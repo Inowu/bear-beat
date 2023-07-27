@@ -1,7 +1,6 @@
-import { Link, Outlet, useNavigate } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import "./Auth.scss";
 import Logo from "../../assets/images/osonuevo.png";
-import { useUserContext } from "../../contexts/UserContext";
 
 function Auth() {
   return (
