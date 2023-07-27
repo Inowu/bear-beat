@@ -1,0 +1,35 @@
+form.sign-up-form {
+  display: flex;
+
+  .c-row {
+    position: relative;
+    .special-label {
+      display: none;
+    }
+
+    .dial-container {
+      position: absolute;
+      width: auto;
+      left: 0px;
+      top: 50%;
+      transform: translate(0px, -50%);
+      input {
+        background-color: transparent;
+        border: none;
+        font-size: 1.8rem;
+        padding: 0;
+        padding-left: 55px;
+        color: #ffffff;
+        margin: 0 !important;
+        width: 100px;
+        &:focus {
+          box-shadow: none;
+        }
+      }
+
+    }
+    input.phone {
+      padding-left: 100px;
+    }
+  }
+}

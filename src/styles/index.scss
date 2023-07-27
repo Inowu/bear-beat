@@ -1,0 +1,42 @@
+@import '~bootstrap/scss/bootstrap';
+@font-face {
+  font-family: "Bear Font2";
+  src: url("../assets/fonts/Arkhip_font.otf");
+}
+@font-face {
+  font-family: "Bear-font";
+  src: url("../assets/fonts/Arkhip_font.ttf");
+}
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+}
+
+html {
+  font-size: 62.5%;
+}
+
+label,
+p,
+a,
+b,
+button,
+.btn,
+ul,
+li,
+div,
+form {
+  font-size: 1.6rem;
+}
