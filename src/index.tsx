@@ -13,6 +13,7 @@ import NotFound from "./pages/NotFound/NotFound";
 import LoginForm from "./components/Auth/LoginForm/LoginForm";
 import SignUpForm from "./components/Auth/SignUpForm/SignUpForm";
 import ForgotPasswordForm from "./components/Auth/ForgotPasswordForm/ForgotPasswordForm";
+import Instructions from "./pages/Instructions/Instructions";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -29,7 +30,10 @@ const router = createBrowserRouter([
             <Outlet />
           </AuthRoute>
         ),
-        children: [{ path: "", element: <Home /> }],
+        children: [
+          { path: "", element: <Home /> },
+          { path: "instrucciones", element: <Instructions /> },
+        ],
       },
       {
         path: "auth",

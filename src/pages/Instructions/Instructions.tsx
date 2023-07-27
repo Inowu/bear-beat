@@ -1,0 +1,98 @@
+import "./Instructions.scss";
+import step1 from "../../assets/images/instructions-1.jpg";
+import step2 from "../../assets/images/instructions-2.jpg";
+import step3 from "../../assets/images/instructions-3.jpg";
+import { useRef } from "react";
+
+function Instructions() {
+  const step1Ref: any = useRef(null);
+  const step2Ref: any = useRef(null);
+  const step3Ref: any = useRef(null);
+  const step4Ref: any = useRef(null);
+
+  return (
+    <div className="instructions-main-container">
+      <h1>Métodos de descarga</h1>
+      <div className="instructions-content-container">
+        <ul className="steps-nav-container">
+          <li
+            className="border-bottom"
+            onClick={() =>
+              step1Ref.current?.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+              })
+            }
+          >
+            Paso 1
+          </li>
+          <li
+            className="border-bottom"
+            onClick={() =>
+              step2Ref.current?.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+              })
+            }
+          >
+            Paso 2
+          </li>
+          <li
+            className="border-bottom"
+            onClick={() =>
+              step3Ref.current?.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+              })
+            }
+          >
+            Paso 3
+          </li>
+          <li
+            onClick={() =>
+              step4Ref.current?.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+              })
+            }
+          >
+            Paso 4
+          </li>
+        </ul>
+        <div className="steps-container">
+          <div className="step-card" ref={step1Ref}>
+            <h2>Paso 1</h2>
+            <p>
+              Descarga e instala filezila cliente en este link
+              https://filezilla-project.org
+            </p>
+            <img src={step1} alt="" />
+          </div>
+          <div className="step-card" ref={step2Ref}>
+            <h2>Paso 2</h2>
+            <p>
+              Ve a la sección mi cuenta y en esta sección encontraras tus claves
+              de usuario FTP
+            </p>
+            <img src={step2} alt="" />
+          </div>
+          <div className="step-card" ref={step3Ref}>
+            <h2>Paso 3</h2>
+            <p>Esas claves de usuario ponlas en esta sección de filezilla</p>
+            <img src={step3} alt="" />
+          </div>
+          <div className="step-card" ref={step4Ref}>
+            <h2>Paso 4</h2>
+            <p>
+              Selecciona en que disco duro o carpeta quieres hacer la descarga
+              una ves echo eso da click derecho a la carpeta que deseas
+              descargar y listo tu descarga arranca exitosamente
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default Instructions;

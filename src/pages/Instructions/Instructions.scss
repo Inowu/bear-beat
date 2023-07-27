@@ -1,0 +1,70 @@
+.instructions-main-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 20px;
+  position: relative;
+
+  h1 {
+    font-size: 3.2rem;
+  }
+
+  .instructions-content-container {
+    display: flex;
+    gap: 15px;
+
+    ul.steps-nav-container {
+      padding: 0;
+      list-style: none;
+      min-width: 200px;
+      background-color: #ffffff;
+      border-radius: 8px;
+      height: fit-content;
+      position: sticky;
+      box-shadow: 0 1px 4px rgb(0 0 0 / 18%);
+      position: sticky;
+      top: 20px;
+
+      li {
+        padding: 5px 10px;
+        font-weight: bold;
+        color: #666666;
+        cursor: pointer;
+
+        &:hover {
+          background-color: #cccccc;
+        }
+      }
+    }
+
+    .steps-container {
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+      padding-bottom: 24px;
+
+      .step-card {
+        width: 100%;
+        padding: 32px;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 1px 4px rgb(0 0 0 / 18%);
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+
+        h2 {
+          font-size: 2.4rem;
+          font-weight: bold;
+          border-bottom: 4px solid #00cbe0;
+        }
+        p {
+          font-size: 1.8rem;
+        }
+        img {
+          width: 100%;
+        }
+      }
+    }
+  }
+}
