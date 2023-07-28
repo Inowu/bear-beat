@@ -15,6 +15,7 @@ import SignUpForm from "./components/Auth/SignUpForm/SignUpForm";
 import ForgotPasswordForm from "./components/Auth/ForgotPasswordForm/ForgotPasswordForm";
 import Instructions from "./pages/Instructions/Instructions";
 import MyAccount from "./pages/MyAccount/MyAccount";
+import Plans from "./pages/Plans/Plans";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -35,6 +36,7 @@ const router = createBrowserRouter([
           { path: "", element: <Home /> },
           { path: "instrucciones", element: <Instructions /> },
           { path: "micuenta", element: <MyAccount /> },
+          { path: "planes", element: <Plans /> },
         ],
       },
       {
