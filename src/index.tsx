@@ -14,6 +14,7 @@ import LoginForm from "./components/Auth/LoginForm/LoginForm";
 import SignUpForm from "./components/Auth/SignUpForm/SignUpForm";
 import ForgotPasswordForm from "./components/Auth/ForgotPasswordForm/ForgotPasswordForm";
 import Instructions from "./pages/Instructions/Instructions";
+import MyAccount from "./pages/MyAccount/MyAccount";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -33,6 +34,7 @@ const router = createBrowserRouter([
         children: [
           { path: "", element: <Home /> },
           { path: "instrucciones", element: <Instructions /> },
+          { path: "micuenta", element: <MyAccount /> },
         ],
       },
       {

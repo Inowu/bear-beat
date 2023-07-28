@@ -1,0 +1,117 @@
+.my-account-main-container {
+  display: flex;
+  gap: 40px;
+  justify-content: center;
+
+  .general {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    flex-grow: 1;
+    max-width: 400px;
+
+    .user-profile-pic {
+      width: 200px;
+      height: 200px;
+      max-width: 200px;
+      min-width: 200px;
+      border-radius: 100%;
+      aspect-ratio: 1/1;
+      background-color: #323232;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
+
+    h2 {
+      font-size: 2.8rem;
+      font-weight: bold;
+    }
+
+    .user-info-container {
+      background-color: #ffffff;
+      border-radius: 8px;
+      padding: 16px 20px;
+      box-shadow: 0 2px 6px -2px rgba(0, 0, 0, 0.39);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+
+      .c-row {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+      }
+    }
+  }
+
+  .purchase {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+
+    .actives-ftp-container {
+      h2 {
+        font-size: 3.2rem;
+        font-weight: bold;
+        text-align: center;
+      }
+      .no-items-container {
+        background-color: #f8d7da;
+        border: 1px solid #f5c2c7;
+        padding: 16px;
+        border-radius: 5px;
+        p {
+          color: #842029;
+          margin: 0;
+          font-size: 1.4rem;
+        }
+      }
+    }
+
+    .last-purchased {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      h2 {
+        font-size: 2.8rem;
+        font-weight: bold;
+        text-align: center;
+      }
+    }
+    table.table {
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: 0 3px 8px rgb(0 0 0 / 14%);
+
+      thead {
+        background-color: #323232;
+        th {
+          background: none;
+
+          color: #06e1f7;
+          padding: 10px;
+        }
+      }
+
+      tbody {
+        background-color: #e2e2e2;
+
+        tr {
+          td {
+            padding: 10px;
+            background: none;
+            vertical-align: middle;
+            img {
+              width: 35px;
+              cursor: pointer;
+            }
+          }
+        }
+      }
+    }
+  }
+}
