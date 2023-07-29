@@ -2,6 +2,7 @@ import { PlanI } from "../../interfaces/Plans";
 import "./PlanCard.scss";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
+import { useNavigate } from "react-router-dom";
 
 interface PlanCardPropsI {
   plan: PlanI;
@@ -9,6 +10,11 @@ interface PlanCardPropsI {
 
 function PlanCard(props: PlanCardPropsI) {
   const { plan } = props;
+  const navigate = useNavigate();
+
+  const handleCheckout = async (planId: number) => {
+    navigate(`/comprar?priceId=${planId}`);
+  };
 
   return (
     <div className="plan-card-main-card">
@@ -39,7 +45,9 @@ function PlanCard(props: PlanCardPropsI) {
       <div className="c-row">
         <p>Contenido en gigas disponibles: {plan.space}</p>
       </div>
-      <button>COMPRAR CON TARJETA</button>
+      <button onClick={() => handleCheckout(plan.id)}>
+        COMPRAR CON TARJETA
+      </button>
       <button>COMPRAR CON PAYPAL</button>
     </div>
   );

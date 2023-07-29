@@ -1,0 +1,41 @@
+form.checkout-form {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+
+  .c-row {
+    width: 100%;
+
+    input {
+      width: 100%;
+    }
+
+    h4 {
+      font-size: 1.4rem;
+
+      span {
+        color: #00e2f7;
+        cursor: pointer;
+      }
+    }
+
+    input {
+      padding: 12px;
+      box-shadow: none;
+      text-shadow: none;
+      border-radius: 5px;
+      border: 2px solid #d3d3d3;
+      background-color: #f8f8f8;
+      font-size: 1.4rem;
+    }
+
+    .StripeElement {
+      border: 2px solid #d3d3d3;
+      background-color: #f8f8f8;
+      padding: 12px;
+      border-radius: 5px;
+    }
+  }
+
+  
+}

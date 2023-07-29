@@ -1,4 +1,4 @@
-@import '~bootstrap/scss/bootstrap';
+@import "~bootstrap/scss/bootstrap";
 @font-face {
   font-family: "Bear Font2";
   src: url("../assets/fonts/Arkhip_font.otf");
@@ -13,7 +13,6 @@
   box-sizing: border-box;
 }
 
-
 html,
 body,
 #root {
@@ -21,7 +20,16 @@ body,
   overflow: hidden;
 }
 
-h1, h2, h3, h4, h5, h6 {
+a {
+  text-decoration: none;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   margin: 0;
 }
 
@@ -31,7 +39,6 @@ html {
 
 body {
   font-family: "Poppins", sans-serif;
-
 }
 
 label,
@@ -45,4 +52,18 @@ li,
 div,
 form {
   font-size: 1.6rem;
+}
+
+button {
+  border: none;
+}
+
+button.primary-pill {
+  border-radius: 25px;
+  font-weight: 700;
+  padding: 10px;
+}
+
+.linear-bg {
+  background: linear-gradient(11deg, #00e6c1, #08e1f7);
 }

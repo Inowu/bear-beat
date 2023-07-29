@@ -3,6 +3,7 @@ import osoLogo from "../../assets/images/oso-icon.png";
 import "./Navbar.scss";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUserCircle, faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
+import { Link } from "react-router-dom";
 
 function Navbar() {
   const { handleLogout } = useUserContext();
@@ -13,9 +14,11 @@ function Navbar() {
         <h2>Bear Beat</h2>
       </div>
       <ul>
-        <li>
-          <FontAwesomeIcon icon={faUserCircle} /> Mi cuenta
-        </li>
+        <Link to={"/micuenta"}>
+          <li>
+            <FontAwesomeIcon icon={faUserCircle} /> Mi cuenta
+          </li>
+        </Link>
         <li onClick={handleLogout}>
           <FontAwesomeIcon icon={faSignOutAlt} /> Cerrar sesión
         </li>
