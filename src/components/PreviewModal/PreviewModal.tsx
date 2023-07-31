@@ -1,0 +1,45 @@
+import { Modal } from "react-bootstrap";
+import videoSrc from "src/assets/video/DAKITI.mp4";
+import "./PreviewModal.scss";
+
+interface PreviewModalPropsI {
+  show: boolean;
+  onHide: () => void;
+}
+
+function PreviewModal(props: PreviewModalPropsI) {
+  const { show, onHide } = props;
+  return (
+    <Modal
+      show={show}
+      onHide={onHide}
+      size="lg"
+      aria-labelledby="contained-modal-title-vcenter"
+      centered
+      className="preview-modal"
+    >
+      <Modal.Header closeButton>
+        <Modal.Title id="contained-modal-title-vcenter">
+          REPRODUCIENDO
+        </Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <div className="preview-container">
+          <video src={videoSrc} controls autoPlay muted />
+        </div>
+      </Modal.Body>
+      <Modal.Footer>
+        <p>
+          Este demo es de 60 segundos y con resolución limitada. Una vez que
+          realizas la descarga con tu plan este tendrá el tiempo completo y alta
+          resolución.
+        </p>
+        <button className="btn primary-pill linear-bg" onClick={onHide}>
+          Cerrar
+        </button>
+      </Modal.Footer>
+    </Modal>
+  );
+}
+
+export default PreviewModal;

@@ -1,0 +1,32 @@
+.preview-modal {
+  .modal-dialog {
+    max-width: 500px;
+
+    .modal-content {
+      background: linear-gradient(38deg, #242424, #343434);
+      color: #ffffff;
+
+      .modal-header {
+        border-color: #484848;
+
+        .modal-title {
+          font-size: 2.4rem;
+        }
+        .btn-close {
+          filter: invert(1);
+        }
+      }
+      .modal-body {
+        .preview-container {
+          video {
+            width: 100%;
+          }
+        }
+      }
+
+      .modal-footer {
+        border-color: #08d0cf;
+      }
+    }
+  }
+}
