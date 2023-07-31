@@ -23,7 +23,7 @@ function Home() {
       <div className="folders-navigation-container">
         <div className="header">
           <div>Nombre</div>
-          <div>Modificado</div>
+          <div className="modified-column">Modificado</div>
         </div>
         <div className="folders-cards-container">
           <div className="folder-card">
@@ -31,7 +31,7 @@ function Home() {
               <FontAwesomeIcon icon={faFolder} />
               <h3>01 Audios Enero 2023</h3>
             </div>
-            <div className="">
+            <div className="modified-column">
               <h4>
                 {new Date().toLocaleString("en-US", {
                   month: "short",

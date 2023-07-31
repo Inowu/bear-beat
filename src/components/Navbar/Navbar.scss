@@ -1,3 +1,5 @@
+@import "src/styles/mixin.scss";
+
 nav {
   display: flex;
   justify-content: space-between;
@@ -22,6 +24,10 @@ nav {
       color: #ffffff;
       margin: 0;
     }
+
+    div.burger-btn {
+      display: none;
+    }
   }
   ul {
     display: flex;
@@ -40,10 +46,55 @@ nav {
       font-family: "Poppins";
       font-size: 1.4rem;
       font-weight: bold;
+      gap: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
 
       &:hover {
         background-color: #08e1f7;
         color: #000000;
+      }
+    }
+  }
+
+  @include respond-to(md) {
+
+    .header {
+      div.burger-btn {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 8px;
+        border-radius: 50px;
+        background-color: #404040;
+
+        svg {
+          color: #ffffff;
+          width: 20px;
+          height: 20px;
+        }
+      }
+    }
+
+    ul {
+      li {
+        padding: 8px;
+        svg {
+          width: 1.6rem;
+          height: 1.6rem!important;
+        }
+        span {
+          display: none;
+        }
+      }
+    }
+  }
+
+  @include respond-to(sm) {
+    .header {
+      h2 {
+        display: none;
       }
     }
   }

@@ -5,9 +5,12 @@
   align-items: center;
   justify-content: flex-start;
   max-width: none!important;
+  width: 100%;
+  overflow-y: scroll;
 
   img.logo {
     max-width: 350px;
+    width: 100%;
   }
 
   form {

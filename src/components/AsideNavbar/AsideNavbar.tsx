@@ -9,9 +9,15 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
 
-function AsideNavbar() {
+interface AsideNavbarPropsI {
+  show: boolean;
+  onHide: () => void;
+}
+
+function AsideNavbar(props: AsideNavbarPropsI) {
+  const { show, onHide } = props;
   return (
-    <aside>
+    <aside className={show ? "open" : ""}>
       <img src={Logo} alt="bear beat" />
       <div className="nav-container">
         <h2>Contenido</h2>

@@ -1,3 +1,5 @@
+@import "src/styles/mixin.scss";
+
 .checkout-main-container {
   display: flex;
   justify-content: center;
@@ -14,7 +16,6 @@
     box-shadow: -10px -10px 0 #08e1f7;
     color: #ffffff;
     gap: 60px;
-
     > div {
       flex: 1;
 
@@ -36,7 +37,6 @@
         .c-row {
           display: grid;
           grid-template-columns: 1fr 3fr;
-
         }
       }
     }
@@ -69,6 +69,16 @@
           justify-content: space-between;
         }
       }
+    }
+  }
+
+  @include respond-to(md) {
+
+    .checkout-card {
+      width: fit-content;
+      align-items: center;
+      padding: 20px;
+      flex-flow: column-reverse;
     }
   }
 }

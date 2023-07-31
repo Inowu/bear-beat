@@ -12,7 +12,7 @@ function Instructions() {
 
   return (
     <div className="instructions-main-container">
-      <h1>Métodos de descarga</h1>
+      <h1>Método de descarga</h1>
       <div className="instructions-content-container">
         <ul className="steps-nav-container">
           <li

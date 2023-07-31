@@ -1,7 +1,11 @@
+@import "src/styles/mixin.scss";
+
 .my-account-main-container {
   display: flex;
   gap: 40px;
   justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
 
   .general {
     display: flex;
@@ -54,6 +58,7 @@
     gap: 40px;
 
     .actives-ftp-container {
+      width: 100%;
       h2 {
         font-size: 3.2rem;
         font-weight: bold;
@@ -110,6 +115,38 @@
               cursor: pointer;
             }
           }
+        }
+      }
+    }
+  }
+
+  @include respond-to(md) {
+    .purchase {
+      width: 100%;
+
+      table.table {
+        width: 100%;
+        margin-bottom: 10px;
+
+        font-size: 1.4rem;
+
+        thead {
+
+          th {
+           padding: 5px; 
+           word-break: break-all;
+          }
+        }
+        tbody {
+          tr {
+            td {
+              padding: 5px;
+              word-break: break-all;
+            }
+          }
+        }
+        h2 {
+          font-size: 1.4rem;
         }
       }
     }

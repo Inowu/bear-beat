@@ -32,7 +32,7 @@ function MyAccount() {
         <div className="actives-ftp-container">
           <h2>MI USUARIO FTP ACTIVO</h2>
           {true ? (
-            <table className="table">
+            <table className="table table-responsive">
               <thead>
                 <tr>
                   <th scope="col">Host</th>

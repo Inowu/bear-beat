@@ -1,3 +1,5 @@
+@import "src/styles/mixin.scss";
+
 aside {
   width: 100%;
   max-width: 300px;
@@ -52,6 +54,27 @@ aside {
           background-color: #08e1f7;
         }
       }
+    }
+  }
+
+  @include respond-to(md) {
+    position: absolute;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0px;
+    max-width: 0px;
+    overflow: hidden;
+    z-index: 100;
+    transition: .3s ease all;
+
+    &.open {
+      max-width: 100%;
+    }
+    .nav-container, img {
+      max-width: 300px;
+      min-width: 300px;
     }
   }
 }
