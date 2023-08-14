@@ -1,0 +1,5 @@
+{
+  "verbose": true,
+  "ext": "ts",
+  "exec": "ts-node --transpileOnly src/index.ts"
+}

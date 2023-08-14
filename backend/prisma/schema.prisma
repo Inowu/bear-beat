@@ -1,0 +1,283 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// generator trpc {
+//   provider             = "prisma-trpc-generator"
+//   contextPath          = "../src/context"
+//   isGenerateSelect     = true
+//   isGenerateInclude    = true
+//   generateModelActions = "aggregate,aggregateRaw,count,create,createMany,delete,deleteMany,findFirst,findFirstOrThrow,findMany,findRaw,findUnique,findUniqueOrThrow,groupBy,update,updateMany,upsert"
+// }
+
+// generator zod {
+//   provider          = "prisma-zod-generator"
+//   // output            = "./generated-zod-schemas"
+//   isGenerateSelect  = true
+//   isGenerateInclude = true
+// }
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Config {
+  id    Int    @id @default(autoincrement())
+  name  String @db.Text
+  value String @db.Text
+
+  @@map("config")
+}
+
+model Countries {
+  id   Int    @id @default(autoincrement()) @db.UnsignedSmallInt
+  name String @unique(map: "name") @db.VarChar(255)
+  code String @db.VarChar(10)
+
+  @@map("countries")
+}
+
+model Cupons {
+  id              Int     @id @default(autoincrement())
+  code            String  @unique(map: "code") @db.VarChar(15)
+  discount        Int
+  type            Int
+  cupon_condition String? @db.VarChar(10)
+  parameter       Int?
+  description     String? @db.Text
+  active          Int     @default(1)
+
+  @@map("cupons")
+}
+
+model CuponsUsed {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  cupon_id   Int
+  date_cupon DateTime @db.DateTime(0)
+
+  @@map("cupons_used")
+}
+
+model DescargasUser {
+  id        Int      @id @default(autoincrement())
+  user_id   Int
+  order_id  Int?
+  available Float    @db.Float
+  ilimitado Int      @default(0)
+  date_end  DateTime @db.Date
+
+  @@map("descargas_user")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model FtpGroup {
+  id        Int    @id @default(autoincrement())
+  groupname String @db.VarChar(16)
+  gid       Int    @default(5500) @db.SmallInt
+  members   String @db.VarChar(16)
+
+  @@index([groupname], map: "groupname")
+  @@map("ftpgroup")
+  @@ignore
+}
+
+model FtpQuotaLimits {
+  id               Int                        @id @default(autoincrement())
+  name             String?                    @db.VarChar(30)
+  quota_type       ftpquotalimits_quota_type  @default(user)
+  per_session      ftpquotalimits_per_session @default(false)
+  limit_type       ftpquotalimits_limit_type  @default(soft)
+  bytes_in_avail   BigInt                     @default(0) @db.UnsignedBigInt
+  bytes_out_avail  BigInt                     @default(0) @db.UnsignedBigInt
+  bytes_xfer_avail BigInt                     @default(0) @db.UnsignedBigInt
+  files_in_avail   Int                        @default(0) @db.UnsignedInt
+  files_out_avail  Int                        @default(0) @db.UnsignedInt
+  files_xfer_avail Int                        @default(0) @db.UnsignedInt
+
+  @@map("ftpquotalimits")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model FtpQuotatAllies {
+  id              Int                        @id @default(autoincrement())
+  name            String                     @default("") @db.VarChar(30)
+  quota_type      ftpquotatallies_quota_type @default(user)
+  bytes_in_used   BigInt                     @default(0) @db.UnsignedBigInt
+  bytes_out_used  BigInt                     @default(0) @db.UnsignedBigInt
+  bytes_xfer_used BigInt                     @default(0) @db.UnsignedBigInt
+  files_in_used   Int                        @default(0) @db.UnsignedInt
+  files_out_used  Int                        @default(0) @db.UnsignedInt
+  files_xfer_used Int                        @default(0) @db.UnsignedInt
+
+  @@map("ftpquota")
+}
+
+model FtpQuotatAlliesHistory {
+  id              Int                                @id @default(autoincrement())
+  name            String                             @db.VarChar(30)
+  quota_type      ftpquotatallies_history_quota_type @default(user)
+  bytes_in_used   BigInt                             @default(0) @db.UnsignedBigInt
+  bytes_out_used  BigInt                             @default(0) @db.UnsignedBigInt
+  bytes_xfer_used BigInt                             @default(0) @db.UnsignedBigInt
+  files_in_used   Int                                @default(0) @db.UnsignedInt
+  files_out_used  Int                                @default(0) @db.UnsignedInt
+  files_xfer_used Int                                @default(0) @db.UnsignedInt
+
+  @@map("ftpquotaallies_history")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model FtpUser {
+  id         Int       @id @default(autoincrement()) @db.UnsignedInt
+  userid     String    @unique(map: "userid") @default("") @db.VarChar(32)
+  passwd     String    @default("") @db.VarChar(32)
+  uid        Int       @default(5500) @db.SmallInt
+  gid        Int       @default(5500) @db.SmallInt
+  homedir    String    @default("") @db.VarChar(255)
+  shell      String    @default("/sbin/nologin") @db.VarChar(16)
+  count      Int       @default(0)
+  accessed   DateTime  @default(dbgenerated("'1999-01-01 00:00:00'")) @db.DateTime(0)
+  modified   DateTime  @default(dbgenerated("'1999-01-01 00:00:00'")) @db.DateTime(0)
+  user_id    Int?
+  order_id   Int?
+  expiration DateTime? @db.Date
+
+  @@map("ftpuser")
+}
+
+model LoginHistory {
+  id        Int     @id @default(autoincrement()) @db.UnsignedInt
+  user      String  @db.VarChar(50)
+  client_ip String  @db.VarChar(100)
+  server_ip String  @db.VarChar(100)
+  protocol  String  @db.Text
+  when      String? @db.VarChar(150)
+
+  @@map("login_history")
+}
+
+model Orders {
+  id             Int      @id @default(autoincrement())
+  date_order     DateTime @db.DateTime(0)
+  payment_id     Int?
+  user_id        Int
+  total_price    Float    @db.Float
+  status         Int      @default(0)
+  discount       Int      @default(0)
+  total_discount Float?   @db.Float
+  cupon_id       Int?
+  is_plan        Int      @default(0)
+  plan_id        Int?
+  txn_id         String?  @db.VarChar(100)
+  payment_method String?  @db.Text
+  invoice_id     String?  @db.Text
+  is_canceled    Int?     @default(0)
+
+  @@map("orders")
+}
+
+model Plans {
+  id                  Int     @id @default(autoincrement())
+  name                String  @db.VarChar(100)
+  description         String  @db.Text
+  moneda              String  @default("usd") @db.VarChar(200)
+  homedir             String  @db.Text
+  gigas               BigInt  @default(0)
+  price               Decimal @db.Decimal(10, 2)
+  duration            String  @db.VarChar(100)
+  activated           Int     @default(0)
+  tokens              Int?
+  audio_ilimitado     Int?
+  tokens_video        Int?
+  video_ilimitado     Int?
+  tokens_karaoke      Int?
+  karaoke_ilimitado   Int?
+  ilimitado_activo    Int?
+  ilimitado_dias      Int?
+  stripe_prod_id      String? @db.Text
+  stripe_prod_id_test String  @db.Text
+  vip_activo          Int?
+
+  @@map("plans")
+}
+
+model Roles {
+  id    Int     @id @default(autoincrement())
+  name  String  @unique(map: "name") @db.VarChar(255)
+  users Users[]
+
+  @@map("roles")
+}
+
+model UserFiles {
+  id             Int       @id @default(autoincrement())
+  // The route where the actual file is stored
+  product_id     String    @db.VarChar(200)
+  // Not used
+  downloads_left Int
+  order_id       Int
+  user_id        Int
+  since          DateTime? @db.Date
+
+  @@map("user_files")
+}
+
+model Users {
+  id             Int       @id @default(autoincrement())
+  registered_on  DateTime  @default(dbgenerated("'2018-01-01'")) @db.Date
+  username       String    @unique(map: "username") @db.VarChar(255)
+  password       String    @db.LongText
+  first_name     String?   @db.VarChar(255)
+  last_name      String?   @db.VarChar(255)
+  address        String?   @db.VarChar(255)
+  birthdate      DateTime? @db.Date
+  email          String    @unique(map: "email") @db.VarChar(255)
+  stripe_cusid   String?   @db.VarChar(200)
+  conekta_cusid  String?   @db.VarChar(255)
+  phone          String?   @db.VarChar(15)
+  city           String?   @db.VarChar(100)
+  role           Roles?    @relation(fields: [role_id], references: [id])
+  role_id        Int?      @default(1)
+  country_id     String?   @db.VarChar(2)
+  profile_img    String?   @db.VarChar(100)
+  active         Int       @default(0)
+  activationcode String?   @db.Text
+  mc_id          Int?
+  ip_registro    String?   @db.Text
+
+  @@map("users")
+}
+
+enum ftpquotatallies_quota_type {
+  user
+  group
+  class
+  all
+}
+
+enum ftpquotalimits_quota_type {
+  user
+  group
+  class
+  all
+}
+
+enum ftpquotatallies_history_quota_type {
+  user
+  group
+  class
+  all
+}
+
+enum ftpquotalimits_per_session {
+  false
+  true
+}
+
+enum ftpquotalimits_limit_type {
+  soft
+  hard
+}
