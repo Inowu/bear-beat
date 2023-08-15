@@ -1,0 +1,36 @@
+import { TRPCError } from '@trpc/server';
+import { shieldedProcedure } from '../../procedures/shielded.procedure';
+
+/**
+ * Returns the number of bytes used by the user and the number of
+ * available bytes
+ * */
+export const quota = shieldedProcedure.query(
+  async ({ ctx: { prisma, session } }) => {
+    const { user } = session!;
+
+    const quotaLimit = await prisma.ftpQuotaLimits.findFirst({
+      where: {
+        name: user?.username,
+      },
+    });
+
+    const quotaUsed = await prisma.ftpquotatallies.findFirst({
+      where: {
+        name: user?.username,
+      },
+    });
+
+    if (!quotaLimit || !quotaUsed) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'There is no quota registered for that user',
+      });
+    }
+
+    return {
+      used: quotaUsed.bytes_out_used,
+      limit: quotaLimit.bytes_out_avail,
+    };
+  },
+);

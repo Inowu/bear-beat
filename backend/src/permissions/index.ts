@@ -6,12 +6,21 @@ const isAdmin = rule<Context>()(
   async (ctx) => ctx.session?.user?.role === RolesNames.admin,
 );
 
+const isLoggedIn = rule<Context>()(async (ctx) => Boolean(ctx.session?.user));
+
 export const permissions = shield<Context>({
   auth: {
     query: {
       login: allow,
       register: allow,
-      me: allow,
+      me: isLoggedIn,
+    },
+  },
+  ftp: {
+    query: {
+      list: isLoggedIn,
+      download: isLoggedIn,
+      quota: isLoggedIn,
     },
   },
   query: {
