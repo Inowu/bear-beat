@@ -2,9 +2,11 @@ import { z } from 'zod';
 
 import type { Prisma } from '@prisma/client';
 
-const Schema: z.ZodType<Prisma.RolesCountOutputTypeSelect> = z
+const Schema: z.ZodType<Prisma.RolesCountAggregateInputType> = z
   .object({
-    users: z.boolean().optional(),
+    id: z.literal(true).optional(),
+    name: z.literal(true).optional(),
+    _all: z.literal(true).optional(),
   })
   .strict();
 

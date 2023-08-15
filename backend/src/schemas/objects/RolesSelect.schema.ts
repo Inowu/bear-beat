@@ -1,14 +1,11 @@
 import { z } from 'zod';
-import { UsersFindManySchema } from '../findManyUsers.schema';
-import { RolesCountOutputTypeArgsObjectSchema } from './RolesCountOutputTypeArgs.schema';
-
 import type { Prisma } from '@prisma/client';
+import { RolesCountOutputTypeArgsObjectSchema } from './RolesCountOutputTypeArgs.schema';
 
 const Schema: z.ZodType<Prisma.RolesSelect> = z
   .object({
     id: z.boolean().optional(),
     name: z.boolean().optional(),
-    users: z.union([z.boolean(), z.lazy(() => UsersFindManySchema)]).optional(),
     _count: z
       .union([z.boolean(), z.lazy(() => RolesCountOutputTypeArgsObjectSchema)])
       .optional(),

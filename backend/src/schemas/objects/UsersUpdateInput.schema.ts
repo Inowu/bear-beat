@@ -1,13 +1,11 @@
 import { z } from 'zod';
+import type { Prisma } from '@prisma/client';
 import { DateTimeFieldUpdateOperationsInputObjectSchema } from './DateTimeFieldUpdateOperationsInput.schema';
 import { StringFieldUpdateOperationsInputObjectSchema } from './StringFieldUpdateOperationsInput.schema';
 import { NullableStringFieldUpdateOperationsInputObjectSchema } from './NullableStringFieldUpdateOperationsInput.schema';
 import { NullableDateTimeFieldUpdateOperationsInputObjectSchema } from './NullableDateTimeFieldUpdateOperationsInput.schema';
 import { IntFieldUpdateOperationsInputObjectSchema } from './IntFieldUpdateOperationsInput.schema';
 import { NullableIntFieldUpdateOperationsInputObjectSchema } from './NullableIntFieldUpdateOperationsInput.schema';
-import { RolesUpdateOneWithoutUsersNestedInputObjectSchema } from './RolesUpdateOneWithoutUsersNestedInput.schema';
-
-import type { Prisma } from '@prisma/client';
 
 const Schema: z.ZodType<Prisma.UsersUpdateInput> = z
   .object({
@@ -132,9 +130,7 @@ const Schema: z.ZodType<Prisma.UsersUpdateInput> = z
       ])
       .optional()
       .nullable(),
-    role: z
-      .lazy(() => RolesUpdateOneWithoutUsersNestedInputObjectSchema)
-      .optional(),
+    role_id: z.number().optional().nullable(),
   })
   .strict();
 

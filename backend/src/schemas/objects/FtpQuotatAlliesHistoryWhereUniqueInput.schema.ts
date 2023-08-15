@@ -1,8 +1,8 @@
-import { z } from "zod";
+import { z } from 'zod';
 
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from '@prisma/client';
 
-const Schema: z.ZodType<Prisma.FtpQuotatAlliesHistoryWhereUniqueInput> = z
+const Schema: z.ZodType<Prisma.FtpQuotaTalliesHistoryWhereUniqueInput> = z
   .object({
     id: z.number(),
   })

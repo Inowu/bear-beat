@@ -4,13 +4,18 @@ import "react-phone-input-2/lib/material.css";
 import "./SignUpForm.scss";
 import es from "react-phone-input-2/lang/es.json";
 import { ReactComponent as Arrow } from "../../../assets/icons/arrow-down.svg";
+import trpc from "../../../api";
 
 function SignUpForm() {
   const navigate = useNavigate();
 
-  const handlesubmit = (e: any) => {
+  const handlesubmit = async (e: any) => {
     e.preventDefault();
-    navigate("/");
+    // await trpc.auth.register.mutate({
+    //   email: "test@test.com",
+    // });
+
+    // navigate("/");
   };
 
   return (

@@ -1,8 +1,7 @@
 import { z } from 'zod';
+import type { Prisma } from '@prisma/client';
 import { SortOrderSchema } from '../enums/SortOrder.schema';
 import { UsersOrderByRelationAggregateInputObjectSchema } from './UsersOrderByRelationAggregateInput.schema';
-
-import type { Prisma } from '@prisma/client';
 
 const Schema: z.ZodType<Prisma.RolesOrderByWithRelationInput> = z
   .object({

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { Prisma } from '@prisma/client';
 import { SortOrderSchema } from '../enums/SortOrder.schema';
 import { FtpQuotatAlliesHistoryCountOrderByAggregateInputObjectSchema } from './FtpQuotatAlliesHistoryCountOrderByAggregateInput.schema';
 import { FtpQuotatAlliesHistoryAvgOrderByAggregateInputObjectSchema } from './FtpQuotatAlliesHistoryAvgOrderByAggregateInput.schema';
@@ -6,9 +7,7 @@ import { FtpQuotatAlliesHistoryMaxOrderByAggregateInputObjectSchema } from './Ft
 import { FtpQuotatAlliesHistoryMinOrderByAggregateInputObjectSchema } from './FtpQuotatAlliesHistoryMinOrderByAggregateInput.schema';
 import { FtpQuotatAlliesHistorySumOrderByAggregateInputObjectSchema } from './FtpQuotatAlliesHistorySumOrderByAggregateInput.schema';
 
-import type { Prisma } from '@prisma/client';
-
-const Schema: z.ZodType<Prisma.FtpQuotatAlliesHistoryOrderByWithAggregationInput> =
+const Schema: z.ZodType<Prisma.FtpQuotaTalliesHistoryOrderByWithAggregationInput> =
   z
     .object({
       id: z.lazy(() => SortOrderSchema).optional(),

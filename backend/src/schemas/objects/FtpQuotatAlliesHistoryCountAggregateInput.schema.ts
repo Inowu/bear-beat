@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import type { Prisma } from '@prisma/client';
 
-const Schema: z.ZodType<Prisma.FtpQuotatAlliesHistoryCountAggregateInputType> =
+const Schema: z.ZodType<Prisma.FtpQuotaTalliesHistoryCountAggregateInputType> =
   z
     .object({
       id: z.literal(true).optional(),

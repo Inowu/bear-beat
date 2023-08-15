@@ -1,15 +1,18 @@
-import { allow, rule, shield } from "trpc-shield";
-import { Context } from "../context";
-import { RolesNames } from "../routers/auth/interfaces/roles.interface";
+import { allow, rule, shield } from 'trpc-shield';
+import { Context } from '../context';
+import { RolesNames } from '../routers/auth/interfaces/roles.interface';
 
-const isAdmin = rule<Context>()(async (ctx, type, path, input, rawInput) => {
-  return ctx.session?.user?.role === RolesNames.admin;
-});
+const isAdmin = rule<Context>()(
+  async (ctx, type, path, input, rawInput) =>
+    ctx.session?.user?.role === RolesNames.admin,
+);
 
 export const permissions = shield<Context>({
   auth: {
-    login: allow,
-    register: allow,
+    query: {
+      login: allow,
+      register: allow,
+    },
   },
   query: {
     aggregateConfig: isAdmin,

@@ -31,6 +31,7 @@
     "typescript": "^5.1.6"
   },
   "dependencies": {
+    "@fastify/cors": "^8.3.0",
     "@fastify/passport": "^2.3.0",
     "@fastify/secure-session": "^6.2.0",
     "@prisma/client": "^5.0.0",

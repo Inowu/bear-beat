@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import type { Prisma } from '@prisma/client';
 
-const Schema: z.ZodType<Prisma.FtpQuotatAlliesHistorySelect> = z
+const Schema: z.ZodType<Prisma.FtpQuotaTalliesHistorySelect> = z
   .object({
     id: z.boolean().optional(),
     name: z.boolean().optional(),

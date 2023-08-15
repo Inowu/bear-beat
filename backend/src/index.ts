@@ -7,8 +7,8 @@ config();
 async function main() {
   try {
     await server.listen({
-      port: 3000,
-      host: '0.0.0.0',
+      port: Number(process.env.PORT),
+      host: process.env.HOST,
     });
 
     await connectFTP();

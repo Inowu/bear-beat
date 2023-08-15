@@ -1,9 +1,8 @@
 import { z } from 'zod';
+import type { Prisma } from '@prisma/client';
 import { SortOrderSchema } from '../enums/SortOrder.schema';
 
-import type { Prisma } from '@prisma/client';
-
-const Schema: z.ZodType<Prisma.FtpQuotatAlliesHistoryMaxOrderByAggregateInput> =
+const Schema: z.ZodType<Prisma.FtpQuotaTalliesHistoryMaxOrderByAggregateInput> =
   z
     .object({
       id: z.lazy(() => SortOrderSchema).optional(),

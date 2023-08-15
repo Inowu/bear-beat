@@ -1,7 +1,12 @@
 {
-  "extends": ["airbnb", "airbnb-typescript/base"],
+  "extends": [
+    "airbnb",
+    "airbnb-typescript/base"
+  ],
   "parser": "@typescript-eslint/parser",
-  "plugins": ["@typescript-eslint"],
+  "plugins": [
+    "@typescript-eslint"
+  ],
   "parserOptions": {
     "project": "./tsconfig.json"
   },
@@ -9,6 +14,10 @@
   "rules": {
     "implicit-arrow-linebreak": "off",
     "function-paren-newline": "off",
-    "import/prefer-default-export": "off"
+    "import/prefer-default-export": "off",
+    "operator-linebreak": "off",
+    "import/no-cycle": "off",
+    "@typescript-eslint/no-use-before-define": "off",
+    "@typescript-eslint/naming-convention": "off"
   }
 }

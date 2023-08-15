@@ -2,8 +2,8 @@ import { createContext, useContext, useEffect, useState } from "react";
 
 interface UserContextI {
   currentUser: { name: string } | null;
-  userToken: string;
-  handleLogin: () => void;
+  userToken: string | null;
+  handleLogin: (token: string) => void;
   handleLogout: () => void;
 }
 
@@ -20,25 +20,31 @@ export function useUserContext() {
 
 const UserContextProvider = (props: any) => {
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [userToken, setUserToken] = useState<string>("");
+  const [userToken, setUserToken] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  function handleLogin() {
-    localStorage.setItem("user", "Javier Centeno");
+  function handleLogin(token: string) {
+    localStorage.setItem("token", token);
+    setUserToken(token);
+    // localStorage.setItem("user", "Javier Centeno");
     setCurrentUser({ name: "Javier Centeno" });
   }
 
   function handleLogout() {
-    setCurrentUser(null);
-    localStorage.removeItem("user");
+    // setCurrentUser(null);
+    // localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    setUserToken(null);
   }
 
   useEffect(() => {
-    const userName = localStorage.getItem("user");
-    console.log(userName);
-    if (userName !== null) {
-      setCurrentUser({ name: userName });
+    const token = localStorage.getItem("token");
+    console.log(token);
+
+    if (token !== null) {
+      setUserToken(token);
     }
+
     setLoading(false);
   }, []);
 

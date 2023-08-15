@@ -1,6 +1,4 @@
 import { z } from 'zod';
-import { RolesArgsObjectSchema } from './RolesArgs.schema';
-
 import type { Prisma } from '@prisma/client';
 
 const Schema: z.ZodType<Prisma.UsersSelect> = z
@@ -18,9 +16,7 @@ const Schema: z.ZodType<Prisma.UsersSelect> = z
     conekta_cusid: z.boolean().optional(),
     phone: z.boolean().optional(),
     city: z.boolean().optional(),
-    role: z
-      .union([z.boolean(), z.lazy(() => RolesArgsObjectSchema)])
-      .optional(),
+    role: z.boolean().optional(),
     role_id: z.boolean().optional(),
     country_id: z.boolean().optional(),
     profile_img: z.boolean().optional(),

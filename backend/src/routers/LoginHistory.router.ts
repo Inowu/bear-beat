@@ -1,24 +1,24 @@
-import { shieldedProcedure } from "../procedures/shielded.procedure";
-import { router } from "../trpc";
-import { LoginHistoryAggregateSchema } from "../schemas/aggregateLoginHistory.schema";
-import { LoginHistoryCreateManySchema } from "../schemas/createManyLoginHistory.schema";
-import { LoginHistoryCreateOneSchema } from "../schemas/createOneLoginHistory.schema";
-import { LoginHistoryDeleteManySchema } from "../schemas/deleteManyLoginHistory.schema";
-import { LoginHistoryDeleteOneSchema } from "../schemas/deleteOneLoginHistory.schema";
-import { LoginHistoryFindFirstSchema } from "../schemas/findFirstLoginHistory.schema";
-import { LoginHistoryFindManySchema } from "../schemas/findManyLoginHistory.schema";
-import { LoginHistoryFindUniqueSchema } from "../schemas/findUniqueLoginHistory.schema";
-import { LoginHistoryGroupBySchema } from "../schemas/groupByLoginHistory.schema";
-import { LoginHistoryUpdateManySchema } from "../schemas/updateManyLoginHistory.schema";
-import { LoginHistoryUpdateOneSchema } from "../schemas/updateOneLoginHistory.schema";
-import { LoginHistoryUpsertSchema } from "../schemas/upsertOneLoginHistory.schema";
+import { shieldedProcedure } from '../procedures/shielded.procedure';
+import { router } from '../trpc';
+import { LoginHistoryAggregateSchema } from '../schemas/aggregateLoginHistory.schema';
+import { LoginHistoryCreateManySchema } from '../schemas/createManyLoginHistory.schema';
+import { LoginHistoryCreateOneSchema } from '../schemas/createOneLoginHistory.schema';
+import { LoginHistoryDeleteManySchema } from '../schemas/deleteManyLoginHistory.schema';
+import { LoginHistoryDeleteOneSchema } from '../schemas/deleteOneLoginHistory.schema';
+import { LoginHistoryFindFirstSchema } from '../schemas/findFirstLoginHistory.schema';
+import { LoginHistoryFindManySchema } from '../schemas/findManyLoginHistory.schema';
+import { LoginHistoryFindUniqueSchema } from '../schemas/findUniqueLoginHistory.schema';
+import { LoginHistoryGroupBySchema } from '../schemas/groupByLoginHistory.schema';
+import { LoginHistoryUpdateManySchema } from '../schemas/updateManyLoginHistory.schema';
+import { LoginHistoryUpdateOneSchema } from '../schemas/updateOneLoginHistory.schema';
+import { LoginHistoryUpsertSchema } from '../schemas/upsertOneLoginHistory.schema';
 
 export const loginhistoriesRouter = router({
   aggregateLoginHistory: shieldedProcedure
     .input(LoginHistoryAggregateSchema)
     .query(async ({ ctx, input }) => {
       const aggregateLoginHistory = await ctx.prisma.loginHistory.aggregate(
-        input
+        input,
       );
       return aggregateLoginHistory;
     }),
@@ -26,7 +26,7 @@ export const loginhistoriesRouter = router({
     .input(LoginHistoryCreateManySchema)
     .mutation(async ({ ctx, input }) => {
       const createManyLoginHistory = await ctx.prisma.loginHistory.createMany(
-        input
+        input,
       );
       return createManyLoginHistory;
     }),
@@ -40,7 +40,7 @@ export const loginhistoriesRouter = router({
     .input(LoginHistoryDeleteManySchema)
     .mutation(async ({ ctx, input }) => {
       const deleteManyLoginHistory = await ctx.prisma.loginHistory.deleteMany(
-        input
+        input,
       );
       return deleteManyLoginHistory;
     }),
@@ -54,7 +54,7 @@ export const loginhistoriesRouter = router({
     .input(LoginHistoryFindFirstSchema)
     .query(async ({ ctx, input }) => {
       const findFirstLoginHistory = await ctx.prisma.loginHistory.findFirst(
-        input
+        input,
       );
       return findFirstLoginHistory;
     }),
@@ -69,7 +69,7 @@ export const loginhistoriesRouter = router({
     .input(LoginHistoryFindManySchema)
     .query(async ({ ctx, input }) => {
       const findManyLoginHistory = await ctx.prisma.loginHistory.findMany(
-        input
+        input,
       );
       return findManyLoginHistory;
     }),
@@ -77,7 +77,7 @@ export const loginhistoriesRouter = router({
     .input(LoginHistoryFindUniqueSchema)
     .query(async ({ ctx, input }) => {
       const findUniqueLoginHistory = await ctx.prisma.loginHistory.findUnique(
-        input
+        input,
       );
       return findUniqueLoginHistory;
     }),
@@ -105,7 +105,7 @@ export const loginhistoriesRouter = router({
     .input(LoginHistoryUpdateManySchema)
     .mutation(async ({ ctx, input }) => {
       const updateManyLoginHistory = await ctx.prisma.loginHistory.updateMany(
-        input
+        input,
       );
       return updateManyLoginHistory;
     }),

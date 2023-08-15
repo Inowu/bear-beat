@@ -1,14 +1,12 @@
 import { z } from 'zod';
+import type { Prisma } from '@prisma/client';
 import { IntFilterObjectSchema } from './IntFilter.schema';
 import { DateTimeFilterObjectSchema } from './DateTimeFilter.schema';
 import { StringFilterObjectSchema } from './StringFilter.schema';
 import { StringNullableFilterObjectSchema } from './StringNullableFilter.schema';
 import { DateTimeNullableFilterObjectSchema } from './DateTimeNullableFilter.schema';
 import { IntNullableFilterObjectSchema } from './IntNullableFilter.schema';
-import { RolesRelationFilterObjectSchema } from './RolesRelationFilter.schema';
 import { RolesWhereInputObjectSchema } from './RolesWhereInput.schema';
-
-import type { Prisma } from '@prisma/client';
 
 const Schema: z.ZodType<Prisma.UsersWhereInput> = z
   .object({
@@ -104,10 +102,7 @@ const Schema: z.ZodType<Prisma.UsersWhereInput> = z
       .optional()
       .nullable(),
     role: z
-      .union([
-        z.lazy(() => RolesRelationFilterObjectSchema),
-        z.lazy(() => RolesWhereInputObjectSchema),
-      ])
+      .lazy(() => RolesWhereInputObjectSchema)
       .optional()
       .nullable(),
   })

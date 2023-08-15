@@ -7,15 +7,16 @@ interface NotAuthRoutePropsI {
 }
 
 function NotAuthRoute({ children }: NotAuthRoutePropsI) {
-  const { currentUser } = useUserContext();
+  const { userToken } = useUserContext();
   const navigate = useNavigate();
+
   useEffect(() => {
-    if (currentUser) {
+    if (userToken) {
       navigate("/");
     }
-  }, [currentUser]);
+  }, [userToken, navigate]);
 
-  if (currentUser) {
+  if (userToken) {
     return <></>; // Avoid rendering children until currentUser is verified
   }
   return <>{children}</>;

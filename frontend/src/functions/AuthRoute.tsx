@@ -7,17 +7,19 @@ interface AuthRoutePropsI {
 }
 
 function AuthRoute({ children }: AuthRoutePropsI) {
-  const { currentUser } = useUserContext();
+  const { userToken } = useUserContext();
   const navigate = useNavigate();
+
   useEffect(() => {
-    if (!currentUser) {
+    if (!userToken) {
       navigate("/auth");
     }
-  }, [currentUser]);
+  }, [userToken, navigate]);
 
-  if (!currentUser) {
+  if (!userToken) {
     return <></>; // Avoid rendering children until currentUser is verified
   }
+
   return <>{children}</>;
 }
 

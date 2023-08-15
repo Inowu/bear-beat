@@ -1,6 +1,4 @@
 import { z } from 'zod';
-import { RolesCreateNestedOneWithoutUsersInputObjectSchema } from './RolesCreateNestedOneWithoutUsersInput.schema';
-
 import type { Prisma } from '@prisma/client';
 
 const Schema: z.ZodType<Prisma.UsersCreateInput> = z
@@ -23,9 +21,7 @@ const Schema: z.ZodType<Prisma.UsersCreateInput> = z
     activationcode: z.string().optional().nullable(),
     mc_id: z.number().optional().nullable(),
     ip_registro: z.string().optional().nullable(),
-    role: z
-      .lazy(() => RolesCreateNestedOneWithoutUsersInputObjectSchema)
-      .optional(),
+    role_id: z.number().optional().nullable(),
   })
   .strict();
 

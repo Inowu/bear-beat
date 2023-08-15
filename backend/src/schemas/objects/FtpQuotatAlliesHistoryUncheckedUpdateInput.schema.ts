@@ -1,13 +1,12 @@
 import { z } from 'zod';
+import type { Prisma } from '@prisma/client';
 import { IntFieldUpdateOperationsInputObjectSchema } from './IntFieldUpdateOperationsInput.schema';
 import { StringFieldUpdateOperationsInputObjectSchema } from './StringFieldUpdateOperationsInput.schema';
 import { ftpquotatallies_history_quota_typeSchema } from '../enums/ftpquotatallies_history_quota_type.schema';
 import { Enumftpquotatallies_history_quota_typeFieldUpdateOperationsInputObjectSchema } from './Enumftpquotatallies_history_quota_typeFieldUpdateOperationsInput.schema';
 import { BigIntFieldUpdateOperationsInputObjectSchema } from './BigIntFieldUpdateOperationsInput.schema';
 
-import type { Prisma } from '@prisma/client';
-
-const Schema: z.ZodType<Prisma.FtpQuotatAlliesHistoryUncheckedUpdateInput> = z
+const Schema: z.ZodType<Prisma.FtpQuotaTalliesHistoryUncheckedUpdateInput> = z
   .object({
     id: z
       .union([

@@ -16,7 +16,7 @@ import { usersRouter } from './Users.router';
 import { authRouter } from './auth';
 import { ftpRouter } from './file-actions';
 
-export default router({
+export const appRouter = router({
   auth: authRouter,
   ftp: ftpRouter,
   config: configsRouter,
@@ -34,3 +34,5 @@ export default router({
   userfiles: userfilesRouter,
   users: usersRouter,
 });
+
+export type AppRouter = typeof appRouter;

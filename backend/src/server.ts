@@ -1,6 +1,7 @@
 import fastify from 'fastify';
+import cors from '@fastify/cors';
 import { fastifyTRPCPlugin } from '@trpc/server/adapters/fastify';
-import appRouter from './routers';
+import { appRouter } from './routers';
 import { createContext } from './context';
 
 export const server = fastify({
@@ -13,6 +14,10 @@ export const server = fastify({
     },
   },
   maxParamLength: 5000,
+});
+
+server.register(cors, {
+  origin: '*',
 });
 
 export const { log } = server;

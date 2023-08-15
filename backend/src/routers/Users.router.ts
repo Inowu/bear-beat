@@ -1,17 +1,17 @@
-import { shieldedProcedure } from "../procedures/shielded.procedure";
-import { router } from "../trpc";
-import { UsersAggregateSchema } from "../schemas/aggregateUsers.schema";
-import { UsersCreateManySchema } from "../schemas/createManyUsers.schema";
-import { UsersCreateOneSchema } from "../schemas/createOneUsers.schema";
-import { UsersDeleteManySchema } from "../schemas/deleteManyUsers.schema";
-import { UsersDeleteOneSchema } from "../schemas/deleteOneUsers.schema";
-import { UsersFindFirstSchema } from "../schemas/findFirstUsers.schema";
-import { UsersFindManySchema } from "../schemas/findManyUsers.schema";
-import { UsersFindUniqueSchema } from "../schemas/findUniqueUsers.schema";
-import { UsersGroupBySchema } from "../schemas/groupByUsers.schema";
-import { UsersUpdateManySchema } from "../schemas/updateManyUsers.schema";
-import { UsersUpdateOneSchema } from "../schemas/updateOneUsers.schema";
-import { UsersUpsertSchema } from "../schemas/upsertOneUsers.schema";
+import { shieldedProcedure } from '../procedures/shielded.procedure';
+import { router } from '../trpc';
+import { UsersAggregateSchema } from '../schemas/aggregateUsers.schema';
+import { UsersCreateManySchema } from '../schemas/createManyUsers.schema';
+import { UsersCreateOneSchema } from '../schemas/createOneUsers.schema';
+import { UsersDeleteManySchema } from '../schemas/deleteManyUsers.schema';
+import { UsersDeleteOneSchema } from '../schemas/deleteOneUsers.schema';
+import { UsersFindFirstSchema } from '../schemas/findFirstUsers.schema';
+import { UsersFindManySchema } from '../schemas/findManyUsers.schema';
+import { UsersFindUniqueSchema } from '../schemas/findUniqueUsers.schema';
+import { UsersGroupBySchema } from '../schemas/groupByUsers.schema';
+import { UsersUpdateManySchema } from '../schemas/updateManyUsers.schema';
+import { UsersUpdateOneSchema } from '../schemas/updateOneUsers.schema';
+import { UsersUpsertSchema } from '../schemas/upsertOneUsers.schema';
 
 export const usersRouter = router({
   aggregateUsers: shieldedProcedure
@@ -54,7 +54,7 @@ export const usersRouter = router({
     .input(UsersFindFirstSchema)
     .query(async ({ ctx, input }) => {
       const findFirstUsersOrThrow = await ctx.prisma.users.findFirstOrThrow(
-        input
+        input,
       );
       return findFirstUsersOrThrow;
     }),
@@ -74,7 +74,7 @@ export const usersRouter = router({
     .input(UsersFindUniqueSchema)
     .query(async ({ ctx, input }) => {
       const findUniqueUsersOrThrow = await ctx.prisma.users.findUniqueOrThrow(
-        input
+        input,
       );
       return findUniqueUsersOrThrow;
     }),

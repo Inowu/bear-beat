@@ -6,7 +6,7 @@ import { useUserContext } from "../contexts/UserContext";
 import { useEffect, useState } from "react";
 
 function MainLayout() {
-  const { currentUser } = useUserContext();
+  const { userToken } = useUserContext();
   const location = useLocation();
 
   const [asideOpen, setAsideOpen] = useState<boolean>(false);
@@ -17,9 +17,9 @@ function MainLayout() {
 
   return (
     <div className="main-layout-main-container">
-      {currentUser && <Navbar setAsideOpen={setAsideOpen} />}
+      {userToken && <Navbar setAsideOpen={setAsideOpen} />}
       <div className="content-container">
-        {currentUser && (
+        {userToken && (
           <AsideNavbar show={asideOpen} onHide={() => setAsideOpen(false)} />
         )}
         <Outlet />

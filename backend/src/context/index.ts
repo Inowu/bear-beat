@@ -1,14 +1,14 @@
-import { inferAsyncReturnType } from "@trpc/server";
-import type { CreateFastifyContextOptions } from "@trpc/server/adapters/fastify";
-import jwt from "jsonwebtoken";
-import { prisma } from "../db";
-import { SessionUser } from "../routers/auth/utils/serialize-user";
+import { inferAsyncReturnType } from '@trpc/server';
+import type { CreateFastifyContextOptions } from '@trpc/server/adapters/fastify';
+import jwt from 'jsonwebtoken';
+import { prisma } from '../db';
+import { SessionUser } from '../routers/auth/utils/serialize-user';
 
 export const createContext = async ({
   req,
   res,
 }: CreateFastifyContextOptions) => {
-  const token = req.headers["authorization"]?.replace("Bearer", "");
+  const token = req.headers.authorization?.replace('Bearer', '');
   let user: SessionUser | null;
 
   try {

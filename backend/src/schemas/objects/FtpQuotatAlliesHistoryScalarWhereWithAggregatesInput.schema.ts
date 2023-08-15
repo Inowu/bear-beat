@@ -1,13 +1,12 @@
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 import { IntWithAggregatesFilterObjectSchema } from './IntWithAggregatesFilter.schema';
 import { StringWithAggregatesFilterObjectSchema } from './StringWithAggregatesFilter.schema';
 import { Enumftpquotatallies_history_quota_typeWithAggregatesFilterObjectSchema } from './Enumftpquotatallies_history_quota_typeWithAggregatesFilter.schema';
 import { ftpquotatallies_history_quota_typeSchema } from '../enums/ftpquotatallies_history_quota_type.schema';
 import { BigIntWithAggregatesFilterObjectSchema } from './BigIntWithAggregatesFilter.schema';
 
-import type { Prisma } from '@prisma/client';
-
-const Schema: z.ZodType<Prisma.FtpQuotatAlliesHistoryScalarWhereWithAggregatesInput> =
+const Schema: z.ZodType<Prisma.FtpQuotaTalliesHistoryScalarWhereWithAggregatesInput> =
   z
     .object({
       AND: z

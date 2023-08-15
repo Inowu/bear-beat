@@ -1,9 +1,7 @@
 import { z } from 'zod';
+import type { Prisma } from '@prisma/client';
 import { IntFilterObjectSchema } from './IntFilter.schema';
 import { StringFilterObjectSchema } from './StringFilter.schema';
-import { UsersListRelationFilterObjectSchema } from './UsersListRelationFilter.schema';
-
-import type { Prisma } from '@prisma/client';
 
 const Schema: z.ZodType<Prisma.RolesWhereInput> = z
   .object({
@@ -27,7 +25,6 @@ const Schema: z.ZodType<Prisma.RolesWhereInput> = z
     name: z
       .union([z.lazy(() => StringFilterObjectSchema), z.string()])
       .optional(),
-    users: z.lazy(() => UsersListRelationFilterObjectSchema).optional(),
   })
   .strict();
 

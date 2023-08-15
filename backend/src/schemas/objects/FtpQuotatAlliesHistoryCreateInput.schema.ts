@@ -1,9 +1,8 @@
 import { z } from 'zod';
+import type { Prisma } from '@prisma/client';
 import { ftpquotatallies_history_quota_typeSchema } from '../enums/ftpquotatallies_history_quota_type.schema';
 
-import type { Prisma } from '@prisma/client';
-
-const Schema: z.ZodType<Prisma.FtpQuotatAlliesHistoryCreateInput> = z
+const Schema: z.ZodType<Prisma.FtpQuotaTalliesHistoryCreateInput> = z
   .object({
     name: z.string(),
     quota_type: z

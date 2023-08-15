@@ -1,8 +1,6 @@
 import { z } from 'zod';
-import { StringFieldUpdateOperationsInputObjectSchema } from './StringFieldUpdateOperationsInput.schema';
-import { UsersUpdateManyWithoutRoleNestedInputObjectSchema } from './UsersUpdateManyWithoutRoleNestedInput.schema';
-
 import type { Prisma } from '@prisma/client';
+import { StringFieldUpdateOperationsInputObjectSchema } from './StringFieldUpdateOperationsInput.schema';
 
 const Schema: z.ZodType<Prisma.RolesUpdateInput> = z
   .object({
@@ -11,9 +9,6 @@ const Schema: z.ZodType<Prisma.RolesUpdateInput> = z
         z.string(),
         z.lazy(() => StringFieldUpdateOperationsInputObjectSchema),
       ])
-      .optional(),
-    users: z
-      .lazy(() => UsersUpdateManyWithoutRoleNestedInputObjectSchema)
       .optional(),
   })
   .strict();

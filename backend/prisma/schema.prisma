@@ -2,25 +2,18 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// generator trpc {
-//   provider             = "prisma-trpc-generator"
-//   contextPath          = "../src/context"
-//   isGenerateSelect     = true
-//   isGenerateInclude    = true
-//   generateModelActions = "aggregate,aggregateRaw,count,create,createMany,delete,deleteMany,findFirst,findFirstOrThrow,findMany,findRaw,findUnique,findUniqueOrThrow,groupBy,update,updateMany,upsert"
-// }
-
-// generator zod {
-//   provider          = "prisma-zod-generator"
-//   // output            = "./generated-zod-schemas"
-//   isGenerateSelect  = true
-//   isGenerateInclude = true
-// }
-
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
+
+// generator trpc {
+//   provider          = "prisma-trpc-generator"
+//   withZod           = true
+//   withMiddleware    = false
+//   withShield        = false
+//   contextPath       = "../src/context"
+// }
 
 model Config {
   id    Int    @id @default(autoincrement())
@@ -74,7 +67,6 @@ model DescargasUser {
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model FtpGroup {
-  id        Int    @id @default(autoincrement())
   groupname String @db.VarChar(16)
   gid       Int    @default(5500) @db.SmallInt
   members   String @db.VarChar(16)
@@ -98,35 +90,6 @@ model FtpQuotaLimits {
   files_xfer_avail Int                        @default(0) @db.UnsignedInt
 
   @@map("ftpquotalimits")
-}
-
-/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
-model FtpQuotatAllies {
-  id              Int                        @id @default(autoincrement())
-  name            String                     @default("") @db.VarChar(30)
-  quota_type      ftpquotatallies_quota_type @default(user)
-  bytes_in_used   BigInt                     @default(0) @db.UnsignedBigInt
-  bytes_out_used  BigInt                     @default(0) @db.UnsignedBigInt
-  bytes_xfer_used BigInt                     @default(0) @db.UnsignedBigInt
-  files_in_used   Int                        @default(0) @db.UnsignedInt
-  files_out_used  Int                        @default(0) @db.UnsignedInt
-  files_xfer_used Int                        @default(0) @db.UnsignedInt
-
-  @@map("ftpquota")
-}
-
-model FtpQuotatAlliesHistory {
-  id              Int                                @id @default(autoincrement())
-  name            String                             @db.VarChar(30)
-  quota_type      ftpquotatallies_history_quota_type @default(user)
-  bytes_in_used   BigInt                             @default(0) @db.UnsignedBigInt
-  bytes_out_used  BigInt                             @default(0) @db.UnsignedBigInt
-  bytes_xfer_used BigInt                             @default(0) @db.UnsignedBigInt
-  files_in_used   Int                                @default(0) @db.UnsignedInt
-  files_out_used  Int                                @default(0) @db.UnsignedInt
-  files_xfer_used Int                                @default(0) @db.UnsignedInt
-
-  @@map("ftpquotaallies_history")
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
@@ -205,18 +168,15 @@ model Plans {
 }
 
 model Roles {
-  id    Int     @id @default(autoincrement())
-  name  String  @unique(map: "name") @db.VarChar(255)
-  users Users[]
+  id   Int    @id @default(autoincrement())
+  name String @unique(map: "name") @db.VarChar(255)
 
   @@map("roles")
 }
 
 model UserFiles {
   id             Int       @id @default(autoincrement())
-  // The route where the actual file is stored
   product_id     String    @db.VarChar(200)
-  // Not used
   downloads_left Int
   order_id       Int
   user_id        Int
@@ -239,7 +199,6 @@ model Users {
   conekta_cusid  String?   @db.VarChar(255)
   phone          String?   @db.VarChar(15)
   city           String?   @db.VarChar(100)
-  role           Roles?    @relation(fields: [role_id], references: [id])
   role_id        Int?      @default(1)
   country_id     String?   @db.VarChar(2)
   profile_img    String?   @db.VarChar(100)
@@ -251,21 +210,35 @@ model Users {
   @@map("users")
 }
 
-enum ftpquotatallies_quota_type {
-  user
-  group
-  class
-  all
+model Ftpquotatallies {
+  name            String                     @default("") @db.VarChar(30)
+  quota_type      ftpquotatallies_quota_type @default(user)
+  bytes_in_used   BigInt                     @default(0) @db.UnsignedBigInt
+  bytes_out_used  BigInt                     @default(0) @db.UnsignedBigInt
+  bytes_xfer_used BigInt                     @default(0) @db.UnsignedBigInt
+  files_in_used   Int                        @default(0) @db.UnsignedInt
+  files_out_used  Int                        @default(0) @db.UnsignedInt
+  files_xfer_used Int                        @default(0) @db.UnsignedInt
+  id              Int                        @id @default(autoincrement()) @db.UnsignedInt
+
+  @@map("ftpquotatallies")
+}
+
+model FtpQuotaTalliesHistory {
+  id              Int                                @id @default(autoincrement())
+  name            String                             @db.VarChar(30)
+  quota_type      ftpquotatallies_history_quota_type @default(user)
+  bytes_in_used   BigInt                             @default(0) @db.UnsignedBigInt
+  bytes_out_used  BigInt                             @default(0) @db.UnsignedBigInt
+  bytes_xfer_used BigInt                             @default(0) @db.UnsignedBigInt
+  files_in_used   Int                                @default(0) @db.UnsignedInt
+  files_out_used  Int                                @default(0) @db.UnsignedInt
+  files_xfer_used Int                                @default(0) @db.UnsignedInt
+
+  @@map("ftpquotatallies_history")
 }
 
 enum ftpquotalimits_quota_type {
-  user
-  group
-  class
-  all
-}
-
-enum ftpquotatallies_history_quota_type {
   user
   group
   class
@@ -280,4 +253,18 @@ enum ftpquotalimits_per_session {
 enum ftpquotalimits_limit_type {
   soft
   hard
+}
+
+enum ftpquotatallies_quota_type {
+  user
+  group
+  class
+  all
+}
+
+enum ftpquotatallies_history_quota_type {
+  user
+  group
+  class
+  all
 }
