@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "start": "NODE_PATH=$(npm root --quiet -g) node concurrently.js"
+  }
+}
