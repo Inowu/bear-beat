@@ -1,17 +1,17 @@
-import { shieldedProcedure } from "../procedures/shielded.procedure";
-import { router } from "../trpc";
-import { FtpUserAggregateSchema } from "../schemas/aggregateFtpUser.schema";
-import { FtpUserCreateManySchema } from "../schemas/createManyFtpUser.schema";
-import { FtpUserCreateOneSchema } from "../schemas/createOneFtpUser.schema";
-import { FtpUserDeleteManySchema } from "../schemas/deleteManyFtpUser.schema";
-import { FtpUserDeleteOneSchema } from "../schemas/deleteOneFtpUser.schema";
-import { FtpUserFindFirstSchema } from "../schemas/findFirstFtpUser.schema";
-import { FtpUserFindManySchema } from "../schemas/findManyFtpUser.schema";
-import { FtpUserFindUniqueSchema } from "../schemas/findUniqueFtpUser.schema";
-import { FtpUserGroupBySchema } from "../schemas/groupByFtpUser.schema";
-import { FtpUserUpdateManySchema } from "../schemas/updateManyFtpUser.schema";
-import { FtpUserUpdateOneSchema } from "../schemas/updateOneFtpUser.schema";
-import { FtpUserUpsertSchema } from "../schemas/upsertOneFtpUser.schema";
+import { shieldedProcedure } from '../procedures/shielded.procedure';
+import { router } from '../trpc';
+import { FtpUserAggregateSchema } from '../schemas/aggregateFtpUser.schema';
+import { FtpUserCreateManySchema } from '../schemas/createManyFtpUser.schema';
+import { FtpUserCreateOneSchema } from '../schemas/createOneFtpUser.schema';
+import { FtpUserDeleteManySchema } from '../schemas/deleteManyFtpUser.schema';
+import { FtpUserDeleteOneSchema } from '../schemas/deleteOneFtpUser.schema';
+import { FtpUserFindFirstSchema } from '../schemas/findFirstFtpUser.schema';
+import { FtpUserFindManySchema } from '../schemas/findManyFtpUser.schema';
+import { FtpUserFindUniqueSchema } from '../schemas/findUniqueFtpUser.schema';
+import { FtpUserGroupBySchema } from '../schemas/groupByFtpUser.schema';
+import { FtpUserUpdateManySchema } from '../schemas/updateManyFtpUser.schema';
+import { FtpUserUpdateOneSchema } from '../schemas/updateOneFtpUser.schema';
+import { FtpUserUpsertSchema } from '../schemas/upsertOneFtpUser.schema';
 
 export const ftpusersRouter = router({
   aggregateFtpUser: shieldedProcedure
@@ -54,7 +54,7 @@ export const ftpusersRouter = router({
     .input(FtpUserFindFirstSchema)
     .query(async ({ ctx, input }) => {
       const findFirstFtpUserOrThrow = await ctx.prisma.ftpUser.findFirstOrThrow(
-        input
+        input,
       );
       return findFirstFtpUserOrThrow;
     }),

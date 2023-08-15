@@ -1,17 +1,17 @@
-import { shieldedProcedure } from "../procedures/shielded.procedure";
-import { router } from "../trpc";
-import { CountriesAggregateSchema } from "../schemas/aggregateCountries.schema";
-import { CountriesCreateManySchema } from "../schemas/createManyCountries.schema";
-import { CountriesCreateOneSchema } from "../schemas/createOneCountries.schema";
-import { CountriesDeleteManySchema } from "../schemas/deleteManyCountries.schema";
-import { CountriesDeleteOneSchema } from "../schemas/deleteOneCountries.schema";
-import { CountriesFindFirstSchema } from "../schemas/findFirstCountries.schema";
-import { CountriesFindManySchema } from "../schemas/findManyCountries.schema";
-import { CountriesFindUniqueSchema } from "../schemas/findUniqueCountries.schema";
-import { CountriesGroupBySchema } from "../schemas/groupByCountries.schema";
-import { CountriesUpdateManySchema } from "../schemas/updateManyCountries.schema";
-import { CountriesUpdateOneSchema } from "../schemas/updateOneCountries.schema";
-import { CountriesUpsertSchema } from "../schemas/upsertOneCountries.schema";
+import { shieldedProcedure } from '../procedures/shielded.procedure';
+import { router } from '../trpc';
+import { CountriesAggregateSchema } from '../schemas/aggregateCountries.schema';
+import { CountriesCreateManySchema } from '../schemas/createManyCountries.schema';
+import { CountriesCreateOneSchema } from '../schemas/createOneCountries.schema';
+import { CountriesDeleteManySchema } from '../schemas/deleteManyCountries.schema';
+import { CountriesDeleteOneSchema } from '../schemas/deleteOneCountries.schema';
+import { CountriesFindFirstSchema } from '../schemas/findFirstCountries.schema';
+import { CountriesFindManySchema } from '../schemas/findManyCountries.schema';
+import { CountriesFindUniqueSchema } from '../schemas/findUniqueCountries.schema';
+import { CountriesGroupBySchema } from '../schemas/groupByCountries.schema';
+import { CountriesUpdateManySchema } from '../schemas/updateManyCountries.schema';
+import { CountriesUpdateOneSchema } from '../schemas/updateOneCountries.schema';
+import { CountriesUpsertSchema } from '../schemas/upsertOneCountries.schema';
 
 export const countriesRouter = router({
   aggregateCountries: shieldedProcedure

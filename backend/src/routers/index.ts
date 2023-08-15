@@ -7,6 +7,7 @@ import { descargasusersRouter } from './DescargasUser.router';
 import { ftpquotalimitsRouter } from './FtpQuotaLimits.router';
 import { ftpquotatallieshistoriesRouter } from './FtpQuotatAlliesHistory.router';
 import { ftpusersRouter } from './FtpUser.router';
+import { ftpquotatalliesRouter } from './Ftpquotatallies.router';
 import { loginhistoriesRouter } from './LoginHistory.router';
 import { ordersRouter } from './Orders.router';
 import { plansRouter } from './Plans.router';
@@ -25,6 +26,7 @@ export const appRouter = router({
   cuponsused: cuponsusedsRouter,
   descargasuser: descargasusersRouter,
   ftpquotalimits: ftpquotalimitsRouter,
+  ftpquotatallies: ftpquotatalliesRouter,
   ftpquotatallieshistory: ftpquotatallieshistoriesRouter,
   ftpuser: ftpusersRouter,
   loginhistory: loginhistoriesRouter,

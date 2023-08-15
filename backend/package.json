@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "nodemon",
     "test": "jest",
-    "compile": "tsc --noEmit"
+    "compile": "tsc --noEmit",
+    "format:fix": "npx prettier --write src/**/*.ts",
+    "format:check": "npx prettier --check src/**/*.ts"
   },
   "keywords": [],
   "author": "",

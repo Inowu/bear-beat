@@ -1,6 +1,6 @@
-import jwt from "jsonwebtoken";
-import { serializeUser } from "./serialize-user";
-import { Users } from "@prisma/client";
+import jwt from 'jsonwebtoken';
+import { Users } from '@prisma/client';
+import { serializeUser } from './serialize-user';
 
 export const generateJwt = (user: Users) =>
   jwt.sign(
@@ -9,6 +9,6 @@ export const generateJwt = (user: Users) =>
     },
     process.env.JWT_SECRET as string,
     {
-      expiresIn: "7d",
-    }
+      expiresIn: '7d',
+    },
   );

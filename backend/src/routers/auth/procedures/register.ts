@@ -1,10 +1,10 @@
-import { z } from "zod";
-import { publicProcedure } from "../../procedures/public.procedure";
-import bcrypt from "bcrypt";
-import { RolesIds } from "./interfaces/roles.interface";
-import { TRPCError } from "@trpc/server";
-import { ActiveState } from "./interfaces/active-state.interface";
-import { generateJwt } from "./utils/generateJwt";
+import { z } from 'zod';
+import bcrypt from 'bcrypt';
+import { TRPCError } from '@trpc/server';
+import { publicProcedure } from '../../../procedures/public.procedure';
+import { RolesIds } from '../interfaces/roles.interface';
+import { ActiveState } from '../interfaces/active-state.interface';
+import { generateJwt } from '../utils/generateJwt';
 
 export const register = publicProcedure
   .input(
@@ -13,7 +13,7 @@ export const register = publicProcedure
       email: z.string().email(),
       password: z.string().min(6),
       phone: z.string(),
-    })
+    }),
   )
   .mutation(
     async ({
@@ -37,11 +37,12 @@ export const register = publicProcedure
         },
       });
 
-      if (existingUser)
+      if (existingUser) {
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Ese email o nombre de usuario ya está registrado",
+          code: 'BAD_REQUEST',
+          message: 'Ese email o nombre de usuario ya está registrado',
         });
+      }
 
       // TODO: Stripe customer id
       // TODO: Send confirmation email and generate token
@@ -61,7 +62,7 @@ export const register = publicProcedure
 
       return {
         token: generateJwt(newUser),
-        message: "Usuario fue creado correctamente",
+        message: 'Usuario fue creado correctamente',
       };
-    }
+    },
   );

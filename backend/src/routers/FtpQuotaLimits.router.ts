@@ -1,24 +1,24 @@
-import { shieldedProcedure } from "../procedures/shielded.procedure";
-import { router } from "../trpc";
-import { FtpQuotaLimitsAggregateSchema } from "../schemas/aggregateFtpQuotaLimits.schema";
-import { FtpQuotaLimitsCreateManySchema } from "../schemas/createManyFtpQuotaLimits.schema";
-import { FtpQuotaLimitsCreateOneSchema } from "../schemas/createOneFtpQuotaLimits.schema";
-import { FtpQuotaLimitsDeleteManySchema } from "../schemas/deleteManyFtpQuotaLimits.schema";
-import { FtpQuotaLimitsDeleteOneSchema } from "../schemas/deleteOneFtpQuotaLimits.schema";
-import { FtpQuotaLimitsFindFirstSchema } from "../schemas/findFirstFtpQuotaLimits.schema";
-import { FtpQuotaLimitsFindManySchema } from "../schemas/findManyFtpQuotaLimits.schema";
-import { FtpQuotaLimitsFindUniqueSchema } from "../schemas/findUniqueFtpQuotaLimits.schema";
-import { FtpQuotaLimitsGroupBySchema } from "../schemas/groupByFtpQuotaLimits.schema";
-import { FtpQuotaLimitsUpdateManySchema } from "../schemas/updateManyFtpQuotaLimits.schema";
-import { FtpQuotaLimitsUpdateOneSchema } from "../schemas/updateOneFtpQuotaLimits.schema";
-import { FtpQuotaLimitsUpsertSchema } from "../schemas/upsertOneFtpQuotaLimits.schema";
+import { shieldedProcedure } from '../procedures/shielded.procedure';
+import { router } from '../trpc';
+import { FtpQuotaLimitsAggregateSchema } from '../schemas/aggregateFtpQuotaLimits.schema';
+import { FtpQuotaLimitsCreateManySchema } from '../schemas/createManyFtpQuotaLimits.schema';
+import { FtpQuotaLimitsCreateOneSchema } from '../schemas/createOneFtpQuotaLimits.schema';
+import { FtpQuotaLimitsDeleteManySchema } from '../schemas/deleteManyFtpQuotaLimits.schema';
+import { FtpQuotaLimitsDeleteOneSchema } from '../schemas/deleteOneFtpQuotaLimits.schema';
+import { FtpQuotaLimitsFindFirstSchema } from '../schemas/findFirstFtpQuotaLimits.schema';
+import { FtpQuotaLimitsFindManySchema } from '../schemas/findManyFtpQuotaLimits.schema';
+import { FtpQuotaLimitsFindUniqueSchema } from '../schemas/findUniqueFtpQuotaLimits.schema';
+import { FtpQuotaLimitsGroupBySchema } from '../schemas/groupByFtpQuotaLimits.schema';
+import { FtpQuotaLimitsUpdateManySchema } from '../schemas/updateManyFtpQuotaLimits.schema';
+import { FtpQuotaLimitsUpdateOneSchema } from '../schemas/updateOneFtpQuotaLimits.schema';
+import { FtpQuotaLimitsUpsertSchema } from '../schemas/upsertOneFtpQuotaLimits.schema';
 
 export const ftpquotalimitsRouter = router({
   aggregateFtpQuotaLimits: shieldedProcedure
     .input(FtpQuotaLimitsAggregateSchema)
     .query(async ({ ctx, input }) => {
       const aggregateFtpQuotaLimits = await ctx.prisma.ftpQuotaLimits.aggregate(
-        input
+        input,
       );
       return aggregateFtpQuotaLimits;
     }),
@@ -33,7 +33,7 @@ export const ftpquotalimitsRouter = router({
     .input(FtpQuotaLimitsCreateOneSchema)
     .mutation(async ({ ctx, input }) => {
       const createOneFtpQuotaLimits = await ctx.prisma.ftpQuotaLimits.create(
-        input
+        input,
       );
       return createOneFtpQuotaLimits;
     }),
@@ -48,7 +48,7 @@ export const ftpquotalimitsRouter = router({
     .input(FtpQuotaLimitsDeleteOneSchema)
     .mutation(async ({ ctx, input }) => {
       const deleteOneFtpQuotaLimits = await ctx.prisma.ftpQuotaLimits.delete(
-        input
+        input,
       );
       return deleteOneFtpQuotaLimits;
     }),
@@ -56,7 +56,7 @@ export const ftpquotalimitsRouter = router({
     .input(FtpQuotaLimitsFindFirstSchema)
     .query(async ({ ctx, input }) => {
       const findFirstFtpQuotaLimits = await ctx.prisma.ftpQuotaLimits.findFirst(
-        input
+        input,
       );
       return findFirstFtpQuotaLimits;
     }),
@@ -71,7 +71,7 @@ export const ftpquotalimitsRouter = router({
     .input(FtpQuotaLimitsFindManySchema)
     .query(async ({ ctx, input }) => {
       const findManyFtpQuotaLimits = await ctx.prisma.ftpQuotaLimits.findMany(
-        input
+        input,
       );
       return findManyFtpQuotaLimits;
     }),
@@ -113,7 +113,7 @@ export const ftpquotalimitsRouter = router({
     .input(FtpQuotaLimitsUpdateOneSchema)
     .mutation(async ({ ctx, input }) => {
       const updateOneFtpQuotaLimits = await ctx.prisma.ftpQuotaLimits.update(
-        input
+        input,
       );
       return updateOneFtpQuotaLimits;
     }),
@@ -121,7 +121,7 @@ export const ftpquotalimitsRouter = router({
     .input(FtpQuotaLimitsUpsertSchema)
     .mutation(async ({ ctx, input }) => {
       const upsertOneFtpQuotaLimits = await ctx.prisma.ftpQuotaLimits.upsert(
-        input
+        input,
       );
       return upsertOneFtpQuotaLimits;
     }),

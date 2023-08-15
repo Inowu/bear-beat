@@ -1,17 +1,17 @@
-import { shieldedProcedure } from "../procedures/shielded.procedure";
-import { router } from "../trpc";
-import { CuponsUsedAggregateSchema } from "../schemas/aggregateCuponsUsed.schema";
-import { CuponsUsedCreateManySchema } from "../schemas/createManyCuponsUsed.schema";
-import { CuponsUsedCreateOneSchema } from "../schemas/createOneCuponsUsed.schema";
-import { CuponsUsedDeleteManySchema } from "../schemas/deleteManyCuponsUsed.schema";
-import { CuponsUsedDeleteOneSchema } from "../schemas/deleteOneCuponsUsed.schema";
-import { CuponsUsedFindFirstSchema } from "../schemas/findFirstCuponsUsed.schema";
-import { CuponsUsedFindManySchema } from "../schemas/findManyCuponsUsed.schema";
-import { CuponsUsedFindUniqueSchema } from "../schemas/findUniqueCuponsUsed.schema";
-import { CuponsUsedGroupBySchema } from "../schemas/groupByCuponsUsed.schema";
-import { CuponsUsedUpdateManySchema } from "../schemas/updateManyCuponsUsed.schema";
-import { CuponsUsedUpdateOneSchema } from "../schemas/updateOneCuponsUsed.schema";
-import { CuponsUsedUpsertSchema } from "../schemas/upsertOneCuponsUsed.schema";
+import { shieldedProcedure } from '../procedures/shielded.procedure';
+import { router } from '../trpc';
+import { CuponsUsedAggregateSchema } from '../schemas/aggregateCuponsUsed.schema';
+import { CuponsUsedCreateManySchema } from '../schemas/createManyCuponsUsed.schema';
+import { CuponsUsedCreateOneSchema } from '../schemas/createOneCuponsUsed.schema';
+import { CuponsUsedDeleteManySchema } from '../schemas/deleteManyCuponsUsed.schema';
+import { CuponsUsedDeleteOneSchema } from '../schemas/deleteOneCuponsUsed.schema';
+import { CuponsUsedFindFirstSchema } from '../schemas/findFirstCuponsUsed.schema';
+import { CuponsUsedFindManySchema } from '../schemas/findManyCuponsUsed.schema';
+import { CuponsUsedFindUniqueSchema } from '../schemas/findUniqueCuponsUsed.schema';
+import { CuponsUsedGroupBySchema } from '../schemas/groupByCuponsUsed.schema';
+import { CuponsUsedUpdateManySchema } from '../schemas/updateManyCuponsUsed.schema';
+import { CuponsUsedUpdateOneSchema } from '../schemas/updateOneCuponsUsed.schema';
+import { CuponsUsedUpsertSchema } from '../schemas/upsertOneCuponsUsed.schema';
 
 export const cuponsusedsRouter = router({
   aggregateCuponsUsed: shieldedProcedure
@@ -24,7 +24,7 @@ export const cuponsusedsRouter = router({
     .input(CuponsUsedCreateManySchema)
     .mutation(async ({ ctx, input }) => {
       const createManyCuponsUsed = await ctx.prisma.cuponsUsed.createMany(
-        input
+        input,
       );
       return createManyCuponsUsed;
     }),
@@ -38,7 +38,7 @@ export const cuponsusedsRouter = router({
     .input(CuponsUsedDeleteManySchema)
     .mutation(async ({ ctx, input }) => {
       const deleteManyCuponsUsed = await ctx.prisma.cuponsUsed.deleteMany(
-        input
+        input,
       );
       return deleteManyCuponsUsed;
     }),
@@ -71,7 +71,7 @@ export const cuponsusedsRouter = router({
     .input(CuponsUsedFindUniqueSchema)
     .query(async ({ ctx, input }) => {
       const findUniqueCuponsUsed = await ctx.prisma.cuponsUsed.findUnique(
-        input
+        input,
       );
       return findUniqueCuponsUsed;
     }),
@@ -99,7 +99,7 @@ export const cuponsusedsRouter = router({
     .input(CuponsUsedUpdateManySchema)
     .mutation(async ({ ctx, input }) => {
       const updateManyCuponsUsed = await ctx.prisma.cuponsUsed.updateMany(
-        input
+        input,
       );
       return updateManyCuponsUsed;
     }),

@@ -8,7 +8,7 @@ export const createContext = async ({
   req,
   res,
 }: CreateFastifyContextOptions) => {
-  const token = req.headers.authorization?.replace('Bearer', '');
+  const token = req.headers.authorization?.replace('Bearer ', '');
   let user: SessionUser | null;
 
   try {

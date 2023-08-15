@@ -3,8 +3,7 @@ import { Context } from '../context';
 import { RolesNames } from '../routers/auth/interfaces/roles.interface';
 
 const isAdmin = rule<Context>()(
-  async (ctx, type, path, input, rawInput) =>
-    ctx.session?.user?.role === RolesNames.admin,
+  async (ctx) => ctx.session?.user?.role === RolesNames.admin,
 );
 
 export const permissions = shield<Context>({
@@ -12,6 +11,7 @@ export const permissions = shield<Context>({
     query: {
       login: allow,
       register: allow,
+      me: allow,
     },
   },
   query: {
@@ -53,7 +53,7 @@ export const permissions = shield<Context>({
     findManyFtpUser: isAdmin,
     findManyLoginHistory: isAdmin,
     findManyOrders: isAdmin,
-    findManyPlans: isAdmin,
+    findManyPlans: allow,
     findManyRoles: isAdmin,
     findManyUserFiles: isAdmin,
     findManyUsers: isAdmin,

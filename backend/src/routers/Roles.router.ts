@@ -1,17 +1,17 @@
-import { shieldedProcedure } from "../procedures/shielded.procedure";
-import { router } from "../trpc";
-import { RolesAggregateSchema } from "../schemas/aggregateRoles.schema";
-import { RolesCreateManySchema } from "../schemas/createManyRoles.schema";
-import { RolesCreateOneSchema } from "../schemas/createOneRoles.schema";
-import { RolesDeleteManySchema } from "../schemas/deleteManyRoles.schema";
-import { RolesDeleteOneSchema } from "../schemas/deleteOneRoles.schema";
-import { RolesFindFirstSchema } from "../schemas/findFirstRoles.schema";
-import { RolesFindManySchema } from "../schemas/findManyRoles.schema";
-import { RolesFindUniqueSchema } from "../schemas/findUniqueRoles.schema";
-import { RolesGroupBySchema } from "../schemas/groupByRoles.schema";
-import { RolesUpdateManySchema } from "../schemas/updateManyRoles.schema";
-import { RolesUpdateOneSchema } from "../schemas/updateOneRoles.schema";
-import { RolesUpsertSchema } from "../schemas/upsertOneRoles.schema";
+import { shieldedProcedure } from '../procedures/shielded.procedure';
+import { router } from '../trpc';
+import { RolesAggregateSchema } from '../schemas/aggregateRoles.schema';
+import { RolesCreateManySchema } from '../schemas/createManyRoles.schema';
+import { RolesCreateOneSchema } from '../schemas/createOneRoles.schema';
+import { RolesDeleteManySchema } from '../schemas/deleteManyRoles.schema';
+import { RolesDeleteOneSchema } from '../schemas/deleteOneRoles.schema';
+import { RolesFindFirstSchema } from '../schemas/findFirstRoles.schema';
+import { RolesFindManySchema } from '../schemas/findManyRoles.schema';
+import { RolesFindUniqueSchema } from '../schemas/findUniqueRoles.schema';
+import { RolesGroupBySchema } from '../schemas/groupByRoles.schema';
+import { RolesUpdateManySchema } from '../schemas/updateManyRoles.schema';
+import { RolesUpdateOneSchema } from '../schemas/updateOneRoles.schema';
+import { RolesUpsertSchema } from '../schemas/upsertOneRoles.schema';
 
 export const rolesRouter = router({
   aggregateRoles: shieldedProcedure
@@ -54,7 +54,7 @@ export const rolesRouter = router({
     .input(RolesFindFirstSchema)
     .query(async ({ ctx, input }) => {
       const findFirstRolesOrThrow = await ctx.prisma.roles.findFirstOrThrow(
-        input
+        input,
       );
       return findFirstRolesOrThrow;
     }),
@@ -74,7 +74,7 @@ export const rolesRouter = router({
     .input(RolesFindUniqueSchema)
     .query(async ({ ctx, input }) => {
       const findUniqueRolesOrThrow = await ctx.prisma.roles.findUniqueOrThrow(
-        input
+        input,
       );
       return findUniqueRolesOrThrow;
     }),
