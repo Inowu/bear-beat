@@ -321,6 +321,14 @@ describe('TRCP API', () => {
         quotatallies.bytes_out_used + BigInt(res.size),
       );
     });
+
+    it.only('Download demo', async () => {
+      const res = await authCaller.ftp.demo({
+        path: 'Downloads/2 Unlimited  - Jump For Joy (90s Redrum).mp3',
+      });
+
+      expect(res.demo).not.toBeUndefined();
+    });
   });
 });
 

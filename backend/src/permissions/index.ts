@@ -13,6 +13,7 @@ export const permissions = shield<Context>({
     list: isLoggedIn,
     download: isLoggedIn,
     quota: isLoggedIn,
+    demo: isLoggedIn,
     login: allow,
     register: allow,
     me: isLoggedIn,

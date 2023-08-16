@@ -1,8 +1,11 @@
+import path from 'path';
 import { config } from 'dotenv';
 import { log, server } from './server';
 import { connectFTP } from './ftp';
 
-config();
+config({
+  path: path.resolve(__dirname, '../.env'),
+});
 
 async function main() {
   try {
