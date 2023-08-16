@@ -30,7 +30,7 @@ export const quota = shieldedProcedure.query(
 
     return {
       used: quotaUsed.bytes_out_used,
-      limit: quotaLimit.bytes_out_avail,
+      available: quotaLimit.bytes_out_avail,
     };
   },
 );

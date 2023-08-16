@@ -9,21 +9,13 @@ const isAdmin = rule<Context>()(
 const isLoggedIn = rule<Context>()(async (ctx) => Boolean(ctx.session?.user));
 
 export const permissions = shield<Context>({
-  auth: {
-    query: {
-      login: allow,
-      register: allow,
-      me: isLoggedIn,
-    },
-  },
-  ftp: {
-    query: {
-      list: isLoggedIn,
-      download: isLoggedIn,
-      quota: isLoggedIn,
-    },
-  },
   query: {
+    list: isLoggedIn,
+    download: isLoggedIn,
+    quota: isLoggedIn,
+    login: allow,
+    register: allow,
+    me: isLoggedIn,
     aggregateConfig: isAdmin,
     aggregateCountries: isAdmin,
     aggregateCupons: isAdmin,

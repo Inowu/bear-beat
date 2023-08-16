@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import { publicProcedure } from '../../procedures/public.procedure';
 import { sftp } from '../../ftp';
+import { shieldedProcedure } from '../../procedures/shielded.procedure';
 
-export default publicProcedure
+export const ls = shieldedProcedure
   .input(
     z.object({
       path: z.string(),
