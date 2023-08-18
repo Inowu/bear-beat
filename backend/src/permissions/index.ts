@@ -1,12 +1,17 @@
 import { allow, rule, shield } from 'trpc-shield';
 import { Context } from '../context';
 import { RolesNames } from '../routers/auth/interfaces/roles.interface';
+import { verifyConektaSignature } from '../routers/utils/verifyConektaSignature';
 
 const isAdmin = rule<Context>()(
   async (ctx) => ctx.session?.user?.role === RolesNames.admin,
 );
 
 const isLoggedIn = rule<Context>()(async (ctx) => Boolean(ctx.session?.user));
+
+const isValidConektaSignature = rule<Context>()(async ({ req }) =>
+  verifyConektaSignature(req, JSON.parse(req.body as any)),
+);
 
 export const permissions = shield<Context>({
   query: {
@@ -17,6 +22,7 @@ export const permissions = shield<Context>({
     login: allow,
     register: allow,
     me: isLoggedIn,
+    findByCode: isLoggedIn,
     aggregateConfig: isAdmin,
     aggregateCountries: isAdmin,
     aggregateCupons: isAdmin,
@@ -89,6 +95,8 @@ export const permissions = shield<Context>({
     groupByUsers: isAdmin,
   },
   mutation: {
+    subscribeWithCardConekta: isLoggedIn,
+    conektaSubscriptionWebhook: isValidConektaSignature,
     createOneConfig: isAdmin,
     createOneCountries: isAdmin,
     createOneCupons: isAdmin,

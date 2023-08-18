@@ -16,10 +16,14 @@ import { userfilesRouter } from './UserFiles.router';
 import { usersRouter } from './Users.router';
 import { authRouter } from './auth';
 import { ftpRouter } from './file-actions';
+import { subscriptionsRouter } from './subscriptions';
+import { webhooksRouter } from './webhooks';
 
 export const appRouter = router({
   auth: authRouter,
   ftp: ftpRouter,
+  subscriptions: subscriptionsRouter,
+  webhooks: webhooksRouter,
   config: configsRouter,
   countries: countriesRouter,
   cupons: cuponsRouter,

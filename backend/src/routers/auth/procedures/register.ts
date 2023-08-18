@@ -5,6 +5,8 @@ import { publicProcedure } from '../../../procedures/public.procedure';
 import { RolesIds } from '../interfaces/roles.interface';
 import { ActiveState } from '../interfaces/active-state.interface';
 import { generateJwt } from '../utils/generateJwt';
+import stripe from '../../../stripe';
+import { conektaClient } from '../../../conekta';
 
 export const register = publicProcedure
   .input(
@@ -45,6 +47,7 @@ export const register = publicProcedure
       }
 
       // TODO: Stripe customer id
+      // TODO: Conekta customer id
       // TODO: Send confirmation email and generate token
       // ? ManyChat ?
       const newUser = await prisma.users.create({
@@ -59,6 +62,23 @@ export const register = publicProcedure
           active: ActiveState.Active,
         },
       });
+
+      await Promise.all([
+        stripe.customers.create({
+          email,
+          metadata: {
+            id: newUser.id,
+          },
+        }),
+        conektaClient.createCustomer({
+          email,
+          name: newUser.username,
+          phone: newUser.phone ?? '',
+          metadata: {
+            id: newUser.id,
+          },
+        }),
+      ]);
 
       return {
         token: generateJwt(newUser),

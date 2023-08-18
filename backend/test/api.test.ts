@@ -322,7 +322,7 @@ describe('TRCP API', () => {
       );
     });
 
-    it.only('Download demo', async () => {
+    it('Download demo', async () => {
       const res = await authCaller.ftp.demo({
         path: 'Downloads/2 Unlimited  - Jump For Joy (90s Redrum).mp3',
       });

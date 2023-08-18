@@ -1,3 +1,5 @@
+import { z } from 'zod';
+import { TRPCError } from '@trpc/server';
 import { shieldedProcedure } from '../procedures/shielded.procedure';
 import { router } from '../trpc';
 import { CuponsAggregateSchema } from '../schemas/aggregateCupons.schema';
@@ -14,6 +16,41 @@ import { CuponsUpdateOneSchema } from '../schemas/updateOneCupons.schema';
 import { CuponsUpsertSchema } from '../schemas/upsertOneCupons.schema';
 
 export const cuponsRouter = router({
+  /**
+   * Returns the discount porcentaje of the coupon with the specified code
+   * or throws a 404 error if no coupon with the specified code was found
+   */
+  findByCode: shieldedProcedure
+    .input(
+      z.object({
+        code: z.string(),
+      }),
+    )
+    .query(async ({ input: { code }, ctx: { prisma } }) => {
+      const cupon = await prisma.cupons.findFirst({
+        where: {
+          AND: [
+            {
+              code,
+            },
+            {
+              active: 1,
+            },
+          ],
+        },
+      });
+
+      if (!cupon) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'No coupon was found with the specified code',
+        });
+      }
+
+      return {
+        discount: cupon.discount,
+      };
+    }),
   aggregateCupons: shieldedProcedure
     .input(CuponsAggregateSchema)
     .query(async ({ ctx, input }) => {

@@ -20,5 +20,7 @@ export const PlansScalarFieldEnumSchema = z.enum([
   'ilimitado_dias',
   'stripe_prod_id',
   'stripe_prod_id_test',
+  'conekta_prod_id',
+  'conekta_prod_id_test',
   'vip_activo',
 ]);
