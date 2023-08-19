@@ -2,6 +2,7 @@ generator client {
   provider = "prisma-client-js"
 }
 
+
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
@@ -154,8 +155,8 @@ model Plans {
   ilimitado_dias       Int?
   stripe_prod_id       String? @db.Text
   stripe_prod_id_test  String  @db.Text
-  conekta_prod_id      String? @db.Text
-  conekta_prod_id_test String? @db.Text
+  conekta_plan_id      String? @db.Text
+  conekta_plan_id_test String? @db.Text
   vip_activo           Int?
 
   @@map("plans")

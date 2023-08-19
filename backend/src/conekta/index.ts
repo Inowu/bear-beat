@@ -3,6 +3,7 @@ import {
   SubscriptionsApi,
   PaymentMethodsApi,
   Configuration,
+  OrdersApi,
 } from 'conekta';
 
 const apikey =
@@ -16,3 +17,5 @@ export const conektaClient = new CustomersApi(config);
 export const conektaSubscriptions = new SubscriptionsApi(config);
 
 export const conektaPaymentMethods = new PaymentMethodsApi(config);
+
+export const conektaOrders = new OrdersApi(config);
