@@ -23,6 +23,8 @@ const Schema: z.ZodType<Prisma.PlansSelect> = z
     ilimitado_dias: z.boolean().optional(),
     stripe_prod_id: z.boolean().optional(),
     stripe_prod_id_test: z.boolean().optional(),
+    conekta_plan_id: z.boolean().optional(),
+    conekta_plan_id_test: z.boolean().optional(),
     vip_activo: z.boolean().optional(),
   })
   .strict();

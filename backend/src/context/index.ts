@@ -19,7 +19,11 @@ export const createContext = async ({
 
   try {
     user = token
-      ? (jwt.verify(token, process.env.JWT_SECRET as string) as SessionUser)
+      ? (
+          jwt.verify(token, process.env.JWT_SECRET as string) as {
+            user: SessionUser;
+          }
+        ).user
       : null;
   } catch (e) {
     return { req, res, prisma, session: null };

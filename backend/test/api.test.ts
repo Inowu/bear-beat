@@ -1,5 +1,8 @@
 import { TRPCError } from '@trpc/server';
-import { getHTTPStatusCodeFromError } from '@trpc/server/http';
+import {
+  getHTTPStatusCode,
+  getHTTPStatusCodeFromError,
+} from '@trpc/server/http';
 import { prisma } from '../src/db';
 import { appRouter } from '../src/routers';
 import { RolesNames } from '../src/routers/auth/interfaces/roles.interface';
@@ -88,6 +91,19 @@ describe('TRCP API', () => {
         console.log(cause);
         expect(cause).toBeInstanceOf(TRPCError);
         expect(getHTTPStatusCodeFromError(cause as TRPCError)).toBe(500);
+      }
+    });
+
+    it.only('subscribeWithCashConekta - isLoggedIn', async () => {
+      try {
+        await caller.subscriptions.subscribeWithCashConekta({
+          planId: 1,
+          currency: 'MXN',
+          paymentMethod: 'SPEI',
+        });
+      } catch (e: any) {
+        console.log(e);
+        expect(getHTTPStatusCodeFromError(e)).toBe(401);
       }
     });
   });

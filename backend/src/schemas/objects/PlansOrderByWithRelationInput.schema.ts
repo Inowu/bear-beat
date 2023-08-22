@@ -70,6 +70,13 @@ const Schema: z.ZodType<Prisma.PlansOrderByWithRelationInput> = z
       ])
       .optional(),
     stripe_prod_id_test: z.lazy(() => SortOrderSchema).optional(),
+    conekta_plan_id: z
+      .union([
+        z.lazy(() => SortOrderSchema),
+        z.lazy(() => SortOrderInputObjectSchema),
+      ])
+      .optional(),
+    conekta_plan_id_test: z.lazy(() => SortOrderSchema).optional(),
     vip_activo: z
       .union([
         z.lazy(() => SortOrderSchema),

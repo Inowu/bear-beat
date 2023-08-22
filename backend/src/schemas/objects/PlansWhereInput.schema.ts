@@ -90,6 +90,13 @@ const Schema: z.ZodType<Prisma.PlansWhereInput> = z
     stripe_prod_id_test: z
       .union([z.lazy(() => StringFilterObjectSchema), z.string()])
       .optional(),
+    conekta_plan_id: z
+      .union([z.lazy(() => StringNullableFilterObjectSchema), z.string()])
+      .optional()
+      .nullable(),
+    conekta_plan_id_test: z
+      .union([z.lazy(() => StringFilterObjectSchema), z.string()])
+      .optional(),
     vip_activo: z
       .union([z.lazy(() => IntNullableFilterObjectSchema), z.number()])
       .optional()

@@ -9,6 +9,7 @@ import {
 import { log } from '../../server';
 import { getConektaCustomer } from './utils/getConektaCustomer';
 import { getPlanConektaKey } from '../../utils/getPlanKey';
+import { hasActiveSubscription } from './utils/hasActiveSub';
 
 export const subscribeWithCardConekta = shieldedProcedure
   .input(
@@ -23,6 +24,10 @@ export const subscribeWithCardConekta = shieldedProcedure
       input: { cardToken, planId, makeDefault },
       ctx: { prisma, session },
     }) => {
+      const user = session!.user!;
+
+      await hasActiveSubscription(user, prisma);
+
       const userConektaId = await getConektaCustomer({
         prisma,
         user: session?.user,

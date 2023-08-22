@@ -5,17 +5,21 @@ import {
   Configuration,
   OrdersApi,
 } from 'conekta';
+import { config } from 'dotenv';
 
-const apikey =
+config();
+
+const apiKey =
   process.env.NODE_ENV === 'production'
-    ? process.env.CONEKTA_KEY
-    : process.env.CONEKTA_TEST_KEY;
-const config = new Configuration({ accessToken: apikey });
+    ? (process.env.CONEKTA_KEY as string)
+    : (process.env.CONEKTA_TEST_KEY as string);
 
-export const conektaClient = new CustomersApi(config);
+const conektaConfig = new Configuration({ apiKey, accessToken: apiKey });
 
-export const conektaSubscriptions = new SubscriptionsApi(config);
+export const conektaClient = new CustomersApi(conektaConfig);
 
-export const conektaPaymentMethods = new PaymentMethodsApi(config);
+export const conektaSubscriptions = new SubscriptionsApi(conektaConfig);
 
-export const conektaOrders = new OrdersApi(config);
+export const conektaPaymentMethods = new PaymentMethodsApi();
+
+export const conektaOrders = new OrdersApi(conektaConfig);

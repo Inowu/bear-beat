@@ -96,6 +96,7 @@ export const permissions = shield<Context>({
   },
   mutation: {
     subscribeWithCardConekta: isLoggedIn,
+    subscribeWithCashConekta: isLoggedIn,
     conektaSubscriptionWebhook: isValidConektaSignature,
     createOneConfig: isAdmin,
     createOneCountries: isAdmin,
