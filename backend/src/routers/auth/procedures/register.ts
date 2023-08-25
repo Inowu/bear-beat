@@ -46,10 +46,7 @@ export const register = publicProcedure
         });
       }
 
-      // TODO: Stripe customer id
-      // TODO: Conekta customer id
       // TODO: Send confirmation email and generate token
-      // ? ManyChat ?
       const newUser = await prisma.users.create({
         data: {
           email,
