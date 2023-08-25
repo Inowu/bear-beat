@@ -8,7 +8,7 @@ import {
 } from '../../conekta';
 import { log } from '../../server';
 import { getConektaCustomer } from './utils/getConektaCustomer';
-import { getPlanConektaKey } from '../../utils/getPlanKey';
+import { getPlanKey } from '../../utils/getPlanKey';
 import { hasActiveSubscription } from './utils/hasActiveSub';
 
 export const subscribeWithCardConekta = shieldedProcedure
@@ -63,7 +63,7 @@ export const subscribeWithCardConekta = shieldedProcedure
         }
 
         await conektaSubscriptions.createSubscription(userConektaId, {
-          plan_id: plan[getPlanConektaKey()] as string,
+          plan_id: plan[getPlanKey()] as string,
           card_id: paymentSource.data.id,
         });
       } catch (e) {

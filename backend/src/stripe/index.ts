@@ -1,4 +1,7 @@
 import Stripe from 'stripe';
+import { config } from 'dotenv';
+
+config();
 
 let stripe: Stripe;
 

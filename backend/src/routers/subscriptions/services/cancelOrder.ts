@@ -30,7 +30,7 @@ export const cancelOrder = async ({
       id: orderId,
     },
     data: {
-      status: OrderStatus.CANCELED,
+      status: OrderStatus.CANCELLED,
     },
   });
 };

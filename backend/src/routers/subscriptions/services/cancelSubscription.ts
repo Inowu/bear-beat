@@ -26,7 +26,9 @@ export const cancelSubscription = async ({
   });
 
   if (!download) {
-    log.error(`No active downloads for user ${user.id}`);
+    log.info(
+      `[CANCEL_SUB] No active subscription for user ${user.id}, no action taken to cancel subscription`,
+    );
 
     return;
   }
@@ -38,7 +40,9 @@ export const cancelSubscription = async ({
   });
 
   if (!quotaTallies) {
-    log.error(`No quota tallies found for user ${user.id}`);
+    log.info(
+      `[CANCEL_SUB] No quota tallies found for user ${user.id}, no action taken to cancel subscription`,
+    );
     return;
   }
 

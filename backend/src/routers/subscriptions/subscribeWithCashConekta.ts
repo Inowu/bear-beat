@@ -10,17 +10,15 @@ import { hasActiveSubscription } from './utils/hasActiveSub';
 
 export const subscribeWithCashConekta = shieldedProcedure
   .input(
-    z.object({
-      planId: z.number(),
-      currency: z.union([z.literal('MXN'), z.literal('USD')]),
-      paymentMethod: z.union([z.literal('Oxxo_cash'), z.literal('SPEI')]),
-    }),
+    z
+      .object({
+        planId: z.number(),
+        paymentMethod: z.union([z.literal('cash'), z.literal('spei')]),
+      })
+      .strict(),
   )
   .mutation(
-    async ({
-      input: { planId, currency, paymentMethod },
-      ctx: { prisma, session },
-    }) => {
+    async ({ input: { planId, paymentMethod }, ctx: { prisma, session } }) => {
       const userConektaId = await getConektaCustomer({
         prisma,
         user: session?.user,
@@ -72,7 +70,7 @@ export const subscribeWithCashConekta = shieldedProcedure
 
       try {
         const conektaOrder = await conektaOrders.createOrder({
-          currency,
+          currency: plan.moneda.toUpperCase(),
           customer_info: {
             customer_id: userConektaId,
           },
@@ -100,7 +98,7 @@ export const subscribeWithCashConekta = shieldedProcedure
           },
         });
 
-        return await prisma.orders.update({
+        await prisma.orders.update({
           where: {
             id: order.id,
           },
@@ -108,6 +106,8 @@ export const subscribeWithCashConekta = shieldedProcedure
             invoice_id: conektaOrder.data.id,
           },
         });
+
+        return conektaOrder.data.charges?.data?.[0].payment_method;
 
         // TODO: Do something with the references, show them to the user on checkout or
         // send them to email

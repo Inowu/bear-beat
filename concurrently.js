@@ -4,13 +4,13 @@ const path = require("path");
 const { result } = concurrently([
   {
     command: "npm run dev",
-    name: "API",
+    name: "BE",
     prefixColor: "red",
     cwd: path.resolve(__dirname, "backend"),
   },
   {
     command: "npm run start",
-    name: "Frontend",
+    name: "FE",
     prefixColor: "blue",
     cwd: path.resolve(__dirname, "frontend"),
   },

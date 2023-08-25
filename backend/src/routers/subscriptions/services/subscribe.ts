@@ -84,26 +84,36 @@ export const subscribe = async ({
           available: 500,
           date_end: addMonths(new Date(), 1).toISOString(),
           user_id: user.id,
+          ...(orderId ? { orderId } : {}),
         },
       }),
     ]);
   } else {
     log.info(`[SUBSCRIPTION] Renovating subscription for user ${user.id}`);
 
-    const existingTallies = await prisma.ftpquotatallies.findFirst({
-      where: {
-        name: user.username,
-      },
-    });
+    const [existingTallies, existingLimits] = await Promise.all([
+      prisma.ftpquotatallies.findFirst({
+        where: {
+          name: user.username,
+        },
+      }),
+      prisma.ftpQuotaLimits.findFirst({
+        where: {
+          name: user.username,
+        },
+      }),
+    ]);
 
     let talliesId = existingTallies?.id;
+    let limitsId = existingLimits?.id;
 
-    if (!existingTallies) {
-      const [tallies] = await prisma.$transaction(
+    if (!existingTallies && !existingLimits) {
+      const [limits, tallies] = await prisma.$transaction(
         insertFtpQuotas({ prisma, user, plan: dbPlan }),
       );
 
       talliesId = tallies.id;
+      limitsId = limits.id;
     }
 
     // Renovation
@@ -115,6 +125,21 @@ export const subscribe = async ({
         data: {
           name: user.username,
           bytes_out_used: 0,
+        },
+      }),
+      prisma.ftpQuotaLimits.update({
+        where: {
+          id: limitsId,
+        },
+        data: {
+          bytes_out_avail: gbToBytes(Number(dbPlan.gigas)),
+          bytes_xfer_avail: 0,
+          files_xfer_avail: 0,
+          files_out_avail: 0,
+          // A limit of 0 means unlimited
+          bytes_in_avail: 1,
+          files_in_avail: 1,
+          name: user.username,
         },
       }),
       prisma.ftpUser.update({
@@ -130,6 +155,7 @@ export const subscribe = async ({
           available: 500,
           date_end: addMonths(new Date(), 1).toISOString(),
           user_id: user.id,
+          ...(orderId ? { orderId } : {}),
         },
       }),
     ]);
@@ -159,7 +185,9 @@ const insertFtpQuotas = ({
   prisma.ftpQuotaLimits.create({
     data: {
       bytes_out_avail: gbToBytes(Number(plan.gigas)),
+      bytes_xfer_avail: 0,
       // A limit of 0 means unlimited
+      files_out_avail: 0,
       bytes_in_avail: 1,
       files_in_avail: 1,
       name: user.username,

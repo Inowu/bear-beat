@@ -1,12 +1,13 @@
 import { EventResponse } from 'conekta';
 import { Plans, Users } from '@prisma/client';
-import { shieldedProcedure } from '../../procedures/shielded.procedure';
-import { subscribe } from '../subscriptions/services/subscribe';
-import { prisma } from '../../db';
-import { log } from '../../server';
-import { cancelSubscription } from '../subscriptions/services/cancelSubscription';
-import { getPlanConektaKey } from '../../utils/getPlanKey';
-import { cancelOrder } from '../subscriptions/services/cancelOrder';
+import { shieldedProcedure } from '../../../procedures/shielded.procedure';
+import { subscribe } from '../../subscriptions/services/subscribe';
+import { prisma } from '../../../db';
+import { log } from '../../../server';
+import { cancelSubscription } from '../../subscriptions/services/cancelSubscription';
+import { getPlanKey } from '../../../utils/getPlanKey';
+import { cancelOrder } from '../../subscriptions/services/cancelOrder';
+import { ConektaEvents } from './events';
 
 export const conektaSubscriptionWebhook = shieldedProcedure.mutation(
   async ({ ctx: { req } }) => {
@@ -37,13 +38,13 @@ export const conektaSubscriptionWebhook = shieldedProcedure.mutation(
     const subscription = payload.data?.object;
 
     switch (payload.type) {
-      case 'subscription.paid':
+      case ConektaEvents.SUB_PAID:
         log.info(
           `[CONEKTA_WH] Creating subscription for user ${user.id}, subscription id: ${subscription.id}, payload: ${payloadStr}`,
         );
         await subscribe({ prisma, user, plan: plan! });
         break;
-      case 'subscription.updated':
+      case ConektaEvents.SUB_UPDATED:
         log.info(
           `[CONEKTA_WH] Updating subscription for user ${user.id}, subscription status: ${subscription.status}, subscription id: ${subscription.id}, payload: ${payloadStr}`,
         );
@@ -51,15 +52,15 @@ export const conektaSubscriptionWebhook = shieldedProcedure.mutation(
           await cancelSubscription({ prisma, user });
         }
         break;
-      case 'subscription.canceled':
+      case ConektaEvents.SUB_CANCELED:
         log.info(
           `[CONEKTA_WH] Canceling subscription for user ${user.id}, subscription id: ${subscription.id}, payload: ${payloadStr}`,
         );
         await cancelSubscription({ prisma, user });
         break;
-      case 'order.voided':
-      case 'order.declined':
-      case 'order.canceled': {
+      case ConektaEvents.ORDER_VOIDED:
+      case ConektaEvents.ORDER_DECLINED:
+      case ConektaEvents.ORDER_CANCELED: {
         const orderId = payload.data?.object.metadata.orderId;
 
         log.info(`[CONEKTA_WH] Canceling order ${orderId}`);
@@ -67,7 +68,7 @@ export const conektaSubscriptionWebhook = shieldedProcedure.mutation(
 
         break;
       }
-      case 'order.paid':
+      case ConektaEvents.ORDER_PAID:
         // Ignore with card for now
         if (
           payload.data?.object.charges.data[0].payment_method.object.startsWith(
@@ -101,16 +102,16 @@ export const getCustomerIdFromPayload = async (
   let user: Users | null | undefined = null;
 
   switch (payload.type) {
-    case 'subscription.paid':
-    case 'subscription.updated':
-    case 'subscription.canceled':
+    case ConektaEvents.SUB_PAID:
+    case ConektaEvents.SUB_UPDATED:
+    case ConektaEvents.SUB_CANCELED:
       user = await prisma.users.findFirst({
         where: {
           conekta_cusid: payload.data?.object.customer_id,
         },
       });
       break;
-    case 'order.paid':
+    case ConektaEvents.ORDER_PAID:
       user = await prisma.users.findFirst({
         where: {
           conekta_cusid: payload.data?.object.customer_info.customer_id,
@@ -130,12 +131,12 @@ const getPlanFromPayload = async (
   let plan: Plans | null | undefined = null;
 
   switch (payload.type) {
-    case 'subscription.paid':
-    case 'subscription.updated':
-    case 'subscription.canceled':
+    case ConektaEvents.SUB_PAID:
+    case ConektaEvents.SUB_UPDATED:
+    case ConektaEvents.SUB_CANCELED:
       plan = await prisma.plans.findFirst({
         where: {
-          [getPlanConektaKey()]: payload.data?.object.plan_id,
+          [getPlanKey()]: payload.data?.object.plan_id,
         },
       });
       break;
@@ -148,13 +149,13 @@ const getPlanFromPayload = async (
 
 const shouldHandleEvent = (payload: EventResponse): boolean => {
   switch (payload.type) {
-    case 'subscription.paid':
-    case 'subscription.updated':
-    case 'subscription.canceled':
-    case 'order.voided':
-    case 'order.declined':
-    case 'order.canceled':
-    case 'order.paid':
+    case ConektaEvents.SUB_PAID:
+    case ConektaEvents.SUB_UPDATED:
+    case ConektaEvents.SUB_CANCELED:
+    case ConektaEvents.ORDER_VOIDED:
+    case ConektaEvents.ORDER_DECLINED:
+    case ConektaEvents.ORDER_CANCELED:
+    case ConektaEvents.ORDER_PAID:
       return true;
     default:
       log.info(
