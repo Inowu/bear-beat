@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import z from 'zod';
 import { addDays } from 'date-fns';
 import { TRPCError } from '@trpc/server';
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
@@ -16,6 +16,42 @@ export const subscribeWithCashConekta = shieldedProcedure
         paymentMethod: z.union([z.literal('cash'), z.literal('spei')]),
       })
       .strict(),
+  )
+  .output(
+    z.union([
+      z.object({
+        object: z.literal('cash_payment'),
+        type: z.literal('oxxo'),
+        auth_code: z.number().optional(),
+        barcode_url: z.string(),
+        cashier_id: z.any(),
+        expires_at: z.number().optional(),
+        reference: z.string(),
+        service_name: z.literal('OxxoPay'),
+        store: z.any(),
+        store_name: z.literal('OXXO'),
+      }),
+      z.object({
+        type: z.literal('spei'),
+        bank: z.literal('STP'),
+        clabe: z.string(),
+        description: z.any().nullable(),
+        executed_at: z.number().nullable(),
+        expires_at: z.number().optional(),
+        issuing_account_bank: z.any().nullable(),
+        issuing_account_holder_name: z.any().nullable(),
+        issuing_account_number: z.any().nullable(),
+        issuing_account_tax_id: z.any().nullable(),
+        object: z.literal('bank_transfer_payment'),
+        payment_attempts: z.array(z.any()),
+        receiving_account_bank: z.literal('STP'),
+        receiving_account_holder_name: z.any().nullable(),
+        receiving_account_number: z.string(),
+        receiving_account_tax_id: z.any().nullable(),
+        reference_number: z.any().nullable(),
+        tracking_code: z.any().nullable(),
+      }),
+    ]),
   )
   .mutation(
     async ({ input: { planId, paymentMethod }, ctx: { prisma, session } }) => {
@@ -107,7 +143,7 @@ export const subscribeWithCashConekta = shieldedProcedure
           },
         });
 
-        return conektaOrder.data.charges?.data?.[0].payment_method;
+        return conektaOrder.data.charges?.data?.[0].payment_method as any;
 
         // TODO: Do something with the references, show them to the user on checkout or
         // send them to email
