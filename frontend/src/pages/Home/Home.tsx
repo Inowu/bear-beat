@@ -7,13 +7,45 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import PreviewModal from "../../components/PreviewModal/PreviewModal";
 import { useEffect, useState } from "react";
-import trpc from "api";
+import trpc from "../../api";
 
 function Home() {
   const [showPreviewModal, setShowPreviewModal] = useState<boolean>(false);
 
   const getData = async () =>  {
-    // const audios = trpc.
+    try{
+      const files = await trpc.ftp.ls.query({
+        path: '',
+      })
+      console.log(files);
+      getPath(files[0].name)
+    }
+    catch(error){
+      console.log(error);
+    }
+  }
+  const getPath = async (name: string) => {
+    try{
+      console.log(name)
+      const files = await trpc.ftp.ls.query({
+        path: name,
+      })
+      console.log(files);
+    }
+    catch(error){
+      console.log(error);
+    }
+  }
+  const downloadFile = async() => {
+    try{
+      const download:any = await trpc.ftp.download.query({
+        path: ''
+      })
+
+    }
+    catch(error){
+      console.log(error);
+    }
   }
   useEffect(() => {
     getData();

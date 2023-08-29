@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import trpc from "../api";
 
 interface UserContextI {
   currentUser: { name: string } | null;
@@ -36,13 +37,21 @@ const UserContextProvider = (props: any) => {
     localStorage.removeItem("token");
     setUserToken(null);
   }
-
+  async function startUser () {
+    try{
+      const user = await trpc.auth.me.query( );
+      // setCurrentUser(user);
+      // console.log(user);
+    }
+    catch(error){
+      console.log(error);
+    }
+  }
   useEffect(() => {
     const token = localStorage.getItem("token");
-    console.log(token);
-
     if (token !== null) {
       setUserToken(token);
+      startUser()
     }
 
     setLoading(false);

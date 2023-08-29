@@ -3,8 +3,11 @@ import Logo from "../../assets/images/osonuevo.png";
 import { Link } from "react-router-dom";
 import filezillaIcon from "../../assets/images/filezilla_icon.png";
 import SpaceAvailableCard from "../../components/SpaceAvailableCard/SpaceAvailableCard";
+import { useUserContext } from "../../contexts/UserContext";
 
 function MyAccount() {
+  const { currentUser } = useUserContext();
+  console.log(currentUser, 'hola');
   return (
     <div className="my-account-main-container">
       <div className="general">

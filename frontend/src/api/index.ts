@@ -10,7 +10,7 @@ const trpc = createTRPCProxyClient<AppRouter>({
       headers: () => {
         console.log(localStorage.getItem("token"));
         return {
-          authorization: localStorage.getItem("token") ?? "",
+          authorization: `Bearer ${localStorage.getItem("token") ?? ""}`,
         };
       },
     }),
