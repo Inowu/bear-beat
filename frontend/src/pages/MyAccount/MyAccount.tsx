@@ -7,26 +7,25 @@ import { useUserContext } from "../../contexts/UserContext";
 
 function MyAccount() {
   const { currentUser } = useUserContext();
-  console.log(currentUser, 'hola');
   return (
     <div className="my-account-main-container">
       <div className="general">
         <div className="user-profile-pic">
-          <img src={Logo} alt="profile pic" />
+          <img src={currentUser?.profileImg ? currentUser.profileImg : Logo} alt="profile pic" />
         </div>
         <h2>Información general</h2>
         <div className="user-info-container">
           <div className="c-row">
             <b>Username</b>
-            <p>fjcenteno</p>
+            <p>{currentUser?.username}</p>
           </div>
           <div className="c-row">
             <b>E-mail</b>
-            <p>fjcenteno99@gmail.com</p>
+            <p>{currentUser?.email}</p>
           </div>
           <div className="c-row">
             <b>Phone</b>
-            <p>+526311267476</p>
+            <p>{currentUser?.phone}</p>
           </div>
         </div>
         {true && <SpaceAvailableCard />}
