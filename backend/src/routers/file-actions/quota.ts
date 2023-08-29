@@ -22,10 +22,10 @@ export const quota = shieldedProcedure.query(
     });
 
     if (!quotaLimit || !quotaUsed) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'There is no quota registered for that user',
-      });
+      return {
+        used: 0,
+        available: 0,
+      };
     }
 
     return {
