@@ -1,5 +1,8 @@
 {
   "scripts": {
     "start": "NODE_PATH=$(npm root --quiet -g) node concurrently.js"
+  },
+  "dependencies": {
+    "yup": "^1.2.0"
   }
 }

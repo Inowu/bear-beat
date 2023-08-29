@@ -1,47 +1,71 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useUserContext } from "../../../contexts/UserContext";
 import trpc from "../../../api";
-import { useState } from "react";
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+import {  useState } from "react";
 
 function LoginForm() {
+  const [loader, setLoader] = useState<boolean>(false);
   const { handleLogin } = useUserContext();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const navigate = useNavigate();
-
-  const handlesubmit = async (e: any) => {
-    e.preventDefault();
-
-    try {
-      const response = await trpc.auth.login.query({
-        username,
-        password,
-      });
-
-      console.log(response);
-      handleLogin(response.token);
-      // navigate("/");
-    } catch (e) {
-      console.log(e);
-    }
+  const validationSchema = Yup.object().shape({
+    username: Yup.string()
+    .required('Username is required')
+    .min(5, 'Username must be at least 5 characters long'),
+    password: Yup.string().required('Password is required')
+    .min(6, 'Password must contain 6 characters atleast'),
+});
+  const initialValues = {
+    username: '',
+    password: '',
   };
+  const formik = useFormik({
+    initialValues: initialValues,
+    validationSchema: validationSchema,
+    onSubmit: async (values) => {
+        setLoader(true);
+        let body = {
+          username: values.username,
+          password: values.password,
+        }
+        try{
+          const login = await trpc.auth.login.query(body);
+          handleLogin(login.token);
+          navigate("/");
+          setLoader(false);
+        }
+        catch(error){
+          alert(error);
+          setLoader(false);
+        }
+    },
+  });
 
   return (
-    <form onSubmit={handlesubmit}>
+    <form onSubmit={formik.handleSubmit}>
       <h2>LOGIN</h2>
       <div className="c-row">
         <input
           placeholder="username"
           type="text"
-          onChange={(e) => setUsername(e.target.value)}
+          id="username" 
+          name="username" 
+          value={formik.values.username} 
+          onChange={formik.handleChange}
         />
+        {formik.errors.username && <div className="error-formik">{formik.errors.username}</div>}
       </div>
       <div className="c-row">
         <input
           placeholder="password"
           type="password"
-          onChange={(e) => setPassword(e.target.value)}
+          id="password" 
+          name="password" 
+          value={formik.values.password} 
+          onChange={formik.handleChange}
         />
+        {formik.errors.password && <div className="error-formik">{formik.errors.password}</div>}
       </div>
       <div className="c-row">
         <Link to={"recuperar"}>¿Olvidaste tu contraseña?</Link>

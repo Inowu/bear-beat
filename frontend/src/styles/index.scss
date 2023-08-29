@@ -75,3 +75,12 @@ button.primary-pill {
 .linear-bg {
   background: linear-gradient(11deg, #00e6c1, #08e1f7);
 }
+.error-formik{
+  color: red;
+  font-weight: 600;
+  position: absolute;
+  bottom: -20px;
+  font-size: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+}

@@ -14,16 +14,15 @@ export const createContext = async ({
   prisma: PrismaClient;
   session: null | { user: SessionUser | null };
 }> => {
-  const token = req.headers.authorization?.replace('Bearer ', '');
+  const token = req.headers.authorization?.split(' ')[1];
+  console.log(token);
   let user: SessionUser | null;
 
   try {
     user = token
-      ? (
-          jwt.verify(token, process.env.JWT_SECRET as string) as {
+      ? jwt.verify(token, process.env.JWT_SECRET as string) as {
             user: SessionUser;
-          }
-        ).user
+          } as any
       : null;
   } catch (e) {
     return { req, res, prisma, session: null };
