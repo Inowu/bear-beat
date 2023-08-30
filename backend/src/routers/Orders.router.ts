@@ -14,6 +14,19 @@ import { OrdersUpdateOneSchema } from '../schemas/updateOneOrders.schema';
 import { OrdersUpsertSchema } from '../schemas/upsertOneOrders.schema';
 
 export const ordersRouter = router({
+  ownOrders: shieldedProcedure
+    .input(OrdersFindManySchema)
+    .query(async ({ ctx: { prisma, session }, input }) => {
+      const orders = await prisma.orders.findMany({
+        ...input,
+        where: {
+          ...input.where,
+          user_id: session!.user!.id,
+        },
+      });
+
+      return orders;
+    }),
   aggregateOrders: shieldedProcedure
     .input(OrdersAggregateSchema)
     .query(async ({ ctx, input }) => {
