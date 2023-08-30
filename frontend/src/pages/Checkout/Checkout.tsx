@@ -2,17 +2,46 @@ import { Elements } from "@stripe/react-stripe-js";
 import CheckoutForm from "../../components/CheckoutForm/CheckoutForm";
 import "./Checkout.scss";
 import { loadStripe } from "@stripe/stripe-js";
-import { plans } from "../../utils/Constants";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useUserContext } from "../../contexts/UserContext";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
+import { useLocation } from 'react-router-dom';
+import { useEffect, useState } from "react";
+import trpc from "../../api";
+import { IPlans } from "interfaces/Plans";
 const stripePromise = loadStripe(
   "pk_test_51JMhq9BL251ZjHC5HzwrIcNGdUplucqxgeAnIK7TtizDJnoofNIUoqO6JwkGQRADoSiRn2h1wCz2rVXgSjGN15Zz00or2Dw7zC"
 );
 
 function Checkout() {
-  const plan = plans[0];
+  const [plan, setPlan] = useState({} as IPlans)
+  const location = useLocation();
+
+  const searchParams = new URLSearchParams(location.search);
+  const priceId = searchParams.get('priceId');
   const { currentUser } = useUserContext();
+  const getPlans = async (id: any) => {
+    const id_plan: any = +id;
+    let body = {
+      where: {
+        activated: 1,
+        id: id_plan,
+      }
+    }
+    try{
+      const plans: any = await trpc.plans.findManyPlans.query(body);
+      setPlan(plans[0]);
+    }
+    catch(error){
+      console.log(error);
+    }
+
+  }
+  useEffect(() => {
+    if(priceId){
+      getPlans(priceId);
+    }
+  }, [priceId])
   return (
     <div className="checkout-main-container">
       <div className="checkout-card">
@@ -41,7 +70,7 @@ function Checkout() {
           <div className="item-information-container">
             <hr />
             <b>
-              {plan.title} - Duración {plan.duration} días
+              {plan.name} - Duración {plan.duration} días
             </b>
             <b>{plan.description}</b>
             <b>Contenido en gigas disponible: {plan.duration}</b>
@@ -50,7 +79,7 @@ function Checkout() {
             </b>
             <div className="total">
               <b>Total de la orden</b>
-              <b>{plan.price}</b>
+              <b>${plan.price}.00 {plan.moneda}</b>
             </div>
           </div>
         </div>

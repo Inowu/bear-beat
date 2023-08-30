@@ -2,6 +2,7 @@ import "./CheckoutForm.scss";
 import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import trpc from "../../api";
 import { visitFunctionBody } from "typescript";
+import { useNavigate } from "react-router-dom";
 
 interface ICheckout {
   plan: number;
@@ -12,7 +13,7 @@ function CheckoutForm(props: ICheckout) {
   const stripe:any = useStripe();
   const elements:any = useElements();
   const random_number: number = Math.random();
-
+  const navigate = useNavigate();
   const suscribetext = async (token: any) => {
     let body_conekta = {
       cardToken: token.id,
@@ -22,14 +23,13 @@ function CheckoutForm(props: ICheckout) {
       // cardToken: token.id,
       planId: plan,
     }
-    console.log(body_stripe);
     try{
       // if(random_number > .5){
       //   const suscribeMethod = await trpc.subscriptions.subscribeWithCardConekta.mutate(body_conekta);
       //   console.log(suscribeMethod);
       // }else{
         const suscribeMethod = await trpc.subscriptions.subscribeWithStripe.query(body_stripe)
-        console.log(suscribeMethod);
+        navigate('/');
       // }
     }
     catch(error){

@@ -81,10 +81,10 @@ function Home() {
     }
   }
   const downloadFile = async (name: string) => {
-    console.log("/"+name);
+    console.log(pastFile.join('/') + "/" + name);
     try{
       const files = await trpc.ftp.download.query({
-        path:'/'+ name,
+        path: pastFile.join('/') + "/" + name,
       })
       console.log(files);
     }
