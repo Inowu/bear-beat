@@ -1,6 +1,6 @@
-import fs from 'fs';
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
+import { fileService } from '../../ftp';
 import { log } from '../../server';
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
 
@@ -14,7 +14,7 @@ export const download = shieldedProcedure
     const { user } = session!;
 
     const fullPath = `${process.env.SONGS_PATH}${path}`;
-    const fileExists = fs.existsSync(fullPath);
+    const fileExists = await fileService.exists(fullPath);
 
     if (!fileExists) {
       throw new TRPCError({
@@ -68,7 +68,7 @@ export const download = shieldedProcedure
       });
     }
 
-    const fileStat = fs.statSync(fullPath);
+    const fileStat = await fileService.stat(fullPath);
 
     const availableBytes =
       quotaLimit.bytes_out_avail - quotaUsed.bytes_out_used;
@@ -82,7 +82,7 @@ export const download = shieldedProcedure
       });
     }
 
-    const stream = fs.readFileSync(fullPath);
+    const stream = await fileService.get(fullPath);
 
     log.info(
       `[File Download] id: ${user?.id}, username: ${user?.username}, bytes: ${availableBytes}`,

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { sftp } from '../../ftp';
+import { fileService } from '../../ftp';
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
 
 export const ls = shieldedProcedure
@@ -11,14 +11,5 @@ export const ls = shieldedProcedure
   .query(async ({ input: { path } }) => {
     const sanitizedPath = path.replace('..', '');
 
-    return (
-      await sftp.list(
-        `${process.env.SONGS_PATH}/${sanitizedPath}`,
-        (file) => !file.name.startsWith('.'),
-      )
-    ).map((result) => ({
-      name: result.name,
-      type: result.type,
-      modified: result.modifyTime,
-    }));
+    return fileService.list(`${process.env.SONGS_PATH}/${sanitizedPath}`);
   });

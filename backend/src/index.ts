@@ -1,7 +1,7 @@
 import path from 'path';
 import { config } from 'dotenv';
 import { log, server } from './server';
-import { connectFTP } from './ftp';
+import { initializeFileService } from './ftp';
 
 config({
   path: path.resolve(__dirname, '../.env'),
@@ -14,7 +14,7 @@ async function main() {
       host: process.env.HOST,
     });
 
-    await connectFTP();
+    await initializeFileService();
   } catch (e) {
     log.error(e);
     process.exit(1);
