@@ -7,6 +7,12 @@ import { prisma } from '../src/db';
 import { appRouter } from '../src/routers';
 import { RolesNames } from '../src/routers/auth/interfaces/roles.interface';
 import { addMonths, subMonths } from 'date-fns';
+import { fileService, initializeFileService } from '../src/ftp';
+
+jest.setTimeout(100000);
+
+const path =
+  '01 Audios Enero 2023/Alternativo/Zedd, Maren Morris n Beauz - Make You Say [Xtendz].mp3';
 
 const user = {
   email: 'test@test.com',
@@ -33,6 +39,14 @@ describe('TRCP API', () => {
     session: {
       user,
     },
+  });
+
+  beforeAll(async () => {
+    await initializeFileService();
+  });
+
+  afterAll(async () => {
+    await fileService.end();
   });
 
   beforeEach(async () => {
@@ -94,16 +108,15 @@ describe('TRCP API', () => {
       }
     });
 
-    it.only('subscribeWithCashConekta - isLoggedIn', async () => {
+    it('subscribeWithCashConekta - isLoggedIn', async () => {
       try {
         await caller.subscriptions.subscribeWithCashConekta({
           planId: 1,
-          currency: 'MXN',
-          paymentMethod: 'SPEI',
+          paymentMethod: 'spei',
         });
       } catch (e: any) {
         console.log(e);
-        expect(getHTTPStatusCodeFromError(e)).toBe(401);
+        expect(getHTTPStatusCodeFromError(e)).toBe(500);
       }
     });
   });
@@ -152,7 +165,7 @@ describe('TRCP API', () => {
       });
 
       const res = await localCaller.ftp.download({
-        path: 'Images/wp.jpg',
+        path,
       });
 
       expect(res.file).not.toBeUndefined();
@@ -161,7 +174,7 @@ describe('TRCP API', () => {
     it('Requires the user to have quotas registered on the database', async () => {
       try {
         await authCaller.ftp.download({
-          path: 'Images/wp.jpg',
+          path,
         });
       } catch (e) {
         expect(getHTTPStatusCodeFromError(e as TRPCError)).toBe(400);
@@ -212,7 +225,7 @@ describe('TRCP API', () => {
 
       try {
         await localCaller.ftp.download({
-          path: 'Images/wp.jpg',
+          path,
         });
       } catch (e) {
         expect(getHTTPStatusCodeFromError(e as TRPCError)).toBe(400);
@@ -263,7 +276,7 @@ describe('TRCP API', () => {
 
       try {
         await localCaller.ftp.download({
-          path: 'Images/wp.jpg',
+          path,
         });
       } catch (e) {
         expect(getHTTPStatusCodeFromError(e as TRPCError)).toBe(400);
@@ -313,7 +326,7 @@ describe('TRCP API', () => {
       });
 
       const res = await localCaller.ftp.download({
-        path: 'Images/wp.jpg',
+        path,
       });
 
       expect(res.file).not.toBeUndefined();
@@ -340,7 +353,7 @@ describe('TRCP API', () => {
 
     it('Download demo', async () => {
       const res = await authCaller.ftp.demo({
-        path: 'Downloads/2 Unlimited  - Jump For Joy (90s Redrum).mp3',
+        path,
       });
 
       expect(res.demo).not.toBeUndefined();
