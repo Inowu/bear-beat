@@ -8,4 +8,7 @@ export interface IUser {
     role: string;
     username: string;
   }
-  
+  export interface IQuota{
+    available: number;
+    used: number;
+  }

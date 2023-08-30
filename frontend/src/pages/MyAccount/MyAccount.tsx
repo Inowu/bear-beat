@@ -4,9 +4,27 @@ import { Link } from "react-router-dom";
 import filezillaIcon from "../../assets/images/filezilla_icon.png";
 import SpaceAvailableCard from "../../components/SpaceAvailableCard/SpaceAvailableCard";
 import { useUserContext } from "../../contexts/UserContext";
+import { useEffect, useState } from "react";
+import trpc from "../../api";
+import { IQuota } from "interfaces/User";
 
 function MyAccount() {
   const { currentUser } = useUserContext();
+  const [quota, setQuota] = useState({} as IQuota)
+  const getQuota = async () => {
+    try{
+      const quota: any = await trpc.ftp.quota.query();
+      setQuota(quota);
+    }
+    catch(error){
+      console.log(error);
+    }
+  }
+
+  useEffect(() => {
+    getQuota();
+  }, [])
+  
   return (
     <div className="my-account-main-container">
       <div className="general">
@@ -28,7 +46,7 @@ function MyAccount() {
             <p>{currentUser?.phone}</p>
           </div>
         </div>
-        {true && <SpaceAvailableCard />}
+        {true && <SpaceAvailableCard quota={quota}/>}
       </div>
       <div className="purchase">
         <div className="actives-ftp-container">

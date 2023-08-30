@@ -1,16 +1,25 @@
+import { IQuota } from "interfaces/User";
 import "./SpaceAvailableCard.scss";
 
-function SpaceAvailableCard() {
+interface ISpaceAvailableCard {
+  quota: IQuota;
+}
+function SpaceAvailableCard(props: ISpaceAvailableCard) {
+  const { quota } = props;
+  const { used, available } = quota;
+  const styles = {
+    width: available === 0 ? "5%" : ((used/available*100) > 5 ? ((used/available)*100)+"%" : "5%"),
+  }
   return (
     <div className="space-available-card">
       <h2 className="title">
-        Usado: <span>0%</span>
+        Usado: <span>{available === 0 ? 0 : ((used/available)*100)}%</span>
       </h2>
       <h3>
-        <span>0GB</span> de 0GB
+        <span>{used}GB</span> de {available}GB
       </h3>
       <div className="progress-bar-container">
-        <div className="progress-bar"></div>
+        <div className="progress-bar" style={styles}/>
       </div>
     </div>
   );

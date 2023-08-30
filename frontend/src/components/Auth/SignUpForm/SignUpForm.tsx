@@ -46,7 +46,6 @@ function SignUpForm() {
           email: values.email,
           phone: values.phone,
         }
-        console.log(body);
         try{
           const register = await trpc.auth.register.mutate(body);
           handleLogin(register.token);

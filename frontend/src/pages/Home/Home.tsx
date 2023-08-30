@@ -81,16 +81,16 @@ function Home() {
     }
   }
   const downloadFile = async (name: string) => {
-    // console.log("/"+name);
-    // try{
-    //   const files = await trpc.ftp.download.query({
-    //     path:'/'+ name,
-    //   })
-    //   console.log(files);
-    // }
-    // catch(error){
-    //   console.log(error);
-    // }
+    console.log("/"+name);
+    try{
+      const files = await trpc.ftp.download.query({
+        path:'/'+ name,
+      })
+      console.log(files);
+    }
+    catch(error){
+      console.log(error);
+    }
   }
   useEffect(() => {
     getFiles();
