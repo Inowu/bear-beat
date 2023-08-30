@@ -15,14 +15,11 @@ export const createContext = async ({
   session: null | { user: SessionUser | null };
 }> => {
   const token = req.headers.authorization?.split(' ')[1];
-  console.log(token);
   let user: SessionUser | null;
 
   try {
     user = token
-      ? jwt.verify(token, process.env.JWT_SECRET as string) as {
-            user: SessionUser;
-          } as any
+      ? (jwt.verify(token, process.env.JWT_SECRET as string) as SessionUser)
       : null;
   } catch (e) {
     return { req, res, prisma, session: null };
