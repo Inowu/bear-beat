@@ -4,6 +4,7 @@ import "./Checkout.scss";
 import { loadStripe } from "@stripe/stripe-js";
 import { plans } from "../../utils/Constants";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useUserContext } from "../../contexts/UserContext";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
 const stripePromise = loadStripe(
   "pk_test_51JMhq9BL251ZjHC5HzwrIcNGdUplucqxgeAnIK7TtizDJnoofNIUoqO6JwkGQRADoSiRn2h1wCz2rVXgSjGN15Zz00or2Dw7zC"
@@ -11,7 +12,7 @@ const stripePromise = loadStripe(
 
 function Checkout() {
   const plan = plans[0];
-
+  const { currentUser } = useUserContext();
   return (
     <div className="checkout-main-container">
       <div className="checkout-card">
@@ -24,15 +25,15 @@ function Checkout() {
             </div>
             <div className="c-row">
               <b>Name: </b>
-              <p>fjcenteno</p>
+              <p>{currentUser?.username}</p>
             </div>
             <div className="c-row">
               <b>E-mail</b>
-              <p>kevin.woolfolk@inowu.dev</p>
+              <p>{currentUser?.email}</p>
             </div>
           </div>
           <Elements stripe={stripePromise}>
-            <CheckoutForm />
+            <CheckoutForm plan={plan.id}/>
           </Elements>
         </div>
         <div className="information-container">

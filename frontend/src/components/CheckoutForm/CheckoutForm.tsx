@@ -1,9 +1,51 @@
 import "./CheckoutForm.scss";
 import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import trpc from "../../api";
+import { visitFunctionBody } from "typescript";
 
-function CheckoutForm() {
-  const onSubmit = (e: any) => {
+interface ICheckout {
+  plan: number;
+}
+
+function CheckoutForm(props: ICheckout) {
+  const { plan } = props;
+  const stripe:any = useStripe();
+  const elements:any = useElements();
+  const random_number: number = Math.random();
+
+  const suscribetext = async (token: any) => {
+    let body_conekta = {
+      cardToken: token.id,
+      planId: plan,
+    }
+    let body_stripe = {
+      // cardToken: token.id,
+      planId: plan,
+    }
+    try{
+      // if(random_number > .5){
+      //   const suscribeMethod = await trpc.subscriptions.subscribeWithCardConekta.mutate(body_conekta);
+      //   console.log(suscribeMethod);
+      // }else{
+        const suscribeMethod = await trpc.subscriptions.subscribeWithStripe.query(body_stripe)
+        console.log(suscribeMethod);
+      // }
+    }
+    catch(error){
+      console.log(error)
+    }
+  }
+  const onSubmit = async(e: any) => {
     e.preventDefault();
+    const cardElement = elements.getElement(CardElement);
+    const { token, error } = await stripe.createToken(cardElement);
+    if(token){
+      suscribetext(token);
+    }
+    if(error){
+      console.log(error);
+    }
+
   };
   return (
     <form className="checkout-form" onSubmit={onSubmit}>

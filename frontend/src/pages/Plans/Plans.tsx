@@ -5,8 +5,8 @@ import "./Plans.scss";
 function Plans() {
   return (
     <div className="plans-main-container">
-      {plans.map((plan) => {
-        return <PlanCard plan={plan} />;
+      {plans.map((plan, index) => {
+        return <PlanCard plan={plan}  key={"plan_" + index}/>;
       })}
     </div>
   );
