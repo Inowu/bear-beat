@@ -11,24 +11,30 @@ import { useEffect, useState } from "react";
 import trpc from "../../api";
 import { IFiles } from "interfaces/Files";
 import { sortArrayByName } from "../../functions/functions";
+import { Spinner } from "../../components/Spinner/Spinner";
 
 function Home() {
   const [showPreviewModal, setShowPreviewModal] = useState<boolean>(false);
   const [files, setfiles] = useState<IFiles[]>([]);
   const [pastFile, setPastFile] = useState<string[]>([]);
+  const [loader, setLoader] = useState<boolean>(false);
   const getFiles = async () =>  {
+    setLoader(true);
     let body = {
       path: '',
     }
     try{
       const files = await trpc.ftp.ls.query(body);
       setfiles(files);
+      setLoader(false);
     }
     catch(error){
       console.log(error);
+      setLoader(false);
     }
   }
   const getPath = async (name: string) => {
+    setLoader(true);
     let tempFiles = pastFile;
     tempFiles.push(name);
     try{
@@ -37,12 +43,15 @@ function Home() {
       })
       setPastFile(tempFiles);
       setfiles(files);
+      setLoader(false);
     }
     catch(error){
       console.log(error);
+      setLoader(false);
     }
   }
   const goBack = async () => {
+    setLoader(true);
     let tempFiles = pastFile;
     tempFiles.pop();
     try{
@@ -51,24 +60,38 @@ function Home() {
       })
       setPastFile(tempFiles);
       setfiles(files);
+      setLoader(false);
+    }
+    catch(error){
+      console.log(error);
+      setLoader(false);
+    }
+  }
+  const playFile = async (name: string) => {
+    console.log(pastFile.join('/') + "/" + name);
+    try{
+      const files = await trpc.ftp.demo.query({
+        path: pastFile.join('/') + "/" + name,
+      })
+      setShowPreviewModal(true);
+      console.log(files);
     }
     catch(error){
       console.log(error);
     }
   }
-
-  // const downloadFile = async () => {
-  //   try{
-  //     const files = await trpc.ftp.ls.query({
-  //       path: tempFiles.join('/'),
-  //     })
-  //     setPastFile(tempFiles);
-  //     setfiles(files);
-  //   }
-  //   catch(error){
-  //     console.log(error);
-  //   }
-  // }
+  const downloadFile = async (name: string) => {
+    // console.log("/"+name);
+    // try{
+    //   const files = await trpc.ftp.download.query({
+    //     path:'/'+ name,
+    //   })
+    //   console.log(files);
+    // }
+    // catch(error){
+    //   console.log(error);
+    // }
+  }
   useEffect(() => {
     getFiles();
   }, []);
@@ -98,7 +121,7 @@ function Home() {
           <div className="modified-column">Modificado</div>
         </div>
         <div className="folders-cards-container">
-          {
+          { !loader ?
             sortArrayByName(files).map((file: IFiles, index: number)=>{
               return (
                 <div key={"files " + index}>
@@ -125,17 +148,18 @@ function Home() {
                     <div className="folder-card video-card">
                     <FontAwesomeIcon
                       icon={faPlay}
-                      onClick={() => setShowPreviewModal(true)}
+                      onClick={() => playFile(file.name)}
                     />
                     <div className="name-container">
                       <h3>{file.name}</h3>
                     </div>
-                    <FontAwesomeIcon icon={faDownload} />
+                    <FontAwesomeIcon icon={faDownload}  onClick={()=> downloadFile(file.name)}/>
                   </div> 
                   }
                 </div>
               )
             })
+            : <Spinner size={4} width= {.4} color="#2c2c2c"/>
           }
         </div>
       </div>
