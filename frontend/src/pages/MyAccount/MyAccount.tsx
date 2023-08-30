@@ -6,23 +6,38 @@ import SpaceAvailableCard from "../../components/SpaceAvailableCard/SpaceAvailab
 import { useUserContext } from "../../contexts/UserContext";
 import { useEffect, useState } from "react";
 import trpc from "../../api";
-import { IQuota } from "interfaces/User";
+import { IOrders, IQuota } from "interfaces/User";
 
 function MyAccount() {
   const { currentUser } = useUserContext();
   const [quota, setQuota] = useState({} as IQuota)
+  const [orders, setOrders] = useState<IOrders[]>([]);
+  console.log(currentUser);
   const getQuota = async () => {
     try{
       const quota: any = await trpc.ftp.quota.query();
+      console.log(quota);
       setQuota(quota);
     }
     catch(error){
       console.log(error);
     }
   }
+  const getOrders = async () => {
+    let body = {
 
+    }
+    try{
+      const orders:any = await trpc.orders.ownOrders.query(body);
+      setOrders(orders);
+    }
+    catch(error){
+      console.log(error);
+    }
+  }
   useEffect(() => {
     getQuota();
+    getOrders();
   }, [])
   
   return (
@@ -64,7 +79,9 @@ function MyAccount() {
                 </tr>
               </thead>
               <tbody>
-                <tr>
+                {
+                  currentUser?.ftpAccount ?
+                  <tr>
                   <td>51.222.40.65</td>
                   <td>kevinwoolfolk</td>
                   <td>123</td>
@@ -73,7 +90,10 @@ function MyAccount() {
                   <td>
                     <img src={filezillaIcon} alt="filezilla" />
                   </td>
-                </tr>
+                </tr>:
+                <tr/>
+                }
+
               </tbody>
             </table>
           ) : (
@@ -97,19 +117,16 @@ function MyAccount() {
               </tr>
             </thead>
             <tbody>
-              {false ? (
-                <>
-                  <tr>
-                    <td>Mark</td>
-                    <td>Otto</td>
-                    <td>@mdo</td>
-                  </tr>
-                  <tr>
-                    <td>Jacob</td>
-                    <td>Thornton</td>
-                    <td>@fat</td>
-                  </tr>
-                </>
+              {orders.length > 0 ? (
+                orders.map((order: IOrders, index: number)=>{
+                  return (
+                    <tr key={"order_" + index}>
+                      <td>{order.date_order.toDateString()}</td>
+                      <td>{order.id}</td>
+                      <td>${order.total_price}.00</td>
+                    </tr>
+                  )
+                })
               ) : (
                 <tr>
                   <td className="pt-4" colSpan={3}>

@@ -68,10 +68,10 @@ function Home() {
     }
   }
   const playFile = async (name: string) => {
-    console.log(pastFile.join('/') + "/" + name);
+    console.log("/" +pastFile.join('/') + "/" + name);
     try{
       const files = await trpc.ftp.demo.query({
-        path: pastFile.join('/') + "/" + name,
+        path: "/" +pastFile.join('/') + "/" + name,
       })
       setShowPreviewModal(true);
       console.log(files);
@@ -81,10 +81,10 @@ function Home() {
     }
   }
   const downloadFile = async (name: string) => {
-    console.log(pastFile.join('/') + "/" + name);
+    console.log("/"+pastFile.join('/') + "/" + name);
     try{
       const files = await trpc.ftp.download.query({
-        path: pastFile.join('/') + "/" + name,
+        path:"/"+ pastFile.join('/') + "/" + name,
       })
       console.log(files);
     }

@@ -48,10 +48,10 @@ function Checkout() {
         <div className="payment-container">
           <h2>Billing information test</h2>
           <div className="order-info-container">
-            <div className="c-row">
+            {/* <div className="c-row">
               <b>Order ID:</b>
               <p>7608</p> 
-            </div>
+            </div> */}
             <div className="c-row">
               <b>Name: </b>
               <p>{currentUser?.username}</p>
