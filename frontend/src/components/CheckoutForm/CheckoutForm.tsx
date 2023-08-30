@@ -22,6 +22,7 @@ function CheckoutForm(props: ICheckout) {
       // cardToken: token.id,
       planId: plan,
     }
+    console.log(body_stripe);
     try{
       // if(random_number > .5){
       //   const suscribeMethod = await trpc.subscriptions.subscribeWithCardConekta.mutate(body_conekta);

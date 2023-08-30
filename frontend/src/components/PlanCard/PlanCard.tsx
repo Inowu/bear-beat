@@ -15,7 +15,7 @@ function PlanCard(props: PlanCardPropsI) {
   const handleCheckout = async (planId: number) => {
     navigate(`/comprar?priceId=${planId}`);
   };
-
+  console.log(plan);
   return (
     <div className="plan-card-main-card">
       <div className="c-row">
