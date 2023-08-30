@@ -1,21 +1,18 @@
-import { log } from '../server';
 import { IFileService } from './interfaces/fileService.interface';
 import { LocalFileService } from './localFileService';
 import { SFTPFileService } from './sftpService';
+import { log } from '../server';
 
 export class FileService implements IFileService {
   private fileService: IFileService;
 
-  constructor(
-    private readonly type: 'local' | 'ftp',
-    private readonly logger = log,
-  ) {
+  constructor(private readonly type: 'local' | 'ftp') {
     this.fileService =
       type === 'local' ? new LocalFileService() : new SFTPFileService();
   }
 
   init(): Promise<any> {
-    this.logger.info(`Initializing ${this.type} file service`);
+    log.info(`Initializing ${this.type} file service`);
     return this.fileService.init();
   }
 
