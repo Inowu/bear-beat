@@ -62,7 +62,7 @@ export const subscribeWithCashConekta = shieldedProcedure
 
       const user = session!.user!;
 
-      await hasActiveSubscription(user, prisma);
+      await hasActiveSubscription(user, userConektaId, prisma, 'cash');
 
       const plan = await prisma.plans.findFirstOrThrow({
         where: {

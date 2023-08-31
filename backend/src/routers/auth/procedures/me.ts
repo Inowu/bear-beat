@@ -16,8 +16,9 @@ export const me = shieldedProcedure.query(
 
     return {
       ...session?.user,
-      hasActiveSubscription:
-        compareAsc(new Date(ftpAccount!.expiration!), new Date()) >= 0,
+      hasActiveSubscription: ftpAccount
+        ? compareAsc(new Date(ftpAccount!.expiration!), new Date()) >= 0
+        : null,
       ftpAccount: {
         ...ftpAccount,
         host: process.env.FTP_HOST,
