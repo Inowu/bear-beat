@@ -1,3 +1,4 @@
+import { compareAsc } from 'date-fns';
 import { shieldedProcedure } from '../../../procedures/shielded.procedure';
 
 /**
@@ -15,7 +16,13 @@ export const me = shieldedProcedure.query(
 
     return {
       ...session?.user,
-      ftpAccount,
+      hasActiveSubscription:
+        compareAsc(new Date(ftpAccount!.expiration!), new Date()) >= 0,
+      ftpAccount: {
+        ...ftpAccount,
+        host: process.env.FTP_HOST,
+        port: process.env.FTP_PORT,
+      },
     };
   },
 );
