@@ -18,9 +18,9 @@ export const subscribeWithStripe = shieldedProcedure
   .query(async ({ input: { planId, coupon }, ctx: { prisma, session } }) => {
     const user = session!.user!;
 
-    await hasActiveSubscription(user, prisma);
-
     const stripeCustomer = await getStripeCustomer(prisma, user);
+
+    await hasActiveSubscription(user, stripeCustomer, prisma);
 
     const plan = await prisma.plans.findFirst({
       where: {

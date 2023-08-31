@@ -1,5 +1,5 @@
 import Client from 'ssh2-sftp-client';
-import { IFileService, IFileStat } from './interfaces/fileService.interface';
+import { IFileService } from './interfaces/fileService.interface';
 
 export class SFTPFileService implements IFileService {
   private sftpClient: Client;
@@ -11,7 +11,7 @@ export class SFTPFileService implements IFileService {
   init(): Promise<any> {
     return this.sftpClient.connect({
       host: process.env.FTP_HOST,
-      port: Number(process.env.FTP_PORT),
+      port: Number(process.env.SFTP_PORT),
       username: process.env.FTP_USERNAME,
       password: process.env.FTP_PASSWORD,
     });

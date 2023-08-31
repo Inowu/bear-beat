@@ -26,12 +26,12 @@ export const subscribeWithCardConekta = shieldedProcedure
     }) => {
       const user = session!.user!;
 
-      await hasActiveSubscription(user, prisma);
-
       const userConektaId = await getConektaCustomer({
         prisma,
         user: session?.user,
       });
+
+      await hasActiveSubscription(user, userConektaId, prisma, 'conekta');
 
       const plan = await prisma.plans.findFirst({
         where: {
