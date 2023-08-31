@@ -140,6 +140,7 @@ export const getCustomerIdFromPayload = async (
   let user: Users | null | undefined = null;
 
   switch (payload.type) {
+    case StripeEvents.SUBSCRIPTION_CREATED:
     case StripeEvents.SUBSCRIPTION_UPDATED:
     case StripeEvents.SUBSCRIPTION_DELETED:
       user = await prisma.users.findFirst({
@@ -162,6 +163,7 @@ const getPlanFromPayload = async (
   let plan: Plans | null | undefined = null;
 
   switch (payload.type) {
+    case StripeEvents.SUBSCRIPTION_CREATED:
     case StripeEvents.SUBSCRIPTION_UPDATED:
     case StripeEvents.SUBSCRIPTION_DELETED:
       plan = await prisma.plans.findFirst({
@@ -179,6 +181,7 @@ const getPlanFromPayload = async (
 
 const shouldHandleEvent = (payload: Stripe.Event): boolean => {
   switch (payload.type) {
+    case StripeEvents.SUBSCRIPTION_CREATED:
     case StripeEvents.SUBSCRIPTION_UPDATED:
     case StripeEvents.SUBSCRIPTION_DELETED:
       return true;
