@@ -26,7 +26,9 @@ function CheckoutForm(props: ICheckout) {
     let body_stripe = {
       // cardToken: token.id,
       planId: plan,
+      coupon: coupon,
     }
+    console.log(body_stripe);
     setLoader(true);
     try{
       // if(random_number > .5){
@@ -39,6 +41,8 @@ function CheckoutForm(props: ICheckout) {
       // }
     }
     catch(error){
+      setLoader(false);
+      alert(error);
       console.log(error)
     }
   }
@@ -58,9 +62,9 @@ function CheckoutForm(props: ICheckout) {
     <form className="checkout-form" onSubmit={onSubmit}>
       <div className="c-row">
         <h4 className="mb-2">Have you a discount code?</h4>
-        <input type="text" placeholder="Example CODE3232" />
+        <input type="text" placeholder="Example CODE3232" onChange={(e)=>setCoupon(e.target.value)} />
         <h4 className="mt-2">
-          Discount only apply on first mont. <span>Apply</span>
+          Discount only apply on first month. <span>Apply</span>
         </h4>
       </div>
       <div className="c-row">
