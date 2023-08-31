@@ -23,5 +23,14 @@ export const getStripeCustomer = async (
     },
   });
 
+  await prisma.users.update({
+    where: {
+      id: user.id,
+    },
+    data: {
+      stripe_cusid: newCustomer.id,
+    },
+  });
+
   return newCustomer.id;
 };
