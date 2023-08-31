@@ -18,6 +18,9 @@ function Home() {
   const [files, setfiles] = useState<IFiles[]>([]);
   const [pastFile, setPastFile] = useState<string[]>([]);
   const [loader, setLoader] = useState<boolean>(false);
+  const [loadFile, setLoadFile] = useState<boolean>(false);
+  const [fileToShow, setFileToShow] = useState<boolean>(false);
+  const [index, setIndex] = useState<number>(-1);
   const getFiles = async () =>  {
     setLoader(true);
     let body = {
@@ -67,12 +70,16 @@ function Home() {
       setLoader(false);
     }
   }
-  const playFile = async (name: string) => {
+  const playFile = async (name: string, index: number) => {
     console.log("/" +pastFile.join('/') + "/" + name);
+    setLoadFile(true);
+    setIndex(index);
     try{
       const files = await trpc.ftp.demo.query({
         path: "/" +pastFile.join('/') + "/" + name,
       })
+      setIndex(-1);
+      setLoadFile(false);
       setShowPreviewModal(true);
       console.log(files);
     }
@@ -122,9 +129,9 @@ function Home() {
         </div>
         <div className="folders-cards-container">
           { !loader ?
-            sortArrayByName(files).map((file: IFiles, index: number)=>{
+            sortArrayByName(files).map((file: IFiles, idx: number)=>{
               return (
-                <div key={"files " + index}>
+                <div key={"files " + idx}>
                   {
                     file.type === "d" &&
                     <div className="folder-card" onClick={()=> getPath(file.name)}>
@@ -146,10 +153,15 @@ function Home() {
                   </div> }
                   { file.type === "-" &&
                     <div className="folder-card video-card">
-                    <FontAwesomeIcon
-                      icon={faPlay}
-                      onClick={() => playFile(file.name)}
-                    />
+                      {
+                        (loadFile && index === idx) ?
+                        <Spinner size={2} width={.2} color="black"/> :
+                        <FontAwesomeIcon
+                        icon={faPlay}
+                        onClick={() => playFile(file.name, idx)}
+                      />
+                      }
+
                     <div className="name-container">
                       <h3>{file.name}</h3>
                     </div>
