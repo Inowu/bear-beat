@@ -12,7 +12,6 @@ function MyAccount() {
   const { currentUser } = useUserContext();
   const [quota, setQuota] = useState({} as IQuota)
   const [orders, setOrders] = useState<IOrders[]>([]);
-  console.log(currentUser);
   const getQuota = async () => {
     try{
       const quota: any = await trpc.ftp.quota.query();
@@ -83,10 +82,10 @@ function MyAccount() {
                   currentUser?.ftpAccount ?
                   <tr>
                   <td>51.222.40.65</td>
-                  <td>kevinwoolfolk</td>
-                  <td>123</td>
+                  <td>{currentUser?.ftpAccount.userid}</td>
+                  <td>{currentUser?.ftpAccount.passwd}</td>
                   <td>21</td>
-                  <td>20 Jul, 2023</td>
+                  <td>{currentUser?.ftpAccount.expiration.toDateString()}</td>
                   <td>
                     <img src={filezillaIcon} alt="filezilla" />
                   </td>

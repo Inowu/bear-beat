@@ -7,11 +7,16 @@ export interface IUser {
     profileImg: string | null;
     role: string;
     username: string;
-    ftpAccount: null;
+    ftpAccount: null | IFtpAccount;
+  }
+  interface IFtpAccount {
+    expiration: Date;
+    passwd: string;
+    userid: string;
   }
   export interface IQuota{
-    available: number;
-    used: number;
+    available: bigint;
+    used: bigint;
   }
   export interface IOrders{
     cupon_id: null;

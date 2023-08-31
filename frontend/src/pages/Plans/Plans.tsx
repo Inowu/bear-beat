@@ -3,8 +3,10 @@ import PlanCard from "../../components/PlanCard/PlanCard";
 import "./Plans.scss";
 import trpc from "../../api";
 import { IPlans } from "../../interfaces/Plans";
+import { useUserContext } from "../../contexts/UserContext";
 
 function Plans() {
+const { currentUser } = useUserContext();
 const [plans, setPlans] = useState<IPlans[]>([]);
   const getPlans = async () => {
     let body = {

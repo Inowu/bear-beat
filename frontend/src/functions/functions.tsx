@@ -16,7 +16,18 @@ const blob = new Blob([new Uint8Array(binaryMp3.length).map((_, i) => binaryMp3.
 const mp3Url = URL.createObjectURL(blob);
 
 // Create an HTML audio element and set its src attribute
-const audioElement = new Audio(mp3Url);
-    console.log(audioElement)
-return audioElement;
+// const audioElement = new Audio(mp3Url);
+    console.log(mp3Url);
+return mp3Url;
+}
+
+export function transformBiteToGb (bite: bigint){
+    let gb: number = +bite?.toString()/1073741824;
+    return Math.round(gb);
+}
+export function getCompleted (used:bigint, available: bigint){
+    let ava = +available?.toString()  === 0 ? 1 : +available?.toString();
+    let use = +used?.toString();
+    let percentage = (use/ava) * 100;
+    return Math.round(percentage)
 }
