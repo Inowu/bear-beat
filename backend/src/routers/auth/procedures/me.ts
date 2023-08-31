@@ -19,11 +19,13 @@ export const me = shieldedProcedure.query(
       hasActiveSubscription: ftpAccount
         ? compareAsc(new Date(ftpAccount!.expiration!), new Date()) >= 0
         : null,
-      ftpAccount: {
-        ...ftpAccount,
-        host: process.env.FTP_HOST,
-        port: process.env.FTP_PORT,
-      },
+      ftpAccount: ftpAccount
+        ? {
+            ...ftpAccount,
+            host: process.env.FTP_HOST,
+            port: process.env.FTP_PORT,
+          }
+        : null,
     };
   },
 );
