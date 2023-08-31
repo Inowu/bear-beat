@@ -8,6 +8,7 @@ export interface IUser {
     role: string;
     username: string;
     ftpAccount: null | IFtpAccount;
+    hasActiveSubscription: boolean;
   }
   interface IFtpAccount {
     expiration: Date;

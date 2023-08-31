@@ -30,11 +30,14 @@ function AsideNavbar(props: AsideNavbarPropsI) {
               <FontAwesomeIcon icon={faFolder} /> Todos los archivos
             </li>
           </Link>
-          <Link to={"/planes"}>
+          {
+            !currentUser?.hasActiveSubscription &&
+            <Link to={"/planes"}>
             <li>
               <FontAwesomeIcon icon={faCartPlus} /> Get plan
             </li>
           </Link>
+          }
           <Link to={"/micuenta"}>
             <li>
               <FontAwesomeIcon icon={faUserCircle} /> Mi cuenta
