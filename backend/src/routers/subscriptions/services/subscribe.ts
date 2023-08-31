@@ -85,7 +85,7 @@ export const subscribe = async ({
             available: 500,
             date_end: addMonths(new Date(), 1).toISOString(),
             user_id: user.id,
-            ...(orderId ? { orderId } : {}),
+            ...(orderId ? { order_id: orderId } : {}),
           },
         }),
       ]);
@@ -160,7 +160,7 @@ export const subscribe = async ({
             available: 500,
             date_end: addMonths(new Date(), 1).toISOString(),
             user_id: user.id,
-            ...(orderId ? { orderId } : {}),
+            ...(orderId ? { order_id: orderId } : {}),
           },
         }),
       ]);
