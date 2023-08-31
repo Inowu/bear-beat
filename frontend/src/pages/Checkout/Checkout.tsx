@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 import trpc from "../../api";
 import { IPlans } from "interfaces/Plans";
 const stripePromise = loadStripe(
-  "pk_test_51JMhq9BL251ZjHC5HzwrIcNGdUplucqxgeAnIK7TtizDJnoofNIUoqO6JwkGQRADoSiRn2h1wCz2rVXgSjGN15Zz00or2Dw7zC"
+  "pk_test_51HxCA5INxJoHjyCFsorAEo5Wj5XL7qXHrgoxsK2HYp0G37925ct9h4PnrI62CUBatbeiqnZPGJck7uL52jHXDWfc00n1vfxlyj"
 );
 
 function Checkout() {

@@ -3,3 +3,7 @@ export function sortArrayByName(array: any){
     newArray = newArray.sort((a:any, b:any) => {return b.type.localeCompare(a.type);});
     return newArray;
 }
+export function transformBase64ToMp3 (base64: string) {
+
+    return base64;
+}

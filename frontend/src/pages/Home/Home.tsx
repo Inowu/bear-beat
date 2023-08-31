@@ -10,7 +10,7 @@ import PreviewModal from "../../components/PreviewModal/PreviewModal";
 import { useEffect, useState } from "react";
 import trpc from "../../api";
 import { IFiles } from "interfaces/Files";
-import { sortArrayByName } from "../../functions/functions";
+import { sortArrayByName, transformBase64ToMp3 } from "../../functions/functions";
 import { Spinner } from "../../components/Spinner/Spinner";
 
 function Home() {
@@ -78,10 +78,11 @@ function Home() {
       const files = await trpc.ftp.demo.query({
         path: "/" +pastFile.join('/') + "/" + name,
       })
+      transformBase64ToMp3(files.demo)
       setIndex(-1);
       setLoadFile(false);
       setShowPreviewModal(true);
-      console.log(files);
+  
     }
     catch(error){
       console.log(error);

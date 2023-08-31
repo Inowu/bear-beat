@@ -14,15 +14,12 @@ function CheckoutForm(props: ICheckout) {
   const [loader, setLoader] = useState<boolean>(false);
   const [coupon, setCoupon] = useState<string>('');
   const { plan } = props;
-  const stripe:any = useStripe();
-  const elements:any = useElements();
+  const stripe: any = useStripe();
+  const elements = useElements();
   const random_number: number = Math.random();
   const navigate = useNavigate();
-  const suscribetext = async (token: any) => {
-    let body_conekta = {
-      cardToken: token.id,
-      planId: plan,
-    }
+
+  const suscribetext = async () => {
     let body_stripe = {
       // cardToken: token.id,
       planId: plan,
@@ -31,14 +28,21 @@ function CheckoutForm(props: ICheckout) {
     console.log(body_stripe);
     setLoader(true);
     try{
-      // if(random_number > .5){
-      //   const suscribeMethod = await trpc.subscriptions.subscribeWithCardConekta.mutate(body_conekta);
-      //   console.log(suscribeMethod);
-      // }else{
         const suscribeMethod = await trpc.subscriptions.subscribeWithStripe.query(body_stripe)
-        setLoader(false);
-        navigate('/');
-      // }
+        if (elements && stripe) {
+          const result = await stripe.confirmCardPayment(suscribeMethod.clientSecret, {
+            payment_method: {
+              card: elements.getElement("card")!,
+            },
+          });
+          console.log(result);
+          if(result.error){
+            console.log(result.error.message);
+          }else{
+            setLoader(false);
+            navigate('/');
+          }
+        }
     }
     catch(error){
       setLoader(false);
@@ -48,16 +52,9 @@ function CheckoutForm(props: ICheckout) {
   }
   const onSubmit = async(e: any) => {
     e.preventDefault();
-    const cardElement = elements.getElement(CardElement);
-    const { token, error } = await stripe.createToken(cardElement);
-    if(token){
-      suscribetext(token);
-    }
-    if(error){
-      console.log(error);
-    }
-
+    suscribetext();
   };
+
   return (
     <form className="checkout-form" onSubmit={onSubmit}>
       <div className="c-row">
