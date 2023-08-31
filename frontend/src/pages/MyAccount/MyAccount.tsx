@@ -15,7 +15,6 @@ function MyAccount() {
   const getQuota = async () => {
     try{
       const quota: any = await trpc.ftp.quota.query();
-      console.log(quota);
       setQuota(quota);
     }
     catch(error){

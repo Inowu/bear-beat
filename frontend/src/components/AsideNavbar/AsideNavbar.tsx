@@ -1,6 +1,7 @@
 import "./AsideNavbar.scss";
 import Logo from "../../assets/images/osonuevo.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useUserContext } from "../../contexts/UserContext";
 import {
   faUserCircle,
   faFolder,
@@ -15,7 +16,9 @@ interface AsideNavbarPropsI {
 }
 
 function AsideNavbar(props: AsideNavbarPropsI) {
+  const { currentUser } = useUserContext();
   const { show, onHide } = props;
+  console.log(currentUser);
   return (
     <aside className={show ? "open" : ""}>
       <img src={Logo} alt="bear beat" />
