@@ -3,24 +3,26 @@ export function sortArrayByName(array: any){
     newArray = newArray.sort((a:any, b:any) => {return b.type.localeCompare(a.type);});
     return newArray;
 }
-export function transformBase64ToMp3 (base64: string) {
-// Decode the base64 string into binary data
-const binaryMp3 = atob(base64);
+export function convertBase64ToMP3(file: any) {
+    const binaryData = atob(file);
 
-// Create a Blob from the binary data
-const blob = new Blob([new Uint8Array(binaryMp3.length).map((_, i) => binaryMp3.charCodeAt(i))], {
-  type: 'audio/mpeg'
-});
-
-// Generate a temporary URL for the Blob
-const mp3Url = URL.createObjectURL(blob);
-
-// Create an HTML audio element and set its src attribute
-// const audioElement = new Audio(mp3Url);
-    console.log(mp3Url);
-return mp3Url;
-}
-
+    const byteArray = new Uint8Array(binaryData.length);
+    for (let i = 0; i < binaryData.length; i++) {
+      byteArray[i] = binaryData.charCodeAt(i);
+    }
+    const mp3Blob = new Blob([byteArray], { type: 'audio/mp3' });
+    const url = URL.createObjectURL(mp3Blob);
+    return url
+  };
+  export function downloadMP3 (file: any, name: string){
+    // Create a temporary anchor element
+    const a = document.createElement('a');
+    a.href = convertBase64ToMP3(file);
+    a.download = name +'.mp3';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
 export function transformBiteToGb (bite: bigint){
     let gb: number = +bite?.toString()/1073741824;
     return Math.round(gb);

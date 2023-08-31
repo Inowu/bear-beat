@@ -10,7 +10,7 @@ import PreviewModal from "../../components/PreviewModal/PreviewModal";
 import { useEffect, useState } from "react";
 import trpc from "../../api";
 import { IFiles } from "interfaces/Files";
-import { sortArrayByName, transformBase64ToMp3 } from "../../functions/functions";
+import { downloadMP3, sortArrayByName } from "../../functions/functions";
 import { Spinner } from "../../components/Spinner/Spinner";
 
 function Home() {
@@ -19,7 +19,8 @@ function Home() {
   const [pastFile, setPastFile] = useState<string[]>([]);
   const [loader, setLoader] = useState<boolean>(false);
   const [loadFile, setLoadFile] = useState<boolean>(false);
-  const [fileToShow, setFileToShow] = useState<boolean>(false);
+  const [loadDownload, setLoadDownload] = useState<boolean>(false);
+  const [fileToShow, setFileToShow] = useState<any>(null);
   const [index, setIndex] = useState<number>(-1);
   const getFiles = async () =>  {
     setLoader(true);
@@ -71,30 +72,31 @@ function Home() {
     }
   }
   const playFile = async (name: string, index: number) => {
-    console.log("/" +pastFile.join('/') + "/" + name);
     setLoadFile(true);
     setIndex(index);
     try{
       const files = await trpc.ftp.demo.query({
         path: "/" +pastFile.join('/') + "/" + name,
       })
-      transformBase64ToMp3(files.demo)
+      setFileToShow(files.demo)
       setIndex(-1);
       setLoadFile(false);
       setShowPreviewModal(true);
-  
     }
     catch(error){
       console.log(error);
     }
   }
-  const downloadFile = async (name: string) => {
-    console.log("/"+pastFile.join('/') + "/" + name);
+  const downloadFile = async (name: string, index: number) => {
+    setLoadDownload(true);
+    setIndex(index);
     try{
       const files = await trpc.ftp.download.query({
         path:"/"+ pastFile.join('/') + "/" + name,
       })
-      console.log(files);
+      downloadMP3(files.file, name);
+      setLoadDownload(false);
+      setIndex(-1);
     }
     catch(error){
       console.log(error);
@@ -108,6 +110,7 @@ function Home() {
     <div className="home-main-container">
       <PreviewModal
         show={showPreviewModal}
+        file={fileToShow}
         onHide={() => setShowPreviewModal(!showPreviewModal)}
       />
       <h2>
@@ -166,7 +169,12 @@ function Home() {
                     <div className="name-container">
                       <h3>{file.name}</h3>
                     </div>
-                    <FontAwesomeIcon icon={faDownload}  onClick={()=> downloadFile(file.name)}/>
+                    {
+                      (loadDownload && index === idx) ?
+                      <Spinner size={2} width={.2} color="black"/> :
+                      <FontAwesomeIcon icon={faDownload}  onClick={()=> downloadFile(file.name, idx)}/>
+                    }
+                   
                   </div> 
                   }
                 </div>
