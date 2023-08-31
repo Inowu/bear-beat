@@ -66,99 +66,107 @@ export const subscribe = async ({
   if (!ftpUser) {
     log.info(`[SUBSCRIPTION] Creating new subscription for user ${user.id}`);
 
-    await prisma.$transaction([
-      ...insertFtpQuotas({ prisma, user, plan: dbPlan }),
-      prisma.ftpUser.create({
-        data: {
-          userid: user.username,
-          user_id: user.id,
-          homedir: dbPlan.homedir,
-          uid: 2001,
-          gid: 2001,
-          passwd: crypto.randomBytes(15).toString('base64'),
-          expiration,
-        },
-      }),
-      prisma.descargasUser.create({
-        data: {
-          available: 500,
-          date_end: addMonths(new Date(), 1).toISOString(),
-          user_id: user.id,
-          ...(orderId ? { orderId } : {}),
-        },
-      }),
-    ]);
+    try {
+      await prisma.$transaction([
+        ...insertFtpQuotas({ prisma, user, plan: dbPlan }),
+        prisma.ftpUser.create({
+          data: {
+            userid: user.username,
+            user_id: user.id,
+            homedir: dbPlan.homedir,
+            uid: 2001,
+            gid: 2001,
+            passwd: crypto.randomBytes(15).toString('base64'),
+            expiration,
+          },
+        }),
+        prisma.descargasUser.create({
+          data: {
+            available: 500,
+            date_end: addMonths(new Date(), 1).toISOString(),
+            user_id: user.id,
+            ...(orderId ? { orderId } : {}),
+          },
+        }),
+      ]);
+    } catch (e) {
+      log.error(`Error while creating ftp user: ${e}`);
+    }
   } else {
     log.info(`[SUBSCRIPTION] Renovating subscription for user ${user.id}`);
 
-    const [existingTallies, existingLimits] = await Promise.all([
-      prisma.ftpquotatallies.findFirst({
-        where: {
-          name: user.username,
-        },
-      }),
-      prisma.ftpQuotaLimits.findFirst({
-        where: {
-          name: user.username,
-        },
-      }),
-    ]);
+    try {
+      const [existingTallies, existingLimits] = await Promise.all([
+        prisma.ftpquotatallies.findFirst({
+          where: {
+            name: user.username,
+          },
+        }),
+        prisma.ftpQuotaLimits.findFirst({
+          where: {
+            name: user.username,
+          },
+        }),
+      ]);
 
-    let talliesId = existingTallies?.id;
-    let limitsId = existingLimits?.id;
+      let talliesId = existingTallies?.id;
+      let limitsId = existingLimits?.id;
 
-    if (!existingTallies && !existingLimits) {
-      const [limits, tallies] = await prisma.$transaction(
-        insertFtpQuotas({ prisma, user, plan: dbPlan }),
-      );
+      if (!existingTallies && !existingLimits) {
+        const [limits, tallies] = await prisma.$transaction(
+          insertFtpQuotas({ prisma, user, plan: dbPlan }),
+        );
 
-      talliesId = tallies.id;
-      limitsId = limits.id;
+        talliesId = tallies.id;
+        limitsId = limits.id;
+      }
+
+      // Renovation
+      await prisma.$transaction([
+        prisma.ftpquotatallies.update({
+          where: {
+            id: talliesId,
+          },
+          data: {
+            name: user.username,
+            bytes_out_used: 0,
+          },
+        }),
+        prisma.ftpQuotaLimits.update({
+          where: {
+            id: limitsId,
+          },
+          data: {
+            bytes_out_avail: gbToBytes(Number(dbPlan.gigas)),
+            bytes_xfer_avail: 0,
+            files_xfer_avail: 0,
+            files_out_avail: 0,
+            // A limit of 0 means unlimited
+            bytes_in_avail: 1,
+            files_in_avail: 1,
+            name: user.username,
+          },
+        }),
+        prisma.ftpUser.update({
+          where: {
+            id: ftpUser.id,
+          },
+          data: {
+            expiration,
+          },
+        }),
+        prisma.descargasUser.create({
+          data: {
+            available: 500,
+            date_end: addMonths(new Date(), 1).toISOString(),
+            user_id: user.id,
+            ...(orderId ? { orderId } : {}),
+          },
+        }),
+      ]);
+    } catch (e) {
+      log.error(`Error while renovating subscription: ${e}`);
     }
-
-    // Renovation
-    await prisma.$transaction([
-      prisma.ftpquotatallies.update({
-        where: {
-          id: talliesId,
-        },
-        data: {
-          name: user.username,
-          bytes_out_used: 0,
-        },
-      }),
-      prisma.ftpQuotaLimits.update({
-        where: {
-          id: limitsId,
-        },
-        data: {
-          bytes_out_avail: gbToBytes(Number(dbPlan.gigas)),
-          bytes_xfer_avail: 0,
-          files_xfer_avail: 0,
-          files_out_avail: 0,
-          // A limit of 0 means unlimited
-          bytes_in_avail: 1,
-          files_in_avail: 1,
-          name: user.username,
-        },
-      }),
-      prisma.ftpUser.update({
-        where: {
-          id: ftpUser.id,
-        },
-        data: {
-          expiration,
-        },
-      }),
-      prisma.descargasUser.create({
-        data: {
-          available: 500,
-          date_end: addMonths(new Date(), 1).toISOString(),
-          user_id: user.id,
-          ...(orderId ? { orderId } : {}),
-        },
-      }),
-    ]);
   }
 
   if (orderId) {
