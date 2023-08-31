@@ -10,7 +10,7 @@ export const subscribe = async ({
   prisma,
   user,
   plan,
-  orderId,
+  orderId: metaOrderId,
 }:
   | {
       plan: Plans;
@@ -21,7 +21,7 @@ export const subscribe = async ({
   | {
       prisma: PrismaClient;
       user: Users;
-      orderId: number;
+      orderId: string;
       plan?: never;
     }) => {
   const ftpUser = await prisma.ftpUser.findFirst({
@@ -33,6 +33,8 @@ export const subscribe = async ({
   const expiration = addMonths(new Date(), 1);
 
   let dbPlan = plan;
+
+  const orderId = Number(metaOrderId);
 
   if (!plan) {
     const order = await prisma.orders.findFirstOrThrow({
