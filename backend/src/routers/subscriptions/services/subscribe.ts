@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { Users, Plans, PrismaClient } from '@prisma/client';
-import { addMonths } from 'date-fns';
+import { addDays } from 'date-fns';
 import { TRPCError } from '@trpc/server';
 import { gbToBytes } from '../../../utils/gbToBytes';
 import { log } from '../../../server';
@@ -29,8 +29,6 @@ export const subscribe = async ({
       userid: user.username,
     },
   });
-
-  const expiration = addMonths(new Date(), 1);
 
   let dbPlan = plan;
 
@@ -62,7 +60,19 @@ export const subscribe = async ({
     });
   }
 
-  if (!dbPlan) return;
+  if (!dbPlan) {
+    log.warn(
+      `[SUBSCRIPTION] Could not find plans with id ${plan?.id}, orderId ${orderId}. No action was taken`,
+    );
+
+    return;
+  }
+
+  const planDurationInDays = Number.isInteger(dbPlan.duration)
+    ? Number(dbPlan.duration)
+    : 30;
+
+  const expiration = addDays(new Date(), planDurationInDays);
 
   // Hasn't subscribed before
   if (!ftpUser) {
@@ -85,7 +95,7 @@ export const subscribe = async ({
         prisma.descargasUser.create({
           data: {
             available: 500,
-            date_end: addMonths(new Date(), 1).toISOString(),
+            date_end: expiration.toISOString(),
             user_id: user.id,
             ...(orderId ? { order_id: orderId } : {}),
           },
@@ -160,7 +170,7 @@ export const subscribe = async ({
         prisma.descargasUser.create({
           data: {
             available: 500,
-            date_end: addMonths(new Date(), 1).toISOString(),
+            date_end: expiration.toISOString(),
             user_id: user.id,
             ...(orderId ? { order_id: orderId } : {}),
           },
