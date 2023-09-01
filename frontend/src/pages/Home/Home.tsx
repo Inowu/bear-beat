@@ -43,7 +43,7 @@ function Home() {
     tempFiles.push(name);
     try{
       const files = await trpc.ftp.ls.query({
-        path: tempFiles.join('/'),
+        path: (tempFiles.length === 0 ? '': '/') + tempFiles.join('/'),
       })
       setPastFile(tempFiles);
       setfiles(files);
