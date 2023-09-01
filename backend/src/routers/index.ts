@@ -7,6 +7,7 @@ import { descargasusersRouter } from './DescargasUser.router';
 import { ftpquotalimitsRouter } from './FtpQuotaLimits.router';
 import { ftpquotatallieshistoriesRouter } from './FtpQuotatAlliesHistory.router';
 import { ftpusersRouter } from './FtpUser.router';
+import { ftpquotatalliesRouter } from './Ftpquotatallies.router';
 import { loginhistoriesRouter } from './LoginHistory.router';
 import { ordersRouter } from './Orders.router';
 import { plansRouter } from './Plans.router';
@@ -15,16 +16,21 @@ import { userfilesRouter } from './UserFiles.router';
 import { usersRouter } from './Users.router';
 import { authRouter } from './auth';
 import { ftpRouter } from './file-actions';
+import { subscriptionsRouter } from './subscriptions';
+import { webhooksRouter } from './webhooks';
 
 export const appRouter = router({
   auth: authRouter,
   ftp: ftpRouter,
+  subscriptions: subscriptionsRouter,
+  webhooks: webhooksRouter,
   config: configsRouter,
   countries: countriesRouter,
   cupons: cuponsRouter,
   cuponsused: cuponsusedsRouter,
   descargasuser: descargasusersRouter,
   ftpquotalimits: ftpquotalimitsRouter,
+  ftpquotatallies: ftpquotatalliesRouter,
   ftpquotatallieshistory: ftpquotatallieshistoriesRouter,
   ftpuser: ftpusersRouter,
   loginhistory: loginhistoriesRouter,

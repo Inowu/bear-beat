@@ -1,24 +1,24 @@
-import { shieldedProcedure } from "../procedures/shielded.procedure";
-import { router } from "../trpc";
-import { DescargasUserAggregateSchema } from "../schemas/aggregateDescargasUser.schema";
-import { DescargasUserCreateManySchema } from "../schemas/createManyDescargasUser.schema";
-import { DescargasUserCreateOneSchema } from "../schemas/createOneDescargasUser.schema";
-import { DescargasUserDeleteManySchema } from "../schemas/deleteManyDescargasUser.schema";
-import { DescargasUserDeleteOneSchema } from "../schemas/deleteOneDescargasUser.schema";
-import { DescargasUserFindFirstSchema } from "../schemas/findFirstDescargasUser.schema";
-import { DescargasUserFindManySchema } from "../schemas/findManyDescargasUser.schema";
-import { DescargasUserFindUniqueSchema } from "../schemas/findUniqueDescargasUser.schema";
-import { DescargasUserGroupBySchema } from "../schemas/groupByDescargasUser.schema";
-import { DescargasUserUpdateManySchema } from "../schemas/updateManyDescargasUser.schema";
-import { DescargasUserUpdateOneSchema } from "../schemas/updateOneDescargasUser.schema";
-import { DescargasUserUpsertSchema } from "../schemas/upsertOneDescargasUser.schema";
+import { shieldedProcedure } from '../procedures/shielded.procedure';
+import { router } from '../trpc';
+import { DescargasUserAggregateSchema } from '../schemas/aggregateDescargasUser.schema';
+import { DescargasUserCreateManySchema } from '../schemas/createManyDescargasUser.schema';
+import { DescargasUserCreateOneSchema } from '../schemas/createOneDescargasUser.schema';
+import { DescargasUserDeleteManySchema } from '../schemas/deleteManyDescargasUser.schema';
+import { DescargasUserDeleteOneSchema } from '../schemas/deleteOneDescargasUser.schema';
+import { DescargasUserFindFirstSchema } from '../schemas/findFirstDescargasUser.schema';
+import { DescargasUserFindManySchema } from '../schemas/findManyDescargasUser.schema';
+import { DescargasUserFindUniqueSchema } from '../schemas/findUniqueDescargasUser.schema';
+import { DescargasUserGroupBySchema } from '../schemas/groupByDescargasUser.schema';
+import { DescargasUserUpdateManySchema } from '../schemas/updateManyDescargasUser.schema';
+import { DescargasUserUpdateOneSchema } from '../schemas/updateOneDescargasUser.schema';
+import { DescargasUserUpsertSchema } from '../schemas/upsertOneDescargasUser.schema';
 
 export const descargasusersRouter = router({
   aggregateDescargasUser: shieldedProcedure
     .input(DescargasUserAggregateSchema)
     .query(async ({ ctx, input }) => {
       const aggregateDescargasUser = await ctx.prisma.descargasUser.aggregate(
-        input
+        input,
       );
       return aggregateDescargasUser;
     }),
@@ -26,7 +26,7 @@ export const descargasusersRouter = router({
     .input(DescargasUserCreateManySchema)
     .mutation(async ({ ctx, input }) => {
       const createManyDescargasUser = await ctx.prisma.descargasUser.createMany(
-        input
+        input,
       );
       return createManyDescargasUser;
     }),
@@ -34,7 +34,7 @@ export const descargasusersRouter = router({
     .input(DescargasUserCreateOneSchema)
     .mutation(async ({ ctx, input }) => {
       const createOneDescargasUser = await ctx.prisma.descargasUser.create(
-        input
+        input,
       );
       return createOneDescargasUser;
     }),
@@ -42,7 +42,7 @@ export const descargasusersRouter = router({
     .input(DescargasUserDeleteManySchema)
     .mutation(async ({ ctx, input }) => {
       const deleteManyDescargasUser = await ctx.prisma.descargasUser.deleteMany(
-        input
+        input,
       );
       return deleteManyDescargasUser;
     }),
@@ -50,7 +50,7 @@ export const descargasusersRouter = router({
     .input(DescargasUserDeleteOneSchema)
     .mutation(async ({ ctx, input }) => {
       const deleteOneDescargasUser = await ctx.prisma.descargasUser.delete(
-        input
+        input,
       );
       return deleteOneDescargasUser;
     }),
@@ -58,7 +58,7 @@ export const descargasusersRouter = router({
     .input(DescargasUserFindFirstSchema)
     .query(async ({ ctx, input }) => {
       const findFirstDescargasUser = await ctx.prisma.descargasUser.findFirst(
-        input
+        input,
       );
       return findFirstDescargasUser;
     }),
@@ -73,7 +73,7 @@ export const descargasusersRouter = router({
     .input(DescargasUserFindManySchema)
     .query(async ({ ctx, input }) => {
       const findManyDescargasUser = await ctx.prisma.descargasUser.findMany(
-        input
+        input,
       );
       return findManyDescargasUser;
     }),
@@ -81,7 +81,7 @@ export const descargasusersRouter = router({
     .input(DescargasUserFindUniqueSchema)
     .query(async ({ ctx, input }) => {
       const findUniqueDescargasUser = await ctx.prisma.descargasUser.findUnique(
-        input
+        input,
       );
       return findUniqueDescargasUser;
     }),
@@ -109,7 +109,7 @@ export const descargasusersRouter = router({
     .input(DescargasUserUpdateManySchema)
     .mutation(async ({ ctx, input }) => {
       const updateManyDescargasUser = await ctx.prisma.descargasUser.updateMany(
-        input
+        input,
       );
       return updateManyDescargasUser;
     }),
@@ -117,7 +117,7 @@ export const descargasusersRouter = router({
     .input(DescargasUserUpdateOneSchema)
     .mutation(async ({ ctx, input }) => {
       const updateOneDescargasUser = await ctx.prisma.descargasUser.update(
-        input
+        input,
       );
       return updateOneDescargasUser;
     }),
@@ -125,7 +125,7 @@ export const descargasusersRouter = router({
     .input(DescargasUserUpsertSchema)
     .mutation(async ({ ctx, input }) => {
       const upsertOneDescargasUser = await ctx.prisma.descargasUser.upsert(
-        input
+        input,
       );
       return upsertOneDescargasUser;
     }),

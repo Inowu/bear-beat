@@ -1,19 +1,32 @@
-import { router } from "../trpc";
-import { shieldedProcedure } from "../procedures/shielded.procedure";
-import { OrdersAggregateSchema } from "../schemas/aggregateOrders.schema";
-import { OrdersCreateManySchema } from "../schemas/createManyOrders.schema";
-import { OrdersCreateOneSchema } from "../schemas/createOneOrders.schema";
-import { OrdersDeleteManySchema } from "../schemas/deleteManyOrders.schema";
-import { OrdersDeleteOneSchema } from "../schemas/deleteOneOrders.schema";
-import { OrdersFindFirstSchema } from "../schemas/findFirstOrders.schema";
-import { OrdersFindManySchema } from "../schemas/findManyOrders.schema";
-import { OrdersFindUniqueSchema } from "../schemas/findUniqueOrders.schema";
-import { OrdersGroupBySchema } from "../schemas/groupByOrders.schema";
-import { OrdersUpdateManySchema } from "../schemas/updateManyOrders.schema";
-import { OrdersUpdateOneSchema } from "../schemas/updateOneOrders.schema";
-import { OrdersUpsertSchema } from "../schemas/upsertOneOrders.schema";
+import { router } from '../trpc';
+import { shieldedProcedure } from '../procedures/shielded.procedure';
+import { OrdersAggregateSchema } from '../schemas/aggregateOrders.schema';
+import { OrdersCreateManySchema } from '../schemas/createManyOrders.schema';
+import { OrdersCreateOneSchema } from '../schemas/createOneOrders.schema';
+import { OrdersDeleteManySchema } from '../schemas/deleteManyOrders.schema';
+import { OrdersDeleteOneSchema } from '../schemas/deleteOneOrders.schema';
+import { OrdersFindFirstSchema } from '../schemas/findFirstOrders.schema';
+import { OrdersFindManySchema } from '../schemas/findManyOrders.schema';
+import { OrdersFindUniqueSchema } from '../schemas/findUniqueOrders.schema';
+import { OrdersGroupBySchema } from '../schemas/groupByOrders.schema';
+import { OrdersUpdateManySchema } from '../schemas/updateManyOrders.schema';
+import { OrdersUpdateOneSchema } from '../schemas/updateOneOrders.schema';
+import { OrdersUpsertSchema } from '../schemas/upsertOneOrders.schema';
 
 export const ordersRouter = router({
+  ownOrders: shieldedProcedure
+    .input(OrdersFindManySchema)
+    .query(async ({ ctx: { prisma, session }, input }) => {
+      const orders = await prisma.orders.findMany({
+        ...input,
+        where: {
+          ...input.where,
+          user_id: session!.user!.id,
+        },
+      });
+
+      return orders;
+    }),
   aggregateOrders: shieldedProcedure
     .input(OrdersAggregateSchema)
     .query(async ({ ctx, input }) => {
@@ -54,7 +67,7 @@ export const ordersRouter = router({
     .input(OrdersFindFirstSchema)
     .query(async ({ ctx, input }) => {
       const findFirstOrdersOrThrow = await ctx.prisma.orders.findFirstOrThrow(
-        input
+        input,
       );
       return findFirstOrdersOrThrow;
     }),
@@ -74,7 +87,7 @@ export const ordersRouter = router({
     .input(OrdersFindUniqueSchema)
     .query(async ({ ctx, input }) => {
       const findUniqueOrdersOrThrow = await ctx.prisma.orders.findUniqueOrThrow(
-        input
+        input,
       );
       return findUniqueOrdersOrThrow;
     }),

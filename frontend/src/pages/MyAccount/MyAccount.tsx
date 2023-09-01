@@ -3,30 +3,63 @@ import Logo from "../../assets/images/osonuevo.png";
 import { Link } from "react-router-dom";
 import filezillaIcon from "../../assets/images/filezilla_icon.png";
 import SpaceAvailableCard from "../../components/SpaceAvailableCard/SpaceAvailableCard";
+import { useUserContext } from "../../contexts/UserContext";
+import { useEffect, useState } from "react";
+import trpc from "../../api";
+import { IOrders, IQuota } from "interfaces/User";
 
 function MyAccount() {
+  const { currentUser } = useUserContext();
+  const [quota, setQuota] = useState({} as IQuota)
+  const [orders, setOrders] = useState<IOrders[]>([]);
+  const getQuota = async () => {
+    try{
+      const quota: any = await trpc.ftp.quota.query();
+      setQuota(quota);
+    }
+    catch(error){
+      console.log(error);
+    }
+  }
+  const getOrders = async () => {
+    let body = {
+
+    }
+    try{
+      const orders:any = await trpc.orders.ownOrders.query(body);
+      setOrders(orders);
+    }
+    catch(error){
+      console.log(error);
+    }
+  }
+  useEffect(() => {
+    getQuota();
+    getOrders();
+  }, [])
+  
   return (
     <div className="my-account-main-container">
       <div className="general">
         <div className="user-profile-pic">
-          <img src={Logo} alt="profile pic" />
+          <img src={currentUser?.profileImg ? currentUser.profileImg : Logo} alt="profile pic" />
         </div>
         <h2>Información general</h2>
         <div className="user-info-container">
           <div className="c-row">
             <b>Username</b>
-            <p>fjcenteno</p>
+            <p>{currentUser?.username}</p>
           </div>
           <div className="c-row">
             <b>E-mail</b>
-            <p>fjcenteno99@gmail.com</p>
+            <p>{currentUser?.email}</p>
           </div>
           <div className="c-row">
             <b>Phone</b>
-            <p>+526311267476</p>
+            <p>{currentUser?.phone}</p>
           </div>
         </div>
-        {true && <SpaceAvailableCard />}
+        {true && <SpaceAvailableCard quota={quota}/>}
       </div>
       <div className="purchase">
         <div className="actives-ftp-container">
@@ -44,16 +77,21 @@ function MyAccount() {
                 </tr>
               </thead>
               <tbody>
-                <tr>
+                {
+                  currentUser?.ftpAccount ?
+                  <tr>
                   <td>51.222.40.65</td>
-                  <td>kevinwoolfolk</td>
-                  <td>123</td>
+                  <td>{currentUser?.ftpAccount.userid}</td>
+                  <td>{currentUser?.ftpAccount.passwd}</td>
                   <td>21</td>
-                  <td>20 Jul, 2023</td>
+                  <td>{currentUser?.ftpAccount.expiration.toDateString()}</td>
                   <td>
                     <img src={filezillaIcon} alt="filezilla" />
                   </td>
-                </tr>
+                </tr>:
+                <tr/>
+                }
+
               </tbody>
             </table>
           ) : (
@@ -77,19 +115,16 @@ function MyAccount() {
               </tr>
             </thead>
             <tbody>
-              {false ? (
-                <>
-                  <tr>
-                    <td>Mark</td>
-                    <td>Otto</td>
-                    <td>@mdo</td>
-                  </tr>
-                  <tr>
-                    <td>Jacob</td>
-                    <td>Thornton</td>
-                    <td>@fat</td>
-                  </tr>
-                </>
+              {orders.length > 0 ? (
+                orders.map((order: IOrders, index: number)=>{
+                  return (
+                    <tr key={"order_" + index}>
+                      <td>{order.date_order.toDateString()}</td>
+                      <td>{order.id}</td>
+                      <td>${order.total_price}.00</td>
+                    </tr>
+                  )
+                })
               ) : (
                 <tr>
                   <td className="pt-4" colSpan={3}>

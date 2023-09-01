@@ -1,17 +1,17 @@
-import { shieldedProcedure } from "../procedures/shielded.procedure";
-import { router } from "../trpc";
-import { ConfigAggregateSchema } from "../schemas/aggregateConfig.schema";
-import { ConfigCreateManySchema } from "../schemas/createManyConfig.schema";
-import { ConfigCreateOneSchema } from "../schemas/createOneConfig.schema";
-import { ConfigDeleteManySchema } from "../schemas/deleteManyConfig.schema";
-import { ConfigDeleteOneSchema } from "../schemas/deleteOneConfig.schema";
-import { ConfigFindFirstSchema } from "../schemas/findFirstConfig.schema";
-import { ConfigFindManySchema } from "../schemas/findManyConfig.schema";
-import { ConfigFindUniqueSchema } from "../schemas/findUniqueConfig.schema";
-import { ConfigGroupBySchema } from "../schemas/groupByConfig.schema";
-import { ConfigUpdateManySchema } from "../schemas/updateManyConfig.schema";
-import { ConfigUpdateOneSchema } from "../schemas/updateOneConfig.schema";
-import { ConfigUpsertSchema } from "../schemas/upsertOneConfig.schema";
+import { shieldedProcedure } from '../procedures/shielded.procedure';
+import { router } from '../trpc';
+import { ConfigAggregateSchema } from '../schemas/aggregateConfig.schema';
+import { ConfigCreateManySchema } from '../schemas/createManyConfig.schema';
+import { ConfigCreateOneSchema } from '../schemas/createOneConfig.schema';
+import { ConfigDeleteManySchema } from '../schemas/deleteManyConfig.schema';
+import { ConfigDeleteOneSchema } from '../schemas/deleteOneConfig.schema';
+import { ConfigFindFirstSchema } from '../schemas/findFirstConfig.schema';
+import { ConfigFindManySchema } from '../schemas/findManyConfig.schema';
+import { ConfigFindUniqueSchema } from '../schemas/findUniqueConfig.schema';
+import { ConfigGroupBySchema } from '../schemas/groupByConfig.schema';
+import { ConfigUpdateManySchema } from '../schemas/updateManyConfig.schema';
+import { ConfigUpdateOneSchema } from '../schemas/updateOneConfig.schema';
+import { ConfigUpsertSchema } from '../schemas/upsertOneConfig.schema';
 
 export const configsRouter = router({
   aggregateConfig: shieldedProcedure
@@ -54,7 +54,7 @@ export const configsRouter = router({
     .input(ConfigFindFirstSchema)
     .query(async ({ ctx, input }) => {
       const findFirstConfigOrThrow = await ctx.prisma.config.findFirstOrThrow(
-        input
+        input,
       );
       return findFirstConfigOrThrow;
     }),
@@ -74,7 +74,7 @@ export const configsRouter = router({
     .input(ConfigFindUniqueSchema)
     .query(async ({ ctx, input }) => {
       const findUniqueConfigOrThrow = await ctx.prisma.config.findUniqueOrThrow(
-        input
+        input,
       );
       return findUniqueConfigOrThrow;
     }),

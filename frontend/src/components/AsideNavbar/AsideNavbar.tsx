@@ -1,6 +1,7 @@
 import "./AsideNavbar.scss";
 import Logo from "../../assets/images/osonuevo.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useUserContext } from "../../contexts/UserContext";
 import {
   faUserCircle,
   faFolder,
@@ -15,7 +16,9 @@ interface AsideNavbarPropsI {
 }
 
 function AsideNavbar(props: AsideNavbarPropsI) {
+  const { currentUser } = useUserContext();
   const { show, onHide } = props;
+  console.log(currentUser);
   return (
     <aside className={show ? "open" : ""}>
       <img src={Logo} alt="bear beat" />
@@ -27,11 +30,14 @@ function AsideNavbar(props: AsideNavbarPropsI) {
               <FontAwesomeIcon icon={faFolder} /> Todos los archivos
             </li>
           </Link>
-          <Link to={"/planes"}>
+          {
+            !currentUser?.hasActiveSubscription &&
+            <Link to={"/planes"}>
             <li>
               <FontAwesomeIcon icon={faCartPlus} /> Get plan
             </li>
           </Link>
+          }
           <Link to={"/micuenta"}>
             <li>
               <FontAwesomeIcon icon={faUserCircle} /> Mi cuenta

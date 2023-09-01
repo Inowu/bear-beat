@@ -1,4 +1,4 @@
-import { permissions } from "../permissions";
-import { t } from "../trpc";
+import { permissions } from '../permissions';
+import { t } from '../trpc';
 
 export const permissionsMiddleware = t.middleware(permissions);

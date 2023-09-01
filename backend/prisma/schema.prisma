@@ -2,18 +2,11 @@ generator client {
   provider = "prisma-client-js"
 }
 
+
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
-
-// generator trpc {
-//   provider          = "prisma-trpc-generator"
-//   withZod           = true
-//   withMiddleware    = false
-//   withShield        = false
-//   contextPath       = "../src/context"
-// }
 
 model Config {
   id    Int    @id @default(autoincrement())
@@ -67,13 +60,13 @@ model DescargasUser {
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model FtpGroup {
+  id        Int    @id @default(autoincrement())
   groupname String @db.VarChar(16)
   gid       Int    @default(5500) @db.SmallInt
   members   String @db.VarChar(16)
 
   @@index([groupname], map: "groupname")
   @@map("ftpgroup")
-  @@ignore
 }
 
 model FtpQuotaLimits {
@@ -143,26 +136,28 @@ model Orders {
 }
 
 model Plans {
-  id                  Int     @id @default(autoincrement())
-  name                String  @db.VarChar(100)
-  description         String  @db.Text
-  moneda              String  @default("usd") @db.VarChar(200)
-  homedir             String  @db.Text
-  gigas               BigInt  @default(0)
-  price               Decimal @db.Decimal(10, 2)
-  duration            String  @db.VarChar(100)
-  activated           Int     @default(0)
-  tokens              Int?
-  audio_ilimitado     Int?
-  tokens_video        Int?
-  video_ilimitado     Int?
-  tokens_karaoke      Int?
-  karaoke_ilimitado   Int?
-  ilimitado_activo    Int?
-  ilimitado_dias      Int?
-  stripe_prod_id      String? @db.Text
-  stripe_prod_id_test String  @db.Text
-  vip_activo          Int?
+  id                   Int     @id @default(autoincrement())
+  name                 String  @db.VarChar(100)
+  description          String  @db.Text
+  moneda               String  @default("usd") @db.VarChar(200)
+  homedir              String  @db.Text
+  gigas                BigInt  @default(0)
+  price                Decimal @db.Decimal(10, 2)
+  duration             String  @db.VarChar(100)
+  activated            Int     @default(0)
+  tokens               Int?
+  audio_ilimitado      Int?
+  tokens_video         Int?
+  video_ilimitado      Int?
+  tokens_karaoke       Int?
+  karaoke_ilimitado    Int?
+  ilimitado_activo     Int?
+  ilimitado_dias       Int?
+  stripe_prod_id       String? @db.Text
+  stripe_prod_id_test  String  @db.Text
+  conekta_plan_id      String? @db.Text
+  conekta_plan_id_test String? @db.Text
+  vip_activo           Int?
 
   @@map("plans")
 }
@@ -211,6 +206,7 @@ model Users {
 }
 
 model Ftpquotatallies {
+  id              Int                        @id @default(autoincrement())
   name            String                     @default("") @db.VarChar(30)
   quota_type      ftpquotatallies_quota_type @default(user)
   bytes_in_used   BigInt                     @default(0) @db.UnsignedBigInt
@@ -219,7 +215,6 @@ model Ftpquotatallies {
   files_in_used   Int                        @default(0) @db.UnsignedInt
   files_out_used  Int                        @default(0) @db.UnsignedInt
   files_xfer_used Int                        @default(0) @db.UnsignedInt
-  id              Int                        @id @default(autoincrement()) @db.UnsignedInt
 
   @@map("ftpquotatallies")
 }

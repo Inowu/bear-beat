@@ -1,20 +1,35 @@
 import { allow, rule, shield } from 'trpc-shield';
 import { Context } from '../context';
 import { RolesNames } from '../routers/auth/interfaces/roles.interface';
+import { verifyConektaSignature } from '../routers/utils/verifyConektaSignature';
+import { verifyStripeSignature } from '../routers/utils/verifyStripeSignature';
 
 const isAdmin = rule<Context>()(
-  async (ctx, type, path, input, rawInput) =>
-    ctx.session?.user?.role === RolesNames.admin,
+  async (ctx) => ctx.session?.user?.role === RolesNames.admin,
+);
+
+const isLoggedIn = rule<Context>()(async (ctx) => Boolean(ctx.session?.user));
+
+const isValidConektaSignature = rule<Context>()(async ({ req }) =>
+  verifyConektaSignature(req, JSON.parse(req.body as any)),
+);
+
+const isValidStripeSignature = rule<Context>()(async ({ req }) =>
+  verifyStripeSignature(req),
 );
 
 export const permissions = shield<Context>({
-  auth: {
-    query: {
-      login: allow,
-      register: allow,
-    },
-  },
   query: {
+    list: isLoggedIn,
+    download: isLoggedIn,
+    quota: isLoggedIn,
+    demo: isLoggedIn,
+    login: allow,
+    register: allow,
+    me: isLoggedIn,
+    findByCode: isLoggedIn,
+    ownOrders: isLoggedIn,
+    subscribeWithStripe: isLoggedIn,
     aggregateConfig: isAdmin,
     aggregateCountries: isAdmin,
     aggregateCupons: isAdmin,
@@ -53,7 +68,7 @@ export const permissions = shield<Context>({
     findManyFtpUser: isAdmin,
     findManyLoginHistory: isAdmin,
     findManyOrders: isAdmin,
-    findManyPlans: isAdmin,
+    findManyPlans: allow,
     findManyRoles: isAdmin,
     findManyUserFiles: isAdmin,
     findManyUsers: isAdmin,
@@ -87,6 +102,10 @@ export const permissions = shield<Context>({
     groupByUsers: isAdmin,
   },
   mutation: {
+    subscribeWithCardConekta: isLoggedIn,
+    subscribeWithCashConekta: isLoggedIn,
+    conektaSubscriptionWebhook: isValidConektaSignature,
+    stripeSubscriptionWebhook: isValidStripeSignature,
     createOneConfig: isAdmin,
     createOneCountries: isAdmin,
     createOneCupons: isAdmin,

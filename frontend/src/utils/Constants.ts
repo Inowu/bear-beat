@@ -8,7 +8,7 @@ export const plans: Array<PlanI> = [
     description: "500 GB de descarga vía FTP",
     duration: 30,
     included: [
-      "Renovacio4n automática",
+      "Renovación automática",
       "Busqueda avanzada",
       "Nueva música diariamente",
       "Descargas con 1 click",
@@ -25,7 +25,7 @@ export const plans: Array<PlanI> = [
     description: "500 GB de descarga vía FTP",
     duration: 30,
     included: [
-      "Renovacio4n automática",
+      "Renovación automática",
       "Busqueda avanzada",
       "Nueva música diariamente",
       "Descargas con 1 click",

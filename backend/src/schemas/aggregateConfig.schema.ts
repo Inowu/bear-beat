@@ -1,12 +1,12 @@
-import { z } from "zod";
-import { ConfigOrderByWithRelationInputObjectSchema } from "./objects/ConfigOrderByWithRelationInput.schema";
-import { ConfigWhereInputObjectSchema } from "./objects/ConfigWhereInput.schema";
-import { ConfigWhereUniqueInputObjectSchema } from "./objects/ConfigWhereUniqueInput.schema";
-import { ConfigCountAggregateInputObjectSchema } from "./objects/ConfigCountAggregateInput.schema";
-import { ConfigMinAggregateInputObjectSchema } from "./objects/ConfigMinAggregateInput.schema";
-import { ConfigMaxAggregateInputObjectSchema } from "./objects/ConfigMaxAggregateInput.schema";
-import { ConfigAvgAggregateInputObjectSchema } from "./objects/ConfigAvgAggregateInput.schema";
-import { ConfigSumAggregateInputObjectSchema } from "./objects/ConfigSumAggregateInput.schema";
+import { z } from 'zod';
+import { ConfigOrderByWithRelationInputObjectSchema } from './objects/ConfigOrderByWithRelationInput.schema';
+import { ConfigWhereInputObjectSchema } from './objects/ConfigWhereInput.schema';
+import { ConfigWhereUniqueInputObjectSchema } from './objects/ConfigWhereUniqueInput.schema';
+import { ConfigCountAggregateInputObjectSchema } from './objects/ConfigCountAggregateInput.schema';
+import { ConfigMinAggregateInputObjectSchema } from './objects/ConfigMinAggregateInput.schema';
+import { ConfigMaxAggregateInputObjectSchema } from './objects/ConfigMaxAggregateInput.schema';
+import { ConfigAvgAggregateInputObjectSchema } from './objects/ConfigAvgAggregateInput.schema';
+import { ConfigSumAggregateInputObjectSchema } from './objects/ConfigSumAggregateInput.schema';
 
 export const ConfigAggregateSchema = z.object({
   orderBy: z

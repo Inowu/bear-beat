@@ -1,17 +1,17 @@
-import { shieldedProcedure } from "../procedures/shielded.procedure";
-import { router } from "../trpc";
-import { UserFilesAggregateSchema } from "../schemas/aggregateUserFiles.schema";
-import { UserFilesCreateManySchema } from "../schemas/createManyUserFiles.schema";
-import { UserFilesCreateOneSchema } from "../schemas/createOneUserFiles.schema";
-import { UserFilesDeleteManySchema } from "../schemas/deleteManyUserFiles.schema";
-import { UserFilesDeleteOneSchema } from "../schemas/deleteOneUserFiles.schema";
-import { UserFilesFindFirstSchema } from "../schemas/findFirstUserFiles.schema";
-import { UserFilesFindManySchema } from "../schemas/findManyUserFiles.schema";
-import { UserFilesFindUniqueSchema } from "../schemas/findUniqueUserFiles.schema";
-import { UserFilesGroupBySchema } from "../schemas/groupByUserFiles.schema";
-import { UserFilesUpdateManySchema } from "../schemas/updateManyUserFiles.schema";
-import { UserFilesUpdateOneSchema } from "../schemas/updateOneUserFiles.schema";
-import { UserFilesUpsertSchema } from "../schemas/upsertOneUserFiles.schema";
+import { shieldedProcedure } from '../procedures/shielded.procedure';
+import { router } from '../trpc';
+import { UserFilesAggregateSchema } from '../schemas/aggregateUserFiles.schema';
+import { UserFilesCreateManySchema } from '../schemas/createManyUserFiles.schema';
+import { UserFilesCreateOneSchema } from '../schemas/createOneUserFiles.schema';
+import { UserFilesDeleteManySchema } from '../schemas/deleteManyUserFiles.schema';
+import { UserFilesDeleteOneSchema } from '../schemas/deleteOneUserFiles.schema';
+import { UserFilesFindFirstSchema } from '../schemas/findFirstUserFiles.schema';
+import { UserFilesFindManySchema } from '../schemas/findManyUserFiles.schema';
+import { UserFilesFindUniqueSchema } from '../schemas/findUniqueUserFiles.schema';
+import { UserFilesGroupBySchema } from '../schemas/groupByUserFiles.schema';
+import { UserFilesUpdateManySchema } from '../schemas/updateManyUserFiles.schema';
+import { UserFilesUpdateOneSchema } from '../schemas/updateOneUserFiles.schema';
+import { UserFilesUpsertSchema } from '../schemas/upsertOneUserFiles.schema';
 
 export const userfilesRouter = router({
   aggregateUserFiles: shieldedProcedure

@@ -1,11 +1,7 @@
-import Client from 'ssh2-sftp-client';
+import { FileService } from '../services/fileService';
 
-export const sftp = new Client();
+export const fileService: FileService = new FileService(
+  process.env.FILE_SERVICE as 'local' | 'ftp',
+);
 
-export const connectFTP = async () =>
-  sftp.connect({
-    host: process.env.FTP_HOST,
-    port: Number(process.env.FTP_PORT),
-    username: process.env.FTP_USERNAME,
-    password: process.env.FTP_PASSWORD,
-  });
+export const initializeFileService = async () => fileService.init();

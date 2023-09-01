@@ -1,16 +1,15 @@
 import { z } from 'zod';
-import { publicProcedure } from '../../procedures/public.procedure';
-import { sftp } from '../../ftp';
+import { fileService } from '../../ftp';
+import { shieldedProcedure } from '../../procedures/shielded.procedure';
 
-export default publicProcedure
+export const ls = shieldedProcedure
   .input(
     z.object({
       path: z.string(),
     }),
   )
-  .query(async ({ input: { path } }) =>
-    (await sftp.list(`${process.env.SONGS_PATH}/${path}`)).map((result) => ({
-      name: result.name,
-      type: result.type,
-    })),
-  );
+  .query(async ({ input: { path } }) => {
+    const sanitizedPath = path.replace('..', '');
+
+    return fileService.list(`${process.env.SONGS_PATH}/${sanitizedPath}`);
+  });

@@ -1,14 +1,17 @@
 import { Modal } from "react-bootstrap";
 import videoSrc from "src/assets/video/DAKITI.mp4";
 import "./PreviewModal.scss";
+import { convertBase64ToMP3 } from "../../functions/functions";
 
 interface PreviewModalPropsI {
+  file: any;
   show: boolean;
   onHide: () => void;
 }
 
 function PreviewModal(props: PreviewModalPropsI) {
-  const { show, onHide } = props;
+  const { show, onHide, file } = props;
+
   return (
     <Modal
       show={show}
@@ -25,7 +28,9 @@ function PreviewModal(props: PreviewModalPropsI) {
       </Modal.Header>
       <Modal.Body>
         <div className="preview-container">
-          <video src={videoSrc} controls autoPlay muted />
+          <audio controls>
+            <source src={convertBase64ToMP3(file)} type="audio/mp3" />
+          </audio>
         </div>
       </Modal.Body>
       <Modal.Footer>

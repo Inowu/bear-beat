@@ -1,5 +1,5 @@
-import { Users } from "@prisma/client";
-import { RolesIds, RolesNames } from "../interfaces/roles.interface";
+import { Users } from '@prisma/client';
+import { RolesIds, RolesNames } from '../interfaces/roles.interface';
 
 export type SessionUser = {
   id: number;
@@ -9,15 +9,14 @@ export type SessionUser = {
   profileImg: string;
 };
 
-export const serializeUser = (user: Users) => {
-  return {
-    id: user.id,
-    role: getRoleFromId(user.role_id),
-    username: user.username,
-    email: user.email,
-    profileImg: user.profile_img,
-  };
-};
+export const serializeUser = (user: Users) => ({
+  id: user.id,
+  role: getRoleFromId(user.role_id),
+  username: user.username,
+  phone: user.phone,
+  email: user.email,
+  profileImg: user.profile_img,
+});
 
 const getRoleFromId = (roleId?: number | null): RolesNames => {
   switch (roleId) {

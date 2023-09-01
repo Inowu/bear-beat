@@ -1,14 +1,20 @@
 import { inferAsyncReturnType } from '@trpc/server';
 import type { CreateFastifyContextOptions } from '@trpc/server/adapters/fastify';
 import jwt from 'jsonwebtoken';
+import { PrismaClient } from '@prisma/client';
 import { prisma } from '../db';
 import { SessionUser } from '../routers/auth/utils/serialize-user';
 
 export const createContext = async ({
   req,
   res,
-}: CreateFastifyContextOptions) => {
-  const token = req.headers.authorization?.replace('Bearer', '');
+}: CreateFastifyContextOptions): Promise<{
+  req: CreateFastifyContextOptions['req'];
+  res: CreateFastifyContextOptions['res'];
+  prisma: PrismaClient;
+  session: null | { user: SessionUser | null };
+}> => {
+  const token = req.headers.authorization?.split(' ')[1];
   let user: SessionUser | null;
 
   try {

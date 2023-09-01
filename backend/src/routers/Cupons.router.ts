@@ -1,19 +1,56 @@
-import { shieldedProcedure } from "../procedures/shielded.procedure";
-import { router } from "../trpc";
-import { CuponsAggregateSchema } from "../schemas/aggregateCupons.schema";
-import { CuponsCreateManySchema } from "../schemas/createManyCupons.schema";
-import { CuponsCreateOneSchema } from "../schemas/createOneCupons.schema";
-import { CuponsDeleteManySchema } from "../schemas/deleteManyCupons.schema";
-import { CuponsDeleteOneSchema } from "../schemas/deleteOneCupons.schema";
-import { CuponsFindFirstSchema } from "../schemas/findFirstCupons.schema";
-import { CuponsFindManySchema } from "../schemas/findManyCupons.schema";
-import { CuponsFindUniqueSchema } from "../schemas/findUniqueCupons.schema";
-import { CuponsGroupBySchema } from "../schemas/groupByCupons.schema";
-import { CuponsUpdateManySchema } from "../schemas/updateManyCupons.schema";
-import { CuponsUpdateOneSchema } from "../schemas/updateOneCupons.schema";
-import { CuponsUpsertSchema } from "../schemas/upsertOneCupons.schema";
+import { z } from 'zod';
+import { TRPCError } from '@trpc/server';
+import { shieldedProcedure } from '../procedures/shielded.procedure';
+import { router } from '../trpc';
+import { CuponsAggregateSchema } from '../schemas/aggregateCupons.schema';
+import { CuponsCreateManySchema } from '../schemas/createManyCupons.schema';
+import { CuponsCreateOneSchema } from '../schemas/createOneCupons.schema';
+import { CuponsDeleteManySchema } from '../schemas/deleteManyCupons.schema';
+import { CuponsDeleteOneSchema } from '../schemas/deleteOneCupons.schema';
+import { CuponsFindFirstSchema } from '../schemas/findFirstCupons.schema';
+import { CuponsFindManySchema } from '../schemas/findManyCupons.schema';
+import { CuponsFindUniqueSchema } from '../schemas/findUniqueCupons.schema';
+import { CuponsGroupBySchema } from '../schemas/groupByCupons.schema';
+import { CuponsUpdateManySchema } from '../schemas/updateManyCupons.schema';
+import { CuponsUpdateOneSchema } from '../schemas/updateOneCupons.schema';
+import { CuponsUpsertSchema } from '../schemas/upsertOneCupons.schema';
 
 export const cuponsRouter = router({
+  /**
+   * Returns the discount porcentaje of the coupon with the specified code
+   * or throws a 404 error if no coupon with the specified code was found
+   */
+  findByCode: shieldedProcedure
+    .input(
+      z.object({
+        code: z.string(),
+      }),
+    )
+    .query(async ({ input: { code }, ctx: { prisma } }) => {
+      const cupon = await prisma.cupons.findFirst({
+        where: {
+          AND: [
+            {
+              code,
+            },
+            {
+              active: 1,
+            },
+          ],
+        },
+      });
+
+      if (!cupon) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'No coupon was found with the specified code',
+        });
+      }
+
+      return {
+        discount: cupon.discount,
+      };
+    }),
   aggregateCupons: shieldedProcedure
     .input(CuponsAggregateSchema)
     .query(async ({ ctx, input }) => {
@@ -54,7 +91,7 @@ export const cuponsRouter = router({
     .input(CuponsFindFirstSchema)
     .query(async ({ ctx, input }) => {
       const findFirstCuponsOrThrow = await ctx.prisma.cupons.findFirstOrThrow(
-        input
+        input,
       );
       return findFirstCuponsOrThrow;
     }),
@@ -74,7 +111,7 @@ export const cuponsRouter = router({
     .input(CuponsFindUniqueSchema)
     .query(async ({ ctx, input }) => {
       const findUniqueCuponsOrThrow = await ctx.prisma.cupons.findUniqueOrThrow(
-        input
+        input,
       );
       return findUniqueCuponsOrThrow;
     }),

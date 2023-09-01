@@ -7,12 +7,30 @@
   h2 {
     font-size: 2.8rem;
   }
+  .btn-back{
+    button{
+      display: flex;
+      gap: 10px;
+      padding-block: 5px;
+      padding-inline: 20px;
+      border-radius: 100px;
+      background: linear-gradient(#2c2c2c, #3d3d3d);
+      color: #cbcbcb;
+      font-weight: 600;
+      align-items: center;
+      &:hover{
+        color: white;
+        gap: 15px;
+        transition: .3s ease all;
+      }
+    }
 
+  }
   .folders-navigation-container {
     display: flex;
     flex-direction: column;
     gap: 10px;
-
+    padding-bottom: 20px;
     .header {
       display: grid;
       grid-template-columns: 2fr 1fr;
@@ -67,6 +85,7 @@
       .video-card {
         grid-template-columns: auto 1fr auto;
         .name-container {
+          padding-inline: 30px;
           justify-content: center;
         }
       }
