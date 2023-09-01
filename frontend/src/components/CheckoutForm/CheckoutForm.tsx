@@ -35,8 +35,9 @@ function CheckoutForm(props: ICheckout) {
               card: elements.getElement("card")!,
             },
           });
-          console.log(result);
           if(result.error){
+            setLoader(false);
+            alert(result.error.message);
             console.log(result.error.message);
           }else{
             setLoader(false);
