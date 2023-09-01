@@ -85,6 +85,8 @@ function Home() {
     }
     catch(error){
       console.log(error);
+      setIndex(-1);
+      setLoadFile(false);
     }
   }
   const downloadFile = async (name: string, index: number) => {
@@ -100,6 +102,8 @@ function Home() {
     }
     catch(error){
       console.log(error);
+      setLoadDownload(false);
+      setIndex(-1);
     }
   }
   useEffect(() => {
