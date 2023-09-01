@@ -122,7 +122,7 @@ function MyAccount() {
                     <tr key={"order_" + index}>
                       <td>{order.date_order.toDateString()}</td>
                       <td>{order.id}</td>
-                      <td>${order.total_price}.00</td>
+                      <td>${order.total_price}.00 {order.total_price === 18 ? "USD" : "MXN"}</td>
                     </tr>
                   )
                 })
