@@ -102,6 +102,7 @@ function Home() {
     }
     catch(error){
       console.log(error);
+      alert('Para descargar se necesita de una suscripción')
       setLoadDownload(false);
       setIndex(-1);
     }
