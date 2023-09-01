@@ -2,19 +2,15 @@ FROM node:18.12.1-alpine AS build
 
 WORKDIR /usr/src/app
 
-COPY . .
+RUN apk --no-cache add --virtual .builds-deps build-base python3 ffmpeg
 
-RUN apk --no-cache add --virtual .builds-deps build-base python3
+COPY package*.json prisma/schema.prisma .
 
-RUN npm config set python /usr/bin/python && npm i && npm run build
-
-FROM node:18.12.1-alpine AS runner
-
-WORKDIR /usr/src/app
+RUN npm config set python /usr/bin/python && npm i && npx prisma generate
 
 COPY . .
 
-RUN npm i --production
+RUN npm run build
 
 EXPOSE 5000
 

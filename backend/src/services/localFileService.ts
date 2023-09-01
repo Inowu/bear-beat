@@ -25,7 +25,7 @@ export class LocalFileService implements IFileService {
     return files
       .filter((file) => !file.startsWith('.'))
       .map((file) => {
-        const stat = statSync(nodePath.join(process.env.SONGS_PATH as string, path, file));
+        const stat = statSync(nodePath.join(path, file));
 
         return {
           name: file,
