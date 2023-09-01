@@ -139,18 +139,57 @@ export const getCustomerIdFromPayload = async (
 ): Promise<Users | null> => {
   let user: Users | null | undefined = null;
 
+  const customerId = (payload.data.object as any).customer;
+
   switch (payload.type) {
     case StripeEvents.SUBSCRIPTION_CREATED:
     case StripeEvents.SUBSCRIPTION_UPDATED:
     case StripeEvents.SUBSCRIPTION_DELETED:
       user = await prisma.users.findFirst({
         where: {
-          stripe_cusid: (payload.data.object as any).customer,
+          stripe_cusid: customerId,
         },
       });
       break;
     default:
       break;
+  }
+
+  if (!user) {
+    const existingUser = await stripeInstance.customers.retrieve(customerId);
+
+    log.info(
+      `[STRIPE_WH] No user with customerId ${customerId} was found, trying to update existing db user. Customer: ${JSON.stringify(
+        existingUser,
+      )}`,
+    );
+
+    const dbUser = await prisma.users.findFirst({
+      where: {
+        email: (existingUser.object as any).email,
+      },
+    });
+
+    if (!dbUser) {
+      log.error(
+        `[STRIPE_WH] No user was found with customer email ${(
+          existingUser.object as any
+        )?.email}`,
+      );
+
+      return null;
+    }
+
+    await prisma.users.update({
+      where: {
+        id: dbUser.id,
+      },
+      data: {
+        stripe_cusid: customerId,
+      },
+    });
+
+    return dbUser;
   }
 
   return user;
