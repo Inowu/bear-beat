@@ -46,6 +46,19 @@ export const cancelSubscription = async ({
     return;
   }
 
+  const ftpUser = await prisma.ftpUser.findFirst({
+    where: {
+      userid: user.username,
+    },
+  });
+
+  if (!ftpUser) {
+    log.info(
+      `[CANCEL_SUB] No ftp user found for user ${user.id}, no action taken to cancel subscription`,
+    );
+    return;
+  }
+
   await prisma.$transaction([
     prisma.descargasUser.update({
       where: {
@@ -61,6 +74,14 @@ export const cancelSubscription = async ({
       },
       data: {
         bytes_out_used: gbToBytes(500) + gbToBytes(1),
+      },
+    }),
+    prisma.ftpUser.update({
+      where: {
+        id: ftpUser.id,
+      },
+      data: {
+        expiration: subDays(new Date(), 1).toISOString(),
       },
     }),
   ]);
