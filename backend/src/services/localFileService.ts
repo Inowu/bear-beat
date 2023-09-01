@@ -1,3 +1,4 @@
+import nodePath from 'path';
 import { statSync, existsSync, promises as fs } from 'fs';
 import { IFileService } from './interfaces/fileService.interface';
 
@@ -24,7 +25,7 @@ export class LocalFileService implements IFileService {
     return files
       .filter((file) => !file.startsWith('.'))
       .map((file) => {
-        const stat = statSync(file);
+        const stat = statSync(nodePath.join(path, file));
 
         return {
           name: file,

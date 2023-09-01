@@ -11,5 +11,5 @@ export const ls = shieldedProcedure
   .query(async ({ input: { path } }) => {
     const sanitizedPath = path.replace('..', '');
 
-    return fileService.list(`${process.env.SONGS_PATH}/${sanitizedPath}`);
+    return fileService.list(`${process.env.SONGS_PATH}${sanitizedPath}`);
   });
