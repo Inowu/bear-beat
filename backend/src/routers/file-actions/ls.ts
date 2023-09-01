@@ -9,7 +9,7 @@ export const ls = shieldedProcedure
     }),
   )
   .query(async ({ input: { path } }) => {
-    const sanitizedPath = path.replace('..', '');
+    const sanitizedPath = path.replace('..', '').replace('//', '/');
 
     return fileService.list(`${process.env.SONGS_PATH}${sanitizedPath}`);
   });
