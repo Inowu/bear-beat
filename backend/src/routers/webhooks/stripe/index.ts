@@ -41,6 +41,7 @@ export const stripeSubscriptionWebhook = shieldedProcedure.mutation(
     await addMetadataToSubscription({
       subId: subscription.id,
       prisma,
+      payload,
     });
 
     switch (payload.type) {
@@ -237,9 +238,11 @@ const shouldHandleEvent = (payload: Stripe.Event): boolean => {
 const addMetadataToSubscription = async ({
   subId,
   prisma,
+  payload,
 }: {
   subId: string;
   prisma: PrismaClient;
+  payload: Stripe.Event;
 }) => {
   const subscription = await stripeInstance.subscriptions.retrieve(subId);
 
@@ -262,10 +265,18 @@ const addMetadataToSubscription = async ({
       `Adding order id (${order.id}) to subscription ${subscription.id}`,
     );
 
-    await stripeInstance.subscriptions.update(subId, {
-      metadata: {
-        orderId: order.id,
-      },
-    });
+    try {
+      await stripeInstance.subscriptions.update(subId, {
+        metadata: {
+          orderId: order.id,
+        },
+      });
+    } catch (e) {
+      log.error(
+        `[STRIPE_WH] Error while updating subscription ${subId}, payload ${JSON.stringify(
+          payload,
+        )}`,
+      );
+    }
   }
 };
