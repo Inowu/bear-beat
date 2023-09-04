@@ -233,6 +233,15 @@ model FtpQuotaTalliesHistory {
   @@map("ftpquotatallies_history")
 }
 
+model Demos {
+  id              Int         @id @default(autoincrement())
+  name            String
+  file            String      @db.LongText
+  duration        Int      
+
+  @@map("demos")
+}
+
 enum ftpquotalimits_quota_type {
   user
   group

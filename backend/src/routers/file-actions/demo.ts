@@ -1,4 +1,5 @@
 import fs from 'fs';
+import path from 'path';
 import tmp from 'tmp';
 import { z } from 'zod';
 import Ffmpeg from 'fluent-ffmpeg';
@@ -12,9 +13,11 @@ export const demo = shieldedProcedure
       path: z.string(),
     }),
   )
-  .query(async ({ input: { path }, ctx: { prisma } }) => {
-    const fullPath = `${process.env.SONGS_PATH}${path}`;
+  .query(async ({ input: { path: demoPath }, ctx: { prisma } }) => {
+    const fullPath = `${process.env.SONGS_PATH}${demoPath}`;
     const fileExists = await fileService.exists(fullPath);
+
+    console.log(fullPath);
 
     if (!fileExists) {
       throw new TRPCError({
@@ -31,9 +34,36 @@ export const demo = shieldedProcedure
 
     const demoDuration = config?.value ? Number(config.value) : 60;
 
+    const existingDemo = await prisma.demos.findFirst({
+      where: {
+        AND: [
+          {
+            name: path.basename(fullPath),
+          },
+          {
+            duration: demoDuration,
+          },
+        ],
+      },
+    });
+
+    if (existingDemo) {
+      return {
+        demo: existingDemo.file,
+      };
+    }
+
     const file = await fileService.get(fullPath);
 
     const demoString = await generateDemo(file, demoDuration);
+
+    await prisma.demos.create({
+      data: {
+        name: path.basename(fullPath),
+        file: demoString,
+        duration: demoDuration,
+      },
+    });
 
     return {
       demo: demoString,
