@@ -9,6 +9,8 @@ services:
     environment:
       STRIPE_WH_SECRET: whsec_TutD4Pl1vuaPpF9Z4FFbyn2kiSzqq4VD
       FILE_SERVICE: local
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - /home/products:/home/products
     networks: 
