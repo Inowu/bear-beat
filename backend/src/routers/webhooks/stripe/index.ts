@@ -84,7 +84,7 @@ export const stripeSubscriptionWebhook = shieldedProcedure.mutation(
             );
             await prisma.orders.update({
               where: {
-                id: subscription.metadata.orderId,
+                id: Number(subscription.metadata.orderId),
               },
               data: {
                 status: OrderStatus.FAILED,
@@ -93,13 +93,13 @@ export const stripeSubscriptionWebhook = shieldedProcedure.mutation(
             break;
           case 'past_due':
             log.info(
-              `[STRIPE_WH] Subscription renovation failed for user ${user.id}, subscription id: ${subscription.id}, payload: ${payloadStr}`,
+              `[STRIPE_WH] Subscription renovation failed for user ${user.id}, canceling subscription... subscription id: ${subscription.id}, payload: ${payloadStr}`,
             );
             // TODO: What to do when a payment fails?
 
             await prisma.orders.update({
               where: {
-                id: subscription.metadata.orderId,
+                id: Number(subscription.metadata.orderId),
               },
               data: {
                 status: OrderStatus.CANCELLED,
@@ -110,7 +110,7 @@ export const stripeSubscriptionWebhook = shieldedProcedure.mutation(
           default:
             await prisma.orders.update({
               where: {
-                id: subscription.metadata.orderId,
+                id: Number(subscription.metadata.orderId),
               },
               data: {
                 status: OrderStatus.FAILED,
@@ -260,7 +260,7 @@ const addMetadataToSubscription = async ({
     return;
   }
 
-  if (!subscription.metadata.orderId && order) {
+  if (subscription.id && !subscription.metadata.orderId && order) {
     log.info(
       `Adding order id (${order.id}) to subscription ${subscription.id}`,
     );
