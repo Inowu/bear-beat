@@ -2,7 +2,7 @@ import { createTRPCProxyClient, httpBatchLink } from "@trpc/client";
 import superjson from "superjson";
 import type { AppRouter } from "../../../backend/src/routers";
 
-const url = process.env.NODE_ENV === 'production' ?'http://thebearbeat.com:8080/trpc' :'http://localhost:5000/trpc'  ;
+const url = process.env.NODE_ENV === 'production' ? 'https://kale67.world/trpc' : 'http://localhost:5000/trpc';
  
 const trpc = createTRPCProxyClient<AppRouter>({
   transformer: superjson,
