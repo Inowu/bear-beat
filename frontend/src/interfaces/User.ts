@@ -14,6 +14,8 @@ export interface IUser {
     expiration: Date;
     passwd: string;
     userid: string;
+    host: string;
+    port: string;
   }
   export interface IQuota{
     available: bigint;

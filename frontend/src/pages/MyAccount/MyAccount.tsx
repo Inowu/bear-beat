@@ -81,10 +81,10 @@ function MyAccount() {
                 {
                   currentUser?.ftpAccount ?
                   <tr>
-                  <td>51.222.40.65</td>
+                  <td>{currentUser?.ftpAccount.host}</td>
                   <td>{currentUser?.ftpAccount.userid}</td>
                   <td>{currentUser?.ftpAccount.passwd}</td>
-                  <td>21</td>
+                  <td>{currentUser?.ftpAccount.port}</td>
                   <td>{currentUser?.ftpAccount.expiration.toDateString()}</td>
                   <td>
                     <img src={filezillaIcon} alt="filezilla" />
