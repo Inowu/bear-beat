@@ -22,7 +22,7 @@ function SignUpForm() {
     .required('Username is required')
     .min(5, 'Username must be at least 5 characters long'),
     password: Yup.string().required('Password is required')
-    .min(6, 'Password must contain 6 characters atleast'),
+    .min(3, 'Password must contain 3 characters atleast'),
     phone: Yup.string().required('Phone is required'),
     passwordConfirmation: 
     Yup.string().required('Confirmation Password is required')
