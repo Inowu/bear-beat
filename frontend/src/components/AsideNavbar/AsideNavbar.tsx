@@ -18,7 +18,6 @@ interface AsideNavbarPropsI {
 function AsideNavbar(props: AsideNavbarPropsI) {
   const { currentUser,  resetCard} = useUserContext();
   const { show, onHide } = props;
-  console.log(currentUser);
   const goTo = () => {
     resetCard();
   }

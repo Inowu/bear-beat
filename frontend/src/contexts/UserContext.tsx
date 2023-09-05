@@ -38,14 +38,13 @@ const UserContextProvider = (props: any) => {
     // localStorage.setItem("user", "Javier Centeno");
   }
   function resetCard() {
-    console.log('entro-reset-2');
     setFileChange(true);
   }
   function closeFile(){
     setFileChange(false);
   }
   function handleLogout() {
-    // setCurrentUser(null);
+    setCurrentUser(null);
     // localStorage.removeItem("user");
     localStorage.removeItem("token");
     setUserToken(null);
@@ -63,6 +62,7 @@ const UserContextProvider = (props: any) => {
     const token = localStorage.getItem("token");
     if (token !== null) {
       setUserToken(token);
+      console.log('hola');
       startUser()
     }
 
