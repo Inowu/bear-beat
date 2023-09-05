@@ -15,7 +15,7 @@ import { Spinner } from "../../components/Spinner/Spinner";
 import { useUserContext } from "../../contexts/UserContext";
 
 function Home() {
-  const { fileChange } = useUserContext();
+  const { fileChange, closeFile } = useUserContext();
   const [showPreviewModal, setShowPreviewModal] = useState<boolean>(false);
   const [files, setfiles] = useState<IFiles[]>([]);
   const [pastFile, setPastFile] = useState<string[]>([]);
