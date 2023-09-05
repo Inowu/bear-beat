@@ -12,8 +12,10 @@ import trpc from "../../api";
 import { IFiles } from "interfaces/Files";
 import { downloadMP3, sortArrayByName } from "../../functions/functions";
 import { Spinner } from "../../components/Spinner/Spinner";
+import { useUserContext } from "../../contexts/UserContext";
 
 function Home() {
+  const { fileChange } = useUserContext();
   const [showPreviewModal, setShowPreviewModal] = useState<boolean>(false);
   const [files, setfiles] = useState<IFiles[]>([]);
   const [pastFile, setPastFile] = useState<string[]>([]);
@@ -111,6 +113,12 @@ function Home() {
     getFiles();
   }, []);
 
+  useEffect(() => {
+    if(fileChange){
+      setPastFile([]);
+    }
+  }, [fileChange])
+  
   return (
     <div className="home-main-container">
       <PreviewModal

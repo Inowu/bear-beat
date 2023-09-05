@@ -16,16 +16,19 @@ interface AsideNavbarPropsI {
 }
 
 function AsideNavbar(props: AsideNavbarPropsI) {
-  const { currentUser } = useUserContext();
+  const { currentUser,  resetCard} = useUserContext();
   const { show, onHide } = props;
   console.log(currentUser);
+  const goTo = () => {
+    resetCard();
+  }
   return (
     <aside className={show ? "open" : ""}>
       <img src={Logo} alt="bear beat" />
       <div className="nav-container">
         <h2>Contenido</h2>
         <ul>
-          <Link to={"/"}>
+          <Link to={"/"} onClick={goTo}>
             <li>
               <FontAwesomeIcon icon={faFolder} /> Todos los archivos
             </li>

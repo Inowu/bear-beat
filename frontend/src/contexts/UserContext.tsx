@@ -7,6 +7,8 @@ interface UserContextI {
   userToken: string | null;
   handleLogin: (token: string) => void;
   handleLogout: () => void;
+  resetCard: ()=> void;
+  fileChange: boolean;
 }
 
 export const UserContext = createContext<UserContextI>({
@@ -14,6 +16,8 @@ export const UserContext = createContext<UserContextI>({
   userToken: "",
   handleLogin: () => {},
   handleLogout: () => {},
+  resetCard: ()=> {},
+  fileChange: false,
 });
 
 export function useUserContext() {
@@ -24,13 +28,16 @@ const UserContextProvider = (props: any) => {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [userToken, setUserToken] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [fileChange, setFileChange] = useState<boolean>(false);
 
   function handleLogin(token: string) {
     localStorage.setItem("token", token);
     setUserToken(token);
     // localStorage.setItem("user", "Javier Centeno");
   }
-
+  function resetCard() {
+    setFileChange(true);
+  }
   function handleLogout() {
     // setCurrentUser(null);
     // localStorage.removeItem("user");
@@ -61,6 +68,8 @@ const UserContextProvider = (props: any) => {
     currentUser,
     handleLogout,
     handleLogin,
+    resetCard,
+    fileChange,
   };
 
   if (loading) return <></>;
