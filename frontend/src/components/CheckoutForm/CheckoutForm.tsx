@@ -40,7 +40,8 @@ function CheckoutForm(props: ICheckout) {
             console.log(result.error.message);
           }else{
             setLoader(false);
-            window.location.href = "/";
+            navigate('/');
+            window.location.reload();
           }
         }
     }
