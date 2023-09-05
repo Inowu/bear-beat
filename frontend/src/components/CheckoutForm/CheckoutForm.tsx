@@ -39,7 +39,7 @@ function CheckoutForm(props: ICheckout) {
             alert(result.error.message);
             console.log(result.error.message);
           }else{
-            alert('Pago realizado con de manera correcta!')
+            alert('Gracias por tu pago, ya puedes descargar!')
             setLoader(false);
             navigate('/');
             window.location.reload();
