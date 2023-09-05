@@ -48,7 +48,7 @@ function PlanCard(props: PlanCardPropsI) {
       <button onClick={() => handleCheckout(plan.id)}>
         COMPRAR CON TARJETA
       </button>
-      <button>COMPRAR CON PAYPAL</button>
+      {/* <button>COMPRAR CON PAYPAL</button> */}
     </div>
   );
 }
