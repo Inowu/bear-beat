@@ -67,7 +67,7 @@ const UserContextProvider = (props: any) => {
     }
 
     setLoading(false);
-  }, []);
+  }, [userToken]);
 
   const values = {
     userToken,
