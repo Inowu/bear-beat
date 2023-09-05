@@ -27,29 +27,30 @@ function CheckoutForm(props: ICheckout) {
     }
     console.log(body_stripe);
     setLoader(true);
-    try{
-        const suscribeMethod = await trpc.subscriptions.subscribeWithStripe.query(body_stripe)
-        if (elements && stripe) {
-          const result = await stripe.confirmCardPayment(suscribeMethod.clientSecret, {
-            payment_method: {
-              card: elements.getElement("card")!,
-            },
-          });
-          if(result.error){
-            setLoader(false);
-            alert(result.error.message);
-            console.log(result.error.message);
-          }else{
-            setLoader(false);
-            navigate('/');
-          }
-        }
-    }
-    catch(error){
-      setLoader(false);
-      alert(error);
-      console.log(error)
-    }
+    window.location.href = "/";
+    // try{
+    //     const suscribeMethod = await trpc.subscriptions.subscribeWithStripe.query(body_stripe)
+    //     if (elements && stripe) {
+    //       const result = await stripe.confirmCardPayment(suscribeMethod.clientSecret, {
+    //         payment_method: {
+    //           card: elements.getElement("card")!,
+    //         },
+    //       });
+    //       if(result.error){
+    //         setLoader(false);
+    //         alert(result.error.message);
+    //         console.log(result.error.message);
+    //       }else{
+    //         setLoader(false);
+    //         navigate('/');
+    //       }
+    //     }
+    // }
+    // catch(error){
+    //   setLoader(false);
+    //   alert(error);
+    //   console.log(error)
+    // }
   }
   const onSubmit = async(e: any) => {
     e.preventDefault();
