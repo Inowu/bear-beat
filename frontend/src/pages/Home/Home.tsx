@@ -115,7 +115,8 @@ function Home() {
 
   useEffect(() => {
     if(fileChange){
-      console.log('entro el reset')
+      console.log('entro el reset-2')
+      closeFile();
       getFiles();
       setPastFile([]);
     }

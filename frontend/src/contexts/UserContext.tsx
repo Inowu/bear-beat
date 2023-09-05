@@ -9,6 +9,7 @@ interface UserContextI {
   handleLogout: () => void;
   resetCard: ()=> void;
   fileChange: boolean;
+  closeFile: ()=> void;
 }
 
 export const UserContext = createContext<UserContextI>({
@@ -18,6 +19,7 @@ export const UserContext = createContext<UserContextI>({
   handleLogout: () => {},
   resetCard: ()=> {},
   fileChange: false,
+  closeFile: ()=> {},
 });
 
 export function useUserContext() {
@@ -36,8 +38,11 @@ const UserContextProvider = (props: any) => {
     // localStorage.setItem("user", "Javier Centeno");
   }
   function resetCard() {
-    console.log('reset');
+    console.log('entro-reset-2');
     setFileChange(true);
+  }
+  function closeFile(){
+    setFileChange(false);
   }
   function handleLogout() {
     // setCurrentUser(null);
@@ -71,6 +76,7 @@ const UserContextProvider = (props: any) => {
     handleLogin,
     resetCard,
     fileChange,
+    closeFile,
   };
 
   if (loading) return <></>;
