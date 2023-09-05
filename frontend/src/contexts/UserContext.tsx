@@ -36,6 +36,7 @@ const UserContextProvider = (props: any) => {
     // localStorage.setItem("user", "Javier Centeno");
   }
   function resetCard() {
+    console.log('reset');
     setFileChange(true);
   }
   function handleLogout() {
