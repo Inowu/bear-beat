@@ -4,8 +4,8 @@ import trpc from "../../../api";
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useState } from "react";
-import { ErrorModal } from "components/Modals/ErrorModal/ErrorModal";
-import { SuccessModal } from "components/Modals/SuccessModal/SuccessModal";
+import { ErrorModal } from "../../../components/Modals/ErrorModal/ErrorModal";
+import { SuccessModal } from "../../../components/Modals/SuccessModal/SuccessModal";
 
 function ForgotPasswordForm() {
   const navigate = useNavigate();
