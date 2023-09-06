@@ -45,7 +45,6 @@ const UserContextProvider = (props: any) => {
   }
   function handleLogout() {
     setCurrentUser(null);
-    // localStorage.removeItem("user");
     localStorage.removeItem("token");
     setUserToken(null);
   }
@@ -62,7 +61,7 @@ const UserContextProvider = (props: any) => {
     const token = localStorage.getItem("token");
     if (token !== null) {
       setUserToken(token);
-      console.log('hola');
+      console.log('aidos');
       startUser()
     }
 
