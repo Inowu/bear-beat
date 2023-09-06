@@ -82,14 +82,18 @@ export const stripeSubscriptionWebhook = shieldedProcedure.mutation(
             log.info(
               `[STRIPE_WH] Incomplete subscription was expired for user ${user.id}, subscription id: ${subscription.id}, payload: ${payloadStr}`,
             );
-            await prisma.orders.update({
-              where: {
-                id: Number(subscription.metadata.orderId),
-              },
-              data: {
-                status: OrderStatus.FAILED,
-              },
-            });
+
+            if (subscription.metadata.orderId) {
+              await prisma.orders.update({
+                where: {
+                  id: Number(subscription.metadata.orderId),
+                },
+                data: {
+                  status: OrderStatus.FAILED,
+                },
+              });
+            }
+
             break;
           case 'past_due':
             log.info(
@@ -97,26 +101,34 @@ export const stripeSubscriptionWebhook = shieldedProcedure.mutation(
             );
             // TODO: What to do when a payment fails?
 
-            await prisma.orders.update({
-              where: {
-                id: Number(subscription.metadata.orderId),
-              },
-              data: {
-                status: OrderStatus.CANCELLED,
-              },
-            });
+            if (subscription.metadata.orderId) {
+              await prisma.orders.update({
+                where: {
+                  id: Number(subscription.metadata.orderId),
+                },
+                data: {
+                  status: OrderStatus.CANCELLED,
+                },
+              });
+            }
+
             await cancelSubscription({ prisma, user });
+
             break;
           default:
-            await prisma.orders.update({
-              where: {
-                id: Number(subscription.metadata.orderId),
-              },
-              data: {
-                status: OrderStatus.FAILED,
-              },
-            });
+            if (subscription.metadata.orderId) {
+              await prisma.orders.update({
+                where: {
+                  id: Number(subscription.metadata.orderId),
+                },
+                data: {
+                  status: OrderStatus.FAILED,
+                },
+              });
+            }
+
             await cancelSubscription({ prisma, user });
+
             break;
         }
         break;
