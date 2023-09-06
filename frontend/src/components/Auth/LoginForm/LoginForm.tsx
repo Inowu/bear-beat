@@ -4,11 +4,17 @@ import trpc from "../../../api";
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import {  useState } from "react";
+import { ErrorModal } from "../../../components/Modals/ErrorModal/ErrorModal";
 
 function LoginForm() {
   const [loader, setLoader] = useState<boolean>(false);
+  const [show, setShow] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<any>('');
   const { handleLogin } = useUserContext();
   const navigate = useNavigate();
+  const closeModal = () => {
+    setShow(false);
+  }
   const validationSchema = Yup.object().shape({
     username: Yup.string()
     .required('Username is required')
@@ -36,12 +42,12 @@ function LoginForm() {
           setLoader(false);
         }
         catch(error){
-          alert(error);
+          setShow(true);
+          setErrorMessage(error);
           setLoader(false);
         }
     },
   });
-
   return (
     <form onSubmit={formik.handleSubmit}>
       <h2>LOGIN</h2>
@@ -76,6 +82,7 @@ function LoginForm() {
       <div className="c-row">
         <Link to={"registro"}>Registrarme</Link>
       </div>
+      <ErrorModal show={show} onHide={closeModal} message={errorMessage}/>
     </form>
   );
 }
