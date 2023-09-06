@@ -23,7 +23,7 @@ export function SuccessModal (props: IError)  {
                     {message?.toString()}
                 </p>
                 <div className='button-container-2'>
-                  <button className='btn-success'>
+                  <button className='btn-success' onClick={onHide}>
                     Aceptar
                   </button>
                 </div>
