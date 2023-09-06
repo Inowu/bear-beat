@@ -5,6 +5,7 @@ import "./SignUpForm.scss";
 import es from "react-phone-input-2/lang/es.json";
 import { ReactComponent as Arrow } from "../../../assets/icons/arrow-down.svg";
 import { useUserContext } from "../../../contexts/UserContext";
+import { ErrorModal } from "../../../components/Modals/ErrorModal/ErrorModal";
 import trpc from "../../../api";
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
@@ -14,6 +15,11 @@ function SignUpForm() {
   const navigate = useNavigate();
   const [loader, setLoader] = useState<boolean>(false);
   const { handleLogin } = useUserContext();
+  const [show, setShow] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<any>('');
+  const closeModal = () => {
+    setShow(false);
+  }
   const validationSchema = Yup.object().shape({
     email:  Yup.string()
     .required('Email is required')
@@ -54,7 +60,8 @@ function SignUpForm() {
           setLoader(false);
         }
         catch(error){
-          alert(error);
+          setShow(true);
+          setErrorMessage(error);
           setLoader(false);
         }
     },
@@ -133,6 +140,7 @@ function SignUpForm() {
           Ya tengo cuenta
         </Link>
       </div>
+      <ErrorModal show={show} onHide={closeModal} message={errorMessage}/>
     </form>
   );
 }

@@ -13,6 +13,7 @@ import { IFiles } from "interfaces/Files";
 import { downloadMP3, sortArrayByName } from "../../functions/functions";
 import { Spinner } from "../../components/Spinner/Spinner";
 import { useUserContext } from "../../contexts/UserContext";
+import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
 
 function Home() {
   const { fileChange, closeFile } = useUserContext();
@@ -24,6 +25,11 @@ function Home() {
   const [loadDownload, setLoadDownload] = useState<boolean>(false);
   const [fileToShow, setFileToShow] = useState<any>(null);
   const [index, setIndex] = useState<number>(-1);
+  const [show, setShow] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<any>('');
+  const closeError = () => {
+    setShow(false);
+  }
   const getFiles = async () =>  {
     setLoader(true);
     let body = {
@@ -86,7 +92,6 @@ function Home() {
       setShowPreviewModal(true);
     }
     catch(error){
-      console.log(error);
       setIndex(-1);
       setLoadFile(false);
     }
@@ -103,8 +108,8 @@ function Home() {
       setIndex(-1);
     }
     catch(error){
-      console.log(error);
-      alert('Para descargar se necesita de una suscripción')
+      setErrorMessage('Para descargar se necesita de una suscripción')
+      setShow(false);
       setLoadDownload(false);
       setIndex(-1);
     }
@@ -200,6 +205,7 @@ function Home() {
           }
         </div>
       </div>
+      <ErrorModal show={show} onHide={closeError} message={errorMessage}/>
     </div>
   );
 }

@@ -4,10 +4,21 @@ import trpc from "../../../api";
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useState } from "react";
+import { ErrorModal } from "components/Modals/ErrorModal/ErrorModal";
+import { SuccessModal } from "components/Modals/SuccessModal/SuccessModal";
 
 function ForgotPasswordForm() {
   const navigate = useNavigate();
   const [loader, setLoader] = useState<boolean>(false);
+  const [show, setShow] = useState<boolean>(false);
+  const [showSuccess, setShowSuccess] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<any>('');
+  const closeError = () => {
+    setShow(false);
+  }
+  const closeSuccess = () => {
+    setShowSuccess(false);
+  }
   const validationSchema = Yup.object().shape({
     email:  Yup.string()
     .required('Email is required')
@@ -26,9 +37,11 @@ function ForgotPasswordForm() {
         }
         try{
           setLoader(false);
+          setShowSuccess(true);
         }
         catch(error){
-          alert(error);
+          setShow(true);
+          setErrorMessage(error);
           setLoader(false);
         }
     },
@@ -46,6 +59,8 @@ function ForgotPasswordForm() {
           Ya tengo cuenta
         </Link>
       </div>
+      <ErrorModal show={show} onHide={closeError} message={errorMessage}/>
+      <SuccessModal show={showSuccess} onHide={closeSuccess} message= "Revise las instrucciones en su correo para realizar el cambio de contraseña" title ="Correo enviado!"/> 
     </form>
   );
 }

@@ -5,6 +5,8 @@ import { visitFunctionBody } from "typescript";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Spinner } from "../../components/Spinner/Spinner";
+import { SuccessModal } from "../../components/Modals/SuccessModal/SuccessModal";
+import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
 
 interface ICheckout {
   plan: number;
@@ -13,12 +15,22 @@ interface ICheckout {
 function CheckoutForm(props: ICheckout) {
   const [loader, setLoader] = useState<boolean>(false);
   const [coupon, setCoupon] = useState<string>('');
+  const [show, setShow] = useState<boolean>(false);
+  const [showSuccess, setShowSuccess] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<any>('');
   const { plan } = props;
   const stripe: any = useStripe();
   const elements = useElements();
   const random_number: number = Math.random();
   const navigate = useNavigate();
-
+  const closeError = () => {
+    setShow(false);
+  }
+  const closeSuccess = () => {
+    setShowSuccess(false);
+    navigate('/');
+    window.location.reload();
+  }
   const suscribetext = async () => {
     let body_stripe = {
       // cardToken: token.id,
@@ -36,20 +48,18 @@ function CheckoutForm(props: ICheckout) {
           });
           if(result.error){
             setLoader(false);
-            alert(result.error.message);
-            console.log(result.error.message);
+            setErrorMessage(result.error.message);
+            setShow(true);
           }else{
-            alert('Gracias por tu pago, ya puedes descargar!')
+            setShowSuccess(true);
             setLoader(false);
-            navigate('/');
-            window.location.reload();
           }
         }
     }
     catch(error){
       setLoader(false);
-      alert(error);
-      console.log(error)
+      setShow(true);
+      setErrorMessage(error);
     }
   }
   const onSubmit = async(e: any) => {
@@ -77,7 +87,8 @@ function CheckoutForm(props: ICheckout) {
         ? <Spinner size={4} width={.4} color="#00e2f7"/>
         : <button className="btn primary-pill linear-bg">SUBSCRIBE</button>
       }
-      
+           <ErrorModal show={show} onHide={closeError} message={errorMessage}/>
+           <SuccessModal show={showSuccess} onHide={closeSuccess} message= "Gracias por tu pago, ya puedes empezar a descargar!" title ="Compra Exitosa"/> 
     </form>
   );
 }
