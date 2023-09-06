@@ -109,7 +109,7 @@ function Home() {
     }
     catch(error){
       setErrorMessage('Para descargar se necesita de una suscripción')
-      setShow(false);
+      setShow(true);
       setLoadDownload(false);
       setIndex(-1);
     }
