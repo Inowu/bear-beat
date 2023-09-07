@@ -55,7 +55,7 @@ function SignUpForm() {
           username: values.username,
           password: values.password,
           email: values.email,
-          phone: code + values.phone,
+          phone: `+${code} ${values.phone}`,
         }
         console.log(body);
         try{
