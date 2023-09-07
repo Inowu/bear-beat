@@ -57,12 +57,12 @@ function SignUpForm() {
           email: values.email,
           phone: `+${code} ${values.phone}`,
         }
-        console.log(body);
         try{
           const register = await trpc.auth.register.mutate(body);
           handleLogin(register.token);
           navigate("/");
           setLoader(false);
+          console.log(register);
         }
         catch(error){
           setShow(true);
