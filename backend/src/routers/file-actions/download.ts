@@ -3,7 +3,6 @@ import { TRPCError } from '@trpc/server';
 import { fileService } from '../../ftp';
 import { log } from '../../server';
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
-import { gbToBytes } from '../../utils/gbToBytes';
 
 export const download = shieldedProcedure
   .input(

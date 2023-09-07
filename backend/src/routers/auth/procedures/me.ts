@@ -12,6 +12,9 @@ export const me = shieldedProcedure.query(
       where: {
         user_id: user.id,
       },
+      orderBy: {
+        accessed: 'desc',
+      },
     });
 
     return {
