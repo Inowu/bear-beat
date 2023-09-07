@@ -48,7 +48,7 @@ export const cancelSubscription = async ({
 
   const ftpUser = await prisma.ftpUser.findFirst({
     where: {
-      userid: user.username,
+      user_id: user.id,
     },
   });
 
