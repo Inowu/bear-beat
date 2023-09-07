@@ -72,7 +72,7 @@ function SignUpForm() {
         catch(error){
           setShow(true);
           setErrorMessage(error);
-          setLoader(false);
+          setLoader(false)
         }
     },
   });
