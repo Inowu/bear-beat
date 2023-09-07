@@ -10,6 +10,7 @@ import trpc from "../../../api";
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useState } from "react";
+import { SuccessModal } from "components/Modals/SuccessModal/SuccessModal";
 
 function SignUpForm() {
   const navigate = useNavigate();
@@ -17,9 +18,14 @@ function SignUpForm() {
   const { handleLogin } = useUserContext();
   const [show, setShow] = useState<boolean>(false);
   const [code, setCode] = useState<string>('52');
+  const [showSuccess, setShowSuccess] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<any>('');
   const closeModal = () => {
     setShow(false);
+  }
+  const closeSuccess = () => {
+    setShowSuccess(false);
+    navigate("/");
   }
   const validationSchema = Yup.object().shape({
     email:  Yup.string()
@@ -29,7 +35,7 @@ function SignUpForm() {
     .required('Username is required')
     .min(5, 'Username must be at least 5 characters long'),
     password: Yup.string().required('Password is required')
-    .min(3, 'Password must contain 3 characters atleast'),
+    .min(6, 'Password must contain 6 characters atleast'),
     phone: Yup.string().required('Phone is required')
     .matches(/^[0-9]{10}$/, 'Phone number is not valid'),
     passwordConfirmation: 
@@ -60,9 +66,8 @@ function SignUpForm() {
         try{
           const register = await trpc.auth.register.mutate(body);
           handleLogin(register.token);
-          navigate("/");
+          setShowSuccess(true);
           setLoader(false);
-          console.log(register);
         }
         catch(error){
           setShow(true);
@@ -148,6 +153,12 @@ function SignUpForm() {
         </Link>
       </div>
       <ErrorModal show={show} onHide={closeModal} message={errorMessage}/>
+      <SuccessModal 
+        show={showSuccess} 
+        onHide={closeSuccess} 
+        message="Se ha creado su usuario con éxito!"
+        title= "Registro Exitoso"
+      />
     </form>
   );
 }
