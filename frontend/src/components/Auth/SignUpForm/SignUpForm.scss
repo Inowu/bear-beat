@@ -6,14 +6,24 @@ form.sign-up-form {
     .special-label {
       display: none;
     }
-
+    .code{
+      position: absolute;
+      font-size: 18px;
+      color: white;
+      margin: 0;
+      left: 50px;
+      top: 48%;
+      transform: translateY(-50%);
+    }
     .dial-container {
       position: absolute;
       width: auto;
       left: 0px;
       top: 50%;
-      transform: translate(0px, -50%);
+      transform: translateY(-50%);
+      z-index: 1000;
       input {
+        display: none;
         background-color: transparent;
         border: none;
         font-size: 1.8rem;
@@ -26,7 +36,6 @@ form.sign-up-form {
           box-shadow: none;
         }
       }
-
     }
     input.phone {
       padding-left: 100px;

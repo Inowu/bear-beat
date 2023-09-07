@@ -16,6 +16,7 @@ function SignUpForm() {
   const [loader, setLoader] = useState<boolean>(false);
   const { handleLogin } = useUserContext();
   const [show, setShow] = useState<boolean>(false);
+  const [code, setCode] = useState<string>('52');
   const [errorMessage, setErrorMessage] = useState<any>('');
   const closeModal = () => {
     setShow(false);
@@ -29,7 +30,8 @@ function SignUpForm() {
     .min(5, 'Username must be at least 5 characters long'),
     password: Yup.string().required('Password is required')
     .min(3, 'Password must contain 3 characters atleast'),
-    phone: Yup.string().required('Phone is required'),
+    phone: Yup.string().required('Phone is required')
+    .matches(/^[0-9]{10}$/, 'Phone number is not valid'),
     passwordConfirmation: 
     Yup.string().required('Confirmation Password is required')
     .oneOf([Yup.ref('password')], 'Both should be the same'),
@@ -41,6 +43,9 @@ function SignUpForm() {
     phone: '',
     passwordConfirmation: '',
   };
+  const handlePhoneNumberChange = (value:any, country:any) => {
+    setCode(country.dialCode);
+  };
   const formik = useFormik({
     initialValues: initialValues,
     validationSchema: validationSchema,
@@ -50,7 +55,7 @@ function SignUpForm() {
           username: values.username,
           password: values.password,
           email: values.email,
-          phone: values.phone,
+          phone: code + values.phone,
         }
         console.log(body);
         try{
@@ -83,12 +88,14 @@ function SignUpForm() {
       </div>
       <div className="c-row">
         <PhoneInput
-          containerClass="dial-container"
-          buttonClass="dial-code"
-          country={"mx"}
-          placeholder="Phone"
-          localization={es}
-        />
+            containerClass="dial-container"
+            buttonClass="dial-code"
+            country={"mx"}
+            placeholder="Phone"
+            localization={es}
+            onChange={handlePhoneNumberChange}
+          />
+        <p className="code">+{code}</p>
         <input 
           className="phone" 
           placeholder="phone" 
