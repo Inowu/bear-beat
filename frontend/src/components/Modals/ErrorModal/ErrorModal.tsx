@@ -20,13 +20,10 @@ export function ErrorModal (props: IError)  {
                 <p className='content'>
                     {message?.toString()}
                 </p>
-                <div className='button-container'>
-                    <button className='btn-cancel' onClick={onHide}>
-                        CANCELAR
-                    </button>
-                    <button className='btn-retry' onClick={onHide}>
-                        REINTENTAR
-                    </button>
+                <div className='button-container-2'>
+                  <button className='btn-cancel' onClick={onHide}>
+                    Cerrar
+                  </button>
                 </div>
             </div>
         </div>
