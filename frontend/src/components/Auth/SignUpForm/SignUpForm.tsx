@@ -10,7 +10,7 @@ import trpc from "../../../api";
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useState } from "react";
-import { SuccessModal } from "components/Modals/SuccessModal/SuccessModal";
+import { SuccessModal } from "../../../components/Modals/SuccessModal/SuccessModal";
 
 function SignUpForm() {
   const navigate = useNavigate();
