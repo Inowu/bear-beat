@@ -3,10 +3,11 @@ import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import trpc from "../../api";
 import { visitFunctionBody } from "typescript";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Spinner } from "../../components/Spinner/Spinner";
 import { SuccessModal } from "../../components/Modals/SuccessModal/SuccessModal";
 import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
+declare let window: any;
 
 interface ICheckout {
   plan: number;
@@ -14,10 +15,17 @@ interface ICheckout {
 
 function CheckoutForm(props: ICheckout) {
   const [loader, setLoader] = useState<boolean>(false);
-  const [coupon, setCoupon] = useState<string>('');
+  const [coupon, setCoupon] = useState<string>("");
   const [show, setShow] = useState<boolean>(false);
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<any>('');
+  const [errorMessage, setErrorMessage] = useState<any>("");
+  const [cardInfo, setCardInfo] = useState({
+    card: "",
+    month: "",
+    year: "",
+    cvv: "",
+    name: "",
+  });
   const { plan } = props;
   const stripe: any = useStripe();
   const elements = useElements();
@@ -25,70 +33,189 @@ function CheckoutForm(props: ICheckout) {
   const navigate = useNavigate();
   const closeError = () => {
     setShow(false);
-  }
+  };
   const closeSuccess = () => {
     setShowSuccess(false);
-    navigate('/');
+    navigate("/");
     window.location.reload();
+  };
+  const conectaSuscribe = async () => {
+    let tempCard = {
+      card: {
+        number: cardInfo.card.replaceAll(" ", ""),
+        name: cardInfo.name,
+        exp_month: cardInfo.month,
+        exp_year: cardInfo.year,
+        cvc: cardInfo.cvv,
+      }
+    }
+    window.Conekta.token.create(
+      tempCard,
+      conektaSuccessResponseHandler,
+      conektaErrorResponseHandler, 'web'
+    );
+  };
+  const conektaSuccessResponseHandler = async (token: any) => {
+    let tokenId = token.id
+    let body_conekta = {
+      cardToken: tokenId,
+      planId: plan,
+      makeDefault: "true",
+    };
+    console.log(body_conekta);
+    try {
+      const suscribeConecta = await trpc.subscriptions.subscribeWithCardConekta.mutate(body_conekta);
+      setShowSuccess(true);
+      setLoader(false);
+    } catch (error) {
+      setErrorMessage('Verifique que los datos de su tarjeta sean los correctos!');
+      setShow(true);
+      setLoader(false);
+    }
   }
+  const conektaErrorResponseHandler = (response: any) => {
+    setErrorMessage('Verifique que los datos de su tarjeta sean los correctos!');
+    setShow(true);
+    setLoader(false);
+  };
   const suscribetext = async () => {
     let body_stripe = {
-      // cardToken: token.id,
       planId: plan,
       coupon: coupon,
-    }
+    };
     setLoader(true);
-    try{
-        const suscribeMethod = await trpc.subscriptions.subscribeWithStripe.query(body_stripe)
-        if (elements && stripe) {
-          const result = await stripe.confirmCardPayment(suscribeMethod.clientSecret, {
+    try {
+      const suscribeMethod = await trpc.subscriptions.subscribeWithStripe.query(
+        body_stripe
+      );
+      if (elements && stripe) {
+        const result = await stripe.confirmCardPayment(
+          suscribeMethod.clientSecret,
+          {
             payment_method: {
               card: elements.getElement("card")!,
             },
-          });
-          if(result.error){
-            setLoader(false);
-            setErrorMessage(result.error.message);
-            setShow(true);
-          }else{
-            setShowSuccess(true);
-            setLoader(false);
           }
+        );
+        if (result.error) {
+          setLoader(false);
+          setErrorMessage(result.error.message);
+          setShow(true);
+        } else {
+          setShowSuccess(true);
+          setLoader(false);
         }
-    }
-    catch(error){
+      }
+    } catch (error) {
       setLoader(false);
       setShow(true);
       setErrorMessage(error);
     }
-  }
-  const onSubmit = async(e: any) => {
-    e.preventDefault();
-    suscribetext();
   };
+  const onSubmit = async (e: any) => {
+    e.preventDefault();
+    if (random_number > 0) {
+      suscribetext();
+    } else {
+      conectaSuscribe();
+    }
+  };
+  // const public_key = "key_GexL0lNgQMi2Ugawb6Eefzp";
+
+  useEffect(() => {
+    // console.log(window.Conekta.setPublicKey(public_key));
+    // window.Conekta.setPublicKey(public_key);
+  }, []);
 
   return (
     <form className="checkout-form" onSubmit={onSubmit}>
       <div className="c-row">
         <h4 className="mb-2">Have you a discount code?</h4>
-        <input type="text" placeholder="Example CODE3232" onChange={(e)=>setCoupon(e.target.value)} />
+        <input
+          type="text"
+          placeholder="Example CODE3232"
+          onChange={(e) => setCoupon(e.target.value)}
+        />
         <h4 className="mt-2">
           Discount only apply on first month. <span>Apply</span>
         </h4>
       </div>
       <div className="c-row">
-        <CardElement
-          className="card-input"
-          options={{ hidePostalCode: true }}
-        />
+        {random_number > 0 ? (
+          <CardElement
+            className="card-input"
+            options={{ hidePostalCode: true }}
+          />
+        ) : (
+          <div className="conekta-input">
+            <input
+              placeholder="Nombre en la tarjeta"
+              onChange={(e) => {
+                setCardInfo({
+                  ...cardInfo,
+                  name: e.target.value,
+                });
+              }}
+            />
+            <div className="bottom-inputs">
+              <input
+                placeholder="Número de tarjeta"
+                type="number"
+                onChange={(e) => {
+                  setCardInfo({
+                    ...cardInfo,
+                    card: e.target.value,
+                  });
+                }}
+              />
+              <div className="other-inputs">
+                <input
+                  placeholder="mes"
+                  type="numer"
+                  onChange={(e) => {
+                    setCardInfo({
+                      ...cardInfo,
+                      month: e.target.value,
+                    });
+                  }}
+                />
+                <input
+                  placeholder="año"
+                  type="number"
+                  onChange={(e) => {
+                    setCardInfo({
+                      ...cardInfo,
+                      year: e.target.value,
+                    });
+                  }}
+                />
+                <input
+                  placeholder="cvv"
+                  type="password"
+                  onChange={(e) => {
+                    setCardInfo({
+                      ...cardInfo,
+                      cvv: e.target.value,
+                    });
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-      {
-        loader 
-        ? <Spinner size={4} width={.4} color="#00e2f7"/>
-        : <button className="btn primary-pill linear-bg">SUBSCRIBE</button>
-      }
-           <ErrorModal show={show} onHide={closeError} message={errorMessage}/>
-           <SuccessModal show={showSuccess} onHide={closeSuccess} message= "Gracias por tu pago, ya puedes empezar a descargar!" title ="Compra Exitosa"/> 
+      {loader ? (
+        <Spinner size={4} width={0.4} color="#00e2f7" />
+      ) : (
+        <button className="btn primary-pill linear-bg">SUBSCRIBE</button>
+      )}
+      <ErrorModal show={show} onHide={closeError} message={errorMessage} />
+      <SuccessModal
+        show={showSuccess}
+        onHide={closeSuccess}
+        message="Gracias por tu pago, ya puedes empezar a descargar!"
+        title="Compra Exitosa"
+      />
     </form>
   );
 }

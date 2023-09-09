@@ -5,7 +5,19 @@ form.checkout-form {
 
   .c-row {
     width: 100%;
-
+    .conekta-input{
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      .bottom-inputs{
+        display: flex;
+        gap: 5px;
+        .other-inputs{
+          display: flex;
+          gap: 5px;
+        }
+      }
+    }
     input {
       width: 100%;
     }
