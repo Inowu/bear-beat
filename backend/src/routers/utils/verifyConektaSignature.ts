@@ -1,7 +1,8 @@
 import NodeRSA from 'node-rsa';
-import { FastifyRequest } from 'fastify';
+import type { Request } from 'express';
+// import { FastifyRequest } from 'fastify';
 
-export const verifyConektaSignature = (req: FastifyRequest, payload: any) => {
+export const verifyConektaSignature = (req: Request, payload: any) => {
   if (!req.headers.digest) {
     return false;
   }

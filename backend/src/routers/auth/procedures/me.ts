@@ -12,13 +12,29 @@ export const me = shieldedProcedure.query(
       where: {
         user_id: user.id,
       },
+      orderBy: {
+        accessed: 'desc',
+      },
+    });
+
+    const hasActiveSubscription = await prisma.descargasUser.findFirst({
+      where: {
+        AND: [
+          {
+            user_id: user.id,
+          },
+          {
+            date_end: {
+              gt: new Date().toISOString(),
+            },
+          },
+        ],
+      },
     });
 
     return {
       ...session?.user,
-      hasActiveSubscription: ftpAccount
-        ? compareAsc(new Date(ftpAccount!.expiration!), new Date()) >= 0
-        : null,
+      hasActiveSubscription: Boolean(hasActiveSubscription),
       ftpAccount: ftpAccount
         ? {
             ...ftpAccount,

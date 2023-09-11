@@ -41,6 +41,7 @@ export const stripeSubscriptionWebhook = shieldedProcedure.mutation(
     await addMetadataToSubscription({
       subId: subscription.id,
       prisma,
+      payload,
     });
 
     switch (payload.type) {
@@ -81,41 +82,53 @@ export const stripeSubscriptionWebhook = shieldedProcedure.mutation(
             log.info(
               `[STRIPE_WH] Incomplete subscription was expired for user ${user.id}, subscription id: ${subscription.id}, payload: ${payloadStr}`,
             );
-            await prisma.orders.update({
-              where: {
-                id: subscription.metadata.orderId,
-              },
-              data: {
-                status: OrderStatus.FAILED,
-              },
-            });
+
+            if (subscription.metadata.orderId) {
+              await prisma.orders.update({
+                where: {
+                  id: Number(subscription.metadata.orderId),
+                },
+                data: {
+                  status: OrderStatus.FAILED,
+                },
+              });
+            }
+
             break;
           case 'past_due':
             log.info(
-              `[STRIPE_WH] Subscription renovation failed for user ${user.id}, subscription id: ${subscription.id}, payload: ${payloadStr}`,
+              `[STRIPE_WH] Subscription renovation failed for user ${user.id}, canceling subscription... subscription id: ${subscription.id}, payload: ${payloadStr}`,
             );
             // TODO: What to do when a payment fails?
 
-            await prisma.orders.update({
-              where: {
-                id: subscription.metadata.orderId,
-              },
-              data: {
-                status: OrderStatus.CANCELLED,
-              },
-            });
+            if (subscription.metadata.orderId) {
+              await prisma.orders.update({
+                where: {
+                  id: Number(subscription.metadata.orderId),
+                },
+                data: {
+                  status: OrderStatus.CANCELLED,
+                },
+              });
+            }
+
             await cancelSubscription({ prisma, user });
+
             break;
           default:
-            await prisma.orders.update({
-              where: {
-                id: subscription.metadata.orderId,
-              },
-              data: {
-                status: OrderStatus.FAILED,
-              },
-            });
+            if (subscription.metadata.orderId) {
+              await prisma.orders.update({
+                where: {
+                  id: Number(subscription.metadata.orderId),
+                },
+                data: {
+                  status: OrderStatus.FAILED,
+                },
+              });
+            }
+
             await cancelSubscription({ prisma, user });
+
             break;
         }
         break;
@@ -139,18 +152,57 @@ export const getCustomerIdFromPayload = async (
 ): Promise<Users | null> => {
   let user: Users | null | undefined = null;
 
+  const customerId = (payload.data.object as any).customer;
+
   switch (payload.type) {
     case StripeEvents.SUBSCRIPTION_CREATED:
     case StripeEvents.SUBSCRIPTION_UPDATED:
     case StripeEvents.SUBSCRIPTION_DELETED:
       user = await prisma.users.findFirst({
         where: {
-          stripe_cusid: (payload.data.object as any).customer,
+          stripe_cusid: customerId,
         },
       });
       break;
     default:
       break;
+  }
+
+  if (!user) {
+    const existingUser = await stripeInstance.customers.retrieve(customerId);
+
+    log.info(
+      `[STRIPE_WH] No user with customerId ${customerId} was found, trying to update existing db user. Customer: ${JSON.stringify(
+        existingUser,
+      )}`,
+    );
+
+    const dbUser = await prisma.users.findFirst({
+      where: {
+        email: (existingUser.object as any).email,
+      },
+    });
+
+    if (!dbUser) {
+      log.error(
+        `[STRIPE_WH] No user was found with customer email ${(
+          existingUser.object as any
+        )?.email}`,
+      );
+
+      return null;
+    }
+
+    await prisma.users.update({
+      where: {
+        id: dbUser.id,
+      },
+      data: {
+        stripe_cusid: customerId,
+      },
+    });
+
+    return dbUser;
   }
 
   return user;
@@ -198,9 +250,11 @@ const shouldHandleEvent = (payload: Stripe.Event): boolean => {
 const addMetadataToSubscription = async ({
   subId,
   prisma,
+  payload,
 }: {
   subId: string;
   prisma: PrismaClient;
+  payload: Stripe.Event;
 }) => {
   const subscription = await stripeInstance.subscriptions.retrieve(subId);
 
@@ -218,15 +272,23 @@ const addMetadataToSubscription = async ({
     return;
   }
 
-  if (!subscription.metadata.orderId && order) {
+  if (subscription.id && !subscription.metadata.orderId && order) {
     log.info(
       `Adding order id (${order.id}) to subscription ${subscription.id}`,
     );
 
-    await stripeInstance.subscriptions.update(subId, {
-      metadata: {
-        orderId: order.id,
-      },
-    });
+    try {
+      await stripeInstance.subscriptions.update(subId, {
+        metadata: {
+          orderId: order.id,
+        },
+      });
+    } catch (e) {
+      log.error(
+        `[STRIPE_WH] Error while updating subscription ${subId}, payload ${JSON.stringify(
+          payload,
+        )}`,
+      );
+    }
   }
 };

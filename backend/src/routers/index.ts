@@ -14,6 +14,7 @@ import { plansRouter } from './Plans.router';
 import { rolesRouter } from './Roles.router';
 import { userfilesRouter } from './UserFiles.router';
 import { usersRouter } from './Users.router';
+import { adminRouter } from './admin';
 import { authRouter } from './auth';
 import { ftpRouter } from './file-actions';
 import { subscriptionsRouter } from './subscriptions';
@@ -24,6 +25,7 @@ export const appRouter = router({
   ftp: ftpRouter,
   subscriptions: subscriptionsRouter,
   webhooks: webhooksRouter,
+  admin: adminRouter,
   config: configsRouter,
   countries: countriesRouter,
   cupons: cuponsRouter,

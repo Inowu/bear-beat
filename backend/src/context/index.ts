@@ -1,5 +1,6 @@
 import { inferAsyncReturnType } from '@trpc/server';
-import type { CreateFastifyContextOptions } from '@trpc/server/adapters/fastify';
+// import type { CreateFastifyContextOptions } from '@trpc/server/adapters/fastify';
+import type { CreateExpressContextOptions } from '@trpc/server/adapters/express';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
 import { prisma } from '../db';
@@ -8,9 +9,9 @@ import { SessionUser } from '../routers/auth/utils/serialize-user';
 export const createContext = async ({
   req,
   res,
-}: CreateFastifyContextOptions): Promise<{
-  req: CreateFastifyContextOptions['req'];
-  res: CreateFastifyContextOptions['res'];
+}: CreateExpressContextOptions): Promise<{
+  req: CreateExpressContextOptions['req'];
+  res: CreateExpressContextOptions['res'];
   prisma: PrismaClient;
   session: null | { user: SessionUser | null };
 }> => {

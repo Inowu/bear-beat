@@ -16,3 +16,13 @@ ALTER TABLE `ftpgroup` DROP PRIMARY KEY,
 ALTER TABLE `ftpquotatallies` DROP PRIMARY KEY,
     MODIFY `id` INTEGER NOT NULL AUTO_INCREMENT,
     ADD PRIMARY KEY (`id`);
+
+-- CreateTable
+CREATE TABLE `demos` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(191) NOT NULL,
+    `file` LONGTEXT NOT NULL,
+    `duration` INTEGER NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

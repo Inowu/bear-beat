@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import * as Path from 'path';
 import { TRPCError } from '@trpc/server';
 import { fileService } from '../../ftp';
 import { log } from '../../server';
@@ -11,7 +12,7 @@ export const download = shieldedProcedure
     }),
   )
   .query(async ({ input: { path }, ctx: { prisma, session } }) => {
-    const { user } = session!;
+    const user = session!.user!;
 
     const fullPath = `${process.env.SONGS_PATH}${path}`;
     const fileExists = await fileService.exists(fullPath);
@@ -42,22 +43,39 @@ export const download = shieldedProcedure
       take: 1,
     });
 
-    if (activePlans.length === 0) {
+    // if (activePlans.length === 0) {
+    //   throw new TRPCError({
+    //     code: 'BAD_REQUEST',
+    //     message: 'This user does not have an active plan',
+    //   });
+    // }
+
+    const ftpUser = await prisma.ftpUser.findFirst({
+      where: {
+        user_id: user?.id,
+      },
+    });
+
+    if (!ftpUser) {
+      log.error(
+        `[File Download] This user does not have an ftp user (${user.id})`,
+      );
+
       throw new TRPCError({
         code: 'BAD_REQUEST',
-        message: 'This user does not have an active plan',
+        message: 'This user does not have an ftp user',
       });
     }
 
     const quotaLimit = await prisma.ftpQuotaLimits.findFirst({
       where: {
-        name: user?.username,
+        name: ftpUser.userid,
       },
     });
 
     const quotaUsed = await prisma.ftpquotatallies.findFirst({
       where: {
-        name: user?.username,
+        name: ftpUser.userid,
       },
     });
 
@@ -107,8 +125,10 @@ export const download = shieldedProcedure
       }),
     ]);
 
-    return {
+    const payload = {
       file: stream.toString('base64'),
       size: fileStat.size,
     };
+
+    return payload;
   });
