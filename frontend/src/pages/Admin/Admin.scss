@@ -1,0 +1,37 @@
+.admin-contain{
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    .header{
+        display: flex;
+        justify-content: space-between;
+        .input{
+            border-radius:100px;
+            padding: 5px 25px;
+            // border: none;
+            background: transparent;
+        }
+    }
+    p{
+        margin: 0;
+    }
+    .users-contain{
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        .user-contain{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 100px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.54);
+            padding: 5px 20px;
+            .btn-active{
+                color: white;
+                background: #09e1f7;;
+                padding: 4px 20px;
+                border-radius: 100px;
+            }
+        }
+    }
+}

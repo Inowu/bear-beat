@@ -17,6 +17,7 @@ import Instructions from "./pages/Instructions/Instructions";
 import MyAccount from "./pages/MyAccount/MyAccount";
 import Plans from "./pages/Plans/Plans";
 import Checkout from "./pages/Checkout/Checkout";
+import Admin from "./pages/Admin/Admin";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -39,6 +40,17 @@ const router = createBrowserRouter([
           { path: "micuenta", element: <MyAccount /> },
           { path: "planes", element: <Plans /> },
           { path: "comprar", element: <Checkout /> },
+        ],
+      },
+      {
+        path: "admin",
+        element: (
+          <AuthRoute>
+            <Outlet />
+          </AuthRoute>
+        ),
+        children: [
+          { path: "", element: <Admin /> },
         ],
       },
       {

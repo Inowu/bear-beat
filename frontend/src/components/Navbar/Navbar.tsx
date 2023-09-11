@@ -8,16 +8,17 @@ import {
   faBars,
 } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
-import { SetStateAction } from "react";
+import { SetStateAction, useEffect } from "react";
 
 interface NavbarPropsI {
   setAsideOpen: React.Dispatch<SetStateAction<boolean>>;
 }
 
 function Navbar(props: NavbarPropsI) {
-  const { handleLogout } = useUserContext();
+  const { handleLogout, currentUser } = useUserContext();
   const { setAsideOpen } = props;
-
+//   useEffect(() => {
+// }, [currentUser])
   return (
     <nav>
       <div className="header">
@@ -31,6 +32,14 @@ function Navbar(props: NavbarPropsI) {
         <h2>Bear Beat</h2>
       </div>
       <ul>
+        {
+          currentUser?.role === "admin" &&
+          <Link to={"/admin"}>
+            <li style={{paddingInline: 15}}>
+              <span>Admin</span>
+            </li>
+          </Link>
+        }
         <Link to={"/micuenta"}>
           <li>
             <FontAwesomeIcon icon={faUserCircle} /> <span>Mi cuenta</span>

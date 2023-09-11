@@ -61,7 +61,6 @@ const UserContextProvider = (props: any) => {
     const token = localStorage.getItem("token");
     if (token !== null) {
       setUserToken(token);
-      console.log('aidos');
       startUser()
     }
 
