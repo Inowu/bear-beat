@@ -41,7 +41,7 @@ export const subscribe = async ({
       },
     });
 
-    if (order.status === OrderStatus.PAYED) {
+    if (order.status === OrderStatus.PAID) {
       log.error(`This order was already paid, ${orderId}`);
       return;
     }
@@ -187,7 +187,7 @@ export const subscribe = async ({
         id: orderId,
       },
       data: {
-        status: OrderStatus.PAYED,
+        status: OrderStatus.PAID,
       },
     });
   }
