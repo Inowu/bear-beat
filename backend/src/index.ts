@@ -45,7 +45,7 @@ async function main() {
       }),
     );
 
-    app.use('/demos', express.static(path.join(__dirname, '../demos')));
+    app.use('/demos', express.static(path.resolve(__dirname, '../demos')));
 
     app.listen(process.env.PORT);
     log.info(`Express server listening on port ${process.env.PORT}`);

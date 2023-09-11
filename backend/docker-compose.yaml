@@ -13,6 +13,7 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - /home/products:/home/products
+      - ./demos:/usr/src/app/demos
     networks: 
       - app-net
   db:

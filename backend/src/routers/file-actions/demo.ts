@@ -15,7 +15,7 @@ export const demo = shieldedProcedure
     }),
   )
   .query(async ({ input: { path: demoPath }, ctx: { prisma } }) => {
-    const fullPath = `${process.env.SONGS_PATH}${demoPath}`;
+    const fullPath = path.join(process.env.SONGS_PATH as string, demoPath);
     const fileExists = await fileService.exists(fullPath);
 
     if (!fileExists) {
@@ -32,21 +32,21 @@ export const demo = shieldedProcedure
     });
 
     const demoDuration = config?.value ? Number(config.value) : 60;
+    const demoOutputPath = path.join(
+      process.env.DEMOS_PATH as string,
+      demoPath,
+    );
 
-    if (await fileService.exists(`${process.env.DEMOS_PATH}${demoPath}`)) {
+    if (await fileService.exists(demoOutputPath)) {
       return {
-        demo: `demos/${demoPath}`,
+        demo: `/demos/${demoPath}`,
       };
     }
 
-    await generateDemo(
-      fullPath,
-      demoDuration,
-      `${process.env.DEMOS_PATH}${demoPath}`,
-    );
+    await generateDemo(fullPath, demoDuration, demoOutputPath);
 
     return {
-      demo: `demos/${demoPath}`,
+      demo: `/demos/${demoPath}`,
     };
   });
 
