@@ -1,7 +1,14 @@
 import path from 'path';
 import { config } from 'dotenv';
-import { log, server } from './server';
-import { initializeFileService } from './ftp';
+import { createExpressMiddleware } from '@trpc/server/adapters/express';
+import express from 'express';
+import compression from 'compression';
+import cors from 'cors';
+import logger from 'pino-http';
+import { log } from './server';
+import { fileService, initializeFileService } from './ftp';
+import { appRouter } from './routers';
+import { createContext } from './context';
 
 config({
   path: path.resolve(__dirname, '../.env'),
@@ -9,10 +16,39 @@ config({
 
 async function main() {
   try {
-    await server.listen({
-      port: Number(process.env.PORT),
-      host: process.env.HOST,
-    });
+    // await server.listen({
+    //   port: Number(process.env.PORT),
+    //   host: process.env.HOST,
+    // });
+
+    const app = express();
+
+    app.use(compression());
+    app.use(
+      logger({
+        transport: {
+          target: 'pino-http-print',
+          options: {
+            colorize: true,
+          },
+        },
+      }),
+    );
+
+    app.use(cors({ origin: '*' }));
+
+    app.use(
+      '/trpc',
+      createExpressMiddleware({
+        router: appRouter,
+        createContext,
+      }),
+    );
+
+    app.use('/demos', express.static(path.join(__dirname, '../demos')));
+
+    app.listen(process.env.PORT);
+    log.info(`Express server listening on port ${process.env.PORT}`);
 
     await initializeFileService();
   } catch (e) {

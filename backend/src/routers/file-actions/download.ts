@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import * as Path from 'path';
 import { TRPCError } from '@trpc/server';
 import { fileService } from '../../ftp';
 import { log } from '../../server';
@@ -42,12 +43,12 @@ export const download = shieldedProcedure
       take: 1,
     });
 
-    if (activePlans.length === 0) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'This user does not have an active plan',
-      });
-    }
+    // if (activePlans.length === 0) {
+    //   throw new TRPCError({
+    //     code: 'BAD_REQUEST',
+    //     message: 'This user does not have an active plan',
+    //   });
+    // }
 
     const ftpUser = await prisma.ftpUser.findFirst({
       where: {
@@ -124,8 +125,10 @@ export const download = shieldedProcedure
       }),
     ]);
 
-    return {
+    const payload = {
       file: stream.toString('base64'),
       size: fileStat.size,
     };
+
+    return payload;
   });

@@ -6,6 +6,7 @@ import Ffmpeg from 'fluent-ffmpeg';
 import { TRPCError } from '@trpc/server';
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
 import { fileService } from '../../ftp';
+import { log } from '../../server';
 
 export const demo = shieldedProcedure
   .input(
@@ -16,8 +17,6 @@ export const demo = shieldedProcedure
   .query(async ({ input: { path: demoPath }, ctx: { prisma } }) => {
     const fullPath = `${process.env.SONGS_PATH}${demoPath}`;
     const fileExists = await fileService.exists(fullPath);
-
-    console.log(fullPath);
 
     if (!fileExists) {
       throw new TRPCError({
@@ -34,71 +33,49 @@ export const demo = shieldedProcedure
 
     const demoDuration = config?.value ? Number(config.value) : 60;
 
-    const existingDemo = await prisma.demos.findFirst({
-      where: {
-        AND: [
-          {
-            name: path.basename(fullPath),
-          },
-          {
-            duration: demoDuration,
-          },
-        ],
-      },
-    });
-
-    if (existingDemo) {
+    if (await fileService.exists(`${process.env.DEMOS_PATH}${demoPath}`)) {
       return {
-        demo: existingDemo.file,
+        demo: `demos/${demoPath}`,
       };
     }
 
-    const file = await fileService.get(fullPath);
-
-    const demoString = await generateDemo(file, demoDuration);
-
-    await prisma.demos.create({
-      data: {
-        name: path.basename(fullPath),
-        file: demoString,
-        duration: demoDuration,
-      },
-    });
+    await generateDemo(
+      fullPath,
+      demoDuration,
+      `${process.env.DEMOS_PATH}${demoPath}`,
+    );
 
     return {
-      demo: demoString,
+      demo: `demos/${demoPath}`,
     };
   });
 
 const generateDemo = (
-  file: string | Buffer | NodeJS.WritableStream,
+  path: string,
   duration: number,
-): Promise<string> =>
+  outputPath: string,
+): Promise<void> =>
   new Promise((resolve, reject) => {
-    const inputTempFile = tmp.fileSync();
-    const tempFile = tmp.fileSync({ prefix: 'mp4' });
-
-    fs.writeSync(inputTempFile.fd, file as Buffer);
-
     const demoVideo = Ffmpeg({
       logger: console,
     })
-      .input(inputTempFile.name)
+      .input(fs.createReadStream(path))
       .inputOptions(['-to', `${duration}`])
       .format('mp4')
       // .on('start', (cmdLine) => console.log(cmdLine))
-      .output(tempFile.name);
+      .output(outputPath);
 
-    // Run the FFmpeg process
+    // // Run the FFmpeg process
     demoVideo.on('end', () => {
-      const fileContents = fs.readFileSync(tempFile.name);
-      const base64Contents = fileContents.toString('base64');
-      tempFile.removeCallback();
-      resolve(base64Contents);
+      // const fileContents = fs.readFileSync(tempFile.name);
+      // const base64Contents = fileContents.toString('base64');
+      // tempFile.removeCallback();
+      resolve();
     });
 
     demoVideo.on('error', (error) => {
-      tempFile.removeCallback();
+      // tempFile.removeCallback();
+      log.error(`[DEMOS] Error while generating demo: ${error}`);
       reject(error);
     });
 

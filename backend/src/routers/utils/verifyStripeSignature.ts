@@ -1,7 +1,8 @@
 import { FastifyRequest } from 'fastify';
+import type { Request } from 'express';
 import stripeInstance from '../../stripe';
 
-export const verifyStripeSignature = (req: FastifyRequest) => {
+export const verifyStripeSignature = (req: Request) => {
   const sig = req.headers['stripe-signature'];
 
   if (!sig) {
