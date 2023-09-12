@@ -25,10 +25,10 @@ export function OptionModal (props: IError)  {
                 </p>
                 <div className='button-container'>
                   <button className='btn-option-1' onClick={action}>
-                    Plan 1: 
+                    Plan 1: $18.00 USD
                   </button>
                   <button className='btn-option-2' onClick={action2}>
-                    Plan 2:
+                    Plan 2: $350.00 MXN
                   </button>
                 </div>
             </div>

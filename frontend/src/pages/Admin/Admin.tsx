@@ -37,7 +37,6 @@ function Admin(){
         }
         try{
             const tempUsers = await trpc.users.findManyUsers.query(body);
-            console.log(tempUsers);
             setLoader(false);
             setUsers(tempUsers);
             setAllUsers(tempUsers);
