@@ -101,7 +101,7 @@ function Home() {
     setLoadDownload(true);
     setIndex(index);
     let body = {
-      path: "/"+ pastFile.join('/') + "/" + name,
+      path: pastFile.join('/') + "/" + name,
       token: userToken,
     }
     try{
