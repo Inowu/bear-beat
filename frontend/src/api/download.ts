@@ -2,9 +2,9 @@ import axios from "axios";
 
 export const downloadApi = async (body: any) => {
     const {path, token} = body
-    
+    const route = encodeURIComponent("https://kale67.world/download?path=" + path + '&token='+ token);
     return axios
-      .get('https://kale67.world/download?path=' + encodeURIComponent(path) + '&token='+ token)
+      .get(route)
       .then((res) => {
         return res
       })
