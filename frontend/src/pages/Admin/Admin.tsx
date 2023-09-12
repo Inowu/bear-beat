@@ -83,7 +83,7 @@ function Admin(){
             alert('Plan activado con exito!')
         }
         catch(error){
-            console.log(error);
+            console.log(error)
         }
     }
     useEffect(() => {
