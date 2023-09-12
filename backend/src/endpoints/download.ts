@@ -6,9 +6,10 @@ import { SessionUser } from '../routers/auth/utils/serialize-user';
 import { log } from '../server';
 
 export const download = async (req: Request, res: Response) => {
-  const token = req.headers.authorization?.split(' ')[1];
+  const token = req.query.token as string;
 
-  if (!token) return res.status(401).send({ error: 'Unauthorized' });
+  if (!token || typeof token !== 'string')
+    return res.status(401).send({ error: 'Unauthorized' });
 
   const user = jwt.verify(
     token,
