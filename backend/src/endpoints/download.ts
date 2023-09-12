@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
+import Path from 'path';
 import { fileService } from '../ftp';
 import { prisma } from '../db';
 import { SessionUser } from '../routers/auth/utils/serialize-user';
@@ -20,7 +21,7 @@ export const download = async (req: Request, res: Response) => {
 
   const path = req.query.path as string;
 
-  const fullPath = `${process.env.SONGS_PATH}${path}`;
+  const fullPath = Path.join(process.env.SONGS_PATH as string, path);
   const fileExists = await fileService.exists(fullPath);
 
   if (!fileExists) {
