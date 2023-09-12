@@ -23,6 +23,7 @@ function Admin(){
         setShowOption(true);
     }
     const closeOption = () => {
+        setSelectUser({} as IAdminUser);
         setShowOption(false);
     }
     const plan_1 = () => {
