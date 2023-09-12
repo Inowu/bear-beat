@@ -100,14 +100,15 @@ function Home() {
   const downloadFile = async (name: string, index: number) => {
     setLoadDownload(true);
     setIndex(index);
-    let body = {
-      path: pastFile.join('/') + "/" + name,
-      token: userToken,
-    }
+    let path = pastFile.join('/') + "/" + name;
     try{
-      const files = await downloadApi(body);
-      console.log('hola');
-      console.log(files);
+      const a:any = document.createElement("a");
+      const url = "https://kale67.world/download?path=" +encodeURIComponent(path)+'&token='+ userToken;
+      a.href = url;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
       // downloadMP3(files.file, name);
       setLoadDownload(false);
       setIndex(-1);
