@@ -30,7 +30,6 @@ export const permissions = shield<Context>({
     findByCode: isLoggedIn,
     ownOrders: isLoggedIn,
     subscribeWithStripe: isLoggedIn,
-    activatePlanForUser: isAdmin,
     aggregateConfig: isAdmin,
     aggregateCountries: isAdmin,
     aggregateCupons: isAdmin,
@@ -103,6 +102,7 @@ export const permissions = shield<Context>({
     groupByUsers: isAdmin,
   },
   mutation: {
+    activatePlanForUser: isAdmin,
     subscribeWithCardConekta: isLoggedIn,
     subscribeWithCashConekta: isLoggedIn,
     conektaSubscriptionWebhook: isValidConektaSignature,

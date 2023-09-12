@@ -43,12 +43,12 @@ export const download = shieldedProcedure
       take: 1,
     });
 
-    // if (activePlans.length === 0) {
-    //   throw new TRPCError({
-    //     code: 'BAD_REQUEST',
-    //     message: 'This user does not have an active plan',
-    //   });
-    // }
+    if (activePlans.length === 0) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'This user does not have an active plan',
+      });
+    }
 
     const ftpUser = await prisma.ftpUser.findFirst({
       where: {
