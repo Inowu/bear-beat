@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import tmp from 'tmp';
+// import tmp from 'tmp';
 import { z } from 'zod';
 import Ffmpeg from 'fluent-ffmpeg';
 import { TRPCError } from '@trpc/server';
@@ -34,7 +34,7 @@ export const demo = shieldedProcedure
     const demoDuration = config?.value ? Number(config.value) : 60;
     const demoOutputPath = path.join(
       process.env.DEMOS_PATH as string,
-      demoPath,
+      path.basename(demoPath),
     );
 
     if (await fileService.exists(demoOutputPath)) {
