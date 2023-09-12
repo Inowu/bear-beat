@@ -61,7 +61,7 @@ const generateDemo = (
     })
       .input(fs.createReadStream(path))
       .inputOptions(['-to', `${duration}`])
-      .format('mp3')
+      .format('mp4')
       // .on('start', (cmdLine) => console.log(cmdLine))
       .output(outputPath);
 
