@@ -6,6 +6,7 @@ import './Admin.scss';
 import { Spinner } from "../../components/Spinner/Spinner";
 import { IPlans } from "../../interfaces/Plans";
 import { OptionModal } from "../../components/Modals/OptionModal/OptionModal";
+import { useNavigate } from "react-router-dom";
 
 function Admin(){
     const { currentUser } = useUserContext();
@@ -17,6 +18,7 @@ function Admin(){
     const [plans, setPlans] = useState<IPlans[]>([]);
     const [selectUser, setSelectUser] = useState({} as IAdminUser);
     const [loader, setLoader] = useState<boolean>(true);
+    const navigate = useNavigate();
     const openOption = () => {
         setShowOption(true);
     }
@@ -88,6 +90,11 @@ function Admin(){
         getPlans();
         getAllUsers();
     }, [])
+    useEffect(() => {
+        if(currentUser &&currentUser.role !== "admin"){
+            navigate('/');
+        }
+    }, [currentUser])
     
     return(
         <div className="admin-contain">
