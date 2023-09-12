@@ -14,7 +14,7 @@ import { downloadMP3, sortArrayByName } from "../../functions/functions";
 import { Spinner } from "../../components/Spinner/Spinner";
 import { useUserContext } from "../../contexts/UserContext";
 import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
-import { downloadApi } from "api/download";
+import { downloadApi } from "../../api/download";
 
 function Home() {
   const { fileChange, closeFile, userToken } = useUserContext();
