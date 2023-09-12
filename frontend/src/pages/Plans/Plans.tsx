@@ -21,7 +21,6 @@ const [plans, setPlans] = useState<IPlans[]>([]);
     catch(error){
       console.log(error);
     }
-
   }
   useEffect(() => {
     getPlans();

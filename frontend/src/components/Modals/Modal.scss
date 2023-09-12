@@ -58,6 +58,14 @@
                 background-color: #ff2d2c;
                 color: white;
             }
+            .btn-option-1{
+                background-color: transparent;
+                color: #2cff2c;
+            }
+            .btn-option-2{
+                background-color: #2cff2c;
+                color: white;
+            }
         }
         .button-container-2{
             display: flex;
@@ -82,4 +90,7 @@
 }
 .success-modal{
     box-shadow: -6px -6px 0px 2px #09e1f7;
+}
+.option-modal{
+    box-shadow: -6px -6px 0px 2px #2cff2c;
 }

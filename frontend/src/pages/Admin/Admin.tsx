@@ -1,15 +1,36 @@
 import { useEffect, useState } from "react";
 import { useUserContext } from "../../contexts/UserContext";
 import trpc from "../../api";
-import { IAdminUser } from "interfaces/admin";
+import { IAdminUser } from "../../interfaces/admin";
 import './Admin.scss';
 import { Spinner } from "../../components/Spinner/Spinner";
+import { IPlans } from "../../interfaces/Plans";
+import { OptionModal } from "../../components/Modals/OptionModal/OptionModal";
 
 function Admin(){
     const { currentUser } = useUserContext();
     const [users, setUsers] = useState<IAdminUser[]>([]);
     const [allUsers, setAllUsers] = useState<IAdminUser[]>([]);
+    const [showOption, setShowOption] = useState<boolean>(false);
+    const [optionMessage, setOptionMessage] = useState<string>('');
+    const [optionTitle, setOptionTitle] = useState<string>('');
+    const [plans, setPlans] = useState<IPlans[]>([]);
+    const [selectUser, setSelectUser] = useState({} as IAdminUser);
     const [loader, setLoader] = useState<boolean>(true);
+    const openOption = () => {
+        setShowOption(true);
+    }
+    const closeOption = () => {
+        setShowOption(false);
+    }
+    const plan_1 = () => {
+        closeOption();
+        activateSubscription(plans[0])
+    }
+    const plan_2 = () => {
+        closeOption();
+        activateSubscription(plans[1])
+    }
     const getAllUsers = async () => {
         let body: any = {
 
@@ -29,26 +50,40 @@ function Admin(){
         let newUsers = tempUsers.filter((user) => user.username.toLowerCase().includes(value.toLowerCase()));
         setUsers(newUsers);
     }
-    const giveSuscription = (user: IAdminUser) => {
-        const confirmed = window.confirm('Seguro que quieren activar la suscripcion de este usuario?');
-        if (confirmed) {
-          activateSubscription(user);
-        } else {
-
-        }
+  const getPlans = async () => {
+    let body = {
+      where: {
+        activated: 1,
+      }
     }
-    const activateSubscription = async (user: IAdminUser) => {
+    try{
+      const plans: any = await trpc.plans.findManyPlans.query(body);
+      setPlans(plans);
+    }
+    catch(error){
+      console.log(error);
+    }
+  }
+    const giveSuscription = (user: IAdminUser) => {
+        setSelectUser(user);
+        setOptionTitle('Seleccione el plan');
+        openOption();
+    }
+    const activateSubscription = async (plan: IPlans) => {
         try{
             let body = {
-
+                planId: plan.id,
+                userId: selectUser.id
             }
-            // const activate = trpc.admin.activatePlanForUser.mutation(body);
+            console.log(body);
+            // const activate = trpc.admin.activatePlanForUser.mutate(body);
         }
         catch(error){
             console.log(error);
         }
     }
     useEffect(() => {
+        getPlans();
         getAllUsers();
     }, [])
     
@@ -76,6 +111,14 @@ function Admin(){
                 : <Spinner size={3} width={.3} color="black"/>
             }
             </div>
+            <OptionModal
+                show={showOption}
+                onHide={closeOption}
+                title ={optionTitle}
+                message ={optionMessage}
+                action ={plan_1}
+                action2 = {plan_2}
+            />
         </div>
     )
 }
