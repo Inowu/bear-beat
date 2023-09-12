@@ -76,13 +76,15 @@ function Admin(){
                 userId: selectUser.id
             }
             console.log(body);
-            // const activate = trpc.admin.activatePlanForUser.mutate(body);
+            const activate = await trpc.admin.activatePlanForUser.mutate(body);
+            alert('Plan activado con exito!')
         }
         catch(error){
             console.log(error);
         }
     }
     useEffect(() => {
+        console.log('hola');
         getPlans();
         getAllUsers();
     }, [])
