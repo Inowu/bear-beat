@@ -14,9 +14,10 @@ import { downloadMP3, sortArrayByName } from "../../functions/functions";
 import { Spinner } from "../../components/Spinner/Spinner";
 import { useUserContext } from "../../contexts/UserContext";
 import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
+import { downloadApi } from "api/download";
 
 function Home() {
-  const { fileChange, closeFile } = useUserContext();
+  const { fileChange, closeFile, userToken } = useUserContext();
   const [showPreviewModal, setShowPreviewModal] = useState<boolean>(false);
   const [files, setfiles] = useState<IFiles[]>([]);
   const [pastFile, setPastFile] = useState<string[]>([]);
@@ -99,11 +100,14 @@ function Home() {
   const downloadFile = async (name: string, index: number) => {
     setLoadDownload(true);
     setIndex(index);
+    let body = {
+      path: "/"+ pastFile.join('/') + "/" + name,
+      token: userToken,
+    }
     try{
-      const files = await trpc.ftp.download.query({
-        path:"/"+ pastFile.join('/') + "/" + name,
-      })
-      downloadMP3(files.file, name);
+      const files = await downloadApi(body);
+      console.log(files);
+      // downloadMP3(files.file, name);
       setLoadDownload(false);
       setIndex(-1);
     }
