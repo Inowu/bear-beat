@@ -5,6 +5,7 @@ import express from 'express';
 import compression from 'compression';
 import cors from 'cors';
 import logger from 'pino-http';
+import pino from 'pino';
 import { log } from './server';
 import { fileService, initializeFileService } from './ftp';
 import { appRouter } from './routers';

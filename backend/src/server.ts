@@ -31,6 +31,24 @@ const transport = pino.transport({
 
 export const log = pino(transport);
 
+// export const log = pino(
+//   {},
+//   pino.transport({
+//     target: 'pino-datadog-transport',
+//     options: {
+//       ddClientConf: {
+//         authMethods: {
+//           apiKeyAuth: '322425cc4859de7ddd30c1cf2a33878a',
+//         },
+//       },
+//       service: 'bearbeat',
+//       ddServerConf: {
+//         site: 'us5.datadoghq.eu',
+//       },
+//     },
+//   }),
+// );
+
 // server.register(fastifyTRPCPlugin, {
 //   prefix: '/trpc',
 //   trpcOptions: {
