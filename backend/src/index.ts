@@ -9,6 +9,7 @@ import { log } from './server';
 import { fileService, initializeFileService } from './ftp';
 import { appRouter } from './routers';
 import { createContext } from './context';
+import { download } from './endpoints/download';
 
 config({
   path: path.resolve(__dirname, '../.env'),
@@ -46,6 +47,8 @@ async function main() {
     );
 
     app.use('/demos', express.static(path.resolve(__dirname, '../demos')));
+
+    app.get('/download', download);
 
     app.listen(process.env.PORT);
     log.info(`Express server listening on port ${process.env.PORT}`);
