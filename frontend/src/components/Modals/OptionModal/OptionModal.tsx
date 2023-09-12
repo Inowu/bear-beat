@@ -14,7 +14,7 @@ export function OptionModal (props: IError)  {
     const {show, onHide, message, action, action2, title} = props;
   return (
     <Modal show={show} onHide={onHide} centered>
-        <div className='modal-container error-modal'>
+        <div className='modal-container option-modal'>
             <div className='header'>
                 <p className='title'>{title}</p>
                 <RiCloseCircleLine className='icon' onClick={onHide}/>
