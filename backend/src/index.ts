@@ -18,11 +18,6 @@ config({
 
 async function main() {
   try {
-    // await server.listen({
-    //   port: Number(process.env.PORT),
-    //   host: process.env.HOST,
-    // });
-
     const app = express();
 
     app.use(compression());
