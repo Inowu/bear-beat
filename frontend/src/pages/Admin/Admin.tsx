@@ -60,7 +60,6 @@ function Admin(){
     }
     try{
       const plans: any = await trpc.plans.findManyPlans.query(body);
-      console.log(plans);
       setPlans(plans);
     }
     catch(error){
@@ -87,7 +86,6 @@ function Admin(){
         }
     }
     useEffect(() => {
-        console.log('hola');
         getPlans();
         getAllUsers();
     }, [])
