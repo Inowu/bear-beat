@@ -97,24 +97,36 @@ function Home() {
       setLoadFile(false);
     }
   }
-  console.log('test-4');
+  console.log('test-5');
   const downloadFile = async (name: string, index: number) => {
     setLoadDownload(true);
     setIndex(index);
     if(currentUser?.hasActiveSubscription){
       let path = pastFile.join('/') + "/" + name;
-      const a:any = document.createElement("a");
       const url = "https://kale67.world/download?path=" +encodeURIComponent(path)+'&token='+ userToken;
-      a.href = url;
-      a.download = name;
+      await startDownload(url);
+    }
+    else{
+      setErrorMessage('Para descargar se necesita de una suscripción')
+      setShow(true);
+      setLoadDownload(false);
+      setIndex(-1);
+    }
+  }
+  const startDownload = async (url: any) => {
+    const a:any = document.createElement("a");
+    try{
+      const downalodURL = await downloadApi(url);
+      console.log(downalodURL);
+      // a.href = url;
+      // a.download = name;
       // document.body.appendChild(a);
       // a.click();
-      console.log(url);
       // window.URL.revokeObjectURL(url);
       setLoadDownload(false);
       setIndex(-1);
     }
-    else{
+    catch(error){
       setErrorMessage('Para descargar se necesita de una suscripción')
       setShow(true);
       setLoadDownload(false);
