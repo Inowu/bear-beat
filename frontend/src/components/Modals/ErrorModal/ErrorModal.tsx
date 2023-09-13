@@ -11,7 +11,6 @@ interface IError {
 }
 export function ErrorModal (props: IError)  {
     const {show, onHide, message, user} = props;
-    console.log(user);
   return (
     <Modal show={show} onHide={onHide} centered>
         <div className='modal-container error-modal'>
