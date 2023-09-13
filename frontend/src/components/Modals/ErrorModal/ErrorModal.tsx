@@ -23,9 +23,17 @@ export function ErrorModal (props: IError)  {
                 <p className='content'>
                     {message?.toString()}
                 </p>
-                <p>
-                  
-                </p>
+                {
+                  user &&
+                  <>
+                    <p>email: {user.email}</p>
+                    {
+                      user.ftpAccount &&
+                      <p>{user.ftpAccount.expiration.toDateString()}</p>
+                    }
+
+                  </>
+                }
                 <div className='button-container-2'>
                   <button className='btn-cancel' onClick={onHide}>
                     Cerrar
