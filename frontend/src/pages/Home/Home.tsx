@@ -97,7 +97,12 @@ function Home() {
       setLoadFile(false);
     }
   }
-  console.log('test-7');
+  const errorMethod = () => {
+    setErrorMessage('Para descargar se necesita de una suscripción')
+    setShow(true);
+    setLoadDownload(false);
+    setIndex(-1);
+  }
   const downloadFile = async (name: string, index: number) => {
     setLoadDownload(true);
     setIndex(index);
@@ -107,10 +112,7 @@ function Home() {
       await startDownload(url);
     }
     else{
-      setErrorMessage('Para descargar se necesita de una suscripción')
-      setShow(true);
-      setLoadDownload(false);
-      setIndex(-1);
+      errorMethod();
     }
   }
   const startDownload = async (url: any) => {
@@ -119,19 +121,21 @@ function Home() {
       // const downalodURL = await downloadApi(url);
       const response = await fetch(url);
       console.log(response)
-      // a.href = url;
-      // a.download = name;
-      // document.body.appendChild(a);
-      // a.click();
-      // window.URL.revokeObjectURL(url);
-      setLoadDownload(false);
-      setIndex(-1);
+      if(response.ok){
+        a.href = url;
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        setLoadDownload(false);
+        setIndex(-1);
+      }
+      else{
+        errorMethod();
+      }
     }
     catch(error){
-      setErrorMessage('Para descargar se necesita de una suscripción')
-      setShow(true);
-      setLoadDownload(false);
-      setIndex(-1);
+      errorMethod();
     }
   }
   useEffect(() => {
