@@ -17,7 +17,7 @@ import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
 import { downloadApi } from "../../api/download";
 
 function Home() {
-  const { fileChange, closeFile, userToken } = useUserContext();
+  const { fileChange, closeFile, userToken,currentUser } = useUserContext();
   const [showPreviewModal, setShowPreviewModal] = useState<boolean>(false);
   const [files, setfiles] = useState<IFiles[]>([]);
   const [pastFile, setPastFile] = useState<string[]>([]);
@@ -97,11 +97,12 @@ function Home() {
       setLoadFile(false);
     }
   }
+  console.log(currentUser);
   const downloadFile = async (name: string, index: number) => {
     setLoadDownload(true);
     setIndex(index);
-    let path = pastFile.join('/') + "/" + name;
-    try{
+    if(currentUser?.hasActiveSubscription){
+      let path = pastFile.join('/') + "/" + name;
       const a:any = document.createElement("a");
       const url = "https://kale67.world/download?path=" +encodeURIComponent(path)+'&token='+ userToken;
       a.href = url;
@@ -112,7 +113,7 @@ function Home() {
       setLoadDownload(false);
       setIndex(-1);
     }
-    catch(error){
+    else{
       setErrorMessage('Para descargar se necesita de una suscripción')
       setShow(true);
       setLoadDownload(false);
