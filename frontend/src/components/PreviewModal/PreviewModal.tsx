@@ -28,7 +28,7 @@ function PreviewModal(props: PreviewModalPropsI) {
       </Modal.Header>
       <Modal.Body>
         <div className="preview-container">
-          <video controls>
+          <video controls autoPlay={true}>
             <source src={file} type="audio/mp3" />
           </video>
         </div>
