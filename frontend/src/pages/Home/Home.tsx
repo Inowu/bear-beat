@@ -97,7 +97,7 @@ function Home() {
       setLoadFile(false);
     }
   }
-  console.log('test-5');
+  console.log('test-6');
   const downloadFile = async (name: string, index: number) => {
     setLoadDownload(true);
     setIndex(index);
@@ -116,8 +116,12 @@ function Home() {
   const startDownload = async (url: any) => {
     const a:any = document.createElement("a");
     try{
-      const downalodURL = await downloadApi(url);
-      console.log(downalodURL);
+      // const downalodURL = await downloadApi(url);
+      const response = await fetch(url);
+      console.log(Response)
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
       // a.href = url;
       // a.download = name;
       // document.body.appendChild(a);
