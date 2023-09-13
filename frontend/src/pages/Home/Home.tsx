@@ -109,13 +109,13 @@ function Home() {
     if(currentUser?.hasActiveSubscription){
       let path = pastFile.join('/') + "/" + name;
       const url = "https://kale67.world/download?path=" +encodeURIComponent(path)+'&token='+ userToken;
-      await startDownload(url);
+      await startDownload(url,name);
     }
     else{
       errorMethod();
     }
   }
-  const startDownload = async (url: any) => {
+  const startDownload = async (url: any, name:any) => {
     const a:any = document.createElement("a");
     try{
       // const downalodURL = await downloadApi(url);
