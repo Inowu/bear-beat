@@ -97,8 +97,8 @@ function Home() {
       setLoadFile(false);
     }
   }
-  const errorMethod = () => {
-    setErrorMessage('Para descargar se necesita de una suscripción')
+  const errorMethod = (message: string) => {
+    setErrorMessage(message)
     setShow(true);
     setLoadDownload(false);
     setIndex(-1);
@@ -112,7 +112,7 @@ function Home() {
       await startDownload(url,name);
     }
     else{
-      errorMethod();
+      errorMethod('Para descargar se necesita de una suscripción');
     }
   }
   const startDownload = async (url: any, name:any) => {
@@ -129,11 +129,11 @@ function Home() {
         setIndex(-1);
       }
       else{
-        errorMethod();
+        errorMethod('Para descargar se necesita tener gb disponibles');
       }
     }
     catch(error){
-      errorMethod();
+      errorMethod('Para descargar se necesita tener gb disponibles');
     }
   }
   useEffect(() => {
