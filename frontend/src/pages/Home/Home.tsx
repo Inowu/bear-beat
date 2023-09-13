@@ -87,8 +87,6 @@ function Home() {
       const files = await trpc.ftp.demo.query({
         path: "/" +pastFile.join('/') + "/" + name,
       })
-      console.log(files);
-      console.log('test-03');
       setFileToShow(encodeURI("https://kale67.world")+files.demo)
       setIndex(-1);
       setLoadFile(false);
