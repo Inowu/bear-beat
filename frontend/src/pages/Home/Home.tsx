@@ -110,7 +110,7 @@ function Home() {
       document.body.appendChild(a);
       a.click();
       console.log(url);
-      window.URL.revokeObjectURL(url);
+      // window.URL.revokeObjectURL(url);
       setLoadDownload(false);
       setIndex(-1);
     }
