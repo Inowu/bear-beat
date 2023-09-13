@@ -118,9 +118,7 @@ function Home() {
   const startDownload = async (url: any, name:any) => {
     const a:any = document.createElement("a");
     try{
-      // const downalodURL = await downloadApi(url);
       const response = await fetch(url);
-      console.log(response)
       if(response.ok){
         a.href = url;
         a.download = name;
