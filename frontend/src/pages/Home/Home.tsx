@@ -147,7 +147,7 @@ function Home() {
       setPastFile([]);
     }
   }, [fileChange])
-  
+  console.log('test-01')
   return (
     <div className="home-main-container">
       <PreviewModal
@@ -226,7 +226,7 @@ function Home() {
           }
         </div>
       </div>
-      <ErrorModal show={show} onHide={closeError} message={errorMessage}/>
+      <ErrorModal show={show} onHide={closeError} message={errorMessage} user={currentUser}/>
     </div>
   );
 }

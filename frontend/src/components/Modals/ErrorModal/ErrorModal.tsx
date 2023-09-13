@@ -2,13 +2,16 @@ import React from 'react'
 import { Modal } from 'react-bootstrap'
 import './../Modal.scss'
 import {RiCloseCircleLine} from 'react-icons/ri'
+import { IUser } from '../../../interfaces/User';
 interface IError {
     show: boolean;
     onHide: () => void;
+    user?: IUser; 
     message?: string;
 }
 export function ErrorModal (props: IError)  {
-    const {show, onHide, message} = props;
+    const {show, onHide, message, user} = props;
+    console.log(user);
   return (
     <Modal show={show} onHide={onHide} centered>
         <div className='modal-container error-modal'>
@@ -19,6 +22,9 @@ export function ErrorModal (props: IError)  {
             <div className='bottom'>
                 <p className='content'>
                     {message?.toString()}
+                </p>
+                <p>
+                  
                 </p>
                 <div className='button-container-2'>
                   <button className='btn-cancel' onClick={onHide}>
