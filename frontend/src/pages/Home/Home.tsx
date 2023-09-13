@@ -87,10 +87,12 @@ function Home() {
       const files = await trpc.ftp.demo.query({
         path: "/" +pastFile.join('/') + "/" + name,
       })
-      setFileToShow(files.demo)
+      console.log(files);
+      console.log('test-02')
+      // setFileToShow(files.demo)
       setIndex(-1);
       setLoadFile(false);
-      setShowPreviewModal(true);
+      // setShowPreviewModal(true);
     }
     catch(error){
       setIndex(-1);
@@ -102,7 +104,6 @@ function Home() {
     setIndex(index);
     let path = pastFile.join('/') + "/" + name;
     try{
-      console.log('test-1')
       const a:any = document.createElement("a");
       const url = "https://kale67.world/download?path=" +encodeURIComponent(path)+'&token='+ userToken;
       a.href = url;
@@ -110,8 +111,6 @@ function Home() {
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
-      // document.body.removeChild(a);
-      // downloadMP3(files.file, name);
       setLoadDownload(false);
       setIndex(-1);
     }
