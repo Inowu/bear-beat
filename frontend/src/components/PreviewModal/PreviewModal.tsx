@@ -29,7 +29,7 @@ function PreviewModal(props: PreviewModalPropsI) {
       <Modal.Body>
         <div className="preview-container">
           <audio controls>
-            <source src={convertBase64ToMP3(file)} type="audio/mp3" />
+            <source src={file} type="audio/mp3" />
           </audio>
         </div>
       </Modal.Body>
