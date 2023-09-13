@@ -28,9 +28,9 @@ function PreviewModal(props: PreviewModalPropsI) {
       </Modal.Header>
       <Modal.Body>
         <div className="preview-container">
-          <audio controls>
+          <video controls>
             <source src={file} type="audio/mp3" />
-          </audio>
+          </video>
         </div>
       </Modal.Body>
       <Modal.Footer>
