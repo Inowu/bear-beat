@@ -97,7 +97,7 @@ function Home() {
       setLoadFile(false);
     }
   }
-  console.log(currentUser);
+  console.log('test-3');
   const downloadFile = async (name: string, index: number) => {
     setLoadDownload(true);
     setIndex(index);
@@ -109,6 +109,7 @@ function Home() {
       a.download = name;
       document.body.appendChild(a);
       a.click();
+      console.log(url);
       window.URL.revokeObjectURL(url);
       setLoadDownload(false);
       setIndex(-1);
