@@ -147,7 +147,6 @@ function Home() {
       setPastFile([]);
     }
   }, [fileChange])
-  console.log('test-03')
   return (
     <div className="home-main-container">
       <PreviewModal
