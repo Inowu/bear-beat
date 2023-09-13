@@ -84,9 +84,9 @@ function Home() {
     setLoadFile(true);
     setIndex(index);
     try{
-      // const files = await trpc.ftp.demo.query({
-      //   path: "/" +pastFile.join('/') + "/" + name,
-      // })
+      const files = await trpc.ftp.demo.query({
+        path: "/" +pastFile.join('/') + "/" + name,
+      })
       console.log(files);
       console.log('test-02');
       // setFileToShow(files.demo)
