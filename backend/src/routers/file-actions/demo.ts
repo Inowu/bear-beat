@@ -59,7 +59,7 @@ const generateDemo = (
     const demoVideo = Ffmpeg({
       logger: console,
     })
-      .input(fs.createReadStream(path))
+      .input(path)
       .inputOptions(['-to', `${duration}`])
       .format('mp4')
       // .on('start', (cmdLine) => console.log(cmdLine))
