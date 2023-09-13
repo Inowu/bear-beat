@@ -88,7 +88,7 @@ function Home() {
         path: "/" +pastFile.join('/') + "/" + name,
       })
       console.log(files);
-      console.log('test-02')
+      console.log('test-02');
       // setFileToShow(files.demo)
       setIndex(-1);
       setLoadFile(false);
