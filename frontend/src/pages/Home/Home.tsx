@@ -97,7 +97,7 @@ function Home() {
       setLoadFile(false);
     }
   }
-  console.log('test-3');
+  console.log('test-4');
   const downloadFile = async (name: string, index: number) => {
     setLoadDownload(true);
     setIndex(index);
@@ -107,8 +107,8 @@ function Home() {
       const url = "https://kale67.world/download?path=" +encodeURIComponent(path)+'&token='+ userToken;
       a.href = url;
       a.download = name;
-      document.body.appendChild(a);
-      a.click();
+      // document.body.appendChild(a);
+      // a.click();
       console.log(url);
       // window.URL.revokeObjectURL(url);
       setLoadDownload(false);
