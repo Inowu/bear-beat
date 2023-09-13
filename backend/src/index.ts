@@ -5,6 +5,7 @@ import express from 'express';
 import compression from 'compression';
 import cors from 'cors';
 import logger from 'pino-http';
+import pino from 'pino';
 import { log } from './server';
 import { fileService, initializeFileService } from './ftp';
 import { appRouter } from './routers';
@@ -17,11 +18,6 @@ config({
 
 async function main() {
   try {
-    // await server.listen({
-    //   port: Number(process.env.PORT),
-    //   host: process.env.HOST,
-    // });
-
     const app = express();
 
     app.use(compression());

@@ -122,5 +122,10 @@ export const download = async (req: Request, res: Response) => {
     }),
   ]);
 
+  res.setHeader(
+    'Content-Disposition',
+    `attachment; filename=${Path.basename(fullPath)}`,
+  );
+
   return res.sendFile(fullPath);
 };

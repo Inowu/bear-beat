@@ -39,14 +39,14 @@ export const demo = shieldedProcedure
 
     if (await fileService.exists(demoOutputPath)) {
       return {
-        demo: `/demos/${demoPath}`,
+        demo: `/demos/${path.basename(demoPath)}`,
       };
     }
 
     await generateDemo(fullPath, demoDuration, demoOutputPath);
 
     return {
-      demo: `/demos/${demoPath}`,
+      demo: `/demos/${path.basename(demoPath)}`,
     };
   });
 
