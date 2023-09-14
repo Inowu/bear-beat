@@ -10,61 +10,12 @@ import cors from '@fastify/cors';
 import winston from 'winston';
 // import DatadogWinston from 'datadog-winston';
 
-export const server = fastify({
-  logger: {
-    transport: {
-      target: 'pino-pretty',
-      options: {
-        colorize: true,
-      },
-    },
-  },
-  maxParamLength: 5000,
-});
-
-server.register(cors, {
-  origin: '*',
-});
-
 export const log = winston.createLogger();
 
 log.add(
   new winston.transports.File({
-    filename: `${__dirname}/../logs/error.log`,
+    filename: `${__dirname}/../logs/bearbeat.log`,
   }),
 );
 
 log.add(new winston.transports.Console());
-
-// export const { log } = server;
-// const transport = pino.transport({
-//   target: 'pino-pretty',
-// });
-//
-// export const log = pino(transport);
-
-// export const log = pino(
-//   {},
-//   pino.transport({
-//     target: 'pino-datadog-transport',
-//     options: {
-//       ddClientConf: {
-//         authMethods: {
-//           apiKeyAuth: '322425cc4859de7ddd30c1cf2a33878a',
-//         },
-//       },
-//       service: 'bearbeat',
-//       ddServerConf: {
-//         site: 'us5.datadoghq.eu',
-//       },
-//     },
-//   }),
-// );
-
-// server.register(fastifyTRPCPlugin, {
-//   prefix: '/trpc',
-//   trpcOptions: {
-//     router: appRouter,
-//     createContext,
-//   },
-// });
