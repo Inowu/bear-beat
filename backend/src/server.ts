@@ -12,10 +12,4 @@ import winston from 'winston';
 
 export const log = winston.createLogger();
 
-log.add(
-  new winston.transports.File({
-    filename: `${__dirname}/../logs/bearbeat.log`,
-  }),
-);
-
 log.add(new winston.transports.Console());

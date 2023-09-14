@@ -28,7 +28,7 @@ export const login = publicProcedure
     if (!user) {
       throw new TRPCError({
         code: 'UNAUTHORIZED',
-        message: 'Invalid credentials',
+        message: 'Credenciales inválidas',
       });
     }
 
@@ -41,7 +41,7 @@ export const login = publicProcedure
     if (!isPasswordCorrect) {
       throw new TRPCError({
         code: 'UNAUTHORIZED',
-        message: 'Invalid credentials',
+        message: 'Credenciales inválidas',
       });
     }
 

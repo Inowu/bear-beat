@@ -4,5 +4,5 @@ import { stripeSubscriptionWebhook } from './stripe';
 
 export const webhooksRouter = router({
   conektaSubscriptionWebhook,
-  stripeSubscriptionWebhook,
+  // stripeSubscriptionWebhook,
 });
