@@ -11,6 +11,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useState } from "react";
 import { SuccessModal } from "../../../components/Modals/SuccessModal/SuccessModal";
+import { Spinner } from "../../../components/Spinner/Spinner";
 
 function SignUpForm() {
   const navigate = useNavigate();
@@ -145,7 +146,11 @@ function SignUpForm() {
         />
          {formik.errors.passwordConfirmation && <div className="error-formik">{formik.errors.passwordConfirmation}</div>}
       </div>
-      <button className="btn" type="submit">REGISTRARSE</button>
+      {
+        !loader
+        ? <button className="btn" type="submit">REGISTRARSE</button>
+        : <Spinner size={3} width={.3} color="#00e2f7"/>
+      }
       <div className="c-row">
         <Link to={"/auth"}>
           <Arrow className="arrow" />

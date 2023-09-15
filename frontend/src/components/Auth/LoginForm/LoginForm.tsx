@@ -5,6 +5,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import {  useState } from "react";
 import { ErrorModal } from "../../../components/Modals/ErrorModal/ErrorModal";
+import { Spinner } from "../../../components/Spinner/Spinner";
 
 function LoginForm() {
   const [loader, setLoader] = useState<boolean>(false);
@@ -76,9 +77,15 @@ function LoginForm() {
       <div className="c-row">
         <Link to={"recuperar"}>¿Olvidaste tu contraseña?</Link>
       </div>
-      <button className="btn" type="submit">
-        INGRESAR
-      </button>
+      {
+        !loader
+        ?
+        <button className="btn" type="submit">
+          INGRESAR
+        </button>
+        :
+        <Spinner size={3} width={.3} color="#00e2f7"/>
+      }
       <div className="c-row">
         <Link to={"registro"}>Registrarme</Link>
       </div>

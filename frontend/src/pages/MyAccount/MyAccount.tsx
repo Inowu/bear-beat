@@ -12,7 +12,6 @@ function MyAccount() {
   const { currentUser } = useUserContext();
   const [quota, setQuota] = useState({} as IQuota)
   const [orders, setOrders] = useState<IOrders[]>([]);
-  console.log('test-02');
   const getQuota = async () => {
     try{
       const quota: any = await trpc.ftp.quota.query();
