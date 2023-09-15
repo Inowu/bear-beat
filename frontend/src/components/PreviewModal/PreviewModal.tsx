@@ -29,7 +29,7 @@ function PreviewModal(props: PreviewModalPropsI) {
       <Modal.Body>
         <div className="preview-container">
           <video controls autoPlay={true}>
-            <source src={file} type="video/mp4" />
+            <source src={file} />
           </video>
         </div>
       </Modal.Body>
