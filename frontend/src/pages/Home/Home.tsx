@@ -87,7 +87,7 @@ function Home() {
       const files = await trpc.ftp.demo.query({
         path: "/" +pastFile.join('/') + "/" + name,
       })
-      setFileToShow(encodeURI("https://kale67.world")+files.demo)
+      setFileToShow(encodeURI("https://thebearbeatapi.lat")+files.demo)
       setIndex(-1);
       setLoadFile(false);
       setShowPreviewModal(true);
@@ -108,7 +108,7 @@ function Home() {
     setIndex(index);
     if(currentUser?.hasActiveSubscription){
       let path = pastFile.join('/') + "/" + name;
-      const url = "https://kale67.world/download?path=" +encodeURIComponent(path)+'&token='+ userToken;
+      const url = "https://thebearbeatapi.lat/download?path=" +encodeURIComponent(path)+'&token='+ userToken;
       await startDownload(url,name);
     }
     else{
