@@ -80,7 +80,7 @@ function Home() {
       setLoader(false);
     }
   }
-  console.log('test-03');
+  console.log('test-04');
   const playFile = async (name: string, index: number) => {
     setLoadFile(true);
     setIndex(index);
@@ -88,8 +88,8 @@ function Home() {
       const files = await trpc.ftp.demo.query({
         path: "/" +pastFile.join('/') + "/" + name,
       })
-      setFileToShow("https://thebearbeatapi.lat"+encodeURI(files.demo))
-      console.log("https://thebearbeatapi.lat"+encodeURI(files.demo))
+      setFileToShow(encodeURI("https://thebearbeatapi.lat" +files.demo))
+      console.log(encodeURI("https://thebearbeatapi.lat" +files.demo))
       setIndex(-1);
       setLoadFile(false);
       setShowPreviewModal(true);
