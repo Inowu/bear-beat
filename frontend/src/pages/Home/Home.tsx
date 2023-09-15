@@ -80,6 +80,7 @@ function Home() {
       setLoader(false);
     }
   }
+  console.log('test-03');
   const playFile = async (name: string, index: number) => {
     setLoadFile(true);
     setIndex(index);
