@@ -58,7 +58,8 @@ aside {
   }
 
   @include respond-to(md) {
-    position: absolute;
+    position: fixed;
+    margin-top: 60px;
     height: 100%;
     display: flex;
     flex-direction: column;
