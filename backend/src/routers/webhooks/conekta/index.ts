@@ -49,14 +49,18 @@ export const conektaSubscriptionWebhook = shieldedProcedure.mutation(
           `[CONEKTA_WH] Updating subscription for user ${user.id}, subscription status: ${subscription.status}, subscription id: ${subscription.id}, payload: ${payloadStr}`,
         );
         if (payload.data?.object.status !== 'active') {
-          await cancelSubscription({ prisma, user });
+          await cancelSubscription({
+            prisma,
+            user,
+            plan: subscription.plan.id,
+          });
         }
         break;
       case ConektaEvents.SUB_CANCELED:
         log.info(
           `[CONEKTA_WH] Canceling subscription for user ${user.id}, subscription id: ${subscription.id}, payload: ${payloadStr}`,
         );
-        await cancelSubscription({ prisma, user });
+        await cancelSubscription({ prisma, user, plan: subscription.plan.id });
         break;
       case ConektaEvents.ORDER_VOIDED:
       case ConektaEvents.ORDER_DECLINED:
