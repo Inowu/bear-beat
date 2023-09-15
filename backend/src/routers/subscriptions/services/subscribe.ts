@@ -111,12 +111,12 @@ export const subscribe = async ({
       const [existingTallies, existingLimits] = await Promise.all([
         prisma.ftpquotatallies.findFirst({
           where: {
-            name: user.username,
+            name: ftpUser.userid,
           },
         }),
         prisma.ftpQuotaLimits.findFirst({
           where: {
-            name: user.username,
+            name: ftpUser.userid,
           },
         }),
       ]);
@@ -140,7 +140,6 @@ export const subscribe = async ({
             id: talliesId,
           },
           data: {
-            name: user.username,
             bytes_out_used: 0,
           },
         }),
