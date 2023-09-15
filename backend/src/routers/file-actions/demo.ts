@@ -61,7 +61,9 @@ const generateDemo = (
     })
       .input(path)
       .inputOptions(['-to', `${duration}`])
-      .format('mp4')
+      .inputOptions(['-ss 0', `-to ${duration}`])
+      .videoCodec('copy') // Copy video stream
+      .audioCodec('copy') // Copy audio stream
       // .on('start', (cmdLine) => console.log(cmdLine))
       .output(outputPath);
 
