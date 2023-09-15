@@ -6,7 +6,7 @@ import { IUser } from '../../../interfaces/User';
 interface IError {
     show: boolean;
     onHide: () => void;
-    user?: IUser; 
+    user?: IUser | null; 
     message?: string;
 }
 export function ErrorModal (props: IError)  {
