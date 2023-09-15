@@ -114,7 +114,11 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
             });
           }
 
-          await cancelSubscription({ prisma, user });
+          await cancelSubscription({
+            prisma,
+            user,
+            plan: subscription.object.plan,
+          });
 
           break;
         default:
@@ -129,7 +133,11 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
             });
           }
 
-          await cancelSubscription({ prisma, user });
+          await cancelSubscription({
+            prisma,
+            user,
+            plan: subscription.plan.id,
+          });
 
           break;
       }
@@ -138,7 +146,8 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
       log.info(
         `[STRIPE_WH] Canceling subscription for user ${user.id}, subscription id: ${subscription.id}, payload: ${payloadStr}`,
       );
-      await cancelSubscription({ prisma, user });
+
+      await cancelSubscription({ prisma, user, plan: subscription.plan.id });
       break;
     default:
       log.info(

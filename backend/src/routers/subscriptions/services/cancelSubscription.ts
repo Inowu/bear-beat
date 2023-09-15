@@ -6,9 +6,11 @@ import { gbToBytes } from '../../../utils/gbToBytes';
 export const cancelSubscription = async ({
   prisma,
   user,
+  plan: planId,
 }: {
   prisma: PrismaClient;
   user: Users;
+  plan: string;
 }) => {
   const download = await prisma.descargasUser.findFirst({
     where: {
@@ -33,19 +35,6 @@ export const cancelSubscription = async ({
     return;
   }
 
-  const quotaTallies = await prisma.ftpquotatallies.findFirst({
-    where: {
-      name: user.username,
-    },
-  });
-
-  if (!quotaTallies) {
-    log.info(
-      `[CANCEL_SUB] No quota tallies found for user ${user.id}, no action taken to cancel subscription`,
-    );
-    return;
-  }
-
   const ftpUser = await prisma.ftpUser.findFirst({
     where: {
       user_id: user.id,
@@ -58,6 +47,29 @@ export const cancelSubscription = async ({
     );
     return;
   }
+
+  const quotaTallies = await prisma.ftpquotatallies.findFirst({
+    where: {
+      name: ftpUser.userid,
+    },
+  });
+
+  if (!quotaTallies) {
+    log.info(
+      `[CANCEL_SUB] No quota tallies found for user ${user.id}, no action taken to cancel subscription`,
+    );
+    return;
+  }
+
+  let gb = 500;
+
+  const plan = await prisma.plans.findFirst({
+    where: {
+      stripe_prod_id: planId,
+    },
+  });
+
+  if (plan) gb = Number(plan.gigas);
 
   await prisma.$transaction([
     prisma.descargasUser.update({
@@ -73,7 +85,7 @@ export const cancelSubscription = async ({
         id: quotaTallies.id,
       },
       data: {
-        bytes_out_used: gbToBytes(500) + gbToBytes(1),
+        bytes_out_used: gbToBytes(gb) + gbToBytes(1),
       },
     }),
     prisma.ftpUser.update({
