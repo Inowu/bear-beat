@@ -87,7 +87,8 @@ function Home() {
       const files = await trpc.ftp.demo.query({
         path: "/" +pastFile.join('/') + "/" + name,
       })
-      setFileToShow(encodeURI("https://thebearbeatapi.lat")+files.demo)
+      setFileToShow("https://thebearbeatapi.lat"+encodeURIComponent(files.demo))
+      console.log("https://thebearbeatapi.lat"+encodeURIComponent(files.demo))
       setIndex(-1);
       setLoadFile(false);
       setShowPreviewModal(true);
