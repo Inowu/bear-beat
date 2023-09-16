@@ -7,17 +7,30 @@ import { shieldedProcedure } from '../../procedures/shielded.procedure';
  * */
 export const quota = shieldedProcedure.query(
   async ({ ctx: { prisma, session } }) => {
-    const { user } = session!;
+    const user = session!.user!;
+
+    const ftpUser = await prisma.ftpUser.findFirst({
+      where: {
+        user_id: user.id,
+      },
+    });
+
+    if (!ftpUser) {
+      return {
+        used: 0,
+        available: 0,
+      };
+    }
 
     const quotaLimit = await prisma.ftpQuotaLimits.findFirst({
       where: {
-        name: user?.username,
+        name: ftpUser.userid,
       },
     });
 
     const quotaUsed = await prisma.ftpquotatallies.findFirst({
       where: {
-        name: user?.username,
+        name: ftpUser.userid,
       },
     });
 

@@ -100,7 +100,7 @@ export const download = async (req: Request, res: Response) => {
   }
 
   log.info(
-    `[File Download] id: ${user?.id}, username: ${user?.username}, bytes: ${availableBytes}`,
+    `[File Download] id: ${user?.id}, username: ${user?.username}, bytes available left: ${availableBytes}`,
   );
 
   await prisma.$transaction([
