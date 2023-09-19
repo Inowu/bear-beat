@@ -38,3 +38,10 @@ export interface IUser {
     txn_id: null;
     user_id: number;
   }
+  export interface IUser_downloads{
+    order_id: number;
+    user_id: number;
+    ilimitado: number;
+    date_end: Date;
+    available: number;
+  }

@@ -6,7 +6,7 @@ import SpaceAvailableCard from "../../components/SpaceAvailableCard/SpaceAvailab
 import { useUserContext } from "../../contexts/UserContext";
 import { useEffect, useState } from "react";
 import trpc from "../../api";
-import { IOrders, IQuota } from "interfaces/User";
+import { IOrders, IQuota, IUser_downloads } from "interfaces/User";
 
 function MyAccount() {
   const { currentUser } = useUserContext();
@@ -26,10 +26,21 @@ function MyAccount() {
 
     }
     try{
-      const user_downloads = await trpc.descargasuser.ownDescargas.query(body);
-      console.log(user_downloads);
-      const orders:any = await trpc.orders.ownOrders.query(body);
-      setOrders(orders);
+      const user_downloads:any = await trpc.descargasuser.ownDescargas.query(body);
+      let allorders:any = [] ;
+      await Promise.all(user_downloads.map(async (orders: any)=>{x
+        let order_body = {
+          where: {
+            id: orders.order_id,
+          }
+        }
+        const order:any = await trpc.orders.ownOrders.query(order_body);
+        if (order.length> 0) {
+          allorders.push(order[0]);
+        }
+      }))
+      console.log(allorders);
+      setOrders(allorders);
     }
     catch(error){
       console.log(error);
