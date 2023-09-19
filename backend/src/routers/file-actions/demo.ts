@@ -59,9 +59,11 @@ const generateDemo = (
     const demoVideo = Ffmpeg({
       logger: console,
     })
-      .input(fs.createReadStream(path))
+      .input(path)
       .inputOptions(['-to', `${duration}`])
-      .format('mp4')
+      .inputOptions(['-ss 0', `-to ${duration}`])
+      .videoCodec('copy') // Copy video stream
+      .audioCodec('copy') // Copy audio stream
       // .on('start', (cmdLine) => console.log(cmdLine))
       .output(outputPath);
 

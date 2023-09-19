@@ -18,6 +18,7 @@ export const verifyStripeSignature = (req: Request) => {
 
     return true;
   } catch (err) {
+    console.log(err);
     return false;
   }
 };

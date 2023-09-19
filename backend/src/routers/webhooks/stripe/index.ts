@@ -1,6 +1,6 @@
 import { Plans, PrismaClient, Users } from '@prisma/client';
 import { Stripe } from 'stripe';
-import { shieldedProcedure } from '../../../procedures/shielded.procedure';
+// import { shieldedProcedure } from '../../../procedures/shielded.procedure';
 import { cancelSubscription } from '../../subscriptions/services/cancelSubscription';
 import { log } from '../../../server';
 import { subscribe } from '../../subscriptions/services/subscribe';
@@ -8,143 +8,153 @@ import { getPlanKey } from '../../../utils/getPlanKey';
 import { StripeEvents } from './events';
 import { OrderStatus } from '../../subscriptions/interfaces/order-status.interface';
 import stripeInstance from '../../../stripe';
+import { prisma } from '../../../db';
+import { Request } from 'express';
 
-export const stripeSubscriptionWebhook = shieldedProcedure.mutation(
-  async ({ ctx: { req, prisma } }) => {
-    const payload: Stripe.Event = JSON.parse(req.body as any);
+// export const stripeSubscriptionWebhook = shieldedProcedure.mutation(
+export const stripeSubscriptionWebhook = async (req: Request) => {
+  const payload: Stripe.Event = JSON.parse(req.body as any);
 
-    const payloadStr = req.body;
+  const payloadStr = req.body;
 
-    if (!shouldHandleEvent(payload)) return;
+  if (!shouldHandleEvent(payload)) return;
 
-    const user = await getCustomerIdFromPayload(payload, prisma);
+  const user = await getCustomerIdFromPayload(payload, prisma);
 
-    if (!user) {
-      log.error(
-        `[STRIPE_WH] User not found in event: ${payload.type}, payload: ${payloadStr}`,
-      );
-      return;
+  if (!user) {
+    log.error(
+      `[STRIPE_WH] User not found in event: ${payload.type}, payload: ${payloadStr}`,
+    );
+    return;
+  }
+
+  const plan = await getPlanFromPayload(payload, prisma);
+
+  if (!plan && payload.type?.startsWith('customer.subscription')) {
+    log.error(
+      `[STRIPE_WH] Plan not found in event: ${payload.type}, payload: ${payloadStr}`,
+    );
+
+    return;
+  }
+
+  const subscription = payload.data.object as any;
+
+  await addMetadataToSubscription({
+    subId: subscription.id,
+    prisma,
+    payload,
+  });
+
+  switch (payload.type) {
+    case StripeEvents.SUBSCRIPTION_CREATED: {
+      if (subscription.status !== 'active') {
+        log.info(
+          `[STRIPE_WH] A subscription was created for user ${user.id}, subscription id: ${subscription.id}, status: ${subscription.status}`,
+        );
+
+        return;
+      }
+
+      subscribe({
+        user,
+        prisma,
+        plan: plan!,
+        orderId: subscription.metadata.orderId,
+      });
+
+      break;
     }
-
-    const plan = await getPlanFromPayload(payload, prisma);
-
-    if (!plan && payload.type?.startsWith('customer.subscription')) {
-      log.error(
-        `[STRIPE_WH] Plan not found in event: ${payload.type}, payload: ${payloadStr}`,
-      );
-
-      return;
-    }
-
-    const subscription = payload.data.object as any;
-
-    await addMetadataToSubscription({
-      subId: subscription.id,
-      prisma,
-      payload,
-    });
-
-    switch (payload.type) {
-      case StripeEvents.SUBSCRIPTION_CREATED: {
-        if (subscription.status !== 'active') {
+    case StripeEvents.SUBSCRIPTION_UPDATED:
+      switch (subscription.status) {
+        case 'active': {
           log.info(
-            `[STRIPE_WH] A subscription was created for user ${user.id}, subscription id: ${subscription.id}, status: ${subscription.status}`,
+            `[STRIPE_WH] Creating subscription for user ${user.id}, subscription id: ${subscription.id}, payload: ${payloadStr}`,
           );
 
-          return;
+          await subscribe({
+            prisma,
+            user,
+            plan: plan!,
+            orderId: subscription.metadata.orderId,
+          });
+          break;
         }
+        case 'incomplete_expired':
+          log.info(
+            `[STRIPE_WH] Incomplete subscription was expired for user ${user.id}, subscription id: ${subscription.id}, payload: ${payloadStr}`,
+          );
 
-        subscribe({
-          user,
-          prisma,
-          plan: plan!,
-          orderId: subscription.metadata.orderId,
-        });
-
-        break;
-      }
-      case StripeEvents.SUBSCRIPTION_UPDATED:
-        switch (subscription.status) {
-          case 'active': {
-            log.info(
-              `[STRIPE_WH] Creating subscription for user ${user.id}, subscription id: ${subscription.id}, payload: ${payloadStr}`,
-            );
-
-            await subscribe({
-              prisma,
-              user,
-              plan: plan!,
-              orderId: subscription.metadata.orderId,
+          if (subscription.metadata.orderId) {
+            await prisma.orders.update({
+              where: {
+                id: Number(subscription.metadata.orderId),
+              },
+              data: {
+                status: OrderStatus.FAILED,
+              },
             });
-            break;
           }
-          case 'incomplete_expired':
-            log.info(
-              `[STRIPE_WH] Incomplete subscription was expired for user ${user.id}, subscription id: ${subscription.id}, payload: ${payloadStr}`,
-            );
 
-            if (subscription.metadata.orderId) {
-              await prisma.orders.update({
-                where: {
-                  id: Number(subscription.metadata.orderId),
-                },
-                data: {
-                  status: OrderStatus.FAILED,
-                },
-              });
-            }
+          break;
+        case 'past_due':
+          log.info(
+            `[STRIPE_WH] Subscription renovation failed for user ${user.id}, canceling subscription... subscription id: ${subscription.id}, payload: ${payloadStr}`,
+          );
+          // TODO: What to do when a payment fails?
 
-            break;
-          case 'past_due':
-            log.info(
-              `[STRIPE_WH] Subscription renovation failed for user ${user.id}, canceling subscription... subscription id: ${subscription.id}, payload: ${payloadStr}`,
-            );
-            // TODO: What to do when a payment fails?
+          if (subscription.metadata.orderId) {
+            await prisma.orders.update({
+              where: {
+                id: Number(subscription.metadata.orderId),
+              },
+              data: {
+                status: OrderStatus.CANCELLED,
+              },
+            });
+          }
 
-            if (subscription.metadata.orderId) {
-              await prisma.orders.update({
-                where: {
-                  id: Number(subscription.metadata.orderId),
-                },
-                data: {
-                  status: OrderStatus.CANCELLED,
-                },
-              });
-            }
+          await cancelSubscription({
+            prisma,
+            user,
+            plan: subscription.object.plan,
+          });
 
-            await cancelSubscription({ prisma, user });
+          break;
+        default:
+          if (subscription.metadata.orderId) {
+            await prisma.orders.update({
+              where: {
+                id: Number(subscription.metadata.orderId),
+              },
+              data: {
+                status: OrderStatus.FAILED,
+              },
+            });
+          }
 
-            break;
-          default:
-            if (subscription.metadata.orderId) {
-              await prisma.orders.update({
-                where: {
-                  id: Number(subscription.metadata.orderId),
-                },
-                data: {
-                  status: OrderStatus.FAILED,
-                },
-              });
-            }
+          await cancelSubscription({
+            prisma,
+            user,
+            plan: subscription.plan.id,
+          });
 
-            await cancelSubscription({ prisma, user });
+          break;
+      }
+      break;
+    case StripeEvents.SUBSCRIPTION_DELETED:
+      log.info(
+        `[STRIPE_WH] Canceling subscription for user ${user.id}, subscription id: ${subscription.id}, payload: ${payloadStr}`,
+      );
 
-            break;
-        }
-        break;
-      case StripeEvents.SUBSCRIPTION_DELETED:
-        log.info(
-          `[STRIPE_WH] Canceling subscription for user ${user.id}, subscription id: ${subscription.id}, payload: ${payloadStr}`,
-        );
-        await cancelSubscription({ prisma, user });
-        break;
-      default:
-        log.info(
-          `[STRIPE_WH] Unhandled event ${payload.type}, payload: ${payloadStr}`,
-        );
-    }
-  },
-);
+      await cancelSubscription({ prisma, user, plan: subscription.plan.id });
+      break;
+    default:
+      log.info(
+        `[STRIPE_WH] Unhandled event ${payload.type}, payload: ${payloadStr}`,
+      );
+  }
+};
 
 export const getCustomerIdFromPayload = async (
   payload: Stripe.Event,

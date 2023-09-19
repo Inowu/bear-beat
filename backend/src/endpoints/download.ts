@@ -25,7 +25,7 @@ export const download = async (req: Request, res: Response) => {
   const fileExists = await fileService.exists(fullPath);
 
   if (!fileExists) {
-    return res.status(500).send({ error: 'That file does not exist' });
+    return res.status(500).send({ error: 'Este archivo no existe' });
   }
 
   const activePlans = await prisma.descargasUser.findMany({
@@ -50,7 +50,7 @@ export const download = async (req: Request, res: Response) => {
   if (activePlans.length === 0) {
     return res
       .status(400)
-      .send({ error: 'This user does not have an active plan' });
+      .send({ error: 'Este usuario no tiene un plan activo' });
   }
 
   const ftpUser = await prisma.ftpUser.findFirst({
@@ -66,7 +66,7 @@ export const download = async (req: Request, res: Response) => {
 
     return res
       .status(400)
-      .send({ error: 'This user does not have an ftp user' });
+      .send({ error: 'Este usuario no tiene una cuenta FTP' });
   }
 
   const quotaLimit = await prisma.ftpQuotaLimits.findFirst({
@@ -100,7 +100,7 @@ export const download = async (req: Request, res: Response) => {
   }
 
   log.info(
-    `[File Download] id: ${user?.id}, username: ${user?.username}, bytes: ${availableBytes}`,
+    `[File Download] id: ${user?.id}, username: ${user?.username}, bytes available left: ${availableBytes}`,
   );
 
   await prisma.$transaction([
@@ -124,7 +124,7 @@ export const download = async (req: Request, res: Response) => {
 
   res.setHeader(
     'Content-Disposition',
-    `attachment; filename=${Path.basename(fullPath)}`,
+    `attachment; filename=${encodeURI(Path.basename(fullPath))}`,
   );
 
   return res.sendFile(fullPath);
