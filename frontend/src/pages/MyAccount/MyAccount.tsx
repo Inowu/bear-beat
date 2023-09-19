@@ -26,21 +26,26 @@ function MyAccount() {
 
     }
     try{
-      const user_downloads:any = await trpc.descargasuser.ownDescargas.query(body);
-      let allorders:any = [] ;
-      await Promise.all(user_downloads.map(async (orders: any)=>{
-        let order_body = {
-          where: {
-            id: orders.order_id,
-          }
-        }
-        const order:any = await trpc.orders.ownOrders.query(order_body);
-        if (order.length> 0) {
-          allorders.push(order[0]);
-        }
-      }))
-      console.log(allorders);
-      setOrders(allorders);
+      // const user_downloads:any = await trpc.descargasuser.ownDescargas.query(body);
+      // let allorders:any = [] ;
+      // await Promise.all(user_downloads.map(async (orders: any)=>{
+      //   let order_body = {
+      //     where: {
+      //       id: orders.order_id,
+      //     }
+      //   }
+      //   const order:any = await trpc.orders.ownOrders.query(order_body);
+      //   if (order.length> 0) {
+      //     allorders.push(order[0]);
+      //   }
+      // }))
+      // console.log(allorders);
+      // setOrders(allorders);
+      let body = {
+
+      }
+      const order:any = await trpc.orders.ownOrders.query(body); 
+      setOrders(order);
     }
     catch(error){
       console.log(error);
