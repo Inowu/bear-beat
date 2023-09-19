@@ -14,6 +14,19 @@ import { DescargasUserUpdateOneSchema } from '../schemas/updateOneDescargasUser.
 import { DescargasUserUpsertSchema } from '../schemas/upsertOneDescargasUser.schema';
 
 export const descargasusersRouter = router({
+  ownDescargas: shieldedProcedure
+    .input(DescargasUserFindManySchema)
+    .query(async ({ ctx: { prisma, session }, input }) => {
+      const orders = await prisma.descargasUser.findMany({
+        ...input,
+        where: {
+          ...input.where,
+          user_id: session!.user!.id,
+        },
+      });
+
+      return orders;
+    }),
   aggregateDescargasUser: shieldedProcedure
     .input(DescargasUserAggregateSchema)
     .query(async ({ ctx, input }) => {
