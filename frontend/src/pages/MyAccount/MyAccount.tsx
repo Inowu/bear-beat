@@ -26,6 +26,8 @@ function MyAccount() {
 
     }
     try{
+      const user_downloads = await trpc.descargasuser.ownDescargas.query(body);
+      console.log(user_downloads);
       const orders:any = await trpc.orders.ownOrders.query(body);
       setOrders(orders);
     }
