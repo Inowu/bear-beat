@@ -28,7 +28,7 @@ function MyAccount() {
     try{
       const user_downloads:any = await trpc.descargasuser.ownDescargas.query(body);
       let allorders:any = [] ;
-      await Promise.all(user_downloads.map(async (orders: any)=>{x
+      await Promise.all(user_downloads.map(async (orders: any)=>{
         let order_body = {
           where: {
             id: orders.order_id,
