@@ -92,7 +92,9 @@ export const download = async (req: Request, res: Response) => {
   const availableBytes = quotaLimit.bytes_out_avail - quotaUsed.bytes_out_used;
 
   if (availableBytes < fileStat.size) {
-    log.error('[File Download] Not enough bytes left');
+    log.error(
+      `[File Download] Not enough bytes left, user id: ${user.id}, song path: ${fullPath}`,
+    );
 
     return res
       .status(400)
