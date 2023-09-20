@@ -39,7 +39,6 @@ function MyAccount() {
           allorders.push(order[0]);
         }
       }))
-      console.log(allorders);
       setOrders(allorders);
       // const order:any = await trpc.orders.ownOrders.query(body); 
       // setOrders(order);
