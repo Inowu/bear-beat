@@ -12,12 +12,15 @@ export const download = async (req: Request, res: Response) => {
   if (!token || typeof token !== 'string')
     return res.status(401).send({ error: 'Unauthorized' });
 
-  const user = jwt.verify(
-    token,
-    process.env.JWT_SECRET as string,
-  ) as SessionUser;
+  let user: SessionUser | null = null;
 
-  if (!user) return res.status(401).send({ error: 'Unauthorized' });
+  try {
+    user = jwt.verify(token, process.env.JWT_SECRET as string) as SessionUser;
+
+    if (!user) return res.status(401).send({ error: 'Unauthorized' });
+  } catch (e) {
+    return res.status(401).send({ error: 'Unauthorized' });
+  }
 
   const path = req.query.path as string;
 
@@ -126,7 +129,7 @@ export const download = async (req: Request, res: Response) => {
 
   res.setHeader(
     'Content-Disposition',
-    `attachment; filename=${encodeURI(Path.basename(fullPath))}`,
+    `attachment; filename*=UTF-8''${Path.basename(fullPath)}`,
   );
 
   return res.sendFile(fullPath);
