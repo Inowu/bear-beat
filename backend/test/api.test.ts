@@ -8,6 +8,7 @@ import { appRouter } from '../src/routers';
 import { RolesNames } from '../src/routers/auth/interfaces/roles.interface';
 import { addMonths, subMonths } from 'date-fns';
 import { fileService, initializeFileService } from '../src/ftp';
+import { subscribe } from '../src/routers/subscriptions/services/subscribe';
 
 jest.setTimeout(100000);
 
@@ -118,6 +119,150 @@ describe('TRCP API', () => {
         console.log(e);
         expect(getHTTPStatusCodeFromError(e)).toBe(500);
       }
+    });
+  });
+
+  describe('Subscription', () => {
+    describe('Renovation', () => {
+      it('A user whith quota tallies and quota limits', async () => {
+        const dbUser = await prisma.users.findFirst({
+          where: {
+            username: user.username,
+          },
+        });
+
+        if (!dbUser) throw new Error('User not found');
+
+        await prisma.ftpUser.create({
+          data: {
+            userid: dbUser.username,
+            user_id: dbUser.id,
+          },
+        });
+
+        await prisma.ftpQuotaLimits.create({
+          data: {
+            name: user.username,
+            bytes_out_avail: 1024 * 1024 * 1024, // 1GB
+          },
+        });
+
+        await prisma.ftpquotatallies.create({
+          data: {
+            name: user.username,
+            bytes_out_used: 1000,
+          },
+        });
+
+        const plan = await prisma.plans.findFirst({
+          where: {
+            id: 14,
+          },
+        });
+
+        await subscribe({ prisma, user: dbUser, plan: plan! });
+
+        const tallies = await prisma.ftpquotatallies.findFirst({
+          where: {
+            name: user.username,
+          },
+        });
+
+        expect(Number(tallies?.bytes_out_used)).toBe(0);
+      });
+
+      it('A user with quotatallies but no limits', async () => {
+        const dbUser = await prisma.users.findFirst({
+          where: {
+            username: user.username,
+          },
+        });
+
+        if (!dbUser) throw new Error('User not found');
+
+        await prisma.ftpUser.create({
+          data: {
+            userid: dbUser.username,
+            user_id: dbUser.id,
+          },
+        });
+
+        await prisma.ftpquotatallies.create({
+          data: {
+            name: user.username,
+            bytes_out_used: 1000,
+          },
+        });
+
+        const plan = await prisma.plans.findFirst({
+          where: {
+            id: 14,
+          },
+        });
+
+        await subscribe({ prisma, user: dbUser, plan: plan! });
+
+        const tallies = await prisma.ftpquotatallies.findFirst({
+          where: {
+            name: user.username,
+          },
+        });
+
+        const limits = await prisma.ftpQuotaLimits.findFirst({
+          where: {
+            name: user.username,
+          },
+        });
+
+        expect(Number(tallies?.bytes_out_used)).toBe(0);
+        expect(limits).toBeTruthy();
+      });
+
+      it('A user with quotalimits but no tallies', async () => {
+        const dbUser = await prisma.users.findFirst({
+          where: {
+            username: user.username,
+          },
+        });
+
+        if (!dbUser) throw new Error('User not found');
+
+        await prisma.ftpUser.create({
+          data: {
+            userid: dbUser.username,
+            user_id: dbUser.id,
+          },
+        });
+
+        await prisma.ftpQuotaLimits.create({
+          data: {
+            name: user.username,
+          },
+        });
+
+        const plan = await prisma.plans.findFirst({
+          where: {
+            id: 14,
+          },
+        });
+
+        await subscribe({ prisma, user: dbUser, plan: plan! });
+
+        const tallies = await prisma.ftpquotatallies.findFirst({
+          where: {
+            name: user.username,
+          },
+        });
+
+        const limits = await prisma.ftpQuotaLimits.findFirst({
+          where: {
+            name: user.username,
+          },
+        });
+
+        expect(Number(tallies?.bytes_out_used)).toBe(0);
+        expect(limits).toBeTruthy();
+      });
     });
   });
 
@@ -394,6 +539,20 @@ const afterEachCleanup = async () => {
     await prisma.ftpQuotaLimits.delete({
       where: {
         id: quotalimits.id,
+      },
+    });
+  }
+
+  const ftpuser = await prisma.ftpUser.findFirst({
+    where: {
+      userid: user.username,
+    },
+  });
+
+  if (ftpuser) {
+    await prisma.ftpUser.delete({
+      where: {
+        id: ftpuser.id,
       },
     });
   }
