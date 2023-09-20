@@ -123,7 +123,6 @@ function Home() {
       if(response.ok){
         a.href = url;
         a.download = name;
-        document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
         setLoadDownload(false);
@@ -216,7 +215,6 @@ function Home() {
                       <Spinner size={2} width={.2} color="black"/> :
                       <FontAwesomeIcon icon={faDownload}  onClick={()=> downloadFile(file.name, idx)}/>
                     }
-                   
                   </div> 
                   }
                 </div>
