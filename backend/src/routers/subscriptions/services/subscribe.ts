@@ -127,7 +127,7 @@ export const subscribe = async ({
       if (!existingTallies) {
         const tallies = await prisma.ftpquotatallies.create({
           data: {
-            name: user.username,
+            name: ftpUser.userid,
           },
         });
 
@@ -143,7 +143,7 @@ export const subscribe = async ({
             files_out_avail: 0,
             bytes_in_avail: 1,
             files_in_avail: 1,
-            name: user.username,
+            name: ftpUser.userid,
           },
         });
 
@@ -172,7 +172,7 @@ export const subscribe = async ({
             // A limit of 0 means unlimited
             bytes_in_avail: 1,
             files_in_avail: 1,
-            name: user.username,
+            name: ftpUser.userid,
           },
         }),
         prisma.ftpUser.update({
