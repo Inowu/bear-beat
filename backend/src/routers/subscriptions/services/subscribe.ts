@@ -5,25 +5,41 @@ import { TRPCError } from '@trpc/server';
 import { gbToBytes } from '../../../utils/gbToBytes';
 import { log } from '../../../server';
 import { OrderStatus } from '../interfaces/order-status.interface';
+import stripeInstance from '../../../stripe';
+
+export enum SubscriptionService {
+  STRIPE = 'Stripe',
+  CONEKTA = 'Conekta',
+  ADMIN = 'ADMIN',
+  STRIPE_RENOVACION = 'Stripe Renovacion',
+}
+
+type Params =
+  | {
+      plan: Plans;
+      prisma: PrismaClient;
+      user: Users;
+      subId: string;
+      orderId?: never;
+      service: SubscriptionService;
+    }
+  | {
+      prisma: PrismaClient;
+      user: Users;
+      orderId: string;
+      subId: string;
+      plan?: never;
+      service: SubscriptionService;
+    };
 
 export const subscribe = async ({
   prisma,
   user,
   plan,
   orderId: metaOrderId,
-}:
-  | {
-      plan: Plans;
-      prisma: PrismaClient;
-      user: Users;
-      orderId?: never;
-    }
-  | {
-      prisma: PrismaClient;
-      user: Users;
-      orderId: string;
-      plan?: never;
-    }) => {
+  subId,
+  service,
+}: Params) => {
   const ftpUser = await prisma.ftpUser.findFirst({
     where: {
       user_id: user.id,
@@ -183,29 +199,39 @@ export const subscribe = async ({
             expiration,
           },
         }),
-        prisma.descargasUser.create({
-          data: {
-            available: 500,
-            date_end: expiration.toISOString(),
-            user_id: user.id,
-            ...(orderId ? { order_id: orderId } : {}),
-          },
-        }),
       ]);
+
+      // Create a entry on this table if the user has no active subscription
+      log.info(`[SUBSCRIPTION] Creating order for user ${user.id}`);
+
+      const order = await prisma.orders.create({
+        data: {
+          txn_id: subId,
+          user_id: user.id,
+          status: OrderStatus.PENDING,
+          is_plan: 1,
+          plan_id: plan?.id,
+          payment_method: service,
+          date_order: new Date().toISOString(),
+          total_price: Number(plan?.price),
+        },
+      });
+
+      log.info(
+        `[SUBSCRIPTION] Creating descargas user entry for user ${user.id}`,
+      );
+
+      await prisma.descargasUser.create({
+        data: {
+          available: 500,
+          date_end: expiration.toISOString(),
+          user_id: user.id,
+          order_id: order.id,
+        },
+      });
     } catch (e) {
       log.error(`Error while renovating subscription: ${e}`);
     }
-  }
-
-  if (orderId) {
-    await prisma.orders.update({
-      where: {
-        id: orderId,
-      },
-      data: {
-        status: OrderStatus.PAID,
-      },
-    });
   }
 };
 

@@ -1,7 +1,10 @@
 import { EventResponse } from 'conekta';
 import { Plans, Users } from '@prisma/client';
 import { shieldedProcedure } from '../../../procedures/shielded.procedure';
-import { subscribe } from '../../subscriptions/services/subscribe';
+import {
+  SubscriptionService,
+  subscribe,
+} from '../../subscriptions/services/subscribe';
 import { prisma } from '../../../db';
 import { log } from '../../../server';
 import { cancelSubscription } from '../../subscriptions/services/cancelSubscription';
@@ -42,7 +45,13 @@ export const conektaSubscriptionWebhook = shieldedProcedure.mutation(
         log.info(
           `[CONEKTA_WH] Creating subscription for user ${user.id}, subscription id: ${subscription.id}, payload: ${payloadStr}`,
         );
-        await subscribe({ prisma, user, plan: plan! });
+        await subscribe({
+          subId: subscription.id,
+          prisma,
+          user,
+          plan: plan!,
+          service: SubscriptionService.CONEKTA,
+        });
         break;
       case ConektaEvents.SUB_UPDATED:
         log.info(
@@ -87,9 +96,11 @@ export const conektaSubscriptionWebhook = shieldedProcedure.mutation(
         );
 
         await subscribe({
+          subId: subscription.id,
           prisma,
           user,
           orderId: payload.data?.object.metadata.orderId,
+          service: SubscriptionService.CONEKTA,
         });
         break;
       default:
