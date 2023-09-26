@@ -19,7 +19,7 @@ function LoginForm() {
   const validationSchema = Yup.object().shape({
     username: Yup.string()
     .required('Username is required')
-    .min(5, 'Username must be at least 5 characters long'),
+    .min(3, 'Username must be at least 3 characters long'),
     password: Yup.string().required('Password is required')
     .min(3, 'Password must contain 3 characters atleast'),
 });
