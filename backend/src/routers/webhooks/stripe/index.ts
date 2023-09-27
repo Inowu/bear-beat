@@ -1,9 +1,11 @@
 import { Plans, PrismaClient, Users } from '@prisma/client';
 import { Stripe } from 'stripe';
-// import { shieldedProcedure } from '../../../procedures/shielded.procedure';
 import { cancelSubscription } from '../../subscriptions/services/cancelSubscription';
 import { log } from '../../../server';
-import { subscribe } from '../../subscriptions/services/subscribe';
+import {
+  SubscriptionService,
+  subscribe,
+} from '../../subscriptions/services/subscribe';
 import { getPlanKey } from '../../../utils/getPlanKey';
 import { StripeEvents } from './events';
 import { OrderStatus } from '../../subscriptions/interfaces/order-status.interface';
@@ -11,7 +13,6 @@ import stripeInstance from '../../../stripe';
 import { prisma } from '../../../db';
 import { Request } from 'express';
 
-// export const stripeSubscriptionWebhook = shieldedProcedure.mutation(
 export const stripeSubscriptionWebhook = async (req: Request) => {
   const payload: Stripe.Event = JSON.parse(req.body as any);
 
@@ -40,11 +41,13 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
 
   const subscription = payload.data.object as any;
 
-  await addMetadataToSubscription({
-    subId: subscription.id,
-    prisma,
-    payload,
-  });
+  // await addMetadataToSubscription({
+  //   subId: subscription.id,
+  //   prisma,
+  //   payload,
+  //   user,
+  //   plan: plan!,
+  // });
 
   switch (payload.type) {
     case StripeEvents.SUBSCRIPTION_CREATED: {
@@ -57,10 +60,12 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
       }
 
       subscribe({
+        subId: subscription.id,
         user,
         prisma,
         plan: plan!,
         orderId: subscription.metadata.orderId,
+        service: SubscriptionService.STRIPE,
       });
 
       break;
@@ -73,10 +78,12 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
           );
 
           await subscribe({
+            subId: subscription.id,
             prisma,
             user,
             plan: plan!,
             orderId: subscription.metadata.orderId,
+            service: SubscriptionService.STRIPE,
           });
           break;
         }
@@ -261,14 +268,18 @@ const addMetadataToSubscription = async ({
   subId,
   prisma,
   payload,
+  plan,
+  user,
 }: {
   subId: string;
   prisma: PrismaClient;
   payload: Stripe.Event;
+  plan: Plans;
+  user: Users;
 }) => {
   const subscription = await stripeInstance.subscriptions.retrieve(subId);
 
-  const order = await prisma.orders.findFirst({
+  let order = await prisma.orders.findFirst({
     where: {
       txn_id: subId,
     },
@@ -276,10 +287,21 @@ const addMetadataToSubscription = async ({
 
   if (!order) {
     log.warn(
-      `[STRIPE_WH] No order found with a stripe subscription id of ${subId}`,
+      `[STRIPE_WH] No order found with a stripe subscription id of ${subId}, creating one...`,
     );
 
-    return;
+    order = await prisma.orders.create({
+      data: {
+        txn_id: subId,
+        user_id: user.id,
+        status: OrderStatus.PENDING,
+        is_plan: 1,
+        plan_id: plan.id,
+        payment_method: 'Stripe Renovación',
+        date_order: new Date().toISOString(),
+        total_price: Number(plan.price),
+      },
+    });
   }
 
   if (subscription.id && !subscription.metadata.orderId && order) {
