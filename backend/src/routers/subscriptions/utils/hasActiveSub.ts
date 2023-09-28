@@ -25,15 +25,19 @@ export const hasActiveSubscription = async (
       });
     }
   } else {
-    const existingConektaSubscription =
-      (await conektaSubscriptions.getSubscription(customerId)).data.status ===
-      'active';
+    try {
+      const existingConektaSubscription =
+        (await conektaSubscriptions.getSubscription(customerId)).data.status ===
+        'active';
 
-    if (existingConektaSubscription) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'There is already an active subscription for this user',
-      });
+      if (existingConektaSubscription) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'There is already an active subscription for this user',
+        });
+      }
+    } catch (e) {
+      console.log(e);
     }
   }
 
