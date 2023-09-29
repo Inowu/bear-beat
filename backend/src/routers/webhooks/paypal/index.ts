@@ -9,7 +9,7 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
 
   switch (payload.event_type) {
     case PaypalEvent.BILLING_SUBSCRIPTION_ACTIVATED:
-      log.info(`[PAYPAL_WH] Activating subscription for user ${user.id}`);
+    // log.info(`[PAYPAL_WH] Activating subscription for user ${user.id}`);
     // await subscribe({
     //   prisma,
     //   user,
