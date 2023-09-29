@@ -147,8 +147,6 @@ export const subscribeWithCashConekta = shieldedProcedure
           },
         });
 
-        console.log(conektaOrder.data.object);
-
         await prisma.orders.update({
           where: {
             id: order.id,
