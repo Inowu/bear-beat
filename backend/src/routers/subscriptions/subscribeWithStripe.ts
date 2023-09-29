@@ -7,6 +7,7 @@ import stripeInstance from '../../stripe';
 import { log } from '../../server';
 import { OrderStatus } from './interfaces/order-status.interface';
 import { hasActiveSubscription } from './utils/hasActiveSub';
+import { SubscriptionService } from './services/types';
 
 export const subscribeWithStripe = shieldedProcedure
   .input(
@@ -20,7 +21,12 @@ export const subscribeWithStripe = shieldedProcedure
 
     const stripeCustomer = await getStripeCustomer(prisma, user);
 
-    await hasActiveSubscription(user, stripeCustomer, prisma);
+    await hasActiveSubscription({
+      user,
+      customerId: stripeCustomer,
+      prisma,
+      service: SubscriptionService.STRIPE,
+    });
 
     const plan = await prisma.plans.findFirst({
       where: {

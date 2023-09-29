@@ -10,6 +10,7 @@ import { log } from '../../server';
 import { getConektaCustomer } from './utils/getConektaCustomer';
 import { getPlanKey } from '../../utils/getPlanKey';
 import { hasActiveSubscription } from './utils/hasActiveSub';
+import { SubscriptionService } from './services/types';
 
 export const subscribeWithCardConekta = shieldedProcedure
   .input(
@@ -31,7 +32,12 @@ export const subscribeWithCardConekta = shieldedProcedure
         user: session?.user,
       });
 
-      await hasActiveSubscription(user, userConektaId, prisma, 'conekta');
+      await hasActiveSubscription({
+        user,
+        customerId: userConektaId,
+        prisma,
+        service: SubscriptionService.CONEKTA,
+      });
 
       const plan = await prisma.plans.findFirst({
         where: {

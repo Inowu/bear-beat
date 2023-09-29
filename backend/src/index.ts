@@ -13,6 +13,9 @@ import { download } from './endpoints/download';
 import winston from 'winston';
 import { verifyStripeSignature } from './routers/utils/verifyStripeSignature';
 import { stripeSubscriptionWebhook } from './routers/webhooks/stripe';
+import { paypalSubscriptionWebhook } from './routers/webhooks/paypal';
+import { verifyConektaSignature } from './routers/utils/verifyConektaSignature';
+import { conektaSubscriptionWebhook } from './routers/webhooks/conekta';
 
 config({
   path: path.resolve(__dirname, '../.env'),
@@ -41,6 +44,16 @@ async function main() {
     );
 
     app.use(
+      '/webhooks.paypal',
+      express.raw({ type: 'application/json' }),
+      async (req, res) => {
+        await paypalSubscriptionWebhook(req);
+
+        return res.status(200);
+      },
+    );
+
+    app.use(
       '/webhooks.stripe',
       express.raw({ type: 'application/json' }),
       async (req, res) => {
@@ -58,6 +71,23 @@ async function main() {
           log.error(`[STRIPE_WH] Error handling webhook: ${e}`);
 
           return res.status(400).end();
+        }
+      },
+    );
+
+    app.use(
+      '/webhooks.conekta',
+      express.raw({ type: 'application/json' }),
+      async (req, res) => {
+        const isValid = verifyConektaSignature(req, req.body);
+
+        if (!isValid) return res.status(401).send('Invalid signature');
+
+        try {
+          await conektaSubscriptionWebhook(req);
+        } catch (e) {
+          log.error(`[CONEKTA_WH] Error handling webhook: ${e}`);
+          return res.status(500);
         }
       },
     );

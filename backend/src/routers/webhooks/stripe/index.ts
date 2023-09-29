@@ -2,16 +2,14 @@ import { Plans, PrismaClient, Users } from '@prisma/client';
 import { Stripe } from 'stripe';
 import { cancelSubscription } from '../../subscriptions/services/cancelSubscription';
 import { log } from '../../../server';
-import {
-  SubscriptionService,
-  subscribe,
-} from '../../subscriptions/services/subscribe';
+import { subscribe } from '../../subscriptions/services/subscribe';
 import { getPlanKey } from '../../../utils/getPlanKey';
 import { StripeEvents } from './events';
 import { OrderStatus } from '../../subscriptions/interfaces/order-status.interface';
 import stripeInstance from '../../../stripe';
 import { prisma } from '../../../db';
 import { Request } from 'express';
+import { SubscriptionService } from '../../subscriptions/services/types';
 
 export const stripeSubscriptionWebhook = async (req: Request) => {
   const payload: Stripe.Event = JSON.parse(req.body as any);
@@ -66,6 +64,7 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
         plan: plan!,
         orderId: subscription.metadata.orderId,
         service: SubscriptionService.STRIPE,
+        expirationDate: new Date(subscription.current_period_end * 1000),
       });
 
       break;
@@ -84,6 +83,7 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
             plan: plan!,
             orderId: subscription.metadata.orderId,
             service: SubscriptionService.STRIPE,
+            expirationDate: new Date(subscription.current_period_end * 1000),
           });
           break;
         }
