@@ -1,46 +1,32 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Users } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
 import { SessionUser } from '../../auth/utils/serialize-user';
 import stripeInstance from '../../../stripe';
 import { log } from '../../../server';
 import { conektaSubscriptions } from '../../../conekta';
+import { SubscriptionService } from '../services/types';
 
-export const hasActiveSubscription = async (
-  user: SessionUser,
-  customerId: string,
-  prisma: PrismaClient,
-  service = 'stripe',
-) => {
-  if (service === 'stripe') {
-    const existingStripeSubscription = await stripeInstance.subscriptions.list({
-      customer: customerId,
-      status: 'active',
-    });
-
-    if (existingStripeSubscription.data.length > 0) {
-      log.error('User already has an active stirpe subscription');
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'There is already an active subscription for this user',
-      });
+export const hasActiveSubscription = async ({
+  user,
+  customerId,
+  prisma,
+  service,
+}:
+  | {
+      user: SessionUser;
+      customerId: string;
+      prisma: PrismaClient;
+      service:
+        | SubscriptionService.STRIPE
+        | SubscriptionService.CONEKTA
+        | SubscriptionService.PAYPAL;
     }
-  } else {
-    try {
-      const existingConektaSubscription =
-        (await conektaSubscriptions.getSubscription(customerId)).data.status ===
-        'active';
-
-      if (existingConektaSubscription) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'There is already an active subscription for this user',
-        });
-      }
-    } catch (e) {
-      console.log(e);
-    }
-  }
-
+  | {
+      user: Users;
+      customerId?: never;
+      prisma: PrismaClient;
+      service: SubscriptionService.ADMIN;
+    }) => {
   const existingSubscription = await prisma.descargasUser.findFirst({
     where: {
       AND: [
@@ -59,5 +45,47 @@ export const hasActiveSubscription = async (
       code: 'BAD_REQUEST',
       message: 'There is already an active subscription for this user',
     });
+  }
+
+  switch (service) {
+    case SubscriptionService.STRIPE:
+      const existingStripeSubscription =
+        await stripeInstance.subscriptions.list({
+          customer: customerId,
+          status: 'active',
+        });
+
+      if (existingStripeSubscription.data.length > 0) {
+        log.error(
+          '[SUBSCRIPTION_CHECK] User already has an active stripe subscription',
+        );
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'There is already an active subscription for this user',
+        });
+      }
+
+      break;
+    case SubscriptionService.CONEKTA:
+      try {
+        const existingConektaSubscription =
+          (await conektaSubscriptions.getSubscription(customerId)).data
+            .status === 'active';
+
+        if (existingConektaSubscription) {
+          log.error(
+            '[SUBSCRIPTION_CHECK] User already has an active conekta subscription',
+          );
+
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'There is already an active subscription for this user',
+          });
+        }
+      } catch (e) {}
+
+      break;
+    default:
+      break;
   }
 };

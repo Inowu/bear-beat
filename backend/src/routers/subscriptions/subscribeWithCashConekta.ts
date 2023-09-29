@@ -7,6 +7,7 @@ import { conektaOrders } from '../../conekta';
 import { OrderStatus } from './interfaces/order-status.interface';
 import { log } from '../../server';
 import { hasActiveSubscription } from './utils/hasActiveSub';
+import { SubscriptionService } from './services/types';
 
 export const subscribeWithCashConekta = shieldedProcedure
   .input(
@@ -62,7 +63,12 @@ export const subscribeWithCashConekta = shieldedProcedure
 
       const user = session!.user!;
 
-      await hasActiveSubscription(user, userConektaId, prisma, 'cash');
+      await hasActiveSubscription({
+        user,
+        customerId: userConektaId,
+        prisma,
+        service: SubscriptionService.CONEKTA,
+      });
 
       const plan = await prisma.plans.findFirst({
         where: {
@@ -102,7 +108,7 @@ export const subscribeWithCashConekta = shieldedProcedure
 
       const order = await prisma.orders.create({
         data: {
-          payment_method: paymentMethod,
+          payment_method: `Conekta ${paymentMethod}`,
           user_id: session!.user!.id,
           status: OrderStatus.PENDING,
           date_order: new Date().toISOString(),
@@ -141,12 +147,15 @@ export const subscribeWithCashConekta = shieldedProcedure
           },
         });
 
+        console.log(conektaOrder.data.object);
+
         await prisma.orders.update({
           where: {
             id: order.id,
           },
           data: {
             invoice_id: conektaOrder.data.id,
+            txn_id: (conektaOrder.data.object as any).id,
           },
         });
 
@@ -155,7 +164,9 @@ export const subscribeWithCashConekta = shieldedProcedure
         // TODO: Do something with the references, show them to the user on checkout or
         // send them to email
       } catch (e: any) {
-        log.error(`There was an error creating an order with conekta: ${e}`);
+        log.error(
+          `[CONEKTA_CASH] There was an error creating an order with conekta: ${e}`,
+        );
 
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',

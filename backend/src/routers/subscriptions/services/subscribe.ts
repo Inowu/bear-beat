@@ -1,36 +1,10 @@
 import crypto from 'crypto';
 import { Users, Plans, PrismaClient } from '@prisma/client';
-import { addDays } from 'date-fns';
 import { TRPCError } from '@trpc/server';
 import { gbToBytes } from '../../../utils/gbToBytes';
 import { log } from '../../../server';
 import { OrderStatus } from '../interfaces/order-status.interface';
-import stripeInstance from '../../../stripe';
-
-export enum SubscriptionService {
-  STRIPE = 'Stripe',
-  CONEKTA = 'Conekta',
-  ADMIN = 'ADMIN',
-  STRIPE_RENOVACION = 'Stripe Renovacion',
-}
-
-type Params =
-  | {
-      plan: Plans;
-      prisma: PrismaClient;
-      user: Users;
-      subId: string;
-      orderId?: never;
-      service: SubscriptionService;
-    }
-  | {
-      prisma: PrismaClient;
-      user: Users;
-      orderId: string;
-      subId: string;
-      plan?: never;
-      service: SubscriptionService;
-    };
+import { Params, SubscriptionService } from './types';
 
 export const subscribe = async ({
   prisma,
@@ -39,6 +13,7 @@ export const subscribe = async ({
   orderId: metaOrderId,
   subId,
   service,
+  expirationDate,
 }: Params) => {
   const ftpUser = await prisma.ftpUser.findFirst({
     where: {
@@ -46,11 +21,12 @@ export const subscribe = async ({
     },
   });
 
-  let dbPlan = plan;
+  let dbPlan: Plans | null | undefined = plan;
 
   const orderId = Number(metaOrderId);
 
   if (!plan) {
+    log.info(`[SUBSCRIPTION] Fetching order with id ${orderId}`);
     const order = await prisma.orders.findFirstOrThrow({
       where: {
         id: orderId,
@@ -58,18 +34,21 @@ export const subscribe = async ({
     });
 
     if (order.status === OrderStatus.PAID) {
-      log.error(`This order was already paid, ${orderId}`);
+      log.error(`[SUBSCRIPTION] This order was already paid, ${orderId}`);
       return;
     }
 
     if (!order.plan_id) {
+      log.error(`[SUBSCRIPTION] This order did not have a plan id, ${orderId}`);
+
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
         message: 'The given order did not have a plan id',
       });
     }
 
-    dbPlan = await prisma.plans.findFirstOrThrow({
+    log.info(`[SUBSCRIPTION] Fetching plan with id ${order.plan_id}`);
+    dbPlan = await prisma.plans.findFirst({
       where: {
         id: order.plan_id,
       },
@@ -83,12 +62,6 @@ export const subscribe = async ({
 
     return;
   }
-
-  const planDurationInDays = Number.isInteger(dbPlan.duration)
-    ? Number(dbPlan.duration)
-    : 30;
-
-  const expiration = addDays(new Date(), planDurationInDays);
 
   // Hasn't subscribed before
   if (!ftpUser) {
@@ -105,18 +78,44 @@ export const subscribe = async ({
             uid: 2001,
             gid: 2001,
             passwd: crypto.randomBytes(15).toString('base64'),
-            expiration,
+            expiration: expirationDate,
           },
         }),
         prisma.descargasUser.create({
           data: {
             available: 500,
-            date_end: expiration.toISOString(),
+            date_end: expirationDate.toISOString(),
             user_id: user.id,
             ...(orderId ? { order_id: orderId } : {}),
           },
         }),
       ]);
+
+      if (service === SubscriptionService.ADMIN) {
+        await prisma.orders.create({
+          data: {
+            txn_id: subId,
+            user_id: user.id,
+            status: OrderStatus.PAID,
+            is_plan: 1,
+            plan_id: dbPlan?.id,
+            payment_method: service,
+            date_order: new Date().toISOString(),
+            total_price: Number(dbPlan?.price),
+          },
+        });
+      }
+
+      if (orderId) {
+        await prisma.orders.update({
+          where: {
+            id: orderId,
+          },
+          data: {
+            status: OrderStatus.PAID,
+          },
+        });
+      }
     } catch (e) {
       log.error(`Error while creating ftp user: ${e}`);
     }
@@ -153,7 +152,7 @@ export const subscribe = async ({
       if (!existingLimits) {
         const limits = await prisma.ftpQuotaLimits.create({
           data: {
-            bytes_out_avail: gbToBytes(Number(plan?.gigas)),
+            bytes_out_avail: gbToBytes(Number(dbPlan?.gigas)),
             bytes_xfer_avail: 0,
             // A limit of 0 means unlimited
             files_out_avail: 0,
@@ -196,7 +195,7 @@ export const subscribe = async ({
             id: ftpUser.id,
           },
           data: {
-            expiration,
+            expiration: expirationDate,
           },
         }),
       ]);
@@ -208,12 +207,12 @@ export const subscribe = async ({
         data: {
           txn_id: subId,
           user_id: user.id,
-          status: OrderStatus.PENDING,
+          status: OrderStatus.PAID,
           is_plan: 1,
-          plan_id: plan?.id,
+          plan_id: dbPlan?.id,
           payment_method: service,
           date_order: new Date().toISOString(),
-          total_price: Number(plan?.price),
+          total_price: Number(dbPlan?.price),
         },
       });
 
@@ -224,7 +223,7 @@ export const subscribe = async ({
       await prisma.descargasUser.create({
         data: {
           available: 500,
-          date_end: expiration.toISOString(),
+          date_end: expirationDate.toISOString(),
           user_id: user.id,
           order_id: order.id,
         },

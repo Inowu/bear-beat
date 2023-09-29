@@ -1,12 +1,11 @@
 import { z } from 'zod';
 import { shieldedProcedure } from '../../../procedures/shielded.procedure';
 import { TRPCError } from '@trpc/server';
-import {
-  SubscriptionService,
-  subscribe,
-} from '../../subscriptions/services/subscribe';
+import { subscribe } from '../../subscriptions/services/subscribe';
 import { log } from '../../../server';
-import { OrderStatus } from '../../subscriptions/interfaces/order-status.interface';
+import { SubscriptionService } from '../../subscriptions/services/types';
+import { addDays } from 'date-fns';
+import { hasActiveSubscription } from '../../subscriptions/utils/hasActiveSub';
 
 export const activatePlanForUser = shieldedProcedure
   .input(
@@ -44,12 +43,19 @@ export const activatePlanForUser = shieldedProcedure
 
     log.info(`[ADMIN] Activating plan ${plan.name} for user ${user.email}`);
 
+    await hasActiveSubscription({
+      user,
+      prisma,
+      service: SubscriptionService.ADMIN,
+    });
+
     await subscribe({
       subId: 'ADMIN',
       user,
       plan,
       prisma,
       service: SubscriptionService.ADMIN,
+      expirationDate: addDays(new Date(), Number(plan.duration)),
     });
 
     return { message: 'El plan ha sido activado correctamente' };

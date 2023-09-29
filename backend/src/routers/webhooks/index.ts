@@ -3,6 +3,6 @@ import { conektaSubscriptionWebhook } from './conekta';
 import { stripeSubscriptionWebhook } from './stripe';
 
 export const webhooksRouter = router({
-  conektaSubscriptionWebhook,
+  // conektaSubscriptionWebhook,
   // stripeSubscriptionWebhook,
 });
