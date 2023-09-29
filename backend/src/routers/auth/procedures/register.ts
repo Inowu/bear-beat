@@ -68,14 +68,14 @@ export const register = publicProcedure
           },
         }),
         // TODO: Uncomnent this when conekta is ready
-        // conektaClient.createCustomer({
-        //   email,
-        //   name: newUser.username,
-        //   phone: newUser.phone ?? '',
-        //   metadata: {
-        //     id: newUser.id,
-        //   },
-        // }),
+        conektaClient.createCustomer({
+          email,
+          name: newUser.username,
+          phone: newUser.phone ?? '',
+          metadata: {
+            id: newUser.id,
+          },
+        }),
       ]);
 
       return {
