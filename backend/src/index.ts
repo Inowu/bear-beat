@@ -16,6 +16,7 @@ import { stripeSubscriptionWebhook } from './routers/webhooks/stripe';
 import { paypalSubscriptionWebhook } from './routers/webhooks/paypal';
 import { verifyConektaSignature } from './routers/utils/verifyConektaSignature';
 import { conektaSubscriptionWebhook } from './routers/webhooks/conekta';
+import { verifyPaypalSignature } from './routers/utils/verifyPaypalSignature';
 
 config({
   path: path.resolve(__dirname, '../.env'),
@@ -47,9 +48,20 @@ async function main() {
       '/webhooks.paypal',
       express.raw({ type: 'application/json' }),
       async (req, res) => {
-        await paypalSubscriptionWebhook(req);
+        const isValid = await verifyPaypalSignature(req);
 
-        return res.status(200);
+        if (!isValid) {
+          return res.status(400).send('Invalid signature');
+        }
+
+        try {
+          await paypalSubscriptionWebhook(req);
+
+          return res.status(200);
+        } catch (e) {
+          log.error(`[PAYPAL_WH] Error handling webhook: ${e}`);
+          return res.status(500);
+        }
       },
     );
 
@@ -70,7 +82,7 @@ async function main() {
         } catch (e) {
           log.error(`[STRIPE_WH] Error handling webhook: ${e}`);
 
-          return res.status(400).end();
+          return res.status(500).end();
         }
       },
     );
@@ -79,9 +91,10 @@ async function main() {
       '/webhooks.conekta',
       express.raw({ type: 'application/json' }),
       async (req, res) => {
-        const isValid = verifyConektaSignature(req, req.body);
-
-        if (!isValid) return res.status(401).send('Invalid signature');
+        // TODO: Uncomment this when conekta signature verification is fixed
+        // const isValid = verifyConektaSignature(req, req.body);
+        //
+        // if (!isValid) return res.status(401).send('Invalid signature');
 
         try {
           await conektaSubscriptionWebhook(req);
