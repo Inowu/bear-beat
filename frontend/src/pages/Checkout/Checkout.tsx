@@ -62,7 +62,7 @@ function Checkout() {
             </div>
           </div>
           <Elements stripe={stripePromise}>
-            <CheckoutForm plan={plan.id}/>
+            <CheckoutForm plan={plan} />
           </Elements>
         </div>
         <div className="information-container">

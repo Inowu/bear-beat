@@ -63,7 +63,6 @@ const UserContextProvider = (props: any) => {
       setUserToken(token);
       startUser()
     }
-
     setLoading(false);
   }, [userToken]);
 

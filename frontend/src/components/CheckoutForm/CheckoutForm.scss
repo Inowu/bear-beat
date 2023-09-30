@@ -2,7 +2,6 @@ form.checkout-form {
   display: flex;
   flex-direction: column;
   gap: 40px;
-
   .c-row {
     width: 100%;
     .conekta-input{
@@ -48,6 +47,20 @@ form.checkout-form {
       border-radius: 5px;
     }
   }
-
-  
+  .button-contain{
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    gap: 20px;
+    .btn-oxxo{
+      padding-block: 10px;
+      font-weight: 600;
+      border-radius: 100px;
+    }
+    .paypal-button-tagline{
+      .paypal-button-text{
+        color: red;
+      }
+    }
+  }
 }

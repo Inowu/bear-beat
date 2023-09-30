@@ -7,10 +7,13 @@ import { useEffect, useState } from "react";
 import { Spinner } from "../../components/Spinner/Spinner";
 import { SuccessModal } from "../../components/Modals/SuccessModal/SuccessModal";
 import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
+import { PayPalButtons, PayPalScriptProvider } from "@paypal/react-paypal-js";
+import { IPlans } from "interfaces/Plans";
+import { returnPricePaypal } from "../../functions/Methods";
 declare let window: any;
 
 interface ICheckout {
-  plan: number;
+  plan: IPlans;
 }
 
 function CheckoutForm(props: ICheckout) {
@@ -19,6 +22,7 @@ function CheckoutForm(props: ICheckout) {
   const [show, setShow] = useState<boolean>(false);
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<any>("");
+  const [initialValues, setInitialValues] = useState<any>(null);
   const [cardInfo, setCardInfo] = useState({
     card: "",
     month: "",
@@ -59,12 +63,13 @@ function CheckoutForm(props: ICheckout) {
     let tokenId = token.id
     let body_conekta = {
       cardToken: tokenId,
-      planId: plan,
+      planId: plan.id,
       makeDefault: "true",
     };
     console.log(body_conekta);
     try {
       const suscribeConecta = await trpc.subscriptions.subscribeWithCardConekta.mutate(body_conekta);
+      console.log(suscribeConecta);
       setShowSuccess(true);
       setLoader(false);
     } catch (error) {
@@ -73,6 +78,25 @@ function CheckoutForm(props: ICheckout) {
       setLoader(false);
     }
   }
+  const payWithOxxo = async() => {
+    try{
+      let body = {
+        planId: plan.id,
+        paymentMethod: "cash" as const,
+      }
+      const oxxoPay = await trpc.subscriptions.subscribeWithCashConekta.mutate(body);
+      console.log(oxxoPay);
+    }
+    catch(error) {
+      setErrorMessage("Ya existe una orden pendiente con este método de pago, revisa tu correo para consultarla");
+      setShow(true);
+      setLoader(false);
+    }
+  }
+  const paypalPayment = async (data: any) => {
+    console.log(data);
+
+  }
   const conektaErrorResponseHandler = (response: any) => {
     setErrorMessage('Verifique que los datos de su tarjeta sean los correctos!');
     setShow(true);
@@ -80,7 +104,7 @@ function CheckoutForm(props: ICheckout) {
   };
   const suscribetext = async () => {
     let body_stripe = {
-      planId: plan,
+      planId: plan.id,
       coupon: coupon,
     };
     setLoader(true);
@@ -125,7 +149,15 @@ function CheckoutForm(props: ICheckout) {
   useEffect(() => {
     // console.log(window.Conekta.setPublicKey(public_key));
     // window.Conekta.setPublicKey(public_key);
-  }, []);
+    // if(plan.id){
+    //   const initialOptions = {
+    //     clientId: "AdDGgG9U23hryPtPz0YqrVsGnCJpcsPgBv5FLvaII8X3MOvOoghIadKZbDTCrv9jAKpHr3C6v-80ulLO",
+    //     currency: plan.moneda === "usd" ? "USD": "MX",
+    //     vault: true,
+    //   };
+    //   setInitialValues(initialOptions);
+    // }
+  }, [plan]);
 
   return (
     <form className="checkout-form" onSubmit={onSubmit}>
@@ -204,11 +236,35 @@ function CheckoutForm(props: ICheckout) {
           </div>
         )}
       </div>
+      <div className="button-contain">
       {loader ? (
         <Spinner size={4} width={0.4} color="#00e2f7" />
       ) : (
         <button className="btn primary-pill linear-bg">SUBSCRIBE</button>
+        
       )}
+      {/* {
+        plan.moneda === "mxn" &&
+        <div className="btn primary-pill silver-bg btn-oxxo" onClick={payWithOxxo}>OXXO</div>
+      }
+        {
+          initialValues !== null &&
+          <PayPalScriptProvider  options={initialValues} >
+          <PayPalButtons 
+            style={{color: "silver", shape: "pill", layout: "horizontal", height: 46}}
+            createSubscription={(data, actions) => {
+              return actions.subscription.create({
+                plan_id: returnPricePaypal(plan.id)
+              })
+            }}
+            onApprove={async (data: any, actions) => {
+              await paypalPayment(data);
+              return data
+            }}
+          />
+        </PayPalScriptProvider>
+        } */}
+      </div>
       <ErrorModal show={show} onHide={closeError} message={errorMessage} />
       <SuccessModal
         show={showSuccess}
