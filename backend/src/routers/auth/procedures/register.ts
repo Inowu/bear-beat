@@ -7,6 +7,8 @@ import { ActiveState } from '../interfaces/active-state.interface';
 import { generateJwt } from '../utils/generateJwt';
 import stripe from '../../../stripe';
 import { conektaClient } from '../../../conekta';
+import { stripNonAlphabetic } from './utils/formatUsername';
+import { log } from '../../../server';
 
 export const register = publicProcedure
   .input(
@@ -60,23 +62,33 @@ export const register = publicProcedure
         },
       });
 
-      await Promise.all([
-        stripe.customers.create({
+      try {
+        await stripe.customers.create({
           email,
           metadata: {
             id: newUser.id,
           },
-        }),
-        // TODO: Uncomnent this when conekta is ready
-        conektaClient.createCustomer({
+        });
+      } catch (e) {
+        log.error(
+          `There was an error creating the stripe customer for user ${newUser.id}`,
+        );
+      }
+
+      try {
+        await conektaClient.createCustomer({
           email,
-          name: newUser.username,
+          name: stripNonAlphabetic(newUser.username),
           phone: newUser.phone ?? '',
           metadata: {
             id: newUser.id,
           },
-        }),
-      ]);
+        });
+      } catch (e: any) {
+        log.error(
+          `There was an error creating the conekta customer for user ${newUser.id}, details: ${e.response?.data?.details}`,
+        );
+      }
 
       return {
         token: generateJwt(newUser),
