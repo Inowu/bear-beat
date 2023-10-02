@@ -70,6 +70,8 @@ export const subscribeWithCashConekta = shieldedProcedure
         service: SubscriptionService.CONEKTA,
       });
 
+      const paymentMethodName = `Conekta ${paymentMethod}`;
+
       const plan = await prisma.plans.findFirst({
         where: {
           id: planId,
@@ -93,7 +95,7 @@ export const subscribeWithCashConekta = shieldedProcedure
               status: OrderStatus.PENDING,
             },
             {
-              payment_method: paymentMethod,
+              payment_method: paymentMethodName,
             },
           ],
         },
@@ -108,7 +110,7 @@ export const subscribeWithCashConekta = shieldedProcedure
 
       const order = await prisma.orders.create({
         data: {
-          payment_method: `Conekta ${paymentMethod}`,
+          payment_method: paymentMethodName,
           user_id: session!.user!.id,
           status: OrderStatus.PENDING,
           date_order: new Date().toISOString(),
