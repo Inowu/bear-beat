@@ -250,10 +250,10 @@ function CheckoutForm(props: ICheckout) {
         
       )}
       {/* oxxo */}
-      {/* {
+      {
         plan.moneda === "mxn" &&
         <div className="btn primary-pill silver-bg btn-oxxo" onClick={payWithOxxo}>OXXO</div>
-      } */}
+      }
         {/* {
           initialValues !== null &&
           <PayPalScriptProvider  options={initialValues} >
