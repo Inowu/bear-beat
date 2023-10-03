@@ -46,7 +46,7 @@ function Checkout() {
     <div className="checkout-main-container">
       <div className="checkout-card">
         <div className="payment-container">
-          <h2>Billing information test</h2>
+          <h2>Billing information</h2>
           <div className="order-info-container">
             {/* <div className="c-row">
               <b>Order ID:</b>
