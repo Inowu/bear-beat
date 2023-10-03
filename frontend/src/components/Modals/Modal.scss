@@ -16,6 +16,11 @@
     p{
         margin: 0;
     }
+    img{
+        width: 112px;
+        height: 50px;
+        margin-block: 10px;
+    }
     .header{
         display: flex;
         align-items: center;
@@ -63,9 +68,28 @@
                 color: #39d834;;
             }
             .btn-option-2{
-                background-color: #39d834;;
+                background-color: #39d834;
                 color: white;
             }
+            .btn-option-3{
+                background-color: #febc2e;
+                color: white;
+            }
+            .btn-option-4{
+                background: linear-gradient(45deg,#04e4cc,#00e1ee);
+                color: white;
+            }
+        }
+        .to-left{
+            justify-content: flex-end;
+        }
+        .reference{
+            color: white;
+            font-size: 12px;
+        }
+        .pay-reference{
+            color: white;
+            font-size: 18px;
         }
         .button-container-2{
             display: flex;
@@ -81,6 +105,11 @@
         }
 
     }
+    .center{
+        text-align: center;
+        align-items: center;
+        gap: 7px;
+    }
 }
 .modal-content{
     border-radius: 25px;
@@ -92,5 +121,8 @@
     box-shadow: -6px -6px 0px 2px #09e1f7;
 }
 .option-modal{
-    box-shadow: -6px -6px 0px 2px #39d834;;
+    box-shadow: -6px -6px 0px 2px #39d834;
+}
+.oxxo-modal{
+    box-shadow: -6px -6px 0px 2px #febc2e;
 }

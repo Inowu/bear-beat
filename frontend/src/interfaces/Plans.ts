@@ -33,3 +33,15 @@ export interface IPlans {
   video_ilimitado: null;
   vip_activo: null;
 }
+export interface IOxxoData {
+  auth_code: null;
+  barcode_url: string;
+  cashier_id: null;
+  expires_at: number;
+  object: string;
+  reference: string;
+  service_name: string;
+  store: null;
+  sotre_name: string;
+  type: string;
+}
