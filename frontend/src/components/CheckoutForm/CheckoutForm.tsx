@@ -167,7 +167,7 @@ function CheckoutForm(props: ICheckout) {
 
   return (
     <form className="checkout-form" onSubmit={onSubmit}>
-      <div className="c-row">
+      {/* <div className="c-row">
         <h4 className="mb-2">Have you a discount code?</h4>
         <input
           type="text"
@@ -177,7 +177,7 @@ function CheckoutForm(props: ICheckout) {
         <h4 className="mt-2">
           Discount only apply on first month. <span>Apply</span>
         </h4>
-      </div>
+      </div> */}
       <div className="c-row">
         {random_number > 0 ? (
           <CardElement
