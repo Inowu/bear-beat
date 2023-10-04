@@ -32,7 +32,6 @@ function PlanCard(props: PlanCardPropsI) {
         planId: plan.id,
         paymentMethod: "cash" as const,
       }
-      console.log(body);
       const oxxoPay = await trpc.subscriptions.subscribeWithCashConekta.mutate(body);
       setShowOxxoModal(true);
       setOxxoData(oxxoPay);
