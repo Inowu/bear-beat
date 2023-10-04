@@ -1,61 +1,75 @@
 import { Request } from 'express';
+import axios from 'axios';
 
 export const verifyPaypalSignature = async (req: Request): Promise<boolean> => {
-  const authAlgo = req.headers['PAYPAL-AUTH-ALGO'];
-  const certUrl = req.headers['PAYPAL-CERT-URL'];
-  const transmissionId = req.headers['PAYPAL-TRANSMISSION-ID'];
-  const transmissionSig = req.headers['PAYPAL-TRANSMISSION-SIG'];
-  const transmissionTime = req.headers['PAYPAL-TRANSMISSION-TIME'];
+  const authAlgo = req.headers['paypal-auth-algo'];
+  const certUrl = req.headers['paypal-cert-url'];
+  const transmissionId = req.headers['paypal-transmission-id'];
+  const transmissionSig = req.headers['paypal-transmission-sig'];
+  const transmissionTime = req.headers['paypal-transmission-time'];
 
   const url =
     process.env.NODE_ENV === 'production'
       ? process.env.PAYPAL_URL
       : process.env.PAYPAL_SANDBOX_URL;
 
-  const clientId = (process.env.NODE_ENV = 'production'
-    ? process.env.PAYPAL_CLIENT_ID
-    : process.env.PAYPAL_TEST_CLIENT_ID);
-  const clientSecret = (process.env.NODE_ENV = 'production'
-    ? process.env.PAYPAL_CLIENT_SECRET
-    : process.env.PAYPAL_TEST_CLIENT_SECRET);
+  const clientId =
+    process.env.NODE_ENV === 'production'
+      ? process.env.PAYPAL_CLIENT_ID
+      : process.env.PAYPAL_TEST_CLIENT_ID;
+  const clientSecret =
+    process.env.NODE_ENV === 'production'
+      ? process.env.PAYPAL_CLIENT_SECRET
+      : process.env.PAYPAL_TEST_CLIENT_SECRET;
 
   const authUrl = `${url}/v1/oauth2/token`;
-  const clientIdAndSecret = `${clientId}:${clientSecret}`;
-  const base64 = Buffer.from(clientIdAndSecret).toString('base64');
 
-  const tokenBody = await (
-    await fetch(authUrl, {
+  try {
+    const {
+      data: { access_token },
+    } = await axios(authUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         Accept: 'application/json',
         'Accept-Language': 'en_US',
-        Authorization: `Basic ${base64}`,
+        'content-type': 'application/x-www-form-urlencoded',
       },
-      body: 'grant_type=client_credentials',
-    })
-  ).json();
-
-  const res = await (
-    await fetch(`${url}/v1/notifications/verify-webhook-signature`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${tokenBody.access_token}`,
+      auth: {
+        username: clientId as string,
+        password: clientSecret as string,
       },
-      body: JSON.stringify({
-        transmission_id: transmissionId,
-        transmission_time: transmissionTime,
-        cert_url: certUrl,
-        auth_algo: authAlgo,
-        transmission_sig: transmissionSig,
-        webhook_id: process.env.PAYPAL_WH_ID,
-        webhook_event: req.body,
-      }),
-    })
-  ).json();
+      params: {
+        grant_type: 'client_credentials',
+      },
+    });
 
-  console.log(res);
+    const verifyPayload = {
+      transmission_id: transmissionId,
+      transmission_time: transmissionTime,
+      cert_url: certUrl,
+      auth_algo: authAlgo,
+      transmission_sig: transmissionSig,
+      webhook_id: process.env.PAYPAL_WH_ID,
+      webhook_event: req.body,
+    };
+
+    const res = await axios.post(
+      `${url}/v1/notifications/verify-webhook-signature`,
+      verifyPayload,
+      {
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+      },
+    );
+
+    console.log({
+      result: res.data.verification_status,
+      body: req.body.toString(),
+    });
+  } catch (e: any) {
+    console.error(e);
+  }
 
   return false;
 };

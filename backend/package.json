@@ -47,6 +47,7 @@
     "@fastify/secure-session": "^6.2.0",
     "@prisma/client": "5.0.0",
     "@trpc/server": "10.36.0",
+    "axios": "^1.5.1",
     "bcrypt": "^5.1.0",
     "compression": "^1.7.4",
     "conekta": "6.0.0",

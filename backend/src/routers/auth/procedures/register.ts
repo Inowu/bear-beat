@@ -6,7 +6,7 @@ import { RolesIds } from '../interfaces/roles.interface';
 import { ActiveState } from '../interfaces/active-state.interface';
 import { generateJwt } from '../utils/generateJwt';
 import stripe from '../../../stripe';
-import { conektaClient } from '../../../conekta';
+import { conektaCustomers } from '../../../conekta';
 import { stripNonAlphabetic } from './utils/formatUsername';
 import { log } from '../../../server';
 
@@ -76,7 +76,7 @@ export const register = publicProcedure
       }
 
       try {
-        await conektaClient.createCustomer({
+        await conektaCustomers.createCustomer({
           email,
           name: stripNonAlphabetic(newUser.username),
           phone: newUser.phone ?? '',
@@ -86,7 +86,9 @@ export const register = publicProcedure
         });
       } catch (e: any) {
         log.error(
-          `There was an error creating the conekta customer for user ${newUser.id}, details: ${e.response?.data?.details}`,
+          `There was an error creating the conekta customer for user ${
+            newUser.id
+          }, details: ${JSON.stringify(e.response?.data?.details)}`,
         );
       }
 

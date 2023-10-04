@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
 import { SessionUser } from '../../auth/utils/serialize-user';
-import { conektaClient } from '../../../conekta';
+import { conektaCustomers } from '../../../conekta';
 import { stripNonAlphabetic } from '../../auth/procedures/utils/formatUsername';
 import { log } from '../../../server';
 
@@ -39,7 +39,7 @@ export const getConektaCustomer = async ({
 
   if (!userConektaId) {
     try {
-      const conektaUser = await conektaClient.createCustomer({
+      const conektaUser = await conektaCustomers.createCustomer({
         name: stripNonAlphabetic(dbUser.username),
         phone: dbUser.phone ?? '',
         email: dbUser.email,
