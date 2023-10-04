@@ -9,8 +9,7 @@ export const plans: Array<PlanI> = [
     duration: 30,
     included: [
       "Renovación automática",
-      "Busqueda avanzada",
-      "Nueva música diariamente",
+      "Nueva música cada semana",
       "Descargas con 1 click",
       "HQ Audio / HD Video",
     ],
@@ -26,8 +25,7 @@ export const plans: Array<PlanI> = [
     duration: 30,
     included: [
       "Renovación automática",
-      "Busqueda avanzada",
-      "Nueva música diariamente",
+      "Nueva música cada semana",
       "Descargas con 1 click",
       "HQ Audio / HD Video",
     ],

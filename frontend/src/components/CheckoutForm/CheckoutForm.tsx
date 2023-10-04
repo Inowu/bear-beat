@@ -8,9 +8,8 @@ import { Spinner } from "../../components/Spinner/Spinner";
 import { SuccessModal } from "../../components/Modals/SuccessModal/SuccessModal";
 import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
 import { PayPalButtons, PayPalScriptProvider } from "@paypal/react-paypal-js";
-import { IOxxoData, IPlans } from "interfaces/Plans";
+import { IPlans } from "interfaces/Plans";
 import { returnPricePaypal } from "../../functions/Methods";
-import { OxxoModal } from "../../components/Modals/OxxoModal/OxxoModal";
 declare let window: any;
 
 interface ICheckout {
@@ -24,8 +23,6 @@ function CheckoutForm(props: ICheckout) {
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<any>("");
   const [initialValues, setInitialValues] = useState<any>(null);
-  const [showOxxoModal, setShowOxxoModal] = useState<boolean>(false);
-  const [oxxoData, setOxxoData] = useState({} as IOxxoData);
   const [cardInfo, setCardInfo] = useState({
     card: "",
     month: "",
@@ -41,9 +38,6 @@ function CheckoutForm(props: ICheckout) {
   const closeError = () => {
     setShow(false);
   };
-  const closeOxxo = () => {
-    setShowOxxoModal(false);
-  }
   const closeSuccess = () => {
     setShowSuccess(false);
     navigate("/");
@@ -80,22 +74,6 @@ function CheckoutForm(props: ICheckout) {
       setLoader(false);
     } catch (error) {
       setErrorMessage('Verifique que los datos de su tarjeta sean los correctos!');
-      setShow(true);
-      setLoader(false);
-    }
-  }
-  const payWithOxxo = async() => {
-    try{
-      let body = {
-        planId: plan.id,
-        paymentMethod: "cash" as const,
-      }
-      const oxxoPay = await trpc.subscriptions.subscribeWithCashConekta.mutate(body);
-      setShowOxxoModal(true);
-      setOxxoData(oxxoPay);
-    }
-    catch(error) {
-      setErrorMessage("Ya existe una orden pendiente con este método de pago, revisa tu correo para consultarla");
       setShow(true);
       setLoader(false);
     }
@@ -249,11 +227,6 @@ function CheckoutForm(props: ICheckout) {
         <button className="btn primary-pill linear-bg">SUBSCRIBE</button>
         
       )}
-      {/* oxxo */}
-      {
-        plan.moneda === "mxn" &&
-        <div className="btn primary-pill silver-bg btn-oxxo" onClick={payWithOxxo}>OXXO</div>
-      }
         {/* {
           initialValues !== null &&
           <PayPalScriptProvider  options={initialValues} >
@@ -278,12 +251,6 @@ function CheckoutForm(props: ICheckout) {
         onHide={closeSuccess}
         message="Gracias por tu pago, ya puedes empezar a descargar!"
         title="Compra Exitosa"
-      />
-      <OxxoModal
-        show={showOxxoModal}
-        onHide={closeOxxo}
-        price={plan.price}
-        oxxoData={oxxoData}
       />
     </form>
   );
