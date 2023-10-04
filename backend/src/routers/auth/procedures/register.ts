@@ -63,10 +63,19 @@ export const register = publicProcedure
       });
 
       try {
-        await stripe.customers.create({
+        const customer = await stripe.customers.create({
           email,
           metadata: {
             id: newUser.id,
+          },
+        });
+
+        await prisma.users.update({
+          where: {
+            id: newUser.id,
+          },
+          data: {
+            stripe_cusid: customer.id,
           },
         });
       } catch (e) {
@@ -76,12 +85,21 @@ export const register = publicProcedure
       }
 
       try {
-        await conektaCustomers.createCustomer({
+        const customer = await conektaCustomers.createCustomer({
           email,
           name: stripNonAlphabetic(newUser.username),
           phone: newUser.phone ?? '',
           metadata: {
             id: newUser.id,
+          },
+        });
+
+        await prisma.users.update({
+          where: {
+            id: newUser.id,
+          },
+          data: {
+            conekta_cusid: customer.data.id,
           },
         });
       } catch (e: any) {

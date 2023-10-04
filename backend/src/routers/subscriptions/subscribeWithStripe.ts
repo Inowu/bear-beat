@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
-import { getStripeCustomer } from './utils/getStripeCustmomer';
+import { getStripeCustomer } from './utils/getStripeCustomer';
 import { getPlanKey } from '../../utils/getPlanKey';
 import stripeInstance from '../../stripe';
 import { log } from '../../server';
