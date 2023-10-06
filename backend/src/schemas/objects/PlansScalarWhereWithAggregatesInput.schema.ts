@@ -122,6 +122,26 @@ const Schema: z.ZodType<Prisma.PlansScalarWhereWithAggregatesInput> = z
     stripe_prod_id_test: z
       .union([z.lazy(() => StringWithAggregatesFilterObjectSchema), z.string()])
       .optional(),
+    conekta_plan_id: z
+      .union([
+        z.lazy(() => StringNullableWithAggregatesFilterObjectSchema),
+        z.string(),
+      ])
+      .optional()
+      .nullable(),
+    conekta_plan_id_test: z
+      .union([z.lazy(() => StringWithAggregatesFilterObjectSchema), z.string()])
+      .optional(),
+    paypal_plan_id: z
+      .union([
+        z.lazy(() => StringNullableWithAggregatesFilterObjectSchema),
+        z.string(),
+      ])
+      .optional()
+      .nullable(),
+    paypal_plan_id_test: z
+      .union([z.lazy(() => StringWithAggregatesFilterObjectSchema), z.string()])
+      .optional(),
     vip_activo: z
       .union([
         z.lazy(() => IntNullableWithAggregatesFilterObjectSchema),

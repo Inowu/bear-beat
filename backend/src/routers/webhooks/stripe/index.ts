@@ -125,6 +125,7 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
             prisma,
             user,
             plan: subscription.object.plan,
+            service: SubscriptionService.STRIPE,
           });
 
           break;
@@ -144,6 +145,7 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
             prisma,
             user,
             plan: subscription.plan.id,
+            service: SubscriptionService.STRIPE,
           });
 
           break;
@@ -154,7 +156,12 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
         `[STRIPE_WH] Canceling subscription for user ${user.id}, subscription id: ${subscription.id}, payload: ${payloadStr}`,
       );
 
-      await cancelSubscription({ prisma, user, plan: subscription.plan.id });
+      await cancelSubscription({
+        prisma,
+        user,
+        plan: subscription.plan.id,
+        service: SubscriptionService.STRIPE,
+      });
       break;
     default:
       log.info(
@@ -186,40 +193,64 @@ export const getCustomerIdFromPayload = async (
   }
 
   if (!user) {
-    const existingUser = await stripeInstance.customers.retrieve(customerId);
+    try {
+      const existingUser = await stripeInstance.customers.retrieve(customerId);
 
-    log.info(
-      `[STRIPE_WH] No user with customerId ${customerId} was found, trying to update existing db user. Customer: ${JSON.stringify(
-        existingUser,
-      )}`,
-    );
-
-    const dbUser = await prisma.users.findFirst({
-      where: {
-        email: (existingUser.object as any).email,
-      },
-    });
-
-    if (!dbUser) {
-      log.error(
-        `[STRIPE_WH] No user was found with customer email ${(
-          existingUser.object as any
-        )?.email}`,
+      log.info(
+        `[STRIPE_WH] No user with customerId ${customerId} was found, trying to update existing db user ${
+          existingUser.id
+        }. Customer: ${JSON.stringify(existingUser)}`,
       );
 
-      return null;
+      const dbUser = await prisma.users.findFirst({
+        where: {
+          email: (existingUser as any).email,
+        },
+      });
+
+      if (!dbUser) {
+        log.error(
+          `[STRIPE_WH] No user was found with customer email ${
+            (existingUser as any).email
+          }`,
+        );
+
+        return null;
+      }
+
+      await prisma.users.update({
+        where: {
+          id: dbUser.id,
+        },
+        data: {
+          stripe_cusid: customerId,
+        },
+      });
+
+      log.info(
+        `[STRIPE_WH] Updated user ${dbUser.id} with stripe_cusid ${customerId}`,
+      );
+
+      return dbUser;
+    } catch (e: any) {
+      if (e.type === 'StripeInvalidRequestError') {
+        if (e.raw.code === 'resource_missing') {
+          log.error(
+            `[STRIPE_WH] Could not find customer with id ${customerId}`,
+          );
+        } else {
+          log.error(
+            `[STRIPE_WH] Stripe error when retrieving customer ${customerId}: ${e.raw.message}`,
+          );
+        }
+      } else {
+        log.error(
+          `[STRIPE_WH] An error happened when trying to update user with customer id ${customerId}: ${e.message}`,
+        );
+      }
+
+      return customerId;
     }
-
-    await prisma.users.update({
-      where: {
-        id: dbUser.id,
-      },
-      data: {
-        stripe_cusid: customerId,
-      },
-    });
-
-    return dbUser;
   }
 
   return user;
@@ -237,7 +268,8 @@ const getPlanFromPayload = async (
     case StripeEvents.SUBSCRIPTION_DELETED:
       plan = await prisma.plans.findFirst({
         where: {
-          [getPlanKey('stripe')]: (payload.data.object as any).plan.id,
+          [getPlanKey(SubscriptionService.STRIPE)]: (payload.data.object as any)
+            .plan.id,
         },
       });
       break;
@@ -264,63 +296,63 @@ const shouldHandleEvent = (payload: Stripe.Event): boolean => {
   }
 };
 
-const addMetadataToSubscription = async ({
-  subId,
-  prisma,
-  payload,
-  plan,
-  user,
-}: {
-  subId: string;
-  prisma: PrismaClient;
-  payload: Stripe.Event;
-  plan: Plans;
-  user: Users;
-}) => {
-  const subscription = await stripeInstance.subscriptions.retrieve(subId);
-
-  let order = await prisma.orders.findFirst({
-    where: {
-      txn_id: subId,
-    },
-  });
-
-  if (!order) {
-    log.warn(
-      `[STRIPE_WH] No order found with a stripe subscription id of ${subId}, creating one...`,
-    );
-
-    order = await prisma.orders.create({
-      data: {
-        txn_id: subId,
-        user_id: user.id,
-        status: OrderStatus.PENDING,
-        is_plan: 1,
-        plan_id: plan.id,
-        payment_method: 'Stripe Renovación',
-        date_order: new Date().toISOString(),
-        total_price: Number(plan.price),
-      },
-    });
-  }
-
-  if (subscription.id && !subscription.metadata.orderId && order) {
-    log.info(
-      `Adding order id (${order.id}) to subscription ${subscription.id}`,
-    );
-
-    try {
-      await stripeInstance.subscriptions.update(subId, {
-        metadata: {
-          orderId: order.id,
-        },
-      });
-    } catch (e) {
-      log.error(
-        `[STRIPE_WH] Error while updating subscription ${subId}, payload ${JSON.stringify(
-          payload,
-        )}`,
-      );
-    }
-  }
-};
+// const addMetadataToSubscription = async ({
+//   subId,
+//   prisma,
+//   payload,
+//   plan,
+//   user,
+// }: {
+//   subId: string;
+//   prisma: PrismaClient;
+//   payload: Stripe.Event;
+//   plan: Plans;
+//   user: Users;
+// }) => {
+//   const subscription = await stripeInstance.subscriptions.retrieve(subId);
+//
+//   let order = await prisma.orders.findFirst({
+//     where: {
+//       txn_id: subId,
+//     },
+//   });
+//
+//   if (!order) {
+//     log.warn(
+//       `[STRIPE_WH] No order found with a stripe subscription id of ${subId}, creating one...`,
+//     );
+//
+//     order = await prisma.orders.create({
+//       data: {
+//         txn_id: subId,
+//         user_id: user.id,
+//         status: OrderStatus.PENDING,
+//         is_plan: 1,
+//         plan_id: plan.id,
+//         payment_method: 'Stripe Renovación',
+//         date_order: new Date().toISOString(),
+//         total_price: Number(plan.price),
+//       },
+//     });
+//   }
+//
+//   if (subscription.id && !subscription.metadata.orderId && order) {
+//     log.info(
+//       `Adding order id (${order.id}) to subscription ${subscription.id}`,
+//     );
+//
+//     try {
+//       await stripeInstance.subscriptions.update(subId, {
+//         metadata: {
+//           orderId: order.id,
+//         },
+//       });
+//     } catch (e) {
+//       log.error(
+//         `[STRIPE_WH] Error while updating subscription ${subId}, payload ${JSON.stringify(
+//           payload,
+//         )}`,
+//       );
+//     }
+//   }
+// };

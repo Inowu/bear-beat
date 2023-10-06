@@ -22,5 +22,7 @@ export const PlansScalarFieldEnumSchema = z.enum([
   'stripe_prod_id_test',
   'conekta_plan_id',
   'conekta_plan_id_test',
+  'paypal_plan_id',
+  'paypal_plan_id_test',
   'vip_activo',
 ]);

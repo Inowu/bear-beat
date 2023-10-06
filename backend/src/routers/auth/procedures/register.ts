@@ -6,7 +6,9 @@ import { RolesIds } from '../interfaces/roles.interface';
 import { ActiveState } from '../interfaces/active-state.interface';
 import { generateJwt } from '../utils/generateJwt';
 import stripe from '../../../stripe';
-import { conektaClient } from '../../../conekta';
+import { conektaCustomers } from '../../../conekta';
+import { stripNonAlphabetic } from './utils/formatUsername';
+import { log } from '../../../server';
 
 export const register = publicProcedure
   .input(
@@ -60,23 +62,53 @@ export const register = publicProcedure
         },
       });
 
-      await Promise.all([
-        stripe.customers.create({
+      try {
+        const customer = await stripe.customers.create({
           email,
           metadata: {
             id: newUser.id,
           },
-        }),
-        // TODO: Uncomnent this when conekta is ready
-        conektaClient.createCustomer({
+        });
+
+        await prisma.users.update({
+          where: {
+            id: newUser.id,
+          },
+          data: {
+            stripe_cusid: customer.id,
+          },
+        });
+      } catch (e) {
+        log.error(
+          `There was an error creating the stripe customer for user ${newUser.id}`,
+        );
+      }
+
+      try {
+        const customer = await conektaCustomers.createCustomer({
           email,
-          name: newUser.username,
+          name: stripNonAlphabetic(newUser.username),
           phone: newUser.phone ?? '',
           metadata: {
             id: newUser.id,
           },
-        }),
-      ]);
+        });
+
+        await prisma.users.update({
+          where: {
+            id: newUser.id,
+          },
+          data: {
+            conekta_cusid: customer.data.id,
+          },
+        });
+      } catch (e: any) {
+        log.error(
+          `There was an error creating the conekta customer for user ${
+            newUser.id
+          }, details: ${JSON.stringify(e.response?.data?.details)}`,
+        );
+      }
 
       return {
         token: generateJwt(newUser),

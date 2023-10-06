@@ -2,15 +2,22 @@ import { PrismaClient, Users } from '@prisma/client';
 import { subDays } from 'date-fns';
 import { log } from '../../../server';
 import { gbToBytes } from '../../../utils/gbToBytes';
+import { getPlanKey } from '../../../utils/getPlanKey';
+import { SubscriptionService } from './types';
 
 export const cancelSubscription = async ({
   prisma,
   user,
   plan: planId,
+  service,
 }: {
   prisma: PrismaClient;
   user: Users;
   plan: string;
+  service:
+    | SubscriptionService.STRIPE
+    | SubscriptionService.CONEKTA
+    | SubscriptionService.PAYPAL;
 }) => {
   const download = await prisma.descargasUser.findFirst({
     where: {
@@ -65,7 +72,7 @@ export const cancelSubscription = async ({
 
   const plan = await prisma.plans.findFirst({
     where: {
-      stripe_prod_id: planId,
+      [getPlanKey(service)]: planId,
     },
   });
 

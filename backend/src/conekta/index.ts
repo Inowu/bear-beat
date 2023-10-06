@@ -16,7 +16,7 @@ const apiKey =
 
 const conektaConfig = new Configuration({ apiKey, accessToken: apiKey });
 
-export const conektaClient = new CustomersApi(conektaConfig);
+export const conektaCustomers = new CustomersApi(conektaConfig);
 
 export const conektaSubscriptions = new SubscriptionsApi(conektaConfig);
 

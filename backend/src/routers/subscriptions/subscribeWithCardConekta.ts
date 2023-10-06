@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
 import {
-  conektaClient,
+  conektaCustomers,
   conektaPaymentMethods,
   conektaSubscriptions,
 } from '../../conekta';
@@ -63,7 +63,7 @@ export const subscribeWithCardConekta = shieldedProcedure
           );
 
         if (makeDefault) {
-          await conektaClient.updateCustomer(userConektaId, {
+          await conektaCustomers.updateCustomer(userConektaId, {
             default_payment_source_id: paymentSource.data.id,
           });
         }

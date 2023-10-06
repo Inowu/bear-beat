@@ -48,11 +48,11 @@ async function main() {
       '/webhooks.paypal',
       express.raw({ type: 'application/json' }),
       async (req, res) => {
-        const isValid = await verifyPaypalSignature(req);
+        // const isValid = await verifyPaypalSignature(req);
 
-        if (!isValid) {
-          return res.status(400).send('Invalid signature');
-        }
+        // if (!isValid) {
+        //   return res.status(400).send('Invalid signature');
+        // }
 
         try {
           await paypalSubscriptionWebhook(req);

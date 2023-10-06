@@ -60,6 +60,7 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
           prisma,
           user,
           plan: subscription.plan.id,
+          service: SubscriptionService.CONEKTA,
         });
       }
       break;
@@ -67,7 +68,12 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
       log.info(
         `[CONEKTA_WH] Canceling subscription for user ${user.id}, subscription id: ${subscription.id}, payload: ${payloadStr}`,
       );
-      await cancelSubscription({ prisma, user, plan: subscription.plan.id });
+      await cancelSubscription({
+        prisma,
+        user,
+        plan: subscription.plan.id,
+        service: SubscriptionService.CONEKTA,
+      });
       break;
     case ConektaEvents.ORDER_VOIDED:
     case ConektaEvents.ORDER_DECLINED:

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
-import { getStripeCustomer } from './utils/getStripeCustmomer';
+import { getStripeCustomer } from './utils/getStripeCustomer';
 import { getPlanKey } from '../../utils/getPlanKey';
 import stripeInstance from '../../stripe';
 import { log } from '../../server';
@@ -37,7 +37,7 @@ export const subscribeWithStripe = shieldedProcedure
     if (!plan) {
       throw new TRPCError({
         code: 'NOT_FOUND',
-        message: 'There are no plans with the specified id',
+        message: 'Ese plan no existe',
       });
     }
 
@@ -51,7 +51,7 @@ export const subscribeWithStripe = shieldedProcedure
       if (!dbCoupon) {
         throw new TRPCError({
           code: 'NOT_FOUND',
-          message: 'That coupon does not exist',
+          message: 'Ese cupón no existe',
         });
       }
     }
@@ -62,19 +62,31 @@ export const subscribeWithStripe = shieldedProcedure
         status: OrderStatus.PENDING,
         is_plan: 1,
         plan_id: plan.id,
-        payment_method: 'Stripe',
+        payment_method: SubscriptionService.STRIPE,
         date_order: new Date().toISOString(),
         total_price: Number(plan.price),
       },
     });
 
     try {
+      const activeSubscription = await stripeInstance.subscriptions.list({
+        customer: stripeCustomer,
+        status: 'active',
+      });
+
+      if (activeSubscription.data.length > 0) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Este usuario ya tiene una suscripción activa',
+        });
+      }
+
       const subscription = await stripeInstance.subscriptions.create({
         customer: stripeCustomer,
         coupon,
         items: [
           {
-            plan: plan[getPlanKey('stripe')]!,
+            plan: plan[getPlanKey(SubscriptionService.STRIPE)]!,
           },
         ],
         payment_behavior: 'default_incomplete',
@@ -107,7 +119,7 @@ export const subscribeWithStripe = shieldedProcedure
 
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
-        message: 'An error happened while creating subscription with stripe',
+        message: 'Ocurrion un error al crear la suscripción',
       });
     }
   });

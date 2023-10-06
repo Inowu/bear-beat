@@ -1,7 +1,9 @@
 import { PrismaClient } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
 import { SessionUser } from '../../auth/utils/serialize-user';
-import { conektaClient } from '../../../conekta';
+import { conektaCustomers } from '../../../conekta';
+import { stripNonAlphabetic } from '../../auth/procedures/utils/formatUsername';
+import { log } from '../../../server';
 
 /**
  * Returns the conekta customer id for this user orCreates
@@ -36,22 +38,28 @@ export const getConektaCustomer = async ({
   let userConektaId: string = dbUser?.conekta_cusid ?? '';
 
   if (!userConektaId) {
-    const conektaUser = await conektaClient.createCustomer({
-      name: dbUser.username,
-      phone: dbUser.phone ?? '',
-      email: dbUser.email,
-    });
+    try {
+      const conektaUser = await conektaCustomers.createCustomer({
+        name: stripNonAlphabetic(dbUser.username),
+        phone: dbUser.phone ?? '',
+        email: dbUser.email,
+      });
 
-    await prisma.users.update({
-      where: {
-        id: dbUser.id,
-      },
-      data: {
-        conekta_cusid: conektaUser.data.id,
-      },
-    });
+      await prisma.users.update({
+        where: {
+          id: dbUser.id,
+        },
+        data: {
+          conekta_cusid: conektaUser.data.id,
+        },
+      });
 
-    userConektaId = conektaUser.data.id;
+      userConektaId = conektaUser.data.id;
+    } catch (e: any) {
+      log.error(
+        `There was an error creating the conekta customer for user ${user.id}, details: ${e.response?.data?.details}`,
+      );
+    }
   }
 
   return userConektaId;

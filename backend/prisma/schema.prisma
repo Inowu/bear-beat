@@ -157,6 +157,8 @@ model Plans {
   stripe_prod_id_test  String  @db.Text
   conekta_plan_id      String? @db.Text
   conekta_plan_id_test String? @db.Text
+  paypal_plan_id_test  String? @db.Text
+  paypal_plan_id       String? @db.Text
   vip_activo           Int?
 
   @@map("plans")

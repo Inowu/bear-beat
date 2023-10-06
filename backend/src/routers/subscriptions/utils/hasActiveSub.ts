@@ -5,6 +5,8 @@ import stripeInstance from '../../../stripe';
 import { log } from '../../../server';
 import { conektaSubscriptions } from '../../../conekta';
 import { SubscriptionService } from '../services/types';
+import axios from 'axios';
+import { paypal } from '../../../paypal';
 
 export const hasActiveSubscription = async ({
   user,
@@ -16,10 +18,13 @@ export const hasActiveSubscription = async ({
       user: SessionUser;
       customerId: string;
       prisma: PrismaClient;
-      service:
-        | SubscriptionService.STRIPE
-        | SubscriptionService.CONEKTA
-        | SubscriptionService.PAYPAL;
+      service: SubscriptionService.STRIPE | SubscriptionService.CONEKTA;
+    }
+  | {
+      user: SessionUser;
+      customerId: number;
+      prisma: PrismaClient;
+      service: SubscriptionService.PAYPAL;
     }
   | {
       user: Users;

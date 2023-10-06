@@ -108,6 +108,8 @@ export const permissions = shield<Context>({
     subscribeWithCashConekta: isLoggedIn,
     conektaSubscriptionWebhook: isValidConektaSignature,
     stripeSubscriptionWebhook: isValidStripeSignature,
+    createPaypalOrder: isLoggedIn,
+    cancelOrder: isLoggedIn,
     createOneConfig: isAdmin,
     createOneCountries: isAdmin,
     createOneCupons: isAdmin,
