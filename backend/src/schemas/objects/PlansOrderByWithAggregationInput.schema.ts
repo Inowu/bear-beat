@@ -75,6 +75,20 @@ const Schema: z.ZodType<Prisma.PlansOrderByWithAggregationInput> = z
       ])
       .optional(),
     stripe_prod_id_test: z.lazy(() => SortOrderSchema).optional(),
+    conekta_plan_id: z
+      .union([
+        z.lazy(() => SortOrderSchema),
+        z.lazy(() => SortOrderInputObjectSchema),
+      ])
+      .optional(),
+    conekta_plan_id_test: z.lazy(() => SortOrderSchema).optional(),
+    paypal_plan_id: z
+      .union([
+        z.lazy(() => SortOrderSchema),
+        z.lazy(() => SortOrderInputObjectSchema),
+      ])
+      .optional(),
+    paypal_plan_id_test: z.lazy(() => SortOrderSchema).optional(),
     vip_activo: z
       .union([
         z.lazy(() => SortOrderSchema),

@@ -125,6 +125,7 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
             prisma,
             user,
             plan: subscription.object.plan,
+            service: SubscriptionService.STRIPE,
           });
 
           break;
@@ -144,6 +145,7 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
             prisma,
             user,
             plan: subscription.plan.id,
+            service: SubscriptionService.STRIPE,
           });
 
           break;
@@ -154,7 +156,12 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
         `[STRIPE_WH] Canceling subscription for user ${user.id}, subscription id: ${subscription.id}, payload: ${payloadStr}`,
       );
 
-      await cancelSubscription({ prisma, user, plan: subscription.plan.id });
+      await cancelSubscription({
+        prisma,
+        user,
+        plan: subscription.plan.id,
+        service: SubscriptionService.STRIPE,
+      });
       break;
     default:
       log.info(
@@ -261,7 +268,8 @@ const getPlanFromPayload = async (
     case StripeEvents.SUBSCRIPTION_DELETED:
       plan = await prisma.plans.findFirst({
         where: {
-          [getPlanKey('stripe')]: (payload.data.object as any).plan.id,
+          [getPlanKey(SubscriptionService.STRIPE)]: (payload.data.object as any)
+            .plan.id,
         },
       });
       break;

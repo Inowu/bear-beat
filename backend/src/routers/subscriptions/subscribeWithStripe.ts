@@ -62,7 +62,7 @@ export const subscribeWithStripe = shieldedProcedure
         status: OrderStatus.PENDING,
         is_plan: 1,
         plan_id: plan.id,
-        payment_method: 'Stripe',
+        payment_method: SubscriptionService.STRIPE,
         date_order: new Date().toISOString(),
         total_price: Number(plan.price),
       },
@@ -86,7 +86,7 @@ export const subscribeWithStripe = shieldedProcedure
         coupon,
         items: [
           {
-            plan: plan[getPlanKey('stripe')]!,
+            plan: plan[getPlanKey(SubscriptionService.STRIPE)]!,
           },
         ],
         payment_behavior: 'default_incomplete',

@@ -21,7 +21,7 @@ export type Params =
   | {
       prisma: PrismaClient;
       user: Users;
-      orderId: string;
+      orderId: string | number;
       subId: string;
       plan?: never;
       service: SubscriptionService;

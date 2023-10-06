@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { Users, Plans, PrismaClient } from '@prisma/client';
+import { Users, Plans, PrismaClient, Orders } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
 import { gbToBytes } from '../../../utils/gbToBytes';
 import { log } from '../../../server';
@@ -200,34 +200,82 @@ export const subscribe = async ({
         }),
       ]);
 
-      // Create a entry on this table if the user has no active subscription
-      log.info(`[SUBSCRIPTION] Creating order for user ${user.id}`);
+      let order: Orders;
 
-      const order = await prisma.orders.create({
-        data: {
-          txn_id: subId,
-          user_id: user.id,
-          status: OrderStatus.PAID,
-          is_plan: 1,
-          plan_id: dbPlan?.id,
-          payment_method: service,
-          date_order: new Date().toISOString(),
-          total_price: Number(dbPlan?.price),
-        },
-      });
+      // When a user subscribes with paypal the order is already created as pending
+      if (service === SubscriptionService.PAYPAL) {
+        log.info(
+          `[SUBSCRIPTION] Checking for pending orders for user ${user.id} and service ${service}`,
+        );
 
-      log.info(
-        `[SUBSCRIPTION] Creating descargas user entry for user ${user.id}`,
-      );
+        const pendingOrder = await prisma.orders.findFirst({
+          where: {
+            AND: [
+              {
+                user_id: user.id,
+              },
+              {
+                status: OrderStatus.PENDING,
+              },
+              {
+                payment_method: service,
+              },
+            ],
+          },
+        });
 
-      await prisma.descargasUser.create({
-        data: {
-          available: 500,
-          date_end: expirationDate.toISOString(),
-          user_id: user.id,
-          order_id: order.id,
-        },
-      });
+        if (pendingOrder) {
+          order = pendingOrder;
+
+          await prisma.orders.update({
+            where: {
+              id: pendingOrder.id,
+            },
+            data: {
+              status: OrderStatus.PAID,
+            },
+          });
+        } else {
+          log.info(
+            `[SUBSCRIPTION] Creating order for user ${user.id}, service ${service}`,
+          );
+
+          order = await prisma.orders.create({
+            data: {
+              txn_id: subId,
+              user_id: user.id,
+              status: OrderStatus.PAID,
+              is_plan: 1,
+              plan_id: dbPlan?.id,
+              payment_method: service,
+              date_order: new Date().toISOString(),
+              total_price: Number(dbPlan?.price),
+            },
+          });
+        }
+      } else {
+        // Create a entry on this table if the user has no active subscription
+        log.info(`[SUBSCRIPTION] Creating order for user ${user.id}`);
+
+        order = await prisma.orders.create({
+          data: {
+            txn_id: subId,
+            user_id: user.id,
+            status: OrderStatus.PAID,
+            is_plan: 1,
+            plan_id: dbPlan?.id,
+            payment_method: service,
+            date_order: new Date().toISOString(),
+            total_price: Number(dbPlan?.price),
+          },
+        });
+
+        log.info(
+          `[SUBSCRIPTION] Creating descargas user entry for user ${user.id}`,
+        );
+      }
+
+      await insertInDescargas({ expirationDate, user, prisma, order });
     } catch (e) {
       log.error(`Error while renovating subscription: ${e}`);
     }
@@ -260,3 +308,23 @@ const insertFtpQuotas = ({
     },
   }),
 ];
+
+const insertInDescargas = ({
+  expirationDate,
+  user,
+  order,
+  prisma,
+}: {
+  prisma: PrismaClient;
+  expirationDate: Date;
+  user: Users;
+  order: Orders;
+}) =>
+  prisma.descargasUser.create({
+    data: {
+      available: 500,
+      date_end: expirationDate.toISOString(),
+      user_id: user.id,
+      order_id: order.id,
+    },
+  });

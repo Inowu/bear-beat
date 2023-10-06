@@ -12,6 +12,10 @@ import { OrdersGroupBySchema } from '../schemas/groupByOrders.schema';
 import { OrdersUpdateManySchema } from '../schemas/updateManyOrders.schema';
 import { OrdersUpdateOneSchema } from '../schemas/updateOneOrders.schema';
 import { OrdersUpsertSchema } from '../schemas/upsertOneOrders.schema';
+import { z } from 'zod';
+import { TRPCError } from '@trpc/server';
+import { OrderStatus } from './subscriptions/interfaces/order-status.interface';
+import { SubscriptionService } from './subscriptions/services/types';
 
 export const ordersRouter = router({
   ownOrders: shieldedProcedure
@@ -26,6 +30,108 @@ export const ordersRouter = router({
       });
 
       return orders;
+    }),
+  createPaypalOrder: shieldedProcedure
+    .input(
+      z.object({
+        planId: z.number(),
+        subscriptionId: z.string(),
+      }),
+    )
+    .mutation(
+      async ({
+        ctx: { prisma, session },
+        input: { planId, subscriptionId },
+      }) => {
+        const user = session!.user!;
+        const plan = await prisma.plans.findFirst({
+          where: {
+            id: planId,
+          },
+        });
+
+        if (!plan) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Ese plan no existe',
+          });
+        }
+
+        const activeSubscription = await prisma.descargasUser.findFirst({
+          where: {
+            AND: [
+              {
+                user_id: user.id,
+              },
+              {
+                date_end: {
+                  gte: new Date().toISOString(),
+                },
+              },
+            ],
+          },
+        });
+
+        if (activeSubscription) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Ya tienes una suscripción activa',
+          });
+        }
+
+        const pendingOrder = await prisma.orders.findFirst({
+          where: {
+            AND: [
+              {
+                user_id: user.id,
+              },
+              {
+                status: OrderStatus.PENDING,
+              },
+              {
+                payment_method: SubscriptionService.PAYPAL,
+              },
+            ],
+          },
+        });
+
+        if (pendingOrder) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Ya existe una orden pendiente de pago con paypal',
+          });
+        }
+
+        return await prisma.orders.create({
+          data: {
+            user_id: user.id,
+            plan_id: plan.id,
+            txn_id: subscriptionId,
+            status: OrderStatus.PENDING,
+            is_plan: 1,
+            date_order: new Date().toISOString(),
+            total_price: Number(plan.price),
+            payment_method: SubscriptionService.PAYPAL,
+          },
+        });
+      },
+    ),
+  cancelOrder: shieldedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+      }),
+    )
+    .mutation(async ({ ctx: { prisma }, input: { id } }) => {
+      return await prisma.orders.update({
+        where: {
+          id,
+        },
+        data: {
+          status: OrderStatus.CANCELLED,
+          is_canceled: 1,
+        },
+      });
     }),
   aggregateOrders: shieldedProcedure
     .input(OrdersAggregateSchema)
