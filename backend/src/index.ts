@@ -60,7 +60,7 @@ async function main() {
           return res.status(200);
         } catch (e) {
           log.error(`[PAYPAL_WH] Error handling webhook: ${e}`);
-          return res.status(500);
+          return res.status(200);
         }
       },
     );
