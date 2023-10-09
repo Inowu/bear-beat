@@ -134,14 +134,14 @@ function CheckoutForm(props: ICheckout) {
   useEffect(() => {
     // console.log(window.Conekta.setPublicKey(public_key));
     // window.Conekta.setPublicKey(public_key);
-    if (plan.id) {
-      const initialOptions = {
-        clientId: "Afu3XeDQNkiDP08dsJuEjeQf6swc8hW6nBPdhXljD0Ra0XK5bewP2EGrbcei3u0-Fx_tcKUZDWuZWuWC",
-        currency: plan.moneda === "usd" ? "USD" : "MX",
-        vault: true,
-      };
-      setInitialValues(initialOptions);
-    }
+    // if (plan.id) {
+    //   const initialOptions = {
+    //     clientId: "Afu3XeDQNkiDP08dsJuEjeQf6swc8hW6nBPdhXljD0Ra0XK5bewP2EGrbcei3u0-Fx_tcKUZDWuZWuWC",
+    //     currency: plan.moneda === "usd" ? "USD" : "MX",
+    //     vault: true,
+    //   };
+    //   setInitialValues(initialOptions);
+    // }
   }, [plan]);
 
   return (
@@ -228,7 +228,7 @@ function CheckoutForm(props: ICheckout) {
           <button className="btn primary-pill linear-bg">SUBSCRIBE</button>
 
         )}
-        {
+        {/* {
           initialValues !== null &&
           <PayPalScriptProvider options={initialValues} >
             <PayPalButtons
@@ -286,15 +286,15 @@ function CheckoutForm(props: ICheckout) {
               }}
 
               onApprove={async (data: any, actions) => {
-                const result = await trpc.subscriptions.subscribeWithPaypal.query({
+                const result = await trpc.subscriptions.subscribeWithPaypal.mutate({
                   planId: 14,
-                  subscriptionId: data.subscriptionID,
+                  subscriptionId: data.subscriptionID
                 })
                 return data;
               }}
             />
           </PayPalScriptProvider>
-        }
+        } */}
       </div>
       <ErrorModal show={show} onHide={closeError} message={errorMessage} />
       <SuccessModal
