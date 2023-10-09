@@ -2,8 +2,10 @@ import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
 import { log } from '../../server';
-import { OrderStatus } from './interfaces/order-status.interface';
 import { SubscriptionService } from './services/types';
+import { subscribe } from './services/subscribe';
+import axios from 'axios';
+import { paypal } from '../../paypal';
 
 export const subscribeWithPaypal = shieldedProcedure
   .input(
@@ -12,7 +14,7 @@ export const subscribeWithPaypal = shieldedProcedure
       subscriptionId: z.string(),
     }),
   )
-  .query(
+  .mutation(
     async ({ input: { planId, subscriptionId }, ctx: { prisma, session } }) => {
       const user = session!.user!;
 
@@ -30,26 +32,26 @@ export const subscribeWithPaypal = shieldedProcedure
       }
 
       try {
-        const order = await prisma.orders.findFirst({
-          where: {
-            txn_id: subscriptionId,
-          },
-        });
+        const paypalToken = await paypal.getToken();
 
-        if (!order) {
-          throw new TRPCError({
-            code: 'NOT_FOUND',
-            message: 'Es necesario crear una orden de paypal primero',
-          });
-        }
+        const subscription = (
+          await axios(
+            `${paypal.paypalUrl()}/v1/billing/subscriptions/${subscriptionId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${paypalToken}`,
+              },
+            },
+          )
+        ).data;
 
-        await prisma.orders.update({
-          where: {
-            id: order.id,
-          },
-          data: {
-            status: OrderStatus.PAID,
-          },
+        await subscribe({
+          prisma,
+          user,
+          plan,
+          subId: subscriptionId,
+          service: SubscriptionService.PAYPAL,
+          expirationDate: new Date(subscription.billing_info.next_billing_time),
         });
 
         return {
