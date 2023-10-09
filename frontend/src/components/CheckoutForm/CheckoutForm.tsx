@@ -34,6 +34,7 @@ function CheckoutForm(props: ICheckout) {
   const stripe: any = useStripe();
   const elements = useElements();
   const random_number: number = Math.random();
+  const [order, setOrder] = useState(0);
   const navigate = useNavigate();
   const closeError = () => {
     setShow(false);
@@ -133,10 +134,10 @@ function CheckoutForm(props: ICheckout) {
   useEffect(() => {
     // console.log(window.Conekta.setPublicKey(public_key));
     // window.Conekta.setPublicKey(public_key);
-    // if(plan.id){
+    // if (plan.id) {
     //   const initialOptions = {
-    //     clientId: "AdDGgG9U23hryPtPz0YqrVsGnCJpcsPgBv5FLvaII8X3MOvOoghIadKZbDTCrv9jAKpHr3C6v-80ulLO",
-    //     currency: plan.moneda === "usd" ? "USD": "MX",
+    //     clientId: "Afu3XeDQNkiDP08dsJuEjeQf6swc8hW6nBPdhXljD0Ra0XK5bewP2EGrbcei3u0-Fx_tcKUZDWuZWuWC",
+    //     currency: plan.moneda === "usd" ? "USD" : "MX",
     //     vault: true,
     //   };
     //   setInitialValues(initialOptions);
@@ -221,28 +222,70 @@ function CheckoutForm(props: ICheckout) {
         )}
       </div>
       <div className="button-contain">
-      {loader ? (
-        <Spinner size={4} width={0.4} color="#00e2f7" />
-      ) : (
-        <button className="btn primary-pill linear-bg">SUBSCRIBE</button>
-        
-      )}
+        {loader ? (
+          <Spinner size={4} width={0.4} color="#00e2f7" />
+        ) : (
+          <button className="btn primary-pill linear-bg">SUBSCRIBE</button>
+
+        )}
         {/* {
           initialValues !== null &&
-          <PayPalScriptProvider  options={initialValues} >
-          <PayPalButtons 
-            style={{color: "silver", shape: "pill", layout: "horizontal", height: 46}}
-            createSubscription={(data, actions) => {
-              return actions.subscription.create({
-                plan_id: returnPricePaypal(plan.id)
-              })
-            }}
-            onApprove={async (data: any, actions) => {
-              await paypalPayment(data);
-              return data
-            }}
-          />
-        </PayPalScriptProvider>
+          <PayPalScriptProvider options={initialValues} >
+            <PayPalButtons
+              style={{ color: "silver", shape: "pill", layout: "horizontal", height: 46 }}
+              onClick={async (data, actions) => {
+                // Revisar si el usuario tiene una suscripcion activa
+                const me = await trpc.auth.me.query();
+
+                if (me.hasActiveSubscription) return actions.reject();
+
+                const existingOrder = await trpc.orders.ownOrders.query({
+                  where: {
+                    AND: [
+                      {
+                        status: 0,
+                      },
+                      {
+                        payment_method: "Paypal",
+                      },
+                    ],
+                  },
+                });
+
+                if (existingOrder.length > 0) {
+                  return actions.reject();
+                }
+
+                actions.resolve();
+              }}
+              onCancel={async (data, actions) => {
+
+                await trpc.orders.cancelOrder.mutate({
+                  id: order,
+                });
+              }}
+              createSubscription={async (data, actions) => {
+
+                try {
+                  const sub = await actions.subscription.create({
+                    plan_id: "P-92327832UX314920EMR7ULSQ",
+                  });
+
+                  const result = await trpc.orders.createPaypalOrder.mutate({
+                    planId: 14,
+                    subscriptionId: sub,
+                  });
+                  setOrder(result.id);
+
+                  return sub;
+                } catch (e: any) {
+                  console.log(e?.message);
+                }
+
+                return "";
+              }}
+            />
+          </PayPalScriptProvider>
         } */}
       </div>
       <ErrorModal show={show} onHide={closeError} message={errorMessage} />
