@@ -134,14 +134,14 @@ function CheckoutForm(props: ICheckout) {
   useEffect(() => {
     // console.log(window.Conekta.setPublicKey(public_key));
     // window.Conekta.setPublicKey(public_key);
-    // if (plan.id) {
-    //   const initialOptions = {
-    //     clientId: "Afu3XeDQNkiDP08dsJuEjeQf6swc8hW6nBPdhXljD0Ra0XK5bewP2EGrbcei3u0-Fx_tcKUZDWuZWuWC",
-    //     currency: plan.moneda === "usd" ? "USD" : "MX",
-    //     vault: true,
-    //   };
-    //   setInitialValues(initialOptions);
-    // }
+    if (plan.id) {
+      const initialOptions = {
+        clientId: "Afu3XeDQNkiDP08dsJuEjeQf6swc8hW6nBPdhXljD0Ra0XK5bewP2EGrbcei3u0-Fx_tcKUZDWuZWuWC",
+        currency: plan.moneda === "usd" ? "USD" : "MX",
+        vault: true,
+      };
+      setInitialValues(initialOptions);
+    }
   }, [plan]);
 
   return (
@@ -228,7 +228,7 @@ function CheckoutForm(props: ICheckout) {
           <button className="btn primary-pill linear-bg">SUBSCRIBE</button>
 
         )}
-        {/* {
+        {
           initialValues !== null &&
           <PayPalScriptProvider options={initialValues} >
             <PayPalButtons
@@ -258,12 +258,12 @@ function CheckoutForm(props: ICheckout) {
 
                 actions.resolve();
               }}
-              onCancel={async (data, actions) => {
+              // onCancel={async (data, actions) => {
 
-                await trpc.orders.cancelOrder.mutate({
-                  id: order,
-                });
-              }}
+              //   await trpc.orders.cancelOrder.mutate({
+              //     id: order,
+              //   });
+              // }}
               createSubscription={async (data, actions) => {
 
                 try {
@@ -271,11 +271,11 @@ function CheckoutForm(props: ICheckout) {
                     plan_id: "P-92327832UX314920EMR7ULSQ",
                   });
 
-                  const result = await trpc.orders.createPaypalOrder.mutate({
-                    planId: 14,
-                    subscriptionId: sub,
-                  });
-                  setOrder(result.id);
+                  // const result = await trpc.orders.createPaypalOrder.mutate({
+                  //   planId: 14,
+                  //   subscriptionId: sub,
+                  // });
+                  // setOrder(result.id);
 
                   return sub;
                 } catch (e: any) {
@@ -284,9 +284,17 @@ function CheckoutForm(props: ICheckout) {
 
                 return "";
               }}
+
+              onApprove={async (data: any, actions) => {
+                const result = await trpc.subscriptions.subscribeWithPaypal.query({
+                  planId: 14,
+                  subscriptionId: data.subscriptionID,
+                })
+                return data;
+              }}
             />
           </PayPalScriptProvider>
-        } */}
+        }
       </div>
       <ErrorModal show={show} onHide={closeError} message={errorMessage} />
       <SuccessModal
