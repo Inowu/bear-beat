@@ -258,24 +258,12 @@ function CheckoutForm(props: ICheckout) {
 
                 actions.resolve();
               }}
-              // onCancel={async (data, actions) => {
-
-              //   await trpc.orders.cancelOrder.mutate({
-              //     id: order,
-              //   });
-              // }}
               createSubscription={async (data, actions) => {
 
                 try {
                   const sub = await actions.subscription.create({
                     plan_id: "P-92327832UX314920EMR7ULSQ",
                   });
-
-                  // const result = await trpc.orders.createPaypalOrder.mutate({
-                  //   planId: 14,
-                  //   subscriptionId: sub,
-                  // });
-                  // setOrder(result.id);
 
                   return sub;
                 } catch (e: any) {
@@ -290,6 +278,7 @@ function CheckoutForm(props: ICheckout) {
                   planId: 14,
                   subscriptionId: data.subscriptionID
                 })
+                setShowSuccess(true);
                 return data;
               }}
             />
