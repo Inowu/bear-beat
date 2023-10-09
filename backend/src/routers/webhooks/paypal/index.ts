@@ -50,6 +50,28 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
     return;
   }
 
+  const activeSub = await prisma.descargasUser.findFirst({
+    where: {
+      AND: [
+        {
+          user_id: user.id,
+        },
+        {
+          date_end: {
+            gt: new Date(),
+          },
+        },
+      ],
+    },
+  });
+
+  if (activeSub) {
+    log.info(
+      `[PAYPAL_WH] User ${user.id} already has an active subscription, ignoring event.`,
+    );
+    return;
+  }
+
   switch (payload.event_type) {
     case PaypalEvent.BILLING_SUBSCRIPTION_ACTIVATED:
       log.info(
