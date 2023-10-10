@@ -27,7 +27,7 @@ function PlanCard(props: PlanCardPropsI) {
     setShow(false);
   };
   const payWithOxxo = async () => {
-    try{
+    try {
       let body = {
         planId: plan.id,
         paymentMethod: "cash" as const,
@@ -36,7 +36,7 @@ function PlanCard(props: PlanCardPropsI) {
       setShowOxxoModal(true);
       setOxxoData(oxxoPay);
     }
-    catch(error) {
+    catch (error) {
       setErrorMessage(error);
       setShow(true);
     }
@@ -45,7 +45,7 @@ function PlanCard(props: PlanCardPropsI) {
     navigate(`/comprar?priceId=${planId}`);
   };
   return (
-    <div className={"plan-card-main-card " + (plan.moneda === "usd" ? "resp-plan": "")}>
+    <div className={"plan-card-main-card " + (plan.moneda === "usd" ? "resp-plan" : "")}>
       <div className="c-row">
         <h2>{plan.name}</h2>
       </div>
@@ -73,19 +73,21 @@ function PlanCard(props: PlanCardPropsI) {
       <div className="button-contain">
         {
           plan.moneda === "mxn" ?
-          <button className="silver-bg" onClick={payWithOxxo}>Pagar vía Oxxo</button>
-          : <div className="space"/>
+            <button className="silver-bg" onClick={payWithOxxo}>Pagar vía Oxxo</button>
+            : <button className="silver-bg" onClick={() => handleCheckout(plan.id)}>
+              PAYPAL
+            </button>
         }
-                <button onClick={() => handleCheckout(plan.id)}>
+        <button onClick={() => handleCheckout(plan.id)}>
           COMPRAR CON TARJETA
         </button>
       </div>
       <OxxoModal
-          show={showOxxoModal}
-          onHide={closeOxxo}
-          price={plan.price}
-          oxxoData={oxxoData}
-        />
+        show={showOxxoModal}
+        onHide={closeOxxo}
+        price={plan.price}
+        oxxoData={oxxoData}
+      />
       <ErrorModal show={show} onHide={closeError} message={errorMessage} />
     </div>
   );
