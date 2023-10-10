@@ -136,7 +136,7 @@ function CheckoutForm(props: ICheckout) {
     // window.Conekta.setPublicKey(public_key);
     // if (plan.id) {
     //   const initialOptions = {
-    //     clientId: "Afu3XeDQNkiDP08dsJuEjeQf6swc8hW6nBPdhXljD0Ra0XK5bewP2EGrbcei3u0-Fx_tcKUZDWuZWuWC",
+    //     clientId: "AYuKvAI09TE9bk9k1TuzodZ2zWQFpWEZesT65IkT4WOws9wq-yfeHLj57kEBH6YR_8NgBUlLShj2HOSr",
     //     currency: plan.moneda === "usd" ? "USD" : "MX",
     //     vault: true,
     //   };
@@ -262,7 +262,7 @@ function CheckoutForm(props: ICheckout) {
 
                 try {
                   const sub = await actions.subscription.create({
-                    plan_id: "P-92327832UX314920EMR7ULSQ",
+                    plan_id: "P-31M706840B499471SMUSJMDQ",
                   });
 
                   return sub;
