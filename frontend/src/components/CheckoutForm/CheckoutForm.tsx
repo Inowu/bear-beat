@@ -134,14 +134,6 @@ function CheckoutForm(props: ICheckout) {
   useEffect(() => {
     // console.log(window.Conekta.setPublicKey(public_key));
     // window.Conekta.setPublicKey(public_key);
-    // if (plan.id) {
-    //   const initialOptions = {
-    //     clientId: "AYuKvAI09TE9bk9k1TuzodZ2zWQFpWEZesT65IkT4WOws9wq-yfeHLj57kEBH6YR_8NgBUlLShj2HOSr",
-    //     currency: plan.moneda === "usd" ? "USD" : "MX",
-    //     vault: true,
-    //   };
-    //   setInitialValues(initialOptions);
-    // }
   }, [plan]);
 
   return (
@@ -228,9 +220,11 @@ function CheckoutForm(props: ICheckout) {
           <button className="btn primary-pill linear-bg">SUBSCRIBE</button>
 
         )}
-        {/* {
-          initialValues !== null &&
-          <PayPalScriptProvider options={initialValues} >
+          <PayPalScriptProvider options={{
+            clientId: "AYuKvAI09TE9bk9k1TuzodZ2zWQFpWEZesT65IkT4WOws9wq-yfeHLj57kEBH6YR_8NgBUlLShj2HOSr",
+            currency: "USD",
+            vault: true,
+          }} >
             <PayPalButtons
               style={{ color: "silver", shape: "pill", layout: "horizontal", height: 46 }}
               onClick={async (data, actions) => {
@@ -283,7 +277,6 @@ function CheckoutForm(props: ICheckout) {
               }}
             />
           </PayPalScriptProvider>
-        } */}
       </div>
       <ErrorModal show={show} onHide={closeError} message={errorMessage} />
       <SuccessModal
