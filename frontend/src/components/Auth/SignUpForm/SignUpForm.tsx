@@ -34,7 +34,9 @@ function SignUpForm() {
     .email('Invalid email format'),
     username: Yup.string()
     .required('Username is required')
-    .min(5, 'Username must be at least 5 characters long'),
+    .min(5, 'Username must be at least 5 characters long')
+    .matches(/[a-zA-Z]/, 'Field must contain at least 1 letter')
+    ,
     password: Yup.string().required('Password is required')
     .min(6, 'Password must contain 6 characters atleast'),
     phone: Yup.string().required('Phone is required')
