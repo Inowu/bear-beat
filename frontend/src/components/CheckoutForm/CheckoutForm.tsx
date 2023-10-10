@@ -220,63 +220,63 @@ function CheckoutForm(props: ICheckout) {
           <button className="btn primary-pill linear-bg">SUBSCRIBE</button>
 
         )}
-          <PayPalScriptProvider options={{
-            clientId: "AYuKvAI09TE9bk9k1TuzodZ2zWQFpWEZesT65IkT4WOws9wq-yfeHLj57kEBH6YR_8NgBUlLShj2HOSr",
-            currency: "USD",
-            vault: true,
-          }} >
-            <PayPalButtons
-              style={{ color: "silver", shape: "pill", layout: "horizontal", height: 46 }}
-              onClick={async (data, actions) => {
-                // Revisar si el usuario tiene una suscripcion activa
-                const me = await trpc.auth.me.query();
+        <PayPalScriptProvider options={{
+          clientId: "AYuKvAI09TE9bk9k1TuzodZ2zWQFpWEZesT65IkT4WOws9wq-yfeHLj57kEBH6YR_8NgBUlLShj2HOSr",
+          currency: "USD",
+          vault: true,
+        }} >
+          <PayPalButtons
+            style={{ color: "silver", shape: "pill", layout: "horizontal", height: 46 }}
+            onClick={async (data, actions) => {
+              // Revisar si el usuario tiene una suscripcion activa
+              const me = await trpc.auth.me.query();
 
-                if (me.hasActiveSubscription) return actions.reject();
+              if (me.hasActiveSubscription) return actions.reject();
 
-                const existingOrder = await trpc.orders.ownOrders.query({
-                  where: {
-                    AND: [
-                      {
-                        status: 0,
-                      },
-                      {
-                        payment_method: "Paypal",
-                      },
-                    ],
-                  },
+              const existingOrder = await trpc.orders.ownOrders.query({
+                where: {
+                  AND: [
+                    {
+                      status: 0,
+                    },
+                    {
+                      payment_method: "Paypal",
+                    },
+                  ],
+                },
+              });
+
+              if (existingOrder.length > 0) {
+                return actions.reject();
+              }
+
+              actions.resolve();
+            }}
+            createSubscription={async (data, actions) => {
+
+              try {
+                const sub = await actions.subscription.create({
+                  plan_id: "P-31M706840B499471SMUSJMDQ",
                 });
 
-                if (existingOrder.length > 0) {
-                  return actions.reject();
-                }
+                return sub;
+              } catch (e: any) {
+                console.log(e?.message);
+              }
 
-                actions.resolve();
-              }}
-              createSubscription={async (data, actions) => {
+              return "";
+            }}
 
-                try {
-                  const sub = await actions.subscription.create({
-                    plan_id: "P-31M706840B499471SMUSJMDQ",
-                  });
-
-                  return sub;
-                } catch (e: any) {
-                  console.log(e?.message);
-                }
-
-                return "";
-              }}
-
-              onApprove={async (data: any, actions) => {
-                const result = await trpc.subscriptions.subscribeWithPaypal.mutate({
-                  planId: 14,
-                  subscriptionId: data.subscriptionID
-                })
-                setShowSuccess(true);
-                return data;
-              }}
-            />
-          </PayPalScriptProvider>
+            onApprove={async (data: any, actions) => {
+              const result = await trpc.subscriptions.subscribeWithPaypal.mutate({
+                planId: 13,
+                subscriptionId: data.subscriptionID
+              })
+              setShowSuccess(true);
+              return data;
+            }}
+          />
+        </PayPalScriptProvider>
       </div>
       <ErrorModal show={show} onHide={closeError} message={errorMessage} />
       <SuccessModal
