@@ -19,7 +19,6 @@ interface ICheckout {
 function CheckoutForm(props: ICheckout) {
   const [loader, setLoader] = useState<boolean>(false);
   const [coupon, setCoupon] = useState<string>("");
-  const [paypalPlan, setPaypalPlan] = useState<any>("");
   const [show, setShow] = useState<boolean>(false);
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<any>("");
@@ -135,19 +134,8 @@ function CheckoutForm(props: ICheckout) {
   useEffect(() => {
     // console.log(window.Conekta.setPublicKey(public_key));
     // window.Conekta.setPublicKey(public_key);
-
-    get()
+    console.log(plan);
   }, [plan]);
-
-  const get = async () => {
-    let plans = await trpc.plans.findManyPlans.query({
-      where: {
-        activated: 1,
-        paypal_plan_id: { not: null }
-      }
-    })
-    setPaypalPlan(plans[0]);
-  }
 
   return (
     <form className="checkout-form" onSubmit={onSubmit}>
@@ -233,9 +221,8 @@ function CheckoutForm(props: ICheckout) {
           <button className="btn primary-pill linear-bg">SUBSCRIBE</button>
 
         )}
-        {paypalPlan && <PayPalScriptProvider options={{
+        {plan.id && <PayPalScriptProvider options={{
           clientId: "AYuKvAI09TE9bk9k1TuzodZ2zWQFpWEZesT65IkT4WOws9wq-yfeHLj57kEBH6YR_8NgBUlLShj2HOSr",
-          currency: "USD",
           vault: true,
         }} >
           <PayPalButtons
@@ -243,9 +230,7 @@ function CheckoutForm(props: ICheckout) {
             onClick={async (data, actions) => {
               // Revisar si el usuario tiene una suscripcion activa
               const me = await trpc.auth.me.query();
-
               if (me.hasActiveSubscription) return actions.reject();
-
               const existingOrder = await trpc.orders.ownOrders.query({
                 where: {
                   AND: [
@@ -266,10 +251,9 @@ function CheckoutForm(props: ICheckout) {
               actions.resolve();
             }}
             createSubscription={async (data, actions) => {
-
               try {
                 const sub = await actions.subscription.create({
-                  plan_id: paypalPlan.paypal_plan_id,
+                  plan_id: plan.paypal_plan_id,
                 });
 
                 return sub;
@@ -282,7 +266,7 @@ function CheckoutForm(props: ICheckout) {
 
             onApprove={async (data: any, actions) => {
               const result = await trpc.subscriptions.subscribeWithPaypal.mutate({
-                planId: paypalPlan.id,
+                planId: plan.id,
                 subscriptionId: data.subscriptionID
               })
               setShowSuccess(true);

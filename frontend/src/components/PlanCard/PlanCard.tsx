@@ -72,11 +72,8 @@ function PlanCard(props: PlanCardPropsI) {
       </div>
       <div className="button-contain">
         {
-          plan.moneda === "mxn" ?
+          plan.moneda === "mxn" &&
             <button className="silver-bg" onClick={payWithOxxo}>Pagar vía Oxxo</button>
-            : <button className="silver-bg" onClick={() => handleCheckout(plan.id)}>
-              PAYPAL
-            </button>
         }
         <button onClick={() => handleCheckout(plan.id)}>
           COMPRAR CON TARJETA

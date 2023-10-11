@@ -27,6 +27,7 @@ export interface IPlans {
   price: string;
   stripe_prod_id: string;
   stripe_prod_id_test: string;
+  paypal_plan_id: string;
   tokens: null;
   tokens_karaoke: null;
   tokens_video: null;
