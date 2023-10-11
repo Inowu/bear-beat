@@ -134,7 +134,6 @@ function CheckoutForm(props: ICheckout) {
   useEffect(() => {
     // console.log(window.Conekta.setPublicKey(public_key));
     // window.Conekta.setPublicKey(public_key);
-    console.log(plan);
   }, [plan]);
 
   return (
@@ -221,7 +220,7 @@ function CheckoutForm(props: ICheckout) {
           <button className="btn primary-pill linear-bg">SUBSCRIBE</button>
 
         )}
-        {/* {plan.id && <PayPalScriptProvider options={{
+        {plan.moneda === "usd" && <PayPalScriptProvider options={{
           clientId: "AYuKvAI09TE9bk9k1TuzodZ2zWQFpWEZesT65IkT4WOws9wq-yfeHLj57kEBH6YR_8NgBUlLShj2HOSr",
           vault: true,
         }} >
@@ -270,7 +269,7 @@ function CheckoutForm(props: ICheckout) {
               return data;
             }}
           />
-        </PayPalScriptProvider>} */}
+        </PayPalScriptProvider>}
       </div>
       <ErrorModal show={show} onHide={closeError} message={errorMessage} />
       <SuccessModal
