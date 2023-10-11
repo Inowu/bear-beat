@@ -220,7 +220,7 @@ function CheckoutForm(props: ICheckout) {
           <button className="btn primary-pill linear-bg">SUBSCRIBE</button>
 
         )}
-        {plan.moneda === "usd" && <PayPalScriptProvider options={{
+        {plan.moneda === "usdeded" && <PayPalScriptProvider options={{
           clientId: "AYuKvAI09TE9bk9k1TuzodZ2zWQFpWEZesT65IkT4WOws9wq-yfeHLj57kEBH6YR_8NgBUlLShj2HOSr",
           vault: true,
         }} >
