@@ -1,3 +1,16 @@
-export const stripNonAlphabetic = (username: string) => {
-  return username.replace(/[^a-zA-Z]/g, '');
+import { Users } from '@prisma/client';
+import crypto from 'crypto';
+
+export const stripNonAlphabetic = (user: Users) => {
+  let name = user.username.replace(/[^a-zA-Z]/g, '');
+
+  if (!name) {
+    name = user.email.split('@')[0].replace(/[^a-zA-Z]/g, '');
+  }
+
+  if (!name) {
+    name = crypto.randomBytes(6).toString('hex');
+  }
+
+  return name;
 };

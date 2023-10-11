@@ -40,7 +40,7 @@ export const getConektaCustomer = async ({
   if (!userConektaId) {
     try {
       const conektaUser = await conektaCustomers.createCustomer({
-        name: stripNonAlphabetic(dbUser.username),
+        name: stripNonAlphabetic(dbUser),
         phone: dbUser.phone ?? '',
         email: dbUser.email,
       });

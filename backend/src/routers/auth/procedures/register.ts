@@ -13,9 +13,19 @@ import { log } from '../../../server';
 export const register = publicProcedure
   .input(
     z.object({
-      username: z.string().min(3),
-      email: z.string().email(),
-      password: z.string().min(6),
+      username: z
+        .string()
+        .min(3, {
+          message: 'El nombre de usuario debe tener al menos 3 caracteres',
+        })
+        // At least one alphabetic character
+        .regex(/^[a-zA-Z0-9]*[a-zA-Z]+[a-zA-Z0-9]*$/, {
+          message: 'El nombre de usuario debe tener por lo menos una letra',
+        }),
+      email: z.string().email({ message: 'Email inválido' }),
+      password: z
+        .string()
+        .min(6, { message: 'La contraseña debe tener al menos 6 caracteres' }),
       phone: z.string(),
     }),
   )
@@ -87,7 +97,7 @@ export const register = publicProcedure
       try {
         const customer = await conektaCustomers.createCustomer({
           email,
-          name: stripNonAlphabetic(newUser.username),
+          name: stripNonAlphabetic(newUser),
           phone: newUser.phone ?? '',
           metadata: {
             id: newUser.id,
