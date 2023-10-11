@@ -9,7 +9,8 @@ import { useState } from "react";
 import trpc from "../../api";
 import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
 import paypal from "../../assets/images/paypal_logo.png"
-
+import { PayPalButtons, PayPalScriptProvider } from "@paypal/react-paypal-js";
+import { SuccessModal } from "../../components/Modals/SuccessModal/SuccessModal";
 interface PlanCardPropsI {
   plan: IPlans;
 }
@@ -19,8 +20,14 @@ function PlanCard(props: PlanCardPropsI) {
   const [oxxoData, setOxxoData] = useState({} as IOxxoData);
   const [show, setShow] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<any>("");
+  const [showSuccess, setShowSuccess] = useState<boolean>(false);
   const { plan } = props;
   const navigate = useNavigate();
+  const closeSuccess = () => {
+    setShowSuccess(false);
+    navigate("/");
+    window.location.reload();
+  };
   const closeOxxo = () => {
     setShowOxxoModal(false);
   }
@@ -74,7 +81,6 @@ function PlanCard(props: PlanCardPropsI) {
       </div>
       <div className="paypal-data">
         <p className="text">Pagos seguros en línea</p>
-        <img src={paypal}/>
       </div>
       <div className="button-contain">
         {
@@ -84,12 +90,67 @@ function PlanCard(props: PlanCardPropsI) {
         <button onClick={() => handleCheckout(plan.id)}>
           COMPRAR CON TARJETA
         </button>
+                {plan.id ? <PayPalScriptProvider options={{
+          clientId: "AYuKvAI09TE9bk9k1TuzodZ2zWQFpWEZesT65IkT4WOws9wq-yfeHLj57kEBH6YR_8NgBUlLShj2HOSr",
+          vault: true,
+        }} >
+          <PayPalButtons
+            style={{ color: "silver", shape: "pill", layout: "horizontal", height: 46 }}
+            onClick={async (data, actions) => {
+              // Revisar si el usuario tiene una suscripcion activa
+              const me = await trpc.auth.me.query();
+              if (me.hasActiveSubscription) return actions.reject();
+              const existingOrder = await trpc.orders.ownOrders.query({
+                where: {
+                  AND: [
+                    {
+                      status: 0,
+                    },
+                    {
+                      payment_method: "Paypal",
+                    },
+                  ],
+                },
+              });
+
+              if (existingOrder.length > 0) {
+                return actions.reject();
+              }
+              actions.resolve();
+            }}
+            createSubscription={async (data, actions) => {
+              try {
+                const sub = await actions.subscription.create({
+                  plan_id: plan.paypal_plan_id,
+                });
+                return sub;
+              } catch (e: any) {
+                console.log(e?.message);
+              }
+              return "";
+            }}
+            onApprove={async (data: any, actions) => {
+              const result = await trpc.subscriptions.subscribeWithPaypal.mutate({
+                planId: plan.id,
+                subscriptionId: data.subscriptionID
+              })
+              setShowSuccess(true);
+              return data;
+            }}
+          />
+        </PayPalScriptProvider> : <div className="paypal-size"/>}
       </div>
       <OxxoModal
         show={showOxxoModal}
         onHide={closeOxxo}
         price={plan.price}
         oxxoData={oxxoData}
+      />
+      <SuccessModal
+        show={showSuccess}
+        onHide={closeSuccess}
+        message="Gracias por tu pago, ya puedes empezar a descargar!"
+        title="Compra Exitosa"
       />
       <ErrorModal show={show} onHide={closeError} message={errorMessage} />
     </div>

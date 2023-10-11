@@ -7,9 +7,7 @@ import { useEffect, useState } from "react";
 import { Spinner } from "../../components/Spinner/Spinner";
 import { SuccessModal } from "../../components/Modals/SuccessModal/SuccessModal";
 import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
-import { PayPalButtons, PayPalScriptProvider } from "@paypal/react-paypal-js";
 import { IPlans } from "interfaces/Plans";
-import { returnPricePaypal } from "../../functions/Methods";
 declare let window: any;
 
 interface ICheckout {
@@ -220,55 +218,6 @@ function CheckoutForm(props: ICheckout) {
           <button className="btn primary-pill linear-bg">SUBSCRIBE</button>
 
         )}
-        {plan.id && <PayPalScriptProvider options={{
-          clientId: "AYuKvAI09TE9bk9k1TuzodZ2zWQFpWEZesT65IkT4WOws9wq-yfeHLj57kEBH6YR_8NgBUlLShj2HOSr",
-          vault: true,
-        }} >
-          <PayPalButtons
-            style={{ color: "silver", shape: "pill", layout: "horizontal", height: 46 }}
-            onClick={async (data, actions) => {
-              // Revisar si el usuario tiene una suscripcion activa
-              const me = await trpc.auth.me.query();
-              if (me.hasActiveSubscription) return actions.reject();
-              const existingOrder = await trpc.orders.ownOrders.query({
-                where: {
-                  AND: [
-                    {
-                      status: 0,
-                    },
-                    {
-                      payment_method: "Paypal",
-                    },
-                  ],
-                },
-              });
-
-              if (existingOrder.length > 0) {
-                return actions.reject();
-              }
-              actions.resolve();
-            }}
-            createSubscription={async (data, actions) => {
-              try {
-                const sub = await actions.subscription.create({
-                  plan_id: plan.paypal_plan_id,
-                });
-                return sub;
-              } catch (e: any) {
-                console.log(e?.message);
-              }
-              return "";
-            }}
-            onApprove={async (data: any, actions) => {
-              const result = await trpc.subscriptions.subscribeWithPaypal.mutate({
-                planId: plan.id,
-                subscriptionId: data.subscriptionID
-              })
-              setShowSuccess(true);
-              return data;
-            }}
-          />
-        </PayPalScriptProvider>}
       </div>
       <ErrorModal show={show} onHide={closeError} message={errorMessage} />
       <SuccessModal

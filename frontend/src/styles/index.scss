@@ -78,6 +78,17 @@ button.primary-pill {
 .silver-bg {
   background: linear-gradient(11deg, #eeeeee, #d5d5d5);
 }
+.paypal-buttons {
+  .buttons-container{
+    .paypal-button-container{
+      .paypal-button-tagline{
+        .paypal-button-text{
+          color: white;
+        }
+      }
+    }
+  }
+}
 .error-formik{
   color: red;
   font-weight: 600;
