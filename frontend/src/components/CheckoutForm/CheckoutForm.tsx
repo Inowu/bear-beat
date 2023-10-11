@@ -220,7 +220,7 @@ function CheckoutForm(props: ICheckout) {
           <button className="btn primary-pill linear-bg">SUBSCRIBE</button>
 
         )}
-        {plan.moneda === "usdeded" && <PayPalScriptProvider options={{
+        {plan.id && <PayPalScriptProvider options={{
           clientId: "AYuKvAI09TE9bk9k1TuzodZ2zWQFpWEZesT65IkT4WOws9wq-yfeHLj57kEBH6YR_8NgBUlLShj2HOSr",
           vault: true,
         }} >
@@ -253,7 +253,6 @@ function CheckoutForm(props: ICheckout) {
                 const sub = await actions.subscription.create({
                   plan_id: plan.paypal_plan_id,
                 });
-                console.log(sub);
                 return sub;
               } catch (e: any) {
                 console.log(e?.message);

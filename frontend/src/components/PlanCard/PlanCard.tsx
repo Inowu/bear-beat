@@ -8,6 +8,7 @@ import { OxxoModal } from "../../components/Modals/OxxoModal/OxxoModal";
 import { useState } from "react";
 import trpc from "../../api";
 import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
+import paypal from "../../assets/images/paypal_logo.png"
 
 interface PlanCardPropsI {
   plan: IPlans;
@@ -33,6 +34,7 @@ function PlanCard(props: PlanCardPropsI) {
         paymentMethod: "cash" as const,
       }
       const oxxoPay = await trpc.subscriptions.subscribeWithCashConekta.mutate(body);
+      console.log(oxxoPay);
       setShowOxxoModal(true);
       setOxxoData(oxxoPay);
     }
@@ -69,6 +71,10 @@ function PlanCard(props: PlanCardPropsI) {
       })}
       <div className="c-row">
         <p>Contenido en gigas disponibles: {plan.gigas.toString()}</p>
+      </div>
+      <div className="paypal-data">
+        <p className="text">Pagos seguros en línea</p>
+        <img src={paypal}/>
       </div>
       <div className="button-contain">
         {

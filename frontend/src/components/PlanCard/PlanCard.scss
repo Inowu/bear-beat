@@ -13,8 +13,24 @@
   padding: 30px;
   gap: 20px;
   color: #ffffff;
-  height: 605px;
-
+  height: 685px;
+  .paypal-data{
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      align-items: center;
+      width: 100%;
+      .text{
+        font-size: 2rem;
+        font-weight: 300;
+        font-style: italic;
+        color: #7AE1F6;
+        margin: 0;
+      }
+      img{
+        width: 100px;
+      }
+  }
   &:hover {
     box-shadow: -13px -13px 0 #08e1f7;
   }
