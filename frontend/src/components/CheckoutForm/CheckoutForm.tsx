@@ -221,7 +221,7 @@ function CheckoutForm(props: ICheckout) {
           <button className="btn primary-pill linear-bg">SUBSCRIBE</button>
 
         )}
-        {plan.id && <PayPalScriptProvider options={{
+        {/* {plan.id && <PayPalScriptProvider options={{
           clientId: "AYuKvAI09TE9bk9k1TuzodZ2zWQFpWEZesT65IkT4WOws9wq-yfeHLj57kEBH6YR_8NgBUlLShj2HOSr",
           vault: true,
         }} >
@@ -247,7 +247,6 @@ function CheckoutForm(props: ICheckout) {
               if (existingOrder.length > 0) {
                 return actions.reject();
               }
-
               actions.resolve();
             }}
             createSubscription={async (data, actions) => {
@@ -255,15 +254,13 @@ function CheckoutForm(props: ICheckout) {
                 const sub = await actions.subscription.create({
                   plan_id: plan.paypal_plan_id,
                 });
-
+                console.log(sub);
                 return sub;
               } catch (e: any) {
                 console.log(e?.message);
               }
-
               return "";
             }}
-
             onApprove={async (data: any, actions) => {
               const result = await trpc.subscriptions.subscribeWithPaypal.mutate({
                 planId: plan.id,
@@ -273,7 +270,7 @@ function CheckoutForm(props: ICheckout) {
               return data;
             }}
           />
-        </PayPalScriptProvider>}
+        </PayPalScriptProvider>} */}
       </div>
       <ErrorModal show={show} onHide={closeError} message={errorMessage} />
       <SuccessModal
