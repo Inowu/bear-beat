@@ -77,6 +77,8 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
       break;
     case ConektaEvents.ORDER_VOIDED:
     case ConektaEvents.ORDER_DECLINED:
+    case ConektaEvents.ORDER_EXPIRED:
+    case ConektaEvents.ORDER_CHARGED_BACK:
     case ConektaEvents.ORDER_CANCELED: {
       const orderId = payload.data?.object.metadata.orderId;
 
