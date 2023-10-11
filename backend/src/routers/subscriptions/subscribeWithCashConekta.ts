@@ -102,10 +102,7 @@ export const subscribeWithCashConekta = shieldedProcedure
       });
 
       if (existingOrder) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Ya existe una orden pendiente con este método de pago',
-        });
+        return existingOrder;
       }
 
       const order = await prisma.orders.create({
