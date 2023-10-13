@@ -40,12 +40,6 @@ export const forgotPassword = publicProcedure
 
     log.info(`[FORGOT_PASSWORD] Sending email to ${user.email}`);
 
-    console.log({
-      name: user.username,
-      email: user.email,
-      link: `${process.env.CLIENT_URL}/reset-password?token=${token}&userId=${user.id}`,
-    });
-
     try {
       await brevo.smtp.sendTransacEmail({
         templateId: 1,
@@ -53,7 +47,7 @@ export const forgotPassword = publicProcedure
         params: {
           NAME: user.username,
           EMAIL: user.email,
-          LINK: `${process.env.CLIENT_URL}/reset-password?token=${token}&userId=${user.id}`,
+          LINK: `${process.env.CLIENT_URL}/auth/reset-password?token=${token}&userId=${user.id}`,
         },
       });
     } catch (e) {
