@@ -6,4 +6,6 @@ export enum ConektaEvents {
   ORDER_DECLINED = 'order.declined',
   ORDER_CANCELED = 'order.canceled',
   ORDER_PAID = 'order.paid',
+  ORDER_EXPIRED = 'order.expired',
+  ORDER_CHARGED_BACK = 'order.charged_back',
 }

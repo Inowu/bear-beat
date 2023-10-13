@@ -203,6 +203,7 @@ model Users {
   activationcode String?   @db.Text
   mc_id          Int?
   ip_registro    String?   @db.Text
+  token_expiration DateTime? @db.Date
 
   @@map("users")
 }

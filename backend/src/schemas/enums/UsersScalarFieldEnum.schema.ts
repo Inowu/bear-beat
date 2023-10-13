@@ -21,4 +21,5 @@ export const UsersScalarFieldEnumSchema = z.enum([
   'activationcode',
   'mc_id',
   'ip_registro',
+  'token_expiration',
 ]);

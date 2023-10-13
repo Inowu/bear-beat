@@ -102,7 +102,14 @@ export const subscribeWithCashConekta = shieldedProcedure
       });
 
       if (existingOrder) {
-        return existingOrder;
+        try {
+          return (await conektaOrders.getOrderById(existingOrder.invoice_id!))
+            .data.charges?.data?.[0].payment_method as any;
+        } catch (e) {
+          log.error(
+            `[CONEKTA_CASH] There was an error getting the order with conekta: ${e}`,
+          );
+        }
       }
 
       const order = await prisma.orders.create({
