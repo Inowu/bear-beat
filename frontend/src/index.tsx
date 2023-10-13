@@ -18,6 +18,7 @@ import MyAccount from "./pages/MyAccount/MyAccount";
 import Plans from "./pages/Plans/Plans";
 import Checkout from "./pages/Checkout/Checkout";
 import Admin from "./pages/Admin/Admin";
+import ResetPassword from "./components/Auth/ResetPassword/ResetPassword";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -64,6 +65,7 @@ const router = createBrowserRouter([
           { path: "", element: <LoginForm /> },
           { path: "registro", element: <SignUpForm /> },
           { path: "recuperar", element: <ForgotPasswordForm /> },
+          { path: "reset-password", element: <ResetPassword /> },
         ],
       },
       {

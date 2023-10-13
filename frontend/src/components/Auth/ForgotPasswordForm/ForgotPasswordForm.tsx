@@ -6,6 +6,7 @@ import * as Yup from 'yup';
 import { useState } from "react";
 import { ErrorModal } from "../../../components/Modals/ErrorModal/ErrorModal";
 import { SuccessModal } from "../../../components/Modals/SuccessModal/SuccessModal";
+import { Spinner } from "../../../components/Spinner/Spinner";
 
 function ForgotPasswordForm() {
   const navigate = useNavigate();
@@ -36,10 +37,12 @@ function ForgotPasswordForm() {
           email: values.email,
         }
         try{
+          await trpc.auth.forgotPassword.mutate(body);
           setLoader(false);
           setShowSuccess(true);
         }
         catch(error){
+          console.log(error);
           setShow(true);
           setErrorMessage(error);
           setLoader(false);
@@ -50,9 +53,22 @@ function ForgotPasswordForm() {
     <form onSubmit={formik.handleSubmit}>
       <h2>CAMBIAR CONTRASEÑA</h2>
       <div className="c-row">
-        <input placeholder="E-mail" type="text" />
+        <input           
+          placeholder="E-mail" 
+          id="email" 
+          name="email" 
+          value={formik.values.email} 
+          onChange={formik.handleChange}
+          type="text" 
+          />
+        {formik.errors.email && <div className="error-formik">{formik.errors.email}</div>}
       </div>
-      <button className="btn" type="submit">ENVIAR LINK</button>
+      {
+        !loader 
+        ? <button className="btn" type="submit">ENVIAR LINK</button>
+        : <Spinner size={3} width={.3} color="#00e2f7"/>
+      }
+
       <div className="c-row">
         <Link to={"/auth"}>
           <Arrow className="arrow" />
