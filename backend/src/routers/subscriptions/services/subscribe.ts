@@ -204,61 +204,6 @@ export const subscribe = async ({
         }),
       ]);
 
-      // let order: Orders;
-      //
-      // When a user subscribes with paypal the order is already created as pending
-      // if (service === SubscriptionService.PAYPAL) {
-      //   log.info(
-      //     `[SUBSCRIPTION] Checking for pending orders for user ${user.id} and service ${service}`,
-      //   );
-      //
-      //   const pendingOrder = await prisma.orders.findFirst({
-      //     where: {
-      //       AND: [
-      //         {
-      //           user_id: user.id,
-      //         },
-      //         {
-      //           status: OrderStatus.PENDING,
-      //         },
-      //         {
-      //           payment_method: service,
-      //         },
-      //       ],
-      //     },
-      //   });
-      //
-      //   if (pendingOrder) {
-      //     order = pendingOrder;
-      //
-      //     await prisma.orders.update({
-      //       where: {
-      //         id: pendingOrder.id,
-      //       },
-      //       data: {
-      //         status: OrderStatus.PAID,
-      //       },
-      //     });
-      //   } else {
-      //     log.info(
-      //       `[SUBSCRIPTION] Creating order for user ${user.id}, service ${service}`,
-      //     );
-      //
-      //     order = await prisma.orders.create({
-      //       data: {
-      //         txn_id: subId,
-      //         user_id: user.id,
-      //         status: OrderStatus.PAID,
-      //         is_plan: 1,
-      //         plan_id: dbPlan?.id,
-      //         payment_method: service,
-      //         date_order: new Date().toISOString(),
-      //         total_price: Number(dbPlan?.price),
-      //       },
-      //     });
-      //   }
-      // } else {
-      // Create an order if the user has no active subscription
       log.info(`[SUBSCRIPTION] Creating order for user ${user.id}`);
 
       const order = await prisma.orders.create({
