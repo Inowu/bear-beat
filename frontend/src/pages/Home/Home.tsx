@@ -12,41 +12,37 @@ import trpc from "../../api";
 function Home() {
   const [showPreviewModal, setShowPreviewModal] = useState<boolean>(false);
 
-  const getData = async () =>  {
-    try{
+  const getData = async () => {
+    try {
       const files = await trpc.ftp.ls.query({
-        path: '',
-      })
+        path: "",
+      });
       console.log(files);
-      getPath(files[0].name)
-    }
-    catch(error){
+      getPath(files[0].name);
+    } catch (error) {
       console.log(error);
     }
-  }
+  };
   const getPath = async (name: string) => {
-    try{
-      console.log(name)
+    try {
+      console.log(name);
       const files = await trpc.ftp.ls.query({
         path: name,
-      })
+      });
       console.log(files);
-    }
-    catch(error){
+    } catch (error) {
       console.log(error);
     }
-  }
-  const downloadFile = async() => {
-    try{
-      const download:any = await trpc.ftp.download.query({
-        path: ''
-      })
-
-    }
-    catch(error){
+  };
+  const downloadFile = async () => {
+    try {
+      const download: any = await trpc.ftp.download.query({
+        path: "",
+      });
+    } catch (error) {
       console.log(error);
     }
-  }
+  };
   useEffect(() => {
     getData();
   }, []);
@@ -91,7 +87,50 @@ function Home() {
             <div className="name-container">
               <h3>Dog Night - Mama Told me not to c.mp3</h3>
             </div>
-            <FontAwesomeIcon icon={faDownload} />
+            <FontAwesomeIcon
+              icon={faDownload}
+              onClick={async () => {
+                try {
+                  const a = document.createElement("a");
+                  // const result = await fetch(
+                  const url =
+                    "https://kale67.world/download?path=" +
+                    encodeURIComponent(
+                      "04 Karaokes Abril 2023/Arcangel & Bad Bunny - La Jumpa.mp4",
+                    ) +
+                    "&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OTkxNiwicm9sZSI6Im5vcm1hbCIsInVzZXJuYW1lIjoia2V2aW53b29sZm9sayIsInBob25lIjoiKzUyNjYyMzI5MDIzNCIsImVtYWlsIjoia2V2aW4ud29vbGZvbGtAaW5vd3UuZGV2IiwicHJvZmlsZUltZyI6bnVsbCwiaWF0IjoxNjk1MjMxOTY3LCJleHAiOjE2OTU4MzY3Njd9.1ghYIG8fT8gibZG9f1gvaWz25t5ONj8k4RFQNIRHqpc";
+                  // ).then((r) => r.text());
+                  // console.log(result);
+                  // console.log(url);
+                  a.href = url;
+                  a.download = "Arcangel & Bad Bunny - La Jumpa.mp4";
+                  document.body.appendChild(a);
+                  a.click(); document.body.removeChild(a);
+                } catch (e) {
+                  console.log(e);
+                }
+
+                // try {
+                //   const data = await fetch(
+                //     "https://bearbeat.com/micuenta/descargar_producto",
+                //     {
+                //       method: "POST",
+                //       headers: {
+                //         "Content-Type": "application/json",
+                //       },
+                //       body: JSON.stringify({
+                //         ruta: "/04 Karaokes Abril 2023/Arcangel & Bad Bunny - La Jumpa.mp4",
+                //         size: 1,
+                //       }),
+                //     }
+                //   ).then((r) => r.json());
+                //
+                //   console.log(data);
+                // } catch (e) {
+                //   console.log(e);
+                // }
+              }}
+            />
           </div>
         </div>
       </div>

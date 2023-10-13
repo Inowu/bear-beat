@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import { Modal } from "react-bootstrap";
 import videoSrc from "src/assets/video/DAKITI.mp4";
+import trpc from "../../api";
 import "./PreviewModal.scss";
 
 interface PreviewModalPropsI {
@@ -9,6 +11,27 @@ interface PreviewModalPropsI {
 
 function PreviewModal(props: PreviewModalPropsI) {
   const { show, onHide } = props;
+  const [demoPath, setDemoPath] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const path = await trpc.ftp.demo.query({
+        path: "04 Karaokes Abril 2023/Arcangel & Bad Bunny - La Jumpa.mp4",
+        // path: "test.mp3",
+      });
+
+      setDemoPath(path.demo);
+    })();
+  }, []);
+
+  if (!demoPath) {
+    console.log("Loading demo...");
+
+    return null;
+  }
+
+  console.log(demoPath);
+
   return (
     <Modal
       show={show}
@@ -25,7 +48,14 @@ function PreviewModal(props: PreviewModalPropsI) {
       </Modal.Header>
       <Modal.Body>
         <div className="preview-container">
-          <video src={videoSrc} controls autoPlay muted />
+          <video
+            src={encodeURI(
+              "https://thebearbeatapi.lat/demos/Ladies Night (ultimix Looking Back 12)kool & The Gang (dj Shaqwave.mp3",
+            )}
+            // src="http://localhost:5000/demos/test.mp3"
+            controls
+            autoPlay
+          />
         </div>
       </Modal.Body>
       <Modal.Footer>

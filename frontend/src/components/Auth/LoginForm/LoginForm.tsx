@@ -1,9 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useUserContext } from "../../../contexts/UserContext";
 import trpc from "../../../api";
-import { useFormik } from 'formik';
-import * as Yup from 'yup';
-import {  useState } from "react";
+import { useFormik } from "formik";
+import * as Yup from "yup";
+import { useState } from "react";
 
 function LoginForm() {
   const [loader, setLoader] = useState<boolean>(false);
@@ -11,34 +11,43 @@ function LoginForm() {
   const navigate = useNavigate();
   const validationSchema = Yup.object().shape({
     username: Yup.string()
-    .required('Username is required')
-    .min(5, 'Username must be at least 5 characters long'),
-    password: Yup.string().required('Password is required')
-    .min(6, 'Password must contain 6 characters atleast'),
-});
+      .required("Username is required")
+      .min(5, "Username must be at least 5 characters long"),
+    password: Yup.string()
+      .required("Password is required")
+      .min(6, "Password must contain 6 characters atleast"),
+  });
   const initialValues = {
-    username: '',
-    password: '',
+    username: "",
+    password: "",
   };
   const formik = useFormik({
     initialValues: initialValues,
     validationSchema: validationSchema,
     onSubmit: async (values) => {
-        setLoader(true);
-        let body = {
-          username: values.username,
-          password: values.password,
-        }
-        try{
-          const login = await trpc.auth.login.query(body);
-          handleLogin(login.token);
-          navigate("/");
-          setLoader(false);
-        }
-        catch(error){
-          alert(error);
-          setLoader(false);
-        }
+      try {
+        const res = await trpc.auth.forgotPassword.mutate({
+          email: "chrisalbe12@gmail.com",
+        });
+        console.log(res);
+      } catch (e: any) {
+        console.error(e?.message);
+      }
+      // setLoader(true);
+      // let body = {
+      //   username: values.username,
+      //   password: values.password,
+      // }
+      // try{
+      //   const login = await trpc.auth.login.query(body);
+      //   handleLogin(login.token);
+      //   navigate("/");
+      //   setLoader(false);
+      // }
+      // catch(error){
+      //   alert(error);
+      //   setLoader(false);
+      // }
     },
   });
 
@@ -49,23 +58,27 @@ function LoginForm() {
         <input
           placeholder="username"
           type="text"
-          id="username" 
-          name="username" 
-          value={formik.values.username} 
+          id="username"
+          name="username"
+          value={formik.values.username}
           onChange={formik.handleChange}
         />
-        {formik.errors.username && <div className="error-formik">{formik.errors.username}</div>}
+        {formik.errors.username && (
+          <div className="error-formik">{formik.errors.username}</div>
+        )}
       </div>
       <div className="c-row">
         <input
           placeholder="password"
           type="password"
-          id="password" 
-          name="password" 
-          value={formik.values.password} 
+          id="password"
+          name="password"
+          value={formik.values.password}
           onChange={formik.handleChange}
         />
-        {formik.errors.password && <div className="error-formik">{formik.errors.password}</div>}
+        {formik.errors.password && (
+          <div className="error-formik">{formik.errors.password}</div>
+        )}
       </div>
       <div className="c-row">
         <Link to={"recuperar"}>¿Olvidaste tu contraseña?</Link>

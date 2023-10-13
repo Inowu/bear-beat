@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
-import sib from 'sib-api-v3-typescript';
 import { publicProcedure } from '../../../procedures/public.procedure';
 import { log } from '../../../server';
 import { brevo } from '../../../email';
