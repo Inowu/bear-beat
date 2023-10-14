@@ -98,6 +98,8 @@ async function main() {
 
         try {
           await conektaSubscriptionWebhook(req);
+
+          return res.status(200);
         } catch (e) {
           log.error(`[CONEKTA_WH] Error handling webhook: ${e}`);
           return res.status(500);

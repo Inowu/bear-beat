@@ -8,6 +8,7 @@ import { log } from '../../server';
 import { OrderStatus } from './interfaces/order-status.interface';
 import { hasActiveSubscription } from './utils/hasActiveSub';
 import { SubscriptionService } from './services/types';
+import { brevo } from '../../email';
 
 export const subscribeWithStripe = shieldedProcedure
   .input(
@@ -106,6 +107,22 @@ export const subscribeWithStripe = shieldedProcedure
           invoice_id: (subscription.latest_invoice as any).id,
         },
       });
+
+      try {
+        await brevo.smtp.sendTransacEmail({
+          templateId: 2,
+          to: [{ email: user.email, name: user.username }],
+          params: {
+            NAME: user.username,
+            plan_name: plan.name,
+            price: plan.price,
+            currency: plan.moneda.toUpperCase(),
+            ORDER: order.id,
+          },
+        });
+      } catch (e) {
+        log.error(`[STRIPE] Error while sending email ${e}`);
+      }
 
       return {
         subscriptionId: subscription.id,

@@ -35,7 +35,7 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
   });
 
   if (!order) {
-    log.error(`[PAYPAL_WH] Order with txn_id ${subId} not found`);
+    // log.error(`[PAYPAL_WH] Order with txn_id ${subId} not found`);
     return;
   }
 
