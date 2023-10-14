@@ -14,9 +14,9 @@ import winston from 'winston';
 import { verifyStripeSignature } from './routers/utils/verifyStripeSignature';
 import { stripeSubscriptionWebhook } from './routers/webhooks/stripe';
 import { paypalSubscriptionWebhook } from './routers/webhooks/paypal';
-import { verifyConektaSignature } from './routers/utils/verifyConektaSignature';
 import { conektaSubscriptionWebhook } from './routers/webhooks/conekta';
-import { verifyPaypalSignature } from './routers/utils/verifyPaypalSignature';
+// import { verifyConektaSignature } from './routers/utils/verifyConektaSignature';
+// import { verifyPaypalSignature } from './routers/utils/verifyPaypalSignature';
 
 config({
   path: path.resolve(__dirname, '../.env'),
@@ -57,10 +57,10 @@ async function main() {
         try {
           await paypalSubscriptionWebhook(req);
 
-          return res.status(200);
+          return res.status(200).end();
         } catch (e) {
           log.error(`[PAYPAL_WH] Error handling webhook: ${e}`);
-          return res.status(200);
+          return res.status(200).end();
         }
       },
     );
@@ -99,10 +99,10 @@ async function main() {
         try {
           await conektaSubscriptionWebhook(req);
 
-          return res.status(200);
+          return res.status(200).end();
         } catch (e) {
           log.error(`[CONEKTA_WH] Error handling webhook: ${e}`);
-          return res.status(500);
+          return res.status(500).end();
         }
       },
     );

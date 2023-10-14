@@ -117,6 +117,7 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
       log.info(
         `[CONEKTA_WH] Unhandled event ${payload.type}, payload: ${payloadStr}`,
       );
+      return;
   }
 };
 
