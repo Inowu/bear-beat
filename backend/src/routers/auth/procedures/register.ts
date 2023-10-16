@@ -121,15 +121,19 @@ export const register = publicProcedure
         );
       }
 
-      log.info('[REGISTER] Sending email to user');
-      await brevo.smtp.sendTransacEmail({
-        templateId: 3,
-        to: [{ email: newUser.email, name: newUser.username }],
-        params: {
-          NAME: newUser.username,
-          EMAIL: newUser.email,
-        },
-      });
+      try {
+        log.info('[REGISTER] Sending email to user');
+        await brevo.smtp.sendTransacEmail({
+          templateId: 3,
+          to: [{ email: newUser.email, name: newUser.username }],
+          params: {
+            NAME: newUser.username,
+            EMAIL: newUser.email,
+          },
+        });
+      } catch (e: any) {
+        log.error(`[REGISTER] Error while sending email ${e.message}`);
+      }
 
       return {
         token: generateJwt(newUser),
