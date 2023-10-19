@@ -1,15 +1,15 @@
-import { Plans, PrismaClient, Users } from '@prisma/client';
+import { Plans, Users } from '@prisma/client';
 import { Stripe } from 'stripe';
+import { Request } from 'express';
 import { cancelSubscription } from '../../subscriptions/services/cancelSubscription';
 import { log } from '../../../server';
 import { subscribe } from '../../subscriptions/services/subscribe';
 import { getPlanKey } from '../../../utils/getPlanKey';
 import { StripeEvents } from './events';
-import { OrderStatus } from '../../subscriptions/interfaces/order-status.interface';
 import stripeInstance from '../../../stripe';
 import { prisma } from '../../../db';
-import { Request } from 'express';
 import { SubscriptionService } from '../../subscriptions/services/types';
+import { OrderStatus } from '../../subscriptions/interfaces/order-status.interface';
 
 export const stripeSubscriptionWebhook = async (req: Request) => {
   const payload: Stripe.Event = JSON.parse(req.body as any);
@@ -18,7 +18,7 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
 
   if (!shouldHandleEvent(payload)) return;
 
-  const user = await getCustomerIdFromPayload(payload, prisma);
+  const user = await getCustomerIdFromPayload(payload);
 
   if (!user) {
     log.error(
@@ -27,7 +27,7 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
     return;
   }
 
-  const plan = await getPlanFromPayload(payload, prisma);
+  const plan = await getPlanFromPayload(payload);
 
   if (!plan && payload.type?.startsWith('customer.subscription')) {
     log.error(
@@ -87,39 +87,42 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
           });
           break;
         }
-        case 'incomplete_expired':
+        case 'incomplete_expired': {
           log.info(
             `[STRIPE_WH] Incomplete subscription was expired for user ${user.id}, subscription id: ${subscription.id}, payload: ${payloadStr}`,
           );
 
-          if (subscription.metadata.orderId) {
+          const pendingOrder = await prisma.orders.findFirst({
+            where: {
+              AND: [
+                {
+                  status: OrderStatus.PENDING,
+                },
+                {
+                  payment_method: SubscriptionService.STRIPE,
+                },
+              ],
+            },
+          });
+
+          if (pendingOrder) {
             await prisma.orders.update({
               where: {
-                id: Number(subscription.metadata.orderId),
-              },
-              data: {
-                status: OrderStatus.FAILED,
-              },
-            });
-          }
-
-          break;
-        case 'past_due':
-          log.info(
-            `[STRIPE_WH] Subscription renovation failed for user ${user.id}, canceling subscription... subscription id: ${subscription.id}, payload: ${payloadStr}`,
-          );
-          // TODO: What to do when a payment fails?
-
-          if (subscription.metadata.orderId) {
-            await prisma.orders.update({
-              where: {
-                id: Number(subscription.metadata.orderId),
+                id: pendingOrder.id,
               },
               data: {
                 status: OrderStatus.CANCELLED,
               },
             });
           }
+
+          break;
+        }
+        case 'past_due': {
+          log.info(
+            `[STRIPE_WH] Subscription renovation failed for user ${user.id}, canceling subscription... subscription id: ${subscription.id}, payload: ${payloadStr}`,
+          );
+          // TODO: What to do when a payment fails?
 
           await cancelSubscription({
             prisma,
@@ -129,18 +132,8 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
           });
 
           break;
+        }
         default:
-          if (subscription.metadata.orderId) {
-            await prisma.orders.update({
-              where: {
-                id: Number(subscription.metadata.orderId),
-              },
-              data: {
-                status: OrderStatus.FAILED,
-              },
-            });
-          }
-
           await cancelSubscription({
             prisma,
             user,
@@ -172,7 +165,6 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
 
 export const getCustomerIdFromPayload = async (
   payload: Stripe.Event,
-  prisma: PrismaClient,
 ): Promise<Users | null> => {
   let user: Users | null | undefined = null;
 
@@ -258,7 +250,6 @@ export const getCustomerIdFromPayload = async (
 
 const getPlanFromPayload = async (
   payload: Stripe.Event,
-  prisma: PrismaClient,
 ): Promise<Plans | null> => {
   let plan: Plans | null | undefined = null;
 
@@ -295,64 +286,3 @@ const shouldHandleEvent = (payload: Stripe.Event): boolean => {
       return false;
   }
 };
-
-// const addMetadataToSubscription = async ({
-//   subId,
-//   prisma,
-//   payload,
-//   plan,
-//   user,
-// }: {
-//   subId: string;
-//   prisma: PrismaClient;
-//   payload: Stripe.Event;
-//   plan: Plans;
-//   user: Users;
-// }) => {
-//   const subscription = await stripeInstance.subscriptions.retrieve(subId);
-//
-//   let order = await prisma.orders.findFirst({
-//     where: {
-//       txn_id: subId,
-//     },
-//   });
-//
-//   if (!order) {
-//     log.warn(
-//       `[STRIPE_WH] No order found with a stripe subscription id of ${subId}, creating one...`,
-//     );
-//
-//     order = await prisma.orders.create({
-//       data: {
-//         txn_id: subId,
-//         user_id: user.id,
-//         status: OrderStatus.PENDING,
-//         is_plan: 1,
-//         plan_id: plan.id,
-//         payment_method: 'Stripe Renovación',
-//         date_order: new Date().toISOString(),
-//         total_price: Number(plan.price),
-//       },
-//     });
-//   }
-//
-//   if (subscription.id && !subscription.metadata.orderId && order) {
-//     log.info(
-//       `Adding order id (${order.id}) to subscription ${subscription.id}`,
-//     );
-//
-//     try {
-//       await stripeInstance.subscriptions.update(subId, {
-//         metadata: {
-//           orderId: order.id,
-//         },
-//       });
-//     } catch (e) {
-//       log.error(
-//         `[STRIPE_WH] Error while updating subscription ${subId}, payload ${JSON.stringify(
-//           payload,
-//         )}`,
-//       );
-//     }
-//   }
-// };

@@ -132,5 +132,4 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
       log.info(`[PAYPAL_WH] Event type ${payload.event_type} not handled`);
       break;
   }
-  return;
 };

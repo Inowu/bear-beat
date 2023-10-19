@@ -112,6 +112,8 @@ export const permissions = shield<Context>({
     subscribeWithPaypal: isLoggedIn,
     createPaypalOrder: isLoggedIn,
     cancelOrder: isLoggedIn,
+    cancelStripeSubscription: isLoggedIn,
+    cancelPaypalSubscription: isLoggedIn,
     createOneConfig: isAdmin,
     createOneCountries: isAdmin,
     createOneCupons: isAdmin,

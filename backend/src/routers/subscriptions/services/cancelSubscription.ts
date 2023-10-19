@@ -4,6 +4,7 @@ import { log } from '../../../server';
 import { gbToBytes } from '../../../utils/gbToBytes';
 import { getPlanKey } from '../../../utils/getPlanKey';
 import { SubscriptionService } from './types';
+import { OrderStatus } from '../interfaces/order-status.interface';
 
 export const cancelSubscription = async ({
   prisma,
@@ -104,4 +105,28 @@ export const cancelSubscription = async ({
       },
     }),
   ]);
+
+  const pendingOrder = await prisma.orders.findFirst({
+    where: {
+      AND: [
+        {
+          status: OrderStatus.PENDING,
+        },
+        {
+          payment_method: SubscriptionService.STRIPE,
+        },
+      ],
+    },
+  });
+
+  if (pendingOrder) {
+    await prisma.orders.update({
+      where: {
+        id: pendingOrder.id,
+      },
+      data: {
+        status: OrderStatus.CANCELLED,
+      },
+    });
+  }
 };

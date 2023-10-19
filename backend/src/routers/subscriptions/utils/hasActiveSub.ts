@@ -5,8 +5,6 @@ import stripeInstance from '../../../stripe';
 import { log } from '../../../server';
 import { conektaSubscriptions } from '../../../conekta';
 import { SubscriptionService } from '../services/types';
-import axios from 'axios';
-import { paypal } from '../../../paypal';
 
 export const hasActiveSubscription = async ({
   user,
@@ -53,7 +51,7 @@ export const hasActiveSubscription = async ({
   }
 
   switch (service) {
-    case SubscriptionService.STRIPE:
+    case SubscriptionService.STRIPE: {
       const existingStripeSubscription =
         await stripeInstance.subscriptions.list({
           customer: customerId,
@@ -71,6 +69,7 @@ export const hasActiveSubscription = async ({
       }
 
       break;
+    }
     case SubscriptionService.CONEKTA:
       try {
         const existingConektaSubscription =
@@ -87,6 +86,7 @@ export const hasActiveSubscription = async ({
             message: 'There is already an active subscription for this user',
           });
         }
+        /* eslint-disable-next-line no-empty */
       } catch (e) {}
 
       break;

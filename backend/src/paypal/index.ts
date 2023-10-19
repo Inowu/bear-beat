@@ -1,5 +1,7 @@
 import axios from 'axios';
 
+/* eslint-disable no-confusing-arrow */
+
 const clientId = (): string =>
   process.env.NODE_ENV === 'production'
     ? (process.env.PAYPAL_CLIENT_ID as string)

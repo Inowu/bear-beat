@@ -1,5 +1,5 @@
-import { Users } from '@prisma/client';
 import crypto from 'crypto';
+import { Users } from '@prisma/client';
 
 export const stripNonAlphabetic = (user: Users) => {
   let name = user.username.replace(/[^a-zA-Z]/g, '');
