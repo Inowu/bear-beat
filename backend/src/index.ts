@@ -1,4 +1,5 @@
 import path from 'path';
+import tracer from 'dd-trace';
 import { config } from 'dotenv';
 import { createExpressMiddleware } from '@trpc/server/adapters/express';
 import express from 'express';
@@ -19,6 +20,12 @@ import { paypalEndpoint } from './endpoints/webhooks/paypal.endpoint';
 
 config({
   path: path.resolve(__dirname, '../.env'),
+});
+
+tracer.init({
+  env: 'prod',
+  service: 'bearbeat',
+  logInjection: true,
 });
 
 async function main() {
@@ -74,9 +81,8 @@ async function main() {
     await initializeRedis();
 
     await initializeSearch();
-  } catch (e) {
-    log.error(e);
-    console.log(e);
+  } catch (e: any) {
+    log.error(e.message);
     await redis.quit();
     process.exit(1);
   }
