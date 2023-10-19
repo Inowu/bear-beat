@@ -7,11 +7,41 @@ import { useUserContext } from "../../contexts/UserContext";
 import { useEffect, useState } from "react";
 import trpc from "../../api";
 import { IOrders, IQuota, IUser_downloads } from "interfaces/User";
+import { ConditionModal } from "../../components/Modals/ConditionModal/ContitionModal";
+import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
+import { SuccessModal } from "../../components/Modals/SuccessModal/SuccessModal";
 
 function MyAccount() {
   const { currentUser } = useUserContext();
   const [quota, setQuota] = useState({} as IQuota)
   const [orders, setOrders] = useState<IOrders[]>([]);
+  const [showCondition, setShowCondition] = useState(false);
+  const [showError, setShowError] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const closeCondition =() => {
+    setShowCondition(false);
+  }
+  const openCondition = () => {
+    setShowCondition(true);
+  }
+  const closeSuccess = () => {
+    setShowSuccess(false);
+  }
+  const closeError = () => {
+    setShowError(false);
+  }
+  const cancelAction = async () => {
+    let body = {
+
+    }
+    try{
+      
+    }
+    catch(error){
+      setShowError(true);
+      console.log(error);
+    }
+  }
   const getQuota = async () => {
     try{
       const quota: any = await trpc.ftp.quota.query();
@@ -74,6 +104,7 @@ function MyAccount() {
           </div>
         </div>
         {true && <SpaceAvailableCard quota={quota}/>}
+        {/* <button className="cancel" onClick={openCondition}>CANCERLAR SUSCRIPCION</button> */}
       </div>
       <div className="purchase">
         <div className="actives-ftp-container">
@@ -152,6 +183,24 @@ function MyAccount() {
           </table>
         </div>
       </div>
+      <ErrorModal 
+        show={showError} 
+        onHide={closeError} 
+        message={"Ha habido un error"}
+      />
+      <SuccessModal 
+        show={showSuccess} 
+        onHide={closeSuccess} 
+        message= "Revise las instrucciones en su correo para realizar el cambio de contraseña" 
+        title ="Correo enviado!"
+      /> 
+      <ConditionModal
+          title="Cancelación de suscripción"
+          message="¿Estás seguro que quieres cancelar tu suscripción?"
+          show={showCondition}
+          onHide={closeCondition}
+          action={cancelAction}
+      />
     </div>
   );
 }

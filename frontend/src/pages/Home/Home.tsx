@@ -39,6 +39,7 @@ function Home() {
     }
     try{
       const files = await trpc.ftp.ls.query(body);
+      console.log(files);
       setfiles(files);
       setLoader(false);
     }
@@ -138,11 +139,16 @@ function Home() {
     }
   }
   const startSearch = async (value: string) => {
+    if(value === ""){
+      return getFiles();
+    }
     let body = {
-
+      query: value,
     }
     try{
-      // const result = await trpc.ftp.search.query(body)
+      const result = await trpc.ftp.search.query(body)
+      console.log(result.documents);
+      // setfiles(result.documents)
     }
     catch(error){
       console.log(error);

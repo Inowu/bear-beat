@@ -14,7 +14,17 @@
     gap: 20px;
     flex-grow: 1;
     max-width: 400px;
-
+    .cancel{
+      color: white;
+      background-color: #FF2B2B;
+      padding-inline: 45px;
+      padding-block: 10px;
+      border-radius: 100px;
+      font-weight: 600;
+      &:hover{
+        opacity: .8;
+      }
+    }
     .user-profile-pic {
       width: 200px;
       height: 200px;
