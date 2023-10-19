@@ -10,11 +10,21 @@ export const search = shieldedProcedure
       offset: z.number().optional(),
     }),
   )
-  .query(async ({ input: { query, limit, offset } }) =>
-    redis.ft.search(redisFileIndexName, `*${query}*`, {
+  .query(async ({ input: { query, limit, offset } }) => {
+    const escapedQuery = query.replace(
+      /([^a-zA-Z0-9\s])/g,
+      (match) => `\\${match}`,
+    );
+
+    const searchTerm = escapedQuery
+      .split(' ')
+      .map((word) => `%${word}%`)
+      .join(' ');
+
+    return redis.ft.search(redisFileIndexName, searchTerm, {
       LIMIT: {
         from: offset ?? 0,
         size: limit ?? 10,
       },
-    }),
-  );
+    });
+  });
