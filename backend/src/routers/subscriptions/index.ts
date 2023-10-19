@@ -1,6 +1,5 @@
 import { router } from '../../trpc';
-import { cancelPaypalSubscription } from './cancel/cancelPaypalSubscription';
-import { cancelStripeSubscription } from './cancel/cancelStripeSubscription';
+import { requestSubscriptionCancellation } from './cancel/cancelSubscription';
 import { subscribeWithCardConekta } from './subscribeWithCardConekta';
 import { subscribeWithCashConekta } from './subscribeWithCashConekta';
 import { subscribeWithPaypal } from './subscribeWithPaypal';
@@ -11,6 +10,5 @@ export const subscriptionsRouter = router({
   subscribeWithCashConekta,
   subscribeWithStripe,
   subscribeWithPaypal,
-  cancelStripeSubscription,
-  cancelPaypalSubscription,
+  requestSubscriptionCancellation,
 });

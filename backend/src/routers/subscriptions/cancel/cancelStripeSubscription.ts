@@ -1,35 +1,38 @@
 import { TRPCError } from '@trpc/server';
-import { shieldedProcedure } from '../../../procedures/shielded.procedure';
+import { PrismaClient } from '@prisma/client';
 import stripeInstance from '../../../stripe';
 import { log } from '../../../server';
+import { SessionUser } from '../../auth/utils/serialize-user';
 
-export const cancelStripeSubscription = shieldedProcedure.mutation(
-  async ({ ctx: { prisma, session } }) => {
-    const user = session!.user!;
+export const cancelStripeSubscription = async ({
+  prisma,
+  user,
+}: {
+  prisma: PrismaClient;
+  user: SessionUser;
+}) => {
+  const dbUser = await prisma.users.findFirst({
+    where: {
+      id: user.id,
+    },
+  });
 
-    const dbUser = await prisma.users.findFirst({
-      where: {
-        id: user.id,
-      },
+  const subscriptions = await stripeInstance.subscriptions.list({
+    customer: dbUser!.stripe_cusid!,
+    status: 'active',
+  });
+
+  if (subscriptions.data.length === 0) {
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message: 'El usuario no tiene una suscripción activa.',
     });
+  }
 
-    const subscriptions = await stripeInstance.subscriptions.list({
-      customer: dbUser!.stripe_cusid!,
-      status: 'active',
-    });
+  const subscription = subscriptions.data[0];
 
-    if (subscriptions.data.length === 0) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'El usuario no tiene una suscripción activa.',
-      });
-    }
+  log.info(`[STRIPE:CANCEL] Canceling subscription ${subscription.id}`);
+  await stripeInstance.subscriptions.cancel(subscriptions.data[0].id);
 
-    const subscription = subscriptions.data[0];
-
-    log.info(`[STRIPE:CANCEL] Canceling subscription ${subscription.id}`);
-    await stripeInstance.subscriptions.cancel(subscriptions.data[0].id);
-
-    return { message: 'Tu suscripción ha sido cancelada con correctamente.' };
-  },
-);
+  return { message: 'Tu suscripción ha sido cancelada con correctamente.' };
+};

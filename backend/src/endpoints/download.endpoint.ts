@@ -29,7 +29,7 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
   const fileExists = await fileService.exists(fullPath);
 
   if (!fileExists) {
-    return res.status(500).send({ error: 'Este archivo no existe' });
+    return res.status(500).send({ error: 'Este archivo o carpeta no existe' });
   }
 
   const activePlans = await prisma.descargasUser.findMany({
