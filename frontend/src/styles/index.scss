@@ -98,3 +98,28 @@ button.primary-pill {
   left: 50%;
   transform: translateX(-50%);
 }
+.search-input{
+  display: flex;
+  position: relative;
+  background-color: white;
+  width: 350px;
+  padding-block: 10px;
+  padding-inline: 15px;
+  border-radius: 8px;
+  input{
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 1.2rem;
+    font-weight: 600;
+    width: 100%;
+  }
+  svg{
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: 10px;
+    color: #6FDCF4;
+    pointer-events: none;
+  }
+}

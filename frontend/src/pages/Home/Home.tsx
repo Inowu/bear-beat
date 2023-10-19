@@ -5,6 +5,7 @@ import {
   faPlay,
   faDownload,
   faArrowLeft,
+  faSearch,
 } from "@fortawesome/free-solid-svg-icons";
 import PreviewModal from "../../components/PreviewModal/PreviewModal";
 import { useEffect, useState } from "react";
@@ -136,6 +137,17 @@ function Home() {
       errorMethod('Para descargar se necesita tener gb disponibles');
     }
   }
+  const startSearch = async (value: string) => {
+    let body = {
+
+    }
+    try{
+      // const result = await trpc.ftp.search.query(body)
+    }
+    catch(error){
+      console.log(error);
+    }
+  }
   useEffect(() => {
     getFiles();
   }, []);
@@ -154,9 +166,18 @@ function Home() {
         file={fileToShow}
         onHide={() => setShowPreviewModal(!showPreviewModal)}
       />
-      <h2>
-        <FontAwesomeIcon icon={faFolder} /> Todos los archivos
-      </h2>
+      <div className="header-contain">
+        <h2>
+          <FontAwesomeIcon icon={faFolder} /> Todos los archivos
+        </h2>
+        {/* <div className="search-input">
+          <input  
+            placeholder="Buscar"
+            onChange={(e:any)=>{startSearch(e.target.value)}}
+          />
+          <FontAwesomeIcon icon ={faSearch} />
+        </div> */}
+      </div>
       {
         pastFile.length> 0 &&
         <div className="btn-back">
