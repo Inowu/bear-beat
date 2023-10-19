@@ -30,12 +30,11 @@ function MyAccount() {
   const closeError = () => {
     setShowError(false);
   }
+  console.log(currentUser);
   const cancelAction = async () => {
-    let body = {
-
-    }
     try{
-      
+      // const cancelStripe = trpc.subscriptions.cancelStripeSubscription.mutate();
+      // const cancelPaypal = trpc.subscriptions.cancelPaypalSubscription.mutate();
     }
     catch(error){
       setShowError(true);

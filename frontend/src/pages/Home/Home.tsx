@@ -146,7 +146,7 @@ function Home() {
       query: value,
     }
     try{
-      const result = await trpc.ftp.search.query(body)
+      const result: any = await trpc.ftp.search.query(body)
       console.log(result.documents);
       setfiles(result.documents)
     }
