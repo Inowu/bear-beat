@@ -13,7 +13,7 @@ export async function initializeSearch() {
   if (!fileIndex.length) {
     log.info('[CACHE:MISS] Creating file index...');
 
-    await createAndUpdateFileIndex(process.env.DEMOS_PATH as string);
+    await createAndUpdateFileIndex(process.env.SONGS_PATH as string);
   }
 
   // eslint-disable-next-line no-underscore-dangle
@@ -98,7 +98,7 @@ async function removeFileFromIndex(fileName: string) {
   return redis.json.del(`${redisFileIndexKey}:${fileName}`);
 }
 
-const watcher = chokidar.watch(process.env.DEMOS_PATH as string, {
+const watcher = chokidar.watch(process.env.SONGS_PATH as string, {
   alwaysStat: true,
 });
 
