@@ -1,16 +1,17 @@
+import Path from 'path';
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import Path from 'path';
 import { fileService } from '../ftp';
 import { prisma } from '../db';
 import { SessionUser } from '../routers/auth/utils/serialize-user';
 import { log } from '../server';
 
-export const download = async (req: Request, res: Response) => {
+export const downloadEndpoint = async (req: Request, res: Response) => {
   const token = req.query.token as string;
 
-  if (!token || typeof token !== 'string')
+  if (!token || typeof token !== 'string') {
     return res.status(401).send({ error: 'Unauthorized' });
+  }
 
   let user: SessionUser | null = null;
 
@@ -129,7 +130,9 @@ export const download = async (req: Request, res: Response) => {
 
   res.setHeader(
     'Content-Disposition',
-    `attachment; filename*=UTF-8''${encodeURI(Path.basename(fullPath))};filename=${encodeURI(Path.basename(fullPath))}`,
+    `attachment; filename*=UTF-8''${encodeURI(
+      Path.basename(fullPath),
+    )};filename=${encodeURI(Path.basename(fullPath))}`,
   );
 
   return res.sendFile(fullPath);

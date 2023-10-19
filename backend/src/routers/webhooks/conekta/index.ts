@@ -1,5 +1,7 @@
 import { EventResponse } from 'conekta';
 import { Plans, Users } from '@prisma/client';
+import { Request } from 'express';
+import { addDays } from 'date-fns';
 import { subscribe } from '../../subscriptions/services/subscribe';
 import { prisma } from '../../../db';
 import { log } from '../../../server';
@@ -8,7 +10,6 @@ import { getPlanKey } from '../../../utils/getPlanKey';
 import { cancelOrder } from '../../subscriptions/services/cancelOrder';
 import { ConektaEvents } from './events';
 import { SubscriptionService } from '../../subscriptions/services/types';
-import { Request } from 'express';
 
 export const conektaSubscriptionWebhook = async (req: Request) => {
   const payload: EventResponse = JSON.parse(req.body as any);
@@ -48,7 +49,9 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
         user,
         plan: plan!,
         service: SubscriptionService.CONEKTA,
-        expirationDate: new Date(),
+        expirationDate: plan
+          ? addDays(new Date(), Number(plan.duration))
+          : addDays(new Date(), 30),
       });
       break;
     case ConektaEvents.SUB_UPDATED:
@@ -87,7 +90,7 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
 
       break;
     }
-    case ConektaEvents.ORDER_PAID:
+    case ConektaEvents.ORDER_PAID: {
       // Ignore with card for now
       if (
         payload.data?.object.charges.data[0].payment_method.object.startsWith(
@@ -104,20 +107,32 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
         `[CONEKTA_WH] Paid order event received for user ${user.id}, payload: ${payloadStr} `,
       );
 
+      const order = await prisma.orders.findFirst({
+        where: {
+          id: payload.data?.object.metadat.orderId,
+        },
+      });
+
+      const orderPlan = await prisma.plans.findFirst({
+        where: {
+          id: order?.plan_id!,
+        },
+      });
+
       await subscribe({
         subId: subscription.id,
         prisma,
         user,
         orderId: payload.data?.object.metadata.orderId,
         service: SubscriptionService.CONEKTA,
-        expirationDate: new Date(),
+        expirationDate: addDays(new Date(), Number(orderPlan?.duration) || 30),
       });
       break;
+    }
     default:
       log.info(
         `[CONEKTA_WH] Unhandled event ${payload.type}, payload: ${payloadStr}`,
       );
-      return;
   }
 };
 

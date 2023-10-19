@@ -27,6 +27,7 @@ export const permissions = shield<Context>({
     login: allow,
     register: allow,
     me: isLoggedIn,
+    search: isLoggedIn,
     findByCode: isLoggedIn,
     ownOrders: isLoggedIn,
     ownDescargas: isLoggedIn,
