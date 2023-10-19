@@ -21,10 +21,15 @@ export const search = shieldedProcedure
       .map((word) => `%${word}%`)
       .join(' ');
 
-    return redis.ft.search(redisFileIndexName, searchTerm, {
+    const results = await redis.ft.search(redisFileIndexName, searchTerm, {
       LIMIT: {
         from: offset ?? 0,
         size: limit ?? 10,
       },
     });
+
+    return {
+      ...results,
+      documents: results.documents.map((doc) => doc.value),
+    };
   });

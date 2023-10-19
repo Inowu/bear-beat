@@ -1,10 +1,10 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
+import axios from 'axios';
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
 import { log } from '../../server';
 import { SubscriptionService } from './services/types';
 import { subscribe } from './services/subscribe';
-import axios from 'axios';
 import { paypal } from '../../paypal';
 
 export const subscribeWithPaypal = shieldedProcedure
