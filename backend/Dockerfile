@@ -1,4 +1,4 @@
-FROM node:18.12.1-alpine AS build
+FROM node:18.18.2-alpine AS build
 
 WORKDIR /usr/src/app
 
@@ -6,11 +6,13 @@ RUN apk --no-cache add --virtual .builds-deps build-base python3 ffmpeg && npm i
 
 COPY package*.json prisma/schema.prisma .
 
-RUN npm config set python /usr/bin/python && npm i && npx prisma generate
+RUN npm i && npx prisma generate
 
 COPY . .
 
 RUN npm run build
+
+RUN ls build/
 
 EXPOSE 5000
 

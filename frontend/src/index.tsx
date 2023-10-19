@@ -1,5 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { PayPalScriptProvider } from "@paypal/react-paypal-js";
 import "./styles/index.scss";
 import reportWebVitals from "./reportWebVitals";
 import { Navigate, Outlet, RouterProvider, createBrowserRouter } from "react-router-dom";
@@ -21,7 +22,7 @@ import Admin from "./pages/Admin/Admin";
 import ResetPassword from "./components/Auth/ResetPassword/ResetPassword";
 
 const root = ReactDOM.createRoot(
-  document.getElementById("root") as HTMLElement
+  document.getElementById("root") as HTMLElement,
 );
 const router = createBrowserRouter([
   {
@@ -78,9 +79,18 @@ const router = createBrowserRouter([
 root.render(
   <React.StrictMode>
     <UserContextProvider>
-      <RouterProvider router={router} />
+      <PayPalScriptProvider
+        options={{
+          clientId:
+            "AYuKvAI09TE9bk9k1TuzodZ2zWQFpWEZesT65IkT4WOws9wq-yfeHLj57kEBH6YR_8NgBUlLShj2HOSr",
+          intent: "subscription",
+          vault: true,
+        }}
+      >
+        <RouterProvider router={router} />
+      </PayPalScriptProvider>
     </UserContextProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );
 
 // If you want to start measuring performance in your app, pass a function

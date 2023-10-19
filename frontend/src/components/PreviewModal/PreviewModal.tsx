@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import { Modal } from "react-bootstrap";
 import videoSrc from "src/assets/video/DAKITI.mp4";
+import trpc from "../../api";
 import "./PreviewModal.scss";
 import { convertBase64ToMP3 } from "../../functions/functions";
 

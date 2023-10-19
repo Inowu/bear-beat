@@ -46,7 +46,7 @@ function Home() {
       console.log(error);
       setLoader(false);
     }
-  }
+  };
   const getPath = async (name: string) => {
     setLoader(true);
     let tempFiles = pastFile;
@@ -147,7 +147,7 @@ function Home() {
     catch(error){
       console.log(error);
     }
-  }
+  };
   useEffect(() => {
     getFiles();
   }, []);

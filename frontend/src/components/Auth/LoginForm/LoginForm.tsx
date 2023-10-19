@@ -24,8 +24,8 @@ function LoginForm() {
     .min(3, 'Password must contain 3 characters atleast'),
 });
   const initialValues = {
-    username: '',
-    password: '',
+    username: "",
+    password: "",
   };
   const formik = useFormik({
     initialValues: initialValues,
@@ -56,23 +56,27 @@ function LoginForm() {
         <input
           placeholder="username"
           type="text"
-          id="username" 
-          name="username" 
-          value={formik.values.username} 
+          id="username"
+          name="username"
+          value={formik.values.username}
           onChange={formik.handleChange}
         />
-        {formik.errors.username && <div className="error-formik">{formik.errors.username}</div>}
+        {formik.errors.username && (
+          <div className="error-formik">{formik.errors.username}</div>
+        )}
       </div>
       <div className="c-row">
         <input
           placeholder="password"
           type="password"
-          id="password" 
-          name="password" 
-          value={formik.values.password} 
+          id="password"
+          name="password"
+          value={formik.values.password}
           onChange={formik.handleChange}
         />
-        {formik.errors.password && <div className="error-formik">{formik.errors.password}</div>}
+        {formik.errors.password && (
+          <div className="error-formik">{formik.errors.password}</div>
+        )}
       </div>
       <div className="c-row">
         <Link to={"recuperar"}>¿Olvidaste tu contraseña?</Link>

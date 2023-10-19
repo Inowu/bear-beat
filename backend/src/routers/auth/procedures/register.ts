@@ -9,6 +9,7 @@ import stripe from '../../../stripe';
 import { conektaCustomers } from '../../../conekta';
 import { stripNonAlphabetic } from './utils/formatUsername';
 import { log } from '../../../server';
+import { brevo } from '../../../email';
 
 export const register = publicProcedure
   .input(
@@ -118,6 +119,20 @@ export const register = publicProcedure
             newUser.id
           }, details: ${JSON.stringify(e.response?.data?.details)}`,
         );
+      }
+
+      try {
+        log.info('[REGISTER] Sending email to user');
+        await brevo.smtp.sendTransacEmail({
+          templateId: 3,
+          to: [{ email: newUser.email, name: newUser.username }],
+          params: {
+            NAME: newUser.username,
+            EMAIL: newUser.email,
+          },
+        });
+      } catch (e: any) {
+        log.error(`[REGISTER] Error while sending email ${e.message}`);
       }
 
       return {

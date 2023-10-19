@@ -6,6 +6,7 @@ import { log } from '../../../server';
 import { OrderStatus } from '../interfaces/order-status.interface';
 import { Params, SubscriptionService } from './types';
 import { SessionUser } from '../../auth/utils/serialize-user';
+import { brevo } from '../../../email';
 
 export const subscribe = async ({
   prisma,
@@ -96,7 +97,7 @@ export const subscribe = async ({
         service === SubscriptionService.ADMIN ||
         service === SubscriptionService.PAYPAL
       ) {
-        await prisma.orders.create({
+        const order = await prisma.orders.create({
           data: {
             txn_id: subId,
             user_id: user.id,
@@ -108,6 +109,22 @@ export const subscribe = async ({
             total_price: Number(dbPlan?.price),
           },
         });
+
+        try {
+          await brevo.smtp.sendTransacEmail({
+            templateId: 2,
+            to: [{ email: user.email, name: user.username }],
+            params: {
+              NAME: user.username,
+              plan_name: dbPlan.name,
+              price: dbPlan.price,
+              currency: dbPlan.moneda.toUpperCase(),
+              ORDER: order.id,
+            },
+          });
+        } catch (e) {
+          log.error(`[STRIPE] Error while sending email ${e}`);
+        }
       }
 
       if (orderId) {
@@ -222,7 +239,6 @@ export const subscribe = async ({
       log.info(
         `[SUBSCRIPTION] Creating descargas user entry for user ${user.id}`,
       );
-      // }
 
       await insertInDescargas({ expirationDate, user, prisma, order });
     } catch (e) {

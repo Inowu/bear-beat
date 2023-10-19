@@ -15,6 +15,8 @@ interface PlanCardPropsI {
   plan: IPlans;
 }
 
+let order: number;
+
 function PlanCard(props: PlanCardPropsI) {
   const [showOxxoModal, setShowOxxoModal] = useState<boolean>(false);
   const [oxxoData, setOxxoData] = useState({} as IOxxoData);

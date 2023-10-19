@@ -1,4 +1,6 @@
 export interface IFileStat {
+  // Apparently redis doesn't support indexing by anything other than strings
+  [key: string]: any;
   name: string;
   type: 'd' | '-';
   modification: number;

@@ -1,25 +1,31 @@
 import path from 'path';
+import tracer from 'dd-trace';
 import { config } from 'dotenv';
 import { createExpressMiddleware } from '@trpc/server/adapters/express';
 import express from 'express';
 import compression from 'compression';
 import cors from 'cors';
 import expressWinston from 'express-winston';
+import winston from 'winston';
 import { log } from './server';
 import { initializeFileService } from './ftp';
 import { appRouter } from './routers';
 import { createContext } from './context';
-import { download } from './endpoints/download';
-import winston from 'winston';
-import { verifyStripeSignature } from './routers/utils/verifyStripeSignature';
-import { stripeSubscriptionWebhook } from './routers/webhooks/stripe';
-import { paypalSubscriptionWebhook } from './routers/webhooks/paypal';
-import { verifyConektaSignature } from './routers/utils/verifyConektaSignature';
-import { conektaSubscriptionWebhook } from './routers/webhooks/conekta';
-import { verifyPaypalSignature } from './routers/utils/verifyPaypalSignature';
+import { downloadEndpoint } from './endpoints/download.endpoint';
+import { initializeRedis, redis } from './redis';
+import { initializeSearch } from './search';
+import { conektaEndpoint } from './endpoints/webhooks/conekta.endpoint';
+import { stripeEndpoint } from './endpoints/webhooks/stripe.endpoint';
+import { paypalEndpoint } from './endpoints/webhooks/paypal.endpoint';
 
 config({
   path: path.resolve(__dirname, '../.env'),
+});
+
+tracer.init({
+  env: 'prod',
+  service: 'bearbeat',
+  logInjection: true,
 });
 
 async function main() {
@@ -47,76 +53,47 @@ async function main() {
     app.use(
       '/webhooks.paypal',
       express.raw({ type: 'application/json' }),
-      async (req, res) => {
-        // const isValid = await verifyPaypalSignature(req);
-
-        // if (!isValid) {
-        //   return res.status(400).send('Invalid signature');
-        // }
-
-        try {
-          await paypalSubscriptionWebhook(req);
-
-          return res.status(200);
-        } catch (e) {
-          log.error(`[PAYPAL_WH] Error handling webhook: ${e}`);
-          return res.status(200);
-        }
-      },
+      paypalEndpoint,
     );
 
     app.use(
       '/webhooks.stripe',
       express.raw({ type: 'application/json' }),
-      async (req, res) => {
-        const isValid = verifyStripeSignature(req);
-
-        if (!isValid) {
-          return res.status(400).send('Invalid signature');
-        }
-
-        try {
-          await stripeSubscriptionWebhook(req);
-
-          return res.status(200).end();
-        } catch (e) {
-          log.error(`[STRIPE_WH] Error handling webhook: ${e}`);
-
-          return res.status(500).end();
-        }
-      },
+      stripeEndpoint,
     );
 
     app.use(
       '/webhooks.conekta',
       express.raw({ type: 'application/json' }),
-      async (req, res) => {
-        // TODO: Uncomment this when conekta signature verification is fixed
-        // const isValid = verifyConektaSignature(req, req.body);
-        //
-        // if (!isValid) return res.status(401).send('Invalid signature');
-
-        try {
-          await conektaSubscriptionWebhook(req);
-        } catch (e) {
-          log.error(`[CONEKTA_WH] Error handling webhook: ${e}`);
-          return res.status(500);
-        }
-      },
+      conektaEndpoint,
     );
 
     app.use('/demos', express.static(path.resolve(__dirname, '../demos')));
 
-    app.get('/download', download);
+    app.get('/download', downloadEndpoint);
 
     app.listen(process.env.PORT);
+
     log.info(`Express server listening on port ${process.env.PORT}`);
 
     await initializeFileService();
-  } catch (e) {
-    log.error(e);
+
+    await initializeRedis();
+
+    await initializeSearch();
+  } catch (e: any) {
+    log.error(e.message);
+    await redis.quit();
     process.exit(1);
   }
 }
+
+// Graceful shutdown
+['exit'].forEach((event) => {
+  process.on(event, async () => {
+    log.info('Shutting down...');
+    await redis.quit();
+  });
+});
 
 main();
