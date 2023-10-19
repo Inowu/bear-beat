@@ -21,16 +21,12 @@ export const search = shieldedProcedure
     //   .map((word) => `%${word}%`)
     //   .join(' ');
     //
-    const results = await redis.ft.search(
-      redisFileIndexName,
-      `*${escapedQuery}*`,
-      {
-        LIMIT: {
-          from: offset ?? 0,
-          size: limit ?? 10,
-        },
+    const results = await redis.ft.search(redisFileIndexName, escapedQuery, {
+      LIMIT: {
+        from: offset ?? 0,
+        size: limit ?? 10,
       },
-    );
+    });
 
     return {
       ...results,
