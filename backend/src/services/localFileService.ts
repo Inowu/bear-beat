@@ -1,5 +1,6 @@
 import nodePath from 'path';
 import { statSync, existsSync, promises as fs } from 'fs';
+import fastFolderSizeSync from 'fast-folder-size/sync';
 import { IFileService } from './interfaces/fileService.interface';
 
 export class LocalFileService implements IFileService {
@@ -25,13 +26,15 @@ export class LocalFileService implements IFileService {
     return files
       .filter((file) => !file.startsWith('.'))
       .map((file) => {
-        const stat = statSync(nodePath.join(path, file));
+        const filePath = nodePath.join(path, file);
+        const stat = statSync(filePath);
+        const type = stat.isFile() ? ('-' as const) : ('d' as const);
 
         return {
           name: file,
-          type: stat.isFile() ? ('-' as const) : ('d' as const),
+          type,
           modification: stat.mtime.getTime(),
-          size: stat.size,
+          size: type === 'd' ? fastFolderSizeSync(filePath)! : stat.size,
         };
       });
   }
