@@ -1,5 +1,6 @@
 import path from 'path';
 import fs from 'fs';
+import Fuse from 'fuse.js';
 import fastFolderSizeSync from 'fast-folder-size/sync';
 import chokidar from 'chokidar';
 import { SchemaFieldTypes } from 'redis';
@@ -17,9 +18,9 @@ export async function initializeSearch() {
   }
 
   // eslint-disable-next-line no-underscore-dangle
-  const redisFtList = await redis.ft._list();
+  const fileSystemList = await redis.ft._list();
 
-  if (!redisFtList.includes(redisFileIndexName)) {
+  if (!fileSystemList.includes(redisFileIndexName)) {
     log.info('[CACHE] Creating search index...');
     await redis.ft.create(
       redisFileIndexName,

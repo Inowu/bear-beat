@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
 import { redis, redisFileIndexName } from '../../redis';
+import Fuse from 'fuse.js';
 
 export const search = shieldedProcedure
   .input(
@@ -29,8 +30,13 @@ export const search = shieldedProcedure
       },
     });
 
+    const fuse = new Fuse(results.documents, {
+      includeScore: true,
+      keys: ['value.name'],
+    });
+
     return {
       ...results,
-      documents: results.documents.map((doc) => doc.value),
+      documents: fuse.search(query),
     };
   });
