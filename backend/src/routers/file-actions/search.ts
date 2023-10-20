@@ -16,12 +16,9 @@ export const search = shieldedProcedure
       (match) => `\\${match}`,
     );
 
-    // const searchTerm = escapedQuery
-    //   .split(' ')
-    //   .map((word) => `%${word}%`)
-    //   .join(' ');
-    //
-    const results = await redis.ft.search(redisFileIndexName, escapedQuery, {
+    const searchTerm = [escapedQuery, ...escapedQuery.split(' ')].join('|');
+
+    const results = await redis.ft.search(redisFileIndexName, searchTerm, {
       LIMIT: {
         from: offset ?? 0,
         size: limit ?? 10,
