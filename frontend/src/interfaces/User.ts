@@ -21,6 +21,13 @@ export interface IUser {
     available: bigint;
     used: bigint;
   }
+  export interface IPaymentMethod{
+    card: string;
+    expire: string;
+    name: string;
+    type: string;
+    default: boolean;
+  }
   export interface IOrders{
     cupon_id: null;
     date_order: Date;
