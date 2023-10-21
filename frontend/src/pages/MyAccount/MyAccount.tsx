@@ -18,7 +18,7 @@ function MyAccount() {
   const [showCondition, setShowCondition] = useState(false);
   const [showError, setShowError] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const closeCondition =() => {
+  const closeCondition = () => {
     setShowCondition(false);
   }
   const openCondition = () => {
@@ -33,22 +33,22 @@ function MyAccount() {
   // const dd = trpc.subscriptions.
   const cancelAction = async () => {
     closeCondition();
-    try{
+    try {
       const cancelSuscription: any = await trpc.subscriptions.requestSubscriptionCancellation.mutate()
       console.log(cancelSuscription)
       setShowSuccess(true);
     }
-    catch(error){
+    catch (error) {
       setShowError(true);
       console.log(error);
     }
   }
   const getQuota = async () => {
-    try{
+    try {
       const quota: any = await trpc.ftp.quota.query();
       setQuota(quota);
     }
-    catch(error){
+    catch (error) {
       console.log(error);
     }
   }
@@ -56,17 +56,17 @@ function MyAccount() {
     let body = {
 
     }
-    try{
-      const user_downloads:any = await trpc.descargasuser.ownDescargas.query(body);
-      let allorders:any = [] ;
-      await Promise.all(user_downloads.map(async (orders: any)=>{
+    try {
+      const user_downloads: any = await trpc.descargasuser.ownDescargas.query(body);
+      let allorders: any = [];
+      await Promise.all(user_downloads.map(async (orders: any) => {
         let order_body = {
           where: {
             id: orders.order_id,
           }
         }
-        const order:any = await trpc.orders.ownOrders.query(order_body);
-        if (order.length> 0) {
+        const order: any = await trpc.orders.ownOrders.query(order_body);
+        if (order.length > 0) {
           allorders.push(order[0]);
         }
       }))
@@ -74,15 +74,17 @@ function MyAccount() {
       // const order:any = await trpc.orders.ownOrders.query(body); 
       // setOrders(order);
     }
-    catch(error){
+    catch (error) {
       console.log(error);
     }
   }
+  console.log(currentUser);
   useEffect(() => {
+
     getQuota();
     getOrders();
   }, [])
-  
+
   return (
     <div className="my-account-main-container">
       <div className="general">
@@ -104,7 +106,7 @@ function MyAccount() {
             <p>{currentUser?.phone}</p>
           </div>
         </div>
-        {true && <SpaceAvailableCard quota={quota}/>}
+        {true && <SpaceAvailableCard quota={quota} />}
         {/* {
           currentUser?.hasActiveSubscription &&
           <button className="cancel" onClick={openCondition}>CANCELAR SUSCRIPCION</button>
@@ -128,17 +130,17 @@ function MyAccount() {
               <tbody>
                 {
                   currentUser?.ftpAccount ?
-                  <tr>
-                  <td>{currentUser?.ftpAccount.host}</td>
-                  <td>{currentUser?.ftpAccount.userid}</td>
-                  <td>{currentUser?.ftpAccount.passwd}</td>
-                  <td>{currentUser?.ftpAccount.port}</td>
-                  <td>{currentUser?.ftpAccount.expiration.toDateString()}</td>
-                  <td>
-                    <img src={filezillaIcon} alt="filezilla" />
-                  </td>
-                </tr>:
-                <tr/>
+                    <tr>
+                      <td>{currentUser?.ftpAccount.host}</td>
+                      <td>{currentUser?.ftpAccount.userid}</td>
+                      <td>{currentUser?.ftpAccount.passwd}</td>
+                      <td>{currentUser?.ftpAccount.port}</td>
+                      <td>{currentUser?.ftpAccount.expiration.toDateString()}</td>
+                      <td>
+                        <img src={filezillaIcon} alt="filezilla" />
+                      </td>
+                    </tr> :
+                    <tr />
                 }
 
               </tbody>
@@ -165,7 +167,7 @@ function MyAccount() {
             </thead>
             <tbody>
               {orders.length > 0 ? (
-                orders.map((order: IOrders, index: number)=>{
+                orders.map((order: IOrders, index: number) => {
                   return (
                     <tr key={"order_" + index}>
                       <td>{order.date_order.toDateString()}</td>
@@ -187,23 +189,23 @@ function MyAccount() {
           </table>
         </div>
       </div>
-      <ErrorModal 
-        show={showError} 
-        onHide={closeError} 
+      <ErrorModal
+        show={showError}
+        onHide={closeError}
         message={"Ha habido un error"}
       />
-      <SuccessModal 
-        show={showSuccess} 
-        onHide={closeSuccess} 
-        message= "Su suscripción se ha cancelado con éxito." 
-        title ="Suscripción Cancelada"
-      /> 
+      <SuccessModal
+        show={showSuccess}
+        onHide={closeSuccess}
+        message="Su suscripción se ha cancelado con éxito."
+        title="Suscripción Cancelada"
+      />
       <ConditionModal
-          title="Cancelación de suscripción"
-          message="¿Estás seguro que quieres cancelar tu suscripción?"
-          show={showCondition}
-          onHide={closeCondition}
-          action={cancelAction}
+        title="Cancelación de suscripción"
+        message="¿Estás seguro que quieres cancelar tu suscripción?"
+        show={showCondition}
+        onHide={closeCondition}
+        action={cancelAction}
       />
     </div>
   );
