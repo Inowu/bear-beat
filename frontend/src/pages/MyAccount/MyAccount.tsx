@@ -6,10 +6,12 @@ import SpaceAvailableCard from "../../components/SpaceAvailableCard/SpaceAvailab
 import { useUserContext } from "../../contexts/UserContext";
 import { useEffect, useState } from "react";
 import trpc from "../../api";
-import { IOrders, IQuota, IUser_downloads } from "interfaces/User";
+import { IOrders, IPaymentMethod, IQuota, IUser_downloads } from "interfaces/User";
 import { ConditionModal } from "../../components/Modals/ConditionModal/ContitionModal";
 import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
 import { SuccessModal } from "../../components/Modals/SuccessModal/SuccessModal";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTrash } from "@fortawesome/free-solid-svg-icons";
 
 function MyAccount() {
   const { currentUser } = useUserContext();
@@ -18,6 +20,16 @@ function MyAccount() {
   const [showCondition, setShowCondition] = useState(false);
   const [showError, setShowError] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [paymentMethods, setPaymentMethods] = useState<IPaymentMethod[]>([]);
+  let dummy = [
+    {
+      card: "0333",
+      type: "visa",
+      expire: "03/25",
+      name: "Andrei Woolfolk",
+      default: true,
+    }
+  ]
   const closeCondition = () => {
     setShowCondition(false);
   }
@@ -40,6 +52,16 @@ function MyAccount() {
     }
     catch (error) {
       setShowError(true);
+      console.log(error);
+    }
+  }
+  const getPaymentMethods = async () => {
+    let body = {}
+    try {
+      const cards: any = await trpc.subscriptions.listStripeCards.query();
+      console.log(cards);
+    }
+    catch (error) {
       console.log(error);
     }
   }
@@ -83,6 +105,7 @@ function MyAccount() {
 
     getQuota();
     getOrders();
+    // getPaymentMethods();
   }, [])
 
   return (
@@ -155,6 +178,50 @@ function MyAccount() {
             </div>
           )}
         </div>
+        {/* <div className="actives-ftp-container">
+          <h2>MÉTODOS DE PAGO</h2>
+          {dummy.length > 0 ? (
+            <table className="table table-responsive">
+              <thead>
+                <tr>
+                  <th scope="col">Tarjeta</th>
+                  <th scope="col">Nombre</th>
+                  <th scope="col">Expiracion</th>
+                  <th scope="col">Default</th>
+                  <th scope="col">Eliminar</th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  dummy.map((card: IPaymentMethod, index: number)=>{
+                    return (
+                      <tr key={"cards_"+index}>
+                        <td>{card.type +" termina en"+card.card}</td>
+                        <td>{card.name}</td>
+                        <td>{card.expire}</td>
+                        <td>{card.default ? "Yes" :"No"}</td>
+                        <td><FontAwesomeIcon icon={faTrash}/></td>
+                      </tr>
+                    )
+                  })
+                }
+              </tbody>
+            </table>
+          ) : (
+            <table className="table table-responsive no-card">
+              <tbody>
+                <tr>
+                  <td className="pt-4" colSpan={3}>
+                    <h2 className="text-center">
+                      No existen métodos de pago.
+                    </h2>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+          )}
+        </div> */}
         <div className="last-purchased">
           <h2>Últimas compras</h2>
           <table className="table">

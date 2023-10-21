@@ -97,11 +97,11 @@
         text-align: center;
       }
     }
+
     table.table {
       border-radius: 6px;
       overflow: hidden;
       box-shadow: 0 3px 8px rgb(0 0 0 / 14%);
-
       thead {
         background-color: #323232;
         th {
@@ -125,6 +125,14 @@
               cursor: pointer;
             }
           }
+        }
+      }
+    }
+    .no-card{
+      tbody{
+        background-color: #292929 !important;
+        .text-center{
+          color: #06e1f7;
         }
       }
     }
