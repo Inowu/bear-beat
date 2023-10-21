@@ -146,9 +146,16 @@ function Home() {
       query: value,
     }
     try{
-      const result: any = await trpc.ftp.search.query(body)
-      console.log(result.documents);
-      setfiles(result.documents)
+      const result: any = await trpc.ftp.search.query(body);
+      let values:any = [];
+      result.documents.map((val:any)=>{
+        if(val.value){
+          values.push(val.value)
+        }else{
+          values.push(val)
+        }
+      })
+      setfiles(values)
     }
     catch(error){
       console.log(error);
@@ -176,13 +183,13 @@ function Home() {
         <h2>
           <FontAwesomeIcon icon={faFolder} /> Todos los archivos
         </h2>
-        {/* <div className="search-input">
+        <div className="search-input">
           <input  
             placeholder="Buscar"
             onChange={(e:any)=>{startSearch(e.target.value)}}
           />
           <FontAwesomeIcon icon ={faSearch} />
-        </div> */}
+        </div>
       </div>
       {
         pastFile.length> 0 &&
