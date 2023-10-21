@@ -183,13 +183,13 @@ function Home() {
         <h2>
           <FontAwesomeIcon icon={faFolder} /> Todos los archivos
         </h2>
-        <div className="search-input">
+        {/* <div className="search-input">
           <input  
             placeholder="Buscar"
             onChange={(e:any)=>{startSearch(e.target.value)}}
           />
           <FontAwesomeIcon icon ={faSearch} />
-        </div>
+        </div> */}
       </div>
       {
         pastFile.length> 0 &&
