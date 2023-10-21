@@ -13,7 +13,7 @@ export function ConditionModal (props: ICondition)  {
     const {show, onHide, message, action, title} = props;
   return (
     <Modal show={show} onHide={onHide} centered>
-        <div className='modal-container error-modal'>
+        <div className='modal-container success-modal'>
             <div className='header'>
                 <p className='title'>{title}</p>
                 <RiCloseCircleLine className='icon' onClick={onHide}/>
@@ -23,10 +23,10 @@ export function ConditionModal (props: ICondition)  {
                     {message?.toString()}
                 </p>
                 <div className='button-container'>
-                  <button className='btn-cancel' onClick={onHide}>
+                  <button className='btn-option-5' onClick={onHide}>
                     Cancelar
                   </button>
-                  <button className='btn-retry' onClick={action}>
+                  <button className='btn-option-4' onClick={action}>
                     Confirmar
                   </button>
                 </div>

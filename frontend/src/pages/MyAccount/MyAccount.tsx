@@ -11,8 +11,13 @@ import { ConditionModal } from "../../components/Modals/ConditionModal/Contition
 import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
 import { SuccessModal } from "../../components/Modals/SuccessModal/SuccessModal";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrash } from "@fortawesome/free-solid-svg-icons";
-
+import { faClose, faP, faPlus, faPlusCircle, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+import AddCard from "../../components/AddCard/AddCard";
+const stripePromise = loadStripe(
+  "pk_live_51HxCA5INxJoHjyCFl7eC2fUI9S22i2NW8iMnAjrvAUjnuVGZedLSRxB3sZspZzzHNOoTCNwgUNoZEYfXQuF6VvBV00MJ2C2k9s"
+);
 function MyAccount() {
   const { currentUser } = useUserContext();
   const [quota, setQuota] = useState({} as IQuota)
@@ -20,7 +25,11 @@ function MyAccount() {
   const [showCondition, setShowCondition] = useState(false);
   const [showError, setShowError] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [conditionMessage, setConditionMessage] = useState("");
+  const [conditionTitle, setConditionTitle] = useState("");
   const [paymentMethods, setPaymentMethods] = useState<IPaymentMethod[]>([]);
+  const [newCard, setNewCard] = useState(false)
+  const [condition, setCondition] = useState(0);
   let dummy = [
     {
       card: "0333",
@@ -28,8 +37,21 @@ function MyAccount() {
       expire: "03/25",
       name: "Andrei Woolfolk",
       default: true,
+    },
+    {
+      card: "4384",
+      type: "visa",
+      expire: "03/25",
+      name: "Andrei Woolfolk",
+      default: false,
     }
   ]
+  const openNewCard = () => {
+    setNewCard(!newCard);
+  }
+  const closeNewCard = () => {
+    setNewCard(false);
+  }
   const closeCondition =() => {
     setShowCondition(false);
   }
@@ -42,7 +64,24 @@ function MyAccount() {
   const closeError = () => {
     setShowError(false);
   }
-  // const dd = trpc.subscriptions.
+  const startCancel = () => {
+    setConditionTitle('Cancelación de suscripción')
+    setConditionMessage('¿Estás seguro que quieres cancelar tu suscripción?')
+    openCondition();
+    setCondition(1);
+  }
+  const changeDefaultCard = () => {
+    setConditionTitle('Cambiar por Predeterminado')
+    setConditionMessage('¿Estás seguro que quieres cambiar tu tarjeta predeterminada?')
+    openCondition();
+    setCondition(2);
+  }
+  const deletePaymentMethod = () => {
+    setConditionTitle('Eliminar método de pago')
+    setConditionMessage('¿Estás seguro que quieres eliminar este método de pago?')
+    openCondition();
+    setCondition(3);
+  }
   const cancelAction = async () => {
     closeCondition();
     try{
@@ -53,6 +92,24 @@ function MyAccount() {
     catch(error){
       setShowError(true);
       console.log(error);
+    }
+  }
+  const changeDefault = async () => {
+    console.log('default');
+    try{
+
+    }
+    catch(error){
+
+    }
+  }
+  const deleteCard = async () => {
+    console.log('borrar');
+    try{
+
+    }
+    catch(error){
+
     }
   }
   const getPaymentMethods = async () => {
@@ -130,7 +187,7 @@ function MyAccount() {
         {true && <SpaceAvailableCard quota={quota}/>}
         {/* {
           currentUser?.hasActiveSubscription &&
-          <button className="cancel" onClick={openCondition}>CANCELAR SUSCRIPCION</button>
+          <button className="cancel" onClick={startCancel}>CANCELAR SUSCRIPCION</button>
         } */}
       </div>
       <div className="purchase">
@@ -177,7 +234,7 @@ function MyAccount() {
           )}
         </div>
         {/* <div className="actives-ftp-container">
-          <h2>MÉTODOS DE PAGO</h2>
+          <h2>MÉTODOS DE PAGO <FontAwesomeIcon className={newCard ?"active" :""} icon={faPlusCircle} onClick={openNewCard}/></h2>
           {dummy.length > 0 ? (
             <table className="table table-responsive">
               <thead>
@@ -194,11 +251,13 @@ function MyAccount() {
                   dummy.map((card: IPaymentMethod, index: number)=>{
                     return (
                       <tr key={"cards_"+index}>
-                        <td>{card.type +" termina en"+card.card}</td>
+                        <td>{card.type +" **"+card.card}</td>
                         <td>{card.name}</td>
                         <td>{card.expire}</td>
-                        <td>{card.default ? "Yes" :"No"}</td>
-                        <td><FontAwesomeIcon icon={faTrash}/></td>
+                        <td>
+                          <div onClick={()=>{!card.default && changeDefaultCard()}} className={"card-status " +(card.default ? "default": "no-default")}/>
+                        </td>
+                        <td><FontAwesomeIcon icon={faTrash} onClick={deletePaymentMethod}/></td>
                       </tr>
                     )
                   })
@@ -217,8 +276,12 @@ function MyAccount() {
                 </tr>
               </tbody>
             </table>
-
           )}
+            <Elements stripe={stripePromise}>
+              <div className={"new-card-box "+(newCard ? "active-card" :"")}>
+                <AddCard/>
+              </div>
+            </Elements>
         </div> */}
         <div className="last-purchased">
           <h2>Últimas compras</h2>
@@ -266,11 +329,14 @@ function MyAccount() {
         title ="Suscripción Cancelada"
       /> 
       <ConditionModal
-          title="Cancelación de suscripción"
-          message="¿Estás seguro que quieres cancelar tu suscripción?"
+          title={conditionTitle}
+          message={conditionMessage}
           show={showCondition}
           onHide={closeCondition}
-          action={cancelAction}
+          action={
+            condition === 1 ?cancelAction 
+            : ( condition === 2 ? changeDefault : deleteCard)
+          }
       />
     </div>
   );

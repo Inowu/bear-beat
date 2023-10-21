@@ -6,7 +6,33 @@
   justify-content: center;
   flex-wrap: wrap;
   width: 100%;
-
+  .card-status {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #323232;
+    margin-left: 20px;
+  }
+  .default {
+    background-color: #06e1f7;
+  }
+  .no-default{
+    cursor: pointer;
+    &:hover{
+      background-color: #06e1f7;
+      opacity: .67;
+    }
+  }
+  .new-card-box{
+    display: flex;
+    width: 100%;
+    right: 0px;
+    opacity: 0;
+    transition: .3s ease all;
+  }
+  .active-card{
+    opacity: 1;
+  }
   .general {
     display: flex;
     flex-direction: column;
@@ -69,10 +95,26 @@
 
     .actives-ftp-container {
       width: 100%;
+
       h2 {
         font-size: 3.2rem;
         font-weight: bold;
         text-align: center;
+        position: relative;
+        svg{
+          position: absolute;
+          right: 0px;
+          border-radius: 50%;
+          color: #323232;
+          transition: .3s ease all;
+          cursor: pointer;
+          &:hover{
+            opacity: .67;
+          }
+        }
+        .active{
+          rotate: 45deg;
+        }
       }
       .no-items-container {
         background-color: #f8d7da;
@@ -111,7 +153,13 @@
           padding: 10px;
         }
       }
-
+      svg{
+        cursor: pointer;
+        margin-left: 20px;
+        &:hover{
+          opacity: .67;
+        }
+      }
       tbody {
         background-color: #e2e2e2;
 
