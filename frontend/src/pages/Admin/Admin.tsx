@@ -79,7 +79,7 @@ function Admin(){
             }
             console.log(body);
             const activate = await trpc.admin.activatePlanForUser.mutate(body);
-            alert('Plan activado con exito!')
+            alert('Plan activado con éxito!')
         }
         catch(error){
             console.log(error)

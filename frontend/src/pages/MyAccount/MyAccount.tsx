@@ -30,11 +30,13 @@ function MyAccount() {
   const closeError = () => {
     setShowError(false);
   }
-  console.log(currentUser);
+  // const dd = trpc.subscriptions.
   const cancelAction = async () => {
+    closeCondition();
     try{
-      // const cancelStripe = trpc.subscriptions.cancelStripeSubscription.mutate();
-      // const cancelPaypal = trpc.subscriptions.cancelPaypalSubscription.mutate();
+      const cancelSuscription: any = await trpc.subscriptions.requestSubscriptionCancellation.mutate()
+      console.log(cancelSuscription)
+      setShowSuccess(true);
     }
     catch(error){
       setShowError(true);
@@ -103,7 +105,10 @@ function MyAccount() {
           </div>
         </div>
         {true && <SpaceAvailableCard quota={quota}/>}
-        {/* <button className="cancel" onClick={openCondition}>CANCERLAR SUSCRIPCION</button> */}
+        {/* {
+          currentUser?.hasActiveSubscription &&
+          <button className="cancel" onClick={openCondition}>CANCELAR SUSCRIPCION</button>
+        } */}
       </div>
       <div className="purchase">
         <div className="actives-ftp-container">
@@ -190,8 +195,8 @@ function MyAccount() {
       <SuccessModal 
         show={showSuccess} 
         onHide={closeSuccess} 
-        message= "Revise las instrucciones en su correo para realizar el cambio de contraseña" 
-        title ="Correo enviado!"
+        message= "Su suscripción se ha cancelado con éxito." 
+        title ="Suscripción Cancelada"
       /> 
       <ConditionModal
           title="Cancelación de suscripción"
