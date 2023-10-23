@@ -122,6 +122,7 @@ watcher
         size: fileStats.size,
         type: '-',
         modification: fileStats.mtime.getTime(),
+        path: filePath.replace('/home/products', ''),
       });
     }
   })
@@ -144,5 +145,6 @@ watcher
       size: fileStats.size,
       type: '-',
       modification: fileStats.mtime.getTime(),
+      path: filePath.replace('/home/products', ''),
     });
   });
