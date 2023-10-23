@@ -46,8 +46,8 @@ export const me = shieldedProcedure.query(
 
     return {
       ...session?.user,
-      hasActiveSubscription:
-        Boolean(hasActiveSubscription) && !isSubscriptionCancelled,
+      hasActiveSubscription: Boolean(hasActiveSubscription),
+      isSubscriptionCancelled,
       ftpAccount: ftpAccount
         ? {
             ...ftpAccount,
