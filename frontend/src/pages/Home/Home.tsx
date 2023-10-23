@@ -81,15 +81,18 @@ function Home() {
       setLoader(false);
     }
   }
-  const playFile = async (name: string, index: number) => {
+  const playFile = async (file: IFiles, index: number) => {
     setLoadFile(true);
     setIndex(index);
     try{
-      const files = await trpc.ftp.demo.query({
-        path: "/" +pastFile.join('/') + "/" + name,
-      })
-      setFileToShow(encodeURI("https://thebearbeatapi.lat" +files.demo))
-      console.log(encodeURI("https://thebearbeatapi.lat" +files.demo))
+      let path: any = "";
+      if (!file.path){
+        path = "/" +pastFile.join('/') + "/" + file.name
+      }else{
+        path = file.path
+      }
+      const files_demo = await trpc.ftp.demo.query({path: path})
+      setFileToShow(encodeURI("https://thebearbeatapi.lat" +files_demo.demo))
       setIndex(-1);
       setLoadFile(false);
       setShowPreviewModal(true);
@@ -164,7 +167,6 @@ function Home() {
   useEffect(() => {
     getFiles();
   }, []);
-
   useEffect(() => {
     if(fileChange){
       closeFile();
@@ -237,7 +239,7 @@ function Home() {
                         <Spinner size={2} width={.2} color="black"/> :
                         <FontAwesomeIcon
                         icon={faPlay}
-                        onClick={() => playFile(file.name, idx)}
+                        onClick={() => playFile(file, idx)}
                       />
                       }
 
