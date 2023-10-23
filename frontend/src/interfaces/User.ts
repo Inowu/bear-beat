@@ -9,6 +9,7 @@ export interface IUser {
     username: string;
     ftpAccount: null | IFtpAccount;
     hasActiveSubscription: boolean;
+    isSubscriptionCancelled: boolean;
   }
   interface IFtpAccount {
     expiration: Date;
