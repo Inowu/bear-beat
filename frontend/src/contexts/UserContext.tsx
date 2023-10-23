@@ -10,6 +10,7 @@ interface UserContextI {
   resetCard: ()=> void;
   fileChange: boolean;
   closeFile: ()=> void;
+  startUser: ()=> void;
 }
 
 export const UserContext = createContext<UserContextI>({
@@ -20,6 +21,7 @@ export const UserContext = createContext<UserContextI>({
   resetCard: ()=> {},
   fileChange: false,
   closeFile: ()=> {},
+  startUser:()=> {},
 });
 
 export function useUserContext() {
@@ -51,6 +53,7 @@ const UserContextProvider = (props: any) => {
   async function startUser () {
     try{
       const user: any = await trpc.auth.me.query( );
+      console.log(user);
       setCurrentUser(user);
     }
     catch(error){
@@ -74,6 +77,7 @@ const UserContextProvider = (props: any) => {
     resetCard,
     fileChange,
     closeFile,
+    startUser,
   };
 
   if (loading) return <></>;

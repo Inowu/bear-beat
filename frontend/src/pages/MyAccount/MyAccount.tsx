@@ -20,7 +20,7 @@ import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 
 function MyAccount() {
-  const { currentUser } = useUserContext();
+  const { currentUser, startUser } = useUserContext();
   const [quota, setQuota] = useState({} as IQuota)
   const [orders, setOrders] = useState<IOrders[]>([]);
   const [showCondition, setShowCondition] = useState(false);
@@ -84,11 +84,11 @@ function MyAccount() {
     openCondition();
     setCondition(3);
   }
-  const cancelAction = async () => {
+  const finishSubscription = async () => {
     closeCondition();
     try {
       const cancelSuscription: any = await trpc.subscriptions.requestSubscriptionCancellation.mutate()
-      console.log(cancelSuscription)
+      startUser();
       setShowSuccess(true);
     }
     catch (error) {
@@ -162,7 +162,6 @@ function MyAccount() {
   }
 
   useEffect(() => {
-
     getQuota();
     getOrders();
     getPaymentMethods();
@@ -191,7 +190,7 @@ function MyAccount() {
         </div>
         {true && <SpaceAvailableCard quota={quota} />}
         {/* {
-          currentUser?.hasActiveSubscription &&
+          currentUser?.hasActiveSubscription && !currentUser.isSubscriptionCancelled &&
           <button className="cancel" onClick={startCancel}>CANCELAR SUSCRIPCION</button>
         } */}
       </div>
@@ -362,7 +361,7 @@ function MyAccount() {
         show={showCondition}
         onHide={closeCondition}
         action={
-          condition === 1 ? cancelAction
+          condition === 1 ? finishSubscription
             : (condition === 2 ? changeDefault : deleteCard)
         }
       />
