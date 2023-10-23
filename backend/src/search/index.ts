@@ -1,6 +1,5 @@
 import path from 'path';
 import fs from 'fs';
-import Fuse from 'fuse.js';
 import fastFolderSizeSync from 'fast-folder-size/sync';
 import chokidar from 'chokidar';
 import { SchemaFieldTypes } from 'redis';
@@ -74,6 +73,7 @@ export function createFlatFileIndex(dirPath: string): IFileStat[] {
           type: 'd',
           size: fastFolderSizeSync(filePath)!,
           modification: stats.mtime.getTime(),
+          path: filePath.replace('/home/products', ''),
         },
         ...dirIndex,
       ]);
@@ -84,6 +84,7 @@ export function createFlatFileIndex(dirPath: string): IFileStat[] {
         size: stats.size,
         type: '-',
         modification: stats.mtime.getTime(),
+        path: filePath.replace('/home/products', ''),
       });
     }
   }
@@ -121,6 +122,7 @@ watcher
         size: fileStats.size,
         type: '-',
         modification: fileStats.mtime.getTime(),
+        path: filePath.replace('/home/products', ''),
       });
     }
   })
@@ -143,5 +145,6 @@ watcher
       size: fileStats.size,
       type: '-',
       modification: fileStats.mtime.getTime(),
+      path: filePath.replace('/home/products', ''),
     });
   });

@@ -32,9 +32,22 @@ export const me = shieldedProcedure.query(
       },
     });
 
+    let isSubscriptionCancelled = false;
+
+    if (hasActiveSubscription) {
+      const order = await prisma.orders.findFirst({
+        where: {
+          id: hasActiveSubscription.order_id!,
+        },
+      });
+
+      isSubscriptionCancelled = Boolean(order?.is_canceled);
+    }
+
     return {
       ...session?.user,
       hasActiveSubscription: Boolean(hasActiveSubscription),
+      isSubscriptionCancelled,
       ftpAccount: ftpAccount
         ? {
             ...ftpAccount,
