@@ -55,5 +55,14 @@ export const requestSubscriptionCancellation = shieldedProcedure.mutation(
       default:
         break;
     }
+
+    await prisma.orders.update({
+      where: {
+        id: order.id,
+      },
+      data: {
+        is_canceled: 1,
+      },
+    });
   },
 );

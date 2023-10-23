@@ -37,6 +37,6 @@ export const search = shieldedProcedure
 
     return {
       ...results,
-      documents: fuse.search(query).map((result) => result.item),
+      documents: fuse.search(query).map((result) => result.item.value),
     };
   });

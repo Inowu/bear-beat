@@ -74,6 +74,7 @@ export function createFlatFileIndex(dirPath: string): IFileStat[] {
           type: 'd',
           size: fastFolderSizeSync(filePath)!,
           modification: stats.mtime.getTime(),
+          path: filePath,
         },
         ...dirIndex,
       ]);
@@ -84,6 +85,7 @@ export function createFlatFileIndex(dirPath: string): IFileStat[] {
         size: stats.size,
         type: '-',
         modification: stats.mtime.getTime(),
+        path: filePath,
       });
     }
   }
