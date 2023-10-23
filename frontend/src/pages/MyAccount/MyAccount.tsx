@@ -1,5 +1,8 @@
 import "./MyAccount.scss";
 import Logo from "../../assets/images/osonuevo.png";
+import Visa from "../../assets/images/cards/visa.png";
+import Mastercard from "../../assets/images/cards/master.png";
+import Amex from "../../assets/images/cards/express.png";
 import { Link } from "react-router-dom";
 import filezillaIcon from "../../assets/images/filezilla_icon.png";
 import SpaceAvailableCard from "../../components/SpaceAvailableCard/SpaceAvailableCard";
@@ -10,14 +13,12 @@ import { IOrders, IPaymentMethod, IQuota, IUser_downloads } from "interfaces/Use
 import { ConditionModal } from "../../components/Modals/ConditionModal/ContitionModal";
 import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
 import { SuccessModal } from "../../components/Modals/SuccessModal/SuccessModal";
+import { PaymentMethodModal } from "../../components/Modals/PaymentMethodModal/PaymentMethodModal";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClose, faP, faPlus, faPlusCircle, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
-import AddCard from "../../components/AddCard/AddCard";
-const stripePromise = loadStripe(
-  "pk_live_51HxCA5INxJoHjyCFl7eC2fUI9S22i2NW8iMnAjrvAUjnuVGZedLSRxB3sZspZzzHNOoTCNwgUNoZEYfXQuF6VvBV00MJ2C2k9s"
-);
+
 function MyAccount() {
   const { currentUser } = useUserContext();
   const [quota, setQuota] = useState({} as IQuota)
@@ -25,6 +26,7 @@ function MyAccount() {
   const [showCondition, setShowCondition] = useState(false);
   const [showError, setShowError] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showPaymentMethod, setShowPaymentMethod] = useState(false);
   const [conditionMessage, setConditionMessage] = useState("");
   const [conditionTitle, setConditionTitle] = useState("");
   const [paymentMethods, setPaymentMethods] = useState<IPaymentMethod[]>([]);
@@ -52,7 +54,7 @@ function MyAccount() {
   const closeNewCard = () => {
     setNewCard(false);
   }
-  const closeCondition =() => {
+  const closeCondition = () => {
     setShowCondition(false);
   }
   const openCondition = () => {
@@ -96,27 +98,28 @@ function MyAccount() {
   }
   const changeDefault = async () => {
     console.log('default');
-    try{
+    try {
 
     }
-    catch(error){
+    catch (error) {
 
     }
   }
   const deleteCard = async () => {
     console.log('borrar');
-    try{
+    try {
 
     }
-    catch(error){
+    catch (error) {
 
     }
   }
   const getPaymentMethods = async () => {
-    let body = {}
     try {
       const cards: any = await trpc.subscriptions.listStripeCards.query();
       console.log(cards);
+
+      setPaymentMethods(cards.data)
     }
     catch (error) {
       console.log(error);
@@ -157,12 +160,12 @@ function MyAccount() {
       console.log(error);
     }
   }
-  console.log(currentUser);
+
   useEffect(() => {
 
     getQuota();
     getOrders();
-    // getPaymentMethods();
+    getPaymentMethods();
   }, [])
 
   return (
@@ -318,6 +321,23 @@ function MyAccount() {
             </tbody>
           </table>
         </div>
+        <div className="actives-ftp-container cards">
+          <h2>Tarjetas</h2>
+          {
+            paymentMethods.map((x: any) => {
+              return (
+                <div className="card">
+                  <div className="circle">
+                    <img src={x.card.brand === "visa" ? Visa : x.card.brand === "mastercard" ? Mastercard : Amex} alt="" />
+                  </div>
+                  <p>Termina en 6969</p>
+                  <p>04/28</p>
+                </div>
+              )
+            })
+          }
+          <p className="new" onClick={() => setShowPaymentMethod(!showPaymentMethod)}>Agregar nueva tarjeta</p>
+        </div>
       </div>
       <ErrorModal
         show={showError}
@@ -330,15 +350,21 @@ function MyAccount() {
         message="Su suscripción se ha cancelado con éxito."
         title="Suscripción Cancelada"
       />
+      <PaymentMethodModal
+        show={showPaymentMethod}
+        onHide={() => setShowPaymentMethod(false)}
+        message=""
+        title="Ingresa una nueva tarjeta"
+      />
       <ConditionModal
-          title={conditionTitle}
-          message={conditionMessage}
-          show={showCondition}
-          onHide={closeCondition}
-          action={
-            condition === 1 ?cancelAction 
-            : ( condition === 2 ? changeDefault : deleteCard)
-          }
+        title={conditionTitle}
+        message={conditionMessage}
+        show={showCondition}
+        onHide={closeCondition}
+        action={
+          condition === 1 ? cancelAction
+            : (condition === 2 ? changeDefault : deleteCard)
+        }
       />
     </div>
   );
