@@ -147,6 +147,7 @@ function Home() {
     }
     let body = {
       query: value,
+      limit: 20,
     }
     try{
       const result: any = await trpc.ftp.search.query(body);
