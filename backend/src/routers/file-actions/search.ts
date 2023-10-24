@@ -12,34 +12,6 @@ export const search = shieldedProcedure
     }),
   )
   .query(async ({ input: { query, limit, offset } }) => {
-    // const escapedQuery = query.replace(
-    //   /([^a-zA-Z0-9\s])/g,
-    //   (match) => `\\${match}`,
-    // );
-    //
-    // const searchTerm = [
-    //   `*${escapedQuery}*`,
-    //   escapedQuery,
-    //   ...escapedQuery.split(' '),
-    // ].join('|');
-    //
-    // const results = await redis.ft.search(redisFileIndexName, searchTerm, {
-    //   LIMIT: {
-    //     from: offset ?? 0,
-    //     size: limit ?? 10,
-    //   },
-    // });
-    //
-    // const fuse = new Fuse(results.documents, {
-    //   includeScore: true,
-    //   keys: ['value.name'],
-    // });
-    //
-    // return {
-    //   ...results,
-    //   documents: fuse.search(query).map((result) => result.item.value),
-    // };
-
     const results = await meiliSearch.index(fileIndexName).search(query, {
       limit: limit ?? 10,
       offset: offset ?? 0,
