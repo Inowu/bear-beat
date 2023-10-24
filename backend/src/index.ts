@@ -84,12 +84,4 @@ async function main() {
   }
 }
 
-// Graceful shutdown
-['exit'].forEach((event) => {
-  process.on(event, async () => {
-    log.info('Shutting down...');
-    await redis.quit();
-  });
-});
-
 main();

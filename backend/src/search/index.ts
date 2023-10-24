@@ -2,10 +2,9 @@ import path from 'path';
 import fs from 'fs';
 import { v4 as uuid } from 'uuid';
 import fastFolderSizeSync from 'fast-folder-size/sync';
-import chokidar from 'chokidar';
+// import chokidar from 'chokidar';
 import { MeiliSearch, TaskStatus } from 'meilisearch';
 import { IFileStat } from '../services/interfaces/fileService.interface';
-import { redis, redisFileIndexKey } from '../redis';
 import { log } from '../server';
 
 export let meiliSearch: MeiliSearch;
@@ -55,36 +54,6 @@ export async function initializeSearch() {
       log.info('[SEARCH] File index created...');
     }
   }
-
-  // const fileIndex = await redis.keys(`${redisFileIndexKey}:*`);
-  //
-  // if (!fileIndex.length) {
-  //   log.info('[CACHE:MISS] Creating file index...');
-  //
-  //   await createAndUpdateFileIndex(process.env.SONGS_PATH as string);
-  // }
-  //
-  // // eslint-disable-next-line no-underscore-dangle
-  // const fileSystemList = await redis.ft._list();
-  //
-  // if (!fileSystemList.includes(redisFileIndexName)) {
-  //   log.info('[CACHE] Creating search index...');
-  //   await redis.ft.create(
-  //     redisFileIndexName,
-  //     {
-  //       '$.name': {
-  //         AS: 'name',
-  //         type: SchemaFieldTypes.TEXT,
-  //       },
-  //     },
-  //     {
-  //       ON: 'JSON',
-  //       PREFIX: `${redisFileIndexKey}:`,
-  //     },
-  //   );
-  //
-  //   log.info('[CACHE] Search index created');
-  // }
 }
 
 async function waitForTask(taskId: number) {
@@ -96,18 +65,6 @@ async function waitForTask(taskId: number) {
   ) {
     task = await meiliSearch.getTask(taskId);
   }
-}
-
-export async function createAndUpdateFileIndex(dirPath: string) {
-  log.info('[FILE INDEX] Generating new file index...');
-  const fileIndex = createFlatFileIndex(dirPath);
-
-  log.info('[CACHE] Updating file index cache...');
-  await Promise.all(
-    fileIndex.map((file) =>
-      redis.json.set(`${redisFileIndexKey}:${file.name}`, '$', file),
-    ),
-  );
 }
 
 export function createFlatFileIndex(dirPath: string): IFileStat[] {
@@ -152,7 +109,7 @@ export function createFlatFileIndex(dirPath: string): IFileStat[] {
 
   return fileIndex;
 }
-//
+
 // async function addFileToIndex(file: IFileStat) {
 //   return redis.json.set(`${redisFileIndexKey}:${file.name}`, '$', file);
 // }
