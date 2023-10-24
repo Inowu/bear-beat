@@ -18,7 +18,7 @@ import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
 import { downloadApi } from "../../api/download";
 
 function Home() {
-  const { fileChange, closeFile, userToken,currentUser } = useUserContext();
+  const { fileChange, closeFile, userToken, currentUser } = useUserContext();
   const [showPreviewModal, setShowPreviewModal] = useState<boolean>(false);
   const [files, setfiles] = useState<IFiles[]>([]);
   const [pastFile, setPastFile] = useState<string[]>([]);
@@ -32,17 +32,17 @@ function Home() {
   const closeError = () => {
     setShow(false);
   }
-  const getFiles = async () =>  {
+  const getFiles = async () => {
     setLoader(true);
     let body = {
       path: '',
     }
-    try{
+    try {
       const files = await trpc.ftp.ls.query(body);
       setfiles(files);
       setLoader(false);
     }
-    catch(error){
+    catch (error) {
       console.log(error);
       setLoader(false);
     }
@@ -51,7 +51,7 @@ function Home() {
     setLoader(true);
     let tempFiles = pastFile;
     tempFiles.push(name);
-    try{
+    try {
       const files = await trpc.ftp.ls.query({
         path: tempFiles.join('/'),
       })
@@ -59,7 +59,7 @@ function Home() {
       setfiles(files);
       setLoader(false);
     }
-    catch(error){
+    catch (error) {
       console.log(error);
       setLoader(false);
     }
@@ -68,7 +68,7 @@ function Home() {
     setLoader(true);
     let tempFiles = pastFile;
     tempFiles.pop();
-    try{
+    try {
       const files = await trpc.ftp.ls.query({
         path: tempFiles.join('/'),
       })
@@ -76,7 +76,7 @@ function Home() {
       setfiles(files);
       setLoader(false);
     }
-    catch(error){
+    catch (error) {
       console.log(error);
       setLoader(false);
     }
@@ -84,20 +84,20 @@ function Home() {
   const playFile = async (file: IFiles, index: number) => {
     setLoadFile(true);
     setIndex(index);
-    try{
+    try {
       let path: any = "";
-      if (!file.path){
-        path = "/" +pastFile.join('/') + "/" + file.name
-      }else{
+      if (!file.path) {
+        path = "/" + pastFile.join('/') + "/" + file.name
+      } else {
         path = file.path
       }
-      const files_demo = await trpc.ftp.demo.query({path: path})
-      setFileToShow(encodeURI("https://thebearbeatapi.lat" +files_demo.demo))
+      const files_demo = await trpc.ftp.demo.query({ path: path })
+      setFileToShow(encodeURI("https://thebearbeatapi.lat" + files_demo.demo))
       setIndex(-1);
       setLoadFile(false);
       setShowPreviewModal(true);
     }
-    catch(error){
+    catch (error) {
       setIndex(-1);
       setLoadFile(false);
     }
@@ -111,20 +111,20 @@ function Home() {
   const downloadFile = async (name: string, index: number) => {
     setLoadDownload(true);
     setIndex(index);
-    if(currentUser?.hasActiveSubscription){
+    if (currentUser?.hasActiveSubscription) {
       let path = pastFile.join('/') + "/" + name;
-      const url = "https://thebearbeatapi.lat/download?path=" +encodeURIComponent(path)+'&token='+ userToken;
-      await startDownload(url,name);
+      const url = "https://thebearbeatapi.lat/download?path=" + encodeURIComponent(path) + '&token=' + userToken;
+      await startDownload(url, name);
     }
-    else{
+    else {
       errorMethod('Para descargar se necesita de una suscripción');
     }
   }
-  const startDownload = async (url: any, name:any) => {
-    const a:any = document.createElement("a");
-    try{
+  const startDownload = async (url: any, name: any) => {
+    const a: any = document.createElement("a");
+    try {
       const response = await fetch(url);
-      if(response.ok){
+      if (response.ok) {
         a.href = url;
         a.download = name;
         a.click();
@@ -132,36 +132,36 @@ function Home() {
         setLoadDownload(false);
         setIndex(-1);
       }
-      else{
+      else {
         errorMethod('Para descargar se necesita tener gb disponibles');
       }
     }
-    catch(error){
+    catch (error) {
       errorMethod('Para descargar se necesita tener gb disponibles');
     }
   }
   const startSearch = async (value: string) => {
     setPastFile([]);
-    if(value === ""){
+    if (value === "") {
       return getFiles();
     }
     let body = {
       query: value,
       limit: 20,
     }
-    try{
+    try {
       const result: any = await trpc.ftp.search.query(body);
-      let values:any = [];
-      result.documents.map((val:any)=>{
-        if(val.value){
+      let values: any = [];
+      result.documents.map((val: any) => {
+        if (val.value) {
           values.push(val.value)
-        }else{
+        } else {
           values.push(val)
         }
       })
       setfiles(values)
     }
-    catch(error){
+    catch (error) {
       console.log(error);
     }
   };
@@ -169,7 +169,7 @@ function Home() {
     getFiles();
   }, []);
   useEffect(() => {
-    if(fileChange){
+    if (fileChange) {
       closeFile();
       getFiles();
       setPastFile([]);
@@ -186,19 +186,19 @@ function Home() {
         <h2>
           <FontAwesomeIcon icon={faFolder} /> Todos los archivos
         </h2>
-        <div className="search-input">
+        {/* <div className="search-input">
           <input  
             placeholder="Buscar"
             onChange={(e:any)=>{startSearch(e.target.value)}}
           />
           <FontAwesomeIcon icon ={faSearch} />
-        </div>
+        </div> */}
       </div>
       {
-        pastFile.length> 0 &&
+        pastFile.length > 0 &&
         <div className="btn-back">
           <button onClick={goBack}>
-          <FontAwesomeIcon icon={faArrowLeft} />
+            <FontAwesomeIcon icon={faArrowLeft} />
             Back
           </button>
         </div>
@@ -210,58 +210,58 @@ function Home() {
           <div className="modified-column">Modificado</div>
         </div>
         <div className="folders-cards-container">
-          { !loader ?
-            sortArrayByName(files).map((file: IFiles, idx: number)=>{
+          {!loader ?
+            sortArrayByName(files).map((file: IFiles, idx: number) => {
               return (
                 <div key={"files " + idx}>
                   {
                     file.type === "d" &&
-                    <div className="folder-card" onClick={()=> getPath(file.name)}>
-                    <div className="name-container">
-                      <FontAwesomeIcon icon={faFolder} />
-                      <h3>{file.name}</h3>
-                    </div>
-                    <div className="modified-column">
-                      <h4>
-                        {new Date().toLocaleString("en-US", {
-                          month: "short",
-                          day: "2-digit",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </h4>
-                    </div>
-                  </div> }
-                  { file.type === "-" &&
+                    <div className="folder-card" onClick={() => getPath(file.name)}>
+                      <div className="name-container">
+                        <FontAwesomeIcon icon={faFolder} />
+                        <h3>{file.name}</h3>
+                      </div>
+                      <div className="modified-column">
+                        <h4>
+                          {new Date().toLocaleString("en-US", {
+                            month: "short",
+                            day: "2-digit",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </h4>
+                      </div>
+                    </div>}
+                  {file.type === "-" &&
                     <div className="folder-card video-card">
                       {
                         (loadFile && index === idx) ?
-                        <Spinner size={2} width={.2} color="black"/> :
-                        <FontAwesomeIcon
-                        icon={faPlay}
-                        onClick={() => playFile(file, idx)}
-                      />
+                          <Spinner size={2} width={.2} color="black" /> :
+                          <FontAwesomeIcon
+                            icon={faPlay}
+                            onClick={() => playFile(file, idx)}
+                          />
                       }
 
-                    <div className="name-container">
-                      <h3>{file.name}</h3>
+                      <div className="name-container">
+                        <h3>{file.name}</h3>
+                      </div>
+                      {
+                        (loadDownload && index === idx) ?
+                          <Spinner size={2} width={.2} color="black" /> :
+                          <FontAwesomeIcon icon={faDownload} onClick={() => downloadFile(file.name, idx)} />
+                      }
                     </div>
-                    {
-                      (loadDownload && index === idx) ?
-                      <Spinner size={2} width={.2} color="black"/> :
-                      <FontAwesomeIcon icon={faDownload}  onClick={()=> downloadFile(file.name, idx)}/>
-                    }
-                  </div> 
                   }
                 </div>
               )
             })
-            : <Spinner size={4} width= {.4} color="#2c2c2c"/>
+            : <Spinner size={4} width={.4} color="#2c2c2c" />
           }
         </div>
       </div>
-      <ErrorModal show={show} onHide={closeError} message={errorMessage} user={currentUser}/>
+      <ErrorModal show={show} onHide={closeError} message={errorMessage} user={currentUser} />
     </div>
   );
 }
