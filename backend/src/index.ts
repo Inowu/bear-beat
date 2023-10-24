@@ -12,7 +12,6 @@ import { initializeFileService } from './ftp';
 import { appRouter } from './routers';
 import { createContext } from './context';
 import { downloadEndpoint } from './endpoints/download.endpoint';
-import { initializeRedis, redis } from './redis';
 import { initializeSearch } from './search';
 import { conektaEndpoint } from './endpoints/webhooks/conekta.endpoint';
 import { stripeEndpoint } from './endpoints/webhooks/stripe.endpoint';
@@ -78,12 +77,9 @@ async function main() {
 
     await initializeFileService();
 
-    await initializeRedis();
-
     await initializeSearch();
   } catch (e: any) {
     log.error(e.message);
-    await redis.quit();
     process.exit(1);
   }
 }
