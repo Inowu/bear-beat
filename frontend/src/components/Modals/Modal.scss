@@ -1,132 +1,136 @@
-
-.modal-container{
+.modal-container {
+  display: flex;
+  flex-direction: column;
+  border-radius: 10px;
+  button {
+    padding-inline: 50px;
+    padding-block: 8px;
+    font-weight: 600;
+    font-size: 16px;
+    border-radius: 100px;
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+  p {
+    margin: 0;
+  }
+  img {
+    width: 112px;
+    height: 50px;
+    margin-block: 10px;
+  }
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-inline: 25px;
+    padding-block: 10px;
+    background-color: #1a1a1a;
+    border-radius: 10px 10px 0px 0px;
+    .title {
+      color: white;
+      font-weight: 600;
+      font-size: 20px;
+    }
+    .icon {
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+    }
+  }
+  .bottom {
     display: flex;
     flex-direction: column;
-    border-radius: 10px;
-    button{
-        padding-inline: 50px;
-        padding-block: 8px;
-        font-weight: 600;
-        font-size: 16px;
-        border-radius: 100px;
-        &:hover{
-            opacity: .8;
-        }
+    gap: 10px;
+    border-radius: 0px 0px 10px 10px;
+    padding-block: 20px;
+    padding-inline: 25px;
+    background-color: #2a2a2a;
+    .content {
+      color: white;
     }
-    p{
-        margin: 0;
+    .button-container {
+      display: flex;
+      gap: 20px;
+      justify-content: space-between;
+      .btn-cancel {
+        background-color: transparent;
+        color: #ff2d2c;
+      }
+      .btn-retry {
+        background-color: #ff2d2c;
+        color: white;
+      }
+      .btn-option-1 {
+        background-color: transparent;
+        color: #39d834;
+      }
+      .btn-option-2 {
+        background-color: #39d834;
+        color: white;
+      }
+      .btn-option-3 {
+        background-color: #febc2e;
+        color: white;
+      }
+      .btn-option-4 {
+        background: linear-gradient(45deg, #04e4cc, #00e1ee);
+        color: white;
+      }
+      .btn-option-5 {
+        background: transparent;
+        color: #09e1f7;
+      }
     }
-    img{
-        width: 112px;
-        height: 50px;
-        margin-block: 10px;
+    .to-left {
+      justify-content: flex-end;
     }
-    .header{
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding-inline: 25px;
-        padding-block: 10px;
-        background-color: #1a1a1a;
-        border-radius: 10px 10px 0px 0px;
-        .title{
-            color: white;
-            font-weight: 600;
-            font-size: 20px;
-        }
-        .icon{
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-        }
+    .reference {
+      color: white;
+      font-size: 12px;
     }
-    .bottom{
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        border-radius: 0px 0px 10px 10px;
-        padding-block: 20px;
-        padding-inline: 25px;
-        background-color: #2a2a2a;
-        .content{
-            color: white;
-        }
-        .button-container{
-            display: flex;
-            gap: 20px;
-            justify-content: space-between;
-            .btn-cancel{
-                background-color: transparent;
-                color: #ff2d2c;
-            }
-            .btn-retry{
-                background-color: #ff2d2c;
-                color: white;
-            }
-            .btn-option-1{
-                background-color: transparent;
-                color: #39d834;;
-            }
-            .btn-option-2{
-                background-color: #39d834;
-                color: white;
-            }
-            .btn-option-3{
-                background-color: #febc2e;
-                color: white;
-            }
-            .btn-option-4{
-                background: linear-gradient(45deg,#04e4cc,#00e1ee);
-                color: white;
-            }
-            .btn-option-5{
-                background: transparent;
-                color: #09e1f7;
-            }
-        }
-        .to-left{
-            justify-content: flex-end;
-        }
-        .reference{
-            color: white;
-            font-size: 12px;
-        }
-        .pay-reference{
-            color: white;
-            font-size: 18px;
-        }
-        .button-container-2{
-            display: flex;
-            justify-content: center;
-            .btn-success{
-                width: fit-content;
-                background: linear-gradient(45deg,#04e4cc,#00e1ee);
-            }
-            .btn-cancel{
-                background-color: #ff2d2c;
-                color: white;
-            }
-        }
-
+    .pay-reference {
+      color: white;
+      font-size: 18px;
     }
-    .center{
-        text-align: center;
-        align-items: center;
-        gap: 7px;
+    .button-container-2 {
+      display: flex;
+      justify-content: center;
+      .btn-success {
+        width: fit-content;
+        background: linear-gradient(45deg, #04e4cc, #00e1ee);
+      }
+      .btn-cancel {
+        background-color: #ff2d2c;
+        color: white;
+      }
     }
+  }
+  .center {
+    text-align: center;
+    align-items: center;
+    gap: 7px;
+  }
 }
-.modal-content{
-    border-radius: 25px;
+.modal-content {
+  border-radius: 25px;
 }
-.error-modal{
-    box-shadow: -6px -6px 0px 2px #ff2d2c;
+.error-modal {
+  box-shadow: -6px -6px 0px 2px #ff2d2c;
 }
-.success-modal{
-    box-shadow: -6px -6px 0px 2px #09e1f7;
+.success-modal {
+  box-shadow: -6px -6px 0px 2px #09e1f7;
 }
-.option-modal{
-    box-shadow: -6px -6px 0px 2px #39d834;
+.option-modal {
+  box-shadow: -6px -6px 0px 2px #39d834;
 }
-.oxxo-modal{
-    box-shadow: -6px -6px 0px 2px #febc2e;
+.oxxo-modal {
+  box-shadow: -6px -6px 0px 2px #febc2e;
+}
+.card-input {
+  border: 2px solid #d3d3d3;
+  background-color: #f8f8f8;
+  padding: 12px;
+  border-radius: 5px;
 }

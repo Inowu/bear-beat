@@ -17,6 +17,11 @@ import { PaymentMethodModal } from "../../components/Modals/PaymentMethodModal/P
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClose, faP, faPlus, faPlusCircle, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { Spinner } from "../../components/Spinner/Spinner";
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+const stripePromise = loadStripe(
+  "pk_live_51HxCA5INxJoHjyCFl7eC2fUI9S22i2NW8iMnAjrvAUjnuVGZedLSRxB3sZspZzzHNOoTCNwgUNoZEYfXQuF6VvBV00MJ2C2k9s"
+);
 
 function MyAccount() {
   const { currentUser, startUser } = useUserContext();
@@ -30,7 +35,6 @@ function MyAccount() {
   const [conditionTitle, setConditionTitle] = useState("");
   const [paymentMethods, setPaymentMethods] = useState<IPaymentMethod[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<any>();
-  const [newCard, setNewCard] = useState(false)
   const [condition, setCondition] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -91,6 +95,7 @@ function MyAccount() {
       if (paymentMethod) {
         const cards: any = await trpc.subscriptions.removeStripeCard.mutate({ paymentMethodId: paymentMethod.id });
         getPaymentMethods();
+        closeCondition();
       }
     }
     catch (error) {
@@ -141,6 +146,16 @@ function MyAccount() {
     }
     catch (error) {
       console.log(error);
+    }
+  }
+
+  const handlePaymentMethod = (value: boolean) => {
+    let error = value;
+    if (!error) {
+      setShowPaymentMethod(false); getPaymentMethods();
+    } else {
+      setShowPaymentMethod(false);
+      setShowError(true);
     }
   }
 
@@ -220,56 +235,6 @@ function MyAccount() {
             </div>
           )}
         </div>
-        {/* <div className="actives-ftp-container">
-          <h2>MÉTODOS DE PAGO <FontAwesomeIcon className={newCard ?"active" :""} icon={faPlusCircle} onClick={openNewCard}/></h2>
-          {dummy.length > 0 ? (
-            <table className="table table-responsive">
-              <thead>
-                <tr>
-                  <th scope="col">Tarjeta</th>
-                  <th scope="col">Nombre</th>
-                  <th scope="col">Expiracion</th>
-                  <th scope="col">Default</th>
-                  <th scope="col">Eliminar</th>
-                </tr>
-              </thead>
-              <tbody>
-                {
-                  dummy.map((card: IPaymentMethod, index: number)=>{
-                    return (
-                      <tr key={"cards_"+index}>
-                        <td>{card.type +" **"+card.card}</td>
-                        <td>{card.name}</td>
-                        <td>{card.expire}</td>
-                        <td>
-                          <div onClick={()=>{!card.default && changeDefaultCard()}} className={"card-status " +(card.default ? "default": "no-default")}/>
-                        </td>
-                        <td><FontAwesomeIcon icon={faTrash} onClick={deletePaymentMethod}/></td>
-                      </tr>
-                    )
-                  })
-                }
-              </tbody>
-            </table>
-          ) : (
-            <table className="table table-responsive no-card">
-              <tbody>
-                <tr>
-                  <td className="pt-4" colSpan={3}>
-                    <h2 className="text-center">
-                      No existen métodos de pago.
-                    </h2>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          )}
-            <Elements stripe={stripePromise}>
-              <div className={"new-card-box "+(newCard ? "active-card" :"")}>
-                <AddCard/>
-              </div>
-            </Elements>
-        </div> */}
         <div className="last-purchased">
           <h2>Últimas compras</h2>
           <table className="table">
@@ -334,12 +299,15 @@ function MyAccount() {
         message="Su suscripción se ha cancelado con éxito."
         title="Suscripción Cancelada"
       />
-      <PaymentMethodModal
-        show={showPaymentMethod}
-        onHide={() => setShowPaymentMethod(false)}
-        message=""
-        title="Ingresa una nueva tarjeta"
-      />
+      <Elements stripe={stripePromise}>
+
+        <PaymentMethodModal
+          show={showPaymentMethod}
+          onHide={handlePaymentMethod}
+          message=""
+          title="Ingresa una nueva tarjeta"
+        />
+      </Elements>
       <ConditionModal
         title={conditionTitle}
         message={conditionMessage}
