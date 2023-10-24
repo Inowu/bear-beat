@@ -16,8 +16,7 @@ import { SuccessModal } from "../../components/Modals/SuccessModal/SuccessModal"
 import { PaymentMethodModal } from "../../components/Modals/PaymentMethodModal/PaymentMethodModal";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClose, faP, faPlus, faPlusCircle, faTrash } from "@fortawesome/free-solid-svg-icons";
-import { Elements } from "@stripe/react-stripe-js";
-import { loadStripe } from "@stripe/stripe-js";
+import { Spinner } from "../../components/Spinner/Spinner";
 
 function MyAccount() {
   const { currentUser, startUser } = useUserContext();
@@ -30,30 +29,11 @@ function MyAccount() {
   const [conditionMessage, setConditionMessage] = useState("");
   const [conditionTitle, setConditionTitle] = useState("");
   const [paymentMethods, setPaymentMethods] = useState<IPaymentMethod[]>([]);
+  const [paymentMethod, setPaymentMethod] = useState<any>();
   const [newCard, setNewCard] = useState(false)
   const [condition, setCondition] = useState(0);
-  let dummy = [
-    {
-      card: "0333",
-      type: "visa",
-      expire: "03/25",
-      name: "Andrei Woolfolk",
-      default: true,
-    },
-    {
-      card: "4384",
-      type: "visa",
-      expire: "03/25",
-      name: "Andrei Woolfolk",
-      default: false,
-    }
-  ]
-  const openNewCard = () => {
-    setNewCard(!newCard);
-  }
-  const closeNewCard = () => {
-    setNewCard(false);
-  }
+  const [isLoading, setIsLoading] = useState(true);
+
   const closeCondition = () => {
     setShowCondition(false);
   }
@@ -106,20 +86,23 @@ function MyAccount() {
     }
   }
   const deleteCard = async () => {
-    console.log('borrar');
-    try {
 
+    try {
+      if (paymentMethod) {
+        const cards: any = await trpc.subscriptions.removeStripeCard.mutate({ paymentMethodId: paymentMethod.id });
+        getPaymentMethods();
+      }
     }
     catch (error) {
 
     }
   }
   const getPaymentMethods = async () => {
+    setIsLoading(true);
     try {
       const cards: any = await trpc.subscriptions.listStripeCards.query();
-      console.log(cards);
-
-      setPaymentMethods(cards.data)
+      setPaymentMethods(cards.data);
+      setIsLoading(false);
     }
     catch (error) {
       console.log(error);
@@ -164,7 +147,7 @@ function MyAccount() {
   useEffect(() => {
     getQuota();
     getOrders();
-    getPaymentMethods();
+    // getPaymentMethods();
   }, [])
 
   return (
@@ -189,10 +172,10 @@ function MyAccount() {
           </div>
         </div>
         {true && <SpaceAvailableCard quota={quota} />}
-        {/* {
+        {
           currentUser?.hasActiveSubscription && !currentUser.isSubscriptionCancelled &&
           <button className="cancel" onClick={startCancel}>CANCELAR SUSCRIPCION</button>
-        } */}
+        }
       </div>
       <div className="purchase">
         <div className="actives-ftp-container">
@@ -320,23 +303,25 @@ function MyAccount() {
             </tbody>
           </table>
         </div>
-        <div className="actives-ftp-container cards">
+        {/* <div className="actives-ftp-container cards">
           <h2>Tarjetas</h2>
-          {
+          {!isLoading ?
             paymentMethods.map((x: any) => {
               return (
                 <div className="card">
                   <div className="circle">
                     <img src={x.card.brand === "visa" ? Visa : x.card.brand === "mastercard" ? Mastercard : Amex} alt="" />
                   </div>
-                  <p>Termina en 6969</p>
-                  <p>04/28</p>
+                  <p>Termina en {x.card.last4}</p>
+                  <p>{x.card.exp_month}/{x.card.exp_year}</p>
+                  <FontAwesomeIcon icon={faTrash} onClick={() => { deletePaymentMethod(); setPaymentMethod(x); }} />
                 </div>
               )
-            })
+            }) :
+            <Spinner size={4} width={0.4} color="#00e2f7" />
           }
           <p className="new" onClick={() => setShowPaymentMethod(!showPaymentMethod)}>Agregar nueva tarjeta</p>
-        </div>
+        </div> */}
       </div>
       <ErrorModal
         show={showError}
