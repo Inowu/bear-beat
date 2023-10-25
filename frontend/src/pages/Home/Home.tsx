@@ -109,6 +109,7 @@ function Home() {
     setIndex(-1);
   }
   const downloadFile = async (file: any, index: number) => {
+    console.log(file);
     setLoadDownload(true);
     setIndex(index);
     let name = file.name;
@@ -120,6 +121,7 @@ function Home() {
       let path = pastFile.join('/') + "/" + name;
       const url = "https://thebearbeatapi.lat/download?path=" + encodeURIComponent(path) + '&token=' + userToken;
       await startDownload(url, name);
+      console.log(url);
     }
     else {
       errorMethod('Para descargar se necesita de una suscripción');
