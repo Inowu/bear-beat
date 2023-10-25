@@ -108,9 +108,14 @@ function Home() {
     setLoadDownload(false);
     setIndex(-1);
   }
-  const downloadFile = async (name: string, index: number) => {
+  const downloadFile = async (file: any, index: number) => {
     setLoadDownload(true);
     setIndex(index);
+    let name = file.name;
+    if(file.path){
+      name = file.path;
+    }
+    console.log(name)
     if (currentUser?.hasActiveSubscription) {
       let path = pastFile.join('/') + "/" + name;
       const url = "https://thebearbeatapi.lat/download?path=" + encodeURIComponent(path) + '&token=' + userToken;
@@ -250,7 +255,7 @@ function Home() {
                       {
                         (loadDownload && index === idx) ?
                           <Spinner size={2} width={.2} color="black" /> :
-                          <FontAwesomeIcon icon={faDownload} onClick={() => downloadFile(file.name, idx)} />
+                          <FontAwesomeIcon icon={faDownload} onClick={() => downloadFile(file, idx)} />
                       }
                     </div>
                   }
