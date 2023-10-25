@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
-import Fuse from 'fuse.js';
 import { fileIndexName, meiliSearch } from '../../search';
 
 export const search = shieldedProcedure

@@ -38,7 +38,7 @@ export async function initializeSearch() {
         primaryKey: 'id',
       });
 
-      await waitForTask(creationTask.taskUid);
+      await meiliSearch.waitForTask(creationTask.taskUid);
 
       const index = createFlatFileIndex(process.env.SONGS_PATH as string);
 
@@ -53,17 +53,6 @@ export async function initializeSearch() {
 
       log.info('[SEARCH] File index created...');
     }
-  }
-}
-
-async function waitForTask(taskId: number) {
-  let task = await meiliSearch.getTask(taskId);
-
-  while (
-    task.status !== TaskStatus.TASK_SUCCEEDED &&
-    task.status !== TaskStatus.TASK_FAILED
-  ) {
-    task = await meiliSearch.getTask(taskId);
   }
 }
 
