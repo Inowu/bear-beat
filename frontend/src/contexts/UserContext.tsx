@@ -58,6 +58,7 @@ const UserContextProvider = (props: any) => {
     }
     catch(error){
       console.log(error);
+      handleLogout();
     }
   }
   useEffect(() => {
