@@ -49,7 +49,7 @@ function Admin(){
     }
     const search = (value: string) => {
         const tempUsers = [...allUsers];
-        let newUsers = tempUsers.filter((user) => user.username.toLowerCase().includes(value.toLowerCase()));
+        let newUsers = tempUsers.filter((user) => (user.username.toLowerCase().includes(value.toLowerCase()) || user.email.toLowerCase().includes(value.toLowerCase())));
         setUsers(newUsers);
     }
   const getPlans = async () => {
@@ -111,7 +111,10 @@ function Admin(){
                 users.map((user: IAdminUser, index: number)=>{
                     return(
                         <div key={"admin_users_" + index} className="user-contain">
-                            <p className="name">{user.username}</p>
+                            <div className="data-contain">
+                                <p className="name"><b>usuario:</b> {user.username}</p>
+                                <p className="name"><b>email:</b> {user.email}</p>
+                            </div>
                             <button onClick={()=>{giveSuscription(user)}} className="btn-active">Activar Suscripcion</button>
                         </div>
                     )
