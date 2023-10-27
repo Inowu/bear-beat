@@ -2,6 +2,7 @@ import { MeiliSearch } from 'meilisearch';
 import { createFlatFileIndex, fileIndexName } from '../src/search/index';
 import { IFileStat } from '../src/services/interfaces/fileService.interface';
 import { config } from 'dotenv';
+import { log } from '../src/server';
 
 config();
 
@@ -10,6 +11,8 @@ async function main() {
     host: process.env.MEILISEARCH_HOST as string,
     apiKey: process.env.MEILISEARCH_KEY as string,
   });
+
+  log.info(`[UPDATE_INDEX] Updating index ${fileIndexName}`);
 
   const index = await meiliSearch.getIndex(fileIndexName);
 
@@ -30,7 +33,7 @@ async function main() {
     const filePath = file.path!;
 
     if (!fileMap.has(filePath)) {
-      console.log(`Deleting ${filePath}`);
+      log.info(`[UPDATE_INDEX] Deleting ${filePath}`);
       await index.deleteDocument(file.id);
     }
   }
@@ -39,7 +42,7 @@ async function main() {
     const filePath = file.path as string;
 
     if (!documents.results.find((doc) => doc.path === filePath)) {
-      console.log(`Adding ${filePath}`);
+      log.info(`[UPDATE_INDEX] Adding ${filePath}`);
       await index.addDocuments([file]);
     }
   }
