@@ -109,7 +109,7 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
 
       const order = await prisma.orders.findFirst({
         where: {
-          id: payload.data?.object.metadat.orderId,
+          id: payload.data?.object.metadata.orderId,
         },
       });
 
@@ -157,6 +157,27 @@ export const getCustomerIdFromPayload = async (
           conekta_cusid: payload.data?.object.customer_info.customer_id,
         },
       });
+
+      if (!user) {
+        log.error('[CONEKTA_WH] Trying to find user by email in database');
+
+        user = await prisma.users.findFirst({
+          where: {
+            email: payload.data?.object.customer_info.email,
+          },
+        });
+
+        if (user) {
+          await prisma.users.update({
+            where: {
+              id: user.id,
+            },
+            data: {
+              conekta_cusid: payload.data?.object.customer_info.customer_id,
+            },
+          });
+        }
+      }
       break;
     default:
       break;
