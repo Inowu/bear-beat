@@ -1,5 +1,6 @@
 import { compareAsc } from 'date-fns';
 import { shieldedProcedure } from '../../../procedures/shielded.procedure';
+import { log } from '../../../server';
 
 /**
  * Returns the current logged in user
@@ -35,13 +36,18 @@ export const me = shieldedProcedure.query(
     let isSubscriptionCancelled = false;
 
     if (hasActiveSubscription) {
-      const order = await prisma.orders.findFirst({
-        where: {
-          id: hasActiveSubscription.order_id!,
-        },
-      });
+      const orderId = hasActiveSubscription.order_id;
 
-      isSubscriptionCancelled = Boolean(order?.is_canceled);
+      if (!orderId) log.warn(`[ME] No orderId found for subscription`);
+      else {
+        const order = await prisma.orders.findFirst({
+          where: {
+            id: hasActiveSubscription.order_id!,
+          },
+        });
+
+        isSubscriptionCancelled = Boolean(order?.is_canceled);
+      }
     }
 
     return {

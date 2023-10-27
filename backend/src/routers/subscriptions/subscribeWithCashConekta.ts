@@ -151,6 +151,7 @@ export const subscribeWithCashConekta = shieldedProcedure
           ],
           metadata: {
             orderId: order.id,
+            userId: user.id,
           },
         });
 

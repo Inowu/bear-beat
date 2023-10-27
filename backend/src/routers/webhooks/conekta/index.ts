@@ -107,6 +107,15 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
         `[CONEKTA_WH] Paid order event received for user ${user.id}, payload: ${payloadStr} `,
       );
 
+      const orderId = payload.data?.object.metadata.orderId;
+
+      if (!orderId) {
+        log.error(
+          `[CONEKTA_WH] Order id not found in payload: ${payloadStr}, returning from conekta webhook`,
+        );
+        return;
+      }
+
       const order = await prisma.orders.findFirst({
         where: {
           id: payload.data?.object.metadata.orderId,
@@ -123,7 +132,7 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
         subId: subscription.id,
         prisma,
         user,
-        orderId: payload.data?.object.metadata.orderId,
+        orderId: Number(orderId),
         service: SubscriptionService.CONEKTA,
         expirationDate: addDays(new Date(), Number(orderPlan?.duration) || 30),
       });
@@ -154,7 +163,14 @@ export const getCustomerIdFromPayload = async (
     case ConektaEvents.ORDER_PAID:
       user = await prisma.users.findFirst({
         where: {
-          conekta_cusid: payload.data?.object.customer_info.customer_id,
+          OR: [
+            {
+              conekta_cusid: payload.data?.object.customer_info.customer_id,
+            },
+            {
+              id: payload.data?.object.metadata.userId,
+            },
+          ],
         },
       });
 
