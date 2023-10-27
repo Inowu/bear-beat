@@ -1,6 +1,6 @@
 module.exports = [
   {
-    script: 'build/src/index.js',
+    script: 'build/index.js',
     name: 'app',
     exec_mode: 'cluster',
     instances: 1,
