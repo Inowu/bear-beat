@@ -130,9 +130,7 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
 
   res.setHeader(
     'Content-Disposition',
-    `attachment; filename*=UTF-8''${encodeURI(
-      Path.basename(fullPath),
-    )};filename=${encodeURI(Path.basename(fullPath))}`,
+    `attachment; filename="${encodeURI(Path.basename(fullPath))}"`,
   );
 
   return res.sendFile(fullPath);
