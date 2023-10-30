@@ -187,10 +187,10 @@ function MyAccount() {
           </div>
         </div>
         {true && <SpaceAvailableCard quota={quota} />}
-        {
+        {/* {
           currentUser?.hasActiveSubscription && !currentUser.isSubscriptionCancelled &&
           <button className="cancel" onClick={startCancel}>CANCELAR SUSCRIPCION</button>
-        }
+        } */}
       </div>
       <div className="purchase">
         <div className="actives-ftp-container">
