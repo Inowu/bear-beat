@@ -69,42 +69,42 @@ export const cancelSubscription = async ({
     return;
   }
 
-  let gb = 500;
+  // let gb = 500;
+  //
+  // const plan = await prisma.plans.findFirst({
+  //   where: {
+  //     [getPlanKey(service)]: planId,
+  //   },
+  // });
+  //
+  // if (plan) gb = Number(plan.gigas);
 
-  const plan = await prisma.plans.findFirst({
-    where: {
-      [getPlanKey(service)]: planId,
-    },
-  });
-
-  if (plan) gb = Number(plan.gigas);
-
-  await prisma.$transaction([
-    prisma.descargasUser.update({
-      where: {
-        id: download.id,
-      },
-      data: {
-        date_end: subDays(new Date(), 1),
-      },
-    }),
-    prisma.ftpquotatallies.update({
-      where: {
-        id: quotaTallies.id,
-      },
-      data: {
-        bytes_out_used: gbToBytes(gb) + gbToBytes(1),
-      },
-    }),
-    prisma.ftpUser.update({
-      where: {
-        id: ftpUser.id,
-      },
-      data: {
-        expiration: subDays(new Date(), 1).toISOString(),
-      },
-    }),
-  ]);
+  // await prisma.$transaction([
+  //   prisma.descargasUser.update({
+  //     where: {
+  //       id: download.id,
+  //     },
+  //     data: {
+  //       date_end: subDays(new Date(), 1),
+  //     },
+  //   }),
+  //   prisma.ftpquotatallies.update({
+  //     where: {
+  //       id: quotaTallies.id,
+  //     },
+  //     data: {
+  //       bytes_out_used: gbToBytes(gb) + gbToBytes(1),
+  //     },
+  //   }),
+  //   prisma.ftpUser.update({
+  //     where: {
+  //       id: ftpUser.id,
+  //     },
+  //     data: {
+  //       expiration: subDays(new Date(), 1).toISOString(),
+  //     },
+  //   }),
+  // ]);
 
   const pendingOrder = await prisma.orders.findFirst({
     where: {
