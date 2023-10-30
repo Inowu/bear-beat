@@ -32,6 +32,7 @@ export interface IPaymentMethod {
   name: string;
   type: string;
   default: boolean;
+  id: string;
 }
 export interface IOrders {
   cupon_id: null;

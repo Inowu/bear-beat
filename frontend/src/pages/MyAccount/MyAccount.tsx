@@ -254,7 +254,7 @@ function MyAccount() {
             </tbody>
           </table>
         </div>
-        {/* <div className="actives-ftp-container cards">
+        <div className="actives-ftp-container cards">
           <h2>Tarjetas</h2>
           {!cardLoad ?
             paymentMethods.map((x: any, index: number) => {
@@ -272,7 +272,7 @@ function MyAccount() {
             <Spinner size={4} width={0.4} color="#00e2f7" />
           }
           <p className="new" onClick={() => setShowPaymentMethod(!showPaymentMethod)}>Agregar nueva tarjeta</p>
-        </div> */}
+        </div>
       </div>
       <ErrorModal
         show={showError}
@@ -286,7 +286,6 @@ function MyAccount() {
         title="Suscripción Cancelada"
       />
       <Elements stripe={stripePromise}>
-
         <PaymentMethodModal
           show={showPaymentMethod}
           onHide={handlePaymentMethod}

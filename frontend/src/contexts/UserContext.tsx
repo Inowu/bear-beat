@@ -89,8 +89,13 @@ const UserContextProvider = (props: any) => {
   }, [userToken]);
 
   useEffect(() => {
-    getPaymentMethods();
-  }, [])
+    if(currentUser === null){
+      setPaymentMethods([])
+    }else{
+      getPaymentMethods();
+    }
+  }, [currentUser])
+  
   
   const values = {
     userToken,

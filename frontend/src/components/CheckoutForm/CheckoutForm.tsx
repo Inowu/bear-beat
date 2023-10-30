@@ -10,6 +10,8 @@ import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
 import { IPlans } from "interfaces/Plans";
 import { useUserContext } from "../../contexts/UserContext";
 import { IPaymentMethod } from "interfaces/User";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPlusCircle } from "@fortawesome/free-solid-svg-icons";
 declare let window: any;
 
 interface ICheckout {
@@ -23,7 +25,7 @@ function CheckoutForm(props: ICheckout) {
   const [show, setShow] = useState<boolean>(false);
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<any>("");
-  const [card, setCard] = useState(null);
+  const [card, setCard] = useState<any>(null);
   const { plan } = props;
   const stripe: any = useStripe();
   const elements = useElements();
@@ -36,7 +38,6 @@ function CheckoutForm(props: ICheckout) {
     navigate("/");
     window.location.reload();
   };
-
   const suscribetext = async () => {
     let body_stripe = {
       planId: plan.id,
@@ -48,14 +49,20 @@ function CheckoutForm(props: ICheckout) {
         body_stripe
       );
       if (elements && stripe) {
+        console.log(card);
         const result = await stripe.confirmCardPayment(
           suscribeMethod.clientSecret,
+          card === null ?
           {
             payment_method: {
               card: elements.getElement("card")!,
             },
           }
+          : {
+            payment_method: card
+          }
         );
+        getPaymentMethods();
         if (result.error) {
           setLoader(false);
           setErrorMessage(result.error.message);
@@ -66,6 +73,7 @@ function CheckoutForm(props: ICheckout) {
         }
       }
     } catch (error) {
+      console.log(error);
       setLoader(false);
       setShow(true);
       setErrorMessage(error);
@@ -88,33 +96,47 @@ function CheckoutForm(props: ICheckout) {
           Discount only apply on first month. <span>Apply</span>
         </h4>
       </div> */}
-      {/* <div className="c-row">
+      <div className="c-row">
         {
           cardLoad
           ? <Spinner size={2} width={0.2} color="#00e2f7" />
           :
-          <select onChange={(e:any)=> setCard(e.target.value)} defaultValue={''}>
-            <option disabled value={''}>Seleccione una tarjeta</option>
-            {
-              paymentMethods.map((card: IPaymentMethod, idx: number)=>{
-                return (
-                  <option value={1} key={"cards" + idx}>{card.card.brand} termina en {card.card.last4}</option>
-                )
-              })
-            }
-          </select>
+          <>
+          {
+            card === null 
+            ?
+            <div className="icon-contain" onClick={()=> setCard("")}>
+              <FontAwesomeIcon icon={faPlusCircle}/>
+              <p>Seleccionar tarjeta</p>
+            </div>
+            :
+            <select onChange={(e:any)=> setCard(e.target.value)} defaultValue={''}>
+              <option disabled value={''}>Seleccione una tarjeta</option>
+              {
+                paymentMethods.map((card: IPaymentMethod, idx: number)=>{
+                  return (
+                    <option value={card.id} key={"cards" + idx}>{card.card.brand} termina en {card.card.last4}</option>
+                  )
+                })
+              }
+            </select>
+          }
+          </>
         }
-      </div> */}
+      </div>
       <div className="c-row">
         {
           card === null ?
           <CardElement
             className="card-input"
             options={{ hidePostalCode: true }}
-          />:
-          <p onClick={()=> setCard(null)}>Agregar nueva tarjeta</p>
+          />
+          :
+          <div className="icon-contain" onClick={()=> setCard(null)}>
+            <FontAwesomeIcon icon={faPlusCircle}/>
+            <p>Agregar nueva tarjeta</p>
+          </div>
         }
-
       </div>
       <div className="button-contain">
         {loader ? (
