@@ -23,7 +23,11 @@ export interface IQuota {
   used: bigint;
 }
 export interface IPaymentMethod {
-  card: string;
+  card: {
+    brand: string;
+    country: string;
+    last4: string;
+  };
   expire: string;
   name: string;
   type: string;

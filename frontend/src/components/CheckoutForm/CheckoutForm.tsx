@@ -8,6 +8,8 @@ import { Spinner } from "../../components/Spinner/Spinner";
 import { SuccessModal } from "../../components/Modals/SuccessModal/SuccessModal";
 import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
 import { IPlans } from "interfaces/Plans";
+import { useUserContext } from "../../contexts/UserContext";
+import { IPaymentMethod } from "interfaces/User";
 declare let window: any;
 
 interface ICheckout {
@@ -15,24 +17,16 @@ interface ICheckout {
 }
 
 function CheckoutForm(props: ICheckout) {
+  const { paymentMethods, cardLoad, getPaymentMethods } = useUserContext();
   const [loader, setLoader] = useState<boolean>(false);
   const [coupon, setCoupon] = useState<string>("");
   const [show, setShow] = useState<boolean>(false);
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<any>("");
-  const [initialValues, setInitialValues] = useState<any>(null);
-  const [cardInfo, setCardInfo] = useState({
-    card: "",
-    month: "",
-    year: "",
-    cvv: "",
-    name: "",
-  });
+  const [card, setCard] = useState(null);
   const { plan } = props;
   const stripe: any = useStripe();
   const elements = useElements();
-  const random_number: number = Math.random();
-  const [order, setOrder] = useState(0);
   const navigate = useNavigate();
   const closeError = () => {
     setShow(false);
@@ -42,49 +36,7 @@ function CheckoutForm(props: ICheckout) {
     navigate("/");
     window.location.reload();
   };
-  const conectaSuscribe = async () => {
-    let tempCard = {
-      card: {
-        number: cardInfo.card.replaceAll(" ", ""),
-        name: cardInfo.name,
-        exp_month: cardInfo.month,
-        exp_year: cardInfo.year,
-        cvc: cardInfo.cvv,
-      }
-    }
-    window.Conekta.token.create(
-      tempCard,
-      conektaSuccessResponseHandler,
-      conektaErrorResponseHandler, 'web'
-    );
-  };
-  const conektaSuccessResponseHandler = async (token: any) => {
-    let tokenId = token.id
-    let body_conekta = {
-      cardToken: tokenId,
-      planId: plan.id,
-      makeDefault: "true",
-    };
-    console.log(body_conekta);
-    try {
-      const suscribeConecta = await trpc.subscriptions.subscribeWithCardConekta.mutate(body_conekta);
-      console.log(suscribeConecta);
-      setShowSuccess(true);
-      setLoader(false);
-    } catch (error) {
-      setErrorMessage('Verifique que los datos de su tarjeta sean los correctos!');
-      setShow(true);
-      setLoader(false);
-    }
-  }
-  const paypalPayment = async (data: any) => {
-    console.log(data);
-  }
-  const conektaErrorResponseHandler = (response: any) => {
-    setErrorMessage('Verifique que los datos de su tarjeta sean los correctos!');
-    setShow(true);
-    setLoader(false);
-  };
+
   const suscribetext = async () => {
     let body_stripe = {
       planId: plan.id,
@@ -121,19 +73,8 @@ function CheckoutForm(props: ICheckout) {
   };
   const onSubmit = async (e: any) => {
     e.preventDefault();
-    if (random_number > 0) {
-      suscribetext();
-    } else {
-      conectaSuscribe();
-    }
+    suscribetext();
   };
-  // const public_key = "key_GexL0lNgQMi2Ugawb6Eefzp";
-
-  useEffect(() => {
-    // console.log(window.Conekta.setPublicKey(public_key));
-    // window.Conekta.setPublicKey(public_key);
-  }, [plan]);
-
   return (
     <form className="checkout-form" onSubmit={onSubmit}>
       {/* <div className="c-row">
@@ -147,69 +88,33 @@ function CheckoutForm(props: ICheckout) {
           Discount only apply on first month. <span>Apply</span>
         </h4>
       </div> */}
+      {/* <div className="c-row">
+        {
+          cardLoad
+          ? <Spinner size={2} width={0.2} color="#00e2f7" />
+          :
+          <select onChange={(e:any)=> setCard(e.target.value)} defaultValue={''}>
+            <option disabled value={''}>Seleccione una tarjeta</option>
+            {
+              paymentMethods.map((card: IPaymentMethod, idx: number)=>{
+                return (
+                  <option value={1} key={"cards" + idx}>{card.card.brand} termina en {card.card.last4}</option>
+                )
+              })
+            }
+          </select>
+        }
+      </div> */}
       <div className="c-row">
-        {random_number > 0 ? (
+        {
+          card === null ?
           <CardElement
             className="card-input"
             options={{ hidePostalCode: true }}
-          />
-        ) : (
-          <div className="conekta-input">
-            <input
-              placeholder="Nombre en la tarjeta"
-              onChange={(e) => {
-                setCardInfo({
-                  ...cardInfo,
-                  name: e.target.value,
-                });
-              }}
-            />
-            <div className="bottom-inputs">
-              <input
-                placeholder="Número de tarjeta"
-                type="number"
-                onChange={(e) => {
-                  setCardInfo({
-                    ...cardInfo,
-                    card: e.target.value,
-                  });
-                }}
-              />
-              <div className="other-inputs">
-                <input
-                  placeholder="mes"
-                  type="numer"
-                  onChange={(e) => {
-                    setCardInfo({
-                      ...cardInfo,
-                      month: e.target.value,
-                    });
-                  }}
-                />
-                <input
-                  placeholder="año"
-                  type="number"
-                  onChange={(e) => {
-                    setCardInfo({
-                      ...cardInfo,
-                      year: e.target.value,
-                    });
-                  }}
-                />
-                <input
-                  placeholder="cvv"
-                  type="password"
-                  onChange={(e) => {
-                    setCardInfo({
-                      ...cardInfo,
-                      cvv: e.target.value,
-                    });
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        )}
+          />:
+          <p onClick={()=> setCard(null)}>Agregar nueva tarjeta</p>
+        }
+
       </div>
       <div className="button-contain">
         {loader ? (

@@ -24,19 +24,17 @@ const stripePromise = loadStripe(
 );
 
 function MyAccount() {
-  const { currentUser, startUser } = useUserContext();
+  const { currentUser, startUser, paymentMethods, cardLoad, getPaymentMethods } = useUserContext();
   const [quota, setQuota] = useState({} as IQuota)
   const [orders, setOrders] = useState<IOrders[]>([]);
   const [showCondition, setShowCondition] = useState(false);
   const [showError, setShowError] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showPaymentMethod, setShowPaymentMethod] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<any>();
   const [conditionMessage, setConditionMessage] = useState("");
   const [conditionTitle, setConditionTitle] = useState("");
-  const [paymentMethods, setPaymentMethods] = useState<IPaymentMethod[]>([]);
-  const [paymentMethod, setPaymentMethod] = useState<any>();
   const [condition, setCondition] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
 
   const closeCondition = () => {
     setShowCondition(false);
@@ -102,17 +100,6 @@ function MyAccount() {
 
     }
   }
-  const getPaymentMethods = async () => {
-    setIsLoading(true);
-    try {
-      const cards: any = await trpc.subscriptions.listStripeCards.query();
-      setPaymentMethods(cards.data);
-      setIsLoading(false);
-    }
-    catch (error) {
-      console.log(error);
-    }
-  }
   const getQuota = async () => {
     try {
       const quota: any = await trpc.ftp.quota.query();
@@ -162,7 +149,6 @@ function MyAccount() {
   useEffect(() => {
     getQuota();
     getOrders();
-    // getPaymentMethods();
   }, [])
 
   return (
@@ -187,10 +173,10 @@ function MyAccount() {
           </div>
         </div>
         {true && <SpaceAvailableCard quota={quota} />}
-        {/* {
+        {
           currentUser?.hasActiveSubscription && !currentUser.isSubscriptionCancelled &&
           <button className="cancel" onClick={startCancel}>CANCELAR SUSCRIPCION</button>
-        } */}
+        }
       </div>
       <div className="purchase">
         <div className="actives-ftp-container">
@@ -270,10 +256,10 @@ function MyAccount() {
         </div>
         {/* <div className="actives-ftp-container cards">
           <h2>Tarjetas</h2>
-          {!isLoading ?
-            paymentMethods.map((x: any) => {
+          {!cardLoad ?
+            paymentMethods.map((x: any, index: number) => {
               return (
-                <div className="card">
+                <div className="card" key={"cards_" + index}>
                   <div className="circle">
                     <img src={x.card.brand === "visa" ? Visa : x.card.brand === "mastercard" ? Mastercard : Amex} alt="" />
                   </div>

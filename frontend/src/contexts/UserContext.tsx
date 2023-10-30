@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import trpc from "../api";
-import { IUser } from "../interfaces/User";
+import { IPaymentMethod, IUser } from "../interfaces/User";
 
 interface UserContextI {
   currentUser: IUser | null;
@@ -11,6 +11,9 @@ interface UserContextI {
   fileChange: boolean;
   closeFile: ()=> void;
   startUser: ()=> void;
+  paymentMethods: IPaymentMethod[];
+  cardLoad: boolean;
+  getPaymentMethods: () => void;
 }
 
 export const UserContext = createContext<UserContextI>({
@@ -22,6 +25,9 @@ export const UserContext = createContext<UserContextI>({
   fileChange: false,
   closeFile: ()=> {},
   startUser:()=> {},
+  paymentMethods: [],
+  cardLoad: false,
+  getPaymentMethods: ()=> {},
 });
 
 export function useUserContext() {
@@ -33,6 +39,8 @@ const UserContextProvider = (props: any) => {
   const [userToken, setUserToken] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [fileChange, setFileChange] = useState<boolean>(false);
+  const [paymentMethods, setPaymentMethods] = useState<IPaymentMethod[]>([]);
+  const [cardLoad, setCardLoad] = useState<boolean>(false);
 
   function handleLogin(token: string) {
     localStorage.setItem("token", token);
@@ -50,10 +58,20 @@ const UserContextProvider = (props: any) => {
     localStorage.removeItem("token");
     setUserToken(null);
   }
+  const getPaymentMethods = async () => {
+    setCardLoad(true);
+    try {
+      const cards: any = await trpc.subscriptions.listStripeCards.query();
+      setPaymentMethods(cards.data);
+      setCardLoad(false);
+    }
+    catch (error) {
+      console.log(error);
+    }
+  }
   async function startUser () {
     try{
       const user: any = await trpc.auth.me.query( );
-      console.log(user);
       setCurrentUser(user);
     }
     catch(error){
@@ -70,6 +88,10 @@ const UserContextProvider = (props: any) => {
     setLoading(false);
   }, [userToken]);
 
+  useEffect(() => {
+    getPaymentMethods();
+  }, [])
+  
   const values = {
     userToken,
     currentUser,
@@ -79,6 +101,10 @@ const UserContextProvider = (props: any) => {
     fileChange,
     closeFile,
     startUser,
+    paymentMethods,
+    cardLoad,
+    getPaymentMethods,
+
   };
 
   if (loading) return <></>;

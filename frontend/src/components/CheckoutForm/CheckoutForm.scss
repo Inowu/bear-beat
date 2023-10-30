@@ -1,7 +1,7 @@
 form.checkout-form {
   display: flex;
   flex-direction: column;
-  gap: 40px;
+  gap: 30px;
   .c-row {
     width: 100%;
     .conekta-input{
@@ -39,7 +39,11 @@ form.checkout-form {
       background-color: #f8f8f8;
       font-size: 1.4rem;
     }
-
+    select{
+      width: 100%;
+      padding: 8px;
+      border-radius: 8px;
+    }
     .StripeElement {
       border: 2px solid #d3d3d3;
       background-color: #f8f8f8;
