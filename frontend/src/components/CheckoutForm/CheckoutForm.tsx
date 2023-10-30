@@ -11,7 +11,7 @@ import { IPlans } from "interfaces/Plans";
 import { useUserContext } from "../../contexts/UserContext";
 import { IPaymentMethod } from "interfaces/User";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlusCircle } from "@fortawesome/free-solid-svg-icons";
+import { faCheckCircle, faPlugCircleCheck, faPlusCircle } from "@fortawesome/free-solid-svg-icons";
 declare let window: any;
 
 interface ICheckout {
@@ -106,20 +106,12 @@ function CheckoutForm(props: ICheckout) {
             card === null 
             ?
             <div className="icon-contain" onClick={()=> setCard("")}>
-              <FontAwesomeIcon icon={faPlusCircle}/>
               <p>Seleccionar tarjeta</p>
             </div>
-            :
-            <select onChange={(e:any)=> setCard(e.target.value)} defaultValue={''}>
-              <option disabled value={''}>Seleccione una tarjeta</option>
-              {
-                paymentMethods.map((card: IPaymentMethod, idx: number)=>{
-                  return (
-                    <option value={card.id} key={"cards" + idx}>{card.card.brand} termina en {card.card.last4}</option>
-                  )
-                })
-              }
-            </select>
+            :          
+            <div className="icon-contain" onClick={()=> setCard(null)}>
+              <p>Agregar nueva tarjeta</p>
+            </div>
           }
           </>
         }
@@ -132,10 +124,16 @@ function CheckoutForm(props: ICheckout) {
             options={{ hidePostalCode: true }}
           />
           :
-          <div className="icon-contain" onClick={()=> setCard(null)}>
-            <FontAwesomeIcon icon={faPlusCircle}/>
-            <p>Agregar nueva tarjeta</p>
-          </div>
+          <select onChange={(e:any)=> setCard(e.target.value)} defaultValue={''}>
+          <option disabled value={''}>Seleccione una tarjeta</option>
+          {
+            paymentMethods.map((card: IPaymentMethod, idx: number)=>{
+              return (
+                <option value={card.id} key={"cards" + idx}>{card.card.brand} termina en {card.card.last4}</option>
+              )
+            })
+          }
+        </select>
         }
       </div>
       <div className="button-contain">
