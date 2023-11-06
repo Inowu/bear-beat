@@ -15,7 +15,7 @@ import { OrdersUpsertSchema } from '../schemas/upsertOneOrders.schema';
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { OrderStatus } from './subscriptions/interfaces/order-status.interface';
-import { SubscriptionService } from './subscriptions/services/types';
+import { PaymentService } from './subscriptions/services/types';
 
 export const ordersRouter = router({
   ownOrders: shieldedProcedure
@@ -89,7 +89,7 @@ export const ordersRouter = router({
                 status: OrderStatus.PENDING,
               },
               {
-                payment_method: SubscriptionService.PAYPAL,
+                payment_method: PaymentService.PAYPAL,
               },
             ],
           },
@@ -111,7 +111,7 @@ export const ordersRouter = router({
             is_plan: 1,
             date_order: new Date().toISOString(),
             total_price: Number(plan.price),
-            payment_method: SubscriptionService.PAYPAL,
+            payment_method: PaymentService.PAYPAL,
           },
         });
       },

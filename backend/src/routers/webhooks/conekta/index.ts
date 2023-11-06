@@ -9,7 +9,7 @@ import { cancelSubscription } from '../../subscriptions/services/cancelSubscript
 import { getPlanKey } from '../../../utils/getPlanKey';
 import { cancelOrder } from '../../subscriptions/services/cancelOrder';
 import { ConektaEvents } from './events';
-import { SubscriptionService } from '../../subscriptions/services/types';
+import { PaymentService } from '../../subscriptions/services/types';
 
 export const conektaSubscriptionWebhook = async (req: Request) => {
   const payload: EventResponse = JSON.parse(req.body as any);
@@ -48,7 +48,7 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
         prisma,
         user,
         plan: plan!,
-        service: SubscriptionService.CONEKTA,
+        service: PaymentService.CONEKTA,
         expirationDate: plan
           ? addDays(new Date(), Number(plan.duration))
           : addDays(new Date(), 30),
@@ -63,7 +63,7 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
           prisma,
           user,
           plan: subscription.plan.id,
-          service: SubscriptionService.CONEKTA,
+          service: PaymentService.CONEKTA,
         });
       }
       break;
@@ -75,7 +75,7 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
         prisma,
         user,
         plan: subscription.plan.id,
-        service: SubscriptionService.CONEKTA,
+        service: PaymentService.CONEKTA,
       });
       break;
     case ConektaEvents.ORDER_VOIDED:
@@ -133,7 +133,7 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
         prisma,
         user,
         orderId: Number(orderId),
-        service: SubscriptionService.CONEKTA,
+        service: PaymentService.CONEKTA,
         expirationDate: addDays(new Date(), Number(orderPlan?.duration) || 30),
       });
       break;

@@ -1,7 +1,7 @@
 import { Plans, PrismaClient, Users } from '@prisma/client';
 import { SessionUser } from '../../auth/utils/serialize-user';
 
-export enum SubscriptionService {
+export enum PaymentService {
   STRIPE = 'Stripe',
   CONEKTA = 'Conekta',
   ADMIN = 'ADMIN',
@@ -16,7 +16,7 @@ export type Params =
       user: Users | SessionUser;
       subId: string;
       orderId?: never;
-      service: SubscriptionService;
+      service: PaymentService;
       expirationDate: Date;
     }
   | {
@@ -25,6 +25,6 @@ export type Params =
       orderId: string | number;
       subId: string;
       plan?: never;
-      service: SubscriptionService;
+      service: PaymentService;
       expirationDate: Date;
     };

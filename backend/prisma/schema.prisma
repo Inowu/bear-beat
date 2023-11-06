@@ -2,7 +2,6 @@ generator client {
   provider = "prisma-client-js"
 }
 
-
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
@@ -60,10 +59,10 @@ model DescargasUser {
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model FtpGroup {
-  id        Int    @id @default(autoincrement())
   groupname String @db.VarChar(16)
   gid       Int    @default(5500) @db.SmallInt
   members   String @db.VarChar(16)
+  id        Int    @id @default(autoincrement())
 
   @@index([groupname], map: "groupname")
   @@map("ftpgroup")
@@ -155,11 +154,11 @@ model Plans {
   ilimitado_dias       Int?
   stripe_prod_id       String? @db.Text
   stripe_prod_id_test  String  @db.Text
+  vip_activo           Int?
   conekta_plan_id      String? @db.Text
   conekta_plan_id_test String? @db.Text
-  paypal_plan_id_test  String? @db.Text
   paypal_plan_id       String? @db.Text
-  vip_activo           Int?
+  paypal_plan_id_test  String? @db.Text
 
   @@map("plans")
 }
@@ -183,33 +182,33 @@ model UserFiles {
 }
 
 model Users {
-  id             Int       @id @default(autoincrement())
-  registered_on  DateTime  @default(dbgenerated("'2018-01-01'")) @db.Date
-  username       String    @unique(map: "username") @db.VarChar(255)
-  password       String    @db.LongText
-  first_name     String?   @db.VarChar(255)
-  last_name      String?   @db.VarChar(255)
-  address        String?   @db.VarChar(255)
-  birthdate      DateTime? @db.Date
-  email          String    @unique(map: "email") @db.VarChar(255)
-  stripe_cusid   String?   @db.VarChar(200)
-  conekta_cusid  String?   @db.VarChar(255)
-  phone          String?   @db.VarChar(15)
-  city           String?   @db.VarChar(100)
-  role_id        Int?      @default(1)
-  country_id     String?   @db.VarChar(2)
-  profile_img    String?   @db.VarChar(100)
-  active         Int       @default(0)
-  activationcode String?   @db.Text
-  mc_id          Int?
-  ip_registro    String?   @db.Text
-  token_expiration DateTime? @db.Date
+  id               Int              @id @default(autoincrement())
+  registered_on    DateTime         @default(dbgenerated("'2018-01-01'")) @db.Date
+  username         String           @unique(map: "username") @db.VarChar(255)
+  password         String           @db.LongText
+  first_name       String?          @db.VarChar(255)
+  last_name        String?          @db.VarChar(255)
+  address          String?          @db.VarChar(255)
+  birthdate        DateTime?        @db.Date
+  email            String           @unique(map: "email") @db.VarChar(255)
+  stripe_cusid     String?          @db.VarChar(200)
+  conekta_cusid    String?          @db.VarChar(255)
+  phone            String?          @db.VarChar(15)
+  city             String?          @db.VarChar(100)
+  role_id          Int?             @default(1)
+  country_id       String?          @db.VarChar(2)
+  profile_img      String?          @db.VarChar(100)
+  active           Int              @default(0)
+  activationcode   String?          @db.Text
+  mc_id            Int?
+  ip_registro      String?          @db.Text
+  token_expiration DateTime?        @db.Date
+  product_orders   product_orders[]
 
   @@map("users")
 }
 
 model Ftpquotatallies {
-  id              Int                        @id @default(autoincrement())
   name            String                     @default("") @db.VarChar(30)
   quota_type      ftpquotatallies_quota_type @default(user)
   bytes_in_used   BigInt                     @default(0) @db.UnsignedBigInt
@@ -218,6 +217,7 @@ model Ftpquotatallies {
   files_in_used   Int                        @default(0) @db.UnsignedInt
   files_out_used  Int                        @default(0) @db.UnsignedInt
   files_xfer_used Int                        @default(0) @db.UnsignedInt
+  id              Int                        @id @default(autoincrement())
 
   @@map("ftpquotatallies")
 }
@@ -236,13 +236,27 @@ model FtpQuotaTalliesHistory {
   @@map("ftpquotatallies_history")
 }
 
-model Demos {
-  id              Int         @id @default(autoincrement())
-  name            String
-  file            String      @db.LongText
-  duration        Int      
+model product_orders {
+  id         Int       @id @default(autoincrement())
+  service    String    @db.VarChar(100)
+  product_id Int
+  created_at DateTime? @db.DateTime(0)
+  status     Int
+  user_id    Int
+  products   products  @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_products")
+  users      Users     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_user")
 
-  @@map("demos")
+  @@index([product_id], map: "FK_products")
+  @@index([user_id], map: "fk_user")
+}
+
+model products {
+  id                     Int              @id @default(autoincrement())
+  name                   String           @db.VarChar(250)
+  stripe_product_test_id String           @db.VarChar(50)
+  stripe_product_id      String           @db.VarChar(50)
+  amount                 Float            @db.Float
+  product_orders         product_orders[]
 }
 
 enum ftpquotalimits_quota_type {

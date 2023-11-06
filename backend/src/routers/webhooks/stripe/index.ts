@@ -8,7 +8,7 @@ import { getPlanKey } from '../../../utils/getPlanKey';
 import { StripeEvents } from './events';
 import stripeInstance from '../../../stripe';
 import { prisma } from '../../../db';
-import { SubscriptionService } from '../../subscriptions/services/types';
+import { PaymentService } from '../../subscriptions/services/types';
 import { OrderStatus } from '../../subscriptions/interfaces/order-status.interface';
 
 export const stripeSubscriptionWebhook = async (req: Request) => {
@@ -18,7 +18,7 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
 
   if (!shouldHandleEvent(payload)) return;
 
-  const user = await getCustomerIdFromPayload(payload);
+  const user = await getUserFromPayload(payload);
 
   if (!user) {
     log.error(
@@ -63,7 +63,7 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
         prisma,
         plan: plan!,
         orderId: subscription.metadata.orderId,
-        service: SubscriptionService.STRIPE,
+        service: PaymentService.STRIPE,
         expirationDate: new Date(subscription.current_period_end * 1000),
       });
 
@@ -82,7 +82,7 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
             user,
             plan: plan!,
             orderId: subscription.metadata.orderId,
-            service: SubscriptionService.STRIPE,
+            service: PaymentService.STRIPE,
             expirationDate: new Date(subscription.current_period_end * 1000),
           });
           break;
@@ -99,7 +99,7 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
                   status: OrderStatus.PENDING,
                 },
                 {
-                  payment_method: SubscriptionService.STRIPE,
+                  payment_method: PaymentService.STRIPE,
                 },
               ],
             },
@@ -128,7 +128,7 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
             prisma,
             user,
             plan: subscription.object.plan,
-            service: SubscriptionService.STRIPE,
+            service: PaymentService.STRIPE,
           });
 
           break;
@@ -138,7 +138,7 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
             prisma,
             user,
             plan: subscription.plan.id,
-            service: SubscriptionService.STRIPE,
+            service: PaymentService.STRIPE,
           });
 
           break;
@@ -153,7 +153,7 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
         prisma,
         user,
         plan: subscription.plan.id,
-        service: SubscriptionService.STRIPE,
+        service: PaymentService.STRIPE,
       });
       break;
     default:
@@ -163,7 +163,7 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
   }
 };
 
-export const getCustomerIdFromPayload = async (
+export const getUserFromPayload = async (
   payload: Stripe.Event,
 ): Promise<Users | null> => {
   let user: Users | null | undefined = null;
@@ -259,7 +259,7 @@ const getPlanFromPayload = async (
     case StripeEvents.SUBSCRIPTION_DELETED:
       plan = await prisma.plans.findFirst({
         where: {
-          [getPlanKey(SubscriptionService.STRIPE)]: (payload.data.object as any)
+          [getPlanKey(PaymentService.STRIPE)]: (payload.data.object as any)
             .plan.id,
         },
       });

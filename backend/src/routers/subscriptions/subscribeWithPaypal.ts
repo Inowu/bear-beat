@@ -3,7 +3,7 @@ import { TRPCError } from '@trpc/server';
 import axios from 'axios';
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
 import { log } from '../../server';
-import { SubscriptionService } from './services/types';
+import { PaymentService } from './services/types';
 import { subscribe } from './services/subscribe';
 import { paypal } from '../../paypal';
 
@@ -50,7 +50,7 @@ export const subscribeWithPaypal = shieldedProcedure
           user,
           plan,
           subId: subscriptionId,
-          service: SubscriptionService.PAYPAL,
+          service: PaymentService.PAYPAL,
           expirationDate: new Date(subscription.billing_info.next_billing_time),
         });
 

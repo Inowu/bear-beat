@@ -1,0 +1,121 @@
+import { z } from 'zod';
+import { shieldedProcedure } from '../../procedures/shielded.procedure';
+import { TRPCError } from '@trpc/server';
+import { log } from '../../server';
+import stripeInstance from '../../stripe';
+import { getStripeCustomer } from '../subscriptions/utils/getStripeCustomer';
+import { PaymentService } from '../subscriptions/services/types';
+import { OrderStatus } from '../subscriptions/interfaces/order-status.interface';
+
+export const buyMoreGBStripe = shieldedProcedure
+  .input(
+    z.object({
+      productId: z.number(),
+      paymentMethod: z.string().optional(),
+    }),
+  )
+  .mutation(
+    async ({
+      ctx: { prisma, session },
+      input: { paymentMethod, productId },
+    }) => {
+      const user = session!.user!;
+
+      const product = await prisma.products.findFirst({
+        where: {
+          id: productId,
+        },
+      });
+
+      if (!product) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'El producto no existe.',
+        });
+      }
+
+      const descargasUser = await prisma.descargasUser.findFirst({
+        where: {
+          AND: [
+            {
+              user_id: user.id,
+            },
+            {
+              date_end: {
+                gt: new Date().toISOString(),
+              },
+            },
+          ],
+        },
+      });
+
+      if (!descargasUser) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'El usuario no tiene una suscripción activa.',
+        });
+      }
+
+      log.info(
+        `[PRODUCT:PURCHASE] Purchasing product ${product.id}, user ${user.id}`,
+      );
+
+      const stripeCustomer = await getStripeCustomer(prisma, user);
+
+      const order = await prisma.product_orders.create({
+        data: {
+          service: PaymentService.STRIPE,
+          product_id: product.id,
+          status: OrderStatus.PENDING,
+          user_id: user.id,
+        },
+      });
+
+      try {
+        const stripePrices = await stripeInstance.prices.list({
+          product:
+            product[
+              process.env.NODE_ENV === 'production'
+                ? 'stripe_product_id'
+                : 'stripe_product_test_id'
+            ],
+        });
+
+        const invoice = await stripeInstance.invoices.create({
+          customer: stripeCustomer,
+          collection_method: 'charge_automatically',
+          auto_advance: true,
+          currency: stripePrices.data[0].currency,
+          ...(paymentMethod ? { default_payment_method: paymentMethod } : {}),
+          metadata: {
+            productId: product.id.toString(),
+            orderId: order.id.toString(),
+          },
+        });
+
+        const invoiceItem = await stripeInstance.invoiceItems.create({
+          customer: stripeCustomer,
+          price: stripePrices.data[0].id,
+          invoice: invoice.id,
+          currency: stripePrices.data[0].currency,
+        });
+
+        await stripeInstance.invoices.finalizeInvoice(invoice.id);
+
+        log.info(`[PRODUCT:PURCHASE] Invoice item ${invoiceItem.id} created`);
+
+        return {
+          message:
+            'Se ha realizado la compra correctamente. En unos momentos se actualizará el saldo de tu cuenta.',
+          invoice,
+        };
+      } catch (e: any) {
+        log.error(`[PRODUCT:PURCHASE] Error: ${e.message}`);
+
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Ha ocurrido un error al realizar la compra.',
+        });
+      }
+    },
+  );

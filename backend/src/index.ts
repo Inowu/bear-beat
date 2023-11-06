@@ -16,6 +16,7 @@ import { initializeSearch } from './search';
 import { conektaEndpoint } from './endpoints/webhooks/conekta.endpoint';
 import { stripeEndpoint } from './endpoints/webhooks/stripe.endpoint';
 import { paypalEndpoint } from './endpoints/webhooks/paypal.endpoint';
+import { stripeInvoiceEndpoint } from './endpoints/webhooks/stripeInvoice.endpoint';
 
 config({
   path: path.resolve(__dirname, '../.env'),
@@ -59,6 +60,12 @@ async function main() {
       '/webhooks.stripe',
       express.raw({ type: 'application/json' }),
       stripeEndpoint,
+    );
+
+    app.use(
+      '/webhooks.stripe.invoice',
+      express.raw({ type: 'application/json' }),
+      stripeInvoiceEndpoint,
     );
 
     app.use(

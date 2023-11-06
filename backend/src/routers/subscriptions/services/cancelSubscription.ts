@@ -3,7 +3,7 @@ import { subDays } from 'date-fns';
 import { log } from '../../../server';
 import { gbToBytes } from '../../../utils/gbToBytes';
 import { getPlanKey } from '../../../utils/getPlanKey';
-import { SubscriptionService } from './types';
+import { PaymentService } from './types';
 import { OrderStatus } from '../interfaces/order-status.interface';
 
 export const cancelSubscription = async ({
@@ -16,9 +16,9 @@ export const cancelSubscription = async ({
   user: Users;
   plan: string;
   service:
-    | SubscriptionService.STRIPE
-    | SubscriptionService.CONEKTA
-    | SubscriptionService.PAYPAL;
+    | PaymentService.STRIPE
+    | PaymentService.CONEKTA
+    | PaymentService.PAYPAL;
 }) => {
   const download = await prisma.descargasUser.findFirst({
     where: {
@@ -113,7 +113,7 @@ export const cancelSubscription = async ({
           status: OrderStatus.PENDING,
         },
         {
-          payment_method: SubscriptionService.STRIPE,
+          payment_method: PaymentService.STRIPE,
         },
       ],
     },

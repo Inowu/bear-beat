@@ -4,7 +4,7 @@ import { TRPCError } from '@trpc/server';
 import { gbToBytes } from '../../../utils/gbToBytes';
 import { log } from '../../../server';
 import { OrderStatus } from '../interfaces/order-status.interface';
-import { Params, SubscriptionService } from './types';
+import { Params, PaymentService } from './types';
 import { SessionUser } from '../../auth/utils/serialize-user';
 import { brevo } from '../../../email';
 
@@ -94,8 +94,8 @@ export const subscribe = async ({
       ]);
 
       if (
-        service === SubscriptionService.ADMIN ||
-        service === SubscriptionService.PAYPAL
+        service === PaymentService.ADMIN ||
+        service === PaymentService.PAYPAL
       ) {
         const order = await prisma.orders.create({
           data: {
