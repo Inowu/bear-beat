@@ -3,7 +3,7 @@ import { shieldedProcedure } from '../../../procedures/shielded.procedure';
 import { TRPCError } from '@trpc/server';
 import { subscribe } from '../../subscriptions/services/subscribe';
 import { log } from '../../../server';
-import { SubscriptionService } from '../../subscriptions/services/types';
+import { PaymentService } from '../../subscriptions/services/types';
 import { addDays } from 'date-fns';
 import { hasActiveSubscription } from '../../subscriptions/utils/hasActiveSub';
 
@@ -46,7 +46,7 @@ export const activatePlanForUser = shieldedProcedure
     await hasActiveSubscription({
       user,
       prisma,
-      service: SubscriptionService.ADMIN,
+      service: PaymentService.ADMIN,
     });
 
     await subscribe({
@@ -54,7 +54,7 @@ export const activatePlanForUser = shieldedProcedure
       user,
       plan,
       prisma,
-      service: SubscriptionService.ADMIN,
+      service: PaymentService.ADMIN,
       expirationDate: addDays(new Date(), Number(plan.duration)),
     });
 

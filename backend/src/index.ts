@@ -12,11 +12,11 @@ import { initializeFileService } from './ftp';
 import { appRouter } from './routers';
 import { createContext } from './context';
 import { downloadEndpoint } from './endpoints/download.endpoint';
-import { initializeRedis, redis } from './redis';
 import { initializeSearch } from './search';
 import { conektaEndpoint } from './endpoints/webhooks/conekta.endpoint';
 import { stripeEndpoint } from './endpoints/webhooks/stripe.endpoint';
 import { paypalEndpoint } from './endpoints/webhooks/paypal.endpoint';
+import { stripeInvoiceEndpoint } from './endpoints/webhooks/stripeInvoice.endpoint';
 
 config({
   path: path.resolve(__dirname, '../.env'),
@@ -63,6 +63,12 @@ async function main() {
     );
 
     app.use(
+      '/webhooks.stripe.invoice',
+      express.raw({ type: 'application/json' }),
+      stripeInvoiceEndpoint,
+    );
+
+    app.use(
       '/webhooks.conekta',
       express.raw({ type: 'application/json' }),
       conektaEndpoint,
@@ -78,22 +84,11 @@ async function main() {
 
     await initializeFileService();
 
-    await initializeRedis();
-
     await initializeSearch();
   } catch (e: any) {
     log.error(e.message);
-    await redis.quit();
     process.exit(1);
   }
 }
-
-// Graceful shutdown
-['exit'].forEach((event) => {
-  process.on(event, async () => {
-    log.info('Shutting down...');
-    await redis.quit();
-  });
-});
 
 main();

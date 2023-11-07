@@ -3,7 +3,7 @@ import { PaypalEvent } from './events';
 import { subscribe } from '../../subscriptions/services/subscribe';
 import { prisma } from '../../../db';
 import { log } from '../../../server';
-import { SubscriptionService } from '../../subscriptions/services/types';
+import { PaymentService } from '../../subscriptions/services/types';
 import { cancelSubscription } from '../../subscriptions/services/cancelSubscription';
 import { getPlanKey } from '../../../utils/getPlanKey';
 
@@ -19,7 +19,7 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
 
   const plan = await prisma.plans.findFirst({
     where: {
-      [getPlanKey(SubscriptionService.PAYPAL)]: planId,
+      [getPlanKey(PaymentService.PAYPAL)]: planId,
     },
   });
 
@@ -86,7 +86,7 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
         expirationDate: new Date(
           payload.resource.billing_info.next_billing_time,
         ),
-        service: SubscriptionService.PAYPAL,
+        service: PaymentService.PAYPAL,
       });
 
       break;
@@ -104,7 +104,7 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
           expirationDate: new Date(
             payload.resource.billing_info.next_billing_time,
           ),
-          service: SubscriptionService.PAYPAL,
+          service: PaymentService.PAYPAL,
         });
 
         break;
@@ -124,7 +124,7 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
         prisma,
         user,
         plan: planId,
-        service: SubscriptionService.PAYPAL,
+        service: PaymentService.PAYPAL,
       });
 
       break;

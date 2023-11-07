@@ -17,6 +17,7 @@ import { usersRouter } from './Users.router';
 import { adminRouter } from './admin';
 import { authRouter } from './auth';
 import { ftpRouter } from './file-actions';
+import { productsRouter } from './products';
 import { subscriptionsRouter } from './subscriptions';
 import { webhooksRouter } from './webhooks';
 
@@ -41,6 +42,7 @@ export const appRouter = router({
   roles: rolesRouter,
   userfiles: userfilesRouter,
   users: usersRouter,
+  products: productsRouter,
 });
 
 export type AppRouter = typeof appRouter;

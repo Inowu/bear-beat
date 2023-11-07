@@ -7,6 +7,7 @@ export type SessionUser = {
   username: string;
   email: string;
   profileImg: string;
+  stripeCusId: string;
 };
 
 export const serializeUser = (user: Users) => ({
@@ -16,6 +17,7 @@ export const serializeUser = (user: Users) => ({
   phone: user.phone,
   email: user.email,
   profileImg: user.profile_img,
+  stripeCusId: user.stripe_cusid,
 });
 
 const getRoleFromId = (roleId?: number | null): RolesNames => {

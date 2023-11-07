@@ -7,7 +7,7 @@ import { conektaOrders } from '../../conekta';
 import { OrderStatus } from './interfaces/order-status.interface';
 import { log } from '../../server';
 import { hasActiveSubscription } from './utils/hasActiveSub';
-import { SubscriptionService } from './services/types';
+import { PaymentService } from './services/types';
 import { brevo } from '../../email';
 
 export const subscribeWithCashConekta = shieldedProcedure
@@ -68,7 +68,7 @@ export const subscribeWithCashConekta = shieldedProcedure
         user,
         customerId: userConektaId,
         prisma,
-        service: SubscriptionService.CONEKTA,
+        service: PaymentService.CONEKTA,
       });
 
       const paymentMethodName = `Conekta ${paymentMethod}`;
@@ -151,6 +151,7 @@ export const subscribeWithCashConekta = shieldedProcedure
           ],
           metadata: {
             orderId: order.id,
+            userId: user.id,
           },
         });
 

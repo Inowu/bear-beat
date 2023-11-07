@@ -4,7 +4,7 @@ import { SessionUser } from '../../auth/utils/serialize-user';
 import stripeInstance from '../../../stripe';
 import { log } from '../../../server';
 import { conektaSubscriptions } from '../../../conekta';
-import { SubscriptionService } from '../services/types';
+import { PaymentService } from '../services/types';
 
 export const hasActiveSubscription = async ({
   user,
@@ -16,19 +16,19 @@ export const hasActiveSubscription = async ({
       user: SessionUser;
       customerId: string;
       prisma: PrismaClient;
-      service: SubscriptionService.STRIPE | SubscriptionService.CONEKTA;
+      service: PaymentService.STRIPE | PaymentService.CONEKTA;
     }
   | {
       user: SessionUser;
       customerId: number;
       prisma: PrismaClient;
-      service: SubscriptionService.PAYPAL;
+      service: PaymentService.PAYPAL;
     }
   | {
       user: Users;
       customerId?: never;
       prisma: PrismaClient;
-      service: SubscriptionService.ADMIN;
+      service: PaymentService.ADMIN;
     }) => {
   const existingSubscription = await prisma.descargasUser.findFirst({
     where: {
@@ -51,7 +51,7 @@ export const hasActiveSubscription = async ({
   }
 
   switch (service) {
-    case SubscriptionService.STRIPE: {
+    case PaymentService.STRIPE: {
       const existingStripeSubscription =
         await stripeInstance.subscriptions.list({
           customer: customerId,
@@ -70,7 +70,7 @@ export const hasActiveSubscription = async ({
 
       break;
     }
-    case SubscriptionService.CONEKTA:
+    case PaymentService.CONEKTA:
       try {
         const existingConektaSubscription =
           (await conektaSubscriptions.getSubscription(customerId)).data

@@ -1,6 +1,6 @@
 import { TRPCError } from '@trpc/server';
 import { shieldedProcedure } from '../../../procedures/shielded.procedure';
-import { SubscriptionService } from '../services/types';
+import { PaymentService } from '../services/types';
 import { cancelStripeSubscription } from './cancelStripeSubscription';
 import { cancelPaypalSubscription } from './cancelPaypalSubscription';
 
@@ -46,10 +46,10 @@ export const requestSubscriptionCancellation = shieldedProcedure.mutation(
     const service = order.payment_method;
 
     switch (service) {
-      case SubscriptionService.STRIPE:
+      case PaymentService.STRIPE:
         await cancelStripeSubscription({ prisma, user });
         break;
-      case SubscriptionService.PAYPAL:
+      case PaymentService.PAYPAL:
         await cancelPaypalSubscription({ prisma, user });
         break;
       default:

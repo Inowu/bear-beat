@@ -5,6 +5,7 @@ export interface IFileStat {
   type: 'd' | '-';
   modification: number;
   size: number;
+  path?: string;
 }
 
 export interface IFileService {

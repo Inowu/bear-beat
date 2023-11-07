@@ -3,7 +3,7 @@ import { subDays } from 'date-fns';
 import { log } from '../../../server';
 import { gbToBytes } from '../../../utils/gbToBytes';
 import { getPlanKey } from '../../../utils/getPlanKey';
-import { SubscriptionService } from './types';
+import { PaymentService } from './types';
 import { OrderStatus } from '../interfaces/order-status.interface';
 
 export const cancelSubscription = async ({
@@ -16,9 +16,9 @@ export const cancelSubscription = async ({
   user: Users;
   plan: string;
   service:
-    | SubscriptionService.STRIPE
-    | SubscriptionService.CONEKTA
-    | SubscriptionService.PAYPAL;
+    | PaymentService.STRIPE
+    | PaymentService.CONEKTA
+    | PaymentService.PAYPAL;
 }) => {
   const download = await prisma.descargasUser.findFirst({
     where: {
@@ -69,42 +69,42 @@ export const cancelSubscription = async ({
     return;
   }
 
-  let gb = 500;
+  // let gb = 500;
+  //
+  // const plan = await prisma.plans.findFirst({
+  //   where: {
+  //     [getPlanKey(service)]: planId,
+  //   },
+  // });
+  //
+  // if (plan) gb = Number(plan.gigas);
 
-  const plan = await prisma.plans.findFirst({
-    where: {
-      [getPlanKey(service)]: planId,
-    },
-  });
-
-  if (plan) gb = Number(plan.gigas);
-
-  await prisma.$transaction([
-    prisma.descargasUser.update({
-      where: {
-        id: download.id,
-      },
-      data: {
-        date_end: subDays(new Date(), 1),
-      },
-    }),
-    prisma.ftpquotatallies.update({
-      where: {
-        id: quotaTallies.id,
-      },
-      data: {
-        bytes_out_used: gbToBytes(gb) + gbToBytes(1),
-      },
-    }),
-    prisma.ftpUser.update({
-      where: {
-        id: ftpUser.id,
-      },
-      data: {
-        expiration: subDays(new Date(), 1).toISOString(),
-      },
-    }),
-  ]);
+  // await prisma.$transaction([
+  //   prisma.descargasUser.update({
+  //     where: {
+  //       id: download.id,
+  //     },
+  //     data: {
+  //       date_end: subDays(new Date(), 1),
+  //     },
+  //   }),
+  //   prisma.ftpquotatallies.update({
+  //     where: {
+  //       id: quotaTallies.id,
+  //     },
+  //     data: {
+  //       bytes_out_used: gbToBytes(gb) + gbToBytes(1),
+  //     },
+  //   }),
+  //   prisma.ftpUser.update({
+  //     where: {
+  //       id: ftpUser.id,
+  //     },
+  //     data: {
+  //       expiration: subDays(new Date(), 1).toISOString(),
+  //     },
+  //   }),
+  // ]);
 
   const pendingOrder = await prisma.orders.findFirst({
     where: {
@@ -113,7 +113,7 @@ export const cancelSubscription = async ({
           status: OrderStatus.PENDING,
         },
         {
-          payment_method: SubscriptionService.STRIPE,
+          payment_method: PaymentService.STRIPE,
         },
       ],
     },

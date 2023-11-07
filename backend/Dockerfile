@@ -12,8 +12,6 @@ COPY . .
 
 RUN npm run build
 
-RUN ls build/
-
 EXPOSE 5000
 
 ENV NODE_ENV=production

@@ -7,7 +7,7 @@ import stripeInstance from '../../stripe';
 import { log } from '../../server';
 import { OrderStatus } from './interfaces/order-status.interface';
 import { hasActiveSubscription } from './utils/hasActiveSub';
-import { SubscriptionService } from './services/types';
+import { PaymentService } from './services/types';
 import { brevo } from '../../email';
 
 export const subscribeWithStripe = shieldedProcedure
@@ -26,7 +26,7 @@ export const subscribeWithStripe = shieldedProcedure
       user,
       customerId: stripeCustomer,
       prisma,
-      service: SubscriptionService.STRIPE,
+      service: PaymentService.STRIPE,
     });
 
     const plan = await prisma.plans.findFirst({
@@ -63,7 +63,7 @@ export const subscribeWithStripe = shieldedProcedure
         status: OrderStatus.PENDING,
         is_plan: 1,
         plan_id: plan.id,
-        payment_method: SubscriptionService.STRIPE,
+        payment_method: PaymentService.STRIPE,
         date_order: new Date().toISOString(),
         total_price: Number(plan.price),
       },
@@ -87,7 +87,7 @@ export const subscribeWithStripe = shieldedProcedure
         coupon,
         items: [
           {
-            plan: plan[getPlanKey(SubscriptionService.STRIPE)]!,
+            plan: plan[getPlanKey(PaymentService.STRIPE)]!,
           },
         ],
         payment_behavior: 'default_incomplete',

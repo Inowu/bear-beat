@@ -1,5 +1,5 @@
 import { Plans } from '@prisma/client';
-import { SubscriptionService } from '../routers/subscriptions/services/types';
+import { PaymentService } from '../routers/subscriptions/services/types';
 
 type PlansKeys = keyof Plans;
 type ConektaPlanIdKeys<T> = T extends
@@ -14,17 +14,17 @@ type ConektaPlanIdKeys<T> = T extends
 
 export function getPlanKey(
   service:
-    | SubscriptionService.PAYPAL
-    | SubscriptionService.STRIPE
-    | SubscriptionService.CONEKTA = SubscriptionService.CONEKTA,
+    | PaymentService.PAYPAL
+    | PaymentService.STRIPE
+    | PaymentService.CONEKTA = PaymentService.CONEKTA,
 ): ConektaPlanIdKeys<PlansKeys> {
-  if (service === SubscriptionService.CONEKTA) {
+  if (service === PaymentService.CONEKTA) {
     return process.env.NODE_ENV === 'production'
       ? 'conekta_plan_id'
       : 'conekta_plan_id_test';
   }
 
-  if (service === SubscriptionService.PAYPAL) {
+  if (service === PaymentService.PAYPAL) {
     return process.env.NODE_ENV === 'production'
       ? 'paypal_plan_id'
       : 'paypal_plan_id_test';
