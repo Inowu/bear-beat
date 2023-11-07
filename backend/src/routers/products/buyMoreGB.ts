@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { shieldedProcedure } from '../../procedures/shielded.procedure';
 import { TRPCError } from '@trpc/server';
+import { shieldedProcedure } from '../../procedures/shielded.procedure';
 import { log } from '../../server';
 import stripeInstance from '../../stripe';
 import { getStripeCustomer } from '../subscriptions/utils/getStripeCustomer';
@@ -20,6 +20,66 @@ export const buyMoreGBStripe = shieldedProcedure
       input: { paymentMethod, productId },
     }) => {
       const user = session!.user!;
+
+      const userFTP = await prisma.ftpUser.findFirst({
+        where: {
+          user_id: user.id,
+        },
+      });
+
+      if (!userFTP) {
+        log.info(`[PRODUCT:PURCHASE] User ${user.id} does not have an FTP`);
+
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'El usuario no tiene una cuenta FTP',
+        });
+      }
+
+      const quotaLimits = await prisma.ftpQuotaLimits.findFirst({
+        where: {
+          name: userFTP.userid,
+        },
+      });
+
+      if (!quotaLimits) {
+        log.info(
+          `[PRODUCT:PURCHASE] User ${user.id} does not have a quota limit`,
+        );
+
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'El usuario no tiene quotas activas',
+        });
+      }
+
+      const quotaTallies = await prisma.ftpquotatallies.findFirst({
+        where: {
+          name: userFTP.userid,
+        },
+      });
+
+      if (!quotaTallies) {
+        log.info(
+          `[PRODUCT:PURCHASE] User ${user.id} does not have quota tallies`,
+        );
+
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'El usuario no tiene quotas activas',
+        });
+      }
+
+      if (quotaTallies.bytes_out_used < quotaLimits.bytes_out_avail) {
+        log.info(
+          `[PRODUCT:PURCHASE] User ${user.id} still has storage available`,
+        );
+
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: 'El usuario aun tiene bytes disponible',
+        });
+      }
 
       const product = await prisma.products.findFirst({
         where: {
