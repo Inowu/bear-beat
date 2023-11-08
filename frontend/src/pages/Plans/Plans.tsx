@@ -16,7 +16,8 @@ const [plans, setPlans] = useState<IPlans[]>([]);
     }
     try{
       const plans: any = await trpc.plans.findManyPlans.query(body);
-      setPlans(plans);
+      let temp_plan = plans.filter((plan:any)=> plan.id === 15 || plan.id === 16);
+      setPlans(temp_plan);
     }
     catch(error){
       console.log(error);

@@ -28,7 +28,7 @@ export function ErrorModal (props: IError)  {
                     <p className='content'><b>Email:</b> {user.email}</p>
                     {
                       user.ftpAccount &&
-                      <p className='content'><b>Fecha de expiración:</b> {user.ftpAccount.expiration.toDateString()}</p>
+                      <p className='content'><b>Fecha de expiración:</b> {user.ftpAccount.expiration?.toDateString()}</p>
                     }
 
                   </>

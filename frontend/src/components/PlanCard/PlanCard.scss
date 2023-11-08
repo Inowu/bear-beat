@@ -37,6 +37,17 @@
 
   .c-row {
     width: 100%;
+    position: relative;
+    .line {
+      position: absolute;
+      width: 145px;
+      height: 4px;
+      border-radius: 10px;
+      background-color: red;
+      bottom: 15px;
+      left: 72px;
+      rotate: 170deg;
+    }
     h2 {
       font-size: 3.4rem;
       font-weight: 700;
