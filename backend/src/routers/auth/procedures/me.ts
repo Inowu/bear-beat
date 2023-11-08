@@ -23,6 +23,13 @@ export const me = shieldedProcedure.query(
       acc.userid.endsWith(extendedAccountPostfix),
     );
 
+    const subscriptionAccount =
+      ftpAccount.length === 1
+        ? ftpAccount[0]
+        : ftpAccount.find(
+            (acc) => !acc.userid.endsWith(extendedAccountPostfix),
+          );
+
     const hasActiveSubscription = await prisma.descargasUser.findFirst({
       where: {
         AND: [
@@ -61,7 +68,7 @@ export const me = shieldedProcedure.query(
       isSubscriptionCancelled,
       stripeCusId: user.stripeCusId,
       extendedFtpAccount,
-      ftpAccount: ftpAccount
+      ftpAccount: subscriptionAccount
         ? {
             ...ftpAccount,
             host: process.env.FTP_HOST,
