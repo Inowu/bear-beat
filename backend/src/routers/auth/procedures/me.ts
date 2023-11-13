@@ -1,4 +1,3 @@
-import { compareAsc } from 'date-fns';
 import { shieldedProcedure } from '../../../procedures/shielded.procedure';
 import { log } from '../../../server';
 import { extendedAccountPostfix } from '../../../utils/constants';
@@ -10,7 +9,7 @@ export const me = shieldedProcedure.query(
   async ({ ctx: { session, prisma } }) => {
     const user = session!.user!;
 
-    const ftpAccount = await prisma.ftpUser.findMany({
+    const ftpAccounts = await prisma.ftpUser.findMany({
       where: {
         user_id: user.id,
       },
@@ -19,14 +18,14 @@ export const me = shieldedProcedure.query(
       },
     });
 
-    const extendedFtpAccount = ftpAccount.find((acc) =>
+    const extendedFtpAccount = ftpAccounts.find((acc) =>
       acc.userid.endsWith(extendedAccountPostfix),
     );
 
     const subscriptionAccount =
-      ftpAccount.length === 1
-        ? ftpAccount[0]
-        : ftpAccount.find(
+      ftpAccounts.length === 1
+        ? ftpAccounts[0]
+        : ftpAccounts.find(
             (acc) => !acc.userid.endsWith(extendedAccountPostfix),
           );
 
@@ -50,7 +49,7 @@ export const me = shieldedProcedure.query(
     if (hasActiveSubscription) {
       const orderId = hasActiveSubscription.order_id;
 
-      if (!orderId) log.warn(`[ME] No orderId found for subscription`);
+      if (!orderId) log.warn('[ME] No orderId found for subscription');
       else {
         const order = await prisma.orders.findFirst({
           where: {
@@ -70,7 +69,7 @@ export const me = shieldedProcedure.query(
       extendedFtpAccount,
       ftpAccount: subscriptionAccount
         ? {
-            ...ftpAccount,
+            ...subscriptionAccount,
             host: process.env.FTP_HOST,
             port: process.env.FTP_PORT,
           }

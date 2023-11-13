@@ -1,6 +1,4 @@
-import fs from 'fs';
 import path from 'path';
-// import tmp from 'tmp';
 import { z } from 'zod';
 import Ffmpeg from 'fluent-ffmpeg';
 import { TRPCError } from '@trpc/server';
@@ -43,6 +41,8 @@ export const demo = shieldedProcedure
       };
     }
 
+    log.info(`[DEMOS] Generating demo for ${demoPath}`);
+
     await generateDemo(fullPath, demoDuration, demoOutputPath);
 
     return {
@@ -51,7 +51,7 @@ export const demo = shieldedProcedure
   });
 
 const generateDemo = (
-  path: string,
+  filePath: string,
   duration: number,
   outputPath: string,
 ): Promise<void> =>
@@ -59,7 +59,7 @@ const generateDemo = (
     const demoVideo = Ffmpeg({
       logger: console,
     })
-      .input(path)
+      .input(filePath)
       .inputOptions(['-to', `${duration}`])
       .inputOptions(['-ss 0', `-to ${duration}`])
       .videoCodec('copy') // Copy video stream
