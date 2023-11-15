@@ -150,6 +150,9 @@
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
         align-items: center;
+        .default-card{
+          color: #0096A5;
+        }
         p {
           margin: 0;
         }

@@ -36,4 +36,14 @@
       border-radius: 25px;
     }
   }
+  .extra-gb{
+    color: #0096a5;
+    font-size: 1.4rem;
+    margin:0;
+    text-decoration: underline;
+    cursor: pointer;
+    &:hover{
+      opacity: .67;
+    }
+  }
 }

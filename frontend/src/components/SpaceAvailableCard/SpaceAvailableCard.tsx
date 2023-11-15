@@ -4,9 +4,10 @@ import { getCompleted, transformBiteToGb } from "../../functions/functions";
 
 interface ISpaceAvailableCard {
   quota: IQuota;
+  openPlan: ()=> void;
 }
 function SpaceAvailableCard(props: ISpaceAvailableCard) {
-  const { quota } = props;
+  const { quota, openPlan } = props;
   const { used, available } = quota;
   const styles = {
     width: getCompleted(used, available) > 5 ? getCompleted(used, available)+"%" : "5%"
@@ -22,6 +23,10 @@ function SpaceAvailableCard(props: ISpaceAvailableCard) {
       <div className="progress-bar-container">
         <div className="progress-bar" style={styles} />
       </div>
+      {/* {
+        getCompleted(used, available) >= 99 &&
+        <p className="extra-gb" onClick={openPlan}>¿Necesitas más espacio?</p>
+      } */}
     </div>
   );
 }

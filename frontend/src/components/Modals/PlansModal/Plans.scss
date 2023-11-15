@@ -1,0 +1,35 @@
+.modal-container-plans{
+    .go-back{
+        color: #09e1f7;
+        width: fit-content;
+        margin: 0;
+        text-decoration: underline;
+        cursor: pointer;
+        font-style: italic;
+        font-size: 1.4rem;
+    }
+    .bottom{
+        .title{
+            color: #fff;
+        }
+    }
+    .add-card{
+        color: #09e1f7;
+        width: fit-content; 
+        font-weight: 600;
+        margin: 0;
+        cursor: pointer;
+    }
+    button{
+        white-space: nowrap;
+        padding-inline: 30px;
+    }
+    select{
+        border-radius: 100px;
+        padding-block: 5px;
+        padding-inline: 18px;
+        border: none;
+        background-color: #434343;
+        color: #09e1f7;
+    }
+}

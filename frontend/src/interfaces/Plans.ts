@@ -46,3 +46,8 @@ export interface IOxxoData {
   sotre_name: string;
   type: string;
 }
+export interface IGBPlans {
+  amount: number;
+  id: number;
+  name: string;
+}

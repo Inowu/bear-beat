@@ -19,6 +19,8 @@ import { faClose, faP, faPlus, faPlusCircle, faTrash } from "@fortawesome/free-s
 import { Spinner } from "../../components/Spinner/Spinner";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
+import { PlansModal } from "../../components/Modals/PlansModal/Plans";
+import { getCompleted } from "../../functions/functions";
 const stripePromise = loadStripe(
   "pk_live_51HxCA5INxJoHjyCFl7eC2fUI9S22i2NW8iMnAjrvAUjnuVGZedLSRxB3sZspZzzHNOoTCNwgUNoZEYfXQuF6VvBV00MJ2C2k9s"
 );
@@ -30,11 +32,15 @@ function MyAccount() {
   const [showCondition, setShowCondition] = useState(false);
   const [showError, setShowError] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [successTitle, setSuccessTitle] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const [showPaymentMethod, setShowPaymentMethod] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<any>();
   const [conditionMessage, setConditionMessage] = useState("");
   const [conditionTitle, setConditionTitle] = useState("");
   const [condition, setCondition] = useState(0);
+  const [showPlan, setShowPlan] = useState<boolean>(false);
 
   const closeCondition = () => {
     setShowCondition(false);
@@ -47,6 +53,12 @@ function MyAccount() {
   }
   const closeError = () => {
     setShowError(false);
+  }
+  const closePlan = () => {
+    setShowPlan(false);
+  }
+  const openPlan = () => {
+    setShowPlan(true);
   }
   const startCancel = () => {
     setConditionTitle('Cancelación de suscripción')
@@ -72,8 +84,11 @@ function MyAccount() {
       const cancelSuscription: any = await trpc.subscriptions.requestSubscriptionCancellation.mutate()
       startUser();
       setShowSuccess(true);
+      setSuccessMessage("Su suscripción se ha cancelado con éxito.");
+      setSuccessTitle("Suscripción Cancelada")
     }
     catch (error) {
+      setErrorMessage('Ha habido un error');
       setShowError(true);
       console.log(error);
     }
@@ -103,6 +118,9 @@ function MyAccount() {
   const getQuota = async () => {
     try {
       const quota: any = await trpc.ftp.quota.query();
+      // if(getCompleted(quota.used, quota.available) >= 99){
+      //   openPlan();
+      // }
       setQuota(quota);
     }
     catch (error) {
@@ -143,9 +161,9 @@ function MyAccount() {
     } else {
       setShowPaymentMethod(false);
       setShowError(true);
+      setErrorMessage('Ha habido un error');
     }
   }
-
   useEffect(() => {
     getQuota();
     getOrders();
@@ -172,7 +190,7 @@ function MyAccount() {
             <p>{currentUser?.phone}</p>
           </div>
         </div>
-        {true && <SpaceAvailableCard quota={quota} />}
+        {true && <SpaceAvailableCard quota={quota} openPlan={openPlan}/>}
         {
           currentUser?.hasActiveSubscription && !currentUser.isSubscriptionCancelled &&
           <button className="cancel" onClick={startCancel}>CANCELAR SUSCRIPCION</button>
@@ -266,6 +284,10 @@ function MyAccount() {
                   <p>Termina en {x.card.last4}</p>
                   <p>{x.card.exp_month}/{x.card.exp_year}</p>
                   <FontAwesomeIcon icon={faTrash} onClick={() => { deletePaymentMethod(); setPaymentMethod(x); }} />
+                  {/* {
+                    x.customer === currentUser?.stripeCusId && 
+                    <p>Predeterminada</p>
+                  } */}
                 </div>
               )
             }) :
@@ -277,13 +299,13 @@ function MyAccount() {
       <ErrorModal
         show={showError}
         onHide={closeError}
-        message={"Ha habido un error"}
+        message={errorMessage}
       />
       <SuccessModal
         show={showSuccess}
         onHide={closeSuccess}
-        message="Su suscripción se ha cancelado con éxito."
-        title="Suscripción Cancelada"
+        message={successMessage}
+        title={successTitle}
       />
       <Elements stripe={stripePromise}>
         <PaymentMethodModal
@@ -303,6 +325,19 @@ function MyAccount() {
             : (condition === 2 ? changeDefault : deleteCard)
         }
       />
+      {/* <Elements stripe={stripePromise}>
+        <PlansModal
+          show={showPlan}
+          onHide={closePlan}
+          dataModals = {{
+            setShowError: setShowError,
+            setShowSuccess: setShowSuccess,
+            setSuccessMessage: setSuccessMessage,
+            setErrorMessage: setErrorMessage,
+            setSuccessTitle: setSuccessTitle,
+          }}
+        />
+      </Elements> */}
     </div>
   );
 }

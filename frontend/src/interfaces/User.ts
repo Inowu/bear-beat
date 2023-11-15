@@ -10,6 +10,7 @@ export interface IUser {
   ftpAccount: null | IFtpAccount;
   hasActiveSubscription: boolean;
   isSubscriptionCancelled: boolean;
+  stripeCusId: string;
 }
 interface IFtpAccount {
   expiration: Date;
