@@ -1,19 +1,45 @@
-import { TRPCError } from '@trpc/server';
+import { z } from 'zod';
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
+import { FtpUser } from '@prisma/client';
+import { extendedAccountPostfix } from '../../utils/constants';
 
 /**
  * Returns the number of bytes used by the user and the number of
  * available bytes
  * */
-export const quota = shieldedProcedure.query(
-  async ({ ctx: { prisma, session } }) => {
+export const quota = shieldedProcedure
+  .input(
+    z.object({
+      isExtended: z.boolean().optional(),
+    }),
+  )
+  .query(async ({ ctx: { prisma, session }, input: { isExtended } }) => {
     const user = session!.user!;
 
-    const ftpUser = await prisma.ftpUser.findFirst({
-      where: {
-        user_id: user.id,
-      },
-    });
+    let ftpUser: FtpUser | null = null;
+
+    if (isExtended) {
+      ftpUser = await prisma.ftpUser.findFirst({
+        where: {
+          AND: [
+            {
+              user_id: user.id,
+            },
+            {
+              userid: {
+                endsWith: extendedAccountPostfix,
+              },
+            },
+          ],
+        },
+      });
+    } else {
+      ftpUser = await prisma.ftpUser.findFirst({
+        where: {
+          user_id: user.id,
+        },
+      });
+    }
 
     if (!ftpUser) {
       return {
@@ -45,5 +71,4 @@ export const quota = shieldedProcedure.query(
       used: quotaUsed.bytes_out_used,
       available: quotaLimit.bytes_out_avail,
     };
-  },
-);
+  });
