@@ -141,33 +141,19 @@ export const buyMoreGBStripe = shieldedProcedure
             ],
         });
 
-        const invoice = await stripeInstance.invoices.create({
+        const pi = await stripeInstance.paymentIntents.create({
           customer: stripeCustomer,
-          collection_method: 'charge_automatically',
-          auto_advance: true,
           currency: stripePrices.data[0].currency,
-          ...(paymentMethod ? { default_payment_method: paymentMethod } : {}),
-          metadata: {
-            productId: product.id.toString(),
-            orderId: order.id.toString(),
-          },
+          amount: stripePrices.data[0].unit_amount as number,
+          payment_method: paymentMethod,
         });
 
-        const invoiceItem = await stripeInstance.invoiceItems.create({
-          customer: stripeCustomer,
-          price: stripePrices.data[0].id,
-          invoice: invoice.id,
-          currency: stripePrices.data[0].currency,
-        });
-
-        await stripeInstance.invoices.finalizeInvoice(invoice.id);
-
-        log.info(`[PRODUCT:PURCHASE] Invoice item ${invoiceItem.id} created`);
+        log.info(`[PRODUCT:PURCHASE] Payment intent ${pi.id} created`);
 
         return {
           message:
             'Se ha realizado la compra correctamente. En unos momentos se actualizará el saldo de tu cuenta.',
-          invoice,
+          clientSecret: pi.client_secret,
         };
       } catch (e: any) {
         log.error(`[PRODUCT:PURCHASE] Error: ${e.message}`);
