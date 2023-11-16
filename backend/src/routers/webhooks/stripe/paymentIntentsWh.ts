@@ -54,9 +54,8 @@ export const stripeInvoiceWebhook = async (req: Request) => {
 
 const shouldHandleEvent = (payload: Stripe.Event): boolean => {
   switch (payload.type) {
-    case StripeEvents.INVOICE_PAID:
-    case StripeEvents.INVOICE_PAYMENT_FAILED:
-    case StripeEvents.INVOICE_VOID:
+    case StripeEvents.PAYMENT_INTENT_SUCCEEDED:
+    case StripeEvents.PAYMENT_INTENT_FAILED:
       return true;
     default:
       log.info(
@@ -69,12 +68,12 @@ const shouldHandleEvent = (payload: Stripe.Event): boolean => {
 };
 
 const getUserFromPayload = async (
-  prisma: PrismaClient,
+  prismaClient: PrismaClient,
   payload: Stripe.Event,
 ) => {
-  const customer = (payload.data.object as Stripe.Invoice).customer;
+  const { customer } = payload.data.object as Stripe.PaymentIntent;
 
-  const user = await prisma.users.findFirst({
+  const user = await prismaClient.users.findFirst({
     where: {
       stripe_cusid: typeof customer === 'string' ? customer : customer?.id,
     },

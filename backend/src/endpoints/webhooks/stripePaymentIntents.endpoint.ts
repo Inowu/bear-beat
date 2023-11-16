@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 import { verifyStripeSignature } from '../../routers/utils/verifyStripeSignature';
 import { log } from '../../server';
-import { stripeInvoiceWebhook } from '../../routers/webhooks/stripe/invoiceWh';
+import { stripeInvoiceWebhook } from '../../routers/webhooks/stripe/paymentIntentsWh';
 
-export const stripeInvoiceEndpoint = async (req: Request, res: Response) => {
+export const stripePiEndpoint = async (req: Request, res: Response) => {
   const isValid = verifyStripeSignature(req);
 
   if (!isValid) {
