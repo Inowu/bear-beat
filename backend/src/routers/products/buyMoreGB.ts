@@ -11,7 +11,7 @@ export const buyMoreGBStripe = shieldedProcedure
   .input(
     z.object({
       productId: z.number(),
-      paymentMethod: z.string().optional(),
+      paymentMethod: z.string(),
     }),
   )
   .mutation(
@@ -122,12 +122,13 @@ export const buyMoreGBStripe = shieldedProcedure
 
       const stripeCustomer = await getStripeCustomer(prisma, user);
 
-      const order = await prisma.product_orders.create({
+      const productOrder = await prisma.product_orders.create({
         data: {
           service: PaymentService.STRIPE,
           product_id: product.id,
           status: OrderStatus.PENDING,
           user_id: user.id,
+          created_at: new Date().toISOString(),
         },
       });
 
@@ -146,6 +147,9 @@ export const buyMoreGBStripe = shieldedProcedure
           currency: stripePrices.data[0].currency,
           amount: stripePrices.data[0].unit_amount as number,
           payment_method: paymentMethod,
+          metadata: {
+            productOrderId: productOrder.id,
+          },
         });
 
         log.info(`[PRODUCT:PURCHASE] Payment intent ${pi.id} created`);

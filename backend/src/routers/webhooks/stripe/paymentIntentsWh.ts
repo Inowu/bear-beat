@@ -1,8 +1,8 @@
 import { Request } from 'express';
 import { Stripe } from 'stripe';
+import { PrismaClient } from '@prisma/client';
 import { StripeEvents } from './events';
 import { log } from '../../../server';
-import { PrismaClient } from '@prisma/client';
 import { prisma } from '../../../db';
 import { addGBToAccount } from '../../products/services/addGBToAccount';
 
@@ -23,26 +23,23 @@ export const stripeInvoiceWebhook = async (req: Request) => {
   }
 
   switch (payload.type) {
-    case StripeEvents.INVOICE_VOID:
-    case StripeEvents.INVOICE_PAYMENT_FAILED: {
+    case StripeEvents.PAYMENT_INTENT_FAILED: {
       log.info(
-        `[STRIPE_WH] Invoice payment failed for user ${user.id}, payload: ${payloadStr}`,
+        `[STRIPE_WH] Payment intent failed for user ${user.id}, payload: ${payloadStr}`,
       );
       break;
     }
-    case StripeEvents.INVOICE_PAID: {
+    case StripeEvents.PAYMENT_INTENT_SUCCEEDED: {
       log.info(
-        `[STRIPE_WH] Invoice paid for user ${user.id}, payload: ${payloadStr}`,
+        `[STRIPE_WH] Payment intent for user ${user.id}, payload: ${payloadStr}`,
       );
 
       await addGBToAccount({
         user,
         prisma,
-        productId: Number(
-          (payload.data.object as Stripe.Invoice).metadata?.productId,
-        ),
         orderId: Number(
-          (payload.data.object as Stripe.Invoice).metadata?.orderId,
+          (payload.data.object as Stripe.PaymentIntent).metadata
+            ?.productOrderId,
         ),
       });
       break;
