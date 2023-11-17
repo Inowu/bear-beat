@@ -72,30 +72,30 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
       .send({ error: 'Este usuario no tiene una cuenta FTP' });
   }
 
-  if (activePlans.length === 0) {
-    if (ftpAccounts.length === 1) {
-      return res
-        .status(400)
-        .send({ error: 'Este usuario no tiene un plan activo' });
-    }
-
-    const extendedAccount = ftpAccounts.find((ftpAccount) =>
-      ftpAccount.userid.endsWith(extendedAccountPostfix),
-    );
-
-    if (!extendedAccount) {
-      log.warn(
-        `[DOWNLOAD] This user does not have an extended account  and has more than one ftp account (${user.id})`,
-      );
-      return res
-        .status(400)
-        .send({ error: 'Este usuario no tiene un plan activo' });
-    }
-
-    log.info(`[DOWNLOAD] Using extended account for user ${user.id}`);
-    ftpUser = extendedAccount;
-    extended = true;
+  // If the user does not have an active plan, we check if he has an extended account
+  // If the user has only one account, that means that he does not have an extended account
+  if (activePlans.length === 0 && ftpAccounts.length <= 1) {
+    return res
+      .status(400)
+      .send({ error: 'Este usuario no tiene un plan activo' });
   }
+
+  const extendedAccount = ftpAccounts.find((ftpAccount) =>
+    ftpAccount.userid.endsWith(extendedAccountPostfix),
+  );
+
+  if (!extendedAccount) {
+    log.warn(
+      `[DOWNLOAD] This user does not have an extended account and has more than one ftp account (${user.id})`,
+    );
+    return res
+      .status(400)
+      .send({ error: 'Este usuario no tiene un plan activo' });
+  }
+
+  log.info(`[DOWNLOAD] Using extended account for user ${user.id}`);
+  ftpUser = extendedAccount;
+  extended = true;
 
   const quotaLimit = await prisma.ftpQuotaLimits.findFirst({
     where: {
