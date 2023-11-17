@@ -4,7 +4,10 @@ import { log } from '../../server';
 import { stripeInvoiceWebhook } from '../../routers/webhooks/stripe/paymentIntentsWh';
 
 export const stripePiEndpoint = async (req: Request, res: Response) => {
-  const isValid = verifyStripeSignature(req);
+  const isValid = verifyStripeSignature(
+    req,
+    process.env.STRIPE_WH_PI_SECRET as string,
+  );
 
   if (!isValid) {
     return res.status(400).send('Invalid signature');

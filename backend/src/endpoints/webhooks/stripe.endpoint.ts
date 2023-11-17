@@ -4,7 +4,10 @@ import { stripeSubscriptionWebhook } from '../../routers/webhooks/stripe';
 import { log } from '../../server';
 
 export const stripeEndpoint = async (req: Request, res: Response) => {
-  const isValid = verifyStripeSignature(req);
+  const isValid = verifyStripeSignature(
+    req,
+    process.env.STRIPE_WH_SECRET as string,
+  );
 
   if (!isValid) {
     return res.status(400).send('Invalid signature');

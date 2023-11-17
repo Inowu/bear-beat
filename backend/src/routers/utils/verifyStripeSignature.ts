@@ -1,8 +1,8 @@
-import { FastifyRequest } from 'fastify';
 import type { Request } from 'express';
 import stripeInstance from '../../stripe';
+import { log } from '../../server';
 
-export const verifyStripeSignature = (req: Request) => {
+export const verifyStripeSignature = (req: Request, secret: string) => {
   const sig = req.headers['stripe-signature'];
 
   if (!sig) {
@@ -10,15 +10,11 @@ export const verifyStripeSignature = (req: Request) => {
   }
 
   try {
-    stripeInstance.webhooks.constructEvent(
-      req.body as any,
-      sig,
-      process.env.STRIPE_WH_SECRET as string,
-    );
+    stripeInstance.webhooks.constructEvent(req.body as any, sig, secret);
 
     return true;
   } catch (err) {
-    console.log(err);
+    log.error(`[STRIPE_WH] Error verifying signature: ${err}`);
     return false;
   }
 };
