@@ -34,6 +34,13 @@ export const stripeInvoiceWebhook = async (req: Request) => {
         `[STRIPE_WH] Payment intent for user ${user.id}, payload: ${payloadStr}`,
       );
 
+      if (!payload.data.object.metadata.productOrderId) {
+        log.info(
+          `[STRIPE_WH] Payment intent for user ${user.id} does not have a productOrderId, no action taken. payload: ${payloadStr}`,
+        );
+        return;
+      }
+
       await addGBToAccount({
         user,
         prisma,
