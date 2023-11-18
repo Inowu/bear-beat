@@ -44,7 +44,6 @@ export function PlansModal (props: IPlan)  {
   const getPlans = async () => {
     try{
         const plans: any = await trpc.products.getProducts.query()
-        console.log(plans);
         setPlans(plans);
     }
     catch(error){
@@ -63,7 +62,6 @@ export function PlansModal (props: IPlan)  {
         }
         try{
             const plans = await trpc.products.buyMoreGBStripe.mutate(body)
-            console.log(plans);
             if (elements && stripe) {
               console.log(card);
               const result = await stripe.confirmCardPayment(

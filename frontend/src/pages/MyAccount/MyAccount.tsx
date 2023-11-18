@@ -124,7 +124,6 @@ function MyAccount() {
         if(getCompleted(quota.used, quota.available) >= 99){
           openPlan();
         }
-        console.log(quota);
         setQuota(quota);
       }
       catch (error) {
