@@ -10,6 +10,7 @@ import { getPlanKey } from '../../../utils/getPlanKey';
 import { cancelOrder } from '../../subscriptions/services/cancelOrder';
 import { ConektaEvents } from './events';
 import { PaymentService } from '../../subscriptions/services/types';
+import { brevo } from '../../../email';
 
 export const conektaSubscriptionWebhook = async (req: Request) => {
   const payload: EventResponse = JSON.parse(req.body as any);
@@ -127,6 +128,22 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
           id: order?.plan_id!,
         },
       });
+
+      try {
+        await brevo.smtp.sendTransacEmail({
+          templateId: 2,
+          to: [{ email: user.email, name: user.username }],
+          params: {
+            NAME: user.username,
+            plan_name: orderPlan?.name,
+            price: plan?.price,
+            currency: plan?.moneda.toUpperCase(),
+            ORDER: order?.id,
+          },
+        });
+      } catch (e) {
+        log.error(`[CONEKTA] Error while sending email ${e}`);
+      }
 
       await subscribe({
         subId: subscription.id,

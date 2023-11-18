@@ -62,7 +62,7 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
     (ftpAccount) => !ftpAccount.userid.endsWith(extendedAccountPostfix),
   );
 
-  let extended = false;
+  let useExtendedAccount = false;
 
   if (ftpAccounts.length === 0 || !regularFtpUser) {
     log.error(`[DOWNLOAD] This user does not have an ftp user (${user.id})`);
@@ -96,7 +96,9 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
 
   if (!quotaLimits || !quotaTallies) {
     log.error(
-      `${logPrefix(extended)} This user does not have quotas (${user.id})`,
+      `${logPrefix(useExtendedAccount)} This user does not have quotas (${
+        user.id
+      })`,
     );
     return res
       .status(400)
@@ -109,10 +111,10 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
   if ((activePlans.length === 0 || !hasRemainingGb) && extendedAccount) {
     log.info(`[DOWNLOAD] Using extended account for user ${user.id}`);
     regularFtpUser = extendedAccount;
-    extended = true;
+    useExtendedAccount = true;
   }
 
-  if (extended && extendedAccount) {
+  if (useExtendedAccount && extendedAccount) {
     quotaLimits = await prisma.ftpQuotaLimits.findFirst({
       where: {
         name: extendedAccount.userid,
@@ -128,7 +130,9 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
 
   if (!quotaLimits || !quotaTallies) {
     log.error(
-      `${logPrefix(extended)} This user does not have quotas (${user.id})`,
+      `${logPrefix(useExtendedAccount)} This user does not have quotas (${
+        user.id
+      })`,
     );
     return res
       .status(400)
@@ -142,7 +146,7 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
 
   if (availableBytes < fileStat.size) {
     log.error(
-      `${logPrefix(extended)} Not enough bytes left, user id: ${
+      `${logPrefix(useExtendedAccount)} Not enough bytes left, user id: ${
         user.id
       }, song path: ${fullPath}`,
     );
@@ -154,7 +158,7 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
 
   log.info(
     `${logPrefix(
-      extended,
+      useExtendedAccount,
     )} id: ${user?.id}, username: ${user?.username}, bytes available left: ${availableBytes}`,
   );
 

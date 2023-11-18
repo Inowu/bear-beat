@@ -15,7 +15,7 @@ const isValidConektaSignature = rule<Context>()(async ({ req }) =>
 );
 
 const isValidStripeSignature = rule<Context>()(async ({ req }) =>
-  verifyStripeSignature(req),
+  verifyStripeSignature(req, process.env.STRIPE_WH_SECRET as string),
 );
 
 export const permissions = shield<Context>({
