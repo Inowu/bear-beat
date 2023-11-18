@@ -21,7 +21,7 @@ interface IPlan {
 }
 
 export function PlansModal (props: IPlan)  {
-  const { paymentMethods} = useUserContext();
+  const { startUser, paymentMethods} = useUserContext();
   const {show, onHide, dataModals} = props;
   const [selectPlan, setSelectPlan] = useState<IGBPlans | null>(null);
   const stripe: any = useStripe();
@@ -44,6 +44,7 @@ export function PlansModal (props: IPlan)  {
   const getPlans = async () => {
     try{
         const plans: any = await trpc.products.getProducts.query()
+        console.log(plans);
         setPlans(plans);
     }
     catch(error){
@@ -60,14 +61,36 @@ export function PlansModal (props: IPlan)  {
             productId: selectPlan.id,
             paymentMethod: card,
         }
-        console.log(body);
         try{
             const plans = await trpc.products.buyMoreGBStripe.mutate(body)
             console.log(plans);
-            close();
-            setShowSuccess(true)
-            setSuccessTitle('Pago Exitoso')
-            setSuccessMessage(plans.message)
+            if (elements && stripe) {
+              console.log(card);
+              const result = await stripe.confirmCardPayment(
+                plans.clientSecret,
+                card === '' ?
+                {
+                  payment_method: {
+                    card: elements.getElement("card")!,
+                  },
+                }
+                : {
+                  payment_method: card
+                }
+              );
+              if (result.error) {
+                setLoader(false);
+                setErrorMessage(result.error.message);
+                setShowError(true);
+              } else {
+                close();
+                setShowSuccess(true)
+                setSuccessTitle('Pago Exitoso')
+                startUser();
+                setSuccessMessage(plans.message)
+                setLoader(false);
+              }
+            }
         }
         catch(error){
             setShowError(true);

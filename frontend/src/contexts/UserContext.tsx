@@ -68,6 +68,7 @@ const UserContextProvider = (props: any) => {
     catch (error) {
       console.log(error);
     }
+    setCardLoad(false);
   }
   async function startUser () {
     try{
