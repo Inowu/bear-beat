@@ -182,9 +182,6 @@ export const getCustomerIdFromPayload = async (
         where: {
           OR: [
             {
-              conekta_cusid: payload.data?.object.customer_info.customer_id,
-            },
-            {
               id: payload.data?.object.metadata.userId,
             },
           ],
@@ -196,7 +193,7 @@ export const getCustomerIdFromPayload = async (
 
         user = await prisma.users.findFirst({
           where: {
-            email: payload.data?.object.customer_info.email,
+            email: payload.data?.object?.customer_info?.email,
           },
         });
 
@@ -206,7 +203,7 @@ export const getCustomerIdFromPayload = async (
               id: user.id,
             },
             data: {
-              conekta_cusid: payload.data?.object.customer_info.customer_id,
+              conekta_cusid: payload.data?.object?.customer_info?.customer_id,
             },
           });
         }
