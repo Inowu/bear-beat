@@ -3,8 +3,10 @@ import { TRPCError } from '@trpc/server';
 import { fileService } from '../../ftp';
 import { log } from '../../server';
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
+import { compressionQueue } from '../../queue';
+import { CompressionJob } from '../../queue/compression-job';
 
-export const download = shieldedProcedure
+export const downloadDir = shieldedProcedure
   .input(
     z.object({
       path: z.string(),
@@ -19,7 +21,7 @@ export const download = shieldedProcedure
     if (!fileExists) {
       throw new TRPCError({
         code: 'BAD_REQUEST',
-        message: 'That file does not exist',
+        message: 'Ese directorio existe',
       });
     }
 
@@ -45,7 +47,7 @@ export const download = shieldedProcedure
     if (activePlans.length === 0) {
       throw new TRPCError({
         code: 'BAD_REQUEST',
-        message: 'This user does not have an active plan',
+        message: 'Este usuario no tiene un plan activo',
       });
     }
 
@@ -57,12 +59,12 @@ export const download = shieldedProcedure
 
     if (!ftpUser) {
       log.error(
-        `[File Download] This user does not have an ftp user (${user.id})`,
+        `[DOWNLOAD:DIR] This user does not have an ftp user (${user.id})`,
       );
 
       throw new TRPCError({
         code: 'BAD_REQUEST',
-        message: 'This user does not have an ftp user',
+        message: 'Este usuario no tiene una cuenta FTP',
       });
     }
 
@@ -91,7 +93,7 @@ export const download = shieldedProcedure
       quotaLimit.bytes_out_avail - quotaUsed.bytes_out_used;
 
     if (availableBytes < fileStat.size) {
-      log.error('[File Download] Not enough bytes left');
+      log.error('[DOWNLOAD:DIR] Not enough bytes left');
 
       throw new TRPCError({
         code: 'BAD_REQUEST',
@@ -99,35 +101,17 @@ export const download = shieldedProcedure
       });
     }
 
-    const stream = await fileService.get(fullPath);
+    const job = await compressionQueue.add(`compress-${user.id}`, {
+      songsAbsolutePath: fullPath,
+      songsRelativePath: path,
+      userId: user.id,
+    } as CompressionJob);
 
     log.info(
-      `[File Download] id: ${user?.id}, username: ${user?.username}, bytes: ${availableBytes}`,
+      `[DOWNLOAD:DIR] Initiating directory compression job ${job.id}, user: ${user.id}`,
     );
 
-    await prisma.$transaction([
-      prisma.ftpQuotaLimits.update({
-        where: {
-          id: quotaLimit.id,
-        },
-        data: {
-          bytes_out_avail: quotaLimit.bytes_out_avail - BigInt(fileStat.size),
-        },
-      }),
-      prisma.ftpquotatallies.update({
-        where: {
-          id: quotaUsed.id,
-        },
-        data: {
-          bytes_out_used: quotaUsed.bytes_out_used + BigInt(fileStat.size),
-        },
-      }),
-    ]);
-
-    const payload = {
-      file: stream.toString('base64'),
-      size: fileStat.size,
+    return {
+      jobId: job.id,
     };
-
-    return payload;
   });

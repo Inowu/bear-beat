@@ -1,9 +1,9 @@
 import path from 'path';
+import SSE from 'express-sse-ts';
 import tracer from 'dd-trace';
 import { config } from 'dotenv';
 import { createExpressMiddleware } from '@trpc/server/adapters/express';
 import express from 'express';
-import compression from 'compression';
 import cors from 'cors';
 import expressWinston from 'express-winston';
 import winston from 'winston';
@@ -17,6 +17,9 @@ import { conektaEndpoint } from './endpoints/webhooks/conekta.endpoint';
 import { stripeEndpoint } from './endpoints/webhooks/stripe.endpoint';
 import { paypalEndpoint } from './endpoints/webhooks/paypal.endpoint';
 import { stripePiEndpoint } from './endpoints/webhooks/stripePaymentIntents.endpoint';
+import { sse } from './sse';
+import { initializeQueue } from './queue';
+import { initializeWorker } from './queue/worker';
 
 config({
   path: path.resolve(__dirname, '../.env'),
@@ -32,7 +35,6 @@ async function main() {
   try {
     const app = express();
 
-    app.use(compression());
     app.use(
       expressWinston.logger({
         transports: [new winston.transports.Console()],
@@ -41,6 +43,8 @@ async function main() {
     );
 
     app.use(cors({ origin: '*' }));
+
+    app.get('/sse', sse.init);
 
     app.use(
       '/trpc',
@@ -85,6 +89,10 @@ async function main() {
     await initializeFileService();
 
     await initializeSearch();
+
+    initializeQueue();
+
+    initializeWorker();
   } catch (e: any) {
     log.error(e.message);
     process.exit(1);
