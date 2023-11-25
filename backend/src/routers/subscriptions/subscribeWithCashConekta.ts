@@ -1,5 +1,5 @@
 import z from 'zod';
-import { addDays } from 'date-fns';
+import { addDays, compareAsc } from 'date-fns';
 import { TRPCError } from '@trpc/server';
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
 import { getConektaCustomer } from './utils/getConektaCustomer';
@@ -8,7 +8,6 @@ import { OrderStatus } from './interfaces/order-status.interface';
 import { log } from '../../server';
 import { hasActiveSubscription } from './utils/hasActiveSub';
 import { PaymentService } from './services/types';
-import { brevo } from '../../email';
 
 export const subscribeWithCashConekta = shieldedProcedure
   .input(
@@ -104,8 +103,58 @@ export const subscribeWithCashConekta = shieldedProcedure
 
       if (existingOrder) {
         try {
-          return (await conektaOrders.getOrderById(existingOrder.invoice_id!))
-            .data.charges?.data?.[0].payment_method as any;
+          const conektaOrder = await conektaOrders.getOrderById(
+            existingOrder.invoice_id!,
+          );
+
+          // Check if the order is expired
+          if (
+            compareAsc(
+              new Date(),
+              new Date(
+                ((conektaOrder.data.charges?.data?.[0].payment_method as any)
+                  ?.expires_at ?? 0) * 1000,
+              ),
+            ) >= 0
+          ) {
+            log.info(
+              `[CONEKTA_CASH] Order ${existingOrder.id} is expired, creating a new one`,
+            );
+
+            const newConektaOrder = await conektaOrders.createOrder({
+              currency: plan.moneda.toUpperCase(),
+              customer_info: {
+                customer_id: userConektaId,
+              },
+              line_items: [
+                {
+                  name: plan.name,
+                  quantity: 1,
+                  unit_price: Number(plan.price) * 100,
+                },
+              ],
+              charges: [
+                {
+                  amount: Number(plan.price) * 100,
+                  payment_method: {
+                    type: paymentMethod.toLowerCase(),
+                    expires_at: Number(
+                      (addDays(new Date(), 30).getTime() / 1000).toFixed(),
+                    ),
+                  },
+                },
+              ],
+              metadata: {
+                orderId: existingOrder.id,
+                userId: user.id,
+              },
+            });
+
+            return newConektaOrder.data.charges?.data?.[0]
+              .payment_method as any;
+          }
+
+          return conektaOrder.data.charges?.data?.[0].payment_method as any;
         } catch (e) {
           log.error(
             `[CONEKTA_CASH] There was an error getting the order with conekta: ${e}`,
@@ -142,9 +191,8 @@ export const subscribeWithCashConekta = shieldedProcedure
               amount: Number(plan.price) * 100,
               payment_method: {
                 type: paymentMethod.toLowerCase(),
-                // TODO: Determine expiration
                 expires_at: Number(
-                  (addDays(new Date(), 10).getTime() / 1000).toFixed(),
+                  (addDays(new Date(), 30).getTime() / 1000).toFixed(),
                 ),
               },
             },
@@ -166,9 +214,6 @@ export const subscribeWithCashConekta = shieldedProcedure
         });
 
         return conektaOrder.data.charges?.data?.[0].payment_method as any;
-
-        // TODO: Do something with the references, show them to the user on checkout or
-        // send them to email
       } catch (e: any) {
         log.error(
           `[CONEKTA_CASH] There was an error creating an order with conekta: ${e}`,
