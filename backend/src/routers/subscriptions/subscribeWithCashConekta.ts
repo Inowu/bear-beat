@@ -8,6 +8,8 @@ import { OrderStatus } from './interfaces/order-status.interface';
 import { log } from '../../server';
 import { hasActiveSubscription } from './utils/hasActiveSub';
 import { PaymentService } from './services/types';
+import { Orders, Plans, PrismaClient } from '@prisma/client';
+import { SessionUser } from '../auth/utils/serialize-user';
 
 export const subscribeWithCashConekta = shieldedProcedure
   .input(
@@ -121,33 +123,13 @@ export const subscribeWithCashConekta = shieldedProcedure
               `[CONEKTA_CASH] Order ${existingOrder.id} is expired, creating a new one`,
             );
 
-            const newConektaOrder = await conektaOrders.createOrder({
-              currency: plan.moneda.toUpperCase(),
-              customer_info: {
-                customer_id: userConektaId,
-              },
-              line_items: [
-                {
-                  name: plan.name,
-                  quantity: 1,
-                  unit_price: Number(plan.price) * 100,
-                },
-              ],
-              charges: [
-                {
-                  amount: Number(plan.price) * 100,
-                  payment_method: {
-                    type: paymentMethod.toLowerCase(),
-                    expires_at: Number(
-                      (addDays(new Date(), 30).getTime() / 1000).toFixed(),
-                    ),
-                  },
-                },
-              ],
-              metadata: {
-                orderId: existingOrder.id,
-                userId: user.id,
-              },
+            const newConektaOrder = await createCashPaymentOrder({
+              plan,
+              customerId: userConektaId,
+              paymentMethod,
+              order: existingOrder,
+              prisma,
+              user,
             });
 
             return newConektaOrder.data.charges?.data?.[0]
@@ -174,43 +156,13 @@ export const subscribeWithCashConekta = shieldedProcedure
       });
 
       try {
-        const conektaOrder = await conektaOrders.createOrder({
-          currency: plan.moneda.toUpperCase(),
-          customer_info: {
-            customer_id: userConektaId,
-          },
-          line_items: [
-            {
-              name: plan.name,
-              quantity: 1,
-              unit_price: Number(plan.price) * 100,
-            },
-          ],
-          charges: [
-            {
-              amount: Number(plan.price) * 100,
-              payment_method: {
-                type: paymentMethod.toLowerCase(),
-                expires_at: Number(
-                  (addDays(new Date(), 30).getTime() / 1000).toFixed(),
-                ),
-              },
-            },
-          ],
-          metadata: {
-            orderId: order.id,
-            userId: user.id,
-          },
-        });
-
-        await prisma.orders.update({
-          where: {
-            id: order.id,
-          },
-          data: {
-            invoice_id: conektaOrder.data.id,
-            txn_id: (conektaOrder.data.object as any).id,
-          },
+        const conektaOrder = await createCashPaymentOrder({
+          plan,
+          customerId: userConektaId,
+          paymentMethod,
+          order,
+          prisma,
+          user,
         });
 
         return conektaOrder.data.charges?.data?.[0].payment_method as any;
@@ -226,3 +178,60 @@ export const subscribeWithCashConekta = shieldedProcedure
       }
     },
   );
+
+const createCashPaymentOrder = async ({
+  plan,
+  customerId,
+  paymentMethod,
+  order,
+  prisma,
+  user,
+}: {
+  plan: Plans;
+  customerId: string;
+  paymentMethod: 'cash' | 'spei';
+  order: Orders;
+  prisma: PrismaClient;
+  user: SessionUser;
+}) => {
+  const conektaOrder = await conektaOrders.createOrder({
+    currency: plan.moneda.toUpperCase(),
+    customer_info: {
+      customer_id: customerId,
+    },
+    line_items: [
+      {
+        name: plan.name,
+        quantity: 1,
+        unit_price: Number(plan.price) * 100,
+      },
+    ],
+    charges: [
+      {
+        amount: Number(plan.price) * 100,
+        payment_method: {
+          type: paymentMethod.toLowerCase(),
+          expires_at: Number(
+            (addDays(new Date(), 30).getTime() / 1000).toFixed(),
+          ),
+        },
+      },
+    ],
+    metadata: {
+      orderId: order.id,
+      userId: user.id,
+    },
+  });
+
+  await prisma.orders.update({
+    where: {
+      id: order.id,
+    },
+    data: {
+      invoice_id: conektaOrder.data.id,
+      txn_id: (conektaOrder.data.object as any).id,
+    },
+  });
+
+  return conektaOrder;
+};
