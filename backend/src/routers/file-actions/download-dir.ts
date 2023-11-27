@@ -5,6 +5,8 @@ import { log } from '../../server';
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
 import { compressionQueue } from '../../queue';
 import { CompressionJob } from '../../queue/compression-job';
+import { extendedAccountPostfix } from '../../utils/constants';
+import { logPrefix } from '../../endpoints/download.endpoint';
 
 export const downloadDir = shieldedProcedure
   .input(
@@ -21,7 +23,7 @@ export const downloadDir = shieldedProcedure
     if (!fileExists) {
       throw new TRPCError({
         code: 'BAD_REQUEST',
-        message: 'Ese directorio existe',
+        message: 'Esa carpeta no existe',
       });
     }
 
@@ -44,23 +46,20 @@ export const downloadDir = shieldedProcedure
       take: 1,
     });
 
-    if (activePlans.length === 0) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'Este usuario no tiene un plan activo',
-      });
-    }
-
-    const ftpUser = await prisma.ftpUser.findFirst({
+    const ftpAccounts = await prisma.ftpUser.findMany({
       where: {
         user_id: user?.id,
       },
     });
 
-    if (!ftpUser) {
-      log.error(
-        `[DOWNLOAD:DIR] This user does not have an ftp user (${user.id})`,
-      );
+    let regularFtpUser = ftpAccounts.find(
+      (ftpAccount) => !ftpAccount.userid.endsWith(extendedAccountPostfix),
+    );
+
+    let useExtendedAccount = false;
+
+    if (ftpAccounts.length === 0 || !regularFtpUser) {
+      log.error(`[DOWNLOAD] This user does not have an ftp user (${user.id})`);
 
       throw new TRPCError({
         code: 'BAD_REQUEST',
@@ -68,36 +67,92 @@ export const downloadDir = shieldedProcedure
       });
     }
 
-    const quotaLimit = await prisma.ftpQuotaLimits.findFirst({
-      where: {
-        name: ftpUser.userid,
-      },
-    });
+    const extendedAccount = ftpAccounts.find((ftpAccount) =>
+      ftpAccount.userid.endsWith(extendedAccountPostfix),
+    );
 
-    const quotaUsed = await prisma.ftpquotatallies.findFirst({
-      where: {
-        name: ftpUser.userid,
-      },
-    });
-
-    if (!quotaLimit || !quotaUsed) {
+    if (activePlans.length === 0 && !extendedAccount) {
       throw new TRPCError({
         code: 'BAD_REQUEST',
-        message: 'This user is not allowed to download this content',
+        message: 'Este usuario no tiene un plan activo',
+      });
+    }
+
+    let quotaTallies = await prisma.ftpquotatallies.findFirst({
+      where: {
+        name: regularFtpUser.userid,
+      },
+    });
+
+    let quotaLimits = await prisma.ftpQuotaLimits.findFirst({
+      where: {
+        name: regularFtpUser.userid,
+      },
+    });
+
+    if (!quotaLimits || !quotaTallies) {
+      log.error(
+        `${logPrefix(useExtendedAccount)} This user does not have quotas (${
+          user.id
+        })`,
+      );
+
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'No hay quotas activas para este usuario',
+      });
+    }
+
+    const hasRemainingGb =
+      quotaTallies.bytes_out_used < quotaLimits.bytes_out_avail;
+
+    if ((activePlans.length === 0 || !hasRemainingGb) && extendedAccount) {
+      log.info(`[DOWNLOAD] Using extended account for user ${user.id}`);
+      regularFtpUser = extendedAccount;
+      useExtendedAccount = true;
+    }
+
+    if (useExtendedAccount && extendedAccount) {
+      quotaLimits = await prisma.ftpQuotaLimits.findFirst({
+        where: {
+          name: extendedAccount.userid,
+        },
+      });
+
+      quotaTallies = await prisma.ftpquotatallies.findFirst({
+        where: {
+          name: extendedAccount.userid,
+        },
+      });
+    }
+
+    if (!quotaLimits || !quotaTallies) {
+      log.error(
+        `${logPrefix(useExtendedAccount)} This user does not have quotas (${
+          user.id
+        })`,
+      );
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'No hay quotas activas para este usuario',
       });
     }
 
     const fileStat = await fileService.stat(fullPath);
 
     const availableBytes =
-      quotaLimit.bytes_out_avail - quotaUsed.bytes_out_used;
+      quotaLimits.bytes_out_avail - quotaTallies.bytes_out_used;
 
     if (availableBytes < fileStat.size) {
-      log.error('[DOWNLOAD:DIR] Not enough bytes left');
+      log.error(
+        `${logPrefix(useExtendedAccount)} Not enough bytes left, user id: ${
+          user.id
+        }, song path: ${fullPath}`,
+      );
 
       throw new TRPCError({
         code: 'BAD_REQUEST',
-        message: 'The user does not have enough available bytes left',
+        message: 'Este usuario no tiene suficientes bytes disponibles',
       });
     }
 

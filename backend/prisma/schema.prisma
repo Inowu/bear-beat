@@ -203,6 +203,7 @@ model Users {
   mc_id            Int?
   ip_registro      String?          @db.Text
   token_expiration DateTime?        @db.Date
+  dir_downloads    dir_downloads[]
   product_orders   product_orders[]
 
   @@map("users")
@@ -237,14 +238,16 @@ model FtpQuotaTalliesHistory {
 }
 
 model product_orders {
-  id         Int       @id @default(autoincrement())
-  service    String    @db.VarChar(100)
-  product_id Int
-  created_at DateTime? @db.DateTime(0)
-  status     Int
-  user_id    Int
-  products   products  @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_products")
-  users      Users     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_user")
+  id             Int       @id @default(autoincrement())
+  service        String    @db.VarChar(100)
+  product_id     Int
+  created_at     DateTime? @db.DateTime(0)
+  status         Int
+  user_id        Int
+  payment_method String?   @default("Stripe") @db.VarChar(250)
+  txn_id         String?   @default("") @db.VarChar(100)
+  products       products  @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_products")
+  users          Users     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_user")
 
   @@index([product_id], map: "FK_products")
   @@index([user_id], map: "fk_user")
@@ -256,7 +259,20 @@ model products {
   stripe_product_test_id String           @db.VarChar(50)
   stripe_product_id      String           @db.VarChar(50)
   amount                 Float            @db.Float
+  price                  Float?           @default(350) @db.Float
+  moneda                 String?          @default("MXN") @db.VarChar(10)
   product_orders         product_orders[]
+}
+
+model dir_downloads {
+  id     Int       @id @default(autoincrement())
+  status String?   @db.VarChar(255)
+  userId Int?
+  size   BigInt?
+  date   DateTime? @db.DateTime(0)
+  users  Users?    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "dir_downloads_ibfk_1")
+
+  @@index([userId], map: "userId")
 }
 
 enum ftpquotalimits_quota_type {

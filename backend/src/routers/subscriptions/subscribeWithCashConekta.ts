@@ -117,7 +117,8 @@ export const subscribeWithCashConekta = shieldedProcedure
                 ((conektaOrder.data.charges?.data?.[0].payment_method as any)
                   ?.expires_at ?? 0) * 1000,
               ),
-            ) >= 0
+            ) >= 0 ||
+            conektaOrder.data.charges?.data?.[0].status !== 'pending_payment'
           ) {
             log.info(
               `[CONEKTA_CASH] Order ${existingOrder.id} is expired, creating a new one`,
