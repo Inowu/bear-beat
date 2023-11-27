@@ -189,5 +189,5 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
   return res.sendFile(fullPath);
 };
 
-const logPrefix = (extendedAccount: boolean) =>
+export const logPrefix = (extendedAccount: boolean) =>
   extendedAccount ? '[DOWNLOAD:EXTENDED]' : '[DOWNLOAD]';

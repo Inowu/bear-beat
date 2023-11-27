@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Orders, PrismaClient, product_orders, products } from '@prisma/client';
+import { PrismaClient, product_orders, products } from '@prisma/client';
 import { addDays, compareAsc } from 'date-fns';
 import { TRPCError } from '@trpc/server';
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
@@ -12,31 +12,35 @@ import { canBuyMoreGB } from './validation/canBuyMoreGB';
 import { getConektaCustomer } from '../subscriptions/utils/getConektaCustomer';
 import { conektaOrders } from '../../conekta';
 import { SessionUser } from '../auth/utils/serialize-user';
+import { addGBToAccount } from './services/addGBToAccount';
 
-export const buyMoreGBStripe = shieldedProcedure
+export const buyMoreGB = shieldedProcedure
   .input(
     z.union([
       z.object({
         productId: z.number(),
         paymentMethod: z.string(),
         service: z.literal(PaymentService.STRIPE),
+        orderId: z.never().optional(),
       }),
       z.object({
         productId: z.number(),
         service: z.literal(PaymentService.CONEKTA),
-        paymentMethod: z.never(),
+        paymentMethod: z.never().optional(),
+        orderId: z.never().optional(),
       }),
       z.object({
         productId: z.number(),
         service: z.literal(PaymentService.PAYPAL),
-        paymentMethod: z.never(),
+        paymentMethod: z.never().optional(),
+        orderId: z.string(),
       }),
     ]),
   )
   .mutation(
     async ({
       ctx: { prisma, session },
-      input: { paymentMethod, productId, service },
+      input: { paymentMethod, productId, service, orderId },
     }) => {
       const user = session!.user!;
 
@@ -78,6 +82,15 @@ export const buyMoreGBStripe = shieldedProcedure
               payment_method: paymentMethod,
               metadata: {
                 productOrderId: productOrder.id,
+              },
+            });
+
+            await prisma.product_orders.update({
+              where: {
+                id: productOrder.id,
+              },
+              data: {
+                txn_id: pi.id,
               },
             });
 
@@ -175,10 +188,29 @@ export const buyMoreGBStripe = shieldedProcedure
           break;
         }
         case PaymentService.PAYPAL: {
-          throw new TRPCError({
-            code: 'BAD_REQUEST',
-            message: 'El servicio especificado no está disponible',
+          log.info(
+            `[PRODUCT:PURCHASE] Creating paypal order for user ${user.id}`,
+          );
+
+          const productOrder = await prisma.product_orders.create({
+            data: {
+              service: PaymentService.PAYPAL,
+              product_id: product.id,
+              status: OrderStatus.PENDING,
+              user_id: user.id,
+              created_at: new Date().toISOString(),
+              payment_method: service,
+              txn_id: orderId,
+            },
           });
+
+          await addGBToAccount({
+            prisma,
+            user,
+            orderId: productOrder.id,
+          });
+
+          break;
         }
         default:
           throw new TRPCError({
@@ -210,7 +242,7 @@ const createCashPaymentOrder = async ({
   user: SessionUser;
 }) => {
   const conektaOrder = await conektaOrders.createOrder({
-    currency: product.currency ?? 'MXN',
+    currency: product.moneda ?? 'MXN',
     customer_info: {
       customer_id: customerId,
     },

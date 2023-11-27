@@ -3,6 +3,7 @@ import { log } from '../../../server';
 import { gbToBytes } from '../../../utils/gbToBytes';
 import { extendedAccountPostfix } from '../../../utils/constants';
 import { OrderStatus } from '../../subscriptions/interfaces/order-status.interface';
+import { SessionUser } from '../../auth/utils/serialize-user';
 
 export const addGBToAccount = async ({
   prisma,
@@ -10,7 +11,7 @@ export const addGBToAccount = async ({
   orderId,
 }: {
   prisma: PrismaClient;
-  user: Users;
+  user: Users | SessionUser;
   orderId: number;
 }) => {
   const order = await prisma.product_orders.findFirst({
