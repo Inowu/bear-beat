@@ -57,14 +57,16 @@ export const canBuyMoreGB = async ({
     });
   }
 
-  if (quotaTallies.bytes_out_used < quotaLimits.bytes_out_avail) {
-    log.info(`[PRODUCT:PURCHASE] User ${user.id} still has storage available`);
+  // This causes problems when the user has space available but it is not enough to download a file
 
-    throw new TRPCError({
-      code: 'CONFLICT',
-      message: 'El usuario aun tiene bytes disponible',
-    });
-  }
+  // if (quotaTallies.bytes_out_used < quotaLimits.bytes_out_avail) {
+  //   log.info(`[PRODUCT:PURCHASE] User ${user.id} still has storage available`);
+  //
+  //   throw new TRPCError({
+  //     code: 'CONFLICT',
+  //     message: 'El usuario aun tiene bytes disponible',
+  //   });
+  // }
 
   const product = await prisma.products.findFirst({
     where: {
