@@ -1,26 +1,39 @@
-import fs from 'fs';
-import path from 'path';
-import archiver from 'archiver';
 import { Job, Worker } from 'bullmq';
-// import jobHandler from './compression-worker';
-import fastFolderSize from 'fast-folder-size/sync';
 import { queueName } from '.';
 import { log } from '../server';
 import { sse } from '../sse';
 import { CompressionJob } from './compression-job';
 
-export let compressionWorker: Worker;
+export const compressionWorkers: Array<Worker<CompressionJob>> = [];
 
-export const initializeWorker = () => {
-  compressionWorker = new Worker<CompressionJob>(
+export const workerFactory = () => {
+  if (compressionWorkers.length < 1) {
+    log.info('[WORKER:COMPRESSION] Creating new worker');
+    compressionWorkers.push(createWorker());
+  }
+
+  return createWorker();
+};
+
+const createWorker = () => {
+  const compressionWorker = new Worker<CompressionJob>(
     queueName,
+    // Spawn a new process for each job
     `${__dirname}/compression-worker.js`,
     {
+      // lockDuration: 1000 * 60 * 60 * 10,
       useWorkerThreads: true,
+      removeOnComplete: {
+        count: 0,
+      },
+      removeOnFail: {
+        count: 0,
+      },
       connection: {
         host: process.env.REDIS_HOST,
         port: parseInt(process.env.REDIS_PORT as string, 10),
       },
+      concurrency: 1,
     },
   );
 
@@ -33,7 +46,6 @@ export const initializeWorker = () => {
     sse.send(
       JSON.stringify({
         jobId: job.id,
-        status: 'completed',
         url: `${process.env.BACKEND_URL}/compressed-dirs${job.data.songsRelativePath}-${job.data.userId}-${job.id}.zip`,
       }),
       'compression:completed',
@@ -45,7 +57,6 @@ export const initializeWorker = () => {
     sse.send(
       JSON.stringify({
         jobId: job?.id,
-        status: 'failed',
       }),
       'compression:failed',
     );
@@ -62,15 +73,16 @@ export const initializeWorker = () => {
   compressionWorker.on('progress', (job) => {
     const progress = Math.round(job.progress as number);
 
-    if (progress % 5 !== 0) return;
+    if (progress % 5 !== 0 || progress === 0) return;
 
     sse.send(
       JSON.stringify({
         progress,
         jobId: job.id,
-        status: 'pending',
       }),
       'compression:progress',
     );
   });
+
+  return compressionWorker;
 };

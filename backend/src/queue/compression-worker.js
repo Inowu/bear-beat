@@ -5,9 +5,10 @@ const fastFolderSize = require('fast-folder-size/sync');
 
 module.exports = async function (job) {
   const { songsAbsolutePath, songsRelativePath, userId } = job.data;
-  console.log(job.data);
 
-  const dirName = `${songsRelativePath}-${userId}-${job.id}.zip`;
+  const dirName = `${songsRelativePath.slice(1)}-${userId}-${
+    job.id
+  }.zip`.replace(/\//g, '_');
 
   const archive = archiver('zip');
 
@@ -24,6 +25,14 @@ module.exports = async function (job) {
     job.updateProgress(
       Math.min((progress.fs.processedBytes / size) * 100, 100.0),
     );
+  });
+
+  archive.on('error', (error) => {
+    log.error(
+      `[COMPRESSION:ERROR] Error while zipping ${songsAbsolutePath}: ${error.message}, code: ${error.code}, ${error.data}`,
+    );
+
+    throw error;
   });
 
   archive.directory(songsAbsolutePath, false);

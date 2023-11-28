@@ -156,17 +156,26 @@ export const downloadDir = shieldedProcedure
       });
     }
 
-    const job = await compressionQueue.add(`compress-${user.id}`, {
-      songsAbsolutePath: fullPath,
-      songsRelativePath: path,
-      userId: user.id,
-    } as CompressionJob);
+    try {
+      const job = await compressionQueue.add(`compress-${user.id}`, {
+        songsAbsolutePath: fullPath,
+        songsRelativePath: path,
+        userId: user.id,
+      } as CompressionJob);
 
-    log.info(
-      `[DOWNLOAD:DIR] Initiating directory compression job ${job.id}, user: ${user.id}`,
-    );
+      log.info(
+        `[DOWNLOAD:DIR] Initiating directory compression job ${job.id}, user: ${user.id}`,
+      );
 
-    return {
-      jobId: job.id,
-    };
+      return {
+        jobId: job.id,
+      };
+    } catch (e: any) {
+      log.error(`[DOWNLOAD:DIR] Error while adding job: ${e.message}`);
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message:
+          'Ocurrió un error al intentar iniciar la compresión de la carpeta',
+      });
+    }
   });
