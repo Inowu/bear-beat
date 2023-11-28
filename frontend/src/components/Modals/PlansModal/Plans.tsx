@@ -120,7 +120,7 @@ export function PlansModal (props: IPlan)  {
                         plans.map((x: IGBPlans, index: number)=>{
                             return (
                                 <button className='btn-option-5' onClick={()=>  choosePlan(x)} key={"buttons_pay_"+index}>
-                                Plan: {x.name}
+                                Plan: {x.name} - ${x.id === 1 ? 350 : 500}.00 MXN
                                 </button>
                             )
                         })
@@ -130,7 +130,7 @@ export function PlansModal (props: IPlan)  {
                     <div className='bottom'>
                         <p className='go-back' onClick={seePlans}>Regresar</p>
                         <p className='title'>Plan de: {selectPlan.name}</p>
-                        {/* <p className='title'>Costo: $ {selectPlan.amount}.00 MXN</p> */}
+                        <p className='title'>Costo: $ {selectPlan.id === 1 ? 350 : 500}.00 MXN</p>
                         <p className='add-card'>Nueva Tarjeta</p>
                         <select onChange={(e:any)=> selectCard(e.target.value)} defaultValue={''}>
                             <option disabled value={''}>Seleccione una tarjeta</option>
