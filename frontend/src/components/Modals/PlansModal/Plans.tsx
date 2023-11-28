@@ -44,6 +44,7 @@ export function PlansModal (props: IPlan)  {
   const getPlans = async () => {
     try{
         const plans: any = await trpc.products.getProducts.query()
+        console.log(plans);
         setPlans(plans);
     }
     catch(error){
@@ -114,12 +115,12 @@ export function PlansModal (props: IPlan)  {
                 <p className='content'>
                 ¿Necesitas más espacio?, elige el plan que deseas comprar.
                 </p>
-                <div className='button-container-2'>
+                <div className='button-container-2' style={{flexDirection: 'column'}}>
                     {
                         plans.map((x: IGBPlans, index: number)=>{
                             return (
                                 <button className='btn-option-5' onClick={()=>  choosePlan(x)} key={"buttons_pay_"+index}>
-                                Plan: {x.name}
+                                Plan: {x.name} - ${x.amount}.00 MXN
                                 </button>
                             )
                         })
@@ -129,6 +130,7 @@ export function PlansModal (props: IPlan)  {
                     <div className='bottom'>
                         <p className='go-back' onClick={seePlans}>Regresar</p>
                         <p className='title'>Plan de: {selectPlan.name}</p>
+                        <p className='title'>Costo: $ {selectPlan.amount}.00 MXN</p>
                         <p className='add-card'>Nueva Tarjeta</p>
                         <select onChange={(e:any)=> selectCard(e.target.value)} defaultValue={''}>
                             <option disabled value={''}>Seleccione una tarjeta</option>
