@@ -1,8 +1,8 @@
 import { Request } from 'express';
 import { Stripe } from 'stripe';
+import { PrismaClient } from '@prisma/client';
 import { StripeEvents } from './events';
 import { log } from '../../../server';
-import { PrismaClient } from '@prisma/client';
 import { prisma } from '../../../db';
 import { addGBToAccount } from '../../products/services/addGBToAccount';
 
@@ -23,26 +23,30 @@ export const stripeInvoiceWebhook = async (req: Request) => {
   }
 
   switch (payload.type) {
-    case StripeEvents.INVOICE_VOID:
-    case StripeEvents.INVOICE_PAYMENT_FAILED: {
+    case StripeEvents.PAYMENT_INTENT_FAILED: {
       log.info(
-        `[STRIPE_WH] Invoice payment failed for user ${user.id}, payload: ${payloadStr}`,
+        `[STRIPE_WH] Payment intent failed for user ${user.id}, payload: ${payloadStr}`,
       );
       break;
     }
-    case StripeEvents.INVOICE_PAID: {
+    case StripeEvents.PAYMENT_INTENT_SUCCEEDED: {
       log.info(
-        `[STRIPE_WH] Invoice paid for user ${user.id}, payload: ${payloadStr}`,
+        `[STRIPE_WH] Payment intent for user ${user.id}, payload: ${payloadStr}`,
       );
+
+      if (!payload.data.object.metadata.productOrderId) {
+        log.info(
+          `[STRIPE_WH] Payment intent for user ${user.id} does not have a productOrderId, no action taken. payload: ${payloadStr}`,
+        );
+        return;
+      }
 
       await addGBToAccount({
         user,
         prisma,
-        productId: Number(
-          (payload.data.object as Stripe.Invoice).metadata?.productId,
-        ),
         orderId: Number(
-          (payload.data.object as Stripe.Invoice).metadata?.orderId,
+          (payload.data.object as Stripe.PaymentIntent).metadata
+            ?.productOrderId,
         ),
       });
       break;
@@ -57,9 +61,8 @@ export const stripeInvoiceWebhook = async (req: Request) => {
 
 const shouldHandleEvent = (payload: Stripe.Event): boolean => {
   switch (payload.type) {
-    case StripeEvents.INVOICE_PAID:
-    case StripeEvents.INVOICE_PAYMENT_FAILED:
-    case StripeEvents.INVOICE_VOID:
+    case StripeEvents.PAYMENT_INTENT_SUCCEEDED:
+    case StripeEvents.PAYMENT_INTENT_FAILED:
       return true;
     default:
       log.info(
@@ -72,12 +75,12 @@ const shouldHandleEvent = (payload: Stripe.Event): boolean => {
 };
 
 const getUserFromPayload = async (
-  prisma: PrismaClient,
+  prismaClient: PrismaClient,
   payload: Stripe.Event,
 ) => {
-  const customer = (payload.data.object as Stripe.Invoice).customer;
+  const { customer } = payload.data.object as Stripe.PaymentIntent;
 
-  const user = await prisma.users.findFirst({
+  const user = await prismaClient.users.findFirst({
     where: {
       stripe_cusid: typeof customer === 'string' ? customer : customer?.id,
     },

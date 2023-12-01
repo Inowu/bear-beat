@@ -1,3 +1,5 @@
+import { z } from 'zod';
+import { TRPCError } from '@trpc/server';
 import { router } from '../trpc';
 import { shieldedProcedure } from '../procedures/shielded.procedure';
 import { OrdersAggregateSchema } from '../schemas/aggregateOrders.schema';
@@ -12,8 +14,6 @@ import { OrdersGroupBySchema } from '../schemas/groupByOrders.schema';
 import { OrdersUpdateManySchema } from '../schemas/updateManyOrders.schema';
 import { OrdersUpdateOneSchema } from '../schemas/updateOneOrders.schema';
 import { OrdersUpsertSchema } from '../schemas/upsertOneOrders.schema';
-import { z } from 'zod';
-import { TRPCError } from '@trpc/server';
 import { OrderStatus } from './subscriptions/interfaces/order-status.interface';
 import { PaymentService } from './subscriptions/services/types';
 
@@ -102,7 +102,7 @@ export const ordersRouter = router({
           });
         }
 
-        return await prisma.orders.create({
+        return prisma.orders.create({
           data: {
             user_id: user.id,
             plan_id: plan.id,
@@ -122,8 +122,8 @@ export const ordersRouter = router({
         id: z.number(),
       }),
     )
-    .mutation(async ({ ctx: { prisma }, input: { id } }) => {
-      return await prisma.orders.update({
+    .mutation(async ({ ctx: { prisma }, input: { id } }) =>
+      prisma.orders.update({
         where: {
           id,
         },
@@ -131,8 +131,8 @@ export const ordersRouter = router({
           status: OrderStatus.CANCELLED,
           is_canceled: 1,
         },
-      });
-    }),
+      }),
+    ),
   aggregateOrders: shieldedProcedure
     .input(OrdersAggregateSchema)
     .query(async ({ ctx, input }) => {

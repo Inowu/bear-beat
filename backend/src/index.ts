@@ -3,7 +3,6 @@ import tracer from 'dd-trace';
 import { config } from 'dotenv';
 import { createExpressMiddleware } from '@trpc/server/adapters/express';
 import express from 'express';
-import compression from 'compression';
 import cors from 'cors';
 import expressWinston from 'express-winston';
 import winston from 'winston';
@@ -16,7 +15,10 @@ import { initializeSearch } from './search';
 import { conektaEndpoint } from './endpoints/webhooks/conekta.endpoint';
 import { stripeEndpoint } from './endpoints/webhooks/stripe.endpoint';
 import { paypalEndpoint } from './endpoints/webhooks/paypal.endpoint';
-import { stripeInvoiceEndpoint } from './endpoints/webhooks/stripeInvoice.endpoint';
+import { stripePiEndpoint } from './endpoints/webhooks/stripePaymentIntents.endpoint';
+import { sse } from './sse';
+import { compressionQueue, initializeQueue } from './queue';
+import { compressionWorkers, workerFactory } from './queue/worker';
 
 config({
   path: path.resolve(__dirname, '../.env'),
@@ -32,7 +34,6 @@ async function main() {
   try {
     const app = express();
 
-    app.use(compression());
     app.use(
       expressWinston.logger({
         transports: [new winston.transports.Console()],
@@ -41,6 +42,8 @@ async function main() {
     );
 
     app.use(cors({ origin: '*' }));
+
+    app.get('/sse', sse.init);
 
     app.use(
       '/trpc',
@@ -63,9 +66,9 @@ async function main() {
     );
 
     app.use(
-      '/webhooks.stripe.invoice',
+      '/webhooks.stripe.pi',
       express.raw({ type: 'application/json' }),
-      stripeInvoiceEndpoint,
+      stripePiEndpoint,
     );
 
     app.use(
@@ -85,10 +88,28 @@ async function main() {
     await initializeFileService();
 
     await initializeSearch();
+
+    initializeQueue();
+
+    workerFactory();
   } catch (e: any) {
     log.error(e.message);
+    await closeConnections();
     process.exit(1);
   }
 }
+
+const closeConnections = async () => {
+  await compressionQueue.close();
+  await Promise.all(compressionWorkers.map(async (worker) => worker.close()));
+};
+
+process.on('SIGTERM', async () => {
+  log.info('SIGTERM signal received: closing connections');
+
+  await closeConnections();
+
+  log.info('All connections closed');
+});
 
 main();

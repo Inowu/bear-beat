@@ -14,7 +14,10 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
     `[PAYPAL_WH] Handling Paypal webhook, payload: ${JSON.stringify(payload)}`,
   );
 
-  const subId = payload.resource.id;
+  const subId =
+    payload.event_type === PaypalEvent.PAYMENT_SALE_COMPLETED
+      ? payload.resource.billing_agreement_id
+      : payload.resource.id;
   const planId = payload.resource.plan_id;
 
   const plan = await prisma.plans.findFirst({
@@ -23,7 +26,7 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
     },
   });
 
-  if (!plan) {
+  if (!plan && payload.event_type !== PaypalEvent.PAYMENT_SALE_COMPLETED) {
     log.error(`[PAYPAL_WH] Plan with id ${planId} not found`);
     return;
   }
@@ -35,7 +38,8 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
   });
 
   if (!order) {
-    // log.error(`[PAYPAL_WH] Order with txn_id ${subId} not found`);
+    // Probably never happening (in prod) but just in case
+    log.error(`[PAYPAL_WH] Order with txn_id ${subId} not found`);
     return;
   }
 
@@ -81,7 +85,7 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
       await subscribe({
         prisma,
         user,
-        plan,
+        plan: plan!,
         subId,
         expirationDate: new Date(
           payload.resource.billing_info.next_billing_time,
@@ -99,7 +103,7 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
         await subscribe({
           prisma,
           user,
-          plan,
+          plan: plan!,
           subId,
           expirationDate: new Date(
             payload.resource.billing_info.next_billing_time,
@@ -128,6 +132,41 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
       });
 
       break;
+    case PaypalEvent.PAYMENT_SALE_COMPLETED: {
+      log.info(
+        `[PAYPAL_WH] Payment completed, renovating subscription for user ${user.id}, subscription id ${payload.resource.id}`,
+      );
+
+      const existingOrder = await prisma.orders.findFirst({
+        where: {
+          txn_id: subId,
+        },
+      });
+
+      if (!existingOrder) {
+        log.error(
+          `[PAYPAL_WH] Error while renovating paypal subscription for user ${user.id}, order with txn_id ${subId} not found`,
+        );
+        return;
+      }
+
+      const orderPlan = await prisma.plans.findFirst({
+        where: {
+          [getPlanKey(PaymentService.PAYPAL)]: existingOrder.plan_id,
+        },
+      });
+
+      await subscribe({
+        prisma,
+        user,
+        plan: orderPlan!,
+        subId,
+        expirationDate: new Date(),
+        service: PaymentService.PAYPAL,
+      });
+
+      break;
+    }
     default:
       log.info(`[PAYPAL_WH] Event type ${payload.event_type} not handled`);
       break;

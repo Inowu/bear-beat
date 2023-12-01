@@ -1,5 +1,5 @@
 import { EventResponse } from 'conekta';
-import { Plans, Users } from '@prisma/client';
+import { Orders, Plans, Users, product_orders, products } from '@prisma/client';
 import { Request } from 'express';
 import { addDays } from 'date-fns';
 import { subscribe } from '../../subscriptions/services/subscribe';
@@ -10,6 +10,9 @@ import { getPlanKey } from '../../../utils/getPlanKey';
 import { cancelOrder } from '../../subscriptions/services/cancelOrder';
 import { ConektaEvents } from './events';
 import { PaymentService } from '../../subscriptions/services/types';
+import { brevo } from '../../../email';
+import { OrderStatus } from '../../subscriptions/interfaces/order-status.interface';
+import { addGBToAccount } from '../../products/services/addGBToAccount';
 
 export const conektaSubscriptionWebhook = async (req: Request) => {
   const payload: EventResponse = JSON.parse(req.body as any);
@@ -37,6 +40,8 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
   }
 
   const subscription = payload.data?.object;
+
+  const isProduct = Boolean(payload.data?.object.metadata.isProduct);
 
   switch (payload.type) {
     case ConektaEvents.SUB_PAID:
@@ -86,7 +91,11 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
       const orderId = payload.data?.object.metadata.orderId;
 
       log.info(`[CONEKTA_WH] Canceling order ${orderId}`);
-      await cancelOrder({ prisma, orderId });
+      await cancelOrder({
+        prisma,
+        orderId,
+        isProduct,
+      });
 
       break;
     }
@@ -116,26 +125,82 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
         return;
       }
 
-      const order = await prisma.orders.findFirst({
-        where: {
-          id: payload.data?.object.metadata.orderId,
-        },
-      });
+      let productOrPlan: Plans | products | null = null;
+      let order: Orders | product_orders | null = null;
 
-      const orderPlan = await prisma.plans.findFirst({
-        where: {
-          id: order?.plan_id!,
-        },
-      });
+      if (isProduct) {
+        log.info(
+          `[CONEKTA_WH] Updating product order ${orderId} to paid, payload: ${payloadStr}`,
+        );
 
-      await subscribe({
-        subId: subscription.id,
-        prisma,
-        user,
-        orderId: Number(orderId),
-        service: PaymentService.CONEKTA,
-        expirationDate: addDays(new Date(), Number(orderPlan?.duration) || 30),
-      });
+        order = await prisma.product_orders.update({
+          where: {
+            id: orderId,
+          },
+          data: {
+            status: OrderStatus.PAID,
+          },
+        });
+      } else {
+        order = (await prisma.orders.update({
+          where: {
+            id: payload.data?.object.metadata.orderId,
+          },
+          data: {
+            status: OrderStatus.PAID,
+          },
+        })) as Orders;
+
+        productOrPlan = (await prisma.plans.findFirst({
+          where: {
+            id: order.plan_id!,
+          },
+        })) as Plans;
+      }
+
+      if (!order || !productOrPlan) {
+        log.error(
+          `[CONEKTA_WH] Order or product not found in payload: ${payloadStr}, returning from conekta webhook`,
+        );
+        return;
+      }
+
+      if (isProduct) {
+        await addGBToAccount({
+          prisma,
+          user,
+          orderId: Number(orderId),
+        });
+      } else {
+        await subscribe({
+          subId: subscription.id,
+          prisma,
+          user,
+          orderId: Number(orderId),
+          service: PaymentService.CONEKTA,
+          expirationDate: addDays(
+            new Date(),
+            Number(productOrPlan.duration) || 30,
+          ),
+        });
+      }
+
+      try {
+        await brevo.smtp.sendTransacEmail({
+          templateId: 2,
+          to: [{ email: user.email, name: user.username }],
+          params: {
+            NAME: user.username,
+            plan_name: productOrPlan.name,
+            price: productOrPlan.price,
+            currency: productOrPlan.moneda.toUpperCase(),
+            ORDER: order.id,
+          },
+        });
+      } catch (e) {
+        log.error(`[CONEKTA] Error while sending email ${e}`);
+      }
+
       break;
     }
     default:
@@ -165,9 +230,6 @@ export const getCustomerIdFromPayload = async (
         where: {
           OR: [
             {
-              conekta_cusid: payload.data?.object.customer_info.customer_id,
-            },
-            {
               id: payload.data?.object.metadata.userId,
             },
           ],
@@ -179,7 +241,7 @@ export const getCustomerIdFromPayload = async (
 
         user = await prisma.users.findFirst({
           where: {
-            email: payload.data?.object.customer_info.email,
+            email: payload.data?.object?.customer_info?.email,
           },
         });
 
@@ -189,7 +251,7 @@ export const getCustomerIdFromPayload = async (
               id: user.id,
             },
             data: {
-              conekta_cusid: payload.data?.object.customer_info.customer_id,
+              conekta_cusid: payload.data?.object?.customer_info?.customer_id,
             },
           });
         }
