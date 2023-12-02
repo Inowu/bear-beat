@@ -61,7 +61,7 @@ function Admin(){
         setPlans(plans);
         }
         catch(error){
-        console.log(error);
+            console.log(error);
         }
     }
     const giveSuscription = (user: IAdminUser) => {
@@ -93,31 +93,64 @@ function Admin(){
     }
     const filterUsers = async (filt: IAdminFilter) => {
         setLoader(true);
-        let body: any = {
-            take: 10,
-            skip: filt.page * 10,
-            where: {
-                email: {
-                    startsWith: filt.search,
-                },
+        try{        
+        if(filt.active === 2){
+            let body: any = {
+                take: 10,
+                skip: filt.page * 10,
+                where: {
+                    email: {
+                        startsWith: filt.search,
+                    },
+                }
             }
-        }
-        let body2: any = {
-            where: {
-                email: {
-                    startsWith: filt.search,
+            let body2: any = {
+                where: {
+                    email: {
+                        startsWith: filt.search,
+                    },
                 },
-            },
-            select: {
-                id: true,
-              },
-        }
-        try{
+                select: {
+                    id: true,
+                  },
+            }
             const tempUsers = await trpc.users.findManyUsers.query(body);
             const totalUsersResponse = await trpc.users.findManyUsers.query(body2);
             setLoader(false);
             setUsers(tempUsers);
             setTotalUsers(totalUsersResponse.length);
+        }else{
+            let body: any = {
+                take: 10,
+                skip: filt.page * 10,
+                where: {
+                    email: {
+                        startsWith: filt.search,
+                    },
+                    active: {
+                        equals: filt.active
+                    }
+                }
+            }
+            let body2: any = {
+                where: {
+                    email: {
+                        startsWith: filt.search,
+                    },
+                    active: {
+                        equals: filt.active
+                    }
+                },
+                select: {
+                    id: true,
+                  },
+            }
+            const tempUsers = await trpc.users.findManyUsers.query(body);
+            const totalUsersResponse = await trpc.users.findManyUsers.query(body2);
+            setLoader(false);
+            setUsers(tempUsers);
+            setTotalUsers(totalUsersResponse.length);
+        }
         }catch(error){
             console.log(error);
         }
@@ -144,15 +177,15 @@ function Admin(){
                     <FontAwesomeIcon icon ={faSearch} />
                 </div>
             </div>
-            <div className="filter-contain">
-                {/* <div className="input-filter">
-                    <select onChange={(e)=> startFilter('active', e.target.value)}>
+            {/* <div className="filter-contain">
+                <div className="select-input">
+                    <select onChange={(e)=> startFilter('active', +e.target.value)}>
                         <option value={2}>Todos</option>
                         <option value={1}>Activos</option>
                         <option value={0}>Inactivos</option>
                     </select>
-                </div> */}
-            </div>
+                </div>
+            </div> */}
             <div className="admin-table">
                 <div className="table-contain">
                     <table>
