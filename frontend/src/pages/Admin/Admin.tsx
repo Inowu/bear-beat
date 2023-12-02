@@ -7,10 +7,21 @@ import { Spinner } from "../../components/Spinner/Spinner";
 import { IPlans } from "../../interfaces/Plans";
 import { OptionModal } from "../../components/Modals/OptionModal/OptionModal";
 import { useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSearch } from "@fortawesome/free-solid-svg-icons";
+import Pagination from "../../components/Pagination/Pagination";
+import { ARRAY_10 } from "../../utils/Constants";
 
+interface IAdminFilter  {
+    page: number;
+    total: number;
+    search: string;
+    active: number;
+}
 function Admin(){
     const { currentUser } = useUserContext();
     const [users, setUsers] = useState<IAdminUser[]>([]);
+    const [totalUsers, setTotalUsers] = useState(0);
     const [allUsers, setAllUsers] = useState<IAdminUser[]>([]);
     const [showOption, setShowOption] = useState<boolean>(false);
     const [optionMessage, setOptionMessage] = useState<string>('');
@@ -18,6 +29,11 @@ function Admin(){
     const [plans, setPlans] = useState<IPlans[]>([]);
     const [selectUser, setSelectUser] = useState({} as IAdminUser);
     const [loader, setLoader] = useState<boolean>(true);
+    const [filters, setFilters] = useState<any>({
+        page: 0,
+        search: '',
+        active: 2,
+    })
     const navigate = useNavigate();
     const openOption = () => {
         setShowOption(true);
@@ -34,38 +50,20 @@ function Admin(){
         closeOption();
         activateSubscription(plans[1])
     }
-    const getAllUsers = async () => {
-        let body: any = {
-
+    const getPlans = async () => {
+        let body = {
+        where: {
+            activated: 1,
+        }
         }
         try{
-            const tempUsers = await trpc.users.findManyUsers.query(body);
-            setLoader(false);
-            setUsers(tempUsers);
-            setAllUsers(tempUsers);
-        }catch(error){
-            console.log(error);
+        const plans: any = await trpc.plans.findManyPlans.query(body);
+        setPlans(plans);
+        }
+        catch(error){
+        console.log(error);
         }
     }
-    const search = (value: string) => {
-        const tempUsers = [...allUsers];
-        let newUsers = tempUsers.filter((user) => (user.username.toLowerCase().includes(value.toLowerCase()) || user.email.toLowerCase().includes(value.toLowerCase())));
-        setUsers(newUsers);
-    }
-  const getPlans = async () => {
-    let body = {
-      where: {
-        activated: 1,
-      }
-    }
-    try{
-      const plans: any = await trpc.plans.findManyPlans.query(body);
-      setPlans(plans);
-    }
-    catch(error){
-      console.log(error);
-    }
-  }
     const giveSuscription = (user: IAdminUser) => {
         setSelectUser(user);
         setOptionTitle('Seleccione el plan');
@@ -77,7 +75,6 @@ function Admin(){
                 planId: plan.id,
                 userId: selectUser.id
             }
-            console.log(body);
             const activate = await trpc.admin.activatePlanForUser.mutate(body);
             alert('Plan activado con éxito!')
         }
@@ -85,9 +82,49 @@ function Admin(){
             console.log(error)
         }
     }
+    const startFilter = (key: string, value: string | number) => {
+        let tempFilters: any = filters;
+        if(key !== 'page'){
+            tempFilters.page = 0;
+        }
+        tempFilters[key] = value;
+        filterUsers(tempFilters);
+        setFilters(tempFilters);
+    }
+    const filterUsers = async (filt: IAdminFilter) => {
+        setLoader(true);
+        let body: any = {
+            take: 10,
+            skip: filt.page * 10,
+            where: {
+                email: {
+                    startsWith: filt.search,
+                },
+            }
+        }
+        let body2: any = {
+            where: {
+                email: {
+                    startsWith: filt.search,
+                },
+            },
+            select: {
+                id: true,
+              },
+        }
+        try{
+            const tempUsers = await trpc.users.findManyUsers.query(body);
+            const totalUsersResponse = await trpc.users.findManyUsers.query(body2);
+            setLoader(false);
+            setUsers(tempUsers);
+            setTotalUsers(totalUsersResponse.length);
+        }catch(error){
+            console.log(error);
+        }
+    }
     useEffect(() => {
         getPlans();
-        getAllUsers();
+        filterUsers(filters);
     }, [])
     useEffect(() => {
         if(currentUser &&currentUser.role !== "admin"){
@@ -98,29 +135,87 @@ function Admin(){
     return(
         <div className="admin-contain">
             <div className="header">
-                <h1>Admin</h1>
-                <input
-                    className="input"
-                    placeholder="Buscar Usuario"
-                    onChange={(e)=> {search(e.target.value)}}
-                />
+                <h1>Usuarios</h1>
+                <div className="search-input">
+                    <input  
+                        placeholder="Buscar por email"
+                        onChange={(e:any)=>{startFilter('search',e.target.value)}}
+                    />
+                    <FontAwesomeIcon icon ={faSearch} />
+                </div>
             </div>
-            <div className="users-contain">
-            {
-                !loader ?
-                users.map((user: IAdminUser, index: number)=>{
-                    return(
-                        <div key={"admin_users_" + index} className="user-contain">
-                            <div className="data-contain">
-                                <p className="name"><b>usuario:</b> {user.username}</p>
-                                <p className="name"><b>email:</b> {user.email}</p>
-                            </div>
-                            <button onClick={()=>{giveSuscription(user)}} className="btn-active">Activar Suscripcion</button>
-                        </div>
-                    )
-                })
-                : <Spinner size={3} width={.3} color="black"/>
-            }
+            <div className="filter-contain">
+                {/* <div className="input-filter">
+                    <select onChange={(e)=> startFilter('active', e.target.value)}>
+                        <option value={2}>Todos</option>
+                        <option value={1}>Activos</option>
+                        <option value={0}>Inactivos</option>
+                    </select>
+                </div> */}
+            </div>
+            <div className="admin-table">
+                <div className="table-contain">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>
+                                    Nombre
+                                </th>
+                                <th>
+                                    Email
+                                </th>
+                                <th>
+                                    Registro
+                                </th>
+                                <th>
+                                    Suscripción
+                                </th>
+                                <th>
+                                    Acciones
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                                {   !loader?
+                                    users.map((user: IAdminUser, index: number)=> {
+                                        return (
+                                            <tr key={"admin_users_" + index}>
+                                                <td className="">
+                                                    {user.username}
+                                                </td>
+                                                <td>
+                                                    {user.email}
+                                                </td>
+                                                <td>
+                                                    {user.registered_on.toLocaleDateString()}
+                                                </td>
+                                                <td style={{textAlign: 'center'}}>
+                                                    {user.active === 1 ? "Activa" : "No activa"}
+                                                </td>
+                                                <td>
+                                                    <button onClick={()=>{giveSuscription(user)}}>Activar Suscripcion</button>
+                                                </td>
+                                            </tr>
+
+                                        )
+                                    })
+                                    : ARRAY_10.map((val:string, index: number)=>{
+                                        return (
+                                            <tr key={"array_10" + index} className="tr-load">
+                                                <td/><td/><td/><td/><td/>
+                                            </tr>
+                                        )
+                                    })
+                                }
+                        </tbody>
+                    </table>
+                </div>
+                <Pagination
+                    totalData = {totalUsers}
+                    title = "usuarios"
+                    startFilter = {startFilter}
+                    currentPage = {filters.page}
+                />
             </div>
             <OptionModal
                 show={showOption}
