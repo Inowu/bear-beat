@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import bcrypt from 'bcrypt';
 import { publicProcedure } from '../../../procedures/public.procedure';
-import { generateJwt } from '../utils/generateJwt';
+import { generateTokens } from './utils/generateTokens';
 
 export const login = publicProcedure
   .input(
@@ -45,7 +45,5 @@ export const login = publicProcedure
       });
     }
 
-    return {
-      token: generateJwt(user),
-    };
+    return generateTokens(prisma, user);
   });

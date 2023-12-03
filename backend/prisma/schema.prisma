@@ -182,27 +182,29 @@ model UserFiles {
 }
 
 model Users {
-  id               Int              @id @default(autoincrement())
-  registered_on    DateTime         @default(dbgenerated("'2018-01-01'")) @db.Date
-  username         String           @unique(map: "username") @db.VarChar(255)
-  password         String           @db.LongText
-  first_name       String?          @db.VarChar(255)
-  last_name        String?          @db.VarChar(255)
-  address          String?          @db.VarChar(255)
-  birthdate        DateTime?        @db.Date
-  email            String           @unique(map: "email") @db.VarChar(255)
-  stripe_cusid     String?          @db.VarChar(200)
-  conekta_cusid    String?          @db.VarChar(255)
-  phone            String?          @db.VarChar(15)
-  city             String?          @db.VarChar(100)
-  role_id          Int?             @default(1)
-  country_id       String?          @db.VarChar(2)
-  profile_img      String?          @db.VarChar(100)
-  active           Int              @default(0)
-  activationcode   String?          @db.Text
+  id               Int                @id @default(autoincrement())
+  registered_on    DateTime           @default(dbgenerated("'2018-01-01'")) @db.Date
+  username         String             @unique(map: "username") @db.VarChar(255)
+  password         String             @db.LongText
+  first_name       String?            @db.VarChar(255)
+  last_name        String?            @db.VarChar(255)
+  address          String?            @db.VarChar(255)
+  birthdate        DateTime?          @db.Date
+  email            String             @unique(map: "email") @db.VarChar(255)
+  stripe_cusid     String?            @db.VarChar(200)
+  conekta_cusid    String?            @db.VarChar(255)
+  phone            String?            @db.VarChar(15)
+  city             String?            @db.VarChar(100)
+  role_id          Int?               @default(1)
+  country_id       String?            @db.VarChar(2)
+  profile_img      String?            @db.VarChar(100)
+  active           Int                @default(0)
+  activationcode   String?            @db.Text
   mc_id            Int?
-  ip_registro      String?          @db.Text
-  token_expiration DateTime?        @db.Date
+  ip_registro      String?            @db.Text
+  token_expiration DateTime?          @db.Date
+  refresh_token    String?            @db.VarChar(250)
+  compression_jobs compression_jobs[]
   dir_downloads    dir_downloads[]
   product_orders   product_orders[]
 
@@ -273,6 +275,18 @@ model dir_downloads {
   users  Users?    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "dir_downloads_ibfk_1")
 
   @@index([userId], map: "userId")
+}
+
+model compression_jobs {
+  id         Int       @id @default(autoincrement())
+  user_id    Int
+  status     String    @db.VarChar(50)
+  createdAt  DateTime  @db.DateTime(0)
+  jobId      Int
+  finishedAt DateTime? @db.DateTime(0)
+  users      Users     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "compression_jobs_ibfk_1")
+
+  @@index([user_id], map: "user_id")
 }
 
 enum ftpquotalimits_quota_type {
