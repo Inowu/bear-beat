@@ -3,9 +3,13 @@ import { useUserContext } from "../../../contexts/UserContext";
 import trpc from "../../../api";
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import {  useState } from "react";
+import { useState } from "react";
 import { ErrorModal } from "../../../components/Modals/ErrorModal/ErrorModal";
 import { Spinner } from "../../../components/Spinner/Spinner";
+import { faHeadset } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+
+
 
 function LoginForm() {
   const [loader, setLoader] = useState<boolean>(false);
@@ -18,11 +22,11 @@ function LoginForm() {
   }
   const validationSchema = Yup.object().shape({
     username: Yup.string()
-    .required('Username is required')
-    .min(3, 'Username must be at least 3 characters long'),
+      .required('Username is required')
+      .min(3, 'Username must be at least 3 characters long'),
     password: Yup.string().required('Password is required')
-    .min(3, 'Password must contain 3 characters atleast'),
-});
+      .min(3, 'Password must contain 3 characters atleast'),
+  });
   const initialValues = {
     username: "",
     password: "",
@@ -31,24 +35,30 @@ function LoginForm() {
     initialValues: initialValues,
     validationSchema: validationSchema,
     onSubmit: async (values) => {
-        setLoader(true);
-        let body = {
-          username: values.username,
-          password: values.password,
-        }
-        try{
-          const login = await trpc.auth.login.query(body);
-          handleLogin(login.token);
-          navigate("/");
-          setLoader(false);
-        }
-        catch(error){
-          setShow(true);
-          setErrorMessage(error);
-          setLoader(false);
-        }
+      setLoader(true);
+      let body = {
+        username: values.username,
+        password: values.password,
+      }
+      try {
+        const login = await trpc.auth.login.query(body);
+        handleLogin(login.token);
+        navigate("/");
+        setLoader(false);
+      }
+      catch (error) {
+        setShow(true);
+        setErrorMessage(error);
+        setLoader(false);
+      }
     },
   });
+
+  const handleButtonClick = () => {
+    // Redireccionar al número de teléfono cuando se hace clic en el botón
+    window.location.href = 'tel:+6622914052';
+  };
+  
   return (
     <form onSubmit={formik.handleSubmit}>
       <h2>LOGIN</h2>
@@ -83,17 +93,32 @@ function LoginForm() {
       </div>
       {
         !loader
-        ?
-        <button className="btn" type="submit">
-          INGRESAR
-        </button>
-        :
-        <Spinner size={3} width={.3} color="#00e2f7"/>
+          ?
+          <button className="btn" type="submit">
+            INGRESAR
+          </button>
+          :
+          <Spinner size={3} width={.3} color="#00e2f7" />
       }
       <div className="c-row">
         <Link to={"registro"}>Registrarme</Link>
       </div>
-      <ErrorModal show={show} onHide={closeModal} message={errorMessage}/>
+      <div
+        style={{
+          position: 'fixed',
+          bottom: '20px',
+          right: '20px',
+          padding: '10px',
+          background: '#fff',
+          color: 'black',
+          borderRadius: '50%',
+          cursor: 'pointer',
+        }}
+        onClick={handleButtonClick}
+      >
+        <FontAwesomeIcon icon={faHeadset} />
+      </div>
+      <ErrorModal show={show} onHide={closeModal} message={errorMessage} />
     </form>
   );
 }

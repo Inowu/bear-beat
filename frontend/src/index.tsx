@@ -54,6 +54,7 @@ const router = createBrowserRouter([
         ),
         children: [
           { path: "", element: <Admin /> },
+          { path: "añadirUsuarios", element: <AddUsers /> },
         ],
       },
       {
@@ -72,7 +73,7 @@ const router = createBrowserRouter([
       },
       {
         path: "*",
-        element:<Navigate to ="/" replace/>
+        element: <Navigate to="/" replace />
       },
     ],
   },
