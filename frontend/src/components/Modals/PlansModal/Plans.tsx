@@ -57,9 +57,10 @@ export function PlansModal(props: IPlan) {
   const buyPlan = async () => {
     setLoader(true);
     if (selectPlan !== null) {
-      let body = {
+      let body: any = {
         productId: selectPlan.id,
         paymentMethod: card,
+        service: 'STRIPE'
       }
       try {
         const plans = await trpc.products.buyMoreGB.mutate(body)
