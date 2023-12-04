@@ -6,6 +6,7 @@ import {
   faUserCircle,
   faSignOutAlt,
   faBars,
+  faShield,
 } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
 import { SetStateAction, useEffect } from "react";
@@ -35,8 +36,8 @@ function Navbar(props: NavbarPropsI) {
         {
           currentUser?.role === "admin" &&
           <Link to={"/admin"}>
-            <li style={{paddingInline: 15}}>
-              <span>Admin</span>
+            <li>
+              <FontAwesomeIcon icon={faShield} /> <span>Admin</span>
             </li>
           </Link>
         }

@@ -119,6 +119,9 @@ function Home() {
     console.log(name)
     if (currentUser?.hasActiveSubscription) {
       let path = pastFile.join('/') + "/" + name;
+      //TEST
+      // const url = "https://kale67.world/download?path=" + encodeURIComponent(path) + '&token=' + userToken;  
+      // DOMAIN 
       const url = "https://thebearbeatapi.lat/download?path=" + encodeURIComponent(path) + '&token=' + userToken;
       await startDownload(url, name);
       console.log(url);
