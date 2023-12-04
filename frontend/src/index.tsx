@@ -20,6 +20,7 @@ import Plans from "./pages/Plans/Plans";
 import Checkout from "./pages/Checkout/Checkout";
 import Admin from "./pages/Admin/Admin";
 import ResetPassword from "./components/Auth/ResetPassword/ResetPassword";
+import { AddUsers } from "./pages/AddUsers/AddUsers";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement,

@@ -34,11 +34,18 @@ function Navbar(props: NavbarPropsI) {
       <ul>
         {
           currentUser?.role === "admin" &&
+         <>
           <Link to={"/admin"}>
             <li style={{paddingInline: 15}}>
               <span>Admin</span>
             </li>
           </Link>
+          <Link to={"/añadirUsuarios"}>
+            <li style={{paddingInline: 15}}>
+              <span>Añadir Usuarios</span>
+            </li>
+          </Link>
+         </>
         }
         <Link to={"/micuenta"}>
           <li>
