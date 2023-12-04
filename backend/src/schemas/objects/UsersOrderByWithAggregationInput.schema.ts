@@ -107,6 +107,12 @@ const Schema: z.ZodType<Prisma.UsersOrderByWithAggregationInput> = z
         z.lazy(() => SortOrderInputObjectSchema),
       ])
       .optional(),
+    refresh_token: z
+      .union([
+        z.lazy(() => SortOrderSchema),
+        z.lazy(() => SortOrderInputObjectSchema),
+      ])
+      .optional(),
     _count: z
       .lazy(() => UsersCountOrderByAggregateInputObjectSchema)
       .optional(),

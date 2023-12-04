@@ -6,3 +6,4 @@ build
 demos
 logs
 compressed-dirs
+bun.*
