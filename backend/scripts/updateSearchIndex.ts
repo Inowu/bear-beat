@@ -1,10 +1,14 @@
 import { MeiliSearch } from 'meilisearch';
-import { createFlatFileIndex, fileIndexName } from '../src/search/index';
+import fastFolderSizeSync from 'fast-folder-size/sync';
+import fs from 'fs';
+import path from 'path';
+import { v4 as uuid } from 'uuid';
 import { IFileStat } from '../src/services/interfaces/fileService.interface';
 import { config } from 'dotenv';
-import { log } from '../src/server';
 
 config();
+
+export const fileIndexName = 'FILE_INDEX';
 
 async function main() {
   const meiliSearch = new MeiliSearch({
@@ -12,7 +16,7 @@ async function main() {
     apiKey: process.env.MEILISEARCH_KEY as string,
   });
 
-  log.info(`[UPDATE_INDEX] Updating index ${fileIndexName}`);
+  console.log(`[UPDATE_INDEX] Updating index ${fileIndexName}`);
 
   const index = await meiliSearch.getIndex(fileIndexName);
 
@@ -33,7 +37,7 @@ async function main() {
     const filePath = file.path!;
 
     if (!fileMap.has(filePath)) {
-      log.info(`[UPDATE_INDEX] Deleting ${filePath}`);
+      console.log(`[UPDATE_INDEX] Deleting ${filePath}`);
       await index.deleteDocument(file.id);
     }
   }
@@ -42,10 +46,53 @@ async function main() {
     const filePath = file.path as string;
 
     if (!documents.results.find((doc) => doc.path === filePath)) {
-      log.info(`[UPDATE_INDEX] Adding ${filePath}`);
+      console.log(`[UPDATE_INDEX] Adding ${filePath}`);
       await index.addDocuments([file]);
     }
   }
+}
+
+function createFlatFileIndex(dirPath: string): IFileStat[] {
+  let fileIndex: IFileStat[] = [];
+  const files = fs.readdirSync(dirPath);
+
+  /* eslint-disable-next-line no-restricted-syntax */
+  for (const file of files) {
+    const filePath = path.join(dirPath, file);
+    const stats = fs.statSync(filePath);
+
+    /* eslint-disable-next-line no-continue */
+    if (file.startsWith('.')) continue;
+
+    if (stats.isDirectory()) {
+      // If it's a directory, recursively index its contents
+      const dirIndex = createFlatFileIndex(filePath);
+
+      fileIndex = fileIndex.concat([
+        {
+          id: uuid(),
+          name: file,
+          type: 'd',
+          size: fastFolderSizeSync(filePath)!,
+          modification: stats.mtime.getTime(),
+          path: filePath.replace('/home/products', ''),
+        },
+        ...dirIndex,
+      ]);
+    } else if (stats.isFile()) {
+      // If it's a file, add it to the index
+      fileIndex.push({
+        id: uuid(),
+        name: file,
+        size: stats.size,
+        type: '-',
+        modification: stats.mtime.getTime(),
+        path: filePath.replace('/home/products', ''),
+      });
+    }
+  }
+
+  return fileIndex;
 }
 
 main();

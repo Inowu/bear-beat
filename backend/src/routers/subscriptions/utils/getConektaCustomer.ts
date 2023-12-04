@@ -41,7 +41,7 @@ export const getConektaCustomer = async ({
     try {
       const conektaUser = await conektaCustomers.createCustomer({
         name: stripNonAlphabetic(dbUser),
-        phone: dbUser.phone ?? '',
+        phone: dbUser.phone ?? '+5215555555555',
         email: dbUser.email,
       });
 
@@ -57,7 +57,9 @@ export const getConektaCustomer = async ({
       userConektaId = conektaUser.data.id;
     } catch (e: any) {
       log.error(
-        `There was an error creating the conekta customer for user ${user.id}, details: ${e.response?.data?.details}`,
+        `There was an error creating the conekta customer for user ${
+          user.id
+        }, details: ${JSON.stringify(e.response?.data?.details)}`,
       );
     }
   }

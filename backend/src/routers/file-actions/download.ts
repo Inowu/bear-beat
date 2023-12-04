@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import * as Path from 'path';
 import { TRPCError } from '@trpc/server';
 import { fileService } from '../../ftp';
 import { log } from '../../server';

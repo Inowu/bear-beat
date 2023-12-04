@@ -6,6 +6,7 @@ import { log } from '../../server';
 import { PaymentService } from './services/types';
 import { subscribe } from './services/subscribe';
 import { paypal } from '../../paypal';
+import { brevo } from '../../email';
 
 export const subscribeWithPaypal = shieldedProcedure
   .input(

@@ -58,13 +58,13 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
     },
   });
 
-  let ftpUser = ftpAccounts.find(
+  let regularFtpUser = ftpAccounts.find(
     (ftpAccount) => !ftpAccount.userid.endsWith(extendedAccountPostfix),
   );
 
-  let extended = false;
+  let useExtendedAccount = false;
 
-  if (ftpAccounts.length === 0 || !ftpUser) {
+  if (ftpAccounts.length === 0 || !regularFtpUser) {
     log.error(`[DOWNLOAD] This user does not have an ftp user (${user.id})`);
 
     return res
@@ -72,46 +72,67 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
       .send({ error: 'Este usuario no tiene una cuenta FTP' });
   }
 
-  if (activePlans.length === 0) {
-    if (ftpAccounts.length === 1) {
-      return res
-        .status(400)
-        .send({ error: 'Este usuario no tiene un plan activo' });
-    }
+  const extendedAccount = ftpAccounts.find((ftpAccount) =>
+    ftpAccount.userid.endsWith(extendedAccountPostfix),
+  );
 
-    const extendedAccount = ftpAccounts.find((ftpAccount) =>
-      ftpAccount.userid.endsWith(extendedAccountPostfix),
-    );
-
-    if (!extendedAccount) {
-      log.warn(
-        `[DOWNLOAD] This user does not have an extended account  and has more than one ftp account (${user.id})`,
-      );
-      return res
-        .status(400)
-        .send({ error: 'Este usuario no tiene un plan activo' });
-    }
-
-    log.info(`[DOWNLOAD] Using extended account for user ${user.id}`);
-    ftpUser = extendedAccount;
-    extended = true;
+  if (activePlans.length === 0 && !extendedAccount) {
+    return res
+      .status(400)
+      .send({ error: 'Este usuario no tiene un plan activo' });
   }
 
-  const quotaLimit = await prisma.ftpQuotaLimits.findFirst({
+  let quotaTallies = await prisma.ftpquotatallies.findFirst({
     where: {
-      name: ftpUser.userid,
+      name: regularFtpUser.userid,
     },
   });
 
-  const quotaUsed = await prisma.ftpquotatallies.findFirst({
+  let quotaLimits = await prisma.ftpQuotaLimits.findFirst({
     where: {
-      name: ftpUser.userid,
+      name: regularFtpUser.userid,
     },
   });
 
-  if (!quotaLimit || !quotaUsed) {
+  if (!quotaLimits || !quotaTallies) {
     log.error(
-      `${logPrefix(extended)} This user does not have quotas (${user.id})`,
+      `${logPrefix(useExtendedAccount)} This user does not have quotas (${
+        user.id
+      })`,
+    );
+    return res
+      .status(400)
+      .send({ error: 'No hay quotas activas para este usuario' });
+  }
+
+  const hasRemainingGb =
+    quotaTallies.bytes_out_used < quotaLimits.bytes_out_avail;
+
+  if ((activePlans.length === 0 || !hasRemainingGb) && extendedAccount) {
+    log.info(`[DOWNLOAD] Using extended account for user ${user.id}`);
+    regularFtpUser = extendedAccount;
+    useExtendedAccount = true;
+  }
+
+  if (useExtendedAccount && extendedAccount) {
+    quotaLimits = await prisma.ftpQuotaLimits.findFirst({
+      where: {
+        name: extendedAccount.userid,
+      },
+    });
+
+    quotaTallies = await prisma.ftpquotatallies.findFirst({
+      where: {
+        name: extendedAccount.userid,
+      },
+    });
+  }
+
+  if (!quotaLimits || !quotaTallies) {
+    log.error(
+      `${logPrefix(useExtendedAccount)} This user does not have quotas (${
+        user.id
+      })`,
     );
     return res
       .status(400)
@@ -120,11 +141,12 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
 
   const fileStat = await fileService.stat(fullPath);
 
-  const availableBytes = quotaLimit.bytes_out_avail - quotaUsed.bytes_out_used;
+  const availableBytes =
+    quotaLimits.bytes_out_avail - quotaTallies.bytes_out_used;
 
   if (availableBytes < fileStat.size) {
     log.error(
-      `${logPrefix(extended)} Not enough bytes left, user id: ${
+      `${logPrefix(useExtendedAccount)} Not enough bytes left, user id: ${
         user.id
       }, song path: ${fullPath}`,
     );
@@ -136,25 +158,25 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
 
   log.info(
     `${logPrefix(
-      extended,
+      useExtendedAccount,
     )} id: ${user?.id}, username: ${user?.username}, bytes available left: ${availableBytes}`,
   );
 
   await prisma.$transaction([
     prisma.ftpQuotaLimits.update({
       where: {
-        id: quotaLimit.id,
+        id: quotaLimits.id,
       },
       data: {
-        bytes_out_avail: quotaLimit.bytes_out_avail - BigInt(fileStat.size),
+        bytes_out_avail: quotaLimits.bytes_out_avail - BigInt(fileStat.size),
       },
     }),
     prisma.ftpquotatallies.update({
       where: {
-        id: quotaUsed.id,
+        id: quotaTallies.id,
       },
       data: {
-        bytes_out_used: quotaUsed.bytes_out_used + BigInt(fileStat.size),
+        bytes_out_used: quotaTallies.bytes_out_used + BigInt(fileStat.size),
       },
     }),
   ]);
@@ -167,5 +189,5 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
   return res.sendFile(fullPath);
 };
 
-const logPrefix = (extendedAccount: boolean) =>
+export const logPrefix = (extendedAccount: boolean) =>
   extendedAccount ? '[DOWNLOAD:EXTENDED]' : '[DOWNLOAD]';

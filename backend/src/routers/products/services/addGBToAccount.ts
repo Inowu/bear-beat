@@ -1,28 +1,38 @@
-import { PrismaClient, Users, products } from '@prisma/client';
+import { PrismaClient, Users } from '@prisma/client';
 import { log } from '../../../server';
 import { gbToBytes } from '../../../utils/gbToBytes';
 import { extendedAccountPostfix } from '../../../utils/constants';
 import { OrderStatus } from '../../subscriptions/interfaces/order-status.interface';
+import { SessionUser } from '../../auth/utils/serialize-user';
 
 export const addGBToAccount = async ({
   prisma,
   user,
-  productId,
   orderId,
 }: {
   prisma: PrismaClient;
-  user: Users;
-  productId: number;
+  user: Users | SessionUser;
   orderId: number;
 }) => {
+  const order = await prisma.product_orders.findFirst({
+    where: {
+      id: orderId,
+    },
+  });
+
+  if (!order) {
+    log.error(`[PRODUCT:ADD_GB] Order ${orderId} not found`);
+    return;
+  }
+
   const product = await prisma.products.findFirst({
     where: {
-      id: productId,
+      id: order.product_id,
     },
   });
 
   if (!product) {
-    log.error(`[PRODUCT:ADD_GB] Product ${productId} not found`);
+    log.error(`[PRODUCT:ADD_GB] Product ${order.product_id} not found`);
     return;
   }
 
