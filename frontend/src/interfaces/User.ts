@@ -11,6 +11,7 @@ export interface IUser {
   hasActiveSubscription: boolean;
   isSubscriptionCancelled: boolean;
   stripeCusId: string;
+  extendedFtpAccount: any ;
 }
 interface IFtpAccount {
   expiration: Date;
@@ -20,6 +21,10 @@ interface IFtpAccount {
   port: string;
 }
 export interface IQuota {
+  regular: IQuotaData
+  extended: IQuotaData
+}
+export interface IQuotaData {
   available: bigint;
   used: bigint;
 }

@@ -3,4 +3,5 @@ export interface IAdminUser {
     username: string;
     active: number;
     id: number;
+    registered_on: Date;
 }

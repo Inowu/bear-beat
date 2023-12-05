@@ -41,7 +41,6 @@ function MyAccount() {
   const [conditionTitle, setConditionTitle] = useState("");
   const [condition, setCondition] = useState(0);
   const [showPlan, setShowPlan] = useState<boolean>(false);
-
   const closeCondition = () => {
     setShowCondition(false);
   }
@@ -116,15 +115,20 @@ function MyAccount() {
     }
   }
   const getQuota = async () => {
-    try {
-      const quota: any = await trpc.ftp.quota.query();
-      // if(getCompleted(quota.used, quota.available) >= 99){
-      //   openPlan();
-      // }
-      setQuota(quota);
-    }
-    catch (error) {
-      console.log(error);
+    if(currentUser !== null){
+      let body = {
+        isExtended: currentUser.extendedFtpAccount
+      }
+      try {
+        const quota: any = await trpc.ftp.quota.query(body);
+        if(getCompleted(quota.used, quota.available) >= 99){
+          openPlan();
+        }
+        setQuota(quota);
+      }
+      catch (error) {
+        console.log(error);
+      }
     }
   }
   const getOrders = async () => {
@@ -165,10 +169,11 @@ function MyAccount() {
     }
   }
   useEffect(() => {
-    getQuota();
-    getOrders();
-  }, [])
-
+    if(currentUser){
+      getQuota();
+      getOrders();
+    }
+  }, [currentUser])
   return (
     <div className="my-account-main-container">
       <div className="general">
@@ -190,7 +195,8 @@ function MyAccount() {
             <p>{currentUser?.phone}</p>
           </div>
         </div>
-        {true && <SpaceAvailableCard quota={quota} openPlan={openPlan}/>}
+        {quota.regular && <SpaceAvailableCard quotaData={quota.regular} openPlan={openPlan} type ="regular"/>}
+        {currentUser?.extendedFtpAccount !== undefined  && quota.extended && <SpaceAvailableCard quotaData={quota.extended} openPlan={openPlan} type ="extended"/>}
         {
           currentUser?.hasActiveSubscription && !currentUser.isSubscriptionCancelled &&
           <button className="cancel" onClick={startCancel}>CANCELAR SUSCRIPCION</button>
@@ -226,7 +232,20 @@ function MyAccount() {
                     </tr> :
                     <tr />
                 }
-
+                {
+                  currentUser?.extendedFtpAccount !== undefined && currentUser?.extendedFtpAccount  && currentUser?.ftpAccount ?
+                    <tr>
+                      <td>{currentUser?.ftpAccount.host}</td>
+                      <td>{currentUser?.extendedFtpAccount.userid}</td>
+                      <td>{currentUser?.extendedFtpAccount.passwd}</td>
+                      <td>{currentUser?.ftpAccount.port}</td>
+                      <td>{}</td>
+                      <td>
+                        <img src={filezillaIcon} alt="filezilla" />
+                      </td>
+                    </tr> :
+                    <tr />
+                }
               </tbody>
             </table>
           ) : (
@@ -325,7 +344,7 @@ function MyAccount() {
             : (condition === 2 ? changeDefault : deleteCard)
         }
       />
-      {/* <Elements stripe={stripePromise}>
+      <Elements stripe={stripePromise}>
         <PlansModal
           show={showPlan}
           onHide={closePlan}
@@ -337,7 +356,7 @@ function MyAccount() {
             setSuccessTitle: setSuccessTitle,
           }}
         />
-      </Elements> */}
+      </Elements>
     </div>
   );
 }

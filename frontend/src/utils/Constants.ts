@@ -34,3 +34,4 @@ export const plans: Array<PlanI> = [
     priceIdStripe: "",
   },
 ];
+export const ARRAY_10 = ['','','','','','','','','',''];
