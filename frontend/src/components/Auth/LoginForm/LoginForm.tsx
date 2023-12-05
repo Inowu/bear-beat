@@ -21,14 +21,14 @@ function LoginForm() {
     setShow(false);
   }
   const validationSchema = Yup.object().shape({
-    username: Yup.string()
-      .required('Username is required')
-      .min(3, 'Username must be at least 3 characters long'),
+    email: Yup.string()
+      .required('Email is required')
+      .email("Invalid email format"),
     password: Yup.string().required('Password is required')
       .min(3, 'Password must contain 3 characters atleast'),
   });
   const initialValues = {
-    username: "",
+    email: "",
     password: "",
   };
   const formik = useFormik({
@@ -37,7 +37,7 @@ function LoginForm() {
     onSubmit: async (values) => {
       setLoader(true);
       let body = {
-        username: values.username,
+        email: values.email,
         password: values.password,
       }
       try {
@@ -55,8 +55,7 @@ function LoginForm() {
   });
 
   const handleButtonClick = () => {
-    // Redireccionar al número de teléfono cuando se hace clic en el botón
-    window.location.href = 'tel:+6622914052';
+    window.location.href = 'tel:+12312312312';
   };
   
   return (
@@ -64,15 +63,15 @@ function LoginForm() {
       <h2>LOGIN</h2>
       <div className="c-row">
         <input
-          placeholder="username"
+          placeholder="email"
           type="text"
-          id="username"
-          name="username"
-          value={formik.values.username}
+          id="email"
+          name="email"
+          value={formik.values.email}
           onChange={formik.handleChange}
         />
-        {formik.errors.username && (
-          <div className="error-formik">{formik.errors.username}</div>
+        {formik.errors.email && (
+          <div className="error-formik">{formik.errors.email}</div>
         )}
       </div>
       <div className="c-row">
@@ -107,16 +106,16 @@ function LoginForm() {
         style={{
           position: 'fixed',
           bottom: '20px',
-          right: '20px',
-          padding: '10px',
+          right: '30px',
+          padding: '12px',
           background: '#fff',
-          color: 'black',
+          color: '#2c2828',
           borderRadius: '50%',
           cursor: 'pointer',
         }}
         onClick={handleButtonClick}
       >
-        <FontAwesomeIcon icon={faHeadset} />
+        <FontAwesomeIcon icon={faHeadset} style={{ fontSize: '25px' }} />
       </div>
       <ErrorModal show={show} onHide={closeModal} message={errorMessage} />
     </form>
