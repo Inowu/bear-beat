@@ -11,6 +11,16 @@ aside {
     width: 100%;
   }
 
+  .btnSupport{
+    position: fixed;
+    bottom: 20px;
+    padding: 12px;
+    background-color: #fff;
+    color: #2c2828;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
   .nav-container {
     color: #ffffff;
     h2 {
@@ -76,6 +86,10 @@ aside {
     .nav-container, img {
       max-width: 300px;
       min-width: 300px;
+    }
+    .btnSupport{
+      position: absolute;
+      bottom: 100px;
     }
   }
 }

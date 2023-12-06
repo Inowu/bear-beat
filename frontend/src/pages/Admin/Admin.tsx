@@ -11,18 +11,21 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import Pagination from "../../components/Pagination/Pagination";
 import { ARRAY_10 } from "../../utils/Constants";
+import AddUsersModal from "../../components/Modals/AddUsersModal/AddUsersModal";
+import CsvDownloader from 'react-csv-downloader';
 
-interface IAdminFilter  {
+interface IAdminFilter {
     page: number;
     total: number;
     search: string;
     active: number;
 }
-function Admin(){
+function Admin() {
     const { currentUser } = useUserContext();
     const [users, setUsers] = useState<IAdminUser[]>([]);
     const [totalUsers, setTotalUsers] = useState(0);
     const [allUsers, setAllUsers] = useState<IAdminUser[]>([]);
+    const [showModal, setShowModal] = useState<boolean>(false);
     const [showOption, setShowOption] = useState<boolean>(false);
     const [optionMessage, setOptionMessage] = useState<string>('');
     const [optionTitle, setOptionTitle] = useState<string>('');
@@ -34,6 +37,9 @@ function Admin(){
         search: '',
         active: 2,
     })
+    const closeModalAdd = () => {
+        setShowModal(false);
+    }
     const navigate = useNavigate();
     const openOption = () => {
         setShowOption(true);
@@ -52,15 +58,15 @@ function Admin(){
     }
     const getPlans = async () => {
         let body = {
-        where: {
-            activated: 1,
+            where: {
+                activated: 1,
+            }
         }
+        try {
+            const plans: any = await trpc.plans.findManyPlans.query(body);
+            setPlans(plans);
         }
-        try{
-        const plans: any = await trpc.plans.findManyPlans.query(body);
-        setPlans(plans);
-        }
-        catch(error){
+        catch (error) {
             console.log(error);
         }
     }
@@ -70,7 +76,7 @@ function Admin(){
         openOption();
     }
     const activateSubscription = async (plan: IPlans) => {
-        try{
+        try {
             let body = {
                 planId: plan.id,
                 userId: selectUser.id
@@ -78,13 +84,13 @@ function Admin(){
             const activate = await trpc.admin.activatePlanForUser.mutate(body);
             alert('Plan activado con éxito!')
         }
-        catch(error){
+        catch (error) {
             console.log(error)
         }
     }
     const startFilter = (key: string, value: string | number) => {
         let tempFilters: any = filters;
-        if(key !== 'page'){
+        if (key !== 'page') {
             tempFilters.page = 0;
         }
         tempFilters[key] = value;
@@ -93,65 +99,65 @@ function Admin(){
     }
     const filterUsers = async (filt: IAdminFilter) => {
         setLoader(true);
-        try{        
-        if(filt.active === 2){
-            let body: any = {
-                take: 10,
-                skip: filt.page * 10,
-                where: {
-                    email: {
-                        startsWith: filt.search,
-                    },
-                }
-            }
-            let body2: any = {
-                where: {
-                    email: {
-                        startsWith: filt.search,
-                    },
-                },
-                select: {
-                    id: true,
-                  },
-            }
-            const tempUsers = await trpc.users.findManyUsers.query(body);
-            const totalUsersResponse = await trpc.users.findManyUsers.query(body2);
-            setLoader(false);
-            setUsers(tempUsers);
-            setTotalUsers(totalUsersResponse.length);
-        }else{
-            let body: any = {
-                take: 10,
-                skip: filt.page * 10,
-                where: {
-                    email: {
-                        startsWith: filt.search,
-                    },
-                    active: {
-                        equals: filt.active
+        try {
+            if (filt.active === 2) {
+                let body: any = {
+                    take: 10,
+                    skip: filt.page * 10,
+                    where: {
+                        email: {
+                            startsWith: filt.search,
+                        },
                     }
                 }
-            }
-            let body2: any = {
-                where: {
-                    email: {
-                        startsWith: filt.search,
+                let body2: any = {
+                    where: {
+                        email: {
+                            startsWith: filt.search,
+                        },
                     },
-                    active: {
-                        equals: filt.active
+                    select: {
+                        id: true,
+                    },
+                }
+                const tempUsers = await trpc.users.findManyUsers.query(body);
+                const totalUsersResponse = await trpc.users.findManyUsers.query(body2);
+                setLoader(false);
+                setUsers(tempUsers);
+                setTotalUsers(totalUsersResponse.length);
+            } else {
+                let body: any = {
+                    take: 10,
+                    skip: filt.page * 10,
+                    where: {
+                        email: {
+                            startsWith: filt.search,
+                        },
+                        active: {
+                            equals: filt.active
+                        }
                     }
-                },
-                select: {
-                    id: true,
-                  },
+                }
+                let body2: any = {
+                    where: {
+                        email: {
+                            startsWith: filt.search,
+                        },
+                        active: {
+                            equals: filt.active
+                        }
+                    },
+                    select: {
+                        id: true,
+                    },
+                }
+                const tempUsers = await trpc.users.findManyUsers.query(body);
+                const totalUsersResponse = await trpc.users.findManyUsers.query(body2);
+                setLoader(false);
+                setUsers(tempUsers);
+                setTotalUsers(totalUsersResponse.length);
             }
-            const tempUsers = await trpc.users.findManyUsers.query(body);
-            const totalUsersResponse = await trpc.users.findManyUsers.query(body2);
-            setLoader(false);
-            setUsers(tempUsers);
-            setTotalUsers(totalUsersResponse.length);
-        }
-        }catch(error){
+        } catch (error) {
             console.log(error);
         }
     }
@@ -160,22 +166,40 @@ function Admin(){
         filterUsers(filters);
     }, [])
     useEffect(() => {
-        if(currentUser &&currentUser.role !== "admin"){
+        if (currentUser && currentUser.role !== "admin") {
             navigate('/');
         }
     }, [currentUser])
-    
-    return(
+
+    const transformUserData = (users: IAdminUser) => {
+        return users.map(user => ({
+            username: user.username,
+            email: user.email,
+            registered_on: user.registered_on.toLocaleDateString(),
+            active: user.active === 1 ? "Activa" : "No activa"
+        }));
+    };
+
+    return (
         <div className="admin-contain">
             <div className="header">
                 <h1>Usuarios</h1>
+                <button className="btn-addUsers" onClick={() => setShowModal(true)}>Añadir Usuarios</button>
+                <CsvDownloader className="btn-addUsers"
+                    filename="lista_de_usuarios"
+                    extension=".csv"
+                    separator=";"
+                    wrapColumnChar="'"
+                    datas={transformUserData(users)}
+                    text="Exportar Clientes" />
                 <div className="search-input">
-                    <input  
+                    <input
                         placeholder="Buscar por email"
-                        onChange={(e:any)=>{startFilter('search',e.target.value)}}
+                        onChange={(e: any) => { startFilter('search', e.target.value) }}
                     />
-                    <FontAwesomeIcon icon ={faSearch} />
+                    <FontAwesomeIcon icon={faSearch} />
                 </div>
+                <AddUsersModal showModal={showModal} onHideModal={closeModalAdd} />
             </div>
             {/* <div className="filter-contain">
                 <div className="select-input">
@@ -209,54 +233,54 @@ function Admin(){
                             </tr>
                         </thead>
                         <tbody>
-                                {   !loader?
-                                    users.map((user: IAdminUser, index: number)=> {
-                                        return (
-                                            <tr key={"admin_users_" + index}>
-                                                <td className="">
-                                                    {user.username}
-                                                </td>
-                                                <td>
-                                                    {user.email}
-                                                </td>
-                                                <td>
-                                                    {user.registered_on.toLocaleDateString()}
-                                                </td>
-                                                <td style={{textAlign: 'center'}}>
-                                                    {user.active === 1 ? "Activa" : "No activa"}
-                                                </td>
-                                                <td>
-                                                    <button onClick={()=>{giveSuscription(user)}}>Activar Suscripcion</button>
-                                                </td>
-                                            </tr>
+                            {!loader ?
+                                users.map((user: IAdminUser, index: number) => {
+                                    return (
+                                        <tr key={"admin_users_" + index}>
+                                            <td className="">
+                                                {user.username}
+                                            </td>
+                                            <td>
+                                                {user.email}
+                                            </td>
+                                            <td>
+                                                {user.registered_on.toLocaleDateString()}
+                                            </td>
+                                            <td style={{ textAlign: 'center' }}>
+                                                {user.active === 1 ? "Activa" : "No activa"}
+                                            </td>
+                                            <td>
+                                                <button onClick={() => { giveSuscription(user) }}>Activar Suscripcion</button>
+                                            </td>
+                                        </tr>
 
-                                        )
-                                    })
-                                    : ARRAY_10.map((val:string, index: number)=>{
-                                        return (
-                                            <tr key={"array_10" + index} className="tr-load">
-                                                <td/><td/><td/><td/><td/>
-                                            </tr>
-                                        )
-                                    })
-                                }
+                                    )
+                                })
+                                : ARRAY_10.map((val: string, index: number) => {
+                                    return (
+                                        <tr key={"array_10" + index} className="tr-load">
+                                            <td /><td /><td /><td /><td />
+                                        </tr>
+                                    )
+                                })
+                            }
                         </tbody>
                     </table>
                 </div>
                 <Pagination
-                    totalData = {totalUsers}
-                    title = "usuarios"
-                    startFilter = {startFilter}
-                    currentPage = {filters.page}
+                    totalData={totalUsers}
+                    title="usuarios"
+                    startFilter={startFilter}
+                    currentPage={filters.page}
                 />
             </div>
             <OptionModal
                 show={showOption}
                 onHide={closeOption}
-                title ={optionTitle}
-                message ={optionMessage}
-                action ={plan_1}
-                action2 = {plan_2}
+                title={optionTitle}
+                message={optionMessage}
+                action={plan_1}
+                action2={plan_2}
             />
         </div>
     )

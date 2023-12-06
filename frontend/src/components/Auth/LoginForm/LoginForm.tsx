@@ -6,8 +6,8 @@ import * as Yup from 'yup';
 import { useState } from "react";
 import { ErrorModal } from "../../../components/Modals/ErrorModal/ErrorModal";
 import { Spinner } from "../../../components/Spinner/Spinner";
-import { faHeadset } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+
+import AddUsersModal from "../../../components/Modals/AddUsersModal/AddUsersModal";
 
 
 
@@ -21,14 +21,14 @@ function LoginForm() {
     setShow(false);
   }
   const validationSchema = Yup.object().shape({
-    email: Yup.string()
+    username: Yup.string()
       .required('Email is required')
       .email("Invalid email format"),
     password: Yup.string().required('Password is required')
       .min(3, 'Password must contain 3 characters atleast'),
   });
   const initialValues = {
-    email: "",
+    username: "",
     password: "",
   };
   const formik = useFormik({
@@ -37,7 +37,7 @@ function LoginForm() {
     onSubmit: async (values) => {
       setLoader(true);
       let body = {
-        email: values.email,
+        username: values.username,
         password: values.password,
       }
       try {
@@ -54,10 +54,8 @@ function LoginForm() {
     },
   });
 
-  const handleButtonClick = () => {
-    window.location.href = 'tel:+12312312312';
-  };
   
+
   return (
     <form onSubmit={formik.handleSubmit}>
       <h2>LOGIN</h2>
@@ -65,13 +63,13 @@ function LoginForm() {
         <input
           placeholder="email"
           type="text"
-          id="email"
-          name="email"
-          value={formik.values.email}
+          id="username"
+          name="username"
+          value={formik.values.username}
           onChange={formik.handleChange}
         />
-        {formik.errors.email && (
-          <div className="error-formik">{formik.errors.email}</div>
+        {formik.errors.username && (
+          <div className="error-formik">{formik.errors.username}</div>
         )}
       </div>
       <div className="c-row">
@@ -101,21 +99,6 @@ function LoginForm() {
       }
       <div className="c-row">
         <Link to={"registro"}>Registrarme</Link>
-      </div>
-      <div
-        style={{
-          position: 'fixed',
-          bottom: '20px',
-          right: '30px',
-          padding: '12px',
-          background: '#fff',
-          color: '#2c2828',
-          borderRadius: '50%',
-          cursor: 'pointer',
-        }}
-        onClick={handleButtonClick}
-      >
-        <FontAwesomeIcon icon={faHeadset} style={{ fontSize: '25px' }} />
       </div>
       <ErrorModal show={show} onHide={closeModal} message={errorMessage} />
     </form>

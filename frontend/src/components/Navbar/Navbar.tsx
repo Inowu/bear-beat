@@ -41,11 +41,6 @@ function Navbar(props: NavbarPropsI) {
               <FontAwesomeIcon icon={faShield} /> <span>Admin</span>
             </li>
           </Link>
-          <Link to={"/añadirUsuarios"}>
-            <li style={{paddingInline: 15}}>
-              <span>Añadir Usuarios</span>
-            </li>
-          </Link>
          </>
         }
         <Link to={"/micuenta"}>

@@ -8,6 +8,7 @@ import {
   faCartPlus,
   faQuestion,
 } from "@fortawesome/free-solid-svg-icons";
+import { faHeadset } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
 
 interface AsideNavbarPropsI {
@@ -16,11 +17,15 @@ interface AsideNavbarPropsI {
 }
 
 function AsideNavbar(props: AsideNavbarPropsI) {
-  const { currentUser,  resetCard} = useUserContext();
+  const { currentUser, resetCard } = useUserContext();
   const { show, onHide } = props;
   const goTo = () => {
     resetCard();
   }
+
+  const handleButtonClick = () => {
+    window.location.href = 'tel:+3521005329';
+  };
   return (
     <aside className={show ? "open" : ""}>
       <img src={Logo} alt="bear beat" />
@@ -35,10 +40,10 @@ function AsideNavbar(props: AsideNavbarPropsI) {
           {
             !currentUser?.hasActiveSubscription &&
             <Link to={"/planes"}>
-            <li>
-              <FontAwesomeIcon icon={faCartPlus} /> Get plan
-            </li>
-          </Link>
+              <li>
+                <FontAwesomeIcon icon={faCartPlus} /> Get plan
+              </li>
+            </Link>
           }
           <Link to={"/micuenta"}>
             <li>
@@ -51,6 +56,9 @@ function AsideNavbar(props: AsideNavbarPropsI) {
             </li>
           </Link>
         </ul>
+      </div>
+      <div onClick={handleButtonClick} className="btnSupport">
+        <FontAwesomeIcon icon={faHeadset} style={{ fontSize: '25px' }} />
       </div>
     </aside>
   );
