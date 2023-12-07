@@ -20,7 +20,7 @@ import Plans from "./pages/Plans/Plans";
 import Checkout from "./pages/Checkout/Checkout";
 import Admin from "./pages/Admin/Admin";
 import ResetPassword from "./components/Auth/ResetPassword/ResetPassword";
-import AddUsersModal from "./components/Modals/AddUsersModal/AddUsersModal";
+import { PlanAdmin } from "./pages/PlanAdmin/PlanAdmin";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement,
@@ -53,7 +53,9 @@ const router = createBrowserRouter([
           </AuthRoute>
         ),
         children: [
-          { path: "", element: <Admin /> },
+          { path: "", element: <Navigate replace to="usuarios" /> },
+          { path: "usuarios", element: <Admin /> },
+          { path: "planesAdmin", element: <PlanAdmin /> },
         ],
       },
       {

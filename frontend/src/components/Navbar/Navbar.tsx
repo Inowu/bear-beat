@@ -36,7 +36,7 @@ function Navbar(props: NavbarPropsI) {
         {
           currentUser?.role === "admin" &&
          <>
-          <Link to={"/admin"}>
+          <Link to={"admin/usuarios"}>
             <li>
               <FontAwesomeIcon icon={faShield} /> <span>Admin</span>
             </li>

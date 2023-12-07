@@ -7,7 +7,6 @@ import { useState } from "react";
 import { ErrorModal } from "../../../components/Modals/ErrorModal/ErrorModal";
 import { Spinner } from "../../../components/Spinner/Spinner";
 
-import AddUsersModal from "../../../components/Modals/AddUsersModal/AddUsersModal";
 
 
 

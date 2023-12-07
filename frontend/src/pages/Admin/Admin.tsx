@@ -25,6 +25,7 @@ function Admin() {
     const [users, setUsers] = useState<IAdminUser[]>([]);
     const [totalUsers, setTotalUsers] = useState(0);
     const [allUsers, setAllUsers] = useState<IAdminUser[]>([]);
+    const [storage, setStorage] = useState();
     const [showModal, setShowModal] = useState<boolean>(false);
     const [showOption, setShowOption] = useState<boolean>(false);
     const [optionMessage, setOptionMessage] = useState<string>('');
@@ -70,6 +71,18 @@ function Admin() {
             console.log(error);
         }
     }
+    // const getStorage = async () => {
+    //     let body = {
+    //     }
+    //     try {
+    //         const storage: any = await trpc.ftp.storage.query(body)
+    //         setStorage(storage);
+    //         console.log(storage)
+    //     }
+    //     catch (error) {
+    //         console.log(error);
+    //     }
+    // }
     const giveSuscription = (user: IAdminUser) => {
         setSelectUser(user);
         setOptionTitle('Seleccione el plan');
@@ -163,6 +176,7 @@ function Admin() {
     }
     useEffect(() => {
         getPlans();
+        // getStorage();
         filterUsers(filters);
     }, [])
     useEffect(() => {
