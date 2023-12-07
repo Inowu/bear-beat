@@ -48,7 +48,7 @@
     "@fastify/passport": "^2.3.0",
     "@fastify/secure-session": "^6.2.0",
     "@getbrevo/brevo": "^1.0.1",
-    "@prisma/client": "5.0.0",
+    "@prisma/client": "^5.4.1",
     "@trpc/server": "10.36.0",
     "archiver": "^6.0.1",
     "axios": "^1.6.2",

@@ -1,3 +1,6 @@
+import { z } from 'zod';
+import { TRPCError } from '@trpc/server';
+import axios from 'axios';
 import { shieldedProcedure } from '../procedures/shielded.procedure';
 import { router } from '../trpc';
 import { PlansAggregateSchema } from '../schemas/aggregatePlans.schema';
@@ -12,8 +15,164 @@ import { PlansGroupBySchema } from '../schemas/groupByPlans.schema';
 import { PlansUpdateManySchema } from '../schemas/updateManyPlans.schema';
 import { PlansUpdateOneSchema } from '../schemas/updateOnePlans.schema';
 import { PlansUpsertSchema } from '../schemas/upsertOnePlans.schema';
+import stripeInstance from '../stripe';
+import { log } from '../server';
+import { getPlanKey } from '../utils/getPlanKey';
+import { PaymentService } from './subscriptions/services/types';
+import { paypal } from '../paypal';
 
 export const plansRouter = router({
+  createStripePlan: shieldedProcedure
+    .input(
+      z.intersection(
+        PlansCreateOneSchema,
+        z.object({
+          data: z.object({
+            interval: z
+              .union([z.literal('month'), z.literal('year')])
+              .optional(),
+          }),
+        }),
+      ),
+    )
+    .mutation(async ({ ctx: { prisma }, input: { data } }) => {
+      try {
+        const stripeProduct = await stripeInstance.products.create({
+          name: data.name,
+          active: Boolean(data.activated) || true,
+          description: data.description,
+          default_price_data: {
+            currency: data.moneda || 'usd',
+            unit_amount: Number(data.price) * 100,
+            recurring: {
+              interval: data.interval || 'month',
+              interval_count: 1,
+            },
+          },
+        });
+
+        /* eslint-disable-next-line no-param-reassign */
+        delete data.interval;
+
+        const prismaPlan = await prisma.plans.create({
+          data: {
+            ...data,
+            [getPlanKey(PaymentService.STRIPE)]: stripeProduct.id,
+          },
+        });
+
+        return prismaPlan;
+      } catch (e) {
+        log.error(
+          `[PLANS:CREATE_STRIPE_PLAN] An error ocurred while creating a stripe plan: ${JSON.stringify(
+            e,
+          )}`,
+        );
+
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Ocurrió un error al crear el plan de stripe',
+        });
+      }
+    }),
+  createPaypalPlan: shieldedProcedure
+    .input(
+      z.intersection(
+        PlansCreateOneSchema,
+        z.object({
+          data: z.object({
+            interval: z
+              .union([z.literal('month'), z.literal('year')])
+              .optional(),
+          }),
+        }),
+      ),
+    )
+    .mutation(async ({ ctx: { prisma }, input: { data } }) => {
+      try {
+        const token = await paypal.getToken();
+
+        const productResponse = (
+          await axios.post(
+            `${paypal.paypalUrl()}/v1/catalogs/products`,
+            {
+              name: data.name,
+              description: data.description,
+              type: 'SERVICE',
+              category: 'ECOMMERCE_SERVICES',
+              home_url: 'https://thebearbeat.com',
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            },
+          )
+        ).data;
+
+        const planResponse = (
+          await axios.post(
+            `${paypal.paypalUrl()}/v1/billing/plans`,
+            {
+              product_id: productResponse.id,
+              name: data.name,
+              description: data.description,
+              status: 'ACTIVE',
+              billing_cycles: [
+                {
+                  tenure_type: 'REGULAR',
+                  sequence: 1,
+                  total_cycles: 0,
+                  pricing_scheme: {
+                    fixed_price: {
+                      value: data.price,
+                      currency_code: data.moneda || 'USD',
+                    },
+                  },
+                  frequency: {
+                    interval_unit: data.interval?.toUpperCase() || 'MONTH',
+                    interval_count: 1,
+                  },
+                },
+              ],
+              payment_preferences: {
+                auto_bill_outstanding: true,
+                setup_fee: {
+                  value: '0',
+                  currency_code: data.moneda || 'USD',
+                },
+              },
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            },
+          )
+        ).data;
+
+        /* eslint-disable-next-line no-param-reassign */
+        delete data.interval;
+
+        return await prisma.plans.create({
+          data: {
+            ...data,
+            [getPlanKey(PaymentService.PAYPAL)]: planResponse.id,
+          },
+        });
+      } catch (e) {
+        log.error(
+          `[PLANS:CREATE_PAYPAL_PLAN] An error ocurred while creating a paypal plan: ${JSON.stringify(
+            e,
+          )}`,
+        );
+
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Ocurrió un error al crear el plan de paypal',
+        });
+      }
+    }),
   aggregatePlans: shieldedProcedure
     .input(PlansAggregateSchema)
     .query(async ({ ctx, input }) => {

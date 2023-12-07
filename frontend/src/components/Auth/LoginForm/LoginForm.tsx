@@ -3,9 +3,12 @@ import { useUserContext } from "../../../contexts/UserContext";
 import trpc from "../../../api";
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import {  useState } from "react";
+import { useState } from "react";
 import { ErrorModal } from "../../../components/Modals/ErrorModal/ErrorModal";
 import { Spinner } from "../../../components/Spinner/Spinner";
+
+
+
 
 function LoginForm() {
   const [loader, setLoader] = useState<boolean>(false);
@@ -18,11 +21,11 @@ function LoginForm() {
   }
   const validationSchema = Yup.object().shape({
     username: Yup.string()
-    .required('Username is required')
-    .min(3, 'Username must be at least 3 characters long'),
+      .required('Email is required')
+      .email("Invalid email format"),
     password: Yup.string().required('Password is required')
-    .min(3, 'Password must contain 3 characters atleast'),
-});
+      .min(3, 'Password must contain 3 characters atleast'),
+  });
   const initialValues = {
     username: "",
     password: "",
@@ -31,30 +34,33 @@ function LoginForm() {
     initialValues: initialValues,
     validationSchema: validationSchema,
     onSubmit: async (values) => {
-        setLoader(true);
-        let body = {
-          username: values.username,
-          password: values.password,
-        }
-        try{
-          const login = await trpc.auth.login.query(body);
-          handleLogin(login.token);
-          navigate("/");
-          setLoader(false);
-        }
-        catch(error){
-          setShow(true);
-          setErrorMessage(error);
-          setLoader(false);
-        }
+      setLoader(true);
+      let body = {
+        username: values.username,
+        password: values.password,
+      }
+      try {
+        const login = await trpc.auth.login.query(body);
+        handleLogin(login.token);
+        navigate("/");
+        setLoader(false);
+      }
+      catch (error) {
+        setShow(true);
+        setErrorMessage(error);
+        setLoader(false);
+      }
     },
   });
+
+  
+
   return (
     <form onSubmit={formik.handleSubmit}>
       <h2>LOGIN</h2>
       <div className="c-row">
         <input
-          placeholder="username"
+          placeholder="email"
           type="text"
           id="username"
           name="username"
@@ -83,17 +89,17 @@ function LoginForm() {
       </div>
       {
         !loader
-        ?
-        <button className="btn" type="submit">
-          INGRESAR
-        </button>
-        :
-        <Spinner size={3} width={.3} color="#00e2f7"/>
+          ?
+          <button className="btn" type="submit">
+            INGRESAR
+          </button>
+          :
+          <Spinner size={3} width={.3} color="#00e2f7" />
       }
       <div className="c-row">
         <Link to={"registro"}>Registrarme</Link>
       </div>
-      <ErrorModal show={show} onHide={closeModal} message={errorMessage}/>
+      <ErrorModal show={show} onHide={closeModal} message={errorMessage} />
     </form>
   );
 }

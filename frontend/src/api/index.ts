@@ -7,6 +7,8 @@ const url = process.env.NODE_ENV === 'production' ? 'https://thebearbeatapi.lat/
 //ACTIVAR PARA LOCAL  
 // const url = process.env.NODE_ENV === 'production' ? 'https://thebearbeatapi.lat/trpc' : 'https://thebearbeatapi.lat/trpc';
 
+console.log(url);
+
 const trpc = createTRPCProxyClient<AppRouter>({
   transformer: superjson,
   links: [
