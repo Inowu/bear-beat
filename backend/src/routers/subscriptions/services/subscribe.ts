@@ -35,10 +35,10 @@ export const subscribe = async ({
       },
     });
 
-    if (order.status === OrderStatus.PAID) {
-      log.error(`[SUBSCRIPTION] This order was already paid, ${orderId}`);
-      return;
-    }
+    // if (order.status === OrderStatus.PAID) {
+    //   log.error(`[SUBSCRIPTION] This order was already paid, ${orderId}`);
+    //   return;
+    // }
 
     if (!order.plan_id) {
       log.error(`[SUBSCRIPTION] This order did not have a plan id, ${orderId}`);

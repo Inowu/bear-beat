@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
-import { FtpUser } from '@prisma/client';
 import { extendedAccountPostfix } from '../../utils/constants';
 
 /**
@@ -8,43 +7,52 @@ import { extendedAccountPostfix } from '../../utils/constants';
  * available bytes
  * */
 export const quota = shieldedProcedure
-  .input(
+  .output(
     z.object({
-      isExtended: z.boolean().optional(),
+      regular: z.object({
+        used: z.bigint(),
+        available: z.bigint(),
+      }),
+      extended: z.object({
+        used: z.bigint(),
+        available: z.bigint(),
+      }),
     }),
   )
-  .query(async ({ ctx: { prisma, session }, input: { isExtended } }) => {
+  .query(async ({ ctx: { prisma, session } }) => {
     const user = session!.user!;
 
-    let ftpUser: FtpUser | null = null;
+    const ftpUserExtended = await prisma.ftpUser.findFirst({
+      where: {
+        AND: [
+          {
+            user_id: user.id,
+          },
+          {
+            userid: {
+              endsWith: extendedAccountPostfix,
+            },
+          },
+        ],
+      },
+    });
 
-    if (isExtended) {
-      ftpUser = await prisma.ftpUser.findFirst({
-        where: {
-          AND: [
-            {
-              user_id: user.id,
-            },
-            {
-              userid: {
-                endsWith: extendedAccountPostfix,
-              },
-            },
-          ],
-        },
-      });
-    } else {
-      ftpUser = await prisma.ftpUser.findFirst({
-        where: {
-          user_id: user.id,
-        },
-      });
-    }
+    const ftpUser = await prisma.ftpUser.findFirst({
+      where: {
+        user_id: user.id,
+      },
+    });
 
     if (!ftpUser) {
       return {
-        used: 0,
-        available: 0,
+        regular: {
+          used: BigInt(0),
+          available: BigInt(0),
+        },
+        extended: {
+          used: BigInt(0),
+          available: BigInt(0),
+        },
       };
     }
 
@@ -62,13 +70,61 @@ export const quota = shieldedProcedure
 
     if (!quotaLimit || !quotaUsed) {
       return {
-        used: 0,
-        available: 0,
+        regular: {
+          used: BigInt(0),
+          available: BigInt(0),
+        },
+        extended: {
+          used: BigInt(0),
+          available: BigInt(0),
+        },
       };
     }
 
-    return {
+    const regularQuota = {
       used: quotaUsed.bytes_out_used,
       available: quotaLimit.bytes_out_avail,
+    };
+
+    if (!ftpUserExtended) {
+      return {
+        regular: regularQuota,
+        extended: {
+          used: BigInt(0),
+          available: BigInt(0),
+        },
+      };
+    }
+
+    const quotaLimitExtended = await prisma.ftpQuotaLimits.findFirst({
+      where: {
+        name: ftpUserExtended.userid,
+      },
+    });
+
+    const quotaUsedExtended = await prisma.ftpquotatallies.findFirst({
+      where: {
+        name: ftpUserExtended.userid,
+      },
+    });
+
+    if (!quotaUsedExtended || !quotaLimitExtended) {
+      return {
+        regular: regularQuota,
+        extended: {
+          used: BigInt(0),
+          available: BigInt(0),
+        },
+      };
+    }
+
+    const extendedQuota = {
+      used: quotaUsedExtended.bytes_out_used,
+      available: quotaLimitExtended.bytes_out_avail,
+    };
+
+    return {
+      regular: regularQuota,
+      extended: extendedQuota,
     };
   });

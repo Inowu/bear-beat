@@ -5,9 +5,11 @@ import { OrderStatus } from '../interfaces/order-status.interface';
 export const cancelOrder = async ({
   prisma,
   orderId,
+  isProduct = false,
 }: {
   prisma: PrismaClient;
   orderId?: number;
+  isProduct?: boolean;
 }) => {
   if (!orderId) {
     log.warn('No orderId found on cancelOrder handler');
@@ -25,12 +27,23 @@ export const cancelOrder = async ({
     return;
   }
 
-  await prisma.orders.update({
-    where: {
-      id: orderId,
-    },
-    data: {
-      status: OrderStatus.CANCELLED,
-    },
-  });
+  if (isProduct) {
+    await prisma.product_orders.update({
+      where: {
+        id: orderId,
+      },
+      data: {
+        status: OrderStatus.CANCELLED,
+      },
+    });
+  } else {
+    await prisma.orders.update({
+      where: {
+        id: orderId,
+      },
+      data: {
+        status: OrderStatus.CANCELLED,
+      },
+    });
+  }
 };

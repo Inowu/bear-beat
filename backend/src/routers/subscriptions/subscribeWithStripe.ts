@@ -108,22 +108,6 @@ export const subscribeWithStripe = shieldedProcedure
         },
       });
 
-      try {
-        await brevo.smtp.sendTransacEmail({
-          templateId: 2,
-          to: [{ email: user.email, name: user.username }],
-          params: {
-            NAME: user.username,
-            plan_name: plan.name,
-            price: plan.price,
-            currency: plan.moneda.toUpperCase(),
-            ORDER: order.id,
-          },
-        });
-      } catch (e) {
-        log.error(`[STRIPE] Error while sending email ${e}`);
-      }
-
       return {
         subscriptionId: subscription.id,
         clientSecret: (subscription.latest_invoice as any).payment_intent
