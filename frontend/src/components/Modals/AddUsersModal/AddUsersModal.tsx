@@ -23,7 +23,7 @@ function AddUsersModal(props: IAddUsersModal) {
 
   const { showModal, onHideModal } = props;
 
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const [loader, setLoader] = useState<boolean>(false);
   const [show, setShow] = useState<boolean>(false);
   const [code, setCode] = useState<string>('52');
@@ -34,7 +34,7 @@ function AddUsersModal(props: IAddUsersModal) {
   }
   const closeSuccess = () => {
     setShowSuccess(false);
-    navigate("/");
+    // navigate("/");
   }
   const validationSchema = Yup.object().shape({
     email: Yup.string()
@@ -85,7 +85,7 @@ function AddUsersModal(props: IAddUsersModal) {
     },
   });
 
-  
+
 
   return (
     <Modal show={showModal} onHide={onHideModal} centered>
@@ -174,7 +174,7 @@ function AddUsersModal(props: IAddUsersModal) {
             ? <button className="btn-option-4" type="submit">Añadir Usuario</button>
             : <Spinner size={3} width={.3} color="#00e2f7" />
         }
-        <button className="btn-cancel" onClick={onHideModal} type="submit">Cancelar</button>
+        <button className="btn-cancel" onClick={onHideModal} type="reset">Cancelar</button>
         <ErrorModal show={show} onHide={closeModal} message={errorMessage} />
         <SuccessModal
           show={showSuccess}

@@ -246,8 +246,8 @@
 
     input.phone {
       border-radius: 100px !important;
-        padding: 5px 90px !important;
-        width: 100% !important;
+      padding: 5px 90px !important;
+      width: 100% !important;
     }
   }
 
@@ -282,4 +282,49 @@
     text-align: center;
     margin-bottom: 20px;
   }
+
+}
+
+select {
+  background-color: transparent;
+  // font-size: 1.8rem;
+  // padding: 0;
+  color: black;
+  border-radius: 100px !important;
+  padding: 5px 20px !important;
+  width: 100% !important;
+  border-width: 2px;
+  // border-color: black;
+  // width: 100px;
+
+  &:focus {
+    box-shadow: none;
+  }
+}
+
+.c-row-price {
+  flex-direction: row !important;
+  // position: relative;
+  margin-bottom: 30px;
+  width: 100%;
+  justify-content: center !important;
+
+  .formik {
+    color: red;
+    padding-left: 4px;
+  }
+
+  input {
+    border-radius: 100px;
+    padding: 5px 25px;
+    width: 80%;
+    // border: none;
+    background: transparent;
+  }
+
+  select {
+    width: 20% !important;
+    padding: 5px 10px !important;
+  }
+
 }

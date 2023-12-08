@@ -60,7 +60,7 @@ export function PlansModal(props: IPlan) {
       let body: any = {
         productId: selectPlan.id,
         paymentMethod: card,
-        service: 'STRIPE'
+        service: 'Stripe'
       }
       try {
         const plans = await trpc.products.buyMoreGB.mutate(body)
