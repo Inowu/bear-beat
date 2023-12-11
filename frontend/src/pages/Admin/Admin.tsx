@@ -185,8 +185,8 @@ function Admin() {
         }
     }, [currentUser])
 
-    const transformUserData = (users: IAdminUser) => {
-        return users.map(user => ({
+    const transformUserData = (users: IAdminUser[]) => {
+        return users.map((user:any) => ({
             username: user.username,
             email: user.email,
             registered_on: user.registered_on.toLocaleDateString(),
