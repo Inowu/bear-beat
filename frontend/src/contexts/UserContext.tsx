@@ -7,10 +7,10 @@ interface UserContextI {
   userToken: string | null;
   handleLogin: (token: string) => void;
   handleLogout: () => void;
-  resetCard: ()=> void;
+  resetCard: () => void;
   fileChange: boolean;
-  closeFile: ()=> void;
-  startUser: ()=> void;
+  closeFile: () => void;
+  startUser: () => void;
   paymentMethods: IPaymentMethod[];
   cardLoad: boolean;
   getPaymentMethods: () => void;
@@ -19,15 +19,15 @@ interface UserContextI {
 export const UserContext = createContext<UserContextI>({
   currentUser: null,
   userToken: "",
-  handleLogin: () => {},
-  handleLogout: () => {},
-  resetCard: ()=> {},
+  handleLogin: () => { },
+  handleLogout: () => { },
+  resetCard: () => { },
   fileChange: false,
-  closeFile: ()=> {},
-  startUser:()=> {},
+  closeFile: () => { },
+  startUser: () => { },
   paymentMethods: [],
   cardLoad: false,
-  getPaymentMethods: ()=> {},
+  getPaymentMethods: () => { },
 });
 
 export function useUserContext() {
@@ -42,15 +42,19 @@ const UserContextProvider = (props: any) => {
   const [paymentMethods, setPaymentMethods] = useState<IPaymentMethod[]>([]);
   const [cardLoad, setCardLoad] = useState<boolean>(false);
 
+
+
+
   function handleLogin(token: string) {
     localStorage.setItem("token", token);
     setUserToken(token);
+    // setUserToken(token);
     // localStorage.setItem("user", "Javier Centeno");
   }
   function resetCard() {
     setFileChange(true);
   }
-  function closeFile(){
+  function closeFile() {
     setFileChange(false);
   }
   function handleLogout() {
@@ -70,12 +74,12 @@ const UserContextProvider = (props: any) => {
     }
     setCardLoad(false);
   }
-  async function startUser () {
-    try{
-      const user: any = await trpc.auth.me.query( );
+  async function startUser() {
+    try {
+      const user: any = await trpc.auth.me.query();
       setCurrentUser(user);
     }
-    catch(error){
+    catch (error) {
       console.log(error);
       handleLogout();
     }
@@ -90,14 +94,16 @@ const UserContextProvider = (props: any) => {
   }, [userToken]);
 
   useEffect(() => {
-    if(currentUser === null){
+    if (currentUser === null) {
       setPaymentMethods([])
-    }else{
+    } else {
       getPaymentMethods();
     }
   }, [currentUser])
-  
-  
+
+ 
+
+
   const values = {
     userToken,
     currentUser,

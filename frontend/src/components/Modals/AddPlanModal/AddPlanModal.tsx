@@ -51,8 +51,11 @@ function AddPlanModal(props: IAddPlanModal) {
     description: "",
     duration: "",
     name: "",
-    price: "",
+    price: 0,
     paymentMethod: "",
+    moneda: "",
+    homedir: "/home/products/",
+    stripe_prod_id_test: "",
   };
   const formik = useFormik({
     initialValues: initialValues,
@@ -64,9 +67,17 @@ function AddPlanModal(props: IAddPlanModal) {
         duration: values.duration,
         name: values.name,
         price: values.price,
+        moneda: values.moneda,
+        homedir: values.homedir,
+        stripe_prod_id_test: values.stripe_prod_id_test,
       }
       try {
-        await trpc.plans.createPaypalPlan.mutate({ data: body });
+        if (values.paymentMethod === 'stripe') {
+          await trpc.plans.createStripePlan.mutate({ data: body });
+        } else if (values.paymentMethod === 'paypal') {
+          await trpc.plans.createPaypalPlan.mutate({ data: body });
+        }
+        // console.log(body);
         setShowSuccess(true);
         setLoader(false);
       }
@@ -126,16 +137,16 @@ function AddPlanModal(props: IAddPlanModal) {
         </div>
         <div className="c-row-price">
           <select
-            id="currency"
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
+            id="moneda"
+            value={formik.values.moneda}
+            onChange={formik.handleChange}
           >
-            <option value="usd">USD</option>
-            <option value="mxn">MXN</option>
+            <option value="USD">USD</option>
+            <option value="MXN">MXN</option>
           </select>
           <input
             placeholder="Price"
-            type="price"
+            type="number"
             id="price"
             name="price"
             value={formik.values.price}
