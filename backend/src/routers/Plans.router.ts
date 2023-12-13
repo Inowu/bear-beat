@@ -75,10 +75,123 @@ export const plansRouter = router({
         });
       }
     }),
+  updateStripePlan: shieldedProcedure
+    .input(PlansUpdateOneSchema)
+    .mutation(async ({ ctx: { prisma }, input }) => {
+      const { where, data } = input;
+
+      const plan = await prisma.plans.findUnique({
+        where,
+      });
+
+      if (!plan) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Plan no encontrado',
+        });
+      }
+
+      const stripeId = plan[getPlanKey(PaymentService.STRIPE)];
+
+      if (!stripeId) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'El plan no tiene un id de stripe asociado',
+        });
+      }
+
+      try {
+        await stripeInstance.products.update(
+          plan[getPlanKey(PaymentService.STRIPE)] as string,
+          {
+            ...(data.name !== undefined ? { name: data.name as string } : {}),
+            ...(data.activated !== undefined
+              ? { active: Boolean(data.activated) }
+              : {}),
+            ...(data.description !== undefined
+              ? { description: data.description as string }
+              : {}),
+            ...(data.price !== undefined || data.moneda !== undefined
+              ? {
+                  default_price_data: {
+                    ...(data.moneda !== undefined
+                      ? { currency: data.moneda }
+                      : {}),
+                    ...(data.price !== undefined
+                      ? { unit_amount: Number(data.price) * 100 }
+                      : {}),
+                  },
+                }
+              : {}),
+          },
+        );
+
+        const prismaPlan = await prisma.plans.update(input);
+
+        return prismaPlan;
+      } catch (e) {
+        log.error(
+          `[PLANS:CREATE_STRIPE_PLAN] An error ocurred while creating a stripe plan: ${JSON.stringify(
+            e,
+          )}`,
+        );
+
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Ocurrió un error al crear el plan de stripe',
+        });
+      }
+    }),
+  deleteStripePlan: shieldedProcedure
+    .input(PlansDeleteOneSchema)
+    .mutation(async ({ ctx: { prisma }, input }) => {
+      const { where } = input;
+
+      const plan = await prisma.plans.findUnique({
+        where,
+      });
+
+      if (!plan) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Plan no encontrado',
+        });
+      }
+
+      const stripeId = plan[getPlanKey(PaymentService.STRIPE)];
+
+      if (!stripeId) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'El plan no tiene un id de stripe asociado',
+        });
+      }
+
+      try {
+        await stripeInstance.products.del(
+          plan[getPlanKey(PaymentService.STRIPE)] as string,
+        );
+
+        const prismaPlan = await prisma.plans.delete(input);
+
+        return prismaPlan;
+      } catch (e) {
+        log.error(
+          `[PLANS:CREATE_STRIPE_PLAN] An error ocurred while creating a stripe plan: ${JSON.stringify(
+            e,
+          )}`,
+        );
+
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Ocurrió un error al crear el plan de stripe',
+        });
+      }
+    }),
   createPaypalPlan: shieldedProcedure
     .input(
       z.intersection(
-        PlansCreateOneSchema,
+        PlansUpdateOneSchema,
         z.object({
           data: z.object({
             interval: z
@@ -88,7 +201,7 @@ export const plansRouter = router({
         }),
       ),
     )
-    .mutation(async ({ ctx: { prisma }, input: { data } }) => {
+    .mutation(async ({ ctx: { prisma }, input: { data, where } }) => {
       try {
         const token = await paypal.getToken();
 
@@ -154,12 +267,61 @@ export const plansRouter = router({
         /* eslint-disable-next-line no-param-reassign */
         delete data.interval;
 
-        return await prisma.plans.create({
+        return await prisma.plans.update({
+          where,
           data: {
-            ...data,
             [getPlanKey(PaymentService.PAYPAL)]: planResponse.id,
           },
         });
+      } catch (e) {
+        log.error(
+          `[PLANS:CREATE_PAYPAL_PLAN] An error ocurred while creating a paypal plan: ${JSON.stringify(
+            e,
+          )}`,
+        );
+
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Ocurrió un error al crear el plan de paypal',
+        });
+      }
+    }),
+  deactivatePaypalPlan: shieldedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+      }),
+    )
+    .mutation(async ({ ctx: { prisma }, input: { id } }) => {
+      const plan = await prisma.plans.findUnique({
+        where: {
+          id,
+        },
+      });
+
+      if (!plan) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Plan no encontrado',
+        });
+      }
+
+      try {
+        const token = await paypal.getToken();
+
+        await axios.post(
+          `${paypal.paypalUrl()}/v1/billing/plans/${
+            plan[getPlanKey(PaymentService.STRIPE)]
+          }/deactivate`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        return plan;
       } catch (e) {
         log.error(
           `[PLANS:CREATE_PAYPAL_PLAN] An error ocurred while creating a paypal plan: ${JSON.stringify(
