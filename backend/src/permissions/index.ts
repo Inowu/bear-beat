@@ -107,7 +107,10 @@ export const permissions = shield<Context>({
   },
   mutation: {
     createStripePlan: isAdmin,
+    updateStripePlan: isAdmin,
+    deleteStripePlan: isAdmin,
     createPaypalPlan: isAdmin,
+    deactivatePaypalPlan: isAdmin,
     activatePlanForUser: isAdmin,
     subscribeWithCardConekta: isLoggedIn,
     subscribeWithCashConekta: isLoggedIn,
