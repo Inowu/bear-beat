@@ -172,7 +172,12 @@ export const plansRouter = router({
           plan[getPlanKey(PaymentService.STRIPE)] as string,
         );
 
-        const prismaPlan = await prisma.plans.delete(input);
+        const prismaPlan = await prisma.plans.update({
+          where,
+          data: {
+            [getPlanKey(PaymentService.STRIPE)]: null,
+          },
+        });
 
         return prismaPlan;
       } catch (e) {

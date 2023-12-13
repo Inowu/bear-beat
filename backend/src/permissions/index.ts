@@ -110,6 +110,7 @@ export const permissions = shield<Context>({
     updateStripePlan: isAdmin,
     deleteStripePlan: isAdmin,
     createPaypalPlan: isAdmin,
+    deactivatePaypalPlan: isAdmin,
     activatePlanForUser: isAdmin,
     subscribeWithCardConekta: isLoggedIn,
     subscribeWithCashConekta: isLoggedIn,
