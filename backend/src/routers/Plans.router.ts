@@ -274,7 +274,7 @@ export const plansRouter = router({
 
         return await prisma.plans.create({
           data: {
-          ...data,
+            ...(data as any),
             [getPlanKey(PaymentService.PAYPAL)]: planResponse.id,
           },
         });
