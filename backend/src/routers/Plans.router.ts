@@ -272,9 +272,9 @@ export const plansRouter = router({
         /* eslint-disable-next-line no-param-reassign */
         delete data.interval;
 
-        return await prisma.plans.update({
-          where,
+        return await prisma.plans.create({
           data: {
+          ...data,
             [getPlanKey(PaymentService.PAYPAL)]: planResponse.id,
           },
         });
