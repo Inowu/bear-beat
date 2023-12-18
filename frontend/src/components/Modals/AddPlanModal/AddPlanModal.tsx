@@ -167,7 +167,7 @@ function AddPlanModal(props: IAddPlanModal) {
             value={formik.values.paymentMethod}
             onChange={formik.handleChange}
           >
-            <option value="">Selecciona un método de pago</option>
+            <option value="">Choose a payment method</option>
             <option value="stripe">Stripe</option>
             <option value="paypal">PayPal</option>
           </select>
