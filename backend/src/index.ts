@@ -19,6 +19,7 @@ import { stripePiEndpoint } from './endpoints/webhooks/stripePaymentIntents.endp
 import { sse } from './sse';
 import { compressionQueue, initializeQueue } from './queue';
 import { compressionWorkers, workerFactory } from './queue/worker';
+import { stripeProductsEndpoint } from './endpoints/webhooks/stripeProducts.endpoint';
 
 config({
   path: path.resolve(__dirname, '../.env'),
@@ -69,6 +70,12 @@ async function main() {
       '/webhooks.stripe.pi',
       express.raw({ type: 'application/json' }),
       stripePiEndpoint,
+    );
+
+    app.use(
+      '/webhooks.stripe.products',
+      express.raw({ type: 'application/json' }),
+      stripeProductsEndpoint,
     );
 
     app.use(
