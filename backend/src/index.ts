@@ -98,7 +98,7 @@ async function main() {
 
     initializeQueue();
 
-    workerFactory();
+    // workerFactory();
   } catch (e: any) {
     log.error(e.message);
     await closeConnections();
