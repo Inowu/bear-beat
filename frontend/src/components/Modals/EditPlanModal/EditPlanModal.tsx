@@ -44,17 +44,8 @@ function EditPlanModal(props: IEditPlanModal) {
         price: Yup.number()
             .typeError("price must be a number")
             .required("price is required"),
-        paymentMethod: Yup.string()
-            .required("payment method is required"),
     });
-    const initialValues = editingPlan ? {
-        description: editingPlan.description,
-        duration: editingPlan.duration,
-        name: editingPlan.name,
-        price: editingPlan.price,
-        moneda: editingPlan.moneda,
-        activated: editingPlan.activated,
-    } : {
+    const initialValues = {
         description: "",
         duration: "",
         name: "",
@@ -76,8 +67,7 @@ function EditPlanModal(props: IEditPlanModal) {
                 activated: values.activated,
             }
             try {
-                await trpc.plans.updateOnePlans.mutate({ where: { id: editingPlan.id }, data: body });
-                // console.log(body);
+                await trpc.plans.updateOnePlans.mutate({where: {id: editingPlan.id}, data: body});
                 setShowSuccess(true);
                 setLoader(false);
             }
@@ -91,15 +81,13 @@ function EditPlanModal(props: IEditPlanModal) {
 
     useEffect(() => {
         if (editingPlan) {
-            formik.resetForm({
-                values: {
+            formik.setValues({
                     description: editingPlan.description,
                     duration: editingPlan.duration,
                     name: editingPlan.name,
-                    price: editingPlan.price,
+                    price: Number(editingPlan.price),
                     moneda: editingPlan.moneda,
                     activated: editingPlan.activated,
-                },
             });
         }
     }, [editingPlan]);
@@ -119,9 +107,9 @@ function EditPlanModal(props: IEditPlanModal) {
                         value={formik.values.description}
                         onChange={formik.handleChange}
                     />
-                    {/* {formik.errors.description && (
+                    {formik.errors.description && (
                         <div className="formik">{formik.errors.description}</div>
-                    )} */}
+                    )}
                 </div>
                 <div className="c-row">
                     <input
@@ -132,9 +120,9 @@ function EditPlanModal(props: IEditPlanModal) {
                         onChange={formik.handleChange}
                         type="text"
                     />
-                    {/* {formik.errors.duration && (
+                    {formik.errors.duration && (
                         <div className="formik">{formik.errors.duration}</div>
-                    )} */}
+                    )}
                 </div>
                 <div className="c-row">
                     <input
@@ -145,9 +133,9 @@ function EditPlanModal(props: IEditPlanModal) {
                         value={formik.values.name}
                         onChange={formik.handleChange}
                     />
-                    {/* {formik.errors.name && (
+                    {formik.errors.name && (
                         <div className="formik">{formik.errors.name}</div>
-                    )} */}
+                    )}
                 </div>
                 <div className="c-row-price">
                     <select
@@ -166,11 +154,11 @@ function EditPlanModal(props: IEditPlanModal) {
                         value={formik.values.price}
                         onChange={formik.handleChange}
                     />
-                    {/* {formik.errors.price && (
+                    {formik.errors.price && (
                         <div className="formik">
                             {formik.errors.price}
                         </div>
-                    )} */}
+                    )}
                 </div>
                 <div className="c-row">
                     {/* <label htmlFor="paymentMethod">Método de Pago</label>

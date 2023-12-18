@@ -8,6 +8,9 @@ import {
   faFolder,
   faCartPlus,
   faQuestion,
+  faDatabase,
+  faTicket,
+  faAddressBook,
 } from "@fortawesome/free-solid-svg-icons";
 import { faHeadset } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
@@ -43,6 +46,21 @@ function AsideNavbar(props: AsideNavbarPropsI) {
             <Link to={"/admin/planesAdmin"}>
               <li>
                 <FontAwesomeIcon icon={faCartPlus} /> Planes
+              </li>
+            </Link>
+            <Link to={"/admin/ordenes"}>
+              <li>
+                <FontAwesomeIcon icon={faAddressBook} /> Ordenes
+              </li>
+            </Link>
+            <Link to={"/admin/cupones"}>
+              <li>
+                <FontAwesomeIcon icon={faTicket} /> Cupones
+              </li>
+            </Link>
+            <Link to={"/admin/almacenamiento"}>
+              <li>
+                <FontAwesomeIcon icon={faDatabase} /> Almacenamiento
               </li>
             </Link>
           </ul>
