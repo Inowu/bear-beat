@@ -96,10 +96,10 @@ export const cuponsRouter = router({
   updateStripeCupon: shieldedProcedure
     .input(CuponsUpdateOneSchema)
     .mutation(async ({ input, ctx: { prisma } }) => {
-      if (!input.data.code) {
+      if (input.data.code) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
-          message: 'No se especificó el código del cupón',
+          message: 'No se puede actualizar el código del cupón',
         });
       }
 
