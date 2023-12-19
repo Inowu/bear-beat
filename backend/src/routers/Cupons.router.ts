@@ -80,7 +80,13 @@ export const cuponsRouter = router({
     )
     .mutation(async ({ input: { code }, ctx: { prisma } }) => {
       try {
-        const cupon = await stripeInstance.coupons.del(code);
+        try {
+          await stripeInstance.coupons.retrieve(code);
+
+          await stripeInstance.coupons.del(code);
+        } catch (e) {
+          log.warn(`[COUPONS] Coupon ${code} does not exist in Stripe`);
+        }
 
         await prisma.cupons.delete({
           where: {
@@ -88,8 +94,10 @@ export const cuponsRouter = router({
           },
         });
 
+        log.info(`[COUPONS] Coupon ${code} was deleted`);
+
         return {
-          message: `Cupón ${cupon.id} fue eliminado`,
+          message: `Cupón ${code} fue eliminado`,
         };
       } catch (e: any) {
         log.error(`[COUPONS] Error deleting coupon: ${e.message}`);
@@ -117,16 +125,8 @@ export const cuponsRouter = router({
       }
 
       try {
-        if (input.data.code) {
-          await stripeInstance.coupons.update(input.data.code as string, {
-            name: input.data.code as string,
-          });
-        }
-
         await prisma.cupons.update({
-          where: {
-            code: input.data.code as string,
-          },
+          where: input.where,
           data: {
             description: input.data.description,
             active: input.data.active,
