@@ -78,9 +78,15 @@ export const cuponsRouter = router({
         code: z.string(),
       }),
     )
-    .mutation(async ({ input: { code } }) => {
+    .mutation(async ({ input: { code }, ctx: { prisma } }) => {
       try {
         const cupon = await stripeInstance.coupons.del(code);
+
+        await prisma.cupons.delete({
+          where: {
+            code,
+          },
+        });
 
         return {
           message: `Cupón ${cupon.id} fue eliminado`,
