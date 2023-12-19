@@ -2,21 +2,22 @@ import "../Modal.scss";
 import { ErrorModal } from "../ErrorModal/ErrorModal";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Spinner } from "../../Spinner/Spinner";
-import { SuccessModal } from "../SuccessModal/SuccessModal";
 import { Modal } from "react-bootstrap";
 import { RiCloseCircleLine } from "react-icons/ri";
 import trpc from "../../../api";
+import { SuccessModal } from "../SuccessModal/SuccessModal";
 
-interface IAddCouponModal {
+interface IEditCouponModal {
     showModal: boolean;
     onHideModal: () => void;
-  }
+    editingCoupon: any;
+}
 
-export const AddCouponModal = (props: IAddCouponModal) => {
+export const EditCouponModal = (props: IEditCouponModal) => {
 
-    const { showModal, onHideModal } = props;
+    const { showModal, onHideModal, editingCoupon } = props;
 
     // const navigate = useNavigate();
     const [loader, setLoader] = useState<boolean>(false);
@@ -30,14 +31,11 @@ export const AddCouponModal = (props: IAddCouponModal) => {
         setShowSuccess(false);
         // navigate("/");
     }
+
     const validationSchema = Yup.object().shape({
-        code: Yup.string()
-            .required("code is required"),
         description: Yup.string()
             .required("description is required"),
-        discount: Yup.number()
-            .required("discount is required")
-            .typeError("discount must be a number"),
+
         active: Yup.string()
             .required("active is required"),
     });
@@ -54,14 +52,14 @@ export const AddCouponModal = (props: IAddCouponModal) => {
         onSubmit: async (values) => {
             setLoader(true);
             let body = {
-                code: values.code,
+                // code: values.code,
                 description: values.description,
-                discount: Number(values.discount),
+                // discount: Number(values.discount),
                 active: Number(values.active),
-                type: Number(values.type)
+                // type: Number(values.type)
             }
             try {
-                    await trpc.cupons.createStripeCupon.mutate({ data: body });
+                await trpc.cupons.updateStripeCupon.mutate({ where: { id: editingCoupon.id }, data: body });
                 // console.log(body);
                 setShowSuccess(true);
                 setLoader(false);
@@ -74,6 +72,18 @@ export const AddCouponModal = (props: IAddCouponModal) => {
         },
     });
 
+    useEffect(() => {
+        if (editingCoupon) {
+            formik.setValues({
+                code: editingCoupon.code,
+                description: editingCoupon.description,
+                discount: Number(editingCoupon.discount),
+                active: Number(editingCoupon.active),
+                type: 1,
+            });
+        }
+    }, [editingCoupon]);
+
     return (
         <Modal show={showModal} onHide={onHideModal} centered>
             <form className="modal-addusers" onSubmit={formik.handleSubmit}>
@@ -81,6 +91,7 @@ export const AddCouponModal = (props: IAddCouponModal) => {
                 <h2>Crear Cupon</h2>
                 <div className="c-row">
                     <input
+                    disabled
                         placeholder="Code"
                         type="text"
                         id="code"
@@ -107,6 +118,7 @@ export const AddCouponModal = (props: IAddCouponModal) => {
                 </div>
                 <div className="c-row">
                     <input
+                        disabled
                         placeholder="Discount"
                         id="discount"
                         name="discount"
@@ -135,7 +147,7 @@ export const AddCouponModal = (props: IAddCouponModal) => {
                 </div>
                 {
                     !loader
-                        ? <button className="btn-option-4" type="submit">Crear Cupon</button>
+                        ? <button className="btn-option-4" type="submit">Modificar Cupon</button>
                         : <Spinner size={3} width={.3} color="#00e2f7" />
                 }
                 <button className="btn-cancel" onClick={onHideModal} type="reset">Cancelar</button>
@@ -143,8 +155,8 @@ export const AddCouponModal = (props: IAddCouponModal) => {
                 <SuccessModal
                     show={showSuccess}
                     onHide={closeSuccess}
-                    message="Se ha añadido su cupon con éxito!"
-                    title="Creación Exitosa"
+                    message="Se ha modificado su cupon con éxito!"
+                    title="Modificación Exitosa"
                 />
             </form>
         </Modal>

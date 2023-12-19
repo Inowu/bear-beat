@@ -1,10 +1,10 @@
 import trpc from "../../api";
-import AddPlanModal from "../../components/Modals/AddPlanModal/AddPlanModal";
-import EditPlanModal from "../../components/Modals/EditPlanModal/EditPlanModal";
 import { useUserContext } from "../../contexts/UserContext";
 import { useEffect, useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import './Coupons.scss';
+import { AddCouponModal } from "../../components/Modals/AddCouponModal/AddCouponModal";
+import { EditCouponModal } from "../../components/Modals/EditCouponModal/EditCouponModal";
 
 
 
@@ -16,7 +16,7 @@ export const Coupons = () => {
     const [showEdit, setShowEdit] = useState<boolean>(false);
     const [coupons, setCoupons] = useState<any>([]);
     const [loader, setLoader] = useState<boolean>(true);
-    const [editingPlan, setEditingPlan] = useState(null);
+    const [editingCoupon, setEditingCoupon] = useState(null);
 
     const getCoupons = async () => {
         let body = {
@@ -51,24 +51,22 @@ export const Coupons = () => {
         getCoupons();
     }, [])
 
-    const handleRemoveCoupon = async (id: number, plan: any) => {
-        console.log(id, plan)
-        const userConfirmation = window.confirm('¿Estás seguro de que deseas eliminar el plan?');
+    const handleRemoveCoupon = async (code: string) => {
+        const userConfirmation = window.confirm('¿Estás seguro de que deseas eliminar el cupon?');
         if (userConfirmation) {
             try {
-                await trpc.cupons.deleteOneCupons.mutate({ where: { id: id } });
+                await trpc.cupons.deleteStripeCupon.mutate({ code: code });
                 setLoader(false);
                 window.location.reload();
             }
             catch (error) {
-                setShow(true);
                 setLoader(false)
             }
         }
     }
 
-    const handleEditPlan = (plan: any) => {
-        setEditingPlan(plan);
+    const handleEditCoupon = (coupon: any) => {
+        setEditingCoupon(coupon);
         setShowEdit(true);
     };
 
@@ -80,8 +78,8 @@ export const Coupons = () => {
                 <h1>Cupones</h1>
                 <button className="btn-addCoupon" onClick={() => setShow(true)}>Crear Cupon</button>
 
-                {/* <AddPlanModal showModal={show} onHideModal={closeModalAdd} /> */}
-                {/* <EditPlanModal showModal={showEdit} onHideModal={closeEditModalAdd} editingPlan={editingPlan} /> */}
+                <AddCouponModal showModal={show} onHideModal={closeModalAdd} />
+                <EditCouponModal showModal={showEdit} onHideModal={closeEditModalAdd} editingCoupon={editingCoupon} />
             </div>
             <div className="admin-table">
                 <div className="table-contain">
@@ -97,9 +95,9 @@ export const Coupons = () => {
                                 <th>
                                     Descuento
                                 </th>
-                                <th>
+                                {/* <th>
                                     Condiciones
-                                </th>
+                                </th> */}
                                 <th>
                                     Activo
                                 </th>
@@ -122,18 +120,18 @@ export const Coupons = () => {
                                             <td>
                                                 {coupon.discount} %
                                             </td>
-                                            <td>
+                                            {/* <td>
                                                 {coupon.cupon_condition}
-                                            </td>
+                                            </td> */}
                                             <td>
                                                 {coupon.activated === 1 ? "Activo" : "No activo"}
                                             </td>
                                             <td>
                                                 <button
-                                                    onClick={() => handleEditPlan(coupon)}
+                                                    onClick={() => handleEditCoupon(coupon)}
                                                 >Editar</button>
                                                 <button
-                                                    onClick={() => handleRemoveCoupon(coupon.id, coupon.paypal_plan_id)}
+                                                    onClick={() => handleRemoveCoupon(coupon.code)}
                                                 >Eliminar</button>
                                             </td>
                                         </tr>
