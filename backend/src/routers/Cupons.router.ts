@@ -117,9 +117,11 @@ export const cuponsRouter = router({
       }
 
       try {
-        await stripeInstance.coupons.update(input.data.code as string, {
-          name: input.data.code as string,
-        });
+        if (input.data.code) {
+          await stripeInstance.coupons.update(input.data.code as string, {
+            name: input.data.code as string,
+          });
+        }
 
         await prisma.cupons.update({
           where: {
