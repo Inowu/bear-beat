@@ -1,28 +1,20 @@
-import { useNavigate } from "react-router-dom";
-import "react-phone-input-2/lib/material.css";
 import "../Modal.scss";
 import { ErrorModal } from "../ErrorModal/ErrorModal";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Spinner } from "../../Spinner/Spinner";
+import { SuccessModal } from "../SuccessModal/SuccessModal";
 import { Modal } from "react-bootstrap";
 import { RiCloseCircleLine } from "react-icons/ri";
-import "react-phone-input-2/lib/material.css";
 import trpc from "../../../api";
-import { SuccessModal } from "../SuccessModal/SuccessModal";
 
-interface IEditPlanModal {
-    showModal: boolean;
-    onHideModal: () => void;
-    editingPlan: any;
-}
+export const AddCouponModal = () => {
 
-function EditPlanModal(props: IEditPlanModal) {
-
-    const { showModal, onHideModal, editingPlan } = props;
+    const { showModal, onHideModal } = props;
 
     // const navigate = useNavigate();
+    const [currency, setCurrency] = useState('USD');
     const [loader, setLoader] = useState<boolean>(false);
     const [show, setShow] = useState<boolean>(false);
     const [showSuccess, setShowSuccess] = useState<boolean>(false);
@@ -44,14 +36,18 @@ function EditPlanModal(props: IEditPlanModal) {
         price: Yup.number()
             .typeError("price must be a number")
             .required("price is required"),
+        paymentMethod: Yup.string()
+            .required("payment method is required"),
     });
     const initialValues = {
         description: "",
         duration: "",
         name: "",
         price: 0,
+        paymentMethod: "",
         moneda: "",
-        activated: 0,
+        homedir: "/home/products/",
+        stripe_prod_id_test: "",
     };
     const formik = useFormik({
         initialValues: initialValues,
@@ -62,12 +58,18 @@ function EditPlanModal(props: IEditPlanModal) {
                 description: values.description,
                 duration: values.duration,
                 name: values.name,
-                price: Number(values.price),
+                price: values.price,
                 moneda: values.moneda,
-                activated: Number(values.activated),
+                homedir: values.homedir,
+                stripe_prod_id_test: values.stripe_prod_id_test,
             }
             try {
-                await trpc.plans.updateOnePlans.mutate({where: {id: editingPlan.id}, data: body});
+                if (values.paymentMethod === 'stripe') {
+                    await trpc.plans.createStripePlan.mutate({ data: body });
+                } else if (values.paymentMethod === 'paypal') {
+                    await trpc.plans.createPaypalPlan.mutate({ data: body });
+                }
+                // console.log(body);
                 setShowSuccess(true);
                 setLoader(false);
             }
@@ -79,25 +81,11 @@ function EditPlanModal(props: IEditPlanModal) {
         },
     });
 
-    useEffect(() => {
-        if (editingPlan) {
-            formik.setValues({
-                    description: editingPlan.description,
-                    duration: editingPlan.duration,
-                    name: editingPlan.name,
-                    price: Number(editingPlan.price),
-                    moneda: editingPlan.moneda,
-                    activated: Number(editingPlan.activated),
-            });
-        }
-    }, [editingPlan]);
-
-
     return (
         <Modal show={showModal} onHide={onHideModal} centered>
             <form className="modal-addusers" onSubmit={formik.handleSubmit}>
                 <RiCloseCircleLine className='icon' onClick={onHideModal} />
-                <h2>Editar Plan</h2>
+                <h2>Crear Plan</h2>
                 <div className="c-row">
                     <input
                         placeholder="Description"
@@ -164,18 +152,22 @@ function EditPlanModal(props: IEditPlanModal) {
                     {/* <label htmlFor="paymentMethod">Método de Pago</label>
           <br/> */}
                     <select
-                        id="activated"
-                        name="activated"
-                        value={formik.values.activated}
+                        id="paymentMethod"
+                        name="paymentMethod"
+                        value={formik.values.paymentMethod}
                         onChange={formik.handleChange}
                     >
-                        <option value="1">Activo</option>
-                        <option value="0">No Activo</option>
+                        <option value="">Choose a payment method</option>
+                        <option value="stripe">Stripe</option>
+                        <option value="paypal">PayPal</option>
                     </select>
+                    {formik.errors.paymentMethod && (
+                        <div className="formik">{formik.errors.paymentMethod}</div>
+                    )}
                 </div>
                 {
                     !loader
-                        ? <button className="btn-option-4" type="submit">Editar Plan</button>
+                        ? <button className="btn-option-4" type="submit">Crear Plan</button>
                         : <Spinner size={3} width={.3} color="#00e2f7" />
                 }
                 <button className="btn-cancel" onClick={onHideModal} type="reset">Cancelar</button>
@@ -183,12 +175,10 @@ function EditPlanModal(props: IEditPlanModal) {
                 <SuccessModal
                     show={showSuccess}
                     onHide={closeSuccess}
-                    message="Se ha actualizado su plan con éxito!"
-                    title="Edición Exitoso"
+                    message="Se ha añadido su plan con éxito!"
+                    title="Registro Exitoso"
                 />
             </form>
         </Modal>
-    );
+    )
 }
-
-export default EditPlanModal;

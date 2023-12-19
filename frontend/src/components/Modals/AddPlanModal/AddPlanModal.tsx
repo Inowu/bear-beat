@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import "react-phone-input-2/lib/material.css";
 import "../Modal.scss";
 import { ErrorModal } from "../ErrorModal/ErrorModal";
 import { useFormik } from "formik";
@@ -9,7 +8,6 @@ import { Spinner } from "../../Spinner/Spinner";
 import { SuccessModal } from "../SuccessModal/SuccessModal";
 import { Modal } from "react-bootstrap";
 import { RiCloseCircleLine } from "react-icons/ri";
-import "react-phone-input-2/lib/material.css";
 import trpc from "../../../api";
 
 interface IAddPlanModal {
@@ -22,7 +20,6 @@ function AddPlanModal(props: IAddPlanModal) {
   const { showModal, onHideModal } = props;
 
   // const navigate = useNavigate();
-  const [currency, setCurrency] = useState('USD');
   const [loader, setLoader] = useState<boolean>(false);
   const [show, setShow] = useState<boolean>(false);
   const [showSuccess, setShowSuccess] = useState<boolean>(false);

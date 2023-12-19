@@ -1,18 +1,34 @@
-import trpc from "api";
+import trpc from "../../api";
+import { useEffect, useState } from "react";
 import { getCompleted, transformBiteToGb } from "../../functions/functions";
 import "./Storage.scss";
 
 export const Storage = () => {
 
+    const [storage, setStorage] = useState({
+        used_storage: 0,
+        total_storage: 0,
+        available_storage: 0
+    });
+    const styles = {
+        width: getCompleted(storage.used_storage, storage.total_storage) > 5 ? getCompleted(storage.used_storage, storage.total_storage) + "%" : "5%"
+    }
+
     const getStorage = async () => {
         try {
-            // await trpc.
-            // console.log(body);
+            const data = await trpc.ftp.storage.query();
+            setStorage(data);
+            console.log(storage);
         }
         catch (error) {
             console.log(error)
         }
     }
+
+    useEffect(() => {
+        getStorage();
+    }, [])
+
 
 
     return (
@@ -22,11 +38,13 @@ export const Storage = () => {
                     Almacenamiento del Servidor:
                 </h2>
                 <h3>
-                    {/* <span>{transformBiteToGb(used)}GB</span> de {transformBiteToGb(available)}GB */}
+                    Espacio Usado: 
+                    <span> {transformBiteToGb(storage.used_storage)}GB de {transformBiteToGb(storage.total_storage)}GB</span>
                 </h3>
                 <div className="progress-bar-container">
-                    <div className="progress-bar" />
+                    <div className="progress-bar" style={styles} />
                 </div>
+                <h3>Espacio Disponible: <span>{transformBiteToGb(storage.available_storage)}GB</span></h3> 
             </div>
         </div>
     )
