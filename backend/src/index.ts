@@ -19,6 +19,7 @@ import { stripePiEndpoint } from './endpoints/webhooks/stripePaymentIntents.endp
 import { sse } from './sse';
 import { compressionQueue, initializeQueue } from './queue';
 import { compressionWorkers, workerFactory } from './queue/worker';
+import { stripeProductsEndpoint } from './endpoints/webhooks/stripeProducts.endpoint';
 
 config({
   path: path.resolve(__dirname, '../.env'),
@@ -72,6 +73,12 @@ async function main() {
     );
 
     app.use(
+      '/webhooks.stripe.products',
+      express.raw({ type: 'application/json' }),
+      stripeProductsEndpoint,
+    );
+
+    app.use(
       '/webhooks.conekta',
       express.raw({ type: 'application/json' }),
       conektaEndpoint,
@@ -91,7 +98,7 @@ async function main() {
 
     initializeQueue();
 
-    workerFactory();
+    // workerFactory();
   } catch (e: any) {
     log.error(e.message);
     await closeConnections();
