@@ -21,6 +21,9 @@ import Checkout from "./pages/Checkout/Checkout";
 import Admin from "./pages/Admin/Admin";
 import ResetPassword from "./components/Auth/ResetPassword/ResetPassword";
 import { PlanAdmin } from "./pages/PlanAdmin/PlanAdmin";
+import { Storage } from "./pages/Storage/Storage";
+import { Coupons } from "./pages/Coupons/Coupons";
+import { Ordens } from "./pages/Ordens/Ordens";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement,
@@ -56,6 +59,9 @@ const router = createBrowserRouter([
           { path: "", element: <Navigate replace to="usuarios" /> },
           { path: "usuarios", element: <Admin /> },
           { path: "planesAdmin", element: <PlanAdmin /> },
+          { path: "almacenamiento", element: <Storage /> },
+          { path: "cupones", element: <Coupons /> },
+          { path: "ordenes", element: <Ordens /> },
         ],
       },
       {

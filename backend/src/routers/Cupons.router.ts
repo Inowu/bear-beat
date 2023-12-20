@@ -14,6 +14,8 @@ import { CuponsGroupBySchema } from '../schemas/groupByCupons.schema';
 import { CuponsUpdateManySchema } from '../schemas/updateManyCupons.schema';
 import { CuponsUpdateOneSchema } from '../schemas/updateOneCupons.schema';
 import { CuponsUpsertSchema } from '../schemas/upsertOneCupons.schema';
+import stripeInstance from '../stripe';
+import { log } from '../server';
 
 export const cuponsRouter = router({
   /**
@@ -50,6 +52,93 @@ export const cuponsRouter = router({
       return {
         discount: cupon.discount,
       };
+    }),
+  createStripeCupon: shieldedProcedure
+    .input(CuponsCreateOneSchema)
+    .mutation(async ({ input, ctx: { prisma } }) => {
+      try {
+        stripeInstance.coupons.create({
+          name: input.data.code,
+          id: input.data.code,
+          percent_off: input.data.discount,
+        });
+
+        await prisma.cupons.create(input);
+      } catch (e: any) {
+        log.error(`[COUPONS] Error creating coupon: ${e.message}`);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Error al crear cupón',
+        });
+      }
+    }),
+  deleteStripeCupon: shieldedProcedure
+    .input(
+      z.object({
+        code: z.string(),
+      }),
+    )
+    .mutation(async ({ input: { code }, ctx: { prisma } }) => {
+      try {
+        try {
+          await stripeInstance.coupons.retrieve(code);
+
+          await stripeInstance.coupons.del(code);
+        } catch (e) {
+          log.warn(`[COUPONS] Coupon ${code} does not exist in Stripe`);
+        }
+
+        await prisma.cupons.delete({
+          where: {
+            code,
+          },
+        });
+
+        log.info(`[COUPONS] Coupon ${code} was deleted`);
+
+        return {
+          message: `Cupón ${code} fue eliminado`,
+        };
+      } catch (e: any) {
+        log.error(`[COUPONS] Error deleting coupon: ${e.message}`);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Error al eliminar cupón',
+        });
+      }
+    }),
+  updateStripeCupon: shieldedProcedure
+    .input(CuponsUpdateOneSchema)
+    .mutation(async ({ input, ctx: { prisma } }) => {
+      if (input.data.code) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'No se puede actualizar el código del cupón',
+        });
+      }
+
+      if (input.data.discount) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'No se puede actualizar el descuento del cupón',
+        });
+      }
+
+      try {
+        await prisma.cupons.update({
+          where: input.where,
+          data: {
+            description: input.data.description,
+            active: input.data.active,
+          },
+        });
+      } catch (e: any) {
+        log.error(`[COUPONS] Error updating coupon: ${e.message}`);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Error al actualizar cupón',
+        });
+      }
     }),
   aggregateCupons: shieldedProcedure
     .input(CuponsAggregateSchema)

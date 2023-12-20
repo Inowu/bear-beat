@@ -5,7 +5,7 @@ import { log } from '../../server';
 
 export const storage = shieldedProcedure.query(async () => {
   try {
-    const response = await axios('http://localhost:8123');
+    const response = await axios('http://0.0.0.0:8123/');
 
     return response.data;
   } catch (e: unknown) {
@@ -13,7 +13,9 @@ export const storage = shieldedProcedure.query(async () => {
       const error = e as AxiosError;
 
       log.error(
-        `[STORAGE] Error while retrieving os storage: ${error?.response?.data}`,
+        `[STORAGE] Error while retrieving os storage: ${
+          error?.response?.data ?? error.message
+        }`,
       );
     }
 

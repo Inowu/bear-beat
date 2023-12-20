@@ -1,34 +1,33 @@
-import trpc from '../../api';
-import * as Yup from "yup";
-import './PlanAdmin.scss';
-import { useUserContext } from '../../contexts/UserContext';
-import { useEffect, useState } from 'react'
+import trpc from "../../api";
+import { useUserContext } from "../../contexts/UserContext";
+import { useEffect, useState } from 'react';
 import { useNavigate } from "react-router-dom";
-import AddPlanModal from '../../components/Modals/AddPlanModal/AddPlanModal';
-import { IPlans } from 'interfaces/Plans';
-import EditPlanModal from '../../components/Modals/EditPlanModal/EditPlanModal';
+import './Coupons.scss';
+import { AddCouponModal } from "../../components/Modals/AddCouponModal/AddCouponModal";
+import { EditCouponModal } from "../../components/Modals/EditCouponModal/EditCouponModal";
 
-export const PlanAdmin = () => {
+
+
+export const Coupons = () => {
 
     const { currentUser } = useUserContext();
     const navigate = useNavigate();
     const [show, setShow] = useState<boolean>(false);
     const [showEdit, setShowEdit] = useState<boolean>(false);
-    const [plans, setPlans] = useState<any>([]);
+    const [coupons, setCoupons] = useState<any>([]);
     const [loader, setLoader] = useState<boolean>(true);
-    const [editingPlan, setEditingPlan] = useState(null);
+    const [editingCoupon, setEditingCoupon] = useState(null);
 
-
-    const getPlans = async () => {
+    const getCoupons = async () => {
         let body = {
             where: {
 
             }
         }
         try {
-            const plans: any = await trpc.plans.findManyPlans.query(body);
-            setPlans(plans);
-            console.log(plans)
+            const coupons: any = await trpc.cupons.findManyCupons.query(body);
+            setCoupons(coupons);
+            console.log(coupons)
             setLoader(false);
         }
         catch (error) {
@@ -49,42 +48,38 @@ export const PlanAdmin = () => {
         }
     }, [currentUser])
     useEffect(() => {
-        getPlans();
+        getCoupons();
     }, [])
 
-    const handleRemovePlan = async (id: number, plan: any) => {
-        console.log(id, plan)
-        const userConfirmation = window.confirm('¿Estás seguro de que deseas eliminar el plan?');
+    const handleRemoveCoupon = async (code: string) => {
+        const userConfirmation = window.confirm('¿Estás seguro de que deseas eliminar el cupon?');
         if (userConfirmation) {
             try {
-                await trpc.plans.deleteOnePlans.mutate({ where: { id: id } });
-                // setShowSuccess(true);
+                await trpc.cupons.deleteStripeCupon.mutate({ code: code });
                 setLoader(false);
                 window.location.reload();
             }
             catch (error) {
-                setShow(true);
-                // setErrorMessage(error);
                 setLoader(false)
             }
         }
     }
 
-    const handleEditPlan = (plan: any) => {
-        setEditingPlan(plan);
+    const handleEditCoupon = (coupon: any) => {
+        setEditingCoupon(coupon);
         setShowEdit(true);
     };
 
 
 
     return (
-        <div className='planAdmin-contain'>
+        <div className='coupons-contain'>
             <div className='header'>
-                <h1>Planes</h1>
-                <button className="btn-addPlan" onClick={() => setShow(true)}>Crear Plan</button>
+                <h1>Cupones</h1>
+                <button className="btn-addCoupon" onClick={() => setShow(true)}>Crear Cupon</button>
 
-                <AddPlanModal showModal={show} onHideModal={closeModalAdd} />
-                <EditPlanModal showModal={showEdit} onHideModal={closeEditModalAdd} editingPlan={editingPlan} />
+                <AddCouponModal showModal={show} onHideModal={closeModalAdd} />
+                <EditCouponModal showModal={showEdit} onHideModal={closeEditModalAdd} editingCoupon={editingCoupon} />
             </div>
             <div className="admin-table">
                 <div className="table-contain">
@@ -92,17 +87,17 @@ export const PlanAdmin = () => {
                         <thead>
                             <tr>
                                 <th>
-                                    Nombre
+                                    Codigo
                                 </th>
                                 <th>
                                     Descripción
                                 </th>
                                 <th>
-                                    Moneda
+                                    Descuento
                                 </th>
-                                <th>
-                                    Precio
-                                </th>
+                                {/* <th>
+                                    Condiciones
+                                </th> */}
                                 <th>
                                     Activo
                                 </th>
@@ -113,32 +108,30 @@ export const PlanAdmin = () => {
                         </thead>
                         <tbody>
                             {!loader ?
-                                plans.map((plan: IPlans, index: number) => {
+                                coupons.map((coupon: any, index: number) => {
                                     return (
-                                        <tr key={"admin_plans_" + index}>
+                                        <tr key={"admin_coupons_" + index}>
                                             <td className="">
-                                                {plan.name}
+                                                {coupon.code}
                                             </td>
                                             <td>
-                                                {plan.description}
+                                                {coupon.description}
                                             </td>
                                             <td>
-                                                {plan.moneda}
+                                                {coupon.discount} %
                                             </td>
+                                            {/* <td>
+                                                {coupon.cupon_condition}
+                                            </td> */}
                                             <td>
-                                                {plan.price}
-                                            </td>
-                                            <td style={{ textAlign: 'center' }}>
-                                                {plan.activated === 1 ? "Activo" : "No activo"}
+                                                {coupon.activated === 1 ? "Activo" : "No activo"}
                                             </td>
                                             <td>
                                                 <button
-                                                    onClick={() => handleEditPlan(plan)}
-                                                    disabled={plan.paypal_plan_id !== null}
+                                                    onClick={() => handleEditCoupon(coupon)}
                                                 >Editar</button>
                                                 <button
-                                                    onClick={() => handleRemovePlan(plan.id, plan.paypal_plan_id)}
-                                                    disabled={plan.paypal_plan_id !== null}
+                                                    onClick={() => handleRemoveCoupon(coupon.code)}
                                                 >Eliminar</button>
                                             </td>
                                         </tr>
@@ -151,12 +144,11 @@ export const PlanAdmin = () => {
                     </table>
                 </div>
                 {/* <Pagination
-                        totalData={totalUsers}
-                        title="usuarios"
-                        startFilter={startFilter}
-                        currentPage={filters.page}
-                    /> */}
+                    totalData={totalUsers}
+                    title="usuarios"
+                    startFilter={startFilter}
+                    currentPage={filters.page}
+                /> */}
             </div>
-        </div>
-    )
+        </div>)
 }

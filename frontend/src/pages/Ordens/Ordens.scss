@@ -1,4 +1,4 @@
-.admin-contain{
+.ordens-contain{
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -51,7 +51,7 @@
         }
     }
 }
-.admin-table{
+.ordens-table{
     display: flex;
     flex-direction: column;
     .table-contain{
@@ -111,5 +111,22 @@
                 }
             }
         }
+    }
+}
+
+.filter-contain{
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    .date-input{
+        width: 250px;
+        padding: 3px;
+        border-radius: 100px;
+        border: none;
+        color: white;
+        background-color: #09e1f7;
+    }
+    p{
+        margin-left: 5px;
     }
 }
