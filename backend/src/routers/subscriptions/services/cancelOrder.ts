@@ -6,10 +6,12 @@ export const cancelOrder = async ({
   prisma,
   orderId,
   isProduct = false,
+  reason = OrderStatus.CANCELLED,
 }: {
   prisma: PrismaClient;
   orderId?: number;
   isProduct?: boolean;
+  reason?: OrderStatus;
 }) => {
   if (!orderId) {
     log.warn('No orderId found on cancelOrder handler');
@@ -33,7 +35,7 @@ export const cancelOrder = async ({
         id: orderId,
       },
       data: {
-        status: OrderStatus.CANCELLED,
+        status: reason,
       },
     });
   } else {
@@ -42,7 +44,7 @@ export const cancelOrder = async ({
         id: orderId,
       },
       data: {
-        status: OrderStatus.CANCELLED,
+        status: reason,
       },
     });
   }

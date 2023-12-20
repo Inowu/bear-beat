@@ -5,6 +5,7 @@ import { StripeEvents } from './events';
 import { log } from '../../../server';
 import { prisma } from '../../../db';
 import { addGBToAccount } from '../../products/services/addGBToAccount';
+import { OrderStatus } from '../../subscriptions/interfaces/order-status.interface';
 
 export const stripeInvoiceWebhook = async (req: Request) => {
   const payload: Stripe.Event = JSON.parse(req.body as any);
@@ -27,6 +28,40 @@ export const stripeInvoiceWebhook = async (req: Request) => {
       log.info(
         `[STRIPE_WH] Payment intent failed for user ${user.id}, payload: ${payloadStr}`,
       );
+
+      if (!payload.data.object.metadata.productOrderId) {
+        log.warn(
+          `[STRIPE_WH] Payment intent for user ${user.id} does not have a productOrderId, no action taken. payload: ${payloadStr}`,
+        );
+
+        return;
+      }
+
+      const order = await prisma.product_orders.findFirst({
+        where: {
+          id: Number(
+            (payload.data.object as Stripe.PaymentIntent).metadata
+              ?.productOrderId,
+          ),
+        },
+      });
+
+      if (!order) {
+        log.warn(
+          `[STRIPE_WH] Product order not found for user ${user.id}, payload: ${payloadStr}`,
+        );
+
+        return;
+      }
+
+      await prisma.product_orders.update({
+        where: {
+          id: order.id,
+        },
+        data: {
+          status: OrderStatus.FAILED,
+        },
+      });
       break;
     }
     case StripeEvents.PAYMENT_INTENT_SUCCEEDED: {
