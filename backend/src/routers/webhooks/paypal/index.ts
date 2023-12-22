@@ -6,6 +6,7 @@ import { log } from '../../../server';
 import { PaymentService } from '../../subscriptions/services/types';
 import { cancelSubscription } from '../../subscriptions/services/cancelSubscription';
 import { getPlanKey } from '../../../utils/getPlanKey';
+import { OrderStatus } from '../../subscriptions/interfaces/order-status.interface';
 
 export const paypalSubscriptionWebhook = async (req: Request) => {
   const payload = JSON.parse(req.body as any);
@@ -15,7 +16,8 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
   );
 
   const subId =
-    payload.event_type === PaypalEvent.PAYMENT_SALE_COMPLETED
+    payload.event_type === PaypalEvent.PAYMENT_SALE_COMPLETED ||
+    payload.event_type === PaypalEvent.PAYMENT_SALE_DENIED
       ? payload.resource.billing_agreement_id
       : payload.resource.id;
   const planId = payload.resource.plan_id;
@@ -26,7 +28,11 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
     },
   });
 
-  if (!plan && payload.event_type !== PaypalEvent.PAYMENT_SALE_COMPLETED) {
+  if (
+    !plan &&
+    payload.event_type !== PaypalEvent.PAYMENT_SALE_COMPLETED &&
+    payload.event_type !== PaypalEvent.PAYMENT_SALE_DENIED
+  ) {
     log.error(`[PAYPAL_WH] Plan with id ${planId} not found`);
     return;
   }
@@ -119,7 +125,6 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
         break;
       }
     case PaypalEvent.BILLING_SUBSCRIPTION_CANCELLED:
-    case PaypalEvent.BILLING_SUBSCRIPTION_EXPIRED:
       log.info(
         `[PAYPAL_WH] Cancelling subscription, subscription id ${payload.resource.id}`,
       );
@@ -129,6 +134,21 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
         user,
         plan: planId,
         service: PaymentService.PAYPAL,
+        reason: OrderStatus.CANCELLED,
+      });
+
+      break;
+    case PaypalEvent.BILLING_SUBSCRIPTION_EXPIRED:
+      log.info(
+        `[PAYPAL_WH] Subscription expired, subscription id ${payload.resource.id}`,
+      );
+
+      await cancelSubscription({
+        prisma,
+        user,
+        plan: planId,
+        service: PaymentService.PAYPAL,
+        reason: OrderStatus.EXPIRED,
       });
 
       break;
@@ -163,6 +183,20 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
         subId,
         expirationDate: new Date(),
         service: PaymentService.PAYPAL,
+      });
+
+      break;
+    }
+
+    case PaypalEvent.PAYMENT_SALE_DENIED: {
+      log.info(`[PAYPAL_WH] Payment denied, subscription id ${subId}`);
+
+      await cancelSubscription({
+        prisma,
+        user,
+        plan: planId,
+        service: PaymentService.PAYPAL,
+        reason: OrderStatus.FAILED,
       });
 
       break;

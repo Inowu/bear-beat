@@ -1,16 +1,19 @@
 import { PrismaClient, Users } from '@prisma/client';
-import { subDays } from 'date-fns';
 import { log } from '../../../server';
-import { gbToBytes } from '../../../utils/gbToBytes';
-import { getPlanKey } from '../../../utils/getPlanKey';
 import { PaymentService } from './types';
 import { OrderStatus } from '../interfaces/order-status.interface';
 
+/*
+ * This only updates the order status to cancelled, it does not actually cancel the subscription,
+ * cancellation is done with other methods specific to each service
+ * */
 export const cancelSubscription = async ({
   prisma,
   user,
+  // Keep this so calls to this function don't break
   plan: planId,
   service,
+  reason = OrderStatus.CANCELLED,
 }: {
   prisma: PrismaClient;
   user: Users;
@@ -19,6 +22,7 @@ export const cancelSubscription = async ({
     | PaymentService.STRIPE
     | PaymentService.CONEKTA
     | PaymentService.PAYPAL;
+  reason?: OrderStatus;
 }) => {
   const download = await prisma.descargasUser.findFirst({
     where: {
@@ -125,7 +129,7 @@ export const cancelSubscription = async ({
         id: pendingOrder.id,
       },
       data: {
-        status: OrderStatus.CANCELLED,
+        status: reason,
       },
     });
   }

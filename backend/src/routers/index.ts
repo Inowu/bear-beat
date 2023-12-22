@@ -1,4 +1,5 @@
 import { router } from '../trpc';
+import { checkoutLogsRouter } from './CheckoutLogs.router';
 import { configsRouter } from './Config.router';
 import { countriesRouter } from './Countries.router';
 import { cuponsRouter } from './Cupons.router';
@@ -43,6 +44,7 @@ export const appRouter = router({
   userfiles: userfilesRouter,
   users: usersRouter,
   products: productsRouter,
+  checkoutLogs: checkoutLogsRouter,
 });
 
 export type AppRouter = typeof appRouter;
