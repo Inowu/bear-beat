@@ -12,7 +12,7 @@ export const HistoryCheckout = () => {
 
     const getHistory = async () => {
         try {
-            const history: any = await trpc.checkoutLogs.registerCheckoutLog.mutate();
+            const history: any = await trpc.checkoutLogs.getCheckoutLogs.query()
             setHistory(history);
             console.log(history)
             setLoader(false);
@@ -42,27 +42,44 @@ export const HistoryCheckout = () => {
                         <thead>
                             <tr>
                                 <th>
-                                    Codigo
+                                    Email
                                 </th>
                                 <th>
-                                    Descripción
+                                    Teléfono
                                 </th>
                                 <th>
-                                    Descuento
-                                </th>
-                                {/* <th>
-                                    Condiciones
-                                </th> */}
-                                <th>
-                                    Activo
+                                    Ultima Fecha de Pago
                                 </th>
                                 <th>
-                                    Acciones
+                                    Estado
                                 </th>
+                                
                             </tr>
                         </thead>
                         <tbody>
-                            
+                            {!loader ?
+                                history.map((his: any, index: number) => {
+                                    return (
+                                        <tr key={"admin_history_" + index}>
+                                            <td className="">
+                                                {his.users.email}
+                                            </td>
+                                            <td>
+                                                {his.users.phone}
+                                            </td>
+                                            <td>
+                                                {his.last_checkout_date.toLocaleDateString()}
+                                            </td>
+                                            <td>
+                                                {his.users.active === 1 ? "Activo" : "No activo"}
+                                            </td>
+                                           
+                                        </tr>
+
+                                    )
+                                })
+                                : <h1>No se Encontraron Datos...</h1>
+                            }
                         </tbody>
                     </table>
                 </div>
