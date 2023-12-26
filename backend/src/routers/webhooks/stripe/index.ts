@@ -144,7 +144,7 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
                 id: pendingOrder.id,
               },
               data: {
-                status: OrderStatus.CANCELLED,
+                status: OrderStatus.EXPIRED,
               },
             });
           }
@@ -162,6 +162,7 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
             user,
             plan: subscription.object.plan,
             service: PaymentService.STRIPE,
+            reason: OrderStatus.EXPIRED,
           });
 
           break;

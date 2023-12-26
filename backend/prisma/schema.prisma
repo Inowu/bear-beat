@@ -207,6 +207,7 @@ model Users {
   compression_jobs compression_jobs[]
   dir_downloads    dir_downloads[]
   product_orders   product_orders[]
+  checkout_logs    checkout_logs[]
 
   @@map("users")
 }
@@ -285,6 +286,15 @@ model compression_jobs {
   jobId      Int
   finishedAt DateTime? @db.DateTime(0)
   users      Users     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "compression_jobs_ibfk_1")
+
+  @@index([user_id], map: "user_id")
+}
+
+model checkout_logs {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  last_checkout_date DateTime @db.DateTime(0)
+  users      Users    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "checkout_logs_ibfk_1")
 
   @@index([user_id], map: "user_id")
 }

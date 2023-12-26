@@ -84,8 +84,32 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
       });
       break;
     case ConektaEvents.ORDER_VOIDED:
-    case ConektaEvents.ORDER_DECLINED:
-    case ConektaEvents.ORDER_EXPIRED:
+    case ConektaEvents.ORDER_DECLINED: {
+      const orderId = payload.data?.object.metadata.orderId;
+
+      log.info(`[CONEKTA_WH] Canceling order ${orderId}`);
+      await cancelOrder({
+        prisma,
+        orderId,
+        isProduct,
+        reason: OrderStatus.FAILED,
+      });
+
+      break;
+    }
+    case ConektaEvents.ORDER_EXPIRED: {
+      const orderId = payload.data?.object.metadata.orderId;
+
+      log.info(`[CONEKTA_WH] Canceling order ${orderId}`);
+      await cancelOrder({
+        prisma,
+        orderId,
+        isProduct,
+        reason: OrderStatus.EXPIRED,
+      });
+
+      break;
+    }
     case ConektaEvents.ORDER_CHARGED_BACK:
     case ConektaEvents.ORDER_CANCELED: {
       const orderId = payload.data?.object.metadata.orderId;
