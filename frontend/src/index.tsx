@@ -24,6 +24,7 @@ import { PlanAdmin } from "./pages/PlanAdmin/PlanAdmin";
 import { Storage } from "./pages/Storage/Storage";
 import { Coupons } from "./pages/Coupons/Coupons";
 import { Ordens } from "./pages/Ordens/Ordens";
+import { HistoryCheckout } from "./pages/Admin/HistoryCheckout/HistoryCheckout";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement,
@@ -62,6 +63,7 @@ const router = createBrowserRouter([
           { path: "almacenamiento", element: <Storage /> },
           { path: "cupones", element: <Coupons /> },
           { path: "ordenes", element: <Ordens /> },
+          { path: "historialCheckout", element: <HistoryCheckout /> },
         ],
       },
       {
