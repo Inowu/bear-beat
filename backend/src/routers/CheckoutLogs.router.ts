@@ -3,6 +3,15 @@ import { log } from '../server';
 import { router } from '../trpc';
 
 export const checkoutLogsRouter = router({
+  getCheckoutLogs: shieldedProcedure.query(async ({ ctx: { prisma } }) => {
+    const checkoutLogs = await prisma.checkout_logs.findMany({
+      include: {
+        users: true,
+      },
+    });
+
+    return checkoutLogs;
+  }),
   registerCheckoutLog: shieldedProcedure.mutation(
     async ({ ctx: { prisma, session } }) => {
       const user = session!.user!;
