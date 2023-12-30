@@ -7,6 +7,9 @@ import { PaymentService } from '../../subscriptions/services/types';
 import { cancelSubscription } from '../../subscriptions/services/cancelSubscription';
 import { getPlanKey } from '../../../utils/getPlanKey';
 import { OrderStatus } from '../../subscriptions/interfaces/order-status.interface';
+import { addDays } from 'date-fns';
+import axios from 'axios';
+import { paypal } from '../../../paypal';
 
 export const paypalSubscriptionWebhook = async (req: Request) => {
   const payload = JSON.parse(req.body as any);
@@ -176,12 +179,37 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
         },
       });
 
+      const paypalToken = await paypal.getToken();
+
+      let expirationDate: Date = addDays(new Date(), 30);
+
+      try {
+        const subscription = (
+          await axios(
+            `${paypal.paypalUrl()}/v1/billing/subscriptions/${subId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${paypalToken}`,
+              },
+            },
+          )
+        ).data;
+
+        if (subscription) {
+          expirationDate = new Date(
+            subscription.billing_info.next_billing_time,
+          );
+        }
+      } catch (e) {
+        log.error(`[PAYPAL_WH] Error while getting subscription ${e}`);
+      }
+
       await subscribe({
         prisma,
         user,
         plan: orderPlan!,
         subId,
-        expirationDate: new Date(),
+        expirationDate,
         service: PaymentService.PAYPAL,
       });
 
