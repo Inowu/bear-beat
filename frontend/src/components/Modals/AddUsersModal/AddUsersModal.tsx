@@ -22,7 +22,6 @@ interface IAddUsersModal {
 function AddUsersModal(props: IAddUsersModal) {
 
   const { showModal, onHideModal } = props;
-
   // const navigate = useNavigate();
   const [loader, setLoader] = useState<boolean>(false);
   const [show, setShow] = useState<boolean>(false);
