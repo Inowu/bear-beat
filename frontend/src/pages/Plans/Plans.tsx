@@ -6,31 +6,30 @@ import { IPlans } from "../../interfaces/Plans";
 import { useUserContext } from "../../contexts/UserContext";
 
 function Plans() {
-const { currentUser } = useUserContext();
-const [plans, setPlans] = useState<IPlans[]>([]);
+  const { currentUser } = useUserContext();
+  const [plans, setPlans] = useState<IPlans[]>([]);
   const getPlans = async () => {
     let body = {
       where: {
         activated: 1,
       }
     }
-    try{
+    try {
       const plans: any = await trpc.plans.findManyPlans.query(body);
-      let temp_plan = plans.filter((plan:any)=> plan.id === 15 || plan.id === 16);
-      setPlans(temp_plan);
+      setPlans(plans);
     }
-    catch(error){
+    catch (error) {
       console.log(error);
     }
   }
   useEffect(() => {
     getPlans();
   }, [])
-  
+
   return (
     <div className="plans-main-container">
       {plans.map((plan: IPlans, index) => {
-        return <PlanCard plan={plan}  key={"plan_" + index}/>;
+        return <PlanCard plan={plan} key={"plan_" + index} />;
       })}
     </div>
   );
