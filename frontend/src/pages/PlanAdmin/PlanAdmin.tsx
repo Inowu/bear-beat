@@ -42,16 +42,6 @@ export const PlanAdmin = () => {
     const closeEditModalAdd = () => {
         setShowEdit(false);
     }
-
-    useEffect(() => {
-        if (currentUser && currentUser.role !== "admin") {
-            navigate('/');
-        }
-    }, [currentUser])
-    useEffect(() => {
-        getPlans();
-    }, [])
-
     const handleRemovePlan = async (id: number, plan: any) => {
         console.log(id, plan)
         const userConfirmation = window.confirm('¿Estás seguro de que deseas eliminar el plan?');
@@ -75,7 +65,15 @@ export const PlanAdmin = () => {
         setShowEdit(true);
     };
 
+    useEffect(() => {
+        if (currentUser && currentUser.role !== "admin") {
+            navigate('/');
+        }
+    }, [currentUser])
 
+    useEffect(() => {
+        getPlans();
+    }, [])
 
     return (
         <div className='planAdmin-contain'>
@@ -134,7 +132,8 @@ export const PlanAdmin = () => {
                                             <td>
                                                 <button
                                                     onClick={() => handleEditPlan(plan)}
-                                                    disabled={plan.paypal_plan_id !== null}
+                                                    // disabled={plan.paypal_plan_id !== null}
+                                                    style ={{marginRight: 10}}
                                                 >Editar</button>
                                                 <button
                                                     onClick={() => handleRemovePlan(plan.id, plan.paypal_plan_id)}
