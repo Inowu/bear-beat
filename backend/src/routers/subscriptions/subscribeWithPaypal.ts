@@ -65,7 +65,7 @@ export const subscribeWithPaypal = shieldedProcedure
 
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: 'Ocurrion un error al crear la suscripción',
+          message: 'Ocurrio un error al crear la suscripción',
         });
       }
     },

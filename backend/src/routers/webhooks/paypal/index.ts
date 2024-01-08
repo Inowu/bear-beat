@@ -175,7 +175,7 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
 
       const orderPlan = await prisma.plans.findFirst({
         where: {
-          [getPlanKey(PaymentService.PAYPAL)]: existingOrder.plan_id,
+          id: existingOrder.plan_id as number,
         },
       });
 
