@@ -33,3 +33,25 @@ export function getCompleted (used:bigint, available: bigint){
     let percentage = (use/ava) * 100;
     return Math.round(percentage)
 }
+export const handleChangeBigint = (gigas: number | string) => {
+  // Here, we're using BigInt to handle big integers.
+  const value = gigas;
+  try {
+    const parsedValue = BigInt(value)
+    return parsedValue
+    // formik.setFieldValue('gigas', parsedValue);
+  } catch (error) {
+    // Handle invalid input, e.g., notify the user.
+    console.error('Invalid input:', error);
+  }
+};
+export const handleChangeBigIntToNumber = (gigas: number) => {
+  // Convert input value to a number.
+  const value = gigas
+  if (!isNaN(value)) {
+    return (Number(value));
+  } else {
+    // Handle invalid input, e.g., notify the user.
+    console.error('Invalid input: not a number');
+  }
+};

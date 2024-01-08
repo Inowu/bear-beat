@@ -116,7 +116,7 @@ function MyAccount() {
   }
   const getQuota = async () => {
     if(currentUser !== null){
-      let body = {
+      let body: any = {
         isExtended: currentUser.extendedFtpAccount
       }
       try {

@@ -11,16 +11,17 @@ import { RiCloseCircleLine } from "react-icons/ri";
 import "react-phone-input-2/lib/material.css";
 import trpc from "../../../api";
 import { SuccessModal } from "../SuccessModal/SuccessModal";
+import { handleChangeBigint, handleChangeBigIntToNumber } from "../../../functions/functions";
 
 interface IEditPlanModal {
     showModal: boolean;
     onHideModal: () => void;
     editingPlan: any;
+    callPlans: () => void;
 }
 
 function EditPlanModal(props: IEditPlanModal) {
-
-    const { showModal, onHideModal, editingPlan } = props;
+    const { showModal, onHideModal, editingPlan, callPlans } = props;
 
     // const navigate = useNavigate();
     const [loader, setLoader] = useState<boolean>(false);
@@ -33,6 +34,8 @@ function EditPlanModal(props: IEditPlanModal) {
     const closeSuccess = () => {
         setShowSuccess(false);
         // navigate("/");
+        onHideModal();
+        callPlans();
     }
     const validationSchema = Yup.object().shape({
         description: Yup.string()
@@ -52,6 +55,7 @@ function EditPlanModal(props: IEditPlanModal) {
         price: 0,
         moneda: "",
         activated: 0,
+        gigas: '',
     };
     const formik = useFormik({
         initialValues: initialValues,
@@ -65,6 +69,7 @@ function EditPlanModal(props: IEditPlanModal) {
                 price: Number(values.price),
                 moneda: values.moneda,
                 activated: Number(values.activated),
+                gigas: handleChangeBigint(values.gigas),
             }
             try {
                 await trpc.plans.updateOnePlans.mutate({where: {id: editingPlan.id}, data: body});
@@ -88,10 +93,10 @@ function EditPlanModal(props: IEditPlanModal) {
                     price: Number(editingPlan.price),
                     moneda: editingPlan.moneda,
                     activated: Number(editingPlan.activated),
+                    gigas: editingPlan.gigas
             });
         }
     }, [editingPlan]);
-
 
     return (
         <Modal show={showModal} onHide={onHideModal} centered>
@@ -101,6 +106,7 @@ function EditPlanModal(props: IEditPlanModal) {
                 <div className="c-row-price" style={{display: "flex", gap: 20 ,marginBottom: 20}}>
                     <p ><b>Moneda: </b>{formik.values.moneda}</p>
                     <p><b>Precio: </b>{formik.values.price}</p>
+                    <p><b>Gigas: </b>{editingPlan && editingPlan.gigas.toString()}</p>
                 </div>
                 <div className="c-row">
                     <input
@@ -125,6 +131,19 @@ function EditPlanModal(props: IEditPlanModal) {
                         type="text"
                     />
                     {formik.errors.duration && (
+                        <div className="formik">{formik.errors.duration}</div>
+                    )}
+                </div>
+                <div className="c-row">
+                    <input
+                        placeholder="gigas"
+                        id="gigas"
+                        name="gigas"
+                        value={formik.values.gigas}
+                        onChange={formik.handleChange}
+                        type="number"
+                    />
+                    {formik.errors.gigas && (
                         <div className="formik">{formik.errors.duration}</div>
                     )}
                 </div>
@@ -157,7 +176,7 @@ function EditPlanModal(props: IEditPlanModal) {
                 {
                     !loader
                         ? <button className="btn-option-4" type="submit">Editar Plan</button>
-                        : <Spinner size={3} width={.3} color="#00e2f7" />
+                        : <div style={{marginBottom: 10}}><Spinner size={3} width={.3} color="#00e2f7" /></div>
                 }
                 <button className="btn-cancel" onClick={onHideModal} type="reset">Cancelar</button>
                 <ErrorModal show={show} onHide={closeModal} message={errorMessage} />

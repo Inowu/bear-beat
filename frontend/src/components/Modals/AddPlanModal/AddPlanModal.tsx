@@ -9,15 +9,17 @@ import { SuccessModal } from "../SuccessModal/SuccessModal";
 import { Modal } from "react-bootstrap";
 import { RiCloseCircleLine } from "react-icons/ri";
 import trpc from "../../../api";
+import { handleChangeBigint } from "../../../functions/functions";
 
 interface IAddPlanModal {
   showModal: boolean;
   onHideModal: () => void;
+  callPlans: () =>  void;
 }
 
 function AddPlanModal(props: IAddPlanModal) {
 
-  const { showModal, onHideModal } = props;
+  const { showModal, onHideModal, callPlans } = props;
 
   // const navigate = useNavigate();
   const [loader, setLoader] = useState<boolean>(false);
@@ -29,6 +31,7 @@ function AddPlanModal(props: IAddPlanModal) {
   }
   const closeSuccess = () => {
     setShowSuccess(false);
+    callPlans();
     // navigate("/");
   }
   const validationSchema = Yup.object().shape({
@@ -43,6 +46,8 @@ function AddPlanModal(props: IAddPlanModal) {
       .required("price is required"),
     paymentMethod: Yup.string()
       .required("payment method is required"),
+      gigas: Yup.string()
+      .required("gigas is required"),
   });
   const initialValues = {
     description: "",
@@ -53,13 +58,14 @@ function AddPlanModal(props: IAddPlanModal) {
     moneda: "",
     homedir: "/home/products/",
     stripe_prod_id_test: "",
+    gigas: '',
   };
   const formik = useFormik({
     initialValues: initialValues,
     validationSchema: validationSchema,
     onSubmit: async (values) => {
       setLoader(true);
-      let body: any = {
+      let body = {
         description: values.description,
         duration: values.duration,
         name: values.name,
@@ -67,27 +73,25 @@ function AddPlanModal(props: IAddPlanModal) {
         moneda: values.moneda,
         homedir: values.homedir,
         stripe_prod_id_test: values.stripe_prod_id_test,
+        gigas: handleChangeBigint(values.gigas),
       }
       try {
         if (values.paymentMethod === 'stripe') {
-          await trpc.plans.createStripePlan.mutate(body);
+          await trpc.plans.createStripePlan.mutate({data: body});
         } else if (values.paymentMethod === 'paypal') {
-          await trpc.plans.createPaypalPlan.mutate(body);
+           await trpc.plans.createPaypalPlan.mutate({data: body});
         }
         // console.log(body);
         setShowSuccess(true);
         setLoader(false);
       }
-      catch (error) {
+      catch (error: any) {
         setShow(true);
-        setErrorMessage(error);
+        setErrorMessage(error.message);
         setLoader(false)
       }
     },
   });
-
-
-
   return (
     <Modal show={showModal} onHide={onHideModal} centered>
       <form className="modal-addusers" onSubmit={formik.handleSubmit}>
@@ -122,7 +126,7 @@ function AddPlanModal(props: IAddPlanModal) {
         <div className="c-row">
           <input
             placeholder="Name"
-            type="name"
+            type="text"
             id="name"
             name="name"
             value={formik.values.name}
@@ -130,6 +134,19 @@ function AddPlanModal(props: IAddPlanModal) {
           />
           {formik.errors.name && (
             <div className="formik">{formik.errors.name}</div>
+          )}
+        </div>
+        <div className="c-row">
+          <input
+            placeholder="gigas (GB)"
+            type="number"
+            id="gigas"
+            name="gigas"
+            value={formik.values.gigas}
+            onChange={formik.handleChange}
+          />
+          {formik.errors.gigas && (
+            <div className="formik">{formik.errors.gigas}</div>
           )}
         </div>
         <div className="c-row-price">
@@ -175,7 +192,7 @@ function AddPlanModal(props: IAddPlanModal) {
         {
           !loader
             ? <button className="btn-option-4" type="submit">Crear Plan</button>
-            : <Spinner size={3} width={.3} color="#00e2f7" />
+            : <div style={{marginBottom: 10}}><Spinner size={3} width={.3} color="#00e2f7" /></div>
         }
         <button className="btn-cancel" onClick={onHideModal} type="reset">Cancelar</button>
         <ErrorModal show={show} onHide={closeModal} message={errorMessage} />

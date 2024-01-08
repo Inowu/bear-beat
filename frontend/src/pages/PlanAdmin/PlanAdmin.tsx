@@ -74,15 +74,15 @@ export const PlanAdmin = () => {
     useEffect(() => {
         getPlans();
     }, [])
-
+    
     return (
         <div className='planAdmin-contain'>
             <div className='header'>
-                <h1>Planes</h1>
+                <h1>Planes - {plans.length}</h1>
                 <button className="btn-addPlan" onClick={() => setShow(true)}>Crear Plan</button>
 
-                <AddPlanModal showModal={show} onHideModal={closeModalAdd} />
-                <EditPlanModal showModal={showEdit} onHideModal={closeEditModalAdd} editingPlan={editingPlan} />
+                <AddPlanModal showModal={show} onHideModal={closeModalAdd} callPlans={getPlans}/>
+                <EditPlanModal showModal={showEdit} onHideModal={closeEditModalAdd} editingPlan={editingPlan} callPlans={getPlans}/>
             </div>
             <div className="admin-table">
                 <div className="table-contain">
