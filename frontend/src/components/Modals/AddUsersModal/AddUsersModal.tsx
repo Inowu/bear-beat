@@ -172,7 +172,7 @@ function AddUsersModal(props: IAddUsersModal) {
         {
           !loader
             ? <button className="btn-option-4" type="submit">Añadir Usuario</button>
-            : <Spinner size={3} width={.3} color="#00e2f7" />
+            : <div style={{marginBottom: 15}}><Spinner size={3} width={.3} color="#00e2f7" /></div>
         }
         <button className="btn-cancel" onClick={onHideModal} type="reset">Cancelar</button>
         <ErrorModal show={show} onHide={closeModal} message={errorMessage} />
