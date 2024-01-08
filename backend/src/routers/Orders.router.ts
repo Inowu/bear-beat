@@ -31,6 +31,25 @@ export const ordersRouter = router({
 
       return orders;
     }),
+  findManyOrdersWithUsers: shieldedProcedure
+    .input(OrdersFindManySchema)
+    .query(async ({ ctx: { prisma }, input }) => {
+      const orders = await prisma.orders.findMany(input);
+
+      const ordersWithUsers = await Promise.all(
+        orders.map(async (order) => {
+          const user = await prisma.users.findFirst({
+            where: {
+              id: order.user_id,
+            },
+          });
+
+          return { ...order, user };
+        }),
+      );
+
+      return ordersWithUsers;
+    }),
   createPaypalOrder: shieldedProcedure
     .input(
       z.object({
