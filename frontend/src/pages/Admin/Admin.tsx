@@ -13,8 +13,9 @@ import Pagination from "../../components/Pagination/Pagination";
 import { ARRAY_10 } from "../../utils/Constants";
 import AddUsersModal from "../../components/Modals/AddUsersModal/AddUsersModal";
 import CsvDownloader from 'react-csv-downloader';
+import {  exportUsers } from "./fuctions";
 
-interface IAdminFilter {
+export interface IAdminFilter {
     page: number;
     total: number;
     search: string;
@@ -242,12 +243,12 @@ function Admin() {
         }
     }, [currentUser])
 
-    const transformUserData = (users: IAdminUser[]) => {
-        return users.map((user:any) => ({
-            username: user.username,
-            email: user.email,
-            registered_on: user.registered_on.toLocaleDateString(),
-            active: user.active === 1 ? "Activa" : "No activa"
+    const transformUserData = async () => {
+        const tempUsers: any = await exportUsers(filters, userDownloads);
+        return tempUsers.map((user:any) => ({
+            Usuario: user.username,
+            Correo: user.email,
+            Fecha_de_Registro: user.registered_on.toLocaleDateString(),
         }));
     };
 
@@ -261,7 +262,7 @@ function Admin() {
                     extension=".csv"
                     separator=";"
                     wrapColumnChar="'"
-                    datas={transformUserData(users)}
+                    datas={transformUserData()}
                     text="Exportar Clientes" />
                 <div className="search-input">
                     <input

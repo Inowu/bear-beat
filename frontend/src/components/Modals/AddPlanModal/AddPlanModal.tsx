@@ -59,7 +59,7 @@ function AddPlanModal(props: IAddPlanModal) {
     validationSchema: validationSchema,
     onSubmit: async (values) => {
       setLoader(true);
-      let body = {
+      let body: any = {
         description: values.description,
         duration: values.duration,
         name: values.name,
@@ -70,9 +70,9 @@ function AddPlanModal(props: IAddPlanModal) {
       }
       try {
         if (values.paymentMethod === 'stripe') {
-          await trpc.plans.createStripePlan.mutate({ data: body });
+          await trpc.plans.createStripePlan.mutate(body);
         } else if (values.paymentMethod === 'paypal') {
-          await trpc.plans.createPaypalPlan.mutate({ data: body });
+          await trpc.plans.createPaypalPlan.mutate(body);
         }
         // console.log(body);
         setShowSuccess(true);
@@ -108,7 +108,7 @@ function AddPlanModal(props: IAddPlanModal) {
         </div>
         <div className="c-row">
           <input
-            placeholder="Duration"
+            placeholder="Duration (days)"
             id="duration"
             name="duration"
             value={formik.values.duration}

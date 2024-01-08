@@ -98,6 +98,10 @@ function EditPlanModal(props: IEditPlanModal) {
             <form className="modal-addusers" onSubmit={formik.handleSubmit}>
                 <RiCloseCircleLine className='icon' onClick={onHideModal} />
                 <h2>Editar Plan</h2>
+                <div className="c-row-price" style={{display: "flex", gap: 20 ,marginBottom: 20}}>
+                    <p ><b>Moneda: </b>{formik.values.moneda}</p>
+                    <p><b>Precio: </b>{formik.values.price}</p>
+                </div>
                 <div className="c-row">
                     <input
                         placeholder="Description"
@@ -135,29 +139,6 @@ function EditPlanModal(props: IEditPlanModal) {
                     />
                     {formik.errors.name && (
                         <div className="formik">{formik.errors.name}</div>
-                    )}
-                </div>
-                <div className="c-row-price">
-                    <select
-                        id="moneda"
-                        value={formik.values.moneda}
-                        onChange={formik.handleChange}
-                    >
-                        <option value="USD">USD</option>
-                        <option value="MXN">MXN</option>
-                    </select>
-                    <input
-                        placeholder="Price"
-                        type="number"
-                        id="price"
-                        name="price"
-                        value={formik.values.price}
-                        onChange={formik.handleChange}
-                    />
-                    {formik.errors.price && (
-                        <div className="formik">
-                            {formik.errors.price}
-                        </div>
                     )}
                 </div>
                 <div className="c-row">

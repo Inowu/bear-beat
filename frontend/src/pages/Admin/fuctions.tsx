@@ -1,0 +1,62 @@
+import { IAdminFilter } from "./Admin";
+import trpc from "../../api";
+export const exportUsers = async (filt: IAdminFilter, userDownloads: any) => {
+    let users = [];
+    try {
+        if (filt.active === 2) {
+            let body: any = {
+                where: {
+                    email: {
+                        startsWith: filt.search,
+                    },
+                },
+                select: {
+                    username: true,
+                    email: true,
+                    registered_on: true,
+                },
+            }
+           users = await trpc.users.findManyUsers.query(body);
+        } else {
+            if(filt.active === 1){
+                let body: any = {
+                    where: {
+                        email: {
+                            startsWith: filt.search,
+                        },
+                        id: {
+                            in: userDownloads.map((obj:any) => obj.user_id),
+                        },
+                    },
+                    select: {
+                        username: true,
+                        email: true,
+                        registered_on: true,
+                    },
+                }
+               users = await trpc.users.findManyUsers.query(body);
+            }
+            else{
+                let body: any = {
+                    where: {
+                        email: {
+                            startsWith: filt.search,
+                        },
+                        id: {
+                            notIn: userDownloads.map((obj:any) => obj.user_id),
+                        },
+                    },
+                    select: {
+                        username: true,
+                        email: true,
+                        registered_on: true,
+                    },
+                }
+               users = await trpc.users.findManyUsers.query(body);
+            }
+        }
+        return users
+    } catch (error) {
+        console.log(error);
+    }
+}
