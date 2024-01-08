@@ -55,49 +55,14 @@ function PlanCard(props: PlanCardPropsI) {
   const handleCheckout = async (planId: number) => {
     navigate(`/comprar?priceId=${planId}`);
   };
-  return (
-    <div className={"plan-card-main-card " + (plan.moneda === "usd" ? "resp-plan" : "")}>
-      <div className="c-row">
-        <h2>{plan.name}</h2>
-      </div>
-      <div className="c-row">
-        <h3>${plan.price}.00 {plan.moneda}</h3>
-      </div>
-      <div className="c-row">
-        <p>{plan.description}</p>
-      </div>
-      <div className="c-row">
-        <p>Duración (En días): {plan.duration}</p>
-      </div>
-      {plans[0].included.map((ad) => {
-        return (
-          <div className="c-row" key={ad}>
-            <p>
-              <FontAwesomeIcon icon={faCheck} /> {ad}
-            </p>
-          </div>
-        );
-      })}
-      <div className="c-row">
-        <p>Contenido en gigas disponibles: {plan.gigas.toString()}</p>
-      </div>
-      <div className="paypal-data">
-        <p className="text">Pagos seguros en línea</p>
-      </div>
-      <div className="button-contain">
-        {
-          plan.moneda === "mxn" &&
-            <button className="silver-bg" onClick={payWithOxxo}>Pagar vía Oxxo</button>
-        }
-        <button onClick={() => handleCheckout(plan.id)}>
-          COMPRAR CON TARJETA
-        </button>
-                {plan.id ? <PayPalScriptProvider options={{
+  const paypalMethod = () => {
+       let data = <PayPalScriptProvider options={{
           clientId: "AYuKvAI09TE9bk9k1TuzodZ2zWQFpWEZesT65IkT4WOws9wq-yfeHLj57kEBH6YR_8NgBUlLShj2HOSr",
           vault: true,
+          intent: "subscription",
         }} >
           <PayPalButtons
-            style={{ color: "silver", shape: "pill", layout: "horizontal", height: 46 }}
+            style={{ color: "silver", shape: "pill", layout: "horizontal", height: 46, tagline: false }}
             onClick={async (data, actions) => {
               // Revisar si el usuario tiene una suscripcion activa
               const me = await trpc.auth.me.query();
@@ -140,7 +105,52 @@ function PlanCard(props: PlanCardPropsI) {
               return data;
             }}
           />
-        </PayPalScriptProvider> : <div className="paypal-size"/>}
+        </PayPalScriptProvider>
+      return data
+  }
+
+  return (
+    <div className={"plan-card-main-card " + (plan.moneda === "usd" ? "resp-plan" : "")}>
+      <div className="c-row">
+        <h2>{plan.name}</h2>
+      </div>
+      <div className="c-row">
+        <h3>${plan.price}.00 {plan.moneda}</h3>
+      </div>
+      <div className="c-row">
+        <p>{plan.description}</p>
+      </div>
+      <div className="c-row">
+        <p>Duración (En días): {plan.duration}</p>
+      </div>
+      {plans[0].included.map((ad) => {
+        return (
+          <div className="c-row" key={ad}>
+            <p>
+              <FontAwesomeIcon icon={faCheck} /> {ad}
+            </p>
+          </div>
+        );
+      })}
+      <div className="c-row">
+        <p>Contenido en gigas disponibles: {plan.gigas.toString()}</p>
+      </div>
+      <div className="paypal-data">
+        <p className="text">Pagos seguros en línea</p>
+      </div>
+      <div className="button-contain">
+        {
+          plan.moneda === "mxn" &&
+            <button className="silver-bg" onClick={payWithOxxo}>Pagar vía Oxxo</button>
+        }
+        <button onClick={() => handleCheckout(plan.id)}>
+          COMPRAR CON TARJETA
+        </button>
+        <div>
+          {
+            paypalMethod()
+          }
+        </div>
       </div>
       <OxxoModal
         show={showOxxoModal}

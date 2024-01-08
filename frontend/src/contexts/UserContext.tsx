@@ -41,10 +41,7 @@ const UserContextProvider = (props: any) => {
   const [fileChange, setFileChange] = useState<boolean>(false);
   const [paymentMethods, setPaymentMethods] = useState<IPaymentMethod[]>([]);
   const [cardLoad, setCardLoad] = useState<boolean>(false);
-
-
-
-
+  
   function handleLogin(token: string) {
     localStorage.setItem("token", token);
     setUserToken(token);
@@ -100,9 +97,6 @@ const UserContextProvider = (props: any) => {
       getPaymentMethods();
     }
   }, [currentUser])
-
- 
-
 
   const values = {
     userToken,
