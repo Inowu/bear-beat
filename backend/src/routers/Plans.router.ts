@@ -27,15 +27,11 @@ export const plansRouter = router({
       z.intersection(
         PlansCreateOneSchema,
         z.object({
-          data: z.object({
-            interval: z
-              .union([z.literal('month'), z.literal('year')])
-              .optional(),
-          }),
+          interval: z.union([z.literal('month'), z.literal('year')]).optional(),
         }),
       ),
     )
-    .mutation(async ({ ctx: { prisma }, input: { data } }) => {
+    .mutation(async ({ ctx: { prisma }, input: { data, interval } }) => {
       try {
         const stripeProduct = await stripeInstance.products.create({
           name: data.name,
@@ -45,14 +41,11 @@ export const plansRouter = router({
             currency: data.moneda || 'usd',
             unit_amount: Number(data.price) * 100,
             recurring: {
-              interval: data.interval || 'month',
+              interval: interval || 'month',
               interval_count: 1,
             },
           },
         });
-
-        /* eslint-disable-next-line no-param-reassign */
-        delete data.interval;
 
         const prismaPlan = await prisma.plans.create({
           data: {
@@ -198,15 +191,11 @@ export const plansRouter = router({
       z.intersection(
         PlansUpdateOneSchema,
         z.object({
-          data: z.object({
-            interval: z
-              .union([z.literal('month'), z.literal('year')])
-              .optional(),
-          }),
+          interval: z.union([z.literal('month'), z.literal('year')]).optional(),
         }),
       ),
     )
-    .mutation(async ({ ctx: { prisma }, input: { data, where } }) => {
+    .mutation(async ({ ctx: { prisma }, input: { data, where, interval } }) => {
       try {
         const token = await paypal.getToken();
 
@@ -248,7 +237,7 @@ export const plansRouter = router({
                     },
                   },
                   frequency: {
-                    interval_unit: data.interval?.toUpperCase() || 'MONTH',
+                    interval_unit: interval?.toUpperCase() || 'MONTH',
                     interval_count: 1,
                   },
                 },
@@ -268,9 +257,6 @@ export const plansRouter = router({
             },
           )
         ).data;
-
-        /* eslint-disable-next-line no-param-reassign */
-        delete data.interval;
 
         return await prisma.plans.create({
           data: {

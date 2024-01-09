@@ -22,7 +22,7 @@ const Schema: z.ZodType<Prisma.PlansUncheckedCreateInput> = z
     ilimitado_activo: z.number().optional().nullable(),
     ilimitado_dias: z.number().optional().nullable(),
     stripe_prod_id: z.string().optional().nullable(),
-    stripe_prod_id_test: z.string(),
+    stripe_prod_id_test: z.string().optional(),
     vip_activo: z.number().optional().nullable(),
   })
   .strict();

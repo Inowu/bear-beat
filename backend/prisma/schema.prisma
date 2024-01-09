@@ -153,7 +153,7 @@ model Plans {
   ilimitado_activo     Int?
   ilimitado_dias       Int?
   stripe_prod_id       String? @db.Text
-  stripe_prod_id_test  String  @db.Text
+  stripe_prod_id_test  String?  @db.Text
   vip_activo           Int?
   conekta_plan_id      String? @db.Text
   conekta_plan_id_test String? @db.Text
