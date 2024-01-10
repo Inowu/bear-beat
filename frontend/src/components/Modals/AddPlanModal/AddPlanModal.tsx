@@ -10,12 +10,14 @@ import { Modal } from "react-bootstrap";
 import { RiCloseCircleLine } from "react-icons/ri";
 import trpc from "../../../api";
 import { handleChangeBigint } from "../../../functions/functions";
+import { ICreatePlans } from "../../../interfaces/Plans";
 
 interface IAddPlanModal {
   showModal: boolean;
   onHideModal: () => void;
   callPlans: () =>  void;
 }
+
 
 function AddPlanModal(props: IAddPlanModal) {
 
@@ -37,28 +39,30 @@ function AddPlanModal(props: IAddPlanModal) {
   const validationSchema = Yup.object().shape({
     description: Yup.string()
       .required("description is required"),
-    duration: Yup.string()
-      .required("duration is required"),
+    interval: Yup.string()
+      .required("interval is required"),
     name: Yup.string()
       .required("name is required"),
     price: Yup.number()
       .typeError("price must be a number")
-      .required("price is required"),
+      .required("price is required")
+      .min(1, "price can't be 0"),
     paymentMethod: Yup.string()
       .required("payment method is required"),
       gigas: Yup.string()
       .required("gigas is required"),
   });
-  const initialValues = {
+  const initialValues: ICreatePlans = {
     description: "",
-    duration: "",
+    interval: "month",
     name: "",
     price: 0,
     paymentMethod: "",
-    moneda: "",
+    moneda: "usd",
     homedir: "/home/products/",
     stripe_prod_id_test: "",
     gigas: '',
+    duration: '',
   };
   const formik = useFormik({
     initialValues: initialValues,
@@ -67,21 +71,22 @@ function AddPlanModal(props: IAddPlanModal) {
       setLoader(true);
       let body = {
         description: values.description,
-        duration: values.duration,
         name: values.name,
         price: values.price,
         moneda: values.moneda,
         homedir: values.homedir,
         stripe_prod_id_test: values.stripe_prod_id_test,
+        duration: values.interval === "month" ? "30" : "365",
         gigas: handleChangeBigint(values.gigas),
       }
       try {
         if (values.paymentMethod === 'stripe') {
-          await trpc.plans.createStripePlan.mutate({data: body});
+          await trpc.plans.createStripePlan.mutate({data: body, interval: values.interval});
         } else if (values.paymentMethod === 'paypal') {
-           await trpc.plans.createPaypalPlan.mutate({data: body});
+           await trpc.plans.createPaypalPlan.mutate({data: body, where: {id: 0}, interval: values.interval});
         }
         // console.log(body);
+        formik.resetForm();
         setShowSuccess(true);
         setLoader(false);
       }
@@ -98,32 +103,7 @@ function AddPlanModal(props: IAddPlanModal) {
         <RiCloseCircleLine className='icon' onClick={onHideModal} />
         <h2>Crear Plan</h2>
         <div className="c-row">
-          <input
-            placeholder="Description"
-            type="text"
-            id="description"
-            name="description"
-            value={formik.values.description}
-            onChange={formik.handleChange}
-          />
-          {formik.errors.description && (
-            <div className="formik">{formik.errors.description}</div>
-          )}
-        </div>
-        <div className="c-row">
-          <input
-            placeholder="Duration (days)"
-            id="duration"
-            name="duration"
-            value={formik.values.duration}
-            onChange={formik.handleChange}
-            type="text"
-          />
-          {formik.errors.duration && (
-            <div className="formik">{formik.errors.duration}</div>
-          )}
-        </div>
-        <div className="c-row">
+          <label>Plan Name</label>
           <input
             placeholder="Name"
             type="text"
@@ -137,6 +117,31 @@ function AddPlanModal(props: IAddPlanModal) {
           )}
         </div>
         <div className="c-row">
+          <label>Description</label>
+          <input
+            placeholder="Description"
+            type="text"
+            id="description"
+            name="description"
+            value={formik.values.description}
+            onChange={formik.handleChange}
+          />
+          {formik.errors.description && (
+            <div className="formik">{formik.errors.description}</div>
+          )}
+        </div>
+        <div className="c-row">
+        <label>Duration</label>
+          <select id="interval" defaultValue={formik.values.interval} onChange={formik.handleChange}>
+            <option value={"month"}>Mes</option>
+            <option value={"year"}>Aňo</option>
+          </select>
+          {formik.errors.interval && (
+            <div className="formik">{formik.errors.interval}</div>
+          )}
+        </div>
+        <div className="c-row">
+        <label>Gigas (gb)</label>
           <input
             placeholder="gigas (GB)"
             type="number"
@@ -149,32 +154,36 @@ function AddPlanModal(props: IAddPlanModal) {
             <div className="formik">{formik.errors.gigas}</div>
           )}
         </div>
-        <div className="c-row-price">
-          <select
-            id="moneda"
-            value={formik.values.moneda}
-            onChange={formik.handleChange}
-          >
-            <option value="USD">USD</option>
-            <option value="MXN">MXN</option>
-          </select>
-          <input
-            placeholder="Price"
-            type="number"
-            id="price"
-            name="price"
-            value={formik.values.price}
-            onChange={formik.handleChange}
-          />
-          {formik.errors.price && (
-            <div className="formik">
-              {formik.errors.price}
-            </div>
-          )}
+        <div className="c-row">
+          <label>Curreny / Price</label>
+          <div className="c-row-price">
+            <select
+              id="moneda"
+              value={formik.values.moneda}
+              onChange={formik.handleChange}
+            >
+              <option value="USD">USD</option>
+              <option value="MXN">MXN</option>
+            </select>
+            <input
+              placeholder="Price"
+              type="number"
+              id="price"
+              name="price"
+              value={formik.values.price}
+              onChange={formik.handleChange}
+            />
+            {formik.errors.price && (
+              <div className="formik">
+                {formik.errors.price}
+              </div>
+            )}
+          </div>
         </div>
         <div className="c-row">
           {/* <label htmlFor="paymentMethod">Método de Pago</label>
           <br/> */}
+          <label>Payment Type</label>
           <select
             id="paymentMethod"
             name="paymentMethod"

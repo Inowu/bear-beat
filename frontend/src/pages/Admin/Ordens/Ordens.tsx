@@ -1,9 +1,9 @@
-import Pagination from "../../components/Pagination/Pagination";
-import trpc from "../../api";
-import { useUserContext } from "../../contexts/UserContext";
+import Pagination from "../../../components/Pagination/Pagination";
+import trpc from "../../../api";
+import { useUserContext } from "../../../contexts/UserContext";
 import { useEffect, useState } from 'react';
 import { useNavigate } from "react-router-dom";
-import { ARRAY_10 } from "../../utils/Constants";
+import { ARRAY_10 } from "../../../utils/Constants";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import "./Ordens.scss";
@@ -24,8 +24,8 @@ export const Ordens = () => {
   const [ordens, setOrdens] = useState<any>([]);
   const [totalOrdens, setTotalOrdens] = useState(0)
   const [loader, setLoader] = useState<boolean>(true);
-  const formatDate = (dateString) => {
-    const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', timeZoneName: 'short' };
+  const formatDate = (dateString: any) => {
+    const options: any = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', timeZoneName: 'short' };
     return new Date(dateString).toLocaleDateString('en-US', options);
   }
   const [filters, setFilters] = useState<any>({

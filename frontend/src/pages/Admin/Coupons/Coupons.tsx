@@ -1,10 +1,10 @@
-import trpc from "../../api";
-import { useUserContext } from "../../contexts/UserContext";
+import trpc from "../../../api";
+import { useUserContext } from "../../../contexts/UserContext";
 import { useEffect, useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import './Coupons.scss';
-import { AddCouponModal } from "../../components/Modals/AddCouponModal/AddCouponModal";
-import { EditCouponModal } from "../../components/Modals/EditCouponModal/EditCouponModal";
+import { AddCouponModal } from "../../../components/Modals/AddCouponModal/AddCouponModal";
+import { EditCouponModal } from "../../../components/Modals/EditCouponModal/EditCouponModal";
 
 
 

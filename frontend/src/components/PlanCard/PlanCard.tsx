@@ -5,7 +5,7 @@ import { faCheck } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
 import { plans } from "../../utils/Constants";
 import { OxxoModal } from "../../components/Modals/OxxoModal/OxxoModal";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import trpc from "../../api";
 import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
 import paypal from "../../assets/images/paypal_logo.png"
@@ -23,8 +23,28 @@ function PlanCard(props: PlanCardPropsI) {
   const [show, setShow] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<any>("");
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
+  const [ppPlan, setppPlan] = useState<null | any>(null);
   const { plan } = props;
   const navigate = useNavigate();
+  const retreivePaypalPlan = async () => {
+    let body = {
+      where: {
+        stripe_prod_id: null,
+        moneda: plan.moneda.toUpperCase(),
+        price: +plan.price,
+      }
+    }
+    try {
+      const plans: any = await trpc.plans.findManyPlans.query(body);
+      if(plans.length > 0){
+        console.log(plans[0])
+        setppPlan(plans[0])
+      }
+    }
+    catch (error) {
+      console.log(error);
+    }
+  }
   const closeSuccess = () => {
     setShowSuccess(false);
     navigate("/");
@@ -88,7 +108,7 @@ function PlanCard(props: PlanCardPropsI) {
             createSubscription={async (data, actions) => {
               try {
                 const sub = await actions.subscription.create({
-                  plan_id: plan.paypal_plan_id,
+                  plan_id: ppPlan.paypal_plan_id,
                 });
                 return sub;
               } catch (e: any) {
@@ -98,7 +118,7 @@ function PlanCard(props: PlanCardPropsI) {
             }}
             onApprove={async (data: any, actions) => {
               const result = await trpc.subscriptions.subscribeWithPaypal.mutate({
-                planId: plan.id,
+                planId: ppPlan.id,
                 subscriptionId: data.subscriptionID
               })
               setShowSuccess(true);
@@ -108,6 +128,15 @@ function PlanCard(props: PlanCardPropsI) {
         </PayPalScriptProvider>
       return data
   }
+  useEffect(() => {
+    retreivePaypalPlan()
+  }, [])
+  
+  useEffect(() => {
+    if(ppPlan !== null){
+      paypalMethod();
+    }
+  }, [ppPlan])
 
   return (
     <div className={"plan-card-main-card " + (plan.moneda === "usd" ? "resp-plan" : "")}>
@@ -140,14 +169,14 @@ function PlanCard(props: PlanCardPropsI) {
       </div>
       <div className="button-contain">
         {
-          plan.moneda === "mxn" &&
+          (plan.moneda === "mxn" || plan.moneda === "MXN") &&
             <button className="silver-bg" onClick={payWithOxxo}>Pagar vía Oxxo</button>
         }
         <button onClick={() => handleCheckout(plan.id)}>
           COMPRAR CON TARJETA
         </button>
         <div>
-          {
+          { ppPlan &&
             paypalMethod()
           }
         </div>

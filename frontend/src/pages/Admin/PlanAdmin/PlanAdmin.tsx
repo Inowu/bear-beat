@@ -1,15 +1,14 @@
-import trpc from '../../api';
+import trpc from '../../../api';
 import * as Yup from "yup";
 import './PlanAdmin.scss';
-import { useUserContext } from '../../contexts/UserContext';
+import { useUserContext } from '../../../contexts/UserContext';
 import { useEffect, useState } from 'react'
 import { useNavigate } from "react-router-dom";
-import AddPlanModal from '../../components/Modals/AddPlanModal/AddPlanModal';
+import AddPlanModal from '../../../components/Modals/AddPlanModal/AddPlanModal';
 import { IPlans } from 'interfaces/Plans';
-import EditPlanModal from '../../components/Modals/EditPlanModal/EditPlanModal';
+import EditPlanModal from '../../../components/Modals/EditPlanModal/EditPlanModal';
 
 export const PlanAdmin = () => {
-
     const { currentUser } = useUserContext();
     const navigate = useNavigate();
     const [show, setShow] = useState<boolean>(false);
@@ -18,17 +17,14 @@ export const PlanAdmin = () => {
     const [loader, setLoader] = useState<boolean>(true);
     const [editingPlan, setEditingPlan] = useState(null);
 
-
     const getPlans = async () => {
         let body = {
-            where: {
-
-            }
+            where: {}
         }
         try {
             const plans: any = await trpc.plans.findManyPlans.query(body);
-            setPlans(plans);
             console.log(plans)
+            setPlans(plans);
             setLoader(false);
         }
         catch (error) {
@@ -43,7 +39,6 @@ export const PlanAdmin = () => {
         setShowEdit(false);
     }
     const handleRemovePlan = async (id: number, plan: any) => {
-        console.log(id, plan)
         const userConfirmation = window.confirm('¿Estás seguro de que deseas eliminar el plan?');
         if (userConfirmation) {
             try {
@@ -144,7 +139,7 @@ export const PlanAdmin = () => {
 
                                     )
                                 })
-                                : <h1>No se Encontraron Datos...</h1>
+                                : <tr><td>No se Encontraron Datos...</td></tr>
                             }
                         </tbody>
                     </table>

@@ -1,11 +1,11 @@
-import trpc from "../../api";
+import trpc from "../../../api";
 import { useEffect, useState } from "react";
-import { getCompleted, transformBiteToGb } from "../../functions/functions";
+import { getCompleted, transformBiteToGb } from "../../../functions/functions";
 import "./Storage.scss";
 
 export const Storage = () => {
 
-    const [storage, setStorage] = useState({
+    const [storage, setStorage] = useState<any>({
         used_storage: 0,
         total_storage: 0,
         available_storage: 0

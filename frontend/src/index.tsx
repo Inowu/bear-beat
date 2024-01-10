@@ -20,10 +20,10 @@ import Plans from "./pages/Plans/Plans";
 import Checkout from "./pages/Checkout/Checkout";
 import Admin from "./pages/Admin/Admin";
 import ResetPassword from "./components/Auth/ResetPassword/ResetPassword";
-import { PlanAdmin } from "./pages/PlanAdmin/PlanAdmin";
-import { Storage } from "./pages/Storage/Storage";
-import { Coupons } from "./pages/Coupons/Coupons";
-import { Ordens } from "./pages/Ordens/Ordens";
+import { PlanAdmin } from "./pages/Admin/PlanAdmin/PlanAdmin";
+import { Storage } from "./pages/Admin/Storage/Storage";
+import { Coupons } from "./pages/Admin/Coupons/Coupons";
+import { Ordens } from "./pages/Admin/Ordens/Ordens";
 import { HistoryCheckout } from "./pages/Admin/HistoryCheckout/HistoryCheckout";
 
 const root = ReactDOM.createRoot(

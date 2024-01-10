@@ -11,7 +11,8 @@ import { RiCloseCircleLine } from "react-icons/ri";
 import "react-phone-input-2/lib/material.css";
 import trpc from "../../../api";
 import { SuccessModal } from "../SuccessModal/SuccessModal";
-import { handleChangeBigint, handleChangeBigIntToNumber } from "../../../functions/functions";
+import { handleChangeBigint } from "../../../functions/functions";
+import { IUpdatePlans } from "../../../interfaces/Plans";
 
 interface IEditPlanModal {
     showModal: boolean;
@@ -40,7 +41,7 @@ function EditPlanModal(props: IEditPlanModal) {
     const validationSchema = Yup.object().shape({
         description: Yup.string()
             .required("description is required"),
-        duration: Yup.string()
+        interval: Yup.string()
             .required("duration is required"),
         name: Yup.string()
             .required("name is required"),
@@ -56,6 +57,7 @@ function EditPlanModal(props: IEditPlanModal) {
         moneda: "",
         activated: 0,
         gigas: '',
+        interval: 'month'
     };
     const formik = useFormik({
         initialValues: initialValues,
@@ -64,7 +66,7 @@ function EditPlanModal(props: IEditPlanModal) {
             setLoader(true);
             let body = {
                 description: values.description,
-                duration: values.duration,
+                duration: values.interval === "month" ? "30" : "365",
                 name: values.name,
                 price: Number(values.price),
                 moneda: values.moneda,
@@ -93,7 +95,8 @@ function EditPlanModal(props: IEditPlanModal) {
                     price: Number(editingPlan.price),
                     moneda: editingPlan.moneda,
                     activated: Number(editingPlan.activated),
-                    gigas: editingPlan.gigas
+                    gigas: editingPlan.gigas,
+                    interval: editingPlan.duration === "30" ? "month" : "year"
             });
         }
     }, [editingPlan]);
@@ -103,12 +106,27 @@ function EditPlanModal(props: IEditPlanModal) {
             <form className="modal-addusers" onSubmit={formik.handleSubmit}>
                 <RiCloseCircleLine className='icon' onClick={onHideModal} />
                 <h2>Editar Plan</h2>
-                <div className="c-row-price" style={{display: "flex", gap: 20 ,marginBottom: 20}}>
-                    <p ><b>Moneda: </b>{formik.values.moneda}</p>
-                    <p><b>Precio: </b>{formik.values.price}</p>
+                <div className="c-row-price" style={{display: "flex", gap: 20}}>
+                    <p ><b>Moneda: </b>{editingPlan && editingPlan.moneda}</p>
+                    <p><b>Precio: </b>{editingPlan && editingPlan.price}</p>
                     <p><b>Gigas: </b>{editingPlan && editingPlan.gigas.toString()}</p>
                 </div>
                 <div className="c-row">
+                    <label>Plan Name</label>
+                    <input
+                        placeholder="Name"
+                        type="name"
+                        id="name"
+                        name="name"
+                        value={formik.values.name}
+                        onChange={formik.handleChange}
+                    />
+                    {formik.errors.name && (
+                        <div className="formik">{formik.errors.name}</div>
+                    )}
+                </div>
+                <div className="c-row">
+                    <label>Description</label>
                     <input
                         placeholder="Description"
                         type="text"
@@ -122,19 +140,17 @@ function EditPlanModal(props: IEditPlanModal) {
                     )}
                 </div>
                 <div className="c-row">
-                    <input
-                        placeholder="Duration"
-                        id="duration"
-                        name="duration"
-                        value={formik.values.duration}
-                        onChange={formik.handleChange}
-                        type="text"
-                    />
-                    {formik.errors.duration && (
-                        <div className="formik">{formik.errors.duration}</div>
+                    <label>Duration</label>
+                    <select  value={formik.values.interval} onChange={formik.handleChange}>
+                        <option value={"month"}>Mes</option>
+                        <option value={"year"}>Aňo</option>
+                    </select>
+                    {formik.errors.interval && (
+                        <div className="formik">{formik.errors.interval}</div>
                     )}
                 </div>
                 <div className="c-row">
+                    <label>Gigas (gb)</label>
                     <input
                         placeholder="gigas"
                         id="gigas"
@@ -145,19 +161,6 @@ function EditPlanModal(props: IEditPlanModal) {
                     />
                     {formik.errors.gigas && (
                         <div className="formik">{formik.errors.duration}</div>
-                    )}
-                </div>
-                <div className="c-row">
-                    <input
-                        placeholder="Name"
-                        type="name"
-                        id="name"
-                        name="name"
-                        value={formik.values.name}
-                        onChange={formik.handleChange}
-                    />
-                    {formik.errors.name && (
-                        <div className="formik">{formik.errors.name}</div>
                     )}
                 </div>
                 <div className="c-row">

@@ -14,10 +14,12 @@ function Plans() {
     let body = {
       where: {
         activated: 1,
+        paypal_plan_id: null,
       }
     }
     try {
       const plans: any = await trpc.plans.findManyPlans.query(body);
+      console.log(plans);
       setPlans(plans);
       setLoader(false);
     }

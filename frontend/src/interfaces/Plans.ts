@@ -51,3 +51,25 @@ export interface IGBPlans {
   id: number;
   name: string;
 }
+export interface ICreatePlans {
+  description: string;
+  interval: "month" | "year",
+  name: string;
+  price: number;
+  paymentMethod: string;
+  moneda: string;
+  homedir: string;
+  stripe_prod_id_test: string;
+  gigas: string;
+  duration: string;
+}
+export interface IUpdatePlans {
+  description: string;
+  interval: "month" | "year",
+  name: string;
+  price: number;
+  moneda: string;
+  gigas: string;
+  duration: string;
+  activated: number;
+}
