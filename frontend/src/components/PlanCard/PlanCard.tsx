@@ -29,6 +29,7 @@ function PlanCard(props: PlanCardPropsI) {
   const retreivePaypalPlan = async () => {
     let body = {
       where: {
+        activated: 1,
         stripe_prod_id: null,
         moneda: plan.moneda.toUpperCase(),
         price: +plan.price,
