@@ -247,7 +247,8 @@ export const plansRouter = router({
                 auto_bill_outstanding: true,
                 setup_fee: {
                   value: '0',
-                  currency_code: data.moneda || 'USD',
+                  currency_code:
+                    (data.moneda as string)?.toUpperCase() || 'USD',
                 },
               },
             },
