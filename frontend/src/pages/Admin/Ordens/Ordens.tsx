@@ -140,13 +140,13 @@ export const Ordens = () => {
             <option value={'Conekta OXXO'}>Conekta OXXO</option>
           </select>
         </div>
-        <div className="select-input">
+        {/* <div className="select-input">
           <p>Estado</p>
           <select onChange={(e) => startFilter('active', Number(e.target.value))}>
             <option value={1}>Activo</option>
             <option value={3}>No Activo</option>
           </select>
-        </div>
+        </div> */}
         <div className="select-input">
           <p>Fecha de Inicio</p>
           <input type="date" className="date-input" onChange={(e) => startFilter('startDate', e.target.value)} />
