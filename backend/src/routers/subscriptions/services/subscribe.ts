@@ -255,24 +255,32 @@ const insertFtpQuotas = ({
   prisma: PrismaClient;
   user: Users | SessionUser;
   plan: Plans;
-}) => [
-  prisma.ftpQuotaLimits.create({
-    data: {
-      bytes_out_avail: gbToBytes(Number(plan.gigas)),
-      bytes_xfer_avail: 0,
-      // A limit of 0 means unlimited
-      files_out_avail: 0,
-      bytes_in_avail: 1,
-      files_in_avail: 1,
-      name: user.username,
-    },
-  }),
-  prisma.ftpquotatallies.create({
-    data: {
-      name: user.username,
-    },
-  }),
-];
+}) => {
+  const gb = gbToBytes(Number(plan.gigas) || 500);
+
+  log.info(
+    `[SUBSCRIPTION] Inserting ftp quotas for user ${user.id}, GB: ${gb}`,
+  );
+
+  return [
+    prisma.ftpQuotaLimits.create({
+      data: {
+        bytes_out_avail: gbToBytes(Number(plan.gigas)),
+        bytes_xfer_avail: 0,
+        // A limit of 0 means unlimited
+        files_out_avail: 0,
+        bytes_in_avail: 1,
+        files_in_avail: 1,
+        name: user.username,
+      },
+    }),
+    prisma.ftpquotatallies.create({
+      data: {
+        name: user.username,
+      },
+    }),
+  ];
+};
 
 const insertInDescargas = async ({
   expirationDate,
