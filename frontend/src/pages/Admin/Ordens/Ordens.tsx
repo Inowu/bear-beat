@@ -44,7 +44,9 @@ export const Ordens = () => {
       }
     }
     try {
-      const ordens: any = await trpc.orders.findManyOrders.query(body);
+      const ordens: any = await trpc.orders.findManyOrdersWithUsers.query(body);
+      console.log(ordens);
+
       setOrdens(ordens);
       setLoader(false);
     }
@@ -104,8 +106,8 @@ export const Ordens = () => {
           id: true,
         },
       }
-      const tempUsers = await trpc.orders.findManyOrders.query(body);
-      const totalUsersResponse = await trpc.orders.findManyOrders.query(body2);
+      const tempUsers = await trpc.orders.findManyOrdersWithUsers.query(body);
+      const totalUsersResponse = await trpc.orders.findManyOrdersWithUsers.query(body2);
       setLoader(false);
       setOrdens(tempUsers);
       setTotalOrdens(totalUsersResponse.length);
@@ -131,7 +133,7 @@ export const Ordens = () => {
       </div>
       <div className="filter-contain">
         <div className="select-input">
-        <p>Metodo de Pago</p>
+          <p>Metodo de Pago</p>
           <select onChange={(e) => startFilter('search', e.target.value)}>
             <option value={''}>Todos</option>
             <option value={'Paypal'}>Paypal</option>
@@ -140,7 +142,7 @@ export const Ordens = () => {
           </select>
         </div>
         <div className="select-input">
-        <p>Estado</p>
+          <p>Estado</p>
           <select onChange={(e) => startFilter('active', Number(e.target.value))}>
             <option value={1}>Activo</option>
             <option value={0}>No Activo</option>
@@ -151,7 +153,7 @@ export const Ordens = () => {
           <input type="date" className="date-input" onChange={(e) => startFilter('startDate', e.target.value)} />
         </div>
         <div className="select-input">
-        <p>Fecha de Final</p>
+          <p>Fecha de Final</p>
           <input type="date" className="date-input" onChange={(e) => startFilter('endDate', e.target.value)} />
         </div>
       </div>
@@ -161,7 +163,16 @@ export const Ordens = () => {
             <thead>
               <tr>
                 <th>
+                  Correo
+                </th>
+                <th>
+                  Telefono
+                </th>
+                <th>
                   Metodo de Pago
+                </th>
+                <th>
+                  Id de la suscripción
                 </th>
                 <th>
                   Precio Total
@@ -180,7 +191,16 @@ export const Ordens = () => {
                   return (
                     <tr key={"admin_ordens_" + index}>
                       <td className="">
+                        {orden.user?.email}
+                      </td>
+                      <td className="">
+                        {orden.user?.phone}
+                      </td>
+                      <td className="">
                         {orden.payment_method}
+                      </td>
+                      <td>
+                        {orden.txn_id}
                       </td>
                       <td>
                         {orden.total_price}
