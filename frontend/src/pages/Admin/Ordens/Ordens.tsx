@@ -144,7 +144,7 @@ export const Ordens = () => {
           <p>Estado</p>
           <select onChange={(e) => startFilter('active', Number(e.target.value))}>
             <option value={1}>Activo</option>
-            <option value={0}>No Activo</option>
+            <option value={3}>No Activo</option>
           </select>
         </div>
         <div className="select-input">
