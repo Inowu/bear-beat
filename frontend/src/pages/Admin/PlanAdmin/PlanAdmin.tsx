@@ -69,15 +69,15 @@ export const PlanAdmin = () => {
     useEffect(() => {
         getPlans();
     }, [])
-    
+
     return (
         <div className='planAdmin-contain'>
             <div className='header'>
                 <h1>Planes - {plans.length}</h1>
                 <button className="btn-addPlan" onClick={() => setShow(true)}>Crear Plan</button>
 
-                <AddPlanModal showModal={show} onHideModal={closeModalAdd} callPlans={getPlans}/>
-                <EditPlanModal showModal={showEdit} onHideModal={closeEditModalAdd} editingPlan={editingPlan} callPlans={getPlans}/>
+                <AddPlanModal showModal={show} onHideModal={closeModalAdd} callPlans={getPlans} />
+                <EditPlanModal showModal={showEdit} onHideModal={closeEditModalAdd} editingPlan={editingPlan} callPlans={getPlans} />
             </div>
             <div className="admin-table">
                 <div className="table-contain">
@@ -86,6 +86,9 @@ export const PlanAdmin = () => {
                             <tr>
                                 <th>
                                     Nombre
+                                </th>
+                                <th>
+                                    Método de pago
                                 </th>
                                 <th>
                                     Descripción
@@ -112,6 +115,9 @@ export const PlanAdmin = () => {
                                             <td className="">
                                                 {plan.name}
                                             </td>
+                                            <td className="">
+                                                {plan.paypal_plan_id ? "paypal" : "stripe"}
+                                            </td>
                                             <td>
                                                 {plan.description}
                                             </td>
@@ -128,7 +134,7 @@ export const PlanAdmin = () => {
                                                 <button
                                                     onClick={() => handleEditPlan(plan)}
                                                     // disabled={plan.paypal_plan_id !== null}
-                                                    style ={{marginRight: 10}}
+                                                    style={{ marginRight: 10 }}
                                                 >Editar</button>
                                                 <button
                                                     onClick={() => handleRemovePlan(plan.id, plan.paypal_plan_id)}
