@@ -37,7 +37,7 @@ function PlanCard(props: PlanCardPropsI) {
     }
     try {
       const plans: any = await trpc.plans.findManyPlans.query(body);
-      if(plans.length > 0){
+      if (plans.length > 0) {
         console.log(plans[0])
         setppPlan(plans[0])
       }
@@ -58,6 +58,7 @@ function PlanCard(props: PlanCardPropsI) {
     setShow(false);
   };
   const payWithOxxo = async () => {
+    trpc.checkoutLogs.registerCheckoutLog.mutate();
     try {
       let body = {
         planId: plan.id,
@@ -74,70 +75,72 @@ function PlanCard(props: PlanCardPropsI) {
     }
   }
   const handleCheckout = async (planId: number) => {
+    trpc.checkoutLogs.registerCheckoutLog.mutate();
     navigate(`/comprar?priceId=${planId}`);
   };
   const paypalMethod = () => {
-       let data = <PayPalScriptProvider options={{
-          clientId: "AYuKvAI09TE9bk9k1TuzodZ2zWQFpWEZesT65IkT4WOws9wq-yfeHLj57kEBH6YR_8NgBUlLShj2HOSr",
-          vault: true,
-          intent: "subscription",
-        }} >
-          <PayPalButtons
-            style={{ color: "silver", shape: "pill", layout: "horizontal", height: 46, tagline: false }}
-            onClick={async (data, actions) => {
-              // Revisar si el usuario tiene una suscripcion activa
-              const me = await trpc.auth.me.query();
-              if (me.hasActiveSubscription) return actions.reject();
-              const existingOrder = await trpc.orders.ownOrders.query({
-                where: {
-                  AND: [
-                    {
-                      status: 0,
-                    },
-                    {
-                      payment_method: "Paypal",
-                    },
-                  ],
+    let data = <PayPalScriptProvider options={{
+      clientId: "AYuKvAI09TE9bk9k1TuzodZ2zWQFpWEZesT65IkT4WOws9wq-yfeHLj57kEBH6YR_8NgBUlLShj2HOSr",
+      vault: true,
+      intent: "subscription",
+    }} >
+      <PayPalButtons
+        style={{ color: "silver", shape: "pill", layout: "horizontal", height: 46, tagline: false }}
+        onClick={async (data, actions) => {
+          trpc.checkoutLogs.registerCheckoutLog.mutate();
+          // Revisar si el usuario tiene una suscripcion activa
+          const me = await trpc.auth.me.query();
+          if (me.hasActiveSubscription) return actions.reject();
+          const existingOrder = await trpc.orders.ownOrders.query({
+            where: {
+              AND: [
+                {
+                  status: 0,
                 },
-              });
+                {
+                  payment_method: "Paypal",
+                },
+              ],
+            },
+          });
 
-              if (existingOrder.length > 0) {
-                return actions.reject();
-              }
-              actions.resolve();
-            }}
-            createSubscription={async (data, actions) => {
-              try {
-                const sub = await actions.subscription.create({
-                  // plan_id: ppPlan.paypal_plan_id,
-                  plan_id: plan.paypal_plan_id,
-                });
-                return sub;
-              } catch (e: any) {
-                console.log(e?.message);
-              }
-              return "";
-            }}
-            onApprove={async (data: any, actions) => {
-              const result = await trpc.subscriptions.subscribeWithPaypal.mutate({
-                // planId: ppPlan.id,
-                planId: plan.id,
-                subscriptionId: data.subscriptionID
-              })
-              setShowSuccess(true);
-              return data;
-            }}
-          />
-        </PayPalScriptProvider>
-      return data
+          if (existingOrder.length > 0) {
+            return actions.reject();
+          }
+          actions.resolve();
+        }}
+        createSubscription={async (data, actions) => {
+          try {
+            const sub = await actions.subscription.create({
+              // plan_id: ppPlan.paypal_plan_id,
+              plan_id: plan.paypal_plan_id,
+            });
+            return sub;
+          } catch (e: any) {
+            console.log(e?.message);
+          }
+          return "";
+        }}
+        onApprove={async (data: any, actions) => {
+          const result = await trpc.subscriptions.subscribeWithPaypal.mutate({
+            // planId: ppPlan.id,
+            planId: plan.id,
+            subscriptionId: data.subscriptionID
+          })
+          setShowSuccess(true);
+          return data;
+        }}
+      />
+    </PayPalScriptProvider>
+    return data
   }
   useEffect(() => {
     // retreivePaypalPlan()
   }, [])
-  
+
   useEffect(() => {
     // if(ppPlan !== null){
-      // paypalMethod();
+    // paypalMethod();
     // }
   }, [ppPlan])
 
@@ -173,13 +176,13 @@ function PlanCard(props: PlanCardPropsI) {
       <div className="button-contain">
         {
           (plan.moneda === "mxn" || plan.moneda === "MXN") &&
-            <button className="silver-bg" onClick={payWithOxxo}>Pagar vía Oxxo</button>
+          <button className="silver-bg" onClick={payWithOxxo}>Pagar vía Oxxo</button>
         }
         <button onClick={() => handleCheckout(plan.id)}>
           COMPRAR CON TARJETA
         </button>
         <div>
-          { plan.id &&
+          {plan.id &&
             paypalMethod()
           }
         </div>
