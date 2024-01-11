@@ -45,8 +45,6 @@ export const Ordens = () => {
     }
     try {
       const ordens: any = await trpc.orders.findManyOrdersWithUsers.query(body);
-      console.log(ordens);
-
       setOrdens(ordens);
       setLoader(false);
     }
