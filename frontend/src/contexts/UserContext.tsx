@@ -5,7 +5,7 @@ import { IPaymentMethod, IUser } from "../interfaces/User";
 interface UserContextI {
   currentUser: IUser | null;
   userToken: string | null;
-  handleLogin: (token: string) => void;
+  handleLogin: (token: string, refreshtoken: string) => void;
   handleLogout: () => void;
   resetCard: () => void;
   fileChange: boolean;
@@ -39,11 +39,13 @@ const UserContextProvider = (props: any) => {
   const [userToken, setUserToken] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [fileChange, setFileChange] = useState<boolean>(false);
+  // const [refreshToken, setRefreshToken] = useState<string>();
   const [paymentMethods, setPaymentMethods] = useState<IPaymentMethod[]>([]);
   const [cardLoad, setCardLoad] = useState<boolean>(false);
 
-  function handleLogin(token: string) {
+  function handleLogin(token: string, refreshtoken: string) {
     localStorage.setItem("token", token);
+    localStorage.setItem("refreshToken", refreshtoken);
     setUserToken(token);
     // setUserToken(token);
     // localStorage.setItem("user", "Javier Centeno");
@@ -57,6 +59,7 @@ const UserContextProvider = (props: any) => {
   function handleLogout() {
     setCurrentUser(null);
     localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
     setUserToken(null);
   }
   const getPaymentMethods = async () => {
@@ -97,6 +100,23 @@ const UserContextProvider = (props: any) => {
       getPaymentMethods();
     }
   }, [currentUser])
+
+  useEffect(() => {
+    const refreshToken = localStorage.getItem("refreshToken");
+    if (refreshToken !== null){
+      const interval = setInterval(async () => {
+        try {
+          const token = await trpc.auth.refresh.query({refreshToken: refreshToken });
+          handleLogin(token.token, token.refreshToken);
+        }
+        catch (error) {
+          console.log(error);
+        }
+      }, 1000 * 60 * 5);
+      return () => clearInterval(interval);
+    }
+  }
+  , [])
 
   const values = {
     userToken,
