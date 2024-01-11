@@ -14,6 +14,62 @@ import { UsersUpdateOneSchema } from '../schemas/updateOneUsers.schema';
 import { UsersUpsertSchema } from '../schemas/upsertOneUsers.schema';
 
 export const usersRouter = router({
+  getActiveUsers: shieldedProcedure
+    .input(UsersFindManySchema)
+    .query(async ({ ctx: { prisma }, input }) => {
+      const filteredUsers = await prisma.users.findMany({
+        where: input.where,
+      });
+
+      const activeSubs = await prisma.descargasUser.findMany({
+        take: input.take,
+        skip: input.skip,
+        where: {
+          AND: [
+            {
+              user_id: {
+                in: filteredUsers.map((user) => user.id),
+              },
+            },
+            {
+              date_end: {
+                gte: new Date(),
+              },
+            },
+          ],
+        },
+      });
+
+      return activeSubs;
+    }),
+  getInactiveUsers: shieldedProcedure
+    .input(UsersFindManySchema)
+    .query(async ({ ctx: { prisma }, input }) => {
+      const filteredUsers = await prisma.users.findMany({
+        where: input.where,
+      });
+
+      const activeSubs = await prisma.descargasUser.findMany({
+        take: input.take,
+        skip: input.skip,
+        where: {
+          AND: [
+            {
+              user_id: {
+                in: filteredUsers.map((user) => user.id),
+              },
+            },
+            {
+              date_end: {
+                lte: new Date(),
+              },
+            },
+          ],
+        },
+      });
+
+      return activeSubs;
+    }),
   aggregateUsers: shieldedProcedure
     .input(UsersAggregateSchema)
     .query(async ({ ctx, input }) => {

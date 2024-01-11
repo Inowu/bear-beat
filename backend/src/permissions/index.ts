@@ -30,6 +30,8 @@ export const permissions = shield<Context>({
     search: isLoggedIn,
     findByCode: isLoggedIn,
     ownOrders: isLoggedIn,
+    getActiveUsers: isAdmin,
+    getInactiveUsers: isAdmin,
     findManyOrdersWithUsers: isAdmin,
     ownDescargas: isLoggedIn,
     subscribeWithStripe: isLoggedIn,
