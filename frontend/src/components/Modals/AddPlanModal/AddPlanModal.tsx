@@ -83,9 +83,9 @@ function AddPlanModal(props: IAddPlanModal) {
         if (values.paymentMethod === 'stripe') {
           await trpc.plans.createStripePlan.mutate({data: body, interval: values.interval});
         } else if (values.paymentMethod === 'paypal') {
-           await trpc.plans.createPaypalPlan.mutate({data: body, where: {id: 0}, interval: values.interval});
+          body.moneda = body.moneda.toUpperCase();
+          await trpc.plans.createPaypalPlan.mutate({data: body, where: {id: 0}, interval: values.interval});
         }
-        // console.log(body);
         formik.resetForm();
         setShowSuccess(true);
         setLoader(false);
