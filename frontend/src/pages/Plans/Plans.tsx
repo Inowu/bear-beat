@@ -14,7 +14,7 @@ function Plans() {
     let body = {
       where: {
         activated: 1,
-        paypal_plan_id: null,
+        // paypal_plan_id: null,
       }
     }
     try {

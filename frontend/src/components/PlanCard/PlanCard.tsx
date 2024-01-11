@@ -109,7 +109,8 @@ function PlanCard(props: PlanCardPropsI) {
             createSubscription={async (data, actions) => {
               try {
                 const sub = await actions.subscription.create({
-                  plan_id: ppPlan.paypal_plan_id,
+                  // plan_id: ppPlan.paypal_plan_id,
+                  plan_id: plan.paypal_plan_id,
                 });
                 return sub;
               } catch (e: any) {
@@ -119,7 +120,8 @@ function PlanCard(props: PlanCardPropsI) {
             }}
             onApprove={async (data: any, actions) => {
               const result = await trpc.subscriptions.subscribeWithPaypal.mutate({
-                planId: ppPlan.id,
+                // planId: ppPlan.id,
+                planId: plan.id,
                 subscriptionId: data.subscriptionID
               })
               setShowSuccess(true);
@@ -130,13 +132,13 @@ function PlanCard(props: PlanCardPropsI) {
       return data
   }
   useEffect(() => {
-    retreivePaypalPlan()
+    // retreivePaypalPlan()
   }, [])
   
   useEffect(() => {
-    if(ppPlan !== null){
-      paypalMethod();
-    }
+    // if(ppPlan !== null){
+      // paypalMethod();
+    // }
   }, [ppPlan])
 
   return (
