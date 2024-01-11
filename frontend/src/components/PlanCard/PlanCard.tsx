@@ -179,7 +179,7 @@ function PlanCard(props: PlanCardPropsI) {
           COMPRAR CON TARJETA
         </button>
         <div>
-          { ppPlan &&
+          { plan.id &&
             paypalMethod()
           }
         </div>
