@@ -38,7 +38,7 @@ export const plansRouter = router({
           active: Boolean(data.activated) || true,
           description: data.description,
           default_price_data: {
-            currency: data.moneda || 'usd',
+            currency: (data.moneda as string)?.toLowerCase() || 'usd',
             unit_amount: Number(data.price) * 100,
             recurring: {
               interval: interval || 'month',
@@ -233,7 +233,8 @@ export const plansRouter = router({
                   pricing_scheme: {
                     fixed_price: {
                       value: data.price,
-                      currency_code: data.moneda || 'USD',
+                      currency_code:
+                        (data.moneda as string)?.toUpperCase() || 'USD',
                     },
                   },
                   frequency: {
@@ -246,7 +247,8 @@ export const plansRouter = router({
                 auto_bill_outstanding: true,
                 setup_fee: {
                   value: '0',
-                  currency_code: data.moneda || 'USD',
+                  currency_code:
+                    (data.moneda as string)?.toUpperCase() || 'USD',
                 },
               },
             },
