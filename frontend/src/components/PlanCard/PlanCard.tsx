@@ -41,7 +41,6 @@ function PlanCard(props: PlanCardPropsI) {
     try {
       const plans: any = await trpc.plans.findManyPlans.query(body);
       if (plans.length > 0) {
-        console.log(plans[0])
         setppPlan(plans[0])
       }
     }
@@ -96,6 +95,7 @@ function PlanCard(props: PlanCardPropsI) {
     trpc.checkoutLogs.registerCheckoutLog.mutate();
     navigate(`/comprar?priceId=${planId}`);
   };
+
   const paypalMethod = () => {
     let data = <PayPalScriptProvider options={{
       clientId: "AYuKvAI09TE9bk9k1TuzodZ2zWQFpWEZesT65IkT4WOws9wq-yfeHLj57kEBH6YR_8NgBUlLShj2HOSr",
@@ -130,8 +130,7 @@ function PlanCard(props: PlanCardPropsI) {
         createSubscription={async (data, actions) => {
           try {
             const sub = await actions.subscription.create({
-              // plan_id: ppPlan.paypal_plan_id,
-              plan_id: plan.paypal_plan_id,
+              plan_id: ppPlan.paypal_plan_id,
             });
             return sub;
           } catch (e: any) {
@@ -141,8 +140,8 @@ function PlanCard(props: PlanCardPropsI) {
         }}
         onApprove={async (data: any, actions) => {
           const result = await trpc.subscriptions.subscribeWithPaypal.mutate({
-            // planId: ppPlan.id,
-            planId: plan.id,
+            planId: ppPlan.id,
+            // planId: plan.id,
             subscriptionId: data.subscriptionID
           })
           setShowSuccess(true);
@@ -152,15 +151,10 @@ function PlanCard(props: PlanCardPropsI) {
     </PayPalScriptProvider>
     return data
   }
-  useEffect(() => {
-    // retreivePaypalPlan()
-  }, [])
 
   useEffect(() => {
-    // if(ppPlan !== null){
-    // paypalMethod();
-    // }
-  }, [ppPlan])
+    retreivePaypalPlan()
+  }, [])
 
   return (
     <div className={"plan-card-main-card " + (plan.moneda === "usd" ? "resp-plan" : "")}>
@@ -204,7 +198,7 @@ function PlanCard(props: PlanCardPropsI) {
           COMPRAR CON TARJETA
         </button>
         <div>
-          {plan.id &&
+          {ppPlan !== null && ppPlan.paypal_plan_id !== null &&
             paypalMethod()
           }
         </div>
