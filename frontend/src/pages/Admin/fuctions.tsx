@@ -1,6 +1,6 @@
 import { IAdminFilter } from "./Admin";
 import trpc from "../../api";
-export const exportUsers = async (filt: IAdminFilter, userDownloads: any) => {
+export const exportUsers = async (filt: IAdminFilter) => {
     let users = [];
     try {
         if (filt.active === 2) {
@@ -24,9 +24,6 @@ export const exportUsers = async (filt: IAdminFilter, userDownloads: any) => {
                         email: {
                             startsWith: filt.search,
                         },
-                        id: {
-                            in: userDownloads.map((obj:any) => obj.user_id),
-                        },
                     },
                     select: {
                         username: true,
@@ -34,7 +31,7 @@ export const exportUsers = async (filt: IAdminFilter, userDownloads: any) => {
                         registered_on: true,
                     },
                 }
-               users = await trpc.users.findManyUsers.query(body);
+               users = await trpc.users.getActiveUsers.query(body);
             }
             else{
                 let body: any = {
@@ -42,9 +39,6 @@ export const exportUsers = async (filt: IAdminFilter, userDownloads: any) => {
                         email: {
                             startsWith: filt.search,
                         },
-                        id: {
-                            notIn: userDownloads.map((obj:any) => obj.user_id),
-                        },
                     },
                     select: {
                         username: true,
@@ -52,7 +46,7 @@ export const exportUsers = async (filt: IAdminFilter, userDownloads: any) => {
                         registered_on: true,
                     },
                 }
-               users = await trpc.users.findManyUsers.query(body);
+               users = await trpc.users.getInactiveUsers.query(body);
             }
         }
         return users

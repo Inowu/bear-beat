@@ -29,7 +29,6 @@ function Admin() {
     const { currentUser } = useUserContext();
     const [users, setUsers] = useState<IAdminUser[]>([]);
     const [totalUsers, setTotalUsers] = useState(0);
-    const [allUsers, setAllUsers] = useState<IAdminUser[]>([]);
     const [storage, setStorage] = useState();
     const [showModal, setShowModal] = useState<boolean>(false);
     const [showOption, setShowOption] = useState<boolean>(false);
@@ -38,7 +37,7 @@ function Admin() {
     const [plans, setPlans] = useState<IPlans[]>([]);
     const [selectUser, setSelectUser] = useState({} as IAdminUser);
     const [loader, setLoader] = useState<boolean>(true);
-    const [userDownloads, setUserDownloads] = useState<IDownloads[]>([]);
+    // const [userDownloads, setUserDownloads] = useState<any>([]);
     const [filters, setFilters] = useState<any>({
         page: 0,
         search: '',
@@ -107,22 +106,22 @@ function Admin() {
             console.log(error)
         }
     }
-    const getDownloads = async () => {
-        const today = new Date();
-        let body_descarga = {
-            where: {
-                date_end: {
-                    gte: today,
-                },
-            },
-            select: {
-                user_id: true,
-                date_end: true,
-            },
-        }
-        const descargasUser = await trpc.descargasuser.findManyDescargasUser.query(body_descarga);
-        setUserDownloads(descargasUser);
-    }
+    // const getDownloads = async () => {
+    //     const today = new Date();
+    //     let body_descarga = {
+    //         where: {
+    //             date_end: {
+    //                 gte: today,
+    //             },
+    //         },
+    //         select: {
+    //             user_id: true,
+    //             date_end: true,
+    //         },
+    //     }
+    //     const descargasUser = await trpc.descargasuser.findManyDescargasUser.query(body_descarga);
+    //     setUserDownloads(descargasUser);
+    // }
     const startFilter = (key: string, value: string | number) => {
         let tempFilters: any = filters;
         if (key !== 'page') {
@@ -160,7 +159,8 @@ function Admin() {
                 setLoader(false);
                 setUsers(tempUsers);
                 setTotalUsers(totalUsersResponse.length);
-            } else {
+            } 
+            else {
                 if(filt.active === 1){
                     let body: any = {
                         take: 10,
@@ -169,27 +169,20 @@ function Admin() {
                             email: {
                                 startsWith: filt.search,
                             },
-                            id: {
-                                in: userDownloads.map((obj:any) => obj.user_id),
-                            },
                         }
                     }
                     let body2: any = {
                         where: {
                             email: {
                                 startsWith: filt.search,
-                            },
-                            id: {
-                                in: userDownloads.map((obj:any) => obj.user_id),
-                            },
+                            }
                         },
                         select: {
                             id: true,
                         },
                     }
-                    const tempUsers = await trpc.users.findManyUsers.query(body);
-                    const totalUsersResponse = await trpc.users.findManyUsers.query(body2);
-                    console.log(tempUsers);
+                    const tempUsers: any = await trpc.users.getActiveUsers.query(body)
+                    const totalUsersResponse = await trpc.users.getActiveUsers.query(body2);
                     setLoader(false);
                     setUsers(tempUsers);
                     setTotalUsers(totalUsersResponse.length);
@@ -201,10 +194,7 @@ function Admin() {
                         where: {
                             email: {
                                 startsWith: filt.search,
-                            },
-                            id: {
-                                notIn: userDownloads.map((obj:any) => obj.user_id),
-                            },
+                            }
                         }
                     }
                     let body2: any = {
@@ -212,16 +202,13 @@ function Admin() {
                             email: {
                                 startsWith: filt.search,
                             },
-                            id: {
-                                notIn: userDownloads.map((obj:any) => obj.user_id),
-                            },
                         },
                         select: {
                             id: true,
                         },
                     }
-                    const tempUsers = await trpc.users.findManyUsers.query(body);
-                    const totalUsersResponse = await trpc.users.findManyUsers.query(body2);
+                    const tempUsers: any = await trpc.users.getInactiveUsers.query(body)
+                    const totalUsersResponse = await trpc.users.getInactiveUsers.query(body2);
                     setLoader(false);
                     setUsers(tempUsers);
                     setTotalUsers(totalUsersResponse.length);
@@ -234,7 +221,7 @@ function Admin() {
     useEffect(() => {
         getPlans();
         // getStorage();
-        getDownloads();
+        // getDownloads();
         filterUsers(filters);
     }, [])
     useEffect(() => {
@@ -244,26 +231,27 @@ function Admin() {
     }, [currentUser])
 
     const transformUserData = async () => {
-        const tempUsers: any = await exportUsers(filters, userDownloads);
+        const tempUsers: any = await exportUsers(filters);
         return tempUsers.map((user:any) => ({
             Usuario: user.username,
             Correo: user.email,
             Fecha_de_Registro: user.registered_on.toLocaleDateString(),
         }));
     };
-
     return (
         <div className="admin-contain">
             <div className="header">
                 <h1>Usuarios</h1>
                 <button className="btn-addUsers" onClick={() => setShowModal(true)}>Añadir Usuarios</button>
-                <CsvDownloader className="btn-addUsers"
-                    filename="lista_de_usuarios"
-                    extension=".csv"
-                    separator=";"
-                    wrapColumnChar="'"
-                    datas={transformUserData()}
-                    text="Exportar Clientes" />
+                    <CsvDownloader 
+                        className="btn-addUsers"
+                        filename="lista_de_usuarios"
+                        extension=".csv"
+                        separator=";"
+                        wrapColumnChar="'"
+                        datas={transformUserData()}
+                        text="Exportar Clientes" 
+                    />
                 <div className="search-input">
                     <input
                         placeholder="Buscar por email"
@@ -296,9 +284,13 @@ function Admin() {
                                 <th>
                                     Registro
                                 </th>
-                                <th>
-                                    Suscripción
-                                </th>
+                                {
+                                    filters.active !== 2 &&
+                                    <th>
+                                        Suscripción
+                                    </th>
+                                }
+
                                 <th>
                                     Acciones
                                 </th>
@@ -318,9 +310,12 @@ function Admin() {
                                             <td>
                                                 {user.registered_on.toLocaleDateString()}
                                             </td>
-                                            <td style={{ textAlign: 'center' }}>
-                                                {userDownloads.filter((val:any)=>val.user_id === user.id).length > 0 ? "Activa" : "No activa"}
-                                            </td>
+                                            {
+                                                filters.active !== 2 && 
+                                                <td >
+                                                    {filters.active === 1? "Activa" : "No activa"}
+                                                </td>
+                                            }
                                             <td>
                                                 <button onClick={() => { giveSuscription(user) }}>Activar Suscripcion</button>
                                             </td>
