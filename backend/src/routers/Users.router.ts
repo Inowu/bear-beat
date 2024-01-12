@@ -17,58 +17,64 @@ export const usersRouter = router({
   getActiveUsers: shieldedProcedure
     .input(UsersFindManySchema)
     .query(async ({ ctx: { prisma }, input }) => {
-      const filteredUsers = await prisma.users.findMany({
-        where: input.where,
+      const activeSubs = await prisma.descargasUser.findMany({
+        where: {
+          date_end: {
+            gte: new Date(),
+          },
+        },
       });
 
-      const activeSubs = await prisma.descargasUser.findMany({
+      const activeUsers = await prisma.users.findMany({
         take: input.take,
         skip: input.skip,
+        select: input.select,
         where: {
           AND: [
             {
-              user_id: {
-                in: filteredUsers.map((user) => user.id),
-              },
+              ...input.where,
             },
             {
-              date_end: {
-                gte: new Date(),
+              id: {
+                in: activeSubs.map((user) => user.user_id),
               },
             },
           ],
         },
       });
 
-      return activeSubs;
+      return activeUsers;
     }),
   getInactiveUsers: shieldedProcedure
     .input(UsersFindManySchema)
     .query(async ({ ctx: { prisma }, input }) => {
-      const filteredUsers = await prisma.users.findMany({
-        where: input.where,
+      const activeSubs = await prisma.descargasUser.findMany({
+        where: {
+          date_end: {
+            gte: new Date(),
+          },
+        },
       });
 
-      const activeSubs = await prisma.descargasUser.findMany({
+      const inactiveUsers = await prisma.users.findMany({
         take: input.take,
         skip: input.skip,
+        select: input.select,
         where: {
           AND: [
             {
-              user_id: {
-                in: filteredUsers.map((user) => user.id),
-              },
+              ...input.where,
             },
             {
-              date_end: {
-                lte: new Date(),
+              id: {
+                notIn: activeSubs.map((user) => user.user_id),
               },
             },
           ],
         },
       });
 
-      return activeSubs;
+      return inactiveUsers;
     }),
   aggregateUsers: shieldedProcedure
     .input(UsersAggregateSchema)
