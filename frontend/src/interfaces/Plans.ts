@@ -46,6 +46,26 @@ export interface IOxxoData {
   sotre_name: string;
   type: string;
 }
+export interface ISpeiData {
+  bank: string;
+  clabe: string;
+  description: null;
+  executed_at: null;
+  expires_at: number;
+  issuing_account_bank: null;
+  issuing_account_holder_name: null;
+  issuing_account_number: null;
+  issuing_account_tax_id: null;
+  object: string;
+  payment_attempts: [];
+  receiving_account_bank: string;
+  receiving_account_holder_name: null;
+  receiving_account_number: string;
+  receiving_account_tax_id: null;
+  reference_number: null;
+  tracking_code: null;
+  type: string;
+}
 export interface IGBPlans {
   amount: number;
   id: number;
@@ -53,7 +73,7 @@ export interface IGBPlans {
 }
 export interface ICreatePlans {
   description: string;
-  interval: "month" | "year",
+  interval: "month" | "year";
   name: string;
   price: number;
   paymentMethod: string;
@@ -65,7 +85,7 @@ export interface ICreatePlans {
 }
 export interface IUpdatePlans {
   description: string;
-  interval: "month" | "year",
+  interval: "month" | "year";
   name: string;
   price: number;
   moneda: string;

@@ -1,4 +1,4 @@
-import { IOxxoData, IPlans } from "../../interfaces/Plans";
+import { IOxxoData, IPlans, ISpeiData } from "../../interfaces/Plans";
 import "./PlanCard.scss";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
@@ -11,6 +11,7 @@ import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
 import paypal from "../../assets/images/paypal_logo.png"
 import { PayPalButtons, PayPalScriptProvider } from "@paypal/react-paypal-js";
 import { SuccessModal } from "../../components/Modals/SuccessModal/SuccessModal";
+import { SpeiModal } from "../../components/Modals/SpeiModal/SpeiModal";
 interface PlanCardPropsI {
   plan: IPlans;
 }
@@ -20,6 +21,8 @@ let order: number;
 function PlanCard(props: PlanCardPropsI) {
   const [showOxxoModal, setShowOxxoModal] = useState<boolean>(false);
   const [oxxoData, setOxxoData] = useState({} as IOxxoData);
+  const [showSpeiModal, setShowSpeiModal] = useState<boolean>(false);
+  const [speiData, setSpeiData] = useState({} as ISpeiData);
   const [show, setShow] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<any>("");
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
@@ -65,9 +68,24 @@ function PlanCard(props: PlanCardPropsI) {
         paymentMethod: "cash" as const,
       }
       const oxxoPay = await trpc.subscriptions.subscribeWithCashConekta.mutate(body);
-      console.log(oxxoPay);
       setShowOxxoModal(true);
       setOxxoData(oxxoPay);
+    }
+    catch (error) {
+      setErrorMessage(error);
+      setShow(true);
+    }
+  }
+  const payWithSpei = async () => {
+    trpc.checkoutLogs.registerCheckoutLog.mutate();
+    try {
+      let body = {
+        planId: plan.id,
+        paymentMethod: "spei" as const,
+      }
+      const speiPay = await trpc.subscriptions.subscribeWithCashConekta.mutate(body);
+      setShowSpeiModal(true);
+      setSpeiData(speiPay);
     }
     catch (error) {
       setErrorMessage(error);
@@ -178,6 +196,10 @@ function PlanCard(props: PlanCardPropsI) {
           (plan.moneda === "mxn" || plan.moneda === "MXN") &&
           <button className="silver-bg" onClick={payWithOxxo}>Pagar vía Oxxo</button>
         }
+        {
+          (plan.moneda === "mxn" || plan.moneda === "MXN") &&
+          <button className="silver-bg" onClick={payWithSpei}>Pagar vía Spei</button>
+        }
         <button onClick={() => handleCheckout(plan.id)}>
           COMPRAR CON TARJETA
         </button>
@@ -192,6 +214,12 @@ function PlanCard(props: PlanCardPropsI) {
         onHide={closeOxxo}
         price={plan.price}
         oxxoData={oxxoData}
+      />
+      <SpeiModal
+        show={showSpeiModal}
+        onHide={() => { setShowSpeiModal(false) }}
+        price={plan.price}
+        speiData={speiData}
       />
       <SuccessModal
         show={showSuccess}
