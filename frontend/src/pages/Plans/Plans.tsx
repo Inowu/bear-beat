@@ -19,7 +19,6 @@ function Plans() {
     }
     try {
       const plans: any = await trpc.plans.findManyPlans.query(body);
-      console.log(plans);
       setPlans(plans);
       setLoader(false);
     }
@@ -30,10 +29,10 @@ function Plans() {
   useEffect(() => {
     getPlans();
   }, [])
-  if(loader) {
+  if (loader) {
     return (
-      <div className="global-loader" style={{ height: "60vh", display: "flex", justifyContent: "center"}}>
-        <Spinner size={5} width={.5} color="#00e2f7"/>
+      <div className="global-loader" style={{ height: "60vh", display: "flex", justifyContent: "center" }}>
+        <Spinner size={5} width={.5} color="#00e2f7" />
       </div>
     )
   }

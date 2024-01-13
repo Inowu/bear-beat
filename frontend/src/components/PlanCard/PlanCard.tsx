@@ -8,7 +8,6 @@ import { OxxoModal } from "../../components/Modals/OxxoModal/OxxoModal";
 import { useEffect, useState } from "react";
 import trpc from "../../api";
 import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
-import paypal from "../../assets/images/paypal_logo.png"
 import { PayPalButtons, PayPalScriptProvider } from "@paypal/react-paypal-js";
 import { SuccessModal } from "../../components/Modals/SuccessModal/SuccessModal";
 import { SpeiModal } from "../../components/Modals/SpeiModal/SpeiModal";
@@ -28,8 +27,10 @@ function PlanCard(props: PlanCardPropsI) {
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
   const [ppPlan, setppPlan] = useState<null | any>(null);
   const { plan } = props;
+  const [paypal, setPaypal] = useState(false);
   const navigate = useNavigate();
   const retreivePaypalPlan = async () => {
+    setPaypal(true)
     let body = {
       where: {
         activated: 1,
@@ -42,6 +43,9 @@ function PlanCard(props: PlanCardPropsI) {
       const plans: any = await trpc.plans.findManyPlans.query(body);
       if (plans.length > 0) {
         setppPlan(plans[0])
+        setTimeout(() => {
+          setPaypal(false)
+        }, 500);
       }
     }
     catch (error) {
@@ -97,7 +101,7 @@ function PlanCard(props: PlanCardPropsI) {
   };
 
   const paypalMethod = () => {
-    let data = <PayPalScriptProvider options={{
+    let data = <PayPalScriptProvider deferLoading={paypal} options={{
       clientId: "AYuKvAI09TE9bk9k1TuzodZ2zWQFpWEZesT65IkT4WOws9wq-yfeHLj57kEBH6YR_8NgBUlLShj2HOSr",
       vault: true,
       intent: "subscription",
