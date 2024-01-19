@@ -124,7 +124,7 @@ function CheckoutForm(props: ICheckout) {
             options={{ hidePostalCode: true }}
           />
           :
-          <select onChange={(e:any)=> setCard(e.target.value)} defaultValue={''}>
+          <select onChange={(e:any)=> setCard(e.target.value)} defaultValue={''} style={{color: "#fff"}}>
           <option disabled value={''}>Seleccione una tarjeta</option>
           {
             paymentMethods.map((card: IPaymentMethod, idx: number)=>{
