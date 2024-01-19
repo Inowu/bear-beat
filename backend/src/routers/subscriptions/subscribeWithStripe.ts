@@ -8,7 +8,6 @@ import { log } from '../../server';
 import { OrderStatus } from './interfaces/order-status.interface';
 import { hasActiveSubscription } from './utils/hasActiveSub';
 import { PaymentService } from './services/types';
-import { brevo } from '../../email';
 
 export const subscribeWithStripe = shieldedProcedure
   .input(
@@ -120,7 +119,7 @@ export const subscribeWithStripe = shieldedProcedure
 
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
-        message: 'Ocurrion un error al crear la suscripción',
+        message: 'Ocurrió un error al crear la suscripción',
       });
     }
   });

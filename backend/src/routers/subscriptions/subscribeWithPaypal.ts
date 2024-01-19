@@ -6,7 +6,6 @@ import { log } from '../../server';
 import { PaymentService } from './services/types';
 import { subscribe } from './services/subscribe';
 import { paypal } from '../../paypal';
-import { brevo } from '../../email';
 
 export const subscribeWithPaypal = shieldedProcedure
   .input(
@@ -65,7 +64,7 @@ export const subscribeWithPaypal = shieldedProcedure
 
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: 'Ocurrio un error al crear la suscripción',
+          message: 'Ocurrió un error al crear la suscripción',
         });
       }
     },
