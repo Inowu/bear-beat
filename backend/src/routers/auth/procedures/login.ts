@@ -45,5 +45,14 @@ export const login = publicProcedure
       });
     }
 
+    const isBlocked = prisma.users.blocked;
+
+    if(!isBlocked){
+      throw new TRPCError({
+        code: 'UNAUTHORIZED',
+        message: 'Usuario Bloqueado',
+      });
+    }
+
     return generateTokens(prisma, user);
   });
