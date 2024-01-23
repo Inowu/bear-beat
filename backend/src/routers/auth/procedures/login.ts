@@ -3,6 +3,7 @@ import { TRPCError } from '@trpc/server';
 import bcrypt from 'bcrypt';
 import { publicProcedure } from '../../../procedures/public.procedure';
 import { generateTokens } from './utils/generateTokens';
+import { usersRouter } from '../../Users.router';
 
 export const login = publicProcedure
   .input(
@@ -45,5 +46,16 @@ export const login = publicProcedure
       });
     }
 
+    const isBlocked = prisma.users.blocked;
+
+    if (!isBlocked) {
+      throw new TRPCError({
+        code: 'UNAUTHORIZED',
+        message: 'Usuario bloqueado',
+      });
+    }
+  }
+
     return generateTokens(prisma, user);
+
   });
