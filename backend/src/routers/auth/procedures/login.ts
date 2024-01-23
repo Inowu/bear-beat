@@ -45,7 +45,7 @@ export const login = publicProcedure
       });
     }
 
-    const isBlocked = prisma.users.blocked;
+    const isBlocked = user.blocked;
 
     if(!isBlocked){
       throw new TRPCError({
