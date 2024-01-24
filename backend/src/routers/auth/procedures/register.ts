@@ -5,6 +5,7 @@ import { publicProcedure } from '../../../procedures/public.procedure';
 import { RolesIds } from '../interfaces/roles.interface';
 import { ActiveState } from '../interfaces/active-state.interface';
 import { generateJwt } from '../utils/generateJwt';
+import { generateTokens } from '../procedures/utils/generateTokens';
 import stripe from '../../../stripe';
 import { conektaCustomers } from '../../../conekta';
 import { stripNonAlphabetic } from './utils/formatUsername';
@@ -135,8 +136,10 @@ export const register = publicProcedure
         log.error(`[REGISTER] Error while sending email ${e.message}`);
       }
 
+      const tokens = await generateTokens(prisma, newUser);
+
       return {
-        token: generateJwt(newUser),
+        ...tokens,
         message: 'Usuario fue creado correctamente',
       };
     },
