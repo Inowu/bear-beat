@@ -99,6 +99,9 @@ export const subscribeWithCashConekta = shieldedProcedure
             {
               payment_method: paymentMethodName,
             },
+            {
+              plan_id: plan.id,
+            },
           ],
         },
       });

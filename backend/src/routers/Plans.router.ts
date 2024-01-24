@@ -38,19 +38,28 @@ export const plansRouter = router({
           active: Boolean(data.activated) || true,
           description: data.description,
           default_price_data: {
-            currency: (data.moneda as string)?.toLowerCase() || 'usd',
+            currency: data.moneda?.toLowerCase() || 'usd',
             unit_amount: Number(data.price) * 100,
             recurring: {
-              interval: interval || 'month',
+              interval:
+                (interval?.toLowerCase() as 'month' | 'year') || 'month',
               interval_count: 1,
             },
           },
         });
 
+        const stripePlan = await stripeInstance.plans.create({
+          interval: (interval?.toLowerCase() as 'month' | 'year') || 'month',
+          interval_count: 1,
+          product: stripeProduct.id,
+          currency: data.moneda?.toLowerCase() || 'usd',
+          amount: Number(data.price) * 100,
+        });
+
         const prismaPlan = await prisma.plans.create({
           data: {
             ...data,
-            [getPlanKey(PaymentService.STRIPE)]: stripeProduct.id,
+            [getPlanKey(PaymentService.STRIPE)]: stripePlan.id,
           },
         });
 
