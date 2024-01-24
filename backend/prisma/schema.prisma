@@ -206,6 +206,7 @@ model Users {
   ip_registro      String?            @db.Text
   token_expiration DateTime?          @db.Date
   refresh_token    String?            @db.VarChar(250)
+  blocked          Boolean            @default(false)
   compression_jobs compression_jobs[]
   dir_downloads    dir_downloads[]
   product_orders   product_orders[]
