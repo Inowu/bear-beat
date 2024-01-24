@@ -4,7 +4,6 @@ import { TRPCError } from '@trpc/server';
 import { publicProcedure } from '../../../procedures/public.procedure';
 import { RolesIds } from '../interfaces/roles.interface';
 import { ActiveState } from '../interfaces/active-state.interface';
-import { generateJwt } from '../utils/generateJwt';
 import { generateTokens } from '../procedures/utils/generateTokens';
 import stripe from '../../../stripe';
 import { conektaCustomers } from '../../../conekta';
