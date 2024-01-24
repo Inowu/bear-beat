@@ -51,6 +51,7 @@ model DescargasUser {
   order_id  Int?
   available Float    @db.Float
   ilimitado Int      @default(0)
+  /// When the user's subscription ends
   date_end  DateTime @db.Date
 
   @@map("descargas_user")
@@ -87,6 +88,7 @@ model FtpQuotaLimits {
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model FtpUser {
   id         Int       @id @default(autoincrement()) @db.UnsignedInt
+  /// This is the equal to the name field in ftpquotatallies table
   userid     String    @unique(map: "userid") @default("") @db.VarChar(32)
   passwd     String    @default("") @db.VarChar(32)
   uid        Int       @default(5500) @db.SmallInt
@@ -213,9 +215,11 @@ model Users {
 }
 
 model Ftpquotatallies {
+  /// The name of the ftp account associated to the user
   name            String                     @default("") @db.VarChar(30)
   quota_type      ftpquotatallies_quota_type @default(user)
   bytes_in_used   BigInt                     @default(0) @db.UnsignedBigInt
+  /// The amount of bytes the user has downloaded
   bytes_out_used  BigInt                     @default(0) @db.UnsignedBigInt
   bytes_xfer_used BigInt                     @default(0) @db.UnsignedBigInt
   files_in_used   Int                        @default(0) @db.UnsignedInt

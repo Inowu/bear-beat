@@ -12,8 +12,45 @@ import { UsersGroupBySchema } from '../schemas/groupByUsers.schema';
 import { UsersUpdateManySchema } from '../schemas/updateManyUsers.schema';
 import { UsersUpdateOneSchema } from '../schemas/updateOneUsers.schema';
 import { UsersUpsertSchema } from '../schemas/upsertOneUsers.schema';
+import { z } from 'zod';
 
 export const usersRouter = router({
+  blockUser: shieldedProcedure
+    .input(
+      z.object({
+        userId: z.number(),
+      }),
+    )
+    .mutation(async ({ ctx: { prisma }, input }) => {
+      // Get user from database
+      // If user does not exist, throw error
+      // Check if user is already blocked
+      // If user is already blocked, throw error
+      // Search for user's ftp account (ftpuser)
+      //      -- userid (The name of the ftpuser account)
+      //      -- user_id (The id of the user)
+      // If user's ftp account does not exist, throw error
+      // Search for ftp quota tallies (ftpquotatallies)
+      //     -- name (The name of the ftpuser account)
+      //     -- bytes_out_used (The amount of bytes downloaded by the user)
+      // If user's ftp quota tallies does not exist, throw error
+      // Search for descargas_user entry using user_id (descargas_user)
+      // If descargas_user entry does not exist, throw error (Usuario no tiene subscripcion)
+      // Search for order associated to descargas_user entry using order_id (orders)
+      // If order does not exist, throw error (Usuario no tiene orden)
+      // Search for plan associated to order
+      // Get plan bytes (plan.gigas)
+      // Use utilitity method to convert gb to bytes (gbToBytes)
+      // Set bytes_out_used to the number of bytes in the plan
+      // Set date_end in descargas_user to current_date
+      // * Note:
+      // * User's table: users
+      // * User's subscription table: descargas_user
+      // * User's quota table: ftpquotatallies
+      // * User's ftp account table: ftpuser
+      // * User's order table: orders
+      // * User's plan table: plan
+    }),
   getActiveUsers: shieldedProcedure
     .input(UsersFindManySchema)
     .query(async ({ ctx: { prisma }, input }) => {
