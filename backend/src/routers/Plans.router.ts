@@ -101,7 +101,7 @@ export const plansRouter = router({
           message: 'El plan no tiene un id de stripe asociado',
         });
       }
-
+      
       try {
         await stripeInstance.products.update(
           plan[getPlanKey(PaymentService.STRIPE)] as string,
