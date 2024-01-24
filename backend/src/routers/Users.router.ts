@@ -1,4 +1,5 @@
 import { shieldedProcedure } from '../procedures/shielded.procedure';
+import { TRPCError } from '@trpc/server';
 import { router } from '../trpc';
 import { UsersAggregateSchema } from '../schemas/aggregateUsers.schema';
 import { UsersCreateManySchema } from '../schemas/createManyUsers.schema';
@@ -24,22 +25,88 @@ export const usersRouter = router({
     .mutation(async ({ ctx: { prisma }, input }) => {
       // Get user from database
       // If user does not exist, throw error
+      const user = await prisma.users.findMany({
+        select: {
+          id: true,
+        },
+      });
       // Check if user is already blocked
       // If user is already blocked, throw error
+      if (!user) {
+        throw new TRPCError({
+          code: 'UNAUTHORIZED',
+          message: 'El usuario ya ha sido bloqueado',
+        });
+      }
       // Search for user's ftp account (ftpuser)
       //      -- userid (The name of the ftpuser account)
       //      -- user_id (The id of the user)
+      const ftpUser = await prisma.ftpUser.findMany({
+        select: {
+          userid: true,
+          user_id: true,
+        },
+      })
       // If user's ftp account does not exist, throw error
+      if (!ftpUser) {
+        throw new TRPCError({
+          code: 'UNAUTHORIZED',
+          message: 'Este usuario no tiene cuenta FTP',
+        });
+      }
       // Search for ftp quota tallies (ftpquotatallies)
       //     -- name (The name of the ftpuser account)
       //     -- bytes_out_used (The amount of bytes downloaded by the user)
+      const ftpQuotaTallies = await prisma.ftpquotatallies.findMany({
+        select: {
+          name: true,
+          bytes_out_used: true,
+        },
+      })
       // If user's ftp quota tallies does not exist, throw error
+      if (!ftpQuotaTallies) {
+        throw new TRPCError({
+          code: 'UNAUTHORIZED',
+          message: 'El usuario no tiene cuotas disponibles',
+        });
+      }
       // Search for descargas_user entry using user_id (descargas_user)
+      const descargasUser = await prisma.descargasUser.findMany({
+        select: {
+          user_id:true,
+        },
+      })
       // If descargas_user entry does not exist, throw error (Usuario no tiene subscripcion)
+      if (!descargasUser){
+        throw new TRPCError({
+          code: 'UNAUTHORIZED',
+          message: 'El usuario no tiene subscripcion',
+        });
+      }
       // Search for order associated to descargas_user entry using order_id (orders)
+      const orderAssociated = await prisma.descargasUser.findMany({
+        select: {
+          order_id: true,
+        },
+      })
       // If order does not exist, throw error (Usuario no tiene orden)
+      if (!orderAssociated){
+        throw new TRPCError({
+          code: 'UNAUTHORIZED',
+          message: 'El usuario no tiene orden',
+        });
+      }
       // Search for plan associated to order
       // Get plan bytes (plan.gigas)
+      const planBytes = await prisma.orders.findMany({
+        select: {
+          plan_id: {
+            select: {
+              Plans.gigas: any,
+            },
+          },
+        },
+      })
       // Use utilitity method to convert gb to bytes (gbToBytes)
       // Set bytes_out_used to the number of bytes in the plan
       // Set date_end in descargas_user to current_date
