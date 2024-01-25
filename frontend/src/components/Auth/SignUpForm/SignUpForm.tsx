@@ -68,7 +68,7 @@ function SignUpForm() {
         }
         try{
           const register = await trpc.auth.register.mutate(body);
-          handleLogin(register.token);
+          handleLogin(register.token, register.refreshToken);
           setShowSuccess(true);
           setLoader(false);
         }

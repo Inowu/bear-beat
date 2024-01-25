@@ -39,16 +39,13 @@ const UserContextProvider = (props: any) => {
   const [userToken, setUserToken] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [fileChange, setFileChange] = useState<boolean>(false);
-  // const [refreshToken, setRefreshToken] = useState<string>();
   const [paymentMethods, setPaymentMethods] = useState<IPaymentMethod[]>([]);
   const [cardLoad, setCardLoad] = useState<boolean>(false);
 
-  function handleLogin(token: string, refreshtoken: string) {
+  function handleLogin(token: string, refreshToken: string) {
     localStorage.setItem("token", token);
-    localStorage.setItem("refreshToken", refreshtoken);
+    localStorage.setItem("refreshToken", refreshToken);
     setUserToken(token);
-    // setUserToken(token);
-    // localStorage.setItem("user", "Javier Centeno");
   }
   function resetCard() {
     setFileChange(true);
@@ -80,8 +77,22 @@ const UserContextProvider = (props: any) => {
       setCurrentUser(user);
     }
     catch (error) {
-      console.log(error);
-      handleLogout();
+      console.log('Trying refresh.....');
+      startUserRefresh();
+    }
+  }
+  async function startUserRefresh() {
+    const refreshToken = localStorage.getItem("refreshToken");
+    if (refreshToken !== null){
+      try {
+        const token = await trpc.auth.refresh.query({refreshToken: refreshToken });
+        console.log('Login refresh succeed!');
+        handleLogin(token.token, token.refreshToken);
+      }
+      catch (error) {
+        console.log('Login refresh denied');
+        handleLogout();
+      }
     }
   }
   useEffect(() => {
@@ -100,23 +111,18 @@ const UserContextProvider = (props: any) => {
       getPaymentMethods();
     }
   }, [currentUser])
-
   useEffect(() => {
-    const refreshToken = localStorage.getItem("refreshToken");
-    if (refreshToken !== null){
-      const interval = setInterval(async () => {
-        try {
-          const token = await trpc.auth.refresh.query({refreshToken: refreshToken });
-          handleLogin(token.token, token.refreshToken);
-        }
-        catch (error) {
-          console.log(error);
-        }
-      }, 1000 * 60 * 5);
-      return () => clearInterval(interval);
-    }
-  }
-  , [])
+    const fetchData = async () => {
+      try {
+        startUserRefresh();
+      } catch (error) {
+        console.error('Error during API call:', error);
+      }
+    };
+    fetchData();
+    const intervalId = setInterval(fetchData, 1000 * 60 * 10);
+    return () => clearInterval(intervalId);
+  }, []);
 
   const values = {
     userToken,

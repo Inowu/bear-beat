@@ -23,7 +23,6 @@ export const PlanAdmin = () => {
         }
         try {
             const plans: any = await trpc.plans.findManyPlans.query(body);
-            console.log(plans)
             setPlans(plans);
             setLoader(false);
         }

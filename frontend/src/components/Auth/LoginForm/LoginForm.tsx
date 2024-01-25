@@ -42,7 +42,6 @@ function LoginForm() {
       try {
         const login = await trpc.auth.login.query(body);
         handleLogin(login.token, login.refreshToken);
-        console.log(login)
         navigate("/");
         setLoader(false);
       }
