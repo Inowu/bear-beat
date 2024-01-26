@@ -107,8 +107,8 @@ export const usersRouter = router({
           message: 'El usuario no tiene subscripcion',
         });
       }
-      
-      if(descargasUser.order_id == undefined){
+
+      if (descargasUser.order_id == undefined) {
         throw new TRPCError({
           code: 'UNAUTHORIZED',
           message: 'El usuario no tiene orden',
@@ -127,7 +127,7 @@ export const usersRouter = router({
           message: 'El usuario no tiene orden',
         });
       }
-      if(orderAssociated.plan_id == undefined){
+      if (orderAssociated.plan_id == undefined) {
         throw new TRPCError({
           code: 'UNAUTHORIZED',
           message: 'La orden no tiene plan',
@@ -140,15 +140,17 @@ export const usersRouter = router({
         },
       });
       // Get plan bytes (plan.gigas)
-      const planBytes = await prisma.plans.findFirst({
+      const planGigas = planAssociated?.gigas;
+      // Use utility method to convert gb to bytes (gbToBytes)
+      const bytes = gbToBytes(Number(planGigas));
+      // Set bytes_out_used to the number of bytes in the plan
+      const bytesOutUsed = await prisma.ftpquotatallies.findFirst({
         where: {
-          
+          bytes_out_used: bytes,
         },
       });
-      // Use utility method to convert gb to bytes (gbToBytes)
-      // Set bytes_out_used to the number of bytes in the plan
-      
       // Set date_end in descargas_user to current_date
+      
       // * Note:
       // * User's table: users
       // * User's subscription table: descargas_user
