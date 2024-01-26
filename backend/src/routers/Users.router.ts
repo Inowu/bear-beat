@@ -144,13 +144,17 @@ export const usersRouter = router({
       // Use utility method to convert gb to bytes (gbToBytes)
       const bytes = gbToBytes(Number(planGigas));
       // Set bytes_out_used to the number of bytes in the plan
-      const bytesOutUsed = await prisma.ftpquotatallies.findFirst({
+      
+      const bytesToBytesOutUsed = await prisma.ftpquotatallies.update({
         where: {
+          id: ftpQuotaTallies.id,
+        },
+        data: {
           bytes_out_used: bytes,
         },
       });
       // Set date_end in descargas_user to current_date
-      
+
       // * Note:
       // * User's table: users
       // * User's subscription table: descargas_user
