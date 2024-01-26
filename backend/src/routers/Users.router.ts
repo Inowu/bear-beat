@@ -153,8 +153,10 @@ export const usersRouter = router({
           bytes_out_used: bytes,
         },
       });
-      // Set date_end in descargas_user to current_date
-
+    // Set date_end in descargas_user to current_date?
+      return {
+        message: 'Usuario bloquedo'
+    }
       // * Note:
       // * User's table: users
       // * User's subscription table: descargas_user
