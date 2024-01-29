@@ -37,6 +37,7 @@ function Admin() {
     const [plans, setPlans] = useState<IPlans[]>([]);
     const [selectUser, setSelectUser] = useState({} as IAdminUser);
     const [loader, setLoader] = useState<boolean>(true);
+    const limit = 100;
     // const [userDownloads, setUserDownloads] = useState<any>([]);
     const [filters, setFilters] = useState<any>({
         page: 0,
@@ -136,8 +137,8 @@ function Admin() {
         try {
             if (filt.active === 2) {
                 let body: any = {
-                    take: 10,
-                    skip: filt.page * 10,
+                    take: limit,
+                    skip: filt.page * limit,
                     where: {
                         email: {
                             startsWith: filt.search,
@@ -163,8 +164,8 @@ function Admin() {
             else {
                 if(filt.active === 1){
                     let body: any = {
-                        take: 10,
-                        skip: filt.page * 10,
+                        take: limit,
+                        skip: filt.page * limit,
                         where: {
                             email: {
                                 startsWith: filt.search,
@@ -189,8 +190,8 @@ function Admin() {
                 }
                 else{
                     let body: any = {
-                        take: 10,
-                        skip: filt.page * 10,
+                        take: limit,
+                        skip: filt.page * limit,
                         where: {
                             email: {
                                 startsWith: filt.search,
@@ -326,7 +327,7 @@ function Admin() {
                                 : ARRAY_10.map((val: string, index: number) => {
                                     return (
                                         <tr key={"array_10" + index} className="tr-load">
-                                            <td /><td /><td /><td /><td />
+                                            <td /><td /><td /><td />
                                         </tr>
                                     )
                                 })

@@ -1,5 +1,5 @@
-export const showPages = (page: number, allData: number) => {
-    let totalPages = Math.ceil(allData/10);
+export const showPages = (page: number, allData: number, limit: number) => {
+    let totalPages = Math.ceil(allData/limit);
     let showPages = totalPages > 3 ? 4 : totalPages;
     let data = [];
     let enteredCase = false;

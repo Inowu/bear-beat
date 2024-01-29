@@ -4,6 +4,7 @@ import './Pagination.scss';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronCircleLeft, faChevronCircleRight } from '@fortawesome/free-solid-svg-icons';
 import { showPages } from './PaginationMethods';
+const limit = 100;
 interface IPagination {
     totalData: number;
     title: string;
@@ -19,7 +20,7 @@ function Pagination (props: IPagination) {
         if(direction === "direct"){
             startFilter('page', page)
         }
-        if(direction === "forward" && currentPage !== Math.ceil(totalData/10)){
+        if(direction === "forward" && currentPage !== Math.ceil(totalData/limit)){
             startFilter('page', page)
         }
     }
@@ -28,7 +29,7 @@ function Pagination (props: IPagination) {
             <p className='left-text'>Total de {title}: {totalData}</p>
             <div className='right-side'>
                 <FontAwesomeIcon icon ={faChevronCircleLeft} onClick={()=> changePage('back', currentPage - 1)}/>
-                {showPages(currentPage + 1, totalData).map((val: number | string, index: number)=>{
+                {showPages(currentPage + 1, totalData, limit).map((val: number | string, index: number)=>{
                     return (
                         <p 
                             key={"paginate_"+ index} 

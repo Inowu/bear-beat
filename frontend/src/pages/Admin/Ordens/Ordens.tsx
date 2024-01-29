@@ -24,6 +24,7 @@ export const Ordens = () => {
   const [ordens, setOrdens] = useState<any>([]);
   const [totalOrdens, setTotalOrdens] = useState(0)
   const [loader, setLoader] = useState<boolean>(true);
+  const limit = 100;
   const formatDate = (dateString: any) => {
     const options: any = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', timeZoneName: 'short' };
     return new Date(dateString).toLocaleDateString('en-US', options);
@@ -72,8 +73,8 @@ export const Ordens = () => {
     setLoader(true);
     try {
       let body: any = {
-        take: 10,
-        skip: filt.page * 10,
+        take: limit,
+        skip: filt.page * limit,
         where: {
           payment_method: {
             startsWith: filt.search,
@@ -217,7 +218,7 @@ export const Ordens = () => {
                 : ARRAY_10.map((val: string, index: number) => {
                   return (
                     <tr key={"array_10" + index} className="tr-load">
-                      <td /><td /><td /><td /><td />
+                      <td /><td /><td /><td /><td /><td /><td />
                     </tr>
                   )
                 })
