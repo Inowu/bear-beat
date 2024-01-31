@@ -4,6 +4,7 @@ import { cancelStripeSubscription } from './cancelStripeSubscription';
 import { cancelPaypalSubscription } from './cancelPaypalSubscription';
 import { PrismaClient, Users } from '@prisma/client';
 import { SessionUser } from '../../auth/utils/serialize-user';
+import { gbToBytes } from '../../../utils/gbToBytes';
 
 export const cancelServicesSubscriptions = async ({
   prisma,
@@ -68,6 +69,39 @@ export const cancelServicesSubscriptions = async ({
       is_canceled: 1,
     },
   });
+
+  const ftpAccounts = await prisma.ftpUser.findMany({
+    where: {
+      user_id: user.id,
+    },
+  });
+
+  if (ftpAccounts.length > 0) {
+    for (const account of ftpAccounts) {
+      const accountTallies = await prisma.ftpquotatallies.findFirst({
+        where: {
+          name: account.userid,
+        },
+      });
+
+      const accountLimits = await prisma.ftpQuotaLimits.findFirst({
+        where: {
+          name: account.userid,
+        },
+      });
+
+      if (accountTallies && accountLimits) {
+        await prisma.ftpquotatallies.update({
+          where: {
+            id: accountTallies.id,
+          },
+          data: {
+            bytes_out_used: gbToBytes(Number(accountLimits.bytes_out_avail)),
+          },
+        });
+      }
+    }
+  }
 
   await prisma.descargasUser.update({
     where: {
