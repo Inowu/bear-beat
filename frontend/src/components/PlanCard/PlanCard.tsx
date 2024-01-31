@@ -30,7 +30,7 @@ function PlanCard(props: PlanCardPropsI) {
   const [paypal, setPaypal] = useState(false);
   const navigate = useNavigate();
   const retreivePaypalPlan = async () => {
-    setPaypal(true)
+    setPaypal(false);
     let body = {
       where: {
         activated: 1,
@@ -101,11 +101,7 @@ function PlanCard(props: PlanCardPropsI) {
   };
 
   const paypalMethod = () => {
-    let data = <PayPalScriptProvider deferLoading={paypal} options={{
-      clientId: "AYuKvAI09TE9bk9k1TuzodZ2zWQFpWEZesT65IkT4WOws9wq-yfeHLj57kEBH6YR_8NgBUlLShj2HOSr",
-      vault: true,
-      intent: "subscription",
-    }} >
+    let data = 
       <PayPalButtons
         style={{ color: "silver", shape: "pill", layout: "horizontal", height: 46, tagline: false }}
         onClick={async (data, actions) => {
@@ -152,7 +148,7 @@ function PlanCard(props: PlanCardPropsI) {
           return data;
         }}
       />
-    </PayPalScriptProvider>
+    
     return data
   }
 
