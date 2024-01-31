@@ -68,4 +68,13 @@ export const cancelServicesSubscriptions = async ({
       is_canceled: 1,
     },
   });
+
+  await prisma.descargasUser.update({
+    where: {
+      id: activeSubscription.id,
+    },
+    data: {
+      date_end: new Date(),
+    },
+  });
 };
