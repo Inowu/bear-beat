@@ -123,6 +123,37 @@ export const usersRouter = router({
 
       return user;
     }),
+  unblockUser: shieldedProcedure
+    .input(
+      z.object({
+        userId: z.number(),
+      }),
+    )
+    .mutation(async ({ ctx: { prisma }, input: { userId } }) => {
+      const user = await prisma.users.findFirst({
+        where: {
+          id: userId,
+        },
+      });
+
+      if (!user) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Usuario no encontrado',
+        });
+      }
+
+      // TODO: Unpaused subscription?
+
+      await prisma.users.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          blocked: false,
+        },
+      });
+    }),
   aggregateUsers: shieldedProcedure
     .input(UsersAggregateSchema)
     .query(async ({ ctx, input }) => {
