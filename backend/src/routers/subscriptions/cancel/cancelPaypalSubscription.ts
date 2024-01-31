@@ -1,6 +1,6 @@
 import { TRPCError } from '@trpc/server';
 import axios from 'axios';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Users } from '@prisma/client';
 import { log } from '../../../server';
 import { paypal } from '../../../paypal';
 import { SessionUser } from '../../auth/utils/serialize-user';
@@ -10,7 +10,7 @@ export const cancelPaypalSubscription = async ({
   user,
 }: {
   prisma: PrismaClient;
-  user: SessionUser;
+  user: SessionUser | Users;
 }) => {
   const descargasUser = await prisma.descargasUser.findFirst({
     where: {

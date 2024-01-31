@@ -1,5 +1,5 @@
 import { TRPCError } from '@trpc/server';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Users } from '@prisma/client';
 import stripeInstance from '../../../stripe';
 import { log } from '../../../server';
 import { SessionUser } from '../../auth/utils/serialize-user';
@@ -9,7 +9,7 @@ export const cancelStripeSubscription = async ({
   user,
 }: {
   prisma: PrismaClient;
-  user: SessionUser;
+  user: SessionUser | Users;
 }) => {
   const dbUser = await prisma.users.findFirst({
     where: {

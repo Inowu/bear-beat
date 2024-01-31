@@ -12,6 +12,10 @@ import { UsersGroupBySchema } from '../schemas/groupByUsers.schema';
 import { UsersUpdateManySchema } from '../schemas/updateManyUsers.schema';
 import { UsersUpdateOneSchema } from '../schemas/updateOneUsers.schema';
 import { UsersUpsertSchema } from '../schemas/upsertOneUsers.schema';
+import { z } from 'zod';
+import { TRPCError } from '@trpc/server';
+import { log } from '../server';
+import { cancelServicesSubscriptions } from './subscriptions/cancel/cancelServicesSubscriptions';
 
 export const usersRouter = router({
   getActiveUsers: shieldedProcedure
@@ -75,6 +79,49 @@ export const usersRouter = router({
       });
 
       return inactiveUsers;
+    }),
+  blockUser: shieldedProcedure
+    .input(
+      z.object({
+        userId: z.number(),
+      }),
+    )
+    .mutation(async ({ ctx: { prisma }, input: { userId } }) => {
+      const user = await prisma.users.findFirst({
+        where: {
+          id: userId,
+        },
+      });
+
+      if (!user) {
+        log.error(`[BLOCK_USER] User ${userId} not found`);
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Usuario no encontrado',
+        });
+      }
+
+      try {
+        log.info(`[BLOCK_USER] Canceling subscription for user ${userId}`);
+        await cancelServicesSubscriptions({ prisma, user });
+      } catch (e) {
+        log.error(
+          `[BLOCK_USER] Error cancelling subscription for user ${userId}, ${e}`,
+        );
+      }
+
+      log.info(`[BLOCK_USER] Blocking user ${userId}`);
+
+      await prisma.users.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          blocked: true,
+        },
+      });
+
+      return user;
     }),
   aggregateUsers: shieldedProcedure
     .input(UsersAggregateSchema)
