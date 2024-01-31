@@ -16,6 +16,7 @@ import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { log } from '../server';
 import { cancelServicesSubscriptions } from './subscriptions/cancel/cancelServicesSubscriptions';
+import { RolesIds } from './auth/interfaces/roles.interface';
 
 export const usersRouter = router({
   getActiveUsers: shieldedProcedure
@@ -41,6 +42,11 @@ export const usersRouter = router({
             {
               id: {
                 in: activeSubs.map((user) => user.user_id),
+              },
+            },
+            {
+              NOT: {
+                role_id: RolesIds.admin,
               },
             },
           ],
@@ -72,6 +78,11 @@ export const usersRouter = router({
             {
               id: {
                 notIn: activeSubs.map((user) => user.user_id),
+              },
+            },
+            {
+              NOT: {
+                role_id: RolesIds.admin,
               },
             },
           ],
@@ -143,8 +154,6 @@ export const usersRouter = router({
         });
       }
 
-      // TODO: Unpaused subscription?
-
       await prisma.users.update({
         where: {
           id: user.id,
@@ -154,6 +163,46 @@ export const usersRouter = router({
         },
       });
     }),
+  removeInactiveUsers: shieldedProcedure.mutation(
+    async ({ ctx: { prisma, session } }) => {
+      const user = session!.user!;
+
+      const activeSubs = await prisma.descargasUser.findMany({
+        where: {
+          date_end: {
+            gte: new Date(),
+          },
+        },
+      });
+
+      const inactiveUsers = await prisma.users.findMany({
+        where: {
+          id: {
+            notIn: activeSubs.map((user) => user.user_id),
+          },
+        },
+      });
+
+      await prisma.users.deleteMany({
+        where: {
+          AND: [
+            {
+              id: {
+                in: inactiveUsers.map((user) => user.id),
+              },
+            },
+            {
+              NOT: {
+                id: user.id,
+              },
+            },
+          ],
+        },
+      });
+
+      return inactiveUsers;
+    },
+  ),
   aggregateUsers: shieldedProcedure
     .input(UsersAggregateSchema)
     .query(async ({ ctx, input }) => {
