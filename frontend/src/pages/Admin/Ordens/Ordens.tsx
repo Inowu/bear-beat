@@ -157,7 +157,7 @@ export const Ordens = () => {
           <input type="date" className="date-input" onChange={(e) => startFilter('endDate', e.target.value)} />
         </div>
       </div>
-      <div className="ordens-table">
+      <div className="admin-table">
         <div className="table-contain">
           <table>
             <thead>
@@ -231,6 +231,7 @@ export const Ordens = () => {
           title="ordenes"
           startFilter={startFilter}
           currentPage={filters.page}
+          limit={100}
         />
       </div>
     </div>

@@ -4,7 +4,7 @@
     gap: 20px;
     .header{
         display: flex;
-        justify-content: space-between;
+        gap: 20px;
         .input{
             border-radius:100px;
             padding: 5px 25px;
@@ -56,7 +56,7 @@
     flex-direction: column;
     .table-contain{
         width: 100%;
-        max-height: 550px;
+        max-height: 76vh;
         overflow-y: auto;
     }
     table{

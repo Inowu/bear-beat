@@ -78,7 +78,7 @@ export const HistoryCheckout = () => {
 
                                     )
                                 })
-                                : <h1>No se Encontraron Datos...</h1>
+                                : <tr>No se Encontraron Datos...</tr>
                             }
                         </tbody>
                     </table>

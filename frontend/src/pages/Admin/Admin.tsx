@@ -20,6 +20,7 @@ export interface IAdminFilter {
     total: number;
     search: string;
     active: number;
+    limit: number
 }
 interface IDownloads {
     user_id: number;
@@ -29,7 +30,6 @@ function Admin() {
     const { currentUser } = useUserContext();
     const [users, setUsers] = useState<IAdminUser[]>([]);
     const [totalUsers, setTotalUsers] = useState(0);
-    const [storage, setStorage] = useState();
     const [showModal, setShowModal] = useState<boolean>(false);
     const [showOption, setShowOption] = useState<boolean>(false);
     const [optionMessage, setOptionMessage] = useState<string>('');
@@ -37,12 +37,11 @@ function Admin() {
     const [plans, setPlans] = useState<IPlans[]>([]);
     const [selectUser, setSelectUser] = useState({} as IAdminUser);
     const [loader, setLoader] = useState<boolean>(true);
-    const limit = 100;
-    // const [userDownloads, setUserDownloads] = useState<any>([]);
     const [filters, setFilters] = useState<any>({
         page: 0,
         search: '',
         active: 2,
+        limit: 100,
     })
     const closeModalAdd = () => {
         setShowModal(false);
@@ -77,18 +76,6 @@ function Admin() {
             console.log(error);
         }
     }
-    // const getStorage = async () => {
-    //     let body = {
-    //     }
-    //     try {
-    //         const storage: any = await trpc.ftp.storage.query(body)
-    //         setStorage(storage);
-    //         console.log(storage)
-    //     }
-    //     catch (error) {
-    //         console.log(error);
-    //     }
-    // }
     const giveSuscription = (user: IAdminUser) => {
         setSelectUser(user);
         setOptionTitle('Seleccione el plan');
@@ -107,22 +94,6 @@ function Admin() {
             console.log(error)
         }
     }
-    // const getDownloads = async () => {
-    //     const today = new Date();
-    //     let body_descarga = {
-    //         where: {
-    //             date_end: {
-    //                 gte: today,
-    //             },
-    //         },
-    //         select: {
-    //             user_id: true,
-    //             date_end: true,
-    //         },
-    //     }
-    //     const descargasUser = await trpc.descargasuser.findManyDescargasUser.query(body_descarga);
-    //     setUserDownloads(descargasUser);
-    // }
     const startFilter = (key: string, value: string | number) => {
         let tempFilters: any = filters;
         if (key !== 'page') {
@@ -137,12 +108,15 @@ function Admin() {
         try {
             if (filt.active === 2) {
                 let body: any = {
-                    take: limit,
-                    skip: filt.page * limit,
+                    take: filt.limit,
+                    skip: filt.page * filt.limit,
                     where: {
                         email: {
                             startsWith: filt.search,
                         },
+                    },
+                    orderBy: {
+                        registered_on: 'desc'
                     }
                 }
                 let body2: any = {
@@ -162,14 +136,16 @@ function Admin() {
                 setTotalUsers(totalUsersResponse.length);
             } 
             else {
-                if(filt.active === 1){
                     let body: any = {
-                        take: limit,
-                        skip: filt.page * limit,
+                        take: filt.limit,
+                        skip: filt.page * filt.limit,
                         where: {
                             email: {
                                 startsWith: filt.search,
                             },
+                        },
+                        orderBy: {
+                            registered_on: 'desc'
                         }
                     }
                     let body2: any = {
@@ -182,38 +158,18 @@ function Admin() {
                             id: true,
                         },
                     }
-                    const tempUsers: any = await trpc.users.getActiveUsers.query(body)
-                    const totalUsersResponse = await trpc.users.getActiveUsers.query(body2);
-                    setLoader(false);
+                    let tempUsers: any = [];
+                    let totalUsersResponse = [];
+                    if(filt.active === 1){
+                        tempUsers = await trpc.users.getActiveUsers.query(body)
+                        totalUsersResponse = await trpc.users.getActiveUsers.query(body2);
+                    }else{
+                        tempUsers = await trpc.users.getInactiveUsers.query(body)
+                        totalUsersResponse = await trpc.users.getInactiveUsers.query(body2);
+                    }
                     setUsers(tempUsers);
                     setTotalUsers(totalUsersResponse.length);
-                }
-                else{
-                    let body: any = {
-                        take: limit,
-                        skip: filt.page * limit,
-                        where: {
-                            email: {
-                                startsWith: filt.search,
-                            }
-                        }
-                    }
-                    let body2: any = {
-                        where: {
-                            email: {
-                                startsWith: filt.search,
-                            },
-                        },
-                        select: {
-                            id: true,
-                        },
-                    }
-                    const tempUsers: any = await trpc.users.getInactiveUsers.query(body)
-                    const totalUsersResponse = await trpc.users.getInactiveUsers.query(body2);
                     setLoader(false);
-                    setUsers(tempUsers);
-                    setTotalUsers(totalUsersResponse.length);
-                }
             }
         } catch (error) {
             console.log(error);
@@ -221,8 +177,6 @@ function Admin() {
     }
     useEffect(() => {
         getPlans();
-        // getStorage();
-        // getDownloads();
         filterUsers(filters);
     }, [])
     useEffect(() => {
@@ -230,7 +184,6 @@ function Admin() {
             navigate('/');
         }
     }, [currentUser])
-
     const transformUserData = async () => {
         const tempUsers: any = await exportUsers(filters);
         return tempUsers.map((user:any) => ({
@@ -253,22 +206,33 @@ function Admin() {
                         datas={transformUserData()}
                         text="Exportar Clientes" 
                     />
+                <AddUsersModal showModal={showModal} onHideModal={closeModalAdd} />
+            </div>
+            <div className="filter-contain">
+                <div className="left-contain">
+                    <div className="select-input">
+                        <select onChange={(e)=> startFilter('active', +e.target.value)}>
+                            <option value={2}>Todos</option>
+                            <option value={1}>Activos</option>
+                            <option value={0}>Inactivos</option>
+                        </select>
+                    </div>
+                    <div className="select-input">
+                        <select defaultValue={filters.limit} onChange={(e)=> startFilter('limit', +e.target.value)}>
+                            <option value={''} disabled>Numero de datos</option>
+                            <option value={100}>100</option>
+                            <option value={200}>200</option>
+                            <option value={500}>500</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div className="search-input">
                     <input
                         placeholder="Buscar por email"
                         onChange={(e: any) => { startFilter('search', e.target.value) }}
                     />
                     <FontAwesomeIcon icon={faSearch} />
-                </div>
-                <AddUsersModal showModal={showModal} onHideModal={closeModalAdd} />
-            </div>
-            <div className="filter-contain">
-                <div className="select-input">
-                    <select onChange={(e)=> startFilter('active', +e.target.value)}>
-                        <option value={2}>Todos</option>
-                        <option value={1}>Activos</option>
-                        <option value={0}>Inactivos</option>
-                    </select>
                 </div>
             </div>
             <div className="admin-table">
@@ -326,9 +290,16 @@ function Admin() {
                                 })
                                 : ARRAY_10.map((val: string, index: number) => {
                                     return (
-                                        <tr key={"array_10" + index} className="tr-load">
-                                            <td /><td /><td /><td />
-                                        </tr>
+                                        
+                                            filters.active !== 2 
+                                            ?
+                                            <tr key={"array_10" + index} className="tr-load">
+                                                <td /><td /><td /><td /> <td/>
+                                            </tr>
+                                            :
+                                            <tr key={"array_10" + index} className="tr-load">
+                                                <td /><td /><td /><td />
+                                            </tr>
                                     )
                                 })
                             }
@@ -340,6 +311,7 @@ function Admin() {
                     title="usuarios"
                     startFilter={startFilter}
                     currentPage={filters.page}
+                    limit = {filters.limit}
                 />
             </div>
             <OptionModal
