@@ -31,9 +31,7 @@ export const usersRouter = router({
       });
 
       const activeUsers = await prisma.users.findMany({
-        take: input.take,
-        skip: input.skip,
-        select: input.select,
+        ...input,
         where: {
           AND: [
             {
@@ -67,9 +65,7 @@ export const usersRouter = router({
       });
 
       const inactiveUsers = await prisma.users.findMany({
-        take: input.take,
-        skip: input.skip,
-        select: input.select,
+        ...input,
         where: {
           AND: [
             {
