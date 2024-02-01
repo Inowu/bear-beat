@@ -94,6 +94,31 @@
                         background: #09e1f7;;
                         padding: 4px 20px;
                         border-radius: 100px;
+                        &:hover{
+                           opacity: .67;
+                        }
+                    }
+                }
+                .wrap-td{
+                    display: flex;
+                    flex-wrap: wrap;
+                    align-items: center;
+                    gap: 15px;
+                    svg{
+                        font-size: 2.4rem;
+                        cursor: pointer;
+                    }
+                    .lock{
+                        color: red;
+                        &:hover{
+                            color: rgba(160, 7, 7, 0.489);
+                        }
+                    }
+                    .unlock{
+                        color: black;
+                        &:hover{
+                           opacity: .5;
+                        }
                     }
                 }
             }

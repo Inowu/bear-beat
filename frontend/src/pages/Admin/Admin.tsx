@@ -15,6 +15,8 @@ import AddUsersModal from "../../components/Modals/AddUsersModal/AddUsersModal";
 import CsvDownloader from 'react-csv-downloader';
 import {  exportUsers } from "./fuctions";
 import { ConditionModal } from "../../components/Modals/ConditionModal/ContitionModal";
+import { FaLockOpen } from "react-icons/fa";
+import { FaLock } from "react-icons/fa";
 
 export interface IAdminFilter {
     page: number;
@@ -39,6 +41,10 @@ function Admin() {
     const [selectUser, setSelectUser] = useState({} as IAdminUser);
     const [loader, setLoader] = useState<boolean>(true);
     const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+    const [showBlockModal, setShowBlockModal] = useState<boolean>(false);
+    const [blockModalMSG, setBlockModalMSG] = useState('');
+    const [selectedUser, setSelectedUser] = useState({} as IAdminUser);
+    const [blocking, setBlocking] = useState<boolean>(false);
     const [filters, setFilters] = useState<any>({
         page: 0,
         search: '',
@@ -50,6 +56,15 @@ function Admin() {
     }
     const handleDeleteModal = () => {
         setShowDeleteModal(!showDeleteModal);
+    }
+    const closeBlockModal = () => {
+        setShowBlockModal(false);
+    }
+    const openBlockModal = (user: IAdminUser, message: string, block: boolean) => {
+        setBlocking(block);
+        setBlockModalMSG(message);
+        setShowBlockModal(true);
+        setSelectedUser(user);
     }
     const navigate = useNavigate();
     const openOption = () => {
@@ -85,6 +100,31 @@ function Admin() {
         setSelectUser(user);
         setOptionTitle('Seleccione el plan');
         openOption();
+    }
+    const removeUsersInactive = async () => {
+        try{
+            // await trpc.users.removeInactiveUsers.mutate();
+        }
+        catch(error){
+            console.log(error);
+        }
+    }
+    const changeBlockUser = async () => {
+        try{
+            let body = {
+                userId: selectedUser.id
+            }
+            if(blocking){
+                const user_block = await trpc.users.blockUser.mutate(body)
+            }else{
+                const user_block = await trpc.users.unblockUser.mutate(body)
+            }
+            closeBlockModal();
+            filterUsers(filters);
+        }
+        catch(error){
+            console.log(error);
+        }
     }
     const activateSubscription = async (plan: IPlans) => {
         try {
@@ -177,14 +217,6 @@ function Admin() {
                     setLoader(false);
             }
         } catch (error) {
-            console.log(error);
-        }
-    }
-    const removeUsersInactive = async () => {
-        try{
-            // await trpc.users.removeInactiveUsers.mutate();
-        }
-        catch(error){
             console.log(error);
         }
     }
@@ -294,8 +326,13 @@ function Admin() {
                                                     {filters.active === 1? "Activa" : "No activa"}
                                                 </td>
                                             }
-                                            <td>
+                                            <td className="wrap-td">
                                                 <button onClick={() => { giveSuscription(user) }}>Activar Suscripcion</button>
+                                                {
+                                                    user.blocked ?
+                                                        <FaLock className="lock" onClick={()=> openBlockModal(user, `Estas por desbloquear al usuario: ${user.username}`,false)}/>
+                                                        : <FaLockOpen className="unlock"  onClick={()=> openBlockModal(user, `Estas por bloquear al usuario: ${user.username}`,true)}/>
+                                                }
                                             </td>
                                         </tr>
 
@@ -334,6 +371,13 @@ function Admin() {
                 show={showDeleteModal}
                 onHide={handleDeleteModal}
                 action={removeUsersInactive}
+            />
+            <ConditionModal
+                title={"Bloquear Usuario"}
+                message={blockModalMSG}
+                show={showBlockModal}
+                onHide={closeBlockModal}
+                action={changeBlockUser}
             />
             <OptionModal
                 show={showOption}
