@@ -103,7 +103,9 @@ function Admin() {
     }
     const removeUsersInactive = async () => {
         try{
-            // await trpc.users.removeInactiveUsers.mutate();
+            await trpc.users.removeInactiveUsers.mutate();
+            handleDeleteModal();
+            filterUsers(filters);
         }
         catch(error){
             console.log(error);
@@ -365,13 +367,13 @@ function Admin() {
                 />
             </div>
             <AddUsersModal showModal={showModal} onHideModal={closeModalAdd} />
-            <ConditionModal
+            {/* <ConditionModal
                 title={"Eliminar usuarios"}
                 message={"Estas por eliminar a los usuarios que no se han suscrito, ni se han suscrito en el pasado mes."}
                 show={showDeleteModal}
                 onHide={handleDeleteModal}
                 action={removeUsersInactive}
-            />
+            /> */}
             <ConditionModal
                 title={"Bloquear Usuario"}
                 message={blockModalMSG}
