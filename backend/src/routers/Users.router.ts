@@ -189,7 +189,7 @@ export const usersRouter = router({
             },
             {
               NOT: {
-                id: user.id,
+                role_id: RolesIds.admin,
               },
             },
           ],
