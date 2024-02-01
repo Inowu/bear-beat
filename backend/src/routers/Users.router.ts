@@ -206,46 +206,55 @@ export const usersRouter = router({
         },
       });
 
-      await prisma.ftpquotatallies.deleteMany({
-        where: {
-          id: {
-            in: tallies.map((tally) => tally.id),
-          },
-        },
-      });
-
-      await prisma.ftpQuotaLimits.deleteMany({
-        where: {
-          id: {
-            in: limits.map((limit) => limit.id),
-          },
-        },
-      });
-
-      await prisma.descargasUser.deleteMany({
-        where: {
-          user_id: {
-            in: inactiveUsersIds,
-          },
-        },
-      });
-
-      await prisma.users.deleteMany({
-        where: {
-          AND: [
-            {
+      try {
+        await prisma.$transaction([
+          prisma.ftpquotatallies.deleteMany({
+            where: {
               id: {
+                in: tallies.map((tally) => tally.id),
+              },
+            },
+          }),
+          prisma.ftpQuotaLimits.deleteMany({
+            where: {
+              id: {
+                in: limits.map((limit) => limit.id),
+              },
+            },
+          }),
+          prisma.descargasUser.deleteMany({
+            where: {
+              user_id: {
                 in: inactiveUsersIds,
               },
             },
-            {
-              NOT: {
-                role_id: RolesIds.admin,
-              },
+          }),
+          prisma.users.deleteMany({
+            where: {
+              AND: [
+                {
+                  id: {
+                    in: inactiveUsersIds,
+                  },
+                },
+                {
+                  NOT: {
+                    role_id: RolesIds.admin,
+                  },
+                },
+              ],
             },
-          ],
-        },
-      });
+          }),
+        ]);
+      } catch (e) {
+        log.error(
+          `[REMOVE_INACTIVE_USERS] Error removing inactive users, ${e}`,
+        );
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Ocurrió un error al eliminar usuarios inactivos',
+        });
+      }
 
       return inactiveUsers;
     },
