@@ -110,6 +110,9 @@ export const permissions = shield<Context>({
     groupByUsers: isAdmin,
   },
   mutation: {
+    removeInactiveUsers: isAdmin,
+    blockUser: isAdmin,
+    unblockUser: isAdmin,
     createStripePlan: isAdmin,
     updateStripePlan: isAdmin,
     deleteStripePlan: isAdmin,

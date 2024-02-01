@@ -12,6 +12,11 @@ import { UsersGroupBySchema } from '../schemas/groupByUsers.schema';
 import { UsersUpdateManySchema } from '../schemas/updateManyUsers.schema';
 import { UsersUpdateOneSchema } from '../schemas/updateOneUsers.schema';
 import { UsersUpsertSchema } from '../schemas/upsertOneUsers.schema';
+import { z } from 'zod';
+import { TRPCError } from '@trpc/server';
+import { log } from '../server';
+import { cancelServicesSubscriptions } from './subscriptions/cancel/cancelServicesSubscriptions';
+import { RolesIds } from './auth/interfaces/roles.interface';
 
 export const usersRouter = router({
   getActiveUsers: shieldedProcedure
@@ -26,9 +31,7 @@ export const usersRouter = router({
       });
 
       const activeUsers = await prisma.users.findMany({
-        take: input.take,
-        skip: input.skip,
-        select: input.select,
+        ...input,
         where: {
           AND: [
             {
@@ -37,6 +40,11 @@ export const usersRouter = router({
             {
               id: {
                 in: activeSubs.map((user) => user.user_id),
+              },
+            },
+            {
+              NOT: {
+                role_id: RolesIds.admin,
               },
             },
           ],
@@ -57,9 +65,7 @@ export const usersRouter = router({
       });
 
       const inactiveUsers = await prisma.users.findMany({
-        take: input.take,
-        skip: input.skip,
-        select: input.select,
+        ...input,
         where: {
           AND: [
             {
@@ -70,12 +76,129 @@ export const usersRouter = router({
                 notIn: activeSubs.map((user) => user.user_id),
               },
             },
+            {
+              NOT: {
+                role_id: RolesIds.admin,
+              },
+            },
           ],
         },
       });
 
       return inactiveUsers;
     }),
+  blockUser: shieldedProcedure
+    .input(
+      z.object({
+        userId: z.number(),
+      }),
+    )
+    .mutation(async ({ ctx: { prisma }, input: { userId } }) => {
+      const user = await prisma.users.findFirst({
+        where: {
+          id: userId,
+        },
+      });
+
+      if (!user) {
+        log.error(`[BLOCK_USER] User ${userId} not found`);
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Usuario no encontrado',
+        });
+      }
+
+      try {
+        log.info(`[BLOCK_USER] Canceling subscription for user ${userId}`);
+        await cancelServicesSubscriptions({ prisma, user });
+      } catch (e) {
+        log.error(
+          `[BLOCK_USER] Error cancelling subscription for user ${userId}, ${e}`,
+        );
+      }
+
+      log.info(`[BLOCK_USER] Blocking user ${userId}`);
+
+      await prisma.users.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          blocked: true,
+        },
+      });
+
+      return user;
+    }),
+  unblockUser: shieldedProcedure
+    .input(
+      z.object({
+        userId: z.number(),
+      }),
+    )
+    .mutation(async ({ ctx: { prisma }, input: { userId } }) => {
+      const user = await prisma.users.findFirst({
+        where: {
+          id: userId,
+        },
+      });
+
+      if (!user) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Usuario no encontrado',
+        });
+      }
+
+      await prisma.users.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          blocked: false,
+        },
+      });
+    }),
+  removeInactiveUsers: shieldedProcedure.mutation(
+    async ({ ctx: { prisma, session } }) => {
+      const user = session!.user!;
+
+      const activeSubs = await prisma.descargasUser.findMany({
+        where: {
+          date_end: {
+            gte: new Date(),
+          },
+        },
+      });
+
+      const inactiveUsers = await prisma.users.findMany({
+        where: {
+          id: {
+            notIn: activeSubs.map((user) => user.user_id),
+          },
+        },
+      });
+
+      await prisma.users.deleteMany({
+        where: {
+          AND: [
+            {
+              id: {
+                in: inactiveUsers.map((user) => user.id),
+              },
+            },
+            {
+              NOT: {
+                role_id: RolesIds.admin,
+              },
+            },
+          ],
+        },
+      });
+
+      return inactiveUsers;
+    },
+  ),
   aggregateUsers: shieldedProcedure
     .input(UsersAggregateSchema)
     .query(async ({ ctx, input }) => {

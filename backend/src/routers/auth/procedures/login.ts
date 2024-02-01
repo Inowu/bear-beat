@@ -47,10 +47,11 @@ export const login = publicProcedure
 
     const isBlocked = user.blocked;
 
-    if(isBlocked){
+    if (isBlocked) {
       throw new TRPCError({
         code: 'UNAUTHORIZED',
-        message: 'Usuario Bloqueado',
+        message:
+          'Tu cuenta ha sido bloqueada. Contacta con soporte para obtener más información.',
       });
     }
 
