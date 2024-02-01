@@ -17,6 +17,7 @@ import { TRPCError } from '@trpc/server';
 import { log } from '../server';
 import { cancelServicesSubscriptions } from './subscriptions/cancel/cancelServicesSubscriptions';
 import { RolesIds } from './auth/interfaces/roles.interface';
+import { subDays, subMonths } from 'date-fns';
 
 export const usersRouter = router({
   getActiveUsers: shieldedProcedure
@@ -158,15 +159,15 @@ export const usersRouter = router({
           blocked: false,
         },
       });
+
+      return user;
     }),
   removeInactiveUsers: shieldedProcedure.mutation(
-    async ({ ctx: { prisma, session } }) => {
-      const user = session!.user!;
-
-      const activeSubs = await prisma.descargasUser.findMany({
+    async ({ ctx: { prisma } }) => {
+      const activeUsers = await prisma.descargasUser.findMany({
         where: {
           date_end: {
-            gte: new Date(),
+            gte: subMonths(new Date(), 1),
           },
         },
       });
@@ -174,7 +175,57 @@ export const usersRouter = router({
       const inactiveUsers = await prisma.users.findMany({
         where: {
           id: {
-            notIn: activeSubs.map((user) => user.user_id),
+            notIn: activeUsers.map((user) => user.user_id),
+          },
+        },
+      });
+
+      const inactiveUsersIds = inactiveUsers.map((user) => user.id);
+
+      const ftpAccounts = await prisma.ftpUser.findMany({
+        where: {
+          user_id: {
+            in: inactiveUsersIds,
+          },
+        },
+      });
+
+      const tallies = await prisma.ftpquotatallies.findMany({
+        where: {
+          name: {
+            in: ftpAccounts.map((account) => account.userid),
+          },
+        },
+      });
+
+      const limits = await prisma.ftpQuotaLimits.findMany({
+        where: {
+          name: {
+            in: ftpAccounts.map((account) => account.userid),
+          },
+        },
+      });
+
+      await prisma.ftpquotatallies.deleteMany({
+        where: {
+          id: {
+            in: tallies.map((tally) => tally.id),
+          },
+        },
+      });
+
+      await prisma.ftpQuotaLimits.deleteMany({
+        where: {
+          id: {
+            in: limits.map((limit) => limit.id),
+          },
+        },
+      });
+
+      await prisma.descargasUser.deleteMany({
+        where: {
+          user_id: {
+            in: inactiveUsersIds,
           },
         },
       });
@@ -184,7 +235,7 @@ export const usersRouter = router({
           AND: [
             {
               id: {
-                in: inactiveUsers.map((user) => user.id),
+                in: inactiveUsersIds,
               },
             },
             {
