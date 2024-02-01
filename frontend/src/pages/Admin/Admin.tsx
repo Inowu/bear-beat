@@ -14,6 +14,7 @@ import { ARRAY_10 } from "../../utils/Constants";
 import AddUsersModal from "../../components/Modals/AddUsersModal/AddUsersModal";
 import CsvDownloader from 'react-csv-downloader';
 import {  exportUsers } from "./fuctions";
+import { ConditionModal } from "../../components/Modals/ConditionModal/ContitionModal";
 
 export interface IAdminFilter {
     page: number;
@@ -37,6 +38,7 @@ function Admin() {
     const [plans, setPlans] = useState<IPlans[]>([]);
     const [selectUser, setSelectUser] = useState({} as IAdminUser);
     const [loader, setLoader] = useState<boolean>(true);
+    const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
     const [filters, setFilters] = useState<any>({
         page: 0,
         search: '',
@@ -45,6 +47,9 @@ function Admin() {
     })
     const closeModalAdd = () => {
         setShowModal(false);
+    }
+    const handleDeleteModal = () => {
+        setShowDeleteModal(!showDeleteModal);
     }
     const navigate = useNavigate();
     const openOption = () => {
@@ -175,6 +180,14 @@ function Admin() {
             console.log(error);
         }
     }
+    const removeUsersInactive = async () => {
+        try{
+            // await trpc.users.removeInactiveUsers.mutate();
+        }
+        catch(error){
+            console.log(error);
+        }
+    }
     useEffect(() => {
         getPlans();
         filterUsers(filters);
@@ -206,7 +219,7 @@ function Admin() {
                         datas={transformUserData()}
                         text="Exportar Clientes" 
                     />
-                <AddUsersModal showModal={showModal} onHideModal={closeModalAdd} />
+                {/* <button className="btn-delete" style={{marginLeft:"auto"}} onClick={handleDeleteModal}>Eliminar Usuarios</button> */}
             </div>
             <div className="filter-contain">
                 <div className="left-contain">
@@ -314,6 +327,14 @@ function Admin() {
                     limit = {filters.limit}
                 />
             </div>
+            <AddUsersModal showModal={showModal} onHideModal={closeModalAdd} />
+            <ConditionModal
+                title={"Eliminar usuarios"}
+                message={"Estas por eliminar a los usuarios que no se han suscrito, ni se han suscrito en el pasado mes."}
+                show={showDeleteModal}
+                onHide={handleDeleteModal}
+                action={removeUsersInactive}
+            />
             <OptionModal
                 show={showOption}
                 onHide={closeOption}

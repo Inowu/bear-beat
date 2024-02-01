@@ -17,8 +17,14 @@
             padding: 4px 20px;
             border-radius: 100px;
         }
-        .btn-addUsers:hover{
-            background-color: #00abbe;
+        .btn-delete{
+            color: white;
+            background: #f71109;;
+            padding: 4px 20px;
+            border-radius: 100px;
+        }
+        button:hover{
+            opacity: .67;
         }
     }
     p{
