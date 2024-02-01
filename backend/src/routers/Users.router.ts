@@ -17,7 +17,9 @@ import { TRPCError } from '@trpc/server';
 import { log } from '../server';
 import { cancelServicesSubscriptions } from './subscriptions/cancel/cancelServicesSubscriptions';
 import { RolesIds } from './auth/interfaces/roles.interface';
-import { subDays, subMonths } from 'date-fns';
+import { subMonths } from 'date-fns';
+import stripeInstance from '../stripe';
+import { conektaCustomers } from '../conekta';
 
 export const usersRouter = router({
   getActiveUsers: shieldedProcedure
@@ -256,7 +258,51 @@ export const usersRouter = router({
         });
       }
 
-      return inactiveUsers;
+      for (const user of inactiveUsers) {
+        try {
+          log.info(
+            `[REMOVE_INACTIVE_USERS] Removing stripe customer for user ${user.id}...`,
+          );
+
+          if (!user.stripe_cusid) continue;
+
+          await stripeInstance.customers.del(user.stripe_cusid);
+
+          log.info(
+            `[REMOVE_INACTIVE_USERS] Removed stripe customer for user ${user.id}`,
+          );
+          // Avoid rate limiting
+          await new Promise((res) => setTimeout(res, 15));
+        } catch (e) {
+          log.error(
+            `[REMOVE_INACTIVE_USERS] Error removing stripe customer for user ${user.id}, ${e}`,
+          );
+        }
+
+        try {
+          log.info(
+            `[REMOVE_INACTIVE_USERS] Removing conekta customer for user ${user.id}...`,
+          );
+
+          if (!user.conekta_cusid) continue;
+
+          await conektaCustomers.deleteCustomerById(user.conekta_cusid);
+
+          log.info(
+            `[REMOVE_INACTIVE_USERS] Removed conekta customer for user ${user.id}`,
+          );
+
+          await new Promise((res) => setTimeout(res, 15));
+        } catch (e) {
+          log.error(
+            `[REMOVE_INACTIVE_USERS] Error removing conekta customer for user ${user.id}, ${e}`,
+          );
+        }
+      }
+
+      return {
+        message: 'Usuarios inactivos eliminados',
+      };
     },
   ),
   aggregateUsers: shieldedProcedure
