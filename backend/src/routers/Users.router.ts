@@ -1,3 +1,4 @@
+import { v4 as uuid } from 'uuid';
 import { shieldedProcedure } from '../procedures/shielded.procedure';
 import { router } from '../trpc';
 import { UsersAggregateSchema } from '../schemas/aggregateUsers.schema';
@@ -20,6 +21,10 @@ import { RolesIds } from './auth/interfaces/roles.interface';
 import { subMonths } from 'date-fns';
 import stripeInstance from '../stripe';
 import { conektaCustomers } from '../conekta';
+import { workerFactory } from '../queue/workerFactory';
+import { removeUsersQueue, removeUsersQueueName } from '../queue/removeUsers';
+import { RemoveUsersJob } from '../queue/removeUsers/types';
+import { JobStatus } from '../queue/jobStatus';
 
 export const usersRouter = router({
   getActiveUsers: shieldedProcedure
@@ -165,7 +170,28 @@ export const usersRouter = router({
       return user;
     }),
   removeInactiveUsers: shieldedProcedure.mutation(
-    async ({ ctx: { prisma } }) => {
+    async ({ ctx: { prisma, session } }) => {
+      const existingJob = await prisma.jobs.findFirst({
+        where: {
+          AND: [
+            {
+              queue: removeUsersQueueName,
+            },
+            {
+              status: JobStatus.IN_PROGRESS,
+            },
+          ],
+        },
+      });
+
+      if (existingJob) {
+        throw new TRPCError({
+          code: 'TOO_MANY_REQUESTS',
+          message:
+            'Ya hay una eliminación en proceso, espere a que termine antes de iniciar otro proceso de eliminación',
+        });
+      }
+
       const activeUsers = await prisma.descargasUser.findMany({
         where: {
           date_end: {
@@ -209,45 +235,45 @@ export const usersRouter = router({
       });
 
       try {
-        await prisma.$transaction([
-          prisma.ftpquotatallies.deleteMany({
-            where: {
-              id: {
-                in: tallies.map((tally) => tally.id),
-              },
-            },
-          }),
-          prisma.ftpQuotaLimits.deleteMany({
-            where: {
-              id: {
-                in: limits.map((limit) => limit.id),
-              },
-            },
-          }),
-          prisma.descargasUser.deleteMany({
-            where: {
-              user_id: {
-                in: inactiveUsersIds,
-              },
-            },
-          }),
-          prisma.users.deleteMany({
-            where: {
-              AND: [
-                {
-                  id: {
-                    in: inactiveUsersIds,
-                  },
-                },
-                {
-                  NOT: {
-                    role_id: RolesIds.admin,
-                  },
-                },
-              ],
-            },
-          }),
-        ]);
+        // await prisma.$transaction([
+        //   prisma.ftpquotatallies.deleteMany({
+        //     where: {
+        //       id: {
+        //         in: tallies.map((tally) => tally.id),
+        //       },
+        //     },
+        //   }),
+        //   prisma.ftpQuotaLimits.deleteMany({
+        //     where: {
+        //       id: {
+        //         in: limits.map((limit) => limit.id),
+        //       },
+        //     },
+        //   }),
+        //   prisma.descargasUser.deleteMany({
+        //     where: {
+        //       user_id: {
+        //         in: inactiveUsersIds,
+        //       },
+        //     },
+        //   }),
+        //   prisma.users.deleteMany({
+        //     where: {
+        //       AND: [
+        //         {
+        //           id: {
+        //             in: inactiveUsersIds,
+        //           },
+        //         },
+        //         {
+        //           NOT: {
+        //             role_id: RolesIds.admin,
+        //           },
+        //         },
+        //       ],
+        //     },
+        //   }),
+        // ]);
       } catch (e) {
         log.error(
           `[REMOVE_INACTIVE_USERS] Error removing inactive users, ${e}`,
@@ -258,50 +284,41 @@ export const usersRouter = router({
         });
       }
 
-      for (const user of inactiveUsers) {
-        try {
-          log.info(
-            `[REMOVE_INACTIVE_USERS] Removing stripe customer for user ${user.id}...`,
-          );
+      // Create a worker
+      workerFactory('users');
 
-          if (!user.stripe_cusid) continue;
+      // Push job to queue
+      const job = await removeUsersQueue.add(removeUsersQueueName, {
+        // TODO: DELETE THE SLICE
+        userCustomerIds: inactiveUsers
+          .slice(0, 100)
+          .map(
+            (
+              user,
+            ): {
+              stripe: string | undefined | null;
+              conekta: string | undefined | null;
+            } => ({
+              stripe: user.stripe_cusid,
+              conekta: user.conekta_cusid,
+            }),
+          )
+          .filter((user) => user.stripe || user.conekta),
+      } as RemoveUsersJob);
 
-          await stripeInstance.customers.del(user.stripe_cusid);
-
-          log.info(
-            `[REMOVE_INACTIVE_USERS] Removed stripe customer for user ${user.id}`,
-          );
-          // Avoid rate limiting
-          await new Promise((res) => setTimeout(res, 15));
-        } catch (e) {
-          log.error(
-            `[REMOVE_INACTIVE_USERS] Error removing stripe customer for user ${user.id}, ${e}`,
-          );
-        }
-
-        try {
-          log.info(
-            `[REMOVE_INACTIVE_USERS] Removing conekta customer for user ${user.id}...`,
-          );
-
-          if (!user.conekta_cusid) continue;
-
-          await conektaCustomers.deleteCustomerById(user.conekta_cusid);
-
-          log.info(
-            `[REMOVE_INACTIVE_USERS] Removed conekta customer for user ${user.id}`,
-          );
-
-          await new Promise((res) => setTimeout(res, 15));
-        } catch (e) {
-          log.error(
-            `[REMOVE_INACTIVE_USERS] Error removing conekta customer for user ${user.id}, ${e}`,
-          );
-        }
-      }
+      await prisma.jobs.create({
+        data: {
+          jobId: job.id,
+          status: JobStatus.IN_PROGRESS,
+          user_id: session!.user!.id,
+          queue: removeUsersQueueName,
+          createdAt: new Date(),
+        },
+      });
 
       return {
-        message: 'Usuarios inactivos eliminados',
+        message:
+          'Se han eliminado los usuarios inactivos y se ha iniciado el proceso de eliminación de sus cuentas en Stripe y Conekta',
       };
     },
   ),

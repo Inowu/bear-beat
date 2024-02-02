@@ -3,8 +3,8 @@ import { TRPCError } from '@trpc/server';
 import { fileService } from '../../ftp';
 import { log } from '../../server';
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
-import { compressionQueue } from '../../queue';
-import { CompressionJob } from '../../queue/compression-job';
+import { compressionQueue } from '../../queue/compression';
+import type { CompressionJob } from '../../queue/compression/types';
 import { extendedAccountPostfix } from '../../utils/constants';
 import { logPrefix } from '../../endpoints/download.endpoint';
 

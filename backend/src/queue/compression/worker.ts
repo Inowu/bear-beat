@@ -1,23 +1,12 @@
 import { Job, Worker } from 'bullmq';
-import { queueName } from '.';
-import { log } from '../server';
-import { sse } from '../sse';
-import { CompressionJob } from './compression-job';
+import { compressionQueueName } from '.';
+import { log } from '../../server';
+import { sse } from '../../sse';
+import { CompressionJob } from './types';
 
-export const compressionWorkers: Array<Worker<CompressionJob>> = [];
-
-export const workerFactory = () => {
-  if (compressionWorkers.length < 1) {
-    log.info('[WORKER:COMPRESSION] Creating new worker');
-    compressionWorkers.push(createWorker());
-  }
-
-  return createWorker();
-};
-
-const createWorker = () => {
+export const createCompressionWorker = () => {
   const compressionWorker = new Worker<CompressionJob>(
-    queueName,
+    compressionQueueName,
     // Spawn a new process for each job
     `${__dirname}/compression-worker.js`,
     {

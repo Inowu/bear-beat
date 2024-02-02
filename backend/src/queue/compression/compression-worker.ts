@@ -3,7 +3,7 @@ import path from 'path';
 import archiver from 'archiver';
 import { Job } from 'bullmq';
 import fastFolderSize from 'fast-folder-size/sync';
-import { CompressionJob } from './compression-job';
+import { CompressionJob } from './types';
 
 export default async function (job: Job<CompressionJob>) {
   const { songsAbsolutePath, songsRelativePath } = job.data;
