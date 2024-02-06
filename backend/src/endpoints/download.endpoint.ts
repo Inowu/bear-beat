@@ -189,7 +189,11 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
       )}"; filename*=UTF-8''${encodeURIComponent(Path.basename(fullPath))}`,
     );
   } catch (e: any) {
-    log.error(`[DOWNLOAD] Error setting header: ${e.message}`);
+    log.warn(
+      `[DOWNLOAD] Error setting header: ${e.message}, file: ${Path.basename(
+        fullPath,
+      )}. Using fallback header instead`,
+    );
 
     res.setHeader(
       'Content-Disposition',
