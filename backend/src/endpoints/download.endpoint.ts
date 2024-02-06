@@ -181,12 +181,23 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
     }),
   ]);
 
-  res.setHeader(
-    'Content-Disposition',
-    `attachment; filename="${Path.basename(
-      fullPath,
-    )}"; filename*=UTF-8''${encodeURIComponent(Path.basename(fullPath))}`,
-  );
+  try {
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${Path.basename(
+        fullPath,
+      )}"; filename*=UTF-8''${encodeURIComponent(Path.basename(fullPath))}`,
+    );
+  } catch (e: any) {
+    log.error(`[DOWNLOAD] Error setting header: ${e.message}`);
+
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename*=UTF-8''${encodeURIComponent(
+        Path.basename(fullPath),
+      )}`,
+    );
+  }
 
   return res.sendFile(fullPath);
 };
