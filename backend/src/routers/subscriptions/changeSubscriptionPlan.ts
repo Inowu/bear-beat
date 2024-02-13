@@ -4,6 +4,8 @@ import { TRPCError } from '@trpc/server';
 import stripeInstance from '../../stripe';
 import { PaymentService } from './services/types';
 import { log } from '../../server';
+import axios from 'axios';
+import { paypal } from '../../paypal';
 
 export const changeSubscriptionPlan = shieldedProcedure
   .input(
@@ -14,13 +16,13 @@ export const changeSubscriptionPlan = shieldedProcedure
   .mutation(async ({ ctx: { prisma, session }, input: { newPlanId } }) => {
     const user = session!.user!;
 
-    const plan = await prisma.plans.findUnique({
+    const newPlan = await prisma.plans.findUnique({
       where: {
         id: newPlanId,
       },
     });
 
-    if (!plan) {
+    if (!newPlan) {
       throw new TRPCError({
         code: 'NOT_FOUND',
         message: 'El plan no fue encontrado',
@@ -47,7 +49,7 @@ export const changeSubscriptionPlan = shieldedProcedure
     });
 
     if (!subscriptionOrder) {
-      log.error(`[SUBSCRIPTION] No se encontró la orden de la suscripción`);
+      log.error(`[CHANGE_PLAN] No se encontró la orden de la suscripción`);
       throw new TRPCError({
         code: 'NOT_FOUND',
         message: 'No se encontró la orden de la suscripción',
@@ -59,7 +61,7 @@ export const changeSubscriptionPlan = shieldedProcedure
       subscriptionOrder.payment_method !== PaymentService.PAYPAL
     ) {
       log.error(
-        `[SUBSCRIPTION] No se puede cambiar el plan de una suscripción que no fue pagada con tarjeta de crédito/débito o PayPal, ${subscriptionOrder.id}`,
+        `[CHANGE_PLAN] No se puede cambiar el plan de una suscripción que no fue pagada con tarjeta de crédito/débito o PayPal, ${subscriptionOrder.id}`,
       );
       throw new TRPCError({
         code: 'BAD_REQUEST',
@@ -70,7 +72,7 @@ export const changeSubscriptionPlan = shieldedProcedure
 
     if (!subscriptionOrder.plan_id) {
       log.error(
-        `[SUBSCRIPTION] Esta orden no tiene un plan asociado, ${subscriptionOrder.id}`,
+        `[CHANGE_PLAN] Esta orden no tiene un plan asociado, ${subscriptionOrder.id}`,
       );
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
@@ -78,18 +80,110 @@ export const changeSubscriptionPlan = shieldedProcedure
       });
     }
 
-    const currentPlan = await prisma.plans.findUnique({
-      where: {
-        id: subscriptionOrder.plan_id,
-      },
-    });
-
-    if (plan.stripe_prod_id) {
+    if (newPlan.stripe_prod_id) {
       // Update the stripe subscription
-      // const stripeSub = await stripeInstance.subscriptions.retrieve();
-    }
+      const subscriptionId = subscriptionOrder.txn_id;
+      if (!subscriptionId || !subscriptionId.startsWith('sub_')) {
+        log.error(
+          `[CHANGE_PLAN] This subscription's order has no subscription id or the id is invalid, order id: ${subscriptionOrder.id}`,
+        );
 
-    //   await stripeInstance.subscriptionItems.list({
-    //   subscription:
-    // })
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message:
+            'Hay un problema con esta suscripción, por favor contacta a soporte',
+        });
+      }
+
+      const stripeSub = (
+        await stripeInstance.subscriptionItems.list({
+          subscription: subscriptionId,
+        })
+      ).data[0];
+
+      if (!stripeSub) {
+        log.error(
+          `[CHANGE_PLAN] Stripe subscription not found, sub id ${subscriptionId}`,
+        );
+
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message:
+            'Hay un problema con esta suscripción, por favor contacta a soporte',
+        });
+      }
+
+      try {
+        await stripeInstance.subscriptionItems.update(stripeSub.id, {
+          price: newPlan.stripe_prod_id,
+        });
+
+        return {
+          message: 'El plan de tu suscripción ha sido actualizado',
+        };
+      } catch (e) {
+        log.error(
+          `[CHANGE_PLAN] Error updating stripe subscription item, ${e}`,
+        );
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message:
+            'Hubo un error al actualizar tu plan, por favor contacta a soporte',
+        });
+      }
+    } else if (newPlan.paypal_plan_id) {
+      if (
+        !subscriptionOrder.txn_id ||
+        !subscriptionOrder.txn_id.startsWith('I-')
+      ) {
+        log.error(
+          `[CHANGE_PLAN] This subscription's order has no subscription id or the id is invalid, order id: ${subscriptionOrder.id}`,
+        );
+
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message:
+            'Hay un problema con esta suscripción, por favor contacta a soporte',
+        });
+      }
+
+      const token = await paypal.getToken();
+
+      try {
+        // Update the paypal subscription
+        await axios.post(
+          `${paypal.paypalUrl()}/v1/billing/subscriptions/${
+            subscriptionOrder.txn_id
+          }/revise`,
+          {
+            plan_id: newPlan.paypal_plan_id,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        return {
+          message: 'El plan de tu suscripción ha sido actualizado',
+        };
+      } catch (e) {
+        log.error(`[CHANGE_PLAN] Error updating paypal subscription, ${e}`);
+
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message:
+            'Hubo un error al actualizar tu plan, por favor contacta a soporte',
+        });
+      }
+    } else {
+      log.error(`[CHANGE_PLAN] Plan has no stripe or paypal id, ${newPlan.id}`);
+
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message:
+          'Hubo un error al actualizar tu plan, por favor contacta a soporte',
+      });
+    }
   });

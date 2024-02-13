@@ -291,7 +291,7 @@ export const usersRouter = router({
       const job = await removeUsersQueue.add(removeUsersQueueName, {
         // TODO: DELETE THE SLICE
         userCustomerIds: inactiveUsers
-          .slice(0, 100)
+          .slice(0, 500)
           .map(
             (
               user,
