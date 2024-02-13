@@ -8,13 +8,12 @@ import { OxxoModal } from "../../components/Modals/OxxoModal/OxxoModal";
 import { useEffect, useState } from "react";
 import trpc from "../../api";
 import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
-import { PayPalButtons, PayPalScriptProvider } from "@paypal/react-paypal-js";
+import { PayPalButtons } from "@paypal/react-paypal-js";
 import { SuccessModal } from "../../components/Modals/SuccessModal/SuccessModal";
 import { SpeiModal } from "../../components/Modals/SpeiModal/SpeiModal";
 interface PlanCardPropsI {
   plan: IPlans;
 }
-
 let order: number;
 
 function PlanCard(props: PlanCardPropsI) {
@@ -52,6 +51,9 @@ function PlanCard(props: PlanCardPropsI) {
       console.log(error);
     }
   }
+  const handleButtonClick = () => {
+    fbq('track', 'CarritoAbandonado');
+  };
   const closeSuccess = () => {
     setShowSuccess(false);
     navigate("/");
@@ -73,6 +75,7 @@ function PlanCard(props: PlanCardPropsI) {
       const oxxoPay = await trpc.subscriptions.subscribeWithCashConekta.mutate(body);
       setShowOxxoModal(true);
       setOxxoData(oxxoPay);
+      handleButtonClick();
     }
     catch (error) {
       setErrorMessage(error);
@@ -89,6 +92,7 @@ function PlanCard(props: PlanCardPropsI) {
       const speiPay = await trpc.subscriptions.subscribeWithCashConekta.mutate(body);
       setShowSpeiModal(true);
       setSpeiData(speiPay);
+      handleButtonClick();
     }
     catch (error) {
       setErrorMessage(error);
@@ -101,11 +105,12 @@ function PlanCard(props: PlanCardPropsI) {
   };
 
   const paypalMethod = () => {
-    let data = 
+    let data =
       <PayPalButtons
         style={{ color: "silver", shape: "pill", layout: "horizontal", height: 46, tagline: false }}
         onClick={async (data, actions) => {
           trpc.checkoutLogs.registerCheckoutLog.mutate();
+          handleButtonClick();
           // Revisar si el usuario tiene una suscripcion activa
           const me = await trpc.auth.me.query();
           if (me.hasActiveSubscription) return actions.reject();
@@ -148,13 +153,15 @@ function PlanCard(props: PlanCardPropsI) {
           return data;
         }}
       />
-    
+
     return data
   }
 
   useEffect(() => {
     retreivePaypalPlan()
   }, [])
+
+  
 
   return (
     <div className={"plan-card-main-card " + (plan.moneda === "usd" ? "resp-plan" : "")}>
@@ -185,10 +192,11 @@ function PlanCard(props: PlanCardPropsI) {
       <div className="paypal-data">
         <p className="text">Pagos seguros en línea</p>
       </div>
-      <div className="button-contain">
+      <div className="button-contain" id="abandonedCartBtn">
         {
           (plan.moneda === "mxn" || plan.moneda === "MXN") &&
-          <button className="silver-bg" onClick={payWithOxxo}>Pagar vía Oxxo</button>
+          <button id="pixelButton" className="silver-bg" onClick={payWithOxxo}>
+            Pagar vía Oxxo</button>
         }
         {
           (plan.moneda === "mxn" || plan.moneda === "MXN") &&
@@ -222,6 +230,7 @@ function PlanCard(props: PlanCardPropsI) {
         title="Compra Exitosa"
       />
       <ErrorModal show={show} onHide={closeError} message={errorMessage} />
+
     </div>
   );
 }

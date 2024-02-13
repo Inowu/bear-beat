@@ -25,10 +25,14 @@ import { Storage } from "./pages/Admin/Storage/Storage";
 import { Coupons } from "./pages/Admin/Coupons/Coupons";
 import { Ordens } from "./pages/Admin/Ordens/Ordens";
 import { HistoryCheckout } from "./pages/Admin/HistoryCheckout/HistoryCheckout";
+import ReactPixel from 'react-facebook-pixel';
+
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement,
 );
+
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -103,6 +107,7 @@ root.render(
     </UserContextProvider>
   </React.StrictMode>,
 );
+
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

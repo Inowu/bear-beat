@@ -24,6 +24,9 @@ function SignUpForm() {
   const closeModal = () => {
     setShow(false);
   }
+  const handleSuccessfulRegister = () => {
+    fbq('track', 'RegistroExitoso');
+  };
   const closeSuccess = () => {
     setShowSuccess(false);
     navigate("/");
@@ -70,6 +73,7 @@ function SignUpForm() {
           const register = await trpc.auth.register.mutate(body);
           handleLogin(register.token, register.refreshToken);
           setShowSuccess(true);
+          handleSuccessfulRegister();
           setLoader(false);
         }
         catch(error){
