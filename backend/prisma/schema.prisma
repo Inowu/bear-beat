@@ -205,7 +205,7 @@ model Users {
   token_expiration DateTime?          @db.Date
   refresh_token    String?            @db.VarChar(250)
   blocked          Boolean            @default(false)
-  compression_jobs compression_jobs[]
+  jobs             jobs[]
   dir_downloads    dir_downloads[]
   product_orders   product_orders[]
   checkout_logs    checkout_logs[]
@@ -279,14 +279,15 @@ model dir_downloads {
   @@index([userId], map: "userId")
 }
 
-model compression_jobs {
+model jobs {
   id         Int       @id @default(autoincrement())
   user_id    Int
+  queue      String    @db.VarChar(255)
   status     String    @db.VarChar(50)
   createdAt  DateTime  @db.DateTime(0)
-  jobId      Int
+  jobId      String?   @db.VarChar(255)
   finishedAt DateTime? @db.DateTime(0)
-  users      Users     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "compression_jobs_ibfk_1")
+  users      Users     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "jobs_ibfk_1")
 
   @@index([user_id], map: "user_id")
 }
