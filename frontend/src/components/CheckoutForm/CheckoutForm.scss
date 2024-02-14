@@ -2,29 +2,29 @@ form.checkout-form {
   display: flex;
   flex-direction: column;
   gap: 30px;
-  .icon-contain{
+  .icon-contain {
     display: flex;
     gap: 5px;
     align-items: center;
-    p{
+    p {
       margin: 0;
       cursor: pointer;
     }
     cursor: pointer;
-    &:hover{
-      opacity: .67;
+    &:hover {
+      opacity: 0.67;
     }
   }
   .c-row {
     width: 100%;
-    .conekta-input{
+    .conekta-input {
       display: flex;
       flex-direction: column;
       gap: 5px;
-      .bottom-inputs{
+      .bottom-inputs {
         display: flex;
         gap: 5px;
-        .other-inputs{
+        .other-inputs {
           display: flex;
           gap: 5px;
         }
@@ -52,7 +52,7 @@ form.checkout-form {
       background-color: #f8f8f8;
       font-size: 1.4rem;
     }
-    select{
+    select {
       width: 100%;
       padding: 8px;
       border-radius: 8px;
@@ -64,18 +64,30 @@ form.checkout-form {
       border-radius: 5px;
     }
   }
-  .button-contain{
+  .cupon-container {
+    display: flex;
+    input {
+      flex: 1;
+      outline: none;
+    }
+    button {
+      padding-inline: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  }
+  .button-contain {
     display: flex;
     width: 100%;
     flex-direction: column;
     gap: 20px;
-    .btn-oxxo{
+    .btn-oxxo {
       padding-block: 10px;
       font-weight: 600;
       border-radius: 100px;
     }
-    .paypal-button-tagline{
-      .paypal-button-text{
+    .paypal-button-tagline {
+      .paypal-button-text {
         color: red;
       }
     }

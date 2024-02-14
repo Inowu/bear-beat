@@ -11,7 +11,7 @@ import { IPlans } from "interfaces/Plans";
 import { useUserContext } from "../../contexts/UserContext";
 import { IPaymentMethod } from "interfaces/User";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheckCircle, faPlugCircleCheck, faPlusCircle } from "@fortawesome/free-solid-svg-icons";
+import { SuccessCoupon } from "../../components/Modals/SuccessCoupon/SuccessCoupon";
 declare let window: any;
 
 interface ICheckout {
@@ -24,11 +24,14 @@ function CheckoutForm(props: ICheckout) {
   const [coupon, setCoupon] = useState<string>("");
   const [show, setShow] = useState<boolean>(false);
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
+  const [showCoupon, setShowCoupon] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<any>("");
   const [card, setCard] = useState<any>(null);
   const { plan } = props;
   const stripe: any = useStripe();
   const elements = useElements();
+
+
   const navigate = useNavigate();
   const closeError = () => {
     setShow(false);
@@ -53,14 +56,14 @@ function CheckoutForm(props: ICheckout) {
         const result = await stripe.confirmCardPayment(
           suscribeMethod.clientSecret,
           card === null ?
-          {
-            payment_method: {
-              card: elements.getElement("card")!,
-            },
-          }
-          : {
-            payment_method: card
-          }
+            {
+              payment_method: {
+                card: elements.getElement("card")!,
+              },
+            }
+            : {
+              payment_method: card
+            }
         );
         getPaymentMethods();
         if (result.error) {
@@ -83,6 +86,16 @@ function CheckoutForm(props: ICheckout) {
     e.preventDefault();
     suscribetext();
   };
+
+  const checkCoupon = async () => {
+    try {
+      const info = await trpc.cupons.findByCode.query({ code: coupon })
+      setShowCoupon(true);
+    } catch (error) {
+      setShow(true);
+      setErrorMessage(error);
+    }
+  }
   return (
     <form className="checkout-form" onSubmit={onSubmit}>
       {/* <div className="c-row">
@@ -99,42 +112,47 @@ function CheckoutForm(props: ICheckout) {
       <div className="c-row">
         {
           cardLoad
-          ? <Spinner size={2} width={0.2} color="#00e2f7" />
-          :
-          <>
-          {
-            card === null 
-            ?
-            <div className="icon-contain" onClick={()=> setCard("")}>
-              <p>Seleccionar tarjeta</p>
-            </div>
-            :          
-            <div className="icon-contain" onClick={()=> setCard(null)}>
-              <p>Agregar nueva tarjeta</p>
-            </div>
-          }
-          </>
+            ? <Spinner size={2} width={0.2} color="#00e2f7" />
+            :
+            <>
+              {
+                card === null
+                  ?
+                  <div className="icon-contain" onClick={() => setCard("")}>
+                    <p>Seleccionar tarjeta</p>
+                  </div>
+                  :
+                  <div className="icon-contain" onClick={() => setCard(null)}>
+                    <p>Agregar nueva tarjeta</p>
+                  </div>
+              }
+            </>
         }
       </div>
       <div className="c-row">
         {
           card === null ?
-          <CardElement
-            className="card-input"
-            options={{ hidePostalCode: true }}
-          />
-          :
-          <select onChange={(e:any)=> setCard(e.target.value)} defaultValue={''} style={{color: "#fff"}}>
-          <option disabled value={''}>Seleccione una tarjeta</option>
-          {
-            paymentMethods.map((card: IPaymentMethod, idx: number)=>{
-              return (
-                <option value={card.id} key={"cards" + idx}>{card.card.brand} termina en {card.card.last4}</option>
-              )
-            })
-          }
-        </select>
+            <CardElement
+              className="card-input"
+              options={{ hidePostalCode: true }}
+            />
+            :
+            <select onChange={(e: any) => setCard(e.target.value)} defaultValue={''} style={{ color: "#fff" }}>
+              <option disabled value={''}>Seleccione una tarjeta</option>
+              {
+                paymentMethods.map((card: IPaymentMethod, idx: number) => {
+                  return (
+                    <option value={card.id} key={"cards" + idx}>{card.card.brand} termina en {card.card.last4}</option>
+                  )
+                })
+              }
+            </select>
         }
+      </div>
+      <div className="cupon-container">
+        <input className="card-input" type="text" placeholder="Introduce el cupón aquí" name="cupon" id="cupon"
+          onChange={(e) => { setCoupon(e.target.value) }} />
+        <button type="button" onClick={checkCoupon}>Aplicar</button>
       </div>
       <div className="button-contain">
         {loader ? (
@@ -150,6 +168,12 @@ function CheckoutForm(props: ICheckout) {
         onHide={closeSuccess}
         message="Gracias por tu pago, ya puedes empezar a descargar!"
         title="Compra Exitosa"
+      />
+      <SuccessCoupon
+        show={showCoupon}
+        onHide={() => { setShowCoupon(false); }}
+        message={"Cupón canjeado!"}
+        title={"Cupón"}
       />
     </form>
   );
