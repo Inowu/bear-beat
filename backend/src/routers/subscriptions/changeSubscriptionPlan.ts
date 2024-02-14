@@ -1,10 +1,10 @@
 import { z } from 'zod';
-import { shieldedProcedure } from '../../procedures/shielded.procedure';
 import { TRPCError } from '@trpc/server';
+import axios from 'axios';
+import { shieldedProcedure } from '../../procedures/shielded.procedure';
 import stripeInstance from '../../stripe';
 import { PaymentService } from './services/types';
 import { log } from '../../server';
-import axios from 'axios';
 import { paypal } from '../../paypal';
 
 export const changeSubscriptionPlan = shieldedProcedure
@@ -49,7 +49,7 @@ export const changeSubscriptionPlan = shieldedProcedure
     });
 
     if (!subscriptionOrder) {
-      log.error(`[CHANGE_PLAN] No se encontró la orden de la suscripción`);
+      log.error('[CHANGE_PLAN] No se encontró la orden de la suscripción');
       throw new TRPCError({
         code: 'NOT_FOUND',
         message: 'No se encontró la orden de la suscripción',

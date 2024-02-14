@@ -1,6 +1,7 @@
 import { router } from '../../trpc';
 import { changePassword } from './procedures/changePassword';
 import { forgotPassword } from './procedures/forgotPasword';
+import { getCurrentSubscriptionPlan } from './procedures/getCurrentSubscriptionPlan';
 import { login } from './procedures/login';
 import { me } from './procedures/me';
 import { refresh } from './procedures/refresh';
@@ -13,4 +14,5 @@ export const authRouter = router({
   changePassword,
   forgotPassword,
   refresh,
+  getCurrentSubscriptionPlan,
 });
