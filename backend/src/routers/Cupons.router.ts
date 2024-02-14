@@ -28,8 +28,10 @@ export const cuponsRouter = router({
         code: z.string(),
       }),
     )
-    .query(async ({ input: { code }, ctx: { prisma } }) => {
-      const cupon = await prisma.cupons.findFirst({
+    .query(async ({ input: { code }, ctx: { session, prisma } }) => {
+      const user = session!.user!;
+
+      const coupon = await prisma.cupons.findFirst({
         where: {
           AND: [
             {
@@ -42,15 +44,33 @@ export const cuponsRouter = router({
         },
       });
 
-      if (!cupon) {
+      if (!coupon) {
         throw new TRPCError({
           code: 'NOT_FOUND',
-          message: 'No coupon was found with the specified code',
+          message: 'Cupón no encontrado',
+        });
+      }
+
+      const usedCoupon = await prisma.cuponsUsed.findFirst({
+        where: {
+          AND: [
+            {
+              user_id: user.id,
+            },
+            { cupon_id: coupon.id },
+          ],
+        },
+      });
+
+      if (usedCoupon) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Cupón ya utilizado',
         });
       }
 
       return {
-        discount: cupon.discount,
+        discount: coupon.discount,
       };
     }),
   createStripeCupon: shieldedProcedure
@@ -179,9 +199,8 @@ export const cuponsRouter = router({
   findFirstCuponsOrThrow: shieldedProcedure
     .input(CuponsFindFirstSchema)
     .query(async ({ ctx, input }) => {
-      const findFirstCuponsOrThrow = await ctx.prisma.cupons.findFirstOrThrow(
-        input,
-      );
+      const findFirstCuponsOrThrow =
+        await ctx.prisma.cupons.findFirstOrThrow(input);
       return findFirstCuponsOrThrow;
     }),
   findManyCupons: shieldedProcedure
@@ -199,9 +218,8 @@ export const cuponsRouter = router({
   findUniqueCuponsOrThrow: shieldedProcedure
     .input(CuponsFindUniqueSchema)
     .query(async ({ ctx, input }) => {
-      const findUniqueCuponsOrThrow = await ctx.prisma.cupons.findUniqueOrThrow(
-        input,
-      );
+      const findUniqueCuponsOrThrow =
+        await ctx.prisma.cupons.findUniqueOrThrow(input);
       return findUniqueCuponsOrThrow;
     }),
   groupByCupons: shieldedProcedure

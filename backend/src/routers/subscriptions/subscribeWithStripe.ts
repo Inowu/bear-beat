@@ -107,6 +107,28 @@ export const subscribeWithStripe = shieldedProcedure
         },
       });
 
+      if (coupon) {
+        const dbCoupon = await prisma.cupons.findFirst({
+          where: {
+            code: coupon,
+          },
+        });
+
+        if (!dbCoupon) {
+          log.warn(`[STRIPE] Coupon ${coupon} not found in database`);
+        } else {
+          log.info(`[STRIPE] Coupon used: ${coupon} by user ${user.id}`);
+
+          await prisma.cuponsUsed.create({
+            data: {
+              user_id: user.id,
+              cupon_id: dbCoupon.id,
+              date_cupon: new Date(),
+            },
+          });
+        }
+      }
+
       return {
         subscriptionId: subscription.id,
         clientSecret: (subscription.latest_invoice as any).payment_intent

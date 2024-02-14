@@ -8,6 +8,7 @@ import { subscribeWithCardConekta } from './subscribeWithCardConekta';
 import { subscribeWithCashConekta } from './subscribeWithCashConekta';
 import { subscribeWithPaypal } from './subscribeWithPaypal';
 import { subscribeWithStripe } from './subscribeWithStripe';
+import { changeSubscriptionPlan } from './changeSubscriptionPlan';
 
 export const subscriptionsRouter = router({
   subscribeWithCardConekta,
@@ -19,4 +20,5 @@ export const subscriptionsRouter = router({
   setDefaultStripePm,
   removeStripeCard,
   createNewPaymentMethod,
+  changeSubscriptionPlan,
 });
