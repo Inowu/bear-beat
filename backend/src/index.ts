@@ -17,9 +17,17 @@ import { stripeEndpoint } from './endpoints/webhooks/stripe.endpoint';
 import { paypalEndpoint } from './endpoints/webhooks/paypal.endpoint';
 import { stripePiEndpoint } from './endpoints/webhooks/stripePaymentIntents.endpoint';
 import { sse } from './sse';
-import { compressionQueue, initializeQueue } from './queue';
-import { compressionWorkers, workerFactory } from './queue/worker';
+import {
+  compressionQueue,
+  initializeCompressionQueue,
+} from './queue/compression';
+import { compressionWorkers } from './queue/workerFactory';
 import { stripeProductsEndpoint } from './endpoints/webhooks/stripeProducts.endpoint';
+import {
+  initializeRemoveUsersQueue,
+  removeUsersQueue,
+} from './queue/removeUsers';
+import { removeUsersWorkers } from './queue/workerFactory';
 
 config({
   path: path.resolve(__dirname, '../.env'),
@@ -96,9 +104,9 @@ async function main() {
 
     await initializeSearch();
 
-    initializeQueue();
+    initializeCompressionQueue();
 
-    // workerFactory();
+    initializeRemoveUsersQueue();
   } catch (e: any) {
     log.error(e.message);
     await closeConnections();
@@ -108,7 +116,9 @@ async function main() {
 
 const closeConnections = async () => {
   await compressionQueue.close();
+  await removeUsersQueue.close();
   await Promise.all(compressionWorkers.map(async (worker) => worker.close()));
+  await Promise.all(removeUsersWorkers.map(async (worker) => worker.close()));
 };
 
 process.on('SIGTERM', async () => {

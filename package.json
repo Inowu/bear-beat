@@ -3,6 +3,7 @@
     "start": "NODE_PATH=$(npm root --quiet -g) node concurrently.js"
   },
   "dependencies": {
+    "react-facebook-pixel": "^1.0.4",
     "yup": "^1.2.0"
   },
   "workspaces": [
