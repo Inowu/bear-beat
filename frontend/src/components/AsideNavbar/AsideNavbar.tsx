@@ -12,6 +12,7 @@ import {
   faTicket,
   faAddressBook,
   faTag,
+  faArrowAltCircleUp,
 } from "@fortawesome/free-solid-svg-icons";
 import { faHeadset } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
@@ -85,7 +86,13 @@ function AsideNavbar(props: AsideNavbarPropsI) {
                   <li>
                     <FontAwesomeIcon icon={faCartPlus} /> Get plan
                   </li>
-                </Link>
+                </Link> 
+                // :
+                // <Link to={"/actualizar-planes"}>
+                //   <li>
+                //     <FontAwesomeIcon icon={faArrowAltCircleUp} /> Actualiza tu plan
+                //   </li>
+                // </Link>
               }
               <Link to={"/micuenta"}>
                 <li>
