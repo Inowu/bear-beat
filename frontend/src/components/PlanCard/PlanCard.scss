@@ -15,6 +15,20 @@
   gap: 20px;
   color: #ffffff;
   height: 750px;
+  position: relative;
+  .announce{
+    top: -20px;
+    right: 25px;
+    position: absolute;
+    background-color: #08e1f7;
+    color: #fff;
+    border-radius: 100px;
+    font-weight: 600;
+    font-size: 1.7rem;
+    padding-block: 4px;
+    padding-inline: 12px;
+    margin: 0;
+  }
   .paypal-data{
       display: flex;
       flex-direction: column;
@@ -23,7 +37,7 @@
       width: 100%;
       .text{
         font-size: 2rem;
-        font-weight: 300;
+        font-weight: 500;
         font-style: italic;
         color: #7AE1F6;
         margin: 0;
@@ -66,7 +80,7 @@
     p {
       margin: 0;
       font-size: 1.4rem;
-
+      font-weight: 500;
       svg {
         color: #25d366;
         font-size: 1.6rem;
@@ -109,5 +123,22 @@
 .resp-plan{
   @media(max-width: 991px){
     order: 2;
+  }
+}
+.plan-white-card{
+  color: #1b1b1b;
+  background: #FFFFFF;
+  h2{
+    color:#08e1f7;
+  }
+  .c-row{
+    h3{
+      color: #1b1b1b;
+    }
+  }
+  .paypal-data{
+    .text{
+      color: #1b1b1b;
+    }
   }
 }

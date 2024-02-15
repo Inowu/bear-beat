@@ -2,7 +2,7 @@ import { IOxxoData, IPlans, ISpeiData } from "../../interfaces/Plans";
 import "./PlanCard.scss";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { plans } from "../../utils/Constants";
 import { OxxoModal } from "../../components/Modals/OxxoModal/OxxoModal";
 import { useEffect, useState } from "react";
@@ -13,10 +13,12 @@ import { SuccessModal } from "../../components/Modals/SuccessModal/SuccessModal"
 import { SpeiModal } from "../../components/Modals/SpeiModal/SpeiModal";
 interface PlanCardPropsI {
   plan: IPlans;
+  currentPlan?: boolean;
 }
 let order: number;
 
 function PlanCard(props: PlanCardPropsI) {
+  const { plan, currentPlan } = props;
   const [showOxxoModal, setShowOxxoModal] = useState<boolean>(false);
   const [oxxoData, setOxxoData] = useState({} as IOxxoData);
   const [showSpeiModal, setShowSpeiModal] = useState<boolean>(false);
@@ -25,9 +27,17 @@ function PlanCard(props: PlanCardPropsI) {
   const [errorMessage, setErrorMessage] = useState<any>("");
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
   const [ppPlan, setppPlan] = useState<null | any>(null);
-  const { plan } = props;
   const [paypal, setPaypal] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const {pathname} = location;
+  const changePlan = async (plan_id: number) => {
+    let body = {
+      newPlanId: plan_id,
+    }
+    await trpc.subscriptions.changeSubscriptionPlan.mutate(body);
+    window.location.reload();
+  }
   const retreivePaypalPlan = async () => {
     setPaypal(false);
     let body = {
@@ -164,7 +174,10 @@ function PlanCard(props: PlanCardPropsI) {
   
 
   return (
-    <div className={"plan-card-main-card " + (plan.moneda === "usd" ? "resp-plan" : "")}>
+    <div className={"plan-card-main-card " + (plan.moneda === "usd" ? "resp-plan " : "") + (currentPlan ? "plan-white-card": "")}>
+      {
+        currentPlan && <p className="announce">Actual</p>
+      }
       <div className="c-row">
         <h2>{plan.name}</h2>
       </div>
@@ -193,7 +206,15 @@ function PlanCard(props: PlanCardPropsI) {
         <p className="text">Pagos seguros en línea</p>
       </div>
       <div className="button-contain" id="abandonedCartBtn">
+      {
+        currentPlan 
+        ? <button className="silver-bg">Cancelar plan</button>
+        : <>
         {
+          pathname === "/actualizar-planes" 
+          ? <button onClick={()=> changePlan(plan.id)}>Cambiar plan</button>
+          : <>
+                  {
           (plan.moneda === "mxn" || plan.moneda === "MXN") &&
           <button id="pixelButton" className="silver-bg" onClick={payWithOxxo}>
             Pagar vía Oxxo</button>
@@ -210,6 +231,11 @@ function PlanCard(props: PlanCardPropsI) {
             paypalMethod()
           }
         </div>
+          </>
+        }
+        </>
+      }
+
       </div>
       <OxxoModal
         show={showOxxoModal}

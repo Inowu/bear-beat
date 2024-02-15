@@ -4,10 +4,12 @@ import trpc from "../../api";
 import { IPlans } from 'interfaces/Plans';
 import { Spinner } from '../../components/Spinner/Spinner';
 import PlanCard from '../../components/PlanCard/PlanCard';
+import { useNavigate } from 'react-router-dom';
 
 export const PlanUpgrade = () => {
     const [plans, setPlans] = useState<IPlans[]>([]);
     const [loader, setLoader] = useState<boolean>(true);
+    const navigate = useNavigate();
     const getPlans = async () => {
       let body = {
         where: {
@@ -24,7 +26,18 @@ export const PlanUpgrade = () => {
         console.log(error);
       }
     }
+    const getCurrentPlan = async () => {
+      try{
+        const currentPlan = await trpc.auth.getCurrentSubscriptionPlan.query();
+        console.log(currentPlan);
+      }
+      catch(error){
+        // navigate('/planes')
+        console.log(error)
+      }
+    }
     useEffect(() => {
+        getCurrentPlan();
         getPlans();
       }, [])
       if (loader) {
@@ -36,6 +49,9 @@ export const PlanUpgrade = () => {
       }
   return (
     <div className='plans-main-container'>
+      {plans.length> 0 &&
+        <PlanCard currentPlan={true} plan={plans[0]}/>
+      }
         {plans.map((plan: IPlans, index) => {
         return <PlanCard plan={plan} key={"plan_" + index} />;
       })}
