@@ -12,17 +12,20 @@ export const workerFactory = (queue: 'compression' | 'users') => {
   if (queue === 'compression') {
     if (compressionWorkers.length < 1) {
       log.info('[WORKER:COMPRESSION] Creating new worker');
+      const newWorker = createCompressionWorker();
       compressionWorkers.push(createCompressionWorker());
-    }
 
-    return createCompressionWorker();
+      return newWorker;
+    }
   }
 
   if (queue === 'users') {
     if (removeUsersWorkers.length < 1) {
       log.info('[WORKER:REMOVE_USERS] Creating new worker');
-      removeUsersWorkers.push(createRemoveUsersWorker());
+      const newWorker = createRemoveUsersWorker();
+      removeUsersWorkers.push(newWorker);
+
+      return newWorker;
     }
-    return createRemoveUsersWorker();
   }
 };

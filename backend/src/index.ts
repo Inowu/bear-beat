@@ -28,6 +28,8 @@ import {
   removeUsersQueue,
 } from './queue/removeUsers';
 import { removeUsersWorkers } from './queue/workerFactory';
+import { downloadDirEndpoint } from './endpoints/download-dir.endpoint';
+import { createCompressionWorker } from './queue/compression/worker';
 
 config({
   path: path.resolve(__dirname, '../.env'),
@@ -95,6 +97,8 @@ async function main() {
     app.use('/demos', express.static(path.resolve(__dirname, '../demos')));
 
     app.get('/download', downloadEndpoint);
+
+    app.get('/download-dir', downloadDirEndpoint);
 
     app.listen(process.env.PORT);
 
