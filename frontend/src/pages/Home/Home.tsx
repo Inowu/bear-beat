@@ -15,6 +15,7 @@ import { downloadMP3, sortArrayByName } from "../../functions/functions";
 import { Spinner } from "../../components/Spinner/Spinner";
 import { useUserContext } from "../../contexts/UserContext";
 import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
+import { useSSE } from 'react-hooks-sse';
 import { downloadApi } from "../../api/download";
 
 function Home() {
@@ -29,6 +30,29 @@ function Home() {
   const [index, setIndex] = useState<number>(-1);
   const [show, setShow] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<any>('');
+  
+  const state = useSSE('compression:progress', {
+    progress: 0,
+    jobId: null
+  });
+  const Progress = () => {
+    console.log(state);
+  };
+  const Failed = () => {
+    const state = useSSE('compression:failed', {
+      failed: 0, 
+      jobId: null
+    });
+    return state.failed;
+  };
+  const Completed = () => {
+    const state = useSSE('compression:completed', {
+      completed: 0, 
+      jobId: null,
+    });
+    return state.completed;
+  };
+  
   const closeError = () => {
     setShow(false);
   }
@@ -185,6 +209,7 @@ function Home() {
       setPastFile([]);
     }
   }, [fileChange])
+
   return (
     <div className="home-main-container">
       <PreviewModal
@@ -213,6 +238,10 @@ function Home() {
           </button>
         </div>
       }
+
+      <div>
+        <button className="btn" onClick={Progress}>Descargar</button>
+      </div>
 
       <div className="folders-navigation-container">
         <div className="header">

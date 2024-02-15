@@ -26,7 +26,7 @@ import { Coupons } from "./pages/Admin/Coupons/Coupons";
 import { Ordens } from "./pages/Admin/Ordens/Ordens";
 import { HistoryCheckout } from "./pages/Admin/HistoryCheckout/HistoryCheckout";
 import { PlanUpgrade } from "./pages/PlanUpgrade/PlanUpgrade";
-import ReactPixel from 'react-facebook-pixel';
+import { SSEProvider } from 'react-hooks-sse';
 
 
 const root = ReactDOM.createRoot(
@@ -95,18 +95,20 @@ const router = createBrowserRouter([
 ]);
 root.render(
   <React.StrictMode>
-    <UserContextProvider>
-      <PayPalScriptProvider
-        options={{
-          clientId:
-            "AYuKvAI09TE9bk9k1TuzodZ2zWQFpWEZesT65IkT4WOws9wq-yfeHLj57kEBH6YR_8NgBUlLShj2HOSr",
-          intent: "subscription",
-          vault: true,
-        }}
-      >
-        <RouterProvider router={router} />
-      </PayPalScriptProvider>
-    </UserContextProvider>
+    <SSEProvider endpoint="https://sse.example.com">
+      <UserContextProvider>
+        <PayPalScriptProvider
+          options={{
+            clientId:
+              "AYuKvAI09TE9bk9k1TuzodZ2zWQFpWEZesT65IkT4WOws9wq-yfeHLj57kEBH6YR_8NgBUlLShj2HOSr",
+            intent: "subscription",
+            vault: true,
+          }}
+        >
+          <RouterProvider router={router} />
+        </PayPalScriptProvider>
+      </UserContextProvider>
+    </SSEProvider>
   </React.StrictMode>,
 );
 
