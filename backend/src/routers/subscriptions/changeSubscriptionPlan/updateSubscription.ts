@@ -200,16 +200,7 @@ const updateFtpUserInfo = async ({
     });
   }
 
-  // Update the ftp limits of the user with the gb of the new plan
-  // Keeping the relative percentage of usage between previous tallies and limit
-
   const newLimit = gbToBytes(Number(newPlan.gigas));
-
-  const percentageUsed = Number(
-    ftpInfo.tallies.bytes_out_used / ftpInfo.limits.bytes_out_avail,
-  );
-
-  const newTallies = newLimit * percentageUsed;
 
   log.info(
     `[CHANGE_PLAN] Updating plan for user ${user.id} to new plan ${newPlan.id} with new limit ${newLimit} bytes`,
@@ -227,28 +218,18 @@ const updateFtpUserInfo = async ({
           bytes_out_avail: newLimit,
         },
       }),
-      prisma.ftpquotatallies.update({
-        where: {
-          id: ftpInfo.tallies.id,
-        },
-        data: {
-          bytes_out_used: newTallies,
-        },
-      }),
       prisma.change_plan_transactions.create({
         data: {
           userId: user.id,
           newPlanId: newPlan.id,
           oldPlanId: previousPlan.id,
           createdAt: new Date(),
-          previousBytesInUsed: ftpInfo.tallies.bytes_in_used,
-          newBytesInUsed: newTallies,
         },
       }),
       prisma.orders.create({
         data: {
           ...subscriptionOrder,
-          payment_method: PaymentService.STRIPE_PLAN_CHANGE,
+          plan_id: newPlan.id,
         },
       }),
     ]);
@@ -258,7 +239,7 @@ const updateFtpUserInfo = async ({
         id: subscription.id,
       },
       data: {
-        order_id: results[3].id,
+        order_id: results[2].id,
       },
     });
   } catch (e) {

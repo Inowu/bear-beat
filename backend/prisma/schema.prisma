@@ -271,13 +271,15 @@ model products {
 
 model dir_downloads {
   id          Int       @id @default(autoincrement())
-  status      String?   @db.VarChar(255)
   userId      Int?
   size        BigInt?
   date        DateTime? @db.DateTime(0)
   dirName     String    @db.VarChar(500)
-  downloadUrl String    @db.VarChar(500)
+  jobId       Int?
+  jobs        jobs?     @relation(fields: [jobId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "dir_downloads_ibfk_2")
+  downloadUrl String?   @db.VarChar(1000)
   users       Users?    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "dir_downloads_ibfk_1")
+  expirationDate DateTime? @db.DateTime(0)
 
   @@index([userId], map: "userId")
 }
@@ -291,6 +293,7 @@ model jobs {
   jobId      String?   @db.VarChar(255)
   finishedAt DateTime? @db.DateTime(0)
   users      Users     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "jobs_ibfk_1")
+  dir_downloads dir_downloads[]
 
   @@index([user_id], map: "user_id")
 }
@@ -311,8 +314,6 @@ model change_plan_transactions {
   newPlanId               Int
   oldPlanId               Int
   createdAt               DateTime @db.DateTime(0)
-  previousBytesInUsed     BigInt
-  newBytesInUsed BigInt
 }
 
 enum ftpquotalimits_quota_type {

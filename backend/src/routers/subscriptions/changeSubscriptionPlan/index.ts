@@ -7,6 +7,8 @@ import {
   updatePaypalSubscription,
   updateStripeSubscription,
 } from './updateSubscription';
+import { getFtpUserInfo } from '../../utils/getFtpUserInfo';
+import { gbToBytes } from '../../../utils/gbToBytes';
 
 export const changeSubscriptionPlan = shieldedProcedure
   .input(
@@ -50,10 +52,40 @@ export const changeSubscriptionPlan = shieldedProcedure
     });
 
     if (!subscriptionOrder) {
-      log.error('[CHANGE_PLAN] No se encontró la orden de la suscripción');
       throw new TRPCError({
         code: 'NOT_FOUND',
         message: 'No se encontró la orden de la suscripción',
+      });
+    }
+
+    const previousPlan = await prisma.plans.findFirst({
+      where: {
+        id: subscriptionOrder.plan_id!,
+      },
+    });
+
+    if (!previousPlan) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'No se encontró el plan de la suscripción',
+      });
+    }
+
+    const { tallies } = await getFtpUserInfo(user);
+
+    if (!tallies) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Hubo un error al obtener tu información de FTP',
+      });
+    }
+
+    // Check if user has used more gb than the plan they are trying to change to
+    if (tallies?.bytes_out_used > gbToBytes(Number(newPlan.gigas))) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message:
+          'No puedes cambiar a un plan con menos gigas de los que has usado',
       });
     }
 
@@ -62,7 +94,7 @@ export const changeSubscriptionPlan = shieldedProcedure
       subscriptionOrder.payment_method !== PaymentService.PAYPAL
     ) {
       log.error(
-        `[CHANGE_PLAN] No se puede cambiar el plan de una suscripción que no fue pagada con tarjeta de crédito/débito o PayPal, ${subscriptionOrder.id}`,
+        `[CHANGE_PLAN] Changing plan failed, invalid payment method - ${subscriptionOrder.id}`,
       );
       throw new TRPCError({
         code: 'BAD_REQUEST',
@@ -72,9 +104,6 @@ export const changeSubscriptionPlan = shieldedProcedure
     }
 
     if (!subscriptionOrder.plan_id) {
-      log.error(
-        `[CHANGE_PLAN] Esta orden no tiene un plan asociado, ${subscriptionOrder.id}`,
-      );
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
         message: 'La orden de la suscripción no tiene un plan asociado',
@@ -82,7 +111,6 @@ export const changeSubscriptionPlan = shieldedProcedure
     }
 
     if (newPlan.stripe_prod_id) {
-      // Update the stripe subscription
       return await updateStripeSubscription({
         newPlan,
         subscription: subscriptionInfo,
