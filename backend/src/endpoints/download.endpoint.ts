@@ -162,24 +162,14 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
     )} id: ${user?.id}, username: ${user?.username}, bytes available left: ${availableBytes}`,
   );
 
-  await prisma.$transaction([
-    prisma.ftpQuotaLimits.update({
-      where: {
-        id: quotaLimits.id,
-      },
-      data: {
-        bytes_out_avail: quotaLimits.bytes_out_avail - BigInt(fileStat.size),
-      },
-    }),
-    prisma.ftpquotatallies.update({
-      where: {
-        id: quotaTallies.id,
-      },
-      data: {
-        bytes_out_used: quotaTallies.bytes_out_used + BigInt(fileStat.size),
-      },
-    }),
-  ]);
+  prisma.ftpquotatallies.update({
+    where: {
+      id: quotaTallies.id,
+    },
+    data: {
+      bytes_out_used: quotaTallies.bytes_out_used + BigInt(fileStat.size),
+    },
+  });
 
   try {
     res.setHeader(
