@@ -253,7 +253,7 @@ function Admin() {
                         datas={transformUserData()}
                         text="Exportar Clientes" 
                     />
-                <button className="btn-delete" style={{marginLeft:"auto"}} onClick={handleDeleteModal}>Eliminar Usuarios</button>
+                {/* <button className="btn-delete" style={{marginLeft:"auto"}} onClick={handleDeleteModal}>Eliminar Usuarios</button> */}
             </div>
             <div className="filter-contain">
                 <div className="left-contain">
