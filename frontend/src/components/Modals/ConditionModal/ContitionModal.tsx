@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Modal } from 'react-bootstrap'
 import './../Modal.scss'
 import {RiCloseCircleLine} from 'react-icons/ri'
+import { Spinner } from '../../../components/Spinner/Spinner';
 interface ICondition {
     show: boolean;
     onHide: () => void;
@@ -11,6 +12,13 @@ interface ICondition {
 }
 export function ConditionModal (props: ICondition)  {
     const {show, onHide, message, action, title} = props;
+    const [loader, setLoader] = useState<boolean>(false);
+    const startAction = async () => {
+      setLoader(true);
+      await action();
+      setLoader(false);
+      onHide();
+    }
   return (
     <Modal show={show} onHide={onHide} centered>
         <div className='modal-container success-modal'>
@@ -26,9 +34,13 @@ export function ConditionModal (props: ICondition)  {
                   <button className='btn-option-5' onClick={onHide}>
                     Cancelar
                   </button>
-                  <button className='btn-option-4' onClick={action}>
-                    Confirmar
-                  </button>
+                  {
+                    !loader 
+                    ? <button className='btn-option-4' onClick={startAction}>
+                      Confirmar
+                    </button>
+                    : <div style={{width: 189}}><Spinner size={3} width={.3} color="#00e2f7"/></div>
+                  }
                 </div>
             </div>
         </div>

@@ -11,35 +11,90 @@ import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
 import { PayPalButtons } from "@paypal/react-paypal-js";
 import { SuccessModal } from "../../components/Modals/SuccessModal/SuccessModal";
 import { SpeiModal } from "../../components/Modals/SpeiModal/SpeiModal";
+import { ConditionModal } from "../../components/Modals/ConditionModal/ContitionModal";
 interface PlanCardPropsI {
   plan: IPlans;
   currentPlan?: boolean;
+  getCurrentPlan: () => void;
 }
-let order: number;
-
 function PlanCard(props: PlanCardPropsI) {
-  const { plan, currentPlan } = props;
+  const { plan, currentPlan, getCurrentPlan } = props;
   const [showOxxoModal, setShowOxxoModal] = useState<boolean>(false);
   const [oxxoData, setOxxoData] = useState({} as IOxxoData);
   const [showSpeiModal, setShowSpeiModal] = useState<boolean>(false);
   const [speiData, setSpeiData] = useState({} as ISpeiData);
-  const [show, setShow] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<any>("");
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
+  const [showCancelModal, setShowCancelModal] = useState<boolean>(false);
+  const [showChangeModal, setShowChangeModal] = useState<boolean>(false);
+  const [showError, setShowError] = useState<boolean>(false);
   const [ppPlan, setppPlan] = useState<null | any>(null);
-  const [paypal, setPaypal] = useState(false);
+  const [errorMSG, setErrorMSG] = useState<string>('');
+  const [successTitle, setSuccessTitle] = useState<string>('');
+  const [successMessage, setSuccessMessage] = useState<string>('');
   const navigate = useNavigate();
   const location = useLocation();
-  const {pathname} = location;
-  const changePlan = async (plan_id: number) => {
-    let body = {
-      newPlanId: plan_id,
+  const { pathname } = location;
+  const handleCancelModal = () => {
+    setShowCancelModal(!showCancelModal);
+  }
+  const handleChangeModal = () => {
+    setShowChangeModal(!showChangeModal)
+  }
+  const handleErrorModal = () => {
+    setShowError(!showError);
+  }
+  const handleOxxoModal = () => {
+    setShowOxxoModal(!OxxoModal);
+  }
+  const openSuccess = () => {
+    setShowSuccess(true);
+  }
+  const closeSuccess = () => {
+    setShowSuccess(false);
+    if(pathname === "/actualizar-planes") {
+      getCurrentPlan()
+    }else{
+      navigate("/");
+      window.location.reload();
     }
-    await trpc.subscriptions.changeSubscriptionPlan.mutate(body);
-    window.location.reload();
+  };
+  const changePlan = async () => {
+    try{
+      let body = {
+        newPlanId: plan.id,
+      }
+      if(plan.paypal_plan_id){
+        const changeplan: any = await trpc.subscriptions.changeSubscriptionPlan.mutate(body);
+        console.log(changeplan.data);
+        const url = changeplan.data.links[0].href;
+        window.open(url, '_blank');
+      }else{
+        const changeplan = await trpc.subscriptions.changeSubscriptionPlan.mutate(body);
+        console.log(changeplan);
+        openSuccess();
+        setSuccessMessage("Su suscripción se ha cambiado con éxito.");
+        setSuccessTitle("Suscripción Cambiada")
+      }
+
+    }
+    catch(error:any){
+      setErrorMSG(error.message);
+      handleErrorModal();
+    }
+  }
+  const finishSubscription = async () => {
+    try {
+      const cancelSuscription: any = await trpc.subscriptions.requestSubscriptionCancellation.mutate()
+      openSuccess()
+      setSuccessMessage("Su suscripción se ha cancelado con éxito.");
+      setSuccessTitle("Suscripción Cancelada")
+    }
+    catch (error: any) {
+      setErrorMSG(error.message);
+      handleErrorModal();
+    }
   }
   const retreivePaypalPlan = async () => {
-    setPaypal(false);
     let body = {
       where: {
         activated: 1,
@@ -52,9 +107,6 @@ function PlanCard(props: PlanCardPropsI) {
       const plans: any = await trpc.plans.findManyPlans.query(body);
       if (plans.length > 0) {
         setppPlan(plans[0])
-        setTimeout(() => {
-          setPaypal(false)
-        }, 500);
       }
     }
     catch (error) {
@@ -64,17 +116,6 @@ function PlanCard(props: PlanCardPropsI) {
   const handleButtonClick = () => {
     fbq('track', 'CarritoAbandonado');
   };
-  const closeSuccess = () => {
-    setShowSuccess(false);
-    navigate("/");
-    window.location.reload();
-  };
-  const closeOxxo = () => {
-    setShowOxxoModal(false);
-  }
-  const closeError = () => {
-    setShow(false);
-  };
   const payWithOxxo = async () => {
     trpc.checkoutLogs.registerCheckoutLog.mutate();
     try {
@@ -83,13 +124,13 @@ function PlanCard(props: PlanCardPropsI) {
         paymentMethod: "cash" as const,
       }
       const oxxoPay = await trpc.subscriptions.subscribeWithCashConekta.mutate(body);
-      setShowOxxoModal(true);
+      handleOxxoModal();
       setOxxoData(oxxoPay);
       handleButtonClick();
     }
-    catch (error) {
-      setErrorMessage(error);
-      setShow(true);
+    catch (error: any) {
+      setErrorMSG(error.message);
+      handleErrorModal();
     }
   }
   const payWithSpei = async () => {
@@ -104,9 +145,9 @@ function PlanCard(props: PlanCardPropsI) {
       setSpeiData(speiPay);
       handleButtonClick();
     }
-    catch (error) {
-      setErrorMessage(error);
-      setShow(true);
+    catch (error: any) {
+      setErrorMSG(error.message);
+      handleErrorModal();
     }
   }
   const handleCheckout = async (planId: number) => {
@@ -159,7 +200,9 @@ function PlanCard(props: PlanCardPropsI) {
             // planId: plan.id,
             subscriptionId: data.subscriptionID
           })
-          setShowSuccess(true);
+          setSuccessMessage("Gracias por tu pago, ya puedes empezar a descargar!");
+          setSuccessTitle("Compra Exitosa");
+          openSuccess();
           return data;
         }}
       />
@@ -171,10 +214,8 @@ function PlanCard(props: PlanCardPropsI) {
     retreivePaypalPlan()
   }, [])
 
-  
-
   return (
-    <div className={"plan-card-main-card " + (plan.moneda === "usd" ? "resp-plan " : "") + (currentPlan ? "plan-white-card": "")}>
+    <div className={"plan-card-main-card " + (plan.moneda === "usd" ? "resp-plan " : "") + (currentPlan ? "plan-white-card" : "")}>
       {
         currentPlan && <p className="announce">Actual</p>
       }
@@ -206,40 +247,53 @@ function PlanCard(props: PlanCardPropsI) {
         <p className="text">Pagos seguros en línea</p>
       </div>
       <div className="button-contain" id="abandonedCartBtn">
-      {
-        currentPlan 
-        ? <button className="silver-bg">Cancelar plan</button>
-        : <>
         {
-          pathname === "/actualizar-planes" 
-          ? <button onClick={()=> changePlan(plan.id)}>Cambiar plan</button>
-          : <>
-                  {
-          (plan.moneda === "mxn" || plan.moneda === "MXN") &&
-          <button id="pixelButton" className="silver-bg" onClick={payWithOxxo}>
-            Pagar vía Oxxo</button>
+          currentPlan
+            ? <button className="silver-bg" onClick={handleCancelModal}>Cancelar plan</button>
+            : <>
+              {
+                pathname === "/actualizar-planes"
+                  ? <button onClick={handleChangeModal}>Cambiar plan</button>
+                  : <>
+                    {
+                      (plan.moneda === "mxn" || plan.moneda === "MXN") &&
+                      <button id="pixelButton" className="silver-bg" onClick={payWithOxxo}>
+                        Pagar vía Oxxo</button>
+                    }
+                    {
+                      (plan.moneda === "mxn" || plan.moneda === "MXN") &&
+                      <button className="silver-bg" onClick={payWithSpei}>Pagar vía Spei</button>
+                    }
+                    <button onClick={() => handleCheckout(plan.id)}>
+                      COMPRAR CON TARJETA
+                    </button>
+                    <div>
+                      {ppPlan !== null && ppPlan.paypal_plan_id !== null &&
+                        paypalMethod()
+                      }
+                    </div>
+                  </>
+              }
+            </>
         }
-        {
-          (plan.moneda === "mxn" || plan.moneda === "MXN") &&
-          <button className="silver-bg" onClick={payWithSpei}>Pagar vía Spei</button>
-        }
-        <button onClick={() => handleCheckout(plan.id)}>
-          COMPRAR CON TARJETA
-        </button>
-        <div>
-          {ppPlan !== null && ppPlan.paypal_plan_id !== null &&
-            paypalMethod()
-          }
-        </div>
-          </>
-        }
-        </>
-      }
-
       </div>
+      <ConditionModal
+        title={'Cancelación de suscripción'}
+        message={'¿Estás seguro que quieres cancelar tu suscripción?'}
+        show={showCancelModal}
+        onHide={handleCancelModal}
+        action={finishSubscription}
+      />
+      <ConditionModal
+        title={'Cambio de plan'}
+        message={`¿Estás seguro que quieres cambiar al plan de: "${plan.name}" de $${plan.price} ${plan.moneda}?`}
+        show={showChangeModal}
+        onHide={handleChangeModal}
+        action={changePlan}
+      />
       <OxxoModal
         show={showOxxoModal}
-        onHide={closeOxxo}
+        onHide={handleOxxoModal}
         price={plan.price}
         oxxoData={oxxoData}
       />
@@ -252,13 +306,15 @@ function PlanCard(props: PlanCardPropsI) {
       <SuccessModal
         show={showSuccess}
         onHide={closeSuccess}
-        message="Gracias por tu pago, ya puedes empezar a descargar!"
-        title="Compra Exitosa"
+        message={successMessage}
+        title={successTitle}
       />
-      <ErrorModal show={show} onHide={closeError} message={errorMessage} />
-
+      <ErrorModal 
+        show={showError} 
+        onHide={handleErrorModal} 
+        message={errorMSG} 
+      />
     </div>
   );
 }
-
 export default PlanCard;

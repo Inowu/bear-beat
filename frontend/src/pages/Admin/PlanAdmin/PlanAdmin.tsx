@@ -43,8 +43,8 @@ export const PlanAdmin = () => {
             try {
                 await trpc.plans.deleteOnePlans.mutate({ where: { id: id } });
                 // setShowSuccess(true);
+                getPlans();
                 setLoader(false);
-                window.location.reload();
             }
             catch (error) {
                 setShow(true);
@@ -138,6 +138,7 @@ export const PlanAdmin = () => {
                                                 <button
                                                     onClick={() => handleRemovePlan(plan.id, plan.paypal_plan_id)}
                                                     disabled={plan.paypal_plan_id !== null}
+                                                    className={plan.paypal_plan_id !== null ?'disable' : ''}
                                                 >Eliminar</button>
                                             </td>
                                         </tr>

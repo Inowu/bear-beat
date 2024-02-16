@@ -20,9 +20,7 @@ interface IAddPlanModal {
 
 
 function AddPlanModal(props: IAddPlanModal) {
-
   const { showModal, onHideModal, callPlans } = props;
-
   // const navigate = useNavigate();
   const [loader, setLoader] = useState<boolean>(false);
   const [show, setShow] = useState<boolean>(false);
@@ -56,7 +54,7 @@ function AddPlanModal(props: IAddPlanModal) {
     description: "",
     interval: "month",
     name: "",
-    price: 0,
+    price: "",
     paymentMethod: "",
     moneda: "usd",
     homedir: "/home/products/",
@@ -112,7 +110,7 @@ function AddPlanModal(props: IAddPlanModal) {
             value={formik.values.name}
             onChange={formik.handleChange}
           />
-          {formik.errors.name && (
+          {formik.touched.name && formik.errors.name && (
             <div className="formik">{formik.errors.name}</div>
           )}
         </div>
@@ -126,7 +124,7 @@ function AddPlanModal(props: IAddPlanModal) {
             value={formik.values.description}
             onChange={formik.handleChange}
           />
-          {formik.errors.description && (
+          {formik.touched.description && formik.errors.description && (
             <div className="formik">{formik.errors.description}</div>
           )}
         </div>
@@ -136,7 +134,7 @@ function AddPlanModal(props: IAddPlanModal) {
             <option value={"month"}>Mes</option>
             <option value={"year"}>Aňo</option>
           </select>
-          {formik.errors.interval && (
+          {formik.touched.interval && formik.errors.interval && (
             <div className="formik">{formik.errors.interval}</div>
           )}
         </div>
@@ -150,7 +148,7 @@ function AddPlanModal(props: IAddPlanModal) {
             value={formik.values.gigas}
             onChange={formik.handleChange}
           />
-          {formik.errors.gigas && (
+          {formik.touched.gigas && formik.errors.gigas && (
             <div className="formik">{formik.errors.gigas}</div>
           )}
         </div>
@@ -173,7 +171,7 @@ function AddPlanModal(props: IAddPlanModal) {
               value={formik.values.price}
               onChange={formik.handleChange}
             />
-            {formik.errors.price && (
+            {formik.touched.price && formik.errors.price && (
               <div className="formik">
                 {formik.errors.price}
               </div>
@@ -194,7 +192,7 @@ function AddPlanModal(props: IAddPlanModal) {
             <option value="stripe">Stripe</option>
             <option value="paypal">PayPal</option>
           </select>
-          {formik.errors.paymentMethod && (
+          {formik.touched.paymentMethod && formik.errors.paymentMethod && (
             <div className="formik">{formik.errors.paymentMethod}</div>
           )}
         </div>

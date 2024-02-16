@@ -5,21 +5,48 @@ import { IPlans } from 'interfaces/Plans';
 import { Spinner } from '../../components/Spinner/Spinner';
 import PlanCard from '../../components/PlanCard/PlanCard';
 import { useNavigate } from 'react-router-dom';
+import { useUserContext } from '../../contexts/UserContext';
 
 export const PlanUpgrade = () => {
+  const { currentUser } = useUserContext();
     const [plans, setPlans] = useState<IPlans[]>([]);
     const [loader, setLoader] = useState<boolean>(true);
+    const [currentPlan, setCurrentPlan] = useState<IPlans |  null>(null);
     const navigate = useNavigate();
-    const getPlans = async () => {
-      let body = {
-        where: {
-          activated: 1,
-          paypal_plan_id: null,
-        }
-      }
+    const getPlans = async (plan_id: number, stripe: string | null, quota: number) => {
+      let gb_spend = BigInt(Math.round(quota/1000000000))
       try {
-        const plans: any = await trpc.plans.findManyPlans.query(body);
-        setPlans(plans);
+        if(stripe !== null){
+          let body = {
+            where: {
+              activated: 1,
+              paypal_plan_id: null,
+              NOT: {
+                id: plan_id
+              },
+              gigas: {
+                gt: gb_spend
+              }
+            }
+          }
+          const plans: any = await trpc.plans.findManyPlans.query(body);
+          setPlans(plans);
+        }else{
+          let body = {
+            where: {
+              activated: 1,
+              stripe_prod_id: null,
+              NOT: {
+                id: plan_id
+              },
+              gigas: {
+                gt: gb_spend
+              }
+            }
+          }
+          const plans: any = await trpc.plans.findManyPlans.query(body);
+          setPlans(plans);
+        }
         setLoader(false);
       }
       catch (error) {
@@ -27,19 +54,30 @@ export const PlanUpgrade = () => {
       }
     }
     const getCurrentPlan = async () => {
+      setLoader(true);
       try{
-        const currentPlan = await trpc.auth.getCurrentSubscriptionPlan.query();
-        console.log(currentPlan);
+        if(currentUser!== null){
+          let body: any = {
+            isExtended: currentUser.extendedFtpAccount
+          }
+          const quota: any = await trpc.ftp.quota.query(body);
+          const tempPlan = await trpc.auth.getCurrentSubscriptionPlan.query();
+          getPlans(tempPlan.id, tempPlan.stripe_prod_id, +quota.regular.used.toString());
+          setCurrentPlan(tempPlan)
+        }
       }
       catch(error){
-        // navigate('/planes')
+        navigate('/planes')
         console.log(error)
+        setLoader(false);
       }
     }
     useEffect(() => {
+      if(currentUser){
         getCurrentPlan();
-        getPlans();
-      }, [])
+      }
+    }, [currentUser])
+
       if (loader) {
         return (
           <div className="global-loader" style={{ height: "60vh", display: "flex", justifyContent: "center" }}>
@@ -49,11 +87,11 @@ export const PlanUpgrade = () => {
       }
   return (
     <div className='plans-main-container'>
-      {plans.length> 0 &&
-        <PlanCard currentPlan={true} plan={plans[0]}/>
+      {currentPlan &&
+        <PlanCard currentPlan={true} plan={currentPlan} getCurrentPlan={()=>{}}/>
       }
         {plans.map((plan: IPlans, index) => {
-        return <PlanCard plan={plan} key={"plan_" + index} />;
+        return <PlanCard plan={plan} key={"plan_" + index} getCurrentPlan={getCurrentPlan}/>;
       })}
     </div>
   )

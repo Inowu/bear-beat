@@ -75,7 +75,7 @@ export interface ICreatePlans {
   description: string;
   interval: "month" | "year";
   name: string;
-  price: number;
+  price: number | "";
   paymentMethod: string;
   moneda: string;
   homedir: string;

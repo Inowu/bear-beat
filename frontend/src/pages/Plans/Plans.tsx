@@ -39,7 +39,7 @@ function Plans() {
   return (
     <div className="plans-main-container">
       {plans.map((plan: IPlans, index) => {
-        return <PlanCard plan={plan} key={"plan_" + index} />;
+        return <PlanCard plan={plan} key={"plan_" + index} getCurrentPlan={()=>{}}/>;
       })}
     </div>
   );

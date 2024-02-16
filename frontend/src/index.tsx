@@ -51,7 +51,7 @@ const router = createBrowserRouter([
           { path: "instrucciones", element: <Instructions /> },
           { path: "micuenta", element: <MyAccount /> },
           { path: "planes", element: <Plans /> },
-          { path: "comprar", element: <Checkout /> },
+          // { path: "comprar", element: <Checkout /> },
           // { path: "actualizar-planes", element: <PlanUpgrade /> },
         ],
       },
