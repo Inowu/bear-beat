@@ -10,6 +10,7 @@ import "./Ordens.scss";
 
 interface IAdminFilter {
   page: number;
+  limit: number;
   total: number;
   search: string;
   active: number;
@@ -24,7 +25,6 @@ export const Ordens = () => {
   const [ordens, setOrdens] = useState<any>([]);
   const [totalOrdens, setTotalOrdens] = useState(0)
   const [loader, setLoader] = useState<boolean>(true);
-  const limit = 100;
   const formatDate = (dateString: any) => {
     const options: any = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', timeZoneName: 'short' };
     return new Date(dateString).toLocaleDateString('en-US', options);
@@ -33,6 +33,7 @@ export const Ordens = () => {
     page: 0,
     search: '',
     active: 1,
+    limit: 100,
     startDate: formatDate(new Date('2010-01-01')),
     endDate: formatDate(new Date()),
   })
@@ -73,8 +74,8 @@ export const Ordens = () => {
     setLoader(true);
     try {
       let body: any = {
-        take: limit,
-        skip: filt.page * limit,
+        take: filt.limit,
+        skip: filt.page * filt.limit,
         where: {
           payment_method: {
             startsWith: filt.search,
@@ -139,6 +140,15 @@ export const Ordens = () => {
             <option value={'Paypal'}>Paypal</option>
             <option value={'Stripe'}>Stripe</option>
             <option value={'Conekta OXXO'}>Conekta OXXO</option>
+          </select>
+        </div>
+        <div className="select-input">
+          <p>Cantidad de ordenes</p>
+          <select defaultValue={filters.limit} onChange={(e)=> startFilter('limit', +e.target.value)}>
+            <option value={''} disabled>Numero de datos</option>
+            <option value={100}>100</option>
+            <option value={200}>200</option>
+            <option value={500}>500</option>
           </select>
         </div>
         {/* <div className="select-input">
@@ -231,7 +241,7 @@ export const Ordens = () => {
           title="ordenes"
           startFilter={startFilter}
           currentPage={filters.page}
-          limit={100}
+          limit={filters.limit}
         />
       </div>
     </div>

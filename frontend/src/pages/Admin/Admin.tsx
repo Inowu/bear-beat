@@ -253,7 +253,7 @@ function Admin() {
                         datas={transformUserData()}
                         text="Exportar Clientes" 
                     />
-                {/* <button className="btn-delete" style={{marginLeft:"auto"}} onClick={handleDeleteModal}>Eliminar Usuarios</button> */}
+                <button className="btn-delete" style={{marginLeft:"auto"}} onClick={handleDeleteModal}>Eliminar Usuarios</button>
             </div>
             <div className="filter-contain">
                 <div className="left-contain">
@@ -367,13 +367,13 @@ function Admin() {
                 />
             </div>
             <AddUsersModal showModal={showModal} onHideModal={closeModalAdd} />
-            {/* <ConditionModal
+            <ConditionModal
                 title={"Eliminar usuarios"}
                 message={"Estas por eliminar a los usuarios que no se han suscrito, ni se han suscrito en el pasado mes."}
                 show={showDeleteModal}
                 onHide={handleDeleteModal}
                 action={removeUsersInactive}
-            /> */}
+            />
             <ConditionModal
                 title={"Bloquear Usuario"}
                 message={blockModalMSG}
