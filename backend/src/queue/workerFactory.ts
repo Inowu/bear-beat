@@ -13,7 +13,7 @@ export const workerFactory = (queue: 'compression' | 'users') => {
     if (compressionWorkers.length < 1) {
       log.info('[WORKER:COMPRESSION] Creating new worker');
       const newWorker = createCompressionWorker();
-      compressionWorkers.push(createCompressionWorker());
+      compressionWorkers.push(newWorker);
 
       return newWorker;
     }

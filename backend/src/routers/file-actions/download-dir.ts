@@ -4,13 +4,15 @@ import { TRPCError } from '@trpc/server';
 import { fileService } from '../../ftp';
 import { log } from '../../server';
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
-import { compressionQueue } from '../../queue/compression';
+import {
+  compressionQueue,
+  compressionQueueName,
+} from '../../queue/compression';
 import type { CompressionJob } from '../../queue/compression/types';
 import { extendedAccountPostfix } from '../../utils/constants';
 import { logPrefix } from '../../endpoints/download.endpoint';
 import fastFolderSizeSync from 'fast-folder-size/sync';
 import { JobStatus } from '../../queue/jobStatus';
-import { workerFactory } from '../../queue/workerFactory';
 
 const MAX_CONCURRENT_DOWNLOADS = 10;
 
@@ -195,8 +197,6 @@ export const downloadDir = shieldedProcedure
         },
       });
 
-      log.info(`[DOWNLOAD:DIR] Adding job to queue for user ${user.id}`);
-
       const job = await compressionQueue.add(`compress-${user.id}`, {
         songsAbsolutePath: fullPath,
         songsRelativePath: path,
@@ -210,12 +210,26 @@ export const downloadDir = shieldedProcedure
         dirSize: Number(dirDownload.size),
       } as CompressionJob);
 
+      log.info(
+        `[DOWNLOAD:DIR] Added job ${job.id} to queue for user ${user.id}`,
+      );
+
       await prisma.dir_downloads.update({
         where: {
           id: dirDownload.id,
         },
         data: {
           jobId: Number(job.id),
+        },
+      });
+
+      await prisma.jobs.create({
+        data: {
+          jobId: job.id,
+          queue: compressionQueueName,
+          status: JobStatus.IN_PROGRESS,
+          user_id: user.id,
+          createdAt: new Date(),
         },
       });
 

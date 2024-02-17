@@ -21,7 +21,7 @@ import {
   compressionQueue,
   initializeCompressionQueue,
 } from './queue/compression';
-import { compressionWorkers } from './queue/workerFactory';
+import { compressionWorkers, workerFactory } from './queue/workerFactory';
 import { stripeProductsEndpoint } from './endpoints/webhooks/stripeProducts.endpoint';
 import {
   initializeRemoveUsersQueue,
@@ -29,7 +29,6 @@ import {
 } from './queue/removeUsers';
 import { removeUsersWorkers } from './queue/workerFactory';
 import { downloadDirEndpoint } from './endpoints/download-dir.endpoint';
-import { createCompressionWorker } from './queue/compression/worker';
 
 config({
   path: path.resolve(__dirname, '../.env'),
@@ -111,6 +110,9 @@ async function main() {
     initializeCompressionQueue();
 
     initializeRemoveUsersQueue();
+
+    workerFactory('users');
+    workerFactory('compression');
   } catch (e: any) {
     log.error(e.message);
     await closeConnections();

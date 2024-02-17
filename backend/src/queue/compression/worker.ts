@@ -5,16 +5,16 @@ import { sse } from '../../sse';
 import { CompressionJob } from './types';
 import { prisma } from '../../db';
 import { addDays } from 'date-fns';
+import compression from './compression-worker';
 
 export const createCompressionWorker = () => {
-  log.info(`[WORKER:COMPRESSION] Creating worker`);
-
   const compressionWorker = new Worker<CompressionJob>(
     compressionQueueName,
     // Spawn a new process for each job
-    `${__dirname}/compression-worker.js`,
+    // `${__dirname}/compression-worker.js`,
+    compression,
     {
-      // lockDuration: 1000 * 60 * 60 * 10,
+      lockDuration: 1000 * 60 * 60 * 10,
       useWorkerThreads: true,
       removeOnComplete: {
         count: 0,
@@ -49,15 +49,23 @@ export const createCompressionWorker = () => {
       },
     });
 
-    await prisma.jobs.update({
-      where: {
-        id: Number(job.id),
-      },
-      data: {
-        status: 'completed',
-        finishedAt: new Date(),
-      },
-    });
+    try {
+      await prisma.jobs.update({
+        where: {
+          id: Number(job.id),
+        },
+        data: {
+          status: 'completed',
+          finishedAt: new Date(),
+        },
+      });
+    } catch (e) {
+      log.error(
+        `[WORKER:COMPRESSION] Error updating job status: ${
+          (e as Error).message
+        }`,
+      );
+    }
 
     sse.send(
       JSON.stringify({
@@ -72,15 +80,23 @@ export const createCompressionWorker = () => {
     log.error(`[WORKER:COMPRESSION] Job ${job?.id}, error: ${error.message}`);
 
     if (job?.id) {
-      await prisma.jobs.update({
-        where: {
-          id: Number(job?.id),
-        },
-        data: {
-          status: 'failed',
-          finishedAt: new Date(),
-        },
-      });
+      try {
+        await prisma.jobs.update({
+          where: {
+            id: Number(job?.id),
+          },
+          data: {
+            status: 'failed',
+            finishedAt: new Date(),
+          },
+        });
+      } catch (e: unknown) {
+        log.error(
+          `[WORKER:COMPRESSION] Error updating job status: ${
+            (e as Error).message
+          }`,
+        );
+      }
 
       const currentTallies = await prisma.ftpquotatallies.findFirst({
         where: {
