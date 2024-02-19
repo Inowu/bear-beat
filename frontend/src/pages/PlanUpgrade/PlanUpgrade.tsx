@@ -32,20 +32,20 @@ export const PlanUpgrade = () => {
           const plans: any = await trpc.plans.findManyPlans.query(body);
           setPlans(plans);
         }else{
-          let body = {
-            where: {
-              activated: 1,
-              stripe_prod_id: null,
-              NOT: {
-                id: plan_id
-              },
-              gigas: {
-                gt: gb_spend
-              }
-            }
-          }
-          const plans: any = await trpc.plans.findManyPlans.query(body);
-          setPlans(plans);
+          // let body = {
+          //   where: {
+          //     activated: 1,
+          //     stripe_prod_id: null,
+          //     NOT: {
+          //       id: plan_id
+          //     },
+          //     gigas: {
+          //       gt: gb_spend
+          //     }
+          //   }
+          // }
+          // const plans: any = await trpc.plans.findManyPlans.query(body);
+          // setPlans(plans);
         }
         setLoader(false);
       }

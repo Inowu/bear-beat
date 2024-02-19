@@ -3,7 +3,6 @@ import { useUserContext } from "../../contexts/UserContext";
 import trpc from "../../api";
 import { IAdminUser } from "../../interfaces/admin";
 import './Admin.scss';
-import { Spinner } from "../../components/Spinner/Spinner";
 import { IPlans } from "../../interfaces/Plans";
 import { OptionModal } from "../../components/Modals/OptionModal/OptionModal";
 import { useNavigate } from "react-router-dom";
@@ -17,8 +16,10 @@ import {  exportUsers } from "./fuctions";
 import { ConditionModal } from "../../components/Modals/ConditionModal/ContitionModal";
 import { FaLockOpen } from "react-icons/fa";
 import { FaLock } from "react-icons/fa";
+import { DeleteUserModal } from "../../components/Modals/DeleteUserModal/DeleteUserModal";
+import { useSSE } from "react-hooks-sse";
 
-export interface IAdminFilter {
+interface IAdminFilter {
     page: number;
     total: number;
     search: string;
@@ -101,15 +102,27 @@ function Admin() {
         setOptionTitle('Seleccione el plan');
         openOption();
     }
-    const removeUsersInactive = async () => {
-        try{
-            await trpc.users.removeInactiveUsers.mutate();
-            handleDeleteModal();
-            filterUsers(filters);
+    const Message = useSSE('remove-users:progress', {
+        progress: 0,
+        queue: "remove-users",
+        jobId: null,
+    });
+    const MessageComplete = useSSE('remove-users:completed', {
+        queue: "remove-users",
+        jobId: null,
+    });
+    const MessageFail = useSSE('remove-users:failed', {
+        queue: "remove-users",
+        jobId: null,
+    });
+    const sendMessage = () => {
+        if(MessageComplete.jobId !==  null){
+            return 'Proceso Completado'
         }
-        catch(error){
-            console.log(error);
+        if(MessageFail.jobId !==  null){
+            return 'Proceso Fallido'
         }
+        return `Eliminando: ${Message.progress}%`
     }
     const changeBlockUser = async () => {
         try{
@@ -150,6 +163,14 @@ function Admin() {
         filterUsers(tempFilters);
         setFilters(tempFilters);
     }
+    const transformUserData = async () => {
+        const tempUsers: any = await exportUsers(filters);
+        return tempUsers.map((user:any) => ({
+            Usuario: user.username,
+            Correo: user.email,
+            Fecha_de_Registro: user.registered_on.toLocaleDateString(),
+        }));
+    };
     const filterUsers = async (filt: IAdminFilter) => {
         setLoader(true);
         try {
@@ -223,6 +244,12 @@ function Admin() {
         }
     }
     useEffect(() => {
+        if(MessageComplete.jobId !== null || MessageFail.jobId !== null){
+            filterUsers(filters);
+        }
+    }, [MessageComplete, MessageFail])
+    
+    useEffect(() => {
         getPlans();
         filterUsers(filters);
     }, [])
@@ -231,14 +258,6 @@ function Admin() {
             navigate('/');
         }
     }, [currentUser])
-    const transformUserData = async () => {
-        const tempUsers: any = await exportUsers(filters);
-        return tempUsers.map((user:any) => ({
-            Usuario: user.username,
-            Correo: user.email,
-            Fecha_de_Registro: user.registered_on.toLocaleDateString(),
-        }));
-    };
     return (
         <div className="admin-contain">
             <div className="header">
@@ -253,7 +272,14 @@ function Admin() {
                         datas={transformUserData()}
                         text="Exportar Clientes" 
                     />
-                {/* <button className="btn-delete" style={{marginLeft:"auto"}} onClick={handleDeleteModal}>Eliminar Usuarios</button> */}
+                    {
+                        Message.jobId === null
+                        ? <button className="btn-delete" style={{marginLeft:"auto"}} onClick={handleDeleteModal}>Eliminar Usuarios</button>
+                        : <div className={"progress-delete " + ((MessageComplete.jobId !== null || MessageFail.jobId !== null) ? "finish": "")}>
+                            <p>{sendMessage()}</p>
+                            <div className="progress" style={{left: `${Message.progress -100}%`}}/>
+                        </div>
+                    }
             </div>
             <div className="filter-contain">
                 <div className="left-contain">
@@ -367,12 +393,11 @@ function Admin() {
                 />
             </div>
             <AddUsersModal showModal={showModal} onHideModal={closeModalAdd} />
-            <ConditionModal
-                title={"Eliminar usuarios"}
-                message={"Estas por eliminar a los usuarios que no se han suscrito, ni se han suscrito en el pasado mes."}
+            <DeleteUserModal
+                filterUsers ={filterUsers}
+                filters ={filters}
                 show={showDeleteModal}
                 onHide={handleDeleteModal}
-                action={removeUsersInactive}
             />
             <ConditionModal
                 title={"Bloquear Usuario"}

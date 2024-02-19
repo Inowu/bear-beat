@@ -5,6 +5,64 @@
     .header{
         display: flex;
         gap: 20px;
+        @keyframes loadRed {
+            0% {
+               background-color: red;
+            }
+
+            50% {
+                background-color: rgb(246, 76, 76);
+            }
+            100% {
+                background-color: red;
+             }
+        }
+        @keyframes loadBorder {
+            0% {
+               border: 2px solid #ff0000;
+            }
+            50% {
+                border: 2px solid rgb(246, 76, 76);
+            }
+            100% {
+                border: 2px solid #ff0000;
+             }
+        }
+        .progress-delete{
+            display: flex;
+            color: black;
+            padding-block: 4px;
+            border-radius: 100px;
+            border-radius: 100px;
+            margin-left: auto;
+            width: 190px;
+            display: flex;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            animation: loadBorder 1.5s infinite;
+            p{
+                text-shadow: 0 0 1px black;
+            }
+            .progress{
+                height: 100%;
+                width: 100%;
+                position: absolute;
+                border-radius: 100px;
+                animation: loadRed 1.5s infinite;
+                top: 0px;
+                z-index: -1;
+                transition: .2s ease all;
+            }
+        }
+        .finish{
+            animation: unset;
+            border: 2px solid #ff0000;
+            .progress{
+                animation: unset;
+                background-color: red;
+            }
+        }
         .input{
             border-radius:100px;
             padding: 5px 25px;

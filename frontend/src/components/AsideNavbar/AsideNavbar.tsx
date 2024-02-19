@@ -81,18 +81,18 @@ function AsideNavbar(props: AsideNavbarPropsI) {
                 </li>
               </Link>
               {
-                !currentUser?.hasActiveSubscription &&
+                !currentUser?.hasActiveSubscription ?
                 <Link to={"/planes"}>
                   <li>
                     <FontAwesomeIcon icon={faCartPlus} /> Get plan
                   </li>
                 </Link> 
-                // :
-                // <Link to={"/actualizar-planes"}>
-                //   <li>
-                //     <FontAwesomeIcon icon={faArrowAltCircleUp} /> Actualiza tu plan
-                //   </li>
-                // </Link>
+                :
+                <Link to={"/actualizar-planes"}>
+                  <li>
+                    <FontAwesomeIcon icon={faArrowAltCircleUp} /> Actualiza tu plan
+                  </li>
+                </Link>
               }
               <Link to={"/micuenta"}>
                 <li>

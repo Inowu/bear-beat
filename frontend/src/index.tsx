@@ -27,6 +27,7 @@ import { Ordens } from "./pages/Admin/Ordens/Ordens";
 import { HistoryCheckout } from "./pages/Admin/HistoryCheckout/HistoryCheckout";
 import { PlanUpgrade } from "./pages/PlanUpgrade/PlanUpgrade";
 import ReactPixel from 'react-facebook-pixel';
+import { SSEProvider } from "react-hooks-sse";
 
 
 const root = ReactDOM.createRoot(
@@ -51,8 +52,8 @@ const router = createBrowserRouter([
           { path: "instrucciones", element: <Instructions /> },
           { path: "micuenta", element: <MyAccount /> },
           { path: "planes", element: <Plans /> },
-          // { path: "comprar", element: <Checkout /> },
-          // { path: "actualizar-planes", element: <PlanUpgrade /> },
+          { path: "comprar", element: <Checkout /> },
+          { path: "actualizar-planes", element: <PlanUpgrade /> },
         ],
       },
       {
@@ -93,6 +94,8 @@ const router = createBrowserRouter([
     ],
   },
 ]);
+// 'https://thebearbeatapi.lat/trpc' 
+// 'https://kale67.world/trpc'
 root.render(
   <React.StrictMode>
     <UserContextProvider>
@@ -104,7 +107,9 @@ root.render(
           vault: true,
         }}
       >
-        <RouterProvider router={router} />
+          <SSEProvider endpoint='https://kale67.world/sse'>
+          <RouterProvider router={router} />
+        </SSEProvider>
       </PayPalScriptProvider>
     </UserContextProvider>
   </React.StrictMode>,
