@@ -117,20 +117,20 @@ export const changeSubscriptionPlan = shieldedProcedure
         subscriptionOrder,
         user,
       });
-    } else if (newPlan.paypal_plan_id) {
-      return await updatePaypalSubscription({
-        newPlan,
-        subscriptionOrder,
-        user,
-        subscription: subscriptionInfo,
-      });
+      // } else if (newPlan.paypal_plan_id) {
+      //   return await updatePaypalSubscription({
+      //     newPlan,
+      //     subscriptionOrder,
+      //     user,
+      //     subscription: subscriptionInfo,
+      //   });
     } else {
       log.error(`[CHANGE_PLAN] Plan has no stripe or paypal id, ${newPlan.id}`);
 
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
         message:
-          'Hubo un error al actualizar tu plan, por favor contacta a soporte',
+          'Por el momento tu plan no es compatible con el cambio de suscripción, por favor intenta más tarde o contacta a soporte para más información.',
       });
     }
   });
