@@ -12,7 +12,7 @@ import Pagination from "../../components/Pagination/Pagination";
 import { ARRAY_10 } from "../../utils/Constants";
 import AddUsersModal from "../../components/Modals/AddUsersModal/AddUsersModal";
 import CsvDownloader from 'react-csv-downloader';
-import {  exportUsers } from "./fuctions";
+import { exportUsers } from "./fuctions";
 import { ConditionModal } from "../../components/Modals/ConditionModal/ContitionModal";
 import { FaLockOpen } from "react-icons/fa";
 import { FaLock } from "react-icons/fa";
@@ -116,28 +116,28 @@ function Admin() {
         jobId: null,
     });
     const sendMessage = () => {
-        if(MessageComplete.jobId !==  null){
+        if (MessageComplete.jobId !== null) {
             return 'Proceso Completado'
         }
-        if(MessageFail.jobId !==  null){
+        if (MessageFail.jobId !== null) {
             return 'Proceso Fallido'
         }
         return `Eliminando: ${Message.progress}%`
     }
     const changeBlockUser = async () => {
-        try{
+        try {
             let body = {
                 userId: selectedUser.id
             }
-            if(blocking){
+            if (blocking) {
                 const user_block = await trpc.users.blockUser.mutate(body)
-            }else{
+            } else {
                 const user_block = await trpc.users.unblockUser.mutate(body)
             }
             closeBlockModal();
             filterUsers(filters);
         }
-        catch(error){
+        catch (error) {
             console.log(error);
         }
     }
@@ -165,7 +165,7 @@ function Admin() {
     }
     const transformUserData = async () => {
         const tempUsers: any = await exportUsers(filters);
-        return tempUsers.map((user:any) => ({
+        return tempUsers.map((user: any) => ({
             Usuario: user.username,
             Correo: user.email,
             Fecha_de_Registro: user.registered_on.toLocaleDateString(),
@@ -202,53 +202,53 @@ function Admin() {
                 setLoader(false);
                 setUsers(tempUsers);
                 setTotalUsers(totalUsersResponse.length);
-            } 
+            }
             else {
-                    let body: any = {
-                        take: filt.limit,
-                        skip: filt.page * filt.limit,
-                        where: {
-                            email: {
-                                startsWith: filt.search,
-                            },
+                let body: any = {
+                    take: filt.limit,
+                    skip: filt.page * filt.limit,
+                    where: {
+                        email: {
+                            startsWith: filt.search,
                         },
-                        orderBy: {
-                            registered_on: 'desc'
+                    },
+                    orderBy: {
+                        registered_on: 'desc'
+                    }
+                }
+                let body2: any = {
+                    where: {
+                        email: {
+                            startsWith: filt.search,
                         }
-                    }
-                    let body2: any = {
-                        where: {
-                            email: {
-                                startsWith: filt.search,
-                            }
-                        },
-                        select: {
-                            id: true,
-                        },
-                    }
-                    let tempUsers: any = [];
-                    let totalUsersResponse = [];
-                    if(filt.active === 1){
-                        tempUsers = await trpc.users.getActiveUsers.query(body)
-                        totalUsersResponse = await trpc.users.getActiveUsers.query(body2);
-                    }else{
-                        tempUsers = await trpc.users.getInactiveUsers.query(body)
-                        totalUsersResponse = await trpc.users.getInactiveUsers.query(body2);
-                    }
-                    setUsers(tempUsers);
-                    setTotalUsers(totalUsersResponse.length);
-                    setLoader(false);
+                    },
+                    select: {
+                        id: true,
+                    },
+                }
+                let tempUsers: any = [];
+                let totalUsersResponse = [];
+                if (filt.active === 1) {
+                    tempUsers = await trpc.users.getActiveUsers.query(body)
+                    totalUsersResponse = await trpc.users.getActiveUsers.query(body2);
+                } else {
+                    tempUsers = await trpc.users.getInactiveUsers.query(body)
+                    totalUsersResponse = await trpc.users.getInactiveUsers.query(body2);
+                }
+                setUsers(tempUsers);
+                setTotalUsers(totalUsersResponse.length);
+                setLoader(false);
             }
         } catch (error) {
             console.log(error);
         }
     }
     useEffect(() => {
-        if(MessageComplete.jobId !== null || MessageFail.jobId !== null){
+        if (MessageComplete.jobId !== null || MessageFail.jobId !== null) {
             filterUsers(filters);
         }
     }, [MessageComplete, MessageFail])
-    
+
     useEffect(() => {
         getPlans();
         filterUsers(filters);
@@ -263,35 +263,35 @@ function Admin() {
             <div className="header">
                 <h1>Usuarios</h1>
                 <button className="btn-addUsers" onClick={() => setShowModal(true)}>Añadir Usuarios</button>
-                    <CsvDownloader 
-                        className="btn-addUsers"
-                        filename="lista_de_usuarios"
-                        extension=".csv"
-                        separator=";"
-                        wrapColumnChar="'"
-                        datas={transformUserData()}
-                        text="Exportar Clientes" 
-                    />
-                    {
+                <CsvDownloader
+                    className="btn-addUsers"
+                    filename="lista_de_usuarios"
+                    extension=".csv"
+                    separator=";"
+                    wrapColumnChar="'"
+                    datas={transformUserData()}
+                    text="Exportar Clientes"
+                />
+                {/* {
                         Message.jobId === null
                         ? <button className="btn-delete" style={{marginLeft:"auto"}} onClick={handleDeleteModal}>Eliminar Usuarios</button>
                         : <div className={"progress-delete " + ((MessageComplete.jobId !== null || MessageFail.jobId !== null) ? "finish": "")}>
                             <p>{sendMessage()}</p>
                             <div className="progress" style={{left: `${Message.progress -100}%`}}/>
                         </div>
-                    }
+                    } */}
             </div>
             <div className="filter-contain">
                 <div className="left-contain">
                     <div className="select-input">
-                        <select onChange={(e)=> startFilter('active', +e.target.value)}>
+                        <select onChange={(e) => startFilter('active', +e.target.value)}>
                             <option value={2}>Todos</option>
                             <option value={1}>Activos</option>
                             <option value={0}>Inactivos</option>
                         </select>
                     </div>
                     <div className="select-input">
-                        <select defaultValue={filters.limit} onChange={(e)=> startFilter('limit', +e.target.value)}>
+                        <select defaultValue={filters.limit} onChange={(e) => startFilter('limit', +e.target.value)}>
                             <option value={''} disabled>Numero de datos</option>
                             <option value={100}>100</option>
                             <option value={200}>200</option>
@@ -349,17 +349,17 @@ function Admin() {
                                                 {user.registered_on.toLocaleDateString()}
                                             </td>
                                             {
-                                                filters.active !== 2 && 
+                                                filters.active !== 2 &&
                                                 <td >
-                                                    {filters.active === 1? "Activa" : "No activa"}
+                                                    {filters.active === 1 ? "Activa" : "No activa"}
                                                 </td>
                                             }
                                             <td className="wrap-td">
                                                 <button onClick={() => { giveSuscription(user) }}>Activar Suscripcion</button>
                                                 {
                                                     user.blocked ?
-                                                        <FaLock className="lock" onClick={()=> openBlockModal(user, `Estas por desbloquear al usuario: ${user.username}`,false)}/>
-                                                        : <FaLockOpen className="unlock"  onClick={()=> openBlockModal(user, `Estas por bloquear al usuario: ${user.username}`,true)}/>
+                                                        <FaLock className="lock" onClick={() => openBlockModal(user, `Estas por desbloquear al usuario: ${user.username}`, false)} />
+                                                        : <FaLockOpen className="unlock" onClick={() => openBlockModal(user, `Estas por bloquear al usuario: ${user.username}`, true)} />
                                                 }
                                             </td>
                                         </tr>
@@ -368,11 +368,11 @@ function Admin() {
                                 })
                                 : ARRAY_10.map((val: string, index: number) => {
                                     return (
-                                        
-                                            filters.active !== 2 
+
+                                        filters.active !== 2
                                             ?
                                             <tr key={"array_10" + index} className="tr-load">
-                                                <td /><td /><td /><td /> <td/>
+                                                <td /><td /><td /><td /> <td />
                                             </tr>
                                             :
                                             <tr key={"array_10" + index} className="tr-load">
@@ -389,13 +389,13 @@ function Admin() {
                     title="usuarios"
                     startFilter={startFilter}
                     currentPage={filters.page}
-                    limit = {filters.limit}
+                    limit={filters.limit}
                 />
             </div>
             <AddUsersModal showModal={showModal} onHideModal={closeModalAdd} />
             <DeleteUserModal
-                filterUsers ={filterUsers}
-                filters ={filters}
+                filterUsers={filterUsers}
+                filters={filters}
                 show={showDeleteModal}
                 onHide={handleDeleteModal}
             />
