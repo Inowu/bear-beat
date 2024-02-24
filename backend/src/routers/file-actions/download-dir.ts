@@ -214,22 +214,22 @@ export const downloadDir = shieldedProcedure
         `[DOWNLOAD:DIR] Added job ${job.id} to queue for user ${user.id}`,
       );
 
-      await prisma.dir_downloads.update({
-        where: {
-          id: dirDownload.id,
-        },
-        data: {
-          jobId: Number(job.id),
-        },
-      });
-
-      await prisma.jobs.create({
+      const dbJob = await prisma.jobs.create({
         data: {
           jobId: job.id,
           queue: compressionQueueName,
           status: JobStatus.IN_PROGRESS,
           user_id: user.id,
           createdAt: new Date(),
+        },
+      });
+
+      await prisma.dir_downloads.update({
+        where: {
+          id: dirDownload.id,
+        },
+        data: {
+          jobId: dbJob.id,
         },
       });
 

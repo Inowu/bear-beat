@@ -1,6 +1,8 @@
 import path from 'path';
+import fs from 'fs';
 import tracer from 'dd-trace';
 import { config } from 'dotenv';
+import { Queue, Worker } from 'bullmq';
 import { createExpressMiddleware } from '@trpc/server/adapters/express';
 import express from 'express';
 import cors from 'cors';
@@ -19,6 +21,7 @@ import { stripePiEndpoint } from './endpoints/webhooks/stripePaymentIntents.endp
 import { sse } from './sse';
 import {
   compressionQueue,
+  compressionQueueName,
   initializeCompressionQueue,
 } from './queue/compression';
 import { compressionWorkers, workerFactory } from './queue/workerFactory';
@@ -29,6 +32,9 @@ import {
 } from './queue/removeUsers';
 import { removeUsersWorkers } from './queue/workerFactory';
 import { downloadDirEndpoint } from './endpoints/download-dir.endpoint';
+import { CompressionJob } from './queue/compression/types';
+import fastFolderSize from 'fast-folder-size/sync';
+import archiver from 'archiver';
 
 config({
   path: path.resolve(__dirname, '../.env'),
@@ -109,11 +115,22 @@ async function main() {
 
     initializeCompressionQueue();
 
-    initializeRemoveUsersQueue();
+    // initializeRemoveUsersQueue();
 
     // TODO: Uncomment when this wowrks
     // workerFactory('users');
-    // workerFactory('compression');
+    workerFactory('compression');
+
+    // compressionQueue.add('test-job', {
+    //   userId: 1,
+    //   dirSize: fastFolderSize('./node_modules'),
+    //   ftpTalliesId: 1,
+    //   songsAbsolutePath:
+    //     '/home/inowu/Desktop/Projects/bearbeat/backend/node_modules',
+    //   ftpAccountName: 'kevinwoolfolk',
+    //   songsRelativePath: '/bearbeat/backend/node_modules',
+    //   dirDownloadId: 1,
+    // } as CompressionJob);
   } catch (e: any) {
     log.error(e.message);
     await closeConnections();

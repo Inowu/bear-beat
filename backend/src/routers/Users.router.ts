@@ -247,6 +247,13 @@ export const usersRouter = router({
         //       },
         //     },
         //   }),
+        //   prisma.ftpUser.deleteMany({
+        //     where: {
+        //       user_id: {
+        //         in: inactiveUsersIds,
+        //       },
+        //     },
+        //   }),
         //   prisma.descargasUser.deleteMany({
         //     where: {
         //       user_id: {

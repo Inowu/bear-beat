@@ -52,7 +52,7 @@ export const createCompressionWorker = () => {
     try {
       await prisma.jobs.update({
         where: {
-          id: Number(job.id),
+          id: job.data.jobDbId,
         },
         data: {
           status: 'completed',
@@ -83,7 +83,7 @@ export const createCompressionWorker = () => {
       try {
         await prisma.jobs.update({
           where: {
-            id: Number(job?.id),
+            id: job.data.jobDbId,
           },
           data: {
             status: 'failed',
