@@ -1,5 +1,7 @@
 import Stripe from 'stripe';
 import { paypal } from './src/paypal';
+import archiver from 'archiver';
+import fs from 'fs';
 import { config } from 'dotenv';
 import {
   CustomersApi,
@@ -66,7 +68,7 @@ async function main() {
   //   clientSecret: paypal.clientSecret(),
   // });
   // PAYPAL
-  const token = await paypal.getToken();
+  // const token = await paypal.getToken();
 
   // const res = await axios.get(
   //   `${paypal.paypalUrl()}/v1/catalogs/products`,
@@ -82,54 +84,75 @@ async function main() {
   //     },
   //   },
   // );
+  //
+  // console.log({
+  //   paypalUrl: paypal.paypalUrl(),
+  //   clientId: paypal.clientId(),
+  //   clientSecret: paypal.clientSecret(),
+  // });
+  // const res = (
+  //   await axios.post(
+  //     `${paypal.paypalUrl()}/v1/billing/plans`,
+  //     {
+  //       product_id: 'PROD-6XD39077UM964502Y',
+  //       name: 'test plan bearbeat',
+  //       description: undefined,
+  //       status: 'ACTIVE',
+  //       billing_cycles: [
+  //         {
+  //           tenure_type: 'REGULAR',
+  //           sequence: 1,
+  //           total_cycles: 0,
+  //           pricing_scheme: {
+  //             fixed_price: {
+  //               value: '18',
+  //               currency_code: 'USD',
+  //             },
+  //           },
+  //           frequency: {
+  //             interval_unit: 'MONTH',
+  //             interval_count: 1,
+  //           },
+  //         },
+  //       ],
+  //       payment_preferences: {
+  //         auto_bill_outstanding: true,
+  //         setup_fee: {
+  //           value: '0',
+  //           currency_code: 'USD',
+  //         },
+  //       },
+  //     },
+  //     {
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     },
+  //   )
+  // ).data;
 
-  console.log({
-    paypalUrl: paypal.paypalUrl(),
-    clientId: paypal.clientId(),
-    clientSecret: paypal.clientSecret(),
+  // const res = (
+  //   await axios(
+  //     `${paypal.paypalUrl()}/v1/billing/subscriptions/I-M9U0UXA9XLU0`,
+  //     { headers: { Authorization: `Bearer ${token}` } },
+  //   )
+  // ).data;
+
+  // console.log(res);
+
+  const archive = archiver('zip', {
+    zlib: { level: 9 },
   });
-  const res = (
-    await axios.post(
-      `${paypal.paypalUrl()}/v1/billing/plans`,
-      {
-        product_id: 'PROD-6XD39077UM964502Y',
-        name: 'test plan bearbeat',
-        description: undefined,
-        status: 'ACTIVE',
-        billing_cycles: [
-          {
-            tenure_type: 'REGULAR',
-            sequence: 1,
-            total_cycles: 0,
-            pricing_scheme: {
-              fixed_price: {
-                value: '18',
-                currency_code: 'USD',
-              },
-            },
-            frequency: {
-              interval_unit: 'MONTH',
-              interval_count: 1,
-            },
-          },
-        ],
-        payment_preferences: {
-          auto_bill_outstanding: true,
-          setup_fee: {
-            value: '0',
-            currency_code: 'USD',
-          },
-        },
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    )
-  ).data;
 
-  console.log(res);
+  const output = fs.createWriteStream('./compressed-dirs/test.zip');
+
+  archive.on('progress', (progress) => console.log(progress));
+
+  archive.directory('./node_modules', false);
+
+  archive.pipe(output);
+
+  await archive.finalize();
 }
 
 main();

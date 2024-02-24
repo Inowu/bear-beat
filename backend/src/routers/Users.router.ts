@@ -282,7 +282,7 @@ export const usersRouter = router({
       }
 
       // Create a worker
-      workerFactory('users');
+      // workerFactory('users');
 
       // Push job to queue
       const job = await removeUsersQueue.add(removeUsersQueueName, {
@@ -358,9 +358,8 @@ export const usersRouter = router({
   findFirstUsersOrThrow: shieldedProcedure
     .input(UsersFindFirstSchema)
     .query(async ({ ctx, input }) => {
-      const findFirstUsersOrThrow = await ctx.prisma.users.findFirstOrThrow(
-        input,
-      );
+      const findFirstUsersOrThrow =
+        await ctx.prisma.users.findFirstOrThrow(input);
       return findFirstUsersOrThrow;
     }),
   findManyUsers: shieldedProcedure
@@ -378,9 +377,8 @@ export const usersRouter = router({
   findUniqueUsersOrThrow: shieldedProcedure
     .input(UsersFindUniqueSchema)
     .query(async ({ ctx, input }) => {
-      const findUniqueUsersOrThrow = await ctx.prisma.users.findUniqueOrThrow(
-        input,
-      );
+      const findUniqueUsersOrThrow =
+        await ctx.prisma.users.findUniqueOrThrow(input);
       return findUniqueUsersOrThrow;
     }),
   groupByUsers: shieldedProcedure

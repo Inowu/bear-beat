@@ -7,6 +7,8 @@ export enum PaymentService {
   ADMIN = 'ADMIN',
   STRIPE_RENOVACION = 'Stripe Renovacion',
   PAYPAL = 'Paypal',
+  STRIPE_PLAN_CHANGE = 'Stripe Plan Change',
+  PAYPAL_PLAN_CHANGE = 'Paypal Plan Change',
 }
 
 export type Params =

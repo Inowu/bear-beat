@@ -27,7 +27,7 @@ export const getCurrentSubscriptionPlan = shieldedProcedure.query(
     if (!order || !order.plan_id) {
       throw new TRPCError({
         code: 'NOT_FOUND',
-        message: 'No se encontro la orden o el plan asociado a la orden',
+        message: 'No se encontró la orden o el plan asociado a la orden',
       });
     }
 
@@ -40,7 +40,7 @@ export const getCurrentSubscriptionPlan = shieldedProcedure.query(
     if (!plan) {
       throw new TRPCError({
         code: 'NOT_FOUND',
-        message: 'No se encontro el plan',
+        message: 'No se encontró el plan',
       });
     }
 

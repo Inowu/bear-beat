@@ -1,12 +1,20 @@
 import { z } from 'zod';
+import Path from 'path';
 import { TRPCError } from '@trpc/server';
 import { fileService } from '../../ftp';
 import { log } from '../../server';
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
-import { compressionQueue } from '../../queue/compression';
+import {
+  compressionQueue,
+  compressionQueueName,
+} from '../../queue/compression';
 import type { CompressionJob } from '../../queue/compression/types';
 import { extendedAccountPostfix } from '../../utils/constants';
 import { logPrefix } from '../../endpoints/download.endpoint';
+import fastFolderSizeSync from 'fast-folder-size/sync';
+import { JobStatus } from '../../queue/jobStatus';
+
+const MAX_CONCURRENT_DOWNLOADS = 10;
 
 export const downloadDir = shieldedProcedure
   .input(
@@ -16,6 +24,27 @@ export const downloadDir = shieldedProcedure
   )
   .query(async ({ input: { path }, ctx: { prisma, session } }) => {
     const user = session!.user!;
+
+    const inProgressJobs = await prisma.jobs.findMany({
+      where: {
+        status: JobStatus.IN_PROGRESS,
+      },
+    });
+
+    if (inProgressJobs.find((job) => job.user_id === user.id)) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message:
+          'Ya tienes una descarga en progreso, solo se permite una descarga por usuario a la vez',
+      });
+    }
+
+    if (inProgressJobs.length > MAX_CONCURRENT_DOWNLOADS) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Hay demasiadas descargas en progreso, intentalo más tarde',
+      });
+    }
 
     const fullPath = `${process.env.SONGS_PATH}${path}`;
     const fileExists = await fileService.exists(fullPath);
@@ -157,11 +186,64 @@ export const downloadDir = shieldedProcedure
     }
 
     try {
+      log.info(`[DOWNLOAD:DIR] User ${user.id} is downloading ${path}`);
+
+      const dirDownload = await prisma.dir_downloads.create({
+        data: {
+          userId: user.id,
+          date: new Date().toISOString(),
+          size: fastFolderSizeSync(fullPath),
+          dirName: Path.basename(fullPath),
+        },
+      });
+
       const job = await compressionQueue.add(`compress-${user.id}`, {
         songsAbsolutePath: fullPath,
         songsRelativePath: path,
         userId: user.id,
+        dirDownloadId: dirDownload.id,
+        ftpAccountName:
+          extendedAccount && useExtendedAccount
+            ? extendedAccount.userid
+            : regularFtpUser.userid,
+        ftpTalliesId: quotaTallies.id,
+        dirSize: Number(dirDownload.size),
       } as CompressionJob);
+
+      log.info(
+        `[DOWNLOAD:DIR] Added job ${job.id} to queue for user ${user.id}`,
+      );
+
+      await prisma.dir_downloads.update({
+        where: {
+          id: dirDownload.id,
+        },
+        data: {
+          jobId: Number(job.id),
+        },
+      });
+
+      await prisma.jobs.create({
+        data: {
+          jobId: job.id,
+          queue: compressionQueueName,
+          status: JobStatus.IN_PROGRESS,
+          user_id: user.id,
+          createdAt: new Date(),
+        },
+      });
+
+      // Pre-update the bytes used and update it back later if the job fails
+      // This is necessary so the user cannot use more bytes than they have
+      log.info(`[DOWNLOAD:DIR] Pre-updating bytes used for user ${user.id}`);
+      await prisma.ftpquotatallies.update({
+        where: {
+          id: quotaTallies.id,
+        },
+        data: {
+          bytes_out_used: quotaTallies.bytes_out_used + BigInt(fileStat.size),
+        },
+      });
 
       log.info(
         `[DOWNLOAD:DIR] Initiating directory compression job ${job.id}, user: ${user.id}`,

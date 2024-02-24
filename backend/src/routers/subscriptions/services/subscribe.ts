@@ -70,7 +70,7 @@ export const subscribe = async ({
     log.info(`[SUBSCRIPTION] Creating new subscription for user ${user.id}`);
 
     try {
-      await prisma.$transaction([
+      const responses = await prisma.$transaction([
         ...insertFtpQuotas({ prisma, user, plan: dbPlan }),
         prisma.ftpUser.create({
           data: {
@@ -107,6 +107,15 @@ export const subscribe = async ({
             payment_method: service,
             date_order: new Date().toISOString(),
             total_price: Number(dbPlan?.price),
+          },
+        });
+
+        await prisma.descargasUser.update({
+          where: {
+            id: responses[1].id,
+          },
+          data: {
+            order_id: order.id,
           },
         });
 

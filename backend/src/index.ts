@@ -21,13 +21,14 @@ import {
   compressionQueue,
   initializeCompressionQueue,
 } from './queue/compression';
-import { compressionWorkers } from './queue/workerFactory';
+import { compressionWorkers, workerFactory } from './queue/workerFactory';
 import { stripeProductsEndpoint } from './endpoints/webhooks/stripeProducts.endpoint';
 import {
   initializeRemoveUsersQueue,
   removeUsersQueue,
 } from './queue/removeUsers';
 import { removeUsersWorkers } from './queue/workerFactory';
+import { downloadDirEndpoint } from './endpoints/download-dir.endpoint';
 
 config({
   path: path.resolve(__dirname, '../.env'),
@@ -96,6 +97,8 @@ async function main() {
 
     app.get('/download', downloadEndpoint);
 
+    app.get('/download-dir', downloadDirEndpoint);
+
     app.listen(process.env.PORT);
 
     log.info(`Express server listening on port ${process.env.PORT}`);
@@ -107,6 +110,10 @@ async function main() {
     initializeCompressionQueue();
 
     initializeRemoveUsersQueue();
+
+    // TODO: Uncomment when this wowrks
+    // workerFactory('users');
+    // workerFactory('compression');
   } catch (e: any) {
     log.error(e.message);
     await closeConnections();

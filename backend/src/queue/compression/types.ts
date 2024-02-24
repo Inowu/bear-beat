@@ -2,4 +2,10 @@ export type CompressionJob = {
   songsRelativePath: string;
   songsAbsolutePath: string;
   userId: number;
+  dirDownloadId: number;
+  // The name of the ftp account used to download the directory
+  // Thtis is necessary because the user can have a normal account or an extended account
+  ftpAccountName: string;
+  ftpTalliesId: number;
+  dirSize: number;
 };
