@@ -279,8 +279,6 @@ model dir_downloads {
   downloadUrl String?   @db.VarChar(1000)
   users       Users?    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "dir_downloads_ibfk_1")
   expirationDate DateTime? @db.DateTime(0)
-
-  @@index([userId], map: "userId")
 }
 
 model jobs {
@@ -292,8 +290,6 @@ model jobs {
   jobId      String?   @db.VarChar(255)
   finishedAt DateTime? @db.DateTime(0)
   users      Users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "jobs_ibfk_1")
-
-  @@index([user_id], map: "user_id")
 }
 
 model checkout_logs {
