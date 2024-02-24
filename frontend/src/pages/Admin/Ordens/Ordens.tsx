@@ -87,6 +87,9 @@ export const Ordens = () => {
             gte: filt.startDate,
             lte: filt.endDate
           }
+        },
+        orderBy: {
+          date_order: 'desc'
         }
       }
       let body2: any = {
@@ -144,7 +147,7 @@ export const Ordens = () => {
         </div>
         <div className="select-input">
           <p>Cantidad de ordenes</p>
-          <select defaultValue={filters.limit} onChange={(e)=> startFilter('limit', +e.target.value)}>
+          <select defaultValue={filters.limit} onChange={(e) => startFilter('limit', +e.target.value)}>
             <option value={''} disabled>Numero de datos</option>
             <option value={100}>100</option>
             <option value={200}>200</option>
