@@ -25,12 +25,23 @@ export const downloadDir = shieldedProcedure
   .query(async ({ input: { path }, ctx: { prisma, session } }) => {
     const user = session!.user!;
 
+    const fullPath = `${process.env.SONGS_PATH}${path}`;
+    const fileExists = await fileService.exists(fullPath);
+
+    if (!fileExists) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Esa carpeta no existe',
+      });
+    }
+
     const inProgressJobs = await prisma.jobs.findMany({
       where: {
         status: JobStatus.IN_PROGRESS,
       },
     });
 
+    // Only allow one download per user
     if (inProgressJobs.find((job) => job.user_id === user.id)) {
       throw new TRPCError({
         code: 'BAD_REQUEST',
@@ -39,20 +50,10 @@ export const downloadDir = shieldedProcedure
       });
     }
 
-    if (inProgressJobs.length > MAX_CONCURRENT_DOWNLOADS) {
+    if (inProgressJobs.length >= MAX_CONCURRENT_DOWNLOADS) {
       throw new TRPCError({
         code: 'BAD_REQUEST',
         message: 'Hay demasiadas descargas en progreso, intentalo más tarde',
-      });
-    }
-
-    const fullPath = `${process.env.SONGS_PATH}${path}`;
-    const fileExists = await fileService.exists(fullPath);
-
-    if (!fileExists) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'Esa carpeta no existe',
       });
     }
 
@@ -100,12 +101,12 @@ export const downloadDir = shieldedProcedure
       ftpAccount.userid.endsWith(extendedAccountPostfix),
     );
 
-    if (activePlans.length === 0 && !extendedAccount) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'Este usuario no tiene un plan activo',
-      });
-    }
+    // if (activePlans.length === 0 && !extendedAccount) {
+    //   throw new TRPCError({
+    //     code: 'BAD_REQUEST',
+    //     message: 'Este usuario no tiene un plan activo',
+    //   });
+    // }
 
     let quotaTallies = await prisma.ftpquotatallies.findFirst({
       where: {

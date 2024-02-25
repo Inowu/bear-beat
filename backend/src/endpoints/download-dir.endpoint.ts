@@ -4,6 +4,8 @@ import jwt from 'jsonwebtoken';
 import { SessionUser } from '../routers/auth/utils/serialize-user';
 import { log } from '../server';
 import { prisma } from '../db';
+import { JobStatus } from '../queue/jobStatus';
+import { fileService } from '../ftp';
 
 export const downloadDirEndpoint = async (req: Request, res: Response) => {
   const token = req.query.token as string;
@@ -33,25 +35,43 @@ export const downloadDirEndpoint = async (req: Request, res: Response) => {
     return res.status(400).send({ error: 'Bad request' });
   }
 
-  const fullPath = Path.join(process.env.SONGS_PATH as string, dirName);
+  const fullPath = Path.resolve(
+    __dirname,
+    `../../${process.env.COMPRESSED_DIRS_NAME}/${dirName}`,
+  );
+  const dirExists = await fileService.exists(fullPath);
+
+  if (!dirExists) {
+    log.error(
+      `[DOWNLOAD] Directory not found for user ${user.id} and jobId ${jobId}`,
+    );
+    return res.status(404).send({ error: 'Esa carpeta no existe' });
+  }
+
   log.info(`[DOWNLOAD] Downloading directory ${fullPath} for user ${user.id}`);
 
-  const download = await prisma.dir_downloads.findFirst({
+  const job = await prisma.jobs.findFirst({
     where: {
       AND: [
-        {
-          userId: user.id,
-        },
-        {
-          jobId: Number(jobId),
-        },
+        { status: JobStatus.COMPLETED },
+        { jobId: jobId },
+        { user_id: user.id },
       ],
     },
   });
 
-  const job = await prisma.jobs.findFirst({
+  if (!job) {
+    log.error(
+      `[DOWNLOAD] Job not found for user ${user.id} and jobId ${jobId}`,
+    );
+    return res
+      .status(404)
+      .send({ error: 'Ocurrió un error al descargar la carpeta' });
+  }
+
+  const download = await prisma.dir_downloads.findFirst({
     where: {
-      id: Number(jobId),
+      jobId: job.id,
     },
   });
 
@@ -59,20 +79,12 @@ export const downloadDirEndpoint = async (req: Request, res: Response) => {
     log.error(
       `[DOWNLOAD] Download not found for user ${user.id} and jobId ${jobId}`,
     );
-    return res.status(404).send({ error: 'El directorio no fue encontrado' });
-  }
-
-  // Should not happen?
-  if (job?.status !== 'completed') {
-    log.error(
-      `[DOWNLOAD] Download in progress or failed for user ${user.id} and jobId ${jobId}`,
-    );
     return res
-      .status(400)
-      .send({ error: 'La descarga del directorio sigue en progreso o falló' });
+      .status(404)
+      .send({ error: 'Ocurrió un error al descargar la carpeta' });
   }
 
-  if (download.expirationDate && download.expirationDate > new Date()) {
+  if (download.expirationDate && new Date() >= download.expirationDate) {
     log.error(
       `[DOWNLOAD] Download expired for user ${user.id} and jobId ${jobId}`,
     );
@@ -101,6 +113,7 @@ export const downloadDirEndpoint = async (req: Request, res: Response) => {
       )}`,
     );
   }
+  console.log('Before sending file');
 
   return res.sendFile(fullPath);
 };

@@ -37,22 +37,36 @@ export const createCompressionWorker = () => {
   compressionWorker.on('completed', async (job: Job<CompressionJob>) => {
     log.info(`[WORKER:COMPRESSION] Job ${job.id} completed`);
     // Save the download URL in the database in case the user wants to download it later
+    const downloadUrl = `${process.env.BACKEND_URL}/download-dir?dirName=${job.data.songsRelativePath}-${job.data.userId}-${job.id}.zip&jobId=${job.id}`;
     await prisma.dir_downloads.update({
       where: {
         id: job.data.dirDownloadId,
       },
       data: {
         // Note: The client has to append the token to the URL. &token=<token>
-        downloadUrl: `${process.env.BACKEND_URL}/download-dir?dirName=${job.data.songsRelativePath}-${job.data.userId}-${job.id}.zip&jobId=${job.id}`,
+        downloadUrl,
         // The URL is valid for 24 hours
         expirationDate: addDays(new Date(), 1),
       },
     });
 
     try {
+      const dbJob = await prisma.jobs.findFirst({
+        where: {
+          jobId: job.id,
+        },
+      });
+
+      if (!dbJob) {
+        log.error(
+          `[WORKER:COMPRESSION] Job ${job.id} not found in the database`,
+        );
+        return;
+      }
+
       await prisma.jobs.update({
         where: {
-          id: job.data.jobDbId,
+          id: dbJob.id,
         },
         data: {
           status: 'completed',
@@ -70,7 +84,7 @@ export const createCompressionWorker = () => {
     sse.send(
       JSON.stringify({
         jobId: job.id,
-        url: `${process.env.BACKEND_URL}/compressed-dirs${job.data.songsRelativePath}-${job.data.userId}-${job.id}.zip`,
+        url: downloadUrl,
       }),
       'compression:completed',
     );
@@ -81,9 +95,22 @@ export const createCompressionWorker = () => {
 
     if (job?.id) {
       try {
+        const dbJob = await prisma.jobs.findFirst({
+          where: {
+            jobId: job.id,
+          },
+        });
+
+        if (!dbJob) {
+          log.error(
+            `[WORKER:COMPRESSION] Job ${job.id} not found in the database`,
+          );
+          return;
+        }
+
         await prisma.jobs.update({
           where: {
-            id: job.data.jobDbId,
+            id: dbJob.id,
           },
           data: {
             status: 'failed',
