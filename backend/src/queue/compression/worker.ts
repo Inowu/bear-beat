@@ -37,7 +37,10 @@ export const createCompressionWorker = () => {
   compressionWorker.on('completed', async (job: Job<CompressionJob>) => {
     log.info(`[WORKER:COMPRESSION] Job ${job.id} completed`);
     // Save the download URL in the database in case the user wants to download it later
-    const downloadUrl = `${process.env.BACKEND_URL}/download-dir?dirName=${job.data.songsRelativePath}-${job.data.userId}-${job.id}.zip&jobId=${job.id}`;
+    const downloadUrl = encodeURIComponent(
+      `${process.env.BACKEND_URL}/download-dir?dirName=${job.data.songsRelativePath}-${job.data.userId}-${job.id}.zip&jobId=${job.id}`,
+    );
+
     await prisma.dir_downloads.update({
       where: {
         id: job.data.dirDownloadId,
@@ -86,7 +89,7 @@ export const createCompressionWorker = () => {
         jobId: job.id,
         url: downloadUrl,
       }),
-      'compression:completed',
+      `compression:completed:${job.data.userId}`,
     );
   });
 
@@ -158,7 +161,7 @@ export const createCompressionWorker = () => {
       JSON.stringify({
         jobId: job?.id,
       }),
-      'compression:failed',
+      `compression:failed:${job?.data.userId}`,
     );
   });
 
@@ -180,7 +183,7 @@ export const createCompressionWorker = () => {
         progress,
         jobId: job.id,
       }),
-      'compression:progress',
+      `compression:progress:${job.data.userId}`,
     );
   });
 
