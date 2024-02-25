@@ -101,12 +101,12 @@ export const downloadDir = shieldedProcedure
       ftpAccount.userid.endsWith(extendedAccountPostfix),
     );
 
-    // if (activePlans.length === 0 && !extendedAccount) {
-    //   throw new TRPCError({
-    //     code: 'BAD_REQUEST',
-    //     message: 'Este usuario no tiene un plan activo',
-    //   });
-    // }
+    if (activePlans.length === 0 && !extendedAccount) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Este usuario no tiene un plan activo',
+      });
+    }
 
     let quotaTallies = await prisma.ftpquotatallies.findFirst({
       where: {
