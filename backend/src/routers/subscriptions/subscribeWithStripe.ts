@@ -54,6 +54,19 @@ export const subscribeWithStripe = shieldedProcedure
           message: 'Ese cupón no existe',
         });
       }
+
+      const usedCoupon = await prisma.cuponsUsed.findFirst({
+        where: {
+          AND: [{ user_id: user.id }, { cupon_id: dbCoupon.id }],
+        },
+      });
+
+      if (usedCoupon) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Ese cupón ya fue usado',
+        });
+      }
     }
 
     const order = await prisma.orders.create({
