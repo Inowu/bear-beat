@@ -1,10 +1,11 @@
 const { PrismaClient } = require('@prisma/client');
 const { config } = require('dotenv');
-const { gbToBytes } = require('../src/utils/gbToBytes');
 
 config();
 
 const prisma = new PrismaClient();
+
+const gbToBytes = (gb) => gb ? gb * 1024 * 1024 * 1024 : 500 * 1024 * 1024 * 1024;
 
 async function updateQuotaLimitsFromSub() {
   const activeSubscriptions = await prisma.descargasUser.findMany({
