@@ -14,8 +14,7 @@ import { logPrefix } from '../../endpoints/download.endpoint';
 import fastFolderSizeSync from 'fast-folder-size/sync';
 import { JobStatus } from '../../queue/jobStatus';
 import axios from 'axios';
-
-const MAX_CONCURRENT_DOWNLOADS = 10;
+import { MAX_CONCURRENT_DOWNLOADS } from '../../queue/compression/worker';
 
 export const downloadDir = shieldedProcedure
   .input(

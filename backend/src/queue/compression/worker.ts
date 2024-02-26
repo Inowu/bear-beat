@@ -5,7 +5,8 @@ import { sse } from '../../sse';
 import { CompressionJob } from './types';
 import { prisma } from '../../db';
 import { addDays } from 'date-fns';
-import compression from './compression-worker';
+
+export const MAX_CONCURRENT_DOWNLOADS = 10;
 
 export const createCompressionWorker = () => {
   const compressionWorker = new Worker<CompressionJob>(
@@ -26,7 +27,7 @@ export const createCompressionWorker = () => {
         host: process.env.REDIS_HOST,
         port: parseInt(process.env.REDIS_PORT as string, 10),
       },
-      concurrency: 1,
+      concurrency: MAX_CONCURRENT_DOWNLOADS,
     },
   );
 

@@ -3,4 +3,5 @@ export type RemoveUsersJob = {
     stripe: string;
     conekta: string;
   }>;
+  userId: number;
 };

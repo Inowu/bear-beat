@@ -115,22 +115,10 @@ async function main() {
 
     initializeCompressionQueue();
 
-    // initializeRemoveUsersQueue();
+    initializeRemoveUsersQueue();
 
-    // TODO: Uncomment when this wowrks
-    // workerFactory('users');
+    workerFactory('users');
     workerFactory('compression');
-
-    // compressionQueue.add('test-job', {
-    //   userId: 1,
-    //   dirSize: fastFolderSize('./node_modules'),
-    //   ftpTalliesId: 1,
-    //   songsAbsolutePath:
-    //     '/home/inowu/Desktop/Projects/bearbeat/backend/node_modules',
-    //   ftpAccountName: 'kevinwoolfolk',
-    //   songsRelativePath: '/bearbeat/backend/node_modules',
-    //   dirDownloadId: 1,
-    // } as CompressionJob);
   } catch (e: any) {
     log.error(e.message);
     await closeConnections();

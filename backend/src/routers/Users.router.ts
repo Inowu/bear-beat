@@ -18,7 +18,6 @@ import { UsersUpsertSchema } from '../schemas/upsertOneUsers.schema';
 import { log } from '../server';
 import { cancelServicesSubscriptions } from './subscriptions/cancel/cancelServicesSubscriptions';
 import { RolesIds } from './auth/interfaces/roles.interface';
-import { workerFactory } from '../queue/workerFactory';
 import { removeUsersQueue, removeUsersQueueName } from '../queue/removeUsers';
 import { RemoveUsersJob } from '../queue/removeUsers/types';
 import { JobStatus } from '../queue/jobStatus';
@@ -232,6 +231,9 @@ export const usersRouter = router({
       });
 
       try {
+        // UNCOMMENT WHEN READY
+        // await prisma.$executeRaw`SET FOREIGN_KEY_CHECKS=0`;
+        //
         // await prisma.$transaction([
         //   prisma.ftpquotatallies.deleteMany({
         //     where: {
@@ -261,6 +263,41 @@ export const usersRouter = router({
         //       },
         //     },
         //   }),
+        //   prisma.orders.deleteMany({
+        //     where: {
+        //       user_id: {
+        //         in: inactiveUsersIds,
+        //       },
+        //     },
+        //   }),
+        //   prisma.dir_downloads.deleteMany({
+        //     where: {
+        //       userId: {
+        //         in: inactiveUsersIds,
+        //       },
+        //     },
+        //   }),
+        //   prisma.cuponsUsed.deleteMany({
+        //     where: {
+        //       user_id: {
+        //         in: inactiveUsersIds,
+        //       },
+        //     },
+        //   }),
+        //   prisma.checkout_logs.deleteMany({
+        //     where: {
+        //       user_id: {
+        //         in: inactiveUsersIds,
+        //       },
+        //     },
+        //   }),
+        //   prisma.jobs.deleteMany({
+        //     where: {
+        //       user_id: {
+        //         in: inactiveUsersIds,
+        //       },
+        //     },
+        //   }),
         //   prisma.users.deleteMany({
         //     where: {
         //       AND: [
@@ -278,6 +315,8 @@ export const usersRouter = router({
         //     },
         //   }),
         // ]);
+        //
+        // await prisma.$executeRaw`SET FOREIGN_KEY_CHECKS=1`;
       } catch (e) {
         log.error(
           `[REMOVE_INACTIVE_USERS] Error removing inactive users, ${e}`,
@@ -290,7 +329,6 @@ export const usersRouter = router({
 
       // Push job to queue
       const job = await removeUsersQueue.add(removeUsersQueueName, {
-        // TODO: DELETE THE SLICE
         userCustomerIds: inactiveUsers
           .slice(0, 500)
           .map(
