@@ -34,6 +34,8 @@ function PlanCard(props: PlanCardPropsI) {
   const navigate = useNavigate();
   const location = useLocation();
   const { pathname } = location;
+  const ManyChatPixel = require('manychat-pixel-js'); 
+  const manyChatPixel = new ManyChatPixel('YOUR_PIXEL_ID');
   const handleCancelModal = () => {
     setShowCancelModal(!showCancelModal);
   }
@@ -115,6 +117,7 @@ function PlanCard(props: PlanCardPropsI) {
   }
   const handleButtonClick = () => {
     fbq('track', 'CarritoAbandonado');
+    manyChatPixel.track('PageView');
   };
   const payWithOxxo = async () => {
     trpc.checkoutLogs.registerCheckoutLog.mutate();
