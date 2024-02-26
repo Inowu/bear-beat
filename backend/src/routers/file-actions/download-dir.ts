@@ -35,7 +35,15 @@ export const downloadDir = shieldedProcedure
       });
     }
 
-    const fileStat = await fileService.stat(fullPath);
+    const dirSize = fastFolderSizeSync(fullPath);
+
+    if (!dirSize) {
+      log.error(`[STORAGE] Couldn't calculate folder size for ${fullPath}`);
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Ocurrió un error al calcular el tamaño de la carpeta',
+      });
+    }
 
     // Check if server has enough storage to perform the download
     try {
@@ -52,7 +60,7 @@ export const downloadDir = shieldedProcedure
       // Add a margin to the storage to avoid reaching the limit
       const storageMargin = 40;
 
-      if (availableStorage <= fileStat.size + storageMargin) {
+      if (availableStorage <= dirSize + storageMargin) {
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message:
@@ -204,7 +212,7 @@ export const downloadDir = shieldedProcedure
     const availableBytes =
       quotaLimits.bytes_out_avail - quotaTallies.bytes_out_used;
 
-    if (availableBytes < fileStat.size) {
+    if (availableBytes < dirSize) {
       log.error(
         `${logPrefix(useExtendedAccount)} Not enough bytes left, user id: ${
           user.id
@@ -273,7 +281,7 @@ export const downloadDir = shieldedProcedure
           id: quotaTallies.id,
         },
         data: {
-          bytes_out_used: quotaTallies.bytes_out_used + BigInt(fileStat.size),
+          bytes_out_used: quotaTallies.bytes_out_used + BigInt(dirSize),
         },
       });
 
