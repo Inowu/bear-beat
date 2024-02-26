@@ -114,7 +114,7 @@ async function main() {
     initializeRemoveUsersQueue();
 
     workerFactory('users');
-    workerFactory('compression');
+    // workerFactory('compression');
   } catch (e: any) {
     log.error(e.message);
     await closeConnections();
