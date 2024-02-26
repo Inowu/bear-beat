@@ -18,11 +18,21 @@ async function removeExpiredCompressedDirs() {
 
   for (const dir of expiredCompressedDirs) {
     console.log(`Removing compressed dir ${dir.id}`);
-    const dirPath = path.resolve(
-      `${process.env.COMPRESSED_DIRS_NAME}/${dir.dirName}-${dir.userId}-${dir.jobId}.zip`,
-    );
+    const job = await prisma.job.findUnique({
+      where: {
+        id: dir.jobId,
+      },
+    });
 
-    fs.unlinkSync(dirPath);
+    try {
+      const dirPath = path.resolve(
+        `${process.env.COMPRESSED_DIRS_NAME}/${dir.dirName}-${dir.userId}-${job.jobId}.zip`,
+      );
+
+      fs.unlinkSync(dirPath);
+    } catch (e) {
+      console.log(`Error removing compressed dir ${dir.id} ${e}`);
+    }
   }
 }
 
