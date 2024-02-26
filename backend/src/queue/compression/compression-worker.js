@@ -9,7 +9,7 @@ module.exports = async function (job) {
   const dirName = `${songsRelativePath}-${job.data.userId}-${job.id}.zip`;
 
   const archive = archiver('zip', {
-    zlib: { level: 5 },
+    zlib: { level: 1 },
   });
 
   console.log(

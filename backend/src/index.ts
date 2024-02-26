@@ -21,7 +21,6 @@ import { stripePiEndpoint } from './endpoints/webhooks/stripePaymentIntents.endp
 import { sse } from './sse';
 import {
   compressionQueue,
-  compressionQueueName,
   initializeCompressionQueue,
 } from './queue/compression';
 import { compressionWorkers, workerFactory } from './queue/workerFactory';
@@ -32,9 +31,6 @@ import {
 } from './queue/removeUsers';
 import { removeUsersWorkers } from './queue/workerFactory';
 import { downloadDirEndpoint } from './endpoints/download-dir.endpoint';
-import { CompressionJob } from './queue/compression/types';
-import fastFolderSize from 'fast-folder-size/sync';
-import archiver from 'archiver';
 
 config({
   path: path.resolve(__dirname, '../.env'),

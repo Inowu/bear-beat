@@ -12,7 +12,7 @@ export default async function (job: Job<CompressionJob>) {
 
   const archive = archiver('zip', {
     zlib: {
-      level: 5,
+      level: 1,
     },
   });
 
