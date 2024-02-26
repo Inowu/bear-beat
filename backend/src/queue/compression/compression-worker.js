@@ -8,7 +8,9 @@ module.exports = async function (job) {
 
   const dirName = `${songsRelativePath}-${job.data.userId}-${job.id}.zip`;
 
-  const archive = archiver('zip');
+  const archive = archiver('zip', {
+    zlib: { level: 9 },
+  });
 
   console.log(
     `[COMPRESSION:START] Compressing ${songsAbsolutePath} to ${dirName}`,

@@ -11,8 +11,8 @@ export const createCompressionWorker = () => {
   const compressionWorker = new Worker<CompressionJob>(
     compressionQueueName,
     // Spawn a new process for each job
-    // `${__dirname}/compression-worker.js`,
-    compression,
+    `${__dirname}/compression-worker.js`,
+    // compression,
     {
       lockDuration: 1000 * 60 * 60 * 10,
       useWorkerThreads: true,
@@ -37,9 +37,10 @@ export const createCompressionWorker = () => {
   compressionWorker.on('completed', async (job: Job<CompressionJob>) => {
     log.info(`[WORKER:COMPRESSION] Job ${job.id} completed`);
     // Save the download URL in the database in case the user wants to download it later
-    const downloadUrl = encodeURIComponent(
-      `${process.env.BACKEND_URL}/download-dir?dirName=${job.data.songsRelativePath}-${job.data.userId}-${job.id}.zip&jobId=${job.id}`,
+    const dirName = encodeURIComponent(
+      `${job.data.songsRelativePath}-${job.data.userId}-${job.id}`,
     );
+    const downloadUrl = `${process.env.BACKEND_URL}/download-dir?dirName=${dirName}.zip&jobId=${job.id}`;
 
     await prisma.dir_downloads.update({
       where: {

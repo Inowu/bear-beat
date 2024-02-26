@@ -288,9 +288,6 @@ export const usersRouter = router({
         });
       }
 
-      // Create a worker
-      // workerFactory('users');
-
       // Push job to queue
       const job = await removeUsersQueue.add(removeUsersQueueName, {
         // TODO: DELETE THE SLICE
