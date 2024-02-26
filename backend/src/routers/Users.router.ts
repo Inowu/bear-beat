@@ -18,7 +18,6 @@ import { UsersUpsertSchema } from '../schemas/upsertOneUsers.schema';
 import { log } from '../server';
 import { cancelServicesSubscriptions } from './subscriptions/cancel/cancelServicesSubscriptions';
 import { RolesIds } from './auth/interfaces/roles.interface';
-import { workerFactory } from '../queue/workerFactory';
 import { removeUsersQueue, removeUsersQueueName } from '../queue/removeUsers';
 import { RemoveUsersJob } from '../queue/removeUsers/types';
 import { JobStatus } from '../queue/jobStatus';
@@ -64,7 +63,7 @@ export const usersRouter = router({
       const activeSubs = await prisma.descargasUser.findMany({
         where: {
           date_end: {
-            gte: new Date(),
+            gte: subMonths(new Date(), 1),
           },
         },
       });
@@ -232,45 +231,91 @@ export const usersRouter = router({
       });
 
       try {
-        // await prisma.$transaction([
-        //   prisma.ftpquotatallies.deleteMany({
-        //     where: {
-        //       id: {
-        //         in: tallies.map((tally) => tally.id),
-        //       },
-        //     },
-        //   }),
-        //   prisma.ftpQuotaLimits.deleteMany({
-        //     where: {
-        //       id: {
-        //         in: limits.map((limit) => limit.id),
-        //       },
-        //     },
-        //   }),
-        //   prisma.descargasUser.deleteMany({
-        //     where: {
-        //       user_id: {
-        //         in: inactiveUsersIds,
-        //       },
-        //     },
-        //   }),
-        //   prisma.users.deleteMany({
-        //     where: {
-        //       AND: [
-        //         {
-        //           id: {
-        //             in: inactiveUsersIds,
-        //           },
-        //         },
-        //         {
-        //           NOT: {
-        //             role_id: RolesIds.admin,
-        //           },
-        //         },
-        //       ],
-        //     },
-        //   }),
-        // ]);
+        await prisma.$executeRaw`SET FOREIGN_KEY_CHECKS=0`;
+
+        await prisma.$transaction([
+          prisma.ftpquotatallies.deleteMany({
+            where: {
+              id: {
+                in: tallies.map((tally) => tally.id),
+              },
+            },
+          }),
+          prisma.ftpQuotaLimits.deleteMany({
+            where: {
+              id: {
+                in: limits.map((limit) => limit.id),
+              },
+            },
+          }),
+          prisma.ftpUser.deleteMany({
+            where: {
+              user_id: {
+                in: inactiveUsersIds,
+              },
+            },
+          }),
+          prisma.descargasUser.deleteMany({
+            where: {
+              user_id: {
+                in: inactiveUsersIds,
+              },
+            },
+          }),
+          prisma.orders.deleteMany({
+            where: {
+              user_id: {
+                in: inactiveUsersIds,
+              },
+            },
+          }),
+          prisma.dir_downloads.deleteMany({
+            where: {
+              userId: {
+                in: inactiveUsersIds,
+              },
+            },
+          }),
+          prisma.cuponsUsed.deleteMany({
+            where: {
+              user_id: {
+                in: inactiveUsersIds,
+              },
+            },
+          }),
+          prisma.checkout_logs.deleteMany({
+            where: {
+              user_id: {
+                in: inactiveUsersIds,
+              },
+            },
+          }),
+          prisma.jobs.deleteMany({
+            where: {
+              user_id: {
+                in: inactiveUsersIds,
+              },
+            },
+          }),
+          prisma.users.deleteMany({
+            where: {
+              AND: [
+                {
+                  id: {
+                    in: inactiveUsersIds,
+                  },
+                },
+                {
+                  NOT: {
+                    role_id: RolesIds.admin,
+                  },
+                },
+              ],
+            },
+          }),
+        ]);
+
+        await prisma.$executeRaw`SET FOREIGN_KEY_CHECKS=1`;
       } catch (e) {
         log.error(
           `[REMOVE_INACTIVE_USERS] Error removing inactive users, ${e}`,
@@ -281,12 +326,8 @@ export const usersRouter = router({
         });
       }
 
-      // Create a worker
-      // workerFactory('users');
-
       // Push job to queue
       const job = await removeUsersQueue.add(removeUsersQueueName, {
-        // TODO: DELETE THE SLICE
         userCustomerIds: inactiveUsers
           .slice(0, 500)
           .map(
@@ -301,6 +342,7 @@ export const usersRouter = router({
             }),
           )
           .filter((user) => user.stripe || user.conekta),
+        userId: session!.user!.id,
       } as RemoveUsersJob);
 
       await prisma.jobs.create({

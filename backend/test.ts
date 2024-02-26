@@ -1,6 +1,9 @@
 import Stripe from 'stripe';
 import { paypal } from './src/paypal';
 import archiver from 'archiver';
+import type { CompressionJob } from './src/queue/compression/types';
+import fastFolderSizeSync from 'fast-folder-size/sync';
+import { Queue, Worker } from 'bullmq';
 import fs from 'fs';
 import { config } from 'dotenv';
 import {
@@ -11,6 +14,7 @@ import {
   OrdersApi,
 } from 'conekta';
 import axios from 'axios';
+import path from 'path';
 
 config();
 
@@ -140,19 +144,116 @@ async function main() {
 
   // console.log(res);
 
-  const archive = archiver('zip', {
-    zlib: { level: 9 },
+  const q = new Queue('test-queue');
+
+  const worker = new Worker<CompressionJob>(
+    'test-queue',
+    async (job) => {
+      const { songsAbsolutePath, songsRelativePath } = job.data;
+
+      console.log(job.data);
+      // const dirName = `${songsRelativePath}-${job.data.userId}-${job.id}.zip`;
+      const dirName = '/home/inowu/Desktop/Projects/cardscan-infrastructure/';
+
+      const archive = archiver('zip');
+
+      console.log(
+        `[COMPRESSION:START] Compressing ${songsAbsolutePath} to ${dirName}`,
+      );
+
+      const zippedDirPath = path.resolve(
+        __dirname,
+        `../../../${process.env.COMPRESSED_DIRS_NAME}/${dirName}`,
+      );
+
+      const output = fs.createWriteStream('./compressed-dirs/test.zip');
+
+      const size = fastFolderSizeSync(dirName)!;
+
+      archive.on('warning', function (err) {
+        if (err.code === 'ENOENT') {
+          console.log(`[COMPRESSION:WARNING] ${err}`);
+        } else {
+          console.log(`[COMPRESSION:ERROR] ${err}`);
+        }
+      });
+
+      output.on('end', function () {
+        console.log('[COMPRESSION:END] Data has been drained');
+      });
+
+      output.on('close', function () {
+        console.log(
+          `[COMPRESSION:CLOSE] Archiver has been finalized and the output file descriptor has closed. ${archive.pointer()} total bytes`,
+        );
+      });
+
+      archive.pipe(output);
+      archive.directory(dirName, false);
+
+      archive.on('error', (error) => {
+        console.log(
+          `[COMPRESSION:ERROR] Error while zipping ${songsAbsolutePath}: ${error.message}, code: ${error.code}, ${error.data}`,
+        );
+
+        throw error;
+      });
+
+      archive.on('finish', () => {
+        console.log(
+          `[COMPRESSION:FINISH] Finished zipping ${songsAbsolutePath}`,
+        );
+      });
+
+      archive.on('progress', (progress) => {
+        const progressPercentage = (progress.fs.processedBytes / size) * 100;
+        if (Math.trunc(progressPercentage) % 10 === 0) {
+          console.log(progressPercentage);
+        }
+        job.updateProgress(Math.min(progressPercentage));
+      });
+
+      await archive.finalize();
+    },
+    {
+      useWorkerThreads: true,
+      lockDuration: 1000 * 60 * 60 * 10, // 10 hours
+      concurrency: 1,
+      removeOnComplete: {
+        count: 0,
+      },
+      removeOnFail: {
+        count: 0,
+      },
+    },
+  );
+
+  worker.on('closed', () => console.log('Worker closed'));
+
+  worker.on('ready', () => console.log('Worker ready'));
+
+  worker.on('failed', (job) => console.log(`Job failed ${job?.id}`));
+
+  worker.on('completed', (job) => console.log(`Job completed ${job.id}`));
+
+  worker.on('stalled', (job) => {
+    console.warn(`[WORKER:COMPRESSION] Job ${job} stalled`);
   });
 
-  const output = fs.createWriteStream('./compressed-dirs/test.zip');
+  worker.on('error', (error) => {
+    console.error(`[WORKER:COMPRESSION] Error: ${error}`);
+  });
 
-  archive.on('progress', (progress) => console.log(progress));
-
-  archive.directory('./node_modules', false);
-
-  archive.pipe(output);
-
-  await archive.finalize();
+  q.add('test-job', {
+    userId: 1,
+    dirSize: fastFolderSizeSync('./node_modules'),
+    ftpTalliesId: 1,
+    songsAbsolutePath:
+      '/home/inowu/Desktop/Projects/bearbeat/backend/node_modules',
+    ftpAccountName: 'kevinwoolfolk',
+    songsRelativePath: '/bearbeat/backend/node_modules',
+    dirDownloadId: 1,
+  } as CompressionJob);
 }
 
 main();

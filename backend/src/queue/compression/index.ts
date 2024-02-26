@@ -11,7 +11,7 @@ export const initializeCompressionQueue = () => {
     connection: {
       host: process.env.REDIS_HOST,
       port: parseInt(process.env.REDIS_PORT as string, 10),
-      enableOfflineQueue: false,
+      // enableOfflineQueue: false,
     },
   });
 
@@ -21,7 +21,7 @@ export const initializeCompressionQueue = () => {
 
   compressionQueue.on('waiting', (job) => {
     // Create a new worker if there are no workers available
-    workerFactory('compression');
+    // workerFactory('compression');
 
     log.info(`[QUEUE:COMPRESSION] Waiting for job: ${job.id}`);
   });

@@ -13,8 +13,8 @@ import { extendedAccountPostfix } from '../../utils/constants';
 import { logPrefix } from '../../endpoints/download.endpoint';
 import fastFolderSizeSync from 'fast-folder-size/sync';
 import { JobStatus } from '../../queue/jobStatus';
-
-const MAX_CONCURRENT_DOWNLOADS = 10;
+import axios from 'axios';
+import { MAX_CONCURRENT_DOWNLOADS } from '../../queue/compression/worker';
 
 export const downloadDir = shieldedProcedure
   .input(
@@ -25,12 +25,56 @@ export const downloadDir = shieldedProcedure
   .query(async ({ input: { path }, ctx: { prisma, session } }) => {
     const user = session!.user!;
 
+    const fullPath = `${process.env.SONGS_PATH}${path}`;
+    const fileExists = await fileService.exists(fullPath);
+
+    if (!fileExists) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Esa carpeta no existe',
+      });
+    }
+
+    const fileStat = await fileService.stat(fullPath);
+
+    // Check if server has enough storage to perform the download
+    try {
+      const response = await axios('http://0.0.0.0:8123/');
+
+      const {
+        available_storage: availableStorage,
+      }: {
+        available_storage: number;
+        used_storage: number;
+        total_storage: number;
+      } = response.data;
+
+      // Add a margin to the storage to avoid reaching the limit
+      const storageMargin = 40;
+
+      if (availableStorage <= fileStat.size + storageMargin) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message:
+            'Lo sentimos, por el momento el servidor no cuenta con suficientes recursos para realizar esta descarga',
+        });
+      }
+    } catch (e: unknown) {
+      log.error(`[STORAGE] Couldn't check os storage: ${e}`);
+
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Ocurrió un error al iniciar la descarga',
+      });
+    }
+
     const inProgressJobs = await prisma.jobs.findMany({
       where: {
         status: JobStatus.IN_PROGRESS,
       },
     });
 
+    // Only allow one download per user
     if (inProgressJobs.find((job) => job.user_id === user.id)) {
       throw new TRPCError({
         code: 'BAD_REQUEST',
@@ -39,20 +83,10 @@ export const downloadDir = shieldedProcedure
       });
     }
 
-    if (inProgressJobs.length > MAX_CONCURRENT_DOWNLOADS) {
+    if (inProgressJobs.length >= MAX_CONCURRENT_DOWNLOADS) {
       throw new TRPCError({
         code: 'BAD_REQUEST',
         message: 'Hay demasiadas descargas en progreso, intentalo más tarde',
-      });
-    }
-
-    const fullPath = `${process.env.SONGS_PATH}${path}`;
-    const fileExists = await fileService.exists(fullPath);
-
-    if (!fileExists) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'Esa carpeta no existe',
       });
     }
 
@@ -167,8 +201,6 @@ export const downloadDir = shieldedProcedure
       });
     }
 
-    const fileStat = await fileService.stat(fullPath);
-
     const availableBytes =
       quotaLimits.bytes_out_avail - quotaTallies.bytes_out_used;
 
@@ -214,22 +246,22 @@ export const downloadDir = shieldedProcedure
         `[DOWNLOAD:DIR] Added job ${job.id} to queue for user ${user.id}`,
       );
 
-      await prisma.dir_downloads.update({
-        where: {
-          id: dirDownload.id,
-        },
-        data: {
-          jobId: Number(job.id),
-        },
-      });
-
-      await prisma.jobs.create({
+      const dbJob = await prisma.jobs.create({
         data: {
           jobId: job.id,
           queue: compressionQueueName,
           status: JobStatus.IN_PROGRESS,
           user_id: user.id,
           createdAt: new Date(),
+        },
+      });
+
+      await prisma.dir_downloads.update({
+        where: {
+          id: dirDownload.id,
+        },
+        data: {
+          jobId: dbJob.id,
         },
       });
 

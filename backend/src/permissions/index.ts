@@ -37,6 +37,7 @@ export const permissions = shield<Context>({
     subscribeWithStripe: isLoggedIn,
     listStripeCards: isLoggedIn,
     getProducts: isLoggedIn,
+    myDirDownloads: isLoggedIn,
     getCheckoutLogs: isAdmin,
     aggregateConfig: isAdmin,
     aggregateCountries: isAdmin,
@@ -110,6 +111,7 @@ export const permissions = shield<Context>({
     groupByUsers: isAdmin,
   },
   mutation: {
+    updatePlanInfo: isLoggedIn,
     removeInactiveUsers: isAdmin,
     getCurrentSubscriptionPlan: isLoggedIn,
     changeSubscriptionPlan: isLoggedIn,

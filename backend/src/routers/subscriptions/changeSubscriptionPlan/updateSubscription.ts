@@ -103,12 +103,13 @@ export const updatePaypalSubscription = async ({
     });
   }
 
-  await updateFtpUserInfo({
-    subscription,
-    user,
-    subscriptionOrder,
-    newPlan,
-  });
+  // This is done after user accepted the change on the client
+  // await updateFtpUserInfo({
+  //   subscription,
+  //   user,
+  //   subscriptionOrder,
+  //   newPlan,
+  // });
 
   const token = await paypal.getToken();
 
@@ -143,7 +144,7 @@ export const updatePaypalSubscription = async ({
   }
 };
 
-const updateFtpUserInfo = async ({
+export const updateFtpUserInfo = async ({
   subscription,
   user,
   subscriptionOrder,

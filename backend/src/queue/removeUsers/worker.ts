@@ -12,7 +12,7 @@ export const createRemoveUsersWorker = () => {
     removeUsersQueueName,
     removeUsersProcessor,
     {
-      // lockDuration: 1000 * 60 * 60 * 10,
+      lockDuration: 1000 * 60 * 60 * 10, // 10 hours
       removeOnComplete: {
         count: 0,
       },
@@ -70,7 +70,7 @@ export const createRemoveUsersWorker = () => {
         queue: removeUsersQueueName,
         jobId: job.id,
       }),
-      'remove-users:completed',
+      `remove-users:completed:${job.data.userId}`,
     );
   });
 
@@ -114,7 +114,7 @@ export const createRemoveUsersWorker = () => {
         jobId: job?.id,
         queue: removeUsersQueueName,
       }),
-      'remove-users:failed',
+      `remove-users:failed:${job?.data.userId}`,
     );
   });
 
@@ -137,7 +137,7 @@ export const createRemoveUsersWorker = () => {
         queue: removeUsersQueueName,
         jobId: job.id,
       }),
-      'remove-users:progress',
+      `remove-users:progress:${job.data.userId}`,
     );
   });
 

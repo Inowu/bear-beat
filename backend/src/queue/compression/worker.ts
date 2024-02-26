@@ -5,14 +5,15 @@ import { sse } from '../../sse';
 import { CompressionJob } from './types';
 import { prisma } from '../../db';
 import { addDays } from 'date-fns';
-import compression from './compression-worker';
+
+export const MAX_CONCURRENT_DOWNLOADS = 10;
 
 export const createCompressionWorker = () => {
   const compressionWorker = new Worker<CompressionJob>(
     compressionQueueName,
     // Spawn a new process for each job
-    // `${__dirname}/compression-worker.js`,
-    compression,
+    `${__dirname}/compression-worker.js`,
+    // compression,
     {
       lockDuration: 1000 * 60 * 60 * 10,
       useWorkerThreads: true,
@@ -26,7 +27,7 @@ export const createCompressionWorker = () => {
         host: process.env.REDIS_HOST,
         port: parseInt(process.env.REDIS_PORT as string, 10),
       },
-      concurrency: 1,
+      concurrency: MAX_CONCURRENT_DOWNLOADS,
     },
   );
 
@@ -37,22 +38,40 @@ export const createCompressionWorker = () => {
   compressionWorker.on('completed', async (job: Job<CompressionJob>) => {
     log.info(`[WORKER:COMPRESSION] Job ${job.id} completed`);
     // Save the download URL in the database in case the user wants to download it later
+    const dirName = encodeURIComponent(
+      `${job.data.songsRelativePath}-${job.data.userId}-${job.id}`,
+    );
+    const downloadUrl = `${process.env.BACKEND_URL}/download-dir?dirName=${dirName}.zip&jobId=${job.id}`;
+
     await prisma.dir_downloads.update({
       where: {
         id: job.data.dirDownloadId,
       },
       data: {
         // Note: The client has to append the token to the URL. &token=<token>
-        downloadUrl: `${process.env.BACKEND_URL}/download-dir?dirName=${job.data.songsRelativePath}-${job.data.userId}-${job.id}.zip&jobId=${job.id}`,
+        downloadUrl,
         // The URL is valid for 24 hours
         expirationDate: addDays(new Date(), 1),
       },
     });
 
     try {
+      const dbJob = await prisma.jobs.findFirst({
+        where: {
+          AND: [{ jobId: job.id }, { queue: compressionQueueName }],
+        },
+      });
+
+      if (!dbJob) {
+        log.error(
+          `[WORKER:COMPRESSION] Job ${job.id} not found in the database`,
+        );
+        return;
+      }
+
       await prisma.jobs.update({
         where: {
-          id: Number(job.id),
+          id: dbJob.id,
         },
         data: {
           status: 'completed',
@@ -70,9 +89,9 @@ export const createCompressionWorker = () => {
     sse.send(
       JSON.stringify({
         jobId: job.id,
-        url: `${process.env.BACKEND_URL}/compressed-dirs${job.data.songsRelativePath}-${job.data.userId}-${job.id}.zip`,
+        url: downloadUrl,
       }),
-      'compression:completed',
+      `compression:completed:${job.data.userId}`,
     );
   });
 
@@ -81,9 +100,22 @@ export const createCompressionWorker = () => {
 
     if (job?.id) {
       try {
+        const dbJob = await prisma.jobs.findFirst({
+          where: {
+            AND: [{ jobId: job.id }, { queue: compressionQueueName }],
+          },
+        });
+
+        if (!dbJob) {
+          log.error(
+            `[WORKER:COMPRESSION] Job ${job.id} not found in the database`,
+          );
+          return;
+        }
+
         await prisma.jobs.update({
           where: {
-            id: Number(job?.id),
+            id: dbJob.id,
           },
           data: {
             status: 'failed',
@@ -131,7 +163,7 @@ export const createCompressionWorker = () => {
       JSON.stringify({
         jobId: job?.id,
       }),
-      'compression:failed',
+      `compression:failed:${job?.data.userId}`,
     );
   });
 
@@ -153,7 +185,7 @@ export const createCompressionWorker = () => {
         progress,
         jobId: job.id,
       }),
-      'compression:progress',
+      `compression:progress:${job.data.userId}`,
     );
   });
 

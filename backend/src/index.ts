@@ -1,6 +1,8 @@
 import path from 'path';
+import fs from 'fs';
 import tracer from 'dd-trace';
 import { config } from 'dotenv';
+import { Queue, Worker } from 'bullmq';
 import { createExpressMiddleware } from '@trpc/server/adapters/express';
 import express from 'express';
 import cors from 'cors';
@@ -53,7 +55,7 @@ async function main() {
 
     app.use(cors({ origin: '*' }));
 
-    app.get('/sse', sse.init);
+    // app.get('/sse', sse.init);
 
     app.use(
       '/trpc',
@@ -111,8 +113,7 @@ async function main() {
 
     initializeRemoveUsersQueue();
 
-    // TODO: Uncomment when this wowrks
-    // workerFactory('users');
+    workerFactory('users');
     // workerFactory('compression');
   } catch (e: any) {
     log.error(e.message);

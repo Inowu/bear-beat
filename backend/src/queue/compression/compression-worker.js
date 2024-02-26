@@ -1,19 +1,15 @@
-import fs from 'fs';
-import path from 'path';
-import archiver from 'archiver';
-import { Job } from 'bullmq';
-import fastFolderSize from 'fast-folder-size/sync';
-import { CompressionJob } from './types';
+const fs = require('fs');
+const path = require('path');
+const archiver = require('archiver');
+const fastFolderSize = require('fast-folder-size/sync');
 
-export default async function (job: Job<CompressionJob>) {
+module.exports = async function (job) {
   const { songsAbsolutePath, songsRelativePath } = job.data;
 
   const dirName = `${songsRelativePath}-${job.data.userId}-${job.id}.zip`;
 
   const archive = archiver('zip', {
-    zlib: {
-      level: 1,
-    },
+    zlib: { level: 1 },
   });
 
   console.log(
@@ -27,7 +23,7 @@ export default async function (job: Job<CompressionJob>) {
 
   const output = fs.createWriteStream(zippedDirPath);
 
-  const size = fastFolderSize(songsAbsolutePath)!;
+  const size = fastFolderSize(songsAbsolutePath);
 
   archive.on('warning', function (err) {
     if (err.code === 'ENOENT') {
@@ -37,9 +33,9 @@ export default async function (job: Job<CompressionJob>) {
     }
   });
 
-  // output.on('end', function () {
-  //   console.log('[COMPRESSION:END] Data has been drained');
-  // });
+  output.on('end', function () {
+    console.log('[COMPRESSION:END] Data has been drained');
+  });
 
   output.on('close', function () {
     console.log(
@@ -73,4 +69,4 @@ export default async function (job: Job<CompressionJob>) {
   });
 
   await archive.finalize();
-}
+};
