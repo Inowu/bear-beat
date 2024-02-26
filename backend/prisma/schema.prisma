@@ -159,6 +159,7 @@ model Plans {
   conekta_plan_id_test String? @db.Text
   paypal_plan_id       String? @db.Text
   paypal_plan_id_test  String? @db.Text
+  paypal_product_id    String? @db.Text
 
   @@map("plans")
 }
