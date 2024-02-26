@@ -343,6 +343,7 @@ export const usersRouter = router({
             }),
           )
           .filter((user) => user.stripe || user.conekta),
+        userId: session!.user!.id,
       } as RemoveUsersJob);
 
       await prisma.jobs.create({

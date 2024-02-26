@@ -9,9 +9,9 @@ export default async function (job: Job<RemoveUsersJob>) {
     const ids = job.data.userCustomerIds[i];
 
     // DO NOT DELETE USERS IN TEST SERVER, SINCE DATABASE IS A COPY OF PRODUCTION
-    log.info(
-      `[REMOVE_INACTIVE_USERS] Test server, simulating delay. Stripe id: ${ids.stripe}, Conekta id: ${ids.conekta}`,
-    );
+    // log.info(
+    //   `[REMOVE_INACTIVE_USERS] Test server, simulating delay. Stripe id: ${ids.stripe}, Conekta id: ${ids.conekta}`,
+    // );
     await new Promise((res) => setTimeout(res, 100));
     job.updateProgress((i / job.data.userCustomerIds.length) * 100);
     continue;
