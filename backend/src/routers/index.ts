@@ -5,6 +5,7 @@ import { countriesRouter } from './Countries.router';
 import { cuponsRouter } from './Cupons.router';
 import { cuponsusedsRouter } from './CuponsUsed.router';
 import { descargasusersRouter } from './DescargasUser.router';
+import { dirDownloadRouter } from './DirDownload.router';
 import { ftpquotalimitsRouter } from './FtpQuotaLimits.router';
 import { ftpquotatallieshistoriesRouter } from './FtpQuotatAlliesHistory.router';
 import { ftpusersRouter } from './FtpUser.router';
@@ -45,6 +46,7 @@ export const appRouter = router({
   users: usersRouter,
   products: productsRouter,
   checkoutLogs: checkoutLogsRouter,
+  dirDownloads: dirDownloadRouter,
 });
 
 export type AppRouter = typeof appRouter;

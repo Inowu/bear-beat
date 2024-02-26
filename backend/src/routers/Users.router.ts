@@ -63,7 +63,7 @@ export const usersRouter = router({
       const activeSubs = await prisma.descargasUser.findMany({
         where: {
           date_end: {
-            gte: new Date(),
+            gte: subMonths(new Date(), 1),
           },
         },
       });
@@ -231,92 +231,91 @@ export const usersRouter = router({
       });
 
       try {
-        // UNCOMMENT WHEN READY
-        // await prisma.$executeRaw`SET FOREIGN_KEY_CHECKS=0`;
-        //
-        // await prisma.$transaction([
-        //   prisma.ftpquotatallies.deleteMany({
-        //     where: {
-        //       id: {
-        //         in: tallies.map((tally) => tally.id),
-        //       },
-        //     },
-        //   }),
-        //   prisma.ftpQuotaLimits.deleteMany({
-        //     where: {
-        //       id: {
-        //         in: limits.map((limit) => limit.id),
-        //       },
-        //     },
-        //   }),
-        //   prisma.ftpUser.deleteMany({
-        //     where: {
-        //       user_id: {
-        //         in: inactiveUsersIds,
-        //       },
-        //     },
-        //   }),
-        //   prisma.descargasUser.deleteMany({
-        //     where: {
-        //       user_id: {
-        //         in: inactiveUsersIds,
-        //       },
-        //     },
-        //   }),
-        //   prisma.orders.deleteMany({
-        //     where: {
-        //       user_id: {
-        //         in: inactiveUsersIds,
-        //       },
-        //     },
-        //   }),
-        //   prisma.dir_downloads.deleteMany({
-        //     where: {
-        //       userId: {
-        //         in: inactiveUsersIds,
-        //       },
-        //     },
-        //   }),
-        //   prisma.cuponsUsed.deleteMany({
-        //     where: {
-        //       user_id: {
-        //         in: inactiveUsersIds,
-        //       },
-        //     },
-        //   }),
-        //   prisma.checkout_logs.deleteMany({
-        //     where: {
-        //       user_id: {
-        //         in: inactiveUsersIds,
-        //       },
-        //     },
-        //   }),
-        //   prisma.jobs.deleteMany({
-        //     where: {
-        //       user_id: {
-        //         in: inactiveUsersIds,
-        //       },
-        //     },
-        //   }),
-        //   prisma.users.deleteMany({
-        //     where: {
-        //       AND: [
-        //         {
-        //           id: {
-        //             in: inactiveUsersIds,
-        //           },
-        //         },
-        //         {
-        //           NOT: {
-        //             role_id: RolesIds.admin,
-        //           },
-        //         },
-        //       ],
-        //     },
-        //   }),
-        // ]);
-        //
-        // await prisma.$executeRaw`SET FOREIGN_KEY_CHECKS=1`;
+        await prisma.$executeRaw`SET FOREIGN_KEY_CHECKS=0`;
+
+        await prisma.$transaction([
+          prisma.ftpquotatallies.deleteMany({
+            where: {
+              id: {
+                in: tallies.map((tally) => tally.id),
+              },
+            },
+          }),
+          prisma.ftpQuotaLimits.deleteMany({
+            where: {
+              id: {
+                in: limits.map((limit) => limit.id),
+              },
+            },
+          }),
+          prisma.ftpUser.deleteMany({
+            where: {
+              user_id: {
+                in: inactiveUsersIds,
+              },
+            },
+          }),
+          prisma.descargasUser.deleteMany({
+            where: {
+              user_id: {
+                in: inactiveUsersIds,
+              },
+            },
+          }),
+          prisma.orders.deleteMany({
+            where: {
+              user_id: {
+                in: inactiveUsersIds,
+              },
+            },
+          }),
+          prisma.dir_downloads.deleteMany({
+            where: {
+              userId: {
+                in: inactiveUsersIds,
+              },
+            },
+          }),
+          prisma.cuponsUsed.deleteMany({
+            where: {
+              user_id: {
+                in: inactiveUsersIds,
+              },
+            },
+          }),
+          prisma.checkout_logs.deleteMany({
+            where: {
+              user_id: {
+                in: inactiveUsersIds,
+              },
+            },
+          }),
+          prisma.jobs.deleteMany({
+            where: {
+              user_id: {
+                in: inactiveUsersIds,
+              },
+            },
+          }),
+          prisma.users.deleteMany({
+            where: {
+              AND: [
+                {
+                  id: {
+                    in: inactiveUsersIds,
+                  },
+                },
+                {
+                  NOT: {
+                    role_id: RolesIds.admin,
+                  },
+                },
+              ],
+            },
+          }),
+        ]);
+
+        await prisma.$executeRaw`SET FOREIGN_KEY_CHECKS=1`;
       } catch (e) {
         log.error(
           `[REMOVE_INACTIVE_USERS] Error removing inactive users, ${e}`,

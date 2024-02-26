@@ -58,7 +58,7 @@ export const createCompressionWorker = () => {
     try {
       const dbJob = await prisma.jobs.findFirst({
         where: {
-          jobId: job.id,
+          AND: [{ jobId: job.id }, { queue: compressionQueueName }],
         },
       });
 
@@ -102,7 +102,7 @@ export const createCompressionWorker = () => {
       try {
         const dbJob = await prisma.jobs.findFirst({
           where: {
-            jobId: job.id,
+            AND: [{ jobId: job.id }, { queue: compressionQueueName }],
           },
         });
 

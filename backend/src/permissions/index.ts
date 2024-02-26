@@ -37,6 +37,7 @@ export const permissions = shield<Context>({
     subscribeWithStripe: isLoggedIn,
     listStripeCards: isLoggedIn,
     getProducts: isLoggedIn,
+    myDirDownloads: isLoggedIn,
     getCheckoutLogs: isAdmin,
     aggregateConfig: isAdmin,
     aggregateCountries: isAdmin,

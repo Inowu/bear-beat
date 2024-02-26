@@ -6,6 +6,7 @@ import { log } from '../server';
 import { prisma } from '../db';
 import { JobStatus } from '../queue/jobStatus';
 import { fileService } from '../ftp';
+import { compressionQueueName } from '../queue/compression';
 
 export const downloadDirEndpoint = async (req: Request, res: Response) => {
   const token = req.query.token as string;
@@ -54,6 +55,7 @@ export const downloadDirEndpoint = async (req: Request, res: Response) => {
     where: {
       AND: [
         { status: JobStatus.COMPLETED },
+        { queue: compressionQueueName },
         { jobId: jobId },
         { user_id: user.id },
       ],
