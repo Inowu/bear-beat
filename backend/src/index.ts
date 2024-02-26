@@ -55,7 +55,7 @@ async function main() {
 
     app.use(cors({ origin: '*' }));
 
-    app.get('/sse', sse.init);
+    // app.get('/sse', sse.init);
 
     app.use(
       '/trpc',
