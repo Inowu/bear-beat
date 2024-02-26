@@ -18,7 +18,7 @@ module.exports = async function (job) {
 
   const zippedDirPath = path.resolve(
     __dirname,
-    `../${process.env.COMPRESSED_DIRS_NAME}/${dirName}`,
+    `../${process.env.COMPRESSED_DIRS_NAME}/${dirName.replace(/\//g, '-')}`,
   );
 
   const output = fs.createWriteStream(zippedDirPath);
