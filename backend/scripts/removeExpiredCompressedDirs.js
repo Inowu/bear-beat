@@ -18,7 +18,7 @@ async function removeExpiredCompressedDirs() {
 
   for (const dir of expiredCompressedDirs) {
     console.log(`Removing compressed dir ${dir.id}`);
-    const job = await prisma.job.findUnique({
+    const job = await prisma.jobs.findUnique({
       where: {
         id: dir.jobId,
       },
