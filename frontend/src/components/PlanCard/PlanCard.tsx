@@ -80,6 +80,7 @@ function PlanCard(props: PlanCardPropsI) {
         setSuccessTitle("Suscripción Cambiada");
       }
     } catch (error: any) {
+      console.log(error.message);
       setErrorMSG(error.message);
       handleErrorModal();
     }

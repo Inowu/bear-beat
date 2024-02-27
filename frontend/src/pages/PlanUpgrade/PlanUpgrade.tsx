@@ -16,7 +16,8 @@ export const PlanUpgrade = () => {
   const getPlans = async (
     plan_id: number,
     stripe: string | null,
-    quota: number
+    quota: number,
+    product_id: string | null
   ) => {
     let gb_spend = BigInt(Math.round(quota / 1000000000));
     try {
@@ -36,10 +37,15 @@ export const PlanUpgrade = () => {
         const plans: any = await trpc.plans.findManyPlans.query(body);
         setPlans(plans);
       } else {
+        if (product_id === null) {
+          setLoader(false);
+          return;
+        }
         let body = {
           where: {
             activated: 1,
             stripe_prod_id: null,
+            // paypal_product_id: product_id,
             NOT: {
               id: plan_id,
             },
@@ -49,7 +55,10 @@ export const PlanUpgrade = () => {
           },
         };
         const plans: any = await trpc.plans.findManyPlans.query(body);
-        setPlans(plans);
+        let paypalplans = plans.filter(
+          (plan: any) => plan.paypal_product_id === product_id
+        );
+        setPlans(paypalplans);
       }
       setLoader(false);
     } catch (error) {
@@ -68,7 +77,8 @@ export const PlanUpgrade = () => {
         getPlans(
           tempPlan.id,
           tempPlan.stripe_prod_id,
-          +quota.regular.used.toString()
+          +quota.regular.used.toString(),
+          tempPlan.paypal_product_id
         );
         setCurrentPlan(tempPlan);
       }
