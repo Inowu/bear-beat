@@ -300,7 +300,7 @@ function Home() {
                           })}
                         </h4>
                       </div>
-                      {checkSize(file.size) && (
+                      {/* {checkSize(file.size) && (
                         <div className="download-button">
                           {loadDownload && index === idx ? (
                             <Spinner size={2} width={0.2} color="black" />
@@ -311,7 +311,7 @@ function Home() {
                             />
                           )}
                         </div>
-                      )}
+                      )} */}
                     </div>
                   )}
                   {file.type === "-" && (
