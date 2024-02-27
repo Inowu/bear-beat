@@ -4,15 +4,15 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
-  .header-contain{
+  .header-contain {
     display: flex;
     justify-content: space-between;
   }
   h2 {
     font-size: 2.8rem;
   }
-  .btn-back{
-    button{
+  .btn-back {
+    button {
       display: flex;
       gap: 10px;
       padding-block: 5px;
@@ -22,13 +22,12 @@
       color: #cbcbcb;
       font-weight: 600;
       align-items: center;
-      &:hover{
+      &:hover {
         color: white;
         gap: 15px;
-        transition: .3s ease all;
+        transition: 0.3s ease all;
       }
     }
-
   }
   .folders-navigation-container {
     display: flex;
@@ -56,12 +55,25 @@
       .folder-card {
         display: grid;
         grid-template-columns: 2fr 1fr;
-        padding: 8px;
+        // padding: 8px;
         background-color: #ffffff;
         border-radius: 8px;
         cursor: pointer;
         box-shadow: 0 1px 4px #00000033;
-
+        position: relative;
+        .name-container {
+          padding: 8px;
+        }
+        .download-button {
+          position: absolute;
+          transform: translateY(-50%);
+          top: 50%;
+          right: 20px;
+          z-index: 4;
+          &:hover {
+            opacity: 0.6;
+          }
+        }
         &:hover {
           background-color: #00000013;
         }
@@ -88,6 +100,8 @@
 
       .video-card {
         grid-template-columns: auto 1fr auto;
+        padding: 10px;
+        align-items: center;
         .name-container {
           padding-inline: 30px;
           justify-content: center;
@@ -113,12 +127,12 @@
       }
     }
   }
-  @media(max-width: 700px){
-    .header-contain{
+  @media (max-width: 700px) {
+    .header-contain {
       flex-direction: column;
       gap: 20px;
     }
-    .search-input{
+    .search-input {
       width: 100%;
     }
   }

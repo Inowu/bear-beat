@@ -1,0 +1,106 @@
+.file-loader-contain {
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  border-radius: 20px;
+  width: 450px;
+  bottom: 20px;
+  right: 20px;
+  padding: 0px !important;
+  box-shadow: 0 1px 20px 5px rgba(0, 0, 0, 0.2);
+  background-color: #fff;
+  overflow: hidden;
+  z-index: 100;
+  p {
+    margin: 0;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    padding-block: 10px;
+    padding-inline: 24px;
+    align-items: center;
+    .title {
+      font-weight: 600;
+      font-size: 2rem;
+    }
+  }
+  @keyframes loadAnimation {
+    0% {
+      background: linear-gradient(to right, #00e5cb 0%, #02e1f1 100%);
+    }
+    20% {
+      background: linear-gradient(to right, #00e5cb 20%, #02e1f1 100%);
+    }
+    40% {
+      background: linear-gradient(to right, #00e5cb 40%, #02e1f1 100%);
+    }
+    60% {
+      background: linear-gradient(to right, #00e5cb 60%, #02e1f1 100%);
+    }
+    80% {
+      background: linear-gradient(to right, #00e5cb 80%, #02e1f1 100%);
+    }
+    100% {
+      background: linear-gradient(to right, #00e5cb 95%, #02e1f1 100%);
+    }
+  }
+  .loader {
+    display: flex;
+    justify-content: space-between;
+    padding-left: 24px;
+    align-items: center;
+    height: 48px;
+    animation: loadAnimation 2s infinite;
+    p {
+      font-weight: 500;
+      font-size: 1.6rem;
+    }
+    button {
+      background-color: black;
+      color: #fff;
+      padding-block: 12px;
+      padding-inline: 24px;
+      border-radius: 100px;
+      &:hover {
+        opacity: 0.67;
+      }
+    }
+  }
+  .files-list {
+    display: flex;
+    flex-direction: column;
+    padding-block: 12px;
+    padding-inline: 24px;
+    gap: 10px;
+    .file-contain {
+      display: flex;
+      justify-content: space-between;
+      .left-side {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        svg {
+          font-size: 2.6rem;
+        }
+        .title-contain {
+          display: flex;
+          flex-direction: column;
+        }
+      }
+      .right-side {
+        display: flex;
+        align-items: center;
+        gap: 30px;
+        button {
+          background-color: transparent;
+          font-weight: 600;
+        }
+      }
+    }
+  }
+  .open {
+    max-height: 200px;
+  }
+}

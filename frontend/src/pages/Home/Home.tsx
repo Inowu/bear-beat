@@ -16,10 +16,16 @@ import { Spinner } from "../../components/Spinner/Spinner";
 import { useUserContext } from "../../contexts/UserContext";
 import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
 import { downloadApi } from "../../api/download";
+import { useDownloadContext } from "../../contexts/DownloadContext";
+import { useSSE } from "react-hooks-sse";
 
 function Home() {
   const { fileChange, closeFile, userToken, currentUser } = useUserContext();
+  const { setShowDownload, setCurrentFile, setViewDownload, setPath } =
+    useDownloadContext();
   const [showPreviewModal, setShowPreviewModal] = useState<boolean>(false);
+  const [error, setError] = useState<boolean>(false);
+  const [errMsg, setErrMsg] = useState<any>("");
   const [files, setfiles] = useState<IFiles[]>([]);
   const [pastFile, setPastFile] = useState<string[]>([]);
   const [loader, setLoader] = useState<boolean>(false);
@@ -28,21 +34,23 @@ function Home() {
   const [fileToShow, setFileToShow] = useState<any>(null);
   const [index, setIndex] = useState<number>(-1);
   const [show, setShow] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<any>('');
+  const [errorMessage, setErrorMessage] = useState<any>("");
   const closeError = () => {
     setShow(false);
-  }
+  };
+  const handleError = () => {
+    setError(!error);
+  };
   const getFiles = async () => {
     setLoader(true);
     let body = {
-      path: '',
-    }
+      path: "",
+    };
     try {
       const files = await trpc.ftp.ls.query(body);
       setfiles(files);
       setLoader(false);
-    }
-    catch (error) {
+    } catch (error) {
       console.log(error);
       setLoader(false);
     }
@@ -53,83 +61,126 @@ function Home() {
     tempFiles.push(name);
     try {
       const files = await trpc.ftp.ls.query({
-        path: tempFiles.join('/'),
-      })
+        path: tempFiles.join("/"),
+      });
       setPastFile(tempFiles);
       setfiles(files);
       setLoader(false);
-    }
-    catch (error) {
+    } catch (error) {
       console.log(error);
       setLoader(false);
     }
-  }
+  };
   const goBack = async () => {
     setLoader(true);
     let tempFiles = pastFile;
     tempFiles.pop();
     try {
       const files = await trpc.ftp.ls.query({
-        path: tempFiles.join('/'),
-      })
+        path: tempFiles.join("/"),
+      });
       setPastFile(tempFiles);
       setfiles(files);
       setLoader(false);
-    }
-    catch (error) {
+    } catch (error) {
       console.log(error);
       setLoader(false);
     }
-  }
+  };
   const playFile = async (file: IFiles, index: number) => {
     setLoadFile(true);
     setIndex(index);
     try {
       let path: any = "";
       if (!file.path) {
-        path = "/" + pastFile.join('/') + "/" + file.name
+        path = "/" + pastFile.join("/") + "/" + file.name;
       } else {
-        path = file.path
+        path = file.path;
       }
-      const files_demo = await trpc.ftp.demo.query({ path: path })
-      setFileToShow(encodeURI("https://thebearbeatapi.lat" + files_demo.demo))
+      const files_demo = await trpc.ftp.demo.query({ path: path });
+      setFileToShow(encodeURI("https://thebearbeatapi.lat" + files_demo.demo));
       setIndex(-1);
       setLoadFile(false);
       setShowPreviewModal(true);
-    }
-    catch (error) {
+    } catch (error) {
       setIndex(-1);
       setLoadFile(false);
     }
-  }
+  };
   const errorMethod = (message: string) => {
-    setErrorMessage(message)
+    setErrorMessage(message);
     setShow(true);
     setLoadDownload(false);
     setIndex(-1);
-  }
+  };
   const downloadFile = async (file: any, index: number) => {
     console.log(file);
     setLoadDownload(true);
     setIndex(index);
     let name = file.name;
-    if(file.path){
+    if (file.path) {
       name = file.path;
     }
-    console.log(name)
     if (currentUser?.hasActiveSubscription) {
-      let path = pastFile.join('/') + "/" + name;
+      let path = pastFile.join("/") + "/" + name;
       //TEST
-      // const url = "https://kale67.world/download?path=" + encodeURIComponent(path) + '&token=' + userToken;  
-      // DOMAIN 
-      const url = "https://thebearbeatapi.lat/download?path=" + encodeURIComponent(path) + '&token=' + userToken;
+      // const url = "https://kale67.world/download?path=" + encodeURIComponent(path) + '&token=' + userToken;
+      // DOMAIN
+      const url =
+        "https://thebearbeatapi.lat/download?path=" +
+        encodeURIComponent(path) +
+        "&token=" +
+        userToken;
       await startDownload(url, name);
       console.log(url);
+    } else {
+      errorMethod("Para descargar se necesita de una suscripción");
     }
-    else {
-      errorMethod('Para descargar se necesita de una suscripción');
+  };
+  const startAlbumDownload = async (file: any, index: number) => {
+    setLoadDownload(true);
+    setIndex(index);
+    let name = file.name;
+    if (file.path) {
+      name = file.path;
     }
-  }
+    if (currentUser?.hasActiveSubscription) {
+      let path = pastFile.join("/") + "/" + name;
+      //TEST
+      // const url = "https://kale67.world/download-dir?path=" + encodeURIComponent(path) + '&token=' + userToken;
+      // DOMAIN
+      const url =
+        "https://thebearbeatapi.lat/download-dir?path=" +
+        encodeURIComponent(path) +
+        "&token=" +
+        userToken;
+      await downloadAlbum(path, file, url);
+      setLoadDownload(false);
+      setIndex(-1);
+    } else {
+      errorMethod("Para descargar se necesita de una suscripción");
+      setLoadDownload(false);
+      setIndex(-1);
+    }
+  };
+  const downloadAlbum = async (path: string, file: any, url: string) => {
+    let body = {
+      path: path,
+    };
+    try {
+      const album = await trpc.ftp.downloadDir.query(body);
+      setCurrentFile(file);
+      setPath(url);
+      setShowDownload(true);
+    } catch (error: any) {
+      setErrMsg(error.message);
+      handleError();
+    }
+  };
+  const downloading = useSSE(`compression:progress:${currentUser?.id}`, {
+    jobId: null,
+    progress: 0,
+  });
   const startDownload = async (url: any, name: any) => {
     const a: any = document.createElement("a");
     try {
@@ -141,15 +192,13 @@ function Home() {
         window.URL.revokeObjectURL(url);
         setLoadDownload(false);
         setIndex(-1);
+      } else {
+        errorMethod("Para descargar se necesita tener gb disponibles");
       }
-      else {
-        errorMethod('Para descargar se necesita tener gb disponibles');
-      }
+    } catch (error) {
+      errorMethod("Para descargar se necesita tener gb disponibles");
     }
-    catch (error) {
-      errorMethod('Para descargar se necesita tener gb disponibles');
-    }
-  }
+  };
   const startSearch = async (value: string) => {
     setPastFile([]);
     if (value === "") {
@@ -158,23 +207,27 @@ function Home() {
     let body = {
       query: value,
       limit: 20,
-    }
+    };
     try {
       const result: any = await trpc.ftp.search.query(body);
       let values: any = [];
       result.documents.map((val: any) => {
         if (val.value) {
-          values.push(val.value)
+          values.push(val.value);
         } else {
-          values.push(val)
+          values.push(val);
         }
-      })
-      setfiles(values)
-    }
-    catch (error) {
+      });
+      setfiles(values);
+    } catch (error) {
       console.log(error);
     }
   };
+  useEffect(() => {
+    console.log(downloading);
+    setViewDownload(downloading);
+  }, [downloading]);
+
   useEffect(() => {
     getFiles();
   }, []);
@@ -184,7 +237,7 @@ function Home() {
       getFiles();
       setPastFile([]);
     }
-  }, [fileChange])
+  }, [fileChange]);
   return (
     <div className="home-main-container">
       <PreviewModal
@@ -197,22 +250,23 @@ function Home() {
           <FontAwesomeIcon icon={faFolder} /> Todos los archivos
         </h2>
         <div className="search-input">
-          <input  
+          <input
             placeholder="Buscar"
-            onChange={(e:any)=>{startSearch(e.target.value)}}
+            onChange={(e: any) => {
+              startSearch(e.target.value);
+            }}
           />
-          <FontAwesomeIcon icon ={faSearch} />
+          <FontAwesomeIcon icon={faSearch} />
         </div>
       </div>
-      {
-        pastFile.length > 0 &&
+      {pastFile.length > 0 && (
         <div className="btn-back">
           <button onClick={goBack}>
             <FontAwesomeIcon icon={faArrowLeft} />
             Back
           </button>
         </div>
-      }
+      )}
 
       <div className="folders-navigation-container">
         <div className="header">
@@ -220,14 +274,16 @@ function Home() {
           <div className="modified-column">Modificado</div>
         </div>
         <div className="folders-cards-container">
-          {!loader ?
+          {!loader ? (
             sortArrayByName(files).map((file: IFiles, idx: number) => {
               return (
                 <div key={"files " + idx}>
-                  {
-                    file.type === "d" &&
-                    <div className="folder-card" onClick={() => getPath(file.name)}>
-                      <div className="name-container">
+                  {file.type === "d" && (
+                    <div className="folder-card">
+                      <div
+                        className="name-container"
+                        onClick={() => getPath(file.name)}
+                      >
                         <FontAwesomeIcon icon={faFolder} />
                         <h3>{file.name}</h3>
                       </div>
@@ -242,36 +298,57 @@ function Home() {
                           })}
                         </h4>
                       </div>
-                    </div>}
-                  {file.type === "-" &&
-                    <div className="folder-card video-card">
-                      {
-                        (loadFile && index === idx) ?
-                          <Spinner size={2} width={.2} color="black" /> :
+                      {/* <div className="download-button">
+                        {loadDownload && index === idx ? (
+                          <Spinner size={2} width={0.2} color="black" />
+                        ) : (
                           <FontAwesomeIcon
-                            icon={faPlay}
-                            onClick={() => playFile(file, idx)}
+                            icon={faDownload}
+                            onClick={() => startAlbumDownload(file, idx)}
                           />
-                      }
+                        )}
+                      </div> */}
+                    </div>
+                  )}
+                  {file.type === "-" && (
+                    <div className="folder-card video-card">
+                      {loadFile && index === idx ? (
+                        <Spinner size={2} width={0.2} color="black" />
+                      ) : (
+                        <FontAwesomeIcon
+                          icon={faPlay}
+                          onClick={() => playFile(file, idx)}
+                        />
+                      )}
 
                       <div className="name-container">
                         <h3>{file.name}</h3>
                       </div>
-                      {
-                        (loadDownload && index === idx) ?
-                          <Spinner size={2} width={.2} color="black" /> :
-                          <FontAwesomeIcon icon={faDownload} onClick={() => downloadFile(file, idx)} />
-                      }
+                      {loadDownload && index === idx ? (
+                        <Spinner size={2} width={0.2} color="black" />
+                      ) : (
+                        <FontAwesomeIcon
+                          icon={faDownload}
+                          onClick={() => downloadFile(file, idx)}
+                        />
+                      )}
                     </div>
-                  }
+                  )}
                 </div>
-              )
+              );
             })
-            : <Spinner size={4} width={.4} color="#2c2c2c" />
-          }
+          ) : (
+            <Spinner size={4} width={0.4} color="#2c2c2c" />
+          )}
         </div>
       </div>
-      <ErrorModal show={show} onHide={closeError} message={errorMessage} user={currentUser} />
+      <ErrorModal
+        show={show}
+        onHide={closeError}
+        message={errorMessage}
+        user={currentUser}
+      />
+      <ErrorModal show={error} onHide={handleError} message={errMsg} />
     </div>
   );
 }

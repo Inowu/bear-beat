@@ -36,14 +36,32 @@
       border-radius: 25px;
     }
   }
-  .extra-gb{
+  .extra-gb {
     color: #0096a5;
     font-size: 1.4rem;
-    margin:0;
+    margin: 0;
     text-decoration: underline;
     cursor: pointer;
-    &:hover{
-      opacity: .67;
+    &:hover {
+      opacity: 0.67;
+    }
+  }
+  .bottom-options {
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+    align-items: center;
+    p {
+      margin: 0;
+    }
+    .button {
+      color: #0096a5;
+      font-weight: 600;
+      font-size: 1.4rem;
+      cursor: pointer;
+      &:hover {
+        opacity: 0.67;
+      }
     }
   }
 }
