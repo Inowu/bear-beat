@@ -17,7 +17,7 @@ function MainLayout() {
   useEffect(() => {
     setAsideOpen(false);
   }, [location]);
-  console.log(showDownload);
+
   return (
     <div className="main-layout-main-container">
       {userToken && <Navbar setAsideOpen={setAsideOpen} />}

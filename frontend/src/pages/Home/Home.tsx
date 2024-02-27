@@ -21,7 +21,7 @@ import { useSSE } from "react-hooks-sse";
 
 function Home() {
   const { fileChange, closeFile, userToken, currentUser } = useUserContext();
-  const { setShowDownload, setCurrentFile, setViewDownload, setPath } =
+  const { setShowDownload, setCurrentFile, setViewDownload, setFileData } =
     useDownloadContext();
   const [showPreviewModal, setShowPreviewModal] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
@@ -170,7 +170,10 @@ function Home() {
     try {
       const album = await trpc.ftp.downloadDir.query(body);
       setCurrentFile(file);
-      setPath(url);
+      setFileData({
+        path: url,
+        name: file.name,
+      });
       setShowDownload(true);
     } catch (error: any) {
       setErrMsg(error.message);

@@ -7,18 +7,18 @@ import { useUserContext } from "../../contexts/UserContext";
 import { useDownloadContext } from "../../contexts/DownloadContext";
 
 export const FileLoader = () => {
-  const { currentFile, setShowDownload, viewDownload, path } =
+  const { currentFile, setShowDownload, viewDownload, fileData } =
     useDownloadContext();
   const startDownload = async () => {
-    console.log(path);
+    console.log(fileData.path);
     const a: any = document.createElement("a");
     try {
-      const response = await fetch(path);
+      const response = await fetch(fileData.path);
       if (response.ok) {
-        a.href = path;
-        a.download = name;
+        a.href = fileData.path;
+        a.download = fileData.name;
         a.click();
-        window.URL.revokeObjectURL(path);
+        window.URL.revokeObjectURL(fileData.path);
       } else {
         // errorMethod("Para descargar se necesita tener gb disponibles");
       }
