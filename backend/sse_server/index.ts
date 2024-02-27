@@ -58,7 +58,7 @@ compressionWorker.on('paused', () => {
 });
 
 compressionWorker.on('completed', async (job: Job<CompressionJob>) => {
-  log.info(`[WORKER:COMPRESSION] Job ${job.id} completed`);
+  log.info(`[WORKER:COMPRESSION:COMPLETED] Job ${job.id} completed`);
   // Save the download URL in the database in case the user wants to download it later
   const dirName = encodeURIComponent(
     `${job.data.songsRelativePath.replace(/\//g, '-')}-${job.data.userId}-${
@@ -67,7 +67,7 @@ compressionWorker.on('completed', async (job: Job<CompressionJob>) => {
   );
   const downloadUrl = `${process.env.BACKEND_URL}/download-dir?dirName=${dirName}.zip&jobId=${job.id}`;
 
-  await prisma.dir_downloads.update({
+  const dirDownload = await prisma.dir_downloads.update({
     where: {
       id: job.data.dirDownloadId,
     },
@@ -82,12 +82,14 @@ compressionWorker.on('completed', async (job: Job<CompressionJob>) => {
   try {
     const dbJob = await prisma.jobs.findFirst({
       where: {
-        AND: [{ jobId: job.id }, { queue: compressionQueueName }],
+        id: dirDownload.jobId!,
       },
     });
 
     if (!dbJob) {
-      log.error(`[WORKER:COMPRESSION] Job ${job.id} not found in the database`);
+      log.error(
+        `[WORKER:COMPRESSION:COMPLETED] Job ${job.id} not found in the database`,
+      );
       return;
     }
 
@@ -102,7 +104,9 @@ compressionWorker.on('completed', async (job: Job<CompressionJob>) => {
     });
   } catch (e) {
     log.error(
-      `[WORKER:COMPRESSION] Error updating job status: ${(e as Error).message}`,
+      `[WORKER:COMPRESSION:COMPLETED] Error updating job status: ${
+        (e as Error).message
+      }`,
     );
   }
 
@@ -116,26 +120,28 @@ compressionWorker.on('completed', async (job: Job<CompressionJob>) => {
 });
 
 compressionWorker.on('failed', async (job, error) => {
-  log.error(`[WORKER:COMPRESSION] Job ${job?.id}, error: ${error.message}`);
+  log.error(
+    `[WORKER:COMPRESSION:FAILED] Job ${job?.id}, error: ${error.message}`,
+  );
 
   if (job?.id) {
     try {
-      const dbJob = await prisma.jobs.findFirst({
+      const dirDownload = await prisma.dir_downloads.findFirst({
         where: {
-          AND: [{ jobId: job.id }, { queue: compressionQueueName }],
+          id: job.data.dirDownloadId,
         },
       });
 
-      if (!dbJob) {
+      if (!dirDownload) {
         log.error(
-          `[WORKER:COMPRESSION] Job ${job.id} not found in the database`,
+          `[WORKER:COMPRESSION:FAILED] Could not find dir download for job ${job?.id}`,
         );
         return;
       }
 
       await prisma.jobs.update({
         where: {
-          id: dbJob.id,
+          id: dirDownload.jobId!,
         },
         data: {
           status: 'failed',
@@ -144,7 +150,7 @@ compressionWorker.on('failed', async (job, error) => {
       });
     } catch (e: unknown) {
       log.error(
-        `[WORKER:COMPRESSION] Error updating job status: ${
+        `[WORKER:COMPRESSION:FAILED] Error updating job status: ${
           (e as Error).message
         }`,
       );
@@ -158,7 +164,7 @@ compressionWorker.on('failed', async (job, error) => {
 
     if (currentTallies) {
       log.info(
-        `[WORKER:COMPRESSION] Updating tallies back for user ${job.data.userId} after failed job ${job?.id}`,
+        `[WORKER:COMPRESSION:FAILED] Updating tallies back for user ${job.data.userId} after failed job ${job?.id}`,
       );
 
       await prisma.ftpquotatallies.update({
@@ -174,7 +180,7 @@ compressionWorker.on('failed', async (job, error) => {
       });
     } else {
       log.warn(
-        `[WORKER:COMPRESSION] Could not find tallies for job ${job?.id}, job: ${job?.data}`,
+        `[WORKER:COMPRESSION:FAILED] Could not find tallies for job ${job?.id}, job: ${job?.data}`,
       );
     }
   }

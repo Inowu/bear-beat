@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const archiver = require('archiver');
-const fastFolderSize = require('fast-folder-size/sync');
+const fastFolderSizeSync = require('fast-folder-size/sync');
 
 module.exports = async function (job) {
   const { songsAbsolutePath, songsRelativePath } = job.data;
@@ -23,7 +23,7 @@ module.exports = async function (job) {
 
   const output = fs.createWriteStream(zippedDirPath);
 
-  const size = fastFolderSize(songsAbsolutePath);
+  const size = fastFolderSizeSync(songsAbsolutePath);
 
   archive.on('warning', function (err) {
     if (err.code === 'ENOENT') {
