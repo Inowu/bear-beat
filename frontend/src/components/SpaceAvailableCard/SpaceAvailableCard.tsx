@@ -38,16 +38,13 @@ function SpaceAvailableCard(props: ISpaceAvailableCard) {
       )}
       {type === "regular" && (
         <div className="bottom-options">
-          <b>
-            Descargas <br />
-            en total
-          </b>
-          <p>
+          {/* <b>Descargas en total</b> */}
+          {/* <p>
             {"15"}
             {" audios"}
-          </p>
+          </p> */}
           <Link to={"/descargas"} className="button">
-            Ver historial
+            Ver historial de descargas
           </Link>
         </div>
       )}
