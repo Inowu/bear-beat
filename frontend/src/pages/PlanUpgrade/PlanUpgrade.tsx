@@ -17,7 +17,8 @@ export const PlanUpgrade = () => {
     plan_id: number,
     stripe: string | null,
     quota: number,
-    product_id: string | null
+    product_id: string | null,
+    moneda: string
   ) => {
     let gb_spend = BigInt(Math.round(quota / 1000000000));
     try {
@@ -45,6 +46,7 @@ export const PlanUpgrade = () => {
           where: {
             activated: 1,
             stripe_prod_id: null,
+            moneda: moneda,
             // paypal_product_id: product_id,
             NOT: {
               id: plan_id,
@@ -74,11 +76,13 @@ export const PlanUpgrade = () => {
         };
         const quota: any = await trpc.ftp.quota.query(body);
         const tempPlan = await trpc.auth.getCurrentSubscriptionPlan.query();
+        console.log(tempPlan);
         getPlans(
           tempPlan.id,
           tempPlan.stripe_prod_id,
           +quota.regular.used.toString(),
-          tempPlan.paypal_product_id
+          tempPlan.paypal_product_id,
+          tempPlan.moneda
         );
         setCurrentPlan(tempPlan);
       }
