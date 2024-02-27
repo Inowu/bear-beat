@@ -1,9 +1,14 @@
-import { FtpQuotaLimits, FtpUser, Ftpquotatallies } from '@prisma/client';
+import {
+  FtpQuotaLimits,
+  FtpUser,
+  Ftpquotatallies,
+  Users,
+} from '@prisma/client';
 import { prisma } from '../../db';
 import { SessionUser } from '../auth/utils/serialize-user';
 
 export const getFtpUserInfo = async (
-  user: SessionUser,
+  user: SessionUser | Users,
 ): Promise<{
   ftpUser?: FtpUser | null;
   limits?: FtpQuotaLimits | null;

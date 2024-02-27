@@ -10,6 +10,8 @@ import { OrderStatus } from '../../subscriptions/interfaces/order-status.interfa
 import { addDays } from 'date-fns';
 import axios from 'axios';
 import { paypal } from '../../../paypal';
+import { updatePlanInfo } from '../../subscriptions/changeSubscriptionPlan/updatePlanInfo';
+import { updateFtpUserInfo } from '../../subscriptions/changeSubscriptionPlan/updateSubscription';
 
 export const paypalSubscriptionWebhook = async (req: Request) => {
   const payload = JSON.parse(req.body as any);
@@ -78,12 +80,12 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
     },
   });
 
-  if (activeSub) {
-    log.info(
-      `[PAYPAL_WH] User ${user.id} already has an active subscription, ignoring event.`,
-    );
-    return;
-  }
+  // if (activeSub) {
+  //   log.info(
+  //     `[PAYPAL_WH] User ${user.id} already has an active subscription, ignoring event.`,
+  //   );
+  //   return;
+  // }
 
   switch (payload.event_type) {
     case PaypalEvent.BILLING_SUBSCRIPTION_ACTIVATED:
@@ -107,6 +109,60 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
       log.info(
         `[PAYPAL_WH] Updating subscription, subscription id ${payload.resource.id}`,
       );
+
+      if (activeSub) {
+        const subscriptionOrder = await prisma.orders.findFirst({
+          where: {
+            txn_id: subId,
+          },
+        });
+
+        if (!subscriptionOrder) {
+          log.error(
+            `[PAYPAL_WH] Subscription updated, but order with txn_id ${subId} not found`,
+          );
+          return;
+        }
+
+        const currentPlan = await prisma.plans.findFirst({
+          where: {
+            id: subscriptionOrder?.plan_id!,
+          },
+        });
+
+        if (!currentPlan) {
+          log.error(
+            `[PAYPAL_WH] Plan with id ${subscriptionOrder?.plan_id} not found`,
+          );
+          return;
+        }
+
+        if (subscriptionOrder.plan_id !== payload.resource.plan_id) {
+          log.info(
+            `[PAYPAL_WH] Changing plans for user ${user.id}, from plan ${currentPlan.paypal_plan_id} to plan ${payload.resource.plan_id}`,
+          );
+
+          const newPlan = await prisma.plans.findFirst({
+            where: {
+              [getPlanKey(PaymentService.PAYPAL)]: payload.resource.plan_id,
+            },
+          });
+
+          if (!newPlan) {
+            log.error(
+              `[PAYPAL_WH] Error when changing plans, plan with id ${payload.resource.plan_id} not found`,
+            );
+            return;
+          }
+
+          return await updateFtpUserInfo({
+            subscription: activeSub,
+            user,
+            subscriptionOrder,
+            newPlan,
+          });
+        }
+      }
 
       if (payload.resource.status === 'ACTIVE') {
         await subscribe({
@@ -159,6 +215,21 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
       log.info(
         `[PAYPAL_WH] Payment completed, renovating subscription for user ${user.id}, subscription id ${payload.resource.id}`,
       );
+
+      const activeSub = await prisma.descargasUser.findFirst({
+        where: {
+          date_end: {
+            gt: new Date(),
+          },
+        },
+      });
+
+      if (activeSub) {
+        log.info(
+          `[PAYPAL_WH] User ${user.id} already has an active subscription, ignoring event.`,
+        );
+        return;
+      }
 
       const existingOrder = await prisma.orders.findFirst({
         where: {

@@ -1,6 +1,6 @@
 import { TRPCError } from '@trpc/server';
 import { log } from '../../../server';
-import { DescargasUser, Orders, Plans } from '@prisma/client';
+import { DescargasUser, Orders, Plans, Users } from '@prisma/client';
 import stripeInstance from '../../../stripe';
 import { prisma } from '../../../db';
 import { gbToBytes } from '../../../utils/gbToBytes';
@@ -151,7 +151,7 @@ export const updateFtpUserInfo = async ({
   newPlan,
 }: {
   subscription: DescargasUser;
-  user: SessionUser;
+  user: SessionUser | Users;
   subscriptionOrder: Orders;
   newPlan: Plans;
 }) => {

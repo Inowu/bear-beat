@@ -63,7 +63,7 @@ export const usersRouter = router({
       const activeSubs = await prisma.descargasUser.findMany({
         where: {
           date_end: {
-            gte: subMonths(new Date(), 1),
+            gte: new Date(),
           },
         },
       });
