@@ -21,8 +21,7 @@ import { useSSE } from "react-hooks-sse";
 
 function Home() {
   const { fileChange, closeFile, userToken, currentUser } = useUserContext();
-  const { setShowDownload, setCurrentFile, setViewDownload, setFileData } =
-    useDownloadContext();
+  const { setShowDownload, setCurrentFile, setFileData } = useDownloadContext();
   const [showPreviewModal, setShowPreviewModal] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
   const [errMsg, setErrMsg] = useState<any>("");
@@ -53,6 +52,14 @@ function Home() {
     } catch (error) {
       console.log(error);
       setLoader(false);
+    }
+  };
+  const checkSize = (size: number) => {
+    let check = size / (1024 * 1024 * 1024);
+    if (check <= 5) {
+      return true;
+    } else {
+      return false;
     }
   };
   const getPath = async (name: string) => {
@@ -168,22 +175,18 @@ function Home() {
       path: path,
     };
     try {
+      setShowDownload(true);
       const album = await trpc.ftp.downloadDir.query(body);
       setCurrentFile(file);
       setFileData({
         path: url,
         name: file.name,
       });
-      setShowDownload(true);
     } catch (error: any) {
       setErrMsg(error.message);
       handleError();
     }
   };
-  const downloading = useSSE(`compression:progress:${currentUser?.id}`, {
-    jobId: null,
-    progress: 0,
-  });
   const startDownload = async (url: any, name: any) => {
     const a: any = document.createElement("a");
     try {
@@ -226,10 +229,6 @@ function Home() {
       console.log(error);
     }
   };
-  useEffect(() => {
-    console.log(downloading);
-    setViewDownload(downloading);
-  }, [downloading]);
 
   useEffect(() => {
     getFiles();
@@ -301,16 +300,18 @@ function Home() {
                           })}
                         </h4>
                       </div>
-                      {/* <div className="download-button">
-                        {loadDownload && index === idx ? (
-                          <Spinner size={2} width={0.2} color="black" />
-                        ) : (
-                          <FontAwesomeIcon
-                            icon={faDownload}
-                            onClick={() => startAlbumDownload(file, idx)}
-                          />
-                        )}
-                      </div> */}
+                      {checkSize(file.size) && (
+                        <div className="download-button">
+                          {loadDownload && index === idx ? (
+                            <Spinner size={2} width={0.2} color="black" />
+                          ) : (
+                            <FontAwesomeIcon
+                              icon={faDownload}
+                              onClick={() => startAlbumDownload(file, idx)}
+                            />
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                   {file.type === "-" && (

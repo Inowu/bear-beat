@@ -5,44 +5,46 @@ import { Spinner } from "../../components/Spinner/Spinner";
 import "./FileLoader.scss";
 import { useUserContext } from "../../contexts/UserContext";
 import { useDownloadContext } from "../../contexts/DownloadContext";
+import { useSSE } from "react-hooks-sse";
 
 export const FileLoader = () => {
-  const { currentFile, setShowDownload, viewDownload, fileData } =
-    useDownloadContext();
-  const startDownload = async () => {
-    console.log(fileData.path);
+  const { currentUser, userToken } = useUserContext();
+  const { currentFile, fileData, setShowDownload } = useDownloadContext();
+  const startDownloadAlbum = async (url: string) => {
     const a: any = document.createElement("a");
     try {
-      const response = await fetch(fileData.path);
+      const response = await fetch(url);
+      setShowDownload(false);
       if (response.ok) {
-        a.href = fileData.path;
+        a.href = url;
         a.download = fileData.name;
         a.click();
-        window.URL.revokeObjectURL(fileData.path);
+        window.URL.revokeObjectURL(url);
       } else {
-        // errorMethod("Para descargar se necesita tener gb disponibles");
       }
     } catch (error: any) {
-      //   errorMethod("Para descargar se necesita tener gb disponibles");
+      setShowDownload(false);
       console.log(error.message);
     }
   };
+  const downloading = useSSE(`compression:progress:${currentUser?.id}`, {
+    jobId: null,
+    progress: 0,
+  });
+  const completed = useSSE(`compression:completed:${currentUser?.id}`, {
+    jobId: null,
+    url: "",
+  });
   useEffect(() => {
-    console.log(viewDownload);
-    if (viewDownload.progress === 100) {
-      startDownload();
-      setShowDownload(false);
+    if (completed.url !== "") {
+      const url = completed.url + "&token=" + userToken;
+      startDownloadAlbum(url);
     }
-  }, [viewDownload]);
-  console.log(viewDownload);
+  }, [completed]);
   return (
     <div className="file-loader-contain">
       <div className="header">
         <p className="title">Descargas</p>
-      </div>
-      <div className="loader">
-        <p>{viewDownload.progress}% cargado</p>
-        {/* <button>Cancelar Todo</button> */}
       </div>
       <div className="files-list">
         {
@@ -60,6 +62,7 @@ export const FileLoader = () => {
             </div>
             <div className="right-side">
               {/* <button>Cancelar</button> */}
+              <p>{downloading.progress}% </p>
               <Spinner size={3} width={0.5} color="#00e2f7" />
             </div>
           </div>

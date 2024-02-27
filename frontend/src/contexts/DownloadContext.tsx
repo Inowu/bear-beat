@@ -7,8 +7,6 @@ interface IDownloadContext {
   setShowDownload: any;
   currentFile: null | any;
   setCurrentFile: any;
-  viewDownload: any;
-  setViewDownload: any;
   fileData: {
     path: string;
     name: string;
@@ -21,8 +19,6 @@ export const DownloadContext = createContext<IDownloadContext>({
   setShowDownload: () => {},
   currentFile: null,
   setCurrentFile: () => {},
-  viewDownload: false,
-  setViewDownload: () => {},
   fileData: {
     path: "",
     name: "",
@@ -35,13 +31,9 @@ export function useDownloadContext() {
 const DownloadContextProvider = (props: any) => {
   const [showDownload, setShowDownload] = useState<boolean>(false);
   const [currentFile, setCurrentFile] = useState<any>(null);
-  const [fileData, setFileData] = useState<any>({
+  const [fileData, setFileData] = useState({
     path: "",
     name: "",
-  });
-  const [viewDownload, setViewDownload] = useState({
-    jobId: null,
-    progress: 0,
   });
 
   const values = {
@@ -49,10 +41,8 @@ const DownloadContextProvider = (props: any) => {
     setShowDownload,
     setCurrentFile,
     currentFile,
-    viewDownload,
-    setViewDownload,
-    setFileData,
     fileData,
+    setFileData,
   };
   //   if (loader) return <FileLoader />;
 

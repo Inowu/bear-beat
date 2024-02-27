@@ -26,48 +26,6 @@
       font-size: 2rem;
     }
   }
-  @keyframes loadAnimation {
-    0% {
-      background: linear-gradient(to right, #00e5cb 0%, #02e1f1 100%);
-    }
-    20% {
-      background: linear-gradient(to right, #00e5cb 20%, #02e1f1 100%);
-    }
-    40% {
-      background: linear-gradient(to right, #00e5cb 40%, #02e1f1 100%);
-    }
-    60% {
-      background: linear-gradient(to right, #00e5cb 60%, #02e1f1 100%);
-    }
-    80% {
-      background: linear-gradient(to right, #00e5cb 80%, #02e1f1 100%);
-    }
-    100% {
-      background: linear-gradient(to right, #00e5cb 95%, #02e1f1 100%);
-    }
-  }
-  .loader {
-    display: flex;
-    justify-content: space-between;
-    padding-left: 24px;
-    align-items: center;
-    height: 48px;
-    animation: loadAnimation 2s infinite;
-    p {
-      font-weight: 500;
-      font-size: 1.6rem;
-    }
-    button {
-      background-color: black;
-      color: #fff;
-      padding-block: 12px;
-      padding-inline: 24px;
-      border-radius: 100px;
-      &:hover {
-        opacity: 0.67;
-      }
-    }
-  }
   .files-list {
     display: flex;
     flex-direction: column;
@@ -100,7 +58,8 @@
       }
     }
   }
-  .open {
-    max-height: 200px;
+  @media (max-width: 600px) {
+    width: 90%;
+    right: 5%;
   }
 }

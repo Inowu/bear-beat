@@ -2,6 +2,7 @@ export interface IFiles {
   name: string;
   type: string;
   path?: string;
+  size: number;
 }
 export interface IDownloads {
   dirName: string;

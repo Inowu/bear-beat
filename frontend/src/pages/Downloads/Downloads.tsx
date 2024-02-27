@@ -46,7 +46,7 @@ function Downloads() {
         {downloads !== null &&
           downloads.map((download: IDownloads, index: number) => {
             return (
-              <div className="single-card">
+              <div className="single-card" key={"downloads " + index}>
                 <div className="left-side">
                   <FaMusic />
                   <p>{download.dirName}</p>
