@@ -10,7 +10,6 @@ import { OrderStatus } from '../../subscriptions/interfaces/order-status.interfa
 import { addDays } from 'date-fns';
 import axios from 'axios';
 import { paypal } from '../../../paypal';
-import { updatePlanInfo } from '../../subscriptions/changeSubscriptionPlan/updatePlanInfo';
 import { updateFtpUserInfo } from '../../subscriptions/changeSubscriptionPlan/updateSubscription';
 
 export const paypalSubscriptionWebhook = async (req: Request) => {

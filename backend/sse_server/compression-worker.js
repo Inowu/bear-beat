@@ -6,7 +6,9 @@ const fastFolderSizeSync = require('fast-folder-size/sync');
 module.exports = async function (job) {
   const { songsAbsolutePath, songsRelativePath } = job.data;
 
-  const dirName = `${songsRelativePath}-${job.data.userId}-${job.id}.zip`;
+  const dirName = `${path.basename(songsRelativePath)}-${job.data.userId}-${
+    job.id
+  }.zip`;
 
   const archive = archiver('zip', {
     zlib: { level: 1 },
@@ -18,7 +20,7 @@ module.exports = async function (job) {
 
   const zippedDirPath = path.resolve(
     __dirname,
-    `../${process.env.COMPRESSED_DIRS_NAME}/${dirName.replace(/\//g, '-')}`,
+    `../${process.env.COMPRESSED_DIRS_NAME}/${dirName}`,
   );
 
   const output = fs.createWriteStream(zippedDirPath);

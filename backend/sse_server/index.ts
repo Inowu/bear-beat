@@ -9,6 +9,7 @@ import { addDays } from 'date-fns';
 import SSE from 'express-sse-ts';
 import winston from 'winston';
 import cors from 'cors';
+import path from 'path';
 
 const sse = new SSE();
 
@@ -61,9 +62,7 @@ compressionWorker.on('completed', async (job: Job<CompressionJob>) => {
   log.info(`[WORKER:COMPRESSION:COMPLETED] Job ${job.id} completed`);
   // Save the download URL in the database in case the user wants to download it later
   const dirName = encodeURIComponent(
-    `${job.data.songsRelativePath.replace(/\//g, '-')}-${job.data.userId}-${
-      job.id
-    }`,
+    `${path.basename(job.data.songsRelativePath)}-${job.data.userId}-${job.id}`,
   );
   const downloadUrl = `${process.env.BACKEND_URL}/download-dir?dirName=${dirName}.zip&jobId=${job.id}`;
 
