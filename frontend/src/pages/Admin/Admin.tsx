@@ -41,6 +41,7 @@ function Admin() {
   const [plans, setPlans] = useState<IPlans[]>([]);
   const [selectUser, setSelectUser] = useState({} as IAdminUser);
   const [loader, setLoader] = useState<boolean>(true);
+  const [totalLoader, setTotalLoader] = useState<boolean>(false);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const [showBlockModal, setShowBlockModal] = useState<boolean>(false);
   const [blockModalMSG, setBlockModalMSG] = useState("");
@@ -174,6 +175,7 @@ function Admin() {
   };
   const filterUsers = async (filt: IAdminFilter) => {
     setLoader(true);
+    setTotalLoader(true);
     try {
       if (filt.active === 2) {
         let body: any = {
@@ -199,10 +201,11 @@ function Admin() {
           },
         };
         const tempUsers = await trpc.users.findManyUsers.query(body);
-        const totalUsersResponse = await trpc.users.findManyUsers.query(body2);
         setLoader(false);
         setUsers(tempUsers);
+        const totalUsersResponse = await trpc.users.findManyUsers.query(body2);
         setTotalUsers(totalUsersResponse.length);
+        setTotalLoader(false);
       } else {
         let body: any = {
           take: filt.limit,
@@ -415,6 +418,7 @@ function Admin() {
           </table>
         </div>
         <Pagination
+          totalLoader={totalLoader}
           totalData={totalUsers}
           title="usuarios"
           startFilter={startFilter}
