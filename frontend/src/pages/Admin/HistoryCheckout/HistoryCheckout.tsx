@@ -37,7 +37,7 @@ export const HistoryCheckout = () => {
         take: filt.limit,
         skip: filt.page * filt.limit,
         orderBy: {
-          last_checkout_date: "asc",
+          last_checkout_date: "desc",
         },
       };
       let body2: any = {
@@ -122,27 +122,27 @@ export const HistoryCheckout = () => {
             <tbody>
               {!loader
                 ? history.map((his: any, index: number) => {
-                    return (
-                      <tr key={"admin_history_" + index}>
-                        <td className="">{his.users.email}</td>
-                        <td>{his.users.phone}</td>
-                        <td>{his.last_checkout_date.toLocaleDateString()}</td>
-                        <td>
-                          {his.users.active === 1 ? "Activo" : "No activo"}
-                        </td>
-                      </tr>
-                    );
-                  })
+                  return (
+                    <tr key={"admin_history_" + index}>
+                      <td className="">{his.users.email}</td>
+                      <td>{his.users.phone}</td>
+                      <td>{his.last_checkout_date.toLocaleDateString()}</td>
+                      <td>
+                        {his.users.active === 1 ? "Activo" : "No activo"}
+                      </td>
+                    </tr>
+                  );
+                })
                 : ARRAY_10.map((val: string, index: number) => {
-                    return (
-                      <tr key={"array_10" + index} className="tr-load">
-                        <td />
-                        <td />
-                        <td />
-                        <td />
-                      </tr>
-                    );
-                  })}
+                  return (
+                    <tr key={"array_10" + index} className="tr-load">
+                      <td />
+                      <td />
+                      <td />
+                      <td />
+                    </tr>
+                  );
+                })}
             </tbody>
           </table>
         </div>
