@@ -17,7 +17,6 @@ function SpaceAvailableCard(props: ISpaceAvailableCard) {
         ? getCompleted(used, available) + "%"
         : "5%",
   };
-  console.log(quotaData);
   return (
     <div className="space-available-card ">
       <h2 className="title">
