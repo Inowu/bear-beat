@@ -55,8 +55,8 @@ export const exportUsers = async (filt: IAdminFilter) => {
 };
 export const exportPayments = async () => {
   try {
-    let body = {};
-    const history = await trpc.checkoutLogs.getCheckoutLogs.query();
+    let body: any = {};
+    const history = await trpc.checkoutLogs.getCheckoutLogs.query(body);
     return history;
   } catch (error: any) {
     console.log(error.message);

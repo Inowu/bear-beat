@@ -41,7 +41,7 @@ export const HistoryCheckout = () => {
         },
       };
       let body2: any = {
-        select: {
+        include: {
           id: true,
         },
       };
@@ -58,14 +58,18 @@ export const HistoryCheckout = () => {
     }
   };
   const transformHistoryData = async () => {
-    const tempHistory: any = await exportPayments();
-    return tempHistory.map((his: any) => ({
-      Usuario: his.users.first_name,
-      Correo: his.users.email,
-      Teléfono: his.users.phone,
-      "Última Fecha de pago": his.last_checkout_date.toLocaleDateString(),
-      Estado: his.users.active === 1 ? "Activo" : "No activo",
-    }));
+    try {
+      const tempHistory: any = await exportPayments();
+      return tempHistory.map((his: any) => ({
+        Usuario: his.users.first_name,
+        Correo: his.users.email,
+        Teléfono: his.users.phone,
+        "Última Fecha de pago": his.last_checkout_date.toLocaleDateString(),
+        Estado: his.users.active === 1 ? "Activo" : "No activo",
+      }));
+    } catch (error) {
+      console.log(error);
+    }
   };
   useEffect(() => {
     if (currentUser && currentUser.role !== "admin") {
