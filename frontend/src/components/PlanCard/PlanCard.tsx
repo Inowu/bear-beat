@@ -46,7 +46,7 @@ function PlanCard(props: PlanCardPropsI) {
     setShowError(!showError);
   };
   const handleOxxoModal = () => {
-    setShowOxxoModal(!OxxoModal);
+    setShowOxxoModal(!showOxxoModal);
   };
   const openSuccess = () => {
     setShowSuccess(true);
@@ -157,7 +157,6 @@ function PlanCard(props: PlanCardPropsI) {
     trpc.checkoutLogs.registerCheckoutLog.mutate();
     navigate(`/comprar?priceId=${planId}`);
   };
-
   const paypalMethod = () => {
     let data = (
       <PayPalButtons
