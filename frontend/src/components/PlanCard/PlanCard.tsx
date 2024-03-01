@@ -34,8 +34,6 @@ function PlanCard(props: PlanCardPropsI) {
   const navigate = useNavigate();
   const location = useLocation();
   const { pathname } = location;
-  const ManyChatPixel = require('manychat-pixel-js'); 
-  const manyChatPixel = new ManyChatPixel('YOUR_PIXEL_ID');
   const handleCancelModal = () => {
     setShowCancelModal(!showCancelModal);
   }
@@ -115,10 +113,6 @@ function PlanCard(props: PlanCardPropsI) {
       console.log(error);
     }
   }
-  const handleButtonClick = () => {
-    fbq('track', 'CarritoAbandonado');
-    manyChatPixel.track('PageView');
-  };
   const payWithOxxo = async () => {
     trpc.checkoutLogs.registerCheckoutLog.mutate();
     try {
@@ -129,7 +123,7 @@ function PlanCard(props: PlanCardPropsI) {
       const oxxoPay = await trpc.subscriptions.subscribeWithCashConekta.mutate(body);
       handleOxxoModal();
       setOxxoData(oxxoPay);
-      handleButtonClick();
+      fbq('track', 'CarritoAbandonado');
     }
     catch (error: any) {
       setErrorMSG(error.message);
@@ -146,7 +140,7 @@ function PlanCard(props: PlanCardPropsI) {
       const speiPay = await trpc.subscriptions.subscribeWithCashConekta.mutate(body);
       setShowSpeiModal(true);
       setSpeiData(speiPay);
-      handleButtonClick();
+      fbq('track', 'CarritoAbandonado');
     }
     catch (error: any) {
       setErrorMSG(error.message);
@@ -164,7 +158,8 @@ function PlanCard(props: PlanCardPropsI) {
         style={{ color: "silver", shape: "pill", layout: "horizontal", height: 46, tagline: false }}
         onClick={async (data, actions) => {
           trpc.checkoutLogs.registerCheckoutLog.mutate();
-          handleButtonClick();
+          fbq('track', 'CarritoAbandonado');
+          fbq('track', 'PagoExitoso');
           // Revisar si el usuario tiene una suscripcion activa
           const me = await trpc.auth.me.query();
           if (me.hasActiveSubscription) return actions.reject();
@@ -203,6 +198,7 @@ function PlanCard(props: PlanCardPropsI) {
             // planId: plan.id,
             subscriptionId: data.subscriptionID
           })
+          fbq('track', 'PagoExitoso');
           setSuccessMessage("Gracias por tu pago, ya puedes empezar a descargar!");
           setSuccessTitle("Compra Exitosa");
           openSuccess();

@@ -30,9 +30,7 @@ export function PlansModal(props: IPlan) {
   const [card, setCard] = useState('');
   const [loader, setLoader] = useState(false);
   const { setShowError, setShowSuccess, setSuccessMessage, setErrorMessage, setSuccessTitle } = dataModals;
-  const handleSuccessfulPayment = () => {
-    fbq('track', 'PagoExitoso');
-  };
+  
   const choosePlan = (val: IGBPlans) => {
     setSelectPlan(val)
   }
@@ -80,7 +78,7 @@ export function PlansModal(props: IPlan) {
               : {
                 payment_method: card
               }
-          );
+          );  
           if (result.error) {
             setLoader(false);
             setErrorMessage(result.error.message);
@@ -89,7 +87,6 @@ export function PlansModal(props: IPlan) {
             close();
             setShowSuccess(true);
             setSuccessTitle('Pago Exitoso');
-            handleSuccessfulPayment();
             startUser();
             setSuccessMessage(plans.message)
             setLoader(false);

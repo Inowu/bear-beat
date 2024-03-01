@@ -25,9 +25,26 @@
   </noscript>
   <!--End of Facebook Pixel Script-->
   
+
   <!-- Manychat -->
   <script src="//widget.manychat.com/104901938679498.js" defer="defer"></script>
   <script src="https://mccdn.me/assets/js/widget.js" defer="defer"></script>
+  <script>
+    window.addEventListener('load', function() {
+      if (window.MessengerExtensions) {
+        window.MessengerExtensions.getUserID(function success(uids) {
+          var pageId = '104901938679498'; 
+          var appId = '104901938679498';
+          var psid = uids.psid;
+  
+          window.manychatPlugin = new window.MessengerExtensions.ManyChat(pageId, appId, psid);
+        }, function error(err) {
+          console.error(err);
+        });
+      }
+    });
+  </script>
+
 
   <meta charset="utf-8" />
   <link rel="icon" href="%PUBLIC_URL%/logoOso.png" />
