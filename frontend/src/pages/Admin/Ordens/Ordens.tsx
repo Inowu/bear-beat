@@ -1,7 +1,7 @@
 import Pagination from "../../../components/Pagination/Pagination";
 import trpc from "../../../api";
 import { useUserContext } from "../../../contexts/UserContext";
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ARRAY_10 } from "../../../utils/Constants";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -19,58 +19,50 @@ interface IAdminFilter {
 }
 
 export const Ordens = () => {
-
   const { currentUser } = useUserContext();
   const navigate = useNavigate();
   const [ordens, setOrdens] = useState<any>([]);
-  const [totalOrdens, setTotalOrdens] = useState(0)
+  const [totalLoader, setTotalLoader] = useState<boolean>(false);
+  const [totalOrdens, setTotalOrdens] = useState(0);
   const [loader, setLoader] = useState<boolean>(true);
   const formatDate = (dateString: any) => {
-    const options: any = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', timeZoneName: 'short' };
-    return new Date(dateString).toLocaleDateString('en-US', options);
-  }
+    const options: any = {
+      weekday: "short",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      timeZoneName: "short",
+    };
+    return new Date(dateString).toLocaleDateString("en-US", options);
+  };
   const [filters, setFilters] = useState<any>({
     page: 0,
-    search: '',
+    search: "",
     active: 1,
     limit: 100,
-    startDate: formatDate(new Date('2010-01-01')),
+    startDate: formatDate(new Date("2010-01-01")),
     endDate: formatDate(new Date()),
-  })
-
-
-  const getOrdens = async () => {
-    let body = {
-      where: {
-
-      }
-    }
-    try {
-      const ordens: any = await trpc.orders.findManyOrdersWithUsers.query(body);
-      setOrdens(ordens);
-    }
-    catch (error) {
-      console.log(error);
-    }
-  }
-
-
+  });
 
   const startFilter = (key: string, value: string | number) => {
     let tempFilters: any = filters;
-    if (key !== 'page') {
+    if (key !== "page") {
       tempFilters.page = 0;
     }
-    if (key === 'startDate' || key === 'endDate') {
+    if (key === "startDate" || key === "endDate") {
       value = formatDate(value);
     }
     tempFilters[key] = value;
     filterOrdens(tempFilters);
     setFilters(tempFilters);
-  }
+  };
 
   const filterOrdens = async (filt: IAdminFilter) => {
     setLoader(true);
+    setTotalLoader(true);
     try {
       let body: any = {
         take: filt.limit,
@@ -80,54 +72,54 @@ export const Ordens = () => {
             startsWith: filt.search,
           },
           status: {
-            equals: filt.active
+            equals: filt.active,
           },
           date_order: {
             gte: filt.startDate,
-            lte: filt.endDate
-          }
+            lte: filt.endDate,
+          },
         },
         orderBy: {
-          date_order: 'desc'
-        }
-      }
+          date_order: "desc",
+        },
+      };
       let body2: any = {
         where: {
           payment_method: {
             startsWith: filt.search,
           },
           status: {
-            equals: filt.active
+            equals: filt.active,
           },
           date_order: {
             gte: filt.startDate,
-            lte: filt.endDate
-          }
+            lte: filt.endDate,
+          },
         },
         select: {
           id: true,
         },
-      }
-
-      const tempUsers = await trpc.orders.findManyOrdersWithUsers.query(body);
-      const totalUsersResponse = await trpc.orders.findManyOrdersWithUsers.query(body2);
+      };
+      const tempOrders = await trpc.orders.findManyOrdersWithUsers.query(body);
       setLoader(false);
-      setOrdens(tempUsers);
-      setTotalOrdens(totalUsersResponse.length);
+      setOrdens(tempOrders);
+      const totalOrders =
+        await trpc.orders.findManyOrdersWithUsers.query(body2);
+      setTotalOrdens(totalOrders.length);
+      setTotalLoader(false);
     } catch (error) {
       console.log(error);
     }
-  }
+  };
 
   useEffect(() => {
     if (currentUser && currentUser.role !== "admin") {
-      navigate('/');
+      navigate("/");
     }
-  }, [currentUser])
+  }, [currentUser]);
   useEffect(() => {
-    getOrdens();
     filterOrdens(filters);
-  }, [])
+  }, []);
 
   return (
     <div className="ordens-contain">
@@ -137,17 +129,22 @@ export const Ordens = () => {
       <div className="filter-contain">
         <div className="select-input">
           <p>Metodo de Pago</p>
-          <select onChange={(e) => startFilter('search', e.target.value)}>
-            <option value={''}>Todos</option>
-            <option value={'Paypal'}>Paypal</option>
-            <option value={'Stripe'}>Stripe</option>
-            <option value={'Conekta OXXO'}>Conekta OXXO</option>
+          <select onChange={(e) => startFilter("search", e.target.value)}>
+            <option value={""}>Todos</option>
+            <option value={"Paypal"}>Paypal</option>
+            <option value={"Stripe"}>Stripe</option>
+            <option value={"Conekta OXXO"}>Conekta OXXO</option>
           </select>
         </div>
         <div className="select-input">
           <p>Cantidad de ordenes</p>
-          <select defaultValue={filters.limit} onChange={(e) => startFilter('limit', +e.target.value)}>
-            <option value={''} disabled>Numero de datos</option>
+          <select
+            defaultValue={filters.limit}
+            onChange={(e) => startFilter("limit", +e.target.value)}
+          >
+            <option value={""} disabled>
+              Numero de datos
+            </option>
             <option value={100}>100</option>
             <option value={200}>200</option>
             <option value={500}>500</option>
@@ -162,11 +159,19 @@ export const Ordens = () => {
         </div> */}
         <div className="select-input">
           <p>Fecha de Inicio</p>
-          <input type="date" className="date-input" onChange={(e) => startFilter('startDate', e.target.value)} />
+          <input
+            type="date"
+            className="date-input"
+            onChange={(e) => startFilter("startDate", e.target.value)}
+          />
         </div>
         <div className="select-input">
           <p>Fecha de Final</p>
-          <input type="date" className="date-input" onChange={(e) => startFilter('endDate', e.target.value)} />
+          <input
+            type="date"
+            className="date-input"
+            onChange={(e) => startFilter("endDate", e.target.value)}
+          />
         </div>
       </div>
       <div className="admin-table">
@@ -174,71 +179,48 @@ export const Ordens = () => {
           <table>
             <thead>
               <tr>
-                <th>
-                  Correo
-                </th>
-                <th>
-                  Telefono
-                </th>
-                <th>
-                  Metodo de Pago
-                </th>
-                <th>
-                  Id de la suscripción
-                </th>
-                <th>
-                  Precio Total
-                </th>
-                <th>
-                  Fecha
-                </th>
-                <th>
-                  Estado
-                </th>
+                <th>Correo</th>
+                <th>Telefono</th>
+                <th>Metodo de Pago</th>
+                <th>Id de la suscripción</th>
+                <th>Precio Total</th>
+                <th>Fecha</th>
+                <th>Estado</th>
               </tr>
             </thead>
             <tbody>
-              {!loader ?
-                ordens.map((orden: any, index: number) => {
-                  return (
-                    <tr key={"admin_ordens_" + index}>
-                      <td className="">
-                        {orden.user?.email}
-                      </td>
-                      <td className="">
-                        {orden.user?.phone}
-                      </td>
-                      <td className="">
-                        {orden.payment_method}
-                      </td>
-                      <td>
-                        {orden.txn_id}
-                      </td>
-                      <td>
-                        {orden.total_price}
-                      </td>
-                      <td>
-                        {orden.date_order.toLocaleDateString()}
-                      </td>
-                      <td>
-                        {orden.status === 1 ? "Activa" : "No activa"}
-                      </td>
-                    </tr>
-
-                  )
-                })
+              {!loader
+                ? ordens.map((orden: any, index: number) => {
+                    return (
+                      <tr key={"admin_ordens_" + index}>
+                        <td className="">{orden.user?.email}</td>
+                        <td className="">{orden.user?.phone}</td>
+                        <td className="">{orden.payment_method}</td>
+                        <td>{orden.txn_id}</td>
+                        <td>{orden.total_price}</td>
+                        <td>{orden.date_order.toLocaleDateString()}</td>
+                        <td>{orden.status === 1 ? "Activa" : "No activa"}</td>
+                      </tr>
+                    );
+                  })
                 : ARRAY_10.map((val: string, index: number) => {
-                  return (
-                    <tr key={"array_10" + index} className="tr-load">
-                      <td /><td /><td /><td /><td /><td /><td />
-                    </tr>
-                  )
-                })
-              }
+                    return (
+                      <tr key={"array_10" + index} className="tr-load">
+                        <td />
+                        <td />
+                        <td />
+                        <td />
+                        <td />
+                        <td />
+                        <td />
+                      </tr>
+                    );
+                  })}
             </tbody>
           </table>
         </div>
         <Pagination
+          totalLoader={totalLoader}
           totalData={totalOrdens}
           title="ordenes"
           startFilter={startFilter}
@@ -247,5 +229,5 @@ export const Ordens = () => {
         />
       </div>
     </div>
-  )
-}
+  );
+};

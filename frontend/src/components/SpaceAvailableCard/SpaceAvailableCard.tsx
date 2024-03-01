@@ -17,6 +17,7 @@ function SpaceAvailableCard(props: ISpaceAvailableCard) {
         ? getCompleted(used, available) + "%"
         : "5%",
   };
+  console.log(quotaData);
   return (
     <div className="space-available-card ">
       <h2 className="title">
@@ -36,18 +37,13 @@ function SpaceAvailableCard(props: ISpaceAvailableCard) {
           ¿Necesitas más espacio?
         </p>
       )}
-      {type === "regular" && (
+      {/* {type === "regular" && (
         <div className="bottom-options">
-          {/* <b>Descargas en total</b> */}
-          {/* <p>
-            {"15"}
-            {" audios"}
-          </p> */}
           <Link to={"/descargas"} className="button">
             Ver historial de descargas
           </Link>
         </div>
-      )}
+      )} */}
     </div>
   );
 }
