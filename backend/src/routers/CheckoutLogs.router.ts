@@ -1,17 +1,29 @@
+import { z } from 'zod';
 import { shieldedProcedure } from '../procedures/shielded.procedure';
 import { log } from '../server';
 import { router } from '../trpc';
 
 export const checkoutLogsRouter = router({
-  getCheckoutLogs: shieldedProcedure.query(async ({ ctx: { prisma } }) => {
-    const checkoutLogs = await prisma.checkout_logs.findMany({
-      include: {
-        users: true,
-      },
-    });
+  getCheckoutLogs: shieldedProcedure
+    .input(
+      z.object({
+        skip: z.number().optional(),
+        take: z.number().optional(),
+        orderBy: z.any(),
+        where: z.any(),
+        select: z.any(),
+      }),
+    )
+    .query(async ({ ctx: { prisma }, input }) => {
+      const checkoutLogs = await prisma.checkout_logs.findMany({
+        ...input,
+        include: {
+          users: true,
+        },
+      });
 
-    return checkoutLogs;
-  }),
+      return checkoutLogs;
+    }),
   registerCheckoutLog: shieldedProcedure.mutation(
     async ({ ctx: { prisma, session } }) => {
       const user = session!.user!;
