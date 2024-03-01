@@ -115,11 +115,16 @@ export const Coupons = () => {
       ) : (
         <Spinner size={3} width={0.3} color="#00e2f7" />
       )}
-      <AddCouponModal showModal={show} onHideModal={closeModalAdd} />
+      <AddCouponModal
+        showModal={show}
+        onHideModal={closeModalAdd}
+        getCoupons={getCoupons}
+      />
       <EditCouponModal
         showModal={showEdit}
         onHideModal={closeEditModalAdd}
         editingCoupon={editingCoupon}
+        getCoupons={getCoupons}
       />
     </div>
   );

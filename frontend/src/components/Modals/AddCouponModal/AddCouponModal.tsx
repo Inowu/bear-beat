@@ -12,10 +12,11 @@ import trpc from "../../../api";
 interface IAddCouponModal {
   showModal: boolean;
   onHideModal: () => void;
+  getCoupons: () => void;
 }
 
 export const AddCouponModal = (props: IAddCouponModal) => {
-  const { showModal, onHideModal } = props;
+  const { showModal, onHideModal, getCoupons } = props;
 
   // const navigate = useNavigate();
   const [loader, setLoader] = useState<boolean>(false);
@@ -26,6 +27,7 @@ export const AddCouponModal = (props: IAddCouponModal) => {
     setShow(false);
   };
   const closeSuccess = () => {
+    onHideModal();
     setShowSuccess(false);
     // navigate("/");
   };
@@ -59,6 +61,7 @@ export const AddCouponModal = (props: IAddCouponModal) => {
       try {
         await trpc.cupons.createStripeCupon.mutate({ data: body });
         // console.log(body);
+        getCoupons();
         setShowSuccess(true);
         setLoader(false);
       } catch (error) {

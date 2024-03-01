@@ -13,10 +13,11 @@ interface IEditCouponModal {
   showModal: boolean;
   onHideModal: () => void;
   editingCoupon: any;
+  getCoupons: () => void;
 }
 
 export const EditCouponModal = (props: IEditCouponModal) => {
-  const { showModal, onHideModal, editingCoupon } = props;
+  const { showModal, onHideModal, editingCoupon, getCoupons } = props;
 
   // const navigate = useNavigate();
   const [loader, setLoader] = useState<boolean>(false);
@@ -29,6 +30,7 @@ export const EditCouponModal = (props: IEditCouponModal) => {
   const closeSuccess = () => {
     setShowSuccess(false);
     // navigate("/");
+    onHideModal();
   };
 
   const validationSchema = Yup.object().shape({
@@ -61,6 +63,7 @@ export const EditCouponModal = (props: IEditCouponModal) => {
           data: body,
         });
         // console.log(body);
+        getCoupons();
         setShowSuccess(true);
         setLoader(false);
       } catch (error) {
