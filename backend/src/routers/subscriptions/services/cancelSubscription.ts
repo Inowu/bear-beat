@@ -6,10 +6,6 @@ import { getPlanKey } from '../../../utils/getPlanKey';
 import { subDays } from 'date-fns';
 import { gbToBytes } from '../../../utils/gbToBytes';
 
-/*
- * This only updates the order status to cancelled, it does not actually cancel the subscription,
- * cancellation is done with other methods specific to each service
- * */
 export const cancelSubscription = async ({
   prisma,
   user,

@@ -6,7 +6,6 @@ import { prisma } from '../../../db';
 import { gbToBytes } from '../../../utils/gbToBytes';
 import { SessionUser } from '../../auth/utils/serialize-user';
 import { getFtpUserInfo } from '../../utils/getFtpUserInfo';
-import { PaymentService } from '../services/types';
 import { paypal } from '../../../paypal';
 import axios from 'axios';
 

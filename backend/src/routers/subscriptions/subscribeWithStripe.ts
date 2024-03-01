@@ -8,6 +8,7 @@ import { log } from '../../server';
 import { OrderStatus } from './interfaces/order-status.interface';
 import { hasActiveSubscription } from './utils/hasActiveSub';
 import { PaymentService } from './services/types';
+import { Cupons } from '@prisma/client';
 
 export const subscribeWithStripe = shieldedProcedure
   .input(
@@ -41,8 +42,10 @@ export const subscribeWithStripe = shieldedProcedure
       });
     }
 
+    let dbCoupon: Cupons | null | undefined;
+
     if (coupon) {
-      const dbCoupon = await prisma.cupons.findFirst({
+      dbCoupon = await prisma.cupons.findFirst({
         where: {
           code: coupon,
         },
@@ -78,6 +81,7 @@ export const subscribeWithStripe = shieldedProcedure
         payment_method: PaymentService.STRIPE,
         date_order: new Date().toISOString(),
         total_price: Number(plan.price),
+        ...(dbCoupon ? { discount: dbCoupon.discount } : {}),
       },
     });
 
@@ -104,6 +108,7 @@ export const subscribeWithStripe = shieldedProcedure
         ],
         payment_behavior: 'default_incomplete',
         payment_settings: { save_default_payment_method: 'on_subscription' },
+        // proration_behavior: 'always_invoice',
         expand: ['latest_invoice.payment_intent'],
         metadata: {
           orderId: order.id,
