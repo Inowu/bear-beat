@@ -14,8 +14,8 @@ interface IAdminFilter {
   total: number;
   search: string;
   active: number;
-  startDate: Date | null;
-  endDate: Date | null;
+  startDate: Date;
+  endDate: Date;
 }
 
 export const Ordens = () => {
@@ -25,26 +25,13 @@ export const Ordens = () => {
   const [totalLoader, setTotalLoader] = useState<boolean>(false);
   const [totalOrdens, setTotalOrdens] = useState(0);
   const [loader, setLoader] = useState<boolean>(true);
-  const formatDate = (dateString: any) => {
-    const options: any = {
-      weekday: "short",
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      timeZoneName: "short",
-    };
-    return new Date(dateString).toLocaleDateString("en-US", options);
-  };
   const [filters, setFilters] = useState<any>({
     page: 0,
     search: "",
     active: 1,
     limit: 100,
-    startDate: formatDate(new Date("2010-01-01")),
-    endDate: formatDate(new Date()),
+    startDate: new Date("2010-01-01"),
+    endDate: new Date(),
   });
 
   const startFilter = (key: string, value: string | number) => {
@@ -53,13 +40,13 @@ export const Ordens = () => {
       tempFilters.page = 0;
     }
     if (key === "startDate" || key === "endDate") {
-      value = formatDate(value);
+      console.log(value);
+      value = value;
     }
     tempFilters[key] = value;
     filterOrdens(tempFilters);
     setFilters(tempFilters);
   };
-
   const filterOrdens = async (filt: IAdminFilter) => {
     setLoader(true);
     setTotalLoader(true);
@@ -96,19 +83,20 @@ export const Ordens = () => {
             lte: filt.endDate,
           },
         },
-        select: {
+        include: {
           id: true,
         },
       };
       const tempOrders = await trpc.orders.findManyOrdersWithUsers.query(body);
+      console.log(tempOrders);
       setLoader(false);
       setOrdens(tempOrders);
       const totalOrders =
         await trpc.orders.findManyOrdersWithUsers.query(body2);
       setTotalOrdens(totalOrders.length);
       setTotalLoader(false);
-    } catch (error) {
-      console.log(error);
+    } catch (error: any) {
+      console.log(error.message);
     }
   };
 
