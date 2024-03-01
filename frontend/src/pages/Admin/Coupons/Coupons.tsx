@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import './Coupons.scss';
 import { AddCouponModal } from "../../../components/Modals/AddCouponModal/AddCouponModal";
 import { EditCouponModal } from "../../../components/Modals/EditCouponModal/EditCouponModal";
-
+import { Spinner } from "../../../components/Spinner/Spinner";
 
 
 export const Coupons = () => {
@@ -81,7 +81,7 @@ export const Coupons = () => {
                 <AddCouponModal showModal={show} onHideModal={closeModalAdd} />
                 <EditCouponModal showModal={showEdit} onHideModal={closeEditModalAdd} editingCoupon={editingCoupon} />
             </div>
-            <div className="admin-table">
+            {!loader ? <div className="admin-table">
                 <div className="table-contain">
                     <table>
                         <thead>
@@ -107,7 +107,7 @@ export const Coupons = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {!loader ?
+                            {(!loader && coupons.length > 0) ?
                                 coupons.map((coupon: any, index: number) => {
                                     return (
                                         <tr key={"admin_coupons_" + index}>
@@ -149,6 +149,7 @@ export const Coupons = () => {
                     startFilter={startFilter}
                     currentPage={filters.page}
                 /> */}
-            </div>
+            </div> :
+                <Spinner size={3} width={.3} color="#00e2f7" />}
         </div>)
 }

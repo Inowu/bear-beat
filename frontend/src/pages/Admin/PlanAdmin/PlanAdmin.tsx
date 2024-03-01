@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import AddPlanModal from '../../../components/Modals/AddPlanModal/AddPlanModal';
 import { IPlans } from 'interfaces/Plans';
 import EditPlanModal from '../../../components/Modals/EditPlanModal/EditPlanModal';
+import { Spinner } from "../../../components/Spinner/Spinner";
 
 export const PlanAdmin = () => {
     const { currentUser } = useUserContext();
@@ -78,7 +79,7 @@ export const PlanAdmin = () => {
                 <AddPlanModal showModal={show} onHideModal={closeModalAdd} callPlans={getPlans} />
                 <EditPlanModal showModal={showEdit} onHideModal={closeEditModalAdd} editingPlan={editingPlan} callPlans={getPlans} />
             </div>
-            <div className="admin-table">
+            {!loader ? <div className="admin-table">
                 <div className="table-contain">
                     <table>
                         <thead>
@@ -107,7 +108,7 @@ export const PlanAdmin = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {!loader ?
+                            {!loader &&
                                 plans.map((plan: IPlans, index: number) => {
                                     return (
                                         <tr key={"admin_plans_" + index}>
@@ -138,14 +139,14 @@ export const PlanAdmin = () => {
                                                 <button
                                                     onClick={() => handleRemovePlan(plan.id, plan.paypal_plan_id)}
                                                     disabled={plan.paypal_plan_id !== null}
-                                                    className={plan.paypal_plan_id !== null ?'disable' : ''}
+                                                    className={plan.paypal_plan_id !== null ? 'disable' : ''}
                                                 >Eliminar</button>
                                             </td>
                                         </tr>
 
                                     )
                                 })
-                                : <tr><td>No se Encontraron Datos...</td></tr>
+
                             }
                         </tbody>
                     </table>
@@ -156,7 +157,8 @@ export const PlanAdmin = () => {
                         startFilter={startFilter}
                         currentPage={filters.page}
                     /> */}
-            </div>
+            </div> :
+                <Spinner size={3} width={.3} color="#00e2f7" />}
         </div>
     )
 }
