@@ -37,7 +37,7 @@ export const HistoryCheckout = () => {
         take: filt.limit,
         skip: filt.page * filt.limit,
         orderBy: {
-          date_order: "desc",
+          last_checkout_date: "asc",
         },
       };
       let body2: any = {
@@ -45,10 +45,12 @@ export const HistoryCheckout = () => {
           id: true,
         },
       };
-      const history = await trpc.checkoutLogs.getCheckoutLogs.query(body);
+      const tempHistory: any =
+        await trpc.checkoutLogs.getCheckoutLogs.query(body);
       setLoader(false);
-      setHistory(history);
-      const totalHistory = await trpc.checkoutLogs.getCheckoutLogs.query(body2);
+      setHistory(tempHistory);
+      const totalHistory: any =
+        await trpc.checkoutLogs.getCheckoutLogs.query(body2);
       setTotalHistory(totalHistory.length);
       setTotalLoader(false);
     } catch (error) {
