@@ -19,7 +19,7 @@ import { FaLock } from "react-icons/fa";
 import { DeleteUserModal } from "../../components/Modals/DeleteUserModal/DeleteUserModal";
 import { useSSE } from "react-hooks-sse";
 
-interface IAdminFilter {
+export interface IAdminFilter {
   page: number;
   total: number;
   search: string;
