@@ -85,11 +85,11 @@ export const HistoryCheckout = () => {
           separator=";"
           wrapColumnChar="'"
           datas={transformHistoryData()}
-          text="Exportar Clientes"
+          text="Exportar Historial"
         />
       </div>
       <div className="select-input">
-        <p>Cantidad de Pagos</p>
+        <p>Cantidad de datos</p>
         <select
           defaultValue={filters.limit}
           onChange={(e) => startFilter("limit", +e.target.value)}
@@ -143,7 +143,7 @@ export const HistoryCheckout = () => {
         <Pagination
           totalLoader={totalLoader}
           totalData={totalHistory}
-          title="Pagos"
+          title="Datos"
           startFilter={startFilter}
           currentPage={filters.page}
           limit={filters.limit}
