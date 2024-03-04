@@ -27,6 +27,7 @@ export const PlanUpgrade = () => {
           where: {
             activated: 1,
             paypal_plan_id: null,
+            moneda: moneda,
             NOT: {
               id: plan_id,
             },
