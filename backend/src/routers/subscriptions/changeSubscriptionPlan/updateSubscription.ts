@@ -58,17 +58,17 @@ export const updateStripeSubscription = async ({
     });
   }
 
-  await updateFtpUserInfo({
-    subscription,
-    user,
-    subscriptionOrder,
-    newPlan,
-  });
-
   try {
     await stripeInstance.subscriptionItems.update(stripeSub.id, {
       // Checked outside method
       price: newPlan.stripe_prod_id!,
+    });
+
+    await updateFtpUserInfo({
+      subscription,
+      user,
+      subscriptionOrder,
+      newPlan,
     });
 
     return {
