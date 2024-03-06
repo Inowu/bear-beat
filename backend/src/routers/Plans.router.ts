@@ -208,29 +208,31 @@ export const plansRouter = router({
       try {
         const token = await paypal.getToken();
 
-        const productResponse = (
-          await axios.post(
-            `${paypal.paypalUrl()}/v1/catalogs/products`,
-            {
-              name: data.name,
-              description: data.description,
-              type: 'SERVICE',
-              category: 'ECOMMERCE_SERVICES',
-              home_url: 'https://thebearbeat.com',
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
+        // WARNING: Highly brittle, this is assuming all the plans who have a paypal product id are the same
+
+        const planWithProduct = await prisma.plans.findFirst({
+          where: {
+            NOT: [
+              {
+                paypal_product_id: null,
               },
-            },
-          )
-        ).data;
+            ],
+          },
+        });
+
+        if (!planWithProduct) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message:
+              'No se encontró un plan con un producto de paypal asociado',
+          });
+        }
 
         const planResponse = (
           await axios.post(
             `${paypal.paypalUrl()}/v1/billing/plans`,
             {
-              product_id: productResponse.id,
+              product_id: planWithProduct.paypal_product_id,
               name: data.name,
               description: data.description,
               status: 'ACTIVE',
@@ -376,9 +378,8 @@ export const plansRouter = router({
   findFirstPlansOrThrow: shieldedProcedure
     .input(PlansFindFirstSchema)
     .query(async ({ ctx, input }) => {
-      const findFirstPlansOrThrow = await ctx.prisma.plans.findFirstOrThrow(
-        input,
-      );
+      const findFirstPlansOrThrow =
+        await ctx.prisma.plans.findFirstOrThrow(input);
       return findFirstPlansOrThrow;
     }),
   findManyPlans: shieldedProcedure
@@ -396,9 +397,8 @@ export const plansRouter = router({
   findUniquePlansOrThrow: shieldedProcedure
     .input(PlansFindUniqueSchema)
     .query(async ({ ctx, input }) => {
-      const findUniquePlansOrThrow = await ctx.prisma.plans.findUniqueOrThrow(
-        input,
-      );
+      const findUniquePlansOrThrow =
+        await ctx.prisma.plans.findUniqueOrThrow(input);
       return findUniquePlansOrThrow;
     }),
   groupByPlans: shieldedProcedure
