@@ -21,6 +21,8 @@ import { RolesIds } from './auth/interfaces/roles.interface';
 import { removeUsersQueue, removeUsersQueueName } from '../queue/removeUsers';
 import { RemoveUsersJob } from '../queue/removeUsers/types';
 import { JobStatus } from '../queue/jobStatus';
+import { ManyChatTags, manyChatTags } from '../many-chat/tags';
+import { manyChat } from '../many-chat';
 
 export const usersRouter = router({
   getActiveUsers: shieldedProcedure
@@ -361,6 +363,46 @@ export const usersRouter = router({
       };
     },
   ),
+  addManyChatTagToUser: shieldedProcedure
+    .input(
+      z.object({
+        tag: z.union([
+          z.literal('USER_CHECKED_PLANS'),
+          z.literal('USER_REGISTERED'),
+          z.literal('CHECKOUT_PLAN_ORO'),
+          z.literal('CHECKOUT_PLAN_CURIOSO'),
+        ]),
+      }),
+    )
+    .mutation(async ({ ctx: { prisma, session }, input: { tag } }) => {
+      const user = await prisma.users.findFirst({
+        where: {
+          id: session!.user!.id,
+        },
+      });
+
+      const mcId = await manyChat.getManyChatId(user!);
+
+      if (!mcId) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Usuario no encontrado en ManyChat',
+        });
+      }
+
+      const response = await manyChat.addTagToUser(user!, tag);
+
+      if (!response) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Ocurrió un error al agregar las etiquetas al usuario',
+        });
+      }
+
+      return {
+        message: 'Se han agregado las etiquetas a los usuarios',
+      };
+    }),
   aggregateUsers: shieldedProcedure
     .input(UsersAggregateSchema)
     .query(async ({ ctx, input }) => {
