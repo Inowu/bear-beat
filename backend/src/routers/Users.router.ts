@@ -21,7 +21,6 @@ import { RolesIds } from './auth/interfaces/roles.interface';
 import { removeUsersQueue, removeUsersQueueName } from '../queue/removeUsers';
 import { RemoveUsersJob } from '../queue/removeUsers/types';
 import { JobStatus } from '../queue/jobStatus';
-import { ManyChatTags, manyChatTags } from '../many-chat/tags';
 import { manyChat } from '../many-chat';
 
 export const usersRouter = router({

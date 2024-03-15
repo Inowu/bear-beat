@@ -117,6 +117,7 @@ export const permissions = shield<Context>({
     changeSubscriptionPlan: isLoggedIn,
     blockUser: isAdmin,
     unblockUser: isAdmin,
+    addManyChatTagToUser: isLoggedIn,
     createStripePlan: isAdmin,
     updateStripePlan: isAdmin,
     deleteStripePlan: isAdmin,
