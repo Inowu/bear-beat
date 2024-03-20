@@ -5,6 +5,7 @@ export const manyChatTags = {
   USER_REGISTERED: 34283067,
   CHECKOUT_PLAN_ORO: 41612832,
   CHECKOUT_PLAN_CURIOSO: 41612820,
+  SUCCESSFUL_PAYMENT: 43455304,
 };
 
 export const _manyChatTagsEnum = zodEnumFromObjKeys(manyChatTags);

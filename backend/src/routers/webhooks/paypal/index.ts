@@ -11,6 +11,7 @@ import { addDays } from 'date-fns';
 import axios from 'axios';
 import { paypal } from '../../../paypal';
 import { updateFtpUserInfo } from '../../subscriptions/changeSubscriptionPlan/updateSubscription';
+import { manyChat } from '../../../many-chat';
 
 export const paypalSubscriptionWebhook = async (req: Request) => {
   const payload = JSON.parse(req.body as any);
@@ -92,6 +93,12 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
         `[PAYPAL_WH] Activating subscription, subscription id ${payload.resource.id}`,
       );
 
+      try {
+        await manyChat.addTagToUser(user, 'SUCCESSFUL_PAYMENT');
+      } catch (e) {
+        log.error(`[PAYPAL] Error while adding tag to user ${user.id}: ${e}`);
+      }
+
       await subscribe({
         prisma,
         user,
@@ -164,6 +171,12 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
       }
 
       if (payload.resource.status === 'ACTIVE') {
+        try {
+          await manyChat.addTagToUser(user, 'SUCCESSFUL_PAYMENT');
+        } catch (e) {
+          log.error(`[PAYPAL] Error while adding tag to user ${user.id}: ${e}`);
+        }
+
         await subscribe({
           prisma,
           user,
@@ -272,6 +285,12 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
         }
       } catch (e) {
         log.error(`[PAYPAL_WH] Error while getting subscription ${e}`);
+      }
+
+      try {
+        await manyChat.addTagToUser(user, 'SUCCESSFUL_PAYMENT');
+      } catch (e) {
+        log.error(`[PAYPAL] Error while adding tag to user ${user.id}: ${e}`);
       }
 
       await subscribe({
