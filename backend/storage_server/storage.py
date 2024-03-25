@@ -8,7 +8,7 @@ app = Flask(__name__)
 @app.route('/')
 def get_storage_info():
     # Get storage information using psutil
-    disk_usage = psutil.disk_usage('/')
+    disk_usage = psutil.disk_usage('/home')
 
     # Format the information as a JSON response
     response = {
