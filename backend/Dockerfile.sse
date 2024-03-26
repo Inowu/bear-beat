@@ -1,18 +1,16 @@
-FROM node:18.18.2-alpine AS build
+FROM node:18.18.2-alpine AS deps
 
 WORKDIR /usr/src/app
 
-RUN apk --no-cache add --virtual .builds-deps build-base python3 && npm install pm2@5.2.2 -g
+RUN apk --no-cache add --virtual .builds-deps build-base python3 && npm install pm2 -g
 
 COPY package*.json prisma/schema.prisma .
 
-RUN npm i && npx prisma generate
+RUN npm i --production && npx prisma generate
 
 COPY . .
 
 ENV NODE_ENV=production
-
-RUN npm run build:sse
 
 EXPOSE 8001
 
