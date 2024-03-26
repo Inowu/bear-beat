@@ -8,6 +8,7 @@
     "test": "jest --setupFiles dotenv/config",
     "compile": "tsc --noEmit",
     "build": "tsc",
+    "build:sse": "tsc -p tsconfig.sse.json && cp sse_server/*.js build_sse/",
     "format:fix": "npx prettier --write src/**/*.ts",
     "format:check": "npx prettier --check src/**/*.ts"
   },

@@ -7,3 +7,4 @@ demos
 logs
 compressed-dirs
 bun.*
+build_sse

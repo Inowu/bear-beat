@@ -1,15 +1,29 @@
 import express from 'express';
 import expressWinston from 'express-winston';
 import { Job, Worker } from 'bullmq';
-import { compressionQueueName } from '../src/queue/compression';
-import { log } from '../src/server';
-import { CompressionJob } from '../src/queue/compression/types';
-import { prisma } from '../src/db';
 import { addDays } from 'date-fns';
 import SSE from 'express-sse-ts';
-import winston from 'winston';
 import cors from 'cors';
 import path from 'path';
+import winston from 'winston';
+import { config } from 'dotenv';
+import { PrismaClient } from '@prisma/client';
+
+config();
+
+const prisma = new PrismaClient({
+  log: ['error'],
+});
+
+const compressionQueueName = 'dir-compression';
+
+const log = winston.createLogger();
+
+log.add(
+  new winston.transports.Console({
+    format: winston.format.json(),
+  }),
+);
 
 const sse = new SSE();
 
@@ -30,9 +44,9 @@ app.listen(8001, () => {
   log.info('SSE server listening on port 8001');
 });
 
-export const MAX_CONCURRENT_DOWNLOADS = 10;
+export const MAX_CONCURRENT_DOWNLOADS = 25;
 
-const compressionWorker = new Worker<CompressionJob>(
+const compressionWorker = new Worker(
   compressionQueueName,
   // Spawn a new process for each job
   `${__dirname}/compression-worker.js`,
@@ -58,7 +72,7 @@ compressionWorker.on('paused', () => {
   log.info('[WORKER:COMPRESSION] Worker paused');
 });
 
-compressionWorker.on('completed', async (job: Job<CompressionJob>) => {
+compressionWorker.on('completed', async (job: Job) => {
   log.info(`[WORKER:COMPRESSION:COMPLETED] Job ${job.id} completed`);
   // Save the download URL in the database in case the user wants to download it later
   const dirName = encodeURIComponent(
@@ -66,19 +80,19 @@ compressionWorker.on('completed', async (job: Job<CompressionJob>) => {
   );
   const downloadUrl = `${process.env.BACKEND_URL}/download-dir?dirName=${dirName}.zip&jobId=${job.id}`;
 
-  const dirDownload = await prisma.dir_downloads.update({
-    where: {
-      id: job.data.dirDownloadId,
-    },
-    data: {
-      // Note: The client has to append the token to the URL. &token=<token>
-      downloadUrl,
-      // The URL is valid for 24 hours
-      expirationDate: addDays(new Date(), 1),
-    },
-  });
-
   try {
+    const dirDownload = await prisma.dir_downloads.update({
+      where: {
+        id: job.data.dirDownloadId,
+      },
+      data: {
+        // Note: The client has to append the token to the URL. &token=<token>
+        downloadUrl,
+        // The URL is valid for 24 hours
+        expirationDate: addDays(new Date(), 1),
+      },
+    });
+
     const dbJob = await prisma.jobs.findFirst({
       where: {
         id: dirDownload.jobId!,

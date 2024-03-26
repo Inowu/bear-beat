@@ -6,4 +6,11 @@ module.exports = [
     instances: 1,
     kill_timeout: 5000,
   },
+  {
+    script: 'build_sse/index.js',
+    name: 'sse-server',
+    exec_mode: 'cluster',
+    instances: 1,
+    kill_timeout: 5000,
+  },
 ];

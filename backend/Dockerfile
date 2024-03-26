@@ -16,5 +16,4 @@ EXPOSE 5000
 
 ENV NODE_ENV=production
 
-# CMD ["node", "build/index.js"]
 CMD ["pm2-runtime", "ecosystem.config.js", "--only", "app"]
