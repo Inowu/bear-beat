@@ -18,7 +18,6 @@ import { conektaEndpoint } from './endpoints/webhooks/conekta.endpoint';
 import { stripeEndpoint } from './endpoints/webhooks/stripe.endpoint';
 import { paypalEndpoint } from './endpoints/webhooks/paypal.endpoint';
 import { stripePiEndpoint } from './endpoints/webhooks/stripePaymentIntents.endpoint';
-import { sse } from './sse';
 import {
   compressionQueue,
   initializeCompressionQueue,
@@ -54,8 +53,6 @@ async function main() {
     );
 
     app.use(cors({ origin: '*' }));
-
-    // app.get('/sse', sse.init);
 
     app.use(
       '/trpc',
@@ -114,7 +111,7 @@ async function main() {
     initializeRemoveUsersQueue();
 
     workerFactory('users');
-    // workerFactory('compression');
+    workerFactory('compression');
   } catch (e: any) {
     log.error(e.message);
     await closeConnections();

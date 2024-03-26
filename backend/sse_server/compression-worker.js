@@ -11,7 +11,7 @@ module.exports = async function (job) {
   }.zip`;
 
   const archive = archiver('zip', {
-    zlib: { level: 1 },
+    zlib: { level: 5 },
   });
 
   console.log(
