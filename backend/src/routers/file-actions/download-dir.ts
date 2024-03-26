@@ -1,20 +1,17 @@
 import { z } from 'zod';
 import Path from 'path';
+import pm2 from 'pm2';
 import { TRPCError } from '@trpc/server';
 import { fileService } from '../../ftp';
 import { log } from '../../server';
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
-import {
-  compressionQueue,
-  compressionQueueName,
-} from '../../queue/compression';
+import { compressionQueue } from '../../queue/compression';
 import type { CompressionJob } from '../../queue/compression/types';
 import { extendedAccountPostfix } from '../../utils/constants';
 import { logPrefix } from '../../endpoints/download.endpoint';
 import fastFolderSizeSync from 'fast-folder-size/sync';
 import { JobStatus } from '../../queue/jobStatus';
 import axios from 'axios';
-import { MAX_CONCURRENT_DOWNLOADS } from '../../queue/compression/worker';
 
 export const downloadDir = shieldedProcedure
   .input(
@@ -91,7 +88,7 @@ export const downloadDir = shieldedProcedure
       });
     }
 
-    if (inProgressJobs.length >= MAX_CONCURRENT_DOWNLOADS) {
+    if (inProgressJobs.length >= Number(process.env.MAX_CONCURRENT_DOWNLOADS)) {
       throw new TRPCError({
         code: 'BAD_REQUEST',
         message: 'Hay demasiadas descargas en progreso, intentalo más tarde',
@@ -257,7 +254,7 @@ export const downloadDir = shieldedProcedure
       const dbJob = await prisma.jobs.create({
         data: {
           jobId: job.id,
-          queue: compressionQueueName,
+          queue: process.env.COMPRESSION_QUEUE_NAME as string,
           status: JobStatus.IN_PROGRESS,
           user_id: user.id,
           createdAt: new Date(),
@@ -288,6 +285,34 @@ export const downloadDir = shieldedProcedure
       log.info(
         `[DOWNLOAD:DIR] Initiating directory compression job ${job.id}, user: ${user.id}`,
       );
+
+      log.info(
+        `[DOWNLOAD:DIR] Starting compression worker for user ${user.id}`,
+      );
+
+      await new Promise((res, rej) => {
+        pm2.start(
+          {
+            name: `compress-${user.id}-${job.id}`,
+            script: Path.resolve(
+              __dirname,
+              '../../../sse_server/compression-worker.js',
+            ),
+            autorestart: false,
+            namespace: process.env.COMPRESSION_QUEUE_NAME as string,
+          },
+          (err, proc) => {
+            if (err) {
+              log.error(
+                `[DOWNLOAD:DIR] Error while starting pm2: ${err.message}`,
+              );
+              return rej(err);
+            }
+
+            return res(proc);
+          },
+        );
+      });
 
       return {
         jobId: job.id,
