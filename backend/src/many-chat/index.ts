@@ -83,7 +83,7 @@ export const manyChat = {
     fieldValue: string,
   ) {
     try {
-      const response = await axios.post('/fb/subscriber/setCustomField', {
+      const response = await client.post('/fb/subscriber/setCustomField', {
         subscriber_id: mcId,
         field_name: fieldKey,
         field_value: fieldValue,
@@ -148,7 +148,7 @@ export const manyChat = {
     user: Users,
     tag: ManyChatTags,
   ): Promise<Array<Record<any, any>> | null> {
-    const mcId = this.getManyChatId(user);
+    const mcId = await this.getManyChatId(user);
 
     if (!mcId) return null;
 
