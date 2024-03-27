@@ -12,6 +12,7 @@ import { PayPalButtons } from "@paypal/react-paypal-js";
 import { SuccessModal } from "../../components/Modals/SuccessModal/SuccessModal";
 import { SpeiModal } from "../../components/Modals/SpeiModal/SpeiModal";
 import { ConditionModal } from "../../components/Modals/ConditionModal/ContitionModal";
+import { manychatApi } from "../../api/manychat";
 interface PlanCardPropsI {
   plan: IPlans;
   currentPlan?: boolean;
@@ -36,6 +37,13 @@ function PlanCard(props: PlanCardPropsI) {
   const { pathname } = location;
   // const ManyChatPixel = require('manychat-pixel-js');
   // const manyChatPixel = new ManyChatPixel('YOUR_PIXEL_ID');
+  const handleManyChat = async () => {
+    try {
+      await manychatApi("USER_CHECKED_PLANS");
+    } catch (error) {
+      console.log(error);
+    }
+  };
   const handleCancelModal = () => {
     setShowCancelModal(!showCancelModal);
   };
@@ -45,8 +53,12 @@ function PlanCard(props: PlanCardPropsI) {
   const handleErrorModal = () => {
     setShowError(!showError);
   };
-  const handleOxxoModal = () => {
-    setShowOxxoModal(!showOxxoModal);
+  const handleOxxoModal = async () => {
+    let tempOxxo = !showOxxoModal;
+    setShowOxxoModal(tempOxxo);
+    if (tempOxxo) {
+      handleManyChat();
+    }
   };
   const openSuccess = () => {
     setShowSuccess(true);
@@ -169,6 +181,7 @@ function PlanCard(props: PlanCardPropsI) {
         }}
         onClick={async (data, actions) => {
           trpc.checkoutLogs.registerCheckoutLog.mutate();
+          handleManyChat();
           // Revisar si el usuario tiene una suscripcion activa
           const me = await trpc.auth.me.query();
           if (me.hasActiveSubscription) return actions.reject();

@@ -10,8 +10,6 @@ const url =
     ? "https://thebearbeatapi.lat/trpc"
     : "https://thebearbeatapi.lat/trpc";
 
-console.log(url);
-
 const trpc = createTRPCProxyClient<AppRouter>({
   transformer: superjson,
   links: [

@@ -1,10 +1,11 @@
+import { IManychat } from "../interfaces/api";
 import trpc from "../api";
-import axios from "axios";
 
-export const manychat = async (tag: any) => {
+export const manychatApi = async (tag: IManychat) => {
   try {
-    // const files = await trpc.users.addManyChatTagToUser.mutate({})
+    const manychat = await trpc.users.addManyChatTagToUser.mutate({ tag });
+    return manychat;
   } catch (error: any) {
-    throw new Error(error.message);
+    throw Error(error.message);
   }
 };

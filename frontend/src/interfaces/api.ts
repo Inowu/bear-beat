@@ -1,0 +1,5 @@
+export type IManychat =
+  | "USER_CHECKED_PLANS"
+  | "USER_REGISTERED"
+  | "CHECKOUT_PLAN_ORO"
+  | "CHECKOUT_PLAN_CURIOSO";

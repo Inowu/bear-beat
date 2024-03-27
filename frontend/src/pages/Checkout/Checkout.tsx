@@ -9,6 +9,7 @@ import { useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import trpc from "../../api";
 import { IPlans } from "interfaces/Plans";
+import { manychatApi } from "../../api/manychat";
 const stripePromise = loadStripe(
   "pk_live_51HxCA5INxJoHjyCFl7eC2fUI9S22i2NW8iMnAjrvAUjnuVGZedLSRxB3sZspZzzHNOoTCNwgUNoZEYfXQuF6VvBV00MJ2C2k9s"
 );
@@ -20,6 +21,14 @@ function Checkout() {
   const searchParams = new URLSearchParams(location.search);
   const priceId = searchParams.get("priceId");
   const { currentUser } = useUserContext();
+  const checkManyChat = async (plans: IPlans) => {
+    if (plans.name.includes("Curioso")) {
+      await manychatApi("CHECKOUT_PLAN_CURIOSO");
+    }
+    if (plans.name.includes("Oro")) {
+      await manychatApi("CHECKOUT_PLAN_ORO");
+    }
+  };
   const getPlans = async (id: any) => {
     const id_plan: any = +id;
     let body = {
@@ -31,6 +40,7 @@ function Checkout() {
     try {
       const plans: any = await trpc.plans.findManyPlans.query(body);
       setPlan(plans[0]);
+      checkManyChat(plans[0]);
     } catch (error) {
       console.log(error);
     }
