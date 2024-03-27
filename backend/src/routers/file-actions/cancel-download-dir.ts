@@ -27,6 +27,51 @@ export const cancelDirDownload = shieldedProcedure
       });
     }
 
+    const download = await prisma.dir_downloads.findFirst({
+      where: {
+        jobId: job.id,
+      },
+    });
+
+    if (!download) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Esa descarga no existe',
+      });
+    }
+
+    log.info(`[DOWNLOAD:DIR:CANCEL] Cancelling download: ${jobId}`);
+    try {
+      await prisma.$transaction([
+        prisma.jobs.update({
+          where: {
+            id: job.id,
+          },
+          data: {
+            status: JobStatus.CANCELLED,
+            finishedAt: new Date(),
+          },
+        }),
+        // Update the expiration date to the current date, the zip file will later be removed by a script
+        prisma.dir_downloads.update({
+          where: {
+            id: download.id,
+          },
+          data: {
+            expirationDate: new Date(),
+          },
+        }),
+      ]);
+    } catch (e: any) {
+      log.error(
+        `[DOWNLOAD:DIR:CANCEL] Error while cancelling download: ${e.message}`,
+      );
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Ocurrió un error al cancelar la descarga',
+      });
+    }
+
     try {
       await new Promise((res, rej) => {
         pm2.delete(`compress-${user.id}-${jobId}`, (err, proc) => {
@@ -46,41 +91,6 @@ export const cancelDirDownload = shieldedProcedure
         message: e.message,
       });
     }
-
-    const download = await prisma.dir_downloads.findFirst({
-      where: {
-        jobId: job.id,
-      },
-    });
-
-    if (!download) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'Esa descarga no existe',
-      });
-    }
-
-    log.info(`[DOWNLOAD:DIR:CANCEL] Download cancelled: ${jobId}`);
-    await prisma.$transaction([
-      prisma.jobs.update({
-        where: {
-          id: job.id,
-        },
-        data: {
-          status: JobStatus.CANCELLED,
-          finishedAt: new Date(),
-        },
-      }),
-      // Update the expiration date to the current date, the zip file will later be removed by a script
-      prisma.dir_downloads.update({
-        where: {
-          id: download.id,
-        },
-        data: {
-          expirationDate: new Date(),
-        },
-      }),
-    ]);
 
     return {
       message: 'La descarga ha sido cancelada correctamente',

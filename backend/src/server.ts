@@ -1,12 +1,20 @@
-import winston from 'winston';
+import winston, { format } from 'winston';
+import DatadogWinston from 'datadog-winston';
 
-export const log = winston.createLogger();
+export const log = winston.createLogger({
+  level: 'info',
+  exitOnError: false,
+  format: format.json(),
+});
 
-const options =
-  process.env.NODE_ENV === 'production'
-    ? {}
-    : {
-        format: winston.format.prettyPrint(),
-      };
+log.add(new winston.transports.Console());
 
-log.add(new winston.transports.Console(options));
+log.add(
+  new DatadogWinston({
+    apiKey: process.env.DD_API_KEY as string,
+    hostname: process.env.DD_HOSTNAME as string,
+    ddsource: 'nodejs',
+    ddtags: 'env:prod',
+    intakeRegion: 'us5',
+  }),
+);
