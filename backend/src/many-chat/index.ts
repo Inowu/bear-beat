@@ -1,7 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import { log } from '../server';
 import { Users } from '@prisma/client';
-import { ManyChatTags } from './tags';
+import { ManyChatTags, manyChatTags } from './tags';
 import { prisma } from '../db';
 
 const client = axios.create({
@@ -155,10 +155,10 @@ export const manyChat = {
     try {
       const response = await client.post('/fb/subscriber/addTag', {
         subscriber_id: mcId,
-        tag_id: tag,
+        tag_id: manyChatTags[tag],
       });
 
-      return response.data.data;
+      return response.data;
     } catch (error: any) {
       log.error(
         `[MANYCHAT] Error while adding tag to subscriber with id ${mcId}: ${
