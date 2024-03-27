@@ -1,4 +1,5 @@
 const { default: axios } = require('axios');
+const { log } = require('./log');
 
 const sendEvent = async (eventName, body) => {
   try {
