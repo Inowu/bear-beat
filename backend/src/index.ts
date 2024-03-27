@@ -36,6 +36,7 @@ tracer.init({
   env: 'prod',
   service: 'bearbeat',
   logInjection: true,
+  hostname: process.env.DD_AGENT_HOST,
 });
 
 async function main() {
