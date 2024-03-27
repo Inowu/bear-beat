@@ -18,12 +18,23 @@ export const cancelDirDownload = shieldedProcedure
       where: {
         jobId,
       },
+      orderBy: {
+        // This is necessary, there can be multiple jobs with the same jobId
+        createdAt: 'desc',
+      },
     });
 
     if (!job) {
       throw new TRPCError({
         code: 'BAD_REQUEST',
         message: 'Ese trabajo no existe',
+      });
+    }
+
+    if (job.user_id !== user.id) {
+      throw new TRPCError({
+        code: 'UNAUTHORIZED',
+        message: 'No tienes permiso para cancelar esta descarga',
       });
     }
 

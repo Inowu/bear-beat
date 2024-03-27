@@ -111,6 +111,7 @@ export const permissions = shield<Context>({
     groupByUsers: isAdmin,
   },
   mutation: {
+    cancelDirDownload: isLoggedIn,
     updatePlanInfo: isLoggedIn,
     removeInactiveUsers: isAdmin,
     getCurrentSubscriptionPlan: isLoggedIn,
