@@ -16,7 +16,15 @@ export const cancelDirDownload = shieldedProcedure
 
     const job = await prisma.jobs.findFirst({
       where: {
-        jobId,
+        AND: [
+          { jobId },
+          {
+            queue: process.env.COMPRESSION_QUEUE_NAME,
+          },
+          {
+            status: JobStatus.IN_PROGRESS,
+          },
+        ],
       },
       orderBy: {
         // This is necessary, there can be multiple jobs with the same jobId
@@ -27,7 +35,7 @@ export const cancelDirDownload = shieldedProcedure
     if (!job) {
       throw new TRPCError({
         code: 'BAD_REQUEST',
-        message: 'Ese trabajo no existe',
+        message: 'No hay descargas pendientes para cancelar',
       });
     }
 
