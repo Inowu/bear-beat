@@ -215,14 +215,20 @@ export const manyChat = {
       `[MANYCHAT:RETRIEVE_OR_CREATE] Updating user ${user.id} with mc_id ${subscriber.id}`,
     );
 
-    await prisma.users.update({
-      where: {
-        id: user.id,
-      },
-      data: {
-        mc_id: Number(subscriber.id),
-      },
-    });
+    try {
+      await prisma.users.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          mc_id: Number(subscriber.id),
+        },
+      });
+    } catch (e: any) {
+      log.error(
+        `[MANYCHAT:GET_ID] Error updating user ${user.id} with mc_id ${subscriber.id}: ${e.message}`,
+      );
+    }
 
     return subscriber.id;
   },
