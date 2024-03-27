@@ -43,7 +43,7 @@ export const downloadDirEndpoint = async (req: Request, res: Response) => {
 
   if (!dirExists) {
     log.error(
-      `[DOWNLOAD] Directory not found for user ${user.id} and jobId ${jobId}`,
+      `[DOWNLOAD] Directory with path ${fullPath} not found for user ${user.id} and jobId ${jobId}`,
     );
     return res.status(404).send({ error: 'Esa carpeta no existe' });
   }
