@@ -1,12 +1,10 @@
 import { Queue } from 'bullmq';
 import { log } from '../../server';
 
-export const removeUsersQueueName = 'remove-users';
-
 export let removeUsersQueue: Queue;
 
 export const initializeRemoveUsersQueue = () => {
-  removeUsersQueue = new Queue(removeUsersQueueName, {
+  removeUsersQueue = new Queue(process.env.REMOVE_USERS_QUEUE_NAME as string, {
     connection: {
       host: process.env.REDIS_HOST || 'localhost',
       port: parseInt(process.env.REDIS_PORT as string, 10) || 6379,

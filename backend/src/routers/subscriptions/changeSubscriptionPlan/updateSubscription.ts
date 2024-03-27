@@ -1,12 +1,11 @@
 import { TRPCError } from '@trpc/server';
 import { log } from '../../../server';
-import { DescargasUser, Orders, Plans } from '@prisma/client';
+import { DescargasUser, Orders, Plans, Users } from '@prisma/client';
 import stripeInstance from '../../../stripe';
 import { prisma } from '../../../db';
 import { gbToBytes } from '../../../utils/gbToBytes';
 import { SessionUser } from '../../auth/utils/serialize-user';
 import { getFtpUserInfo } from '../../utils/getFtpUserInfo';
-import { PaymentService } from '../services/types';
 import { paypal } from '../../../paypal';
 import axios from 'axios';
 
@@ -59,17 +58,17 @@ export const updateStripeSubscription = async ({
     });
   }
 
-  await updateFtpUserInfo({
-    subscription,
-    user,
-    subscriptionOrder,
-    newPlan,
-  });
-
   try {
     await stripeInstance.subscriptionItems.update(stripeSub.id, {
       // Checked outside method
       price: newPlan.stripe_prod_id!,
+    });
+
+    await updateFtpUserInfo({
+      subscription,
+      user,
+      subscriptionOrder,
+      newPlan,
     });
 
     return {
@@ -151,7 +150,7 @@ export const updateFtpUserInfo = async ({
   newPlan,
 }: {
   subscription: DescargasUser;
-  user: SessionUser;
+  user: SessionUser | Users;
   subscriptionOrder: Orders;
   newPlan: Plans;
 }) => {

@@ -11,6 +11,7 @@ import { prisma } from '../../../db';
 import { PaymentService } from '../../subscriptions/services/types';
 import { OrderStatus } from '../../subscriptions/interfaces/order-status.interface';
 import { brevo } from '../../../email';
+import { manyChat } from '../../../many-chat';
 
 export const stripeSubscriptionWebhook = async (req: Request) => {
   const payload: Stripe.Event = JSON.parse(req.body as any);
@@ -74,6 +75,12 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
         log.error(`[STRIPE] Error while sending email ${e}`);
       }
 
+      try {
+        await manyChat.addTagToUser(user, 'SUCCESSFUL_PAYMENT');
+      } catch (e) {
+        log.error(`[STRIPE] Error while adding tag to user ${user.id}: ${e}`);
+      }
+
       subscribe({
         subId: subscription.id,
         user,
@@ -107,6 +114,14 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
             });
           } catch (e) {
             log.error(`[STRIPE] Error while sending email ${e}`);
+          }
+
+          try {
+            await manyChat.addTagToUser(user, 'SUCCESSFUL_PAYMENT');
+          } catch (e) {
+            log.error(
+              `[STRIPE] Error while adding tag to user ${user.id}: ${e}`,
+            );
           }
 
           await subscribe({

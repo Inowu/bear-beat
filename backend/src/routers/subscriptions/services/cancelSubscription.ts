@@ -2,11 +2,10 @@ import { PrismaClient, Users } from '@prisma/client';
 import { log } from '../../../server';
 import { PaymentService } from './types';
 import { OrderStatus } from '../interfaces/order-status.interface';
+import { getPlanKey } from '../../../utils/getPlanKey';
+import { subDays } from 'date-fns';
+import { gbToBytes } from '../../../utils/gbToBytes';
 
-/*
- * This only updates the order status to cancelled, it does not actually cancel the subscription,
- * cancellation is done with other methods specific to each service
- * */
 export const cancelSubscription = async ({
   prisma,
   user,
@@ -73,42 +72,57 @@ export const cancelSubscription = async ({
     return;
   }
 
-  // let gb = 500;
-  //
-  // const plan = await prisma.plans.findFirst({
-  //   where: {
-  //     [getPlanKey(service)]: planId,
-  //   },
-  // });
-  //
-  // if (plan) gb = Number(plan.gigas);
+  const planOrder = await prisma.orders.findFirst({
+    where: {
+      id: download.order_id!,
+    },
+  });
 
-  // await prisma.$transaction([
-  //   prisma.descargasUser.update({
-  //     where: {
-  //       id: download.id,
-  //     },
-  //     data: {
-  //       date_end: subDays(new Date(), 1),
-  //     },
-  //   }),
-  //   prisma.ftpquotatallies.update({
-  //     where: {
-  //       id: quotaTallies.id,
-  //     },
-  //     data: {
-  //       bytes_out_used: gbToBytes(gb) + gbToBytes(1),
-  //     },
-  //   }),
-  //   prisma.ftpUser.update({
-  //     where: {
-  //       id: ftpUser.id,
-  //     },
-  //     data: {
-  //       expiration: subDays(new Date(), 1).toISOString(),
-  //     },
-  //   }),
-  // ]);
+  if (!planOrder) {
+    log.error(
+      `[CANCEL_SUB] No order found for user ${user.id}, no action taken to cancel subscription`,
+    );
+    return;
+  }
+
+  const plan = await prisma.plans.findFirst({
+    where: {
+      [getPlanKey(service)]: planId,
+    },
+  });
+
+  let gb = 500;
+
+  if (plan) gb = Number(plan.gigas);
+
+  log.info(`[CANCEL_SUB] Cancelling subscription for user ${user.id}`);
+
+  await prisma.$transaction([
+    prisma.descargasUser.update({
+      where: {
+        id: download.id,
+      },
+      data: {
+        date_end: new Date(),
+      },
+    }),
+    prisma.ftpquotatallies.update({
+      where: {
+        id: quotaTallies.id,
+      },
+      data: {
+        bytes_out_used: gbToBytes(gb) + gbToBytes(1),
+      },
+    }),
+    prisma.ftpUser.update({
+      where: {
+        id: ftpUser.id,
+      },
+      data: {
+        expiration: subDays(new Date(), 1).toISOString(),
+      },
+    }),
+  ]);
 
   const pendingOrder = await prisma.orders.findFirst({
     where: {

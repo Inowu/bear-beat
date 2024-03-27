@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import pm2 from 'pm2';
 import { subMonths } from 'date-fns';
 import { TRPCError } from '@trpc/server';
 import { shieldedProcedure } from '../procedures/shielded.procedure';
@@ -18,9 +19,10 @@ import { UsersUpsertSchema } from '../schemas/upsertOneUsers.schema';
 import { log } from '../server';
 import { cancelServicesSubscriptions } from './subscriptions/cancel/cancelServicesSubscriptions';
 import { RolesIds } from './auth/interfaces/roles.interface';
-import { removeUsersQueue, removeUsersQueueName } from '../queue/removeUsers';
+import { removeUsersQueue } from '../queue/removeUsers';
 import { RemoveUsersJob } from '../queue/removeUsers/types';
 import { JobStatus } from '../queue/jobStatus';
+import { manyChat } from '../many-chat';
 
 export const usersRouter = router({
   getActiveUsers: shieldedProcedure
@@ -63,7 +65,7 @@ export const usersRouter = router({
       const activeSubs = await prisma.descargasUser.findMany({
         where: {
           date_end: {
-            gte: subMonths(new Date(), 1),
+            gte: new Date(),
           },
         },
       });
@@ -171,7 +173,7 @@ export const usersRouter = router({
         where: {
           AND: [
             {
-              queue: removeUsersQueueName,
+              queue: process.env.REMOVE_USERS_QUEUE_NAME as string,
             },
             {
               status: JobStatus.IN_PROGRESS,
@@ -327,33 +329,52 @@ export const usersRouter = router({
       }
 
       // Push job to queue
-      const job = await removeUsersQueue.add(removeUsersQueueName, {
-        userCustomerIds: inactiveUsers
-          .slice(0, 500)
-          .map(
-            (
-              user,
-            ): {
-              stripe: string | undefined | null;
-              conekta: string | undefined | null;
-            } => ({
-              stripe: user.stripe_cusid,
-              conekta: user.conekta_cusid,
-            }),
-          )
-          .filter((user) => user.stripe || user.conekta),
-        userId: session!.user!.id,
-      } as RemoveUsersJob);
+      const job = await removeUsersQueue.add(
+        process.env.REMOVE_USERS_QUEUE_NAME as string,
+        {
+          userCustomerIds: inactiveUsers
+            .slice(0, 500)
+            .map(
+              (
+                user,
+              ): {
+                stripe: string | undefined | null;
+                conekta: string | undefined | null;
+              } => ({
+                stripe: user.stripe_cusid,
+                conekta: user.conekta_cusid,
+              }),
+            )
+            .filter((user) => user.stripe || user.conekta),
+          userId: session!.user!.id,
+        } as RemoveUsersJob,
+      );
 
       await prisma.jobs.create({
         data: {
           jobId: job.id,
           status: JobStatus.IN_PROGRESS,
           user_id: session!.user!.id,
-          queue: removeUsersQueueName,
+          queue: process.env.REMOVE_USERS_QUEUE_NAME as string,
           createdAt: new Date(),
         },
       });
+
+      log.info(`[REMOVE_INACTIVE_USERS] Starting worker for job ${job.id}`);
+      pm2.start(
+        {
+          name: `removeUsers-${session!.user!.id}-${job.id}`,
+          namespace: process.env.REMOVE_USERS_QUEUE_NAME as string,
+          autorestart: false,
+        },
+        (err) => {
+          if (err) {
+            log.error(
+              `[REMOVE_INACTIVE_USERS] Error starting pm2 process, ${err}`,
+            );
+          }
+        },
+      );
 
       return {
         message:
@@ -361,6 +382,46 @@ export const usersRouter = router({
       };
     },
   ),
+  addManyChatTagToUser: shieldedProcedure
+    .input(
+      z.object({
+        tag: z.union([
+          z.literal('USER_CHECKED_PLANS'),
+          z.literal('USER_REGISTERED'),
+          z.literal('CHECKOUT_PLAN_ORO'),
+          z.literal('CHECKOUT_PLAN_CURIOSO'),
+        ]),
+      }),
+    )
+    .mutation(async ({ ctx: { prisma, session }, input: { tag } }) => {
+      const user = await prisma.users.findFirst({
+        where: {
+          id: session!.user!.id,
+        },
+      });
+
+      const mcId = await manyChat.getManyChatId(user!);
+
+      if (!mcId) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Usuario no encontrado en ManyChat',
+        });
+      }
+
+      const response = await manyChat.addTagToUser(user!, tag);
+
+      if (!response) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Ocurrió un error al agregar las etiquetas al usuario',
+        });
+      }
+
+      return {
+        message: 'Se han agregado las etiquetas a los usuarios',
+      };
+    }),
   aggregateUsers: shieldedProcedure
     .input(UsersAggregateSchema)
     .query(async ({ ctx, input }) => {

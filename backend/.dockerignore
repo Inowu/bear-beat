@@ -4,3 +4,9 @@ Dockerfile
 test/
 demos/
 compressed-dirs/
+mysql-data/
+build/
+build_sse/
+storage_server/
+scripts/
+lib/

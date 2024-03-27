@@ -98,6 +98,7 @@ function CheckoutForm(props: ICheckout) {
           setErrorMessage(result.error.message);
           setShow(true);
         } else {
+           fbq('track', 'PagoExitoso');
           setShowSuccess(true);
           setLoader(false);
         }

@@ -162,7 +162,7 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
     )} id: ${user?.id}, username: ${user?.username}, bytes available left: ${availableBytes}`,
   );
 
-  prisma.ftpquotatallies.update({
+  await prisma.ftpquotatallies.update({
     where: {
       id: quotaTallies.id,
     },

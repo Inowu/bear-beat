@@ -10,6 +10,7 @@ import { conektaCustomers } from '../../../conekta';
 import { stripNonAlphabetic } from './utils/formatUsername';
 import { log } from '../../../server';
 import { brevo } from '../../../email';
+import { manyChat } from '../../../many-chat';
 
 export const register = publicProcedure
   .input(
@@ -133,6 +134,20 @@ export const register = publicProcedure
         });
       } catch (e: any) {
         log.error(`[REGISTER] Error while sending email ${e.message}`);
+      }
+
+      // This implicitly creates a new subscriber in ManyChat or retrieves an existing one
+      const manyChatSubscriber = await manyChat.getManyChatId(newUser);
+
+      if (manyChatSubscriber) {
+        await prisma.users.update({
+          where: {
+            id: newUser.id,
+          },
+          data: {
+            mc_id: newUser.id,
+          },
+        });
       }
 
       const tokens = await generateTokens(prisma, newUser);

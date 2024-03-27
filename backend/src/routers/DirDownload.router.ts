@@ -6,9 +6,9 @@ export const dirDownloadRouter = router({
     async ({ ctx: { prisma, session } }) => {
       const user = session!.user!;
 
-      const dirDownloads = await prisma.descargasUser.findMany({
+      const dirDownloads = await prisma.dir_downloads.findMany({
         where: {
-          user_id: user.id,
+          userId: user.id,
         },
       });
 

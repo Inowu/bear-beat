@@ -13,6 +13,7 @@ import { PaymentService } from '../../subscriptions/services/types';
 import { brevo } from '../../../email';
 import { OrderStatus } from '../../subscriptions/interfaces/order-status.interface';
 import { addGBToAccount } from '../../products/services/addGBToAccount';
+import { manyChat } from '../../../many-chat';
 
 export const conektaSubscriptionWebhook = async (req: Request) => {
   const payload: EventResponse = JSON.parse(req.body as any);
@@ -48,6 +49,13 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
       log.info(
         `[CONEKTA_WH] Creating subscription for user ${user.id}, subscription id: ${subscription.id}, payload: ${payloadStr}`,
       );
+
+      try {
+        await manyChat.addTagToUser(user, 'SUCCESSFUL_PAYMENT');
+      } catch (e) {
+        log.error(`[CONEKTA] Error while adding tag to user ${user.id}: ${e}`);
+      }
+
       await subscribe({
         subId: subscription.id,
         prisma,
@@ -196,6 +204,14 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
           orderId: Number(orderId),
         });
       } else {
+        try {
+          await manyChat.addTagToUser(user, 'SUCCESSFUL_PAYMENT');
+        } catch (e) {
+          log.error(
+            `[CONEKTA] Error while adding tag to user ${user.id}: ${e}`,
+          );
+        }
+
         await subscribe({
           subId: subscription.id,
           prisma,

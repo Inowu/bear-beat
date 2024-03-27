@@ -169,7 +169,6 @@ function PlanCard(props: PlanCardPropsI) {
         }}
         onClick={async (data, actions) => {
           trpc.checkoutLogs.registerCheckoutLog.mutate();
-          handleButtonClick();
           // Revisar si el usuario tiene una suscripcion activa
           const me = await trpc.auth.me.query();
           if (me.hasActiveSubscription) return actions.reject();

@@ -1,17 +1,13 @@
 import { Queue } from 'bullmq';
 import { log } from '../../server';
-import { workerFactory } from '../workerFactory';
-
-export const compressionQueueName = 'dir-compression';
 
 export let compressionQueue: Queue;
 
 export const initializeCompressionQueue = () => {
-  compressionQueue = new Queue(compressionQueueName, {
+  compressionQueue = new Queue(process.env.COMPRESSION_QUEUE_NAME as string, {
     connection: {
       host: process.env.REDIS_HOST,
       port: parseInt(process.env.REDIS_PORT as string, 10),
-      // enableOfflineQueue: false,
     },
   });
 

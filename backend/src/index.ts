@@ -1,8 +1,7 @@
 import path from 'path';
-import fs from 'fs';
 import tracer from 'dd-trace';
+import pm2 from 'pm2';
 import { config } from 'dotenv';
-import { Queue, Worker } from 'bullmq';
 import { createExpressMiddleware } from '@trpc/server/adapters/express';
 import express from 'express';
 import cors from 'cors';
@@ -18,18 +17,15 @@ import { conektaEndpoint } from './endpoints/webhooks/conekta.endpoint';
 import { stripeEndpoint } from './endpoints/webhooks/stripe.endpoint';
 import { paypalEndpoint } from './endpoints/webhooks/paypal.endpoint';
 import { stripePiEndpoint } from './endpoints/webhooks/stripePaymentIntents.endpoint';
-import { sse } from './sse';
 import {
   compressionQueue,
   initializeCompressionQueue,
 } from './queue/compression';
-import { compressionWorkers, workerFactory } from './queue/workerFactory';
 import { stripeProductsEndpoint } from './endpoints/webhooks/stripeProducts.endpoint';
 import {
   initializeRemoveUsersQueue,
   removeUsersQueue,
 } from './queue/removeUsers';
-import { removeUsersWorkers } from './queue/workerFactory';
 import { downloadDirEndpoint } from './endpoints/download-dir.endpoint';
 
 config({
@@ -40,6 +36,7 @@ tracer.init({
   env: 'prod',
   service: 'bearbeat',
   logInjection: true,
+  hostname: process.env.DD_AGENT_HOST,
 });
 
 async function main() {
@@ -54,8 +51,6 @@ async function main() {
     );
 
     app.use(cors({ origin: '*' }));
-
-    // app.get('/sse', sse.init);
 
     app.use(
       '/trpc',
@@ -113,8 +108,12 @@ async function main() {
 
     initializeRemoveUsersQueue();
 
-    workerFactory('users');
-    // workerFactory('compression');
+    pm2.connect((err) => {
+      if (err) {
+        log.error(`[PM2] Error while connecting to pm2: ${err}`);
+      }
+    });
+    log.info(`[PM2] Connected to pm2`);
   } catch (e: any) {
     log.error(e.message);
     await closeConnections();
@@ -125,8 +124,6 @@ async function main() {
 const closeConnections = async () => {
   await compressionQueue.close();
   await removeUsersQueue.close();
-  await Promise.all(compressionWorkers.map(async (worker) => worker.close()));
-  await Promise.all(removeUsersWorkers.map(async (worker) => worker.close()));
 };
 
 process.on('SIGTERM', async () => {
