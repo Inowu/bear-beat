@@ -12,7 +12,6 @@ import * as Yup from "yup";
 import { useState } from "react";
 import { SuccessModal } from "../../../components/Modals/SuccessModal/SuccessModal";
 import { Spinner } from "../../../components/Spinner/Spinner";
-import { manychatApi } from "../../../api/manychat";
 
 function SignUpForm() {
   const navigate = useNavigate();
@@ -76,7 +75,6 @@ function SignUpForm() {
         handleLogin(register.token, register.refreshToken);
         setShowSuccess(true);
         handleSuccessfulRegister();
-        await manychatApi("USER_REGISTERED");
         setLoader(false);
       } catch (error: any) {
         setShow(true);
