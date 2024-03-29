@@ -325,7 +325,6 @@ function Admin() {
             </select>
           </div>
         </div>
-
         <div className="search-input">
           <input
             placeholder="Buscar por email"

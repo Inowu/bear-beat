@@ -13,6 +13,7 @@ interface IAdminFilter {
   limit: number;
   total: number;
   search: string;
+  searchData: string;
   active: number;
   startDate: Date;
   endDate: Date;
@@ -28,6 +29,7 @@ export const Ordens = () => {
   const [filters, setFilters] = useState<any>({
     page: 0,
     search: "",
+    searchData: "",
     active: 1,
     limit: 100,
     startDate: new Date("2010-01-01"),
@@ -51,13 +53,16 @@ export const Ordens = () => {
     setLoader(true);
     setTotalLoader(true);
     try {
-      let body: any = {
+      let body = {
         take: filt.limit,
         skip: filt.page * filt.limit,
         where: {
           payment_method: {
             startsWith: filt.search,
           },
+          // email: {
+          //   startsWith: filt.searchData,
+          // },
           status: {
             equals: filt.active,
           },
@@ -75,6 +80,9 @@ export const Ordens = () => {
           payment_method: {
             startsWith: filt.search,
           },
+          // email: {
+          //   startsWith: filt.searchData,
+          // },
           status: {
             equals: filt.active,
           },
@@ -88,7 +96,6 @@ export const Ordens = () => {
         },
       };
       const tempOrders = await trpc.orders.findManyOrdersWithUsers.query(body);
-      console.log(tempOrders);
       setLoader(false);
       setOrdens(tempOrders);
       const totalOrders =
@@ -113,6 +120,15 @@ export const Ordens = () => {
     <div className="ordens-contain">
       <div className="header">
         <h1>Ordenes</h1>
+        {/* <div className="search-input">
+          <input
+            placeholder="Buscar por email"
+            onChange={(e: any) => {
+              startFilter("searchData", e.target.value);
+            }}
+          />
+          <FontAwesomeIcon icon={faSearch} />
+        </div> */}
       </div>
       <div className="filter-contain">
         <div className="select-input">
