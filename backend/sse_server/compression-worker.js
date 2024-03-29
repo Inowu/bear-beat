@@ -109,6 +109,21 @@ const compressionWorker = new Worker(
   },
 );
 
+compressionWorker.on('active', (job) => {
+  process.on('SIGINT', async () => {
+    try {
+      log.info('[WORKER:COMPRESSION] Closing Worker');
+      await compressionWorker.close(true);
+    } catch (e) {
+      log.error(
+        `[WORKER:COMPRESSION:FAILED] Could not remove job ${job.id}. Error: ${e.message}`,
+      );
+    } finally {
+      process.exit(0);
+    }
+  });
+});
+
 compressionWorker.on('paused', () => {
   log.info('[WORKER:COMPRESSION] Worker paused');
 });
