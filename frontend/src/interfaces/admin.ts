@@ -7,6 +7,16 @@ export interface IAdminUser {
   blocked: boolean;
   phone: string;
 }
+export interface IAdminOrders {
+  city: string;
+  email: string;
+  phone: string;
+  payment_method: "Paypal" | "Stripe" | null;
+  txn_id: string;
+  total_price: number;
+  date_order: Date;
+  status: number;
+}
 export interface IAdminCoupons {
   active: number;
   code: string;

@@ -7,6 +7,7 @@ import { ARRAY_10 } from "../../../utils/Constants";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import "./Ordens.scss";
+import { IAdminOrders } from "../../../interfaces/admin";
 
 interface IAdminFilter {
   page: number;
@@ -22,7 +23,7 @@ interface IAdminFilter {
 export const Ordens = () => {
   const { currentUser } = useUserContext();
   const navigate = useNavigate();
-  const [ordens, setOrdens] = useState<any>([]);
+  const [ordens, setOrdens] = useState<IAdminOrders[]>([]);
   const [totalLoader, setTotalLoader] = useState<boolean>(false);
   const [totalOrdens, setTotalOrdens] = useState(0);
   const [loader, setLoader] = useState<boolean>(true);
@@ -56,41 +57,43 @@ export const Ordens = () => {
       let body = {
         take: filt.limit,
         skip: filt.page * filt.limit,
-        where: {
-          payment_method: {
-            startsWith: filt.search,
-          },
-          // email: {
-          //   startsWith: filt.searchData,
-          // },
-          status: {
-            equals: filt.active,
-          },
-          date_order: {
-            gte: filt.startDate,
-            lte: filt.endDate,
-          },
-        },
+        email: filt.searchData,
+        // where: {
+        //   payment_method: {
+        //     startsWith: filt.search,
+        //   },
+        //   // email: {
+        //   //   startsWith: filt.searchData,
+        //   // },
+        //   status: {
+        //     equals: filt.active,
+        //   },
+        //   date_order: {
+        //     gte: filt.startDate,
+        //     lte: filt.endDate,
+        //   },
+        // },
         orderBy: {
           date_order: "desc",
         },
       };
       let body2: any = {
-        where: {
-          payment_method: {
-            startsWith: filt.search,
-          },
-          // email: {
-          //   startsWith: filt.searchData,
-          // },
-          status: {
-            equals: filt.active,
-          },
-          date_order: {
-            gte: filt.startDate,
-            lte: filt.endDate,
-          },
-        },
+        email: filt.searchData,
+        // where: {
+        //   payment_method: {
+        //     startsWith: filt.search,
+        //   },
+        //   email: {
+        //     startsWith: filt.searchData,
+        //   },
+        //   status: {
+        //     equals: filt.active,
+        //   },
+        //   date_order: {
+        //     gte: filt.startDate,
+        //     lte: filt.endDate,
+        //   },
+        // },
         include: {
           id: true,
         },
@@ -99,8 +102,10 @@ export const Ordens = () => {
         await trpc.orders.findManyOrdersWithUsers.query(body);
       setLoader(false);
       setOrdens(tempOrders);
+      console.log(tempOrders);
       const totalOrders =
         await trpc.orders.findManyOrdersWithUsers.query(body2);
+      console.log(totalOrders);
       setTotalOrdens(totalOrders.length);
       setTotalLoader(false);
     } catch (error: any) {
@@ -121,7 +126,7 @@ export const Ordens = () => {
     <div className="ordens-contain">
       <div className="header">
         <h1>Ordenes</h1>
-        {/* <div className="search-input">
+        <div className="search-input">
           <input
             placeholder="Buscar por email"
             onChange={(e: any) => {
@@ -129,7 +134,7 @@ export const Ordens = () => {
             }}
           />
           <FontAwesomeIcon icon={faSearch} />
-        </div> */}
+        </div>
       </div>
       <div className="filter-contain">
         <div className="select-input">
@@ -195,12 +200,16 @@ export const Ordens = () => {
             </thead>
             <tbody>
               {!loader
-                ? ordens.map((orden: any, index: number) => {
+                ? ordens.map((orden: IAdminOrders, index: number) => {
                     return (
                       <tr key={"admin_ordens_" + index}>
-                        <td className="">{orden.user?.email}</td>
-                        <td className="">{orden.user?.phone}</td>
-                        <td className="">{orden.payment_method}</td>
+                        <td className="">{orden.email}</td>
+                        <td className="">{orden.phone}</td>
+                        <td className="">
+                          {orden.payment_method
+                            ? orden.payment_method
+                            : "Sin PM"}
+                        </td>
                         <td>{orden.txn_id}</td>
                         <td>{orden.total_price}</td>
                         <td>{orden.date_order.toLocaleDateString()}</td>
