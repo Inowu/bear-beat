@@ -15,9 +15,8 @@ import { ICreatePlans } from "../../../interfaces/Plans";
 interface IAddPlanModal {
   showModal: boolean;
   onHideModal: () => void;
-  callPlans: () =>  void;
+  callPlans: () => void;
 }
-
 
 function AddPlanModal(props: IAddPlanModal) {
   const { showModal, onHideModal, callPlans } = props;
@@ -25,30 +24,25 @@ function AddPlanModal(props: IAddPlanModal) {
   const [loader, setLoader] = useState<boolean>(false);
   const [show, setShow] = useState<boolean>(false);
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<any>('');
+  const [errorMessage, setErrorMessage] = useState<any>("");
   const closeModal = () => {
     setShow(false);
-  }
+  };
   const closeSuccess = () => {
     setShowSuccess(false);
     callPlans();
     // navigate("/");
-  }
+  };
   const validationSchema = Yup.object().shape({
-    description: Yup.string()
-      .required("description is required"),
-    interval: Yup.string()
-      .required("interval is required"),
-    name: Yup.string()
-      .required("name is required"),
+    description: Yup.string().required("La descripción es requerida"),
+    interval: Yup.string().required("Este campo es obligatorio"),
+    name: Yup.string().required("El nombre es requerido"),
     price: Yup.number()
-      .typeError("price must be a number")
-      .required("price is required")
-      .min(1, "price can't be 0"),
-    paymentMethod: Yup.string()
-      .required("payment method is required"),
-      gigas: Yup.string()
-      .required("gigas is required"),
+      .typeError("El precio debe ser un número")
+      .required("El precio es requerido")
+      .min(1, "El precio no puede ser 0"),
+    paymentMethod: Yup.string().required("El método de pago es requerido"),
+    gigas: Yup.string().required("Este campo es obligatorio"),
   });
   const initialValues: ICreatePlans = {
     description: "",
@@ -59,8 +53,8 @@ function AddPlanModal(props: IAddPlanModal) {
     moneda: "usd",
     homedir: "/home/products/",
     stripe_prod_id_test: "",
-    gigas: '',
-    duration: '',
+    gigas: "",
+    duration: "",
   };
   const formik = useFormik({
     initialValues: initialValues,
@@ -76,29 +70,35 @@ function AddPlanModal(props: IAddPlanModal) {
         stripe_prod_id_test: values.stripe_prod_id_test,
         duration: values.interval === "month" ? "30" : "365",
         gigas: handleChangeBigint(values.gigas),
-      }
+      };
       try {
-        if (values.paymentMethod === 'stripe') {
-          await trpc.plans.createStripePlan.mutate({data: body, interval: values.interval});
-        } else if (values.paymentMethod === 'paypal') {
+        if (values.paymentMethod === "stripe") {
+          await trpc.plans.createStripePlan.mutate({
+            data: body,
+            interval: values.interval,
+          });
+        } else if (values.paymentMethod === "paypal") {
           body.moneda = body.moneda.toUpperCase();
-          await trpc.plans.createPaypalPlan.mutate({data: body, where: {id: 0}, interval: values.interval});
+          await trpc.plans.createPaypalPlan.mutate({
+            data: body,
+            where: { id: 0 },
+            interval: values.interval,
+          });
         }
         formik.resetForm();
         setShowSuccess(true);
         setLoader(false);
-      }
-      catch (error: any) {
+      } catch (error: any) {
         setShow(true);
         setErrorMessage(error.message);
-        setLoader(false)
+        setLoader(false);
       }
     },
   });
   return (
     <Modal show={showModal} onHide={onHideModal} centered>
       <form className="modal-addusers" onSubmit={formik.handleSubmit}>
-        <RiCloseCircleLine className='icon' onClick={onHideModal} />
+        <RiCloseCircleLine className="icon" onClick={onHideModal} />
         <h2>Crear Plan</h2>
         <div className="c-row">
           <label>Plan Name</label>
@@ -129,8 +129,12 @@ function AddPlanModal(props: IAddPlanModal) {
           )}
         </div>
         <div className="c-row">
-        <label>Duration</label>
-          <select id="interval" defaultValue={formik.values.interval} onChange={formik.handleChange}>
+          <label>Duration</label>
+          <select
+            id="interval"
+            defaultValue={formik.values.interval}
+            onChange={formik.handleChange}
+          >
             <option value={"month"}>Mes</option>
             <option value={"year"}>Aňo</option>
           </select>
@@ -139,7 +143,7 @@ function AddPlanModal(props: IAddPlanModal) {
           )}
         </div>
         <div className="c-row">
-        <label>Gigas (gb)</label>
+          <label>Gigas (gb)</label>
           <input
             placeholder="gigas (GB)"
             type="number"
@@ -172,9 +176,7 @@ function AddPlanModal(props: IAddPlanModal) {
               onChange={formik.handleChange}
             />
             {formik.touched.price && formik.errors.price && (
-              <div className="formik">
-                {formik.errors.price}
-              </div>
+              <div className="formik">{formik.errors.price}</div>
             )}
           </div>
         </div>
@@ -196,12 +198,18 @@ function AddPlanModal(props: IAddPlanModal) {
             <div className="formik">{formik.errors.paymentMethod}</div>
           )}
         </div>
-        {
-          !loader
-            ? <button className="btn-option-4" type="submit">Crear Plan</button>
-            : <div style={{marginBottom: 10}}><Spinner size={3} width={.3} color="#00e2f7" /></div>
-        }
-        <button className="btn-cancel" onClick={onHideModal} type="reset">Cancelar</button>
+        {!loader ? (
+          <button className="btn-option-4" type="submit">
+            Crear Plan
+          </button>
+        ) : (
+          <div style={{ marginBottom: 10 }}>
+            <Spinner size={3} width={0.3} color="#00e2f7" />
+          </div>
+        )}
+        <button className="btn-cancel" onClick={onHideModal} type="reset">
+          Cancelar
+        </button>
         <ErrorModal show={show} onHide={closeModal} message={errorMessage} />
         <SuccessModal
           show={showSuccess}

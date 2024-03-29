@@ -34,9 +34,9 @@ export const EditCouponModal = (props: IEditCouponModal) => {
   };
 
   const validationSchema = Yup.object().shape({
-    description: Yup.string().required("description is required"),
+    description: Yup.string().required("Este campo es obligatorio"),
 
-    active: Yup.string().required("active is required"),
+    active: Yup.string().required("Este campo es obligatorio"),
   });
   const initialValues = {
     code: "",

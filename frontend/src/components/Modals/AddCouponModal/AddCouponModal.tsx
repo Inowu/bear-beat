@@ -32,12 +32,12 @@ export const AddCouponModal = (props: IAddCouponModal) => {
     // navigate("/");
   };
   const validationSchema = Yup.object().shape({
-    code: Yup.string().required("code is required"),
-    description: Yup.string().required("description is required"),
+    code: Yup.string().required("El código es requerido"),
+    description: Yup.string().required("La descripción es requerido"),
     discount: Yup.number()
-      .required("discount is required")
-      .typeError("discount must be a number"),
-    active: Yup.string().required("active is required"),
+      .required("El descuento es requerido")
+      .typeError("El descuento debe ser un número"),
+    active: Yup.string().required("Este campo es obligatorio"),
   });
   const initialValues = {
     code: "",

@@ -33,21 +33,24 @@ function SignUpForm() {
   };
   const validationSchema = Yup.object().shape({
     email: Yup.string()
-      .required("Email is required")
-      .email("Invalid email format"),
+      .required("El correo es requerido")
+      .email("El formato del correo no es correcto"),
     username: Yup.string()
-      .required("Username is required")
-      .min(5, "Username must be at least 5 characters long")
-      .matches(/[a-zA-Z]/, "Field must contain at least 1 letter"),
+      .required("El nombre de usuario es requerido")
+      .min(5, "El nombre de usuario debe contener por lo menos 5 caracteres")
+      .matches(
+        /[a-zA-Z]/,
+        "El nombre de usuario debe contener al menos una letra"
+      ),
     password: Yup.string()
-      .required("Password is required")
-      .min(6, "Password must contain 6 characters atleast"),
+      .required("La contraseña es requerida")
+      .min(6, "La contraseña debe contenter 6 caracteres"),
     phone: Yup.string()
-      .required("Phone is required")
-      .matches(/^[0-9]{10}$/, "Phone number is not valid"),
+      .required("El teléfono es requerido")
+      .matches(/^[0-9]{10}$/, "El teléfono no es válido"),
     passwordConfirmation: Yup.string()
-      .required("Confirmation Password is required")
-      .oneOf([Yup.ref("password")], "Both should be the same"),
+      .required("Debe confirmar la contraseña")
+      .oneOf([Yup.ref("password")], "Ambas contraseñas deben ser iguales"),
   });
   const initialValues = {
     username: "",
