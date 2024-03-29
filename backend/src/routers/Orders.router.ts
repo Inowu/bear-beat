@@ -38,21 +38,103 @@ export const ordersRouter = router({
       z.object({
         email: z.string().optional(),
         phone: z.string().optional(),
+        status: z.nativeEnum(OrderStatus).optional(),
+        paymentMethod: z.string().optional(),
+        date_order: z
+          .union([
+            z.object({
+              gte: z.string().optional(),
+              lte: z.string().optional(),
+            }),
+            z.string(),
+          ])
+          .optional(),
         take: z.number().default(10),
         skip: z.number().default(0),
+        orderBy: z
+          .object({
+            field: z.string(),
+            direction: z
+              .union([z.literal('asc'), z.literal('desc')])
+              .default('desc'),
+          })
+          .default({
+            field: 'o.id',
+            direction: 'desc',
+          }),
       }),
     )
-    .query(async ({ ctx: { prisma }, input: { email, phone, take, skip } }) => {
-      // :P
-      const query = Prisma.sql`
-          SELECT * FROM orders o INNER JOIN users u ON o.user_id = u.id WHERE email LIKE ? OR phone LIKE ? LIMIT ? OFFSET ?
+    .query(
+      async ({
+        ctx: { prisma },
+        input: {
+          email,
+          phone,
+          status,
+          date_order,
+          paymentMethod,
+          take,
+          skip,
+          orderBy,
+        },
+      }) => {
+        const filters = [
+          { email },
+          { phone },
+          { status },
+          { date_order },
+          { paymentMethod },
+        ]
+          .filter((filter) => !!Object.values(filter)[0])
+          .map((filter) => {
+            const [key, value] = Object.entries(filter)[0];
+
+            if (typeof value === 'object' && 'gte' in value && 'lte' in value) {
+              return Prisma.sql`
+                date_order BETWEEN ${value.gte} AND ${value.lte}
+              `;
+            }
+
+            return `${key} LIKE '%${value}%'`;
+          })
+          .join(' AND ');
+
+        const countQuery = Prisma.sql`
+          SELECT COUNT(*) FROM orders o INNER JOIN users u ON o.user_id = u.id WHERE ?
         `;
 
-      // @ts-ignore
-      query.values = [`%${email}%`, `%${phone}%`, take, skip];
+        const query = Prisma.sql`
+          SELECT * FROM orders o INNER JOIN users u ON o.user_id = u.id WHERE ?
+        `;
 
-      return prisma.$queryRaw(query);
-    }),
+        console.log(filters);
+
+        const count = await prisma.$queryRaw(
+          `SELECT COUNT(*) FROM orders o INNER JOIN users u ON o.user_id = u.id WHERE ${filters}`,
+        );
+
+        // (
+        //   countQuery,
+        //   "email = 'gmail'",
+        // ...[filters, `${orderBy.field} ${orderBy.direction}`, take, skip],
+        // );
+
+        const results =
+          await prisma.$queryRaw`SELECT * FROM orders o INNER JOIN users u ON o.user_id = u.id WHERE ${filters}`;
+
+        // const results = await prisma.$queryRaw(
+        //   query,
+        //   ...[filters, `${orderBy.field} ${orderBy.direction}`, take, skip],
+        // );
+
+        console.log({ count, results });
+
+        return {
+          count,
+          data: results,
+        };
+      },
+    ),
   createPaypalOrder: shieldedProcedure
     .input(
       z.object({
