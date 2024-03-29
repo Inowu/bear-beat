@@ -16,6 +16,8 @@ import { OrdersUpdateOneSchema } from '../schemas/updateOneOrders.schema';
 import { OrdersUpsertSchema } from '../schemas/upsertOneOrders.schema';
 import { OrderStatus } from './subscriptions/interfaces/order-status.interface';
 import { PaymentService } from './subscriptions/services/types';
+import { UsersFindManySchema } from '../schemas';
+import { Prisma } from '@prisma/client';
 
 export const ordersRouter = router({
   ownOrders: shieldedProcedure
@@ -32,23 +34,24 @@ export const ordersRouter = router({
       return orders;
     }),
   findManyOrdersWithUsers: shieldedProcedure
-    .input(OrdersFindManySchema)
-    .query(async ({ ctx: { prisma }, input }) => {
-      const orders = await prisma.orders.findMany(input);
+    .input(
+      z.object({
+        email: z.string().optional(),
+        phone: z.string().optional(),
+        take: z.number().default(10),
+        skip: z.number().default(0),
+      }),
+    )
+    .query(async ({ ctx: { prisma }, input: { email, phone, take, skip } }) => {
+      // :P
+      const query = Prisma.sql`
+          SELECT * FROM orders o INNER JOIN users u ON o.user_id = u.id WHERE email LIKE ? OR phone LIKE ? LIMIT ? OFFSET ?
+        `;
 
-      const ordersWithUsers = await Promise.all(
-        orders.map(async (order) => {
-          const user = await prisma.users.findFirst({
-            where: {
-              id: order.user_id,
-            },
-          });
+      // @ts-ignore
+      query.values = [`%${email}%`, `%${phone}%`, take, skip];
 
-          return { ...order, user };
-        }),
-      );
-
-      return ordersWithUsers;
+      return prisma.$queryRaw(query);
     }),
   createPaypalOrder: shieldedProcedure
     .input(
@@ -191,9 +194,8 @@ export const ordersRouter = router({
   findFirstOrdersOrThrow: shieldedProcedure
     .input(OrdersFindFirstSchema)
     .query(async ({ ctx, input }) => {
-      const findFirstOrdersOrThrow = await ctx.prisma.orders.findFirstOrThrow(
-        input,
-      );
+      const findFirstOrdersOrThrow =
+        await ctx.prisma.orders.findFirstOrThrow(input);
       return findFirstOrdersOrThrow;
     }),
   findManyOrders: shieldedProcedure
@@ -211,9 +213,8 @@ export const ordersRouter = router({
   findUniqueOrdersOrThrow: shieldedProcedure
     .input(OrdersFindUniqueSchema)
     .query(async ({ ctx, input }) => {
-      const findUniqueOrdersOrThrow = await ctx.prisma.orders.findUniqueOrThrow(
-        input,
-      );
+      const findUniqueOrdersOrThrow =
+        await ctx.prisma.orders.findUniqueOrThrow(input);
       return findUniqueOrdersOrThrow;
     }),
   groupByOrders: shieldedProcedure
