@@ -166,11 +166,12 @@ function Admin() {
     setFilters(tempFilters);
   };
   const transformUserData = async () => {
-    const tempUsers: any = await exportUsers(filters);
-    return tempUsers.map((user: any) => ({
+    const tempUsers: IAdminUser[] = await exportUsers(filters);
+    return tempUsers.map((user: IAdminUser) => ({
       Usuario: user.username,
       Correo: user.email,
-      Fecha_de_Registro: user.registered_on.toLocaleDateString(),
+      "Fecha de Registro": user.registered_on.toLocaleDateString(),
+      Teléfono: user.phone,
     }));
   };
   const filterUsers = async (filt: IAdminFilter) => {

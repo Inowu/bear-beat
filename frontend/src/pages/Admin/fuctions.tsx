@@ -14,6 +14,7 @@ export const exportUsers = async (filt: IAdminFilter) => {
           username: true,
           email: true,
           registered_on: true,
+          phone: true,
         },
       };
       users = await trpc.users.findManyUsers.query(body);
@@ -29,6 +30,7 @@ export const exportUsers = async (filt: IAdminFilter) => {
             username: true,
             email: true,
             registered_on: true,
+            phone: true,
           },
         };
         users = await trpc.users.getActiveUsers.query(body);
@@ -43,6 +45,7 @@ export const exportUsers = async (filt: IAdminFilter) => {
             username: true,
             email: true,
             registered_on: true,
+            phone: true,
           },
         };
         users = await trpc.users.getInactiveUsers.query(body);

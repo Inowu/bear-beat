@@ -95,7 +95,8 @@ export const Ordens = () => {
           id: true,
         },
       };
-      const tempOrders = await trpc.orders.findManyOrdersWithUsers.query(body);
+      const tempOrders: any =
+        await trpc.orders.findManyOrdersWithUsers.query(body);
       setLoader(false);
       setOrdens(tempOrders);
       const totalOrders =

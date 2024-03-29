@@ -5,6 +5,7 @@ export interface IAdminUser {
   id: number;
   registered_on: Date;
   blocked: boolean;
+  phone: string;
 }
 export interface IAdminCoupons {
   active: number;
