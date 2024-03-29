@@ -315,7 +315,7 @@ function Home() {
                         </h4>
                       </div>
 
-                      {/* <div className="download-button">
+                      <div className="download-button">
                         {loadDownload && index === idx ? (
                           <Spinner size={2} width={0.2} color="black" />
                         ) : (
@@ -324,7 +324,7 @@ function Home() {
                             onClick={() => checkAlbumSize(file, idx)}
                           />
                         )}
-                      </div> */}
+                      </div>
                     </div>
                   )}
                   {file.type === "-" && (
@@ -366,7 +366,7 @@ function Home() {
         title="Descarga de Archivos"
         message={`El siguiente archivo pesa ${
           albumData.gbSize && albumData.gbSize.toFixed(2)
-        }GB, presiona confirmar para continuar con la descarga`}
+        }GB, presiona confirmar para continuar con la descarga.`}
       />
       <ErrorModal
         show={show}

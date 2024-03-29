@@ -6,6 +6,7 @@ import "./FileLoader.scss";
 import { useUserContext } from "../../contexts/UserContext";
 import { useDownloadContext } from "../../contexts/DownloadContext";
 import { useSSE } from "react-hooks-sse";
+import trpc from "../../api";
 
 export const FileLoader = () => {
   const { currentUser, userToken } = useUserContext();
@@ -24,6 +25,17 @@ export const FileLoader = () => {
       }
     } catch (error: any) {
       setShowDownload(false);
+      console.log(error.message);
+    }
+  };
+  const stopDownloadAlbum = async () => {
+    try {
+      let jobID: any = downloading.jobId;
+      const response = await trpc.ftp.cancelDirDownload.mutate({
+        jobId: jobID,
+      });
+      setShowDownload(false);
+    } catch (error: any) {
       console.log(error.message);
     }
   };
@@ -61,7 +73,7 @@ export const FileLoader = () => {
               </div>
             </div>
             <div className="right-side">
-              {/* <button>Cancelar</button> */}
+              <button onClick={stopDownloadAlbum}>Cancelar</button>
               <p>{downloading.progress}% </p>
               <Spinner size={3} width={0.5} color="#00e2f7" />
             </div>
