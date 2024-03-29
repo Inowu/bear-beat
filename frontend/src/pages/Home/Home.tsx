@@ -15,14 +15,24 @@ import { downloadMP3, sortArrayByName } from "../../functions/functions";
 import { Spinner } from "../../components/Spinner/Spinner";
 import { useUserContext } from "../../contexts/UserContext";
 import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
-import { downloadApi } from "../../api/download";
 import { useDownloadContext } from "../../contexts/DownloadContext";
-import { useSSE } from "react-hooks-sse";
+import { ConditionModal } from "../../components/Modals/ConditionModal/ContitionModal";
+
+interface IAlbumData {
+  name: string;
+  type: string;
+  path?: string;
+  size: number;
+  idx: number;
+  gbSize: number;
+}
 
 function Home() {
   const { fileChange, closeFile, userToken, currentUser } = useUserContext();
   const { setShowDownload, setCurrentFile, setFileData } = useDownloadContext();
   const [showPreviewModal, setShowPreviewModal] = useState<boolean>(false);
+  const [showConditionModal, setShowConditionModal] = useState<boolean>(false);
+  const [albumData, setAlbumData] = useState<IAlbumData>({} as IAlbumData);
   const [error, setError] = useState<boolean>(false);
   const [errMsg, setErrMsg] = useState<any>("");
   const [files, setfiles] = useState<IFiles[]>([]);
@@ -40,6 +50,18 @@ function Home() {
   const handleError = () => {
     setError(!error);
   };
+  const closeConditionModal = () => {
+    setShowConditionModal(false);
+  };
+  const checkAlbumSize = (file: IFiles, idx: number) => {
+    let gbSize = file.size / (1024 * 1024 * 1024);
+    if (gbSize >= 1) {
+      setAlbumData({ ...file, idx, gbSize });
+      setShowConditionModal(true);
+    } else {
+      startAlbumDownload(file, idx);
+    }
+  };
   const getFiles = async () => {
     setLoader(true);
     let body = {
@@ -52,14 +74,6 @@ function Home() {
     } catch (error) {
       console.log(error);
       setLoader(false);
-    }
-  };
-  const checkSize = (size: number) => {
-    let check = size / (1024 * 1024 * 1024);
-    if (check <= 5) {
-      return true;
-    } else {
-      return false;
     }
   };
   const getPath = async (name: string) => {
@@ -144,7 +158,7 @@ function Home() {
       errorMethod("Para descargar se necesita de una suscripción");
     }
   };
-  const startAlbumDownload = async (file: any, index: number) => {
+  const startAlbumDownload = async (file: IFiles, index: number) => {
     setLoadDownload(true);
     setIndex(index);
     let name = file.name;
@@ -300,18 +314,17 @@ function Home() {
                           })}
                         </h4>
                       </div>
-                      {/* {checkSize(file.size) && (
-                        <div className="download-button">
-                          {loadDownload && index === idx ? (
-                            <Spinner size={2} width={0.2} color="black" />
-                          ) : (
-                            <FontAwesomeIcon
-                              icon={faDownload}
-                              onClick={() => startAlbumDownload(file, idx)}
-                            />
-                          )}
-                        </div>
-                      )} */}
+
+                      {/* <div className="download-button">
+                        {loadDownload && index === idx ? (
+                          <Spinner size={2} width={0.2} color="black" />
+                        ) : (
+                          <FontAwesomeIcon
+                            icon={faDownload}
+                            onClick={() => checkAlbumSize(file, idx)}
+                          />
+                        )}
+                      </div> */}
                     </div>
                   )}
                   {file.type === "-" && (
@@ -346,6 +359,15 @@ function Home() {
           )}
         </div>
       </div>
+      <ConditionModal
+        show={showConditionModal}
+        onHide={closeConditionModal}
+        action={() => startAlbumDownload(albumData, albumData.idx)}
+        title="Descarga de Archivos"
+        message={`El siguiente archivo pesa ${
+          albumData.gbSize && albumData.gbSize.toFixed(2)
+        }GB, presiona confirmar para continuar con la descarga`}
+      />
       <ErrorModal
         show={show}
         onHide={closeError}
