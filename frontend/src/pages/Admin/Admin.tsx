@@ -274,7 +274,7 @@ function Admin() {
           filename="lista_de_usuarios"
           extension=".csv"
           separator=";"
-          wrapColumnChar="'"
+          wrapColumnChar=""
           datas={transformUserData()}
           text="Exportar Clientes"
         />
