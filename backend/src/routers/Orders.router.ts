@@ -95,22 +95,27 @@ export const ordersRouter = router({
               `;
             }
 
+            if (key === 'email') {
+              return `${key} LIKE '%${value}%' OR phone LIKE '%${value}%'`;
+            }
+
             return `${key} LIKE '%${value}%'`;
           })
           .join(' AND ');
 
-        const countQuery = Prisma.sql`
-          SELECT COUNT(*) FROM orders o INNER JOIN users u ON o.user_id = u.id WHERE ?
-        `;
+        const countQuery = (filters) 
+          ? `SELECT COUNT(*) as totalCount FROM orders o INNER JOIN users u ON o.user_id = u.id WHERE ${filters}`
+          : `SELECT COUNT(*) as totalCount FROM orders o INNER JOIN users u ON o.user_id = u.id`
+        
+        const query = (filters)
+          ? `SELECT * FROM orders o INNER JOIN users u ON o.user_id = u.id WHERE ${filters} LIMIT ${take} OFFSET ${skip}`
+          : `SELECT * FROM orders o INNER JOIN users u ON o.user_id = u.id LIMIT ${take} OFFSET ${skip}`;
 
-        const query = Prisma.sql`
-          SELECT * FROM orders o INNER JOIN users u ON o.user_id = u.id WHERE ?
-        `;
+        console.log('this is filters', filters);
+        console.log('this is take', take);
+        console.log('this is skip', skip);
 
-        console.log(filters);
-
-        const count = await prisma
-          .$queryRaw<number>`SELECT COUNT(*) FROM orders o INNER JOIN users u ON o.user_id = u.id WHERE ${filters}`;
+        const count = await prisma.$queryRawUnsafe<any>(countQuery);
 
         // (
         //   countQuery,
@@ -118,18 +123,17 @@ export const ordersRouter = router({
         // ...[filters, `${orderBy.field} ${orderBy.direction}`, take, skip],
         // );
 
-        const results =
-          await prisma.$queryRaw`SELECT * FROM orders o INNER JOIN users u ON o.user_id = u.id WHERE ${filters}`;
+        const results = await prisma.$queryRawUnsafe(query);
 
         // const results = await prisma.$queryRaw(
         //   query,
         //   ...[filters, `${orderBy.field} ${orderBy.direction}`, take, skip],
         // );
 
-        console.log({ count, results });
-
+        console.log({ count });
+        
         return {
-          count,
+          count: Number(count[0].totalCount),
           data: results,
         };
       },

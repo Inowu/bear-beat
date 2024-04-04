@@ -74,6 +74,7 @@ export const Ordens = () => {
         //   },
         // },
         orderBy: {
+          field: "o.id",
           date_order: "desc",
         },
       };
@@ -101,7 +102,7 @@ export const Ordens = () => {
       const tempOrders: any =
         await trpc.orders.findManyOrdersWithUsers.query(body);
       setLoader(false);
-      setOrdens(tempOrders);
+      setOrdens(tempOrders.data);
       const totalOrders =
         await trpc.orders.findManyOrdersWithUsers.query(body2);
       setTotalOrdens(totalOrders.count);
@@ -126,7 +127,7 @@ export const Ordens = () => {
         <h1>Ordenes</h1>
         <div className="search-input">
           <input
-            placeholder="Buscar por email"
+            placeholder="Buscar por email o teléfono"
             onChange={(e: any) => {
               startFilter("searchData", e.target.value);
             }}
