@@ -137,18 +137,7 @@ export const register = publicProcedure
       }
 
       // This implicitly creates a new subscriber in ManyChat or retrieves an existing one
-      const manyChatSubscriber = await manyChat.getManyChatId(newUser);
-
-      if (manyChatSubscriber) {
-        await prisma.users.update({
-          where: {
-            id: newUser.id,
-          },
-          data: {
-            mc_id: newUser.id,
-          },
-        });
-      }
+      await manyChat.addTagToUser(newUser, 'USER_REGISTERED');
 
       const tokens = await generateTokens(prisma, newUser);
 

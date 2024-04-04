@@ -245,6 +245,7 @@ export const downloadDir = shieldedProcedure
             : regularFtpUser.userid,
         ftpTalliesId: quotaTallies.id,
         dirSize: Number(dirDownload.size),
+        quotaTalliesId: quotaTallies.id,
       } as CompressionJob);
 
       log.info(
@@ -299,6 +300,7 @@ export const downloadDir = shieldedProcedure
               '../../../sse_server/compression-worker.js',
             ),
             autorestart: false,
+            force: true,
             namespace: process.env.COMPRESSION_QUEUE_NAME as string,
           },
           (err, proc) => {

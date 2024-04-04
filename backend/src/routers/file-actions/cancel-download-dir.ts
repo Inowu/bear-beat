@@ -4,6 +4,8 @@ import { shieldedProcedure } from '../../procedures/shielded.procedure';
 import { TRPCError } from '@trpc/server';
 import { JobStatus } from '../../queue/jobStatus';
 import { log } from '../../server';
+import { compressionQueue } from '../../queue/compression';
+import { CompressionJob } from '../../queue/compression/types';
 
 export const cancelDirDownload = shieldedProcedure
   .input(
@@ -32,7 +34,7 @@ export const cancelDirDownload = shieldedProcedure
       },
     });
 
-    if (!job) {
+    if (!job || !job.jobId) {
       throw new TRPCError({
         code: 'BAD_REQUEST',
         message: 'No hay descargas pendientes para cancelar',
@@ -56,6 +58,42 @@ export const cancelDirDownload = shieldedProcedure
       throw new TRPCError({
         code: 'BAD_REQUEST',
         message: 'Esa descarga no existe',
+      });
+    }
+
+    const jobData: CompressionJob = await (
+      await compressionQueue.getJob(job.jobId)
+    )?.data;
+
+    if (!jobData) {
+      log.error(`[DOWNLOAD:DIR:CANCEL] No job data found for job: ${jobId}`);
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Ocurrió un error al cancelar la descarga',
+      });
+    }
+
+    log.info(
+      `[DOWNLOAD:DIR:CANCEL] Updating quota tallies for user ${user.id}`,
+    );
+    try {
+      await prisma.ftpquotatallies.update({
+        where: {
+          id: jobData.quotaTalliesId,
+        },
+        data: {
+          bytes_out_used: {
+            decrement: jobData.dirSize,
+          },
+        },
+      });
+    } catch (e: any) {
+      log.error(
+        `[DOWNLOAD:DIR:CANCEL] Error while updating quota tallies for user ${user.id}: ${e.message}`,
+      );
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Ocurrió un error al cancelar la descarga',
       });
     }
 

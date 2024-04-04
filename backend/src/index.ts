@@ -104,9 +104,13 @@ async function main() {
 
     await initializeSearch();
 
-    initializeCompressionQueue();
+    try {
+      initializeCompressionQueue();
 
-    initializeRemoveUsersQueue();
+      initializeRemoveUsersQueue();
+    } catch (e: any) {
+      log.error(`[QUEUE] Error while initializing queues: ${e.message}`);
+    }
 
     pm2.connect((err) => {
       if (err) {

@@ -8,4 +8,6 @@ export type CompressionJob = {
   ftpAccountName: string;
   ftpTalliesId: number;
   dirSize: number;
+  // If the job gets cancelled we need to update the bytes used back
+  quotaTalliesId: number;
 };
