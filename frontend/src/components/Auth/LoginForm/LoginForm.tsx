@@ -52,10 +52,10 @@ function LoginForm() {
 
   return (
     <form onSubmit={formik.handleSubmit}>
-      <h2>LOGIN</h2>
+      <h2>INICIAR SESIÓN</h2>
       <div className="c-row">
         <input
-          placeholder="email"
+          placeholder="Correo electrónico"
           type="text"
           id="username"
           name="username"
@@ -68,7 +68,7 @@ function LoginForm() {
       </div>
       <div className="c-row">
         <input
-          placeholder="password"
+          placeholder="Contraseña"
           type="password"
           id="password"
           name="password"
