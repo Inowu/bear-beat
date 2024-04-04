@@ -54,7 +54,7 @@ export const Ordens = () => {
     setLoader(true);
     setTotalLoader(true);
     try {
-      let body = {
+      let body: any = {
         take: filt.limit,
         skip: filt.page * filt.limit,
         email: filt.searchData,
@@ -98,11 +98,12 @@ export const Ordens = () => {
           id: true,
         },
       };
+      console.log('this is body', body)
       const tempOrders: any =
         await trpc.orders.findManyOrdersWithUsers.query(body);
       setLoader(false);
       setOrdens(tempOrders);
-      console.log(tempOrders);
+      console.log('this is body2', body2)
       const totalOrders =
         await trpc.orders.findManyOrdersWithUsers.query(body2);
       console.log(totalOrders);
