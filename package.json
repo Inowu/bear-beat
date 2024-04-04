@@ -3,6 +3,7 @@
     "start": "NODE_PATH=$(npm root --quiet -g) node concurrently.js"
   },
   "dependencies": {
+    "concurrently": "^8.2.2",
     "react-facebook-pixel": "^1.0.4",
     "react-hooks-sse": "^2.1.0",
     "yup": "^1.2.0"
