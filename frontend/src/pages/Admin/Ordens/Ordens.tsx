@@ -98,16 +98,13 @@ export const Ordens = () => {
           id: true,
         },
       };
-      console.log('this is body', body)
       const tempOrders: any =
         await trpc.orders.findManyOrdersWithUsers.query(body);
       setLoader(false);
       setOrdens(tempOrders);
-      console.log('this is body2', body2)
       const totalOrders =
         await trpc.orders.findManyOrdersWithUsers.query(body2);
-      console.log(totalOrders);
-      setTotalOrdens(totalOrders.length);
+      setTotalOrdens(totalOrders.count);
       setTotalLoader(false);
     } catch (error: any) {
       console.log(error.message);
