@@ -109,9 +109,8 @@ export const ordersRouter = router({
 
         console.log(filters);
 
-        const count = await prisma.$queryRaw(
-          `SELECT COUNT(*) FROM orders o INNER JOIN users u ON o.user_id = u.id WHERE ${filters}`,
-        );
+        const count = await prisma
+          .$queryRaw`SELECT COUNT(*) FROM orders o INNER JOIN users u ON o.user_id = u.id WHERE ${filters}`;
 
         // (
         //   countQuery,
