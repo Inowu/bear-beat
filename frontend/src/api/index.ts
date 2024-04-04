@@ -6,8 +6,8 @@ import type { AppRouter } from "../../../backend/src/routers";
 
 //ACTIVAR PARA LOCAL
 const url =
-  process.env.NODE_ENV === "production"
-    ? "https://thebearbeatapi.lat/trpc"
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:5001/trpc"
     : "https://thebearbeatapi.lat/trpc";
 
 const trpc = createTRPCProxyClient<AppRouter>({
