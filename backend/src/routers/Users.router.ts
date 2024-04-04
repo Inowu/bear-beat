@@ -400,15 +400,6 @@ export const usersRouter = router({
         },
       });
 
-      const mcId = await manyChat.getManyChatId(user!);
-
-      if (!mcId) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'Usuario no encontrado en ManyChat',
-        });
-      }
-
       const response = await manyChat.addTagToUser(user!, tag);
 
       if (!response) {
