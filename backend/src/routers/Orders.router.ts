@@ -111,26 +111,8 @@ export const ordersRouter = router({
           ? `SELECT * FROM orders o INNER JOIN users u ON o.user_id = u.id WHERE ${filters} LIMIT ${take} OFFSET ${skip}`
           : `SELECT * FROM orders o INNER JOIN users u ON o.user_id = u.id LIMIT ${take} OFFSET ${skip}`;
 
-        console.log('this is filters', filters);
-        console.log('this is take', take);
-        console.log('this is skip', skip);
-
         const count = await prisma.$queryRawUnsafe<any>(countQuery);
-
-        // (
-        //   countQuery,
-        //   "email = 'gmail'",
-        // ...[filters, `${orderBy.field} ${orderBy.direction}`, take, skip],
-        // );
-
         const results = await prisma.$queryRawUnsafe(query);
-
-        // const results = await prisma.$queryRaw(
-        //   query,
-        //   ...[filters, `${orderBy.field} ${orderBy.direction}`, take, skip],
-        // );
-
-        console.log({ count });
         
         return {
           count: Number(count[0].totalCount),

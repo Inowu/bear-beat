@@ -43,7 +43,6 @@ export const Ordens = () => {
       tempFilters.page = 0;
     }
     if (key === "startDate" || key === "endDate") {
-      console.log(value);
       value = value;
     }
     tempFilters[key] = value;
