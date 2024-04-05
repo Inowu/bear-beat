@@ -92,7 +92,7 @@ function SignUpForm() {
       <h2>REGISTRARSE</h2>
       <div className="c-row">
         <input
-          placeholder="E-mail"
+          placeholder="Correo electrónico"
           id="email"
           name="email"
           value={formik.values.email}
@@ -108,14 +108,14 @@ function SignUpForm() {
           containerClass="dial-container"
           buttonClass="dial-code"
           country={"mx"}
-          placeholder="Phone"
+          placeholder="Teléfono"
           localization={es}
           onChange={handlePhoneNumberChange}
         />
         <p className="code">+{code}</p>
         <input
           className="phone"
-          placeholder="phone"
+          placeholder="Teléfono"
           id="phone"
           name="phone"
           value={formik.values.phone}
@@ -128,7 +128,7 @@ function SignUpForm() {
       </div>
       <div className="c-row">
         <input
-          placeholder="Username"
+          placeholder="Nombre de usuario"
           type="text"
           id="username"
           name="username"
@@ -141,7 +141,7 @@ function SignUpForm() {
       </div>
       <div className="c-row">
         <input
-          placeholder="Password"
+          placeholder="Contraseña"
           type="password"
           id="password"
           name="password"
@@ -154,7 +154,7 @@ function SignUpForm() {
       </div>
       <div className="c-row">
         <input
-          placeholder="Repetir password"
+          placeholder="Repetir contraseña"
           type="password"
           id="passwordConfirmation"
           name="passwordConfirmation"
