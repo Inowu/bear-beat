@@ -72,6 +72,7 @@ export const Ordens = () => {
 
     const [tempOrders, errorOrders] = await of(trpc.orders.findManyOrdersWithUsers.query(body));
 
+    console.log(tempOrders!.data)
     if (errorOrders && !tempOrders) {
       throw new Error(errorOrders.message);
     }
