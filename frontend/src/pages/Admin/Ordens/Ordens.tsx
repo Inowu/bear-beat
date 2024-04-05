@@ -10,14 +10,13 @@ import "./Ordens.scss";
 import { IAdminOrders } from "../../../interfaces/admin";
 
 interface IAdminFilter {
-  page: number;
-  limit: number;
-  total: number;
-  search: string;
-  searchData: string;
   active: number;
-  startDate: Date;
-  endDate: Date;
+  endDate: Date | undefined;
+  limit: number;
+  page: number;
+  paymentMethod: string;
+  searchData: string;
+  startDate: Date | undefined;
 }
 
 export const Ordens = () => {
@@ -27,14 +26,14 @@ export const Ordens = () => {
   const [totalLoader, setTotalLoader] = useState<boolean>(false);
   const [totalOrdens, setTotalOrdens] = useState(0);
   const [loader, setLoader] = useState<boolean>(true);
-  const [filters, setFilters] = useState<any>({
-    page: 0,
-    search: "",
-    searchData: "",
+  const [filters, setFilters] = useState<IAdminFilter>({
     active: 1,
+    endDate: undefined,
     limit: 100,
-    startDate: new Date("2010-01-01"),
-    endDate: new Date(),
+    page: 0,
+    paymentMethod: "",
+    searchData: "",
+    startDate: undefined,
   });
 
   const startFilter = (key: string, value: string | number) => {
@@ -46,65 +45,36 @@ export const Ordens = () => {
       value = value;
     }
     tempFilters[key] = value;
-    filterOrdens(tempFilters);
     setFilters(tempFilters);
+    filterOrdens(tempFilters);
   };
   const filterOrdens = async (filt: IAdminFilter) => {
     setLoader(true);
     setTotalLoader(true);
     try {
+      console.log('this is filt', filt)
+
       let body: any = {
         take: filt.limit,
         skip: filt.page * filt.limit,
         email: filt.searchData,
-        // where: {
-        //   payment_method: {
-        //     startsWith: filt.search,
-        //   },
-        //   // email: {
-        //   //   startsWith: filt.searchData,
-        //   // },
-        //   status: {
-        //     equals: filt.active,
-        //   },
-        //   date_order: {
-        //     gte: filt.startDate,
-        //     lte: filt.endDate,
-        //   },
-        // },
-        orderBy: {
-          field: "o.id",
-          date_order: "desc",
-        },
+        paymentMethod: filt.paymentMethod,
       };
-      let body2: any = {
-        email: filt.searchData,
-        // where: {
-        //   payment_method: {
-        //     startsWith: filt.search,
-        //   },
-        //   email: {
-        //     startsWith: filt.searchData,
-        //   },
-        //   status: {
-        //     equals: filt.active,
-        //   },
-        //   date_order: {
-        //     gte: filt.startDate,
-        //     lte: filt.endDate,
-        //   },
-        // },
-        include: {
-          id: true,
-        },
-      };
-      const tempOrders: any =
-        await trpc.orders.findManyOrdersWithUsers.query(body);
-      setLoader(false);
+
+      if (filt.startDate && filt.endDate) {
+        body = {
+          ...body,
+          date_order: {
+            gte: filt.startDate,
+            lte: filt.endDate
+          }
+        }
+      }
+
+      const tempOrders: any = await trpc.orders.findManyOrdersWithUsers.query(body);
       setOrdens(tempOrders.data);
-      const totalOrders =
-        await trpc.orders.findManyOrdersWithUsers.query(body2);
-      setTotalOrdens(totalOrders.count);
+      setTotalOrdens(tempOrders.count);
+      setLoader(false);
       setTotalLoader(false);
     } catch (error: any) {
       console.log(error.message);
@@ -116,6 +86,7 @@ export const Ordens = () => {
       navigate("/");
     }
   }, [currentUser]);
+
   useEffect(() => {
     filterOrdens(filters);
   }, []);
@@ -137,7 +108,7 @@ export const Ordens = () => {
       <div className="filter-contain">
         <div className="select-input">
           <p>Metodo de Pago</p>
-          <select onChange={(e) => startFilter("search", e.target.value)}>
+          <select onChange={(e) => startFilter("paymentMethod", e.target.value)}>
             <option value={""}>Todos</option>
             <option value={"Paypal"}>Paypal</option>
             <option value={"Stripe"}>Stripe</option>
@@ -199,35 +170,35 @@ export const Ordens = () => {
             <tbody>
               {!loader
                 ? ordens.map((orden: IAdminOrders, index: number) => {
-                    return (
-                      <tr key={"admin_ordens_" + index}>
-                        <td className="">{orden.email}</td>
-                        <td className="">{orden.phone}</td>
-                        <td className="">
-                          {orden.payment_method
-                            ? orden.payment_method
-                            : "Sin PM"}
-                        </td>
-                        <td>{orden.txn_id}</td>
-                        <td>{orden.total_price}</td>
-                        <td>{orden.date_order.toLocaleDateString()}</td>
-                        <td>{orden.status === 1 ? "Activa" : "No activa"}</td>
-                      </tr>
-                    );
-                  })
+                  return (
+                    <tr key={"admin_ordens_" + index}>
+                      <td className="">{orden.email}</td>
+                      <td className="">{orden.phone}</td>
+                      <td className="">
+                        {orden.payment_method
+                          ? orden.payment_method
+                          : "Sin PM"}
+                      </td>
+                      <td>{orden.txn_id}</td>
+                      <td>{orden.total_price}</td>
+                      <td>{orden.date_order.toLocaleDateString()}</td>
+                      <td>{orden.status === 1 ? "Activa" : "No activa"}</td>
+                    </tr>
+                  );
+                })
                 : ARRAY_10.map((val: string, index: number) => {
-                    return (
-                      <tr key={"array_10" + index} className="tr-load">
-                        <td />
-                        <td />
-                        <td />
-                        <td />
-                        <td />
-                        <td />
-                        <td />
-                      </tr>
-                    );
-                  })}
+                  return (
+                    <tr key={"array_10" + index} className="tr-load">
+                      <td />
+                      <td />
+                      <td />
+                      <td />
+                      <td />
+                      <td />
+                      <td />
+                    </tr>
+                  );
+                })}
             </tbody>
           </table>
         </div>

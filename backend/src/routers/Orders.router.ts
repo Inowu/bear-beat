@@ -51,17 +51,6 @@ export const ordersRouter = router({
           .optional(),
         take: z.number().default(10),
         skip: z.number().default(0),
-        orderBy: z
-          .object({
-            field: z.string(),
-            direction: z
-              .union([z.literal('asc'), z.literal('desc')])
-              .default('desc'),
-          })
-          .default({
-            field: 'o.id',
-            direction: 'desc',
-          }),
       }),
     )
     .query(
@@ -75,7 +64,6 @@ export const ordersRouter = router({
           paymentMethod,
           take,
           skip,
-          orderBy,
         },
       }) => {
         const filters = [
@@ -83,16 +71,14 @@ export const ordersRouter = router({
           { phone },
           { status },
           { date_order },
-          { paymentMethod },
+          { payment_method: paymentMethod },
         ]
           .filter((filter) => !!Object.values(filter)[0])
           .map((filter) => {
             const [key, value] = Object.entries(filter)[0];
 
             if (typeof value === 'object' && 'gte' in value && 'lte' in value) {
-              return Prisma.sql`
-                date_order BETWEEN ${value.gte} AND ${value.lte}
-              `;
+              return `date_order BETWEEN '${value.gte}' AND '${value.lte}'`;
             }
 
             if (key === 'email') {
@@ -103,13 +89,17 @@ export const ordersRouter = router({
           })
           .join(' AND ');
 
-        const countQuery = (filters) 
-          ? `SELECT COUNT(*) as totalCount FROM orders o INNER JOIN users u ON o.user_id = u.id WHERE ${filters}`
-          : `SELECT COUNT(*) as totalCount FROM orders o INNER JOIN users u ON o.user_id = u.id`
-        
-        const query = (filters)
-          ? `SELECT * FROM orders o INNER JOIN users u ON o.user_id = u.id WHERE ${filters} LIMIT ${take} OFFSET ${skip}`
-          : `SELECT * FROM orders o INNER JOIN users u ON o.user_id = u.id LIMIT ${take} OFFSET ${skip}`;
+        const countQuery = `SELECT COUNT(*) as totalCount 
+          FROM orders o 
+          INNER JOIN users u ON o.user_id = u.id 
+          ${filters ? `WHERE ${filters}` : ""}`;
+
+        const query = `SELECT *
+          FROM orders o
+          INNER JOIN users u ON o.user_id = u.id
+          ${filters ? `WHERE ${filters}` : ""}
+          ORDER BY date_order DESC
+          LIMIT ${take} OFFSET ${skip};`;
 
         const count = await prisma.$queryRawUnsafe<any>(countQuery);
         const results = await prisma.$queryRawUnsafe(query);
