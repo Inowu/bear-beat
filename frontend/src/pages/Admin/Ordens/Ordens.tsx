@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import "./Ordens.scss";
 import { IAdminOrders } from "../../../interfaces/admin";
+import { of } from "await-of";
 
 interface IAdminFilter {
   active: number;
@@ -51,34 +52,34 @@ export const Ordens = () => {
   const filterOrdens = async (filt: IAdminFilter) => {
     setLoader(true);
     setTotalLoader(true);
-    try {
-      console.log('this is filt', filt)
 
-      let body: any = {
-        take: filt.limit,
-        skip: filt.page * filt.limit,
-        email: filt.searchData,
-        paymentMethod: filt.paymentMethod,
-      };
+    let body: any = {
+      take: filt.limit,
+      skip: filt.page * filt.limit,
+      email: filt.searchData,
+      paymentMethod: filt.paymentMethod,
+    };
 
-      if (filt.startDate && filt.endDate) {
-        body = {
-          ...body,
-          date_order: {
-            gte: filt.startDate,
-            lte: filt.endDate
-          }
+    if (filt.startDate && filt.endDate) {
+      body = {
+        ...body,
+        date_order: {
+          gte: filt.startDate,
+          lte: filt.endDate
         }
       }
-
-      const tempOrders: any = await trpc.orders.findManyOrdersWithUsers.query(body);
-      setOrdens(tempOrders.data);
-      setTotalOrdens(tempOrders.count);
-      setLoader(false);
-      setTotalLoader(false);
-    } catch (error: any) {
-      console.log(error.message);
     }
+
+    const [tempOrders, errorOrders] = await of(trpc.orders.findManyOrdersWithUsers.query(body));
+
+    if (errorOrders && !tempOrders) {
+      throw new Error(errorOrders.message);
+    }
+
+    setOrdens(tempOrders!.data);
+    setTotalOrdens(tempOrders!.count);
+    setLoader(false);
+    setTotalLoader(false);
   };
 
   useEffect(() => {

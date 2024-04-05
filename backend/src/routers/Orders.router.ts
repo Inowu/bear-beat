@@ -102,7 +102,7 @@ export const ordersRouter = router({
           LIMIT ${take} OFFSET ${skip};`;
 
         const count = await prisma.$queryRawUnsafe<any>(countQuery);
-        const results = await prisma.$queryRawUnsafe(query);
+        const results = await prisma.$queryRawUnsafe<any>(query);
         
         return {
           count: Number(count[0].totalCount),
