@@ -31,7 +31,7 @@ function EditUserModal(props: IEditPlanModal) {
   };
   const closeSuccess = () => {
     setShowSuccess(false);
-    // navigate("/");
+    window.location.reload();
     onHideModal();
   };
 
