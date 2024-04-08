@@ -48,7 +48,7 @@ export const Storage = () => {
                     <div className="progress-bar reserved-space-bar" />
                     <div className="progress-bar" style={styles} />
                 </div>
-                <h3>Espacio Reservado: <span>{transformBiteToGb(storage.reserved_space)}GB</span></h3>
+                <h3>Espacio Reservado: <span className="reserved-space-text">{transformBiteToGb(storage.reserved_space)}GB</span></h3>
                 <h3>Espacio Disponible: <span>{transformBiteToGb(storage.available_storage)}GB</span></h3>
             </div> :
                 <Spinner size={3} width={.3} color="#00e2f7" />}
