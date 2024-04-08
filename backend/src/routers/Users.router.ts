@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import bcrypt from 'bcrypt';
 import pm2 from 'pm2';
 import { subMonths } from 'date-fns';
 import { TRPCError } from '@trpc/server';
@@ -428,6 +429,10 @@ export const usersRouter = router({
   createOneUsers: shieldedProcedure
     .input(UsersCreateOneSchema)
     .mutation(async ({ ctx, input }) => {
+      let { data } = input;
+      data = { ...data, password: bcrypt.hashSync(data.password.toString(), 10) }
+      input = {...input, data}
+
       const createOneUsers = await ctx.prisma.users.create(input);
       return createOneUsers;
     }),
@@ -497,6 +502,12 @@ export const usersRouter = router({
   updateOneUsers: shieldedProcedure
     .input(UsersUpdateOneSchema)
     .mutation(async ({ ctx, input }) => {
+      let { data } = input;
+      if (data.password) {
+        data = { ...data, password: bcrypt.hashSync(data.password.toString(), 10) }
+        input = {...input, data}
+      }
+      
       const updateOneUsers = await ctx.prisma.users.update(input);
       return updateOneUsers;
     }),
