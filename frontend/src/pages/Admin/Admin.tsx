@@ -17,6 +17,7 @@ import { ConditionModal } from "../../components/Modals/ConditionModal/Contition
 import { FaLockOpen } from "react-icons/fa";
 import { FaLock } from "react-icons/fa";
 import { DeleteUserModal } from "../../components/Modals/DeleteUserModal/DeleteUserModal";
+import EditUserModal from "../../components/Modals/EditUserModal/EditUserModal";
 import { useSSE } from "react-hooks-sse";
 
 export interface IAdminFilter {
@@ -47,6 +48,7 @@ function Admin() {
   const [blockModalMSG, setBlockModalMSG] = useState("");
   const [selectedUser, setSelectedUser] = useState({} as IAdminUser);
   const [blocking, setBlocking] = useState<boolean>(false);
+  const [showEdit, setShowEdit] = useState<boolean>(false);
   const [filters, setFilters] = useState<any>({
     page: 0,
     search: "",
@@ -262,6 +264,18 @@ function Admin() {
       navigate("/");
     }
   }, [currentUser]);
+
+  const handleEditUser = (user: IAdminUser) => {
+    console.log('this is user', user);
+    setSelectedUser(user);
+    setShowEdit(true);
+  }
+
+  const handleCloseEditUser = () => {
+    setShowEdit(false);
+    setSelectUser({} as IAdminUser);
+  }
+
   return (
     <div className="admin-contain">
       <div className="header">
@@ -302,6 +316,11 @@ function Admin() {
             />
           </div>
         )}
+        <EditUserModal 
+          showModal={showEdit} 
+          onHideModal={handleCloseEditUser} 
+          editingUser={selectedUser} 
+        />
       </div>
       <div className="filter-contain">
         <div className="left-contain">
@@ -363,6 +382,10 @@ function Admin() {
                           </td>
                         )}
                         <td className="wrap-td">
+                          <button
+                            onClick={() => handleEditUser(user)}
+                            style={{ marginRight: 10 }}
+                          >Editar</button>
                           <button
                             onClick={() => {
                               giveSuscription(user);
