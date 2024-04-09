@@ -17,6 +17,7 @@ import { useUserContext } from "../../contexts/UserContext";
 import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
 import { useDownloadContext } from "../../contexts/DownloadContext";
 import { ConditionModal } from "../../components/Modals/ConditionModal/ContitionModal";
+import { of } from "await-of";
 
 interface IAlbumData {
   name: string;
@@ -25,6 +26,12 @@ interface IAlbumData {
   size: number;
   idx: number;
   gbSize: number;
+}
+
+interface QueryFolder {
+  back?: boolean, 
+  next?: string, 
+  folder?: number
 }
 
 function Home() {
@@ -76,38 +83,41 @@ function Home() {
       setLoader(false);
     }
   };
-  const getPath = async (name: string) => {
+
+  const goToFolder = async (query: QueryFolder) => {
     setLoader(true);
-    let tempFiles = pastFile;
-    tempFiles.push(name);
-    try {
-      const files = await trpc.ftp.ls.query({
-        path: tempFiles.join("/"),
-      });
-      setPastFile(tempFiles);
-      setfiles(files);
-      setLoader(false);
-    } catch (error) {
-      console.log(error);
-      setLoader(false);
+    let fileStructure = pastFile;
+
+    // Goes back one level
+    if (query.back) {
+      fileStructure.pop();
     }
-  };
-  const goBack = async () => {
-    setLoader(true);
-    let tempFiles = pastFile;
-    tempFiles.pop();
-    try {
-      const files = await trpc.ftp.ls.query({
-        path: tempFiles.join("/"),
-      });
-      setPastFile(tempFiles);
-      setfiles(files);
-      setLoader(false);
-    } catch (error) {
-      console.log(error);
-      setLoader(false);
+
+    // Goes up one level
+    if (query.next) {
+      fileStructure.push(query.next);
     }
-  };
+
+    // Goes to specific folder
+    if (query.folder) {
+      fileStructure = pastFile.slice(0, query.folder);
+    }
+
+    const [files, filesError] = await of(trpc.ftp.ls.query({
+      path: fileStructure.join("/"),
+    }));
+
+    if (filesError && !files) {
+      console.log(filesError);
+      setLoader(false);
+      return;
+    }
+
+    setPastFile(fileStructure);
+    setfiles(files!);
+    setLoader(false);
+  }
+
   const playFile = async (file: IFiles, index: number) => {
     setLoadFile(true);
     setIndex(index);
@@ -276,14 +286,38 @@ function Home() {
         </div>
       </div>
       {pastFile.length > 0 && (
-        <div className="btn-back">
-          <button onClick={goBack}>
-            <FontAwesomeIcon icon={faArrowLeft} />
-            Back
-          </button>
-        </div>
+        <>
+          <div className="folder-structure-container">
+            {pastFile.map((file: any, index) => {
+              const isLastFolder = pastFile.length == index + 1
+              if (isLastFolder) {
+                return (
+                  <p
+                    key={`folder_${index}`}
+                    className="last-folder"
+                  >
+                    {file}/
+                  </p>
+                )
+              }
+              return (
+                <p
+                  key={`folder_${index}`}
+                  onClick={() => { goToFolder({folder: index + 1}) }}
+                >
+                  {file}/
+                </p>
+              )
+            })}
+          </div>
+          <div className="btn-back">
+            <button onClick={() => {goToFolder({back: true})}}>
+              <FontAwesomeIcon icon={faArrowLeft} />
+              Back
+            </button>
+          </div>
+        </>
       )}
-
       <div className="folders-navigation-container">
         <div className="header">
           <div>Nombre</div>
@@ -298,7 +332,7 @@ function Home() {
                     <div className="folder-card">
                       <div
                         className="name-container"
-                        onClick={() => getPath(file.name)}
+                        onClick={() => {goToFolder({next: file.name})}}
                       >
                         <FontAwesomeIcon icon={faFolder} />
                         <h3>{file.name}</h3>
@@ -364,9 +398,8 @@ function Home() {
         onHide={closeConditionModal}
         action={() => startAlbumDownload(albumData, albumData.idx)}
         title="Descarga de Archivos"
-        message={`El siguiente archivo pesa ${
-          albumData.gbSize && albumData.gbSize.toFixed(2)
-        }GB, presiona confirmar para continuar con la descarga.`}
+        message={`El siguiente archivo pesa ${albumData.gbSize && albumData.gbSize.toFixed(2)
+          }GB, presiona confirmar para continuar con la descarga.`}
       />
       <ErrorModal
         show={show}

@@ -29,6 +29,16 @@
       }
     }
   }
+  .folder-structure-container {
+    display: flex;
+    p {
+      margin: 0px 2px 0px 0px;
+      cursor: pointer;
+    }
+    .last-folder {
+      cursor: default;
+    }
+  }
   .folders-navigation-container {
     display: flex;
     flex-direction: column;
