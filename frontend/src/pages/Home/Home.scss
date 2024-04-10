@@ -55,7 +55,7 @@
     padding-bottom: 20px;
     .header {
       display: grid;
-      grid-template-columns: 2fr 1fr;
+      grid-template-columns: 2fr 1fr 1fr;
       border-bottom: 1px solid #1f75cc;
       color: #1f75cc;
       padding: 8px;
@@ -73,7 +73,7 @@
 
       .folder-card {
         display: grid;
-        grid-template-columns: 2fr 1fr;
+        grid-template-columns: 2fr 1fr 1fr;
         // padding: 8px;
         background-color: #ffffff;
         border-radius: 8px;

@@ -11,22 +11,14 @@ import { useEffect, useState } from "react";
 import trpc from "../../api";
 import {
   IOrders,
-  IPaymentMethod,
   IQuota,
-  IUser_downloads,
 } from "interfaces/User";
 import { ConditionModal } from "../../components/Modals/ConditionModal/ContitionModal";
 import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
 import { SuccessModal } from "../../components/Modals/SuccessModal/SuccessModal";
 import { PaymentMethodModal } from "../../components/Modals/PaymentMethodModal/PaymentMethodModal";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faClose,
-  faP,
-  faPlus,
-  faPlusCircle,
-  faTrash,
-} from "@fortawesome/free-solid-svg-icons";
+import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import { Spinner } from "../../components/Spinner/Spinner";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
@@ -82,14 +74,6 @@ function MyAccount() {
     openCondition();
     setCondition(1);
   };
-  const changeDefaultCard = () => {
-    setConditionTitle("Cambiar por Predeterminado");
-    setConditionMessage(
-      "¿Estás seguro que quieres cambiar tu tarjeta predeterminada?"
-    );
-    openCondition();
-    setCondition(2);
-  };
   const deletePaymentMethod = () => {
     setConditionTitle("Eliminar método de pago");
     setConditionMessage(
@@ -101,8 +85,7 @@ function MyAccount() {
   const finishSubscription = async () => {
     closeCondition();
     try {
-      const cancelSuscription: any =
-        await trpc.subscriptions.requestSubscriptionCancellation.mutate();
+      await trpc.subscriptions.requestSubscriptionCancellation.mutate();
       startUser();
       setShowSuccess(true);
       setSuccessMessage("Su suscripción se ha cancelado con éxito.");
@@ -121,7 +104,7 @@ function MyAccount() {
   const deleteCard = async () => {
     try {
       if (paymentMethod) {
-        const cards: any = await trpc.subscriptions.removeStripeCard.mutate({
+        await trpc.subscriptions.removeStripeCard.mutate({
           paymentMethodId: paymentMethod.id,
         });
         getPaymentMethods();

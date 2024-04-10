@@ -325,11 +325,13 @@ function Home() {
       <div className="folders-navigation-container">
         <div className="header">
           <div>Nombre</div>
+          <div>Tamaño</div>
           <div className="modified-column">Modificado</div>
         </div>
         <div className="folders-cards-container">
           {!loader ? (
             sortArrayByName(files).map((file: IFiles, idx: number) => {
+              let gbSize = file.size / (1024 * 1024 * 1024);
               return (
                 <div key={"files " + idx}>
                   {file.type === "d" && (
@@ -340,6 +342,11 @@ function Home() {
                       >
                         <FontAwesomeIcon icon={faFolder} />
                         <h3>{file.name}</h3>
+                      </div>
+                      <div
+                        className="name-container"
+                      >
+                        <h3>{gbSize.toFixed(2)} GB</h3>
                       </div>
                       <div className="modified-column">
                         <h4>
@@ -353,16 +360,18 @@ function Home() {
                         </h4>
                       </div>
 
-                      <div className="download-button">
-                        {loadDownload && index === idx ? (
-                          <Spinner size={2} width={0.2} color="black" />
-                        ) : (
-                          <FontAwesomeIcon
-                            icon={faDownload}
-                            onClick={() => checkAlbumSize(file, idx)}
-                          />
-                        )}
-                      </div>
+                      {gbSize <= 50 && (
+                        <div className="download-button">
+                          {loadDownload && index === idx ? (
+                            <Spinner size={2} width={0.2} color="black" />
+                          ) : (
+                            <FontAwesomeIcon
+                              icon={faDownload}
+                              onClick={() => checkAlbumSize(file, idx)}
+                            />
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                   {file.type === "-" && (
