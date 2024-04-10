@@ -9,13 +9,16 @@ import SpaceAvailableCard from "../../components/SpaceAvailableCard/SpaceAvailab
 import { useUserContext } from "../../contexts/UserContext";
 import { useEffect, useState } from "react";
 import trpc from "../../api";
-import { IOrders, IPaymentMethod, IQuota, IUser_downloads } from "interfaces/User";
+import {
+  IOrders,
+  IQuota,
+} from "interfaces/User";
 import { ConditionModal } from "../../components/Modals/ConditionModal/ContitionModal";
 import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
 import { SuccessModal } from "../../components/Modals/SuccessModal/SuccessModal";
 import { PaymentMethodModal } from "../../components/Modals/PaymentMethodModal/PaymentMethodModal";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faClose, faP, faPlus, faPlusCircle, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import { Spinner } from "../../components/Spinner/Spinner";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
@@ -26,15 +29,21 @@ const stripePromise = loadStripe(
 );
 
 function MyAccount() {
-  const { currentUser, startUser, paymentMethods, cardLoad, getPaymentMethods } = useUserContext();
-  const [quota, setQuota] = useState({} as IQuota)
+  const {
+    currentUser,
+    startUser,
+    paymentMethods,
+    cardLoad,
+    getPaymentMethods,
+  } = useUserContext();
+  const [quota, setQuota] = useState({} as IQuota);
   const [orders, setOrders] = useState<IOrders[]>([]);
   const [showCondition, setShowCondition] = useState(false);
   const [showError, setShowError] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [successTitle, setSuccessTitle] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [successTitle, setSuccessTitle] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const [showPaymentMethod, setShowPaymentMethod] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<any>();
   const [conditionMessage, setConditionMessage] = useState("");
@@ -43,142 +52,136 @@ function MyAccount() {
   const [showPlan, setShowPlan] = useState<boolean>(false);
   const closeCondition = () => {
     setShowCondition(false);
-  }
+  };
   const openCondition = () => {
     setShowCondition(true);
-  }
+  };
   const closeSuccess = () => {
     setShowSuccess(false);
-  }
+  };
   const closeError = () => {
     setShowError(false);
-  }
+  };
   const closePlan = () => {
     setShowPlan(false);
-  }
+  };
   const openPlan = () => {
     setShowPlan(true);
-  }
+  };
   const startCancel = () => {
-    setConditionTitle('Cancelación de suscripción')
-    setConditionMessage('¿Estás seguro que quieres cancelar tu suscripción?')
+    setConditionTitle("Cancelación de suscripción");
+    setConditionMessage("¿Estás seguro que quieres cancelar tu suscripción?");
     openCondition();
     setCondition(1);
-  }
-  const changeDefaultCard = () => {
-    setConditionTitle('Cambiar por Predeterminado')
-    setConditionMessage('¿Estás seguro que quieres cambiar tu tarjeta predeterminada?')
-    openCondition();
-    setCondition(2);
-  }
+  };
   const deletePaymentMethod = () => {
-    setConditionTitle('Eliminar método de pago')
-    setConditionMessage('¿Estás seguro que quieres eliminar este método de pago?')
+    setConditionTitle("Eliminar método de pago");
+    setConditionMessage(
+      "¿Estás seguro que quieres eliminar este método de pago?"
+    );
     openCondition();
     setCondition(3);
-  }
+  };
   const finishSubscription = async () => {
     closeCondition();
     try {
-      const cancelSuscription: any = await trpc.subscriptions.requestSubscriptionCancellation.mutate()
+      await trpc.subscriptions.requestSubscriptionCancellation.mutate();
       startUser();
       setShowSuccess(true);
       setSuccessMessage("Su suscripción se ha cancelado con éxito.");
-      setSuccessTitle("Suscripción Cancelada")
-    }
-    catch (error) {
-      setErrorMessage('Ha habido un error');
+      setSuccessTitle("Suscripción Cancelada");
+    } catch (error) {
+      setErrorMessage("Ha habido un error");
       setShowError(true);
       console.log(error);
     }
-  }
+  };
   const changeDefault = async () => {
-    console.log('default');
+    console.log("default");
     try {
-
-    }
-    catch (error) {
-
-    }
-  }
+    } catch (error) {}
+  };
   const deleteCard = async () => {
-
     try {
       if (paymentMethod) {
-        const cards: any = await trpc.subscriptions.removeStripeCard.mutate({ paymentMethodId: paymentMethod.id });
+        await trpc.subscriptions.removeStripeCard.mutate({
+          paymentMethodId: paymentMethod.id,
+        });
         getPaymentMethods();
         closeCondition();
       }
-    }
-    catch (error) {
-
-    }
-  }
+    } catch (error) {}
+  };
   const getQuota = async () => {
-    if(currentUser !== null){
+    if (currentUser !== null) {
       let body: any = {
-        isExtended: currentUser.extendedFtpAccount
-      }
+        isExtended: currentUser.extendedFtpAccount,
+      };
       try {
         const quota: any = await trpc.ftp.quota.query(body);
-        if(getCompleted(quota.used, quota.available) >= 99){
+        if (getCompleted(quota.used, quota.available) >= 99) {
           openPlan();
         }
         setQuota(quota);
-      }
-      catch (error) {
+      } catch (error) {
         console.log(error);
       }
     }
-  }
+  };
   const getOrders = async () => {
-    let body = {
-
-    }
+    let body = {};
     try {
-      const user_downloads: any = await trpc.descargasuser.ownDescargas.query(body);
+      const user_downloads: any =
+        await trpc.descargasuser.ownDescargas.query(body);
       let allorders: any = [];
-      await Promise.all(user_downloads.map(async (orders: any) => {
-        let order_body = {
-          where: {
-            id: orders.order_id,
+      await Promise.all(
+        user_downloads.map(async (orders: any) => {
+          if (orders.order_id) {
+            let order_body = {
+              where: {
+                id: orders.order_id,
+              },
+            };
+            const order: any = await trpc.orders.ownOrders.query(order_body);
+            if (order.length > 0) {
+              allorders.push(order[0]);
+            }
           }
-        }
-        const order: any = await trpc.orders.ownOrders.query(order_body);
-        if (order.length > 0) {
-          allorders.push(order[0]);
-        }
-      }))
+        })
+      );
       setOrders(allorders);
-      // const order:any = await trpc.orders.ownOrders.query(body); 
+      // const order:any = await trpc.orders.ownOrders.query(body);
       // setOrders(order);
+    } catch (error: any) {
+      console.log(error.message);
     }
-    catch (error) {
-      console.log(error);
-    }
-  }
+  };
 
   const handlePaymentMethod = (value: boolean) => {
     let error = value;
     if (!error) {
-      setShowPaymentMethod(false); getPaymentMethods();
+      setShowPaymentMethod(false);
+      getPaymentMethods();
     } else {
       setShowPaymentMethod(false);
       setShowError(true);
-      setErrorMessage('Ha habido un error');
+      setErrorMessage("Ha habido un error");
     }
-  }
+  };
   useEffect(() => {
-    if(currentUser){
+    if (currentUser) {
       getQuota();
       getOrders();
     }
-  }, [currentUser])
+  }, [currentUser]);
   return (
     <div className="my-account-main-container">
       <div className="general">
         <div className="user-profile-pic">
-          <img src={currentUser?.profileImg ? currentUser.profileImg : Logo} alt="profile pic" />
+          <img
+            src={currentUser?.profileImg ? currentUser.profileImg : Logo}
+            alt="profile pic"
+          />
         </div>
         <h2>Información general</h2>
         <div className="user-info-container">
@@ -195,12 +198,26 @@ function MyAccount() {
             <p>{currentUser?.phone}</p>
           </div>
         </div>
-        {quota.regular && <SpaceAvailableCard quotaData={quota.regular} openPlan={openPlan} type ="regular"/>}
-        {currentUser?.extendedFtpAccount !== undefined  && quota.extended && <SpaceAvailableCard quotaData={quota.extended} openPlan={openPlan} type ="extended"/>}
-        {
-          currentUser?.hasActiveSubscription && !currentUser.isSubscriptionCancelled &&
-          <button className="cancel" onClick={startCancel}>CANCELAR SUSCRIPCION</button>
-        }
+        {quota.regular && (
+          <SpaceAvailableCard
+            quotaData={quota.regular}
+            openPlan={openPlan}
+            type="regular"
+          />
+        )}
+        {currentUser?.extendedFtpAccount !== undefined && quota.extended && (
+          <SpaceAvailableCard
+            quotaData={quota.extended}
+            openPlan={openPlan}
+            type="extended"
+          />
+        )}
+        {currentUser?.hasActiveSubscription &&
+          !currentUser.isSubscriptionCancelled && (
+            <button className="cancel" onClick={startCancel}>
+              CANCELAR SUSCRIPCION
+            </button>
+          )}
       </div>
       <div className="purchase">
         <div className="actives-ftp-container">
@@ -218,34 +235,36 @@ function MyAccount() {
                 </tr>
               </thead>
               <tbody>
-                {
-                  currentUser?.ftpAccount ?
-                    <tr>
-                      <td>{currentUser?.ftpAccount.host}</td>
-                      <td>{currentUser?.ftpAccount.userid}</td>
-                      <td>{currentUser?.ftpAccount.passwd}</td>
-                      <td>{currentUser?.ftpAccount.port}</td>
-                      <td>{currentUser?.ftpAccount.expiration.toDateString()}</td>
-                      <td>
-                        <img src={filezillaIcon} alt="filezilla" />
-                      </td>
-                    </tr> :
-                    <tr />
-                }
-                {
-                  currentUser?.extendedFtpAccount !== undefined && currentUser?.extendedFtpAccount  && currentUser?.ftpAccount ?
-                    <tr>
-                      <td>{currentUser?.ftpAccount.host}</td>
-                      <td>{currentUser?.extendedFtpAccount.userid}</td>
-                      <td>{currentUser?.extendedFtpAccount.passwd}</td>
-                      <td>{currentUser?.ftpAccount.port}</td>
-                      <td>{}</td>
-                      <td>
-                        <img src={filezillaIcon} alt="filezilla" />
-                      </td>
-                    </tr> :
-                    <tr />
-                }
+                {currentUser?.ftpAccount ? (
+                  <tr>
+                    <td>{currentUser?.ftpAccount.host}</td>
+                    <td>{currentUser?.ftpAccount.userid}</td>
+                    <td>{currentUser?.ftpAccount.passwd}</td>
+                    <td>{currentUser?.ftpAccount.port}</td>
+                    <td>{currentUser?.ftpAccount.expiration.toDateString()}</td>
+                    <td>
+                      <img src={filezillaIcon} alt="filezilla" />
+                    </td>
+                  </tr>
+                ) : (
+                  <tr />
+                )}
+                {currentUser?.extendedFtpAccount !== undefined &&
+                currentUser?.extendedFtpAccount &&
+                currentUser?.ftpAccount ? (
+                  <tr>
+                    <td>{currentUser?.ftpAccount.host}</td>
+                    <td>{currentUser?.extendedFtpAccount.userid}</td>
+                    <td>{currentUser?.extendedFtpAccount.passwd}</td>
+                    <td>{currentUser?.ftpAccount.port}</td>
+                    <td>{}</td>
+                    <td>
+                      <img src={filezillaIcon} alt="filezilla" />
+                    </td>
+                  </tr>
+                ) : (
+                  <tr />
+                )}
               </tbody>
             </table>
           ) : (
@@ -275,9 +294,12 @@ function MyAccount() {
                     <tr key={"order_" + index}>
                       <td>{order.date_order.toDateString()}</td>
                       <td>{order.id}</td>
-                      <td>${order.total_price}.00 {order.total_price === 18 ? "USD" : "MXN"}</td>
+                      <td>
+                        ${order.total_price}.00{" "}
+                        {order.total_price === 18 ? "USD" : "MXN"}
+                      </td>
                     </tr>
-                  )
+                  );
                 })
               ) : (
                 <tr>
@@ -293,33 +315,52 @@ function MyAccount() {
         </div>
         <div className="actives-ftp-container cards">
           <h2>Tarjetas</h2>
-          {!cardLoad ?
+          {!cardLoad ? (
             paymentMethods.map((x: any, index: number) => {
               return (
                 <div className="card" key={"cards_" + index}>
                   <div className="circle">
-                    <img src={x.card.brand === "visa" ? Visa : x.card.brand === "mastercard" ? Mastercard : Amex} alt="" />
+                    <img
+                      src={
+                        x.card.brand === "visa"
+                          ? Visa
+                          : x.card.brand === "mastercard"
+                          ? Mastercard
+                          : Amex
+                      }
+                      alt=""
+                    />
                   </div>
                   <p>Termina en {x.card.last4}</p>
-                  <p>{x.card.exp_month}/{x.card.exp_year}</p>
-                  <FontAwesomeIcon icon={faTrash} onClick={() => { deletePaymentMethod(); setPaymentMethod(x); }} />
+                  <p>
+                    {x.card.exp_month}/{x.card.exp_year}
+                  </p>
+                  <FontAwesomeIcon
+                    icon={faTrash}
+                    onClick={() => {
+                      deletePaymentMethod();
+                      setPaymentMethod(x);
+                    }}
+                  />
                   {/* {
                     x.customer === currentUser?.stripeCusId && 
                     <p>Predeterminada</p>
                   } */}
                 </div>
-              )
-            }) :
+              );
+            })
+          ) : (
             <Spinner size={4} width={0.4} color="#00e2f7" />
-          }
-          <p className="new" onClick={() => setShowPaymentMethod(!showPaymentMethod)}>Agregar nueva tarjeta</p>
+          )}
+          <p
+            className="new"
+            onClick={() => setShowPaymentMethod(!showPaymentMethod)}
+          >
+            Agregar nueva tarjeta
+          </p>
         </div>
       </div>
-      <ErrorModal
-        show={showError}
-        onHide={closeError}
-        message={errorMessage}
-      />
+      <ErrorModal show={showError} onHide={closeError} message={errorMessage} />
       <SuccessModal
         show={showSuccess}
         onHide={closeSuccess}
@@ -340,15 +381,18 @@ function MyAccount() {
         show={showCondition}
         onHide={closeCondition}
         action={
-          condition === 1 ? finishSubscription
-            : (condition === 2 ? changeDefault : deleteCard)
+          condition === 1
+            ? finishSubscription
+            : condition === 2
+            ? changeDefault
+            : deleteCard
         }
       />
       <Elements stripe={stripePromise}>
         <PlansModal
           show={showPlan}
           onHide={closePlan}
-          dataModals = {{
+          dataModals={{
             setShowError: setShowError,
             setShowSuccess: setShowSuccess,
             setSuccessMessage: setSuccessMessage,

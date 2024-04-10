@@ -2,12 +2,13 @@ import { createTRPCProxyClient, httpBatchLink } from "@trpc/client";
 import superjson from "superjson";
 import type { AppRouter } from "../../../backend/src/routers";
 
-const url = process.env.NODE_ENV === 'production' ? 'https://thebearbeatapi.lat/trpc' : 'https://kale67.world/trpc';
+// const url = process.env.NODE_ENV === 'production' ? 'https://thebearbeatapi.lat/trpc' : 'https://kale67.world/trpc';
 
-//ACTIVAR PARA LOCAL  
-// const url = process.env.NODE_ENV === 'production' ? 'https://thebearbeatapi.lat/trpc' : 'https://thebearbeatapi.lat/trpc';
-
-console.log(url);
+//ACTIVAR PARA LOCAL
+const url =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:5001/trpc"
+    : "https://thebearbeatapi.lat/trpc";
 
 const trpc = createTRPCProxyClient<AppRouter>({
   transformer: superjson,

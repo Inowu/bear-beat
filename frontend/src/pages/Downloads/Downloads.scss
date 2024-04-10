@@ -1,0 +1,57 @@
+.downloads-container {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  margin-top: 20px;
+  .header {
+    display: flex;
+    justify-content: space-between;
+    .left-side {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      h2 {
+        font-size: 2.6rem;
+      }
+      svg {
+        font-size: 3.4rem;
+      }
+    }
+  }
+  .table-line {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid rgb(200, 198, 198);
+    padding-inline: 20px;
+    p {
+      font-size: 1.4rem;
+    }
+  }
+  .card-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    .single-card {
+      display: flex;
+      justify-content: space-between;
+      background-color: #fff;
+      padding-inline: 24px;
+      padding-block: 16px;
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+      p {
+        font-weight: 600;
+        font-size: 1.6rem;
+        margin: 0;
+      }
+      .left-side {
+        display: flex;
+        gap: 30px;
+        align-items: center;
+        svg {
+          font-size: 2.4rem;
+        }
+      }
+    }
+  }
+}

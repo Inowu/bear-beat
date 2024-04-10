@@ -19,36 +19,38 @@ interface IAddUsersModal {
   onHideModal: () => void;
 }
 
-function AddUsersModal(props: IAddUsersModal) {
-
+export function AddUsersModal(props: IAddUsersModal) {
   const { showModal, onHideModal } = props;
   // const navigate = useNavigate();
   const [loader, setLoader] = useState<boolean>(false);
   const [show, setShow] = useState<boolean>(false);
-  const [code, setCode] = useState<string>('52');
+  const [code, setCode] = useState<string>("52");
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<any>('');
+  const [errorMessage, setErrorMessage] = useState<any>("");
   const closeModal = () => {
     setShow(false);
-  }
+  };
   const closeSuccess = () => {
     setShowSuccess(false);
     // navigate("/");
-  }
+  };
   const validationSchema = Yup.object().shape({
     email: Yup.string()
-      .required("Email is required")
-      .email("Invalid email format"),
+      .required("El correo es requerido")
+      .email("El formato del correo no es correcto"),
     username: Yup.string()
-      .required('Username is required')
-      .min(5, 'Username must be at least 5 characters long')
-      .matches(/[a-zA-Z]/, 'Field must contain at least 1 letter')
-    ,
-    password: Yup.string().required('Password is required')
-      .min(6, 'Password must contain 6 characters atleast'),
-    passwordConfirmation:
-      Yup.string().required('Confirmation Password is required')
-        .oneOf([Yup.ref('password')], 'Both should be the same'),
+      .required("El nombre de usuario es requerido")
+      .min(5, "El nombre de usuario debe contener 5 caracteres")
+      .matches(
+        /[a-zA-Z]/,
+        "El nombre de usuario debe contener al menos 1 carácter"
+      ),
+    password: Yup.string()
+      .required("La contraseña es requerida")
+      .min(6, "La contraseña debe contener por lo menos 6 caracteres"),
+    passwordConfirmation: Yup.string()
+      .required("Debe confirmar la contraseña")
+      .oneOf([Yup.ref("password")], "Ambas contraseñas deben ser iguales"),
   });
   const initialValues = {
     username: "",
@@ -57,7 +59,7 @@ function AddUsersModal(props: IAddUsersModal) {
     email: "",
     passwordConfirmation: "",
   };
-  const handlePhoneNumberChange = (value:any, country:any) => {
+  const handlePhoneNumberChange = (value: any, country: any) => {
     setCode(country.dialCode);
   };
   const formik = useFormik({
@@ -70,26 +72,23 @@ function AddUsersModal(props: IAddUsersModal) {
         password: values.password,
         email: values.email,
         phone: `+${code} ${values.phone}`,
-      }
+      };
       try {
-        await trpc.users.createOneUsers.mutate({data: body});
+        await trpc.users.createOneUsers.mutate({ data: body });
         setShowSuccess(true);
         setLoader(false);
-      }
-      catch (error) {
+      } catch (error) {
         setShow(true);
         setErrorMessage(error);
-        setLoader(false)
+        setLoader(false);
       }
     },
   });
 
-
-
   return (
     <Modal show={showModal} onHide={onHideModal} centered>
       <form className="modal-addusers" onSubmit={formik.handleSubmit}>
-        <RiCloseCircleLine className='icon' onClick={onHideModal} />
+        <RiCloseCircleLine className="icon" onClick={onHideModal} />
         <h2>Añadir Usuario</h2>
         <div className="c-row">
           <input
@@ -163,17 +162,21 @@ function AddUsersModal(props: IAddUsersModal) {
             onChange={formik.handleChange}
           />
           {formik.errors.passwordConfirmation && (
-            <div className="formik">
-              {formik.errors.passwordConfirmation}
-            </div>
+            <div className="formik">{formik.errors.passwordConfirmation}</div>
           )}
         </div>
-        {
-          !loader
-            ? <button className="btn-option-4" type="submit">Añadir Usuario</button>
-            : <div style={{marginBottom: 15}}><Spinner size={3} width={.3} color="#00e2f7" /></div>
-        }
-        <button className="btn-cancel" onClick={onHideModal} type="reset">Cancelar</button>
+        {!loader ? (
+          <button className="btn-option-4" type="submit">
+            Añadir Usuario
+          </button>
+        ) : (
+          <div style={{ marginBottom: 15 }}>
+            <Spinner size={3} width={0.3} color="#00e2f7" />
+          </div>
+        )}
+        <button className="btn-cancel" onClick={onHideModal} type="reset">
+          Cancelar
+        </button>
         <ErrorModal show={show} onHide={closeModal} message={errorMessage} />
         <SuccessModal
           show={showSuccess}
@@ -185,5 +188,3 @@ function AddUsersModal(props: IAddUsersModal) {
     </Modal>
   );
 }
-
-export default AddUsersModal;

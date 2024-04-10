@@ -1,5 +1,16 @@
 export interface IFiles {
-    name: string;
-    type: string;
-    path?: string;
+  name: string;
+  type: string;
+  path?: string;
+  size: number;
+}
+export interface IDownloads {
+  dirName: string;
+  date: Date;
+  id: number;
+  jobId: number;
+  userId: number;
+  size: bigint;
+  downloadUrl: string;
+  expirationDate: Date;
 }

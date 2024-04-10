@@ -3,7 +3,12 @@ import ReactDOM from "react-dom/client";
 import { PayPalScriptProvider } from "@paypal/react-paypal-js";
 import "./styles/index.scss";
 import reportWebVitals from "./reportWebVitals";
-import { Navigate, Outlet, RouterProvider, createBrowserRouter } from "react-router-dom";
+import {
+  Navigate,
+  Outlet,
+  RouterProvider,
+  createBrowserRouter,
+} from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
 import Home from "./pages/Home/Home";
 import UserContextProvider from "./contexts/UserContext";
@@ -26,14 +31,14 @@ import { Coupons } from "./pages/Admin/Coupons/Coupons";
 import { Ordens } from "./pages/Admin/Ordens/Ordens";
 import { HistoryCheckout } from "./pages/Admin/HistoryCheckout/HistoryCheckout";
 import { PlanUpgrade } from "./pages/PlanUpgrade/PlanUpgrade";
-import ReactPixel from 'react-facebook-pixel';
+import ReactPixel from "react-facebook-pixel";
 import { SSEProvider } from "react-hooks-sse";
-
+import DownloadContextProvider from "./contexts/DownloadContext";
+import Downloads from "./pages/Downloads/Downloads";
 
 const root = ReactDOM.createRoot(
-  document.getElementById("root") as HTMLElement,
+  document.getElementById("root") as HTMLElement
 );
-
 
 const router = createBrowserRouter([
   {
@@ -51,6 +56,7 @@ const router = createBrowserRouter([
           { path: "", element: <Home /> },
           { path: "instrucciones", element: <Instructions /> },
           { path: "micuenta", element: <MyAccount /> },
+          { path: "descargas", element: <Downloads /> },
           { path: "planes", element: <Plans /> },
           { path: "comprar", element: <Checkout /> },
           { path: "actualizar-planes", element: <PlanUpgrade /> },
@@ -89,32 +95,33 @@ const router = createBrowserRouter([
       },
       {
         path: "*",
-        element: <Navigate to="/" replace />
+        element: <Navigate to="/" replace />,
       },
     ],
   },
 ]);
-// 'https://thebearbeatapi.lat/trpc' 
+// 'https://thebearbeatapi.lat/trpc'
 // 'https://kale67.world/trpc'
 root.render(
   <React.StrictMode>
     <UserContextProvider>
-      <PayPalScriptProvider
-        options={{
-          clientId:
-            "AYuKvAI09TE9bk9k1TuzodZ2zWQFpWEZesT65IkT4WOws9wq-yfeHLj57kEBH6YR_8NgBUlLShj2HOSr",
-          intent: "subscription",
-          vault: true,
-        }}
-      >
-          <SSEProvider endpoint='https://kale67.world/sse'>
-          <RouterProvider router={router} />
-        </SSEProvider>
-      </PayPalScriptProvider>
+      <DownloadContextProvider>
+        <PayPalScriptProvider
+          options={{
+            clientId:
+              "AYuKvAI09TE9bk9k1TuzodZ2zWQFpWEZesT65IkT4WOws9wq-yfeHLj57kEBH6YR_8NgBUlLShj2HOSr",
+            intent: "subscription",
+            vault: true,
+          }}
+        >
+          <SSEProvider endpoint="https://thebearbeatapi.lat/sse">
+            <RouterProvider router={router} />
+          </SSEProvider>
+        </PayPalScriptProvider>
+      </DownloadContextProvider>
     </UserContextProvider>
-  </React.StrictMode>,
+  </React.StrictMode>
 );
-
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

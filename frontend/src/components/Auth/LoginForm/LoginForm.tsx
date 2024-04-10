@@ -1,30 +1,28 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useUserContext } from "../../../contexts/UserContext";
 import trpc from "../../../api";
-import { useFormik } from 'formik';
-import * as Yup from 'yup';
+import { useFormik } from "formik";
+import * as Yup from "yup";
 import { useState } from "react";
 import { ErrorModal } from "../../../components/Modals/ErrorModal/ErrorModal";
 import { Spinner } from "../../../components/Spinner/Spinner";
 
-
-
-
 function LoginForm() {
   const [loader, setLoader] = useState<boolean>(false);
   const [show, setShow] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<any>('');
+  const [errorMessage, setErrorMessage] = useState<any>("");
   const { handleLogin } = useUserContext();
   const navigate = useNavigate();
   const closeModal = () => {
     setShow(false);
-  }
+  };
   const validationSchema = Yup.object().shape({
     username: Yup.string()
-      .required('Email is required')
-      .email("Invalid email format"),
-    password: Yup.string().required('Password is required')
-      .min(3, 'Password must contain 3 characters atleast'),
+      .required("El correo es requerido")
+      .email("El formato del correo no es correcto"),
+    password: Yup.string()
+      .required("La contraseña es requerida")
+      .min(3, "La contraseña debe contenter 3 caracteres"),
   });
   const initialValues = {
     username: "",
@@ -38,14 +36,13 @@ function LoginForm() {
       let body = {
         username: values.username,
         password: values.password,
-      }
+      };
       try {
         const login = await trpc.auth.login.query(body);
         handleLogin(login.token, login.refreshToken);
         navigate("/");
         setLoader(false);
-      }
-      catch (error) {
+      } catch (error) {
         setShow(true);
         setErrorMessage(error);
         setLoader(false);
@@ -53,14 +50,12 @@ function LoginForm() {
     },
   });
 
-  
-
   return (
     <form onSubmit={formik.handleSubmit}>
-      <h2>LOGIN</h2>
+      <h2>INICIAR SESIÓN</h2>
       <div className="c-row">
         <input
-          placeholder="email"
+          placeholder="Correo electrónico"
           type="text"
           id="username"
           name="username"
@@ -73,7 +68,7 @@ function LoginForm() {
       </div>
       <div className="c-row">
         <input
-          placeholder="password"
+          placeholder="Contraseña"
           type="password"
           id="password"
           name="password"
@@ -87,15 +82,13 @@ function LoginForm() {
       <div className="c-row">
         <Link to={"recuperar"}>¿Olvidaste tu contraseña?</Link>
       </div>
-      {
-        !loader
-          ?
-          <button className="btn" type="submit">
-            INGRESAR
-          </button>
-          :
-          <Spinner size={3} width={.3} color="#00e2f7" />
-      }
+      {!loader ? (
+        <button className="btn" type="submit">
+          INGRESAR
+        </button>
+      ) : (
+        <Spinner size={3} width={0.3} color="#00e2f7" />
+      )}
       <div className="c-row">
         <Link to={"registro"}>Registrarme</Link>
       </div>

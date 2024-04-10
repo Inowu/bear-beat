@@ -2,6 +2,7 @@ import trpc from "../../../api";
 import { useEffect, useState } from "react";
 import { getCompleted, transformBiteToGb } from "../../../functions/functions";
 import "./Storage.scss";
+import { Spinner } from "../../../components/Spinner/Spinner";
 
 export const Storage = () => {
 
@@ -10,18 +11,22 @@ export const Storage = () => {
         total_storage: 0,
         available_storage: 0
     });
+    const [isLoading, setIsLoading] = useState<boolean>(true);
     const styles = {
         width: getCompleted(storage.used_storage, storage.total_storage) > 5 ? getCompleted(storage.used_storage, storage.total_storage) + "%" : "5%"
     }
 
     const getStorage = async () => {
         try {
-            const data = await trpc.ftp.storage.query();
+            let data = await trpc.ftp.storage.query();
+            const reservedSpace = data.total_storage * 0.05;
+            data = {...data, reserved_space: reservedSpace};
+            
             setStorage(data);
-            console.log(storage);
+            setIsLoading(false);
         }
         catch (error) {
-            console.log(error)
+            setIsLoading(false);
         }
     }
 
@@ -29,23 +34,24 @@ export const Storage = () => {
         getStorage();
     }, [])
 
-
-
     return (
         <div className="storage">
-            <div className="storage-card">
+            {!isLoading ? <div className="storage-card">
                 <h2 className="title">
                     Almacenamiento del Servidor:
                 </h2>
                 <h3>
-                    Espacio Usado: 
+                    Espacio Usado:
                     <span> {transformBiteToGb(storage.used_storage)}GB de {transformBiteToGb(storage.total_storage)}GB</span>
                 </h3>
                 <div className="progress-bar-container">
+                    <div className="progress-bar reserved-space-bar" />
                     <div className="progress-bar" style={styles} />
                 </div>
-                <h3>Espacio Disponible: <span>{transformBiteToGb(storage.available_storage)}GB</span></h3> 
-            </div>
+                <h3>Espacio Reservado: <span className="reserved-space-text">{transformBiteToGb(storage.reserved_space)}GB</span></h3>
+                <h3>Espacio Disponible: <span>{transformBiteToGb(storage.available_storage)}GB</span></h3>
+            </div> :
+                <Spinner size={3} width={.3} color="#00e2f7" />}
         </div>
     )
 }

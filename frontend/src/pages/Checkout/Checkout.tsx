@@ -5,43 +5,51 @@ import { loadStripe } from "@stripe/stripe-js";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useUserContext } from "../../contexts/UserContext";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
-import { useLocation } from 'react-router-dom';
+import { useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import trpc from "../../api";
 import { IPlans } from "interfaces/Plans";
+import { manychatApi } from "../../api/manychat";
 const stripePromise = loadStripe(
   "pk_live_51HxCA5INxJoHjyCFl7eC2fUI9S22i2NW8iMnAjrvAUjnuVGZedLSRxB3sZspZzzHNOoTCNwgUNoZEYfXQuF6VvBV00MJ2C2k9s"
 );
 
 function Checkout() {
-  const [plan, setPlan] = useState({} as IPlans)
+  const [plan, setPlan] = useState({} as IPlans);
   const location = useLocation();
-
+  const [discount, setDiscount] = useState<number>(0);
   const searchParams = new URLSearchParams(location.search);
-  const priceId = searchParams.get('priceId');
+  const priceId = searchParams.get("priceId");
   const { currentUser } = useUserContext();
+  const checkManyChat = async (plans: IPlans) => {
+    if (plans.name.includes("Curioso")) {
+      await manychatApi("CHECKOUT_PLAN_CURIOSO");
+    }
+    if (plans.name.includes("Oro")) {
+      await manychatApi("CHECKOUT_PLAN_ORO");
+    }
+  };
   const getPlans = async (id: any) => {
     const id_plan: any = +id;
     let body = {
       where: {
         activated: 1,
         id: id_plan,
-      }
-    }
-    try{
+      },
+    };
+    try {
       const plans: any = await trpc.plans.findManyPlans.query(body);
       setPlan(plans[0]);
-    }
-    catch(error){
+      checkManyChat(plans[0]);
+    } catch (error) {
       console.log(error);
     }
-
-  }
+  };
   useEffect(() => {
-    if(priceId){
+    if (priceId) {
       getPlans(priceId);
     }
-  }, [priceId])
+  }, [priceId]);
   return (
     <div className="checkout-main-container">
       <div className="checkout-card">
@@ -62,7 +70,11 @@ function Checkout() {
             </div>
           </div>
           <Elements stripe={stripePromise}>
-            <CheckoutForm plan={plan} />
+            <CheckoutForm
+              plan={plan}
+              setDiscount={setDiscount}
+              discount={discount}
+            />
           </Elements>
         </div>
         <div className="information-container">
@@ -79,7 +91,14 @@ function Checkout() {
             </b>
             <div className="total">
               <b>Total de la orden</b>
-              <b>${plan.price}.00 {plan.moneda}</b>
+              <b>
+                $
+                {(
+                  parseInt(plan.price) -
+                  parseInt(plan.price) * (discount / 100)
+                ).toFixed(2)}{" "}
+                {plan.moneda}
+              </b>
             </div>
           </div>
         </div>
