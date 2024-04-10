@@ -82,7 +82,7 @@ export const ordersRouter = router({
             }
 
             if (key === 'email') {
-              return `${key} LIKE '%${value}%' OR phone LIKE '%${value}%'`;
+              return `(${key} LIKE '%${value}%' OR phone LIKE '%${value}%')`;
             }
 
             return `${key} LIKE '%${value}%'`;
