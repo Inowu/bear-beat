@@ -77,7 +77,31 @@ export const PlanUpgrade = () => {
         };
         const quota: any = await trpc.ftp.quota.query(body);
         const tempPlan = await trpc.auth.getCurrentSubscriptionPlan.query();
-        console.log(tempPlan);
+        const constructedPlan: IPlans = {
+          activated: tempPlan.activated,
+          audio_ilimitado: null,
+          conekta_plan_id: null,
+          conekta_plan_id_test: null,
+          description: tempPlan.description,
+          duration: tempPlan.duration,
+          gigas: tempPlan.gigas,
+          homedir: tempPlan.homedir,
+          id: tempPlan.id,
+          ilimitado_activo: null,
+          ilimitado_dias: null,
+          karaoke_ilimitado: null,
+          moneda: tempPlan.moneda,
+          name: tempPlan.name,
+          price: tempPlan.price.toString(),
+          stripe_prod_id: tempPlan.stripe_prod_id!,
+          stripe_prod_id_test: tempPlan.stripe_prod_id_test!,
+          paypal_plan_id: tempPlan.paypal_plan_id!,
+          tokens: null,
+          tokens_karaoke: null,
+          tokens_video: null,
+          video_ilimitado: null,
+          vip_activo: null,
+        }
         getPlans(
           tempPlan.id,
           tempPlan.stripe_prod_id,
@@ -85,7 +109,7 @@ export const PlanUpgrade = () => {
           tempPlan.paypal_product_id,
           tempPlan.moneda
         );
-        setCurrentPlan(tempPlan);
+        setCurrentPlan(constructedPlan);
       }
     } catch (error: any) {
       navigate("/planes");

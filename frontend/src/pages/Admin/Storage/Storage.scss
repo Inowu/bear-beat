@@ -31,16 +31,26 @@
             font-weight: bolder;
           }
         }
+
+        .reserved-space-text {
+          color: #e90b0b;
+        }
       
         .progress-bar-container {
           background-color: #cff3f6;
-          padding: 8px;
-          border-radius: 25px;
+          padding: 1px;
+          border-radius: 5px;
+          display: flex;
       
           .progress-bar {
             height: 16px;
             background-color: #08e1f7;
-            border-radius: 25px;
+            border-radius: 3px;
+          }
+          .reserved-space-bar {
+            width: 5%;
+            margin-right: 1px;
+            background-color: #e90b0b;
           }
         }
         .extra-gb{
