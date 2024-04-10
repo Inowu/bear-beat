@@ -19,7 +19,7 @@ interface IAddUsersModal {
   onHideModal: () => void;
 }
 
-function AddUsersModal(props: IAddUsersModal) {
+export function AddUsersModal(props: IAddUsersModal) {
   const { showModal, onHideModal } = props;
   // const navigate = useNavigate();
   const [loader, setLoader] = useState<boolean>(false);
@@ -188,5 +188,3 @@ function AddUsersModal(props: IAddUsersModal) {
     </Modal>
   );
 }
-
-export default AddUsersModal;

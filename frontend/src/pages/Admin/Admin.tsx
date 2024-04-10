@@ -4,21 +4,25 @@ import trpc from "../../api";
 import { IAdminUser } from "../../interfaces/admin";
 import "./Admin.scss";
 import { IPlans } from "../../interfaces/Plans";
-import { OptionModal } from "../../components/Modals/OptionModal/OptionModal";
+import {
+  AddUsersModal,
+  ConditionModal,
+  DeleteUserModal,
+  ErrorModal,
+  OptionModal
+} from '../../components/Modals'
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import Pagination from "../../components/Pagination/Pagination";
 import { ARRAY_10 } from "../../utils/Constants";
-import AddUsersModal from "../../components/Modals/AddUsersModal/AddUsersModal";
 import CsvDownloader from "react-csv-downloader";
 import { exportUsers } from "./fuctions";
-import { ConditionModal } from "../../components/Modals/ConditionModal/ContitionModal";
 import { FaLockOpen } from "react-icons/fa";
 import { FaLock } from "react-icons/fa";
-import { DeleteUserModal } from "../../components/Modals/DeleteUserModal/DeleteUserModal";
 import EditUserModal from "../../components/Modals/EditUserModal/EditUserModal";
 import { useSSE } from "react-hooks-sse";
+import { of } from "await-of";
 
 export interface IAdminFilter {
   page: number;
@@ -29,7 +33,7 @@ export interface IAdminFilter {
 }
 
 function Admin() {
-  const { currentUser } = useUserContext();
+  const { currentUser, handleLogin } = useUserContext();
   const [users, setUsers] = useState<IAdminUser[]>([]);
   const [totalUsers, setTotalUsers] = useState(0);
   const [showModal, setShowModal] = useState<boolean>(false);
@@ -46,6 +50,8 @@ function Admin() {
   const [selectedUser, setSelectedUser] = useState({} as IAdminUser);
   const [blocking, setBlocking] = useState<boolean>(false);
   const [showEdit, setShowEdit] = useState<boolean>(false);
+  const [showError, setShowError] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>("");
   const [filters, setFilters] = useState<any>({
     page: 0,
     search: "",
@@ -279,6 +285,31 @@ function Admin() {
     }
   }, [currentUser]);
 
+  const signInAsUser = async (user: any) => {
+    setLoader(true);
+    const [loginAsUser, errorLogin] = await of(trpc.auth.login.query({
+      username: user.username,
+      password: user.password,
+      isAdmin: true
+    }));
+    
+    if (!loginAsUser && errorLogin) {
+      setErrorMessage(errorLogin.message);
+      setShowError(true);
+      setLoader(false);
+      return;
+    }
+
+    handleLogin(loginAsUser!.token, loginAsUser!.refreshToken);
+    navigate("/");
+    setLoader(false);
+  }
+
+  const closeErrorModal = () => {
+    setShowError(false);
+  };
+
+
   const handleEditUser = (user: IAdminUser) => {
     console.log('this is user', user);
     setSelectedUser(user);
@@ -407,6 +438,13 @@ function Admin() {
                           >
                             Activar Suscripcion
                           </button>
+                          <button
+                            onClick={() => {
+                              signInAsUser(user);
+                            }}
+                          >
+                            Acceder como usuario
+                          </button>
                           {user.blocked ? (
                             <FaLock
                               className="lock"
@@ -485,6 +523,7 @@ function Admin() {
         action={plan_1}
         action2={plan_2}
       />
+      <ErrorModal show={showError} onHide={closeErrorModal} message={errorMessage} />
     </div>
   );
 }
