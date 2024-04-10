@@ -8,16 +8,16 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import "./Ordens.scss";
 import { IAdminOrders } from "../../../interfaces/admin";
+import { of } from "await-of";
 
 interface IAdminFilter {
-  page: number;
-  limit: number;
-  total: number;
-  search: string;
-  searchData: string;
   active: number;
-  startDate: Date;
-  endDate: Date;
+  endDate: Date | undefined;
+  limit: number;
+  page: number;
+  paymentMethod: string;
+  searchData: string;
+  startDate: Date | undefined;
 }
 
 export const Ordens = () => {
@@ -27,14 +27,14 @@ export const Ordens = () => {
   const [totalLoader, setTotalLoader] = useState<boolean>(false);
   const [totalOrdens, setTotalOrdens] = useState(0);
   const [loader, setLoader] = useState<boolean>(true);
-  const [filters, setFilters] = useState<any>({
-    page: 0,
-    search: "",
-    searchData: "",
+  const [filters, setFilters] = useState<IAdminFilter>({
     active: 1,
+    endDate: undefined,
     limit: 100,
-    startDate: new Date("2010-01-01"),
-    endDate: new Date(),
+    page: 0,
+    paymentMethod: "",
+    searchData: "",
+    startDate: undefined,
   });
 
   const startFilter = (key: string, value: string | number) => {
@@ -43,74 +43,44 @@ export const Ordens = () => {
       tempFilters.page = 0;
     }
     if (key === "startDate" || key === "endDate") {
-      console.log(value);
       value = value;
     }
     tempFilters[key] = value;
-    filterOrdens(tempFilters);
     setFilters(tempFilters);
+    filterOrdens(tempFilters);
   };
   const filterOrdens = async (filt: IAdminFilter) => {
     setLoader(true);
     setTotalLoader(true);
-    try {
-      let body = {
-        take: filt.limit,
-        skip: filt.page * filt.limit,
-        email: filt.searchData,
-        // where: {
-        //   payment_method: {
-        //     startsWith: filt.search,
-        //   },
-        //   // email: {
-        //   //   startsWith: filt.searchData,
-        //   // },
-        //   status: {
-        //     equals: filt.active,
-        //   },
-        //   date_order: {
-        //     gte: filt.startDate,
-        //     lte: filt.endDate,
-        //   },
-        // },
-        orderBy: {
-          date_order: "desc",
-        },
-      };
-      let body2: any = {
-        email: filt.searchData,
-        // where: {
-        //   payment_method: {
-        //     startsWith: filt.search,
-        //   },
-        //   email: {
-        //     startsWith: filt.searchData,
-        //   },
-        //   status: {
-        //     equals: filt.active,
-        //   },
-        //   date_order: {
-        //     gte: filt.startDate,
-        //     lte: filt.endDate,
-        //   },
-        // },
-        include: {
-          id: true,
-        },
-      };
-      const tempOrders: any =
-        await trpc.orders.findManyOrdersWithUsers.query(body);
-      setLoader(false);
-      setOrdens(tempOrders);
-      console.log(tempOrders);
-      const totalOrders =
-        await trpc.orders.findManyOrdersWithUsers.query(body2);
-      console.log(totalOrders);
-      setTotalOrdens(totalOrders.length);
-      setTotalLoader(false);
-    } catch (error: any) {
-      console.log(error.message);
+
+    let body: any = {
+      take: filt.limit,
+      skip: filt.page * filt.limit,
+      email: filt.searchData,
+      paymentMethod: filt.paymentMethod,
+    };
+
+    if (filt.startDate && filt.endDate) {
+      body = {
+        ...body,
+        date_order: {
+          gte: filt.startDate,
+          lte: filt.endDate
+        }
+      }
     }
+
+    const [tempOrders, errorOrders] = await of(trpc.orders.findManyOrdersWithUsers.query(body));
+
+    console.log(tempOrders!.data)
+    if (errorOrders && !tempOrders) {
+      throw new Error(errorOrders.message);
+    }
+
+    setOrdens(tempOrders!.data);
+    setTotalOrdens(tempOrders!.count);
+    setLoader(false);
+    setTotalLoader(false);
   };
 
   useEffect(() => {
@@ -118,6 +88,7 @@ export const Ordens = () => {
       navigate("/");
     }
   }, [currentUser]);
+
   useEffect(() => {
     filterOrdens(filters);
   }, []);
@@ -128,7 +99,7 @@ export const Ordens = () => {
         <h1>Ordenes</h1>
         <div className="search-input">
           <input
-            placeholder="Buscar por email"
+            placeholder="Buscar por email o teléfono"
             onChange={(e: any) => {
               startFilter("searchData", e.target.value);
             }}
@@ -139,7 +110,7 @@ export const Ordens = () => {
       <div className="filter-contain">
         <div className="select-input">
           <p>Metodo de Pago</p>
-          <select onChange={(e) => startFilter("search", e.target.value)}>
+          <select onChange={(e) => startFilter("paymentMethod", e.target.value)}>
             <option value={""}>Todos</option>
             <option value={"Paypal"}>Paypal</option>
             <option value={"Stripe"}>Stripe</option>
@@ -201,35 +172,35 @@ export const Ordens = () => {
             <tbody>
               {!loader
                 ? ordens.map((orden: IAdminOrders, index: number) => {
-                    return (
-                      <tr key={"admin_ordens_" + index}>
-                        <td className="">{orden.email}</td>
-                        <td className="">{orden.phone}</td>
-                        <td className="">
-                          {orden.payment_method
-                            ? orden.payment_method
-                            : "Sin PM"}
-                        </td>
-                        <td>{orden.txn_id}</td>
-                        <td>{orden.total_price}</td>
-                        <td>{orden.date_order.toLocaleDateString()}</td>
-                        <td>{orden.status === 1 ? "Activa" : "No activa"}</td>
-                      </tr>
-                    );
-                  })
+                  return (
+                    <tr key={"admin_ordens_" + index}>
+                      <td className="">{orden.email}</td>
+                      <td className="">{orden.phone}</td>
+                      <td className="">
+                        {orden.payment_method
+                          ? orden.payment_method
+                          : "Sin PM"}
+                      </td>
+                      <td>{orden.txn_id}</td>
+                      <td>{orden.total_price}</td>
+                      <td>{orden.date_order.toLocaleDateString()}</td>
+                      <td>{orden.status === 1 ? "Activa" : "No activa"}</td>
+                    </tr>
+                  );
+                })
                 : ARRAY_10.map((val: string, index: number) => {
-                    return (
-                      <tr key={"array_10" + index} className="tr-load">
-                        <td />
-                        <td />
-                        <td />
-                        <td />
-                        <td />
-                        <td />
-                        <td />
-                      </tr>
-                    );
-                  })}
+                  return (
+                    <tr key={"array_10" + index} className="tr-load">
+                      <td />
+                      <td />
+                      <td />
+                      <td />
+                      <td />
+                      <td />
+                      <td />
+                    </tr>
+                  );
+                })}
             </tbody>
           </table>
         </div>

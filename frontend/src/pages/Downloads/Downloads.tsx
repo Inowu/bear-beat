@@ -8,7 +8,7 @@ import { IDownloads } from "interfaces/Files";
 import trpc from "../../api";
 
 function Downloads() {
-  const [downloads, setDownloads] = useState<IDownloads[] | null>(null);
+  const [downloads, setDownloads] = useState<any | null>(null);
   const retreiveDownloads = async () => {
     try {
       const downloads = await trpc.dirDownloads.myDirDownloads.query();

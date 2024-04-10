@@ -26,10 +26,7 @@ export interface IAdminFilter {
   active: number;
   limit: number;
 }
-interface IDownloads {
-  user_id: number;
-  date_end: Date;
-}
+
 function Admin() {
   const { currentUser } = useUserContext();
   const [users, setUsers] = useState<IAdminUser[]>([]);
@@ -166,13 +163,20 @@ function Admin() {
     setFilters(tempFilters);
   };
   const transformUserData = async () => {
-    const tempUsers: IAdminUser[] = await exportUsers(filters);
-    return tempUsers.map((user: IAdminUser) => ({
+    const fetchUsers = await exportUsers(filters);
+
+    if (!fetchUsers || fetchUsers.length < 0) {
+      throw new Error('Error loading tempUsers');
+    }
+
+    const tempUsers = fetchUsers.map((user: any) => ({
       Usuario: user.username,
       Correo: user.email,
       "Fecha de Registro": user.registered_on.toLocaleDateString(),
       Teléfono: user.phone,
-    }));
+    }))
+
+    return tempUsers;
   };
   const filterUsers = async (filt: IAdminFilter) => {
     setLoader(true);
@@ -202,8 +206,18 @@ function Admin() {
           },
         };
         const tempUsers = await trpc.users.findManyUsers.query(body);
+        const transformedUsers: IAdminUser[] = tempUsers.map((user) => ({
+          email: user.email,
+          username: user.username,
+          active: user.active,
+          id: user.id,
+          registered_on: user.registered_on,
+          blocked: user.blocked,
+          phone: user.phone ?? "",
+          password: user.password
+        }))
         setLoader(false);
-        setUsers(tempUsers);
+        setUsers(transformedUsers);
         const totalUsersResponse = await trpc.users.findManyUsers.query(body2);
         setTotalUsers(totalUsersResponse.length);
         setTotalLoader(false);
