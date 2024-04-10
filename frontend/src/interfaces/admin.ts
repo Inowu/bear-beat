@@ -6,6 +6,7 @@ export interface IAdminUser {
   registered_on: Date;
   blocked: boolean;
   phone: string;
+  password: string;
 }
 export interface IAdminOrders {
   city: string;

@@ -3,12 +3,9 @@ import PlanCard from "../../components/PlanCard/PlanCard";
 import "./Plans.scss";
 import trpc from "../../api";
 import { IPlans } from "../../interfaces/Plans";
-import { useUserContext } from "../../contexts/UserContext";
 import { Spinner } from "../../components/Spinner/Spinner";
-import { manychatApi } from "../../api/manychat";
 
 function Plans() {
-  const { currentUser } = useUserContext();
   const [plans, setPlans] = useState<IPlans[]>([]);
   const [loader, setLoader] = useState<boolean>(true);
   const getPlans = async () => {
