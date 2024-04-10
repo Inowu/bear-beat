@@ -31,9 +31,18 @@
   }
   .folder-structure-container {
     display: flex;
+    div {
+      display: flex;
+      align-items: center;
+    }
     p {
-      margin: 0px 2px 0px 0px;
+      margin: 0px 3px 0px 3px;
       cursor: pointer;
+      padding: 5px;
+    }
+    p:hover {
+      background-color: #d1d1d1;
+      border-radius: 10px;
     }
     .last-folder {
       cursor: default;

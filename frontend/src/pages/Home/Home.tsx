@@ -5,6 +5,7 @@ import {
   faPlay,
   faDownload,
   faArrowLeft,
+  faChevronRight,
   faSearch,
 } from "@fortawesome/free-solid-svg-icons";
 import PreviewModal from "../../components/PreviewModal/PreviewModal";
@@ -296,17 +297,20 @@ function Home() {
                     key={`folder_${index}`}
                     className="last-folder"
                   >
-                    {file}/
+                    {file}
                   </p>
                 )
               }
               return (
-                <p
-                  key={`folder_${index}`}
-                  onClick={() => { goToFolder({folder: index + 1}) }}
-                >
-                  {file}/
-                </p>
+                <div>
+                  <p
+                    key={`folder_${index}`}
+                    onClick={() => { goToFolder({folder: index + 1}) }}
+                  >
+                    {file}
+                  </p>
+                  <FontAwesomeIcon icon={faChevronRight} />
+                </div>
               )
             })}
           </div>
