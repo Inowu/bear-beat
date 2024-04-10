@@ -118,7 +118,7 @@ function EditUserModal(props: IEditPlanModal) {
           )}
         </div>
         <div className="c-row">
-          <label>Correo</label>
+          <label>Contraseña</label>
           <input
             placeholder="Contraseña"
             type="password"
