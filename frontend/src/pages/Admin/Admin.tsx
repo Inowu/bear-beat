@@ -51,6 +51,7 @@ function Admin() {
   const [blocking, setBlocking] = useState<boolean>(false);
   const [showError, setShowError] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [showEdit, setShowEdit] = useState<boolean>(false);
   const [filters, setFilters] = useState<any>({
     page: 0,
     search: "",
@@ -284,7 +285,6 @@ function Admin() {
   }, [currentUser]);
 
   const handleEditUser = (user: IAdminUser) => {
-    console.log('this is user', user);
     setSelectedUser(user);
     setShowEdit(true);
   }
