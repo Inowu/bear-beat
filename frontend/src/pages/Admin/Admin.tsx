@@ -214,6 +214,7 @@ function Admin() {
           registered_on: user.registered_on,
           blocked: user.blocked,
           phone: user.phone ?? "",
+          password: user.password
         }))
         setLoader(false);
         setUsers(transformedUsers);
