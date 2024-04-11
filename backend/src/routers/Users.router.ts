@@ -25,6 +25,93 @@ import { RemoveUsersJob } from '../queue/removeUsers/types';
 import { JobStatus } from '../queue/jobStatus';
 import { manyChat } from '../many-chat';
 
+const validateExistingData = async (data: any, prisma: any, id: number) => {
+  if (data.username) {
+    const existingUser = await prisma.users.findFirst({
+      where: {
+        AND: [
+          {
+            id: {
+              not: id
+            }
+          }
+        ],
+        OR: [
+          {
+            username: {
+              equals: data.username.toString(),
+            },
+          },
+        ],
+        
+      },
+    });
+
+    if (existingUser) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Ese nombre de usuario ya está registrado',
+      });
+    }
+  }
+  if (data.email) {
+    const existingUser = await prisma.users.findFirst({
+      where: {
+        AND: [
+          {
+            id: {
+              not: id
+            }
+          }
+        ],
+        OR: [
+          {
+            email: {
+              equals: data.email.toString(),
+            },
+          },
+        ],
+        
+      },
+    });
+
+    if (existingUser) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Ese email ya está registrado',
+      });
+    }
+  }
+  if (data.phone) {
+    const existingUser = await prisma.users.findFirst({
+      where: {
+        AND: [
+          {
+            id: {
+              not: id
+            }
+          }
+        ],
+        OR: [
+          {
+            phone: {
+              equals: data.phone.toString(),
+            },
+          },
+        ],
+        
+      },
+    });
+
+    if (existingUser) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Ese teléfono ya está registrado',
+      });
+    }
+  }
+}
+
 export const usersRouter = router({
   getActiveUsers: shieldedProcedure
     .input(UsersFindManySchema)
@@ -433,6 +520,54 @@ export const usersRouter = router({
       data = { ...data, password: bcrypt.hashSync(data.password.toString(), 10) }
       input = {...input, data}
 
+      const existingUserWithEmail = await ctx.prisma.users.findFirst({
+        where: {
+          OR: [
+            {
+              username: {
+                equals: data.username,
+              },
+            },
+            {
+              email: {
+                equals: data.email,
+              },
+            },
+            {
+              phone: {
+                equals: data.phone
+              }
+            }
+          ],
+        },
+      });
+
+      if (existingUserWithEmail) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Ese email o nombre de usuario ya está registrado',
+        });
+      }
+
+      const existingUserWithPhone = await ctx.prisma.users.findFirst({
+        where: {
+          OR: [
+            {
+              phone: {
+                equals: data.phone
+              }
+            }
+          ],
+        },
+      });
+
+      if (existingUserWithPhone) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Ese teléfono ya está registrado',
+        });
+      }
+
       const createOneUsers = await ctx.prisma.users.create(input);
       return createOneUsers;
     }),
@@ -506,6 +641,91 @@ export const usersRouter = router({
       if (data.password) {
         data = { ...data, password: bcrypt.hashSync(data.password.toString(), 10) }
         input = {...input, data}
+      }
+
+      if (data.username) {
+        const existingUser = await ctx.prisma.users.findFirst({
+          where: {
+            AND: [
+              {
+                id: {
+                  not: input.where.id
+                }
+              }
+            ],
+            OR: [
+              {
+                username: {
+                  equals: data.username.toString(),
+                },
+              },
+            ],
+            
+          },
+        });
+
+        if (existingUser) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Ese nombre de usuario ya está registrado',
+          });
+        }
+      }
+      if (data.email) {
+        const existingUser = await ctx.prisma.users.findFirst({
+          where: {
+            AND: [
+              {
+                id: {
+                  not: input.where.id
+                }
+              }
+            ],
+            OR: [
+              {
+                email: {
+                  equals: data.email.toString(),
+                },
+              },
+            ],
+            
+          },
+        });
+
+        if (existingUser) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Ese email ya está registrado',
+          });
+        }
+      }
+      if (data.phone) {
+        const existingUser = await ctx.prisma.users.findFirst({
+          where: {
+            AND: [
+              {
+                id: {
+                  not: input.where.id
+                }
+              }
+            ],
+            OR: [
+              {
+                phone: {
+                  equals: data.phone.toString(),
+                },
+              },
+            ],
+            
+          },
+        });
+
+        if (existingUser) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Ese teléfono ya está registrado',
+          });
+        }
       }
       
       const updateOneUsers = await ctx.prisma.users.update(input);
