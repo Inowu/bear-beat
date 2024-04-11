@@ -58,6 +58,9 @@ export const FileLoader = () => {
       <div className="header">
         <p className="title">Descargas</p>
       </div>
+      <div className="header">
+        <p className="subtitle">No cierres ni actualices el navegador hasta que termine la descarga.</p>
+      </div>
       <div className="files-list">
         {
           <div className="file-contain">
