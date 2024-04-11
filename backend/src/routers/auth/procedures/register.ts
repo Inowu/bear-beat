@@ -60,6 +60,25 @@ export const register = publicProcedure
         });
       }
 
+      const existingUserWithPhone = await prisma.users.findFirst({
+        where: {
+          OR: [
+            {
+              phone: {
+                equals: phone
+              }
+            }
+          ],
+        },
+      });
+
+      if (existingUserWithPhone) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Ese teléfono ya está registrado',
+        });
+      }
+
       // TODO: Send confirmation email and generate token
       const newUser = await prisma.users.create({
         data: {
