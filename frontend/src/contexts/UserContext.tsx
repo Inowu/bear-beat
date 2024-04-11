@@ -57,6 +57,7 @@ const UserContextProvider = (props: any) => {
     setCurrentUser(null);
     localStorage.removeItem("token");
     localStorage.removeItem("refreshToken");
+    localStorage.removeItem("isAdminAccess");
     setUserToken(null);
   }
   const getPaymentMethods = async () => {
