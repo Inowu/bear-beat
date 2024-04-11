@@ -11,11 +11,22 @@ import "react-phone-input-2/lib/material.css";
 import trpc from "../../../api";
 import { SuccessModal } from "../SuccessModal/SuccessModal";
 import { of } from "await-of";
+import PhoneInput from "react-phone-input-2";
+import es from "react-phone-input-2/lang/es.json";
+
 
 interface IEditPlanModal {
   showModal: boolean;
   onHideModal: () => void;
-  editingUser: any;
+  editingUser: UserToEdit;
+}
+
+interface UserToEdit {
+  id: number;
+  email: string;
+  password: string;
+  username: string;
+  phone: string;
 }
 
 function EditUserModal(props: IEditPlanModal) {
@@ -25,6 +36,7 @@ function EditUserModal(props: IEditPlanModal) {
   const [loader, setLoader] = useState<boolean>(false);
   const [show, setShow] = useState<boolean>(false);
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
+  const [code, setCode] = useState<string>("52");
   const [errorMessage, setErrorMessage] = useState<any>("");
   const closeModal = () => {
     setShow(false);
@@ -39,12 +51,20 @@ function EditUserModal(props: IEditPlanModal) {
     email: Yup.string().required("El correo es requerido"),
     password: Yup.string().required("Este campo es obligatorio").min(6, "La contraseña debe contener por lo menos 6 caracteres"),
     name: Yup.string().required("El nombre es requerido"),
+    phone: Yup.string()
+      .required("El teléfono es requerido")
+      .matches(/^[0-9]{10}$/, "El teléfono no es válido"),
   });
+
+  const handlePhoneNumberChange = (value: any, country: any) => {
+    setCode(country.dialCode);
+  };
 
   const initialValues = {
     email: "",
     password: "",
     name: "",
+    phone: "",
   };
 
   const formik = useFormik({
@@ -56,6 +76,7 @@ function EditUserModal(props: IEditPlanModal) {
         email: values.email,
         username: values.name,
         password: values.password,
+        phone: `+${code} ${values.phone}`,
       };
       
       const [, errorUpdate] = await of(trpc.users.updateOneUsers.mutate({
@@ -76,11 +97,21 @@ function EditUserModal(props: IEditPlanModal) {
 
   useEffect(() => {
     if (editingUser) {
+      let countryCode = "52";
+      let phoneNumber = editingUser.phone;
+      if ( editingUser.phone && editingUser.phone.length > 10) {
+        countryCode = editingUser.phone.slice(1, 3);
+        phoneNumber = editingUser.phone.slice(3).trim();
+      }
+
       formik.setValues({
         password: editingUser.password,
         email: editingUser.email,
         name: editingUser.username,
+        phone: phoneNumber,
       });
+
+      setCode(countryCode);
     }
   }, [editingUser]);
 
@@ -115,6 +146,29 @@ function EditUserModal(props: IEditPlanModal) {
           />
           {formik.errors.email && (
             <div className="formik">{formik.errors.email}</div>
+          )}
+        </div>
+        <div className="c-row2">
+          <PhoneInput
+            containerClass="dial-container"
+            buttonClass="dial-code"
+            country={"mx"}
+            placeholder="Teléfono"
+            localization={es}
+            onChange={handlePhoneNumberChange}
+          />
+          <p className="code">+{code}</p>
+          <input
+            className="phone"
+            placeholder="Teléfono"
+            id="phone"
+            name="phone"
+            value={formik.values.phone}
+            onChange={formik.handleChange}
+            type="text"
+          />
+          {formik.errors.phone && (
+            <div className="error-formik">{formik.errors.phone}</div>
           )}
         </div>
         <div className="c-row">
