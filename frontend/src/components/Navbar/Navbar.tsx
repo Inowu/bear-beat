@@ -1,5 +1,6 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useUserContext } from "../../contexts/UserContext";
+import { useNavigate } from "react-router-dom";
 import osoLogo from "../../assets/images/oso-icon.png";
 import "./Navbar.scss";
 import {
@@ -9,17 +10,33 @@ import {
   faShield,
 } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
-import { SetStateAction, useEffect } from "react";
+import { SetStateAction } from "react";
 
 interface NavbarPropsI {
   setAsideOpen: React.Dispatch<SetStateAction<boolean>>;
 }
 
+interface AdminToken {
+  adminToken: string,
+  adminRefreshToken: string
+}
+
 function Navbar(props: NavbarPropsI) {
-  const { handleLogout, currentUser } = useUserContext();
+  const { handleLogout, currentUser, handleLogin } = useUserContext();
+  const navigate = useNavigate();
   const { setAsideOpen } = props;
-//   useEffect(() => {
-// }, [currentUser])
+  let isAdminAccess = localStorage.getItem("isAdminAccess");
+
+  const goBackAsAdmin = () => {
+    if (isAdminAccess) {
+      const adminToken: AdminToken = JSON.parse(isAdminAccess);
+      handleLogin(adminToken.adminToken, adminToken.adminRefreshToken);
+      localStorage.removeItem("isAdminAccess");
+      navigate("/micuenta");
+    }
+  }
+  //   useEffect(() => {
+  // }, [currentUser])
   return (
     <nav>
       <div className="header">
@@ -35,13 +52,21 @@ function Navbar(props: NavbarPropsI) {
       <ul>
         {
           currentUser?.role === "admin" &&
-         <>
-          <Link to={"admin/usuarios"}>
-            <li>
-              <FontAwesomeIcon icon={faShield} /> <span>Admin</span>
-            </li>
-          </Link>
-         </>
+          <>
+            <Link to={"admin/usuarios"}>
+              <li>
+                <FontAwesomeIcon icon={faShield} /> <span>Admin</span>
+              </li>
+            </Link>
+          </>
+        }
+        {
+          isAdminAccess &&
+          <>
+              <li onClick={goBackAsAdmin}>
+                <FontAwesomeIcon icon={faShield} /> <span>Admin</span>
+              </li>
+          </>
         }
         <Link to={"/micuenta"}>
           <li>
