@@ -300,6 +300,10 @@ function Admin() {
       return;
     }
 
+    const adminToken = localStorage.getItem("token");
+    const adminRefreshToken = localStorage.getItem("refreshToken");
+    localStorage.setItem("isAdminAccess", JSON.stringify({adminToken, adminRefreshToken}));
+
     handleLogin(loginAsUser!.token, loginAsUser!.refreshToken);
     navigate("/");
     setLoader(false);
