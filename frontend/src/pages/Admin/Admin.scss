@@ -125,7 +125,6 @@
     }
       
     table{
-        border-collapse: separate;
         border-spacing: 0;
         // background-color: red;
         width: 100%;
@@ -148,7 +147,7 @@
                 border-bottom: 1px solid white;
                 td{
                     font-size: 1.2rem;
-                    max-width: 250px;
+                    // max-width: 250px;
                     padding-block: .5rem;
                     padding: 10px;
                     button{
@@ -172,10 +171,15 @@
                     display: flex;
                     flex-wrap: wrap;
                     align-items: center;
-                    gap: 15px;
-                    svg{
+                    gap: 5px;
+                    justify-content: space-around;
+                    button {
+                        width: 160px;
+                    }
+                    svg {
                         font-size: 2.4rem;
                         cursor: pointer;
+                        width: 160px;
                     }
                     .lock{
                         color: red;

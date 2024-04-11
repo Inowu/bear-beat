@@ -407,6 +407,7 @@ function Admin() {
               <tr>
                 <th>Nombre</th>
                 <th>Email</th>
+                <th>Teléfono</th>
                 <th>Registro</th>
                 {filters.active !== 2 && <th>Suscripción</th>}
 
@@ -420,6 +421,7 @@ function Admin() {
                       <tr key={"admin_users_" + index}>
                         <td className="">{user.username}</td>
                         <td>{user.email}</td>
+                        <td>{user.phone}</td>
                         <td>{user.registered_on.toLocaleDateString()}</td>
                         {filters.active !== 2 && (
                           <td>
@@ -429,21 +431,22 @@ function Admin() {
                         <td className="wrap-td">
                           <button
                             onClick={() => handleEditUser(user)}
-                            style={{ marginRight: 10 }}
-                          >Editar</button>
-                          <button
-                            onClick={() => {
-                              giveSuscription(user);
-                            }}
                           >
-                            Activar Suscripcion
+                            Editar
                           </button>
                           <button
                             onClick={() => {
                               signInAsUser(user);
                             }}
                           >
-                            Acceder como usuario
+                            Acceder
+                          </button>
+                          <button
+                            onClick={() => {
+                              giveSuscription(user);
+                            }}
+                          >
+                            Activar Suscripción
                           </button>
                           {user.blocked ? (
                             <FaLock
