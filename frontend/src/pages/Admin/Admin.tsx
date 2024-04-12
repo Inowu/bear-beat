@@ -285,6 +285,17 @@ function Admin() {
     }
   }, [currentUser]);
 
+  const handleEditUser = (user: IAdminUser) => {
+    setSelectedUser(user);
+    setShowEdit(true);
+  }
+
+  const handleCloseEditUser = () => {
+    setShowEdit(false);
+    setSelectUser({} as IAdminUser);
+  }
+
+
   const signInAsUser = async (user: any) => {
     setLoader(true);
     const [loginAsUser, errorLogin] = await of(trpc.auth.login.query({
@@ -312,18 +323,6 @@ function Admin() {
   const closeErrorModal = () => {
     setShowError(false);
   };
-
-
-  const handleEditUser = (user: IAdminUser) => {
-    console.log('this is user', user);
-    setSelectedUser(user);
-    setShowEdit(true);
-  }
-
-  const handleCloseEditUser = () => {
-    setShowEdit(false);
-    setSelectUser({} as IAdminUser);
-  }
 
   return (
     <div className="admin-contain">
