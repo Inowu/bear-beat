@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ARRAY_10 } from "../../../utils/Constants";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import CsvDownloader from "react-csv-downloader";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import "./Ordens.scss";
 import { IAdminOrders } from "../../../interfaces/admin";
@@ -36,6 +37,7 @@ export const Ordens = () => {
     searchData: "",
     startDate: undefined,
   });
+  const [exportedOrders, setExportedOrders] = useState<any>([]);
 
   const startFilter = (key: string, value: string | number) => {
     let tempFilters: any = filters;
@@ -72,7 +74,6 @@ export const Ordens = () => {
 
     const [tempOrders, errorOrders] = await of(trpc.orders.findManyOrdersWithUsers.query(body));
 
-    console.log(tempOrders!.data)
     if (errorOrders && !tempOrders) {
       throw new Error(errorOrders.message);
     }
@@ -82,6 +83,43 @@ export const Ordens = () => {
     setLoader(false);
     setTotalLoader(false);
   };
+
+  const transformOrdersToExport = async () => {
+    let body: any = {
+      take: 0,
+      skip: 0,
+      email: filters.searchData,
+      paymentMethod: filters.paymentMethod,
+    };
+
+    if (filters.startDate && filters.endDate) {
+      body = {
+        ...body,
+        date_order: {
+          gte: filters.startDate,
+          lte: filters.endDate
+        }
+      }
+    }
+
+    const [tempOrders, errorOrders] = await of(trpc.orders.findManyOrdersWithUsers.query(body));
+
+    if (errorOrders && !tempOrders) {
+      throw new Error(errorOrders.message);
+    }
+
+    const transformedOrdens = tempOrders!.data.map((order: any) => ({
+      Correo: order.email,
+      Telefono: order.phone,
+      "Metodo de pago": order.payment_method,
+      "Id de la suscripcion": order.txn_id,
+      Precio: order.total_price,
+      Fecha: order.date_order.toLocaleDateString(),
+      Estado: (order.status === 1) ? "Activa" : "No activa",
+    }));
+
+    return transformedOrdens;
+  }
 
   useEffect(() => {
     if (currentUser && currentUser.role !== "admin") {
@@ -96,7 +134,20 @@ export const Ordens = () => {
   return (
     <div className="ordens-contain">
       <div className="header">
+        
+        <div className="title-and-export">
         <h1>Ordenes</h1>
+        <CsvDownloader
+          className="btn-addUsers"
+          filename="lista_de_ordenes"
+          extension=".csv"
+          separator=";"
+          wrapColumnChar=""
+          datas={transformOrdersToExport}
+          text="Exportar Ordenes"
+          disabled={ordens.length === 0}
+        />
+        </div>
         <div className="search-input">
           <input
             placeholder="Buscar por email o teléfono"
@@ -171,7 +222,7 @@ export const Ordens = () => {
             </thead>
             <tbody>
               {!loader
-                ? ordens.map((orden: IAdminOrders, index: number) => {
+                ? ordens.map((orden, index: number) => {
                   return (
                     <tr key={"admin_ordens_" + index}>
                       <td className="">{orden.email}</td>

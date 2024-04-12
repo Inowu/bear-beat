@@ -2,37 +2,54 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+
   .header {
     display: flex;
     justify-content: space-between;
+
+    .title-and-export {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
     .input {
       border-radius: 100px;
       padding: 5px 25px;
       // border: none;
       background: transparent;
     }
+
     .btn-addUsers {
       color: white;
       background: #09e1f7;
       padding: 4px 20px;
       border-radius: 100px;
     }
+
     .btn-addUsers:hover {
       background-color: #00abbe;
     }
+    .btn-addUsers:disabled {
+      background-color: gray;
+    }
   }
+
   .admin-table {
     .table-contain {
       max-height: 72vh;
     }
   }
+
   p {
     margin: 0;
   }
+
   .users-contain {
     display: flex;
     flex-direction: column;
     gap: 15px;
+
     .user-contain {
       display: flex;
       justify-content: space-between;
@@ -40,16 +57,19 @@
       border-radius: 100px;
       box-shadow: 0 0 5px rgba(0, 0, 0, 0.54);
       padding: 5px 20px;
+
       .data-contain {
         display: flex;
         flex-direction: column;
       }
+
       .btn-active {
         color: white;
         background: #09e1f7;
         padding: 4px 20px;
         border-radius: 100px;
       }
+
       &:hover {
         background-color: rgb(202, 202, 202);
       }
@@ -61,10 +81,12 @@
   display: flex;
   width: 100%;
   justify-content: space-between;
+
   .left-contain {
     display: flex;
     gap: 10px;
   }
+
   .date-input {
     width: 200px;
     padding: 3px;
@@ -75,6 +97,7 @@
     padding-block: 5px;
     padding-inline: 20px;
   }
+
   p {
     margin-left: 5px;
   }
