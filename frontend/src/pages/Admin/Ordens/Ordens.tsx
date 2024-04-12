@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ARRAY_10 } from "../../../utils/Constants";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import CsvDownloader from "react-csv-downloader";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import "./Ordens.scss";
 import { IAdminOrders } from "../../../interfaces/admin";
@@ -36,6 +37,7 @@ export const Ordens = () => {
     searchData: "",
     startDate: undefined,
   });
+  const [exportedOrders, setExportedOrders] = useState<any>([]);
 
   const startFilter = (key: string, value: string | number) => {
     let tempFilters: any = filters;
@@ -77,6 +79,17 @@ export const Ordens = () => {
       throw new Error(errorOrders.message);
     }
 
+    const transformedOrdens = tempOrders!.data.map((order: any) => ({
+      Correo: order.email,
+      Telefono: order.phone,
+      "Metodo de pago": order.payment_method,
+      "Id de la suscripcion": order.txn_id,
+      Precio: order.total_price,
+      Fecha: order.date_order.toLocaleDateString(),
+      Estado: (order.status === 1) ? "Activa" : "No activa",
+    }))
+
+    setExportedOrders(transformedOrdens);
     setOrdens(tempOrders!.data);
     setTotalOrdens(tempOrders!.count);
     setLoader(false);
@@ -96,7 +109,20 @@ export const Ordens = () => {
   return (
     <div className="ordens-contain">
       <div className="header">
+        
+        <div className="title-and-export">
         <h1>Ordenes</h1>
+        <CsvDownloader
+          className="btn-addUsers"
+          filename="lista_de_ordenes"
+          extension=".csv"
+          separator=";"
+          wrapColumnChar=""
+          datas={exportedOrders}
+          text="Exportar Ordenes"
+          disabled={ordens.length === 0}
+        />
+        </div>
         <div className="search-input">
           <input
             placeholder="Buscar por email o teléfono"
