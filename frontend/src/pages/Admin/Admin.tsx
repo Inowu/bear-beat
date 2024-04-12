@@ -177,7 +177,7 @@ function Admin() {
       throw new Error('Error loading tempUsers');
     }
 
-    const tempUsers = fetchUsers.map((user: any) => ({
+    const tempUsers = fetchUsers.map((user) => ({
       Usuario: user.username,
       Correo: user.email,
       "Fecha de Registro": user.registered_on.toLocaleDateString(),
