@@ -16,8 +16,17 @@ import { OrdersUpdateOneSchema } from '../schemas/updateOneOrders.schema';
 import { OrdersUpsertSchema } from '../schemas/upsertOneOrders.schema';
 import { OrderStatus } from './subscriptions/interfaces/order-status.interface';
 import { PaymentService } from './subscriptions/services/types';
-import { UsersFindManySchema } from '../schemas';
-import { Prisma } from '@prisma/client';
+
+interface AdminOrders {
+  city: string;
+  email: string;
+  phone: string;
+  payment_method: "Paypal" | "Stripe" | null;
+  txn_id: string;
+  total_price: number;
+  date_order: Date;
+  status: number;
+}
 
 export const ordersRouter = router({
   ownOrders: shieldedProcedure
@@ -81,6 +90,7 @@ export const ordersRouter = router({
               return `date_order BETWEEN '${value.gte}' AND '${value.lte}'`;
             }
 
+            // Same search string can apply to email or phone.
             if (key === 'email') {
               return `(${key} LIKE '%${value}%' OR phone LIKE '%${value}%')`;
             }
@@ -94,16 +104,21 @@ export const ordersRouter = router({
           INNER JOIN users u ON o.user_id = u.id 
           ${filters ? `WHERE ${filters}` : ""}`;
 
+        // Set pagination or not based on offset and limit being defined.
+        const limitOffset = (take && skip)
+          ? `LIMIT ${take} OFFSET ${skip}`
+          : '';
+
         const query = `SELECT *
           FROM orders o
           INNER JOIN users u ON o.user_id = u.id
           ${filters ? `WHERE ${filters}` : ""}
           ORDER BY date_order DESC
-          LIMIT ${take} OFFSET ${skip};`;
+          ${limitOffset};`;
 
         const count = await prisma.$queryRawUnsafe<any>(countQuery);
-        const results = await prisma.$queryRawUnsafe<any>(query);
-        
+        const results = await prisma.$queryRawUnsafe<AdminOrders[]>(query);
+
         return {
           count: Number(count[0].totalCount),
           data: results,
