@@ -74,7 +74,36 @@ export const Ordens = () => {
 
     const [tempOrders, errorOrders] = await of(trpc.orders.findManyOrdersWithUsers.query(body));
 
-    console.log(tempOrders!.data)
+    if (errorOrders && !tempOrders) {
+      throw new Error(errorOrders.message);
+    }
+
+    setOrdens(tempOrders!.data);
+    setTotalOrdens(tempOrders!.count);
+    setLoader(false);
+    setTotalLoader(false);
+  };
+
+  const transformOrdersToExport = async () => {
+    let body: any = {
+      take: 0,
+      skip: 0,
+      email: filters.searchData,
+      paymentMethod: filters.paymentMethod,
+    };
+
+    if (filters.startDate && filters.endDate) {
+      body = {
+        ...body,
+        date_order: {
+          gte: filters.startDate,
+          lte: filters.endDate
+        }
+      }
+    }
+
+    const [tempOrders, errorOrders] = await of(trpc.orders.findManyOrdersWithUsers.query(body));
+
     if (errorOrders && !tempOrders) {
       throw new Error(errorOrders.message);
     }
@@ -87,14 +116,10 @@ export const Ordens = () => {
       Precio: order.total_price,
       Fecha: order.date_order.toLocaleDateString(),
       Estado: (order.status === 1) ? "Activa" : "No activa",
-    }))
+    }));
 
-    setExportedOrders(transformedOrdens);
-    setOrdens(tempOrders!.data);
-    setTotalOrdens(tempOrders!.count);
-    setLoader(false);
-    setTotalLoader(false);
-  };
+    return transformedOrdens;
+  }
 
   useEffect(() => {
     if (currentUser && currentUser.role !== "admin") {
@@ -118,7 +143,7 @@ export const Ordens = () => {
           extension=".csv"
           separator=";"
           wrapColumnChar=""
-          datas={exportedOrders}
+          datas={transformOrdersToExport}
           text="Exportar Ordenes"
           disabled={ordens.length === 0}
         />
@@ -197,7 +222,7 @@ export const Ordens = () => {
             </thead>
             <tbody>
               {!loader
-                ? ordens.map((orden: IAdminOrders, index: number) => {
+                ? ordens.map((orden, index: number) => {
                   return (
                     <tr key={"admin_ordens_" + index}>
                       <td className="">{orden.email}</td>
