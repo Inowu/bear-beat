@@ -49,9 +49,9 @@ function Admin() {
   const [blockModalMSG, setBlockModalMSG] = useState("");
   const [selectedUser, setSelectedUser] = useState({} as IAdminUser);
   const [blocking, setBlocking] = useState<boolean>(false);
+  const [showEdit, setShowEdit] = useState<boolean>(false);
   const [showError, setShowError] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
-  const [showEdit, setShowEdit] = useState<boolean>(false);
   const [filters, setFilters] = useState<any>({
     page: 0,
     search: "",
