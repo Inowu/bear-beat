@@ -28,9 +28,22 @@ export const login = publicProcedure
     });
 
     if (!user) {
+      const deletedUser = await prisma.deletedUsers.findFirst({
+        where: {
+          email: username
+        }
+      });
+
+      if (deletedUser) {
+        throw new TRPCError({
+          code: 'UNAUTHORIZED',
+          message: 'Su cuenta ha sido desactivada, regístrese de nuevo',
+        });
+      }
+
       throw new TRPCError({
         code: 'UNAUTHORIZED',
-        message: 'Credenciales inválidas',
+        message: 'Esta cuenta no existe',
       });
     }
 
