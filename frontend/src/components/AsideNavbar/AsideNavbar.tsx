@@ -13,6 +13,7 @@ import {
   faAddressBook,
   faTag,
   faArrowAltCircleUp,
+  faDownload,
 } from "@fortawesome/free-solid-svg-icons";
 import { faHeadset } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
@@ -63,6 +64,11 @@ function AsideNavbar(props: AsideNavbarPropsI) {
             <Link to={"/admin/almacenamiento"}>
               <li>
                 <FontAwesomeIcon icon={faDatabase} /> Almacenamiento
+              </li>
+            </Link>
+            <Link to={"/admin/historial-descargas"}>
+              <li>
+                <FontAwesomeIcon icon={faDownload} /> Descargas
               </li>
             </Link>
             <Link to={"/admin/historialCheckout"}>

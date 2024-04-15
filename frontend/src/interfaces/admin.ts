@@ -28,3 +28,14 @@ export interface IAdminCoupons {
   parameter: number;
   type: 1;
 }
+
+export interface IAdminDownloadHistory {
+  id: number;
+  userId: number;
+  size: bigint;
+  date: Date;
+  fileName: string;
+  isFolder: boolean;
+  email: string;
+  phone: string;
+}

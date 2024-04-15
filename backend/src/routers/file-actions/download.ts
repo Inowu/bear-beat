@@ -99,6 +99,16 @@ export const download = shieldedProcedure
       });
     }
 
+    await prisma.downloadHistory.create({
+      data: {
+        userId: user.id,
+        size: fileStat.size,
+        date: new Date().toISOString(),
+        fileName: path,
+        isFolder: false
+      }
+    });
+
     const stream = await fileService.get(fullPath);
 
     log.info(

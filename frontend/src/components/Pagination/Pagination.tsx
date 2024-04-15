@@ -43,7 +43,7 @@ function Pagination(props: IPagination) {
             <p className="left-text">{totalData}</p>
           )}
         </div>
-        <p className="left-text">Total de datos: {limit}</p>
+        <p className="left-text">Datos por página: {limit}</p>
       </div>
       <div className="right-side">
         <FontAwesomeIcon

@@ -30,6 +30,7 @@ import { Storage } from "./pages/Admin/Storage/Storage";
 import { Coupons } from "./pages/Admin/Coupons/Coupons";
 import { Ordens } from "./pages/Admin/Ordens/Ordens";
 import { HistoryCheckout } from "./pages/Admin/HistoryCheckout/HistoryCheckout";
+import { DownloadHistory } from "./pages/Admin/DownloadsHistory/DownloadHistory";
 import { PlanUpgrade } from "./pages/PlanUpgrade/PlanUpgrade";
 import ReactPixel from "react-facebook-pixel";
 import { SSEProvider } from "react-hooks-sse";
@@ -74,6 +75,7 @@ const router = createBrowserRouter([
           { path: "usuarios", element: <Admin /> },
           { path: "planesAdmin", element: <PlanAdmin /> },
           { path: "almacenamiento", element: <Storage /> },
+          { path: "historial-descargas", element: <DownloadHistory /> },
           { path: "cupones", element: <Coupons /> },
           { path: "ordenes", element: <Ordens /> },
           { path: "historialCheckout", element: <HistoryCheckout /> },
