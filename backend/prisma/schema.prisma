@@ -318,6 +318,15 @@ model checkout_logs {
   @@index([user_id], map: "user_id")
 }
 
+model DeletedUsers {
+  id            Int       @id @default(autoincrement())
+  email         String    @db.VarChar(255)
+  deletionDate  DateTime  @db.DateTime(0)
+  reactivated   Boolean   @default(false)
+
+  @@map("deleted_users")
+}
+
 model change_plan_transactions {
   id                      Int      @id @default(autoincrement())
   userId                  Int
