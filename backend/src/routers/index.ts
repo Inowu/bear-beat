@@ -6,6 +6,7 @@ import { cuponsRouter } from './Cupons.router';
 import { cuponsusedsRouter } from './CuponsUsed.router';
 import { descargasusersRouter } from './DescargasUser.router';
 import { dirDownloadRouter } from './DirDownload.router';
+import { downloadHistoryRouter } from './DownloadHistory.router';
 import { ftpquotalimitsRouter } from './FtpQuotaLimits.router';
 import { ftpquotatallieshistoriesRouter } from './FtpQuotatAlliesHistory.router';
 import { ftpusersRouter } from './FtpUser.router';
@@ -47,6 +48,7 @@ export const appRouter = router({
   products: productsRouter,
   checkoutLogs: checkoutLogsRouter,
   dirDownloads: dirDownloadRouter,
+  downloadHistory: downloadHistoryRouter
 });
 
 export type AppRouter = typeof appRouter;
