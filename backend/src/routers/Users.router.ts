@@ -295,6 +295,13 @@ export const usersRouter = router({
       });
 
       const inactiveUsersIds = inactiveUsers.map((user) => user.id);
+      const inactiveUsersEmails = inactiveUsers.map((user) => {
+        return {
+          email: user.email,
+          deletionDate: new Date().toISOString(),
+          reactivated: false,
+        }
+      });
 
       const ftpAccounts = await prisma.ftpUser.findMany({
         where: {
@@ -402,6 +409,9 @@ export const usersRouter = router({
                 },
               ],
             },
+          }),
+          prisma.deletedUsers.createMany({ 
+            data: inactiveUsersEmails
           }),
         ]);
 
