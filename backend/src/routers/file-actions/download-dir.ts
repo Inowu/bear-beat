@@ -234,6 +234,16 @@ export const downloadDir = shieldedProcedure
         },
       });
 
+      await prisma.downloadHistory.create({
+        data: {
+          userId: user.id,
+          size: dirSize,
+          date: new Date().toISOString(),
+          fileName: path,
+          isFolder: true
+        }
+      });
+
       const job = await compressionQueue.add(`compress-${user.id}`, {
         songsAbsolutePath: fullPath,
         songsRelativePath: path,
