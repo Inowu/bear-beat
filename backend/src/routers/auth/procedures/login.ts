@@ -43,7 +43,7 @@ export const login = publicProcedure
 
       throw new TRPCError({
         code: 'UNAUTHORIZED',
-        message: 'Credenciales inválidas',
+        message: 'Esta cuenta no existe',
       });
     }
 
