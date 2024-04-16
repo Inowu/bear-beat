@@ -85,13 +85,9 @@ function Admin() {
     setSelectUser({} as IAdminUser);
     setShowOption(false);
   };
-  const plan_1 = () => {
+  const activatePlan = (planId: number) => {
     closeOption();
-    activateSubscription(plans[0]);
-  };
-  const plan_2 = () => {
-    closeOption();
-    activateSubscription(plans[1]);
+    activateSubscription(planId);
   };
   const getPlans = async () => {
     let body = {
@@ -149,10 +145,10 @@ function Admin() {
       console.log(error);
     }
   };
-  const activateSubscription = async (plan: IPlans) => {
+  const activateSubscription = async (planId: number) => {
     try {
       let body = {
-        planId: plan.id,
+        planId,
         userId: selectUser.id,
       };
       const activate = await trpc.admin.activatePlanForUser.mutate(body);
@@ -303,7 +299,7 @@ function Admin() {
       password: user.password,
       isAdmin: true
     }));
-    
+
     if (!loginAsUser && errorLogin) {
       setErrorMessage(errorLogin.message);
       setShowError(true);
@@ -313,7 +309,7 @@ function Admin() {
 
     const adminToken = localStorage.getItem("token");
     const adminRefreshToken = localStorage.getItem("refreshToken");
-    localStorage.setItem("isAdminAccess", JSON.stringify({adminToken, adminRefreshToken}));
+    localStorage.setItem("isAdminAccess", JSON.stringify({ adminToken, adminRefreshToken }));
 
     handleLogin(loginAsUser!.token, loginAsUser!.refreshToken);
     navigate("/");
@@ -364,10 +360,10 @@ function Admin() {
             />
           </div>
         )}
-        <EditUserModal 
-          showModal={showEdit} 
-          onHideModal={handleCloseEditUser} 
-          editingUser={selectedUser} 
+        <EditUserModal
+          showModal={showEdit}
+          onHideModal={handleCloseEditUser}
+          editingUser={selectedUser}
         />
       </div>
       <div className="filter-contain">
@@ -420,81 +416,81 @@ function Admin() {
             <tbody>
               {!loader
                 ? users.map((user: IAdminUser, index: number) => {
-                    return (
-                      <tr key={"admin_users_" + index}>
-                        <td className="">{user.username}</td>
-                        <td>{user.email}</td>
-                        <td>{user.phone}</td>
-                        <td>{user.registered_on.toLocaleDateString()}</td>
-                        {filters.active !== 2 && (
-                          <td>
-                            {filters.active === 1 ? "Activa" : "No activa"}
-                          </td>
-                        )}
-                        <td className="wrap-td">
-                          <button
-                            onClick={() => handleEditUser(user)}
-                          >
-                            Editar
-                          </button>
-                          <button
-                            onClick={() => {
-                              signInAsUser(user);
-                            }}
-                          >
-                            Acceder
-                          </button>
-                          <button
-                            onClick={() => {
-                              giveSuscription(user);
-                            }}
-                          >
-                            Activar Suscripción
-                          </button>
-                          {user.blocked ? (
-                            <FaLock
-                              className="lock"
-                              onClick={() =>
-                                openBlockModal(
-                                  user,
-                                  `Estas por desbloquear al usuario: ${user.username}`,
-                                  false
-                                )
-                              }
-                            />
-                          ) : (
-                            <FaLockOpen
-                              className="unlock"
-                              onClick={() =>
-                                openBlockModal(
-                                  user,
-                                  `Estas por bloquear al usuario: ${user.username}`,
-                                  true
-                                )
-                              }
-                            />
-                          )}
+                  return (
+                    <tr key={"admin_users_" + index}>
+                      <td className="">{user.username}</td>
+                      <td>{user.email}</td>
+                      <td>{user.phone}</td>
+                      <td>{user.registered_on.toLocaleDateString()}</td>
+                      {filters.active !== 2 && (
+                        <td>
+                          {filters.active === 1 ? "Activa" : "No activa"}
                         </td>
-                      </tr>
-                    );
-                  })
+                      )}
+                      <td className="wrap-td">
+                        <button
+                          onClick={() => handleEditUser(user)}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => {
+                            signInAsUser(user);
+                          }}
+                        >
+                          Acceder
+                        </button>
+                        <button
+                          onClick={() => {
+                            giveSuscription(user);
+                          }}
+                        >
+                          Activar Suscripción
+                        </button>
+                        {user.blocked ? (
+                          <FaLock
+                            className="lock"
+                            onClick={() =>
+                              openBlockModal(
+                                user,
+                                `Estas por desbloquear al usuario: ${user.username}`,
+                                false
+                              )
+                            }
+                          />
+                        ) : (
+                          <FaLockOpen
+                            className="unlock"
+                            onClick={() =>
+                              openBlockModal(
+                                user,
+                                `Estas por bloquear al usuario: ${user.username}`,
+                                true
+                              )
+                            }
+                          />
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
                 : ARRAY_10.map((val: string, index: number) => {
-                    return filters.active !== 2 ? (
-                      <tr key={"array_10" + index} className="tr-load">
-                        <td />
-                        <td />
-                        <td />
-                        <td /> <td />
-                      </tr>
-                    ) : (
-                      <tr key={"array_10" + index} className="tr-load">
-                        <td />
-                        <td />
-                        <td />
-                        <td />
-                      </tr>
-                    );
-                  })}
+                  return filters.active !== 2 ? (
+                    <tr key={"array_10" + index} className="tr-load">
+                      <td />
+                      <td />
+                      <td />
+                      <td /> <td />
+                    </tr>
+                  ) : (
+                    <tr key={"array_10" + index} className="tr-load">
+                      <td />
+                      <td />
+                      <td />
+                      <td />
+                    </tr>
+                  );
+                })}
             </tbody>
           </table>
         </div>
@@ -526,8 +522,8 @@ function Admin() {
         onHide={closeOption}
         title={optionTitle}
         message={optionMessage}
-        action={plan_1}
-        action2={plan_2}
+        action={activatePlan}
+        plans={plans}
       />
       <ErrorModal show={showError} onHide={closeErrorModal} message={errorMessage} />
     </div>
