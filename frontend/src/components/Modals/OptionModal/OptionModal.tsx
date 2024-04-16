@@ -28,7 +28,7 @@ export function OptionModal (props: IError)  {
                 <div className='plan-options-container'>
                   {plans.map((plan) => {
                     return <button className='plan-option-button' onClick={() => action(plan.id)}>
-                      {plan.name} - ${plan.price} {plan.moneda.toUpperCase()}
+                      {plan.name} - ${plan.price} {plan.moneda.toUpperCase()} - {plan.paypal_plan_id ? "PayPal" : "Stripe"}
                     </button>
                   })}
                 </div>
