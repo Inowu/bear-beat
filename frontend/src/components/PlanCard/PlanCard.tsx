@@ -270,7 +270,7 @@ function PlanCard(props: PlanCardPropsI) {
         );
       })}
       <div className="c-row">
-        <p>Contenido en gigas disponibles: {plan.gigas.toString()}</p>
+        <p>Contenido en gigas disponibles: {plan.gigas.toString()} al mes</p>
       </div>
       <div className="paypal-data">
         <p className="text">Pagos seguros en línea</p>
