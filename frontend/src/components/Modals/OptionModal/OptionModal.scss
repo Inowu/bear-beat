@@ -1,0 +1,15 @@
+.modal-container {
+    .bottom {
+        .plan-options-container {
+            display: grid;
+            gap: 20px;
+            justify-content: center;
+            justify-items: stretch;
+
+            .plan-option-button {
+                background-color: #39d834;
+                color: white;
+              }
+        }
+    }
+}

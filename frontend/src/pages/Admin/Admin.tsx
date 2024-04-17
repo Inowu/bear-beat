@@ -88,13 +88,9 @@ function Admin() {
     setSelectUser({} as IAdminUser);
     setShowOption(false);
   };
-  const plan_1 = () => {
+  const activatePlan = (planId: number) => {
     closeOption();
-    activateSubscription(plans[0]);
-  };
-  const plan_2 = () => {
-    closeOption();
-    activateSubscription(plans[1]);
+    activateSubscription(planId);
   };
   const getPlans = async () => {
     let body = {
@@ -152,10 +148,10 @@ function Admin() {
       console.log(error);
     }
   };
-  const activateSubscription = async (plan: IPlans) => {
+  const activateSubscription = async (planId: number) => {
     try {
       let body = {
-        planId: plan.id,
+        planId,
         userId: selectUser.id,
       };
       const activate = await trpc.admin.activatePlanForUser.mutate(body);
@@ -608,8 +604,8 @@ function Admin() {
         onHide={closeOption}
         title={optionTitle}
         message={optionMessage}
-        action={plan_1}
-        action2={plan_2}
+        action={activatePlan}
+        plans={plans}
       />
       <ErrorModal show={showError} onHide={closeErrorModal} message={errorMessage} />
       <HistoryModal
