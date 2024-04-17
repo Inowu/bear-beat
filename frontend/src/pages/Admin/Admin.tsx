@@ -9,7 +9,9 @@ import {
   ConditionModal,
   DeleteUserModal,
   ErrorModal,
-  OptionModal
+  OptionModal,
+  EditUserModal,
+  HistoryModal
 } from '../../components/Modals'
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -20,7 +22,6 @@ import CsvDownloader from "react-csv-downloader";
 import { exportUsers } from "./fuctions";
 import { FaLockOpen } from "react-icons/fa";
 import { FaLock } from "react-icons/fa";
-import EditUserModal from "../../components/Modals/EditUserModal/EditUserModal";
 import { useSSE } from "react-hooks-sse";
 import { of } from "await-of";
 
@@ -58,6 +59,8 @@ function Admin() {
     active: 2,
     limit: 100,
   });
+  const [showHistory, setShowHistory] = useState<boolean>(false);
+
   const closeModalAdd = () => {
     setShowModal(false);
   };
@@ -291,6 +294,29 @@ function Admin() {
     setSelectUser({} as IAdminUser);
   }
 
+  const handleOpenHistory = async (user: IAdminUser) => {
+    console.log('this is user', user)
+    const tempHistory =
+      await trpc.downloadHistory.getDownloadHistory.query({
+        orderBy: {
+          date: "desc",
+        },
+        where: {
+          userId: user.id
+        }
+      });
+    console.log('this is tempHistory', tempHistory);
+    setSelectUser(user);
+    console.log('this is selectUser', selectUser);
+    setShowHistory(true);
+  }
+
+  const handleCloseHistory = () => {
+    setShowHistory(false);
+    setSelectUser({} as IAdminUser);
+    console.log('this is selectUser2', selectUser);
+  }
+
 
   const signInAsUser = async (user: any) => {
     setLoader(true);
@@ -428,7 +454,48 @@ function Admin() {
                         </td>
                       )}
                       <td className="wrap-td">
-                        <button
+                        <div className="dropdown">
+                          <button className="dropbtn">Acciones</button>
+                          <div className="dropdown-content">
+                            <p onClick={() => handleEditUser(user)}>Editar</p>
+                            <p onClick={() => signInAsUser(user)}>Acceder</p>
+                            <p onClick={() => giveSuscription(user)}>Activar</p>
+                            <p onClick={() => handleOpenHistory(user)}>Historial</p>
+                            {user.blocked ? (
+                              <p>
+                                <FaLock
+                                  className="lock"
+                                  onClick={() =>
+                                    openBlockModal(
+                                      user,
+                                      `Estas por desbloquear al usuario: ${user.username}`,
+                                      false
+                                    )
+                                  }
+                                />
+                              </p>
+
+                            ) : (
+                              <p>
+                                <FaLockOpen
+                                  className="unlock"
+                                  onClick={() =>
+                                    openBlockModal(
+                                      user,
+                                      `Estas por bloquear al usuario: ${user.username}`,
+                                      true
+                                    )
+                                  }
+                                />
+                              </p>
+
+                            )}
+                          </div>
+                        </div>
+
+
+
+                        {/* <button
                           onClick={() => handleEditUser(user)}
                         >
                           Editar
@@ -446,6 +513,13 @@ function Admin() {
                           }}
                         >
                           Activar Suscripción
+                        </button>
+                        <button
+                          onClick={() => {
+                            handleOpenHistory(user);
+                          }}
+                        >
+                          Historial
                         </button>
                         {user.blocked ? (
                           <FaLock
@@ -469,7 +543,7 @@ function Admin() {
                               )
                             }
                           />
-                        )}
+                        )} */}
                       </td>
                     </tr>
                   );
@@ -492,16 +566,24 @@ function Admin() {
                   );
                 })}
             </tbody>
+            <tfoot>
+              <tr>
+                <th colSpan={5}>
+                  <Pagination
+                    totalLoader={totalLoader}
+                    totalData={totalUsers}
+                    title="usuarios"
+                    startFilter={startFilter}
+                    currentPage={filters.page}
+                    limit={filters.limit}
+                  />
+                </th>
+
+              </tr>
+            </tfoot>
           </table>
         </div>
-        <Pagination
-          totalLoader={totalLoader}
-          totalData={totalUsers}
-          title="usuarios"
-          startFilter={startFilter}
-          currentPage={filters.page}
-          limit={filters.limit}
-        />
+
       </div>
       <AddUsersModal showModal={showModal} onHideModal={closeModalAdd} />
       <DeleteUserModal
@@ -526,6 +608,11 @@ function Admin() {
         plans={plans}
       />
       <ErrorModal show={showError} onHide={closeErrorModal} message={errorMessage} />
+      <HistoryModal
+        show={showHistory}
+        onHide={handleCloseHistory}
+        user={selectUser}
+      />
     </div>
   );
 }
