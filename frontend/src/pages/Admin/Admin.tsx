@@ -466,7 +466,7 @@ function Admin() {
                             <p onClick={() => giveSuscription(user)}>Activar</p>
                             <p onClick={() => handleOpenHistory(user)}>Historial</p>
                             {user.blocked ? (
-                              <span>
+                              <p>
                                 <FaLock
                                   className="lock"
                                   onClick={() =>
@@ -477,10 +477,10 @@ function Admin() {
                                     )
                                   }
                                 />
-                              </span>
+                              </p>
 
                             ) : (
-                              <span>
+                              <p>
                                 <FaLockOpen
                                   className="unlock"
                                   onClick={() =>
@@ -491,7 +491,7 @@ function Admin() {
                                     )
                                   }
                                 />
-                              </span>
+                              </p>
 
                             )}
                           </div>
@@ -570,16 +570,24 @@ function Admin() {
                   );
                 })}
             </tbody>
+            <tfoot>
+              <tr>
+                <th colSpan={5}>
+                  <Pagination
+                    totalLoader={totalLoader}
+                    totalData={totalUsers}
+                    title="usuarios"
+                    startFilter={startFilter}
+                    currentPage={filters.page}
+                    limit={filters.limit}
+                  />
+                </th>
+
+              </tr>
+            </tfoot>
           </table>
         </div>
-        <Pagination
-          totalLoader={totalLoader}
-          totalData={totalUsers}
-          title="usuarios"
-          startFilter={startFilter}
-          currentPage={filters.page}
-          limit={filters.limit}
-        />
+
       </div>
       <AddUsersModal showModal={showModal} onHideModal={closeModalAdd} />
       <DeleteUserModal
