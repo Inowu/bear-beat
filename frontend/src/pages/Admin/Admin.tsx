@@ -9,7 +9,9 @@ import {
   ConditionModal,
   DeleteUserModal,
   ErrorModal,
-  OptionModal
+  OptionModal,
+  EditUserModal,
+  HistoryModal
 } from '../../components/Modals'
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -20,7 +22,6 @@ import CsvDownloader from "react-csv-downloader";
 import { exportUsers } from "./fuctions";
 import { FaLockOpen } from "react-icons/fa";
 import { FaLock } from "react-icons/fa";
-import EditUserModal from "../../components/Modals/EditUserModal/EditUserModal";
 import { useSSE } from "react-hooks-sse";
 import { of } from "await-of";
 
@@ -58,6 +59,8 @@ function Admin() {
     active: 2,
     limit: 100,
   });
+  const [showHistory, setShowHistory] = useState<boolean>(false);
+
   const closeModalAdd = () => {
     setShowModal(false);
   };
@@ -295,6 +298,29 @@ function Admin() {
     setSelectUser({} as IAdminUser);
   }
 
+  const handleOpenHistory = async (user: IAdminUser) => {
+    console.log('this is user', user)
+    const tempHistory =
+      await trpc.downloadHistory.getDownloadHistory.query({
+        orderBy: {
+          date: "desc",
+        },
+        where: {
+          userId: user.id
+        }
+      });
+    console.log('this is tempHistory', tempHistory);
+    setSelectUser(user);
+    console.log('this is selectUser', selectUser);
+    setShowHistory(true);
+  }
+
+  const handleCloseHistory = () => {
+    setShowHistory(false);
+    setSelectUser({} as IAdminUser);
+    console.log('this is selectUser2', selectUser);
+  }
+
 
   const signInAsUser = async (user: any) => {
     setLoader(true);
@@ -303,7 +329,7 @@ function Admin() {
       password: user.password,
       isAdmin: true
     }));
-    
+
     if (!loginAsUser && errorLogin) {
       setErrorMessage(errorLogin.message);
       setShowError(true);
@@ -313,7 +339,7 @@ function Admin() {
 
     const adminToken = localStorage.getItem("token");
     const adminRefreshToken = localStorage.getItem("refreshToken");
-    localStorage.setItem("isAdminAccess", JSON.stringify({adminToken, adminRefreshToken}));
+    localStorage.setItem("isAdminAccess", JSON.stringify({ adminToken, adminRefreshToken }));
 
     handleLogin(loginAsUser!.token, loginAsUser!.refreshToken);
     navigate("/");
@@ -364,10 +390,10 @@ function Admin() {
             />
           </div>
         )}
-        <EditUserModal 
-          showModal={showEdit} 
-          onHideModal={handleCloseEditUser} 
-          editingUser={selectedUser} 
+        <EditUserModal
+          showModal={showEdit}
+          onHideModal={handleCloseEditUser}
+          editingUser={selectedUser}
         />
       </div>
       <div className="filter-contain">
@@ -420,81 +446,129 @@ function Admin() {
             <tbody>
               {!loader
                 ? users.map((user: IAdminUser, index: number) => {
-                    return (
-                      <tr key={"admin_users_" + index}>
-                        <td className="">{user.username}</td>
-                        <td>{user.email}</td>
-                        <td>{user.phone}</td>
-                        <td>{user.registered_on.toLocaleDateString()}</td>
-                        {filters.active !== 2 && (
-                          <td>
-                            {filters.active === 1 ? "Activa" : "No activa"}
-                          </td>
-                        )}
-                        <td className="wrap-td">
-                          <button
-                            onClick={() => handleEditUser(user)}
-                          >
-                            Editar
-                          </button>
-                          <button
-                            onClick={() => {
-                              signInAsUser(user);
-                            }}
-                          >
-                            Acceder
-                          </button>
-                          <button
-                            onClick={() => {
-                              giveSuscription(user);
-                            }}
-                          >
-                            Activar Suscripción
-                          </button>
-                          {user.blocked ? (
-                            <FaLock
-                              className="lock"
-                              onClick={() =>
-                                openBlockModal(
-                                  user,
-                                  `Estas por desbloquear al usuario: ${user.username}`,
-                                  false
-                                )
-                              }
-                            />
-                          ) : (
-                            <FaLockOpen
-                              className="unlock"
-                              onClick={() =>
-                                openBlockModal(
-                                  user,
-                                  `Estas por bloquear al usuario: ${user.username}`,
-                                  true
-                                )
-                              }
-                            />
-                          )}
+                  return (
+                    <tr key={"admin_users_" + index}>
+                      <td className="">{user.username}</td>
+                      <td>{user.email}</td>
+                      <td>{user.phone}</td>
+                      <td>{user.registered_on.toLocaleDateString()}</td>
+                      {filters.active !== 2 && (
+                        <td>
+                          {filters.active === 1 ? "Activa" : "No activa"}
                         </td>
-                      </tr>
-                    );
-                  })
+                      )}
+                      <td className="wrap-td">
+                        <div className="dropdown">
+                          <button className="dropbtn">Acciones</button>
+                          <div className="dropdown-content">
+                            <p onClick={() => handleEditUser(user)}>Editar</p>
+                            <p onClick={() => signInAsUser(user)}>Acceder</p>
+                            <p onClick={() => giveSuscription(user)}>Activar</p>
+                            <p onClick={() => handleOpenHistory(user)}>Historial</p>
+                            {user.blocked ? (
+                              <span>
+                                <FaLock
+                                  className="lock"
+                                  onClick={() =>
+                                    openBlockModal(
+                                      user,
+                                      `Estas por desbloquear al usuario: ${user.username}`,
+                                      false
+                                    )
+                                  }
+                                />
+                              </span>
+
+                            ) : (
+                              <span>
+                                <FaLockOpen
+                                  className="unlock"
+                                  onClick={() =>
+                                    openBlockModal(
+                                      user,
+                                      `Estas por bloquear al usuario: ${user.username}`,
+                                      true
+                                    )
+                                  }
+                                />
+                              </span>
+
+                            )}
+                          </div>
+                        </div>
+
+
+
+                        {/* <button
+                          onClick={() => handleEditUser(user)}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => {
+                            signInAsUser(user);
+                          }}
+                        >
+                          Acceder
+                        </button>
+                        <button
+                          onClick={() => {
+                            giveSuscription(user);
+                          }}
+                        >
+                          Activar Suscripción
+                        </button>
+                        <button
+                          onClick={() => {
+                            handleOpenHistory(user);
+                          }}
+                        >
+                          Historial
+                        </button>
+                        {user.blocked ? (
+                          <FaLock
+                            className="lock"
+                            onClick={() =>
+                              openBlockModal(
+                                user,
+                                `Estas por desbloquear al usuario: ${user.username}`,
+                                false
+                              )
+                            }
+                          />
+                        ) : (
+                          <FaLockOpen
+                            className="unlock"
+                            onClick={() =>
+                              openBlockModal(
+                                user,
+                                `Estas por bloquear al usuario: ${user.username}`,
+                                true
+                              )
+                            }
+                          />
+                        )} */}
+                      </td>
+                    </tr>
+                  );
+                })
                 : ARRAY_10.map((val: string, index: number) => {
-                    return filters.active !== 2 ? (
-                      <tr key={"array_10" + index} className="tr-load">
-                        <td />
-                        <td />
-                        <td />
-                        <td /> <td />
-                      </tr>
-                    ) : (
-                      <tr key={"array_10" + index} className="tr-load">
-                        <td />
-                        <td />
-                        <td />
-                        <td />
-                      </tr>
-                    );
-                  })}
+                  return filters.active !== 2 ? (
+                    <tr key={"array_10" + index} className="tr-load">
+                      <td />
+                      <td />
+                      <td />
+                      <td /> <td />
+                    </tr>
+                  ) : (
+                    <tr key={"array_10" + index} className="tr-load">
+                      <td />
+                      <td />
+                      <td />
+                      <td />
+                    </tr>
+                  );
+                })}
             </tbody>
           </table>
         </div>
@@ -530,6 +604,11 @@ function Admin() {
         action2={plan_2}
       />
       <ErrorModal show={showError} onHide={closeErrorModal} message={errorMessage} />
+      <HistoryModal
+        show={showHistory}
+        onHide={handleCloseHistory}
+        user={selectUser}
+      />
     </div>
   );
 }
