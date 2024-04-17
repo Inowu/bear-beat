@@ -5,8 +5,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./DownloadHistory.scss";
 import Pagination from "../../../components/Pagination/Pagination";
-import CsvDownloader from "react-csv-downloader";
-import { exportPayments } from "../fuctions";
 import { IAdminDownloadHistory } from "../../../interfaces/admin";
 
 interface IAdminFilter {
@@ -36,15 +34,14 @@ export const DownloadHistory = () => {
     setLoader(true);
     setTotalLoader(true);
     try {
-      const body: any = {
-        take: filt.limit,
-        skip: filt.page * filt.limit,
-        orderBy: {
-          date: "desc",
-        },
-      };
       const tempHistory =
-        await trpc.downloadHistory.getDownloadHistory.query(body);
+        await trpc.downloadHistory.getDownloadHistory.query({
+          take: filt.limit,
+          skip: filt.page * filt.limit,
+          orderBy: {
+            date: "desc",
+          },
+        });
 
       setLoader(false);
       setHistory(tempHistory.data);
@@ -54,20 +51,7 @@ export const DownloadHistory = () => {
       console.log(error);
     }
   };
-  const transformHistoryData = async () => {
-    try {
-      const tempHistory: any = await exportPayments();
-      return tempHistory.map((his: any) => ({
-        Usuario: his.users.first_name,
-        Correo: his.users.email,
-        Teléfono: his.users.phone,
-        "Última Fecha de pago": his.last_checkout_date.toLocaleDateString(),
-        Estado: his.users.active === 1 ? "Activo" : "No activo",
-      }));
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  
   useEffect(() => {
     if (currentUser && currentUser.role !== "admin") {
       navigate("/");
@@ -82,15 +66,6 @@ export const DownloadHistory = () => {
     <div className="coupons-contain history-contain">
       <div className="header">
         <h1>Historial de Descargas</h1>
-        {/* <CsvDownloader
-          className="btn-addUsers"
-          filename="lista_de_usuarios"
-          extension=".csv"
-          separator=";"
-          wrapColumnChar="'"
-          datas={transformHistoryData()}
-          text="Exportar Historial"
-        /> */}
       </div>
       <div className="select-input">
         <p>Cantidad de datos</p>
