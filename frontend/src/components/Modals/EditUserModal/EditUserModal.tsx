@@ -29,7 +29,7 @@ interface UserToEdit {
   phone: string;
 }
 
-function EditUserModal(props: IEditPlanModal) {
+export function EditUserModal(props: IEditPlanModal) {
   const { showModal, onHideModal, editingUser } = props;
 
   // const navigate = useNavigate();
@@ -208,5 +208,3 @@ function EditUserModal(props: IEditPlanModal) {
     </Modal>
   );
 }
-
-export default EditUserModal;
