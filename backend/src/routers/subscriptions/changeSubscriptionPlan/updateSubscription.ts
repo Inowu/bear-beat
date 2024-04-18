@@ -62,6 +62,7 @@ export const updateStripeSubscription = async ({
     await stripeInstance.subscriptionItems.update(stripeSub.id, {
       // Checked outside method
       price: newPlan.stripe_prod_id!,
+      proration_behavior: 'always_invoice',
     });
 
     await updateFtpUserInfo({
