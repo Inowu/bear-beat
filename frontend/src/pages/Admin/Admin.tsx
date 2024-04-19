@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useUserContext } from "../../contexts/UserContext";
 import trpc from "../../api";
-import { IAdminUser } from "../../interfaces/admin";
+import { IAdminUser, USER_ROLES } from "../../interfaces/admin";
 import "./Admin.scss";
 import { IPlans } from "../../interfaces/Plans";
 import {
@@ -87,10 +87,7 @@ function Admin() {
     setSelectUser({} as IAdminUser);
     setShowOption(false);
   };
-  const activatePlan = (planId: number) => {
-    closeOption();
-    activateSubscription(planId);
-  };
+  
   const getPlans = async () => {
     let body = {
       where: {
@@ -147,18 +144,8 @@ function Admin() {
       console.log(error);
     }
   };
-  const activateSubscription = async (planId: number) => {
-    try {
-      let body = {
-        planId,
-        userId: selectUser.id,
-      };
-      await trpc.admin.activatePlanForUser.mutate(body);
-      alert("Plan activado con éxito!");
-    } catch (error) {
-      console.log(error);
-    }
-  };
+
+  
   const startFilter = (key: string, value: string | number) => {
     let tempFilters: any = filters;
     if (key !== "page") {
@@ -220,7 +207,8 @@ function Admin() {
           registered_on: user.registered_on,
           blocked: user.blocked,
           phone: user.phone ?? "",
-          password: user.password
+          password: user.password,
+          role: user.role_id ?? 4,
         }))
         setLoader(false);
         setUsers(transformedUsers);
@@ -444,7 +432,7 @@ function Admin() {
                           <button className="dropbtn">Acciones</button>
                           <div className="dropdown-content">
                             <button onClick={() => handleEditUser(user)}>Editar</button>
-                            <button onClick={() => signInAsUser(user)}>Acceder</button>
+                            <button onClick={() => signInAsUser(user)} disabled={user.role === USER_ROLES.ADMIN}>Acceder</button>
                             <button onClick={() => giveSuscription(user)}>Activar</button>
                             <button onClick={() => handleOpenHistory(user)}>Historial</button>
                             <button className="icon-button" onClick={() =>
@@ -522,7 +510,7 @@ function Admin() {
         onHide={closeOption}
         title={optionTitle}
         message=""
-        action={activatePlan}
+        userId={selectUser.id}
         plans={plans}
       />
       <ErrorModal show={showError} onHide={closeErrorModal} message={errorMessage} />
