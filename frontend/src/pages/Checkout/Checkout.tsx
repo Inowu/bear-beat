@@ -10,9 +10,12 @@ import { useEffect, useState } from "react";
 import trpc from "../../api";
 import { IPlans } from "interfaces/Plans";
 import { manychatApi } from "../../api/manychat";
-const stripePromise = loadStripe(
-  "pk_live_51HxCA5INxJoHjyCFl7eC2fUI9S22i2NW8iMnAjrvAUjnuVGZedLSRxB3sZspZzzHNOoTCNwgUNoZEYfXQuF6VvBV00MJ2C2k9s"
-);
+
+const stripeKey = process.env.REACT_APP_ENVIRONMENT === 'development'
+  ? process.env.REACT_APP_STRIPE_TEST_KEY as string
+  : process.env.REACT_APP_STRIPE_KEY as string
+
+const stripePromise = loadStripe(stripeKey);
 
 function Checkout() {
   const [plan, setPlan] = useState({} as IPlans);

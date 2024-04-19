@@ -61,7 +61,7 @@ export const updateStripeSubscription = async ({
   try {
     await stripeInstance.subscriptionItems.update(stripeSub.id, {
       // Checked outside method
-      price: newPlan.stripe_prod_id!,
+      price: process.env.NODE_ENV === 'production' ? newPlan.stripe_prod_id! : newPlan.stripe_prod_id_test!,
       proration_behavior: 'always_invoice',
     });
 
@@ -116,11 +116,10 @@ export const updatePaypalSubscription = async ({
   try {
     // Update the paypal subscription
     const response = await axios.post(
-      `${paypal.paypalUrl()}/v1/billing/subscriptions/${
-        subscriptionOrder.txn_id
+      `${paypal.paypalUrl()}/v1/billing/subscriptions/${subscriptionOrder.txn_id
       }/revise`,
       {
-        plan_id: newPlan.paypal_plan_id,
+        plan_id: process.env.NODE_ENV === 'production' ? newPlan.paypal_plan_id : newPlan.paypal_plan_id_test,
       },
       {
         headers: {

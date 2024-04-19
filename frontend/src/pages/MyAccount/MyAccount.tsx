@@ -24,9 +24,12 @@ import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { PlansModal } from "../../components/Modals/PlansModal/Plans";
 import { getCompleted } from "../../functions/functions";
-const stripePromise = loadStripe(
-  "pk_live_51HxCA5INxJoHjyCFl7eC2fUI9S22i2NW8iMnAjrvAUjnuVGZedLSRxB3sZspZzzHNOoTCNwgUNoZEYfXQuF6VvBV00MJ2C2k9s"
-);
+
+const stripeKey = process.env.REACT_APP_ENVIRONMENT === 'development'
+  ? process.env.REACT_APP_STRIPE_TEST_KEY as string
+  : process.env.REACT_APP_STRIPE_KEY as string
+
+const stripePromise = loadStripe(stripeKey);
 
 function MyAccount() {
   const {
@@ -99,7 +102,7 @@ function MyAccount() {
   const changeDefault = async () => {
     console.log("default");
     try {
-    } catch (error) {}
+    } catch (error) { }
   };
   const deleteCard = async () => {
     try {
@@ -110,7 +113,7 @@ function MyAccount() {
         getPaymentMethods();
         closeCondition();
       }
-    } catch (error) {}
+    } catch (error) { }
   };
   const getQuota = async () => {
     if (currentUser !== null) {
@@ -250,14 +253,14 @@ function MyAccount() {
                   <tr />
                 )}
                 {currentUser?.extendedFtpAccount !== undefined &&
-                currentUser?.extendedFtpAccount &&
-                currentUser?.ftpAccount ? (
+                  currentUser?.extendedFtpAccount &&
+                  currentUser?.ftpAccount ? (
                   <tr>
                     <td>{currentUser?.ftpAccount.host}</td>
                     <td>{currentUser?.extendedFtpAccount.userid}</td>
                     <td>{currentUser?.extendedFtpAccount.passwd}</td>
                     <td>{currentUser?.ftpAccount.port}</td>
-                    <td>{}</td>
+                    <td>{ }</td>
                     <td>
                       <img src={filezillaIcon} alt="filezilla" />
                     </td>
@@ -325,8 +328,8 @@ function MyAccount() {
                         x.card.brand === "visa"
                           ? Visa
                           : x.card.brand === "mastercard"
-                          ? Mastercard
-                          : Amex
+                            ? Mastercard
+                            : Amex
                       }
                       alt=""
                     />
@@ -384,8 +387,8 @@ function MyAccount() {
           condition === 1
             ? finishSubscription
             : condition === 2
-            ? changeDefault
-            : deleteCard
+              ? changeDefault
+              : deleteCard
         }
       />
       <Elements stripe={stripePromise}>
