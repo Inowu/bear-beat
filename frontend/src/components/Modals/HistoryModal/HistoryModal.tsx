@@ -4,9 +4,11 @@ import { ARRAY_10 } from "../../../utils/Constants";
 import { IAdminDownloadHistory, IAdminUser } from "../../../interfaces/admin";
 import { Modal } from 'react-bootstrap'
 import { RiCloseCircleLine } from 'react-icons/ri'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Pagination from "../../../components/Pagination/Pagination";
 import trpc from "../../../api";
+import { of } from 'await-of';
+import { ErrorModal } from '../ErrorModal/ErrorModal';
 
 interface ICondition {
     show: boolean;
@@ -30,34 +32,52 @@ export function HistoryModal(props: ICondition) {
         limit: 20,
     });
     const [remainingGigas, setRemainingGigas] = useState<number>(0);
+    const [showError, setShowError] = useState<boolean>(false);
+    const [errorMessage, setErrorMessage] = useState<string>("");
 
-    const filterHistory = async (filt: IAdminFilter) => {
+    const closeErrorModal = () => {
+        setShowError(false);
+    };
+
+    const filterHistory = useCallback(async (filt: IAdminFilter) => {
+        if (!user || !user.id) {
+            return;
+        }
         setLoader(true);
         setTotalLoader(true);
-        try {
-            const body = {
-                take: filt.limit,
-                skip: filt.page * filt.limit,
-                orderBy: {
-                    date: "desc",
-                },
-                where: {
-                    userId: user.id
-                }
+
+        const body = {
+            take: filt.limit,
+            skip: filt.page * filt.limit,
+            orderBy: {
+                date: "desc",
+            },
+            where: {
+                userId: user.id
             }
-            const tempHistory = await trpc.downloadHistory.getDownloadHistory.query(body);
-            const tempGigas = await trpc.downloadHistory.getRemainingGigas.query({ userId: user.id });
-
-            setLoader(false);
-            setHistory(tempHistory.data);
-            setTotalHistory(tempHistory.count);
-            setRemainingGigas(tempGigas ? tempGigas / (1024 * 1024 * 1024) : tempGigas);
-
-            setTotalLoader(false);
-        } catch (error) {
-            console.log(error);
         }
-    };
+        const [tempHistory, errorHistory] = await of(trpc.downloadHistory.getDownloadHistory.query(body));
+        if (!tempHistory || errorHistory) {
+            console.error(errorHistory);
+            setErrorMessage(errorHistory?.message!);
+            setShowError(true);
+            return;
+        }
+
+        const [tempGigas, errorGigas] = await of(trpc.downloadHistory.getRemainingGigas.query({ userId: user.id }));        if (!tempGigas || errorGigas) {
+            console.error(errorGigas);
+            setErrorMessage(errorGigas?.message!);
+            setShowError(true);
+            return;
+        }
+
+        setLoader(false);
+        setHistory(tempHistory.data);
+        setTotalHistory(tempHistory.count);
+        setRemainingGigas(tempGigas.remaining);
+
+        setTotalLoader(false);
+    }, [user]);
 
     const startFilter = (key: string, value: string | number) => {
         let tempFilters: any = filters;
@@ -70,7 +90,7 @@ export function HistoryModal(props: ICondition) {
         if (user) {
             filterHistory(filters);
         }
-    }, [user]);
+    }, [user, filterHistory, filters]);
 
     return (
         <Modal show={show} onHide={onHide} centered>
@@ -133,6 +153,7 @@ export function HistoryModal(props: ICondition) {
                     />
                 </div>
             </div>
+            <ErrorModal show={showError} onHide={closeErrorModal} message={errorMessage} />
         </Modal>
     )
 }
