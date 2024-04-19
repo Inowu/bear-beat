@@ -7,6 +7,7 @@ export interface IAdminUser {
   blocked: boolean;
   phone: string;
   password: string;
+  role: number;
 }
 export interface IAdminOrders {
   city: string;
@@ -38,4 +39,11 @@ export interface IAdminDownloadHistory {
   isFolder: boolean;
   email: string;
   phone: string;
+}
+
+export enum USER_ROLES {
+  'ADMIN' = 1,
+  'SUBADMIN' = 2,
+  'EDITOR' = 3,
+  'NORMAL' = 4,
 }
