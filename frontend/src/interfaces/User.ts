@@ -13,7 +13,7 @@ export interface IUser {
   stripeCusId: string;
   extendedFtpAccount: any ;
 }
-interface IFtpAccount {
+export interface IFtpAccount {
   expiration: Date;
   passwd: string;
   userid: string;
