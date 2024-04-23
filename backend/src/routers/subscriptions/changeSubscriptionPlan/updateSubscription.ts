@@ -30,7 +30,7 @@ export const updateStripeSubscription = async ({
 
   if (!subscriptionId || !subscriptionId.startsWith('sub_')) {
     log.error(
-      `[CHANGE_PLAN] This subscription's order has no subscription id or the id is invalid, order id: ${subscriptionOrder.id}`,
+      `[CHANGE_PLAN_STRIPE] This subscription's order has no subscription id or the id is invalid, order id: ${subscriptionOrder.id}`,
     );
 
     throw new TRPCError({
@@ -93,7 +93,7 @@ export const updatePaypalSubscription = async ({
 }: Params) => {
   if (!subscriptionOrder.txn_id || !subscriptionOrder.txn_id.startsWith('I-')) {
     log.error(
-      `[CHANGE_PLAN] This subscription's order has no subscription id or the id is invalid, order id: ${subscriptionOrder.id}`,
+      `[CHANGE_PLAN_PAYPAL] This subscription's order has no subscription id or the id is invalid, order id: ${subscriptionOrder.id}`,
     );
 
     throw new TRPCError({
