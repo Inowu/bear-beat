@@ -13,6 +13,7 @@ function Plans() {
       where: {
         activated: 1,
         paypal_plan_id: null,
+        paypal_plan_id_test: null,
       },
     };
     try {
