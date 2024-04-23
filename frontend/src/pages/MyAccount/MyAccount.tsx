@@ -1,17 +1,14 @@
 import "./MyAccount.scss";
-import { ConditionModal } from "../../components/Modals/ConditionModal/ContitionModal";
+import { ConditionModal, ErrorModal, PaymentMethodModal, PlansModal, SuccessModal } from "../../components/Modals"
 import { Elements } from "@stripe/react-stripe-js";
-import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { getCompleted } from "../../functions/functions";
+import { IOrders,  IQuota, IFtpAccount } from "interfaces/User";
 import { Link } from "react-router-dom";
 import { loadStripe } from "@stripe/stripe-js";
-import { PaymentMethodModal } from "../../components/Modals/PaymentMethodModal/PaymentMethodModal";
-import { PlansModal } from "../../components/Modals/PlansModal/Plans";
 import { saveAs } from 'file-saver';
 import { Spinner } from "../../components/Spinner/Spinner";
-import { SuccessModal } from "../../components/Modals/SuccessModal/SuccessModal";
 import { useEffect, useState } from "react";
 import { useUserContext } from "../../contexts/UserContext";
 import Amex from "../../assets/images/cards/express.png";
@@ -21,11 +18,6 @@ import Mastercard from "../../assets/images/cards/master.png";
 import SpaceAvailableCard from "../../components/SpaceAvailableCard/SpaceAvailableCard";
 import trpc from "../../api";
 import Visa from "../../assets/images/cards/visa.png";
-import {
-  IOrders,
-  IQuota,
-  IFtpAccount
-} from "interfaces/User";
 
 const stripeKey = process.env.REACT_APP_ENVIRONMENT === 'development'
   ? process.env.REACT_APP_STRIPE_TEST_KEY as string
@@ -200,8 +192,8 @@ function MyAccount() {
           </Server>
         </Servers>
       </FileZilla3>`;
-      const blob = new Blob([xml], { type: 'text/xml' });
-      saveAs(blob, 'bearbeat.xml');
+    const blob = new Blob([xml], { type: 'text/xml' });
+    saveAs(blob, 'bearbeat.xml');
   }
 
   useEffect(() => {
