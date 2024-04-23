@@ -96,6 +96,7 @@ export const PlanUpgrade = () => {
           stripe_prod_id: tempPlan.stripe_prod_id!,
           stripe_prod_id_test: tempPlan.stripe_prod_id_test!,
           paypal_plan_id: tempPlan.paypal_plan_id!,
+          paypal_plan_id_test: tempPlan.paypal_plan_id_test!,
           tokens: null,
           tokens_karaoke: null,
           tokens_video: null,
