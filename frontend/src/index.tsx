@@ -110,8 +110,9 @@ root.render(
       <DownloadContextProvider>
         <PayPalScriptProvider
           options={{
-            clientId:
-              "AYuKvAI09TE9bk9k1TuzodZ2zWQFpWEZesT65IkT4WOws9wq-yfeHLj57kEBH6YR_8NgBUlLShj2HOSr",
+            clientId: process.env.REACT_APP_ENVIRONMENT === 'development'
+              ? process.env.REACT_APP_PAYPAL_CLIENT_TEST_ID!
+              : process.env.REACT_APP_PAYPAL_CLIENT_ID!,
             intent: "subscription",
             vault: true,
           }}
