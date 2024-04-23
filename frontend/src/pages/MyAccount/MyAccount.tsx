@@ -1,29 +1,31 @@
 import "./MyAccount.scss";
-import Logo from "../../assets/images/osonuevo.png";
-import Visa from "../../assets/images/cards/visa.png";
-import Mastercard from "../../assets/images/cards/master.png";
-import Amex from "../../assets/images/cards/express.png";
+import { ConditionModal } from "../../components/Modals/ConditionModal/ContitionModal";
+import { Elements } from "@stripe/react-stripe-js";
+import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
+import { faTrash } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { getCompleted } from "../../functions/functions";
 import { Link } from "react-router-dom";
-import filezillaIcon from "../../assets/images/filezilla_icon.png";
-import SpaceAvailableCard from "../../components/SpaceAvailableCard/SpaceAvailableCard";
-import { useUserContext } from "../../contexts/UserContext";
+import { loadStripe } from "@stripe/stripe-js";
+import { PaymentMethodModal } from "../../components/Modals/PaymentMethodModal/PaymentMethodModal";
+import { PlansModal } from "../../components/Modals/PlansModal/Plans";
+import { saveAs } from 'file-saver';
+import { Spinner } from "../../components/Spinner/Spinner";
+import { SuccessModal } from "../../components/Modals/SuccessModal/SuccessModal";
 import { useEffect, useState } from "react";
+import { useUserContext } from "../../contexts/UserContext";
+import Amex from "../../assets/images/cards/express.png";
+import filezillaIcon from "../../assets/images/filezilla_icon.png";
+import Logo from "../../assets/images/osonuevo.png";
+import Mastercard from "../../assets/images/cards/master.png";
+import SpaceAvailableCard from "../../components/SpaceAvailableCard/SpaceAvailableCard";
 import trpc from "../../api";
+import Visa from "../../assets/images/cards/visa.png";
 import {
   IOrders,
   IQuota,
+  IFtpAccount
 } from "interfaces/User";
-import { ConditionModal } from "../../components/Modals/ConditionModal/ContitionModal";
-import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
-import { SuccessModal } from "../../components/Modals/SuccessModal/SuccessModal";
-import { PaymentMethodModal } from "../../components/Modals/PaymentMethodModal/PaymentMethodModal";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrash } from "@fortawesome/free-solid-svg-icons";
-import { Spinner } from "../../components/Spinner/Spinner";
-import { Elements } from "@stripe/react-stripe-js";
-import { loadStripe } from "@stripe/stripe-js";
-import { PlansModal } from "../../components/Modals/PlansModal/Plans";
-import { getCompleted } from "../../functions/functions";
 
 const stripeKey = process.env.REACT_APP_ENVIRONMENT === 'development'
   ? process.env.REACT_APP_STRIPE_TEST_KEY as string
@@ -171,6 +173,37 @@ function MyAccount() {
       setErrorMessage("Ha habido un error");
     }
   };
+
+  const downloadXMLFile = (ftpAccount: IFtpAccount) => {
+    const { host, passwd, port, userid } = ftpAccount;
+    const xml = `<?xml version="1.0"?>
+      <FileZilla3>
+        <Servers>
+          <Server>
+            <Host>${host}</Host>
+            <Port>${port}</Port>
+            <Protocol>0</Protocol>
+            <Type>0</Type>
+            <User>${userid}</User>
+            <Pass>${passwd}</Pass>
+            <Logontype>1</Logontype>
+            <TimezoneOffset>0</TimezoneOffset>
+            <PasvMode>MODE_DEFAULT</PasvMode>
+            <MaximumMultipleConnections>0</MaximumMultipleConnections>
+            <EncodingType>Auto</EncodingType>
+            <BypassProxy>0</BypassProxy>
+            <Name>Bear Beat FTP</Name>
+            <Comments>Home: https://thebearbeat.com/</Comments>
+            <LocalDir/>
+            <RemoteDir/>
+            <SyncBrowsing>0</SyncBrowsing>
+          </Server>
+        </Servers>
+      </FileZilla3>`;
+      const blob = new Blob([xml], { type: 'text/xml' });
+      saveAs(blob, 'bearbeat.xml');
+  }
+
   useEffect(() => {
     if (currentUser) {
       getQuota();
@@ -245,7 +278,7 @@ function MyAccount() {
                     <td>{currentUser?.ftpAccount.passwd}</td>
                     <td>{currentUser?.ftpAccount.port}</td>
                     <td>{currentUser?.ftpAccount.expiration.toDateString()}</td>
-                    <td>
+                    <td onClick={() => downloadXMLFile(currentUser?.ftpAccount!)}>
                       <img src={filezillaIcon} alt="filezilla" />
                     </td>
                   </tr>
