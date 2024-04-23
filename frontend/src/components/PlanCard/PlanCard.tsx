@@ -5,7 +5,7 @@ import { faCheck } from "@fortawesome/free-solid-svg-icons";
 import { useLocation, useNavigate } from "react-router-dom";
 import { plans } from "../../utils/Constants";
 import { OxxoModal } from "../../components/Modals/OxxoModal/OxxoModal";
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import trpc from "../../api";
 import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
 import { PayPalButtons } from "@paypal/react-paypal-js";
@@ -77,7 +77,7 @@ function PlanCard(props: PlanCardPropsI) {
       let body = {
         newPlanId: plan.id,
       };
-      if (plan.paypal_plan_id) {
+      if (plan.paypal_plan_id || plan.paypal_plan_id_test) {
         const changeplan: any =
           await trpc.subscriptions.changeSubscriptionPlan.mutate(body);
         console.log(changeplan.data);
@@ -99,8 +99,7 @@ function PlanCard(props: PlanCardPropsI) {
   };
   const finishSubscription = async () => {
     try {
-      const cancelSuscription: any =
-        await trpc.subscriptions.requestSubscriptionCancellation.mutate();
+      await trpc.subscriptions.requestSubscriptionCancellation.mutate();
       openSuccess();
       setSuccessMessage("Su suscripción se ha cancelado con éxito.");
       setSuccessTitle("Suscripción Cancelada");
@@ -114,6 +113,7 @@ function PlanCard(props: PlanCardPropsI) {
       where: {
         activated: 1,
         stripe_prod_id: null,
+        stripe_prod_id_test: '',
         moneda: plan.moneda.toUpperCase(),
         price: +plan.price,
       },
@@ -206,7 +206,7 @@ function PlanCard(props: PlanCardPropsI) {
         createSubscription={async (data, actions) => {
           try {
             const sub = await actions.subscription.create({
-              plan_id: ppPlan.paypal_plan_id,
+              plan_id: process.env.REACT_APP_ENVIRONMENT === 'development' ? ppPlan.paypal_plan_id_test : ppPlan.paypal_plan_id,
             });
             return sub;
           } catch (e: any) {
@@ -215,7 +215,7 @@ function PlanCard(props: PlanCardPropsI) {
           return "";
         }}
         onApprove={async (data: any, actions) => {
-          const result = await trpc.subscriptions.subscribeWithPaypal.mutate({
+          await trpc.subscriptions.subscribeWithPaypal.mutate({
             planId: ppPlan.id,
             // planId: plan.id,
             subscriptionId: data.subscriptionID,
@@ -233,9 +233,72 @@ function PlanCard(props: PlanCardPropsI) {
     return data;
   };
 
-  useEffect(() => {
-    retreivePaypalPlan();
-  }, []);
+  const paypalSubscriptionChange = () => {
+    let data = (
+      <PayPalButtons
+        style={{
+          color: "silver",
+          shape: "pill",
+          layout: "horizontal",
+          height: 46,
+          tagline: false,
+        }}
+        onClick={async (data, actions) => {
+          trpc.checkoutLogs.registerCheckoutLog.mutate();
+          handleManyChat();
+          // Revisar si el usuario tiene una suscripcion activa
+          const me = await trpc.auth.me.query();
+          if (me.hasActiveSubscription) return actions.reject();
+          const existingOrder = await trpc.orders.ownOrders.query({
+            where: {
+              AND: [
+                {
+                  status: 0,
+                },
+                {
+                  payment_method: "Paypal",
+                },
+              ],
+            },
+          });
+
+          if (existingOrder.length > 0) {
+            return actions.reject();
+          }
+          actions.resolve();
+        }}
+        createOrder={async (data, actions) => {
+          try {
+            const order = await actions.order.create({
+              intent: 'CAPTURE',
+              purchase_units: [
+                {
+                  amount: {
+                    currency_code: 'USD',
+                    value: '5'
+                  }
+                }
+              ]
+            });
+
+            console.log('this is order', order);
+            return order;
+          } catch (error) {
+            console.error(error);
+          }
+
+          return "";
+        }}
+        onApprove={async (data, actions) => {
+          console.log('this is data', data);
+        }}
+      />
+    );
+
+    return data;
+  }
+
+  useCallback(retreivePaypalPlan, [plan]);
 
   return (
     <div
@@ -305,7 +368,7 @@ function PlanCard(props: PlanCardPropsI) {
                 </button>
                 <div>
                   {ppPlan !== null &&
-                    ppPlan.paypal_plan_id !== null &&
+                    (ppPlan.paypal_plan_id || ppPlan.paypal_plan_id_test) &&
                     paypalMethod()}
                 </div>
               </>
