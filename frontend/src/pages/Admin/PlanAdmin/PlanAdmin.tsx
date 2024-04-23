@@ -60,6 +60,14 @@ export const PlanAdmin = () => {
         setShowEdit(true);
     };
 
+    const getPaymentMethod = (plan: IPlans) => {
+        if (plan.paypal_plan_id || plan.paypal_plan_id_test) {
+            return 'PayPal';
+        } else {
+            return 'Stripe'
+        }
+    }
+
     useEffect(() => {
         if (currentUser && currentUser.role !== "admin") {
             navigate('/');
@@ -116,13 +124,13 @@ export const PlanAdmin = () => {
                                                 {plan.name}
                                             </td>
                                             <td className="">
-                                                {plan.paypal_plan_id ? "paypal" : "stripe"}
+                                                {getPaymentMethod(plan)}
                                             </td>
                                             <td>
                                                 {plan.description}
                                             </td>
                                             <td>
-                                                {plan.moneda}
+                                                {plan.moneda.toUpperCase()}
                                             </td>
                                             <td>
                                                 {plan.price}
