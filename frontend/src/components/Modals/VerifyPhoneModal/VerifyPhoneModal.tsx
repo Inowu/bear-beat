@@ -32,9 +32,8 @@ export function VerifyPhoneModal(props: IVerifyPhoneModal) {
 
     const closeSuccess = () => {
         setShowSuccess(false);
-        window.location.reload();
-        navigate("/");
         onHideModal();
+        navigate("/");
     };
 
     const validationSchema = Yup.object().shape({
@@ -98,6 +97,7 @@ export function VerifyPhoneModal(props: IVerifyPhoneModal) {
         <Modal show={showModal} centered>
             <form className="modal-addusers" onSubmit={formik.handleSubmit}>
                 <h2>Verificar Teléfono</h2>
+                <p>Se ha enviado un codigo a su WhatsApp para verificar la cuenta.</p>
                 <div className="c-row">
                     <label>Código</label>
                     <input
@@ -125,8 +125,8 @@ export function VerifyPhoneModal(props: IVerifyPhoneModal) {
                 <SuccessModal
                     show={showSuccess}
                     onHide={closeSuccess}
-                    message="Se ha actualizado la información del usuario"
-                    title="Edición Exitosa"
+                    message="Su cuenta ha sido verificada"
+                    title="Verificación Exitosa"
                 />
             </form>
         </Modal>
