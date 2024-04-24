@@ -1,5 +1,6 @@
 export * from './AddCouponModal/AddCouponModal'
 export * from './AddUsersModal/AddUsersModal'
+export * from './ChangeSubscriptionModal/ChangeSubscriptionModal'
 export * from './ConditionModal/ContitionModal'
 export * from './DeleteUserModal/DeleteUserModal'
 export * from './EditCouponModal/EditCouponModal'
