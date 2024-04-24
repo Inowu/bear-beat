@@ -76,7 +76,7 @@ export const downloadHistoryRouter = router({
             );
 
             if (ftpAccounts.length === 0 || !regularFtpUser) {
-                return 0;
+                return { remaining: 0 };
             }
 
             let quotaTallies = await prisma.ftpquotatallies.findFirst({
@@ -92,11 +92,11 @@ export const downloadHistoryRouter = router({
             });
 
             if (!quotaLimits || !quotaTallies) {
-                return 0;
-              }
+                return { remaining: 0 };
+            }
 
             const availableBytes = quotaLimits.bytes_out_avail - quotaTallies.bytes_out_used;
-
-            return Number(availableBytes);
+            const availableGigas = Number(availableBytes) / (1024 * 1024 * 1024);
+            return { remaining: availableGigas };
         })
 });
