@@ -6,6 +6,7 @@ import { login } from './procedures/login';
 import { me } from './procedures/me';
 import { refresh } from './procedures/refresh';
 import { register } from './procedures/register';
+import { verifyPhone } from './procedures/verifyPhone';
 
 export const authRouter = router({
   login,
@@ -14,5 +15,6 @@ export const authRouter = router({
   changePassword,
   forgotPassword,
   refresh,
+  verifyPhone,
   getCurrentSubscriptionPlan,
 });
