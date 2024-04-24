@@ -1,17 +1,20 @@
-import { Link, useNavigate } from "react-router-dom";
-import PhoneInput from "react-phone-input-2";
-import "react-phone-input-2/lib/material.css";
 import "./SignUpForm.scss";
-import es from "react-phone-input-2/lang/es.json";
+import "react-phone-input-2/lib/material.css";
+import { Link, useNavigate } from "react-router-dom";
 import { ReactComponent as Arrow } from "../../../assets/icons/arrow-down.svg";
-import { useUserContext } from "../../../contexts/UserContext";
-import { ErrorModal } from "../../../components/Modals/ErrorModal/ErrorModal";
-import trpc from "../../../api";
-import { useFormik } from "formik";
-import * as Yup from "yup";
-import { useState } from "react";
-import { SuccessModal } from "../../../components/Modals/SuccessModal/SuccessModal";
 import { Spinner } from "../../../components/Spinner/Spinner";
+import { useFormik } from "formik";
+import { useState } from "react";
+import { useUserContext } from "../../../contexts/UserContext";
+import * as Yup from "yup";
+import es from "react-phone-input-2/lang/es.json";
+import PhoneInput from "react-phone-input-2";
+import trpc from "../../../api";
+import {
+  ErrorModal,
+  SuccessModal,
+  VerifyPhoneModal
+} from '../../../components/Modals'
 
 function SignUpForm() {
   const navigate = useNavigate();
@@ -21,6 +24,11 @@ function SignUpForm() {
   const [code, setCode] = useState<string>("52");
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<any>("");
+  const [showVerify, setShowVerify] = useState<boolean>(false);
+  const [newUserId, setNewUserId] = useState<number>(0);
+  const [newUserPhone, setNewUserPhone] = useState<string>("");
+  const [registerInfo, setRegisterInfo] = useState<any>({})
+
   const closeModal = () => {
     setShow(false);
   };
@@ -62,6 +70,7 @@ function SignUpForm() {
   const handlePhoneNumberChange = (value: any, country: any) => {
     setCode(country.dialCode);
   };
+
   const formik = useFormik({
     initialValues: initialValues,
     validationSchema: validationSchema,
@@ -75,9 +84,10 @@ function SignUpForm() {
       };
       try {
         const register = await trpc.auth.register.mutate(body);
-        handleLogin(register.token, register.refreshToken);
-        setShowSuccess(true);
-        handleSuccessfulRegister();
+        setRegisterInfo(register);
+        setNewUserId(register.user.id);
+        setNewUserPhone(register.user.phone!);
+        setShowVerify(true);
         setLoader(false);
       } catch (error: any) {
         setShow(true);
@@ -86,6 +96,13 @@ function SignUpForm() {
       }
     },
   });
+
+  const handleSuccessVerify = () => {
+    handleLogin(registerInfo.token, registerInfo.refreshToken);
+    handleSuccessfulRegister();
+    setShowVerify(false);
+    setShowSuccess(true);
+  }
 
   return (
     <form className="sign-up-form" onSubmit={formik.handleSubmit}>
@@ -186,6 +203,12 @@ function SignUpForm() {
         onHide={closeSuccess}
         message="Se ha creado su usuario con éxito!"
         title="Registro Exitoso"
+      />
+      <VerifyPhoneModal 
+        showModal={showVerify}
+        newUserId={newUserId}
+        newUserPhone={newUserPhone}
+        onHideModal={handleSuccessVerify}
       />
     </form>
   );
