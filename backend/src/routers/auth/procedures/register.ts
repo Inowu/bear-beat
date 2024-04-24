@@ -157,11 +157,7 @@ export const register = publicProcedure
       }
 
       try {
-        console.log('INTENTAREMOS ENVIAR UN CODIGO')
-        log.info('[REGISTER] INTENTAREMOS ENVIAR UN CODIGO');
-        const verificationCode = await twilio.getVerificationCode(newUser.phone!);
-        console.log('THIS IS verificationCode', verificationCode);
-        log.info('THIS IS verificationCode', verificationCode);
+        await twilio.getVerificationCode(newUser.phone!);
       } catch (error: any) {
         log.error(`[REGISTER] Error while sending verification code ${error.message}`);
       }
