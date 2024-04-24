@@ -26,6 +26,25 @@ export function ChangeSubscriptionModal(props: ICondition) {
         onHide();
     }
 
+    const confirmButton = () => {
+        if (plan.stripe_prod_id || plan.stripe_prod_id_test) {
+            return (
+                <button className='btn-option-4' onClick={startAction}>
+                    Confirmar
+                </button>
+            )
+        }
+
+        return (
+            <PayPalComponent
+                type="order"
+                plan={plan}
+                onClick={() => { }}
+                onApprove={startAction}
+            />
+        )
+    }
+
     return (
         <Modal show={show} onHide={onHide} centered>
             <div className='modal-container success-modal'>
@@ -43,12 +62,7 @@ export function ChangeSubscriptionModal(props: ICondition) {
                         </button>
                         {
                             !loader
-                                ? <PayPalComponent
-                                    type="order" 
-                                    plan={plan}
-                                    onClick={() => {}}
-                                    onApprove={startAction}
-                                />
+                                ? confirmButton()
                                 : <div style={{ width: 189 }}><Spinner size={3} width={.3} color="#00e2f7" /></div>
                         }
                     </div>
