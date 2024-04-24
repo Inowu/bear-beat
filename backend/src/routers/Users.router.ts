@@ -43,7 +43,7 @@ const validateExistingData = async (data: any, prisma: any, id: number) => {
             },
           },
         ],
-        
+
       },
     });
 
@@ -71,7 +71,7 @@ const validateExistingData = async (data: any, prisma: any, id: number) => {
             },
           },
         ],
-        
+
       },
     });
 
@@ -99,7 +99,7 @@ const validateExistingData = async (data: any, prisma: any, id: number) => {
             },
           },
         ],
-        
+
       },
     });
 
@@ -410,7 +410,7 @@ export const usersRouter = router({
               ],
             },
           }),
-          prisma.deletedUsers.createMany({ 
+          prisma.deletedUsers.createMany({
             data: inactiveUsersEmails
           }),
         ]);
@@ -528,7 +528,7 @@ export const usersRouter = router({
     .mutation(async ({ ctx, input }) => {
       let { data } = input;
       data = { ...data, password: bcrypt.hashSync(data.password.toString(), 10) }
-      input = {...input, data}
+      input = { ...input, data }
 
       const existingUserWithEmail = await ctx.prisma.users.findFirst({
         where: {
@@ -650,7 +650,7 @@ export const usersRouter = router({
       let { data } = input;
       if (data.password) {
         data = { ...data, password: bcrypt.hashSync(data.password.toString(), 10) }
-        input = {...input, data}
+        input = { ...input, data }
       }
 
       if (data.username) {
@@ -670,7 +670,7 @@ export const usersRouter = router({
                 },
               },
             ],
-            
+
           },
         });
 
@@ -698,7 +698,7 @@ export const usersRouter = router({
                 },
               },
             ],
-            
+
           },
         });
 
@@ -726,7 +726,7 @@ export const usersRouter = router({
                 },
               },
             ],
-            
+
           },
         });
 
@@ -737,7 +737,7 @@ export const usersRouter = router({
           });
         }
       }
-      
+
       const updateOneUsers = await ctx.prisma.users.update(input);
       return updateOneUsers;
     }),
@@ -746,5 +746,29 @@ export const usersRouter = router({
     .mutation(async ({ ctx, input }) => {
       const upsertOneUsers = await ctx.prisma.users.upsert(input);
       return upsertOneUsers;
+    }),
+  findManyUsersWithPlan: shieldedProcedure
+    .input(UsersFindManySchema)
+    .query(async ({ ctx, input }) => {
+      const findManyUsers = await ctx.prisma.users.findMany(input);
+
+      const usersWithPlan = await Promise.all(findManyUsers.map(async (user) => {
+        const existingSubscription = await ctx.prisma.descargasUser.findFirst({
+          where: {
+            AND: [
+              { user_id: user.id },
+              {
+                date_end: {
+                  gte: new Date().toISOString(),
+                },
+              },
+            ],
+          },
+        });
+
+        return { ...user, hasSubscription: existingSubscription ? true : false }
+      }))
+
+      return usersWithPlan;
     }),
 });
