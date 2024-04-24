@@ -320,6 +320,8 @@ function Admin() {
     setShowError(false);
   };
 
+  console.log('this is process.env.REACT_APP_ENVIRONMENT', process.env.REACT_APP_ENVIRONMENT);
+
   return (
     <div className="admin-contain">
       <div className="header">
