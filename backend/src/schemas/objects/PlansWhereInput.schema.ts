@@ -103,7 +103,8 @@ const Schema: z.ZodType<Prisma.PlansWhereInput> = z
       .nullable(),
     paypal_plan_id_test: z
       .union([z.lazy(() => StringFilterObjectSchema), z.string()])
-      .optional(),
+      .optional()
+      .nullable(),
     vip_activo: z
       .union([z.lazy(() => IntNullableFilterObjectSchema), z.number()])
       .optional()

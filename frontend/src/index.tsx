@@ -15,7 +15,6 @@ import UserContextProvider from "./contexts/UserContext";
 import AuthRoute from "./functions/AuthRoute";
 import Auth from "./pages/Auth/Auth";
 import NotAuthRoute from "./functions/NotAuthRoute";
-import NotFound from "./pages/NotFound/NotFound";
 import LoginForm from "./components/Auth/LoginForm/LoginForm";
 import SignUpForm from "./components/Auth/SignUpForm/SignUpForm";
 import ForgotPasswordForm from "./components/Auth/ForgotPasswordForm/ForgotPasswordForm";
@@ -32,7 +31,6 @@ import { Ordens } from "./pages/Admin/Ordens/Ordens";
 import { HistoryCheckout } from "./pages/Admin/HistoryCheckout/HistoryCheckout";
 import { DownloadHistory } from "./pages/Admin/DownloadsHistory/DownloadHistory";
 import { PlanUpgrade } from "./pages/PlanUpgrade/PlanUpgrade";
-import ReactPixel from "react-facebook-pixel";
 import { SSEProvider } from "react-hooks-sse";
 import DownloadContextProvider from "./contexts/DownloadContext";
 import Downloads from "./pages/Downloads/Downloads";
@@ -110,10 +108,9 @@ root.render(
       <DownloadContextProvider>
         <PayPalScriptProvider
           options={{
-            clientId:
-              "AYuKvAI09TE9bk9k1TuzodZ2zWQFpWEZesT65IkT4WOws9wq-yfeHLj57kEBH6YR_8NgBUlLShj2HOSr",
-            intent: "subscription",
-            vault: true,
+            clientId: process.env.REACT_APP_ENVIRONMENT === 'development'
+              ? process.env.REACT_APP_PAYPAL_CLIENT_TEST_ID!
+              : process.env.REACT_APP_PAYPAL_CLIENT_ID!,
           }}
         >
           <SSEProvider endpoint="https://thebearbeatapi.lat/sse">

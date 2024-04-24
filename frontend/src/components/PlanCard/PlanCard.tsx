@@ -4,15 +4,19 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
 import { useLocation, useNavigate } from "react-router-dom";
 import { plans } from "../../utils/Constants";
-import { OxxoModal } from "../../components/Modals/OxxoModal/OxxoModal";
 import { useEffect, useState } from "react";
 import trpc from "../../api";
-import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
-import { PayPalButtons } from "@paypal/react-paypal-js";
-import { SuccessModal } from "../../components/Modals/SuccessModal/SuccessModal";
-import { SpeiModal } from "../../components/Modals/SpeiModal/SpeiModal";
-import { ConditionModal } from "../../components/Modals/ConditionModal/ContitionModal";
 import { manychatApi } from "../../api/manychat";
+import { 
+  ChangeSubscriptionModal, 
+  ConditionModal, 
+  ErrorModal, 
+  OxxoModal, 
+  SpeiModal, 
+  SuccessModal 
+} from "../../components/Modals";
+import PayPalComponent from "../../components/PayPal/PayPalComponent";
+
 interface PlanCardPropsI {
   plan: IPlans;
   currentPlan?: boolean;
@@ -32,6 +36,8 @@ function PlanCard(props: PlanCardPropsI) {
   const [errorMSG, setErrorMSG] = useState<string>("");
   const [successTitle, setSuccessTitle] = useState<string>("");
   const [successMessage, setSuccessMessage] = useState<string>("");
+  const [changeMessage, setChangeMessage] = useState("");
+  const [changeTitle, setChangeTitle] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
   const { pathname } = location;
@@ -48,6 +54,8 @@ function PlanCard(props: PlanCardPropsI) {
     setShowCancelModal(!showCancelModal);
   };
   const handleChangeModal = () => {
+    setChangeMessage(`¿Estás seguro que quieres cambiar al plan de: "${plan.name}" de $${plan.price} ${plan.moneda}? Deberás pagar la diferencia de precio.`);
+    setChangeTitle("Cambio de plan");
     setShowChangeModal(!showChangeModal);
   };
   const handleErrorModal = () => {
@@ -77,10 +85,9 @@ function PlanCard(props: PlanCardPropsI) {
       let body = {
         newPlanId: plan.id,
       };
-      if (plan.paypal_plan_id) {
+      if (plan.paypal_plan_id || plan.paypal_plan_id_test) {
         const changeplan: any =
           await trpc.subscriptions.changeSubscriptionPlan.mutate(body);
-        console.log(changeplan.data);
         const url = changeplan.data.links[0].href;
         window.open(url, "_blank");
       } else {
@@ -99,8 +106,7 @@ function PlanCard(props: PlanCardPropsI) {
   };
   const finishSubscription = async () => {
     try {
-      const cancelSuscription: any =
-        await trpc.subscriptions.requestSubscriptionCancellation.mutate();
+      await trpc.subscriptions.requestSubscriptionCancellation.mutate();
       openSuccess();
       setSuccessMessage("Su suscripción se ha cancelado con éxito.");
       setSuccessTitle("Suscripción Cancelada");
@@ -114,6 +120,7 @@ function PlanCard(props: PlanCardPropsI) {
       where: {
         activated: 1,
         stripe_prod_id: null,
+        stripe_prod_id_test: '',
         moneda: plan.moneda.toUpperCase(),
         price: +plan.price,
       },
@@ -169,74 +176,25 @@ function PlanCard(props: PlanCardPropsI) {
     trpc.checkoutLogs.registerCheckoutLog.mutate();
     navigate(`/comprar?priceId=${planId}`);
   };
-  const paypalMethod = () => {
-    let data = (
-      <PayPalButtons
-        style={{
-          color: "silver",
-          shape: "pill",
-          layout: "horizontal",
-          height: 46,
-          tagline: false,
-        }}
-        onClick={async (data, actions) => {
-          trpc.checkoutLogs.registerCheckoutLog.mutate();
-          handleManyChat();
-          // Revisar si el usuario tiene una suscripcion activa
-          const me = await trpc.auth.me.query();
-          if (me.hasActiveSubscription) return actions.reject();
-          const existingOrder = await trpc.orders.ownOrders.query({
-            where: {
-              AND: [
-                {
-                  status: 0,
-                },
-                {
-                  payment_method: "Paypal",
-                },
-              ],
-            },
-          });
 
-          if (existingOrder.length > 0) {
-            return actions.reject();
-          }
-          actions.resolve();
-        }}
-        createSubscription={async (data, actions) => {
-          try {
-            const sub = await actions.subscription.create({
-              plan_id: ppPlan.paypal_plan_id,
-            });
-            return sub;
-          } catch (e: any) {
-            console.log(e?.message);
-          }
-          return "";
-        }}
-        onApprove={async (data: any, actions) => {
-          const result = await trpc.subscriptions.subscribeWithPaypal.mutate({
-            planId: ppPlan.id,
-            // planId: plan.id,
-            subscriptionId: data.subscriptionID,
-          });
-          setSuccessMessage(
-            "Gracias por tu pago, ya puedes empezar a descargar!"
-          );
-          setSuccessTitle("Compra Exitosa");
-          openSuccess();
-          return data;
-        }}
-      />
+  const successSubscription = async (data: any) => {
+    await trpc.subscriptions.subscribeWithPaypal.mutate({
+      planId: ppPlan.id,
+      // planId: plan.id,
+      subscriptionId: data.subscriptionID,
+    });
+    setSuccessMessage(
+      "Gracias por tu pago, ya puedes empezar a descargar!"
     );
-
+    setSuccessTitle("Compra Exitosa");
+    openSuccess();
     return data;
-  };
+  }
 
+  // useCallback(retreivePaypalPlan, [plan]);
   useEffect(() => {
     retreivePaypalPlan();
-  }, []);
-
+  }, [])
   return (
     <div
       className={
@@ -305,8 +263,13 @@ function PlanCard(props: PlanCardPropsI) {
                 </button>
                 <div>
                   {ppPlan !== null &&
-                    ppPlan.paypal_plan_id !== null &&
-                    paypalMethod()}
+                    (ppPlan.paypal_plan_id || ppPlan.paypal_plan_id_test) &&
+                    <PayPalComponent 
+                      plan={ppPlan}
+                      type={'subscription'}
+                      onApprove={successSubscription}
+                      onClick={() => {}}
+                    />}
                 </div>
               </>
             )}
@@ -323,9 +286,17 @@ function PlanCard(props: PlanCardPropsI) {
       <ConditionModal
         title={"Cambio de plan"}
         message={`¿Estás seguro que quieres cambiar al plan de: "${plan.name}" de $${plan.price} ${plan.moneda}?`}
+        show={false}
+        onHide={handleChangeModal}
+        action={changePlan}
+      />
+      <ChangeSubscriptionModal
+        title={changeTitle}
+        message={changeMessage}
         show={showChangeModal}
         onHide={handleChangeModal}
         action={changePlan}
+        plan={plan}
       />
       <OxxoModal
         show={showOxxoModal}

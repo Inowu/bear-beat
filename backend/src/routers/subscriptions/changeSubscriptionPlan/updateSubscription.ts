@@ -30,7 +30,7 @@ export const updateStripeSubscription = async ({
 
   if (!subscriptionId || !subscriptionId.startsWith('sub_')) {
     log.error(
-      `[CHANGE_PLAN] This subscription's order has no subscription id or the id is invalid, order id: ${subscriptionOrder.id}`,
+      `[CHANGE_PLAN_STRIPE] This subscription's order has no subscription id or the id is invalid, order id: ${subscriptionOrder.id}`,
     );
 
     throw new TRPCError({
@@ -61,7 +61,8 @@ export const updateStripeSubscription = async ({
   try {
     await stripeInstance.subscriptionItems.update(stripeSub.id, {
       // Checked outside method
-      price: newPlan.stripe_prod_id!,
+      price: process.env.NODE_ENV === 'production' ? newPlan.stripe_prod_id! : newPlan.stripe_prod_id_test!,
+      proration_behavior: 'always_invoice',
     });
 
     await updateFtpUserInfo({
@@ -92,7 +93,7 @@ export const updatePaypalSubscription = async ({
 }: Params) => {
   if (!subscriptionOrder.txn_id || !subscriptionOrder.txn_id.startsWith('I-')) {
     log.error(
-      `[CHANGE_PLAN] This subscription's order has no subscription id or the id is invalid, order id: ${subscriptionOrder.id}`,
+      `[CHANGE_PLAN_PAYPAL] This subscription's order has no subscription id or the id is invalid, order id: ${subscriptionOrder.id}`,
     );
 
     throw new TRPCError({
@@ -115,11 +116,10 @@ export const updatePaypalSubscription = async ({
   try {
     // Update the paypal subscription
     const response = await axios.post(
-      `${paypal.paypalUrl()}/v1/billing/subscriptions/${
-        subscriptionOrder.txn_id
+      `${paypal.paypalUrl()}/v1/billing/subscriptions/${subscriptionOrder.txn_id
       }/revise`,
       {
-        plan_id: newPlan.paypal_plan_id,
+        plan_id: process.env.NODE_ENV === 'production' ? newPlan.paypal_plan_id : newPlan.paypal_plan_id_test,
       },
       {
         headers: {

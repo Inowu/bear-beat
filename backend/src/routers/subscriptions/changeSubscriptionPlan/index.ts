@@ -110,14 +110,14 @@ export const changeSubscriptionPlan = shieldedProcedure
       });
     }
 
-    if (newPlan.stripe_prod_id) {
+    if (newPlan.stripe_prod_id || newPlan.stripe_prod_id_test) {
       return await updateStripeSubscription({
         newPlan,
         subscription: subscriptionInfo,
         subscriptionOrder,
         user,
       });
-    } else if (newPlan.paypal_plan_id) {
+    } else if (newPlan.paypal_plan_id || newPlan.paypal_plan_id_test) {
       if (previousPlan.paypal_product_id !== newPlan.paypal_product_id) {
         log.error(
           `[CHANGE_PLAN] Plan change failed, previous plan ${previousPlan.id} and new plan ${newPlan.id} have different paypal product ids`,

@@ -30,7 +30,7 @@ function CheckoutForm(props: ICheckout) {
   const [errorMessage, setErrorMessage] = useState<any>("");
   const [card, setCard] = useState<any>(null);
   const { plan, setDiscount, discount } = props;
-  const stripe: any = useStripe();
+  const stripe = useStripe();
   const elements = useElements();
 
   const navigate = useNavigate();
@@ -84,13 +84,13 @@ function CheckoutForm(props: ICheckout) {
           suscribeMethod.clientSecret,
           card === null
             ? {
-                payment_method: {
-                  card: elements.getElement("card")!,
-                },
-              }
+              payment_method: {
+                card: elements.getElement("card")!,
+              },
+            }
             : {
-                payment_method: card,
-              }
+              payment_method: card,
+            }
         );
         getPaymentMethods();
         if (result.error) {

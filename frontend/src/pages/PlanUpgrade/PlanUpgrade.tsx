@@ -36,8 +36,8 @@ export const PlanUpgrade = () => {
             },
           },
         };
-        const plans: any = await trpc.plans.findManyPlans.query(body);
-        setPlans(plans);
+        const fetchPlans: any = await trpc.plans.findManyPlans.query(body);
+        setPlans(fetchPlans);
       } else {
         if (product_id === null) {
           setLoader(false);
@@ -57,8 +57,8 @@ export const PlanUpgrade = () => {
             },
           },
         };
-        const plans: any = await trpc.plans.findManyPlans.query(body);
-        let paypalplans = plans.filter(
+        const fetchPlans: any = await trpc.plans.findManyPlans.query(body);
+        let paypalplans = fetchPlans.filter(
           (plan: any) => plan.paypal_product_id === product_id
         );
         setPlans(paypalplans);
@@ -96,6 +96,7 @@ export const PlanUpgrade = () => {
           stripe_prod_id: tempPlan.stripe_prod_id!,
           stripe_prod_id_test: tempPlan.stripe_prod_id_test!,
           paypal_plan_id: tempPlan.paypal_plan_id!,
+          paypal_plan_id_test: tempPlan.paypal_plan_id_test!,
           tokens: null,
           tokens_karaoke: null,
           tokens_video: null,
@@ -104,7 +105,7 @@ export const PlanUpgrade = () => {
         }
         getPlans(
           tempPlan.id,
-          tempPlan.stripe_prod_id,
+          tempPlan.stripe_prod_id ? tempPlan.stripe_prod_id : tempPlan.stripe_prod_id_test,
           +quota.regular.used.toString(),
           tempPlan.paypal_product_id,
           tempPlan.moneda
@@ -139,7 +140,7 @@ export const PlanUpgrade = () => {
         <PlanCard
           currentPlan={true}
           plan={currentPlan}
-          getCurrentPlan={() => {}}
+          getCurrentPlan={() => { }}
         />
       )}
       {plans.map((plan: IPlans, index) => {
