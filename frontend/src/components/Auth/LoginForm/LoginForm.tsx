@@ -4,13 +4,17 @@ import trpc from "../../../api";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useState } from "react";
-import { ErrorModal } from "../../../components/Modals/ErrorModal/ErrorModal";
+import { ErrorModal, VerifyPhoneModal } from "../../../components/Modals";
 import { Spinner } from "../../../components/Spinner/Spinner";
 
 function LoginForm() {
   const [loader, setLoader] = useState<boolean>(false);
   const [show, setShow] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<any>("");
+  const [showVerify, setShowVerify] = useState<boolean>(false);
+  const [newUserId, setNewUserId] = useState<number>(0);
+  const [newUserPhone, setNewUserPhone] = useState<string>("");
+  const [loginInfo, setLoginInfo] = useState<any>({})
   const { handleLogin } = useUserContext();
   const navigate = useNavigate();
   const closeModal = () => {
@@ -39,16 +43,29 @@ function LoginForm() {
       };
       try {
         const login = await trpc.auth.login.query(body);
-        handleLogin(login.token, login.refreshToken);
-        navigate("/");
+        if (login.user.active) {
+          handleLogin(login.token, login.refreshToken);
+          navigate("/");
+        } else {
+          setLoginInfo(login);
+          setNewUserId(login.user.id);
+          setNewUserPhone(login.user.phone!);
+          setShowVerify(true);
+        }
+        
         setLoader(false);
-      } catch (error) {
+      } catch (error: any) {
+        setLoader(false);
         setShow(true);
         setErrorMessage(error);
-        setLoader(false);
       }
     },
   });
+
+  const handleSuccessVerify = () => {
+    handleLogin(loginInfo.token, loginInfo.refreshToken);
+    setShowVerify(false);
+  }
 
   return (
     <form onSubmit={formik.handleSubmit}>
@@ -93,6 +110,12 @@ function LoginForm() {
         <Link to={"registro"}>Registrarme</Link>
       </div>
       <ErrorModal show={show} onHide={closeModal} message={errorMessage} />
+      <VerifyPhoneModal 
+        showModal={showVerify}
+        newUserId={newUserId}
+        newUserPhone={newUserPhone}
+        onHideModal={handleSuccessVerify}
+      />
     </form>
   );
 }
