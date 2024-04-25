@@ -73,26 +73,6 @@ export function VerifyPhoneModal(props: IVerifyPhoneModal) {
         },
     });
 
-    //   useEffect(() => {
-    //     if (editingUser) {
-    //       let countryCode = "52";
-    //       let phoneNumber = editingUser.phone;
-    //       if ( editingUser.phone && editingUser.phone.length > 10) {
-    //         countryCode = editingUser.phone.slice(1, 3);
-    //         phoneNumber = editingUser.phone.slice(3).trim();
-    //       }
-
-    //       formik.setValues({
-    //         password: editingUser.password,
-    //         email: editingUser.email,
-    //         name: editingUser.username,
-    //         phone: phoneNumber,
-    //       });
-
-    //       setCode(countryCode);
-    //     }
-    //   }, [editingUser]);
-
     return (
         <Modal show={showModal} centered>
             <form className="modal-addusers" onSubmit={formik.handleSubmit}>
