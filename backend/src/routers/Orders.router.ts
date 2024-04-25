@@ -98,14 +98,16 @@ export const ordersRouter = router({
             return `${key} LIKE '%${value}%'`;
           })
           .join(' AND ');
-
+        
         const countQuery = `SELECT COUNT(*) as totalCount 
           FROM orders o 
           INNER JOIN users u ON o.user_id = u.id 
           ${filters ? `WHERE ${filters}` : ""}`;
 
         // Set pagination or not based on offset and limit being defined.
-        const limitOffset = (take && skip)
+        // Take will always be truthy if we're trying to fill the table.
+        // Take will be falsey if we're trying to export orders in a CSV.
+        const limitOffset = (take)
           ? `LIMIT ${take} OFFSET ${skip}`
           : '';
 

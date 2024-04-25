@@ -30,6 +30,7 @@
     .btn-addUsers:hover {
       background-color: #00abbe;
     }
+
     .btn-addUsers:disabled {
       background-color: gray;
     }
@@ -38,6 +39,19 @@
   .admin-table {
     .table-contain {
       max-height: 72vh;
+
+      table thead,
+      table tfoot {
+        position: sticky;
+      }
+
+      table thead {
+        inset-block-start: 0;
+      }
+
+      table tfoot {
+        inset-block-end: 0;
+      }
     }
   }
 
