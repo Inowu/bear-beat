@@ -24,4 +24,5 @@ export const UsersScalarFieldEnumSchema = z.enum([
   'token_expiration',
   'refresh_token',
   'blocked',
+  'verified'
 ]);

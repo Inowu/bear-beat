@@ -90,7 +90,8 @@ export const register = publicProcedure
           role_id: RolesIds.normal,
           ip_registro: req.ip,
           registered_on: new Date().toISOString(),
-          active: ActiveState.NotActive,
+          active: ActiveState.Active,
+          verified: false
         },
       });
 

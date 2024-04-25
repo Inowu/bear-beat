@@ -83,8 +83,8 @@ export const login = publicProcedure
       });
     }
 
-    const isActive = user.active;
-    if (!isActive) {
+    const isVerified = user.verified;
+    if (!isVerified) {
       await twilio.getVerificationCode(user.phone!);
     }
 

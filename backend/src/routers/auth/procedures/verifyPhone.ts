@@ -35,11 +35,7 @@ export const verifyPhone = publicProcedure
             }
 
             try {
-                console.log('INTENTAREMOS ENVIAR UN CODIGO')
-                log.info('[REGISTER] INTENTAREMOS ENVIAR UN CODIGO');
                 const verificationCode = await twilio.verifyCode(phoneNumber, code);
-                console.log('THIS IS verificationCode', verificationCode);
-                log.info('THIS IS verificationCode', verificationCode);
 
                 if (verificationCode) {
                     log.info('[VERIFY_PHONE] Phone was successfully verified');
@@ -48,7 +44,7 @@ export const verifyPhone = publicProcedure
                             id: userId,
                         },
                         data: {
-                            active: 1
+                            verified: true
                         },
                     });
 

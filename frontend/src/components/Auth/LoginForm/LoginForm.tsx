@@ -43,7 +43,7 @@ function LoginForm() {
       };
       try {
         const login = await trpc.auth.login.query(body);
-        if (login.user.active) {
+        if (login.user.verified) {
           handleLogin(login.token, login.refreshToken);
           navigate("/");
         } else {
