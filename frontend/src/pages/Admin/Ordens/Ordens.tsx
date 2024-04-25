@@ -134,19 +134,19 @@ export const Ordens = () => {
   return (
     <div className="ordens-contain">
       <div className="header">
-        
+
         <div className="title-and-export">
-        <h1>Ordenes</h1>
-        <CsvDownloader
-          className="btn-addUsers"
-          filename="lista_de_ordenes"
-          extension=".csv"
-          separator=";"
-          wrapColumnChar=""
-          datas={transformOrdersToExport}
-          text="Exportar Ordenes"
-          disabled={ordens.length === 0}
-        />
+          <h1>Ordenes</h1>
+          <CsvDownloader
+            className="btn-addUsers"
+            filename="lista_de_ordenes"
+            extension=".csv"
+            separator=";"
+            wrapColumnChar=""
+            datas={transformOrdersToExport}
+            text="Exportar Ordenes"
+            disabled={ordens.length === 0}
+          />
         </div>
         <div className="search-input">
           <input
@@ -253,16 +253,23 @@ export const Ordens = () => {
                   );
                 })}
             </tbody>
+            <tfoot>
+              <tr>
+                <th colSpan={7}>
+                  <Pagination
+                    totalLoader={totalLoader}
+                    totalData={totalOrdens}
+                    title="ordenes"
+                    startFilter={startFilter}
+                    currentPage={filters.page}
+                    limit={filters.limit}
+                  />
+                </th>
+              </tr>
+            </tfoot>
           </table>
         </div>
-        <Pagination
-          totalLoader={totalLoader}
-          totalData={totalOrdens}
-          title="ordenes"
-          startFilter={startFilter}
-          currentPage={filters.page}
-          limit={filters.limit}
-        />
+
       </div>
     </div>
   );
