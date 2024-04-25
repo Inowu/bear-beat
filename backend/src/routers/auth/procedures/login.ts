@@ -4,6 +4,7 @@ import bcrypt from 'bcrypt';
 import { publicProcedure } from '../../../procedures/public.procedure';
 import { generateTokens } from './utils/generateTokens';
 import { RolesIds } from '../interfaces/roles.interface';
+import { twilio } from '../../../twilio';
 
 export const login = publicProcedure
   .input(
@@ -82,5 +83,13 @@ export const login = publicProcedure
       });
     }
 
-    return generateTokens(prisma, user);
+    const isVerified = user.verified;
+    if (!isVerified) {
+      await twilio.getVerificationCode(user.phone!);
+    }
+
+    const tokens = await generateTokens(prisma, user);
+    const loginData = {...tokens, user: user}
+
+    return loginData;
   });

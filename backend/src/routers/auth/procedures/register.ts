@@ -11,6 +11,7 @@ import { stripNonAlphabetic } from './utils/formatUsername';
 import { log } from '../../../server';
 import { brevo } from '../../../email';
 import { manyChat } from '../../../many-chat';
+import { twilio } from '../../../twilio';
 
 export const register = publicProcedure
   .input(
@@ -90,6 +91,7 @@ export const register = publicProcedure
           ip_registro: req.ip,
           registered_on: new Date().toISOString(),
           active: ActiveState.Active,
+          verified: false
         },
       });
 
@@ -155,6 +157,12 @@ export const register = publicProcedure
         log.error(`[REGISTER] Error while sending email ${e.message}`);
       }
 
+      try {
+        await twilio.getVerificationCode(newUser.phone!);
+      } catch (error: any) {
+        log.error(`[REGISTER] Error while sending verification code ${error.message}`);
+      }
+
       // This implicitly creates a new subscriber in ManyChat or retrieves an existing one
       await manyChat.addTagToUser(newUser, 'USER_REGISTERED');
 
@@ -163,6 +171,7 @@ export const register = publicProcedure
       return {
         ...tokens,
         message: 'Usuario fue creado correctamente',
+        user: newUser
       };
     },
   );
