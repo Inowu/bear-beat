@@ -168,7 +168,7 @@ function MyAccount() {
 
   const downloadXMLFile = (ftpAccount: IFtpAccount) => {
     const { host, passwd, port, userid } = ftpAccount;
-    const xml = `<?xml version="1.0"?>
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
       <FileZilla3>
         <Servers>
           <Server>
@@ -179,6 +179,7 @@ function MyAccount() {
             <User>${userid}</User>
             <Pass>${passwd}</Pass>
             <Logontype>1</Logontype>
+            <EncodingType>UTF-8</EncodingType>
             <TimezoneOffset>0</TimezoneOffset>
             <PasvMode>MODE_DEFAULT</PasvMode>
             <MaximumMultipleConnections>0</MaximumMultipleConnections>
