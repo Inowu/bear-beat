@@ -37,16 +37,13 @@ export const Ordens = () => {
     searchData: "",
     startDate: undefined,
   });
-  const [exportedOrders, setExportedOrders] = useState<any>([]);
 
   const startFilter = (key: string, value: string | number) => {
     let tempFilters: any = filters;
     if (key !== "page") {
       tempFilters.page = 0;
     }
-    if (key === "startDate" || key === "endDate") {
-      value = value;
-    }
+    
     tempFilters[key] = value;
     setFilters(tempFilters);
     filterOrdens(tempFilters);
@@ -127,11 +124,11 @@ export const Ordens = () => {
     if (currentUser && currentUser.role !== "admin") {
       navigate("/");
     }
-  }, [currentUser]);
+  }, [currentUser, navigate]);
 
   useEffect(() => {
     filterOrdens(filters);
-  }, []);
+  }, [filters]);
 
   return (
     <div className="ordens-contain">
