@@ -97,25 +97,61 @@ export const subscribe = async ({
         service === PaymentService.ADMIN ||
         service === PaymentService.PAYPAL
       ) {
-        const order = await prisma.orders.create({
-          data: {
-            txn_id: subId,
-            user_id: user.id,
-            status: OrderStatus.PAID,
-            is_plan: 1,
-            plan_id: dbPlan?.id,
-            payment_method: service,
-            date_order: new Date().toISOString(),
-            total_price: Number(dbPlan?.price),
+        const currentOrder = await prisma.orders.findFirst({
+          where: {
+            id: orderId,
           },
+          orderBy: {
+            date_order: 'desc'
+          }
         });
+
+        let selectedOrderId: number;
+        const now = new Date();
+
+        if (currentOrder) {
+          const timeDifference = Math.abs(now.getTime() - currentOrder.date_order.getTime());
+          const minutesDiffernece = Math.floor(timeDifference / 1000 / 60);
+
+          if (minutesDiffernece > 1) {
+            const order = await prisma.orders.create({
+              data: {
+                txn_id: subId,
+                user_id: user.id,
+                status: OrderStatus.PAID,
+                is_plan: 1,
+                plan_id: dbPlan?.id,
+                payment_method: service,
+                date_order: new Date().toISOString(),
+                total_price: Number(dbPlan?.price),
+              },
+            });
+            selectedOrderId = order.id;
+          } else {
+            selectedOrderId = currentOrder.id;
+          }
+        } else {
+          const order = await prisma.orders.create({
+            data: {
+              txn_id: subId,
+              user_id: user.id,
+              status: OrderStatus.PAID,
+              is_plan: 1,
+              plan_id: dbPlan?.id,
+              payment_method: service,
+              date_order: new Date().toISOString(),
+              total_price: Number(dbPlan?.price),
+            },
+          });
+          selectedOrderId = order.id;
+        }
 
         await prisma.descargasUser.update({
           where: {
             id: responses[responses.length - 1].id,
           },
           data: {
-            order_id: order.id,
+            order_id: selectedOrderId,
           },
         });
 
@@ -128,7 +164,7 @@ export const subscribe = async ({
               plan_name: dbPlan.name,
               price: dbPlan.price,
               currency: dbPlan.moneda.toUpperCase(),
-              ORDER: order.id,
+              ORDER: selectedOrderId,
             },
           });
         } catch (e) {
@@ -232,24 +268,58 @@ export const subscribe = async ({
 
       log.info(`[SUBSCRIPTION] Creating order for user ${user.id}`);
 
-      const order = await prisma.orders.create({
-        data: {
-          txn_id: subId,
-          user_id: user.id,
-          status: OrderStatus.PAID,
-          is_plan: 1,
-          plan_id: dbPlan?.id,
-          payment_method: service,
-          date_order: new Date().toISOString(),
-          total_price: Number(dbPlan?.price),
+      const currentOrder = await prisma.orders.findFirst({
+        where: {
+          id: orderId,
         },
+        orderBy: {
+          date_order: 'desc'
+        }
       });
 
       log.info(
         `[SUBSCRIPTION] Creating descargas user entry for user ${user.id}`,
       );
 
-      await insertInDescargas({ expirationDate, user, prisma, order });
+      const now = new Date();
+
+      if (currentOrder) {
+        const timeDifference = Math.abs(now.getTime() - currentOrder.date_order.getTime());
+        const minutesDiffernece = Math.floor(timeDifference / 1000 / 60);
+
+        if (minutesDiffernece > 1) {
+          const order = await prisma.orders.create({
+            data: {
+              txn_id: subId,
+              user_id: user.id,
+              status: OrderStatus.PAID,
+              is_plan: 1,
+              plan_id: dbPlan?.id,
+              payment_method: service,
+              date_order: new Date().toISOString(),
+              total_price: Number(dbPlan?.price),
+            },
+          });
+          await insertInDescargas({ expirationDate, user, prisma, order });
+        } else {
+          await insertInDescargas({ expirationDate, user, prisma, order: currentOrder });
+        }
+      } else {
+        const order = await prisma.orders.create({
+          data: {
+            txn_id: subId,
+            user_id: user.id,
+            status: OrderStatus.PAID,
+            is_plan: 1,
+            plan_id: dbPlan?.id,
+            payment_method: service,
+            date_order: new Date().toISOString(),
+            total_price: Number(dbPlan?.price),
+          },
+        });
+        await insertInDescargas({ expirationDate, user, prisma, order });
+      }
+
     } catch (e) {
       log.error(`Error while renovating subscription: ${e}`);
     }
