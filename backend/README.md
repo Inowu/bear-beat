@@ -5,7 +5,7 @@ In order to enable zero-downtime deploys, the current deployment scheme consists
 
 ##### How to know which pm2 instance is currently active
 
-1. Check the nginx configuration (`/etc/nginx/sites-enabled/thebearbeatapi.lat)`, specifically the `proxy_pass` statement inside the root location (`/`), if the current url points to port 5000 (`http://localhost:5000`) that means `bearbeat-blue` is the cururently active instance, otherwise it's `bearbeat-green`.
+1. Check the nginx configuration (`/etc/nginx/sites-enabled/thebearbeatapi.lat`), specifically the `proxy_pass` statement inside the root location (`/`), if the current url points to port 5000 (`http://localhost:5000`) that means `bearbeat-blue` is the cururently active instance, otherwise it's `bearbeat-green`.
 2. Check the logs of both instances with `pm2 logs bearbeat-blue | tail -n 50`. You can make a test request like this: `curl https://thebearbeatapi.lat` and check the logs of both instances to see which is currently active.
 
 ### Steps to deploy
