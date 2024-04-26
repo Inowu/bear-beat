@@ -47,3 +47,11 @@ export enum USER_ROLES {
   'EDITOR' = 3,
   'NORMAL' = 4,
 }
+
+export enum ORDER_STATUS {
+  PENDING = 0,
+  PAID = 1,
+  FAILED = 2,
+  CANCELLED = 3,
+  EXPIRED = 4,
+}
