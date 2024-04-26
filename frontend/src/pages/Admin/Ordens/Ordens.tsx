@@ -8,7 +8,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import CsvDownloader from "react-csv-downloader";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import "./Ordens.scss";
-import { IAdminOrders } from "../../../interfaces/admin";
+import { IAdminOrders, ORDER_STATUS } from "../../../interfaces/admin";
 import { of } from "await-of";
 
 interface IAdminFilter {
@@ -37,16 +37,13 @@ export const Ordens = () => {
     searchData: "",
     startDate: undefined,
   });
-  const [exportedOrders, setExportedOrders] = useState<any>([]);
 
   const startFilter = (key: string, value: string | number) => {
     let tempFilters: any = filters;
     if (key !== "page") {
       tempFilters.page = 0;
     }
-    if (key === "startDate" || key === "endDate") {
-      value = value;
-    }
+    
     tempFilters[key] = value;
     setFilters(tempFilters);
     filterOrdens(tempFilters);
@@ -60,6 +57,7 @@ export const Ordens = () => {
       skip: filt.page * filt.limit,
       email: filt.searchData,
       paymentMethod: filt.paymentMethod,
+      status: ORDER_STATUS.PAID
     };
 
     if (filt.startDate && filt.endDate) {
@@ -90,6 +88,7 @@ export const Ordens = () => {
       skip: 0,
       email: filters.searchData,
       paymentMethod: filters.paymentMethod,
+      status: ORDER_STATUS.PAID
     };
 
     if (filters.startDate && filters.endDate) {
@@ -125,11 +124,11 @@ export const Ordens = () => {
     if (currentUser && currentUser.role !== "admin") {
       navigate("/");
     }
-  }, [currentUser]);
+  }, [currentUser, navigate]);
 
   useEffect(() => {
     filterOrdens(filters);
-  }, []);
+  }, [filters]);
 
   return (
     <div className="ordens-contain">
