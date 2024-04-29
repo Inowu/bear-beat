@@ -11,13 +11,14 @@ export interface IAdminUser {
 }
 export interface IAdminOrders {
   city: string;
-  email: string;
-  phone: string;
-  payment_method: "Paypal" | "Stripe" | null;
-  txn_id: string;
-  total_price: number;
   date_order: Date;
+  email: string;
+  id: number;
+  payment_method: "Paypal" | "Stripe" | null;
+  phone: string;
   status: number;
+  total_price: number;
+  txn_id: string;
 }
 export interface IAdminCoupons {
   active: number;
