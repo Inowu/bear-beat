@@ -60,8 +60,9 @@ export const HistoryCheckout = () => {
   const transformHistoryData = async () => {
     try {
       const tempHistory: any = await exportPayments();
+      console.log('this is tempHistory', tempHistory);
       return tempHistory.map((his: any) => ({
-        Usuario: his.users.first_name,
+        Usuario: his.users.username,
         Correo: his.users.email,
         Teléfono: his.users.phone,
         "Última Fecha de pago": his.last_checkout_date.toLocaleDateString(),
@@ -89,7 +90,7 @@ export const HistoryCheckout = () => {
           filename="lista_de_usuarios"
           extension=".csv"
           separator=";"
-          wrapColumnChar="'"
+          wrapColumnChar=""
           datas={transformHistoryData()}
           text="Exportar Historial"
         />
