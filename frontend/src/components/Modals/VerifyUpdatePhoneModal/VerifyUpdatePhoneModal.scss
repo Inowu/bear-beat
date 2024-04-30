@@ -1,0 +1,10 @@
+.c-row2 {
+    display: flex;
+    flex-direction: row;
+    gap: 5px;
+}
+
+btn-option-4:disabled {
+    background-color: gray;
+    cursor: not-allowed;
+}

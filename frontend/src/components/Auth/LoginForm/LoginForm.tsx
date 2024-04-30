@@ -4,7 +4,7 @@ import trpc from "../../../api";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useState } from "react";
-import { ErrorModal, VerifyPhoneModal } from "../../../components/Modals";
+import { ErrorModal, VerifyUpdatePhoneModal } from "../../../components/Modals";
 import { Spinner } from "../../../components/Spinner/Spinner";
 
 function LoginForm() {
@@ -110,7 +110,7 @@ function LoginForm() {
         <Link to={"registro"}>Registrarme</Link>
       </div>
       <ErrorModal show={show} onHide={closeModal} message={errorMessage} />
-      <VerifyPhoneModal 
+      <VerifyUpdatePhoneModal 
         showModal={showVerify}
         newUserId={newUserId}
         newUserPhone={newUserPhone}
