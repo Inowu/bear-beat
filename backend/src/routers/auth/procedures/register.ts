@@ -91,7 +91,7 @@ export const register = publicProcedure
           ip_registro: req.ip,
           registered_on: new Date().toISOString(),
           active: ActiveState.Active,
-          verified: false
+          verified: process.env.NODE_ENV === 'production' ? false : true
         },
       });
 
@@ -157,10 +157,12 @@ export const register = publicProcedure
         log.error(`[REGISTER] Error while sending email ${e.message}`);
       }
 
-      try {
-        await twilio.getVerificationCode(newUser.phone!);
-      } catch (error: any) {
-        log.error(`[REGISTER] Error while sending verification code ${error.message}`);
+      if (process.env.NODE_ENV === 'production') {
+        try {
+          await twilio.getVerificationCode(newUser.phone!);
+        } catch (error: any) {
+          log.error(`[REGISTER] Error while sending verification code ${error.message}`);
+        }
       }
 
       // This implicitly creates a new subscriber in ManyChat or retrieves an existing one
