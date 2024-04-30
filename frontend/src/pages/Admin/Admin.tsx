@@ -11,7 +11,8 @@ import {
   ErrorModal,
   OptionModal,
   EditUserModal,
-  HistoryModal
+  HistoryModal,
+  AddExtraStorageModal
 } from '../../components/Modals'
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -59,6 +60,7 @@ function Admin() {
     limit: 100,
   });
   const [showHistory, setShowHistory] = useState<boolean>(false);
+  const [showAddGB, setShowAddGB] = useState<boolean>(false);
 
   const closeModalAdd = () => {
     setShowModal(false);
@@ -249,6 +251,7 @@ function Admin() {
         }
         setUsers(tempUsers);
         setTotalUsers(totalUsersResponse.length);
+        setTotalLoader(false);
         setLoader(false);
       }
     } catch (error) {
@@ -291,6 +294,15 @@ function Admin() {
     setSelectUser({} as IAdminUser);
   }
 
+  const handleOpenAddGB = async (user: IAdminUser) => {
+    setSelectUser(user);
+    setShowAddGB(true);
+  }
+
+  const handleCloseAddGB = () => {
+    setShowAddGB(false);
+    setSelectUser({} as IAdminUser);
+  }
 
   const signInAsUser = async (user: any) => {
     setLoader(true);
@@ -435,6 +447,7 @@ function Admin() {
                             <button onClick={() => signInAsUser(user)} disabled={user.role === USER_ROLES.ADMIN}>Acceder</button>
                             <button onClick={() => giveSuscription(user)}>Activar</button>
                             <button onClick={() => handleOpenHistory(user)}>Historial</button>
+                            <button onClick={() => handleOpenAddGB(user)}>Agregar GB</button>
                             <button className="icon-button" onClick={() =>
                               openBlockModal(
                                 user,
@@ -460,10 +473,14 @@ function Admin() {
                       <td />
                       <td />
                       <td />
-                      <td /> <td />
+                      <td /> 
+                      <td />
+                      <td />
                     </tr>
                   ) : (
                     <tr key={"array_10" + index} className="tr-load">
+                      <td />
+                      <td />
                       <td />
                       <td />
                       <td />
@@ -518,6 +535,11 @@ function Admin() {
         show={showHistory}
         onHide={handleCloseHistory}
         user={selectUser}
+      />
+      <AddExtraStorageModal
+        showModal={showAddGB}
+        onHideModal={handleCloseAddGB}
+        userId={selectUser.id}
       />
     </div>
   );
