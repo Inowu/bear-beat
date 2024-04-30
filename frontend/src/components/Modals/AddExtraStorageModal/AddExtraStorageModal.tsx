@@ -100,8 +100,8 @@ export function AddExtraStorageModal(props: IVerifyPhoneModal) {
                     <input
                         placeholder="Gigas"
                         type="number"
-                        id="aditionalGigas"
-                        name="aditionalGigas"
+                        id="additionalGigas"
+                        name="additionalGigas"
                         value={formik.values.additionalGigas}
                         onChange={formik.handleChange}
                     />
