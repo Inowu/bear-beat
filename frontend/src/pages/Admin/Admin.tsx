@@ -251,6 +251,7 @@ function Admin() {
         }
         setUsers(tempUsers);
         setTotalUsers(totalUsersResponse.length);
+        setTotalLoader(false);
         setLoader(false);
       }
     } catch (error) {
