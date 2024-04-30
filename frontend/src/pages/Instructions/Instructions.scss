@@ -15,6 +15,11 @@
     display: flex;
     gap: 15px;
 
+    iframe {
+      width: 123vh;
+      height: 70vh;
+    }
+
     ul.steps-nav-container {
       padding: 0;
       list-style: none;
