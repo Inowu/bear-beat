@@ -34,6 +34,17 @@ export const verifyPhone = publicProcedure
                 });
             }
 
+            if (phoneNumber !== existingUser.phone) {
+                await prisma.users.update({
+                    where: {
+                        id: userId,
+                    },
+                    data: {
+                        phone: phoneNumber
+                    },
+                });
+            }
+
             try {
                 const verificationCode = await twilio.verifyCode(phoneNumber, code);
 

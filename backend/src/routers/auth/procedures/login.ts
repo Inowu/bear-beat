@@ -84,9 +84,6 @@ export const login = publicProcedure
     }
 
     const isVerified = user.verified;
-    if (!isVerified) {
-      await twilio.getVerificationCode(user.phone!);
-    }
 
     const tokens = await generateTokens(prisma, user);
     const loginData = {...tokens, user: user}
