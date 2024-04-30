@@ -791,6 +791,16 @@ export const usersRouter = router({
         },
       });
 
+      if (!ftpAccount) {
+        log.error(
+          `[REMOVE_INACTIVE_USERS] Error removing inactive users, FTP User not found`,
+        );
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Ocurrió un error al buscar un usuario FTP',
+        });
+      }
+
       const tallies = await ctx.prisma.ftpquotatallies.findMany({
         where: {
           name: ftpAccount?.userid,
@@ -802,6 +812,16 @@ export const usersRouter = router({
           name: ftpAccount?.userid,
         },
       });
+
+      if (tallies.length === 0 || limits.length === 0) {
+        log.error(
+          `[REMOVE_INACTIVE_USERS] Error removing inactive users, no limits or tallies found`,
+        );
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Ocurrió un error al tratar de encontrar el limite del usuario',
+        });
+      }
 
       try {
         await ctx.prisma.$executeRaw`SET FOREIGN_KEY_CHECKS=0`;
@@ -856,18 +876,9 @@ export const usersRouter = router({
               user_id: input.userId,
             },
           }),
-          ctx.prisma.users.deleteMany({
+          ctx.prisma.users.delete({
             where: {
-              AND: [
-                {
-                  id: input.userId
-                },
-                {
-                  NOT: {
-                    role_id: RolesIds.admin,
-                  },
-                },
-              ],
+              id: input.userId
             },
           }),
           ctx.prisma.deletedUsers.create({
