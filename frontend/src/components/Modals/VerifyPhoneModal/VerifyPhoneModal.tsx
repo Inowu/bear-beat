@@ -1,4 +1,5 @@
 import "../Modal.scss";
+import './VerifyPhoneModal.scss';
 import { ErrorModal } from "../ErrorModal/ErrorModal";
 import { Modal } from "react-bootstrap";
 import { of } from "await-of";
