@@ -108,6 +108,7 @@ export const Ordens = () => {
     }
 
     const transformedOrdens = tempOrders!.data.map((order: any) => ({
+      Orden: order.id,
       Correo: order.email,
       Telefono: order.phone,
       "Metodo de pago": order.payment_method,
@@ -149,7 +150,7 @@ export const Ordens = () => {
         </div>
         <div className="search-input">
           <input
-            placeholder="Buscar por email o teléfono"
+            placeholder="Buscar por orden, email o teléfono"
             onChange={(e: any) => {
               startFilter("searchData", e.target.value);
             }}
@@ -210,6 +211,7 @@ export const Ordens = () => {
           <table>
             <thead>
               <tr>
+                <th>No. Orden</th>
                 <th>Correo</th>
                 <th>Telefono</th>
                 <th>Metodo de Pago</th>
@@ -224,6 +226,7 @@ export const Ordens = () => {
                 ? ordens.map((orden, index: number) => {
                   return (
                     <tr key={"admin_ordens_" + index}>
+                      <td className="">{orden.id}</td>
                       <td className="">{orden.email}</td>
                       <td className="">{orden.phone}</td>
                       <td className="">
@@ -254,7 +257,7 @@ export const Ordens = () => {
             </tbody>
             <tfoot>
               <tr>
-                <th colSpan={7}>
+                <th colSpan={8}>
                   <Pagination
                     totalLoader={totalLoader}
                     totalData={totalOrdens}
