@@ -1,6 +1,6 @@
-import React from 'react'
 import { Modal } from 'react-bootstrap'
 import './../Modal.scss'
+import './ErrorModal.scss'
 import {RiCloseCircleLine} from 'react-icons/ri'
 import { IUser } from '../../../interfaces/User';
 interface IError {

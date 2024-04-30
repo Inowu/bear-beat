@@ -1,5 +1,5 @@
-import React from 'react'
 import './../Modal.scss'
+import './SuccessModal.scss'
 import { Modal } from 'react-bootstrap'
 import { RiCloseCircleLine } from 'react-icons/ri';
 interface ISuccess {
