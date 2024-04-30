@@ -11,7 +11,8 @@ import {
   ErrorModal,
   OptionModal,
   EditUserModal,
-  HistoryModal
+  HistoryModal,
+  DeleteUOneUserModal
 } from '../../components/Modals'
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -59,6 +60,7 @@ function Admin() {
     limit: 100,
   });
   const [showHistory, setShowHistory] = useState<boolean>(false);
+  const [showDeleteUser, setShowDeleteUser] = useState<boolean>(false);
 
   const closeModalAdd = () => {
     setShowModal(false);
@@ -291,6 +293,16 @@ function Admin() {
     setSelectUser({} as IAdminUser);
   }
 
+  const handleDeleteUser = async (user: IAdminUser) => {
+    setSelectUser(user);
+    setShowDeleteUser(true);
+  }
+
+  const handleCloseDeleteUser = () => {
+    setShowDeleteUser(false);
+    setSelectUser({} as IAdminUser);
+  }
+
 
   const signInAsUser = async (user: any) => {
     setLoader(true);
@@ -434,6 +446,7 @@ function Admin() {
                             <button onClick={() => handleEditUser(user)}>Editar</button>
                             <button onClick={() => signInAsUser(user)} disabled={user.role === USER_ROLES.ADMIN}>Acceder</button>
                             <button onClick={() => giveSuscription(user)}>Activar</button>
+                            <button onClick={() => handleDeleteUser(user)} disabled={user.role === USER_ROLES.ADMIN}>Eliminar</button>
                             <button onClick={() => handleOpenHistory(user)}>Historial</button>
                             <button className="icon-button" onClick={() =>
                               openBlockModal(
@@ -517,6 +530,11 @@ function Admin() {
       <HistoryModal
         show={showHistory}
         onHide={handleCloseHistory}
+        user={selectUser}
+      />
+      <DeleteUOneUserModal 
+        show={showDeleteUser}
+        onHide={handleCloseDeleteUser}
         user={selectUser}
       />
     </div>
