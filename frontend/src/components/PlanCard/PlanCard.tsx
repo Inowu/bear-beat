@@ -7,13 +7,13 @@ import { plans } from "../../utils/Constants";
 import { useEffect, useState } from "react";
 import trpc from "../../api";
 import { manychatApi } from "../../api/manychat";
-import { 
-  ChangeSubscriptionModal, 
-  ConditionModal, 
-  ErrorModal, 
-  OxxoModal, 
-  SpeiModal, 
-  SuccessModal 
+import {
+  ChangeSubscriptionModal,
+  ConditionModal,
+  ErrorModal,
+  OxxoModal,
+  SpeiModal,
+  SuccessModal
 } from "../../components/Modals";
 import PayPalComponent from "../../components/PayPal/PayPalComponent";
 
@@ -21,9 +21,11 @@ interface PlanCardPropsI {
   plan: IPlans;
   currentPlan?: boolean;
   getCurrentPlan: () => void;
+  selectMethod?: (planId: number) => void;
+  selectedPlan?: number;
 }
 function PlanCard(props: PlanCardPropsI) {
-  const { plan, currentPlan, getCurrentPlan } = props;
+  const { plan, currentPlan, getCurrentPlan, selectMethod, selectedPlan } = props;
   const [showOxxoModal, setShowOxxoModal] = useState<boolean>(false);
   const [oxxoData, setOxxoData] = useState({} as IOxxoData);
   const [showSpeiModal, setShowSpeiModal] = useState<boolean>(false);
@@ -258,19 +260,27 @@ function PlanCard(props: PlanCardPropsI) {
                     Pagar vía Spei
                   </button>
                 )}
-                <button onClick={() => handleCheckout(plan.id)}>
-                  COMPRAR CON TARJETA
-                </button>
-                <div>
-                  {ppPlan !== null &&
-                    (ppPlan.paypal_plan_id || ppPlan.paypal_plan_id_test) &&
-                    <PayPalComponent 
-                      plan={ppPlan}
-                      type={'subscription'}
-                      onApprove={successSubscription}
-                      onClick={() => {}}
-                    />}
-                </div>
+                {selectMethod && (selectedPlan !== plan.id) && (
+                  <button onClick={() => selectMethod(plan.id)}>
+                    COMPRAR
+                  </button>
+                )}
+                {(!selectMethod || (selectedPlan === plan.id)) && (
+                  <>
+                    <button onClick={() => handleCheckout(plan.id)}>
+                      COMPRAR CON TARJETA
+                    </button>
+                    {ppPlan !== null &&
+                      (ppPlan.paypal_plan_id || ppPlan.paypal_plan_id_test) &&
+                      <PayPalComponent
+                        plan={ppPlan}
+                        type={'subscription'}
+                        onApprove={successSubscription}
+                        onClick={() => { }}
+                        key={`paypal-button-component-${plan.id}`}
+                      />}
+                  </>
+                )}
               </>
             )}
           </>
