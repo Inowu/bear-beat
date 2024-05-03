@@ -260,12 +260,12 @@ function PlanCard(props: PlanCardPropsI) {
                     Pagar vía Spei
                   </button>
                 )}
-                {selectMethod && (selectedPlan !== plan.id) && (
+                {selectMethod && ppPlan && (selectedPlan !== plan.id) && (
                   <button onClick={() => selectMethod(plan.id)}>
                     COMPRAR
                   </button>
                 )}
-                {(!selectMethod || (selectedPlan === plan.id)) && (
+                {(selectMethod && ppPlan &&(selectedPlan === plan.id)) && (
                   <>
                     <button onClick={() => handleCheckout(plan.id)}>
                       COMPRAR CON TARJETA
@@ -280,6 +280,11 @@ function PlanCard(props: PlanCardPropsI) {
                         key={`paypal-button-component-${plan.id}`}
                       />}
                   </>
+                )}
+                {(!selectMethod || !ppPlan) && (
+                  <button onClick={() => handleCheckout(plan.id)}>
+                    COMPRAR CON TARJETA
+                  </button>
                 )}
               </>
             )}
