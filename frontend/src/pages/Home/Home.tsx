@@ -290,7 +290,7 @@ function Home() {
       getFiles();
       setPastFile([]);
     }
-  }, [fileChange]);
+  }, [fileChange, closeFile]);
   return (
     <div className="home-main-container">
       <PreviewModal
@@ -328,9 +328,8 @@ function Home() {
                 )
               }
               return (
-                <div>
+                <div key={`folder_${index}`}>
                   <p
-                    key={`folder_${index}`}
                     onClick={() => { goToFolder({ folder: index + 1 }) }}
                   >
                     {file}
