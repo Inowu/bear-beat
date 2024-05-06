@@ -78,14 +78,14 @@ export const manyChat = {
     }
   },
   setCustomField: async function (
-    mcId: number,
+    mcId: any,
     fieldKey: string,
     fieldValue: string,
   ) {
     try {
       const response = await client.post('/fb/subscriber/setCustomField', {
         subscriber_id: mcId,
-        field_name: fieldKey,
+        field_id: fieldKey,
         field_value: fieldValue,
       });
 
@@ -157,6 +157,17 @@ export const manyChat = {
         subscriber_id: mcId,
         tag_id: manyChatTags[tag],
       });
+
+      try {
+        await this.setCustomField(mcId, '10989658', user.phone!);
+      } catch (error) {
+        log.error(
+          `[MANYCHAT] Error while adding phone number to subscriber with id ${mcId}: ${
+            JSON.stringify((error as AxiosError).response?.data) || error
+          }`,
+        );
+      }
+      
 
       return response.data;
     } catch (error: any) {
