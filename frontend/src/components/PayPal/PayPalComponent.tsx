@@ -38,8 +38,13 @@ export default function PayPalComponent(props: Props) {
     
     function render(options: PayPalButtonsComponentOptions) {
         if (window.paypal && window.paypal.Buttons) {
+            // Helps prevent PayPal from rendering multiple buttons.
+            const previousPayPalButton = document.querySelector('.paypal-container');
+            if (previousPayPalButton) {
+                previousPayPalButton.innerHTML = "";
+            }
+
             buttons = window.paypal.Buttons(options);
-            // buttons.render(`#${buttonId}`).catch((err: any) => {
             buttons.render(`#${buttonId}`).catch((err: any) => { 
                 console.warn(
                     "Warning - Caught an error when attempting to render component",
@@ -146,7 +151,7 @@ export default function PayPalComponent(props: Props) {
                             tagline: false,
                         },
                         onApprove: onApproveOrder,
-                        createOrder
+                        createOrder,
                     });
                 });
         } else {
@@ -175,6 +180,6 @@ export default function PayPalComponent(props: Props) {
 
     ///how to use         <PayPalComponent type="subscription" onApprove={saveOrder} onClick={() => undefined}></PayPalComponent>
     return (
-        <div id={`${buttonId}`}></div>
+        <div className='paypal-container' id={`${buttonId}`}></div>
     );
 }
