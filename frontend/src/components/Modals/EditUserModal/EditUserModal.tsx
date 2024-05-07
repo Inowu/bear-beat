@@ -104,6 +104,7 @@ export function EditUserModal(props: IEditPlanModal) {
       if (editingUser.phone) {
         dialCode = editingUser.phone.trim().split(" ")[0].replace("+", "");
         phoneNumber = editingUser.phone.trim().split(" ")[1];
+        setCountryCode(findCountryCode(editingUser.phone.trim().split(" ")[0]));
       }
 
       formik.setValues({
@@ -113,7 +114,6 @@ export function EditUserModal(props: IEditPlanModal) {
         phone: phoneNumber,
       });
       
-      setCountryCode(findCountryCode(editingUser.phone.trim().split(" ")[0]));
       setCode(dialCode);
     }
   }, [editingUser]);
