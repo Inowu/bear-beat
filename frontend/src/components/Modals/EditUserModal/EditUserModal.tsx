@@ -13,7 +13,7 @@ import { SuccessModal } from "../SuccessModal/SuccessModal";
 import { of } from "await-of";
 import PhoneInput from "react-phone-input-2";
 import es from "react-phone-input-2/lang/es.json";
-
+import { findCountryCode } from "../../../utils/country_codes";
 
 interface IEditPlanModal {
   showModal: boolean;
@@ -37,6 +37,7 @@ export function EditUserModal(props: IEditPlanModal) {
   const [show, setShow] = useState<boolean>(false);
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
   const [code, setCode] = useState<string>("52");
+  const [countryCode, setCountryCode] = useState<string>('mx');
   const [errorMessage, setErrorMessage] = useState<any>("");
   const closeModal = () => {
     setShow(false);
@@ -53,7 +54,7 @@ export function EditUserModal(props: IEditPlanModal) {
     name: Yup.string().required("El nombre es requerido"),
     phone: Yup.string()
       .required("El teléfono es requerido")
-      .matches(/^[0-9]{10}$/, "El teléfono no es válido"),
+      .matches(/^[0-9]{7,10}$/, "El teléfono no es válido"),
   });
 
   const handlePhoneNumberChange = (value: any, country: any) => {
@@ -97,11 +98,12 @@ export function EditUserModal(props: IEditPlanModal) {
 
   useEffect(() => {
     if (editingUser) {
-      let countryCode = "52";
+      let dialCode = "52";
       let phoneNumber = editingUser.phone;
-      if ( editingUser.phone && editingUser.phone.length > 10) {
-        countryCode = editingUser.phone.slice(1, 3);
-        phoneNumber = editingUser.phone.slice(3).trim();
+
+      if (editingUser.phone) {
+        dialCode = editingUser.phone.trim().split(" ")[0].replace("+", "");
+        phoneNumber = editingUser.phone.trim().split(" ")[1];
       }
 
       formik.setValues({
@@ -110,8 +112,9 @@ export function EditUserModal(props: IEditPlanModal) {
         name: editingUser.username,
         phone: phoneNumber,
       });
-
-      setCode(countryCode);
+      
+      setCountryCode(findCountryCode(editingUser.phone.trim().split(" ")[0]));
+      setCode(dialCode);
     }
   }, [editingUser]);
 
@@ -152,7 +155,7 @@ export function EditUserModal(props: IEditPlanModal) {
           <PhoneInput
             containerClass="dial-container"
             buttonClass="dial-code"
-            country={"mx"}
+            country={countryCode}
             placeholder="Teléfono"
             localization={es}
             onChange={handlePhoneNumberChange}

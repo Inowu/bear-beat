@@ -55,7 +55,7 @@ function SignUpForm() {
       .min(6, "La contraseña debe contenter 6 caracteres"),
     phone: Yup.string()
       .required("El teléfono es requerido")
-      .matches(/^[0-9]{10}$/, "El teléfono no es válido"),
+      .matches(/^[0-9]{7,10}$/, "El teléfono no es válido"),
     passwordConfirmation: Yup.string()
       .required("Debe confirmar la contraseña")
       .oneOf([Yup.ref("password")], "Ambas contraseñas deben ser iguales"),
@@ -90,8 +90,14 @@ function SignUpForm() {
         setShowVerify(true);
         setLoader(false);
       } catch (error: any) {
+        let errorMessage = error.message;
+
+        if (error.message.includes('"validation"')) {
+          errorMessage = JSON.parse(error.message)[0].message;
+        } 
+
         setShow(true);
-        setErrorMessage(error.message);
+        setErrorMessage(errorMessage);
         setLoader(false);
       }
     },
