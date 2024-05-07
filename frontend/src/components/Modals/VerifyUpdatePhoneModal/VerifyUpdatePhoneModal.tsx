@@ -12,7 +12,7 @@ import * as Yup from "yup";
 import trpc from "../../../api";
 import PhoneInput from "react-phone-input-2";
 import es from "react-phone-input-2/lang/es.json";
-
+import { findCountryCode } from "../../../utils/country_codes";
 
 interface IVerifyPhoneModal {
     showModal: boolean;
@@ -30,6 +30,7 @@ export function VerifyUpdatePhoneModal(props: IVerifyPhoneModal) {
     const [showSuccess, setShowSuccess] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<any>("");
     const [code, setCode] = useState<string>("52");
+    const [countryCode, setCountryCode] = useState<string>('mx');
     const [disableConfirmPhone, setDisableConfirmPhone] = useState<boolean>(true);
     const [disableSendCode, setDisableSendCode] = useState<boolean>(false);
     const [codeSent, setCodeSent] = useState<boolean>(false);
@@ -48,7 +49,7 @@ export function VerifyUpdatePhoneModal(props: IVerifyPhoneModal) {
         code: Yup.string().required("El código es requerido").length(6, "El código debe tener 6 digitos"),
         phone: Yup.string()
             .required("El teléfono es requerido")
-            .matches(/^[0-9]{10}$/, "El teléfono no es válido"),
+            .matches(/^[0-9]{7,10}$/, "El teléfono no es válido"),
     });
 
     const initialValues = {
@@ -111,15 +112,16 @@ export function VerifyUpdatePhoneModal(props: IVerifyPhoneModal) {
     }
 
     useEffect(() => {
-        let countryCode = "52";
+        let dialCode = "52";
         let phoneNumber = newUserPhone;
-        if (newUserPhone && newUserPhone.length > 10) {
-            countryCode = newUserPhone.slice(1, 3);
-            phoneNumber = newUserPhone.slice(3).trim();
+        if (newUserPhone) {
+            dialCode = newUserPhone.trim().split(" ")[0].replace("+", "");
+            phoneNumber = newUserPhone.trim().split(" ")[1];
         }
 
         formik.setFieldValue('phone', phoneNumber);
-        setCode(countryCode);
+        setCountryCode(findCountryCode(newUserPhone.trim().split(" ")[0]));
+        setCode(dialCode);
     }, [newUserPhone])
     // UPDATE users SET verified = 0 WHERE registered_on < '2024-04-29';
     // SELECT * FROM users u WHERE registered_on < '2024-04-29';
@@ -133,7 +135,7 @@ export function VerifyUpdatePhoneModal(props: IVerifyPhoneModal) {
                     <PhoneInput
                         containerClass="dial-container"
                         buttonClass="dial-code"
-                        country={"mx"}
+                        country={countryCode}
                         placeholder="Teléfono"
                         localization={es}
                         onChange={handlePhoneNumberChange}
