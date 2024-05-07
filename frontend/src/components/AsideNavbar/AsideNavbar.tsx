@@ -87,7 +87,7 @@ function AsideNavbar(props: AsideNavbarPropsI) {
                 </li>
               </Link>
               {
-                !currentUser?.hasActiveSubscription ?
+                (!currentUser?.hasActiveSubscription || currentUser.isSubscriptionCancelled) ?
                 <Link to={"/planes"}>
                   <li>
                     <FontAwesomeIcon icon={faCartPlus} /> Get plan
