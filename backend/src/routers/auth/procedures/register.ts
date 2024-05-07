@@ -18,17 +18,13 @@ export const register = publicProcedure
     z.object({
       username: z
         .string()
-        .min(3, {
-          message: 'El nombre de usuario debe tener al menos 3 caracteres',
-        })
+        .min(3, 'El nombre de usuario debe tener al menos 3 caracteres')
         // At least one alphabetic character
-        .regex(/^[a-zA-Z0-9]*[a-zA-Z]+[a-zA-Z0-9]*$/, {
-          message: 'El nombre de usuario debe tener por lo menos una letra',
-        }),
-      email: z.string().email({ message: 'Email inválido' }),
+        .regex(/^[a-zA-Z0-9]*[a-zA-Z]+[a-zA-Z0-9]*$/, 'El nombre de usuario no tiene un formato valido, no incluya caracteres especiales'),
+      email: z.string().email('Email inválido'),
       password: z
         .string()
-        .min(6, { message: 'La contraseña debe tener al menos 6 caracteres' }),
+        .min(6, 'La contraseña debe tener al menos 6 caracteres'),
       phone: z.string(),
     }),
   )

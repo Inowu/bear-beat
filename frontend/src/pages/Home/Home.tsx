@@ -12,13 +12,14 @@ import PreviewModal from "../../components/PreviewModal/PreviewModal";
 import { useEffect, useState } from "react";
 import trpc from "../../api";
 import { IFiles } from "interfaces/Files";
-import { downloadMP3, sortArrayByName } from "../../functions/functions";
+import { sortArrayByName } from "../../functions/functions";
 import { Spinner } from "../../components/Spinner/Spinner";
 import { useUserContext } from "../../contexts/UserContext";
 import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
 import { useDownloadContext } from "../../contexts/DownloadContext";
 import { ConditionModal } from "../../components/Modals/ConditionModal/ContitionModal";
 import { of } from "await-of";
+import Pagination from "../../components/Pagination/Pagination";
 
 interface IAlbumData {
   name: string;
@@ -30,9 +31,9 @@ interface IAlbumData {
 }
 
 interface QueryFolder {
-  back?: boolean, 
-  next?: string, 
-  folder?: number
+  back?: boolean,
+  next?: string,
+  folder?: number,
 }
 
 function Home() {
@@ -52,6 +53,15 @@ function Home() {
   const [index, setIndex] = useState<number>(-1);
   const [show, setShow] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<any>("");
+  const [paginationLoader, setPaginationLoader] = useState(false);
+  const [showPagination, setShowPagination] = useState(false);
+  const [totalSearch, setTotalSearch] = useState(0);
+  const [filters, setFilters] = useState<{ limit: number, page: number }>({
+    limit: 20,
+    page: 0,
+  });
+  const [searchValue, setSearchValue] = useState<string>("");
+
   const closeError = () => {
     setShow(false);
   };
@@ -202,7 +212,7 @@ function Home() {
     };
     try {
       setShowDownload(true);
-      const album = await trpc.ftp.downloadDir.query(body);
+      await trpc.ftp.downloadDir.query(body);
       setCurrentFile(file);
       setFileData({
         path: url,
@@ -232,18 +242,23 @@ function Home() {
     }
   };
   const startSearch = async (value: string) => {
-    setPastFile([]);
+    setShowPagination(true);
+    setPaginationLoader(true);
+    // setPastFile([]);
+    setSearchValue(value);
     if (value === "") {
-      return getFiles();
+      setShowPagination(false);
+      return goToFolder({});
     }
     let body = {
       query: value,
-      limit: 20,
+      limit: filters.limit,
+      offset: filters.page * filters.limit
     };
     try {
-      const result: any = await trpc.ftp.search.query(body);
+      const result = await trpc.ftp.search.query(body);
       let values: any = [];
-      result.documents.map((val: any) => {
+      result.documents.forEach((val) => {
         if (val.value) {
           values.push(val.value);
         } else {
@@ -251,9 +266,22 @@ function Home() {
         }
       });
       setfiles(values);
+      setTotalSearch(result.total);
+      setPaginationLoader(false);
     } catch (error) {
       console.log(error);
     }
+  };
+
+  const nextPage = (key: string, value: string | number) => {
+    let tempFilters: any = filters;
+    if (key !== "page") {
+      tempFilters.page = 0;
+    }
+
+    tempFilters[key] = value;
+    setFilters(tempFilters);
+    startSearch(searchValue);
   };
 
   useEffect(() => {
@@ -265,7 +293,7 @@ function Home() {
       getFiles();
       setPastFile([]);
     }
-  }, [fileChange]);
+  }, [fileChange, closeFile]);
   return (
     <div className="home-main-container">
       <PreviewModal
@@ -287,11 +315,11 @@ function Home() {
           <FontAwesomeIcon icon={faSearch} />
         </div>
       </div>
-      {pastFile.length > 0 && (
+      {(pastFile.length > 0 && !showPagination) && (
         <>
           <div className="folder-structure-container">
             {pastFile.map((file: any, index) => {
-              const isLastFolder = pastFile.length == index + 1
+              const isLastFolder = pastFile.length === index + 1
               if (isLastFolder) {
                 return (
                   <p
@@ -303,10 +331,9 @@ function Home() {
                 )
               }
               return (
-                <div>
+                <div key={`folder_${index}`}>
                   <p
-                    key={`folder_${index}`}
-                    onClick={() => { goToFolder({folder: index + 1}) }}
+                    onClick={() => { goToFolder({ folder: index + 1 }) }}
                   >
                     {file}
                   </p>
@@ -316,7 +343,7 @@ function Home() {
             })}
           </div>
           <div className="btn-back">
-            <button onClick={() => {goToFolder({back: true})}}>
+            <button onClick={() => { goToFolder({ back: true }) }}>
               <FontAwesomeIcon icon={faArrowLeft} />
               Back
             </button>
@@ -339,7 +366,7 @@ function Home() {
                     <div className="folder-card">
                       <div
                         className="name-container"
-                        onClick={() => {goToFolder({next: file.name})}}
+                        onClick={() => { goToFolder({ next: file.name }) }}
                       >
                         <FontAwesomeIcon icon={faFolder} />
                         <h3>{file.name}</h3>
@@ -406,7 +433,19 @@ function Home() {
             <Spinner size={4} width={0.4} color="#2c2c2c" />
           )}
         </div>
+        {showPagination && (
+          <Pagination
+            totalLoader={paginationLoader}
+            totalData={totalSearch}
+            title="ordenes"
+            startFilter={nextPage}
+            currentPage={filters.page}
+            limit={filters.limit}
+          />
+        )}
+
       </div>
+
       <ConditionModal
         show={showConditionModal}
         onHide={closeConditionModal}

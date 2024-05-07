@@ -288,9 +288,18 @@ export const usersRouter = router({
 
       const inactiveUsers = await prisma.users.findMany({
         where: {
-          id: {
-            notIn: activeUsers.map((user) => user.user_id),
-          },
+          AND: [
+            {
+              id: {
+                notIn: activeUsers.map((user) => user.user_id),
+              },
+            },
+            {
+              NOT: {
+                role_id: RolesIds.admin,
+              },
+            },
+          ],
         },
       });
 
