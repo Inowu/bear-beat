@@ -26,6 +26,14 @@ export const cancelServicesSubscriptions = async ({
         },
       ],
     },
+    orderBy: [
+      {
+        date_end: 'desc',
+      },
+      {
+        id: 'desc'
+      },
+    ]
   });
 
   if (!activeSubscription) {
