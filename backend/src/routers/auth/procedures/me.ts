@@ -26,8 +26,8 @@ export const me = shieldedProcedure.query(
       ftpAccounts.length === 1
         ? ftpAccounts[0]
         : ftpAccounts.find(
-            (acc) => !acc.userid.endsWith(extendedAccountPostfix),
-          );
+          (acc) => !acc.userid.endsWith(extendedAccountPostfix),
+        );
 
     const hasActiveSubscription = await prisma.descargasUser.findFirst({
       where: {
@@ -42,6 +42,14 @@ export const me = shieldedProcedure.query(
           },
         ],
       },
+      orderBy: [
+        {
+          date_end: 'desc',
+        },
+        {
+          id: 'desc'
+        },
+      ]
     });
 
     let isSubscriptionCancelled = false;
@@ -53,8 +61,11 @@ export const me = shieldedProcedure.query(
       else {
         const order = await prisma.orders.findFirst({
           where: {
-            id: hasActiveSubscription.order_id!,
+            id: orderId,
           },
+          orderBy: {
+            date_order: 'desc'
+          }
         });
 
         isSubscriptionCancelled = Boolean(order?.is_canceled);
@@ -69,10 +80,10 @@ export const me = shieldedProcedure.query(
       extendedFtpAccount,
       ftpAccount: subscriptionAccount
         ? {
-            ...subscriptionAccount,
-            host: process.env.FTP_HOST,
-            port: process.env.FTP_PORT,
-          }
+          ...subscriptionAccount,
+          host: process.env.FTP_HOST,
+          port: process.env.FTP_PORT,
+        }
         : null,
     };
   },
