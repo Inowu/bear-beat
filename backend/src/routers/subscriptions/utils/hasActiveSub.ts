@@ -44,10 +44,34 @@ export const hasActiveSubscription = async ({
   });
 
   if (existingSubscription) {
-    throw new TRPCError({
-      code: 'BAD_REQUEST',
-      message: 'There is already an active subscription for this user',
-    });
+    const orderId = existingSubscription.order_id;
+
+    if (!orderId) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'There is already an active subscription for this user',
+      });
+    } else {
+      const order = await prisma.orders.findFirst({
+        where: {
+          id: orderId,
+        },
+      });
+
+      if (!order) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'There is already an active subscription for this user',
+        });
+      } else {
+        if (!order.is_canceled) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'There is already an active subscription for this user',
+          });
+        }
+      }
+    }
   }
 
   switch (service) {

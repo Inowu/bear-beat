@@ -162,13 +162,15 @@ function Home() {
     if (file.path) {
       name = file.path;
     }
+    console.log(currentUser)
     if (currentUser?.hasActiveSubscription) {
       let path = pastFile.join("/") + "/" + name;
-      //TEST
-      // const url = "https://kale67.world/download?path=" + encodeURIComponent(path) + '&token=' + userToken;
-      // DOMAIN
+      const domain = process.env.REACT_APP_ENVIRONMENT === 'development'
+        ? 'http://localhost:5001'
+        : 'https://thebearbeatapi.lat'
       const url =
-        "https://thebearbeatapi.lat/download?path=" +
+        domain +
+        "/download?path=" +
         encodeURIComponent(path) +
         "&token=" +
         userToken;
@@ -186,11 +188,12 @@ function Home() {
     }
     if (currentUser?.hasActiveSubscription) {
       let path = pastFile.join("/") + "/" + name;
-      //TEST
-      // const url = "https://kale67.world/download-dir?path=" + encodeURIComponent(path) + '&token=' + userToken;
-      // DOMAIN
+      const domain = process.env.REACT_APP_ENVIRONMENT === 'development'
+        ? 'http://localhost:5001'
+        : 'https://thebearbeatapi.lat'
       const url =
-        "https://thebearbeatapi.lat/download-dir?path=" +
+        domain +
+        "/download-dir?path=" +
         encodeURIComponent(path) +
         "&token=" +
         userToken;
