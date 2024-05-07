@@ -9,6 +9,9 @@ export const getCurrentSubscriptionPlan = shieldedProcedure.query(
       where: {
         user_id: user.id,
       },
+      orderBy: {
+        id: 'desc'
+      }
     });
 
     if (!sub || !sub.order_id) {

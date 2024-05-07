@@ -307,7 +307,7 @@ function Admin() {
   const signInAsUser = async (user: any) => {
     setLoader(true);
     const [loginAsUser, errorLogin] = await of(trpc.auth.login.query({
-      username: user.username,
+      username: user.email,
       password: user.password,
       isAdmin: true
     }));

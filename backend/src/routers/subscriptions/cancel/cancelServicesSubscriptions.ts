@@ -26,6 +26,14 @@ export const cancelServicesSubscriptions = async ({
         },
       ],
     },
+    orderBy: [
+      {
+        date_end: 'desc',
+      },
+      {
+        id: 'desc'
+      },
+    ]
   });
 
   if (!activeSubscription) {
@@ -70,45 +78,47 @@ export const cancelServicesSubscriptions = async ({
     },
   });
 
-  const ftpAccounts = await prisma.ftpUser.findMany({
-    where: {
-      user_id: user.id,
-    },
-  });
+  // Don't update descargar_user and quota tallies since after billing cycle they won't be able to download ever again.
 
-  if (ftpAccounts.length > 0) {
-    for (const account of ftpAccounts) {
-      const accountTallies = await prisma.ftpquotatallies.findFirst({
-        where: {
-          name: account.userid,
-        },
-      });
+  // const ftpAccounts = await prisma.ftpUser.findMany({
+  //   where: {
+  //     user_id: user.id,
+  //   },
+  // });
 
-      const accountLimits = await prisma.ftpQuotaLimits.findFirst({
-        where: {
-          name: account.userid,
-        },
-      });
+  // if (ftpAccounts.length > 0) {
+  //   for (const account of ftpAccounts) {
+  //     const accountTallies = await prisma.ftpquotatallies.findFirst({
+  //       where: {
+  //         name: account.userid,
+  //       },
+  //     });
 
-      if (accountTallies && accountLimits) {
-        await prisma.ftpquotatallies.update({
-          where: {
-            id: accountTallies.id,
-          },
-          data: {
-            bytes_out_used: gbToBytes(Number(accountLimits.bytes_out_avail)),
-          },
-        });
-      }
-    }
-  }
+  //     const accountLimits = await prisma.ftpQuotaLimits.findFirst({
+  //       where: {
+  //         name: account.userid,
+  //       },
+  //     });
 
-  await prisma.descargasUser.update({
-    where: {
-      id: activeSubscription.id,
-    },
-    data: {
-      date_end: new Date(),
-    },
-  });
+  //     if (accountTallies && accountLimits) {
+  //       await prisma.ftpquotatallies.update({
+  //         where: {
+  //           id: accountTallies.id,
+  //         },
+  //         data: {
+  //           bytes_out_used: gbToBytes(Number(accountLimits.bytes_out_avail)),
+  //         },
+  //       });
+  //     }
+  //   }
+  // }
+
+  // await prisma.descargasUser.update({
+  //   where: {
+  //     id: activeSubscription.id,
+  //   },
+  //   data: {
+  //     date_end: new Date(),
+  //   },
+  // });
 };

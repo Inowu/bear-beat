@@ -87,6 +87,12 @@ function SignUpForm() {
         setRegisterInfo(register);
         setNewUserId(register.user.id);
         setNewUserPhone(register.user.phone!);
+
+        if(process.env.REACT_APP_ENVIRONMENT === 'development') {
+          handleLogin(register.token, register.refreshToken);
+          navigate("/");
+        }
+
         setShowVerify(true);
         setLoader(false);
       } catch (error: any) {
