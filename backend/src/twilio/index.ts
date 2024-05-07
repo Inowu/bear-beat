@@ -18,15 +18,12 @@ export const twilio = {
         return verification.status === 'approved'
     },
     sendMessage: async(phoneNumber: string, url: string) => {
-        const body = `Se envió una solicitud de recuperación de contraseña. Haz clic en el siguiente link para cambiar la contraseña.
-        ${url}`;
-        // const body = `Se envió una solicitud de recuperación de contraseña. Haz clic en el siguiente link para cambiar la contraseña.`;
         const curatedPhoneNumber = phoneNumber.trim().replace(' ', '');
         const message = await client.messages.create({
-            to: `whatsapp:${curatedPhoneNumber}`, 
-            body,
-            from: 'whatsapp:+15138776826',
+            contentSid: process.env.TWILIO_CONTENT_SID,
+            contentVariables: JSON.stringify({url}),
             messagingServiceSid: process.env.TWILIO_MESSAGING_SID,
+            to: `whatsapp:${curatedPhoneNumber}`, 
         });
 
         return message.status;
