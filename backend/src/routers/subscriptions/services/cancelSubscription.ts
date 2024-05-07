@@ -36,8 +36,17 @@ export const cancelSubscription = async ({
         },
       ],
     },
+    orderBy: [
+      {
+        date_end: 'desc',
+      },
+      {
+        id: 'desc'
+      },
+    ]
   });
 
+  
   if (!download) {
     log.info(
       `[CANCEL_SUB] No active subscription for user ${user.id}, no action taken to cancel subscription`,
