@@ -9,7 +9,7 @@ import { twilio } from '../../../twilio';
 export const login = publicProcedure
   .input(
     z.object({
-      username: z.string(),
+      username: z.string().email('El email no tiene un formato valido'),
       password: z.string(),
       isAdmin: z.boolean().optional()
     }),

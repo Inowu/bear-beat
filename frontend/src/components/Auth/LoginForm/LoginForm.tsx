@@ -55,9 +55,15 @@ function LoginForm() {
         
         setLoader(false);
       } catch (error: any) {
+        let errorMessage = error.message;
+
+        if (error.message.includes('"validation"')) {
+          errorMessage = JSON.parse(error.message)[0].message;
+        } 
+
         setLoader(false);
         setShow(true);
-        setErrorMessage(error);
+        setErrorMessage(errorMessage);
       }
     },
   });

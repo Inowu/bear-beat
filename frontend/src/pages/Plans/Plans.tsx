@@ -8,6 +8,7 @@ import { Spinner } from "../../components/Spinner/Spinner";
 function Plans() {
   const [plans, setPlans] = useState<IPlans[]>([]);
   const [loader, setLoader] = useState<boolean>(true);
+  const [selectedPlan, setSelectedPlan] = useState<number>(0)
   const getPlans = async () => {
     let body = {
       where: {
@@ -24,6 +25,12 @@ function Plans() {
       console.log(error);
     }
   };
+
+  // Function to indicate PlanCard to let customer choose which Payment Method wants to use.
+  const selectMethod = (planId: number) => {
+    setSelectedPlan(planId)
+  }
+
   useEffect(() => {
     getPlans();
   }, []);
@@ -44,7 +51,9 @@ function Plans() {
           <PlanCard
             plan={plan}
             key={"plan_" + index}
-            getCurrentPlan={() => {}}
+            getCurrentPlan={() => { }}
+            selectMethod={selectMethod}
+            selectedPlan={selectedPlan}
           />
         );
       })}
