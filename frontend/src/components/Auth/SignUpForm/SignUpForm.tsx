@@ -1,10 +1,11 @@
 import "./SignUpForm.scss";
 import "react-phone-input-2/lib/material.css";
+import { findDialCode } from "../../../utils/country_codes";
 import { Link, useNavigate } from "react-router-dom";
 import { ReactComponent as Arrow } from "../../../assets/icons/arrow-down.svg";
 import { Spinner } from "../../../components/Spinner/Spinner";
+import { useCallback, useEffect, useState } from "react";
 import { useFormik } from "formik";
-import { useState } from "react";
 import { useUserContext } from "../../../contexts/UserContext";
 import * as Yup from "yup";
 import es from "react-phone-input-2/lang/es.json";
@@ -22,6 +23,7 @@ function SignUpForm() {
   const { handleLogin } = useUserContext();
   const [show, setShow] = useState<boolean>(false);
   const [code, setCode] = useState<string>("52");
+  const [countryCode, setCountryCode] = useState<string>("mx");
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<any>("");
   const [showVerify, setShowVerify] = useState<boolean>(false);
@@ -100,7 +102,7 @@ function SignUpForm() {
 
         if (error.message.includes('"validation"')) {
           errorMessage = JSON.parse(error.message)[0].message;
-        } 
+        }
 
         setShow(true);
         setErrorMessage(errorMessage);
@@ -115,6 +117,22 @@ function SignUpForm() {
     setShowVerify(false);
     setShowSuccess(true);
   }
+
+  const getUserLocation = useCallback(async () => {
+    try {
+      // This API is free to use but it's limited to 40 requests per IP per hour.
+      const request = await fetch('http://ip-api.com/json');
+      const response = await request.json();
+      setCountryCode(response.countryCode ? response.countryCode.toLowerCase() : 'mx');
+
+      const dialCode = findDialCode(response.countryCode.toUpperCase());
+      setCode(dialCode);
+    } catch (error) {
+      console.error("There was an error while trying to get user's location.", error);
+    }
+  }, [])
+
+  useEffect(() => { getUserLocation() }, [getUserLocation])
 
   return (
     <form className="sign-up-form" onSubmit={formik.handleSubmit}>
@@ -136,7 +154,7 @@ function SignUpForm() {
         <PhoneInput
           containerClass="dial-container"
           buttonClass="dial-code"
-          country={"mx"}
+          country={countryCode}
           placeholder="Teléfono"
           localization={es}
           onChange={handlePhoneNumberChange}
@@ -216,7 +234,7 @@ function SignUpForm() {
         message="Se ha creado su usuario con éxito!"
         title="Registro Exitoso"
       />
-      <VerifyPhoneModal 
+      <VerifyPhoneModal
         showModal={showVerify}
         newUserId={newUserId}
         newUserPhone={newUserPhone}
