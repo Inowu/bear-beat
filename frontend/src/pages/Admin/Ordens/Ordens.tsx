@@ -166,6 +166,7 @@ export const Ordens = () => {
             <option value={"Paypal"}>Paypal</option>
             <option value={"Stripe"}>Stripe</option>
             <option value={"Conekta"}>Conekta OXXO</option>
+            <option value={"Admin"}>Admin</option>
           </select>
         </div>
         <div className="select-input">
