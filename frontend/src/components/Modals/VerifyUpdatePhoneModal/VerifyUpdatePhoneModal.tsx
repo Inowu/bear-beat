@@ -119,6 +119,16 @@ export function VerifyUpdatePhoneModal(props: IVerifyPhoneModal) {
             phoneNumber = newUserPhone.trim().split(" ")[1];
         }
 
+        if (newUserPhone) {
+            if (newUserPhone.includes(" ")) {
+              dialCode = newUserPhone.trim().split(" ")[0].replace("+", "");
+              phoneNumber = newUserPhone.trim().split(" ")[1];
+              setCountryCode(findCountryCode(newUserPhone.trim().split(" ")[0]));
+            } else {
+              phoneNumber = ""
+            }
+          }
+
         formik.setFieldValue('phone', phoneNumber);
         setCountryCode(findCountryCode(newUserPhone.trim().split(" ")[0]));
         setCode(dialCode);
