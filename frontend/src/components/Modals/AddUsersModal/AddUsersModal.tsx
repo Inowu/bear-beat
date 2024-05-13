@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom";
 import "react-phone-input-2/lib/material.css";
 import "../Modal.scss";
 import { ErrorModal } from "../ErrorModal/ErrorModal";
@@ -13,6 +12,7 @@ import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/material.css";
 import es from "react-phone-input-2/lang/es.json";
 import trpc from "../../../api";
+import { USER_ROLES } from "../../../interfaces/admin";
 
 interface IAddUsersModal {
   showModal: boolean;
@@ -58,6 +58,7 @@ export function AddUsersModal(props: IAddUsersModal) {
     phone: "",
     email: "",
     passwordConfirmation: "",
+    role: USER_ROLES.NORMAL
   };
   const handlePhoneNumberChange = (value: any, country: any) => {
     setCode(country.dialCode);
@@ -72,6 +73,7 @@ export function AddUsersModal(props: IAddUsersModal) {
         password: values.password,
         email: values.email,
         phone: `+${code} ${values.phone}`,
+        role_id: values.role 
       };
       try {
         await trpc.users.createOneUsers.mutate({ data: body });
@@ -115,6 +117,19 @@ export function AddUsersModal(props: IAddUsersModal) {
           {formik.errors.email && (
             <div className="formik">{formik.errors.email}</div>
           )}
+        </div>
+        <div className="c-row">
+          <label>Tipo de usuario</label>
+          <select
+            id="role"
+            defaultValue={formik.values.role}
+            onChange={formik.handleChange}
+          >
+            <option value={USER_ROLES.ADMIN}>Admin</option>
+            <option value={USER_ROLES.SUBADMIN}>Subadmin</option>
+            <option value={USER_ROLES.EDITOR}>Editor</option>
+            <option value={USER_ROLES.NORMAL} selected>Normal</option>
+          </select>
         </div>
         <div className="c-row2">
           <PhoneInput
