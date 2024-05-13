@@ -151,7 +151,7 @@ function EditPlanModal(props: IEditPlanModal) {
           <label>Duration</label>
           <select value={formik.values.interval} onChange={formik.handleChange}>
             <option value={"month"}>Mes</option>
-            <option value={"year"}>Aňo</option>
+            <option value={"year"}>Año</option>
           </select>
           {formik.errors.interval && (
             <div className="formik">{formik.errors.interval}</div>

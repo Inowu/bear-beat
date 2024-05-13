@@ -552,11 +552,6 @@ export const usersRouter = router({
                 equals: data.email,
               },
             },
-            {
-              phone: {
-                equals: data.phone
-              }
-            }
           ],
         },
       });
