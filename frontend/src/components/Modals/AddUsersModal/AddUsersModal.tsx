@@ -73,7 +73,7 @@ export function AddUsersModal(props: IAddUsersModal) {
         password: values.password,
         email: values.email,
         phone: `+${code} ${values.phone}`,
-        role_id: values.role 
+        role_id: Number(values.role) 
       };
       try {
         await trpc.users.createOneUsers.mutate({ data: body });
