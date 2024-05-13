@@ -4,6 +4,12 @@ export const findCountryCode = (dialCode: string) => {
     return countryFound?.code.toLowerCase() ?? 'mx';
 }
 
+export const findDialCode = (code: string) => {
+    const countryFound = countryCodes.find((country) => country.code === code);
+
+    return countryFound?.dial_code.slice(1) ?? '52';
+}
+
 const countryCodes = [
     {
         "name": "Afghanistan",

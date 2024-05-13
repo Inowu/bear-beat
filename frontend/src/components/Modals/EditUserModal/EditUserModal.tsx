@@ -1,19 +1,20 @@
-import "react-phone-input-2/lib/material.css";
 import "../Modal.scss";
-import { ErrorModal } from "../ErrorModal/ErrorModal";
-import { useFormik } from "formik";
-import * as Yup from "yup";
-import { useState, useEffect } from "react";
-import { Spinner } from "../../Spinner/Spinner";
-import { Modal } from "react-bootstrap";
-import { RiCloseCircleLine } from "react-icons/ri";
 import "react-phone-input-2/lib/material.css";
-import trpc from "../../../api";
-import { SuccessModal } from "../SuccessModal/SuccessModal";
-import { of } from "await-of";
-import PhoneInput from "react-phone-input-2";
-import es from "react-phone-input-2/lang/es.json";
+import "react-phone-input-2/lib/material.css";
+import { ErrorModal } from "../ErrorModal/ErrorModal";
 import { findCountryCode } from "../../../utils/country_codes";
+import { Modal } from "react-bootstrap";
+import { of } from "await-of";
+import { RiCloseCircleLine } from "react-icons/ri";
+import { Spinner } from "../../Spinner/Spinner";
+import { SuccessModal } from "../SuccessModal/SuccessModal";
+import { useFormik } from "formik";
+import { USER_ROLES } from "../../../interfaces/admin";
+import { useState, useEffect } from "react";
+import * as Yup from "yup";
+import es from "react-phone-input-2/lang/es.json";
+import PhoneInput from "react-phone-input-2";
+import trpc from "../../../api";
 
 interface IEditPlanModal {
   showModal: boolean;
@@ -27,6 +28,7 @@ interface UserToEdit {
   password: string;
   username: string;
   phone: string;
+  role: number;
 }
 
 export function EditUserModal(props: IEditPlanModal) {
@@ -66,6 +68,7 @@ export function EditUserModal(props: IEditPlanModal) {
     password: "",
     name: "",
     phone: "",
+    role: 4,
   };
 
   const formik = useFormik({
@@ -78,6 +81,7 @@ export function EditUserModal(props: IEditPlanModal) {
         username: values.name,
         password: values.password,
         phone: `+${code} ${values.phone}`,
+        role_id: values.role
       };
       
       const [, errorUpdate] = await of(trpc.users.updateOneUsers.mutate({
@@ -102,9 +106,13 @@ export function EditUserModal(props: IEditPlanModal) {
       let phoneNumber = editingUser.phone;
 
       if (editingUser.phone) {
-        dialCode = editingUser.phone.trim().split(" ")[0].replace("+", "");
-        phoneNumber = editingUser.phone.trim().split(" ")[1];
-        setCountryCode(findCountryCode(editingUser.phone.trim().split(" ")[0]));
+        if (editingUser.phone.includes(" ")) {
+          dialCode = editingUser.phone.trim().split(" ")[0].replace("+", "");
+          phoneNumber = editingUser.phone.trim().split(" ")[1];
+          setCountryCode(findCountryCode(editingUser.phone.trim().split(" ")[0]));
+        } else {
+          phoneNumber = ""
+        }
       }
 
       formik.setValues({
@@ -112,6 +120,7 @@ export function EditUserModal(props: IEditPlanModal) {
         email: editingUser.email,
         name: editingUser.username,
         phone: phoneNumber,
+        role: editingUser.role
       });
       
       setCode(dialCode);
@@ -150,6 +159,39 @@ export function EditUserModal(props: IEditPlanModal) {
           {formik.errors.email && (
             <div className="formik">{formik.errors.email}</div>
           )}
+        </div>
+        <div className="c-row">
+          <label>Tipo de usuario</label>
+          <select
+            id="role"
+            defaultValue={formik.values.role}
+            onChange={formik.handleChange}
+          >
+            <option 
+              value={USER_ROLES.ADMIN} 
+              selected={editingUser.role === USER_ROLES.ADMIN}
+            >
+              Admin
+            </option>
+            <option 
+              value={USER_ROLES.SUBADMIN} 
+              selected={editingUser.role === USER_ROLES.SUBADMIN}
+            >
+              Subadmin
+            </option>
+            <option 
+              value={USER_ROLES.EDITOR} 
+              selected={editingUser.role === USER_ROLES.EDITOR}
+            >
+              Editor
+            </option>
+            <option 
+              value={USER_ROLES.NORMAL} 
+              selected={editingUser.role === USER_ROLES.NORMAL}
+            >
+              Normal
+            </option>
+          </select>
         </div>
         <div className="c-row2">
           <PhoneInput
