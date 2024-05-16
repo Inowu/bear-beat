@@ -1,23 +1,37 @@
 import "./Instructions.scss";
+import { of } from "await-of";
+import { useEffect, useRef, useState } from "react";
 import step1 from "../../assets/images/instructions-1.jpg";
 import step2 from "../../assets/images/instructions-2.jpg";
 import step3 from "../../assets/images/instructions-3.jpg";
-import { useRef } from "react";
+import trpc from "../../api"
 
 function Instructions() {
   const step1Ref: any = useRef(null);
   const step2Ref: any = useRef(null);
   const step3Ref: any = useRef(null);
   const step4Ref: any = useRef(null);
+  const [videoURL, setVideoURL] = useState<string>("")
 
-  const url = process.env.REACT_APP_INSTRUCTIONS_VIDEO;
+  const getConfig = async () => {
+    const [videoConfig, errorVideoConfig] = await of(trpc.config.findFirstConfig.query({ where: { name: 'videoURL' } }));
+
+    if (!videoConfig) {
+      console.error(errorVideoConfig);
+      return;
+    }
+
+    setVideoURL(videoConfig.value);
+  }
+
+  useEffect(() => { getConfig() }, [])
 
   return (
     <div className="instructions-main-container">
       <h1>Método de descarga</h1>
       <div className="instructions-content-container">
-        {url ? (
-          <iframe src={url} title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen></iframe>
+        {videoURL !== "" ? (
+          <iframe src={videoURL} title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen></iframe>
         ) : (
           <>
             <ul className="steps-nav-container">
