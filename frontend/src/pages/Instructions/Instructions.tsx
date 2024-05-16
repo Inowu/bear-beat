@@ -83,16 +83,14 @@ function Instructions() {
               <div className="step-card" ref={step1Ref}>
                 <h2>Paso 1</h2>
                 <p>
-                  Descarga e instala filezila cliente en este link
-                  https://filezilla-project.org
+                  Descarga e instala el cliente de FileZilla en este <a href="https://filezilla-project.org/download.php?type=client" target="_blank" rel="noopener noreferrer">link</a>
                 </p>
                 <img src={step1} alt="" />
               </div>
               <div className="step-card" ref={step2Ref}>
                 <h2>Paso 2</h2>
                 <p>
-                  Ve a la sección mi cuenta y en esta sección encontraras tus claves
-                  de usuario FTP
+                  Ve a la sección "Mi Cuenta" y en esta sección encontrarás tus claves de usuario FTP
                 </p>
                 <img src={step2} alt="" />
               </div>
