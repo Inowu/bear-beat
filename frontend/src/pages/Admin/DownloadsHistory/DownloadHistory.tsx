@@ -1,11 +1,13 @@
+import "./DownloadHistory.scss";
+import { AddInstructionsModal } from "../../../components/Modals";
 import { ARRAY_10 } from "../../../utils/Constants";
-import trpc from "../../../api";
-import { useUserContext } from "../../../contexts/UserContext";
+import { IAdminDownloadHistory } from "../../../interfaces/admin";
+import { of } from "await-of";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./DownloadHistory.scss";
+import { useUserContext } from "../../../contexts/UserContext";
 import Pagination from "../../../components/Pagination/Pagination";
-import { IAdminDownloadHistory } from "../../../interfaces/admin";
+import trpc from "../../../api";
 
 interface IAdminFilter {
   page: number;
@@ -23,6 +25,9 @@ export const DownloadHistory = () => {
     page: 0,
     limit: 100,
   });
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [videoURL, setVideoURL] = useState<string>("");
+  const [videoId, setVideoId] = useState<number>(0);
 
   const startFilter = (key: string, value: string | number) => {
     let tempFilters: any = filters;
@@ -51,21 +56,45 @@ export const DownloadHistory = () => {
       console.log(error);
     }
   };
-  
+
+  const getConfig = async () => {
+    const [videoConfig, errorVideoConfig] = await of(trpc.config.findFirstConfig.query({ where: { name: 'videoURL' } }));
+
+    console.log(videoConfig)
+    if (!videoConfig) {
+      console.error(errorVideoConfig);
+      return;
+    }
+
+    setVideoURL(videoConfig.value);
+    setVideoId(videoConfig.id);
+  }
+
+  const onHideModal = () => {
+    setShowModal(false);
+  }
+
   useEffect(() => {
     if (currentUser && currentUser.role !== "admin") {
       navigate("/");
     }
-  }, [currentUser]);
+  }, [currentUser, navigate]);
 
   useEffect(() => {
     filterHistory(filters);
+  }, [filters]);
+
+  useEffect(() => {
+    getConfig();
   }, []);
 
   return (
     <div className="coupons-contain history-contain">
       <div className="header">
         <h1>Historial de Descargas</h1>
+        <button className="btn-addUsers" onClick={() => setShowModal(true)}>
+          Añadir instrucciones
+        </button>
       </div>
       <div className="select-input">
         <p>Cantidad de datos</p>
@@ -124,17 +153,29 @@ export const DownloadHistory = () => {
                   );
                 })}
             </tbody>
+            <tfoot>
+              <tr>
+                <th colSpan={8}>
+                  <Pagination
+                    totalLoader={totalLoader}
+                    totalData={totalHistory}
+                    title="Datos"
+                    startFilter={startFilter}
+                    currentPage={filters.page}
+                    limit={filters.limit}
+                  />
+                </th>
+              </tr>
+            </tfoot>
           </table>
         </div>
-        <Pagination
-          totalLoader={totalLoader}
-          totalData={totalHistory}
-          title="Datos"
-          startFilter={startFilter}
-          currentPage={filters.page}
-          limit={filters.limit}
-        />
       </div>
+      <AddInstructionsModal
+        showModal={showModal}
+        onHideModal={onHideModal}
+        videoURL={videoURL}
+        videoId={videoId}
+      />
     </div>
   );
 };
