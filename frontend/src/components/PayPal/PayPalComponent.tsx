@@ -1,13 +1,13 @@
 import { IPlans } from '../../interfaces/Plans';
 import { loadScript } from "@paypal/paypal-js";
 import { manychatApi } from "../../api/manychat";
-import { 
-    PayPalButtonsComponentOptions, 
-    OnApproveData, 
-    OnApproveActions, 
-    CreateSubscriptionActions, 
-    CreateOrderActions, 
-    OnClickActions 
+import {
+    PayPalButtonsComponentOptions,
+    OnApproveData,
+    OnApproveActions,
+    CreateSubscriptionActions,
+    CreateOrderActions,
+    OnClickActions
 } from "@paypal/paypal-js/types/components/buttons"
 import { useEffect } from 'react'
 import trpc from "../../api";
@@ -35,7 +35,7 @@ export default function PayPalComponent(props: Props) {
             console.log(error);
         }
     };
-    
+
     function render(options: PayPalButtonsComponentOptions) {
         if (window.paypal && window.paypal.Buttons) {
             // Helps prevent PayPal from rendering multiple buttons.
@@ -45,7 +45,7 @@ export default function PayPalComponent(props: Props) {
             }
 
             buttons = window.paypal.Buttons(options);
-            buttons.render(`#${buttonId}`).catch((err: any) => { 
+            buttons.render(`#${buttonId}`).catch((err: any) => {
                 console.warn(
                     "Warning - Caught an error when attempting to render component",
                     err
@@ -102,11 +102,13 @@ export default function PayPalComponent(props: Props) {
             });
         };
         async function createSubscription(data: any, actions: CreateSubscriptionActions) {
+            const planId = process.env.REACT_APP_ENVIRONMENT === 'development'
+                ? props.plan.paypal_plan_id_test
+                : props.plan.paypal_plan_id;
+
             try {
                 const sub = await actions.subscription.create({
-                    plan_id: process.env.REACT_APP_ENVIRONMENT === 'development'
-                        ? props.plan.paypal_plan_id_test
-                        : props.plan.paypal_plan_id,
+                    plan_id: planId,
                 });
                 return sub;
             } catch (e: any) {
@@ -178,7 +180,6 @@ export default function PayPalComponent(props: Props) {
         }
     }
 
-    ///how to use         <PayPalComponent type="subscription" onApprove={saveOrder} onClick={() => undefined}></PayPalComponent>
     return (
         <div className='paypal-container' id={`${buttonId}`}></div>
     );
