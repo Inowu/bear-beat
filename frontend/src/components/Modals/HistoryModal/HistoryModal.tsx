@@ -64,7 +64,7 @@ export function HistoryModal(props: ICondition) {
             return;
         }
 
-        const [tempGigas, errorGigas] = await of(trpc.downloadHistory.getRemainingGigas.query({ userId: user.id }));        if (!tempGigas || errorGigas) {
+        const [tempGigas, errorGigas] = await of(trpc.downloadHistory.getRemainingGigas.query({ userId: user.id })); if (!tempGigas || errorGigas) {
             console.error(errorGigas);
             setErrorMessage(errorGigas?.message!);
             setShowError(true);
@@ -141,16 +141,22 @@ export function HistoryModal(props: ICondition) {
                                         );
                                     })}
                             </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th colSpan={4}>
+                                        <Pagination
+                                            totalLoader={totalLoader}
+                                            totalData={totalHistory}
+                                            title="Datos"
+                                            startFilter={startFilter}
+                                            currentPage={filters.page}
+                                            limit={filters.limit}
+                                        />
+                                    </th>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
-                    <Pagination
-                        totalLoader={totalLoader}
-                        totalData={totalHistory}
-                        title="Datos"
-                        startFilter={startFilter}
-                        currentPage={filters.page}
-                        limit={filters.limit}
-                    />
                 </div>
             </div>
             <ErrorModal show={showError} onHide={closeErrorModal} message={errorMessage} />

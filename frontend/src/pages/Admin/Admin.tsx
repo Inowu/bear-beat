@@ -332,6 +332,24 @@ function Admin() {
     setShowError(false);
   };
 
+  /**
+   * Function that helps determine whether a dropdown should be up or down the Action button.
+   * @param {number} index Actions dropdown that will be shown
+   * @returns {boolean} Tells if dropdown should be displayed up or down
+   */
+  const positioningAction = (index: number): void => {
+    const pageLastPixel = document.body.scrollHeight;
+    const element = document.getElementById(`dropdown-content-${index}`);
+    if (element) {
+      const rect = element.getBoundingClientRect();
+      const elementLastPixel = rect.bottom;
+            
+      if (elementLastPixel >= pageLastPixel) {
+        element.classList.add("dropdown-up");
+      }
+    }
+  }
+
   return (
     <div className="admin-contain">
       <div className="header">
@@ -441,8 +459,8 @@ function Admin() {
                       )}
                       <td className="wrap-td">
                         <div className="dropdown">
-                          <button className="dropbtn">Acciones</button>
-                          <div className="dropdown-content">
+                          <button className="dropbtn" onMouseEnter={() => {positioningAction(index)}}>Acciones</button>
+                          <div className="dropdown-content" id={`dropdown-content-${index}`}>
                             <button onClick={() => handleEditUser(user)}>Editar</button>
                             <button onClick={() => signInAsUser(user)} disabled={user.role === USER_ROLES.ADMIN}>Acceder</button>
                             <button onClick={() => giveSuscription(user)}>Activar</button>
@@ -479,7 +497,6 @@ function Admin() {
                     </tr>
                   ) : (
                     <tr key={"array_10" + index} className="tr-load">
-                      <td />
                       <td />
                       <td />
                       <td />
