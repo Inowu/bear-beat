@@ -165,10 +165,11 @@
 
     table {
         border-spacing: 0;
-        // background-color: red;
         width: 100%;
 
         thead {
+            z-index: 1;
+
             tr {
                 background-color: #dee2e6;
                 border-bottom: 1px solid white;
@@ -182,6 +183,11 @@
                     padding: 10px;
                 }
             }
+
+            tr th:last-child {
+                text-align: center;
+            }
+
         }
 
         tbody {
@@ -260,10 +266,14 @@
                         display: inline-block;
                     }
 
+                    .dropdown-content.dropdown-up {
+                        top: -232px;
+                    }
+
                     .dropdown-content {
                         display: none;
                         position: absolute;
-                        min-width: 160px;
+                        min-width: auto;
                         background-color: #dadee0;
                         box-shadow: 0px 16px 16px 0px rgba(0, 0, 0, 0.2);
                         z-index: 1;
@@ -272,17 +282,19 @@
                         border-radius: 10px;
                         overflow: hidden;
                         right: -15px;
+                        top: 26px;
                     }
 
                     .dropdown-content button {
                         color: black;
-                        padding: 12px 16px;
+                        padding: 10px 16px;
                         text-decoration: none;
                         display: block;
                         cursor: pointer;
                         border-radius: 0%;
                         font-size: 1.2rem;
                         background-color: #dadee0;
+                        min-width: auto;
                     }
 
                     .dropdown-content button:hover {
