@@ -1,6 +1,6 @@
 import "./SignUpForm.scss";
 import "react-phone-input-2/lib/material.css";
-import { findDialCode } from "../../../utils/country_codes";
+import { detectUserCountry, findDialCode } from "../../../utils/country_codes";
 import { Link, useNavigate } from "react-router-dom";
 import { ReactComponent as Arrow } from "../../../assets/icons/arrow-down.svg";
 import { Spinner } from "../../../components/Spinner/Spinner";
@@ -16,6 +16,7 @@ import {
   SuccessModal,
   VerifyPhoneModal
 } from '../../../components/Modals'
+import { useCookies } from "react-cookie";
 
 function SignUpForm() {
   const navigate = useNavigate();
@@ -29,7 +30,8 @@ function SignUpForm() {
   const [showVerify, setShowVerify] = useState<boolean>(false);
   const [newUserId, setNewUserId] = useState<number>(0);
   const [newUserPhone, setNewUserPhone] = useState<string>("");
-  const [registerInfo, setRegisterInfo] = useState<any>({})
+  const [registerInfo, setRegisterInfo] = useState<any>({});
+  const [cookies] = useCookies(['_fbp']);
 
   const closeModal = () => {
     setShow(false);
@@ -83,6 +85,8 @@ function SignUpForm() {
         password: values.password,
         email: values.email,
         phone: `+${code} ${values.phone}`,
+        fbp: cookies._fbp,
+        url: window.location.href
       };
       try {
         const register = await trpc.auth.register.mutate(body);
@@ -90,7 +94,9 @@ function SignUpForm() {
         setNewUserId(register.user.id);
         setNewUserPhone(register.user.phone!);
 
-        if(process.env.REACT_APP_ENVIRONMENT === 'development') {
+        fbq('trackCustom', 'BearBeatRegistro', { email: register.user.email, phone: register.user.phone });
+
+        if (process.env.REACT_APP_ENVIRONMENT === 'development') {
           handleLogin(register.token, register.refreshToken);
           navigate("/");
         }
@@ -120,13 +126,13 @@ function SignUpForm() {
 
   const getUserLocation = useCallback(async () => {
     try {
-      // This API is free to use but it's limited to 40 requests per IP per hour.
-      const request = await fetch('http://ip-api.com/json');
-      const response = await request.json();
-      setCountryCode(response.countryCode ? response.countryCode.toLowerCase() : 'mx');
-
-      const dialCode = findDialCode(response.countryCode.toUpperCase());
-      setCode(dialCode);
+      const country = detectUserCountry();
+      console.log(country);
+      if (country) {
+        setCountryCode(country.code.toLowerCase());
+        const dialCode = findDialCode(country.code.toUpperCase());
+        setCode(dialCode);
+      }
     } catch (error) {
       console.error("There was an error while trying to get user's location.", error);
     }

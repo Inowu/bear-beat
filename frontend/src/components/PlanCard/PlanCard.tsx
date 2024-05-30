@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
 import { useLocation, useNavigate } from "react-router-dom";
 import { plans } from "../../utils/Constants";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import trpc from "../../api";
 import { manychatApi } from "../../api/manychat";
 import {
@@ -16,6 +16,8 @@ import {
   SuccessModal
 } from "../../components/Modals";
 import PayPalComponent from "../../components/PayPal/PayPalComponent";
+import { useCookies } from "react-cookie";
+
 
 interface PlanCardPropsI {
   plan: IPlans;
@@ -23,9 +25,11 @@ interface PlanCardPropsI {
   getCurrentPlan: () => void;
   selectMethod?: (planId: number) => void;
   selectedPlan?: number;
+  userEmail?: string;
+  userPhone?: string;
 }
 function PlanCard(props: PlanCardPropsI) {
-  const { plan, currentPlan, getCurrentPlan, selectMethod, selectedPlan } = props;
+  const { plan, currentPlan, getCurrentPlan, selectMethod, selectedPlan, userEmail, userPhone } = props;
   const [showOxxoModal, setShowOxxoModal] = useState<boolean>(false);
   const [oxxoData, setOxxoData] = useState({} as IOxxoData);
   const [showSpeiModal, setShowSpeiModal] = useState<boolean>(false);
@@ -42,6 +46,7 @@ function PlanCard(props: PlanCardPropsI) {
   const [changeTitle, setChangeTitle] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
+  const [cookies] = useCookies(['_fbp']);
   const { pathname } = location;
   // const ManyChatPixel = require('manychat-pixel-js');
   // const manyChatPixel = new ManyChatPixel('YOUR_PIXEL_ID');
@@ -52,6 +57,19 @@ function PlanCard(props: PlanCardPropsI) {
       console.log(error);
     }
   };
+
+  const handleUserClickOnPlan = async () => {
+    if (userEmail && userPhone) {
+      fbq('trackCustom', 'UsuarioRevisoPlanes', { email: userEmail, phone: userPhone });
+    }
+  }
+
+  const handleUserSuccessfulPayment = async () => {
+    if (userEmail && userPhone) {
+      fbq('trackCustom', 'UsuarioPagoExitoso', { email: userEmail, phone: userPhone });
+    }
+  }
+
   const handleCancelModal = () => {
     setShowCancelModal(!showCancelModal);
   };
@@ -117,7 +135,8 @@ function PlanCard(props: PlanCardPropsI) {
       handleErrorModal();
     }
   };
-  const retreivePaypalPlan = async () => {
+
+  const retreivePaypalPlan = useCallback(async () => {
     let body = {
       where: {
         activated: 1,
@@ -135,12 +154,15 @@ function PlanCard(props: PlanCardPropsI) {
     } catch (error) {
       console.log(error);
     }
-  };
+  }, [plan]
+  )
+
   const handleButtonClick = () => {
     // fbq('track', 'CarritoAbandonado');
     // manyChatPixel.track('PageView');
   };
   const payWithOxxo = async () => {
+    handleUserClickOnPlan();
     trpc.checkoutLogs.registerCheckoutLog.mutate();
     try {
       let body = {
@@ -158,6 +180,7 @@ function PlanCard(props: PlanCardPropsI) {
     }
   };
   const payWithSpei = async () => {
+    handleUserClickOnPlan();
     trpc.checkoutLogs.registerCheckoutLog.mutate();
     try {
       let body = {
@@ -175,6 +198,7 @@ function PlanCard(props: PlanCardPropsI) {
     }
   };
   const handleCheckout = async (planId: number) => {
+    handleUserClickOnPlan();
     trpc.checkoutLogs.registerCheckoutLog.mutate();
     navigate(`/comprar?priceId=${planId}`);
   };
@@ -184,19 +208,20 @@ function PlanCard(props: PlanCardPropsI) {
       planId: ppPlan.id,
       // planId: plan.id,
       subscriptionId: data.subscriptionID,
+      fbp: cookies._fbp,
+      url: window.location.href,
     });
     setSuccessMessage(
       "Gracias por tu pago, ya puedes empezar a descargar!"
     );
     setSuccessTitle("Compra Exitosa");
+    handleUserSuccessfulPayment();
     openSuccess();
     return data;
   }
 
-  // useCallback(retreivePaypalPlan, [plan]);
-  useEffect(() => {
-    retreivePaypalPlan();
-  }, [])
+  useEffect(() => { retreivePaypalPlan() }, [retreivePaypalPlan]);
+
   return (
     <div
       className={
@@ -265,7 +290,7 @@ function PlanCard(props: PlanCardPropsI) {
                     COMPRAR
                   </button>
                 )}
-                {(selectMethod && ppPlan &&(selectedPlan === plan.id)) && (
+                {(selectMethod && ppPlan && (selectedPlan === plan.id)) && (
                   <>
                     <button onClick={() => handleCheckout(plan.id)}>
                       COMPRAR CON TARJETA
@@ -276,7 +301,7 @@ function PlanCard(props: PlanCardPropsI) {
                         plan={ppPlan}
                         type={'subscription'}
                         onApprove={successSubscription}
-                        onClick={() => { }}
+                        onClick={() => { handleUserClickOnPlan() }}
                         key={`paypal-button-component-${plan.id}`}
                       />}
                   </>

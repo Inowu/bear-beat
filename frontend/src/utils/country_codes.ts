@@ -1,3 +1,5 @@
+import { timezones } from "./timezones";
+
 export const findCountryCode = (dialCode: string) => {
     const countryFound = countryCodes.find((country) => country.dial_code === dialCode);
 
@@ -8,6 +10,20 @@ export const findDialCode = (code: string) => {
     const countryFound = countryCodes.find((country) => country.code === code);
 
     return countryFound?.dial_code.slice(1) ?? '52';
+}
+
+export const detectUserCountry = () => {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+	if (timezone === "" || !timezone) {
+		return null;
+	}
+
+    const temp = timezones as any;
+	const _country = temp[timezone].c[0];
+    
+	const country = countryCodes.find((countryElement) => countryElement.code === _country);
+	return country;
 }
 
 const countryCodes = [

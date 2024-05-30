@@ -141,6 +141,8 @@ export const PlanUpgrade = () => {
           currentPlan={true}
           plan={currentPlan}
           getCurrentPlan={() => { }}
+          userEmail={currentUser?.email}
+          userPhone={currentUser?.phone}
         />
       )}
       {plans.map((plan: IPlans, index) => {
@@ -149,6 +151,8 @@ export const PlanUpgrade = () => {
             plan={plan}
             key={"plan_" + index}
             getCurrentPlan={getCurrentPlan}
+            userEmail={currentUser?.email}
+            userPhone={currentUser?.phone}
           />
         );
       })}
