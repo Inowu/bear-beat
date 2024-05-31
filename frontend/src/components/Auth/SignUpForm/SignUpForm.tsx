@@ -36,9 +36,7 @@ function SignUpForm() {
   const closeModal = () => {
     setShow(false);
   };
-  const handleSuccessfulRegister = () => {
-    fbq("track", "RegistroExitoso");
-  };
+
   const closeSuccess = () => {
     setShowSuccess(false);
     navigate("/");
@@ -119,7 +117,6 @@ function SignUpForm() {
 
   const handleSuccessVerify = () => {
     handleLogin(registerInfo.token, registerInfo.refreshToken);
-    handleSuccessfulRegister();
     setShowVerify(false);
     setShowSuccess(true);
   }

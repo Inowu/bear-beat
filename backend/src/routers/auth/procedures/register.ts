@@ -165,11 +165,10 @@ export const register = publicProcedure
 
       const remoteAddress = req.socket.remoteAddress;
       const userAgent = req.headers['user-agent'];
-      log.info({remoteAddress, userAgent, url});
 
       if (remoteAddress && userAgent) {
         log.info('[REGISTER] Sending sign up event to Facebook');
-        await facebook.setEvent('RegistroExitoso', remoteAddress, userAgent, fbp, url, newUser);
+        await facebook.setEvent('RegistroExitosoAPI', remoteAddress, userAgent, fbp, url, newUser);
       }
       // This implicitly creates a new subscriber in ManyChat or retrieves an existing one
       await manyChat.addTagToUser(newUser, 'USER_REGISTERED');

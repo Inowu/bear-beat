@@ -66,7 +66,7 @@ function PlanCard(props: PlanCardPropsI) {
 
   const handleUserSuccessfulPayment = async () => {
     if (userEmail && userPhone) {
-      fbq('trackCustom', 'UsuarioPagoExitoso', { email: userEmail, phone: userPhone });
+      fbq('trackCustom', 'PagoExitoso', { email: userEmail, phone: userPhone });
     }
   }
 

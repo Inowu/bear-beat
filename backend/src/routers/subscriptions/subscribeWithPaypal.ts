@@ -66,11 +66,10 @@ export const subscribeWithPaypal = shieldedProcedure
         if (existingUser) {
           const remoteAddress = req.socket.remoteAddress;
           const userAgent = req.headers['user-agent'];
-          log.info({ remoteAddress, userAgent, url });
   
           if (remoteAddress && userAgent) {
             log.info('[PAYPAL] User has been registered successfully, sending event to facebook');
-            await facebook.setEvent('RegistroExitoso', remoteAddress, userAgent, fbp, url, existingUser);
+            await facebook.setEvent('PagoExitosoAPI', remoteAddress, userAgent, fbp, url, existingUser);
           }
         }
 
