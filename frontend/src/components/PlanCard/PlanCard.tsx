@@ -62,12 +62,14 @@ function PlanCard(props: PlanCardPropsI) {
     if (userEmail && userPhone) {
       fbq('trackCustom', 'UsuarioRevisoPlanes', { email: userEmail, phone: userPhone });
     }
+    await manychatApi('USER_CHECKED_PLANS');
   }
 
   const handleUserSuccessfulPayment = async () => {
     if (userEmail && userPhone) {
       fbq('trackCustom', 'PagoExitoso', { email: userEmail, phone: userPhone });
     }
+    await manychatApi('SUCCESSFUL_PAYMENT');
   }
 
   const handleCancelModal = () => {

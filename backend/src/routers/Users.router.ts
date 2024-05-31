@@ -497,6 +497,7 @@ export const usersRouter = router({
           z.literal('USER_REGISTERED'),
           z.literal('CHECKOUT_PLAN_ORO'),
           z.literal('CHECKOUT_PLAN_CURIOSO'),
+          z.literal('SUCCESSFUL_PAYMENT'),
         ]),
       }),
     )
