@@ -10,6 +10,7 @@ import { hasActiveSubscription } from './utils/hasActiveSub';
 import { PaymentService } from './services/types';
 import { Cupons } from '@prisma/client';
 import { facebook } from '../../facebook';
+import { manyChat } from '../../many-chat';
 
 export const subscribeWithStripe = shieldedProcedure
   .input(
@@ -161,9 +162,11 @@ export const subscribeWithStripe = shieldedProcedure
         const userAgent = req.headers['user-agent'];
 
         if (remoteAddress && userAgent) {
-          log.info('[PAYPAL] User has been registered successfully, sending event to facebook');
+          log.info('[STRIPE] User has successfully paid for a plan, sending event to facebook');
           await facebook.setEvent('PagoExitosoAPI', remoteAddress, userAgent, fbp, url, existingUser);
         }
+
+        await manyChat.addTagToUser(existingUser, 'SUCCESSFUL_PAYMENT');
       }
 
       return {

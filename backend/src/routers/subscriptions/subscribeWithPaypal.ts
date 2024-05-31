@@ -7,6 +7,7 @@ import { PaymentService } from './services/types';
 import { subscribe } from './services/subscribe';
 import { paypal } from '../../paypal';
 import { facebook } from '../../facebook';
+import { manyChat } from '../../many-chat';
 
 export const subscribeWithPaypal = shieldedProcedure
   .input(
@@ -68,9 +69,11 @@ export const subscribeWithPaypal = shieldedProcedure
           const userAgent = req.headers['user-agent'];
   
           if (remoteAddress && userAgent) {
-            log.info('[PAYPAL] User has been registered successfully, sending event to facebook');
+            log.info('[PAYPAL] User has successfully paid for a plan, sending event to facebook');
             await facebook.setEvent('PagoExitosoAPI', remoteAddress, userAgent, fbp, url, existingUser);
           }
+
+          await manyChat.addTagToUser(existingUser, 'SUCCESSFUL_PAYMENT');
         }
 
         return {
