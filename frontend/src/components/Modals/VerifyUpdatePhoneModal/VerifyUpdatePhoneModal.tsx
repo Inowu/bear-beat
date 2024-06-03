@@ -114,10 +114,6 @@ export function VerifyUpdatePhoneModal(props: IVerifyPhoneModal) {
     useEffect(() => {
         let dialCode = "52";
         let phoneNumber = newUserPhone;
-        if (newUserPhone) {
-            dialCode = newUserPhone.trim().split(" ")[0].replace("+", "");
-            phoneNumber = newUserPhone.trim().split(" ")[1];
-        }
 
         if (newUserPhone) {
             if (newUserPhone.includes(" ")) {
@@ -133,9 +129,7 @@ export function VerifyUpdatePhoneModal(props: IVerifyPhoneModal) {
         setCountryCode(findCountryCode(newUserPhone.trim().split(" ")[0]));
         setCode(dialCode);
     }, [newUserPhone])
-    // UPDATE users SET verified = 0 WHERE registered_on < '2024-04-29';
-    // SELECT * FROM users u WHERE registered_on < '2024-04-29';
-    // SELECT * FROM users;
+    
     return (
         <Modal show={showModal} centered>
             <form className="modal-addusers" onSubmit={formik.handleSubmit}>

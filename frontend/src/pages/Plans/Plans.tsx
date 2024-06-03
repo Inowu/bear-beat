@@ -64,6 +64,8 @@ function Plans() {
             getCurrentPlan={() => { }}
             selectMethod={selectMethod}
             selectedPlan={selectedPlan}
+            userEmail={currentUser?.email}
+            userPhone={currentUser?.phone}
           />
         );
       })}

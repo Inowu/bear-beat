@@ -6,17 +6,27 @@ import { log } from '../../server';
 import { PaymentService } from './services/types';
 import { subscribe } from './services/subscribe';
 import { paypal } from '../../paypal';
+import { facebook } from '../../facebook';
+import { manyChat } from '../../many-chat';
 
 export const subscribeWithPaypal = shieldedProcedure
   .input(
     z.object({
       planId: z.number(),
       subscriptionId: z.string(),
+      fbp: z.string(),
+      url: z.string()
     }),
   )
   .mutation(
-    async ({ input: { planId, subscriptionId }, ctx: { prisma, session } }) => {
+    async ({ input: { planId, subscriptionId, fbp, url }, ctx: { prisma, session, req } }) => {
       const user = session!.user!;
+
+      const existingUser = await prisma.users.findFirst({
+        where: {
+          id: user.id,
+        },
+      })
 
       const plan = await prisma.plans.findFirst({
         where: {
@@ -53,6 +63,18 @@ export const subscribeWithPaypal = shieldedProcedure
           service: PaymentService.PAYPAL,
           expirationDate: new Date(subscription.billing_info.next_billing_time),
         });
+
+        if (existingUser) {
+          const remoteAddress = req.socket.remoteAddress;
+          const userAgent = req.headers['user-agent'];
+  
+          if (remoteAddress && userAgent) {
+            log.info('[PAYPAL] User has successfully paid for a plan, sending event to facebook');
+            await facebook.setEvent('PagoExitosoAPI', remoteAddress, userAgent, fbp, url, existingUser);
+          }
+
+          await manyChat.addTagToUser(existingUser, 'SUCCESSFUL_PAYMENT');
+        }
 
         return {
           message: 'La suscripción se creó correctamente',
