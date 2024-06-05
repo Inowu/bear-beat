@@ -145,16 +145,22 @@ export const HistoryCheckout = () => {
                   );
                 })}
             </tbody>
+            <tfoot>
+              <tr>
+                <th colSpan={4}>
+                  <Pagination
+                    totalLoader={totalLoader}
+                    totalData={totalHistory}
+                    title="Datos"
+                    startFilter={startFilter}
+                    currentPage={filters.page}
+                    limit={filters.limit}
+                  />
+                </th>
+              </tr>
+            </tfoot>
           </table>
         </div>
-        <Pagination
-          totalLoader={totalLoader}
-          totalData={totalHistory}
-          title="Datos"
-          startFilter={startFilter}
-          currentPage={filters.page}
-          limit={filters.limit}
-        />
       </div>
     </div>
   );
