@@ -12,6 +12,7 @@ import { IPaymentMethod } from "interfaces/User";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { FaCheck } from "react-icons/fa";
+import { useCookies } from "react-cookie";
 declare let window: any;
 
 interface ICheckout {
@@ -21,7 +22,7 @@ interface ICheckout {
 }
 
 function CheckoutForm(props: ICheckout) {
-  const { paymentMethods, cardLoad, getPaymentMethods } = useUserContext();
+  const { paymentMethods, cardLoad, getPaymentMethods, currentUser } = useUserContext();
   const [loader, setLoader] = useState<boolean>(false);
   const [coupon, setCoupon] = useState<string>("");
   const [show, setShow] = useState<boolean>(false);
@@ -32,6 +33,7 @@ function CheckoutForm(props: ICheckout) {
   const { plan, setDiscount, discount } = props;
   const stripe = useStripe();
   const elements = useElements();
+  const [cookies] = useCookies(['_fbp']);
 
   const navigate = useNavigate();
   const closeError = () => {
@@ -73,6 +75,8 @@ function CheckoutForm(props: ICheckout) {
     let body_stripe = {
       planId: plan.id,
       coupon: code,
+      fbp: cookies._fbp,
+      url: window.location.href
     };
     setLoader(true);
     try {
@@ -98,7 +102,9 @@ function CheckoutForm(props: ICheckout) {
           setErrorMessage(result.error.message);
           setShow(true);
         } else {
-          fbq("track", "PagoExitoso");
+          if (currentUser) {
+            fbq("track", "PagoExitoso", {email: currentUser.email, phone: currentUser.phone});
+          }
           setShowSuccess(true);
           setLoader(false);
         }

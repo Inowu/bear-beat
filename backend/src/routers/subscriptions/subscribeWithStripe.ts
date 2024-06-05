@@ -9,16 +9,26 @@ import { OrderStatus } from './interfaces/order-status.interface';
 import { hasActiveSubscription } from './utils/hasActiveSub';
 import { PaymentService } from './services/types';
 import { Cupons } from '@prisma/client';
+import { facebook } from '../../facebook';
+import { manyChat } from '../../many-chat';
 
 export const subscribeWithStripe = shieldedProcedure
   .input(
     z.object({
       planId: z.number(),
       coupon: z.string().optional(),
+      fbp: z.string(),
+      url: z.string()
     }),
   )
-  .query(async ({ input: { planId, coupon }, ctx: { prisma, session } }) => {
+  .query(async ({ input: { planId, coupon, fbp, url }, ctx: { prisma, session, req } }) => {
     const user = session!.user!;
+
+    const existingUser = await prisma.users.findFirst({
+      where: {
+        id: user.id,
+      },
+    })
 
     const stripeCustomer = await getStripeCustomer(prisma, user);
 
@@ -145,6 +155,18 @@ export const subscribeWithStripe = shieldedProcedure
             },
           });
         }
+      }
+
+      if (existingUser) {
+        const remoteAddress = req.socket.remoteAddress;
+        const userAgent = req.headers['user-agent'];
+
+        if (remoteAddress && userAgent) {
+          log.info('[STRIPE] User has successfully paid for a plan, sending event to facebook');
+          await facebook.setEvent('PagoExitosoAPI', remoteAddress, userAgent, fbp, url, existingUser);
+        }
+
+        await manyChat.addTagToUser(existingUser, 'SUCCESSFUL_PAYMENT');
       }
 
       return {

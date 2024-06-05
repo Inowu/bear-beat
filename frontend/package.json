@@ -27,6 +27,7 @@
     "js-cookie": "^3.0.5",
     "react": "^18.2.0",
     "react-bootstrap": "^2.8.0",
+    "react-cookie": "^7.1.4",
     "react-csv-downloader": "^2.8.0",
     "react-dom": "^18.2.0",
     "react-facebook-pixel": "^1.0.4",

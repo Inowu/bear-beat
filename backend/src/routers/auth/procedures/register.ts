@@ -12,6 +12,7 @@ import { log } from '../../../server';
 import { brevo } from '../../../email';
 import { manyChat } from '../../../many-chat';
 import { twilio } from '../../../twilio';
+import { facebook } from '../../../facebook';
 
 export const register = publicProcedure
   .input(
@@ -26,11 +27,13 @@ export const register = publicProcedure
         .string()
         .min(6, 'La contraseña debe tener al menos 6 caracteres'),
       phone: z.string(),
+      fbp: z.string(),
+      url: z.string()
     }),
   )
   .mutation(
     async ({
-      input: { username, email, password, phone },
+      input: { username, email, password, phone, fbp, url },
       ctx: { req, prisma },
     }) => {
       const existingUser = await prisma.users.findFirst({
@@ -160,6 +163,13 @@ export const register = publicProcedure
         }
       }
 
+      const remoteAddress = req.socket.remoteAddress;
+      const userAgent = req.headers['user-agent'];
+
+      if (remoteAddress && userAgent) {
+        log.info('[REGISTER] Sending sign up event to Facebook');
+        await facebook.setEvent('RegistroExitosoAPI', remoteAddress, userAgent, fbp, url, newUser);
+      }
       // This implicitly creates a new subscriber in ManyChat or retrieves an existing one
       await manyChat.addTagToUser(newUser, 'USER_REGISTERED');
 

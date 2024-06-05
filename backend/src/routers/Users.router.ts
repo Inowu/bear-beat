@@ -497,6 +497,7 @@ export const usersRouter = router({
           z.literal('USER_REGISTERED'),
           z.literal('CHECKOUT_PLAN_ORO'),
           z.literal('CHECKOUT_PLAN_CURIOSO'),
+          z.literal('SUCCESSFUL_PAYMENT'),
         ]),
       }),
     )
@@ -519,6 +520,31 @@ export const usersRouter = router({
       return {
         message: 'Se han agregado las etiquetas a los usuarios',
       };
+    }),
+  sendFacebookEvent: shieldedProcedure
+    .input(
+      z.object({
+        event: z.string()
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { remoteAddress } = ctx.req.socket;
+      const userAgent = ctx.req.headers['user-agent'];
+
+      if (!remoteAddress || !userAgent) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'No hay suficiente información del usuario para enviar a Facebook'
+        })
+      }
+
+      const user = await ctx.prisma.users.findFirst({
+        where: {
+          id: ctx.session!.user!.id,
+        },
+      });
+
+
     }),
   aggregateUsers: shieldedProcedure
     .input(UsersAggregateSchema)

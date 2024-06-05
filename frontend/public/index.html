@@ -2,13 +2,12 @@
 <html lang="en">
 
 <head>
-
-  <!--Facebook Pixel Script-->
+  <!-- Meta Pixel Code -->
   <script>
     !function (f, b, e, v, n, t, s) {
       if (f.fbq) return; n = f.fbq = function () {
         n.callMethod ?
-          n.callMethod.apply(n, arguments) : n.queue.push(arguments)
+        n.callMethod.apply(n, arguments) : n.queue.push(arguments)
       };
       if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
       n.queue = []; t = b.createElement(e); t.async = !0;
@@ -16,27 +15,25 @@
       s.parentNode.insertBefore(t, s)
     }(window, document, 'script',
       'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '920713902651143');
+    fbq('init', '1325763147585869');
     fbq('track', 'PageView');
   </script>
-  <noscript>
-    <img height="1" width="1" style="display:none"
-      src="https://www.facebook.com/tr?id=920713902651143&ev=PageView&noscript=1" />
-  </noscript>
+  <noscript><img height="1" width="1" style="display:none"
+      src="https://www.facebook.com/tr?id=1325763147585869&ev=PageView&noscript=1" /></noscript>
+  <!-- End Meta Pixel Code -->
   <!--End of Facebook Pixel Script-->
-  
 
   <!-- Manychat -->
   <script src="//widget.manychat.com/104901938679498.js" defer="defer"></script>
   <script src="https://mccdn.me/assets/js/widget.js" defer="defer"></script>
   <script>
-    window.addEventListener('load', function() {
+    window.addEventListener('load', function () {
       if (window.MessengerExtensions) {
         window.MessengerExtensions.getUserID(function success(uids) {
-          var pageId = '104901938679498'; 
+          var pageId = '104901938679498';
           var appId = '104901938679498';
           var psid = uids.psid;
-  
+
           window.manychatPlugin = new window.MessengerExtensions.ManyChat(pageId, appId, psid);
         }, function error(err) {
           console.error(err);
