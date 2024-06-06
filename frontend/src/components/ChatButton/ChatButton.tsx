@@ -35,7 +35,7 @@ export const ChatButton = () => {
     };
 
     const handleStartChat = () => {
-        window.open("https://google.com", "_blank");
+        window.open("https://m.me/rn/104901938679498?topic=VIDEOS%20PARA%20DJ&cadence=daily", "_blank");
         setIsOpen(false);
     };
 
