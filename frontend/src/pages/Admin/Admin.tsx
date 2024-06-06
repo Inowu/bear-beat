@@ -89,7 +89,7 @@ function Admin() {
     setSelectUser({} as IAdminUser);
     setShowOption(false);
   };
-  
+
   const getPlans = async () => {
     let body = {
       where: {
@@ -108,11 +108,6 @@ function Admin() {
     setOptionTitle("Seleccione el plan");
     openOption();
   };
-  const Message = useSSE("remove-users:progress", {
-    progress: 0,
-    queue: "remove-users",
-    jobId: null,
-  });
   const MessageComplete = useSSE("remove-users:completed", {
     queue: "remove-users",
     jobId: null,
@@ -121,15 +116,6 @@ function Admin() {
     queue: "remove-users",
     jobId: null,
   });
-  const sendMessage = () => {
-    if (MessageComplete.jobId !== null) {
-      return "Proceso Completado";
-    }
-    if (MessageFail.jobId !== null) {
-      return "Proceso Fallido";
-    }
-    return `Eliminando: ${Message.progress}%`;
-  };
   const changeBlockUser = async () => {
     try {
       let body = {
@@ -147,7 +133,7 @@ function Admin() {
     }
   };
 
-  
+
   const startFilter = (key: string, value: string | number) => {
     let tempFilters: any = filters;
     if (key !== "page") {
@@ -343,7 +329,7 @@ function Admin() {
     if (element) {
       const rect = element.getBoundingClientRect();
       const elementLastPixel = rect.bottom;
-            
+
       if (elementLastPixel >= pageLastPixel) {
         element.classList.add("dropdown-up");
       }
@@ -366,30 +352,6 @@ function Admin() {
           datas={transformUserData()}
           text="Exportar Clientes"
         />
-        {Message.jobId === null ? (
-          <button
-            className="btn-delete"
-            style={{ marginLeft: "auto" }}
-            onClick={handleDeleteModal}
-          >
-            Eliminar Usuarios
-          </button>
-        ) : (
-          <div
-            className={
-              "progress-delete " +
-              (MessageComplete.jobId !== null || MessageFail.jobId !== null
-                ? "finish"
-                : "")
-            }
-          >
-            <p>{sendMessage()}</p>
-            <div
-              className="progress"
-              style={{ left: `${Message.progress - 100}%` }}
-            />
-          </div>
-        )}
         <EditUserModal
           showModal={showEdit}
           onHideModal={handleCloseEditUser}
@@ -459,7 +421,7 @@ function Admin() {
                       )}
                       <td className="wrap-td">
                         <div className="dropdown">
-                          <button className="dropbtn" onMouseEnter={() => {positioningAction(index)}}>Acciones</button>
+                          <button className="dropbtn" onMouseEnter={() => { positioningAction(index) }}>Acciones</button>
                           <div className="dropdown-content" id={`dropdown-content-${index}`}>
                             <button onClick={() => handleEditUser(user)}>Editar</button>
                             <button onClick={() => signInAsUser(user)} disabled={user.role === USER_ROLES.ADMIN}>Acceder</button>
@@ -474,9 +436,9 @@ function Admin() {
                               )
                             }>
                               {user.blocked ? (
-                                <FaLock className='lock'/>
+                                <FaLock className='lock' />
                               ) : (
-                                <FaLockOpen className='unlock'/>
+                                <FaLockOpen className='unlock' />
                               )}
                             </button>
                           </div>
@@ -491,7 +453,7 @@ function Admin() {
                       <td />
                       <td />
                       <td />
-                      <td /> 
+                      <td />
                       <td />
                       <td />
                     </tr>
