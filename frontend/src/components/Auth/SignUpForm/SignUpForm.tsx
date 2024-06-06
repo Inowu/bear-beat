@@ -17,6 +17,7 @@ import {
   VerifyPhoneModal
 } from '../../../components/Modals'
 import { useCookies } from "react-cookie";
+import { ChatButton } from "../../../components/ChatButton/ChatButton";
 
 function SignUpForm() {
   const navigate = useNavigate();
@@ -140,6 +141,7 @@ function SignUpForm() {
   return (
     <form className="sign-up-form" onSubmit={formik.handleSubmit}>
       <h2>REGISTRARSE</h2>
+      <ChatButton />
       <div className="c-row">
         <input
           placeholder="Correo electrónico"
