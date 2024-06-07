@@ -119,7 +119,6 @@ function Home() {
     }));
 
     if (filesError && !files) {
-      console.log(filesError);
       setLoader(false);
       return;
     }
@@ -162,9 +161,10 @@ function Home() {
     if (file.path) {
       name = file.path;
     }
-    console.log(currentUser)
+
     if (currentUser?.hasActiveSubscription) {
-      let path = pastFile.join("/") + "/" + name;
+      // If search is active, the path is different and name contains the whole path.
+      let path = (showPagination) ? name : pastFile.join("/") + "/" + name;
       const domain = process.env.REACT_APP_ENVIRONMENT === 'development'
         ? 'http://localhost:5001'
         : 'https://thebearbeatapi.lat'
