@@ -178,7 +178,7 @@ function SignUpForm() {
       </div>
       <div className="c-row">
         <input
-          placeholder="Nombre de usuario"
+          placeholder="Nombre"
           type="text"
           id="username"
           name="username"
