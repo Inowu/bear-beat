@@ -801,4 +801,181 @@ export const usersRouter = router({
 
       return usersWithPlan;
     }),
+  removeUserByAdminAction: shieldedProcedure
+    .input(
+      z.object({
+        userId: z.number(),
+        userEmail: z.string()
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userToBeDeleted = await ctx.prisma.users.findFirst({
+        where: {
+          id: input.userId
+        }
+      });
+
+      const ftpAccount = await ctx.prisma.ftpUser.findFirst({
+        where: {
+          user_id: input.userId,
+        },
+      });
+
+      if (!ftpAccount) {
+        log.error(
+          `[REMOVE_INACTIVE_USERS] Error removing inactive users, FTP User not found`,
+        );
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Ocurrió un error al buscar un usuario FTP',
+        });
+      }
+
+      const tallies = await ctx.prisma.ftpquotatallies.findMany({
+        where: {
+          name: ftpAccount?.userid,
+        },
+      });
+
+      const limits = await ctx.prisma.ftpQuotaLimits.findMany({
+        where: {
+          name: ftpAccount?.userid,
+        },
+      });
+
+      if (tallies.length === 0 || limits.length === 0) {
+        log.error(
+          `[REMOVE_INACTIVE_USERS] Error removing inactive users, no limits or tallies found`,
+        );
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Ocurrió un error al tratar de encontrar el limite del usuario',
+        });
+      }
+
+      try {
+        await ctx.prisma.$executeRaw`SET FOREIGN_KEY_CHECKS=0`;
+
+        await ctx.prisma.$transaction([
+          ctx.prisma.ftpquotatallies.deleteMany({
+            where: {
+              id: {
+                in: tallies.map((tally) => tally.id),
+              },
+            },
+          }),
+          ctx.prisma.ftpQuotaLimits.deleteMany({
+            where: {
+              id: {
+                in: limits.map((limit) => limit.id),
+              },
+            },
+          }),
+          ctx.prisma.ftpUser.deleteMany({
+            where: {
+              user_id: input.userId,
+            },
+          }),
+          ctx.prisma.descargasUser.deleteMany({
+            where: {
+              user_id: input.userId,
+            },
+          }),
+          ctx.prisma.orders.deleteMany({
+            where: {
+              user_id: input.userId,
+            },
+          }),
+          ctx.prisma.dir_downloads.deleteMany({
+            where: {
+              userId: input.userId,
+            },
+          }),
+          ctx.prisma.cuponsUsed.deleteMany({
+            where: {
+              user_id: input.userId,
+            },
+          }),
+          ctx.prisma.checkout_logs.deleteMany({
+            where: {
+              user_id: input.userId,
+            },
+          }),
+          ctx.prisma.jobs.deleteMany({
+            where: {
+              user_id: input.userId,
+            },
+          }),
+          ctx.prisma.users.delete({
+            where: {
+              id: input.userId
+            },
+          }),
+          ctx.prisma.deletedUsers.create({
+            data: {
+              email: input.userEmail,
+              deletionDate: new Date().toISOString(),
+              reactivated: false
+            }
+          }),
+        ]);
+
+        await ctx.prisma.$executeRaw`SET FOREIGN_KEY_CHECKS=1`;
+      } catch (e) {
+        log.error(
+          `[REMOVE_INACTIVE_USERS] Error removing inactive users, ${e}`,
+        );
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Ocurrió un error al eliminar usuarios inactivos',
+        });
+      }
+
+      if (userToBeDeleted?.stripe_cusid || userToBeDeleted?.conekta_cusid) {
+        // Push job to queue
+        const data = {
+          userCustomerIds: [{
+            stripe: userToBeDeleted.stripe_cusid,
+            conekta: userToBeDeleted.conekta_cusid
+          }],
+          userId: ctx.session!.user!.id
+        } as RemoveUsersJob
+
+        const job = await removeUsersQueue.add(
+          process.env.REMOVE_USERS_QUEUE_NAME as string,
+          data
+        );
+
+        await ctx.prisma.jobs.create({
+          data: {
+            jobId: job.id,
+            status: JobStatus.IN_PROGRESS,
+            user_id: ctx.session!.user!.id,
+            queue: process.env.REMOVE_USERS_QUEUE_NAME as string,
+            createdAt: new Date(),
+          },
+        });
+
+        log.info(`[REMOVE_INACTIVE_USERS] Starting worker for job ${job.id}`);
+        pm2.start(
+          {
+            name: `removeUsers-${ctx.session!.user!.id}-${job.id}`,
+            namespace: process.env.REMOVE_USERS_QUEUE_NAME as string,
+            autorestart: false,
+          },
+          (err) => {
+            if (err) {
+              log.error(
+                `[REMOVE_INACTIVE_USERS] Error starting pm2 process, ${err}`,
+              );
+            }
+          },
+        );
+      }
+
+      return {
+        message:
+          'Se han eliminado los usuarios inactivos y se ha iniciado el proceso de eliminación de sus cuentas en Stripe y Conekta',
+      };
+    })
 });
