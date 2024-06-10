@@ -21,14 +21,17 @@ export const register = publicProcedure
         .string()
         .min(3, 'El nombre de usuario debe tener al menos 3 caracteres')
         // At least one alphabetic character
-        .regex(/^[a-zA-Z0-9]*[a-zA-Z]+[a-zA-Z0-9]*$/, 'El nombre de usuario no tiene un formato valido, no incluya caracteres especiales'),
+        .regex(
+          /^[a-zA-Z0-9 ]*$/,
+          'El nombre de usuario no tiene un formato valido, no incluya caracteres especiales',
+        ),
       email: z.string().email('Email inválido'),
       password: z
         .string()
         .min(6, 'La contraseña debe tener al menos 6 caracteres'),
       phone: z.string(),
       fbp: z.string(),
-      url: z.string()
+      url: z.string(),
     }),
   )
   .mutation(
@@ -65,9 +68,9 @@ export const register = publicProcedure
           OR: [
             {
               phone: {
-                equals: phone
-              }
-            }
+                equals: phone,
+              },
+            },
           ],
         },
       });
@@ -90,7 +93,7 @@ export const register = publicProcedure
           ip_registro: req.ip,
           registered_on: new Date().toISOString(),
           active: ActiveState.Active,
-          verified: process.env.NODE_ENV === 'production' ? false : true
+          verified: process.env.NODE_ENV === 'production' ? false : true,
         },
       });
 
@@ -136,7 +139,8 @@ export const register = publicProcedure
         });
       } catch (e: any) {
         log.error(
-          `There was an error creating the conekta customer for user ${newUser.id
+          `There was an error creating the conekta customer for user ${
+            newUser.id
           }, details: ${JSON.stringify(e.response?.data?.details)}`,
         );
       }
@@ -159,7 +163,9 @@ export const register = publicProcedure
         try {
           await twilio.getVerificationCode(newUser.phone!);
         } catch (error: any) {
-          log.error(`[REGISTER] Error while sending verification code ${error.message}`);
+          log.error(
+            `[REGISTER] Error while sending verification code ${error.message}`,
+          );
         }
       }
 
@@ -168,7 +174,14 @@ export const register = publicProcedure
 
       if (remoteAddress && userAgent) {
         log.info('[REGISTER] Sending sign up event to Facebook');
-        await facebook.setEvent('RegistroExitosoAPI', remoteAddress, userAgent, fbp, url, newUser);
+        await facebook.setEvent(
+          'RegistroExitosoAPI',
+          remoteAddress,
+          userAgent,
+          fbp,
+          url,
+          newUser,
+        );
       }
       // This implicitly creates a new subscriber in ManyChat or retrieves an existing one
       await manyChat.addTagToUser(newUser, 'USER_REGISTERED');
@@ -178,7 +191,7 @@ export const register = publicProcedure
       return {
         ...tokens,
         message: 'Usuario fue creado correctamente',
-        user: newUser
+        user: newUser,
       };
     },
   );
