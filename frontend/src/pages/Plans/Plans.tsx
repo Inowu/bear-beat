@@ -1,13 +1,19 @@
-import { useEffect, useState } from "react";
-import PlanCard from "../../components/PlanCard/PlanCard";
 import "./Plans.scss";
-import trpc from "../../api";
 import { IPlans } from "../../interfaces/Plans";
 import { Spinner } from "../../components/Spinner/Spinner";
+import { useEffect, useState } from "react";
+import { useUserContext } from "../../contexts/UserContext";
+import PlanCard from "../../components/PlanCard/PlanCard";
+import trpc from "../../api";
+import { useNavigate } from "react-router-dom";
 
 function Plans() {
+  const { currentUser } = useUserContext();
   const [plans, setPlans] = useState<IPlans[]>([]);
   const [loader, setLoader] = useState<boolean>(true);
+  const [selectedPlan, setSelectedPlan] = useState<number>(0)
+  const navigate = useNavigate();
+
   const getPlans = async () => {
     let body = {
       where: {
@@ -24,9 +30,20 @@ function Plans() {
       console.log(error);
     }
   };
+
+  // Function to indicate PlanCard to let customer choose which Payment Method wants to use.
+  const selectMethod = (planId: number) => {
+    setSelectedPlan(planId)
+  }
+
   useEffect(() => {
-    getPlans();
-  }, []);
+    if (!currentUser?.hasActiveSubscription || currentUser.isSubscriptionCancelled) {
+      getPlans();
+    } else {
+      navigate("/actualizar-planes");
+    }
+  }, [currentUser, navigate]);
+
   if (loader) {
     return (
       <div
@@ -44,7 +61,11 @@ function Plans() {
           <PlanCard
             plan={plan}
             key={"plan_" + index}
-            getCurrentPlan={() => {}}
+            getCurrentPlan={() => { }}
+            selectMethod={selectMethod}
+            selectedPlan={selectedPlan}
+            userEmail={currentUser?.email}
+            userPhone={currentUser?.phone}
           />
         );
       })}

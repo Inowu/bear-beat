@@ -4,26 +4,32 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
 import { useLocation, useNavigate } from "react-router-dom";
 import { plans } from "../../utils/Constants";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import trpc from "../../api";
 import { manychatApi } from "../../api/manychat";
-import { 
-  ChangeSubscriptionModal, 
-  ConditionModal, 
-  ErrorModal, 
-  OxxoModal, 
-  SpeiModal, 
-  SuccessModal 
+import {
+  ChangeSubscriptionModal,
+  ConditionModal,
+  ErrorModal,
+  OxxoModal,
+  SpeiModal,
+  SuccessModal
 } from "../../components/Modals";
 import PayPalComponent from "../../components/PayPal/PayPalComponent";
+import { useCookies } from "react-cookie";
+
 
 interface PlanCardPropsI {
   plan: IPlans;
   currentPlan?: boolean;
   getCurrentPlan: () => void;
+  selectMethod?: (planId: number) => void;
+  selectedPlan?: number;
+  userEmail?: string;
+  userPhone?: string;
 }
 function PlanCard(props: PlanCardPropsI) {
-  const { plan, currentPlan, getCurrentPlan } = props;
+  const { plan, currentPlan, getCurrentPlan, selectMethod, selectedPlan, userEmail, userPhone } = props;
   const [showOxxoModal, setShowOxxoModal] = useState<boolean>(false);
   const [oxxoData, setOxxoData] = useState({} as IOxxoData);
   const [showSpeiModal, setShowSpeiModal] = useState<boolean>(false);
@@ -40,6 +46,7 @@ function PlanCard(props: PlanCardPropsI) {
   const [changeTitle, setChangeTitle] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
+  const [cookies] = useCookies(['_fbp']);
   const { pathname } = location;
   // const ManyChatPixel = require('manychat-pixel-js');
   // const manyChatPixel = new ManyChatPixel('YOUR_PIXEL_ID');
@@ -50,6 +57,21 @@ function PlanCard(props: PlanCardPropsI) {
       console.log(error);
     }
   };
+
+  const handleUserClickOnPlan = async () => {
+    if (userEmail && userPhone) {
+      fbq('trackCustom', 'UsuarioRevisoPlanes', { email: userEmail, phone: userPhone });
+    }
+    await manychatApi('USER_CHECKED_PLANS');
+  }
+
+  const handleUserSuccessfulPayment = async () => {
+    if (userEmail && userPhone) {
+      fbq('trackCustom', 'PagoExitoso', { email: userEmail, phone: userPhone });
+    }
+    await manychatApi('SUCCESSFUL_PAYMENT');
+  }
+
   const handleCancelModal = () => {
     setShowCancelModal(!showCancelModal);
   };
@@ -115,7 +137,8 @@ function PlanCard(props: PlanCardPropsI) {
       handleErrorModal();
     }
   };
-  const retreivePaypalPlan = async () => {
+
+  const retreivePaypalPlan = useCallback(async () => {
     let body = {
       where: {
         activated: 1,
@@ -133,12 +156,15 @@ function PlanCard(props: PlanCardPropsI) {
     } catch (error) {
       console.log(error);
     }
-  };
+  }, [plan]
+  )
+
   const handleButtonClick = () => {
     // fbq('track', 'CarritoAbandonado');
     // manyChatPixel.track('PageView');
   };
   const payWithOxxo = async () => {
+    handleUserClickOnPlan();
     trpc.checkoutLogs.registerCheckoutLog.mutate();
     try {
       let body = {
@@ -156,6 +182,7 @@ function PlanCard(props: PlanCardPropsI) {
     }
   };
   const payWithSpei = async () => {
+    handleUserClickOnPlan();
     trpc.checkoutLogs.registerCheckoutLog.mutate();
     try {
       let body = {
@@ -173,6 +200,7 @@ function PlanCard(props: PlanCardPropsI) {
     }
   };
   const handleCheckout = async (planId: number) => {
+    handleUserClickOnPlan();
     trpc.checkoutLogs.registerCheckoutLog.mutate();
     navigate(`/comprar?priceId=${planId}`);
   };
@@ -182,19 +210,20 @@ function PlanCard(props: PlanCardPropsI) {
       planId: ppPlan.id,
       // planId: plan.id,
       subscriptionId: data.subscriptionID,
+      fbp: cookies._fbp,
+      url: window.location.href,
     });
     setSuccessMessage(
       "Gracias por tu pago, ya puedes empezar a descargar!"
     );
     setSuccessTitle("Compra Exitosa");
+    handleUserSuccessfulPayment();
     openSuccess();
     return data;
   }
 
-  // useCallback(retreivePaypalPlan, [plan]);
-  useEffect(() => {
-    retreivePaypalPlan();
-  }, [])
+  useEffect(() => { retreivePaypalPlan() }, [retreivePaypalPlan]);
+
   return (
     <div
       className={
@@ -258,19 +287,32 @@ function PlanCard(props: PlanCardPropsI) {
                     Pagar vía Spei
                   </button>
                 )}
-                <button onClick={() => handleCheckout(plan.id)}>
-                  COMPRAR CON TARJETA
-                </button>
-                <div>
-                  {ppPlan !== null &&
-                    (ppPlan.paypal_plan_id || ppPlan.paypal_plan_id_test) &&
-                    <PayPalComponent 
-                      plan={ppPlan}
-                      type={'subscription'}
-                      onApprove={successSubscription}
-                      onClick={() => {}}
-                    />}
-                </div>
+                {selectMethod && ppPlan && (selectedPlan !== plan.id) && (
+                  <button onClick={() => selectMethod(plan.id)}>
+                    COMPRAR
+                  </button>
+                )}
+                {(selectMethod && ppPlan && (selectedPlan === plan.id)) && (
+                  <>
+                    <button onClick={() => handleCheckout(plan.id)}>
+                      COMPRAR CON TARJETA
+                    </button>
+                    {ppPlan !== null &&
+                      (ppPlan.paypal_plan_id || ppPlan.paypal_plan_id_test) &&
+                      <PayPalComponent
+                        plan={ppPlan}
+                        type={'subscription'}
+                        onApprove={successSubscription}
+                        onClick={() => { handleUserClickOnPlan() }}
+                        key={`paypal-button-component-${plan.id}`}
+                      />}
+                  </>
+                )}
+                {(!selectMethod || !ppPlan) && (
+                  <button onClick={() => handleCheckout(plan.id)}>
+                    COMPRAR CON TARJETA
+                  </button>
+                )}
               </>
             )}
           </>

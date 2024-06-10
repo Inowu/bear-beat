@@ -39,7 +39,7 @@ export const downloadHistoryRouter = router({
                 ${filters}`;
 
             // Set pagination or not based on offset and limit being defined.
-            const limitOffset = (input.take && input.skip)
+            const limitOffset = (input.take)
                 ? `LIMIT ${input.take} OFFSET ${input.skip}`
                 : '';
 

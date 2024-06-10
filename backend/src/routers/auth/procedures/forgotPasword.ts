@@ -5,6 +5,7 @@ import { publicProcedure } from '../../../procedures/public.procedure';
 import { log } from '../../../server';
 import { brevo } from '../../../email';
 import { addHours } from 'date-fns';
+import { twilio } from '../../../twilio';
 
 export const forgotPassword = publicProcedure
   .input(
@@ -40,6 +41,8 @@ export const forgotPassword = publicProcedure
 
     log.info(`[FORGOT_PASSWORD] Sending email to ${user.email}`);
 
+    const link = `${process.env.CLIENT_URL}/auth/reset-password?token=${token}&userId=${user.id}`;
+
     try {
       await brevo.smtp.sendTransacEmail({
         templateId: 1,
@@ -47,7 +50,7 @@ export const forgotPassword = publicProcedure
         params: {
           NAME: user.username,
           EMAIL: user.email,
-          LINK: `${process.env.CLIENT_URL}/auth/reset-password?token=${token}&userId=${user.id}`,
+          LINK: link,
         },
       });
     } catch (e) {
@@ -55,6 +58,14 @@ export const forgotPassword = publicProcedure
       return {
         error: 'Ocurrió un error al enviar el correo electrónico',
       };
+    }
+
+    try {
+      log.info(`[TWILIO_SEND_MESSAGE] Sending WhatsApp to ${user.phone}`);
+
+      await twilio.sendMessage(user.phone!, link);
+    } catch (error) {
+      log.error('[TWILIO_SEND_MESSAGE_ERROR]', error);
     }
 
     return {

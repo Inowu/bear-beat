@@ -13,13 +13,12 @@
                 thead {
                     tr {
                         border-bottom: 1px solid white;
-                        position: sticky;
-                        top: 0;
-
                         th {
                             padding: 10px;
                         }
                     }
+                    background-color: #2a2a2a;
+                    z-index: 1;
                 }
 
                 tbody {
@@ -31,6 +30,29 @@
                         }
                     }
                 }
+
+                tfoot {
+                    tr {
+                        th {
+                            div {
+                                color: black
+                            }
+                        }
+                    }
+                }
+            }
+
+            table thead,
+            table tfoot {
+                position: sticky;
+            }
+
+            table thead {
+                inset-block-start: 0;
+            }
+
+            table tfoot {
+                inset-block-end: 0;
             }
         }
     }

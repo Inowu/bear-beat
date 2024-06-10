@@ -136,7 +136,7 @@ function AddPlanModal(props: IAddPlanModal) {
             onChange={formik.handleChange}
           >
             <option value={"month"}>Mes</option>
-            <option value={"year"}>Aňo</option>
+            <option value={"year"}>Año</option>
           </select>
           {formik.touched.interval && formik.errors.interval && (
             <div className="formik">{formik.errors.interval}</div>

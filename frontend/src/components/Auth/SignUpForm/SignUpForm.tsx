@@ -1,10 +1,11 @@
 import "./SignUpForm.scss";
 import "react-phone-input-2/lib/material.css";
+import { detectUserCountry, findDialCode } from "../../../utils/country_codes";
 import { Link, useNavigate } from "react-router-dom";
 import { ReactComponent as Arrow } from "../../../assets/icons/arrow-down.svg";
 import { Spinner } from "../../../components/Spinner/Spinner";
+import { useCallback, useEffect, useState } from "react";
 import { useFormik } from "formik";
-import { useState } from "react";
 import { useUserContext } from "../../../contexts/UserContext";
 import * as Yup from "yup";
 import es from "react-phone-input-2/lang/es.json";
@@ -15,6 +16,7 @@ import {
   SuccessModal,
   VerifyPhoneModal
 } from '../../../components/Modals'
+import { useCookies } from "react-cookie";
 
 function SignUpForm() {
   const navigate = useNavigate();
@@ -22,19 +24,19 @@ function SignUpForm() {
   const { handleLogin } = useUserContext();
   const [show, setShow] = useState<boolean>(false);
   const [code, setCode] = useState<string>("52");
+  const [countryCode, setCountryCode] = useState<string>("mx");
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<any>("");
   const [showVerify, setShowVerify] = useState<boolean>(false);
   const [newUserId, setNewUserId] = useState<number>(0);
   const [newUserPhone, setNewUserPhone] = useState<string>("");
-  const [registerInfo, setRegisterInfo] = useState<any>({})
+  const [registerInfo, setRegisterInfo] = useState<any>({});
+  const [cookies] = useCookies(['_fbp']);
 
   const closeModal = () => {
     setShow(false);
   };
-  const handleSuccessfulRegister = () => {
-    fbq("track", "RegistroExitoso");
-  };
+
   const closeSuccess = () => {
     setShowSuccess(false);
     navigate("/");
@@ -55,7 +57,7 @@ function SignUpForm() {
       .min(6, "La contraseña debe contenter 6 caracteres"),
     phone: Yup.string()
       .required("El teléfono es requerido")
-      .matches(/^[0-9]{10}$/, "El teléfono no es válido"),
+      .matches(/^[0-9]{7,10}$/, "El teléfono no es válido"),
     passwordConfirmation: Yup.string()
       .required("Debe confirmar la contraseña")
       .oneOf([Yup.ref("password")], "Ambas contraseñas deben ser iguales"),
@@ -81,17 +83,33 @@ function SignUpForm() {
         password: values.password,
         email: values.email,
         phone: `+${code} ${values.phone}`,
+        fbp: cookies._fbp,
+        url: window.location.href
       };
       try {
         const register = await trpc.auth.register.mutate(body);
         setRegisterInfo(register);
         setNewUserId(register.user.id);
         setNewUserPhone(register.user.phone!);
+
+        fbq('trackCustom', 'BearBeatRegistro', { email: register.user.email, phone: register.user.phone });
+
+        if (process.env.REACT_APP_ENVIRONMENT === 'development') {
+          handleLogin(register.token, register.refreshToken);
+          navigate("/");
+        }
+
         setShowVerify(true);
         setLoader(false);
       } catch (error: any) {
+        let errorMessage = error.message;
+
+        if (error.message.includes('"validation"')) {
+          errorMessage = JSON.parse(error.message)[0].message;
+        }
+
         setShow(true);
-        setErrorMessage(error.message);
+        setErrorMessage(errorMessage);
         setLoader(false);
       }
     },
@@ -99,10 +117,25 @@ function SignUpForm() {
 
   const handleSuccessVerify = () => {
     handleLogin(registerInfo.token, registerInfo.refreshToken);
-    handleSuccessfulRegister();
     setShowVerify(false);
     setShowSuccess(true);
   }
+
+  const getUserLocation = useCallback(async () => {
+    try {
+      const country = detectUserCountry();
+      console.log(country);
+      if (country) {
+        setCountryCode(country.code.toLowerCase());
+        const dialCode = findDialCode(country.code.toUpperCase());
+        setCode(dialCode);
+      }
+    } catch (error) {
+      console.error("There was an error while trying to get user's location.", error);
+    }
+  }, [])
+
+  useEffect(() => { getUserLocation() }, [getUserLocation])
 
   return (
     <form className="sign-up-form" onSubmit={formik.handleSubmit}>
@@ -124,7 +157,7 @@ function SignUpForm() {
         <PhoneInput
           containerClass="dial-container"
           buttonClass="dial-code"
-          country={"mx"}
+          country={countryCode}
           placeholder="Teléfono"
           localization={es}
           onChange={handlePhoneNumberChange}
@@ -204,7 +237,7 @@ function SignUpForm() {
         message="Se ha creado su usuario con éxito!"
         title="Registro Exitoso"
       />
-      <VerifyPhoneModal 
+      <VerifyPhoneModal
         showModal={showVerify}
         newUserId={newUserId}
         newUserPhone={newUserPhone}

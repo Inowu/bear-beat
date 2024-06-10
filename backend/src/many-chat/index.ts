@@ -58,6 +58,8 @@ export const manyChat = {
         first_name: user.first_name,
         last_name: user.last_name,
         phone: user.phone?.replace(/\s/g, ''),
+        whatsapp_phone: user.phone?.replace(/\s/g, ''),
+        optin_whatsapp: true,
         email: user.email,
         has_opt_in_sms: true,
         has_opt_in_email: true,
@@ -109,9 +111,13 @@ export const manyChat = {
       const response = await client.post('/fb/subscriber/updateSubscriber', {
         ...user,
         subscriber_id: mcId,
+        phone: user.phone?.replace(/\s/g, ''),
+        email: user.email,
         has_opt_in_sms: true,
         has_opt_in_email: true,
         consent_phrase: consentPhrase,
+        optin_whatsapp: true,
+        whatsapp_phone: user.phone?.replace(/\s/g, ''),
       });
 
       return response.data.data;
@@ -214,6 +220,8 @@ export const manyChat = {
     log.info(
       `[MANYCHAT:RETRIEVE_OR_CREATE] Updating user ${user.id} with mc_id ${subscriber.id}`,
     );
+
+    await this.updateSubscriber(user, subscriber.id, 'Consent');
 
     try {
       await prisma.users.update({
