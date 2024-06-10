@@ -5,14 +5,29 @@
       background: #09e1f7;
       padding: 4px 20px;
       border-radius: 100px;
+
       &:hover {
         opacity: 0.67;
       }
     }
   }
+
   .admin-table {
     .table-contain {
       max-height: 74vh;
+    }
+
+    table thead,
+    table tfoot {
+      position: sticky;
+    }
+
+    table thead {
+      inset-block-start: 0;
+    }
+
+    table tfoot {
+      inset-block-end: 0;
     }
   }
 }
