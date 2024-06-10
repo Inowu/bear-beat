@@ -6,6 +6,7 @@ import * as Yup from "yup";
 import { useState } from "react";
 import { ErrorModal, VerifyUpdatePhoneModal } from "../../../components/Modals";
 import { Spinner } from "../../../components/Spinner/Spinner";
+import { ChatButton } from "../../../components/ChatButton/ChatButton";
 
 function LoginForm() {
   const [loader, setLoader] = useState<boolean>(false);
@@ -52,14 +53,14 @@ function LoginForm() {
           setNewUserPhone(login.user.phone!);
           setShowVerify(true);
         }
-        
+
         setLoader(false);
       } catch (error: any) {
         let errorMessage = error.message;
 
         if (error.message.includes('"validation"')) {
           errorMessage = JSON.parse(error.message)[0].message;
-        } 
+        }
 
         setLoader(false);
         setShow(true);
@@ -76,6 +77,7 @@ function LoginForm() {
   return (
     <form onSubmit={formik.handleSubmit}>
       <h2>INICIAR SESIÓN</h2>
+      <ChatButton />
       <div className="c-row">
         <input
           placeholder="Correo electrónico"
@@ -116,7 +118,7 @@ function LoginForm() {
         <Link to={"registro"}>Registrarme</Link>
       </div>
       <ErrorModal show={show} onHide={closeModal} message={errorMessage} />
-      <VerifyUpdatePhoneModal 
+      <VerifyUpdatePhoneModal
         showModal={showVerify}
         newUserId={newUserId}
         newUserPhone={newUserPhone}
