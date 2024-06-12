@@ -70,11 +70,12 @@ export const subscribe = async ({
     log.info(`[SUBSCRIPTION] Creating new subscription for user ${user.id}`);
 
     try {
+      const formattedUsername = user.username.toLowerCase().replace(/ /g, '.');
       const responses = await prisma.$transaction([
         ...insertFtpQuotas({ prisma, user, plan: dbPlan }),
         prisma.ftpUser.create({
           data: {
-            userid: user.username,
+            userid: formattedUsername,
             user_id: user.id,
             homedir: dbPlan.homedir,
             uid: 2001,
@@ -99,7 +100,14 @@ export const subscribe = async ({
       ) {
         let selectedOrderId: number;
 
-        const createdOrder = await insertOrderOrUpdate(prisma, orderId, subId, user.id, dbPlan, service);
+        const createdOrder = await insertOrderOrUpdate(
+          prisma,
+          orderId,
+          subId,
+          user.id,
+          dbPlan,
+          service,
+        );
         selectedOrderId = createdOrder.id;
 
         await prisma.descargasUser.update({
@@ -224,34 +232,52 @@ export const subscribe = async ({
 
       log.info(`[SUBSCRIPTION] Creating order for user ${user.id}`);
 
-      const createdOrder = await insertOrderOrUpdate(prisma, orderId, subId, user.id, dbPlan, service);
-      await insertInDescargas({expirationDate, user, order: createdOrder, prisma});
-      
+      const createdOrder = await insertOrderOrUpdate(
+        prisma,
+        orderId,
+        subId,
+        user.id,
+        dbPlan,
+        service,
+      );
+      await insertInDescargas({
+        expirationDate,
+        user,
+        order: createdOrder,
+        prisma,
+      });
     } catch (e) {
       log.error(`Error while renovating subscription: ${e}`);
     }
   }
 };
 
-const insertOrderOrUpdate = async (prisma: PrismaClient, orderId: number, subId: string, userId: number, plan: Plans, service: PaymentService) => {
+const insertOrderOrUpdate = async (
+  prisma: PrismaClient,
+  orderId: number,
+  subId: string,
+  userId: number,
+  plan: Plans,
+  service: PaymentService,
+) => {
   if (orderId) {
     const currentOrder = await prisma.orders.findFirst({
       where: {
         id: orderId,
       },
       orderBy: {
-        date_order: 'desc'
-      }
+        date_order: 'desc',
+      },
     });
 
-    log.info(
-      `[SUBSCRIPTION] Creating descargas user entry for user ${userId}`,
-    );
+    log.info(`[SUBSCRIPTION] Creating descargas user entry for user ${userId}`);
 
     const now = new Date();
 
     if (currentOrder) {
-      const timeDifference = Math.abs(now.getTime() - currentOrder.date_order.getTime());
+      const timeDifference = Math.abs(
+        now.getTime() - currentOrder.date_order.getTime(),
+      );
       const minutesDiffernece = Math.floor(timeDifference / 1000 / 60);
 
       if (minutesDiffernece > 1) {
@@ -301,7 +327,7 @@ const insertOrderOrUpdate = async (prisma: PrismaClient, orderId: number, subId:
     });
     return order;
   }
-}
+};
 
 const insertFtpQuotas = ({
   prisma,
