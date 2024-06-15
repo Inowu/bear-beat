@@ -53,7 +53,7 @@ export const permissions = shield<Context>({
     aggregateRoles: isAdmin,
     aggregateUserFiles: isAdmin,
     aggregateUsers: isAdmin,
-    findFirstConfig: isAdmin,
+    findFirstConfig: isLoggedIn,
     findFirstCountries: isAdmin,
     findFirstCupons: isAdmin,
     findFirstCuponsUsed: isAdmin,
