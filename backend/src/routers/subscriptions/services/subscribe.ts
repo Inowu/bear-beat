@@ -344,6 +344,8 @@ const insertFtpQuotas = ({
     `[SUBSCRIPTION] Inserting ftp quotas for user ${user.id}, GB: ${gb}`,
   );
 
+  const formattedUsername = user.username.toLowerCase().replace(/ /g, '.');
+
   return [
     prisma.ftpQuotaLimits.create({
       data: {
@@ -353,12 +355,12 @@ const insertFtpQuotas = ({
         files_out_avail: 0,
         bytes_in_avail: 1,
         files_in_avail: 1,
-        name: user.username,
+        name: formattedUsername,
       },
     }),
     prisma.ftpquotatallies.create({
       data: {
-        name: user.username,
+        name: formattedUsername,
       },
     }),
   ];
