@@ -98,6 +98,7 @@ async function updateQuotaLimitsFromSub() {
         },
         data: {
           bytes_out_used: 0,
+          last_renewed_at: new Date(),
         },
       });
 
