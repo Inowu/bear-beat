@@ -51,8 +51,6 @@ async function updateQuotaLimitsFromSub() {
 
     const gb = gbToBytes(Number(plan.gigas));
 
-    console.log(`Updating user ${sub.user_id} with ${gb} bytes`);
-
     const ftpUser = await prisma.ftpUser.findFirst({
       where: {
         user_id: sub.user_id,
@@ -92,6 +90,7 @@ async function updateQuotaLimitsFromSub() {
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
     if (lastUpdate < oneMonthAgo) {
+      console.log(`Updating user ${sub.user_id} with ${gb} bytes`);
       // Reset the used gigas to 0
       await prisma.ftpquotatallies.update({
         where: {
