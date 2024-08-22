@@ -5,7 +5,8 @@ config();
 
 const prisma = new PrismaClient();
 
-const gbToBytes = (gb) => gb ? gb * 1024 * 1024 * 1024 : 500 * 1024 * 1024 * 1024;
+const gbToBytes = (gb) =>
+  gb ? gb * 1024 * 1024 * 1024 : 500 * 1024 * 1024 * 1024;
 
 async function updateQuotaLimitsFromSub() {
   const activeSubscriptions = await prisma.descargasUser.findMany({
@@ -43,9 +44,12 @@ async function updateQuotaLimitsFromSub() {
       continue;
     }
 
-    const gb = gbToBytes(Number(plan.gigas));
+    if (plan.duration !== '365') {
+      console.log(`Plan ${plan.name} is not annual`);
+      continue;
+    }
 
-    console.log(`Updating user ${sub.user_id} with ${gb} bytes`);
+    const gb = gbToBytes(Number(plan.gigas));
 
     const ftpUser = await prisma.ftpUser.findFirst({
       where: {
@@ -69,14 +73,51 @@ async function updateQuotaLimitsFromSub() {
       continue;
     }
 
-    await prisma.ftpQuotaLimits.update({
+    const quotaTallies = await prisma.ftpquotatallies.findFirst({
       where: {
-        id: quotaLimits.id,
-      },
-      data: {
-        bytes_out_avail: gb,
+        name: ftpUser.userid,
       },
     });
+
+    if (!quotaTallies) {
+      console.log(`User ${sub.user_id} doesn't have quota limits`);
+      continue;
+    }
+
+    // Check if the plan is annual and if it has been more than 30 days since the last update
+    const lastUpdate = quotaTallies.last_renewed_at;
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+    if (lastUpdate < oneMonthAgo) {
+      console.log(`Updating user ${sub.user_id} with ${gb} bytes`);
+      // Reset the used gigas to 0
+      await prisma.ftpquotatallies.update({
+        where: {
+          id: quotaTallies.id,
+        },
+        data: {
+          bytes_out_used: 0,
+        },
+      });
+
+      await prisma.ftpQuotaLimits.update({
+        where: {
+          id: quotaLimits.id,
+        },
+        data: {
+          bytes_out_avail: gbToBytes(Number(plan.gigas)),
+          bytes_xfer_avail: 0,
+          files_xfer_avail: 0,
+          files_out_avail: 0,
+          // A limit of 0 means unlimited
+          bytes_in_avail: 1,
+          files_in_avail: 1,
+          name: ftpUser.userid,
+        },
+      }),
+        console.log(`Reset gigas used for user ${sub.user_id}`);
+    }
   }
 }
 
