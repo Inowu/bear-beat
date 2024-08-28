@@ -41,12 +41,11 @@ export const cancelSubscription = async ({
         date_end: 'desc',
       },
       {
-        id: 'desc'
+        id: 'desc',
       },
-    ]
+    ],
   });
 
-  
   if (!download) {
     log.info(
       `[CANCEL_SUB] No active subscription for user ${user.id}, no action taken to cancel subscription`,
@@ -106,32 +105,42 @@ export const cancelSubscription = async ({
 
   log.info(`[CANCEL_SUB] Cancelling subscription for user ${user.id}`);
 
-  // await prisma.$transaction([
-  //   prisma.descargasUser.update({
-  //     where: {
-  //       id: download.id,
-  //     },
-  //     data: {
-  //       date_end: new Date(),
-  //     },
-  //   }),
-  //   prisma.ftpquotatallies.update({
-  //     where: {
-  //       id: quotaTallies.id,
-  //     },
-  //     data: {
-  //       bytes_out_used: gbToBytes(gb) + gbToBytes(1),
-  //     },
-  //   }),
-  //   prisma.ftpUser.update({
-  //     where: {
-  //       id: ftpUser.id,
-  //     },
-  //     data: {
-  //       expiration: subDays(new Date(), 1).toISOString(),
-  //     },
-  //   }),
-  // ]);
+  if (reason === OrderStatus.EXPIRED || reason === OrderStatus.FAILED) {
+    await prisma.$transaction([
+      prisma.descargasUser.update({
+        where: {
+          id: download.id,
+        },
+        data: {
+          date_end: new Date(),
+        },
+      }),
+      prisma.ftpquotatallies.update({
+        where: {
+          id: quotaTallies.id,
+        },
+        data: {
+          bytes_out_used: gbToBytes(gb) + gbToBytes(1),
+        },
+      }),
+      prisma.ftpUser.update({
+        where: {
+          id: ftpUser.id,
+        },
+        data: {
+          expiration: subDays(new Date(), 1).toISOString(),
+        },
+      }),
+      prisma.orders.update({
+        where: {
+          id: planOrder.id,
+        },
+        data: {
+          status: reason,
+        },
+      }),
+    ]);
+  }
 
   const pendingOrder = await prisma.orders.findFirst({
     where: {
