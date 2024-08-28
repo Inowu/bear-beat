@@ -60,22 +60,6 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
       }
 
       try {
-        await brevo.smtp.sendTransacEmail({
-          templateId: 2,
-          to: [{ email: user.email, name: user.username }],
-          params: {
-            NAME: user.username,
-            plan_name: plan.name,
-            price: plan.price,
-            currency: plan.moneda.toUpperCase(),
-            ORDER: subscription.metadata.orderId,
-          },
-        });
-      } catch (e) {
-        log.error(`[STRIPE] Error while sending email ${e}`);
-      }
-
-      try {
         await manyChat.addTagToUser(user, 'SUCCESSFUL_PAYMENT');
       } catch (e) {
         log.error(`[STRIPE] Error while adding tag to user ${user.id}: ${e}`);
