@@ -9,5 +9,6 @@ export const FtpquotatalliesScalarFieldEnumSchema = z.enum([
   'files_in_used',
   'files_out_used',
   'files_xfer_used',
+  'last_renewed_at',
   'id',
 ]);

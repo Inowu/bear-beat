@@ -18,6 +18,7 @@ const Schema: z.ZodType<Prisma.FtpquotatalliesOrderByWithAggregationInput> = z
     files_in_used: z.lazy(() => SortOrderSchema).optional(),
     files_out_used: z.lazy(() => SortOrderSchema).optional(),
     files_xfer_used: z.lazy(() => SortOrderSchema).optional(),
+    last_renewed_at: z.lazy(() => SortOrderSchema).optional(),
     id: z.lazy(() => SortOrderSchema).optional(),
     _count: z
       .lazy(() => FtpquotatalliesCountOrderByAggregateInputObjectSchema)
