@@ -65,15 +65,15 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
         log.error(`[STRIPE] Error while adding tag to user ${user.id}: ${e}`);
       }
 
-      subscribe({
-        subId: subscription.id,
-        user,
-        prisma,
-        plan: plan!,
-        orderId: subscription.metadata.orderId,
-        service: PaymentService.STRIPE,
-        expirationDate: new Date(subscription.current_period_end * 1000),
-      });
+      // subscribe({
+      //   subId: subscription.id,
+      //   user,
+      //   prisma,
+      //   plan: plan!,
+      //   orderId: subscription.metadata.orderId,
+      //   service: PaymentService.STRIPE,
+      //   expirationDate: new Date(subscription.current_period_end * 1000),
+      // });
 
       break;
     }
