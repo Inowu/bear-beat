@@ -61,19 +61,23 @@ export const updateStripeSubscription = async ({
   try {
     await stripeInstance.subscriptionItems.update(stripeSub.id, {
       // Checked outside method
-      price: process.env.NODE_ENV === 'production' ? newPlan.stripe_prod_id! : newPlan.stripe_prod_id_test!,
+      price:
+        process.env.NODE_ENV === 'production'
+          ? newPlan.stripe_prod_id!
+          : newPlan.stripe_prod_id_test!,
       proration_behavior: 'always_invoice',
     });
 
-    await updateFtpUserInfo({
-      subscription,
-      user,
-      subscriptionOrder,
-      newPlan,
-    });
+    // await updateFtpUserInfo({
+    //   subscription,
+    //   user,
+    //   subscriptionOrder,
+    //   newPlan,
+    // });
 
     return {
-      message: 'El plan de tu suscripción ha sido actualizado',
+      message:
+        'Tú cambio de plan está siendo procesado, esto puede tomar varios minutos.',
     };
   } catch (e) {
     log.error(`[CHANGE_PLAN] Error updating stripe subscription item, ${e}`);
@@ -116,10 +120,14 @@ export const updatePaypalSubscription = async ({
   try {
     // Update the paypal subscription
     const response = await axios.post(
-      `${paypal.paypalUrl()}/v1/billing/subscriptions/${subscriptionOrder.txn_id
+      `${paypal.paypalUrl()}/v1/billing/subscriptions/${
+        subscriptionOrder.txn_id
       }/revise`,
       {
-        plan_id: process.env.NODE_ENV === 'production' ? newPlan.paypal_plan_id : newPlan.paypal_plan_id_test,
+        plan_id:
+          process.env.NODE_ENV === 'production'
+            ? newPlan.paypal_plan_id
+            : newPlan.paypal_plan_id_test,
       },
       {
         headers: {
@@ -129,7 +137,8 @@ export const updatePaypalSubscription = async ({
     );
 
     return {
-      message: 'El plan de tu suscripción ha sido actualizado',
+      message:
+        'Tú cambio de plan está siendo procesado, esto puede tomar varios minutos.',
       data: response.data,
     };
   } catch (e) {

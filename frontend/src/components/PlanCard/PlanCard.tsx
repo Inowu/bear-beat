@@ -117,8 +117,8 @@ function PlanCard(props: PlanCardPropsI) {
           await trpc.subscriptions.changeSubscriptionPlan.mutate(body);
         console.log(changeplan);
         openSuccess();
-        setSuccessMessage("Su suscripción se ha cambiado con éxito.");
-        setSuccessTitle("Suscripción Cambiada");
+        setSuccessMessage("Tú cambio de plan está siendo procesado, esto puede tomar varios minutos.");
+        setSuccessTitle("Cambio de suscripción");
       }
     } catch (error: any) {
       console.log(error.message);
