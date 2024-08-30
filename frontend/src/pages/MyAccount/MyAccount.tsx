@@ -4,7 +4,7 @@ import { Elements } from "@stripe/react-stripe-js";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { getCompleted } from "../../functions/functions";
-import { IOrders,  IQuota, IFtpAccount } from "interfaces/User";
+import { IOrders, IQuota, IFtpAccount } from "interfaces/User";
 import { Link } from "react-router-dom";
 import { loadStripe } from "@stripe/stripe-js";
 import { saveAs } from 'file-saver';
@@ -130,6 +130,7 @@ function MyAccount() {
     try {
       const user_downloads: any =
         await trpc.descargasuser.ownDescargas.query(body);
+
       let allorders: any = [];
       await Promise.all(
         user_downloads.map(async (orders: any) => {
@@ -314,6 +315,7 @@ function MyAccount() {
                 <th scope="col">Fecha</th>
                 <th scope="col">Orden #</th>
                 <th scope="col">Precio</th>
+                <th scope="col">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -326,6 +328,13 @@ function MyAccount() {
                       <td>
                         ${order.total_price}.00{" "}
                         {order.total_price === 18 ? "USD" : "MXN"}
+                      </td>
+                      <td>
+                        {order.status === 0 && "Pendiente"}
+                        {order.status === 1 && "Pagada"}
+                        {order.status === 2 && "Fallida"}
+                        {order.status === 3 && "Cancelada"}
+                        {order.status === 4 && "Expirada"}
                       </td>
                     </tr>
                   );
