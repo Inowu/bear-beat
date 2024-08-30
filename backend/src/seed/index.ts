@@ -30,6 +30,8 @@ export const seed = async () => {
     username: 'test',
     password: 'password',
     phone: '534205355',
+    fbp: 'fbp',
+    url: 'https://thebearbeat.com/auth/registro',
   });
 
   user = await prisma.users.findFirst({
