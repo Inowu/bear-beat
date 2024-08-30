@@ -43,7 +43,7 @@ export const Ordens = () => {
     if (key !== "page") {
       tempFilters.page = 0;
     }
-    
+
     tempFilters[key] = value;
     setFilters(tempFilters);
     filterOrdens(tempFilters);
@@ -119,6 +119,23 @@ export const Ordens = () => {
     }));
 
     return transformedOrdens;
+  }
+
+  const getOrderStatusString = (status: number) => {
+    switch (status) {
+      case ORDER_STATUS.PENDING:
+        return "Pendiente";
+      case ORDER_STATUS.PAID:
+        return "Pagada";
+      case ORDER_STATUS.FAILED:
+        return "Fallida";
+      case ORDER_STATUS.CANCELLED:
+        return "Cancelada";
+      case ORDER_STATUS.EXPIRED:
+        return "Expirada";
+      default:
+        return "Desconocido";
+    }
   }
 
   useEffect(() => {
@@ -238,7 +255,7 @@ export const Ordens = () => {
                       <td>{orden.txn_id}</td>
                       <td>{orden.total_price}</td>
                       <td>{orden.date_order.toLocaleDateString()}</td>
-                      <td>{orden.status === 1 ? "Activa" : "No activa"}</td>
+                      <td>{getOrderStatusString(orden.status)}</td>
                     </tr>
                   );
                 })
