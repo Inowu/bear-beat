@@ -327,7 +327,6 @@ function MyAccount() {
                       <td>{order.id}</td>
                       <td>
                         ${order.total_price}.00{" "}
-                        {order.total_price === 18 ? "USD" : "MXN"}
                       </td>
                       <td>
                         {order.status === 0 && "Pendiente"}
