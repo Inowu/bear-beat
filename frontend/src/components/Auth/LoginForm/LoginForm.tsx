@@ -44,9 +44,17 @@ function LoginForm() {
       };
       try {
         const login = await trpc.auth.login.query(body);
+        console.log('login Response', login);
         if (login.user.verified) {
-          handleLogin(login.token, login.refreshToken);
-          navigate("/");
+          if (login.user) {
+            if (login.user.verified) {
+              handleLogin(login.token, login.refreshToken);
+              navigate("/");
+            }
+          } else {
+            handleLogin(login.token, login.refreshToken);
+            navigate("/");
+          }
         } else {
           setLoginInfo(login);
           setNewUserId(login.user.id);
