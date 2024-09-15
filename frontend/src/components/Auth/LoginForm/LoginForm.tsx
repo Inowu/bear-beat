@@ -45,21 +45,21 @@ function LoginForm() {
       try {
         const login = await trpc.auth.login.query(body);
         console.log('login Response', login);
-        if (login.user.verified) {
+        if (login) {
           if (login.user) {
             if (login.user.verified) {
               handleLogin(login.token, login.refreshToken);
               navigate("/");
+            } else {
+              setLoginInfo(login);
+              setNewUserId(login.user.id);
+              setNewUserPhone(login.user.phone!);
+              setShowVerify(true);
             }
           } else {
             handleLogin(login.token, login.refreshToken);
             navigate("/");
           }
-        } else {
-          setLoginInfo(login);
-          setNewUserId(login.user.id);
-          setNewUserPhone(login.user.phone!);
-          setShowVerify(true);
         }
 
         setLoader(false);
