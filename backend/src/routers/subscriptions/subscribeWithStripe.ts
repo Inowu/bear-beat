@@ -17,7 +17,7 @@ export const subscribeWithStripe = shieldedProcedure
     z.object({
       planId: z.number(),
       coupon: z.string().optional(),
-      fbp: z.string(),
+      fbp: z.string().optional(),
       url: z.string()
     }),
   )
@@ -161,11 +161,13 @@ export const subscribeWithStripe = shieldedProcedure
         const remoteAddress = req.socket.remoteAddress;
         const userAgent = req.headers['user-agent'];
 
-        if (remoteAddress && userAgent) {
-          log.info('[STRIPE] User has successfully paid for a plan, sending event to facebook');
-          await facebook.setEvent('PagoExitosoAPI', remoteAddress, userAgent, fbp, url, existingUser);
+        if (fbp) {
+          if (remoteAddress && userAgent) {
+            log.info('[STRIPE] User has successfully paid for a plan, sending event to facebook');
+            await facebook.setEvent('PagoExitosoAPI', remoteAddress, userAgent, fbp, url, existingUser);
+          }
         }
-
+        
         await manyChat.addTagToUser(existingUser, 'SUCCESSFUL_PAYMENT');
       }
 
