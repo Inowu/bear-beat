@@ -15,7 +15,7 @@ import { paypal as uhPaypal } from '../migration/uhPaypal';
 import { checkIfUserIsSubscriber } from '../migration/checkUHSubscriber';
 import uhStripeInstance from '../migration/uhStripe';
 import { uhConektaSubscriptions } from '../migration/uhConekta';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 
 export const subscribeWithStripe = shieldedProcedure
   .input(
