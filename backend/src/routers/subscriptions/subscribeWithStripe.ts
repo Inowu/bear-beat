@@ -11,9 +11,11 @@ import { PaymentService } from './services/types';
 import { Cupons } from '@prisma/client';
 import { facebook } from '../../facebook';
 import { manyChat } from '../../many-chat';
+import { paypal as uhPaypal } from '../migration/uhPaypal';
 import { checkIfUserIsSubscriber } from '../migration/checkUHSubscriber';
 import uhStripeInstance from '../migration/uhStripe';
 import { uhConektaSubscriptions } from '../migration/uhConekta';
+import axios from 'axios';
 
 export const subscribeWithStripe = shieldedProcedure
   .input(
@@ -70,6 +72,36 @@ export const subscribeWithStripe = shieldedProcedure
             throw new TRPCError({
               code: 'INTERNAL_SERVER_ERROR',
               message: 'Ocurrió un error al cancelar la suscripción en UH',
+            });
+          }
+        }
+      }
+      else if (migrationUser?.service === 'paypal') {
+        const subscription = (await axios(`${uhPaypal.paypalUrl()}/v1/billing/subscriptions/${migrationUser.subscriptionId}`, {
+          headers: {
+            Authorization: `Bearer ${await uhPaypal.getToken()}`,
+          },
+        })).data;
+
+        if (subscription.status === 'ACTIVE') {
+          log.info(`[MIGRATION] Cancelling active paypal subscription for user ${user.email}`);
+
+          try {
+            await axios.post(`${uhPaypal.paypalUrl()}/v1/billing/subscriptions/${migrationUser.subscriptionId}/cancel`, {
+              reason: 'CANCEL_BY_USER',
+            }, {
+              headers: {
+                Authorization: `Bearer ${await uhPaypal.getToken()}`,
+              }
+            });
+
+            log.info(`[MIGRATION] Active paypal subscription cancelled for user ${user.email}`);
+          } catch (e) {
+            log.error(`[MIGRATION] An error happened while cancelling active paypal subscription for user ${user.email}: ${(e as AxiosError).response?.data}`);
+
+            throw new TRPCError({
+              code: 'INTERNAL_SERVER_ERROR',
+              message: 'Ocurrió un error al migrar la suscripción',
             });
           }
         }
