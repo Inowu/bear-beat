@@ -1,5 +1,4 @@
 import path from 'path';
-import tracer from 'dd-trace';
 import pm2 from 'pm2';
 import { config } from 'dotenv';
 import { createExpressMiddleware } from '@trpc/server/adapters/express';
@@ -30,13 +29,6 @@ import { downloadDirEndpoint } from './endpoints/download-dir.endpoint';
 
 config({
   path: path.resolve(__dirname, '../.env'),
-});
-
-tracer.init({
-  env: 'prod',
-  service: 'bearbeat',
-  logInjection: true,
-  hostname: process.env.DD_AGENT_HOST,
 });
 
 async function main() {

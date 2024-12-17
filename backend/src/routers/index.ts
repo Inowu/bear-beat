@@ -20,6 +20,7 @@ import { usersRouter } from './Users.router';
 import { adminRouter } from './admin';
 import { authRouter } from './auth';
 import { ftpRouter } from './file-actions';
+import { migrationRouter } from './migration';
 import { productsRouter } from './products';
 import { subscriptionsRouter } from './subscriptions';
 import { webhooksRouter } from './webhooks';
@@ -48,7 +49,8 @@ export const appRouter = router({
   products: productsRouter,
   checkoutLogs: checkoutLogsRouter,
   dirDownloads: dirDownloadRouter,
-  downloadHistory: downloadHistoryRouter
+  downloadHistory: downloadHistoryRouter,
+  migration: migrationRouter,
 });
 
 export type AppRouter = typeof appRouter;

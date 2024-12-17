@@ -11,6 +11,7 @@ import { getConektaCustomer } from './utils/getConektaCustomer';
 import { getPlanKey } from '../../utils/getPlanKey';
 import { hasActiveSubscription } from './utils/hasActiveSub';
 import { PaymentService } from './services/types';
+import { checkIfUserIsSubscriber } from '../migration/checkUHSubscriber';
 
 export const subscribeWithCardConekta = shieldedProcedure
   .input(
@@ -73,15 +74,13 @@ export const subscribeWithCardConekta = shieldedProcedure
           card_id: paymentSource.data.id,
         });
       } catch (e) {
-        log.error(`Error while creating subscription: ${e}`);
+        log.error(`[CONEKTA] Error while creating subscription: ${e}`);
 
         if (e instanceof TRPCError) throw e;
 
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: `There was an error while creating subscription: ${
-            (e as any).message
-          }`,
+          message: `Ocurrió un error al crear la suscripción: ${(e as any).message}`,
         });
       }
     },

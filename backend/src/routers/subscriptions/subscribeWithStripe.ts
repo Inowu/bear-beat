@@ -11,6 +11,9 @@ import { PaymentService } from './services/types';
 import { Cupons } from '@prisma/client';
 import { facebook } from '../../facebook';
 import { manyChat } from '../../many-chat';
+import { checkIfUserIsSubscriber } from '../migration/checkUHSubscriber';
+import uhStripeInstance from '../migration/uhStripe';
+import { uhConektaSubscriptions } from '../migration/uhConekta';
 
 export const subscribeWithStripe = shieldedProcedure
   .input(
@@ -23,6 +26,55 @@ export const subscribeWithStripe = shieldedProcedure
   )
   .query(async ({ input: { planId, coupon, fbp, url }, ctx: { prisma, session, req } }) => {
     const user = session!.user!;
+    let migrationUser = null;
+
+    if (process.env.UH_MIGRATION_ACTIVE === 'true') {
+      migrationUser = await checkIfUserIsSubscriber({
+        email: user.email!,
+      })
+
+      if (migrationUser?.service === 'stripe') {
+        log.info(`[MIGRATION] Cancelling active stripe subscription for user ${user.email}`);
+
+        const activeStripeSubscriptions = await uhStripeInstance.subscriptions.list({
+          customer: migrationUser.subscriptionId,
+          status: 'active',
+        })
+
+        if (activeStripeSubscriptions.data.length > 0) {
+          for (const subscription of activeStripeSubscriptions.data) {
+            log.info(`[MIGRATION] Cancelling active stripe subscription ${subscription.id} for user ${user.email}`);
+            try {
+              await uhStripeInstance.subscriptions.cancel(subscription.id);
+            } catch (e) {
+              log.error(`[MIGRATION] An error happened while cancelling stripe subscription: ${subscription.id}: ${e}`);
+
+              throw new TRPCError({
+                code: 'INTERNAL_SERVER_ERROR',
+                message: 'Ocurrió un error al cancelar la suscripción en UH',
+              });
+            }
+          }
+        }
+      }
+      else if (migrationUser?.service === 'conekta') {
+        log.info(`[MIGRATION] Cancelling active conekta subscription for user ${user.email}`);
+        const activeConektaSubscriptions = await uhConektaSubscriptions.getSubscription(migrationUser.subscriptionId);
+
+        if (activeConektaSubscriptions.data.status === 'active') {
+          try {
+            await uhConektaSubscriptions.cancelSubscription(migrationUser.subscriptionId);
+          } catch (e) {
+            log.error(`[MIGRATION] An error happened while cancelling conekta subscription: ${migrationUser.subscriptionId}: ${e}`);
+
+            throw new TRPCError({
+              code: 'INTERNAL_SERVER_ERROR',
+              message: 'Ocurrió un error al cancelar la suscripción en UH',
+            });
+          }
+        }
+      }
+    }
 
     const existingUser = await prisma.users.findFirst({
       where: {
@@ -118,6 +170,7 @@ export const subscribeWithStripe = shieldedProcedure
         ],
         payment_behavior: 'default_incomplete',
         payment_settings: { save_default_payment_method: 'on_subscription' },
+        trial_period_days: migrationUser?.remainingDays,
         // proration_behavior: 'always_invoice',
         expand: ['latest_invoice.payment_intent'],
         metadata: {
@@ -167,7 +220,7 @@ export const subscribeWithStripe = shieldedProcedure
             await facebook.setEvent('PagoExitosoAPI', remoteAddress, userAgent, fbp, url, existingUser);
           }
         }
-        
+
         await manyChat.addTagToUser(existingUser, 'SUCCESSFUL_PAYMENT');
       }
 
