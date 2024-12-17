@@ -12,7 +12,7 @@ import { Cupons } from '@prisma/client';
 import { facebook } from '../../facebook';
 import { manyChat } from '../../many-chat';
 import { paypal as uhPaypal } from '../migration/uhPaypal';
-import { checkIfUserIsSubscriber } from '../migration/checkUHSubscriber';
+import { checkIfUserIsFromUH, checkIfUserIsSubscriber, SubscriptionCheckResult } from '../migration/checkUHSubscriber';
 import uhStripeInstance from '../migration/uhStripe';
 import { uhConektaSubscriptions } from '../migration/uhConekta';
 import axios, { AxiosError } from 'axios';
@@ -28,84 +28,40 @@ export const subscribeWithStripe = shieldedProcedure
   )
   .query(async ({ input: { planId, coupon, fbp, url }, ctx: { prisma, session, req } }) => {
     const user = session!.user!;
-    let migrationUser = null;
+    let migrationUser: SubscriptionCheckResult | null = null;
 
-    if (process.env.UH_MIGRATION_ACTIVE === 'true') {
-      migrationUser = await checkIfUserIsSubscriber({
-        email: user.email!,
-      })
+    try {
+      if (process.env.UH_MIGRATION_ACTIVE === 'true') {
+        const uhUser = await checkIfUserIsFromUH(user.email);
 
-      if (migrationUser?.service === 'stripe') {
-        log.info(`[MIGRATION] Cancelling active stripe subscription for user ${user.email}`);
+        if (uhUser) {
+          migrationUser = await checkIfUserIsSubscriber(uhUser);
 
-        const activeStripeSubscriptions = await uhStripeInstance.subscriptions.list({
-          customer: migrationUser.subscriptionId,
-          status: 'active',
-        })
+          if (migrationUser) {
+            log.info(`[MIGRATION] Starting cancellation for ${migrationUser.service} subscription ${migrationUser.subscriptionId}`);
 
-        if (activeStripeSubscriptions.data.length > 0) {
-          for (const subscription of activeStripeSubscriptions.data) {
-            log.info(`[MIGRATION] Cancelling active stripe subscription ${subscription.id} for user ${user.email}`);
-            try {
-              await uhStripeInstance.subscriptions.cancel(subscription.id);
-            } catch (e) {
-              log.error(`[MIGRATION] An error happened while cancelling stripe subscription: ${subscription.id}: ${e}`);
-
-              throw new TRPCError({
-                code: 'INTERNAL_SERVER_ERROR',
-                message: 'Ocurrió un error al cancelar la suscripción en UH',
-              });
+            switch (migrationUser.service) {
+              case 'stripe':
+                await handleStripeMigration(migrationUser, user.email);
+                break;
+              case 'conekta':
+                await handleConektaMigration(migrationUser, user.email);
+                break;
+              case 'paypal':
+                await handlePaypalMigration(migrationUser, user.email);
+                break;
+              default:
+                throw new Error(`Unknown service: ${migrationUser.service}`);
             }
           }
         }
       }
-      else if (migrationUser?.service === 'conekta') {
-        log.info(`[MIGRATION] Cancelling active conekta subscription for user ${user.email}`);
-        const activeConektaSubscriptions = await uhConektaSubscriptions.getSubscription(migrationUser.subscriptionId);
-
-        if (activeConektaSubscriptions.data.status === 'active') {
-          try {
-            await uhConektaSubscriptions.cancelSubscription(migrationUser.subscriptionId);
-          } catch (e) {
-            log.error(`[MIGRATION] An error happened while cancelling conekta subscription: ${migrationUser.subscriptionId}: ${e}`);
-
-            throw new TRPCError({
-              code: 'INTERNAL_SERVER_ERROR',
-              message: 'Ocurrió un error al cancelar la suscripción en UH',
-            });
-          }
-        }
-      }
-      else if (migrationUser?.service === 'paypal') {
-        const subscription = (await axios(`${uhPaypal.paypalUrl()}/v1/billing/subscriptions/${migrationUser.subscriptionId}`, {
-          headers: {
-            Authorization: `Bearer ${await uhPaypal.getToken()}`,
-          },
-        })).data;
-
-        if (subscription.status === 'ACTIVE') {
-          log.info(`[MIGRATION] Cancelling active paypal subscription for user ${user.email}`);
-
-          try {
-            await axios.post(`${uhPaypal.paypalUrl()}/v1/billing/subscriptions/${migrationUser.subscriptionId}/cancel`, {
-              reason: 'CANCEL_BY_USER',
-            }, {
-              headers: {
-                Authorization: `Bearer ${await uhPaypal.getToken()}`,
-              }
-            });
-
-            log.info(`[MIGRATION] Active paypal subscription cancelled for user ${user.email}`);
-          } catch (e) {
-            log.error(`[MIGRATION] An error happened while cancelling active paypal subscription for user ${user.email}: ${(e as AxiosError).response?.data}`);
-
-            throw new TRPCError({
-              code: 'INTERNAL_SERVER_ERROR',
-              message: 'Ocurrió un error al migrar la suscripción',
-            });
-          }
-        }
-      }
+    } catch (e) {
+      log.error(`[MIGRATION] Failed to process migration: ${e}`);
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Error al procesar la migración de suscripción',
+      });
     }
 
     const existingUser = await prisma.users.findFirst({
@@ -272,3 +228,67 @@ export const subscribeWithStripe = shieldedProcedure
       });
     }
   });
+
+async function handleStripeMigration(migrationUser: SubscriptionCheckResult, userEmail: string) {
+  const activeStripeSubscriptions = await uhStripeInstance.subscriptions.list({
+    customer: migrationUser.subscriptionId,
+    status: 'active',
+  });
+
+  for (const subscription of activeStripeSubscriptions.data) {
+    try {
+      log.info(`[MIGRATION] Cancelling active stripe subscription ${subscription.id} for user ${userEmail}`);
+      await uhStripeInstance.subscriptions.cancel(subscription.id);
+      log.info(`[MIGRATION] Successfully cancelled stripe subscription ${subscription.id} for user ${userEmail}`);
+    } catch (e) {
+      log.error(`[MIGRATION] Failed to cancel stripe subscription ${subscription.id} for user ${userEmail}: ${e}`);
+      throw e;
+    }
+  }
+}
+
+async function handleConektaMigration(migrationUser: SubscriptionCheckResult, userEmail: string) {
+  const activeConektaSubscriptions = await uhConektaSubscriptions.getSubscription(migrationUser.subscriptionId);
+
+  if (activeConektaSubscriptions.data.status === 'active') {
+    try {
+      log.info(`[MIGRATION] Cancelling active conekta subscription ${migrationUser.subscriptionId} for user ${userEmail}`);
+      await uhConektaSubscriptions.cancelSubscription(migrationUser.subscriptionId);
+      log.info(`[MIGRATION] Successfully cancelled conekta subscription ${migrationUser.subscriptionId} for user ${userEmail}`);
+    } catch (e) {
+      log.error(`[MIGRATION] Failed to cancel conekta subscription ${migrationUser.subscriptionId} for user ${userEmail}: ${e}`);
+      throw e;
+    }
+  }
+}
+
+async function handlePaypalMigration(migrationUser: SubscriptionCheckResult, userEmail: string) {
+  const subscription = (await axios(`${uhPaypal.paypalUrl()}/v1/billing/subscriptions/${migrationUser.subscriptionId}`, {
+    headers: {
+      Authorization: `Bearer ${await uhPaypal.getToken()}`,
+    },
+  })).data;
+
+  if (subscription.status === 'ACTIVE') {
+    log.info(`[MIGRATION] Cancelling active paypal subscription ${migrationUser.subscriptionId} for user ${userEmail}`);
+
+    try {
+      await axios.post(`${uhPaypal.paypalUrl()}/v1/billing/subscriptions/${migrationUser.subscriptionId}/cancel`, {
+        reason: 'CANCEL_BY_USER',
+      }, {
+        headers: {
+          Authorization: `Bearer ${await uhPaypal.getToken()}`,
+        }
+      });
+
+      log.info(`[MIGRATION] Active paypal subscription cancelled for user ${userEmail}`);
+    } catch (e) {
+      log.error(`[MIGRATION] An error happened while cancelling active paypal subscription for user ${userEmail}: ${(e as AxiosError).response?.data}`);
+
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Ocurrió un error al migrar la suscripción',
+      });
+    }
+  }
+}

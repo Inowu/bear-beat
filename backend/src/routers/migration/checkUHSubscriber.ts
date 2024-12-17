@@ -21,32 +21,61 @@ const app = admin.initializeApp({
 });
 const db = admin.firestore(app)
 
-export async function checkIfUserIsSubscriber(user: Record<string, any>): Promise<{ service: 'stripe' | 'conekta' | 'paypal', remainingDays: number, subscriptionEmail: string, subscriptionId: string } | null> {
-  if (user.stripe_id) {
-    log.info(`[MIGRATION] Checking stripe subscription for user ${user.email}`);
+// Add an interface for the return type
+export interface SubscriptionCheckResult {
+  service: 'stripe' | 'conekta' | 'paypal';
+  remainingDays: number;
+  subscriptionEmail: string;
+  subscriptionId: string;
+}
 
-    try {
-      const stripeCustomer = await stripe.customers.retrieve(user.stripe_id);
+// Add type for the user parameter
+interface UHUser {
+  email: string;
+  stripe_id?: string;
+  conektaId?: string;
+  conektaSubId?: string;
+  paypalSubscription?: string;
+}
 
-      if (stripeCustomer) {
-        const subscriptions = await stripe.subscriptions.list({
-          customer: stripeCustomer.id,
-          expand: ['data.customer'],
-        });
+export async function checkIfUserIsSubscriber(user: UHUser): Promise<SubscriptionCheckResult | null> {
+  // Add validation for required fields
+  if (!user.email) {
+    log.error('[MIGRATION] User email is required');
+    return null;
+  }
 
-        if (subscriptions.data.length > 0 && subscriptions.data[0].status === 'active') {
-          return { service: 'stripe', subscriptionId: subscriptions.data[0].id, remainingDays: differenceInDays(new Date(subscriptions.data[0].current_period_end * 1000), new Date()), subscriptionEmail: (subscriptions.data[0].customer as Stripe.Customer).email! };
+  // Add better error handling for subscription checks
+  try {
+    if (user.stripe_id) {
+      log.info(`[MIGRATION] Checking stripe subscription for user ${user.email}`);
+
+      try {
+        const stripeCustomer = await stripe.customers.retrieve(user.stripe_id);
+
+        if (stripeCustomer) {
+          const subscriptions = await stripe.subscriptions.list({
+            customer: stripeCustomer.id,
+            expand: ['data.customer'],
+          });
+
+          if (subscriptions.data.length > 0 && subscriptions.data[0].status === 'active') {
+            return { service: 'stripe', subscriptionId: subscriptions.data[0].id, remainingDays: differenceInDays(new Date(subscriptions.data[0].current_period_end * 1000), new Date()), subscriptionEmail: (subscriptions.data[0].customer as Stripe.Customer).email! };
+          }
+        }
+      } catch (e: any) {
+        if (e.raw.code === 'resource_missing') {
+          log.info(`[MIGRATION] Stripe subscription not found: ${user.stripe_id}`);
+        } else {
+          log.error(`[MIGRATION] An error happened while checking stripe subscription: ${user.stripe_id}: ${e}`);
+
+          return null;
         }
       }
-    } catch (e: any) {
-      if (e.raw.code === 'resource_missing') {
-        log.info(`[MIGRATION] Stripe subscription not found: ${user.stripe_id}`);
-      } else {
-        log.error(`[MIGRATION] An error happened while checking stripe subscription: ${user.stripe_id}: ${e}`);
-
-        return null;
-      }
     }
+  } catch (e) {
+    log.error(`[MIGRATION] Unexpected error checking stripe subscription: ${e}`);
+    return null;
   }
 
   if (user.conektaId && user.conektaSubId) {
@@ -99,6 +128,16 @@ export async function checkIfUserIsSubscriber(user: Record<string, any>): Promis
   return null;
 }
 
+export async function checkIfUserIsFromUH(email: string): Promise<UHUser | null> {
+  const uhUser = await db.collection('users').where('email', '==', email).get();
+
+  if (uhUser.empty) {
+    return null;
+  }
+
+  return uhUser.docs[0].data() as UHUser;
+}
+
 export const checkUHSubscriber = publicProcedure
   .input(z.object({
     email: z.string().email(),
@@ -108,7 +147,7 @@ export const checkUHSubscriber = publicProcedure
       let uhUser;
 
       try {
-        uhUser = await db.collection('users').where('email', '==', email).get();
+        uhUser = await checkIfUserIsFromUH(email);
       } catch (e) {
         console.error(`Error fetching user ${email} in UH: ${e}`);
 
@@ -120,7 +159,7 @@ export const checkUHSubscriber = publicProcedure
 
       log.info(`[MIGRATION] Checking user ${email} in UH`);
 
-      if (uhUser.empty) {
+      if (!uhUser) {
         throw new TRPCError({
           code: 'NOT_FOUND',
           message: 'No hay ningún usuario registrado con este email',
@@ -142,7 +181,7 @@ export const checkUHSubscriber = publicProcedure
         })
       }
 
-      const subscription = await checkIfUserIsSubscriber(uhUser.docs[0].data());
+      const subscription = await checkIfUserIsSubscriber(uhUser);
 
       if (subscription) {
         log.info(`[MIGRATION] User ${email} has subscription: ${subscription.service}`);
