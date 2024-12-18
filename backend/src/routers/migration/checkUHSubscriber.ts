@@ -143,7 +143,7 @@ export const checkUHSubscriber = publicProcedure
     email: z.string().email(),
   }))
   .query(
-    async ({ input: { email }, ctx: { prisma } }) => {
+    async ({ input: { email } }) => {
       let uhUser;
 
       try {
@@ -167,19 +167,6 @@ export const checkUHSubscriber = publicProcedure
       }
 
       log.info(`[MIGRATION] User ${email} found in UH`);
-
-      const bearbeatUser = await prisma.users.findUnique({
-        where: {
-          email: email,
-        },
-      });
-
-      if (bearbeatUser) {
-        throw new TRPCError({
-          code: 'CONFLICT',
-          message: 'Este email ya está registrado en BearBeat',
-        })
-      }
 
       const subscription = await checkIfUserIsSubscriber(uhUser);
 

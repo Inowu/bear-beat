@@ -12,6 +12,12 @@ import { PaymentService } from '../../subscriptions/services/types';
 import { OrderStatus } from '../../subscriptions/interfaces/order-status.interface';
 import { brevo } from '../../../email';
 import { manyChat } from '../../../many-chat';
+import { TRPCError } from '@trpc/server';
+import { checkIfUserIsFromUH, checkIfUserIsSubscriber, SubscriptionCheckResult } from '../../migration/checkUHSubscriber';
+import uhStripeInstance from '../../migration/uhStripe';
+import { uhConektaSubscriptions } from '../../migration/uhConekta';
+import { paypal as uhPaypal } from '../../migration/uhPaypal';
+import axios, { AxiosError } from 'axios';
 
 export const stripeSubscriptionWebhook = async (req: Request) => {
   const payload: Stripe.Event = JSON.parse(req.body as any);
@@ -117,6 +123,8 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
             service: PaymentService.STRIPE,
             expirationDate: new Date(subscription.current_period_end * 1000),
           });
+
+          await cancelUhSubscription(user);
           break;
         }
         case 'incomplete_expired': {
@@ -222,8 +230,7 @@ export const getUserFromPayload = async (
       const existingUser = await stripeInstance.customers.retrieve(customerId);
 
       log.info(
-        `[STRIPE_WH] No user with customerId ${customerId} was found, trying to update existing db user ${
-          existingUser.id
+        `[STRIPE_WH] No user with customerId ${customerId} was found, trying to update existing db user ${existingUser.id
         }. Customer: ${JSON.stringify(existingUser)}`,
       );
 
@@ -235,8 +242,7 @@ export const getUserFromPayload = async (
 
       if (!dbUser) {
         log.error(
-          `[STRIPE_WH] No user was found with customer email ${
-            (existingUser as any).email
+          `[STRIPE_WH] No user was found with customer email ${(existingUser as any).email
           }`,
         );
 
@@ -319,3 +325,105 @@ const shouldHandleEvent = (payload: Stripe.Event): boolean => {
       return false;
   }
 };
+
+
+const cancelUhSubscription = async (user: Users) => {
+  try {
+    if (process.env.UH_MIGRATION_ACTIVE === 'true') {
+      const uhUser = await checkIfUserIsFromUH(user.email);
+
+      if (uhUser) {
+        const migrationUser = await checkIfUserIsSubscriber(uhUser);
+
+        if (migrationUser) {
+          log.info(`[MIGRATION] Starting cancellation for ${migrationUser.service} subscription ${migrationUser.subscriptionId}`);
+
+          switch (migrationUser.service) {
+            case 'stripe':
+              await handleStripeMigration(migrationUser, user.email);
+              break;
+            case 'conekta':
+              await handleConektaMigration(migrationUser, user.email);
+              break;
+            case 'paypal':
+              await handlePaypalMigration(migrationUser, user.email);
+              break;
+            default:
+              throw new Error(`Unknown service: ${migrationUser.service}`);
+          }
+        }
+      }
+    }
+  } catch (e) {
+    log.error(`[MIGRATION] Failed to process migration: ${e}`);
+
+    throw new TRPCError({
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'Error al procesar la migración de suscripción',
+    });
+  }
+};
+
+async function handleStripeMigration(migrationUser: SubscriptionCheckResult, userEmail: string) {
+  const activeStripeSubscriptions = await uhStripeInstance.subscriptions.list({
+    customer: migrationUser.subscriptionId,
+    status: 'active',
+  });
+
+  for (const subscription of activeStripeSubscriptions.data) {
+    try {
+      log.info(`[MIGRATION] Cancelling active stripe subscription ${subscription.id} for user ${userEmail}`);
+      await uhStripeInstance.subscriptions.cancel(subscription.id);
+      log.info(`[MIGRATION] Successfully cancelled stripe subscription ${subscription.id} for user ${userEmail}`);
+    } catch (e) {
+      log.error(`[MIGRATION] Failed to cancel stripe subscription ${subscription.id} for user ${userEmail}: ${e}`);
+      throw e;
+    }
+  }
+}
+
+async function handleConektaMigration(migrationUser: SubscriptionCheckResult, userEmail: string) {
+  const activeConektaSubscriptions = await uhConektaSubscriptions.getSubscription(migrationUser.subscriptionId);
+
+  if (activeConektaSubscriptions.data.status === 'active') {
+    try {
+      log.info(`[MIGRATION] Cancelling active conekta subscription ${migrationUser.subscriptionId} for user ${userEmail}`);
+      await uhConektaSubscriptions.cancelSubscription(migrationUser.subscriptionId);
+      log.info(`[MIGRATION] Successfully cancelled conekta subscription ${migrationUser.subscriptionId} for user ${userEmail}`);
+    } catch (e) {
+      log.error(`[MIGRATION] Failed to cancel conekta subscription ${migrationUser.subscriptionId} for user ${userEmail}: ${e}`);
+      throw e;
+    }
+  }
+}
+
+async function handlePaypalMigration(migrationUser: SubscriptionCheckResult, userEmail: string) {
+  const subscription = (await axios(`${uhPaypal.paypalUrl()}/v1/billing/subscriptions/${migrationUser.subscriptionId}`, {
+    headers: {
+      Authorization: `Bearer ${await uhPaypal.getToken()}`,
+    },
+  })).data;
+
+  if (subscription.status === 'ACTIVE') {
+    log.info(`[MIGRATION] Cancelling active paypal subscription ${migrationUser.subscriptionId} for user ${userEmail}`);
+
+    try {
+      await axios.post(`${uhPaypal.paypalUrl()}/v1/billing/subscriptions/${migrationUser.subscriptionId}/cancel`, {
+        reason: 'CANCEL_BY_USER',
+      }, {
+        headers: {
+          Authorization: `Bearer ${await uhPaypal.getToken()}`,
+        }
+      });
+
+      log.info(`[MIGRATION] Active paypal subscription cancelled for user ${userEmail}`);
+    } catch (e) {
+      log.error(`[MIGRATION] An error happened while cancelling active paypal subscription for user ${userEmail}: ${(e as AxiosError).response?.data}`);
+
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Ocurrió un error al migrar la suscripción',
+      });
+    }
+  }
+}
