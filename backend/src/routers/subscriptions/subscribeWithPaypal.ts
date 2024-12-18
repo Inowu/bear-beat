@@ -16,42 +16,66 @@ export const subscribeWithPaypal = shieldedProcedure
     z.object({
       planId: z.number(),
       subscriptionId: z.string(),
-      fbp: z.string(),
-      url: z.string()
+      fbp: z.string().optional(),
+      url: z.string(),
     }),
   )
   .mutation(
-    async ({ input: { planId, subscriptionId, fbp, url }, ctx: { prisma, session, req } }) => {
+    async ({
+      input: { planId, subscriptionId, fbp, url },
+      ctx: { prisma, session, req },
+    }) => {
       const user = session!.user!;
       let migrationUser = null;
 
       if (process.env.UH_MIGRATION_ACTIVE === 'true') {
         migrationUser = await checkIfUserIsSubscriber({
           email: user.email!,
-        })
+        });
 
         if (migrationUser?.service === 'paypal') {
-          const subscription = (await axios(`${uhPaypal.paypalUrl()}/v1/billing/subscriptions/${migrationUser.subscriptionId}`, {
-            headers: {
-              Authorization: `Bearer ${await uhPaypal.getToken()}`,
-            },
-          })).data;
-
-          if (subscription.status === 'ACTIVE') {
-            log.info(`[MIGRATION] Cancelling active paypal subscription for user ${user.email}`);
-
-            try {
-              await axios.post(`${uhPaypal.paypalUrl()}/v1/billing/subscriptions/${migrationUser.subscriptionId}/cancel`, {
-                reason: 'CANCEL_BY_USER',
-              }, {
+          const subscription = (
+            await axios(
+              `${uhPaypal.paypalUrl()}/v1/billing/subscriptions/${
+                migrationUser.subscriptionId
+              }`,
+              {
                 headers: {
                   Authorization: `Bearer ${await uhPaypal.getToken()}`,
-                }
-              });
+                },
+              },
+            )
+          ).data;
 
-              log.info(`[MIGRATION] Active paypal subscription cancelled for user ${user.email}`);
+          if (subscription.status === 'ACTIVE') {
+            log.info(
+              `[MIGRATION] Cancelling active paypal subscription for user ${user.email}`,
+            );
+
+            try {
+              await axios.post(
+                `${uhPaypal.paypalUrl()}/v1/billing/subscriptions/${
+                  migrationUser.subscriptionId
+                }/cancel`,
+                {
+                  reason: 'CANCEL_BY_USER',
+                },
+                {
+                  headers: {
+                    Authorization: `Bearer ${await uhPaypal.getToken()}`,
+                  },
+                },
+              );
+
+              log.info(
+                `[MIGRATION] Active paypal subscription cancelled for user ${user.email}`,
+              );
             } catch (e) {
-              log.error(`[MIGRATION] An error happened while cancelling active paypal subscription for user ${user.email}: ${(e as AxiosError).response?.data}`);
+              log.error(
+                `[MIGRATION] An error happened while cancelling active paypal subscription for user ${
+                  user.email
+                }: ${(e as AxiosError).response?.data}`,
+              );
 
               throw new TRPCError({
                 code: 'INTERNAL_SERVER_ERROR',
@@ -66,7 +90,7 @@ export const subscribeWithPaypal = shieldedProcedure
         where: {
           id: user.id,
         },
-      })
+      });
 
       const plan = await prisma.plans.findFirst({
         where: {
@@ -108,9 +132,20 @@ export const subscribeWithPaypal = shieldedProcedure
           const remoteAddress = req.socket.remoteAddress;
           const userAgent = req.headers['user-agent'];
 
-          if (remoteAddress && userAgent) {
-            log.info('[PAYPAL] User has successfully paid for a plan, sending event to facebook');
-            await facebook.setEvent('PagoExitosoAPI', remoteAddress, userAgent, fbp, url, existingUser);
+          if (fbp) {
+            if (remoteAddress && userAgent) {
+              log.info(
+                '[PAYPAL] User has successfully paid for a plan, sending event to facebook',
+              );
+              await facebook.setEvent(
+                'PagoExitosoAPI',
+                remoteAddress,
+                userAgent,
+                fbp,
+                url,
+                existingUser,
+              );
+            }
           }
 
           await manyChat.addTagToUser(existingUser, 'SUCCESSFUL_PAYMENT');
