@@ -365,8 +365,21 @@ const cancelUhSubscription = async (user: Users) => {
 };
 
 async function handleStripeMigration(migrationUser: SubscriptionCheckResult, userEmail: string) {
+  const customer = await uhStripeInstance.customers.list({
+    email: userEmail,
+    limit: 1,
+  });
+
+  if (customer.data.length === 0) {
+    log.error(`[MIGRATION] No customer found for user ${userEmail}`);
+    throw new TRPCError({
+      code: 'NOT_FOUND',
+      message: 'No se encontró el cliente',
+    });
+  }
+
   const activeStripeSubscriptions = await uhStripeInstance.subscriptions.list({
-    customer: migrationUser.subscriptionId,
+    customer: customer.data[0].id,
     status: 'active',
   });
 
