@@ -11,7 +11,7 @@ import { PaymentService } from './services/types';
 import { Cupons } from '@prisma/client';
 import { facebook } from '../../facebook';
 import { manyChat } from '../../many-chat';
-import { checkIfUserIsSubscriber } from '../migration/checkUHSubscriber';
+import { checkIfUserIsFromUH, checkIfUserIsSubscriber, SubscriptionCheckResult } from '../migration/checkUHSubscriber';
 import { addDays } from 'date-fns';
 
 export const subscribeWithStripe = shieldedProcedure
@@ -25,13 +25,19 @@ export const subscribeWithStripe = shieldedProcedure
   )
   .query(async ({ input: { planId, coupon, fbp, url }, ctx: { prisma, session, req } }) => {
     const user = session!.user!;
-    const migrationUser = await checkIfUserIsSubscriber(user);
 
     const existingUser = await prisma.users.findFirst({
       where: {
         id: user.id,
       },
     })
+
+    const uhUser = await checkIfUserIsFromUH(user.email);
+    let migrationUser: SubscriptionCheckResult | null = null;
+
+    if (uhUser) {
+      migrationUser = await checkIfUserIsSubscriber(uhUser);
+    }
 
     const stripeCustomer = await getStripeCustomer(prisma, user);
 
@@ -104,11 +110,27 @@ export const subscribeWithStripe = shieldedProcedure
         status: 'active',
       });
 
-      if (activeSubscription.data.length > 0) {
+      const trialingSubscription = await stripeInstance.subscriptions.list({
+        customer: stripeCustomer,
+        status: 'trialing',
+      });
+
+      const activeSubscriptions = [
+        ...activeSubscription.data,
+        ...trialingSubscription.data,
+      ];
+
+      if (activeSubscriptions.length > 0) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: 'Este usuario ya tiene una suscripción activa',
         });
+      }
+
+      const trialEnd = migrationUser?.remainingDays ? parseInt((addDays(new Date(), migrationUser.remainingDays).getTime() / 1000).toFixed(0)) : undefined;
+
+      if (migrationUser) {
+        log.info(`[STRIPE_SUBSCRIBE:MIGRATION] User ${user.id} has a migration subscription, remaining days: ${migrationUser.remainingDays}. Adding trial to subscription: ${trialEnd}`);
       }
 
       const subscription = await stripeInstance.subscriptions.create({
@@ -126,7 +148,7 @@ export const subscribeWithStripe = shieldedProcedure
         metadata: {
           orderId: order.id,
         },
-        ...(migrationUser?.remainingDays ? { trial_end: parseInt((addDays(new Date(), migrationUser.remainingDays).getTime() / 1000).toFixed(0)) } : {}),
+        ...(trialEnd ? { trial_end: trialEnd } : {}),
       });
 
       await prisma.orders.update({
@@ -135,7 +157,7 @@ export const subscribeWithStripe = shieldedProcedure
         },
         data: {
           txn_id: subscription.id,
-          invoice_id: (subscription.latest_invoice as any).id,
+          invoice_id: (subscription?.latest_invoice as any)?.id,
         },
       });
 
@@ -177,8 +199,8 @@ export const subscribeWithStripe = shieldedProcedure
 
       return {
         subscriptionId: subscription.id,
-        clientSecret: (subscription.latest_invoice as any).payment_intent
-          .client_secret,
+        clientSecret: (subscription.latest_invoice as any)?.payment_intent
+          ?.client_secret,
       };
     } catch (e) {
       log.error(

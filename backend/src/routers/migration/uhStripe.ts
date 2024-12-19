@@ -5,7 +5,9 @@ config();
 
 let stripe: Stripe;
 
-stripe = new Stripe(process.env.STRIPE_UH_KEY as string, {
+const stripeKey = process.env.NODE_ENV === 'production' ? process.env.STRIPE_UH_KEY : process.env.STRIPE_UH_TEST_KEY;
+
+stripe = new Stripe(stripeKey as string, {
   apiVersion: '2023-08-16',
 });
 

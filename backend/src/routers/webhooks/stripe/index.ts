@@ -57,7 +57,21 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
 
   switch (payload.type) {
     case StripeEvents.SUBSCRIPTION_CREATED: {
-      if (subscription.status !== 'active') {
+      if (subscription.status === 'trialing') {
+        log.info(`[STRIPE_WH] A trial subscription was created for user ${user.id}, subscription id: ${subscription.id}, status: ${subscription.status}`);
+        await subscribe({
+          subId: subscription.id,
+          prisma,
+          user,
+          plan: plan!,
+          orderId: subscription.metadata.orderId,
+          service: PaymentService.STRIPE,
+          expirationDate: new Date(subscription.current_period_end * 1000),
+        });
+        await cancelUhSubscription(user);
+      }
+
+      if (subscription.status !== 'active' && subscription.status !== 'trialing') {
         log.info(
           `[STRIPE_WH] A subscription was created for user ${user.id}, subscription id: ${subscription.id}, status: ${subscription.status}`,
         );
@@ -336,7 +350,7 @@ const cancelUhSubscription = async (user: Users) => {
         const migrationUser = await checkIfUserIsSubscriber(uhUser);
 
         if (migrationUser) {
-          log.info(`[MIGRATION] Starting cancellation for ${migrationUser.service} subscription ${migrationUser.subscriptionId}`);
+          log.info(`[STRIPE_WH:MIGRATION] Starting cancellation for ${migrationUser.service} subscription ${migrationUser.subscriptionId}`);
 
           switch (migrationUser.service) {
             case 'stripe':
@@ -355,7 +369,7 @@ const cancelUhSubscription = async (user: Users) => {
       }
     }
   } catch (e) {
-    log.error(`[MIGRATION] Failed to process migration: ${e}`);
+    log.error(`[STRIPE_WH:MIGRATION] Failed to process migration: ${e}`);
 
     throw new TRPCError({
       code: 'INTERNAL_SERVER_ERROR',
@@ -371,7 +385,7 @@ async function handleStripeMigration(migrationUser: SubscriptionCheckResult, use
   });
 
   if (customer.data.length === 0) {
-    log.error(`[MIGRATION] No customer found for user ${userEmail}`);
+    log.error(`[STRIPE_WH:MIGRATION] No customer found for user ${userEmail}`);
     throw new TRPCError({
       code: 'NOT_FOUND',
       message: 'No se encontró el cliente',
@@ -385,11 +399,11 @@ async function handleStripeMigration(migrationUser: SubscriptionCheckResult, use
 
   for (const subscription of activeStripeSubscriptions.data) {
     try {
-      log.info(`[MIGRATION] Cancelling active stripe subscription ${subscription.id} for user ${userEmail}`);
+      log.info(`[STRIPE_WH:MIGRATION] Cancelling active stripe subscription ${subscription.id} for user ${userEmail}`);
       await uhStripeInstance.subscriptions.cancel(subscription.id);
-      log.info(`[MIGRATION] Successfully cancelled stripe subscription ${subscription.id} for user ${userEmail}`);
+      log.info(`[STRIPE_WH:MIGRATION] Successfully cancelled stripe subscription ${subscription.id} for user ${userEmail}`);
     } catch (e) {
-      log.error(`[MIGRATION] Failed to cancel stripe subscription ${subscription.id} for user ${userEmail}: ${e}`);
+      log.error(`[STRIPE_WH:MIGRATION] Failed to cancel stripe subscription ${subscription.id} for user ${userEmail}: ${e}`);
       throw e;
     }
   }
@@ -400,11 +414,11 @@ async function handleConektaMigration(migrationUser: SubscriptionCheckResult, us
 
   if (activeConektaSubscriptions.data.status === 'active') {
     try {
-      log.info(`[MIGRATION] Cancelling active conekta subscription ${migrationUser.subscriptionId} for user ${userEmail}`);
+      log.info(`[STRIPE_WH:MIGRATION] Cancelling active conekta subscription ${migrationUser.subscriptionId} for user ${userEmail}`);
       await uhConektaSubscriptions.cancelSubscription(migrationUser.subscriptionId);
-      log.info(`[MIGRATION] Successfully cancelled conekta subscription ${migrationUser.subscriptionId} for user ${userEmail}`);
+      log.info(`[STRIPE_WH:MIGRATION] Successfully cancelled conekta subscription ${migrationUser.subscriptionId} for user ${userEmail}`);
     } catch (e) {
-      log.error(`[MIGRATION] Failed to cancel conekta subscription ${migrationUser.subscriptionId} for user ${userEmail}: ${e}`);
+      log.error(`[STRIPE_WH:MIGRATION] Failed to cancel conekta subscription ${migrationUser.subscriptionId} for user ${userEmail}: ${e}`);
       throw e;
     }
   }
@@ -418,7 +432,7 @@ async function handlePaypalMigration(migrationUser: SubscriptionCheckResult, use
   })).data;
 
   if (subscription.status === 'ACTIVE') {
-    log.info(`[MIGRATION] Cancelling active paypal subscription ${migrationUser.subscriptionId} for user ${userEmail}`);
+    log.info(`[STRIPE_WH:MIGRATION] Cancelling active paypal subscription ${migrationUser.subscriptionId} for user ${userEmail}`);
 
     try {
       await axios.post(`${uhPaypal.paypalUrl()}/v1/billing/subscriptions/${migrationUser.subscriptionId}/cancel`, {
@@ -429,9 +443,9 @@ async function handlePaypalMigration(migrationUser: SubscriptionCheckResult, use
         }
       });
 
-      log.info(`[MIGRATION] Active paypal subscription cancelled for user ${userEmail}`);
+      log.info(`[STRIPE_WH:MIGRATION] Active paypal subscription cancelled for user ${userEmail}`);
     } catch (e) {
-      log.error(`[MIGRATION] An error happened while cancelling active paypal subscription for user ${userEmail}: ${(e as AxiosError).response?.data}`);
+      log.error(`[STRIPE_WH:MIGRATION] An error happened while cancelling active paypal subscription for user ${userEmail}: ${(e as AxiosError).response?.data}`);
 
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
