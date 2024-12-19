@@ -99,7 +99,14 @@ export function UsersUHModal(props: IUsersUHModal) {
           <div className="container">
             <div className="left">
               <RiRefreshLine className="icon" />
-              <h2>¡Estamos renovando nuestro sitio!</h2>
+              <h2>¡Tranquil@! No te preocupes, no vamos a cobrarte nada.</h2>
+              <p>
+                Solo queremos asegurarnos de ponerte al corriente con el nuevo
+                plan. Por ejemplo, si tu suscripción actual vence en 10 días,
+                esta misma fecha se mantendrá en el nuevo sistema. Nos
+                encargaremos de que sigas disfrutando de tu experiencia sin
+                interrupciones. ¡Estamos aquí para ayudarte!
+              </p>
               <p>
                 Nuestro sitio está en pleno proceso de renovación para mejorar
                 tu experiencia. Mientras tanto, te invitamos a unirte a nuestro
@@ -119,7 +126,7 @@ export function UsersUHModal(props: IUsersUHModal) {
               </div>
               <div className="div-bottom">
                 <p>¿Todavía tienes dudas?</p>
-                <p className="blue">Comunícate al 55224347.</p>
+                <p className="blue">Comunícate al 3511580896.</p>
               </div>
             </div>
             <div className="right">
