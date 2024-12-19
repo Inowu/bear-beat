@@ -34,6 +34,7 @@ export function UsersUHModal(props: IUsersUHModal) {
   };
   const closeSuccess = () => {
     setShowSuccess(false);
+    window.location.reload();
   };
 
   const suscribetext = async () => {
