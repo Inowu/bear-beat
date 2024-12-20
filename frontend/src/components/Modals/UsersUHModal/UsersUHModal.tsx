@@ -46,11 +46,24 @@ export function UsersUHModal(props: IUsersUHModal) {
     };
     setLoader(true);
     try {
-      const suscribeMethod =
-        await trpc.subscriptions.subscribeWithStripe.query(body_stripe);
-      if (elements && stripe) {
-        console.log(card);
-        if (suscribeMethod.clientSecret) {
+      const paymentMethod = await stripe!.createPaymentMethod({
+        type: 'card',
+        card: elements!.getElement(CardElement)!,
+      });
+
+      if (paymentMethod.paymentMethod?.id) {
+        await trpc.subscriptions.subscribeWithStripe.query({
+          ...body_stripe,
+          paymentMethod: paymentMethod.paymentMethod.id,
+        });
+        setShowSuccess(true);
+        onHideModal();
+        setLoader(false);
+      } else {
+        const suscribeMethod =
+          await trpc.subscriptions.subscribeWithStripe.query(body_stripe);
+        if (elements && stripe) {
+          console.log(card);
           const result = await stripe.confirmCardPayment(
             suscribeMethod.clientSecret,
             card === null
@@ -63,6 +76,7 @@ export function UsersUHModal(props: IUsersUHModal) {
                   payment_method: card,
                 }
           );
+          getPaymentMethods();
           if (result.error) {
             setLoader(false);
             setErrorMessage(result.error.message);
@@ -79,7 +93,6 @@ export function UsersUHModal(props: IUsersUHModal) {
             setLoader(false);
           }
         }
-        getPaymentMethods();
       }
     } catch (error: any) {
       setLoader(false);
