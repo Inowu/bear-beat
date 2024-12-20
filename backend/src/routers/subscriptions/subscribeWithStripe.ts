@@ -20,10 +20,11 @@ export const subscribeWithStripe = shieldedProcedure
       planId: z.number(),
       coupon: z.string().optional(),
       fbp: z.string().optional(),
-      url: z.string()
+      url: z.string(),
+      paymentMethod: z.string().optional(),
     }),
   )
-  .query(async ({ input: { planId, coupon, fbp, url }, ctx: { prisma, session, req } }) => {
+  .query(async ({ input: { planId, coupon, paymentMethod, fbp, url }, ctx: { prisma, session, req } }) => {
     const user = session!.user!;
 
     const existingUser = await prisma.users.findFirst({
@@ -131,6 +132,19 @@ export const subscribeWithStripe = shieldedProcedure
 
       if (migrationUser) {
         log.info(`[STRIPE_SUBSCRIBE:MIGRATION] User ${user.id} has a migration subscription, remaining days: ${migrationUser.remainingDays}. Adding trial to subscription: ${trialEnd}`);
+      }
+
+      if (paymentMethod) {
+        log.info(`[STRIPE_SUBSCRIBE:MIGRATION] Payment method provided, attaching to customer: ${paymentMethod}`);
+        await stripeInstance.paymentMethods.attach(paymentMethod, {
+          customer: user.stripeCusId,
+        })
+        log.info(`[STRIPE_SUBSCRIBE:MIGRATION] Payment method attached to customer: ${paymentMethod}. Updating customer with default payment method`);
+        await stripeInstance.customers.update(user.stripeCusId, {
+          invoice_settings: {
+            default_payment_method: paymentMethod,
+          },
+        })
       }
 
       const subscription = await stripeInstance.subscriptions.create({
