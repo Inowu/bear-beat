@@ -46,52 +46,20 @@ export function UsersUHModal(props: IUsersUHModal) {
     };
     setLoader(true);
     try {
-      const paymentMethod = await stripe!.createPaymentMethod({
-        type: 'card',
-        card: elements!.getElement(CardElement)!,
-      });
-
-      if (paymentMethod.paymentMethod?.id) {
-        await trpc.subscriptions.subscribeWithStripe.query({
-          ...body_stripe,
-          paymentMethod: paymentMethod.paymentMethod.id,
+      if (elements && stripe) {
+        const paymentMethod = await stripe!.createPaymentMethod({
+          type: 'card',
+          card: elements!.getElement(CardElement)!,
         });
-        setShowSuccess(true);
-        onHideModal();
-        setLoader(false);
-      } else {
-        const suscribeMethod =
-          await trpc.subscriptions.subscribeWithStripe.query(body_stripe);
-        if (elements && stripe) {
-          console.log(card);
-          const result = await stripe.confirmCardPayment(
-            suscribeMethod.clientSecret,
-            card === null
-              ? {
-                  payment_method: {
-                    card: elements.getElement('card')!,
-                  },
-                }
-              : {
-                  payment_method: card,
-                }
-          );
-          getPaymentMethods();
-          if (result.error) {
-            setLoader(false);
-            setErrorMessage(result.error.message);
-            setShow(true);
-          } else {
-            if (currentUser) {
-              fbq('track', 'PagoExitoso', {
-                email: currentUser.email,
-                phone: currentUser.phone,
-              });
-            }
-            setShowSuccess(true);
-            onHideModal();
-            setLoader(false);
-          }
+
+        if (paymentMethod.paymentMethod?.id) {
+          await trpc.subscriptions.subscribeWithStripe.query({
+            ...body_stripe,
+            paymentMethod: paymentMethod.paymentMethod.id,
+          });
+          setShowSuccess(true);
+          onHideModal();
+          setLoader(false);
         }
       }
     } catch (error: any) {
