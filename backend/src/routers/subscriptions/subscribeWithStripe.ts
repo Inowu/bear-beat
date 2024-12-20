@@ -42,6 +42,8 @@ export const subscribeWithStripe = shieldedProcedure
 
     const stripeCustomer = await getStripeCustomer(prisma, user);
 
+    log.info(`[STRIPE_SUBSCRIBE] User ${user.id} is subscribing to plan ${planId}. Stripe customer: ${stripeCustomer}`)
+
     await hasActiveSubscription({
       user,
       customerId: stripeCustomer,
@@ -135,10 +137,20 @@ export const subscribeWithStripe = shieldedProcedure
       }
 
       if (paymentMethod) {
-        log.info(`[STRIPE_SUBSCRIBE:MIGRATION] Payment method provided, attaching to customer: ${paymentMethod}`);
+        log.info(`[STRIPE_SUBSCRIBE:MIGRATION] Payment method provided, attaching to customer: ${paymentMethod} - ${user.stripeCusId}`);
+      try {
         await stripeInstance.paymentMethods.attach(paymentMethod, {
           customer: user.stripeCusId,
         })
+      } catch(e) {
+        log.error(`[STRIPE_SUBSCRIBE:MIGRATION] Error attaching payment method to customer: ${e}`)
+
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Ocurrió un error al crear el método de pago'
+        })
+      }
+
         log.info(`[STRIPE_SUBSCRIBE:MIGRATION] Payment method attached to customer: ${paymentMethod}. Updating customer with default payment method`);
         await stripeInstance.customers.update(user.stripeCusId, {
           invoice_settings: {
