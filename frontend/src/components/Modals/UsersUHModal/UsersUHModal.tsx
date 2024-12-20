@@ -50,34 +50,36 @@ export function UsersUHModal(props: IUsersUHModal) {
         await trpc.subscriptions.subscribeWithStripe.query(body_stripe);
       if (elements && stripe) {
         console.log(card);
-        const result = await stripe.confirmCardPayment(
-          suscribeMethod.clientSecret,
-          card === null
-            ? {
-                payment_method: {
-                  card: elements.getElement('card')!,
-                },
-              }
-            : {
-                payment_method: card,
-              }
-        );
-        getPaymentMethods();
-        if (result.error) {
-          setLoader(false);
-          setErrorMessage(result.error.message);
-          setShow(true);
-        } else {
-          if (currentUser) {
-            fbq('track', 'PagoExitoso', {
-              email: currentUser.email,
-              phone: currentUser.phone,
-            });
+        if (suscribeMethod.clientSecret) {
+          const result = await stripe.confirmCardPayment(
+            suscribeMethod.clientSecret,
+            card === null
+              ? {
+                  payment_method: {
+                    card: elements.getElement('card')!,
+                  },
+                }
+              : {
+                  payment_method: card,
+                }
+          );
+          if (result.error) {
+            setLoader(false);
+            setErrorMessage(result.error.message);
+            setShow(true);
+          } else {
+            if (currentUser) {
+              fbq('track', 'PagoExitoso', {
+                email: currentUser.email,
+                phone: currentUser.phone,
+              });
+            }
+            setShowSuccess(true);
+            onHideModal();
+            setLoader(false);
           }
-          setShowSuccess(true);
-          onHideModal();
-          setLoader(false);
         }
+        getPaymentMethods();
       }
     } catch (error: any) {
       setLoader(false);
