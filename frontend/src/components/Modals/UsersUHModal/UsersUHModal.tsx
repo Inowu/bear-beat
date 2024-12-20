@@ -49,7 +49,7 @@ export function UsersUHModal(props: IUsersUHModal) {
       if (elements && stripe) {
         const paymentMethod = await stripe.createPaymentMethod({
           type: 'card',
-          card: elements!.getElement(CardElement)!,
+          card: elements.getElement(CardElement)!,
         });
 
         if (paymentMethod.paymentMethod?.id) {
