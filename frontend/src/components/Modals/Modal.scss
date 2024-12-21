@@ -392,7 +392,7 @@ select {
         font-weight: 700;
         font-size: 3vw;
       }
-      p{
+      p {
         font-size: 1.1vw;
       }
     }
@@ -450,6 +450,35 @@ select {
           background-color: #2b65c1;
           color: white;
         }
+      }
+    }
+  }
+}
+
+@media (max-width: 780px) {
+  .modal-UHREMIX {
+    .container {
+      flex-direction: column;
+      .left {
+        align-items: center;
+        h2{
+          font-size: 24px;
+          text-align: center;
+        }
+        p{
+          text-align: center;
+          font-size: 18px;
+          ul{
+            margin-top: 10px;
+          }
+        }
+        
+        .div-bottom{
+          display: none;
+        }
+      }
+      .right {
+        width: 100%;
       }
     }
   }
