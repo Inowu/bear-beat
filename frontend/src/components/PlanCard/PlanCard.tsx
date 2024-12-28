@@ -273,7 +273,7 @@ function PlanCard(props: PlanCardPropsI) {
               <button onClick={handleChangeModal}>Cambiar plan</button>
             ) : (
               <>
-                {(plan.moneda === "mxn" || plan.moneda === "MXN") && (
+                {/* {(plan.moneda === "mxn" || plan.moneda === "MXN") && (
                   <button
                     id="pixelButton"
                     className="silver-bg"
@@ -281,7 +281,7 @@ function PlanCard(props: PlanCardPropsI) {
                   >
                     Pagar vía Oxxo
                   </button>
-                )}
+                )} */}
                 {(plan.moneda === "mxn" || plan.moneda === "MXN") && (
                   <button className="silver-bg" onClick={payWithSpei}>
                     Pagar vía Spei
