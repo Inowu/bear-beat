@@ -22,19 +22,29 @@ export const cancelStripeSubscription = async ({
     status: 'active',
   });
 
-  if (subscriptions.data.length === 0) {
+  const trialSubscription = await stripeInstance.subscriptions.list({
+    customer: dbUser!.stripe_cusid!,
+    status: 'trialing',
+  });
+
+  const activeSubscription = [
+    ...subscriptions.data,
+    ...trialSubscription.data,
+  ];
+
+  if (activeSubscription.length === 0) {
     throw new TRPCError({
       code: 'BAD_REQUEST',
       message: 'El usuario no tiene una suscripción activa.',
     });
   }
 
-  const subscription = subscriptions.data[0];
+  const subscription = activeSubscription[0];
 
   try {
     log.info(`[STRIPE:CANCEL] Canceling subscription ${subscription.id}`);
 
-    await stripeInstance.subscriptions.cancel(subscriptions.data[0].id);
+    await stripeInstance.subscriptions.cancel(subscription.id);
 
     return { message: 'Tu suscripción ha sido cancelada con correctamente.' };
   } catch (e: any) {

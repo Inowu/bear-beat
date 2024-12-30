@@ -11,9 +11,8 @@ import { PaymentService } from './services/types';
 import { Cupons } from '@prisma/client';
 import { facebook } from '../../facebook';
 import { manyChat } from '../../many-chat';
-import { checkIfUserIsSubscriber } from '../migration/checkUHSubscriber';
-import uhStripeInstance from '../migration/uhStripe';
-import { uhConektaSubscriptions } from '../migration/uhConekta';
+import { checkIfUserIsFromUH, checkIfUserIsSubscriber, SubscriptionCheckResult } from '../migration/checkUHSubscriber';
+import { addDays } from 'date-fns';
 
 export const subscribeWithStripe = shieldedProcedure
   .input(
@@ -21,60 +20,12 @@ export const subscribeWithStripe = shieldedProcedure
       planId: z.number(),
       coupon: z.string().optional(),
       fbp: z.string().optional(),
-      url: z.string()
+      url: z.string(),
+      paymentMethod: z.string().optional(),
     }),
   )
-  .query(async ({ input: { planId, coupon, fbp, url }, ctx: { prisma, session, req } }) => {
+  .query(async ({ input: { planId, coupon, paymentMethod, fbp, url }, ctx: { prisma, session, req } }) => {
     const user = session!.user!;
-    let migrationUser = null;
-
-    if (process.env.UH_MIGRATION_ACTIVE === 'true') {
-      migrationUser = await checkIfUserIsSubscriber({
-        email: user.email!,
-      })
-
-      if (migrationUser?.service === 'stripe') {
-        log.info(`[MIGRATION] Cancelling active stripe subscription for user ${user.email}`);
-
-        const activeStripeSubscriptions = await uhStripeInstance.subscriptions.list({
-          customer: migrationUser.subscriptionId,
-          status: 'active',
-        })
-
-        if (activeStripeSubscriptions.data.length > 0) {
-          for (const subscription of activeStripeSubscriptions.data) {
-            log.info(`[MIGRATION] Cancelling active stripe subscription ${subscription.id} for user ${user.email}`);
-            try {
-              await uhStripeInstance.subscriptions.cancel(subscription.id);
-            } catch (e) {
-              log.error(`[MIGRATION] An error happened while cancelling stripe subscription: ${subscription.id}: ${e}`);
-
-              throw new TRPCError({
-                code: 'INTERNAL_SERVER_ERROR',
-                message: 'Ocurrió un error al cancelar la suscripción en UH',
-              });
-            }
-          }
-        }
-      }
-      else if (migrationUser?.service === 'conekta') {
-        log.info(`[MIGRATION] Cancelling active conekta subscription for user ${user.email}`);
-        const activeConektaSubscriptions = await uhConektaSubscriptions.getSubscription(migrationUser.subscriptionId);
-
-        if (activeConektaSubscriptions.data.status === 'active') {
-          try {
-            await uhConektaSubscriptions.cancelSubscription(migrationUser.subscriptionId);
-          } catch (e) {
-            log.error(`[MIGRATION] An error happened while cancelling conekta subscription: ${migrationUser.subscriptionId}: ${e}`);
-
-            throw new TRPCError({
-              code: 'INTERNAL_SERVER_ERROR',
-              message: 'Ocurrió un error al cancelar la suscripción en UH',
-            });
-          }
-        }
-      }
-    }
 
     const existingUser = await prisma.users.findFirst({
       where: {
@@ -82,7 +33,16 @@ export const subscribeWithStripe = shieldedProcedure
       },
     })
 
+    const uhUser = await checkIfUserIsFromUH(user.email);
+    let migrationUser: SubscriptionCheckResult | null = null;
+
+    if (uhUser) {
+      migrationUser = await checkIfUserIsSubscriber(uhUser);
+    }
+
     const stripeCustomer = await getStripeCustomer(prisma, user);
+
+    log.info(`[STRIPE_SUBSCRIBE] User ${user.id} is subscribing to plan ${planId}. Stripe customer: ${stripeCustomer}`)
 
     await hasActiveSubscription({
       user,
@@ -153,11 +113,50 @@ export const subscribeWithStripe = shieldedProcedure
         status: 'active',
       });
 
-      if (activeSubscription.data.length > 0) {
+      const trialingSubscription = await stripeInstance.subscriptions.list({
+        customer: stripeCustomer,
+        status: 'trialing',
+      });
+
+      const activeSubscriptions = [
+        ...activeSubscription.data,
+        ...trialingSubscription.data,
+      ];
+
+      if (activeSubscriptions.length > 0) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: 'Este usuario ya tiene una suscripción activa',
         });
+      }
+
+      const trialEnd = migrationUser?.remainingDays ? parseInt((addDays(new Date(), migrationUser.remainingDays).getTime() / 1000).toFixed(0)) : undefined;
+
+      if (migrationUser) {
+        log.info(`[STRIPE_SUBSCRIBE:MIGRATION] User ${user.id} has a migration subscription, remaining days: ${migrationUser.remainingDays}. Adding trial to subscription: ${trialEnd}`);
+      }
+
+      if (paymentMethod) {
+        log.info(`[STRIPE_SUBSCRIBE:MIGRATION] Payment method provided, attaching to customer: ${paymentMethod} - ${user.stripeCusId}`);
+      try {
+        await stripeInstance.paymentMethods.attach(paymentMethod, {
+          customer: user.stripeCusId,
+        })
+      } catch(e) {
+        log.error(`[STRIPE_SUBSCRIBE:MIGRATION] Error attaching payment method to customer: ${e}`)
+
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Ocurrió un error al crear el método de pago'
+        })
+      }
+
+        log.info(`[STRIPE_SUBSCRIBE:MIGRATION] Payment method attached to customer: ${paymentMethod}. Updating customer with default payment method`);
+        await stripeInstance.customers.update(user.stripeCusId, {
+          invoice_settings: {
+            default_payment_method: paymentMethod,
+          },
+        })
       }
 
       const subscription = await stripeInstance.subscriptions.create({
@@ -170,12 +169,12 @@ export const subscribeWithStripe = shieldedProcedure
         ],
         payment_behavior: 'default_incomplete',
         payment_settings: { save_default_payment_method: 'on_subscription' },
-        trial_period_days: migrationUser?.remainingDays,
         // proration_behavior: 'always_invoice',
         expand: ['latest_invoice.payment_intent'],
         metadata: {
           orderId: order.id,
         },
+        ...(trialEnd ? { trial_end: trialEnd } : {}),
       });
 
       await prisma.orders.update({
@@ -184,7 +183,7 @@ export const subscribeWithStripe = shieldedProcedure
         },
         data: {
           txn_id: subscription.id,
-          invoice_id: (subscription.latest_invoice as any).id,
+          invoice_id: (subscription?.latest_invoice as any)?.id,
         },
       });
 
@@ -226,8 +225,8 @@ export const subscribeWithStripe = shieldedProcedure
 
       return {
         subscriptionId: subscription.id,
-        clientSecret: (subscription.latest_invoice as any).payment_intent
-          .client_secret,
+        clientSecret: (subscription.latest_invoice as any)?.payment_intent
+          ?.client_secret,
       };
     } catch (e) {
       log.error(

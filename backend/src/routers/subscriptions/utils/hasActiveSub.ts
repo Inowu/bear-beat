@@ -13,23 +13,23 @@ export const hasActiveSubscription = async ({
   service,
 }:
   | {
-      user: SessionUser;
-      customerId: string;
-      prisma: PrismaClient;
-      service: PaymentService.STRIPE | PaymentService.CONEKTA;
-    }
+    user: SessionUser;
+    customerId: string;
+    prisma: PrismaClient;
+    service: PaymentService.STRIPE | PaymentService.CONEKTA;
+  }
   | {
-      user: SessionUser;
-      customerId: number;
-      prisma: PrismaClient;
-      service: PaymentService.PAYPAL;
-    }
+    user: SessionUser;
+    customerId: number;
+    prisma: PrismaClient;
+    service: PaymentService.PAYPAL;
+  }
   | {
-      user: Users;
-      customerId?: never;
-      prisma: PrismaClient;
-      service: PaymentService.ADMIN;
-    }) => {
+    user: Users;
+    customerId?: never;
+    prisma: PrismaClient;
+    service: PaymentService.ADMIN;
+  }) => {
   const existingSubscription = await prisma.descargasUser.findFirst({
     where: {
       AND: [
@@ -76,13 +76,23 @@ export const hasActiveSubscription = async ({
 
   switch (service) {
     case PaymentService.STRIPE: {
-      const existingStripeSubscription =
+      const existingActiveStripeSubscription =
         await stripeInstance.subscriptions.list({
           customer: customerId,
           status: 'active',
         });
+      const existingTrialingStripeSubscription =
+        await stripeInstance.subscriptions.list({
+          customer: customerId,
+          status: 'trialing',
+        });
 
-      if (existingStripeSubscription.data.length > 0) {
+      const activeSubscriptions = [
+        ...existingActiveStripeSubscription.data,
+        ...existingTrialingStripeSubscription.data,
+      ];
+
+      if (activeSubscriptions.length > 0) {
         log.error(
           '[SUBSCRIPTION_CHECK] User already has an active stripe subscription',
         );
@@ -111,7 +121,7 @@ export const hasActiveSubscription = async ({
           });
         }
         /* eslint-disable-next-line no-empty */
-      } catch (e) {}
+      } catch (e) { }
 
       break;
     default:

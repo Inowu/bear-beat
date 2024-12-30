@@ -9,7 +9,7 @@ import { config } from 'dotenv';
 
 config();
 
-const apiKey = process.env.CONEKTA_UH_KEY as string;
+const apiKey = process.env.NODE_ENV === 'production' ? process.env.CONEKTA_UH_KEY : process.env.CONEKTA_UH_TEST_KEY;
 
 const conektaConfig = new Configuration({ apiKey, accessToken: apiKey });
 
