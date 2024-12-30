@@ -83,7 +83,7 @@ function Home() {
     setShowConditionModal(false);
   };
   const closeModalAdd = () => {
-    setShowModal(false);
+    window.location.reload();
   };
   const checkAlbumSize = (file: IFiles, idx: number) => {
     let gbSize = file.size / (1024 * 1024 * 1024);
@@ -116,13 +116,19 @@ function Home() {
     };
     try {
       const userUH = await trpc.migration.checkUHSubscriber.query(body);
-      if (userUH && userUH.subscriptionEmail) {
+      if (
+        userUH &&
+        userUH.subscriptionEmail &&
+        !currentUser.hasActiveSubscription
+      ) {
         setShowModal(true);
       }
     } catch (error) {
       console.log(error);
     }
   };
+
+  console.log(currentUser)
 
   const goToFolder = async (query: QueryFolder) => {
     setLoader(true);
@@ -330,6 +336,7 @@ function Home() {
       setPastFile([]);
     }
   }, [fileChange, closeFile]);
+
   return (
     <div className="home-main-container">
       <PreviewModal
