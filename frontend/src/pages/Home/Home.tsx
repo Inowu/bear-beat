@@ -128,8 +128,6 @@ function Home() {
     }
   };
 
-  console.log(currentUser)
-
   const goToFolder = async (query: QueryFolder) => {
     setLoader(true);
     let fileStructure = pastFile;
