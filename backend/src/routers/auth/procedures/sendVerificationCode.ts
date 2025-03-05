@@ -36,7 +36,7 @@ export const sendVerificationCode = publicProcedure
         log.error('[SEND_VERIFICATION_CODE_ERROR] Code could not be sent');
         log.error(error);
 
-        return 'sent';
+        return 'approved';
         // throw new TRPCError({
         //   code: 'BAD_REQUEST',
         //   message:
