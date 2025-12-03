@@ -72,10 +72,10 @@ export const verifyPhone = publicProcedure
           };
         } else {
           log.info('[VERIFY_PHONE] Phone could not be verified');
-          return {
-            success: false,
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
             message: 'El codigo no pudo verificarse o es incorrecto',
-          };
+          });
         }
       } catch (error: any) {
         log.error(`[VERIFY_PHONE] Error while verifying code ${error.message}`);
