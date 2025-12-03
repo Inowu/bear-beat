@@ -25,22 +25,6 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
     payload.event_type === PaypalEvent.PAYMENT_SALE_DENIED
       ? payload.resource.billing_agreement_id
       : payload.resource.id;
-  const planId = payload.resource.plan_id;
-
-  const plan = await prisma.plans.findFirst({
-    where: {
-      [getPlanKey(PaymentService.PAYPAL)]: planId,
-    },
-  });
-
-  if (
-    !plan &&
-    payload.event_type !== PaypalEvent.PAYMENT_SALE_COMPLETED &&
-    payload.event_type !== PaypalEvent.PAYMENT_SALE_DENIED
-  ) {
-    log.error(`[PAYPAL_WH] Plan with id ${planId} not found`);
-    return;
-  }
 
   const order = await prisma.orders.findFirst({
     where: {
@@ -51,6 +35,22 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
   if (!order) {
     // Probably never happening (in prod) but just in case
     log.error(`[PAYPAL_WH] Order with txn_id ${subId} not found`);
+    return;
+  }
+
+  const planId = order.plan_id;
+
+  if (!planId) {
+    log.error(`[PAYPAL_WH] Order does not have a plan ID in our DB.`);
+    return;
+  }
+
+  const plan = await prisma.plans.findFirst({
+    where: { id: planId },
+  });
+
+  if (!plan) {
+    log.error(`[PAYPAL_WH] Plan with id ${planId} not found`);
     return;
   }
 
@@ -203,7 +203,10 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
       await cancelSubscription({
         prisma,
         user,
-        plan: planId,
+        plan:
+          process.env.NODE_ENV === 'production'
+            ? plan.paypal_plan_id!
+            : plan.paypal_plan_id_test!,
         service: PaymentService.PAYPAL,
         reason: OrderStatus.CANCELLED,
       });
@@ -217,7 +220,10 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
       await cancelSubscription({
         prisma,
         user,
-        plan: planId,
+        plan:
+          process.env.NODE_ENV === 'production'
+            ? plan.paypal_plan_id!
+            : plan.paypal_plan_id_test!,
         service: PaymentService.PAYPAL,
         reason: OrderStatus.EXPIRED,
       });
@@ -311,7 +317,10 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
       await cancelSubscription({
         prisma,
         user,
-        plan: planId,
+        plan:
+          process.env.NODE_ENV === 'production'
+            ? plan.paypal_plan_id!
+            : plan.paypal_plan_id_test!,
         service: PaymentService.PAYPAL,
         reason: OrderStatus.FAILED,
       });
