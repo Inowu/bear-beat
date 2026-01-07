@@ -30,6 +30,7 @@ function SignUpForm() {
   const [registerInfo, setRegisterInfo] = useState<any>({});
   const [cookies] = useCookies(["_fbp"]);
   const [blockedDomains, setBlockedDomains] = useState<string[]>([]);
+  const [blockedPhoneNumbers, setBlockedPhoneNumbers] = useState<string[]>([]);
 
   const closeModal = () => {
     setShow(false);
@@ -72,6 +73,13 @@ function SignUpForm() {
     return atIndex === -1 ? "" : trimmed.slice(atIndex + 1);
   };
 
+  const phoneRegex = /^\+\d{1,4}\s\d{4,14}$/;
+
+  const normalizePhoneNumber = (phone: string) => {
+    const normalized = phone.trim().replace(/\s+/g, " ");
+    return phoneRegex.test(normalized) ? normalized : "";
+  };
+
   const formik = useFormik({
     initialValues: initialValues,
     validationSchema: validationSchema,
@@ -83,11 +91,18 @@ function SignUpForm() {
         setLoader(false);
         return;
       }
+      const formattedPhone = `+${code} ${values.phone}`;
+      const normalizedPhone = normalizePhoneNumber(formattedPhone);
+      if (normalizedPhone && blockedPhoneNumbers.includes(normalizedPhone)) {
+        formik.setFieldError("phone", "El telefono no esta permitido");
+        setLoader(false);
+        return;
+      }
       let body = {
         username: values.username,
         password: values.password,
         email: values.email,
-        phone: `+${code} ${values.phone}`,
+        phone: formattedPhone,
         fbp: cookies._fbp,
         url: window.location.href,
       };
@@ -155,6 +170,19 @@ function SignUpForm() {
     };
 
     fetchBlockedDomains();
+  }, []);
+
+  useEffect(() => {
+    const fetchBlockedPhones = async () => {
+      try {
+        const numbers = await trpc.blockedPhoneNumbers.listBlockedPhoneNumbers.query();
+        setBlockedPhoneNumbers(numbers);
+      } catch (error) {
+        console.error("No se pudieron cargar los telefonos bloqueados.", error);
+      }
+    };
+
+    fetchBlockedPhones();
   }, []);
 
   return (

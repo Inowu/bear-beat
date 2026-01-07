@@ -17,6 +17,10 @@ import {
   getBlockedEmailDomains,
   normalizeEmailDomain,
 } from '../../../utils/blockedEmailDomains';
+import {
+  getBlockedPhoneNumbers,
+  normalizePhoneNumber,
+} from '../../../utils/blockedPhoneNumbers';
 
 export const register = publicProcedure
   .input(
@@ -50,6 +54,17 @@ export const register = publicProcedure
           throw new TRPCError({
             code: 'BAD_REQUEST',
             message: 'El dominio del correo no está permitido',
+          });
+        }
+      }
+
+      const normalizedPhone = normalizePhoneNumber(phone);
+      if (normalizedPhone) {
+        const blockedPhones = await getBlockedPhoneNumbers(prisma);
+        if (blockedPhones.includes(normalizedPhone)) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'El telefono no esta permitido',
           });
         }
       }

@@ -15,6 +15,7 @@ import {
   faArrowAltCircleUp,
   faDownload,
   faBan,
+  faPhone,
 } from "@fortawesome/free-solid-svg-icons";
 import { faHeadset } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
@@ -80,6 +81,11 @@ function AsideNavbar(props: AsideNavbarPropsI) {
             <Link to={"/admin/dominios-bloqueados"}>
               <li>
                 <FontAwesomeIcon icon={faBan} /> Dominios bloqueados
+              </li>
+            </Link>
+            <Link to={"/admin/telefonos-bloqueados"}>
+              <li>
+                <FontAwesomeIcon icon={faPhone} /> Telefonos bloqueados
               </li>
             </Link>
           </ul>

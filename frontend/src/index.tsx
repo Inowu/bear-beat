@@ -31,6 +31,7 @@ import { Ordens } from "./pages/Admin/Ordens/Ordens";
 import { HistoryCheckout } from "./pages/Admin/HistoryCheckout/HistoryCheckout";
 import { DownloadHistory } from "./pages/Admin/DownloadsHistory/DownloadHistory";
 import { BlockedEmailDomains } from "./pages/Admin/BlockedEmailDomains/BlockedEmailDomains";
+import { BlockedPhoneNumbers } from "./pages/Admin/BlockedPhoneNumbers/BlockedPhoneNumbers";
 import { PlanUpgrade } from "./pages/PlanUpgrade/PlanUpgrade";
 import { SSEProvider } from "react-hooks-sse";
 import DownloadContextProvider from "./contexts/DownloadContext";
@@ -79,6 +80,7 @@ const router = createBrowserRouter([
           { path: "ordenes", element: <Ordens /> },
           { path: "historialCheckout", element: <HistoryCheckout /> },
           { path: "dominios-bloqueados", element: <BlockedEmailDomains /> },
+          { path: "telefonos-bloqueados", element: <BlockedPhoneNumbers /> },
         ],
       },
       {
