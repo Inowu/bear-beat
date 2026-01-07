@@ -29,6 +29,7 @@ function SignUpForm() {
   const [newUserPhone, setNewUserPhone] = useState<string>("");
   const [registerInfo, setRegisterInfo] = useState<any>({});
   const [cookies] = useCookies(["_fbp"]);
+  const [blockedDomains, setBlockedDomains] = useState<string[]>([]);
 
   const closeModal = () => {
     setShow(false);
@@ -65,11 +66,23 @@ function SignUpForm() {
     setCode(country.dialCode);
   };
 
+  const getEmailDomain = (email: string) => {
+    const trimmed = email.trim().toLowerCase();
+    const atIndex = trimmed.lastIndexOf("@");
+    return atIndex === -1 ? "" : trimmed.slice(atIndex + 1);
+  };
+
   const formik = useFormik({
     initialValues: initialValues,
     validationSchema: validationSchema,
     onSubmit: async (values) => {
       setLoader(true);
+      const emailDomain = getEmailDomain(values.email);
+      if (emailDomain && blockedDomains.includes(emailDomain)) {
+        formik.setFieldError("email", "El dominio del correo no está permitido");
+        setLoader(false);
+        return;
+      }
       let body = {
         username: values.username,
         password: values.password,
@@ -130,6 +143,19 @@ function SignUpForm() {
   useEffect(() => {
     getUserLocation();
   }, [getUserLocation]);
+
+  useEffect(() => {
+    const fetchBlockedDomains = async () => {
+      try {
+        const domains = await trpc.blockedEmailDomains.listBlockedEmailDomains.query();
+        setBlockedDomains(domains);
+      } catch (error) {
+        console.error("No se pudieron cargar los dominios bloqueados.", error);
+      }
+    };
+
+    fetchBlockedDomains();
+  }, []);
 
   return (
     <form className="sign-up-form" onSubmit={formik.handleSubmit}>

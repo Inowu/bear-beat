@@ -13,6 +13,10 @@ import { brevo } from '../../../email';
 import { manyChat } from '../../../many-chat';
 import { twilio } from '../../../twilio';
 import { facebook } from '../../../facebook';
+import {
+  getBlockedEmailDomains,
+  normalizeEmailDomain,
+} from '../../../utils/blockedEmailDomains';
 
 export const register = publicProcedure
   .input(
@@ -39,6 +43,17 @@ export const register = publicProcedure
       input: { username, email, password, phone, fbp, url },
       ctx: { req, prisma },
     }) => {
+      const emailDomain = normalizeEmailDomain(email);
+      if (emailDomain) {
+        const blockedDomains = await getBlockedEmailDomains(prisma);
+        if (blockedDomains.includes(emailDomain)) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'El dominio del correo no está permitido',
+          });
+        }
+      }
+
       const existingUser = await prisma.users.findFirst({
         where: {
           OR: [
