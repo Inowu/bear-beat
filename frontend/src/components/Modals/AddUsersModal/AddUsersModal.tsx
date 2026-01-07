@@ -13,6 +13,7 @@ import "react-phone-input-2/lib/material.css";
 import es from "react-phone-input-2/lang/es.json";
 import trpc from "../../../api";
 import { USER_ROLES } from "../../../interfaces/admin";
+import { twoDigitsCountryCodes } from "../../../utils/country_codes";
 
 interface IAddUsersModal {
   showModal: boolean;
@@ -35,16 +36,11 @@ export function AddUsersModal(props: IAddUsersModal) {
     // navigate("/");
   };
   const validationSchema = Yup.object().shape({
-    email: Yup.string()
-      .required("El correo es requerido")
-      .email("El formato del correo no es correcto"),
+    email: Yup.string().required("El correo es requerido").email("El formato del correo no es correcto"),
     username: Yup.string()
       .required("El nombre de usuario es requerido")
       .min(5, "El nombre de usuario debe contener 5 caracteres")
-      .matches(
-        /[a-zA-Z]/,
-        "El nombre de usuario debe contener al menos 1 carácter"
-      ),
+      .matches(/[a-zA-Z]/, "El nombre de usuario debe contener al menos 1 carácter"),
     password: Yup.string()
       .required("La contraseña es requerida")
       .min(6, "La contraseña debe contener por lo menos 6 caracteres"),
@@ -58,7 +54,7 @@ export function AddUsersModal(props: IAddUsersModal) {
     phone: "",
     email: "",
     passwordConfirmation: "",
-    role: USER_ROLES.NORMAL
+    role: USER_ROLES.NORMAL,
   };
   const handlePhoneNumberChange = (value: any, country: any) => {
     setCode(country.dialCode);
@@ -73,7 +69,7 @@ export function AddUsersModal(props: IAddUsersModal) {
         password: values.password,
         email: values.email,
         phone: `+${code} ${values.phone}`,
-        role_id: Number(values.role) 
+        role_id: Number(values.role),
       };
       try {
         await trpc.users.createOneUsers.mutate({ data: body });
@@ -101,9 +97,7 @@ export function AddUsersModal(props: IAddUsersModal) {
             value={formik.values.username}
             onChange={formik.handleChange}
           />
-          {formik.errors.username && (
-            <div className="formik">{formik.errors.username}</div>
-          )}
+          {formik.errors.username && <div className="formik">{formik.errors.username}</div>}
         </div>
         <div className="c-row">
           <input
@@ -114,21 +108,17 @@ export function AddUsersModal(props: IAddUsersModal) {
             onChange={formik.handleChange}
             type="text"
           />
-          {formik.errors.email && (
-            <div className="formik">{formik.errors.email}</div>
-          )}
+          {formik.errors.email && <div className="formik">{formik.errors.email}</div>}
         </div>
         <div className="c-row">
           <label>Tipo de usuario</label>
-          <select
-            id="role"
-            defaultValue={formik.values.role}
-            onChange={formik.handleChange}
-          >
+          <select id="role" defaultValue={formik.values.role} onChange={formik.handleChange}>
             <option value={USER_ROLES.ADMIN}>Admin</option>
             <option value={USER_ROLES.SUBADMIN}>Subadmin</option>
             <option value={USER_ROLES.EDITOR}>Editor</option>
-            <option value={USER_ROLES.NORMAL} selected>Normal</option>
+            <option value={USER_ROLES.NORMAL} selected>
+              Normal
+            </option>
           </select>
         </div>
         <div className="c-row2">
@@ -138,6 +128,8 @@ export function AddUsersModal(props: IAddUsersModal) {
             country={"mx"}
             placeholder="Phone"
             localization={es}
+            preferredCountries={["mx", "us", "ca", "es"]}
+            onlyCountries={twoDigitsCountryCodes.map((c) => c.toLowerCase())}
             onChange={handlePhoneNumberChange}
           />
           <p className="code">+{code}</p>
@@ -150,9 +142,7 @@ export function AddUsersModal(props: IAddUsersModal) {
             onChange={formik.handleChange}
             type="text"
           />
-          {formik.errors.phone && (
-            <div className="error-formik">{formik.errors.phone}</div>
-          )}
+          {formik.errors.phone && <div className="error-formik">{formik.errors.phone}</div>}
         </div>
         <div className="c-row">
           <input
@@ -163,9 +153,7 @@ export function AddUsersModal(props: IAddUsersModal) {
             value={formik.values.password}
             onChange={formik.handleChange}
           />
-          {formik.errors.password && (
-            <div className="formik">{formik.errors.password}</div>
-          )}
+          {formik.errors.password && <div className="formik">{formik.errors.password}</div>}
         </div>
         <div className="c-row">
           <input

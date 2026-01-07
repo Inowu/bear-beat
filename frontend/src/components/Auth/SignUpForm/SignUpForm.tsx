@@ -1,6 +1,6 @@
 import "./SignUpForm.scss";
 import "react-phone-input-2/lib/material.css";
-import { detectUserCountry, findDialCode } from "../../../utils/country_codes";
+import { detectUserCountry, findDialCode, twoDigitsCountryCodes } from "../../../utils/country_codes";
 import { Link, useNavigate } from "react-router-dom";
 import { ReactComponent as Arrow } from "../../../assets/icons/arrow-down.svg";
 import { Spinner } from "../../../components/Spinner/Spinner";
@@ -11,11 +11,7 @@ import * as Yup from "yup";
 import es from "react-phone-input-2/lang/es.json";
 import PhoneInput from "react-phone-input-2";
 import trpc from "../../../api";
-import {
-  ErrorModal,
-  SuccessModal,
-  VerifyPhoneModal
-} from '../../../components/Modals'
+import { ErrorModal, SuccessModal, VerifyPhoneModal } from "../../../components/Modals";
 import { useCookies } from "react-cookie";
 import { ChatButton } from "../../../components/ChatButton/ChatButton";
 
@@ -32,7 +28,7 @@ function SignUpForm() {
   const [newUserId, setNewUserId] = useState<number>(0);
   const [newUserPhone, setNewUserPhone] = useState<string>("");
   const [registerInfo, setRegisterInfo] = useState<any>({});
-  const [cookies] = useCookies(['_fbp']);
+  const [cookies] = useCookies(["_fbp"]);
 
   const closeModal = () => {
     setShow(false);
@@ -43,16 +39,11 @@ function SignUpForm() {
     navigate("/");
   };
   const validationSchema = Yup.object().shape({
-    email: Yup.string()
-      .required("El correo es requerido")
-      .email("El formato del correo no es correcto"),
+    email: Yup.string().required("El correo es requerido").email("El formato del correo no es correcto"),
     username: Yup.string()
       .required("El nombre de usuario es requerido")
       .min(5, "El nombre de usuario debe contener por lo menos 5 caracteres")
-      .matches(
-        /[a-zA-Z]/,
-        "El nombre de usuario debe contener al menos una letra"
-      ),
+      .matches(/[a-zA-Z]/, "El nombre de usuario debe contener al menos una letra"),
     password: Yup.string()
       .required("La contraseña es requerida")
       .min(6, "La contraseña debe contenter 6 caracteres"),
@@ -85,7 +76,7 @@ function SignUpForm() {
         email: values.email,
         phone: `+${code} ${values.phone}`,
         fbp: cookies._fbp,
-        url: window.location.href
+        url: window.location.href,
       };
       try {
         const register = await trpc.auth.register.mutate(body);
@@ -93,9 +84,9 @@ function SignUpForm() {
         setNewUserId(register.user.id);
         setNewUserPhone(register.user.phone!);
 
-        fbq('trackCustom', 'BearBeatRegistro', { email: register.user.email, phone: register.user.phone });
+        fbq("trackCustom", "BearBeatRegistro", { email: register.user.email, phone: register.user.phone });
 
-        if (process.env.REACT_APP_ENVIRONMENT === 'development') {
+        if (process.env.REACT_APP_ENVIRONMENT === "development") {
           handleLogin(register.token, register.refreshToken);
           navigate("/");
         }
@@ -120,7 +111,7 @@ function SignUpForm() {
     handleLogin(registerInfo.token, registerInfo.refreshToken);
     setShowVerify(false);
     setShowSuccess(true);
-  }
+  };
 
   const getUserLocation = useCallback(async () => {
     try {
@@ -134,9 +125,11 @@ function SignUpForm() {
     } catch (error) {
       console.error("There was an error while trying to get user's location.", error);
     }
-  }, [])
+  }, []);
 
-  useEffect(() => { getUserLocation() }, [getUserLocation])
+  useEffect(() => {
+    getUserLocation();
+  }, [getUserLocation]);
 
   return (
     <form className="sign-up-form" onSubmit={formik.handleSubmit}>
@@ -151,15 +144,15 @@ function SignUpForm() {
           onChange={formik.handleChange}
           type="text"
         />
-        {formik.errors.email && (
-          <div className="error-formik">{formik.errors.email}</div>
-        )}
+        {formik.errors.email && <div className="error-formik">{formik.errors.email}</div>}
       </div>
       <div className="c-row">
         <PhoneInput
           containerClass="dial-container"
           buttonClass="dial-code"
           country={countryCode}
+          preferredCountries={["mx", "us", "ca", "es"]}
+          onlyCountries={twoDigitsCountryCodes.map((c) => c.toLowerCase())}
           placeholder="Teléfono"
           localization={es}
           onChange={handlePhoneNumberChange}
@@ -174,9 +167,7 @@ function SignUpForm() {
           onChange={formik.handleChange}
           type="text"
         />
-        {formik.errors.phone && (
-          <div className="error-formik">{formik.errors.phone}</div>
-        )}
+        {formik.errors.phone && <div className="error-formik">{formik.errors.phone}</div>}
       </div>
       <div className="c-row">
         <input
@@ -187,9 +178,7 @@ function SignUpForm() {
           value={formik.values.username}
           onChange={formik.handleChange}
         />
-        {formik.errors.username && (
-          <div className="error-formik">{formik.errors.username}</div>
-        )}
+        {formik.errors.username && <div className="error-formik">{formik.errors.username}</div>}
       </div>
       <div className="c-row">
         <input
@@ -200,9 +189,7 @@ function SignUpForm() {
           value={formik.values.password}
           onChange={formik.handleChange}
         />
-        {formik.errors.password && (
-          <div className="error-formik">{formik.errors.password}</div>
-        )}
+        {formik.errors.password && <div className="error-formik">{formik.errors.password}</div>}
       </div>
       <div className="c-row">
         <input
@@ -214,9 +201,7 @@ function SignUpForm() {
           onChange={formik.handleChange}
         />
         {formik.errors.passwordConfirmation && (
-          <div className="error-formik">
-            {formik.errors.passwordConfirmation}
-          </div>
+          <div className="error-formik">{formik.errors.passwordConfirmation}</div>
         )}
       </div>
       {!loader ? (
