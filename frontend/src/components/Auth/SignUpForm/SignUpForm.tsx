@@ -14,6 +14,7 @@ import trpc from "../../../api";
 import { ErrorModal, SuccessModal, VerifyPhoneModal } from "../../../components/Modals";
 import { useCookies } from "react-cookie";
 import { ChatButton } from "../../../components/ChatButton/ChatButton";
+import Turnstile from "../../../components/Turnstile/Turnstile";
 
 function SignUpForm() {
   const navigate = useNavigate();
@@ -31,6 +32,9 @@ function SignUpForm() {
   const [cookies] = useCookies(["_fbp"]);
   const [blockedDomains, setBlockedDomains] = useState<string[]>([]);
   const [blockedPhoneNumbers, setBlockedPhoneNumbers] = useState<string[]>([]);
+  const [turnstileToken, setTurnstileToken] = useState<string>("");
+  const [turnstileError, setTurnstileError] = useState<string>("");
+  const [turnstileReset, setTurnstileReset] = useState<number>(0);
 
   const closeModal = () => {
     setShow(false);
@@ -84,6 +88,11 @@ function SignUpForm() {
     initialValues: initialValues,
     validationSchema: validationSchema,
     onSubmit: async (values) => {
+      if (!turnstileToken) {
+        setTurnstileError("Confirma que no eres un robot.");
+        return;
+      }
+
       setLoader(true);
       const emailDomain = getEmailDomain(values.email);
       if (emailDomain && blockedDomains.includes(emailDomain)) {
@@ -105,6 +114,7 @@ function SignUpForm() {
         phone: formattedPhone,
         fbp: cookies._fbp,
         url: window.location.href,
+        turnstileToken,
       };
       try {
         const register = await trpc.auth.register.mutate(body);
@@ -120,7 +130,6 @@ function SignUpForm() {
         }
 
         setShowVerify(true);
-        setLoader(false);
       } catch (error: any) {
         let errorMessage = error.message;
 
@@ -130,7 +139,10 @@ function SignUpForm() {
 
         setShow(true);
         setErrorMessage(errorMessage);
+      } finally {
         setLoader(false);
+        setTurnstileToken("");
+        setTurnstileReset((prev) => prev + 1);
       }
     },
   });
@@ -183,6 +195,21 @@ function SignUpForm() {
     };
 
     fetchBlockedPhones();
+  }, []);
+
+  const handleTurnstileSuccess = useCallback((token: string) => {
+    setTurnstileToken(token);
+    setTurnstileError("");
+  }, []);
+
+  const handleTurnstileExpire = useCallback(() => {
+    setTurnstileToken("");
+    setTurnstileError("La verificación expiró, intenta de nuevo.");
+  }, []);
+
+  const handleTurnstileError = useCallback(() => {
+    setTurnstileToken("");
+    setTurnstileError("No se pudo verificar la seguridad.");
   }, []);
 
   return (
@@ -257,6 +284,15 @@ function SignUpForm() {
         {formik.errors.passwordConfirmation && (
           <div className="error-formik">{formik.errors.passwordConfirmation}</div>
         )}
+      </div>
+      <div className="c-row turnstile-row">
+        <Turnstile
+          onVerify={handleTurnstileSuccess}
+          onExpire={handleTurnstileExpire}
+          onError={handleTurnstileError}
+          resetSignal={turnstileReset}
+        />
+        {turnstileError && <div className="error-formik">{turnstileError}</div>}
       </div>
       {!loader ? (
         <button className="btn" type="submit">
