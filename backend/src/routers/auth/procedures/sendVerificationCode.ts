@@ -3,6 +3,33 @@ import { TRPCError } from '@trpc/server';
 import { publicProcedure } from '../../../procedures/public.procedure';
 import { log } from '../../../server';
 import { twilio } from '../../../twilio';
+import * as TwilioLib from 'twilio';
+import { PrismaClient } from '@prisma/client';
+import {
+  getBlockedPhoneNumbers,
+  normalizePhoneNumber,
+  setBlockedPhoneNumbers,
+} from '../../../utils/blockedPhoneNumbers';
+
+const { RestException } = TwilioLib;
+const TWILIO_BLOCKED_ERROR_CODE = 63024;
+
+const addPhoneToBlockedList = async (
+  prisma: PrismaClient,
+  phoneNumber: string,
+) => {
+  const normalized = normalizePhoneNumber(phoneNumber);
+  if (!normalized) {
+    return;
+  }
+
+  const currentNumbers = await getBlockedPhoneNumbers(prisma);
+  if (currentNumbers.includes(normalized)) {
+    return;
+  }
+
+  await setBlockedPhoneNumbers(prisma, [...currentNumbers, normalized]);
+};
 
 export const sendVerificationCode = publicProcedure
   .input(
@@ -33,6 +60,13 @@ export const sendVerificationCode = publicProcedure
 
         return response;
       } catch (error: any) {
+        if (
+          error instanceof RestException &&
+          error.code === TWILIO_BLOCKED_ERROR_CODE
+        ) {
+          await addPhoneToBlockedList(prisma, phoneNumber);
+        }
+
         log.error('[SEND_VERIFICATION_CODE_ERROR] Code could not be sent');
         log.error(error);
 

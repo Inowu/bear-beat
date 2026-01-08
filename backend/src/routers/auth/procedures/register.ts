@@ -13,6 +13,7 @@ import { brevo } from '../../../email';
 import { manyChat } from '../../../many-chat';
 import { twilio } from '../../../twilio';
 import { facebook } from '../../../facebook';
+import * as TwilioLib from 'twilio';
 import {
   getBlockedEmailDomains,
   normalizeEmailDomain,
@@ -20,7 +21,11 @@ import {
 import {
   getBlockedPhoneNumbers,
   normalizePhoneNumber,
+  setBlockedPhoneNumbers,
 } from '../../../utils/blockedPhoneNumbers';
+
+const { RestException } = TwilioLib;
+const TWILIO_BLOCKED_ERROR_CODE = 63024;
 
 export const register = publicProcedure
   .input(
@@ -193,6 +198,22 @@ export const register = publicProcedure
         try {
           await twilio.getVerificationCode(newUser.phone!);
         } catch (error: any) {
+          if (
+            error instanceof RestException &&
+            error.code === TWILIO_BLOCKED_ERROR_CODE
+          ) {
+            const normalizedPhone = normalizePhoneNumber(newUser.phone ?? '');
+            if (normalizedPhone) {
+              const blockedPhones = await getBlockedPhoneNumbers(prisma);
+              if (!blockedPhones.includes(normalizedPhone)) {
+                await setBlockedPhoneNumbers(prisma, [
+                  ...blockedPhones,
+                  normalizedPhone,
+                ]);
+              }
+            }
+          }
+
           log.error(
             `[REGISTER] Error while sending verification code ${error.message}`,
           );
