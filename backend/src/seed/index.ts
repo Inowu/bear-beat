@@ -32,6 +32,7 @@ export const seed = async () => {
     phone: '534205355',
     fbp: 'fbp',
     url: 'https://thebearbeat.com/auth/registro',
+    turnstileToken: 'turnstileToken' + Math.random(),
   });
 
   user = await prisma.users.findFirst({
