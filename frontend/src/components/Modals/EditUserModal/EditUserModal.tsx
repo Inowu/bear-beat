@@ -2,7 +2,7 @@ import "../Modal.scss";
 import "react-phone-input-2/lib/material.css";
 import "react-phone-input-2/lib/material.css";
 import { ErrorModal } from "../ErrorModal/ErrorModal";
-import { findCountryCode } from "../../../utils/country_codes";
+import { findCountryCode, twoDigitsCountryCodes } from "../../../utils/country_codes";
 import { Modal } from "react-bootstrap";
 import { of } from "await-of";
 import { RiCloseCircleLine } from "react-icons/ri";
@@ -39,7 +39,7 @@ export function EditUserModal(props: IEditPlanModal) {
   const [show, setShow] = useState<boolean>(false);
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
   const [code, setCode] = useState<string>("52");
-  const [countryCode, setCountryCode] = useState<string>('mx');
+  const [countryCode, setCountryCode] = useState<string>("mx");
   const [errorMessage, setErrorMessage] = useState<any>("");
   const closeModal = () => {
     setShow(false);
@@ -52,7 +52,9 @@ export function EditUserModal(props: IEditPlanModal) {
 
   const validationSchema = Yup.object().shape({
     email: Yup.string().required("El correo es requerido"),
-    password: Yup.string().required("Este campo es obligatorio").min(6, "La contraseña debe contener por lo menos 6 caracteres"),
+    password: Yup.string()
+      .required("Este campo es obligatorio")
+      .min(6, "La contraseña debe contener por lo menos 6 caracteres"),
     name: Yup.string().required("El nombre es requerido"),
     phone: Yup.string()
       .required("El teléfono es requerido")
@@ -81,13 +83,15 @@ export function EditUserModal(props: IEditPlanModal) {
         username: values.name,
         password: values.password,
         phone: `+${code} ${values.phone}`,
-        role_id: values.role
+        role_id: values.role,
       };
-      
-      const [, errorUpdate] = await of(trpc.users.updateOneUsers.mutate({
-        where: {id: editingUser.id},
-        data: body
-      }));
+
+      const [, errorUpdate] = await of(
+        trpc.users.updateOneUsers.mutate({
+          where: { id: editingUser.id },
+          data: body,
+        })
+      );
 
       if (errorUpdate) {
         setShow(true);
@@ -111,7 +115,7 @@ export function EditUserModal(props: IEditPlanModal) {
           phoneNumber = editingUser.phone.trim().split(" ")[1];
           setCountryCode(findCountryCode(editingUser.phone.trim().split(" ")[0]));
         } else {
-          phoneNumber = ""
+          phoneNumber = "";
         }
       }
 
@@ -120,9 +124,9 @@ export function EditUserModal(props: IEditPlanModal) {
         email: editingUser.email,
         name: editingUser.username,
         phone: phoneNumber,
-        role: editingUser.role
+        role: editingUser.role,
       });
-      
+
       setCode(dialCode);
     }
   }, [editingUser]);
@@ -142,9 +146,7 @@ export function EditUserModal(props: IEditPlanModal) {
             value={formik.values.name}
             onChange={formik.handleChange}
           />
-          {formik.errors.name && (
-            <div className="formik">{formik.errors.name}</div>
-          )}
+          {formik.errors.name && <div className="formik">{formik.errors.name}</div>}
         </div>
         <div className="c-row">
           <label>Correo</label>
@@ -156,39 +158,21 @@ export function EditUserModal(props: IEditPlanModal) {
             value={formik.values.email}
             onChange={formik.handleChange}
           />
-          {formik.errors.email && (
-            <div className="formik">{formik.errors.email}</div>
-          )}
+          {formik.errors.email && <div className="formik">{formik.errors.email}</div>}
         </div>
         <div className="c-row">
           <label>Tipo de usuario</label>
-          <select
-            id="role"
-            defaultValue={formik.values.role}
-            onChange={formik.handleChange}
-          >
-            <option 
-              value={USER_ROLES.ADMIN} 
-              selected={editingUser.role === USER_ROLES.ADMIN}
-            >
+          <select id="role" defaultValue={formik.values.role} onChange={formik.handleChange}>
+            <option value={USER_ROLES.ADMIN} selected={editingUser.role === USER_ROLES.ADMIN}>
               Admin
             </option>
-            <option 
-              value={USER_ROLES.SUBADMIN} 
-              selected={editingUser.role === USER_ROLES.SUBADMIN}
-            >
+            <option value={USER_ROLES.SUBADMIN} selected={editingUser.role === USER_ROLES.SUBADMIN}>
               Subadmin
             </option>
-            <option 
-              value={USER_ROLES.EDITOR} 
-              selected={editingUser.role === USER_ROLES.EDITOR}
-            >
+            <option value={USER_ROLES.EDITOR} selected={editingUser.role === USER_ROLES.EDITOR}>
               Editor
             </option>
-            <option 
-              value={USER_ROLES.NORMAL} 
-              selected={editingUser.role === USER_ROLES.NORMAL}
-            >
+            <option value={USER_ROLES.NORMAL} selected={editingUser.role === USER_ROLES.NORMAL}>
               Normal
             </option>
           </select>
@@ -199,6 +183,8 @@ export function EditUserModal(props: IEditPlanModal) {
             buttonClass="dial-code"
             country={countryCode}
             placeholder="Teléfono"
+            preferredCountries={["mx", "us", "ca", "es"]}
+            onlyCountries={twoDigitsCountryCodes.map((c) => c.toLowerCase())}
             localization={es}
             onChange={handlePhoneNumberChange}
           />
@@ -212,9 +198,7 @@ export function EditUserModal(props: IEditPlanModal) {
             onChange={formik.handleChange}
             type="text"
           />
-          {formik.errors.phone && (
-            <div className="error-formik">{formik.errors.phone}</div>
-          )}
+          {formik.errors.phone && <div className="error-formik">{formik.errors.phone}</div>}
         </div>
         <div className="c-row">
           <label>Contraseña</label>
@@ -226,9 +210,7 @@ export function EditUserModal(props: IEditPlanModal) {
             value={formik.values.password}
             onChange={formik.handleChange}
           />
-          {formik.errors.password && (
-            <div className="formik">{formik.errors.password}</div>
-          )}
+          {formik.errors.password && <div className="formik">{formik.errors.password}</div>}
         </div>
         {!loader ? (
           <button className="btn-option-4" type="submit">

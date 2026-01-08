@@ -56,6 +56,11 @@
         font-size: 1.4rem;
       }
     }
+
+    .turnstile-row {
+      display: flex;
+      justify-content: center;
+    }
     button {
       border-radius: 100px;
       background-color: #06e1f7;

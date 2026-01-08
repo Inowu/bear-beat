@@ -112,6 +112,8 @@ export const permissions = shield<Context>({
   },
   mutation: {
     cancelDirDownload: isLoggedIn,
+    addBlockedEmailDomain: isAdmin,
+    addBlockedPhoneNumber: isAdmin,
     updatePlanInfo: isLoggedIn,
     removeInactiveUsers: isAdmin,
     getCurrentSubscriptionPlan: isLoggedIn,
@@ -125,6 +127,8 @@ export const permissions = shield<Context>({
     createPaypalPlan: isAdmin,
     deactivatePaypalPlan: isAdmin,
     activatePlanForUser: isAdmin,
+    removeBlockedEmailDomain: isAdmin,
+    removeBlockedPhoneNumber: isAdmin,
     subscribeWithCardConekta: isLoggedIn,
     subscribeWithCashConekta: isLoggedIn,
     conektaSubscriptionWebhook: isValidConektaSignature,

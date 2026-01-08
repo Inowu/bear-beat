@@ -7,6 +7,8 @@ import { cuponsusedsRouter } from './CuponsUsed.router';
 import { descargasusersRouter } from './DescargasUser.router';
 import { dirDownloadRouter } from './DirDownload.router';
 import { downloadHistoryRouter } from './DownloadHistory.router';
+import { blockedEmailDomainsRouter } from './BlockedEmailDomains.router';
+import { blockedPhoneNumbersRouter } from './BlockedPhoneNumbers.router';
 import { ftpquotalimitsRouter } from './FtpQuotaLimits.router';
 import { ftpquotatallieshistoriesRouter } from './FtpQuotatAlliesHistory.router';
 import { ftpusersRouter } from './FtpUser.router';
@@ -31,6 +33,8 @@ export const appRouter = router({
   subscriptions: subscriptionsRouter,
   webhooks: webhooksRouter,
   admin: adminRouter,
+  blockedEmailDomains: blockedEmailDomainsRouter,
+  blockedPhoneNumbers: blockedPhoneNumbersRouter,
   config: configsRouter,
   countries: countriesRouter,
   cupons: cuponsRouter,

@@ -13,6 +13,20 @@ import { brevo } from '../../../email';
 import { manyChat } from '../../../many-chat';
 import { twilio } from '../../../twilio';
 import { facebook } from '../../../facebook';
+import * as TwilioLib from 'twilio';
+import {
+  getBlockedEmailDomains,
+  normalizeEmailDomain,
+} from '../../../utils/blockedEmailDomains';
+import {
+  getBlockedPhoneNumbers,
+  normalizePhoneNumber,
+  setBlockedPhoneNumbers,
+} from '../../../utils/blockedPhoneNumbers';
+import { verifyTurnstileToken } from '../../../utils/turnstile';
+
+const { RestException } = TwilioLib;
+const TWILIO_BLOCKED_ERROR_CODE = 63024;
 
 export const register = publicProcedure
   .input(
@@ -32,13 +46,40 @@ export const register = publicProcedure
       phone: z.string(),
       fbp: z.string().optional(),
       url: z.string(),
+      turnstileToken: z
+        .string()
+        .min(1, 'La verificación de seguridad es requerida'),
     }),
   )
   .mutation(
     async ({
-      input: { username, email, password, phone, fbp, url },
+      input: { username, email, password, phone, fbp, url, turnstileToken },
       ctx: { req, prisma },
     }) => {
+      await verifyTurnstileToken({ token: turnstileToken, remoteIp: req.ip });
+
+      const emailDomain = normalizeEmailDomain(email);
+      if (emailDomain) {
+        const blockedDomains = await getBlockedEmailDomains(prisma);
+        if (blockedDomains.includes(emailDomain)) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'El dominio del correo no está permitido',
+          });
+        }
+      }
+
+      const normalizedPhone = normalizePhoneNumber(phone);
+      if (normalizedPhone) {
+        const blockedPhones = await getBlockedPhoneNumbers(prisma);
+        if (blockedPhones.includes(normalizedPhone)) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'El telefono no esta permitido',
+          });
+        }
+      }
+
       const existingUser = await prisma.users.findFirst({
         where: {
           OR: [
@@ -163,6 +204,22 @@ export const register = publicProcedure
         try {
           await twilio.getVerificationCode(newUser.phone!);
         } catch (error: any) {
+          if (
+            error instanceof RestException &&
+            error.code === TWILIO_BLOCKED_ERROR_CODE
+          ) {
+            const normalizedPhone = normalizePhoneNumber(newUser.phone ?? '');
+            if (normalizedPhone) {
+              const blockedPhones = await getBlockedPhoneNumbers(prisma);
+              if (!blockedPhones.includes(normalizedPhone)) {
+                await setBlockedPhoneNumbers(prisma, [
+                  ...blockedPhones,
+                  normalizedPhone,
+                ]);
+              }
+            }
+          }
+
           log.error(
             `[REGISTER] Error while sending verification code ${error.message}`,
           );

@@ -6,14 +6,20 @@ import { log } from '../../../server';
 import { brevo } from '../../../email';
 import { addHours } from 'date-fns';
 import { twilio } from '../../../twilio';
+import { verifyTurnstileToken } from '../../../utils/turnstile';
 
 export const forgotPassword = publicProcedure
   .input(
     z.object({
       email: z.string().email(),
+      turnstileToken: z
+        .string()
+        .min(1, 'La verificación de seguridad es requerida'),
     }),
   )
-  .mutation(async ({ input: { email }, ctx: { prisma } }) => {
+  .mutation(async ({ input: { email, turnstileToken }, ctx: { prisma, req } }) => {
+    await verifyTurnstileToken({ token: turnstileToken, remoteIp: req.ip });
+
     const user = await prisma.users.findFirst({
       where: {
         email,
