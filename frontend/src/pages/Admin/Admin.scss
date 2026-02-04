@@ -449,15 +449,6 @@
                         background: $bear-blue-dim;
                     }
 
-                    // En móvil: dropdown alineado a la izquierda para no salir de pantalla
-                    @include respond-to(tablet) {
-                        .dropdown-content {
-                            left: 0;
-                            right: auto;
-                            min-width: 180px;
-                        }
-                    }
-
                     .dropdown-content button.icon-button {
                         padding: 12px 16px;
                         display: flex;
@@ -486,9 +477,10 @@
                     animation: loadingAnimation 1.5s infinite;
                     border-block: 5px solid #e8ecef;
                     padding: 22px;
-                    background: linear-gradient()
+                    background: linear-gradient(90deg, #d6d5d5, #c2c1c1);
                 }
             }
+        }
         }
 
         tfoot {
@@ -514,6 +506,15 @@
         align-items: center;
         border-radius: 100px;
         padding: 8px 20px;
+    }
+}
+
+// Móvil: dropdown de acciones alineado a la izquierda
+@include respond-to(tablet) {
+    .admin-table table tbody tr .wrap-td .dropdown-content {
+        left: 0;
+        right: auto;
+        min-width: 180px;
     }
 }
 
