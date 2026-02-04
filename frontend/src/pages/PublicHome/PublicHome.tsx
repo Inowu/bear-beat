@@ -17,6 +17,7 @@ import {
   PiWarning,
   PiCheckCircle,
 } from "react-icons/pi";
+import GenreTicker from "../../components/GenreTicker/GenreTicker";
 import "./PublicHome.scss";
 
 const THEME_OPTIONS: { value: ThemeMode; label: string; icon: typeof faSun }[] = [
@@ -103,6 +104,9 @@ function PublicHome() {
           Cancela cuando quieras • Acceso Inmediato
         </p>
       </section>
+
+      {/* 2.5 TICKER DE GÉNEROS */}
+      <GenreTicker />
 
       {/* 3. BARRA DE AUTORIDAD */}
       <section className="ph__authority">
@@ -196,6 +200,11 @@ function PublicHome() {
             <div className="ph__price-body">
               <span className="ph__price-amount">$350</span>
               <span className="ph__price-period">MXN / mes</span>
+              <div className="ph__price-payment-methods" aria-label="Métodos de pago">
+                <span className="ph__price-pay-label ph__price-pay-label--oxxo">OXXO</span>
+                <span className="ph__price-pay-label ph__price-pay-label--spei">SPEI</span>
+              </div>
+              <p className="ph__price-cash-cta">¡Paga en efectivo en OXXO o Transferencia Directa!</p>
               <ul className="ph__price-features">
                 <li>500 GB descarga</li>
                 <li>SPEI, OXXO, Tarjeta</li>
