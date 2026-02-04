@@ -101,6 +101,31 @@
   --auth-login-link-hover: #0e7490;
   --auth-login-btn-bg: #0891b2;
   --auth-login-btn-text: #ffffff;
+
+  /* ========== APP UNIFICADO (mismo estilo y tamaño de texto que PublicHome) ========== */
+  --app-bg: var(--ph-bg);
+  --app-bg-soft: var(--ph-bg-soft);
+  --app-bg-card: var(--ph-bg-card);
+  --app-text-heading: var(--ph-text-heading);
+  --app-text-body: var(--ph-text-body);
+  --app-text-muted: var(--ph-text-muted);
+  --app-border: var(--ph-border);
+  --app-accent: var(--ph-accent);
+  --app-accent-bright: var(--ph-accent-bright);
+  --app-btn-bg: var(--ph-btn-bg);
+  --app-btn-text: var(--ph-btn-text);
+  --app-shadow: var(--ph-shadow);
+  --app-shadow-card: var(--ph-shadow-card);
+  --app-font-weight-body: 500;
+  --app-font-weight-heading: 700;
+  --app-font-weight-heading-strong: 800;
+  /* Escala tipográfica igual que Home: body grande, títulos contundentes */
+  --app-font-size-body: clamp(1rem, 2.5vw, 1.15rem);
+  --app-font-size-body-lg: clamp(1.05rem, 2.8vw, 1.25rem);
+  --app-font-size-h4: clamp(1.1rem, 3vw, 1.35rem);
+  --app-font-size-h3: clamp(1.25rem, 4vw, 1.5rem);
+  --app-font-size-h2: clamp(1.5rem, 5vw, 1.85rem);
+  --app-font-size-h1: clamp(1.75rem, 6vw, 2.25rem);
 }
 
 // Dark: por data-theme o por clase .dark en html (compatibilidad Tailwind)
@@ -195,4 +220,28 @@ html.dark {
   --auth-login-link-hover: #67e8f9;
   --auth-login-btn-bg: #06b6d4;
   --auth-login-btn-text: #000000;
+
+  /* ========== APP UNIFICADO (dark) ========== */
+  --app-bg: var(--ph-bg);
+  --app-bg-soft: var(--ph-bg-soft);
+  --app-bg-card: var(--ph-bg-card);
+  --app-text-heading: var(--ph-text-heading);
+  --app-text-body: var(--ph-text-body);
+  --app-text-muted: var(--ph-text-muted);
+  --app-border: var(--ph-border);
+  --app-accent: var(--ph-accent);
+  --app-accent-bright: var(--ph-accent-bright);
+  --app-btn-bg: var(--ph-btn-bg);
+  --app-btn-text: var(--ph-btn-text);
+  --app-shadow: var(--ph-shadow);
+  --app-shadow-card: var(--ph-shadow-card);
+  --app-font-weight-body: 500;
+  --app-font-weight-heading: 700;
+  --app-font-weight-heading-strong: 800;
+  --app-font-size-body: clamp(1rem, 2.5vw, 1.15rem);
+  --app-font-size-body-lg: clamp(1.05rem, 2.8vw, 1.25rem);
+  --app-font-size-h4: clamp(1.1rem, 3vw, 1.35rem);
+  --app-font-size-h3: clamp(1.25rem, 4vw, 1.5rem);
+  --app-font-size-h2: clamp(1.5rem, 5vw, 1.85rem);
+  --app-font-size-h1: clamp(1.75rem, 6vw, 2.25rem);
 }

@@ -9,9 +9,9 @@
     justify-content: space-between;
   }
   h2 {
-    font-size: 2.8rem;
-    color: var(--theme-heading);
-    font-weight: 700;
+    font-size: var(--app-font-size-h2);
+    color: var(--app-text-heading);
+    font-weight: var(--app-font-weight-heading);
   }
   .btn-back {
     button {
@@ -19,19 +19,21 @@
       gap: 10px;
       padding-block: 8px;
       padding-inline: 20px;
-      border-radius: 100px;
-      background: var(--theme-nav-item-bg);
-      color: var(--theme-nav-text);
-      font-weight: 600;
+      border-radius: 10px;
+      background: var(--app-bg-card);
+      color: var(--app-text-heading);
+      font-weight: var(--app-font-weight-heading);
+      font-size: var(--app-font-size-body);
       align-items: center;
-      box-shadow: var(--theme-card-shadow);
+      box-shadow: var(--app-shadow);
+      border: 2px solid var(--app-border);
       transition: transform 0.2s, box-shadow 0.2s, color 0.3s, background 0.3s, gap 0.3s;
       &:hover {
-        color: var(--theme-nav-item-hover-text);
-        background: var(--theme-nav-item-hover-bg);
+        color: var(--app-btn-text);
+        background: var(--app-accent-bright);
         gap: 15px;
         transform: translateX(-2px);
-        box-shadow: 0 4px 16px var(--theme-accent-glow);
+        box-shadow: var(--app-shadow-card);
       }
     }
   }
@@ -45,11 +47,12 @@
       margin: 0px 3px 0px 3px;
       cursor: pointer;
       padding: 5px;
-      color: var(--theme-ink);
-      font-weight: 500;
+      color: var(--app-text-body);
+      font-weight: var(--app-font-weight-body);
+      font-size: var(--app-font-size-body);
     }
     p:hover {
-      background-color: var(--theme-stripe);
+      background-color: var(--app-bg-soft);
       border-radius: 10px;
     }
     .last-folder {
@@ -64,15 +67,15 @@
     .header {
       display: grid;
       grid-template-columns: 2fr 1fr 1fr;
-      border-bottom: 3px solid var(--theme-ink);
-      color: var(--theme-ink);
+      border-bottom: 3px solid var(--app-border);
+      color: var(--app-text-heading);
       padding: 12px 8px;
-      font-weight: 700;
-      background: var(--theme-stripe);
+      font-weight: var(--app-font-weight-heading);
+      background: var(--app-bg-soft);
       border-radius: 8px 8px 0 0;
 
       div {
-        font-size: 1.4rem;
+        font-size: var(--app-font-size-body);
         cursor: pointer;
       }
     }
@@ -85,11 +88,11 @@
       .folder-card {
         display: grid;
         grid-template-columns: 2fr 1fr 1fr;
-        background-color: var(--theme-card-bg);
-        border: 1px solid var(--theme-card-border);
+        background-color: var(--app-bg-card);
+        border: 2px solid var(--app-border);
         border-radius: 12px;
         cursor: pointer;
-        box-shadow: var(--theme-card-shadow);
+        box-shadow: var(--app-shadow-card);
         position: relative;
         transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
         overflow: hidden;
@@ -100,7 +103,7 @@
           top: 0;
           bottom: 0;
           width: 4px;
-          background: var(--theme-card-accent-line);
+          background: linear-gradient(180deg, var(--app-accent-bright), var(--app-accent));
           opacity: 0.9;
         }
         .name-container {
@@ -117,10 +120,10 @@
           }
         }
         &:hover {
-          background-color: var(--theme-bg-secondary);
-          box-shadow: var(--theme-card-shadow-hover);
+          background-color: var(--app-bg-soft);
+          box-shadow: var(--app-shadow-card);
           transform: translateY(-2px);
-          border-color: var(--theme-card-border-strong);
+          border-color: var(--app-accent-bright);
         }
         svg {
           width: 3rem;
@@ -132,14 +135,14 @@
           gap: 15px;
 
           h3 {
-            color: var(--theme-heading);
-            font-size: 1.5rem;
-            font-weight: 600;
+            color: var(--app-text-heading);
+            font-size: var(--app-font-size-h3);
+            font-weight: var(--app-font-weight-heading);
           }
           h4 {
-            color: var(--theme-ink);
-            font-size: 1.2rem;
-            font-weight: 500;
+            color: var(--app-text-body);
+            font-size: var(--app-font-size-body);
+            font-weight: var(--app-font-weight-body);
           }
         }
       }

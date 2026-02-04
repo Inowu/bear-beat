@@ -10,8 +10,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  background: var(--ph-bg);
-  color: var(--ph-text-heading);
+  background: var(--app-bg);
+  color: var(--app-text-heading);
+  font-size: var(--app-font-size-body);
   transition: background 0.2s ease, color 0.2s ease;
 
   .auth-logo {
@@ -21,20 +22,20 @@
   }
 
   .auth-tagline {
-    color: var(--ph-text-body);
-    font-size: 0.95rem;
-    font-weight: 500;
+    color: var(--app-text-body);
+    font-size: var(--app-font-size-body);
+    font-weight: var(--app-font-weight-body);
     text-align: center;
     margin: 0 8px 20px;
     max-width: 360px;
     line-height: 1.45;
 
     strong {
-      color: var(--ph-text-heading);
-      font-weight: 700;
+      color: var(--app-text-heading);
+      font-weight: var(--app-font-weight-heading);
     }
     .auth-tagline-sep {
-      color: var(--ph-text-muted);
+      color: var(--app-text-muted);
     }
   }
 }

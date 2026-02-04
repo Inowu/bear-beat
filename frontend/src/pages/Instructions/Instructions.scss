@@ -14,18 +14,15 @@
 
   h1 {
     font-family: "Bear-font", "Bear Font2", sans-serif;
-    font-size: 2rem;
+    font-size: var(--app-font-size-h1);
     text-align: center;
-    background: linear-gradient(135deg, $bear-blue 0%, rgba(255, 255, 255, 0.95) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    font-weight: 700;
+    color: var(--app-text-heading);
+    font-weight: var(--app-font-weight-heading-strong);
   }
 
   .instructions-intro {
-    font-size: 1.5rem;
-    color: $text-muted;
+    font-size: var(--app-font-size-body-lg);
+    color: var(--app-text-muted);
     margin: 0 0 12px;
     max-width: 100%;
     line-height: 1.45;
