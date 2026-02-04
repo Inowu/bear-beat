@@ -18,7 +18,8 @@ function MainLayout() {
     setAsideOpen(false);
   }, [location]);
 
-  const isLanding = !userToken && location.pathname === "/";
+  // Sin sesión = mismo layout que la landing (ancho completo, mismo estilo)
+  const isLanding = !userToken;
 
   return (
     <div className="main-layout-main-container">
