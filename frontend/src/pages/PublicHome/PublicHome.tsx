@@ -1,4 +1,9 @@
 import { Link } from "react-router-dom";
+import { useRef, useEffect, useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSun, faMoon, faCircleHalfStroke, faClock } from "@fortawesome/free-solid-svg-icons";
+import { useTheme } from "../../contexts/ThemeContext";
+import type { ThemeMode } from "../../contexts/ThemeContext";
 import Logo from "../../assets/images/osonuevo.png";
 import {
   PiFiles,
@@ -14,7 +19,28 @@ import {
 } from "react-icons/pi";
 import "./PublicHome.scss";
 
+const THEME_OPTIONS: { value: ThemeMode; label: string; icon: typeof faSun }[] = [
+  { value: "light", label: "Claro", icon: faSun },
+  { value: "dark", label: "Oscuro", icon: faMoon },
+  { value: "system", label: "Según sistema", icon: faCircleHalfStroke },
+  { value: "schedule", label: "Por horario", icon: faClock },
+];
+
 function PublicHome() {
+  const { mode, theme, setMode } = useTheme();
+  const [themeMenuOpen, setThemeMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setThemeMenuOpen(false);
+      }
+    }
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
+
   return (
     <div className="ph">
       {/* 1. NAVBAR — Minimalista & Sticky */}
@@ -23,6 +49,35 @@ function PublicHome() {
           <img src={Logo} alt="Bear Beat" />
         </Link>
         <div className="ph__nav-actions">
+          <div className="ph__theme-wrap" ref={menuRef}>
+            <button
+              type="button"
+              className="ph__theme-btn"
+              onClick={() => setThemeMenuOpen((o) => !o)}
+              title={THEME_OPTIONS.find((o) => o.value === mode)?.label ?? "Tema"}
+              aria-label="Cambiar tema"
+            >
+              <FontAwesomeIcon icon={theme === "light" ? faSun : faMoon} />
+            </button>
+            {themeMenuOpen && (
+              <div className="ph__theme-dropdown">
+                {THEME_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    className={mode === opt.value ? "ph__theme-dropdown-item--active" : ""}
+                    onClick={() => {
+                      setMode(opt.value);
+                      setThemeMenuOpen(false);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={opt.icon} />
+                    <span>{opt.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <Link to="/auth" className="ph__nav-btn ph__nav-btn--ghost">
             Iniciar Sesión
           </Link>
