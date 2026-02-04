@@ -88,6 +88,17 @@
   --auth-register-input-focus: #0891b2;
   --auth-register-btn-bg: #0891b2;
   --auth-register-btn-text: #ffffff;
+  /* Login: tarjeta central light */
+  --auth-login-atmosphere-bg: #f8fafc;
+  --auth-login-card-bg: #ffffff;
+  --auth-login-card-border: #f1f5f9;
+  --auth-login-card-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.15), 0 12px 24px -8px rgba(15, 23, 42, 0.08);
+  --auth-login-title: #0f172a;
+  --auth-login-subtitle: #64748b;
+  --auth-login-link: #0891b2;
+  --auth-login-link-hover: #0e7490;
+  --auth-login-btn-bg: #0891b2;
+  --auth-login-btn-text: #ffffff;
 }
 
 // Dark: por data-theme o por clase .dark en html (compatibilidad Tailwind)
@@ -169,4 +180,15 @@ html.dark {
   --auth-register-input-focus: #06b6d4;
   --auth-register-btn-bg: #06b6d4;
   --auth-register-btn-text: #000000;
+  /* Login: tarjeta central dark */
+  --auth-login-atmosphere-bg: transparent;
+  --auth-login-card-bg: #0f172a;
+  --auth-login-card-border: #1e293b;
+  --auth-login-card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(6, 182, 212, 0.08);
+  --auth-login-title: #ffffff;
+  --auth-login-subtitle: #94a3b8;
+  --auth-login-link: #22d3ee;
+  --auth-login-link-hover: #67e8f9;
+  --auth-login-btn-bg: #06b6d4;
+  --auth-login-btn-text: #000000;
 }

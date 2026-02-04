@@ -7,6 +7,8 @@ import { useState } from "react";
 import { ErrorModal, VerifyUpdatePhoneModal } from "../../../components/Modals";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import { ChatButton } from "../../../components/ChatButton/ChatButton";
+import Logo from "../../../assets/images/osonuevo.png";
+import "./LoginForm.scss";
 
 function LoginForm() {
   const [loader, setLoader] = useState<boolean>(false);
@@ -86,51 +88,60 @@ function LoginForm() {
   };
 
   return (
-    <div className="auth-login-card">
-      <h1 className="auth-login-title">Bienvenido de nuevo, Colega.</h1>
-      <p className="auth-login-sub">Ingresa a tu cuenta para seguir descargando.</p>
-      <ChatButton />
-      <form className="auth-form" onSubmit={formik.handleSubmit}>
-        <div className="c-row">
-          <input
-            placeholder="Correo electrónico"
-            type="text"
-            id="username"
-            name="username"
-            value={formik.values.username}
-            onChange={formik.handleChange}
-          />
-          {formik.errors.username && (
-            <div className="error-formik">{formik.errors.username}</div>
+    <div className="auth-login-atmosphere">
+      <div className="auth-login-card">
+        <img src={Logo} alt="Bear Beat" className="auth-login-logo" />
+        <h1 className="auth-login-title">Bienvenido de nuevo, Colega.</h1>
+        <p className="auth-login-sub">Ingresa a tu cuenta para seguir descargando.</p>
+        <ChatButton />
+        <form className="auth-form auth-login-form" onSubmit={formik.handleSubmit}>
+          <div className="c-row">
+            <input
+              placeholder="Correo electrónico"
+              type="text"
+              id="username"
+              name="username"
+              value={formik.values.username}
+              onChange={formik.handleChange}
+              className="auth-login-input"
+            />
+            {formik.errors.username && (
+              <div className="error-formik">{formik.errors.username}</div>
+            )}
+          </div>
+          <div className="c-row">
+            <input
+              placeholder="Contraseña"
+              type="password"
+              id="password"
+              name="password"
+              value={formik.values.password}
+              onChange={formik.handleChange}
+              className="auth-login-input"
+            />
+            {formik.errors.password && (
+              <div className="error-formik">{formik.errors.password}</div>
+            )}
+          </div>
+          <div className="c-row auth-login-forgot-wrap">
+            <Link to="/auth/recuperar" className="auth-login-forgot">
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </div>
+          {!loader ? (
+            <button className="auth-login-submit-btn" type="submit">
+              INGRESAR
+            </button>
+          ) : (
+            <Spinner size={3} width={0.3} color="#00e2f7" />
           )}
-        </div>
-        <div className="c-row">
-          <input
-            placeholder="Contraseña"
-            type="password"
-            id="password"
-            name="password"
-            value={formik.values.password}
-            onChange={formik.handleChange}
-          />
-          {formik.errors.password && (
-            <div className="error-formik">{formik.errors.password}</div>
-          )}
-        </div>
-        <div className="c-row">
-          <Link to={"recuperar"}>¿Olvidaste tu contraseña?</Link>
-        </div>
-        {!loader ? (
-          <button className="btn" type="submit">
-            INGRESAR
-          </button>
-        ) : (
-          <Spinner size={3} width={0.3} color="#00e2f7" />
-        )}
-        <div className="c-row">
-        <Link to="/auth/registro" state={{ from }}>Registrarme</Link>
+          <div className="c-row auth-login-register-wrap">
+            <Link to="/auth/registro" state={{ from }} className="auth-login-register">
+              Registrarme
+            </Link>
+          </div>
+        </form>
       </div>
-      </form>
       <ErrorModal show={show} onHide={closeModal} message={errorMessage} />
       <VerifyUpdatePhoneModal
         showModal={showVerify}

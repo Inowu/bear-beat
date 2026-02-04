@@ -39,31 +39,7 @@
   }
 }
 
-// ----- Login: Single Card -----
-.auth-login-card {
-  width: 100%;
-  max-width: 420px;
-  margin: 0 auto;
-  padding: 32px 24px;
-  background: var(--ph-bg-card);
-  border: 1px solid var(--ph-border);
-  border-radius: 20px;
-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.2), 0 12px 24px -8px rgba(15, 23, 42, 0.1);
-
-  .auth-login-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--ph-text-heading);
-    margin: 0 0 8px;
-    text-align: center;
-  }
-  .auth-login-sub {
-    font-size: 0.95rem;
-    color: var(--ph-text-body);
-    margin: 0 0 24px;
-    text-align: center;
-  }
-}
+// Login: estilos en LoginForm.scss (tarjeta central + atmósfera)
 
 // Card para formularios sueltos (Recuperar, Reset)
 .auth-main-container > form {
