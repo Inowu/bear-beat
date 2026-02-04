@@ -3,5 +3,44 @@
 $text-primary: var(--theme-text-primary);
 $card-glass: var(--theme-card-bg);
 $card-glass-border: var(--theme-card-border);
+$bear-blue: var(--theme-accent);
 $bear-blue-dim: var(--theme-accent-dim);
 $bear-blue-glow: var(--theme-accent-glow);
+$text-dim: var(--theme-bg-muted);
+$bg-dark-soft: var(--theme-bg-soft);
+$text-muted: var(--theme-text-muted);
+$bg-dark: var(--theme-card-bg);
+
+// Clases base para extender en Auth y PublicHome
+.landing-layout {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+}
+
+.landing-card {
+  background: $card-glass;
+  border: 1px solid $card-glass-border;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+}
+
+.landing-input {
+  background: $card-glass;
+  border: 1px solid $card-glass-border;
+  border-radius: 12px;
+  color: $text-primary;
+}
+
+.landing-btn-primary {
+  background: linear-gradient(135deg, $bear-blue 0%, $bear-blue-dim 100%);
+  color: #000;
+  border: none;
+  border-radius: 100px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 0 16px $bear-blue-glow;
+  &:hover {
+    box-shadow: 0 0 24px $bear-blue-glow;
+  }
+}

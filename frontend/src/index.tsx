@@ -14,6 +14,7 @@ import Home from "./pages/Home/Home";
 import UserContextProvider from "./contexts/UserContext";
 import AuthRoute from "./functions/AuthRoute";
 import LandingOrAuthRoute from "./functions/LandingOrAuthRoute";
+import HomeOrLanding from "./functions/HomeOrLanding";
 import Auth from "./pages/Auth/Auth";
 import NotAuthRoute from "./functions/NotAuthRoute";
 import LoginForm from "./components/Auth/LoginForm/LoginForm";
@@ -52,7 +53,7 @@ const router = createBrowserRouter([
         path: "",
         element: <LandingOrAuthRoute />,
         children: [
-          { path: "", element: <Home /> },
+          { path: "", element: <HomeOrLanding /> },
           { path: "instrucciones", element: <Instructions /> },
           { path: "micuenta", element: <MyAccount /> },
           { path: "descargas", element: <Downloads /> },
