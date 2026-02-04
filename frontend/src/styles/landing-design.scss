@@ -22,25 +22,45 @@ $bg-dark: var(--theme-card-bg);
   background: $card-glass;
   border: 1px solid $card-glass-border;
   border-radius: 16px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--theme-card-shadow);
+  position: relative;
+  overflow: hidden;
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--theme-card-accent-line);
+    opacity: 0.9;
+  }
 }
 
 .landing-input {
-  background: $card-glass;
-  border: 1px solid $card-glass-border;
+  background: var(--theme-input-bg);
+  border: 1px solid var(--theme-input-border);
   border-radius: 12px;
-  color: $text-primary;
+  color: var(--theme-input-text);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  &:focus {
+    outline: none;
+    border-color: var(--theme-accent);
+    box-shadow: 0 0 0 3px var(--theme-input-focus-ring);
+  }
 }
 
 .landing-btn-primary {
-  background: linear-gradient(135deg, $bear-blue 0%, $bear-blue-dim 100%);
+  background: linear-gradient(135deg, var(--theme-accent-bright) 0%, var(--theme-accent-dim) 100%);
   color: #000;
   border: none;
   border-radius: 100px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 0 16px $bear-blue-glow;
+  box-shadow: 0 4px 16px var(--theme-accent-glow);
+  transition: transform 0.2s, box-shadow 0.2s;
   &:hover {
-    box-shadow: 0 0 24px $bear-blue-glow;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px var(--theme-accent-glow);
   }
 }

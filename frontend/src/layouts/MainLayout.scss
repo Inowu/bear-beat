@@ -6,8 +6,9 @@
   flex-direction: column;
   position: relative;
   z-index: 1;
-  background-color: var(--theme-bg-primary);
-  transition: background-color 0.2s ease;
+  background: var(--theme-bg-gradient);
+  background-color: var(--theme-bg-primary); /* fallback si gradient = none */
+  transition: background 0.2s ease, background-color 0.2s ease;
 
   .content-container {
     flex: 1;

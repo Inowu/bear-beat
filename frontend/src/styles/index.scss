@@ -42,9 +42,10 @@ html {
 
 body {
   font-family: "Poppins", sans-serif;
+  background: var(--theme-bg-gradient);
   background-color: var(--theme-bg-primary);
   color: var(--theme-text-primary);
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background 0.2s ease, background-color 0.2s ease, color 0.2s ease;
 }
 
 label,
@@ -108,8 +109,14 @@ button.primary-pill {
   width: 350px;
   padding-block: 10px;
   padding-inline: 15px;
-  border-radius: 8px;
+  border-radius: 12px;
   border: 1px solid var(--theme-input-border);
+  box-shadow: var(--theme-card-shadow);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  &:focus-within {
+    border-color: var(--theme-accent);
+    box-shadow: 0 0 0 3px var(--theme-input-focus-ring);
+  }
   input{
     background: transparent;
     border: none;
@@ -136,10 +143,15 @@ button.primary-pill {
     color: var(--theme-input-text);
     padding-block: 10px;
     padding-inline: 15px;
-    border-radius: 8px;
+    border-radius: 12px;
     border: 1px solid var(--theme-input-border);
     font-size: 1.4rem;
     font-weight: 600;
     outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    &:focus {
+      border-color: var(--theme-accent);
+      box-shadow: 0 0 0 3px var(--theme-input-focus-ring);
+    }
   }
 }

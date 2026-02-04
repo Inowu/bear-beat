@@ -281,6 +281,7 @@
         border: 1px solid $card-glass-border;
         border-radius: 12px;
         overflow: hidden;
+        box-shadow: var(--theme-card-shadow);
 
         thead {
             z-index: 1;

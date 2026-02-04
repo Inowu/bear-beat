@@ -3,31 +3,41 @@
 
 :root,
 [data-theme="light"] {
-  // Fondo principal (área de contenido)
-  --theme-bg-primary: #f5f5f5;
+  // Fondo principal: gradiente suave con vida (no gris plano)
+  --theme-bg-primary: #f0f7fa;
+  --theme-bg-primary-end: #e8f4f8;
   --theme-bg-secondary: #ffffff;
+  --theme-bg-gradient: linear-gradient(160deg, #f0f7fa 0%, #e8f4f8 45%, #f5fafc 100%);
   // Navbar y sidebar
-  --theme-nav-bg: #292929;
+  --theme-nav-bg: #1a2332;
   --theme-nav-text: #ffffff;
-  --theme-nav-item-bg: #404040;
+  --theme-nav-item-bg: #2d3a4d;
   --theme-nav-item-hover-bg: #08e1f7;
   --theme-nav-item-hover-text: #000000;
-  // Cards, inputs, bordes
+  // Cards: blanco con profundidad y toque de acento
   --theme-card-bg: #ffffff;
-  --theme-card-border: rgba(0, 0, 0, 0.08);
+  --theme-card-border: rgba(8, 225, 247, 0.15);
+  --theme-card-border-strong: rgba(6, 184, 201, 0.35);
+  --theme-card-shadow: 0 2px 12px rgba(6, 184, 201, 0.06), 0 8px 24px rgba(0, 0, 0, 0.06);
+  --theme-card-shadow-hover: 0 8px 24px rgba(6, 184, 201, 0.12), 0 16px 48px rgba(0, 0, 0, 0.08);
+  --theme-card-accent-line: linear-gradient(180deg, #08e1f7 0%, #06b8c9 100%);
+  // Inputs
   --theme-input-bg: #ffffff;
-  --theme-input-border: #e0e0e0;
+  --theme-input-border: #c5e8ec;
   --theme-input-text: #1a1a1a;
+  --theme-input-focus-ring: rgba(8, 225, 247, 0.4);
   // Texto
-  --theme-text-primary: #1a1a1a;
-  --theme-text-secondary: #4a4a4a;
-  --theme-text-muted: #6b7280;
-  --theme-bg-muted: #e5e5e5;
-  --theme-bg-soft: #f0f0f0;
-  // Acentos (Bear Beat)
-  --theme-accent: #08e1f7;
-  --theme-accent-dim: #06b8c9;
-  --theme-accent-glow: rgba(8, 225, 247, 0.35);
+  --theme-text-primary: #1a2b3c;
+  --theme-text-secondary: #3d4f5f;
+  --theme-text-muted: #5c6b7a;
+  --theme-bg-muted: #dceef2;
+  --theme-bg-soft: #e8f4f7;
+  // Acentos (Bear Beat) – más presentes en light
+  --theme-accent: #06b8c9;
+  --theme-accent-bright: #08e1f7;
+  --theme-accent-dim: #05a0ae;
+  --theme-accent-glow: rgba(8, 225, 247, 0.4);
+  --theme-accent-soft-bg: rgba(8, 225, 247, 0.08);
   // Landing (cuando se usa en público)
   --theme-landing-bg: #000000;
   --theme-landing-text: #ffffff;
@@ -35,7 +45,9 @@
 
 [data-theme="dark"] {
   --theme-bg-primary: #121212;
+  --theme-bg-primary-end: #0d0d0d;
   --theme-bg-secondary: #1e1e1e;
+  --theme-bg-gradient: none;
   --theme-nav-bg: #1a1a1a;
   --theme-nav-text: #e5e5e5;
   --theme-nav-item-bg: #2d2d2d;
@@ -43,17 +55,24 @@
   --theme-nav-item-hover-text: #000000;
   --theme-card-bg: #252525;
   --theme-card-border: rgba(255, 255, 255, 0.08);
+  --theme-card-border-strong: rgba(8, 225, 247, 0.2);
+  --theme-card-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  --theme-card-shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --theme-card-accent-line: transparent;
   --theme-input-bg: #2d2d2d;
   --theme-input-border: #404040;
   --theme-input-text: #e5e5e5;
+  --theme-input-focus-ring: rgba(8, 225, 247, 0.35);
   --theme-text-primary: #e5e5e5;
   --theme-text-secondary: #b0b0b0;
   --theme-text-muted: #888888;
   --theme-bg-muted: #3a3a3a;
   --theme-bg-soft: #2d2d2d;
   --theme-accent: #08e1f7;
+  --theme-accent-bright: #08e1f7;
   --theme-accent-dim: #06b8c9;
   --theme-accent-glow: rgba(8, 225, 247, 0.25);
+  --theme-accent-soft-bg: rgba(8, 225, 247, 0.06);
   --theme-landing-bg: #000000;
   --theme-landing-text: #ffffff;
 }

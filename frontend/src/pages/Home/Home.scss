@@ -16,18 +16,21 @@
     button {
       display: flex;
       gap: 10px;
-      padding-block: 5px;
+      padding-block: 8px;
       padding-inline: 20px;
       border-radius: 100px;
       background: var(--theme-nav-item-bg);
       color: var(--theme-nav-text);
       font-weight: 600;
       align-items: center;
+      box-shadow: var(--theme-card-shadow);
+      transition: transform 0.2s, box-shadow 0.2s, color 0.3s, background 0.3s, gap 0.3s;
       &:hover {
         color: var(--theme-nav-item-hover-text);
         background: var(--theme-nav-item-hover-bg);
         gap: 15px;
-        transition: 0.3s ease all;
+        transform: translateX(-2px);
+        box-shadow: 0 4px 16px var(--theme-accent-glow);
       }
     }
   }
@@ -54,14 +57,17 @@
   .folders-navigation-container {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
     padding-bottom: 20px;
     .header {
       display: grid;
       grid-template-columns: 2fr 1fr 1fr;
-      border-bottom: 1px solid var(--theme-accent);
+      border-bottom: 2px solid var(--theme-accent);
       color: var(--theme-accent);
-      padding: 8px;
+      padding: 10px 8px;
+      font-weight: 600;
+      background: var(--theme-accent-soft-bg);
+      border-radius: 8px 8px 0 0;
 
       div {
         font-size: 1.4rem;
@@ -79,11 +85,22 @@
         grid-template-columns: 2fr 1fr 1fr;
         background-color: var(--theme-card-bg);
         border: 1px solid var(--theme-card-border);
-        border-radius: 8px;
+        border-radius: 12px;
         cursor: pointer;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        box-shadow: var(--theme-card-shadow);
         position: relative;
-        transition: background-color 0.2s ease;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+        overflow: hidden;
+        &::before {
+          content: "";
+          position: absolute;
+          left: 0;
+          top: 0;
+          bottom: 0;
+          width: 4px;
+          background: var(--theme-card-accent-line);
+          opacity: 0.9;
+        }
         .name-container {
           padding: 8px;
         }
@@ -99,6 +116,9 @@
         }
         &:hover {
           background-color: var(--theme-bg-secondary);
+          box-shadow: var(--theme-card-shadow-hover);
+          transform: translateY(-2px);
+          border-color: var(--theme-card-border-strong);
         }
         svg {
           width: 3rem;
