@@ -27,10 +27,15 @@ export function CatalogStats() {
           setData(res as CatalogStatsData);
         }
       })
-      .catch(() => {
+      .catch((err: unknown) => {
         if (!cancelled) {
+          const msg =
+            (err as { message?: string })?.message ||
+            (err as { data?: { message?: string } })?.data?.message;
           setData({
-            error: "No se pudo cargar. ¿Tienes sesión de admin?",
+            error: msg
+              ? `Error: ${msg}`
+              : "No se pudo cargar (revisa que estés logueado y que el servidor tenga SONGS_PATH configurado).",
             genres: [],
             totalFiles: 0,
             totalGB: 0,
@@ -64,7 +69,14 @@ export function CatalogStats() {
     <div className="catalog-stats">
       <h1 className="catalog-stats__title">Estadísticas del catálogo</h1>
       {data.error && (
-        <p className="catalog-stats__error">{data.error}</p>
+        <div className="catalog-stats__error-wrap">
+          <p className="catalog-stats__error">{data.error}</p>
+          {data.totalFiles === 0 && data.genres.length === 0 && (
+            <p className="catalog-stats__error-hint">
+              Si todo está en 0, en el servidor falta configurar SONGS_PATH o el backend no tiene acceso al catálogo FTP.
+            </p>
+          )}
+        </div>
       )}
       <div className="catalog-stats__grid">
         <div className="catalog-stats__card">

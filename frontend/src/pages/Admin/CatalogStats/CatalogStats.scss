@@ -18,10 +18,18 @@
     }
   }
 
+  &__error-wrap {
+    margin-bottom: 16px;
+  }
   &__error {
     color: #e74c3c;
     font-weight: 600;
-    margin-bottom: 16px;
+    margin-bottom: 8px;
+  }
+  &__error-hint {
+    color: $text-muted;
+    font-size: 1.25rem;
+    margin: 0;
   }
 
   &__title {
