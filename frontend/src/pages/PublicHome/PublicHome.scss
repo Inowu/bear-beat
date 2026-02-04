@@ -1,19 +1,20 @@
-// Public Home — Dark mode estilo Serato/Rekordbox, acentos neón Cyan/Electric Blue
-// Siempre oscuro en esta página (conversión Grand Slam)
+// Public Home — Premium Dark (Linear/Vercel/Serato). Slate-950, glows, alta jerarquía.
 @import "src/styles/mixin.scss";
 
-$ph-bg: #0a0a0f;
-$ph-bg-soft: #111827;
-$ph-bg-card: rgba(30, 41, 59, 0.6);
-$ph-border: rgba(148, 163, 184, 0.12);
-$ph-text: #f1f5f9;
+// Equivalentes Tailwind: slate-950, white/5, white/10, cyan-500, slate-400
+$ph-bg: #020617;
+$ph-bg-soft: #0f172a;
+$ph-bg-card: rgba(255, 255, 255, 0.05);
+$ph-border: rgba(255, 255, 255, 0.1);
+$ph-text: #ffffff;
 $ph-text-muted: #94a3b8;
-$ph-accent: #22d3ee;
-$ph-accent-bright: #67e8f9;
-$ph-glow: rgba(34, 211, 238, 0.4);
+$ph-accent: #06b6d4;
+$ph-accent-bright: #22d3ee;
+$ph-glow: rgba(6, 182, 212, 0.2);
+$ph-glow-strong: rgba(6, 182, 212, 0.35);
 
 .ph {
-  background: linear-gradient(180deg, $ph-bg-soft 0%, $ph-bg 30%, $ph-bg 100%);
+  background: $ph-bg;
   min-height: 100vh;
   color: $ph-text;
   margin-left: calc(-50vw + 50%);
@@ -22,7 +23,7 @@ $ph-glow: rgba(34, 211, 238, 0.4);
   box-sizing: border-box;
 }
 
-// ----- 1. NAVBAR (Sticky, minimalista) -----
+// ----- 1. NAVBAR -----
 .ph__nav {
   position: sticky;
   top: 0;
@@ -30,9 +31,9 @@ $ph-glow: rgba(34, 211, 238, 0.4);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 16px 14px;
-  background: rgba(10, 10, 15, 0.85);
-  backdrop-filter: blur(10px);
+  padding: 14px 16px;
+  background: rgba(2, 6, 23, 0.9);
+  backdrop-filter: blur(12px);
   border-bottom: 1px solid $ph-border;
 
   @include respond-from(tablet) {
@@ -65,8 +66,8 @@ $ph-glow: rgba(34, 211, 238, 0.4);
   font-size: 1rem;
   font-weight: 600;
   text-decoration: none;
-  border-radius: 10px;
-  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  border-radius: 9999px;
+  transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
 
   @include respond-from(tablet) {
     min-height: 48px;
@@ -80,34 +81,36 @@ $ph-glow: rgba(34, 211, 238, 0.4);
   border: 1px solid $ph-border;
 
   &:hover {
-    color: $ph-accent;
-    border-color: rgba(34, 211, 238, 0.4);
+    color: $ph-accent-bright;
+    border-color: rgba(6, 182, 212, 0.5);
   }
 }
 
 .ph__nav-btn--primary {
-  background: linear-gradient(135deg, $ph-accent-bright 0%, $ph-accent 100%);
-  color: #0a0a0f;
+  background: $ph-accent;
+  color: #000;
   border: none;
-  box-shadow: 0 0 20px $ph-glow;
+  font-weight: 700;
+  box-shadow: 0 0 24px $ph-glow;
 
   &:hover {
-    box-shadow: 0 0 28px $ph-glow;
+    background: $ph-accent-bright;
+    box-shadow: 0 0 32px $ph-glow-strong;
   }
 }
 
-// ----- 2. HERO -----
+// ----- 2. HERO — Glows + H1 gigante -----
 .ph__hero {
   position: relative;
   text-align: center;
-  padding: 40px 16px 48px;
+  padding: 48px 16px 56px;
   overflow: hidden;
 
   @include respond-from(tablet) {
-    padding: 56px 24px 64px;
+    padding: 64px 24px 72px;
   }
   @include respond-from(md) {
-    padding: 64px 32px 80px;
+    padding: 80px 32px 96px;
   }
 }
 
@@ -115,31 +118,36 @@ $ph-glow: rgba(34, 211, 238, 0.4);
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(34, 211, 238, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 40% at 80% 60%, rgba(34, 211, 238, 0.04) 0%, transparent 50%);
+    radial-gradient(ellipse 100% 80% at 50% -30%, $ph-glow 0%, transparent 55%),
+    radial-gradient(ellipse 70% 50% at 80% 50%, rgba(6, 182, 212, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 20% 80%, rgba(6, 182, 212, 0.05) 0%, transparent 50%);
   pointer-events: none;
 }
 
 .ph__hero-h1 {
   position: relative;
-  font-size: clamp(1.75rem, 5vw, 2.75rem);
+  font-size: clamp(1.85rem, 5.5vw, 3.75rem);
   font-weight: 800;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
-  margin: 0 0 20px;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  margin: 0 0 24px;
   color: $ph-text;
-  max-width: 800px;
+  max-width: 820px;
   margin-left: auto;
   margin-right: auto;
+
+  @include respond-from(md) {
+    font-size: clamp(2.5rem, 4vw, 3.75rem);
+  }
 }
 
 .ph__hero-h2 {
   position: relative;
   font-size: clamp(1.05rem, 2.5vw, 1.2rem);
   font-weight: 400;
-  line-height: 1.55;
+  line-height: 1.6;
   color: $ph-text-muted;
-  margin: 0 0 28px;
+  margin: 0 0 32px;
   max-width: 620px;
   margin-left: auto;
   margin-right: auto;
@@ -148,42 +156,43 @@ $ph-glow: rgba(34, 211, 238, 0.4);
 .ph__hero-cta {
   position: relative;
   display: inline-block;
-  padding: 18px 32px;
+  padding: 18px 36px;
   min-height: 56px;
   font-size: 1.1rem;
   font-weight: 800;
   letter-spacing: 0.02em;
   text-decoration: none;
-  color: #0a0a0f;
-  background: linear-gradient(135deg, $ph-accent-bright 0%, $ph-accent 100%);
-  border-radius: 12px;
-  box-shadow: 0 0 32px $ph-glow;
-  transition: transform 0.2s, box-shadow 0.2s;
+  color: #000;
+  background: $ph-accent;
+  border-radius: 9999px;
+  box-shadow: 0 0 40px $ph-glow;
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
 
   &:hover {
+    background: $ph-accent-bright;
     transform: translateY(-2px);
-    box-shadow: 0 0 40px $ph-glow;
+    box-shadow: 0 0 48px $ph-glow-strong;
   }
 
   @include respond-from(tablet) {
-    padding: 20px 40px;
+    padding: 20px 44px;
     font-size: 1.15rem;
   }
 }
 
 .ph__hero-micro {
   position: relative;
-  margin: 14px 0 0;
+  margin: 16px 0 0;
   font-size: 0.95rem;
   color: $ph-text-muted;
 }
 
 // ----- 3. BARRA AUTORIDAD -----
 .ph__authority {
-  padding: 20px 16px;
+  padding: 22px 16px;
   border-top: 1px solid $ph-border;
   border-bottom: 1px solid $ph-border;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .ph__authority-inner {
@@ -191,7 +200,7 @@ $ph-glow: rgba(34, 211, 238, 0.4);
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  gap: 20px 32px;
+  gap: 20px 36px;
   max-width: 900px;
   margin: 0 auto;
 }
@@ -216,19 +225,19 @@ $ph-glow: rgba(34, 211, 238, 0.4);
 
 // ----- 4. DOLOR -----
 .ph__pain {
-  padding: 48px 16px 56px;
+  padding: 56px 16px 64px;
 
   @include respond-from(tablet) {
-    padding: 56px 24px 64px;
+    padding: 64px 24px 72px;
   }
 }
 
 .ph__pain-title {
   text-align: center;
-  font-size: clamp(1.4rem, 4vw, 1.75rem);
+  font-size: clamp(1.45rem, 4vw, 1.85rem);
   font-weight: 700;
   color: $ph-text;
-  margin: 0 0 28px;
+  margin: 0 0 32px;
 }
 
 .ph__pain-grid {
@@ -245,7 +254,7 @@ $ph-glow: rgba(34, 211, 238, 0.4);
 }
 
 .ph__pain-card {
-  padding: 24px;
+  padding: 26px;
   border-radius: 14px;
   border: 1px solid $ph-border;
   background: $ph-bg-card;
@@ -254,10 +263,11 @@ $ph-glow: rgba(34, 211, 238, 0.4);
     font-size: 1.15rem;
     font-weight: 700;
     margin: 0 0 10px;
+    color: $ph-text;
   }
   p {
     font-size: 0.95rem;
-    line-height: 1.5;
+    line-height: 1.55;
     color: $ph-text-muted;
     margin: 0;
   }
@@ -275,26 +285,26 @@ $ph-glow: rgba(34, 211, 238, 0.4);
 }
 
 .ph__pain-card--good {
-  h3 { color: $ph-accent; }
-  .ph__pain-icon { color: $ph-accent; }
-  border-color: rgba(34, 211, 238, 0.25);
+  h3 { color: $ph-accent-bright; }
+  .ph__pain-icon { color: $ph-accent-bright; }
+  border-color: rgba(6, 182, 212, 0.3);
 }
 
-// ----- 5. BENTO VALUE STACK -----
+// ----- 5. BENTO — grid 1 / md:2 / lg:4, bordes white/10, hover cyan -----
 .ph__section-title {
   text-align: center;
-  font-size: clamp(1.35rem, 3.5vw, 1.6rem);
+  font-size: clamp(1.4rem, 3.5vw, 1.65rem);
   font-weight: 700;
   color: $ph-text;
-  margin: 0 0 28px;
+  margin: 0 0 32px;
 }
 
 .ph__bento {
-  padding: 48px 16px 56px;
+  padding: 56px 16px 64px;
   border-top: 1px solid $ph-border;
 
   @include respond-from(tablet) {
-    padding: 56px 24px 64px;
+    padding: 64px 24px 72px;
   }
 }
 
@@ -302,17 +312,16 @@ $ph-glow: rgba(34, 211, 238, 0.4);
   display: grid;
   grid-template-columns: 1fr;
   gap: 16px;
-  max-width: 1000px;
+  max-width: 1100px;
   margin: 0 auto;
 
   @include respond-from(tablet) {
     grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: auto auto;
     gap: 20px;
   }
-  @include respond-from(md) {
-    grid-template-columns: 1.2fr 1fr;
-    grid-template-rows: 1fr 1fr;
+  @include respond-from(lg) {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
   }
 }
 
@@ -321,37 +330,32 @@ $ph-glow: rgba(34, 211, 238, 0.4);
   border-radius: 14px;
   border: 1px solid $ph-border;
   background: $ph-bg-card;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
 
   &:hover {
-    border-color: rgba(34, 211, 238, 0.3);
-    box-shadow: 0 0 24px rgba(34, 211, 238, 0.08);
+    border-color: rgba(6, 182, 212, 0.5);
+    box-shadow: 0 0 28px rgba(6, 182, 212, 0.08);
   }
 
   h3 {
     font-size: 1.1rem;
     font-weight: 700;
-    color: $ph-accent;
+    color: $ph-accent-bright;
     margin: 0 0 8px;
   }
   p {
     font-size: 0.95rem;
-    line-height: 1.5;
+    line-height: 1.55;
     color: $ph-text-muted;
     margin: 0;
   }
 }
 
 .ph__bento-card--large {
-  @include respond-from(md) {
-    grid-row: span 2;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+  @include respond-from(lg) {
+    h3 { font-size: 1.2rem; }
+    p { font-size: 1rem; }
   }
-
-  h3 { font-size: 1.25rem; }
-  p { font-size: 1rem; }
 }
 
 .ph__bento-icon {
@@ -361,22 +365,36 @@ $ph-glow: rgba(34, 211, 238, 0.4);
   display: block;
 }
 
-// ----- 6. PRECIOS -----
+// ----- 6. PRECIOS — México destacada (borde cyan), botones pill -----
 .ph__pricing {
-  padding: 48px 16px 56px;
+  position: relative;
+  padding: 56px 16px 64px;
   border-top: 1px solid $ph-border;
 
   @include respond-from(tablet) {
-    padding: 56px 24px 64px;
+    padding: 64px 24px 72px;
   }
 }
 
+.ph__pricing::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 60%;
+  background: radial-gradient(ellipse 80% 100% at 50% 0%, $ph-glow 0%, transparent 70%);
+  pointer-events: none;
+}
+
 .ph__pricing-grid {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr;
   gap: 20px;
-  max-width: 700px;
-  margin: 0 auto 28px;
+  max-width: 720px;
+  margin: 0 auto 32px;
 
   @include respond-from(tablet) {
     grid-template-columns: 1fr 1fr;
@@ -387,29 +405,30 @@ $ph-glow: rgba(34, 211, 238, 0.4);
 
 .ph__price-card {
   padding: 28px 24px;
-  border-radius: 14px;
+  border-radius: 16px;
   border: 1px solid $ph-border;
   background: $ph-bg-card;
   text-align: center;
   position: relative;
 
   &.ph__price-card--highlight {
-    border-color: rgba(34, 211, 238, 0.35);
-    box-shadow: 0 0 24px rgba(34, 211, 238, 0.06);
+    border: 1px solid $ph-accent;
+    background: rgba(6, 182, 212, 0.06);
+    box-shadow: 0 0 32px rgba(6, 182, 212, 0.12);
   }
 }
 
 .ph__price-badge {
   position: absolute;
-  top: -10px;
+  top: -11px;
   left: 50%;
   transform: translateX(-50%);
-  padding: 4px 12px;
+  padding: 5px 14px;
   font-size: 0.8rem;
   font-weight: 700;
-  color: #0a0a0f;
+  color: #000;
   background: $ph-accent;
-  border-radius: 100px;
+  border-radius: 9999px;
 }
 
 .ph__price-region {
@@ -423,7 +442,7 @@ $ph-glow: rgba(34, 211, 238, 0.4);
   display: block;
   font-size: 2.5rem;
   font-weight: 800;
-  color: $ph-accent;
+  color: $ph-accent-bright;
   line-height: 1.1;
 }
 
@@ -442,18 +461,18 @@ $ph-glow: rgba(34, 211, 238, 0.4);
 .ph__price-features {
   list-style: none;
   padding: 0;
-  margin: 0 0 20px;
+  margin: 0 0 22px;
   text-align: left;
-  max-width: 200px;
+  max-width: 220px;
   margin-left: auto;
   margin-right: auto;
-  margin-bottom: 20px;
+  margin-bottom: 22px;
 
   li {
     padding: 6px 0;
     font-size: 0.95rem;
     color: $ph-text-muted;
-    padding-left: 20px;
+    padding-left: 22px;
     position: relative;
 
     &::before {
@@ -470,77 +489,79 @@ $ph-glow: rgba(34, 211, 238, 0.4);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 14px 24px;
-  min-height: 48px;
+  padding: 14px 28px;
+  min-height: 50px;
   font-size: 1rem;
   font-weight: 700;
   text-decoration: none;
-  border-radius: 10px;
-  transition: box-shadow 0.2s, transform 0.2s;
+  border-radius: 9999px;
+  transition: box-shadow 0.2s, transform 0.2s, background 0.2s;
 }
 
 .ph__btn--primary {
   width: 100%;
   max-width: 260px;
-  color: #0a0a0f;
-  background: linear-gradient(135deg, $ph-accent-bright 0%, $ph-accent 100%);
+  color: #000;
+  background: $ph-accent;
   border: none;
-  box-shadow: 0 0 20px $ph-glow;
+  box-shadow: 0 0 24px $ph-glow;
 
   &:hover {
-    box-shadow: 0 0 28px $ph-glow;
+    background: $ph-accent-bright;
+    box-shadow: 0 0 32px $ph-glow-strong;
     transform: translateY(-1px);
   }
 }
 
 .ph__guarantee {
+  position: relative;
   text-align: center;
   font-size: 0.95rem;
   color: $ph-text-muted;
   margin: 0;
 }
 
-// ----- 7. FOOTER -----
+// ----- 7. FOOTER — Contraste legible -----
 .ph__footer {
-  padding: 40px 16px 32px;
+  padding: 48px 16px 40px;
   border-top: 1px solid $ph-border;
   text-align: center;
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(15, 23, 42, 0.8);
 }
 
 .ph__footer-logo img {
-  max-width: 90px;
-  margin-bottom: 20px;
-  opacity: 0.9;
+  max-width: 96px;
+  margin-bottom: 22px;
+  opacity: 0.95;
 }
 
 .ph__footer-links {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 16px 24px;
-  margin-bottom: 16px;
+  gap: 18px 28px;
+  margin-bottom: 18px;
 
   a {
-    color: $ph-text-muted;
+    color: #cbd5e1;
     font-size: 1rem;
     font-weight: 600;
     text-decoration: none;
 
     &:hover {
-      color: $ph-accent;
+      color: $ph-accent-bright;
     }
   }
 }
 
 .ph__footer-payments {
-  font-size: 0.9rem;
-  color: rgba(148, 163, 184, 0.7);
-  margin: 0 0 12px;
+  font-size: 0.95rem;
+  color: #94a3b8;
+  margin: 0 0 14px;
 }
 
 .ph__footer-copy {
   font-size: 0.9rem;
-  color: $ph-text-muted;
+  color: #94a3b8;
   margin: 0;
 }
