@@ -78,10 +78,10 @@ function PublicHome() {
               </div>
             )}
           </div>
-          <Link to="/auth" className="ph__nav-btn ph__nav-btn--ghost">
+          <Link to="/auth" state={{ from: "/planes" }} className="ph__nav-btn ph__nav-btn--ghost">
             Iniciar Sesión
           </Link>
-          <Link to="/auth/registro" className="ph__nav-btn ph__nav-btn--primary">
+          <Link to="/auth/registro" state={{ from: "/planes" }} className="ph__nav-btn ph__nav-btn--primary">
             Obtener Acceso
           </Link>
         </div>
@@ -96,7 +96,7 @@ function PublicHome() {
         <h2 className="ph__hero-h2">
           Descarga masiva vía FTP. Música, Video (93% del catálogo) y Karaokes organizados por carpetas. Mientras duermes, tu disco duro se llena.
         </h2>
-        <Link to="/auth/registro" className="ph__hero-cta">
+        <Link to="/auth/registro" state={{ from: "/planes" }} className="ph__hero-cta">
           QUIERO BLINDAR MI LIBRERÍA →
         </Link>
         <p className="ph__hero-micro">
@@ -184,7 +184,7 @@ function PublicHome() {
               <li>Acceso Total</li>
               <li>Tarjeta / PayPal</li>
             </ul>
-            <Link to="/planes" className="ph__btn ph__btn--primary">
+            <Link to="/auth/registro" state={{ from: "/planes" }} className="ph__btn ph__btn--primary">
               Quiero el plan USD
             </Link>
           </div>
@@ -197,7 +197,7 @@ function PublicHome() {
               <li>500 GB descarga</li>
               <li>SPEI, OXXO, Tarjeta</li>
             </ul>
-            <Link to="/planes" className="ph__btn ph__btn--primary">
+            <Link to="/auth/registro" state={{ from: "/planes" }} className="ph__btn ph__btn--primary">
               Quiero el plan MXN
             </Link>
           </div>
@@ -211,8 +211,8 @@ function PublicHome() {
           <img src={Logo} alt="Bear Beat" />
         </Link>
         <div className="ph__footer-links">
-          <Link to="/auth">Iniciar sesión</Link>
-          <Link to="/auth/registro">Registrarme</Link>
+          <Link to="/auth" state={{ from: "/planes" }}>Iniciar sesión</Link>
+          <Link to="/auth/registro" state={{ from: "/planes" }}>Registrarme</Link>
           <a href="/#soporte">Soporte</a>
         </div>
         <p className="ph__footer-payments">

@@ -58,7 +58,14 @@ const router = createBrowserRouter([
           { path: "instrucciones", element: <Instructions /> },
           { path: "micuenta", element: <MyAccount /> },
           { path: "descargas", element: <Downloads /> },
-          { path: "planes", element: <Plans /> },
+          {
+            path: "planes",
+            element: (
+              <AuthRoute>
+                <Plans />
+              </AuthRoute>
+            ),
+          },
           {
             path: "comprar",
             element: (

@@ -1302,3 +1302,16 @@ const countryCodes = [
     code: "ZW",
   },
 ];
+
+/** Países permitidos para el select de teléfono (mismo orden que twoDigitsCountryCodes; MX, US, CA, ES primero). */
+export const allowedCountryOptions = countryCodes
+  .filter((c) => twoDigitsCountryCodes.includes(c.code))
+  .sort((a, b) => {
+    const preferred = ["MX", "US", "CA", "ES"];
+    const i = preferred.indexOf(a.code);
+    const j = preferred.indexOf(b.code);
+    if (i !== -1 && j !== -1) return i - j;
+    if (i !== -1) return -1;
+    if (j !== -1) return 1;
+    return a.name.localeCompare(b.name);
+  });

@@ -1,6 +1,5 @@
 import "./SignUpForm.scss";
-import "react-phone-input-2/lib/material.css";
-import { detectUserCountry, findDialCode, twoDigitsCountryCodes } from "../../../utils/country_codes";
+import { detectUserCountry, findDialCode, allowedCountryOptions } from "../../../utils/country_codes";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ReactComponent as Arrow } from "../../../assets/icons/arrow-down.svg";
 import { Spinner } from "../../../components/Spinner/Spinner";
@@ -8,8 +7,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useFormik } from "formik";
 import { useUserContext } from "../../../contexts/UserContext";
 import * as Yup from "yup";
-import es from "react-phone-input-2/lang/es.json";
-import PhoneInput from "react-phone-input-2";
 import trpc from "../../../api";
 import { ErrorModal, SuccessModal, VerifyPhoneModal } from "../../../components/Modals";
 import { useCookies } from "react-cookie";
@@ -24,8 +21,7 @@ function SignUpForm() {
   const [loader, setLoader] = useState<boolean>(false);
   const { handleLogin } = useUserContext();
   const [show, setShow] = useState<boolean>(false);
-  const [code, setCode] = useState<string>("52");
-  const [countryCode, setCountryCode] = useState<string>("mx");
+  const [dialCode, setDialCode] = useState<string>("52");
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<any>("");
   const [showVerify, setShowVerify] = useState<boolean>(false);
@@ -70,9 +66,6 @@ function SignUpForm() {
     phone: "",
     passwordConfirmation: "",
   };
-  const handlePhoneNumberChange = (value: any, country: any) => {
-    setCode(country.dialCode);
-  };
 
   const getEmailDomain = (email: string) => {
     const trimmed = email.trim().toLowerCase();
@@ -103,7 +96,7 @@ function SignUpForm() {
         setLoader(false);
         return;
       }
-      const formattedPhone = `+${code} ${values.phone}`;
+      const formattedPhone = `+${dialCode} ${values.phone}`;
       const normalizedPhone = normalizePhoneNumber(formattedPhone);
       if (normalizedPhone && blockedPhoneNumbers.includes(normalizedPhone)) {
         formik.setFieldError("phone", "El telefono no esta permitido");
@@ -156,14 +149,12 @@ function SignUpForm() {
     setShowSuccess(true);
   };
 
-  const getUserLocation = useCallback(async () => {
+  const getUserLocation = useCallback(() => {
     try {
       const country = detectUserCountry();
-      console.log(country);
       if (country) {
-        setCountryCode(country.code.toLowerCase());
-        const dialCode = findDialCode(country.code.toUpperCase());
-        setCode(dialCode);
+        const code = findDialCode(country.code.toUpperCase());
+        setDialCode(code);
       }
     } catch (error) {
       console.error("There was an error while trying to get user's location.", error);
@@ -243,17 +234,18 @@ function SignUpForm() {
               {formik.errors.email && <div className="error-formik">{formik.errors.email}</div>}
             </div>
             <div className="c-row c-row--phone">
-              <PhoneInput
-                containerClass="signup-phone-container"
-                inputClass="signup-phone-library-input"
-                buttonClass="signup-phone-flag"
-                country={countryCode}
-                preferredCountries={["mx", "us", "ca", "es"]}
-                onlyCountries={twoDigitsCountryCodes.map((c) => c.toLowerCase())}
-                placeholder="Teléfono (solo números)"
-                localization={es}
-                onChange={handlePhoneNumberChange}
-              />
+              <select
+                className="signup-phone-select"
+                value={dialCode}
+                onChange={(e) => setDialCode(e.target.value)}
+                aria-label="Código de país"
+              >
+                {allowedCountryOptions.map((c) => (
+                  <option key={c.code} value={c.dial_code.slice(1)}>
+                    {c.dial_code} {c.name}
+                  </option>
+                ))}
+              </select>
               <input
                 className="signup-phone-input"
                 placeholder="Ej. 5512345678"
@@ -264,7 +256,7 @@ function SignUpForm() {
                 type="tel"
                 inputMode="numeric"
                 autoComplete="tel-national"
-                maxLength={10}
+                maxLength={15}
               />
               {formik.errors.phone && <div className="error-formik">{formik.errors.phone}</div>}
             </div>

@@ -12,7 +12,7 @@ form.sign-up-form {
     }
   }
 
-  // Fila del teléfono: un solo bloque visual [selector país] [input número]
+  // Fila del teléfono: un solo bloque visual [select país] [input número]
   .c-row--phone {
     min-height: 48px;
     display: flex;
@@ -29,42 +29,34 @@ form.sign-up-form {
     }
   }
 
-  // Contenedor del componente PhoneInput: solo mostramos el dropdown de país
-  .signup-phone-container {
-    position: relative !important;
-    flex: 0 0 56px !important;
-    width: 56px !important;
-    max-width: 56px !important;
-    height: 48px !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border: none !important;
-    background: transparent !important;
+  .signup-phone-select {
+    flex: 0 0 auto;
+    min-width: 0;
+    width: 120px;
+    height: 48px;
+    padding: 0 12px;
+    border: none;
+    border-right: 1px solid var(--auth-input-border);
+    background: transparent;
+    color: var(--ph-text-heading);
+    font-size: 14px;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
 
-    // Ocultar el input que trae la librería; nosotros usamos .signup-phone-input
-    .signup-phone-library-input,
-    input[type="tel"],
-    input {
-      display: none !important;
+    &:focus {
+      outline: none;
     }
 
-    .signup-phone-flag,
-    .flag-dropdown {
-      position: relative !important;
-      width: 56px !important;
-      min-width: 56px !important;
-      height: 48px !important;
-      min-height: 48px !important;
-      margin: 0 !important;
-      padding: 0 6px !important;
-      border: none !important;
-      border-right: 1px solid var(--auth-input-border) !important;
-      border-radius: 0 !important;
-      background: transparent !important;
+    option {
+      background: var(--auth-input-bg);
+      color: var(--ph-text-heading);
     }
   }
 
-  // Input donde el usuario escribe el número (solo dígitos nacionales)
   .signup-phone-input {
     flex: 1;
     min-width: 0;
