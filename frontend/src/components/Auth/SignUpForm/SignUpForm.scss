@@ -6,73 +6,82 @@ form.sign-up-form {
 
   .c-row {
     position: relative;
-    min-height: 48px;
 
     .special-label {
       display: none;
     }
+  }
 
-    // Solo mostramos el prefijo "+52" a la izquierda del input (el dropdown de PhoneInput está a su izquierda)
-    .code {
-      position: absolute;
-      font-size: 1rem;
-      font-weight: 500;
-      color: var(--ph-text-body);
-      margin: 0;
-      left: 52px;
-      top: 50%;
-      transform: translateY(-50%);
-      pointer-events: none;
-      z-index: 2;
+  // Fila del teléfono: un solo bloque visual [selector país] [input número]
+  .c-row--phone {
+    min-height: 48px;
+    display: flex;
+    align-items: stretch;
+    border-radius: 12px;
+    border: 1px solid var(--auth-input-border);
+    background: var(--auth-input-bg);
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+
+    &:focus-within {
+      border-color: var(--ph-accent);
+      box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
+    }
+  }
+
+  // Contenedor del componente PhoneInput: solo mostramos el dropdown de país
+  .signup-phone-container {
+    position: relative !important;
+    flex: 0 0 56px !important;
+    width: 56px !important;
+    max-width: 56px !important;
+    height: 48px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+
+    // Ocultar el input que trae la librería; nosotros usamos .signup-phone-input
+    .signup-phone-library-input,
+    input[type="tel"],
+    input {
+      display: none !important;
     }
 
-    // Contenedor de react-phone-input-2: solo usamos el dropdown de país, ocultamos su input
-    .dial-container {
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      height: 48px;
-      z-index: 5;
+    .signup-phone-flag,
+    .flag-dropdown {
+      position: relative !important;
+      width: 56px !important;
+      min-width: 56px !important;
+      height: 48px !important;
+      min-height: 48px !important;
+      margin: 0 !important;
+      padding: 0 6px !important;
+      border: none !important;
+      border-right: 1px solid var(--auth-input-border) !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+    }
+  }
 
-      // Ocultar solo el input interno del PhoneInput (el nuestro es .phone, fuera de .dial-container)
-      input {
-        display: none !important;
-      }
+  // Input donde el usuario escribe el número (solo dígitos nacionales)
+  .signup-phone-input {
+    flex: 1;
+    min-width: 0;
+    height: 48px;
+    padding: 12px 16px;
+    border: none;
+    background: transparent;
+    color: var(--ph-text-heading);
+    font-size: 16px;
+    box-sizing: border-box;
 
-      .flag-dropdown {
-        position: absolute !important;
-        height: 48px !important;
-        min-height: 48px !important;
-        border-radius: 12px 0 0 12px !important;
-        border: 1px solid var(--auth-input-border) !important;
-        border-right: none !important;
-        background: var(--auth-input-bg) !important;
-      }
+    &::placeholder {
+      color: var(--ph-text-muted);
     }
 
-    // Input donde el usuario escribe el número (sin código de país); se une al dropdown a la izquierda
-    input.phone {
-      width: 100%;
-      padding-left: 108px;
-      padding-right: 16px;
-      min-height: 48px;
-      box-sizing: border-box;
-      border-radius: 0 12px 12px 0;
-      border: 1px solid var(--auth-input-border);
-      border-left: none;
-      background: var(--auth-input-bg);
-      color: var(--ph-text-heading);
-      font-size: 16px;
-      &::placeholder {
-        color: var(--ph-text-muted);
-      }
-      &:focus {
-        outline: none;
-        border-color: var(--ph-accent);
-        border-left: none;
-        box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
-      }
+    &:focus {
+      outline: none;
     }
   }
 

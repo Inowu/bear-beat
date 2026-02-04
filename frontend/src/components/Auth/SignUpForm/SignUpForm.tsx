@@ -242,26 +242,29 @@ function SignUpForm() {
               />
               {formik.errors.email && <div className="error-formik">{formik.errors.email}</div>}
             </div>
-            <div className="c-row">
+            <div className="c-row c-row--phone">
               <PhoneInput
-                containerClass="dial-container"
-                buttonClass="dial-code"
+                containerClass="signup-phone-container"
+                inputClass="signup-phone-library-input"
+                buttonClass="signup-phone-flag"
                 country={countryCode}
                 preferredCountries={["mx", "us", "ca", "es"]}
                 onlyCountries={twoDigitsCountryCodes.map((c) => c.toLowerCase())}
-                placeholder="Teléfono"
+                placeholder="Teléfono (solo números)"
                 localization={es}
                 onChange={handlePhoneNumberChange}
               />
-              <p className="code">+{code}</p>
               <input
-                className="phone"
-                placeholder="Teléfono"
+                className="signup-phone-input"
+                placeholder="Ej. 5512345678"
                 id="phone"
                 name="phone"
                 value={formik.values.phone}
                 onChange={formik.handleChange}
-                type="text"
+                type="tel"
+                inputMode="numeric"
+                autoComplete="tel-national"
+                maxLength={10}
               />
               {formik.errors.phone && <div className="error-formik">{formik.errors.phone}</div>}
             </div>
