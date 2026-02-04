@@ -8,8 +8,9 @@
   --theme-bg-primary-end: #e8f4f8;
   --theme-bg-secondary: #ffffff;
   --theme-bg-gradient: linear-gradient(160deg, #f0f7fa 0%, #e8f4f8 45%, #f5fafc 100%);
-  // Navbar y sidebar
+  // Navbar y sidebar (barra con línea negra abajo para anclar)
   --theme-nav-bg: #1a2332;
+  --theme-nav-border-bottom: #0a0a0b;
   --theme-nav-text: #ffffff;
   --theme-nav-item-bg: #2d3a4d;
   --theme-nav-item-hover-bg: #08e1f7;
@@ -26,12 +27,17 @@
   --theme-input-border: #c5e8ec;
   --theme-input-text: #1a1a1a;
   --theme-input-focus-ring: rgba(8, 225, 247, 0.4);
-  // Texto
+  // Texto + negro para dar vida y contraste
   --theme-text-primary: #1a2b3c;
   --theme-text-secondary: #3d4f5f;
   --theme-text-muted: #5c6b7a;
+  --theme-ink: #0a0a0b;
+  --theme-heading: #0a0a0b;
+  --theme-strong: #111111;
   --theme-bg-muted: #dceef2;
   --theme-bg-soft: #e8f4f7;
+  --theme-stripe: rgba(10, 10, 11, 0.06);
+  --theme-edge: rgba(10, 10, 11, 0.14);
   // Acentos (Bear Beat) – más presentes en light
   --theme-accent: #06b8c9;
   --theme-accent-bright: #08e1f7;
@@ -49,6 +55,7 @@
   --theme-bg-secondary: #1e1e1e;
   --theme-bg-gradient: none;
   --theme-nav-bg: #1a1a1a;
+  --theme-nav-border-bottom: transparent;
   --theme-nav-text: #e5e5e5;
   --theme-nav-item-bg: #2d2d2d;
   --theme-nav-item-hover-bg: #08e1f7;
@@ -66,8 +73,13 @@
   --theme-text-primary: #e5e5e5;
   --theme-text-secondary: #b0b0b0;
   --theme-text-muted: #888888;
+  --theme-ink: #e5e5e5;
+  --theme-heading: #ffffff;
+  --theme-strong: #f0f0f0;
   --theme-bg-muted: #3a3a3a;
   --theme-bg-soft: #2d2d2d;
+  --theme-stripe: rgba(255, 255, 255, 0.04);
+  --theme-edge: rgba(255, 255, 255, 0.08);
   --theme-accent: #08e1f7;
   --theme-accent-bright: #08e1f7;
   --theme-accent-dim: #06b8c9;

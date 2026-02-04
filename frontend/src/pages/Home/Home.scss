@@ -10,7 +10,8 @@
   }
   h2 {
     font-size: 2.8rem;
-    color: var(--theme-text-primary);
+    color: var(--theme-heading);
+    font-weight: 700;
   }
   .btn-back {
     button {
@@ -44,10 +45,11 @@
       margin: 0px 3px 0px 3px;
       cursor: pointer;
       padding: 5px;
-      color: var(--theme-text-primary);
+      color: var(--theme-ink);
+      font-weight: 500;
     }
     p:hover {
-      background-color: var(--theme-card-border);
+      background-color: var(--theme-stripe);
       border-radius: 10px;
     }
     .last-folder {
@@ -62,11 +64,11 @@
     .header {
       display: grid;
       grid-template-columns: 2fr 1fr 1fr;
-      border-bottom: 2px solid var(--theme-accent);
-      color: var(--theme-accent);
-      padding: 10px 8px;
-      font-weight: 600;
-      background: var(--theme-accent-soft-bg);
+      border-bottom: 3px solid var(--theme-ink);
+      color: var(--theme-ink);
+      padding: 12px 8px;
+      font-weight: 700;
+      background: var(--theme-stripe);
       border-radius: 8px 8px 0 0;
 
       div {
@@ -129,17 +131,15 @@
           align-items: center;
           gap: 15px;
 
-          h3, h4 {
-            color: var(--theme-text-primary);
-          }
           h3 {
+            color: var(--theme-heading);
             font-size: 1.5rem;
-            font-weight: 400;
+            font-weight: 600;
           }
-
           h4 {
+            color: var(--theme-ink);
             font-size: 1.2rem;
-            font-weight: 400;
+            font-weight: 500;
           }
         }
       }

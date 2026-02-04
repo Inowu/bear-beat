@@ -22,7 +22,8 @@
             font-size: 1.8rem;
             width: 100%;
             margin: 0 0 4px 0;
-            color: $text-primary;
+            color: var(--theme-heading);
+            font-weight: 700;
         }
 
         .btn-addUsers,

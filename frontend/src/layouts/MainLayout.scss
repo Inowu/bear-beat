@@ -7,7 +7,7 @@
   position: relative;
   z-index: 1;
   background: var(--theme-bg-gradient);
-  background-color: var(--theme-bg-primary); /* fallback si gradient = none */
+  background-color: var(--theme-bg-primary);
   transition: background 0.2s ease, background-color 0.2s ease;
 
   .content-container {
@@ -15,6 +15,7 @@
     display: flex;
     position: relative;
     overflow-y: scroll;
+    border-top: 1px solid var(--theme-edge);
 
     > div {
       flex: 1;
