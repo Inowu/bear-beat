@@ -539,19 +539,18 @@
       flex-direction: column;
       .left {
         align-items: center;
-        h2{
+        h2 {
           font-size: 24px;
           text-align: center;
         }
-        p{
+        p {
           text-align: center;
           font-size: 18px;
-          ul{
+          ul {
             margin-top: 10px;
           }
         }
-        
-        .div-bottom{
+        .div-bottom {
           display: none;
         }
       }
@@ -559,5 +558,78 @@
         width: 100%;
       }
     }
+  }
+}
+
+// Modales responsivos: full width y padding reducido en móvil
+@media (max-width: 768px) {
+  .modal-dialog {
+    margin: 10px;
+    max-width: calc(100% - 20px);
+  }
+  .modal-container {
+    .header {
+      padding-inline: 16px;
+      padding-block: 10px;
+      .title {
+        font-size: 1.8rem;
+      }
+    }
+    .bottom {
+      padding-inline: 16px;
+      padding-block: 16px;
+      .button-container {
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      .button-container button {
+        padding-inline: 24px;
+        padding-block: 10px;
+        min-height: 44px;
+      }
+    }
+  }
+  .modal-addusers {
+    padding: 20px 16px;
+    h2 {
+      font-size: 2.6rem;
+    }
+  }
+}
+
+@media (max-width: 576px) {
+  .modal-dialog {
+    margin: 8px;
+    max-width: calc(100% - 16px);
+  }
+  .modal-container {
+    .header {
+      padding-inline: 12px;
+      .title {
+        font-size: 1.6rem;
+      }
+      .icon {
+        font-size: 22px;
+      }
+    }
+    .bottom {
+      padding-inline: 12px;
+      padding-block: 12px;
+      .content {
+        font-size: 1.4rem;
+      }
+    }
+  }
+  .modal-addusers {
+    padding: 16px 12px;
+    h2 {
+      font-size: 2.2rem;
+    }
+    .c-row input {
+      padding: 10px 16px;
+    }
+  }
+  .modal-UHREMIX .container .right .checkout-form {
+    padding: 0 16px;
   }
 }

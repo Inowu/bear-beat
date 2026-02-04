@@ -66,4 +66,47 @@
       }
     }
   }
+
+  @media (max-width: 768px) {
+    gap: 20px;
+    margin-top: 12px;
+    .header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+      .left-side h2 {
+        font-size: 2rem;
+      }
+    }
+    .single-card {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+      padding-inline: 16px !important;
+      padding-block: 12px !important;
+      .left-side {
+        gap: 16px;
+      }
+    }
+  }
+
+  @media (max-width: 576px) {
+    .header .left-side h2 {
+      font-size: 1.8rem;
+    }
+    .table-line {
+      flex-direction: column;
+      gap: 4px;
+      padding-inline: 12px;
+      p {
+        font-size: 1.2rem;
+      }
+    }
+    .single-card {
+      padding-inline: 12px !important;
+      p {
+        font-size: 1.4rem;
+      }
+    }
+  }
 }

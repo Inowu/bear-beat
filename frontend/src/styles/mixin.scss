@@ -1,6 +1,19 @@
+// Breakpoints: phone ≤576px, tablet ≤768px, md ≤992px, sm ≤400px
 @mixin respond-to($breakpoint) {
   @if $breakpoint == sm {
     @media (max-width: 400px) {
+      @content;
+    }
+  }
+
+  @if $breakpoint == phone {
+    @media (max-width: 576px) {
+      @content;
+    }
+  }
+
+  @if $breakpoint == tablet {
+    @media (max-width: 768px) {
       @content;
     }
   }

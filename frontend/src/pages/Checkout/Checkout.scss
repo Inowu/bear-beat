@@ -81,10 +81,37 @@
 
   @include respond-to(md) {
     .checkout-card {
-      width: fit-content;
+      width: 100%;
       align-items: center;
-      padding: 20px;
+      padding: 24px 20px;
       flex-flow: column-reverse;
+      gap: 24px;
+      > div {
+        width: 100%;
+      }
+      > div h2 {
+        font-size: 2.2rem;
+      }
+      .item-information-container {
+        padding: 16px;
+      }
+    }
+  }
+
+  @include respond-to(phone) {
+    .checkout-card {
+      padding: 16px 12px;
+      gap: 20px;
+      > div h2 {
+        font-size: 1.8rem;
+      }
+      .order-info-container .c-row {
+        grid-template-columns: 1fr 2fr;
+        font-size: 1.4rem;
+      }
+      .item-information-container {
+        padding: 12px;
+      }
     }
   }
 }

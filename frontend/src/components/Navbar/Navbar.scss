@@ -64,35 +64,66 @@ nav {
   }
 
   @include respond-to(md) {
+    padding: 8px 12px;
+    min-height: 56px;
+    height: auto;
 
     .header {
+      img {
+        width: 50px;
+      }
+      h2 {
+        font-size: 1.8rem;
+      }
       div.burger-btn {
         display: flex;
         justify-content: center;
         align-items: center;
-        padding: 8px;
+        padding: 10px;
         border-radius: 50px;
-        background-color: #404040;
+        background: $card-glass;
+        border: 1px solid $card-glass-border;
+        min-width: 44px;
+        min-height: 44px;
 
         svg {
-          color: #ffffff;
-          width: 20px;
-          height: 20px;
+          color: $text-primary;
+          width: 22px;
+          height: 22px;
         }
       }
     }
 
     ul {
+      gap: 6px;
       li {
-        padding: 8px;
+        padding: 10px 12px;
+        min-height: 44px;
+        min-width: 44px;
+        justify-content: center;
         svg {
-          width: 1.6rem;
-          height: 1.6rem!important;
+          width: 1.8rem;
+          height: 1.8rem !important;
         }
         span {
           display: none;
         }
       }
+    }
+  }
+
+  @include respond-to(phone) {
+    padding: 8px 10px;
+    .header {
+      img {
+        width: 44px;
+      }
+      h2 {
+        font-size: 1.6rem;
+      }
+    }
+    ul li {
+      padding: 8px 10px;
     }
   }
 

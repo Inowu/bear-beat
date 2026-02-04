@@ -20,6 +20,35 @@
   color: $text-primary;
   height: 750px;
   position: relative;
+
+  @media (max-width: 768px) {
+    max-width: 100%;
+    min-width: 0;
+    padding: 24px 20px;
+    height: auto;
+    min-height: 520px;
+  }
+
+  @media (max-width: 576px) {
+    padding: 20px 16px;
+    gap: 16px;
+    min-height: 480px;
+    .c-row h2 {
+      font-size: 2.8rem;
+    }
+    .c-row h3 {
+      font-size: 20px;
+    }
+    .button-contain button {
+      padding: 10px 16px;
+      font-size: 1.6rem;
+    }
+    .announce {
+      font-size: 1.4rem;
+      padding-inline: 10px;
+    }
+  }
+
   .announce {
     top: -20px;
     right: 25px;

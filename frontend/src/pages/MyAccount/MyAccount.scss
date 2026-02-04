@@ -254,32 +254,63 @@
   }
 
   @include respond-to(md) {
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    .general {
+      max-width: 100%;
+    }
     .purchase {
       width: 100%;
-
       table.table {
         width: 100%;
         margin-bottom: 10px;
-
         font-size: 1.4rem;
-
-        thead {
-          th {
-            padding: 5px;
-            word-break: break-all;
-          }
+        thead th {
+          padding: 8px 6px;
+          word-break: break-word;
+          font-size: 1.2rem;
         }
-        tbody {
-          tr {
-            td {
-              padding: 5px;
-              word-break: break-all;
-            }
-          }
+        tbody tr td {
+          padding: 8px 6px;
+          word-break: break-word;
+          font-size: 1.2rem;
         }
         h2 {
-          font-size: 1.4rem;
+          font-size: 1.6rem;
         }
+      }
+    }
+  }
+
+  @media (max-width: 576px) {
+    gap: 20px;
+    .general {
+      .user-profile-pic {
+        width: 120px;
+        height: 120px;
+        min-width: 120px;
+        max-width: 120px;
+      }
+      h2 {
+        font-size: 2.2rem;
+      }
+    }
+    .purchase {
+      table.table {
+        font-size: 1.2rem;
+        thead th {
+          padding: 6px 4px;
+          font-size: 1.1rem;
+        }
+        tbody tr td {
+          padding: 6px 4px;
+          font-size: 1.1rem;
+        }
+      }
+      .actives-ftp-container.cards .card .circle {
+        width: 36px;
+        height: 36px;
       }
     }
   }

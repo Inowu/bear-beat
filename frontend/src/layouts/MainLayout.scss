@@ -27,7 +27,17 @@
   @include respond-to(md) {
     .content-container {
       > div {
-        padding: 12px;
+        padding: 16px;
+        max-width: 100%;
+      }
+    }
+  }
+
+  @include respond-to(phone) {
+    .content-container {
+      > div {
+        padding: 12px 10px;
+        max-width: 100%;
       }
     }
   }

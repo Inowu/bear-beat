@@ -2,6 +2,14 @@
 
 .plan-upgrade {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 24px;
   color: $text-primary;
   min-height: 60vh;
+
+  @media (max-width: 576px) {
+    gap: 20px;
+    padding: 0 8px;
+  }
 }

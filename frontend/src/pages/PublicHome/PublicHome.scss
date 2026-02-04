@@ -84,3 +84,56 @@
     background: rgba(8, 225, 247, 0.15);
   }
 }
+
+@media (max-width: 768px) {
+  .public-home-container {
+    padding: 20px 16px;
+  }
+  .public-home-card {
+    padding: 32px 24px;
+  }
+  .public-home-logo {
+    max-width: 220px;
+  }
+  .public-home-tagline {
+    font-size: 1.1rem;
+  }
+  .public-home-sub {
+    font-size: 1.4rem;
+    margin-bottom: 24px;
+  }
+  .public-home-actions {
+    flex-direction: column;
+    width: 100%;
+    gap: 12px;
+  }
+  .public-home-btn {
+    width: 100%;
+    text-align: center;
+    padding: 14px 24px;
+  }
+}
+
+@media (max-width: 576px) {
+  .public-home-container {
+    padding: 16px 12px;
+  }
+  .public-home-card {
+    padding: 24px 16px;
+  }
+  .public-home-logo {
+    max-width: 180px;
+    margin-bottom: 16px;
+  }
+  .public-home-tagline {
+    font-size: 1rem;
+  }
+  .public-home-sub {
+    font-size: 1.3rem;
+    margin-bottom: 20px;
+  }
+  .public-home-btn {
+    font-size: 1.5rem;
+    padding: 12px 20px;
+  }
+}

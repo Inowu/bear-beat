@@ -176,13 +176,76 @@
     }
   }
 
-  @media (max-width: 700px) {
+  @include respond-to(md) {
     .header-contain {
       flex-direction: column;
-      gap: 20px;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    .header-contain h2 {
+      font-size: 2.2rem;
     }
     .search-input {
       width: 100%;
+      max-width: 100%;
+    }
+    .folders-navigation-container .header {
+      grid-template-columns: 1fr 1fr;
+      font-size: 1.2rem;
+    }
+    .folders-navigation-container .header .modified-column {
+      display: none;
+    }
+    .folder-card {
+      grid-template-columns: 1fr auto !important;
+      .name-container {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .modified-column {
+        display: none !important;
+      }
+      .download-button {
+        right: 12px;
+      }
+    }
+    .folder-card.video-card {
+      grid-template-columns: auto 1fr auto !important;
+    }
+  }
+
+  @include respond-to(phone) {
+    gap: 12px;
+    .header-contain h2 {
+      font-size: 1.8rem;
+    }
+    .folder-structure-container {
+      flex-wrap: wrap;
+      gap: 4px;
+      p {
+        font-size: 1.2rem;
+      }
+    }
+    .folders-navigation-container .header {
+      padding: 8px 4px;
+      div {
+        font-size: 1.2rem;
+      }
+    }
+    .folder-card {
+      padding: 10px 8px !important;
+      .name-container h3 {
+        font-size: 1.3rem;
+      }
+      svg {
+        width: 2.4rem !important;
+        height: 2.4rem !important;
+      }
+    }
+    .btn-back button {
+      padding: 10px 16px;
+      font-size: 1.4rem;
     }
   }
 }

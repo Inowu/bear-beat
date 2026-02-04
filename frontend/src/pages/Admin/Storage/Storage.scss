@@ -70,3 +70,26 @@
         }
     }
 }
+
+@media (max-width: 768px) {
+    .storage .storage-card {
+        width: 90%;
+        padding: 24px 20px;
+        h2.title {
+          font-size: 1.8rem;
+        }
+    }
+}
+
+@media (max-width: 576px) {
+    .storage .storage-card {
+        width: 100%;
+        padding: 20px 16px;
+        h2.title {
+          font-size: 1.6rem;
+        }
+        h3 {
+          font-size: 1.4rem;
+        }
+    }
+}
