@@ -76,7 +76,7 @@ function ForgotPasswordForm() {
         <img src={Logo} alt="Bear Beat" className="auth-login-logo" />
         <h1 className="auth-login-title">Recuperar Acceso</h1>
         <p className="auth-login-sub auth-recover-sub">
-          Ingresa tu correo y te enviaremos las instrucciones para volver a entrar.
+          Ingresa tu correo asociado y te enviamos un enlace seguro.
         </p>
         <form
           className="auth-form auth-login-form auth-recover-form"
@@ -99,27 +99,30 @@ function ForgotPasswordForm() {
             )}
           </div>
           <div className="auth-recover-turnstile">
-            <Turnstile
-              theme="dark"
-              onVerify={handleTurnstileSuccess}
-              onExpire={handleTurnstileExpire}
-              onError={handleTurnstileError}
-              resetSignal={turnstileReset}
-            />
+            <div className="auth-recover-turnstile-inner">
+              <Turnstile
+                theme="dark"
+                size="compact"
+                onVerify={handleTurnstileSuccess}
+                onExpire={handleTurnstileExpire}
+                onError={handleTurnstileError}
+                resetSignal={turnstileReset}
+              />
+            </div>
             {turnstileError && (
               <div className="error-formik">{turnstileError}</div>
             )}
           </div>
           {!loader ? (
             <button className="auth-login-submit-btn" type="submit">
-              ENVIAR INSTRUCCIONES
+              ENVIAR ENLACE DE RECUPERACIÓN
             </button>
           ) : (
             <Spinner size={3} width={0.3} color="#00e2f7" />
           )}
           <div className="c-row auth-login-register-wrap auth-recover-back-wrap">
             <Link to="/auth" className="auth-recover-back">
-              ← Volver a Iniciar Sesión
+              ← Regresar a Iniciar Sesión
             </Link>
           </div>
         </form>

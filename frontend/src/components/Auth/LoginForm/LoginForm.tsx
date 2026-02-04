@@ -1,4 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { HiOutlineMail, HiOutlineLockClosed } from "react-icons/hi";
 import { useUserContext } from "../../../contexts/UserContext";
 import trpc from "../../../api";
 import { useFormik } from "formik";
@@ -89,36 +90,43 @@ function LoginForm() {
 
   return (
     <div className="auth-login-atmosphere">
+      <div className="auth-login-glow" aria-hidden />
       <div className="auth-login-card">
         <img src={Logo} alt="Bear Beat" className="auth-login-logo" />
-        <h1 className="auth-login-title">Bienvenido de nuevo, Colega.</h1>
-        <p className="auth-login-sub">Ingresa a tu cuenta para seguir descargando.</p>
+        <h1 className="auth-login-title">Bienvenido, DJ.</h1>
+        <p className="auth-login-sub">Tu cabina está lista. Ingresa para descargar.</p>
         <ChatButton />
         <form className="auth-form auth-login-form" onSubmit={formik.handleSubmit}>
           <div className="c-row">
-            <input
-              placeholder="Correo electrónico"
-              type="text"
-              id="username"
-              name="username"
-              value={formik.values.username}
-              onChange={formik.handleChange}
-              className="auth-login-input"
-            />
+            <div className="auth-login-input-wrap">
+              <HiOutlineMail className="auth-login-input-icon" aria-hidden />
+              <input
+                placeholder="Correo electrónico"
+                type="text"
+                id="username"
+                name="username"
+                value={formik.values.username}
+                onChange={formik.handleChange}
+                className="auth-login-input auth-login-input-with-icon"
+              />
+            </div>
             {formik.errors.username && (
               <div className="error-formik">{formik.errors.username}</div>
             )}
           </div>
           <div className="c-row">
-            <input
-              placeholder="Contraseña"
-              type="password"
-              id="password"
-              name="password"
-              value={formik.values.password}
-              onChange={formik.handleChange}
-              className="auth-login-input"
-            />
+            <div className="auth-login-input-wrap">
+              <HiOutlineLockClosed className="auth-login-input-icon" aria-hidden />
+              <input
+                placeholder="Contraseña"
+                type="password"
+                id="password"
+                name="password"
+                value={formik.values.password}
+                onChange={formik.handleChange}
+                className="auth-login-input auth-login-input-with-icon"
+              />
+            </div>
             {formik.errors.password && (
               <div className="error-formik">{formik.errors.password}</div>
             )}

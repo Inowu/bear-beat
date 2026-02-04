@@ -334,6 +334,7 @@ function SignUpForm() {
               <div className="turnstile-container">
                 <Turnstile
                   theme="dark"
+                  size="compact"
                   onVerify={handleTurnstileSuccess}
                   onExpire={handleTurnstileExpire}
                   onError={handleTurnstileError}

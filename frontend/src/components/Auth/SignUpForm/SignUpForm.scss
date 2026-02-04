@@ -199,8 +199,16 @@ form.sign-up-form {
   .turnstile-container {
     display: flex;
     justify-content: center;
+    align-items: center;
     width: 100%;
+    overflow: hidden;
     margin: 1rem 0;
+
+    /* En móvil, escala ligeramente para que no domine el formulario */
+    @media (max-width: 480px) {
+      transform: scale(0.95);
+      transform-origin: center center;
+    }
   }
 
   .signup-submit-btn {
