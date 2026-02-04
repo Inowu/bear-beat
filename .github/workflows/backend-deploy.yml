@@ -26,26 +26,8 @@ jobs:
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
             set -e
-            # Diagnóstico (se ve en los logs si falla)
-            echo "=== DIAG: HOME=$HOME ==="
-            echo "=== DIAG: which npm ==="
-            which npm || echo "npm no encontrado"
-            echo "=== DIAG: PATH ==="
-            echo "$PATH"
-            echo "=== DIAG: nvm? ==="
-            ls -la ~/.nvm 2>/dev/null || true
-            ls -la /root/.nvm 2>/dev/null || true
-            # Cargar nvm si existe (cualquier usuario)
             export PATH="/usr/local/bin:/usr/bin:$PATH"
-            for nvm_sh in ~/.nvm/nvm.sh /root/.nvm/nvm.sh; do
-              [ -f "$nvm_sh" ] && { . "$nvm_sh"; nvm use default 2>/dev/null || true; break; }
-            done
+            [ -f ~/.nvm/nvm.sh ] && { . ~/.nvm/nvm.sh; nvm use default 2>/dev/null || true; }
             [ -f ~/.profile ] && . ~/.profile
             [ -f ~/.bashrc ] && . ~/.bashrc
-            # Añadir rutas típicas de nvm/node por si no se cargó nvm.sh
-            for d in ~/.nvm/versions/node/*/bin /root/.nvm/versions/node/*/bin; do
-              [ -d "$d" ] && export PATH="$d:$PATH" && break
-            done
-            echo "=== DIAG después de cargar: which npm ==="
-            which npm || echo "npm sigue sin encontrarse"
             cd bear-beat && bash ./deploy.sh

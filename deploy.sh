@@ -34,6 +34,8 @@ require_cmd systemctl
 
 log "Pulling latest changes..."
 before_head="$(git -C "$ROOT_DIR" rev-parse HEAD)"
+# Descartar cambios locales (ej. package-lock.json) para que pull no falle
+git -C "$ROOT_DIR" reset --hard HEAD
 git -C "$ROOT_DIR" pull --ff-only
 after_head="$(git -C "$ROOT_DIR" rev-parse HEAD)"
 
