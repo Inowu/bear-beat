@@ -8,7 +8,7 @@
         text-decoration: underline;
         cursor: pointer;
         font-style: italic;
-        font-size: 1.4rem;
+        font-size: var(--app-font-size-body);
         &:hover {
             color: $text-primary;
         }

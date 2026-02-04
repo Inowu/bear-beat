@@ -6,4 +6,17 @@
             flex-direction: row;
         }
     }
+    .modal-container {
+        .header .title {
+            color: var(--app-text-heading);
+            font-size: var(--app-font-size-h1);
+        }
+        .bottom .content {
+            color: var(--app-text-body);
+            font-size: var(--app-font-size-body);
+        }
+        .bottom button {
+            font-size: var(--app-font-size-body);
+        }
+    }
 }

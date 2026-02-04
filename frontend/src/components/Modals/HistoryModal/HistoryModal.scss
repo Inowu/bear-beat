@@ -2,11 +2,12 @@
 
 .modal-container {
     width: 100vh;
+    font-size: var(--app-font-size-body);
 
     .bottom {
         .table-contain {
             table {
-                color: $text-primary;
+                color: var(--app-text-body);
                 border-spacing: 10px;
                 border-collapse: collapse;
                 width: 100%;
@@ -21,6 +22,7 @@
                             padding: 10px;
                             background: $bg-dark-soft;
                             color: $bear-blue-dim;
+                            font-size: var(--app-font-size-body);
                         }
                     }
                     z-index: 1;
@@ -32,6 +34,7 @@
                         background: $card-glass;
                         td {
                             padding: 10px;
+                            font-size: var(--app-font-size-body);
                         }
                     }
                 }
@@ -40,7 +43,8 @@
                     tr {
                         th {
                             div {
-                                color: $text-primary;
+                                color: var(--app-text-body);
+                                font-size: var(--app-font-size-body);
                             }
                         }
                     }
@@ -73,7 +77,7 @@
         -webkit-overflow-scrolling: touch;
     }
     .modal-container .bottom .table-contain table {
-        font-size: 1.2rem;
+        font-size: var(--app-font-size-body);
     }
     .modal-container .bottom .table-contain th,
     .modal-container .bottom .table-contain td {
