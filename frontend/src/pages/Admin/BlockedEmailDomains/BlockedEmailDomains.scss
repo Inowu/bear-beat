@@ -8,11 +8,19 @@
   color: $text-primary;
   width: 100%;
   overflow-x: hidden;
+  padding-bottom: 20px;
 
   .header {
     display: flex;
     flex-direction: column;
     gap: 12px;
+
+    h1 {
+      font-family: "Bear-font", "Bear Font2", sans-serif;
+      font-size: 1.8rem;
+      margin: 0;
+      color: $text-primary;
+    }
   }
 
   .domain-form {
@@ -64,12 +72,48 @@
       overflow-x: auto;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
+      &::-webkit-scrollbar {
+        height: 8px;
+      }
+      &::-webkit-scrollbar-thumb {
+        background: $card-glass-border;
+        border-radius: 4px;
+      }
     }
     table {
       min-width: 600px;
+      width: 100%;
+      border: 1px solid $card-glass-border;
+      border-radius: 12px;
+      overflow: hidden;
+
+      thead tr {
+        background: $bg-dark-soft !important;
+        border-bottom: 1px solid $card-glass-border;
+        th {
+          font-size: 1.35rem;
+          padding: 12px 10px;
+          color: $bear-blue-dim !important;
+          word-break: break-word;
+          max-width: 1px;
+        }
+      }
+      tbody tr {
+        background: $card-glass !important;
+        border-bottom: 1px solid $card-glass-border;
+        td {
+          font-size: 1.3rem;
+          padding: 10px;
+          color: $text-primary !important;
+          word-break: break-word;
+          max-width: 1px;
+        }
+      }
     }
     table tbody tr td button {
       margin-right: 10px;
+      min-height: 40px;
+      font-size: 1.2rem;
     }
   }
 }

@@ -63,6 +63,7 @@ function Admin() {
   const [showHistory, setShowHistory] = useState<boolean>(false);
   const [showAddGB, setShowAddGB] = useState<boolean>(false);
   const [showDeleteUser, setShowDeleteUser] = useState<boolean>(false);
+  const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(null);
 
   const closeModalAdd = () => {
     setShowModal(false);
@@ -331,9 +332,15 @@ function Admin() {
   };
 
   /**
+   * Toggle dropdown by index (click/touch). Close others.
+   */
+  const toggleDropdown = (index: number) => {
+    setOpenDropdownIndex((prev) => (prev === index ? null : index));
+  };
+
+  /**
    * Function that helps determine whether a dropdown should be up or down the Action button.
    * @param {number} index Actions dropdown that will be shown
-   * @returns {boolean} Tells if dropdown should be displayed up or down
    */
   const positioningAction = (index: number): void => {
     const pageLastPixel = document.body.scrollHeight;
@@ -341,12 +348,26 @@ function Admin() {
     if (element) {
       const rect = element.getBoundingClientRect();
       const elementLastPixel = rect.bottom;
-
       if (elementLastPixel >= pageLastPixel) {
         element.classList.add("dropdown-up");
+      } else {
+        element.classList.remove("dropdown-up");
       }
     }
-  }
+  };
+
+  // Cerrar dropdown al hacer clic fuera (solo si está abierto)
+  useEffect(() => {
+    if (openDropdownIndex === null) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest(`[data-dropdown-index="${openDropdownIndex}"]`)) {
+        setOpenDropdownIndex(null);
+      }
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [openDropdownIndex]);
 
   return (
     <div className="admin-contain">
@@ -432,22 +453,30 @@ function Admin() {
                         </td>
                       )}
                       <td className="wrap-td">
-                        <div className="dropdown">
-                          <button className="dropbtn" onMouseEnter={() => { positioningAction(index) }}>Acciones</button>
+                        <div className={`dropdown ${openDropdownIndex === index ? "open" : ""}`} data-dropdown-index={index}>
+                          <button
+                            type="button"
+                            className="dropbtn"
+                            onMouseEnter={() => { positioningAction(index); }}
+                            onClick={(e) => { e.stopPropagation(); positioningAction(index); toggleDropdown(index); }}
+                          >
+                            Acciones
+                          </button>
                           <div className="dropdown-content" id={`dropdown-content-${index}`}>
-                            <button onClick={() => handleEditUser(user)}>Editar</button>
-                            <button onClick={() => signInAsUser(user)} disabled={user.role === USER_ROLES.ADMIN}>Acceder</button>
-                            <button onClick={() => giveSuscription(user)}>Activar</button>
-                            <button onClick={() => handleDeleteUser(user)} disabled={user.role === USER_ROLES.ADMIN}>Eliminar</button>
-                            <button onClick={() => handleOpenHistory(user)}>Historial</button>
-                            <button onClick={() => handleOpenAddGB(user)}>Agregar GB</button>
-                            <button className="icon-button" onClick={() =>
+                            <button type="button" onClick={() => { setOpenDropdownIndex(null); handleEditUser(user); }}>Editar</button>
+                            <button type="button" onClick={() => { setOpenDropdownIndex(null); signInAsUser(user); }} disabled={user.role === USER_ROLES.ADMIN}>Acceder</button>
+                            <button type="button" onClick={() => { setOpenDropdownIndex(null); giveSuscription(user); }}>Activar</button>
+                            <button type="button" onClick={() => { setOpenDropdownIndex(null); handleDeleteUser(user); }} disabled={user.role === USER_ROLES.ADMIN}>Eliminar</button>
+                            <button type="button" onClick={() => { setOpenDropdownIndex(null); handleOpenHistory(user); }}>Historial</button>
+                            <button type="button" onClick={() => { setOpenDropdownIndex(null); handleOpenAddGB(user); }}>Agregar GB</button>
+                            <button type="button" className="icon-button" onClick={() => {
+                              setOpenDropdownIndex(null);
                               openBlockModal(
                                 user,
                                 `Estas por ${user.blocked ? 'desbloquear' : 'bloquear'} al usuario: ${user.username}`,
                                 !user.blocked
-                              )
-                            }>
+                              );
+                            }}>
                               {user.blocked ? (
                                 <FaLock className='lock' />
                               ) : (

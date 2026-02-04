@@ -2,10 +2,26 @@
 @import "../../../styles/landing-design.scss";
 
 .history-contain {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   color: $text-primary;
   width: 100%;
   overflow-x: hidden;
+  padding-bottom: 20px;
+
   .header {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    h1 {
+      font-family: "Bear-font", "Bear Font2", sans-serif;
+      font-size: 1.8rem;
+      margin: 0;
+      color: $text-primary;
+    }
+
     .btn-addUsers {
       color: #000;
       background: $bear-blue-dim;
@@ -13,6 +29,8 @@
       min-height: 44px;
       border-radius: 100px;
       box-shadow: 0 0 12px $bear-blue-glow;
+      width: 100%;
+      max-width: 100%;
       &:hover {
         opacity: 0.9;
       }
@@ -25,6 +43,13 @@
       overflow-x: auto;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
+      &::-webkit-scrollbar {
+        height: 8px;
+      }
+      &::-webkit-scrollbar-thumb {
+        background: $card-glass-border;
+        border-radius: 4px;
+      }
     }
 
     table thead,
@@ -41,12 +66,52 @@
     }
     table {
       min-width: 600px;
+      width: 100%;
+      border: 1px solid $card-glass-border;
+      border-radius: 12px;
+      overflow: hidden;
+
+      thead tr {
+        background: $bg-dark-soft !important;
+        border-bottom: 1px solid $card-glass-border;
+        th {
+          font-size: 1.35rem;
+          padding: 12px 10px;
+          color: $bear-blue-dim !important;
+          word-break: break-word;
+          max-width: 1px;
+        }
+      }
+      tbody tr {
+        background: $card-glass !important;
+        border-bottom: 1px solid $card-glass-border;
+        td {
+          font-size: 1.3rem;
+          padding: 10px;
+          color: $text-primary !important;
+          word-break: break-word;
+          max-width: 1px;
+        }
+      }
     }
   }
 }
 
 @include respond-from(tablet) {
-  .history-contain .admin-table .table-contain {
-    max-height: 74vh;
+  .history-contain {
+    gap: 20px;
+    .header {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      .btn-addUsers {
+        width: auto;
+        max-width: none;
+      }
+    }
+    .admin-table .table-contain {
+      max-height: 74vh;
+    }
   }
 }
