@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useUserContext } from "../../../contexts/UserContext";
 import trpc from "../../../api";
 import { useFormik } from "formik";
@@ -18,6 +18,8 @@ function LoginForm() {
   const [loginInfo, setLoginInfo] = useState<any>({})
   const { handleLogin } = useUserContext();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as { from?: string } | null)?.from ?? "/";
   const closeModal = () => {
     setShow(false);
   };
@@ -49,7 +51,7 @@ function LoginForm() {
           if (login.user) {
             if (login.user.verified) {
               handleLogin(login.token, login.refreshToken);
-              navigate("/");
+              navigate(from, { replace: true });
             } else {
               setLoginInfo(login);
               setNewUserId(login.user.id);
@@ -58,7 +60,7 @@ function LoginForm() {
             }
           } else {
             handleLogin(login.token, login.refreshToken);
-            navigate("/");
+            navigate(from, { replace: true });
           }
         }
 
@@ -80,7 +82,8 @@ function LoginForm() {
   const handleSuccessVerify = () => {
     handleLogin(loginInfo.token, loginInfo.refreshToken);
     setShowVerify(false);
-  }
+    navigate(from, { replace: true });
+  };
 
   return (
     <div className="auth-login-card">
@@ -125,8 +128,8 @@ function LoginForm() {
           <Spinner size={3} width={0.3} color="#00e2f7" />
         )}
         <div className="c-row">
-          <Link to={"registro"}>Registrarme</Link>
-        </div>
+        <Link to="/auth/registro" state={{ from }}>Registrarme</Link>
+      </div>
       </form>
       <ErrorModal show={show} onHide={closeModal} message={errorMessage} />
       <VerifyUpdatePhoneModal

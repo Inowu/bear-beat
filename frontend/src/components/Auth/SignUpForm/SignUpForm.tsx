@@ -1,7 +1,7 @@
 import "./SignUpForm.scss";
 import "react-phone-input-2/lib/material.css";
 import { detectUserCountry, findDialCode, twoDigitsCountryCodes } from "../../../utils/country_codes";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ReactComponent as Arrow } from "../../../assets/icons/arrow-down.svg";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import { useCallback, useEffect, useState } from "react";
@@ -19,6 +19,8 @@ import { trackLead } from "../../../utils/facebookPixel";
 
 function SignUpForm() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as { from?: string } | null)?.from ?? "/";
   const [loader, setLoader] = useState<boolean>(false);
   const { handleLogin } = useUserContext();
   const [show, setShow] = useState<boolean>(false);
@@ -43,7 +45,7 @@ function SignUpForm() {
 
   const closeSuccess = () => {
     setShowSuccess(false);
-    navigate("/");
+    navigate(from, { replace: true });
   };
   const validationSchema = Yup.object().shape({
     email: Yup.string().required("El correo es requerido").email("El formato del correo no es correcto"),
@@ -127,7 +129,7 @@ function SignUpForm() {
 
         if (process.env.REACT_APP_ENVIRONMENT === "development") {
           handleLogin(register.token, register.refreshToken);
-          navigate("/");
+          navigate(from, { replace: true });
         }
 
         setShowVerify(true);
@@ -315,7 +317,7 @@ function SignUpForm() {
               <Spinner size={3} width={0.3} color="#00e2f7" />
             )}
             <div className="c-row">
-              <Link to={"/auth"}>
+              <Link to="/auth" state={{ from }}>
                 <Arrow className="arrow" />
                 Ya tengo cuenta
               </Link>

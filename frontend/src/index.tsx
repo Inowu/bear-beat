@@ -59,8 +59,22 @@ const router = createBrowserRouter([
           { path: "micuenta", element: <MyAccount /> },
           { path: "descargas", element: <Downloads /> },
           { path: "planes", element: <Plans /> },
-          { path: "comprar", element: <Checkout /> },
-          { path: "actualizar-planes", element: <PlanUpgrade /> },
+          {
+            path: "comprar",
+            element: (
+              <AuthRoute>
+                <Checkout />
+              </AuthRoute>
+            ),
+          },
+          {
+            path: "actualizar-planes",
+            element: (
+              <AuthRoute>
+                <PlanUpgrade />
+              </AuthRoute>
+            ),
+          },
         ],
       },
       {

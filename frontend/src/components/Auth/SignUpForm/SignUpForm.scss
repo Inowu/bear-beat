@@ -1,4 +1,4 @@
-// SignUpForm: solo layout del teléfono; colores por tema (Auth.scss aplica inputs)
+// SignUpForm: campo teléfono = selector de país (PhoneInput) + input numérico (formik)
 form.sign-up-form {
   display: flex;
   flex-direction: column;
@@ -6,11 +6,13 @@ form.sign-up-form {
 
   .c-row {
     position: relative;
+    min-height: 48px;
 
     .special-label {
       display: none;
     }
 
+    // Solo mostramos el prefijo "+52" a la izquierda del input (el dropdown de PhoneInput está a su izquierda)
     .code {
       position: absolute;
       font-size: 1rem;
@@ -24,18 +26,53 @@ form.sign-up-form {
       z-index: 2;
     }
 
+    // Contenedor de react-phone-input-2: solo usamos el dropdown de país, ocultamos su input
     .dial-container {
       position: absolute;
-      width: auto;
       left: 0;
-      top: 50%;
-      transform: translateY(-50%);
-      z-index: 10;
+      top: 0;
+      bottom: 0;
+      height: 48px;
+      z-index: 5;
+
+      // Ocultar solo el input interno del PhoneInput (el nuestro es .phone, fuera de .dial-container)
+      input {
+        display: none !important;
+      }
+
+      .flag-dropdown {
+        position: absolute !important;
+        height: 48px !important;
+        min-height: 48px !important;
+        border-radius: 12px 0 0 12px !important;
+        border: 1px solid var(--auth-input-border) !important;
+        border-right: none !important;
+        background: var(--auth-input-bg) !important;
+      }
     }
 
+    // Input donde el usuario escribe el número (sin código de país); se une al dropdown a la izquierda
     input.phone {
-      padding-left: 110px;
+      width: 100%;
+      padding-left: 108px;
+      padding-right: 16px;
       min-height: 48px;
+      box-sizing: border-box;
+      border-radius: 0 12px 12px 0;
+      border: 1px solid var(--auth-input-border);
+      border-left: none;
+      background: var(--auth-input-bg);
+      color: var(--ph-text-heading);
+      font-size: 16px;
+      &::placeholder {
+        color: var(--ph-text-muted);
+      }
+      &:focus {
+        outline: none;
+        border-color: var(--ph-accent);
+        border-left: none;
+        box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
+      }
     }
   }
 

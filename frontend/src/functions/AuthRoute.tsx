@@ -1,6 +1,6 @@
 import { ReactNode, useEffect } from "react";
 import { useUserContext } from "../contexts/UserContext";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 interface AuthRoutePropsI {
   children: ReactNode;
@@ -9,15 +9,17 @@ interface AuthRoutePropsI {
 function AuthRoute({ children }: AuthRoutePropsI) {
   const { userToken } = useUserContext();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     if (!userToken) {
-      navigate("/auth");
+      const returnUrl = location.pathname + location.search;
+      navigate("/auth", { state: { from: returnUrl }, replace: true });
     }
-  }, [userToken, navigate]);
+  }, [userToken, navigate, location.pathname, location.search]);
 
   if (!userToken) {
-    return <></>; // Avoid rendering children until currentUser is verified
+    return null;
   }
 
   return <>{children}</>;

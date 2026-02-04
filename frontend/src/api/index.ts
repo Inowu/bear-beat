@@ -1,13 +1,16 @@
 import { createTRPCProxyClient, httpBatchLink } from "@trpc/client";
 import superjson from "superjson";
-import type { AppRouter } from "../../../backend/src/routers";
 
+// No importar AppRouter desde backend: el compilador del frontend intenta compilar
+// todo el backend y falla (dotenv, prisma, etc. no están en frontend).
+// El cliente funciona igual en runtime; se pierde solo inferencia estricta de tipos.
 const url =
   process.env.REACT_APP_ENVIRONMENT === "development"
     ? "http://localhost:5001/trpc"
     : "https://thebearbeatapi.lat/trpc";
 
-const trpc = createTRPCProxyClient<AppRouter>({
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const trpc = createTRPCProxyClient<any>({
   transformer: superjson,
   links: [
     httpBatchLink({
