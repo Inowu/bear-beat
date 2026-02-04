@@ -26,5 +26,9 @@ jobs:
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
             set -e
-            # Login shell para cargar .profile/.bashrc y que npm esté en PATH (nvm, etc.)
-            bash -l -c 'cd bear-beat && bash ./deploy.sh'
+            # Asegurar que npm/pm2 estén en PATH (nvm o rutas comunes)
+            export PATH="/usr/local/bin:/usr/bin:$PATH"
+            if [ -f ~/.nvm/nvm.sh ]; then . ~/.nvm/nvm.sh; nvm use default 2>/dev/null || true; fi
+            [ -f ~/.profile ] && . ~/.profile
+            [ -f ~/.bashrc ] && . ~/.bashrc
+            cd bear-beat && bash ./deploy.sh
