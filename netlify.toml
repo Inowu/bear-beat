@@ -4,8 +4,6 @@
   command = "npm run build"
   publish = "build"
 
-# SPA: todas las rutas sin archivo físico sirven index.html (evita 404 en / y rutas del React Router)
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+# Redirects SPA: usar frontend/public/_redirects (se copia a build/).
+# Con base+publish, Netlify solo aplica bien los redirects desde el directorio publicado,
+# no desde la raíz; por eso no ponemos [[redirects]] aquí.
