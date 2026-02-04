@@ -29,6 +29,7 @@ export const permissions = shield<Context>({
     me: isLoggedIn,
     search: isLoggedIn,
     catalogStats: isLoggedIn,
+    'ftp.catalogStats': isLoggedIn,
     findByCode: isLoggedIn,
     ownOrders: isLoggedIn,
     getActiveUsers: isAdmin,
