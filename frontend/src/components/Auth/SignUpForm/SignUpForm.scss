@@ -22,16 +22,48 @@ form.sign-up-form {
     margin-bottom: 6px;
   }
 
-  // Inputs chunky: py-3 px-4, border slate, focus ring-2 ring-cyan-500/50
-  > .c-row > input {
+  // Wrapper input con icono interno (User, Mail, Lock)
+  .signup-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
     width: 100%;
     min-height: 52px;
-    padding: 14px 18px; /* py-3 px-4 + chunky */
-    font-size: 16px;
-    box-sizing: border-box;
     border-radius: 12px;
     border: 2px solid var(--auth-register-input-border);
     background: var(--auth-register-input-bg);
+    transition: border-color 0.2s, box-shadow 0.2s;
+
+    &:focus-within {
+      border-color: var(--auth-register-input-focus);
+      box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.5);
+
+      .signup-input-icon {
+        color: var(--auth-register-icon-focus);
+      }
+    }
+  }
+
+  .signup-input-icon {
+    position: absolute;
+    left: 16px;
+    width: 22px;
+    height: 22px;
+    color: var(--auth-register-icon);
+    pointer-events: none;
+    transition: color 0.2s;
+    flex-shrink: 0;
+  }
+
+  .signup-input-with-icon {
+    width: 100%;
+    min-height: 52px;
+    padding: 14px 18px 14px 46px; /* pl-10 equivalente para no encimar icono */
+    font-size: 16px;
+    box-sizing: border-box;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
     color: var(--auth-register-text);
     transition: border-color 0.2s, box-shadow 0.2s;
 
@@ -41,8 +73,6 @@ form.sign-up-form {
 
     &:focus {
       outline: none;
-      border-color: var(--auth-register-input-focus);
-      box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.5); /* ring-2 ring-cyan-500/50 */
     }
   }
 
@@ -65,37 +95,49 @@ form.sign-up-form {
     }
   }
 
+  // Solo bandera: al tocar la bandera se abre el selector; el código no se muestra
+  .signup-phone-flag-wrap {
+    position: relative;
+    width: 52px;
+    min-width: 52px;
+    flex-shrink: 0;
+    border-right: 2px solid var(--auth-register-input-border);
+    background: var(--auth-register-input-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   .signup-phone-flag {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 52px;
-    flex-shrink: 0;
-    font-size: 1.5rem;
-    line-height: 1;
-    border-right: 2px solid var(--auth-register-input-border);
-    background: var(--auth-register-input-bg);
+    width: 100%;
+    pointer-events: none;
+
+    /* flag-icons: el span tiene clase fi fi-XX */
+    &[class*="fi-"] {
+      min-height: 20px;
+      width: 28px;
+      height: 21px;
+    }
   }
 
-  // Select: solo código (+52), ancho mínimo para no mostrar nombre de país
-  .signup-phone-select {
-    flex: 0 0 auto;
-    min-width: 0;
-    width: 72px;
+  /* Select invisible sobre la bandera: clic abre el dropdown; código oculto visualmente */
+  .signup-phone-select-overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
     height: 100%;
-    min-height: 52px;
-    padding: 0 24px 0 12px;
+    margin: 0;
+    padding: 0;
     border: none;
-    border-right: 2px solid var(--auth-register-input-border);
     background: transparent;
-    color: var(--auth-register-text);
-    font-size: 15px;
-    font-weight: 600;
+    opacity: 0;
     cursor: pointer;
+    z-index: 1;
+    font-size: 0;
     appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='currentColor' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 8px center;
 
     &:focus {
       outline: none;
@@ -104,7 +146,28 @@ form.sign-up-form {
     option {
       background: var(--auth-register-input-bg);
       color: var(--auth-register-text);
+      font-size: 14px;
     }
+  }
+
+  .signup-phone-icon-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    flex-shrink: 0;
+    border-right: 2px solid var(--auth-register-input-border);
+    background: var(--auth-register-input-bg);
+
+    .signup-input-icon {
+      position: static;
+      left: auto;
+      color: var(--auth-register-icon);
+    }
+  }
+
+  .signup-phone-wrap:focus-within .signup-phone-icon-wrap .signup-input-icon {
+    color: var(--auth-register-icon-focus);
   }
 
   .signup-phone-input {
@@ -131,6 +194,13 @@ form.sign-up-form {
     display: flex;
     flex-direction: column;
     align-items: center;
+  }
+
+  .turnstile-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin: 1rem 0;
   }
 
   .signup-submit-btn {
@@ -178,9 +248,9 @@ form.sign-up-form {
   }
 
   .error-formik {
-    color: #dc2626;
-    font-weight: 600;
-    font-size: 0.85rem;
-    margin-top: 4px;
+    font-size: 0.75rem;
+    color: #ef4444;
+    margin-top: 0.25rem;
+    font-weight: 500;
   }
 }

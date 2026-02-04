@@ -1,6 +1,7 @@
 import "./SignUpForm.scss";
 import { detectUserCountry, findDialCode, allowedCountryOptions } from "../../../utils/country_codes";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { HiOutlineUser, HiOutlineMail, HiOutlineLockClosed, HiOutlinePhone } from "react-icons/hi";
 import { ReactComponent as Arrow } from "../../../assets/icons/arrow-down.svg";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import { useCallback, useEffect, useState } from "react";
@@ -206,18 +207,8 @@ function SignUpForm() {
     setTurnstileError("No se pudo verificar la seguridad.");
   }, []);
 
-  // Bandera emoji desde código país (ej. MX → 🇲🇽)
-  const countryCodeToFlag = (code: string) => {
-    if (!code || code.length !== 2) return "";
-    return code
-      .toUpperCase()
-      .split("")
-      .map((c) => String.fromCodePoint(127397 + c.charCodeAt(0)))
-      .join("");
-  };
-
   const selectedCountry = allowedCountryOptions.find((c) => c.dial_code.slice(1) === dialCode);
-  const flagEmoji = selectedCountry ? countryCodeToFlag(selectedCountry.code) : "";
+  const countryFlagClass = selectedCountry ? `fi fi-${selectedCountry.code.toLowerCase()}` : "fi";
 
   return (
     <div className="auth-split">
@@ -238,48 +229,61 @@ function SignUpForm() {
           <form className="sign-up-form auth-form" onSubmit={formik.handleSubmit}>
             <div className="c-row">
               <label htmlFor="username" className="signup-label">Nombre</label>
-              <input
-                placeholder="Tu nombre o nombre artístico"
-                type="text"
-                id="username"
-                name="username"
-                value={formik.values.username}
-                onChange={formik.handleChange}
-              />
+              <div className="signup-input-wrap">
+                <HiOutlineUser className="signup-input-icon" aria-hidden />
+                <input
+                  placeholder="Tu nombre o nombre artístico"
+                  type="text"
+                  id="username"
+                  name="username"
+                  value={formik.values.username}
+                  onChange={formik.handleChange}
+                  className="signup-input-with-icon"
+                />
+              </div>
               {formik.errors.username && <div className="error-formik">{formik.errors.username}</div>}
             </div>
             <div className="c-row">
               <label htmlFor="email" className="signup-label">Correo electrónico</label>
-              <input
-                placeholder="correo@ejemplo.com"
-                id="email"
-                name="email"
-                value={formik.values.email}
-                onChange={formik.handleChange}
-                type="text"
-              />
+              <div className="signup-input-wrap">
+                <HiOutlineMail className="signup-input-icon" aria-hidden />
+                <input
+                  placeholder="correo@ejemplo.com"
+                  id="email"
+                  name="email"
+                  value={formik.values.email}
+                  onChange={formik.handleChange}
+                  type="text"
+                  className="signup-input-with-icon"
+                />
+              </div>
               {formik.errors.email && <div className="error-formik">{formik.errors.email}</div>}
             </div>
             <div className="c-row c-row--phone">
               <label className="signup-label">WhatsApp (para soporte VIP)</label>
               <div className="signup-phone-wrap">
-                <span className="signup-phone-flag" aria-hidden>{flagEmoji}</span>
-                <select
-                  className="signup-phone-select"
-                  value={dialCode}
-                  onChange={(e) => setDialCode(e.target.value)}
-                  aria-label="Código de país"
-                  title={selectedCountry?.name}
-                >
-                  {allowedCountryOptions.map((c) => (
-                    <option key={c.code} value={c.dial_code.slice(1)}>
-                      {c.dial_code}
-                    </option>
-                  ))}
-                </select>
+                <div className="signup-phone-flag-wrap">
+                  <span className={`signup-phone-flag ${countryFlagClass}`} aria-hidden title={selectedCountry?.name} />
+                  <select
+                    className="signup-phone-select-overlay"
+                    value={dialCode}
+                    onChange={(e) => setDialCode(e.target.value)}
+                    aria-label="País (solo bandera visible)"
+                    title={selectedCountry?.name}
+                  >
+                    {allowedCountryOptions.map((c) => (
+                      <option key={c.code} value={c.dial_code.slice(1)}>
+                        {c.dial_code} {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <span className="signup-phone-icon-wrap">
+                  <HiOutlinePhone className="signup-input-icon" aria-hidden />
+                </span>
                 <input
                   className="signup-phone-input"
-                  placeholder="Ej. 5512345678"
+                  placeholder="Escribe tu WhatsApp..."
                   id="phone"
                   name="phone"
                   value={formik.values.phone}
@@ -294,37 +298,48 @@ function SignUpForm() {
             </div>
             <div className="c-row">
               <label htmlFor="password" className="signup-label">Contraseña</label>
-              <input
-                placeholder="Mínimo 6 caracteres"
-                type="password"
-                id="password"
-                name="password"
-                value={formik.values.password}
-                onChange={formik.handleChange}
-              />
+              <div className="signup-input-wrap">
+                <HiOutlineLockClosed className="signup-input-icon" aria-hidden />
+                <input
+                  placeholder="Mínimo 6 caracteres"
+                  type="password"
+                  id="password"
+                  name="password"
+                  value={formik.values.password}
+                  onChange={formik.handleChange}
+                  className="signup-input-with-icon"
+                />
+              </div>
               {formik.errors.password && <div className="error-formik">{formik.errors.password}</div>}
             </div>
             <div className="c-row">
               <label htmlFor="passwordConfirmation" className="signup-label">Repetir contraseña</label>
-              <input
-                placeholder="Repite tu contraseña"
-                type="password"
-                id="passwordConfirmation"
-                name="passwordConfirmation"
-                value={formik.values.passwordConfirmation}
-                onChange={formik.handleChange}
-              />
+              <div className="signup-input-wrap">
+                <HiOutlineLockClosed className="signup-input-icon" aria-hidden />
+                <input
+                  placeholder="Repite tu contraseña"
+                  type="password"
+                  id="passwordConfirmation"
+                  name="passwordConfirmation"
+                  value={formik.values.passwordConfirmation}
+                  onChange={formik.handleChange}
+                  className="signup-input-with-icon"
+                />
+              </div>
               {formik.errors.passwordConfirmation && (
                 <div className="error-formik">{formik.errors.passwordConfirmation}</div>
               )}
             </div>
             <div className="c-row turnstile-row">
-              <Turnstile
-                onVerify={handleTurnstileSuccess}
-                onExpire={handleTurnstileExpire}
-                onError={handleTurnstileError}
-                resetSignal={turnstileReset}
-              />
+              <div className="turnstile-container">
+                <Turnstile
+                  theme="dark"
+                  onVerify={handleTurnstileSuccess}
+                  onExpire={handleTurnstileExpire}
+                  onError={handleTurnstileError}
+                  resetSignal={turnstileReset}
+                />
+              </div>
               {turnstileError && <div className="error-formik">{turnstileError}</div>}
             </div>
             {!loader ? (

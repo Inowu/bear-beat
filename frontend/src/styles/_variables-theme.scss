@@ -86,6 +86,8 @@
   --auth-register-input-bg: #f8fafc; /* slate-50 */
   --auth-register-input-border: #cbd5e1; /* slate-300 */
   --auth-register-input-focus: #0891b2;
+  --auth-register-icon: #94a3b8; /* text-slate-400 inactivo */
+  --auth-register-icon-focus: #06b6d4; /* text-cyan-500 en foco */
   --auth-register-btn-bg: #0891b2;
   --auth-register-btn-text: #ffffff;
   /* Login: tarjeta central light */
@@ -178,6 +180,8 @@ html.dark {
   --auth-register-input-bg: #0f172a; /* slate-900 */
   --auth-register-input-border: #334155; /* slate-700 */
   --auth-register-input-focus: #06b6d4;
+  --auth-register-icon: #64748b; /* slate-400 dark */
+  --auth-register-icon-focus: #22d3ee; /* cyan-400 dark */
   --auth-register-btn-bg: #06b6d4;
   --auth-register-btn-text: #000000;
   /* Login: tarjeta central dark */

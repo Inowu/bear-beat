@@ -100,6 +100,7 @@ function ForgotPasswordForm() {
           </div>
           <div className="auth-recover-turnstile">
             <Turnstile
+              theme="dark"
               onVerify={handleTurnstileSuccess}
               onExpire={handleTurnstileExpire}
               onError={handleTurnstileError}

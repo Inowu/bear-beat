@@ -5,6 +5,7 @@ type TurnstileOptions = {
   callback: (token: string) => void;
   "expired-callback"?: () => void;
   "error-callback"?: () => void;
+  theme?: "light" | "dark" | "auto";
 };
 
 type TurnstileProps = {
@@ -12,11 +13,13 @@ type TurnstileProps = {
   onExpire?: () => void;
   onError?: () => void;
   resetSignal?: number;
+  /** "dark" para fondos oscuros (registro/login dark); evita el widget blanco */
+  theme?: "light" | "dark" | "auto";
 };
 
 const TURNSTILE_VERIFY_INTERVAL_MS = 50;
 
-function Turnstile({ onVerify, onExpire, onError, resetSignal = 0 }: TurnstileProps) {
+function Turnstile({ onVerify, onExpire, onError, resetSignal = 0, theme = "dark" }: TurnstileProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const widgetIdRef = useRef<string | null>(null);
   const onVerifyRef = useRef(onVerify);
@@ -53,6 +56,7 @@ function Turnstile({ onVerify, onExpire, onError, resetSignal = 0 }: TurnstilePr
         callback: (token: string) => onVerifyRef.current(token),
         "expired-callback": () => onExpireRef.current?.(),
         "error-callback": () => onErrorRef.current?.(),
+        theme,
       };
 
       widgetIdRef.current = window.turnstile.render(containerRef.current, options);

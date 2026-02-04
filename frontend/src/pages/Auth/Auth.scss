@@ -168,10 +168,10 @@
   }
 }
 
-// Columna izquierda: SIEMPRE OSCURA (slate-950 → black), sin depender del tema global
+// Columna izquierda: SIEMPRE OSCURA (bg-slate-950 / negro), contraste elegante con formulario claro
 .auth-split-left {
   position: relative;
-  background: linear-gradient(to bottom right, #0f172a /* slate-900 */, #000000);
+  background: linear-gradient(to bottom right, #020617 /* slate-950 */, #000000);
   color: #ffffff;
 
   .auth-split-left-bg {
