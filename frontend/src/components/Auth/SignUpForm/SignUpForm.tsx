@@ -206,14 +206,28 @@ function SignUpForm() {
     setTurnstileError("No se pudo verificar la seguridad.");
   }, []);
 
+  // Bandera emoji desde código país (ej. MX → 🇲🇽)
+  const countryCodeToFlag = (code: string) => {
+    if (!code || code.length !== 2) return "";
+    return code
+      .toUpperCase()
+      .split("")
+      .map((c) => String.fromCodePoint(127397 + c.charCodeAt(0)))
+      .join("");
+  };
+
+  const selectedCountry = allowedCountryOptions.find((c) => c.dial_code.slice(1) === dialCode);
+  const flagEmoji = selectedCountry ? countryCodeToFlag(selectedCountry.code) : "";
+
   return (
     <div className="auth-split">
       <div className="auth-split-panel auth-split-left">
+        <div className="auth-split-left-bg" aria-hidden />
         <h2 className="auth-split-title">Estás a 60 segundos de tenerlo todo.</h2>
         <ul className="auth-split-list">
-          <li>Acceso inmediato a 12.5 TB.</li>
-          <li>Descarga por FTP sin límites.</li>
-          <li>Cancela cuando quieras.</li>
+          <li><strong>12.5 TB</strong> de música y video</li>
+          <li><strong>Descarga FTP</strong> sin límites</li>
+          <li>Cancela cuando quieras</li>
         </ul>
         <p className="auth-split-testimonial">"La mejor inversión para mi carrera."</p>
       </div>
@@ -223,46 +237,9 @@ function SignUpForm() {
           <ChatButton />
           <form className="sign-up-form auth-form" onSubmit={formik.handleSubmit}>
             <div className="c-row">
+              <label htmlFor="username" className="signup-label">Nombre</label>
               <input
-                placeholder="Correo electrónico"
-                id="email"
-                name="email"
-                value={formik.values.email}
-                onChange={formik.handleChange}
-                type="text"
-              />
-              {formik.errors.email && <div className="error-formik">{formik.errors.email}</div>}
-            </div>
-            <div className="c-row c-row--phone">
-              <select
-                className="signup-phone-select"
-                value={dialCode}
-                onChange={(e) => setDialCode(e.target.value)}
-                aria-label="Código de país"
-              >
-                {allowedCountryOptions.map((c) => (
-                  <option key={c.code} value={c.dial_code.slice(1)}>
-                    {c.dial_code} {c.name}
-                  </option>
-                ))}
-              </select>
-              <input
-                className="signup-phone-input"
-                placeholder="Ej. 5512345678"
-                id="phone"
-                name="phone"
-                value={formik.values.phone}
-                onChange={formik.handleChange}
-                type="tel"
-                inputMode="numeric"
-                autoComplete="tel-national"
-                maxLength={15}
-              />
-              {formik.errors.phone && <div className="error-formik">{formik.errors.phone}</div>}
-            </div>
-            <div className="c-row">
-              <input
-                placeholder="Nombre"
+                placeholder="Tu nombre o nombre artístico"
                 type="text"
                 id="username"
                 name="username"
@@ -272,8 +249,52 @@ function SignUpForm() {
               {formik.errors.username && <div className="error-formik">{formik.errors.username}</div>}
             </div>
             <div className="c-row">
+              <label htmlFor="email" className="signup-label">Correo electrónico</label>
               <input
-                placeholder="Contraseña"
+                placeholder="correo@ejemplo.com"
+                id="email"
+                name="email"
+                value={formik.values.email}
+                onChange={formik.handleChange}
+                type="text"
+              />
+              {formik.errors.email && <div className="error-formik">{formik.errors.email}</div>}
+            </div>
+            <div className="c-row c-row--phone">
+              <label className="signup-label">WhatsApp (para soporte VIP)</label>
+              <div className="signup-phone-wrap">
+                <span className="signup-phone-flag" aria-hidden>{flagEmoji}</span>
+                <select
+                  className="signup-phone-select"
+                  value={dialCode}
+                  onChange={(e) => setDialCode(e.target.value)}
+                  aria-label="Código de país"
+                >
+                  {allowedCountryOptions.map((c) => (
+                    <option key={c.code} value={c.dial_code.slice(1)}>
+                      {c.dial_code} {c.name}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  className="signup-phone-input"
+                  placeholder="Ej. 5512345678"
+                  id="phone"
+                  name="phone"
+                  value={formik.values.phone}
+                  onChange={formik.handleChange}
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel-national"
+                  maxLength={15}
+                />
+              </div>
+              {formik.errors.phone && <div className="error-formik">{formik.errors.phone}</div>}
+            </div>
+            <div className="c-row">
+              <label htmlFor="password" className="signup-label">Contraseña</label>
+              <input
+                placeholder="Mínimo 6 caracteres"
                 type="password"
                 id="password"
                 name="password"
@@ -283,8 +304,9 @@ function SignUpForm() {
               {formik.errors.password && <div className="error-formik">{formik.errors.password}</div>}
             </div>
             <div className="c-row">
+              <label htmlFor="passwordConfirmation" className="signup-label">Repetir contraseña</label>
               <input
-                placeholder="Repetir contraseña"
+                placeholder="Repite tu contraseña"
                 type="password"
                 id="passwordConfirmation"
                 name="passwordConfirmation"
@@ -305,14 +327,14 @@ function SignUpForm() {
               {turnstileError && <div className="error-formik">{turnstileError}</div>}
             </div>
             {!loader ? (
-              <button className="btn" type="submit">
+              <button className="signup-submit-btn" type="submit">
                 REGISTRARSE
               </button>
             ) : (
               <Spinner size={3} width={0.3} color="#00e2f7" />
             )}
             <div className="c-row">
-              <Link to="/auth" state={{ from }}>
+              <Link to="/auth" state={{ from }} className="signup-link-back">
                 <Arrow className="arrow" />
                 Ya tengo cuenta
               </Link>

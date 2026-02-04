@@ -192,14 +192,24 @@
   }
 }
 
+// Columna izquierda: SIEMPRE OSCURA (impacto visual en light y dark)
 .auth-split-left {
-  background: #0f172a;
-  background-image:
-    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(6, 182, 212, 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(6, 182, 212, 0.08) 0%, transparent 50%);
+  position: relative;
+  background: #0f172a; /* slate-900 */
   color: #e2e8f0;
 
+  .auth-split-left-bg {
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(ellipse 80% 60% at 50% 0%, rgba(6, 182, 212, 0.12) 0%, transparent 50%),
+      radial-gradient(ellipse 60% 40% at 80% 80%, rgba(6, 182, 212, 0.06) 0%, transparent 50%);
+    pointer-events: none;
+    mix-blend-mode: overlay;
+  }
+
   .auth-split-title {
+    position: relative;
     font-size: 1.5rem;
     font-weight: 800;
     color: #fff;
@@ -212,6 +222,7 @@
   }
 
   .auth-split-list {
+    position: relative;
     list-style: none;
     padding: 0;
     margin: 0 0 28px;
@@ -220,21 +231,29 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      font-size: 0.95rem;
-      color: #cbd5e1;
-      margin-bottom: 12px;
+      font-size: 1.1rem;
+      color: #e2e8f0;
+      margin-bottom: 14px;
+      line-height: 1.35;
 
       &::before {
         content: "✓";
-        color: #06b6d4;
+        color: #22d3ee; /* cyan brillante */
+        font-weight: 800;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+      }
+
+      strong {
+        color: #fff;
         font-weight: 700;
-        font-size: 1.1rem;
       }
     }
   }
 
   .auth-split-testimonial {
-    font-size: 0.9rem;
+    position: relative;
+    font-size: 0.95rem;
     font-style: italic;
     color: #94a3b8;
     margin: 0;
@@ -243,10 +262,13 @@
   }
 }
 
+// Columna derecha: aplica tema (light = white, dark = slate-950)
 .auth-split-right {
-  background: var(--ph-bg-card);
+  background: var(--auth-register-panel-bg);
+  color: var(--auth-register-text);
   border: 1px solid var(--ph-border);
   border-top: none;
+  transition: background 0.2s ease, color 0.2s ease;
 
   @include respond-from(md) {
     border-top: 1px solid var(--ph-border);
@@ -257,7 +279,7 @@
   .auth-split-form-title {
     font-size: 1.35rem;
     font-weight: 700;
-    color: var(--ph-text-heading);
+    color: var(--auth-register-text);
     margin: 0 0 20px;
     text-align: center;
   }

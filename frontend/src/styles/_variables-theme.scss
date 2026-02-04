@@ -80,6 +80,14 @@
   /* Auth (Login/Register): inputs bordes visibles */
   --auth-input-border: #cbd5e1; /* slate-300 */
   --auth-input-bg: #ffffff;
+  /* Register panel derecho (solo formulario): light */
+  --auth-register-panel-bg: #ffffff;
+  --auth-register-text: #0f172a;
+  --auth-register-input-bg: #ffffff;
+  --auth-register-input-border: #cbd5e1;
+  --auth-register-input-focus: #0891b2;
+  --auth-register-btn-bg: #0891b2;
+  --auth-register-btn-text: #ffffff;
 }
 
 // Dark: por data-theme o por clase .dark en html (compatibilidad Tailwind)
@@ -152,5 +160,13 @@ html.dark {
 
   /* Auth: inputs dark */
   --auth-input-border: #334155;
-  --auth-input-bg: #1e293b; /* slate-800 */
+  --auth-input-bg: #1e293b;
+  /* Register panel derecho: dark */
+  --auth-register-panel-bg: #020617;
+  --auth-register-text: #ffffff;
+  --auth-register-input-bg: #0f172a;
+  --auth-register-input-border: #334155;
+  --auth-register-input-focus: #06b6d4;
+  --auth-register-btn-bg: #06b6d4;
+  --auth-register-btn-text: #000000;
 }
