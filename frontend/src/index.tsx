@@ -10,7 +10,7 @@ import {
   createBrowserRouter,
 } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
-import Home from "./pages/Home/Home";
+import HomeOrLanding from "./functions/HomeOrLanding";
 import UserContextProvider from "./contexts/UserContext";
 import AuthRoute from "./functions/AuthRoute";
 import Auth from "./pages/Auth/Auth";
@@ -46,23 +46,13 @@ const router = createBrowserRouter([
     path: "/",
     element: <MainLayout />,
     children: [
-      {
-        path: "",
-        element: (
-          <AuthRoute>
-            <Outlet />
-          </AuthRoute>
-        ),
-        children: [
-          { path: "", element: <Home /> },
-          { path: "instrucciones", element: <Instructions /> },
-          { path: "micuenta", element: <MyAccount /> },
-          { path: "descargas", element: <Downloads /> },
-          { path: "planes", element: <Plans /> },
-          { path: "comprar", element: <Checkout /> },
-          { path: "actualizar-planes", element: <PlanUpgrade /> },
-        ],
-      },
+      { index: true, element: <HomeOrLanding /> },
+      { path: "instrucciones", element: <AuthRoute><Instructions /></AuthRoute> },
+      { path: "micuenta", element: <AuthRoute><MyAccount /></AuthRoute> },
+      { path: "descargas", element: <AuthRoute><Downloads /></AuthRoute> },
+      { path: "planes", element: <AuthRoute><Plans /></AuthRoute> },
+      { path: "comprar", element: <AuthRoute><Checkout /></AuthRoute> },
+      { path: "actualizar-planes", element: <AuthRoute><PlanUpgrade /></AuthRoute> },
       {
         path: "admin",
         element: (

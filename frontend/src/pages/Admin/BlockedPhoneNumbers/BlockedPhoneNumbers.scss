@@ -1,7 +1,10 @@
+@import "../../../styles/landing-design.scss";
+
 .blocked-phones-contain {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  color: $text-primary;
 
   .header {
     display: flex;
@@ -17,18 +20,21 @@
     input {
       border-radius: 100px;
       padding: 6px 20px;
-      background: transparent;
+      background: $card-glass;
+      border: 1px solid $card-glass-border;
+      color: $text-primary;
     }
 
     .btn-addPhone {
-      color: white;
-      background: #09e1f7;
+      color: #000;
+      background: $bear-blue-dim;
       padding: 6px 18px;
       border-radius: 100px;
+      box-shadow: 0 0 12px $bear-blue-glow;
     }
 
     .btn-addPhone:hover {
-      background-color: #00abbe;
+      opacity: 0.9;
     }
 
     .btn-addPhone:disabled {

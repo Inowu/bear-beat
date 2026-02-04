@@ -1,7 +1,11 @@
+@import "../../styles/landing-design.scss";
+
 .plans-main-container {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
   gap: 40px;
   margin-top: 20px;
+  color: $text-primary;
+  min-height: 60vh;
 }

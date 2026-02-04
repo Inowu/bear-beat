@@ -1,12 +1,14 @@
 @import "src/styles/mixin.scss";
+@import "../../styles/landing-design.scss";
 
 nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 8px;
-  background-color: #292929;
-  box-shadow: 0 5px 4px rgb(0 0 0 / 28%);
+  background: $bg-dark-soft;
+  border-bottom: 1px solid $card-glass-border;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
   height: 60px;
 
   .header {
@@ -20,8 +22,8 @@ nav {
 
     h2 {
       font-size: 2.4rem;
-      font-family: "Bear-font";
-      color: #ffffff;
+      font-family: "Bear-font", "Bear Font2", sans-serif;
+      color: $text-primary;
       margin: 0;
     }
 
@@ -35,15 +37,16 @@ nav {
     gap: 10px;
     padding: 0;
     margin: 0;
-   
+
     li {
       cursor: pointer;
-      color: #ffffff;
+      color: $text-primary;
       border-radius: 50px;
-      background-color: #404040;
+      background: $card-glass;
+      border: 1px solid $card-glass-border;
       padding: 4px 8px;
-      transition: all 0.1s ease;
-      font-family: "Poppins";
+      transition: all 0.2s ease;
+      font-family: "Poppins", sans-serif;
       font-size: 1.4rem;
       font-weight: bold;
       gap: 10px;
@@ -52,8 +55,10 @@ nav {
       align-items: center;
 
       &:hover {
-        background-color: #08e1f7;
-        color: #000000;
+        background: $bear-blue-dim;
+        color: #000;
+        border-color: $bear-blue-dim;
+        box-shadow: 0 0 16px $bear-blue-glow;
       }
     }
   }

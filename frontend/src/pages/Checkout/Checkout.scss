@@ -1,26 +1,31 @@
 @import "src/styles/mixin.scss";
+@import "../../styles/landing-design.scss";
 
 .checkout-main-container {
   display: flex;
   justify-content: center;
   align-items: flex-start;
+  color: $text-primary;
 
   .checkout-card {
     width: 100%;
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    background: linear-gradient(45deg, black, #505050);
+    background: $card-glass;
+    backdrop-filter: blur(12px);
+    border: 1px solid $card-glass-border;
     padding: 40px;
     border-radius: 12px;
-    box-shadow: -10px -10px 0 #08e1f7;
-    color: #ffffff;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25), 0 0 40px $bear-blue-glow;
+    color: $text-primary;
     gap: 60px;
     > div {
       flex: 1;
-
       h2 {
+        font-family: "Bear-font", "Bear Font2", sans-serif;
         font-size: 2.8rem;
+        color: $text-primary;
       }
     }
 
@@ -28,15 +33,15 @@
       display: flex;
       flex-direction: column;
       gap: 20px;
-
       .order-info-container {
-        background-color: #f3f3f31f;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid $card-glass-border;
         padding: 16px;
-        border-radius: 6px;
-
+        border-radius: 8px;
         .c-row {
           display: grid;
           grid-template-columns: 1fr 3fr;
+          color: $text-muted;
         }
       }
     }
@@ -46,34 +51,35 @@
       flex-direction: column;
       gap: 20px;
       .item-information-container {
-        background-color: #575757;
+        background: $bg-dark-soft;
+        border: 1px solid $card-glass-border;
         padding: 20px;
-        border-radius: 8px;
+        border-radius: 12px;
         display: flex;
         flex-direction: column;
         gap: 16px;
         hr {
           margin: 0;
-          border: 1px solid #ffffff;
+          border: 1px solid $card-glass-border;
           opacity: 1;
         }
-
         b {
+          color: $text-primary;
           svg {
             color: #25d366;
           }
         }
-
         .total {
           display: flex;
           justify-content: space-between;
+          color: $bear-blue-dim;
+          font-weight: 700;
         }
       }
     }
   }
 
   @include respond-to(md) {
-
     .checkout-card {
       width: fit-content;
       align-items: center;

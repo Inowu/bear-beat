@@ -1,4 +1,5 @@
 @import "src/styles/mixin.scss";
+@import "../../styles/landing-design.scss";
 
 .my-account-main-container {
   display: flex;
@@ -6,27 +7,29 @@
   justify-content: center;
   flex-wrap: wrap;
   width: 100%;
+  color: $text-primary;
+
   .card-status {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    border: 2px solid #323232;
+    border: 2px solid $card-glass-border;
     margin-left: 20px;
   }
   .default {
-    background-color: #06e1f7;
+    background-color: $bear-blue-dim;
   }
   .no-default {
     cursor: pointer;
     &:hover {
-      background-color: #06e1f7;
+      background-color: $bear-blue-dim;
       opacity: 0.67;
     }
   }
   .new-card-box {
     display: flex;
     width: 100%;
-    right: 0px;
+    right: 0;
     opacity: 0;
     transition: 0.3s ease all;
   }
@@ -59,8 +62,8 @@
       min-width: 200px;
       border-radius: 100%;
       aspect-ratio: 1/1;
-      background-color: #323232;
-
+      background: $bg-dark-soft;
+      border: 2px solid $card-glass-border;
       img {
         width: 100%;
         height: 100%;
@@ -69,22 +72,27 @@
     }
 
     h2 {
+      font-family: "Bear-font", "Bear Font2", sans-serif;
       font-size: 2.8rem;
       font-weight: bold;
+      color: $text-primary;
     }
 
     .user-info-container {
-      background-color: #ffffff;
-      border-radius: 8px;
+      background: $card-glass;
+      backdrop-filter: blur(12px);
+      border: 1px solid $card-glass-border;
+      border-radius: 12px;
       padding: 16px 20px;
-      box-shadow: 0 2px 6px -2px rgba(0, 0, 0, 0.39);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
       display: flex;
       flex-direction: column;
       gap: 10px;
-
+      color: $text-primary;
       .c-row {
         display: grid;
         grid-template-columns: 1fr 2fr;
+        color: $text-muted;
       }
     }
   }
@@ -96,21 +104,22 @@
     padding-bottom: 15px;
     .actives-ftp-container {
       width: 100%;
-
       h2 {
+        font-family: "Bear-font", "Bear Font2", sans-serif;
         font-size: 3.2rem;
         font-weight: bold;
         text-align: center;
         position: relative;
+        color: $text-primary;
         svg {
           position: absolute;
-          right: 0px;
+          right: 0;
           border-radius: 50%;
-          color: #323232;
+          color: $bear-blue-dim;
           transition: 0.3s ease all;
           cursor: pointer;
           &:hover {
-            opacity: 0.67;
+            opacity: 0.8;
           }
         }
         .active {
@@ -118,22 +127,24 @@
         }
       }
       .no-items-container {
-        background-color: #f8d7da;
-        border: 1px solid #f5c2c7;
+        background: rgba(248, 215, 218, 0.15);
+        border: 1px solid rgba(245, 194, 199, 0.4);
         padding: 16px;
-        border-radius: 5px;
+        border-radius: 8px;
         p {
-          color: #842029;
+          color: #f8a0a0;
           margin: 0;
           font-size: 1.4rem;
         }
       }
     }
     .actives-ftp-container.cards {
-      background-color: #ffffff;
-      box-shadow: 0px 6px 10px 0px #00000026;
-      border-radius: 6px;
+      background: $card-glass;
+      backdrop-filter: blur(12px);
+      border: 1px solid $card-glass-border;
+      border-radius: 12px;
       padding: 30px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
       display: flex;
       flex-direction: column;
       gap: 20px;
@@ -144,21 +155,23 @@
       }
       .card {
         border: none;
-        border-bottom: 1px solid #e2e2e2;
+        border-bottom: 1px solid $card-glass-border;
         border-radius: 0;
         padding-inline: 10px;
         padding-bottom: 10px;
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
         align-items: center;
-        .default-card{
-          color: #0096A5;
+        color: $text-primary;
+        .default-card {
+          color: $bear-blue-dim;
         }
         p {
           margin: 0;
+          color: $text-muted;
         }
         .circle {
-          background-color: #e2e2e2;
+          background: $bg-dark-soft;
           width: 45px;
           height: 45px;
           border-radius: 50px;
@@ -168,7 +181,7 @@
           }
         }
         svg {
-          color: #ff2d2c;
+          color: #ff6b6b;
           cursor: pointer;
         }
       }
@@ -176,7 +189,7 @@
         font-size: 16px;
         font-weight: 700;
         cursor: pointer;
-        color: #0096a5;
+        color: $bear-blue-dim;
         text-align: right;
       }
     }
@@ -189,50 +202,52 @@
         font-size: 2.8rem;
         font-weight: bold;
         text-align: center;
+        color: $text-primary;
       }
     }
 
     table.table {
-      border-radius: 6px;
+      border-radius: 12px;
       overflow: hidden;
-      box-shadow: 0 3px 8px rgb(0 0 0 / 14%);
+      border: 1px solid $card-glass-border;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
       thead {
-        background-color: #323232;
+        background: $bg-dark-soft !important;
         th {
-          background: none;
-
-          color: #06e1f7;
+          background: none !important;
+          color: $bear-blue-dim !important;
           padding: 10px;
+          border-color: $card-glass-border !important;
         }
       }
       svg {
         cursor: pointer;
         margin-left: 20px;
+        color: $bear-blue-dim;
         &:hover {
-          opacity: 0.67;
+          opacity: 0.8;
         }
       }
       tbody {
-        background-color: #e2e2e2;
-
-        tr {
-          td {
-            padding: 10px;
-            background: none;
-            vertical-align: middle;
-            img {
-              width: 35px;
-              cursor: pointer;
-            }
+        background: $card-glass !important;
+        tr td {
+          padding: 10px;
+          background: none !important;
+          vertical-align: middle;
+          color: $text-primary !important;
+          border-color: $card-glass-border !important;
+          img {
+            width: 35px;
+            cursor: pointer;
           }
         }
       }
     }
     .no-card {
       tbody {
-        background-color: #292929 !important;
+        background: $bg-dark-soft !important;
         .text-center {
-          color: #06e1f7;
+          color: $bear-blue-dim;
         }
       }
     }

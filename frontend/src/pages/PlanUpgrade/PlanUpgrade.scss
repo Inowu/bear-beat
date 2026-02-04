@@ -1,3 +1,7 @@
-.plan-upgrade{
-    display: flex;
+@import "../../styles/landing-design.scss";
+
+.plan-upgrade {
+  display: flex;
+  color: $text-primary;
+  min-height: 60vh;
 }

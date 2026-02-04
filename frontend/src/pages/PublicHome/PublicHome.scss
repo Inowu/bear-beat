@@ -1,0 +1,86 @@
+@import "../../styles/landing-design.scss";
+
+.public-home-container {
+  @extend .landing-layout;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  width: 100%;
+  padding: 24px;
+}
+
+.public-home-card {
+  @extend .landing-card;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 520px;
+  width: 100%;
+  padding: 48px 32px;
+  text-align: center;
+}
+
+.public-home-logo {
+  max-width: 280px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.public-home-tagline {
+  color: $text-muted;
+  font-size: 1.2rem;
+  line-height: 1.4;
+  margin: 0 0 12px;
+  strong {
+    color: $bear-blue-dim;
+    font-weight: 700;
+  }
+  .public-home-sep {
+    color: $text-dim;
+  }
+}
+
+.public-home-sub {
+  color: $text-dim;
+  font-size: 1.5rem;
+  margin: 0 0 32px;
+  line-height: 1.4;
+}
+
+.public-home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+}
+
+.public-home-btn {
+  display: inline-block;
+  padding: 12px 28px;
+  border-radius: 100px;
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.public-home-btn-primary {
+  background: linear-gradient(135deg, #00e6c1, $bear-blue-dim);
+  color: #000;
+  border: none;
+  box-shadow: 0 0 20px $bear-blue-glow;
+  &:hover {
+    box-shadow: 0 0 28px $bear-blue-glow;
+    transform: translateY(-2px);
+  }
+}
+
+.public-home-btn-secondary {
+  background: transparent;
+  color: $bear-blue-dim;
+  border: 2px solid $bear-blue-dim;
+  &:hover {
+    background: rgba(8, 225, 247, 0.15);
+  }
+}

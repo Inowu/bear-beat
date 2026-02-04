@@ -1,50 +1,55 @@
-.storage{
+@import "../../../styles/landing-design.scss";
+
+.storage {
     width: 100%;
     height: 100%;
     display: flex;
     justify-content: center;
+    color: $text-primary;
 
     .storage-card {
-        background-color: #ffffff;
+        background: $card-glass;
+        backdrop-filter: blur(12px);
+        border: 1px solid $card-glass-border;
         width: 60%;
         height: 40%;
         padding: 30px;
-        border-radius: 8px;
-        box-shadow: 0 3px 8px rgb(0 0 0 / 14%);
+        border-radius: 12px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
         display: flex;
         flex-direction: column;
         gap: 10px;
-      
+
         h2.title {
-          color: #474747;
+          color: $text-primary;
           font-size: 2.2rem;
-      
+          font-family: "Bear-font", "Bear Font2", sans-serif;
           span {
-            color: #0096a5;
+            color: $bear-blue-dim;
           }
         }
-      
+
         h3 {
-          color: #afafaf;
+          color: $text-muted;
           span {
-            color: #0096a5;
+            color: $bear-blue-dim;
             font-weight: bolder;
           }
         }
 
         .reserved-space-text {
-          color: #e90b0b;
+          color: #ff6b6b;
         }
-      
+
         .progress-bar-container {
-          background-color: #cff3f6;
+          background: $bg-dark-soft;
           padding: 1px;
           border-radius: 5px;
           display: flex;
-      
+
           .progress-bar {
             height: 16px;
-            background-color: #08e1f7;
+            background: $bear-blue-dim;
             border-radius: 3px;
           }
           .reserved-space-bar {
@@ -53,16 +58,15 @@
             background-color: #e90b0b;
           }
         }
-        .extra-gb{
-          color: #0096a5;
+        .extra-gb {
+          color: $bear-blue-dim;
           font-size: 1.4rem;
-          margin:0;
+          margin: 0;
           text-decoration: underline;
           cursor: pointer;
-          &:hover{
-            opacity: .67;
+          &:hover {
+            opacity: 0.8;
           }
         }
-      }
-      
+    }
 }

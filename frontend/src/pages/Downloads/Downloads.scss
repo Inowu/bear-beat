@@ -1,8 +1,12 @@
+@import "../../styles/landing-design.scss";
+
 .downloads-container {
   display: flex;
   flex-direction: column;
   gap: 30px;
   margin-top: 20px;
+  color: $text-primary;
+
   .header {
     display: flex;
     justify-content: space-between;
@@ -11,20 +15,24 @@
       gap: 15px;
       align-items: center;
       h2 {
+        font-family: "Bear-font", "Bear Font2", sans-serif;
         font-size: 2.6rem;
+        color: $text-primary;
       }
       svg {
         font-size: 3.4rem;
+        color: $bear-blue-dim;
       }
     }
   }
   .table-line {
     display: flex;
     justify-content: space-between;
-    border-bottom: 1px solid rgb(200, 198, 198);
+    border-bottom: 1px solid $card-glass-border;
     padding-inline: 20px;
     p {
       font-size: 1.4rem;
+      color: $text-muted;
     }
   }
   .card-container {
@@ -34,15 +42,18 @@
     .single-card {
       display: flex;
       justify-content: space-between;
-      background-color: #fff;
+      background: $card-glass;
+      backdrop-filter: blur(12px);
+      border: 1px solid $card-glass-border;
       padding-inline: 24px;
       padding-block: 16px;
       border-radius: 12px;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
       p {
         font-weight: 600;
         font-size: 1.6rem;
         margin: 0;
+        color: $text-primary;
       }
       .left-side {
         display: flex;
@@ -50,6 +61,7 @@
         align-items: center;
         svg {
           font-size: 2.4rem;
+          color: $bear-blue-dim;
         }
       }
     }

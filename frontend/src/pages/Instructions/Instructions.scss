@@ -1,4 +1,5 @@
 @import "src/styles/mixin.scss";
+@import "../../styles/landing-design.scss";
 
 .instructions-main-container {
   display: flex;
@@ -6,14 +7,21 @@
   justify-content: flex-start;
   gap: 20px;
   position: relative;
+  color: $text-primary;
 
   h1 {
+    font-family: "Bear-font", "Bear Font2", sans-serif;
     font-size: 3.2rem;
+    background: linear-gradient(135deg, $bear-blue 0%, rgba(255, 255, 255, 0.95) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
   }
 
   .instructions-intro {
     font-size: 1.6rem;
-    color: #444;
+    color: $text-muted;
     margin: -8px 0 0;
     max-width: 720px;
     line-height: 1.4;
@@ -26,28 +34,32 @@
     iframe {
       width: 123vh;
       height: 70vh;
+      border-radius: 12px;
+      border: 1px solid $card-glass-border;
     }
 
     ul.steps-nav-container {
       padding: 0;
       list-style: none;
       min-width: 200px;
-      background-color: #ffffff;
-      border-radius: 8px;
+      background: $card-glass;
+      backdrop-filter: blur(12px);
+      border: 1px solid $card-glass-border;
+      border-radius: 12px;
       height: fit-content;
       position: sticky;
-      box-shadow: 0 1px 4px rgb(0 0 0 / 18%);
-      position: sticky;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
       top: 20px;
 
       li {
-        padding: 5px 10px;
+        padding: 8px 12px;
         font-weight: bold;
-        color: #666666;
+        color: $text-muted;
         cursor: pointer;
-
+        border-radius: 8px;
         &:hover {
-          background-color: #cccccc;
+          color: $bear-blue-dim;
+          background: rgba(8, 225, 247, 0.1);
         }
       }
     }
@@ -61,9 +73,11 @@
       .step-card {
         width: 100%;
         padding: 32px;
-        background-color: #fff;
-        border-radius: 8px;
-        box-shadow: 0 1px 4px rgb(0 0 0 / 18%);
+        background: $card-glass;
+        backdrop-filter: blur(12px);
+        border: 1px solid $card-glass-border;
+        border-radius: 12px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
         display: flex;
         flex-direction: column;
         gap: 15px;
@@ -71,13 +85,19 @@
         h2 {
           font-size: 2.4rem;
           font-weight: bold;
-          border-bottom: 4px solid #00cbe0;
+          color: $text-primary;
+          border-bottom: 4px solid $bear-blue-dim;
         }
         p {
           font-size: 1.8rem;
+          color: $text-muted;
+          a {
+            color: $bear-blue-dim;
+          }
         }
         img {
           width: 100%;
+          border-radius: 8px;
         }
       }
     }

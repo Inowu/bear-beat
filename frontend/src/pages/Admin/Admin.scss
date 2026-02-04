@@ -1,7 +1,10 @@
+@import "../../styles/landing-design.scss";
+
 .admin-contain {
     display: flex;
     flex-direction: column;
     gap: 20px;
+    color: $text-primary;
 
     .header {
         display: flex;
@@ -78,22 +81,22 @@
         .input {
             border-radius: 100px;
             padding: 5px 25px;
-            // border: none;
-            background: transparent;
+            background: $card-glass;
+            border: 1px solid $card-glass-border;
+            color: $text-primary;
         }
 
         .btn-addUsers {
-            color: white;
-            background: #09e1f7;
-            ;
+            color: #000;
+            background: $bear-blue-dim;
             padding: 4px 20px;
             border-radius: 100px;
+            box-shadow: 0 0 16px $bear-blue-glow;
         }
 
         .btn-delete {
             color: white;
             background: #f71109;
-            ;
             padding: 4px 20px;
             border-radius: 100px;
         }
@@ -117,24 +120,26 @@
             justify-content: space-between;
             align-items: center;
             border-radius: 100px;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.54);
+            background: $card-glass;
+            border: 1px solid $card-glass-border;
             padding: 5px 20px;
 
             .data-contain {
                 display: flex;
                 flex-direction: column;
+                color: $text-primary;
             }
 
             .btn-active {
-                color: white;
-                background: #09e1f7;
-                ;
+                color: #000;
+                background: $bear-blue-dim;
                 padding: 4px 20px;
                 border-radius: 100px;
+                box-shadow: 0 0 12px $bear-blue-glow;
             }
 
             &:hover {
-                background-color: rgb(202, 202, 202)
+                border-color: $bear-blue-dim;
             }
         }
     }
@@ -166,50 +171,50 @@
     table {
         border-spacing: 0;
         width: 100%;
+        border: 1px solid $card-glass-border;
+        border-radius: 12px;
+        overflow: hidden;
 
         thead {
             z-index: 1;
-
             tr {
-                background-color: #dee2e6;
-                border-bottom: 1px solid white;
+                background: $bg-dark-soft !important;
+                border-bottom: 1px solid $card-glass-border;
                 position: sticky;
                 top: 0;
                 z-index: 2;
-
                 th {
                     font-size: 1.4rem;
                     max-width: 250px;
                     padding: 10px;
+                    color: $bear-blue-dim !important;
                 }
             }
-
             tr th:last-child {
                 text-align: center;
             }
-
         }
 
         tbody {
             tr {
-                background-color: #e8ecef;
-                border-bottom: 1px solid white;
-
+                background: $card-glass !important;
+                border-bottom: 1px solid $card-glass-border;
                 td {
                     font-size: 1.2rem;
-                    // max-width: 250px;
-                    padding-block: .5rem;
+                    padding-block: 0.5rem;
                     padding: 10px;
+                    color: $text-primary !important;
+                    border-color: $card-glass-border !important;
 
                     button {
                         font-size: 1.2rem;
-                        color: white;
-                        background: #09e1f7;
+                        color: #000;
+                        background: $bear-blue-dim;
                         padding: 4px 20px;
                         border-radius: 100px;
-
+                        box-shadow: 0 0 12px $bear-blue-glow;
                         &:hover {
-                            opacity: .67;
+                            opacity: 0.9;
                         }
                     }
 
@@ -256,9 +261,9 @@
                     }
 
                     .dropbtn {
-                        background-color: #09e1f7;
-                        color: white;
-                        width: 160px
+                        background: $bear-blue-dim;
+                        color: #000;
+                        width: 160px;
                     }
 
                     .dropdown {
@@ -274,8 +279,9 @@
                         display: none;
                         position: absolute;
                         min-width: auto;
-                        background-color: #dadee0;
-                        box-shadow: 0px 16px 16px 0px rgba(0, 0, 0, 0.2);
+                        background: $bg-dark-soft;
+                        border: 1px solid $card-glass-border;
+                        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
                         z-index: 1;
                         gap: 15px;
                         text-align: center;
@@ -286,19 +292,20 @@
                     }
 
                     .dropdown-content button {
-                        color: black;
+                        color: $text-primary;
                         padding: 10px 16px;
                         text-decoration: none;
                         display: block;
                         cursor: pointer;
-                        border-radius: 0%;
+                        border-radius: 0;
                         font-size: 1.2rem;
-                        background-color: #dadee0;
+                        background: transparent;
                         min-width: auto;
+                        border: none;
                     }
 
                     .dropdown-content button:hover {
-                        background-color: #d0d0d0;
+                        background: $card-glass;
                     }
 
                     .dropdown-content button:disabled {
@@ -315,7 +322,7 @@
                     }
 
                     .dropdown:hover .dropbtn {
-                        background-color: #09e1f7;
+                        background: $bear-blue-dim;
                     }
 
                     .dropdown-content button.icon-button {

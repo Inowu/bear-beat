@@ -1,4 +1,5 @@
 @import "src/styles/mixin.scss";
+@import "../styles/landing-design.scss";
 
 .main-layout-main-container {
   height: 100%;
@@ -6,7 +7,8 @@
   flex-direction: column;
   position: relative;
   z-index: 1;
-  background-color: #eeeeee;
+  background: $bg-dark;
+
   .content-container {
     flex: 1;
     display: flex;
@@ -29,5 +31,4 @@
       }
     }
   }
-  
 }
