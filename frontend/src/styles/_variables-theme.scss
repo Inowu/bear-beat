@@ -1,0 +1,55 @@
+// ========== TEMA: light (por defecto) y dark ==========
+// Se aplican con data-theme en <html>: "light" | "dark"
+
+:root,
+[data-theme="light"] {
+  // Fondo principal (área de contenido)
+  --theme-bg-primary: #f5f5f5;
+  --theme-bg-secondary: #ffffff;
+  // Navbar y sidebar
+  --theme-nav-bg: #292929;
+  --theme-nav-text: #ffffff;
+  --theme-nav-item-bg: #404040;
+  --theme-nav-item-hover-bg: #08e1f7;
+  --theme-nav-item-hover-text: #000000;
+  // Cards, inputs, bordes
+  --theme-card-bg: #ffffff;
+  --theme-card-border: rgba(0, 0, 0, 0.08);
+  --theme-input-bg: #ffffff;
+  --theme-input-border: #e0e0e0;
+  --theme-input-text: #1a1a1a;
+  // Texto
+  --theme-text-primary: #1a1a1a;
+  --theme-text-secondary: #4a4a4a;
+  --theme-text-muted: #6b7280;
+  // Acentos (Bear Beat)
+  --theme-accent: #08e1f7;
+  --theme-accent-dim: #06b8c9;
+  --theme-accent-glow: rgba(8, 225, 247, 0.35);
+  // Landing (cuando se usa en público)
+  --theme-landing-bg: #000000;
+  --theme-landing-text: #ffffff;
+}
+
+[data-theme="dark"] {
+  --theme-bg-primary: #121212;
+  --theme-bg-secondary: #1e1e1e;
+  --theme-nav-bg: #1a1a1a;
+  --theme-nav-text: #e5e5e5;
+  --theme-nav-item-bg: #2d2d2d;
+  --theme-nav-item-hover-bg: #08e1f7;
+  --theme-nav-item-hover-text: #000000;
+  --theme-card-bg: #252525;
+  --theme-card-border: rgba(255, 255, 255, 0.08);
+  --theme-input-bg: #2d2d2d;
+  --theme-input-border: #404040;
+  --theme-input-text: #e5e5e5;
+  --theme-text-primary: #e5e5e5;
+  --theme-text-secondary: #b0b0b0;
+  --theme-text-muted: #888888;
+  --theme-accent: #08e1f7;
+  --theme-accent-dim: #06b8c9;
+  --theme-accent-glow: rgba(8, 225, 247, 0.25);
+  --theme-landing-bg: #000000;
+  --theme-landing-text: #ffffff;
+}

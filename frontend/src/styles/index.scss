@@ -1,6 +1,6 @@
 @import "~bootstrap/scss/bootstrap";
+@import "./_variables-theme.scss";
 @import "./mixin.scss";
-@import "./landing-design.scss";
 @font-face {
   font-family: "Bear Font2";
   src: url("../assets/fonts/Arkhip_font.otf");
@@ -38,19 +38,13 @@ h6 {
 
 html {
   font-size: 62.5%;
-  -webkit-text-size-adjust: 100%;
 }
 
 body {
   font-family: "Poppins", sans-serif;
-  overflow-x: hidden;
-}
-
-// Móvil: mantener legibilidad (58% hacía el texto demasiado pequeño)
-@include respond-to(phone) {
-  html {
-    font-size: 62.5%;
-  }
+  background-color: var(--theme-bg-primary);
+  color: var(--theme-text-primary);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 label,
@@ -76,9 +70,8 @@ button.primary-pill {
   padding: 10px;
 
   &:hover {
-    color: #000;
-
-    box-shadow: 0 0 0 0.25rem rgba(130, 138, 145, 0.5);
+    color: var(--theme-nav-item-hover-text);
+    box-shadow: 0 0 0 0.25rem var(--theme-accent-glow);
   }
 }
 
@@ -86,7 +79,7 @@ button.primary-pill {
   background: linear-gradient(11deg, #00e6c1, #08e1f7);
 }
 .silver-bg {
-  background: linear-gradient(11deg, #eeeeee, #d5d5d5);
+  background: var(--theme-bg-primary);
 }
 .paypal-buttons {
   .buttons-container{
@@ -108,50 +101,45 @@ button.primary-pill {
   left: 50%;
   transform: translateX(-50%);
 }
-.search-input {
+.search-input{
   display: flex;
   position: relative;
-  background-color: white;
+  background-color: var(--theme-input-bg);
   width: 350px;
   padding-block: 10px;
   padding-inline: 15px;
   border-radius: 8px;
-  input {
+  border: 1px solid var(--theme-input-border);
+  input{
     background: transparent;
     border: none;
     outline: none;
     font-size: 1.2rem;
     font-weight: 600;
     width: 100%;
+    color: var(--theme-input-text);
   }
-  svg {
+  svg{
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
     right: 10px;
-    color: #6FDCF4;
+    color: var(--theme-accent);
     pointer-events: none;
   }
-  @media (max-width: 576px) {
-    width: 100%;
-    padding-block: 12px;
-  }
 }
-
-.select-input {
+.select-input{
   width: 200px;
-  select {
+  select{
     width: 100%;
-    background-color: white;
+    background-color: var(--theme-input-bg);
+    color: var(--theme-input-text);
     padding-block: 10px;
     padding-inline: 15px;
     border-radius: 8px;
-    border: none;
+    border: 1px solid var(--theme-input-border);
     font-size: 1.4rem;
     font-weight: 600;
     outline: none;
-  }
-  @media (max-width: 576px) {
-    width: 100%;
   }
 }

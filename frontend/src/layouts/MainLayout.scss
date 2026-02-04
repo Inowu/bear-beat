@@ -1,65 +1,49 @@
 @import "src/styles/mixin.scss";
-@import "../styles/landing-design.scss";
 
-// Mobile-first: base = móvil
 .main-layout-main-container {
   height: 100%;
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
   position: relative;
   z-index: 1;
-  background: $bg-dark;
+  background-color: var(--theme-bg-primary);
+  transition: background-color 0.2s ease;
 
   .content-container {
     flex: 1;
-    min-height: 0;
     display: flex;
     position: relative;
-    overflow-x: hidden;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow-y: scroll;
 
     > div {
       flex: 1;
-      width: 100%;
       margin-left: auto;
       margin-right: auto;
-      max-width: 100%;
-      padding: 12px 10px;
-      padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
-      box-sizing: border-box;
-    }
-
-    &.content-container--landing > div {
-      max-width: none;
-      padding: 0;
-      margin: 0;
-      padding-bottom: env(safe-area-inset-bottom, 0);
-    }
-  }
-
-  // Móvil: más espacio al final para que el último contenido se vea al hacer scroll
-  @include respond-to(tablet) {
-    .content-container > div {
-      padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px));
-    }
-
-    .content-container.content-container--landing > div {
-      padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
-    }
-  }
-
-  @include respond-from(tablet) {
-    .content-container > div {
-      padding: 16px;
       max-width: 1320px;
+      padding: 24px;
     }
   }
 
-  @include respond-from(lg) {
-    .content-container > div {
-      padding: 24px;
+  @include respond-to(md) {
+    .content-container {
+      > div {
+        padding: 12px;
+      }
+    }
+  }
+}
+
+// Landing pública: sin recuadro gris (siempre fondo oscuro)
+.main-layout-landing {
+  background-color: var(--theme-landing-bg) !important;
+
+  .content-container {
+    background-color: var(--theme-landing-bg) !important;
+
+    > * {
+      max-width: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
     }
   }
 }

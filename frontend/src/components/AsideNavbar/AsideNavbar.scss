@@ -1,52 +1,35 @@
 @import "src/styles/mixin.scss";
-@import "../../styles/landing-design.scss";
 
-// Mobile-first: base = drawer lateral (cerrado por defecto)
 aside {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 100;
   width: 100%;
-  max-width: 0;
-  height: 100vh;
-  margin-top: 0;
-  padding: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  background: $bg-dark-soft;
-  border-right: 1px solid $card-glass-border;
-  transition: max-width 0.3s ease, box-shadow 0.3s ease;
-
+  max-width: 300px;
+  padding: 0px 20px;
+  background-color: var(--theme-nav-bg);
+  position: sticky;
+  top: 0px;
+  transition: background-color 0.2s ease;
   img {
     width: 100%;
-    max-width: 260px;
   }
 
-  .btnSupport {
-    position: absolute;
-    bottom: 80px;
-    left: 16px;
+  .btnSupport{
+    position: fixed;
+    bottom: 20px;
     padding: 12px;
-    min-width: 48px;
-    min-height: 48px;
-    background: $bear-blue-dim;
-    color: #000;
+    background-color: var(--theme-card-bg);
+    color: var(--theme-text-primary);
     border-radius: 50%;
     cursor: pointer;
-    box-shadow: 0 0 16px $bear-blue-glow;
+    transition: background-color 0.2s, color 0.2s;
   }
 
   .nav-container {
-    color: $text-primary;
-    padding: 16px;
-
+    color: var(--theme-nav-text);
     h2 {
-      font-family: "Bear-font", "Bear Font2", sans-serif;
+      font-family: "Bear-font";
       text-align: center;
-      font-size: 1.6rem;
-      margin-bottom: 12px;
+      font-size: 2.4rem;
+      margin-bottom: 10px;
     }
 
     ul {
@@ -55,79 +38,60 @@ aside {
       margin: 0;
       display: flex;
       flex-direction: column;
-      gap: 8px;
-
+      gap: 10px;
       a {
         text-decoration: none;
       }
 
       li {
-        font-size: 1.5rem;
+        font-size: 1.8rem;
         width: 100%;
-        border-radius: 8px;
-        background: $card-glass;
-        border: 1px solid $card-glass-border;
-        padding: 14px 16px;
-        min-height: 48px;
+        border-radius: 5px;
+        background-color: var(--theme-nav-item-bg);
+        padding: 10px 20px;
         display: flex;
-        gap: 12px;
+        gap: 20px;
         align-items: center;
-        color: $text-primary;
+        color: var(--theme-nav-text);
         font-weight: bold;
-        transition: all 0.2s ease;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.54);
+        transition-property: background, background-color, color;
+        transition-duration: 0.2s;
+        transition-timing-function: ease;
         cursor: pointer;
-        box-sizing: border-box;
 
         &:hover {
           text-decoration: none;
-          color: #000;
-          background: $bear-blue-dim;
-          border-color: $bear-blue-dim;
-          box-shadow: 0 0 16px $bear-blue-glow;
+          color: var(--theme-nav-item-hover-text);
+          background-color: var(--theme-nav-item-hover-bg);
         }
       }
     }
   }
 
-  &.open {
-    max-width: 100%;
-    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
-  }
-}
-
-// Tablet: drawer más angosto, margen top si hay navbar
-@include respond-from(tablet) {
-  aside {
-    margin-top: 56px;
-    height: calc(100vh - 56px);
-    width: auto;
-    max-width: 0;
+  @include respond-to(md) {
+    position: fixed;
+    margin-top: 60px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0px;
+    max-width: 0px;
+    overflow: hidden;
+    z-index: 100;
+    transition: .3s ease all;
 
     &.open {
-      max-width: 280px;
-      padding: 16px;
+      max-width: 100%;
     }
-
-    .nav-container,
-    img {
-      max-width: 280px;
-      min-width: 260px;
+    .nav-container, img {
+      max-width: 300px;
+      min-width: 300px;
     }
-
-    .nav-container h2 {
-      font-size: 1.8rem;
+    .btnSupport{
+      position: absolute;
+      bottom: 100px;
     }
-
-    .nav-container ul li {
-      font-size: 1.6rem;
-      padding: 12px 16px;
-    }
-  }
-}
-
-@include respond-from(md) {
-  aside {
-    margin-top: 60px;
-    height: calc(100vh - 60px);
   }
 }

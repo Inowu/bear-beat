@@ -10,9 +10,10 @@ import {
   createBrowserRouter,
 } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
-import HomeOrLanding from "./functions/HomeOrLanding";
+import Home from "./pages/Home/Home";
 import UserContextProvider from "./contexts/UserContext";
 import AuthRoute from "./functions/AuthRoute";
+import LandingOrAuthRoute from "./functions/LandingOrAuthRoute";
 import Auth from "./pages/Auth/Auth";
 import NotAuthRoute from "./functions/NotAuthRoute";
 import LoginForm from "./components/Auth/LoginForm/LoginForm";
@@ -35,10 +36,8 @@ import { BlockedPhoneNumbers } from "./pages/Admin/BlockedPhoneNumbers/BlockedPh
 import { PlanUpgrade } from "./pages/PlanUpgrade/PlanUpgrade";
 import { SSEProvider } from "react-hooks-sse";
 import DownloadContextProvider from "./contexts/DownloadContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import Downloads from "./pages/Downloads/Downloads";
-import { initFacebookPixel } from "./utils/facebookPixel";
-
-initFacebookPixel();
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -49,13 +48,19 @@ const router = createBrowserRouter([
     path: "/",
     element: <MainLayout />,
     children: [
-      { index: true, element: <HomeOrLanding /> },
-      { path: "instrucciones", element: <AuthRoute><Instructions /></AuthRoute> },
-      { path: "micuenta", element: <AuthRoute><MyAccount /></AuthRoute> },
-      { path: "descargas", element: <AuthRoute><Downloads /></AuthRoute> },
-      { path: "planes", element: <AuthRoute><Plans /></AuthRoute> },
-      { path: "comprar", element: <AuthRoute><Checkout /></AuthRoute> },
-      { path: "actualizar-planes", element: <AuthRoute><PlanUpgrade /></AuthRoute> },
+      {
+        path: "",
+        element: <LandingOrAuthRoute />,
+        children: [
+          { path: "", element: <Home /> },
+          { path: "instrucciones", element: <Instructions /> },
+          { path: "micuenta", element: <MyAccount /> },
+          { path: "descargas", element: <Downloads /> },
+          { path: "planes", element: <Plans /> },
+          { path: "comprar", element: <Checkout /> },
+          { path: "actualizar-planes", element: <PlanUpgrade /> },
+        ],
+      },
       {
         path: "admin",
         element: (
@@ -101,8 +106,9 @@ const router = createBrowserRouter([
 // 'https://kale67.world/trpc'
 root.render(
   <React.StrictMode>
-    <UserContextProvider>
-      <DownloadContextProvider>
+    <ThemeProvider>
+      <UserContextProvider>
+        <DownloadContextProvider>
         <PayPalScriptProvider
           options={{
             clientId: process.env.REACT_APP_ENVIRONMENT === 'development'
@@ -114,8 +120,9 @@ root.render(
             <RouterProvider router={router} />
           </SSEProvider>
         </PayPalScriptProvider>
-      </DownloadContextProvider>
-    </UserContextProvider>
+        </DownloadContextProvider>
+      </UserContextProvider>
+    </ThemeProvider>
   </React.StrictMode>
 );
 

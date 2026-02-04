@@ -24,7 +24,7 @@
 
       h2 {
         font-family: "Bear-font", "Bear Font2", sans-serif;
-        font-size: 1.8rem;
+        font-size: 2rem;
         color: $text-primary;
       }
 
@@ -38,12 +38,12 @@
   .table-line {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
     border-bottom: 1px solid $card-glass-border;
-    padding: 10px 12px;
+    padding: 14px 12px;
 
     p {
-      font-size: 1.2rem;
+      font-size: 1.4rem;
       color: $text-muted;
     }
   }
@@ -57,17 +57,17 @@
       display: flex;
       flex-direction: column;
       align-items: flex-start;
-      gap: 12px;
+      gap: 14px;
       background: $card-glass;
       backdrop-filter: blur(12px);
       border: 1px solid $card-glass-border;
-      padding: 12px 12px;
-      border-radius: 12px;
+      padding: 16px 14px;
+      border-radius: 14px;
       box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
 
       p {
         font-weight: 600;
-        font-size: 1.4rem;
+        font-size: 1.5rem;
         margin: 0;
         color: $text-primary;
       }

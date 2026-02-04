@@ -1,97 +1,71 @@
 @import "src/styles/mixin.scss";
-@import "../../styles/landing-design.scss";
 
-// Mobile-first: base = móvil (tipografía legible en teléfono)
 .home-main-container {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  color: $text-primary;
-  width: 100%;
-  overflow-x: hidden;
-
+  gap: 20px;
   .header-contain {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-
-    h2 {
-      font-family: "Bear-font", "Bear Font2", sans-serif;
-      font-size: 2rem;
-      line-height: 1.25;
-      color: $text-primary;
-      margin: 0;
+    justify-content: space-between;
+  }
+  h2 {
+    font-size: 2.8rem;
+    color: var(--theme-text-primary);
+  }
+  .btn-back {
+    button {
+      display: flex;
+      gap: 10px;
+      padding-block: 5px;
+      padding-inline: 20px;
+      border-radius: 100px;
+      background: var(--theme-nav-item-bg);
+      color: var(--theme-nav-text);
+      font-weight: 600;
+      align-items: center;
+      &:hover {
+        color: var(--theme-nav-item-hover-text);
+        background: var(--theme-nav-item-hover-bg);
+        gap: 15px;
+        transition: 0.3s ease all;
+      }
     }
   }
-
-  .btn-back button {
-    display: flex;
-    gap: 8px;
-    padding: 10px 16px;
-    border-radius: 100px;
-    background: $bg-dark-soft;
-    border: 1px solid $card-glass-border;
-    color: $text-muted;
-    font-weight: 600;
-    font-size: 1.4rem;
-    align-items: center;
-    min-height: 44px;
-
-    &:hover {
-      color: $bear-blue-dim;
-      border-color: $bear-blue-dim;
-      transition: 0.2s ease all;
-    }
-  }
-
   .folder-structure-container {
     display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    align-items: center;
-
     div {
       display: flex;
       align-items: center;
     }
-
     p {
-      margin: 0 2px;
+      margin: 0px 3px 0px 3px;
       cursor: pointer;
-      padding: 8px 10px;
-      color: $text-muted;
-      font-size: 1.4rem;
+      padding: 5px;
+      color: var(--theme-text-primary);
     }
-
     p:hover {
-      color: $bear-blue-dim;
-      border-radius: 8px;
+      background-color: var(--theme-card-border);
+      border-radius: 10px;
     }
-
     .last-folder {
       cursor: default;
-      color: $text-primary;
     }
   }
-
   .folders-navigation-container {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    padding-bottom: 16px;
-
+    padding-bottom: 20px;
     .header {
       display: grid;
-      grid-template-columns: 1fr auto;
-      border-bottom: 1px solid $bear-blue-dim;
-      color: $bear-blue-dim;
-      padding: 12px 8px;
-      font-size: 1.45rem;
-      gap: 8px;
+      grid-template-columns: 2fr 1fr 1fr;
+      border-bottom: 1px solid var(--theme-accent);
+      color: var(--theme-accent);
+      padding: 8px;
 
-      .modified-column {
-        display: none;
+      div {
+        font-size: 1.4rem;
+        cursor: pointer;
       }
     }
 
@@ -102,214 +76,90 @@
 
       .folder-card {
         display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 8px;
-        background: $card-glass;
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid $card-glass-border;
-        border-radius: 12px;
+        grid-template-columns: 2fr 1fr 1fr;
+        background-color: var(--theme-card-bg);
+        border: 1px solid var(--theme-card-border);
+        border-radius: 8px;
         cursor: pointer;
-        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
         position: relative;
-        padding: 10px 8px;
-        min-height: 56px;
-
-        .modified-column {
-          display: none;
-        }
-
+        transition: background-color 0.2s ease;
         .name-container {
-          padding: 4px 8px;
-          min-width: 0;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          // Espacio para que el botón descarga no tape el texto en móvil
-          padding-right: 48px;
+          padding: 8px;
+        }
+        .download-button {
+          position: absolute;
+          transform: translateY(-50%);
+          top: 50%;
+          right: 20px;
+          z-index: 4;
+          &:hover {
+            opacity: 0.6;
+          }
+        }
+        &:hover {
+          background-color: var(--theme-bg-secondary);
+        }
+        svg {
+          width: 3rem;
+          height: 3rem;
+        }
+        div {
+          display: flex;
+          align-items: center;
+          gap: 15px;
 
           h3, h4 {
-            color: $text-primary;
-            line-height: 1.35;
+            color: var(--theme-text-primary);
           }
-
           h3 {
-            font-size: 1.55rem;
+            font-size: 1.5rem;
             font-weight: 400;
           }
 
           h4 {
-            font-size: 1.35rem;
+            font-size: 1.2rem;
             font-weight: 400;
-            color: $text-muted;
           }
-        }
-
-        .download-button {
-          position: absolute;
-          top: 50%;
-          right: 8px;
-          transform: translateY(-50%);
-          z-index: 4;
-          color: $bear-blue-dim;
-          min-width: 40px;
-          min-height: 40px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-
-          &:hover {
-            opacity: 0.8;
-          }
-        }
-
-        &:hover {
-          border-color: $bear-blue-dim;
-          box-shadow: 0 0 20px $bear-blue-glow;
-        }
-
-        svg {
-          width: 2.4rem;
-          height: 2.4rem;
-        }
-
-        div {
-          display: flex;
-          align-items: center;
-          gap: 10px;
         }
       }
 
-      .folder-card.video-card {
+      .video-card {
         grid-template-columns: auto 1fr auto;
         padding: 10px;
-
+        align-items: center;
         .name-container {
-          padding-inline: 12px;
-          padding-right: 8px;
+          padding-inline: 30px;
           justify-content: center;
         }
       }
     }
   }
 
-  .search-input {
-    width: 100%;
-    max-width: 100%;
-    background: $card-glass;
-    border: 1px solid $card-glass-border;
-    border-radius: 8px;
-    font-size: 1.6rem;
-
-    input {
-      color: $text-primary;
-      font-size: 1.6rem;
-      min-height: 44px;
-
-      &::placeholder {
-        color: $text-dim;
+  @include respond-to(md) {
+    .folders-navigation-container {
+      .header {
+        .modified-column {
+          display: none;
+        }
       }
-    }
 
-    svg {
-      color: $bear-blue-dim;
+      .folders-cards-container {
+        .folder-card {
+          .modified-column {
+            display: none;
+          }
+        }
+      }
     }
   }
-}
-
-// Tablet+
-@include respond-from(tablet) {
-  .home-main-container {
-    gap: 16px;
-
-    .header-contain h2 {
-      font-size: 2.2rem;
-    }
-
-    .folders-navigation-container .header {
-      grid-template-columns: 2fr 1fr;
-      font-size: 1.3rem;
-      padding: 8px;
-    }
-
-    .folders-cards-container .folder-card {
-      grid-template-columns: 2fr 1fr auto;
-      padding: 8px 12px;
-
-      .name-container h3 {
-        font-size: 1.45rem;
-      }
-
-      .download-button {
-        right: 16px;
-      }
-
-      svg {
-        width: 2.8rem;
-        height: 2.8rem;
-      }
-    }
-
-    .folder-card.video-card {
-      grid-template-columns: auto 1fr auto !important;
-    }
-  }
-}
-
-// Desktop (md+): mostrar columna "modificado"
-@include respond-from(md) {
-  .home-main-container {
-    gap: 20px;
-
+  @media (max-width: 700px) {
     .header-contain {
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: center;
-
-      h2 {
-        font-size: 2.8rem;
-      }
+      flex-direction: column;
+      gap: 20px;
     }
-
-    .folders-navigation-container .header {
-      grid-template-columns: 2fr 1fr 1fr;
-      font-size: 1.4rem;
-
-      .modified-column {
-        display: block;
-      }
-    }
-
-    .folders-cards-container .folder-card {
-      grid-template-columns: 2fr 1fr 1fr;
-
-      .modified-column {
-        display: flex;
-      }
-
-      .name-container h3 {
-        font-size: 1.5rem;
-      }
-
-      .name-container h4 {
-        font-size: 1.2rem;
-      }
-
-      .download-button {
-        right: 20px;
-      }
-
-      svg {
-        width: 3rem;
-        height: 3rem;
-      }
-    }
-
-    .folder-card.video-card {
-      grid-template-columns: auto 1fr auto !important;
-    }
-
     .search-input {
-      max-width: 400px;
+      width: 100%;
     }
   }
 }

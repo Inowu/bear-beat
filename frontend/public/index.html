@@ -71,6 +71,22 @@
 </head>
 
 <body>
+  <script>
+    (function() {
+      try {
+        var stored = localStorage.getItem('bear-theme');
+        var theme = 'light';
+        if (stored === 'dark') theme = 'dark';
+        else if (stored === 'system') {
+          theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        } else if (stored === 'schedule') {
+          var h = new Date().getHours();
+          theme = (h >= 6 && h < 21) ? 'light' : 'dark';
+        }
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) {}
+    })();
+  </script>
   <noscript>You need to enable JavaScript to run this app.</noscript>
   <div id="root"></div>
   <!--

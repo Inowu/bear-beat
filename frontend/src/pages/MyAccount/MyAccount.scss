@@ -1,15 +1,16 @@
 @import "src/styles/mixin.scss";
 @import "../../styles/landing-design.scss";
 
-// Mobile-first
+// Mobile-first (tipo app nativa)
 .my-account-main-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
   width: 100%;
   color: $text-primary;
   overflow-x: hidden;
+  padding-bottom: 24px;
 
   .card-status {
     width: 20px;
@@ -90,12 +91,18 @@
       text-align: center;
     }
 
+    .cancel {
+      min-height: 48px;
+      padding: 14px 24px;
+      font-size: 1.2rem;
+    }
+
     .user-info-container {
       background: $card-glass;
       backdrop-filter: blur(12px);
       border: 1px solid $card-glass-border;
-      border-radius: 12px;
-      padding: 14px 16px;
+      border-radius: 14px;
+      padding: 18px 16px;
       box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
       width: 100%;
       box-sizing: border-box;
@@ -107,9 +114,9 @@
       .c-row {
         display: grid;
         grid-template-columns: 1fr;
-        gap: 4px 8px;
+        gap: 6px 8px;
         color: $text-muted;
-        font-size: 1.3rem;
+        font-size: 1.4rem;
       }
     }
   }

@@ -1,160 +1,192 @@
 @import "src/styles/mixin.scss";
-@import "../../styles/landing-design.scss";
 
-// Mobile-first: base = móvil (burger visible, nav compacto)
 nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 10px;
-  min-height: 56px;
-  background: $bg-dark-soft;
-  border-bottom: 1px solid $card-glass-border;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+  padding: 8px;
+  background-color: var(--theme-nav-bg);
+  box-shadow: 0 5px 4px rgb(0 0 0 / 28%);
+  height: 60px;
+  transition: background-color 0.2s ease;
 
   .header {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 
     img {
-      width: 44px;
-      height: auto;
+      width: 70px;
     }
 
     h2 {
-      font-size: 1.5rem;
-      font-family: "Bear-font", "Bear Font2", sans-serif;
-      color: $text-primary;
+      font-size: 2.4rem;
+      font-family: "Bear-font";
+      color: var(--theme-nav-text);
       margin: 0;
+      transition: color 0.2s ease;
     }
 
     div.burger-btn {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 10px;
-      border-radius: 50%;
-      background: $card-glass;
-      border: 1px solid $card-glass-border;
-      min-width: 44px;
-      min-height: 44px;
-      cursor: pointer;
-
-      svg {
-        color: $text-primary;
-        width: 20px;
-        height: 20px;
-      }
+      display: none;
     }
   }
-
   ul {
     display: flex;
     list-style: none;
-    gap: 6px;
+    gap: 10px;
     padding: 0;
     margin: 0;
-
+   
     li {
       cursor: pointer;
-      color: $text-primary;
-      border-radius: 50%;
-      background: $card-glass;
-      border: 1px solid $card-glass-border;
-      padding: 10px;
-      min-width: 44px;
-      min-height: 44px;
-      transition: all 0.2s ease;
+      color: var(--theme-nav-text);
+      border-radius: 50px;
+      background-color: var(--theme-nav-item-bg);
+      padding: 4px 8px;
+      transition: all 0.1s ease;
+      font-family: "Poppins";
       font-size: 1.4rem;
+      font-weight: bold;
+      gap: 10px;
       display: flex;
       justify-content: center;
       align-items: center;
 
       &:hover {
-        background: $bear-blue-dim;
-        color: #000;
-        border-color: $bear-blue-dim;
-        box-shadow: 0 0 16px $bear-blue-glow;
+        background-color: var(--theme-nav-item-hover-bg);
+        color: var(--theme-nav-item-hover-text);
       }
+    }
+  }
 
-      span {
-        display: none;
+  .theme-toggle-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 8px;
+
+    .theme-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      background: var(--theme-nav-item-bg);
+      color: var(--theme-nav-text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, color 0.2s;
+      padding: 0;
+
+      &:hover {
+        background: var(--theme-nav-item-hover-bg);
+        color: var(--theme-nav-item-hover-text);
       }
 
       svg {
-        width: 1.6rem;
-        height: 1.6rem;
+        width: 18px;
+        height: 18px;
       }
     }
 
-    a {
-      text-decoration: none;
-      color: inherit;
+    .theme-dropdown-menu {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 8px;
+      min-width: 180px;
+      background: var(--theme-card-bg);
+      border: 1px solid var(--theme-card-border);
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      padding: 8px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+
+      button {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        border: none;
+        border-radius: 8px;
+        background: transparent;
+        color: var(--theme-text-primary);
+        font-size: 1.4rem;
+        font-weight: 500;
+        cursor: pointer;
+        text-align: left;
+        transition: background 0.15s;
+
+        &:hover {
+          background: var(--theme-nav-item-bg);
+          color: var(--theme-nav-text);
+        }
+        &.active {
+          background: var(--theme-accent);
+          color: var(--theme-nav-item-hover-text);
+        }
+        svg {
+          width: 18px;
+          height: 18px;
+          flex-shrink: 0;
+        }
+      }
     }
   }
-}
 
-// Tablet: texto en títulos, iconos un poco más grandes
-@include respond-from(tablet) {
-  nav {
-    padding: 8px 12px;
-    min-height: 60px;
+  @include respond-to(md) {
 
     .header {
-      gap: 10px;
+      div.burger-btn {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 8px;
+        border-radius: 50px;
+        background-color: var(--theme-nav-item-bg);
 
-      img {
-        width: 54px;
+        svg {
+          color: var(--theme-nav-text);
+          width: 20px;
+          height: 20px;
+        }
       }
+    }
 
+    .theme-toggle-wrap {
+      .theme-btn {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
+      }
+    }
+
+    ul {
+      li {
+        padding: 8px;
+        svg {
+          width: 1.6rem;
+          height: 1.6rem!important;
+        }
+        span {
+          display: none;
+        }
+      }
+    }
+  }
+
+  @include respond-to(sm) {
+    .header {
       h2 {
-        font-size: 1.8rem;
-      }
-
-      div.burger-btn svg {
-        width: 22px;
-        height: 22px;
+        display: none;
       }
     }
-
-    ul li {
-      padding: 10px 12px;
-      min-width: 44px;
-      min-height: 44px;
-      border-radius: 50px;
-      font-size: 1.4rem;
-
-      svg {
-        width: 1.8rem;
-        height: 1.8rem;
-      }
-    }
-  }
-}
-
-// Desktop (md+): mostrar textos en nav, mismo burger para aside
-@include respond-from(md) {
-  nav {
-    .header h2 {
-      font-size: 2rem;
-    }
-
-    ul li {
-      gap: 8px;
-      padding: 6px 12px 6px 10px;
-      min-width: auto;
-
-      span {
-        display: inline;
-      }
-    }
-  }
-}
-
-// Pantallas muy pequeñas: ocultar título solo texto
-@include respond-to(sm) {
-  nav .header h2 {
-    display: none;
   }
 }

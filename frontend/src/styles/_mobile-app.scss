@@ -1,0 +1,43 @@
+// ============================================================
+// Estilos globales móvil: que todo se sienta como app nativa
+// - Tipografía legible (mín 16px en inputs/body)
+// - Áreas táctiles mín 44–48px
+// - Sin zoom forzado en inputs (iOS)
+// ============================================================
+@import "src/styles/mixin.scss";
+
+// Móvil y tablet: base legible
+@include respond-to(tablet) {
+  // Evitar texto demasiado pequeño en toda la app
+  body {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  // Inputs/selects: 16px evita zoom automático en iOS
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  // Botones: área táctil mínima tipo app nativa
+  button,
+  .btn {
+    min-height: 48px;
+    padding: 12px 18px;
+    font-size: 1.15rem;
+  }
+
+  label {
+    font-size: 1.15rem;
+  }
+}
+
+@include respond-to(phone) {
+  button,
+  .btn {
+    min-height: 48px;
+    padding: 14px 20px;
+    font-size: 1.2rem;
+  }
+}

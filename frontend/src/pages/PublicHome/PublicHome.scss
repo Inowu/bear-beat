@@ -38,19 +38,24 @@
 
   .public-home-header-link {
     color: $text-muted;
-    font-size: 1.4rem;
+    font-size: 1.5rem;
     font-weight: 600;
     text-decoration: none;
+    padding: 10px 14px;
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
     &:hover {
       color: $bear-blue-dim;
     }
   }
 
   .public-home-header-btn {
-    padding: 10px 20px;
-    border-radius: 100px;
+    padding: 14px 24px;
+    min-height: 48px;
+    border-radius: 14px;
     font-weight: 700;
-    font-size: 1.4rem;
+    font-size: 1.5rem;
     background: linear-gradient(135deg, #00e6c1, $bear-blue-dim);
     color: #000;
     text-decoration: none;
@@ -71,21 +76,21 @@
 
 .public-home-tagline-hero {
   color: $bear-blue-dim;
-  font-size: 1.15rem;
+  font-size: 1.25rem;
   font-weight: 600;
-  margin: 0 0 8px;
+  margin: 0 0 10px;
 }
 
 .public-home-headline {
-  font-size: clamp(1.75rem, 5vw, 2.5rem);
-  line-height: 1.2;
-  margin: 0 0 16px;
+  font-size: clamp(1.9rem, 5vw, 2.5rem);
+  line-height: 1.25;
+  margin: 0 0 18px;
   letter-spacing: -0.02em;
 }
 
 .public-home-hero-desc {
   color: $text-muted;
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   line-height: 1.55;
   margin: 0 0 24px;
   max-width: 640px;
@@ -96,8 +101,8 @@
 .public-home-hero-ctas {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  max-width: 280px;
+  gap: 14px;
+  max-width: 320px;
   margin: 0 auto 28px;
 }
 
@@ -107,7 +112,7 @@
   justify-content: center;
   gap: 16px 20px;
   color: $text-dim;
-  font-size: 0.9rem;
+  font-size: 1.05rem;
   strong {
     color: $bear-blue-dim;
   }
@@ -163,7 +168,7 @@
 
 .public-home-section-title {
   text-align: center;
-  font-size: clamp(1.35rem, 4vw, 1.65rem);
+  font-size: clamp(1.5rem, 4vw, 1.65rem);
   color: $text-primary;
   margin: 0 0 16px;
   font-weight: 700;
@@ -172,22 +177,22 @@
 .public-home-bento-intro {
   text-align: center;
   color: $bear-blue-dim;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   font-weight: 600;
-  margin: 0 0 4px;
+  margin: 0 0 6px;
 }
 
 .public-home-bento-intro-sub {
   text-align: center;
   color: $text-muted;
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   margin: 0 0 16px;
 }
 
 .public-home-bento-desc {
   text-align: center;
   color: $text-dim;
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   line-height: 1.5;
   margin: 0 0 24px;
   max-width: 640px;
@@ -388,6 +393,11 @@
   padding: 32px 0 24px;
   border-top: 1px solid $card-glass-border;
   text-align: center;
+
+  // Móvil: más espacio abajo para que el pie se vea completo (safe area + no tapar por chat)
+  @include respond-to(tablet) {
+    padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 .public-home-footer-logo img {
@@ -416,8 +426,12 @@
 
 .public-home-footer-copy {
   color: $text-dim;
-  font-size: 0.85rem;
+  font-size: 1rem;
   margin: 0;
+}
+
+.public-home-footer-links a {
+  font-size: 1.2rem;
 }
 
 // ----- Responsive -----
