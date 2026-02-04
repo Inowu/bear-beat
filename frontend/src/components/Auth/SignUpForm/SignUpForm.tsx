@@ -269,10 +269,11 @@ function SignUpForm() {
                   value={dialCode}
                   onChange={(e) => setDialCode(e.target.value)}
                   aria-label="Código de país"
+                  title={selectedCountry?.name}
                 >
                   {allowedCountryOptions.map((c) => (
                     <option key={c.code} value={c.dial_code.slice(1)}>
-                      {c.dial_code} {c.name}
+                      {c.dial_code}
                     </option>
                   ))}
                 </select>
@@ -328,7 +329,7 @@ function SignUpForm() {
             </div>
             {!loader ? (
               <button className="signup-submit-btn" type="submit">
-                REGISTRARSE
+                CREAR MI CUENTA PRO
               </button>
             ) : (
               <Spinner size={3} width={0.3} color="#00e2f7" />

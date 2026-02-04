@@ -80,11 +80,11 @@
   /* Auth (Login/Register): inputs bordes visibles */
   --auth-input-border: #cbd5e1; /* slate-300 */
   --auth-input-bg: #ffffff;
-  /* Register panel derecho (solo formulario): light */
+  /* Register panel derecho (solo formulario): light - inputs chunky slate-50/slate-300 */
   --auth-register-panel-bg: #ffffff;
   --auth-register-text: #0f172a;
-  --auth-register-input-bg: #ffffff;
-  --auth-register-input-border: #cbd5e1;
+  --auth-register-input-bg: #f8fafc; /* slate-50 */
+  --auth-register-input-border: #cbd5e1; /* slate-300 */
   --auth-register-input-focus: #0891b2;
   --auth-register-btn-bg: #0891b2;
   --auth-register-btn-text: #ffffff;
@@ -172,11 +172,11 @@ html.dark {
   /* Auth: inputs dark */
   --auth-input-border: #334155;
   --auth-input-bg: #1e293b;
-  /* Register panel derecho: dark */
+  /* Register panel derecho: dark - inputs slate-900 / border slate-700 */
   --auth-register-panel-bg: #020617;
   --auth-register-text: #ffffff;
-  --auth-register-input-bg: #0f172a;
-  --auth-register-input-border: #334155;
+  --auth-register-input-bg: #0f172a; /* slate-900 */
+  --auth-register-input-border: #334155; /* slate-700 */
   --auth-register-input-focus: #06b6d4;
   --auth-register-btn-bg: #06b6d4;
   --auth-register-btn-text: #000000;

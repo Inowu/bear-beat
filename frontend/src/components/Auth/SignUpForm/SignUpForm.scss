@@ -22,10 +22,11 @@ form.sign-up-form {
     margin-bottom: 6px;
   }
 
+  // Inputs chunky: py-3 px-4, border slate, focus ring-2 ring-cyan-500/50
   > .c-row > input {
     width: 100%;
-    min-height: 48px;
-    padding: 12px 16px;
+    min-height: 52px;
+    padding: 14px 18px; /* py-3 px-4 + chunky */
     font-size: 16px;
     box-sizing: border-box;
     border-radius: 12px;
@@ -41,14 +42,14 @@ form.sign-up-form {
     &:focus {
       outline: none;
       border-color: var(--auth-register-input-focus);
-      box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.25);
+      box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.5); /* ring-2 ring-cyan-500/50 */
     }
   }
 
-  // Fila WhatsApp: bandera + select + input
+  // Fila WhatsApp: solo bandera + código (+52), mismo alto (h-12) que el resto
   .c-row--phone {
     .signup-phone-wrap {
-      min-height: 48px;
+      min-height: 52px;
       display: flex;
       align-items: stretch;
       border-radius: 12px;
@@ -60,7 +61,7 @@ form.sign-up-form {
 
     .signup-phone-wrap:focus-within {
       border-color: var(--auth-register-input-focus);
-      box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.25);
+      box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.5);
     }
   }
 
@@ -68,7 +69,7 @@ form.sign-up-form {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 48px;
+    width: 52px;
     flex-shrink: 0;
     font-size: 1.5rem;
     line-height: 1;
@@ -76,17 +77,19 @@ form.sign-up-form {
     background: var(--auth-register-input-bg);
   }
 
+  // Select: solo código (+52), ancho mínimo para no mostrar nombre de país
   .signup-phone-select {
     flex: 0 0 auto;
     min-width: 0;
-    width: 100px;
-    height: 48px;
-    padding: 0 8px 0 12px;
+    width: 72px;
+    height: 100%;
+    min-height: 52px;
+    padding: 0 24px 0 12px;
     border: none;
     border-right: 2px solid var(--auth-register-input-border);
     background: transparent;
     color: var(--auth-register-text);
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
     cursor: pointer;
     appearance: none;
@@ -107,8 +110,8 @@ form.sign-up-form {
   .signup-phone-input {
     flex: 1;
     min-width: 0;
-    height: 48px;
-    padding: 12px 16px;
+    min-height: 52px;
+    padding: 14px 18px;
     border: none;
     background: transparent;
     color: var(--auth-register-text);
@@ -132,21 +135,24 @@ form.sign-up-form {
 
   .signup-submit-btn {
     width: 100%;
-    min-height: 52px;
+    min-height: 56px;
     padding: 14px 20px;
     font-size: 1rem;
     font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
     border-radius: 12px;
     border: none;
     cursor: pointer;
     background: var(--auth-register-btn-bg);
     color: var(--auth-register-btn-text);
+    box-shadow: 0 10px 15px -3px rgba(6, 182, 212, 0.3), 0 4px 6px -4px rgba(6, 182, 212, 0.2); /* shadow-lg shadow-cyan-500/30 */
     transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
 
     &:hover {
       filter: brightness(1.08);
       transform: translateY(-1px);
-      box-shadow: 0 8px 20px rgba(6, 182, 212, 0.3);
+      box-shadow: 0 14px 20px -3px rgba(6, 182, 212, 0.35), 0 6px 8px -4px rgba(6, 182, 212, 0.25);
     }
   }
 

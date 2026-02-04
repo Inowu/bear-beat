@@ -168,27 +168,28 @@
   }
 }
 
-// Columna izquierda: SIEMPRE OSCURA (impacto visual en light y dark)
+// Columna izquierda: SIEMPRE OSCURA (slate-950 → black), sin depender del tema global
 .auth-split-left {
   position: relative;
-  background: #0f172a; /* slate-900 */
-  color: #e2e8f0;
+  background: linear-gradient(to bottom right, #0f172a /* slate-900 */, #000000);
+  color: #ffffff;
 
   .auth-split-left-bg {
     position: absolute;
     inset: 0;
     background-image:
-      radial-gradient(ellipse 80% 60% at 50% 0%, rgba(6, 182, 212, 0.12) 0%, transparent 50%),
+      radial-gradient(ellipse 80% 60% at 50% 0%, rgba(6, 182, 212, 0.1) 0%, transparent 55%),
       radial-gradient(ellipse 60% 40% at 80% 80%, rgba(6, 182, 212, 0.06) 0%, transparent 50%);
     pointer-events: none;
     mix-blend-mode: overlay;
+    opacity: 0.9;
   }
 
   .auth-split-title {
     position: relative;
     font-size: 1.5rem;
     font-weight: 800;
-    color: #fff;
+    color: #ffffff;
     margin: 0 0 24px;
     line-height: 1.25;
 
@@ -208,20 +209,20 @@
       align-items: center;
       gap: 12px;
       font-size: 1.1rem;
-      color: #e2e8f0;
+      color: #ffffff;
       margin-bottom: 14px;
       line-height: 1.35;
 
       &::before {
         content: "✓";
-        color: #22d3ee; /* cyan brillante */
+        color: #22d3ee; /* text-cyan-400 */
         font-weight: 800;
         font-size: 1.25rem;
         flex-shrink: 0;
       }
 
       strong {
-        color: #fff;
+        color: #ffffff;
         font-weight: 700;
       }
     }
@@ -231,7 +232,7 @@
     position: relative;
     font-size: 0.95rem;
     font-style: italic;
-    color: #94a3b8;
+    color: #cbd5e1; /* slate-300 para contraste sutil */
     margin: 0;
     padding-top: 20px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
