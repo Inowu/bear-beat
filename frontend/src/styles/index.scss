@@ -46,10 +46,10 @@ body {
   overflow-x: hidden;
 }
 
-// Mobile-first: base tipografía móvil
+// Móvil: mantener legibilidad (58% hacía el texto demasiado pequeño)
 @include respond-to(phone) {
   html {
-    font-size: 58%; // base más pequeña en móvil para que quepa más contenido
+    font-size: 62.5%;
   }
 }
 

@@ -1,7 +1,7 @@
 @import "src/styles/mixin.scss";
 @import "../../styles/landing-design.scss";
 
-// Mobile-first: base = móvil
+// Mobile-first: base = móvil (tipografía legible en teléfono)
 .home-main-container {
   display: flex;
   flex-direction: column;
@@ -18,7 +18,7 @@
 
     h2 {
       font-family: "Bear-font", "Bear Font2", sans-serif;
-      font-size: 1.75rem;
+      font-size: 2rem;
       line-height: 1.25;
       color: $text-primary;
       margin: 0;
@@ -59,9 +59,9 @@
     p {
       margin: 0 2px;
       cursor: pointer;
-      padding: 6px 8px;
+      padding: 8px 10px;
       color: $text-muted;
-      font-size: 1.2rem;
+      font-size: 1.4rem;
     }
 
     p:hover {
@@ -86,8 +86,8 @@
       grid-template-columns: 1fr auto;
       border-bottom: 1px solid $bear-blue-dim;
       color: $bear-blue-dim;
-      padding: 10px 6px;
-      font-size: 1.25rem;
+      padding: 12px 8px;
+      font-size: 1.45rem;
       gap: 8px;
 
       .modified-column {
@@ -124,6 +124,8 @@
           min-width: 0;
           overflow: hidden;
           text-overflow: ellipsis;
+          // Espacio para que el botón descarga no tape el texto en móvil
+          padding-right: 48px;
 
           h3, h4 {
             color: $text-primary;
@@ -131,12 +133,12 @@
           }
 
           h3 {
-            font-size: 1.4rem;
+            font-size: 1.55rem;
             font-weight: 400;
           }
 
           h4 {
-            font-size: 1.2rem;
+            font-size: 1.35rem;
             font-weight: 400;
             color: $text-muted;
           }
@@ -145,12 +147,12 @@
         .download-button {
           position: absolute;
           top: 50%;
-          right: 12px;
+          right: 8px;
           transform: translateY(-50%);
           z-index: 4;
           color: $bear-blue-dim;
-          min-width: 44px;
-          min-height: 44px;
+          min-width: 40px;
+          min-height: 40px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -183,6 +185,7 @@
 
         .name-container {
           padding-inline: 12px;
+          padding-right: 8px;
           justify-content: center;
         }
       }
@@ -195,10 +198,12 @@
     background: $card-glass;
     border: 1px solid $card-glass-border;
     border-radius: 8px;
+    font-size: 1.6rem;
 
     input {
       color: $text-primary;
-      font-size: 16px;
+      font-size: 1.6rem;
+      min-height: 44px;
 
       &::placeholder {
         color: $text-dim;
