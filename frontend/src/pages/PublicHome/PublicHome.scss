@@ -562,8 +562,8 @@
 .ph__btn--primary {
   width: 100%;
   max-width: 260px;
-  color: #000;
-  background: var(--ph-accent);
+  color: var(--ph-btn-text);
+  background: var(--ph-btn-bg);
   border: none;
   box-shadow: 0 0 24px var(--ph-glow);
 
@@ -625,4 +625,21 @@
   font-size: 0.9rem;
   color: var(--ph-text-muted);
   margin: 0;
+}
+
+// ----- Contraste Light Mode: font-medium en cuerpo (solo light vía variable) -----
+.ph__hero-h2,
+.ph__hero-micro,
+.ph__authority-item,
+.ph__pain-card p,
+.ph__bento-card p,
+.ph__price-region,
+.ph__price-period,
+.ph__price-anchor,
+.ph__price-features li,
+.ph__guarantee,
+.ph__footer-payments,
+.ph__footer-copy,
+.ph__footer-links a {
+  font-weight: var(--ph-body-font-weight);
 }
