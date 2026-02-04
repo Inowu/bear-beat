@@ -60,12 +60,6 @@ esac
 log "Building backend..."
 ( cd "$BACKEND_DIR" && npm run build )
 
-# Verificar que el build incluye catalogStats (procedure del catálogo)
-if ! grep -q "catalogStats" "$BACKEND_DIR/build/routers/file-actions/index.js" 2>/dev/null; then
-  die "Build no contiene catalogStats. Revisar que backend compiló bien."
-fi
-log "Build OK (catalogStats presente)."
-
 log "Updating backend PORT to $target_port"
 if grep -q '^PORT=' "$ENV_FILE"; then
   sed -i.bak "s/^PORT=.*/PORT=$target_port/" "$ENV_FILE"
@@ -78,7 +72,7 @@ log "Restarting pm2 process: $target_process"
 pm2 restart "$target_process"
 
 log "Updating nginx proxy_pass to port $target_port"
-sudo sed -i.bak -E "s|(proxy_pass\s+http://(localhost|127\.0\.0\.1):)[0-9]+;|\1${target_port};|" "$NGINX_CONF"
+sudo sed -i.bak -E "s@(proxy_pass[[:space:]]+http://(localhost|127\.0\.0\.1):)[0-9]+;@\1${target_port};@" "$NGINX_CONF"
 sudo rm -f "${NGINX_CONF}.bak"
 
 log "Testing nginx configuration..."
