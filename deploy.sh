@@ -72,7 +72,9 @@ log "Restarting pm2 process: $target_process"
 pm2 restart "$target_process"
 
 log "Updating nginx proxy_pass to port $target_port"
-sudo sed -i.bak -E "s@(proxy_pass[[:space:]]+http://(localhost|127\.0\.0\.1):)[0-9]+;@\1${target_port};@" "$NGINX_CONF"
+# Dos sed separados para evitar que el | (alternancia) confunda a BSD sed
+sudo sed -i.bak -E "s#(proxy_pass[[:space:]]+http://localhost:)[0-9]+;#\1${target_port};#" "$NGINX_CONF"
+sudo sed -i.bak -E "s#(proxy_pass[[:space:]]+http://127\.0\.0\.1:)[0-9]+;#\1${target_port};#" "$NGINX_CONF"
 sudo rm -f "${NGINX_CONF}.bak"
 
 log "Testing nginx configuration..."
