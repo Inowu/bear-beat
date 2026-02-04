@@ -33,18 +33,9 @@ require_cmd systemctl
 [ -f "$NGINX_CONF" ] || die "Nginx config not found: $NGINX_CONF"
 
 log "Pulling latest changes..."
-before_head="$(git -C "$ROOT_DIR" rev-parse HEAD)"
 # Descartar cambios locales (ej. package-lock.json) para que pull no falle
 git -C "$ROOT_DIR" reset --hard HEAD
 git -C "$ROOT_DIR" pull --ff-only
-after_head="$(git -C "$ROOT_DIR" rev-parse HEAD)"
-
-if git -C "$ROOT_DIR" diff --name-only "$before_head" "$after_head" -- backend | grep -q .; then
-  log "Backend changes detected."
-else
-  log "No backend changes detected. Skipping deploy."
-  exit 0
-fi
 
 current_port="$(grep -Eo 'proxy_pass\s+http://(localhost|127\.0\.0\.1):[0-9]+' "$NGINX_CONF" \
   | head -n 1 \

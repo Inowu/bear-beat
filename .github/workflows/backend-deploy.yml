@@ -30,7 +30,4 @@ jobs:
             [ -f ~/.nvm/nvm.sh ] && { . ~/.nvm/nvm.sh; nvm use default 2>/dev/null || true; }
             [ -f ~/.profile ] && . ~/.profile
             [ -f ~/.bashrc ] && . ~/.bashrc
-            cd bear-beat
-            git reset --hard HEAD
-            git pull --ff-only
-            bash ./deploy.sh
+            cd bear-beat && bash ./deploy.sh
