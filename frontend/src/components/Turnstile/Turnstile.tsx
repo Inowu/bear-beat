@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
+import "./Turnstile.scss";
 
 type TurnstileOptions = {
   sitekey: string;
@@ -7,6 +8,14 @@ type TurnstileOptions = {
   "error-callback"?: () => void;
   theme?: "light" | "dark" | "auto";
   size?: "normal" | "compact" | "flexible";
+  /** 'execute' = no corre hasta llamar a execute(); así el widget puede ir oculto y ejecutarse al enviar el form */
+  execution?: "render" | "execute";
+  /** Idioma del widget (ej. 'es') */
+  language?: string;
+};
+
+export type TurnstileRef = {
+  execute: () => void;
 };
 
 type TurnstileProps = {
@@ -14,15 +23,30 @@ type TurnstileProps = {
   onExpire?: () => void;
   onError?: () => void;
   resetSignal?: number;
-  /** "dark" para fondos oscuros (registro/login dark); evita el widget blanco */
   theme?: "light" | "dark" | "auto";
-  /** "compact" = 150×140px, menos espacio visual; "normal" = 300×65px; "flexible" = 100% ancho */
   size?: "normal" | "compact" | "flexible";
+  /**
+   * true = widget invisible: no ocupa espacio ni se muestra.
+   * La verificación se dispara al llamar ref.execute() (típicamente al enviar el formulario).
+   * Ideal para que no se vea el cuadro de Cloudflare y se adapte al diseño.
+   */
+  invisible?: boolean;
 };
 
 const TURNSTILE_VERIFY_INTERVAL_MS = 50;
 
-function Turnstile({ onVerify, onExpire, onError, resetSignal = 0, theme = "dark", size = "compact" }: TurnstileProps) {
+const Turnstile = forwardRef<TurnstileRef, TurnstileProps>(function Turnstile(
+  {
+    onVerify,
+    onExpire,
+    onError,
+    resetSignal = 0,
+    theme = "dark",
+    size = "compact",
+    invisible = false,
+  },
+  ref
+) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const widgetIdRef = useRef<string | null>(null);
   const onVerifyRef = useRef(onVerify);
@@ -40,6 +64,18 @@ function Turnstile({ onVerify, onExpire, onError, resetSignal = 0, theme = "dark
   useEffect(() => {
     onErrorRef.current = onError;
   }, [onError]);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      execute() {
+        if (window.turnstile && containerRef.current) {
+          window.turnstile.execute(containerRef.current);
+        }
+      },
+    }),
+    []
+  );
 
   useEffect(() => {
     const siteKey = process.env.REACT_APP_TURNSTILE_SITE_KEY;
@@ -61,6 +97,8 @@ function Turnstile({ onVerify, onExpire, onError, resetSignal = 0, theme = "dark
         "error-callback": () => onErrorRef.current?.(),
         theme,
         size,
+        language: "es",
+        ...(invisible && { execution: "execute" as const }),
       };
 
       widgetIdRef.current = window.turnstile.render(containerRef.current, options);
@@ -85,7 +123,7 @@ function Turnstile({ onVerify, onExpire, onError, resetSignal = 0, theme = "dark
         widgetIdRef.current = null;
       }
     };
-  }, []);
+  }, [invisible]);
 
   useEffect(() => {
     if (window.turnstile && widgetIdRef.current) {
@@ -97,7 +135,13 @@ function Turnstile({ onVerify, onExpire, onError, resetSignal = 0, theme = "dark
     return <div>Turnstile no configurado</div>;
   }
 
-  return <div ref={containerRef} className="turnstile-widget-wrap" />;
-}
+  return (
+    <div
+      ref={containerRef}
+      className={invisible ? "turnstile-widget-wrap turnstile-invisible" : "turnstile-widget-wrap"}
+      aria-hidden={invisible ? true : undefined}
+    />
+  );
+});
 
 export default Turnstile;

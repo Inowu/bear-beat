@@ -3,15 +3,16 @@ import { HiOutlineMail } from "react-icons/hi";
 import trpc from "../../../api";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { ErrorModal } from "../../../components/Modals/ErrorModal/ErrorModal";
 import { SuccessModal } from "../../../components/Modals/SuccessModal/SuccessModal";
 import { Spinner } from "../../../components/Spinner/Spinner";
-import Turnstile from "../../../components/Turnstile/Turnstile";
+import Turnstile, { type TurnstileRef } from "../../../components/Turnstile/Turnstile";
 import Logo from "../../../assets/images/osonuevo.png";
 import "./ForgotPasswordForm.scss";
 
 function ForgotPasswordForm() {
+  const turnstileRef = useRef<TurnstileRef>(null);
   const [loader, setLoader] = useState<boolean>(false);
   const [show, setShow] = useState<boolean>(false);
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
@@ -33,10 +34,7 @@ function ForgotPasswordForm() {
     initialValues: { email: "" },
     validationSchema,
     onSubmit: async (values) => {
-      if (!turnstileToken) {
-        setTurnstileError("Confirma que no eres un robot.");
-        return;
-      }
+      if (!turnstileToken) return;
       setLoader(true);
       try {
         await trpc.auth.forgotPassword.mutate({
@@ -58,6 +56,7 @@ function ForgotPasswordForm() {
   const handleTurnstileSuccess = useCallback((token: string) => {
     setTurnstileToken(token);
     setTurnstileError("");
+    formik.submitForm();
   }, []);
 
   const handleTurnstileExpire = useCallback(() => {
@@ -80,7 +79,15 @@ function ForgotPasswordForm() {
         </p>
         <form
           className="auth-form auth-login-form auth-recover-form"
-          onSubmit={formik.handleSubmit}
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!turnstileToken) {
+              setTurnstileError("Verificando seguridad…");
+              turnstileRef.current?.execute();
+              return;
+            }
+            formik.handleSubmit(e);
+          }}
         >
           <div className="c-row auth-recover-email-wrap">
             <HiOutlineMail className="auth-recover-email-icon" aria-hidden />
@@ -98,21 +105,16 @@ function ForgotPasswordForm() {
               <div className="error-formik">{formik.errors.email}</div>
             )}
           </div>
-          <div className="auth-recover-turnstile">
-            <div className="auth-recover-turnstile-inner">
-              <Turnstile
-                theme="dark"
-                size="compact"
-                onVerify={handleTurnstileSuccess}
-                onExpire={handleTurnstileExpire}
-                onError={handleTurnstileError}
-                resetSignal={turnstileReset}
-              />
-            </div>
-            {turnstileError && (
-              <div className="error-formik">{turnstileError}</div>
-            )}
-          </div>
+          {/* Turnstile invisible: se ejecuta al enviar el form, no se muestra ningún cuadro */}
+          <Turnstile
+            ref={turnstileRef}
+            invisible
+            onVerify={handleTurnstileSuccess}
+            onExpire={handleTurnstileExpire}
+            onError={handleTurnstileError}
+            resetSignal={turnstileReset}
+          />
+          {turnstileError && <div className="error-formik">{turnstileError}</div>}
           {!loader ? (
             <button className="auth-login-submit-btn" type="submit">
               ENVIAR ENLACE DE RECUPERACIÓN

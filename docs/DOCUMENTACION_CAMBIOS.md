@@ -62,20 +62,29 @@ Ningún cambio afecta la lógica de negocio, pagos o auth; solo UI, contenido, t
 
 ## 4. Sistema de diseño unificado
 
+**Documentación detallada:** ver **[DISENO-Y-ESTADO-ACTUAL.md](./DISENO-Y-ESTADO-ACTUAL.md)** – sistema de diseño, rutas, páginas, modales y archivos clave (para que cualquier desarrollador o IA entienda el estado actual).
+
 ### Archivo base
 - `frontend/src/styles/landing-design.scss` – variables y clases reutilizables.
+- `frontend/src/styles/_variables-theme.scss` – variables CSS `--app-*` (tipografía, colores) usadas en toda la app.
 
-### Variables
-- `$bear-blue`, `$card-glass`, `$bg-dark`, etc.
+### Tipografía y colores unificados (igual que PublicHome)
+- En `_variables-theme.scss` se definen `--app-font-size-body`, `--app-font-size-h1` … `--app-font-size-h4`, `--app-text-heading`, `--app-text-body`, `--app-bg-card`, etc.
+- `frontend/src/styles/index.scss` aplica estas variables a `body`, `h1`–`h4`, `p`, `label`, `a`, `button`, `form`.
+- **Auth** (Login, Registro, Recuperar contraseña): todos los textos, inputs y botones usan `var(--app-font-size-body)` o `var(--app-font-size-h1)`; sin tamaños fijos en px/rem.
+- **Modales** (Modal.scss, ErrorModal, SuccessModal, HistoryModal, Plans, etc.): títulos, contenido, botones e inputs usan el mismo sistema; mismo aspecto que el Home en toda la web.
+
+### Variables SCSS (mapean a --app-*)
+- `$bear-blue`, `$card-glass`, `$bg-dark`, etc. (en `landing-design.scss`).
 - Clases: `.landing-layout`, `.landing-card`, `.landing-title`, `.landing-btn-primary`, inputs y tablas coherentes.
 
 ### Dónde se aplica
 - Layouts: MainLayout, Navbar, AsideNavbar.
-- Páginas: Auth, PublicHome, Home, Instructions, MyAccount, Downloads, Plans, Checkout, PlanUpgrade, Admin y subpáginas (usuarios, planes, almacenamiento, cupones, órdenes, historiales, dominios/teléfonos bloqueados).
+- Páginas: Auth, PublicHome, Home, Instructions, MyAccount, Downloads, Plans, Checkout, PlanUpgrade, Admin y subpáginas.
 - Componentes: PlanCard, Pagination.
-- Modales: Modal, ErrorModal, SuccessModal, etc. (glassmorphism, botones con glow, colores unificados).
+- Modales: Modal, ErrorModal, SuccessModal, OptionModal, HistoryModal, PlansModal, etc. (tipografía y colores unificados).
 
-Se importa `_landing-design.scss` o `landing-design.scss` donde haga falta para que los estilos estén disponibles.
+Se importa `landing-design.scss` o `_variables-theme.scss` donde haga falta. Para nuevos componentes: usar siempre `var(--app-font-size-body)` (o h1–h4) y colores `var(--app-text-*)`, no tamaños fijos.
 
 ---
 
@@ -257,15 +266,19 @@ Se importa `_landing-design.scss` o `landing-design.scss` donde haga falta para 
 
 ## 13. Archivos clave de referencia
 
+**Estado actual, rutas, páginas, modales y diseño:** ver **[DISENO-Y-ESTADO-ACTUAL.md](./DISENO-Y-ESTADO-ACTUAL.md)**.
+
 | Qué | Dónde |
 |-----|--------|
 | Rutas y layout | `frontend/src/index.tsx` |
 | Home público vs app | `frontend/src/functions/HomeOrLanding.tsx` |
-| Landing | `frontend/src/pages/Landing/`, `frontend/src/pages/PublicHome/` |
-| Estilos globales landing | `frontend/src/styles/landing-design.scss` |
+| Landing / Home público | `frontend/src/pages/PublicHome/` |
+| Estilos globales y tipografía app | `frontend/src/styles/index.scss`, `landing-design.scss` |
+| Variables tema y tipografía (--app-*) | `frontend/src/styles/_variables-theme.scss` |
 | Estilos móvil app-like | `frontend/src/styles/_mobile-app.scss`, `_admin-tables-mobile.scss` |
-| Variables de tema (claro/oscuro) | `frontend/src/styles/_variables-theme.scss` |
 | Contexto de tema | `frontend/src/contexts/ThemeContext.tsx` |
+| Modales (base y variantes) | `frontend/src/components/Modals/Modal.scss`, `ErrorModal/`, `SuccessModal/`, etc. |
+| Auth (Login, Registro, Recuperar) | `frontend/src/components/Auth/` |
 | Facebook Pixel | `frontend/src/utils/facebookPixel.ts` |
 | Build/deploy Netlify | `netlify.toml` (raíz), `frontend/public/_redirects` |
 | Textos y planes | `frontend/src/utils/Constants.ts` |
@@ -288,4 +301,4 @@ Se importa `_landing-design.scss` o `landing-design.scss` donde haga falta para 
 - **Catálogo:** los datos no se cargan solos al entrar; se muestra la última vez guardada en el navegador. Para actualizar: clic en “Actualizar estadísticas” (llama al API con `?refresh=1`). Si falla, revisar `SONGS_PATH` en el backend y que el usuario esté logueado. Exportar CSV descarga los datos actualmente mostrados.
 - **Si vuelve el 404 (frontend):** revisar que el último deploy en Netlify sea “Published” y que el build no falle (si falla, no se genera `build/` ni `_redirects`). No añadir `[[redirects]]` para SPA en `netlify.toml`; mantener solo `_redirects` en `frontend/public`.
 
-Documentación actualizada: landing, diseño, responsive, móvil, temas, catálogo (REST, caché, paginación, export CSV), Netlify, deploy backend. Cualquier desarrollador puede seguir este doc para entender qué se hizo; conviene actualizarlo cuando se añadan cambios relevantes.
+Documentación actualizada: landing, diseño, responsive, móvil, temas, catálogo (REST, caché, paginación, export CSV), Netlify, deploy backend. Cualquier desarrollador puede seguir este doc para entender qué se hizo; conviene actualizarlo cuando se añadan cambios relevantes. Para **diseño unificado, rutas, páginas, modales y estado actual** de la web, mantener al día **[DISENO-Y-ESTADO-ACTUAL.md](./DISENO-Y-ESTADO-ACTUAL.md)** al añadir páginas, modales o cambiar tipografía/colores.

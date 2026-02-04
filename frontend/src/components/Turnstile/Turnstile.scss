@@ -1,0 +1,20 @@
+// Contenedor del widget Cloudflare Turnstile
+
+.turnstile-widget-wrap {
+  // Por defecto el widget se muestra (registro/recuperar con visible)
+}
+
+// Modo invisible: no ocupa espacio ni se ve. La verificación se dispara con ref.execute() al enviar el form.
+.turnstile-invisible {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}

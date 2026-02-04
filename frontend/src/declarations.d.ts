@@ -14,6 +14,8 @@ interface Turnstile {
   render: (container: HTMLElement, options: TurnstileRenderOptions) => string;
   reset: (widgetId: string) => void;
   remove: (widgetId: string) => void;
+  /** Ejecuta el reto (cuando el widget usa execution: 'execute'). Acepta selector o elemento. */
+  execute: (containerOrId: string | HTMLElement) => void;
 }
 
 interface Window {
