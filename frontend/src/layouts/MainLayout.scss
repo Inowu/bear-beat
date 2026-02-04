@@ -13,6 +13,7 @@
 
   .content-container {
     flex: 1;
+    min-height: 0;
     display: flex;
     position: relative;
     overflow-x: hidden;
@@ -26,6 +27,7 @@
       margin-right: auto;
       max-width: 100%;
       padding: 12px 10px;
+      padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
       box-sizing: border-box;
     }
 
@@ -33,6 +35,18 @@
       max-width: none;
       padding: 0;
       margin: 0;
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+  }
+
+  // Móvil: más espacio al final para que el último contenido se vea al hacer scroll
+  @include respond-to(tablet) {
+    .content-container > div {
+      padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .content-container.content-container--landing > div {
+      padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
     }
   }
 

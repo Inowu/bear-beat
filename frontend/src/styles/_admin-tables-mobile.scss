@@ -1,8 +1,120 @@
-// Tablas admin en móvil: cada fila se muestra como tarjeta (sin scroll horizontal)
+// ============================================================
+// Admin móvil: tablas como tarjetas + botones y headers táctiles
+// Aplica a max-width 768px (tablet y móvil)
+// ============================================================
 @import "src/styles/mixin.scss";
 @import "src/styles/landing-design.scss";
 
+$admin-mobile-card-padding: 18px;
+$admin-mobile-gap: 14px;
+$admin-mobile-touch: 48px;
+$admin-mobile-radius: 14px;
+
 @include respond-to(tablet) {
+  // ----- Contenedores de página admin (header + filtros) -----
+  .admin-contain,
+  .ordens-contain,
+  .coupons-contain,
+  .planAdmin-contain,
+  .blocked-domains-contain,
+  .blocked-phones-contain,
+  .history-contain {
+    padding-bottom: 24px;
+    gap: 20px;
+
+    .header {
+      gap: 12px;
+
+      .title-and-export {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        gap: 10px;
+
+        h1 {
+          width: 100%;
+        }
+      }
+
+      h1 {
+        font-size: 2rem;
+        margin: 0 0 8px 0;
+        line-height: 1.2;
+      }
+
+      .btn-addUsers,
+      .btn-addCoupon,
+      .btn-addPlan,
+      .btn-addDomain,
+      .btn-addPhone,
+      button.btn-addUsers {
+        width: 100%;
+        min-height: $admin-mobile-touch;
+        padding: 14px 20px;
+        font-size: 1.2rem;
+        border-radius: $admin-mobile-radius;
+        font-weight: 600;
+      }
+    }
+
+    .filter-contain {
+      gap: $admin-mobile-gap;
+
+      .left-contain {
+        gap: $admin-mobile-gap;
+      }
+
+      .search-input {
+        min-height: $admin-mobile-touch;
+        padding: 14px 18px;
+        padding-right: 48px;
+        font-size: 1.15rem;
+        border-radius: $admin-mobile-radius;
+
+        input {
+          font-size: 1.15rem;
+        }
+      }
+
+      .select-input {
+        select,
+        .date-input {
+          min-height: $admin-mobile-touch;
+          padding: 14px 18px;
+          font-size: 1.15rem;
+          border-radius: $admin-mobile-radius;
+        }
+
+        p {
+          font-size: 1.15rem;
+          margin-bottom: 6px;
+        }
+      }
+    }
+
+    .domain-form,
+    .phone-form {
+      gap: 12px;
+
+      input {
+        min-height: $admin-mobile-touch;
+        padding: 14px 18px;
+        font-size: 1.15rem;
+        border-radius: $admin-mobile-radius;
+      }
+
+      .btn-addDomain,
+      .btn-addPhone {
+        min-height: $admin-mobile-touch;
+        padding: 14px 20px;
+        font-size: 1.2rem;
+        border-radius: $admin-mobile-radius;
+      }
+    }
+  }
+
+  // ----- Tabla como tarjetas -----
   .admin-table .table-contain {
     overflow-x: visible;
     max-height: none;
@@ -23,16 +135,16 @@
 
       tr {
         display: block;
-        margin-bottom: 12px;
-        padding: 14px 12px;
+        margin-bottom: 16px;
+        padding: $admin-mobile-card-padding;
         background: $card-glass;
         border: 1px solid $card-glass-border;
-        border-radius: 12px;
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+        border-radius: $admin-mobile-radius;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
 
         &.tr-load td {
           display: block;
-          padding: 10px 0;
+          padding: 14px 0;
           border: none;
           max-width: none;
         }
@@ -40,10 +152,11 @@
         td {
           display: block;
           max-width: none;
-          padding: 8px 0;
+          padding: 12px 0;
           border: none;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-          font-size: 1.25rem;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          font-size: 1.3rem;
+          line-height: 1.4;
 
           &:last-child {
             border-bottom: none;
@@ -56,21 +169,89 @@
             font-weight: 600;
             color: $bear-blue-dim;
             font-size: 1.1rem;
-            margin-bottom: 2px;
+            margin-bottom: 4px;
+            letter-spacing: 0.02em;
           }
 
-          &.wrap-td {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            align-items: center;
-            padding-top: 10px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+          // Botones genéricos dentro de celdas (Editar, Eliminar, etc.)
+          &:not(.wrap-td) button {
+            min-height: $admin-mobile-touch;
+            padding: 12px 18px;
+            font-size: 1.15rem;
+            border-radius: 12px;
+            width: 100%;
+            margin-top: 4px;
+          }
+        }
 
-            &::before {
-              width: 100%;
-              margin-bottom: 6px;
+        // Celda de acciones (dropdown + botones)
+        td.wrap-td {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          padding-top: 14px;
+          margin-top: 6px;
+          border-top: 1px solid rgba(255, 255, 255, 0.12);
+
+          &::before {
+            width: 100%;
+            margin-bottom: 8px;
+          }
+
+          .dropdown {
+            width: 100%;
+          }
+
+          .dropbtn {
+            width: 100%;
+            min-height: $admin-mobile-touch;
+            padding: 14px 18px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-radius: 12px;
+          }
+
+          .dropdown-content {
+            left: 0;
+            right: 0;
+            min-width: 100%;
+            width: 100%;
+            margin-top: 8px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+          }
+
+          .dropdown-content button {
+            min-height: 52px;
+            padding: 14px 18px;
+            font-size: 1.2rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+
+            &:last-child {
+              border-bottom: none;
             }
+
+            &.icon-button {
+              min-height: 52px;
+            }
+          }
+
+          // Botones sueltos (bloquear, etc.) y iconos
+          > button:not(.dropbtn) {
+            min-height: $admin-mobile-touch;
+            padding: 12px 18px;
+            font-size: 1.15rem;
+            border-radius: 12px;
+            flex: 1 1 140px;
+            min-width: 0;
+          }
+
+          svg {
+            min-width: 48px;
+            min-height: 48px;
+            font-size: 1.5rem;
           }
         }
       }
@@ -79,7 +260,7 @@
     tfoot {
       display: block;
       position: static;
-      margin-top: 12px;
+      margin-top: 16px;
 
       tr {
         display: block;
@@ -90,7 +271,29 @@
         max-width: none;
         padding: 0;
         border: none;
-        text-align: left;
+      }
+
+      .pagination-container {
+        padding: 14px 12px;
+        border-radius: $admin-mobile-radius;
+      }
+
+      .left-text,
+      .right-side .selected,
+      .right-side .unselected,
+      .right-side p {
+        font-size: 1.2rem;
+      }
+
+      .right-side svg {
+        min-width: 48px;
+        min-height: 48px;
+      }
+
+      .right-side .unselected,
+      .right-side .points {
+        min-width: 44px;
+        min-height: 48px;
       }
     }
   }
