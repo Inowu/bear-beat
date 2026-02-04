@@ -7,6 +7,11 @@ const AUDIO_EXT = new Set(['.mp3', '.wav', '.flac', '.aac', '.m4a', '.ogg', '.wm
 
 export interface CatalogStatsResult {
   error?: string;
+  /** Carpetas en la raíz del catálogo (ej. Audios, Karaoke, Videos) */
+  rootFolders: string[];
+  /** Subcarpetas dentro de cada carpeta raíz = géneros por tipo */
+  genresByType: Record<string, string[]>;
+  /** Lista plana de todos los géneros únicos (compatibilidad) */
   genres: string[];
   totalFiles: number;
   totalGB: number;
@@ -18,6 +23,8 @@ export interface CatalogStatsResult {
 
 const emptyResponse: CatalogStatsResult = {
   error: '',
+  rootFolders: [],
+  genresByType: {},
   genres: [],
   totalFiles: 0,
   totalGB: 0,
@@ -78,10 +85,27 @@ export async function getCatalogStats(): Promise<CatalogStatsResult> {
       return { ...emptyResponse, error: 'No se pudo leer el catálogo' };
     }
 
-    const genres = rootEntries
+    const rootFolders = rootEntries
       .filter((e) => e.type === 'd' && !e.name.startsWith('.'))
       .map((e) => e.name)
       .sort((a, b) => a.localeCompare(b));
+
+    const genresByType: Record<string, string[]> = {};
+    const allGenresSet = new Set<string>();
+    for (const folder of rootFolders) {
+      try {
+        const subEntries = await fileService.list(basePath + folder + '/');
+        const subDirs = subEntries
+          .filter((e) => e.type === 'd' && !e.name.startsWith('.'))
+          .map((e) => e.name)
+          .sort((a, b) => a.localeCompare(b));
+        genresByType[folder] = subDirs;
+        subDirs.forEach((g) => allGenresSet.add(g));
+      } catch {
+        genresByType[folder] = [];
+      }
+    }
+    const genres = Array.from(allGenresSet).sort((a, b) => a.localeCompare(b));
 
     const stats = { totalFiles: 0, totalBytes: 0, videos: 0, audios: 0, karaokes: 0, other: 0 };
     await walkDir(basePath, '', stats);
@@ -89,6 +113,8 @@ export async function getCatalogStats(): Promise<CatalogStatsResult> {
     const totalGB = stats.totalBytes / (1024 ** 3);
 
     return {
+      rootFolders,
+      genresByType,
       genres,
       totalFiles: stats.totalFiles,
       totalGB: Math.round(totalGB * 100) / 100,

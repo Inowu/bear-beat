@@ -9,6 +9,8 @@ const API_BASE =
 
 interface CatalogStatsData {
   error?: string;
+  rootFolders?: string[];
+  genresByType?: Record<string, string[]>;
   genres: string[];
   totalFiles: number;
   totalGB: number;
@@ -44,6 +46,8 @@ export function CatalogStats() {
                 ? "Inicia sesión para ver las estadísticas."
                 : `Error: ${msg}`
               : "No se pudo cargar (revisa que estés logueado y que el servidor tenga SONGS_PATH configurado).",
+            rootFolders: [],
+            genresByType: {},
             genres: [],
             totalFiles: 0,
             totalGB: 0,
@@ -86,15 +90,38 @@ export function CatalogStats() {
           )}
         </div>
       )}
-      <div className="catalog-stats__grid">
-        <div className="catalog-stats__card">
-          <h2>Géneros</h2>
-          <p className="catalog-stats__number">{data.genres.length}</p>
-          <ul className="catalog-stats__genres">
-            {data.genres.map((g, i) => (
-              <li key={i}>{g}</li>
+      {(data.rootFolders?.length ?? 0) > 0 && (
+        <div className="catalog-stats__structure">
+          <h2>Carpetas en la raíz</h2>
+          <p className="catalog-stats__number">{data.rootFolders!.length}</p>
+          <ul className="catalog-stats__root-folders">
+            {data.rootFolders!.map((f) => (
+              <li key={f}>{f}</li>
             ))}
           </ul>
+          <h3>Géneros (subcarpetas dentro de cada tipo)</h3>
+          <ul className="catalog-stats__genres-by-type">
+            {data.rootFolders!.map((folder) => {
+              const genresList = data.genresByType?.[folder] ?? [];
+              return (
+                <li key={folder} className="catalog-stats__type-block">
+                  <span className="catalog-stats__type-name">[{folder}]</span>
+                  <span className="catalog-stats__type-count">({genresList.length} géneros)</span>
+                  <ul className="catalog-stats__genres-inline">
+                    {genresList.map((g) => (
+                      <li key={g}>{g}</li>
+                    ))}
+                  </ul>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+      <div className="catalog-stats__grid">
+        <div className="catalog-stats__card">
+          <h2>Géneros (total único)</h2>
+          <p className="catalog-stats__number">{data.genres.length}</p>
         </div>
         <div className="catalog-stats__card">
           <h2>Archivos totales</h2>
