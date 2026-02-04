@@ -14,6 +14,24 @@
     width: 100%;
   }
 
+  .auth-tagline {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.15rem;
+    text-align: center;
+    margin: 0 16px 24px;
+    max-width: 420px;
+    line-height: 1.4;
+
+    strong {
+      color: #06e1f7;
+      font-weight: 700;
+    }
+
+    .auth-tagline-sep {
+      color: rgba(255, 255, 255, 0.6);
+    }
+  }
+
   form {
     display: flex;
     flex-direction: column;

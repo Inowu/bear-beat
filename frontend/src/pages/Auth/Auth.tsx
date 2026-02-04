@@ -6,6 +6,11 @@ function Auth() {
   return (
     <div className="auth-main-container">
       <img className="logo" src={Logo} alt="bear beat" />
+      <p className="auth-tagline">
+        Música y videos <strong>exclusivos para DJs</strong>
+        <span className="auth-tagline-sep"> · </span>
+        Todo organizado por <strong>géneros</strong>
+      </p>
       <Outlet />
     </div>
   );

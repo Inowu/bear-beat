@@ -29,6 +29,9 @@ function Instructions() {
   return (
     <div className="instructions-main-container">
       <h1>Método de descarga</h1>
+      <p className="instructions-intro">
+        Todo el contenido (música y videos) es exclusivo para DJs y está organizado por géneros para que encuentres rápido lo que necesitás.
+      </p>
       <div className="instructions-content-container">
         {videoURL !== "" ? (
           <iframe src={videoURL} title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen></iframe>
