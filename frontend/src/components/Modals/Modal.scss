@@ -1,5 +1,7 @@
+@import "src/styles/mixin.scss";
 @import "../../styles/landing-design.scss";
 
+// Mobile-first: modales full-width en móvil, contenido scrolleable
 .modal-container {
   display: flex;
   flex-direction: column;
@@ -9,10 +11,14 @@
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid $card-glass-border;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px $card-glass-border;
+  max-width: calc(100vw - 24px);
+  max-height: 90vh;
+  overflow: hidden;
 
   button {
-    padding-inline: 50px;
-    padding-block: 8px;
+    padding-inline: 24px;
+    padding-block: 10px;
+    min-height: 44px;
     font-weight: 600;
     font-size: 16px;
     border-radius: 100px;
@@ -38,7 +44,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-inline: 25px;
+    padding-inline: 16px;
     padding-block: 12px;
     background: $bg-dark-soft;
     border-radius: 12px 12px 0 0;
@@ -47,14 +53,19 @@
     .title {
       color: $text-primary;
       font-weight: 600;
-      font-size: 20px;
+      font-size: 1.6rem;
       font-family: "Bear-font", "Bear Font2", sans-serif;
     }
 
     .icon {
       color: $text-muted;
-      font-size: 24px;
+      font-size: 2.2rem;
       cursor: pointer;
+      min-width: 44px;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       &:hover {
         color: $bear-blue-dim;
       }
@@ -66,8 +77,8 @@
     flex-direction: column;
     gap: 10px;
     border-radius: 0 0 12px 12px;
-    padding-block: 20px;
-    padding-inline: 25px;
+    padding-block: 16px;
+    padding-inline: 16px;
     background: rgba(0, 0, 0, 0.2);
     border-top: 1px solid $card-glass-border;
 
@@ -631,5 +642,27 @@
   }
   .modal-UHREMIX .container .right .checkout-form {
     padding: 0 16px;
+  }
+}
+
+@include respond-from(tablet) {
+  .modal-container {
+    max-width: 90vw;
+    button {
+      padding-inline: 40px;
+    }
+    .header {
+      padding-inline: 25px;
+      .title {
+        font-size: 20px;
+      }
+      .icon {
+        font-size: 24px;
+      }
+    }
+    .bottom {
+      padding-inline: 25px;
+      padding-block: 20px;
+    }
   }
 }

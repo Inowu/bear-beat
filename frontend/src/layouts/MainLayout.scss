@@ -1,8 +1,10 @@
 @import "src/styles/mixin.scss";
 @import "../styles/landing-design.scss";
 
+// Mobile-first: base = móvil
 .main-layout-main-container {
   height: 100%;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -13,14 +15,18 @@
     flex: 1;
     display: flex;
     position: relative;
-    overflow-y: scroll;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 
     > div {
       flex: 1;
+      width: 100%;
       margin-left: auto;
       margin-right: auto;
-      max-width: 1320px;
-      padding: 24px;
+      max-width: 100%;
+      padding: 12px 10px;
+      box-sizing: border-box;
     }
 
     &.content-container--landing > div {
@@ -30,21 +36,16 @@
     }
   }
 
-  @include respond-to(md) {
-    .content-container {
-      > div {
-        padding: 16px;
-        max-width: 100%;
-      }
+  @include respond-from(tablet) {
+    .content-container > div {
+      padding: 16px;
+      max-width: 1320px;
     }
   }
 
-  @include respond-to(phone) {
-    .content-container {
-      > div {
-        padding: 12px 10px;
-        max-width: 100%;
-      }
+  @include respond-from(lg) {
+    .content-container > div {
+      padding: 24px;
     }
   }
 }

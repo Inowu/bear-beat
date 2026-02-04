@@ -1,8 +1,10 @@
+@import "src/styles/mixin.scss";
 @import "../../../styles/landing-design.scss";
 
+// Mobile-first
 .storage {
     width: 100%;
-    height: 100%;
+    min-height: 200px;
     display: flex;
     justify-content: center;
     color: $text-primary;
@@ -11,9 +13,10 @@
         background: $card-glass;
         backdrop-filter: blur(12px);
         border: 1px solid $card-glass-border;
-        width: 60%;
-        height: 40%;
-        padding: 30px;
+        width: 100%;
+        max-width: 100%;
+        min-height: 200px;
+        padding: 20px 16px;
         border-radius: 12px;
         box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
         display: flex;
@@ -22,7 +25,7 @@
 
         h2.title {
           color: $text-primary;
-          font-size: 2.2rem;
+          font-size: 1.6rem;
           font-family: "Bear-font", "Bear Font2", sans-serif;
           span {
             color: $bear-blue-dim;
@@ -71,9 +74,10 @@
     }
 }
 
-@media (max-width: 768px) {
+@include respond-from(tablet) {
     .storage .storage-card {
         width: 90%;
+        max-width: 520px;
         padding: 24px 20px;
         h2.title {
           font-size: 1.8rem;
@@ -81,15 +85,17 @@
     }
 }
 
-@media (max-width: 576px) {
-    .storage .storage-card {
-        width: 100%;
-        padding: 20px 16px;
-        h2.title {
-          font-size: 1.6rem;
-        }
-        h3 {
-          font-size: 1.4rem;
+@include respond-from(md) {
+    .storage {
+        height: 100%;
+        .storage-card {
+            width: 60%;
+            height: 40%;
+            min-height: 240px;
+            padding: 30px;
+            h2.title {
+              font-size: 2.2rem;
+            }
         }
     }
 }

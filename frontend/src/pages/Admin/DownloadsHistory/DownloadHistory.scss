@@ -1,12 +1,16 @@
+@import "src/styles/mixin.scss";
 @import "../../../styles/landing-design.scss";
 
 .history-contain {
   color: $text-primary;
+  width: 100%;
+  overflow-x: hidden;
   .header {
     .btn-addUsers {
       color: #000;
       background: $bear-blue-dim;
-      padding: 4px 20px;
+      padding: 10px 20px;
+      min-height: 44px;
       border-radius: 100px;
       box-shadow: 0 0 12px $bear-blue-glow;
       &:hover {
@@ -16,7 +20,10 @@
   }
   .admin-table {
     .table-contain {
-      max-height: 74vh;
+      max-height: 60vh;
+      overflow-x: auto;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
 
       table thead,
       table tfoot {
@@ -31,5 +38,14 @@
         inset-block-end: 0;
       }
     }
+    table {
+      min-width: 600px;
+    }
+  }
+}
+
+@include respond-from(tablet) {
+  .history-contain .admin-table .table-contain {
+    max-height: 74vh;
   }
 }

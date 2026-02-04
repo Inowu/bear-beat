@@ -1,31 +1,59 @@
-// Breakpoints: phone ≤576px, tablet ≤768px, md ≤992px, sm ≤400px
+// Mobile-first breakpoints (base = móvil, luego escalar hacia arriba)
+// phone: 0–576px (base), tablet: 577px–768px, md: 769px–992px, lg: 993px+
+$breakpoint-phone: 576px;
+$breakpoint-tablet: 768px;
+$breakpoint-md: 992px;
+$breakpoint-lg: 1200px;
+$breakpoint-xl: 1700px;
+
+// max-width: solo para móvil/tablet (cuando necesites sobreescribir desktop)
 @mixin respond-to($breakpoint) {
   @if $breakpoint == sm {
     @media (max-width: 400px) {
       @content;
     }
   }
-
   @if $breakpoint == phone {
-    @media (max-width: 576px) {
+    @media (max-width: #{$breakpoint-phone}) {
       @content;
     }
   }
-
   @if $breakpoint == tablet {
-    @media (max-width: 768px) {
+    @media (max-width: #{$breakpoint-tablet}) {
       @content;
     }
   }
-
   @if $breakpoint == md {
-    @media (max-width: 992px) {
+    @media (max-width: #{$breakpoint-md}) {
       @content;
     }
   }
-
   @if $breakpoint == xl {
-    @media (min-width: 1700px) {
+    @media (min-width: #{$breakpoint-xl}) {
+      @content;
+    }
+  }
+}
+
+// min-width: mobile-first (estilos desde este tamaño hacia arriba)
+@mixin respond-from($breakpoint) {
+  @if $breakpoint == tablet {
+    @media (min-width: #{$breakpoint-phone + 1px}) {
+      @content;
+    }
+  }
+  @if $breakpoint == md {
+    @media (min-width: #{$breakpoint-tablet + 1px}) {
+      @content;
+    }
+  }
+  @if $breakpoint == lg {
+    @media (min-width: #{$breakpoint-md + 1px}) {
+      @content;
+    }
+  }
+  @if $breakpoint == xl {
+    @media (min-width: #{$breakpoint-xl}) {
       @content;
     }
   }

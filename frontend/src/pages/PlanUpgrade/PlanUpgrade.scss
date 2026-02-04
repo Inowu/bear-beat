@@ -1,15 +1,29 @@
+@import "src/styles/mixin.scss";
 @import "../../styles/landing-design.scss";
 
+// Mobile-first
 .plan-upgrade {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 24px;
+  gap: 20px;
   color: $text-primary;
   min-height: 60vh;
+  padding: 0 4px;
+  width: 100%;
+  box-sizing: border-box;
+}
 
-  @media (max-width: 576px) {
-    gap: 20px;
+@include respond-from(tablet) {
+  .plan-upgrade {
+    gap: 24px;
     padding: 0 8px;
+  }
+}
+
+@include respond-from(md) {
+  .plan-upgrade {
+    gap: 24px;
+    padding: 0;
   }
 }

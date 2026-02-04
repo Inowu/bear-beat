@@ -1,5 +1,7 @@
+@import "src/styles/mixin.scss";
 @import "../../styles/landing-design.scss";
 
+// Mobile-first
 .plan-card-main-card {
   display: flex;
   flex-direction: column;
@@ -9,44 +11,34 @@
   backdrop-filter: blur(12px);
   border: 1px solid $card-glass-border;
   flex: 1;
-  max-width: 350px;
-  min-width: 300px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25), 0 0 30px $bear-blue-glow;
   transition: all 0.2s ease;
   user-select: none;
   border-radius: 12px;
-  padding: 30px;
-  gap: 20px;
+  padding: 20px 16px;
+  gap: 16px;
   color: $text-primary;
-  height: 750px;
+  height: auto;
+  min-height: 480px;
   position: relative;
 
-  @media (max-width: 768px) {
-    max-width: 100%;
-    min-width: 0;
-    padding: 24px 20px;
-    height: auto;
-    min-height: 520px;
+  .c-row h2 {
+    font-size: 2.8rem;
   }
-
-  @media (max-width: 576px) {
-    padding: 20px 16px;
-    gap: 16px;
-    min-height: 480px;
-    .c-row h2 {
-      font-size: 2.8rem;
-    }
-    .c-row h3 {
-      font-size: 20px;
-    }
-    .button-contain button {
-      padding: 10px 16px;
-      font-size: 1.6rem;
-    }
-    .announce {
-      font-size: 1.4rem;
-      padding-inline: 10px;
-    }
+  .c-row h3 {
+    font-size: 20px;
+  }
+  .button-contain button {
+    padding: 12px 16px;
+    font-size: 1.6rem;
+    min-height: 48px;
+  }
+  .announce {
+    font-size: 1.4rem;
+    padding-inline: 10px;
   }
 
   .announce {
@@ -89,22 +81,22 @@
     position: relative;
     .line {
       position: absolute;
-      width: 145px;
+      width: 100px;
       height: 4px;
       border-radius: 10px;
       background-color: red;
-      bottom: 15px;
-      left: 72px;
-      rotate: 170deg;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%) rotate(170deg);
     }
     h2 {
-      font-size: 3.4rem;
+      font-size: 2.8rem;
       font-weight: 700;
       text-align: center;
     }
 
     h3 {
-      font-size: 24px;
+      font-size: 20px;
       font-weight: 700;
       color: $bear-blue-dim;
       font-family: "Bear-font", "Bear Font2", sans-serif;
@@ -159,8 +151,45 @@
     border: 1px solid $card-glass-border;
   }
 }
-.resp-plan{
-  @media(max-width: 991px){
+@include respond-from(md) {
+  .plan-card-main-card {
+    max-width: 350px;
+    min-width: 280px;
+    padding: 24px 20px;
+    gap: 20px;
+    min-height: 520px;
+    .c-row .line {
+      width: 145px;
+      left: 72px;
+      transform: rotate(170deg);
+    }
+    .c-row h2 {
+      font-size: 3.4rem;
+    }
+    .c-row h3 {
+      font-size: 24px;
+    }
+    .button-contain button {
+      padding: 8px;
+      font-size: 1.8rem;
+    }
+    .announce {
+      font-size: 1.7rem;
+      padding-inline: 12px;
+    }
+  }
+}
+
+@include respond-from(lg) {
+  .plan-card-main-card {
+    padding: 30px;
+    height: 750px;
+    min-height: 750px;
+  }
+}
+
+.resp-plan {
+  @include respond-to(md) {
     order: 2;
   }
 }

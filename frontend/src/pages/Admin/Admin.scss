@@ -1,5 +1,7 @@
+@import "src/styles/mixin.scss";
 @import "../../styles/landing-design.scss";
 
+// Mobile-first: base = móvil (header apilado, tabla con scroll horizontal)
 .admin-contain {
     display: flex;
     flex-direction: column;
@@ -8,7 +10,9 @@
 
     .header {
         display: flex;
-        gap: 20px;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
 
         @keyframes loadRed {
             0% {
@@ -80,16 +84,21 @@
 
         .input {
             border-radius: 100px;
-            padding: 5px 25px;
+            padding: 10px 20px;
             background: $card-glass;
             border: 1px solid $card-glass-border;
             color: $text-primary;
+            width: 100%;
+            max-width: 100%;
+            min-height: 44px;
+            box-sizing: border-box;
         }
 
         .btn-addUsers {
             color: #000;
             background: $bear-blue-dim;
-            padding: 4px 20px;
+            padding: 10px 20px;
+            min-height: 44px;
             border-radius: 100px;
             box-shadow: 0 0 16px $bear-blue-glow;
         }
@@ -97,7 +106,8 @@
         .btn-delete {
             color: white;
             background: #f71109;
-            padding: 4px 20px;
+            padding: 10px 20px;
+            min-height: 44px;
             border-radius: 100px;
         }
 
@@ -113,16 +123,17 @@
     .users-contain {
         display: flex;
         flex-direction: column;
-        gap: 15px;
+        gap: 12px;
 
         .user-contain {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-radius: 100px;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+            border-radius: 12px;
             background: $card-glass;
             border: 1px solid $card-glass-border;
-            padding: 5px 20px;
+            padding: 12px 16px;
 
             .data-contain {
                 display: flex;
@@ -148,11 +159,15 @@
 .admin-table {
     display: flex;
     flex-direction: column;
+    width: 100%;
+    overflow-x: hidden;
 
     .table-contain {
         width: 100%;
-        max-height: 73vh;
-        overflow-y: visible;
+        max-height: 60vh;
+        overflow-x: auto;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
     table thead,
@@ -170,6 +185,7 @@
 
     table {
         border-spacing: 0;
+        min-width: 600px;
         width: 100%;
         border: 1px solid $card-glass-border;
         border-radius: 12px;
@@ -184,9 +200,9 @@
                 top: 0;
                 z-index: 2;
                 th {
-                    font-size: 1.4rem;
+                    font-size: 1.1rem;
                     max-width: 250px;
-                    padding: 10px;
+                    padding: 8px 6px;
                     color: $bear-blue-dim !important;
                 }
             }
@@ -200,17 +216,17 @@
                 background: $card-glass !important;
                 border-bottom: 1px solid $card-glass-border;
                 td {
-                    font-size: 1.2rem;
+                    font-size: 1.1rem;
                     padding-block: 0.5rem;
-                    padding: 10px;
+                    padding: 8px 6px;
                     color: $text-primary !important;
                     border-color: $card-glass-border !important;
 
                     button {
-                        font-size: 1.2rem;
+                        font-size: 1.1rem;
                         color: #000;
                         background: $bear-blue-dim;
-                        padding: 4px 20px;
+                        padding: 6px 14px;
                         border-radius: 100px;
                         box-shadow: 0 0 12px $bear-blue-glow;
                         &:hover {
@@ -361,46 +377,37 @@
     }
 }
 
-@media (max-width: 768px) {
+@include respond-from(tablet) {
     .admin-contain .header {
-        flex-wrap: wrap;
-        gap: 12px;
+        gap: 20px;
         .input {
-            width: 100%;
-            max-width: 100%;
+            width: auto;
+            max-width: 280px;
         }
     }
     .admin-table .table-contain {
-        max-height: 60vh;
-        overflow-x: auto;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-    .admin-table table {
-        min-width: 600px;
+        max-height: 73vh;
     }
     .admin-contain .users-contain .user-contain {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-        padding: 12px 16px;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        border-radius: 100px;
+        padding: 8px 20px;
     }
 }
 
-@media (max-width: 576px) {
-    .admin-contain .header {
-        .btn-addUsers, .btn-delete {
-            padding: 8px 16px;
-            min-height: 44px;
-        }
+@include respond-from(md) {
+    .admin-table table thead th {
+        font-size: 1.4rem;
+        padding: 10px;
     }
-    .admin-table table thead th,
     .admin-table table tbody td {
-        padding: 8px 6px !important;
-        font-size: 1.1rem !important;
+        font-size: 1.2rem;
+        padding: 10px;
     }
     .admin-table table tbody td button {
-        padding: 6px 12px;
-        font-size: 1.1rem;
+        padding: 4px 20px;
+        font-size: 1.2rem;
     }
 }

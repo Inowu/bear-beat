@@ -1,77 +1,97 @@
 @import "src/styles/mixin.scss";
 @import "../../styles/landing-design.scss";
 
+// Mobile-first: base = móvil
 .home-main-container {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;
   color: $text-primary;
+  width: 100%;
+  overflow-x: hidden;
 
   .header-contain {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+
     h2 {
       font-family: "Bear-font", "Bear Font2", sans-serif;
-      font-size: 2.8rem;
+      font-size: 1.75rem;
+      line-height: 1.25;
       color: $text-primary;
+      margin: 0;
     }
   }
-  .btn-back {
-    button {
-      display: flex;
-      gap: 10px;
-      padding-block: 5px;
-      padding-inline: 20px;
-      border-radius: 100px;
-      background: $bg-dark-soft;
-      border: 1px solid $card-glass-border;
-      color: $text-muted;
-      font-weight: 600;
-      align-items: center;
-      &:hover {
-        color: $bear-blue-dim;
-        border-color: $bear-blue-dim;
-        gap: 15px;
-        transition: 0.3s ease all;
-      }
+
+  .btn-back button {
+    display: flex;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 100px;
+    background: $bg-dark-soft;
+    border: 1px solid $card-glass-border;
+    color: $text-muted;
+    font-weight: 600;
+    font-size: 1.4rem;
+    align-items: center;
+    min-height: 44px;
+
+    &:hover {
+      color: $bear-blue-dim;
+      border-color: $bear-blue-dim;
+      transition: 0.2s ease all;
     }
   }
+
   .folder-structure-container {
     display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+
     div {
       display: flex;
       align-items: center;
     }
+
     p {
-      margin: 0 3px;
+      margin: 0 2px;
       cursor: pointer;
-      padding: 5px;
+      padding: 6px 8px;
       color: $text-muted;
+      font-size: 1.2rem;
     }
+
     p:hover {
       color: $bear-blue-dim;
-      border-radius: 10px;
+      border-radius: 8px;
     }
+
     .last-folder {
       cursor: default;
       color: $text-primary;
     }
   }
+
   .folders-navigation-container {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    padding-bottom: 20px;
+    padding-bottom: 16px;
 
     .header {
       display: grid;
-      grid-template-columns: 2fr 1fr 1fr;
+      grid-template-columns: 1fr auto;
       border-bottom: 1px solid $bear-blue-dim;
       color: $bear-blue-dim;
-      padding: 8px;
-      div {
-        font-size: 1.4rem;
-        cursor: pointer;
+      padding: 10px 6px;
+      font-size: 1.25rem;
+      gap: 8px;
+
+      .modified-column {
+        display: none;
       }
     }
 
@@ -82,7 +102,8 @@
 
       .folder-card {
         display: grid;
-        grid-template-columns: 2fr 1fr 1fr;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
         background: $card-glass;
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
@@ -91,161 +112,199 @@
         cursor: pointer;
         box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
         position: relative;
+        padding: 10px 8px;
+        min-height: 56px;
+
+        .modified-column {
+          display: none;
+        }
+
         .name-container {
-          padding: 8px;
+          padding: 4px 8px;
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+
           h3, h4 {
             color: $text-primary;
+            line-height: 1.35;
           }
-        }
-        .download-button {
-          position: absolute;
-          transform: translateY(-50%);
-          top: 50%;
-          right: 20px;
-          z-index: 4;
-          color: $bear-blue-dim;
-          &:hover {
-            opacity: 0.8;
-          }
-        }
-        &:hover {
-          border-color: $bear-blue-dim;
-          box-shadow: 0 0 20px $bear-blue-glow;
-        }
-        svg {
-          width: 3rem;
-          height: 3rem;
-        }
-        div {
-          display: flex;
-          align-items: center;
-          gap: 15px;
+
           h3 {
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             font-weight: 400;
           }
+
           h4 {
             font-size: 1.2rem;
             font-weight: 400;
             color: $text-muted;
           }
         }
+
+        .download-button {
+          position: absolute;
+          top: 50%;
+          right: 12px;
+          transform: translateY(-50%);
+          z-index: 4;
+          color: $bear-blue-dim;
+          min-width: 44px;
+          min-height: 44px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          &:hover {
+            opacity: 0.8;
+          }
+        }
+
+        &:hover {
+          border-color: $bear-blue-dim;
+          box-shadow: 0 0 20px $bear-blue-glow;
+        }
+
+        svg {
+          width: 2.4rem;
+          height: 2.4rem;
+        }
+
+        div {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
       }
 
-      .video-card {
+      .folder-card.video-card {
         grid-template-columns: auto 1fr auto;
         padding: 10px;
-        align-items: center;
+
         .name-container {
-          padding-inline: 30px;
+          padding-inline: 12px;
           justify-content: center;
         }
       }
     }
   }
 
-  @include respond-to(md) {
-    .folders-navigation-container {
-      .header {
-        .modified-column {
-          display: none;
-        }
-      }
-
-      .folders-cards-container {
-        .folder-card {
-          .modified-column {
-            display: none;
-          }
-        }
-      }
-    }
-  }
   .search-input {
+    width: 100%;
+    max-width: 100%;
     background: $card-glass;
     border: 1px solid $card-glass-border;
     border-radius: 8px;
+
     input {
       color: $text-primary;
+      font-size: 16px;
+
       &::placeholder {
         color: $text-dim;
       }
     }
+
     svg {
       color: $bear-blue-dim;
     }
   }
+}
 
-  @include respond-to(md) {
-    .header-contain {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 16px;
-    }
+// Tablet+
+@include respond-from(tablet) {
+  .home-main-container {
+    gap: 16px;
+
     .header-contain h2 {
       font-size: 2.2rem;
     }
-    .search-input {
-      width: 100%;
-      max-width: 100%;
-    }
+
     .folders-navigation-container .header {
-      grid-template-columns: 1fr 1fr;
-      font-size: 1.2rem;
+      grid-template-columns: 2fr 1fr;
+      font-size: 1.3rem;
+      padding: 8px;
     }
-    .folders-navigation-container .header .modified-column {
-      display: none;
-    }
-    .folder-card {
-      grid-template-columns: 1fr auto !important;
-      .name-container {
-        min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
+
+    .folders-cards-container .folder-card {
+      grid-template-columns: 2fr 1fr auto;
+      padding: 8px 12px;
+
+      .name-container h3 {
+        font-size: 1.45rem;
       }
-      .modified-column {
-        display: none !important;
-      }
+
       .download-button {
-        right: 12px;
+        right: 16px;
+      }
+
+      svg {
+        width: 2.8rem;
+        height: 2.8rem;
       }
     }
+
     .folder-card.video-card {
       grid-template-columns: auto 1fr auto !important;
     }
   }
+}
 
-  @include respond-to(phone) {
-    gap: 12px;
-    .header-contain h2 {
-      font-size: 1.8rem;
-    }
-    .folder-structure-container {
-      flex-wrap: wrap;
-      gap: 4px;
-      p {
-        font-size: 1.2rem;
+// Desktop (md+): mostrar columna "modificado"
+@include respond-from(md) {
+  .home-main-container {
+    gap: 20px;
+
+    .header-contain {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+
+      h2 {
+        font-size: 2.8rem;
       }
     }
+
     .folders-navigation-container .header {
-      padding: 8px 4px;
-      div {
+      grid-template-columns: 2fr 1fr 1fr;
+      font-size: 1.4rem;
+
+      .modified-column {
+        display: block;
+      }
+    }
+
+    .folders-cards-container .folder-card {
+      grid-template-columns: 2fr 1fr 1fr;
+
+      .modified-column {
+        display: flex;
+      }
+
+      .name-container h3 {
+        font-size: 1.5rem;
+      }
+
+      .name-container h4 {
         font-size: 1.2rem;
       }
-    }
-    .folder-card {
-      padding: 10px 8px !important;
-      .name-container h3 {
-        font-size: 1.3rem;
+
+      .download-button {
+        right: 20px;
       }
+
       svg {
-        width: 2.4rem !important;
-        height: 2.4rem !important;
+        width: 3rem;
+        height: 3rem;
       }
     }
-    .btn-back button {
-      padding: 10px 16px;
-      font-size: 1.4rem;
+
+    .folder-card.video-card {
+      grid-template-columns: auto 1fr auto !important;
+    }
+
+    .search-input {
+      max-width: 400px;
     }
   }
 }

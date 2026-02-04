@@ -46,7 +46,8 @@ body {
   overflow-x: hidden;
 }
 
-@media (max-width: 576px) {
+// Mobile-first: base tipografía móvil
+@include respond-to(phone) {
   html {
     font-size: 58%; // base más pequeña en móvil para que quepa más contenido
   }

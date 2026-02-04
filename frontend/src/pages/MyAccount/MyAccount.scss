@@ -1,24 +1,28 @@
 @import "src/styles/mixin.scss";
 @import "../../styles/landing-design.scss";
 
+// Mobile-first
 .my-account-main-container {
   display: flex;
-  gap: 40px;
-  justify-content: center;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
   width: 100%;
   color: $text-primary;
+  overflow-x: hidden;
 
   .card-status {
     width: 20px;
     height: 20px;
     border-radius: 50%;
     border: 2px solid $card-glass-border;
-    margin-left: 20px;
+    margin-left: 12px;
   }
+
   .default {
     background-color: $bear-blue-dim;
   }
+
   .no-default {
     cursor: pointer;
     &:hover {
@@ -26,6 +30,7 @@
       opacity: 0.67;
     }
   }
+
   .new-card-box {
     display: flex;
     width: 100%;
@@ -33,37 +38,43 @@
     opacity: 0;
     transition: 0.3s ease all;
   }
+
   .active-card {
     opacity: 1;
   }
+
   .general {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
-    flex-grow: 1;
-    max-width: 400px;
-    margin-bottom: 10px;
+    gap: 16px;
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 0;
+
     .cancel {
       color: white;
       background-color: #ff2b2b;
-      padding-inline: 45px;
-      padding-block: 10px;
+      padding: 10px 24px;
       border-radius: 100px;
       font-weight: 600;
+      min-height: 44px;
+
       &:hover {
         opacity: 0.8;
       }
     }
+
     .user-profile-pic {
-      width: 200px;
-      height: 200px;
-      max-width: 200px;
-      min-width: 200px;
+      width: 120px;
+      height: 120px;
+      min-width: 120px;
+      max-width: 120px;
       border-radius: 100%;
       aspect-ratio: 1/1;
       background: $bg-dark-soft;
       border: 2px solid $card-glass-border;
+
       img {
         width: 100%;
         height: 100%;
@@ -73,9 +84,10 @@
 
     h2 {
       font-family: "Bear-font", "Bear Font2", sans-serif;
-      font-size: 2.8rem;
+      font-size: 2.2rem;
       font-weight: bold;
       color: $text-primary;
+      text-align: center;
     }
 
     .user-info-container {
@@ -83,16 +95,21 @@
       backdrop-filter: blur(12px);
       border: 1px solid $card-glass-border;
       border-radius: 12px;
-      padding: 16px 20px;
+      padding: 14px 16px;
       box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+      width: 100%;
+      box-sizing: border-box;
       display: flex;
       flex-direction: column;
       gap: 10px;
       color: $text-primary;
+
       .c-row {
         display: grid;
-        grid-template-columns: 1fr 2fr;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
         color: $text-muted;
+        font-size: 1.3rem;
       }
     }
   }
@@ -100,17 +117,21 @@
   .purchase {
     display: flex;
     flex-direction: column;
-    gap: 40px;
-    padding-bottom: 15px;
+    gap: 24px;
+    width: 100%;
+    padding-bottom: 16px;
+
     .actives-ftp-container {
       width: 100%;
+
       h2 {
         font-family: "Bear-font", "Bear Font2", sans-serif;
-        font-size: 3.2rem;
+        font-size: 2rem;
         font-weight: bold;
         text-align: center;
         position: relative;
         color: $text-primary;
+
         svg {
           position: absolute;
           right: 0;
@@ -118,73 +139,91 @@
           color: $bear-blue-dim;
           transition: 0.3s ease all;
           cursor: pointer;
+          min-width: 44px;
+          min-height: 44px;
+
           &:hover {
             opacity: 0.8;
           }
         }
+
         .active {
           rotate: 45deg;
         }
       }
+
       .no-items-container {
         background: rgba(248, 215, 218, 0.15);
         border: 1px solid rgba(245, 194, 199, 0.4);
-        padding: 16px;
+        padding: 12px;
         border-radius: 8px;
+
         p {
           color: #f8a0a0;
           margin: 0;
-          font-size: 1.4rem;
+          font-size: 1.3rem;
         }
       }
     }
+
     .actives-ftp-container.cards {
       background: $card-glass;
       backdrop-filter: blur(12px);
       border: 1px solid $card-glass-border;
       border-radius: 12px;
-      padding: 30px;
+      padding: 16px;
       box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 16px;
+
       h2 {
-        font-size: 2.4rem;
+        font-size: 1.8rem;
         font-weight: bold;
         text-align: left;
       }
+
       .card {
         border: none;
         border-bottom: 1px solid $card-glass-border;
         border-radius: 0;
-        padding-inline: 10px;
-        padding-bottom: 10px;
+        padding: 10px 8px;
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        grid-template-columns: 1fr auto auto;
+        gap: 8px;
         align-items: center;
         color: $text-primary;
+        font-size: 1.2rem;
+
         .default-card {
           color: $bear-blue-dim;
         }
+
         p {
           margin: 0;
           color: $text-muted;
         }
+
         .circle {
           background: $bg-dark-soft;
-          width: 45px;
-          height: 45px;
+          width: 36px;
+          height: 36px;
           border-radius: 50px;
           display: flex;
+
           img {
             margin: auto;
           }
         }
+
         svg {
           color: #ff6b6b;
           cursor: pointer;
+          min-width: 44px;
+          min-height: 44px;
         }
       }
+
       .new {
         font-size: 16px;
         font-weight: 700;
@@ -198,8 +237,9 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
+
       h2 {
-        font-size: 2.8rem;
+        font-size: 2rem;
         font-weight: bold;
         text-align: center;
         color: $text-primary;
@@ -207,110 +247,177 @@
     }
 
     table.table {
+      width: 100%;
+      min-width: 0;
       border-radius: 12px;
-      overflow: hidden;
+      overflow-x: auto;
+      display: block;
       border: 1px solid $card-glass-border;
       box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+      font-size: 1.2rem;
+
       thead {
         background: $bg-dark-soft !important;
+
         th {
           background: none !important;
           color: $bear-blue-dim !important;
-          padding: 10px;
+          padding: 8px 6px;
           border-color: $card-glass-border !important;
+          font-size: 1.1rem;
+          word-break: break-word;
         }
       }
+
       svg {
         cursor: pointer;
-        margin-left: 20px;
+        margin-left: 8px;
         color: $bear-blue-dim;
+        min-width: 44px;
+        min-height: 44px;
+
         &:hover {
           opacity: 0.8;
         }
       }
+
       tbody {
         background: $card-glass !important;
+
         tr td {
-          padding: 10px;
+          padding: 8px 6px;
           background: none !important;
           vertical-align: middle;
           color: $text-primary !important;
           border-color: $card-glass-border !important;
+          font-size: 1.1rem;
+          word-break: break-word;
+
           img {
-            width: 35px;
+            width: 32px;
             cursor: pointer;
           }
         }
       }
     }
-    .no-card {
-      tbody {
-        background: $bg-dark-soft !important;
-        .text-center {
-          color: $bear-blue-dim;
-        }
+
+    .no-card tbody {
+      background: $bg-dark-soft !important;
+
+      .text-center {
+        color: $bear-blue-dim;
       }
     }
   }
+}
 
-  @include respond-to(md) {
-    flex-direction: column;
-    align-items: center;
-    gap: 24px;
-    .general {
-      max-width: 100%;
-    }
-    .purchase {
-      width: 100%;
-      table.table {
-        width: 100%;
-        margin-bottom: 10px;
-        font-size: 1.4rem;
-        thead th {
-          padding: 8px 6px;
-          word-break: break-word;
-          font-size: 1.2rem;
-        }
-        tbody tr td {
-          padding: 8px 6px;
-          word-break: break-word;
-          font-size: 1.2rem;
-        }
-        h2 {
-          font-size: 1.6rem;
-        }
-      }
-    }
-  }
+@include respond-from(tablet) {
+  .my-account-main-container {
+    gap: 28px;
 
-  @media (max-width: 576px) {
-    gap: 20px;
     .general {
+      max-width: 400px;
+
       .user-profile-pic {
-        width: 120px;
-        height: 120px;
-        min-width: 120px;
-        max-width: 120px;
+        width: 160px;
+        height: 160px;
+        min-width: 160px;
+        max-width: 160px;
       }
+
       h2 {
-        font-size: 2.2rem;
+        font-size: 2.4rem;
+      }
+
+      .user-info-container .c-row {
+        grid-template-columns: 1fr 2fr;
+        font-size: 1.4rem;
       }
     }
+
     .purchase {
-      table.table {
-        font-size: 1.2rem;
-        thead th {
-          padding: 6px 4px;
-          font-size: 1.1rem;
-        }
-        tbody tr td {
-          padding: 6px 4px;
-          font-size: 1.1rem;
+      gap: 32px;
+
+      .actives-ftp-container.cards {
+        padding: 24px;
+
+        .card {
+          grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+          font-size: 1.4rem;
+
+          .circle {
+            width: 45px;
+            height: 45px;
+          }
         }
       }
-      .actives-ftp-container.cards .card .circle {
-        width: 36px;
-        height: 36px;
+
+      table.table {
+        font-size: 1.4rem;
+        display: table;
+
+        thead th {
+          padding: 10px;
+          font-size: 1.2rem;
+        }
+
+        tbody tr td {
+          padding: 10px;
+          font-size: 1.2rem;
+
+          img {
+            width: 35px;
+          }
+        }
+      }
+    }
+  }
+}
+
+@include respond-from(md) {
+  .my-account-main-container {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 40px;
+
+    .general {
+      max-width: 400px;
+      margin-bottom: 10px;
+
+      .user-profile-pic {
+        width: 200px;
+        height: 200px;
+        min-width: 200px;
+        max-width: 200px;
+      }
+
+      h2 {
+        font-size: 2.8rem;
+      }
+    }
+
+    .purchase {
+      flex-grow: 1;
+      min-width: 280px;
+      max-width: 720px;
+      padding-bottom: 15px;
+      gap: 40px;
+
+      .actives-ftp-container h2 {
+        font-size: 3.2rem;
+      }
+
+      .actives-ftp-container.cards {
+        padding: 30px;
+
+        h2 {
+          font-size: 2.4rem;
+        }
+      }
+
+      .last-purchased h2 {
+        font-size: 2.8rem;
       }
     }
   }
