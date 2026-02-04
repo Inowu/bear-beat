@@ -125,10 +125,10 @@ export const HistoryCheckout = () => {
                 ? history.map((his: any, index: number) => {
                   return (
                     <tr key={"admin_history_" + index}>
-                      <td className="">{his.users.email}</td>
-                      <td>{his.users.phone}</td>
-                      <td>{his.last_checkout_date.toLocaleDateString()}</td>
-                      <td>
+                      <td data-label="Email">{his.users.email}</td>
+                      <td data-label="Teléfono">{his.users.phone}</td>
+                      <td data-label="Última fecha de pago">{his.last_checkout_date.toLocaleDateString()}</td>
+                      <td data-label="Estado">
                         {his.users.active === 1 ? "Activo" : "No activo"}
                       </td>
                     </tr>

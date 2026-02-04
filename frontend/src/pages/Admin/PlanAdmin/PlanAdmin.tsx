@@ -120,25 +120,25 @@ export const PlanAdmin = () => {
                                 plans.map((plan: IPlans, index: number) => {
                                     return (
                                         <tr key={"admin_plans_" + index}>
-                                            <td className="">
+                                            <td data-label="Nombre">
                                                 {plan.name}
                                             </td>
-                                            <td className="">
+                                            <td data-label="Método de pago">
                                                 {getPaymentMethod(plan)}
                                             </td>
-                                            <td>
+                                            <td data-label="Descripción">
                                                 {plan.description}
                                             </td>
-                                            <td>
+                                            <td data-label="Moneda">
                                                 {plan.moneda.toUpperCase()}
                                             </td>
-                                            <td>
+                                            <td data-label="Precio">
                                                 {plan.price}
                                             </td>
-                                            <td style={{ textAlign: 'center' }}>
+                                            <td data-label="Activo" style={{ textAlign: 'center' }}>
                                                 {plan.activated === 1 ? "Activo" : "No activo"}
                                             </td>
-                                            <td>
+                                            <td data-label="Acciones">
                                                 <button
                                                     onClick={() => handleEditPlan(plan)}
                                                     // disabled={plan.paypal_plan_id !== null}

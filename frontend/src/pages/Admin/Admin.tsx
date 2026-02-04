@@ -443,16 +443,16 @@ function Admin() {
                 ? users.map((user: IAdminUser, index: number) => {
                   return (
                     <tr key={"admin_users_" + index}>
-                      <td className="">{user.username}</td>
-                      <td>{user.email}</td>
-                      <td>{user.phone}</td>
-                      <td>{user.registered_on.toLocaleDateString()}</td>
+                      <td data-label="Nombre">{user.username}</td>
+                      <td data-label="Email">{user.email}</td>
+                      <td data-label="Teléfono">{user.phone}</td>
+                      <td data-label="Registro">{user.registered_on.toLocaleDateString()}</td>
                       {filters.active !== 2 && (
-                        <td>
+                        <td data-label="Suscripción">
                           {filters.active === 1 ? "Activa" : "No activa"}
                         </td>
                       )}
-                      <td className="wrap-td">
+                      <td className="wrap-td" data-label="Acciones">
                         <div className={`dropdown ${openDropdownIndex === index ? "open" : ""}`} data-dropdown-index={index}>
                           <button
                             type="button"

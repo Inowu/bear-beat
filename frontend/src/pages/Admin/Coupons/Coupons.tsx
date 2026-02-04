@@ -88,11 +88,11 @@ export const Coupons = () => {
                   coupons.map((coupon: IAdminCoupons, index: number) => {
                     return (
                       <tr key={"admin_coupons_" + index}>
-                        <td className="">{coupon.code}</td>
-                        <td>{coupon.description}</td>
-                        <td>{coupon.discount} %</td>
-                        <td>{coupon.active === 1 ? "Activo" : "No activo"}</td>
-                        <td>
+                        <td data-label="Código">{coupon.code}</td>
+                        <td data-label="Descripción">{coupon.description}</td>
+                        <td data-label="Descuento">{coupon.discount} %</td>
+                        <td data-label="Activo">{coupon.active === 1 ? "Activo" : "No activo"}</td>
+                        <td data-label="Acciones">
                           <button onClick={() => handleEditCoupon(coupon)}>
                             Editar
                           </button>

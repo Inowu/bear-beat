@@ -68,6 +68,8 @@
   }
 }
 
+@import "src/styles/admin-tables-mobile";
+
 @include respond-from(tablet) {
   .blocked-phones-contain {
     gap: 20px;

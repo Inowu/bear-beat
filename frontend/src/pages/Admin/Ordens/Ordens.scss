@@ -237,6 +237,8 @@
   }
 }
 
+@import "src/styles/admin-tables-mobile";
+
 @include respond-from(tablet) {
   .ordens-contain {
     gap: 20px;

@@ -1,0 +1,97 @@
+// Tablas admin en móvil: cada fila se muestra como tarjeta (sin scroll horizontal)
+@import "src/styles/mixin.scss";
+@import "src/styles/landing-design.scss";
+
+@include respond-to(tablet) {
+  .admin-table .table-contain {
+    overflow-x: visible;
+    max-height: none;
+  }
+
+  .admin-table .table-contain table {
+    min-width: 0;
+    display: block;
+    border: none;
+    border-radius: 0;
+
+    thead {
+      display: none;
+    }
+
+    tbody {
+      display: block;
+
+      tr {
+        display: block;
+        margin-bottom: 12px;
+        padding: 14px 12px;
+        background: $card-glass;
+        border: 1px solid $card-glass-border;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+
+        &.tr-load td {
+          display: block;
+          padding: 10px 0;
+          border: none;
+          max-width: none;
+        }
+
+        td {
+          display: block;
+          max-width: none;
+          padding: 8px 0;
+          border: none;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+          font-size: 1.25rem;
+
+          &:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+          }
+
+          &[data-label]::before {
+            content: attr(data-label);
+            display: block;
+            font-weight: 600;
+            color: $bear-blue-dim;
+            font-size: 1.1rem;
+            margin-bottom: 2px;
+          }
+
+          &.wrap-td {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+            &::before {
+              width: 100%;
+              margin-bottom: 6px;
+            }
+          }
+        }
+      }
+    }
+
+    tfoot {
+      display: block;
+      position: static;
+      margin-top: 12px;
+
+      tr {
+        display: block;
+      }
+
+      th {
+        display: block;
+        max-width: none;
+        padding: 0;
+        border: none;
+        text-align: left;
+      }
+    }
+  }
+}

@@ -244,18 +244,18 @@ export const Ordens = () => {
                 ? ordens.map((orden, index: number) => {
                   return (
                     <tr key={"admin_ordens_" + index}>
-                      <td className="">{orden.id}</td>
-                      <td className="">{orden.email}</td>
-                      <td className="">{orden.phone}</td>
-                      <td className="">
+                      <td data-label="No. Orden">{orden.id}</td>
+                      <td data-label="Correo">{orden.email}</td>
+                      <td data-label="Teléfono">{orden.phone}</td>
+                      <td data-label="Método de pago">
                         {orden.payment_method
                           ? orden.payment_method
                           : "Sin PM"}
                       </td>
-                      <td>{orden.txn_id}</td>
-                      <td>{orden.total_price}</td>
-                      <td>{orden.date_order.toLocaleDateString()}</td>
-                      <td>{getOrderStatusString(orden.status)}</td>
+                      <td data-label="Id suscripción">{orden.txn_id}</td>
+                      <td data-label="Precio total">{orden.total_price}</td>
+                      <td data-label="Fecha">{orden.date_order.toLocaleDateString()}</td>
+                      <td data-label="Estado">{getOrderStatusString(orden.status)}</td>
                     </tr>
                   );
                 })

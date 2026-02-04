@@ -141,8 +141,8 @@ export const BlockedPhoneNumbers = () => {
                 {blockedNumbers.length > 0 ? (
                   blockedNumbers.map((phone) => (
                     <tr key={`blocked-phone-${phone}`}>
-                      <td>{phone}</td>
-                      <td>
+                      <td data-label="Teléfono">{phone}</td>
+                      <td data-label="Acciones">
                         <button
                           onClick={() => handleRemovePhone(phone)}
                           disabled={saving}

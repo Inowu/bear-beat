@@ -100,6 +100,8 @@
     }
 }
 
+@import "src/styles/admin-tables-mobile";
+
 @include respond-from(tablet) {
     .planAdmin-contain {
         gap: 20px;

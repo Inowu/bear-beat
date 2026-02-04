@@ -130,12 +130,12 @@ export const DownloadHistory = () => {
                   let gbSize = downloadSize / (1024 * 1024 * 1024);
                   return (
                     <tr key={"admin_history_" + index}>
-                      <td>{his.email}</td>
-                      <td>{his.phone}</td>
-                      <td>{his.fileName}</td>
-                      <td>{gbSize.toFixed(2)} GB</td>
-                      <td>{his.date.toLocaleDateString()}</td>
-                      <td>
+                      <td data-label="Email">{his.email}</td>
+                      <td data-label="Teléfono">{his.phone}</td>
+                      <td data-label="Nombre descarga">{his.fileName}</td>
+                      <td data-label="Tamaño">{gbSize.toFixed(2)} GB</td>
+                      <td data-label="Fecha">{his.date.toLocaleDateString()}</td>
+                      <td data-label="Tipo">
                         {his.isFolder ? "Carpeta" : "Archivo"}
                       </td>
                     </tr>

@@ -154,8 +154,8 @@ export const BlockedEmailDomains = () => {
                 {blockedDomains.length > 0 ? (
                   blockedDomains.map((domain) => (
                     <tr key={`blocked-domain-${domain}`}>
-                      <td>{domain}</td>
-                      <td>
+                      <td data-label="Dominio">{domain}</td>
+                      <td data-label="Acciones">
                         <button
                           onClick={() => handleRemoveDomain(domain)}
                           disabled={saving}
