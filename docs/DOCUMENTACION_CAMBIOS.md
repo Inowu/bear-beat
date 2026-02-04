@@ -12,8 +12,9 @@ Resumen de todo lo implementado en el proyecto (diseño, landing, deploy, correc
 - **Responsive:** breakpoints y ajustes en todas las vistas para móvil.
 - **Experiencia móvil (mobile-first):** estilos tipo app nativa (inputs 16px, botones min-height 48px), tablas Admin en cards en móvil, scroll corregido (padding-bottom en layout y PublicHome).
 - **Sistema de temas:** modo claro (por defecto), oscuro, según sistema y por horario; selector en Navbar; variables CSS en `_variables-theme.scss`; preferencia guardada en `localStorage`.
-- **Admin – Catálogo:** página de estadísticas del catálogo (videos, audios, karaokes, géneros, GB, archivos) en `/admin/catalogo`; procedimiento `ftp.catalogStats` en backend; acceso con usuario logueado (`isLoggedIn`).
+- **Admin – Catálogo:** página de estadísticas del catálogo (videos, audios, karaokes, géneros, GB, archivos) en `/admin/catalogo`; endpoint REST `GET /api/catalog-stats` (JWT) en backend; acceso con usuario logueado.
 - **Deploy Netlify:** configuración para monorepo y corrección del 404 (redirects SPA).
+- **Deploy backend:** GitHub Actions + SSH ejecutan `deploy.sh` en el servidor (build, PM2 blue/green, nginx); compatibilidad sed BSD en el script.
 - **Rutas:** raíz `/` muestra landing o home según sesión; rutas protegidas con `AuthRoute`; Admin incluye ruta `catalogo`.
 
 Ningún cambio afecta la lógica de negocio, pagos o auth; solo UI, contenido, temas, estadísticas de solo lectura y configuración de build/deploy.
@@ -207,26 +208,51 @@ Se importa `_landing-design.scss` o `landing-design.scss` donde haga falta para 
 - Mostrar estadísticas de solo lectura del catálogo de archivos (videos, audios, karaokes, géneros, GB, total de archivos).
 
 ### Backend
-- **Procedimiento:** `ftp.catalogStats` (router FTP / file-actions).
-- **Archivo:** `backend/src/routers/file-actions/catalog-stats.ts`.
+- **Endpoint REST (usado por el frontend):** `GET /api/catalog-stats` con header `Authorization: Bearer <token>`. Responde JSON con las estadísticas.
+- **Archivo del endpoint:** `backend/src/endpoints/catalog-stats.endpoint.ts` (registrado en `backend/src/index.ts`).
+- **Lógica compartida:** `backend/src/routers/file-actions/catalog-stats.ts` exporta `getCatalogStats()`; el endpoint REST y el procedimiento tRPC `ftp.catalogStats` usan esta función. La UI usa REST para no depender del router tRPC en producción.
 - **Lógica:** recorre recursivamente el directorio configurado en `SONGS_PATH` (vía `fileService.list`), cuenta por tipo de extensión (video, audio), detecta “karaoke” en la ruta, suma tamaños y lista directorios de primer nivel como “géneros”.
-- **Permisos:** en `backend/src/permissions/index.ts` el procedimiento está protegido con `isLoggedIn` (cualquier usuario logueado puede ver la página; no solo admin).
+- **Permisos:** el endpoint verifica JWT (usuario logueado). El procedimiento tRPC está en `isLoggedIn` en `backend/src/permissions/index.ts`.
 - **Seguridad:** solo lectura; en caso de error devuelve respuesta segura (sin exponer rutas internas).
 
 ### Frontend
 - **Ruta:** `/admin/catalogo`.
 - **Componente:** `frontend/src/pages/Admin/CatalogStats/CatalogStats.tsx` (y `CatalogStats.scss`).
-- **Comportamiento:** llama a `ftp.catalogStats`, muestra loading, números por tipo (videos, audios, karaokes, otros), géneros, GB y total de archivos; si falla, muestra el mensaje de error del backend (p. ej. “SONGS_PATH no configurado”).
+- **Comportamiento:** llama a `GET /api/catalog-stats` con el token en `Authorization`, muestra loading, números por tipo (videos, audios, karaokes, otros), géneros, GB y total de archivos; si falla, muestra el mensaje de error del backend (p. ej. “SONGS_PATH no configurado”).
 
 ### Sidebar Admin
 - En `AsideNavbar` hay un enlace “Catálogo” (icono `faChartBar`) dentro de la sección Admin que lleva a `/admin/catalogo`.
 
 ### Variable de entorno (backend)
-- `SONGS_PATH` – ruta en el servidor donde está el catálogo de canciones/archivos. Si no está configurada, el procedimiento puede devolver error controlado.
+- `SONGS_PATH` – ruta en el servidor donde está el catálogo de canciones/archivos. Si no está configurada, el endpoint/procedimiento devuelve error controlado.
 
 ---
 
-## 12. Archivos clave de referencia
+## 12. Deploy del backend (GitHub Actions, PM2, nginx)
+
+### Objetivo
+- Desplegar el backend en un servidor propio (VPS) al hacer push a `main`: build, reinicio del proceso y actualización del proxy nginx.
+
+### Flujo
+1. **GitHub Actions:** al hacer push a `main` se ejecuta el workflow `.github/workflows/backend-deploy.yml`.
+2. **SSH:** la acción `appleboy/ssh-action` se conecta al servidor y ejecuta `cd bear-beat && bash ./deploy.sh`.
+3. **deploy.sh:** hace `git reset --hard` + `git pull`, build del backend (`npm run build`), actualiza `PORT` en `.env`, reinicia el proceso PM2 correspondiente (blue o green) y actualiza `proxy_pass` en nginx para apuntar al puerto nuevo.
+
+### Blue/green
+- Dos procesos PM2: `bearbeat-blue` (puerto 5000) y `bearbeat-green` (puerto 6000). Nginx apunta a uno; cada deploy cambia al otro (5000↔6000) para cero-downtime.
+
+### Archivos
+- **Workflow:** `.github/workflows/backend-deploy.yml` – secretos: host, username, key SSH.
+- **Script en servidor:** `deploy.sh` (en el repo, se actualiza con `git pull`). Requiere: git, npm, pm2, nginx, systemctl. La ruta de nginx se define en `NGINX_CONF` dentro del script.
+- **Compatibilidad sed:** el servidor puede usar BSD sed (p. ej. macOS); en `deploy.sh` la actualización de `proxy_pass` usa dos `sed` separados (localhost y 127.0.0.1) con delimitador `#` para evitar errores con el carácter `|`.
+
+### Cómo comprobar que el deploy funcionó
+- En GitHub: pestaña **Actions** → último run de "Deploy backend" en verde (✓).
+- En terminal: `gh run list --limit 1` debe mostrar `success` en la primera fila.
+
+---
+
+## 13. Archivos clave de referencia
 
 | Qué | Dónde |
 |-----|--------|
@@ -241,18 +267,21 @@ Se importa `_landing-design.scss` o `landing-design.scss` donde haga falta para 
 | Build/deploy Netlify | `netlify.toml` (raíz), `frontend/public/_redirects` |
 | Textos y planes | `frontend/src/utils/Constants.ts` |
 | MainLayout (fondo/padding landing) | `frontend/src/layouts/MainLayout/` |
-| Estadísticas catálogo (backend) | `backend/src/routers/file-actions/catalog-stats.ts` |
+| Estadísticas catálogo (lógica + tRPC) | `backend/src/routers/file-actions/catalog-stats.ts` |
+| Endpoint REST catálogo | `backend/src/endpoints/catalog-stats.endpoint.ts` |
 | Permisos (incl. catalogStats) | `backend/src/permissions/index.ts` |
 | Página Admin Catálogo | `frontend/src/pages/Admin/CatalogStats/` |
+| Deploy backend (workflow + script) | `.github/workflows/backend-deploy.yml`, `deploy.sh` |
 
 ---
 
-## 13. Cómo seguir trabajando
+## 14. Cómo seguir trabajando
 
 - **Local:** el código está en tu PC en la carpeta del proyecto; los pushes que hicimos dejaron `main` alineado con GitHub.
-- **Deploy:** Netlify construye desde GitHub (rama `main`); al hacer push, se genera un nuevo deploy. No hace falta tocar redirects en el dashboard si `_redirects` y `netlify.toml` siguen así.
+- **Deploy frontend (Netlify):** Netlify construye desde GitHub (rama `main`); al hacer push, se genera un nuevo deploy. No hace falta tocar redirects en el dashboard si `_redirects` y `netlify.toml` siguen así.
+- **Deploy backend:** al hacer push a `main` se dispara el workflow de GitHub Actions que ejecuta `deploy.sh` en el servidor vía SSH. Comprobar en Actions que el run sea verde; o en terminal: `gh run list --limit 1`.
 - **Tema:** la preferencia se guarda en `localStorage`; el script en `index.html` evita flash. Si añades páginas nuevas, usa las variables de `_variables-theme.scss`.
-- **Catálogo:** si la página de estadísticas falla, revisar que `SONGS_PATH` esté configurado en el backend y que el usuario esté logueado (permiso `isLoggedIn`).
-- **Si vuelve el 404:** revisar que el último deploy en Netlify sea “Published” y que el build no falle (si falla, no se genera `build/` ni `_redirects`). No añadir `[[redirects]]` para SPA en `netlify.toml`; mantener solo `_redirects` en `frontend/public`.
+- **Catálogo:** si la página de estadísticas falla, revisar que `SONGS_PATH` esté configurado en el backend y que el usuario esté logueado. La UI usa `GET /api/catalog-stats` con JWT.
+- **Si vuelve el 404 (frontend):** revisar que el último deploy en Netlify sea “Published” y que el build no falle (si falla, no se genera `build/` ni `_redirects`). No añadir `[[redirects]]` para SPA en `netlify.toml`; mantener solo `_redirects` en `frontend/public`.
 
-Documentación generada y actualizada para referencia (landing, diseño, responsive, móvil, temas, catálogo, Netlify). Si algo cambia en el futuro, conviene actualizar este archivo.
+Documentación actualizada: landing, diseño, responsive, móvil, temas, catálogo (REST), Netlify, deploy backend. Cualquier desarrollador puede seguir este doc para entender qué se hizo; conviene actualizarlo cuando se añadan cambios relevantes.

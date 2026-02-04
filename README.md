@@ -1,4 +1,8 @@
-# Running backend
+# Bear Beat
+
+- **Documentación completa:** ver carpeta [docs/](docs/) (cambios implementados, deploy, Facebook, etc.).
+
+## Running backend
 
 ---
 
