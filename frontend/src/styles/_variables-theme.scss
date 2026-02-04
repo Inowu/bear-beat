@@ -70,6 +70,10 @@
   --ph-footer-bg: #f1f5f9;
   --ph-pain-bad: #dc2626; /* red-600 */
   --ph-pain-good: #06b6d4;
+
+  /* Auth (Login/Register): inputs bordes visibles */
+  --auth-input-border: #cbd5e1; /* slate-300 */
+  --auth-input-bg: #ffffff;
 }
 
 // Dark: por data-theme o por clase .dark en html (compatibilidad Tailwind)
@@ -135,4 +139,8 @@ html.dark {
   --ph-footer-bg: rgba(15, 23, 42, 0.95);
   --ph-pain-bad: #f87171; /* red-400 */
   --ph-pain-good: #22d3ee;
+
+  /* Auth: inputs dark */
+  --auth-input-border: #334155;
+  --auth-input-bg: #1e293b; /* slate-800 */
 }

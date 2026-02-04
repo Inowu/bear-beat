@@ -1,44 +1,47 @@
+// SignUpForm: solo layout del teléfono; colores por tema (Auth.scss aplica inputs)
 form.sign-up-form {
   display: flex;
+  flex-direction: column;
+  gap: 16px;
 
   .c-row {
     position: relative;
+
     .special-label {
       display: none;
     }
-    .code{
+
+    .code {
       position: absolute;
-      font-size: 18px;
-      color: white;
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--ph-text-body);
       margin: 0;
-      left: 50px;
-      top: 48%;
+      left: 52px;
+      top: 50%;
       transform: translateY(-50%);
+      pointer-events: none;
+      z-index: 2;
     }
+
     .dial-container {
       position: absolute;
       width: auto;
-      left: 0px;
+      left: 0;
       top: 50%;
       transform: translateY(-50%);
-      z-index: 1000;
-      input {
-        display: none;
-        background-color: transparent;
-        border: none;
-        font-size: 1.8rem;
-        padding: 0;
-        padding-left: 55px;
-        color: #ffffff;
-        margin: 0 !important;
-        width: 100px;
-        &:focus {
-          box-shadow: none;
-        }
-      }
+      z-index: 10;
     }
+
     input.phone {
-      padding-left: 100px;
+      padding-left: 110px;
+      min-height: 48px;
     }
+  }
+
+  .turnstile-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 }

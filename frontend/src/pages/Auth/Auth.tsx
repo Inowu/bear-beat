@@ -4,8 +4,8 @@ import Logo from "../../assets/images/osonuevo.png";
 
 function Auth() {
   return (
-    <div className="auth-main-container">
-      <img className="logo" src={Logo} alt="bear beat" />
+    <div className="auth-main-container auth-page">
+      <img className="auth-logo" src={Logo} alt="Bear Beat" />
       <p className="auth-tagline">
         Música y videos <strong>exclusivos para DJs</strong>
         <span className="auth-tagline-sep"> · </span>

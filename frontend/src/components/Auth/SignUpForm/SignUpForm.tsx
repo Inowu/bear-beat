@@ -214,99 +214,114 @@ function SignUpForm() {
   }, []);
 
   return (
-    <form className="sign-up-form" onSubmit={formik.handleSubmit}>
-      <h2>REGISTRARSE</h2>
-      <ChatButton />
-      <div className="c-row">
-        <input
-          placeholder="Correo electrónico"
-          id="email"
-          name="email"
-          value={formik.values.email}
-          onChange={formik.handleChange}
-          type="text"
-        />
-        {formik.errors.email && <div className="error-formik">{formik.errors.email}</div>}
+    <div className="auth-split">
+      <div className="auth-split-panel auth-split-left">
+        <h2 className="auth-split-title">Estás a 60 segundos de tenerlo todo.</h2>
+        <ul className="auth-split-list">
+          <li>Acceso inmediato a 12.5 TB.</li>
+          <li>Descarga por FTP sin límites.</li>
+          <li>Cancela cuando quieras.</li>
+        </ul>
+        <p className="auth-split-testimonial">"La mejor inversión para mi carrera."</p>
       </div>
-      <div className="c-row">
-        <PhoneInput
-          containerClass="dial-container"
-          buttonClass="dial-code"
-          country={countryCode}
-          preferredCountries={["mx", "us", "ca", "es"]}
-          onlyCountries={twoDigitsCountryCodes.map((c) => c.toLowerCase())}
-          placeholder="Teléfono"
-          localization={es}
-          onChange={handlePhoneNumberChange}
-        />
-        <p className="code">+{code}</p>
-        <input
-          className="phone"
-          placeholder="Teléfono"
-          id="phone"
-          name="phone"
-          value={formik.values.phone}
-          onChange={formik.handleChange}
-          type="text"
-        />
-        {formik.errors.phone && <div className="error-formik">{formik.errors.phone}</div>}
-      </div>
-      <div className="c-row">
-        <input
-          placeholder="Nombre"
-          type="text"
-          id="username"
-          name="username"
-          value={formik.values.username}
-          onChange={formik.handleChange}
-        />
-        {formik.errors.username && <div className="error-formik">{formik.errors.username}</div>}
-      </div>
-      <div className="c-row">
-        <input
-          placeholder="Contraseña"
-          type="password"
-          id="password"
-          name="password"
-          value={formik.values.password}
-          onChange={formik.handleChange}
-        />
-        {formik.errors.password && <div className="error-formik">{formik.errors.password}</div>}
-      </div>
-      <div className="c-row">
-        <input
-          placeholder="Repetir contraseña"
-          type="password"
-          id="passwordConfirmation"
-          name="passwordConfirmation"
-          value={formik.values.passwordConfirmation}
-          onChange={formik.handleChange}
-        />
-        {formik.errors.passwordConfirmation && (
-          <div className="error-formik">{formik.errors.passwordConfirmation}</div>
-        )}
-      </div>
-      <div className="c-row turnstile-row">
-        <Turnstile
-          onVerify={handleTurnstileSuccess}
-          onExpire={handleTurnstileExpire}
-          onError={handleTurnstileError}
-          resetSignal={turnstileReset}
-        />
-        {turnstileError && <div className="error-formik">{turnstileError}</div>}
-      </div>
-      {!loader ? (
-        <button className="btn" type="submit">
-          REGISTRARSE
-        </button>
-      ) : (
-        <Spinner size={3} width={0.3} color="#00e2f7" />
-      )}
-      <div className="c-row">
-        <Link to={"/auth"}>
-          <Arrow className="arrow" />
-          Ya tengo cuenta
-        </Link>
+      <div className="auth-split-panel auth-split-right">
+        <div className="auth-split-form">
+          <h2 className="auth-split-form-title">Crea tu cuenta Pro</h2>
+          <ChatButton />
+          <form className="sign-up-form auth-form" onSubmit={formik.handleSubmit}>
+            <div className="c-row">
+              <input
+                placeholder="Correo electrónico"
+                id="email"
+                name="email"
+                value={formik.values.email}
+                onChange={formik.handleChange}
+                type="text"
+              />
+              {formik.errors.email && <div className="error-formik">{formik.errors.email}</div>}
+            </div>
+            <div className="c-row">
+              <PhoneInput
+                containerClass="dial-container"
+                buttonClass="dial-code"
+                country={countryCode}
+                preferredCountries={["mx", "us", "ca", "es"]}
+                onlyCountries={twoDigitsCountryCodes.map((c) => c.toLowerCase())}
+                placeholder="Teléfono"
+                localization={es}
+                onChange={handlePhoneNumberChange}
+              />
+              <p className="code">+{code}</p>
+              <input
+                className="phone"
+                placeholder="Teléfono"
+                id="phone"
+                name="phone"
+                value={formik.values.phone}
+                onChange={formik.handleChange}
+                type="text"
+              />
+              {formik.errors.phone && <div className="error-formik">{formik.errors.phone}</div>}
+            </div>
+            <div className="c-row">
+              <input
+                placeholder="Nombre"
+                type="text"
+                id="username"
+                name="username"
+                value={formik.values.username}
+                onChange={formik.handleChange}
+              />
+              {formik.errors.username && <div className="error-formik">{formik.errors.username}</div>}
+            </div>
+            <div className="c-row">
+              <input
+                placeholder="Contraseña"
+                type="password"
+                id="password"
+                name="password"
+                value={formik.values.password}
+                onChange={formik.handleChange}
+              />
+              {formik.errors.password && <div className="error-formik">{formik.errors.password}</div>}
+            </div>
+            <div className="c-row">
+              <input
+                placeholder="Repetir contraseña"
+                type="password"
+                id="passwordConfirmation"
+                name="passwordConfirmation"
+                value={formik.values.passwordConfirmation}
+                onChange={formik.handleChange}
+              />
+              {formik.errors.passwordConfirmation && (
+                <div className="error-formik">{formik.errors.passwordConfirmation}</div>
+              )}
+            </div>
+            <div className="c-row turnstile-row">
+              <Turnstile
+                onVerify={handleTurnstileSuccess}
+                onExpire={handleTurnstileExpire}
+                onError={handleTurnstileError}
+                resetSignal={turnstileReset}
+              />
+              {turnstileError && <div className="error-formik">{turnstileError}</div>}
+            </div>
+            {!loader ? (
+              <button className="btn" type="submit">
+                REGISTRARSE
+              </button>
+            ) : (
+              <Spinner size={3} width={0.3} color="#00e2f7" />
+            )}
+            <div className="c-row">
+              <Link to={"/auth"}>
+                <Arrow className="arrow" />
+                Ya tengo cuenta
+              </Link>
+            </div>
+          </form>
+        </div>
       </div>
       <ErrorModal show={show} onHide={closeModal} message={errorMessage} />
       <SuccessModal
@@ -321,7 +336,7 @@ function SignUpForm() {
         newUserPhone={newUserPhone}
         onHideModal={handleSuccessVerify}
       />
-    </form>
+    </div>
   );
 }
 

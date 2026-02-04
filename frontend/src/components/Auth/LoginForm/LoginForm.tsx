@@ -83,48 +83,51 @@ function LoginForm() {
   }
 
   return (
-    <form onSubmit={formik.handleSubmit}>
-      <h2>INICIAR SESIÓN</h2>
+    <div className="auth-login-card">
+      <h1 className="auth-login-title">Bienvenido de nuevo, Colega.</h1>
+      <p className="auth-login-sub">Ingresa a tu cuenta para seguir descargando.</p>
       <ChatButton />
-      <div className="c-row">
-        <input
-          placeholder="Correo electrónico"
-          type="text"
-          id="username"
-          name="username"
-          value={formik.values.username}
-          onChange={formik.handleChange}
-        />
-        {formik.errors.username && (
-          <div className="error-formik">{formik.errors.username}</div>
+      <form className="auth-form" onSubmit={formik.handleSubmit}>
+        <div className="c-row">
+          <input
+            placeholder="Correo electrónico"
+            type="text"
+            id="username"
+            name="username"
+            value={formik.values.username}
+            onChange={formik.handleChange}
+          />
+          {formik.errors.username && (
+            <div className="error-formik">{formik.errors.username}</div>
+          )}
+        </div>
+        <div className="c-row">
+          <input
+            placeholder="Contraseña"
+            type="password"
+            id="password"
+            name="password"
+            value={formik.values.password}
+            onChange={formik.handleChange}
+          />
+          {formik.errors.password && (
+            <div className="error-formik">{formik.errors.password}</div>
+          )}
+        </div>
+        <div className="c-row">
+          <Link to={"recuperar"}>¿Olvidaste tu contraseña?</Link>
+        </div>
+        {!loader ? (
+          <button className="btn" type="submit">
+            INGRESAR
+          </button>
+        ) : (
+          <Spinner size={3} width={0.3} color="#00e2f7" />
         )}
-      </div>
-      <div className="c-row">
-        <input
-          placeholder="Contraseña"
-          type="password"
-          id="password"
-          name="password"
-          value={formik.values.password}
-          onChange={formik.handleChange}
-        />
-        {formik.errors.password && (
-          <div className="error-formik">{formik.errors.password}</div>
-        )}
-      </div>
-      <div className="c-row">
-        <Link to={"recuperar"}>¿Olvidaste tu contraseña?</Link>
-      </div>
-      {!loader ? (
-        <button className="btn" type="submit">
-          INGRESAR
-        </button>
-      ) : (
-        <Spinner size={3} width={0.3} color="#00e2f7" />
-      )}
-      <div className="c-row">
-        <Link to={"registro"}>Registrarme</Link>
-      </div>
+        <div className="c-row">
+          <Link to={"registro"}>Registrarme</Link>
+        </div>
+      </form>
       <ErrorModal show={show} onHide={closeModal} message={errorMessage} />
       <VerifyUpdatePhoneModal
         showModal={showVerify}
@@ -132,7 +135,7 @@ function LoginForm() {
         newUserPhone={newUserPhone}
         onHideModal={handleSuccessVerify}
       />
-    </form>
+    </div>
   );
 }
 
