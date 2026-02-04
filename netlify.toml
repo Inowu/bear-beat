@@ -1,0 +1,11 @@
+# Build del frontend (monorepo)
+[build]
+  base = "frontend"
+  command = "npm run build"
+  publish = "build"
+
+# SPA: todas las rutas sin archivo físico sirven index.html (evita 404 en / y rutas del React Router)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
