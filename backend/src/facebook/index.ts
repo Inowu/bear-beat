@@ -59,7 +59,7 @@ export const facebook = {
       const data: Record<string, unknown> = {};
       if (customData.value != null) data.value = customData.value;
       if (customData.currency) data.currency = customData.currency.toUpperCase();
-      serverEvent.setCustomData(data);
+      serverEvent.setCustomData(data as any);
     }
 
     const eventRequest = new EventRequest(access_token, pixel_id).setEvents([serverEvent]);
