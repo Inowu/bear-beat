@@ -18,6 +18,99 @@
     }
   }
 
+  &--empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 24px 0;
+  }
+
+  &__empty-msg {
+    color: $text-muted;
+    font-size: 1.2rem;
+    text-align: center;
+    max-width: 400px;
+    margin: 0;
+  }
+
+  &__header-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+
+  &__saved-at {
+    font-size: 1.1rem;
+    color: $text-muted;
+  }
+
+  &__btn-refresh,
+  &__btn-export {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid $card-glass-border;
+    background: $card-glass;
+    color: $bear-blue-dim;
+    &:hover:not(:disabled) {
+      opacity: 0.9;
+    }
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+  &__btn-export {
+    color: $text-primary;
+  }
+
+  &__pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 12px 0 8px;
+    font-size: 1.1rem;
+    color: $text-muted;
+  }
+
+  &__pagination-btns {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    button {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      border: 1px solid $card-glass-border;
+      background: $card-glass;
+      color: $text-primary;
+      cursor: pointer;
+      &:hover:not(:disabled) {
+        opacity: 0.9;
+      }
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+  }
+
   &__error-wrap {
     margin-bottom: 16px;
   }

@@ -12,7 +12,7 @@ Resumen de todo lo implementado en el proyecto (diseño, landing, deploy, correc
 - **Responsive:** breakpoints y ajustes en todas las vistas para móvil.
 - **Experiencia móvil (mobile-first):** estilos tipo app nativa (inputs 16px, botones min-height 48px), tablas Admin en cards en móvil, scroll corregido (padding-bottom en layout y PublicHome).
 - **Sistema de temas:** modo claro (por defecto), oscuro, según sistema y por horario; selector en Navbar; variables CSS en `_variables-theme.scss`; preferencia guardada en `localStorage`.
-- **Admin – Catálogo:** página de estadísticas del catálogo (videos, audios, karaokes, géneros, GB, archivos) en `/admin/catalogo`; endpoint REST `GET /api/catalog-stats` (JWT) en backend; acceso con usuario logueado.
+- **Admin – Catálogo:** página de estadísticas del catálogo en `/admin/catalogo` (totales por tipo y por género, GB, archivos). No se recargan al entrar: se muestra la última carga guardada en el navegador; botón “Actualizar estadísticas” para sincronizar; caché en servidor (1 h); tabla de géneros paginada (50 por página); exportar a CSV.
 - **Deploy Netlify:** configuración para monorepo y corrección del 404 (redirects SPA).
 - **Deploy backend:** GitHub Actions + SSH ejecutan `deploy.sh` en el servidor (build, PM2 blue/green, nginx); compatibilidad sed BSD en el script.
 - **Rutas:** raíz `/` muestra landing o home según sesión; rutas protegidas con `AuthRoute`; Admin incluye ruta `catalogo`.
@@ -208,17 +208,20 @@ Se importa `_landing-design.scss` o `landing-design.scss` donde haga falta para 
 - Mostrar estadísticas de solo lectura del catálogo de archivos (videos, audios, karaokes, géneros, GB, total de archivos).
 
 ### Backend
-- **Endpoint REST (usado por el frontend):** `GET /api/catalog-stats` con header `Authorization: Bearer <token>`. Responde JSON con las estadísticas.
+- **Endpoint REST (usado por el frontend):** `GET /api/catalog-stats` con header `Authorization: Bearer <token>`. Parámetro opcional `?refresh=1` para forzar recalcular (si no se envía, se devuelve caché si existe y tiene menos de 1 hora).
+- **Caché en servidor:** el endpoint guarda en memoria el último resultado durante 1 hora (TTL). Así se evita saturar el servidor al abrir la página varias veces; solo al pedir con `?refresh=1` se vuelve a recorrer el catálogo.
 - **Archivo del endpoint:** `backend/src/endpoints/catalog-stats.endpoint.ts` (registrado en `backend/src/index.ts`).
-- **Lógica compartida:** `backend/src/routers/file-actions/catalog-stats.ts` exporta `getCatalogStats()`; el endpoint REST y el procedimiento tRPC `ftp.catalogStats` usan esta función. La UI usa REST para no depender del router tRPC en producción.
-- **Lógica:** recorre recursivamente el directorio configurado en `SONGS_PATH` (vía `fileService.list`), cuenta por tipo de extensión (video, audio), detecta “karaoke” en la ruta, suma tamaños y lista directorios de primer nivel como “géneros”.
+- **Lógica compartida:** `backend/src/routers/file-actions/catalog-stats.ts` exporta `getCatalogStats()`; recorre todo el árbol bajo `SONGS_PATH`, cuenta por tipo (video, audio, karaoke por ruta), GB por tipo, y por género (carpeta que contiene los archivos) devuelve `genresDetail` (nombre, archivos, GB).
 - **Permisos:** el endpoint verifica JWT (usuario logueado). El procedimiento tRPC está en `isLoggedIn` en `backend/src/permissions/index.ts`.
 - **Seguridad:** solo lectura; en caso de error devuelve respuesta segura (sin exponer rutas internas).
 
 ### Frontend
 - **Ruta:** `/admin/catalogo`.
 - **Componente:** `frontend/src/pages/Admin/CatalogStats/CatalogStats.tsx` (y `CatalogStats.scss`).
-- **Comportamiento:** llama a `GET /api/catalog-stats` con el token en `Authorization`, muestra loading, números por tipo (videos, audios, karaokes, otros), géneros, GB y total de archivos; si falla, muestra el mensaje de error del backend (p. ej. “SONGS_PATH no configurado”).
+- **Sin carga al entrar:** al abrir la página no se llama al API; se muestra la última respuesta guardada en `localStorage` (clave `catalog-stats-cache`). Si no hay datos guardados, se muestra el mensaje “No hay datos guardados” y el botón “Actualizar estadísticas”.
+- **Actualizar estadísticas:** botón que llama a `GET /api/catalog-stats?refresh=1`; al recibir la respuesta se guarda en `localStorage` y se muestra. Así el servidor solo recalcula cuando el usuario lo pide.
+- **Tabla de géneros:** paginación cliente (50 filas por página) con “Anterior” / “Siguiente” y texto “Mostrando X–Y de Z”.
+- **Exportar CSV:** botón “Exportar CSV” que genera un archivo con totales y tabla de géneros (nombre, archivos, GB) y lo descarga (nombre tipo `catalog-stats-YYYY-MM-DD.csv`).
 
 ### Sidebar Admin
 - En `AsideNavbar` hay un enlace “Catálogo” (icono `faChartBar`) dentro de la sección Admin que lleva a `/admin/catalogo`.
@@ -272,6 +275,7 @@ Se importa `_landing-design.scss` o `landing-design.scss` donde haga falta para 
 | Permisos (incl. catalogStats) | `backend/src/permissions/index.ts` |
 | Página Admin Catálogo | `frontend/src/pages/Admin/CatalogStats/` |
 | Deploy backend (workflow + script) | `.github/workflows/backend-deploy.yml`, `deploy.sh` |
+| Script total usuarios (local) | `backend/scripts/count-users.js` – ejecutar desde `backend` con `node scripts/count-users.js` |
 
 ---
 
@@ -281,7 +285,7 @@ Se importa `_landing-design.scss` o `landing-design.scss` donde haga falta para 
 - **Deploy frontend (Netlify):** Netlify construye desde GitHub (rama `main`); al hacer push, se genera un nuevo deploy. No hace falta tocar redirects en el dashboard si `_redirects` y `netlify.toml` siguen así.
 - **Deploy backend:** al hacer push a `main` se dispara el workflow de GitHub Actions que ejecuta `deploy.sh` en el servidor vía SSH. Comprobar en Actions que el run sea verde; o en terminal: `gh run list --limit 1`.
 - **Tema:** la preferencia se guarda en `localStorage`; el script en `index.html` evita flash. Si añades páginas nuevas, usa las variables de `_variables-theme.scss`.
-- **Catálogo:** si la página de estadísticas falla, revisar que `SONGS_PATH` esté configurado en el backend y que el usuario esté logueado. La UI usa `GET /api/catalog-stats` con JWT.
+- **Catálogo:** los datos no se cargan solos al entrar; se muestra la última vez guardada en el navegador. Para actualizar: clic en “Actualizar estadísticas” (llama al API con `?refresh=1`). Si falla, revisar `SONGS_PATH` en el backend y que el usuario esté logueado. Exportar CSV descarga los datos actualmente mostrados.
 - **Si vuelve el 404 (frontend):** revisar que el último deploy en Netlify sea “Published” y que el build no falle (si falla, no se genera `build/` ni `_redirects`). No añadir `[[redirects]]` para SPA en `netlify.toml`; mantener solo `_redirects` en `frontend/public`.
 
-Documentación actualizada: landing, diseño, responsive, móvil, temas, catálogo (REST), Netlify, deploy backend. Cualquier desarrollador puede seguir este doc para entender qué se hizo; conviene actualizarlo cuando se añadan cambios relevantes.
+Documentación actualizada: landing, diseño, responsive, móvil, temas, catálogo (REST, caché, paginación, export CSV), Netlify, deploy backend. Cualquier desarrollador puede seguir este doc para entender qué se hizo; conviene actualizarlo cuando se añadan cambios relevantes.
