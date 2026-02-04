@@ -119,13 +119,13 @@
   --app-font-weight-body: 500;
   --app-font-weight-heading: 700;
   --app-font-weight-heading-strong: 800;
-  /* Escala tipográfica igual que Home: body grande, títulos contundentes */
-  --app-font-size-body: clamp(1rem, 2.5vw, 1.15rem);
-  --app-font-size-body-lg: clamp(1.05rem, 2.8vw, 1.25rem);
-  --app-font-size-h4: clamp(1.1rem, 3vw, 1.35rem);
-  --app-font-size-h3: clamp(1.25rem, 4vw, 1.5rem);
-  --app-font-size-h2: clamp(1.5rem, 5vw, 1.85rem);
-  --app-font-size-h1: clamp(1.75rem, 6vw, 2.25rem);
+  /* Escala tipográfica IGUAL que Home: body 1.9–2rem, títulos grandes */
+  --app-font-size-body: clamp(1.05rem, 3.5vw, 1.9rem);
+  --app-font-size-body-lg: clamp(1.1rem, 3.5vw, 2rem);
+  --app-font-size-h4: clamp(1.2rem, 4vw, 1.5rem);
+  --app-font-size-h3: clamp(1.35rem, 4.5vw, 1.75rem);
+  --app-font-size-h2: clamp(1.5rem, 5.5vw, 2.25rem);
+  --app-font-size-h1: clamp(1.75rem, 6vw, 2.75rem);
 }
 
 // Dark: por data-theme o por clase .dark en html (compatibilidad Tailwind)
@@ -238,10 +238,10 @@ html.dark {
   --app-font-weight-body: 500;
   --app-font-weight-heading: 700;
   --app-font-weight-heading-strong: 800;
-  --app-font-size-body: clamp(1rem, 2.5vw, 1.15rem);
-  --app-font-size-body-lg: clamp(1.05rem, 2.8vw, 1.25rem);
-  --app-font-size-h4: clamp(1.1rem, 3vw, 1.35rem);
-  --app-font-size-h3: clamp(1.25rem, 4vw, 1.5rem);
-  --app-font-size-h2: clamp(1.5rem, 5vw, 1.85rem);
-  --app-font-size-h1: clamp(1.75rem, 6vw, 2.25rem);
+  --app-font-size-body: clamp(1.05rem, 3.5vw, 1.9rem);
+  --app-font-size-body-lg: clamp(1.1rem, 3.5vw, 2rem);
+  --app-font-size-h4: clamp(1.2rem, 4vw, 1.5rem);
+  --app-font-size-h3: clamp(1.35rem, 4.5vw, 1.75rem);
+  --app-font-size-h2: clamp(1.5rem, 5.5vw, 2.25rem);
+  --app-font-size-h1: clamp(1.75rem, 6vw, 2.75rem);
 }

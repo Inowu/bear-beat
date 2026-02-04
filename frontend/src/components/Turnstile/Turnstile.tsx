@@ -97,7 +97,7 @@ function Turnstile({ onVerify, onExpire, onError, resetSignal = 0, theme = "dark
     return <div>Turnstile no configurado</div>;
   }
 
-  return <div ref={containerRef} />;
+  return <div ref={containerRef} className="turnstile-widget-wrap" />;
 }
 
 export default Turnstile;

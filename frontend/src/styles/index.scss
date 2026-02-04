@@ -174,3 +174,20 @@ button.primary-pill {
     }
   }
 }
+
+/* Cloudflare Turnstile: integrado al diseño oscuro (theme=dark + contenedor) */
+.turnstile-widget-wrap {
+  background: var(--app-bg-card);
+  border: 2px solid var(--app-border);
+  border-radius: 12px;
+  padding: 10px;
+  overflow: hidden;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80px;
+
+  iframe {
+    border-radius: 8px;
+  }
+}
