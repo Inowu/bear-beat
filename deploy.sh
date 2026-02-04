@@ -60,6 +60,12 @@ esac
 log "Building backend..."
 ( cd "$BACKEND_DIR" && npm run build )
 
+# Verificar que el build incluye catalogStats (procedure del catálogo)
+if ! grep -q "catalogStats" "$BACKEND_DIR/build/routers/file-actions/index.js" 2>/dev/null; then
+  die "Build no contiene catalogStats. Revisar que backend compiló bien."
+fi
+log "Build OK (catalogStats presente)."
+
 log "Updating backend PORT to $target_port"
 if grep -q '^PORT=' "$ENV_FILE"; then
   sed -i.bak "s/^PORT=.*/PORT=$target_port/" "$ENV_FILE"
