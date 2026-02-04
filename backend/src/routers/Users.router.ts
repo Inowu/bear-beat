@@ -642,6 +642,10 @@ export const usersRouter = router({
       const findManyUsers = await ctx.prisma.users.findMany(input);
       return findManyUsers;
     }),
+  /** Total de usuarios registrados (solo cuenta, eficiente). */
+  countUsers: shieldedProcedure.query(async ({ ctx }) => {
+    return ctx.prisma.users.count();
+  }),
   findUniqueUsers: shieldedProcedure
     .input(UsersFindUniqueSchema)
     .query(async ({ ctx, input }) => {

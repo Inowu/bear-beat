@@ -17,13 +17,23 @@
         gap: 10px;
         align-items: stretch;
 
+        .header__title-row {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+            flex-wrap: wrap;
+            width: 100%;
+        }
         h1 {
             font-family: "Bear-font", "Bear Font2", sans-serif;
             font-size: 1.8rem;
-            width: 100%;
             margin: 0 0 4px 0;
             color: var(--theme-heading);
             font-weight: 700;
+        }
+        .header__total-registered {
+            font-size: 1.1rem;
+            color: var(--theme-text-muted, #888);
         }
 
         .btn-addUsers,

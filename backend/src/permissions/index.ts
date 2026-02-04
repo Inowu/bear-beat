@@ -83,6 +83,7 @@ export const permissions = shield<Context>({
     findManyRoles: isAdmin,
     findManyUserFiles: isAdmin,
     findManyUsers: isAdmin,
+    countUsers: isAdmin,
     findUniqueConfig: isAdmin,
     findUniqueCountries: isAdmin,
     findUniqueCupons: isAdmin,

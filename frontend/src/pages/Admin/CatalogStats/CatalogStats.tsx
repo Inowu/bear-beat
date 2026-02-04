@@ -42,6 +42,30 @@ const emptyData: CatalogStatsData = {
   genresDetail: [],
 };
 
+/** Normaliza la respuesta del API (soporta formato nuevo y antiguo) para no romper con e.genres.length */
+function normalizeCatalogResponse(res: Record<string, unknown>): CatalogStatsData {
+  const genresDetail = Array.isArray(res.genresDetail)
+    ? (res.genresDetail as GenreStats[])
+    : Array.isArray(res.genres)
+      ? (res.genres as string[]).map((name: string) => ({ name, files: 0, gb: 0 }))
+      : [];
+  const totalGenres = typeof res.totalGenres === 'number' ? res.totalGenres : genresDetail.length;
+  return {
+    error: typeof res.error === 'string' ? res.error : undefined,
+    totalFiles: Number(res.totalFiles) || 0,
+    totalGB: Number(res.totalGB) || 0,
+    videos: Number(res.videos) || 0,
+    audios: Number(res.audios) || 0,
+    karaokes: Number(res.karaokes) || 0,
+    other: Number(res.other) || 0,
+    gbVideos: Number(res.gbVideos) || 0,
+    gbAudios: Number(res.gbAudios) || 0,
+    gbKaraokes: Number(res.gbKaraokes) || 0,
+    totalGenres,
+    genresDetail,
+  };
+}
+
 export function CatalogStats() {
   const [data, setData] = useState<CatalogStatsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,7 +81,7 @@ export function CatalogStats() {
         return res.json();
       })
       .then((res) => {
-        if (!cancelled) setData(res as CatalogStatsData);
+        if (!cancelled) setData(normalizeCatalogResponse(res));
       })
       .catch((err: unknown) => {
         if (!cancelled) {
@@ -116,7 +140,7 @@ export function CatalogStats() {
         </div>
         <div className="catalog-stats__card">
           <h2>Géneros únicos</h2>
-          <p className="catalog-stats__number">{data.totalGenres.toLocaleString()}</p>
+          <p className="catalog-stats__number">{(data.totalGenres ?? 0).toLocaleString()}</p>
         </div>
       </div>
 
@@ -143,7 +167,7 @@ export function CatalogStats() {
         </div>
       </div>
 
-      {data.genresDetail.length > 0 && (
+      {(data.genresDetail ?? []).length > 0 && (
         <>
           <h2 className="catalog-stats__section-title">Por género (carpeta donde están los archivos)</h2>
           <p className="catalog-stats__hint">
@@ -159,7 +183,7 @@ export function CatalogStats() {
                 </tr>
               </thead>
               <tbody>
-                {data.genresDetail.map((g) => (
+                {(data.genresDetail ?? []).map((g) => (
                   <tr key={g.name}>
                     <td>{g.name}</td>
                     <td>{g.files.toLocaleString()}</td>

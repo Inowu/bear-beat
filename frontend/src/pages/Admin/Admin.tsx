@@ -39,6 +39,7 @@ function Admin() {
   const { currentUser, handleLogin } = useUserContext();
   const [users, setUsers] = useState<IAdminUser[]>([]);
   const [totalUsers, setTotalUsers] = useState(0);
+  const [totalRegistered, setTotalRegistered] = useState<number | null>(null);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [showOption, setShowOption] = useState<boolean>(false);
   const [optionTitle, setOptionTitle] = useState<string>("");
@@ -257,6 +258,11 @@ function Admin() {
     getPlans();
     filterUsers(filters);
   }, [filters]);
+
+  useEffect(() => {
+    trpc.users.countUsers.query().then(setTotalRegistered).catch(() => setTotalRegistered(null));
+  }, []);
+
   useEffect(() => {
     if (currentUser && currentUser.role !== "admin") {
       navigate("/");
@@ -372,7 +378,12 @@ function Admin() {
   return (
     <div className="admin-contain">
       <div className="header">
-        <h1>Usuarios</h1>
+        <div className="header__title-row">
+          <h1>Usuarios</h1>
+          {totalRegistered !== null && (
+            <span className="header__total-registered">Usuarios registrados: {totalRegistered.toLocaleString()}</span>
+          )}
+        </div>
         <button className="btn-addUsers" onClick={() => setShowModal(true)}>
           Añadir Usuarios
         </button>
