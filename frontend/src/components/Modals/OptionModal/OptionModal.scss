@@ -1,3 +1,5 @@
+@import "../../../styles/landing-design.scss";
+
 .modal-container {
     .bottom {
         .plan-options-container {
@@ -7,9 +9,12 @@
             justify-items: stretch;
 
             .plan-option-button {
-                background-color: #39d834;
-                color: white;
-              }
+                background: linear-gradient(135deg, #00e6c1, $bear-blue-dim);
+                color: #000;
+                border: none;
+                border-radius: 100px;
+                box-shadow: 0 0 16px $bear-blue-glow;
+            }
         }
     }
 }

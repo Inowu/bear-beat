@@ -1,35 +1,43 @@
-.modal-container-plans{
-    .go-back{
-        color: #09e1f7;
+@import "../../../styles/landing-design.scss";
+
+.modal-container-plans {
+    .go-back {
+        color: $bear-blue-dim;
         width: fit-content;
         margin: 0;
         text-decoration: underline;
         cursor: pointer;
         font-style: italic;
         font-size: 1.4rem;
-    }
-    .bottom{
-        .title{
-            color: #fff;
+        &:hover {
+            color: $text-primary;
         }
     }
-    .add-card{
-        color: #09e1f7;
-        width: fit-content; 
+    .bottom {
+        .title {
+            color: $text-primary;
+        }
+    }
+    .add-card {
+        color: $bear-blue-dim;
+        width: fit-content;
         font-weight: 600;
         margin: 0;
         cursor: pointer;
+        &:hover {
+            color: $text-primary;
+        }
     }
-    button{
+    button {
         white-space: nowrap;
         padding-inline: 30px;
     }
-    select{
+    select {
         border-radius: 100px;
-        padding-block: 5px;
+        padding-block: 8px;
         padding-inline: 18px;
-        border: none;
-        background-color: #434343;
-        color: #09e1f7;
+        border: 1px solid $card-glass-border;
+        background: $bg-dark-soft;
+        color: $bear-blue-dim;
     }
 }

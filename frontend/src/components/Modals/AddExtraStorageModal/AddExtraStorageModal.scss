@@ -1,7 +1,11 @@
-.modal-content {
+@import "../../../styles/landing-design.scss";
+
+.add-extra-storage-modal .modal-content {
     flex-direction: column;
 }
+
 .btn-option-4:disabled {
     cursor: not-allowed;
-    background: gray;
+    background: $text-dim !important;
+    box-shadow: none !important;
 }
