@@ -6,6 +6,7 @@ import { useUserContext } from "../contexts/UserContext";
 import { useEffect, useState } from "react";
 import { useDownloadContext } from "../contexts/DownloadContext";
 import { FileLoader } from "../components/FileLoader/FileLoader";
+import { applyRouteSeo } from "../utils/seo";
 
 function MainLayout() {
   const { userToken, currentUser } = useUserContext();
@@ -17,6 +18,10 @@ function MainLayout() {
   useEffect(() => {
     setAsideOpen(false);
   }, [location]);
+
+  useEffect(() => {
+    applyRouteSeo(location.pathname);
+  }, [location.pathname]);
 
   // Sin sesión = mismo layout que la landing (ancho completo, mismo estilo)
   const isLanding = !userToken;

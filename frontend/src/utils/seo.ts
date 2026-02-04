@@ -1,0 +1,85 @@
+/**
+ * SEO por ruta: actualiza <title> y meta description al navegar (SPA).
+ * No modifica la lógica de la app.
+ */
+
+const BASE_TITLE = "Bear Beat";
+const BASE_DESC = "Librería de música y videos exclusivos para DJs. 500 GB cada mes por FTP, contenido organizado por géneros.";
+
+export const ROUTE_SEO: Record<string, { title: string; description: string }> = {
+  "/": {
+    title: `${BASE_TITLE} – Librería de música y videos para DJs | 500 GB/mes por FTP`,
+    description: BASE_DESC,
+  },
+  "/auth": {
+    title: `Iniciar sesión | ${BASE_TITLE}`,
+    description: "Inicia sesión en Bear Beat para acceder a tu librería de música y videos para DJs.",
+  },
+  "/auth/registro": {
+    title: `Registrarme | ${BASE_TITLE}`,
+    description: "Crea tu cuenta en Bear Beat. Accede a 500 GB de música y videos para DJs cada mes por FTP.",
+  },
+  "/auth/recuperar": {
+    title: `Recuperar contraseña | ${BASE_TITLE}`,
+    description: "Recupera el acceso a tu cuenta Bear Beat.",
+  },
+  "/auth/reset-password": {
+    title: `Nueva contraseña | ${BASE_TITLE}`,
+    description: "Establece tu nueva contraseña de Bear Beat.",
+  },
+  "/planes": {
+    title: `Planes y precios | ${BASE_TITLE}`,
+    description: "Planes desde $18/mes. 500 GB cada mes, descarga FTP masiva, contenido por géneros. Cancela cuando quieras.",
+  },
+  "/comprar": {
+    title: `Comprar | ${BASE_TITLE}`,
+    description: "Elige tu plan y paga de forma segura con Visa, Mastercard, PayPal o SPEI.",
+  },
+  "/instrucciones": {
+    title: `Instrucciones de descarga | ${BASE_TITLE}`,
+    description: "Cómo descargar tu librería con FileZilla o Air Explorer. Guía paso a paso.",
+  },
+  "/descargas": {
+    title: `Mis descargas | ${BASE_TITLE}`,
+    description: "Accede a tus descargas y gestiona tu librería de música para DJs.",
+  },
+  "/micuenta": {
+    title: `Mi cuenta | ${BASE_TITLE}`,
+    description: "Gestiona tu suscripción, métodos de pago y datos de cuenta.",
+  },
+  "/actualizar-planes": {
+    title: `Actualizar plan | ${BASE_TITLE}`,
+    description: "Cambia o actualiza tu plan de Bear Beat.",
+  },
+};
+
+const DEFAULT_SEO = {
+  title: BASE_TITLE,
+  description: BASE_DESC,
+};
+
+/**
+ * Aplica título y meta description para la pathname actual.
+ * Llamar desde un componente que use useLocation() y useEffect.
+ */
+export function applyRouteSeo(pathname: string): void {
+  const path = pathname.endsWith("/") && pathname !== "/" ? pathname.slice(0, -1) : pathname;
+  const seo = ROUTE_SEO[path] ?? DEFAULT_SEO;
+
+  document.title = seo.title;
+
+  const metaDesc = document.querySelector('meta[name="description"]');
+  if (metaDesc) {
+    metaDesc.setAttribute("content", seo.description);
+  }
+
+  const ogTitle = document.querySelector('meta[property="og:title"]');
+  if (ogTitle) {
+    ogTitle.setAttribute("content", seo.title);
+  }
+
+  const ogDesc = document.querySelector('meta[property="og:description"]');
+  if (ogDesc) {
+    ogDesc.setAttribute("content", seo.description);
+  }
+}
