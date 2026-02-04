@@ -16,6 +16,7 @@ import {
   faDownload,
   faBan,
   faPhone,
+  faChartBar,
 } from "@fortawesome/free-solid-svg-icons";
 import { faHeadset } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
@@ -66,6 +67,11 @@ function AsideNavbar(props: AsideNavbarPropsI) {
             <Link to={"/admin/almacenamiento"}>
               <li>
                 <FontAwesomeIcon icon={faDatabase} /> Almacenamiento
+              </li>
+            </Link>
+            <Link to={"/admin/catalogo"}>
+              <li>
+                <FontAwesomeIcon icon={faChartBar} /> Catálogo
               </li>
             </Link>
             <Link to={"/admin/historial-descargas"}>

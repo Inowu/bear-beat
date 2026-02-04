@@ -34,6 +34,7 @@ import { HistoryCheckout } from "./pages/Admin/HistoryCheckout/HistoryCheckout";
 import { DownloadHistory } from "./pages/Admin/DownloadsHistory/DownloadHistory";
 import { BlockedEmailDomains } from "./pages/Admin/BlockedEmailDomains/BlockedEmailDomains";
 import { BlockedPhoneNumbers } from "./pages/Admin/BlockedPhoneNumbers/BlockedPhoneNumbers";
+import { CatalogStats } from "./pages/Admin/CatalogStats/CatalogStats";
 import { PlanUpgrade } from "./pages/PlanUpgrade/PlanUpgrade";
 import { SSEProvider } from "react-hooks-sse";
 import DownloadContextProvider from "./contexts/DownloadContext";
@@ -74,6 +75,7 @@ const router = createBrowserRouter([
           { path: "usuarios", element: <Admin /> },
           { path: "planesAdmin", element: <PlanAdmin /> },
           { path: "almacenamiento", element: <Storage /> },
+          { path: "catalogo", element: <CatalogStats /> },
           { path: "historial-descargas", element: <DownloadHistory /> },
           { path: "cupones", element: <Coupons /> },
           { path: "ordenes", element: <Ordens /> },

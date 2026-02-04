@@ -7,6 +7,7 @@ import { quota } from './quota';
 import { search } from './search';
 import { storage } from './storage';
 import { cancelDirDownload } from './cancel-download-dir';
+import { catalogStats } from './catalog-stats';
 
 export const ftpRouter = router({
   ls,
@@ -17,4 +18,5 @@ export const ftpRouter = router({
   downloadDir,
   storage,
   cancelDirDownload,
+  catalogStats,
 });
