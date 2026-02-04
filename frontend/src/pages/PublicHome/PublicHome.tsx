@@ -170,36 +170,40 @@ function PublicHome() {
         </div>
       </section>
 
-      {/* 6. PRECIOS */}
+      {/* 6. PRECIOS — The Pricing Stack: encabezados sólidos, México estrella */}
       <section className="ph__pricing">
         <h2 className="ph__section-title">Planes que se pagan solos</h2>
         <div className="ph__pricing-grid">
-          <div className="ph__price-card">
-            <span className="ph__price-region">Global / USA</span>
-            <span className="ph__price-amount">$18</span>
-            <span className="ph__price-period">USD / mes</span>
-            <p className="ph__price-anchor">Menos de lo que cobras por 20 min de show.</p>
-            <ul className="ph__price-features">
-              <li>500 GB descarga</li>
-              <li>Acceso Total</li>
-              <li>Tarjeta / PayPal</li>
-            </ul>
-            <Link to="/auth/registro" state={{ from: "/planes" }} className="ph__btn ph__btn--primary">
-              Quiero el plan USD
-            </Link>
+          <div className="ph__price-card ph__price-card--global">
+            <div className="ph__price-header ph__price-header--global">GLOBAL / USA</div>
+            <div className="ph__price-body">
+              <span className="ph__price-amount">$18</span>
+              <span className="ph__price-period">USD / mes</span>
+              <p className="ph__price-anchor">Menos de lo que cobras por 20 min de show.</p>
+              <ul className="ph__price-features">
+                <li>500 GB descarga</li>
+                <li>Acceso Total</li>
+                <li>Tarjeta / PayPal</li>
+              </ul>
+              <Link to="/auth/registro" state={{ from: "/planes" }} className="ph__btn ph__btn--primary">
+                Quiero el plan USD
+              </Link>
+            </div>
           </div>
-          <div className="ph__price-card ph__price-card--highlight">
-            <span className="ph__price-badge">Facturación Incluida</span>
-            <span className="ph__price-region">México</span>
-            <span className="ph__price-amount">$350</span>
-            <span className="ph__price-period">MXN / mes</span>
-            <ul className="ph__price-features">
-              <li>500 GB descarga</li>
-              <li>SPEI, OXXO, Tarjeta</li>
-            </ul>
-            <Link to="/auth/registro" state={{ from: "/planes" }} className="ph__btn ph__btn--primary">
-              Quiero el plan MXN
-            </Link>
+          <div className="ph__price-card ph__price-card--mexico">
+            <span className="ph__price-badge">MEJOR OPCIÓN</span>
+            <div className="ph__price-header ph__price-header--mexico">MÉXICO (SPEI/FACTURA)</div>
+            <div className="ph__price-body">
+              <span className="ph__price-amount">$350</span>
+              <span className="ph__price-period">MXN / mes</span>
+              <ul className="ph__price-features">
+                <li>500 GB descarga</li>
+                <li>SPEI, OXXO, Tarjeta</li>
+              </ul>
+              <Link to="/auth/registro" state={{ from: "/planes" }} className="ph__btn ph__btn--primary">
+                Quiero el plan MXN
+              </Link>
+            </div>
           </div>
         </div>
         <p className="ph__guarantee">Garantía de Satisfacción</p>

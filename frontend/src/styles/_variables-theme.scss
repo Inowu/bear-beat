@@ -48,28 +48,34 @@
   --theme-landing-bg: #000000;
   --theme-landing-text: #ffffff;
 
-  // PublicHome — Light: alto contraste WCAG, títulos casi negro, cuerpo slate-700, bordes y sombra visible
-  --ph-bg: #f8fafc; /* slate-50 */
-  --ph-bg-soft: #f1f5f9;
+  // PublicHome — Light: CONTRASTE EXTREMO. Texto negro, fondos blancos/slate-50. Sin grises.
+  --ph-bg: #ffffff;
+  --ph-bg-soft: #f8fafc; /* slate-50 muy suave */
   --ph-bg-card: #ffffff;
-  --ph-border: #e2e8f0; /* slate-200, borde visible en cards */
-  --ph-text-heading: #0a0f1a; /* casi negro, títulos sólidos */
-  --ph-text-body: #334155; /* slate-700, cuerpo legible sin esfuerzo */
-  --ph-text-muted: #475569; /* slate-600, footer y secundario legibles */
-  --ph-body-font-weight: 500; /* font-medium en light para móviles */
-  --ph-btn-bg: #0891b2; /* cyan-600 */
+  --ph-border: #e2e8f0;
+  --ph-text-heading: #0f172a; /* slate-900 / negro */
+  --ph-text-body: #0f172a;   /* mismo negro, legibilidad máxima */
+  --ph-text-muted: #0f172a;  /* sin grises: todo negro en light */
+  --ph-body-font-weight: 500; /* font-medium */
+  --ph-btn-bg: #0891b2;
   --ph-btn-text: #ffffff;
   --ph-btn-hover-bg: #0e7490;
   --ph-accent: #0891b2;
   --ph-accent-bright: #06b6d4;
-  --ph-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.12), 0 4px 6px -4px rgba(15, 23, 42, 0.08);
-  --ph-shadow-card: 0 20px 25px -5px rgba(15, 23, 42, 0.12), 0 10px 10px -5px rgba(226, 232, 240, 0.6); /* shadow-xl volumen */
+  --ph-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.06);
+  --ph-shadow-card: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   --ph-glow: transparent;
   --ph-glow-strong: transparent;
-  --ph-nav-bg: rgba(248, 250, 252, 0.95);
-  --ph-footer-bg: #f1f5f9;
-  --ph-pain-bad: #dc2626; /* red-600 */
+  --ph-nav-bg: rgba(255, 255, 255, 0.98);
+  --ph-footer-bg: #f8fafc;
+  --ph-pain-bad: #dc2626;
   --ph-pain-good: #06b6d4;
+  /* Pricing: header Global (oscuro) */
+  --ph-price-header-global-bg: #1e293b; /* slate-800 */
+  --ph-price-header-global-text: #ffffff;
+  /* Pricing: header México (cyan eléctrico) */
+  --ph-price-header-mexico-bg: #06b6d4; /* cyan-500 */
+  --ph-price-header-mexico-text: #000000;
 
   /* Auth (Login/Register): inputs bordes visibles */
   --auth-input-border: #cbd5e1; /* slate-300 */
@@ -117,28 +123,32 @@ html.dark {
   --theme-landing-bg: #000000;
   --theme-landing-text: #ffffff;
 
-  // PublicHome — Dark: sin cambios (contraste ya correcto)
-  --ph-bg: #020617; /* slate-950 */
+  // PublicHome — Dark: CONTRASTE EXTREMO. Todo texto blanco/slate-50.
+  --ph-bg: #020617;
   --ph-bg-soft: #0f172a;
-  --ph-bg-card: #0f172a; /* slate-900 */
-  --ph-border: #1e293b; /* slate-800 */
-  --ph-text-heading: #ffffff;
-  --ph-text-body: #94a3b8; /* slate-400 */
-  --ph-text-muted: #94a3b8;
-  --ph-body-font-weight: 400;
-  --ph-btn-bg: #06b6d4; /* cyan-500, brilla en dark */
-  --ph-btn-text: #020617; /* slate-950 contraste */
+  --ph-bg-card: #0f172a;
+  --ph-border: #1e293b;
+  --ph-text-heading: #f8fafc; /* slate-50 / blanco */
+  --ph-text-body: #f8fafc;
+  --ph-text-muted: #f8fafc;
+  --ph-body-font-weight: 500;
+  --ph-btn-bg: #06b6d4;
+  --ph-btn-text: #020617;
   --ph-btn-hover-bg: #22d3ee;
   --ph-accent: #06b6d4;
   --ph-accent-bright: #22d3ee;
-  --ph-shadow: none; /* en dark no sombras negras */
-  --ph-shadow-card: none;
-  --ph-glow: rgba(6, 182, 212, 0.2); /* resplandor cyan */
+  --ph-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.2);
+  --ph-shadow-card: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+  --ph-glow: rgba(6, 182, 212, 0.2);
   --ph-glow-strong: rgba(6, 182, 212, 0.35);
-  --ph-nav-bg: rgba(2, 6, 23, 0.95);
-  --ph-footer-bg: rgba(15, 23, 42, 0.95);
-  --ph-pain-bad: #f87171; /* red-400 */
+  --ph-nav-bg: rgba(2, 6, 23, 0.98);
+  --ph-footer-bg: rgba(15, 23, 42, 0.98);
+  --ph-pain-bad: #f87171;
   --ph-pain-good: #22d3ee;
+  --ph-price-header-global-bg: #334155;
+  --ph-price-header-global-text: #ffffff;
+  --ph-price-header-mexico-bg: #06b6d4;
+  --ph-price-header-mexico-text: #000000;
 
   /* Auth: inputs dark */
   --auth-input-border: #334155;
