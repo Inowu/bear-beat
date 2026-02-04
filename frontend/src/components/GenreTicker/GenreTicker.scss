@@ -3,24 +3,28 @@
 
 .genre-ticker {
   position: relative;
-  background: #020617; /* slate-950 */
-  padding: 1.25rem 0;
+  background: #020617;
+  padding: 1.5rem 0 1.25rem;
   overflow: hidden;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 
   @include respond-from(tablet) {
-    padding: 1.5rem 0;
+    padding: 2rem 0 1.5rem;
   }
 }
 
 .genre-ticker__track-wrap {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
 .genre-ticker__row {
+  position: relative;
+  z-index: 0;
   display: flex;
   width: 100%;
   overflow: hidden;
@@ -31,16 +35,16 @@
 .genre-ticker__text {
   display: inline-block;
   font-family: "Poppins", system-ui, sans-serif;
-  font-size: clamp(0.95rem, 2.5vw, 1.15rem);
+  font-size: clamp(1.9rem, 5vw, 2.3rem);
   font-weight: 700;
   letter-spacing: 0.04em;
-  color: #64748b; /* slate-500 gris medio */
-  padding: 0 0.25rem;
+  color: #64748b;
+  padding: 0 0.35rem;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
 
   &:hover {
-    color: #06b6d4; /* cyan-500 */
+    color: #06b6d4;
   }
 }
 
@@ -72,28 +76,20 @@
   }
 }
 
-// Overlay: gradientes (no bloquean clic) + CTA centrado
-.genre-ticker__overlay {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
+// CTA debajo del ticker (no tapa los géneros)
 .genre-ticker__cta {
-  pointer-events: auto;
-  position: relative;
-  z-index: 2;
-  padding: 0.5rem 1rem;
-  font-size: clamp(0.85rem, 2.2vw, 1rem);
+  display: block;
+  text-align: center;
+  padding: 0.6rem 1rem;
+  font-size: clamp(0.9rem, 2.4vw, 1.1rem);
   font-weight: 700;
   color: #94a3b8;
   text-decoration: none;
   border: 1px solid rgba(148, 163, 184, 0.4);
   border-radius: 8px;
-  background: rgba(2, 6, 23, 0.85);
+  background: rgba(2, 6, 23, 0.9);
+  max-width: 90%;
+  margin: 0 auto;
   transition: color 0.2s, border-color 0.2s, box-shadow 0.2s;
 
   &:hover {
@@ -109,6 +105,7 @@
   bottom: 0;
   width: 80px;
   z-index: 1;
+  pointer-events: none;
 
   @include respond-from(tablet) {
     width: 120px;
