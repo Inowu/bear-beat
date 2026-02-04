@@ -36,6 +36,9 @@ import { PlanUpgrade } from "./pages/PlanUpgrade/PlanUpgrade";
 import { SSEProvider } from "react-hooks-sse";
 import DownloadContextProvider from "./contexts/DownloadContext";
 import Downloads from "./pages/Downloads/Downloads";
+import { initFacebookPixel } from "./utils/facebookPixel";
+
+initFacebookPixel();
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement

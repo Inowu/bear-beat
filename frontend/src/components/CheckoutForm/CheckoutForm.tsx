@@ -13,6 +13,7 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { FaCheck } from "react-icons/fa";
 import { useCookies } from "react-cookie";
+import { trackPurchase } from "../../utils/facebookPixel";
 declare let window: any;
 
 interface ICheckout {
@@ -103,7 +104,12 @@ function CheckoutForm(props: ICheckout) {
           setShow(true);
         } else {
           if (currentUser) {
-            fbq("track", "PagoExitoso", {email: currentUser.email, phone: currentUser.phone});
+            trackPurchase({
+              email: currentUser.email,
+              phone: currentUser.phone,
+              currency: "USD",
+              value: plan?.price ?? 0,
+            });
           }
           setShowSuccess(true);
           setLoader(false);

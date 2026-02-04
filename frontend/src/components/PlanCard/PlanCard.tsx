@@ -17,6 +17,7 @@ import {
 } from "../../components/Modals";
 import PayPalComponent from "../../components/PayPal/PayPalComponent";
 import { useCookies } from "react-cookie";
+import { trackPurchase, trackViewPlans } from "../../utils/facebookPixel";
 
 
 interface PlanCardPropsI {
@@ -59,16 +60,12 @@ function PlanCard(props: PlanCardPropsI) {
   };
 
   const handleUserClickOnPlan = async () => {
-    if (userEmail && userPhone) {
-      fbq('trackCustom', 'UsuarioRevisoPlanes', { email: userEmail, phone: userPhone });
-    }
+    trackViewPlans(userEmail && userPhone ? { email: userEmail, phone: userPhone } : undefined);
     await manychatApi('USER_CHECKED_PLANS');
   }
 
   const handleUserSuccessfulPayment = async () => {
-    if (userEmail && userPhone) {
-      fbq('trackCustom', 'PagoExitoso', { email: userEmail, phone: userPhone });
-    }
+    trackPurchase({ email: userEmail, phone: userPhone });
     await manychatApi('SUCCESSFUL_PAYMENT');
   }
 
