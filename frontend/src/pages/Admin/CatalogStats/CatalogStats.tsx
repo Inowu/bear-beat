@@ -7,18 +7,40 @@ const API_BASE =
     ? "http://localhost:5001"
     : "https://thebearbeatapi.lat";
 
+interface GenreStats {
+  name: string;
+  files: number;
+  gb: number;
+}
+
 interface CatalogStatsData {
   error?: string;
-  rootFolders?: string[];
-  genresByType?: Record<string, string[]>;
-  genres: string[];
   totalFiles: number;
   totalGB: number;
   videos: number;
   audios: number;
   karaokes: number;
   other: number;
+  gbVideos: number;
+  gbAudios: number;
+  gbKaraokes: number;
+  totalGenres: number;
+  genresDetail: GenreStats[];
 }
+
+const emptyData: CatalogStatsData = {
+  totalFiles: 0,
+  totalGB: 0,
+  videos: 0,
+  audios: 0,
+  karaokes: 0,
+  other: 0,
+  gbVideos: 0,
+  gbAudios: 0,
+  gbKaraokes: 0,
+  totalGenres: 0,
+  genresDetail: [],
+};
 
 export function CatalogStats() {
   const [data, setData] = useState<CatalogStatsData | null>(null);
@@ -41,20 +63,12 @@ export function CatalogStats() {
         if (!cancelled) {
           const msg = (err as { message?: string })?.message;
           setData({
+            ...emptyData,
             error: msg
               ? msg === "No autorizado"
                 ? "Inicia sesión para ver las estadísticas."
                 : `Error: ${msg}`
               : "No se pudo cargar (revisa que estés logueado y que el servidor tenga SONGS_PATH configurado).",
-            rootFolders: [],
-            genresByType: {},
-            genres: [],
-            totalFiles: 0,
-            totalGB: 0,
-            videos: 0,
-            audios: 0,
-            karaokes: 0,
-            other: 0,
           });
         }
       })
@@ -83,46 +97,15 @@ export function CatalogStats() {
       {data.error && (
         <div className="catalog-stats__error-wrap">
           <p className="catalog-stats__error">{data.error}</p>
-          {data.totalFiles === 0 && data.genres.length === 0 && (
+          {data.totalFiles === 0 && (
             <p className="catalog-stats__error-hint">
               Si todo está en 0, en el servidor falta configurar SONGS_PATH o el backend no tiene acceso al catálogo FTP.
             </p>
           )}
         </div>
       )}
-      {(data.rootFolders?.length ?? 0) > 0 && (
-        <div className="catalog-stats__structure">
-          <h2>Carpetas en la raíz</h2>
-          <p className="catalog-stats__number">{data.rootFolders!.length}</p>
-          <ul className="catalog-stats__root-folders">
-            {data.rootFolders!.map((f) => (
-              <li key={f}>{f}</li>
-            ))}
-          </ul>
-          <h3>Géneros (subcarpetas dentro de cada tipo)</h3>
-          <ul className="catalog-stats__genres-by-type">
-            {data.rootFolders!.map((folder) => {
-              const genresList = data.genresByType?.[folder] ?? [];
-              return (
-                <li key={folder} className="catalog-stats__type-block">
-                  <span className="catalog-stats__type-name">[{folder}]</span>
-                  <span className="catalog-stats__type-count">({genresList.length} géneros)</span>
-                  <ul className="catalog-stats__genres-inline">
-                    {genresList.map((g) => (
-                      <li key={g}>{g}</li>
-                    ))}
-                  </ul>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
+
       <div className="catalog-stats__grid">
-        <div className="catalog-stats__card">
-          <h2>Géneros (total único)</h2>
-          <p className="catalog-stats__number">{data.genres.length}</p>
-        </div>
         <div className="catalog-stats__card">
           <h2>Archivos totales</h2>
           <p className="catalog-stats__number">{data.totalFiles.toLocaleString()}</p>
@@ -132,22 +115,62 @@ export function CatalogStats() {
           <p className="catalog-stats__number">{data.totalGB.toLocaleString()}</p>
         </div>
         <div className="catalog-stats__card">
-          <h2>Videos</h2>
-          <p className="catalog-stats__number">{data.videos.toLocaleString()}</p>
-        </div>
-        <div className="catalog-stats__card">
-          <h2>Audios</h2>
-          <p className="catalog-stats__number">{data.audios.toLocaleString()}</p>
-        </div>
-        <div className="catalog-stats__card">
-          <h2>Karaokes</h2>
-          <p className="catalog-stats__number">{data.karaokes.toLocaleString()}</p>
-        </div>
-        <div className="catalog-stats__card">
-          <h2>Otros</h2>
-          <p className="catalog-stats__number">{data.other.toLocaleString()}</p>
+          <h2>Géneros únicos</h2>
+          <p className="catalog-stats__number">{data.totalGenres.toLocaleString()}</p>
         </div>
       </div>
+
+      <h2 className="catalog-stats__section-title">Por tipo (archivos y GB)</h2>
+      <div className="catalog-stats__grid">
+        <div className="catalog-stats__card">
+          <h3>Videos</h3>
+          <p className="catalog-stats__number">{data.videos.toLocaleString()} archivos</p>
+          <p className="catalog-stats__sub">{data.gbVideos.toLocaleString()} GB</p>
+        </div>
+        <div className="catalog-stats__card">
+          <h3>Audios</h3>
+          <p className="catalog-stats__number">{data.audios.toLocaleString()} archivos</p>
+          <p className="catalog-stats__sub">{data.gbAudios.toLocaleString()} GB</p>
+        </div>
+        <div className="catalog-stats__card">
+          <h3>Karaokes</h3>
+          <p className="catalog-stats__number">{data.karaokes.toLocaleString()} archivos</p>
+          <p className="catalog-stats__sub">{data.gbKaraokes.toLocaleString()} GB</p>
+        </div>
+        <div className="catalog-stats__card">
+          <h3>Otros</h3>
+          <p className="catalog-stats__number">{data.other.toLocaleString()} archivos</p>
+        </div>
+      </div>
+
+      {data.genresDetail.length > 0 && (
+        <>
+          <h2 className="catalog-stats__section-title">Por género (carpeta donde están los archivos)</h2>
+          <p className="catalog-stats__hint">
+            Cada género = nombre de la carpeta que contiene los archivos (ej. Bachata en /Videos/2026/Enero/4/Bachata).
+          </p>
+          <div className="catalog-stats__table-wrap">
+            <table className="catalog-stats__table">
+              <thead>
+                <tr>
+                  <th>Género</th>
+                  <th>Archivos</th>
+                  <th>GB</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.genresDetail.map((g) => (
+                  <tr key={g.name}>
+                    <td>{g.name}</td>
+                    <td>{g.files.toLocaleString()}</td>
+                    <td>{g.gb.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   );
 }

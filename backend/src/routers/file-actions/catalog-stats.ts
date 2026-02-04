@@ -5,40 +5,66 @@ import path from 'path';
 const VIDEO_EXT = new Set(['.mp4', '.mkv', '.avi', '.mov', '.wmv', '.webm', '.m4v', '.flv']);
 const AUDIO_EXT = new Set(['.mp3', '.wav', '.flac', '.aac', '.m4a', '.ogg', '.wma']);
 
+export interface GenreStats {
+  name: string;
+  files: number;
+  gb: number;
+}
+
 export interface CatalogStatsResult {
   error?: string;
-  /** Carpetas en la raíz del catálogo (ej. Audios, Karaoke, Videos) */
-  rootFolders: string[];
-  /** Subcarpetas dentro de cada carpeta raíz = géneros por tipo */
-  genresByType: Record<string, string[]>;
-  /** Lista plana de todos los géneros únicos (compatibilidad) */
-  genres: string[];
   totalFiles: number;
   totalGB: number;
+  /** Cantidad de archivos por tipo */
   videos: number;
   audios: number;
   karaokes: number;
   other: number;
+  /** GB por tipo (video, audio, karaoke) */
+  gbVideos: number;
+  gbAudios: number;
+  gbKaraokes: number;
+  /** Total de géneros únicos (carpeta que contiene archivos, ej. Bachata) */
+  totalGenres: number;
+  /** Por cada género: total archivos y total GB */
+  genresDetail: GenreStats[];
 }
 
 const emptyResponse: CatalogStatsResult = {
   error: '',
-  rootFolders: [],
-  genresByType: {},
-  genres: [],
   totalFiles: 0,
   totalGB: 0,
   videos: 0,
   audios: 0,
   karaokes: 0,
   other: 0,
+  gbVideos: 0,
+  gbAudios: 0,
+  gbKaraokes: 0,
+  totalGenres: 0,
+  genresDetail: [],
 };
 
-async function walkDir(
-  basePath: string,
-  relativePath: string,
-  stats: { totalFiles: number; totalBytes: number; videos: number; audios: number; karaokes: number; other: number }
-): Promise<void> {
+interface WalkStats {
+  totalFiles: number;
+  totalBytes: number;
+  videos: number;
+  audios: number;
+  karaokes: number;
+  other: number;
+  bytesVideos: number;
+  bytesAudios: number;
+  bytesKaraokes: number;
+  byGenre: Record<string, { files: number; bytes: number }>;
+}
+
+function genreFromRelativePath(relativePath: string): string {
+  if (!relativePath) return '(raíz)';
+  const segments = relativePath.split('/').filter(Boolean);
+  return segments.length ? segments[segments.length - 1]! : '(raíz)';
+}
+
+async function walkDir(basePath: string, relativePath: string, stats: WalkStats): Promise<void> {
   const fullPath = basePath + (relativePath ? `${relativePath}/` : '');
   let entries: { name: string; type: string; size: number }[];
   try {
@@ -57,14 +83,30 @@ async function walkDir(
     if (entry.type === 'd') {
       await walkDir(basePath, rel, stats);
     } else {
-      stats.totalFiles += 1;
-      stats.totalBytes += entry.size || 0;
-      const ext = path.extname(entry.name).toLowerCase();
+      const size = entry.size || 0;
+      const genre = genreFromRelativePath(relativePath);
 
-      if (VIDEO_EXT.has(ext)) stats.videos += 1;
-      else if (AUDIO_EXT.has(ext)) stats.audios += 1;
-      else stats.other += 1;
-      if (isKaraokePath) stats.karaokes += 1;
+      stats.totalFiles += 1;
+      stats.totalBytes += size;
+
+      if (!stats.byGenre[genre]) stats.byGenre[genre] = { files: 0, bytes: 0 };
+      stats.byGenre[genre].files += 1;
+      stats.byGenre[genre].bytes += size;
+
+      const ext = path.extname(entry.name).toLowerCase();
+      if (VIDEO_EXT.has(ext)) {
+        stats.videos += 1;
+        stats.bytesVideos += size;
+      } else if (AUDIO_EXT.has(ext)) {
+        stats.audios += 1;
+        stats.bytesAudios += size;
+      } else {
+        stats.other += 1;
+      }
+      if (isKaraokePath) {
+        stats.karaokes += 1;
+        stats.bytesKaraokes += size;
+      }
     }
   }
 }
@@ -78,50 +120,44 @@ export async function getCatalogStats(): Promise<CatalogStatsResult> {
     }
 
     const basePath = songsPath.endsWith('/') ? songsPath : `${songsPath}/`;
-    let rootEntries: { name: string; type: string }[];
-    try {
-      rootEntries = await fileService.list(basePath);
-    } catch {
-      return { ...emptyResponse, error: 'No se pudo leer el catálogo' };
-    }
 
-    const rootFolders = rootEntries
-      .filter((e) => e.type === 'd' && !e.name.startsWith('.'))
-      .map((e) => e.name)
-      .sort((a, b) => a.localeCompare(b));
-
-    const genresByType: Record<string, string[]> = {};
-    const allGenresSet = new Set<string>();
-    for (const folder of rootFolders) {
-      try {
-        const subEntries = await fileService.list(basePath + folder + '/');
-        const subDirs = subEntries
-          .filter((e) => e.type === 'd' && !e.name.startsWith('.'))
-          .map((e) => e.name)
-          .sort((a, b) => a.localeCompare(b));
-        genresByType[folder] = subDirs;
-        subDirs.forEach((g) => allGenresSet.add(g));
-      } catch {
-        genresByType[folder] = [];
-      }
-    }
-    const genres = Array.from(allGenresSet).sort((a, b) => a.localeCompare(b));
-
-    const stats = { totalFiles: 0, totalBytes: 0, videos: 0, audios: 0, karaokes: 0, other: 0 };
+    const stats: WalkStats = {
+      totalFiles: 0,
+      totalBytes: 0,
+      videos: 0,
+      audios: 0,
+      karaokes: 0,
+      other: 0,
+      bytesVideos: 0,
+      bytesAudios: 0,
+      bytesKaraokes: 0,
+      byGenre: {},
+    };
     await walkDir(basePath, '', stats);
 
     const totalGB = stats.totalBytes / (1024 ** 3);
+    const round2 = (n: number) => Math.round(n * 100) / 100;
+
+    const genresDetail: GenreStats[] = Object.entries(stats.byGenre)
+      .map(([name, { files, bytes }]) => ({
+        name,
+        files,
+        gb: round2(bytes / (1024 ** 3)),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
 
     return {
-      rootFolders,
-      genresByType,
-      genres,
       totalFiles: stats.totalFiles,
-      totalGB: Math.round(totalGB * 100) / 100,
+      totalGB: round2(totalGB),
       videos: stats.videos,
       audios: stats.audios,
       karaokes: stats.karaokes,
       other: stats.other,
+      gbVideos: round2(stats.bytesVideos / (1024 ** 3)),
+      gbAudios: round2(stats.bytesAudios / (1024 ** 3)),
+      gbKaraokes: round2(stats.bytesKaraokes / (1024 ** 3)),
+      totalGenres: genresDetail.length,
+      genresDetail,
     };
   } catch {
     return { ...emptyResponse, error: 'Error al calcular. El resto de la web sigue funcionando.' };
