@@ -231,9 +231,9 @@ export const register = publicProcedure
 
       if (fbp) {
         if (remoteAddress && userAgent) {
-          log.info('[REGISTER] Sending sign up event to Facebook');
+          log.info('[REGISTER] Sending sign up event to Facebook CAPI');
           await facebook.setEvent(
-            'RegistroExitosoAPI',
+            'CompleteRegistration',
             remoteAddress,
             userAgent,
             fbp,

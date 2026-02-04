@@ -134,16 +134,17 @@ export const subscribeWithPaypal = shieldedProcedure
 
           if (fbp) {
             if (remoteAddress && userAgent) {
-              log.info(
-                '[PAYPAL] User has successfully paid for a plan, sending event to facebook',
-              );
+              log.info('[PAYPAL] Sending Purchase event to Facebook CAPI');
+              const value = Number(plan.price);
+              const currency = (plan.moneda || 'USD').toUpperCase();
               await facebook.setEvent(
-                'PagoExitosoAPI',
+                'Purchase',
                 remoteAddress,
                 userAgent,
                 fbp,
                 url,
                 existingUser,
+                { value, currency },
               );
             }
           }

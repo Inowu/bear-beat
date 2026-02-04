@@ -1,51 +1,76 @@
 import { Users } from '@prisma/client';
 import * as bizSdk from 'facebook-nodejs-business-sdk';
+import { log } from '../server';
+
 const EventRequest = bizSdk.EventRequest;
 const UserData = bizSdk.UserData;
 const ServerEvent = bizSdk.ServerEvent;
 
-const access_token = process.env.FACEBOOK_ACCESS_TOKEN!;
-const pixel_id = process.env.FACEBOOK_PIXEL_ID!;
-const api = bizSdk.FacebookAdsApi.init(access_token);
+const access_token = process.env.FACEBOOK_ACCESS_TOKEN;
+const pixel_id = process.env.FACEBOOK_PIXEL_ID;
 
-const now = new Date();
-const timestamp = Math.floor(new Date(now.getTime() - 5 * 60000).getTime() / 1000);
+if (access_token) {
+  bizSdk.FacebookAdsApi.init(access_token);
+}
 
+export type FacebookCustomData = {
+  value?: number;
+  currency?: string;
+};
+
+/**
+ * Envía un evento al Conversions API de Meta (CAPI).
+ * Usar nombres estándar: "CompleteRegistration" (registro), "Purchase" (compra).
+ * Para Purchase, pasar customData con value y currency (requeridos por Meta).
+ * Si FACEBOOK_ACCESS_TOKEN o FACEBOOK_PIXEL_ID no están definidos, no se envía nada.
+ */
 export const facebook = {
   setEvent: async function (
-    event: string, 
-    remoteAddress: string, 
+    eventName: string,
+    remoteAddress: string,
     userAgent: string,
     fbp: string,
     sourceUrl: string,
-    user: Users
+    user: Users,
+    customData?: FacebookCustomData
   ) {
-    const userData = (new UserData())
+    if (!access_token || !pixel_id) {
+      log.warn('[FACEBOOK] CAPI no configurado: faltan FACEBOOK_ACCESS_TOKEN o FACEBOOK_PIXEL_ID');
+      return;
+    }
+
+    const timestamp = Math.floor(Date.now() / 1000);
+
+    const userData = new UserData()
       .setEmails([user.email])
-      .setPhones([user.phone!])
+      .setPhones([user.phone || ''])
       .setClientIpAddress(remoteAddress)
       .setClientUserAgent(userAgent)
       .setFbp(fbp);
 
-    const serverEvent = (new ServerEvent())
-      .setEventName(event)
+    const serverEvent = new ServerEvent()
+      .setEventName(eventName)
       .setEventTime(timestamp)
       .setUserData(userData)
       .setEventSourceUrl(sourceUrl)
       .setActionSource('website');
 
-    const eventsData = [serverEvent];
-    const eventRequest = (new EventRequest(access_token, pixel_id))
-      .setEvents(eventsData);
+    if (customData && (customData.value != null || customData.currency)) {
+      const data: Record<string, unknown> = {};
+      if (customData.value != null) data.value = customData.value;
+      if (customData.currency) data.currency = customData.currency.toUpperCase();
+      serverEvent.setCustomData(data);
+    }
 
-    eventRequest.execute().then(
-      response => {
-        console.log('Response: ', response);
-      },
-      err => {
-        console.error('Error: ', err);
-      }
-    );
+    const eventRequest = new EventRequest(access_token, pixel_id).setEvents([serverEvent]);
 
-  }
-}
+    eventRequest
+      .execute()
+      .then((response: unknown) => {
+        log.info('[FACEBOOK] CAPI event sent', { eventName, response: (response as any)?.toString?.() ?? response });
+      })
+      .catch((err: unknown) => {
+        log.error('[FACEBOOK] CAPI error', { eventName, err: err instanceof Error ? err.message : err });
+      });
+  },
+};

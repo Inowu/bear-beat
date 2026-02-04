@@ -215,8 +215,18 @@ export const subscribeWithStripe = shieldedProcedure
 
         if (fbp) {
           if (remoteAddress && userAgent) {
-            log.info('[STRIPE] User has successfully paid for a plan, sending event to facebook');
-            await facebook.setEvent('PagoExitosoAPI', remoteAddress, userAgent, fbp, url, existingUser);
+            log.info('[STRIPE] Sending Purchase event to Facebook CAPI');
+            const value = Number(plan.price);
+            const currency = (plan.moneda || 'USD').toUpperCase();
+            await facebook.setEvent(
+              'Purchase',
+              remoteAddress,
+              userAgent,
+              fbp,
+              url,
+              existingUser,
+              { value, currency },
+            );
           }
         }
 

@@ -1,9 +1,10 @@
 /**
  * Meta / Facebook Pixel – inicialización y tracking seguro.
  * Solo llama a fbq si el script está cargado; evita errores si el pixel no está listo.
+ * Requiere REACT_APP_FB_PIXEL_ID en las variables de entorno (Netlify / .env).
  */
 
-const PIXEL_ID = process.env.REACT_APP_FB_PIXEL_ID || "1325763147585869";
+const PIXEL_ID = (process.env.REACT_APP_FB_PIXEL_ID || "").trim();
 
 declare global {
   interface Window {
@@ -26,8 +27,8 @@ function isFbqReady(): boolean {
  */
 export function initFacebookPixel(): void {
   if (typeof window === "undefined" || typeof document === "undefined") return;
-  const id = PIXEL_ID.trim();
-  if (!id) return;
+  if (!PIXEL_ID) return;
+  const id = PIXEL_ID;
 
   // Evitar doble init
   if (window.fbq && (window as any).fbqLoaded) return;
