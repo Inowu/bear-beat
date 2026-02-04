@@ -1,412 +1,520 @@
+// Public Home — Dark mode estilo Serato/Rekordbox, acentos neón Cyan/Electric Blue
+// Siempre oscuro en esta página (conversión Grand Slam)
 @import "src/styles/mixin.scss";
-@import "../../styles/landing-design.scss";
 
-// Mobile-first
-.public-home-container {
-  @extend .landing-layout;
-  width: 100%;
-  min-height: 100%;
-  padding: 0;
+$ph-bg: #0a0a0f;
+$ph-bg-soft: #111827;
+$ph-bg-card: rgba(30, 41, 59, 0.6);
+$ph-border: rgba(148, 163, 184, 0.12);
+$ph-text: #f1f5f9;
+$ph-text-muted: #94a3b8;
+$ph-accent: #22d3ee;
+$ph-accent-bright: #67e8f9;
+$ph-glow: rgba(34, 211, 238, 0.4);
+
+.ph {
+  background: linear-gradient(180deg, $ph-bg-soft 0%, $ph-bg 30%, $ph-bg 100%);
+  min-height: 100vh;
+  color: $ph-text;
   margin-left: calc(-50vw + 50%);
   margin-right: calc(-50vw + 50%);
   max-width: 100vw;
   box-sizing: border-box;
-
-  &.landing-main-container {
-    padding: 0 12px 24px;
-  }
 }
 
-// ----- Header -----
-.public-home-header {
+// ----- 1. NAVBAR (Sticky, minimalista) -----
+.ph__nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 0 20px;
-  border-bottom: 1px solid $card-glass-border;
+  padding: 14px 16px 14px;
+  background: rgba(10, 10, 15, 0.85);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid $ph-border;
 
-  .public-home-header-logo img {
-    max-width: 120px;
-    height: auto;
-  }
-
-  .public-home-header-actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .public-home-header-link {
-    color: $text-muted;
-    font-size: 1.5rem;
-    font-weight: 600;
-    text-decoration: none;
-    padding: 10px 14px;
-    min-height: 48px;
-    display: inline-flex;
-    align-items: center;
-    &:hover {
-      color: $bear-blue-dim;
-    }
-  }
-
-  .public-home-header-btn {
-    padding: 14px 24px;
-    min-height: 48px;
-    border-radius: 14px;
-    font-weight: 700;
-    font-size: 1.5rem;
-    background: linear-gradient(135deg, #00e6c1, $bear-blue-dim);
-    color: #000;
-    text-decoration: none;
-    box-shadow: 0 0 16px $bear-blue-glow;
-    &:hover {
-      box-shadow: 0 0 24px $bear-blue-glow;
-    }
+  @include respond-from(tablet) {
+    padding: 16px 24px;
   }
 }
 
-// ----- Hero -----
-.public-home-hero {
-  text-align: center;
-  padding: 28px 0 40px;
-  max-width: 100%;
-  margin: 0 auto;
+.ph__nav-logo img {
+  max-width: 110px;
+  height: auto;
+  display: block;
+
+  @include respond-from(tablet) {
+    max-width: 130px;
+  }
 }
 
-.public-home-tagline-hero {
-  color: $bear-blue-dim;
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin: 0 0 10px;
-}
-
-.public-home-headline {
-  font-size: clamp(1.9rem, 5vw, 2.5rem);
-  line-height: 1.25;
-  margin: 0 0 18px;
-  letter-spacing: -0.02em;
-}
-
-.public-home-hero-desc {
-  color: $text-muted;
-  font-size: 1.15rem;
-  line-height: 1.55;
-  margin: 0 0 24px;
-  max-width: 640px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.public-home-hero-ctas {
+.ph__nav-actions {
   display: flex;
-  flex-direction: column;
-  gap: 14px;
-  max-width: 320px;
-  margin: 0 auto 28px;
+  align-items: center;
+  gap: 10px;
 }
 
-.public-home-stats {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 16px 20px;
-  color: $text-dim;
-  font-size: 1.05rem;
-  strong {
-    color: $bear-blue-dim;
-  }
-}
-
-.public-home-btn {
+.ph__nav-btn {
+  padding: 10px 18px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 14px 24px;
-  border-radius: 100px;
-  font-size: 1.05rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 600;
   text-decoration: none;
-  transition: all 0.2s ease;
-  width: 100%;
-  min-height: 48px;
-  box-sizing: border-box;
-}
+  border-radius: 10px;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
 
-.public-home-btn-primary {
-  @extend .landing-btn-primary;
-}
-
-.public-home-btn-secondary {
-  background: transparent;
-  color: $bear-blue-dim;
-  border: 2px solid $bear-blue-dim;
-  &:hover {
-    background: rgba(8, 225, 247, 0.15);
-    color: #fff;
+  @include respond-from(tablet) {
+    min-height: 48px;
+    padding: 12px 22px;
   }
 }
 
-.public-home-btn-cta {
-  margin-top: 8px;
+.ph__nav-btn--ghost {
+  color: $ph-text-muted;
+  background: transparent;
+  border: 1px solid $ph-border;
+
+  &:hover {
+    color: $ph-accent;
+    border-color: rgba(34, 211, 238, 0.4);
+  }
 }
 
-.public-home-btn-large {
-  font-size: 1.15rem;
-  padding: 16px 32px;
-  min-height: 52px;
+.ph__nav-btn--primary {
+  background: linear-gradient(135deg, $ph-accent-bright 0%, $ph-accent 100%);
+  color: #0a0a0f;
+  border: none;
+  box-shadow: 0 0 20px $ph-glow;
+
+  &:hover {
+    box-shadow: 0 0 28px $ph-glow;
+  }
 }
 
-// ----- Bento -----
-.public-home-bento {
-  max-width: 100%;
-  margin: 0 auto 40px;
-  padding: 32px 0;
-  border-top: 1px solid $card-glass-border;
-}
-
-.public-home-section-title {
+// ----- 2. HERO -----
+.ph__hero {
+  position: relative;
   text-align: center;
-  font-size: clamp(1.5rem, 4vw, 1.65rem);
-  color: $text-primary;
-  margin: 0 0 16px;
-  font-weight: 700;
+  padding: 40px 16px 48px;
+  overflow: hidden;
+
+  @include respond-from(tablet) {
+    padding: 56px 24px 64px;
+  }
+  @include respond-from(md) {
+    padding: 64px 32px 80px;
+  }
 }
 
-.public-home-bento-intro {
-  text-align: center;
-  color: $bear-blue-dim;
-  font-size: 1.3rem;
-  font-weight: 600;
-  margin: 0 0 6px;
+.ph__hero-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(34, 211, 238, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 80% 60%, rgba(34, 211, 238, 0.04) 0%, transparent 50%);
+  pointer-events: none;
 }
 
-.public-home-bento-intro-sub {
-  text-align: center;
-  color: $text-muted;
-  font-size: 1.15rem;
-  margin: 0 0 16px;
-}
-
-.public-home-bento-desc {
-  text-align: center;
-  color: $text-dim;
-  font-size: 1.05rem;
-  line-height: 1.5;
-  margin: 0 0 24px;
-  max-width: 640px;
+.ph__hero-h1 {
+  position: relative;
+  font-size: clamp(1.75rem, 5vw, 2.75rem);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin: 0 0 20px;
+  color: $ph-text;
+  max-width: 800px;
   margin-left: auto;
   margin-right: auto;
-  margin-bottom: 24px;
 }
 
-.public-home-bento-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
+.ph__hero-h2 {
+  position: relative;
+  font-size: clamp(1.05rem, 2.5vw, 1.2rem);
+  font-weight: 400;
+  line-height: 1.55;
+  color: $ph-text-muted;
+  margin: 0 0 28px;
+  max-width: 620px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.public-home-bento-card {
-  @extend .landing-card;
-  padding: 20px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+.ph__hero-cta {
+  position: relative;
+  display: inline-block;
+  padding: 18px 32px;
+  min-height: 56px;
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  color: #0a0a0f;
+  background: linear-gradient(135deg, $ph-accent-bright 0%, $ph-accent 100%);
+  border-radius: 12px;
+  box-shadow: 0 0 32px $ph-glow;
+  transition: transform 0.2s, box-shadow 0.2s;
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 0 40px $ph-glow;
   }
 
+  @include respond-from(tablet) {
+    padding: 20px 40px;
+    font-size: 1.15rem;
+  }
+}
+
+.ph__hero-micro {
+  position: relative;
+  margin: 14px 0 0;
+  font-size: 0.95rem;
+  color: $ph-text-muted;
+}
+
+// ----- 3. BARRA AUTORIDAD -----
+.ph__authority {
+  padding: 20px 16px;
+  border-top: 1px solid $ph-border;
+  border-bottom: 1px solid $ph-border;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.ph__authority-inner {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 20px 32px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.ph__authority-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  color: $ph-text-muted;
+
+  @include respond-from(tablet) {
+    font-size: 1rem;
+  }
+}
+
+.ph__authority-icon {
+  flex-shrink: 0;
+  font-size: 1.25rem;
+  color: $ph-accent;
+}
+
+// ----- 4. DOLOR -----
+.ph__pain {
+  padding: 48px 16px 56px;
+
+  @include respond-from(tablet) {
+    padding: 56px 24px 64px;
+  }
+}
+
+.ph__pain-title {
+  text-align: center;
+  font-size: clamp(1.4rem, 4vw, 1.75rem);
+  font-weight: 700;
+  color: $ph-text;
+  margin: 0 0 28px;
+}
+
+.ph__pain-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  max-width: 700px;
+  margin: 0 auto;
+
+  @include respond-from(tablet) {
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+}
+
+.ph__pain-card {
+  padding: 24px;
+  border-radius: 14px;
+  border: 1px solid $ph-border;
+  background: $ph-bg-card;
+
   h3 {
-    color: $bear-blue-dim;
-    font-size: 1.1rem;
-    margin: 0 0 8px;
+    font-size: 1.15rem;
     font-weight: 700;
+    margin: 0 0 10px;
   }
   p {
-    color: $text-muted;
     font-size: 0.95rem;
-    line-height: 1.45;
+    line-height: 1.5;
+    color: $ph-text-muted;
     margin: 0;
   }
 }
 
-.public-home-bento-icon {
+.ph__pain-icon {
   font-size: 1.75rem;
-  color: $bear-blue-dim;
   margin-bottom: 12px;
   display: block;
 }
 
-// ----- Steps -----
-.public-home-steps {
+.ph__pain-card--bad {
+  h3 { color: #f87171; }
+  .ph__pain-icon { color: #f87171; }
+}
+
+.ph__pain-card--good {
+  h3 { color: $ph-accent; }
+  .ph__pain-icon { color: $ph-accent; }
+  border-color: rgba(34, 211, 238, 0.25);
+}
+
+// ----- 5. BENTO VALUE STACK -----
+.ph__section-title {
   text-align: center;
-  max-width: 100%;
-  margin: 0 auto 40px;
-  padding: 28px 16px;
-  @extend .landing-card;
+  font-size: clamp(1.35rem, 3.5vw, 1.6rem);
+  font-weight: 700;
+  color: $ph-text;
+  margin: 0 0 28px;
 }
 
-.public-home-steps-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  margin-bottom: 24px;
-}
+.ph__bento {
+  padding: 48px 16px 56px;
+  border-top: 1px solid $ph-border;
 
-.public-home-step-card {
-  text-align: left;
-  padding: 16px;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 12px;
-  border: 1px solid $card-glass-border;
-
-  .public-home-step-num {
-    display: inline-block;
-    color: $bear-blue-dim;
-    font-size: 1.5rem;
-    font-weight: 800;
-    margin-bottom: 8px;
+  @include respond-from(tablet) {
+    padding: 56px 24px 64px;
   }
+}
+
+.ph__bento-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  max-width: 1000px;
+  margin: 0 auto;
+
+  @include respond-from(tablet) {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: auto auto;
+    gap: 20px;
+  }
+  @include respond-from(md) {
+    grid-template-columns: 1.2fr 1fr;
+    grid-template-rows: 1fr 1fr;
+  }
+}
+
+.ph__bento-card {
+  padding: 24px;
+  border-radius: 14px;
+  border: 1px solid $ph-border;
+  background: $ph-bg-card;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    border-color: rgba(34, 211, 238, 0.3);
+    box-shadow: 0 0 24px rgba(34, 211, 238, 0.08);
+  }
+
   h3 {
-    color: $text-primary;
-    font-size: 1.2rem;
-    margin: 0 0 6px;
+    font-size: 1.1rem;
     font-weight: 700;
+    color: $ph-accent;
+    margin: 0 0 8px;
   }
   p {
-    color: $text-muted;
     font-size: 0.95rem;
-    line-height: 1.4;
+    line-height: 1.5;
+    color: $ph-text-muted;
     margin: 0;
   }
 }
 
-.public-home-steps-sub {
-  color: $text-muted;
-  font-size: 1rem;
-  line-height: 1.5;
-  margin: 0;
+.ph__bento-card--large {
+  @include respond-from(md) {
+    grid-row: span 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  h3 { font-size: 1.25rem; }
+  p { font-size: 1rem; }
 }
 
-// ----- Pricing -----
-.public-home-pricing {
+.ph__bento-icon {
+  font-size: 1.75rem;
+  color: $ph-accent;
+  margin-bottom: 12px;
+  display: block;
+}
+
+// ----- 6. PRECIOS -----
+.ph__pricing {
+  padding: 48px 16px 56px;
+  border-top: 1px solid $ph-border;
+
+  @include respond-from(tablet) {
+    padding: 56px 24px 64px;
+  }
+}
+
+.ph__pricing-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 20px;
-  margin-bottom: 40px;
-  max-width: 900px;
-  margin-left: auto;
-  margin-right: auto;
-  margin-bottom: 40px;
+  max-width: 700px;
+  margin: 0 auto 28px;
+
+  @include respond-from(tablet) {
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    max-width: 800px;
+  }
 }
 
-.public-home-price-card {
-  @extend .landing-card;
-  padding: 24px 20px;
+.ph__price-card {
+  padding: 28px 24px;
+  border-radius: 14px;
+  border: 1px solid $ph-border;
+  background: $ph-bg-card;
   text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
+  position: relative;
 
-  .public-home-price-country {
-    display: block;
-    color: $text-muted;
-    font-size: 0.95rem;
-    margin-bottom: 4px;
-  }
-  .public-home-price-currency {
-    color: $text-dim;
-    font-size: 1rem;
-  }
-  .public-home-price-amount {
-    color: $bear-blue-dim;
-    font-size: 2.2rem;
-    font-weight: 800;
-  }
-  .public-home-price-period {
-    color: $text-dim;
-    font-size: 1rem;
-  }
-  .public-home-price-desc {
-    color: $text-muted;
-    font-size: 0.95rem;
-    line-height: 1.4;
-    margin: 0 0 8px;
-  }
-  .public-home-btn {
-    margin-top: 8px;
-    max-width: 240px;
+  &.ph__price-card--highlight {
+    border-color: rgba(34, 211, 238, 0.35);
+    box-shadow: 0 0 24px rgba(34, 211, 238, 0.06);
   }
 }
 
-// ----- FTP -----
-.public-home-ftp {
-  padding: 32px 0 40px;
-  border-top: 1px solid $card-glass-border;
-  text-align: center;
+.ph__price-badge {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #0a0a0f;
+  background: $ph-accent;
+  border-radius: 100px;
 }
 
-.public-home-ftp-desc {
-  color: $text-muted;
+.ph__price-region {
+  display: block;
+  font-size: 0.9rem;
+  color: $ph-text-muted;
+  margin-bottom: 4px;
+}
+
+.ph__price-amount {
+  display: block;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: $ph-accent;
+  line-height: 1.1;
+}
+
+.ph__price-period {
   font-size: 1rem;
-  line-height: 1.55;
-  margin: 0 0 24px;
-  max-width: 640px;
+  color: $ph-text-muted;
+}
+
+.ph__price-anchor {
+  font-size: 0.9rem;
+  color: $ph-text-muted;
+  margin: 12px 0 16px;
+  font-style: italic;
+}
+
+.ph__price-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px;
+  text-align: left;
+  max-width: 200px;
   margin-left: auto;
   margin-right: auto;
-  margin-bottom: 24px;
-}
+  margin-bottom: 20px;
 
-// ----- CTA final -----
-.public-home-cta {
-  text-align: center;
-  padding: 40px 16px;
-  max-width: 100%;
-  margin: 0 auto;
-  border-top: 1px solid $card-glass-border;
-}
+  li {
+    padding: 6px 0;
+    font-size: 0.95rem;
+    color: $ph-text-muted;
+    padding-left: 20px;
+    position: relative;
 
-.public-home-cta-text {
-  font-size: clamp(1.2rem, 3vw, 1.4rem);
-  color: $text-primary;
-  font-weight: 600;
-  margin: 0 0 8px;
-  line-height: 1.4;
-}
-
-.public-home-cta-sub {
-  color: $text-dim;
-  font-size: 0.95rem;
-  margin: 0 0 20px;
-  line-height: 1.4;
-}
-
-.public-home-cta .public-home-btn {
-  max-width: 320px;
-  margin: 0 auto;
-}
-
-// ----- Footer -----
-.public-home-footer {
-  padding: 32px 0 24px;
-  border-top: 1px solid $card-glass-border;
-  text-align: center;
-
-  // Móvil: más espacio abajo para que el pie se vea completo (safe area + no tapar por chat)
-  @include respond-to(tablet) {
-    padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
+    &::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: $ph-accent;
+      font-weight: 700;
+    }
   }
 }
 
-.public-home-footer-logo img {
-  max-width: 100px;
-  margin-bottom: 16px;
+.ph__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 24px;
+  min-height: 48px;
+  font-size: 1rem;
+  font-weight: 700;
+  text-decoration: none;
+  border-radius: 10px;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.ph__btn--primary {
+  width: 100%;
+  max-width: 260px;
+  color: #0a0a0f;
+  background: linear-gradient(135deg, $ph-accent-bright 0%, $ph-accent 100%);
+  border: none;
+  box-shadow: 0 0 20px $ph-glow;
+
+  &:hover {
+    box-shadow: 0 0 28px $ph-glow;
+    transform: translateY(-1px);
+  }
+}
+
+.ph__guarantee {
+  text-align: center;
+  font-size: 0.95rem;
+  color: $ph-text-muted;
+  margin: 0;
+}
+
+// ----- 7. FOOTER -----
+.ph__footer {
+  padding: 40px 16px 32px;
+  border-top: 1px solid $ph-border;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.ph__footer-logo img {
+  max-width: 90px;
+  margin-bottom: 20px;
   opacity: 0.9;
 }
 
-.public-home-footer-links {
+.ph__footer-links {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
@@ -414,88 +522,25 @@
   margin-bottom: 16px;
 
   a {
-    color: $text-muted;
-    font-size: 1.3rem;
+    color: $ph-text-muted;
+    font-size: 1rem;
     font-weight: 600;
     text-decoration: none;
+
     &:hover {
-      color: $bear-blue-dim;
+      color: $ph-accent;
     }
   }
 }
 
-.public-home-footer-copy {
-  color: $text-dim;
-  font-size: 1rem;
+.ph__footer-payments {
+  font-size: 0.9rem;
+  color: rgba(148, 163, 184, 0.7);
+  margin: 0 0 12px;
+}
+
+.ph__footer-copy {
+  font-size: 0.9rem;
+  color: $ph-text-muted;
   margin: 0;
-}
-
-.public-home-footer-links a {
-  font-size: 1.2rem;
-}
-
-// ----- Responsive -----
-@include respond-from(tablet) {
-  .public-home-container.landing-main-container {
-    padding: 0 16px 32px;
-  }
-  .public-home-header .public-home-header-logo img {
-    max-width: 140px;
-  }
-  .public-home-hero {
-    padding: 36px 0 48px;
-  }
-  .public-home-hero-ctas {
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-    max-width: none;
-    gap: 16px;
-  }
-  .public-home-hero-ctas .public-home-btn {
-    width: auto;
-  }
-  .public-home-bento-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-  }
-  .public-home-steps-cards {
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 24px;
-  }
-  .public-home-step-card {
-    flex: 1;
-    min-width: 200px;
-    max-width: 280px;
-  }
-  .public-home-pricing {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
-  }
-  .public-home-cta .public-home-btn {
-    width: auto;
-  }
-}
-
-@include respond-from(md) {
-  .public-home-container.landing-main-container {
-    padding: 0 24px 48px;
-  }
-  .public-home-hero {
-    padding: 40px 0 56px;
-  }
-  .public-home-hero-desc {
-    font-size: 1.1rem;
-  }
-  .public-home-bento-card {
-    padding: 24px;
-  }
-  .public-home-price-card {
-    padding: 32px 24px;
-  }
-  .public-home-price-amount {
-    font-size: 2.6rem;
-  }
 }

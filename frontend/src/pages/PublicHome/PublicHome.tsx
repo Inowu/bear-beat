@@ -1,175 +1,169 @@
 import { Link } from "react-router-dom";
 import Logo from "../../assets/images/osonuevo.png";
 import {
-  PiMusicNotes,
-  PiDownloadSimple,
-  PiFolder,
-  PiShieldCheck,
+  PiFiles,
+  PiHardDrives,
+  PiCalendar,
   PiHeadset,
+  PiVideoCamera,
+  PiFolderOpen,
+  PiLightning,
+  PiMusicNotes,
+  PiWarning,
   PiCheckCircle,
-  PiArrowRight,
 } from "react-icons/pi";
 import "./PublicHome.scss";
 
 function PublicHome() {
   return (
-    <div className="public-home-container landing-main-container">
-      {/* Header */}
-      <header className="public-home-header">
-        <Link to="/" className="public-home-header-logo">
+    <div className="ph">
+      {/* 1. NAVBAR — Minimalista & Sticky */}
+      <header className="ph__nav">
+        <Link to="/" className="ph__nav-logo">
           <img src={Logo} alt="Bear Beat" />
         </Link>
-        <div className="public-home-header-actions">
-          <Link to="/auth" className="public-home-header-link">Iniciar sesión</Link>
-          <Link to="/auth/registro" className="public-home-header-btn">Registrarme</Link>
+        <div className="ph__nav-actions">
+          <Link to="/auth" className="ph__nav-btn ph__nav-btn--ghost">
+            Iniciar Sesión
+          </Link>
+          <Link to="/auth/registro" className="ph__nav-btn ph__nav-btn--primary">
+            Obtener Acceso
+          </Link>
         </div>
       </header>
 
-      {/* Hero */}
-      <section className="public-home-hero">
-        <p className="public-home-tagline-hero">La librería que no te deja colgado</p>
-        <h1 className="public-home-headline landing-title">
-          Nunca más digas &quot;no lo tengo&quot;
+      {/* 2. HERO — El Gancho */}
+      <section className="ph__hero">
+        <div className="ph__hero-bg" aria-hidden />
+        <h1 className="ph__hero-h1">
+          El Arsenal de 12.5 TB que te convierte en el DJ que nunca falla.
         </h1>
-        <p className="public-home-hero-desc">
-          Música y videos exclusivos para DJs. Todo el catálogo organizado por géneros. Descarga masiva vía FTP con FileZilla o Air Explorer. 500 GB cada mes, contenido nuevo cada semana.
-        </p>
-        <div className="public-home-hero-ctas">
-          <Link to="/auth/registro" className="public-home-btn public-home-btn-primary">
-            Quiero mi acceso ahora
-          </Link>
-          <Link to="/planes" className="public-home-btn public-home-btn-secondary">
-            Ver planes desde $18/mes
-          </Link>
-        </div>
-        <div className="public-home-stats">
-          <span><strong>500 GB</strong> cada mes · FTP masivo</span>
-          <span><strong>Por géneros</strong> todo organizado</span>
-          <span><strong>Cancelas</strong> cuando quieras</span>
-          <span><strong>Pago seguro</strong> Visa · Mastercard · PayPal · SPEI</span>
-        </div>
-      </section>
-
-      {/* Lo que pierdes */}
-      <section className="public-home-bento">
-        <h2 className="public-home-section-title">Lo que pierdes si sigues sin Bear Beat</h2>
-        <p className="public-home-bento-intro">
-          Tu imagen depende de tener el tema
-        </p>
-        <p className="public-home-bento-intro-sub">
-          Una pista que no tienes = pista que no suena
-        </p>
-        <p className="public-home-bento-desc">
-          Música y videos exclusivos para DJs. Todo el catálogo organizado por géneros. Descarga masiva vía FTP con FileZilla o Air Explorer. 500 GB al mes, contenido nuevo cada semana.
-        </p>
-        <div className="public-home-bento-grid">
-          <div className="public-home-bento-card">
-            <PiMusicNotes className="public-home-bento-icon" />
-            <h3>Exclusivo para DJs</h3>
-            <p>Música y video · todo por géneros</p>
-          </div>
-          <div className="public-home-bento-card">
-            <PiDownloadSimple className="public-home-bento-icon" />
-            <h3>Descarga masiva vía FTP</h3>
-            <p>Catálogo organizado por géneros. FileZilla o Air Explorer: conectas, eliges la carpeta del género que quieras y bajas en bloque. Credenciales en Mi Cuenta.</p>
-          </div>
-          <div className="public-home-bento-card">
-            <PiShieldCheck className="public-home-bento-icon" />
-            <h3>Pagos legales, sin líos</h3>
-            <p>Stripe, PayPal, SPEI. Facturación en regla para venues y cadenas.</p>
-          </div>
-          <div className="public-home-bento-card">
-            <PiHeadset className="public-home-bento-icon" />
-            <h3>Soporte cuando lo necesites</h3>
-            <p>Chat y teléfono para DJs</p>
-          </div>
-          <div className="public-home-bento-card">
-            <PiFolder className="public-home-bento-icon" />
-            <h3>Sin ataduras</h3>
-            <p>Renovación automática. Cancela cuando quieras.</p>
-          </div>
-        </div>
-      </section>
-
-      {/* En 3 pasos */}
-      <section className="public-home-steps">
-        <h2 className="public-home-section-title">En 3 pasos estás descargando</h2>
-        <div className="public-home-steps-cards">
-          <div className="public-home-step-card">
-            <span className="public-home-step-num">01</span>
-            <h3>Regístrate</h3>
-            <p>Cuenta en menos de un minuto. Sin tarjeta para probar.</p>
-          </div>
-          <div className="public-home-step-card">
-            <span className="public-home-step-num">02</span>
-            <h3>Elige tu plan</h3>
-            <p>Desde $18 USD o $350 MXN al mes. Tarjeta, PayPal o SPEI.</p>
-          </div>
-          <div className="public-home-step-card">
-            <span className="public-home-step-num">03</span>
-            <h3>Descarga masiva</h3>
-            <p>Credenciales FTP en Mi Cuenta. FileZilla o Air Explorer y bajas todo lo que quieras.</p>
-          </div>
-        </div>
-        <p className="public-home-steps-sub">
-          Menos de lo que cobras por una hora — librería todo el mes
-        </p>
-      </section>
-
-      {/* Precios */}
-      <section className="public-home-pricing">
-        <div className="public-home-price-card">
-          <span className="public-home-price-currency">USD</span>
-          <span className="public-home-price-amount">$18</span>
-          <span className="public-home-price-period">/ mes</span>
-          <p className="public-home-price-desc">500 GB. Tarjeta o PayPal. Ideal para USA y Latinoamérica.</p>
-          <Link to="/planes" className="public-home-btn public-home-btn-primary">Quiero el plan USD</Link>
-        </div>
-        <div className="public-home-price-card">
-          <span className="public-home-price-country">México</span>
-          <span className="public-home-price-currency">MXN</span>
-          <span className="public-home-price-amount">$350</span>
-          <span className="public-home-price-period">/ mes</span>
-          <p className="public-home-price-desc">500 GB. SPEI, tarjeta o PayPal. Facturación incluida.</p>
-          <Link to="/planes" className="public-home-btn public-home-btn-primary">Quiero el plan MXN</Link>
-        </div>
-      </section>
-
-      {/* Descarga masiva FTP */}
-      <section className="public-home-ftp">
-        <h2 className="public-home-section-title">Descarga masiva: FileZilla o Air Explorer</h2>
-        <p className="public-home-ftp-desc">
-          Todo el contenido es exclusivo para DJs y está organizado por géneros. Usuario y contraseña FTP en Mi Cuenta. Con FileZilla o Air Explorer te conectas, eliges el género o las carpetas que quieras y bajas en bloque. Instrucciones paso a paso dentro.
-        </p>
-        <Link to="/auth/registro" className="public-home-btn public-home-btn-primary public-home-btn-cta">
-          Quiero empezar ya
+        <h2 className="ph__hero-h2">
+          Descarga masiva vía FTP. Música, Video (93% del catálogo) y Karaokes organizados por carpetas. Mientras duermes, tu disco duro se llena.
+        </h2>
+        <Link to="/auth/registro" className="ph__hero-cta">
+          QUIERO BLINDAR MI LIBRERÍA →
         </Link>
+        <p className="ph__hero-micro">
+          Cancela cuando quieras • Acceso Inmediato
+        </p>
       </section>
 
-      {/* CTA final */}
-      <section className="public-home-cta">
-        <p className="public-home-cta-text">
-          La próxima vez que pidan un tema, que no sea porque no lo tienes
-        </p>
-        <p className="public-home-cta-sub">
-          Cuenta gratis. Sin compromiso. Cancela cuando quieras.
-        </p>
-        <Link to="/auth/registro" className="public-home-btn public-home-btn-primary public-home-btn-large">
-          Dame mi acceso a Bear Beat
-        </Link>
+      {/* 3. BARRA DE AUTORIDAD */}
+      <section className="ph__authority">
+        <div className="ph__authority-inner">
+          <span className="ph__authority-item">
+            <PiFiles className="ph__authority-icon" aria-hidden />
+            195,000+ Archivos
+          </span>
+          <span className="ph__authority-item">
+            <PiHardDrives className="ph__authority-icon" aria-hidden />
+            12.35 TB de Contenido
+          </span>
+          <span className="ph__authority-item">
+            <PiCalendar className="ph__authority-icon" aria-hidden />
+            Actualización Semanal
+          </span>
+          <span className="ph__authority-item">
+            <PiHeadset className="ph__authority-icon" aria-hidden />
+            Soporte Humano (Chat/Tel)
+          </span>
+        </div>
       </section>
 
-      {/* Footer */}
-      <footer className="public-home-footer">
-        <Link to="/" className="public-home-footer-logo">
+      {/* 4. SECCIÓN DE DOLOR */}
+      <section className="ph__pain">
+        <h2 className="ph__pain-title">¿Cuánto te cuesta decir &quot;No la tengo&quot;?</h2>
+        <div className="ph__pain-grid">
+          <div className="ph__pain-card ph__pain-card--bad">
+            <PiWarning className="ph__pain-icon" aria-hidden />
+            <h3>DJ Amateur</h3>
+            <p>Estresado, buscando en YouTube, mala calidad. Una pista que no tienes = una pista que no suena.</p>
+          </div>
+          <div className="ph__pain-card ph__pain-card--good">
+            <PiCheckCircle className="ph__pain-icon" aria-hidden />
+            <h3>DJ Bear Beat</h3>
+            <p>Tranquilo, carpeta lista. No arriesgues tu reputación dependiendo del WiFi del lugar.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. VALUE STACK — Bento Grid */}
+      <section className="ph__bento">
+        <h2 className="ph__section-title">Todo lo que necesitas en un solo lugar</h2>
+        <div className="ph__bento-grid">
+          <div className="ph__bento-card ph__bento-card--large">
+            <PiVideoCamera className="ph__bento-icon" aria-hidden />
+            <h3>Especialistas en Video Remixes (11.5 TB)</h3>
+            <p>Lo que nadie más tiene.</p>
+          </div>
+          <div className="ph__bento-card">
+            <PiFolderOpen className="ph__bento-icon" aria-hidden />
+            <h3>Estructura Inteligente</h3>
+            <p>Género &gt; Año &gt; Mes. Ahorra 10 horas de trabajo de oficina.</p>
+          </div>
+          <div className="ph__bento-card">
+            <PiLightning className="ph__bento-icon" aria-hidden />
+            <h3>Servidores FTP de Alta Velocidad</h3>
+            <p>Sin límites de bajada.</p>
+          </div>
+          <div className="ph__bento-card">
+            <PiMusicNotes className="ph__bento-icon" aria-hidden />
+            <h3>Catálogo Completo</h3>
+            <p>Desde Cumbias Wepa y Corridos hasta Tech House y Retro 80s.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* 6. PRECIOS */}
+      <section className="ph__pricing">
+        <h2 className="ph__section-title">Planes que se pagan solos</h2>
+        <div className="ph__pricing-grid">
+          <div className="ph__price-card">
+            <span className="ph__price-region">Global / USA</span>
+            <span className="ph__price-amount">$18</span>
+            <span className="ph__price-period">USD / mes</span>
+            <p className="ph__price-anchor">Menos de lo que cobras por 20 min de show.</p>
+            <ul className="ph__price-features">
+              <li>500 GB descarga</li>
+              <li>Acceso Total</li>
+              <li>Tarjeta / PayPal</li>
+            </ul>
+            <Link to="/planes" className="ph__btn ph__btn--primary">
+              Quiero el plan USD
+            </Link>
+          </div>
+          <div className="ph__price-card ph__price-card--highlight">
+            <span className="ph__price-badge">Facturación Incluida</span>
+            <span className="ph__price-region">México</span>
+            <span className="ph__price-amount">$350</span>
+            <span className="ph__price-period">MXN / mes</span>
+            <ul className="ph__price-features">
+              <li>500 GB descarga</li>
+              <li>SPEI, OXXO, Tarjeta</li>
+            </ul>
+            <Link to="/planes" className="ph__btn ph__btn--primary">
+              Quiero el plan MXN
+            </Link>
+          </div>
+        </div>
+        <p className="ph__guarantee">Garantía de Satisfacción</p>
+      </section>
+
+      {/* 7. FOOTER */}
+      <footer className="ph__footer">
+        <Link to="/" className="ph__footer-logo">
           <img src={Logo} alt="Bear Beat" />
         </Link>
-        <div className="public-home-footer-links">
+        <div className="ph__footer-links">
           <Link to="/auth">Iniciar sesión</Link>
           <Link to="/auth/registro">Registrarme</Link>
-          <a href="/#soporte" className="public-home-footer-soporte">Soporte</a>
+          <a href="/#soporte">Soporte</a>
         </div>
-        <p className="public-home-footer-copy">© Bear Beat. Todos los derechos reservados.</p>
+        <p className="ph__footer-payments">
+          Pagos seguros: Stripe · PayPal · Conekta
+        </p>
+        <p className="ph__footer-copy">© Bear Beat. Todos los derechos reservados.</p>
       </footer>
     </div>
   );
