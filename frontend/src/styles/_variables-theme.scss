@@ -47,9 +47,33 @@
   // Landing (cuando se usa en público)
   --theme-landing-bg: #000000;
   --theme-landing-text: #ffffff;
+
+  // PublicHome — Light: bg-slate-50, cards white, border-slate-200, text-slate-900/600, cyan-600
+  --ph-bg: #f8fafc; /* slate-50 */
+  --ph-bg-soft: #f1f5f9;
+  --ph-bg-card: #ffffff;
+  --ph-border: #e2e8f0; /* slate-200 */
+  --ph-text-heading: #0f172a; /* slate-900 */
+  --ph-text-body: #475569; /* slate-600 */
+  --ph-text-muted: #64748b;
+  --ph-btn-bg: #0891b2; /* cyan-600 */
+  --ph-btn-text: #ffffff;
+  --ph-btn-hover-bg: #0e7490;
+  --ph-accent: #0891b2;
+  --ph-accent-bright: #06b6d4;
+  --ph-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.1), 0 4px 6px -4px rgba(15, 23, 42, 0.05); /* shadow-lg shadow-slate-200 */
+  --ph-shadow-card: 0 10px 15px -3px rgba(226, 232, 240, 0.4), 0 4px 6px -4px rgba(226, 232, 240, 0.2);
+  --ph-glow: transparent;
+  --ph-glow-strong: transparent;
+  --ph-nav-bg: rgba(248, 250, 252, 0.95);
+  --ph-footer-bg: #f1f5f9;
+  --ph-pain-bad: #dc2626; /* red-600 */
+  --ph-pain-good: #06b6d4;
 }
 
-[data-theme="dark"] {
+// Dark: por data-theme o por clase .dark en html (compatibilidad Tailwind)
+[data-theme="dark"],
+html.dark {
   --theme-bg-primary: #121212;
   --theme-bg-primary-end: #0d0d0d;
   --theme-bg-secondary: #1e1e1e;
@@ -87,4 +111,26 @@
   --theme-accent-soft-bg: rgba(8, 225, 247, 0.06);
   --theme-landing-bg: #000000;
   --theme-landing-text: #ffffff;
+
+  // PublicHome — Dark: bg-slate-950, cards slate-900, border-slate-800, text white/slate-400, cyan-500 + text-slate-950
+  --ph-bg: #020617; /* slate-950 */
+  --ph-bg-soft: #0f172a;
+  --ph-bg-card: #0f172a; /* slate-900 */
+  --ph-border: #1e293b; /* slate-800 */
+  --ph-text-heading: #ffffff;
+  --ph-text-body: #94a3b8; /* slate-400 */
+  --ph-text-muted: #94a3b8;
+  --ph-btn-bg: #06b6d4; /* cyan-500, brilla en dark */
+  --ph-btn-text: #020617; /* slate-950 contraste */
+  --ph-btn-hover-bg: #22d3ee;
+  --ph-accent: #06b6d4;
+  --ph-accent-bright: #22d3ee;
+  --ph-shadow: none; /* en dark no sombras negras */
+  --ph-shadow-card: none;
+  --ph-glow: rgba(6, 182, 212, 0.2); /* resplandor cyan */
+  --ph-glow-strong: rgba(6, 182, 212, 0.35);
+  --ph-nav-bg: rgba(2, 6, 23, 0.95);
+  --ph-footer-bg: rgba(15, 23, 42, 0.95);
+  --ph-pain-bad: #f87171; /* red-400 */
+  --ph-pain-good: #22d3ee;
 }
