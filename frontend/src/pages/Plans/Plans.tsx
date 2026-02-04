@@ -25,9 +25,10 @@ function Plans() {
     try {
       const plans: any = await trpc.plans.findManyPlans.query(body);
       setPlans(plans);
-      setLoader(false);
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoader(false);
     }
   };
 
@@ -37,17 +38,20 @@ function Plans() {
   };
 
   useEffect(() => {
-    if (
-      !currentUser?.hasActiveSubscription ||
-      currentUser.isSubscriptionCancelled
-    ) {
-      getPlans();
-    } else {
-      navigate('/actualizar-planes');
+    // No decidir nada hasta tener currentUser (evita flash de planes para usuarios con plan)
+    if (currentUser == null) return;
+
+    // Usuarios con plan activo no ven /planes (evitar doble membresía) → home
+    if (currentUser.hasActiveSubscription && !currentUser.isSubscriptionCancelled) {
+      navigate('/', { replace: true });
+      return;
     }
+
+    getPlans();
   }, [currentUser, navigate]);
 
-  if (loader) {
+  // Loader: mientras no tengamos currentUser o estemos cargando planes
+  if (currentUser == null || loader) {
     return (
       <div
         className="global-loader"
