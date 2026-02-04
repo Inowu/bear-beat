@@ -26,6 +26,7 @@ import {
   removeUsersQueue,
 } from './queue/removeUsers';
 import { downloadDirEndpoint } from './endpoints/download-dir.endpoint';
+import { catalogStatsEndpoint } from './endpoints/catalog-stats.endpoint';
 
 config({
   path: path.resolve(__dirname, '../.env'),
@@ -87,6 +88,8 @@ async function main() {
     app.get('/download', downloadEndpoint);
 
     app.get('/download-dir', downloadDirEndpoint);
+
+    app.get('/api/catalog-stats', catalogStatsEndpoint);
 
     app.listen(process.env.PORT);
 

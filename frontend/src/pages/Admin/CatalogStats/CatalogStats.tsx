@@ -1,7 +1,11 @@
-import trpc from "../../../api";
 import { useEffect, useState } from "react";
 import "./CatalogStats.scss";
 import { Spinner } from "../../../components/Spinner/Spinner";
+
+const API_BASE =
+  process.env.REACT_APP_ENVIRONMENT === "development"
+    ? "http://localhost:5001"
+    : "https://thebearbeatapi.lat";
 
 interface CatalogStatsData {
   error?: string;
@@ -20,21 +24,25 @@ export function CatalogStats() {
 
   useEffect(() => {
     let cancelled = false;
-    trpc.ftp.catalogStats
-      .query()
+    const token = localStorage.getItem("token") ?? "";
+    fetch(`${API_BASE}/api/catalog-stats`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
       .then((res) => {
-        if (!cancelled) {
-          setData(res as CatalogStatsData);
-        }
+        if (!res.ok) throw new Error(res.status === 401 ? "No autorizado" : `Error ${res.status}`);
+        return res.json();
+      })
+      .then((res) => {
+        if (!cancelled) setData(res as CatalogStatsData);
       })
       .catch((err: unknown) => {
         if (!cancelled) {
-          const msg =
-            (err as { message?: string })?.message ||
-            (err as { data?: { message?: string } })?.data?.message;
+          const msg = (err as { message?: string })?.message;
           setData({
             error: msg
-              ? `Error: ${msg}`
+              ? msg === "No autorizado"
+                ? "Inicia sesión para ver las estadísticas."
+                : `Error: ${msg}`
               : "No se pudo cargar (revisa que estés logueado y que el servidor tenga SONGS_PATH configurado).",
             genres: [],
             totalFiles: 0,

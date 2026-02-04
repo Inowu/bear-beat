@@ -5,7 +5,8 @@ import path from 'path';
 const VIDEO_EXT = new Set(['.mp4', '.mkv', '.avi', '.mov', '.wmv', '.webm', '.m4v', '.flv']);
 const AUDIO_EXT = new Set(['.mp3', '.wav', '.flac', '.aac', '.m4a', '.ogg', '.wma']);
 
-interface CatalogStats {
+export interface CatalogStatsResult {
+  error?: string;
   genres: string[];
   totalFiles: number;
   totalGB: number;
@@ -14,6 +15,17 @@ interface CatalogStats {
   karaokes: number;
   other: number;
 }
+
+const emptyResponse: CatalogStatsResult = {
+  error: '',
+  genres: [],
+  totalFiles: 0,
+  totalGB: 0,
+  videos: 0,
+  audios: 0,
+  karaokes: 0,
+  other: 0,
+};
 
 async function walkDir(
   basePath: string,
@@ -50,18 +62,8 @@ async function walkDir(
   }
 }
 
-const emptyResponse = {
-  error: '',
-  genres: [] as string[],
-  totalFiles: 0,
-  totalGB: 0,
-  videos: 0,
-  audios: 0,
-  karaokes: 0,
-  other: 0,
-};
-
-export const catalogStats = shieldedProcedure.query(async () => {
+/** Lógica compartida: se usa desde tRPC y desde el endpoint REST /api/catalog-stats */
+export async function getCatalogStats(): Promise<CatalogStatsResult> {
   try {
     const songsPath = process.env.SONGS_PATH;
     if (!songsPath) {
@@ -98,4 +100,6 @@ export const catalogStats = shieldedProcedure.query(async () => {
   } catch {
     return { ...emptyResponse, error: 'Error al calcular. El resto de la web sigue funcionando.' };
   }
-});
+}
+
+export const catalogStats = shieldedProcedure.query(() => getCatalogStats());
