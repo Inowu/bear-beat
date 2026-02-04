@@ -18,10 +18,12 @@ function MainLayout() {
     setAsideOpen(false);
   }, [location]);
 
+  const isLanding = !userToken && location.pathname === "/";
+
   return (
     <div className="main-layout-main-container">
       {userToken && <Navbar setAsideOpen={setAsideOpen} />}
-      <div className="content-container landing-layout">
+      <div className={`content-container landing-layout${isLanding ? " content-container--landing" : ""}`}>
         {userToken && (
           <AsideNavbar show={asideOpen} onHide={() => setAsideOpen(false)} />
         )}
