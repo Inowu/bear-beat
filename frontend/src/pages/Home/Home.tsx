@@ -419,7 +419,12 @@ function Home() {
         <div className="folders-cards-container">
           {!loader ? (
             sortArrayByName(files).map((file: IFiles, idx: number) => {
-              let gbSize = file.size / (1024 * 1024 * 1024);
+              const gbSize = file.size != null && Number.isFinite(file.size)
+                ? file.size / (1024 * 1024 * 1024)
+                : 0;
+              const sizeLabel = file.size != null && Number.isFinite(file.size)
+                ? `${gbSize >= 1 ? gbSize.toFixed(1) : gbSize.toFixed(2)} GB`
+                : '—';
               return (
                 <div key={'files ' + idx}>
                   {file.type === 'd' && (
@@ -443,7 +448,7 @@ function Home() {
                         <span className="fb-row-name" title={file.name}>{file.name}</span>
                       </div>
                       <div className="fb-row-meta">
-                        <span className="fb-row-size">{gbSize >= 1 ? gbSize.toFixed(1) : gbSize.toFixed(2)} <span className="fb-row-size-unit">GB</span></span>
+                        <span className="fb-row-size">{sizeLabel}</span>
                         <span className="modified-column whitespace-nowrap hidden md:inline">
                           {new Date().toLocaleString('en-US', {
                             month: 'short',
@@ -453,7 +458,7 @@ function Home() {
                             minute: '2-digit',
                           })}
                         </span>
-                        {gbSize <= 50 && (
+                        {file.size != null && gbSize <= 50 && (
                           <button
                             type="button"
                             className="fb-btn-download"
@@ -505,7 +510,7 @@ function Home() {
                         <span className="fb-row-name" title={file.name}>{file.name}</span>
                       </div>
                       <div className="fb-row-meta">
-                        <span className="fb-row-size">{gbSize >= 1 ? gbSize.toFixed(1) : gbSize.toFixed(2)} <span className="fb-row-size-unit">GB</span></span>
+                        <span className="fb-row-size">{sizeLabel}</span>
                         {loadDownload && index === idx ? (
                           <Spinner size={2} width={0.2} color="var(--app-btn-text)" />
                         ) : (

@@ -11,7 +11,6 @@ import { Spinner } from "../../../components/Spinner/Spinner";
 import { ChatButton } from "../../../components/ChatButton/ChatButton";
 import Logo from "../../../assets/images/osonuevo.png";
 import { trackManyChatConversion, MC_EVENTS } from "../../../utils/manychatPixel";
-import ErrorButton from "../../ErrorButton/ErrorButton";
 import "./LoginForm.scss";
 
 function LoginForm() {
@@ -153,7 +152,6 @@ function LoginForm() {
               Registrarme
             </Link>
           </div>
-          <ErrorButton />
         </form>
       </div>
       <ErrorModal show={show} onHide={closeModal} message={errorMessage} />

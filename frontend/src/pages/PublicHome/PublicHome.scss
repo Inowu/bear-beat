@@ -4,10 +4,12 @@
 .ph {
   background: var(--ph-bg);
   min-height: 100vh;
+  min-height: 100dvh;
   color: var(--ph-text-heading);
   margin-left: calc(-50vw + 50%);
   margin-right: calc(-50vw + 50%);
-  max-width: 100vw;
+  width: 100vw;
+  max-width: 100%;
   box-sizing: border-box;
   overflow-x: hidden; /* evita scroll horizontal en móvil */
   transition: background 0.2s ease, color 0.2s ease;
@@ -23,6 +25,7 @@
   align-items: center;
   padding: 12px 10px;
   background: var(--ph-nav-bg);
+  -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--ph-border);
 

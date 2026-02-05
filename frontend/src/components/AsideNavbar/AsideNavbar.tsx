@@ -72,7 +72,7 @@ function AsideNavbar(props: AsideNavbarPropsI) {
               <ul className="nav-list">
                 <li><Link to="/" onClick={handleLinkClick}><FontAwesomeIcon icon={faFolder} /> Todos los archivos</Link></li>
                 {!currentUser?.hasActiveSubscription || currentUser.isSubscriptionCancelled ? (
-                  <li><Link to="/planes" {...linkProps}><FontAwesomeIcon icon={faCartPlus} /> Get plan</Link></li>
+                  <li><Link to="/planes" {...linkProps}><FontAwesomeIcon icon={faCartPlus} /> Planes</Link></li>
                 ) : (
                   <li><Link to="/actualizar-planes" {...linkProps}><FontAwesomeIcon icon={faArrowAltCircleUp} /> Actualiza tu plan</Link></li>
                 )}

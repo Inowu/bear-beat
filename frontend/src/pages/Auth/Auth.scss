@@ -162,6 +162,7 @@
 
   @include respond-from(md) {
     flex-direction: row;
+    align-items: stretch;
     max-width: 960px;
     margin: 0 auto;
     border-radius: 20px;
@@ -180,11 +181,18 @@
   }
 }
 
-// Columna izquierda: SIEMPRE OSCURA (bg-slate-950 / negro), contraste elegante con formulario claro
+// Columna izquierda: SIEMPRE OSCURA (bg-slate-950 / negro), misma altura que el formulario
 .auth-split-left {
   position: relative;
   background: linear-gradient(to bottom right, #020617 /* slate-950 */, #000000);
   color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+
+  @include respond-from(md) {
+    min-height: 100%;
+  }
 
   .auth-split-left-bg {
     position: absolute;
@@ -205,6 +213,8 @@
     color: #ffffff;
     margin: 0 0 24px;
     line-height: 1.25;
+    max-width: 100%;
+    overflow-wrap: break-word;
   }
 
   .auth-split-list {
@@ -245,6 +255,9 @@
     margin: 0;
     padding-top: 20px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
+    max-width: 100%;
+    overflow-wrap: break-word;
+    word-break: normal;
   }
 }
 
