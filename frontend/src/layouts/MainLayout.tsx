@@ -43,8 +43,8 @@ function MainLayout() {
       <div
         className={
           useAppBackground
-            ? "flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden border-t border-gray-200 dark:border-bear-dark-100 bg-gradient-to-br from-bear-light-200 to-gray-300 dark:from-bear-dark-900 dark:to-bear-dark-400 lg:flex-row lg:items-stretch lg:overflow-hidden"
-            : "flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden"
+            ? "flex min-h-0 flex-1 flex-col overflow-x-hidden border-t border-gray-200 dark:border-bear-dark-100 bg-gradient-to-br from-bear-light-200 to-gray-300 dark:from-bear-dark-900 dark:to-bear-dark-400 lg:flex-row lg:items-stretch"
+            : "flex min-h-0 flex-1 flex-col overflow-x-hidden"
         }
       >
         {userToken && (
@@ -54,7 +54,7 @@ function MainLayout() {
         <div
           className={
             useAppBackground
-              ? "content-area-app flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto min-h-screen w-full font-poppins text-gray-700 dark:text-gray-300 lg:min-w-0"
+              ? "content-area-app flex min-h-0 flex-1 flex-col overflow-x-hidden min-h-screen w-full font-poppins text-gray-700 dark:text-gray-300 lg:min-w-0"
               : "flex min-h-0 flex-1 flex-col"
           }
           style={
