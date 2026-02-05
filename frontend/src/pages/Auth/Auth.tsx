@@ -9,13 +9,7 @@ function Auth() {
     trackManyChatConversion(MC_EVENTS.VIEW_AUTH);
   }, []);
   return (
-    <div className="min-h-screen w-full bg-slate-950 flex flex-col items-center justify-center p-4">
-      <img className="h-12 w-auto mb-4" src={Logo} alt="Bear Beat" />
-      <p className="auth-tagline text-slate-300 text-center text-sm sm:text-base mb-6 max-w-md">
-        Música y videos <strong className="text-white">exclusivos para DJs</strong>
-        <span className="text-slate-500"> · </span>
-        Todo organizado por <strong className="text-white">géneros</strong>
-      </p>
+    <div className="min-h-screen w-full bg-slate-950 flex items-center justify-center p-4">
       <Outlet />
     </div>
   );

@@ -290,11 +290,11 @@ function Admin() {
   const colCount = filters.active !== 2 ? 6 : 5;
 
   return (
-    <div className="admin-theme w-full max-w-[100vw] overflow-x-hidden">
+    <div className="admin-theme overflow-x-hidden">
       <div className="admin-contain">
-        <div className="admin-top-bar flex flex-col md:flex-row md:items-center md:justify-between gap-4 w-full">
+        <div className="admin-top-bar flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="header__title-row">
-            <h1>Usuarios</h1>
+            <h1 className="text-2xl md:text-3xl font-bold">Usuarios</h1>
             {totalRegistered !== null && (
               <span className="header__total-registered">
                 Registrados: {totalRegistered.toLocaleString()}
@@ -349,33 +349,33 @@ function Admin() {
         {/* Tabla desktop: visible solo en md+ */}
         <div className="admin-table hidden md:block">
           <div className="table-contain">
-            <table className="w-full text-left">
+            <table className="w-full text-left text-sm">
               <thead>
                 <tr>
-                  <th className="bg-slate-900 text-slate-400 p-4">Nombre</th>
-                  <th className="bg-slate-900 text-slate-400 p-4">Email</th>
-                  <th className="bg-slate-900 text-slate-400 p-4">Teléfono</th>
-                  <th className="bg-slate-900 text-slate-400 p-4">Registro</th>
-                  {filters.active !== 2 && <th className="bg-slate-900 text-slate-400 p-4">Suscripción</th>}
-                  <th className="bg-slate-900 text-slate-400 p-4">Acciones</th>
+                  <th className="bg-slate-900 text-slate-400 py-3 px-4 font-medium">Nombre</th>
+                  <th className="bg-slate-900 text-slate-400 py-3 px-4 font-medium">Email</th>
+                  <th className="bg-slate-900 text-slate-400 py-3 px-4 font-medium">Teléfono</th>
+                  <th className="bg-slate-900 text-slate-400 py-3 px-4 font-medium">Registro</th>
+                  {filters.active !== 2 && <th className="bg-slate-900 text-slate-400 py-3 px-4 font-medium">Suscripción</th>}
+                  <th className="bg-slate-900 text-slate-400 py-3 px-4 font-medium">Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {!loader
                   ? users.map((user, index) => (
-                      <tr key={`admin_users_${index}`}>
-                        <td className="max-w-[120px] truncate" title={user.username}>{user.username}</td>
-                        <td className="max-w-[180px] truncate" title={user.email}>{user.email}</td>
-                        <td className="max-w-[100px] truncate" title={user.phone}>{user.phone}</td>
-                        <td>{user.registered_on.toLocaleDateString()}</td>
+                      <tr key={`admin_users_${index}`} className="border-b border-slate-800 hover:bg-slate-900">
+                        <td className="max-w-[120px] truncate py-3 px-4" title={user.username}>{user.username}</td>
+                        <td className="max-w-[180px] truncate py-3 px-4" title={user.email}>{user.email}</td>
+                        <td className="max-w-[100px] truncate py-3 px-4" title={user.phone}>{user.phone}</td>
+                        <td className="py-3 px-4">{user.registered_on.toLocaleDateString()}</td>
                         {filters.active !== 2 && (
-                          <td>
+                          <td className="py-3 px-4">
                             <span className={`badge ${filters.active === 1 ? "badge--success" : "badge--neutral"}`}>
                               {filters.active === 1 ? "Activa" : "No activa"}
                             </span>
                           </td>
                         )}
-                        <td>
+                        <td className="py-3 px-4">
                           <div className="table-actions">
                             <button
                               type="button"

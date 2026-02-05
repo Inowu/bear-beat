@@ -54,9 +54,19 @@ html,
     background-color: #0f172a !important; /* slate-900 */
     color: #e2e8f0 !important;
     border-color: #334155 !important;
+    font-size: 0.875rem !important; /* text-sm */
+    font-weight: 500;
+    max-height: 2.75rem; /* h-11 */
+    min-height: 2.5rem;  /* h-10 */
   }
   input::placeholder, textarea::placeholder {
     color: #94a3b8;
+  }
+  button:not(.btn-cell):not(.dropdown-content button) {
+    font-size: 0.875rem;
+    font-weight: 500;
+    min-height: 2.5rem;
+    max-height: 2.75rem;
   }
   /* Anular cards/tarjetas Bootstrap o con fondo claro */
   .card, [class*="card"], .table, table {

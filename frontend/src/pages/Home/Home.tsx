@@ -335,7 +335,7 @@ function Home() {
   }, [fileChange, closeFile]);
 
   return (
-    <div className="home-main-container w-full max-w-[100vw] overflow-x-hidden">
+    <div className="home-main-container overflow-x-hidden">
       <PreviewModal
         show={showPreviewModal}
         file={fileToShow}
@@ -345,21 +345,15 @@ function Home() {
         <UsersUHModal showModal={showModal} onHideModal={closeModalAdd} />
       </Elements>
       <div className="header-contain flex flex-wrap justify-between items-center gap-4">
-        <h2 className="flex items-center gap-2 font-semibold" style={{ color: 'var(--fb-text)', fontSize: 'var(--app-font-size-h2)' }}>
-          <FolderOpen className="flex-shrink-0" style={{ color: 'var(--fb-accent)', width: '1.75rem', height: '1.75rem', strokeWidth: 2 }} />
+        <h2 className="text-2xl md:text-3xl font-bold flex items-center gap-2 text-slate-200">
+          <FolderOpen className="flex-shrink-0 w-6 h-6 text-cyan-400" strokeWidth={2} />
           Todos los archivos
         </h2>
-        <div className="relative flex items-center w-full md:w-96">
-          <Search className="absolute left-3 w-4 h-4 pointer-events-none" style={{ color: 'var(--fb-text-muted)' }} />
+        <div className="relative flex items-center w-full md:w-80 max-w-full">
+          <Search className="absolute left-3 w-4 h-4 pointer-events-none text-slate-400" />
           <input
             placeholder="Buscar"
-            className="w-full min-w-[200px] pl-10 pr-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent min-h-[44px] bg-slate-900 border-slate-700 text-slate-200"
-            style={{
-              background: 'var(--fb-input-bg)',
-              border: '1px solid var(--fb-input-border)',
-              color: 'var(--fb-text)',
-              fontSize: 'var(--app-font-size-body)',
-            }}
+            className="w-full min-w-0 pl-10 pr-4 h-11 rounded-lg text-sm font-medium bg-slate-900 border border-slate-700 text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
             onChange={(e: any) => {
               startSearch(e.target.value);
             }}
@@ -410,14 +404,14 @@ function Home() {
       <div className="hidden md:block rounded-xl border border-slate-800 overflow-hidden">
         <table className="min-w-full text-left">
           <thead>
-            <tr className="bg-slate-900 text-slate-400 font-medium border-b border-slate-800">
-              <th className="py-4 px-4">Nombre</th>
-              <th className="py-4 px-4 text-right w-24">Tamaño</th>
-              <th className="py-4 px-4 text-right w-36">Modificado</th>
-              <th className="py-4 px-4 text-right w-28">Acciones</th>
+            <tr className="bg-slate-900 text-slate-400 text-sm font-medium border-b border-slate-800">
+              <th className="py-3 px-4">Nombre</th>
+              <th className="py-3 px-4 text-right w-24">Tamaño</th>
+              <th className="py-3 px-4 text-right w-36">Modificado</th>
+              <th className="py-3 px-4 text-right w-28">Acciones</th>
             </tr>
           </thead>
-          <tbody className="bg-slate-950 divide-y divide-slate-800">
+          <tbody className="bg-slate-950 divide-y divide-slate-800 text-sm">
             {!loader ? (
               sortArrayByName(files).map((file: IFiles, idx: number) => {
                 const gbSize = file.size != null && Number.isFinite(file.size)
@@ -439,9 +433,9 @@ function Home() {
                       <div className="flex items-center gap-3 min-w-0">
                         {file.type === 'd' ? (
                           <>
-                            <FolderOpen className="flex-shrink-0 w-5 h-5 text-cyan-400" strokeWidth={2} aria-hidden />
+                            <FolderOpen className="flex-shrink-0 w-4 h-4 text-cyan-400" strokeWidth={2} aria-hidden />
                             <span
-                              className="text-white font-[Poppins] truncate cursor-pointer hover:underline"
+                              className="text-white truncate cursor-pointer hover:underline"
                               title={file.name}
                               onClick={() => goToFolder({ next: file.name })}
                             >
@@ -455,7 +449,7 @@ function Home() {
                             ) : (
                               <button
                                 type="button"
-                                className="flex-shrink-0 min-w-[36px] min-h-[36px] inline-flex items-center justify-center rounded-lg bg-slate-800 text-cyan-400 hover:bg-cyan-500 hover:text-white transition-colors"
+                                className="flex-shrink-0 w-9 h-9 inline-flex items-center justify-center rounded-lg bg-slate-800 text-cyan-400 hover:bg-cyan-500 hover:text-white transition-colors"
                                 onClick={() => playFile(file, idx)}
                                 title="Reproducir"
                                 aria-label="Reproducir"
@@ -463,13 +457,13 @@ function Home() {
                                 <Play className="w-4 h-4" aria-hidden />
                               </button>
                             )}
-                            <span className="text-white font-[Poppins] truncate" title={file.name}>{file.name}</span>
+                            <span className="text-white truncate" title={file.name}>{file.name}</span>
                           </>
                         )}
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-right tabular-nums text-slate-300 font-medium">{sizeLabel}</td>
-                    <td className="py-3 px-4 text-right text-slate-300 font-medium whitespace-nowrap">{modifiedStr}</td>
+                    <td className="py-3 px-4 text-right tabular-nums text-slate-300">{sizeLabel}</td>
+                    <td className="py-3 px-4 text-right text-slate-300 whitespace-nowrap">{modifiedStr}</td>
                     <td className="py-3 px-4 text-right">
                       {file.type === 'd' && file.size != null && gbSize <= 50 && (
                         <button
