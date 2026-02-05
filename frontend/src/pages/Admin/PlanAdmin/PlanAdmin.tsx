@@ -1,172 +1,231 @@
-import trpc from '../../../api';
-import * as Yup from "yup";
-import './PlanAdmin.scss';
-import { useUserContext } from '../../../contexts/UserContext';
-import { useEffect, useState } from 'react'
+import trpc from "../../../api";
+import "./PlanAdmin.scss";
+import { useUserContext } from "../../../contexts/UserContext";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import AddPlanModal from '../../../components/Modals/AddPlanModal/AddPlanModal';
-import { IPlans } from 'interfaces/Plans';
-import EditPlanModal from '../../../components/Modals/EditPlanModal/EditPlanModal';
+import AddPlanModal from "../../../components/Modals/AddPlanModal/AddPlanModal";
+import { IPlans } from "interfaces/Plans";
+import EditPlanModal from "../../../components/Modals/EditPlanModal/EditPlanModal";
 import { Spinner } from "../../../components/Spinner/Spinner";
+import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
+import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
+import { Plus, MoreVertical, Edit2, Trash2 } from "lucide-react";
 
 export const PlanAdmin = () => {
-    const { currentUser } = useUserContext();
-    const navigate = useNavigate();
-    const [show, setShow] = useState<boolean>(false);
-    const [showEdit, setShowEdit] = useState<boolean>(false);
-    const [plans, setPlans] = useState<any>([]);
-    const [loader, setLoader] = useState<boolean>(true);
-    const [editingPlan, setEditingPlan] = useState(null);
+  const { currentUser } = useUserContext();
+  const navigate = useNavigate();
+  const [show, setShow] = useState<boolean>(false);
+  const [showEdit, setShowEdit] = useState<boolean>(false);
+  const [plans, setPlans] = useState<IPlans[]>([]);
+  const [loader, setLoader] = useState<boolean>(true);
+  const [editingPlan, setEditingPlan] = useState<IPlans | null>(null);
+  const [drawerPlan, setDrawerPlan] = useState<IPlans | null>(null);
 
-    const getPlans = async () => {
-        let body = {
-            where: {}
-        }
-        try {
-            const plans: any = await trpc.plans.findManyPlans.query(body);
-            setPlans(plans);
-            setLoader(false);
-        }
-        catch (error) {
-            console.log(error);
-        }
+  const getPlans = async () => {
+    try {
+      const data: any = await trpc.plans.findManyPlans.query({ where: {} });
+      setPlans(data);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoader(false);
     }
+  };
 
-    const closeModalAdd = () => {
-        setShow(false);
+  const closeModalAdd = () => setShow(false);
+  const closeEditModalAdd = () => {
+    setShowEdit(false);
+    setEditingPlan(null);
+  };
+
+  const handleRemovePlan = async (id: number) => {
+    if (!window.confirm("¿Estás seguro de que deseas eliminar el plan?")) return;
+    try {
+      await trpc.plans.deleteOnePlans.mutate({ where: { id } });
+      setDrawerPlan(null);
+      getPlans();
+    } catch (error) {
+      console.log(error);
     }
-    const closeEditModalAdd = () => {
-        setShowEdit(false);
-    }
-    const handleRemovePlan = async (id: number, plan: any) => {
-        const userConfirmation = window.confirm('¿Estás seguro de que deseas eliminar el plan?');
-        if (userConfirmation) {
-            try {
-                await trpc.plans.deleteOnePlans.mutate({ where: { id: id } });
-                // setShowSuccess(true);
-                getPlans();
-                setLoader(false);
-            }
-            catch (error) {
-                setShow(true);
-                // setErrorMessage(error);
-                setLoader(false)
-            }
-        }
-    }
+  };
 
-    const handleEditPlan = (plan: any) => {
-        setEditingPlan(plan);
-        setShowEdit(true);
-    };
+  const handleEditPlan = (plan: IPlans) => {
+    setEditingPlan(plan);
+    setShowEdit(true);
+    setDrawerPlan(null);
+  };
 
-    const getPaymentMethod = (plan: IPlans) => {
-        if (plan.paypal_plan_id || plan.paypal_plan_id_test) {
-            return 'PayPal';
-        } else {
-            return 'Stripe'
-        }
-    }
+  const getPaymentMethod = (plan: IPlans) => {
+    if (plan.paypal_plan_id || plan.paypal_plan_id_test) return "PayPal";
+    return "Stripe";
+  };
 
-    useEffect(() => {
-        if (currentUser && currentUser.role !== "admin") {
-            navigate('/');
-        }
-    }, [currentUser])
+  useEffect(() => {
+    if (currentUser && currentUser.role !== "admin") navigate("/");
+  }, [currentUser, navigate]);
 
-    useEffect(() => {
-        getPlans();
-    }, [])
+  useEffect(() => {
+    getPlans();
+  }, []);
 
+  const toolbar = (
+    <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+      <button
+        type="button"
+        onClick={() => setShow(true)}
+        className="inline-flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white font-medium rounded-lg px-4 py-2 transition-colors"
+      >
+        <Plus size={18} />
+        Crear Plan
+      </button>
+    </div>
+  );
+
+  if (loader && plans.length === 0) {
     return (
-        <div className='planAdmin-contain'>
-            <div className='header'>
-                <h1>Planes - {plans.length}</h1>
-                <button className="btn-addPlan" onClick={() => setShow(true)}>Crear Plan</button>
-
-                <AddPlanModal showModal={show} onHideModal={closeModalAdd} callPlans={getPlans} />
-                <EditPlanModal showModal={showEdit} onHideModal={closeEditModalAdd} editingPlan={editingPlan} callPlans={getPlans} />
-            </div>
-            {!loader ? <div className="admin-table">
-                <div className="table-contain">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>
-                                    Nombre
-                                </th>
-                                <th>
-                                    Método de pago
-                                </th>
-                                <th>
-                                    Descripción
-                                </th>
-                                <th>
-                                    Moneda
-                                </th>
-                                <th>
-                                    Precio
-                                </th>
-                                <th>
-                                    Activo
-                                </th>
-                                <th>
-                                    Acciones
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {!loader &&
-                                plans.map((plan: IPlans, index: number) => {
-                                    return (
-                                        <tr key={"admin_plans_" + index}>
-                                            <td data-label="Nombre">
-                                                {plan.name}
-                                            </td>
-                                            <td data-label="Método de pago">
-                                                {getPaymentMethod(plan)}
-                                            </td>
-                                            <td data-label="Descripción">
-                                                {plan.description}
-                                            </td>
-                                            <td data-label="Moneda">
-                                                {plan.moneda.toUpperCase()}
-                                            </td>
-                                            <td data-label="Precio">
-                                                {plan.price}
-                                            </td>
-                                            <td data-label="Activo" style={{ textAlign: 'center' }}>
-                                                {plan.activated === 1 ? "Activo" : "No activo"}
-                                            </td>
-                                            <td data-label="Acciones">
-                                                <button
-                                                    onClick={() => handleEditPlan(plan)}
-                                                    // disabled={plan.paypal_plan_id !== null}
-                                                    style={{ marginRight: 10 }}
-                                                >Editar</button>
-                                                <button
-                                                    onClick={() => handleRemovePlan(plan.id, plan.paypal_plan_id)}
-                                                    disabled={plan.paypal_plan_id !== null}
-                                                    className={plan.paypal_plan_id !== null ? 'disable' : ''}
-                                                >Eliminar</button>
-                                            </td>
-                                        </tr>
-
-                                    )
-                                })
-
-                            }
-                        </tbody>
-                    </table>
-                </div>
-                {/* <Pagination
-                        totalData={totalUsers}
-                        title="usuarios"
-                        startFilter={startFilter}
-                        currentPage={filters.page}
-                    /> */}
-            </div> :
-                <Spinner size={3} width={.3} color="#00e2f7" />}
+      <AdminPageLayout title="Planes">
+        <div className="flex justify-center py-12">
+          <Spinner size={3} width={0.3} color="#22d3ee" />
         </div>
-    )
-}
+      </AdminPageLayout>
+    );
+  }
+
+  return (
+    <AdminPageLayout title={`Planes — ${plans.length}`} toolbar={toolbar}>
+      <AddPlanModal showModal={show} onHideModal={closeModalAdd} callPlans={getPlans} />
+      <EditPlanModal showModal={showEdit} onHideModal={closeEditModalAdd} editingPlan={editingPlan} callPlans={getPlans} />
+
+      {/* Desktop: tabla */}
+      <div className="rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50 hidden md:block">
+        <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
+          <table className="w-full min-w-[700px]">
+            <thead className="bg-slate-900 sticky top-0 z-10">
+              <tr>
+                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Nombre</th>
+                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Método de pago</th>
+                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4 hidden lg:table-cell">Descripción</th>
+                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Moneda</th>
+                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Precio</th>
+                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Activo</th>
+                <th className="text-slate-400 uppercase text-xs tracking-wider text-right py-3 px-4">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="bg-slate-950">
+              {plans.map((plan, index) => (
+                <tr
+                  key={`plan_${index}`}
+                  className="border-b border-slate-800 hover:bg-slate-900/60 transition-colors"
+                >
+                  <td className="py-3 px-4 text-sm text-slate-300">{plan.name}</td>
+                  <td className="py-3 px-4 text-sm text-slate-300">{getPaymentMethod(plan)}</td>
+                  <td className="py-3 px-4 text-sm text-slate-300 hidden lg:table-cell">{plan.description}</td>
+                  <td className="py-3 px-4 text-sm text-slate-300">{plan.moneda?.toUpperCase()}</td>
+                  <td className="py-3 px-4 text-sm text-slate-300">{plan.price}</td>
+                  <td className="py-3 px-4">
+                    <span
+                      className={`inline-flex text-xs px-2 py-1 rounded-full ${
+                        plan.activated === 1 ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-500/10 text-slate-400"
+                      }`}
+                    >
+                      {plan.activated === 1 ? "Activo" : "No activo"}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleEditPlan(plan)}
+                        className="p-2 text-slate-400 hover:text-cyan-400 transition-colors rounded-lg hover:bg-slate-800"
+                        title="Editar"
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePlan(plan.id)}
+                        disabled={plan.paypal_plan_id != null}
+                        className="p-2 text-slate-400 hover:text-red-400 transition-colors rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Eliminar"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Mobile: lista compacta + drawer */}
+      <div className="md:hidden flex flex-col gap-0 rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50">
+        {plans.map((plan, index) => (
+          <div
+            key={`m_${index}`}
+            className="flex items-center justify-between gap-3 min-h-[64px] px-4 py-3 border-b border-slate-800 hover:bg-slate-900/60 active:bg-slate-800 transition-colors"
+            onClick={() => setDrawerPlan(plan)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && setDrawerPlan(plan)}
+          >
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold text-white text-sm truncate">{plan.name}</p>
+              <p className="text-slate-400 text-xs">{plan.moneda?.toUpperCase()} · {plan.price}</p>
+            </div>
+            <span
+              className={`shrink-0 text-xs px-2 py-1 rounded-full ${
+                plan.activated === 1 ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-500/10 text-slate-400"
+              }`}
+            >
+              {plan.activated === 1 ? "Activo" : "Inactivo"}
+            </span>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setDrawerPlan(plan);
+              }}
+              className="p-2 text-slate-400 hover:text-cyan-400 rounded-lg"
+              aria-label="Ver más"
+            >
+              <MoreVertical size={20} />
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <AdminDrawer
+        open={drawerPlan !== null}
+        onClose={() => setDrawerPlan(null)}
+        title={drawerPlan?.name ?? "Plan"}
+        user={undefined}
+        actions={
+          drawerPlan
+            ? [
+                { id: "edit", label: "Editar", onClick: () => handleEditPlan(drawerPlan), variant: "secondary" },
+                {
+                  id: "delete",
+                  label: "Eliminar",
+                  onClick: () => handleRemovePlan(drawerPlan.id),
+                  disabled: drawerPlan.paypal_plan_id != null,
+                  variant: "danger",
+                },
+              ]
+            : []
+        }
+      >
+        {drawerPlan && (
+          <div className="space-y-2 text-sm text-slate-300">
+            <p><span className="text-slate-500">Método:</span> {getPaymentMethod(drawerPlan)}</p>
+            <p><span className="text-slate-500">Descripción:</span> {drawerPlan.description}</p>
+            <p><span className="text-slate-500">Moneda:</span> {drawerPlan.moneda?.toUpperCase()}</p>
+            <p><span className="text-slate-500">Precio:</span> {drawerPlan.price}</p>
+            <p><span className="text-slate-500">Estado:</span> {drawerPlan.activated === 1 ? "Activo" : "No activo"}</p>
+          </div>
+        )}
+      </AdminDrawer>
+    </AdminPageLayout>
+  );
+};

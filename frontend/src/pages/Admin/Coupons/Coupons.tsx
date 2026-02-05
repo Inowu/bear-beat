@@ -1,12 +1,15 @@
-import trpc from "../../../api";
-import { useUserContext } from "../../../contexts/UserContext";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import trpc from "../../../api";
+import { useUserContext } from "../../../contexts/UserContext";
 import "./Coupons.scss";
 import { AddCouponModal } from "../../../components/Modals/AddCouponModal/AddCouponModal";
 import { EditCouponModal } from "../../../components/Modals/EditCouponModal/EditCouponModal";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import { IAdminCoupons } from "interfaces/admin";
+import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
+import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
+import { Plus, MoreVertical, Edit2, Trash2 } from "lucide-react";
 
 export const Coupons = () => {
   const { currentUser } = useUserContext();
@@ -15,117 +18,200 @@ export const Coupons = () => {
   const [showEdit, setShowEdit] = useState<boolean>(false);
   const [coupons, setCoupons] = useState<IAdminCoupons[]>([]);
   const [loader, setLoader] = useState<boolean>(true);
-  const [editingCoupon, setEditingCoupon] = useState(null);
+  const [editingCoupon, setEditingCoupon] = useState<IAdminCoupons | null>(null);
+  const [drawerCoupon, setDrawerCoupon] = useState<IAdminCoupons | null>(null);
+
   const getCoupons = async () => {
-    let body = {
-      where: {},
-    };
     try {
-      const coupons: any = await trpc.cupons.findManyCupons.query(body);
-      setCoupons(coupons);
+      const data: any = await trpc.cupons.findManyCupons.query({ where: {} });
+      setCoupons(data);
+    } catch (error) {
+      console.log(error);
+    } finally {
       setLoader(false);
+    }
+  };
+
+  const closeModalAdd = () => setShow(false);
+  const closeEditModalAdd = () => {
+    setShowEdit(false);
+    setEditingCoupon(null);
+    setDrawerCoupon(null);
+  };
+
+  const handleRemoveCoupon = async (code: string) => {
+    if (!window.confirm("¿Estás seguro de que deseas eliminar el cupón?")) return;
+    try {
+      await trpc.cupons.deleteStripeCupon.mutate({ code });
+      setDrawerCoupon(null);
+      window.location.reload();
     } catch (error) {
       console.log(error);
     }
   };
 
-  const closeModalAdd = () => {
-    setShow(false);
-  };
-  const closeEditModalAdd = () => {
-    setShowEdit(false);
-  };
-  const handleRemoveCoupon = async (code: string) => {
-    const userConfirmation = window.confirm(
-      "¿Estás seguro de que deseas eliminar el cupon?"
-    );
-    if (userConfirmation) {
-      try {
-        await trpc.cupons.deleteStripeCupon.mutate({ code: code });
-        setLoader(false);
-        window.location.reload();
-      } catch (error) {
-        setLoader(false);
-      }
-    }
-  };
-
-  const handleEditCoupon = (coupon: any) => {
+  const handleEditCoupon = (coupon: IAdminCoupons) => {
     setEditingCoupon(coupon);
     setShowEdit(true);
+    setDrawerCoupon(null);
   };
+
   useEffect(() => {
-    if (currentUser && currentUser.role !== "admin") {
-      navigate("/");
-    }
-  }, [currentUser]);
+    if (currentUser && currentUser.role !== "admin") navigate("/");
+  }, [currentUser, navigate]);
+
   useEffect(() => {
     getCoupons();
   }, []);
-  return (
-    <div className="coupons-contain">
-      <div className="header">
-        <h1>Cupones</h1>
-        <button className="btn-addCoupon" onClick={() => setShow(true)}>
-          Crear Cupon
-        </button>
-      </div>
-      {!loader ? (
-        <div className="admin-table">
-          <div className="table-contain">
-            <table>
-              <thead>
-                <tr>
-                  <th>Codigo</th>
-                  <th>Descripción</th>
-                  <th>Descuento</th>
-                  <th>Activo</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {!loader && coupons.length > 0 ? (
-                  coupons.map((coupon: IAdminCoupons, index: number) => {
-                    return (
-                      <tr key={"admin_coupons_" + index}>
-                        <td data-label="Código">{coupon.code}</td>
-                        <td data-label="Descripción">{coupon.description}</td>
-                        <td data-label="Descuento">{coupon.discount} %</td>
-                        <td data-label="Activo">{coupon.active === 1 ? "Activo" : "No activo"}</td>
-                        <td data-label="Acciones">
-                          <button onClick={() => handleEditCoupon(coupon)}>
-                            Editar
-                          </button>
-                          <button
-                            onClick={() => handleRemoveCoupon(coupon.code)}
-                          >
-                            Eliminar
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>No se Encontraron Datos...</tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+
+  const toolbar = (
+    <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+      <button
+        type="button"
+        onClick={() => setShow(true)}
+        className="inline-flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white font-medium rounded-lg px-4 py-2 transition-colors"
+      >
+        <Plus size={18} />
+        Crear cupón
+      </button>
+    </div>
+  );
+
+  if (loader && coupons.length === 0) {
+    return (
+      <AdminPageLayout title="Cupones">
+        <div className="flex justify-center py-12">
+          <Spinner size={3} width={0.3} color="#22d3ee" />
         </div>
-      ) : (
-        <Spinner size={3} width={0.3} color="#00e2f7" />
-      )}
-      <AddCouponModal
-        showModal={show}
-        onHideModal={closeModalAdd}
-        getCoupons={getCoupons}
-      />
+      </AdminPageLayout>
+    );
+  }
+
+  return (
+    <AdminPageLayout title="Cupones" toolbar={toolbar}>
+      <AddCouponModal showModal={show} onHideModal={closeModalAdd} getCoupons={getCoupons} />
       <EditCouponModal
         showModal={showEdit}
         onHideModal={closeEditModalAdd}
         editingCoupon={editingCoupon}
         getCoupons={getCoupons}
       />
-    </div>
+
+      {coupons.length === 0 ? (
+        <p className="text-slate-400 py-8 text-center">No se encontraron cupones.</p>
+      ) : (
+        <>
+          <div className="rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50 hidden md:block">
+            <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
+              <table className="w-full min-w-[500px]">
+                <thead className="bg-slate-900 sticky top-0 z-10">
+                  <tr>
+                    <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Código</th>
+                    <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4 hidden lg:table-cell">Descripción</th>
+                    <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Descuento</th>
+                    <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Activo</th>
+                    <th className="text-slate-400 uppercase text-xs tracking-wider text-right py-3 px-4">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-slate-950">
+                  {coupons.map((c, index) => (
+                    <tr key={`coupon_${index}`} className="border-b border-slate-800 hover:bg-slate-900/60 transition-colors">
+                      <td className="py-3 px-4 text-sm text-slate-300 font-medium">{c.code}</td>
+                      <td className="py-3 px-4 text-sm text-slate-300 hidden lg:table-cell">{c.description}</td>
+                      <td className="py-3 px-4 text-sm text-slate-300">{c.discount} %</td>
+                      <td className="py-3 px-4">
+                        <span
+                          className={`inline-flex text-xs px-2 py-1 rounded-full ${
+                            c.active === 1 ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-500/10 text-slate-400"
+                          }`}
+                        >
+                          {c.active === 1 ? "Activo" : "No activo"}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleEditCoupon(c)}
+                            className="p-2 text-slate-400 hover:text-cyan-400 transition-colors rounded-lg hover:bg-slate-800"
+                            title="Editar"
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveCoupon(c.code)}
+                            className="p-2 text-slate-400 hover:text-red-400 transition-colors rounded-lg hover:bg-slate-800"
+                            title="Eliminar"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="md:hidden flex flex-col rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50">
+            {coupons.map((c, index) => (
+              <div
+                key={`m_${index}`}
+                className="flex items-center justify-between gap-3 min-h-[64px] px-4 py-3 border-b border-slate-800 hover:bg-slate-900/60 active:bg-slate-800"
+                onClick={() => setDrawerCoupon(c)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === "Enter" && setDrawerCoupon(c)}
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-white text-sm">{c.code}</p>
+                  <p className="text-slate-400 text-xs">{c.discount} % descuento</p>
+                </div>
+                <span
+                  className={`shrink-0 text-xs px-2 py-1 rounded-full ${
+                    c.active === 1 ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-500/10 text-slate-400"
+                  }`}
+                >
+                  {c.active === 1 ? "Activo" : "Inactivo"}
+                </span>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setDrawerCoupon(c); }}
+                  className="p-2 text-slate-400 hover:text-cyan-400 rounded-lg"
+                  aria-label="Ver más"
+                >
+                  <MoreVertical size={20} />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <AdminDrawer
+            open={drawerCoupon !== null}
+            onClose={() => setDrawerCoupon(null)}
+            title={drawerCoupon?.code ?? "Cupón"}
+            user={undefined}
+            actions={
+              drawerCoupon
+                ? [
+                    { id: "edit", label: "Editar", onClick: () => handleEditCoupon(drawerCoupon), variant: "secondary" },
+                    { id: "delete", label: "Eliminar", onClick: () => handleRemoveCoupon(drawerCoupon.code), variant: "danger" },
+                  ]
+                : []
+            }
+          >
+            {drawerCoupon && (
+              <div className="space-y-2 text-sm text-slate-300">
+                <p><span className="text-slate-500">Descripción:</span> {drawerCoupon.description}</p>
+                <p><span className="text-slate-500">Descuento:</span> {drawerCoupon.discount} %</p>
+                <p><span className="text-slate-500">Estado:</span> {drawerCoupon.active === 1 ? "Activo" : "No activo"}</p>
+              </div>
+            )}
+          </AdminDrawer>
+        </>
+      )}
+    </AdminPageLayout>
   );
 };

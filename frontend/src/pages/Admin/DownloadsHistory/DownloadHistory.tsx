@@ -1,13 +1,15 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./DownloadHistory.scss";
 import { AddInstructionsModal } from "../../../components/Modals";
 import { ARRAY_10 } from "../../../utils/Constants";
 import { IAdminDownloadHistory } from "../../../interfaces/admin";
-import { of } from "await-of";
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useUserContext } from "../../../contexts/UserContext";
 import Pagination from "../../../components/Pagination/Pagination";
 import trpc from "../../../api";
+import { useUserContext } from "../../../contexts/UserContext";
+import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
+import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
+import { Plus, MoreVertical } from "lucide-react";
 
 interface IAdminFilter {
   page: number;
@@ -21,63 +23,52 @@ export const DownloadHistory = () => {
   const [totalLoader, setTotalLoader] = useState<boolean>(false);
   const [totalHistory, setTotalHistory] = useState(0);
   const [loader, setLoader] = useState<boolean>(true);
-  const [filters, setFilters] = useState<IAdminFilter>({
-    page: 0,
-    limit: 100,
-  });
+  const [filters, setFilters] = useState<IAdminFilter>({ page: 0, limit: 100 });
   const [showModal, setShowModal] = useState<boolean>(false);
   const [videoURL, setVideoURL] = useState<string>("");
   const [videoId, setVideoId] = useState<number>(0);
+  const [drawerItem, setDrawerItem] = useState<IAdminDownloadHistory | null>(null);
 
   const startFilter = (key: string, value: string | number) => {
-    let tempFilters: any = filters;
-    tempFilters[key] = value;
-    filterHistory(tempFilters);
-    setFilters(tempFilters);
+    const next = { ...filters, [key]: value };
+    if (key !== "page") next.page = 0;
+    setFilters(next);
+    filterHistory(next);
   };
+
   const filterHistory = async (filt: IAdminFilter) => {
     setLoader(true);
     setTotalLoader(true);
     try {
-      const tempHistory =
-        await trpc.downloadHistory.getDownloadHistory.query({
-          take: filt.limit,
-          skip: filt.page * filt.limit,
-          orderBy: {
-            date: "desc",
-          },
-        });
-
-      setLoader(false);
-      setHistory(tempHistory.data);
-      setTotalHistory(tempHistory.count);
-      setTotalLoader(false);
+      const res = await trpc.downloadHistory.getDownloadHistory.query({
+        take: filt.limit,
+        skip: filt.page * filt.limit,
+        orderBy: { date: "desc" },
+      });
+      setHistory(res.data);
+      setTotalHistory(res.count);
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoader(false);
+      setTotalLoader(false);
     }
   };
 
   const getConfig = async () => {
-    const [videoConfig, errorVideoConfig] = await of(trpc.config.findFirstConfig.query({ where: { name: 'videoURL' } }));
-
-    console.log(videoConfig)
-    if (!videoConfig) {
-      console.error(errorVideoConfig);
-      return;
+    try {
+      const c = await trpc.config.findFirstConfig.query({ where: { name: "videoURL" } });
+      if (c) {
+        setVideoURL(c.value);
+        setVideoId(c.id);
+      }
+    } catch (e) {
+      console.error(e);
     }
-
-    setVideoURL(videoConfig.value);
-    setVideoId(videoConfig.id);
-  }
-
-  const onHideModal = () => {
-    setShowModal(false);
-  }
+  };
 
   useEffect(() => {
-    if (currentUser && currentUser.role !== "admin") {
-      navigate("/");
-    }
+    if (currentUser && currentUser.role !== "admin") navigate("/");
   }, [currentUser, navigate]);
 
   useEffect(() => {
@@ -88,74 +79,73 @@ export const DownloadHistory = () => {
     getConfig();
   }, []);
 
+  const toolbar = (
+    <>
+      <select
+        value={filters.limit}
+        onChange={(e) => startFilter("limit", +e.target.value)}
+        className="bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:border-cyan-500 focus:outline-none"
+      >
+        <option value={100}>100</option>
+        <option value={200}>200</option>
+        <option value={500}>500</option>
+      </select>
+      <button
+        type="button"
+        onClick={() => setShowModal(true)}
+        className="inline-flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white font-medium rounded-lg px-4 py-2 transition-colors"
+      >
+        <Plus size={18} />
+        Añadir instrucciones
+      </button>
+    </>
+  );
+
   return (
-    <div className="coupons-contain history-contain">
-      <div className="header">
-        <h1>Historial de Descargas</h1>
-        <button className="btn-addUsers" onClick={() => setShowModal(true)}>
-          Añadir instrucciones
-        </button>
-      </div>
-      <div className="select-input">
-        <p>Cantidad de datos</p>
-        <select
-          defaultValue={filters.limit}
-          onChange={(e) => startFilter("limit", +e.target.value)}
-        >
-          <option value={""} disabled>
-            Numero de datos
-          </option>
-          <option value={100}>100</option>
-          <option value={200}>200</option>
-          <option value={500}>500</option>
-        </select>
-      </div>
-      <div className="admin-table">
-        <div className="table-contain">
-          <table>
-            <thead>
+    <AdminPageLayout title="Historial de descargas" toolbar={toolbar}>
+      <AddInstructionsModal showModal={showModal} onHideModal={() => setShowModal(false)} videoURL={videoURL} videoId={videoId} />
+
+      <div className="rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50 hidden md:block">
+        <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
+          <table className="w-full min-w-[600px]">
+            <thead className="bg-slate-900 sticky top-0 z-10">
               <tr>
-                <th>Email</th>
-                <th>Teléfono</th>
-                <th>Nombre de la descarga</th>
-                <th>Tamaño</th>
-                <th>Fecha de descarga</th>
-                <th>Tipo</th>
+                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Email</th>
+                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4 hidden lg:table-cell">Teléfono</th>
+                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Nombre</th>
+                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Tamaño</th>
+                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Fecha</th>
+                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Tipo</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="bg-slate-950">
               {!loader
-                ? history.map((his: any, index: number) => {
-                  const downloadSize = Number(his.size);
-                  let gbSize = downloadSize / (1024 * 1024 * 1024);
-                  return (
-                    <tr key={"admin_history_" + index}>
-                      <td data-label="Email">{his.email}</td>
-                      <td data-label="Teléfono">{his.phone}</td>
-                      <td data-label="Nombre descarga">{his.fileName}</td>
-                      <td data-label="Tamaño">{gbSize.toFixed(2)} GB</td>
-                      <td data-label="Fecha">{his.date.toLocaleDateString()}</td>
-                      <td data-label="Tipo">
-                        {his.isFolder ? "Carpeta" : "Archivo"}
-                      </td>
+                ? history.map((his, index) => {
+                    const gb = Number(his.size) / (1024 * 1024 * 1024);
+                    return (
+                      <tr key={`h_${index}`} className="border-b border-slate-800 hover:bg-slate-900/60 transition-colors">
+                        <td className="py-3 px-4 text-sm text-slate-300">{his.email}</td>
+                        <td className="py-3 px-4 text-sm text-slate-300 hidden lg:table-cell">{his.phone}</td>
+                        <td className="py-3 px-4 text-sm text-slate-300">{his.fileName}</td>
+                        <td className="py-3 px-4 text-sm text-slate-300">{gb.toFixed(2)} GB</td>
+                        <td className="py-3 px-4 text-sm text-slate-300">{his.date.toLocaleDateString()}</td>
+                        <td className="py-3 px-4">
+                          <span className="inline-flex text-xs px-2 py-1 rounded-full bg-slate-500/10 text-slate-400">
+                            {his.isFolder ? "Carpeta" : "Archivo"}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })
+                : ARRAY_10.map((_, i) => (
+                    <tr key={`s_${i}`} className="border-b border-slate-800">
+                      <td colSpan={6} className="py-4 animate-pulse bg-slate-800/50" />
                     </tr>
-                  );
-                })
-                : ARRAY_10.map((val: string, index: number) => {
-                  return (
-                    <tr key={"array_10" + index} className="tr-load">
-                      <td />
-                      <td />
-                      <td />
-                      <td />
-                      <td />
-                    </tr>
-                  );
-                })}
+                  ))}
             </tbody>
-            <tfoot>
+            <tfoot className="bg-slate-900">
               <tr>
-                <th colSpan={8}>
+                <td colSpan={6} className="py-3 px-4">
                   <Pagination
                     totalLoader={totalLoader}
                     totalData={totalHistory}
@@ -164,18 +154,71 @@ export const DownloadHistory = () => {
                     currentPage={filters.page}
                     limit={filters.limit}
                   />
-                </th>
+                </td>
               </tr>
             </tfoot>
           </table>
         </div>
       </div>
-      <AddInstructionsModal
-        showModal={showModal}
-        onHideModal={onHideModal}
-        videoURL={videoURL}
-        videoId={videoId}
-      />
-    </div>
+
+      <div className="md:hidden flex flex-col rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50">
+        {!loader
+          ? history.map((his, index) => {
+              const gb = Number(his.size) / (1024 * 1024 * 1024);
+              return (
+                <div
+                  key={`m_${index}`}
+                  className="flex items-center justify-between gap-3 min-h-[64px] px-4 py-3 border-b border-slate-800 hover:bg-slate-900/60 active:bg-slate-800"
+                  onClick={() => setDrawerItem(his)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === "Enter" && setDrawerItem(his)}
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-white text-sm truncate">{his.fileName}</p>
+                    <p className="text-slate-400 text-xs">{his.email} · {gb.toFixed(2)} GB</p>
+                  </div>
+                  <span className="shrink-0 text-xs px-2 py-1 rounded-full bg-slate-500/10 text-slate-400">
+                    {his.isFolder ? "Carpeta" : "Archivo"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setDrawerItem(his); }}
+                    className="p-2 text-slate-400 hover:text-cyan-400 rounded-lg"
+                    aria-label="Ver más"
+                  >
+                    <MoreVertical size={20} />
+                  </button>
+                </div>
+              );
+            })
+          : ARRAY_10.map((_, i) => (
+              <div key={`s_${i}`} className="min-h-[64px] px-4 py-3 border-b border-slate-800 animate-pulse bg-slate-800/30" />
+            ))}
+      </div>
+
+      <div className="md:hidden mt-4">
+        <Pagination
+          totalLoader={totalLoader}
+          totalData={totalHistory}
+          title="Datos"
+          startFilter={startFilter}
+          currentPage={filters.page}
+          limit={filters.limit}
+        />
+      </div>
+
+      <AdminDrawer open={drawerItem !== null} onClose={() => setDrawerItem(null)} title={drawerItem?.fileName ?? "Descarga"} user={undefined}>
+        {drawerItem && (
+          <div className="space-y-2 text-sm text-slate-300">
+            <p><span className="text-slate-500">Email:</span> {drawerItem.email}</p>
+            <p><span className="text-slate-500">Teléfono:</span> {drawerItem.phone}</p>
+            <p><span className="text-slate-500">Tamaño:</span> {(Number(drawerItem.size) / (1024 * 1024 * 1024)).toFixed(2)} GB</p>
+            <p><span className="text-slate-500">Fecha:</span> {drawerItem.date.toLocaleDateString()}</p>
+            <p><span className="text-slate-500">Tipo:</span> {drawerItem.isFolder ? "Carpeta" : "Archivo"}</p>
+          </div>
+        )}
+      </AdminDrawer>
+    </AdminPageLayout>
   );
 };

@@ -5,6 +5,9 @@ import { ErrorModal } from "../../../components/Modals";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import { useUserContext } from "../../../contexts/UserContext";
 import "./BlockedPhoneNumbers.scss";
+import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
+import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
+import { Plus, MoreVertical, Trash2 } from "lucide-react";
 
 const PHONE_REGEX = /^\+\d{1,4}\s\d{4,14}$/;
 
@@ -17,19 +20,15 @@ export const BlockedPhoneNumbers = () => {
   const [saving, setSaving] = useState<boolean>(false);
   const [showError, setShowError] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
-
-  const closeError = () => {
-    setShowError(false);
-  };
+  const [drawerPhone, setDrawerPhone] = useState<string | null>(null);
 
   const loadNumbers = async () => {
     setLoader(true);
     try {
-      const numbers =
-        await trpc.blockedPhoneNumbers.listBlockedPhoneNumbers.query();
+      const numbers = await trpc.blockedPhoneNumbers.listBlockedPhoneNumbers.query();
       setBlockedNumbers(numbers);
     } catch (error: any) {
-      setErrorMessage(error.message ?? "Error al cargar los telefonos.");
+      setErrorMessage(error.message ?? "Error al cargar los teléfonos.");
       setShowError(true);
     } finally {
       setLoader(false);
@@ -39,39 +38,30 @@ export const BlockedPhoneNumbers = () => {
   const handleAddPhone = async (event: FormEvent) => {
     event.preventDefault();
     const normalized = newPhone.trim().replace(/\s+/g, " ");
-
     if (!normalized) {
-      setErrorMessage("Ingrese un telefono valido.");
+      setErrorMessage("Ingrese un teléfono válido.");
       setShowError(true);
       return;
     }
-
     if (!PHONE_REGEX.test(normalized)) {
-      setErrorMessage("El telefono no tiene un formato valido.");
+      setErrorMessage("Formato válido: +52 6621258651");
       setShowError(true);
       return;
     }
-
     if (blockedNumbers.includes(normalized)) {
-      setErrorMessage("El telefono ya esta en la lista de bloqueados.");
+      setErrorMessage("El teléfono ya está en la lista.");
       setShowError(true);
       return;
     }
-
     setSaving(true);
     try {
-      const numbers =
-        await trpc.blockedPhoneNumbers.addBlockedPhoneNumber.mutate({
-          phone: normalized,
-        });
+      const numbers = await trpc.blockedPhoneNumbers.addBlockedPhoneNumber.mutate({ phone: normalized });
       setBlockedNumbers(numbers);
       setNewPhone("");
     } catch (error: any) {
-      let message = error.message;
-      if (message?.includes('"validation"')) {
-        message = JSON.parse(message)[0].message;
-      }
-      setErrorMessage(message ?? "Error al agregar el telefono.");
+      let msg = error.message;
+      if (msg?.includes('"validation"')) try { msg = JSON.parse(msg)[0].message; } catch {}
+      setErrorMessage(msg ?? "Error al agregar.");
       setShowError(true);
     } finally {
       setSaving(false);
@@ -79,22 +69,14 @@ export const BlockedPhoneNumbers = () => {
   };
 
   const handleRemovePhone = async (phone: string) => {
-    const shouldRemove = window.confirm(
-      "Desea eliminar este telefono de la lista?",
-    );
-    if (!shouldRemove) {
-      return;
-    }
-
+    if (!window.confirm("¿Eliminar este teléfono de la lista?")) return;
     setSaving(true);
     try {
-      const numbers =
-        await trpc.blockedPhoneNumbers.removeBlockedPhoneNumber.mutate({
-          phone,
-        });
+      const numbers = await trpc.blockedPhoneNumbers.removeBlockedPhoneNumber.mutate({ phone });
       setBlockedNumbers(numbers);
+      setDrawerPhone(null);
     } catch (error: any) {
-      setErrorMessage(error.message ?? "Error al eliminar el telefono.");
+      setErrorMessage(error.message ?? "Error al eliminar.");
       setShowError(true);
     } finally {
       setSaving(false);
@@ -102,69 +84,114 @@ export const BlockedPhoneNumbers = () => {
   };
 
   useEffect(() => {
-    if (currentUser && currentUser.role !== "admin") {
-      navigate("/");
-    }
+    if (currentUser && currentUser.role !== "admin") navigate("/");
   }, [currentUser, navigate]);
 
   useEffect(() => {
     loadNumbers();
   }, []);
 
+  const toolbar = (
+    <form onSubmit={handleAddPhone} className="flex flex-wrap items-center gap-3 flex-1 min-w-0">
+      <input
+        type="text"
+        placeholder="ej. +52 6621258651"
+        value={newPhone}
+        onChange={(e) => setNewPhone(e.target.value)}
+        className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-cyan-500 min-w-[180px] max-w-xs"
+      />
+      <button
+        type="submit"
+        disabled={saving}
+        className="inline-flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white font-medium rounded-lg px-4 py-2 transition-colors disabled:opacity-50"
+      >
+        <Plus size={18} />
+        Agregar teléfono
+      </button>
+    </form>
+  );
+
   return (
-    <div className="blocked-phones-contain">
-      <div className="header">
-        <h1>Telefonos bloqueados</h1>
-      </div>
-      <form className="phone-form" onSubmit={handleAddPhone}>
-        <input
-          placeholder="ej. +52 6621258651"
-          value={newPhone}
-          onChange={(event) => setNewPhone(event.target.value)}
-          type="text"
-        />
-        <button className="btn-addPhone" type="submit" disabled={saving}>
-          Agregar telefono
-        </button>
-      </form>
-      {!loader ? (
-        <div className="admin-table">
-          <div className="table-contain">
-            <table>
-              <thead>
-                <tr>
-                  <th>Telefono</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {blockedNumbers.length > 0 ? (
-                  blockedNumbers.map((phone) => (
-                    <tr key={`blocked-phone-${phone}`}>
-                      <td data-label="Teléfono">{phone}</td>
-                      <td data-label="Acciones">
+    <AdminPageLayout title="Teléfonos bloqueados" toolbar={toolbar}>
+      {loader ? (
+        <div className="flex justify-center py-12">
+          <Spinner size={3} width={0.3} color="#22d3ee" />
+        </div>
+      ) : blockedNumbers.length === 0 ? (
+        <p className="text-slate-400 py-8 text-center">No hay teléfonos bloqueados.</p>
+      ) : (
+        <>
+          <div className="rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50 hidden md:block">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-slate-900">
+                  <tr>
+                    <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Teléfono</th>
+                    <th className="text-slate-400 uppercase text-xs tracking-wider text-right py-3 px-4">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-slate-950">
+                  {blockedNumbers.map((phone) => (
+                    <tr key={`p_${phone}`} className="border-b border-slate-800 hover:bg-slate-900/60 transition-colors">
+                      <td className="py-3 px-4 text-sm text-slate-300">{phone}</td>
+                      <td className="py-3 px-4 text-right">
                         <button
+                          type="button"
                           onClick={() => handleRemovePhone(phone)}
                           disabled={saving}
+                          className="p-2 text-slate-400 hover:text-red-400 transition-colors rounded-lg hover:bg-slate-800 disabled:opacity-50"
+                          title="Eliminar"
                         >
-                          Eliminar
+                          <Trash2 size={16} />
                         </button>
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={2}>No se encontraron telefonos...</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-      ) : (
-        <Spinner size={3} width={0.3} color="#00e2f7" />
+
+          <div className="md:hidden flex flex-col rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50">
+            {blockedNumbers.map((phone) => (
+              <div
+                key={`m_${phone}`}
+                className="flex items-center justify-between gap-3 min-h-[64px] px-4 py-3 border-b border-slate-800 hover:bg-slate-900/60 active:bg-slate-800"
+                onClick={() => setDrawerPhone(phone)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === "Enter" && setDrawerPhone(phone)}
+              >
+                <p className="font-medium text-white text-sm truncate flex-1 min-w-0">{phone}</p>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setDrawerPhone(phone); }}
+                  className="p-2 text-slate-400 hover:text-cyan-400 rounded-lg"
+                  aria-label="Ver más"
+                >
+                  <MoreVertical size={20} />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <AdminDrawer
+            open={drawerPhone !== null}
+            onClose={() => setDrawerPhone(null)}
+            title={drawerPhone ?? "Teléfono"}
+            user={undefined}
+            actions={
+              drawerPhone
+                ? [{ id: "delete", label: "Eliminar de la lista", onClick: () => handleRemovePhone(drawerPhone), variant: "danger" }]
+                : []
+            }
+          >
+            {drawerPhone && <p className="text-slate-300 text-sm">Teléfono bloqueado: <strong className="text-white">{drawerPhone}</strong></p>}
+          </AdminDrawer>
+        </>
       )}
-      <ErrorModal show={showError} onHide={closeError} message={errorMessage} />
-    </div>
+
+      <ErrorModal show={showError} onHide={() => setShowError(false)} message={errorMessage} />
+    </AdminPageLayout>
   );
 };

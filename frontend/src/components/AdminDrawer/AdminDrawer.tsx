@@ -15,7 +15,7 @@ interface AdminDrawerProps {
   open: boolean;
   onClose: () => void;
   title: string;
-  user: IAdminUser | null;
+  user?: IAdminUser | null;
   children?: React.ReactNode;
   actions?: AdminDrawerAction[];
 }

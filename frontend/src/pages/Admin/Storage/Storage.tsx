@@ -1,57 +1,69 @@
-import trpc from "../../../api";
 import { useEffect, useState } from "react";
+import trpc from "../../../api";
 import { getCompleted, transformBiteToGb } from "../../../functions/functions";
 import "./Storage.scss";
 import { Spinner } from "../../../components/Spinner/Spinner";
+import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 
 export const Storage = () => {
+  const [storage, setStorage] = useState<any>({
+    used_storage: 0,
+    total_storage: 0,
+    available_storage: 0,
+    reserved_space: 0,
+  });
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-    const [storage, setStorage] = useState<any>({
-        used_storage: 0,
-        total_storage: 0,
-        available_storage: 0
-    });
-    const [isLoading, setIsLoading] = useState<boolean>(true);
-    const styles = {
-        width: getCompleted(storage.used_storage, storage.total_storage) > 5 ? getCompleted(storage.used_storage, storage.total_storage) + "%" : "5%"
+  const getStorage = async () => {
+    try {
+      let data = await trpc.ftp.storage.query();
+      const reservedSpace = data.total_storage * 0.05;
+      setStorage({ ...data, reserved_space: reservedSpace });
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    const getStorage = async () => {
-        try {
-            let data = await trpc.ftp.storage.query();
-            const reservedSpace = data.total_storage * 0.05;
-            data = {...data, reserved_space: reservedSpace};
-            
-            setStorage(data);
-            setIsLoading(false);
-        }
-        catch (error) {
-            setIsLoading(false);
-        }
-    }
+  useEffect(() => {
+    getStorage();
+  }, []);
 
-    useEffect(() => {
-        getStorage();
-    }, [])
+  const pct = getCompleted(storage.used_storage, storage.total_storage);
+  const barWidth = pct > 5 ? pct + "%" : "5%";
 
-    return (
-        <div className="storage">
-            {!isLoading ? <div className="storage-card">
-                <h2 className="title">
-                    Almacenamiento del Servidor:
-                </h2>
-                <h3>
-                    Espacio Usado:
-                    <span> {transformBiteToGb(storage.used_storage)}GB de {transformBiteToGb(storage.total_storage)}GB</span>
-                </h3>
-                <div className="progress-bar-container">
-                    <div className="progress-bar reserved-space-bar" />
-                    <div className="progress-bar" style={styles} />
-                </div>
-                <h3>Espacio Reservado: <span className="reserved-space-text">{transformBiteToGb(storage.reserved_space)}GB</span></h3>
-                <h3>Espacio Disponible: <span>{transformBiteToGb(storage.available_storage)}GB</span></h3>
-            </div> :
-                <Spinner size={3} width={.3} color="#00e2f7" />}
+  return (
+    <AdminPageLayout title="Almacenamiento del servidor">
+      {isLoading ? (
+        <div className="flex justify-center py-12">
+          <Spinner size={3} width={0.3} color="#22d3ee" />
         </div>
-    )
-}
+      ) : (
+        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 max-w-2xl">
+          <h2 className="text-white font-bold text-lg mb-4" style={{ fontFamily: "Poppins, sans-serif" }}>
+            Espacio usado
+          </h2>
+          <p className="text-slate-300 text-sm mb-4">
+            {transformBiteToGb(storage.used_storage)} GB de {transformBiteToGb(storage.total_storage)} GB
+          </p>
+          <div className="h-4 rounded-lg bg-slate-800 overflow-hidden flex">
+            <div
+              className="bg-slate-600 shrink-0"
+              style={{ width: "5%", minWidth: "5%" }}
+              title="Reservado"
+            />
+            <div
+              className="bg-cyan-500 transition-all duration-500"
+              style={{ width: barWidth }}
+            />
+          </div>
+          <div className="mt-4 space-y-2 text-sm text-slate-400">
+            <p>Espacio reservado: <span className="text-slate-300">{transformBiteToGb(storage.reserved_space)} GB</span></p>
+            <p>Espacio disponible: <span className="text-slate-300">{transformBiteToGb(storage.available_storage)} GB</span></p>
+          </div>
+        </div>
+      )}
+    </AdminPageLayout>
+  );
+};

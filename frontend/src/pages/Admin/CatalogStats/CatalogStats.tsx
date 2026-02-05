@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import "./CatalogStats.scss";
 import { Spinner } from "../../../components/Spinner/Spinner";
+import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 
 const API_BASE =
   process.env.REACT_APP_ENVIRONMENT === "development"
@@ -45,7 +46,6 @@ const emptyData: CatalogStatsData = {
   genresDetail: [],
 };
 
-/** Normaliza la respuesta del API (soporta formato nuevo y antiguo) para no romper con e.genres.length */
 function normalizeCatalogResponse(res: Record<string, unknown>): CatalogStatsData {
   const genresDetail = Array.isArray(res.genresDetail)
     ? (res.genresDetail as GenreStats[])
@@ -164,22 +164,31 @@ export function CatalogStats() {
 
   if (data === null && !loading) {
     return (
-      <div className="catalog-stats catalog-stats--empty">
-        <h1 className="catalog-stats__title">Estadísticas del catálogo</h1>
-        <p className="catalog-stats__empty-msg">No hay datos guardados. Haz clic en Actualizar para cargar las estadísticas (puede tardar unos segundos).</p>
-        <button type="button" className="catalog-stats__btn-refresh" onClick={() => fetchStats(true)}>
-          Actualizar estadísticas
-        </button>
-      </div>
+      <AdminPageLayout
+        title="Estadísticas del catálogo"
+        toolbar={
+          <button
+            type="button"
+            onClick={() => fetchStats(true)}
+            className="bg-cyan-600 hover:bg-cyan-500 text-white font-medium rounded-lg px-4 py-2 transition-colors"
+          >
+            Actualizar estadísticas
+          </button>
+        }
+      >
+        <p className="text-slate-400 py-8">No hay datos guardados. Haz clic en Actualizar para cargar (puede tardar unos segundos).</p>
+      </AdminPageLayout>
     );
   }
 
   if (loading && !data) {
     return (
-      <div className="catalog-stats catalog-stats--loading">
-        <Spinner size={3} width={0.3} color="#00e2f7" />
-        <p>Calculando estadísticas del catálogo… puede tardar unos segundos.</p>
-      </div>
+      <AdminPageLayout title="Estadísticas del catálogo">
+        <div className="flex flex-col items-center justify-center py-12 gap-4">
+          <Spinner size={3} width={0.3} color="#22d3ee" />
+          <p className="text-slate-400 text-sm">Calculando estadísticas…</p>
+        </div>
+      </AdminPageLayout>
     );
   }
 
@@ -192,131 +201,125 @@ export function CatalogStats() {
   const from = page * PAGE_SIZE + 1;
   const to = Math.min((page + 1) * PAGE_SIZE, genres.length);
 
-  return (
-    <div className="catalog-stats">
-      <div className="catalog-stats__header-row">
-        <h1 className="catalog-stats__title">Estadísticas del catálogo</h1>
-        <div className="catalog-stats__actions">
-          {savedAt && (
-            <span className="catalog-stats__saved-at">
-              Datos del {new Date(savedAt).toLocaleString("es")}
-            </span>
-          )}
-          <button
-            type="button"
-            className="catalog-stats__btn-refresh"
-            onClick={() => fetchStats(true)}
-            disabled={loading}
-          >
-            {loading ? "Cargando…" : "Actualizar estadísticas"}
-          </button>
-          <button type="button" className="catalog-stats__btn-export" onClick={handleExportCsv}>
-            Exportar CSV
-          </button>
-        </div>
-      </div>
+  const toolbar = (
+    <div className="flex flex-wrap items-center gap-3">
+      {savedAt && (
+        <span className="text-slate-500 text-sm">Datos del {new Date(savedAt).toLocaleString("es")}</span>
+      )}
+      <button
+        type="button"
+        onClick={() => fetchStats(true)}
+        disabled={loading}
+        className="bg-cyan-600 hover:bg-cyan-500 text-white font-medium rounded-lg px-4 py-2 transition-colors disabled:opacity-50"
+      >
+        {loading ? "Cargando…" : "Actualizar"}
+      </button>
+      <button
+        type="button"
+        onClick={handleExportCsv}
+        className="bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-lg px-4 py-2 border border-slate-600 transition-colors"
+      >
+        Exportar CSV
+      </button>
+    </div>
+  );
 
+  return (
+    <AdminPageLayout title="Estadísticas del catálogo" toolbar={toolbar}>
       {data.error && (
-        <div className="catalog-stats__error-wrap">
-          <p className="catalog-stats__error">{data.error}</p>
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 mb-6">
+          <p className="text-amber-200 text-sm">{data.error}</p>
           {data.totalFiles === 0 && (
-            <p className="catalog-stats__error-hint">
-              Si todo está en 0, en el servidor falta configurar SONGS_PATH o el backend no tiene acceso al catálogo FTP.
-            </p>
+            <p className="text-slate-400 text-xs mt-2">Configura SONGS_PATH en el servidor o revisa el acceso al catálogo FTP.</p>
           )}
         </div>
       )}
 
-      <div className="catalog-stats__grid">
-        <div className="catalog-stats__card">
-          <h2>Archivos totales</h2>
-          <p className="catalog-stats__number">{data.totalFiles.toLocaleString()}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
+          <h2 className="text-slate-400 text-xs uppercase tracking-wider mb-1">Archivos totales</h2>
+          <p className="text-white text-2xl font-bold">{data.totalFiles.toLocaleString()}</p>
         </div>
-        <div className="catalog-stats__card">
-          <h2>GB totales</h2>
-          <p className="catalog-stats__number">{data.totalGB.toLocaleString()}</p>
+        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
+          <h2 className="text-slate-400 text-xs uppercase tracking-wider mb-1">GB totales</h2>
+          <p className="text-white text-2xl font-bold">{data.totalGB.toLocaleString()}</p>
         </div>
-        <div className="catalog-stats__card">
-          <h2>Géneros únicos</h2>
-          <p className="catalog-stats__number">{(data.totalGenres ?? 0).toLocaleString()}</p>
+        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
+          <h2 className="text-slate-400 text-xs uppercase tracking-wider mb-1">Géneros únicos</h2>
+          <p className="text-white text-2xl font-bold">{(data.totalGenres ?? 0).toLocaleString()}</p>
         </div>
       </div>
 
-      <h2 className="catalog-stats__section-title">Por tipo (archivos y GB)</h2>
-      <div className="catalog-stats__grid">
-        <div className="catalog-stats__card">
-          <h3>Videos</h3>
-          <p className="catalog-stats__number">{data.videos.toLocaleString()} archivos</p>
-          <p className="catalog-stats__sub">{data.gbVideos.toLocaleString()} GB</p>
+      <h2 className="text-white font-bold text-lg mb-4" style={{ fontFamily: "Poppins, sans-serif" }}>Por tipo</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
+          <h3 className="text-slate-400 text-sm mb-1">Videos</h3>
+          <p className="text-slate-300 text-sm">{data.videos.toLocaleString()} archivos · {data.gbVideos.toLocaleString()} GB</p>
         </div>
-        <div className="catalog-stats__card">
-          <h3>Audios</h3>
-          <p className="catalog-stats__number">{data.audios.toLocaleString()} archivos</p>
-          <p className="catalog-stats__sub">{data.gbAudios.toLocaleString()} GB</p>
+        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
+          <h3 className="text-slate-400 text-sm mb-1">Audios</h3>
+          <p className="text-slate-300 text-sm">{data.audios.toLocaleString()} archivos · {data.gbAudios.toLocaleString()} GB</p>
         </div>
-        <div className="catalog-stats__card">
-          <h3>Karaokes</h3>
-          <p className="catalog-stats__number">{data.karaokes.toLocaleString()} archivos</p>
-          <p className="catalog-stats__sub">{data.gbKaraokes.toLocaleString()} GB</p>
+        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
+          <h3 className="text-slate-400 text-sm mb-1">Karaokes</h3>
+          <p className="text-slate-300 text-sm">{data.karaokes.toLocaleString()} archivos · {data.gbKaraokes.toLocaleString()} GB</p>
         </div>
-        <div className="catalog-stats__card">
-          <h3>Otros</h3>
-          <p className="catalog-stats__number">{data.other.toLocaleString()} archivos</p>
+        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
+          <h3 className="text-slate-400 text-sm mb-1">Otros</h3>
+          <p className="text-slate-300 text-sm">{data.other.toLocaleString()} archivos</p>
         </div>
       </div>
 
       {genres.length > 0 && (
         <>
-          <h2 className="catalog-stats__section-title">Por género (carpeta donde están los archivos)</h2>
-          <p className="catalog-stats__hint">
-            Cada género = nombre de la carpeta que contiene los archivos (ej. Bachata en /Videos/2026/Enero/4/Bachata).
-          </p>
-          <div className="catalog-stats__pagination">
-            <span className="catalog-stats__pagination-info">
-              Mostrando {from}-{to} de {genres.length}
-            </span>
-            <div className="catalog-stats__pagination-btns">
+          <h2 className="text-white font-bold text-lg mb-2" style={{ fontFamily: "Poppins, sans-serif" }}>Por género</h2>
+          <p className="text-slate-500 text-sm mb-4">Cada género = nombre de la carpeta (ej. Bachata).</p>
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+            <span className="text-slate-500 text-sm">Mostrando {from}-{to} de {genres.length}</span>
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 disabled={page <= 0}
                 onClick={() => setGenrePage((p) => Math.max(0, p - 1))}
+                className="bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white text-sm rounded-lg px-3 py-1.5"
               >
                 Anterior
               </button>
-              <span>
-                Página {page + 1} de {totalPages}
-              </span>
+              <span className="text-slate-400 text-sm">Página {page + 1} de {totalPages}</span>
               <button
                 type="button"
                 disabled={page >= totalPages - 1}
                 onClick={() => setGenrePage((p) => Math.min(totalPages - 1, p + 1))}
+                className="bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white text-sm rounded-lg px-3 py-1.5"
               >
                 Siguiente
               </button>
             </div>
           </div>
-          <div className="catalog-stats__table-wrap">
-            <table className="catalog-stats__table">
-              <thead>
-                <tr>
-                  <th>Género</th>
-                  <th>Archivos</th>
-                  <th>GB</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pageGenres.map((g) => (
-                  <tr key={g.name}>
-                    <td>{g.name}</td>
-                    <td>{g.files.toLocaleString()}</td>
-                    <td>{g.gb.toLocaleString()}</td>
+          <div className="rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50">
+            <div className="overflow-x-auto max-h-[50vh] overflow-y-auto">
+              <table className="w-full">
+                <thead className="bg-slate-900 sticky top-0">
+                  <tr>
+                    <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Género</th>
+                    <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Archivos</th>
+                    <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">GB</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="bg-slate-950">
+                  {pageGenres.map((g) => (
+                    <tr key={g.name} className="border-b border-slate-800 hover:bg-slate-900/60 transition-colors">
+                      <td className="py-3 px-4 text-sm text-slate-300">{g.name}</td>
+                      <td className="py-3 px-4 text-sm text-slate-300">{g.files.toLocaleString()}</td>
+                      <td className="py-3 px-4 text-sm text-slate-300">{g.gb.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </>
       )}
-    </div>
+    </AdminPageLayout>
   );
 }
