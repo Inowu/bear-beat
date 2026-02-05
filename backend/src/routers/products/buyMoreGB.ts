@@ -75,15 +75,18 @@ export const buyMoreGB = shieldedProcedure
                 ],
             });
 
-            const pi = await stripeInstance.paymentIntents.create({
-              customer: stripeCustomer,
-              currency: stripePrices.data[0].currency,
-              amount: stripePrices.data[0].unit_amount as number,
-              payment_method: paymentMethod,
-              metadata: {
-                productOrderId: productOrder.id,
+            const pi = await stripeInstance.paymentIntents.create(
+              {
+                customer: stripeCustomer,
+                currency: stripePrices.data[0].currency,
+                amount: stripePrices.data[0].unit_amount as number,
+                payment_method: paymentMethod,
+                metadata: {
+                  productOrderId: String(productOrder.id),
+                },
               },
-            });
+              { idempotencyKey: `stripe-pi-order-${productOrder.id}` },
+            );
 
             await prisma.product_orders.update({
               where: {

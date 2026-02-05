@@ -1,6 +1,7 @@
 import { Plans, Users } from '@prisma/client';
 import { Stripe } from 'stripe';
 import { Request } from 'express';
+import { getStripeWebhookBody } from '../../utils/verifyStripeSignature';
 import { cancelSubscription } from '../../subscriptions/services/cancelSubscription';
 import { log } from '../../../server';
 import { subscribe } from '../../subscriptions/services/subscribe';
@@ -20,9 +21,9 @@ import { paypal as uhPaypal } from '../../migration/uhPaypal';
 import axios, { AxiosError } from 'axios';
 
 export const stripeSubscriptionWebhook = async (req: Request) => {
-  const payload: Stripe.Event = JSON.parse(req.body as any);
+  const payload: Stripe.Event = JSON.parse(getStripeWebhookBody(req));
 
-  const payloadStr = req.body;
+  const payloadStr = getStripeWebhookBody(req);
 
   if (!shouldHandleEvent(payload)) return;
 

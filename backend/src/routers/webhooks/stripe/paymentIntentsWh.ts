@@ -6,11 +6,12 @@ import { log } from '../../../server';
 import { prisma } from '../../../db';
 import { addGBToAccount } from '../../products/services/addGBToAccount';
 import { OrderStatus } from '../../subscriptions/interfaces/order-status.interface';
+import { getStripeWebhookBody } from '../../../utils/verifyStripeSignature';
 
 export const stripeInvoiceWebhook = async (req: Request) => {
-  const payload: Stripe.Event = JSON.parse(req.body as any);
+  const payload: Stripe.Event = JSON.parse(getStripeWebhookBody(req));
 
-  const payloadStr = req.body;
+  const payloadStr = getStripeWebhookBody(req);
 
   if (!shouldHandleEvent(payload)) return;
 

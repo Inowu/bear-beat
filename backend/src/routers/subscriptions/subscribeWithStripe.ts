@@ -159,23 +159,25 @@ export const subscribeWithStripe = shieldedProcedure
         })
       }
 
-      const subscription = await stripeInstance.subscriptions.create({
-        customer: stripeCustomer,
-        coupon,
-        items: [
-          {
-            plan: plan[getPlanKey(PaymentService.STRIPE)]!,
+      const subscription = await stripeInstance.subscriptions.create(
+        {
+          customer: stripeCustomer,
+          coupon,
+          items: [
+            {
+              plan: plan[getPlanKey(PaymentService.STRIPE)]!,
+            },
+          ],
+          payment_behavior: 'default_incomplete',
+          payment_settings: { save_default_payment_method: 'on_subscription' },
+          expand: ['latest_invoice.payment_intent'],
+          metadata: {
+            orderId: String(order.id),
           },
-        ],
-        payment_behavior: 'default_incomplete',
-        payment_settings: { save_default_payment_method: 'on_subscription' },
-        // proration_behavior: 'always_invoice',
-        expand: ['latest_invoice.payment_intent'],
-        metadata: {
-          orderId: order.id,
+          ...(trialEnd ? { trial_end: trialEnd } : {}),
         },
-        ...(trialEnd ? { trial_end: trialEnd } : {}),
-      });
+        { idempotencyKey: `stripe-sub-order-${order.id}` },
+      );
 
       await prisma.orders.update({
         where: {
