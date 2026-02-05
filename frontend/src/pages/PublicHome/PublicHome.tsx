@@ -48,7 +48,7 @@ function PublicHome() {
   }, []);
 
   return (
-    <div className="ph">
+    <div className="ph w-full overflow-x-hidden">
       {/* 1. NAVBAR — Minimalista & Sticky */}
       <header className="ph__nav">
         <Link to="/" className="ph__nav-logo">

@@ -68,8 +68,9 @@ function MainLayout() {
               : undefined
           }
         >
-          <main className="min-h-screen w-full min-w-0 flex-1 bg-bear-light-200 dark:bg-bear-dark-900">
-            <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+          <main className={`min-h-screen w-full min-w-0 flex-1 ${useAppBackground ? "bg-bear-light-200 dark:bg-bear-dark-900" : "bg-transparent"}`}>
+            {/* Full width for Landing, boxed for App */}
+            <div className={isLanding ? "w-full p-0 m-0" : "max-w-7xl mx-auto w-full px-4 py-10 sm:px-6 lg:px-8"}>
               <Outlet />
             </div>
           </main>
