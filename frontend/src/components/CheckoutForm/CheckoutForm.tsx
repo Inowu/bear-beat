@@ -8,9 +8,6 @@ import { SuccessModal } from "../../components/Modals/SuccessModal/SuccessModal"
 import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
 import { IPlans } from "interfaces/Plans";
 import { useUserContext } from "../../contexts/UserContext";
-import { useFormik } from "formik";
-import * as Yup from "yup";
-import { FaCheck } from "react-icons/fa";
 import { useCookies } from "react-cookie";
 import { trackPurchase } from "../../utils/facebookPixel";
 import { trackManyChatConversion, trackManyChatPurchase, MC_EVENTS } from "../../utils/manychatPixel";
@@ -18,38 +15,16 @@ import { manychatApi } from "../../api/manychat";
 
 declare let window: any;
 
-const validationSchema = Yup.object().shape({
-  code: Yup.string().required("El código es requerido").min(3, "Mínimo 3 caracteres"),
-});
-
-// Fase 1: cupón + botón "Continuar al pago" (obtiene clientSecret)
+// Fase 1: solo botón "Continuar al pago" (cupones deshabilitados por ahora)
 export function CheckoutFormIntro(props: {
   plan: IPlans;
-  discount: number;
-  setDiscount: (val: number) => void;
   setClientSecret: (secret: string) => void;
 }) {
-  const { plan, discount, setDiscount, setClientSecret } = props;
+  const { plan, setClientSecret } = props;
   const [loader, setLoader] = useState(false);
-  const [couponLoader, setCouponLoader] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [showError, setShowError] = useState(false);
   const [cookies] = useCookies(["_fbp"]);
-
-  const formik = useFormik({
-    initialValues: { code: "" },
-    validationSchema,
-    onSubmit: async (values, { setErrors }) => {
-      setCouponLoader(true);
-      try {
-        const info = await trpc.cupons.findByCode.query({ code: values.code });
-        setDiscount(info.discount);
-      } catch (error: any) {
-        setErrors({ code: error.message });
-      }
-      setCouponLoader(false);
-    },
-  });
 
   const handleContinuar = async () => {
     setLoader(true);
@@ -57,7 +32,6 @@ export function CheckoutFormIntro(props: {
     try {
       const result = await trpc.subscriptions.subscribeWithStripe.query({
         planId: plan.id,
-        coupon: formik.values.code || undefined,
         fbp: cookies._fbp,
         url: window.location.href,
       });
@@ -77,34 +51,6 @@ export function CheckoutFormIntro(props: {
 
   return (
     <form className="checkout-form" onSubmit={(e) => e.preventDefault()}>
-      <div className="cupon-container">
-        <input
-          className="card-input"
-          type="text"
-          placeholder="Introduce el cupón aquí"
-          name="code"
-          id="code"
-          value={formik.values.code}
-          onChange={formik.handleChange}
-          disabled={discount > 0}
-        />
-        {couponLoader ? (
-          <div className="loader-ctn">
-            <Spinner size={3} width={0.3} color="#00e2f7" />
-          </div>
-        ) : discount > 0 ? (
-          <div className="check-ctn">
-            <FaCheck />
-          </div>
-        ) : (
-          <button type="button" onClick={() => formik.handleSubmit()}>
-            Aplicar
-          </button>
-        )}
-        {formik.touched.code && formik.errors.code && (
-          <p className="error">{formik.errors.code}</p>
-        )}
-      </div>
       <div className="button-contain">
         {loader ? (
           <Spinner size={4} width={0.4} color="#00e2f7" />

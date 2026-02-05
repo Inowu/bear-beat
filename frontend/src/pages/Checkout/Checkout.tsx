@@ -6,11 +6,13 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useUserContext } from "../../contexts/UserContext";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
 import { useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useCookies } from "react-cookie";
 import trpc from "../../api";
 import { IPlans } from "interfaces/Plans";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 import { manychatApi } from "../../api/manychat";
+import { Spinner } from "../../components/Spinner/Spinner";
 
 const stripeKey =
   process.env.REACT_APP_ENVIRONMENT === "development"
@@ -24,9 +26,12 @@ function Checkout() {
   const location = useLocation();
   const [discount, setDiscount] = useState<number>(0);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [loadingPayment, setLoadingPayment] = useState(false);
+  const autoFetchedRef = useRef(false);
   const searchParams = new URLSearchParams(location.search);
   const priceId = searchParams.get("priceId");
   const { currentUser } = useUserContext();
+  const [cookies] = useCookies(["_fbp"]);
 
   const checkManyChat = async (p: IPlans | undefined) => {
     if (!p) return;
@@ -64,6 +69,29 @@ function Checkout() {
     if (priceId) getPlans(priceId);
   }, [priceId]);
 
+  // Desde /planes con priceId: ir directo al pago (sin clic en "Continuar al pago")
+  useEffect(() => {
+    if (!plan?.id || clientSecret || autoFetchedRef.current) return;
+    autoFetchedRef.current = true;
+    setLoadingPayment(true);
+    trpc.subscriptions.subscribeWithStripe
+      .query({
+        planId: plan.id,
+        fbp: cookies._fbp,
+        url: window.location.href,
+      })
+      .then((r) => {
+        if (r?.clientSecret) setClientSecret(r.clientSecret);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingPayment(false));
+  }, [plan?.id, clientSecret, cookies._fbp]);
+
+  const handleResetPayment = () => {
+    setClientSecret(null);
+    // No resetear autoFetchedRef: al volver mostramos intro "Continuar al pago"
+  };
+
   return (
     <div className="checkout-main-container">
       <div className="checkout-card">
@@ -79,13 +107,13 @@ function Checkout() {
               <p>{currentUser?.email}</p>
             </div>
           </div>
-          {!clientSecret ? (
-            <CheckoutFormIntro
-              plan={plan}
-              discount={discount}
-              setDiscount={setDiscount}
-              setClientSecret={setClientSecret}
-            />
+          {loadingPayment ? (
+            <div className="checkout-form" style={{ alignItems: "center", padding: "2rem" }}>
+              <Spinner size={4} width={0.4} color="#06b6d4" />
+              <p style={{ marginTop: "1rem", opacity: 0.9 }}>Preparando pago...</p>
+            </div>
+          ) : !clientSecret ? (
+            <CheckoutFormIntro plan={plan} setClientSecret={setClientSecret} />
           ) : (
             <Elements
               stripe={stripePromise}
@@ -103,7 +131,7 @@ function Checkout() {
               <CheckoutFormPayment
                 plan={plan}
                 clientSecret={clientSecret}
-                onReset={() => setClientSecret(null)}
+                onReset={handleResetPayment}
               />
             </Elements>
           )}
