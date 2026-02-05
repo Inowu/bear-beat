@@ -1,5 +1,6 @@
 import "../Modal.scss";
 import "react-phone-input-2/lib/material.css";
+import { PasswordInput } from "../../PasswordInput/PasswordInput";
 import "react-phone-input-2/lib/material.css";
 import { ErrorModal } from "../ErrorModal/ErrorModal";
 import { findCountryCode, twoDigitsCountryCodes } from "../../../utils/country_codes";
@@ -202,13 +203,13 @@ export function EditUserModal(props: IEditPlanModal) {
         </div>
         <div className="c-row">
           <label>Contraseña</label>
-          <input
+          <PasswordInput
             placeholder="Contraseña"
-            type="password"
             id="password"
             name="password"
             value={formik.values.password}
             onChange={formik.handleChange}
+            inputClassName="modal-password-input"
           />
           {formik.errors.password && <div className="formik">{formik.errors.password}</div>}
         </div>

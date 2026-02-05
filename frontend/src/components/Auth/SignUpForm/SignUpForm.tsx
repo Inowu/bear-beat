@@ -2,6 +2,7 @@ import "./SignUpForm.scss";
 import { detectUserCountry, findDialCode, allowedCountryOptions } from "../../../utils/country_codes";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { HiOutlineUser, HiOutlineMail, HiOutlineLockClosed, HiOutlinePhone } from "react-icons/hi";
+import { PasswordInput } from "../../PasswordInput/PasswordInput";
 import { ReactComponent as Arrow } from "../../../assets/icons/arrow-down.svg";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import { useCallback, useEffect, useState } from "react";
@@ -310,14 +311,14 @@ function SignUpForm() {
               <label htmlFor="password" className="signup-label">Contraseña</label>
               <div className="signup-input-wrap">
                 <HiOutlineLockClosed className="signup-input-icon" aria-hidden />
-                <input
+                <PasswordInput
                   placeholder="Mínimo 6 caracteres"
-                  type="password"
                   id="password"
                   name="password"
                   value={formik.values.password}
                   onChange={formik.handleChange}
-                  className="signup-input-with-icon"
+                  inputClassName="signup-input-with-icon"
+                  wrapperClassName="signup-password-wrap"
                 />
               </div>
               {formik.errors.password && <div className="error-formik">{formik.errors.password}</div>}
@@ -326,14 +327,14 @@ function SignUpForm() {
               <label htmlFor="passwordConfirmation" className="signup-label">Repetir contraseña</label>
               <div className="signup-input-wrap">
                 <HiOutlineLockClosed className="signup-input-icon" aria-hidden />
-                <input
+                <PasswordInput
                   placeholder="Repite tu contraseña"
-                  type="password"
                   id="passwordConfirmation"
                   name="passwordConfirmation"
                   value={formik.values.passwordConfirmation}
                   onChange={formik.handleChange}
-                  className="signup-input-with-icon"
+                  inputClassName="signup-input-with-icon"
+                  wrapperClassName="signup-password-wrap"
                 />
               </div>
               {formik.errors.passwordConfirmation && (

@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { ReactComponent as Arrow } from "../../../assets/icons/arrow-down.svg";
 import trpc from "../../../api";
+import { PasswordInput } from "../../PasswordInput/PasswordInput";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useState } from "react";
@@ -63,9 +64,8 @@ function ResetPassword() {
     <form onSubmit={formik.handleSubmit}>
       <h2>ESCRIBA UNA NUEVA CONTRASEÑA</h2>
       <div className="c-row">
-        <input
-          placeholder="Password"
-          type="password"
+        <PasswordInput
+          placeholder="Contraseña"
           id="password"
           name="password"
           value={formik.values.password}
@@ -76,9 +76,8 @@ function ResetPassword() {
         )}
       </div>
       <div className="c-row">
-        <input
-          placeholder="Repetir password"
-          type="password"
+        <PasswordInput
+          placeholder="Repetir contraseña"
           id="passwordConfirmation"
           name="passwordConfirmation"
           value={formik.values.passwordConfirmation}

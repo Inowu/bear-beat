@@ -167,6 +167,11 @@
     padding-left: 46px; /* pl-10: no encimar icono */
   }
 
+  .auth-login-password-wrap {
+    flex: 1;
+    min-width: 0;
+  }
+
   .auth-login-forgot-wrap {
     margin-bottom: 0;
   }

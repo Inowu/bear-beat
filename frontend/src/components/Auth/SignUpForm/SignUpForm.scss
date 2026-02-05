@@ -55,6 +55,11 @@ form.sign-up-form {
     flex-shrink: 0;
   }
 
+  .signup-password-wrap {
+    flex: 1;
+    min-width: 0;
+  }
+
   .signup-input-with-icon {
     width: 100%;
     min-height: 52px;

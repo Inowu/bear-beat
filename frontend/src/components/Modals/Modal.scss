@@ -297,7 +297,8 @@
       font-weight: 600;
     }
 
-    input {
+    input,
+    .password-input-wrap .password-input {
       border-radius: 12px;
       padding: 12px 20px;
       width: 100%;

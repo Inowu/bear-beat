@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { HiOutlineMail, HiOutlineLockClosed } from "react-icons/hi";
+import { PasswordInput } from "../../PasswordInput/PasswordInput";
 import { useUserContext } from "../../../contexts/UserContext";
 import trpc from "../../../api";
 import { useFormik } from "formik";
@@ -117,14 +118,14 @@ function LoginForm() {
           <div className="c-row">
             <div className="auth-login-input-wrap">
               <HiOutlineLockClosed className="auth-login-input-icon" aria-hidden />
-              <input
+              <PasswordInput
                 placeholder="Contraseña"
-                type="password"
                 id="password"
                 name="password"
                 value={formik.values.password}
                 onChange={formik.handleChange}
-                className="auth-login-input auth-login-input-with-icon"
+                inputClassName="auth-login-input auth-login-input-with-icon"
+                wrapperClassName="auth-login-password-wrap"
               />
             </div>
             {formik.errors.password && (

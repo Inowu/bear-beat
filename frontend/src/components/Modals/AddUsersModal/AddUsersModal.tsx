@@ -1,5 +1,6 @@
 import "react-phone-input-2/lib/material.css";
 import "../Modal.scss";
+import { PasswordInput } from "../../PasswordInput/PasswordInput";
 import { ErrorModal } from "../ErrorModal/ErrorModal";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -145,24 +146,24 @@ export function AddUsersModal(props: IAddUsersModal) {
           {formik.errors.phone && <div className="error-formik">{formik.errors.phone}</div>}
         </div>
         <div className="c-row">
-          <input
-            placeholder="Password"
-            type="password"
+          <PasswordInput
+            placeholder="Contraseña"
             id="password"
             name="password"
             value={formik.values.password}
             onChange={formik.handleChange}
+            inputClassName="modal-password-input"
           />
           {formik.errors.password && <div className="formik">{formik.errors.password}</div>}
         </div>
         <div className="c-row">
-          <input
-            placeholder="Repetir password"
-            type="password"
+          <PasswordInput
+            placeholder="Repetir contraseña"
             id="passwordConfirmation"
             name="passwordConfirmation"
             value={formik.values.passwordConfirmation}
             onChange={formik.handleChange}
+            inputClassName="modal-password-input"
           />
           {formik.errors.passwordConfirmation && (
             <div className="formik">{formik.errors.passwordConfirmation}</div>

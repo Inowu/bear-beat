@@ -42,7 +42,7 @@ const Turnstile = forwardRef<TurnstileRef, TurnstileProps>(function Turnstile(
     onError,
     resetSignal = 0,
     theme = "dark",
-    size = "compact",
+    size = "flexible",
     invisible = false,
   },
   ref

@@ -1,7 +1,10 @@
 // Contenedor del widget Cloudflare Turnstile
+// Con size="flexible" el widget es rectangular (100% ancho × 65px alto)
 
 .turnstile-widget-wrap {
-  // Por defecto el widget se muestra (registro/recuperar con visible)
+  display: block;
+  width: 100%;
+  min-width: 300px;
 }
 
 // Modo invisible: no ocupa espacio ni se ve. La verificación se dispara con ref.execute() al enviar el form.
