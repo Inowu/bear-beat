@@ -152,6 +152,15 @@ function LoginForm() {
               Registrarme
             </Link>
           </div>
+          <button
+            type="button"
+            className="auth-login-sentry-test"
+            onClick={() => {
+              throw new Error("Prueba de Error Bear Beat - Gustavo");
+            }}
+          >
+            Test Sentry Error
+          </button>
         </form>
       </div>
       <ErrorModal show={show} onHide={closeModal} message={errorMessage} />

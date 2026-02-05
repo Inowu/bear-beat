@@ -1,10 +1,12 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import * as Sentry from "@sentry/react";
 import { PayPalScriptProvider } from "@paypal/react-paypal-js";
 import "./tailwind.css";
 import "./styles/index.scss";
 import reportWebVitals from "./reportWebVitals";
 import { initFacebookPixel } from "./utils/facebookPixel";
+import { ErrorFallback } from "./components/ErrorFallback/ErrorFallback";
 import {
   Navigate,
   Outlet,
@@ -132,8 +134,24 @@ const router = createBrowserRouter([
 // 'https://kale67.world/trpc'
 initFacebookPixel();
 
+if (process.env.REACT_APP_SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.REACT_APP_SENTRY_DSN,
+    integrations: [
+      Sentry.browserTracingIntegration(),
+      Sentry.replayIntegration(),
+    ],
+    tracesSampleRate: 1.0,
+    replaysSessionSampleRate: 0.1,
+    replaysOnErrorSampleRate: 1.0,
+  });
+}
+
 root.render(
   <React.StrictMode>
+    <Sentry.ErrorBoundary
+      fallback={({ error }) => <ErrorFallback error={error} />}
+    >
     <ThemeProvider>
       <UserContextProvider>
         <DownloadContextProvider>
@@ -151,6 +169,7 @@ root.render(
         </DownloadContextProvider>
       </UserContextProvider>
     </ThemeProvider>
+    </Sentry.ErrorBoundary>
   </React.StrictMode>
 );
 
