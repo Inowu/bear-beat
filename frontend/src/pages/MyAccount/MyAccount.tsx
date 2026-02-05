@@ -274,8 +274,9 @@ function MyAccount() {
     const { label, varColor } = map[status] ?? { label: "—", varColor: "var(--ma-text-muted)" };
     return (
       <span
-        className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ma-badge"
+        className="inline-flex items-center rounded-full border px-2 py-0.5 font-medium ma-badge"
         style={{
+          fontSize: "var(--app-font-size-body)",
           color: varColor,
           borderColor: varColor,
           background: "transparent",
@@ -293,8 +294,8 @@ function MyAccount() {
     >
       <div className="max-w-6xl mx-auto p-6">
         <h1
-          className="text-3xl md:text-4xl font-bold mb-1"
-          style={{ fontFamily: "Poppins, sans-serif", color: "var(--ma-title)" }}
+          className="font-bold mb-1"
+          style={{ fontFamily: "Poppins, sans-serif", color: "var(--ma-title)", fontSize: "var(--app-font-size-h1)" }}
         >
           Panel de Control
         </h1>
@@ -343,23 +344,23 @@ function MyAccount() {
                 {currentUser?.username}
               </p>
               <p
-                className="text-sm mt-0.5"
-                style={{ color: "var(--ma-text-muted)" }}
+                className="mt-0.5"
+                style={{ color: "var(--ma-text-muted)", fontSize: "var(--app-font-size-body)" }}
               >
                 {currentUser?.email}
               </p>
               {currentUser?.phone && (
                 <p
-                  className="text-sm mt-0.5"
-                  style={{ color: "var(--ma-text-muted)" }}
+                  className="mt-0.5"
+                  style={{ color: "var(--ma-text-muted)", fontSize: "var(--app-font-size-body)" }}
                 >
                   {currentUser.phone}
                 </p>
               )}
               <div className="mt-4">
                 <p
-                  className="text-xs uppercase tracking-wider mb-2"
-                  style={{ color: "var(--ma-text-muted)" }}
+                  className="uppercase tracking-wider mb-2"
+                  style={{ color: "var(--ma-text-muted)", fontSize: "var(--app-font-size-body)" }}
                 >
                   Almacenamiento Usado: {storagePercent}%
                 </p>
@@ -376,8 +377,8 @@ function MyAccount() {
                   />
                 </div>
                 <p
-                  className="text-sm font-mono mt-1"
-                  style={{ color: "var(--ma-text-muted)" }}
+                  className="font-mono mt-1"
+                  style={{ color: "var(--ma-text-muted)", fontSize: "var(--app-font-size-body)" }}
                 >
                   {usedGb} GB de {availableGb} GB
                 </p>
@@ -388,7 +389,8 @@ function MyAccount() {
                 <button
                   type="button"
                   onClick={startCancel}
-                  className="flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold transition-colors ma-btn-cancel"
+                  className="flex-shrink-0 px-4 py-2 rounded-full font-semibold transition-colors ma-btn-cancel"
+                style={{ fontSize: "var(--app-font-size-body)" }}
                 >
                   Cancelar suscripción
                 </button>
@@ -445,8 +447,8 @@ function MyAccount() {
                     copyFeedback={copyFeedback}
                   />
                   <div
-                    className="pt-2 text-xs"
-                    style={{ color: "var(--ma-text-muted)" }}
+                    className="pt-2"
+                    style={{ color: "var(--ma-text-muted)", fontSize: "var(--app-font-size-body)" }}
                   >
                     Expiración:{" "}
                     {currentUser.ftpAccount.expiration?.toDateString?.() ?? "—"}
@@ -456,14 +458,16 @@ function MyAccount() {
                   <button
                     type="button"
                     onClick={() => downloadXMLFile(currentUser.ftpAccount!)}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors text-sm ma-btn-secondary"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ma-btn-secondary"
+                    style={{ fontSize: "var(--app-font-size-body)" }}
                   >
                     <FileDown className="w-4 h-4" />
                     Descargar FileZilla XML
                   </button>
                   <Link
                     to="/instrucciones"
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors text-sm font-medium ma-btn-accent"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors font-medium ma-btn-accent"
+                    style={{ fontSize: "var(--app-font-size-body)" }}
                   >
                     Instrucciones de conexión
                   </Link>
@@ -471,8 +475,9 @@ function MyAccount() {
               </>
             ) : (
               <div
-                className="rounded-lg border p-4 text-sm"
+                className="rounded-lg border p-4"
                 style={{
+                  fontSize: "var(--app-font-size-body)",
                   borderColor: "var(--ma-card-border)",
                   background: "var(--ma-progress-bg)",
                   color: "var(--ma-text-muted)",
@@ -513,16 +518,16 @@ function MyAccount() {
               <table className="w-full min-w-[320px] ma-table">
                 <thead>
                   <tr className="border-b" style={{ borderColor: "var(--ma-card-border)" }}>
-                    <th className="text-left py-3 px-2 uppercase text-xs tracking-wider font-semibold" style={{ color: "var(--ma-text-muted)" }}>
+                    <th className="text-left py-3 px-2 uppercase tracking-wider font-semibold" style={{ color: "var(--ma-text-muted)", fontSize: "var(--app-font-size-body)" }}>
                       Fecha
                     </th>
-                    <th className="text-left py-3 px-2 uppercase text-xs tracking-wider font-semibold" style={{ color: "var(--ma-text-muted)" }}>
+                    <th className="text-left py-3 px-2 uppercase tracking-wider font-semibold" style={{ color: "var(--ma-text-muted)", fontSize: "var(--app-font-size-body)" }}>
                       Orden #
                     </th>
-                    <th className="text-left py-3 px-2 uppercase text-xs tracking-wider font-semibold" style={{ color: "var(--ma-text-muted)" }}>
+                    <th className="text-left py-3 px-2 uppercase tracking-wider font-semibold" style={{ color: "var(--ma-text-muted)", fontSize: "var(--app-font-size-body)" }}>
                       Precio
                     </th>
-                    <th className="text-left py-3 px-2 uppercase text-xs tracking-wider font-semibold" style={{ color: "var(--ma-text-muted)" }}>
+                    <th className="text-left py-3 px-2 uppercase tracking-wider font-semibold" style={{ color: "var(--ma-text-muted)", fontSize: "var(--app-font-size-body)" }}>
                       Status
                     </th>
                   </tr>
@@ -535,13 +540,13 @@ function MyAccount() {
                         className="border-b ma-table-row"
                         style={{ borderColor: "var(--ma-card-border)" }}
                       >
-                        <td className="py-3 px-2 text-sm" style={{ color: "var(--ma-text)" }}>
+                        <td className="py-3 px-2" style={{ color: "var(--ma-text)", fontSize: "var(--app-font-size-body)" }}>
                           {order.date_order.toDateString()}
                         </td>
-                        <td className="py-3 px-2 text-sm font-mono" style={{ color: "var(--ma-text)" }}>
+                        <td className="py-3 px-2 font-mono" style={{ color: "var(--ma-text)", fontSize: "var(--app-font-size-body)" }}>
                           {order.id}
                         </td>
-                        <td className="py-3 px-2 text-sm" style={{ color: "var(--ma-text)" }}>
+                        <td className="py-3 px-2" style={{ color: "var(--ma-text)", fontSize: "var(--app-font-size-body)" }}>
                           ${order.total_price}.00
                         </td>
                         <td className="py-3 px-2">
@@ -553,8 +558,8 @@ function MyAccount() {
                     <tr>
                       <td
                         colSpan={4}
-                        className="py-8 px-2 text-center text-sm"
-                        style={{ color: "var(--ma-text-muted)" }}
+                        className="py-8 px-2 text-center"
+                        style={{ color: "var(--ma-text-muted)", fontSize: "var(--app-font-size-body)" }}
                       >
                         No hay órdenes en tu historial.
                       </td>
@@ -584,7 +589,8 @@ function MyAccount() {
                 type="button"
                 onClick={openBillingPortal}
                 disabled={portalLoading}
-                className="ml-auto min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium border transition-colors ma-btn-accent"
+                className="ml-auto min-h-[44px] px-4 py-2 rounded-lg font-medium border transition-colors ma-btn-accent"
+                style={{ fontSize: "var(--app-font-size-body)" }}
               >
                 {portalLoading ? "Abriendo…" : "Gestionar pagos y facturas"}
               </button>
@@ -618,7 +624,8 @@ function MyAccount() {
                         <button
                           type="button"
                           onClick={() => setDefaultPaymentMethod(x)}
-                          className="p-1.5 rounded-lg text-xs font-medium transition-colors ma-btn-accent"
+                          className="p-1.5 rounded-lg font-medium transition-colors ma-btn-accent"
+                          style={{ fontSize: "var(--app-font-size-body)" }}
                           aria-label="Usar esta tarjeta"
                         >
                           Usar esta
@@ -636,14 +643,14 @@ function MyAccount() {
                   </div>
                   <div>
                     <p
-                      className="font-mono text-sm"
-                      style={{ color: "var(--ma-text)" }}
+                      className="font-mono"
+                      style={{ color: "var(--ma-text)", fontSize: "var(--app-font-size-body)" }}
                     >
                       •••• •••• •••• {x.card.last4}
                     </p>
                     <p
-                      className="text-xs mt-1"
-                      style={{ color: "var(--ma-text-muted)" }}
+                      className="mt-1"
+                      style={{ color: "var(--ma-text-muted)", fontSize: "var(--app-font-size-body)" }}
                     >
                       {x.card.exp_month}/{x.card.exp_year}
                     </p>
@@ -741,14 +748,14 @@ function FtpRow({
       style={{ borderColor: "var(--ma-card-border)" }}
     >
       <span
-        className="text-xs font-mono uppercase tracking-wider flex-shrink-0"
-        style={{ color: "var(--ma-text-muted)" }}
+        className="font-mono uppercase tracking-wider flex-shrink-0"
+        style={{ color: "var(--ma-text-muted)", fontSize: "var(--app-font-size-body)" }}
       >
         {label}:
       </span>
       <code
-        className="font-mono text-sm truncate flex-1 text-right mr-2"
-        style={{ color: "var(--ma-text)" }}
+        className="font-mono truncate flex-1 text-right mr-2"
+        style={{ color: "var(--ma-text)", fontSize: "var(--app-font-size-body)" }}
       >
         {displayValue}
       </code>
@@ -776,7 +783,7 @@ function FtpRow({
           <Copy className="w-4 h-4" />
         </button>
         {copied && (
-          <span className="text-xs" style={{ color: "var(--ma-accent)" }}>
+          <span style={{ color: "var(--ma-accent)", fontSize: "var(--app-font-size-body)" }}>
             Copiado
           </span>
         )}

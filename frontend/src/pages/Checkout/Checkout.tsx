@@ -127,7 +127,7 @@ function Checkout() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10 items-start">
           {/* Columna izquierda: Resumen de valor (desktop) / colapsado arriba (móvil) */}
           <div className="order-2 lg:order-1 rounded-xl border border-slate-800 bg-slate-900/80 p-6 shadow-xl">
-            <h2 className="text-slate-400 uppercase text-xs tracking-wider mb-4">Resumen de valor</h2>
+            <h2 className="text-slate-400 uppercase tracking-wider mb-4" style={{ fontSize: "var(--app-font-size-body)" }}>Resumen de valor</h2>
             {plan?.name && (
               <>
                 <p className="text-cyan-400 font-bold text-xl md:text-2xl mb-1">
@@ -137,7 +137,7 @@ function Checkout() {
                   ${totalPrice} <span className="text-slate-400 font-normal text-lg">{plan.moneda ?? "MXN"}</span>
                 </p>
                 {plan.description && (
-                  <p className="text-slate-400 text-sm mb-6">{plan.description}</p>
+                  <p className="text-slate-400 mb-6">{plan.description}</p>
                 )}
                 <ul className="space-y-3 mb-6">
                   {benefits.map((label, i) => (
@@ -149,23 +149,23 @@ function Checkout() {
                     </li>
                   ))}
                 </ul>
-                <p className="text-slate-500 text-xs">
+                <p className="text-slate-500">
                   Duración: {plan.duration} días · Renovación automática
                 </p>
               </>
             )}
             {!plan?.name && (
-              <p className="text-slate-500 text-sm">Cargando plan...</p>
+              <p className="text-slate-500">Cargando plan...</p>
             )}
           </div>
 
           {/* Columna derecha: Formulario de pago */}
           <div className="order-1 lg:order-2 rounded-xl border border-slate-800 bg-slate-900 shadow-2xl p-6 md:p-8">
-            <h2 className="text-slate-300 uppercase text-xs tracking-wider mb-2">
+            <h2 className="text-slate-300 uppercase tracking-wider mb-2" style={{ fontSize: "var(--app-font-size-body)" }}>
               Credenciales de cuenta
             </h2>
             <div className="rounded-lg bg-slate-800/50 border border-slate-700 p-4 mb-6">
-              <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-2 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-2">
                 <span className="text-slate-500">Nombre:</span>
                 <span className="text-slate-200">{currentUser?.username ?? "—"}</span>
                 <span className="text-slate-500">Correo:</span>
@@ -176,7 +176,7 @@ function Checkout() {
             {priceId && !clientSecret && !paymentAutoError ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <Spinner size={4} width={0.4} color="#06b6d4" />
-                <p className="mt-4 text-slate-400 text-sm">
+                <p className="mt-4 text-slate-400">
                   {plan?.id ? "Preparando pago..." : "Cargando plan..."}
                 </p>
               </div>

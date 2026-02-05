@@ -7,6 +7,7 @@
   background: var(--app-bg);
   color: var(--app-text-body);
   font-family: "Poppins", sans-serif;
+  font-size: var(--app-font-size-body);
 
   @media (min-width: 768px) {
     padding: 1.5rem;
@@ -17,7 +18,8 @@
 
   /* Tema: reemplazar slate fijos por variables para Dark/Light */
   [class*="bg-slate-950"],
-  [class*="bg-slate-900"] {
+  [class*="bg-slate-900"],
+  [class*="bg-slate-800"] {
     background-color: var(--app-bg-card) !important;
   }
   [class*="border-slate-800"],
