@@ -3,16 +3,15 @@ import { HiOutlineMail } from "react-icons/hi";
 import trpc from "../../../api";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { ErrorModal } from "../../../components/Modals/ErrorModal/ErrorModal";
 import { SuccessModal } from "../../../components/Modals/SuccessModal/SuccessModal";
 import { Spinner } from "../../../components/Spinner/Spinner";
-import Turnstile, { type TurnstileRef } from "../../../components/Turnstile/Turnstile";
+import Turnstile from "../../../components/Turnstile/Turnstile";
 import Logo from "../../../assets/images/osonuevo.png";
 import "./ForgotPasswordForm.scss";
 
 function ForgotPasswordForm() {
-  const turnstileRef = useRef<TurnstileRef>(null);
   const [loader, setLoader] = useState<boolean>(false);
   const [show, setShow] = useState<boolean>(false);
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
@@ -56,7 +55,6 @@ function ForgotPasswordForm() {
   const handleTurnstileSuccess = useCallback((token: string) => {
     setTurnstileToken(token);
     setTurnstileError("");
-    formik.submitForm();
   }, []);
 
   const handleTurnstileExpire = useCallback(() => {
@@ -82,8 +80,7 @@ function ForgotPasswordForm() {
           onSubmit={(e) => {
             e.preventDefault();
             if (!turnstileToken) {
-              setTurnstileError("Verificando seguridad…");
-              turnstileRef.current?.execute();
+              setTurnstileError("Completa la verificación antes de continuar.");
               return;
             }
             formik.handleSubmit(e);
@@ -105,10 +102,7 @@ function ForgotPasswordForm() {
               <div className="error-formik">{formik.errors.email}</div>
             )}
           </div>
-          {/* Turnstile invisible: se ejecuta al enviar el form, no se muestra ningún cuadro */}
           <Turnstile
-            ref={turnstileRef}
-            invisible
             onVerify={handleTurnstileSuccess}
             onExpire={handleTurnstileExpire}
             onError={handleTurnstileError}

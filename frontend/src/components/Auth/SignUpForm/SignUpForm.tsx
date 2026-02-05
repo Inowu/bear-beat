@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { HiOutlineUser, HiOutlineMail, HiOutlineLockClosed, HiOutlinePhone } from "react-icons/hi";
 import { ReactComponent as Arrow } from "../../../assets/icons/arrow-down.svg";
 import { Spinner } from "../../../components/Spinner/Spinner";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useFormik } from "formik";
 import { useUserContext } from "../../../contexts/UserContext";
 import * as Yup from "yup";
@@ -12,11 +12,10 @@ import trpc from "../../../api";
 import { ErrorModal, SuccessModal, VerifyPhoneModal } from "../../../components/Modals";
 import { useCookies } from "react-cookie";
 import { ChatButton } from "../../../components/ChatButton/ChatButton";
-import Turnstile, { type TurnstileRef } from "../../../components/Turnstile/Turnstile";
+import Turnstile from "../../../components/Turnstile/Turnstile";
 import { trackLead } from "../../../utils/facebookPixel";
 
 function SignUpForm() {
-  const turnstileRef = useRef<TurnstileRef>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: string } | null)?.from ?? "/";
@@ -196,7 +195,6 @@ function SignUpForm() {
   const handleTurnstileSuccess = useCallback((token: string) => {
     setTurnstileToken(token);
     setTurnstileError("");
-    formik.submitForm();
   }, []);
 
   const handleTurnstileExpire = useCallback(() => {
@@ -233,8 +231,7 @@ function SignUpForm() {
             onSubmit={(e) => {
               e.preventDefault();
               if (!turnstileToken) {
-                setTurnstileError("Verificando seguridad…");
-                turnstileRef.current?.execute();
+                setTurnstileError("Completa la verificación antes de continuar.");
                 return;
               }
               formik.handleSubmit(e);
@@ -343,10 +340,7 @@ function SignUpForm() {
                 <div className="error-formik">{formik.errors.passwordConfirmation}</div>
               )}
             </div>
-            {/* Turnstile invisible: se ejecuta al enviar el form, no se muestra ningún cuadro */}
             <Turnstile
-              ref={turnstileRef}
-              invisible
               onVerify={handleTurnstileSuccess}
               onExpire={handleTurnstileExpire}
               onError={handleTurnstileError}
