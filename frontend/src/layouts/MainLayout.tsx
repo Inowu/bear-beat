@@ -43,7 +43,7 @@ function MainLayout() {
         {showDownload && currentUser !== null && <FileLoader />}
         <div className={`content-container-inner ${useAppBackground ? "content-area-app min-h-screen w-full font-poppins text-base text-slate-200 bg-transparent transition-colors duration-300" : ""}`}>
           <div className="flex-1 bg-slate-950 min-h-screen relative">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
               <Outlet />
             </div>
           </div>

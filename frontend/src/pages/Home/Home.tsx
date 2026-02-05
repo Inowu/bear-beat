@@ -407,17 +407,17 @@ function Home() {
         </div>
       )}
       {/* Tabla desktop: visible solo en md+ */}
-      <div className="hidden md:block rounded-xl border border-slate-800 overflow-hidden bg-slate-900">
-        <table className="w-full text-left">
+      <div className="hidden md:block rounded-xl border border-slate-800 overflow-hidden">
+        <table className="min-w-full text-left">
           <thead>
-            <tr>
-              <th className="bg-slate-900 text-slate-400 p-4">Nombre</th>
-              <th className="bg-slate-900 text-slate-400 p-4 text-right w-24">Tamaño</th>
-              <th className="bg-slate-900 text-slate-400 p-4 text-right w-36">Modificado</th>
-              <th className="bg-slate-900 text-slate-400 p-4 text-right w-28">Acciones</th>
+            <tr className="bg-slate-900 text-slate-400 font-medium border-b border-slate-800">
+              <th className="py-4 px-4">Nombre</th>
+              <th className="py-4 px-4 text-right w-24">Tamaño</th>
+              <th className="py-4 px-4 text-right w-36">Modificado</th>
+              <th className="py-4 px-4 text-right w-28">Acciones</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="bg-slate-950 divide-y divide-slate-800">
             {!loader ? (
               sortArrayByName(files).map((file: IFiles, idx: number) => {
                 const gbSize = file.size != null && Number.isFinite(file.size)
@@ -434,17 +434,14 @@ function Home() {
                   minute: '2-digit',
                 });
                 return (
-                  <tr
-                    key={`table-${idx}`}
-                    className="border-b border-slate-800 hover:bg-slate-900"
-                  >
-                    <td className="p-4">
+                  <tr key={`table-${idx}`}>
+                    <td className="py-3 px-4 text-slate-300 font-medium">
                       <div className="flex items-center gap-3 min-w-0">
                         {file.type === 'd' ? (
                           <>
-                            <FolderOpen className="flex-shrink-0 w-5 h-5 text-cyan-600 dark:text-cyan-400" strokeWidth={2} aria-hidden />
+                            <FolderOpen className="flex-shrink-0 w-5 h-5 text-cyan-400" strokeWidth={2} aria-hidden />
                             <span
-                              className="text-base font-medium text-slate-200 truncate cursor-pointer hover:underline"
+                              className="text-white font-[Poppins] truncate cursor-pointer hover:underline"
                               title={file.name}
                               onClick={() => goToFolder({ next: file.name })}
                             >
@@ -458,31 +455,31 @@ function Home() {
                             ) : (
                               <button
                                 type="button"
-                                className="fb-btn-play flex-shrink-0 min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg bg-slate-800 text-cyan-400 hover:bg-cyan-500 hover:text-white transition-colors"
+                                className="flex-shrink-0 min-w-[36px] min-h-[36px] inline-flex items-center justify-center rounded-lg bg-slate-800 text-cyan-400 hover:bg-cyan-500 hover:text-white transition-colors"
                                 onClick={() => playFile(file, idx)}
                                 title="Reproducir"
                                 aria-label="Reproducir"
                               >
-                                <Play className="w-5 h-5" aria-hidden />
+                                <Play className="w-4 h-4" aria-hidden />
                               </button>
                             )}
-                            <span className="text-base font-medium text-slate-200 truncate" title={file.name}>{file.name}</span>
+                            <span className="text-white font-[Poppins] truncate" title={file.name}>{file.name}</span>
                           </>
                         )}
                       </div>
                     </td>
-                    <td className="p-4 text-right tabular-nums text-sm text-slate-400">{sizeLabel}</td>
-                    <td className="p-4 text-right text-sm text-slate-400 whitespace-nowrap">{modifiedStr}</td>
-                    <td className="p-4 text-right">
+                    <td className="py-3 px-4 text-right tabular-nums text-slate-300 font-medium">{sizeLabel}</td>
+                    <td className="py-3 px-4 text-right text-slate-300 font-medium whitespace-nowrap">{modifiedStr}</td>
+                    <td className="py-3 px-4 text-right">
                       {file.type === 'd' && file.size != null && gbSize <= 50 && (
                         <button
                           type="button"
-                          className="p-2 rounded-lg hover:bg-slate-800 text-cyan-500 hover:text-cyan-400"
+                          className="inline-flex items-center justify-center p-2 rounded-lg hover:bg-slate-800 text-cyan-500 hover:text-cyan-400"
                           onClick={(e) => { e.stopPropagation(); checkAlbumSize(file, idx); }}
                           title="Descargar"
                           aria-label="Descargar"
                         >
-                          {loadDownload && index === idx ? <Spinner size={2} width={0.2} color="var(--app-btn-text)" /> : <Download className="w-[18px] h-[18px]" aria-hidden />}
+                          {loadDownload && index === idx ? <Spinner size={2} width={0.2} color="var(--app-btn-text)" /> : <Download size={18} aria-hidden />}
                         </button>
                       )}
                       {file.type === '-' && (
@@ -491,12 +488,12 @@ function Home() {
                         ) : (
                           <button
                             type="button"
-                            className="p-2 rounded-lg hover:bg-slate-800 text-cyan-500 hover:text-cyan-400"
+                            className="inline-flex items-center justify-center p-2 rounded-lg hover:bg-slate-800 text-cyan-500 hover:text-cyan-400"
                             onClick={() => downloadFile(file, idx)}
                             title="Descargar"
                             aria-label="Descargar"
                           >
-                            <Download className="w-[18px] h-[18px]" aria-hidden />
+                            <Download size={18} aria-hidden />
                           </button>
                         )
                       )}
@@ -505,7 +502,7 @@ function Home() {
                 );
               })
             ) : (
-              <tr className="border-b border-slate-800"><td colSpan={4} className="p-8 text-center text-slate-400">Cargando…</td></tr>
+              <tr><td colSpan={4} className="py-8 text-center text-slate-400">Cargando…</td></tr>
             )}
           </tbody>
         </table>

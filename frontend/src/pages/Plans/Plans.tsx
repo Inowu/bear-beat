@@ -71,37 +71,27 @@ function Plans() {
       </div>
     );
   }
+  const filteredPlans = plans.filter((plan) => plan.id !== 41);
+  const isSinglePlan = filteredPlans.length === 1;
+
   return (
     <div className="plans-main-container">
-      <h1 className="plans-page-title">Elige tu plan</h1>
-      {/* {plans.map((plan: IPlans, index) => {
-        return (
+      <h1 className="plans-page-title font-[Poppins]">Elige tu plan</h1>
+      <div
+        className={`grid grid-cols-1 md:grid-cols-3 gap-8 ${isSinglePlan ? 'max-w-md mx-auto' : ''}`}
+      >
+        {filteredPlans.map((plan: IPlans, index) => (
           <PlanCard
             plan={plan}
-            key={"plan_" + index}
-            getCurrentPlan={() => { }}
+            key={'plan_' + index}
+            getCurrentPlan={() => {}}
             selectMethod={selectMethod}
             selectedPlan={selectedPlan}
             userEmail={currentUser?.email}
             userPhone={currentUser?.phone}
           />
-        );
-      })} */}
-      {plans
-        .filter((plan) => plan.id !== 41) // Excluye el plan de migración para que no sea visible en la lista de planes
-        .map((plan: IPlans, index) => {
-          return (
-            <PlanCard
-              plan={plan}
-              key={'plan_' + index}
-              getCurrentPlan={() => {}}
-              selectMethod={selectMethod}
-              selectedPlan={selectedPlan}
-              userEmail={currentUser?.email}
-              userPhone={currentUser?.phone}
-            />
-          );
-        })}
+        ))}
+      </div>
     </div>
   );
 }

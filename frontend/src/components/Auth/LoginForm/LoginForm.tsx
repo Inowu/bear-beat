@@ -93,18 +93,16 @@ function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto">
-      <div className="auth-login-atmosphere">
-      <div className="auth-login-glow" aria-hidden />
-      <div className="auth-login-card">
-        <img src={Logo} alt="Bear Beat" className="auth-login-logo" />
-        <h1 className="auth-login-title">Bienvenido, DJ.</h1>
-        <p className="auth-login-sub">Tu cabina está lista. Ingresa para descargar.</p>
+    <>
+      <div className="w-full max-w-md bg-slate-900 rounded-2xl shadow-2xl border border-slate-800 p-8">
+        <img src={Logo} alt="Bear Beat" className="h-12 w-auto mx-auto block mb-6" />
+        <h1 className="text-xl font-bold text-white text-center mb-1 font-[Poppins]">Bienvenido, DJ.</h1>
+        <p className="text-slate-400 text-sm text-center mb-6">Tu cabina está lista. Ingresa para descargar.</p>
         <ChatButton />
-        <form className="auth-form auth-login-form" onSubmit={formik.handleSubmit}>
-          <div className="c-row">
-            <div className="auth-login-input-wrap">
-              <HiOutlineMail className="auth-login-input-icon" aria-hidden />
+        <form className="flex flex-col gap-4" onSubmit={formik.handleSubmit}>
+          <div>
+            <div className="relative">
+              <HiOutlineMail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" aria-hidden />
               <input
                 placeholder="Correo electrónico"
                 type="text"
@@ -112,44 +110,46 @@ function LoginForm() {
                 name="username"
                 value={formik.values.username}
                 onChange={formik.handleChange}
-                className="auth-login-input auth-login-input-with-icon"
+                className="bg-slate-950 border border-slate-700 text-white rounded-lg h-12 px-4 pl-10 w-full focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-shadow"
               />
             </div>
             {formik.errors.username && (
-              <div className="error-formik">{formik.errors.username}</div>
+              <p className="text-red-400 text-sm mt-1">{formik.errors.username}</p>
             )}
           </div>
-          <div className="c-row">
-            <div className="auth-login-input-wrap">
-              <HiOutlineLockClosed className="auth-login-input-icon" aria-hidden />
-              <PasswordInput
-                placeholder="Contraseña"
-                id="password"
-                name="password"
-                value={formik.values.password}
-                onChange={formik.handleChange}
-                inputClassName="auth-login-input auth-login-input-with-icon"
-                wrapperClassName="auth-login-password-wrap"
-              />
-            </div>
+          <div>
+            <PasswordInput
+              placeholder="Contraseña"
+              id="password"
+              name="password"
+              value={formik.values.password}
+              onChange={formik.handleChange}
+              inputClassName="bg-slate-950 border border-slate-700 text-white rounded-lg h-12 px-4 w-full focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-shadow"
+              wrapperClassName="w-full"
+            />
             {formik.errors.password && (
-              <div className="error-formik">{formik.errors.password}</div>
+              <p className="text-red-400 text-sm mt-1">{formik.errors.password}</p>
             )}
           </div>
-          <div className="c-row auth-login-forgot-wrap">
-            <Link to="/auth/recuperar" className="auth-login-forgot">
+          <div className="text-right">
+            <Link to="/auth/recuperar" className="text-sm font-medium text-cyan-400 hover:text-cyan-300">
               ¿Olvidaste tu contraseña?
             </Link>
           </div>
           {!loader ? (
-            <button className="auth-login-submit-btn" type="submit">
+            <button
+              type="submit"
+              className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 rounded-lg transition-all"
+            >
               INGRESAR
             </button>
           ) : (
-            <Spinner size={3} width={0.3} color="var(--app-accent)" />
+            <div className="flex justify-center py-2">
+              <Spinner size={3} width={0.3} color="var(--app-accent)" />
+            </div>
           )}
-          <div className="c-row auth-login-register-wrap">
-            <Link to="/auth/registro" state={{ from }} className="auth-login-register">
+          <div className="text-center">
+            <Link to="/auth/registro" state={{ from }} className="text-sm font-medium text-cyan-400 hover:text-cyan-300">
               Registrarme
             </Link>
           </div>
@@ -162,8 +162,7 @@ function LoginForm() {
         newUserPhone={newUserPhone}
         onHideModal={handleSuccessVerify}
       />
-    </div>
-    </div>
+    </>
   );
 }
 

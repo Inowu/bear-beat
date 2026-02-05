@@ -225,8 +225,8 @@ function SignUpForm() {
         </ul>
         <p className="auth-split-testimonial">"La mejor inversión para mi carrera."</p>
       </div>
-      <div className="auth-split-panel auth-split-right">
-        <div className="auth-split-form">
+      <div className="auth-split-panel auth-split-right flex flex-col items-center">
+        <div className="auth-split-form w-full max-w-md">
           <h2 className="auth-split-form-title">Crea tu cuenta Pro</h2>
           <ChatButton />
           <form
@@ -351,7 +351,10 @@ function SignUpForm() {
             />
             {turnstileError && <div className="error-formik">{turnstileError}</div>}
             {!loader ? (
-              <button className="signup-submit-btn" type="submit">
+              <button
+                type="submit"
+                className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 rounded-lg transition-all signup-submit-btn"
+              >
                 CREAR MI CUENTA PRO
               </button>
             ) : (
