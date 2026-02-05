@@ -412,13 +412,10 @@ function Home() {
         className="folders-navigation-container rounded-xl shadow-2xl overflow-hidden"
         style={{ background: 'var(--fb-bg)', border: '1px solid var(--fb-border)' }}
       >
-        <div
-          className="grid grid-cols-2 md:grid-cols-[2fr_1fr_1fr] gap-4 px-4 py-3 border-b text-sm font-medium"
-          style={{ borderColor: 'var(--fb-border)', color: 'var(--fb-text-muted)' }}
-        >
+        <div className="header">
           <div>Nombre</div>
           <div className="text-right">Tamaño</div>
-          <div className="hidden md:block text-right">Modificado</div>
+          <div className="modified-column hidden md:block text-right">Modificado</div>
         </div>
         <div className="folders-cards-container">
           {!loader ? (
@@ -428,8 +425,8 @@ function Home() {
                 <div key={'files ' + idx}>
                   {file.type === 'd' && (
                     <div
-                      className="flex items-center justify-between p-4 border-b border-l-2 border-l-transparent transition-colors cursor-pointer hover:border-l-2"
-                      style={{ borderBottomColor: 'var(--fb-row-border)' }}
+                      className="fb-row cursor-pointer border-l-2 border-l-transparent hover:border-l-2"
+                      style={{ borderLeftColor: 'transparent' }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.background = 'var(--fb-row-hover-bg)';
                         e.currentTarget.style.borderLeftColor = 'var(--fb-row-hover-border)';
@@ -444,15 +441,11 @@ function Home() {
                     >
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         <Folder className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--fb-folder-icon)' }} />
-                        <span className="font-medium truncate text-[length:var(--app-font-size-body)]" style={{ color: 'var(--fb-text)' }}>
-                          {file.name}
-                        </span>
+                        <span className="fb-row-name">{file.name}</span>
                       </div>
-                      <div className="flex items-center gap-4 flex-shrink-0">
-                        <span className="whitespace-nowrap text-sm font-mono" style={{ color: 'var(--fb-text-muted)' }}>
-                          {gbSize.toFixed(2)} GB
-                        </span>
-                        <span className="modified-column whitespace-nowrap text-sm hidden md:inline" style={{ color: 'var(--fb-text-muted)' }}>
+                      <div className="fb-row-meta">
+                        <span className="whitespace-nowrap font-mono">{gbSize.toFixed(2)} GB</span>
+                        <span className="modified-column whitespace-nowrap hidden md:inline">
                           {new Date().toLocaleString('en-US', {
                             month: 'short',
                             day: '2-digit',
@@ -463,7 +456,7 @@ function Home() {
                         </span>
                         {gbSize <= 50 && (
                           <div
-                            className="p-1 rounded hover:opacity-80"
+                            className="fb-action-wrap"
                             onClick={(e) => {
                               e.stopPropagation();
                               checkAlbumSize(file, idx);
@@ -472,7 +465,7 @@ function Home() {
                             {loadDownload && index === idx ? (
                               <Spinner size={2} width={0.2} color="var(--fb-accent)" />
                             ) : (
-                              <Download className="w-4 h-4 cursor-pointer" style={{ color: 'var(--fb-file-icon)' }} />
+                              <Download className="w-5 h-5 cursor-pointer" style={{ color: 'var(--fb-file-icon)' }} />
                             )}
                           </div>
                         )}
@@ -481,8 +474,8 @@ function Home() {
                   )}
                   {file.type === '-' && (
                     <div
-                      className="flex items-center justify-between p-4 border-b border-l-2 border-l-transparent transition-colors hover:border-l-2"
-                      style={{ borderBottomColor: 'var(--fb-row-border)' }}
+                      className="fb-row border-l-2 border-l-transparent hover:border-l-2"
+                      style={{ borderLeftColor: 'transparent' }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.background = 'var(--fb-row-hover-bg)';
                         e.currentTarget.style.borderLeftColor = 'var(--fb-row-hover-border)';
@@ -498,30 +491,26 @@ function Home() {
                         ) : (
                           <button
                             type="button"
-                            className="p-1 rounded hover:opacity-80 flex-shrink-0"
+                            className="fb-action-wrap flex-shrink-0"
                             onClick={() => playFile(file, idx)}
                           >
-                            <Play className="w-4 h-4" style={{ color: 'var(--fb-file-icon)' }} />
+                            <Play className="w-5 h-5" style={{ color: 'var(--fb-file-icon)' }} />
                           </button>
                         )}
                         <Music className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--fb-file-icon)' }} />
-                        <span className="font-medium truncate text-[length:var(--app-font-size-body)]" style={{ color: 'var(--fb-text)' }}>
-                          {file.name}
-                        </span>
+                        <span className="fb-row-name">{file.name}</span>
                       </div>
-                      <div className="flex items-center gap-3 flex-shrink-0 min-w-0">
-                        <span className="whitespace-nowrap text-sm font-mono" style={{ color: 'var(--fb-text-muted)' }}>
-                          {gbSize.toFixed(2)} GB
-                        </span>
+                      <div className="fb-row-meta">
+                        <span className="whitespace-nowrap font-mono">{gbSize.toFixed(2)} GB</span>
                         {loadDownload && index === idx ? (
                           <Spinner size={2} width={0.2} color="var(--fb-accent)" />
                         ) : (
                           <button
                             type="button"
-                            className="p-1 rounded hover:opacity-80"
+                            className="fb-action-wrap"
                             onClick={() => downloadFile(file, idx)}
                           >
-                            <Download className="w-4 h-4" style={{ color: 'var(--fb-file-icon)' }} />
+                            <Download className="w-5 h-5" style={{ color: 'var(--fb-file-icon)' }} />
                           </button>
                         )}
                       </div>

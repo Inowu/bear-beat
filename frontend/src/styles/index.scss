@@ -16,11 +16,46 @@
   box-sizing: border-box;
 }
 
+/* App nativa móvil: viewport dinámico (100dvh), safe areas, gestos táctiles */
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
 html,
-body,
 #root {
   height: 100%;
+  min-height: 100dvh;
   overflow: hidden;
+}
+
+body {
+  min-height: 100dvh;
+  overflow: hidden;
+  /* Safe areas: notch e indicador de inicio (iPhone X+, Android con gestos) */
+  padding-top: env(safe-area-inset-top, 0);
+  padding-right: env(safe-area-inset-right, 0);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  padding-left: env(safe-area-inset-left, 0);
+}
+
+/* Scroll suave tipo app en iOS/Android */
+body {
+  height: 100%;
+  -webkit-overflow-scrolling: touch;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: none;
+}
+
+/* Respuesta táctil rápida (sin delay 300ms), sin zoom en doble toque en controles */
+button,
+a,
+input,
+select,
+textarea,
+[role="button"] {
+  touch-action: manipulation;
 }
 
 a {
@@ -48,7 +83,7 @@ html {
   font-size: 62.5%;
 }
 
-/* Toda la app usa el mismo estilo y tamaño de texto que el Home (PublicHome) */
+/* Toda la app: mismo estilo y tamaño que Home, legibilidad mínima en toda la web */
 body {
   font-family: "Poppins", sans-serif;
   background: var(--app-bg);
@@ -56,25 +91,50 @@ body {
   color: var(--app-text-body);
   font-size: var(--app-font-size-body);
   font-weight: var(--app-font-weight-body);
+  line-height: 1.4;
   transition: background 0.2s ease, background-color 0.2s ease, color 0.2s ease;
 }
 
+/* Ningún texto por debajo de 1rem para que siempre se pueda leer */
 label,
 p,
 a,
 b,
 ul,
 li,
-div {
-  font-size: var(--app-font-size-body);
+div,
+span {
+  font-size: inherit;
   color: inherit;
-  font-weight: var(--app-font-weight-body);
+  font-weight: inherit;
+  line-height: inherit;
+}
+
+body label,
+body p,
+body .modal-container .content,
+body .modal-container .bottom .content {
+  font-size: var(--app-font-size-body);
 }
 
 button,
 .btn,
-form {
+form,
+input,
+select,
+textarea {
   font-size: var(--app-font-size-body);
+}
+
+/* Área táctil mínima 44px en controles principales (UX móvil) */
+button:not(.icon-only),
+.btn,
+.main-layout-main-container input[type="text"],
+.main-layout-main-container input[type="email"],
+.main-layout-main-container input[type="password"],
+.main-layout-main-container input[type="number"],
+.main-layout-main-container select {
+  min-height: 44px;
 }
 
 button {
@@ -118,7 +178,7 @@ button.primary-pill {
   font-weight: 600;
   position: absolute;
   bottom: -20px;
-  font-size: clamp(0.875rem, 2vw, var(--app-font-size-body));
+  font-size: var(--app-font-size-body);
   left: 50%;
   transform: translateX(-50%);
 }

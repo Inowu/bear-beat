@@ -242,12 +242,13 @@
 
   .auth-login-sentry-test {
     margin-top: 1rem;
-    padding: 6px 12px;
-    font-size: 0.75rem;
+    padding: 10px 16px;
+    min-height: 44px;
+    font-size: var(--app-font-size-body);
     color: var(--app-text-muted);
     background: transparent;
     border: 1px dashed var(--app-border);
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
     transition: opacity 0.2s;
     &:hover {

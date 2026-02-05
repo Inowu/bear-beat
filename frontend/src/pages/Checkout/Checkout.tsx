@@ -13,7 +13,7 @@ import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 import { manychatApi } from "../../api/manychat";
 import { Spinner } from "../../components/Spinner/Spinner";
 import { getStripeAppearance } from "../../utils/stripeAppearance";
-import { Lock, Shield, Check } from "lucide-react";
+import { Lock, Check } from "lucide-react";
 
 const stripeKey =
   process.env.REACT_APP_ENVIRONMENT === "development"
@@ -115,82 +115,87 @@ function Checkout() {
 
   return (
     <div className="checkout-main-container">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="checkout-page-title text-center mb-2">
-          ACTIVAR ACCESO INMEDIATO
-        </h1>
-        <p className="checkout-page-subtitle text-center mb-8">
-          Estás a un paso de desbloquear 12.5 TB de música.
-        </p>
+      <div className="checkout-inner">
+        <header className="checkout-header">
+          <h1 className="checkout-page-title">
+            Activar acceso inmediato
+          </h1>
+          <p className="checkout-page-subtitle">
+            Estás a un paso de desbloquear 12.5 TB de música.
+          </p>
+        </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10 items-start">
-          {/* Columna izquierda: Resumen de valor (desktop) / colapsado arriba (móvil) */}
-          <div className="order-2 lg:order-1 rounded-xl border border-slate-800 bg-slate-900/80 p-6 shadow-xl">
-            <h2 className="text-slate-400 uppercase tracking-wider mb-4" style={{ fontSize: "var(--app-font-size-body)" }}>Resumen de valor</h2>
-            {plan?.name && (
+        <div className="checkout-grid">
+          {/* Resumen del plan */}
+          <aside className="checkout-card checkout-summary">
+            <h2 className="checkout-card__title">Resumen del plan</h2>
+            {plan?.name ? (
               <>
-                <p className="text-cyan-400 font-bold text-xl md:text-2xl mb-1">
-                  {plan.name}
-                </p>
-                <p className="text-white text-3xl md:text-4xl font-bold mb-6">
-                  ${totalPrice} <span className="text-slate-400 font-normal text-lg">{plan.moneda ?? "MXN"}</span>
+                <p className="checkout-summary__plan-name">{plan.name}</p>
+                <p className="checkout-summary__price">
+                  ${totalPrice} <span className="checkout-summary__currency">{plan.moneda ?? "MXN"}</span>
                 </p>
                 {plan.description && (
-                  <p className="text-slate-400 mb-6">{plan.description}</p>
+                  <p className="checkout-summary__desc">{plan.description}</p>
                 )}
-                <ul className="space-y-3 mb-6">
+                <ul className="checkout-summary__benefits">
                   {benefits.map((label, i) => (
-                    <li key={i} className="flex items-center gap-3 text-slate-300">
-                      <span className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    <li key={i}>
+                      <span className="checkout-summary__check">
+                        <Check className="checkout-summary__check-icon" />
                       </span>
                       {label}
                     </li>
                   ))}
                 </ul>
-                <p className="text-slate-500">
+                <p className="checkout-summary__meta">
                   Duración: {plan.duration} días · Renovación automática
                 </p>
               </>
+            ) : (
+              <p className="checkout-summary__loading">Cargando plan...</p>
             )}
-            {!plan?.name && (
-              <p className="text-slate-500">Cargando plan...</p>
-            )}
-          </div>
+          </aside>
 
-          {/* Columna derecha: Formulario de pago */}
-          <div className="order-1 lg:order-2 rounded-xl border border-slate-800 bg-slate-900 shadow-2xl p-6 md:p-8">
-            <h2 className="text-slate-300 uppercase tracking-wider mb-2" style={{ fontSize: "var(--app-font-size-body)" }}>
-              Credenciales de cuenta
-            </h2>
-            <div className="rounded-lg bg-slate-800/50 border border-slate-700 p-4 mb-6">
-              <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-2">
-                <span className="text-slate-500">Nombre:</span>
-                <span className="text-slate-200">{currentUser?.username ?? "—"}</span>
-                <span className="text-slate-500">Correo:</span>
-                <span className="text-slate-200">{currentUser?.email ?? "—"}</span>
+          {/* Formulario de pago */}
+          <section className="checkout-card checkout-payment-card">
+            <h2 className="checkout-card__title">Tu cuenta</h2>
+            <div className="checkout-credentials">
+              <div className="checkout-credentials__row">
+                <span className="checkout-credentials__label">Nombre</span>
+                <span className="checkout-credentials__value">{currentUser?.username ?? "—"}</span>
+              </div>
+              <div className="checkout-credentials__row">
+                <span className="checkout-credentials__label">Correo</span>
+                <span className="checkout-credentials__value">{currentUser?.email ?? "—"}</span>
               </div>
             </div>
 
             {priceId && !clientSecret && !paymentAutoError ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <Spinner size={4} width={0.4} color="#06b6d4" />
-                <p className="mt-4 text-slate-400">
-                  {plan?.id ? "Preparando pago..." : "Cargando plan..."}
+              <div className="checkout-loading">
+                <Spinner size={4} width={0.4} color="var(--app-accent)" />
+                <p className="checkout-loading__text">
+                  {plan?.id ? "Preparando formulario de pago..." : "Cargando plan..."}
                 </p>
               </div>
             ) : !clientSecret ? (
               <CheckoutFormIntro plan={plan} setClientSecret={setClientSecret} />
             ) : stripeOptions ? (
-              <Elements stripe={stripePromise} options={stripeOptions}>
-                <CheckoutFormPayment
-                  plan={plan}
-                  clientSecret={clientSecret}
-                  onReset={handleResetPayment}
-                />
-              </Elements>
+              <>
+                <h3 className="checkout-payment-title">
+                  <Lock size={18} />
+                  Datos de pago
+                </h3>
+                <Elements stripe={stripePromise} options={stripeOptions}>
+                  <CheckoutFormPayment
+                    plan={plan}
+                    clientSecret={clientSecret}
+                    onReset={handleResetPayment}
+                  />
+                </Elements>
+              </>
             ) : null}
-          </div>
+          </section>
         </div>
       </div>
     </div>

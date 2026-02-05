@@ -21,7 +21,7 @@
   }
 
   .left-text {
-    font-size: 1.25rem;
+    font-size: var(--app-font-size-body);
     font-weight: 600;
     color: $text-primary;
   }
@@ -44,13 +44,13 @@
     .selected {
       font-weight: 600;
       color: $bear-blue-dim;
-      font-size: 1.3rem;
+      font-size: var(--app-font-size-body);
     }
 
     .unselected,
     .points {
       cursor: pointer;
-      font-size: 1.3rem;
+      font-size: var(--app-font-size-body);
       color: $text-primary;
       min-width: 36px;
       min-height: 44px;
@@ -74,7 +74,7 @@
 
     p {
       color: $bear-blue-dim;
-      font-size: 1.3rem;
+      font-size: var(--app-font-size-body);
     }
   }
 }
@@ -98,7 +98,7 @@
     .right-side .selected,
     .right-side .unselected,
     .right-side p {
-      font-size: 1.4rem;
+      font-size: var(--app-font-size-body-lg);
     }
   }
 }

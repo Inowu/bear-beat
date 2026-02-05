@@ -53,7 +53,7 @@ export function CheckoutFormIntro(props: {
     <form className="checkout-form" onSubmit={(e) => e.preventDefault()}>
       <div className="button-contain">
         {loader ? (
-          <Spinner size={4} width={0.4} color="#06b6d4" />
+          <Spinner size={4} width={0.4} color="var(--app-accent)" />
         ) : (
           <button
             type="button"
@@ -154,7 +154,7 @@ export function CheckoutFormPayment(props: {
           Volver
         </button>
         {loader ? (
-          <Spinner size={4} width={0.4} color="#06b6d4" />
+          <Spinner size={4} width={0.4} color="var(--app-accent)" />
         ) : (
           <button
             type="submit"

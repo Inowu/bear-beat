@@ -2,6 +2,7 @@
 
 .main-layout-main-container {
   height: 100%;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -15,7 +16,11 @@
     flex: 1;
     display: flex;
     position: relative;
-    overflow-y: scroll;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
     border-top: 1px solid var(--app-border);
 
     > div {
@@ -23,7 +28,7 @@
       margin-left: auto;
       margin-right: auto;
       max-width: 1320px;
-      padding: 1rem; /* 16px móvil — estándar con Home */
+      padding: 1rem;
     }
   }
 

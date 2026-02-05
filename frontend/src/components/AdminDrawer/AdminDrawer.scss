@@ -1,4 +1,4 @@
-@import "src/styles/variables-theme.scss";
+@import "src/styles/_variables-theme.scss";
 
 .admin-drawer-backdrop {
   position: fixed;
@@ -49,7 +49,7 @@
 
   &__title {
     margin: 0;
-    font-size: 1.1rem;
+    font-size: var(--app-font-size-body);
     font-weight: 600;
     color: var(--ad-title);
   }
@@ -101,7 +101,7 @@
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    font-size: 1.25rem;
+    font-size: var(--app-font-size-body);
     flex-shrink: 0;
   }
 
@@ -115,16 +115,16 @@
   &__user-name {
     font-weight: 600;
     color: var(--ad-title);
-    font-size: 1rem;
+    font-size: var(--app-font-size-body);
   }
 
   &__user-email {
-    font-size: 0.875rem;
+    font-size: var(--app-font-size-body);
     color: var(--ad-text);
   }
 
   &__user-meta {
-    font-size: 0.75rem;
+    font-size: var(--app-font-size-body);
     color: var(--ad-text-muted);
   }
 
@@ -138,8 +138,9 @@
   &__btn {
     width: 100%;
     padding: 12px 16px;
+    min-height: 44px;
     border-radius: 10px;
-    font-size: 0.9375rem;
+    font-size: var(--app-font-size-body);
     font-weight: 500;
     border: 1px solid var(--ad-border);
     cursor: pointer;

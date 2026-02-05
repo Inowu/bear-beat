@@ -125,7 +125,7 @@ aside {
       pointer-events: auto;
     }
 
-    // Panel: drawer desde la izquierda (ancho limitado, no toda la pantalla)
+    // Panel: drawer desde la izquierda (safe areas para notch e indicador)
     .aside-inner {
       position: fixed;
       top: 0;
@@ -142,6 +142,10 @@ aside {
       box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25);
       pointer-events: auto;
       transition: transform 0.25s ease;
+      padding-top: env(safe-area-inset-top, 0);
+      padding-bottom: env(safe-area-inset-bottom, 0);
+      padding-left: env(safe-area-inset-left, 0);
+      -webkit-overflow-scrolling: touch;
     }
 
     &:not(.open) .aside-inner {
@@ -162,7 +166,7 @@ aside {
     .aside-close-btn {
       display: flex;
       position: absolute;
-      top: 1rem;
+      top: calc(1rem + env(safe-area-inset-top, 0));
       right: 1rem;
       width: 44px;
       height: 44px;
@@ -173,7 +177,7 @@ aside {
       background: var(--aside-overlay-close-bg);
       color: var(--aside-overlay-close-color);
       cursor: pointer;
-      font-size: 1.25rem;
+      font-size: var(--app-font-size-body);
       transition: color 0.2s, background 0.2s;
       z-index: 2;
 
@@ -227,6 +231,8 @@ aside {
           font-weight: var(--app-font-weight-body);
           border-bottom: 1px solid var(--aside-overlay-border);
           transition: color 0.15s, background 0.15s;
+          -webkit-tap-highlight-color: transparent;
+          touch-action: manipulation;
 
           &:hover,
           &:focus-visible {
@@ -254,9 +260,11 @@ aside {
 
     .btnSupport {
       position: absolute;
-      bottom: 1.5rem;
+      bottom: calc(1.5rem + env(safe-area-inset-bottom, 0));
       left: 50%;
       transform: translateX(-50%);
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
   }
 }

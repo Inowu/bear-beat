@@ -35,6 +35,7 @@ function NotFound() {
         style={{
           background: "var(--app-accent)",
           color: "var(--app-btn-text)",
+          fontSize: "var(--app-font-size-body)",
         }}
       >
         Volver al inicio
