@@ -345,15 +345,15 @@ function Home() {
         <UsersUHModal showModal={showModal} onHideModal={closeModalAdd} />
       </Elements>
       <div className="header-contain flex flex-wrap justify-between items-center gap-4">
-        <h2 className="text-2xl md:text-3xl font-bold flex items-center gap-2 text-slate-200">
-          <FolderOpen className="flex-shrink-0 w-6 h-6 text-cyan-400" strokeWidth={2} />
+        <h2 className="text-2xl md:text-3xl font-bold flex items-center gap-2 text-bear-dark-900 dark:text-white">
+          <FolderOpen className="flex-shrink-0 w-6 h-6 text-bear-cyan" strokeWidth={2} />
           Todos los archivos
         </h2>
         <div className="relative flex items-center w-full md:w-80 max-w-full">
-          <Search className="absolute left-3 w-4 h-4 pointer-events-none text-slate-400" />
+          <Search className="absolute left-3 w-4 h-4 pointer-events-none text-gray-500 dark:text-gray-400" />
           <input
             placeholder="Buscar"
-            className="w-full min-w-0 pl-10 pr-4 h-11 rounded-lg text-sm font-medium bg-slate-900 border border-slate-700 text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+            className="w-full min-w-0 pl-10 pr-4 h-11 rounded-lg text-sm font-medium bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-bear-cyan focus:border-transparent"
             onChange={(e: any) => {
               startSearch(e.target.value);
             }}
@@ -401,17 +401,17 @@ function Home() {
         </div>
       )}
       {/* Tabla desktop: visible solo en md+ */}
-      <div className="hidden md:block rounded-xl border border-slate-800 overflow-hidden">
+      <div className="hidden md:block rounded-xl border border-gray-200 dark:border-bear-dark-100 overflow-hidden">
         <table className="min-w-full text-left">
           <thead>
-            <tr className="bg-slate-900 text-slate-400 text-sm font-medium border-b border-slate-800">
+            <tr className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 text-sm font-medium border-b border-gray-200 dark:border-bear-dark-100">
               <th className="py-3 px-4">Nombre</th>
               <th className="py-3 px-4 text-right w-24">Tamaño</th>
               <th className="py-3 px-4 text-right w-36">Modificado</th>
               <th className="py-3 px-4 text-right w-28">Acciones</th>
             </tr>
           </thead>
-          <tbody className="bg-slate-950 divide-y divide-slate-800 text-sm">
+          <tbody className="bg-bear-light-100 dark:bg-bear-dark-900 divide-y divide-gray-200 dark:divide-bear-dark-100 text-sm">
             {!loader ? (
               sortArrayByName(files).map((file: IFiles, idx: number) => {
                 const gbSize = file.size != null && Number.isFinite(file.size)
@@ -429,13 +429,13 @@ function Home() {
                 });
                 return (
                   <tr key={`table-${idx}`}>
-                    <td className="py-3 px-4 text-slate-300 font-medium">
+                    <td className="py-3 px-4 text-gray-700 dark:text-gray-300 font-medium">
                       <div className="flex items-center gap-3 min-w-0">
                         {file.type === 'd' ? (
                           <>
-                            <FolderOpen className="flex-shrink-0 w-4 h-4 text-cyan-400" strokeWidth={2} aria-hidden />
+                            <FolderOpen className="flex-shrink-0 w-4 h-4 text-bear-cyan" strokeWidth={2} aria-hidden />
                             <span
-                              className="text-white truncate cursor-pointer hover:underline"
+                              className="text-bear-dark-900 dark:text-white truncate cursor-pointer hover:underline"
                               title={file.name}
                               onClick={() => goToFolder({ next: file.name })}
                             >
@@ -449,7 +449,7 @@ function Home() {
                             ) : (
                               <button
                                 type="button"
-                                className="flex-shrink-0 w-9 h-9 inline-flex items-center justify-center rounded-lg bg-slate-800 text-cyan-400 hover:bg-cyan-500 hover:text-white transition-colors"
+                                className="flex-shrink-0 w-9 h-9 inline-flex items-center justify-center rounded-lg bg-gray-200 dark:bg-bear-dark-100 text-bear-cyan hover:bg-bear-cyan hover:text-bear-dark-500 transition-colors"
                                 onClick={() => playFile(file, idx)}
                                 title="Reproducir"
                                 aria-label="Reproducir"
@@ -457,18 +457,18 @@ function Home() {
                                 <Play className="w-4 h-4" aria-hidden />
                               </button>
                             )}
-                            <span className="text-white truncate" title={file.name}>{file.name}</span>
+                            <span className="text-bear-dark-900 dark:text-white truncate" title={file.name}>{file.name}</span>
                           </>
                         )}
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-right tabular-nums text-slate-300">{sizeLabel}</td>
-                    <td className="py-3 px-4 text-right text-slate-300 whitespace-nowrap">{modifiedStr}</td>
+                    <td className="py-3 px-4 text-right tabular-nums text-gray-700 dark:text-gray-300">{sizeLabel}</td>
+                    <td className="py-3 px-4 text-right text-gray-700 dark:text-gray-300 whitespace-nowrap">{modifiedStr}</td>
                     <td className="py-3 px-4 text-right">
                       {file.type === 'd' && file.size != null && gbSize <= 50 && (
                         <button
                           type="button"
-                          className="inline-flex items-center justify-center p-2 rounded-lg hover:bg-slate-800 text-cyan-500 hover:text-cyan-400"
+                          className="inline-flex items-center justify-center p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-bear-dark-100 text-bear-cyan hover:opacity-90"
                           onClick={(e) => { e.stopPropagation(); checkAlbumSize(file, idx); }}
                           title="Descargar"
                           aria-label="Descargar"
@@ -482,7 +482,7 @@ function Home() {
                         ) : (
                           <button
                             type="button"
-                            className="inline-flex items-center justify-center p-2 rounded-lg hover:bg-slate-800 text-cyan-500 hover:text-cyan-400"
+                            className="inline-flex items-center justify-center p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-bear-dark-100 text-bear-cyan hover:opacity-90"
                             onClick={() => downloadFile(file, idx)}
                             title="Descargar"
                             aria-label="Descargar"
@@ -496,12 +496,12 @@ function Home() {
                 );
               })
             ) : (
-              <tr><td colSpan={4} className="py-8 text-center text-slate-400">Cargando…</td></tr>
+              <tr><td colSpan={4} className="py-8 text-center text-gray-500 dark:text-gray-400">Cargando…</td></tr>
             )}
           </tbody>
         </table>
         {showPagination && (
-          <div className="border-t border-slate-800 p-4">
+          <div className="border-t border-gray-200 dark:border-bear-dark-100 p-4 bg-bear-light-100 dark:bg-bear-dark-500">
             <Pagination
               totalLoader={paginationLoader}
               totalData={totalSearch}
@@ -515,8 +515,8 @@ function Home() {
       </div>
 
       {/* Cards móvil: visible solo en móvil */}
-      <div className="folders-navigation-container block md:hidden flex flex-col gap-0 rounded-xl bg-slate-900 shadow-sm border border-slate-800 overflow-hidden">
-        <div className="fb-header grid grid-cols-[1fr_auto_auto] gap-4 py-3 px-4 bg-slate-800/80 text-xs uppercase tracking-wider text-slate-400">
+      <div className="folders-navigation-container block md:hidden flex flex-col gap-0 rounded-xl bg-bear-light-100 dark:bg-bear-dark-500 shadow-sm border border-gray-200 dark:border-bear-dark-100 overflow-hidden">
+        <div className="fb-header grid grid-cols-[1fr_auto_auto] gap-4 py-3 px-4 bg-gray-100 dark:bg-bear-dark-400 text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">
           <div>Nombre</div>
           <div className="text-right hidden sm:block w-20">Tamaño</div>
           <div className="text-right hidden md:block w-36">Modificado</div>
@@ -537,7 +537,7 @@ function Home() {
                 hour: '2-digit',
                 minute: '2-digit',
               });
-              const rowGridClass = "fb-row fb-row-card grid grid-cols-[1fr_auto] md:grid-cols-[1fr_auto_auto] items-center gap-4 p-4 rounded-none border-b border-slate-800 bg-slate-900 hover:bg-slate-800/50 transition-colors";
+              const rowGridClass = "fb-row fb-row-card grid grid-cols-[1fr_auto] md:grid-cols-[1fr_auto_auto] items-center gap-4 p-4 rounded-none border-b border-gray-200 dark:border-bear-dark-100 bg-bear-light-100 dark:bg-bear-dark-500 hover:bg-gray-100 dark:hover:bg-bear-dark-400/50 transition-colors";
               const col2Mobile = "col-start-2 row-start-1 md:col-start-auto md:row-start-auto";
               return (
                 <div key={'files ' + idx}>
@@ -549,18 +549,18 @@ function Home() {
                       }}
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <FolderOpen className="flex-shrink-0 w-5 h-5 text-cyan-600 dark:text-cyan-400" strokeWidth={2} aria-hidden />
-                        <span className="text-base md:text-lg font-medium text-slate-700 dark:text-slate-200 truncate" title={file.name}>{file.name}</span>
+                        <FolderOpen className="flex-shrink-0 w-5 h-5 text-bear-cyan" strokeWidth={2} aria-hidden />
+                        <span className="text-base md:text-lg font-medium text-gray-900 dark:text-gray-200 truncate" title={file.name}>{file.name}</span>
                       </div>
-                      <div className={`hidden sm:flex text-right items-center justify-end tabular-nums text-sm text-slate-500 dark:text-slate-400 w-20 flex-shrink-0 md:justify-end ${col2Mobile}`}>
+                      <div className={`hidden sm:flex text-right items-center justify-end tabular-nums text-sm text-gray-600 dark:text-gray-400 w-20 flex-shrink-0 md:justify-end ${col2Mobile}`}>
                         {sizeLabel}
                       </div>
                       <div className={`flex items-center gap-3 flex-shrink-0 md:justify-end ${col2Mobile}`}>
-                        <span className="text-sm text-slate-500 dark:text-slate-400 hidden md:inline whitespace-nowrap w-36">{modifiedStr}</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400 hidden md:inline whitespace-nowrap w-36">{modifiedStr}</span>
                         {file.size != null && gbSize <= 50 && (
                           <button
                             type="button"
-                            className="fb-btn-download-icon p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-cyan-500 hover:text-cyan-400"
+                            className="fb-btn-download-icon p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-bear-dark-100 transition-colors text-bear-cyan hover:opacity-90"
                             onClick={(e) => {
                               e.stopPropagation();
                               checkAlbumSize(file, idx);
@@ -586,7 +586,7 @@ function Home() {
                         ) : (
                           <button
                             type="button"
-                            className="fb-btn-play flex-shrink-0 min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500 hover:text-white transition-colors"
+                            className="fb-btn-play flex-shrink-0 min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg bg-gray-200 dark:bg-bear-dark-100 text-bear-cyan hover:bg-bear-cyan hover:text-bear-dark-500 transition-colors"
                             onClick={() => playFile(file, idx)}
                             title="Reproducir"
                             aria-label="Reproducir"
@@ -594,19 +594,19 @@ function Home() {
                             <Play className="w-5 h-5" aria-hidden />
                           </button>
                         )}
-                        <span className="text-base md:text-lg font-medium text-slate-700 dark:text-slate-200 truncate" title={file.name}>{file.name}</span>
+                        <span className="text-base md:text-lg font-medium text-gray-900 dark:text-gray-200 truncate" title={file.name}>{file.name}</span>
                       </div>
-                      <div className={`hidden sm:flex text-right items-center justify-end tabular-nums text-sm text-slate-400 w-20 flex-shrink-0 md:justify-end ${col2Mobile}`}>
+                      <div className={`hidden sm:flex text-right items-center justify-end tabular-nums text-sm text-gray-600 dark:text-gray-400 w-20 flex-shrink-0 md:justify-end ${col2Mobile}`}>
                         {sizeLabel}
                       </div>
                       <div className={`flex items-center gap-3 flex-shrink-0 md:justify-end ${col2Mobile}`}>
-                        <span className="text-sm text-slate-400 hidden md:inline whitespace-nowrap w-36">{modifiedStr}</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400 hidden md:inline whitespace-nowrap w-36">{modifiedStr}</span>
                         {loadDownload && index === idx ? (
                           <Spinner size={2} width={0.2} color="var(--app-btn-text)" />
                         ) : (
                           <button
                             type="button"
-                            className="fb-btn-download-icon p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-cyan-500 hover:text-cyan-400"
+                            className="fb-btn-download-icon p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-bear-dark-100 transition-colors text-bear-cyan hover:opacity-90"
                             onClick={() => downloadFile(file, idx)}
                             title="Descargar"
                             aria-label="Descargar"

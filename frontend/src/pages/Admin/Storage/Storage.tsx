@@ -40,27 +40,27 @@ export const Storage = () => {
           <Spinner size={3} width={0.3} color="var(--app-accent)" />
         </div>
       ) : (
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 max-w-2xl">
-          <h2 className="text-white font-bold text-lg mb-4" style={{ fontFamily: "Poppins, sans-serif" }}>
+        <div className="rounded-xl border border-gray-200 dark:border-bear-dark-100 bg-bear-light-100 dark:bg-bear-dark-500/80 p-6 max-w-2xl">
+          <h2 className="text-bear-dark-900 dark:text-white font-bold text-lg mb-4 font-poppins">
             Espacio usado
           </h2>
-          <p className="text-slate-300 text-sm mb-4">
+          <p className="text-gray-700 dark:text-gray-300 text-sm mb-4">
             {transformBiteToGb(storage.used_storage)} GB de {transformBiteToGb(storage.total_storage)} GB
           </p>
-          <div className="h-4 rounded-lg bg-slate-800 overflow-hidden flex">
+          <div className="h-4 rounded-lg bg-gray-200 dark:bg-bear-dark-100 overflow-hidden flex">
             <div
-              className="bg-slate-600 shrink-0"
+              className="bg-gray-400 dark:bg-bear-dark-300 shrink-0"
               style={{ width: "5%", minWidth: "5%" }}
               title="Reservado"
             />
             <div
-              className="bg-cyan-500 transition-all duration-500"
+              className="bg-bear-cyan transition-all duration-500"
               style={{ width: barWidth }}
             />
           </div>
-          <div className="mt-4 space-y-2 text-sm text-slate-400">
-            <p>Espacio reservado: <span className="text-slate-300">{transformBiteToGb(storage.reserved_space)} GB</span></p>
-            <p>Espacio disponible: <span className="text-slate-300">{transformBiteToGb(storage.available_storage)} GB</span></p>
+          <div className="mt-4 space-y-2 text-sm text-gray-600 dark:text-gray-400">
+            <p>Espacio reservado: <span className="text-gray-700 dark:text-gray-300">{transformBiteToGb(storage.reserved_space)} GB</span></p>
+            <p>Espacio disponible: <span className="text-gray-700 dark:text-gray-300">{transformBiteToGb(storage.available_storage)} GB</span></p>
           </div>
         </div>
       )}

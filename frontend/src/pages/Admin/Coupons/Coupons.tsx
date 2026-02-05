@@ -69,7 +69,7 @@ export const Coupons = () => {
       <button
         type="button"
         onClick={() => setShow(true)}
-        className="inline-flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white font-medium rounded-lg px-4 py-2 transition-colors"
+        className="inline-flex items-center gap-2 bg-bear-gradient text-bear-dark-500 hover:opacity-95 font-medium rounded-pill px-4 py-2 transition-colors"
       >
         <Plus size={18} />
         Crear cupón
