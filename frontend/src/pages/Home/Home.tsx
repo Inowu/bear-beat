@@ -368,12 +368,12 @@ function Home() {
       </div>
       {pastFile.length > 0 && !showPagination && (
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex flex-wrap items-center gap-1 font-mono" style={{ color: 'var(--fb-accent)', fontSize: 'var(--app-font-size-body)' }}>
+          <div className="flex flex-wrap items-center gap-1 font-mono text-sm text-cyan-500 dark:text-cyan-400">
             {pastFile.map((file: any, index) => {
               const isLastFolder = pastFile.length === index + 1;
               if (isLastFolder) {
                 return (
-                  <span key={`folder_${index}`} style={{ color: 'var(--fb-accent)' }}>
+                  <span key={`folder_${index}`}>
                     {file}
                   </span>
                 );
@@ -381,15 +381,14 @@ function Home() {
               return (
                 <span key={`folder_${index}`} className="flex items-center gap-1">
                   <span
-                    className="cursor-pointer opacity-90 hover:opacity-100"
-                    style={{ color: 'var(--fb-accent)' }}
+                    className="cursor-pointer opacity-90 hover:opacity-100 hover:underline"
                     onClick={() => {
                       goToFolder({ folder: index + 1 });
                     }}
                   >
                     {file}
                   </span>
-                  <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--fb-text-muted)' }} />
+                  <ChevronRight className="w-4 h-4 flex-shrink-0 text-cyan-500 dark:text-cyan-400" />
                 </span>
               );
             })}
@@ -407,13 +406,13 @@ function Home() {
           </button>
         </div>
       )}
-      <div className="folders-navigation-container flex flex-col gap-3">
-        <div className="fb-header grid grid-cols-[1fr_auto_auto] gap-4 py-3 px-4 rounded-lg bg-slate-100 dark:bg-slate-900 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
+      <div className="folders-navigation-container flex flex-col gap-3 rounded-xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div className="fb-header grid grid-cols-[1fr_auto_auto] gap-4 py-3 px-4 bg-slate-100 dark:bg-slate-800/50 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
           <div>Nombre</div>
           <div className="text-right hidden sm:block">Tamaño</div>
           <div className="text-right hidden md:block">Modificado</div>
         </div>
-        <div className="folders-cards-container flex flex-col gap-3">
+        <div className="folders-cards-container flex flex-col gap-3 p-3 pt-0">
           {!loader ? (
             sortArrayByName(files).map((file: IFiles, idx: number) => {
               const gbSize = file.size != null && Number.isFinite(file.size)
@@ -448,7 +447,7 @@ function Home() {
                         {file.size != null && gbSize <= 50 && (
                           <button
                             type="button"
-                            className="fb-btn-download-icon p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            className="fb-btn-download-icon p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-cyan-500 hover:text-cyan-400"
                             onClick={(e) => {
                               e.stopPropagation();
                               checkAlbumSize(file, idx);
@@ -459,7 +458,7 @@ function Home() {
                             {loadDownload && index === idx ? (
                               <Spinner size={2} width={0.2} color="var(--app-btn-text)" />
                             ) : (
-                              <Download className="w-5 h-5 text-cyan-600 dark:text-cyan-400" aria-hidden />
+                              <Download className="w-[18px] h-[18px]" aria-hidden />
                             )}
                           </button>
                         )}
@@ -492,12 +491,12 @@ function Home() {
                         ) : (
                           <button
                             type="button"
-                            className="fb-btn-download-icon p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            className="fb-btn-download-icon p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-cyan-500 hover:text-cyan-400"
                             onClick={() => downloadFile(file, idx)}
                             title="Descargar"
                             aria-label="Descargar"
                           >
-                            <Download className="w-5 h-5 text-cyan-600 dark:text-cyan-400" aria-hidden />
+                            <Download className="w-[18px] h-[18px]" aria-hidden />
                           </button>
                         )}
                       </div>

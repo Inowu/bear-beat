@@ -3,7 +3,7 @@ import AsideNavbar from "../components/AsideNavbar/AsideNavbar";
 import { Outlet, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar/Navbar";
 import { useUserContext } from "../contexts/UserContext";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDownloadContext } from "../contexts/DownloadContext";
 import { FileLoader } from "../components/FileLoader/FileLoader";
 import { applyRouteSeo } from "../utils/seo";
@@ -14,6 +14,12 @@ function MainLayout() {
   const location = useLocation();
 
   const [asideOpen, setAsideOpen] = useState<boolean>(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+
+  const handleAsideHide = () => {
+    menuButtonRef.current?.focus();
+    setAsideOpen(false);
+  };
 
   useEffect(() => {
     setAsideOpen(false);
@@ -28,13 +34,13 @@ function MainLayout() {
 
   return (
     <div className="main-layout-main-container">
-      {userToken && <Navbar setAsideOpen={setAsideOpen} />}
+      {userToken && <Navbar setAsideOpen={setAsideOpen} menuButtonRef={menuButtonRef} />}
       <div className={`content-container landing-layout${isLanding ? " content-container--landing" : ""}`}>
         {userToken && (
-          <AsideNavbar show={asideOpen} onHide={() => setAsideOpen(false)} />
+          <AsideNavbar show={asideOpen} onHide={handleAsideHide} />
         )}
         {showDownload && currentUser !== null && <FileLoader />}
-        <div className={`content-container-inner ${isLanding ? "" : "content-area-app min-h-screen font-poppins text-slate-900 dark:text-slate-100 bg-slate-50 dark:bg-slate-950"}`}>
+        <div className={`content-container-inner ${isLanding ? "" : "content-area-app min-h-screen font-poppins text-slate-900 dark:text-slate-100 bg-slate-50 dark:bg-slate-950 transition-colors duration-300"}`}>
           <Outlet />
         </div>
       </div>

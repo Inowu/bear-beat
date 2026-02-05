@@ -16,6 +16,7 @@ import { addDays } from 'date-fns';
  * Crea una Stripe Checkout Session (redirect a la página de pago de Stripe).
  * El usuario paga en checkout.stripe.com y Stripe redirige a success_url o cancel_url.
  * La suscripción se activa vía webhook customer.subscription.updated (status active).
+ * Deploy: este procedure debe estar en el backend en producción para que /comprar funcione.
  */
 export const createStripeCheckoutSession = shieldedProcedure
   .input(

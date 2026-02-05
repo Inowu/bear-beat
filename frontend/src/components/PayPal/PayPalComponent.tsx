@@ -9,7 +9,7 @@ import {
     CreateOrderActions,
     OnClickActions
 } from "@paypal/paypal-js/types/components/buttons"
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import trpc from "../../api";
 
 interface Props {
@@ -21,12 +21,20 @@ interface Props {
 
 export default function PayPalComponent(props: Props) {
     const components = "buttons";
-    let buttons;
+    const buttonsRef = useRef<{ render: (selector: string) => Promise<unknown> } | null>(null);
+    const isMountedRef = useRef(true);
     const buttonId = `paypal-button-container-${props.plan.id}`;
 
     useEffect(() => {
+        isMountedRef.current = true;
         loadAndRender();
-    });
+        return () => {
+            isMountedRef.current = false;
+            const el = document.getElementById(buttonId);
+            if (el) el.innerHTML = "";
+            buttonsRef.current = null;
+        };
+    }, []);
 
     const handleManyChat = async () => {
         try {
@@ -37,19 +45,21 @@ export default function PayPalComponent(props: Props) {
     };
 
     function render(options: PayPalButtonsComponentOptions) {
+        if (!isMountedRef.current) return;
+        const container = document.getElementById(buttonId);
+        if (!container || !container.isConnected) return;
         if (window.paypal && window.paypal.Buttons) {
-            // Helps prevent PayPal from rendering multiple buttons.
             const previousPayPalButton = document.querySelector('.paypal-container');
-            if (previousPayPalButton) {
+            if (previousPayPalButton && previousPayPalButton !== container) {
                 previousPayPalButton.innerHTML = "";
             }
-
-            buttons = window.paypal.Buttons(options);
+            const buttons = window.paypal.Buttons(options);
+            buttonsRef.current = buttons;
             buttons.render(`#${buttonId}`).catch((err: any) => {
-                console.warn(
-                    "Warning - Caught an error when attempting to render component",
-                    err
-                );
+                if (!isMountedRef.current) return;
+                const isContainerRemoved = /container.*removed|removed from DOM/i.test(String(err?.message ?? ""));
+                if (isContainerRemoved) return;
+                console.warn("Warning - Caught an error when attempting to render component", err);
             });
         }
     }

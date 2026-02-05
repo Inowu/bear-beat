@@ -42,8 +42,13 @@ nav {
       transition: color 0.2s ease;
     }
 
-    div.burger-btn {
+    .burger-btn {
       display: none;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      padding: 0;
+      color: inherit;
     }
   }
   .nav-right {
@@ -164,7 +169,7 @@ nav {
   @include respond-to(desktop) {
 
     .header {
-      div.burger-btn {
+      .burger-btn {
         display: flex;
         justify-content: center;
         align-items: center;

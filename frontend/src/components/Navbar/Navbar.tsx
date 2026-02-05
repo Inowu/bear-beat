@@ -20,6 +20,7 @@ import { SetStateAction, useState, useRef, useEffect } from "react";
 
 interface NavbarPropsI {
   setAsideOpen: React.Dispatch<SetStateAction<boolean>>;
+  menuButtonRef?: React.RefObject<HTMLButtonElement | null>;
 }
 
 interface AdminToken {
@@ -38,7 +39,7 @@ function Navbar(props: NavbarPropsI) {
   const { handleLogout, currentUser, handleLogin } = useUserContext();
   const { mode, theme, setMode } = useTheme();
   const navigate = useNavigate();
-  const { setAsideOpen } = props;
+  const { setAsideOpen, menuButtonRef } = props;
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -67,12 +68,15 @@ function Navbar(props: NavbarPropsI) {
   return (
     <nav>
       <div className="header">
-        <div
+        <button
+          type="button"
+          ref={menuButtonRef}
           className="burger-btn"
           onClick={() => setAsideOpen((prev) => !prev)}
+          aria-label="Abrir menú"
         >
           <FontAwesomeIcon icon={faBars} />
-        </div>
+        </button>
         <img src={osoLogo} alt="" />
         <h2>Bear Beat</h2>
       </div>

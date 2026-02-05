@@ -82,9 +82,17 @@ function Checkout() {
         }
       })
       .catch((err: { message?: string }) => {
-        setErrorMessage(err?.message ?? "Error al preparar el pago. Intenta de nuevo.");
+        const msg = err?.message ?? "";
+        const isProcedureMissing =
+          /mutation.*procedure|createStripeCheckoutSession/i.test(msg);
+        setErrorMessage(
+          isProcedureMissing
+            ? "El pago con tarjeta no está disponible en este momento. Por favor, intenta más tarde o contacta a soporte."
+            : msg || "Error al preparar el pago. Intenta de nuevo."
+        );
         setShowError(true);
         setRedirecting(false);
+        autoFetchedRef.current = false;
       });
   }, [priceId, plan?.id, redirecting]);
 

@@ -66,7 +66,7 @@ function Instructions() {
 
   return (
     <div
-      className="instructions-main-container min-h-screen"
+      className="instructions-main-container min-h-screen dark:text-slate-300 [&_p]:dark:text-slate-300 [&_li]:dark:text-slate-300 [&_span]:dark:text-slate-300"
       style={{ background: "var(--in-bg)" }}
     >
       <div className="max-w-3xl mx-auto px-4 py-8 md:py-12">
