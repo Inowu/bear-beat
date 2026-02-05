@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "start": "NODE_PATH=$(npm root --quiet -g) node concurrently.js"
+    "start": "NODE_PATH=$(npm root --quiet -g) node concurrently.js",
+    "build": "npm run build --workspace=frontend"
   },
   "dependencies": {
     "await-of": "^3.1.1",

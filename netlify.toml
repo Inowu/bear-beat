@@ -1,11 +1,18 @@
-# Build del frontend (monorepo)
+# Deploy del frontend (React SPA) en monorepo bear-beat
+# https://docs.netlify.com/configure-builds/file-based-configuration/
+
 [build]
-  base = "frontend"
+  # Opción A: base en frontend (recomendado)
+  base    = "frontend"
   command = "npm run build"
   publish = "build"
 
-# SPA: todas las rutas deben servir index.html (evitar 404 en recargas y enlaces directos)
+# Si en Netlify UI tienes "Base directory" en blanco, pon en la UI:
+# Build command: cd frontend && npm run build
+# Publish directory: frontend/build
+
+# Redirecciones para SPA (todas las rutas → index.html)
 [[redirects]]
   from = "/*"
-  to = "/index.html"
+  to   = "/index.html"
   status = 200

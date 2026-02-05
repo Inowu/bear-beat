@@ -1,12 +1,6 @@
 import { IOxxoData, IPlans, ISpeiData } from "../../interfaces/Plans";
 import "./PlanCard.scss";
 import { useLocation, useNavigate } from "react-router-dom";
-
-const CheckIconCyan = () => (
-  <svg className="plan-card-check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
-    <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
-  </svg>
-);
 import { plans } from "../../utils/Constants";
 import { useCallback, useEffect, useState } from "react";
 import trpc from "../../api";
@@ -23,6 +17,12 @@ import PayPalComponent from "../../components/PayPal/PayPalComponent";
 import { useCookies } from "react-cookie";
 import { trackPurchase, trackViewPlans } from "../../utils/facebookPixel";
 import { trackManyChatConversion, trackManyChatPurchase, MC_EVENTS } from "../../utils/manychatPixel";
+
+const CheckIconCyan = () => (
+  <svg className="plan-card-check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+    <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
+  </svg>
+);
 
 
 interface PlanCardPropsI {
