@@ -1,5 +1,7 @@
+import './instrument';
 import path from 'path';
 import pm2 from 'pm2';
+import * as Sentry from '@sentry/node';
 import { config } from 'dotenv';
 import { createExpressMiddleware } from '@trpc/server/adapters/express';
 import express from 'express';
@@ -90,6 +92,12 @@ async function main() {
     app.get('/download-dir', downloadDirEndpoint);
 
     app.get('/api/catalog-stats', catalogStatsEndpoint);
+
+    app.get('/debug-sentry', (_req, _res) => {
+      throw new Error('My first Sentry error (Backend Bear Beat)!');
+    });
+
+    Sentry.setupExpressErrorHandler(app);
 
     app.listen(process.env.PORT);
 
