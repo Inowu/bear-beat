@@ -8,8 +8,7 @@ import { OrderStatus } from './interfaces/order-status.interface';
 import { log } from '../../server';
 import { hasActiveSubscription } from './utils/hasActiveSub';
 import { PaymentService } from './services/types';
-import { Orders, Plans, PrismaClient } from '@prisma/client';
-import { SessionUser } from '../auth/utils/serialize-user';
+import { Orders, Plans, PrismaClient, Users } from '@prisma/client';
 
 export const subscribeWithCashConekta = shieldedProcedure
   .input(
@@ -87,6 +86,13 @@ export const subscribeWithCashConekta = shieldedProcedure
         });
       }
 
+      if (plan.moneda?.toUpperCase() !== 'MXN') {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'OXXO y SPEI solo están disponibles para planes en pesos (MXN). Elige otro método de pago.',
+        });
+      }
+
       const existingOrder = await prisma.orders.findFirst({
         where: {
           AND: [
@@ -127,13 +133,17 @@ export const subscribeWithCashConekta = shieldedProcedure
               `[CONEKTA_CASH] Order ${existingOrder.id} is expired, creating a new one`,
             );
 
+            const fullUserForOrder = await prisma.users.findFirst({
+              where: { id: user.id },
+            });
+            if (!fullUserForOrder) throw new TRPCError({ code: 'NOT_FOUND', message: 'Usuario no encontrado' });
             const newConektaOrder = await createCashPaymentOrder({
               plan,
               customerId: userConektaId,
               paymentMethod,
               order: existingOrder,
               prisma,
-              user,
+              user: fullUserForOrder,
             });
 
             return newConektaOrder.data.charges?.data?.[0]
@@ -159,6 +169,16 @@ export const subscribeWithCashConekta = shieldedProcedure
         },
       });
 
+      const fullUser = await prisma.users.findFirst({
+        where: { id: session!.user!.id },
+      });
+      if (!fullUser) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Usuario no encontrado',
+        });
+      }
+
       try {
         const conektaOrder = await createCashPaymentOrder({
           plan,
@@ -166,7 +186,7 @@ export const subscribeWithCashConekta = shieldedProcedure
           paymentMethod,
           order,
           prisma,
-          user,
+          user: fullUser,
         });
 
         return conektaOrder.data.charges?.data?.[0].payment_method as any;
@@ -196,34 +216,37 @@ const createCashPaymentOrder = async ({
   paymentMethod: 'cash' | 'spei';
   order: Orders;
   prisma: PrismaClient;
-  user: SessionUser;
+  user: Users;
 }) => {
+  const expiresAt = Math.floor(addDays(new Date(), 30).getTime() / 1000);
+  const amountCents = Math.round(Number(plan.price) * 100);
+
   const conektaOrder = await conektaOrders.createOrder({
-    currency: plan.moneda.toUpperCase(),
+    currency: 'MXN',
     customer_info: {
-      customer_id: customerId,
+      name: (user.username || user.email?.split('@')[0] || 'Cliente').trim().slice(0, 255),
+      email: user.email ?? '',
+      phone: (user.phone || '+5215555555555').replace(/\s/g, ''),
     },
     line_items: [
       {
         name: plan.name,
         quantity: 1,
-        unit_price: Number(plan.price) * 100,
+        unit_price: amountCents,
       },
     ],
     charges: [
       {
-        amount: Number(plan.price) * 100,
+        amount: amountCents,
         payment_method: {
           type: paymentMethod.toLowerCase(),
-          expires_at: Number(
-            (addDays(new Date(), 30).getTime() / 1000).toFixed(),
-          ),
+          expires_at: expiresAt,
         },
       },
     ],
     metadata: {
-      orderId: order.id,
-      userId: user.id,
+      orderId: String(order.id),
+      userId: String(user.id),
     },
   });
 

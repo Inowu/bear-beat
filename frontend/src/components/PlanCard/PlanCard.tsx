@@ -1,8 +1,12 @@
 import { IOxxoData, IPlans, ISpeiData } from "../../interfaces/Plans";
 import "./PlanCard.scss";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck } from "@fortawesome/free-solid-svg-icons";
 import { useLocation, useNavigate } from "react-router-dom";
+
+const CheckIconCyan = () => (
+  <svg className="plan-card-check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+    <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
+  </svg>
+);
 import { plans } from "../../utils/Constants";
 import { useCallback, useEffect, useState } from "react";
 import trpc from "../../api";
@@ -227,44 +231,45 @@ function PlanCard(props: PlanCardPropsI) {
   useEffect(() => { retreivePaypalPlan() }, [retreivePaypalPlan]);
 
   return (
-    <div
-      className={
-        "plan-card-main-card " +
-        (plan.moneda === "usd" ? "resp-plan " : "") +
-        (currentPlan ? "plan-white-card" : "")
-      }
-    >
-      {currentPlan && <p className="announce">Actual</p>}
-      <div className="c-row">
-        <h2>{plan.name}</h2>
-      </div>
-      <div className="c-row">
-        <h3>
-          ${plan.price}.00 {plan.moneda}
-        </h3>
-      </div>
-      <div className="c-row">
-        <p>{plan.description}</p>
-      </div>
-      <div className="c-row">
-        <p>Duración (En días): {plan.duration}</p>
-      </div>
-      {plans[0].included.map((ad) => {
-        return (
-          <div className="c-row" key={ad}>
-            <p>
-              <FontAwesomeIcon icon={faCheck} /> {ad}
-            </p>
-          </div>
-        );
-      })}
-      <div className="c-row">
-        <p>Contenido en gigas disponibles: {plan.gigas.toString()} al mes</p>
-      </div>
-      <div className="paypal-data">
-        <p className="text">Pagos seguros en línea</p>
-      </div>
-      <div className="button-contain" id="abandonedCartBtn">
+    <div className={"plan-card-wrapper " + (plan.moneda === "usd" ? "resp-plan " : "")}>
+      <div className="plan-card-glow" aria-hidden />
+      <div
+        className={
+          "plan-card-main-card " +
+          (plan.moneda === "usd" ? "resp-plan " : "") +
+          (currentPlan ? "plan-white-card" : "")
+        }
+      >
+        {currentPlan && <p className="announce">Actual</p>}
+        <div className="c-row">
+          <h2 className="plan-card-title">{plan.name}</h2>
+        </div>
+        <div className="c-row plan-card-price-row">
+          <span className="plan-card-price-amount">${plan.price}.00</span>
+          <span className="plan-card-price-currency">{plan.moneda}</span>
+        </div>
+        <div className="plan-card-gb-highlight">
+          <span className="plan-card-gb-value">{plan.gigas.toString()} GB</span>
+          <span className="plan-card-gb-label">de descarga al mes</span>
+        </div>
+        <div className="c-row">
+          <p className="plan-card-subtitle">{plan.description}</p>
+        </div>
+        <div className="c-row">
+          <p className="plan-card-subtitle">Duración: {plan.duration} días</p>
+        </div>
+        <ul className="plan-card-benefits">
+          {plans[0].included.map((ad) => (
+            <li key={ad} className="plan-card-benefit-item">
+              <CheckIconCyan />
+              <span>{ad}</span>
+            </li>
+          ))}
+        </ul>
+        <div className="paypal-data">
+          <p className="text">Pagos seguros en línea</p>
+        </div>
+        <div className="button-contain" id="abandonedCartBtn">
         {currentPlan ? (
           <button className="silver-bg" onClick={handleCancelModal}>
             Cancelar plan
@@ -272,7 +277,7 @@ function PlanCard(props: PlanCardPropsI) {
         ) : (
           <>
             {pathname === "/actualizar-planes" ? (
-              <button onClick={handleChangeModal}>Cambiar plan</button>
+              <button className="plan-card-btn-primary" onClick={handleChangeModal}>Cambiar plan</button>
             ) : (
               <>
                 {/* {(plan.moneda === "mxn" || plan.moneda === "MXN") && (
@@ -285,18 +290,18 @@ function PlanCard(props: PlanCardPropsI) {
                   </button>
                 )} */}
                 {(plan.moneda === "mxn" || plan.moneda === "MXN") && (
-                  <button className="silver-bg" onClick={payWithSpei}>
+                  <button className="plan-card-btn-secondary silver-bg" onClick={payWithSpei}>
                     Pagar vía Spei
                   </button>
                 )}
                 {selectMethod && ppPlan && (selectedPlan !== plan.id) && (
-                  <button onClick={() => selectMethod(plan.id)}>
+                  <button className="plan-card-btn-primary" onClick={() => selectMethod(plan.id)}>
                     COMPRAR
                   </button>
                 )}
                 {(selectMethod && ppPlan && (selectedPlan === plan.id)) && (
                   <>
-                    <button onClick={() => handleCheckout(plan.id)}>
+                    <button className="plan-card-btn-primary" onClick={() => handleCheckout(plan.id)}>
                       COMPRAR CON TARJETA
                     </button>
                     {ppPlan !== null &&
@@ -311,7 +316,7 @@ function PlanCard(props: PlanCardPropsI) {
                   </>
                 )}
                 {(!selectMethod || !ppPlan) && (
-                  <button onClick={() => handleCheckout(plan.id)}>
+                  <button className="plan-card-btn-primary" onClick={() => handleCheckout(plan.id)}>
                     COMPRAR CON TARJETA
                   </button>
                 )}
@@ -367,6 +372,7 @@ function PlanCard(props: PlanCardPropsI) {
         onHide={handleErrorModal}
         message={errorMSG}
       />
+    </div>
     </div>
   );
 }

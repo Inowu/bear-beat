@@ -77,6 +77,30 @@
   --ph-price-header-mexico-bg: #06b6d4; /* cyan-500 */
   --ph-price-header-mexico-text: #000000;
 
+  /* Plan card (/planes) — Light: tarjeta clara, acentos cyan */
+  --plan-card-bg: #ffffff;
+  --plan-card-border: #e2e8f0;
+  --plan-card-border-hover: rgba(6, 182, 212, 0.5);
+  --plan-card-title: #0f172a;
+  --plan-card-price: #0f172a;
+  --plan-card-price-currency: #64748b;
+  --plan-card-gb-bg: rgba(241, 245, 249, 0.8);
+  --plan-card-gb-value: #0891b2;
+  --plan-card-gb-label: #64748b;
+  --plan-card-subtitle: #64748b;
+  --plan-card-benefit: #475569;
+  --plan-card-check: #06b6d4;
+  --plan-card-paypal-text: #64748b;
+  --plan-card-btn-bg: linear-gradient(to right, #06b6d4, #2563eb);
+  --plan-card-btn-text: #ffffff;
+  --plan-card-btn-glow: rgba(6, 182, 212, 0.35);
+  --plan-card-glow-bg: rgba(6, 182, 212, 0.08);
+  --plan-card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1), 0 0 30px rgba(6, 182, 212, 0.06);
+  --plan-card-shadow-hover: 0 25px 50px -12px rgba(0, 0, 0, 0.12), 0 0 40px rgba(6, 182, 212, 0.12);
+  --plan-card-secondary-bg: #f1f5f9;
+  --plan-card-secondary-border: #e2e8f0;
+  --plan-card-secondary-text: #475569;
+
   /* Auth (Login/Register): inputs bordes visibles */
   --auth-input-border: #cbd5e1; /* slate-300 */
   --auth-input-bg: #ffffff;
@@ -195,6 +219,30 @@ html.dark {
   --ph-price-header-global-text: #ffffff;
   --ph-price-header-mexico-bg: #06b6d4;
   --ph-price-header-mexico-text: #000000;
+
+  /* Plan card (/planes) — Dark: cyberpunk slate + cyan */
+  --plan-card-bg: #0f172a;
+  --plan-card-border: #1e293b;
+  --plan-card-border-hover: rgba(6, 182, 212, 0.5);
+  --plan-card-title: #ffffff;
+  --plan-card-price: #ffffff;
+  --plan-card-price-currency: #94a3b8;
+  --plan-card-gb-bg: rgba(30, 41, 59, 0.5);
+  --plan-card-gb-value: #22d3ee;
+  --plan-card-gb-label: #94a3b8;
+  --plan-card-subtitle: #94a3b8;
+  --plan-card-benefit: #cbd5e1;
+  --plan-card-check: #06b6d4;
+  --plan-card-paypal-text: #94a3b8;
+  --plan-card-btn-bg: linear-gradient(to right, #06b6d4, #2563eb);
+  --plan-card-btn-text: #ffffff;
+  --plan-card-btn-glow: rgba(6, 182, 212, 0.4);
+  --plan-card-glow-bg: rgba(6, 182, 212, 0.15);
+  --plan-card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 30px rgba(6, 182, 212, 0.08);
+  --plan-card-shadow-hover: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(6, 182, 212, 0.15);
+  --plan-card-secondary-bg: #1e293b;
+  --plan-card-secondary-border: #334155;
+  --plan-card-secondary-text: #cbd5e1;
 
   /* Auth: inputs dark */
   --auth-input-border: #334155;

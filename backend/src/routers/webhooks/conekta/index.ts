@@ -152,12 +152,9 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
       break;
     }
     case ConektaEvents.ORDER_PAID: {
-      // Ignore with card for now
-      if (
-        payload.data?.object.charges.data[0].payment_method.object.startsWith(
-          'card',
-        )
-      ) {
+      const paymentMethodObj = payload.data?.object?.charges?.data?.[0]?.payment_method;
+      const pmObjectType = typeof paymentMethodObj?.object === 'string' ? paymentMethodObj.object : '';
+      if (pmObjectType.startsWith('card')) {
         log.info(
           `[CONEKTA_WH] Ignoring card payment for user ${user.id}, payload: ${payloadStr}`,
         );
@@ -168,15 +165,16 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
         `[CONEKTA_WH] Paid order event received for user ${user.id}, payload: ${payloadStr} `,
       );
 
-      const orderId = payload.data?.object.metadata.orderId;
+      const orderId = payload.data?.object?.metadata?.orderId;
 
-      if (!orderId) {
+      if (orderId == null || orderId === '') {
         log.error(
           `[CONEKTA_WH] Order id not found in payload: ${payloadStr}, returning from conekta webhook`,
         );
         return;
       }
 
+      const orderIdNum = Number(orderId);
       let productOrPlan: Plans | products | null = null;
       let order: Orders | product_orders | null = null;
 
@@ -187,7 +185,7 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
 
         order = await prisma.product_orders.update({
           where: {
-            id: orderId,
+            id: orderIdNum,
           },
           data: {
             status: OrderStatus.PAID,
@@ -196,7 +194,7 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
       } else {
         order = (await prisma.orders.update({
           where: {
-            id: payload.data?.object.metadata.orderId,
+            id: orderIdNum,
           },
           data: {
             status: OrderStatus.PAID,
@@ -221,7 +219,7 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
         await addGBToAccount({
           prisma,
           user,
-          orderId: Number(orderId),
+          orderId: orderIdNum,
         });
       } else {
         try {
@@ -233,10 +231,10 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
         }
 
         await subscribe({
-          subId: subscription.id,
+          subId: (payload.data?.object as any)?.id ?? subscription.id,
           prisma,
           user,
-          orderId: Number(orderId),
+          orderId: orderIdNum,
           service: PaymentService.CONEKTA,
           expirationDate: addDays(
             new Date(),
@@ -285,16 +283,33 @@ export const getCustomerIdFromPayload = async (
         },
       });
       break;
-    case ConektaEvents.ORDER_PAID:
-      user = await prisma.users.findFirst({
-        where: {
-          OR: [
-            {
-              id: payload.data?.object.metadata.userId,
-            },
-          ],
-        },
-      });
+    case ConektaEvents.ORDER_VOIDED:
+    case ConektaEvents.ORDER_DECLINED:
+    case ConektaEvents.ORDER_EXPIRED:
+    case ConektaEvents.ORDER_CANCELED:
+    case ConektaEvents.ORDER_CHARGED_BACK: {
+      const orderIdMeta = payload.data?.object?.metadata?.orderId;
+      if (orderIdMeta) {
+        const ord = await prisma.orders.findFirst({
+          where: { id: Number(orderIdMeta) },
+          select: { user_id: true },
+        });
+        if (ord?.user_id) {
+          user = await prisma.users.findFirst({
+            where: { id: ord.user_id },
+          });
+        }
+      }
+      break;
+    }
+    case ConektaEvents.ORDER_PAID: {
+      const userId = payload.data?.object?.metadata?.userId;
+      const userIdNum = typeof userId === 'number' ? userId : Number(userId);
+      if (userIdNum && !Number.isNaN(userIdNum)) {
+        user = await prisma.users.findFirst({
+          where: { id: userIdNum },
+        });
+      }
 
       if (!user) {
         log.error('[CONEKTA_WH] Trying to find user by email in database');
@@ -305,13 +320,11 @@ export const getCustomerIdFromPayload = async (
           },
         });
 
-        if (user) {
+        if (user && payload.data?.object?.customer_info?.customer_id) {
           await prisma.users.update({
-            where: {
-              id: user.id,
-            },
+            where: { id: user.id },
             data: {
-              conekta_cusid: payload.data?.object?.customer_info?.customer_id,
+              conekta_cusid: payload.data.object.customer_info.customer_id,
             },
           });
         }
@@ -355,6 +368,8 @@ const shouldHandleEvent = (payload: EventResponse): boolean => {
     case ConektaEvents.ORDER_DECLINED:
     case ConektaEvents.ORDER_CANCELED:
     case ConektaEvents.ORDER_PAID:
+    case ConektaEvents.ORDER_EXPIRED:
+    case ConektaEvents.ORDER_CHARGED_BACK:
       return true;
     default:
       log.info(
