@@ -1,21 +1,10 @@
-# Deploy del frontend (React SPA) en monorepo bear-beat
-# https://docs.netlify.com/configure-builds/file-based-configuration/
-#
-# Variable requerida para Sentry (configurar en Netlify Dashboard → Environment variables):
-#   REACT_APP_SENTRY_DSN
-
+# Build y publicación del frontend (monorepo)
 [build]
-  # Opción A: base en frontend (recomendado)
-  base    = "frontend"
   command = "npm run build"
-  publish = "build"
+  publish = "frontend/build"
 
-# Si en Netlify UI tienes "Base directory" en blanco, pon en la UI:
-# Build command: cd frontend && npm run build
-# Publish directory: frontend/build
-
-# Redirecciones para SPA (todas las rutas → index.html)
-[[redirects]]
-  from = "/*"
-  to   = "/index.html"
-  status = 200
+# SPA: todas las rutas a index.html (ya está en frontend/public/_redirects)
+# [[redirects]]
+#   from = "/*"
+#   to = "/index.html"
+#   status = 200
