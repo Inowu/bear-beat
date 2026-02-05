@@ -355,11 +355,12 @@ function Home() {
           <Search className="absolute left-3 w-4 h-4 pointer-events-none" style={{ color: 'var(--fb-text-muted)' }} />
           <input
             placeholder="Buscar"
-            className="w-full min-w-[200px] pl-10 pr-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
+            className="w-full min-w-[200px] pl-10 pr-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent min-h-[44px]"
             style={{
               background: 'var(--fb-input-bg)',
               border: '1px solid var(--fb-input-border)',
               color: 'var(--fb-text)',
+              fontSize: 'var(--app-font-size-body)',
             }}
             onChange={(e: any) => {
               startSearch(e.target.value);
@@ -369,7 +370,7 @@ function Home() {
       </div>
       {pastFile.length > 0 && !showPagination && (
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex flex-wrap items-center gap-1 font-mono text-sm" style={{ color: 'var(--fb-accent)' }}>
+          <div className="flex flex-wrap items-center gap-1 font-mono" style={{ color: 'var(--fb-accent)', fontSize: 'var(--app-font-size-body)' }}>
             {pastFile.map((file: any, index) => {
               const isLastFolder = pastFile.length === index + 1;
               if (isLastFolder) {
@@ -400,10 +401,10 @@ function Home() {
             onClick={() => {
               goToFolder({ back: true });
             }}
-            className="fb-volver inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-colors"
-            style={{ color: 'var(--fb-text-muted)' }}
+            className="fb-volver inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-colors min-h-[44px]"
+            style={{ color: 'var(--fb-text-muted)', fontSize: 'var(--app-font-size-body)' }}
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-5 h-5 flex-shrink-0" />
             Volver
           </button>
         </div>

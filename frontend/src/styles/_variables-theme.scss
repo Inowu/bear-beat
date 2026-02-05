@@ -157,9 +157,9 @@
   --app-font-weight-body: 500;
   --app-font-weight-heading: 700;
   --app-font-weight-heading-strong: 800;
-  /* Escala tipográfica IGUAL que Home: body 1.9–2rem, títulos grandes */
-  --app-font-size-body: clamp(1.05rem, 3.5vw, 1.9rem);
-  --app-font-size-body-lg: clamp(1.1rem, 3.5vw, 2rem);
+  /* Escala tipográfica: mínimo legible (nada de hormigas), body 1.2–1.9rem */
+  --app-font-size-body: clamp(1.2rem, 3.5vw, 1.9rem);
+  --app-font-size-body-lg: clamp(1.25rem, 3.5vw, 2rem);
   --app-font-size-h4: clamp(1.2rem, 4vw, 1.5rem);
   --app-font-size-h3: clamp(1.35rem, 4.5vw, 1.75rem);
   --app-font-size-h2: clamp(1.5rem, 5.5vw, 2.25rem);
@@ -398,8 +398,8 @@ html.dark {
   --app-font-weight-body: 500;
   --app-font-weight-heading: 700;
   --app-font-weight-heading-strong: 800;
-  --app-font-size-body: clamp(1.05rem, 3.5vw, 1.9rem);
-  --app-font-size-body-lg: clamp(1.1rem, 3.5vw, 2rem);
+  --app-font-size-body: clamp(1.2rem, 3.5vw, 1.9rem);
+  --app-font-size-body-lg: clamp(1.25rem, 3.5vw, 2rem);
   --app-font-size-h4: clamp(1.2rem, 4vw, 1.5rem);
   --app-font-size-h3: clamp(1.35rem, 4.5vw, 1.75rem);
   --app-font-size-h2: clamp(1.5rem, 5.5vw, 2.25rem);
