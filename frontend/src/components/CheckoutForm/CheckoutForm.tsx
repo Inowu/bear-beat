@@ -12,10 +12,10 @@ import { useCookies } from "react-cookie";
 import { trackPurchase } from "../../utils/facebookPixel";
 import { trackManyChatConversion, trackManyChatPurchase, MC_EVENTS } from "../../utils/manychatPixel";
 import { manychatApi } from "../../api/manychat";
+import { Lock, Shield } from "lucide-react";
 
 declare let window: any;
 
-// Fase 1: solo botón "Continuar al pago" (cupones deshabilitados por ahora)
 export function CheckoutFormIntro(props: {
   plan: IPlans;
   setClientSecret: (secret: string) => void;
@@ -53,11 +53,11 @@ export function CheckoutFormIntro(props: {
     <form className="checkout-form" onSubmit={(e) => e.preventDefault()}>
       <div className="button-contain">
         {loader ? (
-          <Spinner size={4} width={0.4} color="#00e2f7" />
+          <Spinner size={4} width={0.4} color="#06b6d4" />
         ) : (
           <button
             type="button"
-            className="btn primary-pill linear-bg"
+            className="checkout-cta-btn checkout-cta-btn--primary"
             onClick={handleContinuar}
             disabled={!plan?.id}
           >
@@ -70,7 +70,6 @@ export function CheckoutFormIntro(props: {
   );
 }
 
-// Fase 2: Payment Element + Confirmar pago (ya tenemos clientSecret)
 export function CheckoutFormPayment(props: {
   plan: IPlans;
   clientSecret: string;
@@ -148,23 +147,33 @@ export function CheckoutFormPayment(props: {
   return (
     <form className="checkout-form checkout-form-payment" onSubmit={handleConfirm}>
       <div className="c-row payment-element-wrap">
-        <PaymentElement
-          options={{
-            layout: "tabs",
-          }}
-        />
+        <PaymentElement options={{ layout: "tabs" }} />
       </div>
       <div className="button-contain">
-        <button type="button" className="btn secondary-pill" onClick={onReset}>
+        <button type="button" className="checkout-cta-btn checkout-cta-btn--secondary" onClick={onReset}>
           Volver
         </button>
         {loader ? (
-          <Spinner size={4} width={0.4} color="#00e2f7" />
+          <Spinner size={4} width={0.4} color="#06b6d4" />
         ) : (
-          <button type="submit" className="btn primary-pill linear-bg" disabled={!stripe || !elements}>
-            Confirmar pago
+          <button
+            type="submit"
+            className="checkout-cta-btn checkout-cta-btn--primary"
+            disabled={!stripe || !elements}
+          >
+            🔥 DESBLOQUEAR MIS 500GB AHORA
           </button>
         )}
+      </div>
+      <div className="checkout-security-badges">
+        <p className="checkout-security-badges__line">
+          <Lock className="checkout-security-badges__icon" size={14} />
+          Pagos encriptados con seguridad bancaria (256-bit SSL).
+        </p>
+        <p className="checkout-security-badges__line">
+          <Shield className="checkout-security-badges__icon" size={14} />
+          Garantía de satisfacción.
+        </p>
       </div>
       <ErrorModal show={showError} onHide={() => setShowError(false)} message={errorMessage} />
       <SuccessModal
