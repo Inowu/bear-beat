@@ -378,7 +378,6 @@ function PlanCard(props: PlanCardPropsI) {
         message={errorMSG}
       />
     </div>
-    </div>
   );
 }
 export default PlanCard;
