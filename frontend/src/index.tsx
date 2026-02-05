@@ -137,13 +137,12 @@ initFacebookPixel();
 if (process.env.REACT_APP_SENTRY_DSN) {
   Sentry.init({
     dsn: process.env.REACT_APP_SENTRY_DSN,
+    release: "bear-beat@1.0.0",
     sendDefaultPii: true,
     debug: true,
-    integrations: [
-      Sentry.browserTracingIntegration(),
-      // Sentry.replayIntegration(),
-    ],
-    tracesSampleRate: 0.1,
+    // Sin tracing ni replay para evitar 429: solo se envía el error al hacer clic en "Test Sentry Error"
+    // integrations: [ Sentry.browserTracingIntegration() ],
+    // tracesSampleRate: 0.1,
   });
 }
 
