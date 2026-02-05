@@ -10,6 +10,10 @@ aside {
   top: 0;
   transition: background-color 0.2s ease;
 
+  .aside-drawer-header {
+    display: none;
+  }
+
   .aside-logo {
     width: 100%;
   }
@@ -156,11 +160,26 @@ aside {
       transform: translateX(0);
     }
 
-    .aside-logo {
-      display: block;
-      max-width: 180px;
-      padding: 1rem 1.5rem;
+    .aside-drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       flex-shrink: 0;
+      padding: 1rem 1.5rem;
+      padding-top: calc(1rem + env(safe-area-inset-top, 0));
+      padding-right: 3.5rem;
+      border-bottom: 1px solid var(--aside-overlay-border);
+    }
+
+    .aside-drawer-title {
+      font-size: var(--app-font-size-h3);
+      font-weight: 600;
+      color: var(--aside-overlay-text);
+      font-family: "Poppins", sans-serif;
+    }
+
+    .aside-logo {
+      display: none;
     }
 
     .aside-close-btn {

@@ -98,7 +98,7 @@ export function AddUsersModal(props: IAddUsersModal) {
             value={formik.values.username}
             onChange={formik.handleChange}
           />
-          {formik.errors.username && <div className="formik">{formik.errors.username}</div>}
+          {formik.errors.username && <div className="error-formik">{formik.errors.username}</div>}
         </div>
         <div className="c-row">
           <input
@@ -109,7 +109,7 @@ export function AddUsersModal(props: IAddUsersModal) {
             onChange={formik.handleChange}
             type="text"
           />
-          {formik.errors.email && <div className="formik">{formik.errors.email}</div>}
+          {formik.errors.email && <div className="error-formik">{formik.errors.email}</div>}
         </div>
         <div className="c-row">
           <label>Tipo de usuario</label>
@@ -154,7 +154,7 @@ export function AddUsersModal(props: IAddUsersModal) {
             onChange={formik.handleChange}
             inputClassName="modal-password-input"
           />
-          {formik.errors.password && <div className="formik">{formik.errors.password}</div>}
+          {formik.errors.password && <div className="error-formik">{formik.errors.password}</div>}
         </div>
         <div className="c-row">
           <PasswordInput
@@ -166,7 +166,7 @@ export function AddUsersModal(props: IAddUsersModal) {
             inputClassName="modal-password-input"
           />
           {formik.errors.passwordConfirmation && (
-            <div className="formik">{formik.errors.passwordConfirmation}</div>
+            <div className="error-formik">{formik.errors.passwordConfirmation}</div>
           )}
         </div>
         {!loader ? (
@@ -175,7 +175,7 @@ export function AddUsersModal(props: IAddUsersModal) {
           </button>
         ) : (
           <div style={{ marginBottom: 15 }}>
-            <Spinner size={3} width={0.3} color="#00e2f7" />
+            <Spinner size={3} width={0.3} color="var(--app-accent)" />
           </div>
         )}
         <button className="btn-cancel" onClick={onHideModal} type="reset">

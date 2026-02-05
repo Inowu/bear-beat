@@ -3,6 +3,7 @@
 // Aplica a max-width 768px (tablet y móvil)
 // ============================================================
 @import "src/styles/mixin.scss";
+@import "src/styles/_variables-theme.scss";
 @import "src/styles/landing-design.scss";
 
 $admin-mobile-card-padding: 18px;
@@ -38,9 +39,10 @@ $admin-mobile-radius: 14px;
       }
 
       h1 {
-        font-size: 2rem;
+        font-size: var(--app-font-size-h2);
         margin: 0 0 8px 0;
         line-height: 1.2;
+        color: var(--ad-title);
       }
 
       .btn-addUsers,
@@ -52,9 +54,9 @@ $admin-mobile-radius: 14px;
         width: 100%;
         min-height: $admin-mobile-touch;
         padding: 14px 20px;
-        font-size: 1.2rem;
+        font-size: var(--app-font-size-body-lg);
         border-radius: $admin-mobile-radius;
-        font-weight: 600;
+        font-weight: var(--app-font-weight-heading);
       }
     }
 
@@ -69,11 +71,11 @@ $admin-mobile-radius: 14px;
         min-height: $admin-mobile-touch;
         padding: 14px 18px;
         padding-right: 48px;
-        font-size: 1.15rem;
+        font-size: var(--app-font-size-body);
         border-radius: $admin-mobile-radius;
 
         input {
-          font-size: 1.15rem;
+          font-size: var(--app-font-size-body);
         }
       }
 
@@ -82,12 +84,12 @@ $admin-mobile-radius: 14px;
         .date-input {
           min-height: $admin-mobile-touch;
           padding: 14px 18px;
-          font-size: 1.15rem;
+          font-size: var(--app-font-size-body);
           border-radius: $admin-mobile-radius;
         }
 
         p {
-          font-size: 1.15rem;
+          font-size: var(--app-font-size-body);
           margin-bottom: 6px;
         }
       }
@@ -100,7 +102,7 @@ $admin-mobile-radius: 14px;
       input {
         min-height: $admin-mobile-touch;
         padding: 14px 18px;
-        font-size: 1.15rem;
+        font-size: var(--app-font-size-body);
         border-radius: $admin-mobile-radius;
       }
 
@@ -108,7 +110,7 @@ $admin-mobile-radius: 14px;
       .btn-addPhone {
         min-height: $admin-mobile-touch;
         padding: 14px 20px;
-        font-size: 1.2rem;
+        font-size: var(--app-font-size-body-lg);
         border-radius: $admin-mobile-radius;
       }
     }
@@ -154,9 +156,10 @@ $admin-mobile-radius: 14px;
           max-width: none;
           padding: 12px 0;
           border: none;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-          font-size: 1.3rem;
+          border-bottom: 1px solid var(--ad-border);
+          font-size: var(--app-font-size-body-lg);
           line-height: 1.4;
+          color: var(--ad-text);
 
           &:last-child {
             border-bottom: none;
@@ -166,9 +169,9 @@ $admin-mobile-radius: 14px;
           &[data-label]::before {
             content: attr(data-label);
             display: block;
-            font-weight: 600;
-            color: $bear-blue-dim;
-            font-size: 1.1rem;
+            font-weight: var(--app-font-weight-heading);
+            color: var(--ad-accent);
+            font-size: var(--app-font-size-body);
             margin-bottom: 4px;
             letter-spacing: 0.02em;
           }
@@ -177,7 +180,7 @@ $admin-mobile-radius: 14px;
           &:not(.wrap-td) button {
             min-height: $admin-mobile-touch;
             padding: 12px 18px;
-            font-size: 1.15rem;
+            font-size: var(--app-font-size-body);
             border-radius: 12px;
             width: 100%;
             margin-top: 4px;
@@ -206,8 +209,8 @@ $admin-mobile-radius: 14px;
             width: 100%;
             min-height: $admin-mobile-touch;
             padding: 14px 18px;
-            font-size: 1.2rem;
-            font-weight: 600;
+            font-size: var(--app-font-size-body-lg);
+            font-weight: var(--app-font-weight-heading);
             border-radius: 12px;
           }
 
@@ -225,9 +228,9 @@ $admin-mobile-radius: 14px;
           .dropdown-content button {
             min-height: 52px;
             padding: 14px 18px;
-            font-size: 1.2rem;
+            font-size: var(--app-font-size-body-lg);
             text-align: left;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            border-bottom: 1px solid var(--ad-border);
 
             &:last-child {
               border-bottom: none;
@@ -242,7 +245,7 @@ $admin-mobile-radius: 14px;
           > button:not(.dropbtn) {
             min-height: $admin-mobile-touch;
             padding: 12px 18px;
-            font-size: 1.15rem;
+            font-size: var(--app-font-size-body);
             border-radius: 12px;
             flex: 1 1 140px;
             min-width: 0;
@@ -251,7 +254,6 @@ $admin-mobile-radius: 14px;
           svg {
             min-width: 48px;
             min-height: 48px;
-            font-size: 1.5rem;
           }
         }
       }
@@ -282,7 +284,7 @@ $admin-mobile-radius: 14px;
       .right-side .selected,
       .right-side .unselected,
       .right-side p {
-        font-size: 1.2rem;
+        font-size: var(--app-font-size-body-lg);
       }
 
       .right-side svg {

@@ -1,5 +1,5 @@
 @import "src/styles/mixin.scss";
-@import "src/styles/variables-theme.scss";
+@import "src/styles/_variables-theme.scss";
 @import "../../styles/landing-design.scss";
 
 // Mobile-first (tipo app nativa) + tema light/dark (variables --ma-*), tipografía como Home
@@ -116,15 +116,17 @@
     margin-bottom: 0;
 
     .cancel {
-      color: white;
-      background-color: #ff2b2b;
+      color: var(--ma-btn-cancel-text);
+      background-color: var(--ma-btn-cancel-bg);
+      border: 1px solid var(--ma-btn-cancel-border);
       padding: 10px 24px;
       border-radius: 100px;
       font-weight: 600;
-      min-height: 44px;
+      min-height: 48px;
+      font-size: var(--app-font-size-body);
 
       &:hover {
-        opacity: 0.8;
+        opacity: 0.9;
       }
     }
 
@@ -151,12 +153,6 @@
       font-weight: var(--app-font-weight-heading);
       color: var(--app-text-heading);
       text-align: center;
-    }
-
-    .cancel {
-      min-height: 48px;
-      padding: 14px 24px;
-      font-size: var(--app-font-size-body);
     }
 
     .user-info-container {
@@ -222,13 +218,13 @@
       }
 
       .no-items-container {
-        background: rgba(248, 215, 218, 0.15);
-        border: 1px solid rgba(245, 194, 199, 0.4);
+        background: var(--ma-btn-cancel-bg);
+        border: 1px solid var(--ma-btn-cancel-border);
         padding: 12px;
-        border-radius: 8px;
+        border-radius: 12px;
 
         p {
-          color: #f8a0a0;
+          color: var(--ma-badge-fail);
           margin: 0;
           font-size: var(--app-font-size-body);
         }
@@ -291,7 +287,7 @@
         }
 
         svg {
-          color: #ff6b6b;
+          color: var(--ma-badge-fail);
           cursor: pointer;
           min-width: 44px;
           min-height: 44px;

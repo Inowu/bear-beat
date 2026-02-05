@@ -1,0 +1,40 @@
+plugins = []
+headers = []
+
+[functions]
+
+[functions."*"]
+
+[build]
+publish = "/Users/gustavogarcia/Documents/CURSOR/BEAR BEAT REAL/bear-beat/frontend/build"
+publishOrigin = "config"
+commandOrigin = "config"
+base = "/Users/gustavogarcia/Documents/CURSOR/BEAR BEAT REAL/bear-beat"
+command = "npm run build"
+
+[build.environment]
+CI = "false"
+
+[build.processing]
+
+[build.processing.css]
+
+[build.processing.html]
+
+[build.processing.images]
+
+[build.processing.js]
+
+[build.services]
+
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]

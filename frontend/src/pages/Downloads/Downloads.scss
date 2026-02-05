@@ -1,5 +1,5 @@
 @import "src/styles/mixin.scss";
-@import "src/styles/variables-theme.scss";
+@import "src/styles/_variables-theme.scss";
 @import "../../styles/landing-design.scss";
 
 // Mobile-first — tipografía y colores alineados al Home (--app-*)
@@ -35,7 +35,8 @@
       }
 
       svg {
-        font-size: 2.6rem;
+        width: 2.6rem;
+        height: 2.6rem;
         color: var(--app-accent);
       }
     }
@@ -84,7 +85,8 @@
         min-height: 44px;
 
         svg {
-          font-size: 2.2rem;
+          width: 2.2rem;
+          height: 2.2rem;
           color: var(--app-accent);
         }
       }
@@ -147,7 +149,8 @@
       }
 
       svg {
-        font-size: 3.4rem;
+        width: 3.4rem;
+        height: 3.4rem;
       }
     }
 
@@ -168,7 +171,8 @@
       }
 
       .left-side svg {
-        font-size: 2.4rem;
+        width: 2.4rem;
+        height: 2.4rem;
       }
     }
   }

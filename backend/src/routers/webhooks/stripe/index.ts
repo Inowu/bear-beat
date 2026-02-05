@@ -321,14 +321,20 @@ const getPlanFromPayload = async (
   switch (payload.type) {
     case StripeEvents.SUBSCRIPTION_CREATED:
     case StripeEvents.SUBSCRIPTION_UPDATED:
-    case StripeEvents.SUBSCRIPTION_DELETED:
+    case StripeEvents.SUBSCRIPTION_DELETED: {
+      const subscription = payload.data.object as any;
+      const priceId =
+        subscription.plan?.id ??
+        subscription.items?.data?.[0]?.price?.id ??
+        subscription.items?.data?.[0]?.price;
+      if (!priceId) break;
       plan = await prisma.plans.findFirst({
         where: {
-          [getPlanKey(PaymentService.STRIPE)]: (payload.data.object as any).plan
-            .id,
+          [getPlanKey(PaymentService.STRIPE)]: priceId,
         },
       });
       break;
+    }
     default:
       break;
   }

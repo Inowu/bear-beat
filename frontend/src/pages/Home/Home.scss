@@ -76,107 +76,116 @@
       cursor: default;
     }
   }
+  /* Explorador: tipografía estándar (app nativa), títulos visibles, GB compacto */
   .folders-navigation-container {
     display: flex;
     flex-direction: column;
     gap: 0;
-    padding-bottom: 20px;
+    padding-bottom: 16px;
     border-radius: 12px;
+    font-size: var(--app-font-size-body);
 
-    /* Filas del explorador: letra grande, nada de hormigas */
-    .fb-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 14px 16px;
-      min-height: 56px;
-      border-bottom: 1px solid var(--fb-row-border);
-      font-size: var(--app-font-size-body-lg);
-      transition: background 0.15s ease;
+  /* Filas compactas tipo listado nativo (iOS Files / Spotify) */
+  .fb-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 16px;
+    min-height: 56px;
+    border-bottom: 1px solid var(--fb-row-border);
+    font-size: var(--app-font-size-body);
+    transition: background 0.15s ease;
 
-      @media (max-width: 768px) {
-        padding: 12px 14px;
-        min-height: 52px;
-        gap: 10px;
-        font-size: var(--app-font-size-body);
-      }
+    @media (max-width: 768px) {
+      padding: 10px 12px;
+      min-height: 52px;
+      gap: 8px;
     }
+  }
 
-    .fb-row-name {
-      flex: 1;
-      min-width: 0;
-      font-weight: 600;
-      color: var(--fb-text);
-      font-size: var(--app-font-size-body-lg);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+  /* Título: hasta 2 líneas, ellipsis; tooltip con nombre completo vía title */
+  .fb-row-name {
+    flex: 1;
+    min-width: 0;
+    font-weight: 500;
+    color: var(--fb-text);
+    font-size: var(--app-font-size-body);
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
+  }
+
+  .fb-row-meta {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--app-font-size-body);
+    color: var(--fb-text-muted);
+
+    @media (max-width: 768px) {
+      gap: 6px;
     }
+  }
 
-    .fb-row-meta {
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: var(--app-font-size-body-lg);
-      color: var(--fb-text-muted);
+  /* Tamaño en GB: compacto, no domina la fila */
+  .fb-row-size {
+    font-weight: 500;
+    font-size: 0.8125rem;
+    color: var(--fb-text-muted);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .fb-row-size-unit {
+    font-weight: 400;
+    opacity: 0.85;
+  }
 
-      @media (max-width: 768px) {
-        gap: 8px;
-        font-size: var(--app-font-size-body);
-      }
-    }
+  /* Iconos: un solo icono por fila, tamaño contenido */
+  .fb-icon-folder {
+    width: 1.375rem;
+    height: 1.375rem;
+    min-width: 1.375rem;
+    min-height: 1.375rem;
+  }
 
-    .fb-row-size {
-      font-weight: 600;
-      font-size: var(--app-font-size-body-lg);
-      color: var(--fb-text);
-      font-variant-numeric: tabular-nums;
+  .fb-icon-play,
+  .fb-icon-download {
+    width: 1.25rem;
+    height: 1.25rem;
+    min-width: 1.25rem;
+    min-height: 1.25rem;
+  }
 
-      @media (max-width: 768px) {
-        font-size: var(--app-font-size-body);
-      }
-    }
-
-    /* Iconos de carpeta y archivo: tamaño legible, no miniaturas */
-    .fb-icon-folder,
-    .fb-icon-file {
-      width: 1.5rem;
-      height: 1.5rem;
-      min-width: 1.5rem;
-      min-height: 1.5rem;
-    }
-
-    .fb-icon-play,
-    .fb-icon-download {
-      width: 1.25rem;
-      height: 1.25rem;
-      min-width: 1.25rem;
-      min-height: 1.25rem;
-    }
-
-    /* Botón Descargar: pill claro, acento, tipografía legible */
+    /* Botón Descargar: compacto en móvil (solo icono), pill en desktop */
     .fb-btn-download {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 6px;
+      min-width: 44px;
       min-height: 44px;
-      padding: 10px 18px;
-      border-radius: 100px;
+      padding: 8px 14px;
+      border-radius: 10px;
       border: none;
       background: var(--app-accent);
       color: var(--app-btn-text);
       font-size: var(--app-font-size-body);
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+      transition: background 0.2s, opacity 0.2s;
 
       &:hover {
         background: var(--app-accent-bright);
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(6, 182, 212, 0.35);
+      }
+
+      @media (max-width: 768px) {
+        padding: 8px 10px;
+        min-width: 44px;
       }
     }
 
@@ -186,14 +195,14 @@
       }
     }
 
-    /* Botón Play: mismo estilo táctil, sin texto */
+    /* Botón Play: un solo icono por fila, táctil */
     .fb-btn-play {
       min-width: 44px;
       min-height: 44px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      border-radius: 12px;
+      border-radius: 10px;
       border: none;
       background: var(--fb-row-hover-bg);
       color: var(--fb-accent);
@@ -236,12 +245,14 @@
 
     .header {
       display: grid;
-      grid-template-columns: 2fr 1fr 1fr;
-      border-bottom: 2px solid var(--fb-border);
+      grid-template-columns: 1fr auto auto;
+      border-bottom: 1px solid var(--fb-border);
       color: var(--fb-text-muted);
-      padding: 12px 16px;
+      padding: 10px 16px;
       font-weight: 600;
-      font-size: var(--app-font-size-body-lg);
+      font-size: 0.8125rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
       background: var(--fb-bg);
       border-radius: 12px 12px 0 0;
 
@@ -250,8 +261,8 @@
       }
 
       @media (max-width: 768px) {
-        padding: 10px 14px;
-        font-size: var(--app-font-size-body);
+        padding: 8px 12px;
+        font-size: 0.75rem;
       }
     }
 

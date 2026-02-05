@@ -85,7 +85,7 @@ export const PlanAdmin = () => {
     return (
       <AdminPageLayout title="Planes">
         <div className="flex justify-center py-12">
-          <Spinner size={3} width={0.3} color="#22d3ee" />
+          <Spinner size={3} width={0.3} color="var(--app-accent)" />
         </div>
       </AdminPageLayout>
     );

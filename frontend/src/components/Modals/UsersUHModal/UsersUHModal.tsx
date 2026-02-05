@@ -124,7 +124,7 @@ export function UsersUHModal(props: IUsersUHModal) {
               <form className="checkout-form" onSubmit={onSubmit}>
                 <div className="c-row">
                   {cardLoad ? (
-                    <Spinner size={2} width={0.2} color="#00e2f7" />
+                    <Spinner size={2} width={0.2} color="var(--app-accent)" />
                   ) : (
                     <>
                       {card === null ? (
@@ -176,7 +176,7 @@ export function UsersUHModal(props: IUsersUHModal) {
                 </div>
                 <div className="div-bottom">
                   {loader ? (
-                    <Spinner size={4} width={0.4} color="#00e2f7" />
+                    <Spinner size={4} width={0.4} color="var(--app-accent)" />
                   ) : (
                     <button className="btn">CONTRATAR PLAN AHORA</button>
                   )}

@@ -1,7 +1,8 @@
 @import "src/styles/mixin.scss";
+@import "src/styles/_variables-theme.scss";
 @import "../../styles/landing-design.scss";
 
-// Modales alineados al diseño del Home: tipografía --app-* y colores tema
+// Modales alineados al diseño del Home: tipografía --app-*, Poppins, colores tema
 .modal-container {
   display: flex;
   flex-direction: column;
@@ -15,13 +16,15 @@
   max-height: 90vh;
   overflow: hidden;
   color: var(--app-text-body);
+  font-family: "Poppins", sans-serif;
 
   button {
     padding-inline: 24px;
-    padding-block: 10px;
-    min-height: 44px;
-    font-weight: 600;
+    padding-block: 12px;
+    min-height: 48px;
+    font-weight: var(--app-font-weight-heading);
     font-size: var(--app-font-size-body);
+    font-family: "Poppins", sans-serif;
     border-radius: 100px;
     transition: opacity 0.2s, box-shadow 0.2s;
 
@@ -63,8 +66,8 @@
       color: var(--app-text-muted);
       font-size: var(--app-font-size-h3);
       cursor: pointer;
-      min-width: 44px;
-      min-height: 44px;
+      min-width: 48px;
+      min-height: 48px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -98,43 +101,55 @@
 
       .btn-cancel {
         background: transparent;
-        color: #ff6b6b;
-        border: 1px solid rgba(255, 107, 107, 0.5);
+        color: var(--ph-pain-bad);
+        border: 1px solid var(--ma-btn-cancel-border);
+        min-height: 48px;
+        font-size: var(--app-font-size-body);
         &:hover {
-          background: rgba(255, 107, 107, 0.15);
+          background: var(--ma-btn-cancel-bg);
         }
       }
 
       .btn-retry {
-        background: #ff6b6b;
-        color: white;
+        background: var(--ph-pain-bad);
+        color: var(--app-btn-text);
         border: none;
-        box-shadow: 0 0 12px rgba(255, 107, 107, 0.4);
+        min-height: 48px;
+        font-size: var(--app-font-size-body);
+        box-shadow: 0 0 12px var(--ph-glow-strong);
       }
 
       .btn-option-1 {
         background: transparent;
-        color: #51cf66;
-        border: 1px solid rgba(81, 207, 102, 0.5);
+        color: var(--ma-badge-success);
+        border: 1px solid var(--ma-badge-success);
+        min-height: 48px;
+        font-size: var(--app-font-size-body);
       }
 
       .btn-option-2 {
-        background: #51cf66;
-        color: #000;
+        background: var(--ma-badge-success);
+        color: var(--app-text-heading);
         border: none;
-        box-shadow: 0 0 12px rgba(81, 207, 102, 0.4);
+        min-height: 48px;
+        font-size: var(--app-font-size-body);
+        box-shadow: 0 0 12px rgba(34, 197, 94, 0.35);
       }
 
       .btn-option-3 {
-        background: #febc2e;
-        color: #000;
+        background: var(--ma-badge-pending);
+        color: var(--app-text-heading);
         border: none;
+        min-height: 48px;
+        font-size: var(--app-font-size-body);
       }
 
       .btn-option-4 {
-        background: linear-gradient(135deg, #00e6c1, $bear-blue-dim);
-        color: #000;
+        background: linear-gradient(135deg, var(--app-accent-bright), $bear-blue-dim);
+        color: var(--app-text-heading);
         border: none;
+        min-height: 48px;
+        font-size: var(--app-font-size-body);
         box-shadow: 0 0 16px $bear-blue-glow;
         &:hover:not(:disabled) {
           box-shadow: 0 0 24px $bear-blue-glow;
@@ -143,10 +158,12 @@
 
       .btn-option-5 {
         background: transparent;
-        color: $bear-blue-dim;
-        border: 1px solid $bear-blue-dim;
+        color: var(--app-accent);
+        border: 2px solid var(--app-accent);
+        min-height: 48px;
+        font-size: var(--app-font-size-body);
         &:hover {
-          background: rgba(8, 225, 247, 0.1);
+          background: var(--theme-accent-soft-bg);
         }
       }
     }
@@ -174,12 +191,14 @@
       .btn-success {
         width: fit-content;
         min-width: 140px;
+        min-height: 48px;
         padding: 12px 24px;
         background: var(--app-btn-bg);
         color: var(--app-btn-text);
         border: none;
         border-radius: 12px;
-        font-weight: 700;
+        font-weight: var(--app-font-weight-heading);
+        font-size: var(--app-font-size-body);
         box-shadow: var(--app-shadow);
         transition: background 0.2s, transform 0.2s;
         &:hover {
@@ -192,16 +211,20 @@
         background: transparent;
         color: var(--app-accent);
         border: 2px solid var(--app-accent);
+        min-height: 48px;
+        font-size: var(--app-font-size-body);
       }
 
       .btn-cancel {
         background: var(--ph-pain-bad);
-        color: #ffffff;
+        color: var(--app-btn-text);
         border: none;
         border-radius: 12px;
-        font-weight: 700;
+        font-weight: var(--app-font-weight-heading);
+        font-size: var(--app-font-size-body);
         padding: 12px 24px;
         min-width: 120px;
+        min-height: 48px;
         transition: opacity 0.2s, transform 0.2s;
         &:hover {
           opacity: 0.9;
@@ -256,14 +279,15 @@
 
 .card-input {
   background: var(--app-bg-soft);
-  border: 2px solid $card-glass-border;
+  border: 2px solid var(--app-border);
   color: var(--app-text-body);
   font-size: var(--app-font-size-body);
   padding: 12px 16px;
-  border-radius: 8px;
+  min-height: 48px;
+  border-radius: 12px;
   &:focus {
-    border-color: $bear-blue-dim;
-    box-shadow: 0 0 0 2px $bear-blue-glow;
+    border-color: var(--app-accent);
+    box-shadow: 0 0 0 2px var(--theme-accent-glow);
     outline: none;
   }
 }
@@ -276,31 +300,37 @@
   gap: 20px;
   color: var(--app-text-body);
   font-size: var(--app-font-size-body);
+  font-family: "Poppins", sans-serif;
 
   .c-row {
     position: relative;
     width: 100%;
+    margin-bottom: 4px;
     justify-content: center !important;
     label {
       font-weight: 500;
       color: var(--app-text-muted);
       font-size: var(--app-font-size-body);
     }
+    /* Mensajes de error en flujo (no absolutos) para no solapar la siguiente fila */
     .formik,
     .error-formik {
+      display: block;
       color: var(--ph-pain-bad);
       padding-left: 4px;
-      position: absolute;
-      bottom: -22px;
-      left: 0;
+      margin-top: 8px;
+      margin-bottom: 4px;
       font-size: var(--app-font-size-body);
-      font-weight: 600;
+      font-weight: var(--app-font-weight-heading);
+      line-height: 1.4;
+      min-height: 1.4em;
     }
 
     input,
     .password-input-wrap .password-input {
       border-radius: 12px;
       padding: 12px 20px;
+      min-height: 48px;
       width: 100%;
       background: var(--app-bg-soft);
       border: 2px solid var(--app-border);
@@ -308,7 +338,7 @@
       font-size: var(--app-font-size-body);
       &:focus {
         border-color: var(--app-accent);
-        box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.3);
+        box-shadow: 0 0 0 2px var(--theme-accent-glow);
         outline: none;
       }
     }
@@ -324,10 +354,13 @@
     }
 
     .error-formik {
+      display: block;
       color: var(--ph-pain-bad);
       font-size: var(--app-font-size-body);
-      font-weight: 600;
-      margin-top: 6px;
+      font-weight: var(--app-font-weight-heading);
+      margin-top: 8px;
+      margin-bottom: 4px;
+      line-height: 1.4;
     }
 
     .code {
@@ -372,20 +405,24 @@
 
   .btn-option-4 {
     border-radius: 100px;
-    padding: 8px 25px;
-    background: linear-gradient(135deg, #00e6c1, $bear-blue-dim);
-    color: #000;
-    font-weight: bold;
+    padding: 12px 25px;
+    min-height: 48px;
+    background: linear-gradient(135deg, var(--app-accent-bright), $bear-blue-dim);
+    color: var(--app-text-heading);
+    font-weight: var(--app-font-weight-heading);
+    font-size: var(--app-font-size-body);
     border: none;
     box-shadow: 0 0 16px $bear-blue-glow;
   }
 
   .btn-cancel {
     border-radius: 100px;
-    padding: 8px 25px;
-    background: #ff6b6b;
-    font-weight: bold;
-    color: white;
+    padding: 12px 25px;
+    min-height: 48px;
+    background: var(--ph-pain-bad);
+    font-weight: var(--app-font-weight-heading);
+    font-size: var(--app-font-size-body);
+    color: var(--app-btn-text);
     border: none;
   }
 
@@ -394,13 +431,18 @@
     font-size: var(--app-font-size-h2);
     cursor: pointer;
     align-self: flex-end;
+    min-width: 48px;
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     &:hover {
-      color: $bear-blue-dim;
+      color: var(--app-accent);
     }
   }
 
   h2 {
-    font-family: "Bear-font", "Bear Font2", sans-serif;
+    font-family: "Poppins", sans-serif;
     color: var(--app-text-heading);
     font-size: var(--app-font-size-h1);
     font-weight: var(--app-font-weight-heading);
@@ -414,44 +456,55 @@
   background: var(--app-bg-soft);
   color: var(--app-text-body);
   font-size: var(--app-font-size-body);
+  min-height: 48px;
   border-radius: 100px !important;
-  padding: 8px 20px !important;
+  padding: 12px 20px !important;
   width: 100% !important;
-  border: 2px solid $card-glass-border;
+  border: 2px solid var(--app-border);
   &:focus {
-    border-color: $bear-blue-dim;
-    box-shadow: 0 0 0 2px $bear-blue-glow;
+    border-color: var(--app-accent);
+    box-shadow: 0 0 0 2px var(--theme-accent-glow);
     outline: none;
   }
 }
 
 .c-row-price {
   display: flex;
+  flex-wrap: wrap;
   flex-direction: row !important;
   width: 100%;
   justify-content: center !important;
+  gap: 0.5rem 1rem;
 
   .formik,
   .error-formik {
+    display: block;
+    width: 100%;
+    flex-basis: 100%;
     color: var(--ph-pain-bad);
     padding-left: 4px;
+    margin-top: 6px;
     font-size: var(--app-font-size-body);
-    font-weight: 600;
+    font-weight: var(--app-font-weight-heading);
+    line-height: 1.4;
   }
 
   input {
     border-radius: 100px;
-    padding: 8px 25px;
+    padding: 12px 25px;
+    min-height: 48px;
     width: 80%;
     background: var(--app-bg-soft);
-    border: 2px solid $card-glass-border;
+    border: 2px solid var(--app-border);
     color: var(--app-text-body);
     font-size: var(--app-font-size-body);
   }
 
   select {
     width: 20% !important;
-    padding: 5px 10px !important;
+    min-height: 48px;
+    padding: 12px 16px !important;
+    font-size: var(--app-font-size-body);
   }
 }
 
@@ -461,10 +514,12 @@
   width: 100%;
   height: 100%;
   border-radius: 12px;
-  background: $bg-dark;
+  background: var(--app-bg-card);
   padding: 20px 0;
-  border: 1px solid $card-glass-border;
+  border: 1px solid var(--app-border);
   box-shadow: var(--app-shadow-card);
+  font-family: "Poppins", sans-serif;
+  font-size: var(--app-font-size-body);
 
   .top-side {
     display: flex;
@@ -475,8 +530,13 @@
       color: var(--app-text-muted);
       font-size: var(--app-font-size-h2);
       cursor: pointer;
+      min-width: 48px;
+      min-height: 48px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       &:hover {
-        color: $bear-blue-dim;
+        color: var(--app-accent);
       }
     }
   }
@@ -495,8 +555,9 @@
       background-size: cover;
       padding: 0 30px;
       .icon {
-        font-size: 70px;
-        color: $bear-blue-dim;
+        width: 4rem;
+        height: 4rem;
+        color: var(--app-accent);
       }
       .div-text {
         display: flex;
@@ -508,7 +569,7 @@
           font-weight: var(--app-font-weight-heading);
         }
         .blue {
-          color: $bear-blue-dim;
+          color: var(--app-accent);
         }
       }
       .div-bottom {
@@ -518,7 +579,7 @@
         justify-content: flex-end;
         width: 100%;
         .blue {
-          color: $bear-blue-dim;
+          color: var(--app-accent);
         }
       }
       h2 {
@@ -544,15 +605,15 @@
         height: 50vh;
         padding: 0 30px;
         justify-content: center;
-        background: $card-glass;
-        border: 2px solid $card-glass-border;
+        background: var(--app-bg-card);
+        border: 2px solid var(--app-border);
         border-radius: 12px;
         margin-top: 20px;
         .color-blue {
-          color: $bear-blue-dim;
+          color: var(--app-accent);
         }
         p {
-          color: $bear-blue-dim;
+          color: var(--app-accent);
           font-size: var(--app-font-size-body);
         }
       }
@@ -571,7 +632,7 @@
           }
         }
         .blue {
-          color: $bear-blue-dim;
+          color: var(--app-accent);
         }
       }
       .div-bottom {
@@ -581,11 +642,12 @@
         justify-content: center;
         .btn {
           width: 100%;
+          min-height: 48px;
           font-weight: var(--app-font-weight-heading);
           font-size: var(--app-font-size-body);
-          padding: 8px 10px;
-          background: linear-gradient(135deg, #00e6c1, $bear-blue-dim);
-          color: #000;
+          padding: 12px 16px;
+          background: linear-gradient(135deg, var(--app-accent-bright), $bear-blue-dim);
+          color: var(--app-text-heading);
           border: none;
           border-radius: 100px;
           box-shadow: 0 0 16px $bear-blue-glow;
@@ -646,8 +708,8 @@
       }
       .button-container button {
         padding-inline: 24px;
-        padding-block: 10px;
-        min-height: 44px;
+        padding-block: 12px;
+        min-height: 48px;
       }
     }
   }
@@ -660,13 +722,30 @@
 }
 
 @media (max-width: 576px) {
+  /* App nativa: modal tipo bottom sheet (pegado abajo, bordes redondeados arriba) */
+  .modal {
+    align-items: flex-end;
+    padding: 0;
+  }
   .modal-dialog {
-    margin: 8px;
-    max-width: calc(100% - 16px);
+    margin: 0;
+    max-width: 100%;
+    max-height: 92vh;
+  }
+  .modal-content {
+    border-radius: 20px 20px 0 0;
+    border-bottom: none;
+    max-height: 92vh;
+    -webkit-overflow-scrolling: touch;
   }
   .modal-container {
+    border-radius: 20px 20px 0 0;
+    max-height: 92vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     .header {
-      padding-inline: 12px;
+      padding-inline: max(12px, env(safe-area-inset-left, 0));
+      padding-inline-end: max(12px, env(safe-area-inset-right, 0));
       .title {
         font-size: var(--app-font-size-h2);
       }
@@ -675,7 +754,9 @@
       }
     }
     .bottom {
-      padding-inline: 12px;
+      padding-inline: max(12px, env(safe-area-inset-left, 0));
+      padding-inline-end: max(12px, env(safe-area-inset-right, 0));
+      padding-bottom: max(12px, env(safe-area-inset-bottom, 0) + 12px);
       padding-block: 12px;
       .content {
         font-size: var(--app-font-size-body);

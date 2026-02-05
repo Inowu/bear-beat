@@ -37,7 +37,7 @@ export const Storage = () => {
     <AdminPageLayout title="Almacenamiento del servidor">
       {isLoading ? (
         <div className="flex justify-center py-12">
-          <Spinner size={3} width={0.3} color="#22d3ee" />
+          <Spinner size={3} width={0.3} color="var(--app-accent)" />
         </div>
       ) : (
         <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 max-w-2xl">

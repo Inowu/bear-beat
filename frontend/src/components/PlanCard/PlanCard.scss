@@ -48,6 +48,10 @@
   color: var(--plan-card-title);
   height: auto;
   min-height: 420px;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 
   &:hover {
     border-color: var(--plan-card-border-hover);

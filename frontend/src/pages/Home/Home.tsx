@@ -1,11 +1,8 @@
 import './Home.scss';
 import {
-  Folder,
   FolderOpen,
   ArrowLeft,
   ChevronRight,
-  Music,
-  File,
   Search,
   Play,
   Download,
@@ -442,11 +439,11 @@ function Home() {
                       }}
                     >
                       <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <FolderOpen className="flex-shrink-0 fb-icon-folder" strokeWidth={2} style={{ color: 'var(--fb-accent)' }} />
-                        <span className="fb-row-name">{file.name}</span>
+                        <FolderOpen className="flex-shrink-0 fb-icon-folder" strokeWidth={2} style={{ color: 'var(--fb-accent)' }} aria-hidden />
+                        <span className="fb-row-name" title={file.name}>{file.name}</span>
                       </div>
                       <div className="fb-row-meta">
-                        <span className="fb-row-size">{gbSize.toFixed(2)} GB</span>
+                        <span className="fb-row-size">{gbSize >= 1 ? gbSize.toFixed(1) : gbSize.toFixed(2)} <span className="fb-row-size-unit">GB</span></span>
                         <span className="modified-column whitespace-nowrap hidden md:inline">
                           {new Date().toLocaleString('en-US', {
                             month: 'short',
@@ -499,15 +496,16 @@ function Home() {
                             type="button"
                             className="fb-btn-play flex-shrink-0"
                             onClick={() => playFile(file, idx)}
+                            title="Reproducir"
+                            aria-label="Reproducir"
                           >
-                            <Play className="fb-icon-play" style={{ color: 'inherit' }} />
+                            <Play className="fb-icon-play" style={{ color: 'inherit' }} aria-hidden />
                           </button>
                         )}
-                        <Music className="flex-shrink-0 fb-icon-file" strokeWidth={2} style={{ color: 'var(--fb-file-icon)' }} />
-                        <span className="fb-row-name">{file.name}</span>
+                        <span className="fb-row-name" title={file.name}>{file.name}</span>
                       </div>
                       <div className="fb-row-meta">
-                        <span className="fb-row-size">{gbSize.toFixed(2)} GB</span>
+                        <span className="fb-row-size">{gbSize >= 1 ? gbSize.toFixed(1) : gbSize.toFixed(2)} <span className="fb-row-size-unit">GB</span></span>
                         {loadDownload && index === idx ? (
                           <Spinner size={2} width={0.2} color="var(--app-btn-text)" />
                         ) : (
@@ -528,7 +526,7 @@ function Home() {
             })
           ) : (
             <div className="flex justify-center py-12">
-              <Spinner size={4} width={0.4} color="#22d3ee" />
+              <Spinner size={4} width={0.4} color="var(--app-accent)" />
             </div>
           )}
         </div>

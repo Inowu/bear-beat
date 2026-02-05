@@ -52,7 +52,7 @@ export function DeleteUOneUserModal(props: ICondition) {
                                 ? <button className='btn-option-4' onClick={removeUser}>
                                     Confirmar
                                 </button>
-                                : <div style={{ width: 189 }}><Spinner size={3} width={.3} color="#00e2f7" /></div>
+                                : <div style={{ width: 189 }}><Spinner size={3} width={.3} color="var(--app-accent)" /></div>
                         }
                     </div>
                 </div>

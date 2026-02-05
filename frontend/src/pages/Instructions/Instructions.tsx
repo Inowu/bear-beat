@@ -169,9 +169,13 @@ function Instructions() {
                   href={FILEZILLA_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-lg px-6 py-3 text-white font-medium bg-blue-600 hover:bg-blue-500 transition-colors"
+                  className="in-cta-primary"
+                  style={{
+                    background: "var(--app-btn-bg)",
+                    color: "var(--app-btn-text)",
+                  }}
                 >
-                  <Download className="w-5 h-5" />
+                  <Download className="w-5 h-5" style={{ flexShrink: 0 }} />
                   Descargar FileZilla (Gratis)
                 </a>
               </div>

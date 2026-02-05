@@ -1,70 +1,73 @@
+@import "../../../styles/_variables-theme.scss";
 @import "../../../styles/landing-design.scss";
 
 .modal-container {
-    width: 100vh;
-    font-size: var(--app-font-size-body);
+  width: 100vh;
+  font-size: var(--app-font-size-body);
+  font-family: "Poppins", sans-serif;
 
-    .bottom {
-        .table-contain {
-            table {
-                color: var(--app-text-body);
-                border-spacing: 10px;
-                border-collapse: collapse;
-                width: 100%;
-                border: 1px solid $card-glass-border;
-                border-radius: 8px;
-                overflow: hidden;
+  .bottom {
+    .table-contain {
+      table {
+        color: var(--app-text-body);
+        border-spacing: 10px;
+        border-collapse: collapse;
+        width: 100%;
+        border: 1px solid var(--app-border);
+        border-radius: 12px;
+        overflow: hidden;
 
-                thead {
-                    tr {
-                        border-bottom: 1px solid $card-glass-border;
-                        th {
-                            padding: 10px;
-                            background: $bg-dark-soft;
-                            color: $bear-blue-dim;
-                            font-size: var(--app-font-size-body);
-                        }
-                    }
-                    z-index: 1;
-                }
-
-                tbody {
-                    tr {
-                        border-bottom: 1px solid $card-glass-border;
-                        background: $card-glass;
-                        td {
-                            padding: 10px;
-                            font-size: var(--app-font-size-body);
-                        }
-                    }
-                }
-
-                tfoot {
-                    tr {
-                        th {
-                            div {
-                                color: var(--app-text-body);
-                                font-size: var(--app-font-size-body);
-                            }
-                        }
-                    }
-                }
+        thead {
+          tr {
+            border-bottom: 1px solid var(--app-border);
+            th {
+              padding: 12px 14px;
+              background: var(--app-bg-soft);
+              color: var(--app-accent);
+              font-size: var(--app-font-size-body);
+              font-weight: var(--app-font-weight-heading);
             }
-
-            table thead,
-            table tfoot {
-                position: sticky;
-            }
-
-            table thead {
-                inset-block-start: 0;
-            }
-
-            table tfoot {
-                inset-block-end: 0;
-            }
+          }
+          z-index: 1;
         }
+
+        tbody {
+          tr {
+            border-bottom: 1px solid var(--app-border);
+            background: var(--app-bg-card);
+            td {
+              padding: 12px 14px;
+              font-size: var(--app-font-size-body);
+            }
+          }
+        }
+
+        tfoot {
+          tr {
+            th {
+              div {
+                color: var(--app-text-body);
+                font-size: var(--app-font-size-body);
+              }
+            }
+          }
+        }
+      }
+
+      table thead,
+      table tfoot {
+        position: sticky;
+      }
+
+      table thead {
+        inset-block-start: 0;
+      }
+
+      table tfoot {
+        inset-block-end: 0;
+      }
     }
+  }
 }
 
 @media (max-width: 576px) {

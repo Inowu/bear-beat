@@ -1,5 +1,5 @@
 @import "src/styles/mixin.scss";
-@import "src/styles/variables-theme.scss";
+@import "src/styles/_variables-theme.scss";
 
 // ========== GOD MODE ADMIN THEME ==========
 // Usa variables --ad-* (slate-950, slate-900, cyan accent)
@@ -56,7 +56,7 @@
     }
 
     .header__total-registered {
-      font-size: 0.8125rem;
+      font-size: var(--app-font-size-body);
       color: var(--ad-text-muted);
     }
 
@@ -72,13 +72,13 @@
       justify-content: center;
       gap: 6px;
       padding: 8px 14px;
-      min-height: 44px;
+      min-height: 48px;
       border-radius: 8px;
       border: 1px solid var(--ad-border);
       background: var(--ad-card);
       color: var(--ad-text);
-      font-size: 0.875rem;
-      font-weight: 500;
+      font-size: var(--app-font-size-body);
+      font-weight: var(--app-font-weight-body);
       cursor: pointer;
       transition: background 0.15s, border-color 0.15s, color 0.15s;
 
@@ -130,13 +130,13 @@
 
       input {
         width: 100%;
-        min-height: 44px;
+        min-height: 48px;
         padding: 8px 12px 8px 36px;
         border-radius: 8px;
         background: var(--ad-input-bg);
         border: 1px solid var(--ad-input-border);
         color: var(--ad-title);
-        font-size: 0.875rem;
+        font-size: var(--app-font-size-body);
         box-sizing: border-box;
         outline: none;
         transition: border-color 0.15s, box-shadow 0.15s;
@@ -162,13 +162,13 @@
     }
 
     .select-input select {
-      min-height: 44px;
+      min-height: 48px;
       padding: 8px 12px;
       border-radius: 8px;
       background: var(--ad-input-bg);
       border: 1px solid var(--ad-input-border);
       color: var(--ad-title);
-      font-size: 0.875rem;
+      font-size: var(--app-font-size-body);
       cursor: pointer;
       outline: none;
       min-width: 100px;
@@ -183,9 +183,9 @@
   .badge {
     display: inline-flex;
     align-items: center;
-    font-size: 0.75rem;
-    font-weight: 500;
-    padding: 4px 10px;
+    font-size: var(--app-font-size-body);
+    font-weight: var(--app-font-weight-body);
+    padding: 6px 12px;
     border-radius: 9999px;
     white-space: nowrap;
 
@@ -249,8 +249,8 @@
       th {
         padding: 10px 12px;
         text-align: left;
-        font-size: 0.6875rem;
-        font-weight: 600;
+        font-size: var(--app-font-size-body);
+        font-weight: var(--app-font-weight-heading);
         text-transform: uppercase;
         letter-spacing: 0.05em;
         color: var(--ad-text-muted);
@@ -274,7 +274,7 @@
 
       td {
         padding: 12px;
-        font-size: 0.875rem;
+        font-size: var(--app-font-size-body);
         color: var(--ad-text);
         vertical-align: middle;
       }
@@ -346,12 +346,13 @@
     .dropdown-content button {
       display: block;
       width: 100%;
-      padding: 10px 14px;
+      padding: 12px 14px;
+      min-height: 48px;
       text-align: left;
       border: none;
       background: transparent;
       color: var(--ad-text);
-      font-size: 0.8125rem;
+      font-size: var(--app-font-size-body);
       cursor: pointer;
       transition: background 0.1s;
 
@@ -422,16 +423,18 @@
     }
 
     .admin-list-row__avatar {
-      width: 36px;
-      height: 36px;
+      width: 40px;
+      height: 40px;
+      min-width: 40px;
+      min-height: 40px;
       border-radius: 50%;
       background: var(--ad-accent);
-      color: #020617;
+      color: var(--ad-title);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 700;
-      font-size: 0.875rem;
+      font-weight: var(--app-font-weight-heading);
+      font-size: var(--app-font-size-body);
       flex-shrink: 0;
     }
 

@@ -48,7 +48,10 @@ function AsideNavbar(props: AsideNavbarPropsI) {
       {/* Mobile: backdrop to close on tap outside */}
       {show && <div className="aside-backdrop" onClick={onHide} aria-hidden />}
       <div className="aside-inner" onClick={(e) => e.stopPropagation()}>
-        <img src={Logo} alt="Bear Beat" className="aside-logo" />
+        <div className="aside-drawer-header">
+          <span className="aside-drawer-title">Menú</span>
+        </div>
+        <img src={Logo} alt="" className="aside-logo" aria-hidden="true" />
         <div className="nav-container">
           <h2 className="nav-title">Contenido</h2>
           <div className="nav-links-wrap">

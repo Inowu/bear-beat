@@ -115,7 +115,7 @@ export const BlockedPhoneNumbers = () => {
     <AdminPageLayout title="Teléfonos bloqueados" toolbar={toolbar}>
       {loader ? (
         <div className="flex justify-center py-12">
-          <Spinner size={3} width={0.3} color="#22d3ee" />
+          <Spinner size={3} width={0.3} color="var(--app-accent)" />
         </div>
       ) : blockedNumbers.length === 0 ? (
         <p className="text-slate-400 py-8 text-center">No hay teléfonos bloqueados.</p>

@@ -29,6 +29,7 @@ import Instructions from "./pages/Instructions/Instructions";
 import MyAccount from "./pages/MyAccount/MyAccount";
 import Plans from "./pages/Plans/Plans";
 import Checkout from "./pages/Checkout/Checkout";
+import CheckoutSuccess from "./pages/Checkout/CheckoutSuccess";
 import Admin from "./pages/Admin/Admin";
 import ResetPassword from "./components/Auth/ResetPassword/ResetPassword";
 import { PlanAdmin } from "./pages/Admin/PlanAdmin/PlanAdmin";
@@ -76,6 +77,14 @@ const router = createBrowserRouter([
             element: (
               <AuthRoute>
                 <Checkout />
+              </AuthRoute>
+            ),
+          },
+          {
+            path: "comprar/success",
+            element: (
+              <AuthRoute>
+                <CheckoutSuccess />
               </AuthRoute>
             ),
           },

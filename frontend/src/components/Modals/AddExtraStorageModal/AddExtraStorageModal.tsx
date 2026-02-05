@@ -115,7 +115,7 @@ export function AddExtraStorageModal(props: IVerifyPhoneModal) {
                     </button>
                 ) : (
                     <div style={{ marginBottom: 10 }}>
-                        <Spinner size={3} width={0.3} color="#00e2f7" />
+                        <Spinner size={3} width={0.3} color="var(--app-accent)" />
                     </div>
                 )}
                 <ErrorModal show={show} onHide={closeModal} message={errorMessage} />

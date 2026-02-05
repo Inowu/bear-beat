@@ -1,6 +1,6 @@
 # Bear Beat
 
-- **Documentación completa:** ver carpeta [docs/](docs/) (cambios implementados, deploy, Facebook, etc.).
+- **Documentación completa:** ver carpeta [docs/](docs/). Destacado: [docs/CAMBIOS-UX-MOBILE-APP-NATIVA-Y-DEPLOY.md](docs/CAMBIOS-UX-MOBILE-APP-NATIVA-Y-DEPLOY.md) para UX/UI, experiencia móvil tipo app nativa y **deploy a producción** (Netlify).
 
 ---
 

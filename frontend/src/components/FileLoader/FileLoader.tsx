@@ -78,7 +78,7 @@ export const FileLoader = () => {
             <div className="right-side">
               <button onClick={stopDownloadAlbum}>Cancelar</button>
               <p>{downloading.progress}% </p>
-              <Spinner size={3} width={0.5} color="#00e2f7" />
+              <Spinner size={3} width={0.5} color="var(--app-accent)" />
             </div>
           </div>
         }

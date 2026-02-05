@@ -146,7 +146,7 @@ function LoginForm() {
               INGRESAR
             </button>
           ) : (
-            <Spinner size={3} width={0.3} color="#00e2f7" />
+            <Spinner size={3} width={0.3} color="var(--app-accent)" />
           )}
           <div className="c-row auth-login-register-wrap">
             <Link to="/auth/registro" state={{ from }} className="auth-login-register">

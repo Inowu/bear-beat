@@ -1,5 +1,5 @@
 // Checkout: mismo ADN que Home (--app-*), light/dark, tipografía clara e intuitiva
-@import "src/styles/variables-theme.scss";
+@import "src/styles/_variables-theme.scss";
 
 .checkout-main-container {
   min-height: 100vh;
@@ -96,8 +96,8 @@
 }
 
 .checkout-summary__price {
-  font-size: clamp(1.75rem, 4vw, 2.25rem);
-  font-weight: 800;
+  font-size: var(--app-font-size-h2);
+  font-weight: var(--app-font-weight-heading-strong);
   color: var(--app-text-heading);
   margin: 0 0 1rem 0;
 }
@@ -134,10 +134,12 @@
 
 .checkout-summary__check {
   flex-shrink: 0;
-  width: 24px;
-  height: 24px;
+  width: 1.5rem;
+  height: 1.5rem;
+  min-width: 1.5rem;
+  min-height: 1.5rem;
   border-radius: 50%;
-  background: rgba(6, 182, 212, 0.2);
+  background: var(--theme-accent-soft-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -214,6 +216,38 @@
 }
 
 .checkout-loading__text {
+  font-size: var(--app-font-size-body);
+  color: var(--app-text-muted);
+  margin: 0;
+}
+
+// Pantalla única al cargar plan o al redirigir a Stripe (evita grid a medias)
+.checkout-main-container--redirecting {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+.checkout-one-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: 2rem;
+  text-align: center;
+  max-width: 420px;
+}
+
+.checkout-one-state__title {
+  font-size: var(--app-font-size-h2);
+  font-weight: var(--app-font-weight-heading);
+  color: var(--app-text-heading);
+  margin: 0;
+}
+
+.checkout-one-state__text {
   font-size: var(--app-font-size-body);
   color: var(--app-text-muted);
   margin: 0;

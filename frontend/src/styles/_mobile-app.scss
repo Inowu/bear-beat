@@ -3,12 +3,67 @@
 // - Tipografía legible (mín 16px en inputs/body)
 // - Áreas táctiles mín 44–48px
 // - Sin zoom forzado en inputs (iOS)
+// - Contenedores tipo “pantalla” (app-screen)
+// - Feedback táctil (:active)
 // ============================================================
 @import "src/styles/mixin.scss";
 
-// Móvil y tablet: base legible
+// ---------- Contenedores tipo pantalla (todas las secciones) ----------
+// Misma sensación que una pantalla nativa: ancho controlado, sin scroll horizontal, relleno mínimo
+.app-screen,
+.main-layout-main-container .home-main-container,
+.main-layout-main-container .instructions-main-container,
+.main-layout-main-container .my-account-main-container,
+.main-layout-main-container .downloads-container,
+.main-layout-main-container .plans-main-container,
+.main-layout-main-container .checkout-main-container,
+.main-layout-main-container .plan-upgrade,
+.main-layout-main-container .admin-theme,
+.main-layout-main-container .admin-page-wrap,
+.auth-main-container.auth-page {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
+}
+
+// Rellenar altura disponible en viewport (evita pantalla corta en móvil)
+.app-screen,
+.main-layout-main-container .home-main-container,
+.main-layout-main-container .instructions-main-container,
+.main-layout-main-container .my-account-main-container,
+.main-layout-main-container .downloads-container,
+.main-layout-main-container .plans-main-container,
+.main-layout-main-container .checkout-main-container,
+.main-layout-main-container .plan-upgrade {
+  min-height: 100%;
+}
+
+.auth-main-container.auth-page {
+  min-height: 100dvh;
+  padding-left: max(16px, env(safe-area-inset-left, 0));
+  padding-right: max(16px, env(safe-area-inset-right, 0));
+  padding-bottom: max(24px, env(safe-area-inset-bottom, 0) + 16px);
+}
+
+.admin-theme,
+.admin-page-wrap {
+  min-height: 100%;
+}
+
+// ---------- Feedback táctil (tap = respuesta inmediata tipo nativa) ----------
+button:active,
+.btn:active,
+a:active,
+[role="button"]:active,
+input[type="submit"]:active,
+input[type="button"]:active {
+  opacity: 0.9;
+}
+
+// ---------- Móvil y tablet: base legible ----------
 @include respond-to(tablet) {
-  // Evitar texto demasiado pequeño en toda la app
   body {
     -webkit-text-size-adjust: 100%;
   }
@@ -20,7 +75,6 @@
     font-size: 16px !important;
   }
 
-  // Botones: área táctil mínima tipo app nativa
   button,
   .btn {
     min-height: 48px;

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 function NotFound() {
   return (
     <div
-      className="min-h-[60vh] flex flex-col items-center justify-center px-4 py-12 text-center"
+      className="app-screen min-h-[60vh] flex flex-col items-center justify-center px-4 py-12 text-center"
       style={{
         background: "var(--app-bg)",
         color: "var(--app-text-body)",
@@ -31,7 +31,7 @@ function NotFound() {
       </p>
       <Link
         to="/"
-        className="inline-flex items-center justify-center min-h-[44px] px-6 py-3 rounded-xl font-semibold transition-colors"
+        className="btn-back-home inline-flex items-center justify-center min-h-[44px] px-6 py-3 rounded-xl font-semibold"
         style={{
           background: "var(--app-accent)",
           color: "var(--app-btn-text)",

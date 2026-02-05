@@ -2,6 +2,7 @@
 @import "~flag-icons/css/flag-icons.min.css";
 @import "./_variables-theme.scss";
 @import "./mixin.scss";
+@import "./_mobile-app.scss";
 @font-face {
   font-family: "Bear Font2";
   src: url("../assets/fonts/Arkhip_font.otf");
@@ -17,9 +18,12 @@
 }
 
 /* App nativa móvil: viewport dinámico (100dvh), safe areas, gestos táctiles */
+/* Chrome Mac: suavizado de fuentes para que Poppins se vea nítido */
 html {
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 html,
@@ -58,6 +62,17 @@ textarea,
   touch-action: manipulation;
 }
 
+/* Focus visible para accesibilidad (teclado) */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid var(--app-accent);
+  outline-offset: 2px;
+}
+
 a {
   text-decoration: none;
   cursor: pointer;
@@ -84,6 +99,7 @@ html {
 }
 
 /* Toda la app: mismo estilo y tamaño que Home, legibilidad mínima en toda la web */
+/* text-rendering: optimizeLegibility mejora kerning en Chrome/Safari Mac */
 body {
   font-family: "Poppins", sans-serif;
   background: var(--app-bg);
@@ -93,6 +109,7 @@ body {
   font-weight: var(--app-font-weight-body);
   line-height: 1.4;
   transition: background 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+  text-rendering: optimizeLegibility;
 }
 
 /* Ningún texto por debajo de 1rem para que siempre se pueda leer */
@@ -156,9 +173,34 @@ button.primary-pill {
   }
 }
 
-.linear-bg {
-  background: linear-gradient(11deg, #00e6c1, #08e1f7);
+/* Loader global: centrado vertical y horizontal */
+.global-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
 }
+
+.linear-bg {
+  background: linear-gradient(11deg, var(--app-accent-bright), var(--theme-accent-bright));
+}
+
+/* Botón CTA secundario (ej. NotFound): área táctil 44px, hover y transición */
+.btn-back-home {
+  transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  &:hover {
+    background: var(--app-accent-bright) !important;
+    color: var(--app-btn-text) !important;
+    transform: translateY(-1px);
+    box-shadow: var(--app-shadow-card);
+  }
+  &:active {
+    transform: translateY(0);
+  }
+}
+
 .silver-bg {
   background: var(--theme-bg-primary);
 }
@@ -173,14 +215,14 @@ button.primary-pill {
     }
   }
 }
+/* Fallback global: errores en flujo, sin posición absoluta (evita solapamientos) */
 .error-formik {
-  color: var(--ph-pain-bad, #dc2626);
-  font-weight: 600;
-  position: absolute;
-  bottom: -20px;
+  color: var(--ph-pain-bad);
+  font-weight: var(--app-font-weight-heading);
   font-size: var(--app-font-size-body);
-  left: 50%;
-  transform: translateX(-50%);
+  display: block;
+  margin-top: 6px;
+  line-height: 1.4;
 }
 .search-input{
   display: flex;

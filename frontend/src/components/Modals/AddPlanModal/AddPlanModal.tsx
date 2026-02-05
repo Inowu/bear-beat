@@ -153,7 +153,7 @@ function AddPlanModal(props: IAddPlanModal) {
             onChange={formik.handleChange}
           />
           {formik.touched.gigas && formik.errors.gigas && (
-            <div className="formik">{formik.errors.gigas}</div>
+            <div className="error-formik">{formik.errors.gigas}</div>
           )}
         </div>
         <div className="c-row">
@@ -176,7 +176,7 @@ function AddPlanModal(props: IAddPlanModal) {
               onChange={formik.handleChange}
             />
             {formik.touched.price && formik.errors.price && (
-              <div className="formik">{formik.errors.price}</div>
+              <div className="error-formik">{formik.errors.price}</div>
             )}
           </div>
         </div>
@@ -195,7 +195,7 @@ function AddPlanModal(props: IAddPlanModal) {
             <option value="paypal">PayPal</option>
           </select>
           {formik.touched.paymentMethod && formik.errors.paymentMethod && (
-            <div className="formik">{formik.errors.paymentMethod}</div>
+            <div className="error-formik">{formik.errors.paymentMethod}</div>
           )}
         </div>
         {!loader ? (
@@ -204,7 +204,7 @@ function AddPlanModal(props: IAddPlanModal) {
           </button>
         ) : (
           <div style={{ marginBottom: 10 }}>
-            <Spinner size={3} width={0.3} color="#00e2f7" />
+            <Spinner size={3} width={0.3} color="var(--app-accent)" />
           </div>
         )}
         <button className="btn-cancel" onClick={onHideModal} type="reset">

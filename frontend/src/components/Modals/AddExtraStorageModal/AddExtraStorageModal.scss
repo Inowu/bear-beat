@@ -1,11 +1,18 @@
+@import "../../../styles/_variables-theme.scss";
 @import "../../../styles/landing-design.scss";
 
 .add-extra-storage-modal .modal-content {
-    flex-direction: column;
+  flex-direction: column;
+}
+
+.add-extra-storage-modal .btn-option-4 {
+  min-height: 48px;
+  font-size: var(--app-font-size-body);
 }
 
 .btn-option-4:disabled {
-    cursor: not-allowed;
-    background: $text-dim !important;
-    box-shadow: none !important;
+  cursor: not-allowed;
+  background: var(--app-bg-soft) !important;
+  box-shadow: none !important;
+  opacity: 0.7;
 }

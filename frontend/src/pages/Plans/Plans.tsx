@@ -60,14 +60,20 @@ function Plans() {
     return (
       <div
         className="global-loader"
-        style={{ height: '60vh', display: 'flex', justifyContent: 'center' }}
+        style={{
+          height: '60vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
       >
-        <Spinner size={5} width={0.5} color="#00e2f7" />
+        <Spinner size={5} width={0.5} color="var(--app-accent)" />
       </div>
     );
   }
   return (
     <div className="plans-main-container">
+      <h1 className="plans-page-title">Elige tu plan</h1>
       {/* {plans.map((plan: IPlans, index) => {
         return (
           <PlanCard

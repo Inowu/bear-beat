@@ -185,7 +185,7 @@ export function CatalogStats() {
     return (
       <AdminPageLayout title="Estadísticas del catálogo">
         <div className="flex flex-col items-center justify-center py-12 gap-4">
-          <Spinner size={3} width={0.3} color="#22d3ee" />
+          <Spinner size={3} width={0.3} color="var(--app-accent)" />
           <p className="text-slate-400 text-sm">Calculando estadísticas…</p>
         </div>
       </AdminPageLayout>

@@ -38,7 +38,7 @@ function Pagination(props: IPagination) {
         <div className="total">
           <p className="left-text">Total de {title}:</p>
           {totalLoader ? (
-            <Spinner size={1} width={0.1} color="#00e2f7" />
+            <Spinner size={1} width={0.1} color="var(--app-accent)" />
           ) : (
             <p className="left-text">{totalData}</p>
           )}

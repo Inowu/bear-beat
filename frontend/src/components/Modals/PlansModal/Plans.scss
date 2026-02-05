@@ -1,43 +1,59 @@
+@import "../../../styles/_variables-theme.scss";
 @import "../../../styles/landing-design.scss";
 
 .modal-container-plans {
-    .go-back {
-        color: $bear-blue-dim;
-        width: fit-content;
-        margin: 0;
-        text-decoration: underline;
-        cursor: pointer;
-        font-style: italic;
-        font-size: var(--app-font-size-body);
-        &:hover {
-            color: $text-primary;
-        }
+  font-family: "Poppins", sans-serif;
+  font-size: var(--app-font-size-body);
+
+  .go-back {
+    color: var(--app-accent);
+    width: fit-content;
+    margin: 0;
+    text-decoration: underline;
+    cursor: pointer;
+    font-style: italic;
+    font-size: var(--app-font-size-body);
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    &:hover {
+      color: var(--app-text-heading);
     }
-    .bottom {
-        .title {
-            color: $text-primary;
-        }
+  }
+  .bottom {
+    .title {
+      color: var(--app-text-heading);
+      font-size: var(--app-font-size-body);
     }
-    .add-card {
-        color: $bear-blue-dim;
-        width: fit-content;
-        font-weight: 600;
-        margin: 0;
-        cursor: pointer;
-        &:hover {
-            color: $text-primary;
-        }
+  }
+  .add-card {
+    color: var(--app-accent);
+    width: fit-content;
+    font-weight: var(--app-font-weight-heading);
+    margin: 0;
+    cursor: pointer;
+    font-size: var(--app-font-size-body);
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    &:hover {
+      color: var(--app-text-heading);
     }
-    button {
-        white-space: nowrap;
-        padding-inline: 30px;
-    }
-    select {
-        border-radius: 100px;
-        padding-block: 8px;
-        padding-inline: 18px;
-        border: 1px solid $card-glass-border;
-        background: $bg-dark-soft;
-        color: $bear-blue-dim;
-    }
+  }
+  button {
+    white-space: nowrap;
+    padding-inline: 30px;
+    min-height: 48px;
+    font-size: var(--app-font-size-body);
+  }
+  select {
+    border-radius: 100px;
+    padding-block: 12px;
+    padding-inline: 18px;
+    min-height: 48px;
+    border: 2px solid var(--app-border);
+    background: var(--app-bg-soft);
+    color: var(--app-accent);
+    font-size: var(--app-font-size-body);
+  }
 }

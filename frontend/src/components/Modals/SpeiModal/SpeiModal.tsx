@@ -27,6 +27,16 @@ export function SpeiModal(props: ISpei) {
   const [copiedAmount, setCopiedAmount] = useState(false);
 
   const amountText = `$${price}.00`;
+  // Conekta puede devolver la CLABE en "clabe" o en "receiving_account_number"
+  const clabe = speiData.clabe ?? speiData.receiving_account_number ?? "";
+  const bankName = speiData.receiving_account_bank || "STP";
+  const holderName = speiData.receiving_account_holder_name || "CONEKTA";
+  const bankLabel =
+    bankName === "STP"
+      ? "STP (Sistema de Transferencias y Pagos)"
+      : bankName;
+  const hasClabe = clabe.length >= 18;
+
   const copyToClipboard = useCallback((text: string, setter: (v: boolean) => void) => {
     navigator.clipboard.writeText(text).then(
       () => {
@@ -48,21 +58,39 @@ export function SpeiModal(props: ISpei) {
         </div>
 
         <div className="spei-terminal__body">
-          {/* CLABE — El héroe */}
+          {/* A nombre de quién / Banco — evita confusión en la app bancaria */}
+          <div className="spei-terminal__block spei-terminal__block--highlight">
+            <label className="spei-terminal__label">Banco receptor</label>
+            <p className="spei-terminal__value">{bankLabel}</p>
+            <p className="spei-terminal__hint">Usa esta CLABE en cualquier banco (BBVA, Santander, etc.).</p>
+          </div>
+          <div className="spei-terminal__block spei-terminal__block--highlight">
+            <label className="spei-terminal__label">Nombre del beneficiario (a quién hacer la transferencia)</label>
+            <p className="spei-terminal__value spei-terminal__value--holder">{holderName}</p>
+            <p className="spei-terminal__hint">En tu app bancaria, cuando des de alta la cuenta, usa este nombre como titular.</p>
+          </div>
+
+          {/* CLABE interbancaria */}
           <div className="spei-terminal__block">
-            <label className="spei-terminal__label">CLABE interbancaria</label>
-            <div className="spei-terminal__clabe-row">
-              <code className="spei-terminal__clabe">{speiData.clabe}</code>
-              <button
-                type="button"
-                className="spei-terminal__copy-btn"
-                onClick={() => copyToClipboard(speiData.clabe, setCopiedClabe)}
-                title="Copiar CLABE"
-              >
-                {copiedClabe ? <PiCheck aria-hidden /> : <PiCopy aria-hidden />}
-                <span>{copiedClabe ? "Copiado" : "Copiar"}</span>
-              </button>
-            </div>
+            <label className="spei-terminal__label">CLABE interbancaria (18 dígitos)</label>
+            {hasClabe ? (
+              <div className="spei-terminal__clabe-row">
+                <code className="spei-terminal__clabe">{clabe}</code>
+                <button
+                  type="button"
+                  className="spei-terminal__copy-btn"
+                  onClick={() => copyToClipboard(clabe, setCopiedClabe)}
+                  title="Copiar CLABE"
+                >
+                  {copiedClabe ? <PiCheck aria-hidden /> : <PiCopy aria-hidden />}
+                  <span>{copiedClabe ? "Copiado" : "Copiar"}</span>
+                </button>
+              </div>
+            ) : (
+              <p className="spei-terminal__warning">
+                No se recibió la CLABE. Cierra este mensaje e intenta de nuevo con «SPEI», o elige otro método de pago.
+              </p>
+            )}
           </div>
 
           {/* Monto + advertencia */}
@@ -87,14 +115,14 @@ export function SpeiModal(props: ISpei) {
 
           {/* Instrucciones paso a paso */}
           <ol className="spei-terminal__steps">
-            <li>Copia la CLABE única.</li>
-            <li>Ve a tu app bancaria y da de alta la cuenta.</li>
-            <li>Realiza la transferencia.</li>
-            <li>¡Listo! Tu acceso se activará en automático.</li>
+            <li>Anota el <strong>banco</strong> ({bankLabel}) y el <strong>beneficiario</strong> ({holderName}).</li>
+            <li>Copia la CLABE y en tu app bancaria da de alta la cuenta (banco {bankLabel}, titular {holderName}).</li>
+            <li>Transfiere el monto exacto: <strong>{amountText} MXN</strong>.</li>
+            <li>Tu acceso se activará en automático al detectar el pago.</li>
           </ol>
 
           <p className="spei-terminal__expires">
-            Válido antes del: <strong>{formatExpires(speiData.expires_at)}</strong>
+            Válido antes del: <strong>{speiData.expires_at ? formatExpires(speiData.expires_at) : "—"}</strong>
           </p>
 
           <p className="spei-terminal__trust">

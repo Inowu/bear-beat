@@ -114,7 +114,7 @@ function ForgotPasswordForm() {
               ENVIAR ENLACE DE RECUPERACIÓN
             </button>
           ) : (
-            <Spinner size={3} width={0.3} color="#00e2f7" />
+            <Spinner size={3} width={0.3} color="var(--app-accent)" />
           )}
           <div className="c-row auth-login-register-wrap auth-recover-back-wrap">
             <Link to="/auth" className="auth-recover-back">

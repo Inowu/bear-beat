@@ -1,5 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
-import { ReactComponent as Arrow } from "../../../assets/icons/arrow-down.svg";
+import { useNavigate, useLocation } from "react-router-dom";
 import trpc from "../../../api";
 import { PasswordInput } from "../../PasswordInput/PasswordInput";
 import { useFormik } from "formik";
@@ -8,10 +7,11 @@ import { useState } from "react";
 import { ErrorModal } from "../../../components/Modals/ErrorModal/ErrorModal";
 import { SuccessModal } from "../../../components/Modals/SuccessModal/SuccessModal";
 import { Spinner } from "../../../components/Spinner/Spinner";
-import { useLocation } from "react-router-dom";
+import { useUserContext } from "../../../contexts/UserContext";
 
 function ResetPassword() {
   const navigate = useNavigate();
+  const { handleLogin, startUser } = useUserContext();
   const [loader, setLoader] = useState<boolean>(false);
   const [show, setShow] = useState<boolean>(false);
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
@@ -23,7 +23,7 @@ function ResetPassword() {
   };
   const closeSuccess = () => {
     setShowSuccess(false);
-    navigate("/auth/login");
+    navigate("/");
   };
   const validationSchema = Yup.object().shape({
     password: Yup.string()
@@ -43,16 +43,21 @@ function ResetPassword() {
     onSubmit: async (values) => {
       setLoader(true);
       let id: any = searchParams.get("userId");
-      let body: any = {
+      const body = {
         password: values.password,
         userId: +id,
         token: searchParams.get("token"),
       };
-      console.log(body);
       try {
-        await trpc.auth.changePassword.mutate(body);
+        const data = await trpc.auth.changePassword.mutate(body);
         setLoader(false);
-        setShowSuccess(true);
+        if (data?.token && data?.refreshToken) {
+          handleLogin(data.token, data.refreshToken);
+          await startUser();
+          setShowSuccess(true);
+        } else {
+          setShowSuccess(true);
+        }
       } catch (error) {
         setShow(true);
         setErrorMessage(error);
@@ -94,14 +99,14 @@ function ResetPassword() {
           Guardar
         </button>
       ) : (
-        <Spinner size={3} width={0.3} color="#00e2f7" />
+        <Spinner size={3} width={0.3} color="var(--app-accent)" />
       )}
       <ErrorModal show={show} onHide={closeError} message={errorMessage} />
       <SuccessModal
         show={showSuccess}
         onHide={closeSuccess}
-        message="Contraseña guardada exitosamente!"
-        title="Cambio Exitoso"
+        message="Contraseña actualizada correctamente. Has iniciado sesión."
+        title="Cambio exitoso"
       />
     </form>
   );

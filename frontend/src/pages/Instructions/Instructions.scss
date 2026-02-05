@@ -1,5 +1,5 @@
 @import "src/styles/mixin.scss";
-@import "src/styles/variables-theme.scss";
+@import "src/styles/_variables-theme.scss";
 
 // Tipografía alineada al Home (--app-font-size-*)
 .instructions-main-container {
@@ -28,6 +28,10 @@
   }
   .in-nav-dot {
     font-size: var(--app-font-size-body);
+    min-width: 48px;
+    min-height: 48px;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
   .in-terminal span,
   .in-creds-preview span {
@@ -35,6 +39,33 @@
   }
   .in-tip {
     font-size: var(--app-font-size-body);
+  }
+
+  /* CTAs: área táctil 48px y colores de tema */
+  a[href*="filezilla"],
+  .in-cta-primary {
+    min-height: 48px;
+    padding: 12px 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: var(--app-font-size-body);
+    font-weight: var(--app-font-weight-heading);
+    border-radius: 12px;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .in-btn-secondary {
+    min-height: 48px;
+    padding: 12px 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: var(--app-font-size-body);
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
 
   .in-iframe-wrap {
@@ -51,11 +82,9 @@
     }
   }
 
-  .in-btn-secondary {
-    &:hover {
-      opacity: 0.9;
-      background: color-mix(in srgb, var(--in-accent) 12%, transparent);
-    }
+  .in-btn-secondary:hover {
+    opacity: 0.9;
+    background: color-mix(in srgb, var(--in-accent) 12%, transparent);
   }
 
   .in-step-card {
@@ -68,9 +97,17 @@
 
   .in-terminal {
     max-width: 100%;
+    input {
+      font-size: var(--app-font-size-body);
+      min-height: 48px;
+      padding: 12px 14px;
+    }
     input::placeholder {
       color: var(--in-text-muted);
       opacity: 0.8;
+    }
+    label {
+      font-size: var(--app-font-size-body);
     }
   }
 }

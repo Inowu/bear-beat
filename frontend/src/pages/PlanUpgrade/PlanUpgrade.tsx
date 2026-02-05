@@ -129,9 +129,14 @@ export const PlanUpgrade = () => {
     return (
       <div
         className="global-loader"
-        style={{ height: "60vh", display: "flex", justifyContent: "center" }}
+        style={{
+          height: "60vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
       >
-        <Spinner size={5} width={0.5} color="#00e2f7" />
+        <Spinner size={5} width={0.5} color="var(--app-accent)" />
       </div>
     );
   }

@@ -55,7 +55,7 @@ export function PaymentMethodModal(props: IError) {
                     <div className='button-container-2'>
                         {
                             loader
-                            ? <Spinner size={4} width={0.4} color="#00e2f7" />
+                            ? <Spinner size={4} width={0.4} color="var(--app-accent)" />
                             :
                             <button className='btn-success' onClick={() => { create() }}>
                                 Aceptar

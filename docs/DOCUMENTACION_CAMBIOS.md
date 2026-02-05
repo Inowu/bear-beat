@@ -4,9 +4,12 @@ Resumen de todo lo implementado en el proyecto (diseño, landing, deploy, correc
 
 ---
 
-## Cambios recientes (UX/UI, menú, scroll, Netlify)
+## Cambios recientes (UX/UI, app nativa móvil, deploy)
 
-**Ver documento dedicado:** **[CHANGELOG-UX-DEPLOY-RECIENTE.md](./CHANGELOG-UX-DEPLOY-RECIENTE.md)** — tipografía global, explorador de archivos (iconos, botón Descargar), menú hamburguesa (drawer 72vw), scroll hasta el final, `netlify.toml` (base, publish, CI=false), corrección Navbar.scss. Backend sin cambios en ese periodo.
+**Documento principal para desarrolladores:** **[CAMBIOS-UX-MOBILE-APP-NATIVA-Y-DEPLOY.md](./CAMBIOS-UX-MOBILE-APP-NATIVA-Y-DEPLOY.md)**  
+Incluye: auditoría UX/UI en todas las secciones (Home, Instrucciones, Mi cuenta, Descargas, Planes, Checkout, Auth, Admin, NotFound, modales), experiencia tipo app móvil nativa (safe areas, bottom sheet, feedback táctil, `.app-screen`), mensajes de error unificados, y **deploy a producción en Netlify** (comando con `--filter=thebearbeat`). Cualquier desarrollador puede usarlo para entender y mantener estos cambios.
+
+**Changelog anterior (menú, scroll, Netlify):** **[CHANGELOG-UX-DEPLOY-RECIENTE.md](./CHANGELOG-UX-DEPLOY-RECIENTE.md)** — tipografía global, explorador de archivos (iconos, botón Descargar), menú hamburguesa (drawer 72vw), scroll hasta el final, `netlify.toml` (base, publish, CI=false), corrección Navbar.scss.
 
 ---
 

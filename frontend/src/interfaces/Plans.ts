@@ -49,22 +49,24 @@ export interface IOxxoData {
 }
 export interface ISpeiData {
   bank: string;
-  clabe: string;
-  description: null;
-  executed_at: null;
-  expires_at: number;
-  issuing_account_bank: null;
-  issuing_account_holder_name: null;
-  issuing_account_number: null;
-  issuing_account_tax_id: null;
+  /** CLABE interbancaria de 18 dígitos (Conekta puede devolverla en clabe o en receiving_account_number) */
+  clabe?: string;
+  description?: null;
+  executed_at?: null;
+  expires_at?: number;
+  issuing_account_bank?: null;
+  issuing_account_holder_name?: null;
+  issuing_account_number?: null;
+  issuing_account_tax_id?: null;
   object: string;
-  payment_attempts: [];
+  payment_attempts?: unknown[];
   receiving_account_bank: string;
-  receiving_account_holder_name: null;
+  /** Nombre del beneficiario / titular de la cuenta (para que el usuario sepa a quién hace la transferencia) */
+  receiving_account_holder_name?: string | null;
   receiving_account_number: string;
-  receiving_account_tax_id: null;
-  reference_number: null;
-  tracking_code: null;
+  receiving_account_tax_id?: null;
+  reference_number?: string | null;
+  tracking_code?: null;
   type: string;
 }
 export interface IGBPlans {

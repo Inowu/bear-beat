@@ -215,7 +215,11 @@ function PlanCard(props: PlanCardPropsI) {
       setSpeiData(speiPay);
       handleButtonClick();
     } catch (error: any) {
-      setErrorMSG(error.message);
+      const msg =
+        error?.data?.message ??
+        error?.message ??
+        "No se pudo generar la transferencia SPEI. Verifica que el plan sea en pesos (MXN) o intenta más tarde.";
+      setErrorMSG(msg);
       handleErrorModal();
     }
   };

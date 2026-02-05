@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import { publicProcedure } from '../../../procedures/public.procedure';
 import { TRPCError } from '@trpc/server';
 import { log } from '../../../server';
+import { generateTokens } from './utils/generateTokens';
 
 export const changePassword = publicProcedure
   .input(
@@ -50,4 +51,7 @@ export const changePassword = publicProcedure
         token_expiration: null,
       },
     });
+
+    const { token: accessToken, refreshToken } = await generateTokens(prisma, user);
+    return { token: accessToken, refreshToken };
   });

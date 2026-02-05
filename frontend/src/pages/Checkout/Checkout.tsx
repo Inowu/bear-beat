@@ -1,48 +1,25 @@
-import { Elements } from "@stripe/react-stripe-js";
-import { CheckoutFormIntro, CheckoutFormPayment } from "../../components/CheckoutForm/CheckoutForm";
 import "./Checkout.scss";
-import { loadStripe } from "@stripe/stripe-js";
 import { useUserContext } from "../../contexts/UserContext";
-import { useTheme } from "../../contexts/ThemeContext";
-import { useLocation } from "react-router-dom";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useCookies } from "react-cookie";
+import { useLocation, Link } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
 import trpc from "../../api";
 import { IPlans } from "interfaces/Plans";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 import { manychatApi } from "../../api/manychat";
 import { Spinner } from "../../components/Spinner/Spinner";
-import { getStripeAppearance } from "../../utils/stripeAppearance";
-import { Lock, Check } from "lucide-react";
-
-const stripeKey =
-  process.env.REACT_APP_ENVIRONMENT === "development"
-    ? (process.env.REACT_APP_STRIPE_TEST_KEY as string)
-    : (process.env.REACT_APP_STRIPE_KEY as string);
-
-const stripePromise = loadStripe(stripeKey);
+import { Check } from "lucide-react";
+import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
 
 function Checkout() {
-  const { theme } = useTheme();
-  const [plan, setPlan] = useState({} as IPlans);
+  const [plan, setPlan] = useState<IPlans | null>(null);
   const location = useLocation();
-  const [discount] = useState<number>(0);
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [loadingPayment, setLoadingPayment] = useState(false);
-  const [paymentAutoError, setPaymentAutoError] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showError, setShowError] = useState(false);
   const autoFetchedRef = useRef(false);
   const searchParams = new URLSearchParams(location.search);
   const priceId = searchParams.get("priceId");
   const { currentUser } = useUserContext();
-  const [cookies] = useCookies(["_fbp"]);
-
-  const stripeOptions = useMemo(
-    () =>
-      clientSecret
-        ? { clientSecret, appearance: getStripeAppearance(theme) }
-        : undefined,
-    [clientSecret, theme]
-  );
 
   const checkManyChat = async (p: IPlans | undefined) => {
     if (!p) return;
@@ -68,43 +45,53 @@ function Checkout() {
     const body = { where: { activated: 1, id: id_plan } };
     try {
       const plans: IPlans[] = await trpc.plans.findManyPlans.query(body);
-      const p = plans?.[0];
-      setPlan(p ?? ({} as IPlans));
-      checkManyChat(p);
-    } catch (error) {
-      console.log(error);
+      const p = plans?.[0] ?? null;
+      setPlan(p);
+      if (p) checkManyChat(p);
+    } catch {
+      setPlan(null);
     }
   };
 
   useEffect(() => {
     if (priceId) getPlans(priceId);
+    else setPlan(null);
   }, [priceId]);
 
   useEffect(() => {
-    if (!priceId || !plan?.id || clientSecret || autoFetchedRef.current) return;
+    if (!priceId || !plan?.id || redirecting || autoFetchedRef.current) return;
     autoFetchedRef.current = true;
-    setLoadingPayment(true);
-    trpc.subscriptions.subscribeWithStripe
-      .query({
+    setRedirecting(true);
+    const origin = window.location.origin;
+    const successUrl = `${origin}/comprar/success?session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl = `${origin}/planes`;
+
+    trpc.subscriptions.createStripeCheckoutSession
+      .mutate({
         planId: plan.id,
-        fbp: cookies._fbp,
-        url: window.location.href,
+        successUrl,
+        cancelUrl,
       })
-      .then((r) => {
-        if (r?.clientSecret) setClientSecret(r.clientSecret);
-        else setPaymentAutoError(true);
+      .then((result) => {
+        if (result?.url) {
+          window.location.href = result.url;
+        } else {
+          setErrorMessage("No se pudo abrir la página de pago. Intenta de nuevo.");
+          setShowError(true);
+          setRedirecting(false);
+        }
       })
-      .catch(() => setPaymentAutoError(true))
-      .finally(() => setLoadingPayment(false));
-  }, [priceId, plan?.id, clientSecret, cookies._fbp]);
+      .catch((err: { message?: string }) => {
+        setErrorMessage(err?.message ?? "Error al preparar el pago. Intenta de nuevo.");
+        setShowError(true);
+        setRedirecting(false);
+      });
+  }, [priceId, plan?.id, redirecting]);
 
-  const handleResetPayment = () => {
-    setClientSecret(null);
-  };
-
+  const discount = 0;
   const totalPrice = (
-    parseInt(plan.price || "0", 10) -
-    parseInt(plan.price || "0", 10) * (discount / 100)
+    parseInt(plan?.price || "0", 10) -
+    parseInt(plan?.price || "0", 10) * (discount / 100)
   ).toFixed(2);
 
   const benefits = [
@@ -113,51 +100,90 @@ function Checkout() {
     "Cancela cuando quieras",
   ];
 
+  if (!priceId) {
+    return (
+      <div className="checkout-main-container">
+        <div className="checkout-inner">
+          <header className="checkout-header">
+            <h1 className="checkout-page-title">Activar acceso</h1>
+            <p className="checkout-page-subtitle">
+              Elige un plan en la página de planes para continuar.
+            </p>
+          </header>
+          <Link
+            to="/planes"
+            className="checkout-cta-btn checkout-cta-btn--primary"
+            style={{ display: "inline-block", textAlign: "center", marginTop: "1rem" }}
+          >
+            Ver planes
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Estado único: redirigiendo a Stripe → pantalla clara, sin grid
+  if (redirecting) {
+    return (
+      <div className="checkout-main-container checkout-main-container--redirecting">
+        <div className="checkout-one-state">
+          <Spinner size={5} width={0.4} color="var(--app-accent)" />
+          <h2 className="checkout-one-state__title">Preparando tu pago</h2>
+          <p className="checkout-one-state__text">
+            Serás redirigido a la pasarela segura de Stripe en un momento…
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Plan aún cargando → una sola pantalla de carga
+  if (!plan) {
+    return (
+      <div className="checkout-main-container checkout-main-container--redirecting">
+        <div className="checkout-one-state">
+          <Spinner size={5} width={0.4} color="var(--app-accent)" />
+          <p className="checkout-one-state__text">Cargando plan…</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="checkout-main-container">
       <div className="checkout-inner">
         <header className="checkout-header">
-          <h1 className="checkout-page-title">
-            Activar acceso inmediato
-          </h1>
+          <h1 className="checkout-page-title">Activar acceso inmediato</h1>
           <p className="checkout-page-subtitle">
-            Estás a un paso de desbloquear 12.5 TB de música.
+            Serás redirigido a la pasarela de pago segura de Stripe.
           </p>
         </header>
 
         <div className="checkout-grid">
-          {/* Resumen del plan */}
           <aside className="checkout-card checkout-summary">
             <h2 className="checkout-card__title">Resumen del plan</h2>
-            {plan?.name ? (
-              <>
-                <p className="checkout-summary__plan-name">{plan.name}</p>
-                <p className="checkout-summary__price">
-                  ${totalPrice} <span className="checkout-summary__currency">{plan.moneda ?? "MXN"}</span>
-                </p>
-                {plan.description && (
-                  <p className="checkout-summary__desc">{plan.description}</p>
-                )}
-                <ul className="checkout-summary__benefits">
-                  {benefits.map((label, i) => (
-                    <li key={i}>
-                      <span className="checkout-summary__check">
-                        <Check className="checkout-summary__check-icon" />
-                      </span>
-                      {label}
-                    </li>
-                  ))}
-                </ul>
-                <p className="checkout-summary__meta">
-                  Duración: {plan.duration} días · Renovación automática
-                </p>
-              </>
-            ) : (
-              <p className="checkout-summary__loading">Cargando plan...</p>
+            <p className="checkout-summary__plan-name">{plan.name}</p>
+            <p className="checkout-summary__price">
+              ${totalPrice} <span className="checkout-summary__currency">{plan.moneda ?? "MXN"}</span>
+            </p>
+            {plan.description && (
+              <p className="checkout-summary__desc">{plan.description}</p>
             )}
+            <ul className="checkout-summary__benefits">
+              {benefits.map((label, i) => (
+                <li key={i}>
+                  <span className="checkout-summary__check">
+                    <Check className="checkout-summary__check-icon" />
+                  </span>
+                  {label}
+                </li>
+              ))}
+            </ul>
+            <p className="checkout-summary__meta">
+              Duración: {plan.duration} días · Renovación automática
+            </p>
           </aside>
 
-          {/* Formulario de pago */}
           <section className="checkout-card checkout-payment-card">
             <h2 className="checkout-card__title">Tu cuenta</h2>
             <div className="checkout-credentials">
@@ -170,34 +196,16 @@ function Checkout() {
                 <span className="checkout-credentials__value">{currentUser?.email ?? "—"}</span>
               </div>
             </div>
-
-            {priceId && !clientSecret && !paymentAutoError ? (
-              <div className="checkout-loading">
-                <Spinner size={4} width={0.4} color="var(--app-accent)" />
-                <p className="checkout-loading__text">
-                  {plan?.id ? "Preparando formulario de pago..." : "Cargando plan..."}
-                </p>
-              </div>
-            ) : !clientSecret ? (
-              <CheckoutFormIntro plan={plan} setClientSecret={setClientSecret} />
-            ) : stripeOptions ? (
-              <>
-                <h3 className="checkout-payment-title">
-                  <Lock size={18} />
-                  Datos de pago
-                </h3>
-                <Elements stripe={stripePromise} options={stripeOptions}>
-                  <CheckoutFormPayment
-                    plan={plan}
-                    clientSecret={clientSecret}
-                    onReset={handleResetPayment}
-                  />
-                </Elements>
-              </>
-            ) : null}
           </section>
         </div>
       </div>
+
+      <ErrorModal
+        show={showError}
+        onHide={() => setShowError(false)}
+        message={errorMessage ?? ""}
+        user={currentUser ?? undefined}
+      />
     </div>
   );
 }

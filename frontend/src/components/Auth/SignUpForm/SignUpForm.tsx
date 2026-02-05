@@ -355,7 +355,7 @@ function SignUpForm() {
                 CREAR MI CUENTA PRO
               </button>
             ) : (
-              <Spinner size={3} width={0.3} color="#00e2f7" />
+              <Spinner size={3} width={0.3} color="var(--app-accent)" />
             )}
             <div className="c-row">
               <Link to="/auth" state={{ from }} className="signup-link-back">

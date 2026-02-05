@@ -1,13 +1,21 @@
+@import "../../../styles/_variables-theme.scss";
 @import "../../../styles/landing-design.scss";
 
 .c-row2 {
-    display: flex;
-    flex-direction: row;
-    gap: 5px;
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  font-size: var(--app-font-size-body);
+}
+
+.container-verify-update-phone-modal .btn-option-4 {
+  min-height: 48px;
+  font-size: var(--app-font-size-body);
 }
 
 .btn-option-4:disabled {
-    background: $text-dim !important;
-    cursor: not-allowed;
-    box-shadow: none !important;
+  background: var(--app-bg-soft) !important;
+  cursor: not-allowed;
+  box-shadow: none !important;
+  opacity: 0.7;
 }

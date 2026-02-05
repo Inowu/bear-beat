@@ -1,5 +1,6 @@
 # Documentación Bear Beat
 
+- **[CAMBIOS-UX-MOBILE-APP-NATIVA-Y-DEPLOY.md](./CAMBIOS-UX-MOBILE-APP-NATIVA-Y-DEPLOY.md)** – **Recomendado para nuevos cambios.** UX/UI en todas las secciones, experiencia tipo app móvil nativa (safe areas, bottom sheet, feedback táctil), mensajes de error unificados y **deploy a producción** (Netlify con `--filter=thebearbeat`). Para que cualquier desarrollador entienda y mantenga estos cambios.
 - **[DOCUMENTACION_CAMBIOS.md](./DOCUMENTACION_CAMBIOS.md)** – Resumen de todo lo implementado: landing, diseño, Facebook Pixel y CAPI, responsive, móvil, temas, Admin Catálogo (REST), Netlify, deploy backend (GitHub Actions + deploy.sh), rutas y archivos clave.
 - **[DISENO-Y-ESTADO-ACTUAL.md](./DISENO-Y-ESTADO-ACTUAL.md)** – Sistema de diseño (tipografía, colores, variables `--app-*`), estado actual de la web: rutas, páginas, funciones por pantalla, modales y alertas. Referencia para mantener consistencia y para que cualquier desarrollador o IA entienda el proyecto.
 - **[FACEBOOK_META.md](./FACEBOOK_META.md)** – Configuración paso a paso del Pixel de Meta y de la Conversions API (variables de entorno, token, ID del pixel).

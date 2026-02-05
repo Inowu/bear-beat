@@ -1,5 +1,11 @@
+@import "../../../styles/_variables-theme.scss";
 @import "../../../styles/landing-design.scss";
 
 .container-verify-phone-modal .modal-content {
-    flex-direction: row;
+  flex-direction: row;
+}
+
+.container-verify-phone-modal .modal-container {
+  font-family: "Poppins", sans-serif;
+  font-size: var(--app-font-size-body);
 }

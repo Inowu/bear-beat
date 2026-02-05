@@ -87,7 +87,7 @@ export const AddCouponModal = (props: IAddCouponModal) => {
             onChange={formik.handleChange}
           />
           {formik.errors.code && (
-            <div className="formik">{formik.errors.code}</div>
+            <div className="error-formik">{formik.errors.code}</div>
           )}
         </div>
         <div className="c-row">
@@ -100,7 +100,7 @@ export const AddCouponModal = (props: IAddCouponModal) => {
             onChange={formik.handleChange}
           />
           {formik.errors.description && (
-            <div className="formik">{formik.errors.description}</div>
+            <div className="error-formik">{formik.errors.description}</div>
           )}
         </div>
         <div className="c-row">
@@ -113,7 +113,7 @@ export const AddCouponModal = (props: IAddCouponModal) => {
             type="text"
           />
           {formik.errors.discount && (
-            <div className="formik">{formik.errors.discount}</div>
+            <div className="error-formik">{formik.errors.discount}</div>
           )}
         </div>
         <div className="c-row">
@@ -130,7 +130,7 @@ export const AddCouponModal = (props: IAddCouponModal) => {
             <option value="0">No Active</option>
           </select>
           {formik.errors.active && (
-            <div className="formik">{formik.errors.active}</div>
+            <div className="error-formik">{formik.errors.active}</div>
           )}
         </div>
         {!loader ? (
@@ -138,7 +138,7 @@ export const AddCouponModal = (props: IAddCouponModal) => {
             Crear Cupon
           </button>
         ) : (
-          <Spinner size={3} width={0.3} color="#00e2f7" />
+          <Spinner size={3} width={0.3} color="var(--app-accent)" />
         )}
         <button className="btn-cancel" onClick={onHideModal} type="reset">
           Cancelar

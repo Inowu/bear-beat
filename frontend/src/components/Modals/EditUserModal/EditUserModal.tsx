@@ -147,7 +147,7 @@ export function EditUserModal(props: IEditPlanModal) {
             value={formik.values.name}
             onChange={formik.handleChange}
           />
-          {formik.errors.name && <div className="formik">{formik.errors.name}</div>}
+          {formik.errors.name && <div className="error-formik">{formik.errors.name}</div>}
         </div>
         <div className="c-row">
           <label>Correo</label>
@@ -159,7 +159,7 @@ export function EditUserModal(props: IEditPlanModal) {
             value={formik.values.email}
             onChange={formik.handleChange}
           />
-          {formik.errors.email && <div className="formik">{formik.errors.email}</div>}
+          {formik.errors.email && <div className="error-formik">{formik.errors.email}</div>}
         </div>
         <div className="c-row">
           <label>Tipo de usuario</label>
@@ -211,7 +211,7 @@ export function EditUserModal(props: IEditPlanModal) {
             onChange={formik.handleChange}
             inputClassName="modal-password-input"
           />
-          {formik.errors.password && <div className="formik">{formik.errors.password}</div>}
+          {formik.errors.password && <div className="error-formik">{formik.errors.password}</div>}
         </div>
         {!loader ? (
           <button className="btn-option-4" type="submit">
@@ -219,7 +219,7 @@ export function EditUserModal(props: IEditPlanModal) {
           </button>
         ) : (
           <div style={{ marginBottom: 10 }}>
-            <Spinner size={3} width={0.3} color="#00e2f7" />
+            <Spinner size={3} width={0.3} color="var(--app-accent)" />
           </div>
         )}
         <button className="btn-cancel" onClick={onHideModal} type="reset">

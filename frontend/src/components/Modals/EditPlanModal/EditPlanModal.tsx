@@ -130,7 +130,7 @@ function EditPlanModal(props: IEditPlanModal) {
             onChange={formik.handleChange}
           />
           {formik.errors.name && (
-            <div className="formik">{formik.errors.name}</div>
+            <div className="error-formik">{formik.errors.name}</div>
           )}
         </div>
         <div className="c-row">
@@ -144,7 +144,7 @@ function EditPlanModal(props: IEditPlanModal) {
             onChange={formik.handleChange}
           />
           {formik.errors.description && (
-            <div className="formik">{formik.errors.description}</div>
+            <div className="error-formik">{formik.errors.description}</div>
           )}
         </div>
         <div className="c-row">
@@ -154,7 +154,7 @@ function EditPlanModal(props: IEditPlanModal) {
             <option value={"year"}>Año</option>
           </select>
           {formik.errors.interval && (
-            <div className="formik">{formik.errors.interval}</div>
+            <div className="error-formik">{formik.errors.interval}</div>
           )}
         </div>
         <div className="c-row">
@@ -168,7 +168,7 @@ function EditPlanModal(props: IEditPlanModal) {
             type="number"
           />
           {formik.errors.gigas && (
-            <div className="formik">{formik.errors.duration}</div>
+            <div className="error-formik">{formik.errors.gigas}</div>
           )}
         </div>
         <div className="c-row">
@@ -190,7 +190,7 @@ function EditPlanModal(props: IEditPlanModal) {
           </button>
         ) : (
           <div style={{ marginBottom: 10 }}>
-            <Spinner size={3} width={0.3} color="#00e2f7" />
+            <Spinner size={3} width={0.3} color="var(--app-accent)" />
           </div>
         )}
         <button className="btn-cancel" onClick={onHideModal} type="reset">
