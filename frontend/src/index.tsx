@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { PayPalScriptProvider } from "@paypal/react-paypal-js";
+import "./tailwind.css";
 import "./styles/index.scss";
 import reportWebVitals from "./reportWebVitals";
 import { initFacebookPixel } from "./utils/facebookPixel";

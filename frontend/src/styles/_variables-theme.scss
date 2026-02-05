@@ -164,6 +164,90 @@
   --app-font-size-h3: clamp(1.35rem, 4.5vw, 1.75rem);
   --app-font-size-h2: clamp(1.5rem, 5.5vw, 2.25rem);
   --app-font-size-h1: clamp(1.75rem, 6vw, 2.75rem);
+
+  /* Menú móvil (overlay) — Light: cristal ahumado coherente con navbar oscuro */
+  --aside-overlay-bg: rgba(26, 35, 50, 0.98);
+  --aside-overlay-border: rgba(255, 255, 255, 0.08);
+  --aside-overlay-text: #e2e8f0;
+  --aside-overlay-text-muted: #94a3b8;
+  --aside-overlay-hover: var(--theme-accent-bright);
+  --aside-overlay-close-bg: rgba(51, 65, 85, 0.6);
+  --aside-overlay-close-color: #cbd5e1;
+  --aside-overlay-close-hover: var(--theme-accent-bright);
+
+  /* File browser (Home) — Light: contenedor tipo card, acentos cyan */
+  --fb-bg: #f8fafc;
+  --fb-border: #e2e8f0;
+  --fb-row-border: rgba(0, 0, 0, 0.06);
+  --fb-row-hover-bg: rgba(6, 182, 212, 0.06);
+  --fb-row-hover-border: var(--theme-accent-bright);
+  --fb-text: #0f172a;
+  --fb-text-muted: #64748b;
+  --fb-accent: var(--theme-accent-bright);
+  --fb-input-bg: #ffffff;
+  --fb-input-border: #cbd5e1;
+  --fb-input-placeholder: #94a3b8;
+  --fb-folder-icon: #eab308;
+  --fb-file-icon: #64748b;
+
+  /* Mi Cuenta (Panel de Control) — Light */
+  --ma-bg: #f8fafc;
+  --ma-card-bg: #ffffff;
+  --ma-card-border: #e2e8f0;
+  --ma-title: #0f172a;
+  --ma-accent: var(--theme-accent-bright);
+  --ma-text: #0f172a;
+  --ma-text-muted: #64748b;
+  --ma-progress-bg: #e2e8f0;
+  --ma-progress-fill: var(--theme-accent-bright);
+  --ma-avatar-ring: var(--theme-accent-bright);
+  --ma-btn-cancel-bg: rgba(239, 68, 68, 0.15);
+  --ma-btn-cancel-text: #dc2626;
+  --ma-btn-cancel-border: rgba(239, 68, 68, 0.3);
+  --ma-add-card-border: #cbd5e1;
+  --ma-add-card-hover: var(--theme-accent-bright);
+  --ma-badge-success: #16a34a;
+  --ma-badge-pending: #d97706;
+  --ma-badge-fail: #dc2626;
+  --ma-badge-neutral: #64748b;
+
+  /* Instrucciones (Protocolo de Conexión) — Light */
+  --in-bg: #f8fafc;
+  --in-hero-gradient: linear-gradient(180deg, #e0f2fe 0%, #f8fafc 100%);
+  --in-card-bg: #ffffff;
+  --in-card-border: #e2e8f0;
+  --in-title: #0f172a;
+  --in-text: #334155;
+  --in-text-muted: #64748b;
+  --in-accent: var(--theme-accent-bright);
+  --in-stepper-line: #cbd5e1;
+  --in-step-circle: var(--theme-accent-bright);
+  --in-step-circle-text: #0f172a;
+  --in-terminal-bg: #f1f5f9;
+  --in-terminal-border: #e2e8f0;
+
+  /* Admin Panel — Light: fondo claro, texto oscuro, acento cyan (como Home) */
+  --ad-bg: #f8fafc;
+  --ad-card: #ffffff;
+  --ad-border: #e2e8f0;
+  --ad-text: #475569;
+  --ad-text-muted: #64748b;
+  --ad-title: #0f172a;
+  --ad-accent: #0891b2;
+  --ad-accent-bg: #06b6d4;
+  --ad-input-bg: #ffffff;
+  --ad-input-border: #cbd5e1;
+  --ad-focus-ring: rgba(6, 182, 212, 0.35);
+  --ad-row-hover: rgba(241, 245, 249, 0.9);
+  --ad-header-bg: #f1f5f9;
+  --ad-badge-success-bg: rgba(34, 197, 94, 0.12);
+  --ad-badge-success-text: #15803d;
+  --ad-badge-warning-bg: rgba(234, 179, 8, 0.15);
+  --ad-badge-warning-text: #a16207;
+  --ad-badge-danger-bg: rgba(239, 68, 68, 0.12);
+  --ad-badge-danger-text: #b91c1c;
+  --ad-badge-neutral-bg: rgba(100, 116, 139, 0.12);
+  --ad-badge-neutral-text: #475569;
 }
 
 // Dark: por data-theme o por clase .dark en html (compatibilidad Tailwind)
@@ -320,4 +404,88 @@ html.dark {
   --app-font-size-h3: clamp(1.35rem, 4.5vw, 1.75rem);
   --app-font-size-h2: clamp(1.5rem, 5.5vw, 2.25rem);
   --app-font-size-h1: clamp(1.75rem, 6vw, 2.75rem);
+
+  /* Menú móvil (overlay) — Dark: cristal ahumado slate-950 */
+  --aside-overlay-bg: rgba(2, 6, 23, 0.98);
+  --aside-overlay-border: rgba(255, 255, 255, 0.06);
+  --aside-overlay-text: #cbd5e1;
+  --aside-overlay-text-muted: #94a3b8;
+  --aside-overlay-hover: var(--theme-accent-bright);
+  --aside-overlay-close-bg: rgba(51, 65, 85, 0.5);
+  --aside-overlay-close-color: #cbd5e1;
+  --aside-overlay-close-hover: var(--theme-accent-bright);
+
+  /* Mi Cuenta (Panel de Control) — Dark */
+  --ma-bg: #020617;
+  --ma-card-bg: #0f172a;
+  --ma-card-border: #1e293b;
+  --ma-title: #f8fafc;
+  --ma-accent: #22d3ee;
+  --ma-text: #e2e8f0;
+  --ma-text-muted: #94a3b8;
+  --ma-progress-bg: #1e293b;
+  --ma-progress-fill: #22d3ee;
+  --ma-avatar-ring: #22d3ee;
+  --ma-btn-cancel-bg: rgba(239, 68, 68, 0.2);
+  --ma-btn-cancel-text: #f87171;
+  --ma-btn-cancel-border: rgba(239, 68, 68, 0.3);
+  --ma-add-card-border: #334155;
+  --ma-add-card-hover: #22d3ee;
+  --ma-badge-success: #4ade80;
+  --ma-badge-pending: #fbbf24;
+  --ma-badge-fail: #f87171;
+  --ma-badge-neutral: #94a3b8;
+
+  /* Instrucciones (Protocolo de Conexión) — Dark */
+  --in-bg: #020617;
+  --in-hero-gradient: linear-gradient(180deg, #0f172a 0%, #020617 100%);
+  --in-card-bg: #0f172a;
+  --in-card-border: #1e293b;
+  --in-title: #f8fafc;
+  --in-text: #e2e8f0;
+  --in-text-muted: #94a3b8;
+  --in-accent: #22d3ee;
+  --in-stepper-line: #334155;
+  --in-step-circle: #22d3ee;
+  --in-step-circle-text: #020617;
+  --in-terminal-bg: #0f172a;
+  --in-terminal-border: #334155;
+
+  /* Admin Panel (God Mode) — Dark: centro de mando slate-950 + cyan */
+  --ad-bg: #020617;
+  --ad-card: #0f172a;
+  --ad-border: #1e293b;
+  --ad-text: #cbd5e1;
+  --ad-text-muted: #64748b;
+  --ad-title: #ffffff;
+  --ad-accent: #22d3ee;
+  --ad-accent-bg: #06b6d4;
+  --ad-input-bg: #0f172a;
+  --ad-input-border: #334155;
+  --ad-focus-ring: rgba(34, 211, 238, 0.4);
+  --ad-row-hover: rgba(30, 41, 59, 0.5);
+  --ad-header-bg: #0f172a;
+  --ad-badge-success-bg: rgba(34, 197, 94, 0.1);
+  --ad-badge-success-text: #4ade80;
+  --ad-badge-warning-bg: rgba(234, 179, 8, 0.1);
+  --ad-badge-warning-text: #facc15;
+  --ad-badge-danger-bg: rgba(239, 68, 68, 0.1);
+  --ad-badge-danger-text: #f87171;
+  --ad-badge-neutral-bg: rgba(100, 116, 139, 0.1);
+  --ad-badge-neutral-text: #94a3b8;
+
+  /* File browser (Home) — Dark: slate/cyan cyberpunk */
+  --fb-bg: #020617;
+  --fb-border: #1e293b;
+  --fb-row-border: rgba(255, 255, 255, 0.06);
+  --fb-row-hover-bg: rgba(30, 41, 59, 0.8);
+  --fb-row-hover-border: #22d3ee;
+  --fb-text: #e2e8f0;
+  --fb-text-muted: #94a3b8;
+  --fb-accent: #22d3ee;
+  --fb-input-bg: #0f172a;
+  --fb-input-border: #334155;
+  --fb-input-placeholder: #64748b;
+  --fb-folder-icon: #eab308;
+  --fb-file-icon: #94a3b8;
 }

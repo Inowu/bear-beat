@@ -1,13 +1,14 @@
 import './Home.scss';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faFolder,
-  faPlay,
-  faDownload,
-  faArrowLeft,
-  faChevronRight,
-  faSearch,
-} from '@fortawesome/free-solid-svg-icons';
+  Folder,
+  ArrowLeft,
+  ChevronRight,
+  Music,
+  File,
+  Search,
+  Play,
+  Download,
+} from 'lucide-react';
 import PreviewModal from '../../components/PreviewModal/PreviewModal';
 import { useEffect, useState } from 'react';
 import trpc from '../../api';
@@ -345,63 +346,79 @@ function Home() {
       <Elements stripe={stripePromise}>
         <UsersUHModal showModal={showModal} onHideModal={closeModalAdd} />
       </Elements>
-      <div className="header-contain">
-        <h2>
-          <FontAwesomeIcon icon={faFolder} /> Todos los archivos
+      <div className="header-contain flex flex-wrap justify-between items-center gap-4">
+        <h2 className="text-xl font-semibold flex items-center gap-2" style={{ color: 'var(--fb-text)' }}>
+          <Folder className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--fb-accent)' }} />
+          Todos los archivos
         </h2>
-        <div className="search-input">
+        <div className="relative flex items-center">
+          <Search className="absolute left-3 w-4 h-4 pointer-events-none" style={{ color: 'var(--fb-text-muted)' }} />
           <input
             placeholder="Buscar"
+            className="w-full min-w-[200px] pl-10 pr-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
+            style={{
+              background: 'var(--fb-input-bg)',
+              border: '1px solid var(--fb-input-border)',
+              color: 'var(--fb-text)',
+            }}
             onChange={(e: any) => {
               startSearch(e.target.value);
             }}
           />
-          <FontAwesomeIcon icon={faSearch} />
         </div>
       </div>
       {pastFile.length > 0 && !showPagination && (
-        <>
-          <div className="folder-structure-container">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1 font-mono text-sm" style={{ color: 'var(--fb-accent)' }}>
             {pastFile.map((file: any, index) => {
               const isLastFolder = pastFile.length === index + 1;
               if (isLastFolder) {
                 return (
-                  <p key={`folder_${index}`} className="last-folder">
+                  <span key={`folder_${index}`} style={{ color: 'var(--fb-accent)' }}>
                     {file}
-                  </p>
+                  </span>
                 );
               }
               return (
-                <div key={`folder_${index}`}>
-                  <p
+                <span key={`folder_${index}`} className="flex items-center gap-1">
+                  <span
+                    className="cursor-pointer opacity-90 hover:opacity-100"
+                    style={{ color: 'var(--fb-accent)' }}
                     onClick={() => {
                       goToFolder({ folder: index + 1 });
                     }}
                   >
                     {file}
-                  </p>
-                  <FontAwesomeIcon icon={faChevronRight} />
-                </div>
+                  </span>
+                  <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--fb-text-muted)' }} />
+                </span>
               );
             })}
           </div>
-          <div className="btn-back">
-            <button
-              onClick={() => {
-                goToFolder({ back: true });
-              }}
-            >
-              <FontAwesomeIcon icon={faArrowLeft} />
-              Back
-            </button>
-          </div>
-        </>
+          <button
+            type="button"
+            onClick={() => {
+              goToFolder({ back: true });
+            }}
+            className="fb-volver inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-colors"
+            style={{ color: 'var(--fb-text-muted)' }}
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Volver
+          </button>
+        </div>
       )}
-      <div className="folders-navigation-container">
-        <div className="header">
+      <div
+        className="folders-navigation-container rounded-xl shadow-2xl overflow-hidden"
+        style={{ background: 'var(--fb-bg)', border: '1px solid var(--fb-border)' }}
+      >
+        <div
+          className="grid grid-cols-2 md:grid-cols-[2fr_1fr_1fr] gap-4 px-4 py-3 border-b text-sm font-medium"
+          style={{ borderColor: 'var(--fb-border)', color: 'var(--fb-text-muted)' }}
+        >
           <div>Nombre</div>
-          <div>Tamaño</div>
-          <div className="modified-column">Modificado</div>
+          <div className="text-right">Tamaño</div>
+          <div className="hidden md:block text-right">Modificado</div>
         </div>
         <div className="folders-cards-container">
           {!loader ? (
@@ -410,21 +427,34 @@ function Home() {
               return (
                 <div key={'files ' + idx}>
                   {file.type === 'd' && (
-                    <div className="folder-card">
-                      <div
-                        className="name-container"
-                        onClick={() => {
-                          goToFolder({ next: file.name });
-                        }}
-                      >
-                        <FontAwesomeIcon icon={faFolder} />
-                        <h3>{file.name}</h3>
+                    <div
+                      className="flex items-center justify-between p-4 border-b border-l-2 border-l-transparent transition-colors cursor-pointer hover:border-l-2"
+                      style={{
+                        borderBottomColor: 'var(--fb-row-border)',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'var(--fb-row-hover-bg)';
+                        e.currentTarget.style.borderLeftColor = 'var(--fb-row-hover-border)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = '';
+                        e.currentTarget.style.borderLeftColor = 'transparent';
+                      }}
+                      onClick={() => {
+                        goToFolder({ next: file.name });
+                      }}
+                    >
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <Folder className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--fb-folder-icon)' }} />
+                        <span className="font-medium truncate" style={{ color: 'var(--fb-text)' }}>
+                          {file.name}
+                        </span>
                       </div>
-                      <div className="name-container">
-                        <h3>{gbSize.toFixed(2)} GB</h3>
-                      </div>
-                      <div className="modified-column">
-                        <h4>
+                      <div className="flex items-center gap-4 flex-shrink-0">
+                        <span className="whitespace-nowrap text-sm font-mono" style={{ color: 'var(--fb-text-muted)' }}>
+                          {gbSize.toFixed(2)} GB
+                        </span>
+                        <span className="modified-column whitespace-nowrap text-sm hidden md:inline" style={{ color: 'var(--fb-text-muted)' }}>
                           {new Date().toLocaleString('en-US', {
                             month: 'short',
                             day: '2-digit',
@@ -432,52 +462,82 @@ function Home() {
                             hour: '2-digit',
                             minute: '2-digit',
                           })}
-                        </h4>
+                        </span>
+                        {gbSize <= 50 && (
+                          <div
+                            className="p-1 rounded hover:opacity-80"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              checkAlbumSize(file, idx);
+                            }}
+                          >
+                            {loadDownload && index === idx ? (
+                              <Spinner size={2} width={0.2} color="var(--fb-accent)" />
+                            ) : (
+                              <Download className="w-4 h-4 cursor-pointer" style={{ color: 'var(--fb-file-icon)' }} />
+                            )}
+                          </div>
+                        )}
                       </div>
-
-                      {gbSize <= 50 && (
-                        <div className="download-button">
-                          {loadDownload && index === idx ? (
-                            <Spinner size={2} width={0.2} color="black" />
-                          ) : (
-                            <FontAwesomeIcon
-                              icon={faDownload}
-                              onClick={() => checkAlbumSize(file, idx)}
-                            />
-                          )}
-                        </div>
-                      )}
                     </div>
                   )}
                   {file.type === '-' && (
-                    <div className="folder-card video-card">
-                      {loadFile && index === idx ? (
-                        <Spinner size={2} width={0.2} color="black" />
-                      ) : (
-                        <FontAwesomeIcon
-                          icon={faPlay}
-                          onClick={() => playFile(file, idx)}
-                        />
-                      )}
-
-                      <div className="name-container">
-                        <h3>{file.name}</h3>
+                    <div
+                      className="flex items-center justify-between p-4 border-b border-l-2 border-l-transparent transition-colors hover:border-l-2"
+                      style={{
+                        borderBottomColor: 'var(--fb-row-border)',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'var(--fb-row-hover-bg)';
+                        e.currentTarget.style.borderLeftColor = 'var(--fb-row-hover-border)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = '';
+                        e.currentTarget.style.borderLeftColor = 'transparent';
+                      }}
+                    >
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        {loadFile && index === idx ? (
+                          <Spinner size={2} width={0.2} color="var(--fb-accent)" />
+                        ) : (
+                          <button
+                            type="button"
+                            className="p-1 rounded hover:opacity-80 flex-shrink-0"
+                            onClick={() => playFile(file, idx)}
+                          >
+                            <Play className="w-4 h-4" style={{ color: 'var(--fb-file-icon)' }} />
+                          </button>
+                        )}
+                        <Music className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--fb-file-icon)' }} />
+                        <span className="font-medium truncate" style={{ color: 'var(--fb-text)' }}>
+                          {file.name}
+                        </span>
                       </div>
-                      {loadDownload && index === idx ? (
-                        <Spinner size={2} width={0.2} color="black" />
-                      ) : (
-                        <FontAwesomeIcon
-                          icon={faDownload}
-                          onClick={() => downloadFile(file, idx)}
-                        />
-                      )}
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <span className="whitespace-nowrap text-sm font-mono" style={{ color: 'var(--fb-text-muted)' }}>
+                          {gbSize.toFixed(2)} GB
+                        </span>
+                        {loadDownload && index === idx ? (
+                          <Spinner size={2} width={0.2} color="var(--fb-accent)" />
+                        ) : (
+                          <button
+                            type="button"
+                            className="p-1 rounded hover:opacity-80"
+                            onClick={() => downloadFile(file, idx)}
+                          >
+                            <Download className="w-4 h-4" style={{ color: 'var(--fb-file-icon)' }} />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
               );
             })
           ) : (
-            <Spinner size={4} width={0.4} color="#2c2c2c" />
+            <div className="flex justify-center py-12">
+              <Spinner size={4} width={0.4} color="#22d3ee" />
+            </div>
           )}
         </div>
         {showPagination && (

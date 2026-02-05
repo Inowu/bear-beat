@@ -1,16 +1,74 @@
 @import "src/styles/mixin.scss";
 @import "../../styles/landing-design.scss";
 
-// Mobile-first (tipo app nativa)
+// Mobile-first (tipo app nativa) + tema light/dark (variables --ma-*)
 .my-account-main-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 24px;
   width: 100%;
-  color: $text-primary;
+  color: var(--ma-text, $text-primary);
   overflow-x: hidden;
   padding-bottom: 24px;
+
+  .ma-btn-cancel {
+    background: var(--ma-btn-cancel-bg);
+    color: var(--ma-btn-cancel-text);
+    border: 1px solid var(--ma-btn-cancel-border);
+    &:hover {
+      opacity: 0.9;
+    }
+  }
+
+  .ma-btn-secondary {
+    background: var(--ma-progress-bg);
+    color: var(--ma-text);
+    border: 1px solid var(--ma-card-border);
+    &:hover {
+      background: var(--ma-card-border);
+      color: var(--ma-text);
+    }
+  }
+
+  .ma-btn-accent {
+    background: transparent;
+    color: var(--ma-accent);
+    border: 1px solid var(--ma-accent);
+    &:hover {
+      opacity: 0.9;
+      background: var(--ma-accent);
+      color: var(--ma-bg);
+    }
+  }
+
+  .ma-table-row:hover {
+    background: var(--ma-progress-bg);
+  }
+
+  .ma-ftp-icon {
+    color: var(--ma-text-muted);
+    &:hover {
+      color: var(--ma-accent);
+    }
+  }
+
+  .ma-btn-delete {
+    color: var(--ma-text-muted);
+    &:hover {
+      color: #ef4444;
+      background: rgba(239, 68, 68, 0.1);
+    }
+  }
+
+  .ma-add-card:hover {
+    border-color: var(--ma-add-card-hover) !important;
+    color: var(--ma-add-card-hover) !important;
+  }
+
+  .ma-badge {
+    background: color-mix(in srgb, currentColor 12%, transparent);
+  }
 
   .card-status {
     width: 20px;

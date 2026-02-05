@@ -14,10 +14,9 @@ import {
   HistoryModal,
   AddExtraStorageModal,
   DeleteUOneUserModal
-} from '../../components/Modals'
+} from '../../components/Modals';
 import { useNavigate } from "react-router-dom";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSearch } from "@fortawesome/free-solid-svg-icons";
+import { Search, Plus, Download, Pencil, LogIn, MoreVertical } from "lucide-react";
 import Pagination from "../../components/Pagination/Pagination";
 import { ARRAY_10 } from "../../utils/Constants";
 import CsvDownloader from "react-csv-downloader";
@@ -26,6 +25,7 @@ import { FaLockOpen } from "react-icons/fa";
 import { FaLock } from "react-icons/fa";
 import { useSSE } from "react-hooks-sse";
 import { of } from "await-of";
+import { AdminDrawer } from "../../components/AdminDrawer/AdminDrawer";
 
 export interface IAdminFilter {
   page: number;
@@ -55,7 +55,7 @@ function Admin() {
   const [showEdit, setShowEdit] = useState<boolean>(false);
   const [showError, setShowError] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
-  const [filters, setFilters] = useState<any>({
+  const [filters, setFilters] = useState<IAdminFilter>({
     page: 0,
     search: "",
     active: 2,
@@ -65,70 +65,48 @@ function Admin() {
   const [showAddGB, setShowAddGB] = useState<boolean>(false);
   const [showDeleteUser, setShowDeleteUser] = useState<boolean>(false);
   const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(null);
+  const [drawerUser, setDrawerUser] = useState<IAdminUser | null>(null);
 
-  const closeModalAdd = () => {
-    setShowModal(false);
-  };
-  const handleDeleteModal = () => {
-    setShowDeleteModal(!showDeleteModal);
-  };
-  const closeBlockModal = () => {
-    setShowBlockModal(false);
-  };
-  const openBlockModal = (
-    user: IAdminUser,
-    message: string,
-    block: boolean
-  ) => {
+  const closeModalAdd = () => setShowModal(false);
+  const handleDeleteModal = () => setShowDeleteModal(!showDeleteModal);
+  const closeBlockModal = () => setShowBlockModal(false);
+  const openBlockModal = (user: IAdminUser, message: string, block: boolean) => {
     setBlocking(block);
     setBlockModalMSG(message);
     setShowBlockModal(true);
     setSelectedUser(user);
   };
   const navigate = useNavigate();
-  const openOption = () => {
-    setShowOption(true);
-  };
+  const openOption = () => setShowOption(true);
   const closeOption = () => {
     setSelectUser({} as IAdminUser);
     setShowOption(false);
   };
 
   const getPlans = async () => {
-    let body = {
-      where: {
-        activated: 1,
-      },
-    };
     try {
-      const plans: any = await trpc.plans.findManyPlans.query(body);
+      const plans: any = await trpc.plans.findManyPlans.query({ where: { activated: 1 } });
       setPlans(plans);
     } catch (error) {
       console.log(error);
     }
   };
+
   const giveSuscription = (user: IAdminUser) => {
     setSelectUser(user);
     setOptionTitle("Seleccione el plan");
     openOption();
   };
-  const MessageComplete = useSSE("remove-users:completed", {
-    queue: "remove-users",
-    jobId: null,
-  });
-  const MessageFail = useSSE("remove-users:failed", {
-    queue: "remove-users",
-    jobId: null,
-  });
+
+  const MessageComplete = useSSE("remove-users:completed", { queue: "remove-users", jobId: null });
+  const MessageFail = useSSE("remove-users:failed", { queue: "remove-users", jobId: null });
+
   const changeBlockUser = async () => {
     try {
-      let body = {
-        userId: selectedUser.id,
-      };
       if (blocking) {
-        await trpc.users.blockUser.mutate(body);
+        await trpc.users.blockUser.mutate({ userId: selectedUser.id });
       } else {
-        await trpc.users.unblockUser.mutate(body);
+        await trpc.users.unblockUser.mutate({ userId: selectedUser.id });
       }
       closeBlockModal();
       filterUsers(filters);
@@ -137,448 +115,429 @@ function Admin() {
     }
   };
 
-
   const startFilter = (key: string, value: string | number) => {
-    let tempFilters: any = filters;
-    if (key !== "page") {
-      tempFilters.page = 0;
-    }
-    tempFilters[key] = value;
+    const tempFilters = { ...filters };
+    if (key !== "page") tempFilters.page = 0;
+    (tempFilters as any)[key] = value;
     filterUsers(tempFilters);
     setFilters(tempFilters);
   };
+
   const transformUserData = async () => {
     const fetchUsers = await exportUsers(filters);
-
-    if (!fetchUsers || fetchUsers.length < 0) {
-      throw new Error('Error loading tempUsers');
-    }
-
-    const tempUsers = fetchUsers.map((user) => ({
+    if (!fetchUsers || fetchUsers.length < 0) throw new Error('Error loading tempUsers');
+    return fetchUsers.map((user) => ({
       Usuario: user.username,
       Correo: user.email,
       "Fecha de Registro": user.registered_on.toLocaleDateString(),
       Teléfono: user.phone,
-    }))
-
-    return tempUsers;
+    }));
   };
+
   const filterUsers = async (filt: IAdminFilter) => {
     setLoader(true);
     setTotalLoader(true);
     try {
+      const baseWhere = { email: { startsWith: filt.search } };
+      const baseBody = { take: filt.limit, skip: filt.page * filt.limit, where: baseWhere, orderBy: { registered_on: "desc" as const } };
+      const countBody = { where: baseWhere, select: { id: true } };
+
       if (filt.active === 2) {
-        let body: any = {
-          take: filt.limit,
-          skip: filt.page * filt.limit,
-          where: {
-            email: {
-              startsWith: filt.search,
-            },
-          },
-          orderBy: {
-            registered_on: "desc",
-          },
-        };
-        let body2: any = {
-          where: {
-            email: {
-              startsWith: filt.search,
-            },
-          },
-          select: {
-            id: true,
-          },
-        };
-        const tempUsers = await trpc.users.findManyUsers.query(body);
-        const transformedUsers: IAdminUser[] = tempUsers.map((user) => ({
-          email: user.email,
-          username: user.username,
-          active: user.active,
-          id: user.id,
-          registered_on: user.registered_on,
-          blocked: user.blocked,
-          phone: user.phone ?? "",
-          password: user.password,
-          role: user.role_id ?? 4,
-        }))
-        setLoader(false);
+        const tempUsers = await trpc.users.findManyUsers.query(baseBody);
+        const transformedUsers: IAdminUser[] = tempUsers.map((u: any) => ({
+          email: u.email,
+          username: u.username,
+          active: u.active,
+          id: u.id,
+          registered_on: u.registered_on,
+          blocked: u.blocked,
+          phone: u.phone ?? "",
+          password: u.password,
+          role: u.role_id ?? 4,
+        }));
         setUsers(transformedUsers);
-        const totalUsersResponse = await trpc.users.findManyUsers.query(body2);
+        const totalUsersResponse = await trpc.users.findManyUsers.query(countBody);
         setTotalUsers(totalUsersResponse.length);
-        setTotalLoader(false);
       } else {
-        let body: any = {
-          take: filt.limit,
-          skip: filt.page * filt.limit,
-          where: {
-            email: {
-              startsWith: filt.search,
-            },
-          },
-          orderBy: {
-            registered_on: "desc",
-          },
-        };
-        let body2: any = {
-          where: {
-            email: {
-              startsWith: filt.search,
-            },
-          },
-          select: {
-            id: true,
-          },
-        };
-        let tempUsers: any = [];
-        let totalUsersResponse = [];
-        if (filt.active === 1) {
-          tempUsers = await trpc.users.getActiveUsers.query(body);
-          totalUsersResponse = await trpc.users.getActiveUsers.query(body2);
-        } else {
-          tempUsers = await trpc.users.getInactiveUsers.query(body);
-          totalUsersResponse = await trpc.users.getInactiveUsers.query(body2);
-        }
+        const query = filt.active === 1 ? trpc.users.getActiveUsers : trpc.users.getInactiveUsers;
+        const tempUsers = await query.query(baseBody);
+        const totalUsersResponse = await query.query(countBody);
         setUsers(tempUsers);
         setTotalUsers(totalUsersResponse.length);
-        setTotalLoader(false);
-        setLoader(false);
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoader(false);
+      setTotalLoader(false);
     }
   };
+
   useEffect(() => {
-    if (MessageComplete.jobId !== null || MessageFail.jobId !== null) {
-      filterUsers(filters);
-    }
+    if (MessageComplete.jobId !== null || MessageFail.jobId !== null) filterUsers(filters);
   }, [MessageComplete, MessageFail, filters]);
 
   useEffect(() => {
     getPlans();
     filterUsers(filters);
-  }, [filters]);
+  }, []);
 
   useEffect(() => {
     trpc.users.countUsers.query().then(setTotalRegistered).catch(() => setTotalRegistered(null));
   }, []);
 
   useEffect(() => {
-    if (currentUser && currentUser.role !== "admin") {
-      navigate("/");
-    }
+    if (currentUser && currentUser.role !== "admin") navigate("/");
   }, [currentUser, navigate]);
 
   const handleEditUser = (user: IAdminUser) => {
     setSelectedUser(user);
     setShowEdit(true);
-  }
-
+  };
   const handleCloseEditUser = () => {
     setShowEdit(false);
     setSelectUser({} as IAdminUser);
-  }
-
-  const handleOpenHistory = async (user: IAdminUser) => {
+  };
+  const handleOpenHistory = (user: IAdminUser) => {
     setSelectUser(user);
     setShowHistory(true);
-  }
-
+  };
   const handleCloseHistory = () => {
     setShowHistory(false);
     setSelectUser({} as IAdminUser);
-  }
-
-  const handleOpenAddGB = async (user: IAdminUser) => {
-    setSelectUser(user);
+  };
+  const handleOpenAddGB = (user: IAdminUser) => {
+    setSelectedUser(user);
     setShowAddGB(true);
-  }
-
+  };
   const handleCloseAddGB = () => {
     setShowAddGB(false);
     setSelectUser({} as IAdminUser);
-  }
-  const handleDeleteUser = async (user: IAdminUser) => {
+  };
+  const handleDeleteUser = (user: IAdminUser) => {
     setSelectUser(user);
     setShowDeleteUser(true);
-  }
-
+  };
   const handleCloseDeleteUser = () => {
     setShowDeleteUser(false);
     setSelectUser({} as IAdminUser);
-  }
+  };
 
-
-  const signInAsUser = async (user: any) => {
+  const signInAsUser = async (user: IAdminUser) => {
     setLoader(true);
     const [loginAsUser, errorLogin] = await of(trpc.auth.login.query({
       username: user.email,
       password: user.password,
       isAdmin: true
     }));
-
     if (!loginAsUser && errorLogin) {
       setErrorMessage(errorLogin.message);
       setShowError(true);
       setLoader(false);
       return;
     }
-
     const adminToken = localStorage.getItem("token");
     const adminRefreshToken = localStorage.getItem("refreshToken");
     localStorage.setItem("isAdminAccess", JSON.stringify({ adminToken, adminRefreshToken }));
-
     handleLogin(loginAsUser!.token, loginAsUser!.refreshToken);
     navigate("/");
     setLoader(false);
-  }
-
-  const closeErrorModal = () => {
-    setShowError(false);
   };
 
-  /**
-   * Toggle dropdown by index (click/touch). Close others.
-   */
+  const closeErrorModal = () => setShowError(false);
+
   const toggleDropdown = (index: number) => {
     setOpenDropdownIndex((prev) => (prev === index ? null : index));
   };
 
-  /**
-   * Function that helps determine whether a dropdown should be up or down the Action button.
-   * @param {number} index Actions dropdown that will be shown
-   */
-  const positioningAction = (index: number): void => {
-    const pageLastPixel = document.body.scrollHeight;
+  const positioningAction = (index: number) => {
     const element = document.getElementById(`dropdown-content-${index}`);
     if (element) {
       const rect = element.getBoundingClientRect();
-      const elementLastPixel = rect.bottom;
-      if (elementLastPixel >= pageLastPixel) {
-        element.classList.add("dropdown-up");
-      } else {
-        element.classList.remove("dropdown-up");
-      }
+      if (rect.bottom >= document.body.scrollHeight) element.classList.add("dropdown-up");
+      else element.classList.remove("dropdown-up");
     }
   };
 
-  // Cerrar dropdown al hacer clic fuera (solo si está abierto)
   useEffect(() => {
     if (openDropdownIndex === null) return;
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (!target.closest(`[data-dropdown-index="${openDropdownIndex}"]`)) {
-        setOpenDropdownIndex(null);
-      }
+      if (!target.closest(`[data-dropdown-index="${openDropdownIndex}"]`)) setOpenDropdownIndex(null);
     };
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
   }, [openDropdownIndex]);
 
+  const openDrawer = (user: IAdminUser) => {
+    setDrawerUser(user);
+    setSelectUser(user);
+  };
+  const closeDrawer = () => setDrawerUser(null);
+
+  const drawerActions = drawerUser
+    ? [
+        { id: "edit", label: "Editar", onClick: () => handleEditUser(drawerUser!), variant: "secondary" as const },
+        { id: "access", label: "Acceder", onClick: () => signInAsUser(drawerUser!), disabled: drawerUser.role === USER_ROLES.ADMIN, variant: "primary" as const },
+        { id: "activate", label: "Activar plan", onClick: () => { giveSuscription(drawerUser!); closeDrawer(); }, variant: "secondary" as const },
+        { id: "history", label: "Historial", onClick: () => { handleOpenHistory(drawerUser!); closeDrawer(); }, variant: "secondary" as const },
+        { id: "addgb", label: "Agregar GB", onClick: () => { handleOpenAddGB(drawerUser!); closeDrawer(); }, variant: "secondary" as const },
+        { id: "block", label: drawerUser.blocked ? "Desbloquear" : "Bloquear", onClick: () => openBlockModal(drawerUser!, `¿${drawerUser.blocked ? 'Desbloquear' : 'Bloquear'} a ${drawerUser.username}?`, !drawerUser.blocked), variant: "secondary" as const },
+        { id: "delete", label: "Eliminar", onClick: () => handleDeleteUser(drawerUser!), disabled: drawerUser.role === USER_ROLES.ADMIN, variant: "danger" as const },
+      ]
+    : [];
+
+  const colCount = filters.active !== 2 ? 6 : 5;
+
   return (
-    <div className="admin-contain">
-      <div className="header">
-        <div className="header__title-row">
-          <h1>Usuarios</h1>
-          {totalRegistered !== null && (
-            <span className="header__total-registered">Usuarios registrados: {totalRegistered.toLocaleString()}</span>
-          )}
-        </div>
-        <button className="btn-addUsers" onClick={() => setShowModal(true)}>
-          Añadir Usuarios
-        </button>
-        <CsvDownloader
-          className="btn-addUsers"
-          filename="lista_de_usuarios"
-          extension=".csv"
-          separator=";"
-          wrapColumnChar=""
-          datas={transformUserData()}
-          text="Exportar Clientes"
-        />
-        <EditUserModal
-          showModal={showEdit}
-          onHideModal={handleCloseEditUser}
-          editingUser={selectedUser}
-        />
-      </div>
-      <div className="filter-contain">
-        <div className="left-contain">
-          <div className="select-input">
-            <select onChange={(e) => startFilter("active", +e.target.value)}>
-              <option value={2}>Todos</option>
-              <option value={1}>Activos</option>
-              <option value={0}>Inactivos</option>
-            </select>
+    <div className="admin-theme">
+      <div className="admin-contain">
+        <div className="header">
+          <div className="header__title-row">
+            <h1>Usuarios</h1>
+            {totalRegistered !== null && (
+              <span className="header__total-registered">
+                Registrados: {totalRegistered.toLocaleString()}
+              </span>
+            )}
           </div>
-          <div className="select-input">
-            <select
-              defaultValue={filters.limit}
-              onChange={(e) => startFilter("limit", +e.target.value)}
+          <div className="header__actions">
+            <button type="button" className="btn-icon btn-primary" onClick={() => setShowModal(true)}>
+              <Plus size={18} /> Añadir
+            </button>
+            <CsvDownloader
+              filename="lista_de_usuarios"
+              extension=".csv"
+              separator=";"
+              wrapColumnChar=""
+              datas={transformUserData()}
+              text=""
             >
-              <option value={""} disabled>
-                Numero de datos
-              </option>
-              <option value={100}>100</option>
-              <option value={200}>200</option>
-              <option value={500}>500</option>
-            </select>
+              <button type="button" className="btn-icon">
+                <Download size={18} /> Exportar
+              </button>
+            </CsvDownloader>
           </div>
         </div>
-        <div className="search-input">
-          <input
-            placeholder="Buscar por email"
-            onChange={(e: any) => {
-              startFilter("search", e.target.value);
-            }}
-          />
-          <FontAwesomeIcon icon={faSearch} />
-        </div>
-      </div>
-      <div className="admin-table">
-        <div className="table-contain">
-          <table>
-            <thead>
-              <tr>
-                <th>Nombre</th>
-                <th>Email</th>
-                <th>Teléfono</th>
-                <th>Registro</th>
-                {filters.active !== 2 && <th>Suscripción</th>}
 
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {!loader
-                ? users.map((user: IAdminUser, index: number) => {
-                  return (
-                    <tr key={"admin_users_" + index}>
-                      <td data-label="Nombre">{user.username}</td>
-                      <td data-label="Email">{user.email}</td>
-                      <td data-label="Teléfono">{user.phone}</td>
-                      <td data-label="Registro">{user.registered_on.toLocaleDateString()}</td>
-                      {filters.active !== 2 && (
-                        <td data-label="Suscripción">
-                          {filters.active === 1 ? "Activa" : "No activa"}
-                        </td>
-                      )}
-                      <td className="wrap-td" data-label="Acciones">
-                        <div className={`dropdown ${openDropdownIndex === index ? "open" : ""}`} data-dropdown-index={index}>
-                          <button
-                            type="button"
-                            className="dropbtn"
-                            onMouseEnter={() => { positioningAction(index); }}
-                            onClick={(e) => { e.stopPropagation(); positioningAction(index); toggleDropdown(index); }}
-                          >
-                            Acciones
-                          </button>
-                          <div className="dropdown-content" id={`dropdown-content-${index}`}>
-                            <button type="button" onClick={() => { setOpenDropdownIndex(null); handleEditUser(user); }}>Editar</button>
-                            <button type="button" onClick={() => { setOpenDropdownIndex(null); signInAsUser(user); }} disabled={user.role === USER_ROLES.ADMIN}>Acceder</button>
-                            <button type="button" onClick={() => { setOpenDropdownIndex(null); giveSuscription(user); }}>Activar</button>
-                            <button type="button" onClick={() => { setOpenDropdownIndex(null); handleDeleteUser(user); }} disabled={user.role === USER_ROLES.ADMIN}>Eliminar</button>
-                            <button type="button" onClick={() => { setOpenDropdownIndex(null); handleOpenHistory(user); }}>Historial</button>
-                            <button type="button" onClick={() => { setOpenDropdownIndex(null); handleOpenAddGB(user); }}>Agregar GB</button>
-                            <button type="button" className="icon-button" onClick={() => {
-                              setOpenDropdownIndex(null);
-                              openBlockModal(
-                                user,
-                                `Estas por ${user.blocked ? 'desbloquear' : 'bloquear'} al usuario: ${user.username}`,
-                                !user.blocked
-                              );
-                            }}>
-                              {user.blocked ? (
-                                <FaLock className='lock' />
-                              ) : (
-                                <FaLockOpen className='unlock' />
-                              )}
+        <div className="filter-contain">
+          <div className="left-contain">
+            <div className="select-input">
+              <select value={filters.active} onChange={(e) => startFilter("active", +e.target.value)}>
+                <option value={2}>Todos</option>
+                <option value={1}>Activos</option>
+                <option value={0}>Inactivos</option>
+              </select>
+            </div>
+            <div className="select-input">
+              <select value={filters.limit} onChange={(e) => startFilter("limit", +e.target.value)}>
+                <option value={100}>100</option>
+                <option value={200}>200</option>
+                <option value={500}>500</option>
+              </select>
+            </div>
+            <div className="search-input">
+              <Search className="search-input__icon" size={18} />
+              <input
+                placeholder="Buscar por email"
+                value={filters.search}
+                onChange={(e) => startFilter("search", e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Tabla desktop */}
+        <div className="admin-table">
+          <div className="table-contain">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Email</th>
+                  <th>Teléfono</th>
+                  <th>Registro</th>
+                  {filters.active !== 2 && <th>Suscripción</th>}
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {!loader
+                  ? users.map((user, index) => (
+                      <tr key={`admin_users_${index}`}>
+                        <td>{user.username}</td>
+                        <td>{user.email}</td>
+                        <td>{user.phone}</td>
+                        <td>{user.registered_on.toLocaleDateString()}</td>
+                        {filters.active !== 2 && (
+                          <td>
+                            <span className={`badge ${filters.active === 1 ? "badge--success" : "badge--neutral"}`}>
+                              {filters.active === 1 ? "Activa" : "No activa"}
+                            </span>
+                          </td>
+                        )}
+                        <td>
+                          <div className="table-actions">
+                            <button
+                              type="button"
+                              className="btn-cell"
+                              onClick={() => handleEditUser(user)}
+                              title="Editar"
+                            >
+                              <Pencil size={16} />
                             </button>
+                            <button
+                              type="button"
+                              className="btn-cell"
+                              onClick={() => signInAsUser(user)}
+                              disabled={user.role === USER_ROLES.ADMIN}
+                              title="Acceder"
+                            >
+                              <LogIn size={16} />
+                            </button>
+                            <div className="dropdown" data-dropdown-index={index}>
+                              <button
+                                type="button"
+                                className="btn-cell"
+                                onMouseEnter={() => positioningAction(index)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  positioningAction(index);
+                                  toggleDropdown(index);
+                                }}
+                                title="Más acciones"
+                              >
+                                <MoreVertical size={16} />
+                              </button>
+                              <div className="dropdown-content" id={`dropdown-content-${index}`}>
+                                <button type="button" onClick={() => { setOpenDropdownIndex(null); giveSuscription(user); }}>Activar plan</button>
+                                <button type="button" onClick={() => { setOpenDropdownIndex(null); handleOpenHistory(user); }}>Historial</button>
+                                <button type="button" onClick={() => { setOpenDropdownIndex(null); handleOpenAddGB(user); }}>Agregar GB</button>
+                                <button type="button" onClick={() => { setOpenDropdownIndex(null); handleDeleteUser(user); }} disabled={user.role === USER_ROLES.ADMIN}>Eliminar</button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setOpenDropdownIndex(null);
+                                    openBlockModal(user, `¿${user.blocked ? 'Desbloquear' : 'Bloquear'} a ${user.username}?`, !user.blocked);
+                                  }}
+                                >
+                                  {user.blocked ? <><FaLock /> Bloquear</> : <><FaLockOpen /> Desbloquear</>}
+                                </button>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-                : ARRAY_10.map((val: string, index: number) => {
-                  return filters.active !== 2 ? (
-                    <tr key={"array_10" + index} className="tr-load">
-                      <td />
-                      <td />
-                      <td />
-                      <td />
-                      <td />
-                      <td />
-                    </tr>
-                  ) : (
-                    <tr key={"array_10" + index} className="tr-load">
-                      <td />
-                      <td />
-                      <td />
-                      <td />
-                      <td />
-                    </tr>
-                  );
-                })}
-            </tbody>
-            <tfoot>
-              <tr>
-                <th colSpan={5}>
-                  <Pagination
-                    totalLoader={totalLoader}
-                    totalData={totalUsers}
-                    title="usuarios"
-                    startFilter={startFilter}
-                    currentPage={filters.page}
-                    limit={filters.limit}
-                  />
-                </th>
-
-              </tr>
-            </tfoot>
-          </table>
+                        </td>
+                      </tr>
+                    ))
+                  : ARRAY_10.map((_, index) => (
+                      <tr key={`load_${index}`} className="tr-load">
+                        <td /><td /><td /><td />
+                        {filters.active !== 2 && <td />}
+                        <td />
+                      </tr>
+                    ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <th colSpan={colCount}>
+                    <Pagination
+                      totalLoader={totalLoader}
+                      totalData={totalUsers}
+                      title="usuarios"
+                      startFilter={startFilter}
+                      currentPage={filters.page}
+                      limit={filters.limit}
+                    />
+                  </th>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         </div>
 
+        {/* Lista compacta móvil */}
+        <div className="admin-list-mobile">
+          {!loader
+            ? users.map((user, index) => (
+                <div
+                  key={`mobile_${index}`}
+                  className="admin-list-row"
+                  onClick={() => openDrawer(user)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === "Enter" && openDrawer(user)}
+                >
+                  <div className="admin-list-row__left">
+                    <div className="admin-list-row__avatar">
+                      {(user.username || user.email || "?").charAt(0).toUpperCase()}
+                    </div>
+                    <div className="admin-list-row__info">
+                      <span className="admin-list-row__name">{user.username}</span>
+                      <span className="admin-list-row__email">{user.email}</span>
+                    </div>
+                  </div>
+                  <div className="admin-list-row__right">
+                    <span className={`badge ${user.blocked ? "badge--danger" : "badge--success"}`}>
+                      {user.blocked ? "Bloqueado" : "Activo"}
+                    </span>
+                    <button
+                      type="button"
+                      className="admin-list-row__menu"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openDrawer(user);
+                      }}
+                      aria-label="Abrir acciones"
+                    >
+                      <MoreVertical size={20} />
+                    </button>
+                  </div>
+                </div>
+              ))
+            : ARRAY_10.map((_, i) => (
+                <div key={`skeleton_${i}`} className="admin-list-row">
+                  <div className="admin-list-row__left">
+                    <div className="admin-list-row__avatar" style={{ opacity: 0.5 }}>?</div>
+                    <div className="admin-list-row__info">
+                      <span className="admin-list-row__name">—</span>
+                      <span className="admin-list-row__email">—</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+        </div>
+
+        <div className="admin-pagination-mobile">
+          <Pagination
+            totalLoader={totalLoader}
+            totalData={totalUsers}
+            title="usuarios"
+            startFilter={startFilter}
+            currentPage={filters.page}
+            limit={filters.limit}
+          />
+        </div>
       </div>
+
+      <AdminDrawer
+        open={drawerUser !== null}
+        onClose={closeDrawer}
+        title="Usuario"
+        user={drawerUser}
+        actions={drawerActions}
+      />
+
       <AddUsersModal showModal={showModal} onHideModal={closeModalAdd} />
-      <DeleteUserModal
-        filterUsers={filterUsers}
-        filters={filters}
-        show={showDeleteModal}
-        onHide={handleDeleteModal}
-      />
-      <ConditionModal
-        title={"Bloquear Usuario"}
-        message={blockModalMSG}
-        show={showBlockModal}
-        onHide={closeBlockModal}
-        action={changeBlockUser}
-      />
-      <OptionModal
-        show={showOption}
-        onHide={closeOption}
-        title={optionTitle}
-        message=""
-        userId={selectUser.id}
-        plans={plans}
-      />
+      <DeleteUserModal filterUsers={filterUsers} filters={filters} show={showDeleteModal} onHide={handleDeleteModal} />
+      <ConditionModal title="Bloquear Usuario" message={blockModalMSG} show={showBlockModal} onHide={closeBlockModal} action={changeBlockUser} />
+      <OptionModal show={showOption} onHide={closeOption} title={optionTitle} message="" userId={selectUser.id} plans={plans} />
       <ErrorModal show={showError} onHide={closeErrorModal} message={errorMessage} />
-      <HistoryModal
-        show={showHistory}
-        onHide={handleCloseHistory}
-        user={selectUser}
-      />
-      <AddExtraStorageModal
-        showModal={showAddGB}
-        onHideModal={handleCloseAddGB}
-        userId={selectUser.id}
-      />
-      <DeleteUOneUserModal 
-        show={showDeleteUser}
-        onHide={handleCloseDeleteUser}
-        user={selectUser}
-      />
+      <EditUserModal showModal={showEdit} onHideModal={handleCloseEditUser} editingUser={selectedUser} />
+      <HistoryModal show={showHistory} onHide={handleCloseHistory} user={selectUser} />
+      <AddExtraStorageModal showModal={showAddGB} onHideModal={handleCloseAddGB} userId={selectUser.id} />
+      <DeleteUOneUserModal show={showDeleteUser} onHide={handleCloseDeleteUser} user={selectUser} />
     </div>
   );
 }
+
 export default Admin;

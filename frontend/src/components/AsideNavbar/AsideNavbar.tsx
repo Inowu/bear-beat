@@ -17,8 +17,9 @@ import {
   faBan,
   faPhone,
   faChartBar,
+  faTimes,
+  faHeadset,
 } from "@fortawesome/free-solid-svg-icons";
-import { faHeadset } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
 
 interface AsideNavbarPropsI {
@@ -30,107 +31,71 @@ function AsideNavbar(props: AsideNavbarPropsI) {
   const { currentUser, resetCard } = useUserContext();
   const { show, onHide } = props;
   const location = useLocation();
-  const goTo = () => {
+
+  const handleLinkClick = () => {
     resetCard();
+    onHide();
   };
 
-  const handleButtonClick = () => {
+  const handleSupportClick = () => {
     window.location.href = "tel:+3521005329";
   };
+
+  const linkProps = { onClick: onHide };
+
   return (
-    <aside className={show ? "open" : ""}>
-      <img src={Logo} alt="bear beat" />
-      <div className="nav-container">
-        <h2>Contenido</h2>
-        {location.pathname.startsWith("/admin/") ? (
-          <ul>
-            <Link to={"/admin/usuarios"}>
-              <li>
-                <FontAwesomeIcon icon={faUserCircle} /> Usuarios
-              </li>
-            </Link>
-            <Link to={"/admin/planesAdmin"}>
-              <li>
-                <FontAwesomeIcon icon={faCartPlus} /> Planes
-              </li>
-            </Link>
-            <Link to={"/admin/ordenes"}>
-              <li>
-                <FontAwesomeIcon icon={faAddressBook} /> Ordenes
-              </li>
-            </Link>
-            <Link to={"/admin/cupones"}>
-              <li>
-                <FontAwesomeIcon icon={faTicket} /> Cupones
-              </li>
-            </Link>
-            <Link to={"/admin/almacenamiento"}>
-              <li>
-                <FontAwesomeIcon icon={faDatabase} /> Almacenamiento
-              </li>
-            </Link>
-            <Link to={"/admin/catalogo"}>
-              <li>
-                <FontAwesomeIcon icon={faChartBar} /> Catálogo
-              </li>
-            </Link>
-            <Link to={"/admin/historial-descargas"}>
-              <li>
-                <FontAwesomeIcon icon={faDownload} /> Descargas
-              </li>
-            </Link>
-            <Link to={"/admin/historialCheckout"}>
-              <li>
-                <FontAwesomeIcon icon={faTag} /> Checkout
-              </li>
-            </Link>
-            <Link to={"/admin/dominios-bloqueados"}>
-              <li>
-                <FontAwesomeIcon icon={faBan} /> Dominios
-              </li>
-            </Link>
-            <Link to={"/admin/telefonos-bloqueados"}>
-              <li>
-                <FontAwesomeIcon icon={faPhone} /> Telefonos
-              </li>
-            </Link>
-          </ul>
-        ) : (
-          <ul>
-            <Link to={"/"} onClick={goTo}>
-              <li>
-                <FontAwesomeIcon icon={faFolder} /> Todos los archivos
-              </li>
-            </Link>
-            {!currentUser?.hasActiveSubscription || currentUser.isSubscriptionCancelled ? (
-              <Link to={"/planes"}>
-                <li>
-                  <FontAwesomeIcon icon={faCartPlus} /> Get plan
-                </li>
-              </Link>
+    <aside className={show ? "open" : ""} aria-hidden={!show}>
+      {/* Mobile: backdrop to close on tap outside */}
+      {show && <div className="aside-backdrop" onClick={onHide} aria-hidden />}
+      <div className="aside-inner" onClick={(e) => e.stopPropagation()}>
+        <img src={Logo} alt="Bear Beat" className="aside-logo" />
+        <div className="nav-container">
+          <h2 className="nav-title">Contenido</h2>
+          <div className="nav-links-wrap">
+            {location.pathname.startsWith("/admin/") ? (
+              <ul className="nav-list">
+                <li><Link to="/admin/usuarios" {...linkProps}><FontAwesomeIcon icon={faUserCircle} /> Usuarios</Link></li>
+                <li><Link to="/admin/planesAdmin" {...linkProps}><FontAwesomeIcon icon={faCartPlus} /> Planes</Link></li>
+                <li><Link to="/admin/ordenes" {...linkProps}><FontAwesomeIcon icon={faAddressBook} /> Ordenes</Link></li>
+                <li><Link to="/admin/cupones" {...linkProps}><FontAwesomeIcon icon={faTicket} /> Cupones</Link></li>
+                <li><Link to="/admin/almacenamiento" {...linkProps}><FontAwesomeIcon icon={faDatabase} /> Almacenamiento</Link></li>
+                <li><Link to="/admin/catalogo" {...linkProps}><FontAwesomeIcon icon={faChartBar} /> Catálogo</Link></li>
+                <li><Link to="/admin/historial-descargas" {...linkProps}><FontAwesomeIcon icon={faDownload} /> Descargas</Link></li>
+                <li><Link to="/admin/historialCheckout" {...linkProps}><FontAwesomeIcon icon={faTag} /> Checkout</Link></li>
+                <li><Link to="/admin/dominios-bloqueados" {...linkProps}><FontAwesomeIcon icon={faBan} /> Dominios</Link></li>
+                <li><Link to="/admin/telefonos-bloqueados" {...linkProps}><FontAwesomeIcon icon={faPhone} /> Telefonos</Link></li>
+              </ul>
             ) : (
-              <Link to={"/actualizar-planes"}>
-                <li>
-                  <FontAwesomeIcon icon={faArrowAltCircleUp} /> Actualiza tu plan
-                </li>
-              </Link>
+              <ul className="nav-list">
+                <li><Link to="/" onClick={handleLinkClick}><FontAwesomeIcon icon={faFolder} /> Todos los archivos</Link></li>
+                {!currentUser?.hasActiveSubscription || currentUser.isSubscriptionCancelled ? (
+                  <li><Link to="/planes" {...linkProps}><FontAwesomeIcon icon={faCartPlus} /> Get plan</Link></li>
+                ) : (
+                  <li><Link to="/actualizar-planes" {...linkProps}><FontAwesomeIcon icon={faArrowAltCircleUp} /> Actualiza tu plan</Link></li>
+                )}
+                <li><Link to="/micuenta" {...linkProps}><FontAwesomeIcon icon={faUserCircle} /> Mi cuenta</Link></li>
+                <li><Link to="/instrucciones" {...linkProps}><FontAwesomeIcon icon={faQuestion} /> Instrucciones</Link></li>
+              </ul>
             )}
-            <Link to={"/micuenta"}>
-              <li>
-                <FontAwesomeIcon icon={faUserCircle} /> Mi cuenta
-              </li>
-            </Link>
-            <Link to={"/instrucciones"}>
-              <li>
-                <FontAwesomeIcon icon={faQuestion} /> Instrucciones
-              </li>
-            </Link>
-          </ul>
-        )}
+          </div>
+        </div>
+        <button
+          type="button"
+          className="aside-close-btn"
+          onClick={onHide}
+          aria-label="Cerrar menú"
+        >
+          <FontAwesomeIcon icon={faTimes} />
+        </button>
       </div>
-      <div onClick={handleButtonClick} className="btnSupport">
+      <button
+        type="button"
+        className="btnSupport"
+        onClick={handleSupportClick}
+        aria-label="Llamar a soporte"
+      >
         <FontAwesomeIcon icon={faHeadset} style={{ fontSize: "25px" }} />
-      </div>
+      </button>
     </aside>
   );
 }

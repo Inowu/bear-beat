@@ -1,46 +1,48 @@
 @import "src/styles/mixin.scss";
 
+// ---------- Desktop: sidebar (sticky, siempre visible) ----------
 aside {
   width: 100%;
   max-width: 300px;
-  padding: 0px 20px;
+  padding: 0 20px;
   background-color: var(--theme-nav-bg);
   position: sticky;
-  top: 0px;
+  top: 0;
   transition: background-color 0.2s ease;
-  img {
+
+  .aside-logo {
     width: 100%;
   }
 
-  .btnSupport{
-    position: fixed;
-    bottom: 20px;
-    padding: 12px;
-    background-color: var(--theme-card-bg);
-    color: var(--theme-text-primary);
-    border-radius: 50%;
-    cursor: pointer;
-    transition: background-color 0.2s, color 0.2s;
+  .aside-close-btn {
+    display: none;
   }
 
   .nav-container {
     color: var(--theme-nav-text);
-    h2 {
+
+    .nav-title {
       font-family: "Bear-font";
       text-align: center;
       font-size: 2.4rem;
       margin-bottom: 10px;
     }
 
-    ul {
+    .nav-links-wrap {
+      // desktop: no scroll especial
+    }
+
+    .nav-list {
       list-style: none;
       padding: 0;
       margin: 0;
       display: flex;
       flex-direction: column;
       gap: 10px;
+
       a {
         text-decoration: none;
+        color: inherit;
       }
 
       li {
@@ -55,43 +57,191 @@ aside {
         color: var(--theme-nav-text);
         font-weight: bold;
         box-shadow: 0 0 5px rgba(0, 0, 0, 0.54);
-        transition-property: background, background-color, color;
-        transition-duration: 0.2s;
-        transition-timing-function: ease;
+        transition: background 0.2s ease, color 0.2s ease;
         cursor: pointer;
 
         &:hover {
-          text-decoration: none;
           color: var(--theme-nav-item-hover-text);
           background-color: var(--theme-nav-item-hover-bg);
+        }
+
+        a:hover {
+          text-decoration: none;
+          color: inherit;
         }
       }
     }
   }
 
-  @include respond-to(md) {
+  .btnSupport {
     position: fixed;
-    margin-top: 60px;
+    bottom: 20px;
+    padding: 12px;
+    background-color: var(--theme-card-bg);
+    color: var(--theme-text-primary);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+  }
+}
+
+// ---------- Mobile: full overlay (cristal ahumado, scroll, cierre en link) ----------
+@include respond-to(md) {
+  aside {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-width: none;
+    width: 100%;
     height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 0px;
-    max-width: 0px;
+    padding: 0;
+    margin: 0;
+    z-index: 50;
     overflow: hidden;
-    z-index: 100;
-    transition: .3s ease all;
+    pointer-events: none;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+
+    &:not(.open) {
+      opacity: 0;
+      visibility: hidden;
+    }
 
     &.open {
-      max-width: 100%;
+      pointer-events: auto;
+      opacity: 1;
+      visibility: visible;
     }
-    .nav-container, img {
-      max-width: 300px;
-      min-width: 300px;
+
+    // Backdrop: tap outside to close (solo en open)
+    .aside-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background: transparent;
+      pointer-events: auto;
     }
-    .btnSupport{
+
+    // Panel: contenido del menú (cristal ahumado, light/dark vía variables de tema)
+    .aside-inner {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--aside-overlay-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 0 0 1px var(--aside-overlay-border);
+      pointer-events: auto;
+    }
+
+    .aside-logo {
+      display: none;
+    }
+
+    .aside-close-btn {
+      display: flex;
       position: absolute;
-      bottom: 100px;
+      top: 1rem;
+      right: 1rem;
+      width: 44px;
+      height: 44px;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: 50%;
+      background: var(--aside-overlay-close-bg);
+      color: var(--aside-overlay-close-color);
+      cursor: pointer;
+      font-size: 1.25rem;
+      transition: color 0.2s, background 0.2s;
+      z-index: 2;
+
+      &:hover,
+      &:focus-visible {
+        color: var(--aside-overlay-close-hover);
+        background: var(--theme-nav-item-bg);
+      }
+    }
+
+    .nav-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding: 1.5rem 1.5rem 5rem;
+      padding-top: 4rem;
+
+      .nav-title {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        color: var(--aside-overlay-text-muted);
+        flex-shrink: 0;
+      }
+
+      .nav-links-wrap {
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        flex: 1;
+        min-height: 0;
+      }
+
+      .nav-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+
+        a {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          padding: 1rem 1.5rem;
+          text-decoration: none;
+          color: var(--aside-overlay-text);
+          font-size: 1.125rem;
+          font-weight: 500;
+          border-bottom: 1px solid var(--aside-overlay-border);
+          transition: color 0.15s, background 0.15s;
+
+          &:hover,
+          &:focus-visible {
+            color: var(--aside-overlay-hover);
+            background: var(--theme-nav-item-bg);
+          }
+
+          &:active {
+            color: var(--aside-overlay-hover);
+          }
+        }
+
+        li {
+          background: none;
+          box-shadow: none;
+          padding: 0;
+          border-radius: 0;
+
+          &:last-child a {
+            border-bottom: none;
+          }
+        }
+      }
+    }
+
+    .btnSupport {
+      position: absolute;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
     }
   }
 }

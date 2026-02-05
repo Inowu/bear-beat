@@ -1,13 +1,28 @@
 import "./MyAccount.scss";
-import { ConditionModal, ErrorModal, PaymentMethodModal, PlansModal, SuccessModal } from "../../components/Modals"
+import {
+  ConditionModal,
+  ErrorModal,
+  PaymentMethodModal,
+  PlansModal,
+  SuccessModal,
+} from "../../components/Modals";
 import { Elements } from "@stripe/react-stripe-js";
-import { faTrash } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { getCompleted } from "../../functions/functions";
+import {
+  User,
+  CreditCard,
+  Server,
+  Clock,
+  Copy,
+  Eye,
+  EyeOff,
+  FileDown,
+  Trash2,
+} from "lucide-react";
+import { getCompleted, transformBiteToGb } from "../../functions/functions";
 import { IOrders, IQuota, IFtpAccount } from "interfaces/User";
 import { Link } from "react-router-dom";
 import { loadStripe } from "@stripe/stripe-js";
-import { saveAs } from 'file-saver';
+import { saveAs } from "file-saver";
 import { Spinner } from "../../components/Spinner/Spinner";
 import { useEffect, useState } from "react";
 import { useUserContext } from "../../contexts/UserContext";
@@ -15,13 +30,13 @@ import Amex from "../../assets/images/cards/express.png";
 import filezillaIcon from "../../assets/images/filezilla_icon.png";
 import Logo from "../../assets/images/osonuevo.png";
 import Mastercard from "../../assets/images/cards/master.png";
-import SpaceAvailableCard from "../../components/SpaceAvailableCard/SpaceAvailableCard";
 import trpc from "../../api";
 import Visa from "../../assets/images/cards/visa.png";
 
-const stripeKey = process.env.REACT_APP_ENVIRONMENT === 'development'
-  ? process.env.REACT_APP_STRIPE_TEST_KEY as string
-  : process.env.REACT_APP_STRIPE_KEY as string
+const stripeKey =
+  process.env.REACT_APP_ENVIRONMENT === "development"
+    ? (process.env.REACT_APP_STRIPE_TEST_KEY as string)
+    : (process.env.REACT_APP_STRIPE_KEY as string);
 
 const stripePromise = loadStripe(stripeKey);
 
@@ -47,30 +62,23 @@ function MyAccount() {
   const [conditionTitle, setConditionTitle] = useState("");
   const [condition, setCondition] = useState(0);
   const [showPlan, setShowPlan] = useState<boolean>(false);
-  const closeCondition = () => {
-    setShowCondition(false);
-  };
-  const openCondition = () => {
-    setShowCondition(true);
-  };
-  const closeSuccess = () => {
-    setShowSuccess(false);
-  };
-  const closeError = () => {
-    setShowError(false);
-  };
-  const closePlan = () => {
-    setShowPlan(false);
-  };
-  const openPlan = () => {
-    setShowPlan(true);
-  };
+  const [showFtpPass, setShowFtpPass] = useState(false);
+  const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
+
+  const closeCondition = () => setShowCondition(false);
+  const openCondition = () => setShowCondition(true);
+  const closeSuccess = () => setShowSuccess(false);
+  const closeError = () => setShowError(false);
+  const closePlan = () => setShowPlan(false);
+  const openPlan = () => setShowPlan(true);
+
   const startCancel = () => {
     setConditionTitle("Cancelación de suscripción");
     setConditionMessage("¿Estás seguro que quieres cancelar tu suscripción?");
     openCondition();
     setCondition(1);
   };
+
   const deletePaymentMethod = () => {
     setConditionTitle("Eliminar método de pago");
     setConditionMessage(
@@ -79,6 +87,7 @@ function MyAccount() {
     openCondition();
     setCondition(3);
   };
+
   const finishSubscription = async () => {
     closeCondition();
     try {
@@ -93,11 +102,12 @@ function MyAccount() {
       console.log(error);
     }
   };
+
   const changeDefault = async () => {
-    console.log("default");
     try {
-    } catch (error) { }
+    } catch (error) {}
   };
+
   const deleteCard = async () => {
     try {
       if (paymentMethod) {
@@ -107,8 +117,9 @@ function MyAccount() {
         getPaymentMethods();
         closeCondition();
       }
-    } catch (error) { }
+    } catch (error) {}
   };
+
   const getQuota = async () => {
     if (currentUser !== null) {
       let body: any = {
@@ -125,39 +136,30 @@ function MyAccount() {
       }
     }
   };
+
   const getOrders = async () => {
     let body = {};
     try {
       const user_downloads: any =
         await trpc.descargasuser.ownDescargas.query(body);
-
       let allorders: any = [];
       await Promise.all(
         user_downloads.map(async (orders: any) => {
           if (orders.order_id) {
-            let order_body = {
-              where: {
-                id: orders.order_id,
-              },
-            };
+            let order_body = { where: { id: orders.order_id } };
             const order: any = await trpc.orders.ownOrders.query(order_body);
-            if (order.length > 0) {
-              allorders.push(order[0]);
-            }
+            if (order.length > 0) allorders.push(order[0]);
           }
         })
       );
       setOrders(allorders);
-      // const order:any = await trpc.orders.ownOrders.query(body);
-      // setOrders(order);
     } catch (error: any) {
       console.log(error.message);
     }
   };
 
   const handlePaymentMethod = (value: boolean) => {
-    let error = value;
-    if (!error) {
+    if (!value) {
       setShowPaymentMethod(false);
       getPaymentMethods();
     } else {
@@ -194,9 +196,16 @@ function MyAccount() {
           </Server>
         </Servers>
       </FileZilla3>`;
-    const blob = new Blob([xml], { type: 'text/xml' });
-    saveAs(blob, 'bearbeat.xml');
-  }
+    const blob = new Blob([xml], { type: "text/xml" });
+    saveAs(blob, "bearbeat.xml");
+  };
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopyFeedback(label);
+      setTimeout(() => setCopyFeedback(null), 1500);
+    });
+  };
 
   useEffect(() => {
     if (currentUser) {
@@ -204,159 +213,347 @@ function MyAccount() {
       getOrders();
     }
   }, [currentUser]);
+
+  const usedGb = quota?.regular ? transformBiteToGb(quota.regular.used) : 0;
+  const availableGb = quota?.regular
+    ? transformBiteToGb(quota.regular.available)
+    : 10240;
+  const storagePercent = quota?.regular
+    ? getCompleted(quota.regular.used, quota.regular.available)
+    : 0;
+  const initials = currentUser?.username
+    ? currentUser.username.slice(0, 2).toUpperCase()
+    : "??";
+
+  const getStatusBadge = (status: number) => {
+    const map: Record<number, { label: string; varColor: string }> = {
+      0: { label: "Pendiente", varColor: "var(--ma-badge-pending)" },
+      1: { label: "Pagada", varColor: "var(--ma-badge-success)" },
+      2: { label: "Fallida", varColor: "var(--ma-badge-fail)" },
+      3: { label: "Cancelada", varColor: "var(--ma-badge-neutral)" },
+      4: { label: "Expirada", varColor: "var(--ma-badge-neutral)" },
+    };
+    const { label, varColor } = map[status] ?? { label: "—", varColor: "var(--ma-text-muted)" };
+    return (
+      <span
+        className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ma-badge"
+        style={{
+          color: varColor,
+          borderColor: varColor,
+          background: "transparent",
+        }}
+      >
+        {label}
+      </span>
+    );
+  };
+
   return (
-    <div className="my-account-main-container">
-      <div className="general">
-        <div className="user-profile-pic">
-          <img
-            src={currentUser?.profileImg ? currentUser.profileImg : Logo}
-            alt="profile pic"
-          />
-        </div>
-        <h2>Información general</h2>
-        <div className="user-info-container">
-          <div className="c-row">
-            <b>Username</b>
-            <p>{currentUser?.username}</p>
-          </div>
-          <div className="c-row">
-            <b>E-mail</b>
-            <p>{currentUser?.email}</p>
-          </div>
-          <div className="c-row">
-            <b>Phone</b>
-            <p>{currentUser?.phone}</p>
-          </div>
-        </div>
-        {quota.regular && (
-          <SpaceAvailableCard
-            quotaData={quota.regular}
-            openPlan={openPlan}
-            type="regular"
-          />
-        )}
-        {currentUser?.extendedFtpAccount !== undefined && quota.extended && (
-          <SpaceAvailableCard
-            quotaData={quota.extended}
-            openPlan={openPlan}
-            type="extended"
-          />
-        )}
-        {currentUser?.hasActiveSubscription &&
-          !currentUser.isSubscriptionCancelled && (
-            <button className="cancel" onClick={startCancel}>
-              CANCELAR SUSCRIPCION
-            </button>
-          )}
-      </div>
-      <div className="purchase">
-        <div className="actives-ftp-container">
-          <h2>MI USUARIO FTP ACTIVO</h2>
-          {true ? (
-            <table className="table table-responsive">
-              <thead>
-                <tr>
-                  <th scope="col">Host</th>
-                  <th scope="col">Username</th>
-                  <th scope="col">Password</th>
-                  <th scope="col">Port</th>
-                  <th scope="col">Expiración</th>
-                  <th scope="col"> </th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentUser?.ftpAccount ? (
-                  <tr>
-                    <td>{currentUser?.ftpAccount.host}</td>
-                    <td>{currentUser?.ftpAccount.userid}</td>
-                    <td>{currentUser?.ftpAccount.passwd}</td>
-                    <td>{currentUser?.ftpAccount.port}</td>
-                    <td>{currentUser?.ftpAccount.expiration.toDateString()}</td>
-                    <td onClick={() => downloadXMLFile(currentUser?.ftpAccount!)}>
-                      <img src={filezillaIcon} alt="filezilla" />
-                    </td>
-                  </tr>
-                ) : (
-                  <tr />
-                )}
-                {currentUser?.extendedFtpAccount !== undefined &&
-                  currentUser?.extendedFtpAccount &&
-                  currentUser?.ftpAccount ? (
-                  <tr>
-                    <td>{currentUser?.ftpAccount.host}</td>
-                    <td>{currentUser?.extendedFtpAccount.userid}</td>
-                    <td>{currentUser?.extendedFtpAccount.passwd}</td>
-                    <td>{currentUser?.ftpAccount.port}</td>
-                    <td>{ }</td>
-                    <td>
-                      <img src={filezillaIcon} alt="filezilla" />
-                    </td>
-                  </tr>
-                ) : (
-                  <tr />
-                )}
-              </tbody>
-            </table>
-          ) : (
-            <div className="no-items-container">
-              <p>
-                Aún no has comprado un plan,{" "}
-                <Link to={"/planes"}>click aquí</Link> para que vayas a comprar
-                uno.
-              </p>
+    <div
+      className="my-account-main-container min-h-screen"
+      style={{ background: "var(--ma-bg)" }}
+    >
+      <div className="max-w-6xl mx-auto p-6">
+        <h1
+          className="text-3xl md:text-4xl font-bold mb-1"
+          style={{ fontFamily: "Poppins, sans-serif", color: "var(--ma-title)" }}
+        >
+          Panel de Control
+        </h1>
+        <div
+          className="h-1 w-24 rounded-full mb-8"
+          style={{ background: "var(--ma-accent)" }}
+        />
+
+        {/* Module 1: Profile + Consumption (col-span-full) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+          <div
+            className="lg:col-span-full rounded-xl border p-6 flex flex-col sm:flex-row items-center sm:items-start gap-6"
+            style={{
+              background: "var(--ma-card-bg)",
+              borderColor: "var(--ma-card-border)",
+            }}
+          >
+            <div
+              className="flex-shrink-0 w-20 h-20 rounded-full flex items-center justify-center border-2 ring-2"
+              style={{
+                background: "var(--ma-progress-bg)",
+                borderColor: "var(--ma-avatar-ring)",
+                boxShadow: "0 0 0 2px var(--ma-avatar-ring)",
+              }}
+            >
+              {currentUser?.profileImg ? (
+                <img
+                  src={currentUser.profileImg}
+                  alt=""
+                  className="w-full h-full rounded-full object-cover"
+                />
+              ) : (
+                <span
+                  className="text-2xl font-bold"
+                  style={{ color: "var(--ma-accent)" }}
+                >
+                  {initials}
+                </span>
+              )}
             </div>
-          )}
+            <div className="flex-1 w-full text-center sm:text-left">
+              <p
+                className="font-semibold text-lg"
+                style={{ color: "var(--ma-text)" }}
+              >
+                {currentUser?.username}
+              </p>
+              <p
+                className="text-sm mt-0.5"
+                style={{ color: "var(--ma-text-muted)" }}
+              >
+                {currentUser?.email}
+              </p>
+              {currentUser?.phone && (
+                <p
+                  className="text-sm mt-0.5"
+                  style={{ color: "var(--ma-text-muted)" }}
+                >
+                  {currentUser.phone}
+                </p>
+              )}
+              <div className="mt-4">
+                <p
+                  className="text-xs uppercase tracking-wider mb-2"
+                  style={{ color: "var(--ma-text-muted)" }}
+                >
+                  Almacenamiento Usado: {storagePercent}%
+                </p>
+                <div
+                  className="h-2 w-full rounded-full overflow-hidden"
+                  style={{ background: "var(--ma-progress-bg)" }}
+                >
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${Math.min(100, Math.max(2, storagePercent))}%`,
+                      background: "var(--ma-progress-fill)",
+                    }}
+                  />
+                </div>
+                <p
+                  className="text-sm font-mono mt-1"
+                  style={{ color: "var(--ma-text-muted)" }}
+                >
+                  {usedGb} GB de {availableGb} GB
+                </p>
+              </div>
+            </div>
+            {currentUser?.hasActiveSubscription &&
+              !currentUser.isSubscriptionCancelled && (
+                <button
+                  type="button"
+                  onClick={startCancel}
+                  className="flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold transition-colors ma-btn-cancel"
+                >
+                  Cancelar suscripción
+                </button>
+              )}
+          </div>
         </div>
-        <div className="last-purchased">
-          <h2>Últimas compras</h2>
-          <table className="table">
-            <thead>
-              <tr>
-                <th scope="col">Fecha</th>
-                <th scope="col">Orden #</th>
-                <th scope="col">Precio</th>
-                <th scope="col">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.length > 0 ? (
-                orders.map((order: IOrders, index: number) => {
-                  return (
-                    <tr key={"order_" + index}>
-                      <td>{order.date_order.toDateString()}</td>
-                      <td>{order.id}</td>
-                      <td>
-                        ${order.total_price}.00{" "}
-                      </td>
-                      <td>
-                        {order.status === 0 && "Pendiente"}
-                        {order.status === 1 && "Pagada"}
-                        {order.status === 2 && "Fallida"}
-                        {order.status === 3 && "Cancelada"}
-                        {order.status === 4 && "Expirada"}
+
+        {/* Module 2: FTP - The Vault */}
+        <div className="grid grid-cols-1 lg:grid-cols-6 gap-6 mb-6">
+          <div
+            className="lg:col-span-3 rounded-xl border p-6"
+            style={{
+              background: "var(--ma-card-bg)",
+              borderColor: "var(--ma-card-border)",
+            }}
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <Server className="w-5 h-5" style={{ color: "var(--ma-accent)" }} />
+              <h2
+                className="text-lg font-bold"
+                style={{ color: "var(--ma-text)" }}
+              >
+                Credenciales FTP (The Vault)
+              </h2>
+            </div>
+            {currentUser?.ftpAccount ? (
+              <>
+                <div className="space-y-3">
+                  <FtpRow
+                    label="HOST"
+                    value={currentUser.ftpAccount.host}
+                    copyToClipboard={copyToClipboard}
+                    copyFeedback={copyFeedback}
+                  />
+                  <FtpRow
+                    label="USUARIO"
+                    value={currentUser.ftpAccount.userid}
+                    copyToClipboard={copyToClipboard}
+                    copyFeedback={copyFeedback}
+                  />
+                  <FtpRow
+                    label="PASSWORD"
+                    value={currentUser.ftpAccount.passwd}
+                    copyToClipboard={copyToClipboard}
+                    copyFeedback={copyFeedback}
+                    secret
+                    showSecret={showFtpPass}
+                    onToggleSecret={() => setShowFtpPass((s) => !s)}
+                  />
+                  <FtpRow
+                    label="PUERTO"
+                    value={String(currentUser.ftpAccount.port)}
+                    copyToClipboard={copyToClipboard}
+                    copyFeedback={copyFeedback}
+                  />
+                  <div
+                    className="pt-2 text-xs"
+                    style={{ color: "var(--ma-text-muted)" }}
+                  >
+                    Expiración:{" "}
+                    {currentUser.ftpAccount.expiration?.toDateString?.() ?? "—"}
+                  </div>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={() => downloadXMLFile(currentUser.ftpAccount!)}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors text-sm ma-btn-secondary"
+                  >
+                    <FileDown className="w-4 h-4" />
+                    Descargar FileZilla XML
+                  </button>
+                  <Link
+                    to="/instrucciones"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors text-sm font-medium ma-btn-accent"
+                  >
+                    Instrucciones de conexión
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <div
+                className="rounded-lg border p-4 text-sm"
+                style={{
+                  borderColor: "var(--ma-card-border)",
+                  background: "var(--ma-progress-bg)",
+                  color: "var(--ma-text-muted)",
+                }}
+              >
+                <p>
+                  Aún no tienes un plan activo.{" "}
+                  <Link
+                    to="/planes"
+                    className="hover:underline"
+                    style={{ color: "var(--ma-accent)" }}
+                  >
+                    Ver planes
+                  </Link>
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Module 3: Historial de Órdenes */}
+          <div
+            className="lg:col-span-3 rounded-xl border p-6 overflow-hidden"
+            style={{
+              background: "var(--ma-card-bg)",
+              borderColor: "var(--ma-card-border)",
+            }}
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <Clock className="w-5 h-5" style={{ color: "var(--ma-accent)" }} />
+              <h2
+                className="text-lg font-bold"
+                style={{ color: "var(--ma-text)" }}
+              >
+                Historial de órdenes
+              </h2>
+            </div>
+            <div className="overflow-x-auto -mx-2">
+              <table className="w-full min-w-[320px] ma-table">
+                <thead>
+                  <tr className="border-b" style={{ borderColor: "var(--ma-card-border)" }}>
+                    <th className="text-left py-3 px-2 uppercase text-xs tracking-wider font-semibold" style={{ color: "var(--ma-text-muted)" }}>
+                      Fecha
+                    </th>
+                    <th className="text-left py-3 px-2 uppercase text-xs tracking-wider font-semibold" style={{ color: "var(--ma-text-muted)" }}>
+                      Orden #
+                    </th>
+                    <th className="text-left py-3 px-2 uppercase text-xs tracking-wider font-semibold" style={{ color: "var(--ma-text-muted)" }}>
+                      Precio
+                    </th>
+                    <th className="text-left py-3 px-2 uppercase text-xs tracking-wider font-semibold" style={{ color: "var(--ma-text-muted)" }}>
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.length > 0 ? (
+                    orders.map((order: IOrders, index: number) => (
+                      <tr
+                        key={"order_" + index}
+                        className="border-b ma-table-row"
+                        style={{ borderColor: "var(--ma-card-border)" }}
+                      >
+                        <td className="py-3 px-2 text-sm" style={{ color: "var(--ma-text)" }}>
+                          {order.date_order.toDateString()}
+                        </td>
+                        <td className="py-3 px-2 text-sm font-mono" style={{ color: "var(--ma-text)" }}>
+                          {order.id}
+                        </td>
+                        <td className="py-3 px-2 text-sm" style={{ color: "var(--ma-text)" }}>
+                          ${order.total_price}.00
+                        </td>
+                        <td className="py-3 px-2">
+                          {getStatusBadge(order.status)}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={4}
+                        className="py-8 px-2 text-center text-sm"
+                        style={{ color: "var(--ma-text-muted)" }}
+                      >
+                        No hay órdenes en tu historial.
                       </td>
                     </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td className="pt-4" colSpan={3}>
-                    <h2 className="text-center">
-                      No existen ultimas compras en su historial.
-                    </h2>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
-        <div className="actives-ftp-container cards">
-          <h2>Tarjetas</h2>
+
+        {/* Module 4: Métodos de pago (Wallet) */}
+        <div
+          className="rounded-xl border p-6"
+          style={{
+            background: "var(--ma-card-bg)",
+            borderColor: "var(--ma-card-border)",
+          }}
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <CreditCard className="w-5 h-5" style={{ color: "var(--ma-accent)" }} />
+            <h2 className="text-lg font-bold" style={{ color: "var(--ma-text)" }}>
+              Tarjetas
+            </h2>
+          </div>
           {!cardLoad ? (
-            paymentMethods.map((x: any, index: number) => {
-              return (
-                <div className="card" key={"cards_" + index}>
-                  <div className="circle">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {paymentMethods.map((x: any, index: number) => (
+                <div
+                  key={"cards_" + index}
+                  className="relative rounded-xl border p-4 min-h-[120px] flex flex-col justify-between ma-card-item"
+                  style={{
+                    borderColor: "var(--ma-card-border)",
+                    background: "var(--ma-progress-bg)",
+                  }}
+                >
+                  <div className="flex justify-between items-start">
                     <img
                       src={
                         x.card.brand === "visa"
@@ -366,37 +563,57 @@ function MyAccount() {
                             : Amex
                       }
                       alt=""
+                      className="h-8 w-auto object-contain opacity-90"
                     />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        deletePaymentMethod();
+                        setPaymentMethod(x);
+                      }}
+                      className="p-1.5 rounded-lg transition-colors ma-btn-delete"
+                      aria-label="Eliminar tarjeta"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
-                  <p>Termina en {x.card.last4}</p>
-                  <p>
-                    {x.card.exp_month}/{x.card.exp_year}
-                  </p>
-                  <FontAwesomeIcon
-                    icon={faTrash}
-                    onClick={() => {
-                      deletePaymentMethod();
-                      setPaymentMethod(x);
-                    }}
-                  />
-                  {/* {
-                    x.customer === currentUser?.stripeCusId && 
-                    <p>Predeterminada</p>
-                  } */}
+                  <div>
+                    <p
+                      className="font-mono text-sm"
+                      style={{ color: "var(--ma-text)" }}
+                    >
+                      •••• •••• •••• {x.card.last4}
+                    </p>
+                    <p
+                      className="text-xs mt-1"
+                      style={{ color: "var(--ma-text-muted)" }}
+                    >
+                      {x.card.exp_month}/{x.card.exp_year}
+                    </p>
+                  </div>
                 </div>
-              );
-            })
+              ))}
+              <button
+                type="button"
+                onClick={() => setShowPaymentMethod(!showPaymentMethod)}
+                className="min-h-[120px] rounded-xl border-2 border-dashed flex items-center justify-center gap-2 transition-colors ma-add-card"
+                style={{
+                  borderColor: "var(--ma-add-card-border)",
+                  color: "var(--ma-text-muted)",
+                }}
+              >
+                <CreditCard className="w-6 h-6" />
+                <span className="font-medium">Agregar tarjeta</span>
+              </button>
+            </div>
           ) : (
-            <Spinner size={4} width={0.4} color="#00e2f7" />
+            <div className="flex justify-center py-12">
+              <Spinner size={4} width={0.4} color="var(--ma-accent)" />
+            </div>
           )}
-          <p
-            className="new"
-            onClick={() => setShowPaymentMethod(!showPaymentMethod)}
-          >
-            Agregar nueva tarjeta
-          </p>
         </div>
       </div>
+
       <ErrorModal show={showError} onHide={closeError} message={errorMessage} />
       <SuccessModal
         show={showSuccess}
@@ -438,6 +655,75 @@ function MyAccount() {
           }}
         />
       </Elements>
+    </div>
+  );
+}
+
+function FtpRow({
+  label,
+  value,
+  copyToClipboard,
+  copyFeedback,
+  secret,
+  showSecret,
+  onToggleSecret,
+}: {
+  label: string;
+  value: string;
+  copyToClipboard: (text: string, label: string) => void;
+  copyFeedback: string | null;
+  secret?: boolean;
+  showSecret?: boolean;
+  onToggleSecret?: () => void;
+}) {
+  const displayValue = secret ? (showSecret ? value : "••••••••••••") : value;
+  const copied = copyFeedback === label;
+  return (
+    <div
+      className="flex items-center justify-between gap-2 py-2 border-b last:border-0"
+      style={{ borderColor: "var(--ma-card-border)" }}
+    >
+      <span
+        className="text-xs font-mono uppercase tracking-wider flex-shrink-0"
+        style={{ color: "var(--ma-text-muted)" }}
+      >
+        {label}:
+      </span>
+      <code
+        className="font-mono text-sm truncate flex-1 text-right mr-2"
+        style={{ color: "var(--ma-text)" }}
+      >
+        {displayValue}
+      </code>
+      <div className="flex items-center gap-1 flex-shrink-0">
+        {secret && onToggleSecret && (
+          <button
+            type="button"
+            onClick={onToggleSecret}
+            className="p-1.5 rounded transition-colors ma-ftp-icon"
+            aria-label={showSecret ? "Ocultar" : "Mostrar"}
+          >
+            {showSecret ? (
+              <EyeOff className="w-4 h-4" />
+            ) : (
+              <Eye className="w-4 h-4" />
+            )}
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => copyToClipboard(value, label)}
+          className="p-1.5 rounded transition-colors ma-ftp-icon"
+          aria-label="Copiar"
+        >
+          <Copy className="w-4 h-4" />
+        </button>
+        {copied && (
+          <span className="text-xs" style={{ color: "var(--ma-accent)" }}>
+            Copiado
+          </span>
+        )}
+      </div>
     </div>
   );
 }
