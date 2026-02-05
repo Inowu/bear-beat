@@ -1,14 +1,17 @@
 @import "src/styles/mixin.scss";
+@import "src/styles/variables-theme.scss";
 @import "../../styles/landing-design.scss";
 
-// Mobile-first (tipo app nativa) + tema light/dark (variables --ma-*)
+// Mobile-first (tipo app nativa) + tema light/dark (variables --ma-*), tipografía como Home
 .my-account-main-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 24px;
   width: 100%;
-  color: var(--ma-text, $text-primary);
+  max-width: 100vw;
+  color: var(--ma-text);
+  font-size: var(--app-font-size-body);
   overflow-x: hidden;
   padding-bottom: 24px;
   font-family: "Poppins", sans-serif;

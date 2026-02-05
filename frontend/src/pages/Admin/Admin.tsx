@@ -290,7 +290,7 @@ function Admin() {
   const colCount = filters.active !== 2 ? 6 : 5;
 
   return (
-    <div className="admin-theme">
+    <div className="admin-theme w-full max-w-[100vw] overflow-x-hidden">
       <div className="admin-contain">
         <div className="header">
           <div className="header__title-row">
@@ -365,9 +365,9 @@ function Admin() {
                 {!loader
                   ? users.map((user, index) => (
                       <tr key={`admin_users_${index}`}>
-                        <td>{user.username}</td>
-                        <td>{user.email}</td>
-                        <td>{user.phone}</td>
+                        <td className="max-w-[120px] truncate" title={user.username}>{user.username}</td>
+                        <td className="max-w-[180px] truncate" title={user.email}>{user.email}</td>
+                        <td className="max-w-[100px] truncate" title={user.phone}>{user.phone}</td>
                         <td>{user.registered_on.toLocaleDateString()}</td>
                         {filters.active !== 2 && (
                           <td>

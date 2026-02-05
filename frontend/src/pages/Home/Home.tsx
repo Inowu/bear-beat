@@ -337,7 +337,7 @@ function Home() {
   }, [fileChange, closeFile]);
 
   return (
-    <div className="home-main-container">
+    <div className="home-main-container w-full max-w-[100vw] overflow-x-hidden">
       <PreviewModal
         show={showPreviewModal}
         file={fileToShow}
@@ -347,7 +347,7 @@ function Home() {
         <UsersUHModal showModal={showModal} onHideModal={closeModalAdd} />
       </Elements>
       <div className="header-contain flex flex-wrap justify-between items-center gap-4">
-        <h2 className="text-xl font-semibold flex items-center gap-2" style={{ color: 'var(--fb-text)' }}>
+        <h2 className="flex items-center gap-2 font-semibold" style={{ color: 'var(--fb-text)', fontSize: 'var(--app-font-size-h2)' }}>
           <Folder className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--fb-accent)' }} />
           Todos los archivos
         </h2>
@@ -429,9 +429,7 @@ function Home() {
                   {file.type === 'd' && (
                     <div
                       className="flex items-center justify-between p-4 border-b border-l-2 border-l-transparent transition-colors cursor-pointer hover:border-l-2"
-                      style={{
-                        borderBottomColor: 'var(--fb-row-border)',
-                      }}
+                      style={{ borderBottomColor: 'var(--fb-row-border)' }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.background = 'var(--fb-row-hover-bg)';
                         e.currentTarget.style.borderLeftColor = 'var(--fb-row-hover-border)';
@@ -446,7 +444,7 @@ function Home() {
                     >
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         <Folder className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--fb-folder-icon)' }} />
-                        <span className="font-medium truncate" style={{ color: 'var(--fb-text)' }}>
+                        <span className="font-medium truncate text-[length:var(--app-font-size-body)]" style={{ color: 'var(--fb-text)' }}>
                           {file.name}
                         </span>
                       </div>
@@ -484,9 +482,7 @@ function Home() {
                   {file.type === '-' && (
                     <div
                       className="flex items-center justify-between p-4 border-b border-l-2 border-l-transparent transition-colors hover:border-l-2"
-                      style={{
-                        borderBottomColor: 'var(--fb-row-border)',
-                      }}
+                      style={{ borderBottomColor: 'var(--fb-row-border)' }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.background = 'var(--fb-row-hover-bg)';
                         e.currentTarget.style.borderLeftColor = 'var(--fb-row-hover-border)';
@@ -509,11 +505,11 @@ function Home() {
                           </button>
                         )}
                         <Music className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--fb-file-icon)' }} />
-                        <span className="font-medium truncate" style={{ color: 'var(--fb-text)' }}>
+                        <span className="font-medium truncate text-[length:var(--app-font-size-body)]" style={{ color: 'var(--fb-text)' }}>
                           {file.name}
                         </span>
                       </div>
-                      <div className="flex items-center gap-3 flex-shrink-0">
+                      <div className="flex items-center gap-3 flex-shrink-0 min-w-0">
                         <span className="whitespace-nowrap text-sm font-mono" style={{ color: 'var(--fb-text-muted)' }}>
                           {gbSize.toFixed(2)} GB
                         </span>

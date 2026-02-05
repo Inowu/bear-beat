@@ -20,7 +20,7 @@ function Downloads() {
   useEffect(() => { retreiveDownloads(); }, []);
 
   return (
-    <div className="downloads-container">
+    <div className="downloads-container w-full max-w-[100vw] overflow-x-hidden">
       <div className="header">
         <div className="left-side">
           <HiFolderArrowDown />
@@ -45,11 +45,11 @@ function Downloads() {
           downloads.map((download: IDownloads, index: number) => {
             return (
               <div className="single-card" key={"downloads " + index}>
-                <div className="left-side">
-                  <FaMusic />
-                  <p>{download.dirName}</p>
+                <div className="left-side min-w-0 flex-1">
+                  <FaMusic className="flex-shrink-0" />
+                  <p className="truncate">{download.dirName}</p>
                 </div>
-                <p>{download.date.toLocaleDateString()}</p>
+                <p className="flex-shrink-0">{download.date.toLocaleDateString()}</p>
               </div>
             );
           })}
