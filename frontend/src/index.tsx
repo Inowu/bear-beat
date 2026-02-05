@@ -141,8 +141,9 @@ if (process.env.REACT_APP_SENTRY_DSN) {
       Sentry.browserTracingIntegration(),
       Sentry.replayIntegration(),
     ],
-    tracesSampleRate: 1.0,
-    replaysSessionSampleRate: 0.1,
+    // Evitar 429 Too Many Requests: cuota Sentry limitada
+    tracesSampleRate: 0.1,
+    replaysSessionSampleRate: 0.05,
     replaysOnErrorSampleRate: 1.0,
   });
 }
