@@ -85,8 +85,9 @@
     (function() {
       try {
         var stored = localStorage.getItem('bear-theme');
-        var theme = 'light';
-        if (stored === 'dark') theme = 'dark';
+        var theme = 'dark';
+        if (stored === 'light') theme = 'light';
+        else if (stored === 'dark') theme = 'dark';
         else if (stored === 'system') {
           theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         } else if (stored === 'schedule') {

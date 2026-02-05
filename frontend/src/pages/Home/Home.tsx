@@ -406,7 +406,125 @@ function Home() {
           </button>
         </div>
       )}
-      <div className="folders-navigation-container flex flex-col gap-0 rounded-xl bg-slate-900 shadow-sm border border-slate-800 overflow-hidden">
+      {/* Tabla desktop: visible solo en md+ */}
+      <div className="hidden md:block rounded-xl border border-slate-800 overflow-hidden bg-slate-900">
+        <table className="w-full text-left">
+          <thead>
+            <tr>
+              <th className="bg-slate-900 text-slate-400 p-4">Nombre</th>
+              <th className="bg-slate-900 text-slate-400 p-4 text-right w-24">Tamaño</th>
+              <th className="bg-slate-900 text-slate-400 p-4 text-right w-36">Modificado</th>
+              <th className="bg-slate-900 text-slate-400 p-4 text-right w-28">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {!loader ? (
+              sortArrayByName(files).map((file: IFiles, idx: number) => {
+                const gbSize = file.size != null && Number.isFinite(file.size)
+                  ? file.size / (1024 * 1024 * 1024)
+                  : 0;
+                const sizeLabel = file.size != null && Number.isFinite(file.size)
+                  ? `${gbSize >= 1 ? gbSize.toFixed(1) : gbSize.toFixed(2)} GB`
+                  : '—';
+                const modifiedStr = new Date().toLocaleString('en-US', {
+                  month: 'short',
+                  day: '2-digit',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                });
+                return (
+                  <tr
+                    key={`table-${idx}`}
+                    className="border-b border-slate-800 hover:bg-slate-900"
+                  >
+                    <td className="p-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        {file.type === 'd' ? (
+                          <>
+                            <FolderOpen className="flex-shrink-0 w-5 h-5 text-cyan-600 dark:text-cyan-400" strokeWidth={2} aria-hidden />
+                            <span
+                              className="text-base font-medium text-slate-200 truncate cursor-pointer hover:underline"
+                              title={file.name}
+                              onClick={() => goToFolder({ next: file.name })}
+                            >
+                              {file.name}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            {loadFile && index === idx ? (
+                              <Spinner size={2} width={0.2} color="var(--fb-accent)" />
+                            ) : (
+                              <button
+                                type="button"
+                                className="fb-btn-play flex-shrink-0 min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg bg-slate-800 text-cyan-400 hover:bg-cyan-500 hover:text-white transition-colors"
+                                onClick={() => playFile(file, idx)}
+                                title="Reproducir"
+                                aria-label="Reproducir"
+                              >
+                                <Play className="w-5 h-5" aria-hidden />
+                              </button>
+                            )}
+                            <span className="text-base font-medium text-slate-200 truncate" title={file.name}>{file.name}</span>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                    <td className="p-4 text-right tabular-nums text-sm text-slate-400">{sizeLabel}</td>
+                    <td className="p-4 text-right text-sm text-slate-400 whitespace-nowrap">{modifiedStr}</td>
+                    <td className="p-4 text-right">
+                      {file.type === 'd' && file.size != null && gbSize <= 50 && (
+                        <button
+                          type="button"
+                          className="p-2 rounded-lg hover:bg-slate-800 text-cyan-500 hover:text-cyan-400"
+                          onClick={(e) => { e.stopPropagation(); checkAlbumSize(file, idx); }}
+                          title="Descargar"
+                          aria-label="Descargar"
+                        >
+                          {loadDownload && index === idx ? <Spinner size={2} width={0.2} color="var(--app-btn-text)" /> : <Download className="w-[18px] h-[18px]" aria-hidden />}
+                        </button>
+                      )}
+                      {file.type === '-' && (
+                        loadDownload && index === idx ? (
+                          <Spinner size={2} width={0.2} color="var(--app-btn-text)" />
+                        ) : (
+                          <button
+                            type="button"
+                            className="p-2 rounded-lg hover:bg-slate-800 text-cyan-500 hover:text-cyan-400"
+                            onClick={() => downloadFile(file, idx)}
+                            title="Descargar"
+                            aria-label="Descargar"
+                          >
+                            <Download className="w-[18px] h-[18px]" aria-hidden />
+                          </button>
+                        )
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
+            ) : (
+              <tr className="border-b border-slate-800"><td colSpan={4} className="p-8 text-center text-slate-400">Cargando…</td></tr>
+            )}
+          </tbody>
+        </table>
+        {showPagination && (
+          <div className="border-t border-slate-800 p-4">
+            <Pagination
+              totalLoader={paginationLoader}
+              totalData={totalSearch}
+              title="ordenes"
+              startFilter={nextPage}
+              currentPage={filters.page}
+              limit={filters.limit}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Cards móvil: visible solo en móvil */}
+      <div className="folders-navigation-container block md:hidden flex flex-col gap-0 rounded-xl bg-slate-900 shadow-sm border border-slate-800 overflow-hidden">
         <div className="fb-header grid grid-cols-[1fr_auto_auto] gap-4 py-3 px-4 bg-slate-800/80 text-xs uppercase tracking-wider text-slate-400">
           <div>Nombre</div>
           <div className="text-right hidden sm:block w-20">Tamaño</div>

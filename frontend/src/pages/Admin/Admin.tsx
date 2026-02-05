@@ -346,18 +346,18 @@ function Admin() {
           </div>
         </div>
 
-        {/* Tabla desktop */}
-        <div className="admin-table">
+        {/* Tabla desktop: visible solo en md+ */}
+        <div className="admin-table hidden md:block">
           <div className="table-contain">
-            <table>
+            <table className="w-full text-left">
               <thead>
                 <tr>
-                  <th>Nombre</th>
-                  <th>Email</th>
-                  <th>Teléfono</th>
-                  <th>Registro</th>
-                  {filters.active !== 2 && <th>Suscripción</th>}
-                  <th>Acciones</th>
+                  <th className="bg-slate-900 text-slate-400 p-4">Nombre</th>
+                  <th className="bg-slate-900 text-slate-400 p-4">Email</th>
+                  <th className="bg-slate-900 text-slate-400 p-4">Teléfono</th>
+                  <th className="bg-slate-900 text-slate-400 p-4">Registro</th>
+                  {filters.active !== 2 && <th className="bg-slate-900 text-slate-400 p-4">Suscripción</th>}
+                  <th className="bg-slate-900 text-slate-400 p-4">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -429,7 +429,7 @@ function Admin() {
                       </tr>
                     ))
                   : ARRAY_10.map((_, index) => (
-                      <tr key={`load_${index}`} className="tr-load">
+                      <tr key={`load_${index}`} className="tr-load border-b border-slate-800 hover:bg-slate-900">
                         <td /><td /><td /><td />
                         {filters.active !== 2 && <td />}
                         <td />
@@ -454,8 +454,8 @@ function Admin() {
           </div>
         </div>
 
-        {/* Lista compacta móvil */}
-        <div className="admin-list-mobile">
+        {/* Lista compacta móvil: visible solo en móvil */}
+        <div className="admin-list-mobile block md:hidden">
           {!loader
             ? users.map((user, index) => (
                 <div

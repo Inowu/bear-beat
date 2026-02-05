@@ -29,16 +29,69 @@ body {
 body,
 html,
 #root {
-  background-color: #020617; /* slate-950 */
-  color: #e2e8f0; /* slate-200 */
+  background-color: #020617 !important; /* slate-950: gana sobre Bootstrap y cualquier otro */
+  color: #e2e8f0 !important; /* slate-200 */
 }
 
 /* Tema claro: solo cuando el usuario lo elige explícitamente */
 [data-theme="light"] body,
 [data-theme="light"] html,
 [data-theme="light"] #root {
-  background-color: var(--app-bg);
-  color: var(--app-text-body);
+  background-color: var(--app-bg) !important;
+  color: var(--app-text-body) !important;
+}
+
+/* Dashboard/app: forzar oscuro en todo el contenido (anula Bootstrap y componentes claros) */
+.main-layout-main-container.bg-slate-950,
+.main-layout-main-container .content-container.bg-gradient-to-br,
+.content-area-app {
+  background-color: #020617 !important;
+  color: #e2e8f0 !important;
+}
+
+.content-area-app {
+  input, select, textarea {
+    background-color: #0f172a !important; /* slate-900 */
+    color: #e2e8f0 !important;
+    border-color: #334155 !important;
+  }
+  input::placeholder, textarea::placeholder {
+    color: #94a3b8;
+  }
+  /* Anular cards/tarjetas Bootstrap o con fondo claro */
+  .card, [class*="card"], .table, table {
+    background-color: #0f172a !important;
+    color: #e2e8f0 !important;
+    border-color: #1e293b !important;
+  }
+  thead th {
+    background-color: #1e293b !important;
+    color: #cbd5e1 !important;
+    border-color: #334155 !important;
+  }
+  tbody td {
+    background-color: #0f172a !important;
+    color: #e2e8f0 !important;
+    border-color: #1e293b !important;
+  }
+}
+
+[data-theme="light"] .content-area-app {
+  input, select, textarea {
+    background-color: var(--app-bg-card) !important;
+    color: var(--app-text-heading) !important;
+    border-color: var(--app-border) !important;
+  }
+  .card, [class*="card"], .table, table {
+    background-color: var(--app-bg-card) !important;
+    color: var(--app-text-heading) !important;
+    border-color: var(--app-border) !important;
+  }
+  thead th, tbody td {
+    background-color: inherit !important;
+    color: inherit !important;
+    border-color: inherit !important;
+  }
 }
 
 /* App nativa móvil: viewport dinámico (100dvh), safe areas, gestos táctiles */

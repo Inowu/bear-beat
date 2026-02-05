@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-slate-950 text-slate-200 antialiased;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+#root {
+  isolation: isolate;
+  min-height: 100vh;
+}

@@ -93,7 +93,8 @@ function LoginForm() {
   };
 
   return (
-    <div className="auth-login-atmosphere">
+    <div className="w-full max-w-md mx-auto">
+      <div className="auth-login-atmosphere">
       <div className="auth-login-glow" aria-hidden />
       <div className="auth-login-card">
         <img src={Logo} alt="Bear Beat" className="auth-login-logo" />
@@ -161,6 +162,7 @@ function LoginForm() {
         newUserPhone={newUserPhone}
         onHideModal={handleSuccessVerify}
       />
+    </div>
     </div>
   );
 }
