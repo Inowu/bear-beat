@@ -11,8 +11,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #020617; /* slate-950: fondo negro, no blanco */
-  color: #f8fafc; /* slate-50: títulos blancos */
+  background: var(--app-bg);
+  color: var(--app-text-body);
   font-size: var(--app-font-size-body);
   font-family: "Poppins", sans-serif;
   transition: background 0.2s ease, color 0.2s ease;
@@ -45,14 +45,14 @@
 
 // Login: estilos en LoginForm.scss (tarjeta central + atmósfera)
 
-// Card para formularios sueltos (Recuperar, Reset): tarjeta oscura, no cajita blanca
+// Card para formularios sueltos (Recuperar, Reset): usa tema
 .auth-main-container > form {
   max-width: 420px;
   padding: 32px 24px;
-  background: #0f172a; /* slate-900 */
-  border: 1px solid #1e293b; /* slate-800 */
+  background: var(--ph-bg-card);
+  border: 2px solid var(--ph-border);
   border-radius: 1rem;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--ph-shadow-card);
 
   @include respond-from(desktop) {
     max-width: 520px;
@@ -103,24 +103,74 @@
       font-size: var(--app-font-size-body);
       box-sizing: border-box;
       border-radius: 12px;
-      border: 1px solid #334155; /* slate-700 por defecto (dark) */
-      background: #020617; /* slate-950 */
-      color: #f8fafc;
+      border: 2px solid var(--auth-input-border);
+      background: var(--auth-input-bg);
+      color: var(--app-text-heading);
       transition: border-color 0.2s, box-shadow 0.2s;
       &::placeholder {
-        color: #94a3b8;
+        color: var(--app-text-muted);
       }
       &:focus {
         outline: none;
-        border-color: #06b6d4;
-        box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
+        border-color: #08E1F7;
+        box-shadow: 0 0 0 3px rgba(8, 225, 247, 0.25);
       }
+    }
+  }
+
+  /* Wrapper contraseña con icono candado (ResetPassword, etc.): texto e icono visibles sin solaparse */
+  .auth-password-with-icon-wrap {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+    min-height: 52px;
+    border-radius: 12px;
+    border: 2px solid var(--auth-input-border);
+    background: var(--auth-input-bg);
+    transition: border-color 0.2s, box-shadow 0.2s;
+
+    &:focus-within {
+      border-color: #08E1F7;
+      box-shadow: 0 0 0 3px rgba(8, 225, 247, 0.25);
+      .auth-password-icon {
+        color: #08E1F7;
+      }
+    }
+  }
+
+  .auth-password-with-icon-wrap .auth-password-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 22px;
+    height: 22px;
+    color: var(--auth-register-icon, var(--app-text-muted));
+    pointer-events: none;
+    flex-shrink: 0;
+  }
+
+  .auth-password-with-icon-wrap .password-input-wrap {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .auth-password-with-icon-wrap .password-input-wrap .password-input {
+    padding-left: 50px !important;
+    padding-right: 50px !important;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--app-text-heading);
+    &::placeholder {
+      color: var(--app-text-muted);
     }
   }
 
   .error-formik {
     display: block;
-    color: var(--ph-pain-bad);
+    color: var(--app-status-error);
     font-weight: var(--app-font-weight-heading);
     font-size: var(--app-font-size-body);
     margin-top: 8px;
@@ -135,16 +185,16 @@
     padding: 14px 20px;
     font-size: var(--app-font-size-body);
     font-weight: var(--app-font-weight-heading);
-    border-radius: 9999px;
+    border-radius: 999px;
     border: none;
     cursor: pointer;
-    background: var(--ph-btn-bg);
-    color: var(--ph-btn-text);
-    box-shadow: 0 0 24px var(--ph-glow);
-    transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+    background: var(--app-gradient);
+    color: #1A1A1A;
+    box-shadow: 0 4px 14px rgba(8, 225, 247, 0.3);
+    transition: opacity 0.2s, box-shadow 0.2s, transform 0.2s;
     &:hover {
-      background: var(--ph-btn-hover-bg);
-      box-shadow: 0 0 32px var(--ph-glow-strong);
+      opacity: 0.95;
+      box-shadow: 0 6px 20px rgba(8, 225, 247, 0.4);
       transform: translateY(-1px);
     }
   }
@@ -210,8 +260,8 @@
     position: absolute;
     inset: 0;
     background-image:
-      radial-gradient(ellipse 80% 60% at 50% 0%, rgba(6, 182, 212, 0.1) 0%, transparent 55%),
-      radial-gradient(ellipse 60% 40% at 80% 80%, rgba(6, 182, 212, 0.06) 0%, transparent 50%);
+      radial-gradient(ellipse 80% 60% at 50% 0%, rgba(8, 225, 247, 0.12) 0%, transparent 55%),
+      radial-gradient(ellipse 60% 40% at 80% 80%, rgba(8, 225, 247, 0.08) 0%, transparent 50%);
     pointer-events: none;
     mix-blend-mode: overlay;
     opacity: 0.9;
@@ -246,7 +296,7 @@
 
       &::before {
         content: "✓";
-        color: var(--theme-accent-bright);
+        color: #08E1F7;
         font-weight: 800;
         font-size: var(--app-font-size-body-lg);
         flex-shrink: 0;
@@ -273,17 +323,21 @@
   }
 }
 
-// Columna derecha: aplica tema (light = white, dark = slate-950)
+// Columna derecha: aplica tema (light = white, dark = slate-950), tarjeta clara en móvil
 .auth-split-right {
   background: var(--auth-register-panel-bg);
   color: var(--auth-register-text);
   border: 1px solid var(--ph-border);
   border-top: none;
   transition: background 0.2s ease, color 0.2s ease;
+  border-radius: 0 0 1rem 1rem;
+  box-shadow: 0 10px 40px -12px rgba(0, 0, 0, 0.25);
 
   @include respond-from(md) {
     border-top: 1px solid var(--ph-border);
     border-left: none;
+    border-radius: 0;
+    box-shadow: none;
     max-width: 440px;
   }
   @include respond-from(desktop) {

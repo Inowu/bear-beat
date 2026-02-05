@@ -41,7 +41,7 @@
     font-size: var(--app-font-size-body);
   }
 
-  /* CTAs: área táctil 48px y colores de tema */
+  /* CTAs: Bear gradient, área táctil 48px */
   a[href*="filezilla"],
   .in-cta-primary {
     min-height: 48px;
@@ -55,6 +55,15 @@
     border-radius: 12px;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
+    background: var(--app-gradient) !important;
+    color: #1A1A1A !important;
+    border: none;
+    box-shadow: 0 4px 14px rgba(8, 225, 247, 0.3);
+    transition: opacity 0.2s, box-shadow 0.2s;
+    &:hover {
+      opacity: 0.95;
+      box-shadow: 0 6px 20px rgba(8, 225, 247, 0.4);
+    }
   }
 
   .in-btn-secondary {

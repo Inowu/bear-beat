@@ -10,13 +10,13 @@
   .modal-container {
     .header .title {
       margin: 0;
-      color: var(--ph-pain-bad);
+      color: var(--app-status-error);
       font-size: var(--app-font-size-h2);
       font-weight: var(--app-font-weight-heading-strong);
       font-family: "Poppins", sans-serif;
     }
     .header .icon {
-      color: var(--ph-pain-bad);
+      color: var(--app-status-error);
       min-width: 48px;
       min-height: 48px;
       &:hover {

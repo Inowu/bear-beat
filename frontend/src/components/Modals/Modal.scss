@@ -101,7 +101,7 @@
 
       .btn-cancel {
         background: transparent;
-        color: var(--ph-pain-bad);
+        color: var(--app-status-error);
         border: 1px solid var(--ma-btn-cancel-border);
         min-height: 48px;
         font-size: var(--app-font-size-body);
@@ -111,12 +111,12 @@
       }
 
       .btn-retry {
-        background: var(--ph-pain-bad);
+        background: var(--app-status-error);
         color: var(--app-btn-text);
         border: none;
         min-height: 48px;
         font-size: var(--app-font-size-body);
-        box-shadow: 0 0 12px var(--ph-glow-strong);
+        box-shadow: 0 0 12px rgba(255, 45, 44, 0.35);
       }
 
       .btn-option-1 {
@@ -145,14 +145,14 @@
       }
 
       .btn-option-4 {
-        background: linear-gradient(135deg, var(--app-accent-bright), $bear-blue-dim);
+        background: var(--app-gradient);
         color: var(--app-text-heading);
         border: none;
         min-height: 48px;
         font-size: var(--app-font-size-body);
-        box-shadow: 0 0 16px $bear-blue-glow;
+        box-shadow: 0 0 16px var(--app-focus-ring);
         &:hover:not(:disabled) {
-          box-shadow: 0 0 24px $bear-blue-glow;
+          box-shadow: 0 0 24px var(--app-focus-ring);
         }
       }
 
@@ -216,7 +216,7 @@
       }
 
       .btn-cancel {
-        background: var(--ph-pain-bad);
+        background: var(--app-status-error);
         color: var(--app-btn-text);
         border: none;
         border-radius: 12px;
@@ -254,27 +254,23 @@
 }
 
 .error-modal .modal-content {
-  border-color: var(--ph-pain-bad) !important;
-  box-shadow: var(--app-shadow-card), 0 0 0 2px rgba(220, 38, 38, 0.2) !important;
-}
-
-[data-theme="dark"] .error-modal .modal-content {
-  box-shadow: var(--app-shadow-card), 0 0 0 2px rgba(248, 113, 113, 0.25) !important;
+  border-color: var(--app-status-error) !important;
+  box-shadow: var(--app-shadow-card), 0 0 0 2px rgba(255, 45, 44, 0.25) !important;
 }
 
 .success-modal .modal-content {
-  border-color: var(--app-accent) !important;
-  box-shadow: var(--app-shadow-card), 0 0 0 2px rgba(6, 182, 212, 0.2) !important;
+  border-color: var(--app-status-success) !important;
+  box-shadow: var(--app-shadow-card), 0 0 0 2px rgba(57, 216, 52, 0.25) !important;
 }
 
 .option-modal .modal-content {
-  border-color: rgba(81, 207, 102, 0.4) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 2px rgba(81, 207, 102, 0.3) !important;
+  border-color: var(--app-status-success) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 2px rgba(57, 216, 52, 0.3) !important;
 }
 
 .oxxo-modal .modal-content {
-  border-color: rgba(254, 188, 46, 0.5) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 2px rgba(254, 188, 46, 0.3) !important;
+  border-color: var(--app-status-warning) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 2px rgba(254, 188, 46, 0.35) !important;
 }
 
 .card-input {
@@ -286,8 +282,8 @@
   min-height: 48px;
   border-radius: 12px;
   &:focus {
-    border-color: var(--app-accent);
-    box-shadow: 0 0 0 2px var(--theme-accent-glow);
+    border-color: #08E1F7;
+    box-shadow: 0 0 0 2px var(--app-focus-ring);
     outline: none;
   }
 }
@@ -312,11 +308,11 @@
       color: var(--app-text-muted);
       font-size: var(--app-font-size-body);
     }
-    /* Mensajes de error en flujo (no absolutos) para no solapar la siguiente fila */
+    /* Mensajes de error: Bear Beat rojo */
     .formik,
     .error-formik {
       display: block;
-      color: var(--ph-pain-bad);
+      color: var(--app-status-error);
       padding-left: 4px;
       margin-top: 8px;
       margin-bottom: 4px;
@@ -334,11 +330,14 @@
       width: 100%;
       background: var(--app-bg-soft);
       border: 2px solid var(--app-border);
-      color: var(--app-text-body);
+      color: var(--app-text-heading);
       font-size: var(--app-font-size-body);
+      &::placeholder {
+        color: var(--app-text-muted);
+      }
       &:focus {
-        border-color: var(--app-accent);
-        box-shadow: 0 0 0 2px var(--theme-accent-glow);
+        border-color: #08E1F7;
+        box-shadow: 0 0 0 2px var(--app-focus-ring);
         outline: none;
       }
     }
@@ -355,7 +354,7 @@
 
     .error-formik {
       display: block;
-      color: var(--ph-pain-bad);
+      color: var(--app-status-error);
       font-size: var(--app-font-size-body);
       font-weight: var(--app-font-weight-heading);
       margin-top: 8px;
@@ -363,6 +362,7 @@
       line-height: 1.4;
     }
 
+    /* Código de país (+52): a la izquierda del input; el input necesita padding-left para no solaparse */
     .code {
       position: absolute;
       font-size: var(--app-font-size-body);
@@ -371,6 +371,8 @@
       left: 50px;
       top: 48%;
       transform: translateY(-50%);
+      pointer-events: none;
+      z-index: 1;
     }
 
     .dial-container {
@@ -396,10 +398,19 @@
       }
     }
 
+    /* Padding-left > posición del .code (50px) + ancho aproximado del código (+52) para que no se ensimen */
     input.phone {
       border-radius: 100px !important;
-      padding: 5px 90px !important;
+      padding: 8px 90px 8px 72px !important;
       width: 100% !important;
+      box-sizing: border-box;
+      color: var(--app-text-heading);
+      background: var(--app-bg-soft);
+      border: 2px solid var(--app-border);
+      font-size: var(--app-font-size-body);
+      &::placeholder {
+        color: var(--app-text-muted);
+      }
     }
   }
 
@@ -407,19 +418,19 @@
     border-radius: 100px;
     padding: 12px 25px;
     min-height: 48px;
-    background: linear-gradient(135deg, var(--app-accent-bright), $bear-blue-dim);
+    background: var(--app-gradient);
     color: var(--app-text-heading);
     font-weight: var(--app-font-weight-heading);
     font-size: var(--app-font-size-body);
     border: none;
-    box-shadow: 0 0 16px $bear-blue-glow;
+    box-shadow: 0 0 16px var(--app-focus-ring);
   }
 
   .btn-cancel {
     border-radius: 100px;
     padding: 12px 25px;
     min-height: 48px;
-    background: var(--ph-pain-bad);
+    background: var(--app-status-error);
     font-weight: var(--app-font-weight-heading);
     font-size: var(--app-font-size-body);
     color: var(--app-btn-text);
@@ -462,8 +473,8 @@
   width: 100% !important;
   border: 2px solid var(--app-border);
   &:focus {
-    border-color: var(--app-accent);
-    box-shadow: 0 0 0 2px var(--theme-accent-glow);
+    border-color: #08E1F7;
+    box-shadow: 0 0 0 2px var(--app-focus-ring);
     outline: none;
   }
 }
@@ -481,7 +492,7 @@
     display: block;
     width: 100%;
     flex-basis: 100%;
-    color: var(--ph-pain-bad);
+    color: var(--app-status-error);
     padding-left: 4px;
     margin-top: 6px;
     font-size: var(--app-font-size-body);
@@ -498,6 +509,11 @@
     border: 2px solid var(--app-border);
     color: var(--app-text-body);
     font-size: var(--app-font-size-body);
+    &:focus {
+      border-color: #08E1F7;
+      box-shadow: 0 0 0 2px var(--app-focus-ring);
+      outline: none;
+    }
   }
 
   select {
@@ -646,11 +662,11 @@
           font-weight: var(--app-font-weight-heading);
           font-size: var(--app-font-size-body);
           padding: 12px 16px;
-          background: linear-gradient(135deg, var(--app-accent-bright), $bear-blue-dim);
+          background: var(--app-gradient);
           color: var(--app-text-heading);
           border: none;
           border-radius: 100px;
-          box-shadow: 0 0 16px $bear-blue-glow;
+          box-shadow: 0 0 16px var(--app-focus-ring);
         }
       }
     }

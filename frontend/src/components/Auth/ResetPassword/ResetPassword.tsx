@@ -1,4 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
+import { HiOutlineLockClosed } from "react-icons/hi";
 import trpc from "../../../api";
 import { PasswordInput } from "../../PasswordInput/PasswordInput";
 import { useFormik } from "formik";
@@ -66,28 +67,34 @@ function ResetPassword() {
     },
   });
   return (
-    <form onSubmit={formik.handleSubmit}>
+    <form className="auth-form" onSubmit={formik.handleSubmit}>
       <h2>ESCRIBA UNA NUEVA CONTRASEÑA</h2>
       <div className="c-row">
-        <PasswordInput
-          placeholder="Contraseña"
-          id="password"
-          name="password"
-          value={formik.values.password}
-          onChange={formik.handleChange}
-        />
+        <div className="auth-password-with-icon-wrap">
+          <HiOutlineLockClosed className="auth-password-icon" aria-hidden />
+          <PasswordInput
+            placeholder="Nueva contraseña (mín. 6 caracteres)"
+            id="password"
+            name="password"
+            value={formik.values.password}
+            onChange={formik.handleChange}
+          />
+        </div>
         {formik.errors.password && (
           <div className="error-formik">{formik.errors.password}</div>
         )}
       </div>
       <div className="c-row">
-        <PasswordInput
-          placeholder="Repetir contraseña"
-          id="passwordConfirmation"
-          name="passwordConfirmation"
-          value={formik.values.passwordConfirmation}
-          onChange={formik.handleChange}
-        />
+        <div className="auth-password-with-icon-wrap">
+          <HiOutlineLockClosed className="auth-password-icon" aria-hidden />
+          <PasswordInput
+            placeholder="Repetir contraseña"
+            id="passwordConfirmation"
+            name="passwordConfirmation"
+            value={formik.values.passwordConfirmation}
+            onChange={formik.handleChange}
+          />
+        </div>
         {formik.errors.passwordConfirmation && (
           <div className="error-formik">
             {formik.errors.passwordConfirmation}

@@ -20,7 +20,7 @@
     pointer-events: none;
     background: radial-gradient(
       ellipse 80% 60% at 50% 40%,
-      rgba(6, 182, 212, 0.12) 0%,
+      rgba(8, 225, 247, 0.14) 0%,
       transparent 55%
     );
     opacity: 0;
@@ -42,8 +42,8 @@
   pointer-events: none;
   background: radial-gradient(
     ellipse 70% 70% at 50% 50%,
-    rgba(6, 182, 212, 0.35) 0%,
-    rgba(6, 182, 212, 0.12) 40%,
+    rgba(8, 225, 247, 0.35) 0%,
+    rgba(8, 225, 247, 0.12) 40%,
     transparent 70%
   );
   filter: blur(48px);
@@ -61,10 +61,10 @@
   width: 100%;
   max-width: 420px;
   padding: 2.5rem 2rem;
-  background: #0f172a; /* slate-900: tarjeta oscura */
-  border: 1px solid #1e293b; /* slate-800 */
+  background: var(--auth-login-card-bg, #0f172a);
+  border: 2px solid var(--auth-login-card-border, #1e293b);
   border-radius: 1rem;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--auth-login-card-shadow, 0 25px 50px -12px rgba(0, 0, 0, 0.5));
   font-family: "Poppins", sans-serif;
   transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 
@@ -135,15 +135,16 @@
     transition: border-color 0.2s, box-shadow 0.2s;
 
     &:focus-within {
-      border-color: var(--auth-register-input-focus);
-      box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.5);
+      border-color: #08E1F7;
+      box-shadow: 0 0 0 2px var(--app-focus-ring);
 
       .auth-login-input-icon {
-        color: var(--auth-register-icon-focus);
+        color: #08E1F7;
       }
     }
   }
 
+  /* Icono izquierdo: 16px + 22px + 12px gap → padding-left 50px para no solapar */
   .auth-login-input-icon {
     position: absolute;
     left: 16px;
@@ -167,7 +168,8 @@
     transition: border-color 0.2s, box-shadow 0.2s;
 
     &::placeholder {
-      opacity: 0.75;
+      color: var(--auth-register-text);
+      opacity: 0.65;
     }
 
     &:focus {
@@ -176,7 +178,7 @@
   }
 
   .auth-login-input-with-icon {
-    padding-left: 46px; /* pl-10: no encimar icono */
+    padding-left: 50px;
   }
 
   .auth-login-password-wrap {
@@ -186,19 +188,21 @@
 
   .auth-login-forgot-wrap {
     margin-bottom: 0;
+    width: 100%;
   }
 
   .auth-login-forgot {
     display: block;
     text-align: right;
+    width: 100%;
     font-size: var(--app-font-size-body);
     font-weight: 600;
-    color: var(--auth-login-link);
+    color: #08E1F7;
     text-decoration: none;
-    transition: color 0.2s;
+    transition: color 0.2s, opacity 0.2s;
 
     &:hover {
-      color: var(--auth-login-link-hover);
+      opacity: 0.9;
       text-decoration: underline;
     }
   }
@@ -209,18 +213,20 @@
     padding: 14px 20px;
     font-size: var(--app-font-size-body);
     font-weight: 800;
-    letter-spacing: 0.15em; /* tracking-widest */
+    letter-spacing: 0.15em;
     text-transform: uppercase;
-    border-radius: 12px;
+    border-radius: 999px;
     border: none;
     cursor: pointer;
-    background: var(--auth-login-btn-bg);
-    color: var(--auth-login-btn-text);
-    transition: background 0.2s, filter 0.2s, transform 0.2s;
+    background: var(--app-gradient);
+    color: #1A1A1A;
+    box-shadow: 0 4px 14px rgba(8, 225, 247, 0.3);
+    transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
 
     &:hover {
-      filter: brightness(1.08);
+      opacity: 0.95;
       transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(8, 225, 247, 0.4);
     }
   }
 
@@ -232,17 +238,17 @@
   .auth-login-register {
     font-size: var(--app-font-size-body);
     font-weight: 600;
-    color: var(--auth-login-link);
+    color: #08E1F7;
     text-decoration: none;
 
     &:hover {
-      color: var(--auth-login-link-hover);
+      opacity: 0.9;
       text-decoration: underline;
     }
   }
 
   .error-formik {
-    color: var(--ph-pain-bad);
+    color: var(--app-status-error);
     font-weight: 600;
     font-size: var(--app-font-size-body);
     margin-top: 6px;

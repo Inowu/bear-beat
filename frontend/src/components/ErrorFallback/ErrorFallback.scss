@@ -46,10 +46,10 @@
   font-size: var(--app-font-size-body, 1rem);
   font-weight: 600;
   font-family: "Poppins", sans-serif;
-  color: #fff;
-  background: var(--app-accent, #06b6d4);
+  color: #1A1A1A;
+  background: var(--app-gradient);
   border: none;
-  border-radius: 12px;
+  border-radius: 999px;
   cursor: pointer;
   transition: opacity 0.2s, transform 0.15s;
 }

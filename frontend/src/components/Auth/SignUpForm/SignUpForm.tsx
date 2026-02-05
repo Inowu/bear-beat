@@ -353,7 +353,7 @@ function SignUpForm() {
             {!loader ? (
               <button
                 type="submit"
-                className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 rounded-lg transition-all signup-submit-btn"
+                className="signup-submit-btn"
               >
                 CREAR MI CUENTA PRO
               </button>

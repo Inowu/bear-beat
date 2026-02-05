@@ -41,26 +41,25 @@ html,
   color: var(--app-text-body) !important;
 }
 
-/* Dashboard/app: forzar oscuro en todo el contenido (anula Bootstrap y componentes claros) */
-.main-layout-main-container.bg-slate-950,
-.main-layout-main-container .content-container.bg-gradient-to-br,
-.content-area-app {
-  background-color: #020617 !important;
-  color: #e2e8f0 !important;
-}
+/* Dashboard/app: inputs y tablas usan vars de tema (Bear Beat light/dark) */
 
 .content-area-app {
   input, select, textarea {
-    background-color: #0f172a !important; /* slate-900 */
-    color: #e2e8f0 !important;
-    border-color: #334155 !important;
-    font-size: 0.875rem !important; /* text-sm */
+    background-color: var(--app-bg-card) !important;
+    color: var(--app-text-heading) !important;
+    border-color: var(--app-border) !important;
+    font-size: 0.875rem !important;
     font-weight: 500;
-    max-height: 2.75rem; /* h-11 */
-    min-height: 2.5rem;  /* h-10 */
+    max-height: 2.75rem;
+    min-height: 2.5rem;
   }
   input::placeholder, textarea::placeholder {
-    color: #94a3b8;
+    color: var(--app-text-muted);
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--app-accent-bright) !important;
+    box-shadow: 0 0 0 2px rgba(8, 225, 247, 0.25);
   }
   button:not(.btn-cell):not(.dropdown-content button) {
     font-size: 0.875rem;
@@ -68,43 +67,24 @@ html,
     min-height: 2.5rem;
     max-height: 2.75rem;
   }
-  /* Anular cards/tarjetas Bootstrap o con fondo claro */
   .card, [class*="card"], .table, table {
-    background-color: #0f172a !important;
-    color: #e2e8f0 !important;
-    border-color: #1e293b !important;
+    background-color: var(--app-bg-card) !important;
+    color: var(--app-text-heading) !important;
+    border-color: var(--app-border) !important;
   }
   thead th {
-    background-color: #1e293b !important;
-    color: #cbd5e1 !important;
-    border-color: #334155 !important;
+    background-color: var(--app-bg-soft) !important;
+    color: var(--app-text-heading) !important;
+    border-color: var(--app-border) !important;
   }
   tbody td {
-    background-color: #0f172a !important;
-    color: #e2e8f0 !important;
-    border-color: #1e293b !important;
-  }
-}
-
-[data-theme="light"] .content-area-app {
-  input, select, textarea {
     background-color: var(--app-bg-card) !important;
     color: var(--app-text-heading) !important;
     border-color: var(--app-border) !important;
   }
-  .card, [class*="card"], .table, table {
-    background-color: var(--app-bg-card) !important;
-    color: var(--app-text-heading) !important;
-    border-color: var(--app-border) !important;
-  }
-  thead th, tbody td {
-    background-color: inherit !important;
-    color: inherit !important;
-    border-color: inherit !important;
-  }
 }
 
-/* App nativa móvil: viewport dinámico (100dvh), safe areas, gestos táctiles */
+/* Web estándar: scroll en ventana del navegador (no en div interno) */
 /* Chrome Mac: suavizado de fuentes para que Poppins se vea nítido */
 html {
   -webkit-text-size-adjust: 100%;
@@ -115,15 +95,15 @@ html {
 
 html,
 #root {
-  height: 100%;
+  min-height: 100vh;
   min-height: 100dvh;
   overflow-x: hidden;
-  overflow-y: hidden;
+  /* overflow-y por defecto (auto): el documento crece y hace scroll en la ventana */
 }
 
 body {
+  min-height: 100vh;
   min-height: 100dvh;
-  overflow: hidden;
   /* Safe areas: notch e indicador de inicio (iPhone X+, Android con gestos) */
   padding-top: env(safe-area-inset-top, 0);
   padding-right: env(safe-area-inset-right, 0);
@@ -131,13 +111,10 @@ body {
   padding-left: env(safe-area-inset-left, 0);
 }
 
-/* Scroll suave tipo app en iOS/Android */
 body {
-  height: 100%;
   -webkit-overflow-scrolling: touch;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overscroll-behavior-y: none;
 }
 
 /* Respuesta táctil rápida (sin delay 300ms), sin zoom en doble toque en controles */
@@ -415,21 +392,7 @@ button.primary-pill {
   }
 }
 
-/* Dashboard: evitar gigantismo en desktop — inputs y botones con ancho controlado */
-@media (min-width: 768px) {
-  .content-area-app input[type="text"],
-  .content-area-app input[type="email"],
-  .content-area-app input[type="password"],
-  .content-area-app input[type="number"],
-  .content-area-app input[type="search"] {
-    max-width: 24rem; /* 384px / w-96 */
-  }
-  .content-area-app button:not(.icon-only):not(.fb-btn-download-icon):not(.fb-btn-play):not(.btn-cell):not(.admin-list-row__menu),
-  .content-area-app .btn {
-    width: auto;
-    min-width: 8rem;
-  }
-}
+/* Dashboard: anchos de inputs/botones los controla cada página (Login max-w-md, Admin según toolbar) */
 
 /* Cloudflare Turnstile: integrado al diseño oscuro (theme=dark + contenedor) */
 .turnstile-widget-wrap {

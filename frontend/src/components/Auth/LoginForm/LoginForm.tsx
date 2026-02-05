@@ -11,6 +11,7 @@ import { Spinner } from "../../../components/Spinner/Spinner";
 import { ChatButton } from "../../../components/ChatButton/ChatButton";
 import Logo from "../../../assets/images/osonuevo.png";
 import { trackManyChatConversion, MC_EVENTS } from "../../../utils/manychatPixel";
+import "./LoginForm.scss";
 
 function LoginForm() {
   const [loader, setLoader] = useState<boolean>(false);
@@ -93,66 +94,70 @@ function LoginForm() {
 
   return (
     <>
-      <div className="w-full max-w-md bg-bear-light-100 dark:bg-bear-dark-500 p-8 rounded-2xl border border-gray-200 dark:border-bear-dark-100 shadow-2xl font-poppins">
-        <img src={Logo} alt="Bear Beat" className="h-12 w-auto mx-auto block mb-4" />
-        <h1 className="text-2xl md:text-3xl font-bold font-bear text-bear-dark-900 dark:text-white text-center mb-1">Bienvenido, DJ.</h1>
-        <p className="text-gray-600 dark:text-gray-400 text-sm text-center mb-6">Tu cabina está lista. Ingresa para descargar.</p>
-        <ChatButton />
-        <form className="flex flex-col gap-4" onSubmit={formik.handleSubmit}>
-          <div>
-            <div className="relative">
-              <HiOutlineMail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-bear-cyan pointer-events-none" aria-hidden />
-              <input
-                placeholder="Correo electrónico"
-                type="text"
-                id="username"
-                name="username"
-                value={formik.values.username}
-                onChange={formik.handleChange}
-                className="bg-white dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white text-sm font-medium rounded-xl h-11 px-4 pl-10 w-full focus:ring-2 focus:ring-bear-cyan focus:border-transparent outline-none transition-shadow"
-              />
+      <div className="auth-login-atmosphere">
+        <div className="auth-login-card">
+          <img src={Logo} alt="Bear Beat" className="auth-login-logo" />
+          <h1 className="auth-login-title">Bienvenido, DJ.</h1>
+          <p className="auth-login-sub">
+            Tu cabina está lista. Ingresa para descargar.
+          </p>
+          <ChatButton />
+          <form className="auth-form auth-login-form" onSubmit={formik.handleSubmit}>
+            <div className="c-row">
+              <div className="auth-login-input-wrap">
+                <HiOutlineMail className="auth-login-input-icon" aria-hidden />
+                <input
+                  placeholder="Correo electrónico"
+                  type="text"
+                  id="username"
+                  name="username"
+                  value={formik.values.username}
+                  onChange={formik.handleChange}
+                  className="auth-login-input auth-login-input-with-icon"
+                />
+              </div>
+              {formik.errors.username && (
+                <div className="error-formik">{formik.errors.username}</div>
+              )}
             </div>
-            {formik.errors.username && (
-              <p className="text-bear-status-error text-sm mt-1">{formik.errors.username}</p>
-            )}
-          </div>
-          <div>
-            <PasswordInput
-              placeholder="Contraseña"
-              id="password"
-              name="password"
-              value={formik.values.password}
-              onChange={formik.handleChange}
-              inputClassName="bg-white dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white text-sm font-medium rounded-xl h-11 px-4 w-full focus:ring-2 focus:ring-bear-cyan focus:border-transparent outline-none transition-shadow"
-              wrapperClassName="w-full"
-            />
-            {formik.errors.password && (
-              <p className="text-bear-status-error text-sm mt-1">{formik.errors.password}</p>
-            )}
-          </div>
-          <div className="text-right">
-            <Link to="/auth/recuperar" className="text-sm font-medium text-bear-cyan hover:opacity-90">
-              ¿Olvidaste tu contraseña?
-            </Link>
-          </div>
-          {!loader ? (
-            <button
-              type="submit"
-              className="w-full h-11 bg-bear-gradient text-bear-dark-500 text-sm font-bold font-poppins rounded-pill transition-all hover:opacity-95"
-            >
-              INGRESAR
-            </button>
-          ) : (
-            <div className="flex justify-center py-2">
-              <Spinner size={3} width={0.3} color="var(--app-accent)" />
+            <div className="c-row">
+              <div className="auth-login-input-wrap">
+                <HiOutlineLockClosed className="auth-login-input-icon" aria-hidden />
+                <PasswordInput
+                  placeholder="Contraseña"
+                  id="password"
+                  name="password"
+                  value={formik.values.password}
+                  onChange={formik.handleChange}
+                  inputClassName="auth-login-input auth-login-input-with-icon"
+                  wrapperClassName="auth-login-password-wrap"
+                />
+              </div>
+              {formik.errors.password && (
+                <div className="error-formik">{formik.errors.password}</div>
+              )}
             </div>
-          )}
-          <div className="text-center">
-            <Link to="/auth/registro" state={{ from }} className="text-sm font-medium text-bear-cyan hover:opacity-90">
-              Registrarme
-            </Link>
-          </div>
-        </form>
+            <div className="c-row auth-login-forgot-wrap">
+              <Link to="/auth/recuperar" className="auth-login-forgot">
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
+            {!loader ? (
+              <button type="submit" className="auth-login-submit-btn">
+                INGRESAR
+              </button>
+            ) : (
+              <div className="flex justify-center py-2">
+                <Spinner size={3} width={0.3} color="var(--app-accent)" />
+              </div>
+            )}
+            <div className="c-row auth-login-register-wrap">
+              <Link to="/auth/registro" state={{ from }} className="auth-login-register">
+                Registrarme
+              </Link>
+            </div>
+          </form>
+        </div>
       </div>
       <ErrorModal show={show} onHide={closeModal} message={errorMessage} />
       <VerifyUpdatePhoneModal

@@ -31,10 +31,8 @@ function NotFound() {
       </p>
       <Link
         to="/"
-        className="btn-back-home inline-flex items-center justify-center min-h-[44px] px-6 py-3 rounded-xl font-semibold"
+        className="btn-back-home inline-flex items-center justify-center min-h-[44px] px-6 py-3 rounded-pill font-semibold bg-bear-gradient text-bear-dark-500 hover:opacity-90 transition-opacity"
         style={{
-          background: "var(--app-accent)",
-          color: "var(--app-btn-text)",
           fontSize: "var(--app-font-size-body)",
         }}
       >
