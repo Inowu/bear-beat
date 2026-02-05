@@ -1,5 +1,8 @@
 # Deploy del frontend (React SPA) en monorepo bear-beat
 # https://docs.netlify.com/configure-builds/file-based-configuration/
+#
+# Variable requerida para Sentry (configurar en Netlify Dashboard → Environment variables):
+#   REACT_APP_SENTRY_DSN
 
 [build]
   # Opción A: base en frontend (recomendado)

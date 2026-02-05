@@ -28,3 +28,25 @@ Si **Base directory** está vacío en la UI, entonces:
 ## 4. Probar deploy manual
 - Deploys → "Trigger deploy" → "Deploy site".
 - Espera a que termine y recarga https://thebearbeat.com
+
+---
+
+## 5. Sentry (variable de entorno en Netlify)
+
+Para que Sentry reciba errores en producción:
+
+1. **Netlify Dashboard** → tu sitio (thebearbeat) → **Site configuration** → **Environment variables**.
+2. **Add a variable** (o "Add new variable" / "New variable").
+3. **Key:** `REACT_APP_SENTRY_DSN`
+4. **Value:**  
+   `https://b1199b86d9489b928d5a58660bc79c6b@o4508382588305408.ingest.us.sentry.io/4510831772237824`
+5. **Scopes:** marca **All scopes** (o al menos "Production" y "Deploy previews" si quieres).
+6. Guarda y haz un **nuevo deploy** (Deploys → "Trigger deploy" → "Deploy site") para que el build use la variable.
+
+**Desde la terminal** (después de `netlify login` y `netlify link`):
+
+```bash
+netlify env:set REACT_APP_SENTRY_DSN "https://b1199b86d9489b928d5a58660bc79c6b@o4508382588305408.ingest.us.sentry.io/4510831772237824"
+```
+
+Luego dispara un deploy desde el dashboard o con `netlify deploy --prod`.
