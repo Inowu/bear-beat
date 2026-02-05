@@ -71,6 +71,10 @@
   @include respond-from(tablet) {
     padding: 3rem 2.5rem;
   }
+  @include respond-from(desktop) {
+    max-width: 480px;
+    padding: 3rem 2.5rem 3rem 3rem;
+  }
 }
 
 .auth-login-logo {

@@ -69,7 +69,7 @@ function Instructions() {
       className="instructions-main-container min-h-screen dark:text-slate-300 [&_p]:dark:text-slate-300 [&_li]:dark:text-slate-300 [&_span]:dark:text-slate-300"
       style={{ background: "var(--in-bg)" }}
     >
-      <div className="max-w-3xl mx-auto px-4 py-8 md:py-12">
+      <div className="max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto px-4 py-8 md:py-12">
         {videoURL !== "" ? (
           <div className="rounded-xl overflow-hidden border in-iframe-wrap" style={{ borderColor: "var(--in-card-border)" }}>
             <iframe

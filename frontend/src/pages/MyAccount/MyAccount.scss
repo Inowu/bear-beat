@@ -473,6 +473,21 @@
       max-width: 720px;
       padding-bottom: 15px;
       gap: 40px;
+    }
+  }
+}
+
+@include respond-from(desktop) {
+  .my-account-main-container {
+    max-width: 1280px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    gap: 2.5rem;
+
+    .purchase {
+      max-width: 900px;
 
       .actives-ftp-container h2 {
         font-size: var(--app-font-size-h1);
@@ -490,17 +505,6 @@
         font-size: var(--app-font-size-h1);
       }
     }
-  }
-}
-
-@include respond-from(desktop) {
-  .my-account-main-container {
-    max-width: 1280px;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: 1rem;
-    padding-right: 1rem;
-    gap: 2.5rem;
   }
 }
 

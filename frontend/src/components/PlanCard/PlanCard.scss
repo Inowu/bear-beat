@@ -8,6 +8,11 @@
   width: 100%;
   max-width: 100%;
   min-width: 0;
+
+  @include respond-from(desktop) {
+    max-width: 400px;
+    justify-self: center;
+  }
 }
 
 .plan-card-glow {

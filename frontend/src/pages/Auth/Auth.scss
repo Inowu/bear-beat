@@ -45,7 +45,7 @@
 
 // Login: estilos en LoginForm.scss (tarjeta central + atmósfera)
 
-// Card para formularios sueltos (Recuperar, Reset)
+// Card para formularios sueltos (Recuperar, Reset) — móvil estrecha, desktop más ancha
 .auth-main-container > form {
   max-width: 420px;
   padding: 32px 24px;
@@ -53,6 +53,11 @@
   border: 1px solid var(--ph-border);
   border-radius: 20px;
   box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.2), 0 12px 24px -8px rgba(15, 23, 42, 0.1);
+
+  @include respond-from(desktop) {
+    max-width: 520px;
+    padding: 40px 36px;
+  }
 }
 
 // Form común (Login, Register y otros como Recuperar)
@@ -275,6 +280,9 @@
     border-left: none;
     max-width: 440px;
   }
+  @include respond-from(desktop) {
+    max-width: 500px;
+  }
 
   .auth-split-form-title {
     font-size: var(--app-font-size-h3);
@@ -319,16 +327,27 @@
 
 @include respond-from(desktop) {
   .auth-main-container.auth-page {
-    padding: 32px 24px;
+    padding: 40px 32px;
 
     .auth-logo {
-      max-width: 220px;
-      margin-bottom: 20px;
+      max-width: 280px;
+      margin-bottom: 24px;
     }
     .auth-tagline {
-      max-width: 480px;
-      margin-bottom: 28px;
+      max-width: 560px;
+      font-size: 1.125rem;
+      margin-bottom: 32px;
+      line-height: 1.5;
     }
+  }
+  .auth-main-container form.auth-form,
+  .auth-main-container > form .c-row,
+  .auth-main-container form .c-row {
+    gap: 18px;
+  }
+  .auth-main-container > form,
+  .auth-main-container form {
+    gap: 20px;
   }
 }
 
