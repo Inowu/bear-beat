@@ -1,14 +1,24 @@
-// SpeiModal — Terminal de Transferencia SPEI (Dark / Cyberpunk)
-// Equivalencias Tailwind: slate-900, cyan-500/30, cyan-400, etc.
+// SpeiModal — Terminal de Transferencia SPEI (Dark + Light)
+// Respeta data-theme en <html> (ThemeContext): light | dark
 
-$spei-bg: #0f172a; // slate-900
-$spei-border: rgba(6, 182, 212, 0.3); // cyan-500/30
-$spei-cyan: #22d3ee; // cyan-400
-$spei-cyan-bright: #06b6d4; // cyan-500
-$spei-text: #f8fafc; // slate-50
-$spei-muted: #94a3b8; // slate-400
-$spei-warning: #fb923c; // orange-400
-$spei-success: #34d399; // emerald-400
+// ----- Dark (terminal cyberpunk) -----
+$spei-bg-dark: #0f172a;
+$spei-border-dark: rgba(6, 182, 212, 0.3);
+$spei-cyan: #22d3ee;
+$spei-cyan-bright: #06b6d4;
+$spei-text-dark: #f8fafc;
+$spei-muted-dark: #94a3b8;
+$spei-warning: #fb923c;
+$spei-success: #34d399;
+
+// ----- Light (terminal clara, misma jerarquía) -----
+$spei-bg-light: #ffffff;
+$spei-border-light: rgba(8, 145, 178, 0.35);
+$spei-cyan-light: #0891b2;
+$spei-text-light: #0f172a;
+$spei-muted-light: #64748b;
+$spei-warning-light: #ea580c;
+$spei-success-light: #059669;
 
 .spei-modal-wrapper {
   .modal-content {
@@ -22,10 +32,9 @@ $spei-success: #34d399; // emerald-400
   }
 }
 
+// Base estructural (común)
 .spei-terminal {
-  background: $spei-bg;
-  border: 1px solid $spei-border;
-  border-radius: 0.75rem; // rounded-xl
+  border-radius: 0.75rem;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   overflow: hidden;
   font-family: "Poppins", sans-serif;
@@ -37,31 +46,24 @@ $spei-success: #34d399; // emerald-400
     align-items: center;
     justify-content: space-between;
     padding: 1rem 1.25rem;
-    border-bottom: 1px solid $spei-border;
   }
 
   &__title {
     margin: 0;
     font-size: 1.125rem;
     font-weight: 700;
-    color: $spei-text;
     font-family: "Poppins", sans-serif;
   }
 
   &__close {
     background: none;
     border: none;
-    color: $spei-muted;
     padding: 0.25rem;
     cursor: pointer;
     font-size: 1.5rem;
     line-height: 1;
     border-radius: 0.25rem;
     transition: color 0.2s;
-
-    &:hover {
-      color: $spei-text;
-    }
   }
 
   &__body {
@@ -76,7 +78,6 @@ $spei-success: #34d399; // emerald-400
     display: block;
     font-size: 0.75rem;
     font-weight: 600;
-    color: $spei-muted;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin-bottom: 0.5rem;
@@ -93,11 +94,9 @@ $spei-success: #34d399; // emerald-400
   &__clabe {
     font-family: ui-monospace, "SF Mono", "Fira Code", monospace;
     font-size: clamp(1rem, 4vw, 1.5rem);
-    color: $spei-cyan;
-    background: rgba(6, 182, 212, 0.1);
     padding: 0.5rem 0.75rem;
     border-radius: 0.375rem;
-    word-break: break-all; // evita que se corte feo en móvil
+    word-break: break-all;
     flex: 1;
     min-width: 0;
   }
@@ -105,7 +104,6 @@ $spei-success: #34d399; // emerald-400
   &__amount {
     font-size: 1.5rem;
     font-weight: 700;
-    color: $spei-text;
     font-family: ui-monospace, "SF Mono", monospace;
   }
 
@@ -114,20 +112,12 @@ $spei-success: #34d399; // emerald-400
     align-items: center;
     gap: 0.375rem;
     padding: 0.5rem 0.75rem;
-    background: rgba(6, 182, 212, 0.2);
-    border: 1px solid $spei-border;
     border-radius: 0.375rem;
-    color: $spei-cyan;
     font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
     transition: background 0.2s, color 0.2s;
     flex-shrink: 0;
-
-    &:hover {
-      background: rgba(6, 182, 212, 0.3);
-      color: #f8fafc;
-    }
 
     svg {
       width: 1rem;
@@ -138,13 +128,11 @@ $spei-success: #34d399; // emerald-400
   &__warning {
     margin: 0.5rem 0 0;
     font-size: 0.8125rem;
-    color: $spei-warning;
   }
 
   &__steps {
     margin: 1rem 0;
     padding-left: 1.25rem;
-    color: $spei-muted;
     font-size: 0.875rem;
     line-height: 1.6;
 
@@ -155,12 +143,7 @@ $spei-success: #34d399; // emerald-400
 
   &__expires {
     font-size: 0.8125rem;
-    color: $spei-muted;
     margin: 0 0 0.75rem;
-
-    strong {
-      color: $spei-text;
-    }
   }
 
   &__trust {
@@ -168,11 +151,9 @@ $spei-success: #34d399; // emerald-400
     align-items: center;
     gap: 0.5rem;
     font-size: 0.8125rem;
-    color: $spei-muted;
     margin-bottom: 1.25rem;
 
     svg {
-      color: $spei-success;
       width: 1rem;
       height: 1rem;
       flex-shrink: 0;
@@ -188,20 +169,14 @@ $spei-success: #34d399; // emerald-400
   &__btn-primary {
     width: 100%;
     padding: 0.75rem 1rem;
-    background: $spei-cyan-bright;
     border: none;
     border-radius: 0.5rem;
-    color: #0f172a;
     font-size: 1rem;
     font-weight: 600;
     font-family: "Poppins", sans-serif;
     cursor: pointer;
     transition: background 0.2s, transform 0.1s;
 
-    &:hover {
-      background: $spei-cyan;
-      color: #0f172a;
-    }
     &:active {
       transform: scale(0.98);
     }
@@ -212,14 +187,152 @@ $spei-success: #34d399; // emerald-400
     padding: 0.5rem;
     background: transparent;
     border: none;
-    color: $spei-muted;
     font-size: 0.875rem;
     font-family: "Poppins", sans-serif;
     cursor: pointer;
     transition: color 0.2s;
+  }
+}
 
+// ----- Tema DARK (terminal cyberpunk) — default y cuando data-theme="dark" -----
+.spei-terminal,
+[data-theme="dark"] .spei-terminal,
+html.dark .spei-terminal {
+  background: $spei-bg-dark;
+  border: 1px solid $spei-border-dark;
+
+  .spei-terminal__header {
+    border-bottom: 1px solid $spei-border-dark;
+  }
+  .spei-terminal__title {
+    color: $spei-text-dark;
+  }
+  .spei-terminal__close {
+    color: $spei-muted-dark;
     &:hover {
-      color: $spei-text;
+      color: $spei-text-dark;
+    }
+  }
+  .spei-terminal__label {
+    color: $spei-muted-dark;
+  }
+  .spei-terminal__clabe {
+    color: $spei-cyan;
+    background: rgba(6, 182, 212, 0.1);
+  }
+  .spei-terminal__amount {
+    color: $spei-text-dark;
+  }
+  .spei-terminal__copy-btn {
+    background: rgba(6, 182, 212, 0.2);
+    border: 1px solid $spei-border-dark;
+    color: $spei-cyan;
+    &:hover {
+      background: rgba(6, 182, 212, 0.3);
+      color: #f8fafc;
+    }
+  }
+  .spei-terminal__warning {
+    color: $spei-warning;
+  }
+  .spei-terminal__steps {
+    color: $spei-muted-dark;
+  }
+  .spei-terminal__expires {
+    color: $spei-muted-dark;
+    strong {
+      color: $spei-text-dark;
+    }
+  }
+  .spei-terminal__trust {
+    color: $spei-muted-dark;
+    svg {
+      color: $spei-success;
+    }
+  }
+  .spei-terminal__btn-primary {
+    background: $spei-cyan-bright;
+    color: #0f172a;
+    &:hover {
+      background: $spei-cyan;
+      color: #0f172a;
+    }
+  }
+  .spei-terminal__btn-secondary {
+    color: $spei-muted-dark;
+    &:hover {
+      color: $spei-text-dark;
+    }
+  }
+}
+
+// ----- Tema LIGHT (terminal clara, misma jerarquía) -----
+[data-theme="light"] .spei-terminal {
+  background: $spei-bg-light;
+  border: 1px solid $spei-border-light;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.12), 0 0 30px rgba(8, 145, 178, 0.06);
+
+  .spei-terminal__header {
+    border-bottom: 1px solid $spei-border-light;
+  }
+  .spei-terminal__title {
+    color: $spei-text-light;
+  }
+  .spei-terminal__close {
+    color: $spei-muted-light;
+    &:hover {
+      color: $spei-text-light;
+    }
+  }
+  .spei-terminal__label {
+    color: $spei-muted-light;
+  }
+  .spei-terminal__clabe {
+    color: $spei-cyan-light;
+    background: rgba(8, 145, 178, 0.1);
+  }
+  .spei-terminal__amount {
+    color: $spei-text-light;
+  }
+  .spei-terminal__copy-btn {
+    background: rgba(8, 145, 178, 0.12);
+    border: 1px solid $spei-border-light;
+    color: $spei-cyan-light;
+    &:hover {
+      background: rgba(8, 145, 178, 0.2);
+      color: #0f172a;
+    }
+  }
+  .spei-terminal__warning {
+    color: $spei-warning-light;
+  }
+  .spei-terminal__steps {
+    color: $spei-muted-light;
+  }
+  .spei-terminal__expires {
+    color: $spei-muted-light;
+    strong {
+      color: $spei-text-light;
+    }
+  }
+  .spei-terminal__trust {
+    color: $spei-muted-light;
+    svg {
+      color: $spei-success-light;
+    }
+  }
+  .spei-terminal__btn-primary {
+    background: $spei-cyan-light;
+    color: #ffffff;
+    &:hover {
+      background: #0e7490;
+      color: #ffffff;
+    }
+  }
+  .spei-terminal__btn-secondary {
+    color: $spei-muted-light;
+    &:hover {
+      color: $spei-text-light;
     }
   }
 }
