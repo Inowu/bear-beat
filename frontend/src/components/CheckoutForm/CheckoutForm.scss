@@ -123,12 +123,13 @@ form.checkout-form {
       padding: 8px;
       border-radius: 8px;
     }
-    .StripeElement {
-      border: 2px solid #d3d3d3;
-      background-color: #f8f8f8;
-      padding: 12px;
-      border-radius: 5px;
+    .StripeElement,
+    .payment-element-wrap iframe {
+      border-radius: 10px;
     }
+  }
+  .payment-element-wrap {
+    border-radius: 10px;
   }
   .cupon-container {
     display: flex;

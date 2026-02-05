@@ -24,8 +24,10 @@ import { Link } from "react-router-dom";
 import { loadStripe } from "@stripe/stripe-js";
 import { saveAs } from "file-saver";
 import { Spinner } from "../../components/Spinner/Spinner";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useUserContext } from "../../contexts/UserContext";
+import { useTheme } from "../../contexts/ThemeContext";
+import { getStripeAppearance } from "../../utils/stripeAppearance";
 import Amex from "../../assets/images/cards/express.png";
 import filezillaIcon from "../../assets/images/filezilla_icon.png";
 import Logo from "../../assets/images/osonuevo.png";
@@ -41,6 +43,7 @@ const stripeKey =
 const stripePromise = loadStripe(stripeKey);
 
 function MyAccount() {
+  const { theme } = useTheme();
   const {
     currentUser,
     startUser,
@@ -48,6 +51,7 @@ function MyAccount() {
     cardLoad,
     getPaymentMethods,
   } = useUserContext();
+  const stripeOptions = useMemo(() => ({ appearance: getStripeAppearance(theme) }), [theme]);
   const [quota, setQuota] = useState({} as IQuota);
   const [orders, setOrders] = useState<IOrders[]>([]);
   const [showCondition, setShowCondition] = useState(false);
@@ -685,7 +689,7 @@ function MyAccount() {
         message={successMessage}
         title={successTitle}
       />
-      <Elements stripe={stripePromise}>
+      <Elements stripe={stripePromise} options={stripeOptions}>
         <PaymentMethodModal
           show={showPaymentMethod}
           onHide={handlePaymentMethod}
@@ -706,7 +710,7 @@ function MyAccount() {
               : deleteCard
         }
       />
-      <Elements stripe={stripePromise}>
+      <Elements stripe={stripePromise} options={stripeOptions}>
         <PlansModal
           show={showPlan}
           onHide={closePlan}

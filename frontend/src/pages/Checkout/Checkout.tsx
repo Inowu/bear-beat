@@ -3,14 +3,16 @@ import { CheckoutFormIntro, CheckoutFormPayment } from "../../components/Checkou
 import "./Checkout.scss";
 import { loadStripe } from "@stripe/stripe-js";
 import { useUserContext } from "../../contexts/UserContext";
+import { useTheme } from "../../contexts/ThemeContext";
 import { useLocation } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useCookies } from "react-cookie";
 import trpc from "../../api";
 import { IPlans } from "interfaces/Plans";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 import { manychatApi } from "../../api/manychat";
 import { Spinner } from "../../components/Spinner/Spinner";
+import { getStripeAppearance } from "../../utils/stripeAppearance";
 import { Lock, Shield, Check } from "lucide-react";
 
 const stripeKey =
@@ -20,19 +22,8 @@ const stripeKey =
 
 const stripePromise = loadStripe(stripeKey);
 
-const stripeAppearance = {
-  theme: "night" as const,
-  variables: {
-    colorPrimary: "#06b6d4",
-    colorBackground: "#0f172a",
-    colorText: "#f8fafc",
-    colorDanger: "#f87171",
-    fontFamily: "Poppins, sans-serif",
-    borderRadius: "8px",
-  },
-};
-
 function Checkout() {
+  const { theme } = useTheme();
   const [plan, setPlan] = useState({} as IPlans);
   const location = useLocation();
   const [discount] = useState<number>(0);
@@ -44,6 +35,14 @@ function Checkout() {
   const priceId = searchParams.get("priceId");
   const { currentUser } = useUserContext();
   const [cookies] = useCookies(["_fbp"]);
+
+  const stripeOptions = useMemo(
+    () =>
+      clientSecret
+        ? { clientSecret, appearance: getStripeAppearance(theme) }
+        : undefined,
+    [clientSecret, theme]
+  );
 
   const checkManyChat = async (p: IPlans | undefined) => {
     if (!p) return;
@@ -182,21 +181,15 @@ function Checkout() {
               </div>
             ) : !clientSecret ? (
               <CheckoutFormIntro plan={plan} setClientSecret={setClientSecret} />
-            ) : (
-              <Elements
-                stripe={stripePromise}
-                options={{
-                  clientSecret,
-                  appearance: stripeAppearance,
-                }}
-              >
+            ) : stripeOptions ? (
+              <Elements stripe={stripePromise} options={stripeOptions}>
                 <CheckoutFormPayment
                   plan={plan}
                   clientSecret={clientSecret}
                   onReset={handleResetPayment}
                 />
               </Elements>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
