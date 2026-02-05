@@ -15,9 +15,8 @@ if (dsn) {
     debug: true, // Ver en consola si los eventos se envían (doc: "observe your console output")
     release: "bear-beat@1.0.0",
     environment: process.env.NODE_ENV || "production",
-    // Sin tracing/replay para no saturar cuota y evitar 429
+    // Sin tracing/replay para no saturar cuota; NO usar integrations: [] (desactiva el envío de errores)
     tracesSampleRate: 0,
-    integrations: [],
   });
 } else if (typeof window !== "undefined") {
   console.warn(
