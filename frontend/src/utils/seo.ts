@@ -1,8 +1,8 @@
 /**
- * SEO por ruta: actualiza <title> y meta description al navegar (SPA).
- * No modifica la lógica de la app.
+ * SEO por ruta: actualiza <title>, meta description, canonical y og/twitter url al navegar (SPA).
  */
 
+const BASE_URL = "https://thebearbeat.com";
 const BASE_TITLE = "Bear Beat";
 const BASE_DESC = "Librería de música y videos exclusivos para DJs. 500 GB cada mes por FTP, contenido organizado por géneros.";
 
@@ -59,27 +59,36 @@ const DEFAULT_SEO = {
 };
 
 /**
- * Aplica título y meta description para la pathname actual.
+ * Aplica título, meta description, canonical y og/twitter url para la pathname actual.
  * Llamar desde un componente que use useLocation() y useEffect.
  */
 export function applyRouteSeo(pathname: string): void {
   const path = pathname.endsWith("/") && pathname !== "/" ? pathname.slice(0, -1) : pathname;
   const seo = ROUTE_SEO[path] ?? DEFAULT_SEO;
+  const url = path === "" ? BASE_URL : `${BASE_URL}${path}`;
 
   document.title = seo.title;
 
   const metaDesc = document.querySelector('meta[name="description"]');
-  if (metaDesc) {
-    metaDesc.setAttribute("content", seo.description);
-  }
+  if (metaDesc) metaDesc.setAttribute("content", seo.description);
 
   const ogTitle = document.querySelector('meta[property="og:title"]');
-  if (ogTitle) {
-    ogTitle.setAttribute("content", seo.title);
-  }
+  if (ogTitle) ogTitle.setAttribute("content", seo.title);
 
   const ogDesc = document.querySelector('meta[property="og:description"]');
-  if (ogDesc) {
-    ogDesc.setAttribute("content", seo.description);
+  if (ogDesc) ogDesc.setAttribute("content", seo.description);
+
+  const ogUrl = document.querySelector('meta[property="og:url"]');
+  if (ogUrl) ogUrl.setAttribute("content", url);
+
+  const twitterUrl = document.querySelector('meta[name="twitter:url"]');
+  if (twitterUrl) twitterUrl.setAttribute("content", url);
+
+  let canonical = document.querySelector('link[rel="canonical"]');
+  if (!canonical) {
+    canonical = document.createElement("link");
+    canonical.setAttribute("rel", "canonical");
+    document.head.appendChild(canonical);
   }
+  canonical.setAttribute("href", url);
 }
