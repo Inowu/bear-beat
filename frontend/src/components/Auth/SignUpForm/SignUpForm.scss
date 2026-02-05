@@ -257,8 +257,10 @@ form.sign-up-form {
 
   .error-formik {
     font-size: var(--app-font-size-body);
-    color: #ef4444;
-    margin-top: 0.25rem;
-    font-weight: 500;
+    color: var(--ph-pain-bad);
+    margin-top: 6px;
+    font-weight: 600;
+    line-height: 1.4;
+    min-height: 1.4em;
   }
 }

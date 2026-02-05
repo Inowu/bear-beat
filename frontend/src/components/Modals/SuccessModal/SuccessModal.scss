@@ -1,22 +1,24 @@
 @import "../../../styles/landing-design.scss";
 
 .container-success-modal {
-    .modal-dialog {
-        .modal-content {
-            flex-direction: row;
-        }
+  .modal-dialog {
+    .modal-content {
+      flex-direction: row;
     }
-    .modal-container {
-        .header .title {
-            color: var(--app-text-heading);
-            font-size: var(--app-font-size-h1);
-        }
-        .bottom .content {
-            color: var(--app-text-body);
-            font-size: var(--app-font-size-body);
-        }
-        .bottom button {
-            font-size: var(--app-font-size-body);
-        }
+  }
+  .modal-container {
+    .header .title {
+      color: var(--app-accent);
+      font-size: var(--app-font-size-h2);
+      font-weight: var(--app-font-weight-heading-strong);
     }
+    .bottom .content {
+      color: var(--app-text-body);
+      font-size: var(--app-font-size-body);
+      line-height: 1.5;
+    }
+    .bottom button {
+      font-size: var(--app-font-size-body);
+    }
+  }
 }

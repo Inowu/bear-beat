@@ -5,11 +5,11 @@
 .modal-container {
   display: flex;
   flex-direction: column;
-  border-radius: 12px;
-  background: $card-glass;
+  border-radius: 20px;
+  background: var(--app-bg-card);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid $card-glass-border;
+  border: 2px solid var(--app-border);
   box-shadow: var(--app-shadow-card);
   max-width: calc(100vw - 24px);
   max-height: 90vh;
@@ -46,30 +46,31 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-inline: 16px;
-    padding-block: 12px;
-    background: $bg-dark-soft;
-    border-radius: 12px 12px 0 0;
-    border-bottom: 1px solid $card-glass-border;
+    padding-inline: 20px;
+    padding-block: 16px;
+    background: var(--app-bg-soft);
+    border-radius: 20px 20px 0 0;
+    border-bottom: 2px solid var(--app-border);
 
     .title {
       color: var(--app-text-heading);
-      font-weight: var(--app-font-weight-heading);
-      font-size: var(--app-font-size-h1);
-      font-family: "Bear-font", "Bear Font2", sans-serif;
+      font-weight: var(--app-font-weight-heading-strong);
+      font-size: var(--app-font-size-h2);
+      font-family: "Poppins", sans-serif;
     }
 
     .icon {
-      color: $text-muted;
-      font-size: var(--app-font-size-h2);
+      color: var(--app-text-muted);
+      font-size: var(--app-font-size-h3);
       cursor: pointer;
       min-width: 44px;
       min-height: 44px;
       display: flex;
       align-items: center;
       justify-content: center;
+      transition: color 0.2s;
       &:hover {
-        color: $bear-blue-dim;
+        color: var(--app-accent);
       }
     }
   }
@@ -81,12 +82,13 @@
     border-radius: 0 0 12px 12px;
     padding-block: 16px;
     padding-inline: 16px;
-    background: rgba(0, 0, 0, 0.2);
-    border-top: 1px solid $card-glass-border;
+    background: var(--app-bg-soft);
+    border-top: 1px solid var(--app-border);
 
     .content {
       color: var(--app-text-body);
       font-size: var(--app-font-size-body);
+      line-height: 1.5;
     }
 
     .button-container {
@@ -167,25 +169,44 @@
       display: flex;
       justify-content: center;
       gap: 12px;
+      margin-top: 8px;
 
       .btn-success {
         width: fit-content;
-        background: linear-gradient(135deg, #00e6c1, $bear-blue-dim);
-        color: #000;
+        min-width: 140px;
+        padding: 12px 24px;
+        background: var(--app-btn-bg);
+        color: var(--app-btn-text);
         border: none;
-        box-shadow: 0 0 16px $bear-blue-glow;
+        border-radius: 12px;
+        font-weight: 700;
+        box-shadow: var(--app-shadow);
+        transition: background 0.2s, transform 0.2s;
+        &:hover {
+          background: var(--app-accent-bright);
+          transform: translateY(-1px);
+        }
       }
 
       .btn-option-5 {
         background: transparent;
-        color: $bear-blue-dim;
-        border: 1px solid $bear-blue-dim;
+        color: var(--app-accent);
+        border: 2px solid var(--app-accent);
       }
 
       .btn-cancel {
-        background: #ff6b6b;
-        color: white;
+        background: var(--ph-pain-bad);
+        color: #ffffff;
         border: none;
+        border-radius: 12px;
+        font-weight: 700;
+        padding: 12px 24px;
+        min-width: 120px;
+        transition: opacity 0.2s, transform 0.2s;
+        &:hover {
+          opacity: 0.9;
+          transform: translateY(-1px);
+        }
       }
     }
   }
@@ -210,13 +231,17 @@
 }
 
 .error-modal .modal-content {
-  border-color: rgba(255, 107, 107, 0.4) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 2px rgba(255, 107, 107, 0.3) !important;
+  border-color: var(--ph-pain-bad) !important;
+  box-shadow: var(--app-shadow-card), 0 0 0 2px rgba(220, 38, 38, 0.2) !important;
+}
+
+[data-theme="dark"] .error-modal .modal-content {
+  box-shadow: var(--app-shadow-card), 0 0 0 2px rgba(248, 113, 113, 0.25) !important;
 }
 
 .success-modal .modal-content {
-  border-color: $bear-blue-dim !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px $bear-blue-glow !important;
+  border-color: var(--app-accent) !important;
+  box-shadow: var(--app-shadow-card), 0 0 0 2px rgba(6, 182, 212, 0.2) !important;
 }
 
 .option-modal .modal-content {
@@ -246,8 +271,8 @@
 .modal-addusers {
   display: flex;
   flex-direction: column;
-  border-radius: 12px;
-  padding: 30px;
+  border-radius: 20px;
+  padding: 28px 24px;
   gap: 20px;
   color: var(--app-text-body);
   font-size: var(--app-font-size-body);
@@ -261,26 +286,28 @@
       color: var(--app-text-muted);
       font-size: var(--app-font-size-body);
     }
-    .formik {
-      color: #ff6b6b;
+    .formik,
+    .error-formik {
+      color: var(--ph-pain-bad);
       padding-left: 4px;
       position: absolute;
       bottom: -22px;
       left: 0;
       font-size: var(--app-font-size-body);
+      font-weight: 600;
     }
 
     input {
-      border-radius: 100px;
-      padding: 8px 25px;
+      border-radius: 12px;
+      padding: 12px 20px;
       width: 100%;
       background: var(--app-bg-soft);
-      border: 2px solid $card-glass-border;
+      border: 2px solid var(--app-border);
       color: var(--app-text-body);
       font-size: var(--app-font-size-body);
       &:focus {
-        border-color: $bear-blue-dim;
-        box-shadow: 0 0 0 2px $bear-blue-glow;
+        border-color: var(--app-accent);
+        box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.3);
         outline: none;
       }
     }
@@ -293,6 +320,13 @@
 
     .special-label {
       display: none;
+    }
+
+    .error-formik {
+      color: var(--ph-pain-bad);
+      font-size: var(--app-font-size-body);
+      font-weight: 600;
+      margin-top: 6px;
     }
 
     .code {
@@ -396,10 +430,12 @@
   width: 100%;
   justify-content: center !important;
 
-  .formik {
-    color: #ff6b6b;
+  .formik,
+  .error-formik {
+    color: var(--ph-pain-bad);
     padding-left: 4px;
     font-size: var(--app-font-size-body);
+    font-weight: 600;
   }
 
   input {

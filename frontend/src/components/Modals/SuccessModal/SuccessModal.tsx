@@ -29,8 +29,6 @@ export function SuccessModal(props: ISuccess) {
           </div>
         </div>
       </div>
-      <script>
-      </script>
     </Modal>
   )
 }

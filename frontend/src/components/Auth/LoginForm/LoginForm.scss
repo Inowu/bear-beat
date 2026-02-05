@@ -225,9 +225,11 @@
   }
 
   .error-formik {
-    color: #dc2626;
+    color: var(--ph-pain-bad);
     font-weight: 600;
     font-size: var(--app-font-size-body);
-    margin-top: 4px;
+    margin-top: 6px;
+    line-height: 1.4;
+    min-height: 1.4em;
   }
 }
