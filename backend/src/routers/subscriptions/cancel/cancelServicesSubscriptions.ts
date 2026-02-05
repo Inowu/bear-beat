@@ -4,7 +4,7 @@ import { cancelStripeSubscription } from './cancelStripeSubscription';
 import { cancelPaypalSubscription } from './cancelPaypalSubscription';
 import { PrismaClient, Users } from '@prisma/client';
 import { SessionUser } from '../../auth/utils/serialize-user';
-import { gbToBytes } from '../../../utils/gbToBytes';
+import { manyChat } from '../../../many-chat';
 
 export const cancelServicesSubscriptions = async ({
   prisma,
@@ -77,6 +77,13 @@ export const cancelServicesSubscriptions = async ({
       is_canceled: 1,
     },
   });
+
+  const dbUser = await prisma.users.findFirst({
+    where: { id: user.id },
+  });
+  if (dbUser) {
+    manyChat.addTagToUser(dbUser, 'CANCELLED_SUBSCRIPTION').catch(() => {});
+  }
 
   // Don't update descargar_user and quota tallies since after billing cycle they won't be able to download ever again.
 

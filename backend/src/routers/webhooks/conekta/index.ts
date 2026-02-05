@@ -93,9 +93,29 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
       break;
     case ConektaEvents.ORDER_VOIDED:
     case ConektaEvents.ORDER_DECLINED: {
-      const orderId = payload.data?.object.metadata.orderId;
+      const orderId = payload.data?.object.metadata?.orderId;
 
-      log.info(`[CONEKTA_WH] Canceling order ${orderId}`);
+      log.info(`[CONEKTA_WH] Payment failed, canceling order ${orderId}`);
+
+      if (orderId && !isProduct) {
+        const order = await prisma.orders.findFirst({
+          where: { id: Number(orderId) },
+          select: { user_id: true },
+        });
+        if (order?.user_id) {
+          const orderUser = await prisma.users.findFirst({
+            where: { id: order.user_id },
+          });
+          if (orderUser) {
+            try {
+              await manyChat.addTagToUser(orderUser, 'FAILED_PAYMENT');
+            } catch (e) {
+              log.error(`[CONEKTA] Error adding FAILED_PAYMENT tag for user ${orderUser.id}: ${e}`);
+            }
+          }
+        }
+      }
+
       await cancelOrder({
         prisma,
         orderId,

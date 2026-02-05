@@ -314,6 +314,12 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
     case PaypalEvent.PAYMENT_SALE_DENIED: {
       log.info(`[PAYPAL_WH] Payment denied, subscription id ${subId}`);
 
+      try {
+        await manyChat.addTagToUser(user, 'FAILED_PAYMENT');
+      } catch (e) {
+        log.error(`[PAYPAL] Error adding FAILED_PAYMENT tag for user ${user.id}: ${e}`);
+      }
+
       await cancelSubscription({
         prisma,
         user,

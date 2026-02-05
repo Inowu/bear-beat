@@ -10,7 +10,7 @@ Tracking implementado para seguimiento en ManyChat, Facebook Pixel y API ManyCha
 |------------|---------|------------------------------------------------|
 | ManyChat Pixel | 22     | `frontend/src/utils/manychatPixel.ts`          |
 | Facebook Pixel  | 4      | `frontend/src/utils/facebookPixel.ts`          |
-| API ManyChat (tags) | 5   | Backend `src/many-chat/`                       |
+| API ManyChat (tags) | 7   | Backend `src/many-chat/`                       |
 
 ---
 
@@ -55,13 +55,17 @@ Solo eventos del funnel de conversión.
 
 ## 4. API ManyChat (tags)
 
+Lista oficial: `docs/MANYCHAT_ETIQUETAS.md`. Sincronizar: `cd backend && npm run manychat:sync`.
+
 | Tag | Cuándo | Origen |
 |-----|--------|--------|
-| USER_REGISTERED | Registro | register.ts (backend) |
-| USER_CHECKED_PLANS | Ver/click plan | PlanCard, addManyChatTagToUser |
-| CHECKOUT_PLAN_ORO | Checkout plan Oro | Checkout.tsx |
-| CHECKOUT_PLAN_CURIOSO | Checkout plan Curioso | Checkout.tsx |
-| SUCCESSFUL_PAYMENT | Pago confirmado | Webhooks (Stripe/PayPal/Conekta) + frontend |
+| USER_REGISTERED | Registro | register.ts |
+| USER_CHECKED_PLANS | Ver planes | Plans.findManyPlans |
+| CHECKOUT_PLAN_ORO | Checkout plan Oro | Plans.findManyPlans |
+| CHECKOUT_PLAN_CURIOSO | Checkout plan Curioso | Plans.findManyPlans |
+| SUCCESSFUL_PAYMENT | Pago confirmado | Webhooks + subscribe flows |
+| CANCELLED_SUBSCRIPTION | Usuario cancela suscripción | cancelServicesSubscriptions |
+| FAILED_PAYMENT | Pago fallido | Webhooks (Stripe/PayPal/Conekta) |
 
 ---
 

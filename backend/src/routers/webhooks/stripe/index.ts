@@ -146,6 +146,12 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
             `[STRIPE_WH] Incomplete subscription was expired for user ${user.id}, subscription id: ${subscription.id}, payload: ${payloadStr}`,
           );
 
+          try {
+            await manyChat.addTagToUser(user, 'FAILED_PAYMENT');
+          } catch (e) {
+            log.error(`[STRIPE] Error adding FAILED_PAYMENT tag for user ${user.id}: ${e}`);
+          }
+
           const pendingOrder = await prisma.orders.findFirst({
             where: {
               AND: [
@@ -176,7 +182,12 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
           log.info(
             `[STRIPE_WH] Subscription renovation failed for user ${user.id}, canceling subscription... subscription id: ${subscription.id}, payload: ${payloadStr}`,
           );
-          // TODO: What to do when a payment fails?
+
+          try {
+            await manyChat.addTagToUser(user, 'FAILED_PAYMENT');
+          } catch (e) {
+            log.error(`[STRIPE] Error adding FAILED_PAYMENT tag for user ${user.id}: ${e}`);
+          }
 
           await cancelSubscription({
             prisma,

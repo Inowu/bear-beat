@@ -8,6 +8,7 @@
     "test": "jest --setupFiles dotenv/config",
     "manychat:tags": "node -r ts-node/register scripts/checkManyChatTags.ts",
     "manychat:create-tags": "node -r ts-node/register scripts/createManyChatTags.ts",
+    "manychat:sync": "node -r ts-node/register scripts/syncManyChatTags.ts",
     "compile": "tsc --noEmit",
     "build": "rm -rf build && tsc",
     "build:sse": "tsc -p tsconfig.sse.json && cp sse_server/*.js build_sse/",

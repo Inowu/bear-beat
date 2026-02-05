@@ -7,6 +7,8 @@ export const manyChatTags = {
   CHECKOUT_PLAN_ORO: 80813945,
   CHECKOUT_PLAN_CURIOSO: 80813946,
   SUCCESSFUL_PAYMENT: 80813947,
+  CANCELLED_SUBSCRIPTION: 80814857,
+  FAILED_PAYMENT: 80814910,
 };
 
 /** Nombres de etiquetas (fallback cuando addTag por ID falla). Ajusta a los nombres en ManyChat. */
@@ -16,6 +18,8 @@ export const manyChatTagNames: Record<keyof typeof manyChatTags, string> = {
   CHECKOUT_PLAN_ORO: 'Checkout Plan Oro',
   CHECKOUT_PLAN_CURIOSO: 'Checkout Plan Curioso',
   SUCCESSFUL_PAYMENT: 'Pago exitoso',
+  CANCELLED_SUBSCRIPTION: 'Canceló suscripción',
+  FAILED_PAYMENT: 'Pago fallido',
 };
 
 export const _manyChatTagsEnum = zodEnumFromObjKeys(manyChatTags);

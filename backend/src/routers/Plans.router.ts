@@ -20,6 +20,7 @@ import { log } from '../server';
 import { getPlanKey } from '../utils/getPlanKey';
 import { PaymentService } from './subscriptions/services/types';
 import { paypal } from '../paypal';
+import { manyChat } from '../many-chat';
 
 export const plansRouter = router({
   createStripePlan: shieldedProcedure
@@ -387,6 +388,32 @@ export const plansRouter = router({
     .input(PlansFindManySchema)
     .query(async ({ ctx, input }) => {
       const findManyPlans = await ctx.prisma.plans.findMany(input);
+      if (ctx.session?.user?.id && findManyPlans.length > 0) {
+        const user = await ctx.prisma.users.findFirst({
+          where: { id: ctx.session.user.id },
+        });
+        if (user) {
+          const whereAny = input.where as Record<string, unknown> | undefined;
+          const hasSinglePlanId =
+            whereAny?.id !== undefined && findManyPlans.length === 1;
+          if (hasSinglePlanId) {
+            const plan = findManyPlans[0];
+            const name = (plan?.name ?? '').toString();
+            if (name.includes('Oro')) {
+              manyChat.addTagToUser(user, 'CHECKOUT_PLAN_ORO').catch(() => {});
+            } else if (name.includes('Curioso')) {
+              manyChat.addTagToUser(user, 'CHECKOUT_PLAN_CURIOSO').catch(() => {});
+            }
+            const mcId = await manyChat.getManyChatId(user);
+            if (mcId && plan) {
+              manyChat.setCustomField(mcId, 'ultimo_plan_checkout', name).catch(() => {});
+              manyChat.setCustomField(mcId, 'ultimo_precio_checkout', String(plan.price ?? '')).catch(() => {});
+            }
+          } else {
+            manyChat.addTagToUser(user, 'USER_CHECKED_PLANS').catch(() => {});
+          }
+        }
+      }
       return findManyPlans;
     }),
   findUniquePlans: shieldedProcedure

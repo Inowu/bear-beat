@@ -6,11 +6,12 @@ Todo el código está listo. Este manual indica qué hacer tú para que funcione
 
 ## 1. Lo que ya está configurado (no hagas nada)
 
-- ✅ API ManyChat: tags en registro, planes, checkout, pago
-- ✅ ManyChat Pixel: 22 eventos en toda la web
+- ✅ API ManyChat: 7 tags (registro, planes, checkout, pago, cancelación, pago fallido)
+- ✅ ManyChat Pixel: eventos de conversión en toda la web
 - ✅ Facebook Pixel: init + eventos Lead, Purchase, ViewPlans
 - ✅ Scripts ManyChat en `index.html`
 - ✅ Tags con fallback por nombre si los IDs fallan
+- ✅ Custom fields al entrar a checkout (plan, precio)
 
 ---
 
@@ -36,13 +37,24 @@ cd backend && npm run manychat:tags
 
 Si los IDs que salen no coinciden con `backend/src/many-chat/tags.ts`, actualiza ese archivo con los IDs correctos.
 
-### Paso 3: Crear los tags en ManyChat (si faltan)
+### Paso 3: Etiquetas en ManyChat (solo las que usamos)
 
+**Listar las que hay:**
+```bash
+cd backend && npm run manychat:tags
+```
+
+**Crear las que falten (sin borrar otras):**
 ```bash
 cd backend && npm run manychat:create-tags
 ```
 
-Eso crea los tags que falten. Luego vuelve a ejecutar `manychat:tags` para obtener los IDs y ajustar `tags.ts` si hace falta.
+**Sincronizar (recomendado):** borra de ManyChat las etiquetas que no usamos y crea las 7 que sí usamos. Ver lista en `docs/MANYCHAT_ETIQUETAS.md`.
+```bash
+cd backend && npm run manychat:sync
+```
+
+Si los IDs cambian, el script imprime el bloque para pegar en `backend/src/many-chat/tags.ts`.
 
 ### Paso 4: Subir cambios a producción
 
@@ -73,23 +85,22 @@ Haz deploy del frontend y backend (por ejemplo con tu flujo habitual: Git, Netli
 | Acción | Tag API | Evento Pixel |
 |--------|---------|--------------|
 | Ver landing | - | bear_beat_view_home |
-| Clic "Obtener Acceso" | - | bear_beat_click_cta_register |
+| Clic "Obtener Acceso" / "QUIERO BLINDAR" | - | bear_beat_click_cta_register |
 | Clic "Quiero plan USD/MXN" | - | bear_beat_click_plan_usd / _mxn |
 | Entrar a auth | - | bear_beat_view_auth |
 | Login exitoso | - | bear_beat_login_success |
 | Registro exitoso | USER_REGISTERED | bear_beat_registration |
-| Recuperar contraseña | - | bear_beat_request_password_recovery |
 | Clic chat | - | bear_beat_click_chat |
 | Ver planes | USER_CHECKED_PLANS | bear_beat_view_plans |
 | Seleccionar plan / COMPRAR | USER_CHECKED_PLANS | bear_beat_select_plan, _click_buy |
-| Clic SPEI | - | bear_beat_click_spei |
-| Clic PayPal | - | bear_beat_click_paypal |
+| Clic SPEI / PayPal | - | bear_beat_click_spei / _click_paypal |
 | Entrar a checkout | CHECKOUT_PLAN_ORO / CURIOSO | bear_beat_start_checkout |
 | Pago exitoso | SUCCESSFUL_PAYMENT | bear_beat_payment_success |
-| Ver actualizar planes | - | bear_beat_view_plan_upgrade |
-| Cancelar suscripción | - | bear_beat_cancel_subscription |
+| Pago fallido (webhooks) | FAILED_PAYMENT | - |
+| Cancelar suscripción | CANCELLED_SUBSCRIPTION | bear_beat_cancel_subscription |
 | Cambiar plan | - | bear_beat_change_plan |
-| Ver instrucciones / mi cuenta / descargas / catálogo | - | bear_beat_view_* |
+
+Solo existen 7 tags en el código; ver lista completa en `docs/MANYCHAT_ETIQUETAS.md`.
 
 ---
 
@@ -123,8 +134,11 @@ Configúralos en ManyChat → Flows / Automations.
 # Listar tags de ManyChat
 cd backend && npm run manychat:tags
 
-# Crear tags que falten
+# Crear tags que falten (no borra nada)
 cd backend && npm run manychat:create-tags
+
+# Sincronizar: borrar etiquetas no usadas y crear las 7 que usamos
+cd backend && npm run manychat:sync
 ```
 
 ---
@@ -132,8 +146,9 @@ cd backend && npm run manychat:create-tags
 ## 8. Resumen rápido
 
 1. ✅ MC_API_KEY en `backend/.env` (local y producción)
-2. ✅ Ejecutar `manychat:tags` y alinear IDs en `tags.ts` si hace falta
-3. ✅ Ejecutar `manychat:create-tags` si faltan tags
+2. ✅ Ejecutar `manychat:sync` para dejar solo las 7 etiquetas que usamos (opcional pero recomendado)
+3. ✅ O bien `manychat:tags` + `manychat:create-tags` sin borrar nada
 4. ✅ Deploy frontend y backend
 5. ✅ Probar registro y compra para validar tags
 6. ✅ Crear automatizaciones en ManyChat usando tags y eventos
+7. ✅ Lista oficial de etiquetas: `docs/MANYCHAT_ETIQUETAS.md`
