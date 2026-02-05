@@ -1,0 +1,74 @@
+@import "src/styles/variables-theme.scss";
+
+/* Admin: respeta Dark/Light (--ad-*). Mismo impacto tipográfico que Home. */
+.admin-page-wrap {
+  min-height: 100vh;
+  padding: 1rem;
+  background: var(--ad-bg);
+  color: var(--ad-text);
+  font-family: "Poppins", sans-serif;
+
+  @media (min-width: 768px) {
+    padding: 1.5rem;
+  }
+
+  .admin-page-wrap__title {
+    margin: 0 0 1.5rem 0;
+    font-size: var(--app-font-size-h1);
+    font-weight: 800;
+    color: var(--ad-title);
+    font-family: "Poppins", sans-serif;
+  }
+
+  .admin-page-wrap__toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .admin-page-wrap__toolbar button,
+  .admin-page-wrap__toolbar a {
+    min-height: 44px;
+  }
+
+  /* Forzar tema: contenedores y bordes usan --ad-* para sync Dark/Light */
+  [class*="bg-slate-950"],
+  [class*="bg-slate-900"] {
+    background-color: var(--ad-card) !important;
+  }
+  [class*="border-slate-800"] {
+    border-color: var(--ad-border) !important;
+  }
+  .text-white {
+    color: var(--ad-title) !important;
+  }
+  .text-slate-300,
+  .text-slate-400,
+  .text-slate-500 {
+    color: var(--ad-text) !important;
+  }
+  .text-slate-400.uppercase {
+    color: var(--ad-text-muted) !important;
+  }
+  input.bg-slate-900,
+  select.bg-slate-900 {
+    background-color: var(--ad-input-bg) !important;
+    border-color: var(--ad-input-border) !important;
+    color: var(--ad-title) !important;
+  }
+  button.bg-cyan-600 {
+    background-color: var(--ad-accent-bg) !important;
+  }
+  /* Body de tablas y filas hover */
+  .bg-slate-950 tbody,
+  .bg-slate-900\\/50 {
+    background-color: var(--ad-bg) !important;
+  }
+  tr.border-slate-800:hover,
+  [class*="hover:bg-slate-900"]:hover {
+    background-color: var(--ad-row-hover) !important;
+  }
+}

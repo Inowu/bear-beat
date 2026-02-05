@@ -23,15 +23,13 @@
       margin-left: auto;
       margin-right: auto;
       max-width: 1320px;
-      padding: 24px;
+      padding: 1rem; /* 16px móvil — estándar con Home */
     }
   }
 
-  @include respond-to(md) {
-    .content-container {
-      > div {
-        padding: 12px;
-      }
+  @include respond-from(md) {
+    .content-container > div {
+      padding: 1.5rem; /* 24px desktop */
     }
   }
 }

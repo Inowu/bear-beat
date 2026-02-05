@@ -6,10 +6,12 @@
   width: 100%;
   overflow-x: hidden;
   font-size: var(--app-font-size-body);
+  font-family: "Poppins", sans-serif;
 
   header h1 {
     font-size: var(--app-font-size-h1) !important;
     font-weight: var(--app-font-weight-heading-strong);
+    font-family: "Poppins", sans-serif;
   }
   header p {
     font-size: var(--app-font-size-body) !important;

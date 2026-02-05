@@ -8,9 +8,15 @@
   min-height: 100vh;
   background: var(--ad-bg);
   color: var(--ad-text);
-  padding: 16px;
-  padding-bottom: 24px;
+  padding: 1rem;
+  padding-bottom: 1.5rem;
   box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+
+  @media (min-width: 768px) {
+    padding: 1.5rem;
+    padding-bottom: 1.5rem;
+  }
 }
 
 .admin-contain {
@@ -39,10 +45,11 @@
     }
 
     h1 {
-      font-size: clamp(1.25rem, 4vw, 1.5rem);
+      font-size: var(--app-font-size-h1);
       margin: 0;
       color: var(--ad-title);
-      font-weight: 700;
+      font-weight: var(--app-font-weight-heading-strong);
+      font-family: "Poppins", sans-serif;
     }
 
     .header__total-registered {
@@ -62,7 +69,7 @@
       justify-content: center;
       gap: 6px;
       padding: 8px 14px;
-      min-height: 40px;
+      min-height: 44px;
       border-radius: 8px;
       border: 1px solid var(--ad-border);
       background: var(--ad-card);
@@ -120,7 +127,7 @@
 
       input {
         width: 100%;
-        min-height: 40px;
+        min-height: 44px;
         padding: 8px 12px 8px 36px;
         border-radius: 8px;
         background: var(--ad-input-bg);
@@ -152,7 +159,7 @@
     }
 
     .select-input select {
-      min-height: 40px;
+      min-height: 44px;
       padding: 8px 12px;
       border-radius: 8px;
       background: var(--ad-input-bg);
