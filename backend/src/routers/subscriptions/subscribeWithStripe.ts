@@ -107,14 +107,19 @@ export const subscribeWithStripe = shieldedProcedure
       },
     });
 
-    try {
+    const isNoSuchCustomerError = (err: unknown) => {
+      const msg = typeof (err as any)?.message === 'string' ? (err as any).message : '';
+      return msg.toLowerCase().includes('no such customer');
+    };
+
+    const runStripeSubscribe = async (customerId: string) => {
       const activeSubscription = await stripeInstance.subscriptions.list({
-        customer: stripeCustomer,
+        customer: customerId,
         status: 'active',
       });
 
       const trialingSubscription = await stripeInstance.subscriptions.list({
-        customer: stripeCustomer,
+        customer: customerId,
         status: 'trialing',
       });
 
@@ -137,31 +142,29 @@ export const subscribeWithStripe = shieldedProcedure
       }
 
       if (paymentMethod) {
-        log.info(`[STRIPE_SUBSCRIBE:MIGRATION] Payment method provided, attaching to customer: ${paymentMethod} - ${stripeCustomer}`);
-      try {
-        await stripeInstance.paymentMethods.attach(paymentMethod, {
-          customer: stripeCustomer,
-        })
-      } catch(e) {
-        log.error(`[STRIPE_SUBSCRIBE:MIGRATION] Error attaching payment method to customer: ${e}`)
-
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Ocurrió un error al crear el método de pago'
-        })
-      }
-
+        log.info(`[STRIPE_SUBSCRIBE:MIGRATION] Payment method provided, attaching to customer: ${paymentMethod} - ${customerId}`);
+        try {
+          await stripeInstance.paymentMethods.attach(paymentMethod, {
+            customer: customerId,
+          });
+        } catch (e) {
+          log.error(`[STRIPE_SUBSCRIBE:MIGRATION] Error attaching payment method to customer: ${e}`);
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Ocurrió un error al crear el método de pago',
+          });
+        }
         log.info(`[STRIPE_SUBSCRIBE:MIGRATION] Payment method attached to customer: ${paymentMethod}. Updating customer with default payment method`);
-        await stripeInstance.customers.update(stripeCustomer, {
+        await stripeInstance.customers.update(customerId, {
           invoice_settings: {
             default_payment_method: paymentMethod,
           },
-        })
+        });
       }
 
       const subscription = await stripeInstance.subscriptions.create(
         {
-          customer: stripeCustomer,
+          customer: customerId,
           coupon,
           items: [
             {
@@ -180,9 +183,7 @@ export const subscribeWithStripe = shieldedProcedure
       );
 
       await prisma.orders.update({
-        where: {
-          id: order.id,
-        },
+        where: { id: order.id },
         data: {
           txn_id: subscription.id,
           invoice_id: (subscription?.latest_invoice as any)?.id,
@@ -190,21 +191,17 @@ export const subscribeWithStripe = shieldedProcedure
       });
 
       if (coupon) {
-        const dbCoupon = await prisma.cupons.findFirst({
-          where: {
-            code: coupon,
-          },
+        const dbCouponForUse = await prisma.cupons.findFirst({
+          where: { code: coupon },
         });
-
-        if (!dbCoupon) {
+        if (!dbCouponForUse) {
           log.warn(`[STRIPE] Coupon ${coupon} not found in database`);
         } else {
           log.info(`[STRIPE] Coupon used: ${coupon} by user ${user.id}`);
-
           await prisma.cuponsUsed.create({
             data: {
               user_id: user.id,
-              cupon_id: dbCoupon.id,
+              cupon_id: dbCouponForUse.id,
               date_cupon: new Date(),
             },
           });
@@ -214,37 +211,50 @@ export const subscribeWithStripe = shieldedProcedure
       if (existingUser) {
         const remoteAddress = req.socket.remoteAddress;
         const userAgent = req.headers['user-agent'];
-
-        if (fbp) {
-          if (remoteAddress && userAgent) {
-            log.info('[STRIPE] Sending Purchase event to Facebook CAPI');
-            const value = Number(plan.price);
-            const currency = (plan.moneda || 'USD').toUpperCase();
-            await facebook.setEvent(
-              'Purchase',
-              remoteAddress,
-              userAgent,
-              fbp,
-              url,
-              existingUser,
-              { value, currency },
-            );
-          }
+        if (fbp && remoteAddress && userAgent) {
+          log.info('[STRIPE] Sending Purchase event to Facebook CAPI');
+          const value = Number(plan.price);
+          const currency = (plan.moneda || 'USD').toUpperCase();
+          await facebook.setEvent(
+            'Purchase',
+            remoteAddress,
+            userAgent,
+            fbp,
+            url,
+            existingUser,
+            { value, currency },
+          );
         }
-
         await manyChat.addTagToUser(existingUser, 'SUCCESSFUL_PAYMENT');
       }
 
       return {
         subscriptionId: subscription.id,
-        clientSecret: (subscription.latest_invoice as any)?.payment_intent
-          ?.client_secret,
+        clientSecret: (subscription.latest_invoice as any)?.payment_intent?.client_secret,
       };
-    } catch (e) {
-      log.error(
-        `[STRIPE] An error happened while creating subscription with stripe ${e}`,
-      );
+    };
 
+    try {
+      return await runStripeSubscribe(stripeCustomer);
+    } catch (e) {
+      if (isNoSuchCustomerError(e)) {
+        log.warn(`[STRIPE] No such customer detected, clearing stripe_cusid for user ${user.id} and retrying`);
+        await prisma.users.update({
+          where: { id: user.id },
+          data: { stripe_cusid: null },
+        });
+        const stripeCustomerRetry = await getStripeCustomer(prisma, user);
+        try {
+          return await runStripeSubscribe(stripeCustomerRetry);
+        } catch (retryErr) {
+          log.error(`[STRIPE] Retry failed: ${retryErr}`);
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Ocurrió un error al crear la suscripción',
+          });
+        }
+      }
+      log.error(`[STRIPE] Error creating subscription: ${e}`);
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
         message: 'Ocurrió un error al crear la suscripción',
