@@ -6,7 +6,7 @@ import { log } from '../../../server';
 import { prisma } from '../../../db';
 import { addGBToAccount } from '../../products/services/addGBToAccount';
 import { OrderStatus } from '../../subscriptions/interfaces/order-status.interface';
-import { getStripeWebhookBody } from '../../../utils/verifyStripeSignature';
+import { getStripeWebhookBody } from '../../utils/verifyStripeSignature';
 
 export const stripeInvoiceWebhook = async (req: Request) => {
   const payload: Stripe.Event = JSON.parse(getStripeWebhookBody(req));

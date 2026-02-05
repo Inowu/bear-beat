@@ -329,7 +329,8 @@ export const getCustomerIdFromPayload = async (
           });
         }
       }
-      break;
+    }
+    break;
     default:
       break;
   }
