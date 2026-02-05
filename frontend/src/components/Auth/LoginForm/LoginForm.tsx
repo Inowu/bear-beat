@@ -157,12 +157,10 @@ function LoginForm() {
             type="button"
             className="auth-login-sentry-test"
             onClick={() => {
-              const err = new Error("This is your first error!");
-              Sentry.captureException(err);
-              throw err;
+              throw new Error("Sentry Test Error");
             }}
           >
-            Test Sentry Error
+            Break the world
           </button>
         </form>
       </div>

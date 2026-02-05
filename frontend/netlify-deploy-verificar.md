@@ -51,7 +51,10 @@ netlify env:set REACT_APP_SENTRY_DSN "https://b1199b86d9489b928d5a58660bc79c6b@o
 
 Luego dispara un deploy desde el dashboard o con `netlify deploy --prod`.
 
-**Si el wizard de Sentry sigue en "Waiting to receive first event":**
-- Abre la **consola del navegador** (F12) en tu sitio en producción. Si sale `[Sentry] REACT_APP_SENTRY_DSN no definido`, la variable no estuvo en el build: añádela en Netlify y haz **Trigger deploy** de nuevo.
-- Si sale **429 (Too Many Requests)**, la cuota de Sentry está llena: espera unos minutos o revisa Sentry → Settings → Usage.
-- Revisa en **Sentry → Issues** si el error "This is your first error!" ya llegó (a veces el wizard no se actualiza pero el evento sí está).
+**Si el wizard de Sentry sigue en "Waiting to receive first event"** (doc oficial: [Verify your React Setup](https://docs.sentry.io/platforms/javascript/guides/react/#verify-your-react-setup)):
+
+- **Ad blockers:** Desactívalos o prueba en **ventana de incógnito**. Los bloqueadores pueden impedir que se envíen eventos a Sentry.
+- **Consola del navegador (F12):** Con `debug: true` verás mensajes del SDK (envío de eventos, errores de red). Si sale `[Sentry] REACT_APP_SENTRY_DSN no definido`, la variable no estuvo en el build: añádela en Netlify y haz **Trigger deploy** de nuevo.
+- **429 (Too Many Requests):** Cuota llena; espera o revisa Sentry → Settings → Usage.
+- **Probar:** En la pantalla de login hay un botón **"Break the world"** que lanza `new Error("Sentry Test Error")`. Los errores lanzados desde la consola del navegador no cuentan (están en un sandbox).
+- Revisa **Sentry → Issues** por el error "Sentry Test Error"; a veces el wizard no se actualiza pero el evento ya está.

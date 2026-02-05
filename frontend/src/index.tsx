@@ -1,4 +1,4 @@
-import "./sentry";
+import "./instrument";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import * as Sentry from "@sentry/react";
