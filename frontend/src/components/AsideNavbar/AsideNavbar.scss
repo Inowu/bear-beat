@@ -24,7 +24,7 @@ aside {
     .nav-title {
       font-family: "Bear-font";
       text-align: center;
-      font-size: 2.4rem;
+      font-size: var(--app-font-size-h2);
       margin-bottom: 10px;
     }
 
@@ -46,7 +46,7 @@ aside {
       }
 
       li {
-        font-size: 1.8rem;
+        font-size: var(--app-font-size-body-lg);
         width: 100%;
         border-radius: 5px;
         background-color: var(--theme-nav-item-bg);
@@ -86,7 +86,7 @@ aside {
   }
 }
 
-// ---------- Mobile: full overlay (cristal ahumado, scroll, cierre en link) ----------
+// ---------- Mobile: drawer lateral (panel izquierdo, no pantalla completa) ----------
 @include respond-to(md) {
   aside {
     position: fixed;
@@ -115,34 +115,47 @@ aside {
       visibility: visible;
     }
 
-    // Backdrop: tap outside to close (solo en open)
+    // Backdrop: tap outside to close (oscuro, cubre toda la pantalla)
     .aside-backdrop {
       position: fixed;
       inset: 0;
       z-index: 0;
-      background: transparent;
+      background: rgba(0, 0, 0, 0.45);
       pointer-events: auto;
     }
 
-    // Panel: contenido del menú (cristal ahumado, light/dark vía variables de tema)
+    // Panel: drawer desde la izquierda (ancho limitado, no toda la pantalla)
     .aside-inner {
       position: fixed;
-      top: 60px;
+      top: 0;
       left: 0;
-      right: 0;
       bottom: 0;
+      width: min(320px, 85vw);
+      max-width: 100%;
       z-index: 1;
       display: flex;
       flex-direction: column;
       background: var(--aside-overlay-bg);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      box-shadow: 0 0 0 1px var(--aside-overlay-border);
+      box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25);
       pointer-events: auto;
+      transition: transform 0.25s ease;
+    }
+
+    &:not(.open) .aside-inner {
+      transform: translateX(-100%);
+    }
+
+    &.open .aside-inner {
+      transform: translateX(0);
     }
 
     .aside-logo {
-      display: none;
+      display: block;
+      max-width: 180px;
+      padding: 1rem 1.5rem;
+      flex-shrink: 0;
     }
 
     .aside-close-btn {
@@ -179,7 +192,7 @@ aside {
       padding-top: 4rem;
 
       .nav-title {
-        font-size: 1.5rem;
+        font-size: var(--app-font-size-h3);
         margin-bottom: 1rem;
         color: var(--aside-overlay-text-muted);
         flex-shrink: 0;
@@ -208,8 +221,8 @@ aside {
           padding: 1rem 1.5rem;
           text-decoration: none;
           color: var(--aside-overlay-text);
-          font-size: 1.125rem;
-          font-weight: 500;
+          font-size: var(--app-font-size-body);
+          font-weight: var(--app-font-weight-body);
           border-bottom: 1px solid var(--aside-overlay-border);
           transition: color 0.15s, background 0.15s;
 

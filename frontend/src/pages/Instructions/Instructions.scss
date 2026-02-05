@@ -1,8 +1,37 @@
 @import "src/styles/mixin.scss";
+@import "src/styles/variables-theme.scss";
 
+// Tipografía alineada al Home (--app-font-size-*)
 .instructions-main-container {
   width: 100%;
   overflow-x: hidden;
+  font-size: var(--app-font-size-body);
+
+  header h1 {
+    font-size: var(--app-font-size-h1) !important;
+    font-weight: var(--app-font-weight-heading-strong);
+  }
+  header p {
+    font-size: var(--app-font-size-body) !important;
+  }
+  .in-step-card h2 {
+    font-size: var(--app-font-size-h3) !important;
+    font-weight: var(--app-font-weight-heading);
+  }
+  .in-step-card p,
+  .in-step-card .mt-1 {
+    font-size: var(--app-font-size-body) !important;
+  }
+  .in-nav-dot {
+    font-size: var(--app-font-size-body);
+  }
+  .in-terminal span,
+  .in-creds-preview span {
+    font-size: var(--app-font-size-body);
+  }
+  .in-tip {
+    font-size: var(--app-font-size-body);
+  }
 
   .in-iframe-wrap {
     max-width: 900px;
@@ -39,9 +68,5 @@
       color: var(--in-text-muted);
       opacity: 0.8;
     }
-  }
-
-  .in-tip {
-    font-size: 0.9375rem;
   }
 }
