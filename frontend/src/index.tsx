@@ -139,12 +139,10 @@ if (process.env.REACT_APP_SENTRY_DSN) {
     dsn: process.env.REACT_APP_SENTRY_DSN,
     integrations: [
       Sentry.browserTracingIntegration(),
-      Sentry.replayIntegration(),
+      // Replay desactivado temporalmente para evitar 429 y que llegue el primer evento
+      // Sentry.replayIntegration(),
     ],
-    // Evitar 429 Too Many Requests: cuota Sentry limitada
     tracesSampleRate: 0.1,
-    replaysSessionSampleRate: 0.05,
-    replaysOnErrorSampleRate: 1.0,
   });
 }
 

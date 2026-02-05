@@ -156,7 +156,7 @@ function LoginForm() {
             type="button"
             className="auth-login-sentry-test"
             onClick={() => {
-              throw new Error("Prueba de Error Bear Beat - Gustavo");
+              throw new Error("This is your first error!");
             }}
           >
             Test Sentry Error
