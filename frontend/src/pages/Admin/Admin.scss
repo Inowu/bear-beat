@@ -220,8 +220,10 @@
 
     .table-contain {
       width: 100%;
+      max-width: 100%;
       max-height: 60vh;
-      overflow: auto;
+      overflow-x: auto;
+      overflow-y: auto;
       -webkit-overflow-scrolling: touch;
 
       &::-webkit-scrollbar {
@@ -247,10 +249,10 @@
       background: var(--ad-header-bg);
 
       th {
-        padding: 10px 12px;
+        padding: 1rem 1.5rem; /* py-4 px-6 */
         text-align: left;
-        font-size: var(--app-font-size-body);
-        font-weight: var(--app-font-weight-heading);
+        font-size: 0.75rem; /* text-xs */
+        font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.05em;
         color: var(--ad-text-muted);
@@ -260,7 +262,7 @@
 
       th:last-child {
         text-align: right;
-        padding-right: 12px;
+        padding-right: 1.5rem;
       }
     }
 
@@ -273,7 +275,7 @@
       }
 
       td {
-        padding: 12px;
+        padding: 1rem 1.5rem; /* py-4 px-6 */
         font-size: var(--app-font-size-body);
         color: var(--ad-text);
         vertical-align: middle;
@@ -281,7 +283,7 @@
 
       td:last-child {
         text-align: right;
-        padding-right: 12px;
+        padding-right: 1.5rem;
         white-space: nowrap;
       }
     }

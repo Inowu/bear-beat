@@ -407,16 +407,13 @@ function Home() {
           </button>
         </div>
       )}
-      <div
-        className="folders-navigation-container rounded-xl shadow-2xl overflow-hidden"
-        style={{ background: 'var(--fb-bg)', border: '1px solid var(--fb-border)' }}
-      >
-        <div className="header">
-          <div className="header-col-name">Nombre</div>
-          <div className="header-col-size text-right">Tamaño</div>
-          <div className="header-col-modified modified-column hidden md:block text-right">Modificado</div>
+      <div className="folders-navigation-container flex flex-col gap-3">
+        <div className="fb-header grid grid-cols-[1fr_auto_auto] gap-4 py-3 px-4 rounded-lg bg-slate-100 dark:bg-slate-900 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <div>Nombre</div>
+          <div className="text-right hidden sm:block">Tamaño</div>
+          <div className="text-right hidden md:block">Modificado</div>
         </div>
-        <div className="folders-cards-container">
+        <div className="folders-cards-container flex flex-col gap-3">
           {!loader ? (
             sortArrayByName(files).map((file: IFiles, idx: number) => {
               const gbSize = file.size != null && Number.isFinite(file.size)
@@ -425,55 +422,44 @@ function Home() {
               const sizeLabel = file.size != null && Number.isFinite(file.size)
                 ? `${gbSize >= 1 ? gbSize.toFixed(1) : gbSize.toFixed(2)} GB`
                 : '—';
+              const modifiedStr = new Date().toLocaleString('en-US', {
+                month: 'short',
+                day: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              });
               return (
                 <div key={'files ' + idx}>
                   {file.type === 'd' && (
                     <div
-                      className="fb-row cursor-pointer border-l-2 border-l-transparent hover:border-l-2"
-                      style={{ borderLeftColor: 'transparent' }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'var(--fb-row-hover-bg)';
-                        e.currentTarget.style.borderLeftColor = 'var(--fb-row-hover-border)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = '';
-                        e.currentTarget.style.borderLeftColor = 'transparent';
-                      }}
+                      className="fb-row fb-row-card flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer py-4 px-4 sm:px-6"
                       onClick={() => {
                         goToFolder({ next: file.name });
                       }}
                     >
                       <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <FolderOpen className="flex-shrink-0 fb-icon-folder" strokeWidth={2} style={{ color: 'var(--fb-accent)' }} aria-hidden />
-                        <span className="fb-row-name" title={file.name}>{file.name}</span>
+                        <FolderOpen className="flex-shrink-0 w-5 h-5 text-cyan-600 dark:text-cyan-400" strokeWidth={2} aria-hidden />
+                        <span className="font-medium text-slate-700 dark:text-slate-200 truncate" title={file.name}>{file.name}</span>
                       </div>
-                      <div className="fb-row-meta">
-                        <span className="fb-row-size">{sizeLabel}</span>
-                        <span className="modified-column whitespace-nowrap hidden md:inline">
-                          {new Date().toLocaleString('en-US', {
-                            month: 'short',
-                            day: '2-digit',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <span className="text-sm text-slate-500 dark:text-slate-400 hidden sm:inline tabular-nums">{sizeLabel}</span>
+                        <span className="text-sm text-slate-500 dark:text-slate-400 hidden md:inline whitespace-nowrap">{modifiedStr}</span>
                         {file.size != null && gbSize <= 50 && (
                           <button
                             type="button"
-                            className="fb-btn-download"
+                            className="fb-btn-download-icon p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                             onClick={(e) => {
                               e.stopPropagation();
                               checkAlbumSize(file, idx);
                             }}
+                            title="Descargar"
+                            aria-label="Descargar"
                           >
                             {loadDownload && index === idx ? (
                               <Spinner size={2} width={0.2} color="var(--app-btn-text)" />
                             ) : (
-                              <>
-                                <Download className="fb-icon-download" style={{ color: 'inherit' }} />
-                                <span className="fb-btn-download-text">Descargar</span>
-                              </>
+                              <Download className="w-5 h-5 text-cyan-600 dark:text-cyan-400" aria-hidden />
                             )}
                           </button>
                         )}
@@ -481,46 +467,37 @@ function Home() {
                     </div>
                   )}
                   {file.type === '-' && (
-                    <div
-                      className="fb-row border-l-2 border-l-transparent hover:border-l-2"
-                      style={{ borderLeftColor: 'transparent' }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'var(--fb-row-hover-bg)';
-                        e.currentTarget.style.borderLeftColor = 'var(--fb-row-hover-border)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = '';
-                        e.currentTarget.style.borderLeftColor = 'transparent';
-                      }}
-                    >
+                    <div className="fb-row fb-row-card flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors py-4 px-4 sm:px-6">
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         {loadFile && index === idx ? (
                           <Spinner size={2} width={0.2} color="var(--fb-accent)" />
                         ) : (
                           <button
                             type="button"
-                            className="fb-btn-play flex-shrink-0"
+                            className="fb-btn-play flex-shrink-0 min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500 hover:text-white transition-colors"
                             onClick={() => playFile(file, idx)}
                             title="Reproducir"
                             aria-label="Reproducir"
                           >
-                            <Play className="fb-icon-play" style={{ color: 'inherit' }} aria-hidden />
+                            <Play className="w-5 h-5" aria-hidden />
                           </button>
                         )}
-                        <span className="fb-row-name" title={file.name}>{file.name}</span>
+                        <span className="font-medium text-slate-700 dark:text-slate-200 truncate" title={file.name}>{file.name}</span>
                       </div>
-                      <div className="fb-row-meta">
-                        <span className="fb-row-size">{sizeLabel}</span>
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <span className="text-sm text-slate-500 dark:text-slate-400 hidden sm:inline tabular-nums">{sizeLabel}</span>
+                        <span className="text-sm text-slate-500 dark:text-slate-400 hidden md:inline whitespace-nowrap">{modifiedStr}</span>
                         {loadDownload && index === idx ? (
                           <Spinner size={2} width={0.2} color="var(--app-btn-text)" />
                         ) : (
                           <button
                             type="button"
-                            className="fb-btn-download"
+                            className="fb-btn-download-icon p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                             onClick={() => downloadFile(file, idx)}
+                            title="Descargar"
+                            aria-label="Descargar"
                           >
-                            <Download className="fb-icon-download" style={{ color: 'inherit' }} />
-                            <span className="fb-btn-download-text">Descargar</span>
+                            <Download className="w-5 h-5 text-cyan-600 dark:text-cyan-400" aria-hidden />
                           </button>
                         )}
                       </div>

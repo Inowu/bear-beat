@@ -2,22 +2,21 @@
 @import "src/styles/_variables-theme.scss";
 @import "../../styles/landing-design.scss";
 
-// Mobile-first — padding lateral lo da MainLayout (1rem / 1.5rem)
-// Fondo explícito para que en Chrome Mac no se vea gris o cortado tras login
+// Contenedor tipo Cyberpunk/Clean: max-w-7xl, padding generoso, fondo hereda (slate-50 / slate-950)
 .plans-main-container {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   align-items: flex-start;
   gap: 20px;
-  margin-top: 12px;
-  padding: 0;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  max-width: 80rem; /* max-w-7xl */
   color: var(--app-text-heading, $text-primary);
   min-height: 60vh;
   width: 100%;
   box-sizing: border-box;
   font-family: "Poppins", sans-serif;
-  background: var(--app-bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -33,8 +32,8 @@
 
 @include respond-from(tablet) {
   .plans-main-container {
+    padding: 2rem 1.5rem;
     gap: 24px;
-    margin-top: 16px;
   }
   .plans-page-title {
     margin-bottom: 12px;
@@ -43,7 +42,7 @@
 
 @include respond-from(md) {
   .plans-main-container {
+    padding: 2rem 2rem;
     gap: 40px;
-    margin-top: 20px;
   }
 }

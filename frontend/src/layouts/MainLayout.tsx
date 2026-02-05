@@ -34,7 +34,7 @@ function MainLayout() {
           <AsideNavbar show={asideOpen} onHide={() => setAsideOpen(false)} />
         )}
         {showDownload && currentUser !== null && <FileLoader />}
-        <div className="content-container-inner">
+        <div className={`content-container-inner ${isLanding ? "" : "content-area-app min-h-screen font-poppins text-slate-900 dark:text-slate-100 bg-slate-50 dark:bg-slate-950"}`}>
           <Outlet />
         </div>
       </div>
