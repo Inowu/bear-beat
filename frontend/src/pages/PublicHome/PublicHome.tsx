@@ -18,6 +18,7 @@ import {
   PiCheckCircle,
 } from "react-icons/pi";
 import GenreTicker from "../../components/GenreTicker/GenreTicker";
+import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 import "./PublicHome.scss";
 
 const THEME_OPTIONS: { value: ThemeMode; label: string; icon: typeof faSun }[] = [
@@ -31,6 +32,10 @@ function PublicHome() {
   const { mode, theme, setMode } = useTheme();
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    trackManyChatConversion(MC_EVENTS.VIEW_HOME);
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -79,10 +84,10 @@ function PublicHome() {
               </div>
             )}
           </div>
-          <Link to="/auth" state={{ from: "/planes" }} className="ph__nav-btn ph__nav-btn--ghost">
+          <Link to="/auth" state={{ from: "/planes" }} className="ph__nav-btn ph__nav-btn--ghost" onClick={() => trackManyChatConversion(MC_EVENTS.CLICK_CTA_REGISTER)}>
             Iniciar Sesión
           </Link>
-          <Link to="/auth/registro" state={{ from: "/planes" }} className="ph__nav-btn ph__nav-btn--primary">
+          <Link to="/auth/registro" state={{ from: "/planes" }} className="ph__nav-btn ph__nav-btn--primary" onClick={() => trackManyChatConversion(MC_EVENTS.CLICK_CTA_REGISTER)}>
             Obtener Acceso
           </Link>
         </div>
@@ -97,7 +102,7 @@ function PublicHome() {
         <h2 className="ph__hero-h2">
           Descarga masiva vía FTP. Música, Video (93% del catálogo) y Karaokes organizados por carpetas. Mientras duermes, tu disco duro se llena.
         </h2>
-        <Link to="/auth/registro" state={{ from: "/planes" }} className="ph__hero-cta">
+        <Link to="/auth/registro" state={{ from: "/planes" }} className="ph__hero-cta" onClick={() => trackManyChatConversion(MC_EVENTS.CLICK_CTA_REGISTER)}>
           QUIERO BLINDAR MI LIBRERÍA →
         </Link>
         <p className="ph__hero-micro">
@@ -189,7 +194,7 @@ function PublicHome() {
                 <li>Acceso Total</li>
                 <li>Tarjeta / PayPal</li>
               </ul>
-              <Link to="/auth/registro" state={{ from: "/planes" }} className="ph__btn ph__btn--primary">
+              <Link to="/auth/registro" state={{ from: "/planes" }} className="ph__btn ph__btn--primary" onClick={() => trackManyChatConversion(MC_EVENTS.CLICK_PLAN_USD)}>
                 Quiero el plan USD
               </Link>
             </div>
@@ -209,7 +214,7 @@ function PublicHome() {
                 <li>500 GB descarga</li>
                 <li>SPEI, OXXO, Tarjeta</li>
               </ul>
-              <Link to="/auth/registro" state={{ from: "/planes" }} className="ph__btn ph__btn--primary">
+              <Link to="/auth/registro" state={{ from: "/planes" }} className="ph__btn ph__btn--primary" onClick={() => trackManyChatConversion(MC_EVENTS.CLICK_PLAN_MXN)}>
                 Quiero el plan MXN
               </Link>
             </div>

@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import trpc from "../../api";
 import { IPlans } from "interfaces/Plans";
 import { manychatApi } from "../../api/manychat";
+import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 
 const stripeKey = process.env.REACT_APP_ENVIRONMENT === 'development'
   ? process.env.REACT_APP_STRIPE_TEST_KEY as string
@@ -24,26 +25,24 @@ function Checkout() {
   const searchParams = new URLSearchParams(location.search);
   const priceId = searchParams.get("priceId");
   const { currentUser } = useUserContext();
-  const checkManyChat = async (plans: IPlans) => {
-    if (plans.name.includes("Curioso")) {
-      await manychatApi("CHECKOUT_PLAN_CURIOSO");
-    }
-    if (plans.name.includes("Oro")) {
-      await manychatApi("CHECKOUT_PLAN_ORO");
+  const checkManyChat = async (p: IPlans | undefined) => {
+    if (!p) return;
+    trackManyChatConversion(MC_EVENTS.START_CHECKOUT);
+    if (p.name?.includes("Curioso")) {
+      try { await manychatApi("CHECKOUT_PLAN_CURIOSO"); } catch { /* fallback addTagByName */ }
+    } else if (p.name?.includes("Oro")) {
+      try { await manychatApi("CHECKOUT_PLAN_ORO"); } catch { /* fallback addTagByName */ }
     }
   };
-  const getPlans = async (id: any) => {
-    const id_plan: any = +id;
-    let body = {
-      where: {
-        activated: 1,
-        id: id_plan,
-      },
-    };
+  const getPlans = async (id: string | null) => {
+    if (!id) return;
+    const id_plan = +id;
+    const body = { where: { activated: 1, id: id_plan } };
     try {
-      const plans: any = await trpc.plans.findManyPlans.query(body);
-      setPlan(plans[0]);
-      checkManyChat(plans[0]);
+      const plans: IPlans[] = await trpc.plans.findManyPlans.query(body);
+      const p = plans?.[0];
+      setPlan(p ?? ({} as IPlans));
+      checkManyChat(p);
     } catch (error) {
       console.log(error);
     }

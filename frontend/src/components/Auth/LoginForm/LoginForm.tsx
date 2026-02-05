@@ -10,6 +10,7 @@ import { ErrorModal, VerifyUpdatePhoneModal } from "../../../components/Modals";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import { ChatButton } from "../../../components/ChatButton/ChatButton";
 import Logo from "../../../assets/images/osonuevo.png";
+import { trackManyChatConversion, MC_EVENTS } from "../../../utils/manychatPixel";
 import "./LoginForm.scss";
 
 function LoginForm() {
@@ -54,6 +55,7 @@ function LoginForm() {
         if (login) {
           if (login.user) {
             if (login.user.verified) {
+              trackManyChatConversion(MC_EVENTS.LOGIN_SUCCESS);
               handleLogin(login.token, login.refreshToken);
               navigate(from, { replace: true });
             } else {
@@ -63,6 +65,7 @@ function LoginForm() {
               setShowVerify(true);
             }
           } else {
+            trackManyChatConversion(MC_EVENTS.LOGIN_SUCCESS);
             handleLogin(login.token, login.refreshToken);
             navigate(from, { replace: true });
           }

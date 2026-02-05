@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { PayPalScriptProvider } from "@paypal/react-paypal-js";
 import "./styles/index.scss";
 import reportWebVitals from "./reportWebVitals";
+import { initFacebookPixel } from "./utils/facebookPixel";
 import {
   Navigate,
   Outlet,
@@ -128,6 +129,8 @@ const router = createBrowserRouter([
 ]);
 // 'https://thebearbeatapi.lat/trpc'
 // 'https://kale67.world/trpc'
+initFacebookPixel();
+
 root.render(
   <React.StrictMode>
     <ThemeProvider>

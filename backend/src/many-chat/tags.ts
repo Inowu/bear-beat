@@ -1,11 +1,21 @@
 import { z } from 'zod';
 
+/** IDs de etiquetas en ManyChat. Verifica con: cd backend && npm run manychat:tags */
 export const manyChatTags = {
-  USER_CHECKED_PLANS: 43151699,
-  USER_REGISTERED: 34283067,
-  CHECKOUT_PLAN_ORO: 41612832,
-  CHECKOUT_PLAN_CURIOSO: 41612820,
-  SUCCESSFUL_PAYMENT: 43455304,
+  USER_CHECKED_PLANS: 80813943,
+  USER_REGISTERED: 80813944,
+  CHECKOUT_PLAN_ORO: 80813945,
+  CHECKOUT_PLAN_CURIOSO: 80813946,
+  SUCCESSFUL_PAYMENT: 80813947,
+};
+
+/** Nombres de etiquetas (fallback cuando addTag por ID falla). Ajusta a los nombres en ManyChat. */
+export const manyChatTagNames: Record<keyof typeof manyChatTags, string> = {
+  USER_CHECKED_PLANS: 'Usuario revisó planes',
+  USER_REGISTERED: 'Usuario registrado',
+  CHECKOUT_PLAN_ORO: 'Checkout Plan Oro',
+  CHECKOUT_PLAN_CURIOSO: 'Checkout Plan Curioso',
+  SUCCESSFUL_PAYMENT: 'Pago exitoso',
 };
 
 export const _manyChatTagsEnum = zodEnumFromObjKeys(manyChatTags);

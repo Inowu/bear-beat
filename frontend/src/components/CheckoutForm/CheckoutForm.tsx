@@ -14,6 +14,8 @@ import * as Yup from "yup";
 import { FaCheck } from "react-icons/fa";
 import { useCookies } from "react-cookie";
 import { trackPurchase } from "../../utils/facebookPixel";
+import { trackManyChatConversion, trackManyChatPurchase, MC_EVENTS } from "../../utils/manychatPixel";
+import { manychatApi } from "../../api/manychat";
 declare let window: any;
 
 interface ICheckout {
@@ -104,12 +106,12 @@ function CheckoutForm(props: ICheckout) {
           setShow(true);
         } else {
           if (currentUser) {
-            trackPurchase({
-              email: currentUser.email,
-              phone: currentUser.phone,
-              currency: "USD",
-              value: plan?.price ?? 0,
-            });
+            const amount = Number(plan?.price) || 0;
+            const currency = plan?.moneda?.toUpperCase() ?? "USD";
+            trackPurchase({ email: currentUser.email, phone: currentUser.phone, currency, value: amount });
+            trackManyChatConversion(MC_EVENTS.PAYMENT_SUCCESS);
+            trackManyChatPurchase(MC_EVENTS.PAYMENT_SUCCESS, amount, currency);
+            try { await manychatApi("SUCCESSFUL_PAYMENT"); } catch { /* webhook ya lo agrega */ }
           }
           setShowSuccess(true);
           setLoader(false);

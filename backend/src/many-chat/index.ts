@@ -1,8 +1,21 @@
 import axios, { AxiosError } from 'axios';
 import { log } from '../server';
 import { Users } from '@prisma/client';
-import { ManyChatTags, manyChatTags } from './tags';
+import { ManyChatTags, manyChatTags, manyChatTagNames } from './tags';
 import { prisma } from '../db';
+
+/** Obtiene first_name y last_name para ManyChat; usa username si están vacíos */
+function getFirstLastName(user: Users): { first_name: string; last_name: string } {
+  if (user.first_name && user.last_name) {
+    return { first_name: user.first_name, last_name: user.last_name };
+  }
+  const base = (user.username || user.email?.split('@')[0] || 'Usuario').trim();
+  const parts = base.split(/\s+/).filter(Boolean);
+  return {
+    first_name: parts[0] || 'Usuario',
+    last_name: parts.slice(1).join(' ') || parts[0] || '',
+  };
+}
 
 const client = axios.create({
   baseURL: 'https://api.manychat.com',
@@ -53,10 +66,11 @@ export const manyChat = {
     user: Users,
     consentPhrase: string,
   ): Promise<Record<any, any> | null> {
+    const { first_name, last_name } = getFirstLastName(user);
     try {
       const response = await client.post('/fb/subscriber/createSubscriber', {
-        first_name: user.first_name,
-        last_name: user.last_name,
+        first_name,
+        last_name,
         phone: user.phone?.replace(/\s/g, ''),
         whatsapp_phone: user.phone?.replace(/\s/g, ''),
         optin_whatsapp: true,
@@ -135,8 +149,9 @@ export const manyChat = {
     systemFieldValue: string,
   ): Promise<Array<Record<any, any>> | null> {
     try {
+      const encoded = encodeURIComponent(systemFieldValue);
       const response = await client(
-        `/fb/subscriber/findBySystemField?${systemField}=${systemFieldValue}`,
+        `/fb/subscriber/findBySystemField?${systemField}=${encoded}`,
       );
 
       return response.data.data;
@@ -156,23 +171,46 @@ export const manyChat = {
   ): Promise<Array<Record<any, any>> | null> {
     const mcId = await this.getManyChatId(user);
 
-    if (!mcId) return null;
+    if (!mcId) {
+      log.warn(`[MANYCHAT] No mc_id for user ${user.id}, cannot add tag ${tag}`);
+      return null;
+    }
 
+    const subscriberId = Number(mcId);
+    const tagKey = tag as keyof typeof manyChatTags;
+    const tagId = manyChatTags[tagKey];
+
+    // 1. Intentar por ID
     try {
       const response = await client.post('/fb/subscriber/addTag', {
-        subscriber_id: mcId,
-        tag_id: manyChatTags[tag],
+        subscriber_id: subscriberId,
+        tag_id: tagId,
       });
-
+      log.info(`[MANYCHAT] Tag ${tag} (id ${tagId}) added to subscriber ${subscriberId}`);
       return response.data;
     } catch (error: any) {
-      log.error(
-        `[MANYCHAT] Error while adding tag to subscriber with id ${mcId}: ${
-          JSON.stringify((error as AxiosError).response?.data) || error.message
-        }`,
+      const errData = (error as AxiosError).response?.data;
+      const errStr = JSON.stringify(errData) || error.message;
+      log.warn(
+        `[MANYCHAT] addTag by ID failed for user ${user.id}, subscriber ${subscriberId}, tag ${tag} (id ${tagId}): ${errStr}. Trying addTagByName...`,
       );
 
-      return null;
+      // 2. Fallback: intentar por nombre (los IDs pueden no coincidir con tu cuenta)
+      const tagName = manyChatTagNames[tagKey];
+      try {
+        const response = await client.post('/fb/subscriber/addTagByName', {
+          subscriber_id: subscriberId,
+          tag_name: tagName,
+        });
+        log.info(`[MANYCHAT] Tag "${tagName}" added via addTagByName to subscriber ${subscriberId}`);
+        return response.data;
+      } catch (fallbackError: any) {
+        const fbData = (fallbackError as AxiosError).response?.data;
+        log.error(
+          `[MANYCHAT] addTagByName also failed for user ${user.id}, subscriber ${subscriberId}, tag "${tagName}": ${JSON.stringify(fbData) || fallbackError.message}. Verifica los IDs en tags.ts con: npm run manychat:tags`,
+        );
+        return null;
+      }
     }
   },
   getManyChatId: async function (user: Users) {

@@ -1,8 +1,13 @@
 import { Outlet } from "react-router-dom";
+import { useEffect } from "react";
 import "./Auth.scss";
 import Logo from "../../assets/images/osonuevo.png";
+import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 
 function Auth() {
+  useEffect(() => {
+    trackManyChatConversion(MC_EVENTS.VIEW_AUTH);
+  }, []);
   return (
     <div className="auth-main-container auth-page">
       <img className="auth-logo" src={Logo} alt="Bear Beat" />

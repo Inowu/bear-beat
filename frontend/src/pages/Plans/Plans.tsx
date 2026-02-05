@@ -6,6 +6,7 @@ import { useUserContext } from '../../contexts/UserContext';
 import PlanCard from '../../components/PlanCard/PlanCard';
 import trpc from '../../api';
 import { useNavigate } from 'react-router-dom';
+import { trackManyChatConversion, MC_EVENTS } from '../../utils/manychatPixel';
 
 function Plans() {
   const { currentUser } = useUserContext();
@@ -49,6 +50,10 @@ function Plans() {
 
     getPlans();
   }, [currentUser, navigate]);
+
+  useEffect(() => {
+    if (plans.length > 0) trackManyChatConversion(MC_EVENTS.VIEW_PLANS);
+  }, [plans.length]);
 
   // Loader: mientras no tengamos currentUser o estemos cargando planes
   if (currentUser == null || loader) {

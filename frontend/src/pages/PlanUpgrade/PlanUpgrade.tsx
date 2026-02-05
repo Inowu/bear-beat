@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./PlanUpgrade";
 import trpc from "../../api";
+import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 import { IPlans } from "interfaces/Plans";
 import { Spinner } from "../../components/Spinner/Spinner";
 import PlanCard from "../../components/PlanCard/PlanCard";
@@ -123,6 +124,12 @@ export const PlanUpgrade = () => {
       getCurrentPlan();
     }
   }, [currentUser]);
+
+  useEffect(() => {
+    if (!loader && (currentPlan || plans.length > 0)) {
+      trackManyChatConversion(MC_EVENTS.VIEW_PLAN_UPGRADE);
+    }
+  }, [loader, currentPlan, plans.length]);
 
   if (loader) {
     return (

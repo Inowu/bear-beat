@@ -18,6 +18,7 @@ import {
 import PayPalComponent from "../../components/PayPal/PayPalComponent";
 import { useCookies } from "react-cookie";
 import { trackPurchase, trackViewPlans } from "../../utils/facebookPixel";
+import { trackManyChatConversion, trackManyChatPurchase, MC_EVENTS } from "../../utils/manychatPixel";
 
 
 interface PlanCardPropsI {
@@ -61,12 +62,15 @@ function PlanCard(props: PlanCardPropsI) {
 
   const handleUserClickOnPlan = async () => {
     trackViewPlans(userEmail && userPhone ? { email: userEmail, phone: userPhone } : undefined);
-    await manychatApi('USER_CHECKED_PLANS');
+    trackManyChatConversion(MC_EVENTS.SELECT_PLAN);
+    try { await manychatApi('USER_CHECKED_PLANS'); } catch { /* API fallback en backend */ }
   }
 
-  const handleUserSuccessfulPayment = async () => {
+  const handleUserSuccessfulPayment = async (amount?: number, currency?: string) => {
     trackPurchase({ email: userEmail, phone: userPhone });
-    await manychatApi('SUCCESSFUL_PAYMENT');
+    trackManyChatConversion(MC_EVENTS.PAYMENT_SUCCESS);
+    if (amount != null) trackManyChatPurchase(MC_EVENTS.PAYMENT_SUCCESS, amount, currency ?? plan.moneda?.toUpperCase() ?? 'USD');
+    try { await manychatApi('SUCCESSFUL_PAYMENT'); } catch { /* webhook ya lo agrega */ }
   }
 
   const handleCancelModal = () => {
@@ -100,6 +104,7 @@ function PlanCard(props: PlanCardPropsI) {
     }
   };
   const changePlan = async () => {
+    trackManyChatConversion(MC_EVENTS.CHANGE_PLAN);
     try {
       let body = {
         newPlanId: plan.id,
@@ -124,6 +129,7 @@ function PlanCard(props: PlanCardPropsI) {
     }
   };
   const finishSubscription = async () => {
+    trackManyChatConversion(MC_EVENTS.CANCEL_SUBSCRIPTION);
     try {
       await trpc.subscriptions.requestSubscriptionCancellation.mutate();
       openSuccess();
@@ -179,6 +185,7 @@ function PlanCard(props: PlanCardPropsI) {
     }
   };
   const payWithSpei = async () => {
+    trackManyChatConversion(MC_EVENTS.CLICK_SPEI);
     handleUserClickOnPlan();
     trpc.checkoutLogs.registerCheckoutLog.mutate();
     try {
@@ -197,6 +204,7 @@ function PlanCard(props: PlanCardPropsI) {
     }
   };
   const handleCheckout = async (planId: number) => {
+    trackManyChatConversion(MC_EVENTS.CLICK_BUY);
     handleUserClickOnPlan();
     trpc.checkoutLogs.registerCheckoutLog.mutate();
     navigate(`/comprar?priceId=${planId}`);
@@ -205,16 +213,13 @@ function PlanCard(props: PlanCardPropsI) {
   const successSubscription = async (data: any) => {
     await trpc.subscriptions.subscribeWithPaypal.mutate({
       planId: ppPlan.id,
-      // planId: plan.id,
       subscriptionId: data.subscriptionID,
       fbp: cookies._fbp,
       url: window.location.href,
     });
-    setSuccessMessage(
-      "Gracias por tu pago, ya puedes empezar a descargar!"
-    );
+    setSuccessMessage("Gracias por tu pago, ya puedes empezar a descargar!");
     setSuccessTitle("Compra Exitosa");
-    handleUserSuccessfulPayment();
+    handleUserSuccessfulPayment(Number(plan.price) || 0, plan.moneda?.toUpperCase());
     openSuccess();
     return data;
   }
@@ -300,7 +305,7 @@ function PlanCard(props: PlanCardPropsI) {
                         plan={ppPlan}
                         type={'subscription'}
                         onApprove={successSubscription}
-                        onClick={() => { handleUserClickOnPlan() }}
+                        onClick={() => { trackManyChatConversion(MC_EVENTS.CLICK_PAYPAL); handleUserClickOnPlan(); }}
                         key={`paypal-button-component-${plan.id}`}
                       />}
                   </>

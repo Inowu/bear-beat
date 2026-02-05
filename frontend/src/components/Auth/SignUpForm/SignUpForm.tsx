@@ -15,6 +15,7 @@ import { useCookies } from "react-cookie";
 import { ChatButton } from "../../../components/ChatButton/ChatButton";
 import Turnstile from "../../../components/Turnstile/Turnstile";
 import { trackLead } from "../../../utils/facebookPixel";
+import { trackManyChatConversion, MC_EVENTS } from "../../../utils/manychatPixel";
 
 function SignUpForm() {
   const navigate = useNavigate();
@@ -121,6 +122,7 @@ function SignUpForm() {
         setNewUserPhone(register.user.phone!);
 
         trackLead({ email: register.user.email, phone: register.user.phone });
+        trackManyChatConversion(MC_EVENTS.REGISTRATION);
 
         if (process.env.REACT_APP_ENVIRONMENT === "development") {
           handleLogin(register.token, register.refreshToken);
