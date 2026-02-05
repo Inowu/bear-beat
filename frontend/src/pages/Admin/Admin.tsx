@@ -294,7 +294,7 @@ function Admin() {
       <div className="admin-contain">
         <div className="admin-top-bar flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="header__title-row">
-            <h1 className="text-2xl md:text-3xl font-bold">Usuarios</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-bear-dark-900 dark:text-white">Usuarios</h1>
             {totalRegistered !== null && (
               <span className="header__total-registered">
                 Registrados: {totalRegistered.toLocaleString()}
@@ -347,23 +347,23 @@ function Admin() {
         </div>
 
         {/* Tabla desktop: visible solo en md+ (patrón BEAR BEAT PRO) */}
-        <div className="hidden md:block w-full rounded-xl border border-slate-800 overflow-hidden">
+        <div className="hidden md:block w-full rounded-xl border border-gray-200 dark:border-bear-dark-100 overflow-hidden">
           <div className="overflow-x-auto overflow-y-auto max-h-[60vh]">
             <table className="w-full text-left text-sm border-collapse">
               <thead>
                 <tr>
-                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium">Nombre</th>
-                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium">Email</th>
-                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium">Teléfono</th>
-                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium">Registro</th>
-                  {filters.active !== 2 && <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium">Suscripción</th>}
-                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium">Acciones</th>
+                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100">Nombre</th>
+                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100">Email</th>
+                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100">Teléfono</th>
+                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100">Registro</th>
+                  {filters.active !== 2 && <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100">Suscripción</th>}
+                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="bg-slate-950 divide-y divide-slate-800">
+              <tbody className="bg-bear-light-100 dark:bg-bear-dark-900 divide-y divide-gray-200 dark:divide-bear-dark-100">
                 {!loader
                   ? users.map((user, index) => (
-                      <tr key={`admin_users_${index}`} className="border-b border-slate-800 hover:bg-slate-900/50 transition-colors">
+                      <tr key={`admin_users_${index}`} className="border-b border-gray-200 dark:border-bear-dark-100 hover:bg-gray-100 dark:hover:bg-bear-dark-500/50 transition-colors">
                         <td className="max-w-[120px] truncate py-3 px-4" title={user.username}>{user.username}</td>
                         <td className="max-w-[180px] truncate py-3 px-4" title={user.email}>{user.email}</td>
                         <td className="max-w-[100px] truncate py-3 px-4" title={user.phone}>{user.phone}</td>
@@ -429,14 +429,14 @@ function Admin() {
                       </tr>
                     ))
                   : ARRAY_10.map((_, index) => (
-                      <tr key={`load_${index}`} className="tr-load border-b border-slate-800 hover:bg-slate-900">
+                      <tr key={`load_${index}`} className="tr-load border-b border-gray-200 dark:border-bear-dark-100 hover:bg-gray-100 dark:hover:bg-bear-dark-500">
                         <td /><td /><td /><td />
                         {filters.active !== 2 && <td />}
                         <td />
                       </tr>
                     ))}
               </tbody>
-              <tfoot className="bg-slate-900">
+              <tfoot className="bg-bear-light-100 dark:bg-bear-dark-500 border-t border-gray-200 dark:border-bear-dark-100">
                 <tr>
                   <th colSpan={colCount} className="p-4 text-left">
                     <Pagination
@@ -460,7 +460,7 @@ function Admin() {
             ? users.map((user, index) => (
                 <div
                   key={`mobile_${index}`}
-                  className="bg-slate-900 p-4 rounded-lg border border-slate-800"
+                  className="bg-bear-light-100 dark:bg-bear-dark-500 p-4 rounded-lg border border-gray-200 dark:border-bear-dark-100"
                   onClick={() => openDrawer(user)}
                   role="button"
                   tabIndex={0}
@@ -468,12 +468,12 @@ function Admin() {
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className="w-10 h-10 rounded-full bg-cyan-600 flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-bear-cyan flex items-center justify-center text-bear-dark-500 text-sm font-medium flex-shrink-0">
                         {(user.username || user.email || "?").charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-slate-200 truncate">{user.username}</p>
-                        <p className="text-xs text-slate-400 truncate">{user.email}</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-200 truncate">{user.username}</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 truncate">{user.email}</p>
                       </div>
                     </div>
                     <span className={`text-xs px-2 py-1 rounded-full flex-shrink-0 ${user.blocked ? "bg-red-500/10 text-red-400" : "bg-emerald-500/10 text-emerald-400"}`}>
@@ -482,7 +482,7 @@ function Admin() {
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); openDrawer(user); }}
-                      className="p-2 text-slate-400 hover:text-cyan-400 rounded-lg flex-shrink-0"
+                      className="p-2 text-gray-500 dark:text-gray-400 hover:text-bear-cyan rounded-lg flex-shrink-0"
                       aria-label="Abrir acciones"
                     >
                       <MoreVertical size={20} />
@@ -491,12 +491,12 @@ function Admin() {
                 </div>
               ))
             : ARRAY_10.map((_, i) => (
-                <div key={`skeleton_${i}`} className="bg-slate-900 p-4 rounded-lg border border-slate-800 animate-pulse">
+                <div key={`skeleton_${i}`} className="bg-bear-light-100 dark:bg-bear-dark-500 p-4 rounded-lg border border-gray-200 dark:border-bear-dark-100 animate-pulse">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-slate-700" />
+                    <div className="w-10 h-10 rounded-full bg-gray-300 dark:bg-bear-dark-100" />
                     <div className="flex-1">
-                      <p className="text-sm text-slate-500">—</p>
-                      <p className="text-xs text-slate-600">—</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-500">—</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-600">—</p>
                     </div>
                   </div>
                 </div>

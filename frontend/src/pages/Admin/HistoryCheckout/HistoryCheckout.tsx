@@ -81,7 +81,7 @@ export const HistoryCheckout = () => {
       <select
         value={filters.limit}
         onChange={(e) => startFilter("limit", +e.target.value)}
-        className="bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:border-cyan-500 focus:outline-none"
+        className="bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
       >
         <option value={100}>100</option>
         <option value={200}>200</option>
@@ -97,7 +97,7 @@ export const HistoryCheckout = () => {
       >
         <button
           type="button"
-          className="inline-flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white font-medium rounded-lg px-4 py-2 transition-colors"
+          className="inline-flex items-center gap-2 bg-bear-gradient text-bear-dark-500 hover:opacity-95 font-medium rounded-pill px-4 py-2 transition-colors"
         >
           <Download size={18} />
           Exportar
@@ -110,28 +110,28 @@ export const HistoryCheckout = () => {
     <AdminPageLayout title="Historial checkout" toolbar={toolbar}>
       <div className="w-full overflow-x-hidden">
         {/* Tabla desktop (patrón BEAR BEAT PRO) */}
-        <div className="hidden md:block rounded-xl border border-slate-800 overflow-hidden">
+        <div className="hidden md:block rounded-xl border border-gray-200 dark:border-bear-dark-100 overflow-hidden">
           <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
             <table className="w-full text-left text-sm border-collapse">
               <thead>
                 <tr>
-                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium">Email</th>
-                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium hidden lg:table-cell">Teléfono</th>
-                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium">Última fecha de pago</th>
-                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium">Estado</th>
+                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100">Email</th>
+                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium hidden lg:table-cell border-b border-gray-200 dark:border-bear-dark-100">Teléfono</th>
+                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100">Última fecha de pago</th>
+                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100">Estado</th>
                 </tr>
               </thead>
-              <tbody className="bg-slate-950 divide-y divide-slate-800">
+              <tbody className="bg-bear-light-100 dark:bg-bear-dark-900 divide-y divide-gray-200 dark:divide-bear-dark-100">
                 {!loader
                   ? history.map((his, index) => (
-                      <tr key={`ch_${index}`} className="border-b border-slate-800 hover:bg-slate-900/50 transition-colors">
-                        <td className="py-4 px-4 text-slate-300">{his.users?.email}</td>
-                        <td className="py-4 px-4 text-slate-300 hidden lg:table-cell">{his.users?.phone}</td>
-                        <td className="py-4 px-4 text-slate-300">{his.last_checkout_date?.toLocaleDateString?.()}</td>
+                      <tr key={`ch_${index}`} className="border-b border-gray-200 dark:border-bear-dark-100 hover:bg-gray-100 dark:hover:bg-bear-dark-500/50 transition-colors">
+                        <td className="py-4 px-4 text-gray-700 dark:text-gray-300">{his.users?.email}</td>
+                        <td className="py-4 px-4 text-gray-700 dark:text-gray-300 hidden lg:table-cell">{his.users?.phone}</td>
+                        <td className="py-4 px-4 text-gray-700 dark:text-gray-300">{his.last_checkout_date?.toLocaleDateString?.()}</td>
                         <td className="py-4 px-4">
                           <span
                             className={`inline-flex text-xs px-2 py-1 rounded-full ${
-                              his.users?.active === 1 ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-500/10 text-slate-400"
+                              his.users?.active === 1 ? "bg-emerald-500/10 text-emerald-400" : "bg-gray-500/10 text-gray-500 dark:text-gray-400"
                             }`}
                           >
                             {his.users?.active === 1 ? "Activo" : "No activo"}
@@ -140,12 +140,12 @@ export const HistoryCheckout = () => {
                       </tr>
                     ))
                   : ARRAY_10.map((_, i) => (
-                      <tr key={`s_${i}`} className="border-b border-slate-800">
-                        <td colSpan={4} className="py-4 px-4 animate-pulse bg-slate-800/50" />
+                      <tr key={`s_${i}`} className="border-b border-gray-200 dark:border-bear-dark-100">
+                        <td colSpan={4} className="py-4 px-4 animate-pulse bg-gray-200 dark:bg-bear-dark-100/50" />
                       </tr>
                     ))}
               </tbody>
-              <tfoot className="bg-slate-900">
+              <tfoot className="bg-bear-light-100 dark:bg-bear-dark-500 border-t border-gray-200 dark:border-bear-dark-100">
                 <tr>
                   <td colSpan={4} className="p-4">
                     <Pagination
@@ -169,7 +169,7 @@ export const HistoryCheckout = () => {
             ? history.map((his, index) => (
                 <div
                   key={`m_${index}`}
-                  className="bg-slate-900 p-4 rounded-lg border border-slate-800"
+                  className="bg-bear-light-100 dark:bg-bear-dark-500 p-4 rounded-lg border border-gray-200 dark:border-bear-dark-100"
                   onClick={() => setDrawerItem(his)}
                   role="button"
                   tabIndex={0}
@@ -177,12 +177,12 @@ export const HistoryCheckout = () => {
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-slate-200 truncate">{his.users?.email}</p>
-                      <p className="text-xs text-slate-400">{his.last_checkout_date?.toLocaleDateString?.()}</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-200 truncate">{his.users?.email}</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">{his.last_checkout_date?.toLocaleDateString?.()}</p>
                     </div>
                     <span
                       className={`flex-shrink-0 text-xs px-2 py-1 rounded-full ${
-                        his.users?.active === 1 ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-500/10 text-slate-400"
+                        his.users?.active === 1 ? "bg-emerald-500/10 text-emerald-400" : "bg-gray-500/10 text-gray-500 dark:text-gray-400"
                       }`}
                     >
                       {his.users?.active === 1 ? "Activo" : "Inactivo"}
@@ -190,7 +190,7 @@ export const HistoryCheckout = () => {
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); setDrawerItem(his); }}
-                      className="p-2 text-slate-400 hover:text-cyan-400 rounded-lg flex-shrink-0"
+                      className="p-2 text-gray-500 dark:text-gray-400 hover:text-bear-cyan rounded-lg flex-shrink-0"
                       aria-label="Ver más"
                     >
                       <MoreVertical size={20} />
@@ -199,8 +199,8 @@ export const HistoryCheckout = () => {
                 </div>
               ))
             : ARRAY_10.map((_, i) => (
-                <div key={`s_${i}`} className="bg-slate-900 p-4 rounded-lg border border-slate-800 animate-pulse">
-                  <div className="h-12 bg-slate-800/50 rounded" />
+                <div key={`s_${i}`} className="bg-bear-light-100 dark:bg-bear-dark-500 p-4 rounded-lg border border-gray-200 dark:border-bear-dark-100 animate-pulse">
+                  <div className="h-12 bg-gray-200 dark:bg-bear-dark-100/50 rounded" />
                 </div>
               ))}
         </div>
@@ -219,11 +219,11 @@ export const HistoryCheckout = () => {
 
       <AdminDrawer open={drawerItem !== null} onClose={() => setDrawerItem(null)} title={drawerItem?.users?.email ?? "Registro"} user={undefined}>
         {drawerItem && (
-          <div className="space-y-2 text-sm text-slate-300">
-            <p><span className="text-slate-500">Email:</span> {drawerItem.users?.email}</p>
-            <p><span className="text-slate-500">Teléfono:</span> {drawerItem.users?.phone}</p>
-            <p><span className="text-slate-500">Última fecha de pago:</span> {drawerItem.last_checkout_date?.toLocaleDateString?.()}</p>
-            <p><span className="text-slate-500">Estado:</span> {drawerItem.users?.active === 1 ? "Activo" : "No activo"}</p>
+          <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+            <p><span className="text-gray-500">Email:</span> {drawerItem.users?.email}</p>
+            <p><span className="text-gray-500">Teléfono:</span> {drawerItem.users?.phone}</p>
+            <p><span className="text-gray-500">Última fecha de pago:</span> {drawerItem.last_checkout_date?.toLocaleDateString?.()}</p>
+            <p><span className="text-gray-500">Estado:</span> {drawerItem.users?.active === 1 ? "Activo" : "No activo"}</p>
           </div>
         )}
       </AdminDrawer>

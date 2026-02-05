@@ -118,19 +118,19 @@ export const Ordens = () => {
     <>
       <div className="flex flex-wrap items-center gap-3 flex-1 min-w-0">
         <div className="relative flex-1 min-w-[180px] max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 w-4 h-4" />
           <input
             type="text"
             placeholder="Buscar por email o teléfono"
             value={filters.searchData}
             onChange={(e) => startFilter("searchData", e.target.value)}
-            className="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 pl-9 pr-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+            className="w-full bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 rounded-lg py-2 pl-9 pr-3 text-gray-900 dark:text-white text-sm placeholder-gray-500 focus:outline-none focus:border-bear-cyan focus:ring-1 focus:ring-bear-cyan"
           />
         </div>
         <select
           value={filters.paymentMethod}
           onChange={(e) => startFilter("paymentMethod", e.target.value)}
-          className="bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:border-cyan-500 focus:outline-none"
+          className="bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
         >
           <option value="">Todos</option>
           <option value="Paypal">Paypal</option>
@@ -142,18 +142,18 @@ export const Ordens = () => {
           type="date"
           value={filters.startDate}
           onChange={(e) => startFilter("startDate", e.target.value)}
-          className="bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:border-cyan-500 focus:outline-none"
+          className="bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
         />
         <input
           type="date"
           value={filters.endDate}
           onChange={(e) => startFilter("endDate", e.target.value)}
-          className="bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:border-cyan-500 focus:outline-none"
+          className="bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
         />
         <select
           value={filters.limit}
           onChange={(e) => startFilter("limit", +e.target.value)}
-          className="bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:border-cyan-500 focus:outline-none"
+          className="bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
         >
           <option value={100}>100</option>
           <option value={200}>200</option>
@@ -170,7 +170,7 @@ export const Ordens = () => {
       >
         <button
           type="button"
-          className="inline-flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white font-medium rounded-lg px-4 py-2 transition-colors"
+          className="inline-flex items-center gap-2 bg-bear-gradient text-bear-dark-500 hover:opacity-95 font-medium rounded-pill px-4 py-2 transition-colors"
         >
           <Download size={18} />
           Exportar
@@ -197,45 +197,45 @@ export const Ordens = () => {
     <AdminPageLayout title="Órdenes" toolbar={toolbar}>
       <div className="w-full overflow-x-hidden">
         {/* Tabla desktop (patrón BEAR BEAT PRO) */}
-        <div className="hidden md:block rounded-xl border border-slate-800 overflow-hidden">
+        <div className="hidden md:block rounded-xl border border-gray-200 dark:border-bear-dark-100 overflow-hidden">
           <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
             <table className="w-full text-left text-sm border-collapse">
               <thead>
                 <tr>
-                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium">No. Orden</th>
-                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium">Correo</th>
-                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium hidden lg:table-cell">Teléfono</th>
-                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium">Método</th>
-                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium hidden xl:table-cell">Id suscripción</th>
-                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium">Precio</th>
-                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium">Fecha</th>
-                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium">Estado</th>
+                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100">No. Orden</th>
+                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100">Correo</th>
+                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium hidden lg:table-cell border-b border-gray-200 dark:border-bear-dark-100">Teléfono</th>
+                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100">Método</th>
+                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium hidden xl:table-cell border-b border-gray-200 dark:border-bear-dark-100">Id suscripción</th>
+                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100">Precio</th>
+                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100">Fecha</th>
+                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100">Estado</th>
                 </tr>
               </thead>
-              <tbody className="bg-slate-950 divide-y divide-slate-800">
+              <tbody className="bg-bear-light-100 dark:bg-bear-dark-900 divide-y divide-gray-200 dark:divide-bear-dark-100">
                 {!loader
                   ? ordens.map((orden, index) => (
                       <tr
                         key={`order_${index}`}
-                        className="border-b border-slate-800 hover:bg-slate-900/50 transition-colors"
+                        className="border-b border-gray-200 dark:border-bear-dark-100 hover:bg-gray-100 dark:hover:bg-bear-dark-500/50 transition-colors"
                       >
-                        <td className="py-4 px-4 text-slate-300">{orden.id}</td>
-                        <td className="py-4 px-4 text-slate-300">{orden.email}</td>
-                        <td className="py-4 px-4 text-slate-300 hidden lg:table-cell">{orden.phone}</td>
-                        <td className="py-4 px-4 text-slate-300">{orden.payment_method ?? "—"}</td>
-                        <td className="py-4 px-4 text-slate-300 hidden xl:table-cell">{orden.txn_id}</td>
-                        <td className="py-4 px-4 text-slate-300">{orden.total_price}</td>
-                        <td className="py-4 px-4 text-slate-300">{orden.date_order.toLocaleDateString()}</td>
+                        <td className="py-4 px-4 text-gray-700 dark:text-gray-300">{orden.id}</td>
+                        <td className="py-4 px-4 text-gray-700 dark:text-gray-300">{orden.email}</td>
+                        <td className="py-4 px-4 text-gray-700 dark:text-gray-300 hidden lg:table-cell">{orden.phone}</td>
+                        <td className="py-4 px-4 text-gray-700 dark:text-gray-300">{orden.payment_method ?? "—"}</td>
+                        <td className="py-4 px-4 text-gray-700 dark:text-gray-300 hidden xl:table-cell">{orden.txn_id}</td>
+                        <td className="py-4 px-4 text-gray-700 dark:text-gray-300">{orden.total_price}</td>
+                        <td className="py-4 px-4 text-gray-700 dark:text-gray-300">{orden.date_order.toLocaleDateString()}</td>
                         <td className="py-4 px-4">{statusBadge(orden.status)}</td>
                       </tr>
                     ))
                   : ARRAY_10.map((_, i) => (
-                      <tr key={`skeleton_${i}`} className="border-b border-slate-800">
-                        <td colSpan={8} className="py-4 px-4 animate-pulse bg-slate-800/50" />
+                      <tr key={`skeleton_${i}`} className="border-b border-gray-200 dark:border-bear-dark-100">
+                        <td colSpan={8} className="py-4 px-4 animate-pulse bg-gray-200 dark:bg-bear-dark-100/50" />
                       </tr>
                     ))}
               </tbody>
-              <tfoot className="bg-slate-900">
+              <tfoot className="bg-bear-light-100 dark:bg-bear-dark-500 border-t border-gray-200 dark:border-bear-dark-100">
                 <tr>
                   <td colSpan={8} className="p-4">
                     <Pagination
@@ -259,7 +259,7 @@ export const Ordens = () => {
             ? ordens.map((orden, index) => (
                 <div
                   key={`m_${index}`}
-                  className="bg-slate-900 p-4 rounded-lg border border-slate-800"
+                  className="bg-bear-light-100 dark:bg-bear-dark-500 p-4 rounded-lg border border-gray-200 dark:border-bear-dark-100"
                   onClick={() => setDrawerOrder(orden)}
                   role="button"
                   tabIndex={0}
@@ -267,14 +267,14 @@ export const Ordens = () => {
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-slate-200 truncate">{orden.email}</p>
-                      <p className="text-xs text-slate-400">{orden.total_price} · {orden.date_order.toLocaleDateString()}</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-200 truncate">{orden.email}</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">{orden.total_price} · {orden.date_order.toLocaleDateString()}</p>
                     </div>
                     {statusBadge(orden.status)}
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); setDrawerOrder(orden); }}
-                      className="p-2 text-slate-400 hover:text-cyan-400 rounded-lg flex-shrink-0"
+                      className="p-2 text-gray-500 dark:text-gray-400 hover:text-bear-cyan rounded-lg flex-shrink-0"
                       aria-label="Ver más"
                     >
                       <MoreVertical size={20} />
@@ -283,8 +283,8 @@ export const Ordens = () => {
                 </div>
               ))
             : ARRAY_10.map((_, i) => (
-                <div key={`s_${i}`} className="bg-slate-900 p-4 rounded-lg border border-slate-800 animate-pulse">
-                  <div className="h-12 bg-slate-800/50 rounded" />
+                <div key={`s_${i}`} className="bg-bear-light-100 dark:bg-bear-dark-500 p-4 rounded-lg border border-gray-200 dark:border-bear-dark-100 animate-pulse">
+                  <div className="h-12 bg-gray-200 dark:bg-bear-dark-100/50 rounded" />
                 </div>
               ))}
         </div>
@@ -308,14 +308,14 @@ export const Ordens = () => {
         user={undefined}
       >
         {drawerOrder && (
-          <div className="space-y-2 text-sm text-slate-300">
-            <p><span className="text-slate-500">Correo:</span> {drawerOrder.email}</p>
-            <p><span className="text-slate-500">Teléfono:</span> {drawerOrder.phone}</p>
-            <p><span className="text-slate-500">Método:</span> {drawerOrder.payment_method ?? "—"}</p>
-            <p><span className="text-slate-500">Id suscripción:</span> {drawerOrder.txn_id}</p>
-            <p><span className="text-slate-500">Precio:</span> {drawerOrder.total_price}</p>
-            <p><span className="text-slate-500">Fecha:</span> {drawerOrder.date_order.toLocaleDateString()}</p>
-            <p><span className="text-slate-500">Estado:</span> {getOrderStatusString(drawerOrder.status)}</p>
+          <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+            <p><span className="text-gray-500 dark:text-gray-500">Correo:</span> {drawerOrder.email}</p>
+            <p><span className="text-gray-500 dark:text-gray-500">Teléfono:</span> {drawerOrder.phone}</p>
+            <p><span className="text-gray-500 dark:text-gray-500">Método:</span> {drawerOrder.payment_method ?? "—"}</p>
+            <p><span className="text-gray-500 dark:text-gray-500">Id suscripción:</span> {drawerOrder.txn_id}</p>
+            <p><span className="text-gray-500 dark:text-gray-500">Precio:</span> {drawerOrder.total_price}</p>
+            <p><span className="text-gray-500 dark:text-gray-500">Fecha:</span> {drawerOrder.date_order.toLocaleDateString()}</p>
+            <p><span className="text-gray-500 dark:text-gray-500">Estado:</span> {getOrderStatusString(drawerOrder.status)}</p>
           </div>
         )}
       </AdminDrawer>

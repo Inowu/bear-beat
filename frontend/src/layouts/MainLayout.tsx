@@ -35,15 +35,15 @@ function MainLayout() {
     <div
       className={
         useAppBackground
-          ? "flex min-h-screen min-h-dvh w-full flex-col bg-bear-dark-900 text-bear-light-200 font-poppins"
-          : "flex min-h-screen min-h-dvh w-full flex-col text-bear-light-200 font-poppins"
+          ? "flex min-h-screen min-h-dvh w-full flex-col bg-bear-light-200 dark:bg-bear-dark-900 text-gray-700 dark:text-gray-300 font-poppins"
+          : "flex min-h-screen min-h-dvh w-full flex-col text-gray-700 dark:text-gray-300 font-poppins"
       }
     >
       {userToken && <Navbar setAsideOpen={setAsideOpen} menuButtonRef={menuButtonRef} />}
       <div
         className={
           useAppBackground
-            ? "flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden border-t border-bear-dark-100 bg-gradient-to-br from-bear-dark-900 to-bear-dark-400 lg:flex-row lg:items-stretch lg:overflow-hidden"
+            ? "flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden border-t border-gray-200 dark:border-bear-dark-100 bg-gradient-to-br from-bear-light-200 to-gray-300 dark:from-bear-dark-900 dark:to-bear-dark-400 lg:flex-row lg:items-stretch lg:overflow-hidden"
             : "flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden"
         }
       >
@@ -54,7 +54,7 @@ function MainLayout() {
         <div
           className={
             useAppBackground
-              ? "content-area-app flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto min-h-screen w-full font-poppins text-bear-light-200 lg:min-w-0"
+              ? "content-area-app flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto min-h-screen w-full font-poppins text-gray-700 dark:text-gray-300 lg:min-w-0"
               : "flex min-h-0 flex-1 flex-col"
           }
           style={
@@ -68,7 +68,7 @@ function MainLayout() {
               : undefined
           }
         >
-          <main className="min-h-screen w-full min-w-0 flex-1 bg-bear-dark-900">
+          <main className="min-h-screen w-full min-w-0 flex-1 bg-bear-light-200 dark:bg-bear-dark-900">
             <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
               <Outlet />
             </div>

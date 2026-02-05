@@ -93,10 +93,10 @@ function LoginForm() {
 
   return (
     <>
-      <div className="w-full max-w-md bg-bear-dark-500 p-8 rounded-2xl border border-bear-dark-100 shadow-2xl font-poppins">
+      <div className="w-full max-w-md bg-bear-light-100 dark:bg-bear-dark-500 p-8 rounded-2xl border border-gray-200 dark:border-bear-dark-100 shadow-2xl font-poppins">
         <img src={Logo} alt="Bear Beat" className="h-12 w-auto mx-auto block mb-4" />
-        <h1 className="text-2xl md:text-3xl font-bold font-bear text-white text-center mb-1">Bienvenido, DJ.</h1>
-        <p className="text-bear-light-200/80 text-sm text-center mb-6">Tu cabina está lista. Ingresa para descargar.</p>
+        <h1 className="text-2xl md:text-3xl font-bold font-bear text-bear-dark-900 dark:text-white text-center mb-1">Bienvenido, DJ.</h1>
+        <p className="text-gray-600 dark:text-gray-400 text-sm text-center mb-6">Tu cabina está lista. Ingresa para descargar.</p>
         <ChatButton />
         <form className="flex flex-col gap-4" onSubmit={formik.handleSubmit}>
           <div>
@@ -109,7 +109,7 @@ function LoginForm() {
                 name="username"
                 value={formik.values.username}
                 onChange={formik.handleChange}
-                className="bg-bear-dark-300 border border-bear-dark-100 text-white text-sm font-medium rounded-xl h-11 px-4 pl-10 w-full focus:ring-2 focus:ring-bear-cyan focus:border-transparent outline-none transition-shadow"
+                className="bg-white dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white text-sm font-medium rounded-xl h-11 px-4 pl-10 w-full focus:ring-2 focus:ring-bear-cyan focus:border-transparent outline-none transition-shadow"
               />
             </div>
             {formik.errors.username && (
@@ -123,7 +123,7 @@ function LoginForm() {
               name="password"
               value={formik.values.password}
               onChange={formik.handleChange}
-              inputClassName="bg-bear-dark-300 border border-bear-dark-100 text-white text-sm font-medium rounded-xl h-11 px-4 w-full focus:ring-2 focus:ring-bear-cyan focus:border-transparent outline-none transition-shadow"
+              inputClassName="bg-white dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white text-sm font-medium rounded-xl h-11 px-4 w-full focus:ring-2 focus:ring-bear-cyan focus:border-transparent outline-none transition-shadow"
               wrapperClassName="w-full"
             />
             {formik.errors.password && (
@@ -154,6 +154,7 @@ function LoginForm() {
           </div>
         </form>
       </div>
+    </>
       <ErrorModal show={show} onHide={closeModal} message={errorMessage} />
       <VerifyUpdatePhoneModal
         showModal={showVerify}

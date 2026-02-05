@@ -24,45 +24,45 @@ function Downloads() {
     <div className="w-full overflow-x-hidden">
       <header className="mb-6">
         <div className="flex flex-wrap items-center gap-3">
-          <HiFolderArrowDown className="h-6 w-6 flex-shrink-0 text-cyan-500" aria-hidden />
-          <h2 className="text-base font-bold text-slate-200">Historial de descargas</h2>
+          <HiFolderArrowDown className="h-6 w-6 flex-shrink-0 text-bear-cyan" aria-hidden />
+          <h2 className="text-base font-bold text-bear-dark-900 dark:text-white">Historial de descargas</h2>
         </div>
       </header>
 
       {/* Vista Escritorio: tabla real */}
-      <div className="hidden md:block rounded-xl border border-slate-800 overflow-hidden">
+      <div className="hidden md:block rounded-xl border border-gray-200 dark:border-bear-dark-100 overflow-hidden">
         <table className="w-full text-left">
           <thead>
             <tr>
-              <th className="bg-slate-900 text-slate-400 text-xs uppercase tracking-wider p-4 text-left font-medium">
+              <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 text-xs uppercase tracking-wider p-4 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100">
                 Nombre
               </th>
-              <th className="bg-slate-900 text-slate-400 text-xs uppercase tracking-wider p-4 text-left font-medium">
+              <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 text-xs uppercase tracking-wider p-4 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100">
                 Descargado
               </th>
             </tr>
           </thead>
-          <tbody className="bg-slate-950 divide-y divide-slate-800">
+          <tbody className="bg-bear-light-100 dark:bg-bear-dark-900 divide-y divide-gray-200 dark:divide-bear-dark-100">
             {downloads !== null && downloads.length > 0 ? (
               downloads.map((download: IDownloads, index: number) => (
                 <tr
                   key={`download-${index}`}
-                  className="hover:bg-slate-900/50 transition-colors"
+                  className="hover:bg-gray-100 dark:hover:bg-bear-dark-500/50 transition-colors"
                 >
-                  <td className="py-4 px-4 text-sm text-slate-300">
+                  <td className="py-4 px-4 text-sm text-gray-700 dark:text-gray-300">
                     <span className="flex items-center gap-3 min-w-0">
-                      <FaMusic className="h-5 w-5 flex-shrink-0 text-cyan-500" aria-hidden />
+                      <FaMusic className="h-5 w-5 flex-shrink-0 text-bear-cyan" aria-hidden />
                       <span className="truncate">{download.dirName}</span>
                     </span>
                   </td>
-                  <td className="py-4 px-4 text-sm text-slate-300 whitespace-nowrap">
+                  <td className="py-4 px-4 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
                     {download.date.toLocaleDateString()}
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={2} className="py-8 px-4 text-center text-sm text-slate-400">
+                <td colSpan={2} className="py-8 px-4 text-center text-sm text-gray-500 dark:text-gray-400">
                   {downloads === null ? "Cargando…" : "No hay descargas en tu historial."}
                 </td>
               </tr>
@@ -77,22 +77,22 @@ function Downloads() {
           downloads.map((download: IDownloads, index: number) => (
             <div
               key={`download-card-${index}`}
-              className="bg-slate-900 p-4 rounded-lg border border-slate-800"
+              className="bg-bear-light-100 dark:bg-bear-dark-500 p-4 rounded-lg border border-gray-200 dark:border-bear-dark-100"
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <FaMusic className="h-5 w-5 flex-shrink-0 text-cyan-500" aria-hidden />
-                  <p className="text-sm text-slate-300 truncate">{download.dirName}</p>
+                  <FaMusic className="h-5 w-5 flex-shrink-0 text-bear-cyan" aria-hidden />
+                  <p className="text-sm text-gray-700 dark:text-gray-300 truncate">{download.dirName}</p>
                 </div>
-                <p className="text-sm text-slate-400 flex-shrink-0">
+                <p className="text-sm text-gray-600 dark:text-gray-400 flex-shrink-0">
                   {download.date.toLocaleDateString()}
                 </p>
               </div>
             </div>
           ))
         ) : (
-          <div className="bg-slate-900 p-6 rounded-lg border border-slate-800 text-center">
-            <p className="text-sm text-slate-400">
+          <div className="bg-bear-light-100 dark:bg-bear-dark-500 p-6 rounded-lg border border-gray-200 dark:border-bear-dark-100 text-center">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               {downloads === null ? "Cargando…" : "No hay descargas en tu historial."}
             </p>
           </div>
