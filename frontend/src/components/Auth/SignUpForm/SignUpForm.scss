@@ -1,10 +1,11 @@
-// Registro: layout ordenado, labels bold, inputs y botón con tema dual (light/dark)
+// Registro: layout ordenado, tema dual (light/dark), tipografía Home (Poppins)
 @import "src/styles/mixin.scss";
 
 form.sign-up-form {
   display: flex;
   flex-direction: column;
   gap: 18px;
+  font-family: "Poppins", sans-serif;
 
   .c-row {
     position: relative;

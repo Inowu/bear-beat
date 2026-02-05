@@ -22,7 +22,7 @@ aside {
     color: var(--theme-nav-text);
 
     .nav-title {
-      font-family: "Bear-font";
+      font-family: "Poppins", sans-serif;
       text-align: center;
       font-size: var(--app-font-size-h2);
       margin-bottom: 10px;
@@ -51,6 +51,7 @@ aside {
         border-radius: 5px;
         background-color: var(--theme-nav-item-bg);
         padding: 10px 20px;
+        min-height: 44px;
         display: flex;
         gap: 20px;
         align-items: center;
@@ -219,6 +220,7 @@ aside {
           align-items: center;
           gap: 1rem;
           padding: 1rem 1.5rem;
+          min-height: 44px;
           text-decoration: none;
           color: var(--aside-overlay-text);
           font-size: var(--app-font-size-body);

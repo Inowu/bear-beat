@@ -1,29 +1,24 @@
 @import "src/styles/mixin.scss";
+@import "src/styles/variables-theme.scss";
 @import "../../styles/landing-design.scss";
 
-// Mobile-first
+// Mobile-first — mismo estándar que Plans y Home (padding lateral vía MainLayout)
 .plan-upgrade {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: 20px;
-  color: $text-primary;
+  color: var(--app-text-heading);
   min-height: 60vh;
-  padding: 0 4px;
+  padding: 0;
   width: 100%;
   box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+  font-size: var(--app-font-size-body);
 }
 
 @include respond-from(tablet) {
   .plan-upgrade {
     gap: 24px;
-    padding: 0 8px;
-  }
-}
-
-@include respond-from(md) {
-  .plan-upgrade {
-    gap: 24px;
-    padding: 0;
   }
 }
