@@ -27,6 +27,7 @@ function Checkout() {
   const [discount, setDiscount] = useState<number>(0);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loadingPayment, setLoadingPayment] = useState(false);
+  const [paymentAutoError, setPaymentAutoError] = useState(false);
   const autoFetchedRef = useRef(false);
   const searchParams = new URLSearchParams(location.search);
   const priceId = searchParams.get("priceId");
@@ -71,7 +72,7 @@ function Checkout() {
 
   // Desde /planes con priceId: ir directo al pago (sin clic en "Continuar al pago")
   useEffect(() => {
-    if (!plan?.id || clientSecret || autoFetchedRef.current) return;
+    if (!priceId || !plan?.id || clientSecret || autoFetchedRef.current) return;
     autoFetchedRef.current = true;
     setLoadingPayment(true);
     trpc.subscriptions.subscribeWithStripe
@@ -82,10 +83,11 @@ function Checkout() {
       })
       .then((r) => {
         if (r?.clientSecret) setClientSecret(r.clientSecret);
+        else setPaymentAutoError(true);
       })
-      .catch(() => {})
+      .catch(() => setPaymentAutoError(true))
       .finally(() => setLoadingPayment(false));
-  }, [plan?.id, clientSecret, cookies._fbp]);
+  }, [priceId, plan?.id, clientSecret, cookies._fbp]);
 
   const handleResetPayment = () => {
     setClientSecret(null);
@@ -107,10 +109,13 @@ function Checkout() {
               <p>{currentUser?.email}</p>
             </div>
           </div>
-          {loadingPayment ? (
+          {/* Con priceId: no mostrar intro, solo loading hasta tener formulario; si falla, mostrar intro para reintentar */}
+          {priceId && !clientSecret && !paymentAutoError ? (
             <div className="checkout-form" style={{ alignItems: "center", padding: "2rem" }}>
               <Spinner size={4} width={0.4} color="#06b6d4" />
-              <p style={{ marginTop: "1rem", opacity: 0.9 }}>Preparando pago...</p>
+              <p style={{ marginTop: "1rem", opacity: 0.9 }}>
+                {plan?.id ? "Preparando pago..." : "Cargando plan..."}
+              </p>
             </div>
           ) : !clientSecret ? (
             <CheckoutFormIntro plan={plan} setClientSecret={setClientSecret} />
