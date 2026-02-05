@@ -3,6 +3,7 @@ import { PrismaClient, Users } from '@prisma/client';
 import stripeInstance from '../../../stripe';
 import { log } from '../../../server';
 import { SessionUser } from '../../auth/utils/serialize-user';
+import { getStripeCustomer } from '../utils/getStripeCustomer';
 
 export const cancelStripeSubscription = async ({
   prisma,
@@ -11,19 +12,15 @@ export const cancelStripeSubscription = async ({
   prisma: PrismaClient;
   user: SessionUser | Users;
 }) => {
-  const dbUser = await prisma.users.findFirst({
-    where: {
-      id: user.id,
-    },
-  });
+  const stripeCustomerId = await getStripeCustomer(prisma, user as SessionUser);
 
   const subscriptions = await stripeInstance.subscriptions.list({
-    customer: dbUser!.stripe_cusid!,
+    customer: stripeCustomerId,
     status: 'active',
   });
 
   const trialSubscription = await stripeInstance.subscriptions.list({
-    customer: dbUser!.stripe_cusid!,
+    customer: stripeCustomerId,
     status: 'trialing',
   });
 

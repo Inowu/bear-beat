@@ -3,6 +3,7 @@ import { TRPCError } from '@trpc/server';
 import { shieldedProcedure } from '../../../procedures/shielded.procedure';
 import stripeInstance from '../../../stripe';
 import { log } from '../../../server';
+import { getStripeCustomer } from '../utils/getStripeCustomer';
 
 export const setDefaultStripePm = shieldedProcedure
   .input(
@@ -13,19 +14,14 @@ export const setDefaultStripePm = shieldedProcedure
   .mutation(
     async ({ input: { paymentMethodId }, ctx: { prisma, session } }) => {
       const user = session!.user!;
-
-      const dbUser = await prisma.users.findFirst({
-        where: {
-          id: user.id,
-        },
-      });
+      const stripeCustomer = await getStripeCustomer(prisma, user);
 
       try {
         log.error(
           `[STRIPE:PAYMENT_METHOD:DEFAULT] Setting default payment method for user: ${user.id} `,
         );
 
-        await stripeInstance.customers.update(dbUser?.stripe_cusid!, {
+        await stripeInstance.customers.update(stripeCustomer, {
           invoice_settings: {
             default_payment_method: paymentMethodId,
           },

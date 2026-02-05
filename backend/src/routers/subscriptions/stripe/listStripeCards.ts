@@ -2,20 +2,16 @@ import { TRPCError } from '@trpc/server';
 import { shieldedProcedure } from '../../../procedures/shielded.procedure';
 import { log } from '../../../server';
 import stripeInstance from '../../../stripe';
+import { getStripeCustomer } from '../utils/getStripeCustomer';
 
 export const listStripeCards = shieldedProcedure.query(
   async ({ ctx: { prisma, session } }) => {
     const user = session!.user!;
-
-    const stripeCustomer = await prisma.users.findFirst({
-      where: {
-        id: user.id,
-      },
-    });
+    const stripeCustomerId = await getStripeCustomer(prisma, user);
 
     try {
       return stripeInstance.customers.listPaymentMethods(
-        stripeCustomer?.stripe_cusid ?? '',
+        stripeCustomerId,
         {
           type: 'card',
         },

@@ -137,10 +137,10 @@ export const subscribeWithStripe = shieldedProcedure
       }
 
       if (paymentMethod) {
-        log.info(`[STRIPE_SUBSCRIBE:MIGRATION] Payment method provided, attaching to customer: ${paymentMethod} - ${user.stripeCusId}`);
+        log.info(`[STRIPE_SUBSCRIBE:MIGRATION] Payment method provided, attaching to customer: ${paymentMethod} - ${stripeCustomer}`);
       try {
         await stripeInstance.paymentMethods.attach(paymentMethod, {
-          customer: user.stripeCusId,
+          customer: stripeCustomer,
         })
       } catch(e) {
         log.error(`[STRIPE_SUBSCRIBE:MIGRATION] Error attaching payment method to customer: ${e}`)
@@ -152,7 +152,7 @@ export const subscribeWithStripe = shieldedProcedure
       }
 
         log.info(`[STRIPE_SUBSCRIBE:MIGRATION] Payment method attached to customer: ${paymentMethod}. Updating customer with default payment method`);
-        await stripeInstance.customers.update(user.stripeCusId, {
+        await stripeInstance.customers.update(stripeCustomer, {
           invoice_settings: {
             default_payment_method: paymentMethod,
           },

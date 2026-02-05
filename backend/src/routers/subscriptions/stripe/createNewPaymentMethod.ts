@@ -3,6 +3,7 @@ import { TRPCError } from '@trpc/server';
 import { shieldedProcedure } from '../../../procedures/shielded.procedure';
 import stripeInstance from '../../../stripe';
 import { log } from '../../../server';
+import { getStripeCustomer } from '../utils/getStripeCustomer';
 
 export const createNewPaymentMethod = shieldedProcedure
   .input(
@@ -12,12 +13,7 @@ export const createNewPaymentMethod = shieldedProcedure
   )
   .mutation(async ({ input: { cardToken }, ctx: { prisma, session } }) => {
     const user = session!.user!;
-
-    const dbUser = await prisma.users.findFirst({
-      where: {
-        id: user.id,
-      },
-    });
+    const stripeCustomerId = await getStripeCustomer(prisma, user);
 
     try {
       log.info(
@@ -34,7 +30,7 @@ export const createNewPaymentMethod = shieldedProcedure
         `[STRIPE:PAYMENT_METHOD:ATTACH] Attaching payment method to user ${user.id}`,
       );
       await stripeInstance.paymentMethods.attach(pm.id, {
-        customer: dbUser?.stripe_cusid!,
+        customer: stripeCustomerId,
       });
     } catch (e: any) {
       log.error(
