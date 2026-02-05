@@ -100,6 +100,20 @@
   --plan-card-secondary-bg: #f1f5f9;
   --plan-card-secondary-border: #e2e8f0;
   --plan-card-secondary-text: #475569;
+  /* Plan card CRO (monolith, data visualizer, badge, hero) — Light */
+  --plan-card-monolith-bg: #ffffff;
+  --plan-card-monolith-border: #e2e8f0;
+  --plan-card-monolith-shadow-hover: 0 0 30px rgba(6, 182, 212, 0.2);
+  --plan-card-data-visualizer-bg: #f1f5f9;
+  --plan-card-progress-track-bg: #e2e8f0;
+  --plan-card-progress-fill: #06b6d4;
+  --plan-card-badge-value-bg: #06b6d4;
+  --plan-card-badge-value-text: #000000;
+  --plan-card-btn-hero-bg: linear-gradient(to right, #06b6d4, #2563eb);
+  --plan-card-btn-hero-glow: rgba(6, 182, 212, 0.35);
+  --plan-card-btn-outline-border: #06b6d4;
+  --plan-card-btn-outline-color: #0891b2;
+  --plan-card-benefit-icon: #06b6d4;
 
   /* Auth (Login/Register): inputs bordes visibles */
   --auth-input-border: #cbd5e1; /* slate-300 */
@@ -243,6 +257,20 @@ html.dark {
   --plan-card-secondary-bg: #1e293b;
   --plan-card-secondary-border: #334155;
   --plan-card-secondary-text: #cbd5e1;
+  /* Plan card CRO — Dark (cyberpunk) */
+  --plan-card-monolith-bg: #020617;
+  --plan-card-monolith-border: #1e293b;
+  --plan-card-monolith-shadow-hover: 0 0 30px rgba(6, 182, 212, 0.3);
+  --plan-card-data-visualizer-bg: #0f172a;
+  --plan-card-progress-track-bg: #1e293b;
+  --plan-card-progress-fill: #06b6d4;
+  --plan-card-badge-value-bg: #06b6d4;
+  --plan-card-badge-value-text: #000000;
+  --plan-card-btn-hero-bg: linear-gradient(to right, #06b6d4, #2563eb);
+  --plan-card-btn-hero-glow: rgba(6, 182, 212, 0.4);
+  --plan-card-btn-outline-border: #06b6d4;
+  --plan-card-btn-outline-color: #22d3ee;
+  --plan-card-benefit-icon: #06b6d4;
 
   /* Auth: inputs dark */
   --auth-input-border: #334155;

@@ -191,13 +191,18 @@ export const subscribeWithCashConekta = shieldedProcedure
 
         return conektaOrder.data.charges?.data?.[0].payment_method as any;
       } catch (e: any) {
+        const conektaMsg = e?.response?.data?.message || e?.message;
         log.error(
-          `[CONEKTA_CASH] There was an error creating an order with conekta: ${e}`,
+          `[CONEKTA_CASH] Error creating order: ${conektaMsg}`,
+          e?.response?.data,
         );
 
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: 'Ocurrió un error al crear la orden',
+          message:
+            conektaMsg && typeof conektaMsg === 'string'
+              ? `Conekta: ${conektaMsg}`
+              : 'Ocurrió un error al crear la orden. Intenta de nuevo o usa otro método de pago.',
         });
       }
     },
@@ -221,12 +226,12 @@ const createCashPaymentOrder = async ({
   const expiresAt = Math.floor(addDays(new Date(), 30).getTime() / 1000);
   const amountCents = Math.round(Number(plan.price) * 100);
 
-  const conektaOrder = await conektaOrders.createOrder({
-    currency: 'MXN',
+  // Según SDK Conekta (get_order_cash_request): usar customer_id cuando existe
+  // y pre_authorize: false para pagos cash/spei.
+  const orderPayload = {
+    currency: 'MXN' as const,
     customer_info: {
-      name: (user.username || user.email?.split('@')[0] || 'Cliente').trim().slice(0, 255),
-      email: user.email ?? '',
-      phone: (user.phone || '+5215555555555').replace(/\s/g, ''),
+      customer_id: customerId,
     },
     line_items: [
       {
@@ -239,7 +244,7 @@ const createCashPaymentOrder = async ({
       {
         amount: amountCents,
         payment_method: {
-          type: paymentMethod.toLowerCase(),
+          type: paymentMethod.toLowerCase() as 'cash' | 'spei',
           expires_at: expiresAt,
         },
       },
@@ -248,7 +253,23 @@ const createCashPaymentOrder = async ({
       orderId: String(order.id),
       userId: String(user.id),
     },
-  });
+    pre_authorize: false,
+  };
+
+  let conektaOrder;
+  try {
+    conektaOrder = await conektaOrders.createOrder(orderPayload);
+  } catch (apiError: any) {
+    const conektaData = apiError?.response?.data;
+    const details = conektaData?.details
+      ? JSON.stringify(conektaData.details)
+      : conektaData?.message || apiError?.message;
+    log.error(
+      `[CONEKTA_CASH] createOrder failed: ${details}. Full response:`,
+      conektaData || apiError?.response?.data,
+    );
+    throw apiError;
+  }
 
   await prisma.orders.update({
     where: {

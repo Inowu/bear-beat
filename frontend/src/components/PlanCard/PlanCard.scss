@@ -19,6 +19,17 @@
   z-index: 0;
 }
 
+// The Monolith: respeta tema light/dark (variables en _variables-theme.scss)
+.plan-card-monolith .plan-card-main-card {
+  background: var(--plan-card-monolith-bg);
+  border: 1px solid var(--plan-card-monolith-border);
+
+  &:hover {
+    border-color: var(--plan-card-border-hover);
+    box-shadow: var(--plan-card-monolith-shadow-hover);
+  }
+}
+
 .plan-card-main-card {
   position: relative;
   z-index: 1;
@@ -43,6 +54,32 @@
     transform: translateY(-4px);
     box-shadow: var(--plan-card-shadow-hover);
   }
+}
+
+// Badge superior (MEJOR VALOR / Actual)
+.plan-card-badge {
+  position: absolute;
+  top: -10px;
+  right: 20px;
+  z-index: 2;
+  font-family: "Poppins", sans-serif;
+  font-weight: 700;
+  font-size: 1.2rem;
+  padding: 6px 14px;
+  border-radius: 100px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.plan-card-badge--value {
+  background: var(--plan-card-badge-value-bg);
+  color: var(--plan-card-badge-value-text);
+}
+
+.plan-card-badge--actual {
+  background: linear-gradient(135deg, #06b6d4, #2563eb);
+  color: #fff;
+}
 
   .plan-card-title {
     font-family: "Poppins", sans-serif;
@@ -99,6 +136,61 @@
     color: var(--plan-card-gb-label);
   }
 
+  // Data visualizer: "Tu Arsenal Mensual" + barra 100% (tema light/dark)
+  .plan-card-data-visualizer {
+    width: 100%;
+    background: var(--plan-card-data-visualizer-bg);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .plan-card-data-visualizer-header {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .plan-card-data-visualizer-label {
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: var(--plan-card-gb-label);
+  }
+
+  .plan-card-progress-track {
+    width: 100%;
+    height: 8px;
+    background: var(--plan-card-progress-track-bg);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .plan-card-progress-fill {
+    height: 100%;
+    background: var(--plan-card-progress-fill);
+    border-radius: 999px;
+    transition: width 0.4s ease;
+  }
+
+  .plan-card-description {
+    margin-top: 0;
+  }
+
+  .plan-card-access {
+    font-weight: 600;
+    color: var(--plan-card-gb-value);
+  }
+
+  .plan-card-benefit-icon {
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    color: var(--plan-card-benefit-icon);
+    flex-shrink: 0;
+  }
+
   .plan-card-subtitle {
     font-size: 1.4rem;
     color: var(--plan-card-subtitle);
@@ -135,39 +227,110 @@
     flex-shrink: 0;
   }
 
-  .announce {
-    top: -20px;
-    right: 25px;
-    position: absolute;
-    background: var(--plan-card-btn-bg);
-    color: var(--plan-card-btn-text);
-    border-radius: 100px;
-    font-weight: 600;
-    font-size: 1.4rem;
-    padding: 6px 14px;
-    margin: 0;
-    z-index: 2;
-  }
-
-  .plan-card-payment-section {
+  // CTA: botón héroe + opciones secundarias
+  .plan-card-cta-section {
     width: 100%;
-    text-align: center;
-    margin-bottom: 4px;
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
   }
 
-  .plan-card-payment-label {
+  .plan-card-btn-hero {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: var(--plan-card-btn-hero-bg);
+    color: #fff;
     font-family: "Poppins", sans-serif;
     font-weight: 700;
-    font-size: 1.5rem;
-    color: var(--plan-card-title);
-    margin: 0 0 4px;
+    font-size: 1.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 18px 24px;
+    min-height: 56px;
+    border-radius: 14px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 0 24px var(--plan-card-btn-hero-glow);
+    transition: opacity 0.2s ease, box-shadow 0.2s ease;
+
+    svg, .plan-card-btn-hero [aria-hidden] {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    &:hover {
+      opacity: 0.95;
+      box-shadow: 0 0 32px var(--plan-card-btn-hero-glow);
+    }
   }
 
-  .plan-card-payment-sublabel {
-    font-size: 1.25rem;
-    font-weight: 500;
+  .plan-card-secondary-payment {
+    width: 100%;
+    text-align: center;
+    padding-top: 8px;
+    border-top: 1px solid var(--plan-card-border);
+  }
+
+  .plan-card-secondary-label {
+    display: block;
+    font-size: 1.2rem;
+    color: var(--plan-card-subtitle);
+    margin-bottom: 10px;
+  }
+
+  .plan-card-secondary-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    align-items: center;
+
+    .paypal-buttons {
+      min-height: 40px;
+    }
+  }
+
+  .plan-card-btn-outline {
+    padding: 10px 20px;
+    font-family: "Poppins", sans-serif;
+    font-weight: 600;
+    font-size: 1.3rem;
+    color: var(--plan-card-btn-outline-color);
+    background: transparent;
+    border: 2px solid var(--plan-card-btn-outline-border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+
+    &:hover {
+      background: rgba(6, 182, 212, 0.15);
+    }
+  }
+
+  .plan-card-btn-cancel {
+    width: 100%;
+    padding: 14px 18px;
+    font-family: "Poppins", sans-serif;
+    font-weight: 600;
+    font-size: 1.4rem;
+    color: var(--plan-card-secondary-text);
+    background: var(--plan-card-secondary-bg);
+    border: 1px solid var(--plan-card-secondary-border);
+    border-radius: 14px;
+    cursor: pointer;
+  }
+
+  .plan-card-trust {
+    font-size: 1.1rem;
     color: var(--plan-card-subtitle);
     margin: 0;
+    text-align: center;
+    opacity: 0.85;
   }
 
   .button-contain {
@@ -258,8 +421,8 @@
       font-size: 2.2rem;
     }
 
-    .announce {
-      font-size: 1.5rem;
+    .plan-card-badge {
+      font-size: 1.25rem;
     }
   }
 }

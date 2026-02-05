@@ -2,7 +2,7 @@ import { IOxxoData, IPlans, ISpeiData } from "../../interfaces/Plans";
 import "./PlanCard.scss";
 import { useLocation, useNavigate } from "react-router-dom";
 import { plans } from "../../utils/Constants";
-import { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import trpc from "../../api";
 import { manychatApi } from "../../api/manychat";
 import {
@@ -17,12 +17,24 @@ import PayPalComponent from "../../components/PayPal/PayPalComponent";
 import { useCookies } from "react-cookie";
 import { trackPurchase, trackViewPlans } from "../../utils/facebookPixel";
 import { trackManyChatConversion, trackManyChatPurchase, MC_EVENTS } from "../../utils/manychatPixel";
+import { PiLightning, PiFolderOpen, PiMusicNotes, PiDownloadSimple, PiHeartBreak, PiLockOpen } from "react-icons/pi";
 
-const CheckIconCyan = () => (
-  <svg className="plan-card-check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
-    <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
-  </svg>
-);
+// Copy persuasivo CRO: texto aburrido → gancho emocional
+const BENEFIT_COPY: Record<string, string> = {
+  "Contenido exclusivo para DJs": "Remixes Privados (No en Spotify)",
+  "Todo organizado por géneros": "Carpetas Listas para Tocar",
+  "Nueva música cada semana": "Nueva música cada semana",
+  "Descargas con 1 click": "Descargas con 1 click",
+  "Renovación automática": "Cancela cuando quieras (Sin ataduras)",
+};
+
+const BENEFIT_ICONS: Record<string, React.ReactNode> = {
+  "Contenido exclusivo para DJs": <PiMusicNotes className="plan-card-benefit-icon" aria-hidden />,
+  "Todo organizado por géneros": <PiFolderOpen className="plan-card-benefit-icon" aria-hidden />,
+  "Nueva música cada semana": <PiLightning className="plan-card-benefit-icon" aria-hidden />,
+  "Descargas con 1 click": <PiDownloadSimple className="plan-card-benefit-icon" aria-hidden />,
+  "Renovación automática": <PiHeartBreak className="plan-card-benefit-icon" aria-hidden />,
+};
 
 
 interface PlanCardPropsI {
@@ -230,8 +242,11 @@ function PlanCard(props: PlanCardPropsI) {
 
   useEffect(() => { retreivePaypalPlan() }, [retreivePaypalPlan]);
 
+  const isMxn = plan.moneda === "mxn" || plan.moneda === "MXN";
+  const showBadge = isMxn; // "MEJOR VALOR" en planes MXN
+
   return (
-    <div className={"plan-card-wrapper " + (plan.moneda === "usd" ? "resp-plan " : "")}>
+    <div className={"plan-card-wrapper plan-card-monolith " + (plan.moneda === "usd" ? "resp-plan " : "")}>
       <div className="plan-card-glow" aria-hidden />
       <div
         className={
@@ -240,7 +255,8 @@ function PlanCard(props: PlanCardPropsI) {
           (currentPlan ? "plan-white-card" : "")
         }
       >
-        {currentPlan && <p className="announce">Actual</p>}
+        {currentPlan && <span className="plan-card-badge plan-card-badge--actual">Actual</span>}
+        {!currentPlan && showBadge && <span className="plan-card-badge plan-card-badge--value">MEJOR VALOR</span>}
         <div className="c-row">
           <h2 className="plan-card-title">{plan.name}</h2>
         </div>
@@ -248,70 +264,71 @@ function PlanCard(props: PlanCardPropsI) {
           <span className="plan-card-price-amount">${plan.price}.00</span>
           <span className="plan-card-price-currency">{plan.moneda}</span>
         </div>
-        <div className="plan-card-gb-highlight">
-          <span className="plan-card-gb-value">{plan.gigas.toString()} GB</span>
-          <span className="plan-card-gb-label">de descarga al mes</span>
+        <div className="plan-card-data-visualizer">
+          <div className="plan-card-data-visualizer-header">
+            <span className="plan-card-gb-value">{plan.gigas.toString()} GB</span>
+            <span className="plan-card-data-visualizer-label">Tu Arsenal Mensual</span>
+          </div>
+          <div className="plan-card-progress-track">
+            <div className="plan-card-progress-fill" style={{ width: "100%" }} />
+          </div>
         </div>
-        <div className="c-row">
-          <p className="plan-card-subtitle">{plan.description}</p>
-        </div>
-        <div className="c-row">
-          <p className="plan-card-subtitle">Duración: {plan.duration} días</p>
-        </div>
+        <p className="plan-card-subtitle plan-card-description">{plan.description}</p>
+        <p className="plan-card-subtitle plan-card-access">Acceso Ilimitado 24/7</p>
         <ul className="plan-card-benefits">
           {plans[0].included.map((ad) => (
             <li key={ad} className="plan-card-benefit-item">
-              <CheckIconCyan />
-              <span>{ad}</span>
+              {BENEFIT_ICONS[ad] ?? <PiLightning className="plan-card-benefit-icon" aria-hidden />}
+              <span>{BENEFIT_COPY[ad] ?? ad}</span>
             </li>
           ))}
         </ul>
-        <div className="plan-card-payment-section">
-          <p className="plan-card-payment-label">Elige cómo pagar</p>
-          <p className="plan-card-payment-sublabel">Pagos seguros · Tarjeta, PayPal, SPEI u OXXO (México)</p>
-        </div>
-        <div className="button-contain" id="abandonedCartBtn">
-        {currentPlan ? (
-          <button className="silver-bg" onClick={handleCancelModal}>
-            Cancelar plan
-          </button>
-        ) : (
-          <>
-            {pathname === "/actualizar-planes" ? (
-              <button className="plan-card-btn-primary" onClick={handleChangeModal}>Cambiar plan</button>
-            ) : (
-              <>
-                {(plan.moneda === "mxn" || plan.moneda === "MXN") && (
-                  <>
-                    <button
-                      id="pixelButton"
-                      className="plan-card-btn-secondary silver-bg"
-                      onClick={payWithOxxo}
-                    >
-                      Pagar con OXXO
-                    </button>
-                    <button className="plan-card-btn-secondary silver-bg" onClick={payWithSpei}>
-                      Pagar con SPEI
-                    </button>
-                  </>
-                )}
-                <button className="plan-card-btn-primary" onClick={() => handleCheckout(plan.id)}>
-                  Comprar con tarjeta
+        <div className="plan-card-cta-section" id="abandonedCartBtn">
+          {currentPlan ? (
+            <button className="plan-card-btn-cancel" onClick={handleCancelModal}>
+              Cancelar plan
+            </button>
+          ) : (
+            <>
+              {pathname === "/actualizar-planes" ? (
+                <button className="plan-card-btn-hero" onClick={handleChangeModal}>
+                  <PiLockOpen aria-hidden /> Cambiar plan
                 </button>
-                {ppPlan !== null &&
-                  (ppPlan.paypal_plan_id || ppPlan.paypal_plan_id_test) && (
-                  <PayPalComponent
-                    plan={ppPlan}
-                    type={'subscription'}
-                    onApprove={successSubscription}
-                    onClick={() => { trackManyChatConversion(MC_EVENTS.CLICK_PAYPAL); handleUserClickOnPlan(); }}
-                    key={`paypal-button-component-${plan.id}`}
-                  />
-                )}
-              </>
-            )}
-          </>
-        )}
+              ) : (
+                <>
+                  <button
+                    className="plan-card-btn-hero"
+                    onClick={() => handleCheckout(plan.id)}
+                  >
+                    <PiLockOpen aria-hidden /> DESBLOQUEAR ACCESO AHORA
+                  </button>
+                  {(isMxn || (ppPlan !== null && (ppPlan.paypal_plan_id || ppPlan.paypal_plan_id_test))) && (
+                    <div className="plan-card-secondary-payment">
+                      <span className="plan-card-secondary-label">O paga con:</span>
+                      <div className="plan-card-secondary-buttons">
+                        {isMxn && (
+                          <button type="button" className="plan-card-btn-outline" onClick={payWithSpei}>
+                            SPEI
+                          </button>
+                        )}
+                        {ppPlan !== null && (ppPlan.paypal_plan_id || ppPlan.paypal_plan_id_test) && (
+                          <PayPalComponent
+                            plan={ppPlan}
+                            type="subscription"
+                            onApprove={successSubscription}
+                            onClick={() => { trackManyChatConversion(MC_EVENTS.CLICK_PAYPAL); handleUserClickOnPlan(); }}
+                            key={`paypal-button-component-${plan.id}`}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </>
+          )}
+        </div>
+        <p className="plan-card-trust">🔒 Pagos encriptados con seguridad bancaria</p>
       </div>
       <ConditionModal
         title={"Cancelación de suscripción"}
