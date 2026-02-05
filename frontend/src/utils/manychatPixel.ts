@@ -41,7 +41,7 @@ export function trackManyChatPurchase(eventName: string, amount: number, currenc
   }
 }
 
-/** Nombres de eventos para consistencia – funnel completo */
+/** Eventos ManyChat – solo funnel de conversión */
 export const MC_EVENTS = {
   VIEW_HOME: "bear_beat_view_home",
   CLICK_CTA_REGISTER: "bear_beat_click_cta_register",
@@ -56,15 +56,8 @@ export const MC_EVENTS = {
   CLICK_SPEI: "bear_beat_click_spei",
   CLICK_PAYPAL: "bear_beat_click_paypal",
   START_CHECKOUT: "bear_beat_start_checkout",
-  VIEW_CHECKOUT: "bear_beat_view_checkout",
   REGISTRATION: "bear_beat_registration",
   PAYMENT_SUCCESS: "bear_beat_payment_success",
-  VIEW_PLAN_UPGRADE: "bear_beat_view_plan_upgrade",
   CANCEL_SUBSCRIPTION: "bear_beat_cancel_subscription",
   CHANGE_PLAN: "bear_beat_change_plan",
-  VIEW_INSTRUCTIONS: "bear_beat_view_instructions",
-  VIEW_MY_ACCOUNT: "bear_beat_view_my_account",
-  VIEW_DOWNLOADS: "bear_beat_view_downloads",
-  REQUEST_PASSWORD_RECOVERY: "bear_beat_request_password_recovery",
-  VIEW_CATALOG: "bear_beat_view_catalog",
 } as const;

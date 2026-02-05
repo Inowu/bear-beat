@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 import "./Downloads.scss";
 import { HiFolderArrowDown } from "react-icons/hi2";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -19,7 +18,6 @@ function Downloads() {
     }
   };
   useEffect(() => { retreiveDownloads(); }, []);
-  useEffect(() => { trackManyChatConversion(MC_EVENTS.VIEW_DOWNLOADS); }, []);
 
   return (
     <div className="downloads-container">

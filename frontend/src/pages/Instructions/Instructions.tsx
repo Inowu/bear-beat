@@ -1,7 +1,6 @@
 import "./Instructions.scss";
 import { of } from "await-of";
 import { useEffect, useRef, useState } from "react";
-import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 import step1 from "../../assets/images/instructions-1.jpg";
 import step2 from "../../assets/images/instructions-2.jpg";
 import step3 from "../../assets/images/instructions-3.jpg";
@@ -26,7 +25,6 @@ function Instructions() {
   }
 
   useEffect(() => { getConfig() }, []);
-  useEffect(() => { trackManyChatConversion(MC_EVENTS.VIEW_INSTRUCTIONS); }, []);
 
   return (
     <div className="instructions-main-container">

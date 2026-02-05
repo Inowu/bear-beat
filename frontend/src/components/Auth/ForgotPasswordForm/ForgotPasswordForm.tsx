@@ -9,7 +9,6 @@ import { SuccessModal } from "../../../components/Modals/SuccessModal/SuccessMod
 import { Spinner } from "../../../components/Spinner/Spinner";
 import Turnstile from "../../../components/Turnstile/Turnstile";
 import Logo from "../../../assets/images/osonuevo.png";
-import { trackManyChatConversion, MC_EVENTS } from "../../../utils/manychatPixel";
 import "./ForgotPasswordForm.scss";
 
 function ForgotPasswordForm() {
@@ -41,7 +40,6 @@ function ForgotPasswordForm() {
           email: values.email,
           turnstileToken,
         });
-        trackManyChatConversion(MC_EVENTS.REQUEST_PASSWORD_RECOVERY);
         setShowSuccess(true);
       } catch (error) {
         setShow(true);

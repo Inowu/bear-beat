@@ -16,45 +16,27 @@ Tracking implementado para seguimiento en ManyChat, Facebook Pixel y API ManyCha
 
 ## 2. ManyChat Pixel – Eventos (MC_EVENTS)
 
-### Landing y conversión
+Solo eventos del funnel de conversión.
 
 | Evento | Cuándo | Componente |
 |--------|--------|------------|
-| `bear_beat_view_home` | Usuario ve la landing (PublicHome) | PublicHome.tsx |
-| `bear_beat_click_cta_register` | Clic en "Obtener Acceso", "Iniciar Sesión", "QUIERO BLINDAR MI LIBRERÍA" | PublicHome.tsx |
+| `bear_beat_view_home` | Usuario ve la landing | PublicHome.tsx |
+| `bear_beat_click_cta_register` | Clic en "Obtener Acceso", "QUIERO BLINDAR MI LIBRERÍA" | PublicHome.tsx |
 | `bear_beat_click_plan_usd` | Clic en "Quiero el plan USD" | PublicHome.tsx |
 | `bear_beat_click_plan_mxn` | Clic en "Quiero el plan MXN" | PublicHome.tsx |
-| `bear_beat_view_auth` | Usuario entra a /auth (login/registro) | Auth.tsx |
+| `bear_beat_view_auth` | Usuario entra a /auth | Auth.tsx |
 | `bear_beat_login_success` | Login exitoso | LoginForm.tsx |
-| `bear_beat_request_password_recovery` | Recuperar contraseña enviado | ForgotPasswordForm.tsx |
 | `bear_beat_click_chat` | Clic en ChatButton (¿Ayuda DJ?) | ChatButton.tsx |
-
-### Planes y checkout
-
-| Evento | Cuándo | Componente |
-|--------|--------|------------|
 | `bear_beat_view_plans` | Usuario ve /planes | Plans.tsx |
 | `bear_beat_select_plan` | Usuario selecciona plan / COMPRAR | PlanCard.tsx |
 | `bear_beat_click_buy` | Clic en "COMPRAR CON TARJETA" | PlanCard.tsx |
 | `bear_beat_click_spei` | Clic en "Pagar vía SPEI" | PlanCard.tsx |
 | `bear_beat_click_paypal` | Clic en botón PayPal | PlanCard.tsx |
-| `bear_beat_start_checkout` | Usuario entra a checkout con plan | Checkout.tsx |
-| `bear_beat_view_checkout` | (reservado) | - |
+| `bear_beat_start_checkout` | Usuario entra a checkout | Checkout.tsx |
 | `bear_beat_registration` | Registro exitoso | SignUpForm.tsx |
-| `bear_beat_payment_success` | Pago exitoso (Stripe/PayPal) | PlanCard, CheckoutForm |
-| `bear_beat_payment_success` (dinero) | Pago con valor + moneda | PlanCard, CheckoutForm |
-
-### Post-compra
-
-| Evento | Cuándo | Componente |
-|--------|--------|------------|
-| `bear_beat_view_plan_upgrade` | Usuario ve /actualizar-planes | PlanUpgrade.tsx |
+| `bear_beat_payment_success` | Pago exitoso | PlanCard, CheckoutForm |
 | `bear_beat_cancel_subscription` | Clic en "Cancelar plan" | PlanCard.tsx |
 | `bear_beat_change_plan` | Clic en "Cambiar plan" | PlanCard.tsx |
-| `bear_beat_view_instructions` | Usuario ve /instrucciones | Instructions.tsx |
-| `bear_beat_view_my_account` | Usuario ve /micuenta | MyAccount.tsx |
-| `bear_beat_view_downloads` | Usuario ve historial descargas | Downloads.tsx |
-| `bear_beat_view_catalog` | Usuario logueado ve catálogo (Home) | Home.tsx |
 
 ---
 

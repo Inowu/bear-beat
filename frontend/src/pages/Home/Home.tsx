@@ -22,7 +22,6 @@ import { of } from 'await-of';
 import Pagination from '../../components/Pagination/Pagination';
 import { UsersUHModal } from '../../components/Modals/UsersUHModal/UsersUHModal';
 import { Elements } from '@stripe/react-stripe-js';
-import { trackManyChatConversion, MC_EVENTS } from '../../utils/manychatPixel';
 import { loadStripe } from '@stripe/stripe-js';
 
 interface IAlbumData {
@@ -324,9 +323,6 @@ function Home() {
 
   useEffect(() => {
     getFiles();
-  }, []);
-  useEffect(() => {
-    trackManyChatConversion(MC_EVENTS.VIEW_CATALOG);
   }, []);
   useEffect(() => {
     checkUHUser();

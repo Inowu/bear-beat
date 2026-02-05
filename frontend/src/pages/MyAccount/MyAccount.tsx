@@ -18,7 +18,6 @@ import Mastercard from "../../assets/images/cards/master.png";
 import SpaceAvailableCard from "../../components/SpaceAvailableCard/SpaceAvailableCard";
 import trpc from "../../api";
 import Visa from "../../assets/images/cards/visa.png";
-import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 
 const stripeKey = process.env.REACT_APP_ENVIRONMENT === 'development'
   ? process.env.REACT_APP_STRIPE_TEST_KEY as string
@@ -27,7 +26,6 @@ const stripeKey = process.env.REACT_APP_ENVIRONMENT === 'development'
 const stripePromise = loadStripe(stripeKey);
 
 function MyAccount() {
-  useEffect(() => { trackManyChatConversion(MC_EVENTS.VIEW_MY_ACCOUNT); }, []);
   const {
     currentUser,
     startUser,
