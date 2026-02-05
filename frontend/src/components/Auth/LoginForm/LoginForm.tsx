@@ -11,7 +11,7 @@ import { Spinner } from "../../../components/Spinner/Spinner";
 import { ChatButton } from "../../../components/ChatButton/ChatButton";
 import Logo from "../../../assets/images/osonuevo.png";
 import { trackManyChatConversion, MC_EVENTS } from "../../../utils/manychatPixel";
-import * as Sentry from "@sentry/react";
+import ErrorButton from "../../ErrorButton/ErrorButton";
 import "./LoginForm.scss";
 
 function LoginForm() {
@@ -153,15 +153,7 @@ function LoginForm() {
               Registrarme
             </Link>
           </div>
-          <button
-            type="button"
-            className="auth-login-sentry-test"
-            onClick={() => {
-              throw new Error("Sentry Test Error");
-            }}
-          >
-            Break the world
-          </button>
+          <ErrorButton />
         </form>
       </div>
       <ErrorModal show={show} onHide={closeModal} message={errorMessage} />

@@ -1,25 +1,6 @@
-/**
- * Sentry – documento oficial: este archivo debe importarse ANTES que cualquier otro.
- * https://docs.sentry.io/platforms/javascript/guides/react/
- *
- * En CRA/Netlify, REACT_APP_SENTRY_DSN debe existir en el momento del build.
- */
 import * as Sentry from "@sentry/react";
 
-const dsn = process.env.REACT_APP_SENTRY_DSN;
-
-if (dsn) {
-  Sentry.init({
-    dsn,
-    sendDefaultPii: true,
-    debug: true, // Ver en consola si los eventos se envían (doc: "observe your console output")
-    release: "bear-beat@1.0.0",
-    environment: process.env.NODE_ENV || "production",
-    // Sin tracing/replay para no saturar cuota; NO usar integrations: [] (desactiva el envío de errores)
-    tracesSampleRate: 0,
-  });
-} else if (typeof window !== "undefined") {
-  console.warn(
-    "[Sentry] REACT_APP_SENTRY_DSN no definido. En Netlify añade la variable, guarda y haz Trigger deploy (el DSN se incluye en el build)."
-  );
-}
+Sentry.init({
+  dsn: process.env.REACT_APP_SENTRY_DSN || "https://b1199b86d9489b928d5a58660bc79c6b@o4508382588305408.ingest.us.sentry.io/4510831772237824",
+  sendDefaultPii: true,
+});
