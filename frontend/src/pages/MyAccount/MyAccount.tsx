@@ -296,7 +296,7 @@ function MyAccount() {
       className="my-account-main-container min-h-screen"
       style={{ background: "var(--ma-bg)" }}
     >
-      <div className="max-w-6xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto w-full p-4 md:p-6">
         <h1
           className="font-bold mb-1"
           style={{ fontFamily: "Poppins, sans-serif", color: "var(--ma-title)", fontSize: "var(--app-font-size-h1)" }}

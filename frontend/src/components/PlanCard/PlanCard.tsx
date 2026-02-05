@@ -254,7 +254,7 @@ function PlanCard(props: PlanCardPropsI) {
       <div className="plan-card-glow" aria-hidden />
       <div
         className={
-          "plan-card-main-card " +
+          "plan-card-main-card dark:bg-slate-900 dark:border-slate-800 " +
           (plan.moneda === "usd" ? "resp-plan " : "") +
           (currentPlan ? "plan-white-card" : "")
         }

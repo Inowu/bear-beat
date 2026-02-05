@@ -94,6 +94,7 @@
           theme = (h >= 6 && h < 21) ? 'light' : 'dark';
         }
         document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.classList.toggle('dark', theme === 'dark');
         // Chrome en Mac: clase para ajustes de render (fuentes, capas)
         var isMac = typeof navigator !== 'undefined' && navigator.platform && navigator.platform.toLowerCase().indexOf('mac') >= 0;
         var isChrome = typeof window !== 'undefined' && window.chrome && (window.chrome.runtime || !window.opr);

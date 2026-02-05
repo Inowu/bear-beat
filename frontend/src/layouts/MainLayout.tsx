@@ -35,12 +35,12 @@ function MainLayout() {
   return (
     <div className="main-layout-main-container">
       {userToken && <Navbar setAsideOpen={setAsideOpen} menuButtonRef={menuButtonRef} />}
-      <div className={`content-container landing-layout${isLanding ? " content-container--landing" : ""}`}>
+      <div className={`content-container landing-layout${isLanding ? " content-container--landing" : ""} ${!isLanding ? "bg-slate-50 dark:bg-slate-950" : ""}`}>
         {userToken && (
           <AsideNavbar show={asideOpen} onHide={handleAsideHide} />
         )}
         {showDownload && currentUser !== null && <FileLoader />}
-        <div className={`content-container-inner ${isLanding ? "" : "content-area-app min-h-screen font-poppins text-slate-900 dark:text-slate-100 bg-slate-50 dark:bg-slate-950 transition-colors duration-300"}`}>
+        <div className={`content-container-inner ${isLanding ? "" : "content-area-app min-h-screen w-full font-poppins text-base text-slate-900 dark:text-slate-100 bg-slate-50 dark:bg-slate-950 transition-colors duration-300"}`}>
           <Outlet />
         </div>
       </div>

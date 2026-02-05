@@ -292,7 +292,7 @@ function Admin() {
   return (
     <div className="admin-theme w-full max-w-[100vw] overflow-x-hidden">
       <div className="admin-contain">
-        <div className="header">
+        <div className="admin-top-bar flex flex-col md:flex-row md:items-center md:justify-between gap-4 w-full">
           <div className="header__title-row">
             <h1>Usuarios</h1>
             {totalRegistered !== null && (
@@ -301,7 +301,33 @@ function Admin() {
               </span>
             )}
           </div>
-          <div className="header__actions">
+          <div className="filter-contain flex flex-col md:flex-row md:items-center md:flex-1 md:justify-center md:max-w-2xl md:gap-3">
+            <div className="left-contain flex flex-wrap gap-2 md:flex-nowrap md:gap-3">
+              <div className="select-input">
+                <select value={filters.active} onChange={(e) => startFilter("active", +e.target.value)}>
+                  <option value={2}>Todos</option>
+                  <option value={1}>Activos</option>
+                  <option value={0}>Inactivos</option>
+                </select>
+              </div>
+              <div className="select-input">
+                <select value={filters.limit} onChange={(e) => startFilter("limit", +e.target.value)}>
+                  <option value={100}>100</option>
+                  <option value={200}>200</option>
+                  <option value={500}>500</option>
+                </select>
+              </div>
+              <div className="search-input flex-1 min-w-0">
+                <Search className="search-input__icon" size={18} />
+                <input
+                  placeholder="Buscar por email"
+                  value={filters.search}
+                  onChange={(e) => startFilter("search", e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="header__actions flex flex-wrap gap-2 shrink-0">
             <button type="button" className="btn-icon btn-primary" onClick={() => setShowModal(true)}>
               <Plus size={18} /> Añadir
             </button>
@@ -317,33 +343,6 @@ function Admin() {
                 <Download size={18} /> Exportar
               </button>
             </CsvDownloader>
-          </div>
-        </div>
-
-        <div className="filter-contain">
-          <div className="left-contain">
-            <div className="select-input">
-              <select value={filters.active} onChange={(e) => startFilter("active", +e.target.value)}>
-                <option value={2}>Todos</option>
-                <option value={1}>Activos</option>
-                <option value={0}>Inactivos</option>
-              </select>
-            </div>
-            <div className="select-input">
-              <select value={filters.limit} onChange={(e) => startFilter("limit", +e.target.value)}>
-                <option value={100}>100</option>
-                <option value={200}>200</option>
-                <option value={500}>500</option>
-              </select>
-            </div>
-            <div className="search-input">
-              <Search className="search-input__icon" size={18} />
-              <input
-                placeholder="Buscar por email"
-                value={filters.search}
-                onChange={(e) => startFilter("search", e.target.value)}
-              />
-            </div>
           </div>
         </div>
 
