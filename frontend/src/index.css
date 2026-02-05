@@ -2,13 +2,134 @@
 @tailwind components;
 @tailwind utilities;
 
+/* MODO CLARO (default) */
 :root {
+  --bg-main: #f8fafc; /* slate-50 */
+  --bg-card: #ffffff;
+  --bg-input: #ffffff;
+  --text-main: #0f172a; /* slate-900 */
+  --text-muted: #64748b; /* slate-500 */
+  --border-main: #e2e8f0; /* slate-200 */
+  color-scheme: light;
+  /* Puente: SCSS/vars antiguas = mismas valores para que todo el sitio respete light/dark */
+  --app-bg: var(--bg-main);
+  --app-bg-card: var(--bg-card);
+  --app-bg-soft: var(--bg-main);
+  --app-text-heading: var(--text-main);
+  --app-text-body: var(--text-main);
+  --app-text-muted: var(--text-muted);
+  --app-border: var(--border-main);
+  --ph-bg: var(--bg-main);
+  --ph-bg-card: var(--bg-card);
+  --ph-text-heading: var(--text-main);
+  --ph-text-body: var(--text-main);
+  --ph-text-muted: var(--text-muted);
+  --ph-border: var(--border-main);
+  --auth-register-input-bg: var(--bg-input);
+  --auth-register-input-border: var(--border-main);
+  --auth-register-text: var(--text-main);
+  --auth-login-card-bg: var(--bg-card);
+  --auth-login-card-border: var(--border-main);
+  --auth-login-title: var(--text-main);
+  --auth-login-subtitle: var(--text-muted);
+  /* Instrucciones: siguen tema claro */
+  --in-bg: var(--bg-main);
+  --in-card-bg: var(--bg-card);
+  --in-card-border: var(--border-main);
+  --in-title: var(--text-main);
+  --in-text: var(--text-main);
+  --in-text-muted: var(--text-muted);
+  --in-step-circle: #08E1F7;
+  --in-step-circle-text: var(--text-main);
+  --in-hero-gradient: linear-gradient(180deg, #e0f2fe 0%, var(--bg-main) 100%);
+  --in-terminal-bg: #f1f5f9;
+  --in-terminal-border: var(--border-main);
+  --in-stepper-line: var(--border-main);
+  --in-accent: #08E1F7;
+  --app-status-error: #FF2D2C;
+  --app-status-success: #39D834;
+  --app-status-warning: #FEBC2E;
+  --app-accent: #08E1F7;
+  --app-accent-bright: #08E1F7;
+  /* Navbar: siempre oscuro (marca Bear) */
+  --theme-nav-bg: #292929;
+  --theme-nav-border-bottom: rgba(255, 255, 255, 0.1);
+  --theme-nav-text: #e2e8f0;
+  --theme-nav-item-bg: rgba(255, 255, 255, 0.08);
+  --theme-nav-item-hover-bg: rgba(8, 225, 247, 0.2);
+  --theme-nav-item-hover-text: #08E1F7;
+  --theme-card-bg: var(--bg-card);
+  --theme-card-border: var(--border-main);
+  --theme-text-primary: var(--text-main);
+  --theme-accent: #08E1F7;
+  --theme-accent-dim: rgba(8, 225, 247, 0.15);
+}
+
+/* MODO OSCURO (clase .dark en html) */
+.dark {
+  --bg-main: #020617; /* slate-950 */
+  --bg-card: #0f172a; /* slate-900 */
+  --bg-input: #1e293b; /* slate-800 */
+  --text-main: #e2e8f0; /* slate-200 */
+  --text-muted: #94a3b8; /* slate-400 */
+  --border-main: #334155; /* slate-700 */
   color-scheme: dark;
+  --app-bg: var(--bg-main);
+  --app-bg-card: var(--bg-card);
+  --app-bg-soft: var(--bg-main);
+  --app-text-heading: var(--text-main);
+  --app-text-body: var(--text-main);
+  --app-text-muted: var(--text-muted);
+  --app-border: var(--border-main);
+  --ph-bg: var(--bg-main);
+  --ph-bg-card: var(--bg-card);
+  --ph-text-heading: var(--text-main);
+  --ph-text-body: var(--text-main);
+  --ph-text-muted: var(--text-muted);
+  --ph-border: var(--border-main);
+  --auth-register-input-bg: var(--bg-input);
+  --auth-register-input-border: var(--border-main);
+  --auth-register-text: var(--text-main);
+  --auth-login-card-bg: var(--bg-card);
+  --auth-login-card-border: var(--border-main);
+  --auth-login-title: var(--text-main);
+  --auth-login-subtitle: var(--text-muted);
+  /* Instrucciones: siguen tema oscuro */
+  --in-bg: var(--bg-main);
+  --in-card-bg: var(--bg-card);
+  --in-card-border: var(--border-main);
+  --in-title: var(--text-main);
+  --in-text: var(--text-main);
+  --in-text-muted: var(--text-muted);
+  --in-step-circle: #08E1F7;
+  --in-step-circle-text: var(--text-main);
+  --in-hero-gradient: linear-gradient(180deg, #0f172a 0%, var(--bg-main) 100%);
+  --in-terminal-bg: #1e293b;
+  --in-terminal-border: var(--border-main);
+  --in-stepper-line: var(--border-main);
+  --in-accent: #08E1F7;
+  --app-status-error: #FF2D2C;
+  --app-status-success: #39D834;
+  --app-status-warning: #FEBC2E;
+  --app-accent: #08E1F7;
+  --app-accent-bright: #08E1F7;
+  /* Navbar: mismo estilo oscuro en dark */
+  --theme-nav-bg: #292929;
+  --theme-nav-border-bottom: rgba(255, 255, 255, 0.1);
+  --theme-nav-text: #e2e8f0;
+  --theme-nav-item-bg: rgba(255, 255, 255, 0.08);
+  --theme-nav-item-hover-bg: rgba(8, 225, 247, 0.2);
+  --theme-nav-item-hover-text: #08E1F7;
+  --theme-card-bg: var(--bg-card);
+  --theme-card-border: var(--border-main);
+  --theme-text-primary: var(--text-main);
+  --theme-accent: #08E1F7;
+  --theme-accent-dim: rgba(8, 225, 247, 0.15);
 }
 
 body {
-  font-family: 'Poppins', sans-serif;
-  @apply bg-slate-950 text-slate-200 antialiased;
+  font-family: "Poppins", sans-serif;
+  @apply bg-bg-main text-text-main transition-colors duration-300 antialiased;
   margin: 0;
   padding: 0;
   min-height: 100vh;
@@ -17,4 +138,14 @@ body {
 #root {
   isolation: isolate;
   min-height: 100vh;
+}
+
+/* Modales y tarjetas: usan tokens semánticos para light/dark */
+.modal-content,
+.modal-dialog .content {
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--border-main);
+  color: var(--text-main);
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }

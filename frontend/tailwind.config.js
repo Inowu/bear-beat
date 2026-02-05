@@ -5,40 +5,54 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // === PALETA BEAR BEAT ===
+        // PALETA SEMÁNTICA (cambia según el modo light/dark)
+        bg: {
+          main: "var(--bg-main)",
+          card: "var(--bg-card)",
+          input: "var(--bg-input)",
+        },
+        text: {
+          main: "var(--text-main)",
+          muted: "var(--text-muted)",
+        },
+        border: {
+          DEFAULT: "var(--border-main)",
+        },
+        // MARCA (siempre igual)
         bear: {
-          cyan: "#08E1F7",      // Tu Cyan Principal (Brand Highlight)
-          mint: "#00E6C1",      // Tu Menta para el Gradiente
+          cyan: "#08E1F7",
+          mint: "#00E6C1",
           dark: {
-            100: "#404040",     // Chips / Items Nav
-            200: "#3B3B3B",     // Items Nav alt
-            300: "#2A2A2A",     // Body Modales
-            400: "#292929",     // Navbar / Aside Fondo
-            500: "#1A1A1A",     // Header Modales / Fondos oscuros
-            900: "#020617",     // Fondo General (Deep Dark) - Mantenemos slate-950 para contraste
+            100: "#404040",
+            200: "#3B3B3B",
+            300: "#2A2A2A",
+            400: "#292929",
+            500: "#1A1A1A",
+            900: "#020617",
           },
           light: {
-            100: "#FFFFFF",     // Superficies
-            200: "#EEEEEE",     // Fondo General Light
+            100: "#FFFFFF",
+            200: "#EEEEEE",
           },
-          status: {
-            error: "#FF2D2C",
-            success: "#39D834",
-            warning: "#FEBC2E",
-          }
-        }
+        },
+        status: {
+          error: "#FF2D2C",
+          success: "#39D834",
+          warning: "#FEBC2E",
+        },
       },
       fontFamily: {
-        poppins: ["Poppins", "sans-serif"], // UI, Párrafos, Tablas
-        bear: ["Bear-font", "Poppins", "sans-serif"], // Títulos, Branding, Precios
+        poppins: ["Poppins", "sans-serif"],
+        bear: ["Bear-font", "Poppins", "sans-serif"],
       },
       backgroundImage: {
-        'bear-gradient': 'linear-gradient(11deg, #00E6C1 0%, #08E1F7 100%)', // Tu gradiente oficial
+        "bear-gradient": "linear-gradient(11deg, #00E6C1 0%, #08E1F7 100%)",
       },
       borderRadius: {
-        'pill': '999px', // Para tus botones redondos
-      }
+        pill: "999px",
+        card: "12px",
+      },
     },
   },
   plugins: [],
-}
+};

@@ -17,28 +17,12 @@
   box-sizing: border-box;
 }
 
-/* === INYECCIÓN ROOT: fondo negro global por defecto (evita "virus blanco") === */
 html,
 #root,
 body {
   min-height: 100vh;
   margin: 0;
   padding: 0;
-}
-
-body,
-html,
-#root {
-  background-color: #020617 !important; /* slate-950: gana sobre Bootstrap y cualquier otro */
-  color: #e2e8f0 !important; /* slate-200 */
-}
-
-/* Tema claro: solo cuando el usuario lo elige explícitamente */
-[data-theme="light"] body,
-[data-theme="light"] html,
-[data-theme="light"] #root {
-  background-color: var(--app-bg) !important;
-  color: var(--app-text-body) !important;
 }
 
 /* Dashboard/app: inputs y tablas usan vars de tema (Bear Beat light/dark) */
@@ -191,17 +175,12 @@ html {
   }
 }
 
-/* Toda la app: mismo estilo y tamaño que Home, legibilidad mínima en toda la web */
-/* text-rendering: auto evita blur en Chrome Mac; optimizeLegibility se aplica solo en no-Chrome */
+/* Toda la app: tipografía y tamaño; fondo/texto los controla Tailwind (index.css) con bg-bg-main text-text-main */
 body {
   font-family: "Poppins", sans-serif;
-  background: var(--app-bg);
-  background-color: var(--app-bg);
-  color: var(--app-text-body);
   font-size: var(--app-font-size-body);
   font-weight: var(--app-font-weight-body);
   line-height: 1.4;
-  transition: background 0.2s ease, background-color 0.2s ease, color 0.2s ease;
   text-rendering: auto;
 }
 
@@ -431,4 +410,11 @@ button.primary-pill {
   overflow-x: hidden;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
+}
+
+/* Identidad Bear Beat: fuentes; fondo/texto global lo controla index.css con variables semánticas */
+h1,
+h2,
+.brand-text {
+  font-family: "Bear-font", sans-serif;
 }

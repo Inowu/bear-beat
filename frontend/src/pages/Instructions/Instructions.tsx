@@ -65,13 +65,10 @@ function Instructions() {
   };
 
   return (
-    <div
-      className="instructions-main-container min-h-screen dark:text-slate-300 [&_p]:dark:text-slate-300 [&_li]:dark:text-slate-300 [&_span]:dark:text-slate-300"
-      style={{ background: "var(--in-bg)" }}
-    >
+    <div className="instructions-main-container min-h-screen bg-bg-main text-text-main [&_p]:text-text-main [&_li]:text-text-main [&_span]:text-text-main">
       <div className="max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto px-4 py-8 md:py-12">
         {videoURL !== "" ? (
-          <div className="rounded-xl overflow-hidden border in-iframe-wrap" style={{ borderColor: "var(--in-card-border)" }}>
+          <div className="rounded-xl overflow-hidden border border-border in-iframe-wrap">
             <iframe
               src={videoURL}
               title="YouTube video player"

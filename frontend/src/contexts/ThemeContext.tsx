@@ -44,7 +44,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       if (stored && ["light", "dark", "system", "schedule"].includes(stored))
         return stored;
     } catch (_) {}
-    return "dark";
+    return "light";
   });
 
   const [effectiveTheme, setEffectiveTheme] = useState<"light" | "dark">(() =>

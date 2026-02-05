@@ -95,16 +95,16 @@ function LoginForm() {
   return (
     <>
       <div className="auth-login-atmosphere">
-        <div className="auth-login-card">
+        <div className="auth-login-card bg-bg-card border border-border shadow-lg rounded-2xl text-text-main">
           <img src={Logo} alt="Bear Beat" className="auth-login-logo" />
-          <h1 className="auth-login-title">Bienvenido, DJ.</h1>
-          <p className="auth-login-sub">
+          <h1 className="auth-login-title font-bear text-text-main">Bienvenido, DJ.</h1>
+          <p className="auth-login-sub text-text-muted">
             Tu cabina está lista. Ingresa para descargar.
           </p>
           <ChatButton />
           <form className="auth-form auth-login-form" onSubmit={formik.handleSubmit}>
             <div className="c-row">
-              <div className="auth-login-input-wrap">
+              <div className="auth-login-input-wrap rounded-pill bg-bg-input border border-border focus-within:ring-2 focus-within:ring-bear-cyan focus-within:border-transparent">
                 <HiOutlineMail className="auth-login-input-icon" aria-hidden />
                 <input
                   placeholder="Correo electrónico"
@@ -121,7 +121,7 @@ function LoginForm() {
               )}
             </div>
             <div className="c-row">
-              <div className="auth-login-input-wrap">
+              <div className="auth-login-input-wrap rounded-pill bg-bg-input border border-border focus-within:ring-2 focus-within:ring-bear-cyan focus-within:border-transparent">
                 <HiOutlineLockClosed className="auth-login-input-icon" aria-hidden />
                 <PasswordInput
                   placeholder="Contraseña"
@@ -143,7 +143,7 @@ function LoginForm() {
               </Link>
             </div>
             {!loader ? (
-              <button type="submit" className="auth-login-submit-btn">
+              <button type="submit" className="auth-login-submit-btn rounded-pill bg-bear-gradient text-bear-dark-900 font-bold">
                 INGRESAR
               </button>
             ) : (
