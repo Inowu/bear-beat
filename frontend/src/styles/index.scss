@@ -99,7 +99,7 @@ html {
 }
 
 /* Toda la app: mismo estilo y tamaño que Home, legibilidad mínima en toda la web */
-/* text-rendering: optimizeLegibility mejora kerning en Chrome/Safari Mac */
+/* text-rendering: auto evita blur en Chrome Mac; optimizeLegibility se aplica solo en no-Chrome */
 body {
   font-family: "Poppins", sans-serif;
   background: var(--app-bg);
@@ -109,7 +109,25 @@ body {
   font-weight: var(--app-font-weight-body);
   line-height: 1.4;
   transition: background 0.2s ease, background-color 0.2s ease, color 0.2s ease;
-  text-rendering: optimizeLegibility;
+  text-rendering: auto;
+}
+
+/* Chrome en Mac: fuentes más nítidas y capa GPU para evitar parpadeos */
+.chrome-mac {
+  -webkit-font-smoothing: subpixel-antialiased;
+  -moz-osx-font-smoothing: auto;
+}
+
+.chrome-mac body {
+  -webkit-font-smoothing: subpixel-antialiased;
+  -moz-osx-font-smoothing: auto;
+  text-rendering: auto;
+}
+
+.chrome-mac[data-theme="dark"] body,
+.chrome-mac.dark body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Ningún texto por debajo de 1rem para que siempre se pueda leer */
@@ -293,4 +311,17 @@ button.primary-pill {
   iframe {
     border-radius: 8px;
   }
+}
+
+/* Chrome Mac: contenedor principal con capa GPU y contain para render estable */
+.chrome-mac .main-layout-main-container {
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  contain: layout style;
+}
+
+.chrome-mac .main-layout-main-container .content-container {
+  transform: translateZ(0);
+  -webkit-overflow-scrolling: touch;
 }

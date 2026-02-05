@@ -11,6 +11,7 @@
   background-color: var(--app-bg);
   color: var(--app-text-body);
   transition: background 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+  -webkit-font-smoothing: inherit;
 
   .content-container {
     flex: 1;
@@ -23,6 +24,8 @@
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
     border-top: 1px solid var(--app-border);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
   }
 
   /* Contenido con padding y safe areas (notch, barra de gestos) */
