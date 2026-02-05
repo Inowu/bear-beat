@@ -213,13 +213,13 @@
     }
   }
 
-  // ----- Tabla desktop (alta densidad) — visible desde tablet -----
+  // ----- Tabla desktop (alta densidad) — slate-900, sin blanco -----
   .admin-table {
     width: 100%;
     border: 1px solid var(--ad-border);
     border-radius: 12px;
     overflow: hidden;
-    background: var(--ad-card);
+    background: #0f172a; /* slate-900 */
 
     .table-contain {
       width: 100%;

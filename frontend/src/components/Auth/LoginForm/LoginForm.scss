@@ -61,10 +61,10 @@
   width: 100%;
   max-width: 420px;
   padding: 2.5rem 2rem;
-  background: var(--auth-login-card-bg);
-  border: 2px solid var(--auth-login-card-border);
-  border-radius: 20px;
-  box-shadow: var(--auth-login-card-shadow);
+  background: #0f172a; /* slate-900: tarjeta oscura */
+  border: 1px solid #1e293b; /* slate-800 */
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   font-family: "Poppins", sans-serif;
   transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 
@@ -75,6 +75,12 @@
     max-width: 480px;
     padding: 3rem 2.5rem 3rem 3rem;
   }
+}
+
+[data-theme="light"] .auth-login-card {
+  background: var(--auth-login-card-bg);
+  border-color: var(--auth-login-card-border);
+  box-shadow: var(--auth-login-card-shadow);
 }
 
 .auth-login-logo {

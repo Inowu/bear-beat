@@ -9,7 +9,7 @@ function Auth() {
     trackManyChatConversion(MC_EVENTS.VIEW_AUTH);
   }, []);
   return (
-    <div className="auth-main-container auth-page">
+    <div className="auth-main-container auth-page bg-slate-950 min-h-screen flex flex-col items-center justify-center py-8">
       <img className="auth-logo" src={Logo} alt="Bear Beat" />
       <p className="auth-tagline">
         Música y videos <strong>exclusivos para DJs</strong>

@@ -1,3 +1,8 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Fondo negro por defecto: scrollbars y preferencias del navegador */
+:root {
+  color-scheme: dark;
+}

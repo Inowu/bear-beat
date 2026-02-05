@@ -349,11 +349,11 @@ function Home() {
           <FolderOpen className="flex-shrink-0" style={{ color: 'var(--fb-accent)', width: '1.75rem', height: '1.75rem', strokeWidth: 2 }} />
           Todos los archivos
         </h2>
-        <div className="relative flex items-center">
+        <div className="relative flex items-center w-full md:w-96">
           <Search className="absolute left-3 w-4 h-4 pointer-events-none" style={{ color: 'var(--fb-text-muted)' }} />
           <input
             placeholder="Buscar"
-            className="w-full min-w-[200px] pl-10 pr-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent min-h-[44px]"
+            className="w-full min-w-[200px] pl-10 pr-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent min-h-[44px] bg-slate-900 border-slate-700 text-slate-200"
             style={{
               background: 'var(--fb-input-bg)',
               border: '1px solid var(--fb-input-border)',
@@ -406,8 +406,8 @@ function Home() {
           </button>
         </div>
       )}
-      <div className="folders-navigation-container flex flex-col gap-0 rounded-xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
-        <div className="fb-header grid grid-cols-[1fr_auto_auto] gap-4 py-3 px-4 bg-slate-100 dark:bg-slate-800/50 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
+      <div className="folders-navigation-container flex flex-col gap-0 rounded-xl bg-slate-900 shadow-sm border border-slate-800 overflow-hidden">
+        <div className="fb-header grid grid-cols-[1fr_auto_auto] gap-4 py-3 px-4 bg-slate-800/80 text-xs uppercase tracking-wider text-slate-400">
           <div>Nombre</div>
           <div className="text-right hidden sm:block w-20">Tamaño</div>
           <div className="text-right hidden md:block w-36">Modificado</div>
@@ -428,7 +428,7 @@ function Home() {
                 hour: '2-digit',
                 minute: '2-digit',
               });
-              const rowGridClass = "fb-row fb-row-card grid grid-cols-[1fr_auto] md:grid-cols-[1fr_auto_auto] items-center gap-4 p-4 rounded-none border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors";
+              const rowGridClass = "fb-row fb-row-card grid grid-cols-[1fr_auto] md:grid-cols-[1fr_auto_auto] items-center gap-4 p-4 rounded-none border-b border-slate-800 bg-slate-900 hover:bg-slate-800/50 transition-colors";
               const col2Mobile = "col-start-2 row-start-1 md:col-start-auto md:row-start-auto";
               return (
                 <div key={'files ' + idx}>
