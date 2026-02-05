@@ -6,7 +6,6 @@ import { useUserContext } from "../../../contexts/UserContext";
 import { ARRAY_10 } from "../../../utils/Constants";
 import CsvDownloader from "react-csv-downloader";
 import { Search, Download, MoreVertical } from "lucide-react";
-import "./Ordens.scss";
 import { IAdminOrders, ORDER_STATUS } from "../../../interfaces/admin";
 import { of } from "await-of";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
@@ -196,48 +195,50 @@ export const Ordens = () => {
 
   return (
     <AdminPageLayout title="Órdenes" toolbar={toolbar}>
-      <div className="rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50 hidden md:block">
-        <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
-          <table className="w-full min-w-[700px]">
-            <thead className="bg-slate-900 sticky top-0 z-10">
-              <tr>
-                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">No. Orden</th>
-                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Correo</th>
-                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4 hidden lg:table-cell">Teléfono</th>
-                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Método</th>
-                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4 hidden xl:table-cell">Id suscripción</th>
-                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Precio</th>
-                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Fecha</th>
-                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Estado</th>
-              </tr>
-            </thead>
-            <tbody className="bg-slate-950">
-              {!loader
-                ? ordens.map((orden, index) => (
-                    <tr
-                      key={`order_${index}`}
-                      className="border-b border-slate-800 hover:bg-slate-900/60 transition-colors"
-                    >
-                      <td className="py-3 px-4 text-sm text-slate-300">{orden.id}</td>
-                      <td className="py-3 px-4 text-sm text-slate-300">{orden.email}</td>
-                      <td className="py-3 px-4 text-sm text-slate-300 hidden lg:table-cell">{orden.phone}</td>
-                      <td className="py-3 px-4 text-sm text-slate-300">{orden.payment_method ?? "—"}</td>
-                      <td className="py-3 px-4 text-sm text-slate-300 hidden xl:table-cell">{orden.txn_id}</td>
-                      <td className="py-3 px-4 text-sm text-slate-300">{orden.total_price}</td>
-                      <td className="py-3 px-4 text-sm text-slate-300">{orden.date_order.toLocaleDateString()}</td>
-                      <td className="py-3 px-4">{statusBadge(orden.status)}</td>
-                    </tr>
-                  ))
-                : ARRAY_10.map((_, i) => (
-                    <tr key={`skeleton_${i}`} className="border-b border-slate-800">
-                      <td colSpan={8} className="py-4 px-4 animate-pulse bg-slate-800/50" />
-                    </tr>
-                  ))}
-            </tbody>
-            <tfoot className="bg-slate-900">
-              <tr>
-                <td colSpan={8} className="py-3 px-4">
-                  <Pagination
+      <div className="w-full overflow-x-hidden">
+        {/* Tabla desktop (patrón BEAR BEAT PRO) */}
+        <div className="hidden md:block rounded-xl border border-slate-800 overflow-hidden">
+          <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
+            <table className="w-full text-left text-sm border-collapse">
+              <thead>
+                <tr>
+                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium">No. Orden</th>
+                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium">Correo</th>
+                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium hidden lg:table-cell">Teléfono</th>
+                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium">Método</th>
+                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium hidden xl:table-cell">Id suscripción</th>
+                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium">Precio</th>
+                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium">Fecha</th>
+                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium">Estado</th>
+                </tr>
+              </thead>
+              <tbody className="bg-slate-950 divide-y divide-slate-800">
+                {!loader
+                  ? ordens.map((orden, index) => (
+                      <tr
+                        key={`order_${index}`}
+                        className="border-b border-slate-800 hover:bg-slate-900/50 transition-colors"
+                      >
+                        <td className="py-4 px-4 text-slate-300">{orden.id}</td>
+                        <td className="py-4 px-4 text-slate-300">{orden.email}</td>
+                        <td className="py-4 px-4 text-slate-300 hidden lg:table-cell">{orden.phone}</td>
+                        <td className="py-4 px-4 text-slate-300">{orden.payment_method ?? "—"}</td>
+                        <td className="py-4 px-4 text-slate-300 hidden xl:table-cell">{orden.txn_id}</td>
+                        <td className="py-4 px-4 text-slate-300">{orden.total_price}</td>
+                        <td className="py-4 px-4 text-slate-300">{orden.date_order.toLocaleDateString()}</td>
+                        <td className="py-4 px-4">{statusBadge(orden.status)}</td>
+                      </tr>
+                    ))
+                  : ARRAY_10.map((_, i) => (
+                      <tr key={`skeleton_${i}`} className="border-b border-slate-800">
+                        <td colSpan={8} className="py-4 px-4 animate-pulse bg-slate-800/50" />
+                      </tr>
+                    ))}
+              </tbody>
+              <tfoot className="bg-slate-900">
+                <tr>
+                  <td colSpan={8} className="p-4">
+                    <Pagination
                     totalLoader={totalLoader}
                     totalData={totalOrdens}
                     title="ordenes"
@@ -252,46 +253,52 @@ export const Ordens = () => {
         </div>
       </div>
 
-      <div className="md:hidden flex flex-col rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50">
-        {!loader
-          ? ordens.map((orden, index) => (
-              <div
-                key={`m_${index}`}
-                className="flex items-center justify-between gap-3 min-h-[64px] px-4 py-3 border-b border-slate-800 hover:bg-slate-900/60 active:bg-slate-800"
-                onClick={() => setDrawerOrder(orden)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => e.key === "Enter" && setDrawerOrder(orden)}
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-white text-sm truncate">{orden.email}</p>
-                  <p className="text-slate-400 text-xs">{orden.total_price} · {orden.date_order.toLocaleDateString()}</p>
-                </div>
-                {statusBadge(orden.status)}
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); setDrawerOrder(orden); }}
-                  className="p-2 text-slate-400 hover:text-cyan-400 rounded-lg"
-                  aria-label="Ver más"
+        {/* Cards móvil (patrón BEAR BEAT PRO) */}
+        <div className="block md:hidden grid grid-cols-1 gap-4 w-full">
+          {!loader
+            ? ordens.map((orden, index) => (
+                <div
+                  key={`m_${index}`}
+                  className="bg-slate-900 p-4 rounded-lg border border-slate-800"
+                  onClick={() => setDrawerOrder(orden)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === "Enter" && setDrawerOrder(orden)}
                 >
-                  <MoreVertical size={20} />
-                </button>
-              </div>
-            ))
-          : ARRAY_10.map((_, i) => (
-              <div key={`s_${i}`} className="min-h-[64px] px-4 py-3 border-b border-slate-800 animate-pulse bg-slate-800/30" />
-            ))}
-      </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-slate-200 truncate">{orden.email}</p>
+                      <p className="text-xs text-slate-400">{orden.total_price} · {orden.date_order.toLocaleDateString()}</p>
+                    </div>
+                    {statusBadge(orden.status)}
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setDrawerOrder(orden); }}
+                      className="p-2 text-slate-400 hover:text-cyan-400 rounded-lg flex-shrink-0"
+                      aria-label="Ver más"
+                    >
+                      <MoreVertical size={20} />
+                    </button>
+                  </div>
+                </div>
+              ))
+            : ARRAY_10.map((_, i) => (
+                <div key={`s_${i}`} className="bg-slate-900 p-4 rounded-lg border border-slate-800 animate-pulse">
+                  <div className="h-12 bg-slate-800/50 rounded" />
+                </div>
+              ))}
+        </div>
 
-      <div className="md:hidden mt-4">
-        <Pagination
-          totalLoader={totalLoader}
-          totalData={totalOrdens}
-          title="ordenes"
-          startFilter={startFilter}
-          currentPage={filters.page}
-          limit={filters.limit}
-        />
+        <div className="md:hidden mt-4">
+          <Pagination
+            totalLoader={totalLoader}
+            totalData={totalOrdens}
+            title="ordenes"
+            startFilter={startFilter}
+            currentPage={filters.page}
+            limit={filters.limit}
+          />
+        </div>
       </div>
 
       <AdminDrawer

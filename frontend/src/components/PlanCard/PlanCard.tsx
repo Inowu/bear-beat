@@ -295,23 +295,23 @@ function PlanCard(props: PlanCardPropsI) {
           ) : (
             <>
               {pathname === "/actualizar-planes" ? (
-                <button className="plan-card-btn-hero" onClick={handleChangeModal}>
+                <button className="plan-card-btn-hero bg-bear-gradient text-bear-dark-500 rounded-pill border-0" onClick={handleChangeModal}>
                   <PiLockOpen aria-hidden /> Cambiar plan
                 </button>
               ) : (
                 <>
-                  <button
-                    className="plan-card-btn-hero"
-                    onClick={() => handleCheckout(plan.id)}
-                  >
-                    <PiLockOpen aria-hidden /> DESBLOQUEAR ACCESO AHORA
-                  </button>
+              <button
+                className="plan-card-btn-hero bg-bear-gradient text-bear-dark-500 rounded-pill border-0"
+                onClick={() => handleCheckout(plan.id)}
+              >
+                <PiLockOpen aria-hidden /> DESBLOQUEAR ACCESO AHORA
+              </button>
                   {(isMxn || (ppPlan !== null && (ppPlan.paypal_plan_id || ppPlan.paypal_plan_id_test))) && (
                     <div className="plan-card-secondary-payment">
                       <span className="plan-card-secondary-label">O paga con:</span>
                       <div className="plan-card-secondary-buttons">
                         {isMxn && (
-                          <button type="button" className="plan-card-btn-outline" onClick={payWithSpei}>
+                          <button type="button" className="plan-card-btn-outline border-bear-cyan text-bear-cyan hover:bg-bear-cyan/10 rounded-pill" onClick={payWithSpei}>
                             SPEI
                           </button>
                         )}

@@ -66,7 +66,7 @@ function Navbar(props: NavbarPropsI) {
   //   useEffect(() => {
   // }, [currentUser])
   return (
-    <nav>
+    <nav className="bg-bear-dark-400 border-b border-bear-dark-100">
       <div className="header">
         <button
           type="button"

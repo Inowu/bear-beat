@@ -1,4 +1,3 @@
-import "./MainLayout.scss";
 import AsideNavbar from "../components/AsideNavbar/AsideNavbar";
 import { Outlet, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar/Navbar";
@@ -29,21 +28,48 @@ function MainLayout() {
     applyRouteSeo(location.pathname);
   }, [location.pathname]);
 
-  // Solo la landing pública (/) sin sesión usa estilo landing; el resto usa fondo app (slate)
   const isLanding = !userToken && location.pathname === "/";
   const useAppBackground = !isLanding;
 
   return (
-    <div className={`main-layout-main-container ${useAppBackground ? "bg-slate-950" : ""}`}>
+    <div
+      className={
+        useAppBackground
+          ? "flex min-h-screen min-h-dvh w-full flex-col bg-bear-dark-900 text-bear-light-200 font-poppins"
+          : "flex min-h-screen min-h-dvh w-full flex-col text-bear-light-200 font-poppins"
+      }
+    >
       {userToken && <Navbar setAsideOpen={setAsideOpen} menuButtonRef={menuButtonRef} />}
-      <div className={`content-container landing-layout${isLanding ? " content-container--landing" : ""} ${useAppBackground ? "bg-gradient-to-br from-slate-950 to-slate-900" : ""}`}>
+      <div
+        className={
+          useAppBackground
+            ? "flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden border-t border-bear-dark-100 bg-gradient-to-br from-bear-dark-900 to-bear-dark-400 lg:flex-row lg:items-stretch lg:overflow-hidden"
+            : "flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden"
+        }
+      >
         {userToken && (
           <AsideNavbar show={asideOpen} onHide={handleAsideHide} />
         )}
         {showDownload && currentUser !== null && <FileLoader />}
-        <div className={`content-container-inner ${useAppBackground ? "content-area-app min-h-screen w-full font-poppins text-slate-200 bg-transparent transition-colors duration-300" : ""}`}>
-          <main className="flex-1 bg-slate-950 min-h-screen w-full min-w-0">
-            <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div
+          className={
+            useAppBackground
+              ? "content-area-app flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto min-h-screen w-full font-poppins text-bear-light-200 lg:min-w-0"
+              : "flex min-h-0 flex-1 flex-col"
+          }
+          style={
+            useAppBackground
+              ? {
+                  paddingLeft: "max(1rem, env(safe-area-inset-left, 0px))",
+                  paddingRight: "max(1rem, env(safe-area-inset-right, 0px))",
+                  paddingBottom: "max(2rem, calc(env(safe-area-inset-bottom, 0px) + 1.5rem))",
+                  paddingTop: "1rem",
+                }
+              : undefined
+          }
+        >
+          <main className="min-h-screen w-full min-w-0 flex-1 bg-bear-dark-900">
+            <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
               <Outlet />
             </div>
           </main>

@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { ARRAY_10 } from "../../../utils/Constants";
 import trpc from "../../../api";
 import { useUserContext } from "../../../contexts/UserContext";
-import "./HistoryCheckout.scss";
 import Pagination from "../../../components/Pagination/Pagination";
 import CsvDownloader from "react-csv-downloader";
 import { exportPayments } from "../fuctions";
@@ -109,45 +108,47 @@ export const HistoryCheckout = () => {
 
   return (
     <AdminPageLayout title="Historial checkout" toolbar={toolbar}>
-      <div className="rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50 hidden md:block">
-        <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
-          <table className="w-full min-w-[500px]">
-            <thead className="bg-slate-900 sticky top-0 z-10">
-              <tr>
-                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Email</th>
-                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4 hidden lg:table-cell">Teléfono</th>
-                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Última fecha de pago</th>
-                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Estado</th>
-              </tr>
-            </thead>
-            <tbody className="bg-slate-950">
-              {!loader
-                ? history.map((his, index) => (
-                    <tr key={`ch_${index}`} className="border-b border-slate-800 hover:bg-slate-900/60 transition-colors">
-                      <td className="py-3 px-4 text-sm text-slate-300">{his.users?.email}</td>
-                      <td className="py-3 px-4 text-sm text-slate-300 hidden lg:table-cell">{his.users?.phone}</td>
-                      <td className="py-3 px-4 text-sm text-slate-300">{his.last_checkout_date?.toLocaleDateString?.()}</td>
-                      <td className="py-3 px-4">
-                        <span
-                          className={`inline-flex text-xs px-2 py-1 rounded-full ${
-                            his.users?.active === 1 ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-500/10 text-slate-400"
-                          }`}
-                        >
-                          {his.users?.active === 1 ? "Activo" : "No activo"}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                : ARRAY_10.map((_, i) => (
-                    <tr key={`s_${i}`} className="border-b border-slate-800">
-                      <td colSpan={4} className="py-4 animate-pulse bg-slate-800/50" />
-                    </tr>
-                  ))}
-            </tbody>
-            <tfoot className="bg-slate-900">
-              <tr>
-                <td colSpan={4} className="py-3 px-4">
-                  <Pagination
+      <div className="w-full overflow-x-hidden">
+        {/* Tabla desktop (patrón BEAR BEAT PRO) */}
+        <div className="hidden md:block rounded-xl border border-slate-800 overflow-hidden">
+          <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
+            <table className="w-full text-left text-sm border-collapse">
+              <thead>
+                <tr>
+                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium">Email</th>
+                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium hidden lg:table-cell">Teléfono</th>
+                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium">Última fecha de pago</th>
+                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium">Estado</th>
+                </tr>
+              </thead>
+              <tbody className="bg-slate-950 divide-y divide-slate-800">
+                {!loader
+                  ? history.map((his, index) => (
+                      <tr key={`ch_${index}`} className="border-b border-slate-800 hover:bg-slate-900/50 transition-colors">
+                        <td className="py-4 px-4 text-slate-300">{his.users?.email}</td>
+                        <td className="py-4 px-4 text-slate-300 hidden lg:table-cell">{his.users?.phone}</td>
+                        <td className="py-4 px-4 text-slate-300">{his.last_checkout_date?.toLocaleDateString?.()}</td>
+                        <td className="py-4 px-4">
+                          <span
+                            className={`inline-flex text-xs px-2 py-1 rounded-full ${
+                              his.users?.active === 1 ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-500/10 text-slate-400"
+                            }`}
+                          >
+                            {his.users?.active === 1 ? "Activo" : "No activo"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  : ARRAY_10.map((_, i) => (
+                      <tr key={`s_${i}`} className="border-b border-slate-800">
+                        <td colSpan={4} className="py-4 px-4 animate-pulse bg-slate-800/50" />
+                      </tr>
+                    ))}
+              </tbody>
+              <tfoot className="bg-slate-900">
+                <tr>
+                  <td colSpan={4} className="p-4">
+                    <Pagination
                     totalLoader={totalLoader}
                     totalData={totalHistory}
                     title="Datos"
@@ -162,45 +163,50 @@ export const HistoryCheckout = () => {
         </div>
       </div>
 
-      <div className="md:hidden flex flex-col rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50">
-        {!loader
-          ? history.map((his, index) => (
-              <div
-                key={`m_${index}`}
-                className="flex items-center justify-between gap-3 min-h-[64px] px-4 py-3 border-b border-slate-800 hover:bg-slate-900/60 active:bg-slate-800"
-                onClick={() => setDrawerItem(his)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => e.key === "Enter" && setDrawerItem(his)}
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-white text-sm truncate">{his.users?.email}</p>
-                  <p className="text-slate-400 text-xs">{his.last_checkout_date?.toLocaleDateString?.()}</p>
+        {/* Cards móvil (patrón BEAR BEAT PRO) */}
+        <div className="block md:hidden grid grid-cols-1 gap-4 w-full">
+          {!loader
+            ? history.map((his, index) => (
+                <div
+                  key={`m_${index}`}
+                  className="bg-slate-900 p-4 rounded-lg border border-slate-800"
+                  onClick={() => setDrawerItem(his)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === "Enter" && setDrawerItem(his)}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-slate-200 truncate">{his.users?.email}</p>
+                      <p className="text-xs text-slate-400">{his.last_checkout_date?.toLocaleDateString?.()}</p>
+                    </div>
+                    <span
+                      className={`flex-shrink-0 text-xs px-2 py-1 rounded-full ${
+                        his.users?.active === 1 ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-500/10 text-slate-400"
+                      }`}
+                    >
+                      {his.users?.active === 1 ? "Activo" : "Inactivo"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setDrawerItem(his); }}
+                      className="p-2 text-slate-400 hover:text-cyan-400 rounded-lg flex-shrink-0"
+                      aria-label="Ver más"
+                    >
+                      <MoreVertical size={20} />
+                    </button>
+                  </div>
                 </div>
-                <span
-                  className={`shrink-0 text-xs px-2 py-1 rounded-full ${
-                    his.users?.active === 1 ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-500/10 text-slate-400"
-                  }`}
-                >
-                  {his.users?.active === 1 ? "Activo" : "Inactivo"}
-                </span>
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); setDrawerItem(his); }}
-                  className="p-2 text-slate-400 hover:text-cyan-400 rounded-lg"
-                  aria-label="Ver más"
-                >
-                  <MoreVertical size={20} />
-                </button>
-              </div>
-            ))
-          : ARRAY_10.map((_, i) => (
-              <div key={`s_${i}`} className="min-h-[64px] px-4 py-3 border-b border-slate-800 animate-pulse bg-slate-800/30" />
-            ))}
-      </div>
+              ))
+            : ARRAY_10.map((_, i) => (
+                <div key={`s_${i}`} className="bg-slate-900 p-4 rounded-lg border border-slate-800 animate-pulse">
+                  <div className="h-12 bg-slate-800/50 rounded" />
+                </div>
+              ))}
+        </div>
 
-      <div className="md:hidden mt-4">
-        <Pagination
+        <div className="md:hidden mt-4">
+          <Pagination
           totalLoader={totalLoader}
           totalData={totalHistory}
           title="Datos"
@@ -208,6 +214,7 @@ export const HistoryCheckout = () => {
           currentPage={filters.page}
           limit={filters.limit}
         />
+        </div>
       </div>
 
       <AdminDrawer open={drawerItem !== null} onClose={() => setDrawerItem(null)} title={drawerItem?.users?.email ?? "Registro"} user={undefined}>

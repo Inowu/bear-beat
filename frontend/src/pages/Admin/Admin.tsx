@@ -346,24 +346,24 @@ function Admin() {
           </div>
         </div>
 
-        {/* Tabla desktop: visible solo en md+ */}
-        <div className="admin-table hidden md:block">
-          <div className="table-contain">
-            <table className="w-full text-left text-sm">
+        {/* Tabla desktop: visible solo en md+ (patrón BEAR BEAT PRO) */}
+        <div className="hidden md:block w-full rounded-xl border border-slate-800 overflow-hidden">
+          <div className="overflow-x-auto overflow-y-auto max-h-[60vh]">
+            <table className="w-full text-left text-sm border-collapse">
               <thead>
                 <tr>
-                  <th className="bg-slate-900 text-slate-400 py-3 px-4 font-medium">Nombre</th>
-                  <th className="bg-slate-900 text-slate-400 py-3 px-4 font-medium">Email</th>
-                  <th className="bg-slate-900 text-slate-400 py-3 px-4 font-medium">Teléfono</th>
-                  <th className="bg-slate-900 text-slate-400 py-3 px-4 font-medium">Registro</th>
-                  {filters.active !== 2 && <th className="bg-slate-900 text-slate-400 py-3 px-4 font-medium">Suscripción</th>}
-                  <th className="bg-slate-900 text-slate-400 py-3 px-4 font-medium">Acciones</th>
+                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium">Nombre</th>
+                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium">Email</th>
+                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium">Teléfono</th>
+                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium">Registro</th>
+                  {filters.active !== 2 && <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium">Suscripción</th>}
+                  <th className="bg-slate-900 text-slate-400 p-4 sticky top-0 z-10 text-left font-medium">Acciones</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="bg-slate-950 divide-y divide-slate-800">
                 {!loader
                   ? users.map((user, index) => (
-                      <tr key={`admin_users_${index}`} className="border-b border-slate-800 hover:bg-slate-900">
+                      <tr key={`admin_users_${index}`} className="border-b border-slate-800 hover:bg-slate-900/50 transition-colors">
                         <td className="max-w-[120px] truncate py-3 px-4" title={user.username}>{user.username}</td>
                         <td className="max-w-[180px] truncate py-3 px-4" title={user.email}>{user.email}</td>
                         <td className="max-w-[100px] truncate py-3 px-4" title={user.phone}>{user.phone}</td>
@@ -436,9 +436,9 @@ function Admin() {
                       </tr>
                     ))}
               </tbody>
-              <tfoot>
+              <tfoot className="bg-slate-900">
                 <tr>
-                  <th colSpan={colCount}>
+                  <th colSpan={colCount} className="p-4 text-left">
                     <Pagination
                       totalLoader={totalLoader}
                       totalData={totalUsers}
@@ -454,38 +454,35 @@ function Admin() {
           </div>
         </div>
 
-        {/* Lista compacta móvil: visible solo en móvil */}
-        <div className="admin-list-mobile block md:hidden">
+        {/* Cards móvil: visible solo en móvil (patrón BEAR BEAT PRO) */}
+        <div className="block md:hidden grid grid-cols-1 gap-4 w-full">
           {!loader
             ? users.map((user, index) => (
                 <div
                   key={`mobile_${index}`}
-                  className="admin-list-row"
+                  className="bg-slate-900 p-4 rounded-lg border border-slate-800"
                   onClick={() => openDrawer(user)}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => e.key === "Enter" && openDrawer(user)}
                 >
-                  <div className="admin-list-row__left">
-                    <div className="admin-list-row__avatar">
-                      {(user.username || user.email || "?").charAt(0).toUpperCase()}
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="w-10 h-10 rounded-full bg-cyan-600 flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
+                        {(user.username || user.email || "?").charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-slate-200 truncate">{user.username}</p>
+                        <p className="text-xs text-slate-400 truncate">{user.email}</p>
+                      </div>
                     </div>
-                    <div className="admin-list-row__info">
-                      <span className="admin-list-row__name">{user.username}</span>
-                      <span className="admin-list-row__email">{user.email}</span>
-                    </div>
-                  </div>
-                  <div className="admin-list-row__right">
-                    <span className={`badge ${user.blocked ? "badge--danger" : "badge--success"}`}>
+                    <span className={`text-xs px-2 py-1 rounded-full flex-shrink-0 ${user.blocked ? "bg-red-500/10 text-red-400" : "bg-emerald-500/10 text-emerald-400"}`}>
                       {user.blocked ? "Bloqueado" : "Activo"}
                     </span>
                     <button
                       type="button"
-                      className="admin-list-row__menu"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openDrawer(user);
-                      }}
+                      onClick={(e) => { e.stopPropagation(); openDrawer(user); }}
+                      className="p-2 text-slate-400 hover:text-cyan-400 rounded-lg flex-shrink-0"
                       aria-label="Abrir acciones"
                     >
                       <MoreVertical size={20} />
@@ -494,12 +491,12 @@ function Admin() {
                 </div>
               ))
             : ARRAY_10.map((_, i) => (
-                <div key={`skeleton_${i}`} className="admin-list-row">
-                  <div className="admin-list-row__left">
-                    <div className="admin-list-row__avatar" style={{ opacity: 0.5 }}>?</div>
-                    <div className="admin-list-row__info">
-                      <span className="admin-list-row__name">—</span>
-                      <span className="admin-list-row__email">—</span>
+                <div key={`skeleton_${i}`} className="bg-slate-900 p-4 rounded-lg border border-slate-800 animate-pulse">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-slate-700" />
+                    <div className="flex-1">
+                      <p className="text-sm text-slate-500">—</p>
+                      <p className="text-xs text-slate-600">—</p>
                     </div>
                   </div>
                 </div>

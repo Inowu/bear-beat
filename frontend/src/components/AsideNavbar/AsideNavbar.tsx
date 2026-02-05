@@ -44,10 +44,10 @@ function AsideNavbar(props: AsideNavbarPropsI) {
   const linkProps = { onClick: onHide };
 
   return (
-    <aside className={show ? "open" : ""} aria-hidden={!show}>
+    <aside className={`bg-bear-dark-400 ${show ? "open" : ""}`} aria-hidden={!show}>
       {/* Mobile: backdrop to close on tap outside */}
       {show && <div className="aside-backdrop" onClick={onHide} aria-hidden />}
-      <div className="aside-inner" onClick={(e) => e.stopPropagation()}>
+      <div className="aside-inner bg-bear-dark-400" onClick={(e) => e.stopPropagation()}>
         <div className="aside-drawer-header">
           <span className="aside-drawer-title">Menú</span>
         </div>

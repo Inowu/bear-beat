@@ -1,7 +1,5 @@
 import { Outlet } from "react-router-dom";
 import { useEffect } from "react";
-import "./Auth.scss";
-import Logo from "../../assets/images/osonuevo.png";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 
 function Auth() {

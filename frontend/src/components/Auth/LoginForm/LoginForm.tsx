@@ -11,7 +11,6 @@ import { Spinner } from "../../../components/Spinner/Spinner";
 import { ChatButton } from "../../../components/ChatButton/ChatButton";
 import Logo from "../../../assets/images/osonuevo.png";
 import { trackManyChatConversion, MC_EVENTS } from "../../../utils/manychatPixel";
-import "./LoginForm.scss";
 
 function LoginForm() {
   const [loader, setLoader] = useState<boolean>(false);
@@ -94,15 +93,15 @@ function LoginForm() {
 
   return (
     <>
-      <div className="w-full max-w-md bg-slate-900 p-8 rounded-2xl border border-slate-800 shadow-2xl">
+      <div className="w-full max-w-md bg-bear-dark-500 p-8 rounded-2xl border border-bear-dark-100 shadow-2xl font-poppins">
         <img src={Logo} alt="Bear Beat" className="h-12 w-auto mx-auto block mb-4" />
-        <h1 className="text-2xl md:text-3xl font-bold text-white text-center mb-1">Bienvenido, DJ.</h1>
-        <p className="text-slate-400 text-sm text-center mb-6">Tu cabina está lista. Ingresa para descargar.</p>
+        <h1 className="text-2xl md:text-3xl font-bold font-bear text-white text-center mb-1">Bienvenido, DJ.</h1>
+        <p className="text-bear-light-200/80 text-sm text-center mb-6">Tu cabina está lista. Ingresa para descargar.</p>
         <ChatButton />
         <form className="flex flex-col gap-4" onSubmit={formik.handleSubmit}>
           <div>
             <div className="relative">
-              <HiOutlineMail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" aria-hidden />
+              <HiOutlineMail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-bear-cyan pointer-events-none" aria-hidden />
               <input
                 placeholder="Correo electrónico"
                 type="text"
@@ -110,11 +109,11 @@ function LoginForm() {
                 name="username"
                 value={formik.values.username}
                 onChange={formik.handleChange}
-                className="bg-slate-950 border border-slate-700 text-white text-sm font-medium rounded-lg h-11 px-4 pl-10 w-full focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-shadow"
+                className="bg-bear-dark-300 border border-bear-dark-100 text-white text-sm font-medium rounded-xl h-11 px-4 pl-10 w-full focus:ring-2 focus:ring-bear-cyan focus:border-transparent outline-none transition-shadow"
               />
             </div>
             {formik.errors.username && (
-              <p className="text-red-400 text-sm mt-1">{formik.errors.username}</p>
+              <p className="text-bear-status-error text-sm mt-1">{formik.errors.username}</p>
             )}
           </div>
           <div>
@@ -124,22 +123,22 @@ function LoginForm() {
               name="password"
               value={formik.values.password}
               onChange={formik.handleChange}
-              inputClassName="bg-slate-950 border border-slate-700 text-white text-sm font-medium rounded-lg h-11 px-4 w-full focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-shadow"
+              inputClassName="bg-bear-dark-300 border border-bear-dark-100 text-white text-sm font-medium rounded-xl h-11 px-4 w-full focus:ring-2 focus:ring-bear-cyan focus:border-transparent outline-none transition-shadow"
               wrapperClassName="w-full"
             />
             {formik.errors.password && (
-              <p className="text-red-400 text-sm mt-1">{formik.errors.password}</p>
+              <p className="text-bear-status-error text-sm mt-1">{formik.errors.password}</p>
             )}
           </div>
           <div className="text-right">
-            <Link to="/auth/recuperar" className="text-sm font-medium text-cyan-400 hover:text-cyan-300">
+            <Link to="/auth/recuperar" className="text-sm font-medium text-bear-cyan hover:opacity-90">
               ¿Olvidaste tu contraseña?
             </Link>
           </div>
           {!loader ? (
             <button
               type="submit"
-              className="w-full h-11 bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-medium rounded-lg transition-all"
+              className="w-full h-11 bg-bear-gradient text-bear-dark-500 text-sm font-bold font-poppins rounded-pill transition-all hover:opacity-95"
             >
               INGRESAR
             </button>
@@ -149,7 +148,7 @@ function LoginForm() {
             </div>
           )}
           <div className="text-center">
-            <Link to="/auth/registro" state={{ from }} className="text-sm font-medium text-cyan-400 hover:text-cyan-300">
+            <Link to="/auth/registro" state={{ from }} className="text-sm font-medium text-bear-cyan hover:opacity-90">
               Registrarme
             </Link>
           </div>
