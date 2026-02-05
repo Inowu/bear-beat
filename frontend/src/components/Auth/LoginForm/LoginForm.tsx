@@ -11,6 +11,7 @@ import { Spinner } from "../../../components/Spinner/Spinner";
 import { ChatButton } from "../../../components/ChatButton/ChatButton";
 import Logo from "../../../assets/images/osonuevo.png";
 import { trackManyChatConversion, MC_EVENTS } from "../../../utils/manychatPixel";
+import * as Sentry from "@sentry/react";
 import "./LoginForm.scss";
 
 function LoginForm() {
@@ -156,7 +157,9 @@ function LoginForm() {
             type="button"
             className="auth-login-sentry-test"
             onClick={() => {
-              throw new Error("This is your first error!");
+              const err = new Error("This is your first error!");
+              Sentry.captureException(err);
+              throw err;
             }}
           >
             Test Sentry Error

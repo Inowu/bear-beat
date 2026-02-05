@@ -137,9 +137,10 @@ initFacebookPixel();
 if (process.env.REACT_APP_SENTRY_DSN) {
   Sentry.init({
     dsn: process.env.REACT_APP_SENTRY_DSN,
+    debug: true, // Ver en consola si los eventos se envían (quitar en producción si molesta)
     integrations: [
       Sentry.browserTracingIntegration(),
-      // Replay desactivado temporalmente para evitar 429 y que llegue el primer evento
+      // Replay desactivado temporalmente para evitar 429
       // Sentry.replayIntegration(),
     ],
     tracesSampleRate: 0.1,
