@@ -60,12 +60,12 @@
     }
   }
 
-  /* Contenido con padding y safe areas (notch, barra de gestos) */
+  /* Contenido con padding y safe areas; en desktop usa todo el ancho disponible (límite generoso) */
   .content-container-inner {
     flex: 1;
     margin-left: auto;
     margin-right: auto;
-    max-width: 1320px;
+    max-width: 100%;
     width: 100%;
     padding: 1rem;
     padding-left: max(1rem, env(safe-area-inset-left, 0px));
