@@ -1,10 +1,9 @@
-# Build y publicación del frontend (monorepo)
+# Build desde la raíz del monorepo para que publish sea frontend/build (no frontend/frontend/build)
 [build]
+  base = "."
   command = "npm run build"
   publish = "frontend/build"
 
-# SPA: todas las rutas a index.html (ya está en frontend/public/_redirects)
-# [[redirects]]
-#   from = "/*"
-#   to = "/index.html"
-#   status = 200
+# En CI, CRA trata warnings como errores; desactivar para que el build termine
+[build.environment]
+  CI = "false"
