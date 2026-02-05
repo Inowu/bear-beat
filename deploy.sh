@@ -57,6 +57,9 @@ case "$current_port" in
     ;;
 esac
 
+log "Installing dependencies (monorepo workspaces)..."
+( cd "$ROOT_DIR" && npm install )
+
 log "Building backend..."
 ( cd "$BACKEND_DIR" && npm run build )
 
