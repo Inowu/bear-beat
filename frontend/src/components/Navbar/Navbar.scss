@@ -161,7 +161,8 @@ nav {
     }
   }
 
-  @include respond-to(md) {
+  /* Solo móvil/tablet: menú hamburguesa y iconos sin texto */
+  @include respond-to(desktop) {
 
     .header {
       div.burger-btn {

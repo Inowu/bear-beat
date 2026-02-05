@@ -1,6 +1,6 @@
 @import "src/styles/mixin.scss";
 
-// ---------- Desktop: sidebar (sticky, siempre visible) ----------
+// ---------- Desktop: sidebar (sticky, siempre visible; ancho controlado por MainLayout en lg+) ----------
 aside {
   width: 100%;
   max-width: 300px;
@@ -8,7 +8,9 @@ aside {
   background-color: var(--theme-nav-bg);
   position: sticky;
   top: 0;
+  align-self: stretch;
   transition: background-color 0.2s ease;
+  border-right: 1px solid var(--theme-edge, rgba(0, 0, 0, 0.08));
 
   .aside-drawer-header {
     display: none;
@@ -86,8 +88,8 @@ aside {
   }
 }
 
-// ---------- Mobile: drawer lateral (panel izquierdo, no pantalla completa) ----------
-@include respond-to(md) {
+// ---------- Móvil/tablet: drawer lateral (solo por debajo de desktop) ----------
+@include respond-to(desktop) {
   aside {
     position: fixed;
     top: 0;

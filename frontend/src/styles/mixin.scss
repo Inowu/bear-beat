@@ -1,8 +1,10 @@
 // Mobile-first breakpoints (base = móvil, luego escalar hacia arriba)
-// phone: 0–576px (base), tablet: 577px–768px, md: 769px–992px, lg: 993px+
+// phone: 0–576px, tablet: 577px–768px, md: 769px–992px
+// desktop: 1024px+ (computadora; nunca mostrar UI móvil por encima de este ancho)
 $breakpoint-phone: 576px;
 $breakpoint-tablet: 768px;
 $breakpoint-md: 992px;
+$breakpoint-desktop: 1024px;
 $breakpoint-lg: 1200px;
 $breakpoint-xl: 1700px;
 
@@ -28,6 +30,11 @@ $breakpoint-xl: 1700px;
       @content;
     }
   }
+  @if $breakpoint == desktop {
+    @media (max-width: #{$breakpoint-desktop - 1px}) {
+      @content;
+    }
+  }
   @if $breakpoint == xl {
     @media (min-width: #{$breakpoint-xl}) {
       @content;
@@ -49,6 +56,11 @@ $breakpoint-xl: 1700px;
   }
   @if $breakpoint == lg {
     @media (min-width: #{$breakpoint-md + 1px}) {
+      @content;
+    }
+  }
+  @if $breakpoint == desktop {
+    @media (min-width: #{$breakpoint-desktop}) {
       @content;
     }
   }

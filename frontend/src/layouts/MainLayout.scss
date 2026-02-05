@@ -28,6 +28,35 @@
     backface-visibility: hidden;
   }
 
+  /* Desktop (computadora): sidebar izquierda + contenido derecha; nunca versión móvil */
+  @include respond-from(desktop) {
+    .content-container:not(.content-container--landing) {
+      flex-direction: row;
+      align-items: stretch;
+      overflow: hidden;
+    }
+    .content-container:not(.content-container--landing) > aside {
+      flex-shrink: 0;
+      width: 280px;
+      min-width: 280px;
+      max-width: 280px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      align-self: stretch;
+      height: auto;
+    }
+    .content-container:not(.content-container--landing) > .content-container-inner {
+      flex: 1;
+      min-width: 0;
+      margin-left: 0;
+      margin-right: 0;
+      max-width: none;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+
   /* Contenido con padding y safe areas (notch, barra de gestos) */
   .content-container-inner {
     flex: 1;
@@ -47,6 +76,15 @@
       padding: 1.5rem;
       padding-left: max(1.5rem, env(safe-area-inset-left, 0px));
       padding-right: max(1.5rem, env(safe-area-inset-right, 0px));
+      padding-bottom: max(2rem, env(safe-area-inset-bottom, 0px) + 1.5rem);
+    }
+  }
+
+  @include respond-from(desktop) {
+    .content-container-inner {
+      padding: 1.5rem 2rem;
+      padding-left: max(2rem, env(safe-area-inset-left, 0px));
+      padding-right: max(2rem, env(safe-area-inset-right, 0px));
       padding-bottom: max(2rem, env(safe-area-inset-bottom, 0px) + 1.5rem);
     }
   }
