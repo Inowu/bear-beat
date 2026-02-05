@@ -266,8 +266,9 @@ function PlanCard(props: PlanCardPropsI) {
             </li>
           ))}
         </ul>
-        <div className="paypal-data">
-          <p className="text">Pagos seguros en línea</p>
+        <div className="plan-card-payment-section">
+          <p className="plan-card-payment-label">Elige cómo pagar</p>
+          <p className="plan-card-payment-sublabel">Pagos seguros · Tarjeta, PayPal, SPEI u OXXO (México)</p>
         </div>
         <div className="button-contain" id="abandonedCartBtn">
         {currentPlan ? (
@@ -280,45 +281,32 @@ function PlanCard(props: PlanCardPropsI) {
               <button className="plan-card-btn-primary" onClick={handleChangeModal}>Cambiar plan</button>
             ) : (
               <>
-                {/* {(plan.moneda === "mxn" || plan.moneda === "MXN") && (
-                  <button
-                    id="pixelButton"
-                    className="silver-bg"
-                    onClick={payWithOxxo}
-                  >
-                    Pagar vía Oxxo
-                  </button>
-                )} */}
                 {(plan.moneda === "mxn" || plan.moneda === "MXN") && (
-                  <button className="plan-card-btn-secondary silver-bg" onClick={payWithSpei}>
-                    Pagar vía Spei
-                  </button>
-                )}
-                {selectMethod && ppPlan && (selectedPlan !== plan.id) && (
-                  <button className="plan-card-btn-primary" onClick={() => selectMethod(plan.id)}>
-                    COMPRAR
-                  </button>
-                )}
-                {(selectMethod && ppPlan && (selectedPlan === plan.id)) && (
                   <>
-                    <button className="plan-card-btn-primary" onClick={() => handleCheckout(plan.id)}>
-                      COMPRAR CON TARJETA
+                    <button
+                      id="pixelButton"
+                      className="plan-card-btn-secondary silver-bg"
+                      onClick={payWithOxxo}
+                    >
+                      Pagar con OXXO
                     </button>
-                    {ppPlan !== null &&
-                      (ppPlan.paypal_plan_id || ppPlan.paypal_plan_id_test) &&
-                      <PayPalComponent
-                        plan={ppPlan}
-                        type={'subscription'}
-                        onApprove={successSubscription}
-                        onClick={() => { trackManyChatConversion(MC_EVENTS.CLICK_PAYPAL); handleUserClickOnPlan(); }}
-                        key={`paypal-button-component-${plan.id}`}
-                      />}
+                    <button className="plan-card-btn-secondary silver-bg" onClick={payWithSpei}>
+                      Pagar con SPEI
+                    </button>
                   </>
                 )}
-                {(!selectMethod || !ppPlan) && (
-                  <button className="plan-card-btn-primary" onClick={() => handleCheckout(plan.id)}>
-                    COMPRAR CON TARJETA
-                  </button>
+                <button className="plan-card-btn-primary" onClick={() => handleCheckout(plan.id)}>
+                  Comprar con tarjeta
+                </button>
+                {ppPlan !== null &&
+                  (ppPlan.paypal_plan_id || ppPlan.paypal_plan_id_test) && (
+                  <PayPalComponent
+                    plan={ppPlan}
+                    type={'subscription'}
+                    onApprove={successSubscription}
+                    onClick={() => { trackManyChatConversion(MC_EVENTS.CLICK_PAYPAL); handleUserClickOnPlan(); }}
+                    key={`paypal-button-component-${plan.id}`}
+                  />
                 )}
               </>
             )}
