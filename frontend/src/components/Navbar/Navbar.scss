@@ -175,7 +175,59 @@ nav {
     }
   }
 
-  /* Solo móvil/tablet: menú hamburguesa y iconos sin texto */
+  /* Desktop (1024px+): barra amplia, ítems con texto, sin hamburguesa */
+  @include respond-from(desktop) {
+    padding: 10px 24px;
+    min-height: 60px;
+
+    .header {
+      gap: 14px;
+
+      img {
+        max-width: 80px;
+        max-height: 48px;
+      }
+
+      h2 {
+        font-size: var(--app-font-size-h2);
+      }
+    }
+
+    .nav-right {
+      gap: 12px;
+    }
+
+    ul {
+      flex-wrap: nowrap;
+      gap: 8px;
+
+      a,
+      li {
+        padding: 8px 14px;
+        min-height: 40px;
+        white-space: nowrap;
+      }
+
+      li {
+        font-size: 0.9375rem;
+      }
+
+      svg {
+        width: 1.125rem;
+        height: 1.125rem;
+        flex-shrink: 0;
+      }
+    }
+
+    .theme-toggle-wrap .theme-btn {
+      width: 40px;
+      height: 40px;
+      min-width: 40px;
+      min-height: 40px;
+    }
+  }
+
+  /* Solo móvil/tablet (<1024px): menú hamburguesa y iconos sin texto */
   @include respond-to(desktop) {
 
     .header {

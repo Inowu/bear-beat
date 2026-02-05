@@ -381,6 +381,16 @@
       width: 100%;
     }
   }
+
+  @media (min-width: 1024px) {
+    .header-contain {
+      flex-wrap: nowrap;
+      gap: 1.5rem;
+    }
+    .header-contain input {
+      max-width: 320px;
+    }
+  }
 }
 
 .pagination-container {

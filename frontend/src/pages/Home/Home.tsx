@@ -409,8 +409,8 @@ function Home() {
       <div className="folders-navigation-container flex flex-col gap-0 rounded-xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
         <div className="fb-header grid grid-cols-[1fr_auto_auto] gap-4 py-3 px-4 bg-slate-100 dark:bg-slate-800/50 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
           <div>Nombre</div>
-          <div className="text-right hidden sm:block">Tamaño</div>
-          <div className="text-right hidden md:block">Modificado</div>
+          <div className="text-right hidden sm:block w-20">Tamaño</div>
+          <div className="text-right hidden md:block w-36">Modificado</div>
         </div>
         <div className="folders-cards-container flex flex-col gap-0">
           {!loader ? (
@@ -428,11 +428,13 @@ function Home() {
                 hour: '2-digit',
                 minute: '2-digit',
               });
+              const rowGridClass = "fb-row fb-row-card grid grid-cols-[1fr_auto] md:grid-cols-[1fr_auto_auto] items-center gap-4 p-4 rounded-none border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors";
+              const col2Mobile = "col-start-2 row-start-1 md:col-start-auto md:row-start-auto";
               return (
                 <div key={'files ' + idx}>
                   {file.type === 'd' && (
                     <div
-                      className="fb-row fb-row-card grid grid-cols-[1fr_auto] items-center gap-4 p-4 rounded-none border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+                      className={`${rowGridClass} cursor-pointer`}
                       onClick={() => {
                         goToFolder({ next: file.name });
                       }}
@@ -441,9 +443,11 @@ function Home() {
                         <FolderOpen className="flex-shrink-0 w-5 h-5 text-cyan-600 dark:text-cyan-400" strokeWidth={2} aria-hidden />
                         <span className="text-base md:text-lg font-medium text-slate-700 dark:text-slate-200 truncate" title={file.name}>{file.name}</span>
                       </div>
-                      <div className="flex items-center gap-3 flex-shrink-0">
-                        <span className="text-sm text-slate-500 dark:text-slate-400 hidden sm:inline tabular-nums">{sizeLabel}</span>
-                        <span className="text-sm text-slate-500 dark:text-slate-400 hidden md:inline whitespace-nowrap">{modifiedStr}</span>
+                      <div className={`hidden sm:flex text-right items-center justify-end tabular-nums text-sm text-slate-500 dark:text-slate-400 w-20 flex-shrink-0 md:justify-end ${col2Mobile}`}>
+                        {sizeLabel}
+                      </div>
+                      <div className={`flex items-center gap-3 flex-shrink-0 md:justify-end ${col2Mobile}`}>
+                        <span className="text-sm text-slate-500 dark:text-slate-400 hidden md:inline whitespace-nowrap w-36">{modifiedStr}</span>
                         {file.size != null && gbSize <= 50 && (
                           <button
                             type="button"
@@ -466,7 +470,7 @@ function Home() {
                     </div>
                   )}
                   {file.type === '-' && (
-                    <div className="fb-row fb-row-card grid grid-cols-[1fr_auto] items-center gap-4 p-4 rounded-none border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    <div className={rowGridClass}>
                       <div className="flex items-center gap-3 min-w-0">
                         {loadFile && index === idx ? (
                           <Spinner size={2} width={0.2} color="var(--fb-accent)" />
@@ -483,9 +487,11 @@ function Home() {
                         )}
                         <span className="text-base md:text-lg font-medium text-slate-700 dark:text-slate-200 truncate" title={file.name}>{file.name}</span>
                       </div>
-                      <div className="flex items-center gap-3 flex-shrink-0">
-                        <span className="text-sm text-slate-400 hidden sm:inline tabular-nums">{sizeLabel}</span>
-                        <span className="text-sm text-slate-400 hidden md:inline whitespace-nowrap">{modifiedStr}</span>
+                      <div className={`hidden sm:flex text-right items-center justify-end tabular-nums text-sm text-slate-400 w-20 flex-shrink-0 md:justify-end ${col2Mobile}`}>
+                        {sizeLabel}
+                      </div>
+                      <div className={`flex items-center gap-3 flex-shrink-0 md:justify-end ${col2Mobile}`}>
+                        <span className="text-sm text-slate-400 hidden md:inline whitespace-nowrap w-36">{modifiedStr}</span>
                         {loadDownload && index === idx ? (
                           <Spinner size={2} width={0.2} color="var(--app-btn-text)" />
                         ) : (

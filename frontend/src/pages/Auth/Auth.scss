@@ -16,6 +16,7 @@
   font-size: var(--app-font-size-body);
   font-family: "Poppins", sans-serif;
   transition: background 0.2s ease, color 0.2s ease;
+  max-width: 100%;
 
   .auth-logo {
     max-width: 180px;
@@ -312,6 +313,21 @@
     padding: 40px 32px;
     .auth-login-title {
       font-size: var(--app-font-size-h2);
+    }
+  }
+}
+
+@include respond-from(desktop) {
+  .auth-main-container.auth-page {
+    padding: 32px 24px;
+
+    .auth-logo {
+      max-width: 220px;
+      margin-bottom: 20px;
+    }
+    .auth-tagline {
+      max-width: 480px;
+      margin-bottom: 28px;
     }
   }
 }

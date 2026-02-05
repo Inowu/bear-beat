@@ -249,8 +249,7 @@
       position: sticky;
       top: 0;
       z-index: 2;
-      background: #0f172a; /* slate-900 */
-      color: #cbd5e1; /* slate-300 */
+      background: var(--ad-header-bg);
 
       th {
         padding: 0.75rem 1rem; /* p-4 compacto → h-12 */
@@ -259,7 +258,7 @@
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        color: #cbd5e1;
+        color: var(--ad-title);
         border-bottom: 1px solid var(--ad-border);
         white-space: nowrap;
       }

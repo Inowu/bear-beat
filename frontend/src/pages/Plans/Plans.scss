@@ -46,3 +46,21 @@
     gap: 40px;
   }
 }
+
+@include respond-from(desktop) {
+  .plans-main-container {
+    padding: 2.5rem 2rem;
+    gap: 2rem;
+    min-height: 70vh;
+  }
+  .plans-page-title {
+    font-size: var(--app-font-size-h1);
+    margin-bottom: 1.5rem;
+  }
+}
+
+@include respond-from(xl) {
+  .plans-main-container {
+    padding: 3rem 2.5rem;
+  }
+}

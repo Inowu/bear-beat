@@ -275,7 +275,8 @@ button.primary-pill {
   display: flex;
   position: relative;
   background-color: var(--app-bg-card);
-  width: 350px;
+  width: 100%;
+  max-width: 350px;
   padding-block: 10px;
   padding-inline: 15px;
   border-radius: 12px;
@@ -305,7 +306,9 @@ button.primary-pill {
   }
 }
 .select-input{
-  width: 200px;
+  width: 100%;
+  min-width: 0;
+  max-width: 200px;
   select{
     width: 100%;
     background-color: var(--app-bg-card);

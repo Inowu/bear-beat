@@ -95,6 +95,15 @@
     max-width: 320px;
   }
 
+  @include respond-from(desktop) {
+    header h1 {
+      font-size: var(--app-font-size-h1) !important;
+    }
+    .in-iframe-wrap {
+      max-width:  min(900px, 90vw);
+    }
+  }
+
   .in-terminal {
     max-width: 100%;
     input {
