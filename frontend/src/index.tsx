@@ -1,3 +1,4 @@
+import "./sentry";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import * as Sentry from "@sentry/react";
@@ -133,18 +134,6 @@ const router = createBrowserRouter([
 // 'https://thebearbeatapi.lat/trpc'
 // 'https://kale67.world/trpc'
 initFacebookPixel();
-
-if (process.env.REACT_APP_SENTRY_DSN) {
-  Sentry.init({
-    dsn: process.env.REACT_APP_SENTRY_DSN,
-    release: "bear-beat@1.0.0",
-    sendDefaultPii: true,
-    debug: true,
-    // Sin tracing ni replay para evitar 429: solo se envía el error al hacer clic en "Test Sentry Error"
-    // integrations: [ Sentry.browserTracingIntegration() ],
-    // tracesSampleRate: 0.1,
-  });
-}
 
 root.render(
   <React.StrictMode>

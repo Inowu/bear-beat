@@ -41,7 +41,7 @@ Para que Sentry reciba errores en producción:
 4. **Value:**  
    `https://b1199b86d9489b928d5a58660bc79c6b@o4508382588305408.ingest.us.sentry.io/4510831772237824`
 5. **Scopes:** marca **All scopes** (o al menos "Production" y "Deploy previews" si quieres).
-6. Guarda y haz un **nuevo deploy** (Deploys → "Trigger deploy" → "Deploy site") para que el build use la variable.
+6. **Importante:** Guarda y haz un **nuevo deploy** (Deploys → "Trigger deploy" → "Deploy site"). En Create React App el DSN se incluye en el build; si la variable se añadió después del último deploy, el sitio actual **no** tiene Sentry hasta que vuelvas a desplegar.
 
 **Desde la terminal** (después de `netlify login` y `netlify link`):
 
@@ -50,3 +50,8 @@ netlify env:set REACT_APP_SENTRY_DSN "https://b1199b86d9489b928d5a58660bc79c6b@o
 ```
 
 Luego dispara un deploy desde el dashboard o con `netlify deploy --prod`.
+
+**Si el wizard de Sentry sigue en "Waiting to receive first event":**
+- Abre la **consola del navegador** (F12) en tu sitio en producción. Si sale `[Sentry] REACT_APP_SENTRY_DSN no definido`, la variable no estuvo en el build: añádela en Netlify y haz **Trigger deploy** de nuevo.
+- Si sale **429 (Too Many Requests)**, la cuota de Sentry está llena: espera unos minutos o revisa Sentry → Settings → Usage.
+- Revisa en **Sentry → Issues** si el error "This is your first error!" ya llegó (a veces el wizard no se actualiza pero el evento sí está).
