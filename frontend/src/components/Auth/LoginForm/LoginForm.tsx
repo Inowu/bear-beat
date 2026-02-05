@@ -154,7 +154,6 @@ function LoginForm() {
           </div>
         </form>
       </div>
-    </>
       <ErrorModal show={show} onHide={closeModal} message={errorMessage} />
       <VerifyUpdatePhoneModal
         showModal={showVerify}
