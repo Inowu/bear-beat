@@ -4,6 +4,12 @@ Resumen de todo lo implementado en el proyecto (diseño, landing, deploy, correc
 
 ---
 
+## Cambios recientes (UX/UI, menú, scroll, Netlify)
+
+**Ver documento dedicado:** **[CHANGELOG-UX-DEPLOY-RECIENTE.md](./CHANGELOG-UX-DEPLOY-RECIENTE.md)** — tipografía global, explorador de archivos (iconos, botón Descargar), menú hamburguesa (drawer 72vw), scroll hasta el final, `netlify.toml` (base, publish, CI=false), corrección Navbar.scss. Backend sin cambios en ese periodo.
+
+---
+
 ## 1. Resumen ejecutivo
 
 - **Landing y home público:** nueva landing con enfoque neuroventas, estética futurista/DJ y home público para no logueados.
@@ -140,11 +146,17 @@ Se importa `landing-design.scss` o `_variables-theme.scss` donde haga falta. Par
 **`netlify.toml` (en la raíz del repo):**
 ```toml
 [build]
-  base = "frontend"
+  base = "."
   command = "npm run build"
-  publish = "build"
+  publish = "frontend/build"
+
+[build.environment]
+  CI = "false"
 ```
-- No se usan `[[redirects]]` en este archivo: con `base` + `publish`, Netlify aplica bien los redirects solo desde el directorio publicado (el `build/`), no desde la raíz. Poner redirects aquí hacía que `/index.html` se resolviera en el contexto equivocado y seguía el 404.
+- **base = "."**: build desde la raíz del monorepo (evita que `publish` se resuelva como `frontend/frontend/build` cuando Netlify usaba base `frontend`).
+- **publish = "frontend/build"**: carpeta que genera `npm run build` (workspace frontend).
+- **CI = "false"**: para que CRA no trate warnings de ESLint/TypeScript como error y el build termine.
+- Redirects SPA se siguen aplicando desde `frontend/public/_redirects` (copiado a `frontend/build/`).
 
 **`frontend/public/_redirects`:**
 ```

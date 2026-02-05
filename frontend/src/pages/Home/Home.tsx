@@ -1,6 +1,7 @@
 import './Home.scss';
 import {
   Folder,
+  FolderOpen,
   ArrowLeft,
   ChevronRight,
   Music,
@@ -348,7 +349,7 @@ function Home() {
       </Elements>
       <div className="header-contain flex flex-wrap justify-between items-center gap-4">
         <h2 className="flex items-center gap-2 font-semibold" style={{ color: 'var(--fb-text)', fontSize: 'var(--app-font-size-h2)' }}>
-          <Folder className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--fb-accent)' }} />
+          <FolderOpen className="flex-shrink-0" style={{ color: 'var(--fb-accent)', width: '1.75rem', height: '1.75rem', strokeWidth: 2 }} />
           Todos los archivos
         </h2>
         <div className="relative flex items-center">
@@ -441,11 +442,11 @@ function Home() {
                       }}
                     >
                       <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <Folder className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--fb-folder-icon)' }} />
+                        <FolderOpen className="flex-shrink-0 fb-icon-folder" strokeWidth={2} style={{ color: 'var(--fb-accent)' }} />
                         <span className="fb-row-name">{file.name}</span>
                       </div>
                       <div className="fb-row-meta">
-                        <span className="whitespace-nowrap font-mono">{gbSize.toFixed(2)} GB</span>
+                        <span className="fb-row-size">{gbSize.toFixed(2)} GB</span>
                         <span className="modified-column whitespace-nowrap hidden md:inline">
                           {new Date().toLocaleString('en-US', {
                             month: 'short',
@@ -456,19 +457,23 @@ function Home() {
                           })}
                         </span>
                         {gbSize <= 50 && (
-                          <div
-                            className="fb-action-wrap"
+                          <button
+                            type="button"
+                            className="fb-btn-download"
                             onClick={(e) => {
                               e.stopPropagation();
                               checkAlbumSize(file, idx);
                             }}
                           >
                             {loadDownload && index === idx ? (
-                              <Spinner size={2} width={0.2} color="var(--fb-accent)" />
+                              <Spinner size={2} width={0.2} color="var(--app-btn-text)" />
                             ) : (
-                              <Download className="w-5 h-5 cursor-pointer" style={{ color: 'var(--fb-file-icon)' }} />
+                              <>
+                                <Download className="fb-icon-download" style={{ color: 'inherit' }} />
+                                <span className="fb-btn-download-text">Descargar</span>
+                              </>
                             )}
-                          </div>
+                          </button>
                         )}
                       </div>
                     </div>
@@ -492,26 +497,27 @@ function Home() {
                         ) : (
                           <button
                             type="button"
-                            className="fb-action-wrap flex-shrink-0"
+                            className="fb-btn-play flex-shrink-0"
                             onClick={() => playFile(file, idx)}
                           >
-                            <Play className="w-5 h-5" style={{ color: 'var(--fb-file-icon)' }} />
+                            <Play className="fb-icon-play" style={{ color: 'inherit' }} />
                           </button>
                         )}
-                        <Music className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--fb-file-icon)' }} />
+                        <Music className="flex-shrink-0 fb-icon-file" strokeWidth={2} style={{ color: 'var(--fb-file-icon)' }} />
                         <span className="fb-row-name">{file.name}</span>
                       </div>
                       <div className="fb-row-meta">
-                        <span className="whitespace-nowrap font-mono">{gbSize.toFixed(2)} GB</span>
+                        <span className="fb-row-size">{gbSize.toFixed(2)} GB</span>
                         {loadDownload && index === idx ? (
-                          <Spinner size={2} width={0.2} color="var(--fb-accent)" />
+                          <Spinner size={2} width={0.2} color="var(--app-btn-text)" />
                         ) : (
                           <button
                             type="button"
-                            className="fb-action-wrap"
+                            className="fb-btn-download"
                             onClick={() => downloadFile(file, idx)}
                           >
-                            <Download className="w-5 h-5" style={{ color: 'var(--fb-file-icon)' }} />
+                            <Download className="fb-icon-download" style={{ color: 'inherit' }} />
+                            <span className="fb-btn-download-text">Descargar</span>
                           </button>
                         )}
                       </div>

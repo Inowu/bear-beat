@@ -116,22 +116,22 @@ aside {
       visibility: visible;
     }
 
-    // Backdrop: tap outside to close (oscuro, cubre toda la pantalla)
+    // Backdrop: tap fuera cierra; no tapa todo visualmente (se ve que es drawer)
     .aside-backdrop {
       position: fixed;
       inset: 0;
       z-index: 0;
-      background: rgba(0, 0, 0, 0.45);
+      background: rgba(0, 0, 0, 0.35);
       pointer-events: auto;
     }
 
-    // Panel: drawer desde la izquierda (safe areas para notch e indicador)
+    // Panel: solo un lateral (nunca pantalla completa), drawer desde la izquierda
     .aside-inner {
       position: fixed;
       top: 0;
       left: 0;
       bottom: 0;
-      width: min(320px, 85vw);
+      width: min(300px, 72vw);
       max-width: 100%;
       z-index: 1;
       display: flex;

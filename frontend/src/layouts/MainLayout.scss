@@ -15,6 +15,7 @@
   .content-container {
     flex: 1;
     display: flex;
+    flex-direction: column;
     position: relative;
     min-height: 0;
     overflow-y: auto;
@@ -22,19 +23,24 @@
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
     border-top: 1px solid var(--app-border);
+  }
 
-    > div {
-      flex: 1;
-      margin-left: auto;
-      margin-right: auto;
-      max-width: 1320px;
-      padding: 1rem;
-    }
+  /* Contenido con padding abajo para que el scroll llegue hasta el final (sin pie cortado) */
+  .content-container-inner {
+    flex: 1;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 1320px;
+    width: 100%;
+    padding: 1rem;
+    padding-bottom: max(2rem, env(safe-area-inset-bottom, 0px) + 1.5rem);
+    min-height: min-content;
   }
 
   @include respond-from(md) {
-    .content-container > div {
-      padding: 1.5rem; /* 24px desktop */
+    .content-container-inner {
+      padding: 1.5rem;
+      padding-bottom: max(2rem, env(safe-area-inset-bottom, 0px) + 1.5rem);
     }
   }
 }
@@ -46,10 +52,10 @@
   .content-container {
     background-color: var(--theme-landing-bg) !important;
 
-    > * {
+    .content-container-inner {
       max-width: none !important;
       padding: 0 !important;
-      margin: 0 !important;
+      padding-bottom: max(2rem, env(safe-area-inset-bottom, 0px) + 1rem) !important;
     }
   }
 }

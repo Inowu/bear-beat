@@ -128,6 +128,84 @@
       }
     }
 
+    .fb-row-size {
+      font-weight: 600;
+      font-size: var(--app-font-size-body-lg);
+      color: var(--fb-text);
+      font-variant-numeric: tabular-nums;
+
+      @media (max-width: 768px) {
+        font-size: var(--app-font-size-body);
+      }
+    }
+
+    /* Iconos de carpeta y archivo: tamaño legible, no miniaturas */
+    .fb-icon-folder,
+    .fb-icon-file {
+      width: 1.5rem;
+      height: 1.5rem;
+      min-width: 1.5rem;
+      min-height: 1.5rem;
+    }
+
+    .fb-icon-play,
+    .fb-icon-download {
+      width: 1.25rem;
+      height: 1.25rem;
+      min-width: 1.25rem;
+      min-height: 1.25rem;
+    }
+
+    /* Botón Descargar: pill claro, acento, tipografía legible */
+    .fb-btn-download {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 44px;
+      padding: 10px 18px;
+      border-radius: 100px;
+      border: none;
+      background: var(--app-accent);
+      color: var(--app-btn-text);
+      font-size: var(--app-font-size-body);
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+
+      &:hover {
+        background: var(--app-accent-bright);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(6, 182, 212, 0.35);
+      }
+    }
+
+    .fb-btn-download-text {
+      @media (max-width: 600px) {
+        display: none;
+      }
+    }
+
+    /* Botón Play: mismo estilo táctil, sin texto */
+    .fb-btn-play {
+      min-width: 44px;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      border: none;
+      background: var(--fb-row-hover-bg);
+      color: var(--fb-accent);
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+
+      &:hover {
+        background: var(--fb-accent);
+        color: var(--app-btn-text);
+      }
+    }
+
     .fb-row-actions {
       flex-shrink: 0;
       display: flex;

@@ -34,7 +34,9 @@ function MainLayout() {
           <AsideNavbar show={asideOpen} onHide={() => setAsideOpen(false)} />
         )}
         {showDownload && currentUser !== null && <FileLoader />}
-        <Outlet />
+        <div className="content-container-inner">
+          <Outlet />
+        </div>
       </div>
     </div>
   );
