@@ -1,7 +1,55 @@
-// Checkout: layout principal y tipografía están en el componente (Tailwind).
-// Este archivo se mantiene por si hay estilos heredados o de modales.
-@import "src/styles/mixin.scss";
+// Checkout: respeta tema (--app-*), misma tipografía que Home, touch 44px.
+@import "src/styles/variables-theme.scss";
 
 .checkout-main-container {
-  // Contenedor ahora es min-h-screen bg-slate-950 en el TSX (Tailwind).
+  min-height: 100vh;
+  padding: 1rem;
+  background: var(--app-bg);
+  color: var(--app-text-body);
+  font-family: "Poppins", sans-serif;
+
+  @media (min-width: 768px) {
+    padding: 1.5rem;
+  }
+  @media (min-width: 1024px) {
+    padding: 2rem;
+  }
+
+  /* Tema: reemplazar slate fijos por variables para Dark/Light */
+  [class*="bg-slate-950"],
+  [class*="bg-slate-900"] {
+    background-color: var(--app-bg-card) !important;
+  }
+  [class*="border-slate-800"],
+  [class*="border-slate-700"] {
+    border-color: var(--app-border) !important;
+  }
+  .text-white {
+    color: var(--app-text-heading) !important;
+  }
+  .text-slate-100,
+  .text-slate-200,
+  .text-slate-300 {
+    color: var(--app-text-body) !important;
+  }
+  .text-slate-400,
+  .text-slate-500 {
+    color: var(--app-text-muted) !important;
+  }
+  .text-cyan-400,
+  .text-emerald-400 {
+    color: var(--app-accent-bright) !important;
+  }
+
+  /* H1 mismo impacto que Home */
+  .checkout-page-title {
+    font-size: var(--app-font-size-h1);
+    font-weight: 800;
+    font-family: "Poppins", sans-serif;
+    color: var(--app-text-heading);
+  }
+  .checkout-page-subtitle {
+    font-size: var(--app-font-size-body);
+    color: var(--app-text-muted);
+  }
 }

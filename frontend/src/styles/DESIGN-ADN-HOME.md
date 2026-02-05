@@ -5,8 +5,14 @@
 - **H2**: `var(--app-font-size-h2)` = `clamp(1.5rem, 5.5vw, 2.25rem)`, weight 700.
 - **H3**: `var(--app-font-size-h3)` = `clamp(1.35rem, 4.5vw, 1.75rem)`.
 - **H4**: `var(--app-font-size-h4)` = `clamp(1.2rem, 4vw, 1.5rem)`.
-- **Body**: `var(--app-font-size-body)` = `clamp(1.05rem, 3.5vw, 1.9rem)`, weight 500.
+- **Body**: `var(--app-font-size-body)` = `clamp(1.05rem, 3.5vw, 1.9rem)`, weight 500. Mínimo 16px (text-base) en escritorio.
 - **Fuente**: `Poppins, sans-serif` en encabezados y body (definido en `body`).
+
+### Equivalencias Tailwind (cuando se usa en TSX)
+- H1: `text-3xl md:text-5xl font-extrabold font-poppins` (o `text-[length:var(--app-font-size-h1)] font-extrabold font-poppins`).
+- H2: `text-2xl md:text-4xl font-bold font-poppins`.
+- Body: `text-base md:text-lg font-medium` (nunca menor que `text-base` en desktop).
+- Bordes tema: `border-[color:var(--app-border)]` o en SCSS `border: 1px solid var(--app-border)`. Evitar `border-gray-200` sin `dark:border-slate-700`.
 
 ## Colores (variables CSS, cambian con tema)
 - **Fondo app**: `var(--app-bg)` — light: #f8fafc / dark: #020617 (slate-950).

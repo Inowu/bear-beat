@@ -65,6 +65,7 @@
   border: 2px solid var(--auth-login-card-border);
   border-radius: 20px;
   box-shadow: var(--auth-login-card-shadow);
+  font-family: "Poppins", sans-serif;
   transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 
   @include respond-from(tablet) {
@@ -83,7 +84,8 @@
 
 .auth-login-title {
   font-size: var(--app-font-size-h1);
-  font-weight: 900;
+  font-weight: 800;
+  font-family: "Poppins", sans-serif;
   color: var(--auth-login-title);
   margin: 0 0 0.5rem;
   text-align: center;

@@ -115,12 +115,12 @@ function Checkout() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans p-4 md:p-6 lg:p-8">
+    <div className="checkout-main-container">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-white text-2xl md:text-3xl font-bold text-center mb-2" style={{ fontFamily: "Poppins, sans-serif" }}>
+        <h1 className="checkout-page-title text-center mb-2">
           ACTIVAR ACCESO INMEDIATO
         </h1>
-        <p className="text-slate-400 text-center text-sm md:text-base mb-8">
+        <p className="checkout-page-subtitle text-center mb-8">
           Estás a un paso de desbloquear 12.5 TB de música.
         </p>
 
