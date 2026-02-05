@@ -142,6 +142,7 @@ export const permissions = shield<Context>({
     requestSubscriptionCancellation: isLoggedIn,
     createNewPaymentMethod: isLoggedIn,
     setDefaultStripePm: isLoggedIn,
+    createBillingPortalSession: isLoggedIn,
     removeStripeCard: isLoggedIn,
     buyMoreGB: isLoggedIn,
     createStripeCupon: isAdmin,

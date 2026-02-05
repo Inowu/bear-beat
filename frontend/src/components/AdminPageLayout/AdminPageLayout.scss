@@ -62,9 +62,9 @@
   button.bg-cyan-600 {
     background-color: var(--ad-accent-bg) !important;
   }
-  /* Body de tablas y filas hover */
+  /* Body de tablas y filas hover (bg-slate-900/50 = Tailwind opacity) */
   .bg-slate-950 tbody,
-  .bg-slate-900\\/50 {
+  [class*="bg-slate-900/50"] {
     background-color: var(--ad-bg) !important;
   }
   tr.border-slate-800:hover,

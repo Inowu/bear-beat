@@ -64,6 +64,7 @@ function MyAccount() {
   const [showPlan, setShowPlan] = useState<boolean>(false);
   const [showFtpPass, setShowFtpPass] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
+  const [portalLoading, setPortalLoading] = useState(false);
 
   const closeCondition = () => setShowCondition(false);
   const openCondition = () => setShowCondition(true);
@@ -79,13 +80,22 @@ function MyAccount() {
     setCondition(1);
   };
 
-  const deletePaymentMethod = () => {
+  const deletePaymentMethod = (card: any) => {
+    setPaymentMethod(card);
     setConditionTitle("Eliminar método de pago");
     setConditionMessage(
       "¿Estás seguro que quieres eliminar este método de pago?"
     );
     openCondition();
     setCondition(3);
+  };
+
+  const setDefaultPaymentMethod = (card: any) => {
+    setPaymentMethod(card);
+    setConditionTitle("Usar esta tarjeta");
+    setConditionMessage("¿Usar esta tarjeta para los próximos cobros?");
+    openCondition();
+    setCondition(2);
   };
 
   const finishSubscription = async () => {
@@ -104,8 +114,20 @@ function MyAccount() {
   };
 
   const changeDefault = async () => {
+    closeCondition();
+    if (!paymentMethod?.id) return;
     try {
-    } catch (error) {}
+      await trpc.subscriptions.setDefaultStripePm.mutate({
+        paymentMethodId: paymentMethod.id,
+      });
+      getPaymentMethods();
+      setSuccessTitle("Tarjeta actualizada");
+      setSuccessMessage("Esta tarjeta se usará para los próximos cobros.");
+      setShowSuccess(true);
+    } catch (error) {
+      setErrorMessage("No se pudo establecer la tarjeta. Intenta de nuevo.");
+      setShowError(true);
+    }
   };
 
   const deleteCard = async () => {
@@ -166,6 +188,22 @@ function MyAccount() {
       setShowPaymentMethod(false);
       setShowError(true);
       setErrorMessage("Ha habido un error");
+    }
+  };
+
+  const openBillingPortal = async () => {
+    setPortalLoading(true);
+    try {
+      const returnUrl = `${window.location.origin}/micuenta`;
+      const { url } = await trpc.subscriptions.createBillingPortalSession.mutate({
+        returnUrl,
+      });
+      if (url) window.open(url, "_blank");
+    } catch {
+      setErrorMessage("No se pudo abrir el portal de pagos. Intenta más tarde.");
+      setShowError(true);
+    } finally {
+      setPortalLoading(false);
     }
   };
 
@@ -536,11 +574,21 @@ function MyAccount() {
             borderColor: "var(--ma-card-border)",
           }}
         >
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex flex-wrap items-center gap-2 mb-4">
             <CreditCard className="w-5 h-5" style={{ color: "var(--ma-accent)" }} />
             <h2 className="text-lg font-bold" style={{ color: "var(--ma-text)" }}>
               Tarjetas
             </h2>
+            {paymentMethods.length > 0 && (
+              <button
+                type="button"
+                onClick={openBillingPortal}
+                disabled={portalLoading}
+                className="ml-auto min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium border transition-colors ma-btn-accent"
+              >
+                {portalLoading ? "Abriendo…" : "Gestionar pagos y facturas"}
+              </button>
+            )}
           </div>
           {!cardLoad ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -565,17 +613,26 @@ function MyAccount() {
                       alt=""
                       className="h-8 w-auto object-contain opacity-90"
                     />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        deletePaymentMethod();
-                        setPaymentMethod(x);
-                      }}
-                      className="p-1.5 rounded-lg transition-colors ma-btn-delete"
-                      aria-label="Eliminar tarjeta"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      {paymentMethods.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setDefaultPaymentMethod(x)}
+                          className="p-1.5 rounded-lg text-xs font-medium transition-colors ma-btn-accent"
+                          aria-label="Usar esta tarjeta"
+                        >
+                          Usar esta
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => deletePaymentMethod(x)}
+                        className="p-1.5 rounded-lg transition-colors ma-btn-delete"
+                        aria-label="Eliminar tarjeta"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                   <div>
                     <p

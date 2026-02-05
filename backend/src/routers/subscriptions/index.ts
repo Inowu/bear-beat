@@ -2,6 +2,7 @@ import { router } from '../../trpc';
 import { requestSubscriptionCancellation } from './cancel/cancelSubscription';
 import { setDefaultStripePm } from './stripe/setDefaultStripeCard';
 import { createNewPaymentMethod } from './stripe/createNewPaymentMethod';
+import { createBillingPortalSession } from './stripe/createBillingPortalSession';
 import { listStripeCards } from './stripe/listStripeCards';
 import { removeStripeCard } from './stripe/removeStripeCard';
 import { subscribeWithCardConekta } from './subscribeWithCardConekta';
@@ -20,5 +21,6 @@ export const subscriptionsRouter = router({
   setDefaultStripePm,
   removeStripeCard,
   createNewPaymentMethod,
+  createBillingPortalSession,
   changeSubscriptionPlan,
 });
