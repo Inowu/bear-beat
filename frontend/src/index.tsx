@@ -62,8 +62,22 @@ const router = createBrowserRouter([
         children: [
           { path: "", element: <HomeOrLanding /> },
           { path: "instrucciones", element: <Instructions /> },
-          { path: "micuenta", element: <MyAccount /> },
-          { path: "descargas", element: <Downloads /> },
+          {
+            path: "micuenta",
+            element: (
+              <AuthRoute>
+                <MyAccount />
+              </AuthRoute>
+            ),
+          },
+          {
+            path: "descargas",
+            element: (
+              <AuthRoute>
+                <Downloads />
+              </AuthRoute>
+            ),
+          },
           {
             path: "planes",
             element: (

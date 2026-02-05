@@ -412,9 +412,9 @@ function Home() {
         style={{ background: 'var(--fb-bg)', border: '1px solid var(--fb-border)' }}
       >
         <div className="header">
-          <div>Nombre</div>
-          <div className="text-right">Tamaño</div>
-          <div className="modified-column hidden md:block text-right">Modificado</div>
+          <div className="header-col-name">Nombre</div>
+          <div className="header-col-size text-right">Tamaño</div>
+          <div className="header-col-modified modified-column hidden md:block text-right">Modificado</div>
         </div>
         <div className="folders-cards-container">
           {!loader ? (

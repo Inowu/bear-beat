@@ -29,7 +29,10 @@ aside {
       font-family: "Poppins", sans-serif;
       text-align: center;
       font-size: var(--app-font-size-h2);
+      font-weight: 600;
+      color: var(--theme-nav-text);
       margin-bottom: 10px;
+      letter-spacing: 0.02em;
     }
 
     .nav-links-wrap {
@@ -78,16 +81,8 @@ aside {
     }
   }
 
-  .btnSupport {
-    position: fixed;
-    bottom: 20px;
-    padding: 12px;
-    background-color: var(--theme-card-bg);
-    color: var(--theme-text-primary);
-    border: none;
-    border-radius: 50%;
-    cursor: pointer;
-    transition: background-color 0.2s, color 0.2s;
+  .btnSupport.btnSupport-float {
+    display: none;
   }
 }
 
@@ -277,11 +272,23 @@ aside {
       }
     }
 
-    .btnSupport {
+    .btnSupport.btnSupport-float {
+      display: flex;
       position: absolute;
       bottom: calc(1.5rem + env(safe-area-inset-bottom, 0));
       left: 50%;
       transform: translateX(-50%);
+      align-items: center;
+      justify-content: center;
+      width: 52px;
+      height: 52px;
+      padding: 12px;
+      background-color: var(--theme-card-bg);
+      color: var(--theme-text-primary);
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: background-color 0.2s, color 0.2s;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
     }

@@ -132,7 +132,7 @@ const Turnstile = forwardRef<TurnstileRef, TurnstileProps>(function Turnstile(
   }, [resetSignal]);
 
   if (!process.env.REACT_APP_TURNSTILE_SITE_KEY) {
-    return <div>Turnstile no configurado</div>;
+    return null;
   }
 
   return (

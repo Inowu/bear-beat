@@ -67,6 +67,11 @@ function AsideNavbar(props: AsideNavbarPropsI) {
                 <li><Link to="/admin/historialCheckout" {...linkProps}><FontAwesomeIcon icon={faTag} /> Checkout</Link></li>
                 <li><Link to="/admin/dominios-bloqueados" {...linkProps}><FontAwesomeIcon icon={faBan} /> Dominios</Link></li>
                 <li><Link to="/admin/telefonos-bloqueados" {...linkProps}><FontAwesomeIcon icon={faPhone} /> Telefonos</Link></li>
+                <li>
+                  <a href="tel:+3521005329" onClick={(e) => { handleLinkClick(); }} aria-label="Llamar a soporte">
+                    <FontAwesomeIcon icon={faHeadset} /> Soporte
+                  </a>
+                </li>
               </ul>
             ) : (
               <ul className="nav-list">
@@ -78,6 +83,11 @@ function AsideNavbar(props: AsideNavbarPropsI) {
                 )}
                 <li><Link to="/micuenta" {...linkProps}><FontAwesomeIcon icon={faUserCircle} /> Mi cuenta</Link></li>
                 <li><Link to="/instrucciones" {...linkProps}><FontAwesomeIcon icon={faQuestion} /> Instrucciones</Link></li>
+                <li>
+                  <a href="tel:+3521005329" onClick={(e) => { handleLinkClick(); }} aria-label="Llamar a soporte">
+                    <FontAwesomeIcon icon={faHeadset} /> Soporte
+                  </a>
+                </li>
               </ul>
             )}
           </div>
@@ -93,7 +103,7 @@ function AsideNavbar(props: AsideNavbarPropsI) {
       </div>
       <button
         type="button"
-        className="btnSupport"
+        className="btnSupport btnSupport-float"
         onClick={handleSupportClick}
         aria-label="Llamar a soporte"
       >

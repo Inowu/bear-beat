@@ -76,36 +76,37 @@ function Navbar(props: NavbarPropsI) {
         <img src={osoLogo} alt="" />
         <h2>Bear Beat</h2>
       </div>
-      <div className="theme-toggle-wrap" ref={menuRef}>
-        <button
-          type="button"
-          className="theme-btn"
-          onClick={() => setThemeMenuOpen((o) => !o)}
-          title={THEME_OPTIONS.find((o) => o.value === mode)?.label ?? "Tema"}
-          aria-label="Cambiar tema"
-        >
-          <FontAwesomeIcon icon={theme === "light" ? faSun : faMoon} />
-        </button>
-        {themeMenuOpen && (
-          <div className="theme-dropdown-menu">
-            {THEME_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                className={mode === opt.value ? "active" : ""}
-                onClick={() => {
-                  setMode(opt.value);
-                  setThemeMenuOpen(false);
-                }}
-              >
-                <FontAwesomeIcon icon={opt.icon} />
-                <span>{opt.label}</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-      <ul>
+      <div className="nav-right">
+        <div className="theme-toggle-wrap" ref={menuRef}>
+          <button
+            type="button"
+            className="theme-btn"
+            onClick={() => setThemeMenuOpen((o) => !o)}
+            title={THEME_OPTIONS.find((o) => o.value === mode)?.label ?? "Tema"}
+            aria-label="Cambiar tema"
+          >
+            <FontAwesomeIcon icon={theme === "light" ? faSun : faMoon} />
+          </button>
+          {themeMenuOpen && (
+            <div className="theme-dropdown-menu">
+              {THEME_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  className={mode === opt.value ? "active" : ""}
+                  onClick={() => {
+                    setMode(opt.value);
+                    setThemeMenuOpen(false);
+                  }}
+                >
+                  <FontAwesomeIcon icon={opt.icon} />
+                  <span>{opt.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <ul>
         {
           currentUser?.role === "admin" &&
           <>
@@ -132,7 +133,8 @@ function Navbar(props: NavbarPropsI) {
         <li onClick={handleLogout}>
           <FontAwesomeIcon icon={faSignOutAlt} /> <span>Cerrar sesión</span>
         </li>
-      </ul>
+        </ul>
+      </div>
     </nav>
   );
 }
