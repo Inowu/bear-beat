@@ -33,7 +33,7 @@ function MainLayout() {
   const isLanding = !userToken;
 
   return (
-    <div className="main-layout-main-container">
+    <div className={`main-layout-main-container ${!isLanding ? "bg-slate-50 dark:bg-slate-950" : ""}`}>
       {userToken && <Navbar setAsideOpen={setAsideOpen} menuButtonRef={menuButtonRef} />}
       <div className={`content-container landing-layout${isLanding ? " content-container--landing" : ""} ${!isLanding ? "bg-slate-50 dark:bg-slate-950" : ""}`}>
         {userToken && (

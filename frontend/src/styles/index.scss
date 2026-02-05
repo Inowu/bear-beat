@@ -95,8 +95,36 @@ h2 { font-size: var(--app-font-size-h2); }
 h3 { font-size: var(--app-font-size-h3); }
 h4 { font-size: var(--app-font-size-h4); }
 
+/* Móvil/tablet: 62.5% = 1rem 10px para espaciado compacto */
 html {
   font-size: 62.5%;
+}
+
+/* Escritorio (1024px+): base 16px, botones compactos, experiencia PC */
+@media (min-width: 1024px) {
+  html {
+    font-size: 100%;
+  }
+  :root,
+  [data-theme="light"],
+  [data-theme="dark"] {
+    --app-font-size-body: 1rem;
+    --app-font-size-body-lg: 1.125rem;
+    --app-font-size-h4: 1.125rem;
+    --app-font-size-h3: 1.25rem;
+    --app-font-size-h2: 1.5rem;
+    --app-font-size-h1: 2rem;
+  }
+  /* Botones e inputs más compactos en PC (no 48px de móvil) */
+  button:not(.icon-only),
+  .btn,
+  .main-layout-main-container input[type="text"],
+  .main-layout-main-container input[type="email"],
+  .main-layout-main-container input[type="password"],
+  .main-layout-main-container input[type="number"],
+  .main-layout-main-container select {
+    min-height: 40px;
+  }
 }
 
 /* Toda la app: mismo estilo y tamaño que Home, legibilidad mínima en toda la web */
