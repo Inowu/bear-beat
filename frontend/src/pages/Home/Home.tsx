@@ -370,69 +370,66 @@ function Home() {
       <Elements stripe={stripePromise}>
         <UsersUHModal showModal={showModal} onHideModal={closeModalAdd} />
       </Elements>
-      <div className="header-contain flex flex-wrap justify-between items-center gap-4">
-        <h2 className="text-2xl md:text-3xl font-bold flex items-center gap-2 text-bear-dark-900 dark:text-white">
-          <FolderOpen className="flex-shrink-0 w-6 h-6 text-bear-cyan" strokeWidth={2} />
+      <div className="bb-home-top">
+        <h2 className="bb-home-title">
+          <FolderOpen className="bb-home-title-icon" strokeWidth={2} />
           Todos los archivos
         </h2>
-        <div className="relative flex items-center w-full md:w-80 max-w-full">
-          <Search className="absolute left-3 w-4 h-4 pointer-events-none text-gray-500 dark:text-gray-400" />
+        <div className="bb-search-wrap">
+          <Search className="bb-search-icon" />
           <input
             placeholder="Buscar"
             value={searchValue}
-            className="w-full min-w-0 pl-10 pr-4 h-11 rounded-lg text-sm font-medium bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-bear-cyan focus:border-transparent"
+            className="bb-search-input"
             onChange={(e: any) => {
               startSearch(e.target.value);
             }}
           />
         </div>
       </div>
-      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 dark:border-bear-dark-100 bg-bear-light-100 dark:bg-bear-dark-500 p-2">
-        <button
-          type="button"
-          onClick={goToRoot}
-          className="inline-flex items-center gap-1 px-3 py-2 rounded-lg min-h-[40px] text-sm font-medium hover:bg-gray-200 dark:hover:bg-bear-dark-100"
-          style={{ color: "var(--fb-text)", fontSize: "var(--app-font-size-body)" }}
-        >
-          Inicio
-        </button>
-        {!showPagination && pastFile.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1 font-mono text-sm text-cyan-500 dark:text-cyan-400">
-            {pastFile.map((file: any, index) => {
-              const isLastFolder = pastFile.length === index + 1;
-              if (isLastFolder) {
+
+      <div className="bb-pathbar">
+        <div className="bb-path-items">
+          <button type="button" onClick={goToRoot} className="bb-chip bb-chip-root">
+            Inicio
+          </button>
+          {!showPagination && pastFile.length > 0 && (
+            <div className="bb-chip-track">
+              {pastFile.map((file: any, index) => {
+                const isLastFolder = pastFile.length === index + 1;
+                if (isLastFolder) {
+                  return (
+                    <span key={`folder_${index}`} className="bb-chip bb-chip-current">
+                      {file}
+                    </span>
+                  );
+                }
                 return (
-                  <span key={`folder_${index}`}>
-                    {file}
+                  <span key={`folder_${index}`} className="bb-chip-item">
+                    <button
+                      type="button"
+                      className="bb-chip bb-chip-link"
+                      onClick={() => {
+                        goToFolder({ folder: index + 1 });
+                      }}
+                    >
+                      {file}
+                    </button>
+                    <ChevronRight className="bb-chip-sep" />
                   </span>
                 );
-              }
-              return (
-                <span key={`folder_${index}`} className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    className="cursor-pointer opacity-90 hover:opacity-100 hover:underline bg-transparent border-0 p-0"
-                    onClick={() => {
-                      goToFolder({ folder: index + 1 });
-                    }}
-                    style={{ color: "inherit", fontSize: "inherit" }}
-                  >
-                    {file}
-                  </button>
-                  <ChevronRight className="w-4 h-4 flex-shrink-0 text-cyan-500 dark:text-cyan-400" />
-                </span>
-              );
-            })}
-          </div>
-        )}
-        {!showPagination && pastFile.length === 0 && (
-          <p className="m-0 text-sm text-gray-600 dark:text-gray-400">Raíz</p>
-        )}
-        {showPagination && (
-          <p className="m-0 text-sm text-gray-600 dark:text-gray-400">
-            Resultados para: <strong>{searchValue}</strong>
-          </p>
-        )}
+              })}
+            </div>
+          )}
+          {!showPagination && pastFile.length === 0 && (
+            <span className="bb-chip bb-chip-current">Raíz</span>
+          )}
+          {showPagination && (
+            <span className="bb-chip bb-chip-search">
+              Resultados para: <strong>{searchValue}</strong>
+            </span>
+          )}
+        </div>
         <button
           type="button"
           disabled={!showPagination && pastFile.length === 0}
@@ -443,21 +440,20 @@ function Home() {
             }
             goToFolder({ back: true });
           }}
-          className="fb-volver ml-auto inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-colors min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{ color: "var(--fb-text-muted)", fontSize: "var(--app-font-size-body)" }}
+          className="bb-back-btn"
         >
-          <ArrowLeft className="w-5 h-5 flex-shrink-0" />
-          {showPagination ? "Volver a carpeta" : "Volver"}
+          <ArrowLeft className="bb-back-icon" />
+          {showPagination ? 'Volver a carpeta' : 'Volver'}
         </button>
       </div>
 
-      <div className="bb-explorer rounded-xl border border-gray-200 dark:border-bear-dark-100 overflow-hidden bg-bear-light-100 dark:bg-bear-dark-500 shadow-sm">
-        <div className="bb-explorer-head grid grid-cols-[1fr_auto] md:grid-cols-[1fr_120px_auto] gap-3 px-4 py-3 bg-gray-100 dark:bg-bear-dark-400 text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">
+      <div className="bb-explorer">
+        <div className="bb-explorer-head">
           <div>Nombre</div>
-          <div className="hidden md:block text-right">Tamaño</div>
-          <div className="text-right">Acciones</div>
+          <div className="bb-head-size">Tamaño</div>
+          <div className="bb-head-actions">Acciones</div>
         </div>
-        <div className="bb-explorer-body flex flex-col">
+        <div className="bb-explorer-body">
           {!loader ? (
             sortArrayByName(files).map((file: IFiles, idx: number) => {
               const gbSize = file.size != null && Number.isFinite(file.size)
@@ -465,29 +461,33 @@ function Home() {
                 : 0;
               const sizeLabel = file.size != null && Number.isFinite(file.size)
                 ? `${gbSize >= 1 ? gbSize.toFixed(1) : gbSize.toFixed(2)} GB`
-                : "—";
-              const isFolder = file.type === "d";
+                : '—';
+              const isFolder = file.type === 'd';
               const allowFolderDownload = isFolder && file.size != null && gbSize <= 50;
               return (
                 <div
                   key={`explorer-${idx}`}
-                  className={`bb-explorer-row grid grid-cols-[1fr_auto] md:grid-cols-[1fr_120px_auto] items-center gap-3 px-4 py-3 border-b border-gray-200 dark:border-bear-dark-100 hover:bg-gray-100 dark:hover:bg-bear-dark-400/50 transition-colors ${isFolder ? "cursor-pointer" : ""}`}
+                  className={`bb-explorer-row ${isFolder ? 'is-folder' : 'is-file'}`}
                   onClick={() => {
                     if (isFolder) {
                       goToFolder({ next: file.name });
                     }
                   }}
                 >
-                  <div className="flex items-center gap-3 min-w-0">
+                  <div className="bb-row-main">
                     {isFolder ? (
-                      <FolderOpen className="flex-shrink-0 w-5 h-5 text-bear-cyan" strokeWidth={2} aria-hidden />
+                      <span className="bb-kind-icon bb-kind-folder">
+                        <FolderOpen strokeWidth={2} />
+                      </span>
                     ) : (
                       loadFile && index === idx ? (
-                        <Spinner size={2} width={0.2} color="var(--fb-accent)" />
+                        <span className="bb-kind-icon bb-kind-file">
+                          <Spinner size={2} width={0.2} color="var(--fb-accent)" />
+                        </span>
                       ) : (
                         <button
                           type="button"
-                          className="flex-shrink-0 w-10 h-10 min-w-[40px] min-h-[40px] inline-flex items-center justify-center rounded-lg bg-gray-200 dark:bg-bear-dark-100 text-bear-cyan hover:bg-bear-cyan hover:text-bear-dark-500 transition-colors"
+                          className="bb-kind-icon bb-kind-file bb-kind-play"
                           onClick={(e) => {
                             e.stopPropagation();
                             playFile(file, idx);
@@ -495,26 +495,21 @@ function Home() {
                           title="Reproducir"
                           aria-label="Reproducir"
                         >
-                          <Play className="w-4 h-4" aria-hidden />
+                          <Play size={16} />
                         </button>
                       )
                     )}
-                    <span className="text-base font-medium text-gray-900 dark:text-gray-200 truncate" title={file.name}>
+                    <span className="bb-file-name" title={file.name}>
                       {file.name}
                     </span>
                   </div>
-                  <div className="hidden md:block text-right tabular-nums text-sm text-gray-600 dark:text-gray-400">
-                    {sizeLabel}
-                  </div>
-                  <div className="flex items-center justify-end gap-2">
-                    <span className="md:hidden text-xs tabular-nums text-gray-600 dark:text-gray-400">{sizeLabel}</span>
-                    {isFolder && (
-                      <ChevronRight className="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden />
-                    )}
+                  <div className="bb-row-size">{sizeLabel}</div>
+                  <div className="bb-row-actions">
+                    {isFolder && <ChevronRight className="bb-row-chevron" aria-hidden />}
                     {allowFolderDownload && (
                       <button
                         type="button"
-                        className="inline-flex items-center justify-center p-2.5 min-w-[40px] min-h-[40px] rounded-lg hover:bg-gray-200 dark:hover:bg-bear-dark-100 text-bear-cyan hover:opacity-90"
+                        className="bb-action-btn"
                         onClick={(e) => {
                           e.stopPropagation();
                           checkAlbumSize(file, idx);
@@ -525,22 +520,24 @@ function Home() {
                         {loadDownload && index === idx ? (
                           <Spinner size={2} width={0.2} color="var(--app-btn-text)" />
                         ) : (
-                          <Download size={18} aria-hidden />
+                          <Download size={18} />
                         )}
                       </button>
                     )}
-                    {file.type === "-" && (
+                    {file.type === '-' && (
                       loadDownload && index === idx ? (
-                        <Spinner size={2} width={0.2} color="var(--app-btn-text)" />
+                        <span className="bb-action-btn bb-action-btn--loading">
+                          <Spinner size={2} width={0.2} color="var(--app-btn-text)" />
+                        </span>
                       ) : (
                         <button
                           type="button"
-                          className="inline-flex items-center justify-center p-2.5 min-w-[40px] min-h-[40px] rounded-lg hover:bg-gray-200 dark:hover:bg-bear-dark-100 text-bear-cyan hover:opacity-90"
+                          className="bb-action-btn"
                           onClick={() => downloadFile(file, idx)}
                           title="Descargar archivo"
                           aria-label="Descargar archivo"
                         >
-                          <Download size={18} aria-hidden />
+                          <Download size={18} />
                         </button>
                       )
                     )}
@@ -549,13 +546,13 @@ function Home() {
               );
             })
           ) : (
-            <div className="flex justify-center py-12">
+            <div className="bb-explorer-loading">
               <Spinner size={4} width={0.4} color="var(--app-accent)" />
             </div>
           )}
         </div>
         {showPagination && (
-          <div className="border-t border-gray-200 dark:border-bear-dark-100 p-3 md:p-4">
+          <div className="bb-pagination-wrap">
             <Pagination
               totalLoader={paginationLoader}
               totalData={totalSearch}
