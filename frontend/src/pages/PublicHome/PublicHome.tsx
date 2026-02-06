@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useRef, useEffect, useState, type RefObject } from "react";
+import { useRef, useEffect, useMemo, useState, type RefObject } from "react";
 import { motion, AnimatePresence, useInView, animate, type Variants } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSun, faMoon, faCircleHalfStroke, faClock } from "@fortawesome/free-solid-svg-icons";
@@ -35,6 +35,7 @@ const CATALOG_AUDIOS_GB = 850.8;
 const CATALOG_KARAOKES = 1_353;
 const CATALOG_KARAOKES_GB = 24.99;
 const CATALOG_TOTAL_TB = CATALOG_TOTAL_GB / 1000;
+const GENRE_BATCH_SIZE = 36;
 
 function detectMexicoRegion(): boolean {
   if (typeof window === "undefined") return false;
@@ -131,6 +132,8 @@ function CompareSlider() {
 function PublicHome() {
   const { mode, theme, setMode } = useTheme();
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
+  const [genreQuery, setGenreQuery] = useState("");
+  const [visibleGenresCount, setVisibleGenresCount] = useState(GENRE_BATCH_SIZE);
   const [region, setRegion] = useState<PriceRegion>(() =>
     detectMexicoRegion() ? "mexico" : "global"
   );
@@ -139,6 +142,15 @@ function PublicHome() {
   const filesCount = useCountUp(CATALOG_TOTAL_FILES, 1.5);
   const allGenres = FALLBACK_GENRES;
   const genreTotal = allGenres.length;
+  const normalizedGenreQuery = genreQuery.trim().toLocaleLowerCase("es-MX");
+  const filteredGenres = useMemo(() => {
+    if (!normalizedGenreQuery) return allGenres;
+    return allGenres.filter((genre) =>
+      genre.name.toLocaleLowerCase("es-MX").includes(normalizedGenreQuery)
+    );
+  }, [allGenres, normalizedGenreQuery]);
+  const visibleGenres = filteredGenres.slice(0, visibleGenresCount);
+  const canLoadMoreGenres = visibleGenresCount < filteredGenres.length;
 
   const totalTBLabel = `${CATALOG_TOTAL_TB.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TB`;
   const totalGBLabel = `${CATALOG_TOTAL_GB.toLocaleString("es-MX", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} GB`;
@@ -164,6 +176,10 @@ function PublicHome() {
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    setVisibleGenresCount(GENRE_BATCH_SIZE);
+  }, [normalizedGenreQuery]);
 
   return (
     <div className="ph ph--light-premium">
@@ -375,23 +391,48 @@ function PublicHome() {
           <h2 className="ph__section-title ph__section-title--left">Por género</h2>
           <p className="ph__genres-caption">Cada género = nombre de la carpeta donde están los archivos.</p>
           <p className="ph__genres-meta">
-            {`Mostrando todos los ${genreTotal.toLocaleString("es-MX")} géneros únicos.`}
+            {`Mostrando ${Math.min(visibleGenres.length, filteredGenres.length).toLocaleString("es-MX")} de ${filteredGenres.length.toLocaleString("es-MX")} géneros (total catálogo: ${genreTotal.toLocaleString("es-MX")}).`}
           </p>
+          <div className="ph__genres-tools">
+            <label className="ph__genres-search">
+              <span>Buscar género</span>
+              <input
+                type="search"
+                value={genreQuery}
+                onChange={(e) => setGenreQuery(e.target.value)}
+                placeholder="Ej. Cumbia, House, Reggaeton..."
+                aria-label="Buscar género"
+              />
+            </label>
+            {genreQuery && (
+              <button type="button" className="ph__genres-clear" onClick={() => setGenreQuery("")}>
+                Limpiar
+              </button>
+            )}
+          </div>
           <div className="ph__genres-grid">
-            {allGenres.map((genre) => (
+            {visibleGenres.map((genre) => (
               <article key={genre.name} className="ph__genre-chip">
                 <strong>{genre.name}</strong>
-                {genre.files > 0 || genre.gb > 0 ? (
-                  <>
-                    <span>{genre.files.toLocaleString("es-MX")} archivos</span>
-                    <span>{genre.gb.toLocaleString("es-MX", { maximumFractionDigits: 2 })} GB</span>
-                  </>
-                ) : (
-                  <span className="ph__genre-chip-meta">Disponible en catálogo</span>
-                )}
+                <span>{genre.files.toLocaleString("es-MX")} archivos</span>
+                <span>{genre.gb.toLocaleString("es-MX", { maximumFractionDigits: 2 })} GB</span>
               </article>
             ))}
           </div>
+          {visibleGenres.length === 0 && (
+            <p className="ph__genres-empty">No hay coincidencias para tu búsqueda.</p>
+          )}
+          {canLoadMoreGenres && (
+            <div className="ph__genres-more-wrap">
+              <button
+                type="button"
+                className="ph__genres-more"
+                onClick={() => setVisibleGenresCount((prev) => Math.min(prev + GENRE_BATCH_SIZE, filteredGenres.length))}
+              >
+                Ver más géneros
+              </button>
+            </div>
+          )}
         </div>
       </motion.section>
 
