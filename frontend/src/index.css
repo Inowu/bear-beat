@@ -129,10 +129,11 @@
 
 body {
   font-family: "Poppins", sans-serif;
-  @apply bg-bg-main text-text-main transition-colors duration-300 antialiased;
+  @apply bg-bear-light-200 dark:bg-bear-dark-900 text-gray-800 dark:text-gray-200 transition-colors duration-300 antialiased;
   margin: 0;
   padding: 0;
   min-height: 100vh;
+  overflow-y: auto;
 }
 
 #root {

@@ -1,22 +1,34 @@
-// Public Home — Diseño Bear Beat: Poppins en todo (misma tipografía que el resto de rutas)
+// Public Home — Light Premium 2026 (Linear / Stripe / Apple)
+// Mandatory Light Mode: Clean, Minimalist, High-End Software
 @import "src/styles/mixin.scss";
 
+$accent: #00E5FF;
+$bg: #FAFAFA;
+$surface: #FFFFFF;
+$text-primary: #111827;
+$text-secondary: #6B7280;
+$shadow-card: 0 4px 20px rgba(0, 0, 0, 0.05);
+$shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+$success: #10B981;
+
 .ph {
-  background: var(--ph-bg);
   min-height: 100vh;
   min-height: 100dvh;
-  color: var(--ph-text-heading);
-  font-family: "Poppins", sans-serif;
   margin-left: calc(-50vw + 50%);
   margin-right: calc(-50vw + 50%);
   width: 100vw;
   max-width: 100%;
   box-sizing: border-box;
   overflow-x: hidden;
-  transition: background 0.2s ease, color 0.2s ease;
 }
 
-// ----- 1. NAVBAR -----
+.ph--light-premium {
+  background: $bg;
+  color: $text-primary;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+// ----- 1. NAVBAR — Sticky, subtle glass -----
 .ph__nav {
   position: sticky;
   top: 0;
@@ -24,14 +36,14 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 10px;
-  background: var(--ph-nav-bg);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--ph-border);
+  padding: 16px 24px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 
   @include respond-from(tablet) {
-    padding: 16px 24px;
+    padding: 20px 32px;
   }
 }
 
@@ -48,7 +60,7 @@
 .ph__nav-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .ph__theme-wrap {
@@ -58,19 +70,19 @@
 .ph__theme-btn {
   width: 44px;
   height: 44px;
-  border-radius: 10px;
-  border: 2px solid var(--ph-border);
-  background: var(--ph-bg-card);
-  color: var(--ph-text-heading);
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.8);
+  color: $text-secondary;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.2s, border-color 0.2s, background 0.2s;
+  transition: color 0.2s, border-color 0.2s;
 
   &:hover {
-    color: #08E1F7;
-    border-color: rgba(8, 225, 247, 0.5);
+    color: $accent;
+    border-color: rgba($accent, 0.5);
   }
 
   @include respond-from(tablet) {
@@ -85,10 +97,10 @@
   right: 0;
   min-width: 180px;
   padding: 8px;
-  border-radius: 12px;
-  border: 1px solid var(--ph-border);
-  background: var(--ph-bg-card);
-  box-shadow: var(--ph-shadow);
+  border-radius: 16px;
+  border: none;
+  background: $surface;
+  box-shadow: $shadow-card;
   z-index: 100;
   display: flex;
   flex-direction: column;
@@ -98,710 +110,737 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 12px;
+    padding: 10px 14px;
     border: none;
-    border-radius: 8px;
+    border-radius: 12px;
     background: transparent;
-    color: var(--ph-text-heading);
+    color: $text-secondary;
     font-size: var(--app-font-size-body);
-    font-weight: var(--app-font-weight-body);
+    font-weight: 500;
     cursor: pointer;
     text-align: left;
     transition: background 0.2s, color 0.2s;
 
     &:hover {
-      background: var(--ph-bg-soft);
-      color: #08E1F7;
+      background: rgba($accent, 0.08);
+      color: $text-primary;
     }
 
     &.ph__theme-dropdown-item--active {
-      background: var(--ph-bg-soft);
-      color: #08E1F7;
+      background: rgba($accent, 0.1);
+      color: $accent;
       font-weight: 600;
     }
   }
 }
 
 .ph__nav-btn {
-  padding: 10px 14px;
+  padding: 10px 20px;
   min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-size: var(--app-font-size-body);
-  font-weight: var(--app-font-weight-heading);
+  font-weight: 600;
   text-decoration: none;
-  border-radius: 10px;
-  transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
+  border-radius: 999px;
+  transition: all 0.2s ease;
 
   @include respond-from(tablet) {
-    padding: 12px 22px;
+    padding: 12px 24px;
     min-height: 48px;
   }
 }
 
 .ph__nav-btn--ghost {
-  color: var(--ph-text-heading);
+  color: $text-secondary;
   background: transparent;
-  border: 2px solid var(--ph-border);
+  border: 1px solid rgba(0, 0, 0, 0.12);
 
   &:hover {
-    color: #08E1F7;
-    border-color: #08E1F7;
+    color: $accent;
+    border-color: $accent;
+    background: rgba($accent, 0.06);
   }
 }
 
 .ph__nav-btn--primary {
-  background: var(--app-gradient);
-  color: #1A1A1A;
+  background: $accent;
+  color: #000000;
   border: none;
-  font-weight: 800;
-  box-shadow: 0 10px 15px -3px rgba(8, 225, 247, 0.25), 0 4px 6px -4px rgba(0, 230, 193, 0.2);
+  font-weight: 700;
 
   &:hover {
-    opacity: 0.95;
-    box-shadow: 0 20px 25px -5px rgba(8, 225, 247, 0.35);
+    filter: brightness(1.05);
+    transform: scale(1.02);
   }
 }
 
-// ----- 2. HERO — Glows + H1 gigante -----
-.ph__hero {
+// ----- 2. HERO — Split Layout: Left copy, Right visual -----
+.ph__hero--split {
   position: relative;
-  text-align: center;
-  padding: 40px 12px 48px;
-  overflow: hidden;
+  padding: 80px 24px 100px;
+  overflow: visible;
 
   @include respond-from(tablet) {
-    padding: 64px 24px 72px;
+    padding: 100px 32px 120px;
   }
   @include respond-from(md) {
-    padding: 80px 32px 96px;
+    padding: 120px 48px 140px;
   }
 }
 
-.ph__hero-bg {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 100% 80% at 50% -30%, var(--ph-glow) 0%, transparent 55%),
-    radial-gradient(ellipse 70% 50% at 80% 50%, rgba(8, 225, 247, 0.12) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 40% at 20% 80%, rgba(8, 225, 247, 0.06) 0%, transparent 50%);
-  pointer-events: none;
+.ph__hero-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  max-width: 80rem;
+  margin: 0 auto;
+
+  @include respond-from(tablet) {
+    flex-direction: row;
+    align-items: center;
+    gap: 64px;
+  }
+}
+
+.ph__hero-left {
+  flex: 1;
+  text-align: left;
 }
 
 .ph__hero-h1 {
-  position: relative;
-  font-size: clamp(var(--app-font-size-h1), 8vw, 4rem);
-  font-weight: var(--app-font-weight-heading-strong);
+  font-family: "Inter", -apple-system, sans-serif;
+  font-size: clamp(1.75rem, 5vw, 3rem);
+  font-weight: 700;
   line-height: 1.2;
-  letter-spacing: -0.025em;
-  margin: 0 0 24px;
-  color: var(--ph-text-heading);
-  max-width: 100%;
-  padding: 0 0.25rem;
-  margin-left: auto;
-  margin-right: auto;
-  overflow-wrap: break-word;
-  word-wrap: break-word;
+  letter-spacing: -0.02em;
+  margin: 0 0 20px;
+  color: $text-primary;
 
   @include respond-from(tablet) {
-    font-size: clamp(2.5rem, 9vw, 4.5rem);
-    padding: 0;
-  }
-  @include respond-from(md) {
-    font-size: clamp(3rem, 8vw, 5rem);
+    font-size: clamp(2.25rem, 4.5vw, 3.5rem);
   }
 }
 
-.ph__hero-h2 {
-  position: relative;
+.ph__hero-keywords {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 16px 24px;
+  margin-bottom: 20px;
+}
+
+.ph__hero-big-number {
+  font-size: clamp(2.5rem, 8vw, 4.5rem);
+  font-weight: 800;
+  line-height: 1;
+  color: $accent;
+  letter-spacing: -0.03em;
+}
+
+.ph__hero-keyword {
+  font-size: clamp(1.25rem, 3vw, 2rem);
+  font-weight: 700;
+  color: $text-primary;
+}
+
+.ph__hero-sub {
   font-size: var(--app-font-size-body-lg);
-  font-weight: var(--app-font-weight-body);
-  line-height: 1.55;
-  color: var(--ph-text-body);
-  margin: 0 auto 32px;
-  max-width: 100%;
-  padding: 0 0.5rem;
-  text-align: center;
-
-  @include respond-from(tablet) {
-    font-size: var(--app-font-size-h2);
-    padding: 0;
-    max-width: 680px;
-  }
-  @include respond-from(desktop) {
-    max-width: 780px;
-  }
+  font-weight: 500;
+  line-height: 1.6;
+  color: $text-secondary;
+  margin: 0 0 28px;
+  max-width: 480px;
 }
 
-.ph__hero-cta {
-  position: relative;
+.ph__hero-cta--pill {
   display: inline-block;
-  padding: 1rem 1.5rem;
-  min-height: 52px;
+  padding: 18px 40px;
+  min-height: 56px;
   font-size: var(--app-font-size-body-lg);
-  font-weight: var(--app-font-weight-heading-strong);
-  letter-spacing: 0.02em;
+  font-weight: 700;
   text-decoration: none;
-  color: #1A1A1A;
-  background: var(--app-gradient);
-  border-radius: 12px;
-  box-shadow: 0 10px 15px -3px rgba(8, 225, 247, 0.3), 0 4px 6px -4px rgba(0, 230, 193, 0.2);
-  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+  color: #000000;
+  background: $accent;
+  border-radius: 999px;
+  transition: filter 0.2s, transform 0.2s;
 
   &:hover {
-    opacity: 0.95;
-    transform: translateY(-2px);
-    box-shadow: 0 20px 25px -5px rgba(8, 225, 247, 0.4);
-  }
-
-  @include respond-from(tablet) {
-    padding: 20px 44px;
-    font-size: var(--app-font-size-h2);
+    filter: brightness(1.05);
+    transform: scale(1.02);
   }
 }
 
 .ph__hero-micro {
-  position: relative;
-  margin: 16px 0 0;
+  margin: 24px 0 0;
   font-size: var(--app-font-size-body);
-  font-weight: var(--app-font-weight-body);
-  color: var(--ph-text-body);
+  font-weight: 500;
+  color: $text-secondary;
 }
 
-// ----- 3. BARRA AUTORIDAD -----
-.ph__authority {
-  padding: 22px 16px;
-  border-top: 1px solid var(--ph-border);
-  border-bottom: 1px solid var(--ph-border);
-  background: var(--ph-bg-soft);
-}
-
-.ph__authority-inner {
+.ph__hero-right {
+  flex: 1;
   display: flex;
-  flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  gap: 20px 36px;
-  max-width: 900px;
-  margin: 0 auto;
-
-  @include respond-from(desktop) {
-    max-width: 1100px;
-  }
 }
 
-.ph__authority-item {
-  display: inline-flex;
+.ph__hero-visual {
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 1;
+}
+
+.ph__hero-visual-frame {
+  width: 100%;
+  height: 100%;
+  background: $surface;
+  border-radius: 24px;
+  box-shadow: $shadow-soft;
+  display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: var(--app-font-size-body);
-  font-weight: var(--app-font-weight-body);
-  color: var(--ph-text-heading);
-
-  @include respond-from(tablet) {
-    font-size: var(--app-font-size-body-lg);
-  }
+  justify-content: center;
+  padding: 32px;
 }
 
-.ph__authority-icon {
-  flex-shrink: 0;
-  font-size: clamp(1.25rem, 4vw, 2.5rem);
-  color: #08E1F7;
-}
-
-// ----- 4. DOLOR -----
-.ph__pain {
-  padding: 56px 16px 64px;
-
-  @include respond-from(tablet) {
-    padding: 64px 24px 72px;
-  }
-}
-
-.ph__pain-title {
-  text-align: center;
-  font-size: var(--app-font-size-h1);
-  font-weight: var(--app-font-weight-heading-strong);
-  line-height: 1.3;
-  color: var(--ph-text-heading);
-  margin: 0 0 32px;
-  padding: 0 0.5rem;
-
-  @include respond-from(tablet) {
-    font-size: var(--app-font-size-h1);
-    padding: 0;
-  }
-}
-
-.ph__pain-grid {
+.ph__hero-visual-folders {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 20px;
-  max-width: 700px;
-  margin: 0 auto;
-
-  @include respond-from(tablet) {
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-  }
-  @include respond-from(desktop) {
-    max-width: 900px;
-    gap: 28px;
-  }
-}
-
-.ph__pain-card {
-  padding: 20px 16px;
-  border-radius: 14px;
-  border: 2px solid var(--ph-border);
-  background: var(--ph-bg-card);
-  box-shadow: var(--ph-shadow-card);
-
-  h3 {
-    font-size: var(--app-font-size-h3);
-    font-weight: var(--app-font-weight-heading-strong);
-    line-height: 1.25;
-    margin: 0 0 10px;
-    color: var(--ph-text-heading);
-  }
-  p {
-    font-size: var(--app-font-size-body);
-    font-weight: var(--app-font-weight-body);
-    line-height: 1.55;
-    color: var(--ph-text-body);
-    margin: 0;
-  }
-
-  @include respond-from(tablet) {
-    padding: 26px;
-    h3 { font-size: var(--app-font-size-h2); }
-    p { font-size: var(--app-font-size-body-lg); }
-  }
-}
-
-.ph__pain-icon {
-  font-size: clamp(1.75rem, 5vw, 3.5rem);
-  margin-bottom: 12px;
-  display: block;
-}
-
-.ph__pain-card--bad {
-  h3 { color: var(--ph-pain-bad); }
-  .ph__pain-icon { color: var(--ph-pain-bad); }
-}
-
-.ph__pain-card--good {
-  h3 { color: var(--ph-pain-good); }
-  .ph__pain-icon { color: var(--ph-pain-good); }
-  border-color: var(--ph-glow-strong);
-}
-
-// ----- 5. BENTO — grid 1 / md:2 / lg:4, bordes white/10, hover cyan -----
-.ph__section-title {
-  text-align: center;
-  font-size: var(--app-font-size-h2);
-  font-weight: var(--app-font-weight-heading-strong);
-  line-height: 1.3;
-  color: var(--ph-text-heading);
-  margin: 0 0 32px;
-  padding: 0 0.5rem;
-
-  @include respond-from(tablet) {
-    font-size: var(--app-font-size-h1);
-    padding: 0;
-  }
-}
-
-.ph__bento {
-  padding: 56px 16px 64px;
-  border-top: 1px solid var(--ph-border);
-
-  @include respond-from(tablet) {
-    padding: 64px 24px 72px;
-  }
-}
-
-.ph__bento-grid {
-  display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
   gap: 16px;
-  max-width: 1100px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: 200px;
+}
 
-  @include respond-from(tablet) {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-  }
-  @include respond-from(lg) {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
+.ph__hero-visual-folder {
+  aspect-ratio: 1;
+  background: linear-gradient(135deg, rgba($accent, 0.15) 0%, rgba($accent, 0.05) 100%);
+  border-radius: 12px;
+  position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 20%;
+    left: 20%;
+    right: 20%;
+    height: 8px;
+    background: rgba($accent, 0.3);
+    border-radius: 4px;
   }
 }
 
-.ph__bento-card {
-  padding: 20px 16px;
-  border-radius: 14px;
-  border: 2px solid var(--ph-border);
-  background: var(--ph-bg-card);
-  box-shadow: var(--ph-shadow-card);
-  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+.ph__hero-visual-folder--1 { transform: translateY(-4px); }
+.ph__hero-visual-folder--2 { transform: translateY(4px); }
+.ph__hero-visual-folder--3 { transform: translateY(4px); }
+.ph__hero-visual-folder--4 { transform: translateY(-4px); }
+
+// ----- 3. ARSENAL BENTO — Mosaic Grid -----
+.ph__arsenal {
+  padding: 80px 24px;
+
+  @include respond-from(tablet) {
+    padding: 100px 32px;
+  }
+}
+
+.ph__arsenal-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  max-width: 80rem;
+  margin: 0 auto;
+
+  @include respond-from(tablet) {
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: auto auto auto;
+  }
+}
+
+.ph__arsenal-card {
+  background: $surface;
+  border-radius: 24px;
+  border: none;
+  box-shadow: $shadow-card;
+  padding: 28px 24px;
+  transition: box-shadow 0.25s;
 
   &:hover {
-    border-color: #08E1F7;
-    box-shadow: 0 0 28px rgba(8, 225, 247, 0.25);
-  }
-
-  h3 {
-    font-size: var(--app-font-size-h3);
-    font-weight: var(--app-font-weight-heading-strong);
-    line-height: 1.25;
-    color: #08E1F7;
-    margin: 0 0 8px;
-  }
-  p {
-    font-size: var(--app-font-size-body);
-    font-weight: var(--app-font-weight-body);
-    line-height: 1.55;
-    color: var(--ph-text-body);
-    margin: 0;
+    box-shadow: $shadow-soft;
   }
 
   @include respond-from(tablet) {
-    padding: 24px;
-    h3 { font-size: var(--app-font-size-h2); }
-    p { font-size: var(--app-font-size-body-lg); }
+    padding: 32px 28px;
   }
 }
 
-.ph__bento-card--large {
-  @include respond-from(lg) {
-    h3 { font-size: 2.4rem; }
-    p { font-size: 2rem; }
+.ph__arsenal-card--wide {
+  @include respond-from(tablet) {
+    grid-column: span 2;
   }
 }
 
-.ph__bento-icon {
-  font-size: clamp(1.75rem, 5vw, 3.5rem);
-  color: #08E1F7;
-  margin-bottom: 12px;
+.ph__arsenal-card--tall {
+  @include respond-from(tablet) {
+    grid-column: 3;
+    grid-row: span 2;
+  }
+}
+
+.ph__arsenal-card--square {
+  @include respond-from(tablet) {
+    grid-column: span 1;
+  }
+}
+
+.ph__arsenal-card--genres.ph__arsenal-card--wide {
+  @include respond-from(tablet) {
+    grid-column: span 3;
+  }
+}
+
+.ph__arsenal-card--square {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.ph__arsenal-icon {
+  font-size: 2rem;
+  color: $accent;
+  margin-bottom: 16px;
   display: block;
 }
 
-// ----- 6. PRECIOS — The Pricing Stack: encabezado sólido, México estrella -----
-.ph__pricing {
-  position: relative;
-  padding: 56px 16px 64px;
-  border-top: 2px solid var(--ph-border);
+.ph__arsenal-card h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: $text-primary;
+  margin: 0 0 8px;
+}
+
+.ph__arsenal-card p {
+  font-size: var(--app-font-size-body);
+  font-weight: 500;
+  color: $text-secondary;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.ph__arsenal-visual--speed {
+  margin-top: 16px;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.ph__arsenal-visual-bar {
+  display: block;
+  height: 100%;
+  min-width: 20%;
+  background: linear-gradient(90deg, $accent 0%, rgba($accent, 0.7) 100%);
+  border-radius: 999px;
+  transition: width 0.5s ease;
+}
+
+.ph__arsenal-folder-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 16px 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: $text-primary;
+  font-family: ui-monospace, monospace;
+}
+
+.ph__arsenal-stat-value {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 800;
+  color: $accent;
+  letter-spacing: -0.02em;
+}
+
+.ph__arsenal-stat-label {
+  font-size: var(--app-font-size-body);
+  font-weight: 500;
+  color: $text-secondary;
+  margin-top: 4px;
+}
+
+.ph__arsenal-card--genres h3 {
+  color: $accent;
+}
+
+// ----- 4. COMPARATIVA — Interactive Toggle Slider -----
+.ph__compare {
+  padding: 80px 24px;
+  max-width: 80rem;
+  margin: 0 auto;
 
   @include respond-from(tablet) {
-    padding: 64px 24px 72px;
+    padding: 100px 32px;
+  }
+}
+
+.ph__section-title {
+  text-align: left;
+  font-family: "Inter", sans-serif;
+  font-size: var(--app-font-size-h2);
+  font-weight: 700;
+  line-height: 1.3;
+  color: $text-primary;
+  margin: 0 0 32px;
+  letter-spacing: -0.02em;
+
+  @include respond-from(tablet) {
+    font-size: var(--app-font-size-h1);
+    margin-bottom: 40px;
+  }
+}
+
+.ph__section-title--left {
+  text-align: left;
+}
+
+// Compare Slider (Toggle)
+.ph__compare-slider {
+  max-width: 800px;
+}
+
+.ph__compare-toggle {
+  display: flex;
+  gap: 0;
+  margin-bottom: 24px;
+  padding: 6px;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 999px;
+  width: fit-content;
+}
+
+.ph__compare-toggle-btn {
+  padding: 14px 28px;
+  font-size: var(--app-font-size-body);
+  font-weight: 600;
+  color: $text-secondary;
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    color: $text-primary;
+  }
+
+  &.ph__compare-toggle-btn--active {
+    color: #000000;
+    background: $accent;
+  }
+}
+
+.ph__compare-slider-card {
+  padding: 36px 32px;
+  border-radius: 24px;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: $surface;
+  box-shadow: $shadow-card;
+  text-align: left;
+
+  h3 {
+    font-size: var(--app-font-size-h3);
+    font-weight: 700;
+    line-height: 1.3;
+    margin: 0;
+    color: $text-primary;
+  }
+  p {
+    font-size: var(--app-font-size-body);
+    font-weight: 500;
+    line-height: 1.7;
+    margin: 0;
+    color: $text-secondary;
+  }
+}
+
+.ph__compare-slider-card--bad h3 {
+  color: $text-secondary;
+}
+
+.ph__compare-slider-card--good h3 {
+  color: $accent;
+}
+
+.ph__compare-icon {
+  font-size: 2rem;
+  margin-bottom: 4px;
+
+  .ph__compare-slider-card--bad & {
+    color: #EF4444;
+  }
+
+  .ph__compare-slider-card--good & {
+    color: $success;
+  }
+}
+
+// ----- 5. PRICING — Membership Pass -----
+.ph__pricing {
+  position: relative;
+  padding: 80px 24px;
+  max-width: 80rem;
+  margin: 0 auto;
+
+  @include respond-from(tablet) {
+    padding: 100px 32px;
   }
 }
 
 .ph__pricing::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80%;
-  height: 60%;
-  background: radial-gradient(ellipse 80% 100% at 50% 0%, var(--ph-glow) 0%, transparent 70%);
-  pointer-events: none;
+  display: none;
 }
 
-.ph__pricing-grid {
-  position: relative;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 20px; /* el margin-top de la card México ya separa visualmente */
-  max-width: 720px;
-  margin: 0 auto 32px;
-
-  @include respond-from(tablet) {
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-    max-width: 800px;
-
-    .ph__price-card--mexico {
-      margin-top: 0; /* en desktop las cards están lado a lado, no hace falta */
-    }
-  }
-  @include respond-from(desktop) {
-    max-width: 960px;
-    gap: 28px;
-  }
+.ph__pricing--membership .ph__section-title {
+  margin-bottom: 40px;
 }
 
-/* Tarjeta con encabezado sólido (sin bordes genéricos) */
-.ph__price-card {
-  border-radius: 12px;
-  overflow: hidden;
-  text-align: center;
-  position: relative;
-  background: var(--ph-bg-card);
-  box-shadow: var(--ph-shadow-card);
+.ph__pricing-toggle--membership {
+  display: flex;
+  justify-content: flex-start;
+  gap: 0;
+  max-width: 360px;
+  margin: 0 0 32px;
+  padding: 6px;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 999px;
 }
 
-/* Global: header oscuro */
-.ph__price-card--global {
-  border: 2px solid var(--ph-border);
-}
-
-.ph__price-header {
-  padding: 14px 12px;
+.ph__pricing-toggle-btn {
+  flex: 1;
+  padding: 14px 24px;
   font-size: var(--app-font-size-body);
-  font-weight: var(--app-font-weight-heading-strong);
-  letter-spacing: 0.02em;
+  font-weight: 600;
+  color: $text-secondary;
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    color: $text-primary;
+  }
+
+  &.ph__pricing-toggle-btn--active {
+    color: #000000;
+    background: $accent;
+  }
+}
+
+.ph__pricing-card-wrapper {
+  position: relative;
+  min-height: 420px;
+  width: 100%;
+  max-width: 28rem;
+  margin: 0 auto 24px;
+}
+
+.ph__pricing-card-wrapper--membership {
+  max-width: 32rem;
+}
+
+.ph__pricing-card--single {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  border-radius: 24px;
+  overflow: hidden;
+  border: none;
+  background: $surface;
+  box-shadow: $shadow-soft;
+  animation: ph-price-fade 0.3s ease;
+}
+
+@keyframes ph-price-fade {
+  from {
+    opacity: 0.7;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.ph__pricing-card-header {
+  padding: 24px;
+  font-size: var(--app-font-size-body);
+  font-weight: 700;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
   line-height: 1.3;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.03);
+  color: $text-primary;
 }
 
-.ph__price-header--global {
-  background: var(--ph-price-header-global-bg);
-  color: var(--ph-price-header-global-text);
+.ph__pricing-card-header--global {
+  background: rgba(0, 0, 0, 0.04);
+  color: $text-primary;
 }
 
-/* México: LA ESTRELLA — Bear cyan + borde grueso */
-.ph__price-card--mexico {
-  overflow: visible; /* para que el badge no se corte */
-  border: 4px solid #08E1F7;
-  box-shadow: 0 20px 25px -5px rgba(8, 225, 247, 0.3), var(--ph-shadow-card);
-  margin-top: 24px; /* espacio para el badge y que no tape la tarjeta de arriba */
+.ph__pricing-card-header--mexico {
+  background: rgba($accent, 0.12);
+  color: $text-primary;
 }
 
-.ph__price-header--mexico {
-  background: var(--ph-price-header-mexico-bg);
-  color: var(--ph-price-header-mexico-text);
-  font-weight: 900;
-  padding-top: 2.5rem; /* espacio suficiente para que el badge no tape "MÉXICO (SPEI/FACTURA)" */
-  min-height: 4rem;
+.ph__pricing-card-body {
+  padding: 32px 28px 36px;
+  text-align: center;
 }
 
-/* Badge flotante "MEJOR OPCIÓN" — Bear cyan, bien arriba para no tapar el header */
-.ph__price-badge {
-  position: absolute;
-  top: -14px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2;
-  padding: 6px 12px;
-  font-size: var(--app-font-size-h4);
-  font-weight: var(--app-font-weight-heading-strong);
-  letter-spacing: 0.03em;
-  color: #000000;
-  background: #08E1F7;
-  border-radius: 8px;
-  box-shadow: 0 4px 14px rgba(8, 225, 247, 0.45);
-  white-space: nowrap;
-  line-height: 1.2;
-}
-
-.ph__price-body {
-  padding: 24px 20px 28px;
-}
-
-.ph__price-amount {
+.ph__pricing-amount {
   display: block;
-  font-size: clamp(2.5rem, 10vw, 4.5rem);
-  font-weight: var(--app-font-weight-heading-strong);
-  color: var(--ph-text-heading);
-  line-height: 1.1;
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: $text-primary;
+  line-height: 1;
   margin-bottom: 4px;
 }
 
-.ph__price-period {
+.ph__pricing-period {
   display: block;
   font-size: var(--app-font-size-body);
   font-weight: 600;
-  color: var(--ph-text-body);
-  margin-bottom: 12px;
+  color: $text-secondary;
+  margin-bottom: 20px;
 }
 
-/* México: iconografía OXXO / SPEI + franja pago efectivo */
-.ph__price-payment-methods {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem 1.5rem;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
-}
-
-.ph__price-pay-label {
+.ph__pricing-anchor {
   font-size: var(--app-font-size-body);
-  font-weight: var(--app-font-weight-heading-strong);
-  letter-spacing: 0.08em;
-  padding: 0.4rem 0.9rem;
-  border-radius: 8px;
-  background: var(--ph-bg-soft);
-  color: var(--ph-text-heading);
-  border: 2px solid var(--ph-border);
-}
-
-.ph__price-pay-label--oxxo {
-  color: #0d9488;
-  border-color: #0d9488;
-  background: rgba(13, 148, 136, 0.12);
-}
-
-.ph__price-pay-label--spei {
-  color: #059669;
-  border-color: #059669;
-  background: rgba(5, 150, 105, 0.12);
-}
-
-.ph__price-cash-cta {
-  font-size: var(--app-font-size-body);
-  font-weight: var(--app-font-weight-heading-strong);
-  color: #047857;
-  background: rgba(4, 120, 87, 0.15);
-  border: 2px solid #059669;
-  border-radius: 8px;
-  padding: 0.6rem 1rem;
-  margin: 0 0 18px;
-  text-align: center;
-  line-height: 1.3;
-}
-
-html[data-theme="dark"] .ph__price-cash-cta {
-  color: #34d399;
-  border-color: #34d399;
-  background: rgba(52, 211, 153, 0.12);
-}
-
-.ph__price-anchor {
-  font-size: var(--app-font-size-body);
-  font-weight: var(--app-font-weight-body);
-  color: var(--ph-text-body);
-  margin: 0 0 18px;
+  font-weight: 500;
+  color: $text-secondary;
+  margin: 0 0 24px;
   font-style: italic;
 }
 
-.ph__price-features {
+.ph__pricing-features {
   list-style: none;
   padding: 0;
-  margin: 0 0 22px;
+  margin: 0 0 28px;
   text-align: left;
-  max-width: 100%;
+  max-width: 260px;
   margin-left: auto;
   margin-right: auto;
-  margin-bottom: 22px;
+  margin-bottom: 28px;
 
   li {
-    padding: 6px 0;
-    font-size: var(--app-font-size-body);
-    font-weight: var(--app-font-weight-body);
-    color: var(--ph-text-body);
+    padding: 10px 0;
     padding-left: 28px;
     position: relative;
+    font-size: var(--app-font-size-body);
+    font-weight: 500;
+    line-height: 1.6;
+    color: $text-secondary;
 
     &::before {
       content: "✓";
       position: absolute;
       left: 0;
-      color: #08E1F7;
+      color: $success;
       font-weight: 800;
     }
   }
-
-  @include respond-from(tablet) {
-    max-width: 260px;
-    li { font-size: var(--app-font-size-body-lg); padding-left: 32px; }
-  }
 }
 
-/* CTAs: rectangulares, poco redondeados, sombra dura (botón físico) */
-.ph__btn {
-  display: inline-flex;
+.ph__pricing-cta {
+  display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.9rem 1.25rem;
-  min-height: 50px;
-  font-size: var(--app-font-size-body);
-  font-weight: var(--app-font-weight-heading-strong);
-  text-decoration: none;
-  border-radius: 10px;
-  transition: box-shadow 0.2s, transform 0.2s, background 0.2s;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-
-  @include respond-from(tablet) {
-    padding: 14px 28px;
-    font-size: var(--app-font-size-body-lg);
-    min-height: 52px;
-  }
-}
-
-.ph__btn--primary {
   width: 100%;
-  max-width: 280px;
-  color: #1A1A1A;
-  background: var(--app-gradient);
+  padding: 18px 28px;
+  min-height: 56px;
+  font-size: var(--app-font-size-body-lg);
+  font-weight: 700;
+  text-decoration: none;
+  color: #000000;
+  background: $accent;
+  border-radius: 999px;
   border: none;
+  transition: filter 0.2s, transform 0.2s;
 
   &:hover {
-    opacity: 0.95;
-    box-shadow: 0 20px 25px -5px rgba(8, 225, 247, 0.4);
-    transform: translateY(-2px);
+    filter: brightness(1.05);
+    transform: scale(1.02);
   }
 }
 
 .ph__guarantee {
-  position: relative;
-  text-align: center;
+  text-align: left;
   font-size: var(--app-font-size-body);
-  font-weight: var(--app-font-weight-body);
-  color: var(--ph-text-body);
+  font-weight: 500;
+  color: $text-secondary;
   margin: 0;
-  padding: 0 0.5rem;
+  padding: 0;
 }
 
-// ----- 7. FOOTER — Contraste legible -----
-.ph__footer {
-  padding: 48px 16px 40px;
-  border-top: 1px solid var(--ph-border);
+// ----- 8. FOOTER — Light -----
+.ph__footer--2026 {
+  padding: 80px 24px 48px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
   text-align: center;
-  background: var(--ph-footer-bg);
+  background: $surface;
 }
 
 .ph__footer-logo img {
   max-width: 96px;
-  margin-bottom: 22px;
-  opacity: 0.95;
+  margin-bottom: 24px;
+  opacity: 0.9;
 }
 
 .ph__footer-links {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 18px 28px;
-  margin-bottom: 18px;
+  gap: 20px 32px;
+  margin-bottom: 24px;
 
   a {
-    color: var(--ph-text-heading);
+    color: $text-secondary;
     font-size: var(--app-font-size-body);
-    font-weight: var(--app-font-weight-heading);
+    font-weight: 600;
     text-decoration: none;
+    transition: color 0.2s;
 
     &:hover {
-      color: #08E1F7;
+      color: $accent;
     }
   }
 }
 
 .ph__footer-payments {
-  font-size: var(--app-font-size-body);
-  font-weight: var(--app-font-weight-body);
-  color: var(--ph-text-body);
-  margin: 0 0 14px;
-  padding: 0 0.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.ph__footer-payment-logo {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: $text-secondary;
+  letter-spacing: 0.05em;
 }
 
 .ph__footer-copy {
   font-size: var(--app-font-size-body);
-  font-weight: var(--app-font-weight-body);
-  color: var(--ph-text-body);
+  font-weight: 500;
+  color: $text-secondary;
   margin: 0;
   padding: 0 0.5rem;
 }

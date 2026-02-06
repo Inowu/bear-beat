@@ -31,7 +31,7 @@ export function initFacebookPixel(): void {
   const id = PIXEL_ID;
 
   // Evitar doble init
-  if (window.fbq && (window as any).fbqLoaded) return;
+  if (typeof (window as any).fbqLoaded === "boolean" && (window as any).fbqLoaded) return;
 
   (function (f: Window, b: Document, e: string, v: string, n?: any, t?: HTMLScriptElement, s?: Element) {
     if (f.fbq) return;

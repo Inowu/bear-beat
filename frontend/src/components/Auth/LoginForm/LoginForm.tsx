@@ -104,7 +104,7 @@ function LoginForm() {
           <ChatButton />
           <form className="auth-form auth-login-form" onSubmit={formik.handleSubmit}>
             <div className="c-row">
-              <div className="auth-login-input-wrap rounded-pill bg-bg-input border border-border focus-within:ring-2 focus-within:ring-bear-cyan focus-within:border-transparent">
+              <div className="auth-login-input-wrap rounded-pill bg-bg-input border border-gray-300 dark:border-bear-dark-100 focus-within:ring-2 focus-within:ring-bear-cyan focus-within:border-transparent">
                 <HiOutlineMail className="auth-login-input-icon" aria-hidden />
                 <input
                   placeholder="Correo electrónico"
@@ -121,7 +121,7 @@ function LoginForm() {
               )}
             </div>
             <div className="c-row">
-              <div className="auth-login-input-wrap rounded-pill bg-bg-input border border-border focus-within:ring-2 focus-within:ring-bear-cyan focus-within:border-transparent">
+              <div className="auth-login-input-wrap rounded-pill bg-bg-input border border-gray-300 dark:border-bear-dark-100 focus-within:ring-2 focus-within:ring-bear-cyan focus-within:border-transparent">
                 <HiOutlineLockClosed className="auth-login-input-icon" aria-hidden />
                 <PasswordInput
                   placeholder="Contraseña"

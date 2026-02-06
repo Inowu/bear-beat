@@ -70,7 +70,7 @@ function Navbar(props: NavbarPropsI) {
       <div className="header">
         <button
           type="button"
-          ref={menuButtonRef}
+          ref={menuButtonRef as React.LegacyRef<HTMLButtonElement>}
           className="burger-btn"
           onClick={() => setAsideOpen((prev) => !prev)}
           aria-label="Abrir menú"

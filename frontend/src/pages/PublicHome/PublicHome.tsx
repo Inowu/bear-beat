@@ -1,23 +1,18 @@
 import { Link } from "react-router-dom";
 import { useRef, useEffect, useState } from "react";
+import { motion, AnimatePresence, useInView, animate } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSun, faMoon, faCircleHalfStroke, faClock } from "@fortawesome/free-solid-svg-icons";
 import { useTheme } from "../../contexts/ThemeContext";
 import type { ThemeMode } from "../../contexts/ThemeContext";
 import Logo from "../../assets/images/osonuevo.png";
 import {
-  PiFiles,
-  PiHardDrives,
-  PiCalendar,
-  PiHeadset,
   PiVideoCamera,
   PiFolderOpen,
   PiLightning,
-  PiMusicNotes,
   PiWarning,
   PiCheckCircle,
 } from "react-icons/pi";
-import GenreTicker from "../../components/GenreTicker/GenreTicker";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 import "./PublicHome.scss";
 
@@ -28,10 +23,130 @@ const THEME_OPTIONS: { value: ThemeMode; label: string; icon: typeof faSun }[] =
   { value: "schedule", label: "Por horario", icon: faClock },
 ];
 
+type PriceRegion = "global" | "mexico";
+
+/** Simula detección de IP México (por ahora). En producción: llamar a API geolocalización. */
+function detectMexicoRegion(): boolean {
+  if (typeof window === "undefined") return false;
+  const simulated = localStorage.getItem("bear_region_mexico");
+  if (simulated !== null) return simulated === "true";
+  return navigator.language === "es-MX" || navigator.language.startsWith("es-");
+}
+
+function useCountUp(end: number, duration = 1.5, startOnView = false, ref: React.RefObject<HTMLElement | null> | null = null) {
+  const [count, setCount] = useState(0);
+  const inView = useInView(ref ?? { current: null } as React.RefObject<HTMLElement>, { once: true, amount: 0.2 });
+
+  useEffect(() => {
+    const shouldRun = startOnView ? inView : true;
+    if (!shouldRun) return;
+
+    const controls = animate(0, end, {
+      duration,
+      ease: "easeOut",
+      onUpdate: (v) => setCount(Math.round(v)),
+    });
+    return () => controls.stop();
+  }, [end, duration, startOnView, inView]);
+
+  return count;
+}
+
+const heroVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.15,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const heroItemVariants = {
+  hidden: { opacity: 0, y: 24 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: "easeOut" },
+  },
+};
+
+const bentoGridVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.3,
+    },
+  },
+};
+
+function CompareSlider() {
+  const [active, setActive] = useState<"amateur" | "pro">("amateur");
+  return (
+    <div className="ph__compare-slider">
+      <div className="ph__compare-toggle">
+        <button
+          type="button"
+          className={`ph__compare-toggle-btn ${active === "amateur" ? "ph__compare-toggle-btn--active" : ""}`}
+          onClick={() => setActive("amateur")}
+          aria-pressed={active === "amateur"}
+        >
+          DJ Amateur
+        </button>
+        <button
+          type="button"
+          className={`ph__compare-toggle-btn ${active === "pro" ? "ph__compare-toggle-btn--active" : ""}`}
+          onClick={() => setActive("pro")}
+          aria-pressed={active === "pro"}
+        >
+          DJ Bear Beat
+        </button>
+      </div>
+      <AnimatePresence mode="wait">
+        {active === "amateur" ? (
+          <motion.div
+            key="amateur"
+            className="ph__compare-slider-card ph__compare-slider-card--bad"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <PiWarning className="ph__compare-icon" aria-hidden />
+            <h3>DJ Amateur</h3>
+            <p>Estresado, YouTube, mala calidad. Una pista que no tienes = una pista que no suena.</p>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="pro"
+            className="ph__compare-slider-card ph__compare-slider-card--good"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <PiCheckCircle className="ph__compare-icon" aria-hidden />
+            <h3>DJ Bear Beat</h3>
+            <p>Carpeta lista, reputación blindada. No arriesgues tu reputación dependiendo del WiFi del lugar.</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 function PublicHome() {
   const { mode, theme, setMode } = useTheme();
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
+  const [region, setRegion] = useState<PriceRegion>(() =>
+    detectMexicoRegion() ? "mexico" : "global"
+  );
   const menuRef = useRef<HTMLDivElement>(null);
+  const authorityRef = useRef<HTMLElement>(null);
+  const filesCount = useCountUp(195000, 1.5, true, authorityRef);
 
   useEffect(() => {
     trackManyChatConversion(MC_EVENTS.VIEW_HOME);
@@ -48,8 +163,8 @@ function PublicHome() {
   }, []);
 
   return (
-    <div className="ph w-full overflow-x-hidden">
-      {/* 1. NAVBAR — Minimalista & Sticky */}
+    <div className="ph ph--light-premium">
+      {/* 1. NAVBAR */}
       <header className="ph__nav">
         <Link to="/" className="ph__nav-logo">
           <img src={Logo} alt="Bear Beat" />
@@ -93,149 +208,208 @@ function PublicHome() {
         </div>
       </header>
 
-      {/* 2. HERO — El Gancho */}
-      <section className="ph__hero">
-        <div className="ph__hero-bg" aria-hidden />
-        <h1 className="ph__hero-h1">
-          El Arsenal de 12.5 TB que te convierte en el DJ que nunca falla.
-        </h1>
-        <h2 className="ph__hero-h2">
-          Descarga masiva vía FTP. Música, Video (93% del catálogo) y Karaokes organizados por carpetas. Mientras duermes, tu disco duro se llena.
-        </h2>
-        <Link to="/auth/registro" state={{ from: "/planes" }} className="ph__hero-cta" onClick={() => trackManyChatConversion(MC_EVENTS.CLICK_CTA_REGISTER)}>
-          QUIERO BLINDAR MI LIBRERÍA →
-        </Link>
-        <p className="ph__hero-micro">
-          Cancela cuando quieras • Acceso Inmediato
-        </p>
-      </section>
-
-      {/* 2.5 TICKER DE GÉNEROS */}
-      <GenreTicker />
-
-      {/* 3. BARRA DE AUTORIDAD */}
-      <section className="ph__authority">
-        <div className="ph__authority-inner">
-          <span className="ph__authority-item">
-            <PiFiles className="ph__authority-icon" aria-hidden />
-            195,000+ Archivos
-          </span>
-          <span className="ph__authority-item">
-            <PiHardDrives className="ph__authority-icon" aria-hidden />
-            12.35 TB de Contenido
-          </span>
-          <span className="ph__authority-item">
-            <PiCalendar className="ph__authority-icon" aria-hidden />
-            Actualización Semanal
-          </span>
-          <span className="ph__authority-item">
-            <PiHeadset className="ph__authority-icon" aria-hidden />
-            Soporte Humano (Chat/Tel)
-          </span>
-        </div>
-      </section>
-
-      {/* 4. SECCIÓN DE DOLOR */}
-      <section className="ph__pain">
-        <h2 className="ph__pain-title">¿Cuánto te cuesta decir &quot;No la tengo&quot;?</h2>
-        <div className="ph__pain-grid">
-          <div className="ph__pain-card ph__pain-card--bad">
-            <PiWarning className="ph__pain-icon" aria-hidden />
-            <h3>DJ Amateur</h3>
-            <p>Estresado, buscando en YouTube, mala calidad. Una pista que no tienes = una pista que no suena.</p>
-          </div>
-          <div className="ph__pain-card ph__pain-card--good">
-            <PiCheckCircle className="ph__pain-icon" aria-hidden />
-            <h3>DJ Bear Beat</h3>
-            <p>Tranquilo, carpeta lista. No arriesgues tu reputación dependiendo del WiFi del lugar.</p>
-          </div>
-        </div>
-      </section>
-
-      {/* 5. VALUE STACK — Bento Grid */}
-      <section className="ph__bento">
-        <h2 className="ph__section-title">Todo lo que necesitas en un solo lugar</h2>
-        <div className="ph__bento-grid">
-          <div className="ph__bento-card ph__bento-card--large">
-            <PiVideoCamera className="ph__bento-icon" aria-hidden />
-            <h3>Especialistas en Video Remixes (11.5 TB)</h3>
-            <p>Lo que nadie más tiene.</p>
-          </div>
-          <div className="ph__bento-card">
-            <PiFolderOpen className="ph__bento-icon" aria-hidden />
-            <h3>Estructura Inteligente</h3>
-            <p>Género &gt; Año &gt; Mes. Ahorra 10 horas de trabajo de oficina.</p>
-          </div>
-          <div className="ph__bento-card">
-            <PiLightning className="ph__bento-icon" aria-hidden />
-            <h3>Servidores FTP de Alta Velocidad</h3>
-            <p>Sin límites de bajada.</p>
-          </div>
-          <div className="ph__bento-card">
-            <PiMusicNotes className="ph__bento-icon" aria-hidden />
-            <h3>Catálogo Completo</h3>
-            <p>Desde Cumbias Wepa y Corridos hasta Tech House y Retro 80s.</p>
-          </div>
-        </div>
-      </section>
-
-      {/* 6. PRECIOS — The Pricing Stack: encabezados sólidos, México estrella */}
-      <section className="ph__pricing">
-        <h2 className="ph__section-title">Planes que se pagan solos</h2>
-        <div className="ph__pricing-grid">
-          <div className="ph__price-card ph__price-card--global">
-            <div className="ph__price-header ph__price-header--global">GLOBAL / USA</div>
-            <div className="ph__price-body">
-              <span className="ph__price-amount">$18</span>
-              <span className="ph__price-period">USD / mes</span>
-              <p className="ph__price-anchor">Menos de lo que cobras por 20 min de show.</p>
-              <ul className="ph__price-features">
-                <li>500 GB descarga</li>
-                <li>Acceso Total</li>
-                <li>Tarjeta / PayPal</li>
-              </ul>
-              <Link to="/auth/registro" state={{ from: "/planes" }} className="ph__btn ph__btn--primary" onClick={() => trackManyChatConversion(MC_EVENTS.CLICK_PLAN_USD)}>
-                Quiero el plan USD
+      {/* 2. HERO — Split Layout: Left copy, Right visual */}
+      <motion.section
+        className="ph__hero ph__hero--split"
+        variants={heroVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <div className="ph__hero-inner">
+          <div className="ph__hero-left">
+            <motion.h1 className="ph__hero-h1" variants={heroItemVariants}>
+              El arsenal que te convierte en el DJ que nunca falla.
+            </motion.h1>
+            <motion.div className="ph__hero-keywords" variants={heroItemVariants}>
+              <span className="ph__hero-big-number">12.5 TB</span>
+              <span className="ph__hero-keyword">Video Remixes</span>
+            </motion.div>
+            <motion.p className="ph__hero-sub" variants={heroItemVariants}>
+              Descarga masiva vía FTP. Música, Video y Karaokes.
+            </motion.p>
+            <motion.div variants={heroItemVariants}>
+              <Link
+                to="/auth/registro"
+                state={{ from: "/planes" }}
+                className="ph__hero-cta ph__hero-cta--pill"
+                onClick={() => trackManyChatConversion(MC_EVENTS.CLICK_CTA_REGISTER)}
+              >
+                QUIERO BLINDAR MI LIBRERÍA →
               </Link>
-            </div>
+            </motion.div>
+            <motion.p className="ph__hero-micro" variants={heroItemVariants}>
+              Cancela cuando quieras • Acceso Inmediato
+            </motion.p>
           </div>
-          <div className="ph__price-card ph__price-card--mexico">
-            <span className="ph__price-badge">MEJOR OPCIÓN</span>
-            <div className="ph__price-header ph__price-header--mexico">MÉXICO (SPEI/FACTURA)</div>
-            <div className="ph__price-body">
-              <span className="ph__price-amount">$350</span>
-              <span className="ph__price-period">MXN / mes</span>
-              <div className="ph__price-payment-methods" aria-label="Métodos de pago">
-                <span className="ph__price-pay-label ph__price-pay-label--oxxo">OXXO</span>
-                <span className="ph__price-pay-label ph__price-pay-label--spei">SPEI</span>
+          <motion.div className="ph__hero-right" variants={heroItemVariants} aria-hidden>
+            <div className="ph__hero-visual">
+              <div className="ph__hero-visual-frame">
+                <div className="ph__hero-visual-folders">
+                  <div className="ph__hero-visual-folder ph__hero-visual-folder--1" />
+                  <div className="ph__hero-visual-folder ph__hero-visual-folder--2" />
+                  <div className="ph__hero-visual-folder ph__hero-visual-folder--3" />
+                  <div className="ph__hero-visual-folder ph__hero-visual-folder--4" />
+                </div>
               </div>
-              <p className="ph__price-cash-cta">¡Paga en efectivo en OXXO o Transferencia Directa!</p>
-              <ul className="ph__price-features">
-                <li>500 GB descarga</li>
-                <li>SPEI, OXXO, Tarjeta</li>
-              </ul>
-              <Link to="/auth/registro" state={{ from: "/planes" }} className="ph__btn ph__btn--primary" onClick={() => trackManyChatConversion(MC_EVENTS.CLICK_PLAN_MXN)}>
-                Quiero el plan MXN
-              </Link>
             </div>
-          </div>
+          </motion.div>
         </div>
-        <p className="ph__guarantee">Garantía de Satisfacción</p>
-      </section>
+      </motion.section>
 
-      {/* 7. FOOTER */}
-      <footer className="ph__footer">
+      {/* 3. ARSENAL BENTO — Mosaic: FTP wide, Structure tall, Stats square */}
+      <motion.section
+        className="ph__arsenal"
+        variants={bentoGridVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.1 }}
+      >
+        <h2 className="ph__section-title ph__section-title--left">El Arsenal</h2>
+        <div className="ph__arsenal-grid">
+          <motion.div className="ph__arsenal-card ph__arsenal-card--wide" variants={bentoGridVariants}>
+            <PiLightning className="ph__arsenal-icon" aria-hidden />
+            <h3>FTP Ultra Rápido</h3>
+            <p>Servidores de alta velocidad. Sin límites de bajada. 500 GB/mes con FileZilla.</p>
+            <div className="ph__arsenal-visual ph__arsenal-visual--speed">
+              <span className="ph__arsenal-visual-bar" style={{ width: "92%" }} />
+            </div>
+          </motion.div>
+          <motion.div className="ph__arsenal-card ph__arsenal-card--tall" variants={bentoGridVariants}>
+            <PiFolderOpen className="ph__arsenal-icon" aria-hidden />
+            <h3>Estructura Inteligente</h3>
+            <div className="ph__arsenal-folder-tree">
+              <span>Video Remixes</span>
+              <span>→ 2024 → Enero</span>
+              <span>→ Género → Año → Mes</span>
+            </div>
+            <p>Ahorra 10 horas de trabajo de oficina.</p>
+          </motion.div>
+          <motion.div className="ph__arsenal-card ph__arsenal-card--square" variants={bentoGridVariants} ref={authorityRef}>
+            <span className="ph__arsenal-stat-value">12.5 TB</span>
+            <span className="ph__arsenal-stat-label">Contenido Total</span>
+          </motion.div>
+          <motion.div className="ph__arsenal-card ph__arsenal-card--square" variants={bentoGridVariants}>
+            <span className="ph__arsenal-stat-value">{filesCount.toLocaleString("es-MX")}+</span>
+            <span className="ph__arsenal-stat-label">Archivos</span>
+          </motion.div>
+          <motion.div className="ph__arsenal-card ph__arsenal-card--wide ph__arsenal-card--genres" variants={bentoGridVariants}>
+            <PiVideoCamera className="ph__arsenal-icon" aria-hidden />
+            <h3>Video Remixes</h3>
+            <p>11.5 TB — Reggaeton, Cumbias, Corridos, Banda, Tech House, Salsa, Retro 80s.</p>
+          </motion.div>
+        </div>
+      </motion.section>
+
+      {/* 4. COMPARATIVA — Interactive Toggle Slider */}
+      <motion.section
+        className="ph__compare"
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: 0.5 }}
+      >
+        <h2 className="ph__section-title ph__section-title--left">¿Cuánto te cuesta decir &quot;No la tengo&quot;?</h2>
+        <CompareSlider />
+      </motion.section>
+
+      {/* 5. PRICING — Membership Pass */}
+      <motion.section
+        className="ph__pricing ph__pricing--membership"
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: 0.5 }}
+      >
+        <h2 className="ph__section-title ph__section-title--left">Tu pase de membresía</h2>
+
+        <div className="ph__pricing-toggle ph__pricing-toggle--membership">
+          <button
+            type="button"
+            className={`ph__pricing-toggle-btn ${region === "global" ? "ph__pricing-toggle-btn--active" : ""}`}
+            onClick={() => setRegion("global")}
+            aria-pressed={region === "global"}
+          >
+            Global ($ USD)
+          </button>
+          <button
+            type="button"
+            className={`ph__pricing-toggle-btn ${region === "mexico" ? "ph__pricing-toggle-btn--active" : ""}`}
+            onClick={() => setRegion("mexico")}
+            aria-pressed={region === "mexico"}
+          >
+            México ($ MXN)
+          </button>
+        </div>
+
+        <div className="ph__pricing-card-wrapper ph__pricing-card-wrapper--membership">
+          <AnimatePresence mode="wait">
+            {region === "global" ? (
+              <motion.div
+                key="global"
+                className="ph__pricing-card ph__pricing-card--single ph__pricing-card--global"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+              >
+                <div className="ph__pricing-card-header ph__pricing-card-header--global">Membresía Global</div>
+                <div className="ph__pricing-card-body">
+                  <span className="ph__pricing-amount">$18</span>
+                  <span className="ph__pricing-period">USD / mes</span>
+                  <p className="ph__pricing-anchor">Menos de lo que cobras por 20 min de show.</p>
+                  <ul className="ph__pricing-features">
+                    <li>500 GB descarga</li>
+                    <li>Acceso Total</li>
+                    <li>Tarjeta / PayPal</li>
+                  </ul>
+                  <Link to="/auth/registro" state={{ from: "/planes" }} className="ph__pricing-cta" onClick={() => trackManyChatConversion(MC_EVENTS.CLICK_PLAN_USD)}>
+                    Quiero el plan USD
+                  </Link>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="mexico"
+                className="ph__pricing-card ph__pricing-card--single ph__pricing-card--mexico"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+              >
+                <div className="ph__pricing-card-header ph__pricing-card-header--mexico">Membresía México</div>
+                <div className="ph__pricing-card-body">
+                  <span className="ph__pricing-amount">$350</span>
+                  <span className="ph__pricing-period">MXN / mes</span>
+                  <p className="ph__pricing-anchor">Menos de lo que cobras por 20 min de show.</p>
+                  <ul className="ph__pricing-features">
+                    <li>500 GB descarga</li>
+                    <li>SPEI, OXXO, Tarjeta</li>
+                    <li>Acceso Total</li>
+                  </ul>
+                  <Link to="/auth/registro" state={{ from: "/planes" }} className="ph__pricing-cta" onClick={() => trackManyChatConversion(MC_EVENTS.CLICK_PLAN_MXN)}>
+                    Quiero el plan MXN
+                  </Link>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+        <p className="ph__guarantee">Acceso inmediato • Cancela cuando quieras • Garantía de satisfacción</p>
+      </motion.section>
+
+      {/* 8. FOOTER */}
+      <footer className="ph__footer ph__footer--2026">
         <Link to="/" className="ph__footer-logo">
           <img src={Logo} alt="Bear Beat" />
         </Link>
         <div className="ph__footer-links">
           <Link to="/auth" state={{ from: "/planes" }}>Iniciar sesión</Link>
           <Link to="/auth/registro" state={{ from: "/planes" }}>Registrarme</Link>
-          <a href="/#soporte">Soporte</a>
         </div>
-        <p className="ph__footer-payments">
-          Pagos seguros: Stripe · PayPal · Conekta
-        </p>
+        <div className="ph__footer-payments" aria-label="Pagos seguros">
+          <span className="ph__footer-payment-logo" title="Stripe">Stripe</span>
+          <span className="ph__footer-payment-logo" title="PayPal">PayPal</span>
+        </div>
         <p className="ph__footer-copy">© Bear Beat. Todos los derechos reservados.</p>
       </footer>
     </div>

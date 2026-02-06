@@ -161,7 +161,7 @@ initFacebookPixel();
 root.render(
   <React.StrictMode>
     <Sentry.ErrorBoundary
-      fallback={({ error }) => <ErrorFallback error={error} />}
+      fallback={({ error }) => <ErrorFallback error={error instanceof Error ? error : undefined} />}
     >
     <ThemeProvider>
       <UserContextProvider>

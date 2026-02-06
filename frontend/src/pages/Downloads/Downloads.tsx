@@ -21,7 +21,7 @@ function Downloads() {
   }, []);
 
   return (
-    <div className="w-full overflow-x-hidden">
+    <div className="w-full">
       <header className="mb-6">
         <div className="flex flex-wrap items-center gap-3">
           <HiFolderArrowDown className="h-6 w-6 flex-shrink-0 text-bear-cyan" aria-hidden />

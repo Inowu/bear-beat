@@ -57,6 +57,7 @@ function Admin() {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [filters, setFilters] = useState<IAdminFilter>({
     page: 0,
+    total: 0,
     search: "",
     active: 2,
     limit: 100,
