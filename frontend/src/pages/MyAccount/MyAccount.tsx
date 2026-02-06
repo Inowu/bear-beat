@@ -8,7 +8,6 @@ import {
 } from "../../components/Modals";
 import { Elements } from "@stripe/react-stripe-js";
 import {
-  User,
   CreditCard,
   Server,
   Clock,
@@ -29,8 +28,6 @@ import { useUserContext } from "../../contexts/UserContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { getStripeAppearance } from "../../utils/stripeAppearance";
 import Amex from "../../assets/images/cards/express.png";
-import filezillaIcon from "../../assets/images/filezilla_icon.png";
-import Logo from "../../assets/images/osonuevo.png";
 import Mastercard from "../../assets/images/cards/master.png";
 import trpc from "../../api";
 import Visa from "../../assets/images/cards/visa.png";

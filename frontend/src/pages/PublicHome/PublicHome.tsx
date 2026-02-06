@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import { useRef, useEffect, useState } from "react";
-import { motion, AnimatePresence, useInView, animate } from "framer-motion";
+import { useRef, useEffect, useState, type RefObject } from "react";
+import { motion, AnimatePresence, useInView, animate, type Variants } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSun, faMoon, faCircleHalfStroke, faClock } from "@fortawesome/free-solid-svg-icons";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -24,6 +24,7 @@ const THEME_OPTIONS: { value: ThemeMode; label: string; icon: typeof faSun }[] =
 ];
 
 type PriceRegion = "global" | "mexico";
+const BEAR_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 /** Simula detección de IP México (por ahora). En producción: llamar a API geolocalización. */
 function detectMexicoRegion(): boolean {
@@ -33,9 +34,9 @@ function detectMexicoRegion(): boolean {
   return navigator.language === "es-MX" || navigator.language.startsWith("es-");
 }
 
-function useCountUp(end: number, duration = 1.5, startOnView = false, ref: React.RefObject<HTMLElement | null> | null = null) {
+function useCountUp(end: number, duration = 1.5, startOnView = false, ref: RefObject<Element> | null = null) {
   const [count, setCount] = useState(0);
-  const inView = useInView(ref ?? { current: null } as React.RefObject<HTMLElement>, { once: true, amount: 0.2 });
+  const inView = useInView(ref ?? ({ current: null } as RefObject<Element>), { once: true, amount: 0.2 });
 
   useEffect(() => {
     const shouldRun = startOnView ? inView : true;
@@ -52,7 +53,7 @@ function useCountUp(end: number, duration = 1.5, startOnView = false, ref: React
   return count;
 }
 
-const heroVariants = {
+const heroVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -63,16 +64,16 @@ const heroVariants = {
   },
 };
 
-const heroItemVariants = {
+const heroItemVariants: Variants = {
   hidden: { opacity: 0, y: 24 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.5, ease: "easeOut" },
+    transition: { duration: 0.5, ease: BEAR_EASE },
   },
 };
 
-const bentoGridVariants = {
+const bentoGridVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -145,7 +146,7 @@ function PublicHome() {
     detectMexicoRegion() ? "mexico" : "global"
   );
   const menuRef = useRef<HTMLDivElement>(null);
-  const authorityRef = useRef<HTMLElement>(null);
+  const authorityRef = useRef<HTMLDivElement>(null);
   const filesCount = useCountUp(195000, 1.5, true, authorityRef);
 
   useEffect(() => {

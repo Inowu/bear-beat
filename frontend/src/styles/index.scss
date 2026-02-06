@@ -879,6 +879,98 @@ svg[role="img"] {
   -webkit-overflow-scrolling: touch;
 }
 
+/* ==========================================================================
+   UI Hardening 2026
+   Consistencia transversal para rutas internas, modales y estados.
+   ========================================================================== */
+.main-layout-main-container {
+  .card,
+  .panel,
+  .module-card {
+    background: var(--app-bg-card);
+    border: 1px solid var(--app-border);
+    border-radius: var(--bb-radius-card);
+    box-shadow: var(--app-shadow);
+  }
+
+  .badge,
+  .status-pill {
+    border-radius: var(--bb-radius-pill);
+    font-weight: var(--app-font-weight-heading);
+    letter-spacing: 0.01em;
+    padding: 4px 10px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: var(--app-bg-card);
+    border: 1px solid var(--app-border);
+    border-radius: var(--bb-radius-card);
+    overflow: hidden;
+  }
+
+  thead th {
+    background: var(--app-bg-soft);
+    color: var(--app-text-heading);
+    font-weight: var(--app-font-weight-heading);
+    border-bottom: 1px solid var(--app-border);
+  }
+
+  tbody td {
+    border-bottom: 1px solid color-mix(in srgb, var(--app-border) 70%, transparent);
+    color: var(--app-text-body);
+  }
+
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  tbody tr:hover {
+    background: color-mix(in srgb, var(--app-accent) 8%, transparent);
+  }
+}
+
+/* Bootstrap utility overrides to keep brand consistency in dark/light */
+.border,
+.border-top,
+.border-end,
+.border-bottom,
+.border-start {
+  border-color: var(--app-border) !important;
+}
+
+.text-muted {
+  color: var(--app-text-muted) !important;
+}
+
+.modal-content,
+.modal-container {
+  border-color: var(--app-border) !important;
+}
+
+.modal-content input,
+.modal-content select,
+.modal-content textarea {
+  border-color: var(--app-border);
+  background: var(--app-bg-card);
+  color: var(--app-text-heading);
+}
+
+.error-formik,
+.formik {
+  color: var(--app-status-error);
+}
+
+.success-message {
+  color: var(--app-status-success);
+}
+
+.warning-message {
+  color: var(--app-status-warning);
+}
+
 /* Chrome Mac: landing (PublicHome) sin scroll horizontal ni recorte */
 .chrome-mac .ph {
   width: 100%;

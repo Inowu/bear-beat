@@ -102,15 +102,16 @@ function LoginForm() {
             Tu cabina está lista. Ingresa para descargar.
           </p>
           <ChatButton />
-          <form className="auth-form auth-login-form" onSubmit={formik.handleSubmit}>
+          <form className="auth-form auth-login-form" onSubmit={formik.handleSubmit} autoComplete="on">
             <div className="c-row">
               <div className="auth-login-input-wrap rounded-pill bg-bg-input border border-gray-300 dark:border-bear-dark-100 focus-within:ring-2 focus-within:ring-bear-cyan focus-within:border-transparent">
                 <HiOutlineMail className="auth-login-input-icon" aria-hidden />
                 <input
                   placeholder="Correo electrónico"
-                  type="text"
+                  type="email"
                   id="username"
                   name="username"
+                  autoComplete="email"
                   value={formik.values.username}
                   onChange={formik.handleChange}
                   className="auth-login-input auth-login-input-with-icon"
@@ -127,6 +128,7 @@ function LoginForm() {
                   placeholder="Contraseña"
                   id="password"
                   name="password"
+                  autoComplete="current-password"
                   value={formik.values.password}
                   onChange={formik.handleChange}
                   inputClassName="auth-login-input auth-login-input-with-icon"

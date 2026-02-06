@@ -10,7 +10,7 @@ const url =
     : "https://thebearbeatapi.lat/trpc";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const trpc = createTRPCProxyClient<any>({
+const trpc: any = createTRPCProxyClient({
   transformer: superjson,
   links: [
     httpBatchLink({
@@ -22,6 +22,6 @@ const trpc = createTRPCProxyClient<any>({
       },
     }),
   ],
-});
+} as any);
 
 export default trpc;
