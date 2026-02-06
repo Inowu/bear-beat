@@ -22,7 +22,6 @@ export function PasswordInput({ inputClassName, wrapperClassName, ...props }: Pa
         onClick={() => setShow((s) => !s)}
         className="password-input-toggle"
         aria-label={show ? "Ocultar contraseña" : "Mostrar contraseña"}
-        tabIndex={-1}
       >
         {show ? (
           <HiOutlineEyeOff size={22} aria-hidden />

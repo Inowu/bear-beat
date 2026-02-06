@@ -164,4 +164,31 @@
   [class*="dark:hover:bg-bear-dark-500"]:hover {
     background-color: var(--ad-row-hover) !important;
   }
+
+  /* Estándar táctil para icon actions en admin mobile */
+  @media (max-width: 768px) {
+    .md\:hidden button.p-2,
+    .md\:hidden [role="button"] button.p-2,
+    .md\:hidden .rounded-lg.p-2 {
+      min-width: 40px;
+      min-height: 40px;
+      width: 40px;
+      height: 40px;
+      padding: 10px !important;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+    }
+
+    .md\:hidden [role="button"] {
+      min-height: 68px;
+    }
+
+    .admin-page-wrap__toolbar input,
+    .admin-page-wrap__toolbar select,
+    .admin-page-wrap__toolbar button {
+      min-height: 44px;
+    }
+  }
 }

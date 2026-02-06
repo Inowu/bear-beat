@@ -1,3 +1,4 @@
+import "./Auth.scss";
 import { Outlet } from "react-router-dom";
 import { useEffect } from "react";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";

@@ -9,6 +9,7 @@ import { ErrorModal } from "../../../components/Modals/ErrorModal/ErrorModal";
 import { SuccessModal } from "../../../components/Modals/SuccessModal/SuccessModal";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import { useUserContext } from "../../../contexts/UserContext";
+import "./ResetPassword.scss";
 
 function ResetPassword() {
   const navigate = useNavigate();
@@ -67,8 +68,8 @@ function ResetPassword() {
     },
   });
   return (
-    <form className="auth-form" onSubmit={formik.handleSubmit}>
-      <h2>ESCRIBA UNA NUEVA CONTRASEÑA</h2>
+    <form className="auth-form auth-reset-form" onSubmit={formik.handleSubmit} autoComplete="on">
+      <h2 className="auth-reset-title">ESCRIBA UNA NUEVA CONTRASEÑA</h2>
       <div className="c-row">
         <div className="auth-password-with-icon-wrap">
           <HiOutlineLockClosed className="auth-password-icon" aria-hidden />
@@ -76,11 +77,14 @@ function ResetPassword() {
             placeholder="Nueva contraseña (mín. 6 caracteres)"
             id="password"
             name="password"
+            autoComplete="new-password"
             value={formik.values.password}
             onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            aria-invalid={Boolean((formik.touched.password || formik.submitCount > 0) && formik.errors.password)}
           />
         </div>
-        {formik.errors.password && (
+        {(formik.touched.password || formik.submitCount > 0) && formik.errors.password && (
           <div className="error-formik">{formik.errors.password}</div>
         )}
       </div>
@@ -91,18 +95,23 @@ function ResetPassword() {
             placeholder="Repetir contraseña"
             id="passwordConfirmation"
             name="passwordConfirmation"
+            autoComplete="new-password"
             value={formik.values.passwordConfirmation}
             onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            aria-invalid={Boolean(
+              (formik.touched.passwordConfirmation || formik.submitCount > 0) && formik.errors.passwordConfirmation,
+            )}
           />
         </div>
-        {formik.errors.passwordConfirmation && (
+        {(formik.touched.passwordConfirmation || formik.submitCount > 0) && formik.errors.passwordConfirmation && (
           <div className="error-formik">
             {formik.errors.passwordConfirmation}
           </div>
         )}
       </div>
       {!loader ? (
-        <button className="btn" type="submit">
+        <button className="btn auth-reset-submit" type="submit">
           Guardar
         </button>
       ) : (

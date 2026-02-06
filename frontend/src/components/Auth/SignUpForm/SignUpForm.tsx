@@ -212,6 +212,21 @@ function SignUpForm() {
 
   const selectedCountry = allowedCountryOptions.find((c) => c.dial_code.slice(1) === dialCode);
   const countryFlagClass = selectedCountry ? `fi fi-${selectedCountry.code.toLowerCase()}` : "fi";
+  const showUsernameError = Boolean(
+    (formik.touched.username || formik.submitCount > 0) && formik.errors.username,
+  );
+  const showEmailError = Boolean(
+    (formik.touched.email || formik.submitCount > 0) && formik.errors.email,
+  );
+  const showPhoneError = Boolean(
+    (formik.touched.phone || formik.submitCount > 0) && formik.errors.phone,
+  );
+  const showPasswordError = Boolean(
+    (formik.touched.password || formik.submitCount > 0) && formik.errors.password,
+  );
+  const showPasswordConfirmationError = Boolean(
+    (formik.touched.passwordConfirmation || formik.submitCount > 0) && formik.errors.passwordConfirmation,
+  );
 
   return (
     <div className="auth-split">
@@ -225,12 +240,15 @@ function SignUpForm() {
         </ul>
         <p className="auth-split-testimonial">"La mejor inversión para mi carrera."</p>
       </div>
-      <div className="auth-split-panel auth-split-right flex flex-col items-center">
-        <div className="auth-split-form w-full max-w-md">
+      <div className="auth-split-panel auth-split-right">
+        <div className="auth-split-form">
           <h2 className="auth-split-form-title">Crea tu cuenta Pro</h2>
-          <ChatButton />
+          <div className="auth-split-help">
+            <ChatButton variant="inline" />
+          </div>
           <form
             className="sign-up-form auth-form"
+            autoComplete="on"
             onSubmit={(e) => {
               e.preventDefault();
               if (!turnstileToken) {
@@ -240,7 +258,7 @@ function SignUpForm() {
               formik.handleSubmit(e);
             }}
           >
-            <div className="c-row">
+            <div className={`c-row ${showUsernameError ? "is-invalid" : ""}`}>
               <label htmlFor="username" className="signup-label">Nombre</label>
               <div className="signup-input-wrap">
                 <HiOutlineUser className="signup-input-icon" aria-hidden />
@@ -249,14 +267,17 @@ function SignUpForm() {
                   type="text"
                   id="username"
                   name="username"
+                  autoComplete="name"
                   value={formik.values.username}
                   onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
                   className="signup-input-with-icon"
+                  aria-invalid={showUsernameError}
                 />
               </div>
-              {formik.errors.username && <div className="error-formik">{formik.errors.username}</div>}
+              {showUsernameError && <div className="error-formik">{formik.errors.username}</div>}
             </div>
-            <div className="c-row">
+            <div className={`c-row ${showEmailError ? "is-invalid" : ""}`}>
               <label htmlFor="email" className="signup-label">Correo electrónico</label>
               <div className="signup-input-wrap">
                 <HiOutlineMail className="signup-input-icon" aria-hidden />
@@ -264,16 +285,19 @@ function SignUpForm() {
                   placeholder="correo@ejemplo.com"
                   id="email"
                   name="email"
+                  autoComplete="email"
                   value={formik.values.email}
                   onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
                   type="text"
                   className="signup-input-with-icon"
+                  aria-invalid={showEmailError}
                 />
               </div>
-              {formik.errors.email && <div className="error-formik">{formik.errors.email}</div>}
+              {showEmailError && <div className="error-formik">{formik.errors.email}</div>}
             </div>
-            <div className="c-row c-row--phone">
-              <label className="signup-label">WhatsApp (para soporte VIP)</label>
+            <div className={`c-row c-row--phone ${showPhoneError ? "is-invalid" : ""}`}>
+              <label htmlFor="phone" className="signup-label">WhatsApp (para soporte VIP)</label>
               <div className="signup-phone-wrap">
                 <div className="signup-phone-flag-wrap">
                   <span className={`signup-phone-flag ${countryFlagClass}`} aria-hidden title={selectedCountry?.name} />
@@ -301,15 +325,17 @@ function SignUpForm() {
                   name="phone"
                   value={formik.values.phone}
                   onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
                   type="tel"
                   inputMode="numeric"
                   autoComplete="tel-national"
                   maxLength={15}
+                  aria-invalid={showPhoneError}
                 />
               </div>
-              {formik.errors.phone && <div className="error-formik">{formik.errors.phone}</div>}
+              {showPhoneError && <div className="error-formik">{formik.errors.phone}</div>}
             </div>
-            <div className="c-row">
+            <div className={`c-row ${showPasswordError ? "is-invalid" : ""}`}>
               <label htmlFor="password" className="signup-label">Contraseña</label>
               <div className="signup-input-wrap">
                 <HiOutlineLockClosed className="signup-input-icon" aria-hidden />
@@ -317,15 +343,17 @@ function SignUpForm() {
                   placeholder="Mínimo 6 caracteres"
                   id="password"
                   name="password"
+                  autoComplete="new-password"
                   value={formik.values.password}
                   onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
                   inputClassName="signup-input-with-icon"
                   wrapperClassName="signup-password-wrap"
                 />
               </div>
-              {formik.errors.password && <div className="error-formik">{formik.errors.password}</div>}
+              {showPasswordError && <div className="error-formik">{formik.errors.password}</div>}
             </div>
-            <div className="c-row">
+            <div className={`c-row ${showPasswordConfirmationError ? "is-invalid" : ""}`}>
               <label htmlFor="passwordConfirmation" className="signup-label">Repetir contraseña</label>
               <div className="signup-input-wrap">
                 <HiOutlineLockClosed className="signup-input-icon" aria-hidden />
@@ -333,13 +361,15 @@ function SignUpForm() {
                   placeholder="Repite tu contraseña"
                   id="passwordConfirmation"
                   name="passwordConfirmation"
+                  autoComplete="new-password"
                   value={formik.values.passwordConfirmation}
                   onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
                   inputClassName="signup-input-with-icon"
                   wrapperClassName="signup-password-wrap"
                 />
               </div>
-              {formik.errors.passwordConfirmation && (
+              {showPasswordConfirmationError && (
                 <div className="error-formik">{formik.errors.passwordConfirmation}</div>
               )}
             </div>

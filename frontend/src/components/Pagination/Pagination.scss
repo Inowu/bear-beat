@@ -46,38 +46,85 @@ $bear-blue-dim: var(--bb-cyan);
     align-items: center;
     justify-content: center;
 
-    .selected {
-      font-weight: 600;
-      color: var(--app-accent);
-      font-size: var(--app-font-size-body);
-    }
-
-    .unselected,
-    .points {
-      cursor: pointer;
-      font-size: var(--app-font-size-body);
-      color: $text-primary;
-      min-width: 36px;
-      min-height: 44px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      &:hover {
-        opacity: 0.67;
-      }
-    }
-
-    svg {
+    .page-nav {
       cursor: pointer;
       color: var(--app-accent);
       min-width: 44px;
       min-height: 44px;
-      &:hover {
-        opacity: 0.67;
+      width: 44px;
+      height: 44px;
+      border-radius: 999px;
+      border: 1px solid color-mix(in srgb, var(--app-accent) 30%, transparent);
+      background: color-mix(in srgb, var(--app-bg-card) 88%, transparent);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.2s, background 0.2s, transform 0.2s;
+
+      &:hover:not(:disabled) {
+        opacity: 0.92;
+        transform: translateY(-1px);
+      }
+
+      &:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      svg {
+        min-width: 24px;
+        min-height: 24px;
       }
     }
 
-    p {
+    .selected {
+      font-weight: 600;
+      color: var(--app-accent);
+      font-size: var(--app-font-size-body);
+      min-width: 40px;
+      min-height: 44px;
+      padding: 0 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      border: 1px solid color-mix(in srgb, var(--app-accent) 35%, transparent);
+      background: color-mix(in srgb, var(--app-accent) 16%, transparent);
+    }
+
+    .unselected {
+      cursor: pointer;
+      font-size: var(--app-font-size-body);
+      color: $text-primary;
+      min-width: 40px;
+      min-height: 44px;
+      padding: 0 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      background: transparent;
+      transition: opacity 0.2s, background 0.2s;
+
+      &:hover {
+        opacity: 0.67;
+        background: color-mix(in srgb, var(--app-accent) 12%, transparent);
+      }
+    }
+
+    .points {
+      color: $text-primary;
+      min-width: 30px;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.75;
+    }
+
+    button,
+    span {
       color: var(--app-accent);
       font-size: var(--app-font-size-body);
     }
@@ -102,8 +149,15 @@ $bear-blue-dim: var(--bb-cyan);
 
     .right-side .selected,
     .right-side .unselected,
-    .right-side p {
+    .right-side .points {
       font-size: var(--app-font-size-body-lg);
+    }
+
+    .right-side .page-nav {
+      min-width: 42px;
+      min-height: 42px;
+      width: 42px;
+      height: 42px;
     }
   }
 }

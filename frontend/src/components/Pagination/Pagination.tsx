@@ -18,6 +18,9 @@ interface IPagination {
 function Pagination(props: IPagination) {
   const { title, totalData, startFilter, currentPage, limit, totalLoader } =
     props;
+  const totalPages = Math.max(1, Math.ceil(totalData / limit));
+  const canGoBack = currentPage > 0;
+  const canGoForward = currentPage + 1 < totalPages;
   const changePage = (direction: string, page: number) => {
     if (direction === "back" && currentPage !== 0) {
       startFilter("page", page);
@@ -27,7 +30,7 @@ function Pagination(props: IPagination) {
     }
     if (
       direction === "forward" &&
-      currentPage !== Math.ceil(totalData / limit)
+      currentPage + 1 < totalPages
     ) {
       startFilter("page", page);
     }
@@ -46,37 +49,50 @@ function Pagination(props: IPagination) {
         <p className="left-text">Datos por página: {limit}</p>
       </div>
       <div className="right-side">
-        <FontAwesomeIcon
-          icon={faChevronCircleLeft}
+        <button
+          type="button"
+          className="page-nav"
+          aria-label="Página anterior"
           onClick={() => changePage("back", currentPage - 1)}
-        />
+          disabled={!canGoBack}
+        >
+          <FontAwesomeIcon icon={faChevronCircleLeft} />
+        </button>
         {showPages(currentPage + 1, totalData, limit).map(
           (val: number | string, index: number) => {
+            if (typeof val !== "number") {
+              return (
+                <span key={"paginate_" + index} className="points" aria-hidden>
+                  {val}
+                </span>
+              );
+            }
+
+            const isCurrent = currentPage + 1 === val;
             return (
-              <p
+              <button
                 key={"paginate_" + index}
-                className={
-                  currentPage + 1 === val
-                    ? "selected "
-                    : val === "..."
-                    ? "points"
-                    : "unselected"
-                }
-                onClick={() =>
-                  typeof val === "number" && val !== currentPage + 1
-                    ? changePage("direct", val - 1)
-                    : () => {}
-                }
+                type="button"
+                className={isCurrent ? "selected" : "unselected"}
+                aria-label={`Ir a página ${val}`}
+                aria-current={isCurrent ? "page" : undefined}
+                onClick={() => (isCurrent ? null : changePage("direct", val - 1))}
+                disabled={isCurrent}
               >
                 {val}
-              </p>
+              </button>
             );
           }
         )}
-        <FontAwesomeIcon
-          icon={faChevronCircleRight}
+        <button
+          type="button"
+          className="page-nav"
+          aria-label="Página siguiente"
           onClick={() => changePage("forward", currentPage + 1)}
-        />
+          disabled={!canGoForward}
+        >
+          <FontAwesomeIcon icon={faChevronCircleRight} />
+        </button>
       </div>
     </div>
   );

@@ -49,6 +49,52 @@
   }
 }
 
+.chat-fab--inline {
+  position: relative;
+  bottom: auto;
+  right: auto;
+  z-index: 1;
+  width: auto;
+  height: auto;
+  min-height: 44px;
+  padding: 8px 14px;
+  gap: 8px;
+  border-radius: 999px;
+  border-width: 1px;
+  background: linear-gradient(145deg, rgba(8, 225, 247, 0.12) 0%, rgba(8, 225, 247, 0.06) 100%);
+  box-shadow: none;
+  backdrop-filter: blur(6px);
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(8, 225, 247, 0.22);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  .chat-fab-badge {
+    position: static;
+    right: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--app-accent);
+    font-size: 1.3rem;
+    font-weight: 700;
+    animation: none;
+    pointer-events: none;
+  }
+
+  .chat-fab-icon {
+    font-size: 1.25rem;
+  }
+}
+
 .chat-fab-icon {
   font-size: 1.5rem;
   display: flex;
