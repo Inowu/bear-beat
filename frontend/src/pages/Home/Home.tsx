@@ -387,189 +387,77 @@ function Home() {
           />
         </div>
       </div>
-      {(pastFile.length > 0 || showPagination) && (
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 dark:border-bear-dark-100 bg-bear-light-100 dark:bg-bear-dark-500 p-2">
-          <button
-            type="button"
-            onClick={goToRoot}
-            className="inline-flex items-center gap-1 px-3 py-2 rounded-lg min-h-[40px] text-sm font-medium hover:bg-gray-200 dark:hover:bg-bear-dark-100"
-            style={{ color: 'var(--fb-text)', fontSize: 'var(--app-font-size-body)' }}
-          >
-            Inicio
-          </button>
-          {!showPagination && (
-            <div className="flex flex-wrap items-center gap-1 font-mono text-sm text-cyan-500 dark:text-cyan-400">
-              {pastFile.map((file: any, index) => {
-                const isLastFolder = pastFile.length === index + 1;
-                if (isLastFolder) {
-                  return (
-                    <span key={`folder_${index}`}>
-                      {file}
-                    </span>
-                  );
-                }
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 dark:border-bear-dark-100 bg-bear-light-100 dark:bg-bear-dark-500 p-2">
+        <button
+          type="button"
+          onClick={goToRoot}
+          className="inline-flex items-center gap-1 px-3 py-2 rounded-lg min-h-[40px] text-sm font-medium hover:bg-gray-200 dark:hover:bg-bear-dark-100"
+          style={{ color: "var(--fb-text)", fontSize: "var(--app-font-size-body)" }}
+        >
+          Inicio
+        </button>
+        {!showPagination && pastFile.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1 font-mono text-sm text-cyan-500 dark:text-cyan-400">
+            {pastFile.map((file: any, index) => {
+              const isLastFolder = pastFile.length === index + 1;
+              if (isLastFolder) {
                 return (
-                  <span key={`folder_${index}`} className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      className="cursor-pointer opacity-90 hover:opacity-100 hover:underline bg-transparent border-0 p-0"
-                      onClick={() => {
-                        goToFolder({ folder: index + 1 });
-                      }}
-                      style={{ color: 'inherit', fontSize: 'inherit' }}
-                    >
-                      {file}
-                    </button>
-                    <ChevronRight className="w-4 h-4 flex-shrink-0 text-cyan-500 dark:text-cyan-400" />
+                  <span key={`folder_${index}`}>
+                    {file}
                   </span>
                 );
-              })}
-            </div>
-          )}
-          {showPagination && (
-            <p className="m-0 text-sm text-gray-600 dark:text-gray-400">
-              Resultados para: <strong>{searchValue}</strong>
-            </p>
-          )}
-          <button
-            type="button"
-            onClick={() => {
-              if (showPagination) {
-                clearSearch();
-                return;
               }
-              goToFolder({ back: true });
-            }}
-            className="fb-volver ml-auto inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-colors min-h-[44px]"
-            style={{ color: 'var(--fb-text-muted)', fontSize: 'var(--app-font-size-body)' }}
-          >
-            <ArrowLeft className="w-5 h-5 flex-shrink-0" />
-            {showPagination ? 'Volver a carpeta' : 'Volver'}
-          </button>
-        </div>
-      )}
-      {/* Tabla desktop: visible solo en md+ */}
-      <div className="hidden md:block rounded-xl border border-gray-200 dark:border-bear-dark-100 overflow-hidden">
-        <table className="min-w-full text-left">
-          <thead>
-            <tr className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 text-sm font-medium border-b border-gray-200 dark:border-bear-dark-100">
-              <th className="py-3 px-4">Nombre</th>
-              <th className="py-3 px-4 text-right w-24">Tamaño</th>
-              <th className="py-3 px-4 text-right w-36">Modificado</th>
-              <th className="py-3 px-4 text-right w-28">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="bg-bear-light-100 dark:bg-bear-dark-900 divide-y divide-gray-200 dark:divide-bear-dark-100 text-sm">
-            {!loader ? (
-              sortArrayByName(files).map((file: IFiles, idx: number) => {
-                const gbSize = file.size != null && Number.isFinite(file.size)
-                  ? file.size / (1024 * 1024 * 1024)
-                  : 0;
-                const sizeLabel = file.size != null && Number.isFinite(file.size)
-                  ? `${gbSize >= 1 ? gbSize.toFixed(1) : gbSize.toFixed(2)} GB`
-                  : '—';
-                const modifiedStr = new Date().toLocaleString('en-US', {
-                  month: 'short',
-                  day: '2-digit',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                });
-                return (
-                  <tr key={`table-${idx}`}>
-                    <td className="py-3 px-4 text-gray-700 dark:text-gray-300 font-medium">
-                      <div className="flex items-center gap-3 min-w-0">
-                        {file.type === 'd' ? (
-                          <>
-                            <FolderOpen className="flex-shrink-0 w-4 h-4 text-bear-cyan" strokeWidth={2} aria-hidden />
-                            <span
-                              className="text-bear-dark-900 dark:text-white truncate cursor-pointer hover:underline"
-                              title={file.name}
-                              onClick={() => goToFolder({ next: file.name })}
-                            >
-                              {file.name}
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            {loadFile && index === idx ? (
-                              <Spinner size={2} width={0.2} color="var(--fb-accent)" />
-                            ) : (
-                              <button
-                                type="button"
-                                className="flex-shrink-0 w-10 h-10 min-w-[40px] min-h-[40px] inline-flex items-center justify-center rounded-lg bg-gray-200 dark:bg-bear-dark-100 text-bear-cyan hover:bg-bear-cyan hover:text-bear-dark-500 transition-colors"
-                                onClick={() => playFile(file, idx)}
-                                title="Reproducir"
-                                aria-label="Reproducir"
-                              >
-                                <Play className="w-4 h-4" aria-hidden />
-                              </button>
-                            )}
-                            <span className="text-bear-dark-900 dark:text-white truncate" title={file.name}>{file.name}</span>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-right tabular-nums text-gray-700 dark:text-gray-300">{sizeLabel}</td>
-                    <td className="py-3 px-4 text-right text-gray-700 dark:text-gray-300 whitespace-nowrap">{modifiedStr}</td>
-                    <td className="py-3 px-4 text-right">
-                      {file.type === 'd' && file.size != null && gbSize <= 50 && (
-                          <button
-                            type="button"
-                            className="inline-flex items-center justify-center p-2.5 min-w-[40px] min-h-[40px] rounded-lg hover:bg-gray-200 dark:hover:bg-bear-dark-100 text-bear-cyan hover:opacity-90"
-                            onClick={(e) => { e.stopPropagation(); checkAlbumSize(file, idx); }}
-                            title="Descargar"
-                            aria-label="Descargar"
-                        >
-                          {loadDownload && index === idx ? <Spinner size={2} width={0.2} color="var(--app-btn-text)" /> : <Download size={18} aria-hidden />}
-                        </button>
-                      )}
-                      {file.type === '-' && (
-                        loadDownload && index === idx ? (
-                          <Spinner size={2} width={0.2} color="var(--app-btn-text)" />
-                        ) : (
-                          <button
-                            type="button"
-                            className="inline-flex items-center justify-center p-2.5 min-w-[40px] min-h-[40px] rounded-lg hover:bg-gray-200 dark:hover:bg-bear-dark-100 text-bear-cyan hover:opacity-90"
-                            onClick={() => downloadFile(file, idx)}
-                            title="Descargar"
-                            aria-label="Descargar"
-                          >
-                            <Download size={18} aria-hidden />
-                          </button>
-                        )
-                      )}
-                    </td>
-                  </tr>
-                );
-              })
-            ) : (
-              <tr><td colSpan={4} className="py-8 text-center text-gray-500 dark:text-gray-400">Cargando…</td></tr>
-            )}
-          </tbody>
-        </table>
-        {showPagination && (
-          <div className="border-t border-gray-200 dark:border-bear-dark-100 p-4 bg-bear-light-100 dark:bg-bear-dark-500">
-            <Pagination
-              totalLoader={paginationLoader}
-              totalData={totalSearch}
-              title="ordenes"
-              startFilter={nextPage}
-              currentPage={filters.page}
-              limit={filters.limit}
-            />
+              return (
+                <span key={`folder_${index}`} className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    className="cursor-pointer opacity-90 hover:opacity-100 hover:underline bg-transparent border-0 p-0"
+                    onClick={() => {
+                      goToFolder({ folder: index + 1 });
+                    }}
+                    style={{ color: "inherit", fontSize: "inherit" }}
+                  >
+                    {file}
+                  </button>
+                  <ChevronRight className="w-4 h-4 flex-shrink-0 text-cyan-500 dark:text-cyan-400" />
+                </span>
+              );
+            })}
           </div>
         )}
+        {!showPagination && pastFile.length === 0 && (
+          <p className="m-0 text-sm text-gray-600 dark:text-gray-400">Raíz</p>
+        )}
+        {showPagination && (
+          <p className="m-0 text-sm text-gray-600 dark:text-gray-400">
+            Resultados para: <strong>{searchValue}</strong>
+          </p>
+        )}
+        <button
+          type="button"
+          disabled={!showPagination && pastFile.length === 0}
+          onClick={() => {
+            if (showPagination) {
+              clearSearch();
+              return;
+            }
+            goToFolder({ back: true });
+          }}
+          className="fb-volver ml-auto inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-colors min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{ color: "var(--fb-text-muted)", fontSize: "var(--app-font-size-body)" }}
+        >
+          <ArrowLeft className="w-5 h-5 flex-shrink-0" />
+          {showPagination ? "Volver a carpeta" : "Volver"}
+        </button>
       </div>
 
-      {/* Cards móvil: visible solo en móvil */}
-      <div className="folders-navigation-container block md:hidden flex flex-col gap-0 rounded-xl bg-bear-light-100 dark:bg-bear-dark-500 shadow-sm border border-gray-200 dark:border-bear-dark-100 overflow-hidden">
-        <div className="fb-header grid grid-cols-[1fr_auto_auto] gap-4 py-3 px-4 bg-gray-100 dark:bg-bear-dark-400 text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">
+      <div className="bb-explorer rounded-xl border border-gray-200 dark:border-bear-dark-100 overflow-hidden bg-bear-light-100 dark:bg-bear-dark-500 shadow-sm">
+        <div className="bb-explorer-head grid grid-cols-[1fr_auto] md:grid-cols-[1fr_120px_auto] gap-3 px-4 py-3 bg-gray-100 dark:bg-bear-dark-400 text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">
           <div>Nombre</div>
-          <div className="text-right hidden sm:block w-20">Tamaño</div>
-          <div className="text-right hidden md:block w-36">Modificado</div>
+          <div className="hidden md:block text-right">Tamaño</div>
+          <div className="text-right">Acciones</div>
         </div>
-        <div className="folders-cards-container flex flex-col gap-0">
+        <div className="bb-explorer-body flex flex-col">
           {!loader ? (
             sortArrayByName(files).map((file: IFiles, idx: number) => {
               const gbSize = file.size != null && Number.isFinite(file.size)
@@ -577,94 +465,86 @@ function Home() {
                 : 0;
               const sizeLabel = file.size != null && Number.isFinite(file.size)
                 ? `${gbSize >= 1 ? gbSize.toFixed(1) : gbSize.toFixed(2)} GB`
-                : '—';
-              const modifiedStr = new Date().toLocaleString('en-US', {
-                month: 'short',
-                day: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-              });
-              const rowGridClass = "fb-row fb-row-card grid grid-cols-[1fr_auto] md:grid-cols-[1fr_auto_auto] items-center gap-4 p-4 rounded-none border-b border-gray-200 dark:border-bear-dark-100 bg-bear-light-100 dark:bg-bear-dark-500 hover:bg-gray-100 dark:hover:bg-bear-dark-400/50 transition-colors";
-              const col2Mobile = "col-start-2 row-start-1 md:col-start-auto md:row-start-auto";
+                : "—";
+              const isFolder = file.type === "d";
+              const allowFolderDownload = isFolder && file.size != null && gbSize <= 50;
               return (
-                <div key={'files ' + idx}>
-                  {file.type === 'd' && (
-                    <div
-                      className={`${rowGridClass} cursor-pointer`}
-                      onClick={() => {
-                        goToFolder({ next: file.name });
-                      }}
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <FolderOpen className="flex-shrink-0 w-5 h-5 text-bear-cyan" strokeWidth={2} aria-hidden />
-                        <span className="text-base md:text-lg font-medium text-gray-900 dark:text-gray-200 truncate" title={file.name}>{file.name}</span>
-                      </div>
-                      <div className={`hidden sm:flex text-right items-center justify-end tabular-nums text-sm text-gray-600 dark:text-gray-400 w-20 flex-shrink-0 md:justify-end ${col2Mobile}`}>
-                        {sizeLabel}
-                      </div>
-                      <div className={`flex items-center gap-3 flex-shrink-0 md:justify-end ${col2Mobile}`}>
-                        <span className="text-sm text-gray-600 dark:text-gray-400 hidden md:inline whitespace-nowrap w-36">{modifiedStr}</span>
-                        {file.size != null && gbSize <= 50 && (
-                          <button
-                            type="button"
-                            className="fb-btn-download-icon p-2.5 min-w-[40px] min-h-[40px] rounded-lg hover:bg-gray-200 dark:hover:bg-bear-dark-100 transition-colors text-bear-cyan hover:opacity-90"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              checkAlbumSize(file, idx);
-                            }}
-                            title="Descargar"
-                            aria-label="Descargar"
-                          >
-                            {loadDownload && index === idx ? (
-                              <Spinner size={2} width={0.2} color="var(--app-btn-text)" />
-                            ) : (
-                              <Download className="w-[18px] h-[18px]" aria-hidden />
-                            )}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                  {file.type === '-' && (
-                    <div className={rowGridClass}>
-                      <div className="flex items-center gap-3 min-w-0">
-                        {loadFile && index === idx ? (
-                          <Spinner size={2} width={0.2} color="var(--fb-accent)" />
-                        ) : (
-                          <button
-                            type="button"
-                            className="fb-btn-play flex-shrink-0 min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg bg-gray-200 dark:bg-bear-dark-100 text-bear-cyan hover:bg-bear-cyan hover:text-bear-dark-500 transition-colors"
-                            onClick={() => playFile(file, idx)}
-                            title="Reproducir"
-                            aria-label="Reproducir"
-                          >
-                            <Play className="w-5 h-5" aria-hidden />
-                          </button>
-                        )}
-                        <span className="text-base md:text-lg font-medium text-gray-900 dark:text-gray-200 truncate" title={file.name}>{file.name}</span>
-                      </div>
-                      <div className={`hidden sm:flex text-right items-center justify-end tabular-nums text-sm text-gray-600 dark:text-gray-400 w-20 flex-shrink-0 md:justify-end ${col2Mobile}`}>
-                        {sizeLabel}
-                      </div>
-                      <div className={`flex items-center gap-3 flex-shrink-0 md:justify-end ${col2Mobile}`}>
-                        <span className="text-sm text-gray-600 dark:text-gray-400 hidden md:inline whitespace-nowrap w-36">{modifiedStr}</span>
+                <div
+                  key={`explorer-${idx}`}
+                  className={`bb-explorer-row grid grid-cols-[1fr_auto] md:grid-cols-[1fr_120px_auto] items-center gap-3 px-4 py-3 border-b border-gray-200 dark:border-bear-dark-100 hover:bg-gray-100 dark:hover:bg-bear-dark-400/50 transition-colors ${isFolder ? "cursor-pointer" : ""}`}
+                  onClick={() => {
+                    if (isFolder) {
+                      goToFolder({ next: file.name });
+                    }
+                  }}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    {isFolder ? (
+                      <FolderOpen className="flex-shrink-0 w-5 h-5 text-bear-cyan" strokeWidth={2} aria-hidden />
+                    ) : (
+                      loadFile && index === idx ? (
+                        <Spinner size={2} width={0.2} color="var(--fb-accent)" />
+                      ) : (
+                        <button
+                          type="button"
+                          className="flex-shrink-0 w-10 h-10 min-w-[40px] min-h-[40px] inline-flex items-center justify-center rounded-lg bg-gray-200 dark:bg-bear-dark-100 text-bear-cyan hover:bg-bear-cyan hover:text-bear-dark-500 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            playFile(file, idx);
+                          }}
+                          title="Reproducir"
+                          aria-label="Reproducir"
+                        >
+                          <Play className="w-4 h-4" aria-hidden />
+                        </button>
+                      )
+                    )}
+                    <span className="text-base font-medium text-gray-900 dark:text-gray-200 truncate" title={file.name}>
+                      {file.name}
+                    </span>
+                  </div>
+                  <div className="hidden md:block text-right tabular-nums text-sm text-gray-600 dark:text-gray-400">
+                    {sizeLabel}
+                  </div>
+                  <div className="flex items-center justify-end gap-2">
+                    <span className="md:hidden text-xs tabular-nums text-gray-600 dark:text-gray-400">{sizeLabel}</span>
+                    {isFolder && (
+                      <ChevronRight className="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden />
+                    )}
+                    {allowFolderDownload && (
+                      <button
+                        type="button"
+                        className="inline-flex items-center justify-center p-2.5 min-w-[40px] min-h-[40px] rounded-lg hover:bg-gray-200 dark:hover:bg-bear-dark-100 text-bear-cyan hover:opacity-90"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          checkAlbumSize(file, idx);
+                        }}
+                        title="Descargar carpeta"
+                        aria-label="Descargar carpeta"
+                      >
                         {loadDownload && index === idx ? (
                           <Spinner size={2} width={0.2} color="var(--app-btn-text)" />
                         ) : (
-                          <button
-                            type="button"
-                            className="fb-btn-download-icon p-2.5 min-w-[40px] min-h-[40px] rounded-lg hover:bg-gray-200 dark:hover:bg-bear-dark-100 transition-colors text-bear-cyan hover:opacity-90"
-                            onClick={() => downloadFile(file, idx)}
-                            title="Descargar"
-                            aria-label="Descargar"
-                          >
-                            <Download className="w-[18px] h-[18px]" aria-hidden />
-                          </button>
+                          <Download size={18} aria-hidden />
                         )}
-                      </div>
-                    </div>
-                  )}
+                      </button>
+                    )}
+                    {file.type === "-" && (
+                      loadDownload && index === idx ? (
+                        <Spinner size={2} width={0.2} color="var(--app-btn-text)" />
+                      ) : (
+                        <button
+                          type="button"
+                          className="inline-flex items-center justify-center p-2.5 min-w-[40px] min-h-[40px] rounded-lg hover:bg-gray-200 dark:hover:bg-bear-dark-100 text-bear-cyan hover:opacity-90"
+                          onClick={() => downloadFile(file, idx)}
+                          title="Descargar archivo"
+                          aria-label="Descargar archivo"
+                        >
+                          <Download size={18} aria-hidden />
+                        </button>
+                      )
+                    )}
+                  </div>
                 </div>
               );
             })
@@ -675,14 +555,16 @@ function Home() {
           )}
         </div>
         {showPagination && (
-          <Pagination
-            totalLoader={paginationLoader}
-            totalData={totalSearch}
-            title="ordenes"
-            startFilter={nextPage}
-            currentPage={filters.page}
-            limit={filters.limit}
-          />
+          <div className="border-t border-gray-200 dark:border-bear-dark-100 p-3 md:p-4">
+            <Pagination
+              totalLoader={paginationLoader}
+              totalData={totalSearch}
+              title="ordenes"
+              startFilter={nextPage}
+              currentPage={filters.page}
+              limit={filters.limit}
+            />
+          </div>
         )}
       </div>
 
