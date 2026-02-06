@@ -2,16 +2,11 @@
 @import "src/styles/_variables-theme.scss";
 @import "../../styles/landing-design.scss";
 
-// Contenedor: móvil flex wrap; desktop grid 2-3 columnas para usar todo el ancho
 .plans-main-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: flex-start;
-  gap: 20px;
+  display: block;
   margin: 0 auto;
-  padding: 2rem 1rem;
-  max-width: 80rem; /* max-w-7xl */
+  padding: 2.2rem 1rem 2.6rem;
+  max-width: 80rem;
   color: var(--app-text-heading, $text-primary);
   min-height: 60vh;
   width: 100%;
@@ -20,55 +15,85 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  @include respond-from(desktop) {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    justify-items: center;
-    align-content: start;
-    gap: 2rem;
-  }
+}
+
+.plans-hero {
+  display: grid;
+  gap: 0.8rem;
+  justify-items: center;
+  text-align: center;
+  margin-bottom: 1.4rem;
 }
 
 .plans-page-title {
-  width: 100%;
-  text-align: center;
-  margin: 0 0 8px;
+  margin: 0;
   font-size: var(--app-font-size-h2);
   font-weight: var(--app-font-weight-heading);
   color: var(--app-text-heading);
+}
+
+.plans-hero-subtitle {
+  margin: 0;
+  font-size: var(--app-font-size-body);
+  color: var(--app-text-muted);
+}
+
+.plans-trust-strip {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+
+  span {
+    border: 1px solid color-mix(in srgb, var(--app-accent) 25%, var(--app-border));
+    border-radius: 999px;
+    padding: 0.38rem 0.75rem;
+    font-size: 0.86rem;
+    color: var(--app-text-body);
+    background: color-mix(in srgb, var(--app-bg-card) 84%, transparent);
+    font-weight: 600;
+  }
+}
+
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1.2rem;
 
   @include respond-from(desktop) {
-    grid-column: 1 / -1;
-    margin-bottom: 0.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.8rem;
   }
 }
 
 @include respond-from(tablet) {
   .plans-main-container {
     padding: 2rem 1.5rem;
-    gap: 24px;
   }
-  .plans-page-title {
-    margin-bottom: 12px;
+
+  .plans-grid {
+    gap: 1.4rem;
   }
 }
 
 @include respond-from(md) {
   .plans-main-container {
-    padding: 2rem 2rem;
-    gap: 40px;
+    padding: 2.3rem 2rem 3rem;
+  }
+
+  .plans-page-title {
+    font-size: var(--app-font-size-h1);
   }
 }
 
 @include respond-from(desktop) {
   .plans-main-container {
     padding: 2.5rem 2rem;
-    gap: 2rem;
     min-height: 70vh;
   }
-  .plans-page-title {
-    font-size: var(--app-font-size-h1);
-    margin-bottom: 1.5rem;
+
+  .plans-hero {
+    margin-bottom: 1.8rem;
   }
 }
 

@@ -342,6 +342,14 @@
     opacity: 0.85;
   }
 
+  .plan-card-confidence {
+    margin: 0;
+    text-align: center;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: color-mix(in srgb, var(--plan-card-subtitle) 86%, transparent);
+  }
+
   .button-contain {
     display: flex;
     flex-direction: column;

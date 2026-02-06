@@ -16,30 +16,32 @@ function CheckoutSuccess() {
           </p>
         </header>
 
-        <div className="checkout-card" style={{ maxWidth: "480px", margin: "0 auto", textAlign: "center" }}>
-          <div style={{ marginBottom: "1.5rem" }}>
-            <span
-              className="checkout-summary__check"
-              style={{ width: "64px", height: "64px", borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center" }}
-            >
-              <Check style={{ width: 32, height: 32, color: "var(--app-accent-bright)" }} />
+        <div className="checkout-card checkout-success-card">
+          <div className="checkout-success-card__icon-wrap">
+            <span className="checkout-summary__check checkout-success-card__icon">
+              <Check className="checkout-success-card__icon-check" />
             </span>
           </div>
-          <p className="checkout-summary__desc" style={{ marginBottom: "1rem" }}>
+          <p className="checkout-summary__desc checkout-success-card__desc">
             En unos segundos tendrás acceso a todo el catálogo. Si no ves los cambios, recarga la página o cierra sesión y vuelve a entrar.
           </p>
+          <ul className="checkout-success-card__steps">
+            <li>Entra al explorador y valida tu acceso.</li>
+            <li>Si aún no aparece, cierra sesión y vuelve a iniciar.</li>
+          </ul>
           {sessionId && (
-            <p className="checkout-summary__meta" style={{ fontSize: "0.875rem", marginBottom: "1.5rem" }}>
+            <p className="checkout-summary__meta checkout-success-card__meta">
               Referencia: {sessionId.slice(0, 20)}…
             </p>
           )}
-          <Link
-            to="/"
-            className="checkout-cta-btn checkout-cta-btn--primary"
-            style={{ display: "inline-block", textAlign: "center", textDecoration: "none" }}
-          >
-            Ir al explorador
-          </Link>
+          <div className="checkout-success-card__actions">
+            <Link to="/" className="checkout-cta-btn checkout-cta-btn--primary">
+              Ir al explorador
+            </Link>
+            <Link to="/micuenta" className="checkout-cta-btn checkout-cta-btn--ghost">
+              Ir a mi cuenta
+            </Link>
+          </div>
         </div>
       </div>
     </div>

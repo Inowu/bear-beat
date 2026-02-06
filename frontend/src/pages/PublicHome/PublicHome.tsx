@@ -35,7 +35,7 @@ const CATALOG_AUDIOS_GB = 850.8;
 const CATALOG_KARAOKES = 1_353;
 const CATALOG_KARAOKES_GB = 24.99;
 const CATALOG_TOTAL_TB = CATALOG_TOTAL_GB / 1000;
-const GENRE_BATCH_SIZE = 36;
+const GENRE_BATCH_SIZE = 24;
 
 function detectMexicoRegion(): boolean {
   if (typeof window === "undefined") return false;

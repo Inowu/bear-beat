@@ -97,6 +97,7 @@ export const FALLBACK_GENRES: GenreStats[] = [
   { name: "Megamix", files: 188, gb: 64.15 },
   { name: "Mega Mixes", files: 184, gb: 61.46 },
   { name: "70's Rmx", files: 174, gb: 14.74 },
+  { name: "70s Rmx", files: 174, gb: 14.74 },
   { name: "Rhythmic Top 40", files: 166, gb: 10.94 },
   { name: "80's Remix", files: 164, gb: 8.96 },
   { name: "Tech House", files: 164, gb: 10.45 },
@@ -120,6 +121,7 @@ export const FALLBACK_GENRES: GenreStats[] = [
   { name: "60s", files: 94, gb: 5.19 },
   { name: "Bootleg", files: 94, gb: 5.36 },
   { name: "90's Remix", files: 91, gb: 4.22 },
+  { name: "90s Remix", files: 91, gb: 4.22 },
   { name: "Progressive House", files: 91, gb: 5.86 },
   { name: "70's Remix", files: 84, gb: 4.37 },
   { name: "Duranguense", files: 83, gb: 3.59 },
@@ -133,7 +135,9 @@ export const FALLBACK_GENRES: GenreStats[] = [
   { name: "Latino Urbano", files: 74, gb: 3.77 },
   { name: "Despecho Tools", files: 73, gb: 4.82 },
   { name: "80's High Energy", files: 68, gb: 6.5 },
+  { name: "80s High Energy", files: 68, gb: 6.5 },
   { name: "90's Rmx", files: 68, gb: 5.8 },
+  { name: "90s Rmx", files: 68, gb: 5.8 },
   { name: "Musica Infantil", files: 66, gb: 4.81 },
   { name: "80s Rmx", files: 62, gb: 6.84 },
   { name: "Gruperas", files: 62, gb: 1.54 },
@@ -193,6 +197,10 @@ export const FALLBACK_GENRES: GenreStats[] = [
   { name: "Christmas Latin Jazz", files: 2, gb: 0.06 },
   { name: "Christmas Mariachi", files: 2, gb: 0.08 },
   { name: "Christmas Moombahton", files: 2, gb: 0.13 },
+  { name: "60's Remix", files: 0, gb: 0 },
+  { name: "60's Rmx", files: 0, gb: 0 },
+  { name: "70s Old School", files: 0, gb: 0 },
+  { name: "Zapateado", files: 0, gb: 0 },
 ];
 
 export const EXCLUDED_GENRES: string[] = [
@@ -216,9 +224,5 @@ export const UNRESOLVED_GENRES_WITHOUT_SOURCE_DATA: string[] = [
   "Zapateado",
   "60's Remix",
   "60's Rmx",
-  "70s Rmx",
   "70s Old School",
-  "80s High Energy",
-  "90s Remix",
-  "90s Rmx",
 ];

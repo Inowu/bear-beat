@@ -1,7 +1,6 @@
 import { IOxxoData, IPlans, ISpeiData } from "../../interfaces/Plans";
 import "./PlanCard.scss";
 import { useLocation, useNavigate } from "react-router-dom";
-import { plans } from "../../utils/Constants";
 import React, { useCallback, useEffect, useState } from "react";
 import trpc from "../../api";
 import { manychatApi } from "../../api/manychat";
@@ -35,6 +34,14 @@ const BENEFIT_ICONS: Record<string, React.ReactNode> = {
   "Descargas con 1 click": <PiDownloadSimple className="plan-card-benefit-icon" aria-hidden />,
   "Renovación automática": <PiHeartBreak className="plan-card-benefit-icon" aria-hidden />,
 };
+
+const DEFAULT_BENEFITS = [
+  "Contenido exclusivo para DJs",
+  "Todo organizado por géneros",
+  "Nueva música cada semana",
+  "Descargas con 1 click",
+  "Renovación automática",
+];
 
 
 interface PlanCardPropsI {
@@ -248,6 +255,7 @@ function PlanCard(props: PlanCardPropsI) {
 
   const isMxn = plan.moneda === "mxn" || plan.moneda === "MXN";
   const showBadge = isMxn; // "MEJOR VALOR" en planes MXN
+  const includedBenefits = DEFAULT_BENEFITS;
 
   return (
     <div className={"plan-card-wrapper plan-card-monolith " + (plan.moneda === "usd" ? "resp-plan " : "")}>
@@ -280,7 +288,7 @@ function PlanCard(props: PlanCardPropsI) {
         <p className="plan-card-subtitle plan-card-description">{plan.description}</p>
         <p className="plan-card-subtitle plan-card-access">Acceso Ilimitado 24/7</p>
         <ul className="plan-card-benefits">
-          {plans[0].included.map((ad) => (
+          {includedBenefits.map((ad) => (
             <li key={ad} className="plan-card-benefit-item">
               {BENEFIT_ICONS[ad] ?? <PiLightning className="plan-card-benefit-icon" aria-hidden />}
               <span>{BENEFIT_COPY[ad] ?? ad}</span>
@@ -333,6 +341,7 @@ function PlanCard(props: PlanCardPropsI) {
           )}
         </div>
         <p className="plan-card-trust">🔒 Pagos encriptados con seguridad bancaria</p>
+        <p className="plan-card-confidence">Activación inmediata después de tu pago.</p>
       </div>
       <ConditionModal
         title={"Cancelación de suscripción"}

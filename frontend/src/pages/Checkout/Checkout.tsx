@@ -1,19 +1,20 @@
 import "./Checkout.scss";
 import { useUserContext } from "../../contexts/UserContext";
 import { useLocation, Link } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import trpc from "../../api";
 import { IPlans } from "interfaces/Plans";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 import { manychatApi } from "../../api/manychat";
 import { Spinner } from "../../components/Spinner/Spinner";
-import { Check } from "lucide-react";
+import { Check, CreditCard, Lock, ShieldCheck } from "lucide-react";
 import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
 
 function Checkout() {
   const [plan, setPlan] = useState<IPlans | null>(null);
   const location = useLocation();
   const [redirecting, setRedirecting] = useState(false);
+  const [showRedirectHelp, setShowRedirectHelp] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showError, setShowError] = useState(false);
   const autoFetchedRef = useRef(false);
@@ -54,14 +55,19 @@ function Checkout() {
   };
 
   useEffect(() => {
+    autoFetchedRef.current = false;
+    setRedirecting(false);
+    setShowRedirectHelp(false);
     if (priceId) getPlans(priceId);
     else setPlan(null);
   }, [priceId]);
 
-  useEffect(() => {
-    if (!priceId || !plan?.id || redirecting || autoFetchedRef.current) return;
+  const startStripeCheckout = useCallback(() => {
+    if (!priceId || !plan?.id) return;
+
     autoFetchedRef.current = true;
     setRedirecting(true);
+    setShowRedirectHelp(false);
     const origin = window.location.origin;
     const successUrl = `${origin}/comprar/success?session_id={CHECKOUT_SESSION_ID}`;
     const cancelUrl = `${origin}/planes`;
@@ -94,7 +100,20 @@ function Checkout() {
         setRedirecting(false);
         autoFetchedRef.current = false;
       });
-  }, [priceId, plan?.id, redirecting]);
+  }, [priceId, plan?.id]);
+
+  useEffect(() => {
+    if (!priceId || !plan?.id || redirecting || autoFetchedRef.current) return;
+    startStripeCheckout();
+  }, [priceId, plan?.id, redirecting, startStripeCheckout]);
+
+  useEffect(() => {
+    if (!redirecting) return;
+    const timeout = window.setTimeout(() => {
+      setShowRedirectHelp(true);
+    }, 6000);
+    return () => window.clearTimeout(timeout);
+  }, [redirecting]);
 
   const discount = 0;
   const totalPrice = (
@@ -140,6 +159,14 @@ function Checkout() {
           <p className="checkout-one-state__text">
             Serás redirigido a la pasarela segura de Stripe en un momento…
           </p>
+          {showRedirectHelp && (
+            <div className="checkout-one-state__help">
+              <p>Si no te redirige, vuelve a intentar desde planes.</p>
+              <Link to="/planes" className="checkout-cta-btn checkout-cta-btn--ghost">
+                Volver a planes
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -165,6 +192,11 @@ function Checkout() {
           <p className="checkout-page-subtitle">
             Serás redirigido a la pasarela de pago segura de Stripe.
           </p>
+          <div className="checkout-trust-strip" role="list" aria-label="Confianza de pago">
+            <span role="listitem"><ShieldCheck size={16} aria-hidden /> Pago seguro</span>
+            <span role="listitem"><CreditCard size={16} aria-hidden /> Stripe</span>
+            <span role="listitem"><Lock size={16} aria-hidden /> Cifrado bancario</span>
+          </div>
         </header>
 
         <div className="checkout-grid">
@@ -204,6 +236,14 @@ function Checkout() {
                 <span className="checkout-credentials__value">{currentUser?.email ?? "—"}</span>
               </div>
             </div>
+            <button
+              type="button"
+              className="checkout-cta-btn checkout-cta-btn--primary"
+              onClick={startStripeCheckout}
+            >
+              Continuar al pago seguro
+            </button>
+            <p className="checkout-payment-note">Si la redirección automática falla, puedes continuar con este botón.</p>
           </section>
         </div>
       </div>
