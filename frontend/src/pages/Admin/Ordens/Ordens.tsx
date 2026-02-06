@@ -199,14 +199,14 @@ export const Ordens = () => {
         {/* Tabla desktop (patrón BEAR BEAT PRO) */}
         <div className="hidden md:block rounded-xl border border-gray-200 dark:border-bear-dark-100 overflow-hidden">
           <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
-            <table className="w-full min-w-[980px] text-left text-sm border-collapse table-fixed">
+            <table className="w-full text-left text-sm border-collapse table-fixed">
               <thead>
                 <tr>
-                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100 w-[110px]">No. Orden</th>
-                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100 w-[240px]">Correo</th>
-                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium hidden lg:table-cell border-b border-gray-200 dark:border-bear-dark-100 w-[170px]">Teléfono</th>
-                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100 w-[140px]">Método</th>
-                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium hidden xl:table-cell border-b border-gray-200 dark:border-bear-dark-100 w-[180px]">Id suscripción</th>
+                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100 w-[90px]">No. Orden</th>
+                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100 w-[220px]">Correo</th>
+                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium hidden xl:table-cell border-b border-gray-200 dark:border-bear-dark-100 w-[160px]">Teléfono</th>
+                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100 w-[120px]">Método</th>
+                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium hidden 2xl:table-cell border-b border-gray-200 dark:border-bear-dark-100 w-[170px]">Id suscripción</th>
                   <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100 w-[110px]">Precio</th>
                   <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100 w-[120px]">Fecha</th>
                   <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100 w-[120px]">Estado</th>
@@ -221,9 +221,9 @@ export const Ordens = () => {
                       >
                         <td className="py-4 px-4 text-gray-700 dark:text-gray-300">{orden.id}</td>
                         <td className="py-4 px-4 text-gray-700 dark:text-gray-300 truncate" title={orden.email}>{orden.email}</td>
-                        <td className="py-4 px-4 text-gray-700 dark:text-gray-300 hidden lg:table-cell truncate" title={orden.phone ?? ""}>{orden.phone}</td>
+                        <td className="py-4 px-4 text-gray-700 dark:text-gray-300 hidden xl:table-cell truncate" title={orden.phone ?? ""}>{orden.phone}</td>
                         <td className="py-4 px-4 text-gray-700 dark:text-gray-300 truncate" title={orden.payment_method ?? "—"}>{orden.payment_method ?? "—"}</td>
-                        <td className="py-4 px-4 text-gray-700 dark:text-gray-300 hidden xl:table-cell truncate" title={orden.txn_id ?? ""}>{orden.txn_id}</td>
+                        <td className="py-4 px-4 text-gray-700 dark:text-gray-300 hidden 2xl:table-cell truncate" title={orden.txn_id ?? ""}>{orden.txn_id}</td>
                         <td className="py-4 px-4 text-gray-700 dark:text-gray-300">{orden.total_price}</td>
                         <td className="py-4 px-4 text-gray-700 dark:text-gray-300">{orden.date_order.toLocaleDateString()}</td>
                         <td className="py-4 px-4">{statusBadge(orden.status)}</td>

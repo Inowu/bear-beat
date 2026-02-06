@@ -34,6 +34,23 @@
     min-height: 44px;
   }
 
+  /* Controles compactos admin con accesibilidad táctil consistente */
+  button.p-2,
+  button.p-1\.5,
+  .btn-icon,
+  .pagination-container .page-nav,
+  .pagination-container .selected,
+  .pagination-container .unselected {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .pagination-container .page-nav,
+  .pagination-container .selected,
+  .pagination-container .unselected {
+    min-height: 44px;
+  }
+
   /* Forzar tema: utilidades Tailwind del admin mapeadas a --ad-* */
   [class*="bg-slate-950"],
   [class*="bg-slate-900"],

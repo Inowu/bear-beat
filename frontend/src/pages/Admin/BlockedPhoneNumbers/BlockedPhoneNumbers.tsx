@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import trpc from "../../../api";
-import { ErrorModal } from "../../../components/Modals";
+import { ConditionModal, ErrorModal } from "../../../components/Modals";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import { useUserContext } from "../../../contexts/UserContext";
 import "./BlockedPhoneNumbers.scss";
@@ -21,6 +21,7 @@ export const BlockedPhoneNumbers = () => {
   const [showError, setShowError] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [drawerPhone, setDrawerPhone] = useState<string | null>(null);
+  const [phoneToDelete, setPhoneToDelete] = useState<string | null>(null);
 
   const loadNumbers = async () => {
     setLoader(true);
@@ -69,12 +70,12 @@ export const BlockedPhoneNumbers = () => {
   };
 
   const handleRemovePhone = async (phone: string) => {
-    if (!window.confirm("¿Eliminar este teléfono de la lista?")) return;
     setSaving(true);
     try {
       const numbers = await trpc.blockedPhoneNumbers.removeBlockedPhoneNumber.mutate({ phone });
       setBlockedNumbers(numbers);
       setDrawerPhone(null);
+      setPhoneToDelete(null);
     } catch (error: any) {
       setErrorMessage(error.message ?? "Error al eliminar.");
       setShowError(true);
@@ -113,6 +114,13 @@ export const BlockedPhoneNumbers = () => {
 
   return (
     <AdminPageLayout title="Teléfonos bloqueados" toolbar={toolbar}>
+      <ConditionModal
+        show={phoneToDelete !== null}
+        onHide={() => setPhoneToDelete(null)}
+        title="Eliminar teléfono"
+        message="¿Eliminar este teléfono de la lista?"
+        action={() => phoneToDelete ? handleRemovePhone(phoneToDelete) : Promise.resolve()}
+      />
       {loader ? (
         <div className="flex justify-center py-12">
           <Spinner size={3} width={0.3} color="var(--app-accent)" />
@@ -137,7 +145,7 @@ export const BlockedPhoneNumbers = () => {
                       <td className="py-3 px-4 text-right">
                         <button
                           type="button"
-                          onClick={() => handleRemovePhone(phone)}
+                          onClick={() => setPhoneToDelete(phone)}
                           disabled={saving}
                           className="p-2 text-slate-400 hover:text-red-400 transition-colors rounded-lg hover:bg-slate-800 disabled:opacity-50"
                           title="Eliminar"
@@ -182,7 +190,7 @@ export const BlockedPhoneNumbers = () => {
             user={undefined}
             actions={
               drawerPhone
-                ? [{ id: "delete", label: "Eliminar de la lista", onClick: () => handleRemovePhone(drawerPhone), variant: "danger" }]
+                ? [{ id: "delete", label: "Eliminar de la lista", onClick: () => setPhoneToDelete(drawerPhone), variant: "danger" }]
                 : []
             }
           >

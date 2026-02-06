@@ -75,6 +75,30 @@ function Home() {
   const closeError = () => {
     setShow(false);
   };
+  const goToRoot = async () => {
+    setLoader(true);
+    setShowPagination(false);
+    setSearchValue('');
+    setFilters((prev) => ({ ...prev, page: 0 }));
+    const [rootFiles, filesError] = await of(
+      trpc.ftp.ls.query({
+        path: '',
+      })
+    );
+    if (filesError && !rootFiles) {
+      setLoader(false);
+      return;
+    }
+    setPastFile([]);
+    setfiles(rootFiles!);
+    setLoader(false);
+  };
+  const clearSearch = async () => {
+    setSearchValue('');
+    setShowPagination(false);
+    setFilters((prev) => ({ ...prev, page: 0 }));
+    await goToFolder({});
+  };
   const handleError = () => {
     setError(!error);
   };
@@ -284,7 +308,9 @@ function Home() {
     setSearchValue(value);
     if (value === '') {
       setShowPagination(false);
-      return goToFolder({});
+      setPaginationLoader(false);
+      await goToFolder({});
+      return;
     }
     let body = {
       query: value,
@@ -353,6 +379,7 @@ function Home() {
           <Search className="absolute left-3 w-4 h-4 pointer-events-none text-gray-500 dark:text-gray-400" />
           <input
             placeholder="Buscar"
+            value={searchValue}
             className="w-full min-w-0 pl-10 pr-4 h-11 rounded-lg text-sm font-medium bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-bear-cyan focus:border-transparent"
             onChange={(e: any) => {
               startSearch(e.target.value);
@@ -360,43 +387,64 @@ function Home() {
           />
         </div>
       </div>
-      {pastFile.length > 0 && !showPagination && (
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex flex-wrap items-center gap-1 font-mono text-sm text-cyan-500 dark:text-cyan-400">
-            {pastFile.map((file: any, index) => {
-              const isLastFolder = pastFile.length === index + 1;
-              if (isLastFolder) {
+      {(pastFile.length > 0 || showPagination) && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 dark:border-bear-dark-100 bg-bear-light-100 dark:bg-bear-dark-500 p-2">
+          <button
+            type="button"
+            onClick={goToRoot}
+            className="inline-flex items-center gap-1 px-3 py-2 rounded-lg min-h-[40px] text-sm font-medium hover:bg-gray-200 dark:hover:bg-bear-dark-100"
+            style={{ color: 'var(--fb-text)', fontSize: 'var(--app-font-size-body)' }}
+          >
+            Inicio
+          </button>
+          {!showPagination && (
+            <div className="flex flex-wrap items-center gap-1 font-mono text-sm text-cyan-500 dark:text-cyan-400">
+              {pastFile.map((file: any, index) => {
+                const isLastFolder = pastFile.length === index + 1;
+                if (isLastFolder) {
+                  return (
+                    <span key={`folder_${index}`}>
+                      {file}
+                    </span>
+                  );
+                }
                 return (
-                  <span key={`folder_${index}`}>
-                    {file}
+                  <span key={`folder_${index}`} className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      className="cursor-pointer opacity-90 hover:opacity-100 hover:underline bg-transparent border-0 p-0"
+                      onClick={() => {
+                        goToFolder({ folder: index + 1 });
+                      }}
+                      style={{ color: 'inherit', fontSize: 'inherit' }}
+                    >
+                      {file}
+                    </button>
+                    <ChevronRight className="w-4 h-4 flex-shrink-0 text-cyan-500 dark:text-cyan-400" />
                   </span>
                 );
-              }
-              return (
-                <span key={`folder_${index}`} className="flex items-center gap-1">
-                  <span
-                    className="cursor-pointer opacity-90 hover:opacity-100 hover:underline"
-                    onClick={() => {
-                      goToFolder({ folder: index + 1 });
-                    }}
-                  >
-                    {file}
-                  </span>
-                  <ChevronRight className="w-4 h-4 flex-shrink-0 text-cyan-500 dark:text-cyan-400" />
-                </span>
-              );
-            })}
-          </div>
+              })}
+            </div>
+          )}
+          {showPagination && (
+            <p className="m-0 text-sm text-gray-600 dark:text-gray-400">
+              Resultados para: <strong>{searchValue}</strong>
+            </p>
+          )}
           <button
             type="button"
             onClick={() => {
+              if (showPagination) {
+                clearSearch();
+                return;
+              }
               goToFolder({ back: true });
             }}
-            className="fb-volver inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-colors min-h-[44px]"
+            className="fb-volver ml-auto inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-colors min-h-[44px]"
             style={{ color: 'var(--fb-text-muted)', fontSize: 'var(--app-font-size-body)' }}
           >
             <ArrowLeft className="w-5 h-5 flex-shrink-0" />
-            Volver
+            {showPagination ? 'Volver a carpeta' : 'Volver'}
           </button>
         </div>
       )}
@@ -449,7 +497,7 @@ function Home() {
                             ) : (
                               <button
                                 type="button"
-                                className="flex-shrink-0 w-9 h-9 inline-flex items-center justify-center rounded-lg bg-gray-200 dark:bg-bear-dark-100 text-bear-cyan hover:bg-bear-cyan hover:text-bear-dark-500 transition-colors"
+                                className="flex-shrink-0 w-10 h-10 min-w-[40px] min-h-[40px] inline-flex items-center justify-center rounded-lg bg-gray-200 dark:bg-bear-dark-100 text-bear-cyan hover:bg-bear-cyan hover:text-bear-dark-500 transition-colors"
                                 onClick={() => playFile(file, idx)}
                                 title="Reproducir"
                                 aria-label="Reproducir"
@@ -466,12 +514,12 @@ function Home() {
                     <td className="py-3 px-4 text-right text-gray-700 dark:text-gray-300 whitespace-nowrap">{modifiedStr}</td>
                     <td className="py-3 px-4 text-right">
                       {file.type === 'd' && file.size != null && gbSize <= 50 && (
-                        <button
-                          type="button"
-                          className="inline-flex items-center justify-center p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-bear-dark-100 text-bear-cyan hover:opacity-90"
-                          onClick={(e) => { e.stopPropagation(); checkAlbumSize(file, idx); }}
-                          title="Descargar"
-                          aria-label="Descargar"
+                          <button
+                            type="button"
+                            className="inline-flex items-center justify-center p-2.5 min-w-[40px] min-h-[40px] rounded-lg hover:bg-gray-200 dark:hover:bg-bear-dark-100 text-bear-cyan hover:opacity-90"
+                            onClick={(e) => { e.stopPropagation(); checkAlbumSize(file, idx); }}
+                            title="Descargar"
+                            aria-label="Descargar"
                         >
                           {loadDownload && index === idx ? <Spinner size={2} width={0.2} color="var(--app-btn-text)" /> : <Download size={18} aria-hidden />}
                         </button>
@@ -482,7 +530,7 @@ function Home() {
                         ) : (
                           <button
                             type="button"
-                            className="inline-flex items-center justify-center p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-bear-dark-100 text-bear-cyan hover:opacity-90"
+                            className="inline-flex items-center justify-center p-2.5 min-w-[40px] min-h-[40px] rounded-lg hover:bg-gray-200 dark:hover:bg-bear-dark-100 text-bear-cyan hover:opacity-90"
                             onClick={() => downloadFile(file, idx)}
                             title="Descargar"
                             aria-label="Descargar"
@@ -560,7 +608,7 @@ function Home() {
                         {file.size != null && gbSize <= 50 && (
                           <button
                             type="button"
-                            className="fb-btn-download-icon p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-bear-dark-100 transition-colors text-bear-cyan hover:opacity-90"
+                            className="fb-btn-download-icon p-2.5 min-w-[40px] min-h-[40px] rounded-lg hover:bg-gray-200 dark:hover:bg-bear-dark-100 transition-colors text-bear-cyan hover:opacity-90"
                             onClick={(e) => {
                               e.stopPropagation();
                               checkAlbumSize(file, idx);
@@ -606,7 +654,7 @@ function Home() {
                         ) : (
                           <button
                             type="button"
-                            className="fb-btn-download-icon p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-bear-dark-100 transition-colors text-bear-cyan hover:opacity-90"
+                            className="fb-btn-download-icon p-2.5 min-w-[40px] min-h-[40px] rounded-lg hover:bg-gray-200 dark:hover:bg-bear-dark-100 transition-colors text-bear-cyan hover:opacity-90"
                             onClick={() => downloadFile(file, idx)}
                             title="Descargar"
                             aria-label="Descargar"

@@ -49,6 +49,8 @@ nav {
       background: transparent;
       cursor: pointer;
       padding: 0;
+      min-width: 44px;
+      min-height: 44px;
       color: inherit;
     }
   }
@@ -74,21 +76,22 @@ nav {
       -webkit-tap-highlight-color: transparent;
     }
 
-    li {
-      cursor: pointer;
-      color: var(--theme-nav-text);
-      border-radius: 50px;
-      background-color: var(--theme-nav-item-bg);
-      padding: 4px 8px;
-      transition: all 0.1s ease;
-      font-family: "Poppins";
-      font-size: var(--app-font-size-body);
-      font-weight: var(--app-font-weight-heading);
-      gap: 10px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 36px;
+      li {
+        cursor: pointer;
+        color: var(--theme-nav-text);
+        border-radius: 50px;
+        background-color: var(--theme-nav-item-bg);
+        padding: 4px 8px;
+        transition: all 0.1s ease;
+        font-family: "Poppins";
+        font-size: var(--app-font-size-body);
+        font-weight: var(--app-font-weight-heading);
+        gap: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 44px;
+        min-width: 44px;
 
       &:hover {
         background-color: var(--theme-nav-item-hover-bg);
@@ -259,7 +262,11 @@ nav {
 
     ul {
       li {
-        padding: 8px;
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
+        padding: 0;
         svg {
           width: 1.6rem;
           height: 1.6rem!important;

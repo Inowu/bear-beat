@@ -5,6 +5,7 @@ import { useUserContext } from "../../../contexts/UserContext";
 import "./Coupons.scss";
 import { AddCouponModal } from "../../../components/Modals/AddCouponModal/AddCouponModal";
 import { EditCouponModal } from "../../../components/Modals/EditCouponModal/EditCouponModal";
+import { ConditionModal } from "../../../components/Modals";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import { IAdminCoupons } from "interfaces/admin";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
@@ -20,6 +21,7 @@ export const Coupons = () => {
   const [loader, setLoader] = useState<boolean>(true);
   const [editingCoupon, setEditingCoupon] = useState<IAdminCoupons | null>(null);
   const [drawerCoupon, setDrawerCoupon] = useState<IAdminCoupons | null>(null);
+  const [couponToDelete, setCouponToDelete] = useState<IAdminCoupons | null>(null);
 
   const getCoupons = async () => {
     try {
@@ -40,11 +42,11 @@ export const Coupons = () => {
   };
 
   const handleRemoveCoupon = async (code: string) => {
-    if (!window.confirm("¿Estás seguro de que deseas eliminar el cupón?")) return;
     try {
       await trpc.cupons.deleteStripeCupon.mutate({ code });
       setDrawerCoupon(null);
-      window.location.reload();
+      setCouponToDelete(null);
+      getCoupons();
     } catch (error) {
       console.log(error);
     }
@@ -96,6 +98,13 @@ export const Coupons = () => {
         editingCoupon={editingCoupon}
         getCoupons={getCoupons}
       />
+      <ConditionModal
+        show={couponToDelete !== null}
+        onHide={() => setCouponToDelete(null)}
+        title="Eliminar cupón"
+        message="¿Estás seguro de que deseas eliminar el cupón?"
+        action={() => couponToDelete ? handleRemoveCoupon(couponToDelete.code) : Promise.resolve()}
+      />
 
       {coupons.length === 0 ? (
         <p className="text-slate-400 py-8 text-center">No se encontraron cupones.</p>
@@ -140,7 +149,7 @@ export const Coupons = () => {
                           </button>
                           <button
                             type="button"
-                            onClick={() => handleRemoveCoupon(c.code)}
+                            onClick={() => setCouponToDelete(c)}
                             className="p-2 text-slate-400 hover:text-red-400 transition-colors rounded-lg hover:bg-slate-800"
                             title="Eliminar"
                           >
@@ -197,7 +206,7 @@ export const Coupons = () => {
               drawerCoupon
                 ? [
                     { id: "edit", label: "Editar", onClick: () => handleEditCoupon(drawerCoupon), variant: "secondary" },
-                    { id: "delete", label: "Eliminar", onClick: () => handleRemoveCoupon(drawerCoupon.code), variant: "danger" },
+                    { id: "delete", label: "Eliminar", onClick: () => setCouponToDelete(drawerCoupon), variant: "danger" },
                   ]
                 : []
             }

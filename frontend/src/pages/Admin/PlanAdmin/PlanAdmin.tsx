@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import AddPlanModal from "../../../components/Modals/AddPlanModal/AddPlanModal";
 import { IPlans } from "interfaces/Plans";
 import EditPlanModal from "../../../components/Modals/EditPlanModal/EditPlanModal";
+import { ConditionModal } from "../../../components/Modals";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
@@ -20,6 +21,7 @@ export const PlanAdmin = () => {
   const [loader, setLoader] = useState<boolean>(true);
   const [editingPlan, setEditingPlan] = useState<IPlans | null>(null);
   const [drawerPlan, setDrawerPlan] = useState<IPlans | null>(null);
+  const [planToDelete, setPlanToDelete] = useState<IPlans | null>(null);
 
   const getPlans = async () => {
     try {
@@ -39,10 +41,10 @@ export const PlanAdmin = () => {
   };
 
   const handleRemovePlan = async (id: number) => {
-    if (!window.confirm("¿Estás seguro de que deseas eliminar el plan?")) return;
     try {
       await trpc.plans.deleteOnePlans.mutate({ where: { id } });
       setDrawerPlan(null);
+      setPlanToDelete(null);
       getPlans();
     } catch (error) {
       console.log(error);
@@ -95,6 +97,13 @@ export const PlanAdmin = () => {
     <AdminPageLayout title={`Planes — ${plans.length}`} toolbar={toolbar}>
       <AddPlanModal showModal={show} onHideModal={closeModalAdd} callPlans={getPlans} />
       <EditPlanModal showModal={showEdit} onHideModal={closeEditModalAdd} editingPlan={editingPlan} callPlans={getPlans} />
+      <ConditionModal
+        show={planToDelete !== null}
+        onHide={() => setPlanToDelete(null)}
+        title="Eliminar plan"
+        message="¿Estás seguro de que deseas eliminar el plan?"
+        action={() => planToDelete ? handleRemovePlan(planToDelete.id) : Promise.resolve()}
+      />
 
       {/* Desktop: tabla */}
       <div className="rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50 hidden md:block">
@@ -143,7 +152,7 @@ export const PlanAdmin = () => {
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleRemovePlan(plan.id)}
+                        onClick={() => setPlanToDelete(plan)}
                         disabled={plan.paypal_plan_id != null}
                         className="p-2 text-slate-400 hover:text-red-400 transition-colors rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Eliminar"
@@ -208,7 +217,7 @@ export const PlanAdmin = () => {
                 {
                   id: "delete",
                   label: "Eliminar",
-                  onClick: () => handleRemovePlan(drawerPlan.id),
+                  onClick: () => setPlanToDelete(drawerPlan),
                   disabled: drawerPlan.paypal_plan_id != null,
                   variant: "danger",
                 },

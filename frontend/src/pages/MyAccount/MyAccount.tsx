@@ -625,7 +625,7 @@ function MyAccount() {
                         <button
                           type="button"
                           onClick={() => setDefaultPaymentMethod(x)}
-                          className="p-1.5 rounded-lg font-medium transition-colors ma-btn-accent"
+                          className="px-3 py-2 min-h-[40px] rounded-lg font-medium transition-colors ma-btn-accent"
                           style={{ fontSize: "var(--app-font-size-body)" }}
                           aria-label="Usar esta tarjeta"
                         >
@@ -635,7 +635,7 @@ function MyAccount() {
                       <button
                         type="button"
                         onClick={() => deletePaymentMethod(x)}
-                        className="p-1.5 rounded-lg transition-colors ma-btn-delete"
+                        className="p-2 min-w-[40px] min-h-[40px] rounded-lg transition-colors ma-btn-delete"
                         aria-label="Eliminar tarjeta"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -765,7 +765,7 @@ function FtpRow({
           <button
             type="button"
             onClick={onToggleSecret}
-            className="p-1.5 rounded transition-colors ma-ftp-icon"
+            className="p-2 min-w-[40px] min-h-[40px] rounded transition-colors ma-ftp-icon"
             aria-label={showSecret ? "Ocultar" : "Mostrar"}
           >
             {showSecret ? (
@@ -778,7 +778,7 @@ function FtpRow({
         <button
           type="button"
           onClick={() => copyToClipboard(value, label)}
-          className="p-1.5 rounded transition-colors ma-ftp-icon"
+          className="p-2 min-w-[40px] min-h-[40px] rounded transition-colors ma-ftp-icon"
           aria-label="Copiar"
         >
           <Copy className="w-4 h-4" />

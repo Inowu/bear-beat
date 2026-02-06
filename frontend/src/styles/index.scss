@@ -455,10 +455,9 @@ body {
     background-color: var(--app-bg-card) !important;
     color: var(--app-text-heading) !important;
     border-color: var(--app-border) !important;
-    font-size: 0.875rem !important;
+    font-size: var(--app-font-size-body) !important;
     font-weight: 500;
-    max-height: 2.75rem;
-    min-height: 2.5rem;
+    min-height: 44px;
   }
   input::placeholder, textarea::placeholder {
     color: var(--app-text-muted);
@@ -469,10 +468,14 @@ body {
     box-shadow: 0 0 0 2px rgba(8, 225, 247, 0.25);
   }
   button:not(.btn-cell):not(.dropdown-content button) {
-    font-size: 0.875rem;
+    font-size: var(--app-font-size-body);
     font-weight: 500;
-    min-height: 2.5rem;
-    max-height: 2.75rem;
+    min-height: 44px;
+  }
+  .pagination-container .page-nav,
+  .pagination-container .selected,
+  .pagination-container .unselected {
+    min-height: 44px !important;
   }
   .card, [class*="card"], .table, table {
     background-color: var(--app-bg-card) !important;
