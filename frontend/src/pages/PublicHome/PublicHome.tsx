@@ -14,6 +14,7 @@ import {
   PiCheckCircle,
 } from "react-icons/pi";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
+import { FALLBACK_GENRES, type GenreStats } from "./fallbackGenres";
 import "./PublicHome.scss";
 
 const THEME_OPTIONS: { value: ThemeMode; label: string; icon: typeof faSun }[] = [
@@ -35,44 +36,10 @@ const CATALOG_AUDIOS_GB = 850.8;
 const CATALOG_KARAOKES = 1_353;
 const CATALOG_KARAOKES_GB = 24.99;
 const CATALOG_TOTAL_TB = CATALOG_TOTAL_GB / 1000;
-const HOME_GENRES_LIMIT = 24;
 const API_BASE =
   process.env.REACT_APP_ENVIRONMENT === "development"
     ? "http://localhost:5001"
     : "https://thebearbeatapi.lat";
-
-interface GenreStats {
-  name: string;
-  files: number;
-  gb: number;
-}
-
-const FALLBACK_GENRES: GenreStats[] = [
-  { name: "Reguetton", files: 20_421, gb: 1_129.58 },
-  { name: "Electro", files: 14_165, gb: 956.82 },
-  { name: "House", files: 12_138, gb: 949.31 },
-  { name: "Hip Hop", files: 11_960, gb: 674.09 },
-  { name: "Dembow", files: 6_305, gb: 276.52 },
-  { name: "Pop Ingles", files: 5_984, gb: 411.56 },
-  { name: "Retro Ingles Dance", files: 5_743, gb: 385.8 },
-  { name: "Cumbia", files: 5_549, gb: 362.48 },
-  { name: "Reggae", files: 5_079, gb: 266.93 },
-  { name: "Salsa", files: 4_725, gb: 273.88 },
-  { name: "Cubaton", files: 4_625, gb: 246.31 },
-  { name: "Guaracha", files: 4_555, gb: 468.43 },
-  { name: "Acapella In Out", files: 4_083, gb: 223.03 },
-  { name: "Pop Latino Dance", files: 4_069, gb: 254.28 },
-  { name: "Reggaeton", files: 3_952, gb: 203.79 },
-  { name: "Alternativo", files: 3_779, gb: 246.07 },
-  { name: "80's", files: 3_684, gb: 237.78 },
-  { name: "Bachata", files: 3_426, gb: 177.58 },
-  { name: "Transition", files: 2_973, gb: 211.94 },
-  { name: "Country", files: 2_840, gb: 151.62 },
-  { name: "Merengue", files: 2_436, gb: 139.3 },
-  { name: "Cumbia Sonidera", files: 2_200, gb: 174.06 },
-  { name: "Retro Ingles", files: 2_153, gb: 145.61 },
-  { name: "Latino", files: 1_984, gb: 114.51 },
-];
 
 function detectMexicoRegion(): boolean {
   if (typeof window === "undefined") return false;
@@ -175,20 +142,25 @@ function PublicHome() {
   const [genres, setGenres] = useState<GenreStats[]>(FALLBACK_GENRES);
   const [genreTotal, setGenreTotal] = useState(CATALOG_UNIQUE_GENRES);
   const menuRef = useRef<HTMLDivElement>(null);
-  const authorityRef = useRef<HTMLDivElement>(null);
   const heroFilesCount = useCountUp(CATALOG_TOTAL_FILES, 1.1);
-  const filesCount = useCountUp(CATALOG_TOTAL_FILES, 1.5, true, authorityRef);
+  const filesCount = useCountUp(CATALOG_TOTAL_FILES, 1.5);
 
   const totalTBLabel = `${CATALOG_TOTAL_TB.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TB`;
   const totalGBLabel = `${CATALOG_TOTAL_GB.toLocaleString("es-MX", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} GB`;
   const totalFilesLabel = CATALOG_TOTAL_FILES.toLocaleString("es-MX");
-  const uniqueGenresLabel = CATALOG_UNIQUE_GENRES.toLocaleString("es-MX");
+  const uniqueGenresLabel = genreTotal.toLocaleString("es-MX");
   const videosLabel = CATALOG_VIDEOS.toLocaleString("es-MX");
   const videosGbLabel = `${CATALOG_VIDEOS_GB.toLocaleString("es-MX", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} GB`;
   const audiosLabel = CATALOG_AUDIOS.toLocaleString("es-MX");
   const audiosGbLabel = `${CATALOG_AUDIOS_GB.toLocaleString("es-MX", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} GB`;
   const karaokesLabel = CATALOG_KARAOKES.toLocaleString("es-MX");
   const karaokesGbLabel = `${CATALOG_KARAOKES_GB.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GB`;
+  const allGenres = genres.length ? genres : FALLBACK_GENRES;
+  const laneCount = allGenres.length > 160 ? 4 : allGenres.length > 70 ? 3 : 2;
+  const laneSize = Math.ceil(allGenres.length / laneCount);
+  const genreLanes = Array.from({ length: laneCount }, (_, laneIndex) =>
+    allGenres.slice(laneIndex * laneSize, (laneIndex + 1) * laneSize)
+  ).filter((lane) => lane.length > 0);
 
   useEffect(() => {
     trackManyChatConversion(MC_EVENTS.VIEW_HOME);
@@ -205,9 +177,37 @@ function PublicHome() {
   }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem("token") ?? "";
+    try {
+      const raw = localStorage.getItem("catalog-stats-cache");
+      if (raw) {
+        const parsed = JSON.parse(raw) as {
+          data?: { totalGenres?: number; genresDetail?: GenreStats[] };
+        };
+        const cachedRows = Array.isArray(parsed?.data?.genresDetail) ? parsed.data!.genresDetail : [];
+        if (cachedRows.length) {
+          const normalized = [...cachedRows]
+            .filter((g) => g && typeof g.name === "string")
+            .map((g) => ({
+              name: g.name.trim(),
+              files: Number(g.files) || 0,
+              gb: Number(g.gb) || 0,
+            }))
+            .sort((a, b) => b.files - a.files);
+          if (normalized.length) {
+            setGenres(normalized);
+            setGenreTotal(typeof parsed?.data?.totalGenres === "number" ? parsed.data.totalGenres : normalized.length);
+          }
+        }
+      }
+    } catch {
+      // Ignore cache parsing issues.
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
     fetch(`${API_BASE}/api/catalog-stats`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
         if (!res.ok) throw new Error("catalog-stats-unavailable");
@@ -216,14 +216,12 @@ function PublicHome() {
       .then((res: { totalGenres?: number; genresDetail?: GenreStats[] }) => {
         const rows = Array.isArray(res.genresDetail) ? res.genresDetail : [];
         if (!rows.length) return;
-        const sorted = [...rows]
-          .sort((a, b) => b.files - a.files)
-          .slice(0, HOME_GENRES_LIMIT);
+        const sorted = [...rows].sort((a, b) => b.files - a.files || a.name.localeCompare(b.name));
         setGenres(sorted);
         setGenreTotal(typeof res.totalGenres === "number" ? res.totalGenres : rows.length);
       })
       .catch(() => {
-        // Keep fallback genres for landing UX when endpoint/token is unavailable.
+        // Keep cache/fallback genres for landing UX when endpoint is unavailable.
       });
   }, []);
 
@@ -396,7 +394,7 @@ function PublicHome() {
               </div>
               <p>Ahorra 10 horas de trabajo de oficina.</p>
             </motion.div>
-            <motion.div className="ph__arsenal-card ph__arsenal-card--square" variants={bentoGridVariants} ref={authorityRef}>
+            <motion.div className="ph__arsenal-card ph__arsenal-card--square" variants={bentoGridVariants}>
               <span className="ph__arsenal-stat-value">{totalTBLabel}</span>
               <span className="ph__arsenal-stat-label">Contenido Total</span>
             </motion.div>
@@ -436,14 +434,33 @@ function PublicHome() {
         <div className="ph__container">
           <h2 className="ph__section-title ph__section-title--left">Por género</h2>
           <p className="ph__genres-caption">Cada género = nombre de la carpeta donde están los archivos.</p>
-          <p className="ph__genres-meta">Mostrando {genres.length} de {genreTotal} géneros únicos.</p>
-          <div className="ph__genres-grid">
-            {genres.map((genre) => (
-              <article key={genre.name} className="ph__genre-chip">
-                <strong>{genre.name}</strong>
-                <span>{genre.files.toLocaleString("es-MX")} archivos</span>
-                <span>{genre.gb.toLocaleString("es-MX", { maximumFractionDigits: 2 })} GB</span>
-              </article>
+          <p className="ph__genres-meta">
+            {allGenres.length >= genreTotal
+              ? `Mostrando todos los ${genreTotal.toLocaleString("es-MX")} géneros únicos.`
+              : `Mostrando ${allGenres.length.toLocaleString("es-MX")} de ${genreTotal.toLocaleString("es-MX")} géneros únicos.`}
+          </p>
+          <div className="ph__genres-marquee">
+            {genreLanes.map((lane, laneIndex) => (
+              <div
+                key={`genre-lane-${laneIndex}`}
+                className={`ph__genres-lane ${laneIndex % 2 ? "ph__genres-lane--reverse" : ""}`}
+              >
+                <div className="ph__genres-track">
+                  {[...lane, ...lane].map((genre, itemIndex) => (
+                    <article key={`${genre.name}-${laneIndex}-${itemIndex}`} className="ph__genre-chip">
+                      <strong>{genre.name}</strong>
+                      {genre.files > 0 || genre.gb > 0 ? (
+                        <>
+                          <span>{genre.files.toLocaleString("es-MX")} archivos</span>
+                          <span>{genre.gb.toLocaleString("es-MX", { maximumFractionDigits: 2 })} GB</span>
+                        </>
+                      ) : (
+                        <span className="ph__genre-chip-meta">Disponible en catálogo</span>
+                      )}
+                    </article>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         </div>

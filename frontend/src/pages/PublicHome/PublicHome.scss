@@ -885,22 +885,29 @@ $shadow-card: var(--app-shadow-card);
   font-weight: 600;
 }
 
-.ph__genres-grid {
-  display: grid;
-  grid-template-columns: repeat(1, minmax(0, 1fr));
+.ph__genres-marquee {
+  display: flex;
+  flex-direction: column;
   gap: 0.65rem;
+}
 
-  @include respond-from(tablet) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.ph__genres-lane {
+  position: relative;
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%);
+}
 
-  @include respond-from(md) {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
+.ph__genres-track {
+  display: flex;
+  align-items: stretch;
+  gap: 0.65rem;
+  width: max-content;
+  animation: ph-genres-marquee 58s linear infinite;
+}
 
-  @include respond-from(desktop) {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
+.ph__genres-lane--reverse .ph__genres-track {
+  animation-direction: reverse;
+  animation-duration: 66s;
 }
 
 .ph__genre-chip {
@@ -911,6 +918,8 @@ $shadow-card: var(--app-shadow-card);
   display: flex;
   flex-direction: column;
   gap: 0.18rem;
+  min-width: 220px;
+  max-width: 280px;
 
   strong {
     color: $text-primary;
@@ -923,6 +932,20 @@ $shadow-card: var(--app-shadow-card);
     color: $text-secondary;
     font-size: 0.84rem;
     line-height: 1.25;
+  }
+}
+
+.ph__genre-chip-meta {
+  font-weight: 600;
+  color: color-mix(in srgb, $accent 70%, $text-secondary);
+}
+
+@keyframes ph-genres-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
   }
 }
 
@@ -1228,13 +1251,8 @@ $shadow-card: var(--app-shadow-card);
     height: 68px;
   }
 
-  .ph__compare-toggle {
-    width: 100%;
-  }
-
-  .ph__compare-toggle-btn {
-    flex: 1;
-    padding-inline: 0.75rem;
+  .ph__genres-lane {
+    mask-image: none;
   }
 
   .ph__pricing-card-wrapper {
@@ -1253,5 +1271,16 @@ $shadow-card: var(--app-shadow-card);
     animation: none !important;
     transition-duration: 0.01ms !important;
     transition-delay: 0ms !important;
+  }
+
+  .ph__genres-lane {
+    overflow-x: auto;
+    mask-image: none;
+  }
+
+  .ph__genres-track {
+    width: auto;
+    flex-wrap: wrap;
+    justify-content: flex-start;
   }
 }
