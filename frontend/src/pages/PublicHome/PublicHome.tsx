@@ -84,56 +84,36 @@ const bentoGridVariants: Variants = {
 };
 
 function CompareSlider() {
-  const [active, setActive] = useState<"amateur" | "pro">("amateur");
   return (
     <div className="ph__compare-slider">
-      <div className="ph__compare-toggle">
-        <button
-          type="button"
-          className={`ph__compare-toggle-btn ${active === "amateur" ? "ph__compare-toggle-btn--active" : ""}`}
-          onClick={() => setActive("amateur")}
-          aria-pressed={active === "amateur"}
-        >
-          DJ Amateur
-        </button>
-        <button
-          type="button"
-          className={`ph__compare-toggle-btn ${active === "pro" ? "ph__compare-toggle-btn--active" : ""}`}
-          onClick={() => setActive("pro")}
-          aria-pressed={active === "pro"}
-        >
-          DJ Bear Beat
-        </button>
+      <div className="ph__compare-head">
+        <span>DJ Amateur</span>
+        <span>DJ Bear Beat</span>
       </div>
-      <AnimatePresence mode="wait">
-        {active === "amateur" ? (
-          <motion.div
-            key="amateur"
-            className="ph__compare-slider-card ph__compare-slider-card--bad"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <PiWarning className="ph__compare-icon" aria-hidden />
-            <h3>DJ Amateur</h3>
-            <p>Estresado, YouTube, mala calidad. Una pista que no tienes = una pista que no suena.</p>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="pro"
-            className="ph__compare-slider-card ph__compare-slider-card--good"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <PiCheckCircle className="ph__compare-icon" aria-hidden />
-            <h3>DJ Bear Beat</h3>
-            <p>Carpeta lista, reputación blindada. No arriesgues tu reputación dependiendo del WiFi del lugar.</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <div className="ph__compare-grid">
+        <motion.div
+          className="ph__compare-slider-card ph__compare-slider-card--bad"
+          initial={{ opacity: 0, x: -20 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true, amount: 0.25 }}
+          transition={{ duration: 0.35 }}
+        >
+          <PiWarning className="ph__compare-icon" aria-hidden />
+          <h3>DJ Amateur</h3>
+          <p>Estresado, YouTube, mala calidad. Una pista que no tienes = una pista que no suena.</p>
+        </motion.div>
+        <motion.div
+          className="ph__compare-slider-card ph__compare-slider-card--good"
+          initial={{ opacity: 0, x: 20 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true, amount: 0.25 }}
+          transition={{ duration: 0.35 }}
+        >
+          <PiCheckCircle className="ph__compare-icon" aria-hidden />
+          <h3>DJ Bear Beat</h3>
+          <p>Carpeta lista, reputación blindada. No arriesgues tu reputación dependiendo del WiFi del lugar.</p>
+        </motion.div>
+      </div>
     </div>
   );
 }
