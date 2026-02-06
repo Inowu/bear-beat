@@ -277,15 +277,30 @@ function PublicHome() {
       </motion.section>
 
       <motion.section
-        className="ph__compare"
-        initial={{ opacity: 0, y: 40 }}
+        className="ph__spine"
+        initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.2 }}
-        transition={{ duration: 0.5 }}
+        viewport={{ once: true, amount: 0.25 }}
+        transition={{ duration: 0.45 }}
       >
         <div className="ph__container">
-          <h2 className="ph__section-title ph__section-title--left">¿Cuánto te cuesta decir &quot;No la tengo&quot;?</h2>
-          <CompareSlider />
+          <div className="ph__spine-grid">
+            <article className="ph__spine-card">
+              <span className="ph__spine-label">El Arsenal</span>
+              <strong className="ph__spine-value">12.5 TB</strong>
+              <p className="ph__spine-meta">Video Remixes</p>
+            </article>
+            <article className="ph__spine-card">
+              <span className="ph__spine-label">FTP Ultra Rápido</span>
+              <strong className="ph__spine-value">500 GB</strong>
+              <p className="ph__spine-meta">descarga</p>
+            </article>
+            <article className="ph__spine-card">
+              <span className="ph__spine-label">Tu pase de membresía</span>
+              <strong className="ph__spine-value">$18 / $350</strong>
+              <p className="ph__spine-meta">USD / MXN</p>
+            </article>
+          </div>
         </div>
       </motion.section>
 
@@ -331,6 +346,19 @@ function PublicHome() {
               <p>11.5 TB — Reggaeton, Cumbias, Corridos, Banda, Tech House, Salsa, Retro 80s.</p>
             </motion.div>
           </div>
+        </div>
+      </motion.section>
+
+      <motion.section
+        className="ph__compare"
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="ph__container">
+          <h2 className="ph__section-title ph__section-title--left">¿Cuánto te cuesta decir &quot;No la tengo&quot;?</h2>
+          <CompareSlider />
         </div>
       </motion.section>
 

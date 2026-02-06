@@ -523,118 +523,77 @@ $shadow-card: var(--app-shadow-card);
   }
 }
 
-.ph__compare {
-  padding-block: clamp(1.4rem, 4vw, 3.2rem) clamp(3.2rem, 7vw, 5.5rem);
+.ph__spine {
+  padding-block: clamp(0.6rem, 2.4vw, 1.4rem) clamp(1.8rem, 4.3vw, 2.8rem);
 }
 
-.ph__compare-slider {
-  width: min(860px, 100%);
-}
+.ph__spine-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.8rem;
 
-.ph__compare-toggle {
-  width: fit-content;
-  max-width: 100%;
-  display: flex;
-  margin-bottom: 1.2rem;
-  padding: 0.4rem;
-  gap: 0.2rem;
-  border-radius: 999px;
-  border: 1px solid $border;
-  background: color-mix(in srgb, $surface 86%, transparent);
-}
-
-.ph__compare-toggle-btn {
-  padding: 0.78rem 1.25rem;
-  border: none;
-  border-radius: 999px;
-  background: transparent;
-  color: $text-secondary;
-  font-size: var(--app-font-size-body);
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.24s ease, color 0.24s ease;
-
-  &:hover {
-    color: $text-primary;
-  }
-
-  &.ph__compare-toggle-btn--active {
-    background: var(--app-gradient);
-    color: var(--app-btn-text);
+  @include respond-from(md) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
   }
 }
 
-.ph__compare-slider-card {
-  border-radius: 20px;
-  border: 1px solid $border;
-  background: $surface;
+.ph__spine-card {
+  border: 1px solid color-mix(in srgb, $accent 22%, $border);
+  border-radius: 16px;
+  background: linear-gradient(145deg, color-mix(in srgb, $surface 94%, transparent), color-mix(in srgb, $surface 84%, $accent 5%));
   box-shadow: $shadow-soft;
-  padding: clamp(1.25rem, 3vw, 2rem);
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
+  padding: 0.95rem 1rem 1.02rem;
   position: relative;
-  overflow: hidden;
 
   &::before {
     content: "";
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 4px;
-    background: color-mix(in srgb, $border 70%, transparent);
-  }
-
-  h3 {
-    margin: 0;
-    font-size: clamp(1.2rem, 2.8vw, 1.6rem);
-    line-height: 1.2;
-  }
-
-  p {
-    margin: 0;
-    color: $text-secondary;
-    font-size: clamp(0.98rem, 2.2vw, 1.04rem);
-    line-height: 1.62;
-    max-width: 68ch;
+    right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+    background: linear-gradient(90deg, color-mix(in srgb, $accent 72%, transparent), color-mix(in srgb, $mint 65%, transparent));
   }
 }
 
-.ph__compare-slider-card--bad {
-  &::before {
-    background: color-mix(in srgb, var(--app-status-error) 45%, transparent);
-  }
-
-  h3 {
-    color: color-mix(in srgb, var(--app-status-error) 72%, $text-primary);
-  }
+.ph__spine-label {
+  display: block;
+  color: $text-muted;
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 0.3rem;
 }
 
-.ph__compare-slider-card--good {
-  &::before {
-    background: color-mix(in srgb, var(--app-status-success) 55%, transparent);
-  }
-
-  h3 {
-    color: $accent;
-  }
+.ph__spine-value {
+  display: block;
+  color: $text-primary;
+  font-size: clamp(1.35rem, 3vw, 1.85rem);
+  letter-spacing: -0.02em;
+  line-height: 1.03;
+  font-weight: 800;
 }
 
-.ph__compare-icon {
-  font-size: 1.95rem;
-}
-
-.ph__compare-slider-card--bad .ph__compare-icon {
-  color: var(--app-status-error);
-}
-
-.ph__compare-slider-card--good .ph__compare-icon {
-  color: var(--app-status-success);
+.ph__spine-meta {
+  margin: 0.28rem 0 0;
+  color: $text-secondary;
+  font-size: 0.95rem;
+  font-weight: 600;
 }
 
 .ph__arsenal {
-  padding-block: clamp(2.8rem, 6vw, 5.2rem);
+  padding-block: clamp(0.5rem, 2.4vw, 1.5rem) clamp(1.6rem, 4.5vw, 2.8rem);
+}
+
+.ph__arsenal .ph__container {
+  border: 1px solid color-mix(in srgb, $accent 18%, $border);
+  border-radius: 24px;
+  padding: clamp(1.2rem, 2.8vw, 2rem);
+  background: linear-gradient(165deg, color-mix(in srgb, $surface 95%, transparent), color-mix(in srgb, $surface 84%, $accent 3%));
+  box-shadow: $shadow-soft;
 }
 
 .ph__arsenal-grid {
@@ -777,6 +736,124 @@ $shadow-card: var(--app-shadow-card);
 
 .ph__arsenal-card--genres h3 {
   color: $accent;
+}
+
+.ph__compare {
+  padding-block: clamp(0.5rem, 2.4vw, 1.6rem) clamp(2.8rem, 6vw, 4.2rem);
+}
+
+.ph__compare .ph__container {
+  border: 1px solid color-mix(in srgb, $border 82%, transparent);
+  border-radius: 24px;
+  padding: clamp(1.2rem, 2.8vw, 2rem);
+  background: linear-gradient(165deg, color-mix(in srgb, $surface 95%, transparent), color-mix(in srgb, $surface 88%, $mint 2%));
+  box-shadow: $shadow-soft;
+}
+
+.ph__compare-slider {
+  width: min(860px, 100%);
+}
+
+.ph__compare-toggle {
+  width: fit-content;
+  max-width: 100%;
+  display: flex;
+  margin-bottom: 1.2rem;
+  padding: 0.4rem;
+  gap: 0.2rem;
+  border-radius: 999px;
+  border: 1px solid $border;
+  background: color-mix(in srgb, $surface 86%, transparent);
+}
+
+.ph__compare-toggle-btn {
+  padding: 0.78rem 1.25rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: $text-secondary;
+  font-size: var(--app-font-size-body);
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.24s ease, color 0.24s ease;
+
+  &:hover {
+    color: $text-primary;
+  }
+
+  &.ph__compare-toggle-btn--active {
+    background: var(--app-gradient);
+    color: var(--app-btn-text);
+  }
+}
+
+.ph__compare-slider-card {
+  border-radius: 20px;
+  border: 1px solid $border;
+  background: $surface;
+  box-shadow: $shadow-soft;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: color-mix(in srgb, $border 70%, transparent);
+  }
+
+  h3 {
+    margin: 0;
+    font-size: clamp(1.2rem, 2.8vw, 1.6rem);
+    line-height: 1.2;
+  }
+
+  p {
+    margin: 0;
+    color: $text-secondary;
+    font-size: clamp(0.98rem, 2.2vw, 1.04rem);
+    line-height: 1.62;
+    max-width: 68ch;
+  }
+}
+
+.ph__compare-slider-card--bad {
+  &::before {
+    background: color-mix(in srgb, var(--app-status-error) 45%, transparent);
+  }
+
+  h3 {
+    color: color-mix(in srgb, var(--app-status-error) 72%, $text-primary);
+  }
+}
+
+.ph__compare-slider-card--good {
+  &::before {
+    background: color-mix(in srgb, var(--app-status-success) 55%, transparent);
+  }
+
+  h3 {
+    color: $accent;
+  }
+}
+
+.ph__compare-icon {
+  font-size: 1.95rem;
+}
+
+.ph__compare-slider-card--bad .ph__compare-icon {
+  color: var(--app-status-error);
+}
+
+.ph__compare-slider-card--good .ph__compare-icon {
+  color: var(--app-status-success);
 }
 
 .ph__pricing {
