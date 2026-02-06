@@ -294,7 +294,7 @@ function Home() {
     try {
       const result = await trpc.ftp.search.query(body);
       let values: any = [];
-      result.documents.forEach((val) => {
+      result.documents.forEach((val: any) => {
         if (val.value) {
           values.push(val.value);
         } else {

@@ -72,7 +72,7 @@ function Checkout() {
         successUrl,
         cancelUrl,
       })
-      .then((result) => {
+      .then((result: { url?: string | null }) => {
         if (result?.url) {
           window.location.href = result.url;
         } else {

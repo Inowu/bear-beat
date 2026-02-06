@@ -35,6 +35,13 @@ export interface IAdminFilter {
   limit: number;
 }
 
+interface IExportUserRow {
+  username: string;
+  email: string;
+  registered_on: Date | string;
+  phone?: string | null;
+}
+
 function Admin() {
   const { currentUser, handleLogin } = useUserContext();
   const [users, setUsers] = useState<IAdminUser[]>([]);
@@ -127,11 +134,14 @@ function Admin() {
   const transformUserData = async () => {
     const fetchUsers = await exportUsers(filters);
     if (!fetchUsers || fetchUsers.length < 0) throw new Error('Error loading tempUsers');
-    return fetchUsers.map((user) => ({
+    return fetchUsers.map((user: IExportUserRow) => ({
       Usuario: user.username,
       Correo: user.email,
-      "Fecha de Registro": user.registered_on.toLocaleDateString(),
-      Teléfono: user.phone,
+      "Fecha de Registro": (user.registered_on instanceof Date
+        ? user.registered_on
+        : new Date(user.registered_on)
+      ).toLocaleDateString(),
+      Teléfono: user.phone ?? "",
     }));
   };
 

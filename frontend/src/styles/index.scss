@@ -71,7 +71,7 @@
   --theme-card-border-strong: rgba(8, 225, 247, 0.22);
   --theme-card-shadow: var(--bb-shadow);
   --theme-card-shadow-hover: var(--bb-shadow-card);
-  --theme-card-accent-line: linear-gradient(180deg, var(--bb-cyan) 0%, #00A8CD 100%);
+  --theme-card-accent-line: linear-gradient(180deg, var(--bb-cyan) 0%, var(--bb-mint) 100%);
   --theme-input-bg: var(--bb-surface);
   --theme-input-border: var(--bb-border);
   --theme-input-text: var(--bb-text-heading);
@@ -88,7 +88,7 @@
   --theme-edge: rgba(0, 0, 0, 0.12);
   --theme-accent: var(--bb-cyan);
   --theme-accent-bright: var(--bb-cyan);
-  --theme-accent-dim: #00A8CD;
+  --theme-accent-dim: var(--bb-cyan);
   --theme-accent-glow: rgba(8, 225, 247, 0.42);
   --theme-accent-soft-bg: rgba(8, 225, 247, 0.1);
   --theme-landing-bg: #000000;
@@ -157,7 +157,7 @@
   --auth-login-title: var(--bb-text-heading);
   --auth-login-subtitle: var(--bb-text-muted);
   --auth-login-link: var(--bb-cyan);
-  --auth-login-link-hover: #00BFD3;
+  --auth-login-link-hover: var(--bb-cyan);
   --auth-login-btn-bg: var(--bb-gradient);
   --auth-login-btn-text: #0A0A0A;
 
@@ -318,7 +318,7 @@ html.dark,
   --theme-edge: rgba(255, 255, 255, 0.12);
   --theme-accent: var(--bb-cyan);
   --theme-accent-bright: var(--bb-cyan);
-  --theme-accent-dim: #00A8CD;
+  --theme-accent-dim: var(--bb-cyan);
   --theme-accent-soft-bg: rgba(8, 225, 247, 0.14);
 
   --app-bg: var(--bb-bg);

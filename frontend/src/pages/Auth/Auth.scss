@@ -244,8 +244,8 @@
 // Columna izquierda: SIEMPRE OSCURA (bg-slate-950 / negro), misma altura que el formulario
 .auth-split-left {
   position: relative;
-  background: linear-gradient(to bottom right, var(--bb-dark-400), #000000);
-  color: #ffffff;
+  background: linear-gradient(to bottom right, var(--bb-dark-400), var(--theme-landing-bg));
+  color: var(--theme-landing-text);
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -270,7 +270,7 @@
     font-size: var(--app-font-size-h2);
     font-weight: var(--app-font-weight-heading-strong);
     font-family: "Poppins", sans-serif;
-    color: #ffffff;
+    color: var(--theme-landing-text);
     margin: 0 0 24px;
     line-height: 1.25;
     max-width: 100%;
@@ -288,7 +288,7 @@
       align-items: center;
       gap: 12px;
       font-size: var(--app-font-size-body-lg);
-      color: #ffffff;
+      color: var(--theme-landing-text);
       margin-bottom: 14px;
       line-height: 1.35;
 
@@ -301,7 +301,7 @@
       }
 
       strong {
-        color: #ffffff;
+        color: var(--theme-landing-text);
         font-weight: var(--app-font-weight-heading);
       }
     }
@@ -408,4 +408,3 @@
     gap: 20px;
   }
 }
-

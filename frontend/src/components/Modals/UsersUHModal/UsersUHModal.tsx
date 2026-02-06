@@ -157,7 +157,7 @@ export function UsersUHModal(props: IUsersUHModal) {
                     <select
                       onChange={(e: any) => setCard(e.target.value)}
                       defaultValue={''}
-                      style={{ color: '#fff' }}
+                      style={{ color: 'var(--app-text-heading)' }}
                     >
                       <option disabled value={''}>
                         Seleccione una tarjeta

@@ -1,6 +1,11 @@
 @import "src/styles/mixin.scss";
 @import "../../styles/landing-design.scss";
 
+$text-primary: var(--app-text-heading);
+$card-glass: var(--app-bg-card);
+$card-glass-border: var(--app-border);
+$bear-blue-dim: var(--bb-cyan);
+
 // Mobile-first (compatible con tema oscuro admin)
 .pagination-container {
   display: flex;
@@ -43,7 +48,7 @@
 
     .selected {
       font-weight: 600;
-      color: $bear-blue-dim;
+      color: var(--app-accent);
       font-size: var(--app-font-size-body);
     }
 
@@ -64,7 +69,7 @@
 
     svg {
       cursor: pointer;
-      color: $bear-blue-dim;
+      color: var(--app-accent);
       min-width: 44px;
       min-height: 44px;
       &:hover {
@@ -73,7 +78,7 @@
     }
 
     p {
-      color: $bear-blue-dim;
+      color: var(--app-accent);
       font-size: var(--app-font-size-body);
     }
   }

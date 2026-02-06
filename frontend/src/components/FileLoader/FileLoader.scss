@@ -9,8 +9,10 @@
   right: 16px;
   left: auto;
   padding: 0 !important;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
-  background-color: #fff;
+  box-shadow: var(--app-shadow-card);
+  background-color: var(--app-bg-card);
+  border: 1px solid var(--app-border);
+  color: var(--app-text-heading);
   overflow: hidden;
   z-index: 100;
 
@@ -25,15 +27,19 @@
     padding-block: 10px;
     padding-inline: 20px;
     align-items: center;
+    background: color-mix(in srgb, var(--app-accent) 8%, var(--app-bg-card));
+    border-bottom: 1px solid var(--app-border);
 
     .title {
       font-weight: 600;
       font-size: 1.8rem;
+      color: var(--app-text-heading);
     }
 
     .subtitle {
       font-weight: 400;
       font-size: 1.2rem;
+      color: var(--app-text-muted);
     }
   }
 
@@ -87,6 +93,7 @@
         p {
           font-size: 1.4rem;
           font-weight: 600;
+          color: var(--app-text-heading);
         }
 
         button {
@@ -95,6 +102,13 @@
           font-size: 1.3rem;
           padding: 8px 12px;
           cursor: pointer;
+          color: var(--app-accent);
+          border-radius: 999px;
+          transition: background-color 0.2s ease, color 0.2s ease;
+
+          &:hover {
+            background: color-mix(in srgb, var(--app-accent) 12%, transparent);
+          }
         }
       }
     }
