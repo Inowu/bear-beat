@@ -25,6 +25,16 @@ const THEME_OPTIONS: { value: ThemeMode; label: string; icon: typeof faSun }[] =
 
 type PriceRegion = "global" | "mexico";
 const BEAR_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
+const CATALOG_TOTAL_FILES = 195_727;
+const CATALOG_TOTAL_GB = 12_350.1;
+const CATALOG_UNIQUE_GENRES = 209;
+const CATALOG_VIDEOS = 90_651;
+const CATALOG_VIDEOS_GB = 11_499.3;
+const CATALOG_AUDIOS = 105_076;
+const CATALOG_AUDIOS_GB = 850.8;
+const CATALOG_KARAOKES = 1_353;
+const CATALOG_KARAOKES_GB = 24.99;
+const CATALOG_TOTAL_TB = CATALOG_TOTAL_GB / 1000;
 
 function detectMexicoRegion(): boolean {
   if (typeof window === "undefined") return false;
@@ -126,8 +136,19 @@ function PublicHome() {
   );
   const menuRef = useRef<HTMLDivElement>(null);
   const authorityRef = useRef<HTMLDivElement>(null);
-  const heroFilesCount = useCountUp(195000, 1.1);
-  const filesCount = useCountUp(195000, 1.5, true, authorityRef);
+  const heroFilesCount = useCountUp(CATALOG_TOTAL_FILES, 1.1);
+  const filesCount = useCountUp(CATALOG_TOTAL_FILES, 1.5, true, authorityRef);
+
+  const totalTBLabel = `${CATALOG_TOTAL_TB.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TB`;
+  const totalGBLabel = `${CATALOG_TOTAL_GB.toLocaleString("es-MX", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} GB`;
+  const totalFilesLabel = CATALOG_TOTAL_FILES.toLocaleString("es-MX");
+  const uniqueGenresLabel = CATALOG_UNIQUE_GENRES.toLocaleString("es-MX");
+  const videosLabel = CATALOG_VIDEOS.toLocaleString("es-MX");
+  const videosGbLabel = `${CATALOG_VIDEOS_GB.toLocaleString("es-MX", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} GB`;
+  const audiosLabel = CATALOG_AUDIOS.toLocaleString("es-MX");
+  const audiosGbLabel = `${CATALOG_AUDIOS_GB.toLocaleString("es-MX", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} GB`;
+  const karaokesLabel = CATALOG_KARAOKES.toLocaleString("es-MX");
+  const karaokesGbLabel = `${CATALOG_KARAOKES_GB.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GB`;
 
   useEffect(() => {
     trackManyChatConversion(MC_EVENTS.VIEW_HOME);
@@ -205,7 +226,7 @@ function PublicHome() {
                 El arsenal que te convierte en el DJ que nunca falla.
               </motion.h1>
               <motion.div className="ph__hero-keywords" variants={heroItemVariants}>
-                <span className="ph__hero-big-number">12.5 TB</span>
+                <span className="ph__hero-big-number">{totalTBLabel}</span>
                 <span className="ph__hero-keyword">Video Remixes</span>
               </motion.div>
               <motion.p className="ph__hero-sub" variants={heroItemVariants}>
@@ -236,7 +257,7 @@ function PublicHome() {
                 <div className="ph__hero-visual-frame">
                   <div className="ph__hero-visual-head">
                     <span className="ph__hero-visual-label">Video Remixes</span>
-                    <strong className="ph__hero-visual-value">12.5 TB</strong>
+                    <strong className="ph__hero-visual-value">{totalTBLabel}</strong>
                   </div>
                   <p className="ph__hero-visual-copy">Descarga masiva vía FTP. Música, Video y Karaokes.</p>
                   <div className="ph__hero-visual-folders">
@@ -246,7 +267,7 @@ function PublicHome() {
                     <div className="ph__hero-visual-folder ph__hero-visual-folder--4" />
                   </div>
                   <div className="ph__hero-visual-meta">
-                    <span>{heroFilesCount.toLocaleString("es-MX")}+ Archivos</span>
+                    <span>{heroFilesCount.toLocaleString("es-MX")} Archivos</span>
                     <span>Acceso Total</span>
                   </div>
                 </div>
@@ -267,18 +288,18 @@ function PublicHome() {
           <div className="ph__spine-grid">
             <article className="ph__spine-card">
               <span className="ph__spine-label">El Arsenal</span>
-              <strong className="ph__spine-value">12.5 TB</strong>
-              <p className="ph__spine-meta">Video Remixes</p>
+              <strong className="ph__spine-value">{totalGBLabel}</strong>
+              <p className="ph__spine-meta">{totalFilesLabel} archivos</p>
             </article>
             <article className="ph__spine-card">
-              <span className="ph__spine-label">FTP Ultra Rápido</span>
-              <strong className="ph__spine-value">500 GB</strong>
-              <p className="ph__spine-meta">descarga</p>
+              <span className="ph__spine-label">Videos</span>
+              <strong className="ph__spine-value">{videosLabel}</strong>
+              <p className="ph__spine-meta">{videosGbLabel}</p>
             </article>
             <article className="ph__spine-card">
-              <span className="ph__spine-label">Tu pase de membresía</span>
-              <strong className="ph__spine-value">$18 / $350</strong>
-              <p className="ph__spine-meta">USD / MXN</p>
+              <span className="ph__spine-label">Géneros únicos</span>
+              <strong className="ph__spine-value">{uniqueGenresLabel}</strong>
+              <p className="ph__spine-meta">por carpeta</p>
             </article>
           </div>
         </div>
@@ -313,17 +334,17 @@ function PublicHome() {
               <p>Ahorra 10 horas de trabajo de oficina.</p>
             </motion.div>
             <motion.div className="ph__arsenal-card ph__arsenal-card--square" variants={bentoGridVariants} ref={authorityRef}>
-              <span className="ph__arsenal-stat-value">12.5 TB</span>
+              <span className="ph__arsenal-stat-value">{totalTBLabel}</span>
               <span className="ph__arsenal-stat-label">Contenido Total</span>
             </motion.div>
             <motion.div className="ph__arsenal-card ph__arsenal-card--square" variants={bentoGridVariants}>
-              <span className="ph__arsenal-stat-value">{filesCount.toLocaleString("es-MX")}+</span>
+              <span className="ph__arsenal-stat-value">{filesCount.toLocaleString("es-MX")}</span>
               <span className="ph__arsenal-stat-label">Archivos</span>
             </motion.div>
             <motion.div className="ph__arsenal-card ph__arsenal-card--wide ph__arsenal-card--genres" variants={bentoGridVariants}>
               <PiVideoCamera className="ph__arsenal-icon" aria-hidden />
               <h3>Video Remixes</h3>
-              <p>11.5 TB — Reggaeton, Cumbias, Corridos, Banda, Tech House, Salsa, Retro 80s.</p>
+              <p>Videos: {videosLabel} ({videosGbLabel}) · Audios: {audiosLabel} ({audiosGbLabel}) · Karaokes: {karaokesLabel} ({karaokesGbLabel})</p>
             </motion.div>
           </div>
         </div>
