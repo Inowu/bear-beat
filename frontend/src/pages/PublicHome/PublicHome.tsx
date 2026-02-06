@@ -35,6 +35,44 @@ const CATALOG_AUDIOS_GB = 850.8;
 const CATALOG_KARAOKES = 1_353;
 const CATALOG_KARAOKES_GB = 24.99;
 const CATALOG_TOTAL_TB = CATALOG_TOTAL_GB / 1000;
+const HOME_GENRES_LIMIT = 24;
+const API_BASE =
+  process.env.REACT_APP_ENVIRONMENT === "development"
+    ? "http://localhost:5001"
+    : "https://thebearbeatapi.lat";
+
+interface GenreStats {
+  name: string;
+  files: number;
+  gb: number;
+}
+
+const FALLBACK_GENRES: GenreStats[] = [
+  { name: "Reguetton", files: 20_421, gb: 1_129.58 },
+  { name: "Electro", files: 14_165, gb: 956.82 },
+  { name: "House", files: 12_138, gb: 949.31 },
+  { name: "Hip Hop", files: 11_960, gb: 674.09 },
+  { name: "Dembow", files: 6_305, gb: 276.52 },
+  { name: "Pop Ingles", files: 5_984, gb: 411.56 },
+  { name: "Retro Ingles Dance", files: 5_743, gb: 385.8 },
+  { name: "Cumbia", files: 5_549, gb: 362.48 },
+  { name: "Reggae", files: 5_079, gb: 266.93 },
+  { name: "Salsa", files: 4_725, gb: 273.88 },
+  { name: "Cubaton", files: 4_625, gb: 246.31 },
+  { name: "Guaracha", files: 4_555, gb: 468.43 },
+  { name: "Acapella In Out", files: 4_083, gb: 223.03 },
+  { name: "Pop Latino Dance", files: 4_069, gb: 254.28 },
+  { name: "Reggaeton", files: 3_952, gb: 203.79 },
+  { name: "Alternativo", files: 3_779, gb: 246.07 },
+  { name: "80's", files: 3_684, gb: 237.78 },
+  { name: "Bachata", files: 3_426, gb: 177.58 },
+  { name: "Transition", files: 2_973, gb: 211.94 },
+  { name: "Country", files: 2_840, gb: 151.62 },
+  { name: "Merengue", files: 2_436, gb: 139.3 },
+  { name: "Cumbia Sonidera", files: 2_200, gb: 174.06 },
+  { name: "Retro Ingles", files: 2_153, gb: 145.61 },
+  { name: "Latino", files: 1_984, gb: 114.51 },
+];
 
 function detectMexicoRegion(): boolean {
   if (typeof window === "undefined") return false;
@@ -134,6 +172,8 @@ function PublicHome() {
   const [region, setRegion] = useState<PriceRegion>(() =>
     detectMexicoRegion() ? "mexico" : "global"
   );
+  const [genres, setGenres] = useState<GenreStats[]>(FALLBACK_GENRES);
+  const [genreTotal, setGenreTotal] = useState(CATALOG_UNIQUE_GENRES);
   const menuRef = useRef<HTMLDivElement>(null);
   const authorityRef = useRef<HTMLDivElement>(null);
   const heroFilesCount = useCountUp(CATALOG_TOTAL_FILES, 1.1);
@@ -162,6 +202,29 @@ function PublicHome() {
     }
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token") ?? "";
+    fetch(`${API_BASE}/api/catalog-stats`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("catalog-stats-unavailable");
+        return res.json();
+      })
+      .then((res: { totalGenres?: number; genresDetail?: GenreStats[] }) => {
+        const rows = Array.isArray(res.genresDetail) ? res.genresDetail : [];
+        if (!rows.length) return;
+        const sorted = [...rows]
+          .sort((a, b) => b.files - a.files)
+          .slice(0, HOME_GENRES_LIMIT);
+        setGenres(sorted);
+        setGenreTotal(typeof res.totalGenres === "number" ? res.totalGenres : rows.length);
+      })
+      .catch(() => {
+        // Keep fallback genres for landing UX when endpoint/token is unavailable.
+      });
   }, []);
 
   return (
@@ -360,6 +423,29 @@ function PublicHome() {
         <div className="ph__container">
           <h2 className="ph__section-title ph__section-title--left">¿Cuánto te cuesta decir &quot;No la tengo&quot;?</h2>
           <CompareSlider />
+        </div>
+      </motion.section>
+
+      <motion.section
+        className="ph__genres"
+        initial={{ opacity: 0, y: 36 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: 0.45 }}
+      >
+        <div className="ph__container">
+          <h2 className="ph__section-title ph__section-title--left">Por género</h2>
+          <p className="ph__genres-caption">Cada género = nombre de la carpeta donde están los archivos.</p>
+          <p className="ph__genres-meta">Mostrando {genres.length} de {genreTotal} géneros únicos.</p>
+          <div className="ph__genres-grid">
+            {genres.map((genre) => (
+              <article key={genre.name} className="ph__genre-chip">
+                <strong>{genre.name}</strong>
+                <span>{genre.files.toLocaleString("es-MX")} archivos</span>
+                <span>{genre.gb.toLocaleString("es-MX", { maximumFractionDigits: 2 })} GB</span>
+              </article>
+            ))}
+          </div>
         </div>
       </motion.section>
 
