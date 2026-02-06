@@ -101,7 +101,7 @@
 
   .btn-primary {
     background: var(--ad-accent-bg);
-    color: #020617;
+    color: var(--app-btn-text);
     border-color: var(--ad-accent-bg);
 
     &:hover {
@@ -219,7 +219,7 @@
     border: 1px solid var(--ad-border);
     border-radius: 12px;
     overflow: hidden;
-    background: #0f172a; /* slate-900 */
+    background: var(--ad-card);
 
     .table-contain {
       width: 100%;

@@ -3,23 +3,23 @@
 @import "../../../styles/_variables-theme.scss";
 
 // ----- Dark (terminal cyberpunk) -----
-$spei-bg-dark: #0f172a;
-$spei-border-dark: rgba(6, 182, 212, 0.3);
+$spei-bg-dark: #2A2A2A;
+$spei-border-dark: rgba(8, 225, 247, 0.32);
 $spei-cyan: #08E1F7;
 $spei-cyan-bright: #08E1F7;
-$spei-text-dark: #f8fafc;
-$spei-muted-dark: #94a3b8;
-$spei-warning: #fb923c;
-$spei-success: #34d399;
+$spei-text-dark: #F7F7F7;
+$spei-muted-dark: #B8B8B8;
+$spei-warning: #FEBC2E;
+$spei-success: #39D834;
 
 // ----- Light (terminal clara, misma jerarquía) -----
-$spei-bg-light: #ffffff;
-$spei-border-light: rgba(8, 145, 178, 0.35);
+$spei-bg-light: #FFFFFF;
+$spei-border-light: rgba(8, 225, 247, 0.35);
 $spei-cyan-light: #08E1F7;
-$spei-text-light: #0f172a;
-$spei-muted-light: #64748b;
-$spei-warning-light: #ea580c;
-$spei-success-light: #059669;
+$spei-text-light: #1A1A1A;
+$spei-muted-light: #5F5F5F;
+$spei-warning-light: #FEBC2E;
+$spei-success-light: #39D834;
 
 .spei-modal-wrapper {
   .modal-content {
@@ -251,7 +251,7 @@ html.dark .spei-terminal {
     color: $spei-muted-dark;
   }
   .spei-terminal__block--highlight {
-    background: rgba(6, 182, 212, 0.12);
+    background: rgba(8, 225, 247, 0.12);
     border: 1px solid $spei-border-dark;
   }
   .spei-terminal__value {
@@ -262,18 +262,18 @@ html.dark .spei-terminal {
   }
   .spei-terminal__clabe {
     color: $spei-cyan;
-    background: rgba(6, 182, 212, 0.1);
+    background: rgba(8, 225, 247, 0.1);
   }
   .spei-terminal__amount {
     color: $spei-text-dark;
   }
   .spei-terminal__copy-btn {
-    background: rgba(6, 182, 212, 0.2);
+    background: rgba(8, 225, 247, 0.2);
     border: 1px solid $spei-border-dark;
     color: $spei-cyan;
     &:hover {
-      background: rgba(6, 182, 212, 0.3);
-      color: #f8fafc;
+      background: rgba(8, 225, 247, 0.3);
+      color: #F7F7F7;
     }
   }
   .spei-terminal__warning {
@@ -296,10 +296,10 @@ html.dark .spei-terminal {
   }
   .spei-terminal__btn-primary {
     background: $spei-cyan-bright;
-    color: #0f172a;
+    color: #1A1A1A;
     &:hover {
       background: $spei-cyan;
-      color: #0f172a;
+      color: #1A1A1A;
     }
   }
   .spei-terminal__btn-secondary {
@@ -314,7 +314,7 @@ html.dark .spei-terminal {
 [data-theme="light"] .spei-terminal {
   background: $spei-bg-light;
   border: 1px solid $spei-border-light;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.12), 0 0 30px rgba(8, 145, 178, 0.06);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.12), 0 0 30px rgba(8, 225, 247, 0.08);
 
   .spei-terminal__header {
     border-bottom: 1px solid $spei-border-light;
@@ -332,7 +332,7 @@ html.dark .spei-terminal {
     color: $spei-muted-light;
   }
   .spei-terminal__block--highlight {
-    background: rgba(8, 145, 178, 0.1);
+    background: rgba(8, 225, 247, 0.1);
     border: 1px solid $spei-border-light;
   }
   .spei-terminal__value {
@@ -343,18 +343,18 @@ html.dark .spei-terminal {
   }
   .spei-terminal__clabe {
     color: $spei-cyan-light;
-    background: rgba(8, 145, 178, 0.1);
+    background: rgba(8, 225, 247, 0.1);
   }
   .spei-terminal__amount {
     color: $spei-text-light;
   }
   .spei-terminal__copy-btn {
-    background: rgba(8, 145, 178, 0.12);
+    background: rgba(8, 225, 247, 0.12);
     border: 1px solid $spei-border-light;
     color: $spei-cyan-light;
     &:hover {
-      background: rgba(8, 145, 178, 0.2);
-      color: #0f172a;
+      background: rgba(8, 225, 247, 0.2);
+      color: #1A1A1A;
     }
   }
   .spei-terminal__warning {
@@ -377,10 +377,10 @@ html.dark .spei-terminal {
   }
   .spei-terminal__btn-primary {
     background: $spei-cyan-light;
-    color: #ffffff;
+    color: #0A0A0A;
     &:hover {
-      background: #0e7490;
-      color: #ffffff;
+      background: #00BFD3;
+      color: #0A0A0A;
     }
   }
   .spei-terminal__btn-secondary {

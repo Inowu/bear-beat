@@ -110,7 +110,7 @@
       }
       &:focus {
         outline: none;
-        border-color: #08E1F7;
+        border-color: var(--app-accent);
         box-shadow: 0 0 0 3px rgba(8, 225, 247, 0.25);
       }
     }
@@ -129,10 +129,10 @@
     transition: border-color 0.2s, box-shadow 0.2s;
 
     &:focus-within {
-      border-color: #08E1F7;
+      border-color: var(--app-accent);
       box-shadow: 0 0 0 3px rgba(8, 225, 247, 0.25);
       .auth-password-icon {
-        color: #08E1F7;
+        color: var(--app-accent);
       }
     }
   }
@@ -187,7 +187,7 @@
     border: none;
     cursor: pointer;
     background: var(--app-gradient);
-    color: #1A1A1A;
+    color: var(--app-btn-text);
     box-shadow: 0 4px 14px rgba(8, 225, 247, 0.3);
     transition: opacity 0.2s, box-shadow 0.2s, transform 0.2s;
     &:hover {
@@ -244,7 +244,7 @@
 // Columna izquierda: SIEMPRE OSCURA (bg-slate-950 / negro), misma altura que el formulario
 .auth-split-left {
   position: relative;
-  background: linear-gradient(to bottom right, #020617 /* slate-950 */, #000000);
+  background: linear-gradient(to bottom right, var(--bb-dark-400), #000000);
   color: #ffffff;
   display: flex;
   flex-direction: column;
@@ -294,7 +294,7 @@
 
       &::before {
         content: "✓";
-        color: #08E1F7;
+        color: var(--app-accent);
         font-weight: 800;
         font-size: var(--app-font-size-body-lg);
         flex-shrink: 0;
@@ -408,5 +408,4 @@
     gap: 20px;
   }
 }
-
 

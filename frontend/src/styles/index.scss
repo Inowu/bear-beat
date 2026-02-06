@@ -11,6 +11,429 @@
   font-family: "Bear-font";
   src: url("../assets/fonts/Arkhip_font.ttf");
 }
+
+/* ==========================================================================
+   Bear Beat Brand System 2026
+   Fuente de verdad visual para TODO el frontend (rutas, modales, forms, admin)
+   ========================================================================== */
+:root,
+[data-theme="light"] {
+  /* Brand core */
+  --bb-cyan: #08E1F7;
+  --bb-mint: #00E6C1;
+  --bb-gradient: linear-gradient(11deg, var(--bb-mint), var(--bb-cyan));
+  --bb-danger: #FF2D2C;
+  --bb-success: #39D834;
+  --bb-warning: #FEBC2E;
+
+  /* Brand neutrals */
+  --bb-dark-100: #404040;
+  --bb-dark-200: #2A2A2A;
+  --bb-dark-300: #292929;
+  --bb-dark-400: #1A1A1A;
+  --bb-bg: #EEEEEE;
+  --bb-surface: #FFFFFF;
+  --bb-surface-soft: #F8F8F8;
+  --bb-border: #D3D3D3;
+  --bb-text-heading: #1A1A1A;
+  --bb-text-body: #2A2A2A;
+  --bb-text-muted: #5F5F5F;
+  --bb-focus-ring: rgba(8, 225, 247, 0.32);
+  --bb-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+  --bb-shadow-card: 0 14px 40px rgba(0, 0, 0, 0.14);
+  --bb-shadow-glow: 0 0 18px rgba(8, 225, 247, 0.32);
+  --bb-radius-card: 12px;
+  --bb-radius-pill: 999px;
+  --bb-font-ui: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --bb-font-brand: "Bear-font", "Poppins", sans-serif;
+
+  /* Base Tailwind bridge */
+  --bg-main: var(--bb-bg);
+  --bg-card: var(--bb-surface);
+  --bg-input: var(--bb-surface);
+  --text-main: var(--bb-text-heading);
+  --text-muted: var(--bb-text-muted);
+  --border-main: var(--bb-border);
+
+  /* Legacy semantic bridge (existing app vars) */
+  --theme-bg-primary: var(--bb-bg);
+  --theme-bg-primary-end: var(--bb-surface-soft);
+  --theme-bg-secondary: var(--bb-surface);
+  --theme-bg-gradient: linear-gradient(160deg, #f5fdff 0%, var(--bb-bg) 100%);
+  --theme-nav-bg: var(--bb-dark-300);
+  --theme-nav-border-bottom: rgba(255, 255, 255, 0.1);
+  --theme-nav-text: #F2F2F2;
+  --theme-nav-item-bg: rgba(255, 255, 255, 0.08);
+  --theme-nav-item-hover-bg: rgba(8, 225, 247, 0.24);
+  --theme-nav-item-hover-text: var(--bb-cyan);
+  --theme-card-bg: var(--bb-surface);
+  --theme-card-border: var(--bb-border);
+  --theme-card-border-strong: rgba(8, 225, 247, 0.22);
+  --theme-card-shadow: var(--bb-shadow);
+  --theme-card-shadow-hover: var(--bb-shadow-card);
+  --theme-card-accent-line: linear-gradient(180deg, var(--bb-cyan) 0%, #00A8CD 100%);
+  --theme-input-bg: var(--bb-surface);
+  --theme-input-border: var(--bb-border);
+  --theme-input-text: var(--bb-text-heading);
+  --theme-input-focus-ring: var(--bb-focus-ring);
+  --theme-text-primary: var(--bb-text-heading);
+  --theme-text-secondary: var(--bb-text-body);
+  --theme-text-muted: var(--bb-text-muted);
+  --theme-ink: var(--bb-text-heading);
+  --theme-heading: var(--bb-text-heading);
+  --theme-strong: var(--bb-text-heading);
+  --theme-bg-muted: #E6E6E6;
+  --theme-bg-soft: var(--bb-surface-soft);
+  --theme-stripe: rgba(0, 0, 0, 0.05);
+  --theme-edge: rgba(0, 0, 0, 0.12);
+  --theme-accent: var(--bb-cyan);
+  --theme-accent-bright: var(--bb-cyan);
+  --theme-accent-dim: #00A8CD;
+  --theme-accent-glow: rgba(8, 225, 247, 0.42);
+  --theme-accent-soft-bg: rgba(8, 225, 247, 0.1);
+  --theme-landing-bg: #000000;
+  --theme-landing-text: #FFFFFF;
+
+  --ph-bg: var(--bb-bg);
+  --ph-bg-soft: var(--bb-surface-soft);
+  --ph-bg-card: var(--bb-surface);
+  --ph-border: var(--bb-border);
+  --ph-text-heading: var(--bb-text-heading);
+  --ph-text-body: var(--bb-text-body);
+  --ph-text-muted: var(--bb-text-muted);
+  --ph-body-font-weight: 500;
+  --ph-btn-bg: var(--bb-gradient);
+  --ph-btn-text: #0A0A0A;
+  --ph-btn-hover-bg: var(--bb-cyan);
+  --ph-accent: var(--bb-cyan);
+  --ph-accent-bright: var(--bb-cyan);
+  --ph-shadow: var(--bb-shadow);
+  --ph-shadow-card: var(--bb-shadow-card);
+  --ph-glow: rgba(8, 225, 247, 0.24);
+  --ph-glow-strong: rgba(8, 225, 247, 0.34);
+  --ph-nav-bg: rgba(255, 255, 255, 0.92);
+  --ph-footer-bg: var(--bb-surface);
+  --ph-pain-bad: var(--bb-danger);
+  --ph-pain-good: var(--bb-success);
+  --ph-price-header-global-bg: var(--bb-dark-300);
+  --ph-price-header-global-text: #FFFFFF;
+  --ph-price-header-mexico-bg: var(--bb-cyan);
+  --ph-price-header-mexico-text: #000000;
+
+  --app-bg: var(--bb-bg);
+  --app-bg-soft: var(--bb-surface-soft);
+  --app-bg-card: var(--bb-surface);
+  --app-text-heading: var(--bb-text-heading);
+  --app-text-body: var(--bb-text-body);
+  --app-text-muted: var(--bb-text-muted);
+  --app-border: var(--bb-border);
+  --app-accent: var(--bb-cyan);
+  --app-accent-bright: var(--bb-cyan);
+  --app-btn-bg: var(--bb-gradient);
+  --app-btn-text: #0A0A0A;
+  --app-shadow: var(--bb-shadow);
+  --app-shadow-card: var(--bb-shadow-card);
+  --app-focus-ring: var(--bb-focus-ring);
+  --app-status-error: var(--bb-danger);
+  --app-status-success: var(--bb-success);
+  --app-status-warning: var(--bb-warning);
+  --app-gradient: var(--bb-gradient);
+
+  --auth-input-border: var(--bb-border);
+  --auth-input-bg: var(--bb-surface);
+  --auth-register-panel-bg: var(--bb-surface);
+  --auth-register-text: var(--bb-text-heading);
+  --auth-register-input-bg: var(--bb-surface-soft);
+  --auth-register-input-border: var(--bb-border);
+  --auth-register-input-focus: var(--bb-cyan);
+  --auth-register-icon: #7A7A7A;
+  --auth-register-icon-focus: var(--bb-cyan);
+  --auth-register-btn-bg: var(--bb-gradient);
+  --auth-register-btn-text: #0A0A0A;
+  --auth-login-atmosphere-bg: var(--bb-bg);
+  --auth-login-card-bg: var(--bb-surface);
+  --auth-login-card-border: var(--bb-border);
+  --auth-login-card-shadow: var(--bb-shadow-card);
+  --auth-login-title: var(--bb-text-heading);
+  --auth-login-subtitle: var(--bb-text-muted);
+  --auth-login-link: var(--bb-cyan);
+  --auth-login-link-hover: #00BFD3;
+  --auth-login-btn-bg: var(--bb-gradient);
+  --auth-login-btn-text: #0A0A0A;
+
+  --plan-card-bg: var(--bb-surface);
+  --plan-card-border: var(--bb-border);
+  --plan-card-border-hover: rgba(8, 225, 247, 0.4);
+  --plan-card-title: var(--bb-text-heading);
+  --plan-card-price: var(--bb-text-heading);
+  --plan-card-price-currency: var(--bb-text-muted);
+  --plan-card-gb-bg: var(--bb-surface-soft);
+  --plan-card-gb-value: var(--bb-cyan);
+  --plan-card-gb-label: var(--bb-text-muted);
+  --plan-card-subtitle: var(--bb-text-muted);
+  --plan-card-benefit: var(--bb-text-body);
+  --plan-card-check: var(--bb-success);
+  --plan-card-paypal-text: var(--bb-text-muted);
+  --plan-card-btn-bg: var(--bb-gradient);
+  --plan-card-btn-text: #0A0A0A;
+  --plan-card-btn-glow: rgba(8, 225, 247, 0.32);
+  --plan-card-glow-bg: rgba(8, 225, 247, 0.08);
+  --plan-card-shadow: var(--bb-shadow);
+  --plan-card-shadow-hover: var(--bb-shadow-card);
+  --plan-card-secondary-bg: var(--bb-surface-soft);
+  --plan-card-secondary-border: var(--bb-border);
+  --plan-card-secondary-text: var(--bb-text-body);
+  --plan-card-monolith-bg: var(--bb-surface);
+  --plan-card-monolith-border: var(--bb-border);
+  --plan-card-monolith-shadow-hover: var(--bb-shadow-glow);
+  --plan-card-data-visualizer-bg: var(--bb-surface-soft);
+  --plan-card-progress-track-bg: var(--bb-border);
+  --plan-card-progress-fill: var(--bb-cyan);
+  --plan-card-badge-value-bg: var(--bb-cyan);
+  --plan-card-badge-value-text: #0A0A0A;
+  --plan-card-btn-hero-bg: var(--bb-gradient);
+  --plan-card-btn-hero-glow: rgba(8, 225, 247, 0.34);
+  --plan-card-btn-outline-border: var(--bb-cyan);
+  --plan-card-btn-outline-color: var(--bb-cyan);
+  --plan-card-benefit-icon: var(--bb-cyan);
+
+  --aside-overlay-bg: rgba(41, 41, 41, 0.98);
+  --aside-overlay-border: rgba(255, 255, 255, 0.08);
+  --aside-overlay-text: #EDEDED;
+  --aside-overlay-text-muted: #BFBFBF;
+  --aside-overlay-hover: var(--bb-cyan);
+  --aside-overlay-close-bg: rgba(255, 255, 255, 0.06);
+  --aside-overlay-close-color: #EDEDED;
+  --aside-overlay-close-hover: var(--bb-cyan);
+
+  --fb-bg: var(--bb-surface-soft);
+  --fb-border: var(--bb-border);
+  --fb-row-border: rgba(0, 0, 0, 0.08);
+  --fb-row-hover-bg: rgba(8, 225, 247, 0.08);
+  --fb-row-hover-border: var(--bb-cyan);
+  --fb-text: var(--bb-text-heading);
+  --fb-text-muted: var(--bb-text-muted);
+  --fb-accent: var(--bb-cyan);
+  --fb-input-bg: var(--bb-surface);
+  --fb-input-border: var(--bb-border);
+  --fb-input-placeholder: #8A8A8A;
+  --fb-folder-icon: var(--bb-warning);
+  --fb-file-icon: var(--bb-text-muted);
+
+  --ma-bg: var(--bb-bg);
+  --ma-card-bg: var(--bb-surface);
+  --ma-card-border: var(--bb-border);
+  --ma-title: var(--bb-text-heading);
+  --ma-accent: var(--bb-cyan);
+  --ma-text: var(--bb-text-body);
+  --ma-text-muted: var(--bb-text-muted);
+  --ma-progress-bg: var(--bb-border);
+  --ma-progress-fill: var(--bb-cyan);
+  --ma-avatar-ring: var(--bb-cyan);
+  --ma-btn-cancel-bg: rgba(255, 45, 44, 0.12);
+  --ma-btn-cancel-text: var(--bb-danger);
+  --ma-btn-cancel-border: rgba(255, 45, 44, 0.3);
+  --ma-add-card-border: var(--bb-border);
+  --ma-add-card-hover: var(--bb-cyan);
+  --ma-badge-success: var(--bb-success);
+  --ma-badge-pending: var(--bb-warning);
+  --ma-badge-fail: var(--bb-danger);
+  --ma-badge-neutral: var(--bb-text-muted);
+
+  --in-bg: var(--bb-bg);
+  --in-hero-gradient: linear-gradient(180deg, #F7FDFF 0%, var(--bb-bg) 100%);
+  --in-card-bg: var(--bb-surface);
+  --in-card-border: var(--bb-border);
+  --in-title: var(--bb-text-heading);
+  --in-text: var(--bb-text-body);
+  --in-text-muted: var(--bb-text-muted);
+  --in-accent: var(--bb-cyan);
+  --in-stepper-line: var(--bb-border);
+  --in-step-circle: var(--bb-cyan);
+  --in-step-circle-text: #0A0A0A;
+  --in-terminal-bg: var(--bb-surface-soft);
+  --in-terminal-border: var(--bb-border);
+
+  --ad-bg: var(--bb-bg);
+  --ad-card: var(--bb-surface);
+  --ad-border: var(--bb-border);
+  --ad-text: var(--bb-text-body);
+  --ad-text-muted: var(--bb-text-muted);
+  --ad-title: var(--bb-text-heading);
+  --ad-accent: var(--bb-cyan);
+  --ad-accent-bg: var(--bb-cyan);
+  --ad-input-bg: var(--bb-surface);
+  --ad-input-border: var(--bb-border);
+  --ad-focus-ring: var(--bb-focus-ring);
+  --ad-row-hover: rgba(8, 225, 247, 0.06);
+  --ad-header-bg: var(--bb-surface-soft);
+  --ad-badge-success-bg: rgba(57, 216, 52, 0.12);
+  --ad-badge-success-text: #208A1D;
+  --ad-badge-warning-bg: rgba(254, 188, 46, 0.16);
+  --ad-badge-warning-text: #8A6300;
+  --ad-badge-danger-bg: rgba(255, 45, 44, 0.14);
+  --ad-badge-danger-text: #BA1716;
+  --ad-badge-neutral-bg: rgba(95, 95, 95, 0.12);
+  --ad-badge-neutral-text: var(--bb-text-muted);
+
+  color-scheme: light;
+}
+
+[data-theme="dark"],
+html.dark,
+.dark {
+  --bb-bg: #1A1A1A;
+  --bb-surface: #2A2A2A;
+  --bb-surface-soft: #323232;
+  --bb-border: #404040;
+  --bb-text-heading: #F7F7F7;
+  --bb-text-body: #E1E1E1;
+  --bb-text-muted: #B8B8B8;
+  --bb-shadow: 0 10px 32px rgba(0, 0, 0, 0.38);
+  --bb-shadow-card: 0 16px 44px rgba(0, 0, 0, 0.42);
+  --bb-focus-ring: rgba(8, 225, 247, 0.4);
+
+  --bg-main: var(--bb-bg);
+  --bg-card: var(--bb-surface);
+  --bg-input: var(--bb-surface-soft);
+  --text-main: var(--bb-text-heading);
+  --text-muted: var(--bb-text-muted);
+  --border-main: var(--bb-border);
+
+  --theme-bg-primary: #121212;
+  --theme-bg-primary-end: #1A1A1A;
+  --theme-bg-secondary: var(--bb-surface);
+  --theme-bg-gradient: linear-gradient(165deg, #121212 0%, #1A1A1A 100%);
+  --theme-nav-bg: var(--bb-dark-300);
+  --theme-nav-text: #F1F1F1;
+  --theme-nav-item-bg: #3B3B3B;
+  --theme-nav-item-hover-bg: rgba(8, 225, 247, 0.25);
+  --theme-nav-item-hover-text: var(--bb-cyan);
+  --theme-card-bg: var(--bb-surface);
+  --theme-card-border: rgba(255, 255, 255, 0.12);
+  --theme-text-primary: var(--bb-text-heading);
+  --theme-text-secondary: var(--bb-text-body);
+  --theme-text-muted: var(--bb-text-muted);
+  --theme-bg-soft: #2D2D2D;
+  --theme-edge: rgba(255, 255, 255, 0.12);
+  --theme-accent: var(--bb-cyan);
+  --theme-accent-bright: var(--bb-cyan);
+  --theme-accent-dim: #00A8CD;
+  --theme-accent-soft-bg: rgba(8, 225, 247, 0.14);
+
+  --app-bg: var(--bb-bg);
+  --app-bg-soft: var(--bb-surface-soft);
+  --app-bg-card: var(--bb-surface);
+  --app-text-heading: var(--bb-text-heading);
+  --app-text-body: var(--bb-text-body);
+  --app-text-muted: var(--bb-text-muted);
+  --app-border: var(--bb-border);
+  --app-accent: var(--bb-cyan);
+  --app-accent-bright: var(--bb-cyan);
+  --app-btn-bg: var(--bb-gradient);
+  --app-btn-text: #0A0A0A;
+  --app-shadow: var(--bb-shadow);
+  --app-shadow-card: var(--bb-shadow-card);
+  --app-focus-ring: var(--bb-focus-ring);
+
+  --ph-bg: var(--bb-bg);
+  --ph-bg-soft: #232323;
+  --ph-bg-card: var(--bb-surface);
+  --ph-border: var(--bb-border);
+  --ph-text-heading: var(--bb-text-heading);
+  --ph-text-body: var(--bb-text-body);
+  --ph-text-muted: var(--bb-text-muted);
+  --ph-nav-bg: rgba(41, 41, 41, 0.96);
+  --ph-footer-bg: #242424;
+
+  --auth-input-bg: var(--bb-surface-soft);
+  --auth-input-border: var(--bb-border);
+  --auth-register-panel-bg: var(--bb-bg);
+  --auth-register-text: var(--bb-text-heading);
+  --auth-register-input-bg: var(--bb-surface-soft);
+  --auth-register-input-border: var(--bb-border);
+  --auth-register-btn-bg: var(--bb-gradient);
+  --auth-register-btn-text: #0A0A0A;
+  --auth-login-atmosphere-bg: var(--bb-bg);
+  --auth-login-card-bg: var(--bb-surface);
+  --auth-login-card-border: var(--bb-border);
+  --auth-login-title: var(--bb-text-heading);
+  --auth-login-subtitle: var(--bb-text-muted);
+  --auth-login-btn-bg: var(--bb-gradient);
+  --auth-login-btn-text: #0A0A0A;
+
+  --plan-card-bg: var(--bb-surface);
+  --plan-card-border: var(--bb-border);
+  --plan-card-title: var(--bb-text-heading);
+  --plan-card-price: var(--bb-text-heading);
+  --plan-card-price-currency: var(--bb-text-muted);
+  --plan-card-gb-bg: #333333;
+  --plan-card-gb-value: var(--bb-cyan);
+  --plan-card-gb-label: var(--bb-text-muted);
+  --plan-card-subtitle: var(--bb-text-muted);
+  --plan-card-benefit: var(--bb-text-body);
+  --plan-card-check: var(--bb-cyan);
+  --plan-card-paypal-text: var(--bb-text-muted);
+  --plan-card-btn-bg: var(--bb-gradient);
+  --plan-card-btn-text: #0A0A0A;
+  --plan-card-progress-track-bg: #3B3B3B;
+  --plan-card-progress-fill: var(--bb-cyan);
+  --plan-card-badge-value-bg: var(--bb-cyan);
+  --plan-card-badge-value-text: #0A0A0A;
+  --plan-card-btn-hero-bg: var(--bb-gradient);
+  --plan-card-btn-outline-border: var(--bb-cyan);
+  --plan-card-btn-outline-color: var(--bb-cyan);
+  --plan-card-benefit-icon: var(--bb-cyan);
+
+  --in-bg: var(--bb-bg);
+  --in-hero-gradient: linear-gradient(180deg, #232323 0%, var(--bb-bg) 100%);
+  --in-card-bg: var(--bb-surface);
+  --in-card-border: var(--bb-border);
+  --in-title: var(--bb-text-heading);
+  --in-text: var(--bb-text-body);
+  --in-text-muted: var(--bb-text-muted);
+  --in-stepper-line: var(--bb-border);
+  --in-terminal-bg: #303030;
+  --in-terminal-border: var(--bb-border);
+
+  --ma-bg: var(--bb-bg);
+  --ma-card-bg: var(--bb-surface);
+  --ma-card-border: var(--bb-border);
+  --ma-title: var(--bb-text-heading);
+  --ma-accent: var(--bb-cyan);
+  --ma-text: var(--bb-text-body);
+  --ma-text-muted: var(--bb-text-muted);
+  --ma-progress-bg: #3A3A3A;
+  --ma-progress-fill: var(--bb-cyan);
+  --ma-avatar-ring: var(--bb-cyan);
+  --ma-add-card-border: var(--bb-border);
+  --ma-add-card-hover: var(--bb-cyan);
+  --ma-badge-neutral: var(--bb-text-muted);
+
+  --ad-bg: var(--bb-bg);
+  --ad-card: var(--bb-surface);
+  --ad-border: var(--bb-border);
+  --ad-text: var(--bb-text-body);
+  --ad-text-muted: var(--bb-text-muted);
+  --ad-title: var(--bb-text-heading);
+  --ad-accent: var(--bb-cyan);
+  --ad-accent-bg: var(--bb-cyan);
+  --ad-input-bg: var(--bb-surface-soft);
+  --ad-input-border: var(--bb-border);
+  --ad-header-bg: #333333;
+
+  --fb-bg: var(--bb-bg);
+  --fb-border: var(--bb-border);
+  --fb-row-hover-bg: rgba(8, 225, 247, 0.12);
+  --fb-row-hover-border: var(--bb-cyan);
+  --fb-text: var(--bb-text-heading);
+  --fb-text-muted: var(--bb-text-muted);
+  --fb-accent: var(--bb-cyan);
+  --fb-input-bg: var(--bb-surface-soft);
+  --fb-input-border: var(--bb-border);
+
+  color-scheme: dark;
+}
 * {
   margin: 0;
   padding: 0;
@@ -177,11 +600,13 @@ html {
 
 /* Toda la app: tipografía y tamaño; fondo/texto los controla Tailwind (index.css) con bg-bg-main text-text-main */
 body {
-  font-family: "Poppins", sans-serif;
+  font-family: var(--bb-font-ui);
   font-size: var(--app-font-size-body);
   font-weight: var(--app-font-weight-body);
-  line-height: 1.4;
+  line-height: 1.45;
   text-rendering: auto;
+  background: var(--app-bg);
+  color: var(--app-text-body);
 }
 
 /* Chrome en Mac: fuentes más nítidas y capa GPU para evitar parpadeos */
@@ -231,6 +656,45 @@ input,
 select,
 textarea {
   font-size: var(--app-font-size-body);
+  font-family: var(--bb-font-ui);
+}
+
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+  border: 2px solid var(--app-border);
+  border-radius: var(--bb-radius-card);
+  background: var(--app-bg-card);
+  color: var(--app-text-heading);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+
+  &::placeholder {
+    color: var(--app-text-muted);
+    opacity: 0.9;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--app-accent);
+    box-shadow: 0 0 0 3px var(--app-focus-ring);
+  }
+}
+
+button,
+.btn {
+  border-radius: var(--bb-radius-pill);
+  font-weight: var(--app-font-weight-heading);
+  transition: transform 0.16s ease, box-shadow 0.2s ease, opacity 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+button:hover,
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+button:active,
+.btn:active {
+  transform: translateY(0);
 }
 
 /* Área táctil mínima 44px en controles principales (UX móvil) */
@@ -249,11 +713,11 @@ button {
 }
 
 button.primary-pill {
-  border-radius: 10px;
+  border-radius: var(--bb-radius-card);
   font-weight: var(--app-font-weight-heading);
   font-size: var(--app-font-size-body);
   padding: 10px;
-  background: var(--app-btn-bg);
+  background: var(--app-gradient);
   color: var(--app-btn-text);
 
   &:hover {
@@ -272,7 +736,7 @@ button.primary-pill {
 }
 
 .linear-bg {
-  background: linear-gradient(11deg, var(--app-accent-bright), var(--theme-accent-bright));
+  background: var(--app-gradient);
 }
 
 /* Botón CTA secundario (ej. NotFound): área táctil 44px, hover y transición */
@@ -314,6 +778,18 @@ button.primary-pill {
   margin-top: 6px;
   line-height: 1.4;
 }
+
+.formik {
+  color: var(--app-status-error);
+  font-weight: var(--app-font-weight-heading);
+  font-size: var(--app-font-size-body);
+  line-height: 1.4;
+}
+
+.svg-inline--fa,
+svg[role="img"] {
+  vertical-align: middle;
+}
 .search-input{
   display: flex;
   position: relative;
@@ -328,7 +804,7 @@ button.primary-pill {
   transition: border-color 0.2s, box-shadow 0.2s;
   &:focus-within {
     border-color: var(--app-accent);
-    box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.4);
+    box-shadow: 0 0 0 2px var(--app-focus-ring);
   }
   input{
     background: transparent;
@@ -366,7 +842,7 @@ button.primary-pill {
     transition: border-color 0.2s, box-shadow 0.2s;
     &:focus {
       border-color: var(--app-accent);
-      box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.4);
+      box-shadow: 0 0 0 2px var(--app-focus-ring);
     }
   }
 }
@@ -413,8 +889,7 @@ button.primary-pill {
 }
 
 /* Identidad Bear Beat: fuentes; fondo/texto global lo controla index.css con variables semánticas */
-h1,
-h2,
-.brand-text {
-  font-family: "Bear-font", sans-serif;
+.brand-text,
+.font-bear {
+  font-family: var(--bb-font-brand);
 }

@@ -77,7 +77,7 @@ function Navbar(props: NavbarPropsI) {
         >
           <FontAwesomeIcon icon={faBars} />
         </button>
-        <img src={osoLogo} alt="" />
+        <img src={osoLogo} alt="Bear Beat logo" />
         <h2>Bear Beat</h2>
       </div>
       <div className="nav-right">

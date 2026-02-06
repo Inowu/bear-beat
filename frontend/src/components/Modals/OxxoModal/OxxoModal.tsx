@@ -21,7 +21,7 @@ export function OxxoModal (props: IOxxo)  {
         <div className='modal-container success-modal'>
             <div className='header'>
                 <p className='title'>Pago con Oxxo</p>
-                <RiCloseCircleLine className='icon' onClick={onHide}/>
+                <RiCloseCircleLine className='icon' onClick={onHide} aria-label='Cerrar modal' />
             </div>
             <div className='bottom center'>
                 <p className='content'>
@@ -36,7 +36,7 @@ export function OxxoModal (props: IOxxo)  {
                 <p className='pay-reference'>
                    Referencia: {oxxoData.reference}
                 </p>
-                <img src={oxxoData.barcode_url}/>
+                <img src={oxxoData.barcode_url} alt='Código de barras para pago en OXXO' />
                 <p className='content'>
                 Monto a Pagar: <br/> $ {price}.00 MXN
                 </p>

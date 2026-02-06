@@ -115,7 +115,7 @@
     margin-bottom: 16px;
   }
   &__error {
-    color: #e74c3c;
+    color: var(--app-status-error);
     font-weight: 600;
     margin-bottom: 8px;
   }

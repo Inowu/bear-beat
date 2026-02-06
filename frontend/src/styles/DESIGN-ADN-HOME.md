@@ -1,5 +1,12 @@
 # ADN del Home (Golden Standard) — Estándar de oro visual
 
+## Sistema de marca 2026 (obligatorio)
+- Color principal de marca: `#08E1F7`.
+- Gradiente principal de acción: `linear-gradient(11deg, #00E6C1, #08E1F7)`.
+- Estados: error `#FF2D2C`, éxito `#39D834`, warning `#FEBC2E`.
+- Tipografía UI: `Poppins`; tipografía de marca/display: `Bear-font`.
+- Toda la UI debe salir de variables semánticas (`--app-*`, `--theme-*`, `--ph-*`, `--ad-*`, `--ma-*`), no de hex hardcodeados.
+
 ## Tipografía
 - **H1**: `var(--app-font-size-h1)` = `clamp(1.75rem, 6vw, 2.75rem)`, weight 800 (heading-strong).
 - **H2**: `var(--app-font-size-h2)` = `clamp(1.5rem, 5.5vw, 2.25rem)`, weight 700.

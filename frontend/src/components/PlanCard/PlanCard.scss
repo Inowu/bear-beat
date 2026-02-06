@@ -86,8 +86,8 @@
 }
 
 .plan-card-badge--actual {
-  background: linear-gradient(135deg, #06b6d4, #2563eb);
-  color: #fff;
+  background: var(--app-gradient);
+  color: var(--app-btn-text);
 }
 
   .plan-card-title {

@@ -60,7 +60,7 @@
   .ma-btn-delete {
     color: var(--ma-text-muted);
     &:hover {
-      color: #ef4444;
+      color: var(--app-status-error);
       background: rgba(239, 68, 68, 0.1);
     }
   }

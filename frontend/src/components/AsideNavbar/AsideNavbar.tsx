@@ -51,7 +51,7 @@ function AsideNavbar(props: AsideNavbarPropsI) {
         <div className="aside-drawer-header">
           <span className="aside-drawer-title">Menú</span>
         </div>
-        <img src={Logo} alt="" className="aside-logo" aria-hidden="true" />
+        <img src={Logo} alt="Bear Beat logo" className="aside-logo" />
         <div className="nav-container">
           <h2 className="nav-title">Contenido</h2>
           <div className="nav-links-wrap">

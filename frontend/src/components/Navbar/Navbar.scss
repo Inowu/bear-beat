@@ -6,7 +6,7 @@ nav {
   align-items: center;
   padding: 8px;
   /* Brand: bg-bear-dark-400 via Tailwind; fallback for theme vars */
-  background-color: var(--theme-nav-bg, #292929);
+  background-color: var(--theme-nav-bg);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   border-bottom: 2px solid var(--theme-nav-border-bottom, rgba(255, 255, 255, 0.1));
   min-height: 56px;

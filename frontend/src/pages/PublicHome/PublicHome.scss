@@ -2,14 +2,14 @@
 // Mandatory Light Mode: Clean, Minimalist, High-End Software
 @import "src/styles/mixin.scss";
 
-$accent: #00E5FF;
-$bg: #FAFAFA;
+$accent: #08E1F7;
+$bg: #EEEEEE;
 $surface: #FFFFFF;
-$text-primary: #111827;
-$text-secondary: #6B7280;
+$text-primary: #1A1A1A;
+$text-secondary: #404040;
 $shadow-card: 0 4px 20px rgba(0, 0, 0, 0.05);
 $shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
-$success: #10B981;
+$success: #39D834;
 
 .ph {
   min-height: 100vh;
@@ -25,7 +25,7 @@ $success: #10B981;
 .ph--light-premium {
   background: $bg;
   color: $text-primary;
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: "Poppins", sans-serif;
 }
 
 // ----- 1. NAVBAR — Sticky, subtle glass -----
@@ -166,7 +166,7 @@ $success: #10B981;
 
 .ph__nav-btn--primary {
   background: $accent;
-  color: #000000;
+  color: #0A0A0A;
   border: none;
   font-weight: 700;
 
@@ -210,7 +210,7 @@ $success: #10B981;
 }
 
 .ph__hero-h1 {
-  font-family: "Inter", -apple-system, sans-serif;
+  font-family: "Poppins", sans-serif;
   font-size: clamp(1.75rem, 5vw, 3rem);
   font-weight: 700;
   line-height: 1.2;
@@ -261,7 +261,7 @@ $success: #10B981;
   font-size: var(--app-font-size-body-lg);
   font-weight: 700;
   text-decoration: none;
-  color: #000000;
+  color: #0A0A0A;
   background: $accent;
   border-radius: 999px;
   transition: filter 0.2s, transform 0.2s;
@@ -488,7 +488,7 @@ $success: #10B981;
 
 .ph__section-title {
   text-align: left;
-  font-family: "Inter", sans-serif;
+  font-family: "Poppins", sans-serif;
   font-size: var(--app-font-size-h2);
   font-weight: 700;
   line-height: 1.3;
@@ -537,7 +537,7 @@ $success: #10B981;
   }
 
   &.ph__compare-toggle-btn--active {
-    color: #000000;
+    color: #0A0A0A;
     background: $accent;
   }
 }
@@ -582,7 +582,7 @@ $success: #10B981;
   margin-bottom: 4px;
 
   .ph__compare-slider-card--bad & {
-    color: #EF4444;
+    color: #FF2D2C;
   }
 
   .ph__compare-slider-card--good & {
@@ -638,7 +638,7 @@ $success: #10B981;
   }
 
   &.ph__pricing-toggle-btn--active {
-    color: #000000;
+    color: #0A0A0A;
     background: $accent;
   }
 }
@@ -767,7 +767,7 @@ $success: #10B981;
   font-size: var(--app-font-size-body-lg);
   font-weight: 700;
   text-decoration: none;
-  color: #000000;
+  color: #0A0A0A;
   background: $accent;
   border-radius: 999px;
   border: none;

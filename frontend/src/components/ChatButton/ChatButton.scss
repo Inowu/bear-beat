@@ -3,11 +3,11 @@
 
 .chat-fab {
   --chat-fab-size: 56px;
-  --chat-fab-glow: rgba(6, 182, 212, 0.5);
-  --chat-fab-glow-hover: rgba(6, 182, 212, 0.7);
-  --chat-fab-bg: #0f172a; /* slate-900 */
-  --chat-fab-border: #06b6d4; /* cyan-500 */
-  --chat-fab-icon: #22d3ee; /* cyan-400 */
+  --chat-fab-glow: rgba(8, 225, 247, 0.45);
+  --chat-fab-glow-hover: rgba(8, 225, 247, 0.68);
+  --chat-fab-bg: #292929;
+  --chat-fab-border: #08E1F7;
+  --chat-fab-icon: #08E1F7;
 
   position: fixed;
   bottom: 28px;
@@ -18,7 +18,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(145deg, #0f172a 0%, #020617 100%);
+  background: linear-gradient(145deg, #2A2A2A 0%, #1A1A1A 100%);
   border: 2px solid var(--chat-fab-border);
   border-radius: 50%;
   box-shadow: 0 0 20px var(--chat-fab-glow), 0 4px 12px rgba(0, 0, 0, 0.4);
@@ -30,7 +30,7 @@
 
   &:hover {
     transform: scale(1.1);
-    box-shadow: 0 0 28px var(--chat-fab-glow-hover), 0 0 40px rgba(6, 182, 212, 0.25);
+    box-shadow: 0 0 28px var(--chat-fab-glow-hover), 0 0 40px rgba(8, 225, 247, 0.24);
   }
 
   &:active {
@@ -63,13 +63,13 @@
   top: 50%;
   transform: translateY(-50%);
   padding: 6px 12px;
-  background: #06b6d4;
-  color: #000000;
+  background: var(--app-gradient, linear-gradient(11deg, #00E6C1, #08E1F7));
+  color: #0A0A0A;
   font-size: 0.75rem;
   font-weight: 700;
   white-space: nowrap;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.4);
+  box-shadow: 0 2px 8px rgba(8, 225, 247, 0.4);
   animation: chat-fab-badge-in 0.4s ease-out;
   pointer-events: none;
 }

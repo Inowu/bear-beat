@@ -6,7 +6,7 @@ aside {
   max-width: 300px;
   padding: 0 20px;
   /* Brand: #292929 (bear-dark-400) via Tailwind class; fallback */
-  background-color: var(--theme-nav-bg, #292929);
+  background-color: var(--theme-nav-bg);
   position: sticky;
   top: 0;
   align-self: stretch;
@@ -147,7 +147,7 @@ aside {
       display: flex;
       flex-direction: column;
       /* Brand: bear-dark-400 via Tailwind; fallback */
-      background: var(--aside-overlay-bg, #292929);
+      background: var(--aside-overlay-bg);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25);

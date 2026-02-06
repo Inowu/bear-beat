@@ -56,7 +56,7 @@
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
     background: var(--app-gradient) !important;
-    color: #1A1A1A !important;
+    color: var(--app-btn-text) !important;
     border: none;
     box-shadow: 0 4px 14px rgba(8, 225, 247, 0.3);
     transition: opacity 0.2s, box-shadow 0.2s;

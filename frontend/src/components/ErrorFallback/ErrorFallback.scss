@@ -4,8 +4,8 @@
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
-  background: var(--app-bg, #f8fafc);
-  color: var(--app-text-body, #0f172a);
+  background: var(--app-bg);
+  color: var(--app-text-body);
   font-family: "Poppins", sans-serif;
 }
 
@@ -13,29 +13,29 @@
   max-width: 420px;
   padding: 2rem;
   border-radius: 16px;
-  border: 1px solid var(--app-border, #e2e8f0);
-  background: var(--app-bg-card, #ffffff);
-  box-shadow: var(--app-shadow-card, 0 20px 25px -5px rgba(0, 0, 0, 0.1));
+  border: 1px solid var(--app-border);
+  background: var(--app-bg-card);
+  box-shadow: var(--app-shadow-card);
   text-align: center;
 }
 
 .error-fallback__title {
   margin: 0 0 0.75rem;
-  font-size: var(--app-font-size-h2, 1.5rem);
+  font-size: var(--app-font-size-h2);
   font-weight: 700;
-  color: var(--app-text-heading, #0f172a);
+  color: var(--app-text-heading);
 }
 
 .error-fallback__message {
   margin: 0 0 1rem;
-  font-size: var(--app-font-size-body, 1rem);
-  color: var(--app-text-body, #475569);
+  font-size: var(--app-font-size-body);
+  color: var(--app-text-body);
 }
 
 .error-fallback__detail {
   margin: 0 0 1.25rem;
   font-size: 0.875rem;
-  color: var(--app-text-muted, #64748b);
+  color: var(--app-text-muted);
   word-break: break-word;
 }
 
@@ -43,10 +43,10 @@
   display: inline-block;
   padding: 12px 24px;
   min-height: 44px;
-  font-size: var(--app-font-size-body, 1rem);
+  font-size: var(--app-font-size-body);
   font-weight: 600;
   font-family: "Poppins", sans-serif;
-  color: #1A1A1A;
+  color: var(--app-btn-text);
   background: var(--app-gradient);
   border: none;
   border-radius: 999px;

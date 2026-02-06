@@ -3,17 +3,21 @@
     max-width: 500px;
 
     .modal-content {
-      background: linear-gradient(38deg, #242424, #343434);
-      color: #ffffff;
+      background: var(--app-bg-card);
+      color: var(--app-text-body);
+      border: 2px solid var(--app-border);
+      box-shadow: var(--app-shadow-card);
 
       .modal-header {
-        border-color: #484848;
+        border-color: var(--app-border);
 
         .modal-title {
-          font-size: 2.4rem;
+          font-size: var(--app-font-size-h2);
+          color: var(--app-text-heading);
         }
         .btn-close {
-          filter: invert(1);
+          filter: none;
+          opacity: 0.8;
         }
       }
       .modal-body {
@@ -29,8 +33,13 @@
       }
 
       .modal-footer {
-        border-color: #08d0cf;
+        border-color: var(--app-accent);
       }
     }
   }
+}
+
+[data-theme="dark"] .preview-modal .modal-dialog .modal-content .modal-header .btn-close,
+html.dark .preview-modal .modal-dialog .modal-content .modal-header .btn-close {
+  filter: invert(1) grayscale(1);
 }

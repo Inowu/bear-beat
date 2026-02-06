@@ -36,11 +36,11 @@ form.sign-up-form {
     transition: border-color 0.2s, box-shadow 0.2s;
 
     &:focus-within {
-      border-color: #08E1F7; /* Bear cyan */
+      border-color: var(--app-accent);
       box-shadow: 0 0 0 2px rgba(8, 225, 247, 0.5);
 
       .signup-input-icon {
-        color: #08E1F7;
+        color: var(--app-accent);
       }
     }
   }
@@ -99,7 +99,7 @@ form.sign-up-form {
     }
 
     .signup-phone-wrap:focus-within {
-      border-color: #08E1F7;
+      border-color: var(--app-accent);
       box-shadow: 0 0 0 2px rgba(8, 225, 247, 0.5);
     }
   }
@@ -233,7 +233,7 @@ form.sign-up-form {
     border: none;
     cursor: pointer;
     background: var(--app-gradient);
-    color: #1A1A1A;
+    color: var(--app-btn-text);
     box-shadow: 0 4px 14px rgba(8, 225, 247, 0.3);
     transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
 
@@ -248,7 +248,7 @@ form.sign-up-form {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    color: #08E1F7;
+    color: var(--app-accent);
     font-weight: 600;
     font-size: var(--app-font-size-body);
     text-decoration: none;

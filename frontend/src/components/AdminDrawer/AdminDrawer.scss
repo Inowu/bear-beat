@@ -96,7 +96,7 @@
     height: 48px;
     border-radius: 50%;
     background: var(--ad-accent);
-    color: #020617;
+    color: var(--app-btn-text);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -148,7 +148,7 @@
 
     &--primary {
       background: var(--ad-accent-bg);
-      color: #020617;
+      color: var(--app-btn-text);
       border-color: var(--ad-accent-bg);
 
       &:hover:not(:disabled) {

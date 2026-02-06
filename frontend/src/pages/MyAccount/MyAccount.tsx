@@ -328,7 +328,7 @@ function MyAccount() {
               {currentUser?.profileImg ? (
                 <img
                   src={currentUser.profileImg}
-                  alt=""
+                  alt={`Foto de perfil de ${currentUser?.username ?? "usuario"}`}
                   className="w-full h-full rounded-full object-cover"
                 />
               ) : (
@@ -620,7 +620,7 @@ function MyAccount() {
                             ? Mastercard
                             : Amex
                       }
-                      alt=""
+                      alt={`Logo de tarjeta ${x.card.brand}`}
                       className="h-8 w-auto object-contain opacity-90"
                     />
                     <div className="flex items-center gap-1">
