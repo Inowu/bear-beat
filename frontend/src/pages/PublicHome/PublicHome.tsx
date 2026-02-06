@@ -14,7 +14,7 @@ import {
   PiCheckCircle,
 } from "react-icons/pi";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
-import { FALLBACK_GENRES, type GenreStats } from "./fallbackGenres";
+import { FALLBACK_GENRES } from "./fallbackGenres";
 import "./PublicHome.scss";
 
 const THEME_OPTIONS: { value: ThemeMode; label: string; icon: typeof faSun }[] = [
@@ -28,7 +28,6 @@ type PriceRegion = "global" | "mexico";
 const BEAR_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 const CATALOG_TOTAL_FILES = 195_727;
 const CATALOG_TOTAL_GB = 12_350.1;
-const CATALOG_UNIQUE_GENRES = 209;
 const CATALOG_VIDEOS = 90_651;
 const CATALOG_VIDEOS_GB = 11_499.3;
 const CATALOG_AUDIOS = 105_076;
@@ -36,10 +35,6 @@ const CATALOG_AUDIOS_GB = 850.8;
 const CATALOG_KARAOKES = 1_353;
 const CATALOG_KARAOKES_GB = 24.99;
 const CATALOG_TOTAL_TB = CATALOG_TOTAL_GB / 1000;
-const API_BASE =
-  process.env.REACT_APP_ENVIRONMENT === "development"
-    ? "http://localhost:5001"
-    : "https://thebearbeatapi.lat";
 
 function detectMexicoRegion(): boolean {
   if (typeof window === "undefined") return false;
@@ -139,11 +134,11 @@ function PublicHome() {
   const [region, setRegion] = useState<PriceRegion>(() =>
     detectMexicoRegion() ? "mexico" : "global"
   );
-  const [genres, setGenres] = useState<GenreStats[]>(FALLBACK_GENRES);
-  const [genreTotal, setGenreTotal] = useState(CATALOG_UNIQUE_GENRES);
   const menuRef = useRef<HTMLDivElement>(null);
   const heroFilesCount = useCountUp(CATALOG_TOTAL_FILES, 1.1);
   const filesCount = useCountUp(CATALOG_TOTAL_FILES, 1.5);
+  const allGenres = FALLBACK_GENRES;
+  const genreTotal = allGenres.length;
 
   const totalTBLabel = `${CATALOG_TOTAL_TB.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TB`;
   const totalGBLabel = `${CATALOG_TOTAL_GB.toLocaleString("es-MX", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} GB`;
@@ -155,12 +150,6 @@ function PublicHome() {
   const audiosGbLabel = `${CATALOG_AUDIOS_GB.toLocaleString("es-MX", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} GB`;
   const karaokesLabel = CATALOG_KARAOKES.toLocaleString("es-MX");
   const karaokesGbLabel = `${CATALOG_KARAOKES_GB.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GB`;
-  const allGenres = genres.length ? genres : FALLBACK_GENRES;
-  const laneCount = allGenres.length > 160 ? 4 : allGenres.length > 70 ? 3 : 2;
-  const laneSize = Math.ceil(allGenres.length / laneCount);
-  const genreLanes = Array.from({ length: laneCount }, (_, laneIndex) =>
-    allGenres.slice(laneIndex * laneSize, (laneIndex + 1) * laneSize)
-  ).filter((lane) => lane.length > 0);
 
   useEffect(() => {
     trackManyChatConversion(MC_EVENTS.VIEW_HOME);
@@ -174,55 +163,6 @@ function PublicHome() {
     }
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem("catalog-stats-cache");
-      if (raw) {
-        const parsed = JSON.parse(raw) as {
-          data?: { totalGenres?: number; genresDetail?: GenreStats[] };
-        };
-        const cachedRows = Array.isArray(parsed?.data?.genresDetail) ? parsed.data!.genresDetail : [];
-        if (cachedRows.length) {
-          const normalized = [...cachedRows]
-            .filter((g) => g && typeof g.name === "string")
-            .map((g) => ({
-              name: g.name.trim(),
-              files: Number(g.files) || 0,
-              gb: Number(g.gb) || 0,
-            }))
-            .sort((a, b) => b.files - a.files);
-          if (normalized.length) {
-            setGenres(normalized);
-            setGenreTotal(typeof parsed?.data?.totalGenres === "number" ? parsed.data.totalGenres : normalized.length);
-          }
-        }
-      }
-    } catch {
-      // Ignore cache parsing issues.
-    }
-
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    fetch(`${API_BASE}/api/catalog-stats`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("catalog-stats-unavailable");
-        return res.json();
-      })
-      .then((res: { totalGenres?: number; genresDetail?: GenreStats[] }) => {
-        const rows = Array.isArray(res.genresDetail) ? res.genresDetail : [];
-        if (!rows.length) return;
-        const sorted = [...rows].sort((a, b) => b.files - a.files || a.name.localeCompare(b.name));
-        setGenres(sorted);
-        setGenreTotal(typeof res.totalGenres === "number" ? res.totalGenres : rows.length);
-      })
-      .catch(() => {
-        // Keep cache/fallback genres for landing UX when endpoint is unavailable.
-      });
   }, []);
 
   return (
@@ -428,39 +368,28 @@ function PublicHome() {
         className="ph__genres"
         initial={{ opacity: 0, y: 36 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.2 }}
+        viewport={{ once: true, amount: 0.02 }}
         transition={{ duration: 0.45 }}
       >
         <div className="ph__container">
           <h2 className="ph__section-title ph__section-title--left">Por género</h2>
           <p className="ph__genres-caption">Cada género = nombre de la carpeta donde están los archivos.</p>
           <p className="ph__genres-meta">
-            {allGenres.length >= genreTotal
-              ? `Mostrando todos los ${genreTotal.toLocaleString("es-MX")} géneros únicos.`
-              : `Mostrando ${allGenres.length.toLocaleString("es-MX")} de ${genreTotal.toLocaleString("es-MX")} géneros únicos.`}
+            {`Mostrando todos los ${genreTotal.toLocaleString("es-MX")} géneros únicos.`}
           </p>
-          <div className="ph__genres-marquee">
-            {genreLanes.map((lane, laneIndex) => (
-              <div
-                key={`genre-lane-${laneIndex}`}
-                className={`ph__genres-lane ${laneIndex % 2 ? "ph__genres-lane--reverse" : ""}`}
-              >
-                <div className="ph__genres-track">
-                  {[...lane, ...lane].map((genre, itemIndex) => (
-                    <article key={`${genre.name}-${laneIndex}-${itemIndex}`} className="ph__genre-chip">
-                      <strong>{genre.name}</strong>
-                      {genre.files > 0 || genre.gb > 0 ? (
-                        <>
-                          <span>{genre.files.toLocaleString("es-MX")} archivos</span>
-                          <span>{genre.gb.toLocaleString("es-MX", { maximumFractionDigits: 2 })} GB</span>
-                        </>
-                      ) : (
-                        <span className="ph__genre-chip-meta">Disponible en catálogo</span>
-                      )}
-                    </article>
-                  ))}
-                </div>
-              </div>
+          <div className="ph__genres-grid">
+            {allGenres.map((genre) => (
+              <article key={genre.name} className="ph__genre-chip">
+                <strong>{genre.name}</strong>
+                {genre.files > 0 || genre.gb > 0 ? (
+                  <>
+                    <span>{genre.files.toLocaleString("es-MX")} archivos</span>
+                    <span>{genre.gb.toLocaleString("es-MX", { maximumFractionDigits: 2 })} GB</span>
+                  </>
+                ) : (
+                  <span className="ph__genre-chip-meta">Disponible en catálogo</span>
+                )}
+              </article>
             ))}
           </div>
         </div>
@@ -474,81 +403,83 @@ function PublicHome() {
         transition={{ duration: 0.5 }}
       >
         <div className="ph__container">
-          <h2 className="ph__section-title ph__section-title--left">Tu pase de membresía</h2>
+          <div className="ph__pricing-shell">
+            <h2 className="ph__section-title ph__section-title--membership">Tu pase de membresía</h2>
 
-          <div className="ph__pricing-toggle ph__pricing-toggle--membership">
-            <button
-              type="button"
-              className={`ph__pricing-toggle-btn ${region === "global" ? "ph__pricing-toggle-btn--active" : ""}`}
-              onClick={() => setRegion("global")}
-              aria-pressed={region === "global"}
-            >
-              Global ($ USD)
-            </button>
-            <button
-              type="button"
-              className={`ph__pricing-toggle-btn ${region === "mexico" ? "ph__pricing-toggle-btn--active" : ""}`}
-              onClick={() => setRegion("mexico")}
-              aria-pressed={region === "mexico"}
-            >
-              México ($ MXN)
-            </button>
-          </div>
+            <div className="ph__pricing-toggle ph__pricing-toggle--membership">
+              <button
+                type="button"
+                className={`ph__pricing-toggle-btn ${region === "global" ? "ph__pricing-toggle-btn--active" : ""}`}
+                onClick={() => setRegion("global")}
+                aria-pressed={region === "global"}
+              >
+                Global ($ USD)
+              </button>
+              <button
+                type="button"
+                className={`ph__pricing-toggle-btn ${region === "mexico" ? "ph__pricing-toggle-btn--active" : ""}`}
+                onClick={() => setRegion("mexico")}
+                aria-pressed={region === "mexico"}
+              >
+                México ($ MXN)
+              </button>
+            </div>
 
-          <div className="ph__pricing-card-wrapper ph__pricing-card-wrapper--membership">
-            <AnimatePresence mode="wait">
-              {region === "global" ? (
-                <motion.div
-                  key="global"
-                  className="ph__pricing-card ph__pricing-card--single ph__pricing-card--global"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
-                >
-                  <div className="ph__pricing-card-header ph__pricing-card-header--global">Membresía Global</div>
-                  <div className="ph__pricing-card-body">
-                    <span className="ph__pricing-amount">$18</span>
-                    <span className="ph__pricing-period">USD / mes</span>
-                    <p className="ph__pricing-anchor">Menos de lo que cobras por 20 min de show.</p>
-                    <ul className="ph__pricing-features">
-                      <li>500 GB descarga</li>
-                      <li>Acceso Total</li>
-                      <li>Tarjeta / PayPal</li>
-                    </ul>
-                    <Link to="/auth/registro" state={{ from: "/planes" }} className="ph__pricing-cta" onClick={() => trackManyChatConversion(MC_EVENTS.CLICK_PLAN_USD)}>
-                      Quiero el plan USD
-                    </Link>
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="mexico"
-                  className="ph__pricing-card ph__pricing-card--single ph__pricing-card--mexico"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
-                >
-                  <div className="ph__pricing-card-header ph__pricing-card-header--mexico">Membresía México</div>
-                  <div className="ph__pricing-card-body">
-                    <span className="ph__pricing-amount">$350</span>
-                    <span className="ph__pricing-period">MXN / mes</span>
-                    <p className="ph__pricing-anchor">Menos de lo que cobras por 20 min de show.</p>
-                    <ul className="ph__pricing-features">
-                      <li>500 GB descarga</li>
-                      <li>SPEI, OXXO, Tarjeta</li>
-                      <li>Acceso Total</li>
-                    </ul>
-                    <Link to="/auth/registro" state={{ from: "/planes" }} className="ph__pricing-cta" onClick={() => trackManyChatConversion(MC_EVENTS.CLICK_PLAN_MXN)}>
-                      Quiero el plan MXN
-                    </Link>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <div className="ph__pricing-card-wrapper ph__pricing-card-wrapper--membership">
+              <AnimatePresence mode="wait">
+                {region === "global" ? (
+                  <motion.div
+                    key="global"
+                    className="ph__pricing-card ph__pricing-card--single ph__pricing-card--global"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                  >
+                    <div className="ph__pricing-card-header ph__pricing-card-header--global">Membresía Global</div>
+                    <div className="ph__pricing-card-body">
+                      <span className="ph__pricing-amount">$18</span>
+                      <span className="ph__pricing-period">USD / mes</span>
+                      <p className="ph__pricing-anchor">Menos de lo que cobras por 20 min de show.</p>
+                      <ul className="ph__pricing-features">
+                        <li>500 GB descarga</li>
+                        <li>Acceso Total</li>
+                        <li>Tarjeta / PayPal</li>
+                      </ul>
+                      <Link to="/auth/registro" state={{ from: "/planes" }} className="ph__pricing-cta" onClick={() => trackManyChatConversion(MC_EVENTS.CLICK_PLAN_USD)}>
+                        Quiero el plan USD
+                      </Link>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="mexico"
+                    className="ph__pricing-card ph__pricing-card--single ph__pricing-card--mexico"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                  >
+                    <div className="ph__pricing-card-header ph__pricing-card-header--mexico">Membresía México</div>
+                    <div className="ph__pricing-card-body">
+                      <span className="ph__pricing-amount">$350</span>
+                      <span className="ph__pricing-period">MXN / mes</span>
+                      <p className="ph__pricing-anchor">Menos de lo que cobras por 20 min de show.</p>
+                      <ul className="ph__pricing-features">
+                        <li>500 GB descarga</li>
+                        <li>SPEI, OXXO, Tarjeta</li>
+                        <li>Acceso Total</li>
+                      </ul>
+                      <Link to="/auth/registro" state={{ from: "/planes" }} className="ph__pricing-cta" onClick={() => trackManyChatConversion(MC_EVENTS.CLICK_PLAN_MXN)}>
+                        Quiero el plan MXN
+                      </Link>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            <p className="ph__guarantee">Acceso inmediato • Cancela cuando quieras • Garantía de satisfacción</p>
           </div>
-          <p className="ph__guarantee">Acceso inmediato • Cancela cuando quieras • Garantía de satisfacción</p>
         </div>
       </motion.section>
 
