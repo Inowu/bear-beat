@@ -89,7 +89,7 @@ export const canBuyMoreGB = async ({
         },
         {
           date_end: {
-            gt: new Date().toISOString(),
+            gt: new Date(),
           },
         },
       ],

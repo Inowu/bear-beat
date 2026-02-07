@@ -87,7 +87,7 @@ export const subscribe = async ({
         prisma.descargasUser.create({
           data: {
             available: 500,
-            date_end: expirationDate.toISOString(),
+            date_end: expirationDate,
             user_id: user.id,
             ...(orderId ? { order_id: orderId } : {}),
           },
@@ -289,7 +289,7 @@ const insertOrderOrUpdate = async (
             is_plan: 1,
             plan_id: plan.id,
             payment_method: service,
-            date_order: new Date().toISOString(),
+            date_order: new Date(),
             total_price: Number(plan.price),
           },
         });
@@ -306,7 +306,7 @@ const insertOrderOrUpdate = async (
           is_plan: 1,
           plan_id: plan.id,
           payment_method: service,
-          date_order: new Date().toISOString(),
+          date_order: new Date(),
           total_price: Number(plan.price),
         },
       });
@@ -321,7 +321,7 @@ const insertOrderOrUpdate = async (
         is_plan: 1,
         plan_id: plan.id,
         payment_method: service,
-        date_order: new Date().toISOString(),
+        date_order: new Date(),
         total_price: Number(plan.price),
       },
     });
@@ -380,7 +380,7 @@ const insertInDescargas = async ({
   prisma.descargasUser.create({
     data: {
       available: 500,
-      date_end: expirationDate.toISOString(),
+      date_end: expirationDate,
       user_id: user.id,
       order_id: order.id,
     },

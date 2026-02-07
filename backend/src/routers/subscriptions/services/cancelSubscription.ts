@@ -31,7 +31,7 @@ export const cancelSubscription = async ({
         },
         {
           date_end: {
-            gte: new Date().toISOString(),
+            gte: new Date(),
           },
         },
       ],
@@ -128,7 +128,7 @@ export const cancelSubscription = async ({
           id: ftpUser.id,
         },
         data: {
-          expiration: subDays(new Date(), 1).toISOString(),
+          expiration: subDays(new Date(), 1),
         },
       }),
       prisma.orders.update({

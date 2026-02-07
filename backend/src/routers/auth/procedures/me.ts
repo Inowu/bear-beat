@@ -41,7 +41,10 @@ export const me = shieldedProcedure.query(
           },
           {
             date_end: {
-              gt: new Date().toISOString(),
+              // `date_end` is stored as DATE in MySQL (@db.Date). Passing an ISO string (with
+              // time + timezone suffix) can break comparisons under strict SQL modes.
+              // Always pass Date objects to Prisma and let the driver format correctly.
+              gt: new Date(),
             },
           },
         ],

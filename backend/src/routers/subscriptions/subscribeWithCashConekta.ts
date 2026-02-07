@@ -163,7 +163,7 @@ export const subscribeWithCashConekta = shieldedProcedure
           payment_method: paymentMethodName,
           user_id: session!.user!.id,
           status: OrderStatus.PENDING,
-          date_order: new Date().toISOString(),
+          date_order: new Date(),
           total_price: Number(plan.price),
           plan_id: plan.id,
         },

@@ -49,7 +49,7 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
       AND: [
         {
           date_end: {
-            gte: new Date().toISOString(),
+            gte: new Date(),
           },
         },
         {

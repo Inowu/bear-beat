@@ -60,7 +60,7 @@ export const buyMoreGB = shieldedProcedure
               product_id: product.id,
               status: OrderStatus.PENDING,
               user_id: user.id,
-              created_at: new Date().toISOString(),
+              created_at: new Date(),
               payment_method: service,
             },
           });
@@ -122,7 +122,7 @@ export const buyMoreGB = shieldedProcedure
               product_id: product.id,
               status: OrderStatus.PENDING,
               user_id: user.id,
-              created_at: new Date().toISOString(),
+              created_at: new Date(),
               payment_method: service,
             },
           });
@@ -201,7 +201,7 @@ export const buyMoreGB = shieldedProcedure
               product_id: product.id,
               status: OrderStatus.PENDING,
               user_id: user.id,
-              created_at: new Date().toISOString(),
+              created_at: new Date(),
               payment_method: service,
               txn_id: orderId,
             },

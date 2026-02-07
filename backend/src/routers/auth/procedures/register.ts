@@ -133,7 +133,9 @@ export const register = publicProcedure
           phone,
           role_id: RolesIds.normal,
           ip_registro: clientIp ?? req.ip,
-          registered_on: new Date().toISOString(),
+          // `registered_on` is stored as DATE in MySQL (@db.Date). Use Date objects so Prisma
+          // formats it correctly for the database.
+          registered_on: new Date(),
           active: ActiveState.Active,
           verified: process.env.NODE_ENV === 'production' ? false : true,
         },

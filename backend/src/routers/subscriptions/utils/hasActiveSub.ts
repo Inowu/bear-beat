@@ -36,7 +36,7 @@ export const hasActiveSubscription = async ({
         { user_id: user.id },
         {
           date_end: {
-            gte: new Date().toISOString(),
+            gte: new Date(),
           },
         },
       ],

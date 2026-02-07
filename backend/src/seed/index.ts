@@ -62,7 +62,7 @@ export const seed = async () => {
   await prisma.descargasUser.create({
     data: {
       available: 500,
-      date_end: addMonths(new Date(), 12).toISOString(),
+      date_end: addMonths(new Date(), 12),
       user_id: user!.id,
     },
   });

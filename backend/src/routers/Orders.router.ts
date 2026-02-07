@@ -192,7 +192,7 @@ export const ordersRouter = router({
               },
               {
                 date_end: {
-                  gte: new Date().toISOString(),
+                  gte: new Date(),
                 },
               },
             ],
@@ -236,7 +236,7 @@ export const ordersRouter = router({
             txn_id: subscriptionId,
             status: OrderStatus.PENDING,
             is_plan: 1,
-            date_order: new Date().toISOString(),
+            date_order: new Date(),
             total_price: Number(plan.price),
             payment_method: PaymentService.PAYPAL,
           },

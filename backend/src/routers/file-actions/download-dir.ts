@@ -111,7 +111,7 @@ export const downloadDir = shieldedProcedure
         AND: [
           {
             date_end: {
-              gte: new Date().toISOString(),
+              gte: new Date(),
             },
           },
           {
@@ -239,7 +239,7 @@ export const downloadDir = shieldedProcedure
       const dirDownload = await prisma.dir_downloads.create({
         data: {
           userId: user.id,
-          date: new Date().toISOString(),
+          date: new Date(),
           size: fastFolderSizeSync(fullPath),
           dirName: Path.basename(fullPath),
         },
@@ -249,7 +249,7 @@ export const downloadDir = shieldedProcedure
         data: {
           userId: user.id,
           size: dirSize,
-          date: new Date().toISOString(),
+          date: new Date(),
           fileName: path,
           isFolder: true
         }

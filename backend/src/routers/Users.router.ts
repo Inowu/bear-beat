@@ -840,7 +840,7 @@ export const usersRouter = router({
               { user_id: user.id },
               {
                 date_end: {
-                  gte: new Date().toISOString(),
+                  gte: new Date(),
                 },
               },
             ],

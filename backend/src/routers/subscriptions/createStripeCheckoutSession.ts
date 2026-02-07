@@ -132,7 +132,7 @@ export const createStripeCheckoutSession = shieldedProcedure
         is_plan: 1,
         plan_id: plan.id,
         payment_method: PaymentService.STRIPE,
-        date_order: new Date().toISOString(),
+        date_order: new Date(),
         total_price: Number(plan.price),
         ...(dbCoupon ? { discount: dbCoupon.discount } : {}),
       },

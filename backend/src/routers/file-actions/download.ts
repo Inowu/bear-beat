@@ -39,7 +39,7 @@ export const download = shieldedProcedure
         AND: [
           {
             date_end: {
-              gte: new Date().toISOString(),
+              gte: new Date(),
             },
           },
           {
@@ -114,7 +114,7 @@ export const download = shieldedProcedure
       data: {
         userId: user.id,
         size: fileStat.size,
-        date: new Date().toISOString(),
+        date: new Date(),
         fileName: path,
         isFolder: false
       }
