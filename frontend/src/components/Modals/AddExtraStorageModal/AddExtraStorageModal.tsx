@@ -4,7 +4,7 @@ import { ErrorModal } from "../ErrorModal/ErrorModal";
 import { handleChangeBigint } from "../../../functions/functions";
 import { Modal } from "react-bootstrap";
 import { of } from "await-of";
-import { RiCloseCircleLine } from "react-icons/ri";
+import { XCircle } from "lucide-react";
 import { Spinner } from "../../Spinner/Spinner";
 import { SuccessModal } from "../SuccessModal/SuccessModal";
 import { useCallback, useEffect, useState } from "react";
@@ -92,7 +92,7 @@ export function AddExtraStorageModal(props: IVerifyPhoneModal) {
     return (
         <Modal show={showModal} onHide={onHideModal} centered>
             <form className="modal-addusers" onSubmit={formik.handleSubmit}>
-                <RiCloseCircleLine className="icon" onClick={onHideModal} />
+                <XCircle className="icon" onClick={onHideModal} aria-label="Cerrar" />
                 <h2>Agregar GBs adicionales</h2>
                 <p>El usuario cuenta con {currentGB} GBs actualmente.</p>
                 <div className="c-row">

@@ -33,6 +33,17 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
     return res.status(500).send({ error: 'Este archivo o carpeta no existe' });
   }
 
+  const dbUser = await prisma.users.findFirst({
+    where: { id: user.id },
+    select: { verified: true },
+  });
+
+  if (!dbUser?.verified) {
+    return res.status(403).send({
+      error: 'Debes verificar tu WhatsApp antes de descargar',
+    });
+  }
+
   const activePlans = await prisma.descargasUser.findMany({
     where: {
       AND: [

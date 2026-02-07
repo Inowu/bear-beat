@@ -1,7 +1,6 @@
 import { IOxxoData, IPlans, ISpeiData } from "../../interfaces/Plans";
 import "./PlanCard.scss";
 import { useLocation, useNavigate } from "react-router-dom";
-import { plans } from "../../utils/Constants";
 import React, { useCallback, useEffect, useState } from "react";
 import trpc from "../../api";
 import { manychatApi } from "../../api/manychat";
@@ -14,40 +13,64 @@ import {
   SuccessModal
 } from "../../components/Modals";
 import PayPalComponent from "../../components/PayPal/PayPalComponent";
+import PaymentMethodLogos, { type PaymentMethodId } from "../../components/PaymentMethodLogos/PaymentMethodLogos";
 import { useCookies } from "react-cookie";
 import { trackPurchase, trackViewPlans } from "../../utils/facebookPixel";
 import { trackManyChatConversion, trackManyChatPurchase, MC_EVENTS } from "../../utils/manychatPixel";
-import { PiLightning, PiFolderOpen, PiMusicNotes, PiDownloadSimple, PiHeartBreak, PiLockOpen } from "react-icons/pi";
+import { generateEventId } from "../../utils/marketingIds";
+import { Download, FolderOpen, HeartCrack, Music, Unlock, Zap } from "lucide-react";
 
 // Copy persuasivo CRO: texto aburrido → gancho emocional
 const BENEFIT_COPY: Record<string, string> = {
-  "Contenido exclusivo para DJs": "Remixes Privados (No en Spotify)",
-  "Todo organizado por géneros": "Carpetas Listas para Tocar",
-  "Nueva música cada semana": "Nueva música cada semana",
-  "Descargas con 1 click": "Descargas con 1 click",
-  "Renovación automática": "Cancela cuando quieras (Sin ataduras)",
+  "Contenido exclusivo para DJs": "Catálogo pensado para cabina en vivo",
+  "Todo organizado por géneros": "Búsqueda rápida por género y temporada",
+  "Nueva música cada semana": "Nuevos contenidos cada semana",
+  "Descargas con 1 click": "Descarga directa por FTP",
+  "Renovación automática": "Cancela cuando quieras",
 };
 
 const BENEFIT_ICONS: Record<string, React.ReactNode> = {
-  "Contenido exclusivo para DJs": <PiMusicNotes className="plan-card-benefit-icon" aria-hidden />,
-  "Todo organizado por géneros": <PiFolderOpen className="plan-card-benefit-icon" aria-hidden />,
-  "Nueva música cada semana": <PiLightning className="plan-card-benefit-icon" aria-hidden />,
-  "Descargas con 1 click": <PiDownloadSimple className="plan-card-benefit-icon" aria-hidden />,
-  "Renovación automática": <PiHeartBreak className="plan-card-benefit-icon" aria-hidden />,
+  "Contenido exclusivo para DJs": <Music className="plan-card-benefit-icon" aria-hidden />,
+  "Todo organizado por géneros": <FolderOpen className="plan-card-benefit-icon" aria-hidden />,
+  "Nueva música cada semana": <Zap className="plan-card-benefit-icon" aria-hidden />,
+  "Descargas con 1 click": <Download className="plan-card-benefit-icon" aria-hidden />,
+  "Renovación automática": <HeartCrack className="plan-card-benefit-icon" aria-hidden />,
 };
+
+const DEFAULT_BENEFITS = [
+  "Contenido exclusivo para DJs",
+  "Todo organizado por géneros",
+  "Nueva música cada semana",
+  "Descargas con 1 click",
+  "Renovación automática",
+];
+
+function formatPlanCurrency(amount: number, currency: string): string {
+  const locale = currency.toUpperCase() === "USD" ? "en-US" : "es-MX";
+  const fractionDigits = 2;
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: currency.toUpperCase(),
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
+    }).format(amount);
+  } catch {
+    return `${amount.toFixed(fractionDigits)} ${currency.toUpperCase()}`;
+  }
+}
 
 
 interface PlanCardPropsI {
   plan: IPlans;
   currentPlan?: boolean;
   getCurrentPlan: () => void;
-  selectMethod?: (planId: number) => void;
-  selectedPlan?: number;
   userEmail?: string;
   userPhone?: string;
+  showRecommendedBadge?: boolean;
 }
 function PlanCard(props: PlanCardPropsI) {
-  const { plan, currentPlan, getCurrentPlan, selectMethod, selectedPlan, userEmail, userPhone } = props;
+  const { plan, currentPlan, getCurrentPlan, userEmail, userPhone, showRecommendedBadge = true } = props;
   const [showOxxoModal, setShowOxxoModal] = useState<boolean>(false);
   const [oxxoData, setOxxoData] = useState({} as IOxxoData);
   const [showSpeiModal, setShowSpeiModal] = useState<boolean>(false);
@@ -64,28 +87,31 @@ function PlanCard(props: PlanCardPropsI) {
   const [changeTitle, setChangeTitle] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
-  const [cookies] = useCookies(['_fbp']);
+  const [cookies] = useCookies(['_fbp', '_fbc']);
   const { pathname } = location;
   // const ManyChatPixel = require('manychat-pixel-js');
   // const manyChatPixel = new ManyChatPixel('YOUR_PIXEL_ID');
   const handleManyChat = async () => {
     try {
       await manychatApi("USER_CHECKED_PLANS");
-    } catch (error) {
-      console.log(error);
+    } catch {
+      // noop
     }
   };
 
   const handleUserClickOnPlan = async () => {
-    trackViewPlans(userEmail && userPhone ? { email: userEmail, phone: userPhone } : undefined);
+    trackViewPlans({ currency: plan.moneda ?? undefined });
     trackManyChatConversion(MC_EVENTS.SELECT_PLAN);
     try { await manychatApi('USER_CHECKED_PLANS'); } catch { /* API fallback en backend */ }
   }
 
   const handleUserSuccessfulPayment = async (amount?: number, currency?: string) => {
-    trackPurchase({ email: userEmail, phone: userPhone });
+    const value = typeof amount === "number" && Number.isFinite(amount) ? amount : Number(plan.price) || 0;
+    const curr = (currency || plan.moneda || "USD").toUpperCase();
+    const eventId = generateEventId("purchase");
+    trackPurchase({ value, currency: curr, eventId });
     trackManyChatConversion(MC_EVENTS.PAYMENT_SUCCESS);
-    if (amount != null) trackManyChatPurchase(MC_EVENTS.PAYMENT_SUCCESS, amount, currency ?? plan.moneda?.toUpperCase() ?? 'USD');
+    if (value > 0) trackManyChatPurchase(MC_EVENTS.PAYMENT_SUCCESS, value, curr);
     try { await manychatApi('SUCCESSFUL_PAYMENT'); } catch { /* webhook ya lo agrega */ }
   }
 
@@ -115,8 +141,7 @@ function PlanCard(props: PlanCardPropsI) {
     if (pathname === "/actualizar-planes") {
       getCurrentPlan();
     } else {
-      navigate("/");
-      window.location.reload();
+      navigate("/", { replace: true });
     }
   };
   const changePlan = async () => {
@@ -131,15 +156,12 @@ function PlanCard(props: PlanCardPropsI) {
         const url = changeplan.data.links[0].href;
         window.open(url, "_blank");
       } else {
-        const changeplan =
-          await trpc.subscriptions.changeSubscriptionPlan.mutate(body);
-        console.log(changeplan);
+        await trpc.subscriptions.changeSubscriptionPlan.mutate(body);
         openSuccess();
         setSuccessMessage("Tú cambio de plan está siendo procesado, esto puede tomar varios minutos.");
         setSuccessTitle("Cambio de suscripción");
       }
     } catch (error: any) {
-      console.log(error.message);
       setErrorMSG(error.message);
       handleErrorModal();
     }
@@ -172,8 +194,8 @@ function PlanCard(props: PlanCardPropsI) {
       if (plans.length > 0) {
         setppPlan(plans[0]);
       }
-    } catch (error) {
-      console.log(error);
+    } catch {
+      // noop
     }
   }, [plan]
   )
@@ -231,15 +253,31 @@ function PlanCard(props: PlanCardPropsI) {
   };
 
   const successSubscription = async (data: any) => {
+    const eventId = generateEventId("purchase");
     await trpc.subscriptions.subscribeWithPaypal.mutate({
       planId: ppPlan.id,
       subscriptionId: data.subscriptionID,
       fbp: cookies._fbp,
+      fbc: cookies._fbc,
       url: window.location.href,
+      eventId,
     });
     setSuccessMessage("Gracias por tu pago, ya puedes empezar a descargar!");
     setSuccessTitle("Compra Exitosa");
-    handleUserSuccessfulPayment(Number(plan.price) || 0, plan.moneda?.toUpperCase());
+    trackPurchase({
+      value: Number(plan.price) || 0,
+      currency: (plan.moneda || "USD").toUpperCase(),
+      eventId,
+    });
+    trackManyChatConversion(MC_EVENTS.PAYMENT_SUCCESS);
+    if ((Number(plan.price) || 0) > 0) {
+      trackManyChatPurchase(
+        MC_EVENTS.PAYMENT_SUCCESS,
+        Number(plan.price) || 0,
+        (plan.moneda || "USD").toUpperCase(),
+      );
+    }
+    try { await manychatApi('SUCCESSFUL_PAYMENT'); } catch { /* webhook ya lo agrega */ }
     openSuccess();
     return data;
   }
@@ -247,42 +285,66 @@ function PlanCard(props: PlanCardPropsI) {
   useEffect(() => { retreivePaypalPlan() }, [retreivePaypalPlan]);
 
   const isMxn = plan.moneda === "mxn" || plan.moneda === "MXN";
-  const showBadge = isMxn; // "MEJOR VALOR" en planes MXN
+  const showBadge = isMxn && !currentPlan && showRecommendedBadge;
+  const includedBenefits = DEFAULT_BENEFITS;
+  const hasPaypalPlan = ppPlan !== null && Boolean(ppPlan.paypal_plan_id || ppPlan.paypal_plan_id_test);
+  const showPaypalOption = !isMxn && hasPaypalPlan;
+  const planCurrency = (plan.moneda ?? "MXN").toUpperCase();
+  const planPriceValue = Number(plan.price ?? 0) || 0;
+  const planGigasValue = Number(plan.gigas ?? 0) || 0;
+  const unitPricePerGb = planGigasValue > 0 ? planPriceValue / planGigasValue : null;
+  const unitPriceLabel = unitPricePerGb !== null ? formatPlanCurrency(unitPricePerGb, planCurrency) : null;
+  const formattedPlanPrice = formatPlanCurrency(planPriceValue, planCurrency);
+  const paymentSummary = isMxn
+    ? "SPEI, OXXO o Tarjeta"
+    : showPaypalOption
+      ? "Tarjeta o PayPal"
+      : "Tarjeta internacional";
+  const targetAudience = isMxn ? "Pago local en MXN" : "Pago internacional en USD";
+  const displayDescription = isMxn
+    ? "Ideal para DJs en México que quieren activar rápido y cobrar sin fricción."
+    : "Ideal para DJs fuera de México que prefieren pago en USD.";
+  const primaryCtaLabel = isMxn ? "Activar plan MXN" : "Activar plan USD";
+  const paymentLogos: PaymentMethodId[] = isMxn
+    ? ["visa", "mastercard", "amex", "spei", "oxxo"]
+    : showPaypalOption
+      ? ["visa", "mastercard", "amex", "paypal"]
+      : ["visa", "mastercard", "amex"];
 
   return (
     <div className={"plan-card-wrapper plan-card-monolith " + (plan.moneda === "usd" ? "resp-plan " : "")}>
       <div className="plan-card-glow" aria-hidden />
       <div
         className={
-          "plan-card-main-card dark:bg-slate-900 dark:border-slate-800 " +
+          "plan-card-main-card " +
           (plan.moneda === "usd" ? "resp-plan " : "") +
           (currentPlan ? "plan-white-card" : "")
         }
       >
         {currentPlan && <span className="plan-card-badge plan-card-badge--actual">Actual</span>}
-        {!currentPlan && showBadge && <span className="plan-card-badge plan-card-badge--value">MEJOR VALOR</span>}
-        <div className="c-row">
+        {showBadge && <span className="plan-card-badge plan-card-badge--value">MÁS ELEGIDO</span>}
+        <header className="c-row plan-card-head">
+          <p className="plan-card-kicker">{isMxn ? "Pago local" : "Pago internacional"}</p>
           <h2 className="plan-card-title">{plan.name}</h2>
-        </div>
-        <div className="c-row plan-card-price-row">
-          <span className="plan-card-price-amount">${plan.price}.00</span>
-          <span className="plan-card-price-currency">{plan.moneda}</span>
-        </div>
-        <div className="plan-card-data-visualizer">
-          <div className="plan-card-data-visualizer-header">
-            <span className="plan-card-gb-value">{plan.gigas.toString()} GB</span>
-            <span className="plan-card-data-visualizer-label">Tu Arsenal Mensual</span>
+          <p className="plan-card-target">{targetAudience}</p>
+          <div className="plan-card-price-row">
+            <span className="plan-card-price-amount">{formattedPlanPrice}</span>
+            <span className="plan-card-price-currency">{planCurrency} / mes</span>
           </div>
-          <div className="plan-card-progress-track">
-            <div className="plan-card-progress-fill" style={{ width: "100%" }} />
-          </div>
+          {unitPriceLabel && (
+            <p className="plan-card-unit-price">Equivale a {unitPriceLabel} por GB descargable</p>
+          )}
+        </header>
+        <div className="plan-card-highlights" role="list" aria-label={`Resumen de valor para ${plan.name}`}>
+          <span role="listitem">{plan.gigas.toString()} GB al mes</span>
+          <span role="listitem">Acceso total al catálogo</span>
+          <span role="listitem">{paymentSummary}</span>
         </div>
-        <p className="plan-card-subtitle plan-card-description">{plan.description}</p>
-        <p className="plan-card-subtitle plan-card-access">Acceso Ilimitado 24/7</p>
+        <p className="plan-card-description">{displayDescription || plan.description}</p>
         <ul className="plan-card-benefits">
-          {plans[0].included.map((ad) => (
+          {includedBenefits.map((ad) => (
             <li key={ad} className="plan-card-benefit-item">
-              {BENEFIT_ICONS[ad] ?? <PiLightning className="plan-card-benefit-icon" aria-hidden />}
+              {BENEFIT_ICONS[ad] ?? <Zap className="plan-card-benefit-icon" aria-hidden />}
               <span>{BENEFIT_COPY[ad] ?? ad}</span>
             </li>
           ))}
@@ -295,29 +357,34 @@ function PlanCard(props: PlanCardPropsI) {
           ) : (
             <>
               {pathname === "/actualizar-planes" ? (
-                <button className="plan-card-btn-hero bg-bear-gradient text-bear-dark-500 rounded-pill border-0" onClick={handleChangeModal}>
-                  <PiLockOpen aria-hidden /> Cambiar plan
+                <button className="plan-card-btn-hero" onClick={handleChangeModal}>
+                  <Unlock aria-hidden /> Cambiar plan
                 </button>
               ) : (
                 <>
               <button
-                className="plan-card-btn-hero bg-bear-gradient text-bear-dark-500 rounded-pill border-0"
+                className="plan-card-btn-hero"
                 onClick={() => handleCheckout(plan.id)}
               >
-                <PiLockOpen aria-hidden /> DESBLOQUEAR ACCESO AHORA
+                <Unlock aria-hidden /> {primaryCtaLabel}
               </button>
-                  {(isMxn || (ppPlan !== null && (ppPlan.paypal_plan_id || ppPlan.paypal_plan_id_test))) && (
+                  {(isMxn || showPaypalOption) && (
                     <div className="plan-card-secondary-payment">
                       <span className="plan-card-secondary-label">O paga con:</span>
                       <div className="plan-card-secondary-buttons">
                         {isMxn && (
-                          <button type="button" className="plan-card-btn-outline border-bear-cyan text-bear-cyan hover:bg-bear-cyan/10 rounded-pill" onClick={payWithSpei}>
-                            SPEI
-                          </button>
+                          <>
+                            <button type="button" className="plan-card-btn-outline" onClick={payWithSpei}>
+                              SPEI
+                            </button>
+                            <button type="button" className="plan-card-btn-outline" onClick={payWithOxxo}>
+                              OXXO
+                            </button>
+                          </>
                         )}
-                        {ppPlan !== null && (ppPlan.paypal_plan_id || ppPlan.paypal_plan_id_test) && (
+                        {showPaypalOption && (
                           <PayPalComponent
-                            plan={ppPlan}
+                            plan={ppPlan!}
                             type="subscription"
                             onApprove={successSubscription}
                             onClick={() => { trackManyChatConversion(MC_EVENTS.CLICK_PAYPAL); handleUserClickOnPlan(); }}
@@ -331,8 +398,13 @@ function PlanCard(props: PlanCardPropsI) {
               )}
             </>
           )}
+          <PaymentMethodLogos
+            methods={paymentLogos}
+            className="plan-card-payment-logos"
+            ariaLabel={`Métodos de pago disponibles para ${plan.name}`}
+          />
+          <p className="plan-card-confidence">Activación guiada por chat después del pago.</p>
         </div>
-        <p className="plan-card-trust">🔒 Pagos encriptados con seguridad bancaria</p>
       </div>
       <ConditionModal
         title={"Cancelación de suscripción"}
@@ -340,13 +412,6 @@ function PlanCard(props: PlanCardPropsI) {
         show={showCancelModal}
         onHide={handleCancelModal}
         action={finishSubscription}
-      />
-      <ConditionModal
-        title={"Cambio de plan"}
-        message={`¿Estás seguro que quieres cambiar al plan de: "${plan.name}" de $${plan.price} ${plan.moneda}?`}
-        show={false}
-        onHide={handleChangeModal}
-        action={changePlan}
       />
       <ChangeSubscriptionModal
         title={changeTitle}

@@ -1,21 +1,27 @@
 import "./SignUpForm.scss";
 import { detectUserCountry, findDialCode, allowedCountryOptions } from "../../../utils/country_codes";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { HiOutlineUser, HiOutlineMail, HiOutlineLockClosed, HiOutlinePhone } from "react-icons/hi";
+import { Lock, Mail, Phone, User } from "lucide-react";
 import { PasswordInput } from "../../PasswordInput/PasswordInput";
 import { ReactComponent as Arrow } from "../../../assets/icons/arrow-down.svg";
 import { Spinner } from "../../../components/Spinner/Spinner";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useFormik } from "formik";
 import { useUserContext } from "../../../contexts/UserContext";
 import * as Yup from "yup";
 import trpc from "../../../api";
-import { ErrorModal, SuccessModal, VerifyPhoneModal } from "../../../components/Modals";
+import { ErrorModal } from "../../../components/Modals";
 import { useCookies } from "react-cookie";
 import { ChatButton } from "../../../components/ChatButton/ChatButton";
 import Turnstile from "../../../components/Turnstile/Turnstile";
 import { trackLead } from "../../../utils/facebookPixel";
 import { trackManyChatConversion, MC_EVENTS } from "../../../utils/manychatPixel";
+import { GROWTH_METRICS, trackGrowthMetric } from "../../../utils/growthMetrics";
+import { generateEventId } from "../../../utils/marketingIds";
+import {
+  shouldBypassTurnstile,
+  TURNSTILE_BYPASS_TOKEN,
+} from "../../../utils/turnstile";
 
 function SignUpForm() {
   const navigate = useNavigate();
@@ -25,27 +31,22 @@ function SignUpForm() {
   const { handleLogin } = useUserContext();
   const [show, setShow] = useState<boolean>(false);
   const [dialCode, setDialCode] = useState<string>("52");
-  const [showSuccess, setShowSuccess] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<any>("");
-  const [showVerify, setShowVerify] = useState<boolean>(false);
-  const [newUserId, setNewUserId] = useState<number>(0);
-  const [newUserPhone, setNewUserPhone] = useState<string>("");
-  const [registerInfo, setRegisterInfo] = useState<any>({});
-  const [cookies] = useCookies(["_fbp"]);
+  const [cookies] = useCookies(["_fbp", "_fbc"]);
   const [blockedDomains, setBlockedDomains] = useState<string[]>([]);
   const [blockedPhoneNumbers, setBlockedPhoneNumbers] = useState<string[]>([]);
   const [turnstileToken, setTurnstileToken] = useState<string>("");
   const [turnstileError, setTurnstileError] = useState<string>("");
   const [turnstileReset, setTurnstileReset] = useState<number>(0);
+  const turnstileBypassed = shouldBypassTurnstile();
+  const registrationStartedRef = useRef(false);
+  const registrationCompletedRef = useRef(false);
+  const registrationAbandonTrackedRef = useRef(false);
 
   const closeModal = () => {
     setShow(false);
   };
 
-  const closeSuccess = () => {
-    setShowSuccess(false);
-    navigate(from, { replace: true });
-  };
   const validationSchema = Yup.object().shape({
     email: Yup.string().required("El correo es requerido").email("El formato del correo no es correcto"),
     username: Yup.string()
@@ -57,7 +58,7 @@ function SignUpForm() {
       .min(6, "La contraseña debe contenter 6 caracteres"),
     phone: Yup.string()
       .required("El teléfono es requerido")
-      .matches(/^[0-9]{7,10}$/, "El teléfono no es válido"),
+      .matches(/^[0-9]{7,14}$/, "El teléfono no es válido"),
     passwordConfirmation: Yup.string()
       .required("Debe confirmar la contraseña")
       .oneOf([Yup.ref("password")], "Ambas contraseñas deben ser iguales"),
@@ -87,11 +88,12 @@ function SignUpForm() {
     initialValues: initialValues,
     validationSchema: validationSchema,
     onSubmit: async (values) => {
-      if (!turnstileToken) {
+      if (!turnstileToken && !turnstileBypassed) {
         setTurnstileError("Confirma que no eres un robot.");
         return;
       }
 
+      const marketingEventId = generateEventId("reg");
       setLoader(true);
       const emailDomain = getEmailDomain(values.email);
       if (emailDomain && blockedDomains.includes(emailDomain)) {
@@ -112,30 +114,37 @@ function SignUpForm() {
         email: values.email,
         phone: formattedPhone,
         fbp: cookies._fbp,
+        fbc: cookies._fbc,
         url: window.location.href,
-        turnstileToken,
+        eventId: marketingEventId,
+        turnstileToken: turnstileToken || (turnstileBypassed ? TURNSTILE_BYPASS_TOKEN : ""),
       };
       try {
         const register = await trpc.auth.register.mutate(body);
-        setRegisterInfo(register);
-        setNewUserId(register.user.id);
-        setNewUserPhone(register.user.phone!);
+        registrationCompletedRef.current = true;
 
-        trackLead({ email: register.user.email, phone: register.user.phone });
+        trackGrowthMetric(GROWTH_METRICS.REGISTRATION_COMPLETED, {
+          source: "register_submit",
+          from,
+        });
+
+        trackLead({ eventId: marketingEventId });
         trackManyChatConversion(MC_EVENTS.REGISTRATION);
 
-        if (process.env.REACT_APP_ENVIRONMENT === "development") {
-          handleLogin(register.token, register.refreshToken);
-          navigate(from, { replace: true });
-        }
-
-        setShowVerify(true);
+        handleLogin(register.token, register.refreshToken);
+        navigate(from, { replace: true });
       } catch (error: any) {
         let errorMessage = error.message;
 
         if (error.message.includes('"validation"')) {
           errorMessage = JSON.parse(error.message)[0].message;
         }
+
+        trackGrowthMetric(GROWTH_METRICS.REGISTRATION_FAILED, {
+          source: "register_submit",
+          from,
+          reason: errorMessage,
+        });
 
         setShow(true);
         setErrorMessage(errorMessage);
@@ -147,11 +156,24 @@ function SignUpForm() {
     },
   });
 
-  const handleSuccessVerify = () => {
-    handleLogin(registerInfo.token, registerInfo.refreshToken);
-    setShowVerify(false);
-    setShowSuccess(true);
-  };
+  const trackRegistrationAbandon = useCallback(
+    (reason: string) => {
+      if (
+        !registrationStartedRef.current ||
+        registrationCompletedRef.current ||
+        registrationAbandonTrackedRef.current
+      ) {
+        return;
+      }
+      registrationAbandonTrackedRef.current = true;
+      trackManyChatConversion(MC_EVENTS.ABANDON_REGISTRATION);
+      trackGrowthMetric(GROWTH_METRICS.REGISTRATION_ABANDONED, {
+        reason,
+        from,
+      });
+    },
+    [from]
+  );
 
   const getUserLocation = useCallback(() => {
     try {
@@ -168,6 +190,30 @@ function SignUpForm() {
   useEffect(() => {
     getUserLocation();
   }, [getUserLocation]);
+
+  useEffect(() => {
+    const hasAnyFieldValue = Object.values(formik.values).some(
+      (value) => typeof value === "string" && value.trim().length > 0
+    );
+    if (hasAnyFieldValue && !registrationStartedRef.current) {
+      trackGrowthMetric(GROWTH_METRICS.REGISTRATION_STARTED, {
+        source: "register_form_input",
+        from,
+      });
+      registrationStartedRef.current = true;
+    }
+  }, [formik.values, from]);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      trackRegistrationAbandon("beforeunload");
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      trackRegistrationAbandon("route_change");
+    };
+  }, [trackRegistrationAbandon]);
 
   useEffect(() => {
     const fetchBlockedDomains = async () => {
@@ -212,68 +258,92 @@ function SignUpForm() {
 
   const selectedCountry = allowedCountryOptions.find((c) => c.dial_code.slice(1) === dialCode);
   const countryFlagClass = selectedCountry ? `fi fi-${selectedCountry.code.toLowerCase()}` : "fi";
+  const showUsernameError = Boolean(
+    (formik.touched.username || formik.submitCount > 0) && formik.errors.username,
+  );
+  const showEmailError = Boolean(
+    (formik.touched.email || formik.submitCount > 0) && formik.errors.email,
+  );
+  const showPhoneError = Boolean(
+    (formik.touched.phone || formik.submitCount > 0) && formik.errors.phone,
+  );
+  const showPasswordError = Boolean(
+    (formik.touched.password || formik.submitCount > 0) && formik.errors.password,
+  );
+  const showPasswordConfirmationError = Boolean(
+    (formik.touched.passwordConfirmation || formik.submitCount > 0) && formik.errors.passwordConfirmation,
+  );
 
   return (
     <div className="auth-split">
       <div className="auth-split-panel auth-split-left">
         <div className="auth-split-left-bg" aria-hidden />
-        <h2 className="auth-split-title">Estás a 60 segundos de tenerlo todo.</h2>
+        <h2 className="auth-split-title">Tu próxima cabina sin “No la tengo” empieza aquí.</h2>
         <ul className="auth-split-list">
           <li><strong>12.5 TB</strong> de música y video</li>
           <li><strong>Descarga FTP</strong> sin límites</li>
           <li>Cancela cuando quieras</li>
         </ul>
-        <p className="auth-split-testimonial">"La mejor inversión para mi carrera."</p>
+        <p className="auth-split-testimonial">Activación guiada por chat hasta tu primera descarga.</p>
       </div>
-      <div className="auth-split-panel auth-split-right flex flex-col items-center">
-        <div className="auth-split-form w-full max-w-md">
-          <h2 className="auth-split-form-title">Crea tu cuenta Pro</h2>
-          <ChatButton />
+      <div className="auth-split-panel auth-split-right">
+        <div className="auth-split-form">
+          <h2 className="auth-split-form-title">Crea tu cuenta y activa hoy</h2>
+          <div className="auth-split-help">
+            <ChatButton variant="inline" />
+          </div>
           <form
             className="sign-up-form auth-form"
+            autoComplete="on"
             onSubmit={(e) => {
               e.preventDefault();
-              if (!turnstileToken) {
+              if (!turnstileToken && !turnstileBypassed) {
                 setTurnstileError("Completa la verificación antes de continuar.");
                 return;
               }
               formik.handleSubmit(e);
             }}
           >
-            <div className="c-row">
+            <div className={`c-row ${showUsernameError ? "is-invalid" : ""}`}>
               <label htmlFor="username" className="signup-label">Nombre</label>
               <div className="signup-input-wrap">
-                <HiOutlineUser className="signup-input-icon" aria-hidden />
+                <User className="signup-input-icon" aria-hidden />
                 <input
                   placeholder="Tu nombre o nombre artístico"
                   type="text"
                   id="username"
                   name="username"
+                  autoComplete="name"
                   value={formik.values.username}
                   onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
                   className="signup-input-with-icon"
+                  aria-invalid={showUsernameError}
                 />
               </div>
-              {formik.errors.username && <div className="error-formik">{formik.errors.username}</div>}
+              {showUsernameError && <div className="error-formik">{formik.errors.username}</div>}
             </div>
-            <div className="c-row">
+            <div className={`c-row ${showEmailError ? "is-invalid" : ""}`}>
               <label htmlFor="email" className="signup-label">Correo electrónico</label>
               <div className="signup-input-wrap">
-                <HiOutlineMail className="signup-input-icon" aria-hidden />
+                <Mail className="signup-input-icon" aria-hidden />
                 <input
                   placeholder="correo@ejemplo.com"
                   id="email"
                   name="email"
+                  autoComplete="email"
                   value={formik.values.email}
                   onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
                   type="text"
                   className="signup-input-with-icon"
+                  aria-invalid={showEmailError}
                 />
               </div>
-              {formik.errors.email && <div className="error-formik">{formik.errors.email}</div>}
+              {showEmailError && <div className="error-formik">{formik.errors.email}</div>}
             </div>
-            <div className="c-row c-row--phone">
-              <label className="signup-label">WhatsApp (para soporte VIP)</label>
+            <div className={`c-row c-row--phone ${showPhoneError ? "is-invalid" : ""}`}>
+              <label htmlFor="phone" className="signup-label">WhatsApp (activación guiada)</label>
               <div className="signup-phone-wrap">
                 <div className="signup-phone-flag-wrap">
                   <span className={`signup-phone-flag ${countryFlagClass}`} aria-hidden title={selectedCountry?.name} />
@@ -292,7 +362,7 @@ function SignUpForm() {
                   </select>
                 </div>
                 <span className="signup-phone-icon-wrap">
-                  <HiOutlinePhone className="signup-input-icon" aria-hidden />
+                  <Phone className="signup-input-icon" aria-hidden />
                 </span>
                 <input
                   className="signup-phone-input"
@@ -301,45 +371,51 @@ function SignUpForm() {
                   name="phone"
                   value={formik.values.phone}
                   onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
                   type="tel"
                   inputMode="numeric"
                   autoComplete="tel-national"
                   maxLength={15}
+                  aria-invalid={showPhoneError}
                 />
               </div>
-              {formik.errors.phone && <div className="error-formik">{formik.errors.phone}</div>}
+              {showPhoneError && <div className="error-formik">{formik.errors.phone}</div>}
             </div>
-            <div className="c-row">
+            <div className={`c-row ${showPasswordError ? "is-invalid" : ""}`}>
               <label htmlFor="password" className="signup-label">Contraseña</label>
               <div className="signup-input-wrap">
-                <HiOutlineLockClosed className="signup-input-icon" aria-hidden />
+                <Lock className="signup-input-icon" aria-hidden />
                 <PasswordInput
                   placeholder="Mínimo 6 caracteres"
                   id="password"
                   name="password"
+                  autoComplete="new-password"
                   value={formik.values.password}
                   onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
                   inputClassName="signup-input-with-icon"
                   wrapperClassName="signup-password-wrap"
                 />
               </div>
-              {formik.errors.password && <div className="error-formik">{formik.errors.password}</div>}
+              {showPasswordError && <div className="error-formik">{formik.errors.password}</div>}
             </div>
-            <div className="c-row">
+            <div className={`c-row ${showPasswordConfirmationError ? "is-invalid" : ""}`}>
               <label htmlFor="passwordConfirmation" className="signup-label">Repetir contraseña</label>
               <div className="signup-input-wrap">
-                <HiOutlineLockClosed className="signup-input-icon" aria-hidden />
+                <Lock className="signup-input-icon" aria-hidden />
                 <PasswordInput
                   placeholder="Repite tu contraseña"
                   id="passwordConfirmation"
                   name="passwordConfirmation"
+                  autoComplete="new-password"
                   value={formik.values.passwordConfirmation}
                   onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
                   inputClassName="signup-input-with-icon"
                   wrapperClassName="signup-password-wrap"
                 />
               </div>
-              {formik.errors.passwordConfirmation && (
+              {showPasswordConfirmationError && (
                 <div className="error-formik">{formik.errors.passwordConfirmation}</div>
               )}
             </div>
@@ -370,18 +446,6 @@ function SignUpForm() {
         </div>
       </div>
       <ErrorModal show={show} onHide={closeModal} message={errorMessage} />
-      <SuccessModal
-        show={showSuccess}
-        onHide={closeSuccess}
-        message="Se ha creado su usuario con éxito!"
-        title="Registro Exitoso"
-      />
-      <VerifyPhoneModal
-        showModal={showVerify}
-        newUserId={newUserId}
-        newUserPhone={newUserPhone}
-        onHideModal={handleSuccessVerify}
-      />
     </div>
   );
 }

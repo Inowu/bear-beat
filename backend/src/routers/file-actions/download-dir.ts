@@ -21,6 +21,17 @@ export const downloadDir = shieldedProcedure
   )
   .query(async ({ input: { path }, ctx: { prisma, session } }) => {
     const user = session!.user!;
+    const dbUser = await prisma.users.findFirst({
+      where: { id: user.id },
+      select: { verified: true },
+    });
+
+    if (!dbUser?.verified) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'Debes verificar tu WhatsApp antes de descargar',
+      });
+    }
 
     const fullPath = `${process.env.SONGS_PATH}${path}`;
     const fileExists = await fileService.exists(fullPath);

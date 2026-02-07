@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import './../Modal.scss'
 import { Modal } from 'react-bootstrap'
-import { RiCloseCircleLine } from 'react-icons/ri';
+import { XCircle } from 'lucide-react';
 import AddCard from '../../AddCard/AddCard';
 import { CardElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import trpc from "../../../api";
@@ -40,7 +40,7 @@ export function PaymentMethodModal(props: IError) {
             <div className='modal-container success-modal'>
                 <div className='header'>
                     <p className='title'>{title}</p>
-                    <RiCloseCircleLine className='icon' onClick={onHide} />
+                    <XCircle className='icon' onClick={onHide} aria-label="Cerrar" />
                 </div>
                 {random_number > 0 && (
                     <CardElement

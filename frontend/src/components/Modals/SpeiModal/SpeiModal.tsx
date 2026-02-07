@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { Modal } from "react-bootstrap";
-import { PiCopy, PiCheck, PiShieldCheck } from "react-icons/pi";
-import { RiCloseLine } from "react-icons/ri";
+import { Check, Copy, ShieldCheck, X } from "lucide-react";
 import { ISpeiData } from "../../../interfaces/Plans";
 import "../Modal.scss";
 import "./SpeiModal.scss";
@@ -53,7 +52,7 @@ export function SpeiModal(props: ISpei) {
         <div className="spei-terminal__header">
           <h2 className="spei-terminal__title">Transferencia Bancaria (SPEI)</h2>
           <button type="button" className="spei-terminal__close" onClick={onHide} aria-label="Cerrar">
-            <RiCloseLine aria-hidden />
+            <X aria-hidden />
           </button>
         </div>
 
@@ -82,7 +81,7 @@ export function SpeiModal(props: ISpei) {
                   onClick={() => copyToClipboard(clabe, setCopiedClabe)}
                   title="Copiar CLABE"
                 >
-                  {copiedClabe ? <PiCheck aria-hidden /> : <PiCopy aria-hidden />}
+                  {copiedClabe ? <Check aria-hidden /> : <Copy aria-hidden />}
                   <span>{copiedClabe ? "Copiado" : "Copiar"}</span>
                 </button>
               </div>
@@ -104,7 +103,7 @@ export function SpeiModal(props: ISpei) {
                 onClick={() => copyToClipboard(amountText, setCopiedAmount)}
                 title="Copiar monto"
               >
-                {copiedAmount ? <PiCheck aria-hidden /> : <PiCopy aria-hidden />}
+                {copiedAmount ? <Check aria-hidden /> : <Copy aria-hidden />}
                 <span>{copiedAmount ? "Copiado" : "Copiar"}</span>
               </button>
             </div>
@@ -126,7 +125,7 @@ export function SpeiModal(props: ISpei) {
           </p>
 
           <p className="spei-terminal__trust">
-            <PiShieldCheck aria-hidden /> Transacción encriptada y segura
+            <ShieldCheck aria-hidden /> Transacción encriptada y segura
           </p>
 
           <div className="spei-terminal__actions">

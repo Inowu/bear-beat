@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { X } from "lucide-react";
-import { IAdminUser } from "../../interfaces/admin";
+import { IAdminUser, USER_ROLES } from "../../interfaces/admin";
 import "./AdminDrawer.scss";
 
 export interface AdminDrawerAction {
@@ -28,6 +28,19 @@ export function AdminDrawer({
   children,
   actions = [],
 }: AdminDrawerProps) {
+  const formatRegisteredDate = (dateValue: Date | string) => {
+    const parsedDate = dateValue instanceof Date ? dateValue : new Date(dateValue);
+    if (Number.isNaN(parsedDate.getTime())) return "—";
+    return parsedDate.toLocaleDateString();
+  };
+
+  const getRoleLabel = (role: number) => {
+    if (role === USER_ROLES.ADMIN) return "Admin";
+    if (role === USER_ROLES.SUBADMIN) return "Subadmin";
+    if (role === USER_ROLES.EDITOR) return "Editor";
+    return "Usuario";
+  };
+
   useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden";
@@ -71,13 +84,19 @@ export function AdminDrawer({
                 {(user.username || user.email || "?").charAt(0).toUpperCase()}
               </div>
               <div className="admin-drawer__user-info">
-                <span className="admin-drawer__user-name">{user.username}</span>
+                <span className="admin-drawer__user-name">{user.username || "Sin nombre"}</span>
                 <span className="admin-drawer__user-email">{user.email}</span>
+                <div className="admin-drawer__user-tags">
+                  <span className={`admin-drawer__tag ${user.blocked ? "is-danger" : "is-success"}`}>
+                    {user.blocked ? "Bloqueado" : "Activo"}
+                  </span>
+                  <span className="admin-drawer__tag">{getRoleLabel(user.role)}</span>
+                </div>
                 {user.phone && (
                   <span className="admin-drawer__user-meta">{user.phone}</span>
                 )}
                 <span className="admin-drawer__user-meta">
-                  Registro: {user.registered_on.toLocaleDateString()}
+                  Registro: {formatRegisteredDate(user.registered_on)}
                 </span>
               </div>
             </div>

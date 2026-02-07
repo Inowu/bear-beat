@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { HiOutlineMail } from "react-icons/hi";
+import { Mail } from "lucide-react";
 import trpc from "../../../api";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -9,6 +9,11 @@ import { SuccessModal } from "../../../components/Modals/SuccessModal/SuccessMod
 import { Spinner } from "../../../components/Spinner/Spinner";
 import Turnstile from "../../../components/Turnstile/Turnstile";
 import Logo from "../../../assets/images/osonuevo.png";
+import {
+  shouldBypassTurnstile,
+  TURNSTILE_BYPASS_TOKEN,
+} from "../../../utils/turnstile";
+import { GROWTH_METRICS, trackGrowthMetric } from "../../../utils/growthMetrics";
 import "./ForgotPasswordForm.scss";
 
 function ForgotPasswordForm() {
@@ -19,6 +24,7 @@ function ForgotPasswordForm() {
   const [turnstileToken, setTurnstileToken] = useState<string>("");
   const [turnstileError, setTurnstileError] = useState<string>("");
   const [turnstileReset, setTurnstileReset] = useState<number>(0);
+  const turnstileBypassed = shouldBypassTurnstile();
 
   const closeError = () => setShow(false);
   const closeSuccess = () => setShowSuccess(false);
@@ -33,15 +39,21 @@ function ForgotPasswordForm() {
     initialValues: { email: "" },
     validationSchema,
     onSubmit: async (values) => {
-      if (!turnstileToken) return;
+      if (!turnstileToken && !turnstileBypassed) return;
       setLoader(true);
       try {
         await trpc.auth.forgotPassword.mutate({
           email: values.email,
-          turnstileToken,
+          turnstileToken: turnstileToken || (turnstileBypassed ? TURNSTILE_BYPASS_TOKEN : ""),
+        });
+        trackGrowthMetric(GROWTH_METRICS.PASSWORD_RECOVERY_REQUESTED, {
+          source: "forgot_password_form",
         });
         setShowSuccess(true);
       } catch (error) {
+        trackGrowthMetric(GROWTH_METRICS.PASSWORD_RECOVERY_FAILED, {
+          source: "forgot_password_form",
+        });
         setShow(true);
         setErrorMessage(error);
       } finally {
@@ -79,7 +91,7 @@ function ForgotPasswordForm() {
           className="auth-form auth-login-form auth-recover-form"
           onSubmit={(e) => {
             e.preventDefault();
-            if (!turnstileToken) {
+            if (!turnstileToken && !turnstileBypassed) {
               setTurnstileError("Completa la verificación antes de continuar.");
               return;
             }
@@ -87,7 +99,7 @@ function ForgotPasswordForm() {
           }}
         >
           <div className="c-row auth-recover-email-wrap">
-            <HiOutlineMail className="auth-recover-email-icon" aria-hidden />
+            <Mail className="auth-recover-email-icon" aria-hidden />
             <input
               placeholder="Correo electrónico"
               id="email"

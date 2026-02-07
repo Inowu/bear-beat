@@ -1,115 +1,65 @@
-@import "src/styles/mixin.scss";
-
 .main-layout-main-container {
   min-height: 100vh;
-  min-height: 100dvh;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  position: relative;
-  z-index: 1;
+  background: var(--app-bg);
   color: var(--app-text-body);
-  transition: background 0.2s ease, color 0.2s ease;
-  -webkit-font-smoothing: inherit;
+  font-family: var(--bb-font-ui);
+}
+
+.content-container {
+  display: flex;
+  flex: 1;
+  min-height: 0;
   width: 100%;
-  margin: 0;
+  position: relative;
+  overflow-x: hidden;
+  border-top: 1px solid var(--app-border);
+  background: var(--app-bg);
+}
+
+.content-container-inner {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+.main-layout-main {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.content-shell {
+  width: 100%;
+  min-width: 0;
+}
+
+.content-shell--full {
   padding: 0;
-  box-sizing: border-box;
-
-  /* Scroll en ventana: no overflow-y auto en contenedores internos */
-  .content-container {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    min-height: 0;
-    overflow-x: hidden;
-    border-top: 1px solid var(--app-border);
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-  }
-
-  /* Desktop: sidebar + contenido; contenido crece y el window hace scroll */
-  @include respond-from(desktop) {
-    .content-container:not(.content-container--landing) {
-      flex-direction: row;
-      align-items: stretch;
-    }
-    .content-container:not(.content-container--landing) > aside {
-      flex-shrink: 0;
-      width: 280px;
-      min-width: 280px;
-      max-width: 280px;
-      overflow-x: hidden;
-      align-self: stretch;
-      height: auto;
-    }
-    .content-container:not(.content-container--landing) > .content-container-inner {
-      flex: 1;
-      min-width: 0;
-      margin-left: 0;
-      margin-right: 0;
-      max-width: none;
-      overflow-x: hidden;
-    }
-  }
-
-  /* Contenido con padding y safe areas; en desktop usa todo el ancho disponible (límite generoso) */
-  .content-container-inner {
-    flex: 1;
-    margin-left: auto;
-    margin-right: auto;
-    max-width: 100%;
-    width: 100%;
-    padding: 1rem;
-    padding-left: max(1rem, env(safe-area-inset-left, 0px));
-    padding-right: max(1rem, env(safe-area-inset-right, 0px));
-    padding-bottom: max(2rem, env(safe-area-inset-bottom, 0px) + 1.5rem);
-    min-height: min-content;
-  }
-
-  @include respond-from(md) {
-    .content-container-inner {
-      padding: 1.5rem;
-      padding-left: max(1.5rem, env(safe-area-inset-left, 0px));
-      padding-right: max(1.5rem, env(safe-area-inset-right, 0px));
-      padding-bottom: max(2rem, env(safe-area-inset-bottom, 0px) + 1.5rem);
-    }
-  }
-
-  @include respond-from(desktop) {
-    .content-container-inner {
-      padding: 1.5rem 2rem;
-      padding-left: max(2rem, env(safe-area-inset-left, 0px));
-      padding-right: max(2rem, env(safe-area-inset-right, 0px));
-      padding-bottom: max(2rem, env(safe-area-inset-bottom, 0px) + 1.5rem);
-    }
-  }
-
-  @include respond-from(xl) {
-    .content-container-inner {
-      padding: 2rem 2.5rem;
-      padding-left: max(2.5rem, env(safe-area-inset-left, 0px));
-      padding-right: max(2.5rem, env(safe-area-inset-right, 0px));
-    }
-  }
+  margin: 0;
 }
 
-/* Área de contenido (dashboard): dark vía Tailwind .dark en html */
-.content-area-app {
-  transition: background-color 0.2s ease, color 0.2s ease;
+.content-shell--app {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 24px;
 }
 
-// Landing pública: sin recuadro gris (siempre fondo oscuro)
-.main-layout-landing {
-  background-color: var(--theme-landing-bg) !important;
-
+@media (max-width: 992px) {
   .content-container {
-    background-color: var(--theme-landing-bg) !important;
+    border-top: 0;
+  }
 
-    .content-container-inner {
-      max-width: none !important;
-      padding: 0 !important;
-      padding-bottom: max(2rem, env(safe-area-inset-bottom, 0px) + 1rem) !important;
-    }
+  .content-shell--app {
+    padding: 16px 12px 22px;
   }
 }

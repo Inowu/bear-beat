@@ -31,7 +31,7 @@ export default function PayPalComponent(props: Props) {
         return () => {
             isMountedRef.current = false;
             const el = document.getElementById(buttonId);
-            if (el) el.innerHTML = "";
+            if (el) el.replaceChildren();
             buttonsRef.current = null;
         };
     }, []);
@@ -51,7 +51,7 @@ export default function PayPalComponent(props: Props) {
         if (window.paypal && window.paypal.Buttons) {
             const previousPayPalButton = document.querySelector('.paypal-container');
             if (previousPayPalButton && previousPayPalButton !== container) {
-                previousPayPalButton.innerHTML = "";
+                previousPayPalButton.replaceChildren();
             }
             const buttons = window.paypal.Buttons(options);
             buttonsRef.current = buttons;

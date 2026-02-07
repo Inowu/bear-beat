@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
+import { Prisma } from '@prisma/client';
 import { router } from '../trpc';
 import { shieldedProcedure } from '../procedures/shielded.procedure';
 import { OrdersAggregateSchema } from '../schemas/aggregateOrders.schema';
@@ -76,54 +77,83 @@ export const ordersRouter = router({
           skip,
         },
       }) => {
-        const filters = [
-          { email },
-          { phone },
-          { status },
-          { date_order },
-          { payment_method: paymentMethod },
-        ]
-          .filter((filter) => !!Object.values(filter)[0])
-          .map((filter) => {
-            const [key, value] = Object.entries(filter)[0];
+        const whereClauses: Prisma.Sql[] = [];
 
-            if (typeof value === 'object' && 'gte' in value && 'lte' in value) {
-              return `date_order BETWEEN '${value.gte}' AND '${value.lte}'`;
+        if (email) {
+          const likeValue = `%${email}%`;
+          const orderIdFromSearch = Number(email);
+          if (Number.isInteger(orderIdFromSearch)) {
+            whereClauses.push(
+              Prisma.sql`(u.email LIKE ${likeValue} OR u.phone LIKE ${likeValue} OR o.id = ${orderIdFromSearch})`,
+            );
+          } else {
+            whereClauses.push(
+              Prisma.sql`(u.email LIKE ${likeValue} OR u.phone LIKE ${likeValue})`,
+            );
+          }
+        }
+
+        if (phone) {
+          whereClauses.push(Prisma.sql`u.phone LIKE ${`%${phone}%`}`);
+        }
+
+        if (typeof status === 'number') {
+          whereClauses.push(Prisma.sql`o.status = ${status}`);
+        }
+
+        if (paymentMethod) {
+          whereClauses.push(
+            Prisma.sql`o.payment_method LIKE ${`%${paymentMethod}%`}`,
+          );
+        }
+
+        if (date_order) {
+          if (typeof date_order === 'string') {
+            whereClauses.push(
+              Prisma.sql`o.date_order LIKE ${`%${date_order}%`}`,
+            );
+          } else if (typeof date_order === 'object') {
+            if (date_order.gte && date_order.lte) {
+              whereClauses.push(
+                Prisma.sql`o.date_order BETWEEN ${date_order.gte} AND ${date_order.lte}`,
+              );
+            } else if (date_order.gte) {
+              whereClauses.push(Prisma.sql`o.date_order >= ${date_order.gte}`);
+            } else if (date_order.lte) {
+              whereClauses.push(Prisma.sql`o.date_order <= ${date_order.lte}`);
             }
+          }
+        }
 
-            // Same search string can apply to email or phone.
-            if (key === 'email') {
-              return `(${key} LIKE '%${value}%' OR phone LIKE '%${value}%' OR o.id = '${value}')`;
-            }
+        const whereSql =
+          whereClauses.length > 0
+            ? Prisma.sql`WHERE ${Prisma.join(whereClauses, ' AND ')}`
+            : Prisma.empty;
 
-            return `${key} LIKE '%${value}%'`;
-          })
-          .join(' AND ');
-        
-        const countQuery = `SELECT COUNT(*) as totalCount 
-          FROM orders o 
-          INNER JOIN users u ON o.user_id = u.id 
-          ${filters ? `WHERE ${filters}` : ""}`;
+        const countQuery = Prisma.sql`SELECT COUNT(*) as totalCount
+          FROM orders o
+          INNER JOIN users u ON o.user_id = u.id
+          ${whereSql}`;
 
         // Set pagination or not based on offset and limit being defined.
         // Take will always be truthy if we're trying to fill the table.
         // Take will be falsey if we're trying to export orders in a CSV.
-        const limitOffset = (take)
-          ? `LIMIT ${take} OFFSET ${skip}`
-          : '';
+        const paginationSql = take
+          ? Prisma.sql`LIMIT ${take} OFFSET ${skip}`
+          : Prisma.empty;
 
-        const query = `SELECT o.id, o.date_order, o.status, o.total_price, o.txn_id, o.payment_method, u.city, u.email, u.phone
+        const query = Prisma.sql`SELECT o.id, o.date_order, o.status, o.total_price, o.txn_id, o.payment_method, u.city, u.email, u.phone
           FROM orders o
           INNER JOIN users u ON o.user_id = u.id
-          ${filters ? `WHERE ${filters}` : ""}
-          ORDER BY date_order DESC
-          ${limitOffset};`;
+          ${whereSql}
+          ORDER BY o.date_order DESC
+          ${paginationSql};`;
 
-        const count = await prisma.$queryRawUnsafe<any>(countQuery);
-        const results = await prisma.$queryRawUnsafe<AdminOrders[]>(query);
+        const count = await prisma.$queryRaw<Array<{ totalCount: bigint | number }>>(countQuery);
+        const results = await prisma.$queryRaw<AdminOrders[]>(query);
 
         return {
-          count: Number(count[0].totalCount),
+          count: Number(count[0]?.totalCount ?? 0),
           data: results,
         };
       },

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { HiOutlineEye, HiOutlineEyeOff } from "react-icons/hi";
+import { Eye, EyeOff } from "lucide-react";
 import "./PasswordInput.scss";
 
 interface PasswordInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "type"> {
@@ -22,13 +22,8 @@ export function PasswordInput({ inputClassName, wrapperClassName, ...props }: Pa
         onClick={() => setShow((s) => !s)}
         className="password-input-toggle"
         aria-label={show ? "Ocultar contraseña" : "Mostrar contraseña"}
-        tabIndex={-1}
       >
-        {show ? (
-          <HiOutlineEyeOff size={22} aria-hidden />
-        ) : (
-          <HiOutlineEye size={22} aria-hidden />
-        )}
+        {show ? <EyeOff size={20} aria-hidden /> : <Eye size={20} aria-hidden />}
       </button>
     </span>
   );

@@ -1,10 +1,9 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import trpc from "../../../api";
-import { ErrorModal } from "../../../components/Modals";
+import { ConditionModal, ErrorModal } from "../../../components/Modals";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import { useUserContext } from "../../../contexts/UserContext";
-import "./BlockedEmailDomains.scss";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
 import { Plus, MoreVertical, Trash2 } from "lucide-react";
@@ -22,6 +21,7 @@ export const BlockedEmailDomains = () => {
   const [showError, setShowError] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [drawerDomain, setDrawerDomain] = useState<string | null>(null);
+  const [domainToDelete, setDomainToDelete] = useState<string | null>(null);
 
   const loadDomains = async () => {
     setLoader(true);
@@ -70,12 +70,12 @@ export const BlockedEmailDomains = () => {
   };
 
   const handleRemoveDomain = async (domain: string) => {
-    if (!window.confirm("¿Eliminar este dominio de la lista?")) return;
     setSaving(true);
     try {
       const domains = await trpc.blockedEmailDomains.removeBlockedEmailDomain.mutate({ domain });
       setBlockedDomains(domains);
       setDrawerDomain(null);
+      setDomainToDelete(null);
     } catch (error: any) {
       setErrorMessage(error.message ?? "Error al eliminar.");
       setShowError(true);
@@ -115,6 +115,13 @@ export const BlockedEmailDomains = () => {
   return (
     <AdminPageLayout title="Dominios bloqueados" toolbar={toolbar}>
       <p className="text-slate-500 text-sm mb-4">No se permiten dominios públicos como {RESERVED_DOMAINS.slice(0, 4).join(", ")}…</p>
+      <ConditionModal
+        show={domainToDelete !== null}
+        onHide={() => setDomainToDelete(null)}
+        title="Eliminar dominio"
+        message="¿Eliminar este dominio de la lista?"
+        action={() => domainToDelete ? handleRemoveDomain(domainToDelete) : Promise.resolve()}
+      />
 
       {loader ? (
         <div className="flex justify-center py-12">
@@ -140,7 +147,7 @@ export const BlockedEmailDomains = () => {
                       <td className="py-3 px-4 text-right">
                         <button
                           type="button"
-                          onClick={() => handleRemoveDomain(domain)}
+                          onClick={() => setDomainToDelete(domain)}
                           disabled={saving}
                           className="p-2 text-slate-400 hover:text-red-400 transition-colors rounded-lg hover:bg-slate-800 disabled:opacity-50"
                           title="Eliminar"
@@ -185,7 +192,7 @@ export const BlockedEmailDomains = () => {
             user={undefined}
             actions={
               drawerDomain
-                ? [{ id: "delete", label: "Eliminar de la lista", onClick: () => handleRemoveDomain(drawerDomain), variant: "danger" }]
+                ? [{ id: "delete", label: "Eliminar de la lista", onClick: () => setDomainToDelete(drawerDomain), variant: "danger" }]
                 : []
             }
           >

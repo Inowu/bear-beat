@@ -31,7 +31,6 @@ export function AddInstructionsModal(props: IAddInstructions) {
     const closeSuccess = () => {
         setShowSuccess(false);
         onHideModal();
-        window.location.reload();
     };
 
     const validationSchema = Yup.object().shape({
@@ -52,7 +51,6 @@ export function AddInstructionsModal(props: IAddInstructions) {
                 data: { value: values.video }
             };
 
-            console.log(body)
             const [updateVideoUrl, errorUpdate] = await of(trpc.config.updateOneConfig.mutate(body));
 
             if (errorUpdate || !updateVideoUrl) {

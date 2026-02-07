@@ -48,7 +48,7 @@
         }
 
         .reserved-space-text {
-          color: var(--ma-btn-cancel-text, #dc2626);
+          color: var(--ma-btn-cancel-text, var(--app-status-error));
         }
 
         .progress-bar-container {
@@ -65,7 +65,7 @@
           .reserved-space-bar {
             width: 5%;
             margin-right: 1px;
-            background-color: #e90b0b;
+            background-color: var(--app-status-error);
           }
         }
         .extra-gb {

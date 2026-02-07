@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import "./PlanUpgrade.scss";
 import trpc from "../../api";
 import { IPlans } from "interfaces/Plans";
 import { Spinner } from "../../components/Spinner/Spinner";

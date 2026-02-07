@@ -11,15 +11,19 @@ import { log } from '../../server';
 import differenceInDays from 'date-fns/differenceInDays';
 import Stripe from 'stripe';
 
-if (!process.env.FIREBASE_ADMIN_CREDENTIALS_PATH) {
-  throw new Error('FIREBASE_ADMIN_CREDENTIALS_PATH is not set');
-}
+const firebaseCredentialsPath = process.env.FIREBASE_ADMIN_CREDENTIALS_PATH;
+let db: FirebaseFirestore.Firestore | null = null;
 
-// Initialize Firebase
-const app = admin.initializeApp({
-  credential: admin.credential.cert(path.resolve(__dirname, '../../../', process.env.FIREBASE_ADMIN_CREDENTIALS_PATH as string))
-});
-const db = admin.firestore(app)
+if (firebaseCredentialsPath) {
+  const app = admin.initializeApp({
+    credential: admin.credential.cert(
+      path.resolve(__dirname, '../../../', firebaseCredentialsPath),
+    ),
+  });
+  db = admin.firestore(app);
+} else {
+  log.warn('[MIGRATION] FIREBASE_ADMIN_CREDENTIALS_PATH is not set. UH migration checks are disabled.');
+}
 
 // Add an interface for the return type
 export interface SubscriptionCheckResult {
@@ -129,6 +133,12 @@ export async function checkIfUserIsSubscriber(user: UHUser): Promise<Subscriptio
 }
 
 export async function checkIfUserIsFromUH(email: string): Promise<UHUser | null> {
+  if (!db) {
+    throw new TRPCError({
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'UH migration is not configured in this environment',
+    });
+  }
   const uhUser = await db.collection('users').where('email', '==', email).get();
 
   if (uhUser.empty) {

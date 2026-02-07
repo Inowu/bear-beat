@@ -1,0 +1,131 @@
+.payment-method-logos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.48rem;
+}
+
+.payment-method-logos__item {
+  min-height: 32px;
+  min-width: 66px;
+  padding: 0.3rem 0.55rem;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--app-border) 84%, transparent);
+  background: color-mix(in srgb, var(--app-bg-card) 90%, transparent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.32rem;
+  box-shadow: 0 1px 0 color-mix(in srgb, #ffffff 24%, transparent) inset;
+
+  img {
+    display: block;
+    width: auto;
+    max-width: 54px;
+    height: 16px;
+    object-fit: contain;
+  }
+
+  svg {
+    flex-shrink: 0;
+  }
+
+  strong {
+    font-family: var(--bb-font-ui);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    color: var(--app-text-body);
+    text-transform: uppercase;
+    line-height: 1;
+  }
+}
+
+.payment-method-logos--md .payment-method-logos__item {
+  min-height: 36px;
+  min-width: 72px;
+  padding: 0.42rem 0.65rem;
+
+  img {
+    max-width: 62px;
+    height: 18px;
+  }
+
+  strong {
+    font-size: 0.78rem;
+  }
+}
+
+.payment-method-logos__item--paypal {
+  border-color: color-mix(in srgb, #003087 25%, var(--app-border));
+  background: color-mix(in srgb, #ffffff 90%, var(--app-bg-card));
+
+  svg {
+    color: #003087;
+    width: 15px;
+    height: 15px;
+  }
+
+  strong {
+    color: #003087;
+    text-transform: none;
+    font-size: 0.75rem;
+    letter-spacing: 0.01em;
+  }
+}
+
+.payment-method-logos__item--oxxo {
+  border-color: color-mix(in srgb, #d70f2a 38%, var(--app-border));
+  background: color-mix(in srgb, #ffd200 22%, var(--app-bg-card));
+
+  strong {
+    color: #b10c1f;
+    letter-spacing: 0.05em;
+  }
+}
+
+.payment-method-logos__item--spei,
+.payment-method-logos__item--transfer {
+  border-color: color-mix(in srgb, var(--app-accent) 35%, var(--app-border));
+  background: color-mix(in srgb, var(--app-accent) 10%, var(--app-bg-card));
+
+  svg {
+    color: var(--app-accent);
+  }
+
+  strong {
+    color: var(--app-text-heading);
+  }
+}
+
+.payment-method-logos__item--transfer strong {
+  text-transform: none;
+}
+
+[data-theme="dark"] .payment-method-logos__item--paypal,
+html.dark .payment-method-logos__item--paypal,
+.dark .payment-method-logos__item--paypal {
+  background: color-mix(in srgb, #003087 16%, var(--app-bg-card));
+}
+
+@media (max-width: 640px) {
+  .payment-method-logos {
+    gap: 0.42rem;
+  }
+
+  .payment-method-logos__item {
+    min-height: 30px;
+    min-width: 62px;
+    padding: 0.28rem 0.5rem;
+
+    img {
+      max-width: 50px;
+      height: 15px;
+    }
+
+    strong {
+      font-size: 0.69rem;
+    }
+  }
+}

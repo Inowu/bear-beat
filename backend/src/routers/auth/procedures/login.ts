@@ -3,18 +3,16 @@ import { TRPCError } from '@trpc/server';
 import bcrypt from 'bcrypt';
 import { publicProcedure } from '../../../procedures/public.procedure';
 import { generateTokens } from './utils/generateTokens';
-import { RolesIds } from '../interfaces/roles.interface';
 
 export const login = publicProcedure
   .input(
     z.object({
       username: z.string().email('El email no tiene un formato valido'),
       password: z.string(),
-      isAdmin: z.boolean().optional(),
     }),
   )
   .query(
-    async ({ input: { password, username, isAdmin }, ctx: { prisma } }) => {
+    async ({ input: { password, username }, ctx: { prisma } }) => {
       const user = await prisma.users.findFirst({
         where: {
           OR: [
@@ -52,19 +50,7 @@ export const login = publicProcedure
       // I have to replace the prefix for compatibility
       const hash = user.password.replace('$2y$', '$2b$');
 
-      if (isAdmin) {
-        if (user.role_id === RolesIds.admin) {
-          throw new TRPCError({
-            code: 'UNAUTHORIZED',
-            message: 'No puedes acceder a la cuenta de un admin',
-          });
-        }
-      }
-
-      // Admin
-      const isPasswordCorrect = isAdmin
-        ? password === user.password
-        : bcrypt.compareSync(password, hash);
+      const isPasswordCorrect = bcrypt.compareSync(password, hash);
 
       if (!isPasswordCorrect) {
         throw new TRPCError({

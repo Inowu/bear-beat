@@ -5,9 +5,8 @@ nav {
   justify-content: space-between;
   align-items: center;
   padding: 8px;
-  /* Brand: bg-bear-dark-400 via Tailwind; fallback for theme vars */
-  background-color: var(--theme-nav-bg, #292929);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background-color: var(--theme-nav-bg);
+  box-shadow: var(--theme-nav-shadow, 0 4px 12px rgba(0, 0, 0, 0.15));
   border-bottom: 2px solid var(--theme-nav-border-bottom, rgba(255, 255, 255, 0.1));
   min-height: 56px;
   height: auto;
@@ -49,6 +48,8 @@ nav {
       background: transparent;
       cursor: pointer;
       padding: 0;
+      min-width: 44px;
+      min-height: 44px;
       color: inherit;
     }
   }
@@ -65,35 +66,46 @@ nav {
     padding: 0;
     margin: 0;
 
-    a {
-      display: inline-flex;
+    li {
+      display: flex;
       align-items: center;
-      min-height: 44px;
-      text-decoration: none;
-      color: inherit;
-      -webkit-tap-highlight-color: transparent;
     }
 
-    li {
+    .nav-item {
       cursor: pointer;
       color: var(--theme-nav-text);
       border-radius: 50px;
       background-color: var(--theme-nav-item-bg);
-      padding: 4px 8px;
-      transition: all 0.1s ease;
-      font-family: "Poppins";
+      border: 1px solid var(--theme-nav-item-border, transparent);
+      box-shadow: var(--theme-nav-item-shadow, none);
+      padding: 4px 10px;
+      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+      font-family: var(--bb-font-ui);
       font-size: var(--app-font-size-body);
       font-weight: var(--app-font-weight-heading);
       gap: 10px;
-      display: flex;
+      display: inline-flex;
       justify-content: center;
       align-items: center;
-      min-height: 36px;
+      min-height: 44px;
+      min-width: 44px;
+      text-decoration: none;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      background-clip: padding-box;
 
-      &:hover {
-        background-color: var(--theme-nav-item-hover-bg);
-        color: var(--theme-nav-item-hover-text);
-      }
+      /* Button reset */
+      appearance: none;
+      border-style: solid;
+    }
+
+    .nav-item:hover {
+      background-color: var(--theme-nav-item-hover-bg);
+      color: var(--theme-nav-item-hover-text);
+    }
+
+    .nav-item svg {
+      flex-shrink: 0;
     }
   }
 
@@ -104,10 +116,10 @@ nav {
     gap: 6px;
 
     .theme-btn {
-      width: 40px;
-      height: 40px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
-      border: none;
+      border: 1px solid var(--theme-nav-item-border, transparent);
       background: var(--theme-nav-item-bg);
       color: var(--theme-nav-text);
       cursor: pointer;
@@ -137,7 +149,7 @@ nav {
       background: var(--theme-card-bg);
       border: 1px solid var(--theme-card-border);
       border-radius: 12px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      box-shadow: var(--theme-card-shadow-hover);
       padding: 8px;
       z-index: 200;
       display: flex;
@@ -202,14 +214,13 @@ nav {
       flex-wrap: nowrap;
       gap: 8px;
 
-      a,
-      li {
+      .nav-item {
         padding: 8px 14px;
-        min-height: 40px;
+        min-height: 44px;
         white-space: nowrap;
       }
 
-      li {
+      .nav-item {
         font-size: 0.9375rem;
       }
 
@@ -221,10 +232,10 @@ nav {
     }
 
     .theme-toggle-wrap .theme-btn {
-      width: 40px;
-      height: 40px;
-      min-width: 40px;
-      min-height: 40px;
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+      min-height: 44px;
     }
   }
 
@@ -258,16 +269,34 @@ nav {
     }
 
     ul {
-      li {
-        padding: 8px;
-        svg {
-          width: 1.6rem;
-          height: 1.6rem!important;
-        }
-        span {
-          display: none;
-        }
+      .nav-item {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
+        padding: 0;
       }
+
+      .nav-item svg {
+        width: 22px;
+        height: 22px;
+      }
+
+      .nav-item span {
+        display: none;
+      }
+    }
+  }
+
+  /* Móvil/Tablet (<=992px): reducir ruido visual.
+     Acciones de cuenta/logout/admin viven en el drawer (AsideNavbar). */
+  @include respond-to(md) {
+    .nav-right ul {
+      display: none;
+    }
+
+    .header img {
+      max-width: 54px;
     }
   }
 

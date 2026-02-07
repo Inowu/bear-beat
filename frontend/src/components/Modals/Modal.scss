@@ -116,7 +116,7 @@
         border: none;
         min-height: 48px;
         font-size: var(--app-font-size-body);
-        box-shadow: 0 0 12px rgba(255, 45, 44, 0.35);
+        box-shadow: 0 0 12px color-mix(in srgb, var(--app-status-error) 35%, transparent);
       }
 
       .btn-option-1 {
@@ -133,7 +133,7 @@
         border: none;
         min-height: 48px;
         font-size: var(--app-font-size-body);
-        box-shadow: 0 0 12px rgba(34, 197, 94, 0.35);
+        box-shadow: 0 0 12px color-mix(in srgb, var(--app-status-success) 35%, transparent);
       }
 
       .btn-option-3 {
@@ -255,22 +255,22 @@
 
 .error-modal .modal-content {
   border-color: var(--app-status-error) !important;
-  box-shadow: var(--app-shadow-card), 0 0 0 2px rgba(255, 45, 44, 0.25) !important;
+  box-shadow: var(--app-shadow-card), 0 0 0 2px color-mix(in srgb, var(--app-status-error) 25%, transparent) !important;
 }
 
 .success-modal .modal-content {
   border-color: var(--app-status-success) !important;
-  box-shadow: var(--app-shadow-card), 0 0 0 2px rgba(57, 216, 52, 0.25) !important;
+  box-shadow: var(--app-shadow-card), 0 0 0 2px color-mix(in srgb, var(--app-status-success) 25%, transparent) !important;
 }
 
 .option-modal .modal-content {
   border-color: var(--app-status-success) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 2px rgba(57, 216, 52, 0.3) !important;
+  box-shadow: var(--app-shadow-card), 0 0 0 2px color-mix(in srgb, var(--app-status-success) 30%, transparent) !important;
 }
 
 .oxxo-modal .modal-content {
   border-color: var(--app-status-warning) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 2px rgba(254, 188, 46, 0.35) !important;
+  box-shadow: var(--app-shadow-card), 0 0 0 2px color-mix(in srgb, var(--app-status-warning) 35%, transparent) !important;
 }
 
 .card-input {
@@ -282,7 +282,7 @@
   min-height: 48px;
   border-radius: 12px;
   &:focus {
-    border-color: #08E1F7;
+    border-color: var(--app-accent);
     box-shadow: 0 0 0 2px var(--app-focus-ring);
     outline: none;
   }
@@ -336,7 +336,7 @@
         color: var(--app-text-muted);
       }
       &:focus {
-        border-color: #08E1F7;
+        border-color: var(--app-accent);
         box-shadow: 0 0 0 2px var(--app-focus-ring);
         outline: none;
       }
@@ -473,7 +473,7 @@
   width: 100% !important;
   border: 2px solid var(--app-border);
   &:focus {
-    border-color: #08E1F7;
+    border-color: var(--app-accent);
     box-shadow: 0 0 0 2px var(--app-focus-ring);
     outline: none;
   }
@@ -510,7 +510,7 @@
     color: var(--app-text-body);
     font-size: var(--app-font-size-body);
     &:focus {
-      border-color: #08E1F7;
+      border-color: var(--app-accent);
       box-shadow: 0 0 0 2px var(--app-focus-ring);
       outline: none;
     }

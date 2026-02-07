@@ -15,12 +15,11 @@ import trpc from "../../../api";
 interface IVerifyPhoneModal {
     showModal: boolean;
     onHideModal: () => void;
-    newUserId: number;
     newUserPhone: string;
 }
 
 export function VerifyPhoneModal(props: IVerifyPhoneModal) {
-    const { showModal, onHideModal, newUserId, newUserPhone } = props;
+    const { showModal, onHideModal, newUserPhone } = props;
     const navigate = useNavigate();
     const [loader, setLoader] = useState<boolean>(false);
     const [show, setShow] = useState<boolean>(false);
@@ -53,7 +52,6 @@ export function VerifyPhoneModal(props: IVerifyPhoneModal) {
             let body = {
                 code: values.code,
                 phoneNumber: newUserPhone,
-                userId: newUserId,
             };
 
             const [verifyingPhone, errorUpdate] = await of(trpc.auth.verifyPhone.mutate(body));
@@ -67,6 +65,7 @@ export function VerifyPhoneModal(props: IVerifyPhoneModal) {
                     setShow(true);
                     setErrorMessage(verifyingPhone.message);
                     setLoader(false);
+                    return;
                 }
                 setShowSuccess(true);
                 setLoader(false);

@@ -1,6 +1,11 @@
 @import "src/styles/mixin.scss";
 @import "../../styles/landing-design.scss";
 
+$text-primary: var(--app-text-heading);
+$card-glass: var(--app-bg-card);
+$card-glass-border: var(--app-border);
+$bear-blue-dim: var(--bb-cyan);
+
 // Mobile-first (compatible con tema oscuro admin)
 .pagination-container {
   display: flex;
@@ -41,39 +46,86 @@
     align-items: center;
     justify-content: center;
 
-    .selected {
-      font-weight: 600;
-      color: $bear-blue-dim;
-      font-size: var(--app-font-size-body);
+    .page-nav {
+      cursor: pointer;
+      color: var(--app-accent);
+      min-width: 44px;
+      min-height: 44px;
+      width: 44px;
+      height: 44px;
+      border-radius: 999px;
+      border: 1px solid color-mix(in srgb, var(--app-accent) 30%, transparent);
+      background: color-mix(in srgb, var(--app-bg-card) 88%, transparent);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.2s, background 0.2s, transform 0.2s;
+
+      &:hover:not(:disabled) {
+        opacity: 0.92;
+        transform: translateY(-1px);
+      }
+
+      &:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      svg {
+        min-width: 24px;
+        min-height: 24px;
+      }
     }
 
-    .unselected,
-    .points {
+    .selected {
+      font-weight: 600;
+      color: var(--app-accent);
+      font-size: var(--app-font-size-body);
+      min-width: 44px;
+      min-height: 44px;
+      padding: 0 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      border: 1px solid color-mix(in srgb, var(--app-accent) 35%, transparent);
+      background: color-mix(in srgb, var(--app-accent) 16%, transparent);
+    }
+
+    .unselected {
       cursor: pointer;
       font-size: var(--app-font-size-body);
       color: $text-primary;
-      min-width: 36px;
+      min-width: 44px;
+      min-height: 44px;
+      padding: 0 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      background: transparent;
+      transition: opacity 0.2s, background 0.2s;
+
+      &:hover {
+        opacity: 0.67;
+        background: color-mix(in srgb, var(--app-accent) 12%, transparent);
+      }
+    }
+
+    .points {
+      color: $text-primary;
+      min-width: 30px;
       min-height: 44px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      &:hover {
-        opacity: 0.67;
-      }
+      opacity: 0.75;
     }
 
-    svg {
-      cursor: pointer;
-      color: $bear-blue-dim;
-      min-width: 44px;
-      min-height: 44px;
-      &:hover {
-        opacity: 0.67;
-      }
-    }
-
-    p {
-      color: $bear-blue-dim;
+    button,
+    span {
+      color: var(--app-accent);
       font-size: var(--app-font-size-body);
     }
   }
@@ -97,8 +149,15 @@
 
     .right-side .selected,
     .right-side .unselected,
-    .right-side p {
+    .right-side .points {
       font-size: var(--app-font-size-body-lg);
+    }
+
+    .right-side .page-nav {
+      min-width: 44px;
+      min-height: 44px;
+      width: 44px;
+      height: 44px;
     }
   }
 }

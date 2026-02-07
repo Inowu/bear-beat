@@ -1,26 +1,29 @@
 import "./AsideNavbar.scss";
-import Logo from "../../assets/images/osonuevo.png";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useUserContext } from "../../contexts/UserContext";
 import { useLocation } from "react-router-dom";
 import {
-  faUserCircle,
-  faFolder,
-  faCartPlus,
-  faQuestion,
-  faDatabase,
-  faTicket,
-  faAddressBook,
-  faTag,
-  faArrowAltCircleUp,
-  faDownload,
-  faBan,
-  faPhone,
-  faChartBar,
-  faTimes,
-  faHeadset,
-} from "@fortawesome/free-solid-svg-icons";
+  Users,
+  FolderOpen,
+  ShoppingCart,
+  HelpCircle,
+  Database,
+  Ticket,
+  Receipt,
+  FileText,
+  ArrowUpCircle,
+  Download,
+  Ban,
+  Phone,
+  BarChart3,
+  X,
+  Headphones,
+  UserRound,
+  Shield,
+  LogOut,
+} from "lucide-react";
 import { Link } from "react-router-dom";
+import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
+import { SUPPORT_CHAT_URL, openSupportChat } from "../../utils/supportChat";
 
 interface AsideNavbarPropsI {
   show: boolean;
@@ -28,7 +31,7 @@ interface AsideNavbarPropsI {
 }
 
 function AsideNavbar(props: AsideNavbarPropsI) {
-  const { currentUser, resetCard } = useUserContext();
+  const { currentUser, resetCard, handleLogout } = useUserContext();
   const { show, onHide } = props;
   const location = useLocation();
 
@@ -38,55 +41,102 @@ function AsideNavbar(props: AsideNavbarPropsI) {
   };
 
   const handleSupportClick = () => {
-    window.location.href = "tel:+3521005329";
+    trackManyChatConversion(MC_EVENTS.CLICK_CHAT);
+    onHide();
+    openSupportChat();
+  };
+
+  const handleSupportLinkClick = () => {
+    trackManyChatConversion(MC_EVENTS.CLICK_CHAT);
+    handleLinkClick();
   };
 
   const linkProps = { onClick: onHide };
 
   return (
-    <aside className={`bg-bear-dark-400 ${show ? "open" : ""}`} aria-hidden={!show}>
+    <aside className={show ? "open" : ""} aria-hidden={!show}>
       {/* Mobile: backdrop to close on tap outside */}
       {show && <div className="aside-backdrop" onClick={onHide} aria-hidden />}
-      <div className="aside-inner bg-bear-dark-400" onClick={(e) => e.stopPropagation()}>
+      <div className="aside-inner" onClick={(e) => e.stopPropagation()}>
         <div className="aside-drawer-header">
           <span className="aside-drawer-title">Menú</span>
         </div>
-        <img src={Logo} alt="" className="aside-logo" aria-hidden="true" />
         <div className="nav-container">
           <h2 className="nav-title">Contenido</h2>
           <div className="nav-links-wrap">
             {location.pathname.startsWith("/admin/") ? (
               <ul className="nav-list">
-                <li><Link to="/admin/usuarios" {...linkProps}><FontAwesomeIcon icon={faUserCircle} /> Usuarios</Link></li>
-                <li><Link to="/admin/planesAdmin" {...linkProps}><FontAwesomeIcon icon={faCartPlus} /> Planes</Link></li>
-                <li><Link to="/admin/ordenes" {...linkProps}><FontAwesomeIcon icon={faAddressBook} /> Ordenes</Link></li>
-                <li><Link to="/admin/cupones" {...linkProps}><FontAwesomeIcon icon={faTicket} /> Cupones</Link></li>
-                <li><Link to="/admin/almacenamiento" {...linkProps}><FontAwesomeIcon icon={faDatabase} /> Almacenamiento</Link></li>
-                <li><Link to="/admin/catalogo" {...linkProps}><FontAwesomeIcon icon={faChartBar} /> Catálogo</Link></li>
-                <li><Link to="/admin/historial-descargas" {...linkProps}><FontAwesomeIcon icon={faDownload} /> Descargas</Link></li>
-                <li><Link to="/admin/historialCheckout" {...linkProps}><FontAwesomeIcon icon={faTag} /> Checkout</Link></li>
-                <li><Link to="/admin/dominios-bloqueados" {...linkProps}><FontAwesomeIcon icon={faBan} /> Dominios</Link></li>
-                <li><Link to="/admin/telefonos-bloqueados" {...linkProps}><FontAwesomeIcon icon={faPhone} /> Telefonos</Link></li>
+                <li><Link to="/admin/usuarios" {...linkProps}><Users size={18} aria-hidden /> Usuarios</Link></li>
+                <li><Link to="/admin/planesAdmin" {...linkProps}><ShoppingCart size={18} aria-hidden /> Planes</Link></li>
+                <li><Link to="/admin/ordenes" {...linkProps}><Receipt size={18} aria-hidden /> Ordenes</Link></li>
+                <li><Link to="/admin/cupones" {...linkProps}><Ticket size={18} aria-hidden /> Cupones</Link></li>
+                <li><Link to="/admin/almacenamiento" {...linkProps}><Database size={18} aria-hidden /> Almacenamiento</Link></li>
+                <li><Link to="/admin/catalogo" {...linkProps}><BarChart3 size={18} aria-hidden /> Catálogo</Link></li>
+                <li><Link to="/admin/analitica" {...linkProps}><BarChart3 size={18} aria-hidden /> Analítica</Link></li>
+                <li><Link to="/admin/historial-descargas" {...linkProps}><Download size={18} aria-hidden /> Descargas</Link></li>
+                <li><Link to="/admin/historialCheckout" {...linkProps}><FileText size={18} aria-hidden /> Checkout</Link></li>
+                <li><Link to="/admin/dominios-bloqueados" {...linkProps}><Ban size={18} aria-hidden /> Dominios</Link></li>
+                <li><Link to="/admin/telefonos-bloqueados" {...linkProps}><Phone size={18} aria-hidden /> Telefonos</Link></li>
                 <li>
-                  <a href="tel:+3521005329" onClick={(e) => { handleLinkClick(); }} aria-label="Llamar a soporte">
-                    <FontAwesomeIcon icon={faHeadset} /> Soporte
+                  <a
+                    href={SUPPORT_CHAT_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={handleSupportLinkClick}
+                    aria-label="Abrir chat de soporte"
+                  >
+                    <Headphones size={18} aria-hidden /> Soporte
                   </a>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleLogout();
+                      onHide();
+                    }}
+                    aria-label="Cerrar sesión"
+                  >
+                    <LogOut size={18} aria-hidden /> Cerrar sesión
+                  </button>
                 </li>
               </ul>
             ) : (
               <ul className="nav-list">
-                <li><Link to="/" onClick={handleLinkClick}><FontAwesomeIcon icon={faFolder} /> Todos los archivos</Link></li>
+                <li><Link to="/" onClick={handleLinkClick}><FolderOpen size={18} aria-hidden /> Todos los archivos</Link></li>
                 {!currentUser?.hasActiveSubscription || currentUser.isSubscriptionCancelled ? (
-                  <li><Link to="/planes" {...linkProps}><FontAwesomeIcon icon={faCartPlus} /> Planes</Link></li>
+                  <li><Link to="/planes" {...linkProps}><ShoppingCart size={18} aria-hidden /> Planes</Link></li>
                 ) : (
-                  <li><Link to="/actualizar-planes" {...linkProps}><FontAwesomeIcon icon={faArrowAltCircleUp} /> Actualiza tu plan</Link></li>
+                  <li><Link to="/actualizar-planes" {...linkProps}><ArrowUpCircle size={18} aria-hidden /> Actualiza tu plan</Link></li>
                 )}
-                <li><Link to="/micuenta" {...linkProps}><FontAwesomeIcon icon={faUserCircle} /> Mi cuenta</Link></li>
-                <li><Link to="/instrucciones" {...linkProps}><FontAwesomeIcon icon={faQuestion} /> Instrucciones</Link></li>
+                {currentUser?.role === "admin" && (
+                  <li><Link to="/admin/usuarios" {...linkProps}><Shield size={18} aria-hidden /> Admin</Link></li>
+                )}
+                <li><Link to="/micuenta" {...linkProps}><UserRound size={18} aria-hidden /> Mi cuenta</Link></li>
+                <li><Link to="/instrucciones" {...linkProps}><HelpCircle size={18} aria-hidden /> Instrucciones</Link></li>
+                <li><Link to="/legal" {...linkProps}><FileText size={18} aria-hidden /> FAQ y políticas</Link></li>
                 <li>
-                  <a href="tel:+3521005329" onClick={(e) => { handleLinkClick(); }} aria-label="Llamar a soporte">
-                    <FontAwesomeIcon icon={faHeadset} /> Soporte
+                  <a
+                    href={SUPPORT_CHAT_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={handleSupportLinkClick}
+                    aria-label="Abrir chat de soporte"
+                  >
+                    <Headphones size={18} aria-hidden /> Soporte
                   </a>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleLogout();
+                      onHide();
+                    }}
+                    aria-label="Cerrar sesión"
+                  >
+                    <LogOut size={18} aria-hidden /> Cerrar sesión
+                  </button>
                 </li>
               </ul>
             )}
@@ -98,16 +148,16 @@ function AsideNavbar(props: AsideNavbarPropsI) {
           onClick={onHide}
           aria-label="Cerrar menú"
         >
-          <FontAwesomeIcon icon={faTimes} />
+          <X size={20} aria-hidden />
         </button>
       </div>
       <button
         type="button"
         className="btnSupport btnSupport-float"
         onClick={handleSupportClick}
-        aria-label="Llamar a soporte"
+        aria-label="Abrir chat de soporte"
       >
-        <FontAwesomeIcon icon={faHeadset} style={{ fontSize: "25px" }} />
+        <Headphones size={24} aria-hidden />
       </button>
     </aside>
   );

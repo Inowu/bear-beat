@@ -24,6 +24,8 @@ import { removeUsersQueue } from '../queue/removeUsers';
 import { RemoveUsersJob } from '../queue/removeUsers/types';
 import { JobStatus } from '../queue/jobStatus';
 import { manyChat } from '../many-chat';
+import { facebook } from '../facebook';
+import { getClientIpFromRequest } from '../analytics';
 
 const validateExistingData = async (data: any, prisma: any, id: number) => {
   if (data.username) {
@@ -526,19 +528,29 @@ export const usersRouter = router({
   sendFacebookEvent: shieldedProcedure
     .input(
       z.object({
-        event: z.string()
-      })
+        event: z.enum([
+          'Purchase',
+          'InitiateCheckout',
+          'CompleteRegistration',
+          'Lead',
+        ]),
+        url: z.string().url(),
+        fbp: z.string().optional(),
+        fbc: z.string().optional(),
+        eventId: z.string().optional(),
+        value: z.number().optional(),
+        currency: z.string().optional(),
+      }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { remoteAddress } = ctx.req.socket;
-      const userAgent = ctx.req.headers['user-agent'];
-
-      if (!remoteAddress || !userAgent) {
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'No hay suficiente información del usuario para enviar a Facebook'
-        })
-      }
+      const clientIp = getClientIpFromRequest(ctx.req);
+      const userAgentRaw = ctx.req.headers['user-agent'];
+      const userAgent =
+        typeof userAgentRaw === 'string'
+          ? userAgentRaw
+          : Array.isArray(userAgentRaw)
+            ? userAgentRaw[0] ?? null
+            : null;
 
       const user = await ctx.prisma.users.findFirst({
         where: {
@@ -546,7 +558,40 @@ export const usersRouter = router({
         },
       });
 
+      if (!user) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Usuario no encontrado',
+        });
+      }
 
+      try {
+        await facebook.setEvent(
+          input.event,
+          clientIp,
+          userAgent,
+          { fbp: input.fbp, fbc: input.fbc, eventId: input.eventId },
+          input.url,
+          user,
+          input.value != null || input.currency
+            ? { value: input.value, currency: input.currency }
+            : undefined,
+        );
+      } catch (error) {
+        log.error('[FACEBOOK] Error sending CAPI event from client', {
+          event: input.event,
+          error: error instanceof Error ? error.message : error,
+        });
+        // Nunca romper UX por tracking
+        return {
+          ok: false,
+          error: 'capi_failed',
+        };
+      }
+
+      return {
+        ok: true,
+      };
     }),
   aggregateUsers: shieldedProcedure
     .input(UsersAggregateSchema)

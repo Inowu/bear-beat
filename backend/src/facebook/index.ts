@@ -5,6 +5,7 @@ import { log } from '../server';
 const EventRequest = bizSdk.EventRequest;
 const UserData = bizSdk.UserData;
 const ServerEvent = bizSdk.ServerEvent;
+const CustomData = bizSdk.CustomData;
 
 const access_token = process.env.FACEBOOK_ACCESS_TOKEN;
 const pixel_id = process.env.FACEBOOK_PIXEL_ID;
@@ -18,6 +19,12 @@ export type FacebookCustomData = {
   currency?: string;
 };
 
+export type FacebookMarketingContext = {
+  fbp?: string | null;
+  fbc?: string | null;
+  eventId?: string | null;
+};
+
 /**
  * Envía un evento al Conversions API de Meta (CAPI).
  * Usar nombres estándar: "CompleteRegistration" (registro), "Purchase" (compra).
@@ -27,15 +34,16 @@ export type FacebookCustomData = {
 export const facebook = {
   setEvent: async function (
     eventName: string,
-    remoteAddress: string,
-    userAgent: string,
-    fbp: string,
+    remoteAddress: string | null,
+    userAgent: string | null,
+    marketing: FacebookMarketingContext,
     sourceUrl: string,
     user: Users,
     customData?: FacebookCustomData
   ) {
     if (!access_token || !pixel_id) {
-      log.warn('[FACEBOOK] CAPI no configurado: faltan FACEBOOK_ACCESS_TOKEN o FACEBOOK_PIXEL_ID');
+      // No spamear warnings: es normal que en dev o entornos sin configuración no exista.
+      log.debug('[FACEBOOK] CAPI no configurado: faltan FACEBOOK_ACCESS_TOKEN o FACEBOOK_PIXEL_ID');
       return;
     }
 
@@ -43,10 +51,32 @@ export const facebook = {
 
     const userData = new UserData()
       .setEmails([user.email])
-      .setPhones([user.phone || ''])
-      .setClientIpAddress(remoteAddress)
-      .setClientUserAgent(userAgent)
-      .setFbp(fbp);
+      .setExternalId(String(user.id));
+
+    const phone = typeof user.phone === 'string' ? user.phone.trim() : '';
+    if (phone) {
+      userData.setPhones([phone]);
+    }
+
+    if (remoteAddress) {
+      userData.setClientIpAddress(remoteAddress);
+    }
+
+    if (userAgent) {
+      userData.setClientUserAgent(userAgent);
+    }
+
+    const fbp =
+      typeof marketing?.fbp === 'string' ? marketing.fbp.trim() : '';
+    if (fbp) {
+      userData.setFbp(fbp);
+    }
+
+    const fbc =
+      typeof marketing?.fbc === 'string' ? marketing.fbc.trim() : '';
+    if (fbc) {
+      userData.setFbc(fbc);
+    }
 
     const serverEvent = new ServerEvent()
       .setEventName(eventName)
@@ -55,11 +85,17 @@ export const facebook = {
       .setEventSourceUrl(sourceUrl)
       .setActionSource('website');
 
+    const eventId =
+      typeof marketing?.eventId === 'string' ? marketing.eventId.trim() : '';
+    if (eventId) {
+      serverEvent.setEventId(eventId);
+    }
+
     if (customData && (customData.value != null || customData.currency)) {
-      const data: Record<string, unknown> = {};
-      if (customData.value != null) data.value = customData.value;
-      if (customData.currency) data.currency = customData.currency.toUpperCase();
-      serverEvent.setCustomData(data as any);
+      const data = new CustomData();
+      if (customData.value != null) data.setValue(customData.value);
+      if (customData.currency) data.setCurrency(customData.currency.toUpperCase());
+      serverEvent.setCustomData(data);
     }
 
     const eventRequest = new EventRequest(access_token, pixel_id).setEvents([serverEvent]);

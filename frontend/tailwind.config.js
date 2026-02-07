@@ -5,7 +5,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // PALETA SEMÁNTICA (cambia según el modo light/dark)
+        // PALETA SEMÁNTICA (para index.css light/dark)
         bg: {
           main: "var(--bg-main)",
           card: "var(--bg-card)",
@@ -18,41 +18,40 @@ module.exports = {
         border: {
           DEFAULT: "var(--border-main)",
         },
-        // MARCA (siempre igual)
         bear: {
-          cyan: "#08E1F7",
-          mint: "#00E6C1",
+          cyan: "#08E1F7",      // Tu Cyan Principal
+          mint: "#00E6C1",      // Tu Menta
           dark: {
-            100: "#404040",
-            200: "#3B3B3B",
-            300: "#2A2A2A",
-            400: "#292929",
-            500: "#1A1A1A",
-            900: "#020617",
+            100: "#404040",     // Items Nav
+            200: "#3B3B3B",     // Items Nav alt
+            300: "#2A2A2A",     // Body Modales
+            400: "#292929",     // Navbar / Aside
+            500: "#1A1A1A",     // Cards / Fondos
+            900: "#020617",     // Fondo Principal
           },
           light: {
-            100: "#FFFFFF",
-            200: "#EEEEEE",
-          },
+            100: "#FFFFFF",     // Superficies
+            200: "#EEEEEE",     // Fondo General Light
+          }
         },
         status: {
           error: "#FF2D2C",
           success: "#39D834",
           warning: "#FEBC2E",
-        },
+        }
       },
       fontFamily: {
         poppins: ["Poppins", "sans-serif"],
-        bear: ["Bear-font", "Poppins", "sans-serif"],
+        bear: ["Bear-font", "Poppins", "sans-serif"], // Arkhip para títulos
       },
       backgroundImage: {
-        "bear-gradient": "linear-gradient(11deg, #00E6C1 0%, #08E1F7 100%)",
+        'bear-gradient': 'linear-gradient(11deg, #00E6C1 0%, #08E1F7 100%)',
       },
       borderRadius: {
-        pill: "999px",
-        card: "12px",
-      },
+        'pill': '999px',
+        'card': '12px',
+      }
     },
   },
   plugins: [],
-};
+}

@@ -107,15 +107,15 @@ export const DownloadHistory = () => {
 
       <div className="rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50 hidden md:block">
         <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
-          <table className="w-full min-w-[600px]">
+          <table className="w-full table-fixed">
             <thead className="bg-slate-900 sticky top-0 z-10">
               <tr>
-                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Email</th>
-                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4 hidden lg:table-cell">Teléfono</th>
+                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4 w-[180px]">Email</th>
+                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4 hidden xl:table-cell w-[150px]">Teléfono</th>
                 <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Nombre</th>
-                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Tamaño</th>
-                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Fecha</th>
-                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Tipo</th>
+                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4 w-[110px]">Tamaño</th>
+                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4 w-[120px]">Fecha</th>
+                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4 w-[100px]">Tipo</th>
               </tr>
             </thead>
             <tbody className="bg-slate-950">
@@ -124,9 +124,9 @@ export const DownloadHistory = () => {
                     const gb = Number(his.size) / (1024 * 1024 * 1024);
                     return (
                       <tr key={`h_${index}`} className="border-b border-slate-800 hover:bg-slate-900/60 transition-colors">
-                        <td className="py-3 px-4 text-sm text-slate-300">{his.email}</td>
-                        <td className="py-3 px-4 text-sm text-slate-300 hidden lg:table-cell">{his.phone}</td>
-                        <td className="py-3 px-4 text-sm text-slate-300">{his.fileName}</td>
+                        <td className="py-3 px-4 text-sm text-slate-300 truncate" title={his.email}>{his.email}</td>
+                        <td className="py-3 px-4 text-sm text-slate-300 hidden xl:table-cell truncate" title={his.phone ?? ""}>{his.phone}</td>
+                        <td className="py-3 px-4 text-sm text-slate-300 truncate" title={his.fileName}>{his.fileName}</td>
                         <td className="py-3 px-4 text-sm text-slate-300">{gb.toFixed(2)} GB</td>
                         <td className="py-3 px-4 text-sm text-slate-300">{his.date.toLocaleDateString()}</td>
                         <td className="py-3 px-4">

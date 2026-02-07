@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { HiFolderArrowDown } from "react-icons/hi2";
-import { FaMusic } from "react-icons/fa6";
+import { FolderDown, Music } from "lucide-react";
 import { IDownloads } from "interfaces/Files";
 import trpc from "../../api";
 
@@ -21,11 +20,11 @@ function Downloads() {
   }, []);
 
   return (
-    <div className="w-full overflow-x-hidden">
+    <div className="w-full bb-surface">
       <header className="mb-6">
         <div className="flex flex-wrap items-center gap-3">
-          <HiFolderArrowDown className="h-6 w-6 flex-shrink-0 text-bear-cyan" aria-hidden />
-          <h2 className="text-base font-bold font-bear text-text-main">Historial de descargas</h2>
+          <FolderDown className="h-6 w-6 flex-shrink-0 text-bear-cyan" aria-hidden />
+          <h2 className="text-base font-bold text-text-main">Historial de descargas</h2>
         </div>
       </header>
 
@@ -51,7 +50,7 @@ function Downloads() {
                 >
                   <td className="py-4 px-4 text-sm text-text-main">
                     <span className="flex items-center gap-3 min-w-0">
-                      <FaMusic className="h-5 w-5 flex-shrink-0 text-bear-cyan" aria-hidden />
+                      <Music className="h-5 w-5 flex-shrink-0 text-bear-cyan" aria-hidden />
                       <span className="truncate">{download.dirName}</span>
                     </span>
                   </td>
@@ -81,7 +80,7 @@ function Downloads() {
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <FaMusic className="h-5 w-5 flex-shrink-0 text-bear-cyan" aria-hidden />
+                  <Music className="h-5 w-5 flex-shrink-0 text-bear-cyan" aria-hidden />
                   <p className="text-sm text-text-main truncate">{download.dirName}</p>
                 </div>
                 <p className="text-sm text-text-muted flex-shrink-0">

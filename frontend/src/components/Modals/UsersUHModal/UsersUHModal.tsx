@@ -1,7 +1,7 @@
 import { CardElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import '../Modal.scss';
 import { Modal } from 'react-bootstrap';
-import { RiBankCardFill, RiCloseLine, RiRefreshLine } from 'react-icons/ri';
+import { CreditCard, RefreshCw, X } from 'lucide-react';
 import { IPaymentMethod } from 'interfaces/User';
 import { useState } from 'react';
 import { useUserContext } from '../../../contexts/UserContext';
@@ -10,6 +10,7 @@ import trpc from '../../../api';
 import { useCookies } from 'react-cookie';
 import { SuccessModal } from '../SuccessModal/SuccessModal';
 import { ErrorModal } from '../ErrorModal/ErrorModal';
+import { SUPPORT_CHAT_URL } from '../../../utils/supportChat';
 
 interface IUsersUHModal {
   showModal: boolean;
@@ -22,7 +23,7 @@ export function UsersUHModal(props: IUsersUHModal) {
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<any>('');
   const [card, setCard] = useState<any>(null);
-  const { paymentMethods, cardLoad, getPaymentMethods, currentUser } =
+  const { paymentMethods, cardLoad, getPaymentMethods, startUser } =
     useUserContext();
   const [loader, setLoader] = useState<boolean>(false);
   const [cookies] = useCookies(['_fbp']);
@@ -34,7 +35,8 @@ export function UsersUHModal(props: IUsersUHModal) {
   };
   const closeSuccess = () => {
     setShowSuccess(false);
-    window.location.reload();
+    onHideModal();
+    startUser();
   };
 
   const suscribetext = async () => {
@@ -78,11 +80,11 @@ export function UsersUHModal(props: IUsersUHModal) {
       <Modal show={showModal} centered size="xl">
         <div className="modal-UHREMIX">
           <div className="top-side">
-            <RiCloseLine className="icon" />
+            <X className="icon" onClick={onHideModal} aria-label="Cerrar" />
           </div>
           <div className="container">
             <div className="left">
-              <RiRefreshLine className="icon" />
+              <RefreshCw className="icon" aria-hidden />
               <h2>¡Tranquil@! No te preocupes, no vamos a cobrarte nada.</h2>
               <p>
                 Solo queremos asegurarnos de ponerte al corriente con el nuevo
@@ -110,7 +112,14 @@ export function UsersUHModal(props: IUsersUHModal) {
               </div>
               <div className="div-bottom">
                 <p>¿Todavía tienes dudas?</p>
-                <p className="blue">Comunícate al 3511580896.</p>
+                <a
+                  className="blue"
+                  href={SUPPORT_CHAT_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Abrir soporte por chat
+                </a>
               </div>
             </div>
             <div className="right">
@@ -132,7 +141,7 @@ export function UsersUHModal(props: IUsersUHModal) {
                           className="icon-contain"
                           onClick={() => setCard('')}
                         >
-                          <RiBankCardFill className="icon color-blue" />
+                          <CreditCard className="icon color-blue" aria-hidden />
                           <p>Seleccionar tarjeta</p>
                         </div>
                       ) : (
@@ -140,7 +149,7 @@ export function UsersUHModal(props: IUsersUHModal) {
                           className="icon-contain"
                           onClick={() => setCard(null)}
                         >
-                          <RiBankCardFill className="icon color-blue" />
+                          <CreditCard className="icon color-blue" aria-hidden />
                           <p>Agregar nueva tarjeta</p>
                         </div>
                       )}
@@ -157,7 +166,7 @@ export function UsersUHModal(props: IUsersUHModal) {
                     <select
                       onChange={(e: any) => setCard(e.target.value)}
                       defaultValue={''}
-                      style={{ color: '#fff' }}
+                      style={{ color: 'var(--app-text-heading)' }}
                     >
                       <option disabled value={''}>
                         Seleccione una tarjeta

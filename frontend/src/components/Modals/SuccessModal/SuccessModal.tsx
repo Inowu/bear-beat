@@ -1,7 +1,7 @@
 import './../Modal.scss'
 import './SuccessModal.scss'
 import { Modal } from 'react-bootstrap'
-import { RiCloseCircleLine } from 'react-icons/ri';
+import { XCircle } from 'lucide-react';
 interface ISuccess {
   show: boolean;
   onHide: () => void;
@@ -16,7 +16,7 @@ export function SuccessModal(props: ISuccess) {
       <div className='modal-container success-modal'>
         <div className='header'>
           <p className='title'>{title}</p>
-          <RiCloseCircleLine className='icon' onClick={onHide} />
+          <XCircle className='icon' onClick={onHide} aria-label="Cerrar" />
         </div>
         <div className='bottom'>
           <p className='content'>

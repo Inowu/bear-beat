@@ -4,6 +4,7 @@ export interface IUser {
   iat: number;
   id: number;
   phone: string;
+  verified: boolean;
   profileImg: string | null;
   role: string;
   username: string;

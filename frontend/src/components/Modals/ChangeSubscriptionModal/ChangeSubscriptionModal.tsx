@@ -1,6 +1,6 @@
 import './../Modal.scss'
 import { Modal } from 'react-bootstrap'
-import { RiCloseCircleLine } from 'react-icons/ri'
+import { XCircle } from 'lucide-react'
 import { Spinner } from '../../../components/Spinner/Spinner';
 import { useState } from 'react'
 import { IPlans } from "../../../interfaces/Plans";
@@ -50,7 +50,7 @@ export function ChangeSubscriptionModal(props: ICondition) {
             <div className='modal-container success-modal'>
                 <div className='header'>
                     <p className='title'>{title}</p>
-                    <RiCloseCircleLine className='icon' onClick={onHide} />
+                    <XCircle className='icon' onClick={onHide} aria-label="Cerrar" />
                 </div>
                 <div className='bottom'>
                     <p className='content'>

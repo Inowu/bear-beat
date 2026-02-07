@@ -3,7 +3,7 @@ import './HistoryModal.scss'
 import { ARRAY_10 } from "../../../utils/Constants";
 import { IAdminDownloadHistory, IAdminUser } from "../../../interfaces/admin";
 import { Modal } from 'react-bootstrap'
-import { RiCloseCircleLine } from 'react-icons/ri'
+import { XCircle } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
 import Pagination from "../../../components/Pagination/Pagination";
 import trpc from "../../../api";
@@ -97,7 +97,7 @@ export function HistoryModal(props: ICondition) {
             <div className='modal-container success-modal'>
                 <div className='header'>
                     <p className='title'>Historial de descargas</p>
-                    <RiCloseCircleLine className='icon' onClick={onHide} />
+                    <XCircle className='icon' onClick={onHide} aria-label="Cerrar" />
                 </div>
                 <div className='bottom'>
                     <p className='content'>

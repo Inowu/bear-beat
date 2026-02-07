@@ -7,7 +7,7 @@ import { useState } from "react";
 import { Spinner } from "../../Spinner/Spinner";
 import { SuccessModal } from "../SuccessModal/SuccessModal";
 import { Modal } from "react-bootstrap";
-import { RiCloseCircleLine } from "react-icons/ri";
+import { XCircle } from "lucide-react";
 import trpc from "../../../api";
 import { handleChangeBigint } from "../../../functions/functions";
 import { ICreatePlans } from "../../../interfaces/Plans";
@@ -98,7 +98,7 @@ function AddPlanModal(props: IAddPlanModal) {
   return (
     <Modal show={showModal} onHide={onHideModal} centered>
       <form className="modal-addusers" onSubmit={formik.handleSubmit}>
-        <RiCloseCircleLine className="icon" onClick={onHideModal} />
+        <XCircle className="icon" onClick={onHideModal} aria-label="Cerrar" />
         <h2>Crear Plan</h2>
         <div className="c-row">
           <label>Plan Name</label>

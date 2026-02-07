@@ -28,12 +28,12 @@
     }
 
     .btn-addUsers {
-      color: #000;
-      background: $bear-blue-dim;
+      color: var(--app-btn-text);
+      background: var(--app-gradient);
       padding: 10px 20px;
       min-height: 44px;
       border-radius: 100px;
-      box-shadow: 0 0 12px $bear-blue-glow;
+      box-shadow: var(--app-shadow);
       width: 100%;
       max-width: 100%;
       &:hover {

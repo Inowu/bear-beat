@@ -3,9 +3,11 @@
 .admin-drawer-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background:
+    radial-gradient(circle at top, color-mix(in srgb, var(--ad-accent) 18%, transparent) 0%, transparent 40%),
+    color-mix(in srgb, var(--ad-bg) 68%, transparent);
   z-index: 1040;
-  animation: admin-drawer-fade 0.2s ease;
+  animation: admin-drawer-fade 0.24s ease;
 }
 
 .admin-drawer {
@@ -13,16 +15,21 @@
   left: 0;
   right: 0;
   bottom: 0;
-  max-height: 85vh;
-  background: var(--ad-card);
-  border: 1px solid var(--ad-border);
-  border-radius: 16px 16px 0 0;
+  max-height: 86vh;
+  background:
+    linear-gradient(
+      170deg,
+      color-mix(in srgb, var(--ad-card) 98%, transparent) 0%,
+      color-mix(in srgb, var(--ad-row-hover) 70%, transparent) 100%
+    );
+  border: 1px solid color-mix(in srgb, var(--ad-border) 84%, transparent);
+  border-radius: 18px 18px 0 0;
   z-index: 1050;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--app-shadow-card);
   transform: translateY(100%);
-  transition: transform 0.3s ease-out;
+  transition: transform 0.28s ease-out;
   overflow: hidden;
 
   &--open {
@@ -30,10 +37,10 @@
   }
 
   &__handle {
-    width: 40px;
+    width: 42px;
     height: 4px;
-    background: var(--ad-border);
-    border-radius: 2px;
+    background: color-mix(in srgb, var(--ad-border) 92%, transparent);
+    border-radius: 999px;
     margin: 10px auto 0;
     flex-shrink: 0;
   }
@@ -42,35 +49,36 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 16px 8px;
-    border-bottom: 1px solid var(--ad-border);
+    padding: 12px 16px 9px;
+    border-bottom: 1px solid color-mix(in srgb, var(--ad-border) 82%, transparent);
     flex-shrink: 0;
   }
 
   &__title {
     margin: 0;
-    font-size: var(--app-font-size-body);
-    font-weight: 600;
+    font-size: 1.1rem;
+    font-weight: 700;
     color: var(--ad-title);
   }
 
   &__close {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     padding: 0;
-    border: none;
+    border: 1px solid color-mix(in srgb, var(--ad-border) 80%, transparent);
     border-radius: 10px;
-    background: transparent;
+    background: color-mix(in srgb, var(--ad-card) 92%, transparent);
     color: var(--ad-text);
     cursor: pointer;
-    transition: background 0.15s, color 0.15s;
+    transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease;
 
     &:hover {
-      background: var(--ad-row-hover);
-      color: var(--ad-title);
+      border-color: color-mix(in srgb, var(--ad-accent) 42%, transparent);
+      background: color-mix(in srgb, var(--ad-row-hover) 86%, transparent);
+      color: var(--ad-accent);
     }
   }
 
@@ -84,94 +92,138 @@
 
   &__user-summary {
     display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 12px 0;
-    margin-bottom: 16px;
-    border-bottom: 1px solid var(--ad-border);
+    align-items: flex-start;
+    gap: 12px;
+    padding: 2px 0 14px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid color-mix(in srgb, var(--ad-border) 76%, transparent);
   }
 
   &__avatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: var(--ad-accent);
-    color: #020617;
-    display: flex;
+    width: 52px;
+    min-width: 52px;
+    height: 52px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--ad-accent) 24%, var(--ad-card));
+    border: 1px solid color-mix(in srgb, var(--ad-accent) 30%, transparent);
+    color: var(--ad-accent);
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-weight: 700;
-    font-size: var(--app-font-size-body);
-    flex-shrink: 0;
+    font-weight: 800;
+    font-size: 1.15rem;
   }
 
   &__user-info {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
     min-width: 0;
   }
 
   &__user-name {
-    font-weight: 600;
+    font-weight: 700;
     color: var(--ad-title);
-    font-size: var(--app-font-size-body);
+    font-size: 1.02rem;
+    line-height: 1.2;
   }
 
   &__user-email {
-    font-size: var(--app-font-size-body);
+    font-size: 0.9rem;
     color: var(--ad-text);
+    line-height: 1.25;
+    word-break: break-word;
+  }
+
+  &__user-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  &__tag {
+    min-height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 0 8px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border: 1px solid color-mix(in srgb, var(--ad-border) 76%, transparent);
+    background: color-mix(in srgb, var(--ad-card) 94%, transparent);
+    color: var(--ad-text-muted);
+
+    &.is-success {
+      background: color-mix(in srgb, var(--ad-badge-success-bg) 90%, transparent);
+      color: var(--ad-badge-success-text);
+      border-color: color-mix(in srgb, var(--ad-badge-success-text) 22%, transparent);
+    }
+
+    &.is-danger {
+      background: color-mix(in srgb, var(--ad-badge-danger-bg) 86%, transparent);
+      color: var(--ad-badge-danger-text);
+      border-color: color-mix(in srgb, var(--ad-badge-danger-text) 24%, transparent);
+    }
   }
 
   &__user-meta {
-    font-size: var(--app-font-size-body);
+    font-size: 0.86rem;
     color: var(--ad-text-muted);
+    line-height: 1.3;
+    word-break: break-word;
   }
 
   &__actions {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    margin-top: 16px;
+    gap: 9px;
+    margin-top: 8px;
   }
 
   &__btn {
     width: 100%;
     padding: 12px 16px;
     min-height: 44px;
-    border-radius: 10px;
-    font-size: var(--app-font-size-body);
-    font-weight: 500;
-    border: 1px solid var(--ad-border);
+    border-radius: 11px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    border: 1px solid color-mix(in srgb, var(--ad-border) 84%, transparent);
     cursor: pointer;
-    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
 
     &--primary {
-      background: var(--ad-accent-bg);
-      color: #020617;
-      border-color: var(--ad-accent-bg);
+      background: var(--app-gradient);
+      color: var(--app-btn-text);
+      border-color: color-mix(in srgb, var(--ad-accent) 46%, transparent);
+      box-shadow: 0 10px 20px color-mix(in srgb, var(--ad-accent) 24%, transparent);
 
       &:hover:not(:disabled) {
-        filter: brightness(1.1);
+        filter: saturate(1.05);
       }
     }
 
     &--secondary {
-      background: var(--ad-card);
+      background: color-mix(in srgb, var(--ad-card) 94%, transparent);
       color: var(--ad-text);
 
       &:hover:not(:disabled) {
-        background: var(--ad-row-hover);
+        border-color: color-mix(in srgb, var(--ad-accent) 40%, transparent);
+        background: color-mix(in srgb, var(--ad-row-hover) 88%, transparent);
+        color: var(--ad-accent);
       }
     }
 
     &--danger {
-      background: var(--ad-badge-danger-bg);
+      background: color-mix(in srgb, var(--ad-badge-danger-bg) 84%, transparent);
       color: var(--ad-badge-danger-text);
-      border-color: rgba(239, 68, 68, 0.3);
+      border-color: color-mix(in srgb, var(--ad-badge-danger-text) 28%, transparent);
 
       &:hover:not(:disabled) {
-        filter: brightness(1.1);
+        filter: brightness(1.03);
       }
     }
 
@@ -186,6 +238,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }

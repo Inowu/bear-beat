@@ -82,12 +82,12 @@
     }
 
     .btn-addUsers {
-      color: #000;
-      background: var(--app-accent);
+      color: var(--app-btn-text);
+      background: var(--app-gradient);
       padding: 10px 20px;
       min-height: 44px;
       border-radius: 100px;
-      box-shadow: 0 0 12px var(--ph-glow);
+      box-shadow: var(--app-shadow);
     }
 
     .btn-addUsers:hover {
@@ -221,7 +221,7 @@
       justify-content: space-between;
       align-items: center;
       border-radius: 100px;
-      box-shadow: 0 0 5px rgba(0, 0, 0, 0.54);
+      box-shadow: var(--app-shadow);
       padding: 5px 20px;
 
       .data-contain {
@@ -230,14 +230,14 @@
       }
 
       .btn-active {
-        color: white;
-        background: #09e1f7;
+        color: var(--app-btn-text);
+        background: var(--app-gradient);
         padding: 4px 20px;
         border-radius: 100px;
       }
 
       &:hover {
-        background-color: rgb(202, 202, 202);
+        background-color: var(--app-bg-soft);
       }
     }
   }

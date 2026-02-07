@@ -5,7 +5,7 @@ import * as Yup from "yup";
 import { useState, useEffect } from "react";
 import { Spinner } from "../../Spinner/Spinner";
 import { Modal } from "react-bootstrap";
-import { RiCloseCircleLine } from "react-icons/ri";
+import { XCircle } from "lucide-react";
 import trpc from "../../../api";
 import { SuccessModal } from "../SuccessModal/SuccessModal";
 
@@ -89,7 +89,7 @@ export const EditCouponModal = (props: IEditCouponModal) => {
   return (
     <Modal show={showModal} onHide={onHideModal} centered>
       <form className="modal-addusers" onSubmit={formik.handleSubmit}>
-        <RiCloseCircleLine className="icon" onClick={onHideModal} />
+        <XCircle className="icon" onClick={onHideModal} aria-label="Cerrar" />
         <h2>Editar Cupon</h2>
         <div className="c-row">
           <input

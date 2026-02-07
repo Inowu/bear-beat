@@ -11,6 +11,469 @@
   font-family: "Bear-font";
   src: url("../assets/fonts/Arkhip_font.ttf");
 }
+
+/* ==========================================================================
+   Bear Beat Brand System 2026
+   Fuente de verdad visual para TODO el frontend (rutas, modales, forms, admin)
+   ========================================================================== */
+:root,
+[data-theme="light"] {
+  /* Brand core */
+  --bb-cyan: #08E1F7;
+  --bb-mint: #00E6C1;
+  --bb-gradient: linear-gradient(11deg, var(--bb-mint), var(--bb-cyan));
+  /* Ambient accents (for large surfaces; avoid "baby blue" washes) */
+  --bb-ambient-cyan: rgba(8, 225, 247, 0.05);
+  --bb-ambient-mint: rgba(0, 230, 193, 0.04);
+  --bb-danger: #FF2D2C;
+  --bb-success: #39D834;
+  --bb-warning: #FEBC2E;
+
+  /* Brand neutrals */
+  --bb-dark-100: #404040;
+  --bb-dark-200: #2A2A2A;
+  --bb-dark-300: #292929;
+  --bb-dark-400: #1A1A1A;
+  --bb-bg: #EEEEEE;
+  --bb-surface: #FFFFFF;
+  --bb-surface-soft: #F8F8F8;
+  --bb-border: #D3D3D3;
+  --bb-text-heading: #1A1A1A;
+  --bb-text-body: #2A2A2A;
+  --bb-text-muted: #5F5F5F;
+  --bb-focus-ring: rgba(8, 225, 247, 0.32);
+  --bb-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+  --bb-shadow-card: 0 14px 40px rgba(0, 0, 0, 0.14);
+  --bb-shadow-glow: 0 0 18px rgba(8, 225, 247, 0.32);
+  --bb-radius-card: 12px;
+  --bb-radius-pill: 999px;
+  --bb-font-ui: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --bb-font-brand: "Bear-font", "Poppins", sans-serif;
+  --app-font-weight-body: 500;
+  --app-font-weight-heading: 700;
+  --app-font-weight-heading-strong: 800;
+  --app-font-size-body: 1.5rem;
+  --app-font-size-body-lg: 1.6rem;
+  --app-font-size-h4: 1.7rem;
+  --app-font-size-h3: 1.95rem;
+  --app-font-size-h2: 2.4rem;
+  --app-font-size-h1: 3rem;
+
+  /* Base Tailwind bridge */
+  --bg-main: var(--bb-bg);
+  --bg-card: var(--bb-surface);
+  --bg-input: var(--bb-surface);
+  --text-main: var(--bb-text-heading);
+  --text-muted: var(--bb-text-muted);
+  --border-main: var(--bb-border);
+
+  /* Legacy semantic bridge (existing app vars) */
+  --theme-bg-primary: #F3F6F8;
+  --theme-bg-primary-end: #FFFFFF;
+  --theme-bg-secondary: var(--bb-surface);
+  --theme-bg-gradient: linear-gradient(165deg, #FFFFFF 0%, #EDF2F5 100%);
+  /* Light nav (premium/glass, no "baby blue") */
+  --theme-nav-bg: #FFFFFF;
+  --theme-nav-border-bottom: rgba(21, 42, 53, 0.1);
+  --theme-nav-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+  --theme-nav-text: #15202B;
+  /* Neutral light pills (avoid blue-ish nav wash) */
+  --theme-nav-item-bg: #F5F6F8;
+  --theme-nav-item-border: rgba(21, 42, 53, 0.12);
+  --theme-nav-item-hover-bg: color-mix(in srgb, var(--bb-cyan) 16%, #FFFFFF);
+  --theme-nav-item-hover-text: #0F2028;
+  --theme-nav-item-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+  --theme-card-bg: var(--bb-surface);
+  --theme-card-border: var(--bb-border);
+  --theme-card-border-strong: rgba(8, 225, 247, 0.22);
+  --theme-card-shadow: var(--bb-shadow);
+  --theme-card-shadow-hover: var(--bb-shadow-card);
+  --theme-card-accent-line: linear-gradient(180deg, var(--bb-cyan) 0%, var(--bb-mint) 100%);
+  --theme-input-bg: var(--bb-surface);
+  --theme-input-border: var(--bb-border);
+  --theme-input-text: var(--bb-text-heading);
+  --theme-input-focus-ring: var(--bb-focus-ring);
+  --theme-text-primary: var(--bb-text-heading);
+  --theme-text-secondary: var(--bb-text-body);
+  --theme-text-muted: var(--bb-text-muted);
+  --theme-ink: var(--bb-text-heading);
+  --theme-heading: var(--bb-text-heading);
+  --theme-strong: var(--bb-text-heading);
+  --theme-bg-muted: #E9EEF2;
+  --theme-bg-soft: var(--bb-surface-soft);
+  --theme-stripe: rgba(0, 0, 0, 0.05);
+  --theme-edge: rgba(21, 42, 53, 0.15);
+  --theme-accent: var(--bb-cyan);
+  --theme-accent-bright: var(--bb-cyan);
+  --theme-accent-dim: var(--bb-cyan);
+  --theme-accent-glow: rgba(8, 225, 247, 0.42);
+  /* Soft accent surfaces in LIGHT should be subtle (avoid "baby blue" wash) */
+  --theme-accent-soft-bg: rgba(8, 225, 247, 0.06);
+  --theme-landing-bg: #000000;
+  --theme-landing-text: #FFFFFF;
+
+  --ph-bg: var(--bb-bg);
+  --ph-bg-soft: var(--bb-surface-soft);
+  --ph-bg-card: var(--bb-surface);
+  --ph-border: var(--bb-border);
+  --ph-text-heading: var(--bb-text-heading);
+  --ph-text-body: var(--bb-text-body);
+  --ph-text-muted: var(--bb-text-muted);
+  --ph-body-font-weight: 500;
+  --ph-btn-bg: var(--bb-gradient);
+  --ph-btn-text: #0A0A0A;
+  --ph-btn-hover-bg: var(--bb-cyan);
+  --ph-accent: var(--bb-cyan);
+  --ph-accent-bright: var(--bb-cyan);
+  --ph-shadow: var(--bb-shadow);
+  --ph-shadow-card: var(--bb-shadow-card);
+  --ph-glow: rgba(8, 225, 247, 0.24);
+  --ph-glow-strong: rgba(8, 225, 247, 0.34);
+  --ph-nav-bg: #FFFFFF;
+  --ph-footer-bg: var(--bb-surface);
+  --ph-pain-bad: var(--bb-danger);
+  --ph-pain-good: var(--bb-success);
+  --ph-price-header-global-bg: var(--bb-dark-300);
+  --ph-price-header-global-text: #FFFFFF;
+  --ph-price-header-mexico-bg: var(--bb-cyan);
+  --ph-price-header-mexico-text: #000000;
+
+  --app-bg: var(--bb-bg);
+  --app-bg-soft: var(--bb-surface-soft);
+  --app-bg-card: var(--bb-surface);
+  --app-text-heading: var(--bb-text-heading);
+  --app-text-body: var(--bb-text-body);
+  --app-text-secondary: var(--bb-text-body);
+  --app-text-muted: var(--bb-text-muted);
+  --app-border: var(--bb-border);
+  --app-accent: var(--bb-cyan);
+  --app-accent-bright: var(--bb-cyan);
+  --app-btn-bg: var(--bb-gradient);
+  --app-btn-text: #0A0A0A;
+  --app-shadow: var(--bb-shadow);
+  --app-shadow-card: var(--bb-shadow-card);
+  --app-focus-ring: var(--bb-focus-ring);
+  --app-status-error: var(--bb-danger);
+  --app-status-success: var(--bb-success);
+  --app-status-warning: var(--bb-warning);
+  --app-gradient: var(--bb-gradient);
+
+  --auth-input-border: var(--bb-border);
+  --auth-input-bg: var(--bb-surface);
+  --auth-register-panel-bg: var(--bb-surface);
+  --auth-register-text: var(--bb-text-heading);
+  --auth-register-input-bg: var(--bb-surface-soft);
+  --auth-register-input-border: var(--bb-border);
+  --auth-register-input-focus: var(--bb-cyan);
+  --auth-register-icon: #7A7A7A;
+  --auth-register-icon-focus: var(--bb-cyan);
+  --auth-register-btn-bg: var(--bb-gradient);
+  --auth-register-btn-text: #0A0A0A;
+  --auth-login-atmosphere-bg: var(--bb-bg);
+  --auth-login-card-bg: var(--bb-surface);
+  --auth-login-card-border: var(--bb-border);
+  --auth-login-card-shadow: var(--bb-shadow-card);
+  --auth-login-title: var(--bb-text-heading);
+  --auth-login-subtitle: var(--bb-text-muted);
+  --auth-login-link: var(--bb-cyan);
+  --auth-login-link-hover: var(--bb-cyan);
+  --auth-login-btn-bg: var(--bb-gradient);
+  --auth-login-btn-text: #0A0A0A;
+
+  --plan-card-bg: var(--bb-surface);
+  --plan-card-border: var(--bb-border);
+  --plan-card-border-hover: rgba(8, 225, 247, 0.4);
+  --plan-card-title: var(--bb-text-heading);
+  --plan-card-price: var(--bb-text-heading);
+  --plan-card-price-currency: var(--bb-text-muted);
+  --plan-card-gb-bg: var(--bb-surface-soft);
+  --plan-card-gb-value: var(--bb-cyan);
+  --plan-card-gb-label: var(--bb-text-muted);
+  --plan-card-subtitle: var(--bb-text-muted);
+  --plan-card-benefit: var(--bb-text-body);
+  --plan-card-check: var(--bb-success);
+  --plan-card-paypal-text: var(--bb-text-muted);
+  --plan-card-btn-bg: var(--bb-gradient);
+  --plan-card-btn-text: #0A0A0A;
+  --plan-card-btn-glow: rgba(8, 225, 247, 0.32);
+  --plan-card-glow-bg: rgba(8, 225, 247, 0.08);
+  --plan-card-shadow: var(--bb-shadow);
+  --plan-card-shadow-hover: var(--bb-shadow-card);
+  --plan-card-secondary-bg: var(--bb-surface-soft);
+  --plan-card-secondary-border: var(--bb-border);
+  --plan-card-secondary-text: var(--bb-text-body);
+  --plan-card-monolith-bg: var(--bb-surface);
+  --plan-card-monolith-border: var(--bb-border);
+  --plan-card-monolith-shadow-hover: var(--bb-shadow-glow);
+  --plan-card-data-visualizer-bg: var(--bb-surface-soft);
+  --plan-card-progress-track-bg: var(--bb-border);
+  --plan-card-progress-fill: var(--bb-cyan);
+  --plan-card-badge-value-bg: var(--bb-cyan);
+  --plan-card-badge-value-text: #0A0A0A;
+  --plan-card-btn-hero-bg: var(--bb-gradient);
+  --plan-card-btn-hero-glow: rgba(8, 225, 247, 0.34);
+  --plan-card-btn-outline-border: var(--bb-cyan);
+  --plan-card-btn-outline-color: var(--bb-cyan);
+  --plan-card-benefit-icon: var(--bb-cyan);
+
+  --aside-backdrop-bg: rgba(13, 21, 27, 0.28);
+  --aside-overlay-bg: color-mix(in srgb, #FFFFFF 96%, #F4F6F8);
+  --aside-overlay-border: rgba(21, 42, 53, 0.12);
+  --aside-overlay-text: #15202B;
+  --aside-overlay-text-muted: #4A5A64;
+  --aside-overlay-hover: var(--bb-cyan);
+  --aside-overlay-close-bg: rgba(8, 225, 247, 0.12);
+  --aside-overlay-close-color: #15202B;
+  --aside-overlay-close-hover: var(--bb-cyan);
+
+  --fb-bg: var(--bb-surface-soft);
+  --fb-border: var(--bb-border);
+  --fb-row-border: rgba(0, 0, 0, 0.08);
+  --fb-row-hover-bg: rgba(8, 225, 247, 0.05);
+  --fb-row-hover-border: var(--bb-cyan);
+  --fb-text: var(--bb-text-heading);
+  --fb-text-muted: var(--bb-text-muted);
+  --fb-accent: var(--bb-cyan);
+  --fb-input-bg: var(--bb-surface);
+  --fb-input-border: var(--bb-border);
+  --fb-input-placeholder: #8A8A8A;
+  --fb-folder-icon: var(--bb-warning);
+  --fb-file-icon: var(--bb-text-muted);
+
+  --ma-bg: var(--bb-bg);
+  --ma-card-bg: var(--bb-surface);
+  --ma-card-border: var(--bb-border);
+  --ma-title: var(--bb-text-heading);
+  --ma-accent: var(--bb-cyan);
+  --ma-text: var(--bb-text-body);
+  --ma-text-muted: var(--bb-text-muted);
+  --ma-progress-bg: var(--bb-border);
+  --ma-progress-fill: var(--bb-cyan);
+  --ma-avatar-ring: var(--bb-cyan);
+  --ma-btn-cancel-bg: rgba(255, 45, 44, 0.12);
+  --ma-btn-cancel-text: var(--bb-danger);
+  --ma-btn-cancel-border: rgba(255, 45, 44, 0.3);
+  --ma-add-card-border: var(--bb-border);
+  --ma-add-card-hover: var(--bb-cyan);
+  --ma-badge-success: var(--bb-success);
+  --ma-badge-pending: var(--bb-warning);
+  --ma-badge-fail: var(--bb-danger);
+  --ma-badge-neutral: var(--bb-text-muted);
+
+  --in-bg: var(--bb-bg);
+  --in-hero-gradient: linear-gradient(180deg, #F7FDFF 0%, var(--bb-bg) 100%);
+  --in-card-bg: var(--bb-surface);
+  --in-card-border: var(--bb-border);
+  --in-title: var(--bb-text-heading);
+  --in-text: var(--bb-text-body);
+  --in-text-muted: var(--bb-text-muted);
+  --in-accent: var(--bb-cyan);
+  --in-stepper-line: var(--bb-border);
+  --in-step-circle: var(--bb-cyan);
+  --in-step-circle-text: #0A0A0A;
+  --in-terminal-bg: var(--bb-surface-soft);
+  --in-terminal-border: var(--bb-border);
+
+  --ad-bg: var(--bb-bg);
+  --ad-card: var(--bb-surface);
+  --ad-border: var(--bb-border);
+  --ad-text: var(--bb-text-body);
+  --ad-text-muted: var(--bb-text-muted);
+  --ad-title: var(--bb-text-heading);
+  --ad-accent: var(--bb-cyan);
+  --ad-accent-bg: var(--bb-cyan);
+  --ad-input-bg: var(--bb-surface);
+  --ad-input-border: var(--bb-border);
+  --ad-focus-ring: var(--bb-focus-ring);
+  /* Admin: use neutral stripes in LIGHT; keep cyan for borders/CTAs only */
+  --ad-row-hover: rgba(15, 23, 42, 0.035);
+  --ad-header-bg: var(--bb-surface-soft);
+  --ad-badge-success-bg: rgba(57, 216, 52, 0.12);
+  --ad-badge-success-text: #208A1D;
+  --ad-badge-warning-bg: rgba(254, 188, 46, 0.16);
+  --ad-badge-warning-text: #8A6300;
+  --ad-badge-danger-bg: rgba(255, 45, 44, 0.14);
+  --ad-badge-danger-text: #BA1716;
+  --ad-badge-neutral-bg: rgba(95, 95, 95, 0.12);
+  --ad-badge-neutral-text: var(--bb-text-muted);
+
+  color-scheme: light;
+}
+
+[data-theme="dark"],
+html.dark,
+.dark {
+  --bb-ambient-cyan: rgba(8, 225, 247, 0.16);
+  --bb-ambient-mint: rgba(0, 230, 193, 0.12);
+  --bb-bg: #1A1A1A;
+  --bb-surface: #2A2A2A;
+  --bb-surface-soft: #323232;
+  --bb-border: #404040;
+  --bb-text-heading: #F7F7F7;
+  --bb-text-body: #E1E1E1;
+  --bb-text-muted: #B8B8B8;
+  --bb-shadow: 0 10px 32px rgba(0, 0, 0, 0.38);
+  --bb-shadow-card: 0 16px 44px rgba(0, 0, 0, 0.42);
+  --bb-focus-ring: rgba(8, 225, 247, 0.4);
+
+  --bg-main: var(--bb-bg);
+  --bg-card: var(--bb-surface);
+  --bg-input: var(--bb-surface-soft);
+  --text-main: var(--bb-text-heading);
+  --text-muted: var(--bb-text-muted);
+  --border-main: var(--bb-border);
+
+  --theme-bg-primary: #121212;
+  --theme-bg-primary-end: #1A1A1A;
+  --theme-bg-secondary: var(--bb-surface);
+  --theme-bg-gradient: linear-gradient(165deg, #121212 0%, #1A1A1A 100%);
+  --theme-nav-bg: var(--bb-dark-300);
+  --theme-nav-border-bottom: rgba(255, 255, 255, 0.1);
+  --theme-nav-shadow: 0 10px 24px rgba(0, 0, 0, 0.36);
+  --theme-nav-text: #F1F1F1;
+  --theme-nav-item-bg: #3B3B3B;
+  --theme-nav-item-border: rgba(255, 255, 255, 0.08);
+  --theme-nav-item-hover-bg: rgba(8, 225, 247, 0.25);
+  --theme-nav-item-hover-text: var(--bb-cyan);
+  --theme-nav-item-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+  --theme-card-bg: var(--bb-surface);
+  --theme-card-border: rgba(255, 255, 255, 0.12);
+  --theme-text-primary: var(--bb-text-heading);
+  --theme-text-secondary: var(--bb-text-body);
+  --theme-text-muted: var(--bb-text-muted);
+  --theme-bg-soft: #2D2D2D;
+  --theme-edge: rgba(255, 255, 255, 0.12);
+  --theme-accent: var(--bb-cyan);
+  --theme-accent-bright: var(--bb-cyan);
+  --theme-accent-dim: var(--bb-cyan);
+  --theme-accent-soft-bg: rgba(8, 225, 247, 0.14);
+
+  --app-bg: var(--bb-bg);
+  --app-bg-soft: var(--bb-surface-soft);
+  --app-bg-card: var(--bb-surface);
+  --app-text-heading: var(--bb-text-heading);
+  --app-text-body: var(--bb-text-body);
+  --app-text-secondary: var(--bb-text-body);
+  --app-text-muted: var(--bb-text-muted);
+  --app-border: var(--bb-border);
+  --app-accent: var(--bb-cyan);
+  --app-accent-bright: var(--bb-cyan);
+  --app-btn-bg: var(--bb-gradient);
+  --app-btn-text: #0A0A0A;
+  --app-shadow: var(--bb-shadow);
+  --app-shadow-card: var(--bb-shadow-card);
+  --app-focus-ring: var(--bb-focus-ring);
+
+  --ph-bg: var(--bb-bg);
+  --ph-bg-soft: #232323;
+  --ph-bg-card: var(--bb-surface);
+  --ph-border: var(--bb-border);
+  --ph-text-heading: var(--bb-text-heading);
+  --ph-text-body: var(--bb-text-body);
+  --ph-text-muted: var(--bb-text-muted);
+  --ph-nav-bg: rgba(41, 41, 41, 0.96);
+  --ph-footer-bg: #242424;
+
+  --auth-input-bg: var(--bb-surface-soft);
+  --auth-input-border: var(--bb-border);
+  --auth-register-panel-bg: var(--bb-bg);
+  --auth-register-text: var(--bb-text-heading);
+  --auth-register-input-bg: var(--bb-surface-soft);
+  --auth-register-input-border: var(--bb-border);
+  --auth-register-btn-bg: var(--bb-gradient);
+  --auth-register-btn-text: #0A0A0A;
+  --auth-login-atmosphere-bg: var(--bb-bg);
+  --auth-login-card-bg: var(--bb-surface);
+  --auth-login-card-border: var(--bb-border);
+  --auth-login-title: var(--bb-text-heading);
+  --auth-login-subtitle: var(--bb-text-muted);
+  --auth-login-btn-bg: var(--bb-gradient);
+  --auth-login-btn-text: #0A0A0A;
+
+  --plan-card-bg: var(--bb-surface);
+  --plan-card-border: var(--bb-border);
+  --plan-card-title: var(--bb-text-heading);
+  --plan-card-price: var(--bb-text-heading);
+  --plan-card-price-currency: var(--bb-text-muted);
+  --plan-card-gb-bg: #333333;
+  --plan-card-gb-value: var(--bb-cyan);
+  --plan-card-gb-label: var(--bb-text-muted);
+  --plan-card-subtitle: var(--bb-text-muted);
+  --plan-card-benefit: var(--bb-text-body);
+  --plan-card-check: var(--bb-cyan);
+  --plan-card-paypal-text: var(--bb-text-muted);
+  --plan-card-btn-bg: var(--bb-gradient);
+  --plan-card-btn-text: #0A0A0A;
+  --plan-card-progress-track-bg: #3B3B3B;
+  --plan-card-progress-fill: var(--bb-cyan);
+  --plan-card-badge-value-bg: var(--bb-cyan);
+  --plan-card-badge-value-text: #0A0A0A;
+  --plan-card-btn-hero-bg: var(--bb-gradient);
+  --plan-card-btn-outline-border: var(--bb-cyan);
+  --plan-card-btn-outline-color: var(--bb-cyan);
+  --plan-card-benefit-icon: var(--bb-cyan);
+
+  --in-bg: var(--bb-bg);
+  --in-hero-gradient: linear-gradient(180deg, #232323 0%, var(--bb-bg) 100%);
+  --in-card-bg: var(--bb-surface);
+  --in-card-border: var(--bb-border);
+  --in-title: var(--bb-text-heading);
+  --in-text: var(--bb-text-body);
+  --in-text-muted: var(--bb-text-muted);
+  --in-stepper-line: var(--bb-border);
+  --in-terminal-bg: #303030;
+  --in-terminal-border: var(--bb-border);
+
+  --ma-bg: var(--bb-bg);
+  --ma-card-bg: var(--bb-surface);
+  --ma-card-border: var(--bb-border);
+  --ma-title: var(--bb-text-heading);
+  --ma-accent: var(--bb-cyan);
+  --ma-text: var(--bb-text-body);
+  --ma-text-muted: var(--bb-text-muted);
+  --ma-progress-bg: #3A3A3A;
+  --ma-progress-fill: var(--bb-cyan);
+  --ma-avatar-ring: var(--bb-cyan);
+  --ma-add-card-border: var(--bb-border);
+  --ma-add-card-hover: var(--bb-cyan);
+  --ma-badge-neutral: var(--bb-text-muted);
+
+  --ad-bg: var(--bb-bg);
+  --ad-card: var(--bb-surface);
+  --ad-border: var(--bb-border);
+  --ad-text: var(--bb-text-body);
+  --ad-text-muted: var(--bb-text-muted);
+  --ad-title: var(--bb-text-heading);
+  --ad-accent: var(--bb-cyan);
+  --ad-accent-bg: var(--bb-cyan);
+  --ad-input-bg: var(--bb-surface-soft);
+  --ad-input-border: var(--bb-border);
+  --ad-header-bg: #333333;
+  /* Admin: in DARK, subtle cyan hover/stripe is OK */
+  --ad-row-hover: rgba(8, 225, 247, 0.12);
+
+  --fb-bg: var(--bb-bg);
+  --fb-border: var(--bb-border);
+  --fb-row-hover-bg: rgba(8, 225, 247, 0.12);
+  --fb-row-hover-border: var(--bb-cyan);
+  --fb-text: var(--bb-text-heading);
+  --fb-text-muted: var(--bb-text-muted);
+  --fb-accent: var(--bb-cyan);
+  --fb-input-bg: var(--bb-surface-soft);
+  --fb-input-border: var(--bb-border);
+
+  --aside-backdrop-bg: rgba(0, 0, 0, 0.45);
+  --aside-overlay-bg: rgba(41, 41, 41, 0.98);
+  --aside-overlay-border: rgba(255, 255, 255, 0.08);
+  --aside-overlay-text: #EDEDED;
+  --aside-overlay-text-muted: #BFBFBF;
+  --aside-overlay-hover: var(--bb-cyan);
+  --aside-overlay-close-bg: rgba(255, 255, 255, 0.06);
+  --aside-overlay-close-color: #EDEDED;
+  --aside-overlay-close-hover: var(--bb-cyan);
+
+  color-scheme: dark;
+}
 * {
   margin: 0;
   padding: 0;
@@ -25,46 +488,18 @@ body {
   padding: 0;
 }
 
-/* Dashboard/app: inputs y tablas usan vars de tema (Bear Beat light/dark) */
-
+/* Dashboard/app: guardrails (NO overrides agresivos).
+   Importante: antes habia `!important` aquí y pisaba estilos específicos de Home/Admin/etc.
+   Solo aseguramos targets mínimos + tipografía; cada componente conserva su look. */
 .content-area-app {
-  input, select, textarea {
-    background-color: var(--app-bg-card) !important;
-    color: var(--app-text-heading) !important;
-    border-color: var(--app-border) !important;
-    font-size: 0.875rem !important;
-    font-weight: 500;
-    max-height: 2.75rem;
-    min-height: 2.5rem;
+  :where(input, select, textarea) {
+    min-height: 44px;
+    font-size: var(--app-font-size-body);
   }
-  input::placeholder, textarea::placeholder {
-    color: var(--app-text-muted);
-  }
-  input:focus, select:focus, textarea:focus {
-    outline: none;
-    border-color: var(--app-accent-bright) !important;
-    box-shadow: 0 0 0 2px rgba(8, 225, 247, 0.25);
-  }
-  button:not(.btn-cell):not(.dropdown-content button) {
-    font-size: 0.875rem;
-    font-weight: 500;
-    min-height: 2.5rem;
-    max-height: 2.75rem;
-  }
-  .card, [class*="card"], .table, table {
-    background-color: var(--app-bg-card) !important;
-    color: var(--app-text-heading) !important;
-    border-color: var(--app-border) !important;
-  }
-  thead th {
-    background-color: var(--app-bg-soft) !important;
-    color: var(--app-text-heading) !important;
-    border-color: var(--app-border) !important;
-  }
-  tbody td {
-    background-color: var(--app-bg-card) !important;
-    color: var(--app-text-heading) !important;
-    border-color: var(--app-border) !important;
+
+  :where(button, .btn):not(.btn-cell):not(.dropdown-content button) {
+    min-height: 44px;
+    font-size: var(--app-font-size-body);
   }
 }
 
@@ -148,40 +583,19 @@ html {
   font-size: 62.5%;
 }
 
-/* Escritorio (1024px+): base 16px, botones compactos, experiencia PC */
-@media (min-width: 1024px) {
-  html {
-    font-size: 100%;
-  }
-  :root,
-  [data-theme="light"],
-  [data-theme="dark"] {
-    --app-font-size-body: 1rem;
-    --app-font-size-body-lg: 1.125rem;
-    --app-font-size-h4: 1.125rem;
-    --app-font-size-h3: 1.25rem;
-    --app-font-size-h2: 1.5rem;
-    --app-font-size-h1: 2rem;
-  }
-  /* Botones e inputs más compactos en PC (no 48px de móvil) */
-  button:not(.icon-only),
-  .btn,
-  .main-layout-main-container input[type="text"],
-  .main-layout-main-container input[type="email"],
-  .main-layout-main-container input[type="password"],
-  .main-layout-main-container input[type="number"],
-  .main-layout-main-container select {
-    min-height: 40px;
-  }
-}
+/* Nota: mantenemos `1rem = 10px` en TODAS las resoluciones.
+   Muchas reglas históricas del proyecto usan `rem` bajo esta convención; cambiarlo por breakpoint
+   rompe consistencia de tamaños entre rutas y componentes. */
 
 /* Toda la app: tipografía y tamaño; fondo/texto los controla Tailwind (index.css) con bg-bg-main text-text-main */
 body {
-  font-family: "Poppins", sans-serif;
+  font-family: var(--bb-font-ui);
   font-size: var(--app-font-size-body);
   font-weight: var(--app-font-weight-body);
-  line-height: 1.4;
+  line-height: 1.45;
   text-rendering: auto;
+  background: var(--app-bg);
+  color: var(--app-text-body);
 }
 
 /* Chrome en Mac: fuentes más nítidas y capa GPU para evitar parpadeos */
@@ -202,26 +616,14 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Ningún texto por debajo de 1rem para que siempre se pueda leer */
-label,
-p,
-a,
-b,
-ul,
-li,
-div,
-span {
-  font-size: inherit;
+/* Resets mínimos (sin romper semántica) */
+a {
   color: inherit;
-  font-weight: inherit;
-  line-height: inherit;
 }
 
-body label,
-body p,
-body .modal-container .content,
-body .modal-container .bottom .content {
-  font-size: var(--app-font-size-body);
+strong,
+b {
+  font-weight: 700;
 }
 
 button,
@@ -231,6 +633,45 @@ input,
 select,
 textarea {
   font-size: var(--app-font-size-body);
+  font-family: var(--bb-font-ui);
+}
+
+:where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  border: 2px solid var(--app-border);
+  border-radius: var(--bb-radius-card);
+  background: var(--app-bg-card);
+  color: var(--app-text-heading);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+
+  &::placeholder {
+    color: var(--app-text-muted);
+    opacity: 0.9;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--app-accent);
+    box-shadow: 0 0 0 3px var(--app-focus-ring);
+  }
+}
+
+button,
+.btn {
+  border-radius: var(--bb-radius-pill);
+  font-weight: var(--app-font-weight-heading);
+  transition: transform 0.16s ease, box-shadow 0.2s ease, opacity 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+/* IMPORTANT:
+   No aplicamos "lift" global a TODOS los <button>.
+   Muchos botones (clear X en inputs, toggle de password, iconos en toolbars) usan `transform`
+   para centrarse verticalmente; un hover global rompe su layout. */
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: translateY(0);
 }
 
 /* Área táctil mínima 44px en controles principales (UX móvil) */
@@ -249,11 +690,11 @@ button {
 }
 
 button.primary-pill {
-  border-radius: 10px;
+  border-radius: var(--bb-radius-card);
   font-weight: var(--app-font-weight-heading);
   font-size: var(--app-font-size-body);
   padding: 10px;
-  background: var(--app-btn-bg);
+  background: var(--app-gradient);
   color: var(--app-btn-text);
 
   &:hover {
@@ -271,8 +712,168 @@ button.primary-pill {
   min-height: 200px;
 }
 
+/* Estado transversal (loading / empty / error) para vistas de app */
+.app-state-panel {
+  width: min(620px, 100%);
+  min-height: 220px;
+  margin: 0 auto;
+  padding: clamp(18px, 2.2vw, 28px);
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--app-border) 84%, transparent);
+  background:
+    radial-gradient(
+      440px 220px at 100% 0%,
+      color-mix(in srgb, var(--app-accent) 10%, transparent),
+      transparent 70%
+    ),
+    color-mix(in srgb, var(--app-bg-card) 98%, transparent);
+  box-shadow: var(--app-shadow-card);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.app-state-panel.is-loading {
+  border-style: solid;
+}
+
+.app-state-panel.is-empty {
+  border-style: dashed;
+}
+
+.app-state-panel.is-error {
+  border-color: color-mix(in srgb, var(--app-status-error) 55%, var(--app-border));
+  background:
+    radial-gradient(
+      440px 220px at 100% 0%,
+      color-mix(in srgb, var(--app-status-error) 11%, transparent),
+      transparent 70%
+    ),
+    color-mix(in srgb, var(--app-bg-card) 98%, transparent);
+}
+
+.app-state-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--app-accent) 34%, transparent);
+  background: color-mix(in srgb, var(--app-accent) 12%, transparent);
+  color: var(--app-accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.app-state-panel.is-error .app-state-icon {
+  border-color: color-mix(in srgb, var(--app-status-error) 48%, transparent);
+  background: color-mix(in srgb, var(--app-status-error) 14%, transparent);
+  color: var(--app-status-error);
+}
+
+.app-state-title {
+  margin: 0;
+  color: var(--app-text-heading);
+  font-size: clamp(1.45rem, 1.25rem + 0.2vw, 1.75rem);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.app-state-copy {
+  margin: 0;
+  max-width: 46ch;
+  color: var(--app-text-muted);
+  font-size: clamp(1.05rem, 1rem + 0.14vw, 1.2rem);
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.app-state-actions {
+  margin-top: 4px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.app-state-actions button,
+.app-state-actions a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--app-border) 84%, transparent);
+  background: color-mix(in srgb, var(--app-bg-soft) 84%, transparent);
+  color: var(--app-text-heading);
+  font-size: 1.05rem;
+  font-weight: 700;
+  transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease;
+}
+
+.app-state-actions button:hover,
+.app-state-actions a:hover {
+  border-color: color-mix(in srgb, var(--app-accent) 46%, transparent);
+  background: color-mix(in srgb, var(--app-accent) 12%, transparent);
+  color: var(--app-accent);
+}
+
+.bb-surface {
+  width: 100%;
+  min-width: 0;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--app-border) 84%, transparent);
+  position: relative;
+  isolation: isolate;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--app-bg-card) 99%, transparent) 0%,
+    color-mix(in srgb, var(--app-bg-soft) 96%, transparent) 100%
+  );
+  box-shadow: var(--app-shadow-card);
+  padding: clamp(14px, 1.6vw, 22px);
+}
+
+.bb-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 0;
+  background: radial-gradient(
+    980px 360px at 100% -10%,
+    color-mix(in srgb, var(--app-accent) 12%, transparent),
+    transparent 72%
+  );
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+html[data-theme="dark"] .bb-surface::before,
+html.dark .bb-surface::before,
+.dark .bb-surface::before {
+  opacity: 1;
+}
+
+.bb-surface > * {
+  position: relative;
+  z-index: 1;
+}
+
 .linear-bg {
-  background: linear-gradient(11deg, var(--app-accent-bright), var(--theme-accent-bright));
+  background: var(--app-gradient);
 }
 
 /* Botón CTA secundario (ej. NotFound): área táctil 44px, hover y transición */
@@ -314,62 +915,20 @@ button.primary-pill {
   margin-top: 6px;
   line-height: 1.4;
 }
-.search-input{
-  display: flex;
-  position: relative;
-  background-color: var(--app-bg-card);
-  width: 100%;
-  max-width: 350px;
-  padding-block: 10px;
-  padding-inline: 15px;
-  border-radius: 12px;
-  border: 2px solid var(--app-border);
-  box-shadow: var(--app-shadow);
-  transition: border-color 0.2s, box-shadow 0.2s;
-  &:focus-within {
-    border-color: var(--app-accent);
-    box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.4);
-  }
-  input{
-    background: transparent;
-    border: none;
-    outline: none;
-    font-size: var(--app-font-size-body);
-    font-weight: var(--app-font-weight-heading);
-    width: 100%;
-    color: var(--app-text-heading);
-  }
-  svg{
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    right: 10px;
-    color: var(--app-accent);
-    pointer-events: none;
-  }
+
+.formik {
+  color: var(--app-status-error);
+  font-weight: var(--app-font-weight-heading);
+  font-size: var(--app-font-size-body);
+  line-height: 1.4;
 }
-.select-input{
-  width: 100%;
-  min-width: 0;
-  max-width: 200px;
-  select{
-    width: 100%;
-    background-color: var(--app-bg-card);
-    color: var(--app-text-heading);
-    padding-block: 10px;
-    padding-inline: 15px;
-    border-radius: 12px;
-    border: 2px solid var(--app-border);
-    font-size: var(--app-font-size-body);
-    font-weight: var(--app-font-weight-heading);
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    &:focus {
-      border-color: var(--app-accent);
-      box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.4);
-    }
-  }
+
+.svg-inline--fa,
+svg[role="img"] {
+  vertical-align: middle;
 }
+
+/* Nota: `.search-input` / `.select-input` se estilizan de forma específica en Admin (evita colisiones globales). */
 
 /* Dashboard: anchos de inputs/botones los controla cada página (Login max-w-md, Admin según toolbar) */
 
@@ -403,6 +962,98 @@ button.primary-pill {
   -webkit-overflow-scrolling: touch;
 }
 
+/* ==========================================================================
+   UI Hardening 2026
+   Consistencia transversal para rutas internas, modales y estados.
+   ========================================================================== */
+.main-layout-main-container {
+  .card,
+  .panel,
+  .module-card {
+    background: var(--app-bg-card);
+    border: 1px solid var(--app-border);
+    border-radius: var(--bb-radius-card);
+    box-shadow: var(--app-shadow);
+  }
+
+  .badge,
+  .status-pill {
+    border-radius: var(--bb-radius-pill);
+    font-weight: var(--app-font-weight-heading);
+    letter-spacing: 0.01em;
+    padding: 4px 10px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: var(--app-bg-card);
+    border: 1px solid var(--app-border);
+    border-radius: var(--bb-radius-card);
+    overflow: hidden;
+  }
+
+  thead th {
+    background: var(--app-bg-soft);
+    color: var(--app-text-heading);
+    font-weight: var(--app-font-weight-heading);
+    border-bottom: 1px solid var(--app-border);
+  }
+
+  tbody td {
+    border-bottom: 1px solid color-mix(in srgb, var(--app-border) 70%, transparent);
+    color: var(--app-text-body);
+  }
+
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  tbody tr:hover {
+    background: color-mix(in srgb, var(--app-accent) 8%, transparent);
+  }
+}
+
+/* Bootstrap utility overrides to keep brand consistency in dark/light */
+.border,
+.border-top,
+.border-end,
+.border-bottom,
+.border-start {
+  border-color: var(--app-border) !important;
+}
+
+.text-muted {
+  color: var(--app-text-muted) !important;
+}
+
+.modal-content,
+.modal-container {
+  border-color: var(--app-border) !important;
+}
+
+.modal-content input,
+.modal-content select,
+.modal-content textarea {
+  border-color: var(--app-border);
+  background: var(--app-bg-card);
+  color: var(--app-text-heading);
+}
+
+.error-formik,
+.formik {
+  color: var(--app-status-error);
+}
+
+.success-message {
+  color: var(--app-status-success);
+}
+
+.warning-message {
+  color: var(--app-status-warning);
+}
+
 /* Chrome Mac: landing (PublicHome) sin scroll horizontal ni recorte */
 .chrome-mac .ph {
   width: 100%;
@@ -413,8 +1064,7 @@ button.primary-pill {
 }
 
 /* Identidad Bear Beat: fuentes; fondo/texto global lo controla index.css con variables semánticas */
-h1,
-h2,
-.brand-text {
-  font-family: "Bear-font", sans-serif;
+.brand-text,
+.font-bear {
+  font-family: var(--bb-font-brand);
 }

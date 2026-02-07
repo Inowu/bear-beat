@@ -8,7 +8,6 @@ import {
 } from "../../components/Modals";
 import { Elements } from "@stripe/react-stripe-js";
 import {
-  User,
   CreditCard,
   Server,
   Clock,
@@ -29,8 +28,6 @@ import { useUserContext } from "../../contexts/UserContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { getStripeAppearance } from "../../utils/stripeAppearance";
 import Amex from "../../assets/images/cards/express.png";
-import filezillaIcon from "../../assets/images/filezilla_icon.png";
-import Logo from "../../assets/images/osonuevo.png";
 import Mastercard from "../../assets/images/cards/master.png";
 import trpc from "../../api";
 import Visa from "../../assets/images/cards/visa.png";
@@ -263,9 +260,12 @@ function MyAccount() {
   const storagePercent = quota?.regular
     ? getCompleted(quota.regular.used, quota.regular.available)
     : 0;
-  const initials = currentUser?.username
-    ? currentUser.username.slice(0, 2).toUpperCase()
-    : "??";
+  const initialsSource = (currentUser?.username ?? currentUser?.email ?? "DJ").trim();
+  const normalizedInitials = initialsSource
+    .replace(/[^A-Za-z0-9]/g, "")
+    .slice(0, 2)
+    .toUpperCase();
+  const initials = normalizedInitials === "" ? "DJ" : normalizedInitials;
 
   const getStatusBadge = (status: number) => {
     const map: Record<number, { label: string; varColor: string }> = {
@@ -292,137 +292,63 @@ function MyAccount() {
   };
 
   return (
-    <div
-      className="my-account-main-container min-h-screen"
-      style={{ background: "var(--ma-bg)" }}
-    >
-      <div className="max-w-7xl mx-auto w-full p-4 md:p-6">
-        <h1
-          className="font-bold mb-1"
-          style={{ fontFamily: "Poppins, sans-serif", color: "var(--ma-title)", fontSize: "var(--app-font-size-h1)" }}
-        >
-          Panel de Control
-        </h1>
-        <div
-          className="h-1 w-24 rounded-full mb-8"
-          style={{ background: "var(--ma-accent)" }}
-        />
+    <div className="my-account-main-container">
+      <div className="ma-shell">
+        <header className="ma-page-head">
+          <h1>Mi cuenta</h1>
+          <p>Gestiona tu acceso, FTP y métodos de pago desde un solo lugar.</p>
+        </header>
 
-        {/* Module 1: Profile + Consumption (col-span-full) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
-          <div
-            className="lg:col-span-full rounded-xl border p-6 flex flex-col sm:flex-row items-center sm:items-start gap-6"
-            style={{
-              background: "var(--ma-card-bg)",
-              borderColor: "var(--ma-card-border)",
-            }}
-          >
-            <div
-              className="flex-shrink-0 w-20 h-20 rounded-full flex items-center justify-center border-2 ring-2"
-              style={{
-                background: "var(--ma-progress-bg)",
-                borderColor: "var(--ma-avatar-ring)",
-                boxShadow: "0 0 0 2px var(--ma-avatar-ring)",
-              }}
-            >
+        <section className="ma-panel ma-profile-panel">
+          <div className="ma-avatar-block">
+            <div className="ma-avatar">
               {currentUser?.profileImg ? (
                 <img
                   src={currentUser.profileImg}
-                  alt=""
-                  className="w-full h-full rounded-full object-cover"
+                  alt={`Foto de perfil de ${currentUser?.username ?? "usuario"}`}
                 />
               ) : (
-                <span
-                  className="text-2xl font-bold"
-                  style={{ color: "var(--ma-accent)" }}
-                >
-                  {initials}
-                </span>
+                <span>{initials}</span>
               )}
             </div>
-            <div className="flex-1 w-full text-center sm:text-left">
-              <p
-                className="font-semibold text-lg"
-                style={{ color: "var(--ma-text)" }}
-              >
-                {currentUser?.username}
-              </p>
-              <p
-                className="mt-0.5"
-                style={{ color: "var(--ma-text-muted)", fontSize: "var(--app-font-size-body)" }}
-              >
-                {currentUser?.email}
-              </p>
-              {currentUser?.phone && (
-                <p
-                  className="mt-0.5"
-                  style={{ color: "var(--ma-text-muted)", fontSize: "var(--app-font-size-body)" }}
-                >
-                  {currentUser.phone}
-                </p>
-              )}
-              <div className="mt-4">
-                <p
-                  className="uppercase tracking-wider mb-2"
-                  style={{ color: "var(--ma-text-muted)", fontSize: "var(--app-font-size-body)" }}
-                >
-                  Almacenamiento Usado: {storagePercent}%
-                </p>
-                <div
-                  className="h-2 w-full rounded-full overflow-hidden"
-                  style={{ background: "var(--ma-progress-bg)" }}
-                >
-                  <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{
-                      width: `${Math.min(100, Math.max(2, storagePercent))}%`,
-                      background: "var(--ma-progress-fill)",
-                    }}
-                  />
-                </div>
-                <p
-                  className="font-mono mt-1"
-                  style={{ color: "var(--ma-text-muted)", fontSize: "var(--app-font-size-body)" }}
-                >
-                  {usedGb} GB de {availableGb} GB
-                </p>
-              </div>
-            </div>
-            {currentUser?.hasActiveSubscription &&
-              !currentUser.isSubscriptionCancelled && (
-                <button
-                  type="button"
-                  onClick={startCancel}
-                  className="flex-shrink-0 px-4 py-2 rounded-full font-semibold transition-colors ma-btn-cancel"
-                style={{ fontSize: "var(--app-font-size-body)" }}
-                >
-                  Cancelar suscripción
-                </button>
-              )}
           </div>
-        </div>
+          <div className="ma-profile-content">
+            <p className="ma-user-name">{currentUser?.username ?? "Usuario"}</p>
+            <p className="ma-user-meta">{currentUser?.email ?? "Sin correo"}</p>
+            {currentUser?.phone && (
+              <p className="ma-user-meta">{currentUser.phone}</p>
+            )}
+            <div className="ma-storage">
+              <div className="ma-storage-head">
+                <span>Almacenamiento usado</span>
+                <strong>{storagePercent}%</strong>
+              </div>
+              <div className="ma-progress-track">
+                <div
+                  className="ma-progress-fill"
+                  style={{ width: `${Math.min(100, Math.max(2, storagePercent))}%` }}
+                />
+              </div>
+              <p className="ma-storage-amount">{usedGb} GB de {availableGb} GB</p>
+            </div>
+          </div>
+          {currentUser?.hasActiveSubscription &&
+            !currentUser.isSubscriptionCancelled && (
+              <button type="button" onClick={startCancel} className="ma-btn ma-btn-danger">
+                Cancelar suscripción
+              </button>
+            )}
+        </section>
 
-        {/* Module 2: FTP - The Vault */}
-        <div className="grid grid-cols-1 lg:grid-cols-6 gap-6 mb-6">
-          <div
-            className="lg:col-span-3 rounded-xl border p-6"
-            style={{
-              background: "var(--ma-card-bg)",
-              borderColor: "var(--ma-card-border)",
-            }}
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <Server className="w-5 h-5" style={{ color: "var(--ma-accent)" }} />
-              <h2
-                className="text-lg font-bold"
-                style={{ color: "var(--ma-text)" }}
-              >
-                Credenciales FTP (The Vault)
-              </h2>
+        <div className="ma-grid-two">
+          <section className="ma-panel ma-ftp-panel">
+            <div className="ma-panel-head">
+              <Server size={18} />
+              <h2>Credenciales FTP</h2>
             </div>
             {currentUser?.ftpAccount ? (
               <>
-                <div className="space-y-3">
+                <div className="ma-ftp-list">
                   <FtpRow
                     label="HOST"
                     value={currentUser.ftpAccount.host}
@@ -450,121 +376,62 @@ function MyAccount() {
                     copyToClipboard={copyToClipboard}
                     copyFeedback={copyFeedback}
                   />
-                  <div
-                    className="pt-2"
-                    style={{ color: "var(--ma-text-muted)", fontSize: "var(--app-font-size-body)" }}
-                  >
-                    Expiración:{" "}
-                    {currentUser.ftpAccount.expiration?.toDateString?.() ?? "—"}
-                  </div>
                 </div>
-                <div className="mt-4 flex flex-wrap gap-3">
+                <p className="ma-ftp-expiration">
+                  Expiración: {currentUser.ftpAccount.expiration?.toDateString?.() ?? "—"}
+                </p>
+                <div className="ma-ftp-actions">
                   <button
                     type="button"
                     onClick={() => downloadXMLFile(currentUser.ftpAccount!)}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ma-btn-secondary"
-                    style={{ fontSize: "var(--app-font-size-body)" }}
+                    className="ma-btn ma-btn-soft"
                   >
-                    <FileDown className="w-4 h-4" />
-                    Descargar FileZilla XML
+                    <FileDown size={16} />
+                    Descargar XML FileZilla
                   </button>
-                  <Link
-                    to="/instrucciones"
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors font-medium ma-btn-accent"
-                    style={{ fontSize: "var(--app-font-size-body)" }}
-                  >
-                    Instrucciones de conexión
+                  <Link to="/instrucciones" className="ma-btn ma-btn-outline">
+                    Ver instrucciones
                   </Link>
                 </div>
               </>
             ) : (
-              <div
-                className="rounded-lg border p-4"
-                style={{
-                  fontSize: "var(--app-font-size-body)",
-                  borderColor: "var(--ma-card-border)",
-                  background: "var(--ma-progress-bg)",
-                  color: "var(--ma-text-muted)",
-                }}
-              >
+              <div className="ma-empty-card">
                 <p>
                   Aún no tienes un plan activo.{" "}
-                  <Link
-                    to="/planes"
-                    className="hover:underline"
-                    style={{ color: "var(--ma-accent)" }}
-                  >
-                    Ver planes
-                  </Link>
+                  <Link to="/planes">Ver planes</Link>
                 </p>
               </div>
             )}
-          </div>
+          </section>
 
-          {/* Module 3: Historial de Órdenes */}
-          <div
-            className="lg:col-span-3 rounded-xl border p-6 overflow-hidden"
-            style={{
-              background: "var(--ma-card-bg)",
-              borderColor: "var(--ma-card-border)",
-            }}
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <Clock className="w-5 h-5" style={{ color: "var(--ma-accent)" }} />
-              <h2
-                className="text-lg font-bold"
-                style={{ color: "var(--ma-text)" }}
-              >
-                Historial de órdenes
-              </h2>
+          <section className="ma-panel ma-orders-panel">
+            <div className="ma-panel-head">
+              <Clock size={18} />
+              <h2>Historial de órdenes</h2>
             </div>
-            <div className="overflow-x-auto -mx-2">
-              <table className="w-full min-w-[320px] ma-table">
+            <div className="ma-table-wrap">
+              <table className="ma-table">
                 <thead>
-                  <tr className="border-b" style={{ borderColor: "var(--ma-card-border)" }}>
-                    <th className="text-left py-3 px-2 uppercase tracking-wider font-semibold" style={{ color: "var(--ma-text-muted)", fontSize: "var(--app-font-size-body)" }}>
-                      Fecha
-                    </th>
-                    <th className="text-left py-3 px-2 uppercase tracking-wider font-semibold" style={{ color: "var(--ma-text-muted)", fontSize: "var(--app-font-size-body)" }}>
-                      Orden #
-                    </th>
-                    <th className="text-left py-3 px-2 uppercase tracking-wider font-semibold" style={{ color: "var(--ma-text-muted)", fontSize: "var(--app-font-size-body)" }}>
-                      Precio
-                    </th>
-                    <th className="text-left py-3 px-2 uppercase tracking-wider font-semibold" style={{ color: "var(--ma-text-muted)", fontSize: "var(--app-font-size-body)" }}>
-                      Status
-                    </th>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Orden #</th>
+                    <th>Precio</th>
+                    <th>Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {orders.length > 0 ? (
                     orders.map((order: IOrders, index: number) => (
-                      <tr
-                        key={"order_" + index}
-                        className="border-b ma-table-row"
-                        style={{ borderColor: "var(--ma-card-border)" }}
-                      >
-                        <td className="py-3 px-2" style={{ color: "var(--ma-text)", fontSize: "var(--app-font-size-body)" }}>
-                          {order.date_order.toDateString()}
-                        </td>
-                        <td className="py-3 px-2 font-mono" style={{ color: "var(--ma-text)", fontSize: "var(--app-font-size-body)" }}>
-                          {order.id}
-                        </td>
-                        <td className="py-3 px-2" style={{ color: "var(--ma-text)", fontSize: "var(--app-font-size-body)" }}>
-                          ${order.total_price}.00
-                        </td>
-                        <td className="py-3 px-2">
-                          {getStatusBadge(order.status)}
-                        </td>
+                      <tr key={"order_" + index} className="ma-table-row">
+                        <td>{order.date_order.toDateString()}</td>
+                        <td className="ma-mono">{order.id}</td>
+                        <td>${order.total_price}.00</td>
+                        <td>{getStatusBadge(order.status)}</td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td
-                        colSpan={4}
-                        className="py-8 px-2 text-center"
-                        style={{ color: "var(--ma-text-muted)", fontSize: "var(--app-font-size-body)" }}
-                      >
+                      <td colSpan={4} className="ma-table-empty">
                         No hay órdenes en tu historial.
                       </td>
                     </tr>
@@ -572,46 +439,29 @@ function MyAccount() {
                 </tbody>
               </table>
             </div>
-          </div>
+          </section>
         </div>
 
-        {/* Module 4: Métodos de pago (Wallet) */}
-        <div
-          className="rounded-xl border p-6"
-          style={{
-            background: "var(--ma-card-bg)",
-            borderColor: "var(--ma-card-border)",
-          }}
-        >
-          <div className="flex flex-wrap items-center gap-2 mb-4">
-            <CreditCard className="w-5 h-5" style={{ color: "var(--ma-accent)" }} />
-            <h2 className="text-lg font-bold" style={{ color: "var(--ma-text)" }}>
-              Tarjetas
-            </h2>
+        <section className="ma-panel ma-wallet-panel">
+          <div className="ma-panel-head">
+            <CreditCard size={18} />
+            <h2>Tarjetas</h2>
             {paymentMethods.length > 0 && (
               <button
                 type="button"
                 onClick={openBillingPortal}
                 disabled={portalLoading}
-                className="ml-auto min-h-[44px] px-4 py-2 rounded-lg font-medium border transition-colors ma-btn-accent"
-                style={{ fontSize: "var(--app-font-size-body)" }}
+                className="ma-btn ma-btn-outline ma-head-action"
               >
                 {portalLoading ? "Abriendo…" : "Gestionar pagos y facturas"}
               </button>
             )}
           </div>
           {!cardLoad ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="ma-cards-grid">
               {paymentMethods.map((x: any, index: number) => (
-                <div
-                  key={"cards_" + index}
-                  className="relative rounded-xl border p-4 min-h-[120px] flex flex-col justify-between ma-card-item"
-                  style={{
-                    borderColor: "var(--ma-card-border)",
-                    background: "var(--ma-progress-bg)",
-                  }}
-                >
-                  <div className="flex justify-between items-start">
+                <article key={"cards_" + index} className="ma-card-item">
+                  <div className="ma-card-top">
                     <img
                       src={
                         x.card.brand === "visa"
@@ -620,16 +470,15 @@ function MyAccount() {
                             ? Mastercard
                             : Amex
                       }
-                      alt=""
-                      className="h-8 w-auto object-contain opacity-90"
+                      alt={`Logo de tarjeta ${x.card.brand}`}
+                      className="ma-card-brand"
                     />
-                    <div className="flex items-center gap-1">
+                    <div className="ma-card-actions">
                       {paymentMethods.length > 1 && (
                         <button
                           type="button"
                           onClick={() => setDefaultPaymentMethod(x)}
-                          className="p-1.5 rounded-lg font-medium transition-colors ma-btn-accent"
-                          style={{ fontSize: "var(--app-font-size-body)" }}
+                          className="ma-btn ma-btn-outline ma-btn-small"
                           aria-label="Usar esta tarjeta"
                         >
                           Usar esta
@@ -638,48 +487,32 @@ function MyAccount() {
                       <button
                         type="button"
                         onClick={() => deletePaymentMethod(x)}
-                        className="p-1.5 rounded-lg transition-colors ma-btn-delete"
+                        className="ma-icon-btn ma-btn-delete"
                         aria-label="Eliminar tarjeta"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   </div>
-                  <div>
-                    <p
-                      className="font-mono"
-                      style={{ color: "var(--ma-text)", fontSize: "var(--app-font-size-body)" }}
-                    >
-                      •••• •••• •••• {x.card.last4}
-                    </p>
-                    <p
-                      className="mt-1"
-                      style={{ color: "var(--ma-text-muted)", fontSize: "var(--app-font-size-body)" }}
-                    >
-                      {x.card.exp_month}/{x.card.exp_year}
-                    </p>
-                  </div>
-                </div>
+                  <p className="ma-card-number">•••• •••• •••• {x.card.last4}</p>
+                  <p className="ma-card-date">{x.card.exp_month}/{x.card.exp_year}</p>
+                </article>
               ))}
               <button
                 type="button"
                 onClick={() => setShowPaymentMethod(!showPaymentMethod)}
-                className="min-h-[120px] rounded-xl border-2 border-dashed flex items-center justify-center gap-2 transition-colors ma-add-card"
-                style={{
-                  borderColor: "var(--ma-add-card-border)",
-                  color: "var(--ma-text-muted)",
-                }}
+                className="ma-add-card"
               >
-                <CreditCard className="w-6 h-6" />
-                <span className="font-medium">Agregar tarjeta</span>
+                <CreditCard size={20} />
+                <span>Agregar tarjeta</span>
               </button>
             </div>
           ) : (
-            <div className="flex justify-center py-12">
+            <div className="ma-loading-cards">
               <Spinner size={4} width={0.4} color="var(--ma-accent)" />
             </div>
           )}
-        </div>
+        </section>
       </div>
 
       <ErrorModal show={showError} onHide={closeError} message={errorMessage} />
@@ -747,50 +580,33 @@ function FtpRow({
   const displayValue = secret ? (showSecret ? value : "••••••••••••") : value;
   const copied = copyFeedback === label;
   return (
-    <div
-      className="flex items-center justify-between gap-2 py-2 border-b last:border-0"
-      style={{ borderColor: "var(--ma-card-border)" }}
-    >
-      <span
-        className="font-mono uppercase tracking-wider flex-shrink-0"
-        style={{ color: "var(--ma-text-muted)", fontSize: "var(--app-font-size-body)" }}
-      >
-        {label}:
-      </span>
-      <code
-        className="font-mono truncate flex-1 text-right mr-2"
-        style={{ color: "var(--ma-text)", fontSize: "var(--app-font-size-body)" }}
-      >
-        {displayValue}
-      </code>
-      <div className="flex items-center gap-1 flex-shrink-0">
+    <div className="ma-ftp-row">
+      <span className="ma-ftp-label">{label}:</span>
+      <code className="ma-ftp-value">{displayValue}</code>
+      <div className="ma-ftp-actions-inline">
         {secret && onToggleSecret && (
           <button
             type="button"
             onClick={onToggleSecret}
-            className="p-1.5 rounded transition-colors ma-ftp-icon"
+            className="ma-icon-btn ma-ftp-icon"
             aria-label={showSecret ? "Ocultar" : "Mostrar"}
           >
             {showSecret ? (
-              <EyeOff className="w-4 h-4" />
+              <EyeOff size={16} />
             ) : (
-              <Eye className="w-4 h-4" />
+              <Eye size={16} />
             )}
           </button>
         )}
         <button
           type="button"
           onClick={() => copyToClipboard(value, label)}
-          className="p-1.5 rounded transition-colors ma-ftp-icon"
+          className="ma-icon-btn ma-ftp-icon"
           aria-label="Copiar"
         >
-          <Copy className="w-4 h-4" />
+          <Copy size={16} />
         </button>
-        {copied && (
-          <span style={{ color: "var(--ma-accent)", fontSize: "var(--app-font-size-body)" }}>
-            Copiado
-          </span>
-        )}
+        {copied && <span className="ma-copy-ok">Copiado</span>}
       </div>
     </div>
   );

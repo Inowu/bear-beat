@@ -1,6 +1,14 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import trpc from "../api";
+import * as Sentry from "@sentry/react";
 import { IPaymentMethod, IUser } from "../interfaces/User";
+import {
+  clearAdminAccessBackup,
+  clearAuthTokens,
+  getAccessToken,
+  getRefreshToken,
+  setAuthTokens,
+} from "../utils/authStorage";
 
 interface UserContextI {
   currentUser: IUser | null;
@@ -43,8 +51,7 @@ const UserContextProvider = (props: any) => {
   const [cardLoad, setCardLoad] = useState<boolean>(false);
 
   function handleLogin(token: string, refreshToken: string) {
-    localStorage.setItem("token", token);
-    localStorage.setItem("refreshToken", refreshToken);
+    setAuthTokens(token, refreshToken);
     setUserToken(token);
   }
   function resetCard() {
@@ -55,55 +62,79 @@ const UserContextProvider = (props: any) => {
   }
   function handleLogout() {
     setCurrentUser(null);
-    localStorage.removeItem("token");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("isAdminAccess");
+    clearAuthTokens();
+    clearAdminAccessBackup();
     setUserToken(null);
   }
+  const isNetworkError = (error: unknown) => {
+    const message = error instanceof Error ? error.message : String(error ?? "");
+    return message.toLowerCase().includes("failed to fetch") || message.toLowerCase().includes("network");
+  };
   const getPaymentMethods = async () => {
     setCardLoad(true);
     try {
       const cards: any = await trpc.subscriptions.listStripeCards.query();
       setPaymentMethods(cards.data);
-      setCardLoad(false);
     }
-    catch (error) {
-      console.log(error);
+    catch {
+      setPaymentMethods([]);
     }
     setCardLoad(false);
   }
-  async function startUser() {
+  const startUserRefresh = useCallback(async () => {
+    const refreshToken = getRefreshToken();
+    if (refreshToken === null) return "none" as const;
+    try {
+      const token = await trpc.auth.refresh.query({ refreshToken });
+      handleLogin(token.token, token.refreshToken);
+      return "success" as const;
+    }
+    catch (error) {
+      if (isNetworkError(error)) {
+        return "network" as const;
+      }
+      handleLogout();
+      return "denied" as const;
+    }
+  }, []);
+
+  const startUser = useCallback(async () => {
     try {
       const user: any = await trpc.auth.me.query();
       setCurrentUser(user);
     }
     catch (error) {
-      console.log('Trying refresh.....');
-      startUserRefresh();
-    }
-  }
-  async function startUserRefresh() {
-    const refreshToken = localStorage.getItem("refreshToken");
-    if (refreshToken !== null){
-      try {
-        const token = await trpc.auth.refresh.query({refreshToken: refreshToken });
-        console.log('Login refresh succeed!');
-        handleLogin(token.token, token.refreshToken);
+      const refreshResult = await startUserRefresh();
+      if (refreshResult === "success") {
+        try {
+          const refreshedUser: any = await trpc.auth.me.query();
+          setCurrentUser(refreshedUser);
+        } catch (retryError) {
+          if (!isNetworkError(retryError)) {
+            handleLogout();
+          }
+        }
       }
-      catch (error) {
-        console.log('Login refresh denied');
+      if (refreshResult === "none") {
         handleLogout();
       }
     }
-  }
+  }, [startUserRefresh]);
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = getAccessToken();
     if (token !== null) {
       setUserToken(token);
-      startUser()
     }
     setLoading(false);
-  }, [userToken]);
+  }, []);
+
+  useEffect(() => {
+    if (userToken) {
+      startUser();
+    } else {
+      setCurrentUser(null);
+    }
+  }, [userToken, startUser]);
 
   useEffect(() => {
     if (currentUser === null) {
@@ -112,18 +143,34 @@ const UserContextProvider = (props: any) => {
       getPaymentMethods();
     }
   }, [currentUser])
+
+  useEffect(() => {
+    if (!currentUser) {
+      Sentry.setUser(null);
+      return;
+    }
+
+    Sentry.setUser({
+      id: String(currentUser.id),
+      username: currentUser.username,
+      email: currentUser.email,
+    });
+    Sentry.setTag("user_role", currentUser.role);
+    Sentry.setTag("user_verified", String(Boolean(currentUser.verified)));
+  }, [currentUser]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        startUserRefresh();
-      } catch (error) {
-        console.error('Error during API call:', error);
+        await startUserRefresh();
+      } catch {
+        // noop
       }
     };
     fetchData();
     const intervalId = setInterval(fetchData, 1000 * 60 * 10);
     return () => clearInterval(intervalId);
-  }, []);
+  }, [startUserRefresh]);
 
   const values = {
     userToken,

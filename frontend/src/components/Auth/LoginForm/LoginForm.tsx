@@ -1,26 +1,23 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { HiOutlineMail, HiOutlineLockClosed } from "react-icons/hi";
+import { Lock, Mail } from "lucide-react";
 import { PasswordInput } from "../../PasswordInput/PasswordInput";
 import { useUserContext } from "../../../contexts/UserContext";
 import trpc from "../../../api";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useState } from "react";
-import { ErrorModal, VerifyUpdatePhoneModal } from "../../../components/Modals";
+import { ErrorModal } from "../../../components/Modals";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import { ChatButton } from "../../../components/ChatButton/ChatButton";
 import Logo from "../../../assets/images/osonuevo.png";
 import { trackManyChatConversion, MC_EVENTS } from "../../../utils/manychatPixel";
+import { GROWTH_METRICS, trackGrowthMetric } from "../../../utils/growthMetrics";
 import "./LoginForm.scss";
 
 function LoginForm() {
   const [loader, setLoader] = useState<boolean>(false);
   const [show, setShow] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<any>("");
-  const [showVerify, setShowVerify] = useState<boolean>(false);
-  const [newUserId, setNewUserId] = useState<number>(0);
-  const [newUserPhone, setNewUserPhone] = useState<string>("");
-  const [loginInfo, setLoginInfo] = useState<any>({})
   const { handleLogin } = useUserContext();
   const navigate = useNavigate();
   const location = useLocation();
@@ -51,24 +48,11 @@ function LoginForm() {
       };
       try {
         const login = await trpc.auth.login.query(body);
-        console.log('login Response', login);
         if (login) {
-          if (login.user) {
-            if (login.user.verified) {
-              trackManyChatConversion(MC_EVENTS.LOGIN_SUCCESS);
-              handleLogin(login.token, login.refreshToken);
-              navigate(from, { replace: true });
-            } else {
-              setLoginInfo(login);
-              setNewUserId(login.user.id);
-              setNewUserPhone(login.user.phone!);
-              setShowVerify(true);
-            }
-          } else {
-            trackManyChatConversion(MC_EVENTS.LOGIN_SUCCESS);
-            handleLogin(login.token, login.refreshToken);
-            navigate(from, { replace: true });
-          }
+          trackManyChatConversion(MC_EVENTS.LOGIN_SUCCESS);
+          trackGrowthMetric(GROWTH_METRICS.LOGIN_SUCCESS, { from });
+          handleLogin(login.token, login.refreshToken);
+          navigate(from, { replace: true });
         }
 
         setLoader(false);
@@ -79,6 +63,11 @@ function LoginForm() {
           errorMessage = JSON.parse(error.message)[0].message;
         }
 
+        trackGrowthMetric(GROWTH_METRICS.LOGIN_FAILED, {
+          from,
+          reason: errorMessage,
+        });
+
         setLoader(false);
         setShow(true);
         setErrorMessage(errorMessage);
@@ -86,31 +75,26 @@ function LoginForm() {
     },
   });
 
-  const handleSuccessVerify = () => {
-    handleLogin(loginInfo.token, loginInfo.refreshToken);
-    setShowVerify(false);
-    navigate(from, { replace: true });
-  };
-
   return (
     <>
       <div className="auth-login-atmosphere">
         <div className="auth-login-card bg-bg-card border border-border shadow-lg rounded-2xl text-text-main">
           <img src={Logo} alt="Bear Beat" className="auth-login-logo" />
-          <h1 className="auth-login-title font-bear text-text-main">Bienvenido, DJ.</h1>
+          <h1 className="auth-login-title text-text-main">Bienvenido, DJ.</h1>
           <p className="auth-login-sub text-text-muted">
             Tu cabina está lista. Ingresa para descargar.
           </p>
           <ChatButton />
-          <form className="auth-form auth-login-form" onSubmit={formik.handleSubmit}>
+          <form className="auth-form auth-login-form" onSubmit={formik.handleSubmit} autoComplete="on">
             <div className="c-row">
-              <div className="auth-login-input-wrap rounded-pill bg-bg-input border border-border focus-within:ring-2 focus-within:ring-bear-cyan focus-within:border-transparent">
-                <HiOutlineMail className="auth-login-input-icon" aria-hidden />
+              <div className="auth-login-input-wrap rounded-pill bg-bg-input border border-gray-300 dark:border-bear-dark-100 focus-within:ring-2 focus-within:ring-bear-cyan focus-within:border-transparent">
+                <Mail className="auth-login-input-icon" aria-hidden />
                 <input
                   placeholder="Correo electrónico"
-                  type="text"
+                  type="email"
                   id="username"
                   name="username"
+                  autoComplete="email"
                   value={formik.values.username}
                   onChange={formik.handleChange}
                   className="auth-login-input auth-login-input-with-icon"
@@ -121,12 +105,13 @@ function LoginForm() {
               )}
             </div>
             <div className="c-row">
-              <div className="auth-login-input-wrap rounded-pill bg-bg-input border border-border focus-within:ring-2 focus-within:ring-bear-cyan focus-within:border-transparent">
-                <HiOutlineLockClosed className="auth-login-input-icon" aria-hidden />
+              <div className="auth-login-input-wrap rounded-pill bg-bg-input border border-gray-300 dark:border-bear-dark-100 focus-within:ring-2 focus-within:ring-bear-cyan focus-within:border-transparent">
+                <Lock className="auth-login-input-icon" aria-hidden />
                 <PasswordInput
                   placeholder="Contraseña"
                   id="password"
                   name="password"
+                  autoComplete="current-password"
                   value={formik.values.password}
                   onChange={formik.handleChange}
                   inputClassName="auth-login-input auth-login-input-with-icon"
@@ -160,12 +145,6 @@ function LoginForm() {
         </div>
       </div>
       <ErrorModal show={show} onHide={closeModal} message={errorMessage} />
-      <VerifyUpdatePhoneModal
-        showModal={showVerify}
-        newUserId={newUserId}
-        newUserPhone={newUserPhone}
-        onHideModal={handleSuccessVerify}
-      />
     </>
   );
 }

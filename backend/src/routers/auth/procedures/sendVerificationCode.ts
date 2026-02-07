@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { publicProcedure } from '../../../procedures/public.procedure';
+import { shieldedProcedure } from '../../../procedures/shielded.procedure';
 import { log } from '../../../server';
 import { twilio } from '../../../twilio';
 import * as TwilioLib from 'twilio';
@@ -31,19 +31,26 @@ const addPhoneToBlockedList = async (
   await setBlockedPhoneNumbers(prisma, [...currentNumbers, normalized]);
 };
 
-export const sendVerificationCode = publicProcedure
+export const sendVerificationCode = shieldedProcedure
   .input(
     z.object({
       phoneNumber: z.string(),
-      userId: z.number(),
     }),
   )
   .mutation(
-    async ({ input: { phoneNumber, userId }, ctx: { req, prisma } }) => {
+    async ({ input: { phoneNumber }, ctx: { prisma, session } }) => {
+      const sessionUser = session?.user;
+      if (!sessionUser?.id) {
+        throw new TRPCError({
+          code: 'UNAUTHORIZED',
+          message: 'No autorizado',
+        });
+      }
+
       const existingUser = await prisma.users.findFirst({
         where: {
           id: {
-            equals: userId,
+            equals: sessionUser.id,
           },
         },
       });
@@ -69,13 +76,11 @@ export const sendVerificationCode = publicProcedure
 
         log.error('[SEND_VERIFICATION_CODE_ERROR] Code could not be sent');
         log.error(error);
-
-        return 'approved';
-        // throw new TRPCError({
-        //   code: 'BAD_REQUEST',
-        //   message:
-        //     'Hubo un error al momento de enviar el codigo, intente mas tarde.',
-        // });
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message:
+            'Hubo un error al momento de enviar el codigo, intente mas tarde.',
+        });
       }
     },
   );
