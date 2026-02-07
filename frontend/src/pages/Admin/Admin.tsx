@@ -16,16 +16,32 @@ import {
   DeleteUOneUserModal
 } from '../../components/Modals';
 import { useNavigate } from "react-router-dom";
-import { Search, Plus, Download, Pencil, LogIn, MoreVertical } from "lucide-react";
+import {
+  Search,
+  Plus,
+  Download,
+  Pencil,
+  LogIn,
+  MoreVertical,
+  Lock,
+  LockOpen,
+  Users,
+  Filter,
+  AlertTriangle,
+  RefreshCw,
+} from "lucide-react";
 import Pagination from "../../components/Pagination/Pagination";
 import { ARRAY_10 } from "../../utils/Constants";
 import CsvDownloader from "react-csv-downloader";
 import { exportUsers } from "./fuctions";
-import { FaLockOpen } from "react-icons/fa";
-import { FaLock } from "react-icons/fa";
-import { useSSE } from "react-hooks-sse";
 import { of } from "await-of";
 import { AdminDrawer } from "../../components/AdminDrawer/AdminDrawer";
+import {
+  getAccessToken,
+  getRefreshToken,
+  setAdminAccessBackup,
+} from "../../utils/authStorage";
+import { useSafeSSE } from "../../utils/sse";
 
 export interface IAdminFilter {
   page: number;
@@ -41,6 +57,11 @@ interface IExportUserRow {
   registered_on: Date | string;
   phone?: string | null;
 }
+
+const getInitialPageLimit = () => {
+  if (typeof window === "undefined") return 50;
+  return window.innerWidth <= 900 ? 25 : 50;
+};
 
 function Admin() {
   const { currentUser, handleLogin } = useUserContext();
@@ -67,13 +88,14 @@ function Admin() {
     total: 0,
     search: "",
     active: 2,
-    limit: 100,
+    limit: getInitialPageLimit(),
   });
   const [showHistory, setShowHistory] = useState<boolean>(false);
   const [showAddGB, setShowAddGB] = useState<boolean>(false);
   const [showDeleteUser, setShowDeleteUser] = useState<boolean>(false);
   const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(null);
   const [drawerUser, setDrawerUser] = useState<IAdminUser | null>(null);
+  const [loadError, setLoadError] = useState<string>("");
 
   const closeModalAdd = () => setShowModal(false);
   const handleDeleteModal = () => setShowDeleteModal(!showDeleteModal);
@@ -95,8 +117,7 @@ function Admin() {
     try {
       const plans: any = await trpc.plans.findManyPlans.query({ where: { activated: 1 } });
       setPlans(plans);
-    } catch (error) {
-      console.log(error);
+    } catch {
     }
   };
 
@@ -106,8 +127,8 @@ function Admin() {
     openOption();
   };
 
-  const MessageComplete = useSSE("remove-users:completed", { queue: "remove-users", jobId: null });
-  const MessageFail = useSSE("remove-users:failed", { queue: "remove-users", jobId: null });
+  const MessageComplete = useSafeSSE("remove-users:completed", { queue: "remove-users", jobId: null });
+  const MessageFail = useSafeSSE("remove-users:failed", { queue: "remove-users", jobId: null });
 
   const changeBlockUser = async () => {
     try {
@@ -118,8 +139,7 @@ function Admin() {
       }
       closeBlockModal();
       filterUsers(filters);
-    } catch (error) {
-      console.log(error);
+    } catch {
     }
   };
 
@@ -146,11 +166,27 @@ function Admin() {
   };
 
   const filterUsers = async (filt: IAdminFilter) => {
+    setLoadError("");
     setLoader(true);
     setTotalLoader(true);
     try {
       const baseWhere = { email: { startsWith: filt.search } };
-      const baseBody = { take: filt.limit, skip: filt.page * filt.limit, where: baseWhere, orderBy: { registered_on: "desc" as const } };
+      const baseSelect = {
+        id: true,
+        username: true,
+        email: true,
+        phone: true,
+        active: true,
+        registered_on: true,
+        role_id: true,
+      };
+      const baseBody = {
+        take: filt.limit,
+        skip: filt.page * filt.limit,
+        where: baseWhere,
+        orderBy: { registered_on: "desc" as const },
+        select: baseSelect,
+      };
       const countBody = { where: baseWhere, select: { id: true } };
 
       if (filt.active === 2) {
@@ -161,9 +197,8 @@ function Admin() {
           active: u.active,
           id: u.id,
           registered_on: u.registered_on,
-          blocked: u.blocked,
+          blocked: Boolean(u.blocked),
           phone: u.phone ?? "",
-          password: u.password,
           role: u.role_id ?? 4,
         }));
         setUsers(transformedUsers);
@@ -176,8 +211,10 @@ function Admin() {
         setUsers(tempUsers);
         setTotalUsers(totalUsersResponse.length);
       }
-    } catch (error) {
-      console.log(error);
+    } catch {
+      setUsers([]);
+      setTotalUsers(0);
+      setLoadError("No se pudieron cargar los usuarios. Revisa la conexión e intenta nuevamente.");
     } finally {
       setLoader(false);
       setTotalLoader(false);
@@ -236,20 +273,22 @@ function Admin() {
 
   const signInAsUser = async (user: IAdminUser) => {
     setLoader(true);
-    const [loginAsUser, errorLogin] = await of(trpc.auth.login.query({
-      username: user.email,
-      password: user.password,
-      isAdmin: true
-    }));
+    const [loginAsUser, errorLogin] = await of(
+      trpc.auth.impersonateUser.mutate({
+        userId: user.id,
+      })
+    );
     if (!loginAsUser && errorLogin) {
       setErrorMessage(errorLogin.message);
       setShowError(true);
       setLoader(false);
       return;
     }
-    const adminToken = localStorage.getItem("token");
-    const adminRefreshToken = localStorage.getItem("refreshToken");
-    localStorage.setItem("isAdminAccess", JSON.stringify({ adminToken, adminRefreshToken }));
+    const adminToken = getAccessToken();
+    const adminRefreshToken = getRefreshToken();
+    if (adminToken && adminRefreshToken) {
+      setAdminAccessBackup({ adminToken, adminRefreshToken });
+    }
     handleLogin(loginAsUser!.token, loginAsUser!.refreshToken);
     navigate("/");
     setLoader(false);
@@ -265,7 +304,7 @@ function Admin() {
     const element = document.getElementById(`dropdown-content-${index}`);
     if (element) {
       const rect = element.getBoundingClientRect();
-      if (rect.bottom >= document.body.scrollHeight) element.classList.add("dropdown-up");
+      if (rect.bottom >= window.innerHeight - 12) element.classList.add("dropdown-up");
       else element.classList.remove("dropdown-up");
     }
   };
@@ -299,38 +338,81 @@ function Admin() {
     : [];
 
   const colCount = filters.active !== 2 ? 6 : 5;
+  const activeFilterLabel = filters.active === 1 ? "Activos" : filters.active === 0 ? "Inactivos" : "Todos";
+  const rangeStart = totalUsers === 0 ? 0 : filters.page * filters.limit + 1;
+  const rangeEnd = Math.min(filters.page * filters.limit + users.length, totalUsers);
+  const formatRegisteredDate = (dateValue: Date | string) => {
+    const parsedDate = dateValue instanceof Date ? dateValue : new Date(dateValue);
+    if (Number.isNaN(parsedDate.getTime())) {
+      return "—";
+    }
+    return parsedDate.toLocaleDateString();
+  };
+  const retryUsersLoad = () => {
+    filterUsers(filters);
+    trpc.users.countUsers.query().then(setTotalRegistered).catch(() => setTotalRegistered(null));
+  };
 
   return (
-    <div className="admin-theme overflow-x-hidden">
+    <div className="admin-theme">
       <div className="admin-contain">
-        <div className="admin-top-bar flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="header__title-row">
-            <h1 className="text-2xl md:text-3xl font-bold text-bear-dark-900 dark:text-white">Usuarios</h1>
-            {totalRegistered !== null && (
-              <span className="header__total-registered">
-                Registrados: {totalRegistered.toLocaleString()}
+        <section className="admin-top-bar">
+          <div className="admin-top-bar__intro">
+            <div className="header__title-row">
+              <h1 className="admin-title">Usuarios</h1>
+              {totalRegistered !== null && (
+                <span className="header__total-registered">
+                  Registrados: {totalRegistered.toLocaleString()}
+                </span>
+              )}
+            </div>
+            <p className="admin-subtitle">Controla accesos, soporte y acciones críticas desde un solo panel.</p>
+            <div className="admin-insights">
+              <span className="insight-pill">
+                <Users size={14} />
+                {totalUsers.toLocaleString()} resultados
               </span>
-            )}
+              <span className="insight-pill">
+                <Filter size={14} />
+                {activeFilterLabel}
+              </span>
+              <span className="insight-pill">
+                Mostrando {rangeStart.toLocaleString()}-{rangeEnd.toLocaleString()}
+              </span>
+            </div>
           </div>
-          <div className="filter-contain flex flex-col md:flex-row md:items-center md:flex-1 md:justify-center md:max-w-2xl md:gap-3">
-            <div className="left-contain flex flex-wrap gap-2 md:flex-nowrap md:gap-3">
+          <div className="filter-contain">
+            <div className="left-contain">
               <div className="select-input">
-                <select value={filters.active} onChange={(e) => startFilter("active", +e.target.value)}>
+                <label htmlFor="admin-status-filter">Estado</label>
+                <select
+                  id="admin-status-filter"
+                  value={filters.active}
+                  onChange={(e) => startFilter("active", +e.target.value)}
+                >
                   <option value={2}>Todos</option>
                   <option value={1}>Activos</option>
                   <option value={0}>Inactivos</option>
                 </select>
               </div>
               <div className="select-input">
-                <select value={filters.limit} onChange={(e) => startFilter("limit", +e.target.value)}>
+                <label htmlFor="admin-limit-filter">Página</label>
+                <select
+                  id="admin-limit-filter"
+                  value={filters.limit}
+                  onChange={(e) => startFilter("limit", +e.target.value)}
+                >
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
                   <option value={100}>100</option>
                   <option value={200}>200</option>
-                  <option value={500}>500</option>
                 </select>
               </div>
-              <div className="search-input flex-1 min-w-0">
+              <div className="search-input">
+                <label htmlFor="admin-search-filter">Buscar</label>
                 <Search className="search-input__icon" size={18} />
                 <input
+                  id="admin-search-filter"
                   placeholder="Buscar por email"
                   value={filters.search}
                   onChange={(e) => startFilter("search", e.target.value)}
@@ -338,7 +420,7 @@ function Admin() {
               </div>
             </div>
           </div>
-          <div className="header__actions flex flex-wrap gap-2 shrink-0">
+          <div className="header__actions">
             <button type="button" className="btn-icon btn-primary" onClick={() => setShowModal(true)}>
               <Plus size={18} /> Añadir
             </button>
@@ -350,43 +432,97 @@ function Admin() {
               datas={transformUserData()}
               text=""
             >
-              <button type="button" className="btn-icon">
+              <span className="btn-icon btn-secondary">
                 <Download size={18} /> Exportar
-              </button>
+              </span>
             </CsvDownloader>
           </div>
-        </div>
+        </section>
 
-        {/* Tabla desktop: visible solo en md+ (patrón BEAR BEAT PRO) */}
-        <div className="hidden md:block w-full rounded-xl border border-gray-200 dark:border-bear-dark-100 overflow-hidden">
-          <div className="overflow-x-auto overflow-y-auto max-h-[60vh]">
-            <table className="w-full text-left text-sm border-collapse">
+        {loadError && !loader && (
+          <section className="admin-error-strip" role="alert">
+            <AlertTriangle size={16} />
+            <p>{loadError}</p>
+            <button type="button" className="btn-icon btn-secondary" onClick={retryUsersLoad}>
+              <RefreshCw size={16} />
+              Reintentar
+            </button>
+          </section>
+        )}
+
+        <section className="admin-table-panel">
+          <div className="table-contain">
+            <table className="admin-table">
               <thead>
                 <tr>
-                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100">Nombre</th>
-                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100">Email</th>
-                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100">Teléfono</th>
-                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100">Registro</th>
-                  {filters.active !== 2 && <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100">Suscripción</th>}
-                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100">Acciones</th>
+                  <th>Nombre</th>
+                  <th>Email</th>
+                  <th>Teléfono</th>
+                  <th>Registro</th>
+                  {filters.active !== 2 && <th>Suscripción</th>}
+                  <th>Acciones</th>
                 </tr>
               </thead>
-              <tbody className="bg-bear-light-100 dark:bg-bear-dark-900 divide-y divide-gray-200 dark:divide-bear-dark-100">
+              <tbody>
+                {!loader && users.length === 0 && (
+                  <tr className="admin-empty-row">
+                    <td colSpan={colCount}>
+                      {loadError ? (
+                        <div className="admin-empty-state admin-empty-state--error">
+                          <h3>No se pudieron mostrar los usuarios</h3>
+                          <p>{loadError}</p>
+                          <button type="button" className="btn-icon btn-secondary" onClick={retryUsersLoad}>
+                            <RefreshCw size={16} />
+                            Reintentar
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="admin-empty-state">
+                          <h3>No hay usuarios para este filtro</h3>
+                          <p>Prueba cambiar estado o búsqueda para ver resultados.</p>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                )}
                 {!loader
                   ? users.map((user, index) => (
-                      <tr key={`admin_users_${index}`} className="border-b border-gray-200 dark:border-bear-dark-100 hover:bg-gray-100 dark:hover:bg-bear-dark-500/50 transition-colors">
-                        <td className="max-w-[120px] truncate py-3 px-4" title={user.username}>{user.username}</td>
-                        <td className="max-w-[180px] truncate py-3 px-4" title={user.email}>{user.email}</td>
-                        <td className="max-w-[100px] truncate py-3 px-4" title={user.phone}>{user.phone}</td>
-                        <td className="py-3 px-4">{user.registered_on.toLocaleDateString()}</td>
+                      <tr key={`admin_users_${user.id}`}>
+                        <td className="admin-cell-name">
+                          <div className="admin-user-inline">
+                            <span className="admin-user-inline__avatar">
+                              {(user.username || user.email || "?").charAt(0).toUpperCase()}
+                            </span>
+                            <div className="admin-user-inline__copy">
+                              <span className="admin-user-inline__name" title={user.username}>
+                                {user.username || "Sin nombre"}
+                              </span>
+                              <span className="admin-user-inline__meta">ID #{user.id}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="admin-cell-email">
+                          <div className="admin-cell-stack">
+                            <span className="admin-cell-value" title={user.email}>{user.email}</span>
+                            <span className={`badge badge--tiny ${user.blocked ? "badge--danger" : "badge--success"}`}>
+                              {user.blocked ? "Bloqueado" : "Activo"}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="admin-cell-phone" title={user.phone || "Sin teléfono"}>
+                          {user.phone || "—"}
+                        </td>
+                        <td>
+                          <span className="date-pill">{formatRegisteredDate(user.registered_on)}</span>
+                        </td>
                         {filters.active !== 2 && (
-                          <td className="py-3 px-4">
+                          <td>
                             <span className={`badge ${filters.active === 1 ? "badge--success" : "badge--neutral"}`}>
                               {filters.active === 1 ? "Activa" : "No activa"}
                             </span>
                           </td>
                         )}
-                        <td className="py-3 px-4">
+                        <td>
                           <div className="table-actions">
                             <button
                               type="button"
@@ -405,7 +541,10 @@ function Admin() {
                             >
                               <LogIn size={16} />
                             </button>
-                            <div className="dropdown" data-dropdown-index={index}>
+                            <div
+                              className={`dropdown ${openDropdownIndex === index ? "open" : ""}`}
+                              data-dropdown-index={index}
+                            >
                               <button
                                 type="button"
                                 className="btn-cell"
@@ -423,7 +562,14 @@ function Admin() {
                                 <button type="button" onClick={() => { setOpenDropdownIndex(null); giveSuscription(user); }}>Activar plan</button>
                                 <button type="button" onClick={() => { setOpenDropdownIndex(null); handleOpenHistory(user); }}>Historial</button>
                                 <button type="button" onClick={() => { setOpenDropdownIndex(null); handleOpenAddGB(user); }}>Agregar GB</button>
-                                <button type="button" onClick={() => { setOpenDropdownIndex(null); handleDeleteUser(user); }} disabled={user.role === USER_ROLES.ADMIN}>Eliminar</button>
+                                <button
+                                  type="button"
+                                  className="dropdown-action--danger"
+                                  onClick={() => { setOpenDropdownIndex(null); handleDeleteUser(user); }}
+                                  disabled={user.role === USER_ROLES.ADMIN}
+                                >
+                                  Eliminar
+                                </button>
                                 <button
                                   type="button"
                                   onClick={() => {
@@ -431,7 +577,7 @@ function Admin() {
                                     openBlockModal(user, `¿${user.blocked ? 'Desbloquear' : 'Bloquear'} a ${user.username}?`, !user.blocked);
                                   }}
                                 >
-                                  {user.blocked ? <><FaLock /> Bloquear</> : <><FaLockOpen /> Desbloquear</>}
+                                  {user.blocked ? <><LockOpen size={14} /> Desbloquear</> : <><Lock size={14} /> Bloquear</>}
                                 </button>
                               </div>
                             </div>
@@ -440,16 +586,16 @@ function Admin() {
                       </tr>
                     ))
                   : ARRAY_10.map((_, index) => (
-                      <tr key={`load_${index}`} className="tr-load border-b border-gray-200 dark:border-bear-dark-100 hover:bg-gray-100 dark:hover:bg-bear-dark-500">
+                      <tr key={`load_${index}`} className="tr-load">
                         <td /><td /><td /><td />
                         {filters.active !== 2 && <td />}
                         <td />
                       </tr>
                     ))}
               </tbody>
-              <tfoot className="bg-bear-light-100 dark:bg-bear-dark-500 border-t border-gray-200 dark:border-bear-dark-100">
+              <tfoot>
                 <tr>
-                  <th colSpan={colCount} className="p-4 text-left">
+                  <th colSpan={colCount}>
                     <Pagination
                       totalLoader={totalLoader}
                       totalData={totalUsers}
@@ -463,56 +609,86 @@ function Admin() {
               </tfoot>
             </table>
           </div>
-        </div>
+        </section>
 
-        {/* Cards móvil: visible solo en móvil (patrón BEAR BEAT PRO) */}
-        <div className="block md:hidden grid grid-cols-1 gap-4 w-full">
+        <section className="admin-mobile-list">
           {!loader
-            ? users.map((user, index) => (
-                <div
-                  key={`mobile_${index}`}
-                  className="bg-bear-light-100 dark:bg-bear-dark-500 p-4 rounded-lg border border-gray-200 dark:border-bear-dark-100"
-                  onClick={() => openDrawer(user)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => e.key === "Enter" && openDrawer(user)}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className="w-10 h-10 rounded-full bg-bear-cyan flex items-center justify-center text-bear-dark-500 text-sm font-medium flex-shrink-0">
-                        {(user.username || user.email || "?").charAt(0).toUpperCase()}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-200 truncate">{user.username}</p>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 truncate">{user.email}</p>
-                      </div>
-                    </div>
-                    <span className={`text-xs px-2 py-1 rounded-full flex-shrink-0 ${user.blocked ? "bg-red-500/10 text-red-400" : "bg-emerald-500/10 text-emerald-400"}`}>
-                      {user.blocked ? "Bloqueado" : "Activo"}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); openDrawer(user); }}
-                      className="p-2 text-gray-500 dark:text-gray-400 hover:text-bear-cyan rounded-lg flex-shrink-0"
-                      aria-label="Abrir acciones"
-                    >
-                      <MoreVertical size={20} />
-                    </button>
-                  </div>
+            ? users.length === 0
+              ? (
+                <div className="admin-mobile-empty">
+                  {loadError ? (
+                    <>
+                      <h3>No se pudieron mostrar los usuarios</h3>
+                      <p>{loadError}</p>
+                      <button type="button" className="btn-icon btn-secondary" onClick={retryUsersLoad}>
+                        <RefreshCw size={16} />
+                        Reintentar
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <h3>No hay usuarios para este filtro</h3>
+                      <p>Prueba cambiar estado o búsqueda para ver resultados.</p>
+                    </>
+                  )}
                 </div>
-              ))
+                )
+              : users.map((user, index) => (
+                  <div
+                    key={`mobile_${user.id}`}
+                    className="admin-mobile-card"
+                    onClick={() => openDrawer(user)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        openDrawer(user);
+                      }
+                    }}
+                  >
+                    <div className="admin-mobile-card__head">
+                      <div className="admin-mobile-card__identity">
+                        <div className="admin-mobile-card__avatar">
+                          {(user.username || user.email || "?").charAt(0).toUpperCase()}
+                        </div>
+                        <div className="admin-mobile-card__copy">
+                          <p className="admin-mobile-card__name">{user.username || "Sin nombre"}</p>
+                          <p className="admin-mobile-card__email">{user.email}</p>
+                        </div>
+                      </div>
+                      <span className={`admin-mobile-status ${user.blocked ? "is-blocked" : "is-active"}`}>
+                        {user.blocked ? "Bloqueado" : "Activo"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); openDrawer(user); }}
+                        className="admin-mobile-card__menu"
+                        aria-label="Abrir acciones"
+                      >
+                        <MoreVertical size={20} />
+                      </button>
+                    </div>
+                    <div className="admin-mobile-card__foot">
+                      <span>{user.phone || "Sin teléfono"}</span>
+                      <span>{formatRegisteredDate(user.registered_on)}</span>
+                    </div>
+                  </div>
+                ))
             : ARRAY_10.map((_, i) => (
-                <div key={`skeleton_${i}`} className="bg-bear-light-100 dark:bg-bear-dark-500 p-4 rounded-lg border border-gray-200 dark:border-bear-dark-100 animate-pulse">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-300 dark:bg-bear-dark-100" />
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-500 dark:text-gray-500">—</p>
-                      <p className="text-xs text-gray-600 dark:text-gray-600">—</p>
+                <div key={`skeleton_${i}`} className="admin-mobile-card admin-mobile-card--skeleton">
+                  <div className="admin-mobile-card__head">
+                    <div className="admin-mobile-card__identity">
+                      <div className="admin-mobile-card__avatar" />
+                      <div className="admin-mobile-card__copy">
+                        <p className="admin-mobile-card__name">—</p>
+                        <p className="admin-mobile-card__email">—</p>
+                      </div>
                     </div>
                   </div>
                 </div>
               ))}
-        </div>
+        </section>
 
         <div className="admin-pagination-mobile">
           <Pagination
@@ -539,10 +715,20 @@ function Admin() {
       <ConditionModal title="Bloquear Usuario" message={blockModalMSG} show={showBlockModal} onHide={closeBlockModal} action={changeBlockUser} />
       <OptionModal show={showOption} onHide={closeOption} title={optionTitle} message="" userId={selectUser.id} plans={plans} />
       <ErrorModal show={showError} onHide={closeErrorModal} message={errorMessage} />
-      <EditUserModal showModal={showEdit} onHideModal={handleCloseEditUser} editingUser={selectedUser} />
+      <EditUserModal
+        showModal={showEdit}
+        onHideModal={handleCloseEditUser}
+        editingUser={selectedUser}
+        onSaved={() => filterUsers(filters)}
+      />
       <HistoryModal show={showHistory} onHide={handleCloseHistory} user={selectUser} />
       <AddExtraStorageModal showModal={showAddGB} onHideModal={handleCloseAddGB} userId={selectUser.id} />
-      <DeleteUOneUserModal show={showDeleteUser} onHide={handleCloseDeleteUser} user={selectUser} />
+      <DeleteUOneUserModal
+        show={showDeleteUser}
+        onHide={handleCloseDeleteUser}
+        user={selectUser}
+        onDeleted={() => filterUsers(filters)}
+      />
     </div>
   );
 }

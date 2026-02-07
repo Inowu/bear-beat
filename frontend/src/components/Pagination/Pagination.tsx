@@ -1,10 +1,6 @@
 import React from "react";
 import "./Pagination.scss";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faChevronCircleLeft,
-  faChevronCircleRight,
-} from "@fortawesome/free-solid-svg-icons";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { showPages } from "./PaginationMethods";
 import { Spinner } from "../../components/Spinner/Spinner";
 interface IPagination {
@@ -56,7 +52,7 @@ function Pagination(props: IPagination) {
           onClick={() => changePage("back", currentPage - 1)}
           disabled={!canGoBack}
         >
-          <FontAwesomeIcon icon={faChevronCircleLeft} />
+          <ChevronLeft aria-hidden />
         </button>
         {showPages(currentPage + 1, totalData, limit).map(
           (val: number | string, index: number) => {
@@ -91,7 +87,7 @@ function Pagination(props: IPagination) {
           onClick={() => changePage("forward", currentPage + 1)}
           disabled={!canGoForward}
         >
-          <FontAwesomeIcon icon={faChevronCircleRight} />
+          <ChevronRight aria-hidden />
         </button>
       </div>
     </div>

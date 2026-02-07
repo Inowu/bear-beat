@@ -11,6 +11,8 @@ import { PaymentService } from './services/types';
 import { Cupons } from '@prisma/client';
 import { checkIfUserIsFromUH, checkIfUserIsSubscriber, SubscriptionCheckResult } from '../migration/checkUHSubscriber';
 import { addDays } from 'date-fns';
+import { facebook } from '../../facebook';
+import { getClientIpFromRequest } from '../../analytics';
 
 /**
  * Crea una Stripe Checkout Session (redirect a la página de pago de Stripe).
@@ -25,9 +27,13 @@ export const createStripeCheckoutSession = shieldedProcedure
       successUrl: z.string().url(),
       cancelUrl: z.string().url(),
       coupon: z.string().optional(),
+      fbp: z.string().optional(),
+      fbc: z.string().optional(),
+      url: z.string().optional(),
+      eventId: z.string().optional(),
     }),
   )
-  .mutation(async ({ input: { planId, successUrl, cancelUrl, coupon }, ctx: { prisma, session } }) => {
+  .mutation(async ({ input: { planId, successUrl, cancelUrl, coupon, fbp, fbc, url, eventId }, ctx: { prisma, session, req } }) => {
     const user = session!.user!;
 
     const stripeCustomer = await getStripeCustomer(prisma, user);
@@ -49,6 +55,41 @@ export const createStripeCheckoutSession = shieldedProcedure
       throw new TRPCError({
         code: 'NOT_FOUND',
         message: 'Ese plan no existe',
+      });
+    }
+
+    // CAPI: InitiateCheckout con dedupe (eventId) si existe.
+    // No bloquear checkout si falla.
+    try {
+      const existingUser = await prisma.users.findFirst({
+        where: { id: user.id },
+      });
+
+      if (existingUser && url) {
+        const clientIp = getClientIpFromRequest(req);
+        const userAgentRaw = req.headers['user-agent'];
+        const userAgent =
+          typeof userAgentRaw === 'string'
+            ? userAgentRaw
+            : Array.isArray(userAgentRaw)
+              ? userAgentRaw[0] ?? null
+              : null;
+
+        const value = Number(plan.price) || 0;
+        const currency = (plan.moneda || 'USD').toUpperCase();
+        await facebook.setEvent(
+          'InitiateCheckout',
+          clientIp,
+          userAgent,
+          { fbp, fbc, eventId },
+          url,
+          existingUser,
+          { value, currency },
+        );
+      }
+    } catch (error) {
+      log.debug('[STRIPE_CHECKOUT_SESSION] CAPI InitiateCheckout skipped', {
+        error: error instanceof Error ? error.message : error,
       });
     }
 

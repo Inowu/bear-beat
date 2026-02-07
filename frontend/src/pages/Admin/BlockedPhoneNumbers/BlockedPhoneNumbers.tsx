@@ -4,7 +4,6 @@ import trpc from "../../../api";
 import { ConditionModal, ErrorModal } from "../../../components/Modals";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import { useUserContext } from "../../../contexts/UserContext";
-import "./BlockedPhoneNumbers.scss";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
 import { Plus, MoreVertical, Trash2 } from "lucide-react";

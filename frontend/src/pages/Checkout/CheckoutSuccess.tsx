@@ -1,10 +1,99 @@
 import { useSearchParams, Link } from "react-router-dom";
 import "./Checkout.scss";
 import { Check } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { trackManyChatConversion, trackManyChatPurchase, MC_EVENTS } from "../../utils/manychatPixel";
+import { GROWTH_METRICS, trackGrowthMetric } from "../../utils/growthMetrics";
+import { trackPurchase } from "../../utils/facebookPixel";
+import { generateEventId } from "../../utils/marketingIds";
+import trpc from "../../api";
+import { useCookies } from "react-cookie";
 
 function CheckoutSuccess() {
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get("session_id");
+  const trackedSuccessRef = useRef(false);
+  const [cookies] = useCookies(["_fbp", "_fbc"]);
+
+  useEffect(() => {
+    if (trackedSuccessRef.current) return;
+    trackedSuccessRef.current = true;
+
+    const pendingPurchaseStorageKey = "bb.checkout.pendingPurchase";
+    const purchaseDedupeKey = "bb.checkout.purchaseTracked";
+
+    const run = async () => {
+      let pending: any = null;
+      try {
+        const raw = window.sessionStorage.getItem(pendingPurchaseStorageKey);
+        pending = raw ? JSON.parse(raw) : null;
+      } catch {
+        pending = null;
+      }
+
+      const dedupeToken =
+        (typeof pending?.at === "string" && pending.at) ||
+        (typeof sessionId === "string" && sessionId) ||
+        "";
+
+      try {
+        const already = window.sessionStorage.getItem(purchaseDedupeKey);
+        if (already && dedupeToken && already === dedupeToken) {
+          return;
+        }
+      } catch {
+        // noop
+      }
+
+      const value =
+        typeof pending?.value === "number" && Number.isFinite(pending.value)
+          ? pending.value
+          : 0;
+      const currency =
+        typeof pending?.currency === "string" && pending.currency.trim()
+          ? pending.currency.trim().toUpperCase()
+          : "USD";
+
+      const eventId = generateEventId("purchase");
+
+      // Meta Pixel (browser) + ManyChat Pixel
+      trackPurchase({ value, currency, eventId });
+      trackManyChatConversion(MC_EVENTS.PAYMENT_SUCCESS);
+      if (value > 0) trackManyChatPurchase(MC_EVENTS.PAYMENT_SUCCESS, value, currency);
+
+      // Analytics interno
+      trackGrowthMetric(GROWTH_METRICS.PAYMENT_SUCCESS, {
+        sessionId: sessionId ?? null,
+        value,
+        currency,
+        eventId,
+      });
+
+      // Meta CAPI (server) con dedupe usando el mismo eventId
+      try {
+        await trpc.users.sendFacebookEvent.mutate({
+          event: "Purchase",
+          url: window.location.href,
+          fbp: cookies._fbp,
+          fbc: cookies._fbc,
+          eventId,
+          value,
+          currency,
+        });
+      } catch {
+        // No bloquear UX por tracking
+      }
+
+      try {
+        window.sessionStorage.setItem(purchaseDedupeKey, dedupeToken || eventId);
+        window.sessionStorage.removeItem(pendingPurchaseStorageKey);
+      } catch {
+        // noop
+      }
+    };
+
+    void run();
+  }, [sessionId, cookies._fbp, cookies._fbc]);
 
   return (
     <div className="checkout-main-container">

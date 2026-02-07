@@ -1,0 +1,58 @@
+BEAR BEAT
+Guía rápida de descarga 2026
+
+Esta guía resume las instrucciones de la ruta /instrucciones para que puedas descargar sin fricción.
+
+========================================
+MÉTODO 1: FILEZILLA (RECOMENDADO)
+========================================
+1) Instala FileZilla en tu computadora.
+2) Entra a Mi Cuenta y copia tus datos FTP:
+   - Host
+   - Usuario
+   - Contraseña
+   - Puerto
+3) Abre el Gestor de sitios en FileZilla.
+4) Crea una conexión FTP y pega tus datos.
+5) Conecta y arrastra carpetas del panel derecho (servidor) al izquierdo (tu PC).
+
+Tip:
+Para mejor velocidad y estabilidad, usa cable Ethernet cuando descargues carpetas grandes.
+
+========================================
+MÉTODO 2: AIR EXPLORER
+========================================
+1) Instala Air Explorer.
+2) Crea una nueva cuenta FTP.
+3) Pega tus credenciales desde Mi Cuenta.
+4) Conecta tu servidor Bear Beat.
+5) Navega carpetas por año, mes y género.
+6) Selecciona archivos o carpetas y envíalos a tu ruta local de descarga.
+
+Tip:
+Si solo quieres bajar sets específicos, usa búsqueda dentro de Air Explorer para ir directo al género.
+
+========================================
+MÉTODO 3: DESCARGA DIRECTA DESDE LA WEB
+========================================
+1) Inicia sesión y entra al Explorador de archivos en Inicio.
+2) Usa la barra de búsqueda y las rutas para ubicar tu contenido.
+3) Para archivos individuales usa "Descargar archivo".
+4) Para carpetas pequeñas usa "Descargar carpeta".
+5) Si una carpeta es grande, usa FTP (FileZilla o Air Explorer).
+
+========================================
+SI ALGO NO CONECTA
+========================================
+- Revisa que Host, Usuario, Contraseña y Puerto estén copiados exactamente desde Mi Cuenta.
+- Cierra y abre de nuevo tu app FTP, luego reconecta.
+- Si el problema sigue, abre soporte por chat y te guiamos paso a paso.
+
+Soporte por chat:
+https://m.me/rn/104901938679498?topic=VIDEOS%20PARA%20DJ&cadence=daily
+
+Descargas oficiales:
+- FileZilla: https://filezilla-project.org/download.php?type=client
+- Air Explorer: https://www.airexplorer.net/en/download/
+
+© Bear Beat

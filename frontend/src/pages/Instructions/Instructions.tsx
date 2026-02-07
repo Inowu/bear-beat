@@ -1,397 +1,217 @@
 import "./Instructions.scss";
-import { of } from "await-of";
-import { useEffect, useRef, useState } from "react";
-import {
-  Download,
-  Server,
-  Key,
-  Link2,
-  HardDrive,
-  ArrowRight,
-} from "lucide-react";
 import { Link } from "react-router-dom";
-import trpc from "../../api";
+import type { LucideIcon } from "lucide-react";
+import {
+  ArrowRight,
+  CheckCircle2,
+  Download,
+  ExternalLink,
+  FolderSearch,
+  HardDriveDownload,
+  MessageCircle,
+  MousePointerClick,
+  ShieldCheck,
+  WifiOff,
+} from "lucide-react";
+import { SUPPORT_CHAT_URL } from "../../utils/supportChat";
 
 const FILEZILLA_URL = "https://filezilla-project.org/download.php?type=client";
+const AIR_EXPLORER_URL = "https://www.airexplorer.net/en/download/";
+
+interface DownloadMethod {
+  id: "filezilla" | "air-explorer" | "web";
+  title: string;
+  subtitle: string;
+  icon: LucideIcon;
+  steps: string[];
+  tip: string;
+  ctaLabel: string;
+  ctaHref: string;
+  ctaExternal: boolean;
+  showFtpButton: boolean;
+}
+
+const DOWNLOAD_METHODS: DownloadMethod[] = [
+  {
+    id: "filezilla",
+    title: "FileZilla (Recomendado)",
+    subtitle: "La forma más estable para descargas grandes por FTP.",
+    icon: HardDriveDownload,
+    steps: [
+      "Instala FileZilla en tu computadora.",
+      "Entra a Mi Cuenta y copia tus datos FTP: Host, Usuario, Contraseña y Puerto.",
+      "Abre el Gestor de sitios en FileZilla, crea una conexión FTP y pega tus datos.",
+      "Conecta y arrastra carpetas del panel derecho (servidor) al izquierdo (tu PC).",
+    ],
+    tip: "Para mejor velocidad y estabilidad, usa cable Ethernet cuando descargues carpetas grandes.",
+    ctaLabel: "Descargar FileZilla",
+    ctaHref: FILEZILLA_URL,
+    ctaExternal: true,
+    showFtpButton: true,
+  },
+  {
+    id: "air-explorer",
+    title: "Air Explorer",
+    subtitle: "Alternativa FTP simple para DJs que prefieren interfaz tipo explorador.",
+    icon: FolderSearch,
+    steps: [
+      "Instala Air Explorer y abre la app.",
+      "Crea una nueva cuenta FTP y pega tus credenciales de Mi Cuenta.",
+      "Conecta tu servidor Bear Beat y navega carpetas por año, mes y género.",
+      "Selecciona archivos o carpetas y envíalos a tu ruta local de descarga.",
+    ],
+    tip: "Si solo quieres bajar sets específicos, usa búsqueda dentro de Air Explorer para ir directo al género.",
+    ctaLabel: "Descargar Air Explorer",
+    ctaHref: AIR_EXPLORER_URL,
+    ctaExternal: true,
+    showFtpButton: true,
+  },
+  {
+    id: "web",
+    title: "Descarga directa desde la web",
+    subtitle: "Ideal para archivos puntuales sin abrir software externo.",
+    icon: MousePointerClick,
+    steps: [
+      "Inicia sesión y entra al Explorador de archivos en Inicio.",
+      "Usa la barra de búsqueda y las rutas para ubicar rápido tu contenido.",
+      "En archivos individuales usa el botón Descargar archivo.",
+      "Para carpetas pequeñas usa Descargar carpeta; si es carpeta grande usa FTP.",
+    ],
+    tip: "Si una carpeta no permite descarga directa, es por tamaño. Ahí conviene FileZilla o Air Explorer.",
+    ctaLabel: "Ir al explorador web",
+    ctaHref: "/",
+    ctaExternal: false,
+    showFtpButton: false,
+  },
+];
 
 function Instructions() {
-  const step1Ref = useRef<HTMLDivElement>(null);
-  const step2Ref = useRef<HTMLDivElement>(null);
-  const step3Ref = useRef<HTMLDivElement>(null);
-  const step4Ref = useRef<HTMLDivElement>(null);
-  const [videoURL, setVideoURL] = useState<string>("");
-  const [visibleSteps, setVisibleSteps] = useState<Set<number>>(new Set());
-
-  const getConfig = async () => {
-    const [videoConfig, errorVideoConfig] = await of(
-      trpc.config.findFirstConfig.query({ where: { name: "videoURL" } })
-    );
-    if (!videoConfig) {
-      console.error(errorVideoConfig);
-      return;
-    }
-    setVideoURL(videoConfig.value);
-  };
-
-  useEffect(() => {
-    getConfig();
-  }, []);
-
-  useEffect(() => {
-    const refs = [step1Ref, step2Ref, step3Ref, step4Ref];
-    const observers: IntersectionObserver[] = [];
-
-    refs.forEach((ref, index) => {
-      const el = ref.current;
-      if (!el) return;
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              setVisibleSteps((prev) => new Set(prev).add(index + 1));
-            }
-          });
-        },
-        { threshold: 0.2, rootMargin: "0px 0px -40px 0px" }
-      );
-      observer.observe(el);
-      observers.push(observer);
-    });
-    return () => observers.forEach((o) => o.disconnect());
-  }, [videoURL]);
-
-  const scrollToStep = (ref: React.RefObject<HTMLDivElement | null>) => {
-    ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-  };
-
   return (
-    <div className="instructions-main-container min-h-screen bg-bg-main text-text-main [&_p]:text-text-main [&_li]:text-text-main [&_span]:text-text-main">
-      <div className="max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto px-4 py-8 md:py-12">
-        {videoURL !== "" ? (
-          <div className="rounded-xl overflow-hidden border border-border in-iframe-wrap">
-            <iframe
-              src={videoURL}
-              title="YouTube video player"
-              frameBorder={0}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              referrerPolicy="strict-origin-when-cross-origin"
-              allowFullScreen
-              className="w-full aspect-video"
-            />
+    <main className="instructions2026">
+      <div className="instructions2026__container">
+        <header className="instructions2026__hero">
+          <p className="instructions2026__eyebrow">Guía de descarga</p>
+          <h1>Descarga tu contenido en minutos</h1>
+          <p className="instructions2026__lead">
+            Elige tu método favorito: FileZilla, Air Explorer o descarga directa en la web.
+          </p>
+          <div className="instructions2026__hero-actions">
+            <Link to="/micuenta" className="instructions2026__btn instructions2026__btn--primary">
+              Ver mis credenciales FTP
+              <ArrowRight size={16} />
+            </Link>
+            <Link to="/legal" className="instructions2026__btn instructions2026__btn--ghost">
+              FAQ y políticas
+            </Link>
+            <a
+              href={SUPPORT_CHAT_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="instructions2026__btn instructions2026__btn--ghost"
+            >
+              <MessageCircle size={16} />
+              Soporte por chat
+            </a>
           </div>
-        ) : (
-          <>
-            {/* Hero */}
-            <header
-              className="rounded-2xl px-6 py-8 md:py-10 mb-10 text-center"
-              style={{ background: "var(--in-hero-gradient)" }}
-            >
-              <h1
-                className="text-2xl md:text-3xl font-bold uppercase tracking-wider mb-2"
-                style={{ fontFamily: "Poppins, sans-serif", color: "var(--in-title)" }}
-              >
-                Protocolo de Conexión FTP
-              </h1>
-              <p
-                className="text-base md:text-lg max-w-xl mx-auto"
-                style={{ color: "var(--in-text-muted)" }}
-              >
-                Sigue estos 4 pasos para establecer el enlace seguro con nuestros servidores.
-              </p>
-            </header>
+        </header>
 
-            {/* Nav rápido */}
-            <nav className="flex flex-wrap justify-center gap-2 mb-10">
-              {[1, 2, 3, 4].map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() =>
-                    scrollToStep(
-                      [step1Ref, step2Ref, step3Ref, step4Ref][n - 1]
-                    )
-                  }
-                  className="in-nav-dot rounded-full w-9 h-9 flex items-center justify-center text-sm font-bold transition-transform hover:scale-110"
-                  style={{
-                    background: "var(--in-step-circle)",
-                    color: "var(--in-step-circle-text)",
-                  }}
-                >
-                  {n}
-                </button>
-              ))}
-            </nav>
+        <nav className="instructions2026__quick-nav" aria-label="Métodos de descarga">
+          {DOWNLOAD_METHODS.map((method, index) => (
+            <a key={method.id} href={`#${method.id}`} className="instructions2026__quick-link">
+              <span>{index + 1}</span>
+              <strong>{method.title}</strong>
+            </a>
+          ))}
+        </nav>
 
-            {/* Stepper vertical */}
-            <div
-              className="relative pl-10 md:pl-12 border-l-2 space-y-12 md:space-y-16"
-              style={{ borderColor: "var(--in-stepper-line)" }}
-            >
-              {/* FASE 1 */}
-              <div
-                ref={step1Ref}
-                className={`relative in-step-card rounded-xl border p-6 md:p-8 transition-all duration-500 ${
-                  visibleSteps.has(1) ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-                }`}
-                style={{
-                  background: "var(--in-card-bg)",
-                  borderColor: "var(--in-card-border)",
-                }}
-              >
-                <div
-                  className="absolute -left-[3.5rem] top-6 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm border-2"
-                  style={{
-                    background: "var(--in-step-circle)",
-                    color: "var(--in-step-circle-text)",
-                    borderColor: "var(--in-bg)",
-                  }}
-                >
-                  1
-                </div>
-                <div className="flex items-start gap-3 mb-4">
-                  <Server className="w-6 h-6 flex-shrink-0 mt-0.5" style={{ color: "var(--in-accent)" }} />
+        <section className="instructions2026__methods" aria-label="Pasos por método">
+          {DOWNLOAD_METHODS.map((method, index) => {
+            const Icon = method.icon;
+            return (
+              <article key={method.id} id={method.id} className="instructions2026__method-card">
+                <div className="instructions2026__method-head">
+                  <span className="instructions2026__method-index">{index + 1}</span>
+                  <span className="instructions2026__method-icon" aria-hidden>
+                    <Icon size={18} />
+                  </span>
                   <div>
-                    <h2
-                      className="text-lg font-bold uppercase tracking-wide"
-                      style={{ color: "var(--in-title)" }}
-                    >
-                      Fase 1: Instalar cliente FTP
-                    </h2>
-                    <p className="mt-1 text-sm md:text-base" style={{ color: "var(--in-text-muted)" }}>
-                      Necesitas un software gestor para descargar a máxima velocidad.
-                    </p>
+                    <h2>{method.title}</h2>
+                    <p>{method.subtitle}</p>
                   </div>
                 </div>
-                <a
-                  href={FILEZILLA_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="in-cta-primary"
-                  style={{
-                    background: "var(--app-btn-bg)",
-                    color: "var(--app-btn-text)",
-                  }}
-                >
-                  <Download className="w-5 h-5" style={{ flexShrink: 0 }} />
-                  Descargar FileZilla (Gratis)
-                </a>
-              </div>
 
-              {/* FASE 2 */}
-              <div
-                ref={step2Ref}
-                className={`relative in-step-card rounded-xl border p-6 md:p-8 transition-all duration-500 ${
-                  visibleSteps.has(2) ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-                }`}
-                style={{
-                  background: "var(--in-card-bg)",
-                  borderColor: "var(--in-card-border)",
-                }}
-              >
-                <div
-                  className="absolute -left-[3.5rem] top-6 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm border-2"
-                  style={{
-                    background: "var(--in-step-circle)",
-                    color: "var(--in-step-circle-text)",
-                    borderColor: "var(--in-bg)",
-                  }}
-                >
-                  2
-                </div>
-                <div className="flex items-start gap-3 mb-4">
-                  <Key className="w-6 h-6 flex-shrink-0 mt-0.5" style={{ color: "var(--in-accent)" }} />
-                  <div>
-                    <h2
-                      className="text-lg font-bold uppercase tracking-wide"
-                      style={{ color: "var(--in-title)" }}
-                    >
-                      Fase 2: Obtener credenciales
-                    </h2>
-                    <p className="mt-1 text-sm md:text-base" style={{ color: "var(--in-text-muted)" }}>
-                      Tus claves de acceso únicas están en tu Panel de Control.
-                    </p>
-                  </div>
-                </div>
-                <div
-                  className="rounded-lg border p-4 mb-4 in-creds-preview"
-                  style={{
-                    background: "var(--in-terminal-bg)",
-                    borderColor: "var(--in-terminal-border)",
-                  }}
-                >
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs font-mono uppercase" style={{ color: "var(--in-text-muted)" }}>Host</span>
-                    <span className="text-sm font-mono blur-sm select-none" style={{ color: "var(--in-text)" }}>ftp.ejemplo.com</span>
-                  </div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs font-mono uppercase" style={{ color: "var(--in-text-muted)" }}>Usuario</span>
-                    <span className="text-sm font-mono blur-sm select-none" style={{ color: "var(--in-text)" }}>••••••••</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs font-mono uppercase" style={{ color: "var(--in-text-muted)" }}>Contraseña</span>
-                    <span className="text-sm font-mono blur-sm select-none" style={{ color: "var(--in-text)" }}>••••••••••••</span>
-                  </div>
-                </div>
-                <Link
-                  to="/micuenta"
-                  className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 border font-medium transition-colors in-btn-secondary"
-                  style={{
-                    borderColor: "var(--in-card-border)",
-                    color: "var(--in-accent)",
-                  }}
-                >
-                  Ir a Mi Cuenta para ver mis claves
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </div>
+                <ol className="instructions2026__steps">
+                  {method.steps.map((step) => (
+                    <li key={`${method.id}-${step}`}>
+                      <CheckCircle2 size={16} aria-hidden />
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ol>
 
-              {/* FASE 3 */}
-              <div
-                ref={step3Ref}
-                className={`relative in-step-card rounded-xl border p-6 md:p-8 transition-all duration-500 ${
-                  visibleSteps.has(3) ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-                }`}
-                style={{
-                  background: "var(--in-card-bg)",
-                  borderColor: "var(--in-card-border)",
-                }}
-              >
-                <div
-                  className="absolute -left-[3.5rem] top-6 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm border-2"
-                  style={{
-                    background: "var(--in-step-circle)",
-                    color: "var(--in-step-circle-text)",
-                    borderColor: "var(--in-bg)",
-                  }}
-                >
-                  3
-                </div>
-                <div className="flex items-start gap-3 mb-4">
-                  <Link2 className="w-6 h-6 flex-shrink-0 mt-0.5" style={{ color: "var(--in-accent)" }} />
-                  <div>
-                    <h2
-                      className="text-lg font-bold uppercase tracking-wide"
-                      style={{ color: "var(--in-title)" }}
-                    >
-                      Fase 3: Iniciar enlace
-                    </h2>
-                    <p className="mt-1 text-sm md:text-base" style={{ color: "var(--in-text-muted)" }}>
-                      En FileZilla, pega tus datos en los campos del administrador de sitios.
-                    </p>
-                  </div>
-                </div>
-                <div
-                  className="rounded-lg border p-4 in-terminal"
-                  style={{
-                    background: "var(--in-terminal-bg)",
-                    borderColor: "var(--in-terminal-border)",
-                  }}
-                >
-                  <div className="flex items-center gap-2 mb-3 pb-2 border-b font-mono text-xs" style={{ borderColor: "var(--in-terminal-border)", color: "var(--in-text-muted)" }}>
-                    <span className="w-2 h-2 rounded-full bg-red-500/80" />
-                    <span className="w-2 h-2 rounded-full bg-amber-500/80" />
-                    <span className="w-2 h-2 rounded-full bg-green-500/80" />
-                    <span className="ml-2">FileZilla — Administrador de sitios</span>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-                      <label className="text-xs font-mono w-20 flex-shrink-0" style={{ color: "var(--in-text-muted)" }}>Host:</label>
-                      <input
-                        type="text"
-                        readOnly
-                        placeholder="Pega aquí tu Host"
-                        className="flex-1 rounded px-3 py-2 font-mono text-sm border bg-transparent"
-                        style={{ borderColor: "var(--in-terminal-border)", color: "var(--in-text)" }}
-                      />
-                      <span className="text-xs font-medium hidden sm:inline" style={{ color: "var(--in-accent)" }}>← Pega aquí</span>
-                    </div>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-                      <label className="text-xs font-mono w-20 flex-shrink-0" style={{ color: "var(--in-text-muted)" }}>Usuario:</label>
-                      <input
-                        type="text"
-                        readOnly
-                        placeholder="Pega aquí tu usuario"
-                        className="flex-1 rounded px-3 py-2 font-mono text-sm border bg-transparent"
-                        style={{ borderColor: "var(--in-terminal-border)", color: "var(--in-text)" }}
-                      />
-                      <span className="text-xs font-medium hidden sm:inline" style={{ color: "var(--in-accent)" }}>← Pega aquí</span>
-                    </div>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-                      <label className="text-xs font-mono w-20 flex-shrink-0" style={{ color: "var(--in-text-muted)" }}>Contraseña:</label>
-                      <input
-                        type="password"
-                        readOnly
-                        placeholder="Pega aquí tu contraseña"
-                        className="flex-1 rounded px-3 py-2 font-mono text-sm border bg-transparent"
-                        style={{ borderColor: "var(--in-terminal-border)", color: "var(--in-text)" }}
-                      />
-                      <span className="text-xs font-medium hidden sm:inline" style={{ color: "var(--in-accent)" }}>← Pega aquí</span>
-                    </div>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-                      <label className="text-xs font-mono w-20 flex-shrink-0" style={{ color: "var(--in-text-muted)" }}>Puerto:</label>
-                      <input
-                        type="text"
-                        readOnly
-                        placeholder="21"
-                        className="flex-1 max-w-[80px] rounded px-3 py-2 font-mono text-sm border bg-transparent"
-                        style={{ borderColor: "var(--in-terminal-border)", color: "var(--in-text)" }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
+                <p className="instructions2026__tip">
+                  <ShieldCheck size={16} aria-hidden />
+                  {method.tip}
+                </p>
 
-              {/* FASE 4 */}
-              <div
-                ref={step4Ref}
-                className={`relative in-step-card rounded-xl border p-6 md:p-8 transition-all duration-500 ${
-                  visibleSteps.has(4) ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-                }`}
-                style={{
-                  background: "var(--in-card-bg)",
-                  borderColor: "var(--in-card-border)",
-                }}
-              >
-                <div
-                  className="absolute -left-[3.5rem] top-6 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm border-2"
-                  style={{
-                    background: "var(--in-step-circle)",
-                    color: "var(--in-step-circle-text)",
-                    borderColor: "var(--in-bg)",
-                  }}
-                >
-                  4
-                </div>
-                <div className="flex items-start gap-3 mb-4">
-                  <HardDrive className="w-6 h-6 flex-shrink-0 mt-0.5" style={{ color: "var(--in-accent)" }} />
-                  <div>
-                    <h2
-                      className="text-lg font-bold uppercase tracking-wide"
-                      style={{ color: "var(--in-title)" }}
+                <div className="instructions2026__method-actions">
+                  {method.ctaExternal ? (
+                    <a
+                      href={method.ctaHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="instructions2026__btn instructions2026__btn--primary"
                     >
-                      Fase 4: Transferencia de datos
-                    </h2>
-                    <p className="mt-1 text-sm md:text-base" style={{ color: "var(--in-text-muted)" }}>
-                      Arrastra las carpetas del servidor (panel derecho) a tu disco duro (panel izquierdo).
-                    </p>
-                  </div>
+                      <Download size={16} />
+                      {method.ctaLabel}
+                      <ExternalLink size={15} />
+                    </a>
+                  ) : (
+                    <Link to={method.ctaHref} className="instructions2026__btn instructions2026__btn--primary">
+                      {method.ctaLabel}
+                      <ArrowRight size={16} />
+                    </Link>
+                  )}
+
+                  {method.showFtpButton && (
+                    <Link to="/micuenta" className="instructions2026__btn instructions2026__btn--ghost">
+                      Ver credenciales FTP
+                    </Link>
+                  )}
                 </div>
-                <div
-                  className="rounded-lg border-l-4 py-3 px-4 in-tip"
-                  style={{
-                    borderLeftColor: "var(--in-accent)",
-                    background: "var(--in-terminal-bg)",
-                    color: "var(--in-text)",
-                  }}
-                >
-                  <span className="font-semibold">Tip Pro:</span> Usa cable Ethernet para máxima estabilidad en descargas grandes.
-                </div>
-              </div>
-            </div>
-          </>
-        )}
+              </article>
+            );
+          })}
+        </section>
+
+        <section className="instructions2026__troubleshoot" aria-label="Solución rápida de problemas">
+          <h2>Si algo no conecta</h2>
+          <ul>
+            <li>
+              <WifiOff size={16} aria-hidden />
+              Revisa que Host, Usuario, Contraseña y Puerto estén copiados exactamente desde Mi Cuenta.
+            </li>
+            <li>
+              <WifiOff size={16} aria-hidden />
+              Prueba cerrar y abrir la app FTP, luego reconecta.
+            </li>
+            <li>
+              <WifiOff size={16} aria-hidden />
+              Si el problema sigue, abre soporte por chat y te ayudamos paso a paso.
+            </li>
+          </ul>
+          <a
+            href={SUPPORT_CHAT_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="instructions2026__btn instructions2026__btn--primary"
+          >
+            <MessageCircle size={16} />
+            Abrir soporte por chat
+          </a>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }
 

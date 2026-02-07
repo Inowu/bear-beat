@@ -122,8 +122,8 @@
     min-height: 54px;
     border-radius: 12px;
     border: 1px solid rgba(8, 225, 247, 0.24);
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03));
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    background: color-mix(in srgb, var(--auth-register-input-bg) 94%, transparent);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--auth-register-input-border) 30%, transparent);
     transition: border-color 0.2s, box-shadow 0.2s;
 
     &:focus-within {
@@ -140,6 +140,8 @@
   .auth-login-input-icon {
     position: absolute;
     left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
     width: 18px;
     height: 18px;
     color: var(--auth-register-icon);
@@ -157,6 +159,7 @@
     border: none;
     background: transparent;
     color: var(--auth-register-text);
+    font-weight: 500;
     transition: border-color 0.2s, box-shadow 0.2s;
 
     &::placeholder {
@@ -173,6 +176,13 @@
     padding-left: 50px;
   }
 
+  /* Regla explícita para PasswordInput dentro del Login:
+     evita que estilos globales de Auth.scss reduzcan el padding izquierdo y solapen icono/texto. */
+  .auth-login-input-wrap .password-input.auth-login-input-with-icon {
+    padding-left: 50px !important;
+    min-height: 54px;
+  }
+
   .auth-login-password-wrap {
     flex: 1;
     min-width: 0;
@@ -181,12 +191,18 @@
   .auth-login-forgot-wrap {
     margin-bottom: 0;
     width: 100%;
+    display: flex;
+    justify-content: flex-end;
   }
 
   .auth-login-forgot {
-    display: block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-height: 44px;
+    padding: 0 4px;
     text-align: right;
-    width: 100%;
+    width: fit-content;
     font-size: var(--app-font-size-body);
     font-weight: 600;
     color: var(--app-accent);
@@ -228,6 +244,11 @@
   }
 
   .auth-login-register {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 8px;
     font-size: var(--app-font-size-body);
     font-weight: 600;
     color: var(--app-accent);

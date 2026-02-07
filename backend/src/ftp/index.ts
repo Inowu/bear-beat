@@ -5,5 +5,5 @@ export let fileService: FileService;
 export const initializeFileService = async () => {
   fileService = new FileService(process.env.FILE_SERVICE as 'local' | 'ftp');
 
-  fileService.init();
+  await fileService.init();
 };

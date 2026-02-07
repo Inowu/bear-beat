@@ -1,7 +1,7 @@
 import { Modal } from 'react-bootstrap'
 import './../Modal.scss'
 import './ErrorModal.scss'
-import { RiCloseCircleLine } from 'react-icons/ri'
+import { XCircle } from 'lucide-react'
 import { IUser } from '../../../interfaces/User';
 interface IError {
   show: boolean;
@@ -16,7 +16,7 @@ export function ErrorModal(props: IError) {
       <div className='modal-container error-modal'>
         <div className='header'>
           <p className='title'>Error</p>
-          <RiCloseCircleLine className='icon' onClick={onHide} />
+          <XCircle className='icon' onClick={onHide} aria-label="Cerrar" />
         </div>
         <div className='bottom'>
           <p className='content'>

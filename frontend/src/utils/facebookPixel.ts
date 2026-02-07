@@ -1,18 +1,20 @@
 /**
  * Meta / Facebook Pixel – inicialización y tracking seguro.
  * Solo llama a fbq si el script está cargado; evita errores si el pixel no está listo.
- * Requiere REACT_APP_FB_PIXEL_ID en las variables de entorno (Netlify / .env).
+ * Ideal: configurar REACT_APP_FB_PIXEL_ID en variables de entorno (Netlify / .env).
  */
 
-const PIXEL_ID = (process.env.REACT_APP_FB_PIXEL_ID || "").trim();
+// Pixel ID no es secreto. Este fallback coincide con el <noscript> de public/index.html
+// para que el pixel funcione aunque falte el env var en el build.
+const DEFAULT_PIXEL_ID = "1325763147585869";
+const PIXEL_ID = (process.env.REACT_APP_FB_PIXEL_ID || DEFAULT_PIXEL_ID).trim();
 
 declare global {
   interface Window {
-    fbq?: (
-      action: "track" | "trackCustom" | "init",
-      eventName: string,
-      params?: Record<string, unknown>
-    ) => void;
+    // fbq admite un 4to parámetro (options) para deduplicación con eventID.
+    // Tipamos flexible para no romper con variaciones del script.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    fbq?: (...args: any[]) => void;
     _fbq?: unknown;
   }
 }
@@ -55,20 +57,34 @@ export function initFacebookPixel(): void {
   (window as any).fbqLoaded = true;
 }
 
+function fireFbq(
+  action: "track" | "trackCustom",
+  eventName: string,
+  params?: Record<string, unknown>,
+  eventId?: string
+): void {
+  if (!isFbqReady()) return;
+  try {
+    if (eventId) {
+      window.fbq!(action, eventName, params, { eventID: eventId });
+      return;
+    }
+    window.fbq!(action, eventName, params);
+  } catch {
+    // ignorar si el pixel falla
+  }
+}
+
 /**
  * Dispara un evento estándar de Meta (Purchase, Lead, etc.).
  * No hace nada si fbq no está disponible.
  */
 export function trackStandardEvent(
   eventName: string,
-  params?: Record<string, unknown>
+  params?: Record<string, unknown>,
+  eventId?: string
 ): void {
-  if (!isFbqReady()) return;
-  try {
-    window.fbq!("track", eventName, params);
-  } catch {
-    // ignorar si el pixel falla
-  }
+  fireFbq("track", eventName, params, eventId);
 }
 
 /**
@@ -77,14 +93,10 @@ export function trackStandardEvent(
  */
 export function trackCustomEvent(
   eventName: string,
-  params?: Record<string, unknown>
+  params?: Record<string, unknown>,
+  eventId?: string
 ): void {
-  if (!isFbqReady()) return;
-  try {
-    window.fbq!("trackCustom", eventName, params);
-  } catch {
-    // ignorar si el pixel falla
-  }
+  fireFbq("trackCustom", eventName, params, eventId);
 }
 
 /**
@@ -92,37 +104,61 @@ export function trackCustomEvent(
  * Meta recomienda value y currency para optimización.
  */
 export function trackPurchase(options: {
-  value?: number;
-  currency?: string;
-  email?: string;
-  phone?: string;
+  value: number;
+  currency: string;
+  eventId?: string;
 }): void {
-  const { value = 0, currency = "USD", email, phone } = options;
-  trackStandardEvent("Purchase", {
-    value,
-    currency,
-    ...(email && { content_name: email }),
-    ...(phone && { content_category: phone }),
-  });
-  // Mantener evento personalizado por si lo usan en ManyChat/otros
-  trackCustomEvent("PagoExitoso", { email, phone });
+  const { value, currency, eventId } = options;
+  trackStandardEvent(
+    "Purchase",
+    {
+      value,
+      currency: currency.toUpperCase(),
+    },
+    eventId
+  );
+  trackCustomEvent(
+    "PagoExitoso",
+    { value, currency: currency.toUpperCase() },
+    eventId
+  );
 }
 
 /**
  * Lead / CompleteRegistration: uso al completar registro.
  */
-export function trackLead(options?: { email?: string; phone?: string; value?: number; currency?: string }): void {
+export function trackLead(options?: { value?: number; currency?: string; eventId?: string }): void {
   const params: Record<string, unknown> = {};
   if (options?.value != null) params.value = options.value;
-  if (options?.currency) params.currency = options.currency;
-  trackStandardEvent("Lead", params);
-  trackStandardEvent("CompleteRegistration", params);
-  trackCustomEvent("BearBeatRegistro", { email: options?.email, phone: options?.phone });
+  if (options?.currency) params.currency = options.currency.toUpperCase();
+  trackStandardEvent("Lead", params, options?.eventId);
+  trackStandardEvent("CompleteRegistration", params, options?.eventId);
+  trackCustomEvent("BearBeatRegistro", params, options?.eventId);
 }
 
 /**
  * Cuando el usuario revisa planes (para audiencias y remarketing).
  */
-export function trackViewPlans(options?: { email?: string; phone?: string }): void {
-  trackCustomEvent("UsuarioRevisoPlanes", options || {});
+export function trackViewPlans(options?: { currency?: string; eventId?: string }): void {
+  const params: Record<string, unknown> = {};
+  if (options?.currency) params.currency = options.currency.toUpperCase();
+  trackCustomEvent("UsuarioRevisoPlanes", params, options?.eventId);
+}
+
+/**
+ * InitiateCheckout: cuando el usuario inicia pago (ideal para remarketing).
+ */
+export function trackInitiateCheckout(options: {
+  value: number;
+  currency: string;
+  eventId?: string;
+}): void {
+  trackStandardEvent(
+    "InitiateCheckout",
+    {
+      value: options.value,
+      currency: options.currency.toUpperCase(),
+    },
+    options.eventId
+  );
 }

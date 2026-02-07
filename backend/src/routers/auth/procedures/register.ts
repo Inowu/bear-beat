@@ -11,9 +11,7 @@ import { stripNonAlphabetic } from './utils/formatUsername';
 import { log } from '../../../server';
 import { brevo } from '../../../email';
 import { manyChat } from '../../../many-chat';
-import { twilio } from '../../../twilio';
 import { facebook } from '../../../facebook';
-import * as TwilioLib from 'twilio';
 import {
   getBlockedEmailDomains,
   normalizeEmailDomain,
@@ -21,12 +19,9 @@ import {
 import {
   getBlockedPhoneNumbers,
   normalizePhoneNumber,
-  setBlockedPhoneNumbers,
 } from '../../../utils/blockedPhoneNumbers';
 import { verifyTurnstileToken } from '../../../utils/turnstile';
-
-const { RestException } = TwilioLib;
-const TWILIO_BLOCKED_ERROR_CODE = 63024;
+import { getClientIpFromRequest } from '../../../analytics';
 
 export const register = publicProcedure
   .input(
@@ -45,6 +40,8 @@ export const register = publicProcedure
         .min(6, 'La contraseña debe tener al menos 6 caracteres'),
       phone: z.string(),
       fbp: z.string().optional(),
+      fbc: z.string().optional(),
+      eventId: z.string().optional(),
       url: z.string(),
       turnstileToken: z
         .string()
@@ -53,10 +50,14 @@ export const register = publicProcedure
   )
   .mutation(
     async ({
-      input: { username, email, password, phone, fbp, url, turnstileToken },
+      input: { username, email, password, phone, fbp, fbc, eventId, url, turnstileToken },
       ctx: { req, prisma },
     }) => {
-      await verifyTurnstileToken({ token: turnstileToken, remoteIp: req.ip });
+      const clientIp = getClientIpFromRequest(req);
+      await verifyTurnstileToken({
+        token: turnstileToken,
+        remoteIp: clientIp ?? req.ip,
+      });
 
       const emailDomain = normalizeEmailDomain(email);
       if (emailDomain) {
@@ -131,7 +132,7 @@ export const register = publicProcedure
           password: bcrypt.hashSync(password, 10),
           phone,
           role_id: RolesIds.normal,
-          ip_registro: req.ip,
+          ip_registro: clientIp ?? req.ip,
           registered_on: new Date().toISOString(),
           active: ActiveState.Active,
           verified: process.env.NODE_ENV === 'production' ? false : true,
@@ -200,47 +201,28 @@ export const register = publicProcedure
         log.error(`[REGISTER] Error while sending email ${e.message}`);
       }
 
-      if (process.env.NODE_ENV === 'production') {
-        try {
-          await twilio.getVerificationCode(newUser.phone!);
-        } catch (error: any) {
-          if (
-            error instanceof RestException &&
-            error.code === TWILIO_BLOCKED_ERROR_CODE
-          ) {
-            const normalizedPhone = normalizePhoneNumber(newUser.phone ?? '');
-            if (normalizedPhone) {
-              const blockedPhones = await getBlockedPhoneNumbers(prisma);
-              if (!blockedPhones.includes(normalizedPhone)) {
-                await setBlockedPhoneNumbers(prisma, [
-                  ...blockedPhones,
-                  normalizedPhone,
-                ]);
-              }
-            }
-          }
+      const userAgentRaw = req.headers['user-agent'];
+      const userAgent =
+        typeof userAgentRaw === 'string'
+          ? userAgentRaw
+          : Array.isArray(userAgentRaw)
+            ? userAgentRaw[0] ?? null
+            : null;
 
-          log.error(
-            `[REGISTER] Error while sending verification code ${error.message}`,
-          );
-        }
-      }
-
-      const remoteAddress = req.socket.remoteAddress;
-      const userAgent = req.headers['user-agent'];
-
-      if (fbp) {
-        if (remoteAddress && userAgent) {
-          log.info('[REGISTER] Sending sign up event to Facebook CAPI');
-          await facebook.setEvent(
-            'CompleteRegistration',
-            remoteAddress,
-            userAgent,
-            fbp,
-            url,
-            newUser,
-          );
-        }
+      try {
+        log.info('[REGISTER] Sending sign up event to Facebook CAPI');
+        await facebook.setEvent(
+          'CompleteRegistration',
+          clientIp,
+          userAgent,
+          { fbp, fbc, eventId },
+          url,
+          newUser,
+        );
+      } catch (error) {
+        log.error('[REGISTER] Error sending CAPI event', {
+          error: error instanceof Error ? error.message : error,
+        });
       }
       // This implicitly creates a new subscriber in ManyChat or retrieves an existing one
       await manyChat.addTagToUser(newUser, 'USER_REGISTERED');

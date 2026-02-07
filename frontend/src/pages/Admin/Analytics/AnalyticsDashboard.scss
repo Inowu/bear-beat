@@ -1,0 +1,283 @@
+@import "src/styles/_variables-theme.scss";
+
+.analytics-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.analytics-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.analytics-toolbar__range {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ad-text-muted);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.analytics-toolbar__range select {
+  min-height: 40px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--ad-input-border) 88%, transparent);
+  background: color-mix(in srgb, var(--ad-input-bg) 96%, transparent);
+  color: var(--ad-title);
+  padding: 0 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.analytics-toolbar__range input {
+  min-height: 40px;
+  width: 170px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--ad-input-border) 88%, transparent);
+  background: color-mix(in srgb, var(--ad-input-bg) 96%, transparent);
+  color: var(--ad-title);
+  padding: 0 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.analytics-toolbar__refresh {
+  min-height: 40px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--ad-accent) 56%, transparent);
+  background: var(--app-gradient);
+  color: var(--app-btn-text);
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.92rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.analytics-toolbar__refresh:disabled {
+  opacity: 0.66;
+  cursor: not-allowed;
+}
+
+.analytics-toolbar__refresh .is-spinning {
+  animation: analytics-spin 1s linear infinite;
+}
+
+.analytics-alert {
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--app-status-error) 36%, transparent);
+  background: color-mix(in srgb, var(--app-status-error) 12%, transparent);
+  color: var(--app-status-error);
+  font-weight: 700;
+  padding: 10px 12px;
+}
+
+.analytics-alerts-stack {
+  display: grid;
+  gap: 10px;
+}
+
+.analytics-alert header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.analytics-alert p {
+  margin: 8px 0 6px;
+  color: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.analytics-alert small {
+  color: inherit;
+  opacity: 0.92;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.analytics-alert--critical {
+  border-color: color-mix(in srgb, var(--app-status-error) 52%, transparent);
+  background: color-mix(in srgb, var(--app-status-error) 15%, transparent);
+}
+
+.analytics-alert--warning {
+  border-color: color-mix(in srgb, var(--app-status-warning) 50%, transparent);
+  background: color-mix(in srgb, var(--app-status-warning) 16%, transparent);
+  color: color-mix(in srgb, var(--app-status-warning) 70%, var(--ad-title) 30%);
+}
+
+.analytics-alert--info {
+  border-color: color-mix(in srgb, var(--ad-accent) 45%, transparent);
+  background: color-mix(in srgb, var(--ad-accent) 10%, transparent);
+  color: var(--ad-title);
+}
+
+.analytics-loading {
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--ad-text-muted);
+}
+
+.analytics-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.analytics-kpi-card {
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--ad-border) 85%, transparent);
+  background: color-mix(in srgb, var(--ad-card) 98%, transparent);
+  padding: 12px;
+  box-shadow: var(--app-shadow);
+}
+
+.analytics-kpi-card header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--ad-text-muted);
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.analytics-kpi-card header svg {
+  color: var(--ad-accent);
+}
+
+.analytics-kpi-card strong {
+  margin-top: 8px;
+  display: block;
+  color: var(--ad-title);
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.analytics-kpi-card small {
+  margin-top: 6px;
+  display: block;
+  color: var(--ad-text-muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.analytics-panels {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.analytics-panel {
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--ad-border) 84%, transparent);
+  background: color-mix(in srgb, var(--ad-card) 98%, transparent);
+  padding: 12px;
+  box-shadow: var(--app-shadow);
+}
+
+.analytics-panel h2 {
+  margin: 0;
+  color: var(--ad-title);
+  font-size: 1.08rem;
+  font-weight: 800;
+}
+
+.analytics-panel p {
+  margin: 6px 0 10px;
+  color: var(--ad-text-muted);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.analytics-table-wrap {
+  overflow: auto;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--ad-border) 76%, transparent);
+}
+
+.analytics-table-wrap table {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+}
+
+.analytics-table-wrap th {
+  background: color-mix(in srgb, var(--ad-header-bg) 96%, transparent);
+  color: var(--ad-text-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-align: left;
+  padding: 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--ad-border) 82%, transparent);
+}
+
+.analytics-table-wrap td {
+  color: var(--ad-text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--ad-border) 66%, transparent);
+}
+
+.analytics-table-wrap tr:last-child td {
+  border-bottom: 0;
+}
+
+.analytics-foot {
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--ad-border) 82%, transparent);
+  background: color-mix(in srgb, var(--ad-row-hover) 72%, transparent);
+  padding: 10px 12px;
+}
+
+.analytics-foot p {
+  margin: 0;
+  color: var(--ad-text);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.analytics-foot p + p {
+  margin-top: 6px;
+}
+
+@media (min-width: 900px) {
+  .analytics-kpi-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1200px) {
+  .analytics-panels {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@keyframes analytics-spin {
+  from {
+    transform: rotate(0);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

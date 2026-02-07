@@ -9,6 +9,10 @@ import cors from 'cors';
 import expressWinston from 'express-winston';
 import winston from 'winston';
 import { log } from './server';
+import {
+  getSentryBackendStatus,
+  sendBackendSentryTestEvent,
+} from './instrument';
 import { initializeFileService } from './ftp';
 import { appRouter } from './routers';
 import { createContext } from './context';
@@ -23,6 +27,7 @@ import {
   initializeCompressionQueue,
 } from './queue/compression';
 import { stripeProductsEndpoint } from './endpoints/webhooks/stripeProducts.endpoint';
+import { analyticsCollectEndpoint } from './endpoints/analytics.endpoint';
 import {
   initializeRemoveUsersQueue,
   removeUsersQueue,
@@ -34,9 +39,30 @@ config({
   path: path.resolve(__dirname, '../.env'),
 });
 
+const DEFAULT_CORS_ORIGINS = [
+  'http://localhost:3001',
+  'http://localhost:4173',
+  'https://thebearbeat.com',
+  'https://www.thebearbeat.com',
+];
+
+const getAllowedCorsOrigins = (): string[] => {
+  const rawOrigins = process.env.CORS_ALLOWED_ORIGINS;
+  if (!rawOrigins) return DEFAULT_CORS_ORIGINS;
+
+  const parsed = rawOrigins
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  return parsed.length ? parsed : DEFAULT_CORS_ORIGINS;
+};
+
 async function main() {
   try {
     const app = express();
+    const port = Number(process.env.PORT) || 5001;
+    const allowedOrigins = getAllowedCorsOrigins();
 
     app.use(
       expressWinston.logger({
@@ -45,13 +71,30 @@ async function main() {
       }),
     );
 
-    app.use(cors({ origin: '*' }));
+    app.use(
+      cors({
+        origin(origin, callback) {
+          if (!origin) {
+            callback(null, true);
+            return;
+          }
+
+          callback(null, allowedOrigins.includes(origin));
+        },
+        credentials: true,
+      }),
+    );
 
     app.use(
       '/trpc',
       createExpressMiddleware({
         router: appRouter,
         createContext,
+        onError({ path, error, type }) {
+          log.error(
+            `[TRPC] ${type} ${path ?? 'unknown-path'} failed: ${error.message}`,
+          );
+        },
       }),
     );
 
@@ -93,19 +136,67 @@ async function main() {
 
     app.get('/api/catalog-stats', catalogStatsEndpoint);
 
-    app.get('/debug-sentry', (_req, _res) => {
-      throw new Error('My first Sentry error (Backend Bear Beat)!');
+    app.post(
+      '/api/analytics/collect',
+      express.json({ limit: '128kb' }),
+      analyticsCollectEndpoint,
+    );
+
+    app.get('/api/analytics/health', (_req, res) => {
+      res.json({
+        ok: true,
+        analyticsDbConfigured: Boolean(process.env.DATABASE_URL),
+      });
+    });
+
+    app.get('/health/sentry', (_req, res) => {
+      res.json({
+        ok: true,
+        sentry: getSentryBackendStatus(),
+      });
+    });
+
+    app.get('/debug-sentry', async (req, res, next) => {
+      try {
+        const mode = String(req.query?.mode || 'capture');
+        if (mode === 'throw') {
+          return next(new Error('My first Sentry error (Backend Bear Beat)!'));
+        }
+
+        const label = String(req.query?.label || 'debug-route');
+        const eventId = await sendBackendSentryTestEvent(label);
+        return res.status(202).json({
+          ok: true,
+          mode: 'capture',
+          eventId,
+          sentry: getSentryBackendStatus(),
+        });
+      } catch (error) {
+        return next(error);
+      }
     });
 
     Sentry.setupExpressErrorHandler(app);
 
-    app.listen(process.env.PORT);
+    app.listen(port);
 
-    log.info(`Express server listening on port ${process.env.PORT}`);
+    log.info(`Express server listening on port ${port}`);
 
-    await initializeFileService();
+    try {
+      await initializeFileService();
+    } catch (error: any) {
+      log.warn(
+        `[FTP] File service disabled in this environment: ${error?.message ?? 'unknown error'}`,
+      );
+    }
 
-    await initializeSearch();
+    try {
+      await initializeSearch();
+    } catch (error: any) {
+      log.warn(
+        `[SEARCH] Search service disabled in this environment: ${error?.message ?? 'unknown error'}`,
+      );
+    }
 
     try {
       initializeCompressionQueue();
@@ -129,8 +220,12 @@ async function main() {
 }
 
 const closeConnections = async () => {
-  await compressionQueue.close();
-  await removeUsersQueue.close();
+  if (compressionQueue) {
+    await compressionQueue.close();
+  }
+  if (removeUsersQueue) {
+    await removeUsersQueue.close();
+  }
 };
 
 process.on('SIGTERM', async () => {

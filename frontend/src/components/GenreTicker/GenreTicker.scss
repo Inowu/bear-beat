@@ -43,7 +43,7 @@
   animation-iteration-count: infinite;
 
   &:hover {
-    color: #08E1F7;
+    color: var(--ph-accent);
   }
 }
 
@@ -91,9 +91,9 @@
   transition: color 0.2s, border-color 0.2s, box-shadow 0.2s;
 
   &:hover {
-    color: #08E1F7;
-    border-color: #08E1F7;
-    box-shadow: 0 0 20px rgba(8, 225, 247, 0.3);
+    color: var(--ph-accent);
+    border-color: var(--ph-accent);
+    box-shadow: 0 0 20px color-mix(in srgb, var(--ph-accent) 30%, transparent);
   }
 }
 

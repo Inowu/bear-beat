@@ -6,7 +6,6 @@ export interface IAdminUser {
   registered_on: Date;
   blocked: boolean;
   phone: string;
-  password: string;
   role: number;
 }
 export interface IAdminOrders {

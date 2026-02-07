@@ -22,6 +22,9 @@
   --bb-cyan: #08E1F7;
   --bb-mint: #00E6C1;
   --bb-gradient: linear-gradient(11deg, var(--bb-mint), var(--bb-cyan));
+  /* Ambient accents (for large surfaces; avoid "baby blue" washes) */
+  --bb-ambient-cyan: rgba(8, 225, 247, 0.05);
+  --bb-ambient-mint: rgba(0, 230, 193, 0.04);
   --bb-danger: #FF2D2C;
   --bb-success: #39D834;
   --bb-warning: #FEBC2E;
@@ -46,6 +49,15 @@
   --bb-radius-pill: 999px;
   --bb-font-ui: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   --bb-font-brand: "Bear-font", "Poppins", sans-serif;
+  --app-font-weight-body: 500;
+  --app-font-weight-heading: 700;
+  --app-font-weight-heading-strong: 800;
+  --app-font-size-body: 1.5rem;
+  --app-font-size-body-lg: 1.6rem;
+  --app-font-size-h4: 1.7rem;
+  --app-font-size-h3: 1.95rem;
+  --app-font-size-h2: 2.4rem;
+  --app-font-size-h1: 3rem;
 
   /* Base Tailwind bridge */
   --bg-main: var(--bb-bg);
@@ -56,16 +68,21 @@
   --border-main: var(--bb-border);
 
   /* Legacy semantic bridge (existing app vars) */
-  --theme-bg-primary: var(--bb-bg);
-  --theme-bg-primary-end: var(--bb-surface-soft);
+  --theme-bg-primary: #F3F6F8;
+  --theme-bg-primary-end: #FFFFFF;
   --theme-bg-secondary: var(--bb-surface);
-  --theme-bg-gradient: linear-gradient(160deg, #f5fdff 0%, var(--bb-bg) 100%);
-  --theme-nav-bg: var(--bb-dark-300);
-  --theme-nav-border-bottom: rgba(255, 255, 255, 0.1);
-  --theme-nav-text: #F2F2F2;
-  --theme-nav-item-bg: rgba(255, 255, 255, 0.08);
-  --theme-nav-item-hover-bg: rgba(8, 225, 247, 0.24);
-  --theme-nav-item-hover-text: var(--bb-cyan);
+  --theme-bg-gradient: linear-gradient(165deg, #FFFFFF 0%, #EDF2F5 100%);
+  /* Light nav (premium/glass, no "baby blue") */
+  --theme-nav-bg: #FFFFFF;
+  --theme-nav-border-bottom: rgba(21, 42, 53, 0.1);
+  --theme-nav-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+  --theme-nav-text: #15202B;
+  /* Neutral light pills (avoid blue-ish nav wash) */
+  --theme-nav-item-bg: #F5F6F8;
+  --theme-nav-item-border: rgba(21, 42, 53, 0.12);
+  --theme-nav-item-hover-bg: color-mix(in srgb, var(--bb-cyan) 16%, #FFFFFF);
+  --theme-nav-item-hover-text: #0F2028;
+  --theme-nav-item-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
   --theme-card-bg: var(--bb-surface);
   --theme-card-border: var(--bb-border);
   --theme-card-border-strong: rgba(8, 225, 247, 0.22);
@@ -82,15 +99,16 @@
   --theme-ink: var(--bb-text-heading);
   --theme-heading: var(--bb-text-heading);
   --theme-strong: var(--bb-text-heading);
-  --theme-bg-muted: #E6E6E6;
+  --theme-bg-muted: #E9EEF2;
   --theme-bg-soft: var(--bb-surface-soft);
   --theme-stripe: rgba(0, 0, 0, 0.05);
-  --theme-edge: rgba(0, 0, 0, 0.12);
+  --theme-edge: rgba(21, 42, 53, 0.15);
   --theme-accent: var(--bb-cyan);
   --theme-accent-bright: var(--bb-cyan);
   --theme-accent-dim: var(--bb-cyan);
   --theme-accent-glow: rgba(8, 225, 247, 0.42);
-  --theme-accent-soft-bg: rgba(8, 225, 247, 0.1);
+  /* Soft accent surfaces in LIGHT should be subtle (avoid "baby blue" wash) */
+  --theme-accent-soft-bg: rgba(8, 225, 247, 0.06);
   --theme-landing-bg: #000000;
   --theme-landing-text: #FFFFFF;
 
@@ -111,7 +129,7 @@
   --ph-shadow-card: var(--bb-shadow-card);
   --ph-glow: rgba(8, 225, 247, 0.24);
   --ph-glow-strong: rgba(8, 225, 247, 0.34);
-  --ph-nav-bg: rgba(255, 255, 255, 0.92);
+  --ph-nav-bg: #FFFFFF;
   --ph-footer-bg: var(--bb-surface);
   --ph-pain-bad: var(--bb-danger);
   --ph-pain-good: var(--bb-success);
@@ -125,6 +143,7 @@
   --app-bg-card: var(--bb-surface);
   --app-text-heading: var(--bb-text-heading);
   --app-text-body: var(--bb-text-body);
+  --app-text-secondary: var(--bb-text-body);
   --app-text-muted: var(--bb-text-muted);
   --app-border: var(--bb-border);
   --app-accent: var(--bb-cyan);
@@ -197,19 +216,20 @@
   --plan-card-btn-outline-color: var(--bb-cyan);
   --plan-card-benefit-icon: var(--bb-cyan);
 
-  --aside-overlay-bg: rgba(41, 41, 41, 0.98);
-  --aside-overlay-border: rgba(255, 255, 255, 0.08);
-  --aside-overlay-text: #EDEDED;
-  --aside-overlay-text-muted: #BFBFBF;
+  --aside-backdrop-bg: rgba(13, 21, 27, 0.28);
+  --aside-overlay-bg: color-mix(in srgb, #FFFFFF 96%, #F4F6F8);
+  --aside-overlay-border: rgba(21, 42, 53, 0.12);
+  --aside-overlay-text: #15202B;
+  --aside-overlay-text-muted: #4A5A64;
   --aside-overlay-hover: var(--bb-cyan);
-  --aside-overlay-close-bg: rgba(255, 255, 255, 0.06);
-  --aside-overlay-close-color: #EDEDED;
+  --aside-overlay-close-bg: rgba(8, 225, 247, 0.12);
+  --aside-overlay-close-color: #15202B;
   --aside-overlay-close-hover: var(--bb-cyan);
 
   --fb-bg: var(--bb-surface-soft);
   --fb-border: var(--bb-border);
   --fb-row-border: rgba(0, 0, 0, 0.08);
-  --fb-row-hover-bg: rgba(8, 225, 247, 0.08);
+  --fb-row-hover-bg: rgba(8, 225, 247, 0.05);
   --fb-row-hover-border: var(--bb-cyan);
   --fb-text: var(--bb-text-heading);
   --fb-text-muted: var(--bb-text-muted);
@@ -265,7 +285,8 @@
   --ad-input-bg: var(--bb-surface);
   --ad-input-border: var(--bb-border);
   --ad-focus-ring: var(--bb-focus-ring);
-  --ad-row-hover: rgba(8, 225, 247, 0.06);
+  /* Admin: use neutral stripes in LIGHT; keep cyan for borders/CTAs only */
+  --ad-row-hover: rgba(15, 23, 42, 0.035);
   --ad-header-bg: var(--bb-surface-soft);
   --ad-badge-success-bg: rgba(57, 216, 52, 0.12);
   --ad-badge-success-text: #208A1D;
@@ -282,6 +303,8 @@
 [data-theme="dark"],
 html.dark,
 .dark {
+  --bb-ambient-cyan: rgba(8, 225, 247, 0.16);
+  --bb-ambient-mint: rgba(0, 230, 193, 0.12);
   --bb-bg: #1A1A1A;
   --bb-surface: #2A2A2A;
   --bb-surface-soft: #323232;
@@ -305,10 +328,14 @@ html.dark,
   --theme-bg-secondary: var(--bb-surface);
   --theme-bg-gradient: linear-gradient(165deg, #121212 0%, #1A1A1A 100%);
   --theme-nav-bg: var(--bb-dark-300);
+  --theme-nav-border-bottom: rgba(255, 255, 255, 0.1);
+  --theme-nav-shadow: 0 10px 24px rgba(0, 0, 0, 0.36);
   --theme-nav-text: #F1F1F1;
   --theme-nav-item-bg: #3B3B3B;
+  --theme-nav-item-border: rgba(255, 255, 255, 0.08);
   --theme-nav-item-hover-bg: rgba(8, 225, 247, 0.25);
   --theme-nav-item-hover-text: var(--bb-cyan);
+  --theme-nav-item-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
   --theme-card-bg: var(--bb-surface);
   --theme-card-border: rgba(255, 255, 255, 0.12);
   --theme-text-primary: var(--bb-text-heading);
@@ -326,6 +353,7 @@ html.dark,
   --app-bg-card: var(--bb-surface);
   --app-text-heading: var(--bb-text-heading);
   --app-text-body: var(--bb-text-body);
+  --app-text-secondary: var(--bb-text-body);
   --app-text-muted: var(--bb-text-muted);
   --app-border: var(--bb-border);
   --app-accent: var(--bb-cyan);
@@ -421,6 +449,8 @@ html.dark,
   --ad-input-bg: var(--bb-surface-soft);
   --ad-input-border: var(--bb-border);
   --ad-header-bg: #333333;
+  /* Admin: in DARK, subtle cyan hover/stripe is OK */
+  --ad-row-hover: rgba(8, 225, 247, 0.12);
 
   --fb-bg: var(--bb-bg);
   --fb-border: var(--bb-border);
@@ -431,6 +461,16 @@ html.dark,
   --fb-accent: var(--bb-cyan);
   --fb-input-bg: var(--bb-surface-soft);
   --fb-input-border: var(--bb-border);
+
+  --aside-backdrop-bg: rgba(0, 0, 0, 0.45);
+  --aside-overlay-bg: rgba(41, 41, 41, 0.98);
+  --aside-overlay-border: rgba(255, 255, 255, 0.08);
+  --aside-overlay-text: #EDEDED;
+  --aside-overlay-text-muted: #BFBFBF;
+  --aside-overlay-hover: var(--bb-cyan);
+  --aside-overlay-close-bg: rgba(255, 255, 255, 0.06);
+  --aside-overlay-close-color: #EDEDED;
+  --aside-overlay-close-hover: var(--bb-cyan);
 
   color-scheme: dark;
 }
@@ -448,49 +488,18 @@ body {
   padding: 0;
 }
 
-/* Dashboard/app: inputs y tablas usan vars de tema (Bear Beat light/dark) */
-
+/* Dashboard/app: guardrails (NO overrides agresivos).
+   Importante: antes habia `!important` aquí y pisaba estilos específicos de Home/Admin/etc.
+   Solo aseguramos targets mínimos + tipografía; cada componente conserva su look. */
 .content-area-app {
-  input, select, textarea {
-    background-color: var(--app-bg-card) !important;
-    color: var(--app-text-heading) !important;
-    border-color: var(--app-border) !important;
-    font-size: var(--app-font-size-body) !important;
-    font-weight: 500;
+  :where(input, select, textarea) {
     min-height: 44px;
-  }
-  input::placeholder, textarea::placeholder {
-    color: var(--app-text-muted);
-  }
-  input:focus, select:focus, textarea:focus {
-    outline: none;
-    border-color: var(--app-accent-bright) !important;
-    box-shadow: 0 0 0 2px rgba(8, 225, 247, 0.25);
-  }
-  button:not(.btn-cell):not(.dropdown-content button) {
     font-size: var(--app-font-size-body);
-    font-weight: 500;
+  }
+
+  :where(button, .btn):not(.btn-cell):not(.dropdown-content button) {
     min-height: 44px;
-  }
-  .pagination-container .page-nav,
-  .pagination-container .selected,
-  .pagination-container .unselected {
-    min-height: 44px !important;
-  }
-  .card, [class*="card"], .table, table {
-    background-color: var(--app-bg-card) !important;
-    color: var(--app-text-heading) !important;
-    border-color: var(--app-border) !important;
-  }
-  thead th {
-    background-color: var(--app-bg-soft) !important;
-    color: var(--app-text-heading) !important;
-    border-color: var(--app-border) !important;
-  }
-  tbody td {
-    background-color: var(--app-bg-card) !important;
-    color: var(--app-text-heading) !important;
-    border-color: var(--app-border) !important;
+    font-size: var(--app-font-size-body);
   }
 }
 
@@ -574,32 +583,9 @@ html {
   font-size: 62.5%;
 }
 
-/* Escritorio (1024px+): base 16px, botones compactos, experiencia PC */
-@media (min-width: 1024px) {
-  html {
-    font-size: 100%;
-  }
-  :root,
-  [data-theme="light"],
-  [data-theme="dark"] {
-    --app-font-size-body: 1rem;
-    --app-font-size-body-lg: 1.125rem;
-    --app-font-size-h4: 1.125rem;
-    --app-font-size-h3: 1.25rem;
-    --app-font-size-h2: 1.5rem;
-    --app-font-size-h1: 2rem;
-  }
-  /* Botones e inputs más compactos en PC (no 48px de móvil) */
-  button:not(.icon-only),
-  .btn,
-  .main-layout-main-container input[type="text"],
-  .main-layout-main-container input[type="email"],
-  .main-layout-main-container input[type="password"],
-  .main-layout-main-container input[type="number"],
-  .main-layout-main-container select {
-    min-height: 40px;
-  }
-}
+/* Nota: mantenemos `1rem = 10px` en TODAS las resoluciones.
+   Muchas reglas históricas del proyecto usan `rem` bajo esta convención; cambiarlo por breakpoint
+   rompe consistencia de tamaños entre rutas y componentes. */
 
 /* Toda la app: tipografía y tamaño; fondo/texto los controla Tailwind (index.css) con bg-bg-main text-text-main */
 body {
@@ -630,26 +616,14 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Ningún texto por debajo de 1rem para que siempre se pueda leer */
-label,
-p,
-a,
-b,
-ul,
-li,
-div,
-span {
-  font-size: inherit;
+/* Resets mínimos (sin romper semántica) */
+a {
   color: inherit;
-  font-weight: inherit;
-  line-height: inherit;
 }
 
-body label,
-body p,
-body .modal-container .content,
-body .modal-container .bottom .content {
-  font-size: var(--app-font-size-body);
+strong,
+b {
+  font-weight: 700;
 }
 
 button,
@@ -662,9 +636,7 @@ textarea {
   font-family: var(--bb-font-ui);
 }
 
-input:not([type="checkbox"]):not([type="radio"]),
-select,
-textarea {
+:where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
   border: 2px solid var(--app-border);
   border-radius: var(--bb-radius-card);
   background: var(--app-bg-card);
@@ -690,12 +662,14 @@ button,
   transition: transform 0.16s ease, box-shadow 0.2s ease, opacity 0.2s ease, background 0.2s ease, color 0.2s ease;
 }
 
-button:hover,
+/* IMPORTANT:
+   No aplicamos "lift" global a TODOS los <button>.
+   Muchos botones (clear X en inputs, toggle de password, iconos en toolbars) usan `transform`
+   para centrarse verticalmente; un hover global rompe su layout. */
 .btn:hover {
   transform: translateY(-1px);
 }
 
-button:active,
 .btn:active {
   transform: translateY(0);
 }
@@ -736,6 +710,166 @@ button.primary-pill {
   align-items: center;
   justify-content: center;
   min-height: 200px;
+}
+
+/* Estado transversal (loading / empty / error) para vistas de app */
+.app-state-panel {
+  width: min(620px, 100%);
+  min-height: 220px;
+  margin: 0 auto;
+  padding: clamp(18px, 2.2vw, 28px);
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--app-border) 84%, transparent);
+  background:
+    radial-gradient(
+      440px 220px at 100% 0%,
+      color-mix(in srgb, var(--app-accent) 10%, transparent),
+      transparent 70%
+    ),
+    color-mix(in srgb, var(--app-bg-card) 98%, transparent);
+  box-shadow: var(--app-shadow-card);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.app-state-panel.is-loading {
+  border-style: solid;
+}
+
+.app-state-panel.is-empty {
+  border-style: dashed;
+}
+
+.app-state-panel.is-error {
+  border-color: color-mix(in srgb, var(--app-status-error) 55%, var(--app-border));
+  background:
+    radial-gradient(
+      440px 220px at 100% 0%,
+      color-mix(in srgb, var(--app-status-error) 11%, transparent),
+      transparent 70%
+    ),
+    color-mix(in srgb, var(--app-bg-card) 98%, transparent);
+}
+
+.app-state-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--app-accent) 34%, transparent);
+  background: color-mix(in srgb, var(--app-accent) 12%, transparent);
+  color: var(--app-accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.app-state-panel.is-error .app-state-icon {
+  border-color: color-mix(in srgb, var(--app-status-error) 48%, transparent);
+  background: color-mix(in srgb, var(--app-status-error) 14%, transparent);
+  color: var(--app-status-error);
+}
+
+.app-state-title {
+  margin: 0;
+  color: var(--app-text-heading);
+  font-size: clamp(1.45rem, 1.25rem + 0.2vw, 1.75rem);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.app-state-copy {
+  margin: 0;
+  max-width: 46ch;
+  color: var(--app-text-muted);
+  font-size: clamp(1.05rem, 1rem + 0.14vw, 1.2rem);
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.app-state-actions {
+  margin-top: 4px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.app-state-actions button,
+.app-state-actions a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--app-border) 84%, transparent);
+  background: color-mix(in srgb, var(--app-bg-soft) 84%, transparent);
+  color: var(--app-text-heading);
+  font-size: 1.05rem;
+  font-weight: 700;
+  transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease;
+}
+
+.app-state-actions button:hover,
+.app-state-actions a:hover {
+  border-color: color-mix(in srgb, var(--app-accent) 46%, transparent);
+  background: color-mix(in srgb, var(--app-accent) 12%, transparent);
+  color: var(--app-accent);
+}
+
+.bb-surface {
+  width: 100%;
+  min-width: 0;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--app-border) 84%, transparent);
+  position: relative;
+  isolation: isolate;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--app-bg-card) 99%, transparent) 0%,
+    color-mix(in srgb, var(--app-bg-soft) 96%, transparent) 100%
+  );
+  box-shadow: var(--app-shadow-card);
+  padding: clamp(14px, 1.6vw, 22px);
+}
+
+.bb-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 0;
+  background: radial-gradient(
+    980px 360px at 100% -10%,
+    color-mix(in srgb, var(--app-accent) 12%, transparent),
+    transparent 72%
+  );
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+html[data-theme="dark"] .bb-surface::before,
+html.dark .bb-surface::before,
+.dark .bb-surface::before {
+  opacity: 1;
+}
+
+.bb-surface > * {
+  position: relative;
+  z-index: 1;
 }
 
 .linear-bg {
@@ -793,62 +927,8 @@ button.primary-pill {
 svg[role="img"] {
   vertical-align: middle;
 }
-.search-input{
-  display: flex;
-  position: relative;
-  background-color: var(--app-bg-card);
-  width: 100%;
-  max-width: 350px;
-  padding-block: 10px;
-  padding-inline: 15px;
-  border-radius: 12px;
-  border: 2px solid var(--app-border);
-  box-shadow: var(--app-shadow);
-  transition: border-color 0.2s, box-shadow 0.2s;
-  &:focus-within {
-    border-color: var(--app-accent);
-    box-shadow: 0 0 0 2px var(--app-focus-ring);
-  }
-  input{
-    background: transparent;
-    border: none;
-    outline: none;
-    font-size: var(--app-font-size-body);
-    font-weight: var(--app-font-weight-heading);
-    width: 100%;
-    color: var(--app-text-heading);
-  }
-  svg{
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    right: 10px;
-    color: var(--app-accent);
-    pointer-events: none;
-  }
-}
-.select-input{
-  width: 100%;
-  min-width: 0;
-  max-width: 200px;
-  select{
-    width: 100%;
-    background-color: var(--app-bg-card);
-    color: var(--app-text-heading);
-    padding-block: 10px;
-    padding-inline: 15px;
-    border-radius: 12px;
-    border: 2px solid var(--app-border);
-    font-size: var(--app-font-size-body);
-    font-weight: var(--app-font-weight-heading);
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    &:focus {
-      border-color: var(--app-accent);
-      box-shadow: 0 0 0 2px var(--app-focus-ring);
-    }
-  }
-}
+
+/* Nota: `.search-input` / `.select-input` se estilizan de forma específica en Admin (evita colisiones globales). */
 
 /* Dashboard: anchos de inputs/botones los controla cada página (Login max-w-md, Admin según toolbar) */
 

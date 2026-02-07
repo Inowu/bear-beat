@@ -35,6 +35,17 @@ export const downloadDirEndpoint = async (req: Request, res: Response) => {
     return res.status(400).send({ error: 'Bad request' });
   }
 
+  const dbUser = await prisma.users.findFirst({
+    where: { id: user.id },
+    select: { verified: true },
+  });
+
+  if (!dbUser?.verified) {
+    return res.status(403).send({
+      error: 'Debes verificar tu WhatsApp antes de descargar',
+    });
+  }
+
   const fullPath = Path.resolve(
     __dirname,
     `../../${process.env.COMPRESSED_DIRS_NAME}/${dirName}`,

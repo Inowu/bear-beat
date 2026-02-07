@@ -5,7 +5,6 @@ aside {
   width: 100%;
   max-width: 300px;
   padding: 0 20px;
-  /* Brand: #292929 (bear-dark-400) via Tailwind class; fallback */
   background-color: var(--theme-nav-bg);
   position: sticky;
   top: 0;
@@ -55,11 +54,12 @@ aside {
         width: 100%;
         border-radius: 5px;
         background-color: var(--theme-nav-item-bg);
+        border: 1px solid var(--theme-nav-item-border, transparent);
         padding: 0;
         min-height: 44px;
         color: var(--theme-nav-text);
         font-weight: bold;
-        box-shadow: 0 0 5px rgba(0, 0, 0, 0.54);
+        box-shadow: var(--theme-nav-item-shadow, none);
         transition: background 0.2s ease, color 0.2s ease;
         cursor: pointer;
       }
@@ -82,6 +82,25 @@ aside {
           text-decoration: none;
           color: inherit;
         }
+      }
+
+      li button {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        width: 100%;
+        min-height: 44px;
+        padding: 10px 20px;
+        box-sizing: border-box;
+        text-decoration: none;
+        color: inherit;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+        background: transparent;
+        border: none;
+        font: inherit;
+        text-align: left;
       }
 
       li:hover,
@@ -131,7 +150,7 @@ aside {
       position: fixed;
       inset: 0;
       z-index: 0;
-      background: rgba(0, 0, 0, 0.35);
+      background: var(--aside-backdrop-bg, rgba(0, 0, 0, 0.35));
       pointer-events: auto;
     }
 
@@ -146,11 +165,10 @@ aside {
       z-index: 1;
       display: flex;
       flex-direction: column;
-      /* Brand: bear-dark-400 via Tailwind; fallback */
       background: var(--aside-overlay-bg);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25);
+      box-shadow: var(--theme-nav-shadow, 4px 0 24px rgba(0, 0, 0, 0.25));
       pointer-events: auto;
       transition: transform 0.25s ease;
       padding-top: env(safe-area-inset-top, 0);
@@ -245,7 +263,8 @@ aside {
         flex-direction: column;
         gap: 0;
 
-        a {
+        a,
+        button {
           display: flex;
           align-items: center;
           gap: 1rem;
@@ -259,6 +278,10 @@ aside {
           transition: color 0.15s, background 0.15s;
           -webkit-tap-highlight-color: transparent;
           touch-action: manipulation;
+          background: transparent;
+          border: none;
+          font: inherit;
+          text-align: left;
 
           &:hover,
           &:focus-visible {

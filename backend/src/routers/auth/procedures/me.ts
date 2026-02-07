@@ -8,6 +8,10 @@ import { extendedAccountPostfix } from '../../../utils/constants';
 export const me = shieldedProcedure.query(
   async ({ ctx: { session, prisma } }) => {
     const user = session!.user!;
+    const currentDbUser = await prisma.users.findFirst({
+      where: { id: user.id },
+      select: { phone: true, verified: true },
+    });
 
     const ftpAccounts = await prisma.ftpUser.findMany({
       where: {
@@ -74,6 +78,8 @@ export const me = shieldedProcedure.query(
 
     return {
       ...session?.user,
+      phone: currentDbUser?.phone ?? user.phone,
+      verified: currentDbUser?.verified ?? user.verified,
       hasActiveSubscription: Boolean(hasActiveSubscription),
       isSubscriptionCancelled,
       stripeCusId: user.stripeCusId,

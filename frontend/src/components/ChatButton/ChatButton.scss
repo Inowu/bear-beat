@@ -5,8 +5,8 @@
   --chat-fab-size: 56px;
   --chat-fab-glow: rgba(8, 225, 247, 0.45);
   --chat-fab-glow-hover: rgba(8, 225, 247, 0.68);
-  --chat-fab-bg: var(--bb-dark-300);
-  --chat-fab-border: var(--bb-cyan);
+  --chat-fab-bg: color-mix(in srgb, var(--bb-surface) 92%, var(--bb-bg) 8%);
+  --chat-fab-border: color-mix(in srgb, var(--bb-cyan) 78%, var(--bb-border) 22%);
   --chat-fab-icon: var(--bb-cyan);
 
   position: fixed;
@@ -18,7 +18,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(145deg, var(--bb-dark-200) 0%, var(--bb-dark-400) 100%);
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--chat-fab-bg) 96%, transparent) 0%,
+    color-mix(in srgb, var(--bb-surface-soft) 92%, transparent) 100%
+  );
   border: 2px solid var(--chat-fab-border);
   border-radius: 50%;
   box-shadow: 0 0 20px var(--chat-fab-glow), 0 4px 12px rgba(0, 0, 0, 0.4);
@@ -47,6 +51,14 @@
     bottom: max(20px, env(safe-area-inset-bottom, 20px));
     right: max(20px, env(safe-area-inset-right, 20px));
   }
+}
+
+/* Light theme: menos glow y menos "cyberpunk" para verse premium y no distraer. */
+[data-theme="light"] .chat-fab {
+  --chat-fab-glow: rgba(8, 225, 247, 0.18);
+  --chat-fab-glow-hover: rgba(8, 225, 247, 0.28);
+  --chat-fab-bg: #FFFFFF;
+  --chat-fab-border: color-mix(in srgb, var(--bb-cyan) 52%, var(--bb-border));
 }
 
 .chat-fab--inline {
@@ -100,6 +112,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.chat-fab-icon svg {
+  width: 24px;
+  height: 24px;
 }
 
 /* Badge flotante a la izquierda (no se corta en viewport) */

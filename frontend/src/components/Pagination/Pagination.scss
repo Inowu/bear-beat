@@ -81,7 +81,7 @@ $bear-blue-dim: var(--bb-cyan);
       font-weight: 600;
       color: var(--app-accent);
       font-size: var(--app-font-size-body);
-      min-width: 40px;
+      min-width: 44px;
       min-height: 44px;
       padding: 0 10px;
       display: inline-flex;
@@ -96,7 +96,7 @@ $bear-blue-dim: var(--bb-cyan);
       cursor: pointer;
       font-size: var(--app-font-size-body);
       color: $text-primary;
-      min-width: 40px;
+      min-width: 44px;
       min-height: 44px;
       padding: 0 10px;
       display: inline-flex;
@@ -154,10 +154,10 @@ $bear-blue-dim: var(--bb-cyan);
     }
 
     .right-side .page-nav {
-      min-width: 42px;
-      min-height: 42px;
-      width: 42px;
-      height: 42px;
+      min-width: 44px;
+      min-height: 44px;
+      width: 44px;
+      height: 44px;
     }
   }
 }

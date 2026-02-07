@@ -1,5 +1,9 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import "./Turnstile.scss";
+import {
+  shouldBypassTurnstile,
+  TURNSTILE_BYPASS_TOKEN,
+} from "../../utils/turnstile";
 
 type TurnstileOptions = {
   sitekey: string;
@@ -47,6 +51,7 @@ const Turnstile = forwardRef<TurnstileRef, TurnstileProps>(function Turnstile(
   },
   ref
 ) {
+  const isBypassed = shouldBypassTurnstile();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const widgetIdRef = useRef<string | null>(null);
   const onVerifyRef = useRef(onVerify);
@@ -78,6 +83,13 @@ const Turnstile = forwardRef<TurnstileRef, TurnstileProps>(function Turnstile(
   );
 
   useEffect(() => {
+    if (!isBypassed) return;
+    onVerifyRef.current(TURNSTILE_BYPASS_TOKEN);
+  }, [isBypassed]);
+
+  useEffect(() => {
+    if (isBypassed) return;
+
     const siteKey = process.env.REACT_APP_TURNSTILE_SITE_KEY;
     if (!siteKey || !containerRef.current) {
       return;
@@ -123,15 +135,16 @@ const Turnstile = forwardRef<TurnstileRef, TurnstileProps>(function Turnstile(
         widgetIdRef.current = null;
       }
     };
-  }, [invisible]);
+  }, [invisible, isBypassed]);
 
   useEffect(() => {
+    if (isBypassed) return;
     if (window.turnstile && widgetIdRef.current) {
       window.turnstile.reset(widgetIdRef.current);
     }
-  }, [resetSignal]);
+  }, [resetSignal, isBypassed]);
 
-  if (!process.env.REACT_APP_TURNSTILE_SITE_KEY) {
+  if (isBypassed || !process.env.REACT_APP_TURNSTILE_SITE_KEY) {
     return null;
   }
 

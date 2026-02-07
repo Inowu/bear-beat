@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Modal } from 'react-bootstrap'
 import './../Modal.scss'
-import { RiCloseCircleLine } from 'react-icons/ri'
+import { XCircle } from 'lucide-react'
 import trpc from "../../../api";
 import { Spinner } from '../../../components/Spinner/Spinner';
 import { IAdminUser } from '../../../interfaces/admin';
@@ -11,25 +11,24 @@ interface ICondition {
     show: boolean;
     onHide: () => void;
     user: IAdminUser;
+    onDeleted?: () => void;
 }
 
 export function DeleteUOneUserModal(props: ICondition) {
-    const { show, onHide, user } = props;
+    const { show, onHide, user, onDeleted } = props;
     const [loader, setLoader] = useState<boolean>(false);
     const [showError, setShowError] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<string>("");
     const removeUser = async () => {
         setLoader(true);
         try {
-            const deleted = await trpc.users.removeUserByAdminAction.mutate({
+            await trpc.users.removeUserByAdminAction.mutate({
                 userId: user.id,
                 userEmail: user.email
             });
-
-            console.log(deleted);
             onHide();
+            onDeleted?.();
             setLoader(false);
-            window.location.reload();
         } catch (error: any) {
             setErrorMessage(error.message ?? "No se pudo eliminar el usuario.");
             setShowError(true);
@@ -42,7 +41,7 @@ export function DeleteUOneUserModal(props: ICondition) {
               <div className='modal-container success-modal'>
                   <div className='header'>
                       <p className='title'>Eliminar usuario</p>
-                      <RiCloseCircleLine className='icon' onClick={onHide} />
+                      <XCircle className='icon' onClick={onHide} aria-label="Cerrar" />
                   </div>
                   <div className='bottom'>
                       <p className='content'>

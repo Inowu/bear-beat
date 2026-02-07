@@ -1,7 +1,7 @@
 import React from 'react'
 import { Modal } from 'react-bootstrap'
 import './../Modal.scss'
-import {RiCloseCircleLine} from 'react-icons/ri'
+import { XCircle } from 'lucide-react'
 import { IOxxoData } from 'interfaces/Plans';
 interface IOxxo {
     show: boolean;
@@ -21,7 +21,7 @@ export function OxxoModal (props: IOxxo)  {
         <div className='modal-container success-modal'>
             <div className='header'>
                 <p className='title'>Pago con Oxxo</p>
-                <RiCloseCircleLine className='icon' onClick={onHide} aria-label='Cerrar modal' />
+                <XCircle className='icon' onClick={onHide} aria-label='Cerrar modal' />
             </div>
             <div className='bottom center'>
                 <p className='content'>

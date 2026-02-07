@@ -7,7 +7,7 @@ import * as Yup from "yup";
 import { useState, useEffect } from "react";
 import { Spinner } from "../../Spinner/Spinner";
 import { Modal } from "react-bootstrap";
-import { RiCloseCircleLine } from "react-icons/ri";
+import { XCircle } from "lucide-react";
 import "react-phone-input-2/lib/material.css";
 import trpc from "../../../api";
 import { SuccessModal } from "../SuccessModal/SuccessModal";
@@ -103,7 +103,7 @@ function EditPlanModal(props: IEditPlanModal) {
   return (
     <Modal show={showModal} onHide={onHideModal} centered>
       <form className="modal-addusers" onSubmit={formik.handleSubmit}>
-        <RiCloseCircleLine className="icon" onClick={onHideModal} />
+        <XCircle className="icon" onClick={onHideModal} aria-label="Cerrar" />
         <h2>Editar Plan</h2>
         <div className="c-row-price" style={{ display: "flex", gap: 20 }}>
           <p>

@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import "./CatalogStats.scss";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
+import { getAccessToken } from "../../../utils/authStorage";
 
 const API_BASE =
   process.env.REACT_APP_ENVIRONMENT === "development"
@@ -96,7 +97,7 @@ export function CatalogStats() {
 
   const fetchStats = useCallback((refresh = false) => {
     setLoading(true);
-    const token = localStorage.getItem("token") ?? "";
+    const token = getAccessToken() ?? "";
     const url = `${API_BASE}/api/catalog-stats${refresh ? "?refresh=1" : ""}`;
     fetch(url, { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => {

@@ -4,7 +4,7 @@ import { ErrorModal } from '../ErrorModal/ErrorModal'
 import { SuccessModal } from '../SuccessModal/SuccessModal'
 import { IPlans } from 'interfaces/Plans';
 import { Modal } from 'react-bootstrap'
-import { RiCloseCircleLine } from 'react-icons/ri'
+import { XCircle } from 'lucide-react'
 import { useState } from 'react'
 import trpc from "../../../api";
 interface IError {
@@ -48,7 +48,7 @@ export function OptionModal(props: IError) {
         <div className='modal-container option-modal'>
           <div className='header'>
             <p className='title'>{title}</p>
-            <RiCloseCircleLine className='icon' onClick={onHide} />
+            <XCircle className='icon' onClick={onHide} aria-label="Cerrar" />
           </div>
           <div className='bottom'>
             <p className='content'>

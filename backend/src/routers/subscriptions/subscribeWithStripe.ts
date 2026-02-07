@@ -13,6 +13,7 @@ import { facebook } from '../../facebook';
 import { manyChat } from '../../many-chat';
 import { checkIfUserIsFromUH, checkIfUserIsSubscriber, SubscriptionCheckResult } from '../migration/checkUHSubscriber';
 import { addDays } from 'date-fns';
+import { getClientIpFromRequest } from '../../analytics';
 
 export const subscribeWithStripe = shieldedProcedure
   .input(
@@ -20,11 +21,13 @@ export const subscribeWithStripe = shieldedProcedure
       planId: z.number(),
       coupon: z.string().optional(),
       fbp: z.string().optional(),
+      fbc: z.string().optional(),
+      eventId: z.string().optional(),
       url: z.string(),
       paymentMethod: z.string().optional(),
     }),
   )
-  .query(async ({ input: { planId, coupon, paymentMethod, fbp, url }, ctx: { prisma, session, req } }) => {
+  .query(async ({ input: { planId, coupon, paymentMethod, fbp, fbc, eventId, url }, ctx: { prisma, session, req } }) => {
     const user = session!.user!;
 
     const existingUser = await prisma.users.findFirst({
@@ -209,21 +212,32 @@ export const subscribeWithStripe = shieldedProcedure
       }
 
       if (existingUser) {
-        const remoteAddress = req.socket.remoteAddress;
-        const userAgent = req.headers['user-agent'];
-        if (fbp && remoteAddress && userAgent) {
+        const clientIp = getClientIpFromRequest(req);
+        const userAgentRaw = req.headers['user-agent'];
+        const userAgent =
+          typeof userAgentRaw === 'string'
+            ? userAgentRaw
+            : Array.isArray(userAgentRaw)
+              ? userAgentRaw[0] ?? null
+              : null;
+
+        try {
           log.info('[STRIPE] Sending Purchase event to Facebook CAPI');
           const value = Number(plan.price);
           const currency = (plan.moneda || 'USD').toUpperCase();
           await facebook.setEvent(
             'Purchase',
-            remoteAddress,
+            clientIp,
             userAgent,
-            fbp,
+            { fbp, fbc, eventId },
             url,
             existingUser,
             { value, currency },
           );
+        } catch (error) {
+          log.error('[STRIPE] Error sending CAPI event', {
+            error: error instanceof Error ? error.message : error,
+          });
         }
         await manyChat.addTagToUser(existingUser, 'SUCCESSFUL_PAYMENT');
       }

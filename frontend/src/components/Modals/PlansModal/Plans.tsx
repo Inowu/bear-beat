@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import './Plans.scss'
 import { Modal } from 'react-bootstrap'
 import trpc from "../../../api";
-import { RiCloseCircleLine } from 'react-icons/ri';
+import { XCircle } from 'lucide-react';
 import { IGBPlans } from '../../../interfaces/Plans';
 import { useUserContext } from "../../../contexts/UserContext";
 import { IPaymentMethod } from 'interfaces/User';
@@ -109,7 +109,7 @@ export function PlansModal(props: IPlan) {
       <div className='modal-container success-modal modal-container-plans'>
         <div className='header'>
           <p className='title'>Comprar Gbs Extra</p>
-          <RiCloseCircleLine className='icon' onClick={close} />
+          <XCircle className='icon' onClick={close} aria-label="Cerrar" />
         </div>
         {
           selectPlan === null ?

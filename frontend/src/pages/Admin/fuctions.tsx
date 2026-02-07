@@ -52,8 +52,8 @@ export const exportUsers = async (filt: IAdminFilter) => {
       }
     }
     return users;
-  } catch (error) {
-    console.log(error);
+  } catch {
+    return [];
   }
 };
 export const exportPayments = async () => {
@@ -61,7 +61,7 @@ export const exportPayments = async () => {
     let body: any = {};
     const history = await trpc.checkoutLogs.getCheckoutLogs.query(body);
     return history;
-  } catch (error: any) {
-    console.log(error.message);
+  } catch {
+    return [];
   }
 };

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { publicProcedure } from '../../../procedures/public.procedure';
+import { shieldedProcedure } from '../../../procedures/shielded.procedure';
 import { log } from '../../../server';
 import { twilio } from '../../../twilio';
 import * as TwilioLib from 'twilio';
@@ -31,22 +31,29 @@ const addPhoneToBlockedList = async (
   await setBlockedPhoneNumbers(prisma, [...currentNumbers, normalized]);
 };
 
-export const verifyPhone = publicProcedure
+export const verifyPhone = shieldedProcedure
   .input(
     z.object({
       code: z
         .string()
         .min(6, { message: 'El codigo debe tener al menos 6 caracteres' }),
       phoneNumber: z.string(),
-      userId: z.number(),
     }),
   )
   .mutation(
-    async ({ input: { code, phoneNumber, userId }, ctx: { req, prisma } }) => {
+    async ({ input: { code, phoneNumber }, ctx: { prisma, session } }) => {
+      const sessionUser = session?.user;
+      if (!sessionUser?.id) {
+        throw new TRPCError({
+          code: 'UNAUTHORIZED',
+          message: 'No autorizado',
+        });
+      }
+
       const existingUser = await prisma.users.findFirst({
         where: {
           id: {
-            equals: userId,
+            equals: sessionUser.id,
           },
         },
       });
@@ -61,22 +68,12 @@ export const verifyPhone = publicProcedure
       if (phoneNumber !== existingUser.phone) {
         await prisma.users.update({
           where: {
-            id: userId,
+            id: sessionUser.id,
           },
           data: {
             phone: phoneNumber,
           },
         });
-      }
-
-      if (code === '201205') {
-        log.info(
-          '[VERIFY_PHONE] Using code fallback, phone was successfully verified',
-        );
-        return {
-          success: true,
-          message: 'El telefono ha sido verificado; ya puede usar su cuenta',
-        };
       }
 
       try {
@@ -86,7 +83,7 @@ export const verifyPhone = publicProcedure
           log.info('[VERIFY_PHONE] Phone was successfully verified');
           await prisma.users.update({
             where: {
-              id: userId,
+              id: sessionUser.id,
             },
             data: {
               verified: true,

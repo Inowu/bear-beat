@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { HiOutlineLockClosed } from "react-icons/hi";
+import { Lock } from "lucide-react";
 import trpc from "../../../api";
 import { PasswordInput } from "../../PasswordInput/PasswordInput";
 import { useFormik } from "formik";
@@ -72,7 +72,7 @@ function ResetPassword() {
       <h2 className="auth-reset-title">ESCRIBA UNA NUEVA CONTRASEÑA</h2>
       <div className="c-row">
         <div className="auth-password-with-icon-wrap">
-          <HiOutlineLockClosed className="auth-password-icon" aria-hidden />
+          <Lock className="auth-password-icon" aria-hidden />
           <PasswordInput
             placeholder="Nueva contraseña (mín. 6 caracteres)"
             id="password"
@@ -90,7 +90,7 @@ function ResetPassword() {
       </div>
       <div className="c-row">
         <div className="auth-password-with-icon-wrap">
-          <HiOutlineLockClosed className="auth-password-icon" aria-hidden />
+          <Lock className="auth-password-icon" aria-hidden />
           <PasswordInput
             placeholder="Repetir contraseña"
             id="passwordConfirmation"

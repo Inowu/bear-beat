@@ -6,7 +6,7 @@ import { ErrorModal } from "../ErrorModal/ErrorModal";
 import { findCountryCode, twoDigitsCountryCodes } from "../../../utils/country_codes";
 import { Modal } from "react-bootstrap";
 import { of } from "await-of";
-import { RiCloseCircleLine } from "react-icons/ri";
+import { XCircle } from "lucide-react";
 import { Spinner } from "../../Spinner/Spinner";
 import { SuccessModal } from "../SuccessModal/SuccessModal";
 import { useFormik } from "formik";
@@ -21,19 +21,19 @@ interface IEditPlanModal {
   showModal: boolean;
   onHideModal: () => void;
   editingUser: UserToEdit;
+  onSaved?: () => void;
 }
 
 interface UserToEdit {
   id: number;
   email: string;
-  password: string;
   username: string;
   phone: string;
   role: number;
 }
 
 export function EditUserModal(props: IEditPlanModal) {
-  const { showModal, onHideModal, editingUser } = props;
+  const { showModal, onHideModal, editingUser, onSaved } = props;
 
   // const navigate = useNavigate();
   const [loader, setLoader] = useState<boolean>(false);
@@ -47,15 +47,13 @@ export function EditUserModal(props: IEditPlanModal) {
   };
   const closeSuccess = () => {
     setShowSuccess(false);
-    window.location.reload();
+    onSaved?.();
     onHideModal();
   };
 
   const validationSchema = Yup.object().shape({
     email: Yup.string().required("El correo es requerido"),
-    password: Yup.string()
-      .required("Este campo es obligatorio")
-      .min(6, "La contraseña debe contener por lo menos 6 caracteres"),
+    password: Yup.string().min(6, "La contraseña debe contener por lo menos 6 caracteres"),
     name: Yup.string().required("El nombre es requerido"),
     phone: Yup.string()
       .required("El teléfono es requerido")
@@ -79,13 +77,22 @@ export function EditUserModal(props: IEditPlanModal) {
     validationSchema: validationSchema,
     onSubmit: async (values) => {
       setLoader(true);
-      let body = {
+      const body: {
+        email: string;
+        username: string;
+        phone: string;
+        role_id: number;
+        password?: string;
+      } = {
         email: values.email,
         username: values.name,
-        password: values.password,
         phone: `+${code} ${values.phone}`,
         role_id: values.role,
       };
+
+      if (values.password.trim().length > 0) {
+        body.password = values.password;
+      }
 
       const [, errorUpdate] = await of(
         trpc.users.updateOneUsers.mutate({
@@ -121,7 +128,7 @@ export function EditUserModal(props: IEditPlanModal) {
       }
 
       formik.setValues({
-        password: editingUser.password,
+        password: "",
         email: editingUser.email,
         name: editingUser.username,
         phone: phoneNumber,
@@ -135,7 +142,7 @@ export function EditUserModal(props: IEditPlanModal) {
   return (
     <Modal show={showModal} onHide={onHideModal} centered>
       <form className="modal-addusers" onSubmit={formik.handleSubmit}>
-        <RiCloseCircleLine className="icon" onClick={onHideModal} />
+        <XCircle className="icon" onClick={onHideModal} aria-label="Cerrar" />
         <h2>Editar Usuario</h2>
         <div className="c-row">
           <label>Nombre de usuario</label>
@@ -202,7 +209,7 @@ export function EditUserModal(props: IEditPlanModal) {
           {formik.errors.phone && <div className="error-formik">{formik.errors.phone}</div>}
         </div>
         <div className="c-row">
-          <label>Contraseña</label>
+          <label>Nueva contraseña (opcional)</label>
           <PasswordInput
             placeholder="Contraseña"
             id="password"

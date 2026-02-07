@@ -39,6 +39,10 @@ export const ROUTE_SEO: Record<string, { title: string; description: string }> =
     title: `Instrucciones de descarga | ${BASE_TITLE}`,
     description: "Cómo descargar tu librería con FileZilla o Air Explorer. Guía paso a paso.",
   },
+  "/legal": {
+    title: `FAQ, privacidad y reembolsos | ${BASE_TITLE}`,
+    description: "Consulta preguntas frecuentes, política de privacidad, reembolsos y términos de uso de Bear Beat.",
+  },
   "/descargas": {
     title: `Mis descargas | ${BASE_TITLE}`,
     description: "Accede a tus descargas y gestiona tu librería de música para DJs.",

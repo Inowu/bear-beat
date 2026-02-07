@@ -1,12 +1,11 @@
-import React, { useEffect, useState } from "react";
-import { FaChevronDown } from "react-icons/fa";
-import { HiOutlineMusicalNote } from "react-icons/hi2";
+import React, { useEffect } from "react";
+import { Music } from "lucide-react";
 import { Spinner } from "../../components/Spinner/Spinner";
 import "./FileLoader.scss";
 import { useUserContext } from "../../contexts/UserContext";
 import { useDownloadContext } from "../../contexts/DownloadContext";
-import { useSSE } from "react-hooks-sse";
 import trpc from "../../api";
+import { useSafeSSE } from "../../utils/sse";
 
 export const FileLoader = () => {
   const { currentUser, userToken } = useUserContext();
@@ -23,27 +22,26 @@ export const FileLoader = () => {
         window.URL.revokeObjectURL(url);
       } else {
       }
-    } catch (error: any) {
+    } catch {
       setShowDownload(false);
-      console.log(error.message);
     }
   };
   const stopDownloadAlbum = async () => {
     try {
       let jobID: any = downloading.jobId;
-      const response = await trpc.ftp.cancelDirDownload.mutate({
+      await trpc.ftp.cancelDirDownload.mutate({
         jobId: jobID,
       });
       setShowDownload(false);
-    } catch (error: any) {
-      console.log(error.message);
+    } catch {
+      setShowDownload(false);
     }
   };
-  const downloading = useSSE(`compression:progress:${currentUser?.id}`, {
+  const downloading = useSafeSSE(`compression:progress:${currentUser?.id}`, {
     jobId: null,
     progress: 0,
   });
-  const completed = useSSE(`compression:completed:${currentUser?.id}`, {
+  const completed = useSafeSSE(`compression:completed:${currentUser?.id}`, {
     jobId: null,
     url: "",
   });
@@ -63,9 +61,9 @@ export const FileLoader = () => {
       </div>
       <div className="files-list">
         {
-          <div className="file-contain">
+            <div className="file-contain">
             <div className="left-side">
-              <HiOutlineMusicalNote />
+              <Music aria-hidden />
               <div className="title-contain">
                 <p>{currentFile && currentFile.name}</p>
                 <p>

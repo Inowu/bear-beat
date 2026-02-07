@@ -6,7 +6,6 @@ import { of } from "await-of";
 import { Spinner } from "../../Spinner/Spinner";
 import { SuccessModal } from "../SuccessModal/SuccessModal";
 import { useFormik } from "formik";
-import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import * as Yup from "yup";
 import trpc from "../../../api";
@@ -17,13 +16,12 @@ import { findCountryCode, twoDigitsCountryCodes } from "../../../utils/country_c
 interface IVerifyPhoneModal {
   showModal: boolean;
   onHideModal: () => void;
-  newUserId: number;
+  onDismissModal?: () => void;
   newUserPhone: string;
 }
 
 export function VerifyUpdatePhoneModal(props: IVerifyPhoneModal) {
-  const { showModal, onHideModal, newUserId, newUserPhone } = props;
-  const navigate = useNavigate();
+  const { showModal, onHideModal, onDismissModal, newUserPhone } = props;
   const [loader, setLoader] = useState<boolean>(false);
   const [sendingCodeLoader, setSendingCodeLoader] = useState<boolean>(false);
   const [show, setShow] = useState<boolean>(false);
@@ -32,7 +30,6 @@ export function VerifyUpdatePhoneModal(props: IVerifyPhoneModal) {
   const [code, setCode] = useState<string>("52");
   const [countryCode, setCountryCode] = useState<string>("mx");
   const [disableConfirmPhone, setDisableConfirmPhone] = useState<boolean>(true);
-  const [disableSendCode, setDisableSendCode] = useState<boolean>(false);
   const [codeSent, setCodeSent] = useState<boolean>(false);
 
   const closeModal = () => {
@@ -42,14 +39,17 @@ export function VerifyUpdatePhoneModal(props: IVerifyPhoneModal) {
   const closeSuccess = () => {
     setShowSuccess(false);
     onHideModal();
-    navigate("/");
+  };
+
+  const closeWithoutVerify = () => {
+    onDismissModal?.();
   };
 
   const validationSchema = Yup.object().shape({
     code: Yup.string().required("El código es requerido").length(6, "El código debe tener 6 digitos"),
     phone: Yup.string()
       .required("El teléfono es requerido")
-      .matches(/^[0-9]{7,10}$/, "El teléfono no es válido"),
+      .matches(/^[0-9]{7,14}$/, "El teléfono no es válido"),
   });
 
   const initialValues = {
@@ -69,7 +69,6 @@ export function VerifyUpdatePhoneModal(props: IVerifyPhoneModal) {
       let body = {
         code: values.code,
         phoneNumber: `+${code} ${values.phone}`,
-        userId: newUserId,
       };
 
       const [verifyingPhone, errorUpdate] = await of(trpc.auth.verifyPhone.mutate(body));
@@ -83,6 +82,7 @@ export function VerifyUpdatePhoneModal(props: IVerifyPhoneModal) {
           setShow(true);
           setErrorMessage(verifyingPhone.message);
           setLoader(false);
+          return;
         }
         setShowSuccess(true);
         setLoader(false);
@@ -96,7 +96,6 @@ export function VerifyUpdatePhoneModal(props: IVerifyPhoneModal) {
 
     const [verification, errorVerification] = await of(
       trpc.auth.sendVerificationCode.mutate({
-        userId: newUserId,
         phoneNumber: `+${code} ${phone}`,
       })
     );
@@ -105,7 +104,6 @@ export function VerifyUpdatePhoneModal(props: IVerifyPhoneModal) {
       setShow(true);
       setErrorMessage(errorVerification?.message);
     } else {
-      setDisableSendCode(true);
       setDisableConfirmPhone(false);
       setCodeSent(true);
     }
@@ -131,8 +129,16 @@ export function VerifyUpdatePhoneModal(props: IVerifyPhoneModal) {
     setCode(dialCode);
   }, [newUserPhone]);
 
+  useEffect(() => {
+    if (showModal) {
+      setDisableConfirmPhone(true);
+      setCodeSent(false);
+      formik.setFieldValue("code", "");
+    }
+  }, [showModal]);
+
   return (
-    <Modal show={showModal} centered>
+    <Modal show={showModal} centered onHide={closeWithoutVerify}>
       <form className="modal-addusers" onSubmit={formik.handleSubmit}>
         <h2>Verificar Teléfono</h2>
         <p>Confirme su numero de telefono para enviarle el codigo de verificacion.</p>
@@ -159,8 +165,13 @@ export function VerifyUpdatePhoneModal(props: IVerifyPhoneModal) {
           />
           {formik.errors.phone && <div className="error-formik">{formik.errors.phone}</div>}
           {!sendingCodeLoader ? (
-            <button className="btn-option-4" onClick={confirmPhone} disabled={disableSendCode}>
-              Enviar
+            <button
+              type="button"
+              className="btn-option-4"
+              onClick={confirmPhone}
+              disabled={sendingCodeLoader}
+            >
+              {codeSent ? "Reenviar" : "Enviar"}
             </button>
           ) : (
             <div style={{ marginBottom: 10 }}>
@@ -178,7 +189,7 @@ export function VerifyUpdatePhoneModal(props: IVerifyPhoneModal) {
           <label>Código</label>
           <input
             placeholder="Código"
-            type="name"
+            type="text"
             id="code"
             name="code"
             value={formik.values.code}
@@ -195,6 +206,9 @@ export function VerifyUpdatePhoneModal(props: IVerifyPhoneModal) {
             <Spinner size={3} width={0.3} color="var(--app-accent)" />
           </div>
         )}
+        <button type="button" className="btn-option-5" onClick={closeWithoutVerify}>
+          Ahora no
+        </button>
         <ErrorModal show={show} onHide={closeModal} message={errorMessage} />
         <SuccessModal
           show={showSuccess}

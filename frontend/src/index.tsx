@@ -7,6 +7,7 @@ import "./index.css";
 import "./styles/index.scss";
 import reportWebVitals from "./reportWebVitals";
 import { initFacebookPixel } from "./utils/facebookPixel";
+import { GROWTH_METRICS, initGrowthMetrics, trackGrowthMetric } from "./utils/growthMetrics";
 import { ErrorFallback } from "./components/ErrorFallback/ErrorFallback";
 import {
   Navigate,
@@ -25,6 +26,7 @@ import LoginForm from "./components/Auth/LoginForm/LoginForm";
 import SignUpForm from "./components/Auth/SignUpForm/SignUpForm";
 import ForgotPasswordForm from "./components/Auth/ForgotPasswordForm/ForgotPasswordForm";
 import Instructions from "./pages/Instructions/Instructions";
+import Legal from "./pages/Legal/Legal";
 import MyAccount from "./pages/MyAccount/MyAccount";
 import Plans from "./pages/Plans/Plans";
 import Checkout from "./pages/Checkout/Checkout";
@@ -40,11 +42,13 @@ import { DownloadHistory } from "./pages/Admin/DownloadsHistory/DownloadHistory"
 import { BlockedEmailDomains } from "./pages/Admin/BlockedEmailDomains/BlockedEmailDomains";
 import { BlockedPhoneNumbers } from "./pages/Admin/BlockedPhoneNumbers/BlockedPhoneNumbers";
 import { CatalogStats } from "./pages/Admin/CatalogStats/CatalogStats";
+import { AnalyticsDashboard } from "./pages/Admin/Analytics/AnalyticsDashboard";
 import { PlanUpgrade } from "./pages/PlanUpgrade/PlanUpgrade";
 import { SSEProvider } from "react-hooks-sse";
 import DownloadContextProvider from "./contexts/DownloadContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Downloads from "./pages/Downloads/Downloads";
+import { sseEndpoint } from "./utils/runtimeConfig";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -61,6 +65,7 @@ const router = createBrowserRouter([
         children: [
           { path: "", element: <HomeOrLanding /> },
           { path: "instrucciones", element: <Instructions /> },
+          { path: "legal", element: <Legal /> },
           {
             path: "micuenta",
             element: (
@@ -124,6 +129,7 @@ const router = createBrowserRouter([
           { path: "planesAdmin", element: <PlanAdmin /> },
           { path: "almacenamiento", element: <Storage /> },
           { path: "catalogo", element: <CatalogStats /> },
+          { path: "analitica", element: <AnalyticsDashboard /> },
           { path: "historial-descargas", element: <DownloadHistory /> },
           { path: "cupones", element: <Coupons /> },
           { path: "ordenes", element: <Ordens /> },
@@ -156,6 +162,7 @@ const router = createBrowserRouter([
 // 'https://thebearbeatapi.lat/trpc'
 // 'https://kale67.world/trpc'
 initFacebookPixel();
+initGrowthMetrics();
 
 root.render(
   <React.StrictMode>
@@ -172,9 +179,13 @@ root.render(
               : process.env.REACT_APP_PAYPAL_CLIENT_ID!,
           }}
         >
-          <SSEProvider endpoint="https://thebearbeatapi.lat/sse">
+          {sseEndpoint ? (
+            <SSEProvider endpoint={sseEndpoint}>
+              <RouterProvider router={router} />
+            </SSEProvider>
+          ) : (
             <RouterProvider router={router} />
-          </SSEProvider>
+          )}
         </PayPalScriptProvider>
         </DownloadContextProvider>
       </UserContextProvider>
@@ -183,7 +194,28 @@ root.render(
   </React.StrictMode>
 );
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
+reportWebVitals((metric: any) => {
+  if (typeof window === "undefined") return;
+  const metricValue =
+    typeof metric?.value === "number" && Number.isFinite(metric.value)
+      ? metric.value
+      : 0;
+  const metricDelta =
+    typeof metric?.delta === "number" && Number.isFinite(metric.delta)
+      ? metric.delta
+      : 0;
+  const deviceCategory = window.matchMedia("(max-width: 768px)").matches
+    ? "mobile"
+    : "desktop";
+
+  trackGrowthMetric(GROWTH_METRICS.WEB_VITAL_REPORTED, {
+    metricName: metric?.name ?? "unknown",
+    value: Number(metricValue.toFixed(4)),
+    delta: Number(metricDelta.toFixed(4)),
+    rating: metric?.rating ?? "unknown",
+    metricId: metric?.id ?? null,
+    navigationType: metric?.navigationType ?? null,
+    deviceCategory,
+    pagePath: window.location.pathname,
+  });
+});

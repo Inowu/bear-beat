@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { useDownloadContext } from "../contexts/DownloadContext";
 import { FileLoader } from "../components/FileLoader/FileLoader";
 import { applyRouteSeo } from "../utils/seo";
+import { GROWTH_METRICS, trackGrowthMetric } from "../utils/growthMetrics";
 import "./MainLayout.scss";
 
 function MainLayout() {
@@ -15,6 +16,7 @@ function MainLayout() {
 
   const [asideOpen, setAsideOpen] = useState<boolean>(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const trackedPathRef = useRef<string>("");
 
   const handleAsideHide = () => {
     menuButtonRef.current?.focus();
@@ -29,10 +31,34 @@ function MainLayout() {
     applyRouteSeo(location.pathname);
   }, [location.pathname]);
 
+  useEffect(() => {
+    const currentKey = `${location.pathname}${location.search}`;
+    if (trackedPathRef.current === currentKey) return;
+    trackedPathRef.current = currentKey;
+
+    const section =
+      location.pathname.startsWith("/admin")
+        ? "admin"
+        : location.pathname.startsWith("/auth")
+          ? "auth"
+          : location.pathname.startsWith("/planes")
+            ? "planes"
+            : location.pathname === "/"
+              ? "home"
+              : "app";
+
+    trackGrowthMetric(GROWTH_METRICS.PAGE_VIEW, {
+      pagePath: location.pathname,
+      pageQuery: location.search,
+      section,
+    });
+  }, [location.pathname, location.search]);
+
   const isFullWidth =
     location.pathname === "/" ||
     location.pathname.startsWith("/auth") ||
-    location.pathname.startsWith("/instrucciones");
+    location.pathname.startsWith("/instrucciones") ||
+    location.pathname.startsWith("/legal");
 
   return (
     <div className="main-layout-main-container">
