@@ -1,55 +1,131 @@
-import React from 'react'
-import { Modal } from 'react-bootstrap'
-import './../Modal.scss'
-import { XCircle } from 'lucide-react'
-import { IOxxoData } from 'interfaces/Plans';
+import React, { useCallback, useState } from "react";
+import { Modal } from "react-bootstrap";
+import { Check, Copy, Store, X } from "lucide-react";
+import { IOxxoData } from "interfaces/Plans";
+import { openSupportChat } from "../../../utils/supportChat";
+import "../Modal.scss";
+import "./OxxoModal.scss";
 interface IOxxo {
     show: boolean;
     onHide: () => void;
     oxxoData: IOxxoData;
     price: string;
 }
-export function OxxoModal (props: IOxxo)  {
-    const {show, onHide, oxxoData, price} = props;
-    const transformDate = (expires: number) => {
-        const date = new Date(expires * 1000); // Convert to milliseconds
-        const dateString = date.toLocaleString();
-        return dateString
-    }
+function formatExpires(expires: number): string {
+  const date = new Date(expires * 1000);
+  return date.toLocaleString("es-MX", { dateStyle: "medium", timeStyle: "short" });
+}
+
+export function OxxoModal(props: IOxxo) {
+  const { show, onHide, oxxoData, price } = props;
+  const [copiedRef, setCopiedRef] = useState(false);
+  const [copiedAmount, setCopiedAmount] = useState(false);
+
+  const amountValue = Number(price);
+  const amountText = Number.isFinite(amountValue)
+    ? `$${amountValue.toFixed(2)}`
+    : `$${String(price ?? "").trim()}`;
+  const reference = String(oxxoData?.reference ?? "").trim();
+  const hasReference = reference.length >= 6;
+
+  const copyToClipboard = useCallback((text: string, setter: (v: boolean) => void) => {
+    navigator.clipboard.writeText(text).then(
+      () => {
+        setter(true);
+        setTimeout(() => setter(false), 2000);
+      },
+      () => {}
+    );
+  }, []);
+
   return (
-    <Modal show={show} onHide={onHide} centered>
-        <div className='modal-container success-modal'>
-            <div className='header'>
-                <p className='title'>Pago con Oxxo</p>
-                <XCircle className='icon' onClick={onHide} aria-label='Cerrar modal' />
+    <Modal show={show} onHide={onHide} centered className="oxxo-modal-wrapper">
+      <div className="modal-container oxxo-modal">
+        <div className="header">
+          <div className="oxxo-modal__title-wrap">
+            <span className="oxxo-modal__icon" aria-hidden>
+              <Store />
+            </span>
+            <div className="oxxo-modal__title-copy">
+              <p className="title">Pago en efectivo (OXXO)</p>
+              <p className="oxxo-modal__subtitle">
+                Paga con tu referencia en cualquier OXXO. Puede tardar hasta <strong>48 hrs</strong> en reflejarse.
+              </p>
             </div>
-            <div className='bottom center'>
-                <p className='content'>
-                BearBeat te invita a pagar con conekta en Oxxo:
-                </p>
-                <p className='reference'>
-                *Los pagos en oxxo tardan en reflejarse hasta 48 hrs.
-                </p>
-                <p className='reference'>
-                *Ingresa a la plataforma después de este tiempo para tener validado tu pago
-                </p>
-                <p className='pay-reference'>
-                   Referencia: {oxxoData.reference}
-                </p>
-                <img src={oxxoData.barcode_url} alt='Código de barras para pago en OXXO' />
-                <p className='content'>
-                Monto a Pagar: <br/> $ {price}.00 MXN
-                </p>
-                <p className='reference'>
-                   Paga antes del: { transformDate(oxxoData.expires_at)}
-                </p>
-                <div className='button-container to-left'>
-                  <button className='btn-option-4' onClick={onHide}>
-                    Cerrar
+          </div>
+          <button type="button" className="oxxo-modal__close" onClick={onHide} aria-label="Cerrar">
+            <X aria-hidden />
+          </button>
+        </div>
+
+        <div className="bottom">
+          <div className="oxxo-modal__grid">
+            <div className="oxxo-modal__field">
+              <span className="oxxo-modal__label">Referencia</span>
+              {hasReference ? (
+                <div className="oxxo-modal__value-row">
+                  <code className="oxxo-modal__code">{reference}</code>
+                  <button
+                    type="button"
+                    className="oxxo-modal__copy"
+                    onClick={() => copyToClipboard(reference, setCopiedRef)}
+                    title="Copiar referencia"
+                  >
+                    {copiedRef ? <Check aria-hidden /> : <Copy aria-hidden />}
+                    <span>{copiedRef ? "Copiado" : "Copiar"}</span>
                   </button>
                 </div>
+              ) : (
+                <p className="oxxo-modal__warning">
+                  No se recibió la referencia. Cierra este mensaje e intenta de nuevo con «OXXO» o elige tarjeta/SPEI.
+                </p>
+              )}
+
+              {!!oxxoData?.barcode_url && (
+                <div className="oxxo-modal__barcode">
+                  <img src={oxxoData.barcode_url} alt="Código de barras para pago en OXXO" />
+                </div>
+              )}
+
+              <p className="oxxo-modal__expires">
+                Válido antes del:{" "}
+                <strong>{oxxoData?.expires_at ? formatExpires(oxxoData.expires_at) : "—"}</strong>
+              </p>
             </div>
+
+            <div className="oxxo-modal__field">
+              <span className="oxxo-modal__label">Monto a pagar</span>
+              <div className="oxxo-modal__value-row">
+                <span className="oxxo-modal__amount">{amountText} MXN</span>
+                <button
+                  type="button"
+                  className="oxxo-modal__copy"
+                  onClick={() => copyToClipboard(amountText, setCopiedAmount)}
+                  title="Copiar monto"
+                >
+                  {copiedAmount ? <Check aria-hidden /> : <Copy aria-hidden />}
+                  <span>{copiedAmount ? "Copiado" : "Copiar"}</span>
+                </button>
+              </div>
+              <p className="oxxo-modal__warning">
+                Paga la cantidad <strong>exacta</strong> para que se asigne correctamente.
+              </p>
+              <p className="oxxo-modal__hint">
+                Si ya pagaste y no se activó en 48 hrs, abre soporte y lo revisamos.
+              </p>
+            </div>
+          </div>
+
+          <div className="button-container-2">
+            <button type="button" className="btn-option-5" onClick={() => openSupportChat("oxxo_modal")}>
+              Abrir soporte
+            </button>
+            <button type="button" className="btn-success" onClick={onHide}>
+              Listo, ya pagué
+            </button>
+          </div>
         </div>
+      </div>
     </Modal>
-  )
+  );
 }

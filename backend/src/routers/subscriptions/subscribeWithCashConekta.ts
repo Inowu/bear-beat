@@ -18,6 +18,8 @@ export const subscribeWithCashConekta = shieldedProcedure
       .object({
         planId: z.number(),
         paymentMethod: z.union([z.literal('cash'), z.literal('spei')]),
+        // Antifraude (Conekta Collect). Opcional, pero recomendado por Conekta.
+        fingerprint: z.string().max(256).optional().nullable(),
       })
       .strict(),
   )
@@ -58,7 +60,10 @@ export const subscribeWithCashConekta = shieldedProcedure
   //   ]),
   // )
   .mutation(
-    async ({ input: { planId, paymentMethod }, ctx: { prisma, session } }) => {
+    async ({
+      input: { planId, paymentMethod, fingerprint },
+      ctx: { prisma, session },
+    }) => {
       const userConektaId = await getConektaCustomer({
         prisma,
         user: session?.user,
@@ -150,6 +155,7 @@ export const subscribeWithCashConekta = shieldedProcedure
               plan,
               customerId: userConektaId,
               paymentMethod,
+              fingerprint,
               order: existingOrder,
               prisma,
               user: fullUserForOrder,
@@ -193,6 +199,7 @@ export const subscribeWithCashConekta = shieldedProcedure
           plan,
           customerId: userConektaId,
           paymentMethod,
+          fingerprint,
           order,
           prisma,
           user: fullUser,
@@ -221,6 +228,7 @@ const createCashPaymentOrder = async ({
   plan,
   customerId,
   paymentMethod,
+  fingerprint,
   order,
   prisma,
   user,
@@ -228,6 +236,7 @@ const createCashPaymentOrder = async ({
   plan: Plans;
   customerId: string;
   paymentMethod: 'cash' | 'spei';
+  fingerprint?: string | null;
   order: Orders;
   prisma: PrismaClient;
   user: Users;
@@ -296,6 +305,10 @@ const createCashPaymentOrder = async ({
     },
     pre_authorize: false,
   };
+
+  if (fingerprint && typeof fingerprint === 'string') {
+    orderPayload.fingerprint = fingerprint;
+  }
 
   if (reuseCustomerClabe) {
     orderPayload.reuse_customer_clabe = true;
