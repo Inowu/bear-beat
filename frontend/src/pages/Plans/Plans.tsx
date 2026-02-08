@@ -39,16 +39,16 @@ function Plans() {
   };
 
   useEffect(() => {
-    // No decidir nada hasta tener currentUser (evita flash de planes para usuarios con plan)
-    if (currentUser == null) return;
-
-    // Usuarios con plan activo no ven /planes (evitar doble membresía) → home
-    if (currentUser.hasActiveSubscription && !currentUser.isSubscriptionCancelled) {
-      navigate('/', { replace: true });
-      return;
-    }
-
+    // Cargar planes también para usuarios no autenticados (evita "spinner infinito" y mejora conversión).
     getPlans();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    // Usuarios con plan activo no deben ver /planes (evitar doble membresía) → home
+    if (currentUser?.hasActiveSubscription && !currentUser.isSubscriptionCancelled) {
+      navigate('/', { replace: true });
+    }
   }, [currentUser, navigate]);
 
   useEffect(() => {
@@ -112,12 +112,12 @@ function Plans() {
   const heroPaymentMethods = useMemo<PaymentMethodId[]>(() => {
     const methods = new Set<PaymentMethodId>(["visa", "mastercard", "amex"]);
     const hasMxn = sortedPlans.some((plan) => (plan.moneda ?? "").toLowerCase() === "mxn");
-    const hasUsdLike = sortedPlans.some((plan) => (plan.moneda ?? "").toLowerCase() !== "mxn");
+    const hasPaypal = sortedPlans.some((plan) => Boolean(plan.paypal_plan_id || plan.paypal_plan_id_test));
 
     if (hasMxn) {
       methods.add("spei");
     }
-    if (hasUsdLike) {
+    if (hasPaypal) {
       methods.add("paypal");
     }
 
@@ -133,8 +133,8 @@ function Plans() {
       ? "Un solo evento perdiendo pedidos suele costar más que tu membresía mensual."
       : "Perder una sola noche por no tener música puede costar más que tu acceso del mes.";
 
-  // Loader: mientras no tengamos currentUser o estemos cargando planes
-  if (currentUser == null || loader) {
+  // Loader: mientras estemos cargando planes
+  if (loader) {
     return (
       <div
         className="global-loader"

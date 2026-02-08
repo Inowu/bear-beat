@@ -277,7 +277,7 @@ interface PlanCardPropsI {
       const msg =
         error?.data?.message ??
         error?.message ??
-        "No se pudo generar la referencia de OXXO. Intenta más tarde o usa tarjeta/SPEI.";
+        "No se pudo generar la referencia de pago en efectivo. Intenta más tarde o usa tarjeta/SPEI.";
       setErrorMSG(msg);
       handleErrorModal();
     }
@@ -311,13 +311,13 @@ interface PlanCardPropsI {
         window.location.href = result.url;
         return;
       }
-      setErrorMSG("No se pudo abrir el pago BBVA. Intenta con SPEI/OXXO o tarjeta.");
+      setErrorMSG("No se pudo abrir el pago BBVA. Intenta con SPEI/Efectivo o tarjeta.");
       handleErrorModal();
     } catch (error: any) {
       const msg =
         error?.data?.message ??
         error?.message ??
-        "No se pudo abrir el pago BBVA. Intenta con SPEI/OXXO o tarjeta.";
+        "No se pudo abrir el pago BBVA. Intenta con SPEI/Efectivo o tarjeta.";
       setErrorMSG(msg);
       handleErrorModal();
     }
@@ -326,7 +326,22 @@ interface PlanCardPropsI {
     trackManyChatConversion(MC_EVENTS.CLICK_BUY);
     handleUserClickOnPlan();
     trpc.checkoutLogs.registerCheckoutLog.mutate();
-    navigate(`/comprar?priceId=${planId}`);
+    const target = `/comprar?priceId=${planId}`;
+    // /planes es pública; si el usuario no está logueado, mandarlo directo a registro con return URL.
+    if (!userEmail) {
+      navigate("/auth/registro", { state: { from: target } });
+      return;
+    }
+    navigate(target);
+  };
+
+  const handleCheckoutWithMethod = (planId: number, method: string) => {
+    const target = `/comprar?priceId=${planId}&method=${encodeURIComponent(method)}`;
+    if (!userEmail) {
+      navigate("/auth/registro", { state: { from: target } });
+      return;
+    }
+    navigate(target);
   };
 
   const successSubscription = async (data: any) => {
@@ -395,7 +410,7 @@ interface PlanCardPropsI {
   const showBadge = isMxn && !currentPlan && showRecommendedBadge;
   const includedBenefits = DEFAULT_BENEFITS;
   const hasPaypalPlan = ppPlan !== null && Boolean(ppPlan.paypal_plan_id || ppPlan.paypal_plan_id_test);
-  const showPaypalOption = !isMxn && hasPaypalPlan;
+  const showPaypalOption = hasPaypalPlan;
   const planCurrency = (plan.moneda ?? "MXN").toUpperCase();
   const planPriceValue = Number(plan.price ?? 0) || 0;
   const planGigasValue = Number(plan.gigas ?? 0) || 0;
@@ -405,7 +420,8 @@ interface PlanCardPropsI {
 	  const mxnPaymentSummary = (() => {
 	    const parts = ["Tarjeta", "SPEI"];
 	    if (conektaAvailability?.payByBankEnabled) parts.push("BBVA");
-	    if (conektaAvailability?.oxxoEnabled) parts.push("OXXO");
+	    if (conektaAvailability?.oxxoEnabled) parts.push("Efectivo");
+      if (showPaypalOption) parts.push("PayPal");
 	    return parts.join(" / ");
 	  })();
 	  const paymentSummary = isMxn
@@ -417,11 +433,15 @@ interface PlanCardPropsI {
 	  const displayDescription = isMxn
     ? "Ideal para DJs en México que quieren activar rápido y cobrar sin fricción."
     : "Ideal para DJs fuera de México que prefieren pago en USD.";
-	  const primaryCtaLabel = isMxn ? "Activar plan MXN" : "Activar plan USD";
+	  const primaryCtaLabel = !userEmail ? "Crear cuenta y activar" : (isMxn ? "Activar plan MXN" : "Activar plan USD");
 	  const paymentLogos: PaymentMethodId[] = isMxn
 	    ? (conektaAvailability?.oxxoEnabled
-	      ? ["visa", "mastercard", "amex", "spei", "oxxo"]
-	      : ["visa", "mastercard", "amex", "spei"])
+	      ? (showPaypalOption
+	        ? ["visa", "mastercard", "amex", "paypal", "spei", "oxxo"]
+	        : ["visa", "mastercard", "amex", "spei", "oxxo"])
+	      : (showPaypalOption
+	        ? ["visa", "mastercard", "amex", "paypal", "spei"]
+	        : ["visa", "mastercard", "amex", "spei"]))
 	    : showPaypalOption
 	      ? ["visa", "mastercard", "amex", "paypal"]
 	      : ["visa", "mastercard", "amex"];
@@ -485,34 +505,57 @@ interface PlanCardPropsI {
               </button>
 	                  {(isMxn || showPaypalOption) && (
 	                    <div className="plan-card-secondary-payment">
-	                      <span className="plan-card-secondary-label">O paga con:</span>
+	                      <span className="plan-card-secondary-label">
+                          {userEmail ? "O paga con:" : "Inicia sesión para pagar con:"}
+                        </span>
 	                      <div className="plan-card-secondary-buttons">
 	                        {isMxn && (
 	                          <>
-	                            <button type="button" className="plan-card-btn-outline" onClick={payWithSpei}>
+	                            <button
+                                type="button"
+                                className="plan-card-btn-outline"
+                                onClick={() => (userEmail ? payWithSpei() : handleCheckoutWithMethod(plan.id, "spei"))}
+                              >
 	                              SPEI (recurrente)
 	                            </button>
                               {conektaAvailability?.payByBankEnabled && (
-                                <button type="button" className="plan-card-btn-outline" onClick={payWithBbva}>
-                                  BBVA
+                                <button
+                                  type="button"
+                                  className="plan-card-btn-outline"
+                                  onClick={() => (userEmail ? payWithBbva() : handleCheckoutWithMethod(plan.id, "bbva"))}
+                                >
+                                  BBVA (Pago Directo)
                                 </button>
                               )}
                               {conektaAvailability?.oxxoEnabled && (
-                                <button type="button" className="plan-card-btn-outline" onClick={payWithOxxo}>
-                                  OXXO
+                                <button
+                                  type="button"
+                                  className="plan-card-btn-outline"
+                                  onClick={() => (userEmail ? payWithOxxo() : handleCheckoutWithMethod(plan.id, "oxxo"))}
+                                >
+                                  Efectivo
                                 </button>
                               )}
 	                          </>
 	                        )}
-	                        {showPaypalOption && (
-	                          <PayPalComponent
-                            plan={ppPlan!}
-                            type="subscription"
-                            onApprove={successSubscription}
-                            onClick={() => { trackManyChatConversion(MC_EVENTS.CLICK_PAYPAL); handleUserClickOnPlan(); }}
-                            key={`paypal-button-component-${plan.id}`}
-                          />
-                        )}
+	                        {showPaypalOption &&
+                            (userEmail ? (
+                              <PayPalComponent
+                                plan={ppPlan!}
+                                type="subscription"
+                                onApprove={successSubscription}
+                                onClick={() => { trackManyChatConversion(MC_EVENTS.CLICK_PAYPAL); handleUserClickOnPlan(); }}
+                                key={`paypal-button-component-${plan.id}`}
+                              />
+                            ) : (
+                              <button
+                                type="button"
+                                className="plan-card-btn-outline"
+                                onClick={() => navigate("/auth/registro", { state: { from: "/planes" } })}
+                              >
+                                PayPal
+                              </button>
+                            ))}
                       </div>
                     </div>
                   )}

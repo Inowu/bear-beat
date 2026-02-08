@@ -52,7 +52,7 @@ const METHOD_DEFINITIONS: Record<PaymentMethodId, PaymentMethodDefinition> = {
     type: "brand",
   },
   oxxo: {
-    label: "OXXO",
+    label: "Efectivo",
     type: "brand",
   },
   transfer: {

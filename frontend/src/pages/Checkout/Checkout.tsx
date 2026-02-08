@@ -1,6 +1,6 @@
 import "./Checkout.scss";
 import { useUserContext } from "../../contexts/UserContext";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import trpc from "../../api";
 import { IPlans, IOxxoData, ISpeiData } from "interfaces/Plans";
@@ -49,15 +49,44 @@ const METHOD_META: Record<
     Icon: Building2,
   },
   oxxo: {
-    label: "OXXO (Efectivo)",
-    description: "Paga en tienda (puede tardar hasta 48 hrs)",
+    label: "Efectivo",
+    description: "Genera referencia para pagar en tienda (puede tardar hasta 48 hrs)",
     Icon: Banknote,
   },
+};
+
+const pickBestPlanCandidate = (candidates: IPlans[]): IPlans | null => {
+  if (!Array.isArray(candidates) || candidates.length === 0) return null;
+
+  const hasStripePrice = (plan: IPlans) =>
+    typeof (plan as any)?.stripe_prod_id === "string" &&
+    String((plan as any).stripe_prod_id).startsWith("price_");
+  const hasPaypal = (plan: IPlans) =>
+    Boolean((plan as any)?.paypal_plan_id || (plan as any)?.paypal_plan_id_test);
+
+  let best: IPlans | null = null;
+  let bestScore = -1;
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    let score = 0;
+    if (hasStripePrice(candidate)) score += 10;
+    if (hasPaypal(candidate)) score += 2;
+    // Prefer lower ids as a deterministic tie-breaker (legacy plans often have lower ids).
+    const tieBreaker = typeof candidate.id === "number" ? -candidate.id / 10_000 : 0;
+    score += tieBreaker;
+
+    if (score > bestScore) {
+      bestScore = score;
+      best = candidate;
+    }
+  }
+  return best;
 };
 
 function Checkout() {
   const [plan, setPlan] = useState<IPlans | null>(null);
   const location = useLocation();
+  const navigate = useNavigate();
   const [redirecting, setRedirecting] = useState(false);
   const [showRedirectHelp, setShowRedirectHelp] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<CheckoutMethod>("card");
@@ -76,6 +105,7 @@ function Checkout() {
   const interactedRef = useRef(false);
   const searchParams = new URLSearchParams(location.search);
   const priceId = searchParams.get("priceId");
+  const requestedMethod = searchParams.get("method");
   const { currentUser } = useUserContext();
   const [cookies] = useCookies(["_fbp", "_fbc"]);
 
@@ -150,13 +180,48 @@ function Checkout() {
     const body = { where: { activated: 1, id: id_plan } };
     try {
       const plans: IPlans[] = await trpc.plans.findManyPlans.query(body);
-      const p = plans?.[0] ?? null;
+      let p = plans?.[0] ?? null;
+
+      // Conversion hardening: old/legacy plan ids may still be linked from ads or bookmarks.
+      // If the requested plan lacks a Stripe Price ID (price_*), auto-switch to a sibling plan
+      // with the same name/price that has a valid Stripe Price configured.
+      if (p) {
+        const stripeId = (p as any)?.stripe_prod_id;
+        const hasValidStripePrice = typeof stripeId === "string" && stripeId.startsWith("price_");
+        if (!hasValidStripePrice) {
+          try {
+            const siblingBody: any = {
+              where: {
+                activated: 1,
+                name: p.name,
+                price: +p.price,
+              },
+            };
+            const siblings: IPlans[] = await trpc.plans.findManyPlans.query(siblingBody);
+            const best = pickBestPlanCandidate(siblings);
+            if (best && typeof best.id === "number" && best.id !== p.id) {
+              const nextParams = new URLSearchParams(location.search);
+              nextParams.set("priceId", String(best.id));
+              navigate(
+                { pathname: location.pathname, search: `?${nextParams.toString()}` },
+                { replace: true },
+              );
+              setPlan(best);
+              checkManyChat(best);
+              return;
+            }
+          } catch {
+            // fallback to requested plan
+          }
+        }
+      }
+
       setPlan(p);
       if (p) checkManyChat(p);
     } catch {
       setPlan(null);
     }
-  }, [checkManyChat]);
+  }, [checkManyChat, location.pathname, location.search, navigate]);
 
   const trackCheckoutAbandon = useCallback(
     (reason: string) => {
@@ -198,8 +263,16 @@ function Checkout() {
       currency: plan.moneda?.toUpperCase() ?? null,
       amount: Number(plan.price) || null,
     });
-    setSelectedMethod(plan.moneda?.toUpperCase() === "MXN" ? "spei" : "card");
-  }, [plan, checkManyChat]);
+    const requested = typeof requestedMethod === "string" ? requestedMethod.trim().toLowerCase() : "";
+    const requestedAsMethod = (["card", "spei", "bbva", "oxxo"] as const).includes(
+      requested as any,
+    )
+      ? (requested as CheckoutMethod)
+      : null;
+    setSelectedMethod(
+      requestedAsMethod ?? (plan.moneda?.toUpperCase() === "MXN" ? "spei" : "card"),
+    );
+  }, [plan, checkManyChat, requestedMethod]);
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -368,7 +441,7 @@ function Checkout() {
       const msg =
         error?.data?.message ??
         error?.message ??
-        "No pudimos generar la referencia de OXXO. Intenta de nuevo o abre soporte por chat.";
+        "No pudimos generar la referencia de pago en efectivo. Intenta de nuevo o abre soporte por chat.";
       setErrorMessage(msg);
       setShowError(true);
     } finally {
@@ -429,7 +502,7 @@ function Checkout() {
         window.location.href = result.url;
         return;
       }
-      setErrorMessage("No se pudo abrir el pago BBVA. Intenta SPEI/OXXO o tarjeta.");
+      setErrorMessage("No se pudo abrir el pago BBVA. Intenta SPEI/Efectivo o tarjeta.");
       setShowError(true);
       setRedirecting(false);
       setProcessingMethod(null);
@@ -437,7 +510,7 @@ function Checkout() {
       const msg =
         error?.data?.message ??
         error?.message ??
-        "No pudimos abrir el pago BBVA. Intenta SPEI/OXXO o tarjeta.";
+        "No pudimos abrir el pago BBVA. Intenta SPEI/Efectivo o tarjeta.";
       setErrorMessage(msg);
       setShowError(true);
       setRedirecting(false);
@@ -581,7 +654,7 @@ function Checkout() {
               <span role="listitem"><Building2 size={16} aria-hidden /> BBVA</span>
             )}
             {isMxnPlan && conektaAvailability?.oxxoEnabled && (
-              <span role="listitem"><Banknote size={16} aria-hidden /> OXXO</span>
+              <span role="listitem"><Banknote size={16} aria-hidden /> Efectivo</span>
             )}
             <span role="listitem"><Lock size={16} aria-hidden /> Cifrado bancario</span>
           </div>
@@ -667,11 +740,11 @@ function Checkout() {
               {processingMethod === "card" && "Abriendo pasarela segura..."}
               {processingMethod === "spei" && "Generando referencia SPEI (recurrente)..."}
               {processingMethod === "bbva" && "Abriendo pago BBVA..."}
-              {processingMethod === "oxxo" && "Generando referencia OXXO..."}
+              {processingMethod === "oxxo" && "Generando referencia de pago en efectivo..."}
               {processingMethod === null && selectedMethod === "card" && "Continuar con tarjeta segura"}
               {processingMethod === null && selectedMethod === "spei" && "Generar referencia SPEI (recurrente)"}
               {processingMethod === null && selectedMethod === "bbva" && "Continuar con BBVA"}
-              {processingMethod === null && selectedMethod === "oxxo" && "Generar referencia OXXO"}
+              {processingMethod === null && selectedMethod === "oxxo" && "Generar referencia de pago en efectivo"}
             </button>
             <p className="checkout-payment-note">
               Si tienes dudas para pagar, te ayudamos por chat en tiempo real:{" "}

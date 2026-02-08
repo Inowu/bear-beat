@@ -103,7 +103,7 @@ export const subscribeWithCashConekta = shieldedProcedure
       if (paymentMethod === 'cash' && !oxxoEnabled) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
-          message: 'Pago en OXXO deshabilitado temporalmente. Usa tarjeta o SPEI.',
+          message: 'Pago en efectivo deshabilitado temporalmente. Usa tarjeta o SPEI.',
         });
       }
 
@@ -243,6 +243,13 @@ const createCashPaymentOrder = async ({
 }) => {
   const expiresAt = Math.floor(addDays(new Date(), 30).getTime() / 1000);
   const amountCents = Math.round(Number(plan.price) * 100);
+  const customerInfo =
+    paymentMethod === 'cash'
+      ? buildConektaCustomerInfo(user)
+      : {
+          // Needed for SPEI recurrent CLABE reuse.
+          customer_id: customerId,
+        };
 
   // Conekta \"SPEI recurrente\":
   // 1) el cliente debe tener un payment_source tipo \"spei_recurrent\"
@@ -280,9 +287,7 @@ const createCashPaymentOrder = async ({
   // y pre_authorize: false para pagos cash/spei.
   const orderPayload: any = {
     currency: 'MXN' as const,
-    customer_info: {
-      customer_id: customerId,
-    },
+    customer_info: customerInfo,
     line_items: [
       {
         name: plan.name,
@@ -302,6 +307,7 @@ const createCashPaymentOrder = async ({
     metadata: {
       orderId: String(order.id),
       userId: String(user.id),
+      customerId: customerId,
     },
     pre_authorize: false,
   };
@@ -329,15 +335,43 @@ const createCashPaymentOrder = async ({
     throw apiError;
   }
 
+  const conektaChargeIdRaw = (conektaOrder.data as any)?.charges?.data?.[0]?.id;
+  const txnId =
+    typeof conektaChargeIdRaw === 'string' && conektaChargeIdRaw.trim()
+      ? conektaChargeIdRaw.trim()
+      : conektaOrder.data.id;
+
   await prisma.orders.update({
     where: {
       id: order.id,
     },
     data: {
       invoice_id: conektaOrder.data.id,
-      txn_id: (conektaOrder.data.object as any).id,
+      // Store a stable identifier we can correlate with Conekta later.
+      // `invoice_id` is the Conekta Order id (ord_...), and `txn_id` is best-effort:
+      // - cash/spei may have a charge id
+      // - otherwise fallback to order id
+      txn_id: txnId,
     },
   });
 
   return conektaOrder;
 };
+
+function buildConektaCustomerInfo(user: Users): { name: string; email: string; phone: string } {
+  const first = typeof user.first_name === 'string' ? user.first_name.trim() : '';
+  const last = typeof user.last_name === 'string' ? user.last_name.trim() : '';
+  const full = `${first} ${last}`.trim();
+  const name = full || user.username || `User ${user.id}`;
+  return {
+    name: name.slice(0, 120),
+    email: String(user.email || '').trim().slice(0, 200),
+    phone: normalizeConektaPhone(user.phone),
+  };
+}
+
+function normalizeConektaPhone(phone: string | null | undefined): string {
+  const digits = String(phone || '').replace(/\D/g, '');
+  if (digits.length >= 10) return digits.slice(-10);
+  return '9999999999';
+}

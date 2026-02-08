@@ -135,7 +135,7 @@ export const Ordens = () => {
           <option value="">Todos</option>
           <option value="Paypal">Paypal</option>
           <option value="Stripe">Stripe</option>
-          <option value="Conekta">Conekta OXXO</option>
+          <option value="Conekta">Conekta (Efectivo/SPEI)</option>
           <option value="Admin">Admin</option>
         </select>
         <input

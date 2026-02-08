@@ -26,7 +26,7 @@ export const subscribeWithPayByBankConekta = shieldedProcedure
     if (!payByBankEnabled) {
       throw new TRPCError({
         code: 'BAD_REQUEST',
-        message: 'Pago Directo (BBVA) deshabilitado temporalmente. Usa tarjeta, SPEI u OXXO.',
+        message: 'Pago Directo (BBVA) deshabilitado temporalmente. Usa tarjeta, SPEI o efectivo.',
       });
     }
 
@@ -76,22 +76,24 @@ export const subscribeWithPayByBankConekta = shieldedProcedure
       },
     });
 
-    if (existingOrder?.invoice_id) {
+  if (existingOrder?.invoice_id) {
       try {
         const conektaOrder = await conektaOrders.getOrderById(existingOrder.invoice_id);
-        const checkout = (conektaOrder.data as any)?.checkout;
-        const checkoutUrl = typeof checkout?.url === 'string' ? checkout.url : null;
-        const expiresAt = typeof checkout?.expires_at === 'number' ? checkout.expires_at : null;
-        const status = typeof checkout?.status === 'string' ? checkout.status : '';
+        const charge = (conektaOrder.data as any)?.charges?.data?.[0];
+        const status = typeof charge?.status === 'string' ? charge.status : '';
+        const paymentMethod = charge?.payment_method;
+        const redirectUrl =
+          typeof paymentMethod?.redirect_url === 'string' ? paymentMethod.redirect_url : null;
+        const deepLink = typeof paymentMethod?.deep_link === 'string' ? paymentMethod.deep_link : null;
+        const url = redirectUrl || deepLink;
 
-        if (
-          checkoutUrl &&
-          expiresAt &&
-          compareAsc(new Date(), new Date(expiresAt * 1000)) < 0 &&
-          status.toLowerCase() !== 'expired' &&
-          status.toLowerCase() !== 'cancelled'
-        ) {
-          return { url: checkoutUrl, expires_at: expiresAt };
+        // Safety TTL: avoid reusing very old pending orders (pbb links expire).
+        const withinTtl = existingOrder?.date_order
+          ? compareAsc(new Date(), addHours(new Date(existingOrder.date_order), 1)) < 0
+          : false;
+
+        if (withinTtl && url && status.toLowerCase() === 'pending_payment') {
+          return { url, expires_at: null };
         }
       } catch (e) {
         log.error(`[CONEKTA_PBB] Error reusing existing checkout: ${e}`);
@@ -103,7 +105,7 @@ export const subscribeWithPayByBankConekta = shieldedProcedure
         payment_method: paymentMethodName,
         user_id: user.id,
         status: OrderStatus.PENDING,
-        date_order: new Date().toISOString(),
+        date_order: new Date(),
         total_price: Number(plan.price),
         plan_id: plan.id,
       },
@@ -124,18 +126,21 @@ export const subscribeWithPayByBankConekta = shieldedProcedure
         user: fullUser,
       });
 
-      const checkout = (conektaOrder.data as any)?.checkout;
-      const url = typeof checkout?.url === 'string' ? checkout.url : null;
-      const expiresAt = typeof checkout?.expires_at === 'number' ? checkout.expires_at : null;
+      const charge = (conektaOrder.data as any)?.charges?.data?.[0];
+      const paymentMethod = charge?.payment_method;
+      const redirectUrl =
+        typeof paymentMethod?.redirect_url === 'string' ? paymentMethod.redirect_url : null;
+      const deepLink = typeof paymentMethod?.deep_link === 'string' ? paymentMethod.deep_link : null;
+      const url = redirectUrl || deepLink;
 
       if (!url) {
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: 'No se pudo generar el link de pago BBVA. Intenta con SPEI, OXXO o tarjeta.',
+          message: 'No se pudo generar el link de pago BBVA. Intenta con SPEI, efectivo o tarjeta.',
         });
       }
 
-      return { url, expires_at: expiresAt };
+      return { url, expires_at: null };
     } catch (e: any) {
       const conektaMsg = e?.response?.data?.message || e?.message;
       log.error(`[CONEKTA_PBB] Error creating order: ${conektaMsg}`, e?.response?.data);
@@ -165,14 +170,16 @@ const createPayByBankOrder = async ({
   prisma: PrismaClient;
   user: Users;
 }) => {
-  const clientUrlRaw = process.env.CLIENT_URL || 'https://thebearbeat.com';
-  const clientUrl = clientUrlRaw.replace(/\/+$/, '');
-  const expiresAt = Math.floor(addHours(new Date(), 1).getTime() / 1000);
   const amountCents = Math.round(Number(plan.price) * 100);
+  const customerInfo = buildConektaCustomerInfo(user);
+  const shippingContact = buildConektaShippingContact(user, customerInfo);
 
   const orderPayload: any = {
     currency: 'MXN' as const,
-    customer_info: { customer_id: customerId },
+    // Note: Per Conekta docs (2025-2026), Pago Directo can be used without a stored customer.
+    // We still keep `customerId` in our system for subscription checks, but the order payload
+    // provides explicit contact fields to satisfy required validations (phone, etc).
+    customer_info: customerInfo,
     line_items: [
       {
         name: plan.name,
@@ -180,17 +187,23 @@ const createPayByBankOrder = async ({
         unit_price: amountCents,
       },
     ],
-    checkout: {
-      allowed_payment_methods: ['pay_by_bank'],
-      expires_at: expiresAt,
-      success_url: `${clientUrl}/comprar/success?order_id=${order.id}`,
-      failure_url: `${clientUrl}/comprar?priceId=${plan.id}&bbva=failed`,
-      name: `Pago BBVA - ${plan.name}`,
-      type: 'HostedPayment',
-    },
+    // Required for checkout/charge validation even for digital goods.
+    shipping_lines: [{ amount: 0 }],
+    shipping_contact: shippingContact,
+    charges: [
+      {
+        amount: amountCents,
+        payment_method: {
+          type: 'pay_by_bank',
+          // BBVA product for Pago Directo (official docs).
+          product_type: 'bbva_pay_by_bank',
+        },
+      },
+    ],
     metadata: {
       orderId: String(order.id),
       userId: String(user.id),
+      customerId: customerId,
     },
     pre_authorize: false,
   };
@@ -201,13 +214,61 @@ const createPayByBankOrder = async ({
 
   const conektaOrder = await conektaOrders.createOrder(orderPayload);
 
+  const conektaChargeIdRaw = (conektaOrder.data as any)?.charges?.data?.[0]?.id;
+  const txnId =
+    typeof conektaChargeIdRaw === 'string' && conektaChargeIdRaw.trim()
+      ? conektaChargeIdRaw.trim()
+      : conektaOrder.data.id;
+
   await prisma.orders.update({
     where: { id: order.id },
     data: {
       invoice_id: conektaOrder.data.id,
-      txn_id: (conektaOrder.data.object as any).id,
+      // HostedPayment doesn't always create a charge immediately, so fallback to Order id.
+      txn_id: txnId,
     },
   });
 
   return conektaOrder;
 };
+
+function buildConektaCustomerInfo(user: Users): { name: string; email: string; phone: string } {
+  const first = typeof user.first_name === 'string' ? user.first_name.trim() : '';
+  const last = typeof user.last_name === 'string' ? user.last_name.trim() : '';
+  const full = `${first} ${last}`.trim();
+  const name = full || user.username || `User ${user.id}`;
+  return {
+    name: name.slice(0, 120),
+    email: String(user.email || '').trim().slice(0, 200),
+    phone: normalizeConektaPhone(user.phone),
+  };
+}
+
+function normalizeConektaPhone(phone: string | null | undefined): string {
+  const digits = String(phone || '').replace(/\D/g, '');
+  // Conekta examples use 10-digit phone numbers; keep last 10 digits if longer.
+  if (digits.length >= 10) return digits.slice(-10);
+  return '9999999999';
+}
+
+function buildConektaShippingContact(
+  user: Users,
+  customerInfo: { name: string; email: string; phone: string },
+): any {
+  const street1 = typeof user.address === 'string' && user.address.trim() ? user.address.trim() : 'Digital';
+  const city = typeof user.city === 'string' && user.city.trim() ? user.city.trim() : 'Ciudad de Mexico';
+  const country = typeof user.country_id === 'string' && user.country_id.trim() ? user.country_id.trim() : 'MX';
+  // For digital goods we may not have a real shipping address. Use a stable fallback to satisfy schema.
+  const postalCode = '06600';
+  return {
+    receiver: customerInfo.name,
+    phone: customerInfo.phone,
+    address: {
+      street1: street1.slice(0, 240),
+      city: city.slice(0, 80),
+      state: 'CDMX',
+      country: country.toUpperCase().slice(0, 2),
+      postal_code: postalCode,
+    },
+  };
+}

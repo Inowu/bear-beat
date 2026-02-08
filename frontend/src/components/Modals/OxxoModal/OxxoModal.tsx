@@ -47,9 +47,9 @@ export function OxxoModal(props: IOxxo) {
               <Store />
             </span>
             <div className="oxxo-modal__title-copy">
-              <p className="title">Pago en efectivo (OXXO)</p>
+              <p className="title">Pago en efectivo</p>
               <p className="oxxo-modal__subtitle">
-                Paga con tu referencia en cualquier OXXO. Puede tardar hasta <strong>48 hrs</strong> en reflejarse.
+                Paga con tu referencia en tienda. Puede tardar hasta <strong>48 hrs</strong> en reflejarse.
               </p>
             </div>
           </div>
@@ -77,13 +77,13 @@ export function OxxoModal(props: IOxxo) {
                 </div>
               ) : (
                 <p className="oxxo-modal__warning">
-                  No se recibió la referencia. Cierra este mensaje e intenta de nuevo con «OXXO» o elige tarjeta/SPEI.
+                  No se recibió la referencia. Cierra este mensaje e intenta de nuevo con «Efectivo» o elige tarjeta/SPEI.
                 </p>
               )}
 
               {!!oxxoData?.barcode_url && (
                 <div className="oxxo-modal__barcode">
-                  <img src={oxxoData.barcode_url} alt="Código de barras para pago en OXXO" />
+                  <img src={oxxoData.barcode_url} alt="Código de barras para pago en efectivo" />
                 </div>
               )}
 

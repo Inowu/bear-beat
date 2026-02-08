@@ -86,11 +86,7 @@ const router = createBrowserRouter([
           },
           {
             path: "planes",
-            element: (
-              <AuthRoute>
-                <Plans />
-              </AuthRoute>
-            ),
+            element: <Plans />,
           },
           {
             path: "comprar",
