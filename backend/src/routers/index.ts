@@ -27,10 +27,12 @@ import { migrationRouter } from './migration';
 import { productsRouter } from './products';
 import { subscriptionsRouter } from './subscriptions';
 import { webhooksRouter } from './webhooks';
+import { catalogRouter } from './Catalog.router';
 
 export const appRouter = router({
   auth: authRouter,
   ftp: ftpRouter,
+  catalog: catalogRouter,
   subscriptions: subscriptionsRouter,
   webhooks: webhooksRouter,
   admin: adminRouter,

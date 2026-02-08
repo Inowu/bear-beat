@@ -30,7 +30,7 @@ import {
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 import { SUPPORT_CHAT_URL } from "../../utils/supportChat";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../utils/growthMetrics";
-import { FALLBACK_GENRES } from "./fallbackGenres";
+import { FALLBACK_GENRES, type GenreStats } from "./fallbackGenres";
 import PaymentMethodLogos from "../../components/PaymentMethodLogos/PaymentMethodLogos";
 import PreviewModal from "../../components/PreviewModal/PreviewModal";
 import "./PublicHome.scss";
@@ -56,7 +56,6 @@ const CATALOG_AUDIOS = 105_076;
 const CATALOG_AUDIOS_GB = 850.8;
 const CATALOG_KARAOKES = 1_353;
 const CATALOG_KARAOKES_GB = 24.99;
-const CATALOG_TOTAL_TB = CATALOG_TOTAL_GB / 1000;
 const REAL_LIMITED_BONUS_ACTIVE = false;
 const EXCHANGE_RATES_API_URL = "https://open.er-api.com/v6/latest/USD";
 const GEO_IP_LOOKUP_URL = "https://ipwho.is/?fields=success,country_code,currency";
@@ -69,9 +68,6 @@ const GENRE_AUTO_ROTATE_MS = 5_800;
 const TOP_DOWNLOADS_LIMIT = 100;
 const TOP_DOWNLOADS_PAGE_SIZE = 10;
 const TOP_DOWNLOADS_WINDOW_DAYS = 120;
-const LIVE_TOP_DOWNLOADS_ENABLED =
-  process.env.REACT_APP_ENVIRONMENT === "development" ||
-  process.env.REACT_APP_ENABLE_LIVE_TOP_DOWNLOADS === "true";
 const COUNTRY_TO_CURRENCY: Record<string, string> = {
   US: "USD",
   MX: "MXN",
@@ -162,12 +158,13 @@ interface VisitorMonetaryContext {
 }
 
 type TopDownloadKind = "audio" | "video";
+type TopDownloadTab = TopDownloadKind | "karaoke";
 type TopDownloadsSource = "live" | "fallback";
 
 interface TopDownloadItem {
   path: string;
   name: string;
-  type: TopDownloadKind;
+  type: TopDownloadTab;
   downloads: number;
   totalGb: number;
   lastDownload: string;
@@ -176,13 +173,31 @@ interface TopDownloadItem {
 interface PublicTopDownloadsResponse {
   audio: TopDownloadItem[];
   video: TopDownloadItem[];
+  karaoke: TopDownloadItem[];
   generatedAt: string;
   limit: number;
   sinceDays: number;
 }
 
-function buildFallbackTopDownloads(): PublicTopDownloadsResponse {
-  const audio = [...FALLBACK_GENRES]
+interface PublicCatalogSummary {
+  generatedAt: string;
+  stale: boolean;
+  error?: string;
+  totalFiles: number;
+  totalGB: number;
+  videos: number;
+  audios: number;
+  karaokes: number;
+  other: number;
+  gbVideos: number;
+  gbAudios: number;
+  gbKaraokes: number;
+  totalGenres: number;
+  genresDetail: GenreStats[];
+}
+
+function buildFallbackTopDownloads(genres: typeof FALLBACK_GENRES): PublicTopDownloadsResponse {
+  const audio = [...genres]
     .sort((left, right) => right.files - left.files)
     .slice(0, TOP_DOWNLOADS_LIMIT)
     .map((genre, index) => ({
@@ -194,7 +209,7 @@ function buildFallbackTopDownloads(): PublicTopDownloadsResponse {
       lastDownload: "",
     }));
 
-  const video = [...FALLBACK_GENRES]
+  const video = [...genres]
     .sort((left, right) => right.gb - left.gb)
     .slice(0, TOP_DOWNLOADS_LIMIT)
     .map((genre, index) => ({
@@ -209,6 +224,7 @@ function buildFallbackTopDownloads(): PublicTopDownloadsResponse {
   return {
     audio,
     video,
+    karaoke: [],
     generatedAt: new Date().toISOString(),
     limit: TOP_DOWNLOADS_LIMIT,
     sinceDays: TOP_DOWNLOADS_WINDOW_DAYS,
@@ -528,6 +544,7 @@ function PublicHome() {
     gb: number;
     eligible?: boolean | null;
   } | null>(null);
+  const [catalogSummary, setCatalogSummary] = useState<PublicCatalogSummary | null>(null);
   const [genreQuery, setGenreQuery] = useState("");
   const [genrePage, setGenrePage] = useState(0);
   const [genreAutoPlay, setGenreAutoPlay] = useState(true);
@@ -537,7 +554,7 @@ function PublicHome() {
   const [topDownloadsError, setTopDownloadsError] = useState<string | null>(null);
   const [topDownloads, setTopDownloads] = useState<PublicTopDownloadsResponse | null>(null);
   const [topDownloadsSource, setTopDownloadsSource] = useState<TopDownloadsSource>("live");
-  const [topDownloadsTab, setTopDownloadsTab] = useState<TopDownloadKind>("audio");
+  const [topDownloadsTab, setTopDownloadsTab] = useState<TopDownloadTab>("audio");
   const [topDownloadsPage, setTopDownloadsPage] = useState(0);
   const [topDemoLoadingPath, setTopDemoLoadingPath] = useState<string>("");
   const [topDemoNotice, setTopDemoNotice] = useState<string | null>(null);
@@ -564,7 +581,18 @@ function PublicHome() {
     detectMexicoRegion() ? "mexico" : "global"
   , []);
   const menuRef = useRef<HTMLDivElement>(null);
-  const allGenres = useMemo(() => FALLBACK_GENRES, []);
+  const catalogSummaryError = catalogSummary?.error;
+  const catalogSummaryGenres = catalogSummary?.genresDetail;
+  const allGenres = useMemo<GenreStats[]>(() => {
+    if (!catalogSummaryError && Array.isArray(catalogSummaryGenres) && catalogSummaryGenres.length > 0) {
+      return catalogSummaryGenres;
+    }
+    return FALLBACK_GENRES;
+  }, [catalogSummaryError, catalogSummaryGenres]);
+  const genresAreFallback =
+    Boolean(catalogSummaryError) ||
+    !Array.isArray(catalogSummaryGenres) ||
+    catalogSummaryGenres.length === 0;
   const normalizedGenreQuery = genreQuery.trim().toLocaleLowerCase("es-MX");
   const isSearchingGenres = normalizedGenreQuery.length > 0;
   const filteredGenres = useMemo(() => {
@@ -588,8 +616,13 @@ function PublicHome() {
   const filteredGenresLabel = filteredGenres.length.toLocaleString("es-MX");
   const topAudioCountLabel = topDownloads ? topDownloads.audio.length.toLocaleString("es-MX") : "—";
   const topVideoCountLabel = topDownloads ? topDownloads.video.length.toLocaleString("es-MX") : "—";
+  const topKaraokeCountLabel = topDownloads ? topDownloads.karaoke.length.toLocaleString("es-MX") : "—";
   const activeTopDownloads =
-    topDownloadsTab === "audio" ? topDownloads?.audio ?? [] : topDownloads?.video ?? [];
+    topDownloadsTab === "audio"
+      ? topDownloads?.audio ?? []
+      : topDownloadsTab === "video"
+        ? topDownloads?.video ?? []
+        : topDownloads?.karaoke ?? [];
   const topDownloadsTotalPages = Math.max(
     1,
     Math.ceil(activeTopDownloads.length / TOP_DOWNLOADS_PAGE_SIZE)
@@ -610,7 +643,9 @@ function PublicHome() {
     ? "Géneros"
     : topDownloadsTab === "audio"
       ? "Audios"
-      : "Videos";
+      : topDownloadsTab === "video"
+        ? "Videos"
+        : "Karaokes";
   const selectedSegment = SEGMENT_PROFILES[segment];
   const isGlobalRecommended = preferredRegion === "global";
   const isMexicoRecommended = preferredRegion === "mexico";
@@ -625,6 +660,35 @@ function PublicHome() {
         if (!cancelled) setTrialConfig({ enabled: false, days: 0, gb: 0, eligible: null });
       }
     })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchCatalog = async () => {
+      try {
+        const summary = (await trpc.catalog.getPublicCatalogSummary.query()) as PublicCatalogSummary;
+        if (cancelled) return;
+        setCatalogSummary(summary);
+
+        // If the server is refreshing a stale snapshot, retry once to pick up the fresh one.
+        if (summary?.stale && typeof window !== "undefined") {
+          window.setTimeout(() => {
+            if (!cancelled) {
+              void fetchCatalog();
+            }
+          }, 10_000);
+        }
+      } catch {
+        if (!cancelled) setCatalogSummary(null);
+      }
+    };
+
+    void fetchCatalog();
+
     return () => {
       cancelled = true;
     };
@@ -648,16 +712,37 @@ function PublicHome() {
     });
   }, [localPriceEstimate.locale, localPriceEstimate.updatedAt]);
 
-  const totalTBLabel = `${CATALOG_TOTAL_TB.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TB`;
-  const totalGBLabel = `${CATALOG_TOTAL_GB.toLocaleString("es-MX", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} GB`;
-  const totalFilesLabel = CATALOG_TOTAL_FILES.toLocaleString("es-MX");
-  const uniqueGenresLabel = CATALOG_UNIQUE_GENRES.toLocaleString("es-MX");
-  const videosLabel = CATALOG_VIDEOS.toLocaleString("es-MX");
-  const videosGbLabel = `${CATALOG_VIDEOS_GB.toLocaleString("es-MX", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} GB`;
-  const audiosLabel = CATALOG_AUDIOS.toLocaleString("es-MX");
-  const audiosGbLabel = `${CATALOG_AUDIOS_GB.toLocaleString("es-MX", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} GB`;
-  const karaokesLabel = CATALOG_KARAOKES.toLocaleString("es-MX");
-  const karaokesGbLabel = `${CATALOG_KARAOKES_GB.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GB`;
+  const hasLiveCatalog = Boolean(catalogSummary && !catalogSummary.error);
+  const effectiveTotalGB = hasLiveCatalog ? Number(catalogSummary?.totalGB ?? 0) : CATALOG_TOTAL_GB;
+  const effectiveTotalTB = effectiveTotalGB / 1000;
+  const effectiveTotalFiles = hasLiveCatalog ? Number(catalogSummary?.totalFiles ?? 0) : CATALOG_TOTAL_FILES;
+  const effectiveTotalGenres = hasLiveCatalog ? Number(catalogSummary?.totalGenres ?? 0) : CATALOG_UNIQUE_GENRES;
+  const effectiveVideos = hasLiveCatalog ? Number(catalogSummary?.videos ?? 0) : CATALOG_VIDEOS;
+  const effectiveVideosGB = hasLiveCatalog ? Number(catalogSummary?.gbVideos ?? 0) : CATALOG_VIDEOS_GB;
+  const effectiveAudios = hasLiveCatalog ? Number(catalogSummary?.audios ?? 0) : CATALOG_AUDIOS;
+  const effectiveAudiosGB = hasLiveCatalog ? Number(catalogSummary?.gbAudios ?? 0) : CATALOG_AUDIOS_GB;
+  const effectiveKaraokes = hasLiveCatalog ? Number(catalogSummary?.karaokes ?? 0) : CATALOG_KARAOKES;
+  const effectiveKaraokesGB = hasLiveCatalog ? Number(catalogSummary?.gbKaraokes ?? 0) : CATALOG_KARAOKES_GB;
+
+  const totalTBLabel = `${effectiveTotalTB.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TB`;
+  const totalGBLabel = `${effectiveTotalGB.toLocaleString("es-MX", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} GB`;
+  const totalFilesLabel = effectiveTotalFiles.toLocaleString("es-MX");
+  const uniqueGenresLabel = effectiveTotalGenres.toLocaleString("es-MX");
+  const videosLabel = effectiveVideos.toLocaleString("es-MX");
+  const videosGbLabel = `${effectiveVideosGB.toLocaleString("es-MX", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} GB`;
+  const audiosLabel = effectiveAudios.toLocaleString("es-MX");
+  const audiosGbLabel = `${effectiveAudiosGB.toLocaleString("es-MX", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} GB`;
+  const karaokesLabel = effectiveKaraokes.toLocaleString("es-MX");
+  const karaokesGbLabel = `${effectiveKaraokesGB.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GB`;
+  const catalogUpdatedLabel = useMemo(() => {
+    if (!catalogSummary?.generatedAt) return null;
+    const parsedDate = new Date(catalogSummary.generatedAt);
+    if (Number.isNaN(parsedDate.getTime())) return null;
+    return parsedDate.toLocaleString("es-MX", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  }, [catalogSummary?.generatedAt]);
 
   useEffect(() => {
     trackManyChatConversion(MC_EVENTS.VIEW_HOME);
@@ -767,12 +852,7 @@ function PublicHome() {
     setTopDownloadsError(null);
     setTopDownloadsSource("live");
 
-    if (!LIVE_TOP_DOWNLOADS_ENABLED) {
-      setTopDownloads(buildFallbackTopDownloads());
-      setTopDownloadsSource("fallback");
-      setTopDownloadsLoading(false);
-      return;
-    }
+    const fallbackGenres = allGenres.length > 0 ? allGenres : FALLBACK_GENRES;
 
     try {
       const response = (await trpc.downloadHistory.getPublicTopDownloads.query({
@@ -780,29 +860,54 @@ function PublicHome() {
         sinceDays: TOP_DOWNLOADS_WINDOW_DAYS,
       })) as PublicTopDownloadsResponse;
 
+      const hasAnyLive =
+        response.audio.length > 0 || response.video.length > 0 || response.karaoke.length > 0;
+
+      if (!hasAnyLive) {
+        setTopDownloads(buildFallbackTopDownloads(fallbackGenres));
+        setTopDownloadsSource("fallback");
+        setTopDownloadsTab("audio");
+        setTopDownloadsError(null);
+        setTopDemoNotice(
+          "Aún no hay suficiente historial de descargas para armar el Top en vivo. Te mostramos una referencia del catálogo mientras tanto.",
+        );
+        return;
+      }
+
       setTopDownloads(response);
       setTopDownloadsSource("live");
 
-      if (response.audio.length === 0 && response.video.length > 0) {
-        setTopDownloadsTab("video");
-      }
+      // If the selected tab is empty, auto-switch to the first one with data.
+      setTopDownloadsTab((prev) => {
+        if (prev === "audio" && response.audio.length === 0) {
+          if (response.video.length > 0) return "video";
+          if (response.karaoke.length > 0) return "karaoke";
+        }
+        if (prev === "video" && response.video.length === 0) {
+          if (response.audio.length > 0) return "audio";
+          if (response.karaoke.length > 0) return "karaoke";
+        }
+        if (prev === "karaoke" && response.karaoke.length === 0) {
+          if (response.audio.length > 0) return "audio";
+          if (response.video.length > 0) return "video";
+        }
+        return prev;
+      });
     } catch (error: any) {
       const message = error?.message ? String(error.message) : "";
       const normalizedMessage = message.toLocaleLowerCase("es-MX");
-      const isMissingPublicTopEndpoint =
-        normalizedMessage.includes("getpublictopdownloads") ||
-        normalizedMessage.includes("query-procedure");
       const isNetworkError =
         normalizedMessage.includes("failed to fetch") ||
         normalizedMessage.includes("network") ||
         normalizedMessage.includes("timeout");
 
-      if (isMissingPublicTopEndpoint || isNetworkError) {
-        setTopDownloads(buildFallbackTopDownloads());
+      if (isNetworkError) {
+        setTopDownloads(buildFallbackTopDownloads(fallbackGenres));
         setTopDownloadsSource("fallback");
         setTopDownloadsError(null);
+        setTopDownloadsTab("audio");
         setTopDemoNotice(
-          "Estamos sincronizando el Top en vivo. Te mostramos una referencia útil del catálogo mientras tanto.",
+          "No pudimos cargar el Top en vivo por tu conexión. Te mostramos una referencia del catálogo mientras tanto.",
         );
       } else {
         setTopDownloadsError("No pudimos cargar el Top 100 en este momento. Intenta de nuevo.");
@@ -810,7 +915,7 @@ function PublicHome() {
     } finally {
       setTopDownloadsLoading(false);
     }
-  }, []);
+  }, [allGenres]);
 
   const handleTopDemo = useCallback(async (item: TopDownloadItem) => {
     if (topDownloadsAreFallback || item.path.startsWith("fallback://")) {
@@ -842,7 +947,7 @@ function PublicHome() {
       setTopDemoFile({
         url: demoUrl,
         name: demoResponse.name ?? item.name,
-        kind: demoResponse.kind ?? item.type,
+        kind: demoResponse.kind,
       });
       setShowTopDemoModal(true);
     } catch {
@@ -1063,9 +1168,14 @@ function PublicHome() {
               <motion.div className="ph__hero-proof" variants={heroItemVariants}>
                 <span>Acceso Inmediato</span>
                 <span>Cancela cuando quieras</span>
-                <span>500 GB descarga</span>
+                <span>500 GB/mes</span>
                 <span>Resultado inicial &lt; 10 min</span>
               </motion.div>
+              {trialConfig?.enabled && trialConfig.eligible !== false && (
+                <motion.p className="ph__hero-trial-pill" variants={heroItemVariants} role="note">
+                  <strong>{trialConfig.days} días gratis</strong> con tarjeta (Stripe) · {trialConfig.gb} GB incluidos · Solo primera vez
+                </motion.p>
+              )}
               <motion.div className="ph__segment-picker" variants={heroItemVariants}>
                 {(Object.keys(SEGMENT_PROFILES) as DjSegment[]).map((segmentKey) => (
                   <button
@@ -1161,7 +1271,16 @@ function PublicHome() {
             <article className="ph__spine-card">
               <span className="ph__spine-label">El Arsenal</span>
               <strong className="ph__spine-value">{totalGBLabel}</strong>
-              <p className="ph__spine-meta">{totalFilesLabel} archivos</p>
+              <p className="ph__spine-meta">
+                {totalFilesLabel} archivos
+                {catalogUpdatedLabel && (
+                  <span className="ph__spine-updated">
+                    {" "}
+                    · actualizado {catalogUpdatedLabel}
+                    {catalogSummary?.stale ? " (refrescando...)" : ""}
+                  </span>
+                )}
+              </p>
             </article>
             <article className="ph__spine-card">
               <span className="ph__spine-label">Videos</span>
@@ -1190,7 +1309,7 @@ function PublicHome() {
             <motion.div className="ph__arsenal-card ph__arsenal-card--wide" variants={bentoGridVariants}>
               <Zap className="ph__arsenal-icon" aria-hidden />
               <h3>FTP Ultra Rápido</h3>
-              <p>Servidores de alta velocidad. Sin límites de bajada. 500 GB/mes con FileZilla.</p>
+              <p>Servidores de alta velocidad. Sin límites de velocidad. 500 GB/mes incluidos con FileZilla.</p>
               <div className="ph__arsenal-visual ph__arsenal-visual--speed">
                 <span className="ph__arsenal-visual-bar" style={{ width: "92%" }} />
               </div>
@@ -1284,9 +1403,16 @@ function PublicHome() {
           <p className="ph__genres-caption">
             Catálogo ordenado para que ubiques la pista correcta sin cortar el ritmo.
           </p>
+          {catalogUpdatedLabel && (
+            <p className="ph__genres-updated" role="note">
+              Datos del catálogo: {catalogUpdatedLabel}
+              {catalogSummary?.stale ? " (refrescando...)" : ""}
+              {genresAreFallback ? " (estimado)" : ""}
+            </p>
+          )}
           <div className="ph__genres-stats" role="list" aria-label="Resumen del catálogo por género">
             <article role="listitem" className="ph__genres-stat">
-              <strong>{CATALOG_UNIQUE_GENRES.toLocaleString("es-MX")}</strong>
+              <strong>{uniqueGenresLabel}</strong>
               <span>géneros en catálogo</span>
             </article>
             <article role="listitem" className="ph__genres-stat">
@@ -1379,30 +1505,67 @@ function PublicHome() {
             </h2>
             <p className="ph__top-downloads-caption">
               {topDownloadsAreFallback
-                ? "Mientras sincronizamos el histórico de descargas en vivo, te mostramos una referencia útil por género (archivos y GB) para que veas qué pesa más en el catálogo."
+                ? "Aún no hay suficiente historial de descargas para armar el Top en vivo. Te mostramos una referencia del catálogo por género (archivos y GB) para que veas qué pesa más."
                 : "Descubre lo que más baja la comunidad y escucha muestras rápidas para validar energía antes de registrarte."}
             </p>
             <div className="ph__top-downloads-controls" role="tablist" aria-label="Tipo de top">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={topDownloadsTab === "audio"}
-                className={`ph__top-downloads-tab ${topDownloadsTab === "audio" ? "is-active" : ""}`}
-                onClick={() => setTopDownloadsTab("audio")}
-              >
-                <Music2 size={16} />
-                {topDownloadsAreFallback ? "Top géneros (por archivos)" : "Top Audios"}
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={topDownloadsTab === "video"}
-                className={`ph__top-downloads-tab ${topDownloadsTab === "video" ? "is-active" : ""}`}
-                onClick={() => setTopDownloadsTab("video")}
-              >
-                <Clapperboard size={16} />
-                {topDownloadsAreFallback ? "Top géneros (por GB)" : "Top Videos"}
-              </button>
+              {topDownloadsAreFallback ? (
+                <>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={topDownloadsTab === "audio"}
+                    className={`ph__top-downloads-tab ${topDownloadsTab === "audio" ? "is-active" : ""}`}
+                    onClick={() => setTopDownloadsTab("audio")}
+                  >
+                    <Music2 size={16} />
+                    Top géneros (por archivos)
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={topDownloadsTab === "video"}
+                    className={`ph__top-downloads-tab ${topDownloadsTab === "video" ? "is-active" : ""}`}
+                    onClick={() => setTopDownloadsTab("video")}
+                  >
+                    <Clapperboard size={16} />
+                    Top géneros (por GB)
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={topDownloadsTab === "audio"}
+                    className={`ph__top-downloads-tab ${topDownloadsTab === "audio" ? "is-active" : ""}`}
+                    onClick={() => setTopDownloadsTab("audio")}
+                  >
+                    <Music2 size={16} />
+                    Top Audios
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={topDownloadsTab === "video"}
+                    className={`ph__top-downloads-tab ${topDownloadsTab === "video" ? "is-active" : ""}`}
+                    onClick={() => setTopDownloadsTab("video")}
+                  >
+                    <Clapperboard size={16} />
+                    Top Videos
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={topDownloadsTab === "karaoke"}
+                    className={`ph__top-downloads-tab ${topDownloadsTab === "karaoke" ? "is-active" : ""}`}
+                    onClick={() => setTopDownloadsTab("karaoke")}
+                  >
+                    <PlayCircle size={16} />
+                    Top Karaokes
+                  </button>
+                </>
+              )}
               <button
                 type="button"
                 className="ph__top-downloads-refresh"
@@ -1426,6 +1589,12 @@ function PublicHome() {
                   {topDownloadsAreFallback ? "géneros" : "videos"} en Top {TOP_DOWNLOADS_LIMIT}
                 </span>
               </article>
+              {!topDownloadsAreFallback && (
+                <article role="listitem" className="ph__top-downloads-stat">
+                  <strong>{topKaraokeCountLabel}</strong>
+                  <span>karaokes en Top {TOP_DOWNLOADS_LIMIT}</span>
+                </article>
+              )}
               <article role="listitem" className="ph__top-downloads-stat">
                 <strong>{TOP_DOWNLOADS_WINDOW_DAYS}</strong>
                 <span>días de historial analizado</span>
@@ -1444,7 +1613,7 @@ function PublicHome() {
             )}
             {!topDownloadsLoading && !topDownloadsError && topDownloadsAreFallback && (
               <p className="ph__top-downloads-state">
-                Ranking mostrado con referencia del catálogo mientras sincronizamos el histórico de descargas en vivo.
+                Ranking mostrado con referencia del catálogo mientras juntamos suficiente historial de descargas para el Top en vivo.
               </p>
             )}
             {!topDownloadsLoading && !topDownloadsError && activeTopDownloads.length > 0 && (

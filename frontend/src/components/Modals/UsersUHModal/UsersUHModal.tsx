@@ -100,7 +100,7 @@ export function UsersUHModal(props: IUsersUHModal) {
                 exclusivos como:
                 <ul>
                   <li>Acceso a contenido exclusivo.</li>
-                  <li>Descargas ilimitadas de música y videos.</li>
+                  <li>500 GB de descarga al mes.</li>
                   <li>Nuevas canciones diariamente.</li>
                   <li>Listas de reproducción personalizadas.</li>
                   <li>Cancelación sin compromiso.</li>

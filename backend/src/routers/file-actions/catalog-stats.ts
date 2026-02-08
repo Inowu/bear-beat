@@ -1,6 +1,7 @@
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
 import { fileService } from '../../ftp';
 import path from 'path';
+import { promises as fs } from 'fs';
 
 const VIDEO_EXT = new Set(['.mp4', '.mkv', '.avi', '.mov', '.wmv', '.webm', '.m4v', '.flv']);
 const AUDIO_EXT = new Set(['.mp3', '.wav', '.flac', '.aac', '.m4a', '.ogg', '.wma']);
@@ -64,18 +65,52 @@ function genreFromRelativePath(relativePath: string): string {
   return segments.length ? segments[segments.length - 1]! : '(raíz)';
 }
 
+type ListEntry = { name: string; type: 'd' | '-'; size: number };
+
+const isLocalFileService = (): boolean => (process.env.FILE_SERVICE ?? 'local') === 'local';
+
+async function listDirLocal(fullPath: string): Promise<ListEntry[]> {
+  const entries = await fs.readdir(fullPath, { withFileTypes: true });
+  const results: ListEntry[] = [];
+
+  for (const entry of entries) {
+    if (entry.name.startsWith('.')) continue;
+
+    if (entry.isDirectory()) {
+      results.push({ name: entry.name, type: 'd', size: 0 });
+      continue;
+    }
+
+    if (entry.isFile()) {
+      const stat = await fs.stat(path.join(fullPath, entry.name));
+      results.push({ name: entry.name, type: '-', size: stat.size });
+    }
+  }
+
+  return results;
+}
+
+async function listDirFtp(fullPath: string): Promise<ListEntry[]> {
+  const entries = await fileService.list(fullPath);
+  return entries
+    .filter((entry) => entry && typeof entry.name === 'string')
+    .map((entry) => ({
+      name: entry.name,
+      type: entry.type === 'd' ? 'd' : '-',
+      size: entry.size || 0,
+    }));
+}
+
 async function walkDir(basePath: string, relativePath: string, stats: WalkStats): Promise<void> {
-  const fullPath = basePath + (relativePath ? `${relativePath}/` : '');
-  let entries: { name: string; type: string; size: number }[];
+  const fullPath = relativePath ? path.join(basePath, relativePath) : basePath;
+  let entries: ListEntry[];
   try {
-    entries = await fileService.list(fullPath);
+    entries = isLocalFileService() ? await listDirLocal(fullPath) : await listDirFtp(fullPath);
   } catch {
     return;
   }
 
   for (const entry of entries) {
-    if (entry.name.startsWith('.')) continue;
-
     const rel = relativePath ? `${relativePath}/${entry.name}` : entry.name;
     const lowerRel = rel.toLowerCase();
     const isKaraokePath = lowerRel.includes('karaoke');

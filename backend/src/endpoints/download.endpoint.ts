@@ -182,6 +182,24 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
     },
   });
 
+  // Observability: log successful file downloads so PublicHome can show "Top 100" real.
+  // Never break the download if analytics logging fails.
+  try {
+    await prisma.downloadHistory.create({
+      data: {
+        userId: user.id,
+        size: fileStat.size,
+        date: new Date(),
+        fileName: path,
+        isFolder: false,
+      },
+    });
+  } catch (e: any) {
+    log.warn(
+      `[DOWNLOAD] Failed to write download_history for user ${user.id}: ${e?.message ?? e}`,
+    );
+  }
+
   try {
     res.setHeader(
       'Content-Disposition',

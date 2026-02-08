@@ -292,11 +292,48 @@ export const createStripeCheckoutSession = shieldedProcedure
       });
 
       if (!previousPaidPlanOrder) {
-        isMarketingTrial = true;
-        marketingTrialEnd = Math.floor(addDays(new Date(), bbTrialDays).getTime() / 1000);
-        log.info(
-          `[STRIPE_CHECKOUT_SESSION] Marketing trial enabled for user ${user.id}, trial_end: ${marketingTrialEnd}, days: ${bbTrialDays}, gb: ${bbTrialGb}`,
-        );
+        // Anti-abuse guard: if another account with the same phone already used a trial
+        // or has a paid plan, this user is not eligible for the "first time" marketing trial.
+        const phone = (existingUser.phone ?? '').trim();
+        let samePhoneUsedTrialOrPaid = false;
+        if (phone) {
+          try {
+            const samePhoneUsers = await prisma.users.findMany({
+              where: { id: { not: user.id }, phone },
+              select: { id: true, trial_used_at: true },
+              take: 5,
+            });
+
+            const samePhoneHasTrial = samePhoneUsers.some((row) => Boolean(row.trial_used_at));
+            let samePhoneHasPaid = false;
+            if (!samePhoneHasTrial && samePhoneUsers.length > 0) {
+              const paid = await prisma.orders.findFirst({
+                where: {
+                  user_id: { in: samePhoneUsers.map((row) => row.id) },
+                  status: OrderStatus.PAID,
+                  is_plan: 1,
+                },
+                select: { id: true },
+              });
+              samePhoneHasPaid = Boolean(paid);
+            }
+            samePhoneUsedTrialOrPaid = samePhoneHasTrial || samePhoneHasPaid;
+          } catch {
+            // Best-effort only; never break checkout.
+          }
+        }
+
+        if (samePhoneUsedTrialOrPaid) {
+          log.info(
+            `[STRIPE_CHECKOUT_SESSION] Marketing trial blocked for user ${user.id} (same phone already used)`,
+          );
+        } else {
+          isMarketingTrial = true;
+          marketingTrialEnd = Math.floor(addDays(new Date(), bbTrialDays).getTime() / 1000);
+          log.info(
+            `[STRIPE_CHECKOUT_SESSION] Marketing trial enabled for user ${user.id}, trial_end: ${marketingTrialEnd}, days: ${bbTrialDays}, gb: ${bbTrialGb}`,
+          );
+        }
       }
     }
 

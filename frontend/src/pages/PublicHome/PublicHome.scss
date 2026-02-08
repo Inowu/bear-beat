@@ -368,10 +368,31 @@ html[data-theme="dark"] .ph__hero-atmosphere {
     border: 1px solid color-mix(in srgb, $accent 24%, $border);
     background: color-mix(in srgb, $accent 8%, transparent);
     color: $text-primary;
-    font-size: 0.92rem;
+    font-size: 0.95rem;
     line-height: 1;
     font-weight: 600;
     letter-spacing: 0.01em;
+  }
+}
+
+.ph__hero-trial-pill {
+  margin: 0.85rem 0 0;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, $accent 38%, $border);
+  background: color-mix(in srgb, $accent 12%, transparent);
+  color: $text-secondary;
+  font-size: 0.96rem;
+  line-height: 1.2;
+  font-weight: 650;
+
+  strong {
+    color: $accent;
+    font-weight: 850;
   }
 }
 
@@ -404,8 +425,9 @@ html[data-theme="dark"] .ph__hero-atmosphere {
 .ph__hero-micro {
   margin: 0.95rem 0 0;
   font-size: 0.98rem;
-  color: $text-muted;
-  font-weight: 500;
+  color: $text-secondary;
+  font-weight: 550;
+  line-height: 1.5;
 }
 
 .ph__hero-right {
@@ -604,6 +626,13 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   color: $text-secondary;
   font-size: 0.95rem;
   font-weight: 600;
+}
+
+.ph__spine-updated {
+  color: $text-muted;
+  font-weight: 650;
+  font-size: 0.86rem;
+  letter-spacing: 0.01em;
 }
 
 .ph__arsenal {
@@ -900,6 +929,14 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   line-height: 1.5;
 }
 
+.ph__genres-updated {
+  margin: 0.55rem 0 0;
+  color: $text-muted;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  font-weight: 600;
+}
+
 .ph__genres-stats {
   margin: 0.75rem 0 1rem;
   display: grid;
@@ -930,7 +967,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   }
 
   span {
-    color: $text-muted;
+    color: $text-secondary;
     font-size: 0.8rem;
     font-weight: 600;
     line-height: 1.2;
@@ -1175,7 +1212,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
 .ph__top-downloads-caption {
   margin: -0.5rem 0 0;
   color: $text-secondary;
-  font-size: 0.97rem;
+  font-size: 1.01rem;
   line-height: 1.5;
   font-weight: 600;
 }
@@ -1233,7 +1270,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   gap: 0.55rem;
 
   @include respond-from(md) {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
@@ -1253,7 +1290,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   }
 
   span {
-    color: $text-muted;
+    color: $text-secondary;
     font-size: 0.84rem;
     font-weight: 600;
   }

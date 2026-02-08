@@ -34,7 +34,7 @@ export const plansRouter = router({
     if (userId) {
       const user = await ctx.prisma.users.findFirst({
         where: { id: userId },
-        select: { trial_used_at: true },
+        select: { trial_used_at: true, phone: true },
       });
       if (user) {
         if (!config.enabled || user.trial_used_at) {
@@ -49,6 +49,42 @@ export const plansRouter = router({
             select: { id: true },
           });
           eligible = !previousPaidPlanOrder;
+
+          // Anti-abuse guard: if another account with the same phone already used a trial
+          // or has a paid plan, treat this user as not eligible for a new "first time" trial.
+          const phone = (user.phone ?? '').trim();
+          if (eligible && phone) {
+            try {
+              const samePhoneUsers = await ctx.prisma.users.findMany({
+                where: {
+                  id: { not: userId },
+                  phone,
+                },
+                select: { id: true, trial_used_at: true },
+                take: 5,
+              });
+
+              const samePhoneHasTrial = samePhoneUsers.some((row) => Boolean(row.trial_used_at));
+              let samePhoneHasPaid = false;
+              if (!samePhoneHasTrial && samePhoneUsers.length > 0) {
+                const paid = await ctx.prisma.orders.findFirst({
+                  where: {
+                    user_id: { in: samePhoneUsers.map((row) => row.id) },
+                    status: OrderStatus.PAID,
+                    is_plan: 1,
+                  },
+                  select: { id: true },
+                });
+                samePhoneHasPaid = Boolean(paid);
+              }
+
+              if (samePhoneHasTrial || samePhoneHasPaid) {
+                eligible = false;
+              }
+            } catch {
+              // Best-effort only; do not break trial config query.
+            }
+          }
         }
       }
     }
