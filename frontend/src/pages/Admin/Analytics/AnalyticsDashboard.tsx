@@ -59,6 +59,31 @@ interface AttributionPoint {
   registrations: number;
   checkouts: number;
   purchases: number;
+  revenue: number;
+  aov: number;
+}
+
+interface CancellationReasonCampaignPoint {
+  source: string;
+  medium: string;
+  campaign: string;
+  cancellations: number;
+}
+
+interface CancellationReasonPoint {
+  reasonCode: string;
+  cancellations: number;
+  topCampaigns: CancellationReasonCampaignPoint[];
+}
+
+interface CancellationReasonsSnapshot {
+  range: {
+    days: number;
+    start: string;
+    end: string;
+  };
+  totalCancellations: number;
+  reasons: CancellationReasonPoint[];
 }
 
 interface BusinessMetrics {
@@ -149,6 +174,22 @@ interface HealthAlertsSnapshot {
 
 const RANGE_OPTIONS = [7, 14, 30, 60, 90, 120];
 
+const CANCELLATION_REASON_LABELS: Record<string, string> = {
+  too_expensive: "Es muy caro",
+  not_using_enough: "No lo estoy usando suficiente",
+  missing_content: "No encontré lo que buscaba",
+  technical_issues: "Problemas técnicos / algo roto",
+  found_alternative: "Encontré otra alternativa",
+  temporary_pause: "Pausa temporal",
+  other: "Otro",
+  admin_blocked: "Cancelación por admin (bloqueo)",
+};
+
+function formatCancellationReason(code: string): string {
+  const normalized = (code || "").trim();
+  return CANCELLATION_REASON_LABELS[normalized] ?? normalized ?? "—";
+}
+
 function formatCompactNumber(value: number): string {
   return new Intl.NumberFormat("es-MX", {
     notation: "compact",
@@ -183,6 +224,7 @@ export function AnalyticsDashboard() {
   const [funnel, setFunnel] = useState<FunnelOverview | null>(null);
   const [series, setSeries] = useState<DailyPoint[]>([]);
   const [attribution, setAttribution] = useState<AttributionPoint[]>([]);
+  const [cancellations, setCancellations] = useState<CancellationReasonsSnapshot | null>(null);
   const [business, setBusiness] = useState<BusinessMetrics | null>(null);
   const [ux, setUx] = useState<UxSummary | null>(null);
   const [topEvents, setTopEvents] = useState<TopEventPoint[]>([]);
@@ -202,6 +244,7 @@ export function AnalyticsDashboard() {
         funnelResponse,
         seriesResponse,
         attributionResponse,
+        cancellationsResponse,
         businessResponse,
         uxResponse,
         topEventsResponse,
@@ -210,6 +253,7 @@ export function AnalyticsDashboard() {
         trpc.analytics.getAnalyticsFunnelOverview.query({ days: rangeDays }),
         trpc.analytics.getAnalyticsDailySeries.query({ days: rangeDays }),
         trpc.analytics.getAnalyticsAttribution.query({ days: rangeDays, limit: 12 }),
+        trpc.analytics.getAnalyticsCancellationReasons.query({ days: rangeDays, topCampaigns: 5 }),
         trpc.analytics.getAnalyticsBusinessMetrics.query({ days: rangeDays, adSpend }),
         trpc.analytics.getAnalyticsUxQuality.query({ days: rangeDays, routesLimit: 12 }),
         trpc.analytics.getAnalyticsTopEvents.query({ days: rangeDays, limit: 20 }),
@@ -219,6 +263,7 @@ export function AnalyticsDashboard() {
       setFunnel(funnelResponse as FunnelOverview);
       setSeries(seriesResponse as DailyPoint[]);
       setAttribution(attributionResponse as AttributionPoint[]);
+      setCancellations(cancellationsResponse as CancellationReasonsSnapshot);
       setBusiness(businessResponse as BusinessMetrics);
       setUx(uxResponse as UxSummary);
       setTopEvents(topEventsResponse as TopEventPoint[]);
@@ -454,12 +499,14 @@ export function AnalyticsDashboard() {
                             <th>Registros</th>
                             <th>Checkout</th>
                             <th>Pagos</th>
+                            <th>Ingreso</th>
+                            <th>AOV</th>
                           </tr>
                         </thead>
                         <tbody>
                           {attribution.length === 0 ? (
                             <tr>
-                              <td colSpan={6}>Aún no hay atribución capturada.</td>
+                              <td colSpan={8}>Aún no hay atribución capturada.</td>
                             </tr>
                           ) : (
                             attribution.map((item) => (
@@ -470,12 +517,65 @@ export function AnalyticsDashboard() {
                                 <td>{item.registrations.toLocaleString("es-MX")}</td>
                                 <td>{item.checkouts.toLocaleString("es-MX")}</td>
                                 <td>{item.purchases.toLocaleString("es-MX")}</td>
+                                <td>{formatCurrency(item.revenue)}</td>
+                                <td>{formatCurrency(item.aov)}</td>
                               </tr>
                             ))
                           )}
                         </tbody>
                       </table>
                     </div>
+                  </section>
+
+                  <section className="analytics-panel">
+                    <h2>Cancelaciones</h2>
+                    <p>Razones principales y campañas asociadas (últimos {rangeDays} días).</p>
+                    <div className="analytics-table-wrap">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Motivo</th>
+                            <th>Cancelaciones</th>
+                            <th>Top campañas</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {!cancellations || cancellations.reasons.length === 0 ? (
+                            <tr>
+                              <td colSpan={3}>Aún no hay cancelaciones registradas en este rango.</td>
+                            </tr>
+                          ) : (
+                            cancellations.reasons.map((reason) => (
+                              <tr key={reason.reasonCode}>
+                                <td>{formatCancellationReason(reason.reasonCode)}</td>
+                                <td>{reason.cancellations.toLocaleString("es-MX")}</td>
+                                <td>
+                                  {reason.topCampaigns.length === 0 ? (
+                                    "—"
+                                  ) : (
+                                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                                      {reason.topCampaigns.map((campaign) => (
+                                        <span
+                                          key={`${reason.reasonCode}:${campaign.source}:${campaign.campaign}:${campaign.medium}`}
+                                        >
+                                          {campaign.source}/{campaign.campaign} ({campaign.cancellations.toLocaleString("es-MX")})
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                    {cancellations && cancellations.totalCancellations > 0 && (
+                      <small>
+                        Total cancelaciones en rango:{" "}
+                        {cancellations.totalCancellations.toLocaleString("es-MX")}
+                      </small>
+                    )}
                   </section>
 
                   <section className="analytics-panel">

@@ -47,7 +47,8 @@ if (sentryEnabled) {
     dsn,
     environment: sentryEnvironment,
     release: sentryRelease,
-    sendDefaultPii: true,
+    // Strict privacy: do not send default PII from the backend.
+    sendDefaultPii: false,
     debug: sentryDebug,
     sampleRate,
     tracesSampleRate,

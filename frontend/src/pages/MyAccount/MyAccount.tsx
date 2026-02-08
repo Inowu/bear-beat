@@ -1,5 +1,7 @@
 import "./MyAccount.scss";
 import {
+  CancellationReasonModal,
+  type CancellationReasonCode,
   ConditionModal,
   ErrorModal,
   PaymentMethodModal,
@@ -31,6 +33,8 @@ import Amex from "../../assets/images/cards/express.png";
 import Mastercard from "../../assets/images/cards/master.png";
 import trpc from "../../api";
 import Visa from "../../assets/images/cards/visa.png";
+
+import { GROWTH_METRICS, getGrowthAttribution, trackGrowthMetric } from "../../utils/growthMetrics";
 
 const stripeKey =
   process.env.REACT_APP_ENVIRONMENT === "development"
@@ -66,6 +70,7 @@ function MyAccount() {
   const [showFtpPass, setShowFtpPass] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [showCancelReasonModal, setShowCancelReasonModal] = useState(false);
 
   const closeCondition = () => setShowCondition(false);
   const openCondition = () => setShowCondition(true);
@@ -75,10 +80,8 @@ function MyAccount() {
   const openPlan = () => setShowPlan(true);
 
   const startCancel = () => {
-    setConditionTitle("Cancelación de suscripción");
-    setConditionMessage("¿Estás seguro que quieres cancelar tu suscripción?");
-    openCondition();
-    setCondition(1);
+    setShowCancelReasonModal(true);
+    trackGrowthMetric(GROWTH_METRICS.SUBSCRIPTION_CANCEL_STARTED, { surface: "my_account" });
   };
 
   const deletePaymentMethod = (card: any) => {
@@ -99,18 +102,28 @@ function MyAccount() {
     setCondition(2);
   };
 
-  const finishSubscription = async () => {
-    closeCondition();
+  const finishSubscription = async (reasonCode: CancellationReasonCode, reasonText: string) => {
     try {
-      await trpc.subscriptions.requestSubscriptionCancellation.mutate();
+      await trpc.subscriptions.requestSubscriptionCancellation.mutate({
+        reasonCode,
+        reasonText: reasonText?.trim() ? reasonText.trim() : null,
+        attribution: getGrowthAttribution(),
+      });
+      trackGrowthMetric(GROWTH_METRICS.SUBSCRIPTION_CANCEL_CONFIRMED, {
+        surface: "my_account",
+        reasonCode,
+      });
       startUser();
       setShowSuccess(true);
       setSuccessMessage("Su suscripción se ha cancelado con éxito.");
       setSuccessTitle("Suscripción Cancelada");
     } catch (error) {
-      setErrorMessage("Ha habido un error");
-      setShowError(true);
-      console.log(error);
+      trackGrowthMetric(GROWTH_METRICS.SUBSCRIPTION_CANCEL_FAILED, {
+        surface: "my_account",
+        reasonCode,
+        reason: error instanceof Error ? error.message : "unknown-error",
+      });
+      throw error;
     }
   };
 
@@ -536,12 +549,21 @@ function MyAccount() {
         show={showCondition}
         onHide={closeCondition}
         action={
-          condition === 1
-            ? finishSubscription
-            : condition === 2
-              ? changeDefault
-              : deleteCard
+          condition === 2 ? changeDefault : deleteCard
         }
+      />
+      <CancellationReasonModal
+        title="Cancelación de suscripción"
+        message="Antes de cancelar, dinos el motivo (nos ayuda a mejorar)."
+        show={showCancelReasonModal}
+        onHide={() => setShowCancelReasonModal(false)}
+        onReasonChange={(reasonCode) => {
+          trackGrowthMetric(GROWTH_METRICS.SUBSCRIPTION_CANCEL_REASON_SELECTED, {
+            surface: "my_account",
+            reasonCode,
+          });
+        }}
+        onConfirm={({ reasonCode, reasonText }) => finishSubscription(reasonCode, reasonText)}
       />
       <Elements stripe={stripePromise} options={stripeOptions}>
         <PlansModal

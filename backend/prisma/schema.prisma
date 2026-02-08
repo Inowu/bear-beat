@@ -134,6 +134,27 @@ model Orders {
   @@map("orders")
 }
 
+model SubscriptionCancellationFeedback {
+  id             Int      @id @default(autoincrement())
+  user_id        Int
+  order_id       Int?
+  payment_method String?  @db.VarChar(50)
+  reason_code    String   @db.VarChar(60)
+  reason_text    String?  @db.VarChar(500)
+  utm_source     String?  @db.VarChar(120)
+  utm_medium     String?  @db.VarChar(120)
+  utm_campaign   String?  @db.VarChar(180)
+  gclid          String?  @db.VarChar(255)
+  fbclid         String?  @db.VarChar(255)
+  created_at     DateTime @default(now()) @db.DateTime(0)
+
+  @@index([user_id], map: "idx_scf_user_id")
+  @@index([order_id], map: "idx_scf_order_id")
+  @@index([reason_code], map: "idx_scf_reason_code")
+  @@index([created_at], map: "idx_scf_created_at")
+  @@map("subscription_cancellation_feedback")
+}
+
 model Plans {
   id                   Int     @id @default(autoincrement())
   name                 String  @db.VarChar(100)

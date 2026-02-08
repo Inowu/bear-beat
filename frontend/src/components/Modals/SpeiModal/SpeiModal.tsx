@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from "react";
 import { Modal } from "react-bootstrap";
-import { Check, Copy, ShieldCheck, X } from "lucide-react";
+import { Check, Copy, Landmark, ShieldCheck, X } from "lucide-react";
 import { ISpeiData } from "../../../interfaces/Plans";
+import { openSupportChat } from "../../../utils/supportChat";
 import "../Modal.scss";
 import "./SpeiModal.scss";
 
@@ -25,7 +26,10 @@ export function SpeiModal(props: ISpei) {
   const [copiedClabe, setCopiedClabe] = useState(false);
   const [copiedAmount, setCopiedAmount] = useState(false);
 
-  const amountText = `$${price}.00`;
+  const amountValue = Number(price);
+  const amountText = Number.isFinite(amountValue)
+    ? `$${amountValue.toFixed(2)}`
+    : `$${String(price ?? "").trim()}`;
   // Conekta puede devolver la CLABE en "clabe" o en "receiving_account_number"
   const clabe = speiData.clabe ?? speiData.receiving_account_number ?? "";
   const bankName = speiData.receiving_account_bank || "STP";
@@ -48,92 +52,87 @@ export function SpeiModal(props: ISpei) {
 
   return (
     <Modal show={show} onHide={onHide} centered className="spei-modal-wrapper">
-      <div className="modal-container spei-terminal">
-        <div className="spei-terminal__header">
-          <h2 className="spei-terminal__title">Transferencia Bancaria (SPEI)</h2>
-          <button type="button" className="spei-terminal__close" onClick={onHide} aria-label="Cerrar">
+      <div className="modal-container spei-modal">
+        <div className="header">
+          <div className="spei-modal__title-wrap">
+            <span className="spei-modal__icon" aria-hidden>
+              <Landmark />
+            </span>
+            <div className="spei-modal__title-copy">
+              <p className="title">Pago por SPEI</p>
+              <p className="spei-modal__subtitle">
+                Transfiere el monto exacto y tu acceso se activará automáticamente.
+              </p>
+            </div>
+          </div>
+          <button type="button" className="spei-modal__close" onClick={onHide} aria-label="Cerrar">
             <X aria-hidden />
           </button>
         </div>
 
-        <div className="spei-terminal__body">
-          {/* A nombre de quién / Banco — evita confusión en la app bancaria */}
-          <div className="spei-terminal__block spei-terminal__block--highlight">
-            <label className="spei-terminal__label">Banco receptor</label>
-            <p className="spei-terminal__value">{bankLabel}</p>
-            <p className="spei-terminal__hint">Usa esta CLABE en cualquier banco (BBVA, Santander, etc.).</p>
-          </div>
-          <div className="spei-terminal__block spei-terminal__block--highlight">
-            <label className="spei-terminal__label">Nombre del beneficiario (a quién hacer la transferencia)</label>
-            <p className="spei-terminal__value spei-terminal__value--holder">{holderName}</p>
-            <p className="spei-terminal__hint">En tu app bancaria, cuando des de alta la cuenta, usa este nombre como titular.</p>
-          </div>
+        <div className="bottom">
+          <div className="spei-modal__grid">
+            <div className="spei-modal__field">
+              <span className="spei-modal__label">CLABE interbancaria</span>
+              {hasClabe ? (
+                <div className="spei-modal__value-row">
+                  <code className="spei-modal__code">{clabe}</code>
+                  <button
+                    type="button"
+                    className="spei-modal__copy"
+                    onClick={() => copyToClipboard(clabe, setCopiedClabe)}
+                    title="Copiar CLABE"
+                  >
+                    {copiedClabe ? <Check aria-hidden /> : <Copy aria-hidden />}
+                    <span>{copiedClabe ? "Copiado" : "Copiar"}</span>
+                  </button>
+                </div>
+              ) : (
+                <p className="spei-modal__warning">
+                  No se recibió la CLABE. Cierra este mensaje e intenta de nuevo con «SPEI» o elige tarjeta.
+                </p>
+              )}
+              <p className="spei-modal__hint">
+                Banco receptor: <strong>{bankLabel}</strong>
+              </p>
+              <p className="spei-modal__hint">
+                Beneficiario: <strong>{holderName}</strong>
+              </p>
+            </div>
 
-          {/* CLABE interbancaria */}
-          <div className="spei-terminal__block">
-            <label className="spei-terminal__label">CLABE interbancaria (18 dígitos)</label>
-            {hasClabe ? (
-              <div className="spei-terminal__clabe-row">
-                <code className="spei-terminal__clabe">{clabe}</code>
+            <div className="spei-modal__field">
+              <span className="spei-modal__label">Monto a transferir</span>
+              <div className="spei-modal__value-row">
+                <span className="spei-modal__amount">{amountText} MXN</span>
                 <button
                   type="button"
-                  className="spei-terminal__copy-btn"
-                  onClick={() => copyToClipboard(clabe, setCopiedClabe)}
-                  title="Copiar CLABE"
+                  className="spei-modal__copy"
+                  onClick={() => copyToClipboard(amountText, setCopiedAmount)}
+                  title="Copiar monto"
                 >
-                  {copiedClabe ? <Check aria-hidden /> : <Copy aria-hidden />}
-                  <span>{copiedClabe ? "Copiado" : "Copiar"}</span>
+                  {copiedAmount ? <Check aria-hidden /> : <Copy aria-hidden />}
+                  <span>{copiedAmount ? "Copiado" : "Copiar"}</span>
                 </button>
               </div>
-            ) : (
-              <p className="spei-terminal__warning">
-                No se recibió la CLABE. Cierra este mensaje e intenta de nuevo con «SPEI», o elige otro método de pago.
+              <p className="spei-modal__warning">
+                Transfiere la cantidad <strong>exacta</strong>, ni un peso más ni un peso menos.
               </p>
-            )}
-          </div>
-
-          {/* Monto + advertencia */}
-          <div className="spei-terminal__block">
-            <label className="spei-terminal__label">Monto a transferir</label>
-            <div className="spei-terminal__amount-row">
-              <span className="spei-terminal__amount">{amountText} MXN</span>
-              <button
-                type="button"
-                className="spei-terminal__copy-btn"
-                onClick={() => copyToClipboard(amountText, setCopiedAmount)}
-                title="Copiar monto"
-              >
-                {copiedAmount ? <Check aria-hidden /> : <Copy aria-hidden />}
-                <span>{copiedAmount ? "Copiado" : "Copiar"}</span>
-              </button>
+              <p className="spei-modal__expires">
+                Válido antes del:{" "}
+                <strong>{speiData.expires_at ? formatExpires(speiData.expires_at) : "—"}</strong>
+              </p>
+              <p className="spei-modal__trust">
+                <ShieldCheck aria-hidden /> Transacción segura
+              </p>
             </div>
-            <p className="spei-terminal__warning">
-              ⚠️ Transfiere la cantidad EXACTA, ni un peso más ni menos.
-            </p>
           </div>
 
-          {/* Instrucciones paso a paso */}
-          <ol className="spei-terminal__steps">
-            <li>Anota el <strong>banco</strong> ({bankLabel}) y el <strong>beneficiario</strong> ({holderName}).</li>
-            <li>Copia la CLABE y en tu app bancaria da de alta la cuenta (banco {bankLabel}, titular {holderName}).</li>
-            <li>Transfiere el monto exacto: <strong>{amountText} MXN</strong>.</li>
-            <li>Tu acceso se activará en automático al detectar el pago.</li>
-          </ol>
-
-          <p className="spei-terminal__expires">
-            Válido antes del: <strong>{speiData.expires_at ? formatExpires(speiData.expires_at) : "—"}</strong>
-          </p>
-
-          <p className="spei-terminal__trust">
-            <ShieldCheck aria-hidden /> Transacción encriptada y segura
-          </p>
-
-          <div className="spei-terminal__actions">
-            <button type="button" className="spei-terminal__btn-primary" onClick={onHide}>
-              Ya realicé el pago
+          <div className="button-container-2">
+            <button type="button" className="btn-option-5" onClick={() => openSupportChat("spei_modal")}>
+              Abrir soporte
             </button>
-            <button type="button" className="spei-terminal__btn-secondary" onClick={onHide}>
-              Cancelar / Cerrar
+            <button type="button" className="btn-success" onClick={onHide}>
+              Listo, ya pagué
             </button>
           </div>
         </div>

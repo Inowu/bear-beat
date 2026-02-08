@@ -5,13 +5,32 @@ import { cancelPaypalSubscription } from './cancelPaypalSubscription';
 import { PrismaClient, Users } from '@prisma/client';
 import { SessionUser } from '../../auth/utils/serialize-user';
 import { manyChat } from '../../../many-chat';
+import { log } from '../../../server';
+
+interface CancellationAttributionInput {
+  source?: string | null;
+  medium?: string | null;
+  campaign?: string | null;
+  term?: string | null;
+  content?: string | null;
+  fbclid?: string | null;
+  gclid?: string | null;
+}
+
+interface CancellationInput {
+  reasonCode: string;
+  reasonText?: string | null;
+  attribution?: CancellationAttributionInput | null;
+}
 
 export const cancelServicesSubscriptions = async ({
   prisma,
   user,
+  cancellation,
 }: {
   prisma: PrismaClient;
   user: SessionUser | Users;
+  cancellation: CancellationInput;
 }) => {
   const activeSubscription = await prisma.descargasUser.findFirst({
     where: {
@@ -53,6 +72,31 @@ export const cancelServicesSubscriptions = async ({
     throw new TRPCError({
       code: 'BAD_REQUEST',
       message: 'El usuario no tiene una suscripción activa.',
+    });
+  }
+
+  try {
+    await prisma.subscriptionCancellationFeedback.create({
+      data: {
+        user_id: user.id,
+        order_id: order.id ?? null,
+        payment_method: order.payment_method ?? null,
+        reason_code: cancellation.reasonCode.trim().slice(0, 60),
+        reason_text: cancellation.reasonText
+          ? cancellation.reasonText.trim().slice(0, 500)
+          : null,
+        utm_source: cancellation.attribution?.source?.trim().slice(0, 120) ?? null,
+        utm_medium: cancellation.attribution?.medium?.trim().slice(0, 120) ?? null,
+        utm_campaign: cancellation.attribution?.campaign?.trim().slice(0, 180) ?? null,
+        gclid: cancellation.attribution?.gclid?.trim().slice(0, 255) ?? null,
+        fbclid: cancellation.attribution?.fbclid?.trim().slice(0, 255) ?? null,
+      },
+    });
+  } catch (error: unknown) {
+    log.warn('[CANCEL_SUBSCRIPTION] Failed to persist cancellation feedback', {
+      error: error instanceof Error ? error.message : error,
+      userId: user.id,
+      orderId: order.id,
     });
   }
 

@@ -128,6 +128,8 @@ interface AnalyticsAttributionPoint {
   registrations: number;
   checkouts: number;
   purchases: number;
+  revenue: number;
+  aov: number;
 }
 
 interface AnalyticsBusinessMetrics {
@@ -835,6 +837,7 @@ export const getAnalyticsAttributionBreakdown = async (
       registrations: bigint | number;
       checkouts: bigint | number;
       purchases: bigint | number;
+      revenue: unknown;
     }>
   >(Prisma.sql`
     SELECT
@@ -847,7 +850,11 @@ export const getAnalyticsAttributionBreakdown = async (
       END) AS visitors,
       COUNT(CASE WHEN event_name = 'registration_completed' THEN 1 END) AS registrations,
       COUNT(CASE WHEN event_name = 'checkout_started' THEN 1 END) AS checkouts,
-      COUNT(CASE WHEN event_name = 'payment_success' THEN 1 END) AS purchases
+      COUNT(CASE WHEN event_name = 'payment_success' THEN 1 END) AS purchases,
+      COALESCE(SUM(CASE
+        WHEN event_name = 'payment_success' THEN COALESCE(amount, 0)
+        ELSE 0
+      END), 0) AS revenue
     FROM analytics_events
     WHERE event_ts >= ${startDate}
     GROUP BY source, medium, campaign
@@ -855,15 +862,21 @@ export const getAnalyticsAttributionBreakdown = async (
     LIMIT ${limit}
   `);
 
-  return rows.map((row) => ({
-    source: row.source || 'direct',
-    medium: row.medium || 'none',
-    campaign: row.campaign || '(none)',
-    visitors: numberFromUnknown(row.visitors),
-    registrations: numberFromUnknown(row.registrations),
-    checkouts: numberFromUnknown(row.checkouts),
-    purchases: numberFromUnknown(row.purchases),
-  }));
+  return rows.map((row) => {
+    const purchases = numberFromUnknown(row.purchases);
+    const revenue = roundNumber(numberFromUnknown(row.revenue), 2);
+    return {
+      source: row.source || 'direct',
+      medium: row.medium || 'none',
+      campaign: row.campaign || '(none)',
+      visitors: numberFromUnknown(row.visitors),
+      registrations: numberFromUnknown(row.registrations),
+      checkouts: numberFromUnknown(row.checkouts),
+      purchases,
+      revenue,
+      aov: purchases > 0 ? roundNumber(revenue / purchases, 2) : 0,
+    };
+  });
 };
 
 export const getAnalyticsBusinessMetrics = async (
@@ -1506,5 +1519,303 @@ export const getAnalyticsHealthAlerts = async (
   return {
     generatedAt: normalizeDateOutput(new Date()),
     alerts,
+  };
+};
+
+interface AnalyticsCancellationReasonCampaignPoint {
+  source: string;
+  medium: string;
+  campaign: string;
+  cancellations: number;
+}
+
+interface AnalyticsCancellationReasonPoint {
+  reasonCode: string;
+  cancellations: number;
+  topCampaigns: AnalyticsCancellationReasonCampaignPoint[];
+}
+
+interface AnalyticsCancellationReasonsSnapshot {
+  range: {
+    days: number;
+    start: string;
+    end: string;
+  };
+  totalCancellations: number;
+  reasons: AnalyticsCancellationReasonPoint[];
+}
+
+const MAX_CANCELLATION_REASON_LIMIT = 30;
+const MAX_CANCELLATION_CAMPAIGN_ROWS = 800;
+const DEFAULT_CANCELLATION_TOP_CAMPAIGNS = 5;
+
+export const getAnalyticsCancellationReasons = async (
+  prisma: PrismaClient,
+  daysInput?: number,
+  topCampaignsInput?: number,
+): Promise<AnalyticsCancellationReasonsSnapshot> => {
+  const { days, startDate } = resolveRange(daysInput);
+
+  if (!process.env.DATABASE_URL) {
+    return {
+      range: {
+        days,
+        start: normalizeDateOutput(startDate),
+        end: normalizeDateOutput(new Date()),
+      },
+      totalCancellations: 0,
+      reasons: [],
+    };
+  }
+
+  const topCampaigns = topCampaignsInput
+    ? Math.max(1, Math.min(10, Math.floor(topCampaignsInput)))
+    : DEFAULT_CANCELLATION_TOP_CAMPAIGNS;
+
+  try {
+    const reasonRows = await prisma.$queryRaw<
+      Array<{
+        reasonCode: string;
+        cancellations: bigint | number;
+      }>
+    >(Prisma.sql`
+      SELECT
+        reason_code AS reasonCode,
+        COUNT(*) AS cancellations
+      FROM subscription_cancellation_feedback
+      WHERE created_at >= ${startDate}
+      GROUP BY reason_code
+      ORDER BY cancellations DESC
+      LIMIT ${MAX_CANCELLATION_REASON_LIMIT}
+    `);
+
+    const campaignRows = await prisma.$queryRaw<
+      Array<{
+        reasonCode: string;
+        source: string | null;
+        medium: string | null;
+        campaign: string | null;
+        cancellations: bigint | number;
+      }>
+    >(Prisma.sql`
+      SELECT
+        reason_code AS reasonCode,
+        COALESCE(NULLIF(utm_source, ''), 'direct') AS source,
+        COALESCE(NULLIF(utm_medium, ''), 'none') AS medium,
+        COALESCE(NULLIF(utm_campaign, ''), '(none)') AS campaign,
+        COUNT(*) AS cancellations
+      FROM subscription_cancellation_feedback
+      WHERE created_at >= ${startDate}
+      GROUP BY reason_code, source, medium, campaign
+      ORDER BY cancellations DESC
+      LIMIT ${MAX_CANCELLATION_CAMPAIGN_ROWS}
+    `);
+
+    const totalCancellations = reasonRows.reduce(
+      (acc, row) => acc + numberFromUnknown(row.cancellations),
+      0,
+    );
+
+    const campaignByReason = campaignRows.reduce((map, row) => {
+      const reasonCode = row.reasonCode || 'unknown';
+      const list = map.get(reasonCode) ?? [];
+      list.push({
+        source: row.source || 'direct',
+        medium: row.medium || 'none',
+        campaign: row.campaign || '(none)',
+        cancellations: numberFromUnknown(row.cancellations),
+      });
+      map.set(reasonCode, list);
+      return map;
+    }, new Map<string, AnalyticsCancellationReasonCampaignPoint[]>());
+
+    const reasons = reasonRows.map((row) => {
+      const reasonCode = row.reasonCode || 'unknown';
+      const campaigns = campaignByReason.get(reasonCode) ?? [];
+      campaigns.sort((a, b) => b.cancellations - a.cancellations);
+      return {
+        reasonCode,
+        cancellations: numberFromUnknown(row.cancellations),
+        topCampaigns: campaigns.slice(0, topCampaigns),
+      };
+    });
+
+    return {
+      range: {
+        days,
+        start: normalizeDateOutput(startDate),
+        end: normalizeDateOutput(new Date()),
+      },
+      totalCancellations,
+      reasons,
+    };
+  } catch (error) {
+    // If the table is not present yet (migration pending) or query fails, return a safe empty payload.
+    return {
+      range: {
+        days,
+        start: normalizeDateOutput(startDate),
+        end: normalizeDateOutput(new Date()),
+      },
+      totalCancellations: 0,
+      reasons: [],
+    };
+  }
+};
+
+interface AnalyticsLiveEventPoint {
+  ts: string;
+  name: string;
+  pagePath: string | null;
+  visitorId: string | null;
+  sessionId: string | null;
+  userId: number | null;
+  source: string | null;
+  medium: string | null;
+  campaign: string | null;
+}
+
+interface AnalyticsLiveSnapshot {
+  window: {
+    minutes: number;
+    start: string;
+    end: string;
+  };
+  activeVisitors: number;
+  activeSessions: number;
+  activeCheckouts: number;
+  events: AnalyticsLiveEventPoint[];
+}
+
+const DEFAULT_LIVE_WINDOW_MINUTES = 10;
+const DEFAULT_LIVE_LIMIT = 200;
+const MAX_LIVE_LIMIT = 500;
+const MAX_LIVE_WINDOW_MINUTES = 120;
+
+export const getAnalyticsLiveSnapshot = async (
+  prisma: PrismaClient,
+  minutesInput?: number,
+  limitInput?: number,
+): Promise<AnalyticsLiveSnapshot> => {
+  const minutes = minutesInput
+    ? Math.max(1, Math.min(MAX_LIVE_WINDOW_MINUTES, Math.floor(minutesInput)))
+    : DEFAULT_LIVE_WINDOW_MINUTES;
+  const limit = limitInput
+    ? Math.max(1, Math.min(MAX_LIVE_LIMIT, Math.floor(limitInput)))
+    : DEFAULT_LIVE_LIMIT;
+
+  const now = new Date();
+  const windowStart = new Date(now.getTime() - minutes * 60 * 1000);
+
+  if (!process.env.DATABASE_URL) {
+    return {
+      window: {
+        minutes,
+        start: normalizeDateOutput(windowStart),
+        end: normalizeDateOutput(now),
+      },
+      activeVisitors: 0,
+      activeSessions: 0,
+      activeCheckouts: 0,
+      events: [],
+    };
+  }
+
+  await ensureAnalyticsEventsTable(prisma);
+
+  const [activityRows, checkoutRows, eventRows] = await Promise.all([
+    prisma.$queryRaw<
+      Array<{
+        activeVisitors: bigint | number;
+        activeSessions: bigint | number;
+      }>
+    >(Prisma.sql`
+      SELECT
+        COUNT(DISTINCT COALESCE(visitor_id, session_id, CONCAT('anon:', event_id))) AS activeVisitors,
+        COUNT(DISTINCT session_id) AS activeSessions
+      FROM analytics_events
+      WHERE event_ts >= ${windowStart}
+    `),
+    prisma.$queryRaw<
+      Array<{
+        activeCheckouts: bigint | number;
+      }>
+    >(Prisma.sql`
+      SELECT
+        COUNT(DISTINCT checkout.session_id) AS activeCheckouts
+      FROM (
+        SELECT session_id
+        FROM analytics_events
+        WHERE event_ts >= ${windowStart}
+          AND event_name = 'checkout_started'
+          AND session_id IS NOT NULL
+        GROUP BY session_id
+      ) checkout
+      LEFT JOIN (
+        SELECT session_id
+        FROM analytics_events
+        WHERE event_ts >= ${windowStart}
+          AND event_name = 'payment_success'
+          AND session_id IS NOT NULL
+        GROUP BY session_id
+      ) paid ON paid.session_id = checkout.session_id
+      WHERE paid.session_id IS NULL
+    `),
+    prisma.$queryRaw<
+      Array<{
+        eventTs: Date | string;
+        eventName: string;
+        pagePath: string | null;
+        visitorId: string | null;
+        sessionId: string | null;
+        userId: number | null;
+        source: string | null;
+        medium: string | null;
+        campaign: string | null;
+      }>
+    >(Prisma.sql`
+      SELECT
+        event_ts AS eventTs,
+        event_name AS eventName,
+        page_path AS pagePath,
+        visitor_id AS visitorId,
+        session_id AS sessionId,
+        user_id AS userId,
+        utm_source AS source,
+        utm_medium AS medium,
+        utm_campaign AS campaign
+      FROM analytics_events
+      WHERE event_ts >= ${windowStart}
+      ORDER BY event_ts DESC
+      LIMIT ${limit}
+    `),
+  ]);
+
+  const activity = activityRows[0];
+  const checkout = checkoutRows[0];
+
+  return {
+    window: {
+      minutes,
+      start: normalizeDateOutput(windowStart),
+      end: normalizeDateOutput(now),
+    },
+    activeVisitors: numberFromUnknown(activity?.activeVisitors ?? 0),
+    activeSessions: numberFromUnknown(activity?.activeSessions ?? 0),
+    activeCheckouts: numberFromUnknown(checkout?.activeCheckouts ?? 0),
+    events: eventRows.map((row) => {
+      const tsValue = row.eventTs instanceof Date ? row.eventTs : new Date(row.eventTs);
+      return {
+        ts: normalizeDateOutput(tsValue),
+        name: row.eventName,
+        pagePath: row.pagePath,
+        visitorId: row.visitorId,
+        sessionId: row.sessionId,
+        userId: row.userId,
+        source: row.source,
+        medium: row.medium,
+        campaign: row.campaign,
+      };
+    }),
   };
 };

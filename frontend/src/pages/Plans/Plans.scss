@@ -47,7 +47,7 @@
   margin: 0;
   max-width: 58ch;
   color: var(--app-text-body);
-  font-size: clamp(1.04rem, 0.96rem + 0.3vw, 1.25rem);
+  font-size: clamp(1.5rem, 1.35rem + 0.4vw, 1.75rem);
   font-weight: 600;
   line-height: 1.5;
 }
@@ -56,7 +56,7 @@
   margin: 0;
   max-width: 60ch;
   color: var(--app-text-muted);
-  font-size: 0.98rem;
+  font-size: 1.4rem;
   font-weight: 600;
   line-height: 1.42;
 }
@@ -72,7 +72,7 @@
   border: 1px solid color-mix(in srgb, var(--app-accent) 34%, transparent);
   background: var(--theme-accent-soft-bg);
   color: var(--app-text-heading);
-  font-size: 0.84rem;
+  font-size: 1.25rem;
   font-weight: 700;
   line-height: 1;
 }
@@ -96,14 +96,14 @@
 
 .plans-proof-item strong {
   color: var(--app-text-heading);
-  font-size: 1rem;
+  font-size: 1.8rem;
   font-weight: 800;
   line-height: 1.1;
 }
 
 .plans-proof-item span {
   color: var(--app-text-muted);
-  font-size: 0.79rem;
+  font-size: 1.25rem;
   font-weight: 600;
   line-height: 1.2;
 }
@@ -125,7 +125,7 @@
   border: 1px solid color-mix(in srgb, var(--app-border) 90%, transparent);
   background: color-mix(in srgb, var(--app-bg-soft) 88%, transparent);
   color: var(--app-text-body);
-  font-size: 0.84rem;
+  font-size: 1.25rem;
   font-weight: 700;
 }
 
@@ -149,7 +149,7 @@
 .plans-hero-side-title {
   margin: 0;
   color: var(--app-text-heading);
-  font-size: 0.92rem;
+  font-size: 1.2rem;
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -183,14 +183,14 @@
   justify-content: center;
   background: var(--theme-accent-soft-bg-2);
   color: var(--app-text-heading);
-  font-size: 0.78rem;
+  font-size: 1.1rem;
   font-weight: 800;
   line-height: 1;
   flex-shrink: 0;
 }
 
 .plans-flow-strip strong {
-  font-size: 0.9rem;
+  font-size: 1.4rem;
   font-weight: 700;
   color: var(--app-text-body);
   line-height: 1.2;
@@ -199,7 +199,7 @@
 .plans-hero-guarantee {
   margin: 0;
   color: var(--app-text-muted);
-  font-size: 0.88rem;
+  font-size: 1.3rem;
   font-weight: 600;
   line-height: 1.4;
 }
@@ -226,7 +226,7 @@
 .plans-grid-heading p {
   margin: 0;
   color: var(--app-text-muted);
-  font-size: 0.92rem;
+  font-size: 1.4rem;
   font-weight: 600;
   line-height: 1.4;
 }

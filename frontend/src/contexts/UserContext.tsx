@@ -152,8 +152,6 @@ const UserContextProvider = (props: any) => {
 
     Sentry.setUser({
       id: String(currentUser.id),
-      username: currentUser.username,
-      email: currentUser.email,
     });
     Sentry.setTag("user_role", currentUser.role);
     Sentry.setTag("user_verified", String(Boolean(currentUser.verified)));

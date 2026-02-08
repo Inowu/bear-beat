@@ -7,3 +7,15 @@
 # En CI, CRA trata warnings como errores; desactivar para que el build termine
 [build.environment]
   CI = "false"
+  REACT_APP_ENVIRONMENT = "production"
+
+  # PayPal (clientId es público; requerido para que se rendericen los botones)
+  REACT_APP_PAYPAL_CLIENT_ID = "AYuKvAI09TE9bk9k1TuzodZ2zWQFpWEZesT65IkT4WOws9wq-yfeHLj57kEBH6YR_8NgBUlLShj2HOSr"
+  REACT_APP_PAYPAL_CLIENT_TEST_ID = "Afu3XeDQNkiDP08dsJuEjeQf6swc8hW6nBPdhXljD0Ra0XK5bewP2EGrbcei3u0-Fx_tcKUZDWuZWuWC"
+
+  # Hotjar (2026) puede venir como tag de Contentsquare UXA.
+  # No es un secreto (es un ID de tag / script público).
+  REACT_APP_CONTENTSQUARE_TAG_ID = "6e820b371a0f9"
+  REACT_APP_HOTJAR_ENABLED = "1"
+  # 0 = solo conversión (recomendado) | 1 = todo el sitio (excepto /admin)
+  REACT_APP_UX_TRACK_ALL = "0"

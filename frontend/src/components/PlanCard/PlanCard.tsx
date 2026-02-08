@@ -1,14 +1,14 @@
-import { IOxxoData, IPlans, ISpeiData } from "../../interfaces/Plans";
+import { IPlans, ISpeiData } from "../../interfaces/Plans";
 import "./PlanCard.scss";
 import { useLocation, useNavigate } from "react-router-dom";
 import React, { useCallback, useEffect, useState } from "react";
 import trpc from "../../api";
 import { manychatApi } from "../../api/manychat";
 import {
+  CancellationReasonModal,
+  type CancellationReasonCode,
   ChangeSubscriptionModal,
-  ConditionModal,
   ErrorModal,
-  OxxoModal,
   SpeiModal,
   SuccessModal
 } from "../../components/Modals";
@@ -18,6 +18,7 @@ import { useCookies } from "react-cookie";
 import { trackPurchase, trackViewPlans } from "../../utils/facebookPixel";
 import { trackManyChatConversion, trackManyChatPurchase, MC_EVENTS } from "../../utils/manychatPixel";
 import { generateEventId } from "../../utils/marketingIds";
+import { GROWTH_METRICS, getGrowthAttribution, trackGrowthMetric } from "../../utils/growthMetrics";
 import { Download, FolderOpen, HeartCrack, Music, Unlock, Zap } from "lucide-react";
 
 // Copy persuasivo CRO: texto aburrido → gancho emocional
@@ -68,15 +69,13 @@ interface PlanCardPropsI {
   userEmail?: string;
   userPhone?: string;
   showRecommendedBadge?: boolean;
-}
-function PlanCard(props: PlanCardPropsI) {
-  const { plan, currentPlan, getCurrentPlan, userEmail, userPhone, showRecommendedBadge = true } = props;
-  const [showOxxoModal, setShowOxxoModal] = useState<boolean>(false);
-  const [oxxoData, setOxxoData] = useState({} as IOxxoData);
-  const [showSpeiModal, setShowSpeiModal] = useState<boolean>(false);
-  const [speiData, setSpeiData] = useState({} as ISpeiData);
-  const [showSuccess, setShowSuccess] = useState<boolean>(false);
-  const [showCancelModal, setShowCancelModal] = useState<boolean>(false);
+	}
+	function PlanCard(props: PlanCardPropsI) {
+	  const { plan, currentPlan, getCurrentPlan, userEmail, userPhone, showRecommendedBadge = true } = props;
+	  const [showSpeiModal, setShowSpeiModal] = useState<boolean>(false);
+	  const [speiData, setSpeiData] = useState({} as ISpeiData);
+	  const [showSuccess, setShowSuccess] = useState<boolean>(false);
+	  const [showCancelModal, setShowCancelModal] = useState<boolean>(false);
   const [showChangeModal, setShowChangeModal] = useState<boolean>(false);
   const [showError, setShowError] = useState<boolean>(false);
   const [ppPlan, setppPlan] = useState<null | any>(null);
@@ -116,28 +115,30 @@ function PlanCard(props: PlanCardPropsI) {
   }
 
   const handleCancelModal = () => {
-    setShowCancelModal(!showCancelModal);
+    const next = !showCancelModal;
+    setShowCancelModal(next);
+    if (next) {
+      trackGrowthMetric(GROWTH_METRICS.SUBSCRIPTION_CANCEL_STARTED, {
+        surface: pathname === "/actualizar-planes" ? "plan_upgrade" : "plans",
+        planId: plan.id,
+        currency: (plan.moneda ?? "USD").toUpperCase(),
+        amount: Number(plan.price) || null,
+      });
+    }
   };
   const handleChangeModal = () => {
     setChangeMessage(`¿Estás seguro que quieres cambiar al plan de: "${plan.name}" de $${plan.price} ${plan.moneda}? Deberás pagar la diferencia de precio.`);
     setChangeTitle("Cambio de plan");
     setShowChangeModal(!showChangeModal);
   };
-  const handleErrorModal = () => {
-    setShowError(!showError);
-  };
-  const handleOxxoModal = async () => {
-    let tempOxxo = !showOxxoModal;
-    setShowOxxoModal(tempOxxo);
-    if (tempOxxo) {
-      handleManyChat();
-    }
-  };
-  const openSuccess = () => {
-    setShowSuccess(true);
-  };
-  const closeSuccess = () => {
-    setShowSuccess(false);
+	  const handleErrorModal = () => {
+	    setShowError(!showError);
+	  };
+	  const openSuccess = () => {
+	    setShowSuccess(true);
+	  };
+	  const closeSuccess = () => {
+	    setShowSuccess(false);
     if (pathname === "/actualizar-planes") {
       getCurrentPlan();
     } else {
@@ -166,66 +167,69 @@ function PlanCard(props: PlanCardPropsI) {
       handleErrorModal();
     }
   };
-  const finishSubscription = async () => {
+  const finishSubscription = async (reasonCode: CancellationReasonCode, reasonText: string) => {
     trackManyChatConversion(MC_EVENTS.CANCEL_SUBSCRIPTION);
     try {
-      await trpc.subscriptions.requestSubscriptionCancellation.mutate();
+      await trpc.subscriptions.requestSubscriptionCancellation.mutate({
+        reasonCode,
+        reasonText: reasonText?.trim() ? reasonText.trim() : null,
+        attribution: getGrowthAttribution(),
+      });
+      trackGrowthMetric(GROWTH_METRICS.SUBSCRIPTION_CANCEL_CONFIRMED, {
+        surface: pathname === "/actualizar-planes" ? "plan_upgrade" : "plans",
+        planId: plan.id,
+        reasonCode,
+      });
       openSuccess();
       setSuccessMessage("Su suscripción se ha cancelado con éxito.");
       setSuccessTitle("Suscripción Cancelada");
     } catch (error: any) {
-      setErrorMSG(error.message);
-      handleErrorModal();
-    }
-  };
-
-  const retreivePaypalPlan = useCallback(async () => {
-    let body = {
-      where: {
-        activated: 1,
-        stripe_prod_id: null,
-        stripe_prod_id_test: '',
-        moneda: plan.moneda.toUpperCase(),
-        price: +plan.price,
-      },
-    };
-    try {
-      const plans: any = await trpc.plans.findManyPlans.query(body);
-      if (plans.length > 0) {
-        setppPlan(plans[0]);
-      }
-    } catch {
-      // noop
-    }
-  }, [plan]
-  )
-
-  const handleButtonClick = () => {
-    // fbq('track', 'CarritoAbandonado');
-    // manyChatPixel.track('PageView');
-  };
-  const payWithOxxo = async () => {
-    handleUserClickOnPlan();
-    trpc.checkoutLogs.registerCheckoutLog.mutate();
-    try {
-      let body = {
+      trackGrowthMetric(GROWTH_METRICS.SUBSCRIPTION_CANCEL_FAILED, {
+        surface: pathname === "/actualizar-planes" ? "plan_upgrade" : "plans",
         planId: plan.id,
-        paymentMethod: "cash" as const,
-      };
-      const oxxoPay =
-        await trpc.subscriptions.subscribeWithCashConekta.mutate(body);
-      handleOxxoModal();
-      setOxxoData(oxxoPay);
-      handleButtonClick();
-    } catch (error: any) {
-      setErrorMSG(error.message);
-      handleErrorModal();
+        reasonCode,
+        reason: error?.message ?? "unknown-error",
+      });
+      throw error;
     }
   };
-  const payWithSpei = async () => {
-    trackManyChatConversion(MC_EVENTS.CLICK_SPEI);
-    handleUserClickOnPlan();
-    trpc.checkoutLogs.registerCheckoutLog.mutate();
+
+	  const retreivePaypalPlan = useCallback(async () => {
+	    // If this plan already has PayPal config, use it directly.
+	    if (plan.paypal_plan_id || plan.paypal_plan_id_test) {
+	      setppPlan(plan);
+	      return;
+	    }
+
+	    // Otherwise, try to find a sibling plan (same currency/price) that has PayPal IDs.
+	    const body = {
+	      where: {
+	        activated: 1,
+	        moneda: (plan.moneda ?? "").toLowerCase(),
+	        price: +plan.price,
+	        OR: [
+	          { paypal_plan_id: { not: null } },
+	          { paypal_plan_id_test: { not: null } },
+	        ],
+	      },
+	    };
+	    try {
+	      const plans: IPlans[] = await trpc.plans.findManyPlans.query(body as any);
+	      const match = plans.find((p) => Boolean(p.paypal_plan_id || p.paypal_plan_id_test)) ?? null;
+	      setppPlan(match);
+	    } catch {
+	      // noop
+	    }
+	  }, [plan]);
+
+	  const handleButtonClick = () => {
+	    // fbq('track', 'CarritoAbandonado');
+	    // manyChatPixel.track('PageView');
+	  };
+	  const payWithSpei = async () => {
+	    trackManyChatConversion(MC_EVENTS.CLICK_SPEI);
+	    handleUserClickOnPlan();
+	    trpc.checkoutLogs.registerCheckoutLog.mutate();
     try {
       let body = {
         planId: plan.id,
@@ -269,6 +273,13 @@ function PlanCard(props: PlanCardPropsI) {
       currency: (plan.moneda || "USD").toUpperCase(),
       eventId,
     });
+    trackGrowthMetric(GROWTH_METRICS.PAYMENT_SUCCESS, {
+      planId: ppPlan?.id ?? plan.id,
+      amount: Number(plan.price) || 0,
+      value: Number(plan.price) || 0,
+      currency: (plan.moneda || "USD").toUpperCase(),
+      eventId,
+    });
     trackManyChatConversion(MC_EVENTS.PAYMENT_SUCCESS);
     if ((Number(plan.price) || 0) > 0) {
       trackManyChatPurchase(
@@ -295,21 +306,21 @@ function PlanCard(props: PlanCardPropsI) {
   const unitPricePerGb = planGigasValue > 0 ? planPriceValue / planGigasValue : null;
   const unitPriceLabel = unitPricePerGb !== null ? formatPlanCurrency(unitPricePerGb, planCurrency) : null;
   const formattedPlanPrice = formatPlanCurrency(planPriceValue, planCurrency);
-  const paymentSummary = isMxn
-    ? "SPEI, OXXO o Tarjeta"
-    : showPaypalOption
-      ? "Tarjeta o PayPal"
-      : "Tarjeta internacional";
+	  const paymentSummary = isMxn
+	    ? "SPEI o Tarjeta"
+	    : showPaypalOption
+	      ? "Tarjeta o PayPal"
+	      : "Tarjeta internacional";
   const targetAudience = isMxn ? "Pago local en MXN" : "Pago internacional en USD";
   const displayDescription = isMxn
     ? "Ideal para DJs en México que quieren activar rápido y cobrar sin fricción."
     : "Ideal para DJs fuera de México que prefieren pago en USD.";
-  const primaryCtaLabel = isMxn ? "Activar plan MXN" : "Activar plan USD";
-  const paymentLogos: PaymentMethodId[] = isMxn
-    ? ["visa", "mastercard", "amex", "spei", "oxxo"]
-    : showPaypalOption
-      ? ["visa", "mastercard", "amex", "paypal"]
-      : ["visa", "mastercard", "amex"];
+	  const primaryCtaLabel = isMxn ? "Activar plan MXN" : "Activar plan USD";
+	  const paymentLogos: PaymentMethodId[] = isMxn
+	    ? ["visa", "mastercard", "amex", "spei"]
+	    : showPaypalOption
+	      ? ["visa", "mastercard", "amex", "paypal"]
+	      : ["visa", "mastercard", "amex"];
 
   return (
     <div className={"plan-card-wrapper plan-card-monolith " + (plan.moneda === "usd" ? "resp-plan " : "")}>
@@ -368,22 +379,19 @@ function PlanCard(props: PlanCardPropsI) {
               >
                 <Unlock aria-hidden /> {primaryCtaLabel}
               </button>
-                  {(isMxn || showPaypalOption) && (
-                    <div className="plan-card-secondary-payment">
-                      <span className="plan-card-secondary-label">O paga con:</span>
-                      <div className="plan-card-secondary-buttons">
-                        {isMxn && (
-                          <>
-                            <button type="button" className="plan-card-btn-outline" onClick={payWithSpei}>
-                              SPEI
-                            </button>
-                            <button type="button" className="plan-card-btn-outline" onClick={payWithOxxo}>
-                              OXXO
-                            </button>
-                          </>
-                        )}
-                        {showPaypalOption && (
-                          <PayPalComponent
+	                  {(isMxn || showPaypalOption) && (
+	                    <div className="plan-card-secondary-payment">
+	                      <span className="plan-card-secondary-label">O paga con:</span>
+	                      <div className="plan-card-secondary-buttons">
+	                        {isMxn && (
+	                          <>
+	                            <button type="button" className="plan-card-btn-outline" onClick={payWithSpei}>
+	                              SPEI (recurrente)
+	                            </button>
+	                          </>
+	                        )}
+	                        {showPaypalOption && (
+	                          <PayPalComponent
                             plan={ppPlan!}
                             type="subscription"
                             onApprove={successSubscription}
@@ -406,31 +414,32 @@ function PlanCard(props: PlanCardPropsI) {
           <p className="plan-card-confidence">Activación guiada por chat después del pago.</p>
         </div>
       </div>
-      <ConditionModal
-        title={"Cancelación de suscripción"}
-        message={"¿Estás seguro que quieres cancelar tu suscripción?"}
+      <CancellationReasonModal
+        title="Cancelación de suscripción"
+        message="Antes de irte, dinos por qué cancelas (nos ayuda a mejorar)."
         show={showCancelModal}
         onHide={handleCancelModal}
-        action={finishSubscription}
+        onReasonChange={(reasonCode) => {
+          trackGrowthMetric(GROWTH_METRICS.SUBSCRIPTION_CANCEL_REASON_SELECTED, {
+            surface: pathname === "/actualizar-planes" ? "plan_upgrade" : "plans",
+            planId: plan.id,
+            reasonCode,
+          });
+        }}
+        onConfirm={({ reasonCode, reasonText }) => finishSubscription(reasonCode, reasonText)}
       />
-      <ChangeSubscriptionModal
-        title={changeTitle}
-        message={changeMessage}
-        show={showChangeModal}
-        onHide={handleChangeModal}
-        action={changePlan}
-        plan={plan}
-      />
-      <OxxoModal
-        show={showOxxoModal}
-        onHide={handleOxxoModal}
-        price={plan.price}
-        oxxoData={oxxoData}
-      />
-      <SpeiModal
-        show={showSpeiModal}
-        onHide={() => {
-          setShowSpeiModal(false);
+	      <ChangeSubscriptionModal
+	        title={changeTitle}
+	        message={changeMessage}
+	        show={showChangeModal}
+	        onHide={handleChangeModal}
+	        action={changePlan}
+	        plan={plan}
+	      />
+	      <SpeiModal
+	        show={showSpeiModal}
+	        onHide={() => {
+	          setShowSpeiModal(false);
         }}
         price={plan.price}
         speiData={speiData}

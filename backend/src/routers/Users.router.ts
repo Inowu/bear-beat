@@ -206,7 +206,15 @@ export const usersRouter = router({
 
       try {
         log.info(`[BLOCK_USER] Canceling subscription for user ${userId}`);
-        await cancelServicesSubscriptions({ prisma, user });
+        await cancelServicesSubscriptions({
+          prisma,
+          user,
+          cancellation: {
+            reasonCode: 'admin_blocked',
+            reasonText: null,
+            attribution: null,
+          },
+        });
       } catch (e) {
         log.error(
           `[BLOCK_USER] Error cancelling subscription for user ${userId}, ${e}`,

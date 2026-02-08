@@ -3,7 +3,9 @@ import { z } from 'zod';
 import {
   analyticsEventBatchSchema,
   getAnalyticsBusinessMetrics,
+  getAnalyticsCancellationReasons,
   getAnalyticsHealthAlerts,
+  getAnalyticsLiveSnapshot,
   getAnalyticsTopEvents,
   getAnalyticsAttributionBreakdown,
   getAnalyticsDailySeries,
@@ -54,6 +56,20 @@ const analyticsTopEventsInputSchema = z
 const analyticsAlertsInputSchema = z
   .object({
     days: z.number().int().min(7).max(365).optional(),
+  })
+  .optional();
+
+const analyticsCancellationReasonsInputSchema = z
+  .object({
+    days: z.number().int().min(7).max(365).optional(),
+    topCampaigns: z.number().int().min(1).max(10).optional(),
+  })
+  .optional();
+
+const analyticsLiveSnapshotInputSchema = z
+  .object({
+    minutes: z.number().int().min(1).max(120).optional(),
+    limit: z.number().int().min(1).max(500).optional(),
   })
   .optional();
 
@@ -138,5 +154,21 @@ export const analyticsRouter = router({
     .query(async ({ ctx, input }) => {
       assertAdminRole(ctx.session?.user?.role);
       return getAnalyticsHealthAlerts(ctx.prisma, input?.days);
+    }),
+  getAnalyticsCancellationReasons: shieldedProcedure
+    .input(analyticsCancellationReasonsInputSchema)
+    .query(async ({ ctx, input }) => {
+      assertAdminRole(ctx.session?.user?.role);
+      return getAnalyticsCancellationReasons(
+        ctx.prisma,
+        input?.days,
+        input?.topCampaigns,
+      );
+    }),
+  getAnalyticsLiveSnapshot: shieldedProcedure
+    .input(analyticsLiveSnapshotInputSchema)
+    .query(async ({ ctx, input }) => {
+      assertAdminRole(ctx.session?.user?.role);
+      return getAnalyticsLiveSnapshot(ctx.prisma, input?.minutes, input?.limit);
     }),
 });

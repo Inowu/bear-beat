@@ -3,46 +3,92 @@
 
 .container-error-modal {
   .modal-dialog {
+    max-width: 520px;
     .modal-content {
-      flex-direction: row;
+      background: transparent;
+      border: none;
     }
   }
-  .modal-container {
-    .header .title {
-      margin: 0;
-      color: var(--app-status-error);
-      font-size: var(--app-font-size-h2);
-      font-weight: var(--app-font-weight-heading-strong);
-      font-family: "Poppins", sans-serif;
+}
+
+.error-modal {
+  .error-modal__title-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .error-modal__icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 45, 44, 0.12);
+    color: var(--app-status-error);
+    flex-shrink: 0;
+  }
+
+  .header .title {
+    margin: 0;
+    color: var(--app-text-heading);
+    font-size: 2rem;
+    font-weight: var(--app-font-weight-heading-strong);
+    font-family: "Poppins", sans-serif;
+    line-height: 1.15;
+  }
+
+  .error-modal__close {
+    background: transparent;
+    border: 1px solid color-mix(in srgb, var(--app-border) 86%, transparent);
+    color: var(--app-text-muted);
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+
+    &:hover {
+      background: var(--theme-accent-soft-bg);
+      border-color: color-mix(in srgb, var(--app-accent) 40%, transparent);
+      color: var(--app-text-heading);
     }
-    .header .icon {
-      color: var(--app-status-error);
-      min-width: 48px;
-      min-height: 48px;
-      &:hover {
-        color: var(--app-text-heading);
-      }
-    }
-    .bottom {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-    .bottom .content {
-      margin: 0;
-      color: var(--app-text-body);
-      font-size: var(--app-font-size-body);
-      line-height: 1.5;
-    }
-    .bottom .content + .content {
-      margin-top: 0;
-    }
-    .bottom .button-container-2 {
-      margin-top: 0.5rem;
-    }
-    .bottom button {
-      font-size: var(--app-font-size-body);
-      min-height: 48px;
-    }
+  }
+
+  .bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .bottom .content {
+    margin: 0;
+    color: var(--app-text-body);
+    font-size: 1.4rem;
+    line-height: 1.55;
+  }
+
+  .error-modal__hint {
+    margin: 0;
+    color: var(--app-text-muted);
+    font-size: 1.25rem;
+    line-height: 1.45;
+  }
+
+  .bottom .button-container-2 {
+    margin-top: 6px;
+    flex-wrap: wrap;
+  }
+
+  .bottom button {
+    font-size: 1.3rem;
+    min-height: 48px;
   }
 }

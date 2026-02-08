@@ -1,0 +1,65 @@
+@import "src/styles/_variables-theme.scss";
+
+.live-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.live-toolbar__field {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--ad-text-muted);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.live-toolbar__field select,
+.live-toolbar__field input {
+  min-height: 40px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--ad-input-border) 88%, transparent);
+  background: color-mix(in srgb, var(--ad-input-bg) 96%, transparent);
+  color: var(--ad-title);
+  padding: 0 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.live-toolbar__field input {
+  width: 180px;
+}
+
+.live-toolbar__btn {
+  min-height: 40px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--ad-border) 75%, transparent);
+  background: color-mix(in srgb, var(--ad-card) 92%, transparent);
+  color: var(--ad-title);
+  padding: 0 14px;
+  font-size: 0.92rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.live-toolbar__btn--primary {
+  border-color: color-mix(in srgb, var(--ad-accent) 56%, transparent);
+  background: var(--app-gradient);
+  color: var(--app-btn-text);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.live-toolbar__btn:disabled {
+  opacity: 0.66;
+  cursor: not-allowed;
+}
+
+.live-toolbar__btn .is-spinning {
+  animation: analytics-spin 1s linear infinite;
+}
+

@@ -3,13 +3,12 @@ import { useUserContext } from "../../contexts/UserContext";
 import { useLocation, Link } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import trpc from "../../api";
-import { IOxxoData, IPlans, ISpeiData } from "interfaces/Plans";
+import { IPlans, ISpeiData } from "interfaces/Plans";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 import { manychatApi } from "../../api/manychat";
 import { Spinner } from "../../components/Spinner/Spinner";
 import { Check, CreditCard, Landmark, Lock, ShieldCheck } from "lucide-react";
 import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
-import { OxxoModal } from "../../components/Modals/OxxoModal/OxxoModal";
 import { SpeiModal } from "../../components/Modals/SpeiModal/SpeiModal";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../utils/growthMetrics";
 import { SUPPORT_CHAT_URL } from "../../utils/supportChat";
@@ -18,7 +17,7 @@ import { useCookies } from "react-cookie";
 import { trackInitiateCheckout } from "../../utils/facebookPixel";
 import { generateEventId } from "../../utils/marketingIds";
 
-type CheckoutMethod = "card" | "spei" | "oxxo";
+type CheckoutMethod = "card" | "spei";
 
 const METHOD_META: Record<
   CheckoutMethod,
@@ -30,14 +29,9 @@ const METHOD_META: Record<
     Icon: CreditCard,
   },
   spei: {
-    label: "SPEI",
-    description: "Transferencia bancaria en MXN",
+    label: "SPEI (recurrente)",
+    description: "Transferencia bancaria (CLABE reutilizable)",
     Icon: Landmark,
-  },
-  oxxo: {
-    label: "OXXO",
-    description: "Paga en efectivo con referencia",
-    Icon: ShieldCheck,
   },
 };
 
@@ -49,8 +43,6 @@ function Checkout() {
   const [selectedMethod, setSelectedMethod] = useState<CheckoutMethod>("card");
   const [processingMethod, setProcessingMethod] = useState<CheckoutMethod | null>(null);
   const [inlineError, setInlineError] = useState<string | null>(null);
-  const [showOxxoModal, setShowOxxoModal] = useState(false);
-  const [oxxoData, setOxxoData] = useState<IOxxoData | null>(null);
   const [showSpeiModal, setShowSpeiModal] = useState(false);
   const [speiData, setSpeiData] = useState<ISpeiData | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -68,7 +60,7 @@ function Checkout() {
 
   const isMxnPlan = plan?.moneda?.toUpperCase() === "MXN";
   const availableMethods = useMemo<CheckoutMethod[]>(
-    () => (isMxnPlan ? ["card", "spei", "oxxo"] : ["card"]),
+    () => (isMxnPlan ? ["card", "spei"] : ["card"]),
     [isMxnPlan]
   );
 
@@ -114,6 +106,7 @@ function Checkout() {
         method: selectedMethod,
         planId: plan?.id ?? null,
         currency: plan?.moneda?.toUpperCase() ?? null,
+        amount: Number(plan?.price) || null,
       });
     },
     [plan?.id, plan?.moneda, selectedMethod]
@@ -128,9 +121,7 @@ function Checkout() {
     setShowRedirectHelp(false);
     setInlineError(null);
     setSelectedMethod("card");
-    setOxxoData(null);
     setSpeiData(null);
-    setShowOxxoModal(false);
     setShowSpeiModal(false);
     if (priceId) getPlans(priceId);
     else setPlan(null);
@@ -143,6 +134,7 @@ function Checkout() {
     trackGrowthMetric(GROWTH_METRICS.CHECKOUT_STARTED, {
       planId: plan.id,
       currency: plan.moneda?.toUpperCase() ?? null,
+      amount: Number(plan.price) || null,
     });
     setSelectedMethod(plan.moneda?.toUpperCase() === "MXN" ? "spei" : "card");
   }, [plan, checkManyChat]);
@@ -196,6 +188,8 @@ function Checkout() {
     trackGrowthMetric(GROWTH_METRICS.CHECKOUT_METHOD_SELECTED, {
       method: "card",
       planId: plan.id,
+      currency,
+      amount: value,
     });
 
     try {
@@ -223,7 +217,7 @@ function Checkout() {
         /mutation.*procedure|createStripeCheckoutSession/i.test(msg);
       setErrorMessage(
         isProcedureMissing
-          ? "El pago con tarjeta no está disponible en este momento. Intenta SPEI/OXXO o abre soporte por chat."
+          ? "El pago con tarjeta no está disponible en este momento. Intenta SPEI (recurrente) o abre soporte por chat."
           : msg || "Error al preparar el pago. Intenta de nuevo."
       );
       setShowError(true);
@@ -233,17 +227,19 @@ function Checkout() {
   }, [priceId, plan?.id]);
 
   const startCashCheckout = useCallback(
-    async (method: "spei" | "oxxo") => {
+    async () => {
       if (!plan?.id) return;
       interactedRef.current = true;
-      setProcessingMethod(method);
+      setProcessingMethod("spei");
       setInlineError(null);
-      trackManyChatConversion(method === "spei" ? MC_EVENTS.CLICK_SPEI : MC_EVENTS.CLICK_OXXO);
+      trackManyChatConversion(MC_EVENTS.CLICK_SPEI);
       trackManyChatConversion(MC_EVENTS.CLICK_BUY);
       trackGrowthMetric(GROWTH_METRICS.CHECKOUT_METHOD_SELECTED, {
-        method,
-        planId: plan.id,
-      });
+        method: "spei",
+      planId: plan.id,
+      currency: (plan.moneda?.toUpperCase() || "USD").toUpperCase(),
+      amount: Number(plan.price) || null,
+    });
 
       try {
         await trpc.checkoutLogs.registerCheckoutLog.mutate();
@@ -254,16 +250,11 @@ function Checkout() {
       try {
         const response = await trpc.subscriptions.subscribeWithCashConekta.mutate({
           planId: plan.id,
-          paymentMethod: method === "spei" ? "spei" : "cash",
+          paymentMethod: "spei",
         });
         checkoutHandedOffRef.current = true;
-        if (method === "spei") {
-          setSpeiData(response as ISpeiData);
-          setShowSpeiModal(true);
-        } else {
-          setOxxoData(response as IOxxoData);
-          setShowOxxoModal(true);
-        }
+        setSpeiData(response as ISpeiData);
+        setShowSpeiModal(true);
       } catch (error: any) {
         const msg =
           error?.data?.message ??
@@ -294,6 +285,8 @@ function Checkout() {
       method,
       surface: "selector",
       planId: plan?.id ?? null,
+      currency: plan?.moneda?.toUpperCase() ?? null,
+      amount: Number(plan?.price) || null,
     });
   };
 
@@ -307,9 +300,7 @@ function Checkout() {
       startStripeCheckout();
       return;
     }
-    if (selectedMethod === "spei" || selectedMethod === "oxxo") {
-      startCashCheckout(selectedMethod);
-    }
+    if (selectedMethod === "spei") startCashCheckout();
   };
 
   const discount = 0;
@@ -405,11 +396,11 @@ function Checkout() {
           <div className="checkout-trust-strip" role="list" aria-label="Confianza de pago">
             <span role="listitem"><ShieldCheck size={16} aria-hidden /> Pago seguro</span>
             <span role="listitem"><CreditCard size={16} aria-hidden /> Tarjeta / Stripe</span>
-            {isMxnPlan && <span role="listitem"><Landmark size={16} aria-hidden /> SPEI / OXXO</span>}
+            {isMxnPlan && <span role="listitem"><Landmark size={16} aria-hidden /> SPEI (recurrente)</span>}
             <span role="listitem"><Lock size={16} aria-hidden /> Cifrado bancario</span>
           </div>
           <PaymentMethodLogos
-            methods={isMxnPlan ? ["visa", "mastercard", "amex", "spei", "oxxo"] : ["visa", "mastercard", "amex"]}
+            methods={isMxnPlan ? ["visa", "mastercard", "amex", "spei"] : ["visa", "mastercard", "amex"]}
             className="checkout-payment-logos"
             ariaLabel="Métodos de pago disponibles en checkout"
           />
@@ -482,11 +473,9 @@ function Checkout() {
               disabled={processingMethod !== null}
             >
               {processingMethod === "card" && "Abriendo pasarela segura..."}
-              {processingMethod === "spei" && "Generando referencia SPEI..."}
-              {processingMethod === "oxxo" && "Generando referencia OXXO..."}
+              {processingMethod === "spei" && "Generando referencia SPEI (recurrente)..."}
               {processingMethod === null && selectedMethod === "card" && "Continuar con tarjeta segura"}
-              {processingMethod === null && selectedMethod === "spei" && "Generar referencia SPEI"}
-              {processingMethod === null && selectedMethod === "oxxo" && "Generar referencia OXXO"}
+              {processingMethod === null && selectedMethod === "spei" && "Generar referencia SPEI (recurrente)"}
             </button>
             <p className="checkout-payment-note">
               Si tienes dudas para pagar, te ayudamos por chat en tiempo real:{" "}
@@ -510,14 +499,6 @@ function Checkout() {
           show={showSpeiModal}
           onHide={() => setShowSpeiModal(false)}
           speiData={speiData}
-          price={plan.price}
-        />
-      )}
-      {oxxoData && (
-        <OxxoModal
-          show={showOxxoModal}
-          onHide={() => setShowOxxoModal(false)}
-          oxxoData={oxxoData}
           price={plan.price}
         />
       )}
