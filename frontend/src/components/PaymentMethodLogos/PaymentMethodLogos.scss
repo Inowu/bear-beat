@@ -25,6 +25,8 @@
     max-width: 58px;
     height: 18px;
     object-fit: contain;
+    opacity: 0.98;
+    filter: saturate(1.1) contrast(1.12);
   }
 
   svg {
@@ -56,6 +58,16 @@
   strong {
     font-size: 1.2rem;
   }
+}
+
+.payment-method-logos__item--visa,
+.payment-method-logos__item--mastercard,
+.payment-method-logos__item--amex {
+  border-color: color-mix(in srgb, #ffffff 50%, var(--app-border));
+  background: color-mix(in srgb, #ffffff 92%, var(--app-bg-card));
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.55) inset,
+    0 12px 20px rgba(0, 0, 0, 0.12);
 }
 
 .payment-method-logos__item--paypal {

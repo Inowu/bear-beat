@@ -12,12 +12,10 @@ import {
   Shield,
   Gauge,
   TimerReset,
-  DownloadCloud,
   FolderOpen,
   MessageCircle,
   Monitor,
   Moon,
-  BadgeCheck,
   Sun,
   Target,
   Music2,
@@ -28,7 +26,6 @@ import {
   Zap,
 } from "lucide-react";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
-import { SUPPORT_CHAT_URL } from "../../utils/supportChat";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../utils/growthMetrics";
 import { FALLBACK_GENRES, type GenreStats } from "./fallbackGenres";
 import PaymentMethodLogos from "../../components/PaymentMethodLogos/PaymentMethodLogos";
@@ -61,8 +58,6 @@ const EXCHANGE_RATES_API_URL = "https://open.er-api.com/v6/latest/USD";
 const GEO_IP_LOOKUP_URL = "https://ipwho.is/?fields=success,country_code,currency";
 const LOCAL_ESTIMATE_REFRESH_MS = 10 * 60 * 1000;
 const LOCAL_ESTIMATE_REQUEST_TIMEOUT_MS = 3_500;
-const GUIDE_PDF_URL = "/guia-descarga-bear-beat-2026.pdf";
-const GUIDE_PDF_FILENAME = "guia-descarga-bear-beat-2026.pdf";
 const GENRE_PAGE_SIZE = 18;
 const GENRE_AUTO_ROTATE_MS = 5_800;
 const TOP_DOWNLOADS_LIMIT = 100;
@@ -245,45 +240,24 @@ const SEGMENT_PROFILES: Record<
     label: "DJ Amateur",
     title: "Evita decir \"no la tengo\" en tus primeras fechas.",
     summary: "Empieza con una librería estructurada para responder rápido en cada evento.",
-    recommendedPath: "Empieza por plan México y activa checklist de cabina.",
+    recommendedPath: "Carpetas listas: género → año → mes. Encuentra en segundos.",
     cta: "Quiero empezar sin fallar",
   },
   "semi-pro": {
     label: "DJ Semi-Pro",
     title: "Sube tu estándar y reduce el estrés en cabina.",
     summary: "Ten repertorio actualizado y carpetas listas por género, año y mood.",
-    recommendedPath: "Activa plan de trabajo semanal con nuevas descargas.",
+    recommendedPath: "Video Remixes listos por género, año y mes. Nuevos cada semana.",
     cta: "Quiero escalar mi set",
   },
   pro: {
     label: "DJ Pro",
     title: "Protege tu reputación en vivo, evento tras evento.",
     summary: "Convierte la preparación en sistema: menos improvisación, más control.",
-    recommendedPath: "Asegura flujo pro con onboarding y automatización de rutinas.",
+    recommendedPath: "Sistema pro: prepara, descarga y toca sin fallar.",
     cta: "Quiero blindar mi reputación",
   },
 };
-
-const TESTIMONIAL_PATTERNS = [
-  {
-    city: "CDMX",
-    djType: "DJ social",
-    result: "+3 horas ahorradas por evento",
-    quote: "Pasé de improvisar búsquedas a llegar con carpetas listas por género.",
-  },
-  {
-    city: "Guadalajara",
-    djType: "DJ de antro",
-    result: "Menos interrupciones en cabina",
-    quote: "Ahora respondo pedidos más rápido y mantengo la pista sin cortes.",
-  },
-  {
-    city: "Monterrey",
-    djType: "DJ móvil",
-    result: "Más confianza para cerrar eventos",
-    quote: "La estructura del catálogo me ayuda a vender seguridad al cliente.",
-  },
-];
 
 const VALUE_EQUATION = [
   {
@@ -293,7 +267,7 @@ const VALUE_EQUATION = [
   },
   {
     title: "Tiempo corto",
-    detail: "Primer valor en menos de 10 minutos después del pago.",
+    detail: "Activa y descarga en minutos después del pago, con guía por chat.",
     Icon: TimerReset,
   },
   {
@@ -548,8 +522,6 @@ function PublicHome() {
   const [genreQuery, setGenreQuery] = useState("");
   const [genrePage, setGenrePage] = useState(0);
   const [genreAutoPlay, setGenreAutoPlay] = useState(true);
-  const [guideDownloadLoading, setGuideDownloadLoading] = useState(false);
-  const [guideDownloadNotice, setGuideDownloadNotice] = useState<string | null>(null);
   const [topDownloadsLoading, setTopDownloadsLoading] = useState(false);
   const [topDownloadsError, setTopDownloadsError] = useState<string | null>(null);
   const [topDownloads, setTopDownloads] = useState<PublicTopDownloadsResponse | null>(null);
@@ -589,10 +561,6 @@ function PublicHome() {
     }
     return FALLBACK_GENRES;
   }, [catalogSummaryError, catalogSummaryGenres]);
-  const genresAreFallback =
-    Boolean(catalogSummaryError) ||
-    !Array.isArray(catalogSummaryGenres) ||
-    catalogSummaryGenres.length === 0;
   const normalizedGenreQuery = genreQuery.trim().toLocaleLowerCase("es-MX");
   const isSearchingGenres = normalizedGenreQuery.length > 0;
   const filteredGenres = useMemo(() => {
@@ -612,8 +580,6 @@ function PublicHome() {
   const currentGenrePage = Math.min(genrePage, Math.max(totalGenrePages - 1, 0));
   const visibleGenres = genrePages[currentGenrePage] ?? [];
   const firstGenreIndex = visibleGenres.length > 0 ? currentGenrePage * GENRE_PAGE_SIZE + 1 : 0;
-  const lastGenreIndex = visibleGenres.length > 0 ? firstGenreIndex + visibleGenres.length - 1 : 0;
-  const filteredGenresLabel = filteredGenres.length.toLocaleString("es-MX");
   const topAudioCountLabel = topDownloads ? topDownloads.audio.length.toLocaleString("es-MX") : "—";
   const topVideoCountLabel = topDownloads ? topDownloads.video.length.toLocaleString("es-MX") : "—";
   const topKaraokeCountLabel = topDownloads ? topDownloads.karaoke.length.toLocaleString("es-MX") : "—";
@@ -702,15 +668,6 @@ function PublicHome() {
     if (!localPriceEstimate.currency || localPriceEstimate.mxnPlanLocal === null) return null;
     return formatCurrencyAmount(localPriceEstimate.mxnPlanLocal, localPriceEstimate.currency, localPriceEstimate.locale);
   }, [localPriceEstimate.currency, localPriceEstimate.locale, localPriceEstimate.mxnPlanLocal]);
-  const localEstimateDateLabel = useMemo(() => {
-    if (!localPriceEstimate.updatedAt) return null;
-    const parsedDate = new Date(localPriceEstimate.updatedAt);
-    if (Number.isNaN(parsedDate.getTime())) return null;
-    return parsedDate.toLocaleString(localPriceEstimate.locale, {
-      dateStyle: "medium",
-      timeStyle: "short",
-    });
-  }, [localPriceEstimate.locale, localPriceEstimate.updatedAt]);
 
   const hasLiveCatalog = Boolean(catalogSummary && !catalogSummary.error);
   const effectiveTotalGB = hasLiveCatalog ? Number(catalogSummary?.totalGB ?? 0) : CATALOG_TOTAL_GB;
@@ -734,15 +691,6 @@ function PublicHome() {
   const audiosGbLabel = `${effectiveAudiosGB.toLocaleString("es-MX", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} GB`;
   const karaokesLabel = effectiveKaraokes.toLocaleString("es-MX");
   const karaokesGbLabel = `${effectiveKaraokesGB.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GB`;
-  const catalogUpdatedLabel = useMemo(() => {
-    if (!catalogSummary?.generatedAt) return null;
-    const parsedDate = new Date(catalogSummary.generatedAt);
-    if (Number.isNaN(parsedDate.getTime())) return null;
-    return parsedDate.toLocaleString("es-MX", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    });
-  }, [catalogSummary?.generatedAt]);
 
   useEffect(() => {
     trackManyChatConversion(MC_EVENTS.VIEW_HOME);
@@ -809,41 +757,6 @@ function PublicHome() {
       trackManyChatConversion(MC_EVENTS.CLICK_PLAN_MXN);
     }
     trackGrowthMetric(GROWTH_METRICS.CHECKOUT_STARTED, { currency, segment });
-  };
-
-  const handleLeadMagnetDownload = () => {
-    trackManyChatConversion(MC_EVENTS.DOWNLOAD_CHECKLIST);
-    trackGrowthMetric(GROWTH_METRICS.LEAD_MAGNET_DOWNLOAD, { segment });
-  };
-
-  const handleGuideDownload = async (event: React.MouseEvent<HTMLAnchorElement>) => {
-    event.preventDefault();
-    if (guideDownloadLoading) return;
-
-    handleLeadMagnetDownload();
-    setGuideDownloadLoading(true);
-    setGuideDownloadNotice(null);
-
-    try {
-      const response = await fetch(GUIDE_PDF_URL, { cache: "no-store" });
-      if (!response.ok) {
-        throw new Error("GUIDE_UNAVAILABLE");
-      }
-      const fileBlob = await response.blob();
-      const objectUrl = window.URL.createObjectURL(fileBlob);
-      const anchor = document.createElement("a");
-      anchor.href = objectUrl;
-      anchor.download = GUIDE_PDF_FILENAME;
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-      window.URL.revokeObjectURL(objectUrl);
-    } catch {
-      window.open(GUIDE_PDF_URL, "_blank", "noopener,noreferrer");
-      setGuideDownloadNotice("Si no inicia la descarga automática, guarda el PDF desde la pestaña que se abrió.");
-    } finally {
-      setGuideDownloadLoading(false);
-    }
   };
 
   const loadTopDownloads = useCallback(async () => {
@@ -1094,12 +1007,6 @@ function PublicHome() {
           <Link to="/" className="ph__nav-logo">
             <img src={Logo} alt="Bear Beat" />
           </Link>
-          <nav className="ph__nav-mini" aria-label="Navegación principal">
-            <a href="#inicio">Home</a>
-            <a href="#planes">Planes</a>
-            <Link to="/legal">FAQ y Políticas</Link>
-            <Link to="/auth">Acceso</Link>
-          </nav>
           <div className="ph__nav-actions">
             <div className="ph__theme-wrap" ref={menuRef}>
               <button
@@ -1169,7 +1076,7 @@ function PublicHome() {
                 <span>Acceso Inmediato</span>
                 <span>Cancela cuando quieras</span>
                 <span>500 GB/mes</span>
-                <span>Resultado inicial &lt; 10 min</span>
+                <span>Soporte por chat</span>
               </motion.div>
               {trialConfig?.enabled && trialConfig.eligible !== false && (
                 <motion.p className="ph__hero-trial-pill" variants={heroItemVariants} role="note">
@@ -1214,15 +1121,31 @@ function PublicHome() {
                     <strong className="ph__hero-visual-value">{totalTBLabel}</strong>
                   </div>
                   <p className="ph__hero-visual-copy">{selectedSegment.recommendedPath}</p>
-                  <div className="ph__hero-visual-folders">
-                    <div className="ph__hero-visual-folder ph__hero-visual-folder--1" />
-                    <div className="ph__hero-visual-folder ph__hero-visual-folder--2" />
-                    <div className="ph__hero-visual-folder ph__hero-visual-folder--3" />
-                    <div className="ph__hero-visual-folder ph__hero-visual-folder--4" />
-                  </div>
-                  <div className="ph__hero-visual-meta">
-                    <span>{totalFilesLabel} Archivos</span>
-                    <span>Acceso Total</span>
+                  <div className="ph__hero-visual-covers">
+                    <div className="ph__hero-cover ph__hero-cover--video">
+                      <Clapperboard size={18} aria-hidden />
+                      <span>Top Videos</span>
+                    </div>
+                    <div className="ph__hero-cover ph__hero-cover--audio">
+                      <Music2 size={18} aria-hidden />
+                      <span>Top Audios</span>
+                    </div>
+                    <div className="ph__hero-cover ph__hero-cover--karaoke">
+                      <PlayCircle size={18} aria-hidden />
+                      <span>Karaokes</span>
+                    </div>
+                    <div className="ph__hero-cover ph__hero-cover--ftp">
+                      <Zap size={18} aria-hidden />
+                      <span>FTP rápido</span>
+                    </div>
+                    <div className="ph__hero-cover ph__hero-cover--folders">
+                      <FolderOpen size={18} aria-hidden />
+                      <span>Ordenado</span>
+                    </div>
+                    <div className="ph__hero-cover ph__hero-cover--support">
+                      <MessageCircle size={18} aria-hidden />
+                      <span>Soporte</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1273,13 +1196,6 @@ function PublicHome() {
               <strong className="ph__spine-value">{totalGBLabel}</strong>
               <p className="ph__spine-meta">
                 {totalFilesLabel} archivos
-                {catalogUpdatedLabel && (
-                  <span className="ph__spine-updated">
-                    {" "}
-                    · actualizado {catalogUpdatedLabel}
-                    {catalogSummary?.stale ? " (refrescando...)" : ""}
-                  </span>
-                )}
               </p>
             </article>
             <article className="ph__spine-card">
@@ -1355,43 +1271,6 @@ function PublicHome() {
       </motion.section>
 
       <motion.section
-        className="ph__proof"
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.2 }}
-        transition={{ duration: 0.45 }}
-      >
-        <div className="ph__container">
-          <h2 className="ph__section-title ph__section-title--left">Resultados reales de DJs</h2>
-          <div className="ph__proof-grid">
-            {TESTIMONIAL_PATTERNS.map((caseStudy) => (
-              <article key={`${caseStudy.city}-${caseStudy.djType}`} className="ph__proof-card">
-                <p className="ph__proof-head">
-                  {caseStudy.djType} · {caseStudy.city}
-                </p>
-                <p className="ph__proof-quote">“{caseStudy.quote}”</p>
-                <p className="ph__proof-result">{caseStudy.result}</p>
-              </article>
-            ))}
-          </div>
-          <div className="ph__authority-strip" role="list" aria-label="Indicadores auditables">
-            <span role="listitem">
-              <BadgeCheck aria-hidden />
-              {totalFilesLabel} archivos auditables
-            </span>
-            <span role="listitem">
-              <Gauge aria-hidden />
-              {totalGBLabel} de contenido medible
-            </span>
-            <span role="listitem">
-              <Shield aria-hidden />
-              Uptime monitoreado 24/7
-            </span>
-          </div>
-        </div>
-      </motion.section>
-
-      <motion.section
         className="ph__genres"
         initial={{ opacity: 0, y: 36 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -1403,25 +1282,22 @@ function PublicHome() {
           <p className="ph__genres-caption">
             Catálogo ordenado para que ubiques la pista correcta sin cortar el ritmo.
           </p>
-          {catalogUpdatedLabel && (
-            <p className="ph__genres-updated" role="note">
-              Datos del catálogo: {catalogUpdatedLabel}
-              {catalogSummary?.stale ? " (refrescando...)" : ""}
-              {genresAreFallback ? " (estimado)" : ""}
-            </p>
-          )}
           <div className="ph__genres-stats" role="list" aria-label="Resumen del catálogo por género">
             <article role="listitem" className="ph__genres-stat">
               <strong>{uniqueGenresLabel}</strong>
               <span>géneros en catálogo</span>
             </article>
             <article role="listitem" className="ph__genres-stat">
-              <strong>{totalFilesLabel}</strong>
-              <span>archivos totales</span>
+              <strong>{audiosLabel}</strong>
+              <span>audios</span>
             </article>
             <article role="listitem" className="ph__genres-stat">
-              <strong>{totalGenrePages > 0 ? `${currentGenrePage + 1}/${totalGenrePages}` : "0/0"}</strong>
-              <span>{isSearchingGenres ? "páginas con coincidencias" : "paginación automática"}</span>
+              <strong>{videosLabel}</strong>
+              <span>videos</span>
+            </article>
+            <article role="listitem" className="ph__genres-stat">
+              <strong>{karaokesLabel}</strong>
+              <span>karaokes</span>
             </article>
           </div>
           <div className="ph__genres-tools">
@@ -1453,18 +1329,9 @@ function PublicHome() {
               )}
             </div>
           </div>
-          <div className="ph__genres-pagination" role="status" aria-live="polite">
-            {totalGenrePages > 0 ? (
-              <p className="ph__genres-range">
-                {isSearchingGenres
-                  ? `Mostrando ${firstGenreIndex}-${lastGenreIndex} de ${filteredGenresLabel} coincidencias.`
-                  : `Mostrando ${firstGenreIndex}-${lastGenreIndex} de ${filteredGenresLabel} géneros cargados (total catálogo auditado: ${uniqueGenresLabel}).`}
-              </p>
-            ) : (
-              <p className="ph__genres-range">No hay coincidencias para tu búsqueda.</p>
-            )}
-            {totalGenrePages > 1 && (
-              <div className="ph__genres-page-controls">
+          {totalGenrePages > 0 ? (
+            totalGenrePages > 1 && (
+              <div className="ph__genres-page-controls" aria-label="Paginación de géneros">
                 <button type="button" onClick={handlePreviousGenrePage}>
                   Anterior
                 </button>
@@ -1475,8 +1342,10 @@ function PublicHome() {
                   Siguiente
                 </button>
               </div>
-            )}
-          </div>
+            )
+          ) : (
+            <p className="ph__genres-empty">No encontramos ese género.</p>
+          )}
           <div className="ph__genres-grid">
             {visibleGenres.map((genre, index) => (
               <article key={`${genre.name}-${firstGenreIndex + index}`} className="ph__genre-chip">
@@ -1613,7 +1482,7 @@ function PublicHome() {
             )}
             {!topDownloadsLoading && !topDownloadsError && topDownloadsAreFallback && (
               <p className="ph__top-downloads-state">
-                Mostrando referencia del catálogo mientras se junta historial real para el Top en vivo.
+                Referencia por catálogo mientras se junta historial real para el Top en vivo.
               </p>
             )}
             {!topDownloadsLoading && !topDownloadsError && activeTopDownloads.length > 0 && (
@@ -1623,30 +1492,30 @@ function PublicHome() {
                 </p>
                 <ol className="ph__top-downloads-list" aria-label={`Top ${TOP_DOWNLOADS_LIMIT} de ${activeTopLabel}`}>
                   {visibleTopDownloads.map((item, index) => (
-                  <li key={`${item.type}-${item.path}`} className="ph__top-downloads-item">
-                    <span className="ph__top-downloads-rank">#{topPageStart + index}</span>
-                    <div className="ph__top-downloads-meta">
-                      <strong title={item.name}>{item.name}</strong>
-                      <span>
-                        {item.downloads.toLocaleString("es-MX")}{" "}
-                        {topDownloadsAreFallback ? "archivos" : "descargas"} ·{" "}
-                        {item.totalGb.toLocaleString("es-MX", { maximumFractionDigits: 2 })} GB
-                      </span>
-                    </div>
-                    {topDownloadsAreFallback ? (
-                      <span className="ph__top-downloads-pending">Demo en sincronización</span>
-                    ) : (
-                      <button
-                        type="button"
-                        className="ph__top-downloads-play"
-                        onClick={() => void handleTopDemo(item)}
-                        disabled={topDemoLoadingPath !== "" && topDemoLoadingPath !== item.path}
-                      >
-                        <PlayCircle size={16} />
-                        {topDemoLoadingPath === item.path ? "Abriendo..." : "Escuchar demo"}
-                      </button>
-                    )}
-                  </li>
+                    <li key={`${item.type}-${item.path}`} className="ph__top-downloads-item">
+                      <span className="ph__top-downloads-rank">#{topPageStart + index}</span>
+                      <div className="ph__top-downloads-meta">
+                        <strong title={item.name}>{item.name}</strong>
+                        <span>
+                          {item.downloads.toLocaleString("es-MX")}{" "}
+                          {topDownloadsAreFallback ? "archivos" : "descargas"} ·{" "}
+                          {item.totalGb.toLocaleString("es-MX", { maximumFractionDigits: 2 })} GB
+                        </span>
+                      </div>
+                      {topDownloadsAreFallback ? (
+                        <span className="ph__top-downloads-pending">Demo en sincronización</span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="ph__top-downloads-play"
+                          onClick={() => void handleTopDemo(item)}
+                          disabled={topDemoLoadingPath !== "" && topDemoLoadingPath !== item.path}
+                        >
+                          <PlayCircle size={16} />
+                          {topDemoLoadingPath === item.path ? "Abriendo..." : "Escuchar demo"}
+                        </button>
+                      )}
+                    </li>
                   ))}
                 </ol>
                 {topDownloadsTotalPages > 1 && (
@@ -1685,49 +1554,6 @@ function PublicHome() {
               </Link>
               .
             </p>
-          </div>
-        </div>
-      </motion.section>
-
-      <motion.section
-        className="ph__reciprocity"
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.2 }}
-        transition={{ duration: 0.45 }}
-      >
-        <div className="ph__container">
-          <div className="ph__reciprocity-shell">
-            <h2 className="ph__section-title ph__section-title--left">Activa tu cuenta con ayuda real</h2>
-            <p>
-              Te guiamos por chat para activar tu acceso y descargar hoy mismo.
-            </p>
-            <div className="ph__reciprocity-actions">
-              <a
-                href={SUPPORT_CHAT_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ph__reciprocity-btn ph__reciprocity-btn--primary"
-                onClick={() => {
-                  trackManyChatConversion(MC_EVENTS.CLICK_CHAT);
-                  trackGrowthMetric(GROWTH_METRICS.LEAD_MAGNET_DOWNLOAD, { segment, source: "chat_onboarding" });
-                }}
-              >
-                <MessageCircle size={16} />
-                Abrir soporte por chat
-              </a>
-              <a
-                href={GUIDE_PDF_URL}
-                download={GUIDE_PDF_FILENAME}
-                className="ph__reciprocity-btn ph__reciprocity-btn--ghost"
-                onClick={handleGuideDownload}
-                aria-disabled={guideDownloadLoading}
-              >
-                <DownloadCloud size={16} />
-                {guideDownloadLoading ? "Preparando PDF..." : "Descargar guía rápida"}
-              </a>
-            </div>
-            {guideDownloadNotice && <p className="ph__reciprocity-note">{guideDownloadNotice}</p>}
           </div>
         </div>
       </motion.section>
@@ -1869,11 +1695,7 @@ function PublicHome() {
               </button>
               {localPriceEstimate.visible && !localPriceEstimate.error && localPriceEstimate.currency && (
                 <p className="ph__pricing-estimator-note">
-                  Estimado referencial en {localPriceEstimate.currency}
-                  {localPriceEstimate.countryCode ? ` (${localPriceEstimate.countryCode})` : ""} detectado por{" "}
-                  {localPriceEstimate.detectionSource === "ip" ? "IP" : "configuración del navegador"}. Puede variar
-                  por tipo de cambio y comisiones bancarias
-                  {localEstimateDateLabel ? ` • actualizado ${localEstimateDateLabel}` : ""}.
+                  Aprox. en {localPriceEstimate.currency}. Puede variar con el tipo de cambio.
                 </p>
               )}
               {localPriceEstimate.error && (
