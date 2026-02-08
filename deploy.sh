@@ -32,6 +32,24 @@ require_cmd systemctl
 [ -f "$ENV_FILE" ] || die "Env file not found: $ENV_FILE"
 [ -f "$NGINX_CONF" ] || die "Nginx config not found: $NGINX_CONF"
 
+upsert_env() {
+  local key="$1"
+  local value="$2"
+
+  # Escape sed replacement chars for the chosen delimiter (|)
+  local escaped_value="$value"
+  escaped_value="${escaped_value//\\/\\\\}"
+  escaped_value="${escaped_value//&/\\&}"
+  escaped_value="${escaped_value//|/\\|}"
+
+  if grep -q "^${key}=" "$ENV_FILE"; then
+    sed -i.bak "s|^${key}=.*|${key}=${escaped_value}|" "$ENV_FILE"
+    rm -f "${ENV_FILE}.bak"
+  else
+    printf "\n%s=%s\n" "$key" "$value" >> "$ENV_FILE"
+  fi
+}
+
 log "Pulling latest changes..."
 # Descartar cambios locales (ej. package-lock.json) para que pull no falle
 git -C "$ROOT_DIR" reset --hard HEAD
@@ -53,6 +71,11 @@ PY
   fi
   printf "\nANALYTICS_IP_SALT=%s\n" "$salt" >> "$ENV_FILE"
 fi
+
+log "Ensuring required production flags are set (Conekta + client URL)..."
+upsert_env "CLIENT_URL" "https://thebearbeat.com"
+upsert_env "CONEKTA_PBB_ENABLED" "1"
+upsert_env "CONEKTA_OXXO_ENABLED" "1"
 
 current_port="$(grep -Eo 'proxy_pass\s+http://(localhost|127\.0\.0\.1):[0-9]+' "$NGINX_CONF" \
   | head -n 1 \
