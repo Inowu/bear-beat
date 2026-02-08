@@ -3,6 +3,7 @@ node_modules
 .env
 build
 *.sql
+!prisma/migrations/**/migration.sql
 demos
 logs
 compressed-dirs

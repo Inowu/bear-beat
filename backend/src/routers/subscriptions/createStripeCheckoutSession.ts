@@ -13,6 +13,7 @@ import { addDays } from 'date-fns';
 import { facebook } from '../../facebook';
 import { getClientIpFromRequest } from '../../analytics';
 import { resolveCheckoutCoupon } from '../../offers';
+import { getMarketingTrialConfigFromEnv } from '../../utils/trialConfig';
 
 function parseDurationDays(duration: unknown): number | null {
   if (duration == null) return null;
@@ -158,14 +159,21 @@ export const createStripeCheckoutSession = shieldedProcedure
       });
     }
 
+    const existingUser = await prisma.users.findFirst({
+      where: { id: user.id },
+    });
+
+    if (!existingUser) {
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'No se pudo resolver el usuario para iniciar checkout.',
+      });
+    }
+
     // CAPI: InitiateCheckout con dedupe (eventId) si existe.
     // No bloquear checkout si falla.
     try {
-      const existingUser = await prisma.users.findFirst({
-        where: { id: user.id },
-      });
-
-      if (existingUser && url) {
+      if (url) {
         const clientIp = getClientIpFromRequest(req);
         const userAgentRaw = req.headers['user-agent'];
         const userAgent =
@@ -266,21 +274,19 @@ export const createStripeCheckoutSession = shieldedProcedure
     }
 
     // Marketing trial (7 days, 100GB, etc): only for users with no previous paid plan orders.
-    const bbTrialDaysRaw = process.env.BB_TRIAL_DAYS ?? '';
-    const bbTrialDays = Math.max(0, Math.min(60, Math.floor(Number(bbTrialDaysRaw) || 0)));
-    const bbTrialGbRaw = process.env.BB_TRIAL_GB ?? '';
-    const bbTrialGb = Math.max(0, Math.min(10_000, Number(bbTrialGbRaw) || 0));
+    const trialConfig = getMarketingTrialConfigFromEnv();
+    const bbTrialDays = trialConfig.days;
+    const bbTrialGb = trialConfig.gb;
 
     let marketingTrialEnd: number | undefined;
     let isMarketingTrial = false;
 
-    if (!trialEnd && bbTrialDays > 0) {
+    if (!trialEnd && bbTrialDays > 0 && !existingUser.trial_used_at) {
       const previousPaidPlanOrder = await prisma.orders.findFirst({
         where: {
           user_id: user.id,
           status: OrderStatus.PAID,
           is_plan: 1,
-          OR: [{ is_canceled: null }, { is_canceled: 0 }],
         },
         select: { id: true },
       });

@@ -272,6 +272,8 @@ model Users {
   ip_registro              String?                    @db.Text
   token_expiration         DateTime?                  @db.Date
   refresh_token            String?                    @db.VarChar(250)
+  /// One-time marketing trial guard (set when a trial subscription starts).
+  trial_used_at            DateTime?                  @db.DateTime(0)
   blocked                  Boolean                    @default(false)
   verified                 Boolean                    @default(true)
   jobs                     jobs[]

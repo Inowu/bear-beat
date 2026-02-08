@@ -85,6 +85,12 @@ const pickBestPlanCandidate = (candidates: IPlans[]): IPlans | null => {
 
 function Checkout() {
   const [plan, setPlan] = useState<IPlans | null>(null);
+  const [trialConfig, setTrialConfig] = useState<{
+    enabled: boolean;
+    days: number;
+    gb: number;
+    eligible?: boolean | null;
+  } | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const [redirecting, setRedirecting] = useState(false);
@@ -116,6 +122,21 @@ function Checkout() {
     oxxoEnabled: boolean;
     payByBankEnabled: boolean;
   } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const cfg = await trpc.plans.getTrialConfig.query();
+        if (!cancelled) setTrialConfig(cfg);
+      } catch {
+        if (!cancelled) setTrialConfig({ enabled: false, days: 0, gb: 0, eligible: null });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -694,6 +715,11 @@ function Checkout() {
             <p className="checkout-summary__meta">
               Duración: {plan.duration} días · Renovación automática
             </p>
+            {trialConfig?.enabled && trialConfig.eligible !== false && (
+              <p className="checkout-summary__trial" role="note">
+                Incluye {trialConfig.days} días gratis con tarjeta (Stripe) · {trialConfig.gb} GB de descarga incluidos.
+              </p>
+            )}
           </aside>
 
           <section className="checkout-card checkout-payment-card">
@@ -710,7 +736,12 @@ function Checkout() {
             </div>
             <div className="checkout-methods" role="radiogroup" aria-label="Método de pago">
               {availableMethods.map((method) => {
-                const { Icon, label, description } = METHOD_META[method];
+                const { Icon } = METHOD_META[method];
+                let { label, description } = METHOD_META[method];
+                if (method === "card" && trialConfig?.enabled && trialConfig.eligible !== false) {
+                  label = `Tarjeta (${trialConfig.days} días gratis)`;
+                  description = `Incluye ${trialConfig.gb} GB de descarga. Luego cobro automático.`;
+                }
                 return (
                   <button
                     key={method}

@@ -90,6 +90,7 @@ export const permissions = shield<Context>({
     findManyLoginHistory: isAdmin,
     findManyOrders: isAdmin,
     findManyPlans: allow,
+    getTrialConfig: allow,
     findManyRoles: isAdmin,
     findManyUserFiles: isAdmin,
     findManyUsers: isAdmin,

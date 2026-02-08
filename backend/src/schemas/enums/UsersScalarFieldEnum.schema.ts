@@ -23,6 +23,7 @@ export const UsersScalarFieldEnumSchema = z.enum([
   'ip_registro',
   'token_expiration',
   'refresh_token',
+  'trial_used_at',
   'blocked',
   'verified'
 ]);

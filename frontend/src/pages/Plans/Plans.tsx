@@ -19,6 +19,12 @@ function detectPreferredCurrency(): "mxn" | "usd" {
 function Plans() {
   const { currentUser } = useUserContext();
   const [plans, setPlans] = useState<IPlans[]>([]);
+  const [trialConfig, setTrialConfig] = useState<{
+    enabled: boolean;
+    days: number;
+    gb: number;
+    eligible?: boolean | null;
+  } | null>(null);
   const [loader, setLoader] = useState<boolean>(true);
   const [loadError, setLoadError] = useState<string>('');
   const navigate = useNavigate();
@@ -42,6 +48,21 @@ function Plans() {
     // Cargar planes también para usuarios no autenticados (evita "spinner infinito" y mejora conversión).
     getPlans();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const cfg = await trpc.plans.getTrialConfig.query();
+        if (!cancelled) setTrialConfig(cfg);
+      } catch {
+        if (!cancelled) setTrialConfig({ enabled: false, days: 0, gb: 0, eligible: null });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -160,6 +181,16 @@ function Plans() {
           <p className="plans-hero-subtitle">Activa tu membresía en minutos y responde peticiones al instante con un catálogo masivo por género.</p>
           <p className="plans-hero-anchor">{riskAnchor}</p>
           <p className="plans-value-equation">Más repertorio, menos fricción y activación rápida en una sola membresía.</p>
+          {trialConfig?.enabled && trialConfig.eligible !== false && (
+            <p className="plans-trial-pill" role="note">
+              <strong>{trialConfig.days} días gratis</strong>
+              <span>con tarjeta (Stripe)</span>
+              <span aria-hidden>•</span>
+              <span>{trialConfig.gb} GB incluidos</span>
+              <span aria-hidden>•</span>
+              <span>Solo primera vez</span>
+            </p>
+          )}
           <div className="plans-proof-grid" role="list" aria-label="Indicadores de valor">
             {proofItems.map((item) => (
               <article key={item.value} className="plans-proof-item" role="listitem">
@@ -252,6 +283,7 @@ function Plans() {
                 userEmail={currentUser?.email}
                 userPhone={currentUser?.phone}
                 showRecommendedBadge={sortedPlans.length > 1}
+                trialConfig={trialConfig}
               />
             ))}
           </div>

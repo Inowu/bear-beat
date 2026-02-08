@@ -219,6 +219,22 @@
   margin: 0;
 }
 
+.checkout-summary__trial {
+  margin: 0.85rem 0 0;
+  padding: 0.85rem 0.9rem;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--app-accent) 34%, var(--app-border));
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, var(--theme-accent-soft-bg) 92%, transparent) 0%,
+    color-mix(in srgb, var(--app-bg-card) 96%, transparent) 100%
+  );
+  color: var(--app-text-body);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
 // Card de pago
 .checkout-payment-card {
   @media (min-width: 1024px) {

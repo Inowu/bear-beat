@@ -68,6 +68,19 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
           ? Number(String(quotaGbRaw).trim())
           : undefined;
 
+        // One-time marketing trial guard: mark as used when a trial actually starts (not when checkout is created).
+        try {
+          await prisma.users.updateMany({
+            where: { id: user.id, trial_used_at: null },
+            data: { trial_used_at: new Date() },
+          });
+        } catch (e) {
+          log.debug('[STRIPE_WH] trial_used_at update skipped', {
+            userId: user.id,
+            error: e instanceof Error ? e.message : e,
+          });
+        }
+
         await subscribe({
           subId: subscription.id,
           prisma,

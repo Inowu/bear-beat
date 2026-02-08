@@ -1711,6 +1711,28 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   margin: 0 auto 1.2rem;
 }
 
+.ph__pricing-trial-note {
+  margin: 0 auto 1.15rem;
+  width: min(330px, 100%);
+  padding: 0.85rem 0.9rem;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, $accent 36%, $border);
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, $accent 14%, $surface) 0%,
+    color-mix(in srgb, $surface 92%, transparent) 100%
+  );
+  color: $text-secondary;
+  font-size: 0.88rem;
+  font-weight: 650;
+  line-height: 1.35;
+
+  strong {
+    color: $accent;
+    font-weight: 900;
+  }
+}
+
 .ph__pricing-cta {
   width: 100%;
   margin-top: auto;

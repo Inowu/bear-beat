@@ -522,6 +522,12 @@ function PublicHome() {
   const querySegment = normalizeSegment(searchParams.get("segmento"));
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
   const [segment, setSegment] = useState<DjSegment>(querySegment);
+  const [trialConfig, setTrialConfig] = useState<{
+    enabled: boolean;
+    days: number;
+    gb: number;
+    eligible?: boolean | null;
+  } | null>(null);
   const [genreQuery, setGenreQuery] = useState("");
   const [genrePage, setGenrePage] = useState(0);
   const [genreAutoPlay, setGenreAutoPlay] = useState(true);
@@ -608,6 +614,22 @@ function PublicHome() {
   const selectedSegment = SEGMENT_PROFILES[segment];
   const isGlobalRecommended = preferredRegion === "global";
   const isMexicoRecommended = preferredRegion === "mexico";
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const cfg = await trpc.plans.getTrialConfig.query();
+        if (!cancelled) setTrialConfig(cfg);
+      } catch {
+        if (!cancelled) setTrialConfig({ enabled: false, days: 0, gb: 0, eligible: null });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const usdLocalEstimateLabel = useMemo(() => {
     if (!localPriceEstimate.currency || localPriceEstimate.usdPlanLocal === null) return null;
     return formatCurrencyAmount(localPriceEstimate.usdPlanLocal, localPriceEstimate.currency, localPriceEstimate.locale);
@@ -1615,6 +1637,12 @@ function PublicHome() {
                     className="ph__pricing-methods"
                     ariaLabel="Métodos de pago para plan en USD"
                   />
+                  {trialConfig?.enabled && (
+                    <p className="ph__pricing-trial-note" role="note">
+                      <strong>{trialConfig.days} días gratis</strong> solo con tarjeta (Stripe) para nuevos usuarios. Incluye{" "}
+                      {trialConfig.gb} GB de descarga. Después se cobra automáticamente.
+                    </p>
+                  )}
                   <Link to="/auth/registro" state={{ from: "/planes" }} className="ph__pricing-cta" onClick={() => handlePlanIntent("usd")}>
                     Empezar ahora en USD
                   </Link>
@@ -1650,6 +1678,12 @@ function PublicHome() {
                     className="ph__pricing-methods"
                     ariaLabel="Métodos de pago para plan en MXN"
                   />
+                  {trialConfig?.enabled && (
+                    <p className="ph__pricing-trial-note" role="note">
+                      <strong>{trialConfig.days} días gratis</strong> solo con tarjeta (Stripe) para nuevos usuarios. Incluye{" "}
+                      {trialConfig.gb} GB de descarga. Después se cobra automáticamente.
+                    </p>
+                  )}
                   <Link to="/auth/registro" state={{ from: "/planes" }} className="ph__pricing-cta" onClick={() => handlePlanIntent("mxn")}>
                     Empezar ahora en MXN
                   </Link>

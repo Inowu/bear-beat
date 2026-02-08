@@ -19,10 +19,47 @@ import stripeInstance from '../stripe';
 import { log } from '../server';
 import { getPlanKey } from '../utils/getPlanKey';
 import { PaymentService } from './subscriptions/services/types';
+import { OrderStatus } from './subscriptions/interfaces/order-status.interface';
 import { paypal } from '../paypal';
 import { manyChat } from '../many-chat';
+import { getMarketingTrialConfigFromEnv } from '../utils/trialConfig';
 
 export const plansRouter = router({
+  getTrialConfig: shieldedProcedure.query(async ({ ctx }) => {
+    const config = getMarketingTrialConfigFromEnv();
+
+    // `eligible` is best-effort: null when unauthenticated / unknown.
+    let eligible: boolean | null = null;
+    const userId = ctx.session?.user?.id;
+    if (userId) {
+      const user = await ctx.prisma.users.findFirst({
+        where: { id: userId },
+        select: { trial_used_at: true },
+      });
+      if (user) {
+        if (!config.enabled || user.trial_used_at) {
+          eligible = false;
+        } else {
+          const previousPaidPlanOrder = await ctx.prisma.orders.findFirst({
+            where: {
+              user_id: userId,
+              status: OrderStatus.PAID,
+              is_plan: 1,
+            },
+            select: { id: true },
+          });
+          eligible = !previousPaidPlanOrder;
+        }
+      }
+    }
+
+    return {
+      enabled: config.enabled,
+      days: config.days,
+      gb: config.gb,
+      eligible,
+    };
+  }),
   createStripePlan: shieldedProcedure
     .input(
       z.intersection(

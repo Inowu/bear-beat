@@ -71,9 +71,15 @@ interface PlanCardPropsI {
   userEmail?: string;
   userPhone?: string;
   showRecommendedBadge?: boolean;
-	}
-	function PlanCard(props: PlanCardPropsI) {
-	  const { plan, currentPlan, getCurrentPlan, userEmail, userPhone, showRecommendedBadge = true } = props;
+  trialConfig?: {
+    enabled: boolean;
+    days: number;
+    gb: number;
+    eligible?: boolean | null;
+  } | null;
+}
+function PlanCard(props: PlanCardPropsI) {
+  const { plan, currentPlan, getCurrentPlan, userEmail, userPhone, showRecommendedBadge = true, trialConfig } = props;
 	  const [showSpeiModal, setShowSpeiModal] = useState<boolean>(false);
 	  const [speiData, setSpeiData] = useState({} as ISpeiData);
     const [showOxxoModal, setShowOxxoModal] = useState<boolean>(false);
@@ -568,17 +574,17 @@ interface PlanCardPropsI {
 	            className="plan-card-payment-logos"
 	            ariaLabel={`Métodos de pago disponibles para ${plan.name}`}
 	          />
-	          {pathname === "/planes" && (
-	            <div className="plan-card-trial-note" role="note">
-	              <strong>7 días gratis</strong>
-	              <span>
-	                Para nuevos usuarios con tarjeta (Stripe). Incluye 100 GB de descarga. Después se cobra automáticamente.
-	              </span>
-	            </div>
-	          )}
-	          <p className="plan-card-confidence">Activación guiada por chat después del pago.</p>
-	        </div>
-	      </div>
+		          {pathname === "/planes" && trialConfig?.enabled && trialConfig.eligible !== false && (
+		            <div className="plan-card-trial-note" role="note">
+		              <strong>{trialConfig.days} días gratis</strong>
+		              <span>
+		                Para nuevos usuarios con tarjeta (Stripe). Incluye {trialConfig.gb} GB de descarga. Después se cobra automáticamente.
+		              </span>
+		            </div>
+		          )}
+		          <p className="plan-card-confidence">Activación guiada por chat después del pago.</p>
+		        </div>
+		      </div>
       <CancellationReasonModal
         title="Cancelación de suscripción"
         message="Antes de irte, dinos por qué cancelas (nos ayuda a mejorar)."
