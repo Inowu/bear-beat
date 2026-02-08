@@ -76,24 +76,22 @@ export const subscribeWithPayByBankConekta = shieldedProcedure
       },
     });
 
-  if (existingOrder?.invoice_id) {
+    if (existingOrder?.invoice_id) {
       try {
         const conektaOrder = await conektaOrders.getOrderById(existingOrder.invoice_id);
-        const charge = (conektaOrder.data as any)?.charges?.data?.[0];
-        const status = typeof charge?.status === 'string' ? charge.status : '';
-        const paymentMethod = charge?.payment_method;
-        const redirectUrl =
-          typeof paymentMethod?.redirect_url === 'string' ? paymentMethod.redirect_url : null;
-        const deepLink = typeof paymentMethod?.deep_link === 'string' ? paymentMethod.deep_link : null;
-        const url = redirectUrl || deepLink;
+        const checkout = (conektaOrder.data as any)?.checkout;
+        const checkoutUrl = typeof checkout?.url === 'string' ? checkout.url : null;
+        const expiresAt = typeof checkout?.expires_at === 'number' ? checkout.expires_at : null;
+        const status = typeof checkout?.status === 'string' ? checkout.status : '';
 
-        // Safety TTL: avoid reusing very old pending orders (pbb links expire).
-        const withinTtl = existingOrder?.date_order
-          ? compareAsc(new Date(), addHours(new Date(existingOrder.date_order), 1)) < 0
-          : false;
-
-        if (withinTtl && url && status.toLowerCase() === 'pending_payment') {
-          return { url, expires_at: null };
+        if (
+          checkoutUrl &&
+          expiresAt &&
+          compareAsc(new Date(), new Date(expiresAt * 1000)) < 0 &&
+          status.toLowerCase() !== 'expired' &&
+          status.toLowerCase() !== 'cancelled'
+        ) {
+          return { url: checkoutUrl, expires_at: expiresAt };
         }
       } catch (e) {
         log.error(`[CONEKTA_PBB] Error reusing existing checkout: ${e}`);
@@ -126,12 +124,9 @@ export const subscribeWithPayByBankConekta = shieldedProcedure
         user: fullUser,
       });
 
-      const charge = (conektaOrder.data as any)?.charges?.data?.[0];
-      const paymentMethod = charge?.payment_method;
-      const redirectUrl =
-        typeof paymentMethod?.redirect_url === 'string' ? paymentMethod.redirect_url : null;
-      const deepLink = typeof paymentMethod?.deep_link === 'string' ? paymentMethod.deep_link : null;
-      const url = redirectUrl || deepLink;
+      const checkout = (conektaOrder.data as any)?.checkout;
+      const url = typeof checkout?.url === 'string' ? checkout.url : null;
+      const expiresAt = typeof checkout?.expires_at === 'number' ? checkout.expires_at : null;
 
       if (!url) {
         throw new TRPCError({
@@ -140,7 +135,7 @@ export const subscribeWithPayByBankConekta = shieldedProcedure
         });
       }
 
-      return { url, expires_at: null };
+      return { url, expires_at: expiresAt };
     } catch (e: any) {
       const conektaMsg = e?.response?.data?.message || e?.message;
       log.error(`[CONEKTA_PBB] Error creating order: ${conektaMsg}`, e?.response?.data);
@@ -170,6 +165,9 @@ const createPayByBankOrder = async ({
   prisma: PrismaClient;
   user: Users;
 }) => {
+  const clientUrlRaw = process.env.CLIENT_URL || 'https://thebearbeat.com';
+  const clientUrl = clientUrlRaw.replace(/\/+$/, '');
+  const expiresAt = Math.floor(addHours(new Date(), 1).getTime() / 1000);
   const amountCents = Math.round(Number(plan.price) * 100);
   const customerInfo = buildConektaCustomerInfo(user);
   const shippingContact = buildConektaShippingContact(user, customerInfo);
@@ -187,19 +185,17 @@ const createPayByBankOrder = async ({
         unit_price: amountCents,
       },
     ],
-    // Required for checkout/charge validation even for digital goods.
+    // Required for checkout validation even for digital goods.
     shipping_lines: [{ amount: 0 }],
     shipping_contact: shippingContact,
-    charges: [
-      {
-        amount: amountCents,
-        payment_method: {
-          type: 'pay_by_bank',
-          // BBVA product for Pago Directo (official docs).
-          product_type: 'bbva_pay_by_bank',
-        },
-      },
-    ],
+    checkout: {
+      allowed_payment_methods: ['pay_by_bank'],
+      expires_at: expiresAt,
+      success_url: `${clientUrl}/comprar/success?order_id=${order.id}`,
+      failure_url: `${clientUrl}/comprar?priceId=${plan.id}&bbva=failed`,
+      name: `Pago BBVA - ${plan.name}`,
+      type: 'HostedPayment',
+    },
     metadata: {
       orderId: String(order.id),
       userId: String(user.id),
