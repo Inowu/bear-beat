@@ -77,6 +77,9 @@ esac
 log "Installing dependencies (monorepo workspaces)..."
 ( cd "$ROOT_DIR" && npm install )
 
+log "Running Prisma migrations..."
+( cd "$BACKEND_DIR" && npx prisma migrate deploy )
+
 log "Building backend..."
 ( cd "$BACKEND_DIR" && npm run build )
 
