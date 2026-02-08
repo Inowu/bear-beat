@@ -257,17 +257,17 @@ export const subscribe = async ({
         service,
       );
       // Webhooks can be delivered multiple times. Avoid granting duplicate quota rows
-      // when we reuse the same order (idempotency).
-      const existingDescargasForOrder = await prisma.descargasUser.findFirst({
+      // when we process the same billing period more than once (idempotency).
+      const existingDescargasForPeriod = await prisma.descargasUser.findFirst({
         where: {
           user_id: user.id,
-          order_id: createdOrder.id,
+          date_end: expirationDate,
         },
         select: { id: true },
       });
-      if (existingDescargasForOrder) {
+      if (existingDescargasForPeriod) {
         log.info(
-          `[SUBSCRIPTION] Descargas already exists for user ${user.id} order ${createdOrder.id}, skipping insert`,
+          `[SUBSCRIPTION] Descargas already exists for user ${user.id} for period ending ${expirationDate.toISOString()}, skipping insert`,
         );
       } else {
         await insertInDescargas({
