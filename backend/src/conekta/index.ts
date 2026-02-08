@@ -9,10 +9,21 @@ import { config } from 'dotenv';
 
 config();
 
-const apiKey =
-  process.env.NODE_ENV === 'production'
-    ? (process.env.CONEKTA_KEY as string)
-    : (process.env.CONEKTA_TEST_KEY as string);
+const hasLiveKey = Boolean(process.env.CONEKTA_KEY?.trim());
+const hasTestKey = Boolean(process.env.CONEKTA_TEST_KEY?.trim());
+
+// Production servers may not set NODE_ENV. Prefer live keys if available and test keys are missing.
+const preferLive = process.env.NODE_ENV === 'production' || (hasLiveKey && !hasTestKey);
+
+const apiKey = (preferLive ? process.env.CONEKTA_KEY : process.env.CONEKTA_TEST_KEY)
+  ?? process.env.CONEKTA_KEY
+  ?? process.env.CONEKTA_TEST_KEY
+  ?? '';
+
+if (!apiKey) {
+  // eslint-disable-next-line no-console
+  console.warn('[CONEKTA] Missing CONEKTA_KEY/CONEKTA_TEST_KEY. Conekta API calls will fail.');
+}
 
 const conektaConfig = new Configuration({ apiKey, accessToken: apiKey });
 

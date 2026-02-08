@@ -4,6 +4,7 @@ import {
   analyticsEventBatchSchema,
   getAnalyticsBusinessMetrics,
   getAnalyticsCancellationReasons,
+  getAnalyticsCrmDashboard,
   getAnalyticsHealthAlerts,
   getAnalyticsLiveSnapshot,
   getAnalyticsTopEvents,
@@ -70,6 +71,13 @@ const analyticsLiveSnapshotInputSchema = z
   .object({
     minutes: z.number().int().min(1).max(120).optional(),
     limit: z.number().int().min(1).max(500).optional(),
+  })
+  .optional();
+
+const analyticsCrmDashboardInputSchema = z
+  .object({
+    days: z.number().int().min(7).max(365).optional(),
+    limit: z.number().int().min(10).max(300).optional(),
   })
   .optional();
 
@@ -170,5 +178,11 @@ export const analyticsRouter = router({
     .query(async ({ ctx, input }) => {
       assertAdminRole(ctx.session?.user?.role);
       return getAnalyticsLiveSnapshot(ctx.prisma, input?.minutes, input?.limit);
+    }),
+  getAnalyticsCrmDashboard: shieldedProcedure
+    .input(analyticsCrmDashboardInputSchema)
+    .query(async ({ ctx, input }) => {
+      assertAdminRole(ctx.session?.user?.role);
+      return getAnalyticsCrmDashboard(ctx.prisma, input?.days, input?.limit);
     }),
 });

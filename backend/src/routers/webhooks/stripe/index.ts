@@ -19,6 +19,7 @@ import uhStripeInstance from '../../migration/uhStripe';
 import { uhConektaSubscriptions } from '../../migration/uhConekta';
 import { paypal as uhPaypal } from '../../migration/uhPaypal';
 import axios, { AxiosError } from 'axios';
+import { ingestAnalyticsEvents } from '../../../analytics';
 
 export const stripeSubscriptionWebhook = async (req: Request) => {
   const payload: Stripe.Event = JSON.parse(getStripeWebhookBody(req));
@@ -47,6 +48,7 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
   }
 
   const subscription = payload.data.object as any;
+  const previousAttributes = (payload as any)?.data?.previous_attributes as any;
 
   // await addMetadataToSubscription({
   //   subId: subscription.id,
@@ -60,6 +62,11 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
     case StripeEvents.SUBSCRIPTION_CREATED: {
       if (subscription.status === 'trialing') {
         log.info(`[STRIPE_WH] A trial subscription was created for user ${user.id}, subscription id: ${subscription.id}, status: ${subscription.status}`);
+        const quotaGbRaw = subscription?.metadata?.bb_trial_gb;
+        const quotaGb = quotaGbRaw != null && String(quotaGbRaw).trim()
+          ? Number(String(quotaGbRaw).trim())
+          : undefined;
+
         await subscribe({
           subId: subscription.id,
           prisma,
@@ -68,11 +75,51 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
           orderId: subscription.metadata.orderId,
           service: PaymentService.STRIPE,
           expirationDate: new Date(subscription.current_period_end * 1000),
+          quotaGb,
+          isTrial: true,
         });
+
+        // Internal analytics (server-side): trial started.
+        try {
+          await ingestAnalyticsEvents({
+            prisma,
+            events: [
+              {
+                eventId: `stripe:${payload.id}:trial_started`.slice(0, 80),
+                eventName: 'trial_started',
+                eventCategory: 'purchase',
+                eventTs: new Date().toISOString(),
+                userId: user.id,
+                currency: plan?.moneda?.toUpperCase?.() ?? null,
+                amount: 0,
+                metadata: {
+                  planId: plan?.id ?? null,
+                  stripeSubscriptionId: subscription.id,
+                  trialType: subscription?.metadata?.bb_trial_type ?? null,
+                  trialGb: quotaGb ?? null,
+                },
+              },
+            ],
+            sessionUserId: user.id,
+          });
+        } catch (e) {
+          log.debug('[STRIPE_WH] analytics trial_started skipped', {
+            error: e instanceof Error ? e.message : e,
+          });
+        }
+
+        // ManyChat: don't mark as payment; mark as trial instead.
+        try {
+          await manyChat.addTagToUser(user, 'TRIAL_STARTED');
+        } catch (e) {
+          log.error(`[STRIPE] Error while adding TRIAL_STARTED tag to user ${user.id}: ${e}`);
+        }
+
         await cancelUhSubscription(user);
+        return;
       }
 
-      if (subscription.status !== 'active' && subscription.status !== 'trialing') {
+      if (subscription.status !== 'active') {
         log.info(
           `[STRIPE_WH] A subscription was created for user ${user.id}, subscription id: ${subscription.id}, status: ${subscription.status}`,
         );
@@ -80,53 +127,61 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
         return;
       }
 
-      try {
-        await manyChat.addTagToUser(user, 'SUCCESSFUL_PAYMENT');
-      } catch (e) {
-        log.error(`[STRIPE] Error while adding tag to user ${user.id}: ${e}`);
-      }
-
-      // subscribe({
-      //   subId: subscription.id,
-      //   user,
-      //   prisma,
-      //   plan: plan!,
-      //   orderId: subscription.metadata.orderId,
-      //   service: PaymentService.STRIPE,
-      //   expirationDate: new Date(subscription.current_period_end * 1000),
-      // });
-
       break;
     }
     case StripeEvents.SUBSCRIPTION_UPDATED:
       switch (subscription.status) {
         case 'active': {
+          const prevStatus = typeof previousAttributes?.status === 'string'
+            ? String(previousAttributes.status).toLowerCase()
+            : null;
+          const currentPeriodStart = typeof subscription?.current_period_start === 'number'
+            ? subscription.current_period_start
+            : null;
+          const prevPeriodStart = typeof previousAttributes?.current_period_start === 'number'
+            ? previousAttributes.current_period_start
+            : null;
+          const isTrialConversion = prevStatus === 'trialing';
+          const isRenewal = prevStatus === 'active'
+            && currentPeriodStart != null
+            && prevPeriodStart != null
+            && currentPeriodStart !== prevPeriodStart;
+          const isInitialPaidActivation = !isRenewal && !isTrialConversion;
+
           log.info(
             `[STRIPE_WH] Creating subscription for user ${user.id}, subscription id: ${subscription.id}, payload: ${payloadStr}`,
           );
 
-          try {
-            await brevo.smtp.sendTransacEmail({
-              templateId: 2,
-              to: [{ email: user.email, name: user.username }],
-              params: {
-                NAME: user.username,
-                plan_name: plan.name,
-                price: plan.price,
-                currency: plan.moneda.toUpperCase(),
-                ORDER: subscription.metadata.orderId,
-              },
-            });
-          } catch (e) {
-            log.error(`[STRIPE] Error while sending email ${e}`);
+          // Email + ManyChat: only on first paid activation / trial conversion (avoid spamming on renewals).
+          if (isInitialPaidActivation || isTrialConversion) {
+            try {
+              await brevo.smtp.sendTransacEmail({
+                templateId: 2,
+                to: [{ email: user.email, name: user.username }],
+                params: {
+                  NAME: user.username,
+                  plan_name: plan.name,
+                  price: plan.price,
+                  currency: plan.moneda.toUpperCase(),
+                  ORDER: subscription.metadata.orderId,
+                },
+              });
+            } catch (e) {
+              log.error(`[STRIPE] Error while sending email ${e}`);
+            }
           }
 
           try {
-            await manyChat.addTagToUser(user, 'SUCCESSFUL_PAYMENT');
+            if (isTrialConversion) {
+              await manyChat.addTagToUser(user, 'TRIAL_CONVERTED');
+              await manyChat.addTagToUser(user, 'SUCCESSFUL_PAYMENT');
+            } else if (isRenewal) {
+              await manyChat.addTagToUser(user, 'SUBSCRIPTION_RENEWED');
+            } else {
+              await manyChat.addTagToUser(user, 'SUCCESSFUL_PAYMENT');
+            }
           } catch (e) {
-            log.error(
-              `[STRIPE] Error while adding tag to user ${user.id}: ${e}`,
-            );
+            log.error(`[STRIPE] Error while adding tag to user ${user.id}: ${e}`);
           }
 
           await subscribe({
@@ -138,6 +193,55 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
             service: PaymentService.STRIPE,
             expirationDate: new Date(subscription.current_period_end * 1000),
           });
+
+          // Internal analytics (server-side) for renewal/trial conversion.
+          try {
+            if (isTrialConversion) {
+              await ingestAnalyticsEvents({
+                prisma,
+                events: [
+                  {
+                    eventId: `stripe:${payload.id}:trial_converted`.slice(0, 80),
+                    eventName: 'trial_converted',
+                    eventCategory: 'purchase',
+                    eventTs: new Date().toISOString(),
+                    userId: user.id,
+                    currency: plan?.moneda?.toUpperCase?.() ?? null,
+                    amount: Number(plan?.price) || 0,
+                    metadata: {
+                      planId: plan?.id ?? null,
+                      stripeSubscriptionId: subscription.id,
+                    },
+                  },
+                ],
+                sessionUserId: user.id,
+              });
+            } else if (isRenewal) {
+              await ingestAnalyticsEvents({
+                prisma,
+                events: [
+                  {
+                    eventId: `stripe:${payload.id}:subscription_renewed`.slice(0, 80),
+                    eventName: 'subscription_renewed',
+                    eventCategory: 'purchase',
+                    eventTs: new Date().toISOString(),
+                    userId: user.id,
+                    currency: plan?.moneda?.toUpperCase?.() ?? null,
+                    amount: Number(plan?.price) || 0,
+                    metadata: {
+                      planId: plan?.id ?? null,
+                      stripeSubscriptionId: subscription.id,
+                    },
+                  },
+                ],
+                sessionUserId: user.id,
+              });
+            }
+          } catch (e) {
+            log.debug('[STRIPE_WH] analytics renewal/trial conversion skipped', {
+              error: e instanceof Error ? e.message : e,
+            });
+          }
 
           await cancelUhSubscription(user);
           break;

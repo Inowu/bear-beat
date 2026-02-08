@@ -1,5 +1,4 @@
 import z from 'zod';
-import { addHours, compareAsc } from 'date-fns';
 import { TRPCError } from '@trpc/server';
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
 import { getConektaCustomer } from './utils/getConektaCustomer';
@@ -81,19 +80,15 @@ export const subscribeWithPayByBankConekta = shieldedProcedure
     if (existingOrder?.invoice_id) {
       try {
         const conektaOrder = await conektaOrders.getOrderById(existingOrder.invoice_id);
-        const checkout = (conektaOrder.data as any)?.checkout;
-        const checkoutUrl = typeof checkout?.url === 'string' ? checkout.url : null;
-        const expiresAt = typeof checkout?.expires_at === 'number' ? checkout.expires_at : null;
-        const status = typeof checkout?.status === 'string' ? checkout.status : '';
+        const charge = (conektaOrder.data as any)?.charges?.data?.[0];
+        const pm = charge?.payment_method;
+        const redirectUrl = typeof pm?.redirect_url === 'string' ? pm.redirect_url : null;
+        const deepLink = typeof pm?.deep_link === 'string' ? pm.deep_link : null;
+        const status = typeof charge?.status === 'string' ? charge.status.toLowerCase() : '';
 
-        if (
-          checkoutUrl &&
-          expiresAt &&
-          compareAsc(new Date(), new Date(expiresAt * 1000)) < 0 &&
-          status.toLowerCase() !== 'expired' &&
-          status.toLowerCase() !== 'cancelled'
-        ) {
-          return { url: checkoutUrl, expires_at: expiresAt };
+        // If still pending, reuse the same redirect URL.
+        if (redirectUrl && status === 'pending_payment') {
+          return { url: redirectUrl, deepLink };
         }
       } catch (e) {
         log.error(`[CONEKTA_PBB] Error reusing existing checkout: ${e}`);
@@ -126,9 +121,10 @@ export const subscribeWithPayByBankConekta = shieldedProcedure
         user: fullUser,
       });
 
-      const checkout = (conektaOrder.data as any)?.checkout;
-      const url = typeof checkout?.url === 'string' ? checkout.url : null;
-      const expiresAt = typeof checkout?.expires_at === 'number' ? checkout.expires_at : null;
+      const charge = (conektaOrder.data as any)?.charges?.data?.[0];
+      const pm = charge?.payment_method;
+      const url = typeof pm?.redirect_url === 'string' ? pm.redirect_url : null;
+      const deepLink = typeof pm?.deep_link === 'string' ? pm.deep_link : null;
 
       if (!url) {
         throw new TRPCError({
@@ -137,7 +133,7 @@ export const subscribeWithPayByBankConekta = shieldedProcedure
         });
       }
 
-      return { url, expires_at: expiresAt };
+      return { url, deepLink };
     } catch (e: any) {
       const conektaMsg = e?.response?.data?.message || e?.message;
       log.error(`[CONEKTA_PBB] Error creating order: ${conektaMsg}`, e?.response?.data);
@@ -167,18 +163,15 @@ const createPayByBankOrder = async ({
   prisma: PrismaClient;
   user: Users;
 }) => {
-  const clientUrlRaw = process.env.CLIENT_URL || 'https://thebearbeat.com';
-  const clientUrl = clientUrlRaw.replace(/\/+$/, '');
-  const expiresAt = Math.floor(addHours(new Date(), 1).getTime() / 1000);
   const amountCents = Math.round(Number(plan.price) * 100);
   const customerInfo = buildConektaCustomerInfo(user);
   const shippingContact = buildConektaShippingContact(user, customerInfo);
-
+  // Per official docs (2025-2026): Pago Directo BBVA uses a direct order charge with:
+  // - payment_method.type = "pay_by_bank"
+  // - payment_method.product_type = "bbva_pay_by_bank"
+  // It returns redirect_url / deep_link to complete the payment.
   const orderPayload: any = {
     currency: 'MXN' as const,
-    // Note: Per Conekta docs (2025-2026), Pago Directo can be used without a stored customer.
-    // We still keep `customerId` in our system for subscription checks, but the order payload
-    // provides explicit contact fields to satisfy required validations (phone, etc).
     customer_info: customerInfo,
     line_items: [
       {
@@ -187,17 +180,18 @@ const createPayByBankOrder = async ({
         unit_price: amountCents,
       },
     ],
-    // Required for checkout validation even for digital goods.
-    shipping_lines: [{ amount: 0 }],
+    charges: [
+      {
+        payment_method: {
+          type: 'pay_by_bank',
+          product_type: 'bbva_pay_by_bank',
+        },
+      },
+    ],
+    // Conekta's Pay by Bank examples include shipping fields as minimum required, even for digital goods.
+    // Use a safe fallback address when the user has not provided one.
+    shipping_lines: [{ amount: 0, carrier: 'digital' }],
     shipping_contact: shippingContact,
-    checkout: {
-      allowed_payment_methods: ['pay_by_bank'],
-      expires_at: expiresAt,
-      success_url: `${clientUrl}/comprar/success?order_id=${order.id}`,
-      failure_url: `${clientUrl}/comprar?priceId=${plan.id}&bbva=failed`,
-      name: `Pago BBVA - ${plan.name}`,
-      type: 'HostedPayment',
-    },
     metadata: {
       orderId: String(order.id),
       userId: String(user.id),
@@ -222,7 +216,6 @@ const createPayByBankOrder = async ({
     where: { id: order.id },
     data: {
       invoice_id: conektaOrder.data.id,
-      // HostedPayment doesn't always create a charge immediately, so fallback to Order id.
       txn_id: txnId,
     },
   });
@@ -242,31 +235,41 @@ function buildConektaCustomerInfo(user: Users): { name: string; email: string; p
   };
 }
 
+function buildConektaShippingContact(
+  user: Users,
+  customerInfo: { name: string; phone: string },
+): {
+  receiver: string;
+  phone: string;
+  address: { street1: string; postal_code: string; country: string; city?: string; state?: string };
+} {
+  const phoneDigits = normalizeConektaPhone(user.phone || customerInfo.phone);
+  const formattedPhone = phoneDigits ? `+52${phoneDigits}` : '+520000000000';
+  const street =
+    typeof user.address === 'string' && user.address.trim()
+      ? user.address.trim().slice(0, 120)
+      : 'Digital goods';
+  const city =
+    typeof user.city === 'string' && user.city.trim()
+      ? user.city.trim().slice(0, 80)
+      : undefined;
+
+  return {
+    receiver: (customerInfo?.name || user.username || `User ${user.id}`).slice(0, 120),
+    phone: formattedPhone,
+    address: {
+      street1: street,
+      // Use a real-looking ZIP to satisfy validation (fallback is fine for digital).
+      postal_code: '06100',
+      country: 'MX',
+      ...(city ? { city } : {}),
+    },
+  };
+}
+
 function normalizeConektaPhone(phone: string | null | undefined): string {
   const digits = String(phone || '').replace(/\D/g, '');
   // Conekta examples use 10-digit phone numbers; keep last 10 digits if longer.
   if (digits.length >= 10) return digits.slice(-10);
   return '9999999999';
-}
-
-function buildConektaShippingContact(
-  user: Users,
-  customerInfo: { name: string; email: string; phone: string },
-): any {
-  const street1 = typeof user.address === 'string' && user.address.trim() ? user.address.trim() : 'Digital';
-  const city = typeof user.city === 'string' && user.city.trim() ? user.city.trim() : 'Ciudad de Mexico';
-  const country = typeof user.country_id === 'string' && user.country_id.trim() ? user.country_id.trim() : 'MX';
-  // For digital goods we may not have a real shipping address. Use a stable fallback to satisfy schema.
-  const postalCode = '06600';
-  return {
-    receiver: customerInfo.name,
-    phone: customerInfo.phone,
-    address: {
-      street1: street1.slice(0, 240),
-      city: city.slice(0, 80),
-      state: 'CDMX',
-      country: country.toUpperCase().slice(0, 2),
-      postal_code: postalCode,
-    },
-  };
 }

@@ -45,6 +45,7 @@ import { BlockedPhoneNumbers } from "./pages/Admin/BlockedPhoneNumbers/BlockedPh
 import { CatalogStats } from "./pages/Admin/CatalogStats/CatalogStats";
 import { AnalyticsDashboard } from "./pages/Admin/Analytics/AnalyticsDashboard";
 import { LiveAnalytics } from "./pages/Admin/Live/LiveAnalytics";
+import { CrmDashboard } from "./pages/Admin/Crm/CrmDashboard";
 import { PlanUpgrade } from "./pages/PlanUpgrade/PlanUpgrade";
 import { SSEProvider } from "react-hooks-sse";
 import DownloadContextProvider from "./contexts/DownloadContext";
@@ -129,6 +130,7 @@ const router = createBrowserRouter([
           { path: "catalogo", element: <CatalogStats /> },
           { path: "analitica", element: <AnalyticsDashboard /> },
           { path: "live", element: <LiveAnalytics /> },
+          { path: "crm", element: <CrmDashboard /> },
           { path: "historial-descargas", element: <DownloadHistory /> },
           { path: "cupones", element: <Coupons /> },
           { path: "ordenes", element: <Ordens /> },

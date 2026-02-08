@@ -16,6 +16,8 @@ export const subscribe = async ({
   subId,
   service,
   expirationDate,
+  quotaGb: quotaGbInput,
+  isTrial = false,
 }: Params) => {
   const ftpUser = await prisma.ftpUser.findFirst({
     where: {
@@ -25,7 +27,11 @@ export const subscribe = async ({
 
   let dbPlan: Plans | null | undefined = plan;
 
-  const orderId = Number(metaOrderId);
+  const orderIdRaw =
+    typeof metaOrderId === 'string' || typeof metaOrderId === 'number'
+      ? Number(metaOrderId)
+      : 0;
+  const orderId = Number.isFinite(orderIdRaw) && orderIdRaw > 0 ? orderIdRaw : 0;
 
   if (!plan) {
     log.info(`[SUBSCRIPTION] Fetching order with id ${orderId}`);
@@ -65,6 +71,14 @@ export const subscribe = async ({
     return;
   }
 
+  const planGigas = Number(dbPlan.gigas) || 0;
+  const quotaGb =
+    typeof quotaGbInput === 'number' && Number.isFinite(quotaGbInput) && quotaGbInput > 0
+      ? quotaGbInput
+      : planGigas > 0
+        ? planGigas
+        : 500;
+
   // Hasn't subscribed before
   if (!ftpUser) {
     log.info(`[SUBSCRIPTION] Creating new subscription for user ${user.id}`);
@@ -72,7 +86,7 @@ export const subscribe = async ({
     try {
       const formattedUsername = user.username.toLowerCase().replace(/ /g, '.');
       const responses = await prisma.$transaction([
-        ...insertFtpQuotas({ prisma, user, plan: dbPlan }),
+        ...insertFtpQuotas({ prisma, user, plan: dbPlan, quotaGb }),
         prisma.ftpUser.create({
           data: {
             userid: formattedUsername,
@@ -86,7 +100,7 @@ export const subscribe = async ({
         }),
         prisma.descargasUser.create({
           data: {
-            available: 500,
+            available: quotaGb,
             date_end: expirationDate,
             user_id: user.id,
             ...(orderId ? { order_id: orderId } : {}),
@@ -137,14 +151,16 @@ export const subscribe = async ({
       }
 
       if (orderId) {
-        await prisma.orders.update({
-          where: {
-            id: orderId,
-          },
-          data: {
-            status: OrderStatus.PAID,
-          },
-        });
+        if (!isTrial) {
+          await prisma.orders.update({
+            where: {
+              id: orderId,
+            },
+            data: {
+              status: OrderStatus.PAID,
+            },
+          });
+        }
       }
     } catch (e) {
       log.error(`Error while creating ftp user: ${e}`);
@@ -182,7 +198,7 @@ export const subscribe = async ({
       if (!existingLimits) {
         const limits = await prisma.ftpQuotaLimits.create({
           data: {
-            bytes_out_avail: gbToBytes(Number(dbPlan?.gigas)),
+            bytes_out_avail: gbToBytes(quotaGb),
             bytes_xfer_avail: 0,
             // A limit of 0 means unlimited
             files_out_avail: 0,
@@ -210,7 +226,7 @@ export const subscribe = async ({
             id: limitsId,
           },
           data: {
-            bytes_out_avail: gbToBytes(Number(dbPlan.gigas)),
+            bytes_out_avail: gbToBytes(quotaGb),
             bytes_xfer_avail: 0,
             files_xfer_avail: 0,
             files_out_avail: 0,
@@ -240,12 +256,28 @@ export const subscribe = async ({
         dbPlan,
         service,
       );
-      await insertInDescargas({
-        expirationDate,
-        user,
-        order: createdOrder,
-        prisma,
+      // Webhooks can be delivered multiple times. Avoid granting duplicate quota rows
+      // when we reuse the same order (idempotency).
+      const existingDescargasForOrder = await prisma.descargasUser.findFirst({
+        where: {
+          user_id: user.id,
+          order_id: createdOrder.id,
+        },
+        select: { id: true },
       });
+      if (existingDescargasForOrder) {
+        log.info(
+          `[SUBSCRIPTION] Descargas already exists for user ${user.id} order ${createdOrder.id}, skipping insert`,
+        );
+      } else {
+        await insertInDescargas({
+          expirationDate,
+          availableGb: quotaGb,
+          user,
+          order: createdOrder,
+          prisma,
+        });
+      }
     } catch (e) {
       log.error(`Error while renovating subscription: ${e}`);
     }
@@ -260,45 +292,18 @@ const insertOrderOrUpdate = async (
   plan: Plans,
   service: PaymentService,
 ) => {
+  const now = new Date();
+
   if (orderId) {
-    const currentOrder = await prisma.orders.findFirst({
-      where: {
-        id: orderId,
-      },
-      orderBy: {
-        date_order: 'desc',
-      },
+    const byId = await prisma.orders.findFirst({
+      where: { id: orderId },
     });
 
-    log.info(`[SUBSCRIPTION] Creating descargas user entry for user ${userId}`);
-
-    const now = new Date();
-
-    if (currentOrder) {
-      const timeDifference = Math.abs(
-        now.getTime() - currentOrder.date_order.getTime(),
-      );
-      const minutesDiffernece = Math.floor(timeDifference / 1000 / 60);
-
-      if (minutesDiffernece > 1) {
-        const order = await prisma.orders.create({
-          data: {
-            txn_id: subId,
-            user_id: userId,
-            status: OrderStatus.PAID,
-            is_plan: 1,
-            plan_id: plan.id,
-            payment_method: service,
-            date_order: new Date(),
-            total_price: Number(plan.price),
-          },
-        });
-        return order;
-      } else {
-        return currentOrder;
-      }
-    } else {
-      const order = await prisma.orders.create({
+    // If this is the initial checkout-created order (PENDING), mark it as paid now.
+    // This is especially important for trials converting to paid (first invoice happens later).
+    if (byId && byId.status !== OrderStatus.PAID) {
+      const updated = await prisma.orders.update({
+        where: { id: byId.id },
         data: {
           txn_id: subId,
           user_id: userId,
@@ -306,42 +311,68 @@ const insertOrderOrUpdate = async (
           is_plan: 1,
           plan_id: plan.id,
           payment_method: service,
-          date_order: new Date(),
+          date_order: now,
           total_price: Number(plan.price),
         },
       });
-      return order;
+      return updated;
     }
-  } else {
-    const order = await prisma.orders.create({
-      data: {
-        txn_id: subId,
-        user_id: userId,
-        status: OrderStatus.PAID,
-        is_plan: 1,
-        plan_id: plan.id,
-        payment_method: service,
-        date_order: new Date(),
-        total_price: Number(plan.price),
-      },
-    });
-    return order;
   }
+
+  // Dedupe renewals: use the most recent paid order for this subscription id.
+  const latestForSubscription = await prisma.orders.findFirst({
+    where: {
+      txn_id: subId,
+      user_id: userId,
+      payment_method: service,
+      is_plan: 1,
+      plan_id: plan.id,
+      status: OrderStatus.PAID,
+      OR: [{ is_canceled: null }, { is_canceled: 0 }],
+    },
+    orderBy: { date_order: 'desc' },
+  });
+
+  if (latestForSubscription) {
+    const minutesDifference = Math.floor(
+      Math.abs(now.getTime() - latestForSubscription.date_order.getTime()) /
+        1000 /
+        60,
+    );
+    if (minutesDifference <= 1) {
+      return latestForSubscription;
+    }
+  }
+
+  return prisma.orders.create({
+    data: {
+      txn_id: subId,
+      user_id: userId,
+      status: OrderStatus.PAID,
+      is_plan: 1,
+      plan_id: plan.id,
+      payment_method: service,
+      date_order: now,
+      total_price: Number(plan.price),
+    },
+  });
 };
 
 const insertFtpQuotas = ({
   prisma,
   user,
   plan,
+  quotaGb,
 }: {
   prisma: PrismaClient;
   user: Users | SessionUser;
   plan: Plans;
+  quotaGb: number;
 }) => {
-  const gb = gbToBytes(Number(plan.gigas) || 500);
+  const gbBytes = gbToBytes(quotaGb);
 
   log.info(
-    `[SUBSCRIPTION] Inserting ftp quotas for user ${user.id}, GB: ${gb}`,
+    `[SUBSCRIPTION] Inserting ftp quotas for user ${user.id}, bytes_out_avail: ${gbBytes}`,
   );
 
   const formattedUsername = user.username.toLowerCase().replace(/ /g, '.');
@@ -349,7 +380,7 @@ const insertFtpQuotas = ({
   return [
     prisma.ftpQuotaLimits.create({
       data: {
-        bytes_out_avail: gbToBytes(Number(plan.gigas)),
+        bytes_out_avail: gbBytes,
         bytes_xfer_avail: 0,
         // A limit of 0 means unlimited
         files_out_avail: 0,
@@ -368,18 +399,20 @@ const insertFtpQuotas = ({
 
 const insertInDescargas = async ({
   expirationDate,
+  availableGb,
   user,
   order,
   prisma,
 }: {
   prisma: PrismaClient;
   expirationDate: Date;
+  availableGb: number;
   user: Users | SessionUser;
   order: Orders;
 }) =>
   prisma.descargasUser.create({
     data: {
-      available: 500,
+      available: availableGb,
       date_end: expirationDate,
       user_id: user.id,
       order_id: order.id,

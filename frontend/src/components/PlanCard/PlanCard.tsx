@@ -563,14 +563,22 @@ interface PlanCardPropsI {
               )}
             </>
           )}
-          <PaymentMethodLogos
-            methods={paymentLogos}
-            className="plan-card-payment-logos"
-            ariaLabel={`Métodos de pago disponibles para ${plan.name}`}
-          />
-          <p className="plan-card-confidence">Activación guiada por chat después del pago.</p>
-        </div>
-      </div>
+	          <PaymentMethodLogos
+	            methods={paymentLogos}
+	            className="plan-card-payment-logos"
+	            ariaLabel={`Métodos de pago disponibles para ${plan.name}`}
+	          />
+	          {pathname === "/planes" && (
+	            <div className="plan-card-trial-note" role="note">
+	              <strong>7 días gratis</strong>
+	              <span>
+	                Para nuevos usuarios con tarjeta (Stripe). Incluye 100 GB de descarga. Después se cobra automáticamente.
+	              </span>
+	            </div>
+	          )}
+	          <p className="plan-card-confidence">Activación guiada por chat después del pago.</p>
+	        </div>
+	      </div>
       <CancellationReasonModal
         title="Cancelación de suscripción"
         message="Antes de irte, dinos por qué cancelas (nos ayuda a mejorar)."

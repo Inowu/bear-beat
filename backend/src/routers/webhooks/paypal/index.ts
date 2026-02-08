@@ -203,10 +203,7 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
       await cancelSubscription({
         prisma,
         user,
-        plan:
-          process.env.NODE_ENV === 'production'
-            ? plan.paypal_plan_id!
-            : plan.paypal_plan_id_test!,
+        plan: plan[getPlanKey(PaymentService.PAYPAL)]!,
         service: PaymentService.PAYPAL,
         reason: OrderStatus.CANCELLED,
       });
@@ -220,10 +217,7 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
       await cancelSubscription({
         prisma,
         user,
-        plan:
-          process.env.NODE_ENV === 'production'
-            ? plan.paypal_plan_id!
-            : plan.paypal_plan_id_test!,
+        plan: plan[getPlanKey(PaymentService.PAYPAL)]!,
         service: PaymentService.PAYPAL,
         reason: OrderStatus.EXPIRED,
       });
@@ -233,21 +227,6 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
       log.info(
         `[PAYPAL_WH] Payment completed, renovating subscription for user ${user.id}, subscription id ${payload.resource.id}`,
       );
-
-      const activeSub = await prisma.descargasUser.findFirst({
-        where: {
-          date_end: {
-            gt: new Date(),
-          },
-        },
-      });
-
-      if (activeSub) {
-        log.info(
-          `[PAYPAL_WH] User ${user.id} already has an active subscription, ignoring event.`,
-        );
-        return;
-      }
 
       const existingOrder = await prisma.orders.findFirst({
         where: {
@@ -294,7 +273,8 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
       }
 
       try {
-        await manyChat.addTagToUser(user, 'SUCCESSFUL_PAYMENT');
+        // Renewal lifecycle tag (avoid triggering first-payment sequences every month).
+        await manyChat.addTagToUser(user, 'SUBSCRIPTION_RENEWED');
       } catch (e) {
         log.error(`[PAYPAL] Error while adding tag to user ${user.id}: ${e}`);
       }
@@ -323,10 +303,7 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
       await cancelSubscription({
         prisma,
         user,
-        plan:
-          process.env.NODE_ENV === 'production'
-            ? plan.paypal_plan_id!
-            : plan.paypal_plan_id_test!,
+        plan: plan[getPlanKey(PaymentService.PAYPAL)]!,
         service: PaymentService.PAYPAL,
         reason: OrderStatus.FAILED,
       });

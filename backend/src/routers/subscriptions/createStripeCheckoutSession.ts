@@ -268,6 +268,45 @@ export const createStripeCheckoutSession = shieldedProcedure
       log.info(`[STRIPE_CHECKOUT_SESSION] Migration user ${user.id}, trial_end: ${trialEnd}`);
     }
 
+    // Marketing trial (7 days, 100GB, etc): only for users with no previous paid plan orders.
+    const bbTrialDaysRaw = process.env.BB_TRIAL_DAYS ?? '';
+    const bbTrialDays = Math.max(0, Math.min(60, Math.floor(Number(bbTrialDaysRaw) || 0)));
+    const bbTrialGbRaw = process.env.BB_TRIAL_GB ?? '';
+    const bbTrialGb = Math.max(0, Math.min(10_000, Number(bbTrialGbRaw) || 0));
+
+    let marketingTrialEnd: number | undefined;
+    let isMarketingTrial = false;
+
+    if (!trialEnd && bbTrialDays > 0) {
+      const previousPaidPlanOrder = await prisma.orders.findFirst({
+        where: {
+          user_id: user.id,
+          status: OrderStatus.PAID,
+          is_plan: 1,
+          OR: [{ is_canceled: null }, { is_canceled: 0 }],
+        },
+        select: { id: true },
+      });
+
+      if (!previousPaidPlanOrder) {
+        isMarketingTrial = true;
+        marketingTrialEnd = Math.floor(addDays(new Date(), bbTrialDays).getTime() / 1000);
+        log.info(
+          `[STRIPE_CHECKOUT_SESSION] Marketing trial enabled for user ${user.id}, trial_end: ${marketingTrialEnd}, days: ${bbTrialDays}, gb: ${bbTrialGb}`,
+        );
+      }
+    }
+
+    const effectiveTrialEnd = trialEnd ?? marketingTrialEnd;
+    const trialMetadata: Record<string, string> = {};
+    if (effectiveTrialEnd) {
+      trialMetadata.bb_trial_type = uhUser ? 'migration' : isMarketingTrial ? 'marketing' : 'trial';
+      if (isMarketingTrial && bbTrialGb > 0) {
+        // Subscription metadata must be string values.
+        trialMetadata.bb_trial_gb = String(bbTrialGb);
+      }
+    }
+
     try {
       const stripeSession = await stripeInstance.checkout.sessions.create(
         {
@@ -288,8 +327,9 @@ export const createStripeCheckoutSession = shieldedProcedure
           subscription_data: {
             metadata: {
               orderId: String(order.id),
+              ...trialMetadata,
             },
-            ...(trialEnd ? { trial_end: trialEnd } : {}),
+            ...(effectiveTrialEnd ? { trial_end: effectiveTrialEnd } : {}),
           },
           allow_promotion_codes: true,
         },

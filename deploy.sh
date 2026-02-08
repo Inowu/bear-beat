@@ -82,11 +82,17 @@ PY
   printf "\nANALYTICS_IP_SALT=%s\n" "$salt" >> "$ENV_FILE"
 fi
 
+log "Ensuring NODE_ENV is set to production (payments + webhooks rely on it in some modules)..."
+ensure_env_default "NODE_ENV" "production"
+
 log "Ensuring required production flags are set (Conekta + client URL)..."
 upsert_env "CLIENT_URL" "https://thebearbeat.com"
 # Only set defaults; don't override manual disables (critical during incident response).
 ensure_env_default "CONEKTA_PBB_ENABLED" "1"
 ensure_env_default "CONEKTA_OXXO_ENABLED" "1"
+# Default free trial config (Stripe only). Override in backend/.env if needed.
+ensure_env_default "BB_TRIAL_DAYS" "7"
+ensure_env_default "BB_TRIAL_GB" "100"
 
 current_port="$(grep -Eo 'proxy_pass\s+http://(localhost|127\.0\.0\.1):[0-9]+' "$NGINX_CONF" \
   | head -n 1 \

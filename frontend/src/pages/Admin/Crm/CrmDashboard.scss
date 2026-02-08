@@ -1,0 +1,209 @@
+@import "src/styles/_variables-theme.scss";
+
+.crm-toolbar {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.crm-toolbar__group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.crm-toolbar__label {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--ad-text-muted);
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+
+  select {
+    padding: 0 10px;
+    border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--ad-border) 85%, transparent);
+    background: var(--ad-row-hover);
+    color: var(--ad-title);
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+}
+
+.crm-toolbar__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ad-text);
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0;
+  text-transform: none;
+
+  input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--ad-accent);
+  }
+}
+
+.crm-toolbar__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--ad-border) 85%, transparent);
+  background: var(--ad-row-hover);
+  color: var(--ad-title);
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    border-color: color-mix(in srgb, var(--ad-accent) 55%, var(--ad-border));
+    background: color-mix(in srgb, var(--ad-row-hover) 65%, transparent);
+  }
+}
+
+.crm-state {
+  min-height: 40vh;
+  display: grid;
+  place-content: center;
+  gap: 12px;
+  text-align: center;
+  color: var(--ad-text-muted);
+  font-weight: 700;
+}
+
+.crm-state--error {
+  color: color-mix(in srgb, var(--app-status-error) 80%, var(--ad-text));
+}
+
+.crm-wrap {
+  display: grid;
+  gap: 16px;
+}
+
+.crm-range {
+  margin: 0;
+  color: var(--ad-text-muted);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.crm-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.crm-kpi-card {
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--ad-border) 84%, transparent);
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--ad-card) 98%, transparent) 0%,
+    color-mix(in srgb, var(--ad-row-hover) 60%, transparent) 100%
+  );
+  padding: 12px;
+  box-shadow: var(--app-shadow);
+  display: grid;
+  gap: 6px;
+}
+
+.crm-kpi-card__top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.crm-kpi-card__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--ad-accent) 14%, transparent);
+  color: var(--ad-accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.crm-kpi-card__title {
+  color: var(--ad-text-muted);
+  font-size: 0.85rem;
+  font-weight: 900;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.crm-kpi-card__value {
+  color: var(--ad-title);
+  font-size: 1.7rem;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+.crm-kpi-card__helper {
+  color: var(--ad-text-muted);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.crm-section {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--ad-border) 82%, transparent);
+  background: color-mix(in srgb, var(--ad-card) 98%, transparent);
+}
+
+.crm-section__title {
+  margin: 0;
+  color: var(--ad-title);
+  font-size: 1.2rem;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+}
+
+.crm-section__hint {
+  margin: 0;
+  color: var(--ad-text-muted);
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+.crm-table-wrap {
+  width: 100%;
+  overflow: auto;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--ad-border) 82%, transparent);
+}
+
+.crm-table {
+  width: 100%;
+  min-width: 520px;
+}
+
+.crm-table__empty {
+  text-align: center;
+  color: var(--ad-text-muted);
+  padding: 14px;
+}
+

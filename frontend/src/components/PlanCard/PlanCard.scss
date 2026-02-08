@@ -353,6 +353,31 @@ html[data-theme="dark"] .plan-card-btn-hero:hover {
   margin-top: 2px;
 }
 
+.plan-card-trial-note {
+  width: 100%;
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--app-accent) 32%, transparent);
+  background: color-mix(in srgb, var(--theme-accent-soft-bg) 92%, transparent);
+  text-align: center;
+}
+
+.plan-card-trial-note strong {
+  color: var(--plan-card-title);
+  font-size: 1.25rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+
+.plan-card-trial-note span {
+  color: var(--plan-card-subtitle);
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
 .plan-card-confidence {
   margin: 0;
   text-align: center;

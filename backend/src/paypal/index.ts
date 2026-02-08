@@ -2,20 +2,34 @@ import axios from 'axios';
 
 /* eslint-disable no-confusing-arrow */
 
+const hasLiveCreds = Boolean(
+  process.env.PAYPAL_CLIENT_ID?.trim() && process.env.PAYPAL_CLIENT_SECRET?.trim(),
+);
+const hasTestCreds = Boolean(
+  process.env.PAYPAL_TEST_CLIENT_ID?.trim() &&
+    process.env.PAYPAL_TEST_CLIENT_SECRET?.trim(),
+);
+
+// Production servers may not set NODE_ENV. Prefer live creds if available and test creds are missing.
+const preferLive = process.env.NODE_ENV === 'production' || (hasLiveCreds && !hasTestCreds);
+
 const clientId = (): string =>
-  process.env.NODE_ENV === 'production'
-    ? (process.env.PAYPAL_CLIENT_ID as string)
-    : (process.env.PAYPAL_TEST_CLIENT_ID as string);
+  (preferLive ? process.env.PAYPAL_CLIENT_ID : process.env.PAYPAL_TEST_CLIENT_ID) ??
+  process.env.PAYPAL_CLIENT_ID ??
+  process.env.PAYPAL_TEST_CLIENT_ID ??
+  '';
 
 const clientSecret = (): string =>
-  process.env.NODE_ENV === 'production'
-    ? (process.env.PAYPAL_CLIENT_SECRET as string)
-    : (process.env.PAYPAL_TEST_CLIENT_SECRET as string);
+  (preferLive ? process.env.PAYPAL_CLIENT_SECRET : process.env.PAYPAL_TEST_CLIENT_SECRET) ??
+  process.env.PAYPAL_CLIENT_SECRET ??
+  process.env.PAYPAL_TEST_CLIENT_SECRET ??
+  '';
 
 const paypalUrl = (): string =>
-  process.env.NODE_ENV === 'production'
-    ? (process.env.PAYPAL_URL as string)
-    : (process.env.PAYPAL_SANDBOX_URL as string);
+  (preferLive ? process.env.PAYPAL_URL : process.env.PAYPAL_SANDBOX_URL) ??
+  process.env.PAYPAL_URL ??
+  process.env.PAYPAL_SANDBOX_URL ??
+  '';
 
 export const paypal = {
   paypalUrl,
