@@ -349,9 +349,10 @@ html[data-theme="dark"] .ph__hero-atmosphere {
 
 .ph__hero-sub {
   margin: clamp(1rem, 2.2vw, 1.6rem) 0 0;
-  font-size: clamp(1.03rem, 2.3vw, 1.2rem);
+  /* Readability: ensure 14-16px on phones (html rem=10px) */
+  font-size: clamp(1.35rem, 3.2vw, 1.55rem);
   font-weight: 500;
-  line-height: 1.55;
+  line-height: 1.65;
   color: $text-secondary;
   max-width: 52ch;
 }
@@ -368,7 +369,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
     border: 1px solid color-mix(in srgb, $accent 24%, $border);
     background: color-mix(in srgb, $accent 8%, transparent);
     color: $text-primary;
-    font-size: 0.95rem;
+    font-size: 1.12rem;
     line-height: 1;
     font-weight: 600;
     letter-spacing: 0.01em;
@@ -386,7 +387,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   border: 1px solid color-mix(in srgb, $accent 38%, $border);
   background: color-mix(in srgb, $accent 12%, transparent);
   color: $text-secondary;
-  font-size: 0.96rem;
+  font-size: 1.15rem;
   line-height: 1.2;
   font-weight: 650;
 
@@ -405,7 +406,8 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   min-height: 56px;
   border-radius: 999px;
   text-decoration: none;
-  font-size: clamp(1rem, 2.2vw, 1.1rem);
+  /* CTA readability: keep 14-16px even with html{font-size:62.5%} */
+  font-size: clamp(1.4rem, 3vw, 1.55rem);
   line-height: 1;
   font-weight: 800;
   letter-spacing: 0.02em;
@@ -424,10 +426,10 @@ html[data-theme="dark"] .ph__hero-atmosphere {
 
 .ph__hero-micro {
   margin: 0.95rem 0 0;
-  font-size: 0.98rem;
+  font-size: clamp(1.2rem, 2.8vw, 1.35rem);
   color: $text-secondary;
   font-weight: 550;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .ph__hero-right {
@@ -469,7 +471,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
 }
 
 .ph__hero-visual-label {
-  font-size: 0.86rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: $text-muted;
   text-transform: uppercase;
@@ -489,8 +491,8 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   z-index: 1;
   margin: 0.8rem 0 1.2rem;
   color: $text-secondary;
-  font-size: clamp(0.96rem, 2.1vw, 1.02rem);
-  line-height: 1.5;
+  font-size: clamp(1.22rem, 2.8vw, 1.35rem);
+  line-height: 1.65;
 }
 
 .ph__hero-visual-folders {
@@ -552,7 +554,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
     padding: 0.6rem 0.7rem;
     color: $text-primary;
     font-weight: 600;
-    font-size: 0.89rem;
+    font-size: 1.1rem;
     text-align: center;
   }
 }
@@ -605,7 +607,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
 .ph__spine-label {
   display: block;
   color: $text-muted;
-  font-size: 0.86rem;
+  font-size: 1.05rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -624,14 +626,14 @@ html[data-theme="dark"] .ph__hero-atmosphere {
 .ph__spine-meta {
   margin: 0.28rem 0 0;
   color: $text-secondary;
-  font-size: 0.95rem;
+  font-size: 1.2rem;
   font-weight: 600;
 }
 
 .ph__spine-updated {
   color: $text-muted;
   font-weight: 650;
-  font-size: 0.86rem;
+  font-size: 1.1rem;
   letter-spacing: 0.01em;
 }
 
@@ -696,8 +698,8 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   p {
     margin: 0;
     color: $text-secondary;
-    font-size: clamp(0.95rem, 2vw, 1.02rem);
-    line-height: 1.58;
+    font-size: clamp(1.22rem, 2.7vw, 1.38rem);
+    line-height: 1.7;
   }
 
   @include respond-from(md) {
@@ -764,9 +766,9 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   flex-direction: column;
   gap: 0.38rem;
   color: $text-primary;
-  font-size: 0.9rem;
+  font-size: 1.12rem;
   font-weight: 600;
-  line-height: 1.32;
+  line-height: 1.4;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
@@ -782,7 +784,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   margin-top: 0.3rem;
   color: $text-secondary;
   font-weight: 600;
-  font-size: 0.96rem;
+  font-size: 1.2rem;
 }
 
 .ph__arsenal-card--genres h3 {
@@ -872,8 +874,8 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   p {
     margin: 0;
     color: $text-secondary;
-    font-size: clamp(0.98rem, 2.2vw, 1.04rem);
-    line-height: 1.62;
+    font-size: clamp(1.22rem, 2.7vw, 1.38rem);
+    line-height: 1.7;
     max-width: 68ch;
   }
 }
@@ -925,15 +927,15 @@ html[data-theme="dark"] .ph__hero-atmosphere {
 .ph__genres-caption {
   margin: -0.35rem 0 0;
   color: $text-secondary;
-  font-size: clamp(0.96rem, 2.1vw, 1.02rem);
-  line-height: 1.5;
+  font-size: clamp(1.22rem, 2.7vw, 1.38rem);
+  line-height: 1.65;
 }
 
 .ph__genres-updated {
   margin: 0.55rem 0 0;
   color: $text-muted;
-  font-size: 0.92rem;
-  line-height: 1.45;
+  font-size: 1.1rem;
+  line-height: 1.55;
   font-weight: 600;
 }
 
@@ -960,7 +962,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
 
   strong {
     color: $text-primary;
-    font-size: 1rem;
+    font-size: 1.35rem;
     line-height: 1.1;
     font-weight: 800;
     letter-spacing: -0.01em;
@@ -968,7 +970,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
 
   span {
     color: $text-secondary;
-    font-size: 0.8rem;
+    font-size: 1.08rem;
     font-weight: 600;
     line-height: 1.2;
   }
@@ -997,7 +999,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
 
   span {
     color: $text-secondary;
-    font-size: 0.82rem;
+    font-size: 1.08rem;
     font-weight: 700;
   }
 
@@ -1007,9 +1009,9 @@ html[data-theme="dark"] .ph__hero-atmosphere {
     border-radius: 999px;
     border: 1px solid color-mix(in srgb, $accent 24%, $border);
     background: color-mix(in srgb, $surface 86%, transparent);
-    padding: 0.6rem 1rem;
+    padding: 0.78rem 1.05rem;
     color: $text-primary;
-    font-size: 0.92rem;
+    font-size: 1.2rem;
     outline: none;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 
@@ -1031,7 +1033,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   background: color-mix(in srgb, $surface 84%, transparent);
   padding: 0 1rem;
   color: $text-secondary;
-  font-size: 0.9rem;
+  font-size: 1.12rem;
   font-weight: 700;
   cursor: pointer;
   transition: border-color 0.2s ease, color 0.2s ease;
@@ -1049,7 +1051,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   background: color-mix(in srgb, $surface 80%, transparent);
   padding: 0 1rem;
   color: $text-secondary;
-  font-size: 0.88rem;
+  font-size: 1.12rem;
   font-weight: 800;
   cursor: pointer;
   transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
@@ -1074,8 +1076,8 @@ html[data-theme="dark"] .ph__hero-atmosphere {
 .ph__genres-range {
   margin: 0;
   color: $text-secondary;
-  font-size: 0.88rem;
-  line-height: 1.45;
+  font-size: 1.12rem;
+  line-height: 1.55;
 }
 
 .ph__genres-page-controls {
@@ -1090,7 +1092,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
     background: color-mix(in srgb, $surface 90%, transparent);
     padding: 0 1rem;
     color: $text-secondary;
-    font-size: 0.84rem;
+    font-size: 1.05rem;
     font-weight: 800;
     cursor: pointer;
     transition: border-color 0.2s ease, color 0.2s ease;
@@ -1105,7 +1107,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
     min-width: 102px;
     text-align: center;
     color: $text-muted;
-    font-size: 0.8rem;
+    font-size: 1.05rem;
     font-weight: 700;
     letter-spacing: 0.02em;
   }
@@ -1131,15 +1133,15 @@ html[data-theme="dark"] .ph__hero-atmosphere {
 
   strong {
     color: $text-primary;
-    font-size: 0.95rem;
+    font-size: 1.2rem;
     font-weight: 700;
     line-height: 1.3;
   }
 
   span {
     color: $text-secondary;
-    font-size: 0.84rem;
-    line-height: 1.25;
+    font-size: 1.05rem;
+    line-height: 1.35;
   }
 
   &:hover {
@@ -1152,7 +1154,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
 .ph__genres-empty {
   margin: 0.95rem 0 0;
   color: $text-muted;
-  font-size: 0.9rem;
+  font-size: 1.12rem;
 }
 
 .ph__genres-more-wrap {
@@ -1171,7 +1173,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   background: var(--app-gradient);
   color: var(--app-btn-text);
   font-weight: 800;
-  font-size: 0.9rem;
+  font-size: 1.12rem;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 
@@ -1212,8 +1214,8 @@ html[data-theme="dark"] .ph__hero-atmosphere {
 .ph__top-downloads-caption {
   margin: -0.5rem 0 0;
   color: $text-secondary;
-  font-size: 1.01rem;
-  line-height: 1.5;
+  font-size: clamp(1.22rem, 2.7vw, 1.38rem);
+  line-height: 1.65;
   font-weight: 600;
 }
 
@@ -1236,7 +1238,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   align-items: center;
   justify-content: center;
   gap: 0.45rem;
-  font-size: 0.9rem;
+  font-size: 1.12rem;
   font-weight: 700;
   transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
   cursor: pointer;
@@ -1285,13 +1287,13 @@ html[data-theme="dark"] .ph__hero-atmosphere {
 
   strong {
     color: $text-primary;
-    font-size: 1.05rem;
+    font-size: 1.35rem;
     font-weight: 800;
   }
 
   span {
     color: $text-secondary;
-    font-size: 0.84rem;
+    font-size: 1.05rem;
     font-weight: 600;
   }
 }
@@ -1299,9 +1301,9 @@ html[data-theme="dark"] .ph__hero-atmosphere {
 .ph__top-downloads-state {
   margin: 0.9rem 0 0;
   color: $text-secondary;
-  font-size: 0.93rem;
+  font-size: 1.12rem;
   font-weight: 600;
-  line-height: 1.45;
+  line-height: 1.6;
 }
 
 .ph__top-downloads-state--error {
@@ -1324,7 +1326,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
     background: transparent;
     color: var(--app-status-error);
     padding: 0 0.9rem;
-    font-size: 0.86rem;
+    font-size: 1.05rem;
     font-weight: 700;
     cursor: pointer;
   }
@@ -1344,9 +1346,9 @@ html[data-theme="dark"] .ph__hero-atmosphere {
 .ph__top-downloads-range {
   margin: 0.95rem 0 0;
   color: $text-secondary;
-  font-size: 0.87rem;
+  font-size: 1.1rem;
   font-weight: 600;
-  line-height: 1.4;
+  line-height: 1.55;
 }
 
 .ph__top-downloads-pagination {
@@ -1362,7 +1364,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
     background: color-mix(in srgb, $surface 90%, transparent);
     padding: 0 0.95rem;
     color: $text-secondary;
-    font-size: 0.84rem;
+    font-size: 1.05rem;
     font-weight: 800;
     cursor: pointer;
     transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
@@ -1378,7 +1380,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
     min-width: 106px;
     text-align: center;
     color: $text-muted;
-    font-size: 0.8rem;
+    font-size: 1.05rem;
     font-weight: 700;
     letter-spacing: 0.02em;
   }
@@ -1388,8 +1390,8 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   border: 1px solid color-mix(in srgb, $border 82%, transparent);
   border-radius: 12px;
   background: color-mix(in srgb, $surface 92%, transparent);
-  min-height: 58px;
-  padding: 0.46rem 0.58rem;
+  min-height: 70px;
+  padding: 0.62rem 0.7rem;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
@@ -1397,8 +1399,8 @@ html[data-theme="dark"] .ph__hero-atmosphere {
 }
 
 .ph__top-downloads-rank {
-  min-width: 48px;
-  min-height: 34px;
+  min-width: 52px;
+  min-height: 36px;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, $accent 36%, transparent);
   background: color-mix(in srgb, $accent 10%, transparent);
@@ -1406,7 +1408,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.8rem;
+  font-size: 1.05rem;
   font-weight: 800;
   letter-spacing: 0.03em;
 }
@@ -1418,25 +1420,28 @@ html[data-theme="dark"] .ph__hero-atmosphere {
     margin: 0;
     display: block;
     color: $text-primary;
-    font-size: 0.93rem;
-    line-height: 1.35;
+    font-size: 1.12rem;
+    line-height: 1.45;
     font-weight: 700;
-    white-space: nowrap;
+    white-space: normal;
     overflow: hidden;
     text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
   }
 
   span {
     margin-top: 0.15rem;
     display: block;
     color: $text-muted;
-    font-size: 0.8rem;
+    font-size: 1.05rem;
     font-weight: 600;
   }
 }
 
 .ph__top-downloads-play {
-  min-height: 36px;
+  min-height: 42px;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, $accent 44%, transparent);
   background: color-mix(in srgb, $accent 10%, transparent);
@@ -1445,8 +1450,8 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   align-items: center;
   justify-content: center;
   gap: 0.36rem;
-  padding: 0 0.74rem;
-  font-size: 0.8rem;
+  padding: 0 1rem;
+  font-size: 1.05rem;
   font-weight: 700;
   cursor: pointer;
   transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
@@ -1463,7 +1468,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
 }
 
 .ph__top-downloads-pending {
-  min-height: 36px;
+  min-height: 42px;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, $border 86%, transparent);
   background: color-mix(in srgb, $surface 88%, transparent);
@@ -1472,22 +1477,22 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   align-items: center;
   justify-content: center;
   padding: 0 0.74rem;
-  font-size: 0.78rem;
+  font-size: 1.05rem;
   font-weight: 700;
 }
 
 .ph__top-downloads-note {
   margin: 0.8rem 0 0;
   color: var(--app-status-error);
-  font-size: 0.88rem;
+  font-size: 1.12rem;
   font-weight: 700;
 }
 
 .ph__top-downloads-footnote {
   margin: 0.88rem 0 0;
   color: $text-muted;
-  font-size: 0.86rem;
-  line-height: 1.45;
+  font-size: 1.1rem;
+  line-height: 1.55;
   font-weight: 600;
 
   a {
@@ -1529,15 +1534,15 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   h3 {
     margin: 0;
     color: $text-primary;
-    font-size: 1rem;
-    line-height: 1.3;
+    font-size: 1.28rem;
+    line-height: 1.35;
   }
 
   p {
     margin: 0;
     color: $text-secondary;
-    font-size: 0.88rem;
-    line-height: 1.48;
+    font-size: 1.15rem;
+    line-height: 1.6;
   }
 }
 
@@ -1552,7 +1557,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   background: color-mix(in srgb, $accent 12%, transparent);
   padding: 0 0.65rem;
   color: $text-primary;
-  font-size: 0.74rem;
+  font-size: 1.05rem;
   font-weight: 800;
   letter-spacing: 0.08em;
 }
@@ -1588,8 +1593,8 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   margin: -0.1rem 0 0.4rem;
   text-align: center;
   color: $text-secondary;
-  font-size: clamp(0.97rem, 2.1vw, 1.04rem);
-  line-height: 1.55;
+  font-size: clamp(1.22rem, 2.7vw, 1.38rem);
+  line-height: 1.65;
   max-width: 64ch;
 }
 
@@ -1631,7 +1636,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   justify-content: center;
   padding: 0 10px;
   border-radius: 999px;
-  font-size: 0.75rem;
+  font-size: 1.02rem;
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1645,7 +1650,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
 .ph__pricing-card-header {
   padding: 1.1rem 1.2rem;
   text-align: center;
-  font-size: 0.92rem;
+  font-size: 1.12rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1691,7 +1696,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
 .ph__pricing-local {
   margin: -0.45rem 0 0.85rem;
   color: $accent;
-  font-size: 0.9rem;
+  font-size: 1.15rem;
   font-weight: 800;
   letter-spacing: 0.01em;
 }
@@ -1699,23 +1704,23 @@ html[data-theme="dark"] .ph__hero-atmosphere {
 .ph__pricing-anchor {
   margin: 0.25rem 0 0.75rem;
   color: $text-secondary;
-  font-size: clamp(0.96rem, 2.2vw, 1.02rem);
-  line-height: 1.5;
+  font-size: clamp(1.22rem, 2.7vw, 1.38rem);
+  line-height: 1.65;
   font-weight: 600;
 }
 
 .ph__pricing-fit {
   margin: 0;
   color: $text-muted;
-  font-size: 0.9rem;
-  line-height: 1.4;
+  font-size: 1.15rem;
+  line-height: 1.55;
   font-weight: 600;
 }
 
 .ph__pricing-cost {
   margin: 0 0 1rem;
   color: $accent;
-  font-size: 0.9rem;
+  font-size: 1.15rem;
   font-weight: 800;
   letter-spacing: 0.01em;
 }
@@ -1731,7 +1736,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
     position: relative;
     padding: 0.58rem 0 0.58rem 1.6rem;
     color: $text-secondary;
-    font-size: 0.99rem;
+    font-size: 1.15rem;
     font-weight: 600;
 
     &::before {
@@ -1760,9 +1765,9 @@ html[data-theme="dark"] .ph__hero-atmosphere {
     color-mix(in srgb, $surface 92%, transparent) 100%
   );
   color: $text-secondary;
-  font-size: 0.88rem;
+  font-size: 1.12rem;
   font-weight: 650;
-  line-height: 1.35;
+  line-height: 1.55;
 
   strong {
     color: $accent;
@@ -1784,7 +1789,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   letter-spacing: 0.02em;
   color: var(--app-btn-text);
   background: var(--app-gradient);
-  font-size: clamp(0.98rem, 2.2vw, 1.05rem);
+  font-size: clamp(1.15rem, 2.8vw, 1.25rem);
   font-weight: 800;
   box-shadow: 0 11px 28px color-mix(in srgb, $accent 34%, transparent);
   transition: transform 0.2s ease, filter 0.2s ease;
@@ -1798,9 +1803,9 @@ html[data-theme="dark"] .ph__hero-atmosphere {
 .ph__pricing-risk {
   margin: 0.65rem 0 0;
   color: $text-muted;
-  font-size: 0.82rem;
+  font-size: 1.05rem;
   font-weight: 600;
-  line-height: 1.35;
+  line-height: 1.55;
 }
 
 .ph__pricing-estimator {
@@ -1817,7 +1822,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   border: 1px solid color-mix(in srgb, $accent 36%, $border);
   background: color-mix(in srgb, $surface 88%, transparent);
   color: $text-primary;
-  font-size: 0.9rem;
+  font-size: 1.12rem;
   font-weight: 800;
   padding: 0 1.2rem;
   cursor: pointer;
@@ -1842,15 +1847,15 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   max-width: 74ch;
   text-align: center;
   color: $text-muted;
-  font-size: 0.82rem;
-  line-height: 1.45;
+  font-size: 1.05rem;
+  line-height: 1.55;
 }
 
 .ph__pricing-estimator-error {
   margin: 0;
   text-align: center;
   color: var(--app-status-error);
-  font-size: 0.84rem;
+  font-size: 1.05rem;
   font-weight: 700;
 }
 
@@ -1858,7 +1863,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   margin: 0.4rem 0 0;
   text-align: center;
   color: $text-secondary;
-  font-size: clamp(0.9rem, 2vw, 1rem);
+  font-size: clamp(1.15rem, 2.6vw, 1.28rem);
   font-weight: 600;
 }
 
@@ -1903,7 +1908,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
     text-decoration: none;
     color: var(--theme-nav-text);
     font-weight: 700;
-    font-size: 0.98rem;
+    font-size: 1.12rem;
     transition: color 0.2s ease;
 
     &:hover {
@@ -1937,7 +1942,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
     margin: 0;
     text-align: center;
     color: color-mix(in srgb, var(--theme-nav-text) 75%, transparent);
-    font-size: 0.9rem;
+    font-size: 1.1rem;
     font-weight: 500;
   }
 
@@ -1972,7 +1977,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
     display: inline-flex;
     align-items: center;
     color: $text-secondary;
-    font-size: 0.9rem;
+    font-size: 1.05rem;
     font-weight: 700;
     text-decoration: none;
     transition: color 0.2s ease;
@@ -1990,9 +1995,9 @@ html[data-theme="dark"] .ph__hero-atmosphere {
 .ph__hero-promise {
   margin: 0.78rem 0 0;
   color: $text-primary;
-  font-size: clamp(1rem, 2.2vw, 1.1rem);
+  font-size: clamp(1.25rem, 2.8vw, 1.4rem);
   font-weight: 600;
-  line-height: 1.5;
+  line-height: 1.6;
 
   strong {
     color: $accent;
@@ -2012,7 +2017,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
     padding: 0 0.95rem;
     background: color-mix(in srgb, $surface 86%, transparent);
     color: $text-secondary;
-    font-size: 0.87rem;
+    font-size: 1.1rem;
     font-weight: 700;
     cursor: pointer;
     transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
@@ -2033,8 +2038,8 @@ html[data-theme="dark"] .ph__hero-atmosphere {
 .ph__segment-summary {
   margin: 0.15rem 0 0;
   color: $text-secondary;
-  font-size: 0.96rem;
-  line-height: 1.5;
+  font-size: 1.22rem;
+  line-height: 1.65;
   max-width: 56ch;
 }
 
@@ -2071,15 +2076,15 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   h3 {
     margin: 0.55rem 0 0.35rem;
     color: $text-primary;
-    font-size: 1.03rem;
+    font-size: 1.28rem;
     font-weight: 800;
   }
 
   p {
     margin: 0;
     color: $text-secondary;
-    font-size: 0.93rem;
-    line-height: 1.45;
+    font-size: 1.15rem;
+    line-height: 1.6;
   }
 }
 
@@ -2103,9 +2108,9 @@ html[data-theme="dark"] .ph__hero-atmosphere {
 .ph__value-anchor {
   margin: 1rem 0 0;
   color: $text-secondary;
-  font-size: 0.98rem;
+  font-size: 1.22rem;
   font-weight: 600;
-  line-height: 1.55;
+  line-height: 1.65;
 }
 
 .ph__proof {
@@ -2140,7 +2145,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
 .ph__proof-head {
   margin: 0;
   color: $text-muted;
-  font-size: 0.82rem;
+  font-size: 1.05rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -2149,15 +2154,15 @@ html[data-theme="dark"] .ph__hero-atmosphere {
 .ph__proof-quote {
   margin: 0.56rem 0 0;
   color: $text-primary;
-  font-size: 0.95rem;
+  font-size: 1.15rem;
   font-weight: 600;
-  line-height: 1.48;
+  line-height: 1.65;
 }
 
 .ph__proof-result {
   margin: 0.56rem 0 0;
   color: $accent;
-  font-size: 0.85rem;
+  font-size: 1.05rem;
   font-weight: 800;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -2179,7 +2184,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
     padding: 0 0.8rem;
     color: $text-secondary;
     background: color-mix(in srgb, $surface 86%, transparent);
-    font-size: 0.85rem;
+    font-size: 1.05rem;
     font-weight: 700;
   }
 
@@ -2204,8 +2209,8 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   p {
     margin: -0.2rem 0 0;
     color: $text-secondary;
-    font-size: 0.97rem;
-    line-height: 1.5;
+    font-size: 1.22rem;
+    line-height: 1.65;
   }
 }
 
@@ -2224,7 +2229,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   border-radius: 999px;
   padding: 0 1rem;
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: 1.12rem;
   font-weight: 800;
   transition: transform 0.2s ease, filter 0.2s ease;
 
@@ -2257,8 +2262,8 @@ html[data-theme="dark"] .ph__hero-atmosphere {
 .ph__reciprocity-note {
   margin: 0.62rem 0 0;
   color: $text-muted;
-  font-size: 0.83rem;
-  line-height: 1.45;
+  font-size: 1.05rem;
+  line-height: 1.6;
 }
 
 .ph__scarcity {
@@ -2274,16 +2279,16 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   display: inline-flex;
   align-items: center;
   padding: 0 1.05rem;
-  font-size: 0.9rem;
+  font-size: 1.12rem;
   font-weight: 700;
 }
 
 .ph__guarantee-terms {
   margin: 0.1rem 0 0;
   color: $text-secondary;
-  font-size: 0.92rem;
+  font-size: 1.12rem;
   text-align: center;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .ph__faq-link {
@@ -2293,7 +2298,7 @@ html[data-theme="dark"] .ph__hero-atmosphere {
   align-items: center;
   justify-content: center;
   color: $accent;
-  font-size: 0.92rem;
+  font-size: 1.12rem;
   font-weight: 700;
   text-decoration: none;
 }
