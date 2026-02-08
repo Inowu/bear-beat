@@ -715,7 +715,7 @@ function Checkout() {
             <p className="checkout-summary__meta">
               Duración: {plan.duration} días · Renovación automática
             </p>
-            {trialConfig?.enabled && trialConfig.eligible !== false && (
+            {selectedMethod === "card" && trialConfig?.enabled && trialConfig.eligible !== false && (
               <p className="checkout-summary__trial" role="note">
                 Incluye {trialConfig.days} días gratis con tarjeta (Stripe) · {trialConfig.gb} GB de descarga incluidos.
               </p>
