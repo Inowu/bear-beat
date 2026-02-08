@@ -514,7 +514,7 @@ function CompareSlider() {
         >
           <AlertTriangle className="ph__compare-icon" aria-hidden />
           <h3>DJ Amateur</h3>
-          <p>Estresado, YouTube, mala calidad. Una pista que no tienes = una pista que no suena.</p>
+          <p>YouTube, mala calidad y estrés. Si no la tienes, no suena.</p>
         </motion.div>
         <motion.div
           className="ph__compare-slider-card ph__compare-slider-card--good"
@@ -525,7 +525,7 @@ function CompareSlider() {
         >
           <CheckCircle2 className="ph__compare-icon" aria-hidden />
           <h3>DJ Bear Beat</h3>
-          <p>Carpeta lista, reputación blindada. No arriesgues tu reputación dependiendo del WiFi del lugar.</p>
+          <p>Carpetas listas. Responde pedidos sin depender del WiFi.</p>
         </motion.div>
       </div>
     </div>
@@ -869,7 +869,7 @@ function PublicHome() {
         setTopDownloadsTab("audio");
         setTopDownloadsError(null);
         setTopDemoNotice(
-          "Aún no hay suficiente historial de descargas para armar el Top en vivo. Te mostramos una referencia del catálogo mientras tanto.",
+          "Aún no hay suficiente historial para el Top en vivo. Mostramos referencia del catálogo mientras tanto.",
         );
         return;
       }
@@ -907,7 +907,7 @@ function PublicHome() {
         setTopDownloadsError(null);
         setTopDownloadsTab("audio");
         setTopDemoNotice(
-          "No pudimos cargar el Top en vivo por tu conexión. Te mostramos una referencia del catálogo mientras tanto.",
+          "No pudimos cargar el Top en vivo por tu conexión. Mostramos referencia del catálogo mientras tanto.",
         );
       } else {
         setTopDownloadsError("No pudimos cargar el Top 100 en este momento. Intenta de nuevo.");
@@ -1160,10 +1160,10 @@ function PublicHome() {
                 <span className="ph__hero-keyword">Reputación Protegida</span>
               </motion.div>
               <motion.p className="ph__hero-sub" variants={heroItemVariants}>
-                No es solo música: es seguridad en vivo para tu nombre como DJ.
+                Repertorio listo para cabina: responde pedidos sin estrés.
               </motion.p>
               <motion.p className="ph__hero-promise" variants={heroItemVariants}>
-                <strong>Nunca volver a decir “No la tengo” en cabina.</strong>
+                <strong>Nunca digas “No la tengo” en vivo.</strong>
               </motion.p>
               <motion.div className="ph__hero-proof" variants={heroItemVariants}>
                 <span>Acceso Inmediato</span>
@@ -1202,7 +1202,7 @@ function PublicHome() {
                 </Link>
               </motion.div>
               <motion.p className="ph__hero-micro" variants={heroItemVariants}>
-                Cuesta menos que perder un evento por no tener la canción correcta.
+                Cuesta menos que perder un evento.
               </motion.p>
             </div>
 
@@ -1309,7 +1309,7 @@ function PublicHome() {
             <motion.div className="ph__arsenal-card ph__arsenal-card--wide" variants={bentoGridVariants}>
               <Zap className="ph__arsenal-icon" aria-hidden />
               <h3>FTP Ultra Rápido</h3>
-              <p>Servidores de alta velocidad. Sin límites de velocidad. 500 GB/mes incluidos con FileZilla.</p>
+              <p>FTP rápido y estable. 500 GB/mes incluidos. Funciona con FileZilla.</p>
               <div className="ph__arsenal-visual ph__arsenal-visual--speed">
                 <span className="ph__arsenal-visual-bar" style={{ width: "92%" }} />
               </div>
@@ -1505,8 +1505,8 @@ function PublicHome() {
             </h2>
             <p className="ph__top-downloads-caption">
               {topDownloadsAreFallback
-                ? "Aún no hay suficiente historial de descargas para armar el Top en vivo. Te mostramos una referencia del catálogo por género (archivos y GB) para que veas qué pesa más."
-                : "Descubre lo que más baja la comunidad y escucha muestras rápidas para validar energía antes de registrarte."}
+                ? "Mientras juntamos historial real, te mostramos referencia del catálogo por género (archivos y GB)."
+                : "Escucha demos y mira qué baja la comunidad antes de registrarte."}
             </p>
             <div className="ph__top-downloads-controls" role="tablist" aria-label="Tipo de top">
               {topDownloadsAreFallback ? (
@@ -1613,7 +1613,7 @@ function PublicHome() {
             )}
             {!topDownloadsLoading && !topDownloadsError && topDownloadsAreFallback && (
               <p className="ph__top-downloads-state">
-                Ranking mostrado con referencia del catálogo mientras juntamos suficiente historial de descargas para el Top en vivo.
+                Mostrando referencia del catálogo mientras se junta historial real para el Top en vivo.
               </p>
             )}
             {!topDownloadsLoading && !topDownloadsError && activeTopDownloads.length > 0 && (
@@ -1700,7 +1700,7 @@ function PublicHome() {
           <div className="ph__reciprocity-shell">
             <h2 className="ph__section-title ph__section-title--left">Activa tu cuenta con ayuda real</h2>
             <p>
-              Te guiamos por chat para activar tu acceso, entrar al FTP y empezar a descargar sin fricción.
+              Te guiamos por chat para activar tu acceso y descargar hoy mismo.
             </p>
             <div className="ph__reciprocity-actions">
               <a
@@ -1775,7 +1775,7 @@ function PublicHome() {
           <div className="ph__pricing-shell">
             <h2 className="ph__section-title ph__section-title--membership">Activa hoy tu acceso Pro</h2>
             <p className="ph__pricing-intro">
-              Entra hoy, descarga hoy y llega a tu próximo evento con repertorio listo.
+              Activa hoy. Descarga hoy. Llega a cabina con repertorio listo.
             </p>
             <div className="ph__pricing-cards">
               <motion.article
@@ -1794,8 +1794,7 @@ function PublicHome() {
                     <p className="ph__pricing-local">Aprox. {usdLocalEstimateLabel}</p>
                   )}
                   <p className="ph__pricing-fit">Para DJs fuera de México o que cobran en USD.</p>
-                  <p className="ph__pricing-anchor">Si una sola canción faltante te cuesta un cliente, este plan se paga solo.</p>
-                  <p className="ph__pricing-cost">Desde $0.036 USD por GB descargado.</p>
+                  <p className="ph__pricing-anchor">500 GB/mes. Pagas y descargas hoy.</p>
                   <ul className="ph__pricing-features">
                     <li>500 GB de descarga al mes</li>
                     <li>Catálogo completo para cubrir peticiones en vivo</li>
@@ -1806,7 +1805,7 @@ function PublicHome() {
                     className="ph__pricing-methods"
                     ariaLabel="Métodos de pago para plan en USD"
                   />
-                  {trialConfig?.enabled && (
+                  {trialConfig?.enabled && trialConfig.eligible !== false && (
                     <p className="ph__pricing-trial-note" role="note">
                       <strong>{trialConfig.days} días gratis</strong> solo con tarjeta (Stripe) para nuevos usuarios. Incluye{" "}
                       {trialConfig.gb} GB de descarga. Después se cobra automáticamente.
@@ -1835,8 +1834,7 @@ function PublicHome() {
                     <p className="ph__pricing-local">Aprox. {mxnLocalEstimateLabel}</p>
                   )}
                   <p className="ph__pricing-fit">Para DJs que cobran en pesos y prefieren pago local.</p>
-                  <p className="ph__pricing-anchor">Una sola noche con respuestas lentas puede costarte más que este acceso.</p>
-                  <p className="ph__pricing-cost">Desde $0.70 MXN por GB descargado.</p>
+                  <p className="ph__pricing-anchor">500 GB/mes. Tarjeta o SPEI.</p>
                   <ul className="ph__pricing-features">
                     <li>500 GB de descarga al mes</li>
                     <li>SPEI o Tarjeta</li>
@@ -1847,7 +1845,7 @@ function PublicHome() {
                     className="ph__pricing-methods"
                     ariaLabel="Métodos de pago para plan en MXN"
                   />
-                  {trialConfig?.enabled && (
+                  {trialConfig?.enabled && trialConfig.eligible !== false && (
                     <p className="ph__pricing-trial-note" role="note">
                       <strong>{trialConfig.days} días gratis</strong> solo con tarjeta (Stripe) para nuevos usuarios. Incluye{" "}
                       {trialConfig.gb} GB de descarga. Después se cobra automáticamente.
