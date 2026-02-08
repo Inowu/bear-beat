@@ -207,18 +207,27 @@ export function hotjarStateChange(path: string): void {
     const provider = resolveProvider();
     if (provider === "contentsquare") {
       ensureContentsquareStub();
+      const opts = { lifespan: "onNextPageviewOnly" as const };
+
+      // Strict privacy: never send query strings to 3rd parties.
+      // Contentsquare provides setPath/setQuery to override URL parts.
+      // Docs: Tag API reference (setPath/setQuery/trackPageview).
+      window._uxa?.push(["setPath", normalizedPath, opts]);
+      window._uxa?.push(["setQuery", "", opts]);
+
       if (!contentsquareInitialHandled) {
         contentsquareInitialHandled = true;
         // Avoid duplicating the initial pageview if the tag is already installed.
         if (typeof window.CS_CONF === "undefined") {
           // In web context, the tag fires a "natural" pageview on load.
-          // If trackPageview is called before the tag loads, it behaves like setPath and overrides that first pageview.
-          window._uxa?.push(["trackPageview", normalizedPath]);
+          // setPath/setQuery above will override that first pageview.
           injectContentsquareScript();
         }
         return;
       }
-      window._uxa?.push(["trackPageview", normalizedPath]);
+
+      // Artificial pageview for SPAs (setPath/setQuery above define the URL).
+      window._uxa?.push(["trackPageview"]);
       return;
     }
 
