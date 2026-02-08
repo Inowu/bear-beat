@@ -75,7 +75,7 @@ export const PlanAdmin = () => {
       <button
         type="button"
         onClick={() => setShow(true)}
-        className="inline-flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white font-medium rounded-lg px-4 py-2 transition-colors"
+        className="inline-flex items-center gap-2 bg-bear-gradient hover:opacity-95 text-bear-dark-500 font-medium rounded-lg px-4 py-2 transition-opacity"
       >
         <Plus size={18} />
         Crear Plan
@@ -145,7 +145,7 @@ export const PlanAdmin = () => {
                       <button
                         type="button"
                         onClick={() => handleEditPlan(plan)}
-                        className="p-2 text-slate-400 hover:text-cyan-400 transition-colors rounded-lg hover:bg-slate-800"
+                        className="p-2 text-slate-400 hover:text-bear-cyan transition-colors rounded-lg hover:bg-slate-800"
                         title="Editar"
                       >
                         <Edit2 size={16} />
@@ -196,7 +196,7 @@ export const PlanAdmin = () => {
                 e.stopPropagation();
                 setDrawerPlan(plan);
               }}
-              className="p-2 text-slate-400 hover:text-cyan-400 rounded-lg"
+              className="p-2 text-slate-400 hover:text-bear-cyan rounded-lg"
               aria-label="Ver más"
             >
               <MoreVertical size={20} />

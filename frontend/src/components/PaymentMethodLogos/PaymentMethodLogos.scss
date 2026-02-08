@@ -88,7 +88,7 @@
 .payment-method-logos__item--spei,
 .payment-method-logos__item--transfer {
   border-color: color-mix(in srgb, var(--app-accent) 35%, var(--app-border));
-  background: color-mix(in srgb, var(--app-accent) 10%, var(--app-bg-card));
+  background: var(--theme-accent-soft-bg);
 
   svg {
     color: var(--app-accent);

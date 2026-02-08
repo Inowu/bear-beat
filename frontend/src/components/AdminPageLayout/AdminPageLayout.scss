@@ -11,7 +11,8 @@
   padding: clamp(10px, 1.5vw, 24px);
   border-radius: clamp(14px, 2vw, 22px);
   border: 1px solid color-mix(in srgb, var(--ad-border) 84%, transparent);
-  background: var(--ad-bg);
+  /* Contenedor "card" sobre el fondo del admin (premium en light/dark) */
+  background: var(--ad-card);
   color: var(--ad-text);
   box-shadow: var(--app-shadow-card);
   font-family: var(--bb-font-ui);
@@ -103,7 +104,7 @@
     position: sticky;
     top: 0;
     z-index: 2;
-    background: color-mix(in srgb, var(--ad-header-bg) 94%, transparent) !important;
+    background: var(--ad-header-bg) !important;
     border-bottom: 1px solid color-mix(in srgb, var(--ad-border) 88%, transparent);
     color: var(--ad-text-muted) !important;
     font-size: 0.85rem !important;
@@ -121,6 +122,15 @@
 
   tbody tr {
     border-bottom: 1px solid color-mix(in srgb, var(--ad-border) 70%, transparent) !important;
+    background: var(--ad-card) !important;
+  }
+
+  tbody tr:nth-child(2n) {
+    background: var(--ad-row-zebra-bg) !important;
+  }
+
+  tbody tr:hover {
+    background: var(--ad-row-hover-bg) !important;
   }
 
   tbody tr:last-child {
@@ -301,6 +311,13 @@
     color: var(--app-btn-text) !important;
     border-color: transparent !important;
     box-shadow: 0 10px 22px color-mix(in srgb, var(--ad-accent) 24%, transparent);
+  }
+
+  /* Light: avoid neon halo around primary CTAs. */
+  html[data-theme="light"] & button.bg-cyan-600,
+  html[data-theme="light"] & button.bg-bear-gradient,
+  html[data-theme="light"] & [class*="bg-bear-cyan"] {
+    box-shadow: var(--app-shadow) !important;
   }
 
   [class*="text-bear-dark-500"] {

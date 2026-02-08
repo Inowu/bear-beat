@@ -171,7 +171,7 @@ export function CatalogStats() {
           <button
             type="button"
             onClick={() => fetchStats(true)}
-            className="bg-cyan-600 hover:bg-cyan-500 text-white font-medium rounded-lg px-4 py-2 transition-colors"
+            className="bg-bear-gradient hover:opacity-95 text-bear-dark-500 font-medium rounded-lg px-4 py-2 transition-opacity"
           >
             Actualizar estadísticas
           </button>
@@ -211,14 +211,14 @@ export function CatalogStats() {
         type="button"
         onClick={() => fetchStats(true)}
         disabled={loading}
-        className="bg-cyan-600 hover:bg-cyan-500 text-white font-medium rounded-lg px-4 py-2 transition-colors disabled:opacity-50"
+        className="bg-bear-gradient hover:opacity-95 text-bear-dark-500 font-medium rounded-lg px-4 py-2 transition-opacity disabled:opacity-50"
       >
         {loading ? "Cargando…" : "Actualizar"}
       </button>
       <button
         type="button"
         onClick={handleExportCsv}
-        className="bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-lg px-4 py-2 border border-slate-600 transition-colors"
+        className="bg-bg-card hover:bg-bg-input text-text-main font-medium rounded-lg px-4 py-2 border border-border transition-colors"
       >
         Exportar CSV
       </button>

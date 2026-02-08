@@ -70,7 +70,7 @@
   padding: 0 12px;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--app-accent) 34%, transparent);
-  background: color-mix(in srgb, var(--app-accent) 10%, transparent);
+  background: var(--theme-accent-soft-bg);
   color: var(--app-text-heading);
   font-size: 0.84rem;
   font-weight: 700;
@@ -181,7 +181,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: color-mix(in srgb, var(--app-accent) 15%, transparent);
+  background: var(--theme-accent-soft-bg-2);
   color: var(--app-text-heading);
   font-size: 0.78rem;
   font-weight: 800;
@@ -282,10 +282,6 @@
     width: 100%;
     justify-content: center;
     text-align: center;
-  }
-
-  .plans-trust-strip span {
-    width: 100%;
   }
 
   .plans-grid {

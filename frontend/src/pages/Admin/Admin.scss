@@ -170,7 +170,7 @@ html[data-theme="dark"] .admin-theme::before {
   width: 100%;
   min-height: 44px;
   padding: 0 12px;
-  border-radius: 11px;
+  border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--ad-input-border) 88%, transparent);
   background: color-mix(in srgb, var(--ad-input-bg) 94%, transparent);
   color: var(--ad-title);
@@ -196,7 +196,7 @@ html[data-theme="dark"] .admin-theme::before {
   width: 100%;
   min-height: 44px;
   padding: 0 12px 0 38px;
-  border-radius: 11px;
+  border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--ad-input-border) 88%, transparent);
   background: color-mix(in srgb, var(--ad-input-bg) 94%, transparent);
   color: var(--ad-title);
@@ -243,7 +243,7 @@ html[data-theme="dark"] .admin-theme::before {
   justify-content: center;
   gap: 7px;
   padding: 0 14px;
-  border-radius: 11px;
+  border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--ad-border) 86%, transparent);
   background: color-mix(in srgb, var(--ad-card) 94%, transparent);
   color: var(--ad-text);
@@ -283,6 +283,15 @@ html[data-theme="dark"] .admin-theme::before {
   filter: saturate(1.05);
 }
 
+/* Light: no neon glow halos. Keep glow for dark theme. */
+html[data-theme="light"] .admin-theme .btn-primary {
+  box-shadow: var(--app-shadow);
+}
+
+html[data-theme="light"] .admin-theme .btn-primary:hover {
+  box-shadow: var(--app-shadow-card);
+}
+
 .btn-secondary {
   border-color: color-mix(in srgb, var(--ad-border) 82%, transparent);
   background: color-mix(in srgb, var(--ad-card) 96%, transparent);
@@ -292,7 +301,8 @@ html[data-theme="dark"] .admin-theme::before {
   width: 100%;
   border-radius: 18px;
   border: 1px solid color-mix(in srgb, var(--ad-border) 84%, transparent);
-  background: color-mix(in srgb, var(--ad-card) 98%, transparent);
+  /* Opaque surface to prevent ambient accent bleed (premium + readable). */
+  background: var(--ad-card);
   box-shadow: var(--app-shadow-card);
   overflow: hidden;
 }
@@ -352,7 +362,7 @@ html[data-theme="dark"] .admin-theme::before {
   padding: 13px 12px;
   text-align: left;
   border-bottom: 1px solid color-mix(in srgb, var(--ad-border) 88%, transparent);
-  background: color-mix(in srgb, var(--ad-header-bg) 96%, transparent);
+  background: var(--ad-header-bg);
   color: color-mix(in srgb, var(--ad-text-muted) 94%, transparent);
   font-size: 0.9rem;
   font-weight: 800;
@@ -367,6 +377,7 @@ html[data-theme="dark"] .admin-theme::before {
 
 .admin-table tbody tr {
   border-bottom: 1px solid color-mix(in srgb, var(--ad-border) 72%, transparent);
+  background: var(--ad-card);
   transition: background 0.14s ease, transform 0.14s ease;
 }
 
@@ -375,11 +386,11 @@ html[data-theme="dark"] .admin-theme::before {
 }
 
 .admin-table tbody tr:nth-child(2n) {
-  background: color-mix(in srgb, var(--ad-row-hover) 44%, transparent);
+  background: var(--ad-row-zebra-bg);
 }
 
 .admin-table tbody tr:hover {
-  background: color-mix(in srgb, var(--ad-row-hover) 92%, transparent);
+  background: var(--ad-row-hover-bg);
 }
 
 .admin-table tbody td {
@@ -409,8 +420,9 @@ html[data-theme="dark"] .admin-theme::before {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: color-mix(in srgb, var(--ad-accent) 24%, var(--ad-card));
-  border: 1px solid color-mix(in srgb, var(--ad-accent) 26%, transparent);
+  /* Light: subtle (no baby-blue wash). Dark: can be stronger via token. */
+  background: var(--theme-accent-soft-bg-2);
+  border: 1px solid color-mix(in srgb, var(--ad-accent) 28%, transparent);
   color: var(--ad-accent);
   font-weight: 800;
   font-size: 0.96rem;
@@ -719,8 +731,9 @@ html[data-theme="dark"] .admin-theme::before {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: color-mix(in srgb, var(--ad-accent) 24%, var(--ad-card));
-  border: 1px solid color-mix(in srgb, var(--ad-accent) 30%, transparent);
+  /* Light: subtle (no baby-blue wash). Dark: can be stronger via token. */
+  background: var(--theme-accent-soft-bg-2);
+  border: 1px solid color-mix(in srgb, var(--ad-accent) 32%, transparent);
   color: var(--ad-accent);
   font-size: 1.04rem;
   font-weight: 800;
@@ -935,11 +948,12 @@ html[data-theme="dark"] .admin-theme::before {
   }
 
   .left-contain {
-    grid-template-columns: 1fr;
+    /* Mobile: mantener 2 columnas para reducir altura (estado + página) */
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .search-input {
-    grid-column: auto;
+    grid-column: span 2;
   }
 
   .header__actions {

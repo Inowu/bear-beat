@@ -90,8 +90,8 @@ html[data-theme="dark"] .home-main-container::before {
   height: 36px;
   padding: 6px;
   border-radius: 11px;
-  border: 1px solid color-mix(in srgb, var(--app-accent) 34%, transparent);
-  background: color-mix(in srgb, var(--app-accent) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--app-accent) 28%, transparent);
+  background: var(--theme-accent-soft-bg-2);
   color: var(--app-accent);
 }
 
@@ -138,7 +138,7 @@ html[data-theme="dark"] .home-main-container::before {
 
   &:hover {
     border-color: color-mix(in srgb, var(--app-accent) 46%, transparent);
-    background: color-mix(in srgb, var(--app-accent) 10%, transparent);
+    background: var(--theme-accent-soft-bg);
     color: var(--app-text-heading);
   }
 }
@@ -197,6 +197,8 @@ html[data-theme="dark"] .home-main-container::before {
   top: 50%;
   width: 44px;
   height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   border-radius: 10px;
   border: 1px solid color-mix(in srgb, var(--app-border) 80%, transparent);
   background: color-mix(in srgb, var(--app-bg-card) 94%, transparent);
@@ -205,6 +207,8 @@ html[data-theme="dark"] .home-main-container::before {
   align-items: center;
   justify-content: center;
   transform: translateY(-50%);
+  padding: 0;
+  box-sizing: border-box;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
@@ -212,7 +216,7 @@ html[data-theme="dark"] .home-main-container::before {
 
   &:hover {
     border-color: color-mix(in srgb, var(--app-accent) 40%, transparent);
-    background: color-mix(in srgb, var(--app-accent) 10%, transparent);
+    background: var(--theme-accent-soft-bg);
     color: var(--app-accent);
   }
 
@@ -302,7 +306,7 @@ html[data-theme="dark"] .home-main-container::before {
 
 .bb-chip-root {
   border-color: color-mix(in srgb, var(--app-accent) 36%, transparent);
-  background: color-mix(in srgb, var(--app-accent) 12%, transparent);
+  background: var(--theme-accent-soft-bg-2);
 }
 
 .bb-chip-current {
@@ -319,7 +323,7 @@ html[data-theme="dark"] .home-main-container::before {
 
   &:hover {
     border-color: color-mix(in srgb, var(--app-accent) 40%, transparent);
-    background: color-mix(in srgb, var(--app-accent) 10%, transparent);
+    background: var(--theme-accent-soft-bg);
     color: var(--app-accent);
   }
 }
@@ -333,7 +337,7 @@ html[data-theme="dark"] .home-main-container::before {
 
 .bb-chip-search {
   border-color: color-mix(in srgb, var(--app-accent) 34%, transparent);
-  background: color-mix(in srgb, var(--app-accent) 9%, transparent);
+  background: var(--theme-accent-soft-bg);
   color: var(--app-text-body);
 
   strong {
@@ -382,7 +386,7 @@ html[data-theme="dark"] .home-main-container::before {
 
   &:hover:not(:disabled) {
     border-color: color-mix(in srgb, var(--app-accent) 40%, transparent);
-    background: color-mix(in srgb, var(--app-accent) 10%, transparent);
+    background: var(--theme-accent-soft-bg);
     color: var(--app-text-heading);
   }
 
@@ -437,8 +441,8 @@ html[data-theme="dark"] .home-main-container::before {
   gap: 4px;
   padding: 12px 14px;
   border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--app-accent) 24%, transparent);
-  background: color-mix(in srgb, var(--app-accent) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--app-accent) 20%, transparent);
+  background: var(--theme-accent-soft-bg);
 
   h3 {
     margin: 0;
@@ -492,7 +496,12 @@ html[data-theme="dark"] .home-main-container::before {
 .bb-root-card.is-folder:hover {
   transform: translateY(-2px);
   border-color: color-mix(in srgb, var(--app-accent) 40%, transparent);
-  box-shadow: 0 12px 24px color-mix(in srgb, var(--app-accent) 16%, transparent);
+  /* Light: premium = neutral shadow. Dark: gets a subtle cyan glow via override below. */
+  box-shadow: var(--app-shadow-card);
+}
+
+html[data-theme="dark"] .bb-root-card.is-folder:hover {
+  box-shadow: 0 12px 24px rgba(8, 225, 247, 0.18);
 }
 
 .bb-root-card-main {
@@ -575,7 +584,7 @@ html[data-theme="dark"] .home-main-container::before {
   padding: 0 10px;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--app-accent) 34%, transparent);
-  background: color-mix(in srgb, var(--app-accent) 10%, transparent);
+  background: var(--theme-accent-soft-bg);
   color: var(--app-accent);
   font-size: 0.9rem;
   font-weight: 700;
@@ -630,8 +639,12 @@ html[data-theme="dark"] .home-main-container::before {
 }
 
 .bb-explorer-row:hover {
-  background: color-mix(in srgb, var(--app-accent) 8%, transparent);
+  background: var(--theme-accent-soft-bg);
   border-color: color-mix(in srgb, var(--app-accent) 28%, transparent);
+}
+
+html[data-theme="light"] .bb-explorer-row:hover {
+  background: rgba(15, 23, 42, 0.025);
 }
 
 .bb-row-main {
@@ -670,7 +683,7 @@ html[data-theme="dark"] .home-main-container::before {
   padding: 0 12px;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--app-accent) 32%, transparent);
-  background: color-mix(in srgb, var(--app-accent) 10%, transparent);
+  background: var(--theme-accent-soft-bg);
   color: var(--app-accent);
   cursor: pointer;
   font-size: 0.96rem;
@@ -680,7 +693,7 @@ html[data-theme="dark"] .home-main-container::before {
 
   &:hover {
     border-color: color-mix(in srgb, var(--app-accent) 46%, transparent);
-    background: color-mix(in srgb, var(--app-accent) 14%, transparent);
+    background: var(--theme-accent-soft-bg-2);
   }
 
   svg {
@@ -713,13 +726,13 @@ html[data-theme="dark"] .home-main-container::before {
 
 .bb-kind-folder {
   border-color: color-mix(in srgb, var(--app-accent) 34%, transparent);
-  background: color-mix(in srgb, var(--app-accent) 13%, transparent);
+  background: var(--theme-accent-soft-bg-2);
   color: var(--app-accent);
 }
 
 .bb-kind-audio {
   border-color: color-mix(in srgb, var(--app-accent) 26%, transparent);
-  background: color-mix(in srgb, var(--app-accent) 10%, transparent);
+  background: var(--theme-accent-soft-bg);
   color: color-mix(in srgb, var(--app-accent) 86%, white);
 }
 
@@ -779,7 +792,7 @@ html[data-theme="dark"] .home-main-container::before {
   padding: 0 10px;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--app-accent) 28%, transparent);
-  background: color-mix(in srgb, var(--app-accent) 9%, transparent);
+  background: var(--theme-accent-soft-bg);
   color: var(--app-accent);
   display: inline-flex;
   align-items: center;
@@ -819,12 +832,12 @@ html[data-theme="dark"] .home-main-container::before {
 
 .bb-action-btn--ghost {
   border-color: color-mix(in srgb, var(--app-accent) 28%, transparent);
-  background: color-mix(in srgb, var(--app-accent) 9%, transparent);
+  background: var(--theme-accent-soft-bg);
   color: var(--app-accent);
 
   &:hover {
     border-color: color-mix(in srgb, var(--app-accent) 44%, transparent);
-    background: color-mix(in srgb, var(--app-accent) 14%, transparent);
+    background: var(--theme-accent-soft-bg-2);
   }
 }
 
@@ -832,25 +845,34 @@ html[data-theme="dark"] .home-main-container::before {
   border-color: color-mix(in srgb, var(--app-accent) 46%, transparent);
   background: var(--app-gradient);
   color: var(--app-btn-text);
-  box-shadow: 0 8px 18px color-mix(in srgb, var(--app-accent) 24%, transparent);
+  /* Light: neutral depth. Dark: subtle glow override below. */
+  box-shadow: var(--app-shadow);
 
   &:hover {
     border-color: color-mix(in srgb, var(--app-accent) 58%, transparent);
-    box-shadow: 0 10px 20px color-mix(in srgb, var(--app-accent) 32%, transparent);
+    box-shadow: var(--app-shadow-card);
   }
+}
+
+html[data-theme="dark"] .bb-action-btn--accent {
+  box-shadow: 0 8px 18px rgba(8, 225, 247, 0.24);
+}
+
+html[data-theme="dark"] .bb-action-btn--accent:hover {
+  box-shadow: 0 10px 20px rgba(8, 225, 247, 0.32);
 }
 
 .bb-action-btn--folder {
   min-height: 40px;
   padding: 0 9px;
   border-color: color-mix(in srgb, var(--app-accent) 36%, transparent);
-  background: color-mix(in srgb, var(--app-accent) 10%, transparent);
+  background: var(--theme-accent-soft-bg);
   color: var(--app-accent);
   box-shadow: none;
 
   &:hover {
     border-color: color-mix(in srgb, var(--app-accent) 52%, transparent);
-    background: color-mix(in srgb, var(--app-accent) 16%, transparent);
+    background: var(--theme-accent-soft-bg-2);
   }
 }
 
@@ -945,10 +967,19 @@ html[data-theme="dark"] .home-main-container::before {
 
   .bb-home-quick-actions {
     gap: 7px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .bb-home-quick-actions::-webkit-scrollbar {
+    display: none;
   }
 
   .bb-home-quick-btn {
-    flex: 1 1 180px;
+    flex: 0 0 auto;
+    white-space: nowrap;
   }
 
   .bb-explorer-row {

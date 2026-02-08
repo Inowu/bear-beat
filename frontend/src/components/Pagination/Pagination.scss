@@ -89,7 +89,7 @@ $bear-blue-dim: var(--bb-cyan);
       justify-content: center;
       border-radius: 10px;
       border: 1px solid color-mix(in srgb, var(--app-accent) 35%, transparent);
-      background: color-mix(in srgb, var(--app-accent) 16%, transparent);
+      background: var(--theme-accent-soft-bg-2);
     }
 
     .unselected {
@@ -109,7 +109,7 @@ $bear-blue-dim: var(--bb-cyan);
 
       &:hover {
         opacity: 0.67;
-        background: color-mix(in srgb, var(--app-accent) 12%, transparent);
+        background: var(--theme-accent-soft-bg);
       }
     }
 

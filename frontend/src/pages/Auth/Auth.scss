@@ -88,7 +88,7 @@
   max-width: 420px;
   padding: 32px 24px;
   background: var(--ph-bg-card);
-  border: 2px solid var(--ph-border);
+  border: 1px solid var(--ph-border);
   border-radius: 1rem;
   box-shadow: var(--ph-shadow-card);
 
@@ -140,8 +140,8 @@
       padding: 12px 16px;
       font-size: var(--app-font-size-body);
       box-sizing: border-box;
-      border-radius: 12px;
-      border: 2px solid var(--auth-input-border);
+      border-radius: 999px;
+      border: 1px solid var(--auth-input-border);
       background: var(--auth-input-bg);
       color: var(--app-text-heading);
       transition: border-color 0.2s, box-shadow 0.2s;
@@ -151,7 +151,7 @@
       &:focus {
         outline: none;
         border-color: var(--app-accent);
-        box-shadow: 0 0 0 3px rgba(8, 225, 247, 0.25);
+        box-shadow: 0 0 0 3px var(--app-focus-ring);
       }
     }
   }
@@ -163,14 +163,14 @@
     align-items: stretch;
     width: 100%;
     min-height: 52px;
-    border-radius: 12px;
-    border: 2px solid var(--auth-input-border);
+    border-radius: 999px;
+    border: 1px solid var(--auth-input-border);
     background: var(--auth-input-bg);
     transition: border-color 0.2s, box-shadow 0.2s;
 
     &:focus-within {
       border-color: var(--app-accent);
-      box-shadow: 0 0 0 3px rgba(8, 225, 247, 0.25);
+      box-shadow: 0 0 0 3px var(--app-focus-ring);
       .auth-password-icon {
         color: var(--app-accent);
       }
@@ -198,7 +198,7 @@
     padding-left: 50px !important;
     padding-right: 50px !important;
     border: none;
-    border-radius: 10px;
+    border-radius: 999px;
     background: transparent;
     color: var(--app-text-heading);
     &::placeholder {
@@ -209,33 +209,42 @@
   .error-formik {
     display: block;
     color: var(--app-status-error);
-    font-weight: var(--app-font-weight-heading);
-    font-size: var(--app-font-size-body);
-    margin-top: 8px;
-    margin-bottom: 4px;
-    line-height: 1.4;
-    min-height: 1.4em;
+    font-weight: 600;
+    font-size: 1.25rem;
+    margin-top: 6px;
+    margin-bottom: 0;
+    line-height: 1.35;
+    min-height: 1.35em;
   }
 
-  button.btn {
-    width: 100%;
-    min-height: 48px;
-    padding: 14px 20px;
-    font-size: var(--app-font-size-body);
-    font-weight: var(--app-font-weight-heading);
-    border-radius: 999px;
-    border: none;
-    cursor: pointer;
-    background: var(--app-gradient);
-    color: var(--app-btn-text);
-    box-shadow: 0 4px 14px rgba(8, 225, 247, 0.3);
-    transition: opacity 0.2s, box-shadow 0.2s, transform 0.2s;
-    &:hover {
-      opacity: 0.95;
-      box-shadow: 0 6px 20px rgba(8, 225, 247, 0.4);
-      transform: translateY(-1px);
-    }
-  }
+	  button.btn {
+	    width: 100%;
+	    min-height: 48px;
+	    padding: 14px 20px;
+	    font-size: var(--app-font-size-body);
+	    font-weight: var(--app-font-weight-heading);
+	    border-radius: 999px;
+	    border: none;
+	    cursor: pointer;
+	    background: var(--app-gradient);
+	    color: var(--app-btn-text);
+	    box-shadow: 0 4px 14px rgba(8, 225, 247, 0.3);
+	    transition: opacity 0.2s, box-shadow 0.2s, transform 0.2s;
+	    &:hover {
+	      opacity: 0.95;
+	      box-shadow: 0 6px 20px rgba(8, 225, 247, 0.4);
+	      transform: translateY(-1px);
+	    }
+	  }
+
+	  /* Light: CTA sin halo neón (premium/limpio). Dark: conserva glow. */
+	  html[data-theme="light"] & button.btn {
+	    box-shadow: var(--app-shadow);
+	  }
+
+	  html[data-theme="light"] & button.btn:hover {
+	    box-shadow: var(--app-shadow-card);
+	  }
 
   .arrow {
     stroke: currentColor;

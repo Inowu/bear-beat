@@ -23,8 +23,8 @@
   --bb-mint: #00E6C1;
   --bb-gradient: linear-gradient(11deg, var(--bb-mint), var(--bb-cyan));
   /* Ambient accents (for large surfaces; avoid "baby blue" washes) */
-  --bb-ambient-cyan: rgba(8, 225, 247, 0.05);
-  --bb-ambient-mint: rgba(0, 230, 193, 0.04);
+  --bb-ambient-cyan: rgba(8, 225, 247, 0.022);
+  --bb-ambient-mint: rgba(0, 230, 193, 0.018);
   --bb-danger: #FF2D2C;
   --bb-success: #39D834;
   --bb-warning: #FEBC2E;
@@ -34,16 +34,18 @@
   --bb-dark-200: #2A2A2A;
   --bb-dark-300: #292929;
   --bb-dark-400: #1A1A1A;
-  --bb-bg: #EEEEEE;
+  /* Light base: slightly cooler/cleaner than #EEEEEE to feel premium (2026) */
+  --bb-bg: #F3F6F8;
   --bb-surface: #FFFFFF;
-  --bb-surface-soft: #F8F8F8;
-  --bb-border: #D3D3D3;
+  --bb-surface-soft: #F6F7F8;
+  --bb-border: rgba(21, 42, 53, 0.14);
   --bb-text-heading: #1A1A1A;
   --bb-text-body: #2A2A2A;
   --bb-text-muted: #5F5F5F;
   --bb-focus-ring: rgba(8, 225, 247, 0.32);
-  --bb-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
-  --bb-shadow-card: 0 14px 40px rgba(0, 0, 0, 0.14);
+  /* Shadows: softer and more “glass + border” than heavy drop-shadows */
+  --bb-shadow: 0 10px 26px rgba(15, 23, 42, 0.10);
+  --bb-shadow-card: 0 18px 48px rgba(15, 23, 42, 0.12);
   --bb-shadow-glow: 0 0 18px rgba(8, 225, 247, 0.32);
   --bb-radius-card: 12px;
   --bb-radius-pill: 999px;
@@ -80,7 +82,8 @@
   /* Neutral light pills (avoid blue-ish nav wash) */
   --theme-nav-item-bg: #F5F6F8;
   --theme-nav-item-border: rgba(21, 42, 53, 0.12);
-  --theme-nav-item-hover-bg: color-mix(in srgb, var(--bb-cyan) 16%, #FFFFFF);
+  /* Light hover: subtle tint, avoid "baby blue" panels */
+  --theme-nav-item-hover-bg: color-mix(in srgb, var(--bb-cyan) 7%, #FFFFFF);
   --theme-nav-item-hover-text: #0F2028;
   --theme-nav-item-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
   --theme-card-bg: var(--bb-surface);
@@ -108,7 +111,9 @@
   --theme-accent-dim: var(--bb-cyan);
   --theme-accent-glow: rgba(8, 225, 247, 0.42);
   /* Soft accent surfaces in LIGHT should be subtle (avoid "baby blue" wash) */
-  --theme-accent-soft-bg: rgba(8, 225, 247, 0.06);
+  --theme-accent-soft-bg: rgba(8, 225, 247, 0.035);
+  --theme-accent-soft-bg-2: rgba(8, 225, 247, 0.06);
+  --theme-accent-soft-bg-3: rgba(8, 225, 247, 0.085);
   --theme-landing-bg: #000000;
   --theme-landing-text: #FFFFFF;
 
@@ -159,9 +164,11 @@
   --app-gradient: var(--bb-gradient);
 
   --auth-input-border: var(--bb-border);
-  --auth-input-bg: var(--bb-surface);
+  /* Auth: en light, inputs con relleno suave (gris neutro) para separarse del panel blanco sin “baby blue”. */
+  --auth-input-bg: var(--bb-surface-soft);
   --auth-register-panel-bg: var(--bb-surface);
   --auth-register-text: var(--bb-text-heading);
+  /* En light: inputs neutros (blancos) para evitar "baby blue" visual */
   --auth-register-input-bg: var(--bb-surface-soft);
   --auth-register-input-border: var(--bb-border);
   --auth-register-input-focus: var(--bb-cyan);
@@ -287,6 +294,9 @@
   --ad-focus-ring: var(--bb-focus-ring);
   /* Admin: use neutral stripes in LIGHT; keep cyan for borders/CTAs only */
   --ad-row-hover: rgba(15, 23, 42, 0.035);
+  /* Admin table rows must be opaque (avoid ambient cyan bleeding through). */
+  --ad-row-zebra-bg: #F7F8FA;
+  --ad-row-hover-bg: #EEF2F6;
   --ad-header-bg: var(--bb-surface-soft);
   --ad-badge-success-bg: rgba(57, 216, 52, 0.12);
   --ad-badge-success-text: #208A1D;
@@ -347,6 +357,8 @@ html.dark,
   --theme-accent-bright: var(--bb-cyan);
   --theme-accent-dim: var(--bb-cyan);
   --theme-accent-soft-bg: rgba(8, 225, 247, 0.14);
+  --theme-accent-soft-bg-2: rgba(8, 225, 247, 0.22);
+  --theme-accent-soft-bg-3: rgba(8, 225, 247, 0.3);
 
   --app-bg: var(--bb-bg);
   --app-bg-soft: var(--bb-surface-soft);
@@ -449,8 +461,10 @@ html.dark,
   --ad-input-bg: var(--bb-surface-soft);
   --ad-input-border: var(--bb-border);
   --ad-header-bg: #333333;
-  /* Admin: in DARK, subtle cyan hover/stripe is OK */
-  --ad-row-hover: rgba(8, 225, 247, 0.12);
+  /* Admin: in DARK, keep zebra/hover neutral (premium); reserve cyan for accents/CTAs */
+  --ad-row-hover: rgba(255, 255, 255, 0.045);
+  --ad-row-zebra-bg: #2E2E2E;
+  --ad-row-hover-bg: #353535;
 
   --fb-bg: var(--bb-bg);
   --fb-border: var(--bb-border);
@@ -637,7 +651,7 @@ textarea {
 }
 
 :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
-  border: 2px solid var(--app-border);
+  border: 1px solid var(--app-border);
   border-radius: var(--bb-radius-card);
   background: var(--app-bg-card);
   color: var(--app-text-heading);
@@ -653,6 +667,18 @@ textarea {
     border-color: var(--app-accent);
     box-shadow: 0 0 0 3px var(--app-focus-ring);
   }
+}
+
+/* iOS/Safari: `type="search"` trae un botón nativo (x) que rompe layouts con clear custom */
+input[type="search"] {
+  -webkit-appearance: none;
+}
+
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-results-button,
+input[type="search"]::-webkit-search-results-decoration {
+  display: none;
 }
 
 button,
@@ -736,6 +762,17 @@ button.primary-pill {
   text-align: center;
 }
 
+[data-theme="light"] .app-state-panel {
+  /* Light: sin "wash" de cian en estados (loading/empty/error) */
+  background:
+    radial-gradient(
+      440px 220px at 100% 0%,
+      color-mix(in srgb, var(--app-accent) 4%, transparent),
+      transparent 72%
+    ),
+    color-mix(in srgb, var(--app-bg-card) 99%, transparent);
+}
+
 .app-state-panel.is-loading {
   border-style: solid;
 }
@@ -760,7 +797,7 @@ button.primary-pill {
   height: 54px;
   border-radius: 16px;
   border: 1px solid color-mix(in srgb, var(--app-accent) 34%, transparent);
-  background: color-mix(in srgb, var(--app-accent) 12%, transparent);
+  background: var(--theme-accent-soft-bg-2);
   color: var(--app-accent);
   display: inline-flex;
   align-items: center;
@@ -825,7 +862,7 @@ button.primary-pill {
 .app-state-actions button:hover,
 .app-state-actions a:hover {
   border-color: color-mix(in srgb, var(--app-accent) 46%, transparent);
-  background: color-mix(in srgb, var(--app-accent) 12%, transparent);
+  background: var(--theme-accent-soft-bg);
   color: var(--app-accent);
 }
 
@@ -908,17 +945,17 @@ html.dark .bb-surface::before,
 }
 /* Fallback global: errores en flujo, sin posición absoluta (evita solapamientos) */
 .error-formik {
-  color: var(--ph-pain-bad);
-  font-weight: var(--app-font-weight-heading);
-  font-size: var(--app-font-size-body);
+  color: var(--app-status-error);
+  font-weight: 600;
+  font-size: 1.25rem;
   display: block;
   margin-top: 6px;
-  line-height: 1.4;
+  line-height: 1.35;
 }
 
 .formik {
   color: var(--app-status-error);
-  font-weight: var(--app-font-weight-heading);
+  font-weight: 600;
   font-size: var(--app-font-size-body);
   line-height: 1.4;
 }
@@ -935,7 +972,7 @@ svg[role="img"] {
 /* Cloudflare Turnstile: integrado al diseño oscuro (theme=dark + contenedor) */
 .turnstile-widget-wrap {
   background: var(--app-bg-card);
-  border: 2px solid var(--app-border);
+  border: 1px solid var(--app-border);
   border-radius: 12px;
   padding: 10px;
   overflow: hidden;
@@ -1052,6 +1089,11 @@ svg[role="img"] {
 
 .warning-message {
   color: var(--app-status-warning);
+}
+
+/* Light: hovers de tablas neutrales (evita zebra/hover cian en superficies claras) */
+[data-theme="light"] .main-layout-main-container tbody tr:hover {
+  background: rgba(15, 23, 42, 0.03);
 }
 
 /* Chrome Mac: landing (PublicHome) sin scroll horizontal ni recorte */

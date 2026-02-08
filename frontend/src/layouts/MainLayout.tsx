@@ -66,7 +66,9 @@ function MainLayout() {
       <div className="content-container">
         {userToken && <AsideNavbar show={asideOpen} onHide={handleAsideHide} />}
         {showDownload && currentUser !== null && <FileLoader />}
-        <div className={`content-container-inner ${!isFullWidth ? "content-area-app" : ""}`}>
+        {/* Guardrails visuales (altura mínima, tipografía consistente) deben aplicar en TODAS las rutas,
+            incl. Auth/Planes/Instrucciones. Son mínimos y no pisan estilos específicos. */}
+        <div className="content-container-inner content-area-app">
           <main className="main-layout-main">
             <div
               className={

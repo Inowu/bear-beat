@@ -20,7 +20,7 @@
   background: linear-gradient(
     160deg,
     color-mix(in srgb, var(--app-bg-card) 95%, transparent),
-    color-mix(in srgb, var(--app-accent) 6%, var(--app-bg-card))
+    color-mix(in srgb, var(--app-accent) 3%, var(--app-bg-card))
   );
   box-shadow: var(--app-shadow);
   padding: clamp(1.1rem, 2.4vw, 1.8rem);

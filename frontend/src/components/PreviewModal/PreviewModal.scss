@@ -5,7 +5,7 @@
     .modal-content {
       background: var(--app-bg-card);
       color: var(--app-text-body);
-      border: 2px solid var(--app-border);
+      border: 1px solid var(--app-border);
       box-shadow: var(--app-shadow-card);
 
       .modal-header {
@@ -107,7 +107,7 @@
           padding: 0 12px;
           border-radius: 999px;
           border: 1px solid color-mix(in srgb, var(--app-accent) 42%, transparent);
-          background: color-mix(in srgb, var(--app-accent) 10%, transparent);
+          background: var(--theme-accent-soft-bg);
           color: var(--app-accent);
           font-size: 0.96rem;
           font-weight: 700;
@@ -115,7 +115,7 @@
 
           &:hover:not(:disabled) {
             border-color: color-mix(in srgb, var(--app-accent) 58%, transparent);
-            background: color-mix(in srgb, var(--app-accent) 16%, transparent);
+            background: var(--theme-accent-soft-bg-2);
           }
 
           &:disabled {
