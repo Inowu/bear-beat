@@ -14,6 +14,7 @@ import { brevo } from '../../../email';
 import { OrderStatus } from '../../subscriptions/interfaces/order-status.interface';
 import { addGBToAccount } from '../../products/services/addGBToAccount';
 import { manyChat } from '../../../many-chat';
+import { ingestAnalyticsEvents } from '../../../analytics';
 
 export const conektaSubscriptionWebhook = async (req: Request) => {
   const payload: EventResponse = JSON.parse(req.body as any);
@@ -72,6 +73,33 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
         `[CONEKTA_WH] Updating subscription for user ${user.id}, subscription status: ${subscription.status}, subscription id: ${subscription.id}, payload: ${payloadStr}`,
       );
       if (payload.data?.object.status !== 'active') {
+        // Internal analytics: provider-side cancellation (best-effort involuntary signal).
+        try {
+          await ingestAnalyticsEvents({
+            prisma,
+            events: [
+              {
+                eventId: `conekta:${payload.id}:subscription_cancel_involuntary`.slice(0, 80),
+                eventName: 'subscription_cancel_involuntary',
+                eventCategory: 'retention',
+                eventTs: new Date().toISOString(),
+                userId: user.id,
+                metadata: {
+                  provider: 'conekta',
+                  reason: String(payload.data?.object.status || 'unknown'),
+                  conektaSubscriptionId: subscription.id,
+                  planId: plan?.id ?? null,
+                },
+              },
+            ],
+            sessionUserId: user.id,
+          });
+        } catch (e) {
+          log.debug('[CONEKTA_WH] analytics involuntary cancellation skipped', {
+            error: e instanceof Error ? e.message : e,
+          });
+        }
+
         await cancelSubscription({
           prisma,
           user,
@@ -116,6 +144,35 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
         }
       }
 
+      // Internal analytics: payment failed (cash/spei).
+      try {
+        await ingestAnalyticsEvents({
+          prisma,
+          events: [
+            {
+              eventId: `conekta:${payload.id}:payment_failed`.slice(0, 80),
+              eventName: 'payment_failed',
+              eventCategory: 'purchase',
+              eventTs: new Date().toISOString(),
+              userId: user.id,
+              currency: plan?.moneda?.toUpperCase?.() ?? 'MXN',
+              amount: Number(plan?.price) || null,
+              metadata: {
+                provider: 'conekta',
+                reason: payload.type,
+                conektaOrderId: payload.data?.object?.id ?? null,
+                orderId: orderId ?? null,
+              },
+            },
+          ],
+          sessionUserId: user.id,
+        });
+      } catch (e) {
+        log.debug('[CONEKTA_WH] analytics payment_failed skipped', {
+          error: e instanceof Error ? e.message : e,
+        });
+      }
+
       await cancelOrder({
         prisma,
         orderId,
@@ -129,6 +186,36 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
       const orderId = payload.data?.object.metadata.orderId;
 
       log.info(`[CONEKTA_WH] Canceling order ${orderId}`);
+
+      // Internal analytics: payment expired (cash/spei).
+      try {
+        await ingestAnalyticsEvents({
+          prisma,
+          events: [
+            {
+              eventId: `conekta:${payload.id}:payment_failed`.slice(0, 80),
+              eventName: 'payment_failed',
+              eventCategory: 'purchase',
+              eventTs: new Date().toISOString(),
+              userId: user.id,
+              currency: plan?.moneda?.toUpperCase?.() ?? 'MXN',
+              amount: Number(plan?.price) || null,
+              metadata: {
+                provider: 'conekta',
+                reason: 'order_expired',
+                conektaOrderId: payload.data?.object?.id ?? null,
+                orderId: orderId ?? null,
+              },
+            },
+          ],
+          sessionUserId: user.id,
+        });
+      } catch (e) {
+        log.debug('[CONEKTA_WH] analytics payment_failed skipped', {
+          error: e instanceof Error ? e.message : e,
+        });
+      }
+
       await cancelOrder({
         prisma,
         orderId,

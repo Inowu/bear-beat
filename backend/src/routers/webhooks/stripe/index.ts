@@ -20,6 +20,7 @@ import { uhConektaSubscriptions } from '../../migration/uhConekta';
 import { paypal as uhPaypal } from '../../migration/uhPaypal';
 import axios, { AxiosError } from 'axios';
 import { ingestAnalyticsEvents } from '../../../analytics';
+import { markUserOffersRedeemed } from '../../../offers';
 
 export const stripeSubscriptionWebhook = async (req: Request) => {
   const payload: Stripe.Event = JSON.parse(getStripeWebhookBody(req));
@@ -194,6 +195,44 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
             expirationDate: new Date(subscription.current_period_end * 1000),
           });
 
+          // Offers/coupons: mark user offers redeemed and persist coupon usage (Checkout Sessions path).
+          try {
+            await markUserOffersRedeemed({ prisma, userId: user.id, reason: 'stripe_active' });
+          } catch {
+            // noop
+          }
+
+          try {
+            const orderIdRaw = subscription?.metadata?.orderId;
+            const orderId = Number(orderIdRaw);
+            if (Number.isFinite(orderId) && orderId > 0) {
+              const order = await prisma.orders.findFirst({
+                where: { id: orderId },
+                select: { user_id: true, cupon_id: true },
+              });
+              if (order?.cupon_id) {
+                const used = await prisma.cuponsUsed.findFirst({
+                  where: { user_id: order.user_id, cupon_id: order.cupon_id },
+                  select: { id: true },
+                });
+                if (!used) {
+                  await prisma.cuponsUsed.create({
+                    data: {
+                      user_id: order.user_id,
+                      cupon_id: order.cupon_id,
+                      date_cupon: new Date(),
+                    },
+                  });
+                }
+              }
+            }
+          } catch (e) {
+            log.debug('[STRIPE_WH] Coupon usage persist skipped', {
+              userId: user.id,
+              error: e instanceof Error ? e.message : e,
+            });
+          }
+
           // Internal analytics (server-side) for renewal/trial conversion.
           try {
             if (isTrialConversion) {
@@ -257,6 +296,35 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
             log.error(`[STRIPE] Error adding FAILED_PAYMENT tag for user ${user.id}: ${e}`);
           }
 
+          // Internal analytics: payment failed (pre-activation).
+          try {
+            await ingestAnalyticsEvents({
+              prisma,
+              events: [
+                {
+                  eventId: `stripe:${payload.id}:payment_failed`.slice(0, 80),
+                  eventName: 'payment_failed',
+                  eventCategory: 'purchase',
+                  eventTs: new Date().toISOString(),
+                  userId: user.id,
+                  currency: plan?.moneda?.toUpperCase?.() ?? null,
+                  amount: Number(plan?.price) || 0,
+                  metadata: {
+                    provider: 'stripe',
+                    reason: 'incomplete_expired',
+                    stripeSubscriptionId: subscription.id,
+                    orderId: subscription?.metadata?.orderId ?? null,
+                  },
+                },
+              ],
+              sessionUserId: user.id,
+            });
+          } catch (e) {
+            log.debug('[STRIPE_WH] analytics payment_failed skipped', {
+              error: e instanceof Error ? e.message : e,
+            });
+          }
+
           const pendingOrder = await prisma.orders.findFirst({
             where: {
               AND: [
@@ -292,6 +360,48 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
             await manyChat.addTagToUser(user, 'FAILED_PAYMENT');
           } catch (e) {
             log.error(`[STRIPE] Error adding FAILED_PAYMENT tag for user ${user.id}: ${e}`);
+          }
+
+          // Internal analytics: payment failed + involuntary cancellation.
+          try {
+            await ingestAnalyticsEvents({
+              prisma,
+              events: [
+                {
+                  eventId: `stripe:${payload.id}:payment_failed`.slice(0, 80),
+                  eventName: 'payment_failed',
+                  eventCategory: 'purchase',
+                  eventTs: new Date().toISOString(),
+                  userId: user.id,
+                  currency: plan?.moneda?.toUpperCase?.() ?? null,
+                  amount: Number(plan?.price) || 0,
+                  metadata: {
+                    provider: 'stripe',
+                    reason: 'past_due',
+                    stripeSubscriptionId: subscription.id,
+                    orderId: subscription?.metadata?.orderId ?? null,
+                  },
+                },
+                {
+                  eventId: `stripe:${payload.id}:subscription_cancel_involuntary`.slice(0, 80),
+                  eventName: 'subscription_cancel_involuntary',
+                  eventCategory: 'retention',
+                  eventTs: new Date().toISOString(),
+                  userId: user.id,
+                  metadata: {
+                    provider: 'stripe',
+                    reason: 'past_due',
+                    stripeSubscriptionId: subscription.id,
+                    orderId: subscription?.metadata?.orderId ?? null,
+                  },
+                },
+              ],
+              sessionUserId: user.id,
+            });
+          } catch (e) {
+            log.debug('[STRIPE_WH] analytics payment_failed/involuntary_cancel skipped', {
+              error: e instanceof Error ? e.message : e,
+            });
           }
 
           await cancelSubscription({

@@ -3,6 +3,7 @@ import {
   Activity,
   Clock,
   DollarSign,
+  AlertTriangle,
   RefreshCw,
   Repeat,
   UserPlus,
@@ -30,12 +31,51 @@ interface CrmCancellationReasonPoint {
   cancellations: number;
 }
 
+interface CrmTrialNoDownloadPoint {
+  userId: number;
+  username: string;
+  email: string;
+  phone: string | null;
+  trialStartedAt: string;
+  planId: number | null;
+}
+
 interface CrmPaidNoDownloadPoint {
   userId: number;
   username: string;
+  email: string;
+  phone: string | null;
   paidAt: string;
   planId: number | null;
   paymentMethod: string | null;
+}
+
+interface CrmRecentCancellationPoint {
+  id: number;
+  userId: number;
+  username: string;
+  email: string;
+  phone: string | null;
+  paymentMethod: string | null;
+  createdAt: string;
+  reasonCode: string;
+  reasonText: string | null;
+  source: string | null;
+  medium: string | null;
+  campaign: string | null;
+}
+
+interface AutomationRunRow {
+  id: number;
+  startedAt: string;
+  finishedAt: string | null;
+  status: string;
+  error: string | null;
+}
+
+interface AutomationStatusSnapshot {
+  actionsLast24h: number;
+  recentRuns: AutomationRunRow[];
 }
 
 interface CrmSnapshot {
@@ -56,11 +96,15 @@ interface CrmSnapshot {
     trialConversions: number;
     trialConversionRatePct: number;
     cancellations: number;
+    involuntaryCancellations: number;
     avgHoursPaidToFirstDownload: number | null;
+    avgHoursRegisterToFirstPaid: number | null;
   };
   registrationsDaily: CrmDailyRegistrationPoint[];
   trialsDaily: CrmDailyTrialPoint[];
   cancellationTopReasons: CrmCancellationReasonPoint[];
+  recentCancellations: CrmRecentCancellationPoint[];
+  trialNoDownload24h: CrmTrialNoDownloadPoint[];
   paidNoDownload24h: CrmPaidNoDownloadPoint[];
 }
 
@@ -118,19 +162,47 @@ export function CrmDashboard() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [snapshot, setSnapshot] = useState<CrmSnapshot | null>(null);
+  const [automation, setAutomation] = useState<AutomationStatusSnapshot | null>(null);
+  const [actionToast, setActionToast] = useState<string>("");
+  const [actionBusyKey, setActionBusyKey] = useState<string | null>(null);
+
+  const toast = (message: string) => {
+    setActionToast(message);
+    window.setTimeout(() => setActionToast(""), 3500);
+  };
+
+  const runAction = async (key: string, fn: () => Promise<void>) => {
+    setActionBusyKey(key);
+    try {
+      await fn();
+      toast("Listo.");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "No se pudo completar la acción.";
+      toast(msg);
+    } finally {
+      setActionBusyKey(null);
+    }
+  };
 
   const refresh = useCallback(async () => {
     setError("");
     setLoading(true);
     try {
-      const data: CrmSnapshot = await trpc.analytics.getAnalyticsCrmDashboard.query({
-        days: rangeDays,
-        limit: 80,
-      });
+      const [data, automationStatus] = await Promise.all([
+        trpc.analytics.getAnalyticsCrmDashboard.query({
+          days: rangeDays,
+          limit: 80,
+        }) as Promise<CrmSnapshot>,
+        trpc.analytics.getAutomationStatus
+          .query({ runsLimit: 12 })
+          .catch(() => null) as Promise<AutomationStatusSnapshot | null>,
+      ]);
       setSnapshot(data);
+      setAutomation(automationStatus);
     } catch {
       setError("No se pudo cargar el CRM. Intenta de nuevo.");
       setSnapshot(null);
+      setAutomation(null);
     } finally {
       setLoading(false);
     }
@@ -206,6 +278,11 @@ export function CrmDashboard() {
       ) : snapshot ? (
         <div className="crm-wrap">
           <p className="crm-range">{rangeLabel}</p>
+          {actionToast ? (
+            <div className="crm-toast" role="status">
+              {actionToast}
+            </div>
+          ) : null}
 
           <div className="crm-kpi-grid" role="list" aria-label="KPIs principales">
             <KpiCard
@@ -246,7 +323,57 @@ export function CrmDashboard() {
               helper={`Conversión ${formatPct(snapshot.kpis.trialConversionRatePct)}`}
               icon={Clock}
             />
+            <KpiCard
+              title="Cancelaciones"
+              value={formatCompactNumber(snapshot.kpis.cancellations)}
+              helper={`Involuntarias: ${formatCompactNumber(snapshot.kpis.involuntaryCancellations)}`}
+              icon={AlertTriangle}
+            />
+            <KpiCard
+              title="Registro → primer pago"
+              value={formatDecimal(snapshot.kpis.avgHoursRegisterToFirstPaid, 2)}
+              helper="Promedio horas"
+              icon={Clock}
+            />
           </div>
+
+          {automation ? (
+            <section className="crm-section">
+              <h2 className="crm-section__title">Automations</h2>
+              <p className="crm-section__hint">
+                Acciones últimas 24h: <strong>{automation.actionsLast24h}</strong>
+              </p>
+              <div className="crm-table-wrap">
+                <table className="crm-table">
+                  <thead>
+                    <tr>
+                      <th>Run ID</th>
+                      <th>Inicio</th>
+                      <th>Fin</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {automation.recentRuns.map((run) => (
+                      <tr key={run.id}>
+                        <td>{run.id}</td>
+                        <td>{run.startedAt}</td>
+                        <td>{run.finishedAt ?? "—"}</td>
+                        <td>{run.status}</td>
+                      </tr>
+                    ))}
+                    {automation.recentRuns.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="crm-table__empty">
+                          Aún no hay corridas registradas.
+                        </td>
+                      </tr>
+                    ) : null}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          ) : null}
 
           <section className="crm-section">
             <h2 className="crm-section__title">Registros diarios (acumulado)</h2>
@@ -351,6 +478,79 @@ export function CrmDashboard() {
           </section>
 
           <section className="crm-section">
+            <h2 className="crm-section__title">Trial inició y no descargó en 24h</h2>
+            <p className="crm-section__hint">
+              Segmento crítico: necesitan onboarding para activar valor antes del día 7.
+            </p>
+            <div className="crm-table-wrap">
+              <table className="crm-table">
+                <thead>
+                  <tr>
+                    <th>User ID</th>
+                    <th>Usuario</th>
+                    <th>Email</th>
+                    <th>Teléfono</th>
+                    <th>Trial inició</th>
+                    <th>Plan</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {snapshot.trialNoDownload24h.map((row) => (
+                    <tr key={`${row.userId}-${row.trialStartedAt}`}>
+                      <td>{row.userId}</td>
+                      <td>{row.username}</td>
+                      <td>{row.email}</td>
+                      <td>{row.phone ?? "—"}</td>
+                      <td>{row.trialStartedAt}</td>
+                      <td>{row.planId ?? "—"}</td>
+                      <td className="crm-actions">
+                        <button
+                          type="button"
+                          className="crm-action-btn"
+                          disabled={actionBusyKey === `trial-onboard-${row.userId}`}
+                          onClick={() =>
+                            void runAction(`trial-onboard-${row.userId}`, async () => {
+                              await trpc.analytics.adminAddManyChatTag.mutate({
+                                userId: row.userId,
+                                tagName: "AUTOMATION_TRIAL_NO_DOWNLOAD_24H",
+                              });
+                            })
+                          }
+                        >
+                          Onboarding
+                        </button>
+                        <button
+                          type="button"
+                          className="crm-action-btn crm-action-btn--ghost"
+                          disabled={actionBusyKey === `trial-contact-${row.userId}`}
+                          onClick={() =>
+                            void runAction(`trial-contact-${row.userId}`, async () => {
+                              await trpc.analytics.adminMarkContacted.mutate({
+                                userId: row.userId,
+                                note: "trial_no_download_24h",
+                              });
+                            })
+                          }
+                        >
+                          Contactado
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {snapshot.trialNoDownload24h.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="crm-table__empty">
+                        Todo bien: no hay usuarios en este segmento.
+                      </td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section className="crm-section">
             <h2 className="crm-section__title">Pagaron y no descargaron en 24h</h2>
             <p className="crm-section__hint">
               Lista enfocada en primeras compras dentro del rango.
@@ -361,9 +561,12 @@ export function CrmDashboard() {
                   <tr>
                     <th>User ID</th>
                     <th>Usuario</th>
+                    <th>Email</th>
+                    <th>Teléfono</th>
                     <th>Pagó</th>
                     <th>Plan</th>
                     <th>Método</th>
+                    <th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -371,15 +574,124 @@ export function CrmDashboard() {
                     <tr key={`${row.userId}-${row.paidAt}`}>
                       <td>{row.userId}</td>
                       <td>{row.username}</td>
+                      <td>{row.email}</td>
+                      <td>{row.phone ?? "—"}</td>
                       <td>{row.paidAt}</td>
                       <td>{row.planId ?? "—"}</td>
                       <td>{row.paymentMethod ?? "—"}</td>
+                      <td className="crm-actions">
+                        <button
+                          type="button"
+                          className="crm-action-btn"
+                          disabled={actionBusyKey === `paid-onboard-${row.userId}`}
+                          onClick={() =>
+                            void runAction(`paid-onboard-${row.userId}`, async () => {
+                              await trpc.analytics.adminAddManyChatTag.mutate({
+                                userId: row.userId,
+                                tagName: "AUTOMATION_PAID_NO_DOWNLOAD_24H",
+                              });
+                            })
+                          }
+                        >
+                          Onboarding
+                        </button>
+                        <button
+                          type="button"
+                          className="crm-action-btn crm-action-btn--ghost"
+                          disabled={actionBusyKey === `paid-contact-${row.userId}`}
+                          onClick={() =>
+                            void runAction(`paid-contact-${row.userId}`, async () => {
+                              await trpc.analytics.adminMarkContacted.mutate({
+                                userId: row.userId,
+                                note: "paid_no_download_24h",
+                              });
+                            })
+                          }
+                        >
+                          Contactado
+                        </button>
+                      </td>
                     </tr>
                   ))}
                   {snapshot.paidNoDownload24h.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="crm-table__empty">
+                      <td colSpan={8} className="crm-table__empty">
                         Todo bien: no hay usuarios en este segmento.
+                      </td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section className="crm-section">
+            <h2 className="crm-section__title">Cancelaciones recientes</h2>
+            <p className="crm-section__hint">Con motivo y atribución (si existe).</p>
+            <div className="crm-table-wrap">
+              <table className="crm-table">
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>User ID</th>
+                    <th>Usuario</th>
+                    <th>Email</th>
+                    <th>Teléfono</th>
+                    <th>Método</th>
+                    <th>Motivo</th>
+                    <th>Campaña</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {snapshot.recentCancellations.map((row) => (
+                    <tr key={row.id}>
+                      <td>{row.createdAt}</td>
+                      <td>{row.userId}</td>
+                      <td>{row.username}</td>
+                      <td>{row.email}</td>
+                      <td>{row.phone ?? "—"}</td>
+                      <td>{row.paymentMethod ?? "—"}</td>
+                      <td>{row.reasonCode}</td>
+                      <td>{row.campaign ?? "—"}</td>
+                      <td className="crm-actions">
+                        <button
+                          type="button"
+                          className="crm-action-btn"
+                          disabled={actionBusyKey === `cancel-offer-${row.userId}`}
+                          onClick={() =>
+                            void runAction(`cancel-offer-${row.userId}`, async () => {
+                              await trpc.analytics.adminCreateOffer.mutate({
+                                userId: row.userId,
+                                percentOff: 10,
+                              });
+                            })
+                          }
+                        >
+                          Cupón 10%
+                        </button>
+                        <button
+                          type="button"
+                          className="crm-action-btn crm-action-btn--ghost"
+                          disabled={actionBusyKey === `cancel-contact-${row.userId}`}
+                          onClick={() =>
+                            void runAction(`cancel-contact-${row.userId}`, async () => {
+                              await trpc.analytics.adminMarkContacted.mutate({
+                                userId: row.userId,
+                                note: "recent_cancellation",
+                              });
+                            })
+                          }
+                        >
+                          Contactado
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {snapshot.recentCancellations.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="crm-table__empty">
+                        Aún no hay cancelaciones en este rango.
                       </td>
                     </tr>
                   ) : null}
@@ -392,4 +704,3 @@ export function CrmDashboard() {
     </AdminPageLayout>
   );
 }
-

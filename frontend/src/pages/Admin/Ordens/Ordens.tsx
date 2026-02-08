@@ -19,6 +19,7 @@ interface IAdminFilter {
   paymentMethod: string;
   searchData: string;
   startDate: string;
+  status: number | "";
 }
 
 function getOrderStatusString(status: number) {
@@ -48,13 +49,23 @@ export const Ordens = () => {
     paymentMethod: "",
     searchData: "",
     startDate: "",
+    status: ORDER_STATUS.PAID,
   });
+
+  const buildDateRange = (start: string, end: string) => {
+    const startVal = start ? `${start} 00:00:00` : "";
+    const endVal = end ? `${end} 23:59:59` : "";
+    if (!startVal && !endVal) return undefined;
+    return {
+      ...(startVal ? { gte: startVal } : {}),
+      ...(endVal ? { lte: endVal } : {}),
+    };
+  };
 
   const startFilter = (key: string, value: string | number) => {
     const next = { ...filters, [key]: value };
     if (key !== "page") next.page = 0;
     setFilters(next);
-    filterOrdens(next);
   };
 
   const filterOrdens = async (filt: IAdminFilter) => {
@@ -66,10 +77,15 @@ export const Ordens = () => {
         skip: filt.page * filt.limit,
         email: filt.searchData,
         paymentMethod: filt.paymentMethod,
-        status: ORDER_STATUS.PAID,
       };
-      if (filt.startDate && filt.endDate) {
-        body.date_order = { gte: new Date(filt.startDate), lte: new Date(filt.endDate) };
+
+      if (typeof filt.status === "number") {
+        body.status = filt.status;
+      }
+
+      const dateRange = buildDateRange(filt.startDate, filt.endDate);
+      if (dateRange) {
+        body.date_order = dateRange;
       }
       const [res, err] = await of(trpc.orders.findManyOrdersWithUsers.query(body));
       if (err || !res) return;
@@ -87,10 +103,13 @@ export const Ordens = () => {
       skip: 0,
       email: filters.searchData,
       paymentMethod: filters.paymentMethod,
-      status: ORDER_STATUS.PAID,
     };
-    if (filters.startDate && filters.endDate) {
-      body.date_order = { gte: new Date(filters.startDate), lte: new Date(filters.endDate) };
+    if (typeof filters.status === "number") {
+      body.status = filters.status;
+    }
+    const dateRange = buildDateRange(filters.startDate, filters.endDate);
+    if (dateRange) {
+      body.date_order = dateRange;
     }
     const [res, err] = await of(trpc.orders.findManyOrdersWithUsers.query(body));
     if (err || !res) return [];
@@ -102,7 +121,7 @@ export const Ordens = () => {
       "Id de la suscripcion": o.txn_id,
       Precio: o.total_price,
       Fecha: o.date_order.toLocaleDateString(),
-      Estado: o.status === 1 ? "Activa" : "No activa",
+      Estado: getOrderStatusString(o.status),
     }));
   };
 
@@ -135,8 +154,22 @@ export const Ordens = () => {
           <option value="">Todos</option>
           <option value="Paypal">Paypal</option>
           <option value="Stripe">Stripe</option>
-          <option value="Conekta">Conekta (Efectivo/SPEI)</option>
+          <option value="Conekta">Conekta (SPEI/Efectivo/BBVA)</option>
           <option value="Admin">Admin</option>
+        </select>
+        <select
+          value={filters.status}
+          onChange={(e) =>
+            startFilter("status", e.target.value === "" ? "" : Number(e.target.value))
+          }
+          className="bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
+        >
+          <option value="">Todos los estados</option>
+          <option value={ORDER_STATUS.PAID}>Pagada</option>
+          <option value={ORDER_STATUS.PENDING}>Pendiente</option>
+          <option value={ORDER_STATUS.FAILED}>Fallida</option>
+          <option value={ORDER_STATUS.CANCELLED}>Cancelada</option>
+          <option value={ORDER_STATUS.EXPIRED}>Expirada</option>
         </select>
         <input
           type="date"
@@ -150,6 +183,20 @@ export const Ordens = () => {
           onChange={(e) => startFilter("endDate", e.target.value)}
           className="bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
         />
+        <button
+          type="button"
+          onClick={() => {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, "0");
+            const dd = String(today.getDate()).padStart(2, "0");
+            const iso = `${yyyy}-${mm}-${dd}`;
+            setFilters((prev) => ({ ...prev, startDate: iso, endDate: iso, page: 0 }));
+          }}
+          className="bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm hover:opacity-95 focus:border-bear-cyan focus:outline-none"
+        >
+          Hoy
+        </button>
         <select
           value={filters.limit}
           onChange={(e) => startFilter("limit", +e.target.value)}

@@ -8,11 +8,11 @@ import { log } from '../../server';
 import { OrderStatus } from './interfaces/order-status.interface';
 import { hasActiveSubscription } from './utils/hasActiveSub';
 import { PaymentService } from './services/types';
-import { Cupons } from '@prisma/client';
 import { checkIfUserIsFromUH, checkIfUserIsSubscriber, SubscriptionCheckResult } from '../migration/checkUHSubscriber';
 import { addDays } from 'date-fns';
 import { facebook } from '../../facebook';
 import { getClientIpFromRequest } from '../../analytics';
+import { resolveCheckoutCoupon } from '../../offers';
 
 function parseDurationDays(duration: unknown): number | null {
   if (duration == null) return null;
@@ -218,29 +218,26 @@ export const createStripeCheckoutSession = shieldedProcedure
       }
     }
 
-    let dbCoupon: Cupons | null | undefined;
-    if (coupon) {
-      dbCoupon = await prisma.cupons.findFirst({
-        where: { code: coupon },
+    if (!priceId || typeof priceId !== 'string') {
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'No se pudo resolver el precio de Stripe para este plan.',
       });
-      if (!dbCoupon) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'Ese cupón no existe',
-        });
-      }
-      const usedCoupon = await prisma.cuponsUsed.findFirst({
-        where: {
-          AND: [{ user_id: user.id }, { cupon_id: dbCoupon.id }],
-        },
-      });
-      if (usedCoupon) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Ese cupón ya fue usado',
-        });
-      }
     }
+    const stripePriceId = priceId;
+
+    const resolvedCoupon = await resolveCheckoutCoupon({
+      prisma,
+      userId: user.id,
+      requestedCoupon: coupon ?? null,
+    });
+
+    const dbCoupon = resolvedCoupon.couponCode
+      ? await prisma.cupons.findFirst({
+          where: { code: resolvedCoupon.couponCode, active: 1 },
+          select: { id: true, discount: true, code: true },
+        })
+      : null;
 
     const order = await prisma.orders.create({
       data: {
@@ -251,7 +248,7 @@ export const createStripeCheckoutSession = shieldedProcedure
         payment_method: PaymentService.STRIPE,
         date_order: new Date(),
         total_price: Number(plan.price),
-        ...(dbCoupon ? { discount: dbCoupon.discount } : {}),
+        ...(dbCoupon ? { discount: dbCoupon.discount, cupon_id: dbCoupon.id } : {}),
       },
     });
 
@@ -307,17 +304,17 @@ export const createStripeCheckoutSession = shieldedProcedure
       }
     }
 
-    try {
-      const stripeSession = await stripeInstance.checkout.sessions.create(
-        {
-          mode: 'subscription',
-          customer: stripeCustomer,
-          line_items: [
-            {
-              price: priceId,
-              quantity: 1,
-            },
-          ],
+	    const createSession = async (withDiscount: boolean) =>
+	      stripeInstance.checkout.sessions.create(
+	        {
+	          mode: 'subscription',
+	          customer: stripeCustomer,
+	          line_items: [
+	            {
+	              price: stripePriceId,
+	              quantity: 1,
+	            },
+	          ],
           success_url: successUrl,
           cancel_url: cancelUrl,
           metadata: {
@@ -332,10 +329,22 @@ export const createStripeCheckoutSession = shieldedProcedure
             ...(effectiveTrialEnd ? { trial_end: effectiveTrialEnd } : {}),
           },
           allow_promotion_codes: true,
+          ...(withDiscount && resolvedCoupon.couponCode
+            ? { discounts: [{ coupon: resolvedCoupon.couponCode }] }
+            : {}),
         },
         { idempotencyKey: `stripe-checkout-order-${order.id}` },
       );
 
+    const isStripeCouponError = (err: unknown): boolean => {
+      const message =
+        typeof (err as any)?.message === 'string' ? String((err as any).message) : '';
+      const lower = message.toLowerCase();
+      return lower.includes('coupon') && (lower.includes('no such') || lower.includes('invalid'));
+    };
+
+    try {
+      const stripeSession = await createSession(true);
       if (!stripeSession.url) {
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
@@ -350,6 +359,34 @@ export const createStripeCheckoutSession = shieldedProcedure
         sessionId: stripeSession.id,
       };
     } catch (e: unknown) {
+      // Never break checkout due to an auto-offer coupon mismatch in Stripe. Retry without the discount.
+      if (resolvedCoupon.source === 'offer' && resolvedCoupon.couponCode && isStripeCouponError(e)) {
+        log.warn('[STRIPE_CHECKOUT_SESSION] Offer coupon rejected by Stripe, retrying without discount', {
+          orderId: order.id,
+          coupon: resolvedCoupon.couponCode,
+          error: e instanceof Error ? e.message : e,
+        });
+        try {
+          const stripeSession = await createSession(false);
+          if (stripeSession.url) {
+            // Keep DB consistent with what Stripe actually applied.
+            try {
+              await prisma.orders.update({
+                where: { id: order.id },
+                data: { discount: 0, cupon_id: null },
+              });
+            } catch {
+              // noop
+            }
+            return { url: stripeSession.url, sessionId: stripeSession.id };
+          }
+        } catch (retryError) {
+          log.error('[STRIPE_CHECKOUT_SESSION] Retry without coupon failed', {
+            orderId: order.id,
+            error: retryError instanceof Error ? retryError.message : retryError,
+          });
+        }
+      }
       log.error(`[STRIPE_CHECKOUT_SESSION] Error: ${e}`);
       const msg = e instanceof Error ? e.message : 'Error al crear la sesión de pago';
       throw new TRPCError({

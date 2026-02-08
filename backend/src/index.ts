@@ -1,3 +1,4 @@
+import './polyfills';
 import './instrument';
 import path from 'path';
 import pm2 from 'pm2';

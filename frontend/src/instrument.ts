@@ -56,7 +56,9 @@ if (sentryEnabled) {
     environment: sentryEnvironment,
     release: sentryRelease,
     debug: sentryDebug,
-    sendDefaultPii: true,
+    // Strict privacy: do not send default PII (user IP/cookies) from the browser.
+    // We still tag issues with a stable user id in UserContext.
+    sendDefaultPii: false,
     sampleRate,
     tracesSampleRate,
     replaysSessionSampleRate,

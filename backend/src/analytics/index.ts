@@ -229,12 +229,38 @@ interface AnalyticsCrmCancellationReasonPoint {
   cancellations: number;
 }
 
+interface AnalyticsCrmTrialNoDownloadPoint {
+  userId: number;
+  username: string;
+  email: string;
+  phone: string | null;
+  trialStartedAt: string;
+  planId: number | null;
+}
+
 interface AnalyticsCrmPaidNoDownloadPoint {
   userId: number;
   username: string;
+  email: string;
+  phone: string | null;
   paidAt: string;
   planId: number | null;
   paymentMethod: string | null;
+}
+
+interface AnalyticsCrmRecentCancellationPoint {
+  id: number;
+  userId: number;
+  username: string;
+  email: string;
+  phone: string | null;
+  paymentMethod: string | null;
+  createdAt: string;
+  reasonCode: string;
+  reasonText: string | null;
+  source: string | null;
+  medium: string | null;
+  campaign: string | null;
 }
 
 interface AnalyticsCrmDashboardSnapshot {
@@ -255,11 +281,15 @@ interface AnalyticsCrmDashboardSnapshot {
     trialConversions: number;
     trialConversionRatePct: number;
     cancellations: number;
+    involuntaryCancellations: number;
     avgHoursPaidToFirstDownload: number | null;
+    avgHoursRegisterToFirstPaid: number | null;
   };
   registrationsDaily: AnalyticsCrmDailyRegistrationPoint[];
   trialsDaily: AnalyticsCrmDailyTrialPoint[];
   cancellationTopReasons: AnalyticsCrmCancellationReasonPoint[];
+  recentCancellations: AnalyticsCrmRecentCancellationPoint[];
+  trialNoDownload24h: AnalyticsCrmTrialNoDownloadPoint[];
   paidNoDownload24h: AnalyticsCrmPaidNoDownloadPoint[];
 }
 
@@ -527,6 +557,11 @@ const ensureAnalyticsEventsTable = async (
 
   await analyticsTableReadyPromise;
 };
+
+// Used by other modules (automation runner, webhooks) that need to query analytics_events safely.
+export const ensureAnalyticsEventsTableExists = async (
+  prisma: PrismaClient,
+): Promise<void> => ensureAnalyticsEventsTable(prisma);
 
 export const ingestAnalyticsEvents = async ({
   prisma,
@@ -1444,11 +1479,15 @@ export const getAnalyticsCrmDashboard = async (
         trialConversions: 0,
         trialConversionRatePct: 0,
         cancellations: 0,
+        involuntaryCancellations: 0,
         avgHoursPaidToFirstDownload: null,
+        avgHoursRegisterToFirstPaid: null,
       },
       registrationsDaily: [],
       trialsDaily: [],
       cancellationTopReasons: [],
+      recentCancellations: [],
+      trialNoDownload24h: [],
       paidNoDownload24h: [],
     };
   }
@@ -1467,7 +1506,11 @@ export const getAnalyticsCrmDashboard = async (
     trialDailyRows,
     cancellationsTotalRows,
     cancellationRows,
+    recentCancellationRows,
+    involuntaryCancellationRows,
     activationAvgRows,
+    registerToPaidAvgRows,
+    trialNoDownloadRows,
     paidNoDownloadRows,
   ] = await Promise.all([
     prisma.$queryRaw<Array<{ totalUsers: bigint | number }>>(Prisma.sql`
@@ -1567,6 +1610,50 @@ export const getAnalyticsCrmDashboard = async (
       ORDER BY cancellations DESC
       LIMIT 8
     `),
+    prisma.$queryRaw<
+      Array<{
+        id: number;
+        userId: number;
+        username: string;
+        email: string;
+        phone: string | null;
+        paymentMethod: string | null;
+        createdAt: Date;
+        reasonCode: string;
+        reasonText: string | null;
+        source: string | null;
+        medium: string | null;
+        campaign: string | null;
+      }>
+    >(Prisma.sql`
+      SELECT
+        scf.id AS id,
+        u.id AS userId,
+        u.username AS username,
+        u.email AS email,
+        u.phone AS phone,
+        scf.payment_method AS paymentMethod,
+        scf.created_at AS createdAt,
+        scf.reason_code AS reasonCode,
+        scf.reason_text AS reasonText,
+        scf.utm_source AS source,
+        scf.utm_medium AS medium,
+        scf.utm_campaign AS campaign
+      FROM subscription_cancellation_feedback scf
+      INNER JOIN users u
+        ON u.id = scf.user_id
+      WHERE scf.created_at >= ${startDateOnly}
+      ORDER BY scf.created_at DESC
+      LIMIT ${limit}
+    `),
+    prisma.$queryRaw<Array<{ involuntaryCancellations: bigint | number }>>(Prisma.sql`
+      SELECT
+        COUNT(DISTINCT user_id) AS involuntaryCancellations
+      FROM analytics_events
+      WHERE event_ts >= ${startDateOnly}
+        AND event_name = 'subscription_cancel_involuntary'
+        AND user_id IS NOT NULL
+    `),
     prisma.$queryRaw<Array<{ avgMinutes: bigint | number | null }>>(Prisma.sql`
       SELECT
         AVG(TIMESTAMPDIFF(MINUTE, fp.first_paid_at, fd.first_download_at)) AS avgMinutes
@@ -1587,10 +1674,60 @@ export const getAnalyticsCrmDashboard = async (
       WHERE fp.first_paid_at >= ${startDateOnly}
         AND fd.first_download_at >= fp.first_paid_at
     `),
+    prisma.$queryRaw<Array<{ avgMinutes: bigint | number | null }>>(Prisma.sql`
+      SELECT
+        AVG(TIMESTAMPDIFF(MINUTE, u.registered_on, fp.first_paid_at)) AS avgMinutes
+      FROM users u
+      INNER JOIN (
+        SELECT user_id, MIN(date_order) AS first_paid_at
+        FROM orders
+        WHERE status = 1
+          AND is_plan = 1
+          AND (is_canceled IS NULL OR is_canceled = 0)
+        GROUP BY user_id
+      ) fp
+        ON fp.user_id = u.id
+      WHERE fp.first_paid_at >= ${startDateOnly}
+        AND fp.first_paid_at >= u.registered_on
+    `),
     prisma.$queryRaw<
       Array<{
         userId: number;
         username: string;
+        email: string;
+        phone: string | null;
+        trialStartedAt: Date;
+        planId: bigint | number | null;
+      }>
+    >(Prisma.sql`
+      SELECT
+        u.id AS userId,
+        u.username AS username,
+        u.email AS email,
+        u.phone AS phone,
+        ae.event_ts AS trialStartedAt,
+        NULLIF(CAST(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.planId')) AS UNSIGNED), 0) AS planId
+      FROM analytics_events ae
+      INNER JOIN users u
+        ON u.id = ae.user_id
+      LEFT JOIN download_history dh
+        ON dh.userId = ae.user_id
+        AND dh.date >= ae.event_ts
+        AND dh.date < DATE_ADD(ae.event_ts, INTERVAL 24 HOUR)
+      WHERE ae.event_ts >= ${startDateOnly}
+        AND ae.event_name = 'trial_started'
+        AND ae.user_id IS NOT NULL
+        AND ae.event_ts < DATE_SUB(NOW(), INTERVAL 24 HOUR)
+        AND dh.id IS NULL
+      ORDER BY ae.event_ts DESC
+      LIMIT ${limit}
+    `),
+    prisma.$queryRaw<
+      Array<{
+        userId: number;
+        username: string;
+        email: string;
+        phone: string | null;
         paidAt: Date;
         planId: number | null;
         paymentMethod: string | null;
@@ -1599,6 +1736,8 @@ export const getAnalyticsCrmDashboard = async (
       SELECT
         u.id AS userId,
         u.username AS username,
+        u.email AS email,
+        u.phone AS phone,
         fp.first_paid_at AS paidAt,
         o.plan_id AS planId,
         o.payment_method AS paymentMethod
@@ -1622,7 +1761,8 @@ export const getAnalyticsCrmDashboard = async (
         AND dh.date >= fp.first_paid_at
         AND dh.date < DATE_ADD(fp.first_paid_at, INTERVAL 24 HOUR)
       WHERE fp.first_paid_at >= ${startDateOnly}
-      GROUP BY u.id, u.username, fp.first_paid_at, o.plan_id, o.payment_method
+        AND fp.first_paid_at < DATE_SUB(NOW(), INTERVAL 24 HOUR)
+      GROUP BY u.id, u.username, u.email, u.phone, fp.first_paid_at, o.plan_id, o.payment_method
       HAVING COUNT(dh.id) = 0
       ORDER BY fp.first_paid_at DESC
       LIMIT ${limit}
@@ -1662,6 +1802,9 @@ export const getAnalyticsCrmDashboard = async (
   const cancellationsTotal = numberFromUnknown(
     cancellationsTotalRows?.[0]?.cancellations,
   );
+  const involuntaryCancellations = numberFromUnknown(
+    involuntaryCancellationRows?.[0]?.involuntaryCancellations,
+  );
 
   const activationAvgMinutesRaw = activationAvgRows?.[0]?.avgMinutes;
   const avgMinutesPaidToFirstDownload =
@@ -1670,6 +1813,14 @@ export const getAnalyticsCrmDashboard = async (
     avgMinutesPaidToFirstDownload == null || Number.isNaN(avgMinutesPaidToFirstDownload)
       ? null
       : roundNumber(avgMinutesPaidToFirstDownload / 60, 2);
+
+  const registerToPaidAvgMinutesRaw = registerToPaidAvgRows?.[0]?.avgMinutes;
+  const avgMinutesRegisterToFirstPaid =
+    registerToPaidAvgMinutesRaw == null ? null : numberFromUnknown(registerToPaidAvgMinutesRaw);
+  const avgHoursRegisterToFirstPaid =
+    avgMinutesRegisterToFirstPaid == null || Number.isNaN(avgMinutesRegisterToFirstPaid)
+      ? null
+      : roundNumber(avgMinutesRegisterToFirstPaid / 60, 2);
 
   return {
     range: {
@@ -1689,7 +1840,9 @@ export const getAnalyticsCrmDashboard = async (
       trialConversions,
       trialConversionRatePct,
       cancellations: cancellationsTotal,
+      involuntaryCancellations,
       avgHoursPaidToFirstDownload,
+      avgHoursRegisterToFirstPaid,
     },
     registrationsDaily,
     trialsDaily: trialDailyRows.map((row) => ({
@@ -1701,9 +1854,33 @@ export const getAnalyticsCrmDashboard = async (
       reasonCode: row.reasonCode,
       cancellations: numberFromUnknown(row.cancellations),
     })),
+    recentCancellations: recentCancellationRows.map((row) => ({
+      id: Number(row.id),
+      userId: Number(row.userId),
+      username: row.username,
+      email: row.email,
+      phone: row.phone ?? null,
+      paymentMethod: row.paymentMethod ?? null,
+      createdAt: normalizeDateOutput(row.createdAt),
+      reasonCode: row.reasonCode,
+      reasonText: row.reasonText ?? null,
+      source: row.source ?? null,
+      medium: row.medium ?? null,
+      campaign: row.campaign ?? null,
+    })),
+    trialNoDownload24h: trialNoDownloadRows.map((row) => ({
+      userId: Number(row.userId),
+      username: row.username,
+      email: row.email,
+      phone: row.phone ?? null,
+      trialStartedAt: normalizeDateOutput(row.trialStartedAt),
+      planId: row.planId == null ? null : numberFromUnknown(row.planId),
+    })),
     paidNoDownload24h: paidNoDownloadRows.map((row) => ({
       userId: Number(row.userId),
       username: row.username,
+      email: row.email,
+      phone: row.phone ?? null,
       paidAt: normalizeDateOutput(row.paidAt),
       planId: row.planId == null ? null : Number(row.planId),
       paymentMethod: row.paymentMethod ?? null,
@@ -1889,6 +2066,8 @@ interface AnalyticsCancellationReasonsSnapshot {
     start: string;
     end: string;
   };
+  voluntaryCancellations: number;
+  involuntaryCancellations: number;
   totalCancellations: number;
   reasons: AnalyticsCancellationReasonPoint[];
 }
@@ -1911,6 +2090,8 @@ export const getAnalyticsCancellationReasons = async (
         start: normalizeDateOutput(startDate),
         end: normalizeDateOutput(new Date()),
       },
+      voluntaryCancellations: 0,
+      involuntaryCancellations: 0,
       totalCancellations: 0,
       reasons: [],
     };
@@ -1921,7 +2102,10 @@ export const getAnalyticsCancellationReasons = async (
     : DEFAULT_CANCELLATION_TOP_CAMPAIGNS;
 
   try {
-    const reasonRows = await prisma.$queryRaw<
+    await ensureAnalyticsEventsTable(prisma);
+
+    const [reasonRows, campaignRows, involuntaryRows] = await Promise.all([
+      prisma.$queryRaw<
       Array<{
         reasonCode: string;
         cancellations: bigint | number;
@@ -1935,9 +2119,8 @@ export const getAnalyticsCancellationReasons = async (
       GROUP BY reason_code
       ORDER BY cancellations DESC
       LIMIT ${MAX_CANCELLATION_REASON_LIMIT}
-    `);
-
-    const campaignRows = await prisma.$queryRaw<
+    `),
+      prisma.$queryRaw<
       Array<{
         reasonCode: string;
         source: string | null;
@@ -1957,12 +2140,25 @@ export const getAnalyticsCancellationReasons = async (
       GROUP BY reason_code, source, medium, campaign
       ORDER BY cancellations DESC
       LIMIT ${MAX_CANCELLATION_CAMPAIGN_ROWS}
-    `);
+    `),
+      prisma.$queryRaw<Array<{ involuntaryCancellations: bigint | number }>>(Prisma.sql`
+        SELECT
+          COUNT(DISTINCT user_id) AS involuntaryCancellations
+        FROM analytics_events
+        WHERE event_ts >= ${startDate}
+          AND event_name = 'subscription_cancel_involuntary'
+          AND user_id IS NOT NULL
+      `),
+    ]);
 
-    const totalCancellations = reasonRows.reduce(
+    const voluntaryCancellations = reasonRows.reduce(
       (acc, row) => acc + numberFromUnknown(row.cancellations),
       0,
     );
+    const involuntaryCancellations = numberFromUnknown(
+      involuntaryRows?.[0]?.involuntaryCancellations,
+    );
+    const totalCancellations = voluntaryCancellations + involuntaryCancellations;
 
     const campaignByReason = campaignRows.reduce((map, row) => {
       const reasonCode = row.reasonCode || 'unknown';
@@ -1994,6 +2190,8 @@ export const getAnalyticsCancellationReasons = async (
         start: normalizeDateOutput(startDate),
         end: normalizeDateOutput(new Date()),
       },
+      voluntaryCancellations,
+      involuntaryCancellations,
       totalCancellations,
       reasons,
     };
@@ -2005,6 +2203,8 @@ export const getAnalyticsCancellationReasons = async (
         start: normalizeDateOutput(startDate),
         end: normalizeDateOutput(new Date()),
       },
+      voluntaryCancellations: 0,
+      involuntaryCancellations: 0,
       totalCancellations: 0,
       reasons: [],
     };

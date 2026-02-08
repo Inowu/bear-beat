@@ -155,6 +155,52 @@ model SubscriptionCancellationFeedback {
   @@map("subscription_cancellation_feedback")
 }
 
+model AutomationRunLog {
+  id          Int      @id @default(autoincrement())
+  started_at  DateTime @default(now()) @db.DateTime(0)
+  finished_at DateTime? @db.DateTime(0)
+  status      String   @db.VarChar(20)
+  error       String?  @db.Text
+
+  @@index([started_at], map: "idx_automation_runs_started_at")
+  @@index([status], map: "idx_automation_runs_status")
+  @@map("automation_run_logs")
+}
+
+model AutomationActionLog {
+  id                  Int      @id @default(autoincrement())
+  user_id             Int
+  action_key          String   @db.VarChar(80)
+  stage               Int      @default(0)
+  channel             String   @db.VarChar(20)
+  provider_message_id String?  @db.VarChar(120)
+  sent_at             DateTime @default(now()) @db.DateTime(0)
+  metadata_json       Json?
+
+  @@unique([user_id, action_key, stage], map: "uniq_automation_action_user_key_stage")
+  @@index([user_id], map: "idx_automation_action_user_id")
+  @@index([sent_at], map: "idx_automation_action_sent_at")
+  @@map("automation_action_logs")
+}
+
+model UserOffer {
+  id            Int      @id @default(autoincrement())
+  user_id       Int
+  offer_key     String   @db.VarChar(80)
+  stage         Int      @default(0)
+  percent_off   Int
+  coupon_code   String?  @db.VarChar(15)
+  expires_at    DateTime @db.DateTime(0)
+  created_at    DateTime @default(now()) @db.DateTime(0)
+  redeemed_at   DateTime? @db.DateTime(0)
+  metadata_json Json?
+
+  @@unique([user_id, offer_key, stage], map: "uniq_user_offer_user_key_stage")
+  @@index([expires_at], map: "idx_user_offer_expires_at")
+  @@index([user_id], map: "idx_user_offer_user_id")
+  @@map("user_offers")
+}
+
 model Plans {
   id                   Int     @id @default(autoincrement())
   name                 String  @db.VarChar(100)

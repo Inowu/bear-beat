@@ -8,12 +8,12 @@ import { log } from '../../server';
 import { OrderStatus } from './interfaces/order-status.interface';
 import { hasActiveSubscription } from './utils/hasActiveSub';
 import { PaymentService } from './services/types';
-import { Cupons } from '@prisma/client';
 import { facebook } from '../../facebook';
 import { manyChat } from '../../many-chat';
 import { checkIfUserIsFromUH, checkIfUserIsSubscriber, SubscriptionCheckResult } from '../migration/checkUHSubscriber';
 import { addDays } from 'date-fns';
 import { getClientIpFromRequest } from '../../analytics';
+import { resolveCheckoutCoupon } from '../../offers';
 
 export const subscribeWithStripe = shieldedProcedure
   .input(
@@ -67,35 +67,18 @@ export const subscribeWithStripe = shieldedProcedure
       });
     }
 
-    let dbCoupon: Cupons | null | undefined;
+    const resolvedCoupon = await resolveCheckoutCoupon({
+      prisma,
+      userId: user.id,
+      requestedCoupon: coupon ?? null,
+    });
 
-    if (coupon) {
-      dbCoupon = await prisma.cupons.findFirst({
-        where: {
-          code: coupon,
-        },
-      });
-
-      if (!dbCoupon) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'Ese cupón no existe',
-        });
-      }
-
-      const usedCoupon = await prisma.cuponsUsed.findFirst({
-        where: {
-          AND: [{ user_id: user.id }, { cupon_id: dbCoupon.id }],
-        },
-      });
-
-      if (usedCoupon) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Ese cupón ya fue usado',
-        });
-      }
-    }
+    const dbCoupon = resolvedCoupon.couponCode
+      ? await prisma.cupons.findFirst({
+          where: { code: resolvedCoupon.couponCode, active: 1 },
+          select: { id: true, discount: true, code: true },
+        })
+      : null;
 
     const order = await prisma.orders.create({
       data: {
@@ -106,7 +89,7 @@ export const subscribeWithStripe = shieldedProcedure
         payment_method: PaymentService.STRIPE,
         date_order: new Date(),
         total_price: Number(plan.price),
-        ...(dbCoupon ? { discount: dbCoupon.discount } : {}),
+        ...(dbCoupon ? { discount: dbCoupon.discount, cupon_id: dbCoupon.id } : {}),
       },
     });
 
@@ -165,10 +148,17 @@ export const subscribeWithStripe = shieldedProcedure
         });
       }
 
-      const subscription = await stripeInstance.subscriptions.create(
+      const isStripeCouponError = (err: unknown) => {
+        const msg = typeof (err as any)?.message === 'string' ? (err as any).message : '';
+        const lower = String(msg).toLowerCase();
+        return lower.includes('coupon') && (lower.includes('no such') || lower.includes('invalid'));
+      };
+
+      const createSubscription = async (couponCode: string | null) =>
+        stripeInstance.subscriptions.create(
         {
           customer: customerId,
-          coupon,
+          ...(couponCode ? { coupon: couponCode } : {}),
           items: [
             {
               plan: plan[getPlanKey(PaymentService.STRIPE)]!,
@@ -185,28 +175,55 @@ export const subscribeWithStripe = shieldedProcedure
         { idempotencyKey: `stripe-sub-order-${order.id}` },
       );
 
+      let subscription: any;
+      let droppedOfferCoupon = false;
+      try {
+        subscription = await createSubscription(resolvedCoupon.couponCode);
+      } catch (err) {
+        // Never break the flow due to an auto-offer coupon mismatch in Stripe.
+        if (resolvedCoupon.source === 'offer' && resolvedCoupon.couponCode && isStripeCouponError(err)) {
+          log.warn('[STRIPE_SUBSCRIBE] Offer coupon rejected by Stripe, retrying without coupon', {
+            userId: user.id,
+            orderId: order.id,
+            coupon: resolvedCoupon.couponCode,
+            error: err instanceof Error ? err.message : err,
+          });
+          droppedOfferCoupon = true;
+          subscription = await createSubscription(null);
+        } else {
+          throw err;
+        }
+      }
+
       await prisma.orders.update({
         where: { id: order.id },
         data: {
           txn_id: subscription.id,
           invoice_id: (subscription?.latest_invoice as any)?.id,
+          ...(droppedOfferCoupon ? { discount: 0, cupon_id: null } : {}),
         },
       });
 
-      if (coupon) {
-        const dbCouponForUse = await prisma.cupons.findFirst({
-          where: { code: coupon },
-        });
-        if (!dbCouponForUse) {
-          log.warn(`[STRIPE] Coupon ${coupon} not found in database`);
-        } else {
-          log.info(`[STRIPE] Coupon used: ${coupon} by user ${user.id}`);
-          await prisma.cuponsUsed.create({
-            data: {
-              user_id: user.id,
-              cupon_id: dbCouponForUse.id,
-              date_cupon: new Date(),
-            },
+      if (!droppedOfferCoupon && resolvedCoupon.couponCode && dbCoupon) {
+        try {
+          const usedCoupon = await prisma.cuponsUsed.findFirst({
+            where: { user_id: user.id, cupon_id: dbCoupon.id },
+            select: { id: true },
+          });
+          if (!usedCoupon) {
+            await prisma.cuponsUsed.create({
+              data: {
+                user_id: user.id,
+                cupon_id: dbCoupon.id,
+                date_cupon: new Date(),
+              },
+            });
+          }
+        } catch (e) {
+          log.debug('[STRIPE_SUBSCRIBE] Failed to persist cuponsUsed', {
+            userId: user.id,
+            coupon: resolvedCoupon.couponCode,
+            error: e instanceof Error ? e.message : e,
           });
         }
       }

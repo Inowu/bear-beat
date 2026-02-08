@@ -12,6 +12,7 @@ import axios from 'axios';
 import { paypal } from '../../../paypal';
 import { updateFtpUserInfo } from '../../subscriptions/changeSubscriptionPlan/updateSubscription';
 import { manyChat } from '../../../many-chat';
+import { ingestAnalyticsEvents } from '../../../analytics';
 
 export const paypalSubscriptionWebhook = async (req: Request) => {
   const payload = JSON.parse(req.body as any);
@@ -214,6 +215,33 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
         `[PAYPAL_WH] Subscription expired, subscription id ${payload.resource.id}`,
       );
 
+      // Internal analytics: treat provider-side expiration as involuntary cancellation.
+      try {
+        await ingestAnalyticsEvents({
+          prisma,
+          events: [
+            {
+              eventId: `paypal:${payload.id || payload.event_id}:subscription_cancel_involuntary`.slice(0, 80),
+              eventName: 'subscription_cancel_involuntary',
+              eventCategory: 'retention',
+              eventTs: new Date().toISOString(),
+              userId: user.id,
+              metadata: {
+                provider: 'paypal',
+                reason: 'subscription_expired',
+                paypalSubscriptionId: subId,
+                orderId: order.id,
+              },
+            },
+          ],
+          sessionUserId: user.id,
+        });
+      } catch (e) {
+        log.debug('[PAYPAL_WH] analytics involuntary cancellation skipped', {
+          error: e instanceof Error ? e.message : e,
+        });
+      }
+
       await cancelSubscription({
         prisma,
         user,
@@ -298,6 +326,48 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
         await manyChat.addTagToUser(user, 'FAILED_PAYMENT');
       } catch (e) {
         log.error(`[PAYPAL] Error adding FAILED_PAYMENT tag for user ${user.id}: ${e}`);
+      }
+
+      // Internal analytics: payment failed + involuntary cancellation.
+      try {
+        await ingestAnalyticsEvents({
+          prisma,
+          events: [
+            {
+              eventId: `paypal:${payload.id || payload.event_id}:payment_failed`.slice(0, 80),
+              eventName: 'payment_failed',
+              eventCategory: 'purchase',
+              eventTs: new Date().toISOString(),
+              userId: user.id,
+              currency: plan?.moneda?.toUpperCase?.() ?? null,
+              amount: Number(plan?.price) || 0,
+              metadata: {
+                provider: 'paypal',
+                reason: 'payment_sale_denied',
+                paypalSubscriptionId: subId,
+                orderId: order.id,
+              },
+            },
+            {
+              eventId: `paypal:${payload.id || payload.event_id}:subscription_cancel_involuntary`.slice(0, 80),
+              eventName: 'subscription_cancel_involuntary',
+              eventCategory: 'retention',
+              eventTs: new Date().toISOString(),
+              userId: user.id,
+              metadata: {
+                provider: 'paypal',
+                reason: 'payment_sale_denied',
+                paypalSubscriptionId: subId,
+                orderId: order.id,
+              },
+            },
+          ],
+          sessionUserId: user.id,
+        });
+      } catch (e) {
+        log.debug('[PAYPAL_WH] analytics payment_failed/involuntary_cancel skipped', {
+          error: e instanceof Error ? e.message : e,
+        });
       }
 
       await cancelSubscription({

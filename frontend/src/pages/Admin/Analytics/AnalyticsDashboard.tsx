@@ -82,6 +82,8 @@ interface CancellationReasonsSnapshot {
     start: string;
     end: string;
   };
+  voluntaryCancellations: number;
+  involuntaryCancellations: number;
   totalCancellations: number;
   reasons: CancellationReasonPoint[];
 }
@@ -570,12 +572,13 @@ export function AnalyticsDashboard() {
                         </tbody>
                       </table>
                     </div>
-                    {cancellations && cancellations.totalCancellations > 0 && (
-                      <small>
-                        Total cancelaciones en rango:{" "}
+                    {cancellations && cancellations.totalCancellations > 0 ? (
+                      <small style={{ display: "block", marginTop: 8, color: "var(--ad-text-muted)", fontWeight: 700 }}>
+                        Voluntarias: {cancellations.voluntaryCancellations.toLocaleString("es-MX")} · Involuntarias:{" "}
+                        {cancellations.involuntaryCancellations.toLocaleString("es-MX")} · Total:{" "}
                         {cancellations.totalCancellations.toLocaleString("es-MX")}
                       </small>
-                    )}
+                    ) : null}
                   </section>
 
                   <section className="analytics-panel">

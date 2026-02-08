@@ -17,15 +17,28 @@ function getFirstLastName(user: Users): { first_name: string; last_name: string 
   };
 }
 
+const MC_API_KEY = (process.env.MC_API_KEY || '').trim();
+
 const client = axios.create({
   baseURL: 'https://api.manychat.com',
-  headers: {
-    Authorization: `Bearer ${process.env.MC_API_KEY}`,
-  },
+  headers: MC_API_KEY ? { Authorization: `Bearer ${MC_API_KEY}` } : {},
 });
+
+const isManyChatConfigured = (): boolean => Boolean(MC_API_KEY);
+
+let didWarnMissingConfig = false;
+const warnMissingConfig = (method: string) => {
+  if (didWarnMissingConfig) return;
+  didWarnMissingConfig = true;
+  log.warn(`[MANYCHAT] MC_API_KEY not configured; skipping ManyChat calls (first seen in ${method})`);
+};
 
 export const manyChat = {
   getInfo: async function (mcId: number): Promise<Record<any, any> | null> {
+    if (!isManyChatConfigured()) {
+      warnMissingConfig('getInfo');
+      return null;
+    }
     try {
       const response = await client(
         `/fb/subscriber/getInfo?subscriber_id=${mcId}`,
@@ -46,6 +59,10 @@ export const manyChat = {
     customFieldKey: string,
     customFieldValue: string,
   ) {
+    if (!isManyChatConfigured()) {
+      warnMissingConfig('findByCustomField');
+      return null;
+    }
     try {
       const response = await client(
         `/fb/subscriber/findByCustomField?key=${customFieldKey}&value=${customFieldValue}`,
@@ -66,6 +83,10 @@ export const manyChat = {
     user: Users,
     consentPhrase: string,
   ): Promise<Record<any, any> | null> {
+    if (!isManyChatConfigured()) {
+      warnMissingConfig('createSubscriber');
+      return null;
+    }
     const { first_name, last_name } = getFirstLastName(user);
     try {
       const response = await client.post('/fb/subscriber/createSubscriber', {
@@ -98,6 +119,10 @@ export const manyChat = {
     fieldKey: string,
     fieldValue: string,
   ) {
+    if (!isManyChatConfigured()) {
+      warnMissingConfig('setCustomField');
+      return null;
+    }
     try {
       const response = await client.post('/fb/subscriber/setCustomField', {
         subscriber_id: mcId,
@@ -121,6 +146,10 @@ export const manyChat = {
     mcId: number,
     consentPhrase: string,
   ) {
+    if (!isManyChatConfigured()) {
+      warnMissingConfig('updateSubscriber');
+      return null;
+    }
     try {
       const response = await client.post('/fb/subscriber/updateSubscriber', {
         ...user,
@@ -148,6 +177,10 @@ export const manyChat = {
     systemField: 'email' | 'phone',
     systemFieldValue: string,
   ): Promise<Array<Record<any, any>> | null> {
+    if (!isManyChatConfigured()) {
+      warnMissingConfig('findBySystemField');
+      return null;
+    }
     try {
       const encoded = encodeURIComponent(systemFieldValue);
       const response = await client(
@@ -167,8 +200,12 @@ export const manyChat = {
   },
   addTagToUser: async function (
     user: Users,
-    tag: ManyChatTags,
+    tag: ManyChatTags | string,
   ): Promise<Array<Record<any, any>> | null> {
+    if (!isManyChatConfigured()) {
+      warnMissingConfig('addTagToUser');
+      return null;
+    }
     const mcId = await this.getManyChatId(user);
 
     if (!mcId) {
@@ -177,26 +214,15 @@ export const manyChat = {
     }
 
     const subscriberId = Number(mcId);
-    const tagKey = tag as keyof typeof manyChatTags;
-    const tagId = manyChatTags[tagKey];
+    const tagRaw = String(tag || '').trim();
+    if (!tagRaw) return null;
 
-    // 1. Intentar por ID
-    try {
-      const response = await client.post('/fb/subscriber/addTag', {
-        subscriber_id: subscriberId,
-        tag_id: tagId,
-      });
-      log.info(`[MANYCHAT] Tag ${tag} (id ${tagId}) added to subscriber ${subscriberId}`);
-      return response.data;
-    } catch (error: any) {
-      const errData = (error as AxiosError).response?.data;
-      const errStr = JSON.stringify(errData) || error.message;
-      log.warn(
-        `[MANYCHAT] addTag by ID failed for user ${user.id}, subscriber ${subscriberId}, tag ${tag} (id ${tagId}): ${errStr}. Trying addTagByName...`,
-      );
+    const hasKey = Object.prototype.hasOwnProperty.call(manyChatTags, tagRaw);
+    const tagKey = hasKey ? (tagRaw as keyof typeof manyChatTags) : null;
+    const tagId = tagKey ? manyChatTags[tagKey] : null;
+    const tagName = tagKey ? manyChatTagNames[tagKey] : tagRaw;
 
-      // 2. Fallback: intentar por nombre (los IDs pueden no coincidir con tu cuenta)
-      const tagName = manyChatTagNames[tagKey];
+    const tryAddByName = async () => {
       try {
         const response = await client.post('/fb/subscriber/addTagByName', {
           subscriber_id: subscriberId,
@@ -207,16 +233,43 @@ export const manyChat = {
       } catch (fallbackError: any) {
         const fbData = (fallbackError as AxiosError).response?.data;
         log.error(
-          `[MANYCHAT] addTagByName also failed for user ${user.id}, subscriber ${subscriberId}, tag "${tagName}": ${JSON.stringify(fbData) || fallbackError.message}. Verifica los IDs en tags.ts con: npm run manychat:tags`,
+          `[MANYCHAT] addTagByName failed for user ${user.id}, subscriber ${subscriberId}, tag "${tagName}": ${JSON.stringify(fbData) || fallbackError.message}`,
         );
         return null;
       }
+    };
+
+    // 1. Intentar por ID
+    if (typeof tagId === 'number' && Number.isFinite(tagId) && tagId > 0) {
+      try {
+        const response = await client.post('/fb/subscriber/addTag', {
+          subscriber_id: subscriberId,
+          tag_id: tagId,
+        });
+        log.info(`[MANYCHAT] Tag ${tagRaw} (id ${tagId}) added to subscriber ${subscriberId}`);
+        return response.data;
+      } catch (error: any) {
+        const errData = (error as AxiosError).response?.data;
+        const errStr = JSON.stringify(errData) || error.message;
+        log.warn(
+          `[MANYCHAT] addTag by ID failed for user ${user.id}, subscriber ${subscriberId}, tag ${tagRaw} (id ${tagId}): ${errStr}. Trying addTagByName...`,
+        );
+        return tryAddByName();
+      }
     }
+
+    // If tagId is missing/0 (IDs differ across ManyChat workspaces), go straight to addTagByName.
+    return tryAddByName();
   },
   getManyChatId: async function (user: Users) {
     let mcId = user.mc_id;
 
     if (mcId) return mcId;
+
+    if (!isManyChatConfigured()) {
+      warnMissingConfig('getManyChatId');
+      return null;
+    }
 
     const existingSubscriberByEmail = await this.findBySystemField(
       'email',

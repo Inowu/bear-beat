@@ -123,6 +123,15 @@ log "Running Prisma migrations..."
 log "Building backend..."
 ( cd "$BACKEND_DIR" && npm run build )
 
+log "Ensuring pm2 automation runner is running (single instance)..."
+automation_process="bearbeat-automation"
+automation_script="${BACKEND_DIR}/build/automationRunner.js"
+if pm2 describe "$automation_process" >/dev/null 2>&1; then
+  pm2 restart "$automation_process"
+else
+  pm2 start "$automation_script" --name "$automation_process"
+fi
+
 log "Updating backend PORT to $target_port"
 if grep -q '^PORT=' "$ENV_FILE"; then
   sed -i.bak "s/^PORT=.*/PORT=$target_port/" "$ENV_FILE"
