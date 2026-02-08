@@ -20,6 +20,6 @@ export const conektaCustomers = new CustomersApi(conektaConfig);
 
 export const conektaSubscriptions = new SubscriptionsApi(conektaConfig);
 
-export const conektaPaymentMethods = new PaymentMethodsApi();
+export const conektaPaymentMethods = new PaymentMethodsApi(conektaConfig);
 
 export const conektaOrders = new OrdersApi(conektaConfig);

@@ -64,6 +64,8 @@ function CheckoutSuccess() {
       // Analytics interno
       trackGrowthMetric(GROWTH_METRICS.PAYMENT_SUCCESS, {
         sessionId: sessionId ?? null,
+        planId: typeof pending?.planId === "number" ? pending.planId : null,
+        amount: value,
         value,
         currency,
         eventId,

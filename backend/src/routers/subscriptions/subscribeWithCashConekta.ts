@@ -3,12 +3,14 @@ import { addDays, compareAsc } from 'date-fns';
 import { TRPCError } from '@trpc/server';
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
 import { getConektaCustomer } from './utils/getConektaCustomer';
-import { conektaOrders } from '../../conekta';
+import { conektaOrders, conektaPaymentMethods } from '../../conekta';
 import { OrderStatus } from './interfaces/order-status.interface';
 import { log } from '../../server';
 import { hasActiveSubscription } from './utils/hasActiveSub';
 import { PaymentService } from './services/types';
 import { Orders, Plans, PrismaClient, Users } from '@prisma/client';
+
+const oxxoEnabled = process.env.CONEKTA_OXXO_ENABLED === '1';
 
 export const subscribeWithCashConekta = shieldedProcedure
   .input(
@@ -16,6 +18,8 @@ export const subscribeWithCashConekta = shieldedProcedure
       .object({
         planId: z.number(),
         paymentMethod: z.union([z.literal('cash'), z.literal('spei')]),
+        // Antifraude (Conekta Collect). Opcional, pero recomendado por Conekta.
+        fingerprint: z.string().max(256).optional().nullable(),
       })
       .strict(),
   )
@@ -56,7 +60,10 @@ export const subscribeWithCashConekta = shieldedProcedure
   //   ]),
   // )
   .mutation(
-    async ({ input: { planId, paymentMethod }, ctx: { prisma, session } }) => {
+    async ({
+      input: { planId, paymentMethod, fingerprint },
+      ctx: { prisma, session },
+    }) => {
       const userConektaId = await getConektaCustomer({
         prisma,
         user: session?.user,
@@ -89,7 +96,14 @@ export const subscribeWithCashConekta = shieldedProcedure
       if (plan.moneda?.toUpperCase() !== 'MXN') {
         throw new TRPCError({
           code: 'BAD_REQUEST',
-          message: 'OXXO y SPEI solo están disponibles para planes en pesos (MXN). Elige otro método de pago.',
+          message: 'Este método de pago solo está disponible para planes en pesos (MXN). Elige otro método de pago.',
+        });
+      }
+
+      if (paymentMethod === 'cash' && !oxxoEnabled) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Pago en OXXO deshabilitado temporalmente. Usa tarjeta o SPEI.',
         });
       }
 
@@ -141,6 +155,7 @@ export const subscribeWithCashConekta = shieldedProcedure
               plan,
               customerId: userConektaId,
               paymentMethod,
+              fingerprint,
               order: existingOrder,
               prisma,
               user: fullUserForOrder,
@@ -184,6 +199,7 @@ export const subscribeWithCashConekta = shieldedProcedure
           plan,
           customerId: userConektaId,
           paymentMethod,
+          fingerprint,
           order,
           prisma,
           user: fullUser,
@@ -212,6 +228,7 @@ const createCashPaymentOrder = async ({
   plan,
   customerId,
   paymentMethod,
+  fingerprint,
   order,
   prisma,
   user,
@@ -219,6 +236,7 @@ const createCashPaymentOrder = async ({
   plan: Plans;
   customerId: string;
   paymentMethod: 'cash' | 'spei';
+  fingerprint?: string | null;
   order: Orders;
   prisma: PrismaClient;
   user: Users;
@@ -226,9 +244,41 @@ const createCashPaymentOrder = async ({
   const expiresAt = Math.floor(addDays(new Date(), 30).getTime() / 1000);
   const amountCents = Math.round(Number(plan.price) * 100);
 
+  // Conekta \"SPEI recurrente\":
+  // 1) el cliente debe tener un payment_source tipo \"spei_recurrent\"
+  // 2) al crear la orden SPEI, incluir reuse_customer_clabe: true para reutilizar la misma CLABE
+  // Docs: https://developers.conekta.com/docs/cargos-con-referencia-recurrente
+  let reuseCustomerClabe = false;
+  if (paymentMethod === 'spei') {
+    try {
+      const existing = await conektaPaymentMethods.getCustomerPaymentMethods(
+        customerId,
+      );
+      const hasSpeiRecurrent =
+        existing.data?.data?.some(
+          (pm: any) => pm?.type === 'spei_recurrent',
+        ) ?? false;
+
+      if (!hasSpeiRecurrent) {
+        await conektaPaymentMethods.createCustomerPaymentMethods(customerId, {
+          type: 'spei_recurrent',
+        } as any);
+      }
+
+      reuseCustomerClabe = true;
+    } catch (e) {
+      // No bloquear el checkout si el payment_source no se puede crear/leer:
+      // seguimos con SPEI normal (CLABE puede cambiar por orden).
+      log.error(
+        `[CONEKTA_SPEI_RECURRENT] Unable to ensure spei_recurrent payment source for customer ${customerId}: ${e}`,
+      );
+      reuseCustomerClabe = false;
+    }
+  }
+
   // Según SDK Conekta (get_order_cash_request): usar customer_id cuando existe
   // y pre_authorize: false para pagos cash/spei.
-  const orderPayload = {
+  const orderPayload: any = {
     currency: 'MXN' as const,
     customer_info: {
       customer_id: customerId,
@@ -255,6 +305,14 @@ const createCashPaymentOrder = async ({
     },
     pre_authorize: false,
   };
+
+  if (fingerprint && typeof fingerprint === 'string') {
+    orderPayload.fingerprint = fingerprint;
+  }
+
+  if (reuseCustomerClabe) {
+    orderPayload.reuse_customer_clabe = true;
+  }
 
   let conektaOrder;
   try {

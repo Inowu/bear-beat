@@ -12,7 +12,7 @@ const FAQ_ITEMS = [
   {
     question: "¿Qué métodos de pago manejan?",
     answer:
-      "Según el plan y la moneda puedes pagar con Tarjeta, PayPal, SPEI y OXXO. Las opciones visibles en checkout dependen del plan seleccionado.",
+      "Según el plan y la moneda puedes pagar con Tarjeta, PayPal y SPEI. Las opciones visibles en checkout dependen del plan seleccionado (OXXO puede deshabilitarse temporalmente).",
   },
   {
     question: "¿Cómo cancelo mi suscripción?",
@@ -37,7 +37,7 @@ const FAQ_ITEMS = [
   {
     question: "¿Pueden usar logos de Visa, Mastercard, PayPal, OXXO o SPEI?",
     answer:
-      "Sí, solo como señalización de métodos aceptados y respetando guías de marca de cada proveedor. Esas marcas y logotipos pertenecen a sus respectivos titulares.",
+      "Sí, solo como señalización de métodos aceptados y respetando guías de marca de cada proveedor. Esas marcas y logotipos pertenecen a sus respectivos titulares (y pueden variar por disponibilidad).",
   },
 ];
 
@@ -157,7 +157,7 @@ function Legal() {
             </p>
             <h3>4. Canales de pago</h3>
             <p>
-              El procesamiento de pagos depende del método elegido (Tarjeta/PayPal/SPEI/OXXO), y tiempos de reflejo o
+              El procesamiento de pagos depende del método elegido (Tarjeta/PayPal/SPEI), y tiempos de reflejo o
               validación pueden variar según el proveedor.
             </p>
           </div>

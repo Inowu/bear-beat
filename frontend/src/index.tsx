@@ -8,6 +8,7 @@ import "./styles/index.scss";
 import reportWebVitals from "./reportWebVitals";
 import { initFacebookPixel } from "./utils/facebookPixel";
 import { GROWTH_METRICS, initGrowthMetrics, trackGrowthMetric } from "./utils/growthMetrics";
+import { initHotjar } from "./utils/hotjar";
 import { ErrorFallback } from "./components/ErrorFallback/ErrorFallback";
 import {
   Navigate,
@@ -43,6 +44,7 @@ import { BlockedEmailDomains } from "./pages/Admin/BlockedEmailDomains/BlockedEm
 import { BlockedPhoneNumbers } from "./pages/Admin/BlockedPhoneNumbers/BlockedPhoneNumbers";
 import { CatalogStats } from "./pages/Admin/CatalogStats/CatalogStats";
 import { AnalyticsDashboard } from "./pages/Admin/Analytics/AnalyticsDashboard";
+import { LiveAnalytics } from "./pages/Admin/Live/LiveAnalytics";
 import { PlanUpgrade } from "./pages/PlanUpgrade/PlanUpgrade";
 import { SSEProvider } from "react-hooks-sse";
 import DownloadContextProvider from "./contexts/DownloadContext";
@@ -130,6 +132,7 @@ const router = createBrowserRouter([
           { path: "almacenamiento", element: <Storage /> },
           { path: "catalogo", element: <CatalogStats /> },
           { path: "analitica", element: <AnalyticsDashboard /> },
+          { path: "live", element: <LiveAnalytics /> },
           { path: "historial-descargas", element: <DownloadHistory /> },
           { path: "cupones", element: <Coupons /> },
           { path: "ordenes", element: <Ordens /> },
@@ -163,6 +166,7 @@ const router = createBrowserRouter([
 // 'https://kale67.world/trpc'
 initFacebookPixel();
 initGrowthMetrics();
+initHotjar();
 
 root.render(
   <React.StrictMode>

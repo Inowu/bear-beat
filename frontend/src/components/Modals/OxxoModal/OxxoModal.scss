@@ -1,0 +1,153 @@
+.oxxo-modal-wrapper {
+  .oxxo-modal {
+    max-width: 720px;
+    width: calc(100vw - 2rem);
+  }
+}
+
+.oxxo-modal {
+  .header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .oxxo-modal__title-wrap {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+  }
+
+  .oxxo-modal__icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .oxxo-modal__subtitle {
+    margin: 0.35rem 0 0;
+    opacity: 0.9;
+    line-height: 1.35;
+  }
+
+  .oxxo-modal__close {
+    border: 0;
+    background: transparent;
+    color: inherit;
+    opacity: 0.85;
+    padding: 0.25rem;
+    border-radius: 10px;
+  }
+
+  .oxxo-modal__close:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .oxxo-modal__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
+
+  @media (min-width: 900px) {
+    .oxxo-modal__grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+  }
+
+  .oxxo-modal__field {
+    padding: 0.85rem;
+    border-radius: 14px;
+    background: rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .oxxo-modal__label {
+    display: block;
+    font-size: 0.95rem;
+    opacity: 0.85;
+    margin-bottom: 0.35rem;
+  }
+
+  .oxxo-modal__value-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .oxxo-modal__code {
+    font-size: 1.05rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    user-select: all;
+    word-break: break-word;
+  }
+
+  .oxxo-modal__amount {
+    font-size: 1.3rem;
+    font-weight: 700;
+  }
+
+  .oxxo-modal__copy {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.06);
+    color: inherit;
+    padding: 0.45rem 0.6rem;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .oxxo-modal__copy:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .oxxo-modal__warning {
+    margin: 0.6rem 0 0;
+    color: rgba(255, 255, 255, 0.92);
+    opacity: 0.95;
+  }
+
+  .oxxo-modal__hint {
+    margin: 0.6rem 0 0;
+    opacity: 0.85;
+    line-height: 1.35;
+  }
+
+  .oxxo-modal__expires {
+    margin: 0.75rem 0 0;
+    opacity: 0.9;
+  }
+
+  .oxxo-modal__barcode {
+    margin-top: 0.75rem;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #fff;
+    padding: 0.75rem;
+    display: grid;
+    place-items: center;
+  }
+
+  .oxxo-modal__barcode img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+}
+

@@ -1,24 +1,27 @@
-import { IOxxoData, IPlans, ISpeiData } from "../../interfaces/Plans";
+import { IPlans, IOxxoData, ISpeiData } from "../../interfaces/Plans";
 import "./PlanCard.scss";
 import { useLocation, useNavigate } from "react-router-dom";
 import React, { useCallback, useEffect, useState } from "react";
 import trpc from "../../api";
 import { manychatApi } from "../../api/manychat";
 import {
+  CancellationReasonModal,
+  type CancellationReasonCode,
   ChangeSubscriptionModal,
-  ConditionModal,
   ErrorModal,
-  OxxoModal,
   SpeiModal,
   SuccessModal
 } from "../../components/Modals";
+import { OxxoModal } from "../../components/Modals/OxxoModal/OxxoModal";
 import PayPalComponent from "../../components/PayPal/PayPalComponent";
 import PaymentMethodLogos, { type PaymentMethodId } from "../../components/PaymentMethodLogos/PaymentMethodLogos";
 import { useCookies } from "react-cookie";
 import { trackPurchase, trackViewPlans } from "../../utils/facebookPixel";
 import { trackManyChatConversion, trackManyChatPurchase, MC_EVENTS } from "../../utils/manychatPixel";
 import { generateEventId } from "../../utils/marketingIds";
+import { GROWTH_METRICS, getGrowthAttribution, trackGrowthMetric } from "../../utils/growthMetrics";
 import { Download, FolderOpen, HeartCrack, Music, Unlock, Zap } from "lucide-react";
+import { getConektaFingerprint } from "../../utils/conektaCollect";
 
 // Copy persuasivo CRO: texto aburrido → gancho emocional
 const BENEFIT_COPY: Record<string, string> = {
@@ -68,18 +71,22 @@ interface PlanCardPropsI {
   userEmail?: string;
   userPhone?: string;
   showRecommendedBadge?: boolean;
-}
-function PlanCard(props: PlanCardPropsI) {
-  const { plan, currentPlan, getCurrentPlan, userEmail, userPhone, showRecommendedBadge = true } = props;
-  const [showOxxoModal, setShowOxxoModal] = useState<boolean>(false);
-  const [oxxoData, setOxxoData] = useState({} as IOxxoData);
-  const [showSpeiModal, setShowSpeiModal] = useState<boolean>(false);
-  const [speiData, setSpeiData] = useState({} as ISpeiData);
-  const [showSuccess, setShowSuccess] = useState<boolean>(false);
-  const [showCancelModal, setShowCancelModal] = useState<boolean>(false);
+	}
+	function PlanCard(props: PlanCardPropsI) {
+	  const { plan, currentPlan, getCurrentPlan, userEmail, userPhone, showRecommendedBadge = true } = props;
+	  const [showSpeiModal, setShowSpeiModal] = useState<boolean>(false);
+	  const [speiData, setSpeiData] = useState({} as ISpeiData);
+    const [showOxxoModal, setShowOxxoModal] = useState<boolean>(false);
+    const [oxxoData, setOxxoData] = useState({} as IOxxoData);
+	  const [showSuccess, setShowSuccess] = useState<boolean>(false);
+	  const [showCancelModal, setShowCancelModal] = useState<boolean>(false);
   const [showChangeModal, setShowChangeModal] = useState<boolean>(false);
   const [showError, setShowError] = useState<boolean>(false);
   const [ppPlan, setppPlan] = useState<null | any>(null);
+  const [conektaAvailability, setConektaAvailability] = useState<{
+    oxxoEnabled: boolean;
+    payByBankEnabled: boolean;
+  } | null>(null);
   const [errorMSG, setErrorMSG] = useState<string>("");
   const [successTitle, setSuccessTitle] = useState<string>("");
   const [successMessage, setSuccessMessage] = useState<string>("");
@@ -116,28 +123,30 @@ function PlanCard(props: PlanCardPropsI) {
   }
 
   const handleCancelModal = () => {
-    setShowCancelModal(!showCancelModal);
+    const next = !showCancelModal;
+    setShowCancelModal(next);
+    if (next) {
+      trackGrowthMetric(GROWTH_METRICS.SUBSCRIPTION_CANCEL_STARTED, {
+        surface: pathname === "/actualizar-planes" ? "plan_upgrade" : "plans",
+        planId: plan.id,
+        currency: (plan.moneda ?? "USD").toUpperCase(),
+        amount: Number(plan.price) || null,
+      });
+    }
   };
   const handleChangeModal = () => {
     setChangeMessage(`¿Estás seguro que quieres cambiar al plan de: "${plan.name}" de $${plan.price} ${plan.moneda}? Deberás pagar la diferencia de precio.`);
     setChangeTitle("Cambio de plan");
     setShowChangeModal(!showChangeModal);
   };
-  const handleErrorModal = () => {
-    setShowError(!showError);
-  };
-  const handleOxxoModal = async () => {
-    let tempOxxo = !showOxxoModal;
-    setShowOxxoModal(tempOxxo);
-    if (tempOxxo) {
-      handleManyChat();
-    }
-  };
-  const openSuccess = () => {
-    setShowSuccess(true);
-  };
-  const closeSuccess = () => {
-    setShowSuccess(false);
+	  const handleErrorModal = () => {
+	    setShowError(!showError);
+	  };
+	  const openSuccess = () => {
+	    setShowSuccess(true);
+	  };
+	  const closeSuccess = () => {
+	    setShowSuccess(false);
     if (pathname === "/actualizar-planes") {
       getCurrentPlan();
     } else {
@@ -166,70 +175,74 @@ function PlanCard(props: PlanCardPropsI) {
       handleErrorModal();
     }
   };
-  const finishSubscription = async () => {
+  const finishSubscription = async (reasonCode: CancellationReasonCode, reasonText: string) => {
     trackManyChatConversion(MC_EVENTS.CANCEL_SUBSCRIPTION);
     try {
-      await trpc.subscriptions.requestSubscriptionCancellation.mutate();
+      await trpc.subscriptions.requestSubscriptionCancellation.mutate({
+        reasonCode,
+        reasonText: reasonText?.trim() ? reasonText.trim() : null,
+        attribution: getGrowthAttribution(),
+      });
+      trackGrowthMetric(GROWTH_METRICS.SUBSCRIPTION_CANCEL_CONFIRMED, {
+        surface: pathname === "/actualizar-planes" ? "plan_upgrade" : "plans",
+        planId: plan.id,
+        reasonCode,
+      });
       openSuccess();
       setSuccessMessage("Su suscripción se ha cancelado con éxito.");
       setSuccessTitle("Suscripción Cancelada");
     } catch (error: any) {
-      setErrorMSG(error.message);
-      handleErrorModal();
-    }
-  };
-
-  const retreivePaypalPlan = useCallback(async () => {
-    let body = {
-      where: {
-        activated: 1,
-        stripe_prod_id: null,
-        stripe_prod_id_test: '',
-        moneda: plan.moneda.toUpperCase(),
-        price: +plan.price,
-      },
-    };
-    try {
-      const plans: any = await trpc.plans.findManyPlans.query(body);
-      if (plans.length > 0) {
-        setppPlan(plans[0]);
-      }
-    } catch {
-      // noop
-    }
-  }, [plan]
-  )
-
-  const handleButtonClick = () => {
-    // fbq('track', 'CarritoAbandonado');
-    // manyChatPixel.track('PageView');
-  };
-  const payWithOxxo = async () => {
-    handleUserClickOnPlan();
-    trpc.checkoutLogs.registerCheckoutLog.mutate();
-    try {
-      let body = {
+      trackGrowthMetric(GROWTH_METRICS.SUBSCRIPTION_CANCEL_FAILED, {
+        surface: pathname === "/actualizar-planes" ? "plan_upgrade" : "plans",
         planId: plan.id,
-        paymentMethod: "cash" as const,
-      };
-      const oxxoPay =
-        await trpc.subscriptions.subscribeWithCashConekta.mutate(body);
-      handleOxxoModal();
-      setOxxoData(oxxoPay);
-      handleButtonClick();
-    } catch (error: any) {
-      setErrorMSG(error.message);
-      handleErrorModal();
+        reasonCode,
+        reason: error?.message ?? "unknown-error",
+      });
+      throw error;
     }
   };
-  const payWithSpei = async () => {
-    trackManyChatConversion(MC_EVENTS.CLICK_SPEI);
-    handleUserClickOnPlan();
-    trpc.checkoutLogs.registerCheckoutLog.mutate();
+
+	  const retreivePaypalPlan = useCallback(async () => {
+	    // If this plan already has PayPal config, use it directly.
+	    if (plan.paypal_plan_id || plan.paypal_plan_id_test) {
+	      setppPlan(plan);
+	      return;
+	    }
+
+	    // Otherwise, try to find a sibling plan (same currency/price) that has PayPal IDs.
+	    const body = {
+	      where: {
+	        activated: 1,
+	        moneda: (plan.moneda ?? "").toLowerCase(),
+	        price: +plan.price,
+	        OR: [
+	          { paypal_plan_id: { not: null } },
+	          { paypal_plan_id_test: { not: null } },
+	        ],
+	      },
+	    };
+	    try {
+	      const plans: IPlans[] = await trpc.plans.findManyPlans.query(body as any);
+	      const match = plans.find((p) => Boolean(p.paypal_plan_id || p.paypal_plan_id_test)) ?? null;
+	      setppPlan(match);
+	    } catch {
+	      // noop
+	    }
+	  }, [plan]);
+
+	  const handleButtonClick = () => {
+	    // fbq('track', 'CarritoAbandonado');
+	    // manyChatPixel.track('PageView');
+	  };
+	  const payWithSpei = async () => {
+	    trackManyChatConversion(MC_EVENTS.CLICK_SPEI);
+	    handleUserClickOnPlan();
+	    trpc.checkoutLogs.registerCheckoutLog.mutate();
     try {
       let body = {
         planId: plan.id,
         paymentMethod: "spei" as const,
+        fingerprint: await getConektaFingerprint(),
       };
       const speiPay =
         await trpc.subscriptions.subscribeWithCashConekta.mutate(body);
@@ -241,6 +254,70 @@ function PlanCard(props: PlanCardPropsI) {
         error?.data?.message ??
         error?.message ??
         "No se pudo generar la transferencia SPEI. Verifica que el plan sea en pesos (MXN) o intenta más tarde.";
+      setErrorMSG(msg);
+      handleErrorModal();
+    }
+  };
+
+  const payWithOxxo = async () => {
+    trackManyChatConversion(MC_EVENTS.CLICK_OXXO);
+    handleUserClickOnPlan();
+    trpc.checkoutLogs.registerCheckoutLog.mutate();
+    try {
+      const body = {
+        planId: plan.id,
+        paymentMethod: "cash" as const,
+        fingerprint: await getConektaFingerprint(),
+      };
+      const oxxoPay = await trpc.subscriptions.subscribeWithCashConekta.mutate(body);
+      setShowOxxoModal(true);
+      setOxxoData(oxxoPay);
+      handleButtonClick();
+    } catch (error: any) {
+      const msg =
+        error?.data?.message ??
+        error?.message ??
+        "No se pudo generar la referencia de OXXO. Intenta más tarde o usa tarjeta/SPEI.";
+      setErrorMSG(msg);
+      handleErrorModal();
+    }
+  };
+
+  const payWithBbva = async () => {
+    handleUserClickOnPlan();
+    trpc.checkoutLogs.registerCheckoutLog.mutate();
+    try {
+      const value = Number(plan.price) || 0;
+      const currency = (plan.moneda || "MXN").toUpperCase();
+      try {
+        window.sessionStorage.setItem(
+          "bb.checkout.pendingPurchase",
+          JSON.stringify({
+            planId: plan.id,
+            value,
+            currency,
+            at: new Date().toISOString(),
+          }),
+        );
+      } catch {
+        // noop
+      }
+
+      const result = await trpc.subscriptions.subscribeWithPayByBankConekta.mutate({
+        planId: plan.id,
+        fingerprint: await getConektaFingerprint(),
+      });
+      if (result?.url) {
+        window.location.href = result.url;
+        return;
+      }
+      setErrorMSG("No se pudo abrir el pago BBVA. Intenta con SPEI/OXXO o tarjeta.");
+      handleErrorModal();
+    } catch (error: any) {
+      const msg =
+        error?.data?.message ??
+        error?.message ??
+        "No se pudo abrir el pago BBVA. Intenta con SPEI/OXXO o tarjeta.";
       setErrorMSG(msg);
       handleErrorModal();
     }
@@ -269,6 +346,13 @@ function PlanCard(props: PlanCardPropsI) {
       currency: (plan.moneda || "USD").toUpperCase(),
       eventId,
     });
+    trackGrowthMetric(GROWTH_METRICS.PAYMENT_SUCCESS, {
+      planId: ppPlan?.id ?? plan.id,
+      amount: Number(plan.price) || 0,
+      value: Number(plan.price) || 0,
+      currency: (plan.moneda || "USD").toUpperCase(),
+      eventId,
+    });
     trackManyChatConversion(MC_EVENTS.PAYMENT_SUCCESS);
     if ((Number(plan.price) || 0) > 0) {
       trackManyChatPurchase(
@@ -285,6 +369,29 @@ function PlanCard(props: PlanCardPropsI) {
   useEffect(() => { retreivePaypalPlan() }, [retreivePaypalPlan]);
 
   const isMxn = plan.moneda === "mxn" || plan.moneda === "MXN";
+  useEffect(() => {
+    let cancelled = false;
+    if (!isMxn) {
+      setConektaAvailability(null);
+      return;
+    }
+    (async () => {
+      try {
+        const result = await trpc.subscriptions.getConektaAvailability.query();
+        if (!cancelled) {
+          setConektaAvailability({
+            oxxoEnabled: Boolean(result?.oxxoEnabled),
+            payByBankEnabled: Boolean(result?.payByBankEnabled),
+          });
+        }
+      } catch {
+        if (!cancelled) setConektaAvailability({ oxxoEnabled: false, payByBankEnabled: false });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isMxn]);
   const showBadge = isMxn && !currentPlan && showRecommendedBadge;
   const includedBenefits = DEFAULT_BENEFITS;
   const hasPaypalPlan = ppPlan !== null && Boolean(ppPlan.paypal_plan_id || ppPlan.paypal_plan_id_test);
@@ -295,21 +402,29 @@ function PlanCard(props: PlanCardPropsI) {
   const unitPricePerGb = planGigasValue > 0 ? planPriceValue / planGigasValue : null;
   const unitPriceLabel = unitPricePerGb !== null ? formatPlanCurrency(unitPricePerGb, planCurrency) : null;
   const formattedPlanPrice = formatPlanCurrency(planPriceValue, planCurrency);
-  const paymentSummary = isMxn
-    ? "SPEI, OXXO o Tarjeta"
-    : showPaypalOption
-      ? "Tarjeta o PayPal"
-      : "Tarjeta internacional";
+	  const mxnPaymentSummary = (() => {
+	    const parts = ["Tarjeta", "SPEI"];
+	    if (conektaAvailability?.payByBankEnabled) parts.push("BBVA");
+	    if (conektaAvailability?.oxxoEnabled) parts.push("OXXO");
+	    return parts.join(" / ");
+	  })();
+	  const paymentSummary = isMxn
+	    ? mxnPaymentSummary
+	    : showPaypalOption
+	      ? "Tarjeta o PayPal"
+	      : "Tarjeta internacional";
   const targetAudience = isMxn ? "Pago local en MXN" : "Pago internacional en USD";
-  const displayDescription = isMxn
+	  const displayDescription = isMxn
     ? "Ideal para DJs en México que quieren activar rápido y cobrar sin fricción."
     : "Ideal para DJs fuera de México que prefieren pago en USD.";
-  const primaryCtaLabel = isMxn ? "Activar plan MXN" : "Activar plan USD";
-  const paymentLogos: PaymentMethodId[] = isMxn
-    ? ["visa", "mastercard", "amex", "spei", "oxxo"]
-    : showPaypalOption
-      ? ["visa", "mastercard", "amex", "paypal"]
-      : ["visa", "mastercard", "amex"];
+	  const primaryCtaLabel = isMxn ? "Activar plan MXN" : "Activar plan USD";
+	  const paymentLogos: PaymentMethodId[] = isMxn
+	    ? (conektaAvailability?.oxxoEnabled
+	      ? ["visa", "mastercard", "amex", "spei", "oxxo"]
+	      : ["visa", "mastercard", "amex", "spei"])
+	    : showPaypalOption
+	      ? ["visa", "mastercard", "amex", "paypal"]
+	      : ["visa", "mastercard", "amex"];
 
   return (
     <div className={"plan-card-wrapper plan-card-monolith " + (plan.moneda === "usd" ? "resp-plan " : "")}>
@@ -368,22 +483,29 @@ function PlanCard(props: PlanCardPropsI) {
               >
                 <Unlock aria-hidden /> {primaryCtaLabel}
               </button>
-                  {(isMxn || showPaypalOption) && (
-                    <div className="plan-card-secondary-payment">
-                      <span className="plan-card-secondary-label">O paga con:</span>
-                      <div className="plan-card-secondary-buttons">
-                        {isMxn && (
-                          <>
-                            <button type="button" className="plan-card-btn-outline" onClick={payWithSpei}>
-                              SPEI
-                            </button>
-                            <button type="button" className="plan-card-btn-outline" onClick={payWithOxxo}>
-                              OXXO
-                            </button>
-                          </>
-                        )}
-                        {showPaypalOption && (
-                          <PayPalComponent
+	                  {(isMxn || showPaypalOption) && (
+	                    <div className="plan-card-secondary-payment">
+	                      <span className="plan-card-secondary-label">O paga con:</span>
+	                      <div className="plan-card-secondary-buttons">
+	                        {isMxn && (
+	                          <>
+	                            <button type="button" className="plan-card-btn-outline" onClick={payWithSpei}>
+	                              SPEI (recurrente)
+	                            </button>
+                              {conektaAvailability?.payByBankEnabled && (
+                                <button type="button" className="plan-card-btn-outline" onClick={payWithBbva}>
+                                  BBVA
+                                </button>
+                              )}
+                              {conektaAvailability?.oxxoEnabled && (
+                                <button type="button" className="plan-card-btn-outline" onClick={payWithOxxo}>
+                                  OXXO
+                                </button>
+                              )}
+	                          </>
+	                        )}
+	                        {showPaypalOption && (
+	                          <PayPalComponent
                             plan={ppPlan!}
                             type="subscription"
                             onApprove={successSubscription}
@@ -406,27 +528,28 @@ function PlanCard(props: PlanCardPropsI) {
           <p className="plan-card-confidence">Activación guiada por chat después del pago.</p>
         </div>
       </div>
-      <ConditionModal
-        title={"Cancelación de suscripción"}
-        message={"¿Estás seguro que quieres cancelar tu suscripción?"}
+      <CancellationReasonModal
+        title="Cancelación de suscripción"
+        message="Antes de irte, dinos por qué cancelas (nos ayuda a mejorar)."
         show={showCancelModal}
         onHide={handleCancelModal}
-        action={finishSubscription}
+        onReasonChange={(reasonCode) => {
+          trackGrowthMetric(GROWTH_METRICS.SUBSCRIPTION_CANCEL_REASON_SELECTED, {
+            surface: pathname === "/actualizar-planes" ? "plan_upgrade" : "plans",
+            planId: plan.id,
+            reasonCode,
+          });
+        }}
+        onConfirm={({ reasonCode, reasonText }) => finishSubscription(reasonCode, reasonText)}
       />
-      <ChangeSubscriptionModal
-        title={changeTitle}
-        message={changeMessage}
-        show={showChangeModal}
-        onHide={handleChangeModal}
-        action={changePlan}
-        plan={plan}
-      />
-      <OxxoModal
-        show={showOxxoModal}
-        onHide={handleOxxoModal}
-        price={plan.price}
-        oxxoData={oxxoData}
-      />
+	      <ChangeSubscriptionModal
+	        title={changeTitle}
+	        message={changeMessage}
+	        show={showChangeModal}
+	        onHide={handleChangeModal}
+	        action={changePlan}
+	        plan={plan}
+	      />
       <SpeiModal
         show={showSpeiModal}
         onHide={() => {
@@ -434,6 +557,14 @@ function PlanCard(props: PlanCardPropsI) {
         }}
         price={plan.price}
         speiData={speiData}
+      />
+      <OxxoModal
+        show={showOxxoModal}
+        onHide={() => {
+          setShowOxxoModal(false);
+        }}
+        price={plan.price}
+        oxxoData={oxxoData}
       />
       <SuccessModal
         show={showSuccess}

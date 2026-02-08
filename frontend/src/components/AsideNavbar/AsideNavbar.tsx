@@ -2,6 +2,7 @@ import "./AsideNavbar.scss";
 import { useUserContext } from "../../contexts/UserContext";
 import { useLocation } from "react-router-dom";
 import {
+  Activity,
   Users,
   FolderOpen,
   ShoppingCart,
@@ -73,6 +74,7 @@ function AsideNavbar(props: AsideNavbarPropsI) {
                 <li><Link to="/admin/almacenamiento" {...linkProps}><Database size={18} aria-hidden /> Almacenamiento</Link></li>
                 <li><Link to="/admin/catalogo" {...linkProps}><BarChart3 size={18} aria-hidden /> Catálogo</Link></li>
                 <li><Link to="/admin/analitica" {...linkProps}><BarChart3 size={18} aria-hidden /> Analítica</Link></li>
+                <li><Link to="/admin/live" {...linkProps}><Activity size={18} aria-hidden /> Live</Link></li>
                 <li><Link to="/admin/historial-descargas" {...linkProps}><Download size={18} aria-hidden /> Descargas</Link></li>
                 <li><Link to="/admin/historialCheckout" {...linkProps}><FileText size={18} aria-hidden /> Checkout</Link></li>
                 <li><Link to="/admin/dominios-bloqueados" {...linkProps}><Ban size={18} aria-hidden /> Dominios</Link></li>

@@ -35,11 +35,14 @@ const tracesSampleRate = resolveNumber(
 );
 const replaysSessionSampleRate = resolveNumber(
   process.env.REACT_APP_SENTRY_REPLAY_SESSION_SAMPLE_RATE,
-  isProdBuild ? 0.02 : 0,
+  // Default to 0 to avoid duplicating Hotjar session recordings.
+  // Keep "replay on error" enabled for debugging real issues.
+  isProdBuild ? 0 : 0,
 );
 const replaysOnErrorSampleRate = resolveNumber(
   process.env.REACT_APP_SENTRY_REPLAY_ON_ERROR_SAMPLE_RATE,
-  isProdBuild ? 0.1 : 0,
+  // Capture all error replays by default in production; override via env if needed.
+  isProdBuild ? 1 : 0,
 );
 
 const sentryEnabled = Boolean(dsn);
@@ -60,8 +63,13 @@ if (sentryEnabled) {
     replaysOnErrorSampleRate,
     integrations: [
       Sentry.replayIntegration({
-        maskAllText: false,
-        blockAllMedia: false,
+        // Strict privacy defaults: do not record readable text or input values.
+        // Unmask/unblock only explicitly safe elements.
+        maskAllText: true,
+        maskAllInputs: true,
+        blockAllMedia: true,
+        unmask: ["[data-replay-unmask]"],
+        unblock: ["[data-replay-unblock]"],
       }),
     ],
     beforeSend(event) {

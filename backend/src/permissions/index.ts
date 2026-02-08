@@ -48,6 +48,8 @@ export const permissions = shield<Context>({
     getAnalyticsUxQuality: isAdmin,
     getAnalyticsTopEvents: isAdmin,
     getAnalyticsAlerts: isAdmin,
+    getAnalyticsCancellationReasons: isAdmin,
+    getAnalyticsLiveSnapshot: isAdmin,
     aggregateConfig: isAdmin,
     aggregateCountries: isAdmin,
     aggregateCupons: isAdmin,

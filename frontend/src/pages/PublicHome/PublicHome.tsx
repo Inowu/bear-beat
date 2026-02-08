@@ -301,7 +301,7 @@ const ACTIVATION_STEPS = [
   {
     step: "02",
     title: "Paga en flujo simple",
-    detail: "Checkout en una pantalla con tarjeta, SPEI u OXXO.",
+    detail: "Checkout en una pantalla con tarjeta o SPEI.",
   },
   {
     step: "03",
@@ -1642,11 +1642,11 @@ function PublicHome() {
                   <p className="ph__pricing-cost">Desde $0.70 MXN por GB descargado.</p>
                   <ul className="ph__pricing-features">
                     <li>500 GB de descarga al mes</li>
-                    <li>SPEI, OXXO o Tarjeta</li>
+                    <li>SPEI o Tarjeta</li>
                     <li>Catálogo completo para cubrir peticiones en vivo</li>
                   </ul>
                   <PaymentMethodLogos
-                    methods={["visa", "mastercard", "amex", "spei", "oxxo"]}
+                    methods={["visa", "mastercard", "amex", "spei"]}
                     className="ph__pricing-methods"
                     ariaLabel="Métodos de pago para plan en MXN"
                   />
@@ -1702,7 +1702,7 @@ function PublicHome() {
           </div>
           <div className="ph__footer-payments" aria-label="Pagos seguros">
             <PaymentMethodLogos
-              methods={["visa", "mastercard", "amex", "paypal", "spei", "oxxo"]}
+              methods={["visa", "mastercard", "amex", "paypal", "spei"]}
               className="ph__footer-payment-logos"
               ariaLabel="Métodos de pago aceptados en Bear Beat"
             />

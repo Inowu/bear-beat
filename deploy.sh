@@ -37,6 +37,23 @@ log "Pulling latest changes..."
 git -C "$ROOT_DIR" reset --hard HEAD
 git -C "$ROOT_DIR" pull --ff-only
 
+log "Ensuring ANALYTICS_IP_SALT is set (privacy: hash IPs in internal analytics)..."
+if ! grep -q '^ANALYTICS_IP_SALT=' "$ENV_FILE"; then
+  # Don't print the salt to logs. Generate once and keep it in .env.
+  if command -v openssl >/dev/null 2>&1; then
+    salt="$(openssl rand -hex 32)"
+  elif command -v python3 >/dev/null 2>&1; then
+    salt="$(python3 - <<'PY'
+import secrets
+print(secrets.token_hex(32))
+PY
+    )"
+  else
+    die "Missing required command to generate ANALYTICS_IP_SALT: install openssl or python3"
+  fi
+  printf "\nANALYTICS_IP_SALT=%s\n" "$salt" >> "$ENV_FILE"
+fi
+
 current_port="$(grep -Eo 'proxy_pass\s+http://(localhost|127\.0\.0\.1):[0-9]+' "$NGINX_CONF" \
   | head -n 1 \
   | sed -E 's/.*:([0-9]+)$/\1/')"
@@ -59,6 +76,9 @@ esac
 
 log "Installing dependencies (monorepo workspaces)..."
 ( cd "$ROOT_DIR" && npm install )
+
+log "Running Prisma migrations..."
+( cd "$BACKEND_DIR" && npx prisma migrate deploy )
 
 log "Building backend..."
 ( cd "$BACKEND_DIR" && npm run build )

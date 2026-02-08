@@ -1,0 +1,213 @@
+import z from 'zod';
+import { addHours, compareAsc } from 'date-fns';
+import { TRPCError } from '@trpc/server';
+import { shieldedProcedure } from '../../procedures/shielded.procedure';
+import { getConektaCustomer } from './utils/getConektaCustomer';
+import { conektaOrders } from '../../conekta';
+import { OrderStatus } from './interfaces/order-status.interface';
+import { log } from '../../server';
+import { hasActiveSubscription } from './utils/hasActiveSub';
+import { PaymentService } from './services/types';
+import { Orders, Plans, PrismaClient, Users } from '@prisma/client';
+
+const payByBankEnabled = process.env.CONEKTA_PBB_ENABLED === '1';
+
+export const subscribeWithPayByBankConekta = shieldedProcedure
+  .input(
+    z
+      .object({
+        planId: z.number(),
+        // Antifraude (Conekta Collect). Opcional, pero recomendado por Conekta.
+        fingerprint: z.string().max(256).optional().nullable(),
+      })
+      .strict(),
+  )
+  .mutation(async ({ input: { planId, fingerprint }, ctx: { prisma, session } }) => {
+    if (!payByBankEnabled) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Pago Directo (BBVA) deshabilitado temporalmente. Usa tarjeta, SPEI u OXXO.',
+      });
+    }
+
+    const userConektaId = await getConektaCustomer({
+      prisma,
+      user: session?.user,
+    });
+
+    const user = session!.user!;
+
+    await hasActiveSubscription({
+      user,
+      customerId: userConektaId,
+      prisma,
+      service: PaymentService.CONEKTA,
+    });
+
+    const paymentMethodName = 'Conekta pay_by_bank';
+
+    const plan = await prisma.plans.findFirst({
+      where: { id: planId },
+    });
+
+    if (!plan) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'El plan especificado no existe',
+      });
+    }
+
+    if (plan.moneda?.toUpperCase() !== 'MXN') {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Pago Directo (BBVA) solo está disponible para planes en pesos (MXN). Elige otro método de pago.',
+      });
+    }
+
+    // Reusar checkout existente (si no expiró) para evitar crear múltiples links.
+    const existingOrder = await prisma.orders.findFirst({
+      where: {
+        AND: [
+          { user_id: user.id },
+          { status: OrderStatus.PENDING },
+          { payment_method: paymentMethodName },
+          { plan_id: plan.id },
+        ],
+      },
+    });
+
+    if (existingOrder?.invoice_id) {
+      try {
+        const conektaOrder = await conektaOrders.getOrderById(existingOrder.invoice_id);
+        const checkout = (conektaOrder.data as any)?.checkout;
+        const checkoutUrl = typeof checkout?.url === 'string' ? checkout.url : null;
+        const expiresAt = typeof checkout?.expires_at === 'number' ? checkout.expires_at : null;
+        const status = typeof checkout?.status === 'string' ? checkout.status : '';
+
+        if (
+          checkoutUrl &&
+          expiresAt &&
+          compareAsc(new Date(), new Date(expiresAt * 1000)) < 0 &&
+          status.toLowerCase() !== 'expired' &&
+          status.toLowerCase() !== 'cancelled'
+        ) {
+          return { url: checkoutUrl, expires_at: expiresAt };
+        }
+      } catch (e) {
+        log.error(`[CONEKTA_PBB] Error reusing existing checkout: ${e}`);
+      }
+    }
+
+    const order = await prisma.orders.create({
+      data: {
+        payment_method: paymentMethodName,
+        user_id: user.id,
+        status: OrderStatus.PENDING,
+        date_order: new Date().toISOString(),
+        total_price: Number(plan.price),
+        plan_id: plan.id,
+      },
+    });
+
+    const fullUser = await prisma.users.findFirst({ where: { id: user.id } });
+    if (!fullUser) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'Usuario no encontrado' });
+    }
+
+    try {
+      const conektaOrder = await createPayByBankOrder({
+        plan,
+        customerId: userConektaId,
+        fingerprint,
+        order,
+        prisma,
+        user: fullUser,
+      });
+
+      const checkout = (conektaOrder.data as any)?.checkout;
+      const url = typeof checkout?.url === 'string' ? checkout.url : null;
+      const expiresAt = typeof checkout?.expires_at === 'number' ? checkout.expires_at : null;
+
+      if (!url) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'No se pudo generar el link de pago BBVA. Intenta con SPEI, OXXO o tarjeta.',
+        });
+      }
+
+      return { url, expires_at: expiresAt };
+    } catch (e: any) {
+      const conektaMsg = e?.response?.data?.message || e?.message;
+      log.error(`[CONEKTA_PBB] Error creating order: ${conektaMsg}`, e?.response?.data);
+
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message:
+          conektaMsg && typeof conektaMsg === 'string'
+            ? `Conekta: ${conektaMsg}`
+            : 'Ocurrió un error al crear la orden BBVA. Intenta de nuevo o usa otro método de pago.',
+      });
+    }
+  });
+
+const createPayByBankOrder = async ({
+  plan,
+  customerId,
+  fingerprint,
+  order,
+  prisma,
+  user,
+}: {
+  plan: Plans;
+  customerId: string;
+  fingerprint?: string | null;
+  order: Orders;
+  prisma: PrismaClient;
+  user: Users;
+}) => {
+  const clientUrlRaw = process.env.CLIENT_URL || 'https://thebearbeat.com';
+  const clientUrl = clientUrlRaw.replace(/\/+$/, '');
+  const expiresAt = Math.floor(addHours(new Date(), 1).getTime() / 1000);
+  const amountCents = Math.round(Number(plan.price) * 100);
+
+  const orderPayload: any = {
+    currency: 'MXN' as const,
+    customer_info: { customer_id: customerId },
+    line_items: [
+      {
+        name: plan.name,
+        quantity: 1,
+        unit_price: amountCents,
+      },
+    ],
+    checkout: {
+      allowed_payment_methods: ['pay_by_bank'],
+      expires_at: expiresAt,
+      success_url: `${clientUrl}/comprar/success?order_id=${order.id}`,
+      failure_url: `${clientUrl}/comprar?priceId=${plan.id}&bbva=failed`,
+      name: `Pago BBVA - ${plan.name}`,
+      type: 'HostedPayment',
+    },
+    metadata: {
+      orderId: String(order.id),
+      userId: String(user.id),
+    },
+    pre_authorize: false,
+  };
+
+  if (fingerprint && typeof fingerprint === 'string') {
+    orderPayload.fingerprint = fingerprint;
+  }
+
+  const conektaOrder = await conektaOrders.createOrder(orderPayload);
+
+  await prisma.orders.update({
+    where: { id: order.id },
+    data: {
+      invoice_id: conektaOrder.data.id,
+      txn_id: (conektaOrder.data.object as any).id,
+    },
+  });
+
+  return conektaOrder;
+};

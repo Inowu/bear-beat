@@ -116,7 +116,6 @@ function Plans() {
 
     if (hasMxn) {
       methods.add("spei");
-      methods.add("oxxo");
     }
     if (hasUsdLike) {
       methods.add("paypal");

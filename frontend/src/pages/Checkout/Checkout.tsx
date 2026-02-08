@@ -3,22 +3,31 @@ import { useUserContext } from "../../contexts/UserContext";
 import { useLocation, Link } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import trpc from "../../api";
-import { IOxxoData, IPlans, ISpeiData } from "interfaces/Plans";
+import { IPlans, IOxxoData, ISpeiData } from "interfaces/Plans";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 import { manychatApi } from "../../api/manychat";
 import { Spinner } from "../../components/Spinner/Spinner";
-import { Check, CreditCard, Landmark, Lock, ShieldCheck } from "lucide-react";
+import {
+  Banknote,
+  Building2,
+  Check,
+  CreditCard,
+  Landmark,
+  Lock,
+  ShieldCheck,
+} from "lucide-react";
 import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
-import { OxxoModal } from "../../components/Modals/OxxoModal/OxxoModal";
 import { SpeiModal } from "../../components/Modals/SpeiModal/SpeiModal";
+import { OxxoModal } from "../../components/Modals/OxxoModal/OxxoModal";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../utils/growthMetrics";
 import { SUPPORT_CHAT_URL } from "../../utils/supportChat";
 import PaymentMethodLogos from "../../components/PaymentMethodLogos/PaymentMethodLogos";
 import { useCookies } from "react-cookie";
 import { trackInitiateCheckout } from "../../utils/facebookPixel";
 import { generateEventId } from "../../utils/marketingIds";
+import { getConektaFingerprint } from "../../utils/conektaCollect";
 
-type CheckoutMethod = "card" | "spei" | "oxxo";
+type CheckoutMethod = "card" | "spei" | "oxxo" | "bbva";
 
 const METHOD_META: Record<
   CheckoutMethod,
@@ -30,14 +39,19 @@ const METHOD_META: Record<
     Icon: CreditCard,
   },
   spei: {
-    label: "SPEI",
-    description: "Transferencia bancaria en MXN",
+    label: "SPEI (recurrente)",
+    description: "Transferencia bancaria (CLABE reutilizable)",
     Icon: Landmark,
   },
+  bbva: {
+    label: "BBVA (Pago Directo)",
+    description: "Autoriza desde tu banca BBVA",
+    Icon: Building2,
+  },
   oxxo: {
-    label: "OXXO",
-    description: "Paga en efectivo con referencia",
-    Icon: ShieldCheck,
+    label: "OXXO (Efectivo)",
+    description: "Paga en tienda (puede tardar hasta 48 hrs)",
+    Icon: Banknote,
   },
 };
 
@@ -49,10 +63,11 @@ function Checkout() {
   const [selectedMethod, setSelectedMethod] = useState<CheckoutMethod>("card");
   const [processingMethod, setProcessingMethod] = useState<CheckoutMethod | null>(null);
   const [inlineError, setInlineError] = useState<string | null>(null);
-  const [showOxxoModal, setShowOxxoModal] = useState(false);
-  const [oxxoData, setOxxoData] = useState<IOxxoData | null>(null);
   const [showSpeiModal, setShowSpeiModal] = useState(false);
   const [speiData, setSpeiData] = useState<ISpeiData | null>(null);
+  const [showOxxoModal, setShowOxxoModal] = useState(false);
+  const [oxxoData, setOxxoData] = useState<IOxxoData | null>(null);
+  const [redirectingProvider, setRedirectingProvider] = useState<"stripe" | "bbva">("stripe");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showError, setShowError] = useState(false);
   const checkoutStartedRef = useRef(false);
@@ -67,10 +82,49 @@ function Checkout() {
   const pendingPurchaseStorageKey = "bb.checkout.pendingPurchase";
 
   const isMxnPlan = plan?.moneda?.toUpperCase() === "MXN";
-  const availableMethods = useMemo<CheckoutMethod[]>(
-    () => (isMxnPlan ? ["card", "spei", "oxxo"] : ["card"]),
-    [isMxnPlan]
-  );
+  const [conektaAvailability, setConektaAvailability] = useState<{
+    oxxoEnabled: boolean;
+    payByBankEnabled: boolean;
+  } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!isMxnPlan) {
+      setConektaAvailability(null);
+      return;
+    }
+    (async () => {
+      try {
+        const result = await trpc.subscriptions.getConektaAvailability.query();
+        if (!cancelled) {
+          setConektaAvailability({
+            oxxoEnabled: Boolean(result?.oxxoEnabled),
+            payByBankEnabled: Boolean(result?.payByBankEnabled),
+          });
+        }
+      } catch {
+        if (!cancelled) setConektaAvailability({ oxxoEnabled: false, payByBankEnabled: false });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isMxnPlan]);
+
+  const availableMethods = useMemo<CheckoutMethod[]>(() => {
+    if (!isMxnPlan) return ["card"];
+    const methods: CheckoutMethod[] = ["card", "spei"];
+    if (conektaAvailability?.payByBankEnabled) methods.push("bbva");
+    if (conektaAvailability?.oxxoEnabled) methods.push("oxxo");
+    return methods;
+  }, [isMxnPlan, conektaAvailability?.oxxoEnabled, conektaAvailability?.payByBankEnabled]);
+
+  useEffect(() => {
+    if (!availableMethods.includes(selectedMethod)) {
+      setSelectedMethod(availableMethods[0]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [availableMethods.join("|")]);
 
   const checkManyChat = useCallback(async (p: IPlans | undefined) => {
     if (!p) return;
@@ -114,6 +168,7 @@ function Checkout() {
         method: selectedMethod,
         planId: plan?.id ?? null,
         currency: plan?.moneda?.toUpperCase() ?? null,
+        amount: Number(plan?.price) || null,
       });
     },
     [plan?.id, plan?.moneda, selectedMethod]
@@ -128,9 +183,7 @@ function Checkout() {
     setShowRedirectHelp(false);
     setInlineError(null);
     setSelectedMethod("card");
-    setOxxoData(null);
     setSpeiData(null);
-    setShowOxxoModal(false);
     setShowSpeiModal(false);
     if (priceId) getPlans(priceId);
     else setPlan(null);
@@ -143,6 +196,7 @@ function Checkout() {
     trackGrowthMetric(GROWTH_METRICS.CHECKOUT_STARTED, {
       planId: plan.id,
       currency: plan.moneda?.toUpperCase() ?? null,
+      amount: Number(plan.price) || null,
     });
     setSelectedMethod(plan.moneda?.toUpperCase() === "MXN" ? "spei" : "card");
   }, [plan, checkManyChat]);
@@ -161,6 +215,7 @@ function Checkout() {
   const startStripeCheckout = useCallback(async () => {
     if (!priceId || !plan?.id) return;
     setProcessingMethod("card");
+    setRedirectingProvider("stripe");
     setRedirecting(true);
     setShowRedirectHelp(false);
     interactedRef.current = true;
@@ -196,6 +251,8 @@ function Checkout() {
     trackGrowthMetric(GROWTH_METRICS.CHECKOUT_METHOD_SELECTED, {
       method: "card",
       planId: plan.id,
+      currency,
+      amount: value,
     });
 
     try {
@@ -223,7 +280,7 @@ function Checkout() {
         /mutation.*procedure|createStripeCheckoutSession/i.test(msg);
       setErrorMessage(
         isProcedureMissing
-          ? "El pago con tarjeta no está disponible en este momento. Intenta SPEI/OXXO o abre soporte por chat."
+          ? "El pago con tarjeta no está disponible en este momento. Intenta SPEI (recurrente) o abre soporte por chat."
           : msg || "Error al preparar el pago. Intenta de nuevo."
       );
       setShowError(true);
@@ -233,17 +290,19 @@ function Checkout() {
   }, [priceId, plan?.id]);
 
   const startCashCheckout = useCallback(
-    async (method: "spei" | "oxxo") => {
+    async () => {
       if (!plan?.id) return;
       interactedRef.current = true;
-      setProcessingMethod(method);
+      setProcessingMethod("spei");
       setInlineError(null);
-      trackManyChatConversion(method === "spei" ? MC_EVENTS.CLICK_SPEI : MC_EVENTS.CLICK_OXXO);
+      trackManyChatConversion(MC_EVENTS.CLICK_SPEI);
       trackManyChatConversion(MC_EVENTS.CLICK_BUY);
       trackGrowthMetric(GROWTH_METRICS.CHECKOUT_METHOD_SELECTED, {
-        method,
-        planId: plan.id,
-      });
+        method: "spei",
+      planId: plan.id,
+      currency: (plan.moneda?.toUpperCase() || "USD").toUpperCase(),
+      amount: Number(plan.price) || null,
+    });
 
       try {
         await trpc.checkoutLogs.registerCheckoutLog.mutate();
@@ -252,18 +311,15 @@ function Checkout() {
       }
 
       try {
+        const fingerprint = await getConektaFingerprint();
         const response = await trpc.subscriptions.subscribeWithCashConekta.mutate({
           planId: plan.id,
-          paymentMethod: method === "spei" ? "spei" : "cash",
+          paymentMethod: "spei",
+          fingerprint,
         });
         checkoutHandedOffRef.current = true;
-        if (method === "spei") {
-          setSpeiData(response as ISpeiData);
-          setShowSpeiModal(true);
-        } else {
-          setOxxoData(response as IOxxoData);
-          setShowOxxoModal(true);
-        }
+        setSpeiData(response as ISpeiData);
+        setShowSpeiModal(true);
       } catch (error: any) {
         const msg =
           error?.data?.message ??
@@ -277,6 +333,117 @@ function Checkout() {
     },
     [plan?.id]
   );
+
+  const startOxxoCheckout = useCallback(async () => {
+    if (!plan?.id) return;
+    interactedRef.current = true;
+    setProcessingMethod("oxxo");
+    setInlineError(null);
+    trackManyChatConversion(MC_EVENTS.CLICK_OXXO);
+    trackManyChatConversion(MC_EVENTS.CLICK_BUY);
+    trackGrowthMetric(GROWTH_METRICS.CHECKOUT_METHOD_SELECTED, {
+      method: "oxxo",
+      planId: plan.id,
+      currency: (plan.moneda?.toUpperCase() || "USD").toUpperCase(),
+      amount: Number(plan.price) || null,
+    });
+
+    try {
+      await trpc.checkoutLogs.registerCheckoutLog.mutate();
+    } catch {
+      // No bloquear checkout si el log falla.
+    }
+
+    try {
+      const fingerprint = await getConektaFingerprint();
+      const response = await trpc.subscriptions.subscribeWithCashConekta.mutate({
+        planId: plan.id,
+        paymentMethod: "cash",
+        fingerprint,
+      });
+      checkoutHandedOffRef.current = true;
+      setOxxoData(response as IOxxoData);
+      setShowOxxoModal(true);
+    } catch (error: any) {
+      const msg =
+        error?.data?.message ??
+        error?.message ??
+        "No pudimos generar la referencia de OXXO. Intenta de nuevo o abre soporte por chat.";
+      setErrorMessage(msg);
+      setShowError(true);
+    } finally {
+      setProcessingMethod(null);
+    }
+  }, [plan?.id]);
+
+  const startBbvaCheckout = useCallback(async () => {
+    if (!plan?.id) return;
+    interactedRef.current = true;
+    setProcessingMethod("bbva");
+    setRedirectingProvider("bbva");
+    setRedirecting(true);
+    setShowRedirectHelp(false);
+    setInlineError(null);
+    trackManyChatConversion(MC_EVENTS.CLICK_BUY);
+
+    const value = Number(plan.price) || 0;
+    const currency = (plan.moneda?.toUpperCase() || "USD").toUpperCase();
+    const initiateCheckoutEventId = generateEventId("init_checkout");
+    trackInitiateCheckout({ value, currency, eventId: initiateCheckoutEventId });
+
+    try {
+      window.sessionStorage.setItem(
+        pendingPurchaseStorageKey,
+        JSON.stringify({
+          planId: plan.id,
+          value,
+          currency,
+          at: new Date().toISOString(),
+        }),
+      );
+    } catch {
+      // noop
+    }
+
+    trackGrowthMetric(GROWTH_METRICS.CHECKOUT_METHOD_SELECTED, {
+      method: "bbva",
+      planId: plan.id,
+      currency,
+      amount: value,
+    });
+
+    try {
+      await trpc.checkoutLogs.registerCheckoutLog.mutate();
+    } catch {
+      // No bloquear checkout si el log falla.
+    }
+
+    try {
+      const fingerprint = await getConektaFingerprint();
+      const result = await trpc.subscriptions.subscribeWithPayByBankConekta.mutate({
+        planId: plan.id,
+        fingerprint,
+      });
+      if (result?.url) {
+        checkoutHandedOffRef.current = true;
+        window.location.href = result.url;
+        return;
+      }
+      setErrorMessage("No se pudo abrir el pago BBVA. Intenta SPEI/OXXO o tarjeta.");
+      setShowError(true);
+      setRedirecting(false);
+      setProcessingMethod(null);
+    } catch (error: any) {
+      const msg =
+        error?.data?.message ??
+        error?.message ??
+        "No pudimos abrir el pago BBVA. Intenta SPEI/OXXO o tarjeta.";
+      setErrorMessage(msg);
+      setShowError(true);
+      setRedirecting(false);
+      setProcessingMethod(null);
+    }
+  }, [plan?.id]);
 
   useEffect(() => {
     if (!redirecting) return;
@@ -294,6 +461,8 @@ function Checkout() {
       method,
       surface: "selector",
       planId: plan?.id ?? null,
+      currency: plan?.moneda?.toUpperCase() ?? null,
+      amount: Number(plan?.price) || null,
     });
   };
 
@@ -307,9 +476,9 @@ function Checkout() {
       startStripeCheckout();
       return;
     }
-    if (selectedMethod === "spei" || selectedMethod === "oxxo") {
-      startCashCheckout(selectedMethod);
-    }
+    if (selectedMethod === "spei") startCashCheckout();
+    if (selectedMethod === "oxxo") startOxxoCheckout();
+    if (selectedMethod === "bbva") startBbvaCheckout();
   };
 
   const discount = 0;
@@ -353,13 +522,15 @@ function Checkout() {
 
   // Estado único: redirigiendo a Stripe → pantalla clara, sin grid
   if (redirecting) {
+    const providerName =
+      redirectingProvider === "stripe" ? "Stripe" : "BBVA (Conekta)";
     return (
       <div className="checkout-main-container checkout-main-container--redirecting">
         <div className="checkout-one-state">
           <Spinner size={5} width={0.4} color="var(--app-accent)" />
           <h2 className="checkout-one-state__title">Preparando tu pago</h2>
           <p className="checkout-one-state__text">
-            Serás redirigido a la pasarela segura de Stripe en un momento…
+            Serás redirigido a la pasarela segura de {providerName} en un momento…
           </p>
           {showRedirectHelp && (
             <div className="checkout-one-state__help">
@@ -405,11 +576,23 @@ function Checkout() {
           <div className="checkout-trust-strip" role="list" aria-label="Confianza de pago">
             <span role="listitem"><ShieldCheck size={16} aria-hidden /> Pago seguro</span>
             <span role="listitem"><CreditCard size={16} aria-hidden /> Tarjeta / Stripe</span>
-            {isMxnPlan && <span role="listitem"><Landmark size={16} aria-hidden /> SPEI / OXXO</span>}
+            {isMxnPlan && <span role="listitem"><Landmark size={16} aria-hidden /> SPEI (recurrente)</span>}
+            {isMxnPlan && conektaAvailability?.payByBankEnabled && (
+              <span role="listitem"><Building2 size={16} aria-hidden /> BBVA</span>
+            )}
+            {isMxnPlan && conektaAvailability?.oxxoEnabled && (
+              <span role="listitem"><Banknote size={16} aria-hidden /> OXXO</span>
+            )}
             <span role="listitem"><Lock size={16} aria-hidden /> Cifrado bancario</span>
           </div>
           <PaymentMethodLogos
-            methods={isMxnPlan ? ["visa", "mastercard", "amex", "spei", "oxxo"] : ["visa", "mastercard", "amex"]}
+            methods={
+              isMxnPlan
+                ? (conektaAvailability?.oxxoEnabled
+                    ? ["visa", "mastercard", "amex", "spei", "oxxo"]
+                    : ["visa", "mastercard", "amex", "spei"])
+                : ["visa", "mastercard", "amex"]
+            }
             className="checkout-payment-logos"
             ariaLabel="Métodos de pago disponibles en checkout"
           />
@@ -482,10 +665,12 @@ function Checkout() {
               disabled={processingMethod !== null}
             >
               {processingMethod === "card" && "Abriendo pasarela segura..."}
-              {processingMethod === "spei" && "Generando referencia SPEI..."}
+              {processingMethod === "spei" && "Generando referencia SPEI (recurrente)..."}
+              {processingMethod === "bbva" && "Abriendo pago BBVA..."}
               {processingMethod === "oxxo" && "Generando referencia OXXO..."}
               {processingMethod === null && selectedMethod === "card" && "Continuar con tarjeta segura"}
-              {processingMethod === null && selectedMethod === "spei" && "Generar referencia SPEI"}
+              {processingMethod === null && selectedMethod === "spei" && "Generar referencia SPEI (recurrente)"}
+              {processingMethod === null && selectedMethod === "bbva" && "Continuar con BBVA"}
               {processingMethod === null && selectedMethod === "oxxo" && "Generar referencia OXXO"}
             </button>
             <p className="checkout-payment-note">

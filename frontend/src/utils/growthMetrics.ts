@@ -20,6 +20,10 @@ export const GROWTH_METRICS = {
   CHECKOUT_ABANDONED: "checkout_abandoned",
   PAYMENT_SUCCESS: "payment_success",
   SUPPORT_CHAT_OPENED: "support_chat_opened",
+  SUBSCRIPTION_CANCEL_STARTED: "subscription_cancel_started",
+  SUBSCRIPTION_CANCEL_REASON_SELECTED: "subscription_cancel_reason_selected",
+  SUBSCRIPTION_CANCEL_CONFIRMED: "subscription_cancel_confirmed",
+  SUBSCRIPTION_CANCEL_FAILED: "subscription_cancel_failed",
   FILE_SEARCH_PERFORMED: "file_search_performed",
   FOLDER_NAVIGATED: "folder_navigated",
   FILE_PREVIEW_OPENED: "file_preview_opened",
@@ -43,7 +47,7 @@ type AnalyticsCategory =
   | "retention"
   | "system";
 
-interface AnalyticsAttribution {
+export interface AnalyticsAttribution {
   source?: string | null;
   medium?: string | null;
   campaign?: string | null;
@@ -118,6 +122,10 @@ const eventCategoryMap: Record<GrowthMetricName, AnalyticsCategory> = {
   [GROWTH_METRICS.CHECKOUT_ABANDONED]: "checkout",
   [GROWTH_METRICS.PAYMENT_SUCCESS]: "purchase",
   [GROWTH_METRICS.SUPPORT_CHAT_OPENED]: "support",
+  [GROWTH_METRICS.SUBSCRIPTION_CANCEL_STARTED]: "retention",
+  [GROWTH_METRICS.SUBSCRIPTION_CANCEL_REASON_SELECTED]: "retention",
+  [GROWTH_METRICS.SUBSCRIPTION_CANCEL_CONFIRMED]: "retention",
+  [GROWTH_METRICS.SUBSCRIPTION_CANCEL_FAILED]: "retention",
   [GROWTH_METRICS.FILE_SEARCH_PERFORMED]: "engagement",
   [GROWTH_METRICS.FOLDER_NAVIGATED]: "engagement",
   [GROWTH_METRICS.FILE_PREVIEW_OPENED]: "engagement",
@@ -247,6 +255,10 @@ function readStoredAttribution(): AnalyticsAttribution | null {
   }
 }
 
+export function getGrowthAttribution(): AnalyticsAttribution | null {
+  return readStoredAttribution();
+}
+
 function persistAttribution(attribution: AnalyticsAttribution | null): void {
   if (typeof window === "undefined") return;
   if (!attribution) {
@@ -314,13 +326,102 @@ function shouldSkipPageViewDuplicate(
   return isDuplicate;
 }
 
+const SENSITIVE_PAYLOAD_KEY =
+  /(email|e-mail|phone|password|passwd|passcode|token|authorization|cookie|card|credit|cc|cvv|cvc|iban|routing|address|street|zip|postal|ssn|social)/i;
+
+// Keep this list intentionally small and explicit; add keys as needed when introducing new metrics.
+const ALLOWED_PAYLOAD_KEYS = new Set<string>([
+  // Navigation
+  "pagePath",
+  "pageQuery",
+  "section",
+
+  // Acquisition / segmentation
+  "surface",
+  "segment",
+  "source",
+  "from",
+
+  // Funnel / purchase
+  "planId",
+  "method",
+  "currency",
+  "amount",
+  "value",
+  "sessionId",
+  "eventId",
+
+  // Cancellation / retention
+  "reasonCode",
+  "reasonText",
+  "reason",
+
+  // Product usage
+  "depth",
+  "scope",
+  "scopePath",
+  "fileType",
+  "sizeBytes",
+  "skipVerificationGate",
+  "delivery",
+  "statusCode",
+  "queryLength",
+  "queryText",
+  "totalResults",
+
+  // Web Vitals
+  "metricName",
+  "delta",
+  "rating",
+  "metricId",
+  "navigationType",
+  "deviceCategory",
+]);
+
+const MAX_METADATA_STRING_LEN_DEFAULT = 240;
+const MAX_METADATA_STRING_LEN_REASON = 500;
+
+function sanitizeMetadataValue(key: string, value: unknown): unknown {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const maxLen =
+      key === "reason" || key === "reasonText"
+        ? MAX_METADATA_STRING_LEN_REASON
+        : MAX_METADATA_STRING_LEN_DEFAULT;
+    return trimmed.slice(0, maxLen);
+  }
+
+  // Avoid storing nested objects/arrays by default (keeps payloads predictable and small).
+  return null;
+}
+
+function sanitizePayload(
+  _metric: GrowthMetricName,
+  payload: Record<string, unknown>,
+): Record<string, unknown> {
+  const safe: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(payload)) {
+    if (!ALLOWED_PAYLOAD_KEYS.has(key)) continue;
+    if (SENSITIVE_PAYLOAD_KEY.test(key)) continue;
+
+    const sanitized = sanitizeMetadataValue(key, value);
+    if (sanitized === null || sanitized === undefined) continue;
+    safe[key] = sanitized;
+  }
+  return safe;
+}
+
 function buildMetadata(
   metric: GrowthMetricName,
   payload: Record<string, unknown>,
 ): Record<string, unknown> {
   const metadata: Record<string, unknown> = {
     metric,
-    ...payload,
+    ...sanitizePayload(metric, payload),
   };
 
   if (typeof window !== "undefined") {

@@ -7,6 +7,7 @@ import { useDownloadContext } from "../contexts/DownloadContext";
 import { FileLoader } from "../components/FileLoader/FileLoader";
 import { applyRouteSeo } from "../utils/seo";
 import { GROWTH_METRICS, trackGrowthMetric } from "../utils/growthMetrics";
+import { hotjarStateChange } from "../utils/hotjar";
 import "./MainLayout.scss";
 
 function MainLayout() {
@@ -52,6 +53,9 @@ function MainLayout() {
       pageQuery: location.search,
       section,
     });
+
+    // Hotjar SPA state change (conversion surfaces only, see utils/hotjar.ts).
+    hotjarStateChange(currentKey);
   }, [location.pathname, location.search]);
 
   const isFullWidth =
