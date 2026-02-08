@@ -74,24 +74,12 @@ input[type="button"]:active {
   textarea {
     font-size: 16px !important;
   }
-
-  button,
-  .btn {
-    min-height: 48px;
-    padding: 12px 18px;
-    font-size: 1.15rem;
-  }
-
-  label {
-    font-size: 1.15rem;
-  }
 }
 
 @include respond-to(phone) {
-  button,
-  .btn {
-    min-height: 48px;
-    padding: 14px 20px;
-    font-size: 1.2rem;
-  }
+  /* Evitamos reglas globales agresivas sobre `button` en mobile.
+     Cada pantalla (Auth/Home/Admin/etc) define sus CTAs y botones icono.
+     Esto previene:
+     - iconos amontonados (ojo del password, clear X, botones compactos)
+     - toolbars que se vuelven "barras gigantes" en pantallas pequeñas */
 }

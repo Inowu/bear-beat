@@ -84,7 +84,7 @@ export const DownloadHistory = () => {
       <select
         value={filters.limit}
         onChange={(e) => startFilter("limit", +e.target.value)}
-        className="bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:border-cyan-500 focus:outline-none"
+        className="bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
       >
         <option value={100}>100</option>
         <option value={200}>200</option>
@@ -93,7 +93,7 @@ export const DownloadHistory = () => {
       <button
         type="button"
         onClick={() => setShowModal(true)}
-        className="inline-flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white font-medium rounded-lg px-4 py-2 transition-colors"
+        className="inline-flex items-center gap-2 bg-bear-gradient hover:opacity-95 text-bear-dark-500 font-medium rounded-lg px-4 py-2 transition-opacity"
       >
         <Plus size={18} />
         Añadir instrucciones
@@ -184,7 +184,7 @@ export const DownloadHistory = () => {
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); setDrawerItem(his); }}
-                    className="p-2 text-slate-400 hover:text-cyan-400 rounded-lg"
+                    className="p-2 text-slate-400 hover:text-bear-cyan rounded-lg"
                     aria-label="Ver más"
                   >
                     <MoreVertical size={20} />

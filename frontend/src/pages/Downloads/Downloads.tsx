@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { FolderDown, Music } from "lucide-react";
 import { IDownloads } from "interfaces/Files";
 import trpc from "../../api";
+import { Spinner } from "../../components/Spinner/Spinner";
 
 function Downloads() {
   const [downloads, setDownloads] = useState<IDownloads[] | null>(null);
@@ -19,6 +20,9 @@ function Downloads() {
     retrieveDownloads();
   }, []);
 
+  const isLoading = downloads === null;
+  const isEmpty = downloads !== null && downloads.length === 0;
+
   return (
     <div className="w-full bb-surface">
       <header className="mb-6">
@@ -28,8 +32,38 @@ function Downloads() {
         </div>
       </header>
 
+      {(isLoading || isEmpty) && (
+        <div className="min-h-[260px] flex items-center justify-center">
+          <div
+            className={`app-state-panel ${isLoading ? "is-loading" : "is-empty"}`}
+            role={isLoading ? "status" : "note"}
+            aria-live={isLoading ? "polite" : undefined}
+          >
+            <span className="app-state-icon" aria-hidden>
+              {isLoading ? (
+                <Spinner size={2.6} width={0.25} color="var(--app-accent)" />
+              ) : (
+                <Music />
+              )}
+            </span>
+            <h3 className="app-state-title">
+              {isLoading ? "Cargando descargas" : "Aún no hay descargas"}
+            </h3>
+            <p className="app-state-copy">
+              {isLoading
+                ? "Estamos preparando tu historial."
+                : "Cuando descargues carpetas o archivos, aparecerán aquí."}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Vista Escritorio: tabla real */}
-      <div className="hidden md:block rounded-xl border border-border overflow-hidden">
+      <div
+        className={`hidden md:block rounded-xl border border-border overflow-hidden ${
+          isLoading || isEmpty ? "hidden" : ""
+        }`}
+      >
         <table className="w-full text-left">
           <thead>
             <tr>
@@ -42,11 +76,11 @@ function Downloads() {
             </tr>
           </thead>
           <tbody className="bg-bg-card divide-y divide-border">
-            {downloads !== null && downloads.length > 0 ? (
+            {downloads !== null && downloads.length > 0 &&
               downloads.map((download: IDownloads, index: number) => (
                 <tr
                   key={`download-${index}`}
-                  className="hover:bg-bear-cyan/10 transition-colors"
+                  className="transition-colors"
                 >
                   <td className="py-4 px-4 text-sm text-text-main">
                     <span className="flex items-center gap-3 min-w-0">
@@ -58,25 +92,19 @@ function Downloads() {
                     {download.date.toLocaleDateString()}
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={2} className="py-8 px-4 text-center text-sm text-text-muted">
-                  {downloads === null ? "Cargando…" : "No hay descargas en tu historial."}
-                </td>
-              </tr>
-            )}
+              ))}
           </tbody>
         </table>
       </div>
 
       {/* Vista Móvil: tarjetas */}
-      <div className="block md:hidden grid grid-cols-1 gap-4">
-        {downloads !== null && downloads.length > 0 ? (
+      <div className={`block md:hidden grid grid-cols-1 gap-4 ${isLoading || isEmpty ? "hidden" : ""}`}>
+        {downloads !== null && downloads.length > 0 &&
           downloads.map((download: IDownloads, index: number) => (
             <div
               key={`download-card-${index}`}
-              className="bg-bg-card p-4 rounded-2xl border border-border shadow-lg"
+              className="bg-bg-card p-4 rounded-2xl border border-border shadow-none"
+              style={{ boxShadow: "var(--app-shadow)" }}
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -88,14 +116,7 @@ function Downloads() {
                 </p>
               </div>
             </div>
-          ))
-        ) : (
-          <div className="bg-bg-card p-6 rounded-2xl border border-border shadow-lg text-center">
-            <p className="text-sm text-text-muted">
-              {downloads === null ? "Cargando…" : "No hay descargas en tu historial."}
-            </p>
-          </div>
-        )}
+          ))}
       </div>
     </div>
   );

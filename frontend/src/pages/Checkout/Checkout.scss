@@ -59,7 +59,7 @@
     gap: 0.4rem;
     border-radius: 999px;
     border: 1px solid color-mix(in srgb, var(--app-accent) 28%, var(--app-border));
-    background: color-mix(in srgb, var(--app-accent) 8%, transparent);
+    background: var(--theme-accent-soft-bg);
     padding: 0 0.7rem;
     color: var(--app-text-body);
     font-size: 0.82rem;
@@ -72,7 +72,7 @@
     height: 20px;
     border-radius: 999px;
     border: 1px solid color-mix(in srgb, var(--app-accent) 38%, transparent);
-    background: color-mix(in srgb, var(--app-accent) 14%, transparent);
+    background: var(--theme-accent-soft-bg-2);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -416,8 +416,14 @@
 
 .checkout-method.is-active {
   border-color: color-mix(in srgb, var(--app-accent) 60%, var(--app-border));
-  background: color-mix(in srgb, var(--app-accent) 11%, var(--app-bg-card));
-  box-shadow: 0 8px 18px color-mix(in srgb, var(--app-accent) 18%, transparent);
+  /* Light: subtle tint + neutral depth. Dark: stronger tint + glow override below. */
+  background: color-mix(in srgb, var(--app-accent) 6%, var(--app-bg-card));
+  box-shadow: var(--app-shadow);
+}
+
+html[data-theme="dark"] .checkout-method.is-active {
+  background: color-mix(in srgb, var(--app-accent) 16%, var(--app-bg-card));
+  box-shadow: 0 8px 18px rgba(8, 225, 247, 0.18);
 }
 
 .checkout-method__icon {
@@ -430,7 +436,7 @@
   align-items: center;
   justify-content: center;
   color: var(--app-accent);
-  background: color-mix(in srgb, var(--app-accent) 10%, transparent);
+  background: var(--theme-accent-soft-bg);
 }
 
 .checkout-method__copy {

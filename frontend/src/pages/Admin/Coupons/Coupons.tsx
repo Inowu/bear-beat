@@ -142,7 +142,7 @@ export const Coupons = () => {
                           <button
                             type="button"
                             onClick={() => handleEditCoupon(c)}
-                            className="p-2 text-slate-400 hover:text-cyan-400 transition-colors rounded-lg hover:bg-slate-800"
+                            className="p-2 text-slate-400 hover:text-bear-cyan transition-colors rounded-lg hover:bg-slate-800"
                             title="Editar"
                           >
                             <Edit2 size={16} />
@@ -188,7 +188,7 @@ export const Coupons = () => {
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); setDrawerCoupon(c); }}
-                  className="p-2 text-slate-400 hover:text-cyan-400 rounded-lg"
+                  className="p-2 text-slate-400 hover:text-bear-cyan rounded-lg"
                   aria-label="Ver más"
                 >
                   <MoreVertical size={20} />

@@ -20,7 +20,7 @@
   background: linear-gradient(
     160deg,
     color-mix(in srgb, var(--app-bg-card) 95%, transparent),
-    color-mix(in srgb, var(--app-accent) 7%, var(--app-bg-card))
+    color-mix(in srgb, var(--app-accent) 3%, var(--app-bg-card))
   );
   padding: clamp(1.1rem, 2.6vw, 1.9rem);
   box-shadow: var(--app-shadow);
@@ -171,7 +171,7 @@
   align-items: center;
   justify-content: center;
   border: 1px solid color-mix(in srgb, var(--app-accent) 28%, transparent);
-  background: color-mix(in srgb, var(--app-accent) 11%, transparent);
+  background: var(--theme-accent-soft-bg-2);
   color: var(--app-accent);
 }
 
@@ -216,7 +216,7 @@
   min-height: 42px;
   border-radius: 12px;
   border: 1px solid color-mix(in srgb, var(--app-accent) 24%, var(--app-border));
-  background: color-mix(in srgb, var(--app-accent) 7%, transparent);
+  background: var(--theme-accent-soft-bg);
   padding: 0.55rem 0.75rem;
   display: flex;
   align-items: flex-start;

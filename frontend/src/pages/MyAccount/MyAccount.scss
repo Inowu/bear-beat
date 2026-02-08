@@ -67,7 +67,7 @@
   width: 72px;
   height: 72px;
   border-radius: 999px;
-  border: 2px solid color-mix(in srgb, var(--ma-avatar-ring) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ma-avatar-ring) 88%, transparent);
   background: color-mix(in srgb, var(--ma-progress-bg) 88%, transparent);
   display: inline-flex;
   align-items: center;
@@ -333,7 +333,7 @@
 
 .ma-add-card {
   min-height: 130px !important;
-  border: 2px dashed color-mix(in srgb, var(--ma-add-card-border) 86%, transparent);
+  border: 1px dashed color-mix(in srgb, var(--ma-add-card-border) 86%, transparent);
   border-radius: 12px;
   background: transparent;
   color: var(--ma-text-muted);

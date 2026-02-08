@@ -75,10 +75,17 @@ function LoginForm() {
     },
   });
 
+  const showUsernameError = Boolean(
+    (formik.touched.username || formik.submitCount > 0) && formik.errors.username,
+  );
+  const showPasswordError = Boolean(
+    (formik.touched.password || formik.submitCount > 0) && formik.errors.password,
+  );
+
   return (
     <>
       <div className="auth-login-atmosphere">
-        <div className="auth-login-card bg-bg-card border border-border shadow-lg rounded-2xl text-text-main">
+        <div className="auth-login-card">
           <img src={Logo} alt="Bear Beat" className="auth-login-logo" />
           <h1 className="auth-login-title text-text-main">Bienvenido, DJ.</h1>
           <p className="auth-login-sub text-text-muted">
@@ -86,8 +93,8 @@ function LoginForm() {
           </p>
           <ChatButton />
           <form className="auth-form auth-login-form" onSubmit={formik.handleSubmit} autoComplete="on">
-            <div className="c-row">
-              <div className="auth-login-input-wrap rounded-pill bg-bg-input border border-gray-300 dark:border-bear-dark-100 focus-within:ring-2 focus-within:ring-bear-cyan focus-within:border-transparent">
+            <div className={`c-row ${showUsernameError ? "is-invalid" : ""}`}>
+              <div className="auth-login-input-wrap">
                 <Mail className="auth-login-input-icon" aria-hidden />
                 <input
                   placeholder="Correo electrónico"
@@ -97,15 +104,16 @@ function LoginForm() {
                   autoComplete="email"
                   value={formik.values.username}
                   onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
                   className="auth-login-input auth-login-input-with-icon"
                 />
               </div>
-              {formik.errors.username && (
+              {showUsernameError && (
                 <div className="error-formik">{formik.errors.username}</div>
               )}
             </div>
-            <div className="c-row">
-              <div className="auth-login-input-wrap rounded-pill bg-bg-input border border-gray-300 dark:border-bear-dark-100 focus-within:ring-2 focus-within:ring-bear-cyan focus-within:border-transparent">
+            <div className={`c-row ${showPasswordError ? "is-invalid" : ""}`}>
+              <div className="auth-login-input-wrap">
                 <Lock className="auth-login-input-icon" aria-hidden />
                 <PasswordInput
                   placeholder="Contraseña"
@@ -114,11 +122,12 @@ function LoginForm() {
                   autoComplete="current-password"
                   value={formik.values.password}
                   onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
                   inputClassName="auth-login-input auth-login-input-with-icon"
                   wrapperClassName="auth-login-password-wrap"
                 />
               </div>
-              {formik.errors.password && (
+              {showPasswordError && (
                 <div className="error-formik">{formik.errors.password}</div>
               )}
             </div>
@@ -128,7 +137,7 @@ function LoginForm() {
               </Link>
             </div>
             {!loader ? (
-              <button type="submit" className="auth-login-submit-btn rounded-pill bg-bear-gradient text-bear-dark-900 font-bold">
+              <button type="submit" className="auth-login-submit-btn">
                 INGRESAR
               </button>
             ) : (

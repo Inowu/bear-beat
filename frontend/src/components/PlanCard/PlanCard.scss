@@ -17,6 +17,13 @@
   );
   filter: blur(20px);
   pointer-events: none;
+  /* Light mode: keep it crisp/neutral; glow is reserved for dark theme. */
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+html[data-theme="dark"] .plan-card-glow {
+  opacity: 1;
 }
 
 .plan-card-main-card {
@@ -147,18 +154,18 @@
 
 .plan-card-highlights {
   display: flex;
-  flex-direction: column;
-  gap: 7px;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .plan-card-highlights span {
-  min-height: 34px;
+  min-height: 32px;
   display: inline-flex;
   align-items: center;
-  padding: 0 11px;
-  border-radius: 9px;
-  border: 1px solid color-mix(in srgb, var(--app-border) 86%, transparent);
-  background: color-mix(in srgb, var(--app-bg-soft) 84%, transparent);
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--app-border) 84%, transparent);
+  background: var(--theme-accent-soft-bg);
   color: var(--plan-card-benefit);
   font-size: 0.84rem;
   font-weight: 700;
@@ -177,29 +184,42 @@
   list-style: none;
   width: 100%;
   margin: 0;
-  padding: 0;
+  padding: 6px;
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 0;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--plan-card-border) 74%, transparent);
+  background: color-mix(in srgb, var(--app-bg-soft) 78%, transparent);
 }
 
 .plan-card-benefit-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 36px;
-  padding: 0 10px;
-  border-radius: 9px;
-  border: 1px solid color-mix(in srgb, var(--plan-card-border) 76%, transparent);
-  background: color-mix(in srgb, var(--app-bg-card) 94%, transparent);
+  min-height: 42px;
+  padding: 10px 10px;
+  border-radius: 12px;
+  border: none;
+  background: transparent;
   color: var(--plan-card-benefit);
   font-size: 0.84rem;
   font-weight: 700;
   line-height: 1.35;
+  transition: background 0.16s ease, color 0.16s ease;
+}
+
+.plan-card-benefit-item:not(:first-child) {
+  border-top: 1px solid color-mix(in srgb, var(--plan-card-border) 56%, transparent);
 }
 
 .plan-card-benefit-item span {
   flex: 1;
+}
+
+.plan-card-benefit-item:hover {
+  background: var(--theme-accent-soft-bg);
+  color: var(--plan-card-title);
 }
 
 .plan-card-benefit-icon {
@@ -236,7 +256,8 @@
   font-weight: 800 !important;
   letter-spacing: 0.01em;
   cursor: pointer;
-  box-shadow: 0 11px 22px color-mix(in srgb, var(--app-accent) 29%, transparent);
+  /* Light: neutral depth. Dark: subtle cyan glow override below. */
+  box-shadow: var(--app-shadow);
   transition: transform 0.16s ease, box-shadow 0.16s ease;
 }
 
@@ -248,7 +269,15 @@
 
 .plan-card-btn-hero:hover {
   transform: translateY(-1px);
-  box-shadow: 0 13px 26px color-mix(in srgb, var(--app-accent) 32%, transparent);
+  box-shadow: var(--app-shadow-card);
+}
+
+html[data-theme="dark"] .plan-card-btn-hero {
+  box-shadow: 0 11px 22px rgba(8, 225, 247, 0.29);
+}
+
+html[data-theme="dark"] .plan-card-btn-hero:hover {
+  box-shadow: 0 13px 26px rgba(8, 225, 247, 0.32);
 }
 
 .plan-card-secondary-payment {
@@ -286,7 +315,7 @@
   padding: 0 14px;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--plan-card-btn-outline-border) 72%, transparent);
-  background: color-mix(in srgb, var(--plan-card-btn-outline-border) 8%, transparent);
+  background: var(--theme-accent-soft-bg);
   color: var(--plan-card-btn-outline-color);
   font-size: 0.84rem !important;
   font-weight: 700 !important;
@@ -298,7 +327,7 @@
 
 .plan-card-btn-outline:hover {
   border-color: var(--plan-card-btn-outline-border);
-  background: color-mix(in srgb, var(--plan-card-btn-outline-border) 16%, transparent);
+  background: var(--theme-accent-soft-bg-2);
 }
 
 .plan-card-btn-cancel {
@@ -316,7 +345,7 @@
 
 .plan-card-btn-cancel:hover {
   border-color: color-mix(in srgb, var(--app-accent) 34%, transparent);
-  background: color-mix(in srgb, var(--app-accent) 8%, transparent);
+  background: var(--theme-accent-soft-bg);
 }
 
 .plan-card-payment-logos {

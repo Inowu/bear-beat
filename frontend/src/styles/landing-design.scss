@@ -19,7 +19,7 @@ $bg-dark: var(--app-bg-card);
 
 .landing-card {
   background: $card-glass;
-  border: 2px solid $card-glass-border;
+  border: 1px solid $card-glass-border;
   border-radius: 14px;
   box-shadow: var(--app-shadow-card);
   position: relative;
@@ -38,7 +38,7 @@ $bg-dark: var(--app-bg-card);
 
 .landing-input {
   background: var(--auth-register-input-bg);
-  border: 2px solid var(--auth-register-input-border);
+  border: 1px solid var(--auth-register-input-border);
   border-radius: 12px;
   color: var(--app-text-heading);
   font-size: var(--app-font-size-body);

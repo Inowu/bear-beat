@@ -98,12 +98,12 @@ export const BlockedPhoneNumbers = () => {
         placeholder="ej. +52 6621258651"
         value={newPhone}
         onChange={(e) => setNewPhone(e.target.value)}
-        className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-cyan-500 min-w-[180px] max-w-xs"
+        className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-bear-cyan min-w-[180px] max-w-xs"
       />
       <button
         type="submit"
         disabled={saving}
-        className="inline-flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white font-medium rounded-lg px-4 py-2 transition-colors disabled:opacity-50"
+        className="inline-flex items-center gap-2 bg-bear-gradient hover:opacity-95 text-bear-dark-500 font-medium rounded-lg px-4 py-2 transition-opacity disabled:opacity-50"
       >
         <Plus size={18} />
         Agregar teléfono
@@ -173,7 +173,7 @@ export const BlockedPhoneNumbers = () => {
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); setDrawerPhone(phone); }}
-                  className="p-2 text-slate-400 hover:text-cyan-400 rounded-lg"
+                  className="p-2 text-slate-400 hover:text-bear-cyan rounded-lg"
                   aria-label="Ver más"
                 >
                   <MoreVertical size={20} />

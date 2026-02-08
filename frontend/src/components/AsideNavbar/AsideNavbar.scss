@@ -52,7 +52,7 @@ aside {
       li {
         font-size: var(--app-font-size-body-lg);
         width: 100%;
-        border-radius: 5px;
+        border-radius: 12px;
         background-color: var(--theme-nav-item-bg);
         border: 1px solid var(--theme-nav-item-border, transparent);
         padding: 0;
@@ -62,6 +62,7 @@ aside {
         box-shadow: var(--theme-nav-item-shadow, none);
         transition: background 0.2s ease, color 0.2s ease;
         cursor: pointer;
+        background-clip: padding-box;
       }
 
       li a {
