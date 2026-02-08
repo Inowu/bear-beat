@@ -237,7 +237,7 @@ interface PlanCardPropsI {
 	  const payWithSpei = async () => {
 	    trackManyChatConversion(MC_EVENTS.CLICK_SPEI);
 	    handleUserClickOnPlan();
-	    trpc.checkoutLogs.registerCheckoutLog.mutate();
+	    void trpc.checkoutLogs.registerCheckoutLog.mutate().catch(() => {});
     try {
       let body = {
         planId: plan.id,
@@ -262,7 +262,7 @@ interface PlanCardPropsI {
   const payWithOxxo = async () => {
     trackManyChatConversion(MC_EVENTS.CLICK_OXXO);
     handleUserClickOnPlan();
-    trpc.checkoutLogs.registerCheckoutLog.mutate();
+    void trpc.checkoutLogs.registerCheckoutLog.mutate().catch(() => {});
     try {
       const body = {
         planId: plan.id,
@@ -285,7 +285,7 @@ interface PlanCardPropsI {
 
   const payWithBbva = async () => {
     handleUserClickOnPlan();
-    trpc.checkoutLogs.registerCheckoutLog.mutate();
+    void trpc.checkoutLogs.registerCheckoutLog.mutate().catch(() => {});
     try {
       const value = Number(plan.price) || 0;
       const currency = (plan.moneda || "MXN").toUpperCase();
@@ -325,7 +325,7 @@ interface PlanCardPropsI {
   const handleCheckout = async (planId: number) => {
     trackManyChatConversion(MC_EVENTS.CLICK_BUY);
     handleUserClickOnPlan();
-    trpc.checkoutLogs.registerCheckoutLog.mutate();
+    void trpc.checkoutLogs.registerCheckoutLog.mutate().catch(() => {});
     const target = `/comprar?priceId=${planId}`;
     // /planes es pública; si el usuario no está logueado, mandarlo directo a registro con return URL.
     if (!userEmail) {

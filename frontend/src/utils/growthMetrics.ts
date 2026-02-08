@@ -176,9 +176,10 @@ const tryGetUserIdFromToken = (): number | null => {
 };
 
 function safeStorageRead(
-  storage: Storage,
+  storage: Storage | null | undefined,
   key: string,
 ): string | null {
+  if (!storage) return null;
   try {
     return storage.getItem(key);
   } catch {
@@ -187,10 +188,11 @@ function safeStorageRead(
 }
 
 function safeStorageWrite(
-  storage: Storage,
+  storage: Storage | null | undefined,
   key: string,
   value: string,
 ): void {
+  if (!storage) return;
   try {
     storage.setItem(key, value);
   } catch {
@@ -198,11 +200,30 @@ function safeStorageWrite(
   }
 }
 
-function safeStorageRemove(storage: Storage, key: string): void {
+function safeStorageRemove(storage: Storage | null | undefined, key: string): void {
+  if (!storage) return;
   try {
     storage.removeItem(key);
   } catch {
     // noop
+  }
+}
+
+function getSafeLocalStorage(): Storage | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+function getSafeSessionStorage(): Storage | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
   }
 }
 
@@ -217,36 +238,51 @@ function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
 }
 
+let memoryVisitorId: string | null = null;
+let memorySessionId: string | null = null;
+let memorySessionTs = 0;
+let memoryAttribution: AnalyticsAttribution | null = null;
+
 function getOrCreateVisitorId(): string {
   if (typeof window === "undefined") return "server";
-  const existing = safeStorageRead(window.localStorage, STORAGE_VISITOR_ID);
+  const localStorage = getSafeLocalStorage();
+  const existing = safeStorageRead(localStorage, STORAGE_VISITOR_ID);
   if (existing) return existing;
+  if (memoryVisitorId) return memoryVisitorId;
   const visitorId = generateId("v");
-  safeStorageWrite(window.localStorage, STORAGE_VISITOR_ID, visitorId);
+  safeStorageWrite(localStorage, STORAGE_VISITOR_ID, visitorId);
+  memoryVisitorId = visitorId;
   return visitorId;
 }
 
 function getOrCreateSessionId(): string {
   if (typeof window === "undefined") return "server-session";
+  const sessionStorage = getSafeSessionStorage();
   const now = Date.now();
-  const existing = safeStorageRead(window.sessionStorage, STORAGE_SESSION_ID);
-  const rawTs = safeStorageRead(window.sessionStorage, STORAGE_SESSION_TS);
-  const lastTs = rawTs ? Number(rawTs) : NaN;
+  const existing =
+    safeStorageRead(sessionStorage, STORAGE_SESSION_ID) ?? memorySessionId;
+  const rawTs = safeStorageRead(sessionStorage, STORAGE_SESSION_TS);
+  const lastTs = rawTs ? Number(rawTs) : memorySessionTs || NaN;
 
   if (existing && Number.isFinite(lastTs) && now - lastTs <= SESSION_TTL_MS) {
-    safeStorageWrite(window.sessionStorage, STORAGE_SESSION_TS, String(now));
+    safeStorageWrite(sessionStorage, STORAGE_SESSION_TS, String(now));
+    memorySessionId = existing;
+    memorySessionTs = now;
     return existing;
   }
 
   const sessionId = generateId("s");
-  safeStorageWrite(window.sessionStorage, STORAGE_SESSION_ID, sessionId);
-  safeStorageWrite(window.sessionStorage, STORAGE_SESSION_TS, String(now));
+  safeStorageWrite(sessionStorage, STORAGE_SESSION_ID, sessionId);
+  safeStorageWrite(sessionStorage, STORAGE_SESSION_TS, String(now));
+  memorySessionId = sessionId;
+  memorySessionTs = now;
   return sessionId;
 }
 
 function readStoredAttribution(): AnalyticsAttribution | null {
   if (typeof window === "undefined") return null;
-  const raw = safeStorageRead(window.localStorage, STORAGE_ATTRIBUTION);
+  const localStorage = getSafeLocalStorage();
+  const raw = safeStorageRead(localStorage, STORAGE_ATTRIBUTION);
   if (!raw) return null;
   try {
     return JSON.parse(raw) as AnalyticsAttribution;
@@ -261,11 +297,14 @@ export function getGrowthAttribution(): AnalyticsAttribution | null {
 
 function persistAttribution(attribution: AnalyticsAttribution | null): void {
   if (typeof window === "undefined") return;
+  const localStorage = getSafeLocalStorage();
   if (!attribution) {
-    safeStorageRemove(window.localStorage, STORAGE_ATTRIBUTION);
+    safeStorageRemove(localStorage, STORAGE_ATTRIBUTION);
+    memoryAttribution = null;
     return;
   }
-  safeStorageWrite(window.localStorage, STORAGE_ATTRIBUTION, JSON.stringify(attribution));
+  safeStorageWrite(localStorage, STORAGE_ATTRIBUTION, JSON.stringify(attribution));
+  memoryAttribution = attribution;
 }
 
 function captureAttributionFromLocation(): AnalyticsAttribution | null {
@@ -282,7 +321,7 @@ function captureAttributionFromLocation(): AnalyticsAttribution | null {
     params.has("gclid");
 
   if (!hasAttributionParams) {
-    return readStoredAttribution();
+    return readStoredAttribution() ?? memoryAttribution;
   }
 
   const captured: AnalyticsAttribution = {
@@ -483,7 +522,8 @@ function buildAnalyticsEvent(
 function loadPendingQueueFromStorage(): void {
   if (typeof window === "undefined") return;
   if (queuedEvents.length > 0) return;
-  const raw = safeStorageRead(window.localStorage, STORAGE_PENDING_QUEUE);
+  const localStorage = getSafeLocalStorage();
+  const raw = safeStorageRead(localStorage, STORAGE_PENDING_QUEUE);
   if (!raw) return;
   try {
     const parsed = JSON.parse(raw) as AnalyticsEventPayload[];
@@ -497,12 +537,13 @@ function loadPendingQueueFromStorage(): void {
 
 function persistPendingQueue(): void {
   if (typeof window === "undefined") return;
+  const localStorage = getSafeLocalStorage();
   if (!queuedEvents.length) {
-    safeStorageRemove(window.localStorage, STORAGE_PENDING_QUEUE);
+    safeStorageRemove(localStorage, STORAGE_PENDING_QUEUE);
     return;
   }
   const trimmed = queuedEvents.slice(0, MAX_PERSISTED_EVENTS);
-  safeStorageWrite(window.localStorage, STORAGE_PENDING_QUEUE, JSON.stringify(trimmed));
+  safeStorageWrite(localStorage, STORAGE_PENDING_QUEUE, JSON.stringify(trimmed));
 }
 
 function enqueueEvent(event: AnalyticsEventPayload): void {
@@ -678,13 +719,15 @@ if (typeof window !== "undefined") {
   window.bbAnalyticsFlush = flushGrowthMetrics;
   window.bbAnalyticsStatus = () => {
     loadPendingQueueFromStorage();
+    const localStorage = getSafeLocalStorage();
+    const sessionStorage = getSafeSessionStorage();
     return {
       apiBaseUrl,
       analyticsCollectUrl,
       remoteDisabled: analyticsRemoteDisabled,
       queuedEvents: queuedEvents.length,
-      visitorId: safeStorageRead(window.localStorage, STORAGE_VISITOR_ID),
-      sessionId: safeStorageRead(window.sessionStorage, STORAGE_SESSION_ID),
+      visitorId: safeStorageRead(localStorage, STORAGE_VISITOR_ID) ?? memoryVisitorId,
+      sessionId: safeStorageRead(sessionStorage, STORAGE_SESSION_ID) ?? memorySessionId,
       lastQueueSample: window.__bbGrowthQueue?.slice(-5) ?? [],
     };
   };

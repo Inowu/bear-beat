@@ -88,6 +88,30 @@ if (sentryEnabled) {
         return null;
       }
 
+      // Fetch/navigation aborts are common (especially in in-app browsers) and not actionable.
+      if (
+        combined.includes("aborterror") ||
+        combined.includes("fetch is aborted") ||
+        combined.includes("signal is aborted") ||
+        combined.includes("the user aborted a request")
+      ) {
+        return null;
+      }
+
+      // Replay (rrweb) may attempt to introspect cross-origin iframes (PayPal, etc).
+      // These SecurityErrors are expected and not actionable.
+      if (
+        combined.includes("blocked a frame with origin") &&
+        combined.includes("cross-origin frame")
+      ) {
+        return null;
+      }
+
+      // Rare Safari/third-party noise with no useful stack traces.
+      if (combined.includes("emptyranges")) {
+        return null;
+      }
+
       // In dev builds, only allow explicit Sentry test events unless overridden.
       if (!isProdBuild && !captureDevErrors) {
         const isExplicitTest =

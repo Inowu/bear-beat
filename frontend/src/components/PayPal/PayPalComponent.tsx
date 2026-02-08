@@ -69,7 +69,7 @@ export default function PayPalComponent(props: Props) {
             : process.env.REACT_APP_PAYPAL_CLIENT_ID!;
 
         async function onClickButton(data: any, actions: OnClickActions) {
-            trpc.checkoutLogs.registerCheckoutLog.mutate();
+            void trpc.checkoutLogs.registerCheckoutLog.mutate().catch(() => { });
             handleManyChat();
             // Revisar si el usuario tiene una suscripcion activa
             const me = await trpc.auth.me.query();

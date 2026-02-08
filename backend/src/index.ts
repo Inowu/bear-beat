@@ -156,25 +156,33 @@ async function main() {
       });
     });
 
-    app.get('/debug-sentry', async (req, res, next) => {
-      try {
-        const mode = String(req.query?.mode || 'capture');
-        if (mode === 'throw') {
-          return next(new Error('My first Sentry error (Backend Bear Beat)!'));
-        }
+    // Debug endpoint for validating Sentry wiring.
+    // Disable by default in production (avoid noise and abuse).
+    const enableSentryDebugRoute =
+      process.env.SENTRY_DEBUG_ROUTE_ENABLED === '1' || process.env.NODE_ENV !== 'production';
+    if (enableSentryDebugRoute) {
+      app.get('/debug-sentry', async (req, res, next) => {
+        try {
+          const mode = String(req.query?.mode || 'capture');
+          if (mode === 'throw') {
+            return next(new Error('My first Sentry error (Backend Bear Beat)!'));
+          }
 
-        const label = String(req.query?.label || 'debug-route');
-        const eventId = await sendBackendSentryTestEvent(label);
-        return res.status(202).json({
-          ok: true,
-          mode: 'capture',
-          eventId,
-          sentry: getSentryBackendStatus(),
-        });
-      } catch (error) {
-        return next(error);
-      }
-    });
+          const label = String(req.query?.label || 'debug-route');
+          const eventId = await sendBackendSentryTestEvent(label);
+          return res.status(202).json({
+            ok: true,
+            mode: 'capture',
+            eventId,
+            sentry: getSentryBackendStatus(),
+          });
+        } catch (error) {
+          return next(error);
+        }
+      });
+    } else {
+      app.get('/debug-sentry', (_req, res) => res.status(404).end());
+    }
 
     Sentry.setupExpressErrorHandler(app);
 
