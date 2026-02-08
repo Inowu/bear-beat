@@ -1,3 +1,8 @@
 node_modules
 list-ftp.sh
 ftp-stats.py
+# Local Netlify folder
+.netlify
+# Playwright CLI artifacts
+.playwright-cli
+output

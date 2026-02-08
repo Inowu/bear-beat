@@ -10,7 +10,9 @@ import { hasActiveSubscription } from './utils/hasActiveSub';
 import { PaymentService } from './services/types';
 import { Orders, Plans, PrismaClient, Users } from '@prisma/client';
 
-const oxxoEnabled = process.env.CONEKTA_OXXO_ENABLED === '1';
+const cashEnabled =
+  process.env.CONEKTA_OXXO_ENABLED === '1' ||
+  process.env.CONEKTA_CASH_ENABLED === '1';
 
 export const subscribeWithCashConekta = shieldedProcedure
   .input(
@@ -100,7 +102,7 @@ export const subscribeWithCashConekta = shieldedProcedure
         });
       }
 
-      if (paymentMethod === 'cash' && !oxxoEnabled) {
+      if (paymentMethod === 'cash' && !cashEnabled) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: 'Pago en efectivo deshabilitado temporalmente. Usa tarjeta o SPEI.',

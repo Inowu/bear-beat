@@ -11,6 +11,7 @@ import {
 } from "@paypal/paypal-js/types/components/buttons"
 import { useEffect, useRef } from 'react'
 import trpc from "../../api";
+import "./PayPalComponent.scss";
 
 interface Props {
     onApprove: (order: any) => void;
@@ -49,10 +50,8 @@ export default function PayPalComponent(props: Props) {
         const container = document.getElementById(buttonId);
         if (!container || !container.isConnected) return;
         if (window.paypal && window.paypal.Buttons) {
-            const previousPayPalButton = document.querySelector('.paypal-container');
-            if (previousPayPalButton && previousPayPalButton !== container) {
-                previousPayPalButton.replaceChildren();
-            }
+            // Ensure we only clear our own container (multiple PayPal buttons may exist on the page).
+            container.replaceChildren();
             const buttons = window.paypal.Buttons(options);
             buttonsRef.current = buttons;
             buttons.render(`#${buttonId}`).catch((err: any) => {

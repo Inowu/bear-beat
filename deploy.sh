@@ -50,6 +50,16 @@ upsert_env() {
   fi
 }
 
+ensure_env_default() {
+  local key="$1"
+  local value="$2"
+
+  if grep -q "^${key}=" "$ENV_FILE"; then
+    return 0
+  fi
+  printf "\n%s=%s\n" "$key" "$value" >> "$ENV_FILE"
+}
+
 log "Pulling latest changes..."
 # Descartar cambios locales (ej. package-lock.json) para que pull no falle
 git -C "$ROOT_DIR" reset --hard HEAD
@@ -74,8 +84,9 @@ fi
 
 log "Ensuring required production flags are set (Conekta + client URL)..."
 upsert_env "CLIENT_URL" "https://thebearbeat.com"
-upsert_env "CONEKTA_PBB_ENABLED" "1"
-upsert_env "CONEKTA_OXXO_ENABLED" "1"
+# Only set defaults; don't override manual disables (critical during incident response).
+ensure_env_default "CONEKTA_PBB_ENABLED" "1"
+ensure_env_default "CONEKTA_OXXO_ENABLED" "1"
 
 current_port="$(grep -Eo 'proxy_pass\s+http://(localhost|127\.0\.0\.1):[0-9]+' "$NGINX_CONF" \
   | head -n 1 \

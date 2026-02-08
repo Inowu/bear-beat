@@ -1,0 +1,13 @@
+/* PayPal buttons render into iframes; reserve space so the layout doesn't jump. */
+.paypal-container {
+  width: 100%;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.paypal-container > * {
+  width: 100%;
+}
+

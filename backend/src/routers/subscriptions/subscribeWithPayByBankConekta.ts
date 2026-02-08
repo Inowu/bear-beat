@@ -10,7 +10,9 @@ import { hasActiveSubscription } from './utils/hasActiveSub';
 import { PaymentService } from './services/types';
 import { Orders, Plans, PrismaClient, Users } from '@prisma/client';
 
-const payByBankEnabled = process.env.CONEKTA_PBB_ENABLED === '1';
+const payByBankEnabled =
+  process.env.CONEKTA_PBB_ENABLED === '1' ||
+  process.env.CONEKTA_PAY_BY_BANK_ENABLED === '1';
 
 export const subscribeWithPayByBankConekta = shieldedProcedure
   .input(
