@@ -23,9 +23,11 @@ export default function Compatibility() {
           <Link to="/instrucciones" className="home-link">
             Ver instrucciones de descarga →
           </Link>
+          <a href="#faq-formats" className="home-link">
+            Ver formatos en el FAQ →
+          </a>
         </div>
       </div>
     </section>
   );
 }
-

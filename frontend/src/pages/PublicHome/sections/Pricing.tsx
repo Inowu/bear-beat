@@ -3,6 +3,7 @@ import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import PaymentMethodLogos, { type PaymentMethodId } from "../../../components/PaymentMethodLogos/PaymentMethodLogos";
 import { HOME_HERO_MICROCOPY_BASE, HOME_HERO_MICROCOPY_TRIAL } from "../homeCopy";
+import { formatInt } from "../homeFormat";
 
 export type TrialSummary = {
   enabled: boolean;
@@ -75,7 +76,7 @@ export default function Pricing(props: {
           <h2 className="home-h2">Precio simple, catálogo gigante</h2>
           <p className="home-sub">
             Catálogo total: <strong>{catalogTBLabel}</strong> • Descargas:{" "}
-            <strong>{downloadQuotaGb.toLocaleString(numberLocale)} GB/mes</strong>
+            <strong>{formatInt(downloadQuotaGb)} GB/mes</strong>
           </p>
         </div>
 
@@ -118,14 +119,14 @@ export default function Pricing(props: {
 
           {hasTrial && trial && (
             <div className="pricing__trial" role="note">
-              <strong>Prueba: {trial.days} días</strong> · {trial.gb} GB incluidos · solo tarjeta (Stripe), 1ª vez
+              <strong>Prueba: {trial.days} días</strong> · {formatInt(trial.gb)} GB incluidos · solo tarjeta (Stripe), 1ª vez
               <div className="pricing__trial-sub">Cancela antes de que termine y no se cobra.</div>
             </div>
           )}
 
           <ul className="pricing__includes" aria-label="Incluye">
             <li>
-              <CheckCircle2 size={16} aria-hidden /> Descargas: {downloadQuotaGb.toLocaleString(numberLocale)} GB/mes
+              <CheckCircle2 size={16} aria-hidden /> Descargas: {formatInt(downloadQuotaGb)} GB/mes
             </li>
             <li>
               <CheckCircle2 size={16} aria-hidden /> Catálogo total: {catalogTBLabel} (eliges qué bajar)

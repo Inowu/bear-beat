@@ -6,20 +6,28 @@ import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../utils/growthMetrics";
 import { FALLBACK_GENRES, type GenreStats } from "./fallbackGenres";
 import type { IPlans } from "../../interfaces/Plans";
-import { getHomeCtaPrimaryLabel } from "./homeCopy";
+import { getHomeCtaPrimaryLabel, HOME_HERO_MICROCOPY_BASE, HOME_HERO_MICROCOPY_TRIAL } from "./homeCopy";
+import {
+  HOME_NUMBER_LOCALE,
+  formatInt,
+  formatTB,
+  normalizeGenreDisplayName,
+  normalizeSearchKey,
+} from "./homeFormat";
 import HomeHero from "./sections/HomeHero";
 import TrustBar from "./sections/TrustBar";
 import UseCases from "./sections/UseCases";
 import CatalogDemo, { type CatalogGenre } from "./sections/CatalogDemo";
+import HumanSocialProof from "./sections/HumanSocialProof";
 import SocialProof from "./sections/SocialProof";
 import Compatibility from "./sections/Compatibility";
 import ActivationSteps from "./sections/ActivationSteps";
 import Pricing, { type PricingPlan, type TrialSummary } from "./sections/Pricing";
 import HomeFaq from "./sections/HomeFaq";
 import HomeDemoModal from "./sections/HomeDemoModal";
+import StickyMobileCta from "./sections/StickyMobileCta";
 import "./PublicHome.scss";
 
-const NUMBER_LOCALE = "es-MX";
 const TOP_DOWNLOADS_DAYS = 120;
 
 const FALLBACK_TOTAL_FILES = 195_727;
@@ -241,6 +249,9 @@ export default function PublicHome() {
   }, [trialConfig]);
 
   const ctaPrimaryLabel = useMemo(() => getHomeCtaPrimaryLabel(trialSummary), [trialSummary]);
+  const footerMicrocopy = useMemo(() => {
+    return trialSummary?.enabled ? HOME_HERO_MICROCOPY_TRIAL : HOME_HERO_MICROCOPY_BASE;
+  }, [trialSummary?.enabled]);
 
   const pricingPlans = useMemo(() => {
     const bestMxn = pickBestPlan(plans, "mxn");
@@ -257,7 +268,7 @@ export default function PublicHome() {
     return Number.isFinite(fromPlans) && (fromPlans ?? 0) > 0 ? Number(fromPlans) : 500;
   }, [pricingPlans.mxn?.gigas, pricingPlans.usd?.gigas]);
 
-  const downloadQuotaLabel = `${downloadQuotaGb.toLocaleString(NUMBER_LOCALE)} GB/mes`;
+  const downloadQuotaLabel = `${formatInt(downloadQuotaGb)} GB/mes`;
 
   const hasLiveCatalog = Boolean(
     catalogSummary &&
@@ -272,12 +283,8 @@ export default function PublicHome() {
   const effectiveTotalGB = hasLiveCatalog ? Number(catalogSummary?.totalGB ?? 0) : FALLBACK_TOTAL_GB;
   const effectiveTotalTB = effectiveTotalGB / 1000;
 
-  const totalTBLabel = `${effectiveTotalTB.toLocaleString(NUMBER_LOCALE, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })} TB`;
-
-  const totalFilesLabel = effectiveTotalFiles.toLocaleString(NUMBER_LOCALE);
+  const totalTBLabel = formatTB(effectiveTotalTB);
+  const totalFilesLabel = formatInt(effectiveTotalFiles);
 
   const catalogGenres = useMemo<CatalogGenre[]>(() => {
     const source =
@@ -286,7 +293,9 @@ export default function PublicHome() {
         : FALLBACK_GENRES;
 
     return source.map((g) => ({
-      name: g.name,
+      id: g.name,
+      name: normalizeGenreDisplayName(g.name),
+      searchKey: normalizeSearchKey(normalizeGenreDisplayName(g.name)),
       files: Number(g.files ?? 0),
       gb: Number(g.gb ?? 0),
     }));
@@ -314,22 +323,42 @@ export default function PublicHome() {
       }));
   }, [topDownloads]);
 
+  const socialKaraoke = useMemo(() => {
+    const items = topDownloads?.karaoke ?? [];
+    return items
+      .filter((item) => item && typeof item.name === "string")
+      .slice(0, 20)
+      .map((item) => ({
+        name: prettyMediaName(item.name) || item.name,
+        downloads: Number(item.downloads ?? 0),
+      }));
+  }, [topDownloads]);
+
   const onPrimaryCtaClick = useCallback(
-    (location: "hero" | "mid" | "pricing" | "footer") => {
+    (location: "hero" | "mid" | "pricing" | "footer" | "sticky") => {
       trackGrowthMetric(GROWTH_METRICS.CTA_PRIMARY_CLICK, { location });
       trackManyChatConversion(MC_EVENTS.CLICK_CTA_REGISTER);
     },
     [],
   );
 
-  const onSecondaryCtaClick = useCallback(() => {
-    trackGrowthMetric(GROWTH_METRICS.CTA_SECONDARY_CLICK, { location: "catalog_demo" });
-  }, []);
+  const onSecondaryCtaClick = useCallback(
+    (location: "demo" | "top_downloads" | "modal_demo") => {
+      trackGrowthMetric(GROWTH_METRICS.CTA_SECONDARY_CLICK, { location });
+    },
+    [],
+  );
 
   const onDemoClick = useCallback(() => {
-    trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, { location: "hero" });
+    trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, { location: "hero_block" });
     setShowDemo(true);
   }, []);
+
+  useEffect(() => {
+    if (!showDemo) return;
+    // Track that the user actually viewed the demo modal (separate from the click source).
+    trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, { location: "modal" });
+  }, [showDemo]);
 
   const onFaqExpand = useCallback((id: string) => {
     trackGrowthMetric(GROWTH_METRICS.FAQ_EXPAND, { question: id });
@@ -374,7 +403,7 @@ export default function PublicHome() {
               FAQ
             </Link>
             <Link to="/auth" className="home-topnav__link">
-              Acceso
+              Iniciar sesión
             </Link>
           </nav>
         </div>
@@ -400,12 +429,18 @@ export default function PublicHome() {
 
         <CatalogDemo
           genres={catalogGenres}
-          numberLocale={NUMBER_LOCALE}
           isFallback={!hasLiveCatalog}
-          onSecondaryCtaClick={onSecondaryCtaClick}
+          onSecondaryCtaClick={() => onSecondaryCtaClick("demo")}
         />
 
-        <SocialProof audio={socialAudio} video={socialVideo} numberLocale={NUMBER_LOCALE} />
+        <HumanSocialProof />
+
+        <SocialProof
+          audio={socialAudio}
+          video={socialVideo}
+          karaoke={socialKaraoke}
+          onMoreClick={() => onSecondaryCtaClick("top_downloads")}
+        />
 
         <Compatibility />
 
@@ -415,7 +450,7 @@ export default function PublicHome() {
           <Pricing
             plans={pricingPlans}
             defaultCurrency={preferredCurrency}
-            numberLocale={NUMBER_LOCALE}
+            numberLocale={HOME_NUMBER_LOCALE}
             catalogTBLabel={totalTBLabel}
             downloadQuotaGb={downloadQuotaGb}
             trial={trialSummary}
@@ -449,14 +484,24 @@ export default function PublicHome() {
             >
               {ctaPrimaryLabel}
             </Link>
-            <p className="home-footer__micro">Pago seguro • Cancela cuando quieras</p>
+            <p className="home-footer__micro">{footerMicrocopy}</p>
           </div>
 
           <p className="home-footer__copy">© Bear Beat. Todos los derechos reservados.</p>
         </div>
       </footer>
 
-      <HomeDemoModal show={showDemo} onHide={() => setShowDemo(false)} />
+      <HomeDemoModal
+        show={showDemo}
+        onHide={() => setShowDemo(false)}
+        ctaLabel={ctaPrimaryLabel}
+        onModalCtaClick={() => onSecondaryCtaClick("modal_demo")}
+      />
+
+      <StickyMobileCta
+        ctaLabel={ctaPrimaryLabel}
+        onPrimaryCtaClick={() => onPrimaryCtaClick("sticky")}
+      />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import {
   HOME_HERO_SUBTITLE,
   HOME_HERO_TITLE,
 } from "../homeCopy";
+import { formatInt } from "../homeFormat";
 import CatalogPreviewWebp from "../../../assets/images/home-catalog-preview.webp";
 import CatalogPreviewPng from "../../../assets/images/home-catalog-preview.png";
 
@@ -29,7 +30,7 @@ export default function HomeHero(props: {
   const microcopy = hasTrial ? HOME_HERO_MICROCOPY_TRIAL : HOME_HERO_MICROCOPY_BASE;
   const bulletTrialAddon =
     hasTrial && trial
-      ? ` · Prueba: ${trial.days} días / ${trial.gb} GB (solo tarjeta, 1ª vez)`
+      ? ` · Prueba: ${formatInt(trial.days)} días / ${formatInt(trial.gb)} GB (solo tarjeta, 1ª vez)`
       : "";
 
   return (
@@ -71,18 +72,30 @@ export default function HomeHero(props: {
                 Ver demo
               </button>
             </div>
+            <ul className="home-visual__bullets" aria-label="Qué verás al activar">
+              <li>Audios / Videos / Karaoke</li>
+              <li>Búsqueda por canción, artista o carpeta</li>
+              <li>Guía FTP incluida</li>
+            </ul>
             <div className="home-visual__frame">
-              <picture>
-                <source srcSet={CatalogPreviewWebp} type="image/webp" />
-                <img
-                  src={CatalogPreviewPng}
-                  alt="Vista real del catálogo por dentro (biblioteca y secciones)"
-                  width={960}
-                  height={600}
-                  loading="eager"
-                  decoding="async"
-                />
-              </picture>
+              <button
+                type="button"
+                className="home-visual__frame-btn"
+                onClick={onDemoClick}
+                aria-label="Ver demo del catálogo"
+              >
+                <picture>
+                  <source srcSet={CatalogPreviewWebp} type="image/webp" />
+                  <img
+                    src={CatalogPreviewPng}
+                    alt="Vista real del catálogo por dentro (biblioteca y secciones)"
+                    width={960}
+                    height={600}
+                    loading="eager"
+                    decoding="async"
+                  />
+                </picture>
+              </button>
             </div>
             <p className="home-visual__note">Vista real del catálogo. Abre la demo para ver detalles.</p>
           </div>

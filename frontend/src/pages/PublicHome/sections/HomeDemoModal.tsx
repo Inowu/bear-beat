@@ -1,13 +1,16 @@
 import { Modal } from "react-bootstrap";
 import { CheckCircle2 } from "lucide-react";
 import { Link } from "react-router-dom";
-import CatalogPreviewImg from "../../../assets/images/home-catalog-preview.webp";
+import CatalogPreviewWebp from "../../../assets/images/home-catalog-preview.webp";
+import CatalogPreviewPng from "../../../assets/images/home-catalog-preview.png";
 
 export default function HomeDemoModal(props: {
   show: boolean;
   onHide: () => void;
+  ctaLabel: string;
+  onModalCtaClick: () => void;
 }) {
-  const { show, onHide } = props;
+  const { show, onHide, ctaLabel, onModalCtaClick } = props;
 
   return (
     <Modal
@@ -27,14 +30,17 @@ export default function HomeDemoModal(props: {
         </p>
 
         <div className="home-demo-modal__frame">
-          <img
-            src={CatalogPreviewImg}
-            alt="Vista real del catálogo por dentro (biblioteca y secciones)"
-            width={960}
-            height={600}
-            loading="lazy"
-            decoding="async"
-          />
+          <picture>
+            <source srcSet={CatalogPreviewWebp} type="image/webp" />
+            <img
+              src={CatalogPreviewPng}
+              alt="Vista real del catálogo por dentro (biblioteca y secciones)"
+              width={960}
+              height={600}
+              loading="lazy"
+              decoding="async"
+            />
+          </picture>
         </div>
 
         <ul className="home-demo-modal__bullets" aria-label="Qué verás al activar">
@@ -49,7 +55,18 @@ export default function HomeDemoModal(props: {
           </li>
         </ul>
 
-        <div className="home-demo-modal__links">
+        <div className="home-demo-modal__actions">
+          <Link
+            to="/auth/registro"
+            state={{ from: "/planes" }}
+            className="home-cta home-cta--primary home-demo-modal__cta"
+            onClick={() => {
+              onModalCtaClick();
+              onHide();
+            }}
+          >
+            {ctaLabel}
+          </Link>
           <Link to="/instrucciones" className="home-link" onClick={onHide}>
             Ver instrucciones de descarga →
           </Link>

@@ -9,13 +9,22 @@ Scope: Solo la landing pública (`/`) cuando NO hay sesión. Estética dark/neó
    - Cómo funciona: eliges del catálogo total y descargas con cuota mensual.
    - Qué hacer ahora: CTA principal claro.
 3. Verificar que NO existe texto ambiguo tipo “Acceso Total” sin aclarar la cuota.
-4. Verificar que el CTA principal siempre dice exactamente:
+4. Navbar:
+   - El link debe decir `Iniciar sesión` (no “Acceso”).
+5. Números/unidades (consistencia visual):
+   - Separadores consistentes (ej. `12.62 TB`, `202,563`, `1,129.6 GB`).
+   - TB siempre con 2 decimales; GB (en demo) con 1 decimal; cuota mensual como entero.
+   - Géneros visibles sin typos obvios (ej. `Reggaetón`, `Pop Inglés`, `Retro Inglés Dance`).
+6. Verificar que el CTA principal siempre dice exactamente:
    - Si trial está habilitado: `Empezar prueba (7 días)` (o el número real de días según backend).
    - Si trial NO está habilitado: `Activar acceso`.
-5. Verificar que el CTA secundario (demo catálogo) siempre dice: `Ver los 200 géneros al activar`.
-6. Funnel post‑CTA (sin ambigüedad):
+7. Verificar que el CTA secundario (demo catálogo) siempre dice: `Ver los 200 géneros al activar`.
+8. Funnel post‑CTA (sin ambigüedad):
    - Usuario SIN cuenta: CTA primario lleva a `/auth/registro` (crear cuenta) y al completar debe volver a `/planes`.
    - Usuario CON cuenta: link “Ya tengo cuenta” lleva a `/auth` (login) y al completar debe volver a `/` (app) o a `from`.
+9. Sticky CTA (mobile):
+   - Aparece al hacer scroll (no tapa el CTA principal del hero).
+   - Se puede cerrar con `X` y no vuelve a aparecer tras recargar.
 
 ## Responsivo / Legibilidad
 1. Mobile (390x844):
@@ -49,12 +58,14 @@ Abrir DevTools Console y ejecutar:
 2. Recargar home:
    - Debe aparecer `home_view`.
 3. Click en “Ver demo”:
-   - Debe aparecer `view_demo_click` con `metadata.location = \"hero\"`.
-4. Click en CTA principal (hero, steps, pricing, footer):
+   - Debe aparecer `view_demo_click` con `metadata.location = \"hero_block\"`.
+   - Al abrir el modal, debe aparecer otro `view_demo_click` con `metadata.location = \"modal\"`.
+4. Click en CTA principal (hero, steps, pricing, footer, sticky):
    - Debe aparecer `cta_primary_click` con `metadata.location` correcto:
-     - `hero`, `mid`, `pricing`, `footer`.
-5. Click en CTA secundario (Catalog Demo):
-   - Debe aparecer `cta_secondary_click` con `metadata.location = \"catalog_demo\"`.
+     - `hero`, `mid`, `pricing`, `footer`, `sticky`.
+5. Click en CTA secundario (Catalog Demo / Top descargas / Modal demo):
+   - Debe aparecer `cta_secondary_click` con `metadata.location` correcto:
+     - `demo`, `top_downloads`, `modal_demo`.
 6. Scroll hasta Pricing:
    - Debe aparecer `pricing_view` una sola vez.
 7. Expandir un FAQ:

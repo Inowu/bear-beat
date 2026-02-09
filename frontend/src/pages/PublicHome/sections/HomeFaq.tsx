@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 import { HOME_FAQ_ITEMS } from "../homeCopy";
 
@@ -15,6 +15,24 @@ export default function HomeFaq(props: {
     [onFaqExpand],
   );
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const openFromHash = () => {
+      const hash = window.location.hash;
+      if (!hash || !hash.startsWith("#faq-")) return;
+      const el = document.querySelector(hash);
+      if (!(el instanceof HTMLDetailsElement)) return;
+
+      el.open = true;
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+
+    openFromHash();
+    window.addEventListener("hashchange", openFromHash);
+    return () => window.removeEventListener("hashchange", openFromHash);
+  }, []);
+
   return (
     <section className="home-faq" aria-label="Preguntas frecuentes">
       <div className="ph__container">
@@ -27,6 +45,7 @@ export default function HomeFaq(props: {
           {HOME_FAQ_ITEMS.map((item) => (
             <details
               key={item.id}
+              id={`faq-${item.id}`}
               className="home-faq__item"
               onToggle={(e) => {
                 const el = e.currentTarget as HTMLDetailsElement;
@@ -47,4 +66,3 @@ export default function HomeFaq(props: {
     </section>
   );
 }
-

@@ -2,33 +2,31 @@ import { Link } from "react-router-dom";
 import { Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { HOME_CTA_SECONDARY_LABEL } from "../homeCopy";
+import { formatGB, formatInt, normalizeSearchKey } from "../homeFormat";
 
 export type CatalogGenre = {
+  id: string;
   name: string;
+  searchKey: string;
   files: number;
   gb: number;
 };
 
 const MAX_RESULTS = 10;
 
-function normalizeQuery(value: string): string {
-  return value.trim().toLocaleLowerCase("es-ES");
-}
-
 export default function CatalogDemo(props: {
   genres: CatalogGenre[];
-  numberLocale: string;
   isFallback: boolean;
   onSecondaryCtaClick: () => void;
 }) {
-  const { genres, numberLocale, isFallback, onSecondaryCtaClick } = props;
+  const { genres, isFallback, onSecondaryCtaClick } = props;
   const [query, setQuery] = useState("");
-  const normalized = normalizeQuery(query);
+  const normalized = normalizeSearchKey(query);
 
   const results = useMemo(() => {
     const base = Array.isArray(genres) ? genres : [];
     const filtered = normalized
-      ? base.filter((g) => g.name.toLocaleLowerCase("es-ES").includes(normalized))
+      ? base.filter((g) => g.searchKey.includes(normalized))
       : base;
 
     const sorted = [...filtered].sort((a, b) => {
@@ -55,7 +53,7 @@ export default function CatalogDemo(props: {
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar género (ej. Cumbia, House, Reggaeton)"
+              placeholder="Buscar género (ej. Cumbia, House, Reggaetón)"
               aria-label="Buscar género"
             />
           </div>
@@ -69,11 +67,10 @@ export default function CatalogDemo(props: {
 
         <div className="catalog-demo__grid" role="list" aria-label="Resultados de géneros">
           {results.map((g) => (
-            <article key={g.name} className="catalog-demo__card" role="listitem">
+            <article key={g.id} className="catalog-demo__card" role="listitem">
               <strong>{g.name}</strong>
               <span>
-                {g.files.toLocaleString(numberLocale)} archivos ·{" "}
-                {g.gb.toLocaleString(numberLocale, { maximumFractionDigits: 2 })} GB
+                {formatInt(g.files)} archivos · {formatGB(g.gb)}
               </span>
             </article>
           ))}

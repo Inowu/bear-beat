@@ -41,7 +41,7 @@ export const HOME_COMPATIBILITY_ITEMS = [
   },
   {
     title: "Formatos comunes",
-    body: "Audio y video en formatos comunes (por ejemplo MP3 y MP4).",
+    body: "Formatos comunes: MP3 y MP4. Ver formatos completos en el FAQ.",
   },
   {
     title: "Tu software, tu forma",
@@ -102,7 +102,7 @@ export const HOME_FAQ_ITEMS: HomeFaqItem[] = [
     id: "formats",
     question: "¿Qué formatos manejan?",
     answer:
-      "Trabajamos con audio y video en formatos comunes (por ejemplo MP3 y MP4). Si necesitas detalles, revisa el FAQ completo en la sección Legal.",
+      "Soportamos audio en MP3/WAV/FLAC/AAC/M4A/OGG/WMA y video en MP4/MKV/AVI/MOV/WMV/WEBM/M4V/FLV. (Karaoke se identifica por carpeta “karaoke”.)",
   },
   {
     id: "support",

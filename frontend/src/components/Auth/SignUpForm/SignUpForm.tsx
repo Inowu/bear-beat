@@ -280,7 +280,7 @@ function SignUpForm() {
         <div className="auth-split-left-bg" aria-hidden />
         <h2 className="auth-split-title">Tu próxima cabina sin “No la tengo” empieza aquí.</h2>
         <ul className="auth-split-list">
-          <li><strong>12.62 TB</strong> de música y video</li>
+          <li><strong>Catálogo gigante</strong> de música y video</li>
           <li><strong>Descarga por FTP</strong> (rápido y ordenado)</li>
           <li>Cancela cuando quieras</li>
         </ul>
