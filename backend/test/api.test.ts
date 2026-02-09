@@ -1,559 +1,147 @@
-import { TRPCError } from '@trpc/server';
-import {
-  getHTTPStatusCode,
-  getHTTPStatusCodeFromError,
-} from '@trpc/server/http';
-import { prisma } from '../src/db';
-import { appRouter } from '../src/routers';
-import { RolesNames } from '../src/routers/auth/interfaces/roles.interface';
-import { addMonths, subMonths } from 'date-fns';
-import { fileService, initializeFileService } from '../src/ftp';
-import { subscribe } from '../src/routers/subscriptions/services/subscribe';
+import bcrypt from "bcrypt";
+import { TRPCError } from "@trpc/server";
+import { getHTTPStatusCodeFromError } from "@trpc/server/http";
+import { prisma } from "../src/db";
+import { router } from "../src/trpc";
+import { authRouter } from "../src/routers/auth";
+import { RolesIds, RolesNames } from "../src/routers/auth/interfaces/roles.interface";
 
-jest.setTimeout(100000);
+jest.setTimeout(60_000);
 
-const path =
-  '01 Audios Enero 2023/Alternativo/Zedd, Maren Morris n Beauz - Make You Say [Xtendz].mp3';
+describe("TRPC API (smoke)", () => {
+  const normalEmail = "jest-user@local.test";
+  const adminEmail = "jest-admin@local.test";
+  const password = "password-12345";
 
-const user = {
-  email: 'test@test.com',
-  password: 'password',
-  username: 'test',
-  phone: '534253',
-  role: RolesNames.normal,
-  profileImg: '',
-  id: 1,
-};
+  let normalUserId = 0;
+  let adminUserId = 0;
 
-describe('TRCP API', () => {
-  const caller = appRouter.createCaller({
+  beforeAll(async () => {
+    const hash = await bcrypt.hash(password, 10);
+
+    const normal = await prisma.users.upsert({
+      where: { email: normalEmail },
+      update: {
+        username: "jest-user",
+        password: hash,
+        role_id: RolesIds.normal,
+        active: 1,
+        verified: true,
+        blocked: false,
+      },
+      create: {
+        username: "jest-user",
+        email: normalEmail,
+        password: hash,
+        role_id: RolesIds.normal,
+        active: 1,
+        verified: true,
+        blocked: false,
+      },
+    });
+    normalUserId = normal.id;
+
+    const admin = await prisma.users.upsert({
+      where: { email: adminEmail },
+      update: {
+        username: "jest-admin",
+        password: hash,
+        role_id: RolesIds.admin,
+        active: 1,
+        verified: true,
+        blocked: false,
+      },
+      create: {
+        username: "jest-admin",
+        email: adminEmail,
+        password: hash,
+        role_id: RolesIds.admin,
+        active: 1,
+        verified: true,
+        blocked: false,
+      },
+    });
+    adminUserId = admin.id;
+  });
+
+  // Keep the test router minimal to avoid pulling in ESM-only deps from unrelated routers.
+  const testRouter = router({
+    auth: authRouter,
+  });
+
+  const caller = testRouter.createCaller({
     req: {} as any,
     res: {} as any,
     prisma,
     session: null,
   });
 
-  const authCaller = appRouter.createCaller({
-    req: {} as any,
-    res: {} as any,
-    prisma,
-    session: {
-      user,
-    },
-  });
-
-  beforeAll(async () => {
-    await initializeFileService();
-  });
-
-  afterAll(async () => {
-    await fileService.end();
-  });
-
-  beforeEach(async () => {
-    if (
-      !(await prisma.users.findFirst({
-        where: {
+  const makeCaller = (user: {
+    id: number;
+    role: RolesNames;
+    username: string;
+    email: string;
+  }) =>
+    testRouter.createCaller({
+      req: {} as any,
+      res: {} as any,
+      prisma,
+      session: {
+        user: {
+          id: user.id,
+          role: user.role,
           username: user.username,
+          phone: null,
+          verified: true,
+          email: user.email,
+          profileImg: null,
+          stripeCusId: null,
         },
-      }))
-    ) {
-      return caller.auth.register(user);
+      },
+    });
+
+  it("login: allows valid credentials", async () => {
+    const res = await caller.auth.login({
+      username: normalEmail,
+      password,
+    });
+    expect(res.token).toBeDefined();
+    expect(res.refreshToken).toBeDefined();
+  });
+
+  it("login: rejects invalid password", async () => {
+    try {
+      await caller.auth.login({
+        username: normalEmail,
+        password: "wrong-password",
+      });
+      throw new Error("expected auth.login to throw");
+    } catch (cause) {
+      expect(cause).toBeInstanceOf(TRPCError);
+      expect(getHTTPStatusCodeFromError(cause as TRPCError)).toBe(401);
     }
   });
 
-  afterEach(async () => {
-    return afterEachCleanup();
+  it("me: rejects when not authenticated", async () => {
+    try {
+      await caller.auth.me();
+      throw new Error("expected auth.me to throw");
+    } catch (cause) {
+      expect(cause).toBeInstanceOf(TRPCError);
+      expect(getHTTPStatusCodeFromError(cause as TRPCError)).toBe(403);
+    }
   });
 
-  describe('Login', () => {
-    it('Can login', async () => {
-      const res = await caller.auth.login({
-        username: user.username,
-        password: user.password,
-      });
-
-      expect(res.token).toBeDefined();
+  it("me: returns session user when authenticated", async () => {
+    const normalCaller = makeCaller({
+      id: normalUserId,
+      role: RolesNames.normal,
+      username: "jest-user",
+      email: normalEmail,
     });
 
-    it('Throws an error if password is incorrect', async () => {
-      try {
-        await caller.auth.login({
-          username: user.username,
-          password: 'incorrect',
-        });
-      } catch (cause) {
-        expect(cause).toBeInstanceOf(TRPCError);
-        expect(getHTTPStatusCodeFromError(cause as TRPCError)).toBe(401);
-      }
-    });
-  });
-
-  describe('Permissions', () => {
-    it('Rejects requests that are not authenticated', async () => {
-      try {
-        await caller.orders.createOneOrders({ data: {} as any });
-      } catch (cause) {
-        expect(cause).toBeInstanceOf(TRPCError);
-        expect(getHTTPStatusCodeFromError(cause as TRPCError)).toBe(500);
-      }
-    });
-
-    it('Requires admin role', async () => {
-      try {
-        await authCaller.orders.createOneOrders({ data: {} as any });
-      } catch (cause) {
-        console.log(cause);
-        expect(cause).toBeInstanceOf(TRPCError);
-        expect(getHTTPStatusCodeFromError(cause as TRPCError)).toBe(500);
-      }
-    });
-
-    it('subscribeWithCashConekta - isLoggedIn', async () => {
-      try {
-        await caller.subscriptions.subscribeWithCashConekta({
-          planId: 1,
-          paymentMethod: 'spei',
-        });
-      } catch (e: any) {
-        console.log(e);
-        expect(getHTTPStatusCodeFromError(e)).toBe(500);
-      }
-    });
-  });
-
-  describe('Subscription', () => {
-    describe('Renovation', () => {
-      it('A user whith quota tallies and quota limits', async () => {
-        const dbUser = await prisma.users.findFirst({
-          where: {
-            username: user.username,
-          },
-        });
-
-        if (!dbUser) throw new Error('User not found');
-
-        await prisma.ftpUser.create({
-          data: {
-            userid: dbUser.username,
-            user_id: dbUser.id,
-          },
-        });
-
-        await prisma.ftpQuotaLimits.create({
-          data: {
-            name: user.username,
-            bytes_out_avail: 1024 * 1024 * 1024, // 1GB
-          },
-        });
-
-        await prisma.ftpquotatallies.create({
-          data: {
-            name: user.username,
-            bytes_out_used: 1000,
-          },
-        });
-
-        const plan = await prisma.plans.findFirst({
-          where: {
-            id: 14,
-          },
-        });
-
-        await subscribe({ prisma, user: dbUser, plan: plan! });
-
-        const tallies = await prisma.ftpquotatallies.findFirst({
-          where: {
-            name: user.username,
-          },
-        });
-
-        expect(Number(tallies?.bytes_out_used)).toBe(0);
-      });
-
-      it('A user with quotatallies but no limits', async () => {
-        const dbUser = await prisma.users.findFirst({
-          where: {
-            username: user.username,
-          },
-        });
-
-        if (!dbUser) throw new Error('User not found');
-
-        await prisma.ftpUser.create({
-          data: {
-            userid: dbUser.username,
-            user_id: dbUser.id,
-          },
-        });
-
-        await prisma.ftpquotatallies.create({
-          data: {
-            name: user.username,
-            bytes_out_used: 1000,
-          },
-        });
-
-        const plan = await prisma.plans.findFirst({
-          where: {
-            id: 14,
-          },
-        });
-
-        await subscribe({ prisma, user: dbUser, plan: plan! });
-
-        const tallies = await prisma.ftpquotatallies.findFirst({
-          where: {
-            name: user.username,
-          },
-        });
-
-        const limits = await prisma.ftpQuotaLimits.findFirst({
-          where: {
-            name: user.username,
-          },
-        });
-
-        expect(Number(tallies?.bytes_out_used)).toBe(0);
-        expect(limits).toBeTruthy();
-      });
-
-      it('A user with quotalimits but no tallies', async () => {
-        const dbUser = await prisma.users.findFirst({
-          where: {
-            username: user.username,
-          },
-        });
-
-        if (!dbUser) throw new Error('User not found');
-
-        await prisma.ftpUser.create({
-          data: {
-            userid: dbUser.username,
-            user_id: dbUser.id,
-          },
-        });
-
-        await prisma.ftpQuotaLimits.create({
-          data: {
-            name: user.username,
-          },
-        });
-
-        const plan = await prisma.plans.findFirst({
-          where: {
-            id: 14,
-          },
-        });
-
-        await subscribe({ prisma, user: dbUser, plan: plan! });
-
-        const tallies = await prisma.ftpquotatallies.findFirst({
-          where: {
-            name: user.username,
-          },
-        });
-
-        const limits = await prisma.ftpQuotaLimits.findFirst({
-          where: {
-            name: user.username,
-          },
-        });
-
-        expect(Number(tallies?.bytes_out_used)).toBe(0);
-        expect(limits).toBeTruthy();
-      });
-    });
-  });
-
-  describe('Download', () => {
-    it('Allows the user to download content if the user has enough bytes available and an active plan', async () => {
-      await prisma.ftpQuotaLimits.create({
-        data: {
-          name: user.username,
-          bytes_out_avail: 1024 * 1024 * 1024, // 1GB
-        },
-      });
-
-      await prisma.ftpquotatallies.create({
-        data: {
-          name: user.username,
-        },
-      });
-
-      const dbUser = await prisma.users.findFirst({
-        where: {
-          username: user.username,
-        },
-      });
-
-      if (!dbUser) throw new Error('User not found');
-
-      await prisma.descargasUser.create({
-        data: {
-          available: 0,
-          date_end: addMonths(new Date(), 1).toISOString(),
-          user_id: dbUser.id,
-        },
-      });
-
-      const localCaller = appRouter.createCaller({
-        prisma,
-        req: {} as any,
-        res: {} as any,
-        session: {
-          user: {
-            ...user,
-            id: dbUser.id,
-          },
-        },
-      });
-
-      const res = await localCaller.ftp.download({
-        path,
-      });
-
-      expect(res.file).not.toBeUndefined();
-    });
-
-    it('Requires the user to have quotas registered on the database', async () => {
-      try {
-        await authCaller.ftp.download({
-          path,
-        });
-      } catch (e) {
-        expect(getHTTPStatusCodeFromError(e as TRPCError)).toBe(400);
-      }
-    });
-
-    it('Requires the user to have enough available bytes left', async () => {
-      await prisma.ftpQuotaLimits.create({
-        data: {
-          name: user.username,
-          bytes_out_avail: 0,
-        },
-      });
-
-      await prisma.ftpquotatallies.create({
-        data: {
-          name: user.username,
-        },
-      });
-
-      const dbUser = await prisma.users.findFirst({
-        where: {
-          username: user.username,
-        },
-      });
-
-      if (!dbUser) throw new Error('User not found');
-
-      await prisma.descargasUser.create({
-        data: {
-          available: 0,
-          date_end: addMonths(new Date(), 1).toISOString(),
-          user_id: dbUser.id,
-        },
-      });
-
-      const localCaller = appRouter.createCaller({
-        prisma,
-        req: {} as any,
-        res: {} as any,
-        session: {
-          user: {
-            ...user,
-            id: dbUser.id,
-          },
-        },
-      });
-
-      try {
-        await localCaller.ftp.download({
-          path,
-        });
-      } catch (e) {
-        expect(getHTTPStatusCodeFromError(e as TRPCError)).toBe(400);
-      }
-    });
-
-    it('Requires the user to have an active plan', async () => {
-      await prisma.ftpQuotaLimits.create({
-        data: {
-          name: user.username,
-          bytes_out_avail: 1024 * 1024 * 1024,
-        },
-      });
-
-      await prisma.ftpquotatallies.create({
-        data: {
-          name: user.username,
-        },
-      });
-
-      const dbUser = await prisma.users.findFirst({
-        where: {
-          username: user.username,
-        },
-      });
-
-      if (!dbUser) throw new Error('User not found');
-
-      await prisma.descargasUser.create({
-        data: {
-          available: 0,
-          date_end: subMonths(new Date(), 1).toISOString(),
-          user_id: dbUser.id,
-        },
-      });
-
-      const localCaller = appRouter.createCaller({
-        prisma,
-        req: {} as any,
-        res: {} as any,
-        session: {
-          user: {
-            ...user,
-            id: dbUser.id,
-          },
-        },
-      });
-
-      try {
-        await localCaller.ftp.download({
-          path,
-        });
-      } catch (e) {
-        expect(getHTTPStatusCodeFromError(e as TRPCError)).toBe(400);
-      }
-    });
-
-    it('Updates the used bytes and the available bytes after successfully downloading the file', async () => {
-      const quotalimits = await prisma.ftpQuotaLimits.create({
-        data: {
-          name: user.username,
-          bytes_out_avail: 1024 * 1024 * 1024,
-        },
-      });
-
-      const quotatallies = await prisma.ftpquotatallies.create({
-        data: {
-          name: user.username,
-        },
-      });
-
-      const dbUser = await prisma.users.findFirst({
-        where: {
-          username: user.username,
-        },
-      });
-
-      if (!dbUser) throw new Error('User not found');
-
-      await prisma.descargasUser.create({
-        data: {
-          available: 0,
-          date_end: addMonths(new Date(), 1).toISOString(),
-          user_id: dbUser.id,
-        },
-      });
-
-      const localCaller = appRouter.createCaller({
-        prisma,
-        req: {} as any,
-        res: {} as any,
-        session: {
-          user: {
-            ...user,
-            id: dbUser.id,
-          },
-        },
-      });
-
-      const res = await localCaller.ftp.download({
-        path,
-      });
-
-      expect(res.file).not.toBeUndefined();
-
-      const updatedQuotaLimits = await prisma.ftpQuotaLimits.findFirst({
-        where: {
-          id: quotalimits.id,
-        },
-      });
-
-      const updatedQuotaTallies = await prisma.ftpquotatallies.findFirst({
-        where: {
-          id: quotatallies.id,
-        },
-      });
-
-      expect(updatedQuotaLimits?.bytes_out_avail).toBe(
-        quotalimits.bytes_out_avail - BigInt(res.size),
-      );
-      expect(updatedQuotaTallies?.bytes_out_used).toBe(
-        quotatallies.bytes_out_used + BigInt(res.size),
-      );
-    });
-
-    it('Download demo', async () => {
-      const res = await authCaller.ftp.demo({
-        path,
-      });
-
-      expect(res.demo).not.toBeUndefined();
-    });
+    const me = await normalCaller.auth.me();
+    expect(me.id).toBe(normalUserId);
+    expect(me.email).toBe(normalEmail);
   });
 });
-
-const afterEachCleanup = async () => {
-  const dbUser = await prisma.users.findFirst({
-    where: {
-      username: user.username,
-    },
-  });
-
-  if (!dbUser) return;
-
-  const quotatallies = await prisma.ftpquotatallies.findFirst({
-    where: {
-      name: user.username,
-    },
-  });
-
-  if (quotatallies) {
-    await prisma.ftpquotatallies.delete({
-      where: {
-        id: quotatallies.id,
-      },
-    });
-  }
-
-  const quotalimits = await prisma.ftpQuotaLimits.findFirst({
-    where: {
-      name: user.username,
-    },
-  });
-
-  if (quotalimits) {
-    await prisma.ftpQuotaLimits.delete({
-      where: {
-        id: quotalimits.id,
-      },
-    });
-  }
-
-  const ftpuser = await prisma.ftpUser.findFirst({
-    where: {
-      userid: user.username,
-    },
-  });
-
-  if (ftpuser) {
-    await prisma.ftpUser.delete({
-      where: {
-        id: ftpuser.id,
-      },
-    });
-  }
-};

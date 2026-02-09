@@ -1,0 +1,267 @@
+[
+  {
+    "path": "/",
+    "type": "public",
+    "requiresAuth": false,
+    "requiresRole": null,
+    "sourceFile": "frontend/src/index.tsx",
+    "notes": []
+  },
+  {
+    "path": "/*",
+    "type": "public",
+    "requiresAuth": false,
+    "requiresRole": null,
+    "sourceFile": "frontend/src/index.tsx",
+    "notes": []
+  },
+  {
+    "path": "/actualizar-planes",
+    "type": "app",
+    "requiresAuth": true,
+    "requiresRole": null,
+    "sourceFile": "frontend/src/index.tsx",
+    "notes": [
+      "Wrapped with <AuthRoute> (redirects to /auth if no token)."
+    ]
+  },
+  {
+    "path": "/admin",
+    "type": "admin",
+    "requiresAuth": true,
+    "requiresRole": "admin",
+    "sourceFile": "frontend/src/index.tsx",
+    "notes": [
+      "Wrapped with <AuthRoute> (redirects to /auth if no token).",
+      "Admin pages also check currentUser.role === 'admin' inside each page component."
+    ]
+  },
+  {
+    "path": "/admin/almacenamiento",
+    "type": "admin",
+    "requiresAuth": true,
+    "requiresRole": "admin",
+    "sourceFile": "frontend/src/index.tsx",
+    "notes": [
+      "Admin pages also check currentUser.role === 'admin' inside each page component."
+    ]
+  },
+  {
+    "path": "/admin/analitica",
+    "type": "admin",
+    "requiresAuth": true,
+    "requiresRole": "admin",
+    "sourceFile": "frontend/src/index.tsx",
+    "notes": [
+      "Admin pages also check currentUser.role === 'admin' inside each page component."
+    ]
+  },
+  {
+    "path": "/admin/catalogo",
+    "type": "admin",
+    "requiresAuth": true,
+    "requiresRole": "admin",
+    "sourceFile": "frontend/src/index.tsx",
+    "notes": [
+      "Admin pages also check currentUser.role === 'admin' inside each page component."
+    ]
+  },
+  {
+    "path": "/admin/crm",
+    "type": "admin",
+    "requiresAuth": true,
+    "requiresRole": "admin",
+    "sourceFile": "frontend/src/index.tsx",
+    "notes": [
+      "Admin pages also check currentUser.role === 'admin' inside each page component."
+    ]
+  },
+  {
+    "path": "/admin/cupones",
+    "type": "admin",
+    "requiresAuth": true,
+    "requiresRole": "admin",
+    "sourceFile": "frontend/src/index.tsx",
+    "notes": [
+      "Admin pages also check currentUser.role === 'admin' inside each page component."
+    ]
+  },
+  {
+    "path": "/admin/dominios-bloqueados",
+    "type": "admin",
+    "requiresAuth": true,
+    "requiresRole": "admin",
+    "sourceFile": "frontend/src/index.tsx",
+    "notes": [
+      "Admin pages also check currentUser.role === 'admin' inside each page component."
+    ]
+  },
+  {
+    "path": "/admin/historial-descargas",
+    "type": "admin",
+    "requiresAuth": true,
+    "requiresRole": "admin",
+    "sourceFile": "frontend/src/index.tsx",
+    "notes": [
+      "Admin pages also check currentUser.role === 'admin' inside each page component."
+    ]
+  },
+  {
+    "path": "/admin/historialCheckout",
+    "type": "admin",
+    "requiresAuth": true,
+    "requiresRole": "admin",
+    "sourceFile": "frontend/src/index.tsx",
+    "notes": [
+      "Admin pages also check currentUser.role === 'admin' inside each page component."
+    ]
+  },
+  {
+    "path": "/admin/live",
+    "type": "admin",
+    "requiresAuth": true,
+    "requiresRole": "admin",
+    "sourceFile": "frontend/src/index.tsx",
+    "notes": [
+      "Admin pages also check currentUser.role === 'admin' inside each page component."
+    ]
+  },
+  {
+    "path": "/admin/ordenes",
+    "type": "admin",
+    "requiresAuth": true,
+    "requiresRole": "admin",
+    "sourceFile": "frontend/src/index.tsx",
+    "notes": [
+      "Admin pages also check currentUser.role === 'admin' inside each page component."
+    ]
+  },
+  {
+    "path": "/admin/planesAdmin",
+    "type": "admin",
+    "requiresAuth": true,
+    "requiresRole": "admin",
+    "sourceFile": "frontend/src/index.tsx",
+    "notes": [
+      "Admin pages also check currentUser.role === 'admin' inside each page component."
+    ]
+  },
+  {
+    "path": "/admin/telefonos-bloqueados",
+    "type": "admin",
+    "requiresAuth": true,
+    "requiresRole": "admin",
+    "sourceFile": "frontend/src/index.tsx",
+    "notes": [
+      "Admin pages also check currentUser.role === 'admin' inside each page component."
+    ]
+  },
+  {
+    "path": "/admin/usuarios",
+    "type": "admin",
+    "requiresAuth": true,
+    "requiresRole": "admin",
+    "sourceFile": "frontend/src/index.tsx",
+    "notes": [
+      "Admin pages also check currentUser.role === 'admin' inside each page component."
+    ]
+  },
+  {
+    "path": "/auth",
+    "type": "auth",
+    "requiresAuth": false,
+    "requiresRole": null,
+    "sourceFile": "frontend/src/index.tsx",
+    "notes": [
+      "Wrapped with <NotAuthRoute> (redirects to / if already logged in)."
+    ]
+  },
+  {
+    "path": "/auth/recuperar",
+    "type": "auth",
+    "requiresAuth": false,
+    "requiresRole": null,
+    "sourceFile": "frontend/src/index.tsx",
+    "notes": []
+  },
+  {
+    "path": "/auth/registro",
+    "type": "auth",
+    "requiresAuth": false,
+    "requiresRole": null,
+    "sourceFile": "frontend/src/index.tsx",
+    "notes": []
+  },
+  {
+    "path": "/auth/reset-password",
+    "type": "auth",
+    "requiresAuth": false,
+    "requiresRole": null,
+    "sourceFile": "frontend/src/index.tsx",
+    "notes": []
+  },
+  {
+    "path": "/comprar",
+    "type": "app",
+    "requiresAuth": true,
+    "requiresRole": null,
+    "sourceFile": "frontend/src/index.tsx",
+    "notes": [
+      "Wrapped with <AuthRoute> (redirects to /auth if no token)."
+    ]
+  },
+  {
+    "path": "/comprar/success",
+    "type": "app",
+    "requiresAuth": true,
+    "requiresRole": null,
+    "sourceFile": "frontend/src/index.tsx",
+    "notes": [
+      "Wrapped with <AuthRoute> (redirects to /auth if no token)."
+    ]
+  },
+  {
+    "path": "/descargas",
+    "type": "app",
+    "requiresAuth": true,
+    "requiresRole": null,
+    "sourceFile": "frontend/src/index.tsx",
+    "notes": [
+      "Wrapped with <AuthRoute> (redirects to /auth if no token)."
+    ]
+  },
+  {
+    "path": "/instrucciones",
+    "type": "public",
+    "requiresAuth": false,
+    "requiresRole": null,
+    "sourceFile": "frontend/src/index.tsx",
+    "notes": []
+  },
+  {
+    "path": "/legal",
+    "type": "public",
+    "requiresAuth": false,
+    "requiresRole": null,
+    "sourceFile": "frontend/src/index.tsx",
+    "notes": []
+  },
+  {
+    "path": "/micuenta",
+    "type": "app",
+    "requiresAuth": true,
+    "requiresRole": null,
+    "sourceFile": "frontend/src/index.tsx",
+    "notes": [
+      "Wrapped with <AuthRoute> (redirects to /auth if no token)."
+    ]
+  },
+  {
+    "path": "/planes",
+    "type": "public",
+    "requiresAuth": false,
+    "requiresRole": null,
+    "sourceFile": "frontend/src/index.tsx",
+    "notes": []
+  }
+]
