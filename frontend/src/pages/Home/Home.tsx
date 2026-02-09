@@ -34,6 +34,7 @@ import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { SUPPORT_CHAT_URL } from '../../utils/supportChat';
 import { GROWTH_METRICS, trackGrowthMetric } from '../../utils/growthMetrics';
+import { formatBytes } from '../../utils/format';
 
 interface IAlbumData {
   name: string;
@@ -722,30 +723,14 @@ function Home() {
     : files;
   const sortedFiles = sortArrayByName(visibleFiles) as IFiles[];
   const isRootView = !showPagination && pastFile.length === 0;
-  const formatGb = (sizeInBytes?: number | null) => {
-    if (sizeInBytes == null || !Number.isFinite(sizeInBytes)) {
-      return '—';
-    }
-    const gbValue = sizeInBytes / (1024 * 1024 * 1024);
-    const decimals = gbValue >= 1000 ? 0 : gbValue >= 100 ? 1 : 2;
-    return `${new Intl.NumberFormat('es-MX', {
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-    }).format(gbValue)} GB`;
-  };
+  const formatSize = (sizeInBytes?: number | null) => formatBytes(sizeInBytes);
   const totalVisibleBytes = sortedFiles.reduce((total, file) => {
     if (file.size == null || !Number.isFinite(file.size)) {
       return total;
     }
     return total + file.size;
   }, 0);
-  const totalVisibleGb = totalVisibleBytes / (1024 * 1024 * 1024);
-  const totalVisibleDecimals =
-    totalVisibleGb >= 1000 ? 0 : totalVisibleGb >= 100 ? 1 : 2;
-  const totalVisibleLabel = new Intl.NumberFormat('es-MX', {
-    minimumFractionDigits: totalVisibleDecimals,
-    maximumFractionDigits: totalVisibleDecimals,
-  }).format(totalVisibleGb);
+  const totalVisibleLabel = formatBytes(totalVisibleBytes);
   const itemCountLabel = visibleFiles.length === 1 ? 'elemento' : 'elementos';
   const hasLoadError = loadError.trim() !== '';
   const isSearching = searchValue.trim() !== '';
@@ -904,7 +889,7 @@ function Home() {
                 <span className="bb-mini-pill">
                   {sortedFiles.length} {itemCountLabel}
                 </span>
-                <span className="bb-mini-pill">{totalVisibleLabel} GB</span>
+                <span className="bb-mini-pill">{totalVisibleLabel}</span>
               </div>
             </div>
             <button
@@ -982,7 +967,7 @@ function Home() {
             </div>
           <div className="bb-root-grid">
             {sortedFiles.map((file: IFiles, idx: number) => {
-              const sizeLabel = formatGb(file.size);
+              const sizeLabel = formatSize(file.size);
               const isFolder = file.type === 'd';
               const kind = getFileVisualKind(file);
               return (
@@ -1070,7 +1055,7 @@ function Home() {
                 const gbSize = file.size != null && Number.isFinite(file.size)
                   ? file.size / (1024 * 1024 * 1024)
                   : 0;
-                const sizeLabel = formatGb(file.size);
+                const sizeLabel = formatSize(file.size);
                 const isFolder = file.type === 'd';
                 const allowFolderDownload = isFolder && file.size != null && gbSize <= 50;
                 const fileCategoryLabel = getFileCategoryLabel(file);
@@ -1212,9 +1197,7 @@ function Home() {
         onHide={closeConditionModal}
         action={() => startAlbumDownload(albumData, albumData.idx)}
         title="Descarga de Archivos"
-        message={`El siguiente archivo pesa ${
-          albumData.gbSize && albumData.gbSize.toFixed(2)
-        }GB, presiona confirmar para continuar con la descarga.`}
+        message={`El siguiente archivo pesa ${formatBytes(albumData.size)}, presiona confirmar para continuar con la descarga.`}
       />
       <VerifyUpdatePhoneModal
         showModal={showVerifyModal}

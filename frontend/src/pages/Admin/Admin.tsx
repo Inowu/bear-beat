@@ -42,6 +42,7 @@ import {
   setAdminAccessBackup,
 } from "../../utils/authStorage";
 import { useSafeSSE } from "../../utils/sse";
+import { formatDateShort, formatInt } from "../../utils/format";
 
 export interface IAdminFilter {
   page: number;
@@ -341,13 +342,6 @@ function Admin() {
   const activeFilterLabel = filters.active === 1 ? "Activos" : filters.active === 0 ? "Inactivos" : "Todos";
   const rangeStart = totalUsers === 0 ? 0 : filters.page * filters.limit + 1;
   const rangeEnd = Math.min(filters.page * filters.limit + users.length, totalUsers);
-  const formatRegisteredDate = (dateValue: Date | string) => {
-    const parsedDate = dateValue instanceof Date ? dateValue : new Date(dateValue);
-    if (Number.isNaN(parsedDate.getTime())) {
-      return "—";
-    }
-    return parsedDate.toLocaleDateString();
-  };
   const retryUsersLoad = () => {
     filterUsers(filters);
     trpc.users.countUsers.query().then(setTotalRegistered).catch(() => setTotalRegistered(null));
@@ -362,7 +356,7 @@ function Admin() {
               <h1 className="admin-title">Usuarios</h1>
               {totalRegistered !== null && (
                 <span className="header__total-registered">
-                  Registrados: {totalRegistered.toLocaleString()}
+                  Registrados: {formatInt(totalRegistered)}
                 </span>
               )}
             </div>
@@ -370,14 +364,14 @@ function Admin() {
             <div className="admin-insights">
               <span className="insight-pill">
                 <Users size={14} />
-                {totalUsers.toLocaleString()} resultados
+                {formatInt(totalUsers)} resultados
               </span>
               <span className="insight-pill">
                 <Filter size={14} />
                 {activeFilterLabel}
               </span>
               <span className="insight-pill">
-                Mostrando {rangeStart.toLocaleString()}-{rangeEnd.toLocaleString()}
+                Mostrando {formatInt(rangeStart)}-{formatInt(rangeEnd)}
               </span>
             </div>
           </div>
@@ -396,7 +390,7 @@ function Admin() {
                 </select>
               </div>
               <div className="select-input">
-                <label htmlFor="admin-limit-filter">Página</label>
+                <label htmlFor="admin-limit-filter">Por página</label>
                 <select
                   id="admin-limit-filter"
                   value={filters.limit}
@@ -513,7 +507,7 @@ function Admin() {
                           {user.phone || "—"}
                         </td>
                         <td>
-                          <span className="date-pill">{formatRegisteredDate(user.registered_on)}</span>
+                          <span className="date-pill">{formatDateShort(user.registered_on)}</span>
                         </td>
                         {filters.active !== 2 && (
                           <td>
@@ -671,7 +665,7 @@ function Admin() {
                     </div>
                     <div className="admin-mobile-card__foot">
                       <span>{user.phone || "Sin teléfono"}</span>
-                      <span>{formatRegisteredDate(user.registered_on)}</span>
+                      <span>{formatDateShort(user.registered_on)}</span>
                     </div>
                   </div>
                 ))

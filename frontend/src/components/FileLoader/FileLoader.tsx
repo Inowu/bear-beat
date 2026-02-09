@@ -6,6 +6,7 @@ import { useUserContext } from "../../contexts/UserContext";
 import { useDownloadContext } from "../../contexts/DownloadContext";
 import trpc from "../../api";
 import { useSafeSSE } from "../../utils/sse";
+import { formatBytes } from "../../utils/format";
 
 export const FileLoader = () => {
   const { currentUser, userToken } = useUserContext();
@@ -67,9 +68,7 @@ export const FileLoader = () => {
               <div className="title-contain">
                 <p>{currentFile && currentFile.name}</p>
                 <p>
-                  {currentFile &&
-                    (currentFile.size / (1024 * 1024 * 1024)).toFixed(2)}{" "}
-                  GB
+                  {currentFile ? formatBytes(currentFile.size) : "—"}
                 </p>
               </div>
             </div>

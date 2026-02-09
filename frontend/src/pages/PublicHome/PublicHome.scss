@@ -85,7 +85,7 @@
 
 @media (max-width: 640px) {
   .home-main {
-    padding-bottom: 112px;
+    padding-bottom: 96px;
   }
 }
 
@@ -658,6 +658,7 @@
   gap: 12px;
   padding: 10px 0;
   border-top: 1px solid color-mix(in srgb, var(--ph-border) 60%, transparent);
+  overflow: hidden;
 }
 
 .social-proof__row:first-of-type {
@@ -666,6 +667,7 @@
 
 .social-proof__left {
   min-width: 0;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -684,6 +686,9 @@
   color: color-mix(in srgb, var(--ph-text-muted) 92%, transparent);
   font-size: 12px;
   line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .social-proof__artist {
@@ -705,6 +710,7 @@
   color: color-mix(in srgb, var(--ph-text-muted) 92%, transparent);
   font-size: 13px;
   white-space: nowrap;
+  flex: 0 0 auto;
 }
 
 .social-proof__neutral {
@@ -990,6 +996,13 @@
   filter: brightness(1.1) contrast(1.05);
 }
 
+.pricing__payments-note {
+  margin-top: 8px;
+  color: color-mix(in srgb, var(--ph-text-muted) 92%, transparent);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 /* I. FAQ */
 .home-faq {
   padding: 34px 0 10px;
@@ -1268,7 +1281,7 @@ details[open] > .home-faq__summary svg {
   right: 0;
   bottom: 0;
   z-index: 60;
-  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
   background: color-mix(in srgb, var(--ph-bg) 84%, black);
   border-top: 1px solid color-mix(in srgb, var(--ph-border) 70%, transparent);
   backdrop-filter: blur(14px);
@@ -1277,37 +1290,44 @@ details[open] > .home-faq__summary svg {
 .home-sticky__inner {
   width: min(1120px, calc(100% - 16px));
   margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  grid-template-rows: auto auto;
-  gap: 6px 10px;
+  display: flex;
   align-items: center;
+  gap: 10px;
 }
 
 .home-sticky__cta {
-  grid-column: 1 / 2;
-  justify-content: center;
-  padding: 12px 14px;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 10px 14px;
   border-radius: 14px;
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
 }
 
-.home-sticky__micro {
-  grid-column: 1 / 2;
-  color: color-mix(in srgb, var(--ph-text-muted) 92%, transparent);
-  font-size: 12px;
+.home-sticky__cta-label {
+  font-weight: 900;
+  line-height: 1.08;
+}
+
+.home-sticky__cta-micro {
+  font-size: 11px;
   font-weight: 750;
+  line-height: 1.1;
+  opacity: 0.9;
 }
 
 .home-sticky__close {
-  grid-column: 2 / 3;
-  grid-row: 1 / 3;
   appearance: none;
   border: 1px solid color-mix(in srgb, var(--ph-border) 70%, transparent);
   background: color-mix(in srgb, var(--ph-bg-card) 84%, transparent);
   color: var(--ph-text-heading);
   border-radius: 14px;
-  width: 38px;
-  height: 38px;
+  width: 34px;
+  height: 34px;
   display: grid;
   place-items: center;
   cursor: pointer;

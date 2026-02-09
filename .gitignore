@@ -1,4 +1,6 @@
 node_modules
+.DS_Store
+**/.DS_Store
 list-ftp.sh
 ftp-stats.py
 # Local Netlify folder

@@ -97,9 +97,9 @@ export default function StickyMobileCta(props: {
           className="home-cta home-cta--primary home-sticky__cta"
           onClick={onPrimaryCtaClick}
         >
-          {ctaLabel}
+          <span className="home-sticky__cta-label">{ctaLabel}</span>
+          <span className="home-sticky__cta-micro">Cancela cuando quieras</span>
         </Link>
-        <span className="home-sticky__micro">Cancela cuando quieras</span>
         <button type="button" className="home-sticky__close" onClick={dismiss} aria-label="Ocultar barra">
           <X size={16} aria-hidden />
         </button>

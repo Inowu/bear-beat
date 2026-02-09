@@ -133,6 +133,9 @@ function LoginForm() {
           <ChatButton />
           <form className="auth-form auth-login-form" onSubmit={formik.handleSubmit} autoComplete="on">
             <div className={`c-row ${showUsernameError ? "is-invalid" : ""}`}>
+              <label htmlFor="username" className="auth-field-label">
+                Correo electrónico
+              </label>
               <div className="auth-login-input-wrap">
                 <Mail className="auth-login-input-icon" aria-hidden />
                 <input
@@ -152,6 +155,9 @@ function LoginForm() {
               )}
             </div>
             <div className={`c-row ${showPasswordError ? "is-invalid" : ""}`}>
+              <label htmlFor="password" className="auth-field-label">
+                Contraseña
+              </label>
               <div className="auth-login-input-wrap">
                 <Lock className="auth-login-input-icon" aria-hidden />
                 <PasswordInput

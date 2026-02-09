@@ -161,6 +161,13 @@ function TopList(props: {
   );
 }
 
+function titleWithTopCount(base: string, count: number): string {
+  const n = Number(count);
+  if (!Number.isFinite(n) || n <= 0) return base;
+  if (n < 3) return `${base} · Top ${n}`;
+  return base;
+}
+
 export default function SocialProof(props: {
   audio: SocialTopItem[];
   video: SocialTopItem[];
@@ -211,9 +218,27 @@ export default function SocialProof(props: {
         </div>
 
         <div className="social-proof__grid" aria-label="Top descargas">
-          {hasAudio && <TopList title="Audios" items={audio} maxRows={5} />}
-          {hasVideo && <TopList title="Videos" items={video} maxRows={5} />}
-          {hasKaraoke && <TopList title="Karaokes" items={karaoke} maxRows={5} />}
+          {hasAudio && (
+            <TopList
+              title={titleWithTopCount("Audios", audio.length)}
+              items={audio}
+              maxRows={Math.min(5, audio.length)}
+            />
+          )}
+          {hasVideo && (
+            <TopList
+              title={titleWithTopCount("Videos", video.length)}
+              items={video}
+              maxRows={Math.min(5, video.length)}
+            />
+          )}
+          {hasKaraoke && (
+            <TopList
+              title={titleWithTopCount("Karaokes", karaoke.length)}
+              items={karaoke}
+              maxRows={Math.min(5, karaoke.length)}
+            />
+          )}
         </div>
       </div>
 
@@ -231,9 +256,27 @@ export default function SocialProof(props: {
         <Modal.Body>
           <p className="home-demo-modal__sub">Top real por categoría (últimos meses).</p>
           <div className="social-proof__grid" aria-label="Top descargas completo">
-            {hasAudio && <TopList title="Audios" items={audio} maxRows={20} />}
-            {hasVideo && <TopList title="Videos" items={video} maxRows={20} />}
-            {hasKaraoke && <TopList title="Karaokes" items={karaoke} maxRows={20} />}
+            {hasAudio && (
+              <TopList
+                title={titleWithTopCount("Audios", audio.length)}
+                items={audio}
+                maxRows={Math.min(20, audio.length)}
+              />
+            )}
+            {hasVideo && (
+              <TopList
+                title={titleWithTopCount("Videos", video.length)}
+                items={video}
+                maxRows={Math.min(20, video.length)}
+              />
+            )}
+            {hasKaraoke && (
+              <TopList
+                title={titleWithTopCount("Karaokes", karaoke.length)}
+                items={karaoke}
+                maxRows={Math.min(20, karaoke.length)}
+              />
+            )}
           </div>
         </Modal.Body>
       </Modal>

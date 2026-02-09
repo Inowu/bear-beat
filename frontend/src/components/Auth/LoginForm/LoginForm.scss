@@ -117,6 +117,16 @@
     margin: 0;
   }
 
+  .auth-field-label {
+    display: block;
+    margin: 0 0 6px;
+    padding: 0 8px;
+    font-size: 13px;
+    font-weight: 750;
+    letter-spacing: 0.01em;
+    color: color-mix(in srgb, var(--auth-login-subtitle) 92%, transparent);
+  }
+
   /* Wrapper con icono (Mail / Lock): igual que Registro; dark = bg-slate-950/slate-700, focus cyan */
   .auth-login-input-wrap {
     position: relative;

@@ -143,21 +143,26 @@ function ForgotPasswordForm() {
             formik.handleSubmit(e);
           }}
         >
-          <div className="c-row auth-recover-email-wrap">
-            <Mail className="auth-recover-email-icon" aria-hidden />
-            <input
-              placeholder="Correo electrónico"
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              value={formik.values.email}
-              onChange={formik.handleChange}
-              className="auth-login-input auth-recover-email-input"
-            />
-            {formik.errors.email && (
-              <div className="error-formik">{formik.errors.email}</div>
-            )}
+          <div className="c-row">
+            <label htmlFor="email" className="auth-field-label">
+              Correo electrónico
+            </label>
+            <div className="auth-recover-email-wrap">
+              <Mail className="auth-recover-email-icon" aria-hidden />
+              <input
+                placeholder="Correo electrónico"
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                value={formik.values.email}
+                onChange={formik.handleChange}
+                className="auth-login-input auth-recover-email-input"
+              />
+              {formik.errors.email && (
+                <div className="error-formik">{formik.errors.email}</div>
+              )}
+            </div>
           </div>
           <Turnstile
             onVerify={handleTurnstileSuccess}

@@ -64,10 +64,22 @@ export default function Pricing(props: {
 
   const paymentMethods = useMemo<PaymentMethodId[]>(() => {
     const methods = new Set<PaymentMethodId>(["visa", "mastercard", "amex"]);
-    if (plan?.hasPaypal) methods.add("paypal");
-    if (plan?.currency === "mxn") methods.add("spei");
+    // Trial is Stripe/card-only. Avoid showing PayPal/SPEI next to the trial message.
+    if (!hasTrial) {
+      if (plan?.hasPaypal) methods.add("paypal");
+      if (plan?.currency === "mxn") methods.add("spei");
+    }
     return Array.from(methods);
-  }, [plan]);
+  }, [plan, hasTrial]);
+
+  const altPaymentLabel = useMemo(() => {
+    const items: string[] = [];
+    if (plan?.hasPaypal) items.push("PayPal");
+    if (plan?.currency === "mxn") items.push("SPEI");
+    return items.join(" / ");
+  }, [plan?.currency, plan?.hasPaypal]);
+
+  const showAltPaymentsNote = Boolean(hasTrial && altPaymentLabel);
 
   return (
     <section className="pricing" aria-label="Precio">
@@ -154,6 +166,11 @@ export default function Pricing(props: {
                 className="pricing__payment-logos"
                 ariaLabel="Métodos de pago aceptados"
               />
+              {showAltPaymentsNote && (
+                <div className="pricing__payments-note" role="note">
+                  La prueba aplica solo con tarjeta. Otros métodos ({altPaymentLabel}) se muestran como opciones sin prueba al activar.
+                </div>
+              )}
             </div>
           </div>
         </div>

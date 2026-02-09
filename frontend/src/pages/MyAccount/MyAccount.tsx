@@ -35,6 +35,7 @@ import trpc from "../../api";
 import Visa from "../../assets/images/cards/visa.png";
 
 import { GROWTH_METRICS, getGrowthAttribution, trackGrowthMetric } from "../../utils/growthMetrics";
+import { formatDateShort, formatInt } from "../../utils/format";
 
 const stripeKey =
   process.env.REACT_APP_ENVIRONMENT === "development"
@@ -333,7 +334,7 @@ function MyAccount() {
             )}
             <div className="ma-storage">
               <div className="ma-storage-head">
-                <span>Almacenamiento usado</span>
+                <span>Cuota mensual / usado este ciclo</span>
                 <strong>{storagePercent}%</strong>
               </div>
               <div className="ma-progress-track">
@@ -342,7 +343,9 @@ function MyAccount() {
                   style={{ width: `${Math.min(100, Math.max(2, storagePercent))}%` }}
                 />
               </div>
-              <p className="ma-storage-amount">{usedGb} GB de {availableGb} GB</p>
+              <p className="ma-storage-amount">
+                {formatInt(availableGb)} GB/mes · usados: {formatInt(usedGb)} GB este ciclo
+              </p>
             </div>
           </div>
           {currentUser?.hasActiveSubscription &&
@@ -391,7 +394,7 @@ function MyAccount() {
                   />
                 </div>
                 <p className="ma-ftp-expiration">
-                  Expiración: {currentUser.ftpAccount.expiration?.toDateString?.() ?? "—"}
+                  Expiración: {formatDateShort(currentUser.ftpAccount.expiration ?? null)}
                 </p>
                 <div className="ma-ftp-actions">
                   <button
@@ -436,7 +439,7 @@ function MyAccount() {
                   {orders.length > 0 ? (
                     orders.map((order: IOrders, index: number) => (
                       <tr key={"order_" + index} className="ma-table-row">
-                        <td>{order.date_order.toDateString()}</td>
+                        <td>{formatDateShort(order.date_order)}</td>
                         <td className="ma-mono">{order.id}</td>
                         <td>${order.total_price}.00</td>
                         <td>{getStatusBadge(order.status)}</td>
