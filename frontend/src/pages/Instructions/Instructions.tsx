@@ -87,7 +87,7 @@ const DOWNLOAD_METHODS: DownloadMethod[] = [
 
 function Instructions() {
   return (
-    <main className="instructions2026">
+    <div className="instructions2026" role="region" aria-label="Instrucciones de descarga">
       <div className="instructions2026__container">
         <header className="instructions2026__hero">
           <p className="instructions2026__eyebrow">Guía de descarga</p>
@@ -211,7 +211,7 @@ function Instructions() {
           </a>
         </section>
       </div>
-    </main>
+    </div>
   );
 }
 

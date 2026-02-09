@@ -26,6 +26,7 @@ import { useCookies } from "react-cookie";
 import { trackInitiateCheckout } from "../../utils/facebookPixel";
 import { generateEventId } from "../../utils/marketingIds";
 import { getConektaFingerprint } from "../../utils/conektaCollect";
+import { formatInt } from "../../utils/format";
 
 type CheckoutMethod = "card" | "spei" | "oxxo" | "bbva";
 
@@ -284,6 +285,12 @@ function Checkout() {
       currency: plan.moneda?.toUpperCase() ?? null,
       amount: Number(plan.price) || null,
     });
+    trackGrowthMetric(GROWTH_METRICS.CHECKOUT_START, {
+      planId: plan.id,
+      currency: plan.moneda?.toUpperCase() ?? null,
+      amount: Number(plan.price) || null,
+      method: "unknown",
+    });
     const requested = typeof requestedMethod === "string" ? requestedMethod.trim().toLowerCase() : "";
     const requestedAsMethod = (["card", "spei", "bbva", "oxxo"] as const).includes(
       requested as any,
@@ -377,6 +384,14 @@ function Checkout() {
           ? "El pago con tarjeta no está disponible en este momento. Intenta SPEI (recurrente) o abre soporte por chat."
           : msg || "Error al preparar el pago. Intenta de nuevo."
       );
+      trackGrowthMetric(GROWTH_METRICS.CHECKOUT_ERROR, {
+        method: "card",
+        planId: plan.id,
+        currency,
+        amount: value,
+        reason: msg || "stripe_checkout_failed",
+        errorCode: isProcedureMissing ? "procedure_missing" : "provider_error",
+      });
       setShowError(true);
       setRedirecting(false);
       setProcessingMethod(null);
@@ -419,6 +434,14 @@ function Checkout() {
           error?.data?.message ??
           error?.message ??
           "No pudimos generar la referencia. Intenta de nuevo o abre soporte por chat.";
+        trackGrowthMetric(GROWTH_METRICS.CHECKOUT_ERROR, {
+          method: "spei",
+          planId: plan.id,
+          currency: (plan.moneda?.toUpperCase() || "USD").toUpperCase(),
+          amount: Number(plan.price) || null,
+          reason: msg,
+          errorCode: "provider_error",
+        });
         setErrorMessage(msg);
         setShowError(true);
       } finally {
@@ -463,6 +486,14 @@ function Checkout() {
         error?.data?.message ??
         error?.message ??
         "No pudimos generar la referencia de pago en efectivo. Intenta de nuevo o abre soporte por chat.";
+      trackGrowthMetric(GROWTH_METRICS.CHECKOUT_ERROR, {
+        method: "oxxo",
+        planId: plan.id,
+        currency: (plan.moneda?.toUpperCase() || "USD").toUpperCase(),
+        amount: Number(plan.price) || null,
+        reason: msg,
+        errorCode: "provider_error",
+      });
       setErrorMessage(msg);
       setShowError(true);
     } finally {
@@ -532,6 +563,14 @@ function Checkout() {
         error?.data?.message ??
         error?.message ??
         "No pudimos abrir el pago BBVA. Intenta SPEI/Efectivo o tarjeta.";
+      trackGrowthMetric(GROWTH_METRICS.CHECKOUT_ERROR, {
+        method: "bbva",
+        planId: plan.id,
+        currency,
+        amount: value,
+        reason: msg,
+        errorCode: "provider_error",
+      });
       setErrorMessage(msg);
       setShowError(true);
       setRedirecting(false);
@@ -581,9 +620,10 @@ function Checkout() {
     parseInt(plan?.price || "0", 10) * (discount / 100)
   ).toFixed(2);
 
+  const quotaGb = Number(plan?.gigas ?? 500);
   const benefits = [
-    "Acceso FTP Ilimitado",
-    "Sin Límite de Velocidad",
+    "Descargas por FTP (recomendado para carpetas grandes)",
+    `Cuota mensual clara: ${formatInt(quotaGb)} GB/mes`,
     "Cancela cuando quieras",
   ];
   const checkoutSteps = [
@@ -717,7 +757,7 @@ function Checkout() {
             </p>
             {selectedMethod === "card" && trialConfig?.enabled && trialConfig.eligible !== false && (
               <p className="checkout-summary__trial" role="note">
-                Incluye {trialConfig.days} días gratis con tarjeta (Stripe) · {trialConfig.gb} GB de descarga incluidos.
+                Incluye {formatInt(trialConfig.days)} días gratis con tarjeta (Stripe) · {formatInt(trialConfig.gb)} GB de descarga incluidos.
               </p>
             )}
           </aside>

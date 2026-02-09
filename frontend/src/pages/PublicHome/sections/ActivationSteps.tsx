@@ -32,14 +32,14 @@ export default function ActivationSteps(props: {
           </p>
         </div>
 
-        <div className="activation-steps__grid" role="list" aria-label="Pasos de activación">
+        <ol className="activation-steps__grid" aria-label="Pasos de activación">
           {STEPS.map((step) => (
-            <article key={step.title} className="activation-steps__card" role="listitem">
+            <li key={step.title} className="activation-steps__card">
               <h3>{step.title}</h3>
               <p>{step.body}</p>
-            </article>
+            </li>
           ))}
-        </div>
+        </ol>
 
         <div className="activation-steps__cta">
           <Link

@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { trackManyChatConversion, MC_EVENTS } from '../../utils/manychatPixel';
 import { AlertTriangle, RefreshCw, Layers3, ShieldCheck, Zap, MessageCircle } from 'lucide-react';
 import PaymentMethodLogos, { type PaymentMethodId } from '../../components/PaymentMethodLogos/PaymentMethodLogos';
+import { formatInt, formatTB } from '../../utils/format';
 
 function detectPreferredCurrency(): "mxn" | "usd" {
   if (typeof window === "undefined") return "usd";
@@ -19,6 +20,12 @@ function detectPreferredCurrency(): "mxn" | "usd" {
 function Plans() {
   const { currentUser } = useUserContext();
   const [plans, setPlans] = useState<IPlans[]>([]);
+  const [catalogSummary, setCatalogSummary] = useState<{
+    totalFiles: number;
+    totalGB: number;
+    totalGenres: number;
+    error?: string;
+  } | null>(null);
   const [trialConfig, setTrialConfig] = useState<{
     enabled: boolean;
     days: number;
@@ -58,6 +65,21 @@ function Plans() {
         if (!cancelled) setTrialConfig(cfg);
       } catch {
         if (!cancelled) setTrialConfig({ enabled: false, days: 0, gb: 0, eligible: null });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const summary: any = await trpc.catalog.getPublicCatalogSummary.query();
+        if (!cancelled) setCatalogSummary(summary);
+      } catch {
+        if (!cancelled) setCatalogSummary(null);
       }
     })();
     return () => {
@@ -144,11 +166,24 @@ function Plans() {
 
     return Array.from(methods);
   }, [sortedPlans]);
-  const proofItems = [
-    { value: "195,727", label: "archivos disponibles" },
-    { value: "12,350 GB", label: "catálogo total" },
-    { value: "209 géneros", label: "para responder pedidos" },
-  ];
+  const proofItems = useMemo(() => {
+    const hasLive =
+      Boolean(catalogSummary) &&
+      !catalogSummary?.error &&
+      Number(catalogSummary?.totalFiles ?? 0) > 0 &&
+      Number(catalogSummary?.totalGB ?? 0) > 0;
+
+    const totalFiles = hasLive ? Number(catalogSummary?.totalFiles ?? 0) : 195_727;
+    const totalGB = hasLive ? Number(catalogSummary?.totalGB ?? 0) : 12_350.1;
+    const totalGenres = hasLive ? Number(catalogSummary?.totalGenres ?? 0) : 209;
+    const totalTB = totalGB / 1000;
+
+    return [
+      { value: formatInt(totalFiles), label: "archivos disponibles" },
+      { value: formatTB(totalTB), label: "catálogo total" },
+      { value: `${formatInt(totalGenres)} géneros`, label: "para responder pedidos" },
+    ];
+  }, [catalogSummary]);
   const riskAnchor =
     preferredCurrency === "mxn"
       ? "Un solo evento perdiendo pedidos suele costar más que tu membresía mensual."
@@ -183,32 +218,32 @@ function Plans() {
           <p className="plans-value-equation">Más repertorio, menos fricción y activación rápida en una sola membresía.</p>
           {trialConfig?.enabled && trialConfig.eligible !== false && (
             <p className="plans-trial-pill" role="note">
-              <strong>{trialConfig.days} días gratis</strong>
+              <strong>{formatInt(trialConfig.days)} días gratis</strong>
               <span>con tarjeta (Stripe)</span>
               <span aria-hidden>•</span>
-              <span>{trialConfig.gb} GB incluidos</span>
+              <span>{formatInt(trialConfig.gb)} GB incluidos</span>
               <span aria-hidden>•</span>
               <span>Solo primera vez</span>
             </p>
           )}
-          <div className="plans-proof-grid" role="list" aria-label="Indicadores de valor">
+          <div className="plans-proof-grid" aria-label="Indicadores de valor">
             {proofItems.map((item) => (
-              <article key={item.value} className="plans-proof-item" role="listitem">
+              <article key={item.value} className="plans-proof-item">
                 <strong>{item.value}</strong>
                 <span>{item.label}</span>
               </article>
             ))}
           </div>
-          <div className="plans-trust-strip" role="list" aria-label="Beneficios clave">
-            <span role="listitem">
+          <div className="plans-trust-strip" aria-label="Beneficios clave">
+            <span>
               <Zap size={16} aria-hidden />
               <strong>Acceso inmediato</strong>
             </span>
-            <span role="listitem">
+            <span>
               <ShieldCheck size={16} aria-hidden />
               <strong>Pagos seguros</strong>
             </span>
-            <span role="listitem">
+            <span>
               <MessageCircle size={16} aria-hidden />
               <strong>Soporte por chat</strong>
             </span>

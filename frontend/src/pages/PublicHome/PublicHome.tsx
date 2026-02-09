@@ -337,6 +337,7 @@ export default function PublicHome() {
   const onPrimaryCtaClick = useCallback(
     (location: "hero" | "mid" | "pricing" | "footer" | "sticky") => {
       trackGrowthMetric(GROWTH_METRICS.CTA_PRIMARY_CLICK, { location });
+      trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, { id: "home_primary", location });
       trackManyChatConversion(MC_EVENTS.CLICK_CTA_REGISTER);
     },
     [],
@@ -345,6 +346,7 @@ export default function PublicHome() {
   const onSecondaryCtaClick = useCallback(
     (location: "demo" | "top_downloads" | "modal_demo") => {
       trackGrowthMetric(GROWTH_METRICS.CTA_SECONDARY_CLICK, { location });
+      trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, { id: `home_secondary_${location}`, location });
     },
     [],
   );
@@ -409,7 +411,7 @@ export default function PublicHome() {
         </div>
       </header>
 
-      <main className="home-main" aria-label="Landing">
+      <div className="home-main" aria-label="Landing">
         <HomeHero
           totalTBLabel={totalTBLabel}
           downloadQuotaLabel={downloadQuotaLabel}
@@ -460,7 +462,7 @@ export default function PublicHome() {
         </div>
 
         <HomeFaq onFaqExpand={onFaqExpand} />
-      </main>
+      </div>
 
       <footer className="home-footer" aria-label="Footer">
         <div className="ph__container home-footer__inner">

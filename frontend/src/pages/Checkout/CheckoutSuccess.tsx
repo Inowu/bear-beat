@@ -70,6 +70,13 @@ function CheckoutSuccess() {
         currency,
         eventId,
       });
+      trackGrowthMetric(GROWTH_METRICS.CHECKOUT_SUCCESS, {
+        sessionId: sessionId ?? null,
+        planId: typeof pending?.planId === "number" ? pending.planId : null,
+        amount: value,
+        currency,
+        eventId,
+      });
 
       // Meta CAPI (server) con dedupe usando el mismo eventId
       try {

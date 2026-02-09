@@ -4,12 +4,22 @@ import trpc from "../../../api";
 import { PasswordInput } from "../../PasswordInput/PasswordInput";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ErrorModal } from "../../../components/Modals/ErrorModal/ErrorModal";
 import { SuccessModal } from "../../../components/Modals/SuccessModal/SuccessModal";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import { useUserContext } from "../../../contexts/UserContext";
+import { GROWTH_METRICS, trackGrowthMetric } from "../../../utils/growthMetrics";
 import "./ResetPassword.scss";
+
+function inferErrorCode(message: string): string {
+  const m = `${message ?? ""}`.toLowerCase();
+  if (!m) return "unknown";
+  if (m.includes("requerid")) return "required";
+  if (m.includes("igual")) return "mismatch";
+  if (m.includes("min") || m.includes("caracter")) return "too_short";
+  return "error";
+}
 
 function ResetPassword() {
   const navigate = useNavigate();
@@ -44,6 +54,8 @@ function ResetPassword() {
     validationSchema: validationSchema,
     onSubmit: async (values) => {
       setLoader(true);
+      trackGrowthMetric(GROWTH_METRICS.FORM_SUBMIT, { formId: "reset_password" });
+      trackGrowthMetric(GROWTH_METRICS.AUTH_START, { flow: "reset_password" });
       let id: any = searchParams.get("userId");
       const body = {
         password: values.password,
@@ -54,22 +66,48 @@ function ResetPassword() {
         const data = await trpc.auth.changePassword.mutate(body);
         setLoader(false);
         if (data?.token && data?.refreshToken) {
+          trackGrowthMetric(GROWTH_METRICS.AUTH_SUCCESS, { flow: "reset_password" });
           handleLogin(data.token, data.refreshToken);
           await startUser();
           setShowSuccess(true);
         } else {
+          trackGrowthMetric(GROWTH_METRICS.AUTH_SUCCESS, { flow: "reset_password" });
           setShowSuccess(true);
         }
       } catch (error) {
+        trackGrowthMetric(GROWTH_METRICS.AUTH_ERROR, {
+          flow: "reset_password",
+          errorCode: "server_error",
+        });
+        trackGrowthMetric(GROWTH_METRICS.FORM_ERROR, {
+          formId: "reset_password",
+          field: "form",
+          errorCode: "server_error",
+        });
         setShow(true);
         setErrorMessage(error);
         setLoader(false);
       }
     },
   });
+
+  const lastSubmitTrackedRef = useRef(0);
+  useEffect(() => {
+    if (formik.submitCount <= lastSubmitTrackedRef.current) return;
+    lastSubmitTrackedRef.current = formik.submitCount;
+    const errors = formik.errors as Record<string, string>;
+    for (const [field, message] of Object.entries(errors)) {
+      if (!message) continue;
+      trackGrowthMetric(GROWTH_METRICS.FORM_ERROR, {
+        formId: "reset_password",
+        field,
+        errorCode: inferErrorCode(message),
+      });
+    }
+  }, [formik.submitCount, formik.errors]);
   return (
     <form className="auth-form auth-reset-form" onSubmit={formik.handleSubmit} autoComplete="on">
-      <h2 className="auth-reset-title">ESCRIBA UNA NUEVA CONTRASEÑA</h2>
+      <h1 className="auth-reset-title">ESCRIBA UNA NUEVA CONTRASEÑA</h1>
       <div className="c-row">
         <div className="auth-password-with-icon-wrap">
           <Lock className="auth-password-icon" aria-hidden />

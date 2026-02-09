@@ -43,7 +43,7 @@ const FAQ_ITEMS = [
 
 function Legal() {
   return (
-    <main className="legal2026">
+    <div className="legal2026" role="region" aria-label="Centro legal y ayuda">
       <div className="legal2026__container">
         <header className="legal2026__hero">
           <p className="legal2026__eyebrow">Centro legal y ayuda</p>
@@ -196,7 +196,7 @@ function Legal() {
           </div>
         </section>
       </div>
-    </main>
+    </div>
   );
 }
 

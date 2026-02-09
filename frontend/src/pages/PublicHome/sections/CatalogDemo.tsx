@@ -65,9 +65,9 @@ export default function CatalogDemo(props: {
           </p>
         )}
 
-        <div className="catalog-demo__grid" role="list" aria-label="Resultados de géneros">
+        <div className="catalog-demo__grid" aria-label="Resultados de géneros">
           {results.map((g) => (
-            <article key={g.id} className="catalog-demo__card" role="listitem">
+            <article key={g.id} className="catalog-demo__card">
               <strong>{g.name}</strong>
               <span>
                 {formatInt(g.files)} archivos · {formatGB(g.gb)}

@@ -10,14 +10,14 @@ export default function Compatibility() {
           Descargas a tu computadora e importas a tu software como siempre. Si nunca usaste FTP, te guiamos.
         </p>
 
-        <div className="compatibility__grid" role="list" aria-label="Compatibilidad">
+        <ul className="compatibility__grid" aria-label="Compatibilidad">
           {HOME_COMPATIBILITY_ITEMS.map((item) => (
-            <article key={item.title} className="compatibility__card" role="listitem">
+            <li key={item.title} className="compatibility__card">
               <h3>{item.title}</h3>
               <p>{item.body}</p>
-            </article>
+            </li>
           ))}
-        </div>
+        </ul>
 
         <div className="compatibility__cta">
           <Link to="/instrucciones" className="home-link">

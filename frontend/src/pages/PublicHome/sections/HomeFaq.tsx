@@ -41,7 +41,7 @@ export default function HomeFaq(props: {
           Resolvemos las dudas típicas antes de que pagues.
         </p>
 
-        <div className="home-faq__list" role="list">
+        <div className="home-faq__list">
           {HOME_FAQ_ITEMS.map((item) => (
             <details
               key={item.id}
@@ -56,7 +56,7 @@ export default function HomeFaq(props: {
                 <span>{item.question}</span>
                 <ChevronDown size={18} aria-hidden />
               </summary>
-              <div className="home-faq__body" role="listitem">
+              <div className="home-faq__body">
                 <p>{item.answer}</p>
               </div>
             </details>

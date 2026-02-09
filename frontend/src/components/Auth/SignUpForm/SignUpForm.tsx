@@ -23,6 +23,19 @@ import {
   TURNSTILE_BYPASS_TOKEN,
 } from "../../../utils/turnstile";
 
+function inferErrorCode(message: string): string {
+  const m = `${message ?? ""}`.toLowerCase();
+  if (!m) return "unknown";
+  if (m.includes("requerid")) return "required";
+  if (m.includes("formato") || m.includes("email") || m.includes("correo")) return "invalid_format";
+  if (m.includes("válid") || m.includes("invalid")) return "invalid";
+  if (m.includes("min") || m.includes("caracter")) return "too_short";
+  if (m.includes("igual")) return "mismatch";
+  if (m.includes("robot") || m.includes("verific")) return "verification";
+  if (m.includes("permit")) return "blocked";
+  return "error";
+}
+
 function SignUpForm() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -55,7 +68,7 @@ function SignUpForm() {
       .matches(/[a-zA-Z]/, "El nombre de usuario debe contener al menos una letra"),
     password: Yup.string()
       .required("La contraseña es requerida")
-      .min(6, "La contraseña debe contenter 6 caracteres"),
+      .min(6, "La contraseña debe contener al menos 6 caracteres"),
     phone: Yup.string()
       .required("El teléfono es requerido")
       .matches(/^[0-9]{7,14}$/, "El teléfono no es válido"),
@@ -90,21 +103,38 @@ function SignUpForm() {
     onSubmit: async (values) => {
       if (!turnstileToken && !turnstileBypassed) {
         setTurnstileError("Confirma que no eres un robot.");
+        trackGrowthMetric(GROWTH_METRICS.FORM_ERROR, {
+          formId: "signup",
+          field: "turnstile",
+          errorCode: "verification",
+        });
         return;
       }
 
       const marketingEventId = generateEventId("reg");
       setLoader(true);
+      trackGrowthMetric(GROWTH_METRICS.FORM_SUBMIT, { formId: "signup" });
+      trackGrowthMetric(GROWTH_METRICS.AUTH_START, { flow: "signup", from });
       const emailDomain = getEmailDomain(values.email);
       if (emailDomain && blockedDomains.includes(emailDomain)) {
         formik.setFieldError("email", "El dominio del correo no está permitido");
+        trackGrowthMetric(GROWTH_METRICS.FORM_ERROR, {
+          formId: "signup",
+          field: "email",
+          errorCode: "blocked",
+        });
         setLoader(false);
         return;
       }
       const formattedPhone = `+${dialCode} ${values.phone}`;
       const normalizedPhone = normalizePhoneNumber(formattedPhone);
       if (normalizedPhone && blockedPhoneNumbers.includes(normalizedPhone)) {
-        formik.setFieldError("phone", "El telefono no esta permitido");
+        formik.setFieldError("phone", "El teléfono no está permitido");
+        trackGrowthMetric(GROWTH_METRICS.FORM_ERROR, {
+          formId: "signup",
+          field: "phone",
+          errorCode: "blocked",
+        });
         setLoader(false);
         return;
       }
@@ -131,6 +161,7 @@ function SignUpForm() {
         trackLead({ eventId: marketingEventId });
         trackManyChatConversion(MC_EVENTS.REGISTRATION);
 
+        trackGrowthMetric(GROWTH_METRICS.AUTH_SUCCESS, { flow: "signup", from });
         handleLogin(register.token, register.refreshToken);
         navigate(from, { replace: true });
       } catch (error: any) {
@@ -144,6 +175,17 @@ function SignUpForm() {
           source: "register_submit",
           from,
           reason: errorMessage,
+        });
+        trackGrowthMetric(GROWTH_METRICS.AUTH_ERROR, {
+          flow: "signup",
+          from,
+          errorCode: "registration_failed",
+          reason: errorMessage,
+        });
+        trackGrowthMetric(GROWTH_METRICS.FORM_ERROR, {
+          formId: "signup",
+          field: "form",
+          errorCode: "server_error",
         });
 
         setShow(true);
@@ -203,6 +245,28 @@ function SignUpForm() {
       registrationStartedRef.current = true;
     }
   }, [formik.values, from]);
+
+  const lastSubmitTrackedRef = useRef(0);
+  useEffect(() => {
+    if (formik.submitCount <= lastSubmitTrackedRef.current) return;
+    lastSubmitTrackedRef.current = formik.submitCount;
+    const errors = formik.errors as Record<string, string>;
+    for (const [field, message] of Object.entries(errors)) {
+      if (!message) continue;
+      trackGrowthMetric(GROWTH_METRICS.FORM_ERROR, {
+        formId: "signup",
+        field,
+        errorCode: inferErrorCode(message),
+      });
+    }
+    if (turnstileError) {
+      trackGrowthMetric(GROWTH_METRICS.FORM_ERROR, {
+        formId: "signup",
+        field: "turnstile",
+        errorCode: inferErrorCode(turnstileError),
+      });
+    }
+  }, [formik.submitCount, formik.errors, turnstileError]);
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -286,12 +350,12 @@ function SignUpForm() {
         </ul>
         <p className="auth-split-testimonial">Activación guiada por chat hasta tu primera descarga.</p>
       </div>
-      <div className="auth-split-panel auth-split-right">
-        <div className="auth-split-form">
-          <h2 className="auth-split-form-title">Crea tu cuenta y activa hoy</h2>
-          <div className="auth-split-help">
-            <ChatButton variant="inline" />
-          </div>
+	      <div className="auth-split-panel auth-split-right">
+	        <div className="auth-split-form">
+	          <h1 className="auth-split-form-title">Crea tu cuenta y activa hoy</h1>
+	          <div className="auth-split-help">
+	            <ChatButton variant="inline" />
+	          </div>
           <form
             className="sign-up-form auth-form"
             autoComplete="on"

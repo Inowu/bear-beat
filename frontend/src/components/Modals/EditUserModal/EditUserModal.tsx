@@ -16,6 +16,7 @@ import * as Yup from "yup";
 import es from "react-phone-input-2/lang/es.json";
 import PhoneInput from "react-phone-input-2";
 import trpc from "../../../api";
+import { GROWTH_METRICS, trackGrowthMetric } from "../../../utils/growthMetrics";
 
 interface IEditPlanModal {
   showModal: boolean;
@@ -77,6 +78,7 @@ export function EditUserModal(props: IEditPlanModal) {
     validationSchema: validationSchema,
     onSubmit: async (values) => {
       setLoader(true);
+      trackGrowthMetric(GROWTH_METRICS.FORM_SUBMIT, { formId: "admin_edit_user" });
       const body: {
         email: string;
         username: string;
@@ -102,10 +104,20 @@ export function EditUserModal(props: IEditPlanModal) {
       );
 
       if (errorUpdate) {
+        trackGrowthMetric(GROWTH_METRICS.ADMIN_ACTION, {
+          action: "update",
+          entity: "user",
+          success: false,
+        });
         setShow(true);
         setErrorMessage(errorUpdate.message);
         setLoader(false);
       } else {
+        trackGrowthMetric(GROWTH_METRICS.ADMIN_ACTION, {
+          action: "update",
+          entity: "user",
+          success: true,
+        });
         setShowSuccess(true);
         setLoader(false);
       }

@@ -3,7 +3,7 @@ import { Mail } from "lucide-react";
 import trpc from "../../../api";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ErrorModal } from "../../../components/Modals/ErrorModal/ErrorModal";
 import { SuccessModal } from "../../../components/Modals/SuccessModal/SuccessModal";
 import { Spinner } from "../../../components/Spinner/Spinner";
@@ -15,6 +15,15 @@ import {
 } from "../../../utils/turnstile";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../../utils/growthMetrics";
 import "./ForgotPasswordForm.scss";
+
+function inferErrorCode(message: string): string {
+  const m = `${message ?? ""}`.toLowerCase();
+  if (!m) return "unknown";
+  if (m.includes("requerid")) return "required";
+  if (m.includes("formato") || m.includes("email") || m.includes("correo")) return "invalid_format";
+  if (m.includes("robot") || m.includes("verific")) return "verification";
+  return "error";
+}
 
 function ForgotPasswordForm() {
   const [loader, setLoader] = useState<boolean>(false);
@@ -39,8 +48,17 @@ function ForgotPasswordForm() {
     initialValues: { email: "" },
     validationSchema,
     onSubmit: async (values) => {
-      if (!turnstileToken && !turnstileBypassed) return;
+      if (!turnstileToken && !turnstileBypassed) {
+        setTurnstileError("Completa la verificación antes de continuar.");
+        trackGrowthMetric(GROWTH_METRICS.FORM_ERROR, {
+          formId: "forgot_password",
+          field: "turnstile",
+          errorCode: "verification",
+        });
+        return;
+      }
       setLoader(true);
+      trackGrowthMetric(GROWTH_METRICS.FORM_SUBMIT, { formId: "forgot_password" });
       try {
         await trpc.auth.forgotPassword.mutate({
           email: values.email,
@@ -51,6 +69,11 @@ function ForgotPasswordForm() {
         });
         setShowSuccess(true);
       } catch (error) {
+        trackGrowthMetric(GROWTH_METRICS.FORM_ERROR, {
+          formId: "forgot_password",
+          field: "form",
+          errorCode: "server_error",
+        });
         trackGrowthMetric(GROWTH_METRICS.PASSWORD_RECOVERY_FAILED, {
           source: "forgot_password_form",
         });
@@ -63,6 +86,28 @@ function ForgotPasswordForm() {
       }
     },
   });
+
+  const lastSubmitTrackedRef = useRef(0);
+  useEffect(() => {
+    if (formik.submitCount <= lastSubmitTrackedRef.current) return;
+    lastSubmitTrackedRef.current = formik.submitCount;
+    const errors = formik.errors as Record<string, string>;
+    for (const [field, message] of Object.entries(errors)) {
+      if (!message) continue;
+      trackGrowthMetric(GROWTH_METRICS.FORM_ERROR, {
+        formId: "forgot_password",
+        field,
+        errorCode: inferErrorCode(message),
+      });
+    }
+    if (turnstileError) {
+      trackGrowthMetric(GROWTH_METRICS.FORM_ERROR, {
+        formId: "forgot_password",
+        field: "turnstile",
+        errorCode: inferErrorCode(turnstileError),
+      });
+    }
+  }, [formik.submitCount, formik.errors, turnstileError]);
 
   const handleTurnstileSuccess = useCallback((token: string) => {
     setTurnstileToken(token);

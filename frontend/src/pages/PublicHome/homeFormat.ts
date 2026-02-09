@@ -1,36 +1,15 @@
-const HOME_NUMBER_LOCALE = "es-MX";
+import {
+  APP_NUMBER_LOCALE,
+  formatGB as formatGBBase,
+  formatInt as formatIntBase,
+  formatTB as formatTBBase,
+} from "../../utils/format";
 
-const nfInt = new Intl.NumberFormat(HOME_NUMBER_LOCALE, {
-  maximumFractionDigits: 0,
-});
+const HOME_NUMBER_LOCALE = APP_NUMBER_LOCALE;
 
-const nfTb = new Intl.NumberFormat(HOME_NUMBER_LOCALE, {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-
-const nfGb = new Intl.NumberFormat(HOME_NUMBER_LOCALE, {
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-});
-
-export function formatInt(value: number): string {
-  const n = Number(value);
-  if (!Number.isFinite(n)) return "0";
-  return nfInt.format(Math.round(n));
-}
-
-export function formatTB(tbValue: number): string {
-  const n = Number(tbValue);
-  if (!Number.isFinite(n) || n <= 0) return `0.00 TB`;
-  return `${nfTb.format(n)} TB`;
-}
-
-export function formatGB(gbValue: number): string {
-  const n = Number(gbValue);
-  if (!Number.isFinite(n) || n <= 0) return `0.0 GB`;
-  return `${nfGb.format(n)} GB`;
-}
+export const formatInt = formatIntBase;
+export const formatTB = formatTBBase;
+export const formatGB = formatGBBase;
 
 export function formatDownloads(value: number): string {
   return `${formatInt(value)} descargas`;
@@ -70,4 +49,3 @@ export function normalizeGenreDisplayName(raw: string): string {
 
 export type HomeNumberLocale = typeof HOME_NUMBER_LOCALE;
 export { HOME_NUMBER_LOCALE };
-

@@ -22,6 +22,7 @@ import { generateEventId } from "../../utils/marketingIds";
 import { GROWTH_METRICS, getGrowthAttribution, trackGrowthMetric } from "../../utils/growthMetrics";
 import { Download, FolderOpen, HeartCrack, Music, Unlock, Zap } from "lucide-react";
 import { getConektaFingerprint } from "../../utils/conektaCollect";
+import { formatInt } from "../../utils/format";
 
 // Copy persuasivo CRO: texto aburrido → gancho emocional
 const BENEFIT_COPY: Record<string, string> = {
@@ -242,6 +243,12 @@ function PlanCard(props: PlanCardPropsI) {
 	  };
 	  const payWithSpei = async () => {
 	    trackManyChatConversion(MC_EVENTS.CLICK_SPEI);
+      trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
+        id: "plans_pay_spei",
+        location: pathname === "/actualizar-planes" ? "plan_upgrade" : "plans",
+        planId: plan.id,
+        method: "spei",
+      });
 	    handleUserClickOnPlan();
 	    void trpc.checkoutLogs.registerCheckoutLog.mutate().catch(() => {});
     try {
@@ -267,6 +274,12 @@ function PlanCard(props: PlanCardPropsI) {
 
   const payWithOxxo = async () => {
     trackManyChatConversion(MC_EVENTS.CLICK_OXXO);
+    trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
+      id: "plans_pay_cash",
+      location: pathname === "/actualizar-planes" ? "plan_upgrade" : "plans",
+      planId: plan.id,
+      method: "oxxo",
+    });
     handleUserClickOnPlan();
     void trpc.checkoutLogs.registerCheckoutLog.mutate().catch(() => {});
     try {
@@ -290,6 +303,12 @@ function PlanCard(props: PlanCardPropsI) {
   };
 
   const payWithBbva = async () => {
+    trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
+      id: "plans_pay_bbva",
+      location: pathname === "/actualizar-planes" ? "plan_upgrade" : "plans",
+      planId: plan.id,
+      method: "bbva",
+    });
     handleUserClickOnPlan();
     void trpc.checkoutLogs.registerCheckoutLog.mutate().catch(() => {});
     try {
@@ -332,6 +351,11 @@ function PlanCard(props: PlanCardPropsI) {
     trackManyChatConversion(MC_EVENTS.CLICK_BUY);
     handleUserClickOnPlan();
     void trpc.checkoutLogs.registerCheckoutLog.mutate().catch(() => {});
+    trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
+      id: "plans_primary_checkout",
+      location: pathname === "/actualizar-planes" ? "plan_upgrade" : "plans",
+      planId,
+    });
     const target = `/comprar?priceId=${planId}`;
     // /planes es pública; si el usuario no está logueado, mandarlo directo a registro con return URL.
     if (!userEmail) {
@@ -343,6 +367,12 @@ function PlanCard(props: PlanCardPropsI) {
 
   const handleCheckoutWithMethod = (planId: number, method: string) => {
     const target = `/comprar?priceId=${planId}&method=${encodeURIComponent(method)}`;
+    trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
+      id: `plans_method_${method}`,
+      location: pathname === "/actualizar-planes" ? "plan_upgrade" : "plans",
+      planId,
+      method,
+    });
     if (!userEmail) {
       navigate("/auth/registro", { state: { from: target } });
       return;
@@ -477,8 +507,8 @@ function PlanCard(props: PlanCardPropsI) {
           )}
         </header>
         <div className="plan-card-highlights" role="list" aria-label={`Resumen de valor para ${plan.name}`}>
-          <span role="listitem">{plan.gigas.toString()} GB al mes</span>
-          <span role="listitem">Acceso total al catálogo</span>
+          <span role="listitem">{formatInt(Number(plan.gigas ?? 0))} GB/mes</span>
+          <span role="listitem">Catálogo completo (eliges qué descargar)</span>
           <span role="listitem">{paymentSummary}</span>
         </div>
         <p className="plan-card-description">{displayDescription || plan.description}</p>
@@ -550,14 +580,31 @@ function PlanCard(props: PlanCardPropsI) {
                                 plan={ppPlan!}
                                 type="subscription"
                                 onApprove={successSubscription}
-                                onClick={() => { trackManyChatConversion(MC_EVENTS.CLICK_PAYPAL); handleUserClickOnPlan(); }}
+                                onClick={() => {
+                                  trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
+                                    id: "plans_pay_paypal",
+                                    location: pathname === "/actualizar-planes" ? "plan_upgrade" : "plans",
+                                    planId: plan.id,
+                                    method: "paypal",
+                                  });
+                                  trackManyChatConversion(MC_EVENTS.CLICK_PAYPAL);
+                                  handleUserClickOnPlan();
+                                }}
                                 key={`paypal-button-component-${plan.id}`}
                               />
                             ) : (
                               <button
                                 type="button"
                                 className="plan-card-btn-outline"
-                                onClick={() => navigate("/auth/registro", { state: { from: "/planes" } })}
+                                onClick={() => {
+                                  trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
+                                    id: "plans_pay_paypal",
+                                    location: pathname === "/actualizar-planes" ? "plan_upgrade" : "plans",
+                                    planId: plan.id,
+                                    method: "paypal",
+                                  });
+                                  navigate("/auth/registro", { state: { from: "/planes" } });
+                                }}
                               >
                                 PayPal
                               </button>

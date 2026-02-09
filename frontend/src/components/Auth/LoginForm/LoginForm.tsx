@@ -5,7 +5,7 @@ import { useUserContext } from "../../../contexts/UserContext";
 import trpc from "../../../api";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ErrorModal } from "../../../components/Modals";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import { ChatButton } from "../../../components/ChatButton/ChatButton";
@@ -13,6 +13,16 @@ import Logo from "../../../assets/images/osonuevo.png";
 import { trackManyChatConversion, MC_EVENTS } from "../../../utils/manychatPixel";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../../utils/growthMetrics";
 import "./LoginForm.scss";
+
+function inferErrorCode(message: string): string {
+  const m = `${message ?? ""}`.toLowerCase();
+  if (!m) return "unknown";
+  if (m.includes("requerid")) return "required";
+  if (m.includes("formato") || m.includes("email") || m.includes("correo")) return "invalid_format";
+  if (m.includes("min") || m.includes("caracter")) return "too_short";
+  if (m.includes("inválid") || m.includes("invalid")) return "invalid";
+  return "error";
+}
 
 function LoginForm() {
   const [loader, setLoader] = useState<boolean>(false);
@@ -31,7 +41,7 @@ function LoginForm() {
       .email("El formato del correo no es correcto"),
     password: Yup.string()
       .required("La contraseña es requerida")
-      .min(3, "La contraseña debe contenter 3 caracteres"),
+      .min(3, "La contraseña debe contener al menos 3 caracteres"),
   });
   const initialValues = {
     username: "",
@@ -42,6 +52,8 @@ function LoginForm() {
     validationSchema: validationSchema,
     onSubmit: async (values) => {
       setLoader(true);
+      trackGrowthMetric(GROWTH_METRICS.FORM_SUBMIT, { formId: "login" });
+      trackGrowthMetric(GROWTH_METRICS.AUTH_START, { flow: "login", from });
       let body = {
         username: values.username,
         password: values.password,
@@ -51,6 +63,7 @@ function LoginForm() {
         if (login) {
           trackManyChatConversion(MC_EVENTS.LOGIN_SUCCESS);
           trackGrowthMetric(GROWTH_METRICS.LOGIN_SUCCESS, { from });
+          trackGrowthMetric(GROWTH_METRICS.AUTH_SUCCESS, { flow: "login", from });
           handleLogin(login.token, login.refreshToken);
           navigate(from, { replace: true });
         }
@@ -67,6 +80,17 @@ function LoginForm() {
           from,
           reason: errorMessage,
         });
+        trackGrowthMetric(GROWTH_METRICS.AUTH_ERROR, {
+          flow: "login",
+          from,
+          errorCode: "login_failed",
+          reason: errorMessage,
+        });
+        trackGrowthMetric(GROWTH_METRICS.FORM_ERROR, {
+          formId: "login",
+          field: "form",
+          errorCode: "auth_failed",
+        });
 
         setLoader(false);
         setShow(true);
@@ -74,6 +98,21 @@ function LoginForm() {
       }
     },
   });
+
+  const lastSubmitTrackedRef = useRef(0);
+  useEffect(() => {
+    if (formik.submitCount <= lastSubmitTrackedRef.current) return;
+    lastSubmitTrackedRef.current = formik.submitCount;
+    const errors = formik.errors as Partial<Record<"username" | "password", string>>;
+    for (const [field, message] of Object.entries(errors)) {
+      if (!message) continue;
+      trackGrowthMetric(GROWTH_METRICS.FORM_ERROR, {
+        formId: "login",
+        field,
+        errorCode: inferErrorCode(message),
+      });
+    }
+  }, [formik.submitCount, formik.errors]);
 
   const showUsernameError = Boolean(
     (formik.touched.username || formik.submitCount > 0) && formik.errors.username,
