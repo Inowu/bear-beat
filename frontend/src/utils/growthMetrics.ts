@@ -4,6 +4,11 @@ import { apiBaseUrl } from "./runtimeConfig";
 
 export const GROWTH_METRICS = {
   PAGE_VIEW: "page_view",
+  HOME_VIEW: "home_view",
+  CTA_PRIMARY_CLICK: "cta_primary_click",
+  CTA_SECONDARY_CLICK: "cta_secondary_click",
+  PRICING_VIEW: "pricing_view",
+  FAQ_EXPAND: "faq_expand",
   LP_TO_REGISTER: "lp_to_register",
   SEGMENT_SELECTED: "segment_selected",
   LEAD_MAGNET_DOWNLOAD: "lead_magnet_download",
@@ -106,6 +111,11 @@ let analyticsRemoteDisabled = false;
 
 const eventCategoryMap: Record<GrowthMetricName, AnalyticsCategory> = {
   [GROWTH_METRICS.PAGE_VIEW]: "navigation",
+  [GROWTH_METRICS.HOME_VIEW]: "navigation",
+  [GROWTH_METRICS.CTA_PRIMARY_CLICK]: "acquisition",
+  [GROWTH_METRICS.CTA_SECONDARY_CLICK]: "acquisition",
+  [GROWTH_METRICS.PRICING_VIEW]: "engagement",
+  [GROWTH_METRICS.FAQ_EXPAND]: "engagement",
   [GROWTH_METRICS.LP_TO_REGISTER]: "acquisition",
   [GROWTH_METRICS.SEGMENT_SELECTED]: "engagement",
   [GROWTH_METRICS.LEAD_MAGNET_DOWNLOAD]: "engagement",
@@ -374,6 +384,7 @@ const ALLOWED_PAYLOAD_KEYS = new Set<string>([
   "pagePath",
   "pageQuery",
   "section",
+  "location",
 
   // Acquisition / segmentation
   "surface",
@@ -385,6 +396,7 @@ const ALLOWED_PAYLOAD_KEYS = new Set<string>([
   "planId",
   "method",
   "currency",
+  "currencyDefault",
   "amount",
   "value",
   "sessionId",
@@ -407,6 +419,9 @@ const ALLOWED_PAYLOAD_KEYS = new Set<string>([
   "queryLength",
   "queryText",
   "totalResults",
+
+  // FAQ / content
+  "question",
 
   // Web Vitals
   "metricName",
