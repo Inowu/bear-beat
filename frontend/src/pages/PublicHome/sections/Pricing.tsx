@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import PaymentMethodLogos, { type PaymentMethodId } from "../../../components/PaymentMethodLogos/PaymentMethodLogos";
-import { HOME_CTA_PRIMARY_LABEL } from "../homeCopy";
+import { HOME_HERO_MICROCOPY_BASE, HOME_HERO_MICROCOPY_TRIAL } from "../homeCopy";
 
 export type TrialSummary = {
   enabled: boolean;
@@ -34,6 +34,7 @@ export default function Pricing(props: {
   catalogTBLabel: string;
   downloadQuotaGb: number;
   trial: TrialSummary | null;
+  ctaLabel: string;
   onPrimaryCtaClick: () => void;
 }) {
   const {
@@ -43,6 +44,7 @@ export default function Pricing(props: {
     catalogTBLabel,
     downloadQuotaGb,
     trial,
+    ctaLabel,
     onPrimaryCtaClick,
   } = props;
 
@@ -57,6 +59,7 @@ export default function Pricing(props: {
   const [currency, setCurrency] = useState<"mxn" | "usd">(initialCurrency);
   const plan = currency === "mxn" ? plans.mxn : plans.usd;
   const hasTrial = Boolean(trial?.enabled);
+  const microcopy = hasTrial ? HOME_HERO_MICROCOPY_TRIAL : HOME_HERO_MICROCOPY_BASE;
 
   const paymentMethods = useMemo<PaymentMethodId[]>(() => {
     const methods = new Set<PaymentMethodId>(["visa", "mastercard", "amex"]);
@@ -139,9 +142,10 @@ export default function Pricing(props: {
               className="home-cta home-cta--primary"
               onClick={onPrimaryCtaClick}
             >
-              {HOME_CTA_PRIMARY_LABEL}
+              {ctaLabel}
               <ArrowRight size={18} aria-hidden />
             </Link>
+            <p className="pricing__micro">{microcopy}</p>
             <div className="pricing__payments">
               <PaymentMethodLogos
                 methods={paymentMethods}
@@ -156,4 +160,3 @@ export default function Pricing(props: {
     </section>
   );
 }
-

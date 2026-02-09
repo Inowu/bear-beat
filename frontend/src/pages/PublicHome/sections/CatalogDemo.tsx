@@ -9,7 +9,7 @@ export type CatalogGenre = {
   gb: number;
 };
 
-const MAX_RESULTS = 12;
+const MAX_RESULTS = 10;
 
 function normalizeQuery(value: string): string {
   return value.trim().toLocaleLowerCase("es-ES");
@@ -98,4 +98,3 @@ export default function CatalogDemo(props: {
     </section>
   );
 }
-

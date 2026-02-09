@@ -6,7 +6,7 @@ import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../utils/growthMetrics";
 import { FALLBACK_GENRES, type GenreStats } from "./fallbackGenres";
 import type { IPlans } from "../../interfaces/Plans";
-import { HOME_CTA_PRIMARY_LABEL } from "./homeCopy";
+import { getHomeCtaPrimaryLabel } from "./homeCopy";
 import HomeHero from "./sections/HomeHero";
 import TrustBar from "./sections/TrustBar";
 import UseCases from "./sections/UseCases";
@@ -197,7 +197,7 @@ export default function PublicHome() {
     (async () => {
       try {
         const response = (await trpc.downloadHistory.getPublicTopDownloads.query({
-          limit: 10,
+          limit: 25,
           sinceDays: TOP_DOWNLOADS_DAYS,
         })) as PublicTopDownloadsResponse;
 
@@ -239,6 +239,8 @@ export default function PublicHome() {
       gb: Number(trialConfig.gb ?? 0),
     };
   }, [trialConfig]);
+
+  const ctaPrimaryLabel = useMemo(() => getHomeCtaPrimaryLabel(trialSummary), [trialSummary]);
 
   const pricingPlans = useMemo(() => {
     const bestMxn = pickBestPlan(plans, "mxn");
@@ -294,7 +296,7 @@ export default function PublicHome() {
     const items = topDownloads?.audio ?? [];
     return items
       .filter((item) => item && typeof item.name === "string")
-      .slice(0, 5)
+      .slice(0, 20)
       .map((item) => ({
         name: prettyMediaName(item.name) || item.name,
         downloads: Number(item.downloads ?? 0),
@@ -305,7 +307,7 @@ export default function PublicHome() {
     const items = topDownloads?.video ?? [];
     return items
       .filter((item) => item && typeof item.name === "string")
-      .slice(0, 5)
+      .slice(0, 20)
       .map((item) => ({
         name: prettyMediaName(item.name) || item.name,
         downloads: Number(item.downloads ?? 0),
@@ -322,6 +324,11 @@ export default function PublicHome() {
 
   const onSecondaryCtaClick = useCallback(() => {
     trackGrowthMetric(GROWTH_METRICS.CTA_SECONDARY_CLICK, { location: "catalog_demo" });
+  }, []);
+
+  const onDemoClick = useCallback(() => {
+    trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, { location: "hero" });
+    setShowDemo(true);
   }, []);
 
   const onFaqExpand = useCallback((id: string) => {
@@ -378,8 +385,9 @@ export default function PublicHome() {
           totalTBLabel={totalTBLabel}
           downloadQuotaLabel={downloadQuotaLabel}
           trial={trialSummary}
+          ctaLabel={ctaPrimaryLabel}
           onPrimaryCtaClick={() => onPrimaryCtaClick("hero")}
-          onDemoClick={() => setShowDemo(true)}
+          onDemoClick={onDemoClick}
         />
 
         <TrustBar
@@ -401,7 +409,7 @@ export default function PublicHome() {
 
         <Compatibility />
 
-        <ActivationSteps onPrimaryCtaClick={() => onPrimaryCtaClick("mid")} />
+        <ActivationSteps ctaLabel={ctaPrimaryLabel} onPrimaryCtaClick={() => onPrimaryCtaClick("mid")} />
 
         <div ref={pricingRef}>
           <Pricing
@@ -411,6 +419,7 @@ export default function PublicHome() {
             catalogTBLabel={totalTBLabel}
             downloadQuotaGb={downloadQuotaGb}
             trial={trialSummary}
+            ctaLabel={ctaPrimaryLabel}
             onPrimaryCtaClick={() => onPrimaryCtaClick("pricing")}
           />
         </div>
@@ -438,7 +447,7 @@ export default function PublicHome() {
               className="home-cta home-cta--primary"
               onClick={() => onPrimaryCtaClick("footer")}
             >
-              {HOME_CTA_PRIMARY_LABEL}
+              {ctaPrimaryLabel}
             </Link>
             <p className="home-footer__micro">Pago seguro • Cancela cuando quieras</p>
           </div>

@@ -9,8 +9,13 @@ Scope: Solo la landing pública (`/`) cuando NO hay sesión. Estética dark/neó
    - Cómo funciona: eliges del catálogo total y descargas con cuota mensual.
    - Qué hacer ahora: CTA principal claro.
 3. Verificar que NO existe texto ambiguo tipo “Acceso Total” sin aclarar la cuota.
-4. Verificar que el CTA principal siempre dice exactamente: `Activar acceso`.
-5. Verificar que el CTA secundario (demo catálogo) siempre dice: `Ver catálogo completo al activar`.
+4. Verificar que el CTA principal siempre dice exactamente:
+   - Si trial está habilitado: `Empezar prueba (7 días)` (o el número real de días según backend).
+   - Si trial NO está habilitado: `Activar acceso`.
+5. Verificar que el CTA secundario (demo catálogo) siempre dice: `Ver los 200 géneros al activar`.
+6. Funnel post‑CTA (sin ambigüedad):
+   - Usuario SIN cuenta: CTA primario lleva a `/auth/registro` (crear cuenta) y al completar debe volver a `/planes`.
+   - Usuario CON cuenta: link “Ya tengo cuenta” lleva a `/auth` (login) y al completar debe volver a `/` (app) o a `from`.
 
 ## Responsivo / Legibilidad
 1. Mobile (390x844):
@@ -43,14 +48,16 @@ Abrir DevTools Console y ejecutar:
 1. `window.__bbGrowthQueue` debe existir y crecer con eventos.
 2. Recargar home:
    - Debe aparecer `home_view`.
-3. Click en CTA principal (hero, steps, pricing, footer):
+3. Click en “Ver demo”:
+   - Debe aparecer `view_demo_click` con `metadata.location = \"hero\"`.
+4. Click en CTA principal (hero, steps, pricing, footer):
    - Debe aparecer `cta_primary_click` con `metadata.location` correcto:
      - `hero`, `mid`, `pricing`, `footer`.
-4. Click en CTA secundario (Catalog Demo):
+5. Click en CTA secundario (Catalog Demo):
    - Debe aparecer `cta_secondary_click` con `metadata.location = \"catalog_demo\"`.
-5. Scroll hasta Pricing:
+6. Scroll hasta Pricing:
    - Debe aparecer `pricing_view` una sola vez.
-6. Expandir un FAQ:
+7. Expandir un FAQ:
    - Debe aparecer `faq_expand` con `metadata.question = <id>`.
 
 ## Regresión (no romper flujo)
@@ -61,4 +68,3 @@ Abrir DevTools Console y ejecutar:
    - `/legal` (FAQ y políticas)
    - `/instrucciones`
 2. No hay errores en consola al cargar `/`.
-

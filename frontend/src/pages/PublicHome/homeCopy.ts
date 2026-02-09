@@ -1,13 +1,19 @@
-export const HOME_CTA_PRIMARY_LABEL = "Activar acceso";
-export const HOME_CTA_SECONDARY_LABEL = "Ver catálogo completo al activar";
+export const HOME_CTA_PRIMARY_LABEL_FALLBACK = "Activar acceso";
+export const HOME_CTA_SECONDARY_LABEL = "Ver los 200 géneros al activar";
+
+export function getHomeCtaPrimaryLabel(trial: { enabled: boolean; days: number } | null): string {
+  if (trial?.enabled && Number.isFinite(trial.days) && trial.days > 0) {
+    return `Empezar prueba (${trial.days} días)`;
+  }
+  return HOME_CTA_PRIMARY_LABEL_FALLBACK;
+}
 
 export const HOME_HERO_TITLE = "Nunca vuelvas a decir “No la tengo” en cabina.";
 export const HOME_HERO_SUBTITLE =
   "Membresía para DJs: video remixes, audios y karaokes organizados para descargar y llegar con repertorio listo.";
 
 export const HOME_HERO_MICROCOPY_BASE = "Pago seguro • Cancela cuando quieras";
-export const HOME_HERO_MICROCOPY_TRIAL =
-  "Pago seguro • Cancela cuando quieras • Se cobra automáticamente al terminar la prueba";
+export const HOME_HERO_MICROCOPY_TRIAL = "Se cobra al terminar la prueba si no cancelas.";
 
 export const HOME_USE_CASES = [
   {
@@ -111,4 +117,3 @@ export const HOME_FAQ_ITEMS: HomeFaqItem[] = [
       "Según el plan y la moneda puedes pagar con Tarjeta, PayPal, SPEI y efectivo. Las opciones visibles en checkout dependen del plan seleccionado (algunos métodos pueden deshabilitarse temporalmente).",
   },
 ];
-

@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
-import { HOME_CTA_PRIMARY_LABEL } from "../homeCopy";
 
 const STEPS = [
   {
@@ -18,9 +17,10 @@ const STEPS = [
 ] as const;
 
 export default function ActivationSteps(props: {
+  ctaLabel: string;
   onPrimaryCtaClick: () => void;
 }) {
-  const { onPrimaryCtaClick } = props;
+  const { ctaLabel, onPrimaryCtaClick } = props;
 
   return (
     <section className="activation-steps" aria-label="Activación rápida">
@@ -48,7 +48,7 @@ export default function ActivationSteps(props: {
             className="home-cta home-cta--primary"
             onClick={onPrimaryCtaClick}
           >
-            {HOME_CTA_PRIMARY_LABEL}
+            {ctaLabel}
             <ArrowRight size={18} aria-hidden />
           </Link>
         </div>
@@ -56,4 +56,3 @@ export default function ActivationSteps(props: {
     </section>
   );
 }
-
