@@ -628,18 +628,11 @@ function Admin() {
                 </div>
                 )
               : users.map((user, index) => (
-                  <div
+                  <button
                     key={`mobile_${user.id}`}
                     className="admin-mobile-card"
                     onClick={() => openDrawer(user)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        openDrawer(user);
-                      }
-                    }}
+                    type="button"
                   >
                     <div className="admin-mobile-card__head">
                       <div className="admin-mobile-card__identity">
@@ -654,20 +647,15 @@ function Admin() {
                       <span className={`admin-mobile-status ${user.blocked ? "is-blocked" : "is-active"}`}>
                         {user.blocked ? "Bloqueado" : "Activo"}
                       </span>
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); openDrawer(user); }}
-                        className="admin-mobile-card__menu"
-                        aria-label="Abrir acciones"
-                      >
+                      <span className="admin-mobile-card__menu" aria-hidden>
                         <MoreVertical size={20} />
-                      </button>
+                      </span>
                     </div>
                     <div className="admin-mobile-card__foot">
                       <span>{user.phone || "Sin teléfono"}</span>
                       <span>{formatDateShort(user.registered_on)}</span>
                     </div>
-                  </div>
+                  </button>
                 ))
             : ARRAY_10.map((_, i) => (
                 <div key={`skeleton_${i}`} className="admin-mobile-card admin-mobile-card--skeleton">

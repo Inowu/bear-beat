@@ -514,6 +514,7 @@ function SignUpForm() {
               <button
                 type="submit"
                 className="signup-submit-btn"
+                data-testid="signup-submit"
               >
                 CREAR MI CUENTA PRO
               </button>

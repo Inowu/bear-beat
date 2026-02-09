@@ -536,6 +536,7 @@ function PlanCard(props: PlanCardPropsI) {
               <button
                 className="plan-card-btn-hero"
                 onClick={() => handleCheckout(plan.id)}
+                data-testid={`plan-primary-cta-${plan.id}`}
               >
                 <Unlock aria-hidden /> {primaryCtaLabel}
               </button>

@@ -1,0 +1,52 @@
+.bb-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--app-text-heading);
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease, opacity 160ms ease;
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+.bb-icon-btn__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bb-icon-btn--ghost {
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--app-accent) 10%, transparent);
+  }
+}
+
+.bb-icon-btn--secondary {
+  background: color-mix(in srgb, var(--app-bg-card) 92%, transparent);
+  border-color: color-mix(in srgb, var(--app-border) 85%, transparent);
+  box-shadow: var(--app-shadow);
+
+  &:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--app-accent) 35%, var(--app-border));
+  }
+}
+
+.bb-icon-btn--danger {
+  background: color-mix(in srgb, var(--app-status-error) 18%, transparent);
+  border-color: color-mix(in srgb, var(--app-status-error) 40%, transparent);
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--app-status-error) 26%, transparent);
+  }
+}
+

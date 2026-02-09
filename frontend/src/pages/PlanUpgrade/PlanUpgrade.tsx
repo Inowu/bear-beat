@@ -5,12 +5,15 @@ import { Spinner } from "../../components/Spinner/Spinner";
 import PlanCard from "../../components/PlanCard/PlanCard";
 import { useNavigate } from "react-router-dom";
 import { useUserContext } from "../../contexts/UserContext";
+import { Button, EmptyState, Alert } from "../../components/ui";
+import { ArrowRight, RefreshCw, Shield } from "lucide-react";
 
 export const PlanUpgrade = () => {
   const { currentUser } = useUserContext();
   const [plans, setPlans] = useState<IPlans[]>([]);
   const [loader, setLoader] = useState<boolean>(true);
   const [currentPlan, setCurrentPlan] = useState<IPlans | null>(null);
+  const [loadError, setLoadError] = useState<string>("");
   const navigate = useNavigate();
   const getPlans = async (
     plan_id: number,
@@ -64,18 +67,28 @@ export const PlanUpgrade = () => {
       }
       setLoader(false);
     } catch (error) {
-      console.log(error);
+      setPlans([]);
+      setLoadError("No pudimos cargar los planes disponibles. Intenta de nuevo.");
+      setLoader(false);
     }
   };
   const getCurrentPlan = async () => {
     setLoader(true);
+    setLoadError("");
     try {
       if (currentUser !== null) {
         let body: any = {
           isExtended: currentUser.extendedFtpAccount,
         };
-        const quota: any = await trpc.ftp.quota.query(body);
         const tempPlan = await trpc.auth.getCurrentSubscriptionPlan.query();
+        if (!tempPlan) {
+          setCurrentPlan(null);
+          setPlans([]);
+          setLoader(false);
+          return;
+        }
+
+        const quota: any = await trpc.ftp.quota.query(body);
         const constructedPlan: IPlans = {
           activated: tempPlan.activated,
           audio_ilimitado: null,
@@ -112,8 +125,9 @@ export const PlanUpgrade = () => {
         setCurrentPlan(constructedPlan);
       }
     } catch (error: any) {
-      navigate("/planes");
-      console.log(error.message);
+      setCurrentPlan(null);
+      setPlans([]);
+      setLoadError("No pudimos cargar tu plan actual. Revisa tu conexión e intenta de nuevo.");
       setLoader(false);
     }
   };
@@ -141,6 +155,54 @@ export const PlanUpgrade = () => {
   }
   return (
     <div className="plans-main-container">
+      <header className="mb-6">
+        <h1 className="text-text-main font-bold">Actualizar plan</h1>
+        <p className="text-text-muted mt-2">
+          Sube de nivel cuando lo necesites. Si no tienes un plan activo, ve a Planes.
+        </p>
+      </header>
+
+      {loadError ? (
+        <div className="mb-6">
+          <Alert tone="danger" title="No se pudo cargar">
+            {loadError}
+          </Alert>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Button
+              variant="secondary"
+              leftIcon={<RefreshCw size={18} />}
+              onClick={() => void getCurrentPlan()}
+            >
+              Reintentar
+            </Button>
+            <Button
+              variant="primary"
+              leftIcon={<ArrowRight size={18} />}
+              onClick={() => navigate("/planes")}
+            >
+              Ver planes
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
+      {!loadError && !currentPlan ? (
+        <EmptyState
+          icon={<Shield size={22} />}
+          title="Aún no tienes un plan activo para actualizar"
+          description="Primero elige un plan. En cuanto tu compra se active, aquí verás las opciones para subir de nivel."
+          action={
+            <Button
+              variant="primary"
+              leftIcon={<ArrowRight size={18} />}
+              onClick={() => navigate("/planes")}
+            >
+              Ir a Planes
+            </Button>
+          }
+        />
+      ) : null}
+
       {currentPlan && (
         <PlanCard
           currentPlan={true}

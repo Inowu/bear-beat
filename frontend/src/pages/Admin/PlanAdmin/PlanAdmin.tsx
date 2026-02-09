@@ -146,18 +146,18 @@ export const PlanAdmin = () => {
                         type="button"
                         onClick={() => handleEditPlan(plan)}
                         className="p-2 text-slate-400 hover:text-bear-cyan transition-colors rounded-lg hover:bg-slate-800"
-                        title="Editar"
+                        aria-label="Editar plan"
                       >
-                        <Edit2 size={16} />
+                        <Edit2 size={16} aria-hidden />
                       </button>
                       <button
                         type="button"
                         onClick={() => setPlanToDelete(plan)}
                         disabled={plan.paypal_plan_id != null}
                         className="p-2 text-slate-400 hover:text-red-400 transition-colors rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Eliminar"
+                        aria-label="Eliminar plan"
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={16} aria-hidden />
                       </button>
                     </div>
                   </td>
@@ -171,13 +171,11 @@ export const PlanAdmin = () => {
       {/* Mobile: lista compacta + drawer */}
       <div className="md:hidden flex flex-col gap-0 rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50">
         {plans.map((plan, index) => (
-          <div
+          <button
             key={`m_${index}`}
             className="flex items-center justify-between gap-3 min-h-[64px] px-4 py-3 border-b border-slate-800 hover:bg-slate-900/60 active:bg-slate-800 transition-colors"
             onClick={() => setDrawerPlan(plan)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === "Enter" && setDrawerPlan(plan)}
+            type="button"
           >
             <div className="min-w-0 flex-1">
               <p className="font-semibold text-white text-sm truncate">{plan.name}</p>
@@ -190,18 +188,10 @@ export const PlanAdmin = () => {
             >
               {plan.activated === 1 ? "Activo" : "Inactivo"}
             </span>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setDrawerPlan(plan);
-              }}
-              className="p-2 text-slate-400 hover:text-bear-cyan rounded-lg"
-              aria-label="Ver más"
-            >
+            <span className="p-2 text-slate-400" aria-hidden>
               <MoreVertical size={20} />
-            </button>
-          </div>
+            </span>
+          </button>
         ))}
       </div>
 

@@ -196,6 +196,11 @@
   border: 1px solid color-mix(in srgb, var(--ad-border) 82%, transparent);
 }
 
+.crm-table-wrap:focus-visible {
+  outline: 2px solid var(--ad-accent);
+  outline-offset: 3px;
+}
+
 .crm-table {
   width: 100%;
   min-width: 920px;

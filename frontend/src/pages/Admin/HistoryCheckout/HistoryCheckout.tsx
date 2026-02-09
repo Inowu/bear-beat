@@ -9,6 +9,7 @@ import { exportPayments } from "../fuctions";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
 import { Download, MoreVertical } from "lucide-react";
+import { Select } from "../../../components/ui";
 
 interface IAdminFilter {
   page: number;
@@ -78,15 +79,17 @@ export const HistoryCheckout = () => {
 
   const toolbar = (
     <>
-      <select
-        value={filters.limit}
-        onChange={(e) => startFilter("limit", +e.target.value)}
-        className="bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
-      >
-        <option value={100}>100</option>
-        <option value={200}>200</option>
-        <option value={500}>500</option>
-      </select>
+      <label className="inline-flex flex-col gap-1 text-sm text-gray-700 dark:text-gray-300">
+        Por página
+        <Select
+          value={filters.limit}
+          onChange={(e) => startFilter("limit", +e.target.value)}
+        >
+          <option value={100}>100</option>
+          <option value={200}>200</option>
+          <option value={500}>500</option>
+        </Select>
+      </label>
       <CsvDownloader
         filename="lista_historial_checkout"
         extension=".csv"
@@ -95,13 +98,10 @@ export const HistoryCheckout = () => {
         datas={transformHistoryData}
         text=""
       >
-        <button
-          type="button"
-          className="inline-flex items-center gap-2 bg-bear-gradient text-bear-dark-500 hover:opacity-95 font-medium rounded-pill px-4 py-2 transition-colors"
-        >
-          <Download size={18} />
+        <span className="inline-flex items-center gap-2 bg-bear-gradient text-bear-dark-500 hover:opacity-95 font-medium rounded-pill px-4 py-2 transition-colors">
+          <Download size={18} aria-hidden />
           Exportar
-        </button>
+        </span>
       </CsvDownloader>
     </>
   );
@@ -167,13 +167,11 @@ export const HistoryCheckout = () => {
         <div className="block md:hidden grid grid-cols-1 gap-4 w-full">
           {!loader
             ? history.map((his, index) => (
-                <div
+                <button
                   key={`m_${index}`}
                   className="bg-bear-light-100 dark:bg-bear-dark-500 p-4 rounded-lg border border-gray-200 dark:border-bear-dark-100"
                   onClick={() => setDrawerItem(his)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => e.key === "Enter" && setDrawerItem(his)}
+                  type="button"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0 flex-1">
@@ -187,16 +185,11 @@ export const HistoryCheckout = () => {
                     >
                       {his.users?.active === 1 ? "Activo" : "Inactivo"}
                     </span>
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); setDrawerItem(his); }}
-                      className="p-2 text-gray-500 dark:text-gray-400 hover:text-bear-cyan rounded-lg flex-shrink-0"
-                      aria-label="Ver más"
-                    >
+                    <span className="flex-shrink-0 text-gray-500 dark:text-gray-400" aria-hidden>
                       <MoreVertical size={20} />
-                    </button>
+                    </span>
                   </div>
-                </div>
+                </button>
               ))
             : ARRAY_10.map((_, i) => (
                 <div key={`s_${i}`} className="bg-bear-light-100 dark:bg-bear-dark-500 p-4 rounded-lg border border-gray-200 dark:border-bear-dark-100 animate-pulse">

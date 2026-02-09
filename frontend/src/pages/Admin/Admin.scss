@@ -696,6 +696,10 @@ html[data-theme="light"] .admin-theme .btn-primary:hover {
 }
 
 .admin-mobile-card {
+  appearance: none;
+  display: block;
+  width: 100%;
+  text-align: left;
   padding: 11px 12px;
   border-radius: 14px;
   border: 1px solid color-mix(in srgb, var(--ad-border) 84%, transparent);

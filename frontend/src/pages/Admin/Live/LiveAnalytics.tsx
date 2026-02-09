@@ -208,7 +208,11 @@ export function LiveAnalytics() {
                     {filteredEvents.length.toLocaleString("es-MX")} /{" "}
                     {snapshot.events.length.toLocaleString("es-MX")}
                   </p>
-                  <div className="analytics-table-wrap">
+                  <div
+                    className="analytics-table-wrap"
+                    tabIndex={0}
+                    aria-label="Tabla de eventos (desplazable)"
+                  >
                     <table>
                       <thead>
                         <tr>
@@ -227,8 +231,8 @@ export function LiveAnalytics() {
                             <td colSpan={7}>No hay eventos para los filtros actuales.</td>
                           </tr>
                         ) : (
-                          filteredEvents.map((evt) => (
-                            <tr key={`${evt.ts}:${evt.sessionId}:${evt.visitorId}:${evt.name}`}>
+                          filteredEvents.map((evt, index) => (
+                            <tr key={`${evt.ts}:${evt.sessionId}:${evt.visitorId}:${evt.name}:${index}`}>
                               <td>{formatTs(evt.ts)}</td>
                               <td>{evt.name}</td>
                               <td>{evt.pagePath ?? "—"}</td>
@@ -259,4 +263,3 @@ export function LiveAnalytics() {
     </AdminPageLayout>
   );
 }
-

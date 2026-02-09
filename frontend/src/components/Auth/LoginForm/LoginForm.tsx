@@ -182,7 +182,7 @@ function LoginForm() {
               </Link>
             </div>
             {!loader ? (
-              <button type="submit" className="auth-login-submit-btn">
+              <button type="submit" className="auth-login-submit-btn" data-testid="login-submit">
                 INGRESAR
               </button>
             ) : (

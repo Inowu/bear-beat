@@ -409,7 +409,7 @@ export function AnalyticsDashboard() {
         {alerts && alerts.alerts.length > 0 && (
           <section className="analytics-alerts-stack">
             {alerts.alerts.map((alert) => (
-              <article
+              <div
                 key={alert.id}
                 className={`analytics-alert analytics-alert--${alert.severity}`}
                 role={alert.severity === "critical" ? "alert" : "status"}
@@ -422,7 +422,7 @@ export function AnalyticsDashboard() {
                 </header>
                 <p>{alert.message}</p>
                 <small>{alert.recommendation}</small>
-              </article>
+              </div>
             ))}
           </section>
         )}
@@ -456,7 +456,7 @@ export function AnalyticsDashboard() {
                       Rango: {new Date(funnel.range.start).toLocaleDateString("es-MX")} a{" "}
                       {new Date(funnel.range.end).toLocaleDateString("es-MX")}
                     </p>
-                    <div className="analytics-table-wrap">
+                    <div className="analytics-table-wrap" tabIndex={0} aria-label="Tabla: serie diaria (desplazable)">
                       <table>
                         <thead>
                           <tr>
@@ -491,7 +491,7 @@ export function AnalyticsDashboard() {
                   <section className="analytics-panel">
                     <h2>Atribución por canal</h2>
                     <p>Top fuentes por visitantes, registros y pagos.</p>
-                    <div className="analytics-table-wrap">
+                    <div className="analytics-table-wrap" tabIndex={0} aria-label="Tabla: atribución por canal (desplazable)">
                       <table>
                         <thead>
                           <tr>
@@ -532,7 +532,7 @@ export function AnalyticsDashboard() {
                   <section className="analytics-panel">
                     <h2>Cancelaciones</h2>
                     <p>Razones principales y campañas asociadas (últimos {rangeDays} días).</p>
-                    <div className="analytics-table-wrap">
+                    <div className="analytics-table-wrap" tabIndex={0} aria-label="Tabla: cancelaciones (desplazable)">
                       <table>
                         <thead>
                           <tr>
@@ -584,7 +584,7 @@ export function AnalyticsDashboard() {
                   <section className="analytics-panel">
                     <h2>Unidad económica</h2>
                     <p>Métricas de rentabilidad para decisiones de crecimiento.</p>
-                    <div className="analytics-table-wrap">
+                    <div className="analytics-table-wrap" tabIndex={0} aria-label="Tabla: unidad económica (desplazable)">
                       <table>
                         <tbody>
                           <tr>
@@ -627,7 +627,7 @@ export function AnalyticsDashboard() {
                   <section className="analytics-panel">
                     <h2>UX técnica (Web Vitals)</h2>
                     <p>Calidad por ruta y dispositivo para detectar fricción real de conversión.</p>
-                    <div className="analytics-table-wrap">
+                    <div className="analytics-table-wrap" tabIndex={0} aria-label="Tabla: resumen de Web Vitals (desplazable)">
                       <table>
                         <tbody>
                           <tr>
@@ -653,7 +653,7 @@ export function AnalyticsDashboard() {
                         </tbody>
                       </table>
                     </div>
-                    <div className="analytics-table-wrap">
+                    <div className="analytics-table-wrap" tabIndex={0} aria-label="Tabla: Web Vitals por ruta (desplazable)">
                       <table>
                         <thead>
                           <tr>
@@ -685,7 +685,7 @@ export function AnalyticsDashboard() {
                         </tbody>
                       </table>
                     </div>
-                    <div className="analytics-table-wrap">
+                    <div className="analytics-table-wrap" tabIndex={0} aria-label="Tabla: Web Vitals por dispositivo (desplazable)">
                       <table>
                         <thead>
                           <tr>
@@ -722,7 +722,7 @@ export function AnalyticsDashboard() {
                   <section className="analytics-panel">
                     <h2>Top eventos</h2>
                     <p>Cobertura real de instrumentación y uso de producto.</p>
-                    <div className="analytics-table-wrap">
+                    <div className="analytics-table-wrap" tabIndex={0} aria-label="Tabla: top eventos (desplazable)">
                       <table>
                         <thead>
                           <tr>

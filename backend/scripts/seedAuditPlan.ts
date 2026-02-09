@@ -1,3 +1,4 @@
+import "./_loadEnv";
 import { PrismaClient } from "@prisma/client";
 
 /**
@@ -121,4 +122,3 @@ main()
   .finally(async () => {
     await prisma.$disconnect().catch(() => null);
   });
-

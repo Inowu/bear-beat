@@ -1,0 +1,61 @@
+.bb-tabs {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.bb-tabs__tab {
+  text-align: left;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--app-border) 85%, transparent);
+  background: color-mix(in srgb, var(--app-bg-card) 92%, transparent);
+  padding: 12px 12px;
+  min-height: 56px;
+  cursor: pointer;
+  transition: border-color 140ms ease, box-shadow 140ms ease, background-color 140ms ease, transform 140ms ease;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    border-color: color-mix(in srgb, var(--app-accent) 40%, var(--app-border));
+    box-shadow: var(--app-shadow);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+.bb-tabs__tab.is-active {
+  border-color: color-mix(in srgb, var(--app-accent) 55%, var(--app-border));
+  box-shadow: 0 0 0 2px var(--app-focus-ring), var(--app-shadow);
+}
+
+.bb-tabs__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--app-accent) 16%, transparent);
+  color: var(--app-text-heading);
+  margin-bottom: 8px;
+}
+
+.bb-tabs__label {
+  display: block;
+  font-weight: 900;
+  color: var(--app-text-heading);
+  line-height: 1.1;
+}
+
+.bb-tabs__desc {
+  display: block;
+  margin-top: 6px;
+  color: var(--app-text-muted);
+  font-weight: 600;
+  font-size: 0.95em;
+}
+

@@ -1,4 +1,3 @@
-import { TRPCError } from '@trpc/server';
 import { shieldedProcedure } from '../../../procedures/shielded.procedure';
 
 export const getCurrentSubscriptionPlan = shieldedProcedure.query(
@@ -14,12 +13,9 @@ export const getCurrentSubscriptionPlan = shieldedProcedure.query(
       }
     });
 
-    if (!sub || !sub.order_id) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'El usuario no tiene un plan activo',
-      });
-    }
+    // Expected state for many users (trial expired / never purchased): return null instead of 404
+    // to avoid noisy console/network errors in the client.
+    if (!sub || !sub.order_id) return null;
 
     const order = await prisma.orders.findFirst({
       where: {
@@ -27,12 +23,7 @@ export const getCurrentSubscriptionPlan = shieldedProcedure.query(
       },
     });
 
-    if (!order || !order.plan_id) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'No se encontró la orden o el plan asociado a la orden',
-      });
-    }
+    if (!order || !order.plan_id) return null;
 
     const plan = await prisma.plans.findFirst({
       where: {
@@ -40,12 +31,7 @@ export const getCurrentSubscriptionPlan = shieldedProcedure.query(
       },
     });
 
-    if (!plan) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'No se encontró el plan',
-      });
-    }
+    if (!plan) return null;
 
     return plan;
   },

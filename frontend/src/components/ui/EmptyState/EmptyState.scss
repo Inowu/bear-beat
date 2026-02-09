@@ -1,0 +1,51 @@
+.bb-empty {
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 18px 16px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--app-border) 85%, transparent);
+  background:
+    radial-gradient(600px 220px at 20% 0%, color-mix(in srgb, var(--app-accent) 12%, transparent), transparent),
+    color-mix(in srgb, var(--app-bg-card) 92%, transparent);
+  box-shadow: var(--app-shadow-card);
+  text-align: center;
+}
+
+.bb-empty__icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  margin: 0 auto 12px;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--app-accent) 16%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--app-accent) 25%, transparent);
+}
+
+.bb-empty__title {
+  font-size: var(--app-font-size-h4);
+  font-weight: 900;
+  color: var(--app-text-heading);
+  margin: 0;
+}
+
+.bb-empty__desc {
+  margin: 10px auto 0;
+  color: var(--app-text-muted);
+  max-width: 56ch;
+}
+
+.bb-empty__action {
+  margin-top: 14px;
+  display: flex;
+  justify-content: center;
+}
+
+.bb-empty--danger {
+  border-color: color-mix(in srgb, var(--app-status-error) 45%, var(--app-border));
+  background:
+    radial-gradient(600px 220px at 20% 0%, color-mix(in srgb, var(--app-status-error) 10%, transparent), transparent),
+    color-mix(in srgb, var(--app-bg-card) 92%, transparent);
+}
+

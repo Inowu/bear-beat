@@ -3,7 +3,7 @@ import { TRPCError } from '@trpc/server';
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
 import { getStripeCustomer } from './utils/getStripeCustomer';
 import { getPlanKey } from '../../utils/getPlanKey';
-import stripeInstance from '../../stripe';
+import stripeInstance, { isStripeConfigured } from '../../stripe';
 import { log } from '../../server';
 import { OrderStatus } from './interfaces/order-status.interface';
 import { hasActiveSubscription } from './utils/hasActiveSub';
@@ -137,17 +137,6 @@ export const createStripeCheckoutSession = shieldedProcedure
   .mutation(async ({ input: { planId, successUrl, cancelUrl, coupon, fbp, fbc, url, eventId }, ctx: { prisma, session, req } }) => {
     const user = session!.user!;
 
-    const stripeCustomer = await getStripeCustomer(prisma, user);
-
-    log.info(`[STRIPE_CHECKOUT_SESSION] User ${user.id} creating checkout session for plan ${planId}`);
-
-    await hasActiveSubscription({
-      user,
-      customerId: stripeCustomer,
-      prisma,
-      service: PaymentService.STRIPE,
-    });
-
     const plan = await prisma.plans.findFirst({
       where: { id: planId },
     });
@@ -169,6 +158,56 @@ export const createStripeCheckoutSession = shieldedProcedure
         message: 'No se pudo resolver el usuario para iniciar checkout.',
       });
     }
+
+    const isLocalSuccessUrl = (() => {
+      try {
+        const parsed = new URL(successUrl);
+        const host = parsed.hostname;
+        return host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0' || host === '::1';
+      } catch {
+        return false;
+      }
+    })();
+
+    // Local dev safety net: allow UI/funnel testing even when Stripe keys are not configured.
+    // This NEVER runs in production and only returns a localhost success_url (no real payment).
+    if (process.env.NODE_ENV !== 'production' && isLocalSuccessUrl && !isStripeConfigured()) {
+      const mockSessionId = `cs_test_mock_${Date.now()}_${user.id}_${plan.id}`;
+      let redirectUrl = successUrl;
+      if (redirectUrl.includes('{CHECKOUT_SESSION_ID}')) {
+        redirectUrl = redirectUrl.replace('{CHECKOUT_SESSION_ID}', mockSessionId);
+      } else {
+        try {
+          const parsed = new URL(redirectUrl);
+          parsed.searchParams.set('session_id', mockSessionId);
+          redirectUrl = parsed.toString();
+        } catch {
+          // keep best-effort
+        }
+      }
+
+      log.warn('[STRIPE_CHECKOUT_SESSION] Stripe not configured, returning mock checkout URL (local dev only).', {
+        userId: user.id,
+        planId: plan.id,
+      });
+
+      return {
+        url: redirectUrl,
+        sessionId: mockSessionId,
+        mocked: true,
+      };
+    }
+
+    const stripeCustomer = await getStripeCustomer(prisma, user);
+
+    log.info(`[STRIPE_CHECKOUT_SESSION] User ${user.id} creating checkout session for plan ${planId}`);
+
+    await hasActiveSubscription({
+      user,
+      customerId: stripeCustomer,
+      prisma,
+      service: PaymentService.STRIPE,
+    });
 
     // CAPI: InitiateCheckout con dedupe (eventId) si existe.
     // No bloquear checkout si falla.

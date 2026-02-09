@@ -1,9 +1,9 @@
 # A11y Report (axe)
 
-Generado: 2026-02-09T17:36:24.820Z
+Generado: 2026-02-09T20:43:28.982Z
 
 ## Resumen
-- Rutas auditadas: 46
+- Rutas auditadas: 27
 - Violaciones totales: 0
 - Por severidad: —
 

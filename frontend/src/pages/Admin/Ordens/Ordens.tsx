@@ -146,43 +146,55 @@ export const Ordens = () => {
             className="w-full bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 rounded-lg py-2 pl-9 pr-3 text-gray-900 dark:text-white text-sm placeholder-gray-500 focus:outline-none focus:border-bear-cyan focus:ring-1 focus:ring-bear-cyan"
           />
         </div>
-        <select
-          value={filters.paymentMethod}
-          onChange={(e) => startFilter("paymentMethod", e.target.value)}
-          className="bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
-        >
-          <option value="">Todos</option>
-          <option value="Paypal">Paypal</option>
-          <option value="Stripe">Stripe</option>
-          <option value="Conekta">Conekta (SPEI/Efectivo/BBVA)</option>
-          <option value="Admin">Admin</option>
-        </select>
-        <select
-          value={filters.status}
-          onChange={(e) =>
-            startFilter("status", e.target.value === "" ? "" : Number(e.target.value))
-          }
-          className="bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
-        >
-          <option value="">Todos los estados</option>
-          <option value={ORDER_STATUS.PAID}>Pagada</option>
-          <option value={ORDER_STATUS.PENDING}>Pendiente</option>
-          <option value={ORDER_STATUS.FAILED}>Fallida</option>
-          <option value={ORDER_STATUS.CANCELLED}>Cancelada</option>
-          <option value={ORDER_STATUS.EXPIRED}>Expirada</option>
-        </select>
-        <input
-          type="date"
-          value={filters.startDate}
-          onChange={(e) => startFilter("startDate", e.target.value)}
-          className="bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
-        />
-        <input
-          type="date"
-          value={filters.endDate}
-          onChange={(e) => startFilter("endDate", e.target.value)}
-          className="bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
-        />
+        <label className="inline-flex flex-col gap-1 text-xs font-semibold text-gray-600 dark:text-gray-400">
+          Método
+          <select
+            value={filters.paymentMethod}
+            onChange={(e) => startFilter("paymentMethod", e.target.value)}
+            className="bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
+          >
+            <option value="">Todos</option>
+            <option value="Paypal">Paypal</option>
+            <option value="Stripe">Stripe</option>
+            <option value="Conekta">Conekta (SPEI/Efectivo/BBVA)</option>
+            <option value="Admin">Admin</option>
+          </select>
+        </label>
+        <label className="inline-flex flex-col gap-1 text-xs font-semibold text-gray-600 dark:text-gray-400">
+          Estado
+          <select
+            value={filters.status}
+            onChange={(e) =>
+              startFilter("status", e.target.value === "" ? "" : Number(e.target.value))
+            }
+            className="bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
+          >
+            <option value="">Todos</option>
+            <option value={ORDER_STATUS.PAID}>Pagada</option>
+            <option value={ORDER_STATUS.PENDING}>Pendiente</option>
+            <option value={ORDER_STATUS.FAILED}>Fallida</option>
+            <option value={ORDER_STATUS.CANCELLED}>Cancelada</option>
+            <option value={ORDER_STATUS.EXPIRED}>Expirada</option>
+          </select>
+        </label>
+        <label className="inline-flex flex-col gap-1 text-xs font-semibold text-gray-600 dark:text-gray-400">
+          Desde
+          <input
+            type="date"
+            value={filters.startDate}
+            onChange={(e) => startFilter("startDate", e.target.value)}
+            className="bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
+          />
+        </label>
+        <label className="inline-flex flex-col gap-1 text-xs font-semibold text-gray-600 dark:text-gray-400">
+          Hasta
+          <input
+            type="date"
+            value={filters.endDate}
+            onChange={(e) => startFilter("endDate", e.target.value)}
+            className="bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
+          />
+        </label>
         <button
           type="button"
           onClick={() => {
@@ -197,15 +209,18 @@ export const Ordens = () => {
         >
           Hoy
         </button>
-        <select
-          value={filters.limit}
-          onChange={(e) => startFilter("limit", +e.target.value)}
-          className="bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
-        >
-          <option value={100}>100</option>
-          <option value={200}>200</option>
-          <option value={500}>500</option>
-        </select>
+        <label className="inline-flex flex-col gap-1 text-xs font-semibold text-gray-600 dark:text-gray-400">
+          Por página
+          <select
+            value={filters.limit}
+            onChange={(e) => startFilter("limit", +e.target.value)}
+            className="bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
+          >
+            <option value={100}>100</option>
+            <option value={200}>200</option>
+            <option value={500}>500</option>
+          </select>
+        </label>
       </div>
       <CsvDownloader
         filename="lista_de_ordenes"
@@ -215,13 +230,10 @@ export const Ordens = () => {
         datas={transformOrdersToExport}
         text=""
       >
-        <button
-          type="button"
-          className="inline-flex items-center gap-2 bg-bear-gradient text-bear-dark-500 hover:opacity-95 font-medium rounded-pill px-4 py-2 transition-colors"
-        >
-          <Download size={18} />
+        <span className="inline-flex items-center gap-2 bg-bear-gradient text-bear-dark-500 hover:opacity-95 font-medium rounded-pill px-4 py-2 transition-colors">
+          <Download size={18} aria-hidden />
           Exportar
-        </button>
+        </span>
       </CsvDownloader>
     </>
   );
@@ -304,13 +316,11 @@ export const Ordens = () => {
         <div className="block md:hidden grid grid-cols-1 gap-4 w-full">
           {!loader
             ? ordens.map((orden, index) => (
-                <div
+                <button
                   key={`m_${index}`}
                   className="bg-bear-light-100 dark:bg-bear-dark-500 p-4 rounded-lg border border-gray-200 dark:border-bear-dark-100"
                   onClick={() => setDrawerOrder(orden)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => e.key === "Enter" && setDrawerOrder(orden)}
+                  type="button"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0 flex-1">
@@ -318,16 +328,11 @@ export const Ordens = () => {
                       <p className="text-xs text-gray-600 dark:text-gray-400">{orden.total_price} · {orden.date_order.toLocaleDateString()}</p>
                     </div>
                     {statusBadge(orden.status)}
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); setDrawerOrder(orden); }}
-                      className="p-2 text-gray-500 dark:text-gray-400 hover:text-bear-cyan rounded-lg flex-shrink-0"
-                      aria-label="Ver más"
-                    >
+                    <span className="p-2 text-gray-500 dark:text-gray-400 flex-shrink-0" aria-hidden>
                       <MoreVertical size={20} />
-                    </button>
+                    </span>
                   </div>
-                </div>
+                </button>
               ))
             : ARRAY_10.map((_, i) => (
                 <div key={`s_${i}`} className="bg-bear-light-100 dark:bg-bear-dark-500 p-4 rounded-lg border border-gray-200 dark:border-bear-dark-100 animate-pulse">

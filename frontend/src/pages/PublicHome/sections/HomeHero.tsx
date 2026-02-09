@@ -51,6 +51,7 @@ export default function HomeHero(props: {
               to="/auth/registro"
               state={{ from: "/planes" }}
               className="home-cta home-cta--primary"
+              data-testid="home-cta-primary"
               onClick={onPrimaryCtaClick}
             >
               {ctaLabel}

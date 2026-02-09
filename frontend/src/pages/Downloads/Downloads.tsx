@@ -3,16 +3,21 @@ import { FolderDown, Music } from "lucide-react";
 import { IDownloads } from "interfaces/Files";
 import trpc from "../../api";
 import { Spinner } from "../../components/Spinner/Spinner";
+import { Button, EmptyState } from "../../components/ui";
+import { RefreshCw, AlertTriangle } from "lucide-react";
 
 function Downloads() {
   const [downloads, setDownloads] = useState<IDownloads[] | null>(null);
+  const [loadError, setLoadError] = useState<string>("");
 
   const retrieveDownloads = async () => {
     try {
+      setLoadError("");
       const data = await trpc.dirDownloads.myDirDownloads.query();
       setDownloads(data);
     } catch (error: unknown) {
-      console.error(error instanceof Error ? error.message : error);
+      setDownloads(null);
+      setLoadError("No pudimos cargar tu historial de descargas. Intenta de nuevo.");
     }
   };
 
@@ -20,17 +25,34 @@ function Downloads() {
     retrieveDownloads();
   }, []);
 
-  const isLoading = downloads === null;
-  const isEmpty = downloads !== null && downloads.length === 0;
+  const isError = Boolean(loadError);
+  const isLoading = downloads === null && !isError;
+  const isEmpty = downloads !== null && downloads.length === 0 && !isError;
 
   return (
     <div className="w-full bb-surface">
       <header className="mb-6">
         <div className="flex flex-wrap items-center gap-3">
           <FolderDown className="h-6 w-6 flex-shrink-0 text-bear-cyan" aria-hidden />
-          <h2 className="text-base font-bold text-text-main">Historial de descargas</h2>
+          <h1 className="text-text-main font-bold">Historial de descargas</h1>
         </div>
       </header>
+
+      {isError && (
+        <div className="min-h-[240px] flex items-center justify-center">
+          <EmptyState
+            tone="danger"
+            icon={<AlertTriangle size={22} />}
+            title="No se pudo cargar"
+            description={loadError}
+            action={
+              <Button variant="secondary" leftIcon={<RefreshCw size={18} />} onClick={() => void retrieveDownloads()}>
+                Reintentar
+              </Button>
+            }
+          />
+        </div>
+      )}
 
       {(isLoading || isEmpty) && (
         <div className="min-h-[260px] flex items-center justify-center">
@@ -46,9 +68,9 @@ function Downloads() {
                 <Music />
               )}
             </span>
-            <h3 className="app-state-title">
+            <h2 className="app-state-title">
               {isLoading ? "Cargando descargas" : "Aún no hay descargas"}
-            </h3>
+            </h2>
             <p className="app-state-copy">
               {isLoading
                 ? "Estamos preparando tu historial."
@@ -61,7 +83,7 @@ function Downloads() {
       {/* Vista Escritorio: tabla real */}
       <div
         className={`hidden md:block rounded-xl border border-border overflow-hidden ${
-          isLoading || isEmpty ? "hidden" : ""
+          isLoading || isEmpty || isError ? "hidden" : ""
         }`}
       >
         <table className="w-full text-left">
@@ -98,7 +120,7 @@ function Downloads() {
       </div>
 
       {/* Vista Móvil: tarjetas */}
-      <div className={`block md:hidden grid grid-cols-1 gap-4 ${isLoading || isEmpty ? "hidden" : ""}`}>
+      <div className={`block md:hidden grid grid-cols-1 gap-4 ${isLoading || isEmpty || isError ? "hidden" : ""}`}>
         {downloads !== null && downloads.length > 0 &&
           downloads.map((download: IDownloads, index: number) => (
             <div

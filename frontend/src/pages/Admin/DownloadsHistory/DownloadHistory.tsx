@@ -10,6 +10,7 @@ import { useUserContext } from "../../../contexts/UserContext";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
 import { Plus, MoreVertical } from "lucide-react";
+import { Select } from "../../../components/ui";
 
 interface IAdminFilter {
   page: number;
@@ -81,15 +82,14 @@ export const DownloadHistory = () => {
 
   const toolbar = (
     <>
-      <select
-        value={filters.limit}
-        onChange={(e) => startFilter("limit", +e.target.value)}
-        className="bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
-      >
-        <option value={100}>100</option>
-        <option value={200}>200</option>
-        <option value={500}>500</option>
-      </select>
+      <label className="inline-flex flex-col gap-1 text-sm text-slate-300">
+        Por página
+        <Select value={filters.limit} onChange={(e) => startFilter("limit", +e.target.value)}>
+          <option value={100}>100</option>
+          <option value={200}>200</option>
+          <option value={500}>500</option>
+        </Select>
+      </label>
       <button
         type="button"
         onClick={() => setShowModal(true)}
@@ -166,13 +166,11 @@ export const DownloadHistory = () => {
           ? history.map((his, index) => {
               const gb = Number(his.size) / (1024 * 1024 * 1024);
               return (
-                <div
+                <button
                   key={`m_${index}`}
                   className="flex items-center justify-between gap-3 min-h-[64px] px-4 py-3 border-b border-slate-800 hover:bg-slate-900/60 active:bg-slate-800"
                   onClick={() => setDrawerItem(his)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => e.key === "Enter" && setDrawerItem(his)}
+                  type="button"
                 >
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold text-white text-sm truncate">{his.fileName}</p>
@@ -181,15 +179,10 @@ export const DownloadHistory = () => {
                   <span className="shrink-0 text-xs px-2 py-1 rounded-full bg-slate-500/10 text-slate-400">
                     {his.isFolder ? "Carpeta" : "Archivo"}
                   </span>
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setDrawerItem(his); }}
-                    className="p-2 text-slate-400 hover:text-bear-cyan rounded-lg"
-                    aria-label="Ver más"
-                  >
+                  <span className="p-2 text-slate-400" aria-hidden>
                     <MoreVertical size={20} />
-                  </button>
-                </div>
+                  </span>
+                </button>
               );
             })
           : ARRAY_10.map((_, i) => (

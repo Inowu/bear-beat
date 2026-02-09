@@ -1,0 +1,29 @@
+.bb-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--app-border) 85%, transparent);
+  background: color-mix(in srgb, var(--app-bg-card) 92%, transparent);
+  color: var(--app-text-heading);
+  font-family: var(--bb-font-ui);
+  font-size: var(--app-font-size-body);
+  font-weight: 600;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+
+  &::placeholder {
+    color: color-mix(in srgb, var(--app-text-muted) 92%, transparent);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: color-mix(in srgb, var(--app-accent) 55%, var(--app-border));
+    box-shadow: 0 0 0 2px var(--app-focus-ring);
+  }
+}
+
+.bb-input.is-invalid {
+  border-color: color-mix(in srgb, var(--app-status-error) 55%, var(--app-border));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--app-status-error) 20%, transparent);
+}
+

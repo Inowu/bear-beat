@@ -1,0 +1,35 @@
+.bb-alert {
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--app-border) 85%, transparent);
+  background: color-mix(in srgb, var(--app-bg-card) 92%, transparent);
+  color: var(--app-text-body);
+  padding: 12px 14px;
+  box-shadow: var(--app-shadow);
+}
+
+.bb-alert__title {
+  font-weight: 900;
+  color: var(--app-text-heading);
+  margin-bottom: 6px;
+}
+
+.bb-alert__body {
+  color: var(--app-text-body);
+}
+
+.bb-alert--success {
+  border-color: color-mix(in srgb, var(--app-status-success) 40%, var(--app-border));
+  background: color-mix(in srgb, var(--app-status-success) 12%, var(--app-bg-card));
+}
+
+.bb-alert--warning {
+  border-color: color-mix(in srgb, var(--app-status-warning) 45%, var(--app-border));
+  background: color-mix(in srgb, var(--app-status-warning) 12%, var(--app-bg-card));
+}
+
+.bb-alert--danger {
+  border-color: color-mix(in srgb, var(--app-status-error) 45%, var(--app-border));
+  background: color-mix(in srgb, var(--app-status-error) 12%, var(--app-bg-card));
+}
+

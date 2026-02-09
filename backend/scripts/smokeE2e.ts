@@ -1,3 +1,4 @@
+import "./_loadEnv";
 import path from "path";
 import { spawn } from "child_process";
 import { chromium } from "playwright";
@@ -7,6 +8,8 @@ import { chromium } from "playwright";
  *
  * It validates critical CRO flows without completing real payments:
  * - Home renders + CTA goes to Registro
+ * - Registro básico (crea un usuario nuevo)
+ * - Planes → Checkout → Success (sin cobro real; en local dev el backend devuelve success_url si Stripe no está configurado)
  * - /planes renders at least one plan card (requires local seed)
  * - Optional: login + admin route loads (requires seeded admin user)
  */
@@ -66,14 +69,15 @@ async function main() {
 
   const { child } = spawnDevServersIfNeeded();
   try {
-    await waitForHttpOk(baseUrl, 120_000);
+    // CRA + TS typecheck can be slow on first boot (cold cache). Give it more time.
+    await waitForHttpOk(baseUrl, 180_000);
     const apiBaseRaw =
       process.env.REACT_APP_API_BASE_URL?.trim() ||
       process.env.SMOKE_API_BASE_URL?.trim() ||
       "";
     if (apiBaseRaw) {
       const apiBase = apiBaseRaw.endsWith("/") ? apiBaseRaw.slice(0, -1) : apiBaseRaw;
-      await waitForHttpOk(`${apiBase}/api/analytics/health`, 90_000);
+      await waitForHttpOk(`${apiBase}/api/analytics/health`, 120_000);
     }
 
     const browser = await chromium.launch({ headless: true });
@@ -82,30 +86,69 @@ async function main() {
     });
     const page = await ctx.newPage();
 
+    const smokeUserEmail = `smoke-${Date.now()}@local.test`;
+    const smokeUserPassword = `Smoke-${Date.now()}-pass!`;
+
     // HOME (logged out)
     await page.goto(`${baseUrl}/`, { waitUntil: "domcontentloaded", timeout: 60_000 });
     await page.getByRole("heading", { level: 1 }).waitFor({ state: "visible", timeout: 15_000 });
 
-    const primaryCta = page.locator(".home-hero .home-cta--primary").first();
+    const primaryCta = page.locator("[data-testid='home-cta-primary']").first();
     await primaryCta.waitFor({ state: "visible", timeout: 10_000 });
     await primaryCta.click();
     await page.waitForURL(/\/auth\/registro/, { timeout: 20_000 });
 
-    // PLANES (logged out, requires at least 1 activated plan)
-    await page.goto(`${baseUrl}/planes`, { waitUntil: "domcontentloaded", timeout: 60_000 });
+    // REGISTRO básico (dev/local bypass Turnstile)
+    await page.locator("#email").fill(smokeUserEmail);
+    await page.locator("#password").fill(smokeUserPassword);
+    await page.locator("#passwordConfirmation").fill(smokeUserPassword);
+    await page.locator("[data-testid='signup-submit']").click();
+    await page.waitForURL((url) => url.pathname === "/planes", { timeout: 40_000 });
+
+    // PLANES (logged in, requires at least 1 activated plan)
     const planCard = page.locator(".plan-card-wrapper, .plan-card-main-card").first();
-    await planCard.waitFor({ state: "visible", timeout: 20_000 });
+    await planCard.waitFor({ state: "visible", timeout: 25_000 });
+
+    // PLANES → CHECKOUT
+    await page.locator("[data-testid^='plan-primary-cta-']").first().click();
+    await page.waitForURL((url) => url.pathname === "/comprar" && url.search.includes("priceId="), {
+      timeout: 25_000,
+    });
+
+    // CHECKOUT → SUCCESS (mocked in local dev if Stripe keys are missing)
+    await page.getByRole("heading", { level: 1, name: /activar acceso inmediato/i }).waitFor({
+      state: "visible",
+      timeout: 25_000,
+    });
+    await page.locator("[data-testid='checkout-method-card']").click();
+    await page.locator("[data-testid='checkout-continue']").click();
+    await page.waitForURL((url) => url.pathname === "/comprar/success", { timeout: 30_000 });
+    await page.getByRole("heading", { level: 1, name: /pago realizado/i }).waitFor({
+      state: "visible",
+      timeout: 25_000,
+    });
+
+    // LOGIN (nuevo usuario) en una tab limpia (sessionStorage es per-tab)
+    const loginPage = await ctx.newPage();
+    await loginPage.goto(`${baseUrl}/auth`, { waitUntil: "domcontentloaded", timeout: 60_000 });
+    await loginPage.locator("input[name='username']").fill(smokeUserEmail);
+    await loginPage.locator("input[name='password']").fill(smokeUserPassword);
+    await loginPage.locator("[data-testid='login-submit']").click();
+    await loginPage.waitForURL((url) => !url.pathname.startsWith("/auth"), { timeout: 25_000 });
+    await loginPage.close();
 
     // Optional: login + admin
     if (loginEmail && loginPassword) {
-      await page.goto(`${baseUrl}/auth`, { waitUntil: "domcontentloaded", timeout: 60_000 });
-      await page.locator("input[name='username']").fill(loginEmail);
-      await page.locator("input[name='password']").fill(loginPassword);
-      await page.getByRole("button", { name: /ingresar/i }).click();
-      await page.waitForURL((url) => !url.pathname.startsWith("/auth"), { timeout: 25_000 });
+      const adminPage = await ctx.newPage();
+      await adminPage.goto(`${baseUrl}/auth`, { waitUntil: "domcontentloaded", timeout: 60_000 });
+      await adminPage.locator("input[name='username']").fill(loginEmail);
+      await adminPage.locator("input[name='password']").fill(loginPassword);
+      await adminPage.locator("[data-testid='login-submit']").click();
+      await adminPage.waitForURL((url) => !url.pathname.startsWith("/auth"), { timeout: 25_000 });
 
-      await page.goto(`${baseUrl}/admin/usuarios`, { waitUntil: "domcontentloaded", timeout: 60_000 });
-      await page.getByRole("heading", { name: "Usuarios" }).first().waitFor({ state: "visible", timeout: 25_000 });
+      await adminPage.goto(`${baseUrl}/admin/usuarios`, { waitUntil: "domcontentloaded", timeout: 60_000 });
+      await adminPage.getByRole("heading", { name: "Usuarios" }).first().waitFor({ state: "visible", timeout: 25_000 });
+      await adminPage.close();
     }
 
     await ctx.close();

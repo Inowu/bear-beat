@@ -789,6 +789,7 @@ function Checkout() {
                     className={`checkout-method ${selectedMethod === method ? "is-active" : ""}`}
                     onClick={() => handleSelectMethod(method)}
                     aria-pressed={selectedMethod === method}
+                    data-testid={`checkout-method-${method}`}
                   >
                     <span className="checkout-method__icon" aria-hidden>
                       <Icon size={18} />
@@ -807,6 +808,7 @@ function Checkout() {
               className="checkout-cta-btn checkout-cta-btn--primary"
               onClick={handleContinuePayment}
               disabled={processingMethod !== null}
+              data-testid="checkout-continue"
             >
               {processingMethod === "card" && "Abriendo pasarela segura..."}
               {processingMethod === "spei" && "Generando referencia SPEI (recurrente)..."}

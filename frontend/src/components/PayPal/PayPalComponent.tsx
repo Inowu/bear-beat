@@ -96,6 +96,9 @@ export default function PayPalComponent(props: Props) {
 
         async function createOrder(data: any, actions: CreateOrderActions) {
             const currentPlan = await trpc.auth.getCurrentSubscriptionPlan.query();
+            if (!currentPlan) {
+                throw new Error("No tienes un plan activo para actualizar.");
+            }
             const priceDifference = Number(props.plan.price) - Number(currentPlan.price);
 
             return await actions.order.create({

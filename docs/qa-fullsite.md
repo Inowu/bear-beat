@@ -40,7 +40,9 @@ npm run e2e:smoke --workspace=backend
 
 Validaciones incluidas:
 - Home carga y CTA lleva a `/auth/registro`.
+- Registro básico (crea un usuario nuevo en dev/local).
 - `/planes` renderiza al menos 1 plan card.
+- Planes → Checkout → Success (sin cobro real): en local dev, si Stripe no está configurado, el backend regresa `success_url` mock (solo localhost, nunca producción).
 - Login (opcional) y `/admin/usuarios` carga con heading `Usuarios`.
 
 ## 4) Auditoría Automática (routes + UI inventory + a11y + errores)
@@ -129,4 +131,3 @@ Outputs (commiteados):
    - `checkout_*` en `/comprar` (cuando aplique)
    - `cta_click` en CTAs principales (Home/Planes)
    - `admin_action` en acciones admin críticas (ej. editar usuario)
-

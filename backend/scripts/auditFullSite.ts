@@ -1,3 +1,4 @@
+import "./_loadEnv";
 import fs from "fs";
 import path from "path";
 import { spawn } from "child_process";
@@ -6,6 +7,11 @@ import { chromium, type Browser, type BrowserContext } from "playwright";
 import AxeBuilder from "@axe-core/playwright";
 
 type RouteType = "public" | "auth" | "app" | "admin";
+
+type AuthTokens = {
+  token: string;
+  refreshToken: string;
+};
 
 type RouteMapEntry = {
   path: string;
@@ -44,6 +50,7 @@ type UiInventoryRouteResult = {
   status: "ok" | "error";
   error?: string;
   console: Array<{ type: string; text: string }>;
+  httpErrors: Array<{ url: string; method: string; status: number; statusText: string }>;
   failedRequests: Array<{ url: string; method: string; failure: string }>;
   interactive: UiInventoryInteractive[];
   iconOnlyMissingLabel: Array<{
@@ -318,10 +325,12 @@ async function collectRouteResult(
   baseUrl: string,
   route: RouteMapEntry,
   authState: "anonymous" | "authenticated",
+  authTokens?: AuthTokens,
 ): Promise<UiInventoryRouteResult> {
   const page = await ctx.newPage();
 
   const consoleEvents: Array<{ type: string; text: string }> = [];
+  const httpErrors: Array<{ url: string; method: string; status: number; statusText: string }> = [];
   const failedRequests: Array<{ url: string; method: string; failure: string }> = [];
 
   page.on("console", (msg) => {
@@ -329,6 +338,23 @@ async function collectRouteResult(
       type: msg.type(),
       text: sanitizeText(msg.text()),
     });
+  });
+
+  page.on("response", (res) => {
+    const status = res.status();
+    if (status < 400) return;
+    try {
+      const req = res.request();
+      const url = sanitizeText(res.url());
+      const method = req.method();
+      const statusText = sanitizeText(res.statusText());
+      const key = `${method} ${url} ${status}`;
+      // De-dupe to keep artifacts readable.
+      if (httpErrors.some((e) => `${e.method} ${e.url} ${e.status}` === key)) return;
+      httpErrors.push({ url, method, status, statusText });
+    } catch {
+      // noop
+    }
   });
 
   page.on("requestfailed", (req) => {
@@ -347,6 +373,7 @@ async function collectRouteResult(
     title: "",
     status: "ok",
     console: consoleEvents,
+    httpErrors,
     failedRequests,
     interactive: [],
     iconOnlyMissingLabel: [],
@@ -354,13 +381,58 @@ async function collectRouteResult(
     a11y: null,
   };
 
+  const slug = stableSlug(route.path.replace(/\//g, "-"));
+  const desktopPath = path.join(SCREENSHOTS_DIR, `${slug}--desktop.png`);
+  const mobilePath = path.join(SCREENSHOTS_DIR, `${slug}--mobile.png`);
+
+  const takeScreenshots = async (): Promise<{ desktop: string; mobile: string } | null> => {
+    try {
+      // Desktop
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: desktopPath, fullPage: true });
+
+      // Mobile
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: mobilePath, fullPage: true });
+
+      return {
+        desktop: path.relative(REPO_ROOT, desktopPath),
+        mobile: path.relative(REPO_ROOT, mobilePath),
+      };
+    } catch (err) {
+      consoleEvents.push({ type: "warning", text: `screenshot failed: ${sanitizeText(String(err))}` });
+      return null;
+    }
+  };
+
   try {
+    // Auth tokens are stored in sessionStorage (per-tab). When we audit with new pages
+    // we must pre-seed sessionStorage BEFORE the app mounts, otherwise AuthRoute redirects.
+    if (authTokens) {
+      await page.addInitScript(
+        (tokens: { token: string; refreshToken: string }) => {
+          try {
+            window.sessionStorage.setItem("token", tokens.token);
+            window.sessionStorage.setItem("refreshToken", tokens.refreshToken);
+          } catch {
+            // noop
+          }
+        },
+        { token: authTokens.token, refreshToken: authTokens.refreshToken },
+      );
+    }
+
     const url = new URL(route.path, baseUrl).toString();
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45_000 });
     await page.waitForTimeout(500);
 
     resultBase.finalUrl = page.url();
     resultBase.title = await page.title();
+
+    const screenshots = await takeScreenshots();
+    resultBase.screenshots = screenshots;
 
     const evaluateInventory = async (): Promise<{
       interactive: UiInventoryInteractive[];
@@ -503,26 +575,6 @@ async function collectRouteResult(
       tagName: i.tagName,
     }));
 
-    // Screenshots (full-page, 2 viewports) saved under /audit/screenshots.
-    const slug = stableSlug(route.path.replace(/\//g, "-"));
-    const desktopPath = path.join(SCREENSHOTS_DIR, `${slug}--desktop.png`);
-    const mobilePath = path.join(SCREENSHOTS_DIR, `${slug}--mobile.png`);
-
-    // Desktop
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await page.waitForTimeout(200);
-    await page.screenshot({ path: desktopPath, fullPage: true });
-
-    // Mobile
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.waitForTimeout(200);
-    await page.screenshot({ path: mobilePath, fullPage: true });
-
-    resultBase.screenshots = {
-      desktop: path.relative(REPO_ROOT, desktopPath),
-      mobile: path.relative(REPO_ROOT, mobilePath),
-    };
-
     // A11y (axe)
     try {
       const axe = new AxeBuilder({ page });
@@ -557,6 +609,11 @@ async function collectRouteResult(
     resultBase.error = sanitizeText(String(err));
     resultBase.finalUrl = page.url();
     resultBase.title = await page.title().catch(() => "");
+
+    // Evidence is mandatory: try to screenshot even on errors/timeouts.
+    if (!resultBase.screenshots) {
+      resultBase.screenshots = await takeScreenshots();
+    }
   } finally {
     await page.close();
   }
@@ -564,10 +621,10 @@ async function collectRouteResult(
   return resultBase;
 }
 
-async function tryLogin(ctx: BrowserContext, baseUrl: string): Promise<boolean> {
+async function tryLogin(ctx: BrowserContext, baseUrl: string): Promise<AuthTokens | null> {
   const email = process.env.AUDIT_LOGIN_EMAIL?.trim();
   const password = process.env.AUDIT_LOGIN_PASSWORD?.trim();
-  if (!email || !password) return false;
+  if (!email || !password) return null;
 
   const page = await ctx.newPage();
   try {
@@ -577,10 +634,25 @@ async function tryLogin(ctx: BrowserContext, baseUrl: string): Promise<boolean> 
     await page.fill("#password", password).catch(() => null);
     await page.click("button[type='submit']").catch(() => null);
 
-    await page.waitForFunction(() => Boolean(window.sessionStorage.getItem("token")), null, { timeout: 15_000 });
-    return true;
+    await page.waitForFunction(
+      () => Boolean(window.sessionStorage.getItem("token")) && Boolean(window.sessionStorage.getItem("refreshToken")),
+      null,
+      { timeout: 20_000 },
+    );
+
+    const tokens = await page.evaluate(() => {
+      return {
+        token: window.sessionStorage.getItem("token"),
+        refreshToken: window.sessionStorage.getItem("refreshToken"),
+      };
+    });
+
+    if (typeof tokens.token === "string" && typeof tokens.refreshToken === "string" && tokens.token && tokens.refreshToken) {
+      return { token: tokens.token, refreshToken: tokens.refreshToken };
+    }
+    return null;
   } catch {
-    return false;
+    return null;
   } finally {
     await page.close().catch(() => null);
   }
@@ -780,9 +852,12 @@ function buildCroFindings(routeResults: UiInventoryRouteResult[]): string {
   lines.push(`### Consola / Network failures`);
   for (const r of routeResults) {
     const errors = r.console.filter((c) => c.type === "error");
+    const httpErrorsCount = r.httpErrors.length;
     const failed = r.failedRequests.length;
-    if (errors.length === 0 && failed === 0) continue;
-    lines.push(`- \`${r.path}\`: console errors=${errors.length}, failedRequests=${failed}`);
+    if (errors.length === 0 && httpErrorsCount === 0 && failed === 0) continue;
+    lines.push(
+      `- \`${r.path}\`: console errors=${errors.length}, httpErrors=${httpErrorsCount}, requestFailed=${failed}`,
+    );
   }
 
   lines.push(``);
@@ -803,7 +878,8 @@ async function main() {
   const start = spawnDevServersIfNeeded(baseUrl);
 
   try {
-    await waitForHttpOk(baseUrl, 90_000);
+    // CRA + TS typecheck can be slow on first boot (cold cache). Give it more time.
+    await waitForHttpOk(baseUrl, 180_000);
     // If we're booting the full stack (FE+BE), wait for the backend health endpoint too.
     // This prevents early "ERR_CONNECTION_REFUSED" during the first TRPC batch request.
     const apiBaseRaw =
@@ -812,7 +888,7 @@ async function main() {
       "";
     if (apiBaseRaw) {
       const apiBase = apiBaseRaw.endsWith("/") ? apiBaseRaw.slice(0, -1) : apiBaseRaw;
-      await waitForHttpOk(`${apiBase}/api/analytics/health`, 90_000);
+      await waitForHttpOk(`${apiBase}/api/analytics/health`, 120_000);
     }
 
     const routeMap = parseRouteMapFromFrontendIndex();
@@ -829,7 +905,8 @@ async function main() {
         viewport: { width: 1440, height: 900 },
       });
 
-      for (const route of routeMap) {
+      // Logged-out coverage: only public + auth routes.
+      for (const route of routeMap.filter((r) => !r.requiresAuth)) {
         if (route.path.includes("*")) continue;
         const res = await collectRouteResult(anonCtx, baseUrl, route, "anonymous");
         uiReport.routes.push(res);
@@ -842,12 +919,13 @@ async function main() {
         const authCtx = await browser.newContext({
           viewport: { width: 1440, height: 900 },
         });
-        const ok = await tryLogin(authCtx, baseUrl);
-        if (ok) {
+        const tokens = await tryLogin(authCtx, baseUrl);
+        if (tokens) {
+          // Authenticated coverage: audit ALL protected routes with sessionStorage pre-seeded per page.
           for (const route of routeMap) {
             if (route.path.includes("*")) continue;
             if (!route.requiresAuth) continue;
-            const res = await collectRouteResult(authCtx, baseUrl, route, "authenticated");
+            const res = await collectRouteResult(authCtx, baseUrl, route, "authenticated", tokens);
             uiReport.routes.push(res);
           }
         } else {
@@ -859,6 +937,7 @@ async function main() {
             status: "error",
             error: "AUDIT_LOGIN_EMAIL/AUDIT_LOGIN_PASSWORD no pudieron iniciar sesión en este entorno.",
             console: [],
+            httpErrors: [],
             failedRequests: [],
             interactive: [],
             iconOnlyMissingLabel: [],
@@ -871,6 +950,30 @@ async function main() {
     });
 
     writeJson(path.join(DOCS_AUDIT_DIR, "ui-inventory.json"), uiReport);
+
+    // Hard fail conditions (coverage correctness):
+    // - Any route marked requiresAuth that still ends at /auth after "authenticated" audit.
+    // - Any route that errored without screenshots (missing evidence).
+    const requiresAuthByPath = new Map(routeMap.map((r) => [r.path, r.requiresAuth] as const));
+    const protectedAuthRedirects = uiReport.routes.filter((r) => {
+      if (r.authState !== "authenticated") return false;
+      if (!requiresAuthByPath.get(r.path)) return false;
+      try {
+        return new URL(r.finalUrl).pathname.startsWith("/auth");
+      } catch {
+        return false;
+      }
+    });
+
+    const missingEvidence = uiReport.routes.filter((r) => !r.screenshots);
+
+    if (protectedAuthRedirects.length > 0 || missingEvidence.length > 0) {
+      // eslint-disable-next-line no-console
+      console.error(
+        `[audit:fullsite] FAIL: protected routes redirected to /auth=${protectedAuthRedirects.length}, missing screenshots=${missingEvidence.length}`,
+      );
+      process.exitCode = 1;
+    }
 
     // A11y report (markdown)
     writeText(path.join(DOCS_AUDIT_DIR, "a11y-report.md"), markdownA11yReport(uiReport.routes));

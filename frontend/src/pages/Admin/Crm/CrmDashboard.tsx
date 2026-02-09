@@ -143,7 +143,7 @@ function KpiCard(props: {
 }) {
   const { title, value, helper, icon: Icon } = props;
   return (
-    <div className="crm-kpi-card">
+    <div className="crm-kpi-card" role="listitem">
       <div className="crm-kpi-card__top">
         <span className="crm-kpi-card__icon" aria-hidden>
           <Icon />
@@ -343,7 +343,7 @@ export function CrmDashboard() {
               <p className="crm-section__hint">
                 Acciones últimas 24h: <strong>{automation.actionsLast24h}</strong>
               </p>
-              <div className="crm-table-wrap">
+              <div className="crm-table-wrap" tabIndex={0} aria-label="Tabla: historial de automations (desplazable)">
                 <table className="crm-table">
                   <thead>
                     <tr>
@@ -377,7 +377,7 @@ export function CrmDashboard() {
 
           <section className="crm-section">
             <h2 className="crm-section__title">Registros diarios (acumulado)</h2>
-            <div className="crm-table-wrap">
+            <div className="crm-table-wrap" tabIndex={0} aria-label="Tabla: registros diarios (desplazable)">
               <table className="crm-table">
                 <thead>
                   <tr>
@@ -408,7 +408,7 @@ export function CrmDashboard() {
 
           <section className="crm-section">
             <h2 className="crm-section__title">Trial por día</h2>
-            <div className="crm-table-wrap">
+            <div className="crm-table-wrap" tabIndex={0} aria-label="Tabla: trial por día (desplazable)">
               <table className="crm-table">
                 <thead>
                   <tr>
@@ -442,7 +442,7 @@ export function CrmDashboard() {
             <p className="crm-section__hint">
               Total en el rango: <strong>{snapshot.kpis.cancellations}</strong>
             </p>
-            <div className="crm-table-wrap">
+            <div className="crm-table-wrap" tabIndex={0} aria-label="Tabla: cancelaciones por razón (desplazable)">
               <table className="crm-table">
                 <thead>
                   <tr>
@@ -482,7 +482,7 @@ export function CrmDashboard() {
             <p className="crm-section__hint">
               Segmento crítico: necesitan onboarding para activar valor antes del día 7.
             </p>
-            <div className="crm-table-wrap">
+            <div className="crm-table-wrap" tabIndex={0} aria-label="Tabla: trial sin descarga (24h) (desplazable)">
               <table className="crm-table">
                 <thead>
                   <tr>
@@ -555,7 +555,7 @@ export function CrmDashboard() {
             <p className="crm-section__hint">
               Lista enfocada en primeras compras dentro del rango.
             </p>
-            <div className="crm-table-wrap">
+            <div className="crm-table-wrap" tabIndex={0} aria-label="Tabla: pagaron y no descargaron (24h) (desplazable)">
               <table className="crm-table">
                 <thead>
                   <tr>
@@ -628,7 +628,7 @@ export function CrmDashboard() {
           <section className="crm-section">
             <h2 className="crm-section__title">Cancelaciones recientes</h2>
             <p className="crm-section__hint">Con motivo y atribución (si existe).</p>
-            <div className="crm-table-wrap">
+            <div className="crm-table-wrap" tabIndex={0} aria-label="Tabla: cancelaciones recientes (desplazable)">
               <table className="crm-table">
                 <thead>
                   <tr>
