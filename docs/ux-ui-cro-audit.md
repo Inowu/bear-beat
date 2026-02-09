@@ -33,7 +33,7 @@ Evidencia (screenshots por ruta, desktop+mobile): `audit/screenshots/*--desktop.
 - A11y (axe): 0 violaciones
 - Protected routes (auth): **0** terminan en `/auth` (finalUrl mismatch)
 - Evidencia: **0** rutas sin screenshots
-- Robustez: **0** rutas con `console.error`, **0** con HTTP 4xx/5xx, **0** con `requestfailed`
+- Robustez: **0** rutas con `console.error`, **0** con HTTP 4xx/5xx, **1** con `requestfailed` (Stripe `m.stripe.network` abortado en headless en `/`)
 
 ## Inventario UI (automático, por ruta)
 
@@ -41,9 +41,9 @@ Este inventario se extrae con Playwright desde DOM visible (mobile viewport) y s
 
 | Ruta | Auth | Btn | Links | Inputs | Selects | Icono sin label | Axe | Console err | HTTP 4xx/5xx | Req fail |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| `/` | anonymous | 4 | 15 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `/` | anonymous | 4 | 15 | 1 | 0 | 0 | 0 | 0 | 0 | 1 |
 | `/actualizar-planes` | authenticated | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| `/admin` | authenticated | 12 | 0 | 1 | 2 | 0 | 0 | 0 | 0 | 0 |
+| `/admin` | authenticated | 14 | 0 | 1 | 2 | 0 | 0 | 0 | 0 | 0 |
 | `/admin/almacenamiento` | authenticated | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `/admin/analitica` | authenticated | 3 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
 | `/admin/catalogo` | authenticated | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -51,22 +51,22 @@ Este inventario se extrae con Playwright desde DOM visible (mobile viewport) y s
 | `/admin/cupones` | authenticated | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `/admin/dominios-bloqueados` | authenticated | 3 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `/admin/historial-descargas` | authenticated | 5 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| `/admin/historialCheckout` | authenticated | 8 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
+| `/admin/historialCheckout` | authenticated | 10 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | `/admin/live` | authenticated | 4 | 0 | 2 | 2 | 0 | 0 | 0 | 0 | 0 |
 | `/admin/ordenes` | authenticated | 6 | 0 | 3 | 3 | 0 | 0 | 0 | 0 | 0 |
 | `/admin/planesAdmin` | authenticated | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `/admin/telefonos-bloqueados` | authenticated | 3 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
-| `/admin/usuarios` | authenticated | 12 | 0 | 1 | 2 | 0 | 0 | 0 | 0 | 0 |
+| `/admin/usuarios` | authenticated | 14 | 0 | 1 | 2 | 0 | 0 | 0 | 0 | 0 |
 | `/auth` | anonymous | 2 | 3 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `/auth/recuperar` | anonymous | 1 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `/auth/registro` | anonymous | 3 | 2 | 5 | 1 | 0 | 0 | 0 | 0 | 0 |
 | `/auth/reset-password` | anonymous | 3 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `/comprar` | authenticated | 5 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `/comprar/success` | authenticated | 5 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| `/descargas` | authenticated | 5 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `/descargas` | authenticated | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `/instrucciones` | anonymous | 0 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `/legal` | anonymous | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| `/micuenta` | authenticated | 3 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `/micuenta` | authenticated | 6 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `/planes` | anonymous | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 
 ## Evidencia por Ruta (screenshots “después”)
@@ -172,4 +172,3 @@ Formato por issue:
 5. **Success (`/comprar/success`)**
    - Qué funciona: confirmación clara + próximos pasos + CTAs a explorador y cuenta.
    - Mitigación: agregar (P2) verificación real de activación (polling a backend) para reducir tickets de “ya pagué y no tengo acceso”.
-
