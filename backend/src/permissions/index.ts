@@ -3,6 +3,7 @@ import { Context } from '../context';
 import { RolesNames } from '../routers/auth/interfaces/roles.interface';
 import { verifyConektaSignature } from '../routers/utils/verifyConektaSignature';
 import { verifyStripeSignature } from '../routers/utils/verifyStripeSignature';
+import { TRPCError } from '@trpc/server';
 
 const isAdmin = rule<Context>()(
   async (ctx) => ctx.session?.user?.role === RolesNames.admin,
@@ -18,8 +19,9 @@ const isValidStripeSignature = rule<Context>()(async ({ req }) =>
   verifyStripeSignature(req, process.env.STRIPE_WH_SECRET as string),
 );
 
-export const permissions = shield<Context>({
-  query: {
+export const permissions = shield<Context>(
+  {
+    query: {
     list: isLoggedIn,
     download: isLoggedIn,
     quota: isLoggedIn,
@@ -124,7 +126,7 @@ export const permissions = shield<Context>({
     groupByUserFiles: isAdmin,
     groupByUsers: isAdmin,
   },
-  mutation: {
+    mutation: {
     verifyPhone: isLoggedIn,
     sendVerificationCode: isLoggedIn,
     cancelDirDownload: isLoggedIn,
@@ -249,4 +251,9 @@ export const permissions = shield<Context>({
     upsertOneUserFiles: isAdmin,
     upsertOneUsers: isAdmin,
   },
-});
+  },
+  {
+    // Ensure permission denials don't look like 500s in clients (better UX + clearer telemetry).
+    fallbackError: new TRPCError({ code: 'FORBIDDEN', message: 'No autorizado' }),
+  },
+);

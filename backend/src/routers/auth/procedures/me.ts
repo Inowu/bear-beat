@@ -1,12 +1,20 @@
 import { shieldedProcedure } from '../../../procedures/shielded.procedure';
 import { log } from '../../../server';
 import { extendedAccountPostfix } from '../../../utils/constants';
+import { TRPCError } from '@trpc/server';
 
 /**
  * Returns the current logged in user
  * */
 export const me = shieldedProcedure.query(
   async ({ ctx: { session, prisma } }) => {
+    if (!session?.user) {
+      throw new TRPCError({
+        code: 'UNAUTHORIZED',
+        message: 'No autorizado',
+      });
+    }
+
     const user = session!.user!;
     const currentDbUser = await prisma.users.findFirst({
       where: { id: user.id },
