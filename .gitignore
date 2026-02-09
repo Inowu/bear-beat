@@ -8,3 +8,5 @@ ftp-stats.py
 # Playwright CLI artifacts
 .playwright-cli
 output
+# Local audit screenshots (may contain PII depending on DB; keep untracked)
+audit/screenshots

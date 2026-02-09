@@ -13,7 +13,7 @@ import trpc from "../../../api";
 import { ErrorModal } from "../../../components/Modals";
 import { useCookies } from "react-cookie";
 import { ChatButton } from "../../../components/ChatButton/ChatButton";
-import Turnstile from "../../../components/Turnstile/Turnstile";
+import Turnstile, { type TurnstileRef } from "../../../components/Turnstile/Turnstile";
 import { trackLead } from "../../../utils/facebookPixel";
 import { trackManyChatConversion, MC_EVENTS } from "../../../utils/manychatPixel";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../../utils/growthMetrics";
@@ -51,6 +51,8 @@ function SignUpForm() {
   const [turnstileToken, setTurnstileToken] = useState<string>("");
   const [turnstileError, setTurnstileError] = useState<string>("");
   const [turnstileReset, setTurnstileReset] = useState<number>(0);
+  const [turnstilePendingSubmit, setTurnstilePendingSubmit] = useState(false);
+  const turnstileRef = useRef<TurnstileRef | null>(null);
   const turnstileBypassed = shouldBypassTurnstile();
   const registrationStartedRef = useRef(false);
   const registrationCompletedRef = useRef(false);
@@ -62,16 +64,23 @@ function SignUpForm() {
 
   const validationSchema = Yup.object().shape({
     email: Yup.string().required("El correo es requerido").email("El formato del correo no es correcto"),
+    // Nombre de usuario es opcional (conversion-first). Si lo ingresan, validarlo.
     username: Yup.string()
-      .required("El nombre de usuario es requerido")
-      .min(5, "El nombre de usuario debe contener por lo menos 5 caracteres")
-      .matches(/[a-zA-Z]/, "El nombre de usuario debe contener al menos una letra"),
+      .matches(/^[a-zA-Z0-9 ]*$/, { message: "No uses caracteres especiales", excludeEmptyString: true })
+      .matches(/[a-zA-Z]/, { message: "Incluye al menos una letra", excludeEmptyString: true })
+      .test(
+        "min-if-present",
+        "Usa al menos 3 caracteres",
+        (value) => !value || value.trim().length >= 3,
+      )
+      .notRequired(),
     password: Yup.string()
       .required("La contraseña es requerida")
       .min(6, "La contraseña debe contener al menos 6 caracteres"),
+    // WhatsApp is optional (conversion-first). If present, validate format.
     phone: Yup.string()
-      .required("El teléfono es requerido")
-      .matches(/^[0-9]{7,14}$/, "El teléfono no es válido"),
+      .matches(/^[0-9]{7,14}$/, { message: "El teléfono no es válido", excludeEmptyString: true })
+      .notRequired(),
     passwordConfirmation: Yup.string()
       .required("Debe confirmar la contraseña")
       .oneOf([Yup.ref("password")], "Ambas contraseñas deben ser iguales"),
@@ -102,12 +111,11 @@ function SignUpForm() {
     validationSchema: validationSchema,
     onSubmit: async (values) => {
       if (!turnstileToken && !turnstileBypassed) {
-        setTurnstileError("Confirma que no eres un robot.");
-        trackGrowthMetric(GROWTH_METRICS.FORM_ERROR, {
-          formId: "signup",
-          field: "turnstile",
-          errorCode: "verification",
-        });
+        // Invisible Turnstile: execute only on submit to avoid showing the widget by default.
+        setTurnstileError("Verificando seguridad...");
+        setTurnstilePendingSubmit(true);
+        setLoader(true);
+        turnstileRef.current?.execute();
         return;
       }
 
@@ -126,7 +134,8 @@ function SignUpForm() {
         setLoader(false);
         return;
       }
-      const formattedPhone = `+${dialCode} ${values.phone}`;
+      const rawPhone = `${values.phone ?? ""}`.trim();
+      const formattedPhone = rawPhone ? `+${dialCode} ${rawPhone}` : "";
       const normalizedPhone = normalizePhoneNumber(formattedPhone);
       if (normalizedPhone && blockedPhoneNumbers.includes(normalizedPhone)) {
         formik.setFieldError("phone", "El teléfono no está permitido");
@@ -197,6 +206,15 @@ function SignUpForm() {
       }
     },
   });
+
+  useEffect(() => {
+    if (!turnstilePendingSubmit) return;
+    if (!turnstileToken) return;
+    setTurnstilePendingSubmit(false);
+    // Retry the submission now that we have a token.
+    formik.submitForm();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [turnstilePendingSubmit, turnstileToken]);
 
   const trackRegistrationAbandon = useCallback(
     (reason: string) => {
@@ -313,11 +331,15 @@ function SignUpForm() {
   const handleTurnstileExpire = useCallback(() => {
     setTurnstileToken("");
     setTurnstileError("La verificación expiró, intenta de nuevo.");
+    setTurnstilePendingSubmit(false);
+    setLoader(false);
   }, []);
 
   const handleTurnstileError = useCallback(() => {
     setTurnstileToken("");
     setTurnstileError("No se pudo verificar la seguridad.");
+    setTurnstilePendingSubmit(false);
+    setLoader(false);
   }, []);
 
   const selectedCountry = allowedCountryOptions.find((c) => c.dial_code.slice(1) === dialCode);
@@ -361,19 +383,15 @@ function SignUpForm() {
             autoComplete="on"
             onSubmit={(e) => {
               e.preventDefault();
-              if (!turnstileToken && !turnstileBypassed) {
-                setTurnstileError("Completa la verificación antes de continuar.");
-                return;
-              }
               formik.handleSubmit(e);
             }}
           >
             <div className={`c-row ${showUsernameError ? "is-invalid" : ""}`}>
-              <label htmlFor="username" className="signup-label">Nombre</label>
+              <label htmlFor="username" className="signup-label">Nombre (opcional)</label>
               <div className="signup-input-wrap">
                 <User className="signup-input-icon" aria-hidden />
                 <input
-                  placeholder="Tu nombre o nombre artístico"
+                  placeholder="Tu nombre o DJ name (opcional)"
                   type="text"
                   id="username"
                   name="username"
@@ -407,7 +425,7 @@ function SignUpForm() {
               {showEmailError && <div className="error-formik">{formik.errors.email}</div>}
             </div>
             <div className={`c-row c-row--phone ${showPhoneError ? "is-invalid" : ""}`}>
-              <label htmlFor="phone" className="signup-label">WhatsApp (activación guiada)</label>
+              <label htmlFor="phone" className="signup-label">WhatsApp (opcional)</label>
               <div className="signup-phone-wrap">
                 <div className="signup-phone-flag-wrap">
                   <span className={`signup-phone-flag ${countryFlagClass}`} aria-hidden title={selectedCountry?.name} />
@@ -430,7 +448,7 @@ function SignUpForm() {
                 </span>
                 <input
                   className="signup-phone-input"
-                  placeholder="Escribe tu WhatsApp..."
+                  placeholder="Si quieres, te guiamos por chat más rápido"
                   id="phone"
                   name="phone"
                   value={formik.values.phone}
@@ -484,6 +502,8 @@ function SignUpForm() {
               )}
             </div>
             <Turnstile
+              ref={turnstileRef}
+              invisible
               onVerify={handleTurnstileSuccess}
               onExpire={handleTurnstileExpire}
               onError={handleTurnstileError}

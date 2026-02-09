@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import bcrypt from 'bcrypt';
+import { Prisma } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
 import { publicProcedure } from '../../../procedures/public.procedure';
 import { RolesIds } from '../interfaces/roles.interface';
@@ -23,22 +24,79 @@ import {
 import { verifyTurnstileToken } from '../../../utils/turnstile';
 import { getClientIpFromRequest } from '../../../analytics';
 
+function normalizeUsernameCandidate(value: string): string {
+  const trimmed = `${value ?? ''}`.trim();
+  if (!trimmed) return '';
+  // Keep only characters allowed by the product (letters/numbers/spaces) and collapse spaces.
+  return trimmed.replace(/[^a-zA-Z0-9 ]+/g, '').replace(/\s+/g, ' ').trim();
+}
+
+async function ensureUniqueUsername(prisma: any, base: string): Promise<string> {
+  const normalizedBase = normalizeUsernameCandidate(base);
+  let candidate = normalizedBase || 'DJ';
+
+  // Ensure it contains at least one letter to keep the UI friendly and consistent with legacy rules.
+  if (!/[a-zA-Z]/.test(candidate)) {
+    candidate = `DJ ${candidate}`.trim();
+  }
+
+  // Minimum length guard (db + UI expectations).
+  if (candidate.length < 3) {
+    candidate = `${candidate} DJ`.trim();
+  }
+
+  // Limit length to avoid awkward overflows in admin/mobile cards.
+  const MAX_LEN = 24;
+  const baseShort = candidate.slice(0, MAX_LEN).trim();
+
+  // Try a few suffixes if taken.
+  for (let i = 0; i < 8; i += 1) {
+    const attempt =
+      i === 0
+        ? baseShort
+        : `${baseShort.slice(0, Math.max(3, MAX_LEN - 5)).trim()} ${Math.floor(
+            1000 + Math.random() * 9000,
+          )}`.trim();
+
+    const exists = await prisma.users.findFirst({
+      where: { username: { equals: attempt } },
+      select: { id: true },
+    });
+    if (!exists) return attempt;
+  }
+
+  return `${baseShort.slice(0, Math.max(3, MAX_LEN - 6)).trim()} ${Date.now() % 100000}`.trim();
+}
+
 export const register = publicProcedure
   .input(
     z.object({
+      // Username is optional (conversion-first). If omitted, we generate one from the email.
+      // If provided, it must be simple (letters/numbers/spaces) to keep UX consistent.
       username: z
         .string()
-        .min(3, 'El nombre de usuario debe tener al menos 3 caracteres')
-        // At least one alphabetic character
-        .regex(
-          /^[a-zA-Z0-9 ]*$/,
-          'El nombre de usuario no tiene un formato valido, no incluya caracteres especiales',
+        .optional()
+        .default('')
+        .transform((v) => `${v ?? ''}`.trim())
+        .refine(
+          (v) => {
+            if (!v) return true;
+            if (v.length < 3) return false;
+            if (!/^[a-zA-Z0-9 ]*$/.test(v)) return false;
+            if (!/[a-zA-Z]/.test(v)) return false;
+            return true;
+          },
+          {
+            message:
+              'El nombre de usuario debe tener al menos 3 caracteres, incluir una letra y no usar caracteres especiales',
+          },
         ),
       email: z.string().email('Email inválido'),
       password: z
         .string()
         .min(6, 'La contraseña debe tener al menos 6 caracteres'),
-      phone: z.string(),
+      // Phone/WhatsApp should not block conversion. If present, we validate uniqueness and blocked lists.
+      phone: z.string().optional().default(''),
       fbp: z.string().optional(),
       fbc: z.string().optional(),
       eventId: z.string().optional(),
@@ -70,76 +128,118 @@ export const register = publicProcedure
         }
       }
 
-      const normalizedPhone = normalizePhoneNumber(phone);
+      const normalizedPhone = normalizePhoneNumber(phone || '');
       if (normalizedPhone) {
         const blockedPhones = await getBlockedPhoneNumbers(prisma);
         if (blockedPhones.includes(normalizedPhone)) {
           throw new TRPCError({
             code: 'BAD_REQUEST',
-            message: 'El telefono no esta permitido',
+            message: 'El teléfono no está permitido',
           });
         }
       }
 
       const existingUser = await prisma.users.findFirst({
-        where: {
-          OR: [
-            {
-              username: {
-                equals: username,
-              },
-            },
-            {
-              email: {
-                equals: email,
-              },
-            },
-          ],
-        },
+        where: { email: { equals: email } },
+        select: { id: true },
       });
 
-      if (existingUser) {
+      if (existingUser?.id) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
-          message: 'Ese email o nombre de usuario ya está registrado',
+          message: 'Ese email ya está registrado',
         });
       }
 
-      const existingUserWithPhone = await prisma.users.findFirst({
-        where: {
-          OR: [
-            {
-              phone: {
-                equals: phone,
-              },
+      if (normalizedPhone) {
+        const existingUserWithPhone = await prisma.users.findFirst({
+          where: {
+            phone: {
+              equals: normalizedPhone,
             },
-          ],
-        },
-      });
-
-      if (existingUserWithPhone) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Ese teléfono ya está registrado',
+          },
         });
+
+        if (existingUserWithPhone) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Ese teléfono ya está registrado',
+          });
+        }
+      }
+
+      const usernameFromEmail = normalizeUsernameCandidate(email.split('@')[0] ?? '');
+      const finalUsername = username
+        ? normalizeUsernameCandidate(username)
+        : await ensureUniqueUsername(prisma, usernameFromEmail || 'DJ');
+
+      if (username) {
+        const existingUserWithUsername = await prisma.users.findFirst({
+          where: { username: { equals: finalUsername } },
+          select: { id: true },
+        });
+        if (existingUserWithUsername?.id) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Ese nombre de usuario ya está registrado',
+          });
+        }
       }
 
       // TODO: Send confirmation email and generate token
-      const newUser = await prisma.users.create({
-        data: {
-          email,
-          username,
-          password: bcrypt.hashSync(password, 10),
-          phone,
-          role_id: RolesIds.normal,
-          ip_registro: clientIp ?? req.ip,
-          // `registered_on` is stored as DATE in MySQL (@db.Date). Use Date objects so Prisma
-          // formats it correctly for the database.
-          registered_on: new Date(),
-          active: ActiveState.Active,
-          verified: process.env.NODE_ENV === 'production' ? false : true,
-        },
-      });
+      const baseUserData = {
+        email,
+        password: bcrypt.hashSync(password, 10),
+        phone: normalizedPhone || null,
+        role_id: RolesIds.normal,
+        ip_registro: clientIp ?? req.ip,
+        // `registered_on` is stored as DATE in MySQL (@db.Date). Use Date objects so Prisma
+        // formats it correctly for the database.
+        registered_on: new Date(),
+        active: ActiveState.Active,
+        verified: process.env.NODE_ENV === 'production' ? false : true,
+      };
+
+      const userProvidedUsername = Boolean(username);
+      let newUser;
+      try {
+        newUser = await prisma.users.create({
+          data: {
+            ...baseUserData,
+            username: finalUsername,
+          },
+        });
+      } catch (e: any) {
+        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+          const targets = Array.isArray(e.meta?.target) ? (e.meta?.target as string[]) : [];
+          if (targets.includes('email')) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'Ese email ya está registrado' });
+          }
+          if (targets.includes('phone')) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'Ese teléfono ya está registrado' });
+          }
+          if (targets.includes('username')) {
+            if (userProvidedUsername) {
+              throw new TRPCError({
+                code: 'BAD_REQUEST',
+                message: 'Ese nombre de usuario ya está registrado',
+              });
+            }
+            // Rare race: regenerate and retry once.
+            const retryUsername = await ensureUniqueUsername(prisma, finalUsername);
+            newUser = await prisma.users.create({
+              data: {
+                ...baseUserData,
+                username: retryUsername,
+              },
+            });
+          } else {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'No se pudo crear el usuario' });
+          }
+        } else {
+          throw e;
+        }
+      }
 
       try {
         const customer = await stripe.customers.create({
@@ -227,7 +327,14 @@ export const register = publicProcedure
         });
       }
       // This implicitly creates a new subscriber in ManyChat or retrieves an existing one
-      await manyChat.addTagToUser(newUser, 'USER_REGISTERED');
+      try {
+        await manyChat.addTagToUser(newUser, 'USER_REGISTERED');
+      } catch (error) {
+        log.warn('[REGISTER] ManyChat tag failed (non-blocking)', {
+          error: error instanceof Error ? error.message : error,
+          userId: newUser.id,
+        });
+      }
 
       const tokens = await generateTokens(prisma, newUser);
 

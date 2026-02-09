@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-02-09T05:38:53.353Z",
+  "generatedAt": "2026-02-09T17:34:59.940Z",
   "baseUrl": "http://localhost:3000",
   "routes": [
     {
@@ -443,8 +443,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/root--desktop.png",
-        "mobile": "output/audit/screenshots/root--mobile.png"
+        "desktop": "audit/screenshots/root--desktop.png",
+        "mobile": "audit/screenshots/root--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -642,8 +642,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/actualizar-planes--desktop.png",
-        "mobile": "output/audit/screenshots/actualizar-planes--mobile.png"
+        "desktop": "audit/screenshots/actualizar-planes--desktop.png",
+        "mobile": "audit/screenshots/actualizar-planes--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -841,8 +841,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/admin--desktop.png",
-        "mobile": "output/audit/screenshots/admin--mobile.png"
+        "desktop": "audit/screenshots/admin--desktop.png",
+        "mobile": "audit/screenshots/admin--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -1040,8 +1040,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/admin-almacenamiento--desktop.png",
-        "mobile": "output/audit/screenshots/admin-almacenamiento--mobile.png"
+        "desktop": "audit/screenshots/admin-almacenamiento--desktop.png",
+        "mobile": "audit/screenshots/admin-almacenamiento--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -1239,8 +1239,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/admin-analitica--desktop.png",
-        "mobile": "output/audit/screenshots/admin-analitica--mobile.png"
+        "desktop": "audit/screenshots/admin-analitica--desktop.png",
+        "mobile": "audit/screenshots/admin-analitica--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -1438,8 +1438,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/admin-catalogo--desktop.png",
-        "mobile": "output/audit/screenshots/admin-catalogo--mobile.png"
+        "desktop": "audit/screenshots/admin-catalogo--desktop.png",
+        "mobile": "audit/screenshots/admin-catalogo--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -1637,8 +1637,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/admin-crm--desktop.png",
-        "mobile": "output/audit/screenshots/admin-crm--mobile.png"
+        "desktop": "audit/screenshots/admin-crm--desktop.png",
+        "mobile": "audit/screenshots/admin-crm--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -1836,8 +1836,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/admin-cupones--desktop.png",
-        "mobile": "output/audit/screenshots/admin-cupones--mobile.png"
+        "desktop": "audit/screenshots/admin-cupones--desktop.png",
+        "mobile": "audit/screenshots/admin-cupones--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -2035,8 +2035,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/admin-dominios-bloqueados--desktop.png",
-        "mobile": "output/audit/screenshots/admin-dominios-bloqueados--mobile.png"
+        "desktop": "audit/screenshots/admin-dominios-bloqueados--desktop.png",
+        "mobile": "audit/screenshots/admin-dominios-bloqueados--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -2234,8 +2234,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/admin-historial-descargas--desktop.png",
-        "mobile": "output/audit/screenshots/admin-historial-descargas--mobile.png"
+        "desktop": "audit/screenshots/admin-historial-descargas--desktop.png",
+        "mobile": "audit/screenshots/admin-historial-descargas--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -2433,8 +2433,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/admin-historialcheckout--desktop.png",
-        "mobile": "output/audit/screenshots/admin-historialcheckout--mobile.png"
+        "desktop": "audit/screenshots/admin-historialcheckout--desktop.png",
+        "mobile": "audit/screenshots/admin-historialcheckout--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -2632,8 +2632,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/admin-live--desktop.png",
-        "mobile": "output/audit/screenshots/admin-live--mobile.png"
+        "desktop": "audit/screenshots/admin-live--desktop.png",
+        "mobile": "audit/screenshots/admin-live--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -2831,8 +2831,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/admin-ordenes--desktop.png",
-        "mobile": "output/audit/screenshots/admin-ordenes--mobile.png"
+        "desktop": "audit/screenshots/admin-ordenes--desktop.png",
+        "mobile": "audit/screenshots/admin-ordenes--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -3030,8 +3030,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/admin-planesadmin--desktop.png",
-        "mobile": "output/audit/screenshots/admin-planesadmin--mobile.png"
+        "desktop": "audit/screenshots/admin-planesadmin--desktop.png",
+        "mobile": "audit/screenshots/admin-planesadmin--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -3229,8 +3229,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/admin-telefonos-bloqueados--desktop.png",
-        "mobile": "output/audit/screenshots/admin-telefonos-bloqueados--mobile.png"
+        "desktop": "audit/screenshots/admin-telefonos-bloqueados--desktop.png",
+        "mobile": "audit/screenshots/admin-telefonos-bloqueados--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -3428,8 +3428,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/admin-usuarios--desktop.png",
-        "mobile": "output/audit/screenshots/admin-usuarios--mobile.png"
+        "desktop": "audit/screenshots/admin-usuarios--desktop.png",
+        "mobile": "audit/screenshots/admin-usuarios--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -3623,8 +3623,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/auth--desktop.png",
-        "mobile": "output/audit/screenshots/auth--mobile.png"
+        "desktop": "audit/screenshots/auth--desktop.png",
+        "mobile": "audit/screenshots/auth--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -3742,8 +3742,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/auth-recuperar--desktop.png",
-        "mobile": "output/audit/screenshots/auth-recuperar--mobile.png"
+        "desktop": "audit/screenshots/auth-recuperar--desktop.png",
+        "mobile": "audit/screenshots/auth-recuperar--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -3825,7 +3825,7 @@
           "tagName": "input",
           "role": null,
           "type": "text",
-          "accessibleName": "Nombre",
+          "accessibleName": "Nombre (opcional)",
           "visibleText": "",
           "ariaLabel": null,
           "nameAttr": "username",
@@ -3833,7 +3833,7 @@
           "href": null,
           "disabled": false,
           "required": false,
-          "placeholder": "Tu nombre o nombre artístico",
+          "placeholder": "Tu nombre o DJ name (opcional)",
           "testId": null,
           "selector": "#username",
           "hasIcon": false,
@@ -3882,7 +3882,7 @@
           "tagName": "input",
           "role": null,
           "type": "tel",
-          "accessibleName": "WhatsApp (activación guiada)",
+          "accessibleName": "WhatsApp (opcional)",
           "visibleText": "",
           "ariaLabel": null,
           "nameAttr": "phone",
@@ -3890,7 +3890,7 @@
           "href": null,
           "disabled": false,
           "required": false,
-          "placeholder": "Escribe tu WhatsApp...",
+          "placeholder": "Si quieres, te guiamos por chat más rápido",
           "testId": null,
           "selector": "#phone",
           "hasIcon": false,
@@ -4013,8 +4013,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/auth-registro--desktop.png",
-        "mobile": "output/audit/screenshots/auth-registro--mobile.png"
+        "desktop": "audit/screenshots/auth-registro--desktop.png",
+        "mobile": "audit/screenshots/auth-registro--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -4170,8 +4170,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/auth-reset-password--desktop.png",
-        "mobile": "output/audit/screenshots/auth-reset-password--mobile.png"
+        "desktop": "audit/screenshots/auth-reset-password--desktop.png",
+        "mobile": "audit/screenshots/auth-reset-password--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -4369,8 +4369,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/comprar--desktop.png",
-        "mobile": "output/audit/screenshots/comprar--mobile.png"
+        "desktop": "audit/screenshots/comprar--desktop.png",
+        "mobile": "audit/screenshots/comprar--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -4568,8 +4568,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/comprar-success--desktop.png",
-        "mobile": "output/audit/screenshots/comprar-success--mobile.png"
+        "desktop": "audit/screenshots/comprar-success--desktop.png",
+        "mobile": "audit/screenshots/comprar-success--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -4767,8 +4767,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/descargas--desktop.png",
-        "mobile": "output/audit/screenshots/descargas--mobile.png"
+        "desktop": "audit/screenshots/descargas--desktop.png",
+        "mobile": "audit/screenshots/descargas--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -5057,8 +5057,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/instrucciones--desktop.png",
-        "mobile": "output/audit/screenshots/instrucciones--mobile.png"
+        "desktop": "audit/screenshots/instrucciones--desktop.png",
+        "mobile": "audit/screenshots/instrucciones--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -5233,8 +5233,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/legal--desktop.png",
-        "mobile": "output/audit/screenshots/legal--mobile.png"
+        "desktop": "audit/screenshots/legal--desktop.png",
+        "mobile": "audit/screenshots/legal--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -5432,8 +5432,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/micuenta--desktop.png",
-        "mobile": "output/audit/screenshots/micuenta--mobile.png"
+        "desktop": "audit/screenshots/micuenta--desktop.png",
+        "mobile": "audit/screenshots/micuenta--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -5551,8 +5551,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/planes--desktop.png",
-        "mobile": "output/audit/screenshots/planes--mobile.png"
+        "desktop": "audit/screenshots/planes--desktop.png",
+        "mobile": "audit/screenshots/planes--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -5750,8 +5750,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/actualizar-planes--desktop.png",
-        "mobile": "output/audit/screenshots/actualizar-planes--mobile.png"
+        "desktop": "audit/screenshots/actualizar-planes--desktop.png",
+        "mobile": "audit/screenshots/actualizar-planes--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -5949,8 +5949,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/admin--desktop.png",
-        "mobile": "output/audit/screenshots/admin--mobile.png"
+        "desktop": "audit/screenshots/admin--desktop.png",
+        "mobile": "audit/screenshots/admin--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -6148,8 +6148,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/admin-almacenamiento--desktop.png",
-        "mobile": "output/audit/screenshots/admin-almacenamiento--mobile.png"
+        "desktop": "audit/screenshots/admin-almacenamiento--desktop.png",
+        "mobile": "audit/screenshots/admin-almacenamiento--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -6347,8 +6347,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/admin-analitica--desktop.png",
-        "mobile": "output/audit/screenshots/admin-analitica--mobile.png"
+        "desktop": "audit/screenshots/admin-analitica--desktop.png",
+        "mobile": "audit/screenshots/admin-analitica--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -6546,8 +6546,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/admin-catalogo--desktop.png",
-        "mobile": "output/audit/screenshots/admin-catalogo--mobile.png"
+        "desktop": "audit/screenshots/admin-catalogo--desktop.png",
+        "mobile": "audit/screenshots/admin-catalogo--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -6745,8 +6745,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/admin-crm--desktop.png",
-        "mobile": "output/audit/screenshots/admin-crm--mobile.png"
+        "desktop": "audit/screenshots/admin-crm--desktop.png",
+        "mobile": "audit/screenshots/admin-crm--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -6944,8 +6944,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/admin-cupones--desktop.png",
-        "mobile": "output/audit/screenshots/admin-cupones--mobile.png"
+        "desktop": "audit/screenshots/admin-cupones--desktop.png",
+        "mobile": "audit/screenshots/admin-cupones--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -7143,8 +7143,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/admin-dominios-bloqueados--desktop.png",
-        "mobile": "output/audit/screenshots/admin-dominios-bloqueados--mobile.png"
+        "desktop": "audit/screenshots/admin-dominios-bloqueados--desktop.png",
+        "mobile": "audit/screenshots/admin-dominios-bloqueados--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -7342,8 +7342,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/admin-historial-descargas--desktop.png",
-        "mobile": "output/audit/screenshots/admin-historial-descargas--mobile.png"
+        "desktop": "audit/screenshots/admin-historial-descargas--desktop.png",
+        "mobile": "audit/screenshots/admin-historial-descargas--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -7541,8 +7541,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/admin-historialcheckout--desktop.png",
-        "mobile": "output/audit/screenshots/admin-historialcheckout--mobile.png"
+        "desktop": "audit/screenshots/admin-historialcheckout--desktop.png",
+        "mobile": "audit/screenshots/admin-historialcheckout--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -7740,8 +7740,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/admin-live--desktop.png",
-        "mobile": "output/audit/screenshots/admin-live--mobile.png"
+        "desktop": "audit/screenshots/admin-live--desktop.png",
+        "mobile": "audit/screenshots/admin-live--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -7939,8 +7939,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/admin-ordenes--desktop.png",
-        "mobile": "output/audit/screenshots/admin-ordenes--mobile.png"
+        "desktop": "audit/screenshots/admin-ordenes--desktop.png",
+        "mobile": "audit/screenshots/admin-ordenes--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -8138,8 +8138,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/admin-planesadmin--desktop.png",
-        "mobile": "output/audit/screenshots/admin-planesadmin--mobile.png"
+        "desktop": "audit/screenshots/admin-planesadmin--desktop.png",
+        "mobile": "audit/screenshots/admin-planesadmin--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -8337,8 +8337,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/admin-telefonos-bloqueados--desktop.png",
-        "mobile": "output/audit/screenshots/admin-telefonos-bloqueados--mobile.png"
+        "desktop": "audit/screenshots/admin-telefonos-bloqueados--desktop.png",
+        "mobile": "audit/screenshots/admin-telefonos-bloqueados--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -8536,8 +8536,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/admin-usuarios--desktop.png",
-        "mobile": "output/audit/screenshots/admin-usuarios--mobile.png"
+        "desktop": "audit/screenshots/admin-usuarios--desktop.png",
+        "mobile": "audit/screenshots/admin-usuarios--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -8735,8 +8735,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/comprar--desktop.png",
-        "mobile": "output/audit/screenshots/comprar--mobile.png"
+        "desktop": "audit/screenshots/comprar--desktop.png",
+        "mobile": "audit/screenshots/comprar--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -8934,8 +8934,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/comprar-success--desktop.png",
-        "mobile": "output/audit/screenshots/comprar-success--mobile.png"
+        "desktop": "audit/screenshots/comprar-success--desktop.png",
+        "mobile": "audit/screenshots/comprar-success--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -9133,8 +9133,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/descargas--desktop.png",
-        "mobile": "output/audit/screenshots/descargas--mobile.png"
+        "desktop": "audit/screenshots/descargas--desktop.png",
+        "mobile": "audit/screenshots/descargas--mobile.png"
       },
       "a11y": {
         "violationCount": 0,
@@ -9332,8 +9332,8 @@
       ],
       "iconOnlyMissingLabel": [],
       "screenshots": {
-        "desktop": "output/audit/screenshots/micuenta--desktop.png",
-        "mobile": "output/audit/screenshots/micuenta--mobile.png"
+        "desktop": "audit/screenshots/micuenta--desktop.png",
+        "mobile": "audit/screenshots/micuenta--mobile.png"
       },
       "a11y": {
         "violationCount": 0,

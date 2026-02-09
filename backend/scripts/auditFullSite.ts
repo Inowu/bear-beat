@@ -74,9 +74,10 @@ type UiInventoryReport = {
 
 const REPO_ROOT = path.resolve(__dirname, "..", "..");
 const FRONTEND_INDEX = path.resolve(REPO_ROOT, "frontend", "src", "index.tsx");
+// Reports live under docs (tracked). Screenshots live under /audit/screenshots (optional to commit).
+// Keep PII redacted in textual artifacts (see sanitizeText()).
 const DOCS_AUDIT_DIR = path.resolve(REPO_ROOT, "docs", "audit");
-const OUTPUT_DIR = path.resolve(REPO_ROOT, "output", "audit");
-const SCREENSHOTS_DIR = path.resolve(OUTPUT_DIR, "screenshots");
+const SCREENSHOTS_DIR = path.resolve(REPO_ROOT, "audit", "screenshots");
 
 function ensureDir(p: string) {
   fs.mkdirSync(p, { recursive: true });
@@ -502,7 +503,7 @@ async function collectRouteResult(
       tagName: i.tagName,
     }));
 
-    // Screenshots (saved outside docs to avoid bloating git).
+    // Screenshots (full-page, 2 viewports) saved under /audit/screenshots.
     const slug = stableSlug(route.path.replace(/\//g, "-"));
     const desktopPath = path.join(SCREENSHOTS_DIR, `${slug}--desktop.png`);
     const mobilePath = path.join(SCREENSHOTS_DIR, `${slug}--mobile.png`);
@@ -796,7 +797,6 @@ function buildCroFindings(routeResults: UiInventoryRouteResult[]): string {
 
 async function main() {
   ensureDir(DOCS_AUDIT_DIR);
-  ensureDir(OUTPUT_DIR);
   ensureDir(SCREENSHOTS_DIR);
 
   const baseUrl = process.env.AUDIT_BASE_URL?.trim() || "http://localhost:3000";
