@@ -7,6 +7,13 @@
     var(--ph-bg);
 }
 
+/* Reserve space for the mobile sticky CTA so footer CTAs never get covered. */
+@media (max-width: 640px) {
+  .public-home {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  }
+}
+
 .ph__container {
   width: min(1120px, calc(100% - 40px));
   margin: 0 auto;

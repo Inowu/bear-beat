@@ -38,11 +38,11 @@ export default function CatalogDemo(props: {
   }, [genres, normalized]);
 
   return (
-    <section id="demo" className="catalog-demo" aria-label="Demo del catálogo" data-testid="home-demo-section">
+    <section id="catalogo" className="catalog-demo" aria-label="Explora por género" data-testid="home-catalog-section">
       <div className="ph__container">
         <div className="catalog-demo__head">
           <div>
-            <h2 className="home-h2">Demo del catálogo</h2>
+            <h2 className="home-h2">Explora por género</h2>
             <p className="home-sub">
               Busca un género y mira cómo está ordenado. Al activar ves el catálogo completo.
             </p>

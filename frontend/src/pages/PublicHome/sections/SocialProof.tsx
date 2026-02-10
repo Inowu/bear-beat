@@ -274,7 +274,7 @@ export default function SocialProof(props: {
 
   if (!hasAny) {
     return (
-      <section className="social-proof" aria-label="Repertorio por categorías">
+      <section id="demo" className="social-proof" aria-label="Repertorio por categorías" data-testid="home-demo-section">
         <div className="ph__container">
           <div className="social-proof__neutral" role="note">
             <h3>Repertorio listo por categorías</h3>
@@ -288,7 +288,7 @@ export default function SocialProof(props: {
   }
 
   return (
-    <section className="social-proof" aria-label="Descargas destacadas">
+    <section id="demo" className="social-proof" aria-label="Descargas destacadas" data-testid="home-demo-section">
       <div className="ph__container">
         <div className="social-proof__head">
           <div>

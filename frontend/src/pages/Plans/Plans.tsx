@@ -20,7 +20,6 @@ function detectPreferredCurrency(): "mxn" | "usd" {
 function Plans() {
   const { currentUser } = useUserContext();
   const [plans, setPlans] = useState<IPlans[]>([]);
-  const [showSinglePlan, setShowSinglePlan] = useState(false);
   const [catalogSummary, setCatalogSummary] = useState<{
     totalFiles: number;
     totalGB: number;
@@ -57,19 +56,6 @@ function Plans() {
     // Cargar planes también para usuarios no autenticados (evita "spinner infinito" y mejora conversión).
     getPlans();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(max-width: 920px)");
-    const update = () => setShowSinglePlan(mq.matches);
-    update();
-    if (typeof mq.addEventListener === "function") {
-      mq.addEventListener("change", update);
-      return () => mq.removeEventListener("change", update);
-    }
-    mq.addListener(update);
-    return () => mq.removeListener(update);
   }, []);
 
   useEffect(() => {
@@ -192,7 +178,7 @@ function Plans() {
   }, [sortedPlans]);
   const heroMicrocopy =
     trialConfig?.enabled && trialConfig.eligible !== false
-      ? `Prueba: ${formatInt(trialConfig.days)} días + ${formatInt(trialConfig.gb)} GB (solo tarjeta, 1ª vez). Cancelas antes de que termine y no se cobra.`
+      ? `Prueba: ${formatInt(trialConfig.days)} días + ${formatInt(trialConfig.gb)} GB (solo tarjeta/Stripe). Otros métodos activan sin prueba.`
       : "Pago mensual. Cancela cuando quieras.";
 
   useEffect(() => {
@@ -219,18 +205,8 @@ function Plans() {
 
   const plansToRender = useMemo(() => {
     if (!plansByCurrency.mxn && !plansByCurrency.usd) return [];
-    if (showSinglePlan) return primaryPlan ? [primaryPlan] : [];
-
-    const list: IPlans[] = [];
-    if (selectedCurrency === "mxn") {
-      if (plansByCurrency.mxn) list.push(plansByCurrency.mxn);
-      if (plansByCurrency.usd) list.push(plansByCurrency.usd);
-    } else {
-      if (plansByCurrency.usd) list.push(plansByCurrency.usd);
-      if (plansByCurrency.mxn) list.push(plansByCurrency.mxn);
-    }
-    return list;
-  }, [plansByCurrency.mxn, plansByCurrency.usd, primaryPlan, selectedCurrency, showSinglePlan]);
+    return primaryPlan ? [primaryPlan] : [];
+  }, [plansByCurrency.mxn, plansByCurrency.usd, primaryPlan]);
 
   // Loader: mientras estemos cargando planes
   if (loader) {
