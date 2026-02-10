@@ -47,6 +47,15 @@ form.sign-up-form {
     position: relative;
   }
 
+  .auth-field-help {
+    margin-top: 4px;
+    padding: 0 8px;
+    color: color-mix(in srgb, var(--auth-login-subtitle) 94%, transparent);
+    font-size: clamp(12px, 0.15vw + 11px, 13px);
+    font-weight: 550;
+    line-height: 1.35;
+  }
+
   .c-row.is-invalid .signup-phone-wrap {
     border-color: color-mix(in srgb, var(--app-status-error) 78%, var(--auth-input-border));
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--app-status-error) 20%, transparent);
@@ -195,11 +204,33 @@ form.sign-up-form {
     box-shadow: 0 10px 24px rgba(8, 225, 247, 0.3);
     transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
 
-    &:hover {
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.72;
+      transform: none;
+    }
+
+    &:hover:not(:disabled) {
       opacity: 0.96;
       transform: translateY(-1px) scale(1.005);
       box-shadow: 0 10px 24px rgba(8, 225, 247, 0.33);
     }
+  }
+
+  .signup-submit-content {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .signup-submit-spinner {
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    border: 2px solid color-mix(in srgb, currentColor 35%, transparent);
+    border-top-color: currentColor;
+    animation: signupSpin 0.85s linear infinite;
   }
 
   /* Light: CTA sin halo neón (premium/limpio). Dark: conserva glow. */
@@ -209,6 +240,36 @@ form.sign-up-form {
 
   html[data-theme="light"] & .signup-submit-btn:hover {
     box-shadow: var(--app-shadow-card);
+  }
+
+  .auth-signup-legal {
+    margin: 0;
+    padding: 0 8px;
+    text-align: center;
+    color: color-mix(in srgb, var(--auth-login-subtitle) 96%, transparent);
+    font-size: clamp(12px, 0.15vw + 11px, 13px);
+    font-weight: 600;
+    line-height: 1.45;
+  }
+
+  .auth-signup-legal-link {
+    color: var(--app-accent);
+    font-weight: 750;
+    text-decoration: none;
+
+    &:hover {
+      opacity: 0.92;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--app-focus-ring);
+      outline-offset: 2px;
+      border-radius: 10px;
+      text-decoration: underline;
+      text-underline-offset: 4px;
+    }
   }
 
   .signup-link-back {
@@ -239,11 +300,18 @@ form.sign-up-form {
   }
 
   .error-formik {
-    margin-top: 6px;
+    margin-top: 4px;
+    min-height: 1.35em;
+    padding: 0 8px;
     color: var(--app-status-error);
     font-size: clamp(12px, 0.2vw + 11px, 13px);
     font-weight: 600;
     line-height: 1.35;
+    overflow-wrap: anywhere;
+
+    &[aria-hidden="true"] {
+      visibility: hidden;
+    }
   }
 }
 
@@ -278,5 +346,11 @@ form.sign-up-form {
     .signup-link-back {
       font-size: 14px;
     }
+  }
+}
+
+@keyframes signupSpin {
+  to {
+    transform: rotate(360deg);
   }
 }

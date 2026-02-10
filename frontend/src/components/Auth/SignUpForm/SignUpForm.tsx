@@ -3,8 +3,7 @@ import { detectUserCountry, findDialCode, allowedCountryOptions } from "../../..
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Lock, Mail, Phone, User } from "lucide-react";
 import { PasswordInput } from "../../PasswordInput/PasswordInput";
-import { Spinner } from "../../../components/Spinner/Spinner";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFormik } from "formik";
 import { useUserContext } from "../../../contexts/UserContext";
 import * as Yup from "yup";
@@ -22,6 +21,20 @@ import {
 } from "../../../utils/turnstile";
 import { toErrorMessage } from "../../../utils/errorMessage";
 import Logo from "../../../assets/images/osonuevo.png";
+
+function FieldError(props: { id: string; show: boolean; message?: string }) {
+  const { id, show, message } = props;
+  return (
+    <div
+      className="error-formik"
+      id={id}
+      role={show ? "alert" : undefined}
+      aria-hidden={!show}
+    >
+      {show ? message : ""}
+    </div>
+  );
+}
 
 function inferErrorCode(message: string): string {
   const m = `${message ?? ""}`.toLowerCase();
@@ -57,6 +70,12 @@ function SignUpForm() {
   const registrationStartedRef = useRef(false);
   const registrationCompletedRef = useRef(false);
   const registrationAbandonTrackedRef = useRef(false);
+  const [trialConfig, setTrialConfig] = useState<{
+    enabled: boolean;
+    days: number;
+    gb: number;
+    eligible: boolean | null;
+  } | null>(null);
 
   const validationSchema = Yup.object().shape({
     email: Yup.string().required("El correo es requerido").email("El formato del correo no es correcto"),
@@ -257,6 +276,23 @@ function SignUpForm() {
   }, [getUserLocation]);
 
   useEffect(() => {
+    const fetchTrialConfig = async () => {
+      try {
+        const cfg = (await trpc.plans.getTrialConfig.query()) as any;
+        setTrialConfig({
+          enabled: Boolean(cfg?.enabled),
+          days: Number(cfg?.days ?? 0),
+          gb: Number(cfg?.gb ?? 0),
+          eligible: typeof cfg?.eligible === "boolean" ? cfg.eligible : null,
+        });
+      } catch {
+        // ignore
+      }
+    };
+    void fetchTrialConfig();
+  }, []);
+
+  useEffect(() => {
     const hasAnyFieldValue = Object.values(formik.values).some(
       (value) => typeof value === "string" && value.trim().length > 0
     );
@@ -364,11 +400,29 @@ function SignUpForm() {
   const showPasswordConfirmationError = Boolean(
     (formik.touched.passwordConfirmation || formik.submitCount > 0) && formik.errors.passwordConfirmation,
   );
-  const usernameErrorId = showUsernameError ? "signup-username-error" : undefined;
-  const emailErrorId = showEmailError ? "signup-email-error" : undefined;
-  const phoneErrorId = showPhoneError ? "signup-phone-error" : undefined;
-  const passwordErrorId = showPasswordError ? "signup-password-error" : undefined;
-  const passwordConfirmationErrorId = showPasswordConfirmationError ? "signup-password-confirmation-error" : undefined;
+  const usernameHelpId = "signup-username-help";
+  const phoneHelpId = "signup-phone-help";
+  const passwordHelpId = "signup-password-help";
+  const passwordConfirmationHelpId = "signup-password-confirmation-help";
+  const usernameErrorId = "signup-username-error";
+  const emailErrorId = "signup-email-error";
+  const phoneErrorId = "signup-phone-error";
+  const passwordErrorId = "signup-password-error";
+  const passwordConfirmationErrorId = "signup-password-confirmation-error";
+  const describedByUsername = `${usernameHelpId} ${usernameErrorId}`;
+  const describedByPhone = `${phoneHelpId} ${phoneErrorId}`;
+  const describedByPassword = `${passwordHelpId} ${passwordErrorId}`;
+  const describedByPasswordConfirmation = `${passwordConfirmationHelpId} ${passwordConfirmationErrorId}`;
+  const submitLabel = useMemo(() => {
+    const isCheckoutIntent = from.startsWith("/comprar") || from.startsWith("/checkout");
+    if (isCheckoutIntent) return "Crear cuenta y activar";
+    const hasTrial =
+      Boolean(trialConfig?.enabled) &&
+      trialConfig?.eligible !== false &&
+      Number.isFinite(trialConfig?.days) &&
+      (trialConfig?.days ?? 0) > 0;
+    return hasTrial ? "Crear cuenta y empezar prueba" : "Crear cuenta y activar";
+  }, [from, trialConfig?.days, trialConfig?.eligible, trialConfig?.enabled]);
 
   return (
     <>
@@ -381,12 +435,14 @@ function SignUpForm() {
 
           <ul className="auth-signup-bullets" aria-label="Beneficios">
             <li>
-              <strong>Catálogo gigante</strong> de música y video
+              <strong>Catálogo gigante</strong>: audio, videos y karaokes
             </li>
             <li>
-              <strong>Descarga por FTP</strong> (rápido y ordenado)
+              <strong>Descarga por FTP o web</strong> (tú eliges)
             </li>
-            <li>Cancela cuando quieras</li>
+            <li>
+              <strong>Soporte por chat</strong> para activar rápido
+            </li>
           </ul>
 
           <form
@@ -404,7 +460,7 @@ function SignUpForm() {
               <div className="auth-login-input-wrap">
                 <User className="auth-login-input-icon" aria-hidden />
                 <input
-                  placeholder="Tu nombre o DJ name (opcional)"
+                  placeholder="DJ Kubo"
                   type="text"
                   id="username"
                   name="username"
@@ -414,14 +470,13 @@ function SignUpForm() {
                   onBlur={formik.handleBlur}
                   className="auth-login-input auth-login-input-with-icon"
                   aria-invalid={showUsernameError}
-                  aria-describedby={usernameErrorId}
+                  aria-describedby={describedByUsername}
                 />
               </div>
-              {showUsernameError && (
-                <div className="error-formik" id={usernameErrorId} role="alert">
-                  {formik.errors.username}
-                </div>
-              )}
+              <div className="auth-field-help" id={usernameHelpId}>
+                Opcional. Solo para personalizar tu cuenta.
+              </div>
+              <FieldError id={usernameErrorId} show={showUsernameError} message={formik.errors.username} />
             </div>
             <div className={`c-row ${showEmailError ? "is-invalid" : ""}`}>
               <label htmlFor="email" className="auth-field-label">
@@ -447,11 +502,7 @@ function SignUpForm() {
                   aria-describedby={emailErrorId}
                 />
               </div>
-              {showEmailError && (
-                <div className="error-formik" id={emailErrorId} role="alert">
-                  {formik.errors.email}
-                </div>
-              )}
+              <FieldError id={emailErrorId} show={showEmailError} message={formik.errors.email} />
             </div>
             <div className={`c-row c-row--phone ${showPhoneError ? "is-invalid" : ""}`}>
               <label htmlFor="phone" className="auth-field-label">
@@ -479,7 +530,7 @@ function SignUpForm() {
                 </span>
                 <input
                   className="signup-phone-input"
-                  placeholder="Si quieres, te guiamos por chat más rápido"
+                  placeholder="5512345678"
                   id="phone"
                   name="phone"
                   value={formik.values.phone}
@@ -490,14 +541,13 @@ function SignUpForm() {
                   autoComplete="tel-national"
                   maxLength={15}
                   aria-invalid={showPhoneError}
-                  aria-describedby={phoneErrorId}
+                  aria-describedby={describedByPhone}
                 />
               </div>
-              {showPhoneError && (
-                <div className="error-formik" id={phoneErrorId} role="alert">
-                  {formik.errors.phone}
-                </div>
-              )}
+              <div className="auth-field-help" id={phoneHelpId}>
+                Opcional. Solo lo usamos si tú pides soporte por WhatsApp.
+              </div>
+              <FieldError id={phoneErrorId} show={showPhoneError} message={formik.errors.phone} />
             </div>
             <div className={`c-row ${showPasswordError ? "is-invalid" : ""}`}>
               <label htmlFor="password" className="auth-field-label">
@@ -514,16 +564,15 @@ function SignUpForm() {
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   aria-invalid={showPasswordError}
-                  aria-describedby={passwordErrorId}
+                  aria-describedby={describedByPassword}
                   inputClassName="auth-login-input auth-login-input-with-icon"
                   wrapperClassName="auth-login-password-wrap"
                 />
               </div>
-              {showPasswordError && (
-                <div className="error-formik" id={passwordErrorId} role="alert">
-                  {formik.errors.password}
-                </div>
-              )}
+              <div className="auth-field-help" id={passwordHelpId}>
+                Mínimo 6 caracteres.
+              </div>
+              <FieldError id={passwordErrorId} show={showPasswordError} message={formik.errors.password} />
             </div>
             <div className={`c-row ${showPasswordConfirmationError ? "is-invalid" : ""}`}>
               <label htmlFor="passwordConfirmation" className="auth-field-label">
@@ -540,16 +589,19 @@ function SignUpForm() {
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   aria-invalid={showPasswordConfirmationError}
-                  aria-describedby={passwordConfirmationErrorId}
+                  aria-describedby={describedByPasswordConfirmation}
                   inputClassName="auth-login-input auth-login-input-with-icon"
                   wrapperClassName="auth-login-password-wrap"
                 />
               </div>
-              {showPasswordConfirmationError && (
-                <div className="error-formik" id={passwordConfirmationErrorId} role="alert">
-                  {formik.errors.passwordConfirmation}
-                </div>
-              )}
+              <div className="auth-field-help" id={passwordConfirmationHelpId}>
+                Debe coincidir con tu contraseña.
+              </div>
+              <FieldError
+                id={passwordConfirmationErrorId}
+                show={showPasswordConfirmationError}
+                message={formik.errors.passwordConfirmation}
+              />
             </div>
             <Turnstile
               ref={turnstileRef}
@@ -563,20 +615,33 @@ function SignUpForm() {
             <div className="auth-login-inline-error" role="alert" aria-live="polite">
               {inlineError}
             </div>
-            {!loader ? (
-              <button
-                type="submit"
-                className="signup-submit-btn"
-                data-testid="signup-submit"
-              >
-                CREAR MI CUENTA PRO
-              </button>
-            ) : (
-              <Spinner size={3} width={0.3} color="var(--app-accent)" />
-            )}
+            <button
+              type="submit"
+              className="signup-submit-btn"
+              data-testid="signup-submit"
+              disabled={loader}
+              aria-busy={loader || undefined}
+            >
+              <span className="signup-submit-content">
+                {loader && <span className="signup-submit-spinner" aria-hidden />}
+                {loader ? "Creando..." : submitLabel}
+              </span>
+            </button>
+            <p className="auth-signup-legal">
+              Al crear tu cuenta aceptas{" "}
+              <Link to="/legal#terminos" className="auth-signup-legal-link">
+                Términos
+              </Link>{" "}
+              y{" "}
+              <Link to="/legal#privacidad" className="auth-signup-legal-link">
+                Privacidad
+              </Link>
+              .
+            </p>
             <div className="c-row auth-login-register-wrap">
+              <span className="auth-login-register-copy">¿Ya tienes cuenta?</span>{" "}
               <Link to="/auth" state={{ from }} className="auth-login-register">
-                Ya tengo cuenta
+                Inicia sesión
               </Link>
             </div>
           </form>
