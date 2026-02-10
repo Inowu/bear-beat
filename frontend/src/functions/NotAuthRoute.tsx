@@ -1,6 +1,6 @@
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useMemo } from "react";
 import { useUserContext } from "../contexts/UserContext";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 interface NotAuthRoutePropsI {
   children: ReactNode;
@@ -9,12 +9,20 @@ interface NotAuthRoutePropsI {
 function NotAuthRoute({ children }: NotAuthRoutePropsI) {
   const { userToken } = useUserContext();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const redirectTo = useMemo(() => {
+    const from = (location.state as { from?: unknown } | null)?.from;
+    const target = typeof from === "string" && from.startsWith("/") ? from : "/";
+    // Never redirect back into /auth (avoid loops).
+    return target.startsWith("/auth") ? "/" : target;
+  }, [location.state]);
 
   useEffect(() => {
     if (userToken) {
-      navigate("/");
+      navigate(redirectTo, { replace: true });
     }
-  }, [userToken, navigate]);
+  }, [userToken, navigate, redirectTo]);
 
   if (userToken) {
     return <></>; // Avoid rendering children until currentUser is verified
