@@ -516,6 +516,7 @@ export default function PublicHome() {
               to="/auth/registro"
               state={{ from: "/planes" }}
               className="home-cta home-cta--primary"
+              data-testid="home-footer-primary-cta"
               onClick={() => onPrimaryCtaClick("footer")}
             >
               {ctaPrimaryLabel}

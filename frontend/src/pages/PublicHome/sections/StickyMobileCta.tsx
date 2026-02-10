@@ -31,8 +31,10 @@ export default function StickyMobileCta(props: {
   });
   const [isMobile, setIsMobile] = useState(false);
   const [visible, setVisible] = useState(false);
+  const [hideForFooterCta, setHideForFooterCta] = useState(false);
 
   const rafRef = useRef<number | null>(null);
+  const footerObserverRef = useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -49,6 +51,52 @@ export default function StickyMobileCta(props: {
   }, []);
 
   const canShow = useMemo(() => isMobile && !dismissed, [dismissed, isMobile]);
+
+  useEffect(() => {
+    if (!canShow) {
+      setHideForFooterCta(false);
+      if (footerObserverRef.current) {
+        footerObserverRef.current.disconnect();
+        footerObserverRef.current = null;
+      }
+      return;
+    }
+
+    const footerCta = document.querySelector("[data-testid='home-footer-primary-cta']");
+    if (!footerCta) {
+      setHideForFooterCta(false);
+      return;
+    }
+
+    const computeFallback = () => {
+      const rect = footerCta.getBoundingClientRect();
+      const isIntersecting = rect.top < window.innerHeight && rect.bottom > 0;
+      setHideForFooterCta(isIntersecting);
+    };
+
+    if (typeof IntersectionObserver === "undefined") {
+      computeFallback();
+      window.addEventListener("scroll", computeFallback, { passive: true });
+      window.addEventListener("resize", computeFallback);
+      return () => {
+        window.removeEventListener("scroll", computeFallback);
+        window.removeEventListener("resize", computeFallback);
+      };
+    }
+
+    footerObserverRef.current?.disconnect();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        setHideForFooterCta(Boolean(entry?.isIntersecting));
+      },
+      { threshold: 0.01 },
+    );
+    footerObserverRef.current = observer;
+    observer.observe(footerCta);
+
+    return () => observer.disconnect();
+  }, [canShow]);
 
   useEffect(() => {
     if (!canShow) {
@@ -86,7 +134,7 @@ export default function StickyMobileCta(props: {
     safeWriteLocalStorage(STORAGE_KEY, "1");
   }, []);
 
-  if (!canShow || !visible) return null;
+  if (!canShow || !visible || hideForFooterCta) return null;
 
   return (
     <div className="home-sticky" role="region" aria-label="Acceso rápido">
