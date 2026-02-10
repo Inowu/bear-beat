@@ -93,6 +93,7 @@ function extractTrailingMeta(value: string): {
 }
 
 function TopList(props: {
+  sectionId?: string;
   title: string;
   items: SocialTopItem[];
   maxRows: number;
@@ -100,7 +101,7 @@ function TopList(props: {
   loadingKey: string | null;
   onOpenDemo: (row: { key: string; path: string; label: string; kindHint: string }) => void;
 }) {
-  const { title, items, maxRows, activeKey, loadingKey, onOpenDemo } = props;
+  const { sectionId, title, items, maxRows, activeKey, loadingKey, onOpenDemo } = props;
   const headingId = useId();
 
   const rows = useMemo(() => {
@@ -142,43 +143,44 @@ function TopList(props: {
   const showKeyMeta = rows.length > 0 && rows.every((row) => Boolean(row.bpm) && Boolean(row.camelot));
 
   return (
-    <section className="social-proof__col" aria-labelledby={headingId}>
+    <section id={sectionId} className="social-proof__col" aria-labelledby={headingId}>
       <h3 id={headingId} className="social-proof__col-title">
         {title}
       </h3>
       <div role="list">
-        {rows.map((item) => (
-          <div key={item.key} className="social-proof__row" role="listitem">
-            <button
-              type="button"
-              className={[
-                "social-proof__play",
-                activeKey === item.key ? "social-proof__play--active" : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-              onClick={() => {
-                onOpenDemo({
-                  key: item.key,
-                  path: item.path,
-                  label: item.artist ? `${item.artist} – ${item.track}` : item.track,
-                  kindHint: title.toLowerCase(),
-                });
-              }}
-              disabled={!item.path || loadingKey === item.key}
-              aria-label={
-                loadingKey === item.key
-                  ? "Cargando demo"
-                  : `Abrir demo de ${item.artist ? `${item.artist} – ${item.track}` : item.track}`
-              }
-              data-testid="home-topdemo-play"
-            >
-              {loadingKey === item.key ? (
-                <Loader2 size={18} className="social-proof__spinner" aria-hidden />
-              ) : (
-                <Play size={18} aria-hidden />
-              )}
-            </button>
+        {rows.map((item) => {
+          const demoLabel = item.artist ? `${item.artist} – ${item.track}` : item.track;
+
+          return (
+            <div key={item.key} className="social-proof__row" role="listitem">
+              <button
+                type="button"
+                className={[
+                  "social-proof__play",
+                  activeKey === item.key ? "social-proof__play--active" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                onClick={() => {
+                  onOpenDemo({
+                    key: item.key,
+                    path: item.path,
+                    label: demoLabel,
+                    kindHint: title.toLowerCase(),
+                  });
+                }}
+                disabled={!item.path || loadingKey === item.key}
+                aria-label={
+                  loadingKey === item.key ? `Cargando demo: ${demoLabel}` : `Reproducir demo: ${demoLabel}`
+                }
+                data-testid="home-topdemo-play"
+              >
+                {loadingKey === item.key ? (
+                  <Loader2 size={18} className="social-proof__spinner" aria-hidden />
+                ) : (
+                  <Play size={18} aria-hidden />
+                )}
+              </button>
             <div className="social-proof__left">
               <span className="social-proof__name" title={item.artist ? `${item.artist} – ${item.track}` : item.track}>
                 {item.artist ? (
@@ -202,7 +204,8 @@ function TopList(props: {
             </div>
             <span className="social-proof__meta">{formatDownloads(item.downloads)}</span>
           </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
@@ -291,6 +294,23 @@ export default function SocialProof(props: {
           <div>
             <h2 className="home-h2">Lo que más se descarga</h2>
             <p className="home-sub">Top real por categoría. Toca play para abrir un demo (aprox. 60s).</p>
+            <nav className="social-proof__jump" aria-label="Saltar a categoría">
+              {hasAudio && (
+                <a className="social-proof__jump-link" href="#top-audios">
+                  Audios
+                </a>
+              )}
+              {hasVideo && (
+                <a className="social-proof__jump-link" href="#top-videos">
+                  Videos
+                </a>
+              )}
+              {hasKaraoke && (
+                <a className="social-proof__jump-link" href="#top-karaokes">
+                  Karaokes
+                </a>
+              )}
+            </nav>
             {demoAlert && (
               <p className="social-proof__alert" role="alert">
                 {demoAlert}
@@ -312,6 +332,7 @@ export default function SocialProof(props: {
         <div className="social-proof__grid" aria-label="Top descargas">
           {hasAudio && (
             <TopList
+              sectionId="top-audios"
               title={titleWithTopCount("Audios", audio.length)}
               items={audio}
               maxRows={Math.min(5, audio.length)}
@@ -322,6 +343,7 @@ export default function SocialProof(props: {
           )}
           {hasVideo && (
             <TopList
+              sectionId="top-videos"
               title={titleWithTopCount("Videos", video.length)}
               items={video}
               maxRows={Math.min(5, video.length)}
@@ -332,6 +354,7 @@ export default function SocialProof(props: {
           )}
           {hasKaraoke && (
             <TopList
+              sectionId="top-karaokes"
               title={titleWithTopCount("Karaokes", karaoke.length)}
               items={karaoke}
               maxRows={Math.min(5, karaoke.length)}
