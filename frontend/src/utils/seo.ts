@@ -5,11 +5,13 @@
 const BASE_URL = "https://thebearbeat.com";
 const BASE_TITLE = "Bear Beat";
 const BASE_DESC = "Librería de música y videos exclusivos para DJs. 500 GB cada mes por FTP, contenido organizado por géneros.";
+const HOME_DESC =
+  "Membresía para DJs: video remixes, audios y karaokes. Catálogo 14.14 TB, 500 GB/mes. Prueba 7 días + 100 GB (solo tarjeta, 1ª vez).";
 
 export const ROUTE_SEO: Record<string, { title: string; description: string }> = {
   "/": {
-    title: `${BASE_TITLE} – Librería de música y videos para DJs | 500 GB/mes por FTP`,
-    description: BASE_DESC,
+    title: `${BASE_TITLE} – Membresía para DJs (videos, remixes y karaokes) | 14.14 TB + 500 GB/mes`,
+    description: HOME_DESC,
   },
   "/auth": {
     title: `Iniciar sesión | ${BASE_TITLE}`,
@@ -87,6 +89,12 @@ export function applyRouteSeo(pathname: string): void {
 
   const twitterUrl = document.querySelector('meta[name="twitter:url"]');
   if (twitterUrl) twitterUrl.setAttribute("content", url);
+
+  const twitterTitle = document.querySelector('meta[name="twitter:title"]');
+  if (twitterTitle) twitterTitle.setAttribute("content", seo.title);
+
+  const twitterDesc = document.querySelector('meta[name="twitter:description"]');
+  if (twitterDesc) twitterDesc.setAttribute("content", seo.description);
 
   let canonical = document.querySelector('link[rel="canonical"]');
   if (!canonical) {

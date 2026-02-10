@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { HOME_FAQ_ITEMS } from "../homeCopy";
 
@@ -6,11 +6,15 @@ export default function HomeFaq(props: {
   onFaqExpand?: (id: string) => void;
 }) {
   const { onFaqExpand } = props;
+  const [openIds, setOpenIds] = useState<Record<string, boolean>>({});
 
   const handleToggle = useCallback(
-    (id: string, open: boolean) => {
-      if (!open) return;
-      onFaqExpand?.(id);
+    (id: string) => {
+      setOpenIds((prev) => {
+        const next = { ...prev, [id]: !prev[id] };
+        if (next[id]) onFaqExpand?.(id);
+        return next;
+      });
     },
     [onFaqExpand],
   );
@@ -22,9 +26,9 @@ export default function HomeFaq(props: {
       const hash = window.location.hash;
       if (!hash || !hash.startsWith("#faq-")) return;
       const el = document.querySelector(hash);
-      if (!(el instanceof HTMLDetailsElement)) return;
-
-      el.open = true;
+      if (!(el instanceof HTMLElement)) return;
+      const id = hash.replace("#faq-", "");
+      setOpenIds((prev) => ({ ...prev, [id]: true }));
       el.scrollIntoView({ behavior: "smooth", block: "start" });
     };
 
@@ -32,6 +36,32 @@ export default function HomeFaq(props: {
     window.addEventListener("hashchange", openFromHash);
     return () => window.removeEventListener("hashchange", openFromHash);
   }, []);
+
+  const faqSchemaJson = useMemo(() => {
+    const schema = {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: HOME_FAQ_ITEMS.map((item) => ({
+        "@type": "Question",
+        name: item.question,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: item.answer,
+        },
+      })),
+    };
+    return JSON.stringify(schema);
+  }, []);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.setAttribute("data-schema", "bb-faq");
+    script.text = faqSchemaJson;
+    document.head.appendChild(script);
+    return () => script.remove();
+  }, [faqSchemaJson]);
 
   return (
     <section className="home-faq" aria-label="Preguntas frecuentes">
@@ -43,23 +73,32 @@ export default function HomeFaq(props: {
 
         <div className="home-faq__list">
           {HOME_FAQ_ITEMS.map((item) => (
-            <details
+            <div
               key={item.id}
               id={`faq-${item.id}`}
-              className="home-faq__item"
-              onToggle={(e) => {
-                const el = e.currentTarget as HTMLDetailsElement;
-                handleToggle(item.id, el.open);
-              }}
+              className={["home-faq__item", openIds[item.id] ? "is-open" : ""].filter(Boolean).join(" ")}
             >
-              <summary className="home-faq__summary">
+              <button
+                type="button"
+                className="home-faq__summary"
+                aria-expanded={Boolean(openIds[item.id])}
+                aria-controls={`faq-panel-${item.id}`}
+                id={`faq-button-${item.id}`}
+                onClick={() => handleToggle(item.id)}
+              >
                 <span>{item.question}</span>
                 <ChevronDown size={18} aria-hidden />
-              </summary>
-              <div className="home-faq__body">
+              </button>
+              <div
+                className="home-faq__body"
+                id={`faq-panel-${item.id}`}
+                role="region"
+                aria-labelledby={`faq-button-${item.id}`}
+                hidden={!openIds[item.id]}
+              >
                 <p>{item.answer}</p>
               </div>
-            </details>
+            </div>
           ))}
         </div>
       </div>
