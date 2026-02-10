@@ -32,11 +32,11 @@ export default function StickyMobileCta(props: {
   });
   const [isMobile, setIsMobile] = useState(false);
   const [visible, setVisible] = useState(false);
-  const [hideForFooterCta, setHideForFooterCta] = useState(false);
+  const [hideForOtherCtas, setHideForOtherCtas] = useState(false);
   const [hideForHeroCta, setHideForHeroCta] = useState(false);
 
   const rafRef = useRef<number | null>(null);
-  const footerObserverRef = useRef<IntersectionObserver | null>(null);
+  const otherObserverRef = useRef<IntersectionObserver | null>(null);
   const heroObserverRef = useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {
@@ -103,24 +103,26 @@ export default function StickyMobileCta(props: {
 
   useEffect(() => {
     if (!canShow) {
-      setHideForFooterCta(false);
-      if (footerObserverRef.current) {
-        footerObserverRef.current.disconnect();
-        footerObserverRef.current = null;
-      }
+      setHideForOtherCtas(false);
+      otherObserverRef.current?.disconnect();
+      otherObserverRef.current = null;
       return;
     }
 
-    const footerCta = document.querySelector("[data-testid='home-footer-primary-cta']");
-    if (!footerCta) {
-      setHideForFooterCta(false);
+    const selectors =
+      "[data-testid='home-mid-primary-cta'],[data-testid='home-pricing-primary-cta'],[data-testid='home-footer-primary-cta']";
+    const otherCtas = Array.from(document.querySelectorAll(selectors));
+    if (otherCtas.length === 0) {
+      setHideForOtherCtas(false);
       return;
     }
 
     const computeFallback = () => {
-      const rect = footerCta.getBoundingClientRect();
-      const isIntersecting = rect.top < window.innerHeight && rect.bottom > 0;
-      setHideForFooterCta(isIntersecting);
+      const isIntersecting = otherCtas.some((cta) => {
+        const rect = cta.getBoundingClientRect();
+        return rect.top < window.innerHeight && rect.bottom > 0;
+      });
+      setHideForOtherCtas(isIntersecting);
     };
 
     if (typeof IntersectionObserver === "undefined") {
@@ -133,16 +135,22 @@ export default function StickyMobileCta(props: {
       };
     }
 
-    footerObserverRef.current?.disconnect();
+    otherObserverRef.current?.disconnect();
+    const visibleMap = new Map<Element, boolean>();
+    for (const cta of otherCtas) visibleMap.set(cta, false);
+
     const observer = new IntersectionObserver(
       (entries) => {
-        const entry = entries[0];
-        setHideForFooterCta(Boolean(entry?.isIntersecting));
+        for (const entry of entries) {
+          visibleMap.set(entry.target, Boolean(entry.isIntersecting));
+        }
+        setHideForOtherCtas(Array.from(visibleMap.values()).some(Boolean));
       },
       { threshold: 0.01 },
     );
-    footerObserverRef.current = observer;
-    observer.observe(footerCta);
+    otherObserverRef.current = observer;
+    for (const cta of otherCtas) observer.observe(cta);
+    computeFallback();
 
     return () => observer.disconnect();
   }, [canShow]);
@@ -187,7 +195,7 @@ export default function StickyMobileCta(props: {
       ? `Cancela antes de ${trial.days} días y no se cobra`
       : "Cancela cuando quieras";
 
-  if (!canShow || !visible || hideForFooterCta) return null;
+  if (!canShow || !visible || hideForOtherCtas) return null;
 
   return (
     <div className="home-sticky" role="region" aria-label="Acceso rápido">
