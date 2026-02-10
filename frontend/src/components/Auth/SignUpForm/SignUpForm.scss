@@ -42,96 +42,23 @@ form.sign-up-form {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  font-family: "Poppins", sans-serif;
 
   .c-row {
     position: relative;
   }
 
-  .c-row.is-invalid .signup-input-wrap,
+  .auth-field-help {
+    margin-top: 4px;
+    padding: 0 8px;
+    color: color-mix(in srgb, var(--auth-login-subtitle) 94%, transparent);
+    font-size: clamp(12px, 0.15vw + 11px, 13px);
+    font-weight: 550;
+    line-height: 1.35;
+  }
+
   .c-row.is-invalid .signup-phone-wrap {
-    border-color: rgba(255, 45, 44, 0.85);
-    box-shadow: 0 0 0 2px rgba(255, 45, 44, 0.16);
-  }
-
-  .signup-label {
-    display: block;
-    margin-bottom: 7px;
-    font-size: clamp(13px, 0.35vw + 12px, 15px);
-    font-weight: 700;
-    letter-spacing: 0.01em;
-    color: var(--auth-register-text);
-  }
-
-  .signup-input-wrap {
-    position: relative;
-    display: flex;
-    align-items: center;
-    width: 100%;
-    min-height: var(--signup-field-height);
-    border-radius: 999px;
-    border: 1px solid color-mix(in srgb, var(--auth-register-input-border) 92%, transparent);
-    background: color-mix(in srgb, var(--auth-register-input-bg) 94%, transparent);
-    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--auth-register-input-border) 30%, transparent);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-
-    &:focus-within {
-      border-color: var(--app-accent);
-      box-shadow: 0 0 0 3px var(--app-focus-ring);
-
-      .signup-input-icon {
-        color: var(--app-accent);
-      }
-    }
-  }
-
-  .signup-input-icon {
-    position: absolute;
-    left: 14px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 18px;
-    height: 18px;
-    color: var(--auth-register-icon);
-    pointer-events: none;
-    transition: color 0.2s ease;
-    flex-shrink: 0;
-  }
-
-  .signup-password-wrap {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .signup-input-with-icon {
-    width: 100%;
-    min-height: var(--signup-field-height);
-    padding: 13px 16px 13px 46px;
-    border: none;
-    border-radius: 999px;
-    box-sizing: border-box;
-    background: transparent;
-    color: var(--auth-register-text);
-    font-size: clamp(15px, 0.4vw + 13px, 16px);
-    font-weight: 500;
-    transition: color 0.2s ease;
-
-    &::placeholder {
-      color: var(--auth-register-text);
-      opacity: 0.68;
-    }
-
-    &:focus {
-      outline: none;
-    }
-
-    &:-webkit-autofill,
-    &:-webkit-autofill:hover,
-    &:-webkit-autofill:focus {
-      -webkit-text-fill-color: var(--auth-register-text);
-      box-shadow: 0 0 0 1000px transparent inset;
-      transition: background-color 9999s ease-in-out 0s;
-    }
+    border-color: color-mix(in srgb, var(--app-status-error) 78%, var(--auth-input-border));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--app-status-error) 20%, transparent);
   }
 
   .c-row--phone {
@@ -141,9 +68,9 @@ form.sign-up-form {
       align-items: stretch;
       overflow: hidden;
       border-radius: 999px;
-      border: 1px solid color-mix(in srgb, var(--auth-register-input-border) 92%, transparent);
-      background: color-mix(in srgb, var(--auth-register-input-bg) 94%, transparent);
-      box-shadow: inset 0 1px 0 color-mix(in srgb, var(--auth-register-input-border) 30%, transparent);
+      border: 1px solid color-mix(in srgb, var(--auth-input-border) 92%, transparent);
+      background: color-mix(in srgb, var(--auth-input-bg) 96%, transparent);
+      box-shadow: inset 0 1px 0 color-mix(in srgb, var(--auth-input-border) 22%, transparent);
       transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
     }
 
@@ -153,13 +80,22 @@ form.sign-up-form {
     }
   }
 
+  .signup-input-icon {
+    width: 18px;
+    height: 18px;
+    color: var(--auth-register-icon);
+    pointer-events: none;
+    transition: color 0.2s ease;
+    flex-shrink: 0;
+  }
+
   .signup-phone-flag-wrap {
     position: relative;
     width: 52px;
     min-width: 52px;
     flex-shrink: 0;
-    border-right: 1px solid color-mix(in srgb, var(--auth-register-input-border) 78%, transparent);
-    background: color-mix(in srgb, var(--auth-register-input-bg) 82%, transparent);
+    border-right: 1px solid color-mix(in srgb, var(--auth-input-border) 78%, transparent);
+    background: color-mix(in srgb, var(--auth-input-bg) 88%, transparent);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -199,7 +135,7 @@ form.sign-up-form {
     }
 
     option {
-      background: var(--auth-register-input-bg);
+      background: var(--auth-input-bg);
       color: var(--auth-register-text);
       font-size: var(--app-font-size-body);
     }
@@ -211,17 +147,12 @@ form.sign-up-form {
     justify-content: center;
     width: 46px;
     flex-shrink: 0;
-    border-right: 1px solid color-mix(in srgb, var(--auth-register-input-border) 78%, transparent);
-    background: color-mix(in srgb, var(--auth-register-input-bg) 82%, transparent);
-
-    .signup-input-icon {
-      position: static;
-      color: var(--auth-register-icon);
-    }
+    border-right: 1px solid color-mix(in srgb, var(--auth-input-border) 78%, transparent);
+    background: color-mix(in srgb, var(--auth-input-bg) 88%, transparent);
   }
 
   .signup-phone-wrap:focus-within .signup-phone-icon-wrap .signup-input-icon {
-    color: var(--auth-register-icon-focus);
+    color: var(--app-accent);
   }
 
   .signup-phone-input {
@@ -273,11 +204,33 @@ form.sign-up-form {
     box-shadow: 0 10px 24px rgba(8, 225, 247, 0.3);
     transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
 
-    &:hover {
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.72;
+      transform: none;
+    }
+
+    &:hover:not(:disabled) {
       opacity: 0.96;
       transform: translateY(-1px) scale(1.005);
       box-shadow: 0 10px 24px rgba(8, 225, 247, 0.33);
     }
+  }
+
+  .signup-submit-content {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .signup-submit-spinner {
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    border: 2px solid color-mix(in srgb, currentColor 35%, transparent);
+    border-top-color: currentColor;
+    animation: signupSpin 0.85s linear infinite;
   }
 
   /* Light: CTA sin halo neón (premium/limpio). Dark: conserva glow. */
@@ -287,6 +240,36 @@ form.sign-up-form {
 
   html[data-theme="light"] & .signup-submit-btn:hover {
     box-shadow: var(--app-shadow-card);
+  }
+
+  .auth-signup-legal {
+    margin: 0;
+    padding: 0 8px;
+    text-align: center;
+    color: color-mix(in srgb, var(--auth-login-subtitle) 96%, transparent);
+    font-size: clamp(12px, 0.15vw + 11px, 13px);
+    font-weight: 600;
+    line-height: 1.45;
+  }
+
+  .auth-signup-legal-link {
+    color: var(--app-accent);
+    font-weight: 750;
+    text-decoration: none;
+
+    &:hover {
+      opacity: 0.92;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--app-focus-ring);
+      outline-offset: 2px;
+      border-radius: 10px;
+      text-decoration: underline;
+      text-underline-offset: 4px;
+    }
   }
 
   .signup-link-back {
@@ -317,24 +300,30 @@ form.sign-up-form {
   }
 
   .error-formik {
-    margin-top: 6px;
+    margin-top: 4px;
+    min-height: 1.35em;
+    padding: 0 8px;
     color: var(--app-status-error);
     font-size: clamp(12px, 0.2vw + 11px, 13px);
     font-weight: 600;
     line-height: 1.35;
+    overflow-wrap: anywhere;
+
+    &[aria-hidden="true"] {
+      visibility: hidden;
+    }
   }
 }
 
 [data-theme="light"] form.sign-up-form {
-  .signup-input-wrap,
   .c-row--phone .signup-phone-wrap {
     /* Light: neutral fill (premium), sin "baby blue" */
-    background: color-mix(in srgb, var(--auth-register-input-bg) 96%, transparent);
+    background: color-mix(in srgb, var(--auth-input-bg) 96%, transparent);
   }
 
   .signup-phone-flag-wrap,
   .signup-phone-icon-wrap {
-    background: color-mix(in srgb, var(--auth-register-input-bg) 88%, transparent);
+    background: color-mix(in srgb, var(--auth-input-bg) 90%, transparent);
   }
 }
 
@@ -357,5 +346,11 @@ form.sign-up-form {
     .signup-link-back {
       font-size: 14px;
     }
+  }
+}
+
+@keyframes signupSpin {
+  to {
+    transform: rotate(360deg);
   }
 }

@@ -76,6 +76,25 @@ export function applyRouteSeo(pathname: string): void {
 
   document.title = seo.title;
 
+  // Robots: keep auth routes out of search results (login, signup, password reset).
+  const shouldNoIndex = path.startsWith("/auth");
+  const robotsContent = shouldNoIndex ? "noindex, nofollow" : "index, follow";
+  let robots = document.querySelector('meta[name="robots"]');
+  if (!robots) {
+    robots = document.createElement("meta");
+    robots.setAttribute("name", "robots");
+    document.head.appendChild(robots);
+  }
+  robots.setAttribute("content", robotsContent);
+
+  let googlebot = document.querySelector('meta[name="googlebot"]');
+  if (!googlebot) {
+    googlebot = document.createElement("meta");
+    googlebot.setAttribute("name", "googlebot");
+    document.head.appendChild(googlebot);
+  }
+  googlebot.setAttribute("content", robotsContent);
+
   const metaDesc = document.querySelector('meta[name="description"]');
   if (metaDesc) metaDesc.setAttribute("content", seo.description);
 
