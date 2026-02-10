@@ -188,9 +188,14 @@ function Legal() {
           <p className="legal2026__hero-note">Se abre en una nueva pestaña (Messenger).</p>
         </header>
 
-        <nav className="legal2026__quick-nav" aria-label="Contenido">
+        <nav className="legal2026__quick-nav bb-segmented" aria-label="Contenido">
           {sections.map(({ id, label, Icon }) => (
-            <a key={id} href={`#${id}`} aria-current={activeSection === id ? "location" : undefined}>
+            <a
+              key={id}
+              href={`#${id}`}
+              className="bb-segmented__btn"
+              aria-current={activeSection === id ? "location" : undefined}
+            >
               <Icon size={16} aria-hidden />
               {label}
             </a>
@@ -210,17 +215,17 @@ function Legal() {
               Contraer todo
             </button>
           </div>
-          <div className="legal2026__faq-list">
+          <div className="legal2026__faq-list bb-accordion">
             {FAQ_ITEMS.map((item, idx) => {
               const isOpen = Boolean(faqOpen[idx]);
               const buttonId = `legal-faq-button-${idx}`;
               const panelId = `legal-faq-panel-${idx}`;
               return (
-                <div key={item.question} className="legal2026__faq-item">
+                <div key={item.question} className="legal2026__faq-item bb-accordion__item">
                   <h3 className="legal2026__faq-question">
                     <button
                       type="button"
-                      className="legal2026__faq-trigger"
+                      className="legal2026__faq-trigger bb-accordion__trigger"
                       id={buttonId}
                       aria-expanded={isOpen}
                       aria-controls={panelId}
@@ -232,7 +237,7 @@ function Legal() {
                   </h3>
                   <div
                     id={panelId}
-                    className="legal2026__faq-panel"
+                    className="legal2026__faq-panel bb-accordion__panel"
                     role="region"
                     aria-labelledby={buttonId}
                     hidden={!isOpen}

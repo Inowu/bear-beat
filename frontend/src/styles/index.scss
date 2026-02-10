@@ -51,6 +51,8 @@
   --bb-shadow: 0 10px 26px rgba(15, 23, 42, 0.10);
   --bb-shadow-card: 0 18px 48px rgba(15, 23, 42, 0.12);
   --bb-shadow-glow: 0 0 18px rgba(8, 225, 247, 0.32);
+  --bb-shadow-1: var(--bb-shadow);
+  --bb-shadow-2: var(--bb-shadow-card);
   /* Spacing scale (theme-agnostic) */
   --bb-space-1: 4px;
   --bb-space-2: 8px;
@@ -1136,4 +1138,179 @@ svg[role="img"] {
 .brand-text,
 .font-bear {
   font-family: var(--bb-font-brand);
+}
+
+/* ==========================================================================
+   Public UI Kit (Marketing/Auth/Legal) — UI only, no logic
+   ========================================================================== */
+
+.bb-card {
+  border-radius: var(--bb-radius-xl);
+  border: 1px solid color-mix(in srgb, var(--app-border) 82%, transparent);
+  background: color-mix(in srgb, var(--app-bg-card) 96%, transparent);
+  box-shadow: var(--bb-shadow-1);
+}
+
+.bb-card--shadow-2 {
+  box-shadow: var(--bb-shadow-2);
+}
+
+.bb-card--soft {
+  background: color-mix(in srgb, var(--app-bg-soft) 86%, transparent);
+  box-shadow: none;
+}
+
+.bb-segmented {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px;
+  gap: 6px;
+  border-radius: var(--bb-radius-pill);
+  border: 1px solid color-mix(in srgb, var(--app-border) 80%, transparent);
+  background: color-mix(in srgb, var(--app-bg-card) 84%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.bb-segmented__btn {
+  appearance: none;
+  border: 1px solid transparent;
+  background: transparent;
+  color: color-mix(in srgb, var(--app-text-body) 92%, transparent);
+  cursor: pointer;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: var(--bb-radius-pill);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.bb-segmented__btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--app-accent) 9%, transparent);
+}
+
+.bb-segmented__btn[aria-selected="true"],
+.bb-segmented__btn.is-active {
+  background: color-mix(in srgb, var(--app-accent) 18%, var(--app-bg-card));
+  border-color: color-mix(in srgb, var(--app-accent) 28%, transparent);
+  color: var(--app-text-heading);
+}
+
+.bb-segmented__btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.bb-segmented__btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--app-accent) 62%, transparent);
+  outline-offset: 2px;
+}
+
+.bb-badge {
+  min-height: 26px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
+  border-radius: var(--bb-radius-pill);
+  border: 1px solid color-mix(in srgb, var(--app-border) 82%, transparent);
+  background: color-mix(in srgb, var(--app-bg-soft) 82%, transparent);
+  color: var(--app-text-muted);
+  font-size: 1.2rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.bb-badge--accent {
+  border-color: color-mix(in srgb, var(--app-accent) 34%, transparent);
+  background: color-mix(in srgb, var(--app-accent) 12%, transparent);
+  color: var(--app-text-heading);
+}
+
+.bb-stat-pill {
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: var(--bb-radius-pill);
+  border: 1px solid color-mix(in srgb, var(--app-border) 82%, transparent);
+  background: color-mix(in srgb, var(--app-bg-card) 92%, transparent);
+  box-shadow: none;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.bb-stat-pill__value {
+  min-width: 0;
+  color: var(--app-text-heading);
+  font-weight: 950;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bb-stat-pill__label {
+  color: var(--app-text-muted);
+  font-weight: 900;
+  font-size: 1.1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.bb-accordion {
+  display: grid;
+  gap: 10px;
+}
+
+.bb-accordion__item {
+  border-radius: var(--bb-radius-lg);
+  border: 1px solid color-mix(in srgb, var(--app-border) 82%, transparent);
+  background: color-mix(in srgb, var(--app-bg-soft) 80%, transparent);
+  overflow: hidden;
+}
+
+.bb-accordion__trigger {
+  width: 100%;
+  appearance: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--app-text-heading);
+  text-align: left;
+  padding: 14px 14px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  font-size: 1.4rem;
+  font-weight: 850;
+  line-height: 1.35;
+}
+
+.bb-accordion__trigger:hover {
+  background: color-mix(in srgb, var(--app-accent) 6%, transparent);
+}
+
+.bb-accordion__trigger:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--app-accent) 62%, transparent);
+  outline-offset: 2px;
+}
+
+.bb-accordion__panel {
+  padding: 0 14px 14px;
+  border-top: 1px solid color-mix(in srgb, var(--app-border) 72%, transparent);
+  color: color-mix(in srgb, var(--app-text-body) 92%, transparent);
+  font-size: 1.4rem;
+  line-height: 1.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bb-segmented__btn {
+    transition: none !important;
+  }
 }

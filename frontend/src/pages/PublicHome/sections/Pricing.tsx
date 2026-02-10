@@ -106,10 +106,10 @@ export default function Pricing(props: {
         </div>
 
         {(hasMxn || hasUsd) && hasMxn && hasUsd && (
-          <div className="pricing__toggle" role="tablist" aria-label="Moneda">
+          <div className="pricing__toggle bb-segmented" role="tablist" aria-label="Moneda">
             <button
               type="button"
-              className={`pricing__toggle-btn ${currency === "mxn" ? "is-active" : ""}`.trim()}
+              className={`pricing__toggle-btn bb-segmented__btn ${currency === "mxn" ? "is-active" : ""}`.trim()}
               onClick={() => setCurrency("mxn")}
               role="tab"
               id={mxnTabId}
@@ -120,7 +120,7 @@ export default function Pricing(props: {
             </button>
             <button
               type="button"
-              className={`pricing__toggle-btn ${currency === "usd" ? "is-active" : ""}`.trim()}
+              className={`pricing__toggle-btn bb-segmented__btn ${currency === "usd" ? "is-active" : ""}`.trim()}
               onClick={() => setCurrency("usd")}
               role="tab"
               id={usdTabId}

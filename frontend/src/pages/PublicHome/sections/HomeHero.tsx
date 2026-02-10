@@ -37,17 +37,17 @@ export default function HomeHero(props: {
           <p className="home-hero__sub">{HOME_HERO_SUBTITLE}</p>
 
           <div className="home-hero__stats" role="list" aria-label="Resumen">
-            <div role="listitem" className="home-stat">
-              <span className="home-stat__value">{totalTBLabel}</span>
-              <span className="home-stat__label">catálogo</span>
+            <div role="listitem" className="home-stat bb-stat-pill">
+              <span className="home-stat__value bb-stat-pill__value">{totalTBLabel}</span>
+              <span className="home-stat__label bb-stat-pill__label">catálogo</span>
             </div>
-            <div role="listitem" className="home-stat">
-              <span className="home-stat__value">{downloadQuotaLabel}</span>
-              <span className="home-stat__label">de descarga</span>
+            <div role="listitem" className="home-stat bb-stat-pill">
+              <span className="home-stat__value bb-stat-pill__value">{downloadQuotaLabel}</span>
+              <span className="home-stat__label bb-stat-pill__label">de descarga</span>
             </div>
-            <div role="listitem" className="home-stat">
-              <span className="home-stat__value">Género / año / mood</span>
-              <span className="home-stat__label">carpetas listas</span>
+            <div role="listitem" className="home-stat bb-stat-pill">
+              <span className="home-stat__value bb-stat-pill__value">Género / año / mood</span>
+              <span className="home-stat__label bb-stat-pill__label">carpetas listas</span>
             </div>
           </div>
 

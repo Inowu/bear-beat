@@ -270,26 +270,31 @@ function Plans() {
           <div className="plans-hero-grid">
             <div className="plans-hero-copy" aria-label="Qué incluye">
               <ul className="plans-hero-chips" aria-label="Incluye">
-                <li>
-                  <strong>{proofItems[1]?.value ?? "—"}</strong> catálogo
+                <li className="plans-hero-chip bb-stat-pill">
+                  <span className="bb-stat-pill__value">{proofItems[1]?.value ?? "—"}</span>
+                  <span className="bb-stat-pill__label">catálogo</span>
                 </li>
-                <li>
-                  <strong>{downloadQuotaGb ? `${formatInt(downloadQuotaGb)} GB/mes` : "—"}</strong> de descargas
+                <li className="plans-hero-chip bb-stat-pill">
+                  <span className="bb-stat-pill__value">
+                    {downloadQuotaGb ? `${formatInt(downloadQuotaGb)} GB/mes` : "—"}
+                  </span>
+                  <span className="bb-stat-pill__label">de descargas</span>
                 </li>
-                <li>
-                  <strong>FTP + web</strong> (tú eliges)
+                <li className="plans-hero-chip bb-stat-pill">
+                  <span className="bb-stat-pill__value">FTP + web</span>
+                  <span className="bb-stat-pill__label">(tú eliges)</span>
                 </li>
               </ul>
               <p className="plans-hero-micro">{heroMicrocopy}</p>
             </div>
             <div className="plans-hero-choice" aria-label="Moneda">
               <h2 className="plans-hero-choice-title">Elige tu moneda</h2>
-              <div className="plans-currency-toggle" role="tablist" aria-label="Moneda">
+              <div className="plans-currency-toggle bb-segmented" role="tablist" aria-label="Moneda">
                 <button
                   type="button"
                   role="tab"
                   aria-selected={selectedCurrency === "mxn"}
-                  className={selectedCurrency === "mxn" ? "is-active" : ""}
+                  className={["bb-segmented__btn", selectedCurrency === "mxn" ? "is-active" : ""].filter(Boolean).join(" ")}
                   onClick={() => setSelectedCurrency("mxn")}
                   disabled={!plansByCurrency.mxn}
                 >
@@ -299,7 +304,7 @@ function Plans() {
                   type="button"
                   role="tab"
                   aria-selected={selectedCurrency === "usd"}
-                  className={selectedCurrency === "usd" ? "is-active" : ""}
+                  className={["bb-segmented__btn", selectedCurrency === "usd" ? "is-active" : ""].filter(Boolean).join(" ")}
                   onClick={() => setSelectedCurrency("usd")}
                   disabled={!plansByCurrency.usd}
                 >

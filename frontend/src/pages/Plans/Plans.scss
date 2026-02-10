@@ -115,24 +115,8 @@
   gap: 8px;
 }
 
-.plans-hero-chips li {
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 12px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--ph-bg-card) 86%, transparent);
-  border: 1px solid color-mix(in srgb, var(--ph-border) 72%, transparent);
-  color: color-mix(in srgb, var(--ph-text-body) 92%, transparent);
-  font-size: 13px;
-  font-weight: 750;
-  line-height: 1.2;
-}
-
-.plans-hero-chips strong {
-  color: var(--ph-text-heading);
-  font-weight: 950;
+.plans-hero-chip {
+  flex: 1 1 220px;
 }
 
 .plans-hero-choice {
@@ -156,43 +140,7 @@
 }
 
 .plans-currency-toggle {
-  width: fit-content;
-  display: inline-flex;
-  padding: 4px;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--ph-border) 70%, transparent);
-  background: color-mix(in srgb, var(--ph-bg-card) 80%, transparent);
-  gap: 6px;
-}
-
-.plans-currency-toggle button {
-  appearance: none;
-  border: none;
-  cursor: pointer;
-  min-height: 40px;
-  padding: 0 14px;
-  border-radius: 999px;
-  background: transparent;
-  color: color-mix(in srgb, var(--ph-text-body) 92%, transparent);
-  font-weight: 900;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  transition: background 0.16s ease, color 0.16s ease, transform 0.16s ease;
-}
-
-.plans-currency-toggle button.is-active {
-  background: color-mix(in srgb, var(--ph-accent) 88%, black);
-  color: #041214;
-}
-
-.plans-currency-toggle button:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-.plans-currency-toggle button:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--ph-accent) 62%, transparent);
-  outline-offset: 2px;
+  max-width: 100%;
 }
 
 .plans-currency-micro {

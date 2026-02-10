@@ -71,16 +71,18 @@ export default function HomeFaq(props: {
           Resolvemos las dudas típicas antes de que pagues.
         </p>
 
-        <div className="home-faq__list">
+        <div className="home-faq__list bb-accordion">
           {HOME_FAQ_ITEMS.map((item) => (
             <div
               key={item.id}
               id={`faq-${item.id}`}
-              className={["home-faq__item", openIds[item.id] ? "is-open" : ""].filter(Boolean).join(" ")}
+              className={["home-faq__item", "bb-accordion__item", openIds[item.id] ? "is-open" : ""]
+                .filter(Boolean)
+                .join(" ")}
             >
               <button
                 type="button"
-                className="home-faq__summary"
+                className="home-faq__summary bb-accordion__trigger"
                 aria-expanded={Boolean(openIds[item.id])}
                 aria-controls={`faq-panel-${item.id}`}
                 id={`faq-button-${item.id}`}
@@ -90,7 +92,7 @@ export default function HomeFaq(props: {
                 <ChevronDown size={18} aria-hidden />
               </button>
               <div
-                className="home-faq__body"
+                className="home-faq__body bb-accordion__panel"
                 id={`faq-panel-${item.id}`}
                 role="region"
                 aria-labelledby={`faq-button-${item.id}`}

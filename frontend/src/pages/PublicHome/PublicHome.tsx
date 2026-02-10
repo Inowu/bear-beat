@@ -506,17 +506,27 @@ export default function PublicHome() {
           <Link to="/" className="home-topnav__brand" aria-label="Bear Beat" aria-current="page">
             <img src={Logo} alt="Bear Beat" />
           </Link>
-          <nav className="home-topnav__nav" aria-label="Links">
-            <Link to="/planes" className="home-topnav__link">
-              Planes
+          <div className="home-topnav__right" aria-label="Acciones">
+            <nav className="home-topnav__nav" aria-label="Links">
+              <Link to="/planes" className="home-topnav__link">
+                Planes
+              </Link>
+              <Link to="/legal" className="home-topnav__link">
+                FAQ
+              </Link>
+              <Link to="/auth" className="home-topnav__link">
+                Iniciar sesión
+              </Link>
+            </nav>
+            <Link
+              to="/auth/registro"
+              state={{ from: "/planes" }}
+              className="home-topnav__cta"
+              onClick={() => onPrimaryCtaClick("hero")}
+            >
+              Empezar prueba
             </Link>
-            <Link to="/legal" className="home-topnav__link">
-              FAQ
-            </Link>
-            <Link to="/auth" className="home-topnav__link">
-              Iniciar sesión
-            </Link>
-          </nav>
+          </div>
         </div>
       </header>
 
