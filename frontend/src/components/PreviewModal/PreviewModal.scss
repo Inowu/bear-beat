@@ -82,6 +82,10 @@
           gap: 10px;
         }
 
+        .preview-waveform-shell {
+          position: relative;
+        }
+
         .preview-waveform {
           width: 100%;
           min-height: 104px;
@@ -89,6 +93,48 @@
           border: 1px solid color-mix(in srgb, var(--app-border) 78%, transparent);
           background: color-mix(in srgb, var(--app-bg-card) 88%, transparent);
           overflow: hidden;
+        }
+
+        .preview-wave-placeholder {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          display: flex;
+          align-items: flex-end;
+          justify-content: center;
+          gap: 4px;
+          padding: 18px 14px;
+          opacity: 0.85;
+        }
+
+        .preview-wave-placeholder span {
+          width: 100%;
+          flex: 1 1 0;
+          min-width: 2px;
+          border-radius: 999px;
+          background: color-mix(in srgb, var(--app-accent) 70%, transparent);
+          height: 20%;
+          transform-origin: bottom;
+          animation: preview-eq 1.15s ease-in-out infinite;
+          animation-delay: calc(var(--i, 0) * 70ms);
+        }
+
+        .preview-wave-placeholder:not(.is-playing) span {
+          animation-play-state: paused;
+          height: 22%;
+          opacity: 0.5;
+        }
+
+        @keyframes preview-eq {
+          0%,
+          100% {
+            transform: scaleY(0.25);
+            opacity: 0.55;
+          }
+          50% {
+            transform: scaleY(1);
+            opacity: 1;
+          }
         }
 
         .preview-audio-controls {
@@ -144,6 +190,31 @@
           font-size: 0.92rem;
           font-weight: 700;
           line-height: 1.4;
+        }
+
+        .preview-video-error {
+          margin-top: 10px;
+          display: grid;
+          gap: 6px;
+        }
+
+        .preview-video-fallback {
+          width: fit-content;
+          color: var(--app-accent);
+          font-weight: 750;
+          text-decoration: none;
+        }
+
+        .preview-video-fallback:hover {
+          text-decoration: underline;
+        }
+
+        .preview-video-fallback:focus-visible {
+          outline: 2px solid var(--app-focus-ring);
+          outline-offset: 2px;
+          border-radius: 10px;
+          text-decoration: underline;
+          text-underline-offset: 4px;
         }
       }
 
