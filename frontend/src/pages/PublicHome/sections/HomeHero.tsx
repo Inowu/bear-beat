@@ -1,14 +1,10 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, PlayCircle } from "lucide-react";
+import { ArrowRight, CirclePlay, Lock, Sparkles } from "lucide-react";
 import {
-  HOME_HERO_MICROCOPY_BASE,
-  HOME_HERO_MICROCOPY_TRIAL,
   HOME_HERO_SUBTITLE,
   HOME_HERO_TITLE,
 } from "../homeCopy";
 import { formatInt } from "../homeFormat";
-import CatalogPreviewWebp from "../../../assets/images/home-catalog-preview.webp";
-import CatalogPreviewPng from "../../../assets/images/home-catalog-preview.png";
 
 type TrialSummary = {
   enabled: boolean;
@@ -19,20 +15,19 @@ type TrialSummary = {
 export default function HomeHero(props: {
   totalTBLabel: string;
   downloadQuotaLabel: string;
+  afterPriceLabel: string;
   trial: TrialSummary | null;
   ctaLabel: string;
   onPrimaryCtaClick: () => void;
   onDemoScroll: () => void;
-  onTourClick: () => void;
 }) {
-  const { totalTBLabel, downloadQuotaLabel, trial, ctaLabel, onPrimaryCtaClick, onDemoScroll, onTourClick } = props;
+  const { totalTBLabel, downloadQuotaLabel, afterPriceLabel, trial, ctaLabel, onPrimaryCtaClick, onDemoScroll } = props;
 
   const hasTrial = Boolean(trial?.enabled);
-  const microcopy = hasTrial ? HOME_HERO_MICROCOPY_TRIAL : HOME_HERO_MICROCOPY_BASE;
-  const bulletTrialAddon =
+  const riskReversal =
     hasTrial && trial
-      ? ` · Prueba: ${formatInt(trial.days)} días / ${formatInt(trial.gb)} GB (solo tarjeta, 1ª vez)`
-      : "";
+      ? `${formatInt(trial.days)} días + ${formatInt(trial.gb)} GB. Cancelas antes de que termine y no se cobra.`
+      : null;
 
   return (
     <section className="home-hero" aria-label="Presentación">
@@ -41,65 +36,64 @@ export default function HomeHero(props: {
           <h1 className="home-hero__title">{HOME_HERO_TITLE}</h1>
           <p className="home-hero__sub">{HOME_HERO_SUBTITLE}</p>
 
-          <ul className="home-hero__bullets" aria-label="Puntos clave">
-            <li>Catálogo total: {totalTBLabel} (eliges qué bajar)</li>
-            <li>Descargas: {downloadQuotaLabel}{bulletTrialAddon}</li>
-            <li>Carpetas listas por género/año/mood + activación guiada por chat</li>
-          </ul>
+          <div className="home-hero__stats" role="list" aria-label="Resumen">
+            <div role="listitem" className="home-stat">
+              <span className="home-stat__value">{totalTBLabel}</span>
+              <span className="home-stat__label">catálogo</span>
+            </div>
+            <div role="listitem" className="home-stat">
+              <span className="home-stat__value">{downloadQuotaLabel}</span>
+              <span className="home-stat__label">de descarga</span>
+            </div>
+            <div role="listitem" className="home-stat">
+              <span className="home-stat__value">Género / año / mood</span>
+              <span className="home-stat__label">carpetas listas</span>
+            </div>
+          </div>
 
           <div className="home-hero__cta">
-            <Link
-              to="/auth/registro"
-              state={{ from: "/planes" }}
-              className="home-cta home-cta--primary"
-              data-testid="home-cta-primary"
-              onClick={onPrimaryCtaClick}
-            >
-              {ctaLabel}
-              <ArrowRight size={18} aria-hidden />
-            </Link>
-            <p className="home-hero__micro">{microcopy}</p>
+            <div className="home-hero__cta-row" role="group" aria-label="Acciones">
+              <Link
+                to="/auth/registro"
+                state={{ from: "/planes" }}
+                className="home-cta home-cta--primary"
+                data-testid="home-cta-primary"
+                onClick={onPrimaryCtaClick}
+              >
+                {ctaLabel}
+                <ArrowRight size={18} aria-hidden />
+              </Link>
+              <button type="button" className="home-cta home-cta--secondary" onClick={onDemoScroll}>
+                <CirclePlay size={18} aria-hidden />
+                Ver demo del catálogo
+              </button>
+            </div>
+            <div className="home-hero__micro">
+              {riskReversal ? (
+                <>
+                  <span className="home-hero__micro-row">
+                    <Sparkles size={16} aria-hidden />
+                    {riskReversal}
+                  </span>
+                  <span className="home-hero__micro-row">
+                    <ArrowRight size={16} aria-hidden />
+                    Después: desde {afterPriceLabel}/mes
+                  </span>
+                </>
+              ) : (
+                <span className="home-hero__micro-row">
+                  <ArrowRight size={16} aria-hidden />
+                  Desde {afterPriceLabel}/mes
+                </span>
+              )}
+              <span className="home-hero__micro-row">
+                <Lock size={16} aria-hidden />
+                Pago seguro (Stripe)
+              </span>
+            </div>
             <Link to="/auth" state={{ from: "/planes" }} className="home-hero__cta-alt">
               Ya tengo cuenta
             </Link>
-          </div>
-        </div>
-
-        <div className="home-hero__visual" aria-label="Así se ve por dentro">
-            <div className="home-visual">
-              <div className="home-visual__head">
-                <strong>Así se ve por dentro</strong>
-                <button type="button" className="home-visual__demo" onClick={onDemoScroll}>
-                  <PlayCircle size={18} aria-hidden />
-                  Ver demo
-                </button>
-              </div>
-            <ul className="home-visual__bullets" aria-label="Qué verás al activar">
-              <li>Audios / Videos / Karaoke</li>
-              <li>Búsqueda por canción, artista o carpeta</li>
-              <li>Guía FTP incluida</li>
-            </ul>
-            <div className="home-visual__frame">
-              <button
-                type="button"
-                className="home-visual__frame-btn"
-                onClick={onTourClick}
-                aria-label="Ver captura del catálogo"
-              >
-                <picture>
-                  <source srcSet={CatalogPreviewWebp} type="image/webp" />
-                  <img
-                    src={CatalogPreviewPng}
-                    alt="Vista real del catálogo por dentro (biblioteca y secciones)"
-                    width={960}
-                    height={600}
-                    loading="eager"
-                    decoding="async"
-                  />
-                </picture>
-              </button>
-            </div>
-            <p className="home-visual__note">Vista real del catálogo. Toca la captura para ver detalles.</p>
           </div>
         </div>
       </div>

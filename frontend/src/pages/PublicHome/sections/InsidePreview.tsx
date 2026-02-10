@@ -1,0 +1,63 @@
+import { CirclePlay } from "lucide-react";
+import CatalogPreviewWebp from "../../../assets/images/home-catalog-preview.webp";
+import CatalogPreviewPng from "../../../assets/images/home-catalog-preview.png";
+
+export default function InsidePreview(props: {
+  onDemoScroll: () => void;
+  onTourClick: () => void;
+}) {
+  const { onDemoScroll, onTourClick } = props;
+
+  return (
+    <section className="inside-preview" aria-label="Así se ve por dentro">
+      <div className="ph__container">
+        <div className="inside-preview__head">
+          <div>
+            <h2 className="home-h2">Así se ve por dentro</h2>
+            <p className="home-sub">Busca por género/canción/carpeta y arma repertorio en minutos.</p>
+          </div>
+          <button type="button" className="home-cta home-cta--secondary inside-preview__cta" onClick={onDemoScroll}>
+            <CirclePlay size={18} aria-hidden />
+            Ver demo del catálogo
+          </button>
+        </div>
+
+        <div className="home-visual">
+          <div className="home-visual__head">
+            <strong>Vista real del catálogo</strong>
+            <span className="inside-preview__hint" aria-hidden>
+              Toca la captura
+            </span>
+          </div>
+          <ul className="home-visual__bullets" aria-label="Qué verás al activar">
+            <li>Audios / Videos / Karaoke</li>
+            <li>Búsqueda por canción, artista o carpeta</li>
+            <li>Guía FTP incluida</li>
+          </ul>
+          <div className="home-visual__frame">
+            <button
+              type="button"
+              className="home-visual__frame-btn"
+              onClick={onTourClick}
+              aria-label="Ver captura del catálogo"
+            >
+              <picture>
+                <source srcSet={CatalogPreviewWebp} type="image/webp" />
+                <img
+                  src={CatalogPreviewPng}
+                  alt="Vista real del catálogo por dentro (biblioteca y secciones)"
+                  width={960}
+                  height={600}
+                  loading="lazy"
+                  decoding="async"
+                />
+              </picture>
+            </button>
+          </div>
+          <p className="home-visual__note">Vista real del catálogo. Toca la captura para ver detalles.</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+

@@ -6,7 +6,7 @@ import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../utils/growthMetrics";
 import { FALLBACK_GENRES, type GenreStats } from "./fallbackGenres";
 import type { IPlans } from "../../interfaces/Plans";
-import { getHomeCtaPrimaryLabel, HOME_HERO_MICROCOPY_BASE, HOME_HERO_MICROCOPY_TRIAL } from "./homeCopy";
+import { getHomeCtaPrimaryLabel, HOME_HERO_MICROCOPY_BASE } from "./homeCopy";
 import {
   HOME_NUMBER_LOCALE,
   formatInt,
@@ -15,6 +15,8 @@ import {
   normalizeSearchKey,
 } from "./homeFormat";
 import HomeHero from "./sections/HomeHero";
+import HowItWorks from "./sections/HowItWorks";
+import InsidePreview from "./sections/InsidePreview";
 import TrustBar from "./sections/TrustBar";
 import UseCases from "./sections/UseCases";
 import CatalogDemo, { type CatalogGenre } from "./sections/CatalogDemo";
@@ -139,6 +141,14 @@ function toPricingPlan(plan: IPlans, currency: "mxn" | "usd"): PricingPlan {
   };
 }
 
+function formatUsdMonthlyHint(amount: number | null | undefined): string {
+  const value = Number(amount ?? 0);
+  if (!Number.isFinite(value) || value <= 0) return "USD 18";
+  const hasDecimals = Math.round(value) !== value;
+  const formatted = hasDecimals ? value.toFixed(2) : `${value}`;
+  return `USD ${formatted}`;
+}
+
 export default function PublicHome() {
   const location = useLocation();
   const preferredCurrency = useMemo(() => detectPreferredCurrency(), []);
@@ -251,8 +261,11 @@ export default function PublicHome() {
 
   const ctaPrimaryLabel = useMemo(() => getHomeCtaPrimaryLabel(trialSummary), [trialSummary]);
   const footerMicrocopy = useMemo(() => {
-    return trialSummary?.enabled ? HOME_HERO_MICROCOPY_TRIAL : HOME_HERO_MICROCOPY_BASE;
-  }, [trialSummary?.enabled]);
+    if (trialSummary?.enabled) {
+      return `${formatInt(trialSummary.days)} días + ${formatInt(trialSummary.gb)} GB. Cancelas antes de que termine y no se cobra.`;
+    }
+    return HOME_HERO_MICROCOPY_BASE;
+  }, [trialSummary?.enabled, trialSummary?.days, trialSummary?.gb]);
 
   const pricingPlans = useMemo(() => {
     const bestMxn = pickBestPlan(plans, "mxn");
@@ -263,6 +276,10 @@ export default function PublicHome() {
       usd: bestUsd ? toPricingPlan(bestUsd, "usd") : null,
     } as { mxn: PricingPlan | null; usd: PricingPlan | null };
   }, [plans]);
+
+  const afterPriceLabel = useMemo(() => {
+    return formatUsdMonthlyHint(pricingPlans.usd?.price);
+  }, [pricingPlans.usd?.price]);
 
   const downloadQuotaGb = useMemo(() => {
     const fromPlans = pricingPlans.mxn?.gigas ?? pricingPlans.usd?.gigas;
@@ -425,6 +442,9 @@ export default function PublicHome() {
 
   return (
     <div className="public-home">
+      <a className="home-skip" href="#home-main">
+        Saltar al contenido
+      </a>
       <header className="home-topnav" aria-label="Navegación">
         <div className="ph__container home-topnav__inner">
           <Link to="/" className="home-topnav__brand" aria-label="Bear Beat">
@@ -444,16 +464,20 @@ export default function PublicHome() {
         </div>
       </header>
 
-      <div className="home-main" aria-label="Landing">
+      <main id="home-main" className="home-main">
         <HomeHero
           totalTBLabel={totalTBLabel}
           downloadQuotaLabel={downloadQuotaLabel}
+          afterPriceLabel={afterPriceLabel}
           trial={trialSummary}
           ctaLabel={ctaPrimaryLabel}
           onPrimaryCtaClick={() => onPrimaryCtaClick("hero")}
           onDemoScroll={onDemoScroll}
-          onTourClick={onTourClick}
         />
+
+        <HowItWorks trial={trialSummary} />
+
+        <InsidePreview onDemoScroll={onDemoScroll} onTourClick={onTourClick} />
 
         <TrustBar
           totalFilesLabel={totalFilesLabel}
@@ -496,7 +520,7 @@ export default function PublicHome() {
         </div>
 
         <HomeFaq onFaqExpand={onFaqExpand} />
-      </div>
+      </main>
 
       <footer className="home-footer" aria-label="Footer">
         <div className="ph__container home-footer__inner">
@@ -537,6 +561,7 @@ export default function PublicHome() {
 
       <StickyMobileCta
         ctaLabel={ctaPrimaryLabel}
+        trial={trialSummary}
         onPrimaryCtaClick={() => onPrimaryCtaClick("sticky")}
       />
     </div>
