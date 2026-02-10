@@ -518,7 +518,7 @@ export default function PublicHome() {
         </div>
       </header>
 
-      <main id="home-main" className="home-main">
+      <div id="home-main" className="home-main">
         <HomeHero
           totalTBLabel={totalTBLabel}
           downloadQuotaLabel={downloadQuotaLabel}
@@ -574,7 +574,7 @@ export default function PublicHome() {
         </div>
 
         <HomeFaq onFaqExpand={onFaqExpand} />
-      </main>
+      </div>
 
       <footer className="home-footer" aria-label="Footer">
         <div className="ph__container home-footer__inner">

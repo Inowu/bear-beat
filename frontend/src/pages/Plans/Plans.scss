@@ -93,7 +93,9 @@
 }
 
 .plans-decision-grid {
-  margin-top: 16px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
@@ -229,10 +231,17 @@
 }
 
 .plans-plan-grid {
+  margin: 0;
+  padding: 0;
+  list-style: none;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
   align-items: stretch;
+}
+
+.plans-plan-item {
+  min-width: 0;
 }
 
 @media (max-width: 920px) {

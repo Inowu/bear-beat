@@ -256,13 +256,13 @@ function Plans() {
         <section className="plans-hero" aria-label="Planes">
           <h1 className="plans-page-title">Elige tu moneda y activa</h1>
           <p className="plans-hero-subtitle">Activa tu membresía en minutos y llega con repertorio listo.</p>
-          <div className="plans-decision-grid" role="list" aria-label="Qué vas a decidir">
-            <article className="plans-decision-card" role="listitem">
+          <ul className="plans-decision-grid" aria-label="Qué vas a decidir">
+            <li className="plans-decision-card">
               <Zap className="plans-decision-icon" aria-hidden />
               <h2 className="plans-decision-title">Beneficio</h2>
               <p className="plans-decision-copy">Responde pedidos al instante con contenido listo para cabina.</p>
-            </article>
-            <article className="plans-decision-card" role="listitem">
+            </li>
+            <li className="plans-decision-card">
               <ListChecks className="plans-decision-icon" aria-hidden />
               <h2 className="plans-decision-title">Qué incluye</h2>
               <ul className="plans-decision-stats" aria-label="Incluye">
@@ -276,8 +276,8 @@ function Plans() {
                   <strong>FTP + web</strong> (como te acomode)
                 </li>
               </ul>
-            </article>
-            <article className="plans-decision-card" role="listitem">
+            </li>
+            <li className="plans-decision-card">
               <Wallet className="plans-decision-icon" aria-hidden />
               <h2 className="plans-decision-title">Qué plan elegir</h2>
               <div className="plans-currency-toggle" role="tablist" aria-label="Moneda">
@@ -303,8 +303,8 @@ function Plans() {
                 </button>
               </div>
               <p className="plans-currency-micro">MXN: México (pago local). USD: internacional.</p>
-            </article>
-          </div>
+            </li>
+          </ul>
           <p className="plans-hero-micro">{heroMicrocopy}</p>
         </section>
       {loadError ? (
@@ -341,19 +341,20 @@ function Plans() {
         </section>
       ) : (
         <>
-          <div className="plans-plan-grid" role="list" aria-label="Planes disponibles">
+          <ul className="plans-plan-grid" aria-label="Planes disponibles">
             {plansToRender.map((plan) => (
-              <PlanCard
-                plan={plan}
-                key={`plan_${plan.id}`}
-                getCurrentPlan={() => {}}
-                userEmail={currentUser?.email}
-                showRecommendedBadge={plan === plansByCurrency.mxn}
-                variant="marketing"
-                trialConfig={trialConfig}
-              />
+              <li key={`plan_${plan.id}`} className="plans-plan-item">
+                <PlanCard
+                  plan={plan}
+                  getCurrentPlan={() => {}}
+                  userEmail={currentUser?.email}
+                  showRecommendedBadge={plan === plansByCurrency.mxn}
+                  variant="marketing"
+                  trialConfig={trialConfig}
+                />
+              </li>
             ))}
-          </div>
+          </ul>
         </>
       )}
       </div>
