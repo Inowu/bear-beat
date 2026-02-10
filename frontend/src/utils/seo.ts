@@ -43,8 +43,8 @@ export const ROUTE_SEO: Record<string, { title: string; description: string }> =
     description: "Cómo descargar tu librería con FileZilla o Air Explorer. Guía paso a paso.",
   },
   "/legal": {
-    title: `FAQ, privacidad y reembolsos | ${BASE_TITLE}`,
-    description: "Consulta preguntas frecuentes, política de privacidad, reembolsos y términos de uso de Bear Beat.",
+    title: `Centro legal y FAQ | ${BASE_TITLE} – privacidad, reembolsos y términos`,
+    description: "Consulta FAQ, política de privacidad, reembolsos, cancelaciones y términos de uso de Bear Beat.",
   },
   "/descargas": {
     title: `Mis descargas | ${BASE_TITLE}`,
@@ -75,6 +75,25 @@ export function applyRouteSeo(pathname: string): void {
   const url = path === "" ? BASE_URL : `${BASE_URL}${path}`;
 
   document.title = seo.title;
+
+  // Robots: keep auth routes out of search results (login, signup, password reset).
+  const shouldNoIndex = path.startsWith("/auth");
+  const robotsContent = shouldNoIndex ? "noindex, nofollow" : "index, follow";
+  let robots = document.querySelector('meta[name="robots"]');
+  if (!robots) {
+    robots = document.createElement("meta");
+    robots.setAttribute("name", "robots");
+    document.head.appendChild(robots);
+  }
+  robots.setAttribute("content", robotsContent);
+
+  let googlebot = document.querySelector('meta[name="googlebot"]');
+  if (!googlebot) {
+    googlebot = document.createElement("meta");
+    googlebot.setAttribute("name", "googlebot");
+    document.head.appendChild(googlebot);
+  }
+  googlebot.setAttribute("content", robotsContent);
 
   const metaDesc = document.querySelector('meta[name="description"]');
   if (metaDesc) metaDesc.setAttribute("content", seo.description);

@@ -21,6 +21,7 @@ export function PasswordInput({ inputClassName, wrapperClassName, ...props }: Pa
         type="button"
         onClick={() => setShow((s) => !s)}
         className="password-input-toggle"
+        aria-pressed={show}
         aria-label={show ? "Ocultar contraseña" : "Mostrar contraseña"}
       >
         {show ? <EyeOff size={20} aria-hidden /> : <Eye size={20} aria-hidden />}

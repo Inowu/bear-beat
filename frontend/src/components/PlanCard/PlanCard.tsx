@@ -341,7 +341,9 @@ function PlanCard(props: PlanCardPropsI) {
 	      ? "Tarjeta o PayPal"
 	      : "Tarjeta internacional";
 	  const primaryCtaLabel = !userEmail
-	    ? "Crear cuenta y activar"
+	    ? (trialConfig?.enabled && trialConfig.eligible !== false && Number.isFinite(trialConfig.days) && (trialConfig.days ?? 0) > 0
+        ? "Crear cuenta y empezar prueba"
+        : "Crear cuenta y activar")
 	    : isMarketing
 	      ? "Activar ahora"
 	      : (isMxn ? "Activar plan MXN" : "Activar plan USD");
@@ -365,13 +367,13 @@ function PlanCard(props: PlanCardPropsI) {
   const trialNearCtaCopy = (() => {
     if (!showTrialMessaging) return null;
     if (trialConfig?.eligible === false) {
-      return "La prueba solo aplica la primera vez con tarjeta. En esta cuenta se activa al pagar.";
+      return "Prueba solo 1ª vez con tarjeta. En esta cuenta se activa al pagar.";
     }
     if (!formattedTrial) return null;
     if (isMxn) {
-      return `La prueba (${formattedTrial}) aplica solo con tarjeta (Stripe). PayPal/SPEI/Efectivo activan sin prueba.`;
+      return `Prueba (${formattedTrial}) solo con tarjeta (Stripe). PayPal/SPEI/Efectivo activan sin prueba.`;
     }
-    return `La prueba (${formattedTrial}) aplica solo con tarjeta (Stripe). PayPal activa sin prueba.`;
+    return `Prueba (${formattedTrial}) solo con tarjeta (Stripe). PayPal activa sin prueba.`;
   })();
 
   return (
@@ -461,9 +463,9 @@ function PlanCard(props: PlanCardPropsI) {
                           aria-expanded={showAltPayments}
                           aria-controls={`plan-alt-payments-${plan.id}`}
                           onClick={() => setShowAltPayments((prev) => !prev)}
-                        >
-                          {showAltPayments ? "Ocultar opciones de pago" : "Otras formas de pago"}
-                        </button>
+	                        >
+	                          {showAltPayments ? "Cerrar opciones" : "Otras formas de pago"}
+	                        </button>
                         {showAltPayments && (
                           <div
                             id={`plan-alt-payments-${plan.id}`}
@@ -482,7 +484,6 @@ function PlanCard(props: PlanCardPropsI) {
                                 onClick={() => handleCheckoutWithMethod(plan.id, "spei")}
                               >
                                 <span className="plan-card-btn-label">SPEI (recurrente)</span>
-                                {showTrialMessaging && <span className="plan-card-btn-pill">Sin prueba</span>}
                               </button>
                               {conektaAvailability?.payByBankEnabled && (
                                 <button
@@ -491,7 +492,6 @@ function PlanCard(props: PlanCardPropsI) {
                                   onClick={() => handleCheckoutWithMethod(plan.id, "bbva")}
                                 >
                                   <span className="plan-card-btn-label">BBVA (Pago directo)</span>
-                                  {showTrialMessaging && <span className="plan-card-btn-pill">Sin prueba</span>}
                                 </button>
                               )}
                               {conektaAvailability?.oxxoEnabled && (
@@ -501,7 +501,6 @@ function PlanCard(props: PlanCardPropsI) {
                                   onClick={() => handleCheckoutWithMethod(plan.id, "oxxo")}
                                 >
                                   <span className="plan-card-btn-label">Efectivo</span>
-                                  {showTrialMessaging && <span className="plan-card-btn-pill">Sin prueba</span>}
                                 </button>
                               )}
                               {showPaypalOption &&
@@ -537,7 +536,6 @@ function PlanCard(props: PlanCardPropsI) {
                                     }}
                                   >
                                     <span className="plan-card-btn-label">PayPal</span>
-                                    {showTrialMessaging && <span className="plan-card-btn-pill">Sin prueba</span>}
                                   </button>
                                 ))}
                             </div>

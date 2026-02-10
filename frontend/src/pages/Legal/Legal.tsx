@@ -1,7 +1,11 @@
 import { Link } from "react-router-dom";
-import { MessageCircle, ShieldCheck, WalletCards, FileText, CircleHelp } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { MessageCircle, ShieldCheck, WalletCards, FileText, CircleHelp, ChevronDown, ArrowUp } from "lucide-react";
 import { SUPPORT_CHAT_URL } from "../../utils/supportChat";
 import "./Legal.scss";
+
+const LEGAL_LAST_UPDATED_LABEL = "6 de febrero de 2026";
+const LEGAL_LAST_UPDATED_ISO = "2026-02-06";
 
 const FAQ_ITEMS = [
   {
@@ -42,16 +46,131 @@ const FAQ_ITEMS = [
 ];
 
 function Legal() {
+  const sections = useMemo(
+    () => [
+      { id: "faq", label: "FAQ", Icon: CircleHelp },
+      { id: "privacidad", label: "Privacidad", Icon: ShieldCheck },
+      { id: "reembolsos", label: "Reembolsos", Icon: WalletCards },
+      { id: "terminos", label: "Términos", Icon: FileText },
+    ],
+    [],
+  );
+
+  const [activeSection, setActiveSection] = useState(() => {
+    if (typeof window === "undefined") return "faq";
+    return window.location.hash?.replace("#", "") || "faq";
+  });
+
+  const focusSection = useCallback((id: string) => {
+    if (!id) return;
+    const el = document.getElementById(id) as HTMLElement | null;
+    if (!el) return;
+    // Programmatic focus helps screen readers announce the section after following deep links.
+    try {
+      el.focus({ preventScroll: true });
+    } catch {
+      // noop
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const hash = window.location.hash?.replace("#", "") || "";
+    if (hash) {
+      const el = document.getElementById(hash);
+      el?.scrollIntoView({ block: "start" });
+      focusSection(hash);
+      setActiveSection(hash);
+    }
+
+    const onHashChange = () => {
+      const next = window.location.hash?.replace("#", "") || "faq";
+      setActiveSection(next);
+      focusSection(next);
+    };
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, [focusSection]);
+
+  const [faqOpen, setFaqOpen] = useState<boolean[]>(() => FAQ_ITEMS.map(() => false));
+
+  const toggleFaq = useCallback((idx: number) => {
+    setFaqOpen((prev) => prev.map((open, i) => (i === idx ? !open : open)));
+  }, []);
+
+  const expandAllFaq = useCallback(() => setFaqOpen(FAQ_ITEMS.map(() => true)), []);
+  const collapseAllFaq = useCallback(() => setFaqOpen(FAQ_ITEMS.map(() => false)), []);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+
+    const schema = {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: "Preguntas frecuentes, privacidad y reembolsos | Bear Beat",
+      url: "https://thebearbeat.com/legal",
+      inLanguage: "es-MX",
+      dateModified: LEGAL_LAST_UPDATED_ISO,
+      isPartOf: {
+        "@type": "WebSite",
+        name: "Bear Beat",
+        url: "https://thebearbeat.com",
+      },
+    } as const;
+
+    const existing = document.querySelector("script[data-schema='bb-legal-webpage']") as HTMLScriptElement | null;
+    const script = existing ?? document.createElement("script");
+    script.type = "application/ld+json";
+    script.setAttribute("data-schema", "bb-legal-webpage");
+    script.text = JSON.stringify(schema);
+    if (!existing) document.head.appendChild(script);
+
+    return () => {
+      script.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (FAQ_ITEMS.length === 0) return;
+
+    const schema = {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: FAQ_ITEMS.map((item) => ({
+        "@type": "Question",
+        name: item.question,
+        acceptedAnswer: { "@type": "Answer", text: item.answer },
+      })),
+    } as const;
+
+    const existing = document.querySelector("script[data-schema='bb-legal-faq']") as HTMLScriptElement | null;
+    const script = existing ?? document.createElement("script");
+    script.type = "application/ld+json";
+    script.setAttribute("data-schema", "bb-legal-faq");
+    script.text = JSON.stringify(schema);
+    if (!existing) document.head.appendChild(script);
+
+    return () => {
+      script.remove();
+    };
+  }, []);
+
   return (
     <div className="legal2026" role="region" aria-label="Centro legal y ayuda">
       <div className="legal2026__container">
-        <header className="legal2026__hero">
+        <a className="legal2026__skip" href="#faq">
+          Saltar al FAQ
+        </a>
+
+        <header id="legal-top" className="legal2026__hero">
           <p className="legal2026__eyebrow">Centro legal y ayuda</p>
           <h1>Preguntas frecuentes, privacidad y reembolsos</h1>
           <p className="legal2026__lead">
             Información basada en el funcionamiento actual del sitio y el flujo real de cuenta, pagos y soporte.
           </p>
-          <p className="legal2026__updated">Última actualización: 6 de febrero de 2026</p>
+          <p className="legal2026__updated">Última actualización: {LEGAL_LAST_UPDATED_LABEL}</p>
           <div className="legal2026__hero-actions">
             <Link to="/instrucciones" className="legal2026__btn legal2026__btn--ghost">
               Ver instrucciones de descarga
@@ -66,58 +185,93 @@ function Legal() {
               Abrir soporte por chat
             </a>
           </div>
+          <p className="legal2026__hero-note">Se abre en una nueva pestaña (Messenger).</p>
         </header>
 
-        <nav className="legal2026__quick-nav" aria-label="Secciones legales">
-          <a href="#faq">
-            <CircleHelp size={16} />
-            FAQ
-          </a>
-          <a href="#privacidad">
-            <ShieldCheck size={16} />
-            Privacidad
-          </a>
-          <a href="#reembolsos">
-            <WalletCards size={16} />
-            Reembolsos
-          </a>
-          <a href="#terminos">
-            <FileText size={16} />
-            Términos
-          </a>
+        <nav className="legal2026__quick-nav" aria-label="Contenido">
+          {sections.map(({ id, label, Icon }) => (
+            <a key={id} href={`#${id}`} aria-current={activeSection === id ? "location" : undefined}>
+              <Icon size={16} aria-hidden />
+              {label}
+            </a>
+          ))}
         </nav>
 
-        <section id="faq" className="legal2026__section">
+        <section id="faq" className="legal2026__section" tabIndex={-1}>
           <div className="legal2026__section-head">
             <CircleHelp size={18} />
             <h2>Preguntas frecuentes (FAQ)</h2>
           </div>
-          <div className="legal2026__faq-list">
-            {FAQ_ITEMS.map((item) => (
-              <details key={item.question} className="legal2026__faq-item">
-                <summary>{item.question}</summary>
-                <p>{item.answer}</p>
-              </details>
-            ))}
+          <div className="legal2026__faq-actions" aria-label="Acciones de FAQ">
+            <button type="button" onClick={expandAllFaq}>
+              Expandir todo
+            </button>
+            <button type="button" onClick={collapseAllFaq}>
+              Contraer todo
+            </button>
           </div>
+          <div className="legal2026__faq-list">
+            {FAQ_ITEMS.map((item, idx) => {
+              const isOpen = Boolean(faqOpen[idx]);
+              const buttonId = `legal-faq-button-${idx}`;
+              const panelId = `legal-faq-panel-${idx}`;
+              return (
+                <div key={item.question} className="legal2026__faq-item">
+                  <h3 className="legal2026__faq-question">
+                    <button
+                      type="button"
+                      className="legal2026__faq-trigger"
+                      id={buttonId}
+                      aria-expanded={isOpen}
+                      aria-controls={panelId}
+                      onClick={() => toggleFaq(idx)}
+                    >
+                      <span>{item.question}</span>
+                      <ChevronDown className="legal2026__faq-icon" size={18} aria-hidden />
+                    </button>
+                  </h3>
+                  <div
+                    id={panelId}
+                    className="legal2026__faq-panel"
+                    role="region"
+                    aria-labelledby={buttonId}
+                    hidden={!isOpen}
+                  >
+                    <p>{item.answer}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <a className="legal2026__backtop" href="#legal-top">
+            <ArrowUp size={16} aria-hidden />
+            Volver arriba
+          </a>
         </section>
 
-        <section id="privacidad" className="legal2026__section">
+        <section id="privacidad" className="legal2026__section" tabIndex={-1}>
           <div className="legal2026__section-head">
             <ShieldCheck size={18} />
             <h2>Política de privacidad</h2>
           </div>
           <div className="legal2026__content">
             <h3>1. Datos que se recaban</h3>
-            <p>
-              Para operar tu cuenta se recaban datos como nombre de usuario, correo electrónico, teléfono y datos
-              técnicos de sesión. También se registran eventos de uso para seguridad y mejora del servicio.
-            </p>
+            <ul>
+              <li>Nombre de usuario</li>
+              <li>Correo electrónico</li>
+              <li>Teléfono</li>
+              <li>Datos técnicos de sesión</li>
+              <li>Eventos de uso para seguridad y mejora del servicio</li>
+            </ul>
             <h3>2. Uso de los datos</h3>
-            <p>
-              Se usan para crear y administrar la cuenta, autenticar accesos, procesar suscripciones, brindar soporte,
-              prevenir fraude y mejorar experiencia de navegación y checkout.
-            </p>
+            <ul>
+              <li>Crear y administrar la cuenta</li>
+              <li>Autenticar accesos</li>
+              <li>Procesar suscripciones</li>
+              <li>Brindar soporte</li>
+              <li>Prevenir fraude</li>
+              <li>Mejorar experiencia de navegación y checkout</li>
+            </ul>
             <h3>3. Proveedores externos</h3>
             <p>
               El sitio integra servicios de terceros para cobro y operación (por ejemplo pasarelas de pago y
@@ -133,9 +287,13 @@ function Legal() {
               Puedes solicitar corrección o actualización de tu información desde tu cuenta y por soporte en chat.
             </p>
           </div>
+          <a className="legal2026__backtop" href="#legal-top">
+            <ArrowUp size={16} aria-hidden />
+            Volver arriba
+          </a>
         </section>
 
-        <section id="reembolsos" className="legal2026__section">
+        <section id="reembolsos" className="legal2026__section" tabIndex={-1}>
           <div className="legal2026__section-head">
             <WalletCards size={18} />
             <h2>Política de reembolsos y cancelaciones</h2>
@@ -151,19 +309,25 @@ function Legal() {
               real de activación o acceso. No existe reembolso automático general para pagos ya procesados.
             </p>
             <h3>3. Casos que requieren soporte inmediato</h3>
-            <p>
-              Cobro duplicado, activación incompleta o imposibilidad de acceso deben reportarse por chat para revisión
-              prioritaria.
-            </p>
+            <ul>
+              <li>Cobro duplicado</li>
+              <li>Activación incompleta</li>
+              <li>Imposibilidad de acceso</li>
+            </ul>
+            <p>Estos casos deben reportarse por chat para revisión prioritaria.</p>
             <h3>4. Canales de pago</h3>
             <p>
               El procesamiento de pagos depende del método elegido (Tarjeta/PayPal/SPEI), y tiempos de reflejo o
               validación pueden variar según el proveedor.
             </p>
           </div>
+          <a className="legal2026__backtop" href="#legal-top">
+            <ArrowUp size={16} aria-hidden />
+            Volver arriba
+          </a>
         </section>
 
-        <section id="terminos" className="legal2026__section">
+        <section id="terminos" className="legal2026__section" tabIndex={-1}>
           <div className="legal2026__section-head">
             <FileText size={18} />
             <h2>Términos básicos de uso</h2>
@@ -194,6 +358,10 @@ function Legal() {
               Cada marca es propiedad de su titular y su uso se ajusta a lineamientos de branding del proveedor.
             </p>
           </div>
+          <a className="legal2026__backtop" href="#legal-top">
+            <ArrowUp size={16} aria-hidden />
+            Volver arriba
+          </a>
         </section>
       </div>
     </div>

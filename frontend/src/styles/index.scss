@@ -25,6 +25,10 @@
   /* Ambient accents (for large surfaces; avoid "baby blue" washes) */
   --bb-ambient-cyan: rgba(8, 225, 247, 0.022);
   --bb-ambient-mint: rgba(0, 230, 193, 0.018);
+  /* Landing (public) background spots: tuned per theme to keep LIGHT premium (no wash)
+     while DARK keeps the neon glow. Used by /, /planes, /legal. */
+  --bb-landing-spot-1: rgba(8, 225, 247, 0.06);
+  --bb-landing-spot-2: rgba(8, 225, 247, 0.04);
   --bb-danger: #FF2D2C;
   --bb-success: #39D834;
   --bb-warning: #FEBC2E;
@@ -315,6 +319,8 @@ html.dark,
 .dark {
   --bb-ambient-cyan: rgba(8, 225, 247, 0.16);
   --bb-ambient-mint: rgba(0, 230, 193, 0.12);
+  --bb-landing-spot-1: rgba(8, 225, 247, 0.12);
+  --bb-landing-spot-2: rgba(8, 225, 247, 0.08);
   --bb-bg: #1A1A1A;
   --bb-surface: #2A2A2A;
   --bb-surface-soft: #323232;

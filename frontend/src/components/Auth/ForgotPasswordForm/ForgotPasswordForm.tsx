@@ -4,8 +4,6 @@ import trpc from "../../../api";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ErrorModal } from "../../../components/Modals/ErrorModal/ErrorModal";
-import { SuccessModal } from "../../../components/Modals/SuccessModal/SuccessModal";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import Turnstile, { type TurnstileRef } from "../../../components/Turnstile/Turnstile";
 import Logo from "../../../assets/images/osonuevo.png";
@@ -14,7 +12,6 @@ import {
   TURNSTILE_BYPASS_TOKEN,
 } from "../../../utils/turnstile";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../../utils/growthMetrics";
-import { toErrorMessage } from "../../../utils/errorMessage";
 import "./ForgotPasswordForm.scss";
 
 function inferErrorCode(message: string): string {
@@ -28,18 +25,17 @@ function inferErrorCode(message: string): string {
 
 function ForgotPasswordForm() {
   const [loader, setLoader] = useState<boolean>(false);
-  const [show, setShow] = useState<boolean>(false);
-  const [showSuccess, setShowSuccess] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [requestStatus, setRequestStatus] = useState<"idle" | "sending" | "sent">("idle");
   const [turnstileToken, setTurnstileToken] = useState<string>("");
   const [turnstileError, setTurnstileError] = useState<string>("");
   const [turnstileReset, setTurnstileReset] = useState<number>(0);
   const [turnstilePendingSubmit, setTurnstilePendingSubmit] = useState(false);
   const turnstileRef = useRef<TurnstileRef | null>(null);
   const turnstileBypassed = shouldBypassTurnstile();
+  const statusRef = useRef<HTMLDivElement | null>(null);
 
-  const closeError = () => setShow(false);
-  const closeSuccess = () => setShowSuccess(false);
+  const SAFE_COPY =
+    "Si el correo está registrado, te enviaremos un enlace. Revisa Spam/Promociones.";
 
   const validationSchema = Yup.object().shape({
     email: Yup.string()
@@ -51,6 +47,8 @@ function ForgotPasswordForm() {
     initialValues: { email: "" },
     validationSchema,
     onSubmit: async (values) => {
+      setRequestStatus("sending");
+      setTurnstileError("");
       if (!turnstileToken && !turnstileBypassed) {
         // Invisible Turnstile: execute only on submit to avoid showing the widget by default.
         setTurnstileError("Verificando seguridad...");
@@ -69,7 +67,6 @@ function ForgotPasswordForm() {
         trackGrowthMetric(GROWTH_METRICS.PASSWORD_RECOVERY_REQUESTED, {
           source: "forgot_password_form",
         });
-        setShowSuccess(true);
       } catch (error) {
         trackGrowthMetric(GROWTH_METRICS.FORM_ERROR, {
           formId: "forgot_password",
@@ -79,9 +76,9 @@ function ForgotPasswordForm() {
         trackGrowthMetric(GROWTH_METRICS.PASSWORD_RECOVERY_FAILED, {
           source: "forgot_password_form",
         });
-        setShow(true);
-        setErrorMessage(toErrorMessage(error));
+        // Security UX: don't reveal whether the email exists. Show the same neutral message.
       } finally {
+        setRequestStatus("sent");
         setLoader(false);
         setTurnstileToken("");
         setTurnstileReset((prev) => prev + 1);
@@ -128,6 +125,7 @@ function ForgotPasswordForm() {
   const handleTurnstileExpire = useCallback(() => {
     setTurnstileToken("");
     setTurnstileError("La verificación expiró, intenta de nuevo.");
+    setRequestStatus("idle");
     setTurnstilePendingSubmit(false);
     setLoader(false);
   }, []);
@@ -135,12 +133,29 @@ function ForgotPasswordForm() {
   const handleTurnstileError = useCallback(() => {
     setTurnstileToken("");
     setTurnstileError("No se pudo verificar la seguridad.");
+    setRequestStatus("idle");
     setTurnstilePendingSubmit(false);
     setLoader(false);
   }, []);
 
+  useEffect(() => {
+    if (requestStatus !== "sent") return;
+    statusRef.current?.focus();
+  }, [requestStatus]);
+
+  useEffect(() => {
+    if (requestStatus !== "sent") return;
+    // If the user edits the email, clear the status message to avoid confusion.
+    setRequestStatus("idle");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formik.values.email]);
+
   const showEmailError = Boolean((formik.touched.email || formik.submitCount > 0) && formik.errors.email);
   const emailErrorId = showEmailError ? "forgot-email-error" : undefined;
+  const emailHelpId = "forgot-email-help";
+  const emailDescribedBy = [emailHelpId, emailErrorId].filter(Boolean).join(" ") || undefined;
+  const statusMessage =
+    requestStatus === "sending" ? "Enviando enlace..." : requestStatus === "sent" ? SAFE_COPY : "";
 
   return (
     <div className="auth-login-atmosphere">
@@ -158,16 +173,21 @@ function ForgotPasswordForm() {
             <div className="auth-recover-email-wrap">
               <Mail className="auth-recover-email-icon" aria-hidden />
               <input
-                placeholder="Correo electrónico"
+                placeholder="correo@ejemplo.com"
                 id="email"
                 name="email"
                 type="email"
+                inputMode="email"
                 autoComplete="email"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                disabled={loader}
                 value={formik.values.email}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 aria-invalid={showEmailError}
-                aria-describedby={emailErrorId}
+                aria-describedby={emailDescribedBy}
                 className="auth-login-input auth-recover-email-input"
               />
               {showEmailError && (
@@ -176,6 +196,9 @@ function ForgotPasswordForm() {
                 </div>
               )}
             </div>
+            <p className="auth-recover-helper" id={emailHelpId}>
+              {SAFE_COPY}
+            </p>
           </div>
           <Turnstile
             ref={turnstileRef}
@@ -190,13 +213,37 @@ function ForgotPasswordForm() {
               {turnstileError}
             </div>
           )}
-          {!loader ? (
-            <button className="auth-login-submit-btn" type="submit" data-testid="forgot-submit">
-              ENVIAR ENLACE DE RECUPERACIÓN
-            </button>
-          ) : (
-            <Spinner size={3} width={0.3} color="var(--app-accent)" />
-          )}
+          <div
+            className={[
+              "auth-recover-status",
+              requestStatus === "sent" ? "is-sent" : "",
+              requestStatus === "sending" ? "is-sending" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            ref={statusRef}
+            tabIndex={-1}
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {statusMessage}
+          </div>
+          <button
+            className="auth-login-submit-btn"
+            type="submit"
+            data-testid="forgot-submit"
+            disabled={loader || Boolean(turnstilePendingSubmit)}
+          >
+            {loader ? (
+              <span className="auth-recover-submit-loading">
+                <Spinner size={1.5} width={0.22} color="var(--app-btn-text)" />
+                ENVIANDO...
+              </span>
+            ) : (
+              "ENVIAR ENLACE"
+            )}
+          </button>
           <div className="c-row auth-login-register-wrap auth-recover-back-wrap">
             <Link to="/auth" className="auth-recover-back">
               ← Regresar a Iniciar Sesión
@@ -204,13 +251,6 @@ function ForgotPasswordForm() {
           </div>
         </form>
       </div>
-      <ErrorModal show={show} onHide={closeError} message={errorMessage} />
-      <SuccessModal
-        show={showSuccess}
-        onHide={closeSuccess}
-        message="Revisa las instrucciones en tu correo para restablecer la contraseña."
-        title="Correo enviado"
-      />
     </div>
   );
 }

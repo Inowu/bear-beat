@@ -1,10 +1,40 @@
 {
-  "generatedAt": "2026-02-10T13:54:34.664Z",
+  "generatedAt": "2026-02-10T18:29:00.056Z",
   "static": [
     {
-      "file": "frontend/src/components/Modals/index.ts",
-      "line": 13,
-      "message": "export * from './ErrorModal/ErrorModal'",
+      "file": "frontend/src/components/Modals/EditUserModal/EditUserModal.tsx",
+      "line": 5,
+      "message": "../ErrorModal/ErrorModal",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/components/Modals/EditUserModal/EditUserModal.tsx",
+      "line": 56,
+      "message": "El correo es requerido",
+      "kind": "validation"
+    },
+    {
+      "file": "frontend/src/components/Modals/EditUserModal/EditUserModal.tsx",
+      "line": 58,
+      "message": "El nombre es requerido",
+      "kind": "validation"
+    },
+    {
+      "file": "frontend/src/components/Modals/EditUserModal/EditUserModal.tsx",
+      "line": 60,
+      "message": "El teléfono es requerido",
+      "kind": "validation"
+    },
+    {
+      "file": "frontend/src/components/Modals/EditUserModal/EditUserModal.tsx",
+      "line": 113,
+      "message": "setErrorMessage(errorUpdate.message);",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/components/Modals/EditUserModal/EditUserModal.tsx",
+      "line": 247,
+      "message": "<ErrorModal show={show} onHide={closeModal} message={errorMessage} />",
       "kind": "runtime"
     },
     {
@@ -46,162 +76,6 @@
     {
       "file": "frontend/src/components/Modals/AddUsersModal/AddUsersModal.tsx",
       "line": 184,
-      "message": "<ErrorModal show={show} onHide={closeModal} message={errorMessage} />",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Modals/VerifyPhoneModal/VerifyPhoneModal.tsx",
-      "line": 3,
-      "message": "../ErrorModal/ErrorModal",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Modals/VerifyPhoneModal/VerifyPhoneModal.tsx",
-      "line": 40,
-      "message": "El código es requerido",
-      "kind": "validation"
-    },
-    {
-      "file": "frontend/src/components/Modals/VerifyPhoneModal/VerifyPhoneModal.tsx",
-      "line": 61,
-      "message": "setErrorMessage(errorUpdate?.message);",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Modals/VerifyPhoneModal/VerifyPhoneModal.tsx",
-      "line": 66,
-      "message": "setErrorMessage(verifyingPhone.message);",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Modals/VerifyPhoneModal/VerifyPhoneModal.tsx",
-      "line": 104,
-      "message": "<ErrorModal show={show} onHide={closeModal} message={errorMessage} />",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Modals/EditUserModal/EditUserModal.tsx",
-      "line": 5,
-      "message": "../ErrorModal/ErrorModal",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Modals/EditUserModal/EditUserModal.tsx",
-      "line": 56,
-      "message": "El correo es requerido",
-      "kind": "validation"
-    },
-    {
-      "file": "frontend/src/components/Modals/EditUserModal/EditUserModal.tsx",
-      "line": 58,
-      "message": "El nombre es requerido",
-      "kind": "validation"
-    },
-    {
-      "file": "frontend/src/components/Modals/EditUserModal/EditUserModal.tsx",
-      "line": 60,
-      "message": "El teléfono es requerido",
-      "kind": "validation"
-    },
-    {
-      "file": "frontend/src/components/Modals/EditUserModal/EditUserModal.tsx",
-      "line": 113,
-      "message": "setErrorMessage(errorUpdate.message);",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Modals/EditUserModal/EditUserModal.tsx",
-      "line": 247,
-      "message": "<ErrorModal show={show} onHide={closeModal} message={errorMessage} />",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Modals/VerifyUpdatePhoneModal/VerifyUpdatePhoneModal.tsx",
-      "line": 3,
-      "message": "../ErrorModal/ErrorModal",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Modals/VerifyUpdatePhoneModal/VerifyUpdatePhoneModal.tsx",
-      "line": 49,
-      "message": "El código es requerido",
-      "kind": "validation"
-    },
-    {
-      "file": "frontend/src/components/Modals/VerifyUpdatePhoneModal/VerifyUpdatePhoneModal.tsx",
-      "line": 51,
-      "message": "El teléfono es requerido",
-      "kind": "validation"
-    },
-    {
-      "file": "frontend/src/components/Modals/VerifyUpdatePhoneModal/VerifyUpdatePhoneModal.tsx",
-      "line": 78,
-      "message": "setErrorMessage(errorUpdate?.message);",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Modals/VerifyUpdatePhoneModal/VerifyUpdatePhoneModal.tsx",
-      "line": 83,
-      "message": "setErrorMessage(verifyingPhone.message);",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Modals/VerifyUpdatePhoneModal/VerifyUpdatePhoneModal.tsx",
-      "line": 105,
-      "message": "setErrorMessage(errorVerification?.message);",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Modals/VerifyUpdatePhoneModal/VerifyUpdatePhoneModal.tsx",
-      "line": 212,
-      "message": "<ErrorModal show={show} onHide={closeModal} message={errorMessage} />",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Auth/SignUpForm/SignUpForm.tsx",
-      "line": 12,
-      "message": "../../../components/Modals",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Auth/SignUpForm/SignUpForm.tsx",
-      "line": 68,
-      "message": "El correo es requerido",
-      "kind": "validation"
-    },
-    {
-      "file": "frontend/src/components/Auth/SignUpForm/SignUpForm.tsx",
-      "line": 80,
-      "message": "La contraseña es requerida",
-      "kind": "validation"
-    },
-    {
-      "file": "frontend/src/components/Auth/SignUpForm/SignUpForm.tsx",
-      "line": 87,
-      "message": "Debe confirmar la contraseña",
-      "kind": "validation"
-    },
-    {
-      "file": "frontend/src/components/Auth/SignUpForm/SignUpForm.tsx",
-      "line": 130,
-      "message": "email",
-      "kind": "validation"
-    },
-    {
-      "file": "frontend/src/components/Auth/SignUpForm/SignUpForm.tsx",
-      "line": 143,
-      "message": "phone",
-      "kind": "validation"
-    },
-    {
-      "file": "frontend/src/components/Auth/SignUpForm/SignUpForm.tsx",
-      "line": 199,
-      "message": "setErrorMessage(errorMessage);",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Auth/SignUpForm/SignUpForm.tsx",
-      "line": 561,
       "message": "<ErrorModal show={show} onHide={closeModal} message={errorMessage} />",
       "kind": "runtime"
     },
@@ -248,24 +122,6 @@
       "kind": "runtime"
     },
     {
-      "file": "frontend/src/components/Modals/DeleteOneUserModal/DeleteOneUserModal.tsx",
-      "line": 8,
-      "message": "import { ErrorModal } from '../ErrorModal/ErrorModal';",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Modals/DeleteOneUserModal/DeleteOneUserModal.tsx",
-      "line": 33,
-      "message": "No se pudo eliminar el usuario.",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Modals/DeleteOneUserModal/DeleteOneUserModal.tsx",
-      "line": 65,
-      "message": "<ErrorModal show={showError} onHide={() => setShowError(false)} message={errorMessage} />",
-      "kind": "runtime"
-    },
-    {
       "file": "frontend/src/components/Modals/OptionModal/OptionModal.tsx",
       "line": 3,
       "message": "import { ErrorModal } from '../ErrorModal/ErrorModal'",
@@ -287,6 +143,150 @@
       "file": "frontend/src/components/Modals/OptionModal/OptionModal.tsx",
       "line": 67,
       "message": "<ErrorModal show={showError} onHide={closeErrorModal} message={errorMessage} />",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/pages/Admin/Crm/CrmDashboard.tsx",
+      "line": 188,
+      "message": "setError(\"\");",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/pages/Admin/Crm/CrmDashboard.tsx",
+      "line": 203,
+      "message": "No se pudo cargar el CRM. Intenta de nuevo.",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/components/Auth/SignUpForm/SignUpForm.tsx",
+      "line": 81,
+      "message": "El correo es requerido",
+      "kind": "validation"
+    },
+    {
+      "file": "frontend/src/components/Auth/SignUpForm/SignUpForm.tsx",
+      "line": 93,
+      "message": "La contraseña es requerida",
+      "kind": "validation"
+    },
+    {
+      "file": "frontend/src/components/Auth/SignUpForm/SignUpForm.tsx",
+      "line": 100,
+      "message": "Debe confirmar la contraseña",
+      "kind": "validation"
+    },
+    {
+      "file": "frontend/src/components/Auth/SignUpForm/SignUpForm.tsx",
+      "line": 144,
+      "message": "email",
+      "kind": "validation"
+    },
+    {
+      "file": "frontend/src/components/Auth/SignUpForm/SignUpForm.tsx",
+      "line": 157,
+      "message": "phone",
+      "kind": "validation"
+    },
+    {
+      "file": "frontend/src/components/Modals/DeleteOneUserModal/DeleteOneUserModal.tsx",
+      "line": 8,
+      "message": "import { ErrorModal } from '../ErrorModal/ErrorModal';",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/components/Modals/DeleteOneUserModal/DeleteOneUserModal.tsx",
+      "line": 33,
+      "message": "No se pudo eliminar el usuario.",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/components/Modals/DeleteOneUserModal/DeleteOneUserModal.tsx",
+      "line": 65,
+      "message": "<ErrorModal show={showError} onHide={() => setShowError(false)} message={errorMessage} />",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/components/Modals/VerifyUpdatePhoneModal/VerifyUpdatePhoneModal.tsx",
+      "line": 3,
+      "message": "../ErrorModal/ErrorModal",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/components/Modals/VerifyUpdatePhoneModal/VerifyUpdatePhoneModal.tsx",
+      "line": 49,
+      "message": "El código es requerido",
+      "kind": "validation"
+    },
+    {
+      "file": "frontend/src/components/Modals/VerifyUpdatePhoneModal/VerifyUpdatePhoneModal.tsx",
+      "line": 51,
+      "message": "El teléfono es requerido",
+      "kind": "validation"
+    },
+    {
+      "file": "frontend/src/components/Modals/VerifyUpdatePhoneModal/VerifyUpdatePhoneModal.tsx",
+      "line": 78,
+      "message": "setErrorMessage(errorUpdate?.message);",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/components/Modals/VerifyUpdatePhoneModal/VerifyUpdatePhoneModal.tsx",
+      "line": 83,
+      "message": "setErrorMessage(verifyingPhone.message);",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/components/Modals/VerifyUpdatePhoneModal/VerifyUpdatePhoneModal.tsx",
+      "line": 105,
+      "message": "setErrorMessage(errorVerification?.message);",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/components/Modals/VerifyUpdatePhoneModal/VerifyUpdatePhoneModal.tsx",
+      "line": 212,
+      "message": "<ErrorModal show={show} onHide={closeModal} message={errorMessage} />",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/components/Modals/EditPlanModal/EditPlanModal.tsx",
+      "line": 4,
+      "message": "../ErrorModal/ErrorModal",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/components/Modals/EditPlanModal/EditPlanModal.tsx",
+      "line": 42,
+      "message": "La descripción es requerida",
+      "kind": "validation"
+    },
+    {
+      "file": "frontend/src/components/Modals/EditPlanModal/EditPlanModal.tsx",
+      "line": 43,
+      "message": "Este campo es obligatorio",
+      "kind": "validation"
+    },
+    {
+      "file": "frontend/src/components/Modals/EditPlanModal/EditPlanModal.tsx",
+      "line": 44,
+      "message": "El nombre es requerido",
+      "kind": "validation"
+    },
+    {
+      "file": "frontend/src/components/Modals/EditPlanModal/EditPlanModal.tsx",
+      "line": 47,
+      "message": "El precio es requerido",
+      "kind": "validation"
+    },
+    {
+      "file": "frontend/src/components/Modals/EditPlanModal/EditPlanModal.tsx",
+      "line": 82,
+      "message": "setErrorMessage(error);",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/components/Modals/EditPlanModal/EditPlanModal.tsx",
+      "line": 199,
+      "message": "<ErrorModal show={show} onHide={closeModal} message={errorMessage} />",
       "kind": "runtime"
     },
     {
@@ -338,114 +338,6 @@
       "kind": "runtime"
     },
     {
-      "file": "frontend/src/components/Modals/EditPlanModal/EditPlanModal.tsx",
-      "line": 4,
-      "message": "../ErrorModal/ErrorModal",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Modals/EditPlanModal/EditPlanModal.tsx",
-      "line": 42,
-      "message": "La descripción es requerida",
-      "kind": "validation"
-    },
-    {
-      "file": "frontend/src/components/Modals/EditPlanModal/EditPlanModal.tsx",
-      "line": 43,
-      "message": "Este campo es obligatorio",
-      "kind": "validation"
-    },
-    {
-      "file": "frontend/src/components/Modals/EditPlanModal/EditPlanModal.tsx",
-      "line": 44,
-      "message": "El nombre es requerido",
-      "kind": "validation"
-    },
-    {
-      "file": "frontend/src/components/Modals/EditPlanModal/EditPlanModal.tsx",
-      "line": 47,
-      "message": "El precio es requerido",
-      "kind": "validation"
-    },
-    {
-      "file": "frontend/src/components/Modals/EditPlanModal/EditPlanModal.tsx",
-      "line": 82,
-      "message": "setErrorMessage(error);",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Modals/EditPlanModal/EditPlanModal.tsx",
-      "line": 199,
-      "message": "<ErrorModal show={show} onHide={closeModal} message={errorMessage} />",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Modals/PlansModal/Plans.tsx",
-      "line": 84,
-      "message": "setErrorMessage(result.error.message);",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Modals/PlansModal/Plans.tsx",
-      "line": 98,
-      "message": "setErrorMessage(error);",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Auth/ForgotPasswordForm/ForgotPasswordForm.tsx",
-      "line": 7,
-      "message": "../../../components/Modals/ErrorModal/ErrorModal",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Auth/ForgotPasswordForm/ForgotPasswordForm.tsx",
-      "line": 46,
-      "message": "El correo es requerido",
-      "kind": "validation"
-    },
-    {
-      "file": "frontend/src/components/Auth/ForgotPasswordForm/ForgotPasswordForm.tsx",
-      "line": 83,
-      "message": "setErrorMessage(toErrorMessage(error));",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Auth/ForgotPasswordForm/ForgotPasswordForm.tsx",
-      "line": 207,
-      "message": "<ErrorModal show={show} onHide={closeError} message={errorMessage} />",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/pages/Admin/Admin.tsx",
-      "line": 11,
-      "message": "ErrorModal,",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/pages/Admin/Admin.tsx",
-      "line": 157,
-      "message": "if (!fetchUsers || fetchUsers.length < 0) throw new Error('Error loading tempUsers');",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/pages/Admin/Admin.tsx",
-      "line": 283,
-      "message": "setErrorMessage(errorLogin.message);",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/pages/Admin/Admin.tsx",
-      "line": 298,
-      "message": "const closeErrorModal = () => setShowError(false);",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/pages/Admin/Admin.tsx",
-      "line": 708,
-      "message": "<ErrorModal show={showError} onHide={closeErrorModal} message={errorMessage} />",
-      "kind": "runtime"
-    },
-    {
       "file": "frontend/src/components/Modals/DeleteUserModal/DeleteUserModal.tsx",
       "line": 7,
       "message": "import { ErrorModal } from '../ErrorModal/ErrorModal';",
@@ -461,48 +353,6 @@
       "file": "frontend/src/components/Modals/DeleteUserModal/DeleteUserModal.tsx",
       "line": 67,
       "message": "<ErrorModal show={showError} onHide={() => setShowError(false)} message={errorMessage} />",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Modals/AddCouponModal/AddCouponModal.tsx",
-      "line": 2,
-      "message": "../ErrorModal/ErrorModal",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Modals/AddCouponModal/AddCouponModal.tsx",
-      "line": 35,
-      "message": "El código es requerido",
-      "kind": "validation"
-    },
-    {
-      "file": "frontend/src/components/Modals/AddCouponModal/AddCouponModal.tsx",
-      "line": 36,
-      "message": "La descripción es requerido",
-      "kind": "validation"
-    },
-    {
-      "file": "frontend/src/components/Modals/AddCouponModal/AddCouponModal.tsx",
-      "line": 38,
-      "message": "El descuento es requerido",
-      "kind": "validation"
-    },
-    {
-      "file": "frontend/src/components/Modals/AddCouponModal/AddCouponModal.tsx",
-      "line": 40,
-      "message": "Este campo es obligatorio",
-      "kind": "validation"
-    },
-    {
-      "file": "frontend/src/components/Modals/AddCouponModal/AddCouponModal.tsx",
-      "line": 69,
-      "message": "setErrorMessage(error);",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Modals/AddCouponModal/AddCouponModal.tsx",
-      "line": 146,
-      "message": "<ErrorModal show={show} onHide={closeModal} message={errorMessage} />",
       "kind": "runtime"
     },
     {
@@ -536,33 +386,39 @@
       "kind": "runtime"
     },
     {
-      "file": "frontend/src/components/Modals/CancellationReasonModal/CancellationReasonModal.tsx",
-      "line": 64,
-      "message": "setErrorMessage(\"\");",
+      "file": "frontend/src/components/Modals/index.ts",
+      "line": 13,
+      "message": "export * from './ErrorModal/ErrorModal'",
       "kind": "runtime"
     },
     {
-      "file": "frontend/src/components/Modals/CancellationReasonModal/CancellationReasonModal.tsx",
-      "line": 70,
-      "message": "setErrorMessage(\"\");",
+      "file": "frontend/src/components/Modals/VerifyPhoneModal/VerifyPhoneModal.tsx",
+      "line": 3,
+      "message": "../ErrorModal/ErrorModal",
       "kind": "runtime"
     },
     {
-      "file": "frontend/src/components/Modals/CancellationReasonModal/CancellationReasonModal.tsx",
-      "line": 84,
-      "message": "setErrorMessage(msg);",
+      "file": "frontend/src/components/Modals/VerifyPhoneModal/VerifyPhoneModal.tsx",
+      "line": 40,
+      "message": "El código es requerido",
+      "kind": "validation"
+    },
+    {
+      "file": "frontend/src/components/Modals/VerifyPhoneModal/VerifyPhoneModal.tsx",
+      "line": 61,
+      "message": "setErrorMessage(errorUpdate?.message);",
       "kind": "runtime"
     },
     {
-      "file": "frontend/src/components/Modals/CancellationReasonModal/CancellationReasonModal.tsx",
-      "line": 107,
-      "message": "setErrorMessage(\"\");",
+      "file": "frontend/src/components/Modals/VerifyPhoneModal/VerifyPhoneModal.tsx",
+      "line": 66,
+      "message": "setErrorMessage(verifyingPhone.message);",
       "kind": "runtime"
     },
     {
-      "file": "frontend/src/components/Modals/CancellationReasonModal/CancellationReasonModal.tsx",
-      "line": 135,
-      "message": "setErrorMessage(\"\");",
+      "file": "frontend/src/components/Modals/VerifyPhoneModal/VerifyPhoneModal.tsx",
+      "line": 104,
+      "message": "<ErrorModal show={show} onHide={closeModal} message={errorMessage} />",
       "kind": "runtime"
     },
     {
@@ -614,30 +470,6 @@
       "kind": "runtime"
     },
     {
-      "file": "frontend/src/components/Modals/ErrorModal/ErrorModal.tsx",
-      "line": 3,
-      "message": "./ErrorModal.scss",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Modals/ErrorModal/ErrorModal.tsx",
-      "line": 14,
-      "message": "export function ErrorModal(props: IError) {",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/pages/Admin/Crm/CrmDashboard.tsx",
-      "line": 188,
-      "message": "setError(\"\");",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/pages/Admin/Crm/CrmDashboard.tsx",
-      "line": 203,
-      "message": "No se pudo cargar el CRM. Intenta de nuevo.",
-      "kind": "runtime"
-    },
-    {
       "file": "frontend/src/components/Modals/UsersUHModal/UsersUHModal.tsx",
       "line": 12,
       "message": "import { ErrorModal } from '../ErrorModal/ErrorModal';",
@@ -656,64 +488,160 @@
       "kind": "runtime"
     },
     {
-      "file": "frontend/src/pages/Admin/CatalogStats/CatalogStats.tsx",
-      "line": 104,
-      "message": "No autorizado",
+      "file": "frontend/src/components/Modals/CancellationReasonModal/CancellationReasonModal.tsx",
+      "line": 64,
+      "message": "setErrorMessage(\"\");",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/components/Modals/CancellationReasonModal/CancellationReasonModal.tsx",
+      "line": 70,
+      "message": "setErrorMessage(\"\");",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/components/Modals/CancellationReasonModal/CancellationReasonModal.tsx",
+      "line": 84,
+      "message": "setErrorMessage(msg);",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/components/Modals/CancellationReasonModal/CancellationReasonModal.tsx",
+      "line": 107,
+      "message": "setErrorMessage(\"\");",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/components/Modals/CancellationReasonModal/CancellationReasonModal.tsx",
+      "line": 135,
+      "message": "setErrorMessage(\"\");",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/components/Auth/ForgotPasswordForm/ForgotPasswordForm.tsx",
+      "line": 42,
+      "message": "El correo es requerido",
+      "kind": "validation"
+    },
+    {
+      "file": "frontend/src/pages/Admin/Admin.tsx",
+      "line": 11,
+      "message": "ErrorModal,",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/pages/Admin/Admin.tsx",
+      "line": 157,
+      "message": "if (!fetchUsers || fetchUsers.length < 0) throw new Error('Error loading tempUsers');",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/pages/Admin/Admin.tsx",
+      "line": 283,
+      "message": "setErrorMessage(errorLogin.message);",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/pages/Admin/Admin.tsx",
+      "line": 298,
+      "message": "const closeErrorModal = () => setShowError(false);",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/pages/Admin/Admin.tsx",
+      "line": 708,
+      "message": "<ErrorModal show={showError} onHide={closeErrorModal} message={errorMessage} />",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/components/Modals/ErrorModal/ErrorModal.tsx",
+      "line": 3,
+      "message": "./ErrorModal.scss",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/components/Modals/ErrorModal/ErrorModal.tsx",
+      "line": 14,
+      "message": "export function ErrorModal(props: IError) {",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/components/Modals/AddCouponModal/AddCouponModal.tsx",
+      "line": 2,
+      "message": "../ErrorModal/ErrorModal",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/components/Modals/AddCouponModal/AddCouponModal.tsx",
+      "line": 35,
+      "message": "El código es requerido",
+      "kind": "validation"
+    },
+    {
+      "file": "frontend/src/components/Modals/AddCouponModal/AddCouponModal.tsx",
+      "line": 36,
+      "message": "La descripción es requerido",
+      "kind": "validation"
+    },
+    {
+      "file": "frontend/src/components/Modals/AddCouponModal/AddCouponModal.tsx",
+      "line": 38,
+      "message": "El descuento es requerido",
+      "kind": "validation"
+    },
+    {
+      "file": "frontend/src/components/Modals/AddCouponModal/AddCouponModal.tsx",
+      "line": 40,
+      "message": "Este campo es obligatorio",
+      "kind": "validation"
+    },
+    {
+      "file": "frontend/src/components/Modals/AddCouponModal/AddCouponModal.tsx",
+      "line": 69,
+      "message": "setErrorMessage(error);",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/components/Modals/AddCouponModal/AddCouponModal.tsx",
+      "line": 146,
+      "message": "<ErrorModal show={show} onHide={closeModal} message={errorMessage} />",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/components/Modals/PlansModal/Plans.tsx",
+      "line": 84,
+      "message": "setErrorMessage(result.error.message);",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/components/Modals/PlansModal/Plans.tsx",
+      "line": 98,
+      "message": "setErrorMessage(error);",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/pages/Admin/Live/LiveAnalytics.tsx",
+      "line": 57,
+      "message": "setError(\"\");",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/pages/Admin/Live/LiveAnalytics.tsx",
+      "line": 69,
+      "message": "setError(message);",
       "kind": "runtime"
     },
     {
       "file": "frontend/src/components/Auth/LoginForm/LoginForm.tsx",
-      "line": 9,
-      "message": "../../../components/Modals",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Auth/LoginForm/LoginForm.tsx",
-      "line": 41,
+      "line": 36,
       "message": "El correo es requerido",
       "kind": "validation"
     },
     {
       "file": "frontend/src/components/Auth/LoginForm/LoginForm.tsx",
-      "line": 44,
+      "line": 39,
       "message": "La contraseña es requerida",
       "kind": "validation"
-    },
-    {
-      "file": "frontend/src/components/Auth/LoginForm/LoginForm.tsx",
-      "line": 94,
-      "message": "setErrorMessage(errorMessage);",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Auth/LoginForm/LoginForm.tsx",
-      "line": 208,
-      "message": "<ErrorModal show={show} onHide={closeModal} message={errorMessage} />",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Modals/AddExtraStorageModal/AddExtraStorageModal.tsx",
-      "line": 3,
-      "message": "../ErrorModal/ErrorModal",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Modals/AddExtraStorageModal/AddExtraStorageModal.tsx",
-      "line": 46,
-      "message": "Debes ingresar una cantidad",
-      "kind": "validation"
-    },
-    {
-      "file": "frontend/src/components/Modals/AddExtraStorageModal/AddExtraStorageModal.tsx",
-      "line": 64,
-      "message": "setErrorMessage(errorUpdate?.message);",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/components/Modals/AddExtraStorageModal/AddExtraStorageModal.tsx",
-      "line": 121,
-      "message": "<ErrorModal show={show} onHide={closeModal} message={errorMessage} />",
-      "kind": "runtime"
     },
     {
       "file": "frontend/src/components/Modals/AddInstructionsModal/AddInstructionsModal.tsx",
@@ -788,6 +716,36 @@
       "kind": "runtime"
     },
     {
+      "file": "frontend/src/components/Modals/AddExtraStorageModal/AddExtraStorageModal.tsx",
+      "line": 3,
+      "message": "../ErrorModal/ErrorModal",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/components/Modals/AddExtraStorageModal/AddExtraStorageModal.tsx",
+      "line": 46,
+      "message": "Debes ingresar una cantidad",
+      "kind": "validation"
+    },
+    {
+      "file": "frontend/src/components/Modals/AddExtraStorageModal/AddExtraStorageModal.tsx",
+      "line": 64,
+      "message": "setErrorMessage(errorUpdate?.message);",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/components/Modals/AddExtraStorageModal/AddExtraStorageModal.tsx",
+      "line": 121,
+      "message": "<ErrorModal show={show} onHide={closeModal} message={errorMessage} />",
+      "kind": "runtime"
+    },
+    {
+      "file": "frontend/src/pages/Admin/CatalogStats/CatalogStats.tsx",
+      "line": 104,
+      "message": "No autorizado",
+      "kind": "runtime"
+    },
+    {
       "file": "frontend/src/pages/Admin/BlockedEmailDomains/BlockedEmailDomains.tsx",
       "line": 4,
       "message": "../../../components/Modals",
@@ -833,18 +791,6 @@
       "file": "frontend/src/pages/Admin/BlockedEmailDomains/BlockedEmailDomains.tsx",
       "line": 203,
       "message": "<ErrorModal show={showError} onHide={() => setShowError(false)} message={errorMessage} />",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/pages/Admin/Live/LiveAnalytics.tsx",
-      "line": 57,
-      "message": "setError(\"\");",
-      "kind": "runtime"
-    },
-    {
-      "file": "frontend/src/pages/Admin/Live/LiveAnalytics.tsx",
-      "line": 69,
-      "message": "setError(message);",
       "kind": "runtime"
     },
     {

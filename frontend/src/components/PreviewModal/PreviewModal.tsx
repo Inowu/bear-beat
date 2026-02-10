@@ -36,10 +36,12 @@ function PreviewModal(props: PreviewModalPropsI) {
   const waveSurferRef = useRef<WaveSurfer | null>(null);
   const [isModalReady, setIsModalReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [waveDrawn, setWaveDrawn] = useState<boolean>(false);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [duration, setDuration] = useState<number>(0);
   const [audioLoadError, setAudioLoadError] = useState<string>('');
   const [videoLoadError, setVideoLoadError] = useState<string>('');
+  const placeholderBars = Array.from({ length: 18 }, (_, idx) => idx);
 
   useEffect(() => {
     if (!show) {
@@ -53,6 +55,7 @@ function PreviewModal(props: PreviewModalPropsI) {
     // Reset errors when switching between files while modal is open.
     setAudioLoadError('');
     setVideoLoadError('');
+    setWaveDrawn(false);
   }, [show, file?.url]);
 
   useEffect(() => {
@@ -62,6 +65,7 @@ function PreviewModal(props: PreviewModalPropsI) {
         setCurrentTime(0);
         setDuration(0);
         setAudioLoadError('');
+        setWaveDrawn(false);
       }
       return;
     }
@@ -89,12 +93,19 @@ function PreviewModal(props: PreviewModalPropsI) {
 
     waveSurferRef.current = wave;
     setAudioLoadError('');
+    setWaveDrawn(false);
     setCurrentTime(0);
     setDuration(0);
 
     const handleReady = () => {
       setDuration(wave.getDuration());
+      // On some devices/browsers the redraw events can be delayed or missed.
+      // "ready" is our reliable signal to swap the placeholder for the real waveform UI.
+      setWaveDrawn(true);
       wave.play();
+    };
+    const handleRedraw = () => {
+      setWaveDrawn(true);
     };
     const handleTimeUpdate = (time: number) => {
       setCurrentTime(time);
@@ -114,6 +125,8 @@ function PreviewModal(props: PreviewModalPropsI) {
     };
 
     wave.on('ready', handleReady);
+    wave.on('redraw', handleRedraw);
+    wave.on('redrawcomplete', handleRedraw);
     wave.on('timeupdate', handleTimeUpdate);
     wave.on('play', handlePlay);
     wave.on('pause', handlePause);
@@ -126,6 +139,7 @@ function PreviewModal(props: PreviewModalPropsI) {
       wave.destroy();
       waveSurferRef.current = null;
       setIsPlaying(false);
+      setWaveDrawn(false);
       setCurrentTime(0);
       setDuration(0);
     };
@@ -167,13 +181,25 @@ function PreviewModal(props: PreviewModalPropsI) {
         <div className={`preview-container ${isAudio ? 'is-audio' : 'is-video'}`}>
           {file && isAudio && (
             <div className="preview-audio-shell">
-              <div
-                className="preview-waveform"
-                ref={waveformRef}
-                role="region"
-                aria-label="Forma de onda de audio"
-                onContextMenu={(e) => e.preventDefault()}
-              />
+              <div className="preview-waveform-shell">
+                <div
+                  className="preview-waveform"
+                  ref={waveformRef}
+                  role="region"
+                  aria-label="Forma de onda de audio"
+                  onContextMenu={(e) => e.preventDefault()}
+                />
+                {!waveDrawn && (
+                  <div
+                    className={`preview-wave-placeholder ${isPlaying ? 'is-playing' : ''}`}
+                    aria-hidden
+                  >
+                    {placeholderBars.map((idx) => (
+                      <span key={idx} style={{ ['--i' as any]: idx } as any} />
+                    ))}
+                  </div>
+                )}
+              </div>
               <div className="preview-audio-controls">
                 <button
                   type="button"
@@ -207,7 +233,14 @@ function PreviewModal(props: PreviewModalPropsI) {
                 onContextMenu={(e) => e.preventDefault()}
                 onDragStart={(e) => e.preventDefault()}
               />
-              {videoLoadError !== '' && <p className="preview-wave-error">{videoLoadError}</p>}
+              {videoLoadError !== '' && (
+                <div className="preview-video-error">
+                  <p className="preview-wave-error">{videoLoadError}</p>
+                  <a className="preview-video-fallback" href={file.url} target="_blank" rel="noreferrer">
+                    Abrir demo en otra pestaña →
+                  </a>
+                </div>
+              )}
             </>
           )}
         </div>

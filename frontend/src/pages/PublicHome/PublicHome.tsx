@@ -324,7 +324,6 @@ export default function PublicHome() {
     const items = topDownloads?.audio ?? [];
     return items
       .filter((item) => item && typeof item.name === "string" && typeof item.path === "string")
-      .slice(0, 20)
       .map((item) => ({
         path: item.path,
         name: prettyMediaName(item.name) || item.name,
@@ -336,7 +335,6 @@ export default function PublicHome() {
     const items = topDownloads?.video ?? [];
     return items
       .filter((item) => item && typeof item.name === "string" && typeof item.path === "string")
-      .slice(0, 20)
       .map((item) => ({
         path: item.path,
         name: prettyMediaName(item.name) || item.name,
@@ -348,7 +346,6 @@ export default function PublicHome() {
     const items = topDownloads?.karaoke ?? [];
     return items
       .filter((item) => item && typeof item.name === "string" && typeof item.path === "string")
-      .slice(0, 20)
       .map((item) => ({
         path: item.path,
         name: prettyMediaName(item.name) || item.name,
@@ -382,10 +379,15 @@ export default function PublicHome() {
       }
       window.history.replaceState(null, "", "#demo");
       if (options.focusSearch) {
-        // Avoid opening the keyboard on initial page load; focus only on explicit click.
+        // Avoid opening the keyboard; focus the first demo play button when the user explicitly clicks "Ver demo".
         window.setTimeout(() => {
-          const input = document.getElementById("catalog-demo-search") as HTMLInputElement | null;
-          input?.focus({ preventScroll: true });
+          const play = document.querySelector("[data-testid='home-topdemo-play']") as HTMLButtonElement | null;
+          if (play) {
+            play.focus({ preventScroll: true });
+            return;
+          }
+          const jump = document.querySelector(".social-proof__jump-link") as HTMLAnchorElement | null;
+          jump?.focus({ preventScroll: true });
         }, 0);
       }
     },

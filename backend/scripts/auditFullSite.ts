@@ -382,8 +382,9 @@ async function applyPrivacyMaskForScreenshots(page: Page): Promise<void> {
 
 function getScreenshotMaskLocators(page: Page, route: RouteMapEntry): Locator[] {
   if (!PRIVACY_MASK) return [];
-  // Only mask authenticated/admin surfaces to keep public/auth screenshots readable.
-  if (route.type === "public" || route.type === "auth") return [];
+  // Public screenshots are safe to keep readable. Any other surface (auth/app/admin)
+  // can contain typed values (email/password) or account data; always mask inputs.
+  if (route.type === "public") return [];
 
   const masks: Locator[] = [];
 
@@ -606,16 +607,29 @@ function spawnDevServersIfNeeded(baseUrl: string): { child: ReturnType<typeof sp
   if (!shouldStart) return { child: null };
 
   const cmd = process.env.AUDIT_START_CMD?.trim() || "npm start";
-  const child = spawn(cmd, {
-    cwd: REPO_ROOT,
-    shell: true,
-    env: {
-      ...process.env,
-      // Make dev server quieter and more deterministic where possible.
-      BROWSER: "none",
-    },
-    stdio: "ignore",
-  });
+  const env = {
+    ...process.env,
+    // Make dev server quieter and more deterministic where possible.
+    BROWSER: "none",
+  };
+
+  // Avoid `shell: true` for the default `npm start`, otherwise the "child.pid"
+  // is the shell and `process.kill(-pid)` won't terminate the actual npm/dev servers.
+  const isDefaultNpmStart = cmd === "npm start";
+  const child = isDefaultNpmStart
+    ? spawn(process.platform === "win32" ? "npm.cmd" : "npm", ["start"], {
+        cwd: REPO_ROOT,
+        detached: true,
+        env,
+        stdio: "ignore",
+      })
+    : spawn(cmd, {
+        cwd: REPO_ROOT,
+        shell: true,
+        detached: true,
+        env,
+        stdio: "ignore",
+      });
 
   // Prevent orphaned process on parent exit.
   child.unref();
@@ -623,9 +637,12 @@ function spawnDevServersIfNeeded(baseUrl: string): { child: ReturnType<typeof sp
 }
 
 function safeKill(child: ReturnType<typeof spawn> | null) {
-  if (!child) return;
+  if (!child?.pid) return;
   try {
-    child.kill("SIGTERM");
+    // Kill the whole process group (concurrently -> FE+BE).
+    // `process.kill(-pid)` is POSIX-only; keep a best-effort fallback for Windows.
+    if (process.platform === "win32") child.kill("SIGTERM");
+    else process.kill(-child.pid, "SIGTERM");
   } catch {
     // ignore
   }

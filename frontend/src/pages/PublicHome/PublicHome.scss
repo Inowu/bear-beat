@@ -2,9 +2,16 @@
   min-height: 100vh;
   color: var(--ph-text-body);
   background:
-    radial-gradient(900px 560px at 10% 0%, rgba(8, 225, 247, 0.12), transparent 60%),
-    radial-gradient(860px 520px at 90% 10%, rgba(8, 225, 247, 0.08), transparent 60%),
+    radial-gradient(900px 560px at 10% 0%, var(--bb-landing-spot-1), transparent 60%),
+    radial-gradient(860px 520px at 90% 10%, var(--bb-landing-spot-2), transparent 60%),
     var(--ph-bg);
+}
+
+/* Reserve space for the mobile sticky CTA so footer CTAs never get covered. */
+@media (max-width: 640px) {
+  .public-home {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  }
 }
 
 .ph__container {
@@ -885,13 +892,33 @@
 }
 
 .social-proof__row {
+  border-top: 1px solid color-mix(in srgb, var(--ph-border) 60%, transparent);
+  overflow: hidden;
+}
+
+.social-proof__row-btn {
+  width: 100%;
+  appearance: none;
+  border: none;
+  background: transparent;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
   padding: 10px 0;
-  border-top: 1px solid color-mix(in srgb, var(--ph-border) 60%, transparent);
-  overflow: hidden;
+  text-align: left;
+  cursor: pointer;
+}
+
+.social-proof__row-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.social-proof__row-btn:focus-visible {
+  outline: 2px solid var(--app-focus-ring);
+  outline-offset: 4px;
+  border-radius: 16px;
 }
 
 .social-proof__play {
@@ -908,7 +935,7 @@
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28);
 }
 
-.social-proof__play:hover {
+.social-proof__row-btn:hover .social-proof__play {
   background: color-mix(in srgb, var(--ph-accent) 12%, var(--ph-bg-card));
   border-color: color-mix(in srgb, var(--ph-accent) 72%, var(--ph-border));
 }
@@ -917,14 +944,12 @@
   background: color-mix(in srgb, var(--ph-accent) 18%, var(--ph-bg-card));
 }
 
-.social-proof__play:disabled {
+.social-proof__row-btn:disabled .social-proof__play {
   opacity: 0.55;
-  cursor: not-allowed;
   box-shadow: none;
 }
 
-.social-proof__play:focus-visible {
-  outline: none;
+.social-proof__row-btn:focus-visible .social-proof__play {
   box-shadow:
     0 0 0 3px color-mix(in srgb, var(--ph-accent) 28%, transparent),
     0 12px 34px rgba(0, 0, 0, 0.36);
@@ -1025,6 +1050,20 @@
   font-size: 13px;
   line-height: 1.35;
   color: color-mix(in srgb, var(--ph-pain-bad) 92%, var(--ph-text-body));
+}
+
+.social-proof__modal-loading {
+  margin: 10px 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--ph-bg-card) 86%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ph-border) 72%, transparent);
+  color: color-mix(in srgb, var(--ph-text-muted) 92%, transparent);
+  font-size: 13px;
+  line-height: 1.2;
 }
 
 .social-proof__sr-player {
@@ -1679,7 +1718,11 @@
   bottom: 0;
   z-index: 60;
   padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
-  background: color-mix(in srgb, var(--ph-bg) 84%, black);
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--ph-bg) 92%, var(--bb-surface) 8%) 0%,
+    color-mix(in srgb, var(--ph-bg) 70%, transparent) 100%
+  );
   border-top: 1px solid color-mix(in srgb, var(--ph-border) 70%, transparent);
   backdrop-filter: blur(14px);
 }

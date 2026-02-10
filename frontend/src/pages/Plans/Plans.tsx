@@ -7,9 +7,16 @@ import PlanCard from '../../components/PlanCard/PlanCard';
 import trpc from '../../api';
 import { useNavigate } from 'react-router-dom';
 import { trackManyChatConversion, MC_EVENTS } from '../../utils/manychatPixel';
-import { AlertTriangle, RefreshCw, Layers3, Wallet, ListChecks, Zap } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Layers3 } from 'lucide-react';
 import { formatInt, formatTB } from '../../utils/format';
 import PlansStickyCta from './PlansStickyCta';
+
+function normalizeCurrency(value: unknown): "mxn" | "usd" | "" {
+  const raw = `${value ?? ""}`.trim().toLowerCase();
+  if (raw === "mxn") return "mxn";
+  if (raw === "usd") return "usd";
+  return "";
+}
 
 function detectPreferredCurrency(): "mxn" | "usd" {
   if (typeof window === "undefined") return "usd";
@@ -20,7 +27,6 @@ function detectPreferredCurrency(): "mxn" | "usd" {
 function Plans() {
   const { currentUser } = useUserContext();
   const [plans, setPlans] = useState<IPlans[]>([]);
-  const [showSinglePlan, setShowSinglePlan] = useState(false);
   const [catalogSummary, setCatalogSummary] = useState<{
     totalFiles: number;
     totalGB: number;
@@ -38,6 +44,21 @@ function Plans() {
   const navigate = useNavigate();
   const preferredCurrency = useMemo(() => detectPreferredCurrency(), []);
   const [selectedCurrency, setSelectedCurrency] = useState<"mxn" | "usd">(preferredCurrency);
+  const [isCompareWidth, setIsCompareWidth] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(min-width: 920px)");
+    const update = () => setIsCompareWidth(mq.matches);
+    update();
+    if (typeof mq.addEventListener === "function") {
+      mq.addEventListener("change", update);
+      return () => mq.removeEventListener("change", update);
+    }
+    // Safari fallback.
+    mq.addListener(update);
+    return () => mq.removeListener(update);
+  }, []);
 
   const getPlans = async () => {
     setLoadError('');
@@ -57,19 +78,6 @@ function Plans() {
     // Cargar planes también para usuarios no autenticados (evita "spinner infinito" y mejora conversión).
     getPlans();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(max-width: 920px)");
-    const update = () => setShowSinglePlan(mq.matches);
-    update();
-    if (typeof mq.addEventListener === "function") {
-      mq.addEventListener("change", update);
-      return () => mq.removeEventListener("change", update);
-    }
-    mq.addListener(update);
-    return () => mq.removeListener(update);
   }, []);
 
   useEffect(() => {
@@ -121,7 +129,6 @@ function Plans() {
       if (price <= 0 || gigas <= 0) return false;
       return true;
     });
-    const normalizeCurrency = (value: string | null | undefined) => (value ?? "").trim().toLowerCase();
     const parsePrice = (value: string | null | undefined) => Number(value ?? "0") || 0;
     const hasPaypal = (plan: IPlans) => Boolean(plan.paypal_plan_id || plan.paypal_plan_id_test);
 
@@ -181,8 +188,8 @@ function Plans() {
     ];
   }, [catalogSummary]);
   const plansByCurrency = useMemo(() => {
-    const mxn = sortedPlans.find((plan) => (plan.moneda ?? "").toLowerCase() === "mxn") ?? null;
-    const usd = sortedPlans.find((plan) => (plan.moneda ?? "").toLowerCase() === "usd") ?? null;
+    const mxn = sortedPlans.find((plan) => normalizeCurrency(plan.moneda) === "mxn") ?? null;
+    const usd = sortedPlans.find((plan) => normalizeCurrency(plan.moneda) === "usd") ?? null;
     return { mxn, usd };
   }, [sortedPlans]);
   const downloadQuotaGb = useMemo(() => {
@@ -190,10 +197,18 @@ function Plans() {
     if (values.length === 0) return 0;
     return Math.max(...values);
   }, [sortedPlans]);
-  const heroMicrocopy =
-    trialConfig?.enabled && trialConfig.eligible !== false
-      ? `Prueba: ${formatInt(trialConfig.days)} días + ${formatInt(trialConfig.gb)} GB (solo tarjeta, 1ª vez). Cancelas antes de que termine y no se cobra.`
-      : "Pago mensual. Cancela cuando quieras.";
+  const heroMicrocopy = "Pago mensual. Cancela cuando quieras.";
+  const hasTrial = useMemo(() => {
+    if (!trialConfig?.enabled) return false;
+    if (trialConfig.eligible === false) return false;
+    return Number.isFinite(trialConfig.days) && (trialConfig.days ?? 0) > 0;
+  }, [trialConfig?.days, trialConfig?.eligible, trialConfig?.enabled]);
+  const heroTrialCopy = useMemo(() => {
+    if (!trialConfig?.enabled) return null;
+    if (!Number.isFinite(trialConfig.days) || !Number.isFinite(trialConfig.gb)) return null;
+    if ((trialConfig.days ?? 0) <= 0 || (trialConfig.gb ?? 0) <= 0) return null;
+    return `Prueba con tarjeta (Stripe): ${formatInt(trialConfig.days)} días + ${formatInt(trialConfig.gb)} GB.`;
+  }, [trialConfig?.days, trialConfig?.enabled, trialConfig?.gb]);
 
   useEffect(() => {
     const hasSelected = selectedCurrency === "mxn" ? Boolean(plansByCurrency.mxn) : Boolean(plansByCurrency.usd);
@@ -217,20 +232,16 @@ function Plans() {
     navigate(target);
   };
 
+  const isCompareLayout = Boolean(isCompareWidth && plansByCurrency.mxn && plansByCurrency.usd);
   const plansToRender = useMemo(() => {
     if (!plansByCurrency.mxn && !plansByCurrency.usd) return [];
-    if (showSinglePlan) return primaryPlan ? [primaryPlan] : [];
-
-    const list: IPlans[] = [];
-    if (selectedCurrency === "mxn") {
-      if (plansByCurrency.mxn) list.push(plansByCurrency.mxn);
-      if (plansByCurrency.usd) list.push(plansByCurrency.usd);
-    } else {
-      if (plansByCurrency.usd) list.push(plansByCurrency.usd);
-      if (plansByCurrency.mxn) list.push(plansByCurrency.mxn);
+    if (isCompareLayout) {
+      return preferredCurrency === "mxn"
+        ? ([plansByCurrency.mxn, plansByCurrency.usd].filter(Boolean) as IPlans[])
+        : ([plansByCurrency.usd, plansByCurrency.mxn].filter(Boolean) as IPlans[]);
     }
-    return list;
-  }, [plansByCurrency.mxn, plansByCurrency.usd, primaryPlan, selectedCurrency, showSinglePlan]);
+    return primaryPlan ? [primaryPlan] : [];
+  }, [isCompareLayout, plansByCurrency.mxn, plansByCurrency.usd, preferredCurrency, primaryPlan]);
 
   // Loader: mientras estemos cargando planes
   if (loader) {
@@ -253,33 +264,26 @@ function Plans() {
   return (
     <div className="plans-page">
       <div className="plans-main-container">
-        <section className="plans-hero" aria-label="Planes">
-          <h1 className="plans-page-title">Elige tu moneda y activa</h1>
-          <p className="plans-hero-subtitle">Activa tu membresía en minutos y llega con repertorio listo.</p>
-          <ul className="plans-decision-grid" aria-label="Qué vas a decidir">
-            <li className="plans-decision-card">
-              <Zap className="plans-decision-icon" aria-hidden />
-              <h2 className="plans-decision-title">Beneficio</h2>
-              <p className="plans-decision-copy">Responde pedidos al instante con contenido listo para cabina.</p>
-            </li>
-            <li className="plans-decision-card">
-              <ListChecks className="plans-decision-icon" aria-hidden />
-              <h2 className="plans-decision-title">Qué incluye</h2>
-              <ul className="plans-decision-stats" aria-label="Incluye">
+        <section className="plans-hero" aria-label="Planes" data-testid="plans-hero">
+          <h1 className="plans-page-title">Planes y precios</h1>
+          <p className="plans-hero-subtitle">Activa en minutos y llega con repertorio listo.</p>
+          <div className="plans-hero-grid">
+            <div className="plans-hero-copy" aria-label="Qué incluye">
+              <ul className="plans-hero-chips" aria-label="Incluye">
                 <li>
-                  <strong>{proofItems[1]?.value ?? "—"}</strong> catálogo (eliges qué bajar)
+                  <strong>{proofItems[1]?.value ?? "—"}</strong> catálogo
                 </li>
                 <li>
                   <strong>{downloadQuotaGb ? `${formatInt(downloadQuotaGb)} GB/mes` : "—"}</strong> de descargas
                 </li>
                 <li>
-                  <strong>FTP + web</strong> (como te acomode)
+                  <strong>FTP + web</strong> (tú eliges)
                 </li>
               </ul>
-            </li>
-            <li className="plans-decision-card">
-              <Wallet className="plans-decision-icon" aria-hidden />
-              <h2 className="plans-decision-title">Qué plan elegir</h2>
+              <p className="plans-hero-micro">{heroMicrocopy}</p>
+            </div>
+            <div className="plans-hero-choice" aria-label="Moneda">
+              <h2 className="plans-hero-choice-title">Elige tu moneda</h2>
               <div className="plans-currency-toggle" role="tablist" aria-label="Moneda">
                 <button
                   type="button"
@@ -303,9 +307,9 @@ function Plans() {
                 </button>
               </div>
               <p className="plans-currency-micro">MXN: México (pago local). USD: internacional.</p>
-            </li>
-          </ul>
-          <p className="plans-hero-micro">{heroMicrocopy}</p>
+              {heroTrialCopy && <p className="plans-trial-note">{heroTrialCopy}</p>}
+            </div>
+          </div>
         </section>
       {loadError ? (
         <section className="plans-state-wrap">
@@ -341,14 +345,25 @@ function Plans() {
         </section>
       ) : (
         <>
-          <ul className="plans-plan-grid" aria-label="Planes disponibles">
+          <ul
+            className={["plans-plan-grid", isCompareLayout ? "plans-plan-grid--compare" : ""].filter(Boolean).join(" ")}
+            aria-label="Planes disponibles"
+          >
             {plansToRender.map((plan) => (
-              <li key={`plan_${plan.id}`} className="plans-plan-item">
+              <li
+                key={`plan_${plan.id}`}
+                className={[
+                  "plans-plan-item",
+                  isCompareLayout && normalizeCurrency(plan.moneda) === selectedCurrency ? "is-selected" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
                 <PlanCard
                   plan={plan}
                   getCurrentPlan={() => {}}
                   userEmail={currentUser?.email}
-                  showRecommendedBadge={plan === plansByCurrency.mxn}
+                  showRecommendedBadge={normalizeCurrency(plan.moneda) === preferredCurrency}
                   variant="marketing"
                   trialConfig={trialConfig}
                 />
@@ -361,7 +376,7 @@ function Plans() {
 
       <PlansStickyCta
         planId={primaryPlan?.id ?? null}
-        ctaLabel={!currentUser?.email ? "Crear cuenta y activar" : "Activar ahora"}
+        ctaLabel={!currentUser?.email ? (hasTrial ? "Crear cuenta y empezar prueba" : "Crear cuenta y activar") : "Activar ahora"}
         trial={trialConfig?.enabled ? { enabled: trialConfig.enabled, days: trialConfig.days, gb: trialConfig.gb } : null}
         onClick={handlePrimaryCta}
       />

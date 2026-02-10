@@ -1,4 +1,4 @@
-import { useCallback, useId, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { Modal } from "react-bootstrap";
 import { Loader2, Play } from "lucide-react";
 import trpc from "../../../api";
@@ -14,6 +14,24 @@ export type SocialTopItem = {
 };
 
 type DemoKind = "audio" | "video";
+
+function prettyMediaName(value: string): string {
+  const name = `${value ?? ""}`.trim();
+  if (!name) return "";
+  const noExt = name.replace(/\.[a-z0-9]{2,5}$/i, "");
+  return noExt.replace(/[_]+/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function normalizeApiItems(value: unknown): SocialTopItem[] {
+  const items = Array.isArray(value) ? value : [];
+  return items
+    .filter((item: any) => item && typeof item.path === "string" && typeof item.name === "string")
+    .map((item: any) => ({
+      path: item.path,
+      name: prettyMediaName(item.name) || item.name,
+      downloads: Number(item.downloads ?? 0),
+    }));
+}
 
 function isLikelyBpm(value: number): boolean {
   return Number.isFinite(value) && value >= 50 && value <= 220;
@@ -150,17 +168,15 @@ function TopList(props: {
       <div role="list">
         {rows.map((item) => {
           const demoLabel = item.artist ? `${item.artist} – ${item.track}` : item.track;
+          const isDisabled = !item.path || loadingKey === item.key;
+          const rowButtonLabel =
+            loadingKey === item.key ? `Cargando demo: ${demoLabel}` : `Reproducir demo: ${demoLabel}`;
 
           return (
             <div key={item.key} className="social-proof__row" role="listitem">
               <button
                 type="button"
-                className={[
-                  "social-proof__play",
-                  activeKey === item.key ? "social-proof__play--active" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
+                className="social-proof__row-btn"
                 onClick={() => {
                   onOpenDemo({
                     key: item.key,
@@ -169,40 +185,52 @@ function TopList(props: {
                     kindHint: title.toLowerCase(),
                   });
                 }}
-                disabled={!item.path || loadingKey === item.key}
-                aria-label={
-                  loadingKey === item.key ? `Cargando demo: ${demoLabel}` : `Reproducir demo: ${demoLabel}`
-                }
+                disabled={isDisabled}
+                aria-label={rowButtonLabel}
                 data-testid="home-topdemo-play"
               >
-                {loadingKey === item.key ? (
-                  <Loader2 size={18} className="social-proof__spinner" aria-hidden />
-                ) : (
-                  <Play size={18} aria-hidden />
-                )}
-              </button>
-            <div className="social-proof__left">
-              <span className="social-proof__name" title={item.artist ? `${item.artist} – ${item.track}` : item.track}>
-                {item.artist ? (
-                  <>
-                    <span className="social-proof__artist">{item.artist}</span>
-                    <span className="social-proof__dash" aria-hidden>
-                      {" "}
-                      –{" "}
-                    </span>
-                    <span className="social-proof__track">{item.track}</span>
-                  </>
-                ) : (
-                  item.track
-                )}
-              </span>
-              {showKeyMeta && (
-                <span className="social-proof__row-meta">
-                  {item.bpm} BPM • {item.camelot}
+                <span
+                  className={[
+                    "social-proof__play",
+                    activeKey === item.key ? "social-proof__play--active" : "",
+                    loadingKey === item.key ? "social-proof__play--loading" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  aria-hidden
+                >
+                  {loadingKey === item.key ? (
+                    <Loader2 size={18} className="social-proof__spinner" aria-hidden />
+                  ) : (
+                    <Play size={18} aria-hidden />
+                  )}
                 </span>
-              )}
-            </div>
-            <span className="social-proof__meta">{formatDownloads(item.downloads)}</span>
+                <span className="social-proof__left">
+                  <span
+                    className="social-proof__name"
+                    title={item.artist ? `${item.artist} – ${item.track}` : item.track}
+                  >
+                    {item.artist ? (
+                      <>
+                        <span className="social-proof__artist">{item.artist}</span>
+                        <span className="social-proof__dash" aria-hidden>
+                          {" "}
+                          –{" "}
+                        </span>
+                        <span className="social-proof__track">{item.track}</span>
+                      </>
+                    ) : (
+                      item.track
+                    )}
+                  </span>
+                  {showKeyMeta && (
+                    <span className="social-proof__row-meta">
+                      {item.bpm} BPM • {item.camelot}
+                    </span>
+                  )}
+                </span>
+                <span className="social-proof__meta">{formatDownloads(item.downloads)}</span>
+              </button>
           </div>
           );
         })}
@@ -226,11 +254,51 @@ export default function SocialProof(props: {
 }) {
   const { audio, video, karaoke, onMoreClick } = props;
   const [showMore, setShowMore] = useState(false);
+  const [modalTop, setModalTop] = useState<{
+    audio: SocialTopItem[];
+    video: SocialTopItem[];
+    karaoke: SocialTopItem[];
+  } | null>(null);
+  const [modalLoading, setModalLoading] = useState(false);
+  const [modalError, setModalError] = useState<string | null>(null);
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const [loadingKey, setLoadingKey] = useState<string | null>(null);
   const [demoAlert, setDemoAlert] = useState<string | null>(null);
   const [previewFile, setPreviewFile] = useState<{ url: string; name: string; kind: DemoKind } | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+
+  useEffect(() => {
+    if (!showMore) return;
+    if (modalTop) return;
+    let cancelled = false;
+
+    (async () => {
+      setModalError(null);
+      setModalLoading(true);
+      try {
+        const result: any = await trpc.downloadHistory.getPublicTopDownloads.query({
+          limit: 100,
+          sinceDays: 120,
+        });
+        if (cancelled) return;
+        setModalTop({
+          audio: normalizeApiItems(result?.audio),
+          video: normalizeApiItems(result?.video),
+          karaoke: normalizeApiItems(result?.karaoke),
+        });
+      } catch {
+        if (!cancelled) {
+          setModalError("No pudimos cargar el top completo en este momento. Te mostramos una versión corta.");
+        }
+      } finally {
+        if (!cancelled) setModalLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [modalTop, showMore]);
 
   const onOpenDemo = useCallback(async (row: { key: string; path: string; label: string; kindHint: string }) => {
     setDemoAlert(null);
@@ -272,9 +340,16 @@ export default function SocialProof(props: {
   const hasKaraoke = (karaoke?.length ?? 0) > 0;
   const hasAny = hasAudio || hasVideo || hasKaraoke;
 
+  const modalAudio = modalTop?.audio ?? audio;
+  const modalVideo = modalTop?.video ?? video;
+  const modalKaraoke = modalTop?.karaoke ?? karaoke;
+  const modalHasAudio = (modalAudio?.length ?? 0) > 0;
+  const modalHasVideo = (modalVideo?.length ?? 0) > 0;
+  const modalHasKaraoke = (modalKaraoke?.length ?? 0) > 0;
+
   if (!hasAny) {
     return (
-      <section className="social-proof" aria-label="Repertorio por categorías">
+      <section id="demo" className="social-proof" aria-label="Repertorio por categorías" data-testid="home-demo-section">
         <div className="ph__container">
           <div className="social-proof__neutral" role="note">
             <h3>Repertorio listo por categorías</h3>
@@ -288,7 +363,7 @@ export default function SocialProof(props: {
   }
 
   return (
-    <section className="social-proof" aria-label="Descargas destacadas">
+    <section id="demo" className="social-proof" aria-label="Descargas destacadas" data-testid="home-demo-section">
       <div className="ph__container">
         <div className="social-proof__head">
           <div>
@@ -325,7 +400,7 @@ export default function SocialProof(props: {
               setShowMore(true);
             }}
           >
-            Ver top por categoría →
+            Ver top 100 por categoría →
           </button>
         </div>
 
@@ -378,33 +453,44 @@ export default function SocialProof(props: {
           <Modal.Title id="social-proof-title">Lo que más se descarga</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <p className="home-demo-modal__sub">Top real por categoría (últimos meses).</p>
+          <p className="home-demo-modal__sub">Top 100 real por categoría (últimos meses).</p>
+          {modalLoading && !modalTop && (
+            <div className="social-proof__modal-loading" role="status" aria-live="polite">
+              <Loader2 size={18} className="social-proof__spinner" aria-hidden />
+              Cargando top 100…
+            </div>
+          )}
+          {modalError && (
+            <p className="social-proof__alert" role="alert">
+              {modalError}
+            </p>
+          )}
           <div className="social-proof__grid" aria-label="Top descargas completo">
-            {hasAudio && (
+            {modalHasAudio && (
               <TopList
-                title={titleWithTopCount("Audios", audio.length)}
-                items={audio}
-                maxRows={Math.min(20, audio.length)}
+                title={titleWithTopCount("Audios", modalAudio.length)}
+                items={modalAudio}
+                maxRows={Math.min(100, modalAudio.length)}
                 activeKey={activeKey}
                 loadingKey={loadingKey}
                 onOpenDemo={onOpenDemo}
               />
             )}
-            {hasVideo && (
+            {modalHasVideo && (
               <TopList
-                title={titleWithTopCount("Videos", video.length)}
-                items={video}
-                maxRows={Math.min(20, video.length)}
+                title={titleWithTopCount("Videos", modalVideo.length)}
+                items={modalVideo}
+                maxRows={Math.min(100, modalVideo.length)}
                 activeKey={activeKey}
                 loadingKey={loadingKey}
                 onOpenDemo={onOpenDemo}
               />
             )}
-            {hasKaraoke && (
+            {modalHasKaraoke && (
               <TopList
-                title={titleWithTopCount("Karaokes", karaoke.length)}
-                items={karaoke}
-                maxRows={Math.min(20, karaoke.length)}
+                title={titleWithTopCount("Karaokes", modalKaraoke.length)}
+                items={modalKaraoke}
+                maxRows={Math.min(100, modalKaraoke.length)}
                 activeKey={activeKey}
                 loadingKey={loadingKey}
                 onOpenDemo={onOpenDemo}

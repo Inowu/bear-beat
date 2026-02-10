@@ -10,7 +10,7 @@
   --chat-fab-icon: var(--bb-cyan);
 
   position: fixed;
-  bottom: 28px;
+  bottom: calc(28px + var(--chat-fab-bottom-offset, 0px));
   right: 28px;
   z-index: 9999;
   width: var(--chat-fab-size);
@@ -43,12 +43,12 @@
 
   /* Margen seguro en móviles para no tapar footer / safe area */
   @media (max-width: 768px) {
-    bottom: max(24px, env(safe-area-inset-bottom, 24px));
+    bottom: calc(max(24px, env(safe-area-inset-bottom, 24px)) + var(--chat-fab-bottom-offset, 0px));
     right: max(24px, env(safe-area-inset-right, 24px));
   }
 
   @media (max-width: 480px) {
-    bottom: max(20px, env(safe-area-inset-bottom, 20px));
+    bottom: calc(max(20px, env(safe-area-inset-bottom, 20px)) + var(--chat-fab-bottom-offset, 0px));
     right: max(20px, env(safe-area-inset-right, 20px));
   }
 }

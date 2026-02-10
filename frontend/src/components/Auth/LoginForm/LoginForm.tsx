@@ -6,9 +6,7 @@ import trpc from "../../../api";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useEffect, useRef, useState } from "react";
-import { ErrorModal } from "../../../components/Modals";
 import { Spinner } from "../../../components/Spinner/Spinner";
-import { ChatButton } from "../../../components/ChatButton/ChatButton";
 import Logo from "../../../assets/images/osonuevo.png";
 import { trackManyChatConversion, MC_EVENTS } from "../../../utils/manychatPixel";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../../utils/growthMetrics";
@@ -27,15 +25,11 @@ function inferErrorCode(message: string): string {
 
 function LoginForm() {
   const [loader, setLoader] = useState<boolean>(false);
-  const [show, setShow] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [inlineError, setInlineError] = useState<string>("");
   const { handleLogin } = useUserContext();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: string } | null)?.from ?? "/";
-  const closeModal = () => {
-    setShow(false);
-  };
   const validationSchema = Yup.object().shape({
     username: Yup.string()
       .required("El correo es requerido")
@@ -53,6 +47,7 @@ function LoginForm() {
     validationSchema: validationSchema,
     onSubmit: async (values) => {
       setLoader(true);
+      setInlineError("");
       trackGrowthMetric(GROWTH_METRICS.FORM_SUBMIT, { formId: "login" });
       trackGrowthMetric(GROWTH_METRICS.AUTH_START, { flow: "login", from });
       let body = {
@@ -90,8 +85,7 @@ function LoginForm() {
         });
 
         setLoader(false);
-        setShow(true);
-        setErrorMessage(errorMessage);
+        setInlineError(errorMessage);
       }
     },
   });
@@ -120,6 +114,13 @@ function LoginForm() {
   const usernameErrorId = showUsernameError ? "login-username-error" : undefined;
   const passwordErrorId = showPasswordError ? "login-password-error" : undefined;
 
+  useEffect(() => {
+    if (!inlineError) return;
+    // If the user edits the credentials, clear the form-level error to reduce noise.
+    setInlineError("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formik.values.username, formik.values.password]);
+
   return (
     <>
       <div className="auth-login-atmosphere">
@@ -129,7 +130,6 @@ function LoginForm() {
           <p className="auth-login-sub text-text-muted">
             Tu cabina está lista. Ingresa para descargar.
           </p>
-          <ChatButton />
           <form className="auth-form auth-login-form" onSubmit={formik.handleSubmit} autoComplete="on">
             <div className={`c-row ${showUsernameError ? "is-invalid" : ""}`}>
               <label htmlFor="username" className="auth-field-label">
@@ -138,11 +138,15 @@ function LoginForm() {
               <div className="auth-login-input-wrap">
                 <Mail className="auth-login-input-icon" aria-hidden />
                 <input
-                  placeholder="Correo electrónico"
+                  placeholder="correo@ejemplo.com"
                   type="email"
                   id="username"
                   name="username"
+                  inputMode="email"
                   autoComplete="email"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                   value={formik.values.username}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
@@ -164,7 +168,7 @@ function LoginForm() {
               <div className="auth-login-input-wrap">
                 <Lock className="auth-login-input-icon" aria-hidden />
                 <PasswordInput
-                  placeholder="Contraseña"
+                  placeholder="Tu contraseña"
                   id="password"
                   name="password"
                   autoComplete="current-password"
@@ -188,6 +192,9 @@ function LoginForm() {
                 ¿Olvidaste tu contraseña?
               </Link>
             </div>
+            <div className="auth-login-inline-error" role="alert" aria-live="polite">
+              {inlineError}
+            </div>
             {!loader ? (
               <button type="submit" className="auth-login-submit-btn" data-testid="login-submit">
                 INGRESAR
@@ -198,14 +205,16 @@ function LoginForm() {
               </div>
             )}
             <div className="c-row auth-login-register-wrap">
-              <Link to="/auth/registro" state={{ from }} className="auth-login-register">
-                Registrarme
-              </Link>
+              <span className="auth-login-register-copy">
+                ¿No tienes cuenta?{" "}
+                <Link to="/auth/registro" state={{ from }} className="auth-login-register">
+                  Crear cuenta
+                </Link>
+              </span>
             </div>
           </form>
         </div>
       </div>
-      <ErrorModal show={show} onHide={closeModal} message={errorMessage} />
     </>
   );
 }
