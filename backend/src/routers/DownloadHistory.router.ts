@@ -87,10 +87,14 @@ const getAllMediaExtensions = (): string[] => [
   ...VIDEO_EXTENSIONS,
 ];
 
-const createDemoFileName = (catalogPath: string): string => {
-  const ext = path.extname(catalogPath) || '.mp4';
+const createDemoFileName = (catalogPath: string, kind: TopDownloadKind): string => {
+  // Force browser-friendly demo formats:
+  // - audio: mp3
+  // - video/karaoke: mp4 (h264/aac)
+  const ext = kind === 'audio' ? '.mp3' : '.mp4';
+  const originalExt = path.extname(catalogPath) || ext;
   const base = path
-    .basename(catalogPath, ext)
+    .basename(catalogPath, originalExt)
     .replace(/[^a-zA-Z0-9-_]/g, '_')
     .slice(0, 72);
   const digest = createHash('md5').update(catalogPath).digest('hex').slice(0, 12);
@@ -101,28 +105,42 @@ const generateDemo = (
   filePath: string,
   duration: number,
   outputPath: string,
+  kind: TopDownloadKind,
 ): Promise<void> =>
   new Promise((resolve, reject) => {
-    const demoVideo = Ffmpeg({
+    const command = Ffmpeg({
       logger: console,
     })
       .input(filePath)
-      .inputOptions(['-to', `${duration}`])
-      .inputOptions(['-ss 0', `-to ${duration}`])
-      .videoCodec('copy')
-      .audioCodec('copy')
-      .output(outputPath);
+      .inputOptions(['-ss 0'])
+      .outputOptions([`-t ${duration}`]);
 
-    demoVideo.on('end', () => {
+    if (kind === 'audio') {
+      command
+        .noVideo()
+        .audioCodec('libmp3lame')
+        .audioBitrate('128k')
+        .format('mp3');
+    } else {
+      command
+        .videoCodec('libx264')
+        .audioCodec('aac')
+        .outputOptions(['-movflags +faststart', '-preset veryfast', '-crf 28', '-pix_fmt yuv420p'])
+        .format('mp4');
+    }
+
+    command.output(outputPath);
+
+    command.on('end', () => {
       resolve();
     });
 
-    demoVideo.on('error', (error) => {
+    command.on('error', (error) => {
       log.error(`[PUBLIC_TOP_DEMOS] Error while generating demo: ${error}`);
       reject(error);
     });
 
-    demoVideo.run();
+    command.run();
   });
 
 const getTopDownloadsByKind = async (
@@ -421,7 +439,7 @@ export const downloadHistoryRouter = router({
         },
       });
       const demoDuration = config?.value ? Number(config.value) : 60;
-      const demoFileName = createDemoFileName(normalizedPath);
+      const demoFileName = createDemoFileName(normalizedPath, itemKind);
       const demoOutputPath = path.join(
         process.env.DEMOS_PATH as string,
         demoFileName,
@@ -429,7 +447,7 @@ export const downloadHistoryRouter = router({
 
       if (!(await fileService.exists(demoOutputPath))) {
         log.info(`[PUBLIC_TOP_DEMOS] Generating demo for ${normalizedPath}`);
-        await generateDemo(fullPath, demoDuration, demoOutputPath);
+        await generateDemo(fullPath, demoDuration, demoOutputPath, itemKind);
       }
 
       return {

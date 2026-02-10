@@ -892,13 +892,33 @@
 }
 
 .social-proof__row {
+  border-top: 1px solid color-mix(in srgb, var(--ph-border) 60%, transparent);
+  overflow: hidden;
+}
+
+.social-proof__row-btn {
+  width: 100%;
+  appearance: none;
+  border: none;
+  background: transparent;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
   padding: 10px 0;
-  border-top: 1px solid color-mix(in srgb, var(--ph-border) 60%, transparent);
-  overflow: hidden;
+  text-align: left;
+  cursor: pointer;
+}
+
+.social-proof__row-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.social-proof__row-btn:focus-visible {
+  outline: 2px solid var(--app-focus-ring);
+  outline-offset: 4px;
+  border-radius: 16px;
 }
 
 .social-proof__play {
@@ -915,7 +935,7 @@
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28);
 }
 
-.social-proof__play:hover {
+.social-proof__row-btn:hover .social-proof__play {
   background: color-mix(in srgb, var(--ph-accent) 12%, var(--ph-bg-card));
   border-color: color-mix(in srgb, var(--ph-accent) 72%, var(--ph-border));
 }
@@ -924,14 +944,12 @@
   background: color-mix(in srgb, var(--ph-accent) 18%, var(--ph-bg-card));
 }
 
-.social-proof__play:disabled {
+.social-proof__row-btn:disabled .social-proof__play {
   opacity: 0.55;
-  cursor: not-allowed;
   box-shadow: none;
 }
 
-.social-proof__play:focus-visible {
-  outline: none;
+.social-proof__row-btn:focus-visible .social-proof__play {
   box-shadow:
     0 0 0 3px color-mix(in srgb, var(--ph-accent) 28%, transparent),
     0 12px 34px rgba(0, 0, 0, 0.36);

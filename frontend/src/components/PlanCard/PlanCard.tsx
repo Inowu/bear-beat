@@ -341,7 +341,9 @@ function PlanCard(props: PlanCardPropsI) {
 	      ? "Tarjeta o PayPal"
 	      : "Tarjeta internacional";
 	  const primaryCtaLabel = !userEmail
-	    ? "Crear cuenta y activar"
+	    ? (trialConfig?.enabled && trialConfig.eligible !== false && Number.isFinite(trialConfig.days) && (trialConfig.days ?? 0) > 0
+        ? "Crear cuenta y empezar prueba"
+        : "Crear cuenta y activar")
 	    : isMarketing
 	      ? "Activar ahora"
 	      : (isMxn ? "Activar plan MXN" : "Activar plan USD");

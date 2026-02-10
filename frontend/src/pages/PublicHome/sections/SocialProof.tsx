@@ -150,17 +150,15 @@ function TopList(props: {
       <div role="list">
         {rows.map((item) => {
           const demoLabel = item.artist ? `${item.artist} – ${item.track}` : item.track;
+          const isDisabled = !item.path || loadingKey === item.key;
+          const rowButtonLabel =
+            loadingKey === item.key ? `Cargando demo: ${demoLabel}` : `Reproducir demo: ${demoLabel}`;
 
           return (
             <div key={item.key} className="social-proof__row" role="listitem">
               <button
                 type="button"
-                className={[
-                  "social-proof__play",
-                  activeKey === item.key ? "social-proof__play--active" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
+                className="social-proof__row-btn"
                 onClick={() => {
                   onOpenDemo({
                     key: item.key,
@@ -169,40 +167,52 @@ function TopList(props: {
                     kindHint: title.toLowerCase(),
                   });
                 }}
-                disabled={!item.path || loadingKey === item.key}
-                aria-label={
-                  loadingKey === item.key ? `Cargando demo: ${demoLabel}` : `Reproducir demo: ${demoLabel}`
-                }
+                disabled={isDisabled}
+                aria-label={rowButtonLabel}
                 data-testid="home-topdemo-play"
               >
-                {loadingKey === item.key ? (
-                  <Loader2 size={18} className="social-proof__spinner" aria-hidden />
-                ) : (
-                  <Play size={18} aria-hidden />
-                )}
-              </button>
-            <div className="social-proof__left">
-              <span className="social-proof__name" title={item.artist ? `${item.artist} – ${item.track}` : item.track}>
-                {item.artist ? (
-                  <>
-                    <span className="social-proof__artist">{item.artist}</span>
-                    <span className="social-proof__dash" aria-hidden>
-                      {" "}
-                      –{" "}
-                    </span>
-                    <span className="social-proof__track">{item.track}</span>
-                  </>
-                ) : (
-                  item.track
-                )}
-              </span>
-              {showKeyMeta && (
-                <span className="social-proof__row-meta">
-                  {item.bpm} BPM • {item.camelot}
+                <span
+                  className={[
+                    "social-proof__play",
+                    activeKey === item.key ? "social-proof__play--active" : "",
+                    loadingKey === item.key ? "social-proof__play--loading" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  aria-hidden
+                >
+                  {loadingKey === item.key ? (
+                    <Loader2 size={18} className="social-proof__spinner" aria-hidden />
+                  ) : (
+                    <Play size={18} aria-hidden />
+                  )}
                 </span>
-              )}
-            </div>
-            <span className="social-proof__meta">{formatDownloads(item.downloads)}</span>
+                <span className="social-proof__left">
+                  <span
+                    className="social-proof__name"
+                    title={item.artist ? `${item.artist} – ${item.track}` : item.track}
+                  >
+                    {item.artist ? (
+                      <>
+                        <span className="social-proof__artist">{item.artist}</span>
+                        <span className="social-proof__dash" aria-hidden>
+                          {" "}
+                          –{" "}
+                        </span>
+                        <span className="social-proof__track">{item.track}</span>
+                      </>
+                    ) : (
+                      item.track
+                    )}
+                  </span>
+                  {showKeyMeta && (
+                    <span className="social-proof__row-meta">
+                      {item.bpm} BPM • {item.camelot}
+                    </span>
+                  )}
+                </span>
+                <span className="social-proof__meta">{formatDownloads(item.downloads)}</span>
+              </button>
           </div>
           );
         })}

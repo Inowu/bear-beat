@@ -86,7 +86,9 @@ async function main() {
     });
     const page = await ctx.newPage();
 
-    const smokeUserEmail = `smoke-${Date.now()}@local.test`;
+    // Some local environments block "local.test" (anti-fraud / disposable domains).
+    // Use a neutral domain to keep smoke e2e reproducible.
+    const smokeUserEmail = `smoke-${Date.now()}@gmail.com`;
     const smokeUserPassword = `Smoke-${Date.now()}-pass!`;
 
     // AUTH (logged out): forgot password loads

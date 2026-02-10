@@ -7,7 +7,7 @@ import PlanCard from '../../components/PlanCard/PlanCard';
 import trpc from '../../api';
 import { useNavigate } from 'react-router-dom';
 import { trackManyChatConversion, MC_EVENTS } from '../../utils/manychatPixel';
-import { AlertTriangle, RefreshCw, Layers3, Wallet, ListChecks, Zap } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Layers3 } from 'lucide-react';
 import { formatInt, formatTB } from '../../utils/format';
 import PlansStickyCta from './PlansStickyCta';
 
@@ -192,6 +192,17 @@ function Plans() {
     return Math.max(...values);
   }, [sortedPlans]);
   const heroMicrocopy = "Pago mensual. Cancela cuando quieras.";
+  const hasTrial = useMemo(() => {
+    if (!trialConfig?.enabled) return false;
+    if (trialConfig.eligible === false) return false;
+    return Number.isFinite(trialConfig.days) && (trialConfig.days ?? 0) > 0;
+  }, [trialConfig?.days, trialConfig?.eligible, trialConfig?.enabled]);
+  const heroTrialCopy = useMemo(() => {
+    if (!trialConfig?.enabled) return null;
+    if (!Number.isFinite(trialConfig.days) || !Number.isFinite(trialConfig.gb)) return null;
+    if ((trialConfig.days ?? 0) <= 0 || (trialConfig.gb ?? 0) <= 0) return null;
+    return `Prueba con tarjeta (Stripe): ${formatInt(trialConfig.days)} días + ${formatInt(trialConfig.gb)} GB.`;
+  }, [trialConfig?.days, trialConfig?.enabled, trialConfig?.gb]);
 
   useEffect(() => {
     const hasSelected = selectedCurrency === "mxn" ? Boolean(plansByCurrency.mxn) : Boolean(plansByCurrency.usd);
@@ -249,31 +260,24 @@ function Plans() {
       <div className="plans-main-container">
         <section className="plans-hero" aria-label="Planes" data-testid="plans-hero">
           <h1 className="plans-page-title">Planes y precios</h1>
-          <p className="plans-hero-subtitle">Elige MXN o USD. Activa en minutos y llega con repertorio listo.</p>
-          <ul className="plans-decision-grid" aria-label="Qué vas a decidir">
-            <li className="plans-decision-card">
-              <Zap className="plans-decision-icon" aria-hidden />
-              <h2 className="plans-decision-title">Beneficio</h2>
-              <p className="plans-decision-copy">Responde pedidos al instante con contenido listo para cabina.</p>
-            </li>
-            <li className="plans-decision-card">
-              <ListChecks className="plans-decision-icon" aria-hidden />
-              <h2 className="plans-decision-title">Incluye</h2>
-              <ul className="plans-decision-stats" aria-label="Incluye">
+          <p className="plans-hero-subtitle">Activa en minutos y llega con repertorio listo.</p>
+          <div className="plans-hero-grid">
+            <div className="plans-hero-copy" aria-label="Qué incluye">
+              <ul className="plans-hero-chips" aria-label="Incluye">
                 <li>
-                  <strong>{proofItems[1]?.value ?? "—"}</strong> catálogo (tú eliges qué bajar)
+                  <strong>{proofItems[1]?.value ?? "—"}</strong> catálogo
                 </li>
                 <li>
                   <strong>{downloadQuotaGb ? `${formatInt(downloadQuotaGb)} GB/mes` : "—"}</strong> de descargas
                 </li>
                 <li>
-                  <strong>FTP + web</strong> (como te acomode)
+                  <strong>FTP + web</strong> (tú eliges)
                 </li>
               </ul>
-            </li>
-            <li className="plans-decision-card">
-              <Wallet className="plans-decision-icon" aria-hidden />
-              <h2 className="plans-decision-title">Moneda</h2>
+              <p className="plans-hero-micro">{heroMicrocopy}</p>
+            </div>
+            <div className="plans-hero-choice" aria-label="Moneda">
+              <h2 className="plans-hero-choice-title">Elige tu moneda</h2>
               <div className="plans-currency-toggle" role="tablist" aria-label="Moneda">
                 <button
                   type="button"
@@ -297,9 +301,9 @@ function Plans() {
                 </button>
               </div>
               <p className="plans-currency-micro">MXN: México (pago local). USD: internacional.</p>
-            </li>
-          </ul>
-          <p className="plans-hero-micro">{heroMicrocopy}</p>
+              {heroTrialCopy && <p className="plans-trial-note">{heroTrialCopy}</p>}
+            </div>
+          </div>
         </section>
       {loadError ? (
         <section className="plans-state-wrap">
@@ -366,7 +370,7 @@ function Plans() {
 
       <PlansStickyCta
         planId={primaryPlan?.id ?? null}
-        ctaLabel={!currentUser?.email ? "Crear cuenta y activar" : "Activar ahora"}
+        ctaLabel={!currentUser?.email ? (hasTrial ? "Crear cuenta y empezar prueba" : "Crear cuenta y activar") : "Activar ahora"}
         trial={trialConfig?.enabled ? { enabled: trialConfig.enabled, days: trialConfig.days, gb: trialConfig.gb } : null}
         onClick={handlePrimaryCta}
       />
