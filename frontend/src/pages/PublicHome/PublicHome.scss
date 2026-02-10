@@ -1052,6 +1052,20 @@
   color: color-mix(in srgb, var(--ph-pain-bad) 92%, var(--ph-text-body));
 }
 
+.social-proof__modal-loading {
+  margin: 10px 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--ph-bg-card) 86%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ph-border) 72%, transparent);
+  color: color-mix(in srgb, var(--ph-text-muted) 92%, transparent);
+  font-size: 13px;
+  line-height: 1.2;
+}
+
 .social-proof__sr-player {
   position: absolute;
   left: -9999px;

@@ -324,7 +324,6 @@ export default function PublicHome() {
     const items = topDownloads?.audio ?? [];
     return items
       .filter((item) => item && typeof item.name === "string" && typeof item.path === "string")
-      .slice(0, 20)
       .map((item) => ({
         path: item.path,
         name: prettyMediaName(item.name) || item.name,
@@ -336,7 +335,6 @@ export default function PublicHome() {
     const items = topDownloads?.video ?? [];
     return items
       .filter((item) => item && typeof item.name === "string" && typeof item.path === "string")
-      .slice(0, 20)
       .map((item) => ({
         path: item.path,
         name: prettyMediaName(item.name) || item.name,
@@ -348,7 +346,6 @@ export default function PublicHome() {
     const items = topDownloads?.karaoke ?? [];
     return items
       .filter((item) => item && typeof item.name === "string" && typeof item.path === "string")
-      .slice(0, 20)
       .map((item) => ({
         path: item.path,
         name: prettyMediaName(item.name) || item.name,
