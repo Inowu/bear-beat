@@ -445,7 +445,13 @@ function Admin() {
         )}
 
         <section className="admin-table-panel">
-          <div className="table-contain">
+          <div
+            className="table-contain"
+            tabIndex={0}
+            role="region"
+            aria-label="Tabla de usuarios (desliza para ver más columnas)"
+            data-scroll-region
+          >
             <table className="admin-table">
               <thead>
                 <tr>

@@ -100,7 +100,11 @@ function AsideNavbar(props: AsideNavbarPropsI) {
   if (!drawerOpen && !isDesktop) return null;
 
   return (
-    <aside className={drawerOpen ? "open" : ""}>
+    <aside
+      className={drawerOpen ? "open" : ""}
+      aria-hidden={drawerOpen ? undefined : true}
+      aria-label="Menú lateral"
+    >
       {/* Mobile: backdrop to close on tap outside */}
       {!isDesktop && show && (
         <div className="aside-backdrop" onClick={onHide} aria-hidden />

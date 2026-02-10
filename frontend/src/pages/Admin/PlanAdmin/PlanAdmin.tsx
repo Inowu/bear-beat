@@ -107,7 +107,13 @@ export const PlanAdmin = () => {
 
       {/* Desktop: tabla */}
       <div className="rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50 hidden md:block">
-        <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
+        <div
+          className="overflow-x-auto max-h-[60vh] overflow-y-auto"
+          tabIndex={0}
+          role="region"
+          aria-label="Tabla de planes (desliza para ver más)"
+          data-scroll-region
+        >
           <table className="w-full min-w-[700px]">
             <thead className="bg-slate-900 sticky top-0 z-10">
               <tr>

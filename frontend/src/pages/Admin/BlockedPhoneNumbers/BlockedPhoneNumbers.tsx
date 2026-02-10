@@ -128,7 +128,13 @@ export const BlockedPhoneNumbers = () => {
       ) : (
         <>
           <div className="rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50 hidden md:block">
-            <div className="overflow-x-auto">
+            <div
+              className="overflow-x-auto"
+              tabIndex={0}
+              role="region"
+              aria-label="Tabla de teléfonos bloqueados (desliza para ver más)"
+              data-scroll-region
+            >
               <table className="w-full">
                 <thead className="bg-slate-900">
                   <tr>
@@ -160,24 +166,18 @@ export const BlockedPhoneNumbers = () => {
 
           <div className="md:hidden flex flex-col rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50">
             {blockedNumbers.map((phone) => (
-              <div
+              <button
+                type="button"
                 key={`m_${phone}`}
-                className="flex items-center justify-between gap-3 min-h-[64px] px-4 py-3 border-b border-slate-800 hover:bg-slate-900/60 active:bg-slate-800"
+                className="flex items-center justify-between gap-3 min-h-[64px] w-full px-4 py-3 border-b border-slate-800 hover:bg-slate-900/60 active:bg-slate-800 text-left"
                 onClick={() => setDrawerPhone(phone)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => e.key === "Enter" && setDrawerPhone(phone)}
+                aria-label={`Ver acciones para ${phone}`}
               >
                 <p className="font-medium text-white text-sm truncate flex-1 min-w-0">{phone}</p>
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); setDrawerPhone(phone); }}
-                  className="p-2 text-slate-400 hover:text-bear-cyan rounded-lg"
-                  aria-label="Ver más"
-                >
+                <span className="p-2 text-slate-400 hover:text-bear-cyan rounded-lg" aria-hidden>
                   <MoreVertical size={20} />
-                </button>
-              </div>
+                </span>
+              </button>
             ))}
           </div>
 

@@ -131,7 +131,13 @@ export const BlockedEmailDomains = () => {
       ) : (
         <>
           <div className="rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50 hidden md:block">
-            <div className="overflow-x-auto">
+            <div
+              className="overflow-x-auto"
+              tabIndex={0}
+              role="region"
+              aria-label="Tabla de dominios bloqueados (desliza para ver más)"
+              data-scroll-region
+            >
               <table className="w-full">
                 <thead className="bg-slate-900">
                   <tr>
@@ -163,24 +169,18 @@ export const BlockedEmailDomains = () => {
 
           <div className="md:hidden flex flex-col rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50">
             {blockedDomains.map((domain) => (
-              <div
+              <button
+                type="button"
                 key={`m_${domain}`}
-                className="flex items-center justify-between gap-3 min-h-[64px] px-4 py-3 border-b border-slate-800 hover:bg-slate-900/60 active:bg-slate-800"
+                className="flex items-center justify-between gap-3 min-h-[64px] w-full px-4 py-3 border-b border-slate-800 hover:bg-slate-900/60 active:bg-slate-800 text-left"
                 onClick={() => setDrawerDomain(domain)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => e.key === "Enter" && setDrawerDomain(domain)}
+                aria-label={`Ver acciones para ${domain}`}
               >
                 <p className="font-medium text-white text-sm truncate flex-1 min-w-0">{domain}</p>
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); setDrawerDomain(domain); }}
-                  className="p-2 text-slate-400 hover:text-bear-cyan rounded-lg"
-                  aria-label="Ver más"
-                >
+                <span className="p-2 text-slate-400 hover:text-bear-cyan rounded-lg" aria-hidden>
                   <MoreVertical size={20} />
-                </button>
-              </div>
+                </span>
+              </button>
             ))}
           </div>
 

@@ -15,17 +15,31 @@ export const PlanUpgrade = () => {
   const [currentPlan, setCurrentPlan] = useState<IPlans | null>(null);
   const [loadError, setLoadError] = useState<string>("");
   const navigate = useNavigate();
+
+  const toBigInt = (value: unknown): bigint => {
+    if (typeof value === "bigint") return value;
+    if (typeof value === "number" && Number.isFinite(value)) return BigInt(Math.trunc(value));
+    if (typeof value === "string" && value.trim()) {
+      try {
+        return BigInt(value.trim());
+      } catch {
+        return BigInt(0);
+      }
+    }
+    return BigInt(0);
+  };
+
   const getPlans = async (
     plan_id: number,
     stripe: string | null,
-    quota: number,
+    quotaBytes: bigint,
     product_id: string | null,
     moneda: string
   ) => {
-    let gb_spend = BigInt(Math.round(quota / 1000000000));
+    const gbSpend = quotaBytes / BigInt(1000000000);
     try {
       if (stripe !== null) {
-        let body = {
+        const body = {
           where: {
             activated: 1,
             paypal_plan_id: null,
@@ -33,19 +47,16 @@ export const PlanUpgrade = () => {
             NOT: {
               id: plan_id,
             },
-            gigas: {
-              gt: gb_spend,
-            },
           },
         };
         const fetchPlans: any = await trpc.plans.findManyPlans.query(body);
-        setPlans(fetchPlans);
+        const filtered: any[] = (fetchPlans ?? []).filter((p: any) => toBigInt(p?.gigas) > gbSpend);
+        setPlans(filtered);
       } else {
         if (product_id === null) {
-          setLoader(false);
           return;
         }
-        let body = {
+        const body = {
           where: {
             activated: 1,
             stripe_prod_id: null,
@@ -54,21 +65,19 @@ export const PlanUpgrade = () => {
             NOT: {
               id: plan_id,
             },
-            gigas: {
-              gt: gb_spend,
-            },
           },
         };
         const fetchPlans: any = await trpc.plans.findManyPlans.query(body);
-        let paypalplans = fetchPlans.filter(
+        const paypalplans = (fetchPlans ?? []).filter(
           (plan: any) => plan.paypal_product_id === product_id
         );
-        setPlans(paypalplans);
+        const filteredPaypal = paypalplans.filter((p: any) => toBigInt(p?.gigas) > gbSpend);
+        setPlans(filteredPaypal);
       }
-      setLoader(false);
     } catch (error) {
       setPlans([]);
       setLoadError("No pudimos cargar los planes disponibles. Intenta de nuevo.");
+    } finally {
       setLoader(false);
     }
   };
@@ -118,7 +127,7 @@ export const PlanUpgrade = () => {
         getPlans(
           tempPlan.id,
           tempPlan.stripe_prod_id ? tempPlan.stripe_prod_id : tempPlan.stripe_prod_id_test,
-          +quota.regular.used.toString(),
+          toBigInt(quota?.regular?.used?.toString?.() ?? "0"),
           tempPlan.paypal_product_id,
           tempPlan.moneda
         );
