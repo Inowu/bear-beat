@@ -3,7 +3,6 @@ import { detectUserCountry, findDialCode, allowedCountryOptions } from "../../..
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Lock, Mail, Phone, User } from "lucide-react";
 import { PasswordInput } from "../../PasswordInput/PasswordInput";
-import { ReactComponent as Arrow } from "../../../assets/icons/arrow-down.svg";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useFormik } from "formik";
@@ -23,6 +22,7 @@ import {
   TURNSTILE_BYPASS_TOKEN,
 } from "../../../utils/turnstile";
 import { toErrorMessage } from "../../../utils/errorMessage";
+import Logo from "../../../assets/images/osonuevo.png";
 
 function inferErrorCode(message: string): string {
   const m = `${message ?? ""}`.toLowerCase();
@@ -363,25 +363,26 @@ function SignUpForm() {
   const passwordConfirmationErrorId = showPasswordConfirmationError ? "signup-password-confirmation-error" : undefined;
 
   return (
-    <div className="auth-split">
-      <div className="auth-split-panel auth-split-left">
-        <div className="auth-split-left-bg" aria-hidden />
-        <h2 className="auth-split-title">Tu próxima cabina sin “No la tengo” empieza aquí.</h2>
-        <ul className="auth-split-list">
-          <li><strong>Catálogo gigante</strong> de música y video</li>
-          <li><strong>Descarga por FTP</strong> (rápido y ordenado)</li>
-          <li>Cancela cuando quieras</li>
-        </ul>
-        <p className="auth-split-testimonial">Activación guiada por chat hasta tu primera descarga.</p>
-      </div>
-	      <div className="auth-split-panel auth-split-right">
-	        <div className="auth-split-form">
-	          <h1 className="auth-split-form-title">Crea tu cuenta y activa hoy</h1>
-	          <div className="auth-split-help">
-	            <ChatButton variant="inline" />
-	          </div>
+    <>
+      <div className="auth-login-atmosphere">
+        <div className="auth-login-card auth-login-card--signup">
+          <img src={Logo} alt="Bear Beat" className="auth-login-logo" />
+          <h1 className="auth-login-title">Crea tu cuenta</h1>
+          <p className="auth-login-sub">Activa en minutos y empieza con demos antes de descargar.</p>
+          <ChatButton />
+
+          <ul className="auth-signup-bullets" aria-label="Beneficios">
+            <li>
+              <strong>Catálogo gigante</strong> de música y video
+            </li>
+            <li>
+              <strong>Descarga por FTP</strong> (rápido y ordenado)
+            </li>
+            <li>Cancela cuando quieras</li>
+          </ul>
+
           <form
-            className="sign-up-form auth-form"
+            className="sign-up-form auth-form auth-signup-form"
             autoComplete="on"
             onSubmit={(e) => {
               e.preventDefault();
@@ -548,9 +549,8 @@ function SignUpForm() {
             ) : (
               <Spinner size={3} width={0.3} color="var(--app-accent)" />
             )}
-            <div className="c-row">
-              <Link to="/auth" state={{ from }} className="signup-link-back">
-                <Arrow className="arrow" />
+            <div className="c-row auth-login-register-wrap">
+              <Link to="/auth" state={{ from }} className="auth-login-register">
                 Ya tengo cuenta
               </Link>
             </div>
@@ -558,7 +558,7 @@ function SignUpForm() {
         </div>
       </div>
       <ErrorModal show={show} onHide={closeModal} message={errorMessage} />
-    </div>
+    </>
   );
 }
 

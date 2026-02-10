@@ -1,5 +1,42 @@
 @import "src/styles/mixin.scss";
 
+.auth-login-card.auth-login-card--signup {
+  max-width: 520px;
+}
+
+.auth-signup-bullets {
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  color: var(--auth-login-subtitle);
+  font-size: 14px;
+  line-height: 1.35;
+
+  li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 0;
+    overflow-wrap: break-word;
+
+    &::before {
+      content: "✓";
+      flex: 0 0 auto;
+      color: var(--app-accent);
+      font-weight: 900;
+      line-height: 1.1;
+      margin-top: 1px;
+    }
+
+    strong {
+      color: var(--auth-login-title);
+      font-weight: 800;
+    }
+  }
+}
+
 form.sign-up-form {
   --signup-field-height: 54px;
   display: flex;
