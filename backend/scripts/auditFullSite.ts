@@ -893,12 +893,17 @@ async function main() {
 
     const routeMap = parseRouteMapFromFrontendIndex();
     writeJson(path.join(DOCS_AUDIT_DIR, "route-map.json"), routeMap);
+    const protectedRoutes = routeMap.filter((r) => r.requiresAuth && !r.path.includes("*"));
 
     const uiReport: UiInventoryReport = {
       generatedAt: new Date().toISOString(),
       baseUrl,
       routes: [],
     };
+
+    // Coverage correctness: "audit:fullsite" must include protected/app/admin routes.
+    // We treat missing/failed login as a hard failure (but still emit artifacts for debugging).
+    let authCoverageError: "missing_credentials" | "login_failed" | null = null;
 
     await withBrowser(async (browser) => {
       const anonCtx = await browser.newContext({
@@ -914,39 +919,44 @@ async function main() {
 
       await anonCtx.close();
 
-      const shouldTryAuth = Boolean(process.env.AUDIT_LOGIN_EMAIL && process.env.AUDIT_LOGIN_PASSWORD);
-      if (shouldTryAuth) {
-        const authCtx = await browser.newContext({
-          viewport: { width: 1440, height: 900 },
-        });
-        const tokens = await tryLogin(authCtx, baseUrl);
-        if (tokens) {
-          // Authenticated coverage: audit ALL protected routes with sessionStorage pre-seeded per page.
-          for (const route of routeMap) {
-            if (route.path.includes("*")) continue;
-            if (!route.requiresAuth) continue;
-            const res = await collectRouteResult(authCtx, baseUrl, route, "authenticated", tokens);
-            uiReport.routes.push(res);
-          }
-        } else {
-          uiReport.routes.push({
-            path: "/auth",
-            authState: "authenticated",
-            finalUrl: new URL("/auth", baseUrl).toString(),
-            title: "Login failed (audit)",
-            status: "error",
-            error: "AUDIT_LOGIN_EMAIL/AUDIT_LOGIN_PASSWORD no pudieron iniciar sesión en este entorno.",
-            console: [],
-            httpErrors: [],
-            failedRequests: [],
-            interactive: [],
-            iconOnlyMissingLabel: [],
-            screenshots: null,
-            a11y: null,
-          });
-        }
-        await authCtx.close();
+      const needsAuthCoverage = protectedRoutes.length > 0;
+      if (!needsAuthCoverage) return;
+
+      const email = process.env.AUDIT_LOGIN_EMAIL?.trim();
+      const password = process.env.AUDIT_LOGIN_PASSWORD?.trim();
+      if (!email || !password) {
+        authCoverageError = "missing_credentials";
+        return;
       }
+
+      const authCtx = await browser.newContext({
+        viewport: { width: 1440, height: 900 },
+      });
+      const tokens = await tryLogin(authCtx, baseUrl);
+      if (tokens) {
+        // Authenticated coverage: audit ALL protected routes with sessionStorage pre-seeded per page.
+        for (const route of protectedRoutes) {
+          const res = await collectRouteResult(authCtx, baseUrl, route, "authenticated", tokens);
+          uiReport.routes.push(res);
+        }
+      } else {
+        // Capture evidence for the login page too (screenshots, console, etc.).
+        const authRoute: RouteMapEntry =
+          routeMap.find((r) => r.path === "/auth") ?? {
+            path: "/auth",
+            type: "auth",
+            requiresAuth: false,
+            requiresRole: null,
+            sourceFile: path.relative(REPO_ROOT, FRONTEND_INDEX),
+            notes: [],
+          };
+        const res = await collectRouteResult(authCtx, baseUrl, authRoute, "authenticated");
+        res.status = "error";
+        res.error = "AUDIT_LOGIN_EMAIL/AUDIT_LOGIN_PASSWORD no pudieron iniciar sesión en este entorno.";
+        uiReport.routes.push(res);
+        authCoverageError = "login_failed";
+      }
+      await authCtx.close();
     });
 
     writeJson(path.join(DOCS_AUDIT_DIR, "ui-inventory.json"), uiReport);
@@ -967,11 +977,35 @@ async function main() {
 
     const missingEvidence = uiReport.routes.filter((r) => !r.screenshots);
 
-    if (protectedAuthRedirects.length > 0 || missingEvidence.length > 0) {
+    const auditedProtectedPaths = new Set(
+      uiReport.routes
+        .filter((r) => r.authState === "authenticated" && Boolean(requiresAuthByPath.get(r.path)))
+        .map((r) => r.path),
+    );
+    const missingProtectedRoutes = protectedRoutes.map((r) => r.path).filter((p) => !auditedProtectedPaths.has(p));
+
+    if (
+      authCoverageError ||
+      missingProtectedRoutes.length > 0 ||
+      protectedAuthRedirects.length > 0 ||
+      missingEvidence.length > 0
+    ) {
       // eslint-disable-next-line no-console
       console.error(
-        `[audit:fullsite] FAIL: protected routes redirected to /auth=${protectedAuthRedirects.length}, missing screenshots=${missingEvidence.length}`,
+        `[audit:fullsite] FAIL: authCoverage=${authCoverageError ?? "ok"}, missingProtectedRoutes=${missingProtectedRoutes.length}, protectedRedirectsToAuth=${protectedAuthRedirects.length}, missingScreenshots=${missingEvidence.length}`,
       );
+      if (authCoverageError === "missing_credentials") {
+        // eslint-disable-next-line no-console
+        console.error(
+          `[audit:fullsite] Missing AUDIT_LOGIN_EMAIL/AUDIT_LOGIN_PASSWORD; protected routes in router=${protectedRoutes.length}.`,
+        );
+      }
+      if (missingProtectedRoutes.length > 0) {
+        // eslint-disable-next-line no-console
+        console.error(
+          `[audit:fullsite] Missing protected route results (first 15): ${missingProtectedRoutes.slice(0, 15).join(", ")}`,
+        );
+      }
       process.exitCode = 1;
     }
 

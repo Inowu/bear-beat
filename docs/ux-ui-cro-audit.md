@@ -29,11 +29,12 @@ Evidencia (screenshots por ruta, desktop+mobile): `audit/screenshots/*--desktop.
 
 Última corrida:
 
+- `generatedAt`: `2026-02-09T23:55:53.200Z`
 - Rutas auditadas: 27
 - A11y (axe): 0 violaciones
 - Protected routes (auth): **0** terminan en `/auth` (finalUrl mismatch)
 - Evidencia: **0** rutas sin screenshots
-- Robustez: **0** rutas con `console.error`, **0** con HTTP 4xx/5xx, **1** con `requestfailed` (Stripe `m.stripe.network` abortado en headless en `/`)
+- Robustez: **0** rutas con `console.error`, **0** con HTTP 4xx/5xx, **0** con `requestfailed`
 
 ## Inventario UI (automático, por ruta)
 
@@ -116,7 +117,7 @@ Formato por issue:
 
 | Issue | Ruta | Selector | Qué está mal | Impacto | Fix implementado | Evidencia |
 |---|---|---|---|---|---|---|
-| P0-1 | Global (auditoría) | `AuthRoute` + auditoría | La auditoría no cubría rutas protegidas: cada ruta abría tab nuevo y perdía `sessionStorage`, terminando en `/auth`. | Sin cobertura real de app/admin: se “aprueba” un sitio roto; impossible validar funnels completos. | Auditoría ahora extrae tokens de login y los inyecta con `page.addInitScript()` por page; hard-fail si una ruta `requiresAuth` termina en `/auth`. | Ver `docs/audit/ui-inventory.json` (protectedRedirects=0). |
+| P0-1 | Global (auditoría) | `AuthRoute` + auditoría | La auditoría no cubría rutas protegidas: cada ruta abría tab nuevo y perdía `sessionStorage`, terminando en `/auth`. | Sin cobertura real de app/admin: se “aprueba” un sitio roto; impossible validar funnels completos. | Auditoría ahora extrae tokens de login y los inyecta con `page.addInitScript()` por page; hard-fail si faltan credenciales/login o si una ruta `requiresAuth` termina en `/auth`. | Ver `docs/audit/ui-inventory.json` (protectedRedirects=0). |
 | P0-2 | Backend/DB | Prisma tables | Rutas dependían de tablas inexistentes (ej. descargas + logs), causando errores silenciosos/ruido. | Páginas clave fallan (descargas/historiales). Confianza baja. | Migración Prisma agrega `dir_downloads`, `checkout_logs`, `download_history`. | N/A (error era server-side). |
 | P0-3 | `/admin/crm` | `.crm-kpi-grid[role="list"]` | A11Y: `role="list"` sin hijos `role="listitem"`. | Lectores de pantalla: estructura inválida; axe critical. | KPI cards ahora renderizan `role="listitem"`. | Antes: `audit/screenshots/before-20260209-152804/admin-crm--mobile.png` · Después: `audit/screenshots/admin-crm--mobile.png` |
 | P0-4 | `/admin/crm` | `.crm-table-wrap` | A11Y: región scroll sin acceso por teclado. | Keyboard-only no puede navegar/scroll; axe serious. | `tabIndex={0}` + `aria-label` en wraps + focus ring. | Antes: `audit/screenshots/before-20260209-152804/admin-crm--mobile.png` · Después: `audit/screenshots/admin-crm--mobile.png` |

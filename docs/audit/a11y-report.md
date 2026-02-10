@@ -1,6 +1,6 @@
 # A11y Report (axe)
 
-Generado: 2026-02-09T22:31:37.869Z
+Generado: 2026-02-09T23:56:45.643Z
 
 ## Resumen
 - Rutas auditadas: 27
