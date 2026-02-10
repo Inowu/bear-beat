@@ -3,10 +3,12 @@ import fs from "fs";
 import path from "path";
 import { spawn } from "child_process";
 import * as ts from "typescript";
-import { chromium, type Browser, type BrowserContext } from "playwright";
+import { chromium, type Browser, type BrowserContext, type Locator, type Page } from "playwright";
 import AxeBuilder from "@axe-core/playwright";
 
 type RouteType = "public" | "auth" | "app" | "admin";
+
+type ScreenshotStatus = "captured" | "captured_masked" | "skipped_pii" | "failed";
 
 type AuthTokens = {
   token: string;
@@ -52,6 +54,7 @@ type UiInventoryRouteResult = {
   console: Array<{ type: string; text: string }>;
   httpErrors: Array<{ url: string; method: string; status: number; statusText: string }>;
   failedRequests: Array<{ url: string; method: string; failure: string }>;
+  blockedWrites: Array<{ url: string; method: string; reason: string }>;
   interactive: UiInventoryInteractive[];
   interactiveDesktop?: UiInventoryInteractive[];
   interactiveMobile?: UiInventoryInteractive[];
@@ -70,6 +73,9 @@ type UiInventoryRouteResult = {
     route: string;
     tagName: string;
   }>;
+  screenshotStatusDesktop?: ScreenshotStatus;
+  screenshotStatusMobile?: ScreenshotStatus;
+  screenshotMasked: boolean;
   screenshots: { desktop: string; mobile: string } | null;
   a11y: {
     violationCount: number;
@@ -117,10 +123,26 @@ type UiInventoryReport = {
 
 const REPO_ROOT = path.resolve(__dirname, "..", "..");
 const FRONTEND_INDEX = path.resolve(REPO_ROOT, "frontend", "src", "index.tsx");
-// Reports live under docs (tracked). Screenshots live under /audit/screenshots (optional to commit).
+// Default artifacts:
+// - Reports live under docs (tracked).
+// - Screenshots live under /audit/screenshots (gitignored, may contain PII depending on DB).
+//
+// Production audits must write to an explicit AUDIT_ARTIFACTS_DIR (gitignored) and apply
+// a read-only network guard + privacy masking for screenshots.
 // Keep PII redacted in textual artifacts (see sanitizeText()).
-const DOCS_AUDIT_DIR = path.resolve(REPO_ROOT, "docs", "audit");
-const SCREENSHOTS_DIR = path.resolve(REPO_ROOT, "audit", "screenshots");
+const DEFAULT_DOCS_AUDIT_DIR = path.resolve(REPO_ROOT, "docs", "audit");
+const DEFAULT_SCREENSHOTS_DIR = path.resolve(REPO_ROOT, "audit", "screenshots");
+
+const AUDIT_ARTIFACTS_DIR = process.env.AUDIT_ARTIFACTS_DIR?.trim() || "";
+const ARTIFACTS_DIR = AUDIT_ARTIFACTS_DIR
+  ? path.resolve(REPO_ROOT, AUDIT_ARTIFACTS_DIR)
+  : DEFAULT_DOCS_AUDIT_DIR;
+const SCREENSHOTS_DIR = AUDIT_ARTIFACTS_DIR
+  ? path.join(ARTIFACTS_DIR, "screenshots")
+  : DEFAULT_SCREENSHOTS_DIR;
+
+const READ_ONLY = process.env.AUDIT_READ_ONLY === "1";
+const PRIVACY_MASK = process.env.AUDIT_PRIVACY_MASK === "1" || READ_ONLY;
 
 function ensureDir(p: string) {
   fs.mkdirSync(p, { recursive: true });
@@ -146,6 +168,267 @@ function sanitizeText(value: string): string {
   out = out.replace(/\s+/g, " ").trim();
   if (out.length > 160) out = `${out.slice(0, 157)}...`;
   return out;
+}
+
+function sanitizeUrlForArtifact(rawUrl: string): string {
+  // Strip query/hash to avoid leaking tokens in audit artifacts.
+  // Still keeps the information needed for finalUrl/path mismatch checks.
+  try {
+    const u = new URL(rawUrl);
+    return `${u.origin}${u.pathname}`;
+  } catch {
+    return sanitizeText(rawUrl);
+  }
+}
+
+let cachedTrpcMutationProcedures: Set<string> | null = null;
+
+function getTrpcMutationProcedures(): Set<string> {
+  if (!READ_ONLY) return new Set<string>();
+  if (cachedTrpcMutationProcedures) return cachedTrpcMutationProcedures;
+
+  const { spawnSync } = require("child_process") as typeof import("child_process");
+  const res = spawnSync(
+    "rg",
+    ["-oN", "trpc\\.[A-Za-z0-9_$.]+\\.mutate(?:Async)?\\b", "frontend/src"],
+    { cwd: REPO_ROOT, encoding: "utf8" },
+  );
+  const output = `${res.stdout ?? ""}`;
+  const lines = output.split("\n").filter(Boolean);
+
+  const set = new Set<string>();
+  for (const line of lines) {
+    const idx = line.indexOf(":trpc.");
+    const rawExpr = idx >= 0 ? line.slice(idx + 1) : line.trim();
+    const expr = rawExpr.trim();
+    if (!expr.startsWith("trpc.")) continue;
+    const pathExpr = expr
+      .replace(/^trpc\./, "")
+      .replace(/\.mutate(?:Async)?$/, "")
+      .replace(/\?\./g, ".");
+    if (!pathExpr) continue;
+    set.add(pathExpr);
+  }
+
+  cachedTrpcMutationProcedures = set;
+  return set;
+}
+
+function getAllowedTrpcMutations(): Set<string> {
+  // Production audits are READ-ONLY, but authentication is allowed.
+  // Keep this allowlist minimal.
+  const allow = new Set<string>(["auth.login"]);
+  const extra = process.env.AUDIT_READ_ONLY_TRPC_ALLOW_MUTATIONS?.trim();
+  if (extra) {
+    for (const p of extra.split(",").map((s) => s.trim()).filter(Boolean)) {
+      allow.add(p);
+    }
+  }
+  return allow;
+}
+
+function parseTrpcProceduresFromUrl(rawUrl: string): string[] {
+  try {
+    const u = new URL(rawUrl);
+    const path = u.pathname;
+    const idx = path.indexOf("/trpc/");
+    if (idx === -1) return [];
+    const segment = path.slice(idx + "/trpc/".length);
+    if (!segment) return [];
+    return segment
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+function isTurnstileUrl(u: URL): boolean {
+  return u.hostname === "challenges.cloudflare.com";
+}
+
+async function installReadOnlyGuard(
+  page: Page,
+  blockedWrites: UiInventoryRouteResult["blockedWrites"],
+): Promise<void> {
+  if (!READ_ONLY) return;
+
+  const mutationProcedures = getTrpcMutationProcedures();
+  const allowedMutations = getAllowedTrpcMutations();
+
+  await page.route("**/*", async (route) => {
+    const req = route.request();
+    const method = req.method().toUpperCase();
+    if (method === "GET" || method === "HEAD" || method === "OPTIONS") {
+      await route.continue();
+      return;
+    }
+
+    const rawUrl = req.url();
+    let u: URL | null = null;
+    try {
+      u = new URL(rawUrl);
+    } catch {
+      blockedWrites.push({ url: sanitizeText(rawUrl), method, reason: "blocked_invalid_url" });
+      await route.abort("blockedbyclient");
+      return;
+    }
+
+    // Allow Turnstile/Cloudflare challenge endpoints when present (auth anti-bot).
+    if (isTurnstileUrl(u)) {
+      await route.continue();
+      return;
+    }
+
+    // Allow TRPC queries (POST) required for navigation/data fetching, but block any known mutation procedures.
+    if (method === "POST" && u.pathname.includes("/trpc")) {
+      const procedures = parseTrpcProceduresFromUrl(rawUrl);
+      if (procedures.length === 0) {
+        blockedWrites.push({ url: sanitizeText(rawUrl), method, reason: "blocked_trpc_unknown_procedure" });
+        await route.abort("blockedbyclient");
+        return;
+      }
+
+      const blockedProc = procedures.find((p) => mutationProcedures.has(p) && !allowedMutations.has(p));
+      if (blockedProc) {
+        blockedWrites.push({
+          url: sanitizeText(rawUrl),
+          method,
+          reason: `blocked_trpc_mutation:${sanitizeText(blockedProc)}`,
+        });
+        await route.abort("blockedbyclient");
+        return;
+      }
+
+      await route.continue();
+      return;
+    }
+
+    // Default: block all other non-GET methods (production audits are read-only).
+    blockedWrites.push({
+      url: sanitizeText(rawUrl),
+      method,
+      reason: "blocked_non_get",
+    });
+    await route.abort("blockedbyclient");
+  });
+}
+
+async function applyPrivacyMaskForScreenshots(page: Page): Promise<void> {
+  if (!PRIVACY_MASK) return;
+  await page.evaluate(() => {
+    const STYLE_ID = "audit-privacy-mask-style";
+    if (!document.getElementById(STYLE_ID)) {
+      const style = document.createElement("style");
+      style.id = STYLE_ID;
+      style.textContent = `
+        [data-audit-mask=\"1\"] { filter: blur(10px) !important; }
+        [data-audit-mask=\"1\"] * { filter: blur(10px) !important; }
+      `;
+      document.head.appendChild(style);
+    }
+
+    const mark = (el: Element | null) => {
+      if (!el) return;
+      try {
+        (el as HTMLElement).setAttribute("data-audit-mask", "1");
+      } catch {
+        // noop
+      }
+    };
+
+    // Route-specific/class-based masking (stable selectors from the codebase).
+    const selectors = [
+      // MyAccount
+      ".ma-user-name",
+      ".ma-user-meta",
+      ".ma-ftp-value",
+      ".ma-card-number",
+      ".ma-card-date",
+      ".ma-ftp-row",
+
+      // Admin (usuarios + common table/card patterns)
+      ".admin-cell-email",
+      ".admin-cell-phone",
+      ".admin-cell-value",
+      ".admin-user-inline__name",
+      ".admin-mobile-card__email",
+      ".admin-mobile-card__name",
+      ".admin-table td",
+      ".admin-mobile-card",
+    ];
+    for (const sel of selectors) {
+      document.querySelectorAll(sel).forEach(mark);
+    }
+
+    const emailRe = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/i;
+    const phoneRe = /\\+\\d{1,4}\\s\\d{4,14}/;
+
+    // Generic: mask leaf elements that contain email/phone-like strings.
+    const els = Array.from(document.querySelectorAll("body *"));
+    for (const el of els) {
+      if (!(el instanceof HTMLElement)) continue;
+      if (el.childElementCount > 0) continue;
+      const text = (el.innerText || el.textContent || "").trim();
+      if (text.length < 4 || text.length > 90) continue;
+      if (emailRe.test(text) || phoneRe.test(text)) mark(el);
+      const title = el.getAttribute("title") || "";
+      if (title && title.length <= 120 && (emailRe.test(title) || phoneRe.test(title))) mark(el);
+    }
+  });
+}
+
+function getScreenshotMaskLocators(page: Page, route: RouteMapEntry): Locator[] {
+  if (!PRIVACY_MASK) return [];
+  // Only mask authenticated/admin surfaces to keep public/auth screenshots readable.
+  if (route.type === "public" || route.type === "auth") return [];
+
+  const masks: Locator[] = [];
+
+  // Forms can contain typed values (email/phone, etc).
+  masks.push(page.locator("input, textarea, [contenteditable='true']"));
+
+  // App: MyAccount (email/phone/FTP values)
+  masks.push(
+    page.locator(
+      [
+        ".ma-user-name",
+        ".ma-user-meta",
+        ".ma-ftp-row",
+        ".ma-ftp-value",
+        ".ma-card-number",
+        ".ma-card-date",
+      ].join(", "),
+    ),
+  );
+
+  // Admin: user lists and table-like pages
+  masks.push(
+    page.locator(
+      [
+        ".admin-table",
+        ".admin-mobile-card",
+        ".admin-user-inline",
+        ".admin-user-inline__name",
+        ".admin-cell-email",
+        ".admin-cell-phone",
+        ".admin-mobile-card__name",
+        ".admin-mobile-card__email",
+      ].join(", "),
+    ),
+  );
+
+  // Heuristic: anything visibly containing email/phone-like patterns.
+  masks.push(page.locator("text=/@/"));
+  masks.push(page.locator("text=/\\+\\d{1,4}\\s\\d{4,14}/"));
+
+  // Admin pages frequently contain PII; mask the entire main content for safety.
+  if (route.type === "admin") {
+    masks.push(page.locator("main"));
+  }
+
+  return masks;
 }
 
 function stableSlug(input: string): string {
@@ -368,6 +651,7 @@ async function collectRouteResult(
   const consoleEvents: Array<{ type: string; text: string }> = [];
   const httpErrors: Array<{ url: string; method: string; status: number; statusText: string }> = [];
   const failedRequests: Array<{ url: string; method: string; failure: string }> = [];
+  const blockedWrites: Array<{ url: string; method: string; reason: string }> = [];
 
   page.on("console", (msg) => {
     consoleEvents.push({
@@ -395,9 +679,12 @@ async function collectRouteResult(
 
   page.on("requestfailed", (req) => {
     const failure = req.failure();
+    const url = sanitizeText(req.url());
+    const method = req.method();
+    if (blockedWrites.some((b) => b.url === url && b.method === method)) return;
     failedRequests.push({
-      url: sanitizeText(req.url()),
-      method: req.method(),
+      url,
+      method,
       failure: sanitizeText(failure?.errorText ?? "unknown"),
     });
   });
@@ -411,8 +698,10 @@ async function collectRouteResult(
     console: consoleEvents,
     httpErrors,
     failedRequests,
+    blockedWrites,
     interactive: [],
     iconOnlyMissingLabel: [],
+    screenshotMasked: false,
     screenshots: null,
     a11y: null,
   };
@@ -589,7 +878,9 @@ async function collectRouteResult(
   };
 
   type ViewportCapture = {
-    screenshot: string;
+    screenshot: string | null;
+    screenshotStatus: ScreenshotStatus;
+    masked: boolean;
     interactive: UiInventoryInteractive[];
     iconOnlyMissingLabel: Array<{ selector: string; route: string; tagName: string }>;
     a11y: UiInventoryRouteResult["a11y"];
@@ -601,16 +892,30 @@ async function collectRouteResult(
     screenshotPath: string;
   }): Promise<ViewportCapture | null> => {
     const { kind, viewport, screenshotPath } = opts;
+    const masks = getScreenshotMaskLocators(page, route);
+    const useMask = masks.length > 0;
     try {
       await page.setViewportSize(viewport);
       await page.waitForTimeout(200);
-      await page.screenshot({ path: screenshotPath, fullPage: true });
+      if (useMask) {
+        await applyPrivacyMaskForScreenshots(page).catch(() => null);
+        await page.screenshot({ path: screenshotPath, fullPage: true, mask: masks });
+      } else {
+        await page.screenshot({ path: screenshotPath, fullPage: true });
+      }
     } catch (err) {
       consoleEvents.push({
         type: "warning",
         text: `screenshot failed (${kind}): ${sanitizeText(String(err))}`,
       });
-      return null;
+      return {
+        screenshot: null,
+        screenshotStatus: "failed",
+        masked: useMask,
+        interactive: [],
+        iconOnlyMissingLabel: [],
+        a11y: null,
+      };
     }
 
     let inv: Awaited<ReturnType<typeof evaluateInventory>> | null = null;
@@ -640,6 +945,8 @@ async function collectRouteResult(
 
     return {
       screenshot: path.relative(REPO_ROOT, screenshotPath),
+      screenshotStatus: useMask ? "captured_masked" : "captured",
+      masked: useMask,
       interactive,
       iconOnlyMissingLabel,
       a11y,
@@ -672,6 +979,13 @@ async function collectRouteResult(
   };
 
   try {
+    await installReadOnlyGuard(page, blockedWrites).catch((err) => {
+      consoleEvents.push({
+        type: "warning",
+        text: `read-only guard failed: ${sanitizeText(String(err))}`,
+      });
+    });
+
     // Auth tokens are stored in sessionStorage (per-tab). When we audit with new pages
     // we must pre-seed sessionStorage BEFORE the app mounts, otherwise AuthRoute redirects.
     if (authTokens) {
@@ -692,7 +1006,7 @@ async function collectRouteResult(
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45_000 });
     await page.waitForTimeout(500);
 
-    resultBase.finalUrl = page.url();
+    resultBase.finalUrl = sanitizeUrlForArtifact(page.url());
     resultBase.title = await page.title();
 
     try {
@@ -719,11 +1033,13 @@ async function collectRouteResult(
       screenshotPath: mobilePath,
     });
 
-    if (desktop && mobile) {
-      resultBase.screenshots = { desktop: desktop.screenshot, mobile: mobile.screenshot };
-    } else {
-      resultBase.screenshots = null;
-    }
+    resultBase.screenshotStatusDesktop = desktop?.screenshotStatus ?? "failed";
+    resultBase.screenshotStatusMobile = mobile?.screenshotStatus ?? "failed";
+    resultBase.screenshotMasked = Boolean(desktop?.masked || mobile?.masked);
+
+    const desktopShot = desktop?.screenshot ?? null;
+    const mobileShot = mobile?.screenshot ?? null;
+    resultBase.screenshots = desktopShot && mobileShot ? { desktop: desktopShot, mobile: mobileShot } : null;
 
     resultBase.interactiveDesktop = desktop?.interactive ?? [];
     resultBase.interactiveMobile = mobile?.interactive ?? [];
@@ -746,20 +1062,36 @@ async function collectRouteResult(
   } catch (err) {
     resultBase.status = "error";
     resultBase.error = sanitizeText(String(err));
-    resultBase.finalUrl = page.url();
+    resultBase.finalUrl = sanitizeUrlForArtifact(page.url());
     resultBase.title = await page.title().catch(() => "");
 
     // Evidence is mandatory: try to screenshot even on errors/timeouts.
     if (!resultBase.screenshots) {
       try {
+        const masks = getScreenshotMaskLocators(page, route);
+        const useMask = masks.length > 0;
+
         await page.setViewportSize({ width: 1280, height: 800 });
         await page.waitForTimeout(200);
-        await page.screenshot({ path: desktopPath, fullPage: true });
+        if (useMask) {
+          await applyPrivacyMaskForScreenshots(page).catch(() => null);
+          await page.screenshot({ path: desktopPath, fullPage: true, mask: masks });
+        } else {
+          await page.screenshot({ path: desktopPath, fullPage: true });
+        }
 
         await page.setViewportSize({ width: 390, height: 844 });
         await page.waitForTimeout(200);
-        await page.screenshot({ path: mobilePath, fullPage: true });
+        if (useMask) {
+          await applyPrivacyMaskForScreenshots(page).catch(() => null);
+          await page.screenshot({ path: mobilePath, fullPage: true, mask: masks });
+        } else {
+          await page.screenshot({ path: mobilePath, fullPage: true });
+        }
 
+        resultBase.screenshotStatusDesktop = useMask ? "captured_masked" : "captured";
+        resultBase.screenshotStatusMobile = useMask ? "captured_masked" : "captured";
+        resultBase.screenshotMasked = useMask;
         resultBase.screenshots = {
           desktop: path.relative(REPO_ROOT, desktopPath),
           mobile: path.relative(REPO_ROOT, mobilePath),
@@ -769,6 +1101,9 @@ async function collectRouteResult(
           type: "warning",
           text: `screenshot failed (error path): ${sanitizeText(String(screenshotErr))}`,
         });
+        resultBase.screenshotStatusDesktop = "failed";
+        resultBase.screenshotStatusMobile = "failed";
+        resultBase.screenshotMasked = false;
         resultBase.screenshots = null;
       }
     }
@@ -786,6 +1121,7 @@ async function tryLogin(ctx: BrowserContext, baseUrl: string): Promise<AuthToken
 
   const page = await ctx.newPage();
   try {
+    await installReadOnlyGuard(page, []).catch(() => null);
     await page.goto(new URL("/auth", baseUrl).toString(), { waitUntil: "domcontentloaded", timeout: 45_000 });
     await page.waitForTimeout(400);
     await page.fill("#username", email).catch(() => null);
@@ -938,6 +1274,7 @@ async function extractErrorCopyDynamic(baseUrl: string): Promise<any[]> {
   await withBrowser(async (browser) => {
     const ctx = await browser.newContext();
     const page = await ctx.newPage();
+    await installReadOnlyGuard(page, []).catch(() => null);
 
     const captureErrorsOnSubmit = async (route: string, submitSelector: string, formId: string) => {
       await page.goto(new URL(route, baseUrl).toString(), { waitUntil: "domcontentloaded", timeout: 45_000 });
@@ -1028,8 +1365,154 @@ function buildCroFindings(routeResults: UiInventoryRouteResult[]): string {
   return `${lines.join("\n")}\n`;
 }
 
+function buildQaFullsiteReport(opts: {
+  baseUrl: string;
+  routeMap: RouteMapEntry[];
+  routeResults: UiInventoryRouteResult[];
+}): string {
+  const { baseUrl, routeMap, routeResults } = opts;
+  const lines: string[] = [];
+
+  const statusCounts: Record<string, number> = {};
+  let consoleErrors = 0;
+  let consoleWarnings = 0;
+  let httpErrors = 0;
+  let failedRequests = 0;
+  let blockedWrites = 0;
+  let missingScreenshots = 0;
+
+  const totalsByImpact: Record<string, number> = {};
+  let totalA11y = 0;
+
+  for (const r of routeResults) {
+    statusCounts[r.status] = (statusCounts[r.status] ?? 0) + 1;
+    consoleErrors += r.console.filter((c) => c.type === "error").length;
+    consoleWarnings += r.console.filter((c) => c.type === "warning").length;
+    httpErrors += r.httpErrors.length;
+    failedRequests += r.failedRequests.length;
+    blockedWrites += r.blockedWrites.length;
+    if (!r.screenshots) missingScreenshots += 1;
+
+    if (r.a11y) {
+      totalA11y += r.a11y.violationCount;
+      for (const [impact, count] of Object.entries(r.a11y.byImpact)) {
+        totalsByImpact[impact] = (totalsByImpact[impact] ?? 0) + count;
+      }
+    }
+  }
+
+  const protectedRoutes = routeMap.filter((r) => r.requiresAuth && !r.path.includes("*"));
+  const requiresAuthByPath = new Map(routeMap.map((r) => [r.path, r.requiresAuth] as const));
+  const requiresRoleByPath = new Map(routeMap.map((r) => [r.path, r.requiresRole] as const));
+
+  const protectedRedirects = routeResults.filter((r) => r.status === "auth_redirect");
+  const roleMismatches = routeResults.filter((r) => r.status === "role_mismatch");
+  const errorRoutes = routeResults.filter((r) => r.status === "error");
+
+  const auditedProtected = routeResults.filter(
+    (r) => r.authState === "authenticated" && Boolean(requiresAuthByPath.get(r.path)),
+  );
+
+  lines.push(`# QA Fullsite Report`);
+  lines.push(``);
+  lines.push(`Generado: ${new Date().toISOString()}`);
+  lines.push(``);
+
+  lines.push(`## Resumen`);
+  lines.push(`- Base URL: \`${baseUrl}\``);
+  lines.push(`- Rutas auditadas: ${routeResults.length}`);
+  lines.push(
+    `- Status: ${Object.entries(statusCounts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([k, v]) => `${k}=${v}`)
+      .join(" | ")}`,
+  );
+  lines.push(`- Rutas protegidas (router): ${protectedRoutes.length}`);
+  lines.push(`- Rutas protegidas auditadas (authenticated): ${auditedProtected.length}`);
+  lines.push(`- Redirects a /auth (FAIL): ${protectedRedirects.length}`);
+  lines.push(`- Admin role mismatches (FAIL): ${roleMismatches.length}`);
+  lines.push(`- Errores (status=error): ${errorRoutes.length}`);
+  lines.push(`- Screenshots faltantes: ${missingScreenshots}`);
+  lines.push(`- Axe (total violaciones): ${totalA11y}`);
+  lines.push(
+    `- Axe por severidad: ${Object.entries(totalsByImpact)
+      .sort((a, b) => b[1] - a[1])
+      .map(([k, v]) => `${k}=${v}`)
+      .join(" | ") || "—"}`,
+  );
+  lines.push(`- Console: errors=${consoleErrors}, warnings=${consoleWarnings}`);
+  lines.push(`- Network: httpErrors=${httpErrors}, failedRequests=${failedRequests}`);
+  lines.push(`- Read-only guard: blockedWrites=${blockedWrites}`);
+  lines.push(``);
+
+  lines.push(`## Issues Por Ruta`);
+  for (const r of routeResults) {
+    const ce = r.console.filter((c) => c.type === "error").length;
+    const cw = r.console.filter((c) => c.type === "warning").length;
+    const issues =
+      r.status !== "ok" ||
+      (r.a11y?.violationCount ?? 0) > 0 ||
+      ce > 0 ||
+      r.httpErrors.length > 0 ||
+      r.failedRequests.length > 0 ||
+      r.blockedWrites.length > 0 ||
+      !r.screenshots;
+    if (!issues) continue;
+
+    let finalPath = "";
+    try {
+      finalPath = new URL(r.finalUrl).pathname;
+    } catch {
+      finalPath = r.finalUrl;
+    }
+
+    const role = requiresRoleByPath.get(r.path);
+    lines.push(`### \`${r.path}\` (${r.authState}${role ? `, role=${role}` : ""})`);
+    lines.push(`- Final: \`${sanitizeText(finalPath)}\``);
+    lines.push(`- Status: \`${r.status}\`${r.error ? ` (${sanitizeText(r.error)})` : ""}`);
+    lines.push(`- Axe: ${(r.a11y?.violationCount ?? 0).toString()} violaciones`);
+    lines.push(`- Console: errors=${ce}, warnings=${cw}`);
+    lines.push(`- Network: httpErrors=${r.httpErrors.length}, failedRequests=${r.failedRequests.length}`);
+    lines.push(`- blockedWrites=${r.blockedWrites.length}`);
+    lines.push(`- screenshots=${r.screenshots ? "ok" : "missing"}`);
+
+    if (ce > 0) {
+      lines.push(`- Console errors (top 5):`);
+      const top = r.console.filter((c) => c.type === "error").slice(0, 5);
+      for (const c of top) lines.push(`  - ${sanitizeText(c.text)}`);
+    }
+    if (r.httpErrors.length > 0) {
+      lines.push(`- HTTP errors (top 5):`);
+      for (const e of r.httpErrors.slice(0, 5)) {
+        lines.push(`  - ${e.method} ${sanitizeText(e.url)} -> ${e.status} ${sanitizeText(e.statusText)}`);
+      }
+    }
+    if (r.failedRequests.length > 0) {
+      lines.push(`- Failed requests (top 5):`);
+      for (const f of r.failedRequests.slice(0, 5)) {
+        lines.push(`  - ${f.method} ${sanitizeText(f.url)} -> ${sanitizeText(f.failure)}`);
+      }
+    }
+    if (r.blockedWrites.length > 0) {
+      lines.push(`- Read-only blocked writes (top 5):`);
+      for (const b of r.blockedWrites.slice(0, 5)) {
+        lines.push(`  - ${b.method} ${sanitizeText(b.url)} (${sanitizeText(b.reason)})`);
+      }
+    }
+
+    lines.push(``);
+  }
+
+  if (routeResults.every((r) => r.status === "ok")) {
+    lines.push(`No se detectaron errores de navegación (status != ok) en las rutas auditadas.`);
+    lines.push(``);
+  }
+
+  return `${lines.join("\n")}\n`;
+}
+
 async function main() {
-  ensureDir(DOCS_AUDIT_DIR);
+  ensureDir(ARTIFACTS_DIR);
   ensureDir(SCREENSHOTS_DIR);
 
   const baseUrl = process.env.AUDIT_BASE_URL?.trim() || "http://localhost:3000";
@@ -1050,7 +1533,7 @@ async function main() {
     }
 
     const routeMap = parseRouteMapFromFrontendIndex();
-    writeJson(path.join(DOCS_AUDIT_DIR, "route-map.json"), routeMap);
+    writeJson(path.join(ARTIFACTS_DIR, "route-map.json"), routeMap);
     const protectedRoutes = routeMap.filter((r) => r.requiresAuth && !r.path.includes("*"));
 
     const uiReport: UiInventoryReport = {
@@ -1117,7 +1600,7 @@ async function main() {
       await authCtx.close();
     });
 
-    writeJson(path.join(DOCS_AUDIT_DIR, "ui-inventory.json"), uiReport);
+    writeJson(path.join(ARTIFACTS_DIR, "ui-inventory.json"), uiReport);
 
     // Hard fail conditions (coverage correctness):
     // - Any route marked requiresAuth that still ends at /auth after "authenticated" audit.
@@ -1190,19 +1673,56 @@ async function main() {
     }
 
     // A11y report (markdown)
-    writeText(path.join(DOCS_AUDIT_DIR, "a11y-report.md"), markdownA11yReport(uiReport.routes));
+    writeText(path.join(ARTIFACTS_DIR, "a11y-report.md"), markdownA11yReport(uiReport.routes));
 
     // Error copy catalog
     const staticErrors = extractErrorCopyStatic();
     const dynamicErrors = await extractErrorCopyDynamic(baseUrl);
-    writeJson(path.join(DOCS_AUDIT_DIR, "error-copy-catalog.json"), {
+    writeJson(path.join(ARTIFACTS_DIR, "error-copy-catalog.json"), {
       generatedAt: new Date().toISOString(),
       static: staticErrors,
       dynamic: dynamicErrors,
     });
 
     // CRO findings
-    writeText(path.join(DOCS_AUDIT_DIR, "cro-findings.md"), buildCroFindings(uiReport.routes));
+    writeText(path.join(ARTIFACTS_DIR, "cro-findings.md"), buildCroFindings(uiReport.routes));
+
+    if (AUDIT_ARTIFACTS_DIR) {
+      writeText(
+        path.join(ARTIFACTS_DIR, "qa-fullsite.md"),
+        buildQaFullsiteReport({ baseUrl, routeMap, routeResults: uiReport.routes }),
+      );
+    }
+
+    // Summary (stdout): required for CI/automation without reading files.
+    const statusCounts: Record<string, number> = {};
+    let a11yTotal = 0;
+    const totalsByImpact: Record<string, number> = {};
+    let consoleErrors = 0;
+    let httpErrors = 0;
+    let failedRequests = 0;
+    let blockedWrites = 0;
+
+    for (const r of uiReport.routes) {
+      statusCounts[r.status] = (statusCounts[r.status] ?? 0) + 1;
+      a11yTotal += r.a11y?.violationCount ?? 0;
+      for (const [impact, count] of Object.entries(r.a11y?.byImpact ?? {})) {
+        totalsByImpact[impact] = (totalsByImpact[impact] ?? 0) + count;
+      }
+      consoleErrors += r.console.filter((c) => c.type === "error").length;
+      httpErrors += r.httpErrors.length;
+      failedRequests += r.failedRequests.length;
+      blockedWrites += r.blockedWrites.length;
+    }
+
+    // eslint-disable-next-line no-console
+    console.log(
+      `[audit:fullsite] Summary: routes=${uiReport.routes.length}, status=${Object.entries(statusCounts)
+        .map(([k, v]) => `${k}=${v}`)
+        .join("|")}, a11yTotal=${a11yTotal}, a11yImpact=${Object.entries(totalsByImpact)
+        .map(([k, v]) => `${k}=${v}`)
+        .join("|") || "—"}, consoleErrors=${consoleErrors}, httpErrors=${httpErrors}, failedRequests=${failedRequests}, blockedWrites=${blockedWrites}`,
+    );
   } finally {
     safeKill(start.child);
   }
