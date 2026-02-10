@@ -35,23 +35,39 @@ function spawnDevServersIfNeeded(): { child: ReturnType<typeof spawn> | null } {
   if (!shouldStart) return { child: null };
 
   const cmd = process.env.SMOKE_START_CMD?.trim() || "npm start";
-  const child = spawn(cmd, {
-    cwd: REPO_ROOT,
-    shell: true,
-    env: {
-      ...process.env,
-      BROWSER: "none",
-    },
-    stdio: "ignore",
-  });
+  const env = {
+    ...process.env,
+    BROWSER: "none",
+  };
+
+  // Avoid `shell: true` for the default `npm start`, otherwise the "child.pid"
+  // is the shell and `process.kill(-pid)` won't terminate the actual npm/dev servers.
+  const isDefaultNpmStart = cmd === "npm start";
+  const child = isDefaultNpmStart
+    ? spawn(process.platform === "win32" ? "npm.cmd" : "npm", ["start"], {
+        cwd: REPO_ROOT,
+        detached: true,
+        env,
+        stdio: "ignore",
+      })
+    : spawn(cmd, {
+        cwd: REPO_ROOT,
+        shell: true,
+        detached: true,
+        env,
+        stdio: "ignore",
+      });
   child.unref();
   return { child };
 }
 
 function safeKill(child: ReturnType<typeof spawn> | null) {
-  if (!child) return;
+  if (!child?.pid) return;
   try {
-    child.kill("SIGTERM");
+    // Kill the whole process group (concurrently -> FE+BE).
+    // `process.kill(-pid)` is POSIX-only; keep a best-effort fallback for Windows.
+    if (process.platform === "win32") child.kill("SIGTERM");
+    else process.kill(-child.pid, "SIGTERM");
   } catch {
     // ignore
   }
@@ -66,6 +82,7 @@ async function main() {
   const baseUrl = resolveBaseUrl();
   const loginEmail = process.env.SMOKE_LOGIN_EMAIL?.trim();
   const loginPassword = process.env.SMOKE_LOGIN_PASSWORD?.trim();
+  const startingServers = process.env.SMOKE_START_SERVERS === "1";
 
   const { child } = spawnDevServersIfNeeded();
   try {
@@ -75,8 +92,11 @@ async function main() {
       process.env.REACT_APP_API_BASE_URL?.trim() ||
       process.env.SMOKE_API_BASE_URL?.trim() ||
       "";
-    if (apiBaseRaw) {
-      const apiBase = apiBaseRaw.endsWith("/") ? apiBaseRaw.slice(0, -1) : apiBaseRaw;
+    const inferredApiBase =
+      apiBaseRaw ||
+      (startingServers && baseUrl.includes("localhost:3000") ? "http://localhost:5001" : "");
+    if (inferredApiBase) {
+      const apiBase = inferredApiBase.endsWith("/") ? inferredApiBase.slice(0, -1) : inferredApiBase;
       await waitForHttpOk(`${apiBase}/api/analytics/health`, 120_000);
     }
 
