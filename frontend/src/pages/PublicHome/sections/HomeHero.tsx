@@ -22,9 +22,10 @@ export default function HomeHero(props: {
   trial: TrialSummary | null;
   ctaLabel: string;
   onPrimaryCtaClick: () => void;
-  onDemoClick: () => void;
+  onDemoScroll: () => void;
+  onTourClick: () => void;
 }) {
-  const { totalTBLabel, downloadQuotaLabel, trial, ctaLabel, onPrimaryCtaClick, onDemoClick } = props;
+  const { totalTBLabel, downloadQuotaLabel, trial, ctaLabel, onPrimaryCtaClick, onDemoScroll, onTourClick } = props;
 
   const hasTrial = Boolean(trial?.enabled);
   const microcopy = hasTrial ? HOME_HERO_MICROCOPY_TRIAL : HOME_HERO_MICROCOPY_BASE;
@@ -65,14 +66,14 @@ export default function HomeHero(props: {
         </div>
 
         <div className="home-hero__visual" aria-label="Así se ve por dentro">
-          <div className="home-visual">
-            <div className="home-visual__head">
-              <strong>Así se ve por dentro</strong>
-              <button type="button" className="home-visual__demo" onClick={onDemoClick}>
-                <PlayCircle size={18} aria-hidden />
-                Ver demo
-              </button>
-            </div>
+            <div className="home-visual">
+              <div className="home-visual__head">
+                <strong>Así se ve por dentro</strong>
+                <button type="button" className="home-visual__demo" onClick={onDemoScroll}>
+                  <PlayCircle size={18} aria-hidden />
+                  Ver demo
+                </button>
+              </div>
             <ul className="home-visual__bullets" aria-label="Qué verás al activar">
               <li>Audios / Videos / Karaoke</li>
               <li>Búsqueda por canción, artista o carpeta</li>
@@ -82,8 +83,8 @@ export default function HomeHero(props: {
               <button
                 type="button"
                 className="home-visual__frame-btn"
-                onClick={onDemoClick}
-                aria-label="Ver demo del catálogo"
+                onClick={onTourClick}
+                aria-label="Ver captura del catálogo"
               >
                 <picture>
                   <source srcSet={CatalogPreviewWebp} type="image/webp" />
@@ -98,7 +99,7 @@ export default function HomeHero(props: {
                 </picture>
               </button>
             </div>
-            <p className="home-visual__note">Vista real del catálogo. Abre la demo para ver detalles.</p>
+            <p className="home-visual__note">Vista real del catálogo. Toca la captura para ver detalles.</p>
           </div>
         </div>
       </div>

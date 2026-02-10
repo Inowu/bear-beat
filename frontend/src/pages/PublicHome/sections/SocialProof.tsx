@@ -1,11 +1,18 @@
-import { useId, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Modal } from "react-bootstrap";
+import { Loader2, Pause, Play } from "lucide-react";
+import trpc from "../../../api";
+import { apiBaseUrl } from "../../../utils/runtimeConfig";
+import { GROWTH_METRICS, trackGrowthMetric } from "../../../utils/growthMetrics";
 import { formatDownloads } from "../homeFormat";
 
 export type SocialTopItem = {
+  path: string;
   name: string;
   downloads: number;
 };
+
+type DemoKind = "audio" | "video";
 
 function isLikelyBpm(value: number): boolean {
   return Number.isFinite(value) && value >= 50 && value <= 220;
@@ -88,8 +95,12 @@ function TopList(props: {
   title: string;
   items: SocialTopItem[];
   maxRows: number;
+  activeKey: string | null;
+  loadingKey: string | null;
+  isPlaying: boolean;
+  onToggleDemo: (row: { key: string; path: string; label: string; kindHint: string }) => void;
 }) {
-  const { title, items, maxRows } = props;
+  const { title, items, maxRows, activeKey, loadingKey, isPlaying, onToggleDemo } = props;
   const headingId = useId();
 
   const rows = useMemo(() => {
@@ -97,11 +108,13 @@ function TopList(props: {
       const raw = `${item.name ?? ""}`.trim();
       const parsed = extractTrailingMeta(raw);
       const normalized = parsed.clean || raw;
+      const rowKey = item.path ? item.path : `${raw}__${idx}`;
 
       const sepMatch = normalized.match(/\s[-–]\s/);
       if (!sepMatch) {
         return {
-          key: `${raw}__${idx}`,
+          key: rowKey,
+          path: item.path,
           artist: "",
           track: normalized || raw,
           downloads: item.downloads,
@@ -115,7 +128,8 @@ function TopList(props: {
       const artist = normalized.slice(0, sepIdx).trim();
       const track = normalized.slice(sepIdx + sepLen).trim();
       return {
-        key: `${raw}__${idx}`,
+        key: rowKey,
+        path: item.path,
         artist,
         track: track || raw,
         downloads: item.downloads,
@@ -135,6 +149,40 @@ function TopList(props: {
       <div role="list">
         {rows.map((item) => (
           <div key={item.key} className="social-proof__row" role="listitem">
+            <button
+              type="button"
+              className={[
+                "social-proof__play",
+                activeKey === item.key ? "social-proof__play--active" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              onClick={() => {
+                onToggleDemo({
+                  key: item.key,
+                  path: item.path,
+                  label: item.artist ? `${item.artist} – ${item.track}` : item.track,
+                  kindHint: title.toLowerCase(),
+                });
+              }}
+              disabled={!item.path || loadingKey === item.key}
+              aria-label={
+                loadingKey === item.key
+                  ? "Cargando demo"
+                  : activeKey === item.key && isPlaying
+                    ? `Pausar demo de ${item.artist ? `${item.artist} – ${item.track}` : item.track}`
+                    : `Reproducir demo de ${item.artist ? `${item.artist} – ${item.track}` : item.track}`
+              }
+              data-testid="home-topdemo-play"
+            >
+              {loadingKey === item.key ? (
+                <Loader2 size={18} className="social-proof__spinner" aria-hidden />
+              ) : activeKey === item.key && isPlaying ? (
+                <Pause size={18} aria-hidden />
+              ) : (
+                <Play size={18} aria-hidden />
+              )}
+            </button>
             <div className="social-proof__left">
               <span className="social-proof__name" title={item.artist ? `${item.artist} – ${item.track}` : item.track}>
                 {item.artist ? (
@@ -179,6 +227,130 @@ export default function SocialProof(props: {
 }) {
   const { audio, video, karaoke, onMoreClick } = props;
   const [showMore, setShowMore] = useState(false);
+  const [activeKey, setActiveKey] = useState<string | null>(null);
+  const [loadingKey, setLoadingKey] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [nowPlayingLabel, setNowPlayingLabel] = useState<string>("");
+  const [demoAlert, setDemoAlert] = useState<string | null>(null);
+
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const demoCache = useRef<Map<string, { url: string; kind: DemoKind }>>(new Map());
+
+  const stopPlayback = useCallback(() => {
+    const audioEl = audioRef.current;
+    const videoEl = videoRef.current;
+    if (audioEl) {
+      audioEl.pause();
+    }
+    if (videoEl) {
+      videoEl.pause();
+    }
+    setIsPlaying(false);
+  }, []);
+
+  useEffect(() => {
+    return () => stopPlayback();
+  }, [stopPlayback]);
+
+  const playUrl = useCallback(async (kind: DemoKind, url: string) => {
+    const audioEl = audioRef.current;
+    const videoEl = videoRef.current;
+
+    if (kind === "audio") {
+      if (!audioEl) throw new Error("Missing audio element");
+      if (videoEl) {
+        videoEl.pause();
+        videoEl.removeAttribute("src");
+        videoEl.load();
+      }
+      audioEl.src = url;
+      audioEl.currentTime = 0;
+      await audioEl.play();
+      return;
+    }
+
+    if (!videoEl) throw new Error("Missing video element");
+    if (audioEl) {
+      audioEl.pause();
+      audioEl.removeAttribute("src");
+      audioEl.load();
+    }
+    videoEl.src = url;
+    videoEl.currentTime = 0;
+    await videoEl.play();
+  }, []);
+
+  const onToggleDemo = useCallback(
+    async (row: { key: string; path: string; label: string; kindHint: string }) => {
+      setDemoAlert(null);
+
+      if (activeKey === row.key) {
+        if (isPlaying) {
+          stopPlayback();
+          return;
+        }
+
+        const cached = demoCache.current.get(row.key);
+        if (!cached) {
+          setActiveKey(null);
+          setNowPlayingLabel("");
+          return;
+        }
+
+        try {
+          setLoadingKey(row.key);
+          await playUrl(cached.kind, cached.url);
+          setIsPlaying(true);
+          setNowPlayingLabel(row.label);
+        } catch {
+          setDemoAlert("No pudimos reproducir este demo. Intenta con otro archivo.");
+        } finally {
+          setLoadingKey(null);
+        }
+
+        return;
+      }
+
+      try {
+        stopPlayback();
+        setActiveKey(row.key);
+        setLoadingKey(row.key);
+        setNowPlayingLabel(row.label);
+
+        const cached = demoCache.current.get(row.key);
+        if (cached) {
+          await playUrl(cached.kind, cached.url);
+          setIsPlaying(true);
+          return;
+        }
+
+        const result = (await trpc.downloadHistory.getPublicTopDemo.query({
+          path: row.path,
+        })) as { demo: string; kind: DemoKind };
+        const url = new URL(result.demo, apiBaseUrl).toString();
+        const kind: DemoKind = result.kind === "video" ? "video" : "audio";
+        demoCache.current.set(row.key, { url, kind });
+
+        trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, {
+          location: "top_downloads",
+          kind,
+          source: row.kindHint,
+        });
+
+        await playUrl(kind, url);
+        setIsPlaying(true);
+      } catch {
+        setDemoAlert("No pudimos cargar el demo en este momento. Intenta de nuevo más tarde.");
+        setActiveKey(null);
+        setNowPlayingLabel("");
+        setIsPlaying(false);
+      } finally {
+        setLoadingKey(null);
+      }
+    },
+    [activeKey, isPlaying, playUrl, stopPlayback],
+  );
 
   const hasAudio = (audio?.length ?? 0) > 0;
   const hasVideo = (video?.length ?? 0) > 0;
@@ -206,7 +378,18 @@ export default function SocialProof(props: {
         <div className="social-proof__head">
           <div>
             <h2 className="home-h2">Lo que más se descarga</h2>
-            <p className="home-sub">Top real por categoría.</p>
+            <p className="home-sub">Top real por categoría. Toca play para escuchar un demo (aprox. 60s).</p>
+            {nowPlayingLabel && (
+              <p className="social-proof__now-playing" aria-live="polite">
+                {isPlaying ? "Reproduciendo demo: " : "Demo en pausa: "}
+                <span className="social-proof__now-playing-name">{nowPlayingLabel}</span>
+              </p>
+            )}
+            {demoAlert && (
+              <p className="social-proof__alert" role="alert">
+                {demoAlert}
+              </p>
+            )}
           </div>
           <button
             type="button"
@@ -226,6 +409,10 @@ export default function SocialProof(props: {
               title={titleWithTopCount("Audios", audio.length)}
               items={audio}
               maxRows={Math.min(5, audio.length)}
+              activeKey={activeKey}
+              loadingKey={loadingKey}
+              isPlaying={isPlaying}
+              onToggleDemo={onToggleDemo}
             />
           )}
           {hasVideo && (
@@ -233,6 +420,10 @@ export default function SocialProof(props: {
               title={titleWithTopCount("Videos", video.length)}
               items={video}
               maxRows={Math.min(5, video.length)}
+              activeKey={activeKey}
+              loadingKey={loadingKey}
+              isPlaying={isPlaying}
+              onToggleDemo={onToggleDemo}
             />
           )}
           {hasKaraoke && (
@@ -240,9 +431,34 @@ export default function SocialProof(props: {
               title={titleWithTopCount("Karaokes", karaoke.length)}
               items={karaoke}
               maxRows={Math.min(5, karaoke.length)}
+              activeKey={activeKey}
+              loadingKey={loadingKey}
+              isPlaying={isPlaying}
+              onToggleDemo={onToggleDemo}
             />
           )}
         </div>
+      </div>
+
+      <div className="social-proof__sr-player" aria-hidden>
+        <audio
+          ref={audioRef}
+          preload="none"
+          onEnded={() => setIsPlaying(false)}
+          onPause={() => setIsPlaying(false)}
+          onPlay={() => setIsPlaying(true)}
+        />
+        <video
+          ref={videoRef}
+          preload="none"
+          playsInline
+          // Avoid accidental full-screen/PiP controls; we only need audio playback.
+          controls={false}
+          disablePictureInPicture
+          onEnded={() => setIsPlaying(false)}
+          onPause={() => setIsPlaying(false)}
+          onPlay={() => setIsPlaying(true)}
+        />
       </div>
 
       <Modal
@@ -264,6 +480,10 @@ export default function SocialProof(props: {
                 title={titleWithTopCount("Audios", audio.length)}
                 items={audio}
                 maxRows={Math.min(20, audio.length)}
+                activeKey={activeKey}
+                loadingKey={loadingKey}
+                isPlaying={isPlaying}
+                onToggleDemo={onToggleDemo}
               />
             )}
             {hasVideo && (
@@ -271,6 +491,10 @@ export default function SocialProof(props: {
                 title={titleWithTopCount("Videos", video.length)}
                 items={video}
                 maxRows={Math.min(20, video.length)}
+                activeKey={activeKey}
+                loadingKey={loadingKey}
+                isPlaying={isPlaying}
+                onToggleDemo={onToggleDemo}
               />
             )}
             {hasKaraoke && (
@@ -278,6 +502,10 @@ export default function SocialProof(props: {
                 title={titleWithTopCount("Karaokes", karaoke.length)}
                 items={karaoke}
                 maxRows={Math.min(20, karaoke.length)}
+                activeKey={activeKey}
+                loadingKey={loadingKey}
+                isPlaying={isPlaying}
+                onToggleDemo={onToggleDemo}
               />
             )}
           </div>

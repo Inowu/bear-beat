@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import trpc from "../../api";
 import Logo from "../../assets/images/osonuevo.png";
@@ -58,9 +58,9 @@ type PublicCatalogSummary = {
 };
 
 type PublicTopDownloadsResponse = {
-  audio: Array<{ name: string; downloads: number }>;
-  video: Array<{ name: string; downloads: number }>;
-  karaoke: Array<{ name: string; downloads: number }>;
+  audio: Array<{ path: string; name: string; downloads: number }>;
+  video: Array<{ path: string; name: string; downloads: number }>;
+  karaoke: Array<{ path: string; name: string; downloads: number }>;
   generatedAt: string;
   limit: number;
   sinceDays: number;
@@ -140,6 +140,7 @@ function toPricingPlan(plan: IPlans, currency: "mxn" | "usd"): PricingPlan {
 }
 
 export default function PublicHome() {
+  const location = useLocation();
   const preferredCurrency = useMemo(() => detectPreferredCurrency(), []);
   const [trialConfig, setTrialConfig] = useState<TrialConfigResponse | null>(null);
   const [catalogSummary, setCatalogSummary] = useState<PublicCatalogSummary | null>(null);
@@ -304,9 +305,10 @@ export default function PublicHome() {
   const socialAudio = useMemo(() => {
     const items = topDownloads?.audio ?? [];
     return items
-      .filter((item) => item && typeof item.name === "string")
+      .filter((item) => item && typeof item.name === "string" && typeof item.path === "string")
       .slice(0, 20)
       .map((item) => ({
+        path: item.path,
         name: prettyMediaName(item.name) || item.name,
         downloads: Number(item.downloads ?? 0),
       }));
@@ -315,9 +317,10 @@ export default function PublicHome() {
   const socialVideo = useMemo(() => {
     const items = topDownloads?.video ?? [];
     return items
-      .filter((item) => item && typeof item.name === "string")
+      .filter((item) => item && typeof item.name === "string" && typeof item.path === "string")
       .slice(0, 20)
       .map((item) => ({
+        path: item.path,
         name: prettyMediaName(item.name) || item.name,
         downloads: Number(item.downloads ?? 0),
       }));
@@ -326,9 +329,10 @@ export default function PublicHome() {
   const socialKaraoke = useMemo(() => {
     const items = topDownloads?.karaoke ?? [];
     return items
-      .filter((item) => item && typeof item.name === "string")
+      .filter((item) => item && typeof item.name === "string" && typeof item.path === "string")
       .slice(0, 20)
       .map((item) => ({
+        path: item.path,
         name: prettyMediaName(item.name) || item.name,
         downloads: Number(item.downloads ?? 0),
       }));
@@ -351,8 +355,32 @@ export default function PublicHome() {
     [],
   );
 
-  const onDemoClick = useCallback(() => {
+  const scrollToDemo = useCallback(
+    (options: { behavior?: ScrollBehavior; focusSearch?: boolean } = {}) => {
+      if (typeof window === "undefined") return;
+      const section = document.getElementById("demo");
+      if (section) {
+        section.scrollIntoView({ behavior: options.behavior ?? "smooth", block: "start" });
+      }
+      window.history.replaceState(null, "", "#demo");
+      if (options.focusSearch) {
+        // Avoid opening the keyboard on initial page load; focus only on explicit click.
+        window.setTimeout(() => {
+          const input = document.getElementById("catalog-demo-search") as HTMLInputElement | null;
+          input?.focus({ preventScroll: true });
+        }, 0);
+      }
+    },
+    [],
+  );
+
+  const onDemoScroll = useCallback(() => {
     trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, { location: "hero_block" });
+    scrollToDemo({ behavior: "smooth", focusSearch: true });
+  }, [scrollToDemo]);
+
+  const onTourClick = useCallback(() => {
+    trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, { location: "hero_modal" });
     setShowDemo(true);
   }, []);
 
@@ -361,6 +389,11 @@ export default function PublicHome() {
     // Track that the user actually viewed the demo modal (separate from the click source).
     trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, { location: "modal" });
   }, [showDemo]);
+
+  useEffect(() => {
+    if (location.hash !== "#demo") return;
+    scrollToDemo({ behavior: "auto", focusSearch: false });
+  }, [location.hash, scrollToDemo]);
 
   const onFaqExpand = useCallback((id: string) => {
     trackGrowthMetric(GROWTH_METRICS.FAQ_EXPAND, { question: id });
@@ -418,7 +451,8 @@ export default function PublicHome() {
           trial={trialSummary}
           ctaLabel={ctaPrimaryLabel}
           onPrimaryCtaClick={() => onPrimaryCtaClick("hero")}
-          onDemoClick={onDemoClick}
+          onDemoScroll={onDemoScroll}
+          onTourClick={onTourClick}
         />
 
         <TrustBar
