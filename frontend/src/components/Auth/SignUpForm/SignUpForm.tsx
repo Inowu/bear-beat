@@ -433,13 +433,13 @@ function SignUpForm() {
 
           <ul className="auth-signup-bullets" aria-label="Beneficios">
             <li>
-              <strong>Catálogo gigante</strong>: audio, videos y karaokes
+              <strong>Catálogo gigante</strong>: audios, videos y karaokes
             </li>
             <li>
-              <strong>Descarga por FTP o web</strong> (tú eliges)
+              <strong>Descarga a tu modo</strong>: FTP o web
             </li>
             <li>
-              <strong>Soporte por chat</strong> para activar rápido
+              <strong>Soporte por chat</strong>: te ayudamos a activar rápido
             </li>
           </ul>
 
