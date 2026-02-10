@@ -884,24 +884,24 @@ function Home() {
               </button>
             </div>
 
-            <div className="bb-library-route">
-              <nav className="bb-breadcrumb" aria-label="Ruta">
-                <ol className="bb-breadcrumb-list">
-                  <li className="bb-breadcrumb-item">
-                    <button type="button" onClick={goToRoot} className="bb-breadcrumb-link">
-                      Inicio
-                    </button>
-                  </li>
+	            <div className="bb-library-route">
+	              <nav className="bb-breadcrumb" aria-label="Ruta" tabIndex={0} data-scroll-region>
+	                <ol className="bb-breadcrumb-list">
+	                  <li className="bb-breadcrumb-item">
+	                    <button type="button" onClick={goToRoot} className="bb-breadcrumb-link">
+	                      Inicio
+	                    </button>
+	                  </li>
                   {!showPagination &&
                     pastFile.map((file: any, index) => {
                       const isLastFolder = pastFile.length === index + 1;
-                      if (isLastFolder) {
-                        return (
-                          <li key={`folder_${index}`} className="bb-breadcrumb-item">
-                            <span className="bb-breadcrumb-current">{file}</span>
-                          </li>
-                        );
-                      }
+	                      if (isLastFolder) {
+	                        return (
+	                          <li key={`folder_${index}`} className="bb-breadcrumb-item">
+	                            <span className="bb-breadcrumb-current" aria-current="page">{file}</span>
+	                          </li>
+	                        );
+	                      }
                       return (
                         <li key={`folder_${index}`} className="bb-breadcrumb-item">
                           <button
