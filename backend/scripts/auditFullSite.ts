@@ -382,8 +382,9 @@ async function applyPrivacyMaskForScreenshots(page: Page): Promise<void> {
 
 function getScreenshotMaskLocators(page: Page, route: RouteMapEntry): Locator[] {
   if (!PRIVACY_MASK) return [];
-  // Only mask authenticated/admin surfaces to keep public/auth screenshots readable.
-  if (route.type === "public" || route.type === "auth") return [];
+  // Public screenshots are safe to keep readable. Any other surface (auth/app/admin)
+  // can contain typed values (email/password) or account data; always mask inputs.
+  if (route.type === "public") return [];
 
   const masks: Locator[] = [];
 
