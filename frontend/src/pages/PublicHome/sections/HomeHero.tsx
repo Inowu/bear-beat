@@ -46,8 +46,8 @@ export default function HomeHero(props: {
               <span className="home-stat__label bb-stat-pill__label">de descarga</span>
             </div>
             <div role="listitem" className="home-stat bb-stat-pill">
-              <span className="home-stat__value bb-stat-pill__value">Año / Mes / Semana / Género</span>
-              <span className="home-stat__label bb-stat-pill__label">carpetas listas</span>
+              <span className="home-stat__value bb-stat-pill__value">Audios / Videos / Karaoke</span>
+              <span className="home-stat__label bb-stat-pill__label">Año / Mes / Semana / Género</span>
             </div>
           </div>
 
