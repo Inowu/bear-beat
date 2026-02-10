@@ -2,33 +2,36 @@
 
 .legal2026 {
   min-height: 100vh;
-  background: var(--app-bg);
-  color: var(--app-text-body);
-  padding: clamp(1.1rem, 2.2vw, 1.8rem) 0 clamp(2rem, 4vw, 3rem);
+  color: var(--ph-text-body);
+  background:
+    radial-gradient(900px 560px at 10% 0%, rgba(8, 225, 247, 0.12), transparent 60%),
+    radial-gradient(860px 520px at 90% 10%, rgba(8, 225, 247, 0.08), transparent 60%),
+    var(--ph-bg);
+  padding: 38px 0 46px;
 }
 
 .legal2026__container {
-  width: min(1080px, calc(100% - 2rem));
+  width: min(1120px, calc(100% - 40px));
   margin-inline: auto;
   display: grid;
   gap: 0.9rem;
 }
 
 .legal2026__hero {
-  border-radius: 22px;
-  border: 1px solid color-mix(in srgb, var(--app-accent) 20%, var(--app-border));
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--ph-border) 70%, transparent);
   background: linear-gradient(
     160deg,
-    color-mix(in srgb, var(--app-bg-card) 95%, transparent),
-    color-mix(in srgb, var(--app-accent) 3%, var(--app-bg-card))
+    color-mix(in srgb, var(--ph-bg-card) 92%, transparent),
+    color-mix(in srgb, var(--ph-accent) 6%, var(--ph-bg-card))
   );
-  box-shadow: var(--app-shadow);
-  padding: clamp(1.1rem, 2.4vw, 1.8rem);
+  box-shadow: var(--ph-shadow-card);
+  padding: clamp(1.1rem, 2.4vw, 1.7rem);
 }
 
 .legal2026__eyebrow {
   margin: 0;
-  color: var(--app-accent);
+  color: var(--ph-accent);
   font-size: 0.8rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -37,14 +40,14 @@
 
 .legal2026__hero h1 {
   margin: 0.38rem 0 0;
-  color: var(--app-text-heading);
+  color: var(--ph-text-heading);
   font-size: clamp(1.45rem, 3.7vw, 2.1rem);
   line-height: 1.1;
 }
 
 .legal2026__lead {
   margin: 0.58rem 0 0;
-  color: var(--app-text-body);
+  color: color-mix(in srgb, var(--ph-text-body) 88%, transparent);
   font-size: clamp(0.93rem, 2.1vw, 1.02rem);
   line-height: 1.55;
   max-width: 68ch;
@@ -52,7 +55,7 @@
 
 .legal2026__updated {
   margin: 0.55rem 0 0;
-  color: var(--app-text-muted);
+  color: var(--ph-text-muted);
   font-size: 0.84rem;
   font-weight: 600;
 }
@@ -66,8 +69,8 @@
 
 .legal2026__btn {
   min-height: 44px;
-  border-radius: 999px;
-  padding: 0 0.95rem;
+  border-radius: 14px;
+  padding: 14px 18px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -75,20 +78,21 @@
   text-decoration: none;
   font-size: 0.9rem;
   font-weight: 800;
+  letter-spacing: 0.01em;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .legal2026__btn--primary {
-  border: 1px solid color-mix(in srgb, var(--app-accent) 45%, transparent);
-  background: var(--app-gradient);
-  color: var(--app-btn-text);
-  box-shadow: 0 9px 20px color-mix(in srgb, var(--app-accent) 22%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ph-accent) 42%, transparent);
+  background: var(--ph-btn-bg);
+  color: var(--ph-btn-text);
+  box-shadow: 0 18px 52px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(8, 225, 247, 0.22);
 }
 
 .legal2026__btn--ghost {
-  border: 1px solid color-mix(in srgb, var(--app-accent) 30%, var(--app-border));
-  background: color-mix(in srgb, var(--app-bg-card) 90%, transparent);
-  color: var(--app-text-body);
+  border: 1px solid color-mix(in srgb, var(--ph-accent) 30%, transparent);
+  background: color-mix(in srgb, var(--ph-bg-card) 90%, transparent);
+  color: color-mix(in srgb, var(--ph-text-body) 92%, transparent);
 }
 
 .legal2026__btn:hover {
@@ -103,9 +107,9 @@
   a {
     min-height: 44px;
     border-radius: 999px;
-    border: 1px solid color-mix(in srgb, var(--app-accent) 26%, var(--app-border));
-    background: color-mix(in srgb, var(--app-bg-card) 92%, transparent);
-    color: var(--app-text-body);
+    border: 1px solid color-mix(in srgb, var(--ph-border) 70%, transparent);
+    background: color-mix(in srgb, var(--ph-bg-card) 86%, transparent);
+    color: color-mix(in srgb, var(--ph-text-body) 92%, transparent);
     text-decoration: none;
     font-size: 0.82rem;
     font-weight: 700;
@@ -118,9 +122,9 @@
 
 .legal2026__section {
   border-radius: 18px;
-  border: 1px solid color-mix(in srgb, var(--app-border) 85%, transparent);
-  background: var(--app-bg-card);
-  box-shadow: var(--app-shadow);
+  border: 1px solid color-mix(in srgb, var(--ph-border) 72%, transparent);
+  background: color-mix(in srgb, var(--ph-bg-card) 90%, transparent);
+  box-shadow: var(--ph-shadow-card);
   padding: clamp(0.95rem, 2.2vw, 1.35rem);
 }
 
@@ -131,12 +135,12 @@
   margin-bottom: 0.68rem;
 
   svg {
-    color: var(--app-accent);
+    color: var(--ph-accent);
   }
 
   h2 {
     margin: 0;
-    color: var(--app-text-heading);
+    color: var(--ph-text-heading);
     font-size: clamp(1.06rem, 2.4vw, 1.2rem);
   }
 }
@@ -148,13 +152,13 @@
 
 .legal2026__faq-item {
   border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--app-border) 86%, transparent);
-  background: color-mix(in srgb, var(--app-bg-soft) 54%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ph-border) 75%, transparent);
+  background: color-mix(in srgb, var(--ph-bg-soft) 76%, transparent);
   padding: 0.68rem 0.78rem;
 
   summary {
     cursor: pointer;
-    color: var(--app-text-heading);
+    color: var(--ph-text-heading);
     font-size: 0.93rem;
     font-weight: 700;
     line-height: 1.4;
@@ -162,7 +166,7 @@
 
   p {
     margin: 0.56rem 0 0;
-    color: var(--app-text-body);
+    color: color-mix(in srgb, var(--ph-text-body) 92%, transparent);
     font-size: 0.9rem;
     line-height: 1.52;
   }
@@ -174,14 +178,14 @@
 
   h3 {
     margin: 0.18rem 0 0;
-    color: var(--app-text-heading);
+    color: var(--ph-text-heading);
     font-size: 0.94rem;
     font-weight: 800;
   }
 
   p {
     margin: 0;
-    color: var(--app-text-body);
+    color: color-mix(in srgb, var(--ph-text-body) 92%, transparent);
     font-size: 0.9rem;
     line-height: 1.56;
   }
@@ -189,7 +193,7 @@
 
 @include respond-to(phone) {
   .legal2026__container {
-    width: min(1080px, calc(100% - 1.2rem));
+    width: min(1120px, calc(100% - 28px));
   }
 
   .legal2026__hero-actions {
@@ -199,4 +203,16 @@
   .legal2026__btn {
     width: 100%;
   }
+}
+
+.legal2026 a:focus-visible,
+.legal2026 summary:focus-visible,
+.legal2026__btn:focus-visible,
+.legal2026__quick-nav a:focus-visible {
+  outline: 2px solid var(--app-focus-ring);
+  outline-offset: 2px;
+}
+
+.legal2026__btn:active {
+  transform: translateY(1px);
 }
