@@ -143,6 +143,7 @@ const SCREENSHOTS_DIR = AUDIT_ARTIFACTS_DIR
 
 const READ_ONLY = process.env.AUDIT_READ_ONLY === "1";
 const PRIVACY_MASK = process.env.AUDIT_PRIVACY_MASK === "1" || READ_ONLY;
+const AUDIT_EXTRA_HEADERS = READ_ONLY ? { "x-bb-audit-readonly": "1" } : undefined;
 
 function ensureDir(p: string) {
   fs.mkdirSync(p, { recursive: true });
@@ -1272,7 +1273,9 @@ async function extractErrorCopyDynamic(baseUrl: string): Promise<any[]> {
   const items: any[] = [];
 
   await withBrowser(async (browser) => {
-    const ctx = await browser.newContext();
+    const ctx = await browser.newContext({
+      extraHTTPHeaders: AUDIT_EXTRA_HEADERS,
+    });
     const page = await ctx.newPage();
     await installReadOnlyGuard(page, []).catch(() => null);
 
@@ -1549,6 +1552,7 @@ async function main() {
     await withBrowser(async (browser) => {
       const anonCtx = await browser.newContext({
         viewport: { width: 1440, height: 900 },
+        extraHTTPHeaders: AUDIT_EXTRA_HEADERS,
       });
 
       // Logged-out coverage: only public + auth routes.
@@ -1572,6 +1576,7 @@ async function main() {
 
       const authCtx = await browser.newContext({
         viewport: { width: 1440, height: 900 },
+        extraHTTPHeaders: AUDIT_EXTRA_HEADERS,
       });
       const tokens = await tryLogin(authCtx, baseUrl);
       if (tokens) {

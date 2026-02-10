@@ -461,7 +461,12 @@ export const plansRouter = router({
     .input(PlansFindManySchema)
     .query(async ({ ctx, input }) => {
       const findManyPlans = await ctx.prisma.plans.findMany(input);
-      if (ctx.session?.user?.id && findManyPlans.length > 0) {
+      // Production audits are READ-ONLY. When the auditor sets this header, avoid
+      // triggering external side-effects (ManyChat tags/custom fields) from a query.
+      const auditReadOnlyHeader = ctx.req?.headers?.['x-bb-audit-readonly'];
+      const isAuditReadOnly = auditReadOnlyHeader === '1';
+
+      if (!isAuditReadOnly && ctx.session?.user?.id && findManyPlans.length > 0) {
         const user = await ctx.prisma.users.findFirst({
           where: { id: ctx.session.user.id },
         });
