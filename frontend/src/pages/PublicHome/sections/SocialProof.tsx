@@ -305,7 +305,7 @@ export default function SocialProof(props: {
               setShowMore(true);
             }}
           >
-            Ver más →
+            Ver top por categoría →
           </button>
         </div>
 
