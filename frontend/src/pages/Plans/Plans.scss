@@ -6,8 +6,8 @@
   padding: 38px 0 46px;
   color: var(--ph-text-body);
   background:
-    radial-gradient(900px 560px at 10% 0%, rgba(8, 225, 247, 0.12), transparent 60%),
-    radial-gradient(860px 520px at 90% 10%, rgba(8, 225, 247, 0.08), transparent 60%),
+    radial-gradient(900px 560px at 10% 0%, var(--bb-landing-spot-1), transparent 60%),
+    radial-gradient(860px 520px at 90% 10%, var(--bb-landing-spot-2), transparent 60%),
     var(--ph-bg);
 }
 
@@ -249,6 +249,25 @@
 
 /* Single plan card layout: currency toggle handles switching. */
 
+@media (min-width: 920px) {
+  .plans-plan-grid--compare {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-items: stretch;
+    align-items: stretch;
+  }
+
+  .plans-plan-grid--compare .plans-plan-item {
+    max-width: none;
+  }
+}
+
+.plans-plan-item.is-selected .plan-card-main-card {
+  border-color: color-mix(in srgb, var(--ph-accent) 44%, transparent);
+  box-shadow:
+    0 14px 34px color-mix(in srgb, var(--ph-accent) 10%, transparent),
+    var(--ph-shadow-card);
+}
+
 .plans-state-wrap {
   min-height: clamp(300px, 50vh, 560px);
   display: flex;
@@ -273,7 +292,7 @@
   padding: 12px 14px calc(12px + env(safe-area-inset-bottom));
   background: linear-gradient(
     to top,
-    color-mix(in srgb, var(--ph-bg) 94%, black) 0%,
+    color-mix(in srgb, var(--ph-bg) 92%, var(--bb-surface) 8%) 0%,
     color-mix(in srgb, var(--ph-bg) 76%, transparent) 100%
   );
   border-top: 1px solid color-mix(in srgb, var(--ph-border) 72%, transparent);

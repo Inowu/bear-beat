@@ -431,7 +431,7 @@ function SignUpForm() {
           <img src={Logo} alt="Bear Beat" className="auth-login-logo" />
           <h1 className="auth-login-title">Crea tu cuenta</h1>
           <p className="auth-login-sub">Activa en minutos y empieza con demos antes de descargar.</p>
-          <ChatButton />
+          <ChatButton variant="inline" />
 
           <ul className="auth-signup-bullets" aria-label="Beneficios">
             <li>

@@ -37,6 +37,21 @@ function Plans() {
   const navigate = useNavigate();
   const preferredCurrency = useMemo(() => detectPreferredCurrency(), []);
   const [selectedCurrency, setSelectedCurrency] = useState<"mxn" | "usd">(preferredCurrency);
+  const [isCompareWidth, setIsCompareWidth] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(min-width: 920px)");
+    const update = () => setIsCompareWidth(mq.matches);
+    update();
+    if (typeof mq.addEventListener === "function") {
+      mq.addEventListener("change", update);
+      return () => mq.removeEventListener("change", update);
+    }
+    // Safari fallback.
+    mq.addListener(update);
+    return () => mq.removeListener(update);
+  }, []);
 
   const getPlans = async () => {
     setLoadError('');
@@ -176,10 +191,7 @@ function Plans() {
     if (values.length === 0) return 0;
     return Math.max(...values);
   }, [sortedPlans]);
-  const heroMicrocopy =
-    trialConfig?.enabled && trialConfig.eligible !== false
-      ? `Prueba: ${formatInt(trialConfig.days)} días + ${formatInt(trialConfig.gb)} GB (solo tarjeta/Stripe). Otros métodos activan sin prueba.`
-      : "Pago mensual. Cancela cuando quieras.";
+  const heroMicrocopy = "Pago mensual. Cancela cuando quieras.";
 
   useEffect(() => {
     const hasSelected = selectedCurrency === "mxn" ? Boolean(plansByCurrency.mxn) : Boolean(plansByCurrency.usd);
@@ -203,10 +215,16 @@ function Plans() {
     navigate(target);
   };
 
+  const isCompareLayout = Boolean(isCompareWidth && plansByCurrency.mxn && plansByCurrency.usd);
   const plansToRender = useMemo(() => {
     if (!plansByCurrency.mxn && !plansByCurrency.usd) return [];
+    if (isCompareLayout) {
+      return preferredCurrency === "mxn"
+        ? ([plansByCurrency.mxn, plansByCurrency.usd].filter(Boolean) as IPlans[])
+        : ([plansByCurrency.usd, plansByCurrency.mxn].filter(Boolean) as IPlans[]);
+    }
     return primaryPlan ? [primaryPlan] : [];
-  }, [plansByCurrency.mxn, plansByCurrency.usd, primaryPlan]);
+  }, [isCompareLayout, plansByCurrency.mxn, plansByCurrency.usd, preferredCurrency, primaryPlan]);
 
   // Loader: mientras estemos cargando planes
   if (loader) {
@@ -229,9 +247,9 @@ function Plans() {
   return (
     <div className="plans-page">
       <div className="plans-main-container">
-        <section className="plans-hero" aria-label="Planes">
-          <h1 className="plans-page-title">Elige tu moneda y activa</h1>
-          <p className="plans-hero-subtitle">Activa tu membresía en minutos y llega con repertorio listo.</p>
+        <section className="plans-hero" aria-label="Planes" data-testid="plans-hero">
+          <h1 className="plans-page-title">Planes y precios</h1>
+          <p className="plans-hero-subtitle">Elige MXN o USD. Activa en minutos y llega con repertorio listo.</p>
           <ul className="plans-decision-grid" aria-label="Qué vas a decidir">
             <li className="plans-decision-card">
               <Zap className="plans-decision-icon" aria-hidden />
@@ -240,10 +258,10 @@ function Plans() {
             </li>
             <li className="plans-decision-card">
               <ListChecks className="plans-decision-icon" aria-hidden />
-              <h2 className="plans-decision-title">Qué incluye</h2>
+              <h2 className="plans-decision-title">Incluye</h2>
               <ul className="plans-decision-stats" aria-label="Incluye">
                 <li>
-                  <strong>{proofItems[1]?.value ?? "—"}</strong> catálogo (eliges qué bajar)
+                  <strong>{proofItems[1]?.value ?? "—"}</strong> catálogo (tú eliges qué bajar)
                 </li>
                 <li>
                   <strong>{downloadQuotaGb ? `${formatInt(downloadQuotaGb)} GB/mes` : "—"}</strong> de descargas
@@ -255,7 +273,7 @@ function Plans() {
             </li>
             <li className="plans-decision-card">
               <Wallet className="plans-decision-icon" aria-hidden />
-              <h2 className="plans-decision-title">Qué plan elegir</h2>
+              <h2 className="plans-decision-title">Moneda</h2>
               <div className="plans-currency-toggle" role="tablist" aria-label="Moneda">
                 <button
                   type="button"
@@ -317,14 +335,25 @@ function Plans() {
         </section>
       ) : (
         <>
-          <ul className="plans-plan-grid" aria-label="Planes disponibles">
+          <ul
+            className={["plans-plan-grid", isCompareLayout ? "plans-plan-grid--compare" : ""].filter(Boolean).join(" ")}
+            aria-label="Planes disponibles"
+          >
             {plansToRender.map((plan) => (
-              <li key={`plan_${plan.id}`} className="plans-plan-item">
+              <li
+                key={`plan_${plan.id}`}
+                className={[
+                  "plans-plan-item",
+                  isCompareLayout && (plan.moneda ?? "").toLowerCase() === selectedCurrency ? "is-selected" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
                 <PlanCard
                   plan={plan}
                   getCurrentPlan={() => {}}
                   userEmail={currentUser?.email}
-                  showRecommendedBadge={plan === plansByCurrency.mxn}
+                  showRecommendedBadge={(plan.moneda ?? "").toLowerCase() === preferredCurrency}
                   variant="marketing"
                   trialConfig={trialConfig}
                 />

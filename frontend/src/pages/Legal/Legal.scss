@@ -5,8 +5,8 @@
   min-height: 100vh;
   color: var(--ph-text-body);
   background:
-    radial-gradient(900px 560px at 10% 0%, rgba(8, 225, 247, 0.12), transparent 60%),
-    radial-gradient(860px 520px at 90% 10%, rgba(8, 225, 247, 0.08), transparent 60%),
+    radial-gradient(900px 560px at 10% 0%, var(--bb-landing-spot-1), transparent 60%),
+    radial-gradient(860px 520px at 90% 10%, var(--bb-landing-spot-2), transparent 60%),
     var(--ph-bg);
   padding: 38px 0 46px;
 }

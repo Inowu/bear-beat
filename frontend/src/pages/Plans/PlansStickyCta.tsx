@@ -31,6 +31,7 @@ export default function PlansStickyCta(props: {
     return safeReadLocalStorage(STORAGE_KEY) === "1";
   });
   const [isMobile, setIsMobile] = useState(false);
+  const [hideForHero, setHideForHero] = useState(false);
   const [hideForPrimaryCta, setHideForPrimaryCta] = useState(false);
   const [visible, setVisible] = useState(false);
   const rafRef = useRef<number | null>(null);
@@ -50,6 +51,47 @@ export default function PlansStickyCta(props: {
   }, []);
 
   const canShow = useMemo(() => isMobile && !dismissed && Boolean(planId), [dismissed, isMobile, planId]);
+
+  useEffect(() => {
+    if (!canShow) {
+      setHideForHero(false);
+      return;
+    }
+
+    const hero = document.querySelector("[data-testid='plans-hero']");
+    if (!hero) {
+      setHideForHero(false);
+      return;
+    }
+
+    const computeFallback = () => {
+      const rect = hero.getBoundingClientRect();
+      const isIntersecting = rect.top < window.innerHeight && rect.bottom > 0;
+      setHideForHero(isIntersecting);
+    };
+
+    if (typeof IntersectionObserver === "undefined") {
+      computeFallback();
+      window.addEventListener("scroll", computeFallback, { passive: true });
+      window.addEventListener("resize", computeFallback);
+      return () => {
+        window.removeEventListener("scroll", computeFallback);
+        window.removeEventListener("resize", computeFallback);
+      };
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        setHideForHero(Boolean(entry?.isIntersecting));
+      },
+      { threshold: 0.01 },
+    );
+    observer.observe(hero);
+    computeFallback();
+
+    return () => observer.disconnect();
+  }, [canShow]);
 
   useEffect(() => {
     if (!canShow || !planId) {
@@ -99,7 +141,11 @@ export default function PlansStickyCta(props: {
       return;
     }
 
-    const update = () => setVisible(!hideForPrimaryCta);
+    const update = () => {
+      const doc = document.documentElement;
+      const isNearBottom = window.innerHeight + window.scrollY >= doc.scrollHeight - 220;
+      setVisible(!hideForPrimaryCta && !hideForHero && !isNearBottom);
+    };
 
     const onScroll = () => {
       if (rafRef.current) return;
@@ -118,7 +164,7 @@ export default function PlansStickyCta(props: {
         rafRef.current = null;
       }
     };
-  }, [canShow, hideForPrimaryCta]);
+  }, [canShow, hideForHero, hideForPrimaryCta]);
 
   const dismiss = useCallback(() => {
     setDismissed(true);
@@ -146,4 +192,3 @@ export default function PlansStickyCta(props: {
     </div>
   );
 }
-

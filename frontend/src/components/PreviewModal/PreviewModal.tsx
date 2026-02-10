@@ -99,6 +99,9 @@ function PreviewModal(props: PreviewModalPropsI) {
 
     const handleReady = () => {
       setDuration(wave.getDuration());
+      // On some devices/browsers the redraw events can be delayed or missed.
+      // "ready" is our reliable signal to swap the placeholder for the real waveform UI.
+      setWaveDrawn(true);
       wave.play();
     };
     const handleRedraw = () => {

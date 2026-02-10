@@ -162,8 +162,10 @@ export default function StickyMobileCta(props: {
     }
 
     const update = () => {
+      const doc = document.documentElement;
+      const isNearBottom = window.innerHeight + window.scrollY >= doc.scrollHeight - 220;
       // Show only when the main CTA is not visible anymore.
-      setVisible(!hideForHeroCta);
+      setVisible(!hideForHeroCta && !isNearBottom);
     };
 
     const onScroll = () => {

@@ -131,7 +131,7 @@ function LoginForm() {
           <p className="auth-login-sub text-text-muted">
             Tu cabina está lista. Ingresa para descargar.
           </p>
-          <ChatButton />
+          <ChatButton variant="inline" />
           <form className="auth-form auth-login-form" onSubmit={formik.handleSubmit} autoComplete="on">
             <div className={`c-row ${showUsernameError ? "is-invalid" : ""}`}>
               <label htmlFor="username" className="auth-field-label">
