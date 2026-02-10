@@ -1,6 +1,6 @@
 # CRO Findings (Quick Wins)
 
-Generado: 2026-02-10T01:29:02.043Z
+Generado: 2026-02-10T02:08:53.303Z
 
 ## Hallazgos Automáticos
 
@@ -8,6 +8,7 @@ Generado: 2026-02-10T01:29:02.043Z
 - No se detectaron icon-buttons sin label accesible en las rutas auditadas.
 
 ### Consola / Network failures
+- `/`: console errors=0, httpErrors=0, requestFailed=1
 
 ## Hipótesis / Prioridad (manual)
 - Prioriza arreglar errores en consola en rutas de conversión (Home/Planes/Auth/Checkout).
