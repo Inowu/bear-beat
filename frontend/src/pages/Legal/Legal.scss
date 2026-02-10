@@ -1,6 +1,7 @@
 @import "src/styles/mixin.scss";
 
 .legal2026 {
+  position: relative;
   min-height: 100vh;
   color: var(--ph-text-body);
   background:
@@ -8,6 +9,29 @@
     radial-gradient(860px 520px at 90% 10%, rgba(8, 225, 247, 0.08), transparent 60%),
     var(--ph-bg);
   padding: 38px 0 46px;
+}
+
+.legal2026__skip {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 20;
+  transform: translateY(-150%);
+  background: color-mix(in srgb, var(--ph-bg-card) 92%, black);
+  color: var(--ph-text-heading);
+  border: 1px solid color-mix(in srgb, var(--ph-accent) 40%, transparent);
+  border-radius: 12px;
+  padding: 10px 12px;
+  text-decoration: none;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  transition: transform 0.16s ease;
+}
+
+.legal2026__skip:focus-visible {
+  transform: translateY(0);
+  outline: 2px solid var(--app-focus-ring);
+  outline-offset: 2px;
 }
 
 .legal2026__container {
@@ -58,6 +82,14 @@
   color: var(--ph-text-muted);
   font-size: 0.84rem;
   font-weight: 600;
+}
+
+.legal2026__hero-note {
+  margin: 0.55rem 0 0;
+  color: color-mix(in srgb, var(--ph-text-muted) 94%, transparent);
+  font-size: 0.86rem;
+  font-weight: 650;
+  line-height: 1.5;
 }
 
 .legal2026__hero-actions {
@@ -117,6 +149,19 @@
     align-items: center;
     gap: 0.35rem;
     padding: 0 0.75rem;
+    transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease, color 0.16s ease;
+  }
+
+  a:hover {
+    transform: translateY(-1px);
+    border-color: color-mix(in srgb, var(--ph-accent) 30%, transparent);
+    background: color-mix(in srgb, var(--ph-bg-card) 80%, transparent);
+  }
+
+  a[aria-current="location"] {
+    border-color: color-mix(in srgb, var(--ph-accent) 44%, transparent);
+    background: color-mix(in srgb, var(--ph-accent) 16%, var(--ph-bg-card));
+    color: var(--ph-text-heading);
   }
 }
 
@@ -126,6 +171,12 @@
   background: color-mix(in srgb, var(--ph-bg-card) 90%, transparent);
   box-shadow: var(--ph-shadow-card);
   padding: clamp(0.95rem, 2.2vw, 1.35rem);
+  scroll-margin-top: 18px;
+}
+
+.legal2026__section:focus-visible {
+  outline: 2px solid var(--app-focus-ring);
+  outline-offset: 4px;
 }
 
 .legal2026__section-head {
@@ -150,31 +201,105 @@
   gap: 0.52rem;
 }
 
+.legal2026__faq-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.15rem 0 0.75rem;
+}
+
+.legal2026__faq-actions button {
+  min-height: 40px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ph-border) 74%, transparent);
+  background: color-mix(in srgb, var(--ph-bg-soft) 78%, transparent);
+  color: color-mix(in srgb, var(--ph-text-body) 92%, transparent);
+  padding: 0 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+}
+
+.legal2026__faq-actions button:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--ph-accent) 30%, transparent);
+  background: color-mix(in srgb, var(--ph-bg-soft) 74%, transparent);
+}
+
 .legal2026__faq-item {
   border-radius: 12px;
   border: 1px solid color-mix(in srgb, var(--ph-border) 75%, transparent);
   background: color-mix(in srgb, var(--ph-bg-soft) 76%, transparent);
-  padding: 0.68rem 0.78rem;
+  overflow: hidden;
+}
 
-  summary {
-    cursor: pointer;
-    color: var(--ph-text-heading);
-    font-size: 0.93rem;
-    font-weight: 700;
-    line-height: 1.4;
-  }
+.legal2026__faq-question {
+  margin: 0;
+}
 
-  p {
-    margin: 0.56rem 0 0;
-    color: color-mix(in srgb, var(--ph-text-body) 92%, transparent);
-    font-size: 0.9rem;
-    line-height: 1.52;
-  }
+.legal2026__faq-trigger {
+  width: 100%;
+  appearance: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--ph-text-heading);
+  font-size: 0.93rem;
+  font-weight: 800;
+  line-height: 1.4;
+  padding: 0.78rem 0.78rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  text-align: left;
+}
+
+.legal2026__faq-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--ph-accent);
+  transition: transform 0.16s ease;
+}
+
+.legal2026__faq-trigger[aria-expanded="true"] .legal2026__faq-icon {
+  transform: rotate(180deg);
+}
+
+.legal2026__faq-panel {
+  padding: 0 0.78rem 0.78rem;
+}
+
+.legal2026__faq-panel p {
+  margin: 0;
+  color: color-mix(in srgb, var(--ph-text-body) 94%, transparent);
+  font-size: 0.92rem;
+  line-height: 1.62;
+}
+
+.legal2026__backtop {
+  margin-top: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  text-decoration: none;
+  font-weight: 850;
+  letter-spacing: 0.01em;
+  color: color-mix(in srgb, var(--ph-accent) 86%, white);
+}
+
+.legal2026__backtop:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
 .legal2026__content {
   display: grid;
   gap: 0.55rem;
+  max-width: 80ch;
 
   h3 {
     margin: 0.18rem 0 0;
@@ -185,9 +310,21 @@
 
   p {
     margin: 0;
-    color: color-mix(in srgb, var(--ph-text-body) 92%, transparent);
-    font-size: 0.9rem;
-    line-height: 1.56;
+    color: color-mix(in srgb, var(--ph-text-body) 94%, transparent);
+    font-size: 0.93rem;
+    line-height: 1.7;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 1.15rem;
+    color: color-mix(in srgb, var(--ph-text-body) 94%, transparent);
+    font-size: 0.93rem;
+    line-height: 1.7;
+  }
+
+  li {
+    margin: 0.12rem 0;
   }
 }
 
@@ -206,7 +343,9 @@
 }
 
 .legal2026 a:focus-visible,
-.legal2026 summary:focus-visible,
+.legal2026__faq-trigger:focus-visible,
+.legal2026__faq-actions button:focus-visible,
+.legal2026__backtop:focus-visible,
 .legal2026__btn:focus-visible,
 .legal2026__quick-nav a:focus-visible {
   outline: 2px solid var(--app-focus-ring);

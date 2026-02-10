@@ -43,8 +43,8 @@ export const ROUTE_SEO: Record<string, { title: string; description: string }> =
     description: "Cómo descargar tu librería con FileZilla o Air Explorer. Guía paso a paso.",
   },
   "/legal": {
-    title: `FAQ, privacidad y reembolsos | ${BASE_TITLE}`,
-    description: "Consulta preguntas frecuentes, política de privacidad, reembolsos y términos de uso de Bear Beat.",
+    title: `Centro legal y FAQ | ${BASE_TITLE} – privacidad, reembolsos y términos`,
+    description: "Consulta FAQ, política de privacidad, reembolsos, cancelaciones y términos de uso de Bear Beat.",
   },
   "/descargas": {
     title: `Mis descargas | ${BASE_TITLE}`,
