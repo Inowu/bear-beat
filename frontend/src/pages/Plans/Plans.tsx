@@ -9,7 +9,6 @@ import { useNavigate } from 'react-router-dom';
 import { trackManyChatConversion, MC_EVENTS } from '../../utils/manychatPixel';
 import { AlertTriangle, RefreshCw, Layers3, CheckCircle2 } from 'lucide-react';
 import { formatInt, formatTB } from '../../utils/format';
-import { HOME_HERO_MICROCOPY_BASE, HOME_HERO_MICROCOPY_TRIAL, HOME_HERO_SUBTITLE, HOME_HERO_TITLE } from '../PublicHome/homeCopy';
 
 function detectPreferredCurrency(): "mxn" | "usd" {
   if (typeof window === "undefined") return "usd";
@@ -20,7 +19,6 @@ function detectPreferredCurrency(): "mxn" | "usd" {
 function Plans() {
   const { currentUser } = useUserContext();
   const [plans, setPlans] = useState<IPlans[]>([]);
-  const [currency, setCurrency] = useState<"mxn" | "usd">(() => detectPreferredCurrency());
   const [catalogSummary, setCatalogSummary] = useState<{
     totalFiles: number;
     totalGB: number;
@@ -171,28 +169,15 @@ function Plans() {
     const usd = sortedPlans.find((plan) => (plan.moneda ?? "").toLowerCase() === "usd") ?? null;
     return { mxn, usd };
   }, [sortedPlans]);
-  const hasMxn = Boolean(plansByCurrency.mxn);
-  const hasUsd = Boolean(plansByCurrency.usd);
-  const activePlan = (currency === "mxn" ? plansByCurrency.mxn : plansByCurrency.usd) ?? plansByCurrency.mxn ?? plansByCurrency.usd;
   const downloadQuotaGb = useMemo(() => {
     const values = sortedPlans.map((plan) => Number(plan.gigas ?? 0)).filter((v) => Number.isFinite(v) && v > 0);
     if (values.length === 0) return 0;
     return Math.max(...values);
   }, [sortedPlans]);
-  const trialBulletAddon =
-    trialConfig?.enabled && trialConfig.eligible !== false
-      ? ` · Prueba: ${formatInt(trialConfig.days)} días / ${formatInt(trialConfig.gb)} GB (solo tarjeta, 1ª vez)`
-      : "";
   const heroMicrocopy =
     trialConfig?.enabled && trialConfig.eligible !== false
-      ? HOME_HERO_MICROCOPY_TRIAL
-      : HOME_HERO_MICROCOPY_BASE;
-
-  useEffect(() => {
-    // Ajustar currency si la preferida no existe en la lista actual (sin pisar el toggle del usuario después).
-    if (currency === "mxn" && !hasMxn && hasUsd) setCurrency("usd");
-    if (currency === "usd" && !hasUsd && hasMxn) setCurrency("mxn");
-  }, [currency, hasMxn, hasUsd]);
+      ? `Prueba: ${formatInt(trialConfig.days)} días / ${formatInt(trialConfig.gb)} GB (solo tarjeta, 1ª vez). Se cobra al finalizar la prueba si no cancelas.`
+      : "Se renueva cada mes. Cancela cuando quieras.";
 
   // Loader: mientras estemos cargando planes
   if (loader) {
@@ -216,8 +201,10 @@ function Plans() {
     <div className="plans-page">
       <div className="plans-main-container">
         <section className="plans-hero" aria-label="Planes">
-          <h1 className="plans-page-title">{HOME_HERO_TITLE}</h1>
-          <p className="plans-hero-subtitle">{HOME_HERO_SUBTITLE}</p>
+          <h1 className="plans-page-title">Elige tu plan</h1>
+          <p className="plans-hero-subtitle">
+            Video remixes, audios y karaokes listos para cabina. Activa en minutos y descarga cada mes.
+          </p>
           <ul className="plans-hero-bullets" aria-label="Puntos clave">
             <li>
               <CheckCircle2 size={16} aria-hidden />
@@ -226,11 +213,10 @@ function Plans() {
             <li>
               <CheckCircle2 size={16} aria-hidden />
               Descargas: <strong>{downloadQuotaGb ? `${formatInt(downloadQuotaGb)} GB/mes` : "—"}</strong>
-              {trialBulletAddon}
             </li>
             <li>
               <CheckCircle2 size={16} aria-hidden />
-              Carpetas listas + guía por chat para activar
+              Activación guiada por chat (respuesta rápida)
             </li>
           </ul>
           <p className="plans-hero-micro">{heroMicrocopy}</p>
@@ -271,40 +257,28 @@ function Plans() {
         <>
           <section className="plans-grid-heading">
             <h2>Elige tu moneda</h2>
-            <p>MXN para México, USD internacional. Activación en minutos.</p>
+            <p>MXN para México. USD internacional. Activación en minutos.</p>
           </section>
 
-          {hasMxn && hasUsd && (
-            <div className="plans-currency-toggle" role="tablist" aria-label="Moneda">
-              <button
-                type="button"
-                className={`plans-currency-toggle__btn ${currency === "mxn" ? "is-active" : ""}`.trim()}
-                onClick={() => setCurrency("mxn")}
-                role="tab"
-                aria-selected={currency === "mxn"}
-              >
-                MXN
-              </button>
-              <button
-                type="button"
-                className={`plans-currency-toggle__btn ${currency === "usd" ? "is-active" : ""}`.trim()}
-                onClick={() => setCurrency("usd")}
-                role="tab"
-                aria-selected={currency === "usd"}
-              >
-                USD
-              </button>
-            </div>
-          )}
-
-          <div className="plans-card-slot">
-            {activePlan && (
+          <div className="plans-plan-grid" role="list" aria-label="Planes disponibles">
+            {plansByCurrency.mxn && (
               <PlanCard
-                plan={activePlan as IPlans}
-                key={`plan_${activePlan.id}`}
+                plan={plansByCurrency.mxn as IPlans}
+                key={`plan_mxn_${plansByCurrency.mxn.id}`}
+                getCurrentPlan={() => {}}
+                userEmail={currentUser?.email}
+                showRecommendedBadge
+                variant="marketing"
+              />
+            )}
+            {plansByCurrency.usd && (
+              <PlanCard
+                plan={plansByCurrency.usd as IPlans}
+                key={`plan_usd_${plansByCurrency.usd.id}`}
                 getCurrentPlan={() => {}}
                 userEmail={currentUser?.email}
                 showRecommendedBadge={false}
+                variant="marketing"
               />
             )}
           </div>

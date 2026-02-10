@@ -212,6 +212,32 @@ html[data-theme="dark"] .plan-card-glow {
   flex-shrink: 0;
 }
 
+.plan-card-benefits-toggle {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: 2px 0;
+  width: fit-content;
+  color: color-mix(in srgb, var(--app-accent) 84%, white);
+  font-size: 1.3rem;
+  font-weight: 850;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  transition: color 0.16s ease;
+}
+
+.plan-card-benefits-toggle:hover {
+  color: color-mix(in srgb, var(--app-accent) 92%, white);
+}
+
+.plan-card-benefits-toggle:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--app-accent) 62%, transparent);
+  outline-offset: 4px;
+  border-radius: 12px;
+}
+
 .plan-card-cta-section {
   width: 100%;
   margin-top: auto;

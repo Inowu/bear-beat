@@ -115,43 +115,17 @@
   line-height: 1.5;
 }
 
-.plans-currency-toggle {
-  display: inline-flex;
-  padding: 6px;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--ph-border) 70%, transparent);
-  background: color-mix(in srgb, var(--ph-bg-card) 86%, transparent);
-  gap: 6px;
-  width: fit-content;
+.plans-plan-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
 }
 
-.plans-currency-toggle__btn {
-  appearance: none;
-  border: none;
-  cursor: pointer;
-  padding: 10px 14px;
-  border-radius: 999px;
-  background: transparent;
-  color: color-mix(in srgb, var(--ph-text-muted) 92%, transparent);
-  font-weight: 850;
-  letter-spacing: 0.02em;
-}
-
-.plans-currency-toggle__btn.is-active {
-  background: color-mix(in srgb, var(--ph-accent) 16%, transparent);
-  color: var(--ph-text-heading);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ph-accent) 30%, transparent);
-}
-
-.plans-currency-toggle__btn:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--ph-accent) 62%, transparent);
-  outline-offset: 2px;
-}
-
-.plans-card-slot {
-  width: 100%;
-  max-width: 640px;
-  margin: 0 auto;
+@media (max-width: 920px) {
+  .plans-plan-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .plans-state-wrap {
@@ -167,4 +141,3 @@
     padding: 24px 0 92px;
   }
 }
-
