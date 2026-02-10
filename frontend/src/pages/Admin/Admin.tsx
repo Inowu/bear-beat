@@ -445,7 +445,13 @@ function Admin() {
         )}
 
         <section className="admin-table-panel">
-          <div className="table-contain">
+          <div
+            className="table-contain"
+            tabIndex={0}
+            role="region"
+            aria-label="Tabla de usuarios (desliza para ver más columnas)"
+            data-scroll-region
+          >
             <table className="admin-table">
               <thead>
                 <tr>
@@ -523,6 +529,7 @@ function Admin() {
                               className="btn-cell"
                               onClick={() => handleEditUser(user)}
                               title="Editar"
+                              aria-label="Editar usuario"
                             >
                               <Pencil size={16} />
                             </button>
@@ -532,6 +539,7 @@ function Admin() {
                               onClick={() => signInAsUser(user)}
                               disabled={user.role === USER_ROLES.ADMIN}
                               title="Acceder"
+                              aria-label="Acceder como usuario"
                             >
                               <LogIn size={16} />
                             </button>
@@ -549,6 +557,7 @@ function Admin() {
                                   toggleDropdown(index);
                                 }}
                                 title="Más acciones"
+                                aria-label="Más acciones"
                               >
                                 <MoreVertical size={16} />
                               </button>

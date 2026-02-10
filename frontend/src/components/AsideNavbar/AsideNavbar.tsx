@@ -1,6 +1,7 @@
 import "./AsideNavbar.scss";
 import { useUserContext } from "../../contexts/UserContext";
 import { useLocation } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
 import {
   Activity,
   Users,
@@ -35,15 +36,56 @@ function AsideNavbar(props: AsideNavbarPropsI) {
   const { currentUser, resetCard, handleLogout } = useUserContext();
   const { show, onHide } = props;
   const location = useLocation();
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+  const [isDesktop, setIsDesktop] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    return window.matchMedia("(min-width: 1024px)").matches;
+  });
+
+  // Keep JS breakpoint aligned with `frontend/src/styles/mixin.scss` desktop=1024px
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mql = window.matchMedia("(min-width: 1024px)");
+
+    const onChange = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    setIsDesktop(mql.matches);
+
+    if (mql.addEventListener) mql.addEventListener("change", onChange);
+    // Safari < 14
+    else mql.addListener(onChange);
+
+    return () => {
+      if (mql.removeEventListener) mql.removeEventListener("change", onChange);
+      else mql.removeListener(onChange);
+    };
+  }, []);
+
+  const drawerOpen = isDesktop ? true : show;
+
+  useEffect(() => {
+    if (isDesktop || !show) return;
+    closeBtnRef.current?.focus();
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onHide();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [isDesktop, show, onHide]);
+
+  // Avoid focusing the (hidden) burger button on desktop; drawer close is mobile-only.
+  const closeDrawer = () => {
+    if (!isDesktop) onHide();
+  };
 
   const handleLinkClick = () => {
     resetCard();
-    onHide();
+    closeDrawer();
   };
 
   const handleSupportClick = () => {
     trackManyChatConversion(MC_EVENTS.CLICK_CHAT);
-    onHide();
+    closeDrawer();
     openSupportChat();
   };
 
@@ -52,12 +94,21 @@ function AsideNavbar(props: AsideNavbarPropsI) {
     handleLinkClick();
   };
 
-  const linkProps = { onClick: onHide };
+  const linkProps = { onClick: closeDrawer };
+
+  // Mobile: when closed, unmount to avoid `aria-hidden-focus` violations in axe.
+  if (!drawerOpen && !isDesktop) return null;
 
   return (
-    <aside className={show ? "open" : ""} aria-hidden={!show}>
+    <aside
+      className={drawerOpen ? "open" : ""}
+      aria-hidden={drawerOpen ? undefined : true}
+      aria-label="Menú lateral"
+    >
       {/* Mobile: backdrop to close on tap outside */}
-      {show && <div className="aside-backdrop" onClick={onHide} aria-hidden />}
+      {!isDesktop && show && (
+        <div className="aside-backdrop" onClick={onHide} aria-hidden />
+      )}
       <div className="aside-inner" onClick={(e) => e.stopPropagation()}>
         <div className="aside-drawer-header">
           <span className="aside-drawer-title">Menú</span>
@@ -150,6 +201,7 @@ function AsideNavbar(props: AsideNavbarPropsI) {
           className="aside-close-btn"
           onClick={onHide}
           aria-label="Cerrar menú"
+          ref={closeBtnRef}
         >
           <X size={20} aria-hidden />
         </button>

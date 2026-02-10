@@ -298,7 +298,13 @@ export function CatalogStats() {
             </div>
           </div>
           <div className="rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50">
-            <div className="overflow-x-auto max-h-[50vh] overflow-y-auto">
+            <div
+              className="overflow-x-auto max-h-[50vh] overflow-y-auto"
+              tabIndex={0}
+              role="region"
+              aria-label="Tabla de catálogo por género (desliza para ver más)"
+              data-scroll-region
+            >
               <table className="w-full">
                 <thead className="bg-slate-900 sticky top-0">
                   <tr>

@@ -12,6 +12,7 @@ import { ChatButton } from "../../../components/ChatButton/ChatButton";
 import Logo from "../../../assets/images/osonuevo.png";
 import { trackManyChatConversion, MC_EVENTS } from "../../../utils/manychatPixel";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../../utils/growthMetrics";
+import { toErrorMessage } from "../../../utils/errorMessage";
 import "./LoginForm.scss";
 
 function inferErrorCode(message: string): string {
@@ -27,7 +28,7 @@ function inferErrorCode(message: string): string {
 function LoginForm() {
   const [loader, setLoader] = useState<boolean>(false);
   const [show, setShow] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<any>("");
+  const [errorMessage, setErrorMessage] = useState<string>("");
   const { handleLogin } = useUserContext();
   const navigate = useNavigate();
   const location = useLocation();
@@ -70,11 +71,7 @@ function LoginForm() {
 
         setLoader(false);
       } catch (error: any) {
-        let errorMessage = error.message;
-
-        if (error.message.includes('"validation"')) {
-          errorMessage = JSON.parse(error.message)[0].message;
-        }
+        const errorMessage = toErrorMessage(error);
 
         trackGrowthMetric(GROWTH_METRICS.LOGIN_FAILED, {
           from,
@@ -120,6 +117,8 @@ function LoginForm() {
   const showPasswordError = Boolean(
     (formik.touched.password || formik.submitCount > 0) && formik.errors.password,
   );
+  const usernameErrorId = showUsernameError ? "login-username-error" : undefined;
+  const passwordErrorId = showPasswordError ? "login-password-error" : undefined;
 
   return (
     <>
@@ -147,11 +146,15 @@ function LoginForm() {
                   value={formik.values.username}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
+                  aria-invalid={showUsernameError}
+                  aria-describedby={usernameErrorId}
                   className="auth-login-input auth-login-input-with-icon"
                 />
               </div>
               {showUsernameError && (
-                <div className="error-formik">{formik.errors.username}</div>
+                <div className="error-formik" id={usernameErrorId} role="alert">
+                  {formik.errors.username}
+                </div>
               )}
             </div>
             <div className={`c-row ${showPasswordError ? "is-invalid" : ""}`}>
@@ -168,12 +171,16 @@ function LoginForm() {
                   value={formik.values.password}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
+                  aria-invalid={showPasswordError}
+                  aria-describedby={passwordErrorId}
                   inputClassName="auth-login-input auth-login-input-with-icon"
                   wrapperClassName="auth-login-password-wrap"
                 />
               </div>
               {showPasswordError && (
-                <div className="error-formik">{formik.errors.password}</div>
+                <div className="error-formik" id={passwordErrorId} role="alert">
+                  {formik.errors.password}
+                </div>
               )}
             </div>
             <div className="c-row auth-login-forgot-wrap">

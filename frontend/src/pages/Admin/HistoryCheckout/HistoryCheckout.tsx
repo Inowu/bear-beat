@@ -108,10 +108,16 @@ export const HistoryCheckout = () => {
 
   return (
     <AdminPageLayout title="Historial checkout" toolbar={toolbar}>
-      <div className="w-full overflow-x-hidden">
-        {/* Tabla desktop (patrón BEAR BEAT PRO) */}
-        <div className="hidden md:block rounded-xl border border-gray-200 dark:border-bear-dark-100 overflow-hidden">
-          <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
+        <div className="w-full overflow-x-hidden">
+          {/* Tabla desktop (patrón BEAR BEAT PRO) */}
+          <div className="hidden md:block rounded-xl border border-gray-200 dark:border-bear-dark-100 overflow-hidden">
+          <div
+            className="overflow-x-auto max-h-[60vh] overflow-y-auto"
+            tabIndex={0}
+            role="region"
+            aria-label="Historial de checkout (tabla desplazable)"
+            data-scroll-region
+          >
             <table className="w-full text-left text-sm border-collapse">
               <thead>
                 <tr>

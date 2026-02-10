@@ -10,3 +10,5 @@ ftp-stats.py
 output
 # Local audit screenshots (may contain PII depending on DB; keep untracked)
 audit/screenshots
+# Production audit artifacts (read-only, may include masked screenshots; keep untracked)
+audit-artifacts

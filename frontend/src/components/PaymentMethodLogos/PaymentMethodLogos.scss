@@ -119,7 +119,9 @@
 [data-theme="dark"] .payment-method-logos__item--paypal,
 html.dark .payment-method-logos__item--paypal,
 .dark .payment-method-logos__item--paypal {
-  background: color-mix(in srgb, #003087 16%, var(--app-bg-card));
+  /* Keep PayPal label accessible in dark theme (blue on dark fails contrast). */
+  background: color-mix(in srgb, #ffffff 92%, var(--app-bg-card));
+  border-color: color-mix(in srgb, #003087 25%, var(--app-border));
 }
 
 @media (max-width: 640px) {

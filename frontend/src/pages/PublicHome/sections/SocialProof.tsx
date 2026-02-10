@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { Modal } from "react-bootstrap";
 import { formatDownloads } from "../homeFormat";
 
@@ -90,6 +90,7 @@ function TopList(props: {
   maxRows: number;
 }) {
   const { title, items, maxRows } = props;
+  const headingId = useId();
 
   const rows = useMemo(() => {
     return (items ?? []).slice(0, maxRows).map((item, idx) => {
@@ -127,37 +128,39 @@ function TopList(props: {
   const showKeyMeta = rows.length > 0 && rows.every((row) => Boolean(row.bpm) && Boolean(row.camelot));
 
   return (
-    <div className="social-proof__col" role="list" aria-label={title}>
-      <h3 className="social-proof__col-title">{title}</h3>
-      {rows.map((item) => (
-        <div key={item.key} className="social-proof__row" role="listitem">
-          <div className="social-proof__left">
-            <span className="social-proof__name" title={item.artist ? `${item.artist} – ${item.track}` : item.track}>
-              {item.artist ? (
-                <>
-                  <span className="social-proof__artist">{item.artist}</span>
-                  <span className="social-proof__dash" aria-hidden>
-                    {" "}
-                    –{" "}
-                  </span>
-                  <span className="social-proof__track">{item.track}</span>
-                </>
-              ) : (
-                item.track
-              )}
-            </span>
-            {showKeyMeta && (
-              <span className="social-proof__row-meta">
-                {item.bpm} BPM • {item.camelot}
+    <section className="social-proof__col" aria-labelledby={headingId}>
+      <h3 id={headingId} className="social-proof__col-title">
+        {title}
+      </h3>
+      <div role="list">
+        {rows.map((item) => (
+          <div key={item.key} className="social-proof__row" role="listitem">
+            <div className="social-proof__left">
+              <span className="social-proof__name" title={item.artist ? `${item.artist} – ${item.track}` : item.track}>
+                {item.artist ? (
+                  <>
+                    <span className="social-proof__artist">{item.artist}</span>
+                    <span className="social-proof__dash" aria-hidden>
+                      {" "}
+                      –{" "}
+                    </span>
+                    <span className="social-proof__track">{item.track}</span>
+                  </>
+                ) : (
+                  item.track
+                )}
               </span>
-            )}
+              {showKeyMeta && (
+                <span className="social-proof__row-meta">
+                  {item.bpm} BPM • {item.camelot}
+                </span>
+              )}
+            </div>
+            <span className="social-proof__meta">{formatDownloads(item.downloads)}</span>
           </div>
-          <span className="social-proof__meta">
-            {formatDownloads(item.downloads)}
-          </span>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+    </section>
   );
 }
 

@@ -111,7 +111,13 @@ export const Coupons = () => {
       ) : (
         <>
           <div className="rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50 hidden md:block">
-            <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
+            <div
+              className="overflow-x-auto max-h-[60vh] overflow-y-auto"
+              tabIndex={0}
+              role="region"
+              aria-label="Tabla de cupones (desliza para ver más)"
+              data-scroll-region
+            >
               <table className="w-full min-w-[500px]">
                 <thead className="bg-slate-900 sticky top-0 z-10">
                   <tr>
@@ -166,13 +172,12 @@ export const Coupons = () => {
 
           <div className="md:hidden flex flex-col rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50">
             {coupons.map((c, index) => (
-              <div
+              <button
+                type="button"
                 key={`m_${index}`}
-                className="flex items-center justify-between gap-3 min-h-[64px] px-4 py-3 border-b border-slate-800 hover:bg-slate-900/60 active:bg-slate-800"
+                className="flex items-center justify-between gap-3 min-h-[64px] w-full px-4 py-3 border-b border-slate-800 hover:bg-slate-900/60 active:bg-slate-800 text-left"
                 onClick={() => setDrawerCoupon(c)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => e.key === "Enter" && setDrawerCoupon(c)}
+                aria-label={`Ver acciones del cupón ${c.code}`}
               >
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold text-white text-sm">{c.code}</p>
@@ -185,15 +190,10 @@ export const Coupons = () => {
                 >
                   {c.active === 1 ? "Activo" : "Inactivo"}
                 </span>
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); setDrawerCoupon(c); }}
-                  className="p-2 text-slate-400 hover:text-bear-cyan rounded-lg"
-                  aria-label="Ver más"
-                >
+                <span className="p-2 text-slate-400 hover:text-bear-cyan rounded-lg" aria-hidden>
                   <MoreVertical size={20} />
-                </button>
-              </div>
+                </span>
+              </button>
             ))}
           </div>
 
