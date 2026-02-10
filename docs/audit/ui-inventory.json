@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-02-10T03:35:25.650Z",
+  "generatedAt": "2026-02-10T03:41:32.002Z",
   "baseUrl": "http://localhost:3000",
   "routes": [
     {
@@ -19,31 +19,31 @@
         },
         {
           "type": "warning",
-          "text": "[Meta pixel] 1325763147585869 is unavailable on this website due to it's traffic permission settings. Go to https://www.facebook.com/business/help/5726906300..."
-        },
-        {
-          "type": "warning",
-          "text": "[Meta pixel] 1325763147585869 is unavailable on this website due to it's traffic permission settings. Go to https://www.facebook.com/business/help/5726906300..."
-        },
-        {
-          "type": "warning",
-          "text": "[Meta pixel] 1325763147585869 is unavailable on this website due to it's traffic permission settings. Go to https://www.facebook.com/business/help/5726906300..."
-        },
-        {
-          "type": "warning",
-          "text": "[Meta pixel] 1325763147585869 is unavailable on this website due to it's traffic permission settings. Go to https://www.facebook.com/business/help/5726906300..."
-        },
-        {
-          "type": "warning",
-          "text": "[Meta pixel] 1325763147585869 is unavailable on this website due to it's traffic permission settings. Go to https://www.facebook.com/business/help/5726906300..."
-        },
-        {
-          "type": "warning",
           "text": "You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS."
         },
         {
           "type": "warning",
           "text": "You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS."
+        },
+        {
+          "type": "warning",
+          "text": "[Meta pixel] 1325763147585869 is unavailable on this website due to it's traffic permission settings. Go to https://www.facebook.com/business/help/5726906300..."
+        },
+        {
+          "type": "warning",
+          "text": "[Meta pixel] 1325763147585869 is unavailable on this website due to it's traffic permission settings. Go to https://www.facebook.com/business/help/5726906300..."
+        },
+        {
+          "type": "warning",
+          "text": "[Meta pixel] 1325763147585869 is unavailable on this website due to it's traffic permission settings. Go to https://www.facebook.com/business/help/5726906300..."
+        },
+        {
+          "type": "warning",
+          "text": "[Meta pixel] 1325763147585869 is unavailable on this website due to it's traffic permission settings. Go to https://www.facebook.com/business/help/5726906300..."
+        },
+        {
+          "type": "warning",
+          "text": "[Meta pixel] 1325763147585869 is unavailable on this website due to it's traffic permission settings. Go to https://www.facebook.com/business/help/5726906300..."
         },
         {
           "type": "warning",
@@ -4542,7 +4542,13 @@
         }
       ],
       "httpErrors": [],
-      "failedRequests": [],
+      "failedRequests": [
+        {
+          "url": "https://m.stripe.network/inner.html",
+          "method": "GET",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
       "blockedWrites": [],
       "interactive": [
         {
