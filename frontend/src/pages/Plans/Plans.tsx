@@ -11,6 +11,13 @@ import { AlertTriangle, RefreshCw, Layers3 } from 'lucide-react';
 import { formatInt, formatTB } from '../../utils/format';
 import PlansStickyCta from './PlansStickyCta';
 
+function normalizeCurrency(value: unknown): "mxn" | "usd" | "" {
+  const raw = `${value ?? ""}`.trim().toLowerCase();
+  if (raw === "mxn") return "mxn";
+  if (raw === "usd") return "usd";
+  return "";
+}
+
 function detectPreferredCurrency(): "mxn" | "usd" {
   if (typeof window === "undefined") return "usd";
   const lang = navigator.language?.toLowerCase() ?? "";
@@ -122,7 +129,6 @@ function Plans() {
       if (price <= 0 || gigas <= 0) return false;
       return true;
     });
-    const normalizeCurrency = (value: string | null | undefined) => (value ?? "").trim().toLowerCase();
     const parsePrice = (value: string | null | undefined) => Number(value ?? "0") || 0;
     const hasPaypal = (plan: IPlans) => Boolean(plan.paypal_plan_id || plan.paypal_plan_id_test);
 
@@ -182,8 +188,8 @@ function Plans() {
     ];
   }, [catalogSummary]);
   const plansByCurrency = useMemo(() => {
-    const mxn = sortedPlans.find((plan) => (plan.moneda ?? "").toLowerCase() === "mxn") ?? null;
-    const usd = sortedPlans.find((plan) => (plan.moneda ?? "").toLowerCase() === "usd") ?? null;
+    const mxn = sortedPlans.find((plan) => normalizeCurrency(plan.moneda) === "mxn") ?? null;
+    const usd = sortedPlans.find((plan) => normalizeCurrency(plan.moneda) === "usd") ?? null;
     return { mxn, usd };
   }, [sortedPlans]);
   const downloadQuotaGb = useMemo(() => {
@@ -348,7 +354,7 @@ function Plans() {
                 key={`plan_${plan.id}`}
                 className={[
                   "plans-plan-item",
-                  isCompareLayout && (plan.moneda ?? "").toLowerCase() === selectedCurrency ? "is-selected" : "",
+                  isCompareLayout && normalizeCurrency(plan.moneda) === selectedCurrency ? "is-selected" : "",
                 ]
                   .filter(Boolean)
                   .join(" ")}
@@ -357,7 +363,7 @@ function Plans() {
                   plan={plan}
                   getCurrentPlan={() => {}}
                   userEmail={currentUser?.email}
-                  showRecommendedBadge={(plan.moneda ?? "").toLowerCase() === preferredCurrency}
+                  showRecommendedBadge={normalizeCurrency(plan.moneda) === preferredCurrency}
                   variant="marketing"
                   trialConfig={trialConfig}
                 />
