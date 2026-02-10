@@ -431,17 +431,35 @@ function SignUpForm() {
           <h1 className="auth-login-title">Crea tu cuenta</h1>
           <p className="auth-login-sub">Activa en minutos y empieza con demos antes de descargar.</p>
 
-          <ul className="auth-signup-bullets" aria-label="Beneficios">
-            <li>
-              <strong>Catálogo gigante</strong>: audios, videos y karaokes
-            </li>
-            <li>
-              <strong>Descarga a tu modo</strong>: FTP o web
-            </li>
-            <li>
-              <strong>Soporte por chat</strong>: te ayudamos a activar rápido
-            </li>
-          </ul>
+          <div className="auth-signup-benefits" role="list" aria-label="Beneficios">
+            <div className="auth-signup-benefit" role="listitem">
+              <span className="auth-signup-benefit__icon" aria-hidden>
+                ✓
+              </span>
+              <div className="auth-signup-benefit__copy">
+                <span className="auth-signup-benefit__title">Catálogo gigante</span>
+                <span className="auth-signup-benefit__desc">audios, videos y karaokes</span>
+              </div>
+            </div>
+            <div className="auth-signup-benefit" role="listitem">
+              <span className="auth-signup-benefit__icon" aria-hidden>
+                ✓
+              </span>
+              <div className="auth-signup-benefit__copy">
+                <span className="auth-signup-benefit__title">Descarga a tu modo</span>
+                <span className="auth-signup-benefit__desc">FTP o web</span>
+              </div>
+            </div>
+            <div className="auth-signup-benefit" role="listitem">
+              <span className="auth-signup-benefit__icon" aria-hidden>
+                ✓
+              </span>
+              <div className="auth-signup-benefit__copy">
+                <span className="auth-signup-benefit__title">Soporte por chat</span>
+                <span className="auth-signup-benefit__desc">te ayudamos a activar rápido</span>
+              </div>
+            </div>
+          </div>
 
           <form
             className="sign-up-form auth-form auth-login-form auth-signup-form"

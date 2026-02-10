@@ -1,40 +1,71 @@
 @import "src/styles/mixin.scss";
 
 .auth-login-card.auth-login-card--signup {
-  max-width: 520px;
+  /* Match /auth (login) card proportions: tighter, more premium. */
+  max-width: 480px;
+
+  .auth-login-logo {
+    margin-bottom: 1.1rem;
+  }
+
+  .auth-login-sub {
+    margin-bottom: 1.15rem;
+  }
 }
 
-.auth-signup-bullets {
+/* Benefits: replace the old "label: description" bullets with compact chips.
+   Keeps the same copy, improves scanability + responsiveness. */
+.auth-signup-benefits {
   margin: 0 0 16px;
-  padding: 0;
-  list-style: none;
   display: grid;
-  gap: 8px;
-  color: var(--auth-login-subtitle);
-  font-size: 14px;
-  line-height: 1.35;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
 
-  li {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    margin: 0;
-    overflow-wrap: break-word;
+.auth-signup-benefit {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--auth-input-border) 86%, transparent);
+  background: color-mix(in srgb, var(--auth-input-bg) 88%, transparent);
+}
 
-    &::before {
-      content: "✓";
-      flex: 0 0 auto;
-      color: var(--app-accent);
-      font-weight: 900;
-      line-height: 1.1;
-      margin-top: 1px;
-    }
+.auth-signup-benefit__icon {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--app-accent);
+  font-weight: 950;
+  line-height: 1;
+}
 
-    strong {
-      color: var(--auth-login-title);
-      font-weight: 800;
-    }
-  }
+.auth-signup-benefit__copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.auth-signup-benefit__title {
+  color: var(--auth-login-title);
+  font-weight: 850;
+  font-size: 1.3rem;
+  line-height: 1.25;
+}
+
+.auth-signup-benefit__desc {
+  color: color-mix(in srgb, var(--auth-login-subtitle) 92%, transparent);
+  font-weight: 650;
+  font-size: 1.2rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
 }
 
 form.sign-up-form {
@@ -315,6 +346,12 @@ form.sign-up-form {
   }
 }
 
+[data-theme="dark"] .auth-signup-benefit,
+html.dark .auth-signup-benefit,
+.dark .auth-signup-benefit {
+  background: color-mix(in srgb, #0b0c0d 28%, var(--auth-input-bg));
+}
+
 [data-theme="light"] form.sign-up-form {
   .c-row--phone .signup-phone-wrap {
     /* Light: neutral fill (premium), sin "baby blue" */
@@ -346,6 +383,12 @@ form.sign-up-form {
     .signup-link-back {
       font-size: 14px;
     }
+  }
+}
+
+@include respond-from(tablet) {
+  .auth-signup-benefits {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
