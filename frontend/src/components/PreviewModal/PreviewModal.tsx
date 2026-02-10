@@ -28,23 +28,35 @@ const formatTime = (seconds: number): string => {
 
 function PreviewModal(props: PreviewModalPropsI) {
   const { show, onHide, file } = props;
-  const audioPattern = /\.(mp3|wav|aac|m4a|flac|ogg|aiff|alac)(\?|$)/i;
-  const resolvedKind =
-    file?.kind === 'audio' || audioPattern.test(`${file?.name ?? ''} ${file?.url ?? ''}`)
-      ? 'audio'
-      : 'video';
+  const resolvedKind = file?.kind === 'video' ? 'video' : 'audio';
   const isAudio = resolvedKind === 'audio';
   const mediaName = file?.name ?? '';
   const audioUrl = file?.url ?? '';
   const waveformRef = useRef<HTMLDivElement | null>(null);
   const waveSurferRef = useRef<WaveSurfer | null>(null);
+  const [isModalReady, setIsModalReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [duration, setDuration] = useState<number>(0);
   const [audioLoadError, setAudioLoadError] = useState<string>('');
+  const [videoLoadError, setVideoLoadError] = useState<string>('');
 
   useEffect(() => {
-    if (!show || audioUrl === '' || !isAudio || !waveformRef.current) {
+    if (!show) {
+      setIsModalReady(false);
+      setVideoLoadError('');
+    }
+  }, [show]);
+
+  useEffect(() => {
+    if (!show) return;
+    // Reset errors when switching between files while modal is open.
+    setAudioLoadError('');
+    setVideoLoadError('');
+  }, [show, file?.url]);
+
+  useEffect(() => {
+    if (!show || !isModalReady || audioUrl === '' || !isAudio || !waveformRef.current) {
       if (!show || audioUrl === '' || !isAudio) {
         setIsPlaying(false);
         setCurrentTime(0);
@@ -54,9 +66,15 @@ function PreviewModal(props: PreviewModalPropsI) {
       return;
     }
 
+    // Prevent duplicate instances when switching files quickly.
+    if (waveSurferRef.current) {
+      waveSurferRef.current.destroy();
+      waveSurferRef.current = null;
+    }
+
     const wave = WaveSurfer.create({
       container: waveformRef.current,
-      waveColor: 'rgba(8, 225, 247, 0.28)',
+      waveColor: 'rgba(8, 225, 247, 0.44)',
       progressColor: '#08E1F7',
       cursorColor: '#08E1F7',
       cursorWidth: 2,
@@ -111,7 +129,7 @@ function PreviewModal(props: PreviewModalPropsI) {
       setCurrentTime(0);
       setDuration(0);
     };
-  }, [show, audioUrl, isAudio]);
+  }, [show, isModalReady, audioUrl, isAudio]);
 
   const toggleAudio = () => {
     const player = waveSurferRef.current;
@@ -133,6 +151,8 @@ function PreviewModal(props: PreviewModalPropsI) {
       aria-labelledby="contained-modal-title-vcenter"
       centered
       className="preview-modal"
+      onEntered={() => setIsModalReady(true)}
+      onExited={() => setIsModalReady(false)}
     >
       <Modal.Header closeButton>
         <Modal.Title id="contained-modal-title-vcenter">
@@ -173,17 +193,22 @@ function PreviewModal(props: PreviewModalPropsI) {
             </div>
           )}
           {file && !isAudio && (
-            <video
-              controls
-              autoPlay
-              controlsList="nodownload noplaybackrate"
-              disablePictureInPicture
-              playsInline
-              onContextMenu={(e) => e.preventDefault()}
-              onDragStart={(e) => e.preventDefault()}
-            >
-              <source src={file.url} />
-            </video>
+            <>
+              <video
+                key={file.url}
+                src={file.url}
+                controls
+                autoPlay
+                preload="metadata"
+                controlsList="nodownload noplaybackrate"
+                disablePictureInPicture
+                playsInline
+                onError={() => setVideoLoadError('No pudimos cargar este video. Prueba con otro archivo.')}
+                onContextMenu={(e) => e.preventDefault()}
+                onDragStart={(e) => e.preventDefault()}
+              />
+              {videoLoadError !== '' && <p className="preview-wave-error">{videoLoadError}</p>}
+            </>
           )}
         </div>
       </Modal.Body>
