@@ -1,4 +1,4 @@
-import { IPlans, IOxxoData, ISpeiData } from "../../interfaces/Plans";
+import { IPlans } from "../../interfaces/Plans";
 import "./PlanCard.scss";
 import { useLocation, useNavigate } from "react-router-dom";
 import React, { useCallback, useEffect, useState } from "react";
@@ -9,10 +9,8 @@ import {
   type CancellationReasonCode,
   ChangeSubscriptionModal,
   ErrorModal,
-  SpeiModal,
   SuccessModal
 } from "../../components/Modals";
-import { OxxoModal } from "../../components/Modals/OxxoModal/OxxoModal";
 import PayPalComponent from "../../components/PayPal/PayPalComponent";
 import PaymentMethodLogos, { type PaymentMethodId } from "../../components/PaymentMethodLogos/PaymentMethodLogos";
 import { useCookies } from "react-cookie";
@@ -21,7 +19,6 @@ import { trackManyChatConversion, trackManyChatPurchase, MC_EVENTS } from "../..
 import { generateEventId } from "../../utils/marketingIds";
 import { GROWTH_METRICS, getGrowthAttribution, trackGrowthMetric } from "../../utils/growthMetrics";
 import { Download, FolderOpen, HeartCrack, Music, Unlock, Zap } from "lucide-react";
-import { getConektaFingerprint } from "../../utils/conektaCollect";
 import { formatInt } from "../../utils/format";
 
 // Copy persuasivo CRO: texto aburrido → gancho emocional
@@ -81,10 +78,6 @@ interface PlanCardPropsI {
 }
 function PlanCard(props: PlanCardPropsI) {
   const { plan, currentPlan, getCurrentPlan, userEmail, showRecommendedBadge = true } = props;
-	  const [showSpeiModal, setShowSpeiModal] = useState<boolean>(false);
-	  const [speiData, setSpeiData] = useState({} as ISpeiData);
-    const [showOxxoModal, setShowOxxoModal] = useState<boolean>(false);
-    const [oxxoData, setOxxoData] = useState({} as IOxxoData);
 	  const [showSuccess, setShowSuccess] = useState<boolean>(false);
 	  const [showCancelModal, setShowCancelModal] = useState<boolean>(false);
   const [showChangeModal, setShowChangeModal] = useState<boolean>(false);
@@ -219,116 +212,6 @@ function PlanCard(props: PlanCardPropsI) {
 	    }
 	  }, [plan]);
 
-	  const handleButtonClick = () => {
-	    // fbq('track', 'CarritoAbandonado');
-	    // manyChatPixel.track('PageView');
-	  };
-	  const payWithSpei = async () => {
-	    trackManyChatConversion(MC_EVENTS.CLICK_SPEI);
-      trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
-        id: "plans_pay_spei",
-        location: pathname === "/actualizar-planes" ? "plan_upgrade" : "plans",
-        planId: plan.id,
-        method: "spei",
-      });
-	    handleUserClickOnPlan();
-	    void trpc.checkoutLogs.registerCheckoutLog.mutate().catch(() => {});
-    try {
-      let body = {
-        planId: plan.id,
-        paymentMethod: "spei" as const,
-        fingerprint: await getConektaFingerprint(),
-      };
-      const speiPay =
-        await trpc.subscriptions.subscribeWithCashConekta.mutate(body);
-      setShowSpeiModal(true);
-      setSpeiData(speiPay);
-      handleButtonClick();
-    } catch (error: any) {
-      const msg =
-        error?.data?.message ??
-        error?.message ??
-        "No se pudo generar la transferencia SPEI. Verifica que el plan sea en pesos (MXN) o intenta más tarde.";
-      setErrorMSG(msg);
-      handleErrorModal();
-    }
-  };
-
-  const payWithOxxo = async () => {
-    trackManyChatConversion(MC_EVENTS.CLICK_OXXO);
-    trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
-      id: "plans_pay_cash",
-      location: pathname === "/actualizar-planes" ? "plan_upgrade" : "plans",
-      planId: plan.id,
-      method: "oxxo",
-    });
-    handleUserClickOnPlan();
-    void trpc.checkoutLogs.registerCheckoutLog.mutate().catch(() => {});
-    try {
-      const body = {
-        planId: plan.id,
-        paymentMethod: "cash" as const,
-        fingerprint: await getConektaFingerprint(),
-      };
-      const oxxoPay = await trpc.subscriptions.subscribeWithCashConekta.mutate(body);
-      setShowOxxoModal(true);
-      setOxxoData(oxxoPay);
-      handleButtonClick();
-    } catch (error: any) {
-      const msg =
-        error?.data?.message ??
-        error?.message ??
-        "No se pudo generar la referencia de pago en efectivo. Intenta más tarde o usa tarjeta/SPEI.";
-      setErrorMSG(msg);
-      handleErrorModal();
-    }
-  };
-
-  const payWithBbva = async () => {
-    trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
-      id: "plans_pay_bbva",
-      location: pathname === "/actualizar-planes" ? "plan_upgrade" : "plans",
-      planId: plan.id,
-      method: "bbva",
-    });
-    handleUserClickOnPlan();
-    void trpc.checkoutLogs.registerCheckoutLog.mutate().catch(() => {});
-    try {
-      const value = Number(plan.price) || 0;
-      const currency = (plan.moneda || "MXN").toUpperCase();
-      try {
-        window.sessionStorage.setItem(
-          "bb.checkout.pendingPurchase",
-          JSON.stringify({
-            planId: plan.id,
-            value,
-            currency,
-            at: new Date().toISOString(),
-          }),
-        );
-      } catch {
-        // noop
-      }
-
-      const result = await trpc.subscriptions.subscribeWithPayByBankConekta.mutate({
-        planId: plan.id,
-        fingerprint: await getConektaFingerprint(),
-      });
-      if (result?.url) {
-        window.location.href = result.url;
-        return;
-      }
-      setErrorMSG("No se pudo abrir el pago BBVA. Intenta con SPEI/Efectivo o tarjeta.");
-      handleErrorModal();
-    } catch (error: any) {
-      const msg =
-        error?.data?.message ??
-        error?.message ??
-        "No se pudo abrir el pago BBVA. Intenta con SPEI/Efectivo o tarjeta.";
-      setErrorMSG(msg);
-      handleErrorModal();
-    }
-  };
   const handleCheckout = async (planId: number) => {
     trackManyChatConversion(MC_EVENTS.CLICK_BUY);
     handleUserClickOnPlan();
@@ -431,9 +314,6 @@ function PlanCard(props: PlanCardPropsI) {
   const showPaypalOption = hasPaypalPlan;
   const planCurrency = (plan.moneda ?? "MXN").toUpperCase();
   const planPriceValue = Number(plan.price ?? 0) || 0;
-  const planGigasValue = Number(plan.gigas ?? 0) || 0;
-  const unitPricePerGb = planGigasValue > 0 ? planPriceValue / planGigasValue : null;
-  const unitPriceLabel = unitPricePerGb !== null ? formatPlanCurrency(unitPricePerGb, planCurrency) : null;
   const formattedPlanPrice = formatPlanCurrency(planPriceValue, planCurrency);
 	  const mxnPaymentSummary = (() => {
 	    const parts = ["Tarjeta", "SPEI"];
@@ -447,10 +327,6 @@ function PlanCard(props: PlanCardPropsI) {
 	    : showPaypalOption
 	      ? "Tarjeta o PayPal"
 	      : "Tarjeta internacional";
-  const targetAudience = isMxn ? "Pago local en MXN" : "Pago internacional en USD";
-  const displayDescription = isMxn
-    ? "Ideal para DJs en México que quieren activar rápido y cobrar sin fricción."
-    : "Ideal para DJs fuera de México que prefieren pago en USD.";
 	  const primaryCtaLabel = !userEmail ? "Crear cuenta y activar" : (isMxn ? "Activar plan MXN" : "Activar plan USD");
 	  const paymentLogos: PaymentMethodId[] = isMxn
 	    ? (conektaAvailability?.oxxoEnabled
@@ -479,14 +355,10 @@ function PlanCard(props: PlanCardPropsI) {
         <header className="c-row plan-card-head">
           <p className="plan-card-kicker">{isMxn ? "Pago local" : "Pago internacional"}</p>
           <h2 className="plan-card-title">{plan.name}</h2>
-          <p className="plan-card-target">{targetAudience}</p>
           <div className="plan-card-price-row">
             <span className="plan-card-price-amount">{formattedPlanPrice}</span>
             <span className="plan-card-price-currency">{planCurrency} / mes</span>
           </div>
-          {unitPriceLabel && (
-            <p className="plan-card-unit-price">Equivale a {unitPriceLabel} por GB descargable</p>
-          )}
         </header>
         <ul className="plan-card-highlights" aria-label={`Incluye en ${plan.name}`}>
           <li className="plan-card-highlight-item">
@@ -495,7 +367,6 @@ function PlanCard(props: PlanCardPropsI) {
           <li className="plan-card-highlight-item">Catálogo completo (eliges qué descargar)</li>
           <li className="plan-card-highlight-item">Métodos: {paymentSummary}</li>
         </ul>
-        <p className="plan-card-description">{displayDescription || plan.description}</p>
         <ul className="plan-card-benefits">
           {includedBenefits.map((ad) => (
             <li key={ad} className="plan-card-benefit-item">
@@ -547,7 +418,7 @@ function PlanCard(props: PlanCardPropsI) {
                               <button
                                 type="button"
                                 className="plan-card-btn-outline"
-                                onClick={() => (userEmail ? payWithSpei() : handleCheckoutWithMethod(plan.id, "spei"))}
+                                onClick={() => handleCheckoutWithMethod(plan.id, "spei")}
                               >
                                 SPEI (recurrente)
                               </button>
@@ -555,7 +426,7 @@ function PlanCard(props: PlanCardPropsI) {
                                 <button
                                   type="button"
                                   className="plan-card-btn-outline"
-                                  onClick={() => (userEmail ? payWithBbva() : handleCheckoutWithMethod(plan.id, "bbva"))}
+                                  onClick={() => handleCheckoutWithMethod(plan.id, "bbva")}
                                 >
                                   BBVA (Pago directo)
                                 </button>
@@ -564,7 +435,7 @@ function PlanCard(props: PlanCardPropsI) {
                                 <button
                                   type="button"
                                   className="plan-card-btn-outline"
-                                  onClick={() => (userEmail ? payWithOxxo() : handleCheckoutWithMethod(plan.id, "oxxo"))}
+                                  onClick={() => handleCheckoutWithMethod(plan.id, "oxxo")}
                                 >
                                   Efectivo
                                 </button>
@@ -686,22 +557,6 @@ function PlanCard(props: PlanCardPropsI) {
 	        action={changePlan}
 	        plan={plan}
 	      />
-      <SpeiModal
-        show={showSpeiModal}
-        onHide={() => {
-          setShowSpeiModal(false);
-        }}
-        price={plan.price}
-        speiData={speiData}
-      />
-      <OxxoModal
-        show={showOxxoModal}
-        onHide={() => {
-          setShowOxxoModal(false);
-        }}
-        price={plan.price}
-        oxxoData={oxxoData}
-      />
       <SuccessModal
         show={showSuccess}
         onHide={closeSuccess}
