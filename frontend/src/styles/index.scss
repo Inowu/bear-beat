@@ -51,6 +51,20 @@
   --bb-shadow: 0 10px 26px rgba(15, 23, 42, 0.10);
   --bb-shadow-card: 0 18px 48px rgba(15, 23, 42, 0.12);
   --bb-shadow-glow: 0 0 18px rgba(8, 225, 247, 0.32);
+  /* Spacing scale (theme-agnostic) */
+  --bb-space-1: 4px;
+  --bb-space-2: 8px;
+  --bb-space-3: 12px;
+  --bb-space-4: 16px;
+  --bb-space-5: 20px;
+  --bb-space-6: 24px;
+  --bb-space-7: 32px;
+  --bb-space-8: 40px;
+  /* Radius scale */
+  --bb-radius-sm: 10px;
+  --bb-radius-md: 12px;
+  --bb-radius-lg: 16px;
+  --bb-radius-xl: 20px;
   --bb-radius-card: 12px;
   --bb-radius-pill: 999px;
   --bb-font-ui: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;

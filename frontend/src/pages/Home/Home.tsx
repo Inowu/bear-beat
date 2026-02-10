@@ -8,6 +8,8 @@ import {
   Search,
   Play,
   Download,
+  BookOpen,
+  MessageCircle,
   FileMusic,
   FileVideoCamera,
   FileArchive,
@@ -774,117 +776,156 @@ function Home() {
         <UsersUHModal showModal={showModal} onHideModal={closeModalAdd} />
       </Elements>
       <div className="bb-home-overview">
-        <div className="bb-home-top">
-          <div className="bb-home-title-wrap">
-            <h2 className="bb-home-title">
-              <FolderOpen className="bb-home-title-icon" strokeWidth={2} />
-              Tu biblioteca
-            </h2>
-            <p className="bb-home-subtitle">{currentRouteLabel}</p>
+        <div className="bb-library-header">
+          <div className="bb-library-top">
+            <div className="bb-library-left">
+              <button
+                type="button"
+                disabled={!canNavigateBack}
+                onClick={() => {
+                  if (isSearching) {
+                    clearSearch();
+                    return;
+                  }
+                  if (showPagination) {
+                    clearSearch();
+                    return;
+                  }
+                  goToFolder({ back: true });
+                }}
+                className="bb-back-btn bb-back-btn--header"
+              >
+                <ArrowLeft className="bb-back-icon" aria-hidden />
+                <span className="bb-back-label">
+                  {isSearching ? 'Limpiar filtro' : showPagination ? 'Volver a carpeta' : 'Volver'}
+                </span>
+              </button>
+              <div className="bb-home-title-wrap">
+                <h2 className="bb-home-title">
+                  <FolderOpen className="bb-home-title-icon" strokeWidth={2} />
+                  Tu biblioteca
+                </h2>
+                <p className="bb-home-subtitle">{currentRouteLabel}</p>
+              </div>
+            </div>
+
+            <div className="bb-home-quick-actions" aria-label="Acciones rápidas">
+              <button
+                type="button"
+                className="bb-home-quick-btn bb-home-quick-btn--icon"
+                onClick={() => {
+                  if (showPagination && searchValue.trim() !== '') {
+                    startSearch(searchValue);
+                    return;
+                  }
+                  if (pastFile.length > 0) {
+                    goToFolder({});
+                    return;
+                  }
+                  getFiles();
+                }}
+                aria-label="Recargar"
+                title="Recargar"
+              >
+                <RefreshCw size={18} aria-hidden />
+                <span className="bb-quick-label">Recargar</span>
+              </button>
+              <Link
+                to="/instrucciones"
+                className="bb-home-quick-btn bb-home-quick-btn--link bb-home-quick-btn--icon"
+                aria-label="Guía FTP"
+                title="Guía FTP"
+              >
+                <BookOpen size={18} aria-hidden />
+                <span className="bb-quick-label">Guía FTP</span>
+              </Link>
+              <a
+                href={SUPPORT_CHAT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bb-home-quick-btn bb-home-quick-btn--link bb-home-quick-btn--icon"
+                onClick={() => {
+                  trackGrowthMetric(GROWTH_METRICS.SUPPORT_CHAT_OPENED, {
+                    source: 'home_library_quick_action',
+                    pagePath: `/${pastFile.join('/')}`,
+                  });
+                }}
+                aria-label="Soporte por chat"
+                title="Soporte por chat"
+              >
+                <MessageCircle size={18} aria-hidden />
+                <span className="bb-quick-label">Soporte</span>
+              </a>
+            </div>
           </div>
-          <div className="bb-home-quick-actions">
-            <button
-              type="button"
-              className="bb-home-quick-btn"
-              onClick={() => {
-                if (showPagination && searchValue.trim() !== '') {
-                  startSearch(searchValue);
-                  return;
-                }
-                if (pastFile.length > 0) {
-                  goToFolder({});
-                  return;
-                }
-                getFiles();
-              }}
-            >
-              Recargar
-            </button>
-            <Link to="/instrucciones" className="bb-home-quick-btn bb-home-quick-btn--link">
-              Guía FTP
-            </Link>
-            <a
-              href={SUPPORT_CHAT_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bb-home-quick-btn bb-home-quick-btn--link"
-              onClick={() => {
-                trackGrowthMetric(GROWTH_METRICS.SUPPORT_CHAT_OPENED, {
-                  source: 'home_library_quick_action',
-                  pagePath: `/${pastFile.join('/')}`,
-                });
-              }}
-            >
-              Soporte por chat
-            </a>
-          </div>
-        </div>
-        <div className="bb-home-tools">
-          <div className="bb-search-wrap">
-            <Search className="bb-search-icon" />
-            <input
-              placeholder="Busca por canción, artista o carpeta"
-              value={searchValue}
-              className="bb-search-input"
-              onChange={(e: any) => {
-                setFilters((prev) => ({ ...prev, page: 0 }));
-                startSearch(e.target.value);
-              }}
-            />
-            <button
-              type="button"
-              className={`bb-search-clear ${searchValue !== '' ? 'is-visible' : ''}`}
-              onClick={clearSearch}
-              aria-label="Limpiar búsqueda"
-              disabled={searchValue === ''}
-              tabIndex={searchValue === '' ? -1 : 0}
-              aria-hidden={searchValue === ''}
-            >
-              <X size={14} />
-            </button>
-          </div>
-          <div className="bb-home-toolbar">
-            <div className="bb-home-toolbar-main">
-              <div className="bb-path-items">
-                <button type="button" onClick={goToRoot} className="bb-chip bb-chip-root">
-                  Inicio
-                </button>
-                {!showPagination && pastFile.length > 0 && (
-                  <div className="bb-chip-track">
-                    {pastFile.map((file: any, index) => {
+
+          <div className="bb-library-bar">
+            <div className="bb-search-wrap">
+              <Search className="bb-search-icon" aria-hidden />
+              <input
+                placeholder="Busca por canción, artista o carpeta"
+                value={searchValue}
+                className="bb-search-input"
+                onChange={(e: any) => {
+                  setFilters((prev) => ({ ...prev, page: 0 }));
+                  startSearch(e.target.value);
+                }}
+              />
+              <button
+                type="button"
+                className={`bb-search-clear ${searchValue !== '' ? 'is-visible' : ''}`}
+                onClick={clearSearch}
+                aria-label="Limpiar búsqueda"
+                disabled={searchValue === ''}
+                tabIndex={searchValue === '' ? -1 : 0}
+                aria-hidden={searchValue === ''}
+              >
+                <X size={14} aria-hidden />
+              </button>
+            </div>
+
+            <div className="bb-library-route">
+              <nav className="bb-breadcrumb" aria-label="Ruta">
+                <ol className="bb-breadcrumb-list">
+                  <li className="bb-breadcrumb-item">
+                    <button type="button" onClick={goToRoot} className="bb-breadcrumb-link">
+                      Inicio
+                    </button>
+                  </li>
+                  {!showPagination &&
+                    pastFile.map((file: any, index) => {
                       const isLastFolder = pastFile.length === index + 1;
                       if (isLastFolder) {
                         return (
-                          <span key={`folder_${index}`} className="bb-chip bb-chip-current">
-                            <Folder className="bb-chip-folder-icon" strokeWidth={2} />
-                            {file}
-                          </span>
+                          <li key={`folder_${index}`} className="bb-breadcrumb-item">
+                            <span className="bb-breadcrumb-current">{file}</span>
+                          </li>
                         );
                       }
                       return (
-                        <span key={`folder_${index}`} className="bb-chip-item">
+                        <li key={`folder_${index}`} className="bb-breadcrumb-item">
                           <button
                             type="button"
-                            className="bb-chip bb-chip-link"
+                            className="bb-breadcrumb-link"
                             onClick={() => {
                               goToFolder({ folder: index + 1 });
                             }}
                           >
-                            <Folder className="bb-chip-folder-icon" strokeWidth={2} />
                             {file}
                           </button>
-                          <ChevronRight className="bb-chip-sep" />
-                        </span>
+                        </li>
                       );
                     })}
-                  </div>
-                )}
-                {isSearching && (
-                  <span className="bb-chip bb-chip-search">
-                    {showPagination ? 'Resultados:' : 'Filtro:'} <strong>{searchValue}</strong>
-                  </span>
-                )}
-              </div>
+                  {isSearching && (
+                    <li className="bb-breadcrumb-item">
+                      <span className="bb-breadcrumb-current" aria-current="page">
+                        {showPagination ? 'Resultados:' : 'Filtro:'} <strong>{searchValue}</strong>
+                      </span>
+                    </li>
+                  )}
+                </ol>
+              </nav>
+
               <div className="bb-home-meta-inline">
                 <span className="bb-mini-pill">
                   {sortedFiles.length} {itemCountLabel}
@@ -892,25 +933,6 @@ function Home() {
                 <span className="bb-mini-pill">{totalVisibleLabel}</span>
               </div>
             </div>
-            <button
-              type="button"
-              disabled={!canNavigateBack}
-              onClick={() => {
-                if (isSearching) {
-                  clearSearch();
-                  return;
-                }
-                if (showPagination) {
-                  clearSearch();
-                  return;
-                }
-                goToFolder({ back: true });
-              }}
-              className="bb-back-btn"
-            >
-              <ArrowLeft className="bb-back-icon" />
-              {isSearching ? 'Limpiar filtro' : showPagination ? 'Volver a carpeta' : 'Volver'}
-            </button>
           </div>
         </div>
       </div>
@@ -1059,6 +1081,7 @@ function Home() {
                 const isFolder = file.type === 'd';
                 const allowFolderDownload = isFolder && file.size != null && gbSize <= 50;
                 const fileCategoryLabel = getFileCategoryLabel(file);
+                const kind = getFileVisualKind(file);
                 return (
                   <article
                     key={`explorer-${idx}`}
@@ -1078,32 +1101,13 @@ function Home() {
                       }
                     }}
                   >
+                    <div className="bb-row-icon" aria-hidden>
+                      <span className={`bb-kind-icon bb-kind-${kind}`}>
+                        {renderKindIcon(kind)}
+                      </span>
+                    </div>
+
                     <div className="bb-row-main">
-                      {isFolder ? (
-                        <span className="bb-kind-icon bb-kind-folder bb-folder-marker" aria-hidden>
-                          {renderKindIcon('folder')}
-                        </span>
-                      ) : (
-                        loadFile && index === idx ? (
-                          <span className="bb-inline-play bb-inline-play--loading" aria-live="polite">
-                            <Spinner size={2} width={0.2} color="var(--app-accent)" />
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            className="bb-inline-play"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              playFile(file, idx);
-                            }}
-                            title="Escuchar muestra"
-                            aria-label="Escuchar muestra"
-                          >
-                            <Play size={16} />
-                            <span>Escuchar</span>
-                          </button>
-                        )
-                      )}
                       <div className="bb-file-copy">
                         <span className="bb-file-name" title={file.name}>
                           {file.name}
@@ -1113,52 +1117,91 @@ function Home() {
                           <span className="bb-file-pill bb-file-pill--size">{sizeLabel}</span>
                         </div>
                       </div>
-                      {isFolder && (
-                        <span className="bb-folder-enter" aria-hidden>
-                          <span>Abrir</span>
-                          <ChevronRight className="bb-row-chevron" />
-                        </span>
-                      )}
                     </div>
+
                     <div className="bb-row-actions">
-                      {allowFolderDownload && (
-                        <button
-                          type="button"
-                          className="bb-action-btn bb-action-btn--folder"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            checkAlbumSize(file, idx);
-                          }}
-                          title="Descargar carpeta"
-                          aria-label="Descargar carpeta"
-                        >
-                          {loadDownload && index === idx ? (
-                            <Spinner size={2} width={0.2} color="var(--app-btn-text)" />
-                          ) : (
-                            <>
-                              <Download size={18} />
-                              <span className="bb-action-label">Descargar</span>
-                            </>
-                          )}
-                        </button>
-                      )}
-                      {file.type === '-' && (
-                        loadDownload && index === idx ? (
-                          <span className="bb-action-btn bb-action-btn--accent bb-action-btn--loading">
-                            <Spinner size={2} width={0.2} color="var(--app-btn-text)" />
-                          </span>
-                        ) : (
+                      {isFolder ? (
+                        <>
                           <button
                             type="button"
-                            className="bb-action-btn bb-action-btn--accent"
-                            onClick={() => downloadFile(file, idx)}
-                            title="Descargar archivo"
-                            aria-label="Descargar archivo"
+                            className="bb-action-btn bb-action-btn--primary"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              goToFolder({ next: file.name });
+                            }}
+                            title="Abrir carpeta"
+                            aria-label="Abrir carpeta"
                           >
-                            <Download size={18} />
-                            <span className="bb-action-label">Descargar</span>
+                            <span className="bb-action-label">Abrir</span>
+                            <ChevronRight className="bb-row-chevron" aria-hidden />
                           </button>
-                        )
+
+                          {allowFolderDownload && (
+                            <button
+                              type="button"
+                              className="bb-action-btn bb-action-btn--ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                checkAlbumSize(file, idx);
+                              }}
+                              title="Descargar carpeta"
+                              aria-label="Descargar carpeta"
+                            >
+                              {loadDownload && index === idx ? (
+                                <Spinner size={2} width={0.2} color="var(--app-accent)" />
+                              ) : (
+                                <>
+                                  <Download size={18} aria-hidden />
+                                  <span className="bb-action-label">Descargar</span>
+                                </>
+                              )}
+                            </button>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          {loadFile && index === idx ? (
+                            <span
+                              className="bb-action-btn bb-action-btn--ghost bb-action-btn--loading"
+                              aria-live="polite"
+                            >
+                              <Spinner size={2} width={0.2} color="var(--app-accent)" />
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              className="bb-action-btn bb-action-btn--ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                playFile(file, idx);
+                              }}
+                              title="Escuchar muestra"
+                              aria-label="Escuchar muestra"
+                            >
+                              <Play size={18} aria-hidden />
+                              <span className="bb-action-label">Escuchar</span>
+                            </button>
+                          )}
+
+                          {file.type === '-' && (
+                            loadDownload && index === idx ? (
+                              <span className="bb-action-btn bb-action-btn--primary bb-action-btn--loading">
+                                <Spinner size={2} width={0.2} color="var(--app-accent)" />
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                className="bb-action-btn bb-action-btn--primary"
+                                onClick={() => downloadFile(file, idx)}
+                                title="Descargar archivo"
+                                aria-label="Descargar archivo"
+                              >
+                                <Download size={18} aria-hidden />
+                                <span className="bb-action-label">Descargar</span>
+                              </button>
+                            )
+                          )}
+                        </>
                       )}
                     </div>
                   </article>
