@@ -248,6 +248,38 @@ html[data-theme="dark"] .plan-card-glow {
   border-top: 1px solid color-mix(in srgb, var(--plan-card-border) 74%, transparent);
 }
 
+.plan-card-trial-note {
+  margin: 0;
+  color: color-mix(in srgb, var(--plan-card-subtitle) 92%, transparent);
+  font-size: 1.18rem;
+  font-weight: 650;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.plan-card-trust-row {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.plan-card-trust-row li {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--plan-card-border) 72%, transparent);
+  background: color-mix(in srgb, var(--app-bg-soft) 72%, transparent);
+  color: color-mix(in srgb, var(--plan-card-subtitle) 92%, transparent);
+  font-size: 1.15rem;
+  font-weight: 750;
+}
+
 .plan-card-btn-hero {
   width: 100%;
   min-height: 52px !important;
@@ -334,6 +366,30 @@ html[data-theme="dark"] .plan-card-btn-hero:hover {
   background: color-mix(in srgb, var(--app-bg-soft) 72%, transparent);
 }
 
+.plan-card-alt-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.plan-card-alt-badge {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--app-accent) 40%, transparent);
+  background: color-mix(in srgb, var(--theme-accent-soft-bg) 92%, transparent);
+  color: color-mix(in srgb, var(--app-accent) 86%, white);
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 .plan-card-secondary-label {
   display: block;
   margin: 0;
@@ -360,6 +416,7 @@ html[data-theme="dark"] .plan-card-btn-hero:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 10px;
   padding: 0 14px;
   border-radius: 14px;
   border: 1px solid color-mix(in srgb, var(--plan-card-btn-outline-border) 72%, transparent);
@@ -371,6 +428,25 @@ html[data-theme="dark"] .plan-card-btn-hero:hover {
   text-transform: uppercase;
   cursor: pointer;
   transition: border-color 0.16s ease, background 0.16s ease;
+}
+
+.plan-card-btn-label {
+  display: inline-flex;
+  align-items: center;
+}
+
+.plan-card-btn-pill {
+  min-height: 20px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--app-accent) 34%, transparent);
+  background: color-mix(in srgb, var(--app-bg-soft) 70%, transparent);
+  color: color-mix(in srgb, var(--plan-card-title) 92%, transparent);
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
 }
 
 .plan-card-btn-outline:hover {
@@ -399,6 +475,15 @@ html[data-theme="dark"] .plan-card-btn-hero:hover {
 .plan-card-payment-logos {
   justify-content: center;
   margin-top: 2px;
+}
+
+.plan-card-alt-hint {
+  margin: 0;
+  color: color-mix(in srgb, var(--plan-card-subtitle) 92%, transparent);
+  font-size: 1.15rem;
+  font-weight: 650;
+  line-height: 1.45;
+  text-align: center;
 }
 
 .plan-card-confidence {

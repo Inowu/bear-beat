@@ -7,8 +7,9 @@ import PlanCard from '../../components/PlanCard/PlanCard';
 import trpc from '../../api';
 import { useNavigate } from 'react-router-dom';
 import { trackManyChatConversion, MC_EVENTS } from '../../utils/manychatPixel';
-import { AlertTriangle, RefreshCw, Layers3, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Layers3, Wallet, ListChecks, Zap } from 'lucide-react';
 import { formatInt, formatTB } from '../../utils/format';
+import PlansStickyCta from './PlansStickyCta';
 
 function detectPreferredCurrency(): "mxn" | "usd" {
   if (typeof window === "undefined") return "usd";
@@ -19,6 +20,7 @@ function detectPreferredCurrency(): "mxn" | "usd" {
 function Plans() {
   const { currentUser } = useUserContext();
   const [plans, setPlans] = useState<IPlans[]>([]);
+  const [showSinglePlan, setShowSinglePlan] = useState(false);
   const [catalogSummary, setCatalogSummary] = useState<{
     totalFiles: number;
     totalGB: number;
@@ -35,6 +37,7 @@ function Plans() {
   const [loadError, setLoadError] = useState<string>('');
   const navigate = useNavigate();
   const preferredCurrency = useMemo(() => detectPreferredCurrency(), []);
+  const [selectedCurrency, setSelectedCurrency] = useState<"mxn" | "usd">(preferredCurrency);
 
   const getPlans = async () => {
     setLoadError('');
@@ -54,6 +57,19 @@ function Plans() {
     // Cargar planes también para usuarios no autenticados (evita "spinner infinito" y mejora conversión).
     getPlans();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(max-width: 920px)");
+    const update = () => setShowSinglePlan(mq.matches);
+    update();
+    if (typeof mq.addEventListener === "function") {
+      mq.addEventListener("change", update);
+      return () => mq.removeEventListener("change", update);
+    }
+    mq.addListener(update);
+    return () => mq.removeListener(update);
   }, []);
 
   useEffect(() => {
@@ -176,8 +192,45 @@ function Plans() {
   }, [sortedPlans]);
   const heroMicrocopy =
     trialConfig?.enabled && trialConfig.eligible !== false
-      ? `Prueba: ${formatInt(trialConfig.days)} días / ${formatInt(trialConfig.gb)} GB (solo tarjeta, 1ª vez). Se cobra al finalizar la prueba si no cancelas.`
-      : "Se renueva cada mes. Cancela cuando quieras.";
+      ? `Prueba: ${formatInt(trialConfig.days)} días + ${formatInt(trialConfig.gb)} GB (solo tarjeta, 1ª vez). Cancelas antes de que termine y no se cobra.`
+      : "Pago mensual. Cancela cuando quieras.";
+
+  useEffect(() => {
+    const hasSelected = selectedCurrency === "mxn" ? Boolean(plansByCurrency.mxn) : Boolean(plansByCurrency.usd);
+    if (hasSelected) return;
+    if (plansByCurrency.mxn) setSelectedCurrency("mxn");
+    else if (plansByCurrency.usd) setSelectedCurrency("usd");
+  }, [plansByCurrency.mxn, plansByCurrency.usd, selectedCurrency]);
+
+  const primaryPlan = useMemo(() => {
+    if (selectedCurrency === "mxn") return plansByCurrency.mxn ?? plansByCurrency.usd;
+    return plansByCurrency.usd ?? plansByCurrency.mxn;
+  }, [plansByCurrency.mxn, plansByCurrency.usd, selectedCurrency]);
+
+  const handlePrimaryCta = () => {
+    if (!primaryPlan) return;
+    const target = `/comprar?priceId=${primaryPlan.id}`;
+    if (!currentUser?.email) {
+      navigate("/auth/registro", { state: { from: target } });
+      return;
+    }
+    navigate(target);
+  };
+
+  const plansToRender = useMemo(() => {
+    if (!plansByCurrency.mxn && !plansByCurrency.usd) return [];
+    if (showSinglePlan) return primaryPlan ? [primaryPlan] : [];
+
+    const list: IPlans[] = [];
+    if (selectedCurrency === "mxn") {
+      if (plansByCurrency.mxn) list.push(plansByCurrency.mxn);
+      if (plansByCurrency.usd) list.push(plansByCurrency.usd);
+    } else {
+      if (plansByCurrency.usd) list.push(plansByCurrency.usd);
+      if (plansByCurrency.mxn) list.push(plansByCurrency.mxn);
+    }
+    return list;
+  }, [plansByCurrency.mxn, plansByCurrency.usd, primaryPlan, selectedCurrency, showSinglePlan]);
 
   // Loader: mientras estemos cargando planes
   if (loader) {
@@ -201,24 +254,57 @@ function Plans() {
     <div className="plans-page">
       <div className="plans-main-container">
         <section className="plans-hero" aria-label="Planes">
-          <h1 className="plans-page-title">Elige tu plan</h1>
-          <p className="plans-hero-subtitle">
-            Video remixes, audios y karaokes listos para cabina. Activa en minutos y descarga cada mes.
-          </p>
-          <ul className="plans-hero-bullets" aria-label="Puntos clave">
-            <li>
-              <CheckCircle2 size={16} aria-hidden />
-              Catálogo total: <strong>{proofItems[1]?.value ?? "—"}</strong> (eliges qué bajar)
-            </li>
-            <li>
-              <CheckCircle2 size={16} aria-hidden />
-              Descargas: <strong>{downloadQuotaGb ? `${formatInt(downloadQuotaGb)} GB/mes` : "—"}</strong>
-            </li>
-            <li>
-              <CheckCircle2 size={16} aria-hidden />
-              Activación guiada por chat (respuesta rápida)
-            </li>
-          </ul>
+          <h1 className="plans-page-title">Elige tu moneda y activa</h1>
+          <p className="plans-hero-subtitle">Activa tu membresía en minutos y llega con repertorio listo.</p>
+          <div className="plans-decision-grid" role="list" aria-label="Qué vas a decidir">
+            <article className="plans-decision-card" role="listitem">
+              <Zap className="plans-decision-icon" aria-hidden />
+              <h2 className="plans-decision-title">Beneficio</h2>
+              <p className="plans-decision-copy">Responde pedidos al instante con contenido listo para cabina.</p>
+            </article>
+            <article className="plans-decision-card" role="listitem">
+              <ListChecks className="plans-decision-icon" aria-hidden />
+              <h2 className="plans-decision-title">Qué incluye</h2>
+              <ul className="plans-decision-stats" aria-label="Incluye">
+                <li>
+                  <strong>{proofItems[1]?.value ?? "—"}</strong> catálogo (eliges qué bajar)
+                </li>
+                <li>
+                  <strong>{downloadQuotaGb ? `${formatInt(downloadQuotaGb)} GB/mes` : "—"}</strong> de descargas
+                </li>
+                <li>
+                  <strong>FTP + web</strong> (como te acomode)
+                </li>
+              </ul>
+            </article>
+            <article className="plans-decision-card" role="listitem">
+              <Wallet className="plans-decision-icon" aria-hidden />
+              <h2 className="plans-decision-title">Qué plan elegir</h2>
+              <div className="plans-currency-toggle" role="tablist" aria-label="Moneda">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={selectedCurrency === "mxn"}
+                  className={selectedCurrency === "mxn" ? "is-active" : ""}
+                  onClick={() => setSelectedCurrency("mxn")}
+                  disabled={!plansByCurrency.mxn}
+                >
+                  MXN
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={selectedCurrency === "usd"}
+                  className={selectedCurrency === "usd" ? "is-active" : ""}
+                  onClick={() => setSelectedCurrency("usd")}
+                  disabled={!plansByCurrency.usd}
+                >
+                  USD
+                </button>
+              </div>
+              <p className="plans-currency-micro">MXN: México (pago local). USD: internacional.</p>
+            </article>
+          </div>
           <p className="plans-hero-micro">{heroMicrocopy}</p>
         </section>
       {loadError ? (
@@ -255,36 +341,29 @@ function Plans() {
         </section>
       ) : (
         <>
-          <section className="plans-grid-heading">
-            <h2>Elige tu moneda</h2>
-            <p>MXN para México. USD internacional. Activación en minutos.</p>
-          </section>
-
           <div className="plans-plan-grid" role="list" aria-label="Planes disponibles">
-            {plansByCurrency.mxn && (
+            {plansToRender.map((plan) => (
               <PlanCard
-                plan={plansByCurrency.mxn as IPlans}
-                key={`plan_mxn_${plansByCurrency.mxn.id}`}
+                plan={plan}
+                key={`plan_${plan.id}`}
                 getCurrentPlan={() => {}}
                 userEmail={currentUser?.email}
-                showRecommendedBadge
+                showRecommendedBadge={plan === plansByCurrency.mxn}
                 variant="marketing"
+                trialConfig={trialConfig}
               />
-            )}
-            {plansByCurrency.usd && (
-              <PlanCard
-                plan={plansByCurrency.usd as IPlans}
-                key={`plan_usd_${plansByCurrency.usd.id}`}
-                getCurrentPlan={() => {}}
-                userEmail={currentUser?.email}
-                showRecommendedBadge={false}
-                variant="marketing"
-              />
-            )}
+            ))}
           </div>
         </>
       )}
       </div>
+
+      <PlansStickyCta
+        planId={primaryPlan?.id ?? null}
+        ctaLabel={!currentUser?.email ? "Crear cuenta y activar" : "Activar ahora"}
+        trial={trialConfig?.enabled ? { enabled: trialConfig.enabled, days: trialConfig.days, gb: trialConfig.gb } : null}
+        onClick={handlePrimaryCta}
+      />
     </div>
   );
 }
