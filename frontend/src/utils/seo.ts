@@ -30,8 +30,9 @@ export const ROUTE_SEO: Record<string, { title: string; description: string }> =
     description: "Establece tu nueva contraseña de Bear Beat.",
   },
   "/planes": {
-    title: `Planes y precios | ${BASE_TITLE}`,
-    description: "Planes desde $18/mes. 500 GB cada mes, descarga FTP masiva, contenido por géneros. Cancela cuando quieras.",
+    title: `Planes y precios | ${BASE_TITLE} – 14.14 TB + 500 GB/mes (MXN o USD)`,
+    description:
+      "Elige MXN (México) o USD (internacional). Catálogo 14.14 TB, 500 GB/mes. Prueba 7 días + 100 GB (solo tarjeta, 1ª vez).",
   },
   "/comprar": {
     title: `Comprar | ${BASE_TITLE}`,

@@ -6,7 +6,7 @@ import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../utils/growthMetrics";
 import { FALLBACK_GENRES, type GenreStats } from "./fallbackGenres";
 import type { IPlans } from "../../interfaces/Plans";
-import { getHomeCtaPrimaryLabel, HOME_HERO_MICROCOPY_BASE } from "./homeCopy";
+import { getHomeCtaPrimaryLabel, HOME_HERO_MICROCOPY_BASE, HOME_HERO_MICROCOPY_TRIAL } from "./homeCopy";
 import {
   HOME_NUMBER_LOCALE,
   formatInt,
@@ -262,10 +262,11 @@ export default function PublicHome() {
   const ctaPrimaryLabel = useMemo(() => getHomeCtaPrimaryLabel(trialSummary), [trialSummary]);
   const footerMicrocopy = useMemo(() => {
     if (trialSummary?.enabled) {
-      return `${formatInt(trialSummary.days)} días + ${formatInt(trialSummary.gb)} GB. Cancelas antes de que termine y no se cobra.`;
+      // Mantén el detalle de la prueba arriba (hero/pricing) y deja el footer en modo "micro".
+      return `Pago seguro (Stripe) • ${HOME_HERO_MICROCOPY_TRIAL}`;
     }
     return HOME_HERO_MICROCOPY_BASE;
-  }, [trialSummary?.enabled, trialSummary?.days, trialSummary?.gb]);
+  }, [trialSummary?.enabled]);
 
   const pricingPlans = useMemo(() => {
     const bestMxn = pickBestPlan(plans, "mxn");
@@ -440,6 +441,59 @@ export default function PublicHome() {
     return () => observer.disconnect();
   }, [preferredCurrency]);
 
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+
+    const offers: Array<{ "@type": "Offer"; priceCurrency: string; price: number; url: string; availability: string }> =
+      [];
+
+    if (pricingPlans.usd && pricingPlans.usd.price > 0) {
+      offers.push({
+        "@type": "Offer",
+        priceCurrency: "USD",
+        price: pricingPlans.usd.price,
+        url: "https://thebearbeat.com/planes",
+        availability: "https://schema.org/InStock",
+      });
+    }
+
+    if (pricingPlans.mxn && pricingPlans.mxn.price > 0) {
+      offers.push({
+        "@type": "Offer",
+        priceCurrency: "MXN",
+        price: pricingPlans.mxn.price,
+        url: "https://thebearbeat.com/planes",
+        availability: "https://schema.org/InStock",
+      });
+    }
+
+    const existing = document.querySelector("script[data-schema='bb-product']") as HTMLScriptElement | null;
+    if (offers.length === 0) {
+      existing?.remove();
+      return;
+    }
+
+    const schema = {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      name: "Membresía Bear Beat",
+      brand: { "@type": "Brand", name: "Bear Beat" },
+      url: "https://thebearbeat.com/planes",
+      offers: offers.length === 1 ? offers[0] : offers,
+    } as const;
+
+    const script = existing ?? document.createElement("script");
+    script.type = "application/ld+json";
+    script.setAttribute("data-schema", "bb-product");
+    script.text = JSON.stringify(schema);
+    if (!existing) document.head.appendChild(script);
+
+    return () => {
+      // Mantén el schema solo en la landing pública.
+      script.remove();
+    };
+  }, [pricingPlans.mxn, pricingPlans.usd]);
+
   return (
     <div className="public-home">
       <a className="home-skip" href="#home-main">
@@ -447,7 +501,7 @@ export default function PublicHome() {
       </a>
       <header className="home-topnav" aria-label="Navegación">
         <div className="ph__container home-topnav__inner">
-          <Link to="/" className="home-topnav__brand" aria-label="Bear Beat">
+          <Link to="/" className="home-topnav__brand" aria-label="Bear Beat" aria-current="page">
             <img src={Logo} alt="Bear Beat" />
           </Link>
           <nav className="home-topnav__nav" aria-label="Links">
@@ -464,7 +518,7 @@ export default function PublicHome() {
         </div>
       </header>
 
-      <main id="home-main" className="home-main">
+      <div id="home-main" className="home-main">
         <HomeHero
           totalTBLabel={totalTBLabel}
           downloadQuotaLabel={downloadQuotaLabel}
@@ -520,7 +574,7 @@ export default function PublicHome() {
         </div>
 
         <HomeFaq onFaqExpand={onFaqExpand} />
-      </main>
+      </div>
 
       <footer className="home-footer" aria-label="Footer">
         <div className="ph__container home-footer__inner">

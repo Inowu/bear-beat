@@ -46,6 +46,7 @@ export default function ActivationSteps(props: {
             to="/auth/registro"
             state={{ from: "/planes" }}
             className="home-cta home-cta--primary"
+            data-testid="home-mid-primary-cta"
             onClick={onPrimaryCtaClick}
           >
             {ctaLabel}

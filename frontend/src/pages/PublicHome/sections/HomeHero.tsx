@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, CirclePlay, Lock, Sparkles } from "lucide-react";
 import {
+  HOME_HERO_MICROCOPY_BASE,
+  HOME_HERO_MICROCOPY_TRIAL,
   HOME_HERO_SUBTITLE,
   HOME_HERO_TITLE,
 } from "../homeCopy";
@@ -24,10 +26,8 @@ export default function HomeHero(props: {
   const { totalTBLabel, downloadQuotaLabel, afterPriceLabel, trial, ctaLabel, onPrimaryCtaClick, onDemoScroll } = props;
 
   const hasTrial = Boolean(trial?.enabled);
-  const riskReversal =
-    hasTrial && trial
-      ? `${formatInt(trial.days)} días + ${formatInt(trial.gb)} GB. Cancelas antes de que termine y no se cobra.`
-      : null;
+  const trialLabel =
+    hasTrial && trial ? `Prueba: ${formatInt(trial.days)} días + ${formatInt(trial.gb)} GB.` : null;
 
   return (
     <section className="home-hero" aria-label="Presentación">
@@ -68,12 +68,19 @@ export default function HomeHero(props: {
                 Ver demo del catálogo
               </button>
             </div>
+
+            <Link to="/auth" state={{ from: "/planes" }} className="home-hero__cta-alt">
+              ¿Ya tienes cuenta? Inicia sesión →
+            </Link>
+
             <div className="home-hero__micro">
-              {riskReversal ? (
+              {trialLabel ? (
                 <>
                   <span className="home-hero__micro-row">
                     <Sparkles size={16} aria-hidden />
-                    {riskReversal}
+                    <span>
+                      <strong>{trialLabel}</strong> {HOME_HERO_MICROCOPY_TRIAL}
+                    </span>
                   </span>
                   <span className="home-hero__micro-row">
                     <ArrowRight size={16} aria-hidden />
@@ -88,12 +95,9 @@ export default function HomeHero(props: {
               )}
               <span className="home-hero__micro-row">
                 <Lock size={16} aria-hidden />
-                Pago seguro (Stripe)
+                {HOME_HERO_MICROCOPY_BASE}
               </span>
             </div>
-            <Link to="/auth" state={{ from: "/planes" }} className="home-hero__cta-alt">
-              Ya tengo cuenta
-            </Link>
           </div>
         </div>
       </div>

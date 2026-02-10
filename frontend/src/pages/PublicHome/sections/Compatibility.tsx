@@ -15,29 +15,31 @@ export default function Compatibility() {
           FTP o web: tú eliges. Descargas a tu computadora e importas a tu software como siempre.
         </p>
 
-        <div className="compatibility__compare" role="list" aria-label="Opciones de descarga">
-          <article className="compatibility__card compatibility__card--primary" role="listitem">
+        <ul className="compatibility__compare" aria-label="Opciones de descarga">
+          <li className="compatibility__card compatibility__card--primary">
             <p className="compatibility__tag">FTP</p>
             <h3>{ftp?.title ?? "Descargas por FTP"}</h3>
             <p>{ftp?.body}</p>
-          </article>
-          <article className="compatibility__card" role="listitem">
+            <p className="compatibility__hint">Recomendado para descargas grandes.</p>
+          </li>
+          <li className="compatibility__card">
             <p className="compatibility__tag">Web</p>
             <h3>{web?.title ?? "También por web"}</h3>
             <p>{web?.body}</p>
-          </article>
-        </div>
+            <p className="compatibility__hint">Útil para archivos puntuales.</p>
+          </li>
+        </ul>
 
-        <div className="compatibility__extras" role="list" aria-label="Detalles">
-          <article className="compatibility__card compatibility__card--soft" role="listitem">
+        <ul className="compatibility__extras" aria-label="Detalles">
+          <li className="compatibility__card compatibility__card--soft">
             <h3>{formats?.title ?? "Formatos comunes"}</h3>
             <p>{formats?.body}</p>
-          </article>
-          <article className="compatibility__card compatibility__card--soft" role="listitem">
+          </li>
+          <li className="compatibility__card compatibility__card--soft">
             <h3>{workflow?.title ?? "Tu software, tu forma"}</h3>
             <p>{workflow?.body}</p>
-          </article>
-        </div>
+          </li>
+        </ul>
 
         <div className="compatibility__cta">
           <Link to="/instrucciones" className="home-link">

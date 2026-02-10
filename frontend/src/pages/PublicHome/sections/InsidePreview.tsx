@@ -25,8 +25,8 @@ export default function InsidePreview(props: {
         <div className="home-visual">
           <div className="home-visual__head">
             <strong>Vista real del catálogo</strong>
-            <span className="inside-preview__hint" aria-hidden>
-              Toca la captura
+            <span className="inside-preview__hint">
+              Toca para ampliar
             </span>
           </div>
           <ul className="home-visual__bullets" aria-label="Qué verás al activar">
@@ -39,7 +39,7 @@ export default function InsidePreview(props: {
               type="button"
               className="home-visual__frame-btn"
               onClick={onTourClick}
-              aria-label="Ver captura del catálogo"
+              aria-label="Abrir captura del catálogo en detalle"
             >
               <picture>
                 <source srcSet={CatalogPreviewWebp} type="image/webp" />
@@ -60,4 +60,3 @@ export default function InsidePreview(props: {
     </section>
   );
 }
-

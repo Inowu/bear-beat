@@ -78,7 +78,15 @@ interface PlanCardPropsI {
   } | null;
 }
 function PlanCard(props: PlanCardPropsI) {
-  const { plan, currentPlan, getCurrentPlan, userEmail, showRecommendedBadge = true, variant = "default" } = props;
+  const {
+    plan,
+    currentPlan,
+    getCurrentPlan,
+    userEmail,
+    showRecommendedBadge = true,
+    variant = "default",
+    trialConfig,
+  } = props;
   const isMarketing = variant === "marketing";
 	  const [showSuccess, setShowSuccess] = useState<boolean>(false);
 	  const [showCancelModal, setShowCancelModal] = useState<boolean>(false);
@@ -327,7 +335,7 @@ function PlanCard(props: PlanCardPropsI) {
       if (showPaypalOption) parts.push("PayPal");
 	    return parts.join(" / ");
 	  })();
-	  const paymentSummary = isMxn
+  const paymentSummary = isMxn
 	    ? mxnPaymentSummary
 	    : showPaypalOption
 	      ? "Tarjeta o PayPal"
@@ -348,6 +356,23 @@ function PlanCard(props: PlanCardPropsI) {
 	    : showPaypalOption
 	      ? ["visa", "mastercard", "amex", "paypal"]
 	      : ["visa", "mastercard", "amex"];
+
+  const showTrialMessaging = Boolean(trialConfig?.enabled) && isMarketing;
+  const formattedTrial =
+    trialConfig?.enabled && trialConfig.eligible !== false
+      ? `${formatInt(trialConfig.days)} días + ${formatInt(trialConfig.gb)} GB`
+      : null;
+  const trialNearCtaCopy = (() => {
+    if (!showTrialMessaging) return null;
+    if (trialConfig?.eligible === false) {
+      return "La prueba solo aplica la primera vez con tarjeta. En esta cuenta se activa al pagar.";
+    }
+    if (!formattedTrial) return null;
+    if (isMxn) {
+      return `La prueba (${formattedTrial}) aplica solo con tarjeta (Stripe). PayPal/SPEI/Efectivo activan sin prueba.`;
+    }
+    return `La prueba (${formattedTrial}) aplica solo con tarjeta (Stripe). PayPal activa sin prueba.`;
+  })();
 
   return (
     <div
@@ -420,6 +445,14 @@ function PlanCard(props: PlanCardPropsI) {
               >
                 <Unlock aria-hidden /> {primaryCtaLabel}
               </button>
+                    {trialNearCtaCopy && <p className="plan-card-trial-note">{trialNearCtaCopy}</p>}
+                    {isMarketing && (
+                      <ul className="plan-card-trust-row" aria-label="Confianza">
+                        <li>Pago seguro</li>
+                        <li>Soporte por chat 1 a 1</li>
+                        <li>Cancela cuando quieras</li>
+                      </ul>
+                    )}
                     {isMxn && (
                       <div className="plan-card-alt-payments">
                         <button
@@ -436,16 +469,20 @@ function PlanCard(props: PlanCardPropsI) {
                             id={`plan-alt-payments-${plan.id}`}
                             className="plan-card-alt-panel"
                           >
-                            <span className="plan-card-secondary-label">
-                              {userEmail ? "Paga con:" : "Inicia sesión para pagar con:"}
-                            </span>
+                            <div className="plan-card-alt-head">
+                              <span className="plan-card-secondary-label">
+                                {userEmail ? "Paga con:" : "Inicia sesión para pagar con:"}
+                              </span>
+                              {showTrialMessaging && <span className="plan-card-alt-badge">Sin prueba</span>}
+                            </div>
                             <div className="plan-card-secondary-buttons">
                               <button
                                 type="button"
                                 className="plan-card-btn-outline"
                                 onClick={() => handleCheckoutWithMethod(plan.id, "spei")}
                               >
-                                SPEI (recurrente)
+                                <span className="plan-card-btn-label">SPEI (recurrente)</span>
+                                {showTrialMessaging && <span className="plan-card-btn-pill">Sin prueba</span>}
                               </button>
                               {conektaAvailability?.payByBankEnabled && (
                                 <button
@@ -453,7 +490,8 @@ function PlanCard(props: PlanCardPropsI) {
                                   className="plan-card-btn-outline"
                                   onClick={() => handleCheckoutWithMethod(plan.id, "bbva")}
                                 >
-                                  BBVA (Pago directo)
+                                  <span className="plan-card-btn-label">BBVA (Pago directo)</span>
+                                  {showTrialMessaging && <span className="plan-card-btn-pill">Sin prueba</span>}
                                 </button>
                               )}
                               {conektaAvailability?.oxxoEnabled && (
@@ -462,7 +500,8 @@ function PlanCard(props: PlanCardPropsI) {
                                   className="plan-card-btn-outline"
                                   onClick={() => handleCheckoutWithMethod(plan.id, "oxxo")}
                                 >
-                                  Efectivo
+                                  <span className="plan-card-btn-label">Efectivo</span>
+                                  {showTrialMessaging && <span className="plan-card-btn-pill">Sin prueba</span>}
                                 </button>
                               )}
                               {showPaypalOption &&
@@ -497,10 +536,14 @@ function PlanCard(props: PlanCardPropsI) {
                                       navigate("/auth/registro", { state: { from: "/planes" } });
                                     }}
                                   >
-                                    PayPal
+                                    <span className="plan-card-btn-label">PayPal</span>
+                                    {showTrialMessaging && <span className="plan-card-btn-pill">Sin prueba</span>}
                                   </button>
                                 ))}
                             </div>
+                            {showTrialMessaging && (
+                              <p className="plan-card-alt-hint">Estas opciones activan sin prueba.</p>
+                            )}
                           </div>
                         )}
                       </div>

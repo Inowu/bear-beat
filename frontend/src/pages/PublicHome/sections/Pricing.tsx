@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { useId, useMemo, useState } from "react";
 import PaymentMethodLogos, { type PaymentMethodId } from "../../../components/PaymentMethodLogos/PaymentMethodLogos";
-import { HOME_HERO_MICROCOPY_BASE } from "../homeCopy";
+import { HOME_HERO_MICROCOPY_BASE, HOME_HERO_MICROCOPY_TRIAL } from "../homeCopy";
 import { formatInt } from "../homeFormat";
 
 export type TrialSummary = {
@@ -155,7 +155,7 @@ export default function Pricing(props: {
                     <strong>
                       Prueba: {trial.days} días + {formatInt(trial.gb)} GB
                     </strong>
-                    <div className="pricing__trial-sub">Solo tarjeta (Stripe), 1ª vez. Cancelas antes de que termine y no se cobra.</div>
+                    <div className="pricing__trial-sub">Solo tarjeta (Stripe), 1ª vez. {HOME_HERO_MICROCOPY_TRIAL}</div>
                   </div>
                 )}
 
@@ -176,6 +176,7 @@ export default function Pricing(props: {
                     to="/auth/registro"
                     state={{ from: "/planes" }}
                     className="home-cta home-cta--primary"
+                    data-testid="home-pricing-primary-cta"
                     onClick={onPrimaryCtaClick}
                   >
                     {ctaLabel}
@@ -243,6 +244,7 @@ export default function Pricing(props: {
                     to="/auth/registro"
                     state={{ from: "/planes" }}
                     className="home-cta home-cta--primary"
+                    data-testid="home-pricing-primary-cta"
                     onClick={onPrimaryCtaClick}
                   >
                     {ctaLabel}

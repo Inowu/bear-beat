@@ -40,7 +40,8 @@ function inferErrorCode(message: string): string {
 function SignUpForm() {
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as { from?: string } | null)?.from ?? "/";
+  // Default conversion path after signup is /planes (unless the user came from a protected route / checkout).
+  const from = (location.state as { from?: string } | null)?.from ?? "/planes";
   const [loader, setLoader] = useState<boolean>(false);
   const { handleLogin } = useUserContext();
   const [show, setShow] = useState<boolean>(false);
