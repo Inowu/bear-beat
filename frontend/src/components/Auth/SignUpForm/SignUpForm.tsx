@@ -9,7 +9,6 @@ import { useUserContext } from "../../../contexts/UserContext";
 import * as Yup from "yup";
 import trpc from "../../../api";
 import { useCookies } from "react-cookie";
-import { ChatButton } from "../../../components/ChatButton/ChatButton";
 import Turnstile, { type TurnstileRef } from "../../../components/Turnstile/Turnstile";
 import { trackLead } from "../../../utils/facebookPixel";
 import { trackManyChatConversion, MC_EVENTS } from "../../../utils/manychatPixel";
@@ -431,7 +430,6 @@ function SignUpForm() {
           <img src={Logo} alt="Bear Beat" className="auth-login-logo" />
           <h1 className="auth-login-title">Crea tu cuenta</h1>
           <p className="auth-login-sub">Activa en minutos y empieza con demos antes de descargar.</p>
-          <ChatButton variant="inline" />
 
           <ul className="auth-signup-bullets" aria-label="Beneficios">
             <li>

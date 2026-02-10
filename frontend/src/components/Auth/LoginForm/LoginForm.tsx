@@ -7,7 +7,6 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useEffect, useRef, useState } from "react";
 import { Spinner } from "../../../components/Spinner/Spinner";
-import { ChatButton } from "../../../components/ChatButton/ChatButton";
 import Logo from "../../../assets/images/osonuevo.png";
 import { trackManyChatConversion, MC_EVENTS } from "../../../utils/manychatPixel";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../../utils/growthMetrics";
@@ -131,7 +130,6 @@ function LoginForm() {
           <p className="auth-login-sub text-text-muted">
             Tu cabina está lista. Ingresa para descargar.
           </p>
-          <ChatButton variant="inline" />
           <form className="auth-form auth-login-form" onSubmit={formik.handleSubmit} autoComplete="on">
             <div className={`c-row ${showUsernameError ? "is-invalid" : ""}`}>
               <label htmlFor="username" className="auth-field-label">
