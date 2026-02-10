@@ -61,6 +61,7 @@ function MainLayout() {
   const isFullWidth =
     location.pathname === "/" ||
     location.pathname.startsWith("/auth") ||
+    location.pathname.startsWith("/planes") ||
     location.pathname.startsWith("/instrucciones") ||
     location.pathname.startsWith("/legal");
 

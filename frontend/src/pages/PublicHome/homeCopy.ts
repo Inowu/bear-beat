@@ -12,8 +12,8 @@ export const HOME_HERO_TITLE = "Nunca vuelvas a decir “No la tengo” en cabin
 export const HOME_HERO_SUBTITLE =
   "Membresía para DJs: video remixes, audios y karaokes organizados para descargar y llegar con repertorio listo.";
 
-export const HOME_HERO_MICROCOPY_BASE = "Pago seguro • Cancela cuando quieras";
-export const HOME_HERO_MICROCOPY_TRIAL = "Se cobra al terminar la prueba si no cancelas.";
+export const HOME_HERO_MICROCOPY_BASE = "Pago seguro (Stripe) • Cancela cuando quieras";
+export const HOME_HERO_MICROCOPY_TRIAL = "Cancela antes de que termine y no se cobra.";
 
 export const HOME_USE_CASES = [
   {

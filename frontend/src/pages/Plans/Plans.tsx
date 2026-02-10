@@ -7,8 +7,7 @@ import PlanCard from '../../components/PlanCard/PlanCard';
 import trpc from '../../api';
 import { useNavigate } from 'react-router-dom';
 import { trackManyChatConversion, MC_EVENTS } from '../../utils/manychatPixel';
-import { AlertTriangle, RefreshCw, Layers3, ShieldCheck, Zap, MessageCircle } from 'lucide-react';
-import PaymentMethodLogos, { type PaymentMethodId } from '../../components/PaymentMethodLogos/PaymentMethodLogos';
+import { AlertTriangle, RefreshCw, Layers3, CheckCircle2 } from 'lucide-react';
 import { formatInt, formatTB } from '../../utils/format';
 
 function detectPreferredCurrency(): "mxn" | "usd" {
@@ -147,25 +146,6 @@ function Plans() {
       return (a.name ?? "").localeCompare(b.name ?? "", "es");
     });
   }, [plans, preferredCurrency]);
-  const conversionPath = [
-    "Elige plan",
-    "Paga seguro",
-    "Activa y descarga",
-  ];
-  const heroPaymentMethods = useMemo<PaymentMethodId[]>(() => {
-    const methods = new Set<PaymentMethodId>(["visa", "mastercard", "amex"]);
-    const hasMxn = sortedPlans.some((plan) => (plan.moneda ?? "").toLowerCase() === "mxn");
-    const hasPaypal = sortedPlans.some((plan) => Boolean(plan.paypal_plan_id || plan.paypal_plan_id_test));
-
-    if (hasMxn) {
-      methods.add("spei");
-    }
-    if (hasPaypal) {
-      methods.add("paypal");
-    }
-
-    return Array.from(methods);
-  }, [sortedPlans]);
   const proofItems = useMemo(() => {
     const hasLive =
       Boolean(catalogSummary) &&
@@ -184,10 +164,20 @@ function Plans() {
       { value: `${formatInt(totalGenres)} géneros`, label: "para responder pedidos" },
     ];
   }, [catalogSummary]);
-  const riskAnchor =
-    preferredCurrency === "mxn"
-      ? "Un solo evento perdiendo pedidos suele costar más que tu membresía mensual."
-      : "Perder una sola noche por no tener música puede costar más que tu acceso del mes.";
+  const plansByCurrency = useMemo(() => {
+    const mxn = sortedPlans.find((plan) => (plan.moneda ?? "").toLowerCase() === "mxn") ?? null;
+    const usd = sortedPlans.find((plan) => (plan.moneda ?? "").toLowerCase() === "usd") ?? null;
+    return { mxn, usd };
+  }, [sortedPlans]);
+  const downloadQuotaGb = useMemo(() => {
+    const values = sortedPlans.map((plan) => Number(plan.gigas ?? 0)).filter((v) => Number.isFinite(v) && v > 0);
+    if (values.length === 0) return 0;
+    return Math.max(...values);
+  }, [sortedPlans]);
+  const heroMicrocopy =
+    trialConfig?.enabled && trialConfig.eligible !== false
+      ? `Prueba: ${formatInt(trialConfig.days)} días / ${formatInt(trialConfig.gb)} GB (solo tarjeta, 1ª vez). Se cobra al finalizar la prueba si no cancelas.`
+      : "Se renueva cada mes. Cancela cuando quieras.";
 
   // Loader: mientras estemos cargando planes
   if (loader) {
@@ -206,69 +196,31 @@ function Plans() {
       </div>
     );
   }
-  const isSinglePlan = sortedPlans.length === 1;
 
   return (
-    <div className="plans-main-container">
-      <section className="plans-hero">
-        <div className="plans-hero-main">
-          <h1 className="plans-page-title">Nunca vuelvas a decir: “no la tengo”</h1>
-          <p className="plans-hero-subtitle">Activa tu membresía en minutos y responde peticiones al instante con un catálogo masivo por género.</p>
-          <p className="plans-hero-anchor">{riskAnchor}</p>
-          <p className="plans-value-equation">Más repertorio, menos fricción y activación rápida en una sola membresía.</p>
-          {trialConfig?.enabled && trialConfig.eligible !== false && (
-            <p className="plans-trial-pill" role="note">
-              <strong>{formatInt(trialConfig.days)} días gratis</strong>
-              <span>con tarjeta (Stripe)</span>
-              <span aria-hidden>•</span>
-              <span>{formatInt(trialConfig.gb)} GB incluidos</span>
-              <span aria-hidden>•</span>
-              <span>Solo primera vez</span>
-            </p>
-          )}
-          <div className="plans-proof-grid" aria-label="Indicadores de valor">
-            {proofItems.map((item) => (
-              <article key={item.value} className="plans-proof-item">
-                <strong>{item.value}</strong>
-                <span>{item.label}</span>
-              </article>
-            ))}
-          </div>
-          <div className="plans-trust-strip" aria-label="Beneficios clave">
-            <span>
-              <Zap size={16} aria-hidden />
-              <strong>Acceso inmediato</strong>
-            </span>
-            <span>
-              <ShieldCheck size={16} aria-hidden />
-              <strong>Pagos seguros</strong>
-            </span>
-            <span>
-              <MessageCircle size={16} aria-hidden />
-              <strong>Soporte por chat</strong>
-            </span>
-          </div>
-        </div>
-        <div className="plans-hero-side">
-          <h2 className="plans-hero-side-title">Activación en 3 pasos</h2>
-          <ol className="plans-flow-strip" aria-label="Ruta de activación rápida">
-            {conversionPath.map((step, index) => (
-              <li key={step}>
-                <span aria-hidden>{index + 1}</span>
-                <strong>{step}</strong>
-              </li>
-            ))}
-          </ol>
-          <p className="plans-hero-guarantee">
-            Si te atoras, soporte por chat te acompaña hasta que quedes activo.
+    <div className="plans-page">
+      <div className="plans-main-container">
+        <section className="plans-hero" aria-label="Planes">
+          <h1 className="plans-page-title">Elige tu plan</h1>
+          <p className="plans-hero-subtitle">
+            Video remixes, audios y karaokes listos para cabina. Activa en minutos y descarga cada mes.
           </p>
-          <PaymentMethodLogos
-            methods={heroPaymentMethods}
-            className="plans-payment-logos"
-            ariaLabel="Métodos de pago disponibles en Bear Beat"
-          />
-        </div>
-      </section>
+          <ul className="plans-hero-bullets" aria-label="Puntos clave">
+            <li>
+              <CheckCircle2 size={16} aria-hidden />
+              Catálogo total: <strong>{proofItems[1]?.value ?? "—"}</strong> (eliges qué bajar)
+            </li>
+            <li>
+              <CheckCircle2 size={16} aria-hidden />
+              Descargas: <strong>{downloadQuotaGb ? `${formatInt(downloadQuotaGb)} GB/mes` : "—"}</strong>
+            </li>
+            <li>
+              <CheckCircle2 size={16} aria-hidden />
+              Activación guiada por chat (respuesta rápida)
+            </li>
+          </ul>
+          <p className="plans-hero-micro">{heroMicrocopy}</p>
+        </section>
       {loadError ? (
         <section className="plans-state-wrap">
           <div className="app-state-panel is-error" role="alert">
@@ -304,26 +256,35 @@ function Plans() {
       ) : (
         <>
           <section className="plans-grid-heading">
-            <h2>Elige y activa hoy</h2>
-            <p>{isSinglePlan ? 'Este plan ya incluye catálogo completo, descarga mensual y soporte por chat.' : 'Compara tu moneda y activa el plan que mejor te convenga hoy.'}</p>
+            <h2>Elige tu moneda</h2>
+            <p>MXN para México. USD internacional. Activación en minutos.</p>
           </section>
-          <div
-            className={`plans-grid ${isSinglePlan ? 'is-single' : ''}`}
-          >
-            {sortedPlans.map((plan: IPlans) => (
+
+          <div className="plans-plan-grid" role="list" aria-label="Planes disponibles">
+            {plansByCurrency.mxn && (
               <PlanCard
-                plan={plan}
-                key={'plan_' + plan.id}
+                plan={plansByCurrency.mxn as IPlans}
+                key={`plan_mxn_${plansByCurrency.mxn.id}`}
                 getCurrentPlan={() => {}}
                 userEmail={currentUser?.email}
-                userPhone={currentUser?.phone}
-                showRecommendedBadge={sortedPlans.length > 1}
-                trialConfig={trialConfig}
+                showRecommendedBadge
+                variant="marketing"
               />
-            ))}
+            )}
+            {plansByCurrency.usd && (
+              <PlanCard
+                plan={plansByCurrency.usd as IPlans}
+                key={`plan_usd_${plansByCurrency.usd.id}`}
+                getCurrentPlan={() => {}}
+                userEmail={currentUser?.email}
+                showRecommendedBadge={false}
+                variant="marketing"
+              />
+            )}
           </div>
         </>
       )}
+      </div>
     </div>
   );
 }

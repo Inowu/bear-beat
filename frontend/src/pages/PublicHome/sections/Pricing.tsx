@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import PaymentMethodLogos, { type PaymentMethodId } from "../../../components/PaymentMethodLogos/PaymentMethodLogos";
-import { HOME_HERO_MICROCOPY_BASE, HOME_HERO_MICROCOPY_TRIAL } from "../homeCopy";
+import { HOME_HERO_MICROCOPY_BASE } from "../homeCopy";
 import { formatInt } from "../homeFormat";
 
 export type TrialSummary = {
@@ -26,6 +26,25 @@ function formatCurrency(amount: number, currency: "mxn" | "usd", locale: string)
   } catch {
     return `${amount} ${code}`;
   }
+}
+
+function getPaymentMethodsForPlan(plan: PricingPlan | null, hasTrial: boolean): PaymentMethodId[] {
+  const methods = new Set<PaymentMethodId>(["visa", "mastercard", "amex"]);
+  if (!plan) return Array.from(methods);
+  // Trial is Stripe/card-only. Avoid showing PayPal/SPEI next to the trial message.
+  if (!hasTrial) {
+    if (plan.hasPaypal) methods.add("paypal");
+    if (plan.currency === "mxn") methods.add("spei");
+  }
+  return Array.from(methods);
+}
+
+function getAltPaymentLabelForPlan(plan: PricingPlan | null): string {
+  if (!plan) return "";
+  const items: string[] = [];
+  if (plan.hasPaypal) items.push("PayPal");
+  if (plan.currency === "mxn") items.push("SPEI");
+  return items.join(" / ");
 }
 
 export default function Pricing(props: {
@@ -58,28 +77,22 @@ export default function Pricing(props: {
   }, [defaultCurrency, hasMxn, hasUsd]);
 
   const [currency, setCurrency] = useState<"mxn" | "usd">(initialCurrency);
-  const plan = currency === "mxn" ? plans.mxn : plans.usd;
+  const mxnPlan = plans.mxn ?? null;
+  const usdPlan = plans.usd ?? null;
   const hasTrial = Boolean(trial?.enabled);
-  const microcopy = hasTrial ? HOME_HERO_MICROCOPY_TRIAL : HOME_HERO_MICROCOPY_BASE;
+  const microcopy = HOME_HERO_MICROCOPY_BASE;
+  const tabPrefix = useId();
+  const mxnTabId = `${tabPrefix}-tab-mxn`;
+  const usdTabId = `${tabPrefix}-tab-usd`;
+  const mxnPanelId = `${tabPrefix}-panel-mxn`;
+  const usdPanelId = `${tabPrefix}-panel-usd`;
 
-  const paymentMethods = useMemo<PaymentMethodId[]>(() => {
-    const methods = new Set<PaymentMethodId>(["visa", "mastercard", "amex"]);
-    // Trial is Stripe/card-only. Avoid showing PayPal/SPEI next to the trial message.
-    if (!hasTrial) {
-      if (plan?.hasPaypal) methods.add("paypal");
-      if (plan?.currency === "mxn") methods.add("spei");
-    }
-    return Array.from(methods);
-  }, [plan, hasTrial]);
-
-  const altPaymentLabel = useMemo(() => {
-    const items: string[] = [];
-    if (plan?.hasPaypal) items.push("PayPal");
-    if (plan?.currency === "mxn") items.push("SPEI");
-    return items.join(" / ");
-  }, [plan?.currency, plan?.hasPaypal]);
-
-  const showAltPaymentsNote = Boolean(hasTrial && altPaymentLabel);
+  const mxnPaymentMethods = useMemo(() => getPaymentMethodsForPlan(mxnPlan, hasTrial), [mxnPlan, hasTrial]);
+  const usdPaymentMethods = useMemo(() => getPaymentMethodsForPlan(usdPlan, hasTrial), [usdPlan, hasTrial]);
+  const mxnAltPaymentLabel = useMemo(() => getAltPaymentLabelForPlan(mxnPlan), [mxnPlan]);
+  const usdAltPaymentLabel = useMemo(() => getAltPaymentLabelForPlan(usdPlan), [usdPlan]);
+  const showAltPaymentsNoteMxn = Boolean(hasTrial && mxnAltPaymentLabel);
+  const showAltPaymentsNoteUsd = Boolean(hasTrial && usdAltPaymentLabel);
 
   return (
     <section className="pricing" aria-label="Precio">
@@ -99,6 +112,8 @@ export default function Pricing(props: {
               className={`pricing__toggle-btn ${currency === "mxn" ? "is-active" : ""}`.trim()}
               onClick={() => setCurrency("mxn")}
               role="tab"
+              id={mxnTabId}
+              aria-controls={mxnPanelId}
               aria-selected={currency === "mxn"}
             >
               MXN
@@ -108,6 +123,8 @@ export default function Pricing(props: {
               className={`pricing__toggle-btn ${currency === "usd" ? "is-active" : ""}`.trim()}
               onClick={() => setCurrency("usd")}
               role="tab"
+              id={usdTabId}
+              aria-controls={usdPanelId}
               aria-selected={currency === "usd"}
             >
               USD
@@ -115,64 +132,140 @@ export default function Pricing(props: {
           </div>
         )}
 
-        <div className="pricing__card" aria-label="Plan">
-          <div className="pricing__card-head">
-            <div>
-              <p className="pricing__pill">Pago mensual</p>
-              <h3 className="pricing__title">{plan?.name ?? "Membresía Bear Beat"}</h3>
-            </div>
-            <div className="pricing__price">
-              <span className="pricing__amount">
-                {plan ? formatCurrency(plan.price, plan.currency, numberLocale) : "—"}
-              </span>
-              <span className="pricing__per">/ mes</span>
-            </div>
-          </div>
+        <div className="pricing__panels" aria-label="Plan">
+          {hasMxn && mxnPlan && (
+            <div id={mxnPanelId} role="tabpanel" aria-labelledby={mxnTabId} hidden={currency !== "mxn"}>
+              <div className="pricing__card">
+                <div className="pricing__card-head">
+                  <div>
+                    <p className="pricing__pill">Pago mensual</p>
+                    <h3 className="pricing__title">{mxnPlan.name ?? "Membresía Bear Beat"}</h3>
+                  </div>
+                  <div className="pricing__price">
+                    <span className="pricing__amount">
+                      {formatCurrency(mxnPlan.price, "mxn", numberLocale)}
+                    </span>
+                    <span className="pricing__per">/ mes</span>
+                    {hasTrial && <span className="pricing__after">Después de la prueba</span>}
+                  </div>
+                </div>
 
-          {hasTrial && trial && (
-            <div className="pricing__trial" role="note">
-              <strong>Prueba: {trial.days} días</strong> · {formatInt(trial.gb)} GB incluidos · solo tarjeta (Stripe), 1ª vez
-              <div className="pricing__trial-sub">Cancela antes de que termine y no se cobra.</div>
+                {hasTrial && trial && (
+                  <div className="pricing__trial" role="note">
+                    <strong>
+                      Prueba: {trial.days} días + {formatInt(trial.gb)} GB
+                    </strong>
+                    <div className="pricing__trial-sub">Solo tarjeta (Stripe), 1ª vez. Cancelas antes de que termine y no se cobra.</div>
+                  </div>
+                )}
+
+                <ul className="pricing__includes" aria-label="Incluye">
+                  <li>
+                    <CheckCircle2 size={16} aria-hidden /> Descargas: {formatInt(downloadQuotaGb)} GB/mes
+                  </li>
+                  <li>
+                    <CheckCircle2 size={16} aria-hidden /> Catálogo total: {catalogTBLabel} (eliges qué bajar)
+                  </li>
+                  <li>
+                    <CheckCircle2 size={16} aria-hidden /> Carpetas listas + guía por chat para activar
+                  </li>
+                </ul>
+
+                <div className="pricing__cta">
+                  <Link
+                    to="/auth/registro"
+                    state={{ from: "/planes" }}
+                    className="home-cta home-cta--primary"
+                    onClick={onPrimaryCtaClick}
+                  >
+                    {ctaLabel}
+                    <ArrowRight size={18} aria-hidden />
+                  </Link>
+                  <p className="pricing__micro">{microcopy}</p>
+                  <div className="pricing__payments">
+                    <PaymentMethodLogos
+                      methods={mxnPaymentMethods}
+                      size="md"
+                      className="pricing__payment-logos"
+                      ariaLabel="Métodos de pago aceptados"
+                    />
+                    {showAltPaymentsNoteMxn && (
+                      <div className="pricing__payments-note" role="note">
+                        La prueba aplica solo con tarjeta. Otros métodos ({mxnAltPaymentLabel}) se muestran como opciones sin prueba al activar.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
-          <ul className="pricing__includes" aria-label="Incluye">
-            <li>
-              <CheckCircle2 size={16} aria-hidden /> Descargas: {formatInt(downloadQuotaGb)} GB/mes
-            </li>
-            <li>
-              <CheckCircle2 size={16} aria-hidden /> Catálogo total: {catalogTBLabel} (eliges qué bajar)
-            </li>
-            <li>
-              <CheckCircle2 size={16} aria-hidden /> Carpetas listas + guía por chat para activar
-            </li>
-          </ul>
-
-          <div className="pricing__cta">
-            <Link
-              to="/auth/registro"
-              state={{ from: "/planes" }}
-              className="home-cta home-cta--primary"
-              onClick={onPrimaryCtaClick}
-            >
-              {ctaLabel}
-              <ArrowRight size={18} aria-hidden />
-            </Link>
-            <p className="pricing__micro">{microcopy}</p>
-            <div className="pricing__payments">
-              <PaymentMethodLogos
-                methods={paymentMethods}
-                size="md"
-                className="pricing__payment-logos"
-                ariaLabel="Métodos de pago aceptados"
-              />
-              {showAltPaymentsNote && (
-                <div className="pricing__payments-note" role="note">
-                  La prueba aplica solo con tarjeta. Otros métodos ({altPaymentLabel}) se muestran como opciones sin prueba al activar.
+          {hasUsd && usdPlan && (
+            <div id={usdPanelId} role="tabpanel" aria-labelledby={usdTabId} hidden={currency !== "usd"}>
+              <div className="pricing__card">
+                <div className="pricing__card-head">
+                  <div>
+                    <p className="pricing__pill">Pago mensual</p>
+                    <h3 className="pricing__title">{usdPlan.name ?? "Membresía Bear Beat"}</h3>
+                  </div>
+                  <div className="pricing__price">
+                    <span className="pricing__amount">
+                      {formatCurrency(usdPlan.price, "usd", numberLocale)}
+                    </span>
+                    <span className="pricing__per">/ mes</span>
+                    {hasTrial && <span className="pricing__after">Después de la prueba</span>}
+                  </div>
                 </div>
-              )}
+
+                {hasTrial && trial && (
+                  <div className="pricing__trial" role="note">
+                    <strong>
+                      Prueba: {trial.days} días + {formatInt(trial.gb)} GB
+                    </strong>
+                    <div className="pricing__trial-sub">Solo tarjeta (Stripe), 1ª vez. Cancelas antes de que termine y no se cobra.</div>
+                  </div>
+                )}
+
+                <ul className="pricing__includes" aria-label="Incluye">
+                  <li>
+                    <CheckCircle2 size={16} aria-hidden /> Descargas: {formatInt(downloadQuotaGb)} GB/mes
+                  </li>
+                  <li>
+                    <CheckCircle2 size={16} aria-hidden /> Catálogo total: {catalogTBLabel} (eliges qué bajar)
+                  </li>
+                  <li>
+                    <CheckCircle2 size={16} aria-hidden /> Carpetas listas + guía por chat para activar
+                  </li>
+                </ul>
+
+                <div className="pricing__cta">
+                  <Link
+                    to="/auth/registro"
+                    state={{ from: "/planes" }}
+                    className="home-cta home-cta--primary"
+                    onClick={onPrimaryCtaClick}
+                  >
+                    {ctaLabel}
+                    <ArrowRight size={18} aria-hidden />
+                  </Link>
+                  <p className="pricing__micro">{microcopy}</p>
+                  <div className="pricing__payments">
+                    <PaymentMethodLogos
+                      methods={usdPaymentMethods}
+                      size="md"
+                      className="pricing__payment-logos"
+                      ariaLabel="Métodos de pago aceptados"
+                    />
+                    {showAltPaymentsNoteUsd && (
+                      <div className="pricing__payments-note" role="note">
+                        La prueba aplica solo con tarjeta. Otros métodos ({usdAltPaymentLabel}) se muestran como opciones sin prueba al activar.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </section>

@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import trpc from "../../api";
 import Logo from "../../assets/images/osonuevo.png";
@@ -6,7 +6,7 @@ import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../utils/growthMetrics";
 import { FALLBACK_GENRES, type GenreStats } from "./fallbackGenres";
 import type { IPlans } from "../../interfaces/Plans";
-import { getHomeCtaPrimaryLabel, HOME_HERO_MICROCOPY_BASE, HOME_HERO_MICROCOPY_TRIAL } from "./homeCopy";
+import { getHomeCtaPrimaryLabel, HOME_HERO_MICROCOPY_BASE } from "./homeCopy";
 import {
   HOME_NUMBER_LOCALE,
   formatInt,
@@ -15,6 +15,8 @@ import {
   normalizeSearchKey,
 } from "./homeFormat";
 import HomeHero from "./sections/HomeHero";
+import HowItWorks from "./sections/HowItWorks";
+import InsidePreview from "./sections/InsidePreview";
 import TrustBar from "./sections/TrustBar";
 import UseCases from "./sections/UseCases";
 import CatalogDemo, { type CatalogGenre } from "./sections/CatalogDemo";
@@ -58,9 +60,9 @@ type PublicCatalogSummary = {
 };
 
 type PublicTopDownloadsResponse = {
-  audio: Array<{ name: string; downloads: number }>;
-  video: Array<{ name: string; downloads: number }>;
-  karaoke: Array<{ name: string; downloads: number }>;
+  audio: Array<{ path: string; name: string; downloads: number }>;
+  video: Array<{ path: string; name: string; downloads: number }>;
+  karaoke: Array<{ path: string; name: string; downloads: number }>;
   generatedAt: string;
   limit: number;
   sinceDays: number;
@@ -139,7 +141,16 @@ function toPricingPlan(plan: IPlans, currency: "mxn" | "usd"): PricingPlan {
   };
 }
 
+function formatUsdMonthlyHint(amount: number | null | undefined): string {
+  const value = Number(amount ?? 0);
+  if (!Number.isFinite(value) || value <= 0) return "USD 18";
+  const hasDecimals = Math.round(value) !== value;
+  const formatted = hasDecimals ? value.toFixed(2) : `${value}`;
+  return `USD ${formatted}`;
+}
+
 export default function PublicHome() {
+  const location = useLocation();
   const preferredCurrency = useMemo(() => detectPreferredCurrency(), []);
   const [trialConfig, setTrialConfig] = useState<TrialConfigResponse | null>(null);
   const [catalogSummary, setCatalogSummary] = useState<PublicCatalogSummary | null>(null);
@@ -250,8 +261,11 @@ export default function PublicHome() {
 
   const ctaPrimaryLabel = useMemo(() => getHomeCtaPrimaryLabel(trialSummary), [trialSummary]);
   const footerMicrocopy = useMemo(() => {
-    return trialSummary?.enabled ? HOME_HERO_MICROCOPY_TRIAL : HOME_HERO_MICROCOPY_BASE;
-  }, [trialSummary?.enabled]);
+    if (trialSummary?.enabled) {
+      return `${formatInt(trialSummary.days)} días + ${formatInt(trialSummary.gb)} GB. Cancelas antes de que termine y no se cobra.`;
+    }
+    return HOME_HERO_MICROCOPY_BASE;
+  }, [trialSummary?.enabled, trialSummary?.days, trialSummary?.gb]);
 
   const pricingPlans = useMemo(() => {
     const bestMxn = pickBestPlan(plans, "mxn");
@@ -262,6 +276,10 @@ export default function PublicHome() {
       usd: bestUsd ? toPricingPlan(bestUsd, "usd") : null,
     } as { mxn: PricingPlan | null; usd: PricingPlan | null };
   }, [plans]);
+
+  const afterPriceLabel = useMemo(() => {
+    return formatUsdMonthlyHint(pricingPlans.usd?.price);
+  }, [pricingPlans.usd?.price]);
 
   const downloadQuotaGb = useMemo(() => {
     const fromPlans = pricingPlans.mxn?.gigas ?? pricingPlans.usd?.gigas;
@@ -304,9 +322,10 @@ export default function PublicHome() {
   const socialAudio = useMemo(() => {
     const items = topDownloads?.audio ?? [];
     return items
-      .filter((item) => item && typeof item.name === "string")
+      .filter((item) => item && typeof item.name === "string" && typeof item.path === "string")
       .slice(0, 20)
       .map((item) => ({
+        path: item.path,
         name: prettyMediaName(item.name) || item.name,
         downloads: Number(item.downloads ?? 0),
       }));
@@ -315,9 +334,10 @@ export default function PublicHome() {
   const socialVideo = useMemo(() => {
     const items = topDownloads?.video ?? [];
     return items
-      .filter((item) => item && typeof item.name === "string")
+      .filter((item) => item && typeof item.name === "string" && typeof item.path === "string")
       .slice(0, 20)
       .map((item) => ({
+        path: item.path,
         name: prettyMediaName(item.name) || item.name,
         downloads: Number(item.downloads ?? 0),
       }));
@@ -326,9 +346,10 @@ export default function PublicHome() {
   const socialKaraoke = useMemo(() => {
     const items = topDownloads?.karaoke ?? [];
     return items
-      .filter((item) => item && typeof item.name === "string")
+      .filter((item) => item && typeof item.name === "string" && typeof item.path === "string")
       .slice(0, 20)
       .map((item) => ({
+        path: item.path,
         name: prettyMediaName(item.name) || item.name,
         downloads: Number(item.downloads ?? 0),
       }));
@@ -351,8 +372,32 @@ export default function PublicHome() {
     [],
   );
 
-  const onDemoClick = useCallback(() => {
+  const scrollToDemo = useCallback(
+    (options: { behavior?: ScrollBehavior; focusSearch?: boolean } = {}) => {
+      if (typeof window === "undefined") return;
+      const section = document.getElementById("demo");
+      if (section) {
+        section.scrollIntoView({ behavior: options.behavior ?? "smooth", block: "start" });
+      }
+      window.history.replaceState(null, "", "#demo");
+      if (options.focusSearch) {
+        // Avoid opening the keyboard on initial page load; focus only on explicit click.
+        window.setTimeout(() => {
+          const input = document.getElementById("catalog-demo-search") as HTMLInputElement | null;
+          input?.focus({ preventScroll: true });
+        }, 0);
+      }
+    },
+    [],
+  );
+
+  const onDemoScroll = useCallback(() => {
     trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, { location: "hero_block" });
+    scrollToDemo({ behavior: "smooth", focusSearch: true });
+  }, [scrollToDemo]);
+
+  const onTourClick = useCallback(() => {
+    trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, { location: "hero_modal" });
     setShowDemo(true);
   }, []);
 
@@ -361,6 +406,11 @@ export default function PublicHome() {
     // Track that the user actually viewed the demo modal (separate from the click source).
     trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, { location: "modal" });
   }, [showDemo]);
+
+  useEffect(() => {
+    if (location.hash !== "#demo") return;
+    scrollToDemo({ behavior: "auto", focusSearch: false });
+  }, [location.hash, scrollToDemo]);
 
   const onFaqExpand = useCallback((id: string) => {
     trackGrowthMetric(GROWTH_METRICS.FAQ_EXPAND, { question: id });
@@ -392,6 +442,9 @@ export default function PublicHome() {
 
   return (
     <div className="public-home">
+      <a className="home-skip" href="#home-main">
+        Saltar al contenido
+      </a>
       <header className="home-topnav" aria-label="Navegación">
         <div className="ph__container home-topnav__inner">
           <Link to="/" className="home-topnav__brand" aria-label="Bear Beat">
@@ -411,15 +464,20 @@ export default function PublicHome() {
         </div>
       </header>
 
-      <div className="home-main" aria-label="Landing">
+      <main id="home-main" className="home-main">
         <HomeHero
           totalTBLabel={totalTBLabel}
           downloadQuotaLabel={downloadQuotaLabel}
+          afterPriceLabel={afterPriceLabel}
           trial={trialSummary}
           ctaLabel={ctaPrimaryLabel}
           onPrimaryCtaClick={() => onPrimaryCtaClick("hero")}
-          onDemoClick={onDemoClick}
+          onDemoScroll={onDemoScroll}
         />
+
+        <HowItWorks trial={trialSummary} />
+
+        <InsidePreview onDemoScroll={onDemoScroll} onTourClick={onTourClick} />
 
         <TrustBar
           totalFilesLabel={totalFilesLabel}
@@ -462,7 +520,7 @@ export default function PublicHome() {
         </div>
 
         <HomeFaq onFaqExpand={onFaqExpand} />
-      </div>
+      </main>
 
       <footer className="home-footer" aria-label="Footer">
         <div className="ph__container home-footer__inner">
@@ -482,6 +540,7 @@ export default function PublicHome() {
               to="/auth/registro"
               state={{ from: "/planes" }}
               className="home-cta home-cta--primary"
+              data-testid="home-footer-primary-cta"
               onClick={() => onPrimaryCtaClick("footer")}
             >
               {ctaPrimaryLabel}
@@ -502,6 +561,7 @@ export default function PublicHome() {
 
       <StickyMobileCta
         ctaLabel={ctaPrimaryLabel}
+        trial={trialSummary}
         onPrimaryCtaClick={() => onPrimaryCtaClick("sticky")}
       />
     </div>

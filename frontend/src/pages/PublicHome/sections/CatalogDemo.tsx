@@ -38,7 +38,7 @@ export default function CatalogDemo(props: {
   }, [genres, normalized]);
 
   return (
-    <section className="catalog-demo" aria-label="Demo del catálogo">
+    <section id="demo" className="catalog-demo" aria-label="Demo del catálogo" data-testid="home-demo-section">
       <div className="ph__container">
         <div className="catalog-demo__head">
           <div>
@@ -50,6 +50,7 @@ export default function CatalogDemo(props: {
           <div className="catalog-demo__search">
             <Search size={18} aria-hidden />
             <input
+              id="catalog-demo-search"
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
