@@ -20,11 +20,13 @@ export default function Compatibility() {
             <p className="compatibility__tag">FTP</p>
             <h3>{ftp?.title ?? "Descargas por FTP"}</h3>
             <p>{ftp?.body}</p>
+            <p className="compatibility__hint">Recomendado para descargas grandes.</p>
           </article>
           <article className="compatibility__card" role="listitem">
             <p className="compatibility__tag">Web</p>
             <h3>{web?.title ?? "También por web"}</h3>
             <p>{web?.body}</p>
+            <p className="compatibility__hint">Útil para archivos puntuales.</p>
           </article>
         </div>
 
