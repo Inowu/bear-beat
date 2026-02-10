@@ -10,6 +10,7 @@ import { SuccessModal } from "../../../components/Modals/SuccessModal/SuccessMod
 import { Spinner } from "../../../components/Spinner/Spinner";
 import { useUserContext } from "../../../contexts/UserContext";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../../utils/growthMetrics";
+import { toErrorMessage } from "../../../utils/errorMessage";
 import "./ResetPassword.scss";
 
 function inferErrorCode(message: string): string {
@@ -27,7 +28,7 @@ function ResetPassword() {
   const [loader, setLoader] = useState<boolean>(false);
   const [show, setShow] = useState<boolean>(false);
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<any>("");
+  const [errorMessage, setErrorMessage] = useState<string>("");
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const closeError = () => {
@@ -85,7 +86,7 @@ function ResetPassword() {
           errorCode: "server_error",
         });
         setShow(true);
-        setErrorMessage(error);
+        setErrorMessage(toErrorMessage(error));
         setLoader(false);
       }
     },
@@ -105,10 +106,21 @@ function ResetPassword() {
       });
     }
   }, [formik.submitCount, formik.errors]);
+
+  const showPasswordError = Boolean((formik.touched.password || formik.submitCount > 0) && formik.errors.password);
+  const showPasswordConfirmationError = Boolean(
+    (formik.touched.passwordConfirmation || formik.submitCount > 0) && formik.errors.passwordConfirmation,
+  );
+  const passwordErrorId = showPasswordError ? "reset-password-error" : undefined;
+  const passwordConfirmationErrorId = showPasswordConfirmationError ? "reset-password-confirmation-error" : undefined;
+
   return (
     <form className="auth-form auth-reset-form" onSubmit={formik.handleSubmit} autoComplete="on">
-      <h1 className="auth-reset-title">ESCRIBA UNA NUEVA CONTRASEÑA</h1>
+      <h1 className="auth-reset-title">Crea una nueva contraseña</h1>
       <div className="c-row">
+        <label htmlFor="password" className="auth-field-label">
+          Nueva contraseña
+        </label>
         <div className="auth-password-with-icon-wrap">
           <Lock className="auth-password-icon" aria-hidden />
           <PasswordInput
@@ -119,14 +131,20 @@ function ResetPassword() {
             value={formik.values.password}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
-            aria-invalid={Boolean((formik.touched.password || formik.submitCount > 0) && formik.errors.password)}
+            aria-invalid={showPasswordError}
+            aria-describedby={passwordErrorId}
           />
         </div>
-        {(formik.touched.password || formik.submitCount > 0) && formik.errors.password && (
-          <div className="error-formik">{formik.errors.password}</div>
+        {showPasswordError && (
+          <div className="error-formik" id={passwordErrorId} role="alert">
+            {formik.errors.password}
+          </div>
         )}
       </div>
       <div className="c-row">
+        <label htmlFor="passwordConfirmation" className="auth-field-label">
+          Repetir contraseña
+        </label>
         <div className="auth-password-with-icon-wrap">
           <Lock className="auth-password-icon" aria-hidden />
           <PasswordInput
@@ -137,20 +155,19 @@ function ResetPassword() {
             value={formik.values.passwordConfirmation}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
-            aria-invalid={Boolean(
-              (formik.touched.passwordConfirmation || formik.submitCount > 0) && formik.errors.passwordConfirmation,
-            )}
+            aria-invalid={showPasswordConfirmationError}
+            aria-describedby={passwordConfirmationErrorId}
           />
         </div>
-        {(formik.touched.passwordConfirmation || formik.submitCount > 0) && formik.errors.passwordConfirmation && (
-          <div className="error-formik">
+        {showPasswordConfirmationError && (
+          <div className="error-formik" id={passwordConfirmationErrorId} role="alert">
             {formik.errors.passwordConfirmation}
           </div>
         )}
       </div>
       {!loader ? (
-        <button className="btn auth-reset-submit" type="submit">
-          Guardar
+        <button className="btn auth-reset-submit" type="submit" data-testid="reset-submit">
+          Guardar contraseña
         </button>
       ) : (
         <Spinner size={3} width={0.3} color="var(--app-accent)" />

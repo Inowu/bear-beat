@@ -257,7 +257,13 @@ export const Ordens = () => {
       <div className="w-full overflow-x-hidden">
         {/* Tabla desktop (patrón BEAR BEAT PRO) */}
         <div className="hidden md:block rounded-xl border border-gray-200 dark:border-bear-dark-100 overflow-hidden">
-          <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
+          <div
+            className="overflow-x-auto max-h-[60vh] overflow-y-auto"
+            tabIndex={0}
+            role="region"
+            aria-label="Tabla de órdenes (desliza para ver más columnas)"
+            data-scroll-region
+          >
             <table className="w-full text-left text-sm border-collapse table-fixed">
               <thead>
                 <tr>

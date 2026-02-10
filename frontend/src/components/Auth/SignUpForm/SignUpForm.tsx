@@ -22,6 +22,7 @@ import {
   shouldBypassTurnstile,
   TURNSTILE_BYPASS_TOKEN,
 } from "../../../utils/turnstile";
+import { toErrorMessage } from "../../../utils/errorMessage";
 
 function inferErrorCode(message: string): string {
   const m = `${message ?? ""}`.toLowerCase();
@@ -44,7 +45,7 @@ function SignUpForm() {
   const { handleLogin } = useUserContext();
   const [show, setShow] = useState<boolean>(false);
   const [dialCode, setDialCode] = useState<string>("52");
-  const [errorMessage, setErrorMessage] = useState<any>("");
+  const [errorMessage, setErrorMessage] = useState<string>("");
   const [cookies] = useCookies(["_fbp", "_fbc"]);
   const [blockedDomains, setBlockedDomains] = useState<string[]>([]);
   const [blockedPhoneNumbers, setBlockedPhoneNumbers] = useState<string[]>([]);
@@ -174,11 +175,7 @@ function SignUpForm() {
         handleLogin(register.token, register.refreshToken);
         navigate(from, { replace: true });
       } catch (error: any) {
-        let errorMessage = error.message;
-
-        if (error.message.includes('"validation"')) {
-          errorMessage = JSON.parse(error.message)[0].message;
-        }
+        const errorMessage = toErrorMessage(error);
 
         trackGrowthMetric(GROWTH_METRICS.REGISTRATION_FAILED, {
           source: "register_submit",
@@ -359,6 +356,11 @@ function SignUpForm() {
   const showPasswordConfirmationError = Boolean(
     (formik.touched.passwordConfirmation || formik.submitCount > 0) && formik.errors.passwordConfirmation,
   );
+  const usernameErrorId = showUsernameError ? "signup-username-error" : undefined;
+  const emailErrorId = showEmailError ? "signup-email-error" : undefined;
+  const phoneErrorId = showPhoneError ? "signup-phone-error" : undefined;
+  const passwordErrorId = showPasswordError ? "signup-password-error" : undefined;
+  const passwordConfirmationErrorId = showPasswordConfirmationError ? "signup-password-confirmation-error" : undefined;
 
   return (
     <div className="auth-split">
@@ -401,9 +403,14 @@ function SignUpForm() {
                   onBlur={formik.handleBlur}
                   className="signup-input-with-icon"
                   aria-invalid={showUsernameError}
+                  aria-describedby={usernameErrorId}
                 />
               </div>
-              {showUsernameError && <div className="error-formik">{formik.errors.username}</div>}
+              {showUsernameError && (
+                <div className="error-formik" id={usernameErrorId} role="alert">
+                  {formik.errors.username}
+                </div>
+              )}
             </div>
             <div className={`c-row ${showEmailError ? "is-invalid" : ""}`}>
               <label htmlFor="email" className="signup-label">Correo electrónico</label>
@@ -420,9 +427,14 @@ function SignUpForm() {
                   type="text"
                   className="signup-input-with-icon"
                   aria-invalid={showEmailError}
+                  aria-describedby={emailErrorId}
                 />
               </div>
-              {showEmailError && <div className="error-formik">{formik.errors.email}</div>}
+              {showEmailError && (
+                <div className="error-formik" id={emailErrorId} role="alert">
+                  {formik.errors.email}
+                </div>
+              )}
             </div>
             <div className={`c-row c-row--phone ${showPhoneError ? "is-invalid" : ""}`}>
               <label htmlFor="phone" className="signup-label">WhatsApp (opcional)</label>
@@ -459,9 +471,14 @@ function SignUpForm() {
                   autoComplete="tel-national"
                   maxLength={15}
                   aria-invalid={showPhoneError}
+                  aria-describedby={phoneErrorId}
                 />
               </div>
-              {showPhoneError && <div className="error-formik">{formik.errors.phone}</div>}
+              {showPhoneError && (
+                <div className="error-formik" id={phoneErrorId} role="alert">
+                  {formik.errors.phone}
+                </div>
+              )}
             </div>
             <div className={`c-row ${showPasswordError ? "is-invalid" : ""}`}>
               <label htmlFor="password" className="signup-label">Contraseña</label>
@@ -475,11 +492,17 @@ function SignUpForm() {
                   value={formik.values.password}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
+                  aria-invalid={showPasswordError}
+                  aria-describedby={passwordErrorId}
                   inputClassName="signup-input-with-icon"
                   wrapperClassName="signup-password-wrap"
                 />
               </div>
-              {showPasswordError && <div className="error-formik">{formik.errors.password}</div>}
+              {showPasswordError && (
+                <div className="error-formik" id={passwordErrorId} role="alert">
+                  {formik.errors.password}
+                </div>
+              )}
             </div>
             <div className={`c-row ${showPasswordConfirmationError ? "is-invalid" : ""}`}>
               <label htmlFor="passwordConfirmation" className="signup-label">Repetir contraseña</label>
@@ -493,12 +516,16 @@ function SignUpForm() {
                   value={formik.values.passwordConfirmation}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
+                  aria-invalid={showPasswordConfirmationError}
+                  aria-describedby={passwordConfirmationErrorId}
                   inputClassName="signup-input-with-icon"
                   wrapperClassName="signup-password-wrap"
                 />
               </div>
               {showPasswordConfirmationError && (
-                <div className="error-formik">{formik.errors.passwordConfirmation}</div>
+                <div className="error-formik" id={passwordConfirmationErrorId} role="alert">
+                  {formik.errors.passwordConfirmation}
+                </div>
               )}
             </div>
             <Turnstile
