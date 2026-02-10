@@ -80,7 +80,7 @@ interface PlanCardPropsI {
   } | null;
 }
 function PlanCard(props: PlanCardPropsI) {
-  const { plan, currentPlan, getCurrentPlan, userEmail, userPhone, showRecommendedBadge = true, trialConfig } = props;
+  const { plan, currentPlan, getCurrentPlan, userEmail, showRecommendedBadge = true } = props;
 	  const [showSpeiModal, setShowSpeiModal] = useState<boolean>(false);
 	  const [speiData, setSpeiData] = useState({} as ISpeiData);
     const [showOxxoModal, setShowOxxoModal] = useState<boolean>(false);
@@ -89,6 +89,7 @@ function PlanCard(props: PlanCardPropsI) {
 	  const [showCancelModal, setShowCancelModal] = useState<boolean>(false);
   const [showChangeModal, setShowChangeModal] = useState<boolean>(false);
   const [showError, setShowError] = useState<boolean>(false);
+  const [showAltPayments, setShowAltPayments] = useState<boolean>(false);
   const [ppPlan, setppPlan] = useState<null | any>(null);
   const [conektaAvailability, setConektaAvailability] = useState<{
     oxxoEnabled: boolean;
@@ -103,30 +104,11 @@ function PlanCard(props: PlanCardPropsI) {
   const location = useLocation();
   const [cookies] = useCookies(['_fbp', '_fbc']);
   const { pathname } = location;
-  // const ManyChatPixel = require('manychat-pixel-js');
-  // const manyChatPixel = new ManyChatPixel('YOUR_PIXEL_ID');
-  const handleManyChat = async () => {
-    try {
-      await manychatApi("USER_CHECKED_PLANS");
-    } catch {
-      // noop
-    }
-  };
 
   const handleUserClickOnPlan = async () => {
     trackViewPlans({ currency: plan.moneda ?? undefined });
     trackManyChatConversion(MC_EVENTS.SELECT_PLAN);
     try { await manychatApi('USER_CHECKED_PLANS'); } catch { /* API fallback en backend */ }
-  }
-
-  const handleUserSuccessfulPayment = async (amount?: number, currency?: string) => {
-    const value = typeof amount === "number" && Number.isFinite(amount) ? amount : Number(plan.price) || 0;
-    const curr = (currency || plan.moneda || "USD").toUpperCase();
-    const eventId = generateEventId("purchase");
-    trackPurchase({ value, currency: curr, eventId });
-    trackManyChatConversion(MC_EVENTS.PAYMENT_SUCCESS);
-    if (value > 0) trackManyChatPurchase(MC_EVENTS.PAYMENT_SUCCESS, value, curr);
-    try { await manychatApi('SUCCESSFUL_PAYMENT'); } catch { /* webhook ya lo agrega */ }
   }
 
   const handleCancelModal = () => {
@@ -466,7 +448,7 @@ function PlanCard(props: PlanCardPropsI) {
 	      ? "Tarjeta o PayPal"
 	      : "Tarjeta internacional";
   const targetAudience = isMxn ? "Pago local en MXN" : "Pago internacional en USD";
-	  const displayDescription = isMxn
+  const displayDescription = isMxn
     ? "Ideal para DJs en México que quieren activar rápido y cobrar sin fricción."
     : "Ideal para DJs fuera de México que prefieren pago en USD.";
 	  const primaryCtaLabel = !userEmail ? "Crear cuenta y activar" : (isMxn ? "Activar plan MXN" : "Activar plan USD");
@@ -506,11 +488,13 @@ function PlanCard(props: PlanCardPropsI) {
             <p className="plan-card-unit-price">Equivale a {unitPriceLabel} por GB descargable</p>
           )}
         </header>
-        <div className="plan-card-highlights" role="list" aria-label={`Resumen de valor para ${plan.name}`}>
-          <span role="listitem">{formatInt(Number(plan.gigas ?? 0))} GB/mes</span>
-          <span role="listitem">Catálogo completo (eliges qué descargar)</span>
-          <span role="listitem">{paymentSummary}</span>
-        </div>
+        <ul className="plan-card-highlights" aria-label={`Incluye en ${plan.name}`}>
+          <li className="plan-card-highlight-item">
+            <strong>{formatInt(Number(plan.gigas ?? 0))} GB/mes</strong> de descarga
+          </li>
+          <li className="plan-card-highlight-item">Catálogo completo (eliges qué descargar)</li>
+          <li className="plan-card-highlight-item">Métodos: {paymentSummary}</li>
+        </ul>
         <p className="plan-card-description">{displayDescription || plan.description}</p>
         <ul className="plan-card-benefits">
           {includedBenefits.map((ad) => (
@@ -540,28 +524,40 @@ function PlanCard(props: PlanCardPropsI) {
               >
                 <Unlock aria-hidden /> {primaryCtaLabel}
               </button>
-	                  {(isMxn || showPaypalOption) && (
-	                    <div className="plan-card-secondary-payment">
-	                      <span className="plan-card-secondary-label">
-                          {userEmail ? "O paga con:" : "Inicia sesión para pagar con:"}
-                        </span>
-	                      <div className="plan-card-secondary-buttons">
-	                        {isMxn && (
-	                          <>
-	                            <button
+                    {isMxn && (
+                      <div className="plan-card-alt-payments">
+                        <button
+                          type="button"
+                          className="plan-card-alt-toggle"
+                          aria-expanded={showAltPayments}
+                          aria-controls={`plan-alt-payments-${plan.id}`}
+                          onClick={() => setShowAltPayments((prev) => !prev)}
+                        >
+                          {showAltPayments ? "Ocultar opciones de pago" : "Otras formas de pago"}
+                        </button>
+                        {showAltPayments && (
+                          <div
+                            id={`plan-alt-payments-${plan.id}`}
+                            className="plan-card-alt-panel"
+                          >
+                            <span className="plan-card-secondary-label">
+                              {userEmail ? "Paga con:" : "Inicia sesión para pagar con:"}
+                            </span>
+                            <div className="plan-card-secondary-buttons">
+                              <button
                                 type="button"
                                 className="plan-card-btn-outline"
                                 onClick={() => (userEmail ? payWithSpei() : handleCheckoutWithMethod(plan.id, "spei"))}
                               >
-	                              SPEI (recurrente)
-	                            </button>
+                                SPEI (recurrente)
+                              </button>
                               {conektaAvailability?.payByBankEnabled && (
                                 <button
                                   type="button"
                                   className="plan-card-btn-outline"
                                   onClick={() => (userEmail ? payWithBbva() : handleCheckoutWithMethod(plan.id, "bbva"))}
                                 >
-                                  BBVA (Pago Directo)
+                                  BBVA (Pago directo)
                                 </button>
                               )}
                               {conektaAvailability?.oxxoEnabled && (
@@ -573,46 +569,89 @@ function PlanCard(props: PlanCardPropsI) {
                                   Efectivo
                                 </button>
                               )}
-	                          </>
-	                        )}
-	                        {showPaypalOption &&
-                            (userEmail ? (
-                              <PayPalComponent
-                                plan={ppPlan!}
-                                type="subscription"
-                                onApprove={successSubscription}
-                                onClick={() => {
-                                  trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
-                                    id: "plans_pay_paypal",
-                                    location: pathname === "/actualizar-planes" ? "plan_upgrade" : "plans",
-                                    planId: plan.id,
-                                    method: "paypal",
-                                  });
-                                  trackManyChatConversion(MC_EVENTS.CLICK_PAYPAL);
-                                  handleUserClickOnPlan();
-                                }}
-                                key={`paypal-button-component-${plan.id}`}
-                              />
-                            ) : (
-                              <button
-                                type="button"
-                                className="plan-card-btn-outline"
-                                onClick={() => {
-                                  trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
-                                    id: "plans_pay_paypal",
-                                    location: pathname === "/actualizar-planes" ? "plan_upgrade" : "plans",
-                                    planId: plan.id,
-                                    method: "paypal",
-                                  });
-                                  navigate("/auth/registro", { state: { from: "/planes" } });
-                                }}
-                              >
-                                PayPal
-                              </button>
-                            ))}
+                              {showPaypalOption &&
+                                (userEmail ? (
+                                  <PayPalComponent
+                                    plan={ppPlan!}
+                                    type="subscription"
+                                    onApprove={successSubscription}
+                                    onClick={() => {
+                                      trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
+                                        id: "plans_pay_paypal",
+                                        location: pathname === "/actualizar-planes" ? "plan_upgrade" : "plans",
+                                        planId: plan.id,
+                                        method: "paypal",
+                                      });
+                                      trackManyChatConversion(MC_EVENTS.CLICK_PAYPAL);
+                                      handleUserClickOnPlan();
+                                    }}
+                                    key={`paypal-button-component-${plan.id}`}
+                                  />
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className="plan-card-btn-outline"
+                                    onClick={() => {
+                                      trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
+                                        id: "plans_pay_paypal",
+                                        location: pathname === "/actualizar-planes" ? "plan_upgrade" : "plans",
+                                        planId: plan.id,
+                                        method: "paypal",
+                                      });
+                                      navigate("/auth/registro", { state: { from: "/planes" } });
+                                    }}
+                                  >
+                                    PayPal
+                                  </button>
+                                ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  )}
+                    )}
+                    {!isMxn && showPaypalOption && (
+                      <div className="plan-card-secondary-payment">
+                        <span className="plan-card-secondary-label">
+                          {userEmail ? "O paga con PayPal:" : "Inicia sesión para pagar con PayPal:"}
+                        </span>
+                        <div className="plan-card-secondary-buttons">
+                          {userEmail ? (
+                            <PayPalComponent
+                              plan={ppPlan!}
+                              type="subscription"
+                              onApprove={successSubscription}
+                              onClick={() => {
+                                trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
+                                  id: "plans_pay_paypal",
+                                  location: pathname === "/actualizar-planes" ? "plan_upgrade" : "plans",
+                                  planId: plan.id,
+                                  method: "paypal",
+                                });
+                                trackManyChatConversion(MC_EVENTS.CLICK_PAYPAL);
+                                handleUserClickOnPlan();
+                              }}
+                              key={`paypal-button-component-${plan.id}`}
+                            />
+                          ) : (
+                            <button
+                              type="button"
+                              className="plan-card-btn-outline"
+                              onClick={() => {
+                                trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
+                                  id: "plans_pay_paypal",
+                                  location: pathname === "/actualizar-planes" ? "plan_upgrade" : "plans",
+                                  planId: plan.id,
+                                  method: "paypal",
+                                });
+                                navigate("/auth/registro", { state: { from: "/planes" } });
+                              }}
+                            >
+                              PayPal
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
                 </>
               )}
             </>
@@ -622,14 +661,6 @@ function PlanCard(props: PlanCardPropsI) {
 	            className="plan-card-payment-logos"
 	            ariaLabel={`Métodos de pago disponibles para ${plan.name}`}
 	          />
-		          {pathname === "/planes" && trialConfig?.enabled && trialConfig.eligible !== false && (
-		            <div className="plan-card-trial-note" role="note">
-		              <strong>{trialConfig.days} días gratis</strong>
-		              <span>
-		                Para nuevos usuarios con tarjeta (Stripe). Incluye {trialConfig.gb} GB de descarga. Después se cobra automáticamente.
-		              </span>
-		            </div>
-		          )}
 		          <p className="plan-card-confidence">Activación guiada por chat después del pago.</p>
 		        </div>
 		      </div>

@@ -215,16 +215,17 @@ function Plans() {
           <h1 className="plans-page-title">Nunca vuelvas a decir: “no la tengo”</h1>
           <p className="plans-hero-subtitle">Activa tu membresía en minutos y responde peticiones al instante con un catálogo masivo por género.</p>
           <p className="plans-hero-anchor">{riskAnchor}</p>
-          <p className="plans-value-equation">Más repertorio, menos fricción y activación rápida en una sola membresía.</p>
           {trialConfig?.enabled && trialConfig.eligible !== false && (
-            <p className="plans-trial-pill" role="note">
+            <aside className="plans-trial-callout" role="note" aria-label="Prueba gratis">
               <strong>{formatInt(trialConfig.days)} días gratis</strong>
-              <span>con tarjeta (Stripe)</span>
-              <span aria-hidden>•</span>
-              <span>{formatInt(trialConfig.gb)} GB incluidos</span>
-              <span aria-hidden>•</span>
-              <span>Solo primera vez</span>
-            </p>
+              <div className="plans-trial-meta">
+                <span>con tarjeta (Stripe)</span>
+                <span aria-hidden>•</span>
+                <span>{formatInt(trialConfig.gb)} GB incluidos</span>
+                <span aria-hidden>•</span>
+                <span>Solo primera vez</span>
+              </div>
+            </aside>
           )}
           <div className="plans-proof-grid" aria-label="Indicadores de valor">
             {proofItems.map((item) => (
@@ -234,20 +235,20 @@ function Plans() {
               </article>
             ))}
           </div>
-          <div className="plans-trust-strip" aria-label="Beneficios clave">
-            <span>
+          <ul className="plans-trust-list" aria-label="Beneficios clave">
+            <li>
               <Zap size={16} aria-hidden />
-              <strong>Acceso inmediato</strong>
-            </span>
-            <span>
+              Acceso inmediato
+            </li>
+            <li>
               <ShieldCheck size={16} aria-hidden />
-              <strong>Pagos seguros</strong>
-            </span>
-            <span>
+              Pagos seguros
+            </li>
+            <li>
               <MessageCircle size={16} aria-hidden />
-              <strong>Soporte por chat</strong>
-            </span>
-          </div>
+              Soporte por chat
+            </li>
+          </ul>
         </div>
         <div className="plans-hero-side">
           <h2 className="plans-hero-side-title">Activación en 3 pasos</h2>
@@ -316,9 +317,7 @@ function Plans() {
                 key={'plan_' + plan.id}
                 getCurrentPlan={() => {}}
                 userEmail={currentUser?.email}
-                userPhone={currentUser?.phone}
                 showRecommendedBadge={sortedPlans.length > 1}
-                trialConfig={trialConfig}
               />
             ))}
           </div>
