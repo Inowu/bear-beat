@@ -425,7 +425,13 @@ function MyAccount() {
               <Clock size={18} />
               <h2>Historial de órdenes</h2>
             </div>
-            <div className="ma-table-wrap">
+            <div
+              className="ma-table-wrap"
+              tabIndex={0}
+              role="region"
+              aria-label="Historial de órdenes (desliza para ver más columnas)"
+              data-scroll-region
+            >
               <table className="ma-table">
                 <thead>
                   <tr>

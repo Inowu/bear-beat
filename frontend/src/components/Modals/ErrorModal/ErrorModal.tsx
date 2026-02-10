@@ -4,15 +4,16 @@ import "./ErrorModal.scss";
 import { AlertTriangle, X } from "lucide-react";
 import { IUser } from "../../../interfaces/User";
 import { openSupportChat } from "../../../utils/supportChat";
+import { toErrorMessage } from "../../../utils/errorMessage";
 interface IError {
   show: boolean;
   onHide: () => void;
   user?: IUser | null;
-  message?: string;
+  message?: unknown;
 }
 export function ErrorModal(props: IError) {
   const { show, onHide, message } = props;
-  const raw = (message ?? "").toString().trim();
+  const raw = toErrorMessage(message).trim();
   const friendly =
     raw ||
     "Ocurrió un error al procesar tu solicitud. Intenta de nuevo o abre soporte por chat.";

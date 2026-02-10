@@ -89,6 +89,14 @@ async function main() {
     const smokeUserEmail = `smoke-${Date.now()}@local.test`;
     const smokeUserPassword = `Smoke-${Date.now()}-pass!`;
 
+    // AUTH (logged out): forgot password loads
+    await page.goto(`${baseUrl}/auth/recuperar`, { waitUntil: "domcontentloaded", timeout: 60_000 });
+    await page.getByRole("heading", { level: 1, name: /recuperar acceso/i }).waitFor({
+      state: "visible",
+      timeout: 15_000,
+    });
+    await page.locator("input[name='email']").waitFor({ state: "visible", timeout: 10_000 });
+
     // HOME (logged out)
     await page.goto(`${baseUrl}/`, { waitUntil: "domcontentloaded", timeout: 60_000 });
     await page.getByRole("heading", { level: 1 }).waitFor({ state: "visible", timeout: 15_000 });

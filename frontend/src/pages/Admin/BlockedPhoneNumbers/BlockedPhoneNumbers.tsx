@@ -7,6 +7,7 @@ import { useUserContext } from "../../../contexts/UserContext";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
 import { Plus, MoreVertical, Trash2 } from "lucide-react";
+import { toErrorMessage } from "../../../utils/errorMessage";
 
 const PHONE_REGEX = /^\+\d{1,4}\s\d{4,14}$/;
 
@@ -28,7 +29,7 @@ export const BlockedPhoneNumbers = () => {
       const numbers = await trpc.blockedPhoneNumbers.listBlockedPhoneNumbers.query();
       setBlockedNumbers(numbers);
     } catch (error: any) {
-      setErrorMessage(error.message ?? "Error al cargar los teléfonos.");
+      setErrorMessage(toErrorMessage(error) || "Error al cargar los teléfonos.");
       setShowError(true);
     } finally {
       setLoader(false);
@@ -59,9 +60,7 @@ export const BlockedPhoneNumbers = () => {
       setBlockedNumbers(numbers);
       setNewPhone("");
     } catch (error: any) {
-      let msg = error.message;
-      if (msg?.includes('"validation"')) try { msg = JSON.parse(msg)[0].message; } catch {}
-      setErrorMessage(msg ?? "Error al agregar.");
+      setErrorMessage(toErrorMessage(error) || "Error al agregar.");
       setShowError(true);
     } finally {
       setSaving(false);
@@ -76,7 +75,7 @@ export const BlockedPhoneNumbers = () => {
       setDrawerPhone(null);
       setPhoneToDelete(null);
     } catch (error: any) {
-      setErrorMessage(error.message ?? "Error al eliminar.");
+      setErrorMessage(toErrorMessage(error) || "Error al eliminar.");
       setShowError(true);
     } finally {
       setSaving(false);

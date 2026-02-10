@@ -47,19 +47,55 @@ type UiInventoryRouteResult = {
   authState: "anonymous" | "authenticated";
   finalUrl: string;
   title: string;
-  status: "ok" | "error";
+  status: "ok" | "error" | "auth_redirect" | "role_mismatch";
   error?: string;
   console: Array<{ type: string; text: string }>;
   httpErrors: Array<{ url: string; method: string; status: number; statusText: string }>;
   failedRequests: Array<{ url: string; method: string; failure: string }>;
   interactive: UiInventoryInteractive[];
+  interactiveDesktop?: UiInventoryInteractive[];
+  interactiveMobile?: UiInventoryInteractive[];
   iconOnlyMissingLabel: Array<{
+    selector: string;
+    route: string;
+    tagName: string;
+  }>;
+  iconOnlyMissingLabelDesktop?: Array<{
+    selector: string;
+    route: string;
+    tagName: string;
+  }>;
+  iconOnlyMissingLabelMobile?: Array<{
     selector: string;
     route: string;
     tagName: string;
   }>;
   screenshots: { desktop: string; mobile: string } | null;
   a11y: {
+    violationCount: number;
+    byImpact: Record<string, number>;
+    violations: Array<{
+      id: string;
+      impact: string | null;
+      description: string;
+      help: string;
+      helpUrl: string;
+      nodes: Array<{ target: string; failureSummary?: string }>;
+    }>;
+  } | null;
+  a11yDesktop?: {
+    violationCount: number;
+    byImpact: Record<string, number>;
+    violations: Array<{
+      id: string;
+      impact: string | null;
+      description: string;
+      help: string;
+      helpUrl: string;
+      nodes: Array<{ target: string; failureSummary?: string }>;
+    }>;
+  } | null;
+  a11yMobile?: {
     violationCount: number;
     byImpact: Record<string, number>;
     violations: Array<{
@@ -385,26 +421,254 @@ async function collectRouteResult(
   const desktopPath = path.join(SCREENSHOTS_DIR, `${slug}--desktop.png`);
   const mobilePath = path.join(SCREENSHOTS_DIR, `${slug}--mobile.png`);
 
-  const takeScreenshots = async (): Promise<{ desktop: string; mobile: string } | null> => {
-    try {
-      // Desktop
-      await page.setViewportSize({ width: 1280, height: 800 });
-      await page.waitForTimeout(200);
-      await page.screenshot({ path: desktopPath, fullPage: true });
-
-      // Mobile
-      await page.setViewportSize({ width: 390, height: 844 });
-      await page.waitForTimeout(200);
-      await page.screenshot({ path: mobilePath, fullPage: true });
-
-      return {
-        desktop: path.relative(REPO_ROOT, desktopPath),
-        mobile: path.relative(REPO_ROOT, mobilePath),
+  const evaluateInventory = async (): Promise<{
+    interactive: UiInventoryInteractive[];
+    iconOnlyMissingLabel: Array<{ selector: string; tagName: string }>;
+  }> => {
+    return await page.evaluate(() => {
+      const isVisible = (el: Element): boolean => {
+        const style = window.getComputedStyle(el as HTMLElement);
+        if (style.visibility === "hidden" || style.display === "none") return false;
+        const rect = (el as HTMLElement).getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0;
       };
+
+      const sanitize = (value: string): string => {
+        const raw = `${value ?? ""}`;
+        if (!raw) return "";
+        let out = raw;
+        out = out.replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "<redacted-email>");
+        out = out.replace(/\+\d{1,4}\s\d{4,14}/g, "<redacted-phone>");
+        out = out.replace(/\s+/g, " ").trim();
+        if (out.length > 160) out = `${out.slice(0, 157)}...`;
+        return out;
+      };
+
+      const getLabelText = (el: HTMLElement): string => {
+        const ariaLabel = el.getAttribute("aria-label");
+        if (ariaLabel) return ariaLabel;
+        const labelledBy = el.getAttribute("aria-labelledby");
+        if (labelledBy) {
+          const parts = labelledBy.split(/\s+/g).filter(Boolean);
+          const texts = parts
+            .map((id) => document.getElementById(id))
+            .filter(Boolean)
+            .map((node) => (node as HTMLElement).innerText || node?.textContent || "")
+            .map((t) => t.trim())
+            .filter(Boolean);
+          if (texts.length) return texts.join(" ");
+        }
+
+        const id = el.getAttribute("id");
+        if (id) {
+          const label = document.querySelector(`label[for=\"${CSS.escape(id)}\"]`) as HTMLLabelElement | null;
+          if (label) return (label.innerText || label.textContent || "").trim();
+        }
+
+        const labelParent = el.closest("label");
+        if (labelParent) return ((labelParent as HTMLLabelElement).innerText || labelParent.textContent || "").trim();
+        return "";
+      };
+
+      const getVisibleText = (el: HTMLElement): string => {
+        // Avoid huge text blobs.
+        const text = (el.innerText || el.textContent || "").trim();
+        return sanitize(text);
+      };
+
+      const buildSelector = (el: Element): string => {
+        const testId = (el as HTMLElement).getAttribute("data-testid");
+        if (testId) return `[data-testid=\"${CSS.escape(testId)}\"]`;
+        const id = (el as HTMLElement).id;
+        if (id) return `#${CSS.escape(id)}`;
+        const role = (el as HTMLElement).getAttribute("role");
+        const tag = el.tagName.toLowerCase();
+        const classes = Array.from((el as HTMLElement).classList)
+          .slice(0, 2)
+          .map((c) => `.${CSS.escape(c)}`)
+          .join("");
+        const name = (getLabelText(el as HTMLElement) || getVisibleText(el as HTMLElement)).slice(0, 30);
+        const nameAttr = name ? `[data-name~=\"${CSS.escape(name.split(" ")[0] ?? "")}\"]` : "";
+        return `${tag}${classes}${role ? `[role=\"${CSS.escape(role)}\"]` : ""}${nameAttr}`;
+      };
+
+      const isInteractive = (el: Element): boolean => {
+        const tag = el.tagName.toLowerCase();
+        if (tag === "button") return true;
+        if (tag === "a") return Boolean((el as HTMLAnchorElement).href);
+        if (tag === "input" || tag === "select" || tag === "textarea") return true;
+        const role = (el as HTMLElement).getAttribute("role");
+        if (role === "button" || role === "link" || role === "checkbox" || role === "radio" || role === "switch") return true;
+        return false;
+      };
+
+      const nodes = Array.from(document.querySelectorAll("*")).filter((el) => isInteractive(el) && isVisible(el));
+      const interactive = nodes.map((el) => {
+        const h = el as HTMLElement;
+        const tagName = h.tagName.toLowerCase();
+        const role = h.getAttribute("role");
+        const type = tagName === "input" ? (h as HTMLInputElement).type : h.getAttribute("type");
+        const ariaLabel = h.getAttribute("aria-label");
+        const nameAttr = h.getAttribute("name");
+        const id = h.getAttribute("id");
+        const href = tagName === "a" ? (h as HTMLAnchorElement).getAttribute("href") : null;
+        const disabled = (h as any).disabled === true || h.getAttribute("aria-disabled") === "true";
+        const required = (h as any).required === true || h.getAttribute("aria-required") === "true";
+        const placeholder = tagName === "input" || tagName === "textarea" ? h.getAttribute("placeholder") : null;
+        const testId = h.getAttribute("data-testid");
+
+        const visibleText = getVisibleText(h);
+        const accessibleName = sanitize(getLabelText(h) || visibleText || placeholder || "");
+
+        const hasSvg = Boolean(h.querySelector("svg"));
+        const hasText = Boolean((h.innerText || "").trim());
+        const isIconOnly = hasSvg && !hasText && !ariaLabel;
+
+        return {
+          route: window.location.pathname,
+          tagName,
+          role,
+          type: type || null,
+          accessibleName,
+          visibleText,
+          ariaLabel,
+          nameAttr,
+          id,
+          href,
+          disabled,
+          required,
+          placeholder,
+          testId,
+          selector: buildSelector(h),
+          hasIcon: hasSvg,
+          isIconOnly,
+        };
+      });
+
+      const iconOnlyMissingLabel = interactive
+        .filter((i) => i.isIconOnly)
+        .map((i) => ({ selector: i.selector, tagName: i.tagName }));
+
+      return { interactive, iconOnlyMissingLabel };
+    });
+  };
+
+  type A11yResult = Exclude<UiInventoryRouteResult["a11y"], null>;
+
+  const runA11y = async (): Promise<UiInventoryRouteResult["a11y"]> => {
+    try {
+      const axe = new AxeBuilder({ page });
+      const analysis = await axe.analyze();
+      const byImpact: Record<string, number> = {};
+      for (const v of analysis.violations) {
+        const impact = v.impact ?? "unknown";
+        byImpact[impact] = (byImpact[impact] ?? 0) + 1;
+      }
+
+      const out: A11yResult = {
+        violationCount: analysis.violations.length,
+        byImpact,
+        violations: analysis.violations.map((v) => ({
+          id: v.id,
+          impact: v.impact ?? null,
+          description: v.description,
+          help: v.help,
+          helpUrl: v.helpUrl,
+          nodes: v.nodes.slice(0, 10).map((n) => ({
+            target: sanitizeText(JSON.stringify(n.target)),
+            failureSummary: sanitizeText(n.failureSummary ?? ""),
+          })),
+        })),
+      };
+
+      return out;
     } catch (err) {
-      consoleEvents.push({ type: "warning", text: `screenshot failed: ${sanitizeText(String(err))}` });
+      resultBase.console.push({ type: "warning", text: `axe failed: ${sanitizeText(String(err))}` });
       return null;
     }
+  };
+
+  type ViewportCapture = {
+    screenshot: string;
+    interactive: UiInventoryInteractive[];
+    iconOnlyMissingLabel: Array<{ selector: string; route: string; tagName: string }>;
+    a11y: UiInventoryRouteResult["a11y"];
+  };
+
+  const captureViewport = async (opts: {
+    kind: "desktop" | "mobile";
+    viewport: { width: number; height: number };
+    screenshotPath: string;
+  }): Promise<ViewportCapture | null> => {
+    const { kind, viewport, screenshotPath } = opts;
+    try {
+      await page.setViewportSize(viewport);
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: screenshotPath, fullPage: true });
+    } catch (err) {
+      consoleEvents.push({
+        type: "warning",
+        text: `screenshot failed (${kind}): ${sanitizeText(String(err))}`,
+      });
+      return null;
+    }
+
+    let inv: Awaited<ReturnType<typeof evaluateInventory>> | null = null;
+    try {
+      inv = await evaluateInventory();
+    } catch (err) {
+      consoleEvents.push({
+        type: "warning",
+        text: `inventory failed (${kind}): ${sanitizeText(String(err))}`,
+      });
+      inv = { interactive: [], iconOnlyMissingLabel: [] };
+    }
+
+    const a11y = await runA11y();
+
+    const interactive = (inv?.interactive ?? []).map((i) => ({
+      ...i,
+      accessibleName: sanitizeText(i.accessibleName),
+      visibleText: sanitizeText(i.visibleText),
+    }));
+
+    const iconOnlyMissingLabel = (inv?.iconOnlyMissingLabel ?? []).map((i) => ({
+      selector: i.selector,
+      route: route.path,
+      tagName: i.tagName,
+    }));
+
+    return {
+      screenshot: path.relative(REPO_ROOT, screenshotPath),
+      interactive,
+      iconOnlyMissingLabel,
+      a11y,
+    };
+  };
+
+  const mergeA11y = (
+    desktop: UiInventoryRouteResult["a11y"],
+    mobile: UiInventoryRouteResult["a11y"],
+  ): UiInventoryRouteResult["a11y"] => {
+    if (!desktop && !mobile) return null;
+    const all = [...(desktop?.violations ?? []), ...(mobile?.violations ?? [])];
+    const seen = new Set<string>();
+    const merged = all.filter((v) => {
+      const key = `${v.id}|${v.impact ?? ""}|${v.nodes?.[0]?.target ?? ""}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    const byImpact: Record<string, number> = {};
+    for (const v of merged) {
+      const impact = v.impact ?? "unknown";
+      byImpact[impact] = (byImpact[impact] ?? 0) + 1;
+    }
+    return {
+      violationCount: merged.length,
+      byImpact,
+      violations: merged,
+    };
   };
 
   try {
@@ -431,179 +695,54 @@ async function collectRouteResult(
     resultBase.finalUrl = page.url();
     resultBase.title = await page.title();
 
-    const screenshots = await takeScreenshots();
-    resultBase.screenshots = screenshots;
-
-    const evaluateInventory = async (): Promise<{
-      interactive: UiInventoryInteractive[];
-      iconOnlyMissingLabel: Array<{ selector: string; tagName: string }>;
-    }> => {
-      return await page.evaluate(() => {
-        const isVisible = (el: Element): boolean => {
-          const style = window.getComputedStyle(el as HTMLElement);
-          if (style.visibility === "hidden" || style.display === "none") return false;
-          const rect = (el as HTMLElement).getBoundingClientRect();
-          return rect.width > 0 && rect.height > 0;
-        };
-
-        const sanitize = (value: string): string => {
-          const raw = `${value ?? ""}`;
-          if (!raw) return "";
-          let out = raw;
-          out = out.replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "<redacted-email>");
-          out = out.replace(/\+\d{1,4}\s\d{4,14}/g, "<redacted-phone>");
-          out = out.replace(/\s+/g, " ").trim();
-          if (out.length > 160) out = `${out.slice(0, 157)}...`;
-          return out;
-        };
-
-        const getLabelText = (el: HTMLElement): string => {
-          const ariaLabel = el.getAttribute("aria-label");
-          if (ariaLabel) return ariaLabel;
-          const labelledBy = el.getAttribute("aria-labelledby");
-          if (labelledBy) {
-            const parts = labelledBy.split(/\s+/g).filter(Boolean);
-            const texts = parts
-              .map((id) => document.getElementById(id))
-              .filter(Boolean)
-              .map((node) => (node as HTMLElement).innerText || node?.textContent || "")
-              .map((t) => t.trim())
-              .filter(Boolean);
-            if (texts.length) return texts.join(" ");
-          }
-
-          const id = el.getAttribute("id");
-          if (id) {
-            const label = document.querySelector(`label[for=\"${CSS.escape(id)}\"]`) as HTMLLabelElement | null;
-            if (label) return (label.innerText || label.textContent || "").trim();
-          }
-
-          const labelParent = el.closest("label");
-          if (labelParent) return ((labelParent as HTMLLabelElement).innerText || labelParent.textContent || "").trim();
-          return "";
-        };
-
-        const getVisibleText = (el: HTMLElement): string => {
-          // Avoid huge text blobs.
-          const text = (el.innerText || el.textContent || "").trim();
-          return sanitize(text);
-        };
-
-        const buildSelector = (el: Element): string => {
-          const testId = (el as HTMLElement).getAttribute("data-testid");
-          if (testId) return `[data-testid=\"${CSS.escape(testId)}\"]`;
-          const id = (el as HTMLElement).id;
-          if (id) return `#${CSS.escape(id)}`;
-          const role = (el as HTMLElement).getAttribute("role");
-          const tag = el.tagName.toLowerCase();
-          const classes = Array.from((el as HTMLElement).classList).slice(0, 2).map((c) => `.${CSS.escape(c)}`).join("");
-          const name = (getLabelText(el as HTMLElement) || getVisibleText(el as HTMLElement)).slice(0, 30);
-          const nameAttr = name ? `[data-name~=\"${CSS.escape(name.split(" ")[0] ?? "")}\"]` : "";
-          return `${tag}${classes}${role ? `[role=\"${CSS.escape(role)}\"]` : ""}${nameAttr}`;
-        };
-
-        const isInteractive = (el: Element): boolean => {
-          const tag = el.tagName.toLowerCase();
-          if (tag === "button") return true;
-          if (tag === "a") return Boolean((el as HTMLAnchorElement).href);
-          if (tag === "input" || tag === "select" || tag === "textarea") return true;
-          const role = (el as HTMLElement).getAttribute("role");
-          if (role === "button" || role === "link" || role === "checkbox" || role === "radio" || role === "switch") return true;
-          return false;
-        };
-
-        const nodes = Array.from(document.querySelectorAll("*")).filter((el) => isInteractive(el) && isVisible(el));
-        const interactive = nodes.map((el) => {
-          const h = el as HTMLElement;
-          const tagName = h.tagName.toLowerCase();
-          const role = h.getAttribute("role");
-          const type = tagName === "input" ? (h as HTMLInputElement).type : h.getAttribute("type");
-          const ariaLabel = h.getAttribute("aria-label");
-          const nameAttr = h.getAttribute("name");
-          const id = h.getAttribute("id");
-          const href = tagName === "a" ? (h as HTMLAnchorElement).getAttribute("href") : null;
-          const disabled = (h as any).disabled === true || h.getAttribute("aria-disabled") === "true";
-          const required = (h as any).required === true || h.getAttribute("aria-required") === "true";
-          const placeholder = tagName === "input" || tagName === "textarea" ? h.getAttribute("placeholder") : null;
-          const testId = h.getAttribute("data-testid");
-
-          const visibleText = getVisibleText(h);
-          const accessibleName = sanitize(getLabelText(h) || visibleText || placeholder || "");
-
-          const hasSvg = Boolean(h.querySelector("svg"));
-          const hasText = Boolean((h.innerText || "").trim());
-          const isIconOnly = hasSvg && !hasText && !ariaLabel;
-
-          return {
-            route: window.location.pathname,
-            tagName,
-            role,
-            type: type || null,
-            accessibleName,
-            visibleText,
-            ariaLabel,
-            nameAttr,
-            id,
-            href,
-            disabled,
-            required,
-            placeholder,
-            testId,
-            selector: buildSelector(h),
-            hasIcon: hasSvg,
-            isIconOnly,
-          };
-        });
-
-        const iconOnlyMissingLabel = interactive
-          .filter((i) => i.isIconOnly)
-          .map((i) => ({ selector: i.selector, tagName: i.tagName }));
-
-        return { interactive, iconOnlyMissingLabel };
-      });
-    };
-
-    const inv = await evaluateInventory();
-    resultBase.interactive = inv.interactive.map((i) => ({
-      ...i,
-      accessibleName: sanitizeText(i.accessibleName),
-      visibleText: sanitizeText(i.visibleText),
-    }));
-    resultBase.iconOnlyMissingLabel = inv.iconOnlyMissingLabel.map((i) => ({
-      selector: i.selector,
-      route: route.path,
-      tagName: i.tagName,
-    }));
-
-    // A11y (axe)
     try {
-      const axe = new AxeBuilder({ page });
-      const analysis = await axe.analyze();
-      const byImpact: Record<string, number> = {};
-      for (const v of analysis.violations) {
-        const impact = v.impact ?? "unknown";
-        byImpact[impact] = (byImpact[impact] ?? 0) + 1;
+      const finalPath = new URL(resultBase.finalUrl).pathname;
+      if (authState === "authenticated" && route.requiresAuth && finalPath.startsWith("/auth")) {
+        resultBase.status = "auth_redirect";
+        resultBase.error = `Ruta protegida redirigida a /auth (finalPath=${finalPath}).`;
+      } else if (authState === "authenticated" && route.requiresRole === "admin" && !finalPath.startsWith("/admin")) {
+        resultBase.status = "role_mismatch";
+        resultBase.error = `Ruta admin no cargó bajo /admin (finalPath=${finalPath}).`;
       }
-
-      resultBase.a11y = {
-        violationCount: analysis.violations.length,
-        byImpact,
-        violations: analysis.violations.map((v) => ({
-          id: v.id,
-          impact: v.impact ?? null,
-          description: v.description,
-          help: v.help,
-          helpUrl: v.helpUrl,
-          nodes: v.nodes.slice(0, 10).map((n) => ({
-            target: sanitizeText(JSON.stringify(n.target)),
-            failureSummary: sanitizeText(n.failureSummary ?? ""),
-          })),
-        })),
-      };
-    } catch (err) {
-      resultBase.a11y = null;
-      resultBase.console.push({ type: "warning", text: `axe failed: ${sanitizeText(String(err))}` });
+    } catch {
+      // ignore URL parse failures here; they'll be captured in finalUrl checks
     }
+
+    const desktop = await captureViewport({
+      kind: "desktop",
+      viewport: { width: 1280, height: 800 },
+      screenshotPath: desktopPath,
+    });
+    const mobile = await captureViewport({
+      kind: "mobile",
+      viewport: { width: 390, height: 844 },
+      screenshotPath: mobilePath,
+    });
+
+    if (desktop && mobile) {
+      resultBase.screenshots = { desktop: desktop.screenshot, mobile: mobile.screenshot };
+    } else {
+      resultBase.screenshots = null;
+    }
+
+    resultBase.interactiveDesktop = desktop?.interactive ?? [];
+    resultBase.interactiveMobile = mobile?.interactive ?? [];
+    resultBase.interactive = mobile?.interactive ?? desktop?.interactive ?? [];
+
+    resultBase.iconOnlyMissingLabelDesktop = desktop?.iconOnlyMissingLabel ?? [];
+    resultBase.iconOnlyMissingLabelMobile = mobile?.iconOnlyMissingLabel ?? [];
+    const combinedIcon = [...resultBase.iconOnlyMissingLabelDesktop, ...resultBase.iconOnlyMissingLabelMobile];
+    const seenIcon = new Set<string>();
+    resultBase.iconOnlyMissingLabel = combinedIcon.filter((i) => {
+      const key = `${i.tagName}|${i.selector}`;
+      if (seenIcon.has(key)) return false;
+      seenIcon.add(key);
+      return true;
+    });
+
+    resultBase.a11yDesktop = desktop?.a11y ?? null;
+    resultBase.a11yMobile = mobile?.a11y ?? null;
+    resultBase.a11y = mergeA11y(resultBase.a11yDesktop ?? null, resultBase.a11yMobile ?? null);
   } catch (err) {
     resultBase.status = "error";
     resultBase.error = sanitizeText(String(err));
@@ -612,7 +751,26 @@ async function collectRouteResult(
 
     // Evidence is mandatory: try to screenshot even on errors/timeouts.
     if (!resultBase.screenshots) {
-      resultBase.screenshots = await takeScreenshots();
+      try {
+        await page.setViewportSize({ width: 1280, height: 800 });
+        await page.waitForTimeout(200);
+        await page.screenshot({ path: desktopPath, fullPage: true });
+
+        await page.setViewportSize({ width: 390, height: 844 });
+        await page.waitForTimeout(200);
+        await page.screenshot({ path: mobilePath, fullPage: true });
+
+        resultBase.screenshots = {
+          desktop: path.relative(REPO_ROOT, desktopPath),
+          mobile: path.relative(REPO_ROOT, mobilePath),
+        };
+      } catch (screenshotErr) {
+        consoleEvents.push({
+          type: "warning",
+          text: `screenshot failed (error path): ${sanitizeText(String(screenshotErr))}`,
+        });
+        resultBase.screenshots = null;
+      }
     }
   } finally {
     await page.close();
@@ -963,8 +1121,10 @@ async function main() {
 
     // Hard fail conditions (coverage correctness):
     // - Any route marked requiresAuth that still ends at /auth after "authenticated" audit.
+    // - Any admin route (requiresRole=admin) that does NOT end under /admin (role mismatch).
     // - Any route that errored without screenshots (missing evidence).
     const requiresAuthByPath = new Map(routeMap.map((r) => [r.path, r.requiresAuth] as const));
+    const requiresRoleByPath = new Map(routeMap.map((r) => [r.path, r.requiresRole] as const));
     const protectedAuthRedirects = uiReport.routes.filter((r) => {
       if (r.authState !== "authenticated") return false;
       if (!requiresAuthByPath.get(r.path)) return false;
@@ -972,6 +1132,16 @@ async function main() {
         return new URL(r.finalUrl).pathname.startsWith("/auth");
       } catch {
         return false;
+      }
+    });
+
+    const adminRoleMismatches = uiReport.routes.filter((r) => {
+      if (r.authState !== "authenticated") return false;
+      if (requiresRoleByPath.get(r.path) !== "admin") return false;
+      try {
+        return !new URL(r.finalUrl).pathname.startsWith("/admin");
+      } catch {
+        return true;
       }
     });
 
@@ -988,11 +1158,12 @@ async function main() {
       authCoverageError ||
       missingProtectedRoutes.length > 0 ||
       protectedAuthRedirects.length > 0 ||
+      adminRoleMismatches.length > 0 ||
       missingEvidence.length > 0
     ) {
       // eslint-disable-next-line no-console
       console.error(
-        `[audit:fullsite] FAIL: authCoverage=${authCoverageError ?? "ok"}, missingProtectedRoutes=${missingProtectedRoutes.length}, protectedRedirectsToAuth=${protectedAuthRedirects.length}, missingScreenshots=${missingEvidence.length}`,
+        `[audit:fullsite] FAIL: authCoverage=${authCoverageError ?? "ok"}, missingProtectedRoutes=${missingProtectedRoutes.length}, protectedRedirectsToAuth=${protectedAuthRedirects.length}, adminRoleMismatches=${adminRoleMismatches.length}, missingScreenshots=${missingEvidence.length}`,
       );
       if (authCoverageError === "missing_credentials") {
         // eslint-disable-next-line no-console
@@ -1004,6 +1175,15 @@ async function main() {
         // eslint-disable-next-line no-console
         console.error(
           `[audit:fullsite] Missing protected route results (first 15): ${missingProtectedRoutes.slice(0, 15).join(", ")}`,
+        );
+      }
+      if (adminRoleMismatches.length > 0) {
+        // eslint-disable-next-line no-console
+        console.error(
+          `[audit:fullsite] Admin role mismatches (first 15): ${adminRoleMismatches
+            .slice(0, 15)
+            .map((r) => `${r.path} -> ${r.finalUrl}`)
+            .join(", ")}`,
         );
       }
       process.exitCode = 1;

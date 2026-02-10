@@ -7,6 +7,7 @@ import { useUserContext } from "../../../contexts/UserContext";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
 import { Plus, MoreVertical, Trash2 } from "lucide-react";
+import { toErrorMessage } from "../../../utils/errorMessage";
 
 const DOMAIN_REGEX = /^(?!-)[a-z0-9-]+(\.[a-z0-9-]+)+$/;
 const RESERVED_DOMAINS = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "live.com", "icloud.com", "protonmail.com", "aol.com"];
@@ -29,7 +30,7 @@ export const BlockedEmailDomains = () => {
       const domains = await trpc.blockedEmailDomains.listBlockedEmailDomains.query();
       setBlockedDomains(domains);
     } catch (error: any) {
-      setErrorMessage(error.message ?? "Error al cargar los dominios.");
+      setErrorMessage(toErrorMessage(error) || "Error al cargar los dominios.");
       setShowError(true);
     } finally {
       setLoader(false);
@@ -60,9 +61,7 @@ export const BlockedEmailDomains = () => {
       setBlockedDomains(domains);
       setNewDomain("");
     } catch (error: any) {
-      let msg = error.message;
-      if (msg?.includes('"validation"')) try { msg = JSON.parse(msg)[0].message; } catch {}
-      setErrorMessage(msg ?? "Error al agregar.");
+      setErrorMessage(toErrorMessage(error) || "Error al agregar.");
       setShowError(true);
     } finally {
       setSaving(false);
@@ -77,7 +76,7 @@ export const BlockedEmailDomains = () => {
       setDrawerDomain(null);
       setDomainToDelete(null);
     } catch (error: any) {
-      setErrorMessage(error.message ?? "Error al eliminar.");
+      setErrorMessage(toErrorMessage(error) || "Error al eliminar.");
       setShowError(true);
     } finally {
       setSaving(false);
