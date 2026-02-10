@@ -9,7 +9,6 @@ import { useFormik } from "formik";
 import { useUserContext } from "../../../contexts/UserContext";
 import * as Yup from "yup";
 import trpc from "../../../api";
-import { ErrorModal } from "../../../components/Modals";
 import { useCookies } from "react-cookie";
 import { ChatButton } from "../../../components/ChatButton/ChatButton";
 import Turnstile, { type TurnstileRef } from "../../../components/Turnstile/Turnstile";
@@ -44,9 +43,8 @@ function SignUpForm() {
   const from = (location.state as { from?: string } | null)?.from ?? "/planes";
   const [loader, setLoader] = useState<boolean>(false);
   const { handleLogin } = useUserContext();
-  const [show, setShow] = useState<boolean>(false);
   const [dialCode, setDialCode] = useState<string>("52");
-  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [inlineError, setInlineError] = useState<string>("");
   const [cookies] = useCookies(["_fbp", "_fbc"]);
   const [blockedDomains, setBlockedDomains] = useState<string[]>([]);
   const [blockedPhoneNumbers, setBlockedPhoneNumbers] = useState<string[]>([]);
@@ -59,10 +57,6 @@ function SignUpForm() {
   const registrationStartedRef = useRef(false);
   const registrationCompletedRef = useRef(false);
   const registrationAbandonTrackedRef = useRef(false);
-
-  const closeModal = () => {
-    setShow(false);
-  };
 
   const validationSchema = Yup.object().shape({
     email: Yup.string().required("El correo es requerido").email("El formato del correo no es correcto"),
@@ -112,6 +106,7 @@ function SignUpForm() {
     initialValues: initialValues,
     validationSchema: validationSchema,
     onSubmit: async (values) => {
+      setInlineError("");
       if (!turnstileToken && !turnstileBypassed) {
         // Invisible Turnstile: execute only on submit to avoid showing the widget by default.
         setTurnstileError("Verificando seguridad...");
@@ -195,8 +190,7 @@ function SignUpForm() {
           errorCode: "server_error",
         });
 
-        setShow(true);
-        setErrorMessage(errorMessage);
+        setInlineError(errorMessage);
       } finally {
         setLoader(false);
         setTurnstileToken("");
@@ -204,6 +198,19 @@ function SignUpForm() {
       }
     },
   });
+
+  useEffect(() => {
+    if (!inlineError) return;
+    // If the user edits any field, clear the form-level error to reduce noise.
+    setInlineError("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    formik.values.username,
+    formik.values.email,
+    formik.values.phone,
+    formik.values.password,
+    formik.values.passwordConfirmation,
+  ]);
 
   useEffect(() => {
     if (!turnstilePendingSubmit) return;
@@ -383,7 +390,7 @@ function SignUpForm() {
           </ul>
 
           <form
-            className="sign-up-form auth-form auth-signup-form"
+            className="sign-up-form auth-form auth-login-form auth-signup-form"
             autoComplete="on"
             onSubmit={(e) => {
               e.preventDefault();
@@ -391,9 +398,11 @@ function SignUpForm() {
             }}
           >
             <div className={`c-row ${showUsernameError ? "is-invalid" : ""}`}>
-              <label htmlFor="username" className="signup-label">Nombre (opcional)</label>
-              <div className="signup-input-wrap">
-                <User className="signup-input-icon" aria-hidden />
+              <label htmlFor="username" className="auth-field-label">
+                Nombre (opcional)
+              </label>
+              <div className="auth-login-input-wrap">
+                <User className="auth-login-input-icon" aria-hidden />
                 <input
                   placeholder="Tu nombre o DJ name (opcional)"
                   type="text"
@@ -403,7 +412,7 @@ function SignUpForm() {
                   value={formik.values.username}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
-                  className="signup-input-with-icon"
+                  className="auth-login-input auth-login-input-with-icon"
                   aria-invalid={showUsernameError}
                   aria-describedby={usernameErrorId}
                 />
@@ -415,9 +424,11 @@ function SignUpForm() {
               )}
             </div>
             <div className={`c-row ${showEmailError ? "is-invalid" : ""}`}>
-              <label htmlFor="email" className="signup-label">Correo electrónico</label>
-              <div className="signup-input-wrap">
-                <Mail className="signup-input-icon" aria-hidden />
+              <label htmlFor="email" className="auth-field-label">
+                Correo electrónico
+              </label>
+              <div className="auth-login-input-wrap">
+                <Mail className="auth-login-input-icon" aria-hidden />
                 <input
                   placeholder="correo@ejemplo.com"
                   id="email"
@@ -426,8 +437,12 @@ function SignUpForm() {
                   value={formik.values.email}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
-                  type="text"
-                  className="signup-input-with-icon"
+                  type="email"
+                  inputMode="email"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  className="auth-login-input auth-login-input-with-icon"
                   aria-invalid={showEmailError}
                   aria-describedby={emailErrorId}
                 />
@@ -439,7 +454,9 @@ function SignUpForm() {
               )}
             </div>
             <div className={`c-row c-row--phone ${showPhoneError ? "is-invalid" : ""}`}>
-              <label htmlFor="phone" className="signup-label">WhatsApp (opcional)</label>
+              <label htmlFor="phone" className="auth-field-label">
+                WhatsApp (opcional)
+              </label>
               <div className="signup-phone-wrap">
                 <div className="signup-phone-flag-wrap">
                   <span className={`signup-phone-flag ${countryFlagClass}`} aria-hidden title={selectedCountry?.name} />
@@ -483,9 +500,11 @@ function SignUpForm() {
               )}
             </div>
             <div className={`c-row ${showPasswordError ? "is-invalid" : ""}`}>
-              <label htmlFor="password" className="signup-label">Contraseña</label>
-              <div className="signup-input-wrap">
-                <Lock className="signup-input-icon" aria-hidden />
+              <label htmlFor="password" className="auth-field-label">
+                Contraseña
+              </label>
+              <div className="auth-login-input-wrap">
+                <Lock className="auth-login-input-icon" aria-hidden />
                 <PasswordInput
                   placeholder="Mínimo 6 caracteres"
                   id="password"
@@ -496,8 +515,8 @@ function SignUpForm() {
                   onBlur={formik.handleBlur}
                   aria-invalid={showPasswordError}
                   aria-describedby={passwordErrorId}
-                  inputClassName="signup-input-with-icon"
-                  wrapperClassName="signup-password-wrap"
+                  inputClassName="auth-login-input auth-login-input-with-icon"
+                  wrapperClassName="auth-login-password-wrap"
                 />
               </div>
               {showPasswordError && (
@@ -507,9 +526,11 @@ function SignUpForm() {
               )}
             </div>
             <div className={`c-row ${showPasswordConfirmationError ? "is-invalid" : ""}`}>
-              <label htmlFor="passwordConfirmation" className="signup-label">Repetir contraseña</label>
-              <div className="signup-input-wrap">
-                <Lock className="signup-input-icon" aria-hidden />
+              <label htmlFor="passwordConfirmation" className="auth-field-label">
+                Repetir contraseña
+              </label>
+              <div className="auth-login-input-wrap">
+                <Lock className="auth-login-input-icon" aria-hidden />
                 <PasswordInput
                   placeholder="Repite tu contraseña"
                   id="passwordConfirmation"
@@ -520,8 +541,8 @@ function SignUpForm() {
                   onBlur={formik.handleBlur}
                   aria-invalid={showPasswordConfirmationError}
                   aria-describedby={passwordConfirmationErrorId}
-                  inputClassName="signup-input-with-icon"
-                  wrapperClassName="signup-password-wrap"
+                  inputClassName="auth-login-input auth-login-input-with-icon"
+                  wrapperClassName="auth-login-password-wrap"
                 />
               </div>
               {showPasswordConfirmationError && (
@@ -539,6 +560,9 @@ function SignUpForm() {
               resetSignal={turnstileReset}
             />
             {turnstileError && <div className="error-formik">{turnstileError}</div>}
+            <div className="auth-login-inline-error" role="alert" aria-live="polite">
+              {inlineError}
+            </div>
             {!loader ? (
               <button
                 type="submit"
@@ -558,7 +582,6 @@ function SignUpForm() {
           </form>
         </div>
       </div>
-      <ErrorModal show={show} onHide={closeModal} message={errorMessage} />
     </>
   );
 }
