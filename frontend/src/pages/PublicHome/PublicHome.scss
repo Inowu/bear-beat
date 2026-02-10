@@ -80,53 +80,44 @@
 }
 
 .home-topnav__nav {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 18px;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ph-border) 80%, transparent);
+  background: color-mix(in srgb, var(--ph-bg-card) 86%, transparent);
+  backdrop-filter: blur(10px);
 }
 
 .home-topnav__right {
   display: flex;
   align-items: center;
-  gap: 12px;
-}
-
-.home-topnav__cta {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-  padding: 0 12px;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--ph-accent) 40%, transparent);
-  background: var(--ph-btn-bg);
-  color: var(--ph-btn-text);
-  text-decoration: none;
-  font-weight: 900;
-  font-size: 13px;
-  letter-spacing: 0.01em;
-  box-shadow: var(--ph-shadow);
-  transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
-}
-
-.home-topnav__cta:hover {
-  background: var(--ph-btn-hover-bg);
-  box-shadow: var(--ph-shadow-card);
+  gap: 10px;
 }
 
 .home-topnav__link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
   color: color-mix(in srgb, var(--ph-text-body) 92%, transparent);
   text-decoration: none;
-  font-weight: 600;
+  font-weight: 850;
   font-size: 14px;
-  padding: 8px 10px;
-  border-radius: 10px;
+  letter-spacing: 0.01em;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
 }
 
 .home-topnav__link.is-active,
 .home-topnav__link[aria-current="page"] {
   color: var(--ph-text-heading);
-  background: color-mix(in srgb, var(--ph-accent) 12%, transparent);
+  background: color-mix(in srgb, var(--ph-accent) 14%, transparent);
+  border-color: color-mix(in srgb, var(--ph-accent) 18%, transparent);
 }
 
 .home-topnav__link:hover {
@@ -145,18 +136,13 @@
   }
 
   .home-topnav__nav {
-    gap: 8px;
+    gap: 4px;
+    padding: 3px;
   }
 
   .home-topnav__link {
     font-size: 13px;
-    padding: 8px 8px;
-  }
-}
-
-@media (min-width: 920px) {
-  .home-topnav__cta {
-    display: inline-flex;
+    padding: 0 12px;
   }
 }
 

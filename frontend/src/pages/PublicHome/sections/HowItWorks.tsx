@@ -27,7 +27,7 @@ export default function HowItWorks(props: { trial: { enabled: boolean; days: num
               <Search size={18} />
             </span>
             <h3>Encuentra en segundos</h3>
-            <p>Carpetas listas por género/año/mood para responder pedidos sin estrés.</p>
+            <p>Carpetas listas por año/mes/semana/género para responder pedidos sin estrés.</p>
           </li>
           <li className="how-it-works__card">
             <span className="how-it-works__icon" aria-hidden>

@@ -46,7 +46,7 @@ export default function HomeHero(props: {
               <span className="home-stat__label bb-stat-pill__label">de descarga</span>
             </div>
             <div role="listitem" className="home-stat bb-stat-pill">
-              <span className="home-stat__value bb-stat-pill__value">Género / año / mood</span>
+              <span className="home-stat__value bb-stat-pill__value">Año / Mes / Semana / Género</span>
               <span className="home-stat__label bb-stat-pill__label">carpetas listas</span>
             </div>
           </div>
@@ -84,13 +84,13 @@ export default function HomeHero(props: {
                   </span>
                   <span className="home-hero__micro-row">
                     <ArrowRight size={16} aria-hidden />
-                    Después: desde {afterPriceLabel}/mes
+                    Después: desde {afterPriceLabel}
                   </span>
                 </>
               ) : (
                 <span className="home-hero__micro-row">
                   <ArrowRight size={16} aria-hidden />
-                  Desde {afterPriceLabel}/mes
+                  Desde {afterPriceLabel}
                 </span>
               )}
               <span className="home-hero__micro-row">

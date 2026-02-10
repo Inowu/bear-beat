@@ -14,7 +14,7 @@ export default function InsidePreview(props: {
         <div className="inside-preview__head">
           <div>
             <h2 className="home-h2">Así se ve por dentro</h2>
-            <p className="home-sub">Busca por género/canción/carpeta y arma repertorio en minutos.</p>
+            <p className="home-sub">Busca por canción, artista o carpeta y navega por Año / Mes / Semana / Género.</p>
           </div>
           <button type="button" className="home-cta home-cta--secondary inside-preview__cta" onClick={onDemoScroll}>
             <CirclePlay size={18} aria-hidden />
@@ -45,7 +45,7 @@ export default function InsidePreview(props: {
                 <source srcSet={CatalogPreviewWebp} type="image/webp" />
                 <img
                   src={CatalogPreviewPng}
-                  alt="Vista real del catálogo por dentro (biblioteca y secciones)"
+                  alt="Vista real del catálogo por dentro (biblioteca: Audios, Karaoke y Videos)"
                   width={960}
                   height={600}
                   loading="lazy"

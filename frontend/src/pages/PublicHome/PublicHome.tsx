@@ -141,12 +141,20 @@ function toPricingPlan(plan: IPlans, currency: "mxn" | "usd"): PricingPlan {
   };
 }
 
-function formatUsdMonthlyHint(amount: number | null | undefined): string {
+function formatMonthlyCurrencyHint(amount: number | null | undefined, currency: "mxn" | "usd"): string {
+  const fallback = currency === "mxn" ? 350 : 18;
+  const code = currency === "mxn" ? "MXN" : "USD";
   const value = Number(amount ?? 0);
-  if (!Number.isFinite(value) || value <= 0) return "USD 18";
-  const hasDecimals = Math.round(value) !== value;
-  const formatted = hasDecimals ? value.toFixed(2) : `${value}`;
-  return `USD ${formatted}`;
+  const effective = Number.isFinite(value) && value > 0 ? value : fallback;
+  const hasDecimals = Math.round(effective) !== effective;
+  const formatted = hasDecimals ? effective.toFixed(2) : `${effective}`;
+  return `${code} $${formatted}`;
+}
+
+function formatMonthlyDualHint(mxnAmount: number | null | undefined, usdAmount: number | null | undefined): string {
+  const mxn = formatMonthlyCurrencyHint(mxnAmount, "mxn");
+  const usd = formatMonthlyCurrencyHint(usdAmount, "usd");
+  return `${mxn}/mes (${usd})`;
 }
 
 export default function PublicHome() {
@@ -279,8 +287,8 @@ export default function PublicHome() {
   }, [plans]);
 
   const afterPriceLabel = useMemo(() => {
-    return formatUsdMonthlyHint(pricingPlans.usd?.price);
-  }, [pricingPlans.usd?.price]);
+    return formatMonthlyDualHint(pricingPlans.mxn?.price, pricingPlans.usd?.price);
+  }, [pricingPlans.mxn?.price, pricingPlans.usd?.price]);
 
   const downloadQuotaGb = useMemo(() => {
     const fromPlans = pricingPlans.mxn?.gigas ?? pricingPlans.usd?.gigas;
@@ -511,21 +519,10 @@ export default function PublicHome() {
               <Link to="/planes" className="home-topnav__link">
                 Planes
               </Link>
-              <Link to="/legal" className="home-topnav__link">
-                FAQ
-              </Link>
               <Link to="/auth" className="home-topnav__link">
                 Iniciar sesión
               </Link>
             </nav>
-            <Link
-              to="/auth/registro"
-              state={{ from: "/planes" }}
-              className="home-topnav__cta"
-              onClick={() => onPrimaryCtaClick("hero")}
-            >
-              Empezar prueba
-            </Link>
           </div>
         </div>
       </header>

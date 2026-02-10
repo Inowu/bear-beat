@@ -18,11 +18,11 @@ export const HOME_HERO_MICROCOPY_TRIAL = "Cancela antes de que termine y no se c
 export const HOME_USE_CASES = [
   {
     title: "Pedido inesperado",
-    body: "Encuentra rápido por género y carpeta. Responde sin cortar el ritmo.",
+    body: "Encuentra rápido por carpeta (año/mes/semana/género). Responde sin cortar el ritmo.",
   },
   {
     title: "Evento social multi‑género",
-    body: "Carpetas listas por género/año para transiciones sin estrés.",
+    body: "Carpetas listas por año/mes/semana/género para transiciones sin estrés.",
   },
   {
     title: "Sin WiFi (evita YouTube)",
@@ -41,7 +41,7 @@ export const HOME_COMPATIBILITY_ITEMS = [
   },
   {
     title: "Formatos comunes",
-    body: "Formatos comunes: MP3 y MP4. Ver formatos completos en el FAQ.",
+    body: "Formatos comunes: MP3 (audio) y MP4 (video).",
   },
   {
     title: "Tu software, tu forma",
@@ -102,7 +102,7 @@ export const HOME_FAQ_ITEMS: HomeFaqItem[] = [
     id: "formats",
     question: "¿Qué formatos manejan?",
     answer:
-      "Soportamos audio en MP3/WAV/FLAC/AAC/M4A/OGG/WMA y video en MP4/MKV/AVI/MOV/WMV/WEBM/M4V/FLV. (Karaoke se identifica por carpeta “karaoke”.)",
+      "Audio: MP3. Video: MP4.",
   },
   {
     id: "support",
