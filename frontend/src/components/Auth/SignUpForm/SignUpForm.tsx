@@ -425,6 +425,9 @@ function SignUpForm() {
         <div className="auth-login-card auth-login-card--signup">
           <img src={Logo} alt="Bear Beat" className="auth-login-logo" />
           <h1 className="auth-login-title">Crea tu cuenta</h1>
+          <p className="auth-login-sub auth-login-sub--signup">
+            Activa tu cuenta en minutos y empieza a descargar.
+          </p>
 
           <form
             className="sign-up-form auth-form auth-login-form auth-signup-form"
@@ -434,28 +437,6 @@ function SignUpForm() {
               formik.handleSubmit(e);
             }}
           >
-            <div className={`c-row ${showUsernameError ? "is-invalid" : ""}`}>
-              <label htmlFor="username" className="auth-field-label">
-                Nombre (opcional)
-              </label>
-              <div className="auth-login-input-wrap">
-                <User className="auth-login-input-icon" aria-hidden />
-                <input
-                  placeholder="DJ Kubo"
-                  type="text"
-                  id="username"
-                  name="username"
-                  autoComplete="name"
-                  value={formik.values.username}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  className="auth-login-input auth-login-input-with-icon"
-                  aria-invalid={showUsernameError}
-                  aria-describedby={describedByUsername}
-                />
-              </div>
-              <FieldError id={usernameErrorId} show={showUsernameError} message={formik.errors.username} />
-            </div>
             <div className={`c-row ${showEmailError ? "is-invalid" : ""}`}>
               <label htmlFor="email" className="auth-field-label">
                 Correo electrónico
@@ -481,48 +462,6 @@ function SignUpForm() {
                 />
               </div>
               <FieldError id={emailErrorId} show={showEmailError} message={formik.errors.email} />
-            </div>
-            <div className={`c-row c-row--phone ${showPhoneError ? "is-invalid" : ""}`}>
-              <label htmlFor="phone" className="auth-field-label">
-                WhatsApp (opcional)
-              </label>
-              <div className="signup-phone-wrap">
-                <div className="signup-phone-flag-wrap">
-                  <span className={`signup-phone-flag ${countryFlagClass}`} aria-hidden title={selectedCountry?.name} />
-                  <select
-                    className="signup-phone-select-overlay"
-                    value={dialCode}
-                    onChange={(e) => setDialCode(e.target.value)}
-                    aria-label="País (solo bandera visible)"
-                    title={selectedCountry?.name}
-                  >
-                    {allowedCountryOptions.map((c) => (
-                      <option key={c.code} value={c.dial_code.slice(1)}>
-                        {c.dial_code} {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <span className="signup-phone-icon-wrap">
-                  <Phone className="signup-input-icon" aria-hidden />
-                </span>
-                <input
-                  className="signup-phone-input"
-                  placeholder="5512345678"
-                  id="phone"
-                  name="phone"
-                  value={formik.values.phone}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  type="tel"
-                  inputMode="numeric"
-                  autoComplete="tel-national"
-                  maxLength={15}
-                  aria-invalid={showPhoneError}
-                  aria-describedby={describedByPhone}
-                />
-              </div>
-              <FieldError id={phoneErrorId} show={showPhoneError} message={formik.errors.phone} />
             </div>
             <div className={`c-row ${showPasswordError ? "is-invalid" : ""}`}>
               <label htmlFor="password" className="auth-field-label">
@@ -572,6 +511,72 @@ function SignUpForm() {
                 message={formik.errors.passwordConfirmation}
               />
             </div>
+            <div className="auth-signup-optional-grid">
+              <div className={`c-row ${showUsernameError ? "is-invalid" : ""}`}>
+                <label htmlFor="username" className="auth-field-label">
+                  Nombre (opcional)
+                </label>
+                <div className="auth-login-input-wrap">
+                  <User className="auth-login-input-icon" aria-hidden />
+                  <input
+                    placeholder="DJ Kubo"
+                    type="text"
+                    id="username"
+                    name="username"
+                    autoComplete="name"
+                    value={formik.values.username}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="auth-login-input auth-login-input-with-icon"
+                    aria-invalid={showUsernameError}
+                    aria-describedby={describedByUsername}
+                  />
+                </div>
+                <FieldError id={usernameErrorId} show={showUsernameError} message={formik.errors.username} />
+              </div>
+              <div className={`c-row c-row--phone ${showPhoneError ? "is-invalid" : ""}`}>
+                <label htmlFor="phone" className="auth-field-label">
+                  WhatsApp (opcional)
+                </label>
+                <div className="signup-phone-wrap">
+                  <div className="signup-phone-flag-wrap">
+                    <span className={`signup-phone-flag ${countryFlagClass}`} aria-hidden title={selectedCountry?.name} />
+                    <select
+                      className="signup-phone-select-overlay"
+                      value={dialCode}
+                      onChange={(e) => setDialCode(e.target.value)}
+                      aria-label="País (solo bandera visible)"
+                      title={selectedCountry?.name}
+                    >
+                      {allowedCountryOptions.map((c) => (
+                        <option key={c.code} value={c.dial_code.slice(1)}>
+                          {c.dial_code} {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <span className="signup-phone-icon-wrap">
+                    <Phone className="signup-input-icon" aria-hidden />
+                  </span>
+                  <input
+                    className="signup-phone-input"
+                    placeholder="5512345678"
+                    id="phone"
+                    name="phone"
+                    value={formik.values.phone}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    type="tel"
+                    inputMode="numeric"
+                    autoComplete="tel-national"
+                    maxLength={15}
+                    aria-invalid={showPhoneError}
+                    aria-describedby={describedByPhone}
+                  />
+                </div>
+                <FieldError id={phoneErrorId} show={showPhoneError} message={formik.errors.phone} />
+              </div>
+            </div>
             <Turnstile
               ref={turnstileRef}
               invisible
@@ -608,10 +613,12 @@ function SignUpForm() {
               .
             </p>
             <div className="c-row auth-login-register-wrap">
-              <span className="auth-login-register-copy">¿Ya tienes cuenta?</span>{" "}
-              <Link to="/auth" state={{ from }} className="auth-login-register">
-                Inicia sesión
-              </Link>
+              <span className="auth-login-register-copy">
+                ¿Ya tienes cuenta?{" "}
+                <Link to="/auth" state={{ from }} className="auth-login-register">
+                  Inicia sesión
+                </Link>
+              </span>
             </div>
           </form>
         </div>
