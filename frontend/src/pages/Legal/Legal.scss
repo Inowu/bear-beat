@@ -8,7 +8,7 @@
     radial-gradient(900px 560px at 10% 0%, var(--bb-landing-spot-1), transparent 60%),
     radial-gradient(860px 520px at 90% 10%, var(--bb-landing-spot-2), transparent 60%),
     var(--ph-bg);
-  padding: 38px 0 46px;
+  padding: 32px 0 46px;
 }
 
 .legal2026__skip {
@@ -56,7 +56,7 @@
 .legal2026__eyebrow {
   margin: 0;
   color: var(--ph-accent);
-  font-size: 0.8rem;
+  font-size: 1.1rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -65,14 +65,15 @@
 .legal2026__hero h1 {
   margin: 0.38rem 0 0;
   color: var(--ph-text-heading);
-  font-size: clamp(1.45rem, 3.7vw, 2.1rem);
-  line-height: 1.1;
+  font-size: clamp(2.35rem, 4.8vw, 3.2rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
 }
 
 .legal2026__lead {
   margin: 0.58rem 0 0;
   color: color-mix(in srgb, var(--ph-text-body) 88%, transparent);
-  font-size: clamp(0.93rem, 2.1vw, 1.02rem);
+  font-size: var(--app-font-size-body-lg);
   line-height: 1.55;
   max-width: 68ch;
 }
@@ -80,14 +81,14 @@
 .legal2026__updated {
   margin: 0.55rem 0 0;
   color: var(--ph-text-muted);
-  font-size: 0.84rem;
-  font-weight: 600;
+  font-size: 1.25rem;
+  font-weight: 650;
 }
 
 .legal2026__hero-note {
   margin: 0.55rem 0 0;
   color: color-mix(in srgb, var(--ph-text-muted) 94%, transparent);
-  font-size: 0.86rem;
+  font-size: 1.25rem;
   font-weight: 650;
   line-height: 1.5;
 }
@@ -102,13 +103,13 @@
 .legal2026__btn {
   min-height: 44px;
   border-radius: 14px;
-  padding: 14px 18px;
+  padding: 0 16px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: 1.3rem;
   font-weight: 800;
   letter-spacing: 0.01em;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
@@ -157,6 +158,12 @@
   align-items: center;
   gap: 0.35rem;
   text-decoration: none;
+  text-transform: none;
+  letter-spacing: 0.01em;
+  font-size: 1.25rem;
+  font-weight: 850;
+  padding: 0 12px;
+  white-space: nowrap;
 }
 
 .legal2026__quick-nav .bb-segmented__btn[aria-current="location"] {
@@ -192,7 +199,8 @@
   h2 {
     margin: 0;
     color: var(--ph-text-heading);
-    font-size: clamp(1.06rem, 2.4vw, 1.2rem);
+    font-size: var(--app-font-size-h4);
+    letter-spacing: -0.01em;
   }
 }
 
@@ -215,10 +223,10 @@
   background: color-mix(in srgb, var(--ph-bg-soft) 78%, transparent);
   color: color-mix(in srgb, var(--ph-text-body) 92%, transparent);
   padding: 0 0.85rem;
-  font-size: 0.82rem;
+  font-size: 1.15rem;
   font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  text-transform: none;
   cursor: pointer;
   transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
 }
@@ -247,10 +255,10 @@
   background: transparent;
   cursor: pointer;
   color: var(--ph-text-heading);
-  font-size: 0.93rem;
+  font-size: 1.4rem;
   font-weight: 800;
   line-height: 1.4;
-  padding: 0.78rem 0.78rem;
+  padding: 1.15rem 1.05rem;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -270,14 +278,14 @@
 }
 
 .legal2026__faq-panel {
-  padding: 0 0.78rem 0.78rem;
+  padding: 0 1.05rem 1.05rem;
 }
 
 .legal2026__faq-panel p {
   margin: 0;
   color: color-mix(in srgb, var(--ph-text-body) 94%, transparent);
-  font-size: 0.92rem;
-  line-height: 1.62;
+  font-size: var(--app-font-size-body);
+  line-height: 1.65;
 }
 
 .legal2026__backtop {
@@ -298,20 +306,21 @@
 
 .legal2026__content {
   display: grid;
-  gap: 0.55rem;
-  max-width: 80ch;
+  gap: 0.75rem;
+  max-width: 76ch;
 
   h3 {
     margin: 0.18rem 0 0;
     color: var(--ph-text-heading);
-    font-size: 0.94rem;
+    font-size: 1.4rem;
     font-weight: 800;
+    letter-spacing: 0.01em;
   }
 
   p {
     margin: 0;
     color: color-mix(in srgb, var(--ph-text-body) 94%, transparent);
-    font-size: 0.93rem;
+    font-size: var(--app-font-size-body);
     line-height: 1.7;
   }
 
@@ -319,7 +328,7 @@
     margin: 0;
     padding-left: 1.15rem;
     color: color-mix(in srgb, var(--ph-text-body) 94%, transparent);
-    font-size: 0.93rem;
+    font-size: var(--app-font-size-body);
     line-height: 1.7;
   }
 
@@ -333,12 +342,39 @@
     width: min(1120px, calc(100% - 28px));
   }
 
+  .legal2026 {
+    padding-top: 22px;
+  }
+
+  .legal2026__hero {
+    border-radius: 18px;
+    padding: 1.25rem;
+  }
+
+  .legal2026__hero h1 {
+    font-size: clamp(2.15rem, 6.4vw, 2.7rem);
+  }
+
+  .legal2026__lead {
+    font-size: var(--app-font-size-body);
+  }
+
   .legal2026__hero-actions {
     flex-direction: column;
   }
 
   .legal2026__btn {
     width: 100%;
+  }
+
+  .legal2026__section {
+    border-radius: 16px;
+    scroll-margin-top: 86px;
+  }
+
+  .legal2026__faq-actions {
+    margin-top: 0.35rem;
+    margin-bottom: 0.85rem;
   }
 }
 
