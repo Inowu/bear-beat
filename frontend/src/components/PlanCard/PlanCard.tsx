@@ -260,7 +260,7 @@ function PlanCard(props: PlanCardPropsI) {
   const successSubscription = async (data: any) => {
     const eventId = generateEventId("purchase");
     await trpc.subscriptions.subscribeWithPaypal.mutate({
-      planId: ppPlan.id,
+      planId: plan.id,
       subscriptionId: data.subscriptionID,
       fbp: cookies._fbp,
       fbc: cookies._fbc,

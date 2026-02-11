@@ -372,8 +372,6 @@ export const plansRouter = router({
       try {
         const token = await paypal.getToken();
 
-        // WARNING: Highly brittle, this is assuming all the plans who have a paypal product id are the same
-
         const planWithProduct = await prisma.plans.findFirst({
           where: {
             NOT: [
@@ -384,19 +382,34 @@ export const plansRouter = router({
           },
         });
 
-        if (!planWithProduct) {
-          throw new TRPCError({
-            code: 'NOT_FOUND',
-            message:
-              'No se encontró un plan con un producto de paypal asociado',
-          });
+        let paypalProductId = planWithProduct?.paypal_product_id;
+        if (!paypalProductId) {
+          const productResponse = (
+            await axios.post(
+              `${paypal.paypalUrl()}/v1/catalogs/products`,
+              {
+                name: data.name,
+                description: data.description || 'Bear Beat subscription',
+                type: 'SERVICE',
+                category: 'SOFTWARE',
+              },
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  'Content-Type': 'application/json',
+                },
+              },
+            )
+          ).data;
+
+          paypalProductId = productResponse.id as string;
         }
 
         const planResponse = (
           await axios.post(
             `${paypal.paypalUrl()}/v1/billing/plans`,
             {
-              product_id: planWithProduct.paypal_product_id,
+              product_id: paypalProductId,
               name: data.name,
               description: data.description,
               status: 'ACTIVE',
@@ -439,6 +452,7 @@ export const plansRouter = router({
         return await prisma.plans.create({
           data: {
             ...(data as any),
+            paypal_product_id: paypalProductId,
             [getPlanKey(PaymentService.PAYPAL)]: planResponse.id,
           },
         });
@@ -477,11 +491,17 @@ export const plansRouter = router({
 
       try {
         const token = await paypal.getToken();
+        const paypalPlanKey = getPlanKey(PaymentService.PAYPAL);
+        const paypalPlanId = plan[paypalPlanKey];
+        if (!paypalPlanId) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'El plan no tiene un id de PayPal asociado',
+          });
+        }
 
         await axios.post(
-          `${paypal.paypalUrl()}/v1/billing/plans/${
-            plan[getPlanKey(PaymentService.STRIPE)]
-          }/deactivate`,
+          `${paypal.paypalUrl()}/v1/billing/plans/${paypalPlanId}/deactivate`,
           {},
           {
             headers: {
@@ -490,7 +510,12 @@ export const plansRouter = router({
           },
         );
 
-        return plan;
+        return await prisma.plans.update({
+          where: { id: plan.id },
+          data: {
+            [paypalPlanKey]: null,
+          },
+        });
       } catch (e) {
         log.error(
           `[PLANS:CREATE_PAYPAL_PLAN] An error ocurred while creating a paypal plan: ${JSON.stringify(

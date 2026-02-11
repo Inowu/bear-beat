@@ -14,18 +14,56 @@ import { updateFtpUserInfo } from '../../subscriptions/changeSubscriptionPlan/up
 import { manyChat } from '../../../many-chat';
 import { ingestAnalyticsEvents } from '../../../analytics';
 
+const parsePaypalPayload = (req: Request): Record<string, any> => {
+  const body = req.body as unknown;
+
+  if (Buffer.isBuffer(body)) {
+    const raw = body.toString('utf8').trim();
+    return raw ? (JSON.parse(raw) as Record<string, any>) : {};
+  }
+
+  if (typeof body === 'string') {
+    const raw = body.trim();
+    return raw ? (JSON.parse(raw) as Record<string, any>) : {};
+  }
+
+  if (typeof body === 'object' && body) {
+    return body as Record<string, any>;
+  }
+
+  return {};
+};
+
+const getPaypalSubscriptionId = (payload: Record<string, any>): string | null => {
+  const resource = payload?.resource ?? {};
+  const candidates = [
+    resource?.billing_agreement_id,
+    resource?.supplementary_data?.related_ids?.subscription_id,
+    resource?.subscription_id,
+    resource?.id,
+  ];
+
+  const resolved = candidates.find(
+    (value) => typeof value === 'string' && value.trim().length > 0,
+  );
+
+  return (resolved as string | undefined) ?? null;
+};
+
 export const paypalSubscriptionWebhook = async (req: Request) => {
-  const payload = JSON.parse(req.body as any);
+  const payload = parsePaypalPayload(req);
 
   log.info(
     `[PAYPAL_WH] Handling Paypal webhook, payload: ${JSON.stringify(payload)}`,
   );
 
-  const subId =
-    payload.event_type === PaypalEvent.PAYMENT_SALE_COMPLETED ||
-    payload.event_type === PaypalEvent.PAYMENT_SALE_DENIED
-      ? payload.resource.billing_agreement_id
-      : payload.resource.id;
+  const subId = getPaypalSubscriptionId(payload);
+  if (!subId) {
+    log.error(
+      `[PAYPAL_WH] Could not resolve subscription id for event ${payload?.event_type}`,
+    );
+    return;
+  }
 
   const order = await prisma.orders.findFirst({
     where: {
@@ -90,6 +128,7 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
 
   switch (payload.event_type) {
     case PaypalEvent.BILLING_SUBSCRIPTION_ACTIVATED:
+    case PaypalEvent.BILLING_SUBSCRIPTION_REACTIVATED:
       log.info(
         `[PAYPAL_WH] Activating subscription, subscription id ${payload.resource.id}`,
       );
@@ -144,20 +183,31 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
           return;
         }
 
-        if (subscriptionOrder.plan_id !== payload.resource.plan_id) {
+        const paypalPlanKey = getPlanKey(PaymentService.PAYPAL);
+        const incomingPaypalPlanId =
+          typeof payload.resource?.plan_id === 'string'
+            ? payload.resource.plan_id
+            : null;
+        const currentPaypalPlanId = currentPlan[paypalPlanKey] as string | null;
+
+        if (
+          incomingPaypalPlanId &&
+          currentPaypalPlanId &&
+          currentPaypalPlanId !== incomingPaypalPlanId
+        ) {
           log.info(
-            `[PAYPAL_WH] Changing plans for user ${user.id}, from plan ${currentPlan.paypal_plan_id} to plan ${payload.resource.plan_id}`,
+            `[PAYPAL_WH] Changing plans for user ${user.id}, from plan ${currentPaypalPlanId} to plan ${incomingPaypalPlanId}`,
           );
 
           const newPlan = await prisma.plans.findFirst({
             where: {
-              [getPlanKey(PaymentService.PAYPAL)]: payload.resource.plan_id,
+              [getPlanKey(PaymentService.PAYPAL)]: incomingPaypalPlanId,
             },
           });
 
           if (!newPlan) {
             log.error(
-              `[PAYPAL_WH] Error when changing plans, plan with id ${payload.resource.plan_id} not found`,
+              `[PAYPAL_WH] Error when changing plans, plan with id ${incomingPaypalPlanId} not found`,
             );
             return;
           }
@@ -210,9 +260,10 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
       });
 
       break;
+    case PaypalEvent.BILLING_SUBSCRIPTION_SUSPENDED:
     case PaypalEvent.BILLING_SUBSCRIPTION_EXPIRED:
       log.info(
-        `[PAYPAL_WH] Subscription expired, subscription id ${payload.resource.id}`,
+        `[PAYPAL_WH] Subscription ${payload.event_type}, subscription id ${payload.resource.id}`,
       );
 
       // Internal analytics: treat provider-side expiration as involuntary cancellation.
@@ -228,7 +279,10 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
               userId: user.id,
               metadata: {
                 provider: 'paypal',
-                reason: 'subscription_expired',
+                reason:
+                  payload.event_type === PaypalEvent.BILLING_SUBSCRIPTION_SUSPENDED
+                    ? 'subscription_suspended'
+                    : 'subscription_expired',
                 paypalSubscriptionId: subId,
                 orderId: order.id,
               },
@@ -247,7 +301,10 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
         user,
         plan: plan[getPlanKey(PaymentService.PAYPAL)]!,
         service: PaymentService.PAYPAL,
-        reason: OrderStatus.EXPIRED,
+        reason:
+          payload.event_type === PaypalEvent.BILLING_SUBSCRIPTION_SUSPENDED
+            ? OrderStatus.FAILED
+            : OrderStatus.EXPIRED,
       });
 
       break;
@@ -274,6 +331,12 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
           id: existingOrder.plan_id as number,
         },
       });
+      if (!orderPlan) {
+        log.error(
+          `[PAYPAL_WH] Plan with id ${existingOrder.plan_id} not found for renewal`,
+        );
+        return;
+      }
 
       const paypalToken = await paypal.getToken();
 
@@ -319,8 +382,11 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
       break;
     }
 
+    case PaypalEvent.BILLING_SUBSCRIPTION_PAYMENT_FAILED:
     case PaypalEvent.PAYMENT_SALE_DENIED: {
-      log.info(`[PAYPAL_WH] Payment denied, subscription id ${subId}`);
+      log.info(
+        `[PAYPAL_WH] Payment failed (${payload.event_type}), subscription id ${subId}`,
+      );
 
       try {
         await manyChat.addTagToUser(user, 'FAILED_PAYMENT');
@@ -343,7 +409,10 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
               amount: Number(plan?.price) || 0,
               metadata: {
                 provider: 'paypal',
-                reason: 'payment_sale_denied',
+                reason:
+                  payload.event_type === PaypalEvent.BILLING_SUBSCRIPTION_PAYMENT_FAILED
+                    ? 'billing_subscription_payment_failed'
+                    : 'payment_sale_denied',
                 paypalSubscriptionId: subId,
                 orderId: order.id,
               },
@@ -356,7 +425,10 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
               userId: user.id,
               metadata: {
                 provider: 'paypal',
-                reason: 'payment_sale_denied',
+                reason:
+                  payload.event_type === PaypalEvent.BILLING_SUBSCRIPTION_PAYMENT_FAILED
+                    ? 'billing_subscription_payment_failed'
+                    : 'payment_sale_denied',
                 paypalSubscriptionId: subId,
                 orderId: order.id,
               },

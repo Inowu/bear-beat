@@ -77,6 +77,7 @@ export default function PayPalComponent(props: Props) {
             : process.env.REACT_APP_PAYPAL_CLIENT_ID!;
 
         async function onClickButton(data: any, actions: OnClickActions) {
+            props.onClick();
             void trpc.checkoutLogs.registerCheckoutLog.mutate().catch(() => { });
             handleManyChat();
             // Revisar si el usuario tiene una suscripcion activa
@@ -125,6 +126,9 @@ export default function PayPalComponent(props: Props) {
             const planId = process.env.REACT_APP_ENVIRONMENT === 'development'
                 ? props.plan.paypal_plan_id_test
                 : props.plan.paypal_plan_id;
+            if (!planId) {
+                throw new Error("No hay plan de PayPal configurado para este plan.");
+            }
 
             try {
                 const sub = await actions.subscription.create({

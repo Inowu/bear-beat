@@ -11,6 +11,7 @@ import { facebook } from '../../facebook';
 import { manyChat } from '../../many-chat';
 import { checkIfUserIsSubscriber } from '../migration/checkUHSubscriber';
 import { getClientIpFromRequest } from '../../analytics';
+import { getPlanKey } from '../../utils/getPlanKey';
 
 export const subscribeWithPaypal = shieldedProcedure
   .input(
@@ -122,10 +123,32 @@ export const subscribeWithPaypal = shieldedProcedure
           )
         ).data;
 
+        if (subscription?.status !== 'ACTIVE') {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message:
+              'La suscripción de PayPal aún no está activa. Intenta nuevamente en unos segundos.',
+          });
+        }
+
+        const paypalPlanId =
+          typeof subscription?.plan_id === 'string'
+            ? subscription.plan_id
+            : null;
+        const paypalPlanKey = getPlanKey(PaymentService.PAYPAL);
+        const planFromPaypal = paypalPlanId
+          ? await prisma.plans.findFirst({
+              where: {
+                [paypalPlanKey]: paypalPlanId,
+              },
+            })
+          : null;
+        const resolvedPlan = planFromPaypal ?? plan;
+
         await subscribe({
           prisma,
           user,
-          plan,
+          plan: resolvedPlan,
           subId: subscriptionId,
           service: PaymentService.PAYPAL,
           expirationDate: new Date(subscription.billing_info.next_billing_time),
@@ -143,8 +166,8 @@ export const subscribeWithPaypal = shieldedProcedure
 
           try {
             log.info('[PAYPAL] Sending Purchase event to Facebook CAPI');
-            const value = Number(plan.price);
-            const currency = (plan.moneda || 'USD').toUpperCase();
+            const value = Number(resolvedPlan.price);
+            const currency = (resolvedPlan.moneda || 'USD').toUpperCase();
             await facebook.setEvent(
               'Purchase',
               clientIp,
@@ -167,6 +190,10 @@ export const subscribeWithPaypal = shieldedProcedure
           message: 'La suscripción se creó correctamente',
         };
       } catch (e) {
+        if (e instanceof TRPCError) {
+          throw e;
+        }
+
         log.error(
           `[PAYPAL] An error happened while creating subscription with paypal ${e}`,
         );
