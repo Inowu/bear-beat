@@ -518,6 +518,15 @@
     margin-left: 0;
     width: 100%;
   }
+
+  /* Allow the long "Gestionar pagos y facturas" CTA to wrap below the title. */
+  .ma-wallet-panel .ma-panel-head {
+    flex-wrap: wrap;
+  }
+
+  .ma-wallet-panel .ma-head-action {
+    flex: 1 1 100%;
+  }
 }
 
 @media (max-width: 640px) {
@@ -535,6 +544,52 @@
 
   .ma-page-head p {
     font-size: 14px;
+  }
+
+  /* Mobile: reduce vertical space in the top summary by placing avatar + identity side-by-side. */
+  .ma-profile-panel {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .ma-avatar {
+    width: 56px;
+    height: 56px;
+  }
+
+  .ma-profile-content {
+    gap: 3px;
+  }
+
+  .ma-user-name {
+    font-size: 17px;
+  }
+
+  .ma-user-meta {
+    font-size: 13.5px;
+  }
+
+  .ma-storage {
+    margin-top: 4px;
+  }
+
+  .ma-storage-head span {
+    font-size: 12px;
+  }
+
+  .ma-storage-head strong {
+    font-size: 13px;
+  }
+
+  .ma-storage-amount {
+    font-size: 13.5px;
+  }
+
+  /* Make the main account action easy to hit without stealing height. */
+  .ma-profile-panel > .ma-btn-danger {
+    grid-column: 1 / -1;
+    width: 100%;
+    justify-content: center;
   }
 
   .ma-card-item {
