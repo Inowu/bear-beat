@@ -159,6 +159,58 @@
   font-weight: 650;
 }
 
+/* Mobile: reduce scroll by compacting the hero and making the stat chips a single-row scroll region. */
+@media (max-width: 640px) {
+  .plans-hero {
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .plans-hero-subtitle {
+    margin-top: 6px;
+  }
+
+  .plans-hero-grid {
+    margin-top: 12px;
+    gap: 10px;
+  }
+
+  .plans-hero-chips {
+    /* Keep a single row in small screens to save vertical space. */
+    position: relative;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 2px 2px 6px;
+    scrollbar-width: none;
+  }
+
+  .plans-hero-chips::-webkit-scrollbar {
+    display: none;
+  }
+
+  .plans-hero-chip {
+    flex: 0 0 auto;
+    /* Slightly narrower than desktop so 1.5 chips fit on screen. */
+    min-width: 190px;
+  }
+
+  .plans-hero-choice {
+    padding: 12px;
+    gap: 8px;
+    border-radius: 16px;
+  }
+
+  .plans-hero-choice-title {
+    font-size: 13px;
+  }
+
+  .plans-currency-micro,
+  .plans-trial-note,
+  .plans-hero-micro {
+    font-size: 12.5px;
+  }
+}
+
 .plans-grid-heading {
   display: grid;
   gap: 6px;

@@ -565,6 +565,103 @@ html[data-theme="dark"] .plan-card-btn-hero:hover {
   }
 }
 
+/* Marketing (public /planes): mobile-first compaction to reduce scroll while keeping all actions intact. */
+@media (max-width: 480px) {
+  .plan-card-wrapper.is-marketing .plan-card-main-card {
+    gap: 9px;
+    padding: 12px;
+  }
+
+  .plan-card-wrapper.is-marketing .plan-card-kicker {
+    min-height: 22px;
+    padding: 0 9px;
+    font-size: 1.05rem;
+  }
+
+  .plan-card-wrapper.is-marketing .plan-card-title {
+    font-size: clamp(1.48rem, 1.25rem + 0.9vw, 1.72rem);
+  }
+
+  .plan-card-wrapper.is-marketing .plan-card-price-amount {
+    font-size: clamp(1.86rem, 1.6rem + 1.2vw, 2.2rem);
+  }
+
+  .plan-card-wrapper.is-marketing .plan-card-price-currency {
+    font-size: 1.15rem;
+  }
+
+  .plan-card-wrapper.is-marketing .plan-card-highlights {
+    gap: 5px;
+  }
+
+  .plan-card-wrapper.is-marketing .plan-card-highlight-item,
+  .plan-card-wrapper.is-marketing .plan-card-benefit-item {
+    font-size: 1.16rem;
+    line-height: 1.3;
+  }
+
+  .plan-card-wrapper.is-marketing .plan-card-benefits {
+    gap: 6px;
+  }
+
+  .plan-card-wrapper.is-marketing .plan-card-cta-section {
+    gap: 8px;
+    padding-top: 8px;
+  }
+
+  .plan-card-wrapper.is-marketing .plan-card-btn-hero {
+    min-height: 46px !important;
+    font-size: 1.35rem !important;
+    border-radius: 13px;
+  }
+
+  .plan-card-wrapper.is-marketing .plan-card-alt-toggle {
+    min-height: 42px !important;
+    border-radius: 13px;
+    font-size: 1.15rem !important;
+  }
+
+  /* Keep trust + payment methods in one row (horizontal scroll) to save vertical space. */
+  .plan-card-wrapper.is-marketing .plan-card-trust-row,
+  .plan-card-wrapper.is-marketing .plan-card-payment-logos {
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+
+  .plan-card-wrapper.is-marketing .plan-card-trust-row::-webkit-scrollbar,
+  .plan-card-wrapper.is-marketing .plan-card-payment-logos::-webkit-scrollbar {
+    display: none;
+  }
+
+  .plan-card-wrapper.is-marketing .plan-card-trust-row li {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    min-height: 30px;
+    padding: 0 9px;
+    font-size: 1.05rem;
+  }
+
+  .plan-card-wrapper.is-marketing .plan-card-payment-logos .payment-method-logos__item {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    min-width: auto;
+    min-height: 32px;
+    padding: 0.28rem 0.5rem;
+  }
+
+  .plan-card-wrapper.is-marketing .plan-card-payment-logos .payment-method-logos__item img {
+    max-width: 52px;
+    height: 17px;
+  }
+
+  .plan-card-wrapper.is-marketing .plan-card-payment-logos .payment-method-logos__item strong {
+    font-size: 1.0rem;
+  }
+}
+
 .resp-plan {
   @include respond-to(md) {
     order: 2;
