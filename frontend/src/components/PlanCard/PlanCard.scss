@@ -400,10 +400,9 @@ html[data-theme="dark"] .plan-card-btn-hero:hover {
 }
 
 .plan-card-secondary-buttons {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 8px;
 }
 
@@ -411,7 +410,12 @@ html[data-theme="dark"] .plan-card-btn-hero:hover {
   min-height: 44px;
 }
 
+.plan-card-secondary-buttons .paypal-container {
+  min-height: 44px;
+}
+
 .plan-card-btn-outline {
+  width: 100%;
   min-height: 44px !important;
   display: inline-flex;
   align-items: center;
@@ -424,8 +428,8 @@ html[data-theme="dark"] .plan-card-btn-hero:hover {
   color: var(--plan-card-btn-outline-color);
   font-size: 1.25rem !important;
   font-weight: 700 !important;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  text-transform: none;
   cursor: pointer;
   transition: border-color 0.16s ease, background 0.16s ease;
 }
@@ -433,6 +437,8 @@ html[data-theme="dark"] .plan-card-btn-hero:hover {
 .plan-card-btn-label {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .plan-card-btn-pill {
@@ -619,6 +625,16 @@ html[data-theme="dark"] .plan-card-btn-hero:hover {
     min-height: 42px !important;
     border-radius: 13px;
     font-size: 1.15rem !important;
+  }
+
+  .plan-card-wrapper.is-marketing .plan-card-secondary-buttons {
+    grid-template-columns: 1fr;
+  }
+
+  .plan-card-wrapper.is-marketing .plan-card-btn-outline {
+    min-height: 42px !important;
+    font-size: 1.12rem !important;
+    border-radius: 12px;
   }
 
   /* Keep trust + payment methods in one row (horizontal scroll) to save vertical space. */

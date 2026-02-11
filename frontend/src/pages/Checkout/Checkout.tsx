@@ -14,11 +14,13 @@ import {
   CreditCard,
   Landmark,
   Lock,
+  Wallet,
   ShieldCheck,
 } from "lucide-react";
 import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
 import { SpeiModal } from "../../components/Modals/SpeiModal/SpeiModal";
 import { OxxoModal } from "../../components/Modals/OxxoModal/OxxoModal";
+import PayPalComponent from "../../components/PayPal/PayPalComponent";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../utils/growthMetrics";
 import { SUPPORT_CHAT_URL } from "../../utils/supportChat";
 import PaymentMethodLogos from "../../components/PaymentMethodLogos/PaymentMethodLogos";
@@ -28,7 +30,7 @@ import { generateEventId } from "../../utils/marketingIds";
 import { getConektaFingerprint } from "../../utils/conektaCollect";
 import { formatInt } from "../../utils/format";
 
-type CheckoutMethod = "card" | "spei" | "oxxo" | "bbva";
+type CheckoutMethod = "card" | "spei" | "oxxo" | "bbva" | "paypal";
 
 const METHOD_META: Record<
   CheckoutMethod,
@@ -48,6 +50,11 @@ const METHOD_META: Record<
     label: "BBVA (Pago Directo)",
     description: "Autoriza desde tu banca BBVA",
     Icon: Building2,
+  },
+  paypal: {
+    label: "PayPal",
+    description: "Paga con tu cuenta PayPal",
+    Icon: Wallet,
   },
   oxxo: {
     label: "Efectivo",
@@ -106,6 +113,7 @@ function Checkout() {
   const [redirectingProvider, setRedirectingProvider] = useState<"stripe" | "bbva">("stripe");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showError, setShowError] = useState(false);
+  const [paypalPlan, setPaypalPlan] = useState<IPlans | null>(null);
   const checkoutStartedRef = useRef(false);
   const checkoutHandedOffRef = useRef(false);
   const abandonTrackedRef = useRef(false);
@@ -123,6 +131,7 @@ function Checkout() {
     oxxoEnabled: boolean;
     payByBankEnabled: boolean;
   } | null>(null);
+  const hasPaypalPlan = Boolean(paypalPlan?.paypal_plan_id || paypalPlan?.paypal_plan_id_test);
 
   useEffect(() => {
     let cancelled = false;
@@ -163,13 +172,51 @@ function Checkout() {
     };
   }, [isMxnPlan]);
 
+  useEffect(() => {
+    let cancelled = false;
+    if (!plan) {
+      setPaypalPlan(null);
+      return;
+    }
+
+    const resolvePaypalPlan = async () => {
+      if (plan.paypal_plan_id || plan.paypal_plan_id_test) {
+        if (!cancelled) setPaypalPlan(plan);
+        return;
+      }
+      try {
+        const siblings = await trpc.plans.findManyPlans.query({
+          where: {
+            activated: 1,
+            moneda: (plan.moneda ?? "").toLowerCase(),
+            price: +plan.price,
+            OR: [{ paypal_plan_id: { not: null } }, { paypal_plan_id_test: { not: null } }],
+          },
+        } as any);
+        const match =
+          siblings.find((candidate: IPlans) => candidate?.paypal_plan_id || candidate?.paypal_plan_id_test) ??
+          null;
+        if (!cancelled) setPaypalPlan(match);
+      } catch {
+        if (!cancelled) setPaypalPlan(null);
+      }
+    };
+
+    void resolvePaypalPlan();
+    return () => {
+      cancelled = true;
+    };
+  }, [plan?.id, plan?.moneda, plan?.price, plan?.paypal_plan_id, plan?.paypal_plan_id_test]);
+
   const availableMethods = useMemo<CheckoutMethod[]>(() => {
-    if (!isMxnPlan) return ["card"];
-    const methods: CheckoutMethod[] = ["card", "spei"];
+    if (!isMxnPlan) return hasPaypalPlan ? ["card", "paypal"] : ["card"];
+    const methods: CheckoutMethod[] = ["card"];
+    if (hasPaypalPlan) methods.push("paypal");
+    methods.push("spei");
     if (conektaAvailability?.payByBankEnabled) methods.push("bbva");
     if (conektaAvailability?.oxxoEnabled) methods.push("oxxo");
     return methods;
-  }, [isMxnPlan, conektaAvailability?.oxxoEnabled, conektaAvailability?.payByBankEnabled]);
+  }, [isMxnPlan, hasPaypalPlan, conektaAvailability?.oxxoEnabled, conektaAvailability?.payByBankEnabled]);
 
   useEffect(() => {
     if (!availableMethods.includes(selectedMethod)) {
@@ -292,7 +339,7 @@ function Checkout() {
       method: "unknown",
     });
     const requested = typeof requestedMethod === "string" ? requestedMethod.trim().toLowerCase() : "";
-    const requestedAsMethod = (["card", "spei", "bbva", "oxxo"] as const).includes(
+    const requestedAsMethod = (["card", "spei", "bbva", "oxxo", "paypal"] as const).includes(
       requested as any,
     )
       ? (requested as CheckoutMethod)
@@ -578,6 +625,71 @@ function Checkout() {
     }
   }, [plan?.id]);
 
+  const startPaypalCheckout = useCallback(
+    async (data: any) => {
+      if (!paypalPlan?.id || !plan?.id) return;
+      const subscriptionId =
+        typeof data?.subscriptionID === "string" && data.subscriptionID.trim()
+          ? data.subscriptionID.trim()
+          : null;
+      if (!subscriptionId) {
+        setErrorMessage("No recibimos la referencia de PayPal. Intenta de nuevo.");
+        setShowError(true);
+        return;
+      }
+
+      setProcessingMethod("paypal");
+      interactedRef.current = true;
+      const value = Number(plan.price) || 0;
+      const currency = (plan.moneda?.toUpperCase() || "USD").toUpperCase();
+      const eventId = generateEventId("purchase");
+
+      try {
+        await trpc.subscriptions.subscribeWithPaypal.mutate({
+          planId: paypalPlan.id,
+          subscriptionId,
+          fbp: cookies._fbp,
+          fbc: cookies._fbc,
+          url: window.location.href,
+          eventId,
+        });
+
+        try {
+          window.sessionStorage.setItem(
+            pendingPurchaseStorageKey,
+            JSON.stringify({
+              planId: plan.id,
+              value,
+              currency,
+              at: new Date().toISOString(),
+            }),
+          );
+        } catch {
+          // noop
+        }
+
+        checkoutHandedOffRef.current = true;
+        navigate("/comprar/success", { replace: true });
+      } catch (error: any) {
+        const msg =
+          error?.data?.message ?? error?.message ?? "No se pudo completar el pago con PayPal.";
+        trackGrowthMetric(GROWTH_METRICS.CHECKOUT_ERROR, {
+          method: "paypal",
+          planId: plan.id,
+          currency,
+          amount: value,
+          reason: msg,
+          errorCode: "provider_error",
+        });
+        setErrorMessage(msg);
+        setShowError(true);
+      } finally {
+        setProcessingMethod(null);
+      }
+    },
+    [paypalPlan?.id, plan?.id, plan?.price, plan?.moneda, cookies._fbp, cookies._fbc, navigate],
+  );
+
   useEffect(() => {
     if (!redirecting) return;
     const timeout = window.setTimeout(() => {
@@ -612,6 +724,9 @@ function Checkout() {
     if (selectedMethod === "spei") startCashCheckout();
     if (selectedMethod === "oxxo") startOxxoCheckout();
     if (selectedMethod === "bbva") startBbvaCheckout();
+    if (selectedMethod === "paypal") {
+      setInlineError("Usa el botón de PayPal para completar tu pago.");
+    }
   };
 
   const discount = 0;
@@ -726,6 +841,7 @@ function Checkout() {
           <div className="checkout-trust-strip" role="list" aria-label="Confianza de pago">
             <span role="listitem"><ShieldCheck size={16} aria-hidden /> Pago seguro</span>
             <span role="listitem"><CreditCard size={16} aria-hidden /> Tarjeta / Stripe</span>
+            {hasPaypalPlan && <span role="listitem"><Wallet size={16} aria-hidden /> PayPal</span>}
             {isMxnPlan && <span role="listitem"><Landmark size={16} aria-hidden /> SPEI (recurrente)</span>}
             {isMxnPlan && conektaAvailability?.payByBankEnabled && (
               <span role="listitem"><Building2 size={16} aria-hidden /> BBVA</span>
@@ -739,9 +855,15 @@ function Checkout() {
             methods={
               isMxnPlan
                 ? (conektaAvailability?.oxxoEnabled
-                    ? ["visa", "mastercard", "amex", "spei", "oxxo"]
-                    : ["visa", "mastercard", "amex", "spei"])
-                : ["visa", "mastercard", "amex"]
+                    ? (hasPaypalPlan
+                        ? ["visa", "mastercard", "amex", "paypal", "spei", "oxxo"]
+                        : ["visa", "mastercard", "amex", "spei", "oxxo"])
+                    : (hasPaypalPlan
+                        ? ["visa", "mastercard", "amex", "paypal", "spei"]
+                        : ["visa", "mastercard", "amex", "spei"]))
+                : (hasPaypalPlan
+                    ? ["visa", "mastercard", "amex", "paypal"]
+                    : ["visa", "mastercard", "amex"])
             }
             className="checkout-payment-logos"
             ariaLabel="Métodos de pago disponibles en checkout"
@@ -835,22 +957,61 @@ function Checkout() {
             </div>
             {inlineError && <p className="checkout-inline-error">{inlineError}</p>}
             <div className="checkout-payment-actions">
-              <button
-                type="button"
-                className="checkout-cta-btn checkout-cta-btn--primary"
-                onClick={handleContinuePayment}
-                disabled={processingMethod !== null}
-                data-testid="checkout-continue"
-              >
-                {processingMethod === "card" && "Abriendo pasarela segura..."}
-                {processingMethod === "spei" && "Generando referencia SPEI (recurrente)..."}
-                {processingMethod === "bbva" && "Abriendo pago BBVA..."}
-                {processingMethod === "oxxo" && "Generando referencia de pago en efectivo..."}
-                {processingMethod === null && selectedMethod === "card" && "Continuar con tarjeta segura"}
-                {processingMethod === null && selectedMethod === "spei" && "Generar referencia SPEI (recurrente)"}
-                {processingMethod === null && selectedMethod === "bbva" && "Continuar con BBVA"}
-                {processingMethod === null && selectedMethod === "oxxo" && "Generar referencia de pago en efectivo"}
-              </button>
+              {selectedMethod === "paypal" ? (
+                <div className="checkout-paypal-panel">
+                  <p className="checkout-paypal-panel__hint">
+                    Completa tu pago seguro con PayPal:
+                  </p>
+                  {hasPaypalPlan && currentUser?.email ? (
+                    <PayPalComponent
+                      plan={paypalPlan!}
+                      type="subscription"
+                      onApprove={(data: any) => {
+                        void startPaypalCheckout(data);
+                      }}
+                      onClick={() => {
+                        interactedRef.current = true;
+                        trackManyChatConversion(MC_EVENTS.CLICK_PAYPAL);
+                        setInlineError(null);
+                        trackGrowthMetric(GROWTH_METRICS.CHECKOUT_METHOD_SELECTED, {
+                          method: "paypal",
+                          surface: "paypal_button",
+                          planId: plan?.id ?? null,
+                          currency: plan?.moneda?.toUpperCase() ?? null,
+                          amount: Number(plan?.price) || null,
+                        });
+                      }}
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      className="checkout-cta-btn checkout-cta-btn--ghost"
+                      onClick={() =>
+                        navigate("/auth/registro", { state: { from: `${location.pathname}${location.search}` } })
+                      }
+                    >
+                      Inicia sesión para pagar con PayPal
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="checkout-cta-btn checkout-cta-btn--primary"
+                  onClick={handleContinuePayment}
+                  disabled={processingMethod !== null}
+                  data-testid="checkout-continue"
+                >
+                  {processingMethod === "card" && "Abriendo pasarela segura..."}
+                  {processingMethod === "spei" && "Generando referencia SPEI (recurrente)..."}
+                  {processingMethod === "bbva" && "Abriendo pago BBVA..."}
+                  {processingMethod === "oxxo" && "Generando referencia de pago en efectivo..."}
+                  {processingMethod === null && selectedMethod === "card" && "Continuar con tarjeta segura"}
+                  {processingMethod === null && selectedMethod === "spei" && "Generar referencia SPEI (recurrente)"}
+                  {processingMethod === null && selectedMethod === "bbva" && "Continuar con BBVA"}
+                  {processingMethod === null && selectedMethod === "oxxo" && "Generar referencia de pago en efectivo"}
+                </button>
+              )}
               <p className="checkout-payment-note">
                 Si tienes dudas para pagar, te ayudamos por chat en tiempo real:{" "}
                 <a href={SUPPORT_CHAT_URL} target="_blank" rel="noopener noreferrer">

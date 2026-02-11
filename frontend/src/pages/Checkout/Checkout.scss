@@ -522,6 +522,29 @@ html.dark .checkout-method.is-active,
   gap: 9px;
 }
 
+.checkout-paypal-panel {
+  width: 100%;
+  display: grid;
+  gap: 8px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--app-border) 84%, transparent);
+  background: color-mix(in srgb, var(--app-bg-soft) 88%, transparent);
+  padding: 10px;
+}
+
+.checkout-paypal-panel__hint {
+  margin: 0;
+  color: var(--app-text-muted);
+  font-size: 1.22rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.checkout-paypal-panel .paypal-container {
+  justify-content: stretch;
+  min-height: 46px;
+}
+
 .checkout-cta-btn {
   width: 100%;
   min-height: 48px;

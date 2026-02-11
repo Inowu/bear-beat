@@ -45,6 +45,14 @@ export default function PayPalComponent(props: Props) {
         }
     };
 
+    const paypalButtonStyle: PayPalButtonsComponentOptions["style"] = {
+        color: "blue",
+        shape: "pill",
+        layout: "horizontal",
+        height: 46,
+        tagline: false,
+    };
+
     function render(options: PayPalButtonsComponentOptions) {
         if (!isMountedRef.current) return;
         const container = document.getElementById(buttonId);
@@ -157,13 +165,7 @@ export default function PayPalComponent(props: Props) {
             })
                 .then(() => {
                     render({
-                        style: {
-                            color: "silver",
-                            shape: "pill",
-                            layout: "horizontal",
-                            height: 46,
-                            tagline: false,
-                        },
+                        style: paypalButtonStyle,
                         onApprove: onApproveOrder,
                         createOrder,
                     });
@@ -177,13 +179,7 @@ export default function PayPalComponent(props: Props) {
             })
                 .then(() => {
                     render({
-                        style: {
-                            color: "silver",
-                            shape: "pill",
-                            layout: "horizontal",
-                            height: 46,
-                            tagline: false,
-                        },
+                        style: paypalButtonStyle,
                         onApprove: onApproveSubsciption,
                         createSubscription,
                         onClick: onClickButton,
