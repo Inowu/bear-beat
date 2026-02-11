@@ -37,7 +37,10 @@ nav {
 
     h2 {
       font-size: var(--app-font-size-h2);
-      font-family: "Bear-font";
+      font-family: var(--bb-font-ui);
+      font-weight: var(--app-font-weight-heading-strong);
+      letter-spacing: var(--bb-letter-spacing-heading);
+      line-height: var(--bb-line-height-heading);
       color: var(--theme-nav-text);
       margin: 0;
       transition: color 0.2s ease;

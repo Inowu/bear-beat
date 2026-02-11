@@ -90,6 +90,9 @@
   --app-font-size-h3: 1.95rem;
   --app-font-size-h2: 2.4rem;
   --app-font-size-h1: 3rem;
+  --app-font-size-label: 1.3rem;
+  --app-font-size-caption: 1.2rem;
+  --app-font-size-button: 1.45rem;
 
   /* Base Tailwind bridge */
   --bg-main: var(--bb-bg);
@@ -1452,6 +1455,23 @@ html[data-theme="light"] {
   .admin-page-wrap
 ) :where(p, li, label, small, .text-muted) {
   color: color-mix(in srgb, var(--app-text-body) 95%, transparent);
+  line-height: 1.5;
+}
+
+:where(
+  .public-home,
+  .plans-page,
+  .auth-main-container,
+  .legal2026,
+  .instructions2026,
+  .my-account-main-container,
+  .checkout-main-container,
+  .admin-theme,
+  .admin-page-wrap
+) :where(label, legend, .form-label, .form-text, .helper-text, .empty-text, .hint) {
+  font-size: var(--app-font-size-label);
+  font-weight: 600;
+  letter-spacing: 0;
 }
 
 ::selection {
@@ -1482,6 +1502,8 @@ html[data-theme="light"] {
   color: var(--app-text-heading);
   font-size: var(--app-font-size-body);
   font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: 0;
   box-shadow: none;
 }
 
@@ -1549,9 +1571,10 @@ html[data-theme="light"] {
   min-height: 44px;
   border-radius: var(--bb-radius-pill);
   font-family: var(--bb-font-ui);
-  font-size: var(--app-font-size-body);
+  font-size: var(--app-font-size-button);
   font-weight: 800;
   letter-spacing: 0.01em;
+  line-height: 1.1;
 }
 
 :where(
@@ -1598,19 +1621,51 @@ html[data-theme="dark"] :where(
   border-color: color-mix(in srgb, var(--app-border) 88%, transparent);
 }
 
+:where(
+  .alert,
+  .alert-success,
+  .alert-danger,
+  .alert-warning,
+  .toast,
+  .toast-body,
+  .modal-header,
+  .modal-body,
+  .modal-footer,
+  .bb-alert,
+  .analytics-alert,
+  .crm-toast,
+  .admin-error-strip
+) {
+  font-family: var(--bb-font-ui);
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
 :where(button, .btn, .bb-btn, .bb-icon-btn, .ma-btn, .checkout-cta-btn) svg {
   flex-shrink: 0;
 }
 
-:where(.error-formik, .formik, .auth-login-inline-error) {
+:where(
+  .error-formik,
+  .formik,
+  .auth-login-inline-error,
+  .invalid-feedback
+) {
   color: var(--app-status-error);
-  font-size: 1.24rem;
+  font-size: var(--app-font-size-caption);
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+:where(.valid-feedback) {
+  color: var(--app-status-success);
+  font-size: var(--app-font-size-caption);
   font-weight: 700;
   line-height: 1.4;
 }
 
 :where(.success-message, .warning-message) {
-  font-size: 1.24rem;
+  font-size: var(--app-font-size-caption);
   font-weight: 700;
   line-height: 1.4;
 }

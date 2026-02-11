@@ -135,7 +135,10 @@ $bg-dark-soft: var(--ad-header-bg);
   }
 
   &__title {
-    font-family: "Bear-font", "Bear Font2", sans-serif;
+    font-family: var(--bb-font-ui);
+    font-weight: var(--app-font-weight-heading-strong);
+    letter-spacing: var(--bb-letter-spacing-heading);
+    line-height: var(--bb-line-height-heading);
     font-size: 1.8rem;
     margin-bottom: 20px;
   }
