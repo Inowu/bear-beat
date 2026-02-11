@@ -4,9 +4,12 @@ import { log } from '../../server';
 import { stripeProductsWebhook } from '../../routers/webhooks/stripe/productsWh';
 
 export const stripeProductsEndpoint = async (req: Request, res: Response) => {
+  const productsSecret =
+    process.env.STRIPE_WH_PRODUCTS_SECRET || process.env.STRIPE_WH_PI_SECRET;
+
   const isValid = verifyStripeSignature(
     req,
-    process.env.STRIPE_WH_PI_SECRET as string,
+    productsSecret as string,
   );
 
   if (!isValid) {

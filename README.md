@@ -52,7 +52,7 @@ Variables **mínimas** para desarrollo local:
 
 Otras variables que usa el proyecto (puedes dejarlas vacías o con valores de prueba para desarrollo):
 
-- Stripe: `STRIPE_KEY`, `STRIPE_TEST_KEY`, `STRIPE_WH_SECRET`
+- Stripe: `STRIPE_KEY`, `STRIPE_TEST_KEY`, `STRIPE_WH_SECRET`, `STRIPE_WH_PI_SECRET`, `STRIPE_WH_PRODUCTS_SECRET`, `STRIPE_API_VERSION`
 - PayPal, Conekta, Twilio, Turnstile (Cloudflare)
 - FTP/SFTP: `FTP_HOST`, `SFTP_PORT`, `FTP_USERNAME`, `FTP_PASSWORD`
 - Meilisearch: `MEILISEARCH_HOST`, `MEILISEARCH_KEY`

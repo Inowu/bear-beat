@@ -103,7 +103,7 @@
     "prisma-trpc-generator": "1.4.1",
     "prisma-zod-generator": "0.8.13",
     "ssh2-sftp-client": "^9.1.0",
-    "stripe": "^13.11.0",
+    "stripe": "^20.3.1",
     "superjson": "^1.13.1",
     "tmp": "^0.2.1",
     "trpc-shield": "^0.4.3",

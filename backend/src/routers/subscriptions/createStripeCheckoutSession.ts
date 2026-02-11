@@ -14,106 +14,7 @@ import { facebook } from '../../facebook';
 import { getClientIpFromRequest } from '../../analytics';
 import { resolveCheckoutCoupon } from '../../offers';
 import { getMarketingTrialConfigFromEnv } from '../../utils/trialConfig';
-
-function parseDurationDays(duration: unknown): number | null {
-  if (duration == null) return null;
-  const raw = String(duration).trim();
-  if (!raw) return null;
-  // Supports values like "30", "30 días", "30 dias".
-  const match = raw.match(/(\d{1,4})/);
-  if (!match?.[1]) return null;
-  const n = Number(match[1]);
-  if (!Number.isFinite(n) || n <= 0) return null;
-  return n;
-}
-
-function inferStripeRecurring(durationDays: number | null): {
-  interval: 'day' | 'week' | 'month' | 'year';
-  interval_count: number;
-} {
-  // Default to monthly if duration is unknown (most subscription plans).
-  if (!durationDays) return { interval: 'month', interval_count: 1 };
-
-  // Common cases.
-  if (durationDays >= 360 && durationDays <= 370) return { interval: 'year', interval_count: 1 };
-  if (durationDays >= 28 && durationDays <= 31) return { interval: 'month', interval_count: 1 };
-
-  // Weekly if it divides cleanly.
-  if (durationDays % 7 === 0) {
-    const weeks = Math.floor(durationDays / 7);
-    // Stripe supports interval_count up to 52 for weeks.
-    if (weeks >= 1 && weeks <= 52) return { interval: 'week', interval_count: weeks };
-  }
-
-  // Day-based subscriptions are allowed, but keep it within Stripe limits.
-  if (durationDays >= 1 && durationDays <= 365) return { interval: 'day', interval_count: durationDays };
-
-  return { interval: 'month', interval_count: 1 };
-}
-
-function toCents(value: unknown): number {
-  if (value == null) return 0;
-  const raw =
-    typeof value === 'string'
-      ? value
-      : typeof (value as any)?.toString === 'function'
-        ? (value as any).toString()
-        : String(value);
-  const n = Number(raw);
-  if (!Number.isFinite(n) || n <= 0) return 0;
-  return Math.round(n * 100);
-}
-
-async function ensureStripePriceId(opts: {
-  prisma: any;
-  plan: any;
-  priceKey: 'stripe_prod_id' | 'stripe_prod_id_test';
-}): Promise<string> {
-  const { prisma, plan, priceKey } = opts;
-
-  // If another request already updated the plan, respect it.
-  const current = plan?.[priceKey];
-  if (typeof current === 'string' && current.startsWith('price_')) return current;
-
-  const currency = String(plan?.moneda || 'usd').trim().toLowerCase();
-  const unitAmount = toCents(plan?.price);
-  if (!unitAmount || unitAmount <= 0) {
-    throw new Error('Invalid plan price');
-  }
-
-  const { interval, interval_count } = inferStripeRecurring(parseDurationDays(plan?.duration));
-
-  // Create product + recurring price once and persist the Price ID into the plan record.
-  // Note: schema field name is stripe_prod_id* but it's used as a Stripe Price ID in Checkout.
-  const product = await stripeInstance.products.create(
-    {
-      name: String(plan?.name || `Plan ${plan?.id || ''}`).slice(0, 250),
-      description: plan?.description ? String(plan.description).slice(0, 500) : undefined,
-      metadata: { bb_plan_id: String(plan.id) },
-    },
-    { idempotencyKey: `bb-stripe-plan-${plan.id}-product-${priceKey}` },
-  );
-
-  const price = await stripeInstance.prices.create(
-    {
-      currency,
-      unit_amount: unitAmount,
-      recurring: { interval, interval_count },
-      product: product.id,
-      metadata: { bb_plan_id: String(plan.id) },
-    },
-    {
-      idempotencyKey: `bb-stripe-plan-${plan.id}-price-${priceKey}-${currency}-${unitAmount}-${interval}-${interval_count}`,
-    },
-  );
-
-  await prisma.plans.update({
-    where: { id: plan.id },
-    data: { [priceKey]: price.id },
-  });
-
-  return price.id;
-}
+import { ensureStripePriceId, StripePriceKey } from './utils/ensureStripePriceId';
 
 /**
  * Crea una Stripe Checkout Session (redirect a la página de pago de Stripe).
@@ -240,9 +141,7 @@ export const createStripeCheckoutSession = shieldedProcedure
       });
     }
 
-    const priceKey = getPlanKey(PaymentService.STRIPE) as
-      | 'stripe_prod_id'
-      | 'stripe_prod_id_test';
+    const priceKey = getPlanKey(PaymentService.STRIPE) as StripePriceKey;
     let priceId = plan[priceKey];
     if (!priceId || typeof priceId !== 'string' || !priceId.startsWith('price_')) {
       // Auto-setup to avoid losing conversions when a plan is missing Stripe price configuration.
@@ -396,17 +295,17 @@ export const createStripeCheckoutSession = shieldedProcedure
       }
     }
 
-	    const createSession = async (withDiscount: boolean) =>
-	      stripeInstance.checkout.sessions.create(
-	        {
-	          mode: 'subscription',
-	          customer: stripeCustomer,
-	          line_items: [
-	            {
-	              price: stripePriceId,
-	              quantity: 1,
-	            },
-	          ],
+    const createSession = async (withDiscount: boolean) =>
+      stripeInstance.checkout.sessions.create(
+        {
+          mode: 'subscription',
+          customer: stripeCustomer,
+          line_items: [
+            {
+              price: stripePriceId,
+              quantity: 1,
+            },
+          ],
           success_url: successUrl,
           cancel_url: cancelUrl,
           metadata: {

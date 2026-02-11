@@ -23,6 +23,64 @@ import { OrderStatus } from './subscriptions/interfaces/order-status.interface';
 import { paypal } from '../paypal';
 import { manyChat } from '../many-chat';
 import { getMarketingTrialConfigFromEnv } from '../utils/trialConfig';
+import { StripePriceKey } from './subscriptions/utils/ensureStripePriceId';
+
+type StripeRecurringInterval = 'day' | 'week' | 'month' | 'year';
+
+function normalizeRecurringInterval(value: unknown): StripeRecurringInterval {
+  if (value === 'day' || value === 'week' || value === 'month' || value === 'year') return value;
+  return 'month';
+}
+
+async function resolveStripeProductAndRecurring(
+  stripeIdentifier: string,
+): Promise<{
+  productId: string;
+  recurring: { interval: StripeRecurringInterval; interval_count: number };
+}> {
+  if (stripeIdentifier.startsWith('price_')) {
+    const price = await stripeInstance.prices.retrieve(stripeIdentifier);
+    const productId = typeof price.product === 'string' ? price.product : price.product.id;
+    return {
+      productId,
+      recurring: {
+        interval: normalizeRecurringInterval(price.recurring?.interval),
+        interval_count: price.recurring?.interval_count ?? 1,
+      },
+    };
+  }
+
+  if (stripeIdentifier.startsWith('plan_')) {
+    const legacyPlan = await stripeInstance.plans.retrieve(stripeIdentifier);
+    if (!legacyPlan.product) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'No se pudo resolver el producto del plan de Stripe.',
+      });
+    }
+    const productId =
+      typeof legacyPlan.product === 'string' ? legacyPlan.product : legacyPlan.product.id;
+    return {
+      productId,
+      recurring: {
+        interval: normalizeRecurringInterval(legacyPlan.interval),
+        interval_count: legacyPlan.interval_count ?? 1,
+      },
+    };
+  }
+
+  if (stripeIdentifier.startsWith('prod_')) {
+    return {
+      productId: stripeIdentifier,
+      recurring: { interval: 'month', interval_count: 1 },
+    };
+  }
+
+  throw new TRPCError({
+    code: 'BAD_REQUEST',
+    message: 'El identificador de Stripe del plan es inválido.',
+  });
+}
 
 export const plansRouter = router({
   getTrialConfig: shieldedProcedure.query(async ({ ctx }) => {
@@ -107,33 +165,38 @@ export const plansRouter = router({
     )
     .mutation(async ({ ctx: { prisma }, input: { data, interval } }) => {
       try {
+        const priceKey = getPlanKey(PaymentService.STRIPE) as StripePriceKey;
+        const recurringInterval = normalizeRecurringInterval(interval?.toLowerCase());
+        const currency = (data.moneda?.toLowerCase() || 'usd').trim();
+        const unitAmount = Math.round(Number(data.price) * 100);
+
+        if (!Number.isFinite(unitAmount) || unitAmount <= 0) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'El precio del plan debe ser mayor a cero',
+          });
+        }
+
         const stripeProduct = await stripeInstance.products.create({
           name: data.name,
-          active: Boolean(data.activated) || true,
+          active: data.activated == null ? true : Boolean(data.activated),
           description: data.description,
-          default_price_data: {
-            currency: data.moneda?.toLowerCase() || 'usd',
-            unit_amount: Number(data.price) * 100,
-            recurring: {
-              interval:
-                (interval?.toLowerCase() as 'month' | 'year') || 'month',
-              interval_count: 1,
-            },
-          },
         });
 
-        const stripePlan = await stripeInstance.plans.create({
-          interval: (interval?.toLowerCase() as 'month' | 'year') || 'month',
-          interval_count: 1,
+        const stripePrice = await stripeInstance.prices.create({
           product: stripeProduct.id,
-          currency: data.moneda?.toLowerCase() || 'usd',
-          amount: Number(data.price) * 100,
+          currency,
+          unit_amount: unitAmount,
+          recurring: {
+            interval: recurringInterval,
+            interval_count: 1,
+          },
         });
 
         const prismaPlan = await prisma.plans.create({
           data: {
             ...data,
-            [getPlanKey(PaymentService.STRIPE)]: stripePlan.id,
+            [priceKey]: stripePrice.id,
           },
         });
 
@@ -177,32 +240,57 @@ export const plansRouter = router({
       }
 
       try {
-        await stripeInstance.products.update(
-          plan[getPlanKey(PaymentService.STRIPE)] as string,
-          {
-            ...(data.name !== undefined ? { name: data.name as string } : {}),
-            ...(data.activated !== undefined
-              ? { active: Boolean(data.activated) }
-              : {}),
-            ...(data.description !== undefined
-              ? { description: data.description as string }
-              : {}),
-            ...(data.price !== undefined || data.moneda !== undefined
-              ? {
-                  default_price_data: {
-                    ...(data.moneda !== undefined
-                      ? { currency: data.moneda }
-                      : {}),
-                    ...(data.price !== undefined
-                      ? { unit_amount: Number(data.price) * 100 }
-                      : {}),
-                  },
-                }
-              : {}),
-          },
-        );
+        const priceKey = getPlanKey(PaymentService.STRIPE) as StripePriceKey;
+        const stripeIdentifier = plan[priceKey] as string;
+        const { productId, recurring } = await resolveStripeProductAndRecurring(stripeIdentifier);
 
-        const prismaPlan = await prisma.plans.update(input);
+        const productUpdate: Record<string, unknown> = {};
+        if (data.name !== undefined) productUpdate.name = data.name as string;
+        if (data.activated !== undefined) productUpdate.active = Boolean(data.activated);
+        if (data.description !== undefined) {
+          productUpdate.description = (data.description as string) || '';
+        }
+
+        if (Object.keys(productUpdate).length > 0) {
+          await stripeInstance.products.update(productId, productUpdate);
+        }
+
+        const shouldCreateNewPrice =
+          data.price !== undefined ||
+          data.moneda !== undefined ||
+          !stripeIdentifier.startsWith('price_');
+
+        let replacementPriceId: string | null = null;
+        if (shouldCreateNewPrice) {
+          const unitAmount = Math.round(Number((data.price as any) ?? plan.price) * 100);
+          if (!Number.isFinite(unitAmount) || unitAmount <= 0) {
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message: 'El precio del plan debe ser mayor a cero',
+            });
+          }
+
+          const currencyRaw = String((data.moneda as any) ?? plan.moneda ?? 'usd')
+            .trim()
+            .toLowerCase();
+          const currency = /^[a-z]{3}$/.test(currencyRaw) ? currencyRaw : 'usd';
+
+          const replacementPrice = await stripeInstance.prices.create({
+            product: productId,
+            currency,
+            unit_amount: unitAmount,
+            recurring,
+          });
+          replacementPriceId = replacementPrice.id;
+        }
+
+        const prismaPlan = await prisma.plans.update({
+          where,
+          data: {
+            ...(data as Record<string, unknown>),
+            ...(replacementPriceId ? { [priceKey]: replacementPriceId } : {}),
+          },
+        });
 
         return prismaPlan;
       } catch (e) {
@@ -244,14 +332,16 @@ export const plansRouter = router({
       }
 
       try {
-        await stripeInstance.products.del(
-          plan[getPlanKey(PaymentService.STRIPE)] as string,
-        );
+        const priceKey = getPlanKey(PaymentService.STRIPE) as StripePriceKey;
+        const stripeIdentifier = plan[priceKey] as string;
+        const { productId } = await resolveStripeProductAndRecurring(stripeIdentifier);
+
+        await stripeInstance.products.update(productId, { active: false });
 
         const prismaPlan = await prisma.plans.update({
           where,
           data: {
-            [getPlanKey(PaymentService.STRIPE)]: null,
+            [priceKey]: null,
           },
         });
 

@@ -420,7 +420,7 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
           await cancelSubscription({
             prisma,
             user,
-            plan: subscription.object.plan,
+            plan: getStripeSubscriptionPriceId(subscription),
             service: PaymentService.STRIPE,
             reason: OrderStatus.EXPIRED,
           });
@@ -431,7 +431,7 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
           await cancelSubscription({
             prisma,
             user,
-            plan: subscription.plan.id,
+            plan: getStripeSubscriptionPriceId(subscription),
             service: PaymentService.STRIPE,
           });
 
@@ -446,7 +446,7 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
       await cancelSubscription({
         prisma,
         user,
-        plan: subscription.plan.id,
+        plan: getStripeSubscriptionPriceId(subscription),
         service: PaymentService.STRIPE,
       });
       break;
@@ -455,6 +455,20 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
         `[STRIPE_WH] Unhandled event ${payload.type}, payload: ${payloadStr}`,
       );
   }
+};
+
+const getStripeSubscriptionPriceId = (subscription: any): string => {
+  const priceId =
+    subscription?.plan?.id
+    || subscription?.items?.data?.[0]?.price?.id
+    || subscription?.items?.data?.[0]?.price;
+
+  if (typeof priceId === 'string' && priceId.trim()) return priceId;
+
+  log.warn('[STRIPE_WH] Subscription event without resolvable plan/price id', {
+    subscriptionId: subscription?.id ?? null,
+  });
+  return '';
 };
 
 export const getUserFromPayload = async (
@@ -550,16 +564,58 @@ const getPlanFromPayload = async (
     case StripeEvents.SUBSCRIPTION_UPDATED:
     case StripeEvents.SUBSCRIPTION_DELETED: {
       const subscription = payload.data.object as any;
-      const priceId =
-        subscription.plan?.id ??
-        subscription.items?.data?.[0]?.price?.id ??
-        subscription.items?.data?.[0]?.price;
-      if (!priceId) break;
-      plan = await prisma.plans.findFirst({
-        where: {
-          [getPlanKey(PaymentService.STRIPE)]: priceId,
-        },
-      });
+      const stripePlanKey = getPlanKey(PaymentService.STRIPE);
+      const identifiers = [
+        subscription.items?.data?.[0]?.price?.id,
+        subscription.items?.data?.[0]?.price,
+        subscription.plan?.id,
+      ]
+        .filter((value): value is string => typeof value === 'string' && value.trim().length > 0);
+
+      if (identifiers.length > 0) {
+        plan = await prisma.plans.findFirst({
+          where: {
+            [stripePlanKey]: { in: identifiers } as any,
+          } as any,
+        });
+      }
+
+      if (!plan && identifiers.length > 0) {
+        const candidateId = identifiers[0];
+        if (candidateId.startsWith('price_') || candidateId.startsWith('plan_')) {
+          try {
+            const stripePrice = await stripeInstance.prices.retrieve(candidateId);
+            const productId =
+              typeof stripePrice.product === 'string'
+                ? stripePrice.product
+                : stripePrice.product?.id;
+            if (productId) {
+              plan = await prisma.plans.findFirst({
+                where: {
+                  [stripePlanKey]: productId,
+                },
+              });
+            }
+          } catch {
+            // ignore and fallback to order metadata below
+          }
+        }
+      }
+
+      if (!plan) {
+        const orderIdRaw = Number(subscription?.metadata?.orderId);
+        if (Number.isFinite(orderIdRaw) && orderIdRaw > 0) {
+          const order = await prisma.orders.findFirst({
+            where: { id: orderIdRaw },
+            select: { plan_id: true },
+          });
+          if (order?.plan_id) {
+            plan = await prisma.plans.findFirst({
+              where: { id: order.plan_id },
+            });
+          }
+        }
+      }
       break;
     }
     default:

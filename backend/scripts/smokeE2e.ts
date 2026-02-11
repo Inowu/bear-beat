@@ -82,6 +82,7 @@ async function main() {
   const baseUrl = resolveBaseUrl();
   const loginEmail = process.env.SMOKE_LOGIN_EMAIL?.trim();
   const loginPassword = process.env.SMOKE_LOGIN_PASSWORD?.trim();
+  const skipSignup = process.env.SMOKE_SKIP_SIGNUP === "1";
   const startingServers = process.env.SMOKE_START_SERVERS === "1";
 
   const { child } = spawnDevServersIfNeeded();
@@ -111,29 +112,41 @@ async function main() {
     const smokeUserEmail = `smoke-${Date.now()}@gmail.com`;
     const smokeUserPassword = `Smoke-${Date.now()}-pass!`;
 
-    // AUTH (logged out): forgot password loads
-    await page.goto(`${baseUrl}/auth/recuperar`, { waitUntil: "domcontentloaded", timeout: 60_000 });
-    await page.getByRole("heading", { level: 1, name: /recuperar acceso/i }).waitFor({
-      state: "visible",
-      timeout: 15_000,
-    });
-    await page.locator("input[name='email']").waitFor({ state: "visible", timeout: 10_000 });
+    if (skipSignup) {
+      if (!loginEmail || !loginPassword) {
+        throw new Error("SMOKE_SKIP_SIGNUP=1 requires SMOKE_LOGIN_EMAIL/SMOKE_LOGIN_PASSWORD");
+      }
+      await page.goto(`${baseUrl}/auth`, { waitUntil: "domcontentloaded", timeout: 60_000 });
+      await page.locator("input[name='username']").fill(loginEmail);
+      await page.locator("input[name='password']").fill(loginPassword);
+      await page.locator("[data-testid='login-submit']").click();
+      await page.waitForURL((url) => !url.pathname.startsWith("/auth"), { timeout: 40_000 });
+      await page.goto(`${baseUrl}/planes`, { waitUntil: "domcontentloaded", timeout: 60_000 });
+    } else {
+      // AUTH (logged out): forgot password loads
+      await page.goto(`${baseUrl}/auth/recuperar`, { waitUntil: "domcontentloaded", timeout: 60_000 });
+      await page.getByRole("heading", { level: 1, name: /recuperar acceso/i }).waitFor({
+        state: "visible",
+        timeout: 15_000,
+      });
+      await page.locator("input[name='email']").waitFor({ state: "visible", timeout: 10_000 });
 
-    // HOME (logged out)
-    await page.goto(`${baseUrl}/`, { waitUntil: "domcontentloaded", timeout: 60_000 });
-    await page.getByRole("heading", { level: 1 }).waitFor({ state: "visible", timeout: 15_000 });
+      // HOME (logged out)
+      await page.goto(`${baseUrl}/`, { waitUntil: "domcontentloaded", timeout: 60_000 });
+      await page.getByRole("heading", { level: 1 }).waitFor({ state: "visible", timeout: 15_000 });
 
-    const primaryCta = page.locator("[data-testid='home-cta-primary']").first();
-    await primaryCta.waitFor({ state: "visible", timeout: 10_000 });
-    await primaryCta.click();
-    await page.waitForURL(/\/auth\/registro/, { timeout: 20_000 });
+      const primaryCta = page.locator("[data-testid='home-cta-primary']").first();
+      await primaryCta.waitFor({ state: "visible", timeout: 10_000 });
+      await primaryCta.click();
+      await page.waitForURL(/\/auth\/registro/, { timeout: 20_000 });
 
-    // REGISTRO básico (dev/local bypass Turnstile)
-    await page.locator("#email").fill(smokeUserEmail);
-    await page.locator("#password").fill(smokeUserPassword);
-    await page.locator("#passwordConfirmation").fill(smokeUserPassword);
-    await page.locator("[data-testid='signup-submit']").click();
-    await page.waitForURL((url) => url.pathname === "/planes", { timeout: 40_000 });
+      // REGISTRO básico (dev/local bypass Turnstile)
+      await page.locator("#email").fill(smokeUserEmail);
+      await page.locator("#password").fill(smokeUserPassword);
+      await page.locator("#passwordConfirmation").fill(smokeUserPassword);
+      await page.locator("[data-testid='signup-submit']").click();
+      await page.waitForURL((url) => url.pathname === "/planes", { timeout: 40_000 });
+    }
 
     // PLANES (logged in, requires at least 1 activated plan)
     const planCard = page.locator(".plan-card-wrapper, .plan-card-main-card").first();
@@ -146,7 +159,7 @@ async function main() {
     });
 
     // CHECKOUT → SUCCESS (mocked in local dev if Stripe keys are missing)
-    await page.getByRole("heading", { level: 1, name: /activar acceso inmediato/i }).waitFor({
+    await page.getByRole("heading", { level: 1, name: /(activar|activa).*acceso/i }).waitFor({
       state: "visible",
       timeout: 25_000,
     });
@@ -158,14 +171,16 @@ async function main() {
       timeout: 25_000,
     });
 
-    // LOGIN (nuevo usuario) en una tab limpia (sessionStorage es per-tab)
-    const loginPage = await ctx.newPage();
-    await loginPage.goto(`${baseUrl}/auth`, { waitUntil: "domcontentloaded", timeout: 60_000 });
-    await loginPage.locator("input[name='username']").fill(smokeUserEmail);
-    await loginPage.locator("input[name='password']").fill(smokeUserPassword);
-    await loginPage.locator("[data-testid='login-submit']").click();
-    await loginPage.waitForURL((url) => !url.pathname.startsWith("/auth"), { timeout: 25_000 });
-    await loginPage.close();
+    if (!skipSignup) {
+      // LOGIN (nuevo usuario) en una tab limpia (sessionStorage es per-tab)
+      const loginPage = await ctx.newPage();
+      await loginPage.goto(`${baseUrl}/auth`, { waitUntil: "domcontentloaded", timeout: 60_000 });
+      await loginPage.locator("input[name='username']").fill(smokeUserEmail);
+      await loginPage.locator("input[name='password']").fill(smokeUserPassword);
+      await loginPage.locator("[data-testid='login-submit']").click();
+      await loginPage.waitForURL((url) => !url.pathname.startsWith("/auth"), { timeout: 25_000 });
+      await loginPage.close();
+    }
 
     // Optional: login + admin
     if (loginEmail && loginPassword) {

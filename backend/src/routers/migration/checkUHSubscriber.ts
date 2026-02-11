@@ -64,7 +64,17 @@ export async function checkIfUserIsSubscriber(user: UHUser): Promise<Subscriptio
           });
 
           if (subscriptions.data.length > 0 && subscriptions.data[0].status === 'active') {
-            return { service: 'stripe', subscriptionId: subscriptions.data[0].id, remainingDays: differenceInDays(new Date(subscriptions.data[0].current_period_end * 1000), new Date()), subscriptionEmail: (subscriptions.data[0].customer as Stripe.Customer).email! };
+            const sub = subscriptions.data[0];
+            const periodEnd =
+              sub.items?.data?.[0]?.current_period_end
+              || sub.trial_end
+              || Math.floor(Date.now() / 1000);
+            return {
+              service: 'stripe',
+              subscriptionId: sub.id,
+              remainingDays: differenceInDays(new Date(periodEnd * 1000), new Date()),
+              subscriptionEmail: (sub.customer as Stripe.Customer).email!,
+            };
           }
         }
       } catch (e: any) {

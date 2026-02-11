@@ -1,167 +1,105 @@
 import { Request } from 'express';
 import { Stripe } from 'stripe';
-import { PrismaClient } from '@prisma/client';
 import { StripeEvents } from './events';
 import { log } from '../../../server';
 import { prisma } from '../../../db';
+import stripeInstance from '../../../stripe';
 import { getPlanKey } from '../../../utils/getPlanKey';
 import { PaymentService } from '../../subscriptions/services/types';
+import { getStripeWebhookBody } from '../../utils/verifyStripeSignature';
+
+type StripePriceKey = 'stripe_prod_id' | 'stripe_prod_id_test';
+
+const stripePriceKey = getPlanKey(PaymentService.STRIPE) as StripePriceKey;
 
 export const stripeProductsWebhook = async (req: Request) => {
-  const payload: Stripe.Event = JSON.parse(req.body as any);
-
-  const payloadStr = req.body;
+  const payloadBody = getStripeWebhookBody(req);
+  const payload: Stripe.Event = JSON.parse(payloadBody);
 
   if (!shouldHandleEvent(payload)) return;
 
-  const user = await getUserFromPayload(prisma, payload);
+  switch (payload.type) {
+    case StripeEvents.PRODUCT_UPDATED: {
+      await handleProductUpdated(payload.data.object as Stripe.Product, payloadBody);
+      break;
+    }
+    case StripeEvents.PRICE_UPDATED: {
+      await handlePriceUpdated(payload.data.object as Stripe.Price, payloadBody);
+      break;
+    }
+    default:
+      log.info(`[STRIPE_WH] Unhandled event ${payload.type}, payload: ${payloadBody}`);
+  }
+};
 
-  if (!user) {
-    log.error(
-      `[STRIPE_WH] User not found in event: ${payload.type}, payload: ${payloadStr}`,
+async function handleProductUpdated(product: Stripe.Product, payloadBody: string) {
+  log.info(`[STRIPE_WH] Updating Stripe product ${product.id}, payload: ${payloadBody}`);
+
+  let productPrices: Stripe.Price[] = [];
+  try {
+    const prices = await stripeInstance.prices.list({
+      product: product.id,
+      limit: 100,
+      active: true,
+    });
+    productPrices = prices.data;
+  } catch (error) {
+    log.error('[STRIPE_WH] Failed to list product prices', {
+      productId: product.id,
+      error: error instanceof Error ? error.message : error,
+    });
+    return;
+  }
+
+  const priceIds = productPrices.map((price) => price.id);
+  if (priceIds.length === 0) {
+    log.info(`[STRIPE_WH] Product ${product.id} has no active prices, skipping plan sync.`);
+    return;
+  }
+
+  const plan = await prisma.plans.findFirst({
+    where: {
+      [stripePriceKey]: {
+        in: priceIds,
+      } as any,
+    } as any,
+  });
+
+  if (!plan) {
+    log.warn(
+      `[STRIPE_WH] No internal plan linked to Stripe product ${product.id}. Prices: ${priceIds.join(', ')}`,
     );
     return;
   }
 
-  switch (payload.type) {
-    case StripeEvents.PRODUCT_UPDATED: {
-      log.info(
-        `[STRIPE_WH] Updating stripe product ${payload.data.object.id}, payload: ${payloadStr}`,
-      );
+  await prisma.plans.update({
+    where: { id: plan.id },
+    data: {
+      name: product.name,
+      ...(product.description ? { description: product.description } : {}),
+    },
+  });
+}
 
-      const stripeProduct = payload.data.object as Stripe.Product;
+async function handlePriceUpdated(price: Stripe.Price, payloadBody: string) {
+  log.info(`[STRIPE_WH] Updating Stripe price ${price.id}, payload: ${payloadBody}`);
 
-      const plan = await prisma.plans.findFirst({
-        where: {
-          [getPlanKey(PaymentService.STRIPE)]: stripeProduct.id,
-        },
-      });
+  const plan = await prisma.plans.findFirst({
+    where: { [stripePriceKey]: price.id } as any,
+  });
 
-      if (!plan) {
-        log.warn(
-          `[STRIPE_WH] Plan not found in event: ${payload.type}, looking for product instead, payload: ${payloadStr}`,
-        );
-
-        const product = await prisma.products.findFirst({
-          where: {
-            [getPlanKey(PaymentService.STRIPE)]: stripeProduct.id,
-          },
-        });
-
-        if (!product) {
-          log.error(
-            `[STRIPE_WH] Product not found in event: ${payload.type}, payload: ${payloadStr}`,
-          );
-          return;
-        }
-
-        await prisma.products.update({
-          where: {
-            id: product.id,
-          },
-          data: {},
-        });
-
-        await prisma.plans.update({
-          where: {
-            id: product.id,
-          },
-          data: {
-            name: stripeProduct.name,
-            ...(stripeProduct.description
-              ? { description: stripeProduct.description }
-              : {}),
-          },
-        });
-
-        return;
-      }
-
-      await prisma.plans.update({
-        where: {
-          id: plan.id,
-        },
-        data: {
-          name: stripeProduct.name,
-          ...(stripeProduct.description
-            ? { description: stripeProduct.description }
-            : {}),
-        },
-      });
-
-      break;
-    }
-    case StripeEvents.PRICE_UPDATED: {
-      log.info(
-        `[STRIPE_WH] Updating stripe price for product ${payload.data.object.id}, payload: ${payloadStr}`,
-      );
-
-      const stripePrice = payload.data.object as Stripe.Price;
-
-      const plan = await prisma.plans.findFirst({
-        where: {
-          [getPlanKey(PaymentService.STRIPE)]: stripePrice.product,
-        },
-      });
-
-      if (!plan) {
-        log.warn(
-          `[STRIPE_WH] Plan not found in event: ${payload.type}, looking for product instead, payload: ${payloadStr}`,
-        );
-
-        const product = await prisma.products.findFirst({
-          where: {
-            [getPlanKey(PaymentService.STRIPE)]: stripePrice.product,
-          },
-        });
-
-        if (!product) {
-          log.error(
-            `[STRIPE_WH] Product not found in event: ${payload.type}, payload: ${payloadStr}`,
-          );
-          return;
-        }
-
-        await prisma.products.update({
-          where: {
-            id: product.id,
-          },
-          data: {},
-        });
-
-        await prisma.plans.update({
-          where: {
-            id: product.id,
-          },
-          data: {
-            ...(stripePrice.unit_amount
-              ? { price: stripePrice.unit_amount / 100 }
-              : {}),
-          },
-        });
-
-        return;
-      }
-
-      await prisma.plans.update({
-        where: {
-          id: plan.id,
-        },
-        data: {
-          ...(stripePrice.unit_amount
-            ? { price: stripePrice.unit_amount / 100 }
-            : {}),
-        },
-      });
-      break;
-    }
-    default: {
-      log.info(
-        `[STRIPE_WH] Unhandled event ${payload.type}, payload: ${payloadStr}`,
-      );
-    }
+  if (!plan) {
+    log.warn(`[STRIPE_WH] No internal plan linked to Stripe price ${price.id}`);
+    return;
   }
-};
+
+  await prisma.plans.update({
+    where: { id: plan.id },
+    data: {
+      ...(price.unit_amount != null ? { price: price.unit_amount / 100 } : {}),
+    },
+  });
+}
 
 const shouldHandleEvent = (payload: Stripe.Event): boolean => {
   switch (payload.type) {
@@ -169,26 +107,7 @@ const shouldHandleEvent = (payload: Stripe.Event): boolean => {
     case StripeEvents.PRICE_UPDATED:
       return true;
     default:
-      log.info(
-        `[STRIPE_WH] Uhandled event ${payload.type}, payload: ${JSON.stringify(
-          payload,
-        )}`,
-      );
+      log.info(`[STRIPE_WH] Unhandled event ${payload.type}, payload: ${JSON.stringify(payload)}`);
       return false;
   }
-};
-
-const getUserFromPayload = async (
-  prismaClient: PrismaClient,
-  payload: Stripe.Event,
-) => {
-  const { customer } = payload.data.object as Stripe.PaymentIntent;
-
-  const user = await prismaClient.users.findFirst({
-    where: {
-      stripe_cusid: typeof customer === 'string' ? customer : customer?.id,
-    },
-  });
-
-  return user;
 };

@@ -14,6 +14,7 @@ import { checkIfUserIsFromUH, checkIfUserIsSubscriber, SubscriptionCheckResult }
 import { addDays } from 'date-fns';
 import { getClientIpFromRequest } from '../../analytics';
 import { resolveCheckoutCoupon } from '../../offers';
+import { ensureStripePriceId, StripePriceKey } from './utils/ensureStripePriceId';
 
 export const subscribeWithStripe = shieldedProcedure
   .input(
@@ -66,6 +67,7 @@ export const subscribeWithStripe = shieldedProcedure
         message: 'Ese plan no existe',
       });
     }
+    const priceKey = getPlanKey(PaymentService.STRIPE) as StripePriceKey;
 
     const resolvedCoupon = await resolveCheckoutCoupon({
       prisma,
@@ -99,6 +101,26 @@ export const subscribeWithStripe = shieldedProcedure
     };
 
     const runStripeSubscribe = async (customerId: string) => {
+      let stripePriceId: string;
+      try {
+        stripePriceId = await ensureStripePriceId({
+          prisma,
+          plan,
+          priceKey,
+        });
+      } catch (error) {
+        log.error('[STRIPE_SUBSCRIBE] Missing Stripe price and auto-setup failed', {
+          userId: user.id,
+          planId: plan.id,
+          priceKey,
+          error: error instanceof Error ? error.message : error,
+        });
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Este plan no tiene un precio de Stripe configurado.',
+        });
+      }
+
       const activeSubscription = await stripeInstance.subscriptions.list({
         customer: customerId,
         status: 'active',
@@ -156,24 +178,24 @@ export const subscribeWithStripe = shieldedProcedure
 
       const createSubscription = async (couponCode: string | null) =>
         stripeInstance.subscriptions.create(
-        {
-          customer: customerId,
-          ...(couponCode ? { coupon: couponCode } : {}),
-          items: [
-            {
-              plan: plan[getPlanKey(PaymentService.STRIPE)]!,
+          {
+            customer: customerId,
+            ...(couponCode ? { discounts: [{ coupon: couponCode }] } : {}),
+            items: [
+              {
+                price: stripePriceId,
+              },
+            ],
+            payment_behavior: 'default_incomplete',
+            payment_settings: { save_default_payment_method: 'on_subscription' },
+            expand: ['latest_invoice.payment_intent'],
+            metadata: {
+              orderId: String(order.id),
             },
-          ],
-          payment_behavior: 'default_incomplete',
-          payment_settings: { save_default_payment_method: 'on_subscription' },
-          expand: ['latest_invoice.payment_intent'],
-          metadata: {
-            orderId: String(order.id),
+            ...(trialEnd ? { trial_end: trialEnd } : {}),
           },
-          ...(trialEnd ? { trial_end: trialEnd } : {}),
-        },
-        { idempotencyKey: `stripe-sub-order-${order.id}` },
-      );
+          { idempotencyKey: `stripe-sub-order-${order.id}` },
+        );
 
       let subscription: any;
       let droppedOfferCoupon = false;
