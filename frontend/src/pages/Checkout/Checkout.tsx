@@ -735,23 +735,19 @@ function Checkout() {
     parseInt(plan?.price || "0", 10) * (discount / 100)
   ).toFixed(2);
   const selectedMethodMeta = METHOD_META[selectedMethod];
+  const SelectedMethodIcon = selectedMethodMeta.Icon;
 
   const quotaGb = Number(plan?.gigas ?? 500);
   const durationDays = Number(plan?.duration ?? 0);
   const benefits = [
-    "Descargas por FTP (recomendado para carpetas grandes)",
-    `Cuota mensual clara: ${formatInt(quotaGb)} GB/mes`,
-    "Cancela cuando quieras",
+    `${formatInt(quotaGb)} GB por mes para descargas`,
+    "Catálogo organizado para cabina (audio, video y karaoke)",
+    "Soporte por chat para activar más rápido",
   ];
   const quickFacts = [
     `${formatInt(quotaGb)} GB/mes`,
-    `${formatInt(durationDays)} días`,
-    `${availableMethods.length} método${availableMethods.length === 1 ? "" : "s"} de pago`,
-  ];
-  const checkoutSteps = [
-    { step: "1", label: "Confirma tu plan" },
-    { step: "2", label: "Elige método de pago" },
-    { step: "3", label: "Activa y descarga" },
+    `${formatInt(durationDays)} días por ciclo`,
+    "Cancela cuando quieras",
   ];
   let continueLabel = "Continuar";
   if (processingMethod === "card") continueLabel = "Abriendo pasarela segura...";
@@ -775,8 +771,7 @@ function Checkout() {
           </header>
           <Link
             to="/planes"
-            className="checkout-cta-btn checkout-cta-btn--primary"
-            style={{ display: "inline-block", textAlign: "center", marginTop: "1rem" }}
+            className="checkout-cta-btn checkout-cta-btn--primary checkout-empty-link"
           >
             Ver planes
           </Link>
@@ -832,9 +827,9 @@ function Checkout() {
           </span>
           <div className="checkout-header__main">
             <div className="checkout-header__copy">
-              <h1 className="checkout-page-title">Activar acceso inmediato</h1>
+              <h1 className="checkout-page-title">Activa tu acceso en 1 minuto</h1>
               <p className="checkout-page-subtitle">
-                Elige tu método de pago y completa tu activación en la misma pantalla.
+                Elige el método que prefieras y completa tu pago seguro en esta misma pantalla.
               </p>
               <div className="checkout-header__quickfacts" role="list" aria-label="Detalles rápidos del plan">
                 {quickFacts.map((fact) => (
@@ -846,18 +841,11 @@ function Checkout() {
               className="checkout-header__amount"
               aria-label={`Total ${totalPrice} ${plan.moneda ?? "MXN"}`}
             >
-              <span>Total de hoy</span>
+              <span>Plan seleccionado</span>
+              <small className="checkout-header__amount-plan">{plan.name}</small>
               <strong>${totalPrice}</strong>
               <small>{plan.moneda ?? "MXN"} / mes</small>
             </div>
-          </div>
-          <div className="checkout-steps" role="list" aria-label="Pasos de checkout">
-            {checkoutSteps.map((stepData) => (
-              <span key={stepData.step} role="listitem">
-                <strong>{stepData.step}</strong>
-                <span>{stepData.label}</span>
-              </span>
-            ))}
           </div>
           <div className="checkout-trust-strip" role="list" aria-label="Confianza de pago">
             <span role="listitem"><ShieldCheck size={16} aria-hidden /> Pago seguro</span>
@@ -889,6 +877,12 @@ function Checkout() {
             className="checkout-payment-logos"
             ariaLabel="Métodos de pago disponibles en checkout"
           />
+          <p className="checkout-header__support">
+            ¿Dudas para pagar?{" "}
+            <a href={SUPPORT_CHAT_URL} target="_blank" rel="noopener noreferrer">
+              Abrir soporte por chat
+            </a>
+          </p>
         </header>
 
         <div className="checkout-grid">
@@ -900,6 +894,9 @@ function Checkout() {
             </p>
             <p className="checkout-summary__mini">
               Pago mensual con renovación automática.
+            </p>
+            <p className="checkout-summary__billing">
+              Se activa al confirmar el pago del primer ciclo.
             </p>
             <div className="checkout-summary__stats" role="list" aria-label="Detalles del plan">
               <span role="listitem">{formatInt(quotaGb)} GB/mes</span>
@@ -931,9 +928,9 @@ function Checkout() {
 
           <section className="checkout-card checkout-payment-card">
             <div className="checkout-payment-card__head">
-              <h2 className="checkout-card__title">Tu cuenta y pago</h2>
+              <h2 className="checkout-card__title">Elige cómo pagar</h2>
               <p className="checkout-payment-card__hint">
-                Selecciona cómo quieres pagar hoy.
+                Tu acceso se activa al confirmar el pago.
               </p>
             </div>
             <div className="checkout-credentials" role="group" aria-label="Datos de tu cuenta">
@@ -949,10 +946,18 @@ function Checkout() {
             <div className="checkout-selected-method" aria-live="polite">
               <span className="checkout-selected-method__label">Método elegido</span>
               <div className="checkout-selected-method__value">
-                <strong>{selectedMethodMeta.label}</strong>
-                <small>{selectedMethodMeta.description}</small>
+                <span className="checkout-selected-method__icon" aria-hidden>
+                  <SelectedMethodIcon size={17} />
+                </span>
+                <div>
+                  <strong>{selectedMethodMeta.label}</strong>
+                  <small>{selectedMethodMeta.description}</small>
+                </div>
               </div>
             </div>
+            <p className="checkout-payment-card__microcopy">
+              Métodos disponibles para {plan.moneda ?? "MXN"}.
+            </p>
             <div className="checkout-methods" role="radiogroup" aria-label="Método de pago">
               {availableMethods.map((method) => {
                 const { Icon } = METHOD_META[method];
@@ -1037,9 +1042,9 @@ function Checkout() {
                 </button>
               )}
               <p className="checkout-payment-note">
-                Si tienes dudas para pagar, te ayudamos por chat en tiempo real:{" "}
+                Si te atoras en cualquier paso, te ayudamos en tiempo real por chat:{" "}
                 <a href={SUPPORT_CHAT_URL} target="_blank" rel="noopener noreferrer">
-                  abrir soporte
+                  abrir soporte ahora
                 </a>
                 .
               </p>
