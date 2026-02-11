@@ -23,7 +23,7 @@ import {
   LogOut,
   Undo2,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 
 interface AsideNavbarPropsI {
   show: boolean;
@@ -83,6 +83,9 @@ function AsideNavbar(props: AsideNavbarPropsI) {
 
   const linkProps = { onClick: closeDrawer };
 
+  const navLinkClassName = ({ isActive }: { isActive: boolean }) =>
+    `nav-link-item${isActive ? " is-active" : ""}`;
+
   // Mobile: when closed, unmount to avoid `aria-hidden-focus` violations in axe.
   if (!drawerOpen && !isDesktop) return null;
 
@@ -103,52 +106,188 @@ function AsideNavbar(props: AsideNavbarPropsI) {
         <div className="nav-container">
           <h2 className="nav-title">Contenido</h2>
           <div className="nav-links-wrap">
-            {location.pathname.startsWith("/admin/") ? (
-              <ul className="nav-list">
-                <li><Link to="/admin/usuarios" {...linkProps}><Users size={18} aria-hidden /> Usuarios</Link></li>
-                <li><Link to="/admin/planesAdmin" {...linkProps}><ShoppingCart size={18} aria-hidden /> Planes</Link></li>
-                <li><Link to="/admin/ordenes" {...linkProps}><Receipt size={18} aria-hidden /> Ordenes</Link></li>
-                <li><Link to="/admin/cupones" {...linkProps}><Ticket size={18} aria-hidden /> Cupones</Link></li>
-                <li><Link to="/admin/almacenamiento" {...linkProps}><Database size={18} aria-hidden /> Almacenamiento</Link></li>
-                <li><Link to="/admin/catalogo" {...linkProps}><BarChart3 size={18} aria-hidden /> Catálogo</Link></li>
-                <li><Link to="/admin/analitica" {...linkProps}><BarChart3 size={18} aria-hidden /> Analítica</Link></li>
-                <li><Link to="/admin/crm" {...linkProps}><Users size={18} aria-hidden /> CRM</Link></li>
-                <li><Link to="/admin/live" {...linkProps}><Activity size={18} aria-hidden /> Live</Link></li>
-                <li><Link to="/admin/historial-descargas" {...linkProps}><Download size={18} aria-hidden /> Descargas</Link></li>
-                <li><Link to="/admin/historialCheckout" {...linkProps}><FileText size={18} aria-hidden /> Checkout</Link></li>
-                <li><Link to="/admin/dominios-bloqueados" {...linkProps}><Ban size={18} aria-hidden /> Dominios</Link></li>
-                <li><Link to="/admin/telefonos-bloqueados" {...linkProps}><Phone size={18} aria-hidden /> Telefonos</Link></li>
-                <li><Link to="/" onClick={handleLinkClick}><Undo2 size={18} aria-hidden /> Modo usuario</Link></li>
-                <li>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      handleLogout(true);
-                      onHide();
-                    }}
-                    aria-label="Cerrar sesión"
-                  >
-                    <LogOut size={18} aria-hidden /> Cerrar sesión
-                  </button>
-                </li>
-              </ul>
+            {location.pathname.startsWith("/admin") ? (
+              <div className="nav-admin-groups">
+                <section className="nav-group">
+                  <p className="nav-group__title">Operación</p>
+                  <ul className="nav-list">
+                    <li>
+                      <NavLink to="/admin/usuarios" className={navLinkClassName} {...linkProps}>
+                        <Users size={18} aria-hidden />
+                        Usuarios
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink to="/admin/ordenes" className={navLinkClassName} {...linkProps}>
+                        <Receipt size={18} aria-hidden />
+                        Órdenes
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink to="/admin/historialCheckout" className={navLinkClassName} {...linkProps}>
+                        <FileText size={18} aria-hidden />
+                        Checkout
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink to="/admin/historial-descargas" className={navLinkClassName} {...linkProps}>
+                        <Download size={18} aria-hidden />
+                        Descargas
+                      </NavLink>
+                    </li>
+                  </ul>
+                </section>
+
+                <section className="nav-group">
+                  <p className="nav-group__title">Comercial</p>
+                  <ul className="nav-list">
+                    <li>
+                      <NavLink to="/admin/planesAdmin" className={navLinkClassName} {...linkProps}>
+                        <ShoppingCart size={18} aria-hidden />
+                        Planes
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink to="/admin/cupones" className={navLinkClassName} {...linkProps}>
+                        <Ticket size={18} aria-hidden />
+                        Cupones
+                      </NavLink>
+                    </li>
+                  </ul>
+                </section>
+
+                <section className="nav-group">
+                  <p className="nav-group__title">Analítica</p>
+                  <ul className="nav-list">
+                    <li>
+                      <NavLink to="/admin/catalogo" className={navLinkClassName} {...linkProps}>
+                        <BarChart3 size={18} aria-hidden />
+                        Catálogo
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink to="/admin/analitica" className={navLinkClassName} {...linkProps}>
+                        <BarChart3 size={18} aria-hidden />
+                        Analítica
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink to="/admin/crm" className={navLinkClassName} {...linkProps}>
+                        <Users size={18} aria-hidden />
+                        CRM
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink to="/admin/live" className={navLinkClassName} {...linkProps}>
+                        <Activity size={18} aria-hidden />
+                        Live
+                      </NavLink>
+                    </li>
+                  </ul>
+                </section>
+
+                <section className="nav-group">
+                  <p className="nav-group__title">Seguridad y sistema</p>
+                  <ul className="nav-list">
+                    <li>
+                      <NavLink to="/admin/dominios-bloqueados" className={navLinkClassName} {...linkProps}>
+                        <Ban size={18} aria-hidden />
+                        Dominios
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink to="/admin/telefonos-bloqueados" className={navLinkClassName} {...linkProps}>
+                        <Phone size={18} aria-hidden />
+                        Teléfonos
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink to="/admin/almacenamiento" className={navLinkClassName} {...linkProps}>
+                        <Database size={18} aria-hidden />
+                        Almacenamiento
+                      </NavLink>
+                    </li>
+                  </ul>
+                </section>
+
+                <section className="nav-group nav-group--actions">
+                  <ul className="nav-list">
+                    <li>
+                      <Link to="/" onClick={handleLinkClick} className="nav-link-item nav-link-item--secondary">
+                        <Undo2 size={18} aria-hidden />
+                        Modo usuario
+                      </Link>
+                    </li>
+                    <li>
+                      <button
+                        type="button"
+                        className="nav-link-item nav-link-item--danger"
+                        onClick={() => {
+                          handleLogout(true);
+                          onHide();
+                        }}
+                        aria-label="Cerrar sesión"
+                      >
+                        <LogOut size={18} aria-hidden />
+                        Cerrar sesión
+                      </button>
+                    </li>
+                  </ul>
+                </section>
+              </div>
             ) : (
               <ul className="nav-list">
-                <li><Link to="/" onClick={handleLinkClick}><FolderOpen size={18} aria-hidden /> Todos los archivos</Link></li>
+                <li>
+                  <NavLink to="/" onClick={handleLinkClick} className={navLinkClassName}>
+                    <FolderOpen size={18} aria-hidden />
+                    Todos los archivos
+                  </NavLink>
+                </li>
                 {!currentUser?.hasActiveSubscription || currentUser.isSubscriptionCancelled ? (
-                  <li><Link to="/planes" {...linkProps}><ShoppingCart size={18} aria-hidden /> Planes</Link></li>
+                  <li>
+                    <NavLink to="/planes" className={navLinkClassName} {...linkProps}>
+                      <ShoppingCart size={18} aria-hidden />
+                      Planes
+                    </NavLink>
+                  </li>
                 ) : (
-                  <li><Link to="/actualizar-planes" {...linkProps}><ArrowUpCircle size={18} aria-hidden /> Actualiza tu plan</Link></li>
+                  <li>
+                    <NavLink to="/actualizar-planes" className={navLinkClassName} {...linkProps}>
+                      <ArrowUpCircle size={18} aria-hidden />
+                      Actualiza tu plan
+                    </NavLink>
+                  </li>
                 )}
                 {currentUser?.role === "admin" && (
-                  <li><Link to="/admin/usuarios" {...linkProps}><Shield size={18} aria-hidden /> Admin</Link></li>
+                  <li>
+                    <NavLink to="/admin/usuarios" className={navLinkClassName} {...linkProps}>
+                      <Shield size={18} aria-hidden />
+                      Admin
+                    </NavLink>
+                  </li>
                 )}
-                <li><Link to="/micuenta" {...linkProps}><UserRound size={18} aria-hidden /> Mi cuenta</Link></li>
-                <li><Link to="/instrucciones" {...linkProps}><HelpCircle size={18} aria-hidden /> Instrucciones</Link></li>
-                <li><Link to="/legal" {...linkProps}><FileText size={18} aria-hidden /> FAQ y políticas</Link></li>
+                <li>
+                  <NavLink to="/micuenta" className={navLinkClassName} {...linkProps}>
+                    <UserRound size={18} aria-hidden />
+                    Mi cuenta
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/instrucciones" className={navLinkClassName} {...linkProps}>
+                    <HelpCircle size={18} aria-hidden />
+                    Instrucciones
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/legal" className={navLinkClassName} {...linkProps}>
+                    <FileText size={18} aria-hidden />
+                    FAQ y políticas
+                  </NavLink>
+                </li>
                 <li>
                   <button
                     type="button"
+                    className="nav-link-item nav-link-item--danger"
                     onClick={() => {
                       handleLogout(true);
                       onHide();

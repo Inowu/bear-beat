@@ -1,10 +1,9 @@
 @import "src/styles/mixin.scss";
 
-// ---------- Desktop: sidebar (sticky, siempre visible; ancho controlado por MainLayout en lg+) ----------
 aside {
   width: 100%;
   max-width: 300px;
-  padding: 0 20px;
+  padding: 0 16px;
   background-color: var(--theme-nav-bg);
   position: sticky;
   top: 0;
@@ -26,88 +25,124 @@ aside {
 
   .nav-container {
     color: var(--theme-nav-text);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 14px 0 18px;
 
     .nav-title {
       font-family: "Poppins", sans-serif;
       text-align: center;
-      font-size: var(--app-font-size-h2);
-      font-weight: 600;
+      font-size: var(--app-font-size-h3);
+      font-weight: 700;
       color: var(--theme-nav-text);
-      margin-bottom: 10px;
-      letter-spacing: 0.02em;
+      margin: 0 0 10px;
+      letter-spacing: 0.01em;
     }
 
     .nav-links-wrap {
-      // desktop: no scroll especial
+      overflow-y: auto;
+      overflow-x: hidden;
+      min-height: 0;
+      padding-right: 2px;
+      scrollbar-width: thin;
+    }
+
+    .nav-admin-groups {
+      display: grid;
+      gap: 14px;
+      padding-bottom: 10px;
+    }
+
+    .nav-group {
+      display: grid;
+      gap: 8px;
+    }
+
+    .nav-group__title {
+      margin: 0;
+      padding: 0 6px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: color-mix(in srgb, var(--theme-nav-text) 70%, transparent);
     }
 
     .nav-list {
       list-style: none;
       padding: 0;
       margin: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+      display: grid;
+      gap: 8px;
 
       li {
-        font-size: var(--app-font-size-body-lg);
-        width: 100%;
-        border-radius: 12px;
-        background-color: var(--theme-nav-item-bg);
-        border: 1px solid var(--theme-nav-item-border, transparent);
-        padding: 0;
-        min-height: 44px;
-        color: var(--theme-nav-text);
-        font-weight: bold;
-        box-shadow: var(--theme-nav-item-shadow, none);
-        transition: background 0.2s ease, color 0.2s ease;
-        cursor: pointer;
-        background-clip: padding-box;
+        margin: 0;
       }
+    }
 
-      li a {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        width: 100%;
-        min-height: 44px;
-        padding: 10px 20px;
-        box-sizing: border-box;
-        text-decoration: none;
-        color: inherit;
-        cursor: pointer;
-        -webkit-tap-highlight-color: transparent;
-        user-select: none;
+    .nav-link-item {
+      width: 100%;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--theme-nav-item-border, transparent);
+      background: var(--theme-nav-item-bg);
+      box-shadow: var(--theme-nav-item-shadow, none);
+      color: var(--theme-nav-text);
+      font-size: var(--app-font-size-body);
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      transition:
+        border-color 0.2s ease,
+        background-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.18s ease;
 
-        &:hover {
-          text-decoration: none;
-          color: inherit;
-        }
-      }
-
-      li button {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        width: 100%;
-        min-height: 44px;
-        padding: 10px 20px;
-        box-sizing: border-box;
-        text-decoration: none;
-        color: inherit;
-        cursor: pointer;
-        -webkit-tap-highlight-color: transparent;
-        user-select: none;
-        background: transparent;
-        border: none;
-        font: inherit;
-        text-align: left;
-      }
-
-      li:hover,
-      li:focus-within {
+      &:hover,
+      &:focus-visible {
         color: var(--theme-nav-item-hover-text);
-        background-color: var(--theme-nav-item-hover-bg);
+        background: var(--theme-nav-item-hover-bg);
+        border-color: color-mix(in srgb, var(--app-accent) 28%, var(--theme-nav-item-border, transparent));
+        outline: none;
+      }
+
+      &:active {
+        transform: translateY(1px);
+      }
+
+      &.is-active {
+        border-color: color-mix(in srgb, var(--app-accent) 52%, var(--theme-nav-item-border, transparent));
+        background: color-mix(in srgb, var(--app-accent-bright) 14%, var(--theme-nav-item-bg));
+        color: var(--theme-nav-item-hover-text);
+      }
+
+      &--secondary {
+        border-style: dashed;
+      }
+
+      &--danger {
+        color: var(--app-status-error);
+      }
+
+      &--danger:hover,
+      &--danger:focus-visible {
+        background: color-mix(in srgb, var(--app-status-error) 10%, var(--theme-nav-item-bg));
+        border-color: color-mix(in srgb, var(--app-status-error) 36%, var(--theme-nav-item-border, transparent));
+      }
+
+      svg {
+        flex-shrink: 0;
+      }
+
+      span {
+        min-width: 0;
       }
     }
   }
@@ -117,7 +152,6 @@ aside {
   }
 }
 
-// ---------- Móvil/tablet: drawer lateral (solo por debajo de desktop) ----------
 @include respond-to(desktop) {
   aside {
     position: fixed;
@@ -146,7 +180,6 @@ aside {
       visibility: visible;
     }
 
-    // Backdrop: tap fuera cierra; no tapa todo visualmente (se ve que es drawer)
     .aside-backdrop {
       position: fixed;
       inset: 0;
@@ -155,13 +188,12 @@ aside {
       pointer-events: auto;
     }
 
-    // Panel: solo un lateral (nunca pantalla completa), drawer desde la izquierda
     .aside-inner {
       position: fixed;
       top: 0;
       left: 0;
       bottom: 0;
-      width: min(300px, 72vw);
+      width: min(320px, 78vw);
       max-width: 100%;
       z-index: 1;
       display: flex;
@@ -191,7 +223,7 @@ aside {
       align-items: center;
       justify-content: space-between;
       flex-shrink: 0;
-      padding: 1rem 1.5rem;
+      padding: 1rem 1.25rem;
       padding-top: calc(1rem + env(safe-area-inset-top, 0));
       padding-right: 3.5rem;
       border-bottom: 1px solid var(--aside-overlay-border);
@@ -199,7 +231,7 @@ aside {
 
     .aside-drawer-title {
       font-size: var(--app-font-size-h3);
-      font-weight: 600;
+      font-weight: 700;
       color: var(--aside-overlay-text);
       font-family: "Poppins", sans-serif;
     }
@@ -222,7 +254,6 @@ aside {
       background: var(--aside-overlay-close-bg);
       color: var(--aside-overlay-close-color);
       cursor: pointer;
-      font-size: var(--app-font-size-body);
       transition: color 0.2s, background 0.2s;
       z-index: 2;
 
@@ -238,95 +269,45 @@ aside {
       display: flex;
       flex-direction: column;
       min-height: 0;
-      padding: 1.5rem 1.5rem 5rem;
-      padding-top: 4rem;
+      padding: 1.25rem 1.1rem 1.6rem;
+      padding-top: 1.25rem;
 
       .nav-title {
-        font-size: var(--app-font-size-h3);
-        margin-bottom: 1rem;
+        font-size: 1.02rem;
+        text-align: left;
         color: var(--aside-overlay-text-muted);
-        flex-shrink: 0;
+        margin-bottom: 10px;
+        padding: 0 6px;
       }
 
       .nav-links-wrap {
         overflow-y: auto;
         overflow-x: hidden;
-        -webkit-overflow-scrolling: touch;
-        flex: 1;
         min-height: 0;
+        flex: 1;
       }
 
-      .nav-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 0;
-
-        a,
-        button {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-          padding: 1rem 1.5rem;
-          min-height: 44px;
-          text-decoration: none;
-          color: var(--aside-overlay-text);
-          font-size: var(--app-font-size-body);
-          font-weight: var(--app-font-weight-body);
-          border-bottom: 1px solid var(--aside-overlay-border);
-          transition: color 0.15s, background 0.15s;
-          -webkit-tap-highlight-color: transparent;
-          touch-action: manipulation;
-          background: transparent;
-          border: none;
-          font: inherit;
-          text-align: left;
-
-          &:hover,
-          &:focus-visible {
-            color: var(--aside-overlay-hover);
-            background: var(--theme-nav-item-bg);
-          }
-
-          &:active {
-            color: var(--aside-overlay-hover);
-          }
-        }
-
-        li {
-          background: none;
-          box-shadow: none;
-          padding: 0;
-          border-radius: 0;
-
-          &:last-child a {
-            border-bottom: none;
-          }
-        }
+      .nav-group__title {
+        color: color-mix(in srgb, var(--aside-overlay-text-muted) 92%, transparent);
       }
-    }
 
-    .btnSupport.btnSupport-float {
-      display: flex;
-      position: absolute;
-      bottom: calc(1.5rem + env(safe-area-inset-bottom, 0));
-      left: 50%;
-      transform: translateX(-50%);
-      align-items: center;
-      justify-content: center;
-      width: 52px;
-      height: 52px;
-      padding: 12px;
-      background-color: var(--theme-card-bg);
-      color: var(--theme-text-primary);
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      transition: background-color 0.2s, color 0.2s;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
+      .nav-link-item {
+        background: color-mix(in srgb, var(--aside-overlay-bg) 82%, transparent);
+        border-color: color-mix(in srgb, var(--aside-overlay-border) 92%, transparent);
+        color: var(--aside-overlay-text);
+        font-size: 0.94rem;
+        min-height: 44px;
+      }
+
+      .nav-link-item:hover,
+      .nav-link-item:focus-visible {
+        color: var(--aside-overlay-hover);
+      }
+
+      .nav-link-item.is-active {
+        border-color: color-mix(in srgb, var(--app-accent) 58%, var(--aside-overlay-border));
+        background: color-mix(in srgb, var(--app-accent-bright) 14%, var(--aside-overlay-bg));
+      }
     }
   }
 }
