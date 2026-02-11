@@ -120,6 +120,9 @@ log "Installing dependencies (monorepo workspaces)..."
 log "Running Prisma migrations..."
 ( cd "$BACKEND_DIR" && npx prisma migrate deploy )
 
+log "Ensuring PayPal webhook IDs are configured..."
+( cd "$BACKEND_DIR" && npm run paypal:webhooks:ensure )
+
 log "Building backend..."
 ( cd "$BACKEND_DIR" && npm run build )
 

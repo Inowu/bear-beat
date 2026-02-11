@@ -12,6 +12,7 @@
     "audit:fullsite": "node -r ts-node/register scripts/auditFullSite.ts",
     "seed:audit-user": "node -r ts-node/register scripts/seedAuditUser.ts",
     "seed:audit-plan": "node -r ts-node/register scripts/seedAuditPlan.ts",
+    "paypal:webhooks:ensure": "node -r ts-node/register scripts/ensurePaypalWebhooks.ts",
     "e2e:smoke": "node -r ts-node/register scripts/smokeE2e.ts",
     "db:hygiene:backup": "node -r ts-node/register scripts/dbHygiene.ts backup",
     "db:hygiene:audit": "node -r ts-node/register scripts/dbHygiene.ts audit",
