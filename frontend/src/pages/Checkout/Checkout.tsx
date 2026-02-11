@@ -636,7 +636,7 @@ function Checkout() {
     return (
       <div className="checkout-main-container">
         <div className="checkout-inner">
-          <header className="checkout-header">
+          <header className="checkout-header checkout-card">
             <h1 className="checkout-page-title">Activar acceso</h1>
             <p className="checkout-page-subtitle">
               Elige un plan en la página de planes para continuar.
@@ -694,11 +694,27 @@ function Checkout() {
   return (
     <div className="checkout-main-container">
       <div className="checkout-inner">
-        <header className="checkout-header">
-          <h1 className="checkout-page-title">Activar acceso inmediato</h1>
-          <p className="checkout-page-subtitle">
-            Elige tu método de pago y completa tu activación en la misma pantalla.
-          </p>
+        <header className="checkout-header checkout-card">
+          <span className="checkout-header__eyebrow">
+            <ShieldCheck size={14} aria-hidden />
+            Checkout protegido
+          </span>
+          <div className="checkout-header__main">
+            <div className="checkout-header__copy">
+              <h1 className="checkout-page-title">Activar acceso inmediato</h1>
+              <p className="checkout-page-subtitle">
+                Elige tu método de pago y completa tu activación en la misma pantalla.
+              </p>
+            </div>
+            <div
+              className="checkout-header__amount"
+              aria-label={`Total ${totalPrice} ${plan.moneda ?? "MXN"}`}
+            >
+              <span>Total de hoy</span>
+              <strong>${totalPrice}</strong>
+              <small>{plan.moneda ?? "MXN"} / mes</small>
+            </div>
+          </div>
           <div className="checkout-steps" role="list" aria-label="Pasos de checkout">
             {checkoutSteps.map((stepData) => (
               <span key={stepData.step} role="listitem">
@@ -739,6 +755,11 @@ function Checkout() {
             <p className="checkout-summary__price">
               ${totalPrice} <span className="checkout-summary__currency">{plan.moneda ?? "MXN"}</span>
             </p>
+            <div className="checkout-summary__stats" role="list" aria-label="Detalles del plan">
+              <span role="listitem">{formatInt(quotaGb)} GB/mes</span>
+              <span role="listitem">{plan.duration} días</span>
+              <span role="listitem">Renovación automática</span>
+            </div>
             {plan.description && (
               <p className="checkout-summary__desc">{plan.description}</p>
             )}
@@ -753,7 +774,7 @@ function Checkout() {
               ))}
             </ul>
             <p className="checkout-summary__meta">
-              Duración: {plan.duration} días · Renovación automática
+              Activación inmediata al confirmar el pago.
             </p>
             {selectedMethod === "card" && trialConfig?.enabled && trialConfig.eligible !== false && (
               <p className="checkout-summary__trial" role="note">
@@ -763,13 +784,18 @@ function Checkout() {
           </aside>
 
           <section className="checkout-card checkout-payment-card">
-            <h2 className="checkout-card__title">Tu cuenta y pago</h2>
-            <div className="checkout-credentials">
-              <div className="checkout-credentials__row">
+            <div className="checkout-payment-card__head">
+              <h2 className="checkout-card__title">Tu cuenta y pago</h2>
+              <p className="checkout-payment-card__hint">
+                Selecciona cómo quieres pagar hoy.
+              </p>
+            </div>
+            <div className="checkout-credentials" role="group" aria-label="Datos de tu cuenta">
+              <div className="checkout-credentials__item">
                 <span className="checkout-credentials__label">Nombre</span>
                 <span className="checkout-credentials__value">{currentUser?.username ?? "—"}</span>
               </div>
-              <div className="checkout-credentials__row">
+              <div className="checkout-credentials__item">
                 <span className="checkout-credentials__label">Correo</span>
                 <span className="checkout-credentials__value">{currentUser?.email ?? "—"}</span>
               </div>
@@ -791,41 +817,48 @@ function Checkout() {
                     aria-pressed={selectedMethod === method}
                     data-testid={`checkout-method-${method}`}
                   >
-                    <span className="checkout-method__icon" aria-hidden>
-                      <Icon size={18} />
+                    <span className="checkout-method__top">
+                      <span className="checkout-method__icon" aria-hidden>
+                        <Icon size={18} />
+                      </span>
+                      <span className="checkout-method__copy">
+                        <strong>{label}</strong>
+                        <small>{description}</small>
+                      </span>
                     </span>
-                    <span className="checkout-method__copy">
-                      <strong>{label}</strong>
-                      <small>{description}</small>
+                    <span className="checkout-method__state" aria-hidden>
+                      {selectedMethod === method ? "Seleccionado" : "Elegir"}
                     </span>
                   </button>
                 );
               })}
             </div>
             {inlineError && <p className="checkout-inline-error">{inlineError}</p>}
-            <button
-              type="button"
-              className="checkout-cta-btn checkout-cta-btn--primary"
-              onClick={handleContinuePayment}
-              disabled={processingMethod !== null}
-              data-testid="checkout-continue"
-            >
-              {processingMethod === "card" && "Abriendo pasarela segura..."}
-              {processingMethod === "spei" && "Generando referencia SPEI (recurrente)..."}
-              {processingMethod === "bbva" && "Abriendo pago BBVA..."}
-              {processingMethod === "oxxo" && "Generando referencia de pago en efectivo..."}
-              {processingMethod === null && selectedMethod === "card" && "Continuar con tarjeta segura"}
-              {processingMethod === null && selectedMethod === "spei" && "Generar referencia SPEI (recurrente)"}
-              {processingMethod === null && selectedMethod === "bbva" && "Continuar con BBVA"}
-              {processingMethod === null && selectedMethod === "oxxo" && "Generar referencia de pago en efectivo"}
-            </button>
-            <p className="checkout-payment-note">
-              Si tienes dudas para pagar, te ayudamos por chat en tiempo real:{" "}
-              <a href={SUPPORT_CHAT_URL} target="_blank" rel="noopener noreferrer">
-                abrir soporte
-              </a>
-              .
-            </p>
+            <div className="checkout-payment-actions">
+              <button
+                type="button"
+                className="checkout-cta-btn checkout-cta-btn--primary"
+                onClick={handleContinuePayment}
+                disabled={processingMethod !== null}
+                data-testid="checkout-continue"
+              >
+                {processingMethod === "card" && "Abriendo pasarela segura..."}
+                {processingMethod === "spei" && "Generando referencia SPEI (recurrente)..."}
+                {processingMethod === "bbva" && "Abriendo pago BBVA..."}
+                {processingMethod === "oxxo" && "Generando referencia de pago en efectivo..."}
+                {processingMethod === null && selectedMethod === "card" && "Continuar con tarjeta segura"}
+                {processingMethod === null && selectedMethod === "spei" && "Generar referencia SPEI (recurrente)"}
+                {processingMethod === null && selectedMethod === "bbva" && "Continuar con BBVA"}
+                {processingMethod === null && selectedMethod === "oxxo" && "Generar referencia de pago en efectivo"}
+              </button>
+              <p className="checkout-payment-note">
+                Si tienes dudas para pagar, te ayudamos por chat en tiempo real:{" "}
+                <a href={SUPPORT_CHAT_URL} target="_blank" rel="noopener noreferrer">
+                  abrir soporte
+                </a>
+                .
+              </p>
+            </div>
           </section>
         </div>
       </div>
