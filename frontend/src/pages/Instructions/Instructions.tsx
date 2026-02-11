@@ -111,7 +111,7 @@ function Instructions() {
         </div>
       </header>
 
-      <main id="instructions-main" className="instructions2026__main">
+      <section id="instructions-main" className="instructions2026__main" aria-label="Contenido principal de instrucciones">
         <div className="ph__container instructions2026__container">
           <header className="instructions2026__hero">
             <p className="instructions2026__eyebrow">Guía de descarga</p>
@@ -248,7 +248,7 @@ function Instructions() {
             </a>
           </section>
         </div>
-      </main>
+      </section>
     </div>
   );
 }

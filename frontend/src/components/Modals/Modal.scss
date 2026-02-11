@@ -26,10 +26,12 @@
     font-size: var(--app-font-size-body);
     font-family: "Poppins", sans-serif;
     border-radius: 100px;
-    transition: opacity 0.2s, box-shadow 0.2s;
+    letter-spacing: 0.01em;
+    transition: opacity 0.2s, box-shadow 0.2s, transform 0.16s ease, border-color 0.16s ease;
 
     &:hover {
       opacity: 0.9;
+      transform: translateY(-1px);
     }
   }
 
@@ -85,7 +87,7 @@
     border-radius: 0 0 12px 12px;
     padding-block: 16px;
     padding-inline: 16px;
-    background: var(--app-bg-soft);
+    background: color-mix(in srgb, var(--app-bg-soft) 88%, var(--app-bg-card));
     border-top: 1px solid var(--app-border);
 
     .content {
@@ -150,19 +152,23 @@
         border: none;
         min-height: 48px;
         font-size: var(--app-font-size-body);
-        box-shadow: 0 0 16px var(--app-focus-ring);
+        box-shadow: var(--app-shadow);
         &:hover:not(:disabled) {
-          box-shadow: 0 0 24px var(--app-focus-ring);
+          box-shadow: var(--app-shadow-card);
         }
       }
 
-      /* Light: primary CTA sin halo neón (premium/limpio). */
-      html[data-theme="light"] & .btn-option-4 {
-        box-shadow: var(--app-shadow);
+      /* Dark: conserva glow sutil para CTA primario */
+      html[data-theme="dark"] & .btn-option-4,
+      html.dark & .btn-option-4,
+      .dark & .btn-option-4 {
+        box-shadow: 0 12px 24px color-mix(in srgb, var(--app-accent) 26%, transparent);
       }
 
-      html[data-theme="light"] & .btn-option-4:hover:not(:disabled) {
-        box-shadow: var(--app-shadow-card);
+      html[data-theme="dark"] & .btn-option-4:hover:not(:disabled),
+      html.dark & .btn-option-4:hover:not(:disabled),
+      .dark & .btn-option-4:hover:not(:disabled) {
+        box-shadow: 0 14px 28px color-mix(in srgb, var(--app-accent) 30%, transparent);
       }
 
       .btn-option-5 {
@@ -251,10 +257,10 @@
 }
 
 .modal-content {
-  border-radius: 12px;
+  border-radius: 18px;
   background: var(--app-bg-card) !important;
   backdrop-filter: blur(12px);
-  border: 1px solid var(--app-border) !important;
+  border: 1px solid color-mix(in srgb, var(--app-border) 90%, transparent) !important;
   box-shadow: var(--app-shadow-card) !important;
 }
 
@@ -280,6 +286,19 @@
 .oxxo-modal .modal-content {
   border-color: var(--app-status-warning) !important;
   box-shadow: var(--app-shadow-card), 0 0 0 2px color-mix(in srgb, var(--app-status-warning) 35%, transparent) !important;
+}
+
+html[data-theme="light"] .error-modal .modal-content {
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.12), 0 0 0 1px color-mix(in srgb, var(--app-status-error) 30%, transparent) !important;
+}
+
+html[data-theme="light"] .success-modal .modal-content,
+html[data-theme="light"] .option-modal .modal-content {
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.12), 0 0 0 1px color-mix(in srgb, var(--app-status-success) 30%, transparent) !important;
+}
+
+html[data-theme="light"] .oxxo-modal .modal-content {
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.12), 0 0 0 1px color-mix(in srgb, var(--app-status-warning) 30%, transparent) !important;
 }
 
 .card-input {

@@ -881,6 +881,34 @@ html[data-theme="light"] .plan-card-wrapper.is-marketing .plan-card-alt-panel {
   background: color-mix(in srgb, var(--app-bg-soft) 78%, transparent);
 }
 
+html[data-theme="light"] .plan-card-wrapper.is-marketing .plan-card-kicker,
+html[data-theme="light"] .plan-card-wrapper.is-marketing .plan-card-price-currency,
+html[data-theme="light"] .plan-card-wrapper.is-marketing .plan-card-trial-note,
+html[data-theme="light"] .plan-card-wrapper.is-marketing .plan-card-alt-hint,
+html[data-theme="light"] .plan-card-wrapper.is-marketing .plan-card-confidence {
+  color: color-mix(in srgb, var(--plan-card-subtitle) 98%, transparent);
+}
+
+html[data-theme="light"] .plan-card-wrapper.is-marketing .plan-card-highlight-item,
+html[data-theme="light"] .plan-card-wrapper.is-marketing .plan-card-benefit-item {
+  color: color-mix(in srgb, var(--plan-card-benefit) 98%, transparent);
+}
+
+html[data-theme="light"] .plan-card-wrapper.is-marketing .plan-card-btn-hero {
+  border-color: color-mix(in srgb, var(--app-accent) 42%, transparent);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.09);
+}
+
+html[data-theme="light"] .plan-card-wrapper.is-marketing .plan-card-btn-hero:hover {
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.11);
+}
+
+html[data-theme="light"] .plan-card-wrapper.is-marketing .plan-card-btn-outline,
+html[data-theme="light"] .plan-card-wrapper.is-marketing .plan-card-alt-toggle {
+  border-color: color-mix(in srgb, var(--plan-card-btn-outline-border) 82%, transparent);
+  background: color-mix(in srgb, #ffffff 88%, var(--app-bg-soft));
+}
+
 .resp-plan {
   @include respond-to(md) {
     order: 2;

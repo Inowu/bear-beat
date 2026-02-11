@@ -369,6 +369,56 @@ html[data-theme="dark"] .admin-page-wrap::before {
   z-index: 1;
 }
 
+/* Legacy admin pages (usuarios/ordenes/cupones/etc.) coherence layer */
+.admin-page-wrap :where(.btn-addUsers, .btn-addCoupon, .btn-addPlan, .btn-addDomain, .btn-addPhone) {
+  min-height: 44px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ad-accent) 52%, transparent);
+  background: var(--app-gradient);
+  color: var(--app-btn-text);
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  box-shadow: var(--app-shadow);
+}
+
+.admin-page-wrap :where(.btn-addUsers, .btn-addCoupon, .btn-addPlan, .btn-addDomain, .btn-addPhone):hover {
+  filter: saturate(1.05);
+}
+
+html[data-theme="dark"] .admin-page-wrap :where(.btn-addUsers, .btn-addCoupon, .btn-addPlan, .btn-addDomain, .btn-addPhone) {
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--ad-accent) 26%, transparent);
+}
+
+.admin-page-wrap :where(.search-input input, .input, .select-input select, .select-input .date-input) {
+  min-height: 44px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--ad-input-border) 88%, transparent);
+  background: color-mix(in srgb, var(--ad-input-bg) 96%, transparent);
+  color: var(--ad-title);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.admin-page-wrap :where(.search-input input, .input, .select-input select, .select-input .date-input)::placeholder {
+  color: color-mix(in srgb, var(--ad-text-muted) 92%, transparent);
+}
+
+.admin-page-wrap :where(.search-input input, .input, .select-input select, .select-input .date-input):focus-visible {
+  outline: none;
+  border-color: color-mix(in srgb, var(--ad-accent) 58%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ad-accent) 24%, transparent);
+}
+
+.admin-page-wrap .search-input__icon {
+  color: color-mix(in srgb, var(--ad-text-muted) 94%, transparent);
+}
+
+html[data-theme="light"] .admin-page-wrap :where(.search-input input, .input, .select-input select, .select-input .date-input) {
+  background: color-mix(in srgb, #ffffff 98.8%, var(--ad-input-bg)) !important;
+  border-color: color-mix(in srgb, var(--ad-input-border) 92%, transparent) !important;
+}
+
 @media (max-width: 768px) {
   .admin-page-wrap {
     padding: 8px;

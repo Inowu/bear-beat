@@ -646,6 +646,7 @@ async function flushQueuedEvents(): Promise<void> {
     const token = getAccessToken();
     const response = await fetch(analyticsCollectUrl, {
       method: "POST",
+      credentials: "omit",
       headers: {
         "content-type": "application/json",
         ...(token ? { authorization: `Bearer ${token}` } : {}),

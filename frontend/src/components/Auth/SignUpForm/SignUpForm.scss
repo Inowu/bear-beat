@@ -295,6 +295,27 @@ form.sign-up-form {
   }
 }
 
+html[data-theme="light"] .auth-login-card.auth-login-card--signup {
+  border-color: color-mix(in srgb, var(--auth-login-card-border) 96%, transparent);
+  background: color-mix(in srgb, #ffffff 99%, var(--auth-login-card-bg));
+  box-shadow:
+    0 18px 36px rgba(15, 23, 42, 0.085),
+    0 1px 0 rgba(255, 255, 255, 0.72) inset;
+}
+
+html[data-theme="light"] form.sign-up-form .signup-submit-btn {
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.1);
+}
+
+html[data-theme="light"] form.sign-up-form .signup-submit-btn:hover:not(:disabled) {
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.12);
+}
+
+html[data-theme="light"] form.sign-up-form .turnstile-widget-wrap {
+  border-color: color-mix(in srgb, var(--auth-input-border) 94%, transparent);
+  background: color-mix(in srgb, #ffffff 88%, var(--auth-input-bg));
+}
+
 @include respond-to(sm) {
   .auth-login-card.auth-login-card--signup {
     max-width: 430px;

@@ -1561,7 +1561,7 @@
 .home-footer {
   padding: 34px 0 44px;
   border-top: 1px solid color-mix(in srgb, var(--ph-border) 70%, transparent);
-  background: color-mix(in srgb, var(--ph-bg) 88%, black);
+  background: color-mix(in srgb, var(--ph-footer-bg) 94%, var(--ph-bg));
 }
 
 @media (max-width: 640px) {
@@ -1607,22 +1607,23 @@
   margin: 0;
   color: color-mix(in srgb, var(--ph-text-muted) 92%, transparent);
   font-size: 14.5px;
-  line-height: 1.58;
+  line-height: 1.64;
   max-width: 38ch;
-  text-wrap: pretty;
+  text-wrap: balance;
+  hyphens: none;
 }
 
 .home-footer__links {
   grid-area: links;
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(112px, max-content));
   gap: 8px;
-  align-items: flex-start;
-  align-content: flex-start;
+  justify-content: start;
 }
 
 .home-footer__links a {
   min-height: 38px;
+  min-width: 112px;
   padding: 0 13px;
   display: inline-flex;
   align-items: center;
@@ -1659,9 +1660,10 @@
   margin: 0;
   color: color-mix(in srgb, var(--ph-text-muted) 92%, transparent);
   font-size: 13.5px;
-  line-height: 1.54;
+  line-height: 1.62;
   max-width: 40ch;
-  text-wrap: pretty;
+  text-wrap: balance;
+  hyphens: none;
 }
 
 .home-footer__copy {
@@ -1669,6 +1671,7 @@
   margin: 6px 0 0;
   color: color-mix(in srgb, var(--ph-text-muted) 86%, transparent);
   font-size: 12.8px;
+  font-weight: 640;
   line-height: 1.45;
   letter-spacing: 0.005em;
 }
@@ -1915,6 +1918,78 @@
 
 .home-sticky__close:hover {
   background: color-mix(in srgb, var(--ph-accent) 10%, transparent);
+}
+
+html[data-theme="light"] .public-home {
+  background:
+    radial-gradient(940px 580px at 10% 0%, color-mix(in srgb, var(--ph-accent) 2.8%, transparent), transparent 62%),
+    radial-gradient(900px 540px at 90% 10%, color-mix(in srgb, var(--ph-accent) 2.1%, transparent), transparent 62%),
+    var(--ph-bg);
+}
+
+html[data-theme="light"] .home-topnav {
+  background: color-mix(in srgb, var(--ph-bg) 95%, #ffffff);
+  border-bottom-color: color-mix(in srgb, var(--ph-border) 88%, transparent);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+html[data-theme="light"] .home-topnav__nav {
+  border-color: color-mix(in srgb, var(--ph-border) 90%, transparent);
+  background: color-mix(in srgb, #ffffff 97%, var(--ph-bg-card));
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
+}
+
+html[data-theme="light"] .home-topnav__link {
+  color: color-mix(in srgb, var(--ph-text-body) 98%, transparent);
+}
+
+html[data-theme="light"] .home-topnav__link.is-active,
+html[data-theme="light"] .home-topnav__link[aria-current="page"] {
+  background: color-mix(in srgb, var(--ph-accent) 13%, #ffffff);
+  border-color: color-mix(in srgb, var(--ph-accent) 30%, transparent);
+}
+
+html[data-theme="light"] .home-visual,
+html[data-theme="light"] .how-it-works__card,
+html[data-theme="light"] .trust-bar__item,
+html[data-theme="light"] .use-cases__card,
+html[data-theme="light"] .catalog-demo__search,
+html[data-theme="light"] .catalog-demo__card,
+html[data-theme="light"] .social-proof__col,
+html[data-theme="light"] .social-proof__neutral,
+html[data-theme="light"] .compatibility__card,
+html[data-theme="light"] .home-faq__item,
+html[data-theme="light"] .human-proof__card {
+  border-color: color-mix(in srgb, var(--ph-border) 88%, transparent);
+  background: color-mix(in srgb, #ffffff 98%, var(--ph-bg-card));
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.065);
+}
+
+html[data-theme="light"] .home-hero__sub,
+html[data-theme="light"] .home-sub,
+html[data-theme="light"] .home-hero__micro-row,
+html[data-theme="light"] .home-visual__note,
+html[data-theme="light"] .home-footer__micro {
+  color: color-mix(in srgb, var(--ph-text-body) 96%, transparent);
+}
+
+html[data-theme="light"] .home-footer {
+  border-top-color: color-mix(in srgb, var(--ph-border) 84%, transparent);
+  background: color-mix(in srgb, #ffffff 96%, var(--ph-bg));
+}
+
+html[data-theme="light"] .home-footer__links a {
+  border-color: color-mix(in srgb, var(--ph-border) 88%, transparent);
+  background: color-mix(in srgb, #ffffff 98%, var(--ph-bg-card));
+}
+
+html[data-theme="light"] .home-sticky {
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, #ffffff 94%, var(--ph-bg)) 0%,
+    color-mix(in srgb, var(--ph-bg) 72%, transparent) 100%
+  );
+  border-top-color: color-mix(in srgb, var(--ph-border) 82%, transparent);
 }
 
 @media (prefers-reduced-motion: reduce) {

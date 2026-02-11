@@ -705,13 +705,58 @@ html[data-theme="light"] .plans-grid-heading p {
   color: color-mix(in srgb, var(--ph-text-muted) 98%, transparent);
 }
 
+html[data-theme="light"] .plans-page {
+  background:
+    radial-gradient(940px 580px at 10% 0%, color-mix(in srgb, var(--ph-accent) 2.6%, transparent), transparent 62%),
+    radial-gradient(920px 560px at 90% 10%, color-mix(in srgb, var(--ph-accent) 2%, transparent), transparent 62%),
+    var(--ph-bg);
+}
+
 html[data-theme="light"] .plans-topnav {
-  background: color-mix(in srgb, var(--ph-bg) 92%, white);
+  border-bottom-color: color-mix(in srgb, var(--ph-border) 86%, transparent);
+  background: color-mix(in srgb, var(--ph-bg) 95%, white);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
 }
 
 html[data-theme="light"] .plans-topnav__nav {
   border-color: color-mix(in srgb, var(--ph-border) 86%, transparent);
   background: color-mix(in srgb, var(--ph-bg-card) 98%, transparent);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
+}
+
+html[data-theme="light"] .plans-topnav__link {
+  color: color-mix(in srgb, var(--ph-text-body) 98%, transparent);
+}
+
+html[data-theme="light"] .plans-topnav__link:hover,
+html[data-theme="light"] .plans-topnav__link.is-active,
+html[data-theme="light"] .plans-topnav__link[aria-current="page"] {
+  background: color-mix(in srgb, var(--ph-accent) 14%, #ffffff);
+  border-color: color-mix(in srgb, var(--ph-accent) 30%, transparent);
+}
+
+html[data-theme="light"] .plans-hero-subtitle,
+html[data-theme="light"] .plans-hero-micro,
+html[data-theme="light"] .plans-currency-micro,
+html[data-theme="light"] .plans-trial-note {
+  color: color-mix(in srgb, var(--ph-text-body) 95%, transparent);
+}
+
+html[data-theme="light"] .plans-hero-price-tag,
+html[data-theme="light"] .plans-hero-trust li {
+  border-color: color-mix(in srgb, var(--ph-border) 88%, transparent);
+  background: color-mix(in srgb, #ffffff 92%, var(--ph-bg-soft));
+}
+
+html[data-theme="light"] .plans-grid-heading {
+  padding: 2px 4px 2px;
+}
+
+html[data-theme="light"] .plans-plan-item.is-selected .plan-card-main-card {
+  border-color: color-mix(in srgb, var(--ph-accent) 38%, transparent);
+  box-shadow:
+    0 14px 30px color-mix(in srgb, var(--ph-accent) 8%, transparent),
+    0 12px 24px rgba(15, 23, 42, 0.08);
 }
 
 html[data-theme="light"] .plans-hero-primary {
@@ -721,4 +766,13 @@ html[data-theme="light"] .plans-hero-primary {
 html[data-theme="light"] .plans-hero-trust li {
   border-color: color-mix(in srgb, var(--ph-border) 82%, transparent);
   background: color-mix(in srgb, var(--ph-bg-soft) 82%, transparent);
+}
+
+html[data-theme="light"] .plans-sticky {
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, #ffffff 94%, var(--ph-bg)) 0%,
+    color-mix(in srgb, var(--ph-bg) 76%, transparent) 100%
+  );
+  border-top-color: color-mix(in srgb, var(--ph-border) 84%, transparent);
 }

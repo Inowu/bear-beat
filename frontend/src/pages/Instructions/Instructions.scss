@@ -639,6 +639,49 @@ html[data-theme="light"] .instructions2026__troubleshoot {
     #ffffff;
 }
 
+html[data-theme="light"] .instructions2026__topnav {
+  border-bottom-color: color-mix(in srgb, var(--ph-border) 88%, transparent);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+}
+
+html[data-theme="light"] .instructions2026__lead,
+html[data-theme="light"] .instructions2026__hero-note,
+html[data-theme="light"] .instructions2026__navigator-help,
+html[data-theme="light"] .instructions2026__method-copy p,
+html[data-theme="light"] .instructions2026__steps li,
+html[data-theme="light"] .instructions2026__troubleshoot li {
+  color: color-mix(in srgb, var(--ph-text-body) 96%, transparent);
+}
+
+html[data-theme="light"] .instructions2026__hero-note {
+  color: color-mix(in srgb, var(--ph-text-muted) 98%, transparent);
+}
+
+html[data-theme="light"] .instructions2026__quick-link {
+  color: color-mix(in srgb, var(--ph-text-body) 98%, transparent);
+}
+
+html[data-theme="light"] .instructions2026__quick-link:hover {
+  background: color-mix(in srgb, var(--ph-accent) 7%, #ffffff);
+}
+
+html[data-theme="light"] .instructions2026__method-head {
+  padding-bottom: 2px;
+  border-bottom: 1px solid color-mix(in srgb, var(--ph-border) 80%, transparent);
+}
+
+html[data-theme="light"] .instructions2026__method-actions .instructions2026__btn--primary {
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.11);
+}
+
+html[data-theme="light"] .instructions2026__method-actions .instructions2026__btn--ghost.home-cta--secondary {
+  border-color: color-mix(in srgb, var(--ph-border) 88%, transparent);
+}
+
+html[data-theme="light"] .instructions2026__troubleshoot {
+  border-color: color-mix(in srgb, #d9caa9 82%, var(--ph-border));
+}
+
 .instructions2026 a:focus-visible,
 .instructions2026 button:focus-visible {
   outline: 2px solid var(--app-focus-ring);

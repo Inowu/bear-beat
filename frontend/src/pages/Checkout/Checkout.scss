@@ -829,6 +829,97 @@ html.dark .checkout-cta-btn--primary,
   }
 }
 
+html[data-theme="light"] .checkout-main-container {
+  background:
+    radial-gradient(
+      920px 460px at 8% -8%,
+      color-mix(in srgb, var(--app-accent) 4.6%, transparent),
+      transparent 62%
+    ),
+    radial-gradient(
+      920px 500px at 92% -12%,
+      color-mix(in srgb, var(--app-accent) 3.6%, transparent),
+      transparent 66%
+    ),
+    var(--app-bg);
+}
+
+html[data-theme="light"] .checkout-card,
+html[data-theme="light"] .checkout-one-state {
+  border-color: color-mix(in srgb, var(--app-border) 92%, transparent);
+  background: color-mix(in srgb, #ffffff 99%, var(--app-bg-card));
+  box-shadow:
+    0 1px 0 color-mix(in srgb, #ffffff 96%, transparent) inset,
+    0 14px 30px rgba(15, 23, 42, 0.08);
+}
+
+html[data-theme="light"] .checkout-header__amount,
+html[data-theme="light"] .checkout-summary__trial,
+html[data-theme="light"] .checkout-selected-method {
+  border-color: color-mix(in srgb, var(--app-accent) 32%, var(--app-border));
+  background: color-mix(in srgb, var(--theme-accent-soft-bg-2) 52%, #ffffff);
+}
+
+html[data-theme="light"] .checkout-page-subtitle,
+html[data-theme="light"] .checkout-payment-card__hint,
+html[data-theme="light"] .checkout-summary__desc,
+html[data-theme="light"] .checkout-payment-note,
+html[data-theme="light"] .checkout-summary__meta,
+html[data-theme="light"] .checkout-summary__mini {
+  color: color-mix(in srgb, var(--app-text-muted) 98%, transparent);
+}
+
+html[data-theme="light"] .checkout-steps span[role="listitem"],
+html[data-theme="light"] .checkout-trust-strip span,
+html[data-theme="light"] .checkout-header__quickfacts span,
+html[data-theme="light"] .checkout-summary__stats span,
+html[data-theme="light"] .checkout-method__state {
+  border-color: color-mix(in srgb, var(--app-border) 88%, transparent);
+  background: color-mix(in srgb, #ffffff 98.6%, var(--app-bg-soft));
+}
+
+html[data-theme="light"] .checkout-method {
+  border-color: color-mix(in srgb, var(--app-border) 90%, transparent);
+  background: color-mix(in srgb, #ffffff 99%, var(--app-bg-card));
+}
+
+html[data-theme="light"] .checkout-method:hover {
+  box-shadow: 0 10px 20px color-mix(in srgb, var(--app-accent) 10%, transparent);
+}
+
+html[data-theme="light"] .checkout-method.is-active {
+  border-color: color-mix(in srgb, var(--app-accent) 36%, var(--app-border));
+  background: color-mix(in srgb, var(--app-accent) 7%, #ffffff);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--app-accent) 11%, transparent);
+}
+
+html[data-theme="light"] .checkout-paypal-panel {
+  border-color: color-mix(in srgb, var(--app-border) 88%, transparent);
+  background: color-mix(in srgb, #ffffff 99%, var(--app-bg-soft));
+}
+
+html[data-theme="light"] .checkout-paypal-panel .paypal-container {
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--app-border) 82%, transparent);
+  background: color-mix(in srgb, #ffffff 99%, transparent);
+  padding: 4px;
+}
+
+html[data-theme="light"] .checkout-cta-btn--primary {
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--app-accent) 20%, transparent);
+}
+
+html[data-theme="light"] .checkout-cta-btn--ghost {
+  border-color: color-mix(in srgb, var(--app-border) 90%, transparent);
+  background: color-mix(in srgb, #ffffff 99%, var(--app-bg-card));
+}
+
+html[data-theme="light"] .checkout-credentials,
+html[data-theme="light"] .checkout-credentials__item {
+  border-color: color-mix(in srgb, var(--app-border) 88%, transparent);
+  background: color-mix(in srgb, #ffffff 99%, var(--app-bg-soft));
+}
+
 @media (max-width: 720px) {
   .checkout-main-container {
     padding-left: max(10px, env(safe-area-inset-left, 0));

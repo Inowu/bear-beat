@@ -93,7 +93,7 @@
   background: color-mix(in srgb, #ffd200 22%, var(--app-bg-card));
 
   strong {
-    color: #b10c1f;
+    color: #7a0b19;
     letter-spacing: 0.05em;
   }
 }
@@ -122,6 +122,19 @@ html.dark .payment-method-logos__item--paypal,
   /* Keep PayPal label accessible in dark theme (blue on dark fails contrast). */
   background: color-mix(in srgb, #ffffff 92%, var(--app-bg-card));
   border-color: color-mix(in srgb, #003087 25%, var(--app-border));
+}
+
+[data-theme="dark"] .payment-method-logos__item--oxxo,
+html.dark .payment-method-logos__item--oxxo,
+.dark .payment-method-logos__item--oxxo {
+  border-color: color-mix(in srgb, #ffd97f 30%, var(--app-border));
+  background: color-mix(in srgb, #3a2f14 88%, var(--app-bg-card));
+}
+
+[data-theme="dark"] .payment-method-logos__item--oxxo strong,
+html.dark .payment-method-logos__item--oxxo strong,
+.dark .payment-method-logos__item--oxxo strong {
+  color: #fff3d0;
 }
 
 @media (max-width: 640px) {

@@ -4,12 +4,12 @@
 
 /* Token bridge for Tailwind utilities and first paint */
 :root {
-  --bg-main: #EEEEEE;
+  --bg-main: #ECF2F7;
   --bg-card: #FFFFFF;
-  --bg-input: #FFFFFF;
-  --text-main: #1A1A1A;
-  --text-muted: #5F5F5F;
-  --border-main: #D3D3D3;
+  --bg-input: #F4F7FA;
+  --text-main: #141A24;
+  --text-muted: #556070;
+  --border-main: rgba(15, 23, 42, 0.16);
   color-scheme: light;
 }
 
@@ -45,6 +45,15 @@ body {
   background-color: var(--bg-card) !important;
   border: 1px solid var(--border-main);
   color: var(--text-main);
-  border-radius: 1rem;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.28);
+  border-radius: 1.2rem;
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.15);
+}
+
+[data-theme="dark"] .modal-content,
+html.dark .modal-content,
+.dark .modal-content,
+[data-theme="dark"] .modal-dialog .content,
+html.dark .modal-dialog .content,
+.dark .modal-dialog .content {
+  box-shadow: 0 20px 42px rgba(0, 0, 0, 0.44);
 }

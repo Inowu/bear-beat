@@ -424,6 +424,67 @@
   }
 }
 
+html[data-theme="light"] .legal2026 {
+  background:
+    radial-gradient(940px 580px at 10% 0%, color-mix(in srgb, var(--ph-accent) 2.4%, transparent), transparent 64%),
+    radial-gradient(900px 560px at 90% 8%, color-mix(in srgb, var(--ph-accent) 1.9%, transparent), transparent 64%),
+    var(--ph-bg);
+}
+
+html[data-theme="light"] .legal2026__hero,
+html[data-theme="light"] .legal2026__section {
+  border-color: color-mix(in srgb, var(--ph-border) 90%, transparent);
+  background: color-mix(in srgb, #ffffff 99%, var(--ph-bg-card));
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+}
+
+html[data-theme="light"] .legal2026__hero {
+  background:
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, #ffffff 99.5%, var(--ph-bg-card)),
+      color-mix(in srgb, var(--ph-accent) 2.2%, #ffffff)
+    );
+}
+
+html[data-theme="light"] .legal2026__lead,
+html[data-theme="light"] .legal2026__hero-note,
+html[data-theme="light"] .legal2026__updated,
+html[data-theme="light"] .legal2026__content p,
+html[data-theme="light"] .legal2026__content ul,
+html[data-theme="light"] .legal2026__faq-panel p {
+  color: color-mix(in srgb, var(--ph-text-body) 96%, transparent);
+}
+
+html[data-theme="light"] .legal2026__quick-nav {
+  border-color: color-mix(in srgb, var(--ph-border) 88%, transparent);
+  background: color-mix(in srgb, var(--ph-bg-card) 98%, transparent);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.07);
+}
+
+html[data-theme="light"] .legal2026__quick-nav .bb-segmented__btn {
+  color: color-mix(in srgb, var(--ph-text-body) 98%, transparent);
+}
+
+html[data-theme="light"] .legal2026__quick-nav .bb-segmented__btn[aria-current="location"] {
+  background: color-mix(in srgb, var(--ph-accent) 12%, #ffffff);
+  border-color: color-mix(in srgb, var(--ph-accent) 28%, transparent);
+}
+
+html[data-theme="light"] .legal2026__faq-actions button,
+html[data-theme="light"] .legal2026__faq-item {
+  border-color: color-mix(in srgb, var(--ph-border) 90%, transparent);
+  background: color-mix(in srgb, #ffffff 99%, var(--ph-bg-soft));
+}
+
+html[data-theme="light"] .legal2026__faq-actions button:hover {
+  background: color-mix(in srgb, var(--ph-accent) 7%, #ffffff);
+}
+
+html[data-theme="light"] .legal2026__faq-panel {
+  border-top: 1px solid color-mix(in srgb, var(--ph-border) 84%, transparent);
+}
+
 .legal2026 a:focus-visible,
 .legal2026__faq-trigger:focus-visible,
 .legal2026__faq-actions button:focus-visible,

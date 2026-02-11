@@ -599,6 +599,92 @@
   font-weight: 700 !important;
 }
 
+html[data-theme="light"] .my-account-main-container {
+  background:
+    radial-gradient(
+      940px 460px at 8% -10%,
+      color-mix(in srgb, var(--ma-accent) 5.4%, transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      800px 420px at 100% -6%,
+      color-mix(in srgb, var(--ma-accent) 4.4%, transparent),
+      transparent 74%
+    ),
+    var(--ma-bg);
+}
+
+html[data-theme="light"] .ma-page-head p,
+html[data-theme="light"] .ma-user-meta,
+html[data-theme="light"] .ma-storage-amount,
+html[data-theme="light"] .ma-empty-card p,
+html[data-theme="light"] .ma-table-empty {
+  color: color-mix(in srgb, var(--ma-text-muted) 98%, transparent);
+}
+
+html[data-theme="light"] .ma-page-kicker {
+  border-color: color-mix(in srgb, var(--ma-accent) 28%, transparent);
+  background: color-mix(in srgb, var(--ma-accent) 8%, #ffffff);
+}
+
+html[data-theme="light"] .ma-panel {
+  border-color: color-mix(in srgb, var(--ma-card-border) 90%, transparent);
+  background: color-mix(in srgb, #ffffff 99%, var(--ma-card-bg));
+  box-shadow:
+    0 14px 30px rgba(15, 23, 42, 0.08),
+    inset 0 1px 0 color-mix(in srgb, #ffffff 94%, transparent);
+}
+
+html[data-theme="light"] .ma-table-wrap,
+html[data-theme="light"] .ma-empty-card,
+html[data-theme="light"] .ma-card-item,
+html[data-theme="light"] .ma-ftp-row {
+  border-color: color-mix(in srgb, var(--ma-card-border) 90%, transparent);
+  background: color-mix(in srgb, #ffffff 98.7%, var(--ma-progress-bg));
+}
+
+html[data-theme="light"] .ma-table th {
+  background: color-mix(in srgb, var(--ma-progress-bg) 32%, #ffffff);
+}
+
+html[data-theme="light"] .ma-table-row:hover td {
+  background: color-mix(in srgb, var(--ma-accent) 4.8%, #ffffff);
+}
+
+html[data-theme="light"] .ma-status-pill,
+html[data-theme="light"] .ma-storage-head span,
+html[data-theme="light"] .ma-storage-head strong {
+  color: color-mix(in srgb, var(--ma-text) 92%, transparent);
+}
+
+html[data-theme="light"] .ma-btn-soft {
+  border-color: color-mix(in srgb, var(--ma-card-border) 90%, transparent);
+  background: color-mix(in srgb, #ffffff 98%, var(--ma-progress-bg));
+}
+
+html[data-theme="light"] .ma-btn-soft:hover {
+  background: color-mix(in srgb, var(--ma-accent) 8%, #ffffff);
+}
+
+html[data-theme="light"] .ma-btn-outline {
+  border-color: color-mix(in srgb, var(--ma-accent) 42%, transparent);
+  background: color-mix(in srgb, #ffffff 98%, transparent);
+}
+
+html[data-theme="light"] .ma-btn-danger {
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--app-status-error) 14%, transparent);
+}
+
+html[data-theme="light"] .ma-add-card {
+  border-color: color-mix(in srgb, var(--ma-card-border) 90%, transparent);
+  background: color-mix(in srgb, #ffffff 98.5%, transparent);
+}
+
+html[data-theme="light"] .ma-add-card:hover {
+  background: color-mix(in srgb, var(--ma-accent) 8%, #ffffff);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--ma-accent) 12%, transparent);
+}
+
 @media (max-width: 1080px) {
   .ma-profile-panel {
     grid-template-columns: auto minmax(0, 1fr);

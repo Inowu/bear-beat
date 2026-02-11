@@ -90,6 +90,14 @@
   opacity: 0.08;
 }
 
+[data-theme="light"] .auth-main-container.auth-page .auth-tagline {
+  color: color-mix(in srgb, var(--app-text-body) 94%, transparent);
+}
+
+[data-theme="light"] .auth-main-container.auth-page .auth-tagline .auth-tagline-sep {
+  color: color-mix(in srgb, var(--app-text-muted) 96%, transparent);
+}
+
 // Login: estilos en LoginForm.scss (tarjeta central + atmósfera)
 
 // Card para formularios sueltos (Recuperar, Reset): usa tema
@@ -447,25 +455,34 @@
 }
 
 [data-theme="light"] .auth-split {
-  background: rgba(255, 255, 255, 0.92);
-  border-color: rgba(8, 225, 247, 0.35);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
+  background: color-mix(in srgb, #ffffff 98%, var(--bb-bg));
+  border-color: color-mix(in srgb, var(--ph-border) 88%, transparent);
+  box-shadow: 0 24px 52px rgba(15, 23, 42, 0.13);
 }
 
 [data-theme="light"] .auth-split-form {
-  background: color-mix(in srgb, #ffffff 96%, transparent);
-  border-color: color-mix(in srgb, var(--auth-register-input-border) 86%, transparent);
+  background: color-mix(in srgb, #ffffff 99%, var(--bb-surface-soft));
+  border-color: color-mix(in srgb, var(--auth-register-input-border) 92%, transparent);
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.1);
 }
 
 [data-theme="light"] .auth-split-left {
   background:
-    radial-gradient(ellipse 100% 90% at 20% 0%, rgba(8, 225, 247, 0.19) 0%, transparent 56%),
-    linear-gradient(160deg, #101315 0%, #171b1d 45%, #111417 100%);
+    radial-gradient(ellipse 100% 92% at 18% 0%, rgba(8, 225, 247, 0.17) 0%, transparent 58%),
+    linear-gradient(160deg, #13171c 0%, #1a2027 48%, #14191f 100%);
   color: #f8f8f8;
 }
 
 [data-theme="light"] .auth-split-left .auth-split-testimonial {
-  color: rgba(242, 244, 245, 0.84);
+  color: rgba(242, 244, 245, 0.86);
+}
+
+[data-theme="light"] .auth-split-right {
+  background: color-mix(in srgb, #ffffff 99%, var(--bb-bg));
+}
+
+[data-theme="light"] .auth-split-right .auth-split-form-title {
+  color: var(--app-text-heading);
 }
 
 [data-theme="dark"] .auth-split,

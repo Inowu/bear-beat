@@ -41,17 +41,17 @@
   --bb-dark-300: #292929;
   --bb-dark-400: #1A1A1A;
   /* Light base: slightly cooler/cleaner than #EEEEEE to feel premium (2026) */
-  --bb-bg: #EEF2F6;
+  --bb-bg: #ECF2F7;
   --bb-surface: #FFFFFF;
-  --bb-surface-soft: #F1F4F6;
-  --bb-border: rgba(15, 23, 42, 0.12);
-  --bb-text-heading: #1A1A1A;
-  --bb-text-body: #2A2A2A;
-  --bb-text-muted: #5F5F5F;
-  --bb-focus-ring: rgba(0, 124, 137, 0.26);
+  --bb-surface-soft: #F4F7FA;
+  --bb-border: rgba(15, 23, 42, 0.16);
+  --bb-text-heading: #141A24;
+  --bb-text-body: #1F2937;
+  --bb-text-muted: #556070;
+  --bb-focus-ring: rgba(0, 124, 137, 0.34);
   /* Shadows: softer and more “glass + border” than heavy drop-shadows */
-  --bb-shadow: 0 10px 24px rgba(15, 23, 42, 0.085);
-  --bb-shadow-card: 0 18px 46px rgba(15, 23, 42, 0.105);
+  --bb-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+  --bb-shadow-card: 0 16px 40px rgba(15, 23, 42, 0.11);
   --bb-shadow-glow: 0 0 16px rgba(8, 225, 247, 0.26);
   --bb-shadow-1: var(--bb-shadow);
   --bb-shadow-2: var(--bb-shadow-card);
@@ -124,7 +124,7 @@
   --theme-ink: var(--bb-text-heading);
   --theme-heading: var(--bb-text-heading);
   --theme-strong: var(--bb-text-heading);
-  --theme-bg-muted: #E9EEF2;
+  --theme-bg-muted: #E7EDF3;
   --theme-bg-soft: var(--bb-surface-soft);
   --theme-stripe: rgba(0, 0, 0, 0.05);
   --theme-edge: rgba(21, 42, 53, 0.15);
@@ -133,9 +133,9 @@
   --theme-accent-dim: var(--bb-accent-ink);
   --theme-accent-glow: rgba(8, 225, 247, 0.24);
   /* Soft accent surfaces in LIGHT should be subtle (avoid "baby blue" wash) */
-  --theme-accent-soft-bg: rgba(8, 225, 247, 0.028);
-  --theme-accent-soft-bg-2: rgba(8, 225, 247, 0.045);
-  --theme-accent-soft-bg-3: rgba(8, 225, 247, 0.065);
+  --theme-accent-soft-bg: rgba(8, 225, 247, 0.038);
+  --theme-accent-soft-bg-2: rgba(8, 225, 247, 0.062);
+  --theme-accent-soft-bg-3: rgba(8, 225, 247, 0.09);
   --theme-landing-bg: #000000;
   --theme-landing-text: #FFFFFF;
 
@@ -194,7 +194,7 @@
   --auth-register-input-bg: var(--bb-surface-soft);
   --auth-register-input-border: var(--bb-border);
   --auth-register-input-focus: var(--bb-accent-ink);
-  --auth-register-icon: #7A7A7A;
+  --auth-register-icon: #66707D;
   --auth-register-icon-focus: var(--bb-accent-ink);
   --auth-register-btn-bg: var(--bb-gradient);
   --auth-register-btn-text: #0A0A0A;
@@ -265,7 +265,7 @@
   --fb-accent: var(--bb-accent-ink);
   --fb-input-bg: var(--bb-surface);
   --fb-input-border: var(--bb-border);
-  --fb-input-placeholder: #8A8A8A;
+  --fb-input-placeholder: #697381;
   --fb-folder-icon: var(--bb-warning);
   --fb-file-icon: var(--bb-text-muted);
 
@@ -1321,8 +1321,311 @@ svg[role="img"] {
   line-height: 1.6;
 }
 
+html[data-theme="light"] {
+  .bb-card {
+    border-color: color-mix(in srgb, var(--app-border) 92%, transparent);
+    background: color-mix(in srgb, #ffffff 99%, var(--app-bg-card));
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.075);
+  }
+
+  .bb-card--soft {
+    background: color-mix(in srgb, #ffffff 94%, var(--app-bg-soft));
+    border-color: color-mix(in srgb, var(--app-border) 88%, transparent);
+  }
+
+  .bb-segmented {
+    border-color: color-mix(in srgb, var(--app-border) 90%, transparent);
+    background: color-mix(in srgb, #ffffff 96%, var(--app-bg-card));
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
+  }
+
+  .bb-segmented__btn {
+    color: color-mix(in srgb, var(--app-text-body) 98%, transparent);
+    letter-spacing: 0.045em;
+  }
+
+  .bb-segmented__btn[aria-selected="true"],
+  .bb-segmented__btn.is-active {
+    background: color-mix(in srgb, var(--app-accent) 14%, #ffffff);
+    border-color: color-mix(in srgb, var(--app-accent) 34%, transparent);
+  }
+
+  .bb-badge {
+    border-color: color-mix(in srgb, var(--app-border) 90%, transparent);
+    background: color-mix(in srgb, #ffffff 84%, var(--app-bg-soft));
+  }
+
+  .bb-stat-pill {
+    border-color: color-mix(in srgb, var(--app-border) 90%, transparent);
+    background: color-mix(in srgb, #ffffff 98%, var(--app-bg-card));
+  }
+
+  .bb-accordion__item {
+    border-color: color-mix(in srgb, var(--app-border) 90%, transparent);
+    background: color-mix(in srgb, #ffffff 94%, var(--app-bg-soft));
+  }
+
+  .bb-accordion__panel {
+    border-top-color: color-mix(in srgb, var(--app-border) 84%, transparent);
+    color: color-mix(in srgb, var(--app-text-body) 96%, transparent);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .bb-segmented__btn {
     transition: none !important;
   }
+}
+
+/* ==========================================================================
+   Brand Coherence Layer 2026 (Global)
+   Goal: one visual language across public/auth/admin/modals/states.
+   ========================================================================== */
+
+:where(
+  .main-layout-main-container,
+  .public-home,
+  .plans-page,
+  .auth-main-container,
+  .legal2026,
+  .instructions2026,
+  .my-account-main-container,
+  .checkout-main-container,
+  .admin-theme,
+  .admin-page-wrap
+) {
+  font-family: var(--bb-font-ui);
+}
+
+:where(
+  .public-home,
+  .plans-page,
+  .auth-main-container,
+  .legal2026,
+  .instructions2026,
+  .my-account-main-container,
+  .checkout-main-container,
+  .admin-theme,
+  .admin-page-wrap
+) :where(h1, h2, h3, h4, h5, h6) {
+  line-height: 1.14;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+:where(
+  .public-home,
+  .plans-page,
+  .auth-main-container,
+  .legal2026,
+  .instructions2026,
+  .my-account-main-container,
+  .checkout-main-container,
+  .admin-theme,
+  .admin-page-wrap
+) :where(p, li, label, small, .text-muted) {
+  color: color-mix(in srgb, var(--app-text-body) 95%, transparent);
+}
+
+::selection {
+  background: color-mix(in srgb, var(--app-accent) 24%, transparent);
+  color: var(--app-text-heading);
+}
+
+/* Legacy + Bootstrap control harmonization */
+:where(
+  .form-control,
+  .form-select,
+  .card-input,
+  .input,
+  .search-input input,
+  .search-input__field input,
+  .select-input select,
+  .select-input .date-input,
+  .admin-page-wrap__toolbar input,
+  .admin-page-wrap__toolbar select,
+  .modal-container input,
+  .modal-container select,
+  .modal-container textarea
+) {
+  min-height: 44px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--app-border) 88%, transparent);
+  background: color-mix(in srgb, var(--app-bg-card) 95%, transparent);
+  color: var(--app-text-heading);
+  font-size: var(--app-font-size-body);
+  font-weight: 600;
+  box-shadow: none;
+}
+
+:where(
+  .form-control,
+  .form-select,
+  .card-input,
+  .input,
+  .search-input input,
+  .search-input__field input,
+  .select-input select,
+  .select-input .date-input,
+  .admin-page-wrap__toolbar input,
+  .admin-page-wrap__toolbar select,
+  .modal-container input,
+  .modal-container select,
+  .modal-container textarea
+)::placeholder {
+  color: color-mix(in srgb, var(--app-text-muted) 96%, transparent);
+}
+
+:where(
+  .form-control,
+  .form-select,
+  .card-input,
+  .input,
+  .search-input input,
+  .search-input__field input,
+  .select-input select,
+  .select-input .date-input,
+  .admin-page-wrap__toolbar input,
+  .admin-page-wrap__toolbar select,
+  .modal-container input,
+  .modal-container select,
+  .modal-container textarea
+):focus-visible {
+  outline: none;
+  border-color: color-mix(in srgb, var(--app-accent) 56%, var(--app-border));
+  box-shadow: 0 0 0 3px var(--app-focus-ring);
+}
+
+/* Legacy CTA/button harmonization across pages and admin tools */
+:where(
+  .btn,
+  .btn-primary,
+  .btn-secondary,
+  .btn-outline-primary,
+  .btn-outline-secondary,
+  .btn-addUsers,
+  .btn-addCoupon,
+  .btn-addPlan,
+  .btn-addDomain,
+  .btn-addPhone,
+  .btn-option-4,
+  .btn-success,
+  .crm-toolbar__btn,
+  .live-toolbar__btn,
+  .analytics-toolbar__refresh
+) {
+  min-height: 44px;
+  border-radius: var(--bb-radius-pill);
+  font-family: var(--bb-font-ui);
+  font-size: var(--app-font-size-body);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+:where(
+  .btn-primary,
+  .btn-addUsers,
+  .btn-addCoupon,
+  .btn-addPlan,
+  .btn-addDomain,
+  .btn-addPhone,
+  .btn-option-4,
+  .btn-success,
+  .analytics-toolbar__refresh,
+  .live-toolbar__btn--primary
+) {
+  background: var(--app-gradient);
+  color: var(--app-btn-text);
+  border-color: color-mix(in srgb, var(--app-accent) 36%, transparent);
+  box-shadow: var(--app-shadow);
+}
+
+html[data-theme="dark"] :where(
+  .btn-primary,
+  .btn-addUsers,
+  .btn-addCoupon,
+  .btn-addPlan,
+  .btn-addDomain,
+  .btn-addPhone,
+  .btn-option-4,
+  .btn-success,
+  .analytics-toolbar__refresh,
+  .live-toolbar__btn--primary
+) {
+  box-shadow: 0 12px 24px color-mix(in srgb, var(--app-accent) 28%, transparent);
+}
+
+:where(
+  .btn-secondary,
+  .btn-outline-primary,
+  .btn-outline-secondary,
+  .btn-option-5
+) {
+  background: color-mix(in srgb, var(--app-bg-card) 96%, transparent);
+  color: var(--app-text-heading);
+  border-color: color-mix(in srgb, var(--app-border) 88%, transparent);
+}
+
+:where(button, .btn, .bb-btn, .bb-icon-btn, .ma-btn, .checkout-cta-btn) svg {
+  flex-shrink: 0;
+}
+
+:where(.error-formik, .formik, .auth-login-inline-error) {
+  color: var(--app-status-error);
+  font-size: 1.24rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+:where(.success-message, .warning-message) {
+  font-size: 1.24rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+/* Modal system coherence (bootstrap + custom modals). */
+.modal-backdrop.show {
+  background: color-mix(in srgb, #020812 56%, transparent);
+  opacity: 0.54;
+}
+
+.modal-content {
+  border-radius: 18px !important;
+  border: 1px solid color-mix(in srgb, var(--app-border) 90%, transparent) !important;
+  background: color-mix(in srgb, var(--app-bg-card) 98%, transparent) !important;
+  box-shadow: var(--app-shadow-card) !important;
+}
+
+.modal-content .modal-header,
+.modal-content .modal-footer {
+  border-color: color-mix(in srgb, var(--app-border) 84%, transparent);
+}
+
+.modal-content .modal-title {
+  color: var(--app-text-heading);
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+
+.modal-content .btn-close {
+  opacity: 0.75;
+}
+
+.modal-content .btn-close:hover {
+  opacity: 1;
+}
+
+html[data-theme="light"] .modal-content {
+  border-color: color-mix(in srgb, var(--app-border) 92%, transparent) !important;
+  background: color-mix(in srgb, #ffffff 99%, var(--app-bg-card)) !important;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16) !important;
+}
+
+/* Status surfaces consistency */
+:where(.bb-alert, .analytics-alert, .crm-toast, .admin-error-strip) {
+  border-radius: 14px;
+}
+
+html[data-theme="light"] :where(.bb-alert, .analytics-alert, .crm-toast, .admin-error-strip) {
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
 }

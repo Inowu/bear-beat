@@ -363,3 +363,35 @@
     }
   }
 }
+
+html[data-theme="light"] .auth-login-atmosphere {
+  background:
+    radial-gradient(560px 320px at 50% 32%, color-mix(in srgb, var(--app-accent) 4.2%, transparent), transparent 70%),
+    var(--auth-login-atmosphere-bg);
+}
+
+html[data-theme="light"] .auth-login-card {
+  border-color: color-mix(in srgb, var(--auth-login-card-border) 96%, transparent);
+  background: color-mix(in srgb, #ffffff 99%, var(--auth-login-card-bg));
+  box-shadow:
+    0 18px 36px rgba(15, 23, 42, 0.085),
+    0 1px 0 rgba(255, 255, 255, 0.72) inset;
+}
+
+html[data-theme="light"] .auth-login-form .auth-field-label {
+  color: color-mix(in srgb, var(--auth-login-subtitle) 98%, transparent);
+}
+
+html[data-theme="light"] .auth-login-form .auth-login-input-wrap {
+  border-color: color-mix(in srgb, var(--auth-input-border) 96%, transparent);
+  background: color-mix(in srgb, #ffffff 94%, var(--auth-input-bg));
+}
+
+html[data-theme="light"] .auth-login-form .auth-login-input::placeholder {
+  opacity: 0.74;
+}
+
+html[data-theme="light"] .auth-login-form .auth-login-forgot,
+html[data-theme="light"] .auth-login-form .auth-login-register {
+  font-weight: 700;
+}
