@@ -1,13 +1,22 @@
 /* PayPal buttons render into iframes; reserve space so the layout doesn't jump. */
 .paypal-container {
   width: 100%;
-  min-height: 46px;
+  min-height: 50px;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: stretch;
+  border-radius: 999px;
+  overflow: hidden;
+  background: transparent;
 }
 
 .paypal-container > * {
-  width: 100%;
+  width: 100% !important;
 }
 
+.paypal-container iframe {
+  width: 100% !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+}

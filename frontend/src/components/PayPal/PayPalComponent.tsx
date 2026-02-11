@@ -22,6 +22,7 @@ interface Props {
 
 export default function PayPalComponent(props: Props) {
     const components = "buttons";
+    const disableFunding: string[] = ["paylater", "credit", "venmo"];
     const buttonsRef = useRef<{ render: (selector: string) => Promise<unknown> } | null>(null);
     const isMountedRef = useRef(true);
     const buttonId = `paypal-button-container-${props.plan.id}`;
@@ -48,8 +49,9 @@ export default function PayPalComponent(props: Props) {
     const paypalButtonStyle: PayPalButtonsComponentOptions["style"] = {
         color: "blue",
         shape: "pill",
-        layout: "horizontal",
-        height: 46,
+        layout: "vertical",
+        label: "paypal",
+        height: 48,
         tagline: false,
     };
 
@@ -165,11 +167,14 @@ export default function PayPalComponent(props: Props) {
             loadScript({
                 clientId,
                 vault: false,
-                components
+                components,
+                disableFunding,
             })
                 .then(() => {
                     render({
                         style: paypalButtonStyle,
+                        // Checkout optimizado: botón único PayPal, sin bloques secundarios.
+                        fundingSource: "paypal",
                         onApprove: onApproveOrder,
                         createOrder,
                     });
@@ -180,10 +185,13 @@ export default function PayPalComponent(props: Props) {
                 vault: true,
                 intent: "subscription",
                 components,
+                disableFunding,
             })
                 .then(() => {
                     render({
                         style: paypalButtonStyle,
+                        // Checkout optimizado: botón único PayPal, sin bloques secundarios.
+                        fundingSource: "paypal",
                         onApprove: onApproveSubsciption,
                         createSubscription,
                         onClick: onClickButton,

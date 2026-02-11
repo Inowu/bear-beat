@@ -729,7 +729,10 @@ html.dark .checkout-method.is-active,
 
 .checkout-paypal-panel .paypal-container {
   justify-content: stretch;
-  min-height: 46px;
+  min-height: 50px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: transparent;
 }
 
 .checkout-cta-btn {
@@ -1013,9 +1016,9 @@ html[data-theme="light"] .checkout-paypal-panel {
 
 html[data-theme="light"] .checkout-paypal-panel .paypal-container {
   border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--app-border) 82%, transparent);
-  background: color-mix(in srgb, #ffffff 99%, transparent);
-  padding: 4px;
+  border: 1px solid color-mix(in srgb, var(--app-border) 74%, transparent);
+  background: color-mix(in srgb, var(--theme-accent-soft-bg) 38%, #ffffff);
+  padding: 3px;
 }
 
 html[data-theme="light"] .checkout-cta-btn--primary {
