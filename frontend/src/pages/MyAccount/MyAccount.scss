@@ -18,6 +18,13 @@
     var(--ma-bg);
   color: var(--ma-text);
   font-family: var(--bb-font-ui);
+  font-size: var(--app-font-size-body);
+  line-height: 1.45;
+  letter-spacing: 0;
+}
+
+.my-account-main-container :where(h1, h2, h3, p, span, a, button, th, td, code) {
+  font-family: var(--bb-font-ui);
 }
 
 .ma-shell {
@@ -45,7 +52,7 @@
   border: 1px solid color-mix(in srgb, var(--ma-accent) 32%, transparent);
   background: color-mix(in srgb, var(--ma-accent) 12%, transparent);
   color: var(--ma-accent);
-  font-size: 11.5px;
+  font-size: 1.06rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -56,7 +63,7 @@
   margin: 0;
   color: var(--ma-title);
   font-family: var(--bb-font-ui);
-  font-size: clamp(28px, 2vw + 18px, 38px);
+  font-size: clamp(2.9rem, 2vw + 1.8rem, 3.8rem);
   font-weight: 800;
   line-height: 1.06;
   letter-spacing: -0.02em;
@@ -65,9 +72,9 @@
 .ma-page-head p {
   margin: 0;
   color: var(--ma-text-muted);
-  font-size: 15px;
+  font-size: 1.46rem;
   font-weight: 500;
-  line-height: 1.46;
+  line-height: 1.48;
 }
 
 .ma-panel {
@@ -128,7 +135,7 @@
 .ma-user-name {
   margin: 0;
   color: var(--ma-text);
-  font-size: 21px;
+  font-size: 2.2rem;
   font-weight: 800;
   line-height: 1.12;
 }
@@ -136,9 +143,9 @@
 .ma-user-meta {
   margin: 0;
   color: var(--ma-text-muted);
-  font-size: 14px;
+  font-size: 1.36rem;
   font-weight: 500;
-  line-height: 1.4;
+  line-height: 1.44;
   word-break: break-word;
 }
 
@@ -158,7 +165,7 @@
   border: 1px solid color-mix(in srgb, var(--ma-card-border) 88%, transparent);
   background: color-mix(in srgb, var(--ma-progress-bg) 68%, transparent);
   color: var(--ma-text-muted);
-  font-size: 12px;
+  font-size: 1.16rem;
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0.01em;
@@ -197,14 +204,14 @@
 
 .ma-storage-head span {
   color: var(--ma-text-muted);
-  font-size: 12.5px;
+  font-size: 1.2rem;
   font-weight: 600;
   letter-spacing: 0.01em;
 }
 
 .ma-storage-head strong {
   color: var(--ma-title);
-  font-size: 13px;
+  font-size: 1.3rem;
   font-weight: 800;
 }
 
@@ -225,7 +232,7 @@
 .ma-storage-amount {
   margin: 0;
   color: var(--ma-text-muted);
-  font-size: 13.5px;
+  font-size: 1.3rem;
   font-weight: 500;
   font-family: var(--bb-font-ui);
 }
@@ -251,7 +258,7 @@
 .ma-panel-head h2 {
   margin: 0;
   color: var(--ma-title);
-  font-size: clamp(17px, 0.3vw + 16px, 21px);
+  font-size: clamp(1.8rem, 0.3vw + 1.65rem, 2.1rem);
   font-weight: 800;
   line-height: 1.18;
 }
@@ -266,7 +273,7 @@
 .ma-empty-card p {
   margin: 0;
   color: var(--ma-text-muted);
-  font-size: 14px;
+  font-size: 1.35rem;
   font-weight: 500;
   line-height: 1.48;
 }
@@ -285,7 +292,7 @@
 .ma-ftp-expiration {
   margin: 12px 0 0;
   color: var(--ma-text-muted);
-  font-size: 13px;
+  font-size: 1.25rem;
   font-weight: 500;
 }
 
@@ -311,7 +318,7 @@
 
 .ma-table th {
   color: var(--ma-text-muted);
-  font-size: 11.5px;
+  font-size: 1.08rem;
   font-weight: 700;
   letter-spacing: 0.055em;
   text-transform: uppercase;
@@ -326,7 +333,7 @@
 
 .ma-table td {
   color: var(--ma-text);
-  font-size: 13.5px;
+  font-size: 1.34rem;
   font-weight: 500;
   padding: 11px 12px;
   border-bottom: 1px solid color-mix(in srgb, var(--ma-card-border) 86%, transparent);
@@ -344,7 +351,7 @@
 
 .ma-mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-  font-size: 12.8px;
+  font-size: 1.22rem;
   letter-spacing: 0.01em;
 }
 
@@ -397,7 +404,7 @@
 .ma-card-number {
   margin: 0;
   color: var(--ma-text);
-  font-size: 14px;
+  font-size: 1.34rem;
   font-weight: 700;
   letter-spacing: 0.045em;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
@@ -406,7 +413,7 @@
 .ma-card-date {
   margin: 0;
   color: var(--ma-text-muted);
-  font-size: 13px;
+  font-size: 1.22rem;
   font-weight: 500;
 }
 
@@ -421,7 +428,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  font-size: 14px !important;
+  font-size: 1.34rem !important;
   font-weight: 600 !important;
   cursor: pointer;
   transition: border-color 0.16s ease, color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
@@ -458,7 +465,7 @@
 
 .ma-ftp-label {
   color: var(--ma-text-muted);
-  font-size: 11.5px;
+  font-size: 1.08rem;
   font-weight: 700;
   letter-spacing: 0.055em;
   text-transform: uppercase;
@@ -466,7 +473,7 @@
 
 .ma-ftp-value {
   color: var(--ma-text);
-  font-size: 13px;
+  font-size: 1.24rem;
   font-weight: 700;
   text-align: left;
   min-width: 0;
@@ -484,7 +491,7 @@
 
 .ma-copy-ok {
   color: var(--ma-accent);
-  font-size: 11.5px;
+  font-size: 1.08rem;
   font-weight: 700;
   letter-spacing: 0.01em;
 }
@@ -521,7 +528,7 @@
 }
 
 .ma-badge {
-  font-size: 12px !important;
+  font-size: 1.12rem !important;
   font-weight: 700 !important;
   border-radius: 999px !important;
 }
@@ -535,7 +542,7 @@
   padding: 0 14px;
   border-radius: 999px;
   border: 1px solid transparent;
-  font-size: 14px !important;
+  font-size: 1.32rem !important;
   font-weight: 700 !important;
   line-height: 1;
   text-decoration: none;
@@ -590,12 +597,12 @@
 .ma-btn-small {
   min-height: 38px !important;
   padding: 0 12px;
-  font-size: 12px !important;
+  font-size: 1.16rem !important;
 }
 
 .my-account-main-container .content-area-app button.ma-btn {
   min-height: 44px !important;
-  font-size: 14px !important;
+  font-size: 1.32rem !important;
   font-weight: 700 !important;
 }
 
@@ -733,11 +740,11 @@ html[data-theme="light"] .ma-add-card:hover {
   }
 
   .ma-page-head h1 {
-    font-size: clamp(26px, 7vw, 32px);
+    font-size: clamp(2.6rem, 7vw, 3.2rem);
   }
 
   .ma-page-head p {
-    font-size: 14px;
+    font-size: 1.34rem;
     line-height: 1.42;
   }
 
@@ -761,12 +768,12 @@ html[data-theme="light"] .ma-add-card:hover {
   }
 
   .ma-user-meta {
-    font-size: 13.5px;
+    font-size: 1.28rem;
   }
 
   .ma-status-pill {
     min-height: 28px;
-    font-size: 11.5px;
+    font-size: 1.08rem;
     padding: 0 10px;
   }
 
@@ -775,15 +782,15 @@ html[data-theme="light"] .ma-add-card:hover {
   }
 
   .ma-storage-head span {
-    font-size: 12px;
+    font-size: 1.12rem;
   }
 
   .ma-storage-head strong {
-    font-size: 13px;
+    font-size: 1.2rem;
   }
 
   .ma-storage-amount {
-    font-size: 13px;
+    font-size: 1.22rem;
   }
 
   .ma-profile-panel > .ma-btn-danger {
@@ -855,7 +862,7 @@ html[data-theme="light"] .ma-add-card:hover {
   }
 
   .ma-card-number {
-    font-size: 13.5px;
+    font-size: 1.28rem;
   }
 
   .ma-table {
