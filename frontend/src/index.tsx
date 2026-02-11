@@ -1,8 +1,7 @@
 import "./instrument";
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import ReactDOM from "react-dom/client";
 import * as Sentry from "@sentry/react";
-import { PayPalScriptProvider } from "@paypal/react-paypal-js";
 import "./index.css";
 import "./styles/index.scss";
 import reportWebVitals from "./reportWebVitals";
@@ -21,40 +20,93 @@ import UserContextProvider from "./contexts/UserContext";
 import AuthRoute from "./functions/AuthRoute";
 import LandingOrAuthRoute from "./functions/LandingOrAuthRoute";
 import HomeOrLanding from "./functions/HomeOrLanding";
-import Auth from "./pages/Auth/Auth";
 import NotAuthRoute from "./functions/NotAuthRoute";
-import LoginForm from "./components/Auth/LoginForm/LoginForm";
-import SignUpForm from "./components/Auth/SignUpForm/SignUpForm";
-import ForgotPasswordForm from "./components/Auth/ForgotPasswordForm/ForgotPasswordForm";
-import Instructions from "./pages/Instructions/Instructions";
-import Legal from "./pages/Legal/Legal";
-import MyAccount from "./pages/MyAccount/MyAccount";
-import Plans from "./pages/Plans/Plans";
-import Checkout from "./pages/Checkout/Checkout";
-import CheckoutSuccess from "./pages/Checkout/CheckoutSuccess";
-import Admin from "./pages/Admin/Admin";
-import ResetPassword from "./components/Auth/ResetPassword/ResetPassword";
-import { PlanAdmin } from "./pages/Admin/PlanAdmin/PlanAdmin";
-import { Storage } from "./pages/Admin/Storage/Storage";
-import { Coupons } from "./pages/Admin/Coupons/Coupons";
-import { Ordens } from "./pages/Admin/Ordens/Ordens";
-import { HistoryCheckout } from "./pages/Admin/HistoryCheckout/HistoryCheckout";
-import { DownloadHistory } from "./pages/Admin/DownloadsHistory/DownloadHistory";
-import { BlockedEmailDomains } from "./pages/Admin/BlockedEmailDomains/BlockedEmailDomains";
-import { BlockedPhoneNumbers } from "./pages/Admin/BlockedPhoneNumbers/BlockedPhoneNumbers";
-import { CatalogStats } from "./pages/Admin/CatalogStats/CatalogStats";
-import { AnalyticsDashboard } from "./pages/Admin/Analytics/AnalyticsDashboard";
-import { LiveAnalytics } from "./pages/Admin/Live/LiveAnalytics";
-import { CrmDashboard } from "./pages/Admin/Crm/CrmDashboard";
-import { PlanUpgrade } from "./pages/PlanUpgrade/PlanUpgrade";
 import { SSEProvider } from "react-hooks-sse";
 import DownloadContextProvider from "./contexts/DownloadContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import Downloads from "./pages/Downloads/Downloads";
 import { sseEndpoint } from "./utils/runtimeConfig";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
+);
+
+const Auth = lazy(() => import("./pages/Auth/Auth"));
+const LoginForm = lazy(() => import("./components/Auth/LoginForm/LoginForm"));
+const SignUpForm = lazy(() => import("./components/Auth/SignUpForm/SignUpForm"));
+const ForgotPasswordForm = lazy(() => import("./components/Auth/ForgotPasswordForm/ForgotPasswordForm"));
+const ResetPassword = lazy(() => import("./components/Auth/ResetPassword/ResetPassword"));
+const Instructions = lazy(() => import("./pages/Instructions/Instructions"));
+const Legal = lazy(() => import("./pages/Legal/Legal"));
+const MyAccount = lazy(() => import("./pages/MyAccount/MyAccount"));
+const Plans = lazy(() => import("./pages/Plans/Plans"));
+const Checkout = lazy(() => import("./pages/Checkout/Checkout"));
+const CheckoutSuccess = lazy(() => import("./pages/Checkout/CheckoutSuccess"));
+const PlanUpgrade = lazy(() =>
+  import("./pages/PlanUpgrade/PlanUpgrade").then((module) => ({ default: module.PlanUpgrade })),
+);
+const Downloads = lazy(() => import("./pages/Downloads/Downloads"));
+const Admin = lazy(() => import("./pages/Admin/Admin"));
+const PlanAdmin = lazy(() =>
+  import("./pages/Admin/PlanAdmin/PlanAdmin").then((module) => ({ default: module.PlanAdmin })),
+);
+const Storage = lazy(() =>
+  import("./pages/Admin/Storage/Storage").then((module) => ({ default: module.Storage })),
+);
+const CatalogStats = lazy(() =>
+  import("./pages/Admin/CatalogStats/CatalogStats").then((module) => ({ default: module.CatalogStats })),
+);
+const AnalyticsDashboard = lazy(() =>
+  import("./pages/Admin/Analytics/AnalyticsDashboard").then((module) => ({ default: module.AnalyticsDashboard })),
+);
+const LiveAnalytics = lazy(() =>
+  import("./pages/Admin/Live/LiveAnalytics").then((module) => ({ default: module.LiveAnalytics })),
+);
+const CrmDashboard = lazy(() =>
+  import("./pages/Admin/Crm/CrmDashboard").then((module) => ({ default: module.CrmDashboard })),
+);
+const DownloadHistory = lazy(() =>
+  import("./pages/Admin/DownloadsHistory/DownloadHistory").then((module) => ({ default: module.DownloadHistory })),
+);
+const Coupons = lazy(() =>
+  import("./pages/Admin/Coupons/Coupons").then((module) => ({ default: module.Coupons })),
+);
+const Ordens = lazy(() =>
+  import("./pages/Admin/Ordens/Ordens").then((module) => ({ default: module.Ordens })),
+);
+const HistoryCheckout = lazy(() =>
+  import("./pages/Admin/HistoryCheckout/HistoryCheckout").then((module) => ({ default: module.HistoryCheckout })),
+);
+const BlockedEmailDomains = lazy(() =>
+  import("./pages/Admin/BlockedEmailDomains/BlockedEmailDomains").then((module) => ({
+    default: module.BlockedEmailDomains,
+  })),
+);
+const BlockedPhoneNumbers = lazy(() =>
+  import("./pages/Admin/BlockedPhoneNumbers/BlockedPhoneNumbers").then((module) => ({
+    default: module.BlockedPhoneNumbers,
+  })),
+);
+
+function RouteLoader() {
+  return (
+    <div
+      style={{
+        minHeight: "40vh",
+        display: "grid",
+        placeItems: "center",
+        color: "var(--theme-text-muted, #9ca3af)",
+        fontWeight: 600,
+      }}
+      aria-live="polite"
+      aria-busy="true"
+    >
+      Cargando...
+    </div>
+  );
+}
+
+const withRouteSuspense = (content: React.ReactNode) => (
+  <Suspense fallback={<RouteLoader />}>{content}</Suspense>
 );
 
 const router = createBrowserRouter([
@@ -67,13 +119,13 @@ const router = createBrowserRouter([
         element: <LandingOrAuthRoute />,
         children: [
           { path: "", element: <HomeOrLanding /> },
-          { path: "instrucciones", element: <Instructions /> },
-          { path: "legal", element: <Legal /> },
+          { path: "instrucciones", element: withRouteSuspense(<Instructions />) },
+          { path: "legal", element: withRouteSuspense(<Legal />) },
           {
             path: "micuenta",
             element: (
               <AuthRoute>
-                <MyAccount />
+                {withRouteSuspense(<MyAccount />)}
               </AuthRoute>
             ),
           },
@@ -81,19 +133,19 @@ const router = createBrowserRouter([
             path: "descargas",
             element: (
               <AuthRoute>
-                <Downloads />
+                {withRouteSuspense(<Downloads />)}
               </AuthRoute>
             ),
           },
           {
             path: "planes",
-            element: <Plans />,
+            element: withRouteSuspense(<Plans />),
           },
           {
             path: "comprar",
             element: (
               <AuthRoute>
-                <Checkout />
+                {withRouteSuspense(<Checkout />)}
               </AuthRoute>
             ),
           },
@@ -101,7 +153,7 @@ const router = createBrowserRouter([
             path: "comprar/success",
             element: (
               <AuthRoute>
-                <CheckoutSuccess />
+                {withRouteSuspense(<CheckoutSuccess />)}
               </AuthRoute>
             ),
           },
@@ -109,7 +161,7 @@ const router = createBrowserRouter([
             path: "actualizar-planes",
             element: (
               <AuthRoute>
-                <PlanUpgrade />
+                {withRouteSuspense(<PlanUpgrade />)}
               </AuthRoute>
             ),
           },
@@ -124,33 +176,33 @@ const router = createBrowserRouter([
         ),
         children: [
           { path: "", element: <Navigate replace to="usuarios" /> },
-          { path: "usuarios", element: <Admin /> },
-          { path: "planesAdmin", element: <PlanAdmin /> },
-          { path: "almacenamiento", element: <Storage /> },
-          { path: "catalogo", element: <CatalogStats /> },
-          { path: "analitica", element: <AnalyticsDashboard /> },
-          { path: "live", element: <LiveAnalytics /> },
-          { path: "crm", element: <CrmDashboard /> },
-          { path: "historial-descargas", element: <DownloadHistory /> },
-          { path: "cupones", element: <Coupons /> },
-          { path: "ordenes", element: <Ordens /> },
-          { path: "historialCheckout", element: <HistoryCheckout /> },
-          { path: "dominios-bloqueados", element: <BlockedEmailDomains /> },
-          { path: "telefonos-bloqueados", element: <BlockedPhoneNumbers /> },
+          { path: "usuarios", element: withRouteSuspense(<Admin />) },
+          { path: "planesAdmin", element: withRouteSuspense(<PlanAdmin />) },
+          { path: "almacenamiento", element: withRouteSuspense(<Storage />) },
+          { path: "catalogo", element: withRouteSuspense(<CatalogStats />) },
+          { path: "analitica", element: withRouteSuspense(<AnalyticsDashboard />) },
+          { path: "live", element: withRouteSuspense(<LiveAnalytics />) },
+          { path: "crm", element: withRouteSuspense(<CrmDashboard />) },
+          { path: "historial-descargas", element: withRouteSuspense(<DownloadHistory />) },
+          { path: "cupones", element: withRouteSuspense(<Coupons />) },
+          { path: "ordenes", element: withRouteSuspense(<Ordens />) },
+          { path: "historialCheckout", element: withRouteSuspense(<HistoryCheckout />) },
+          { path: "dominios-bloqueados", element: withRouteSuspense(<BlockedEmailDomains />) },
+          { path: "telefonos-bloqueados", element: withRouteSuspense(<BlockedPhoneNumbers />) },
         ],
       },
       {
         path: "auth",
         element: (
           <NotAuthRoute>
-            <Auth />
+            {withRouteSuspense(<Auth />)}
           </NotAuthRoute>
         ),
         children: [
-          { path: "", element: <LoginForm /> },
-          { path: "registro", element: <SignUpForm /> },
-          { path: "recuperar", element: <ForgotPasswordForm /> },
-          { path: "reset-password", element: <ResetPassword /> },
+          { path: "", element: withRouteSuspense(<LoginForm />) },
+          { path: "registro", element: withRouteSuspense(<SignUpForm />) },
+          { path: "recuperar", element: withRouteSuspense(<ForgotPasswordForm />) },
+          { path: "reset-password", element: withRouteSuspense(<ResetPassword />) },
         ],
       },
       {
@@ -160,11 +212,27 @@ const router = createBrowserRouter([
     ],
   },
 ]);
-// 'https://thebearbeatapi.lat/trpc'
-// 'https://kale67.world/trpc'
-initFacebookPixel();
-initGrowthMetrics();
-initHotjar();
+
+const scheduleTrackersInit = () => {
+  if (typeof window === "undefined") return;
+
+  const bootstrap = () => {
+    initFacebookPixel();
+    initGrowthMetrics();
+    initHotjar();
+  };
+
+  const maybeWindow = window as Window & {
+    requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
+  };
+  if (typeof maybeWindow.requestIdleCallback === "function") {
+    maybeWindow.requestIdleCallback(() => bootstrap(), { timeout: 2000 });
+    return;
+  }
+  window.setTimeout(bootstrap, 1200);
+};
+
+scheduleTrackersInit();
 
 root.render(
   <React.StrictMode>
@@ -174,13 +242,6 @@ root.render(
     <ThemeProvider>
       <UserContextProvider>
         <DownloadContextProvider>
-        <PayPalScriptProvider
-          options={{
-            clientId: process.env.REACT_APP_ENVIRONMENT === 'development'
-              ? process.env.REACT_APP_PAYPAL_CLIENT_TEST_ID!
-              : process.env.REACT_APP_PAYPAL_CLIENT_ID!,
-          }}
-        >
           {sseEndpoint ? (
             <SSEProvider endpoint={sseEndpoint}>
               <RouterProvider router={router} />
@@ -188,7 +249,6 @@ root.render(
           ) : (
             <RouterProvider router={router} />
           )}
-        </PayPalScriptProvider>
         </DownloadContextProvider>
       </UserContextProvider>
     </ThemeProvider>

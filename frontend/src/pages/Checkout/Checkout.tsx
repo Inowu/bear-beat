@@ -190,7 +190,7 @@ function Checkout() {
             activated: 1,
             moneda: (plan.moneda ?? "").toLowerCase(),
             price: +plan.price,
-            OR: [{ paypal_plan_id: { not: null } }, { paypal_plan_id_test: { not: null } }],
+            OR: [{ paypal_plan_id: { not: null } }, { paypal_plan_id_test: { not: "" } }],
           },
         } as any);
         const match =

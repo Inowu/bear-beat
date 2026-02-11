@@ -211,7 +211,7 @@ function PlanCard(props: PlanCardPropsI) {
 	        price: +plan.price,
 	        OR: [
 	          { paypal_plan_id: { not: null } },
-	          { paypal_plan_id_test: { not: null } },
+	          { paypal_plan_id_test: { not: "" } },
 	        ],
 	      },
 	    };
