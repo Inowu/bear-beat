@@ -88,6 +88,12 @@
   transform: translateY(-1px);
 }
 
+.instructions2026__btn:focus-visible,
+.instructions2026__quick-link:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--app-accent) 62%, transparent);
+  outline-offset: 3px;
+}
+
 .instructions2026__quick-nav {
   display: grid;
   gap: 0.55rem;
@@ -136,6 +142,7 @@
 }
 
 .instructions2026__method-card {
+  scroll-margin-top: 16px;
   border-radius: 18px;
   border: 1px solid color-mix(in srgb, var(--app-border) 86%, transparent);
   background: var(--app-bg-card);
@@ -295,12 +302,103 @@
     width: min(1120px, calc(100% - 1.2rem));
   }
 
-  .instructions2026__hero-actions,
-  .instructions2026__method-actions {
-    flex-direction: column;
+  .instructions2026__hero {
+    padding: 1rem;
+    border-radius: 18px;
+  }
+
+  .instructions2026__hero-actions {
+    /* Mobile: reduce hero height. Keep primary CTA full width; secondary CTAs in 2 columns. */
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .instructions2026__hero-actions > :first-child {
+    grid-column: 1 / -1;
   }
 
   .instructions2026__btn {
     width: 100%;
+    min-height: 44px;
+    font-size: 0.88rem;
+    padding: 0 0.95rem;
+  }
+
+  .instructions2026__quick-nav {
+    /* Horizontal quick nav to avoid eating the viewport height. */
+    display: flex;
+    align-items: stretch;
+    gap: 0.6rem;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+
+  .instructions2026__quick-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .instructions2026__quick-link {
+    flex: 0 0 auto;
+    min-height: 44px;
+    border-radius: 999px;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .instructions2026__quick-link span {
+    min-width: 24px;
+    height: 24px;
+    font-size: 0.78rem;
+  }
+
+  .instructions2026__quick-link strong {
+    font-size: 0.86rem;
+    white-space: nowrap;
+  }
+
+  .instructions2026__methods {
+    gap: 0.75rem;
+  }
+
+  .instructions2026__method-card {
+    padding: 0.95rem;
+    border-radius: 16px;
+  }
+
+  .instructions2026__method-head {
+    gap: 0.55rem;
+  }
+
+  .instructions2026__method-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+  }
+
+  .instructions2026__steps {
+    margin-top: 0.75rem;
+    gap: 0.45rem;
+  }
+
+  .instructions2026__steps li {
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
+
+  .instructions2026__tip {
+    margin-top: 0.75rem;
+    padding: 0.5rem 0.65rem;
+    font-size: 0.85rem;
+  }
+
+  .instructions2026__method-actions {
+    margin-top: 0.75rem;
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .instructions2026__troubleshoot {
+    border-radius: 16px;
   }
 }
