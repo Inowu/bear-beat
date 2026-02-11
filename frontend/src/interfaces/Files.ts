@@ -1,8 +1,22 @@
+export interface ITrackMetadata {
+  artist: string | null;
+  title: string | null;
+  displayName: string | null;
+  bpm: number | null;
+  camelot: string | null;
+  format: string | null;
+  version: string | null;
+  coverUrl: string | null;
+  durationSeconds: number | null;
+  source: 'database' | 'inferred' | string;
+}
+
 export interface IFiles {
   name: string;
   type: string;
   path?: string;
   size: number;
+  metadata?: ITrackMetadata | null;
 }
 export interface IDownloads {
   dirName: string;

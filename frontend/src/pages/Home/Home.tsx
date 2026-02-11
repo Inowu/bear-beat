@@ -20,8 +20,9 @@ import {
 } from 'lucide-react';
 import PreviewModal from '../../components/PreviewModal/PreviewModal';
 import { useEffect, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 import trpc from '../../api';
-import { IFiles } from 'interfaces/Files';
+import { IFiles, ITrackMetadata } from 'interfaces/Files';
 import { sortArrayByName } from '../../functions/functions';
 import { Spinner } from '../../components/Spinner/Spinner';
 import { useUserContext } from '../../contexts/UserContext';
@@ -63,6 +64,19 @@ interface PendingDownload {
 type FileVisualKind = 'folder' | 'audio' | 'video' | 'archive' | 'file';
 type PreviewKind = 'audio' | 'video';
 type MediaScope = 'audio' | 'video' | 'karaoke' | null;
+type TrackCardTheme = 'audio' | 'video';
+type ResolvedTrackMetadata = {
+  artist: string | null;
+  title: string;
+  displayName: string;
+  bpm: number | null;
+  camelot: string | null;
+  format: string | null;
+  version: string | null;
+  coverUrl: string | null;
+  durationSeconds: number | null;
+  source: 'database' | 'inferred';
+};
 
 const AUDIO_EXT_REGEX = /\.(mp3|wav|aac|m4a|flac|ogg|aiff|alac)$/i;
 const VIDEO_EXT_REGEX = /\.(mp4|mov|mkv|avi|wmv|webm|m4v)$/i;
@@ -71,6 +85,88 @@ const VIDEO_PATH_REGEX = /(^|\/)videos?(\/|$)/i;
 const KARAOKE_PATH_REGEX = /(^|\/)karaokes?(\/|$)/i;
 
 const normalizeFilePath = (value?: string): string => (value ?? '').replace(/\\/g, '/');
+const normalizeOptionalText = (value: unknown): string | null => {
+  const text = `${value ?? ''}`.trim();
+  return text ? text : null;
+};
+const normalizeOptionalNumber = (value: unknown): number | null => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return null;
+  }
+  return value;
+};
+const toTrackCardTheme = (kind: FileVisualKind): TrackCardTheme | null => {
+  if (kind === 'audio') return 'audio';
+  if (kind === 'video') return 'video';
+  return null;
+};
+const formatDurationPill = (durationSeconds: number | null): string | null => {
+  if (!durationSeconds || durationSeconds < 1) return null;
+  const totalSeconds = Math.floor(durationSeconds);
+  const mins = Math.floor(totalSeconds / 60);
+  const secs = totalSeconds % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
+const getCoverInitials = (input: string): string => {
+  const parts = input
+    .split(/[\s\-_/]+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (parts.length === 0) return 'BB';
+  if (parts.length === 1) {
+    return parts[0].slice(0, 2).toUpperCase();
+  }
+  return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+};
+const buildTrackMetadata = (
+  file: IFiles,
+  kind: FileVisualKind,
+): ResolvedTrackMetadata | null => {
+  if (file.type === 'd') return null;
+  const trackTheme = toTrackCardTheme(kind);
+  if (!trackTheme) return null;
+
+  const inferred = inferTrackMetadata(file.name);
+  const backend = (file.metadata ?? null) as ITrackMetadata | null;
+
+  const artist = normalizeOptionalText(backend?.artist) ?? inferred.artist;
+  const title =
+    normalizeOptionalText(backend?.title) ??
+    normalizeOptionalText(inferred.title) ??
+    normalizeOptionalText(file.name) ??
+    '';
+  const bpm = normalizeOptionalNumber(backend?.bpm) ?? inferred.bpm;
+  const camelot = normalizeOptionalText(backend?.camelot) ?? inferred.camelot;
+  const format = normalizeOptionalText(backend?.format) ?? inferred.format;
+  const version = normalizeOptionalText(backend?.version) ?? inferred.version;
+  const coverUrl = normalizeOptionalText(backend?.coverUrl);
+  const durationSeconds = normalizeOptionalNumber(backend?.durationSeconds);
+  const displayName =
+    normalizeOptionalText(backend?.displayName) ??
+    (artist ? `${artist} - ${title}` : title) ??
+    normalizeOptionalText(inferred.displayName) ??
+    file.name;
+
+  return {
+    artist,
+    title,
+    displayName,
+    bpm,
+    camelot,
+    format,
+    version,
+    coverUrl,
+    durationSeconds,
+    source: normalizeOptionalText(backend?.source) === 'database' ? 'database' : 'inferred',
+  };
+};
+const getTrackCoverSeed = (value: string): number => {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 31 + value.charCodeAt(i)) % 360;
+  }
+  return Math.abs(hash);
+};
 
 const stripeKey =
   process.env.REACT_APP_ENVIRONMENT === 'development'
@@ -1083,12 +1179,20 @@ function Home() {
                 const allowFolderDownload = isFolder && file.size != null && gbSize <= 50;
                 const fileCategoryLabel = getFileCategoryLabel(file);
                 const kind = getFileVisualKind(file);
-                const inferredTrack = isFolder ? null : inferTrackMetadata(file.name);
-                const displayFileName = inferredTrack?.displayName || file.name;
+                const trackTheme = toTrackCardTheme(kind);
+                const resolvedTrack = buildTrackMetadata(file, kind);
+                const displayFileName = resolvedTrack?.displayName || file.name;
+                const trackTitle = resolvedTrack?.title || displayFileName;
+                const trackArtist = resolvedTrack?.artist;
+                const trackCoverSeed = getTrackCoverSeed(
+                  `${trackArtist ?? ''}${trackTitle}${file.path ?? ''}`.toLowerCase(),
+                );
+                const trackCoverInitials = getCoverInitials(trackArtist || trackTitle || file.name);
+                const trackDurationPill = formatDurationPill(resolvedTrack?.durationSeconds ?? null);
                 return (
                   <article
                     key={`explorer-${idx}`}
-                    className={`bb-explorer-row ${isFolder ? 'is-folder' : 'is-file'}`}
+                    className={`bb-explorer-row ${isFolder ? 'is-folder' : 'is-file'} ${resolvedTrack ? 'is-track' : ''}`}
                     onContextMenu={(e) => e.preventDefault()}
                     onClick={() => {
                       if (isFolder) {
@@ -1111,32 +1215,66 @@ function Home() {
                     </div>
 
                     <div className="bb-row-main">
-                      <div className="bb-file-copy">
+                      <div className={`bb-file-copy ${resolvedTrack ? 'bb-file-copy--track' : ''}`}>
+                        {resolvedTrack && (
+                          <span
+                            className={`bb-track-cover bb-track-cover--${trackTheme ?? 'audio'}`}
+                            style={{
+                              '--bb-track-cover-hue': trackCoverSeed,
+                            } as CSSProperties}
+                            aria-hidden
+                          >
+                            {resolvedTrack.coverUrl ? (
+                              <img
+                                src={resolvedTrack.coverUrl}
+                                alt=""
+                                loading="lazy"
+                                decoding="async"
+                                className="bb-track-cover-img"
+                              />
+                            ) : (
+                              <span className="bb-track-cover-fallback">{trackCoverInitials}</span>
+                            )}
+                          </span>
+                        )}
+                        <div className="bb-track-copy">
                         <span className="bb-file-name" title={file.name}>
-                          {displayFileName}
+                          {resolvedTrack ? trackTitle : displayFileName}
                         </span>
+                        {resolvedTrack && trackArtist && (
+                          <span className="bb-track-artist" title={trackArtist}>
+                            {trackArtist}
+                          </span>
+                        )}
                         <div className="bb-file-meta">
                           <span className="bb-file-pill">{fileCategoryLabel}</span>
-                          {!isFolder && inferredTrack?.format && (
-                            <span className="bb-file-pill bb-file-pill--format">{inferredTrack.format}</span>
+                          {resolvedTrack?.source === 'database' && (
+                            <span className="bb-file-pill bb-file-pill--db">Meta</span>
                           )}
-                          {!isFolder && inferredTrack?.bpm && (
+                          {resolvedTrack?.format && (
+                            <span className="bb-file-pill bb-file-pill--format">{resolvedTrack.format}</span>
+                          )}
+                          {resolvedTrack?.bpm && (
                             <span className="bb-file-pill bb-file-pill--tempo">
-                              {inferredTrack.bpm} BPM
+                              {resolvedTrack.bpm} BPM
                             </span>
                           )}
-                          {!isFolder && inferredTrack?.camelot && (
-                            <span className="bb-file-pill bb-file-pill--key">{inferredTrack.camelot}</span>
+                          {resolvedTrack?.camelot && (
+                            <span className="bb-file-pill bb-file-pill--key">{resolvedTrack.camelot}</span>
                           )}
-                          {!isFolder && inferredTrack?.version && (
+                          {resolvedTrack?.version && (
                             <span
                               className="bb-file-pill bb-file-pill--version"
-                              title={inferredTrack.version}
+                              title={resolvedTrack.version}
                             >
-                              {inferredTrack.version}
+                              {resolvedTrack.version}
                             </span>
                           )}
+                          {trackDurationPill && (
+                            <span className="bb-file-pill bb-file-pill--duration">{trackDurationPill}</span>
+                          )}
                           <span className="bb-file-pill bb-file-pill--size">{sizeLabel}</span>
+                        </div>
                         </div>
                       </div>
                     </div>

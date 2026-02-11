@@ -1,7 +1,11 @@
+import path from 'path';
+
 const KEY_SUFFIX_REGEX = /\b(1[0-2]|[1-9])\s*([AB])\b/i;
 const EXTENSION_REGEX = /\.([a-z0-9]{2,5})$/i;
 const VERSION_SUFFIX_REGEX =
   /\s[-–]\s*(original mix|extended mix|radio edit|remix|edit|intro|outro|clean|dirty|acapella|instrumental|mashup|bootleg|live|vip)\s*$/i;
+const TRACK_FILE_EXT_REGEX =
+  /\.(mp3|wav|aac|m4a|flac|ogg|aiff|alac|mp4|mov|mkv|avi|wmv|webm|m4v)$/i;
 
 export type InferredTrackMetadata = {
   artist: string | null;
@@ -11,15 +15,46 @@ export type InferredTrackMetadata = {
   camelot: string | null;
   format: string | null;
   version: string | null;
+  coverUrl: string | null;
+  durationSeconds: number | null;
+  source: 'inferred';
 };
 
-const normalizeWhitespace = (value: string): string => value.replace(/\s+/g, " ").trim();
+const normalizeWhitespace = (value: string): string => value.replace(/\s+/g, ' ').trim();
+
+export function normalizeCatalogPath(value: string): string {
+  const normalized = `${value ?? ''}`.trim().replace(/\\/g, '/');
+  if (!normalized) return '/';
+  const withLeadingSlash = normalized.startsWith('/') ? normalized : `/${normalized}`;
+  const collapsed = withLeadingSlash.replace(/\/{2,}/g, '/');
+  if (collapsed !== '/' && collapsed.endsWith('/')) {
+    return collapsed.slice(0, -1);
+  }
+  return collapsed;
+}
+
+export function toCatalogRelativePath(absolutePath: string, songsPath: string): string {
+  const relative = path.relative(songsPath, absolutePath).replace(/\\/g, '/');
+  if (!relative || relative === '.') {
+    return '/';
+  }
+  if (relative.startsWith('..')) {
+    return normalizeCatalogPath(absolutePath);
+  }
+  return normalizeCatalogPath(relative);
+}
 
 export function prettyMediaName(value: string): string {
-  const name = `${value ?? ""}`.trim();
-  if (!name) return "";
-  const noExt = name.replace(/\.[a-z0-9]{2,5}$/i, "");
-  return normalizeWhitespace(noExt.replace(/_/g, " "));
+  const name = `${value ?? ''}`.trim();
+  if (!name) return '';
+  const noExt = name.replace(/\.[a-z0-9]{2,5}$/i, '');
+  return normalizeWhitespace(noExt.replace(/_/g, ' '));
+}
+
+export function isTrackLikeFileName(name: string): boolean {
+  const rawName = `${name ?? ''}`.trim();
+  if (!rawName) return false;
+  return TRACK_FILE_EXT_REGEX.test(rawName);
 }
 
 function isLikelyBpm(value: number): boolean {
@@ -49,12 +84,12 @@ function extractBpm(value: string): number | null {
 
 function toVersionLabel(value: string): string {
   const compact = normalizeWhitespace(value).toLowerCase();
-  if (!compact) return "";
-  if (compact === "vip") return "VIP";
+  if (!compact) return '';
+  if (compact === 'vip') return 'VIP';
   return compact
-    .split(" ")
+    .split(' ')
     .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
-    .join(" ");
+    .join(' ');
 }
 
 function extractTempoAndKey(value: string): {
@@ -64,7 +99,7 @@ function extractTempoAndKey(value: string): {
 } {
   const trimmed = normalizeWhitespace(value);
   if (!trimmed) {
-    return { clean: "", bpm: null, camelot: null };
+    return { clean: '', bpm: null, camelot: null };
   }
 
   let clean = trimmed;
@@ -74,7 +109,7 @@ function extractTempoAndKey(value: string): {
   const trailingParen = /\s*\(([^)]*)\)\s*$/;
   const parenMatch = trailingParen.exec(clean);
   if (parenMatch) {
-    const inside = normalizeWhitespace(parenMatch[1] ?? "");
+    const inside = normalizeWhitespace(parenMatch[1] ?? '');
     const maybeBpm = extractBpm(inside);
     const maybeCamelot = extractCamelot(inside);
     if (maybeBpm || maybeCamelot) {
@@ -114,7 +149,7 @@ function extractVersion(value: string): {
   version: string | null;
 } {
   const trimmed = normalizeWhitespace(value);
-  if (!trimmed) return { clean: "", version: null };
+  if (!trimmed) return { clean: '', version: null };
 
   let clean = trimmed;
   let version: string | null = null;
@@ -122,7 +157,7 @@ function extractVersion(value: string): {
   const trailingParen = /\s*\(([^)]{2,36})\)\s*$/;
   const parenMatch = trailingParen.exec(clean);
   if (parenMatch) {
-    const inside = normalizeWhitespace(parenMatch[1] ?? "");
+    const inside = normalizeWhitespace(parenMatch[1] ?? '');
     if (inside && !extractBpm(inside) && !extractCamelot(inside)) {
       version = toVersionLabel(inside);
       clean = normalizeWhitespace(clean.slice(0, parenMatch.index));
@@ -133,7 +168,7 @@ function extractVersion(value: string): {
     const trailingBracket = /\s*\[([^\]]{2,36})\]\s*$/;
     const bracketMatch = trailingBracket.exec(clean);
     if (bracketMatch) {
-      const inside = normalizeWhitespace(bracketMatch[1] ?? "");
+      const inside = normalizeWhitespace(bracketMatch[1] ?? '');
       if (inside && !extractBpm(inside) && !extractCamelot(inside)) {
         version = toVersionLabel(inside);
         clean = normalizeWhitespace(clean.slice(0, bracketMatch.index));
@@ -144,7 +179,7 @@ function extractVersion(value: string): {
   if (!version) {
     const versionMatch = VERSION_SUFFIX_REGEX.exec(clean);
     if (versionMatch) {
-      version = toVersionLabel(versionMatch[1] ?? "");
+      version = toVersionLabel(versionMatch[1] ?? '');
       clean = normalizeWhitespace(clean.slice(0, versionMatch.index));
     }
   }
@@ -172,19 +207,10 @@ function splitArtistAndTitle(value: string): { artist: string | null; title: str
   };
 }
 
-export function inferTrackMetadata(name: string): InferredTrackMetadata {
-  const rawName = `${name ?? ""}`.trim();
-  if (!rawName) {
-    return {
-      artist: null,
-      title: "",
-      displayName: "",
-      bpm: null,
-      camelot: null,
-      format: null,
-      version: null,
-    };
-  }
+export function inferTrackMetadataFromName(name: string): InferredTrackMetadata | null {
+  const rawName = `${name ?? ''}`.trim();
+  if (!rawName) return null;
+  if (!isTrackLikeFileName(rawName)) return null;
 
   const extension = EXTENSION_REGEX.exec(rawName)?.[1] ?? null;
   const normalizedName = prettyMediaName(rawName);
@@ -207,5 +233,8 @@ export function inferTrackMetadata(name: string): InferredTrackMetadata {
     camelot: tempoKeyMeta.camelot,
     format: extension ? extension.toUpperCase() : null,
     version: versionMeta.version,
+    coverUrl: null,
+    durationSeconds: null,
+    source: 'inferred',
   };
 }

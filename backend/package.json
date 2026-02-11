@@ -9,6 +9,8 @@
     "manychat:tags": "node -r ts-node/register scripts/checkManyChatTags.ts",
     "manychat:create-tags": "node -r ts-node/register scripts/createManyChatTags.ts",
     "manychat:sync": "node -r ts-node/register scripts/syncManyChatTags.ts",
+    "metadata:scan": "node -r ts-node/register scripts/scanTrackMetadata.ts",
+    "metadata:spotify-covers": "node -r ts-node/register scripts/backfillTrackMetadataSpotify.ts",
     "audit:fullsite": "node -r ts-node/register scripts/auditFullSite.ts",
     "seed:audit-user": "node -r ts-node/register scripts/seedAuditUser.ts",
     "seed:audit-plan": "node -r ts-node/register scripts/seedAuditPlan.ts",

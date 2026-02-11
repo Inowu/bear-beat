@@ -93,6 +93,12 @@ ensure_env_default "CONEKTA_OXXO_ENABLED" "1"
 # Default free trial config (Stripe only). Override in backend/.env if needed.
 ensure_env_default "BB_TRIAL_DAYS" "7"
 ensure_env_default "BB_TRIAL_GB" "100"
+ensure_env_default "TRACK_METADATA_SCAN_ON_BOOT" "0"
+ensure_env_default "TRACK_METADATA_SPOTIFY_ENABLED" "0"
+ensure_env_default "TRACK_METADATA_SPOTIFY_SCAN_ON_REBUILD" "0"
+ensure_env_default "TRACK_METADATA_SPOTIFY_SCAN_MAX" "400"
+ensure_env_default "TRACK_METADATA_SPOTIFY_MAX_PER_CALL" "6"
+ensure_env_default "TRACK_METADATA_SPOTIFY_MISS_RETRY_HOURS" "24"
 
 current_port="$(grep -Eo 'proxy_pass\s+http://(localhost|127\.0\.0\.1):[0-9]+' "$NGINX_CONF" \
   | head -n 1 \
@@ -125,6 +131,22 @@ log "Ensuring PayPal webhook IDs are configured..."
 
 log "Building backend..."
 ( cd "$BACKEND_DIR" && npm run build )
+
+log "Refreshing track metadata index (non-blocking if unavailable)..."
+if grep -q '^SONGS_PATH=' "$ENV_FILE"; then
+  if ! ( cd "$BACKEND_DIR" && npm run metadata:scan ); then
+    log "Warning: metadata:scan failed; continuing deploy."
+  fi
+else
+  log "Skipping metadata:scan (SONGS_PATH not configured)."
+fi
+
+if grep -q '^TRACK_METADATA_SPOTIFY_ENABLED=1' "$ENV_FILE"; then
+  log "Backfilling Spotify covers for track metadata (optional)..."
+  if ! ( cd "$BACKEND_DIR" && npm run metadata:spotify-covers ); then
+    log "Warning: metadata:spotify-covers failed; continuing deploy."
+  fi
+fi
 
 log "Ensuring pm2 automation runner is running (single instance)..."
 automation_process="bearbeat-automation"

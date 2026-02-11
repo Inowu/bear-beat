@@ -1,3 +1,16 @@
+export interface ITrackMetadata {
+  artist: string | null;
+  title: string | null;
+  displayName: string | null;
+  bpm: number | null;
+  camelot: string | null;
+  format: string | null;
+  version: string | null;
+  coverUrl: string | null;
+  durationSeconds: number | null;
+  source: 'database' | 'inferred';
+}
+
 export interface IFileStat {
   // Apparently redis doesn't support indexing by anything other than strings
   [key: string]: any;
@@ -6,6 +19,7 @@ export interface IFileStat {
   modification: number;
   size: number;
   path?: string;
+  metadata?: ITrackMetadata;
 }
 
 export interface IFileService {

@@ -19,6 +19,7 @@ import { appRouter } from './routers';
 import { createContext } from './context';
 import { downloadEndpoint } from './endpoints/download.endpoint';
 import { initializeSearch } from './search';
+import { rebuildTrackMetadataIndex } from './metadata';
 import { conektaEndpoint } from './endpoints/webhooks/conekta.endpoint';
 import { stripeEndpoint } from './endpoints/webhooks/stripe.endpoint';
 import { paypalEndpoint } from './endpoints/webhooks/paypal.endpoint';
@@ -212,6 +213,20 @@ async function main() {
       log.warn(
         `[SEARCH] Search service disabled in this environment: ${error?.message ?? 'unknown error'}`,
       );
+    }
+
+    if (process.env.TRACK_METADATA_SCAN_ON_BOOT === '1') {
+      void rebuildTrackMetadataIndex()
+        .then((result) => {
+          log.info(
+            `[TRACK_METADATA] Boot scan done: indexed=${result.indexedTracks}, skipped=${result.skippedFiles}`,
+          );
+        })
+        .catch((error: any) => {
+          log.warn(
+            `[TRACK_METADATA] Boot scan failed: ${error?.message ?? 'unknown error'}`,
+          );
+        });
     }
 
     try {

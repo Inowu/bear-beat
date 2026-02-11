@@ -4,6 +4,10 @@ import { v4 as uuid } from 'uuid';
 import fastFolderSizeSync from 'fast-folder-size/sync';
 // import chokidar from 'chokidar';
 import { MeiliSearch, TaskStatus } from 'meilisearch';
+import {
+  inferTrackMetadataFromName,
+  toCatalogRelativePath,
+} from '../metadata/inferTrackMetadata';
 import { IFileStat } from '../services/interfaces/fileService.interface';
 import { log } from '../server';
 
@@ -21,6 +25,14 @@ export async function initializeSearch() {
 
   try {
     const fileIndex = await meiliSearch.getIndex(fileIndexName);
+    await fileIndex.updateSettings({
+      searchableAttributes: [
+        'name',
+        'metadata.displayName',
+        'metadata.artist',
+        'metadata.title',
+      ],
+    });
 
     const documents = await fileIndex.getDocuments();
 
@@ -48,7 +60,12 @@ export async function initializeSearch() {
       await searchIndex.addDocuments(index);
 
       await searchIndex.updateSettings({
-        searchableAttributes: ['name'],
+        searchableAttributes: [
+          'name',
+          'metadata.displayName',
+          'metadata.artist',
+          'metadata.title',
+        ],
       });
 
       log.info('[SEARCH] File index created...');
@@ -56,7 +73,7 @@ export async function initializeSearch() {
   }
 }
 
-export function createFlatFileIndex(dirPath: string): IFileStat[] {
+export function createFlatFileIndex(dirPath: string, rootPath: string = dirPath): IFileStat[] {
   let fileIndex: IFileStat[] = [];
   const files = fs.readdirSync(dirPath);
 
@@ -70,7 +87,7 @@ export function createFlatFileIndex(dirPath: string): IFileStat[] {
 
     if (stats.isDirectory()) {
       // If it's a directory, recursively index its contents
-      const dirIndex = createFlatFileIndex(filePath);
+      const dirIndex = createFlatFileIndex(filePath, rootPath);
 
       fileIndex = fileIndex.concat([
         {
@@ -79,11 +96,12 @@ export function createFlatFileIndex(dirPath: string): IFileStat[] {
           type: 'd',
           size: fastFolderSizeSync(filePath)!,
           modification: stats.mtime.getTime(),
-          path: filePath.replace('/home/products', ''),
+          path: toCatalogRelativePath(filePath, rootPath),
         },
         ...dirIndex,
       ]);
     } else if (stats.isFile()) {
+      const inferredMetadata = inferTrackMetadataFromName(file);
       // If it's a file, add it to the index
       fileIndex.push({
         id: uuid(),
@@ -91,7 +109,8 @@ export function createFlatFileIndex(dirPath: string): IFileStat[] {
         size: stats.size,
         type: '-',
         modification: stats.mtime.getTime(),
-        path: filePath.replace('/home/products', ''),
+        path: toCatalogRelativePath(filePath, rootPath),
+        ...(inferredMetadata ? { metadata: inferredMetadata } : {}),
       });
     }
   }

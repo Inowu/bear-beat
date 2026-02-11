@@ -3,6 +3,10 @@ import fastFolderSizeSync from 'fast-folder-size/sync';
 import fs from 'fs';
 import path from 'path';
 import { v4 as uuid } from 'uuid';
+import {
+  inferTrackMetadataFromName,
+  toCatalogRelativePath,
+} from '../src/metadata/inferTrackMetadata';
 import { IFileStat } from '../src/services/interfaces/fileService.interface';
 import { config } from 'dotenv';
 
@@ -52,7 +56,7 @@ async function main() {
   }
 }
 
-function createFlatFileIndex(dirPath: string): IFileStat[] {
+function createFlatFileIndex(dirPath: string, rootPath: string = dirPath): IFileStat[] {
   let fileIndex: IFileStat[] = [];
   const files = fs.readdirSync(dirPath);
 
@@ -66,7 +70,7 @@ function createFlatFileIndex(dirPath: string): IFileStat[] {
 
     if (stats.isDirectory()) {
       // If it's a directory, recursively index its contents
-      const dirIndex = createFlatFileIndex(filePath);
+      const dirIndex = createFlatFileIndex(filePath, rootPath);
 
       fileIndex = fileIndex.concat([
         {
@@ -75,11 +79,12 @@ function createFlatFileIndex(dirPath: string): IFileStat[] {
           type: 'd',
           size: fastFolderSizeSync(filePath)!,
           modification: stats.mtime.getTime(),
-          path: filePath.replace('/home/products', ''),
+          path: toCatalogRelativePath(filePath, rootPath),
         },
         ...dirIndex,
       ]);
     } else if (stats.isFile()) {
+      const inferredMetadata = inferTrackMetadataFromName(file);
       // If it's a file, add it to the index
       fileIndex.push({
         id: uuid(),
@@ -87,7 +92,8 @@ function createFlatFileIndex(dirPath: string): IFileStat[] {
         size: stats.size,
         type: '-',
         modification: stats.mtime.getTime(),
-        path: filePath.replace('/home/products', ''),
+        path: toCatalogRelativePath(filePath, rootPath),
+        ...(inferredMetadata ? { metadata: inferredMetadata } : {}),
       });
     }
   }

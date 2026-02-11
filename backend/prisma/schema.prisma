@@ -367,6 +367,30 @@ model DownloadHistory {
   @@map("download_history")
 }
 
+model TrackMetadata {
+  id              Int      @id @default(autoincrement())
+  path            String   @unique(map: "uniq_track_metadata_path") @db.VarChar(1000)
+  name            String   @db.VarChar(500)
+  artist          String?  @db.VarChar(255)
+  title           String?  @db.VarChar(500)
+  displayName     String?  @map("display_name") @db.VarChar(600)
+  bpm             Int?
+  camelot         String?  @db.VarChar(4)
+  format          String?  @db.VarChar(10)
+  version         String?  @db.VarChar(80)
+  coverUrl        String?  @map("cover_url") @db.VarChar(1000)
+  durationSeconds Int?     @map("duration_seconds")
+  source          String   @default("inferred") @db.VarChar(20)
+  createdAt       DateTime @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.DateTime(0)
+
+  @@index([name], map: "idx_track_metadata_name")
+  @@index([artist], map: "idx_track_metadata_artist")
+  @@index([title], map: "idx_track_metadata_title")
+  @@index([bpm], map: "idx_track_metadata_bpm")
+  @@map("track_metadata")
+}
+
 model jobs {
   id         Int       @id @default(autoincrement())
   user_id    Int

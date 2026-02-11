@@ -1,0 +1,23 @@
+CREATE TABLE IF NOT EXISTS `track_metadata` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `path` VARCHAR(1000) NOT NULL,
+  `name` VARCHAR(500) NOT NULL,
+  `artist` VARCHAR(255) NULL,
+  `title` VARCHAR(500) NULL,
+  `display_name` VARCHAR(600) NULL,
+  `bpm` INT NULL,
+  `camelot` VARCHAR(4) NULL,
+  `format` VARCHAR(10) NULL,
+  `version` VARCHAR(80) NULL,
+  `cover_url` VARCHAR(1000) NULL,
+  `duration_seconds` INT NULL,
+  `source` VARCHAR(20) NOT NULL DEFAULT 'inferred',
+  `created_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+  `updated_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0),
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `uniq_track_metadata_path`(`path`),
+  INDEX `idx_track_metadata_name`(`name`),
+  INDEX `idx_track_metadata_artist`(`artist`),
+  INDEX `idx_track_metadata_title`(`title`),
+  INDEX `idx_track_metadata_bpm`(`bpm`)
+);
