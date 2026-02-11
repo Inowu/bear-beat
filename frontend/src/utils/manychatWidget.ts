@@ -1,6 +1,7 @@
 const MANYCHAT_WIDGET_SRC = "https://widget.manychat.com/104901938679498.js";
 const MANYCHAT_RUNTIME_SRC = "https://mccdn.me/assets/js/widget.js";
 const MANYCHAT_ID = "104901938679498";
+const MANYCHAT_MIN_DELAY_MS = 8000;
 
 const SCRIPT_ATTR = "data-bb-manychat";
 
@@ -76,14 +77,15 @@ export function scheduleManychatWidget(): void {
     window.addEventListener("load", initManychatPlugin, { once: true });
   };
 
-  if (typeof maybeWindow.requestIdleCallback === "function") {
-    maybeWindow.requestIdleCallback(() => {
-      void boot();
-    }, { timeout: 4500 });
-    return;
-  }
-
-  window.setTimeout(() => {
+  const scheduleBoot = () => {
+    if (typeof maybeWindow.requestIdleCallback === "function") {
+      maybeWindow.requestIdleCallback(() => {
+        void boot();
+      }, { timeout: 3000 });
+      return;
+    }
     void boot();
-  }, 2800);
+  };
+
+  window.setTimeout(scheduleBoot, MANYCHAT_MIN_DELAY_MS);
 }

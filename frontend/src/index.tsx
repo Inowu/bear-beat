@@ -287,14 +287,14 @@ const scheduleTrackersInit = () => {
     growthMetrics.initGrowthMetrics();
     hotjar.initHotjar();
     manychat.scheduleManychatWidget();
-  });
+  }, 4500, 3500);
 };
 
 const scheduleMonitoringInit = () => {
   if (typeof window === "undefined") return;
   scheduleIdleTask(async () => {
     await import("./instrument");
-  }, 2600, 1800);
+  }, 6500, 4500);
 };
 
 scheduleMonitoringInit();
