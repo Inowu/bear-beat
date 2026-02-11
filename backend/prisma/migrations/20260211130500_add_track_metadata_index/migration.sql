@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS `track_metadata` (
   `id` INT NOT NULL AUTO_INCREMENT,
-  `path` VARCHAR(1000) NOT NULL,
+  `path` VARCHAR(700) NOT NULL,
   `name` VARCHAR(500) NOT NULL,
   `artist` VARCHAR(255) NULL,
   `title` VARCHAR(500) NULL,
