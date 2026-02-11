@@ -194,14 +194,39 @@
     min-width: 190px;
   }
 
+  .plans-hero-chip.bb-stat-pill {
+    min-height: 40px;
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .plans-hero-chip .bb-stat-pill__label {
+    font-size: 1.0rem;
+    letter-spacing: 0.07em;
+  }
+
   .plans-hero-choice {
     padding: 12px;
     gap: 8px;
     border-radius: 16px;
+    /* Make "Elige tu moneda" + toggle share a row to save height. */
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
   }
 
   .plans-hero-choice-title {
     font-size: 13px;
+    grid-column: 1;
+  }
+
+  .plans-currency-toggle {
+    grid-column: 2;
+    justify-self: end;
+  }
+
+  .plans-currency-micro,
+  .plans-trial-note {
+    grid-column: 1 / -1;
   }
 
   .plans-currency-micro,
