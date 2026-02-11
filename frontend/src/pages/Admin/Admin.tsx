@@ -485,7 +485,7 @@ function Admin() {
                     <td colSpan={colCount}>
                       {loadError ? (
                         <div className="admin-empty-state admin-empty-state--error">
-                          <h3>No se pudieron mostrar los usuarios</h3>
+                          <h2>No se pudieron mostrar los usuarios</h2>
                           <p>{loadError}</p>
                           <button type="button" className="btn-icon btn-secondary" onClick={retryUsersLoad}>
                             <RefreshCw size={16} />
@@ -494,7 +494,7 @@ function Admin() {
                         </div>
                       ) : (
                         <div className="admin-empty-state">
-                          <h3>No hay usuarios para este filtro</h3>
+                          <h2>No hay usuarios para este filtro</h2>
                           <p>Prueba cambiar estado o búsqueda para ver resultados.</p>
                         </div>
                       )}
@@ -649,7 +649,7 @@ function Admin() {
                 <div className="admin-mobile-empty">
                   {loadError ? (
                     <>
-                      <h3>No se pudieron mostrar los usuarios</h3>
+                      <h2>No se pudieron mostrar los usuarios</h2>
                       <p>{loadError}</p>
                       <button type="button" className="btn-icon btn-secondary" onClick={retryUsersLoad}>
                         <RefreshCw size={16} />
@@ -658,7 +658,7 @@ function Admin() {
                     </>
                   ) : (
                     <>
-                      <h3>No hay usuarios para este filtro</h3>
+                      <h2>No hay usuarios para este filtro</h2>
                       <p>Prueba cambiar estado o búsqueda para ver resultados.</p>
                     </>
                   )}

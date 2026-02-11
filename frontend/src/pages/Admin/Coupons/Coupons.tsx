@@ -150,6 +150,7 @@ export const Coupons = () => {
                             onClick={() => handleEditCoupon(c)}
                             className="p-2 text-slate-400 hover:text-bear-cyan transition-colors rounded-lg hover:bg-slate-800"
                             title="Editar"
+                            aria-label={`Editar cupón ${c.code}`}
                           >
                             <Edit2 size={16} />
                           </button>
@@ -158,6 +159,7 @@ export const Coupons = () => {
                             onClick={() => setCouponToDelete(c)}
                             className="p-2 text-slate-400 hover:text-red-400 transition-colors rounded-lg hover:bg-slate-800"
                             title="Eliminar"
+                            aria-label={`Eliminar cupón ${c.code}`}
                           >
                             <Trash2 size={16} />
                           </button>

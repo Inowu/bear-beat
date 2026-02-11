@@ -128,11 +128,12 @@ aside {
       }
 
       &--danger {
-        color: var(--app-status-error);
+        color: var(--theme-nav-danger-text, var(--app-status-error));
       }
 
       &--danger:hover,
       &--danger:focus-visible {
+        color: var(--theme-nav-danger-text, var(--app-status-error));
         background: color-mix(in srgb, var(--app-status-error) 10%, var(--theme-nav-item-bg));
         border-color: color-mix(in srgb, var(--app-status-error) 36%, var(--theme-nav-item-border, transparent));
       }

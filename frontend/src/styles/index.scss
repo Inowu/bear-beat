@@ -112,6 +112,7 @@
   /* Neutral light pills (avoid blue-ish nav wash) */
   --theme-nav-item-bg: var(--bb-surface-soft);
   --theme-nav-item-border: var(--bb-border);
+  --theme-nav-danger-text: #BA1716;
   /* Light hover: subtle tint, avoid "baby blue" panels */
   --theme-nav-item-hover-bg: color-mix(in srgb, var(--bb-cyan) 4%, #FFFFFF);
   --theme-nav-item-hover-text: #0F2028;
@@ -376,6 +377,7 @@ html.dark,
   --theme-nav-text: #F1F1F1;
   --theme-nav-item-bg: #3B3B3B;
   --theme-nav-item-border: rgba(255, 255, 255, 0.08);
+  --theme-nav-danger-text: #FF8E8E;
   --theme-nav-item-hover-bg: rgba(8, 225, 247, 0.25);
   --theme-nav-item-hover-text: var(--bb-cyan);
   --theme-nav-item-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
