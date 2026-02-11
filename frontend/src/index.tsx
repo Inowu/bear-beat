@@ -8,6 +8,7 @@ import reportWebVitals from "./reportWebVitals";
 import { initFacebookPixel } from "./utils/facebookPixel";
 import { GROWTH_METRICS, initGrowthMetrics, trackGrowthMetric } from "./utils/growthMetrics";
 import { initHotjar } from "./utils/hotjar";
+import { scheduleManychatWidget } from "./utils/manychatWidget";
 import { ErrorFallback } from "./components/ErrorFallback/ErrorFallback";
 import {
   Navigate,
@@ -220,6 +221,7 @@ const scheduleTrackersInit = () => {
     initFacebookPixel();
     initGrowthMetrics();
     initHotjar();
+    scheduleManychatWidget();
   };
 
   const maybeWindow = window as Window & {

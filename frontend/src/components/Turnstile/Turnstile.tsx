@@ -5,6 +5,38 @@ import {
   TURNSTILE_BYPASS_TOKEN,
 } from "../../utils/turnstile";
 
+const TURNSTILE_SCRIPT_SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+const TURNSTILE_SCRIPT_ATTR = "data-bb-turnstile";
+let turnstileScriptPromise: Promise<void> | null = null;
+
+function ensureTurnstileScript(): Promise<void> {
+  if (typeof window === "undefined") return Promise.resolve();
+  if (window.turnstile) return Promise.resolve();
+  if (turnstileScriptPromise) return turnstileScriptPromise;
+
+  turnstileScriptPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>(`script[${TURNSTILE_SCRIPT_ATTR}='1']`);
+    if (existing) {
+      existing.addEventListener("load", () => resolve(), { once: true });
+      existing.addEventListener("error", () => reject(new Error("Turnstile script failed to load")), {
+        once: true,
+      });
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = TURNSTILE_SCRIPT_SRC;
+    script.async = true;
+    script.defer = true;
+    script.setAttribute(TURNSTILE_SCRIPT_ATTR, "1");
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Turnstile script failed to load"));
+    document.head.appendChild(script);
+  });
+
+  return turnstileScriptPromise;
+}
+
 type TurnstileOptions = {
   sitekey: string;
   callback: (token: string) => void;
@@ -95,10 +127,11 @@ const Turnstile = forwardRef<TurnstileRef, TurnstileProps>(function Turnstile(
       return;
     }
 
+    let cancelled = false;
     let intervalId: number | undefined;
 
     const renderWidget = () => {
-      if (!window.turnstile || !containerRef.current || widgetIdRef.current) {
+      if (cancelled || !window.turnstile || !containerRef.current || widgetIdRef.current) {
         return;
       }
 
@@ -120,13 +153,19 @@ const Turnstile = forwardRef<TurnstileRef, TurnstileProps>(function Turnstile(
       }
     };
 
-    if (window.turnstile) {
-      renderWidget();
-    } else {
-      intervalId = window.setInterval(renderWidget, TURNSTILE_VERIFY_INTERVAL_MS);
-    }
+    void ensureTurnstileScript()
+      .then(() => {
+        if (cancelled) return;
+        if (window.turnstile) {
+          renderWidget();
+        } else {
+          intervalId = window.setInterval(renderWidget, TURNSTILE_VERIFY_INTERVAL_MS);
+        }
+      })
+      .catch(() => onErrorRef.current?.());
 
     return () => {
+      cancelled = true;
       if (intervalId) {
         window.clearInterval(intervalId);
       }
@@ -135,7 +174,7 @@ const Turnstile = forwardRef<TurnstileRef, TurnstileProps>(function Turnstile(
         widgetIdRef.current = null;
       }
     };
-  }, [invisible, isBypassed]);
+  }, [invisible, isBypassed, size, theme]);
 
   useEffect(() => {
     if (isBypassed) return;

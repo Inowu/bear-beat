@@ -6,24 +6,7 @@
   <noscript><img height="1" width="1" style="display:none"
       src="https://www.facebook.com/tr?id=1325763147585869&ev=PageView&noscript=1" alt="" /></noscript>
 
-  <!-- Manychat -->
-  <script src="https://widget.manychat.com/104901938679498.js" defer="defer"></script>
-  <script src="https://mccdn.me/assets/js/widget.js" defer="defer"></script>
-  <script>
-    window.addEventListener('load', function () {
-      if (window.MessengerExtensions) {
-        window.MessengerExtensions.getUserID(function success(uids) {
-          var pageId = '104901938679498';
-          var appId = '104901938679498';
-          var psid = uids.psid;
-
-          window.manychatPlugin = new window.MessengerExtensions.ManyChat(pageId, appId, psid);
-        }, function error(err) {
-          console.error(err);
-        });
-      }
-    });
-  </script>
+  <!-- Manychat widget: loaded on-demand from React after first idle in public routes -->
 
 	  <!-- Hotjar/Contentsquare (2026):
 	       Se inyecta desde React (utils/hotjar.ts) para:
@@ -63,7 +46,7 @@
   <meta name="twitter:image:alt" content="Bear Beat – Librería de música y videos para DJs" />
   <link rel="icon" href="%PUBLIC_URL%/logoOso.png" />
   <!-- Conekta: se carga on-demand desde React (utils/conektaCollect.ts) para no bloquear la landing -->
-  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+  <!-- Turnstile API: loaded on-demand in Turnstile component (auth forms only) -->
   <link rel="apple-touch-icon" href="%PUBLIC_URL%/logoOso.png" />
   <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","@id":"https://thebearbeat.com/#website","name":"Bear Beat","url":"https://thebearbeat.com/","description":"Librería de música y videos exclusivos para DJs. 500 GB cada mes por FTP, contenido organizado por géneros.","publisher":{"@id":"https://thebearbeat.com/#organization"},"potentialAction":{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://thebearbeat.com/?q={search_term_string}"},"query-input":"required name=search_term_string"}}</script>
