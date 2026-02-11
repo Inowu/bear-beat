@@ -14,7 +14,7 @@ interface UserContextI {
   currentUser: IUser | null;
   userToken: string | null;
   handleLogin: (token: string, refreshtoken: string) => void;
-  handleLogout: () => void;
+  handleLogout: (redirectToHome?: boolean) => void;
   resetCard: () => void;
   fileChange: boolean;
   closeFile: () => void;
@@ -60,11 +60,15 @@ const UserContextProvider = (props: any) => {
   function closeFile() {
     setFileChange(false);
   }
-  function handleLogout() {
+  function handleLogout(redirectToHome: boolean = false) {
     setCurrentUser(null);
     clearAuthTokens();
     clearAdminAccessBackup();
     setUserToken(null);
+
+    if (redirectToHome && typeof window !== "undefined") {
+      window.location.assign("/");
+    }
   }
   const isNetworkError = (error: unknown) => {
     const message = error instanceof Error ? error.message : String(error ?? "");

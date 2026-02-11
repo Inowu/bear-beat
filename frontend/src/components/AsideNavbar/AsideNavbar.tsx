@@ -123,7 +123,7 @@ function AsideNavbar(props: AsideNavbarPropsI) {
                   <button
                     type="button"
                     onClick={() => {
-                      handleLogout();
+                      handleLogout(true);
                       onHide();
                     }}
                     aria-label="Cerrar sesión"
@@ -150,7 +150,7 @@ function AsideNavbar(props: AsideNavbarPropsI) {
                   <button
                     type="button"
                     onClick={() => {
-                      handleLogout();
+                      handleLogout(true);
                       onHide();
                     }}
                     aria-label="Cerrar sesión"

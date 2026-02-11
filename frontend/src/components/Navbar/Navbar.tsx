@@ -135,7 +135,11 @@ function Navbar(props: NavbarPropsI) {
             </Link>
           </li>
           <li>
-            <button type="button" className="nav-item" onClick={handleLogout}>
+            <button
+              type="button"
+              className="nav-item"
+              onClick={() => handleLogout(true)}
+            >
               <LogOut size={18} aria-hidden />
               <span>Cerrar sesión</span>
             </button>
