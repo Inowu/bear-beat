@@ -371,28 +371,28 @@ function Plans() {
               </div>
               <p className="plans-currency-micro">MXN: México (pago local). USD: internacional.</p>
               {heroTrialCopy && <p className="plans-trial-note">{heroTrialCopy}</p>}
-              <div className="plans-hero-primary" aria-live="polite">
-                <div className="plans-hero-primary-head">
-                  <p className="plans-hero-primary-kicker">{primaryPlan ? `Plan ${primaryPlan.name}` : "Plan disponible"}</p>
-                  <p className="plans-hero-primary-price">{selectedPriceLabel ?? "—"}</p>
-                </div>
-                <button
-                  type="button"
-                  className="plans-hero-primary-cta"
-                  data-testid="plans-hero-primary-cta"
-                  onClick={handlePrimaryCta}
-                  disabled={!primaryPlan}
-                >
-                  {primaryCtaLabel}
-                  <ArrowRight size={16} />
-                </button>
-                <ul className="plans-hero-trust" aria-label="Confianza">
-                  <li>Pago seguro</li>
-                  <li>Activación guiada</li>
-                  <li>Cancela cuando quieras</li>
-                </ul>
-              </div>
             </div>
+          </div>
+          <div className="plans-hero-primary plans-hero-primary--strip" aria-live="polite">
+            <div className="plans-hero-primary-head">
+              <p className="plans-hero-primary-kicker">{primaryPlan ? `Plan ${primaryPlan.name}` : "Plan disponible"}</p>
+              <p className="plans-hero-primary-price">{selectedPriceLabel ?? "—"}</p>
+            </div>
+            <button
+              type="button"
+              className="plans-hero-primary-cta"
+              data-testid="plans-hero-primary-cta"
+              onClick={handlePrimaryCta}
+              disabled={!primaryPlan}
+            >
+              {primaryCtaLabel}
+              <ArrowRight size={16} />
+            </button>
+            <ul className="plans-hero-trust" aria-label="Confianza">
+              <li>Pago seguro</li>
+              <li>Activación guiada</li>
+              <li>Cancela cuando quieras</li>
+            </ul>
           </div>
         </section>
       {loadError ? (
