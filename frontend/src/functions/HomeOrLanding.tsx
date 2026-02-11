@@ -1,6 +1,8 @@
+import { Suspense, lazy } from "react";
 import { useUserContext } from "../contexts/UserContext";
-import Home from "../pages/Home/Home";
 import PublicHome from "../pages/PublicHome/PublicHome";
+
+const Home = lazy(() => import("../pages/Home/Home"));
 
 /**
  * En "/" muestra:
@@ -12,7 +14,11 @@ function HomeOrLanding() {
   const { userToken } = useUserContext();
 
   if (userToken) {
-    return <Home />;
+    return (
+      <Suspense fallback={null}>
+        <Home />
+      </Suspense>
+    );
   }
 
   return <PublicHome />;

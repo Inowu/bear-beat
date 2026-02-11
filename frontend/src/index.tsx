@@ -1,14 +1,8 @@
-import "./instrument";
 import React, { Suspense, lazy } from "react";
 import ReactDOM from "react-dom/client";
-import * as Sentry from "@sentry/react";
 import "./index.css";
 import "./styles/index.scss";
 import reportWebVitals from "./reportWebVitals";
-import { initFacebookPixel } from "./utils/facebookPixel";
-import { GROWTH_METRICS, initGrowthMetrics, trackGrowthMetric } from "./utils/growthMetrics";
-import { initHotjar } from "./utils/hotjar";
-import { scheduleManychatWidget } from "./utils/manychatWidget";
 import { ErrorFallback } from "./components/ErrorFallback/ErrorFallback";
 import {
   Navigate,
@@ -30,6 +24,47 @@ import { sseEndpoint } from "./utils/runtimeConfig";
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
 );
+
+type AppErrorBoundaryProps = {
+  children: React.ReactNode;
+};
+
+type AppErrorBoundaryState = {
+  error: Error | null;
+};
+
+class AppErrorBoundary extends React.Component<AppErrorBoundaryProps, AppErrorBoundaryState> {
+  state: AppErrorBoundaryState = {
+    error: null,
+  };
+
+  static getDerivedStateFromError(error: unknown): AppErrorBoundaryState {
+    return {
+      error: error instanceof Error ? error : new Error("Unexpected app error"),
+    };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
+    void import("@sentry/react")
+      .then((module) => {
+        module.captureException(error, {
+          extra: {
+            componentStack: errorInfo.componentStack ?? "",
+          },
+        });
+      })
+      .catch(() => {
+        // noop
+      });
+  }
+
+  render() {
+    if (this.state.error) {
+      return <ErrorFallback error={this.state.error} />;
+    }
+    return this.props.children;
+  }
+}
 
 const Auth = lazy(() => import("./pages/Auth/Auth"));
 const LoginForm = lazy(() => import("./components/Auth/LoginForm/LoginForm"));
@@ -214,33 +249,60 @@ const router = createBrowserRouter([
   },
 ]);
 
-const scheduleTrackersInit = () => {
+let growthMetricsModulePromise: Promise<typeof import("./utils/growthMetrics")> | null = null;
+
+function loadGrowthMetricsModule() {
+  if (!growthMetricsModulePromise) {
+    growthMetricsModulePromise = import("./utils/growthMetrics");
+  }
+  return growthMetricsModulePromise;
+}
+
+const scheduleIdleTask = (task: () => Promise<void> | void, timeout = 2000, fallbackDelay = 1200) => {
   if (typeof window === "undefined") return;
-
-  const bootstrap = () => {
-    initFacebookPixel();
-    initGrowthMetrics();
-    initHotjar();
-    scheduleManychatWidget();
-  };
-
   const maybeWindow = window as Window & {
     requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
   };
   if (typeof maybeWindow.requestIdleCallback === "function") {
-    maybeWindow.requestIdleCallback(() => bootstrap(), { timeout: 2000 });
+    maybeWindow.requestIdleCallback(() => {
+      void task();
+    }, { timeout });
     return;
   }
-  window.setTimeout(bootstrap, 1200);
+  window.setTimeout(() => {
+    void task();
+  }, fallbackDelay);
 };
 
+const scheduleTrackersInit = () => {
+  if (typeof window === "undefined") return;
+  scheduleIdleTask(async () => {
+    const [facebookPixel, growthMetrics, hotjar, manychat] = await Promise.all([
+      import("./utils/facebookPixel"),
+      loadGrowthMetricsModule(),
+      import("./utils/hotjar"),
+      import("./utils/manychatWidget"),
+    ]);
+    facebookPixel.initFacebookPixel();
+    growthMetrics.initGrowthMetrics();
+    hotjar.initHotjar();
+    manychat.scheduleManychatWidget();
+  });
+};
+
+const scheduleMonitoringInit = () => {
+  if (typeof window === "undefined") return;
+  scheduleIdleTask(async () => {
+    await import("./instrument");
+  }, 2600, 1800);
+};
+
+scheduleMonitoringInit();
 scheduleTrackersInit();
 
 root.render(
   <React.StrictMode>
-    <Sentry.ErrorBoundary
-      fallback={({ error }) => <ErrorFallback error={error instanceof Error ? error : undefined} />}
-    >
+    <AppErrorBoundary>
     <ThemeProvider>
       <UserContextProvider>
         <DownloadContextProvider>
@@ -254,7 +316,7 @@ root.render(
         </DownloadContextProvider>
       </UserContextProvider>
     </ThemeProvider>
-    </Sentry.ErrorBoundary>
+    </AppErrorBoundary>
   </React.StrictMode>
 );
 
@@ -272,14 +334,20 @@ reportWebVitals((metric: any) => {
     ? "mobile"
     : "desktop";
 
-  trackGrowthMetric(GROWTH_METRICS.WEB_VITAL_REPORTED, {
-    metricName: metric?.name ?? "unknown",
-    value: Number(metricValue.toFixed(4)),
-    delta: Number(metricDelta.toFixed(4)),
-    rating: metric?.rating ?? "unknown",
-    metricId: metric?.id ?? null,
-    navigationType: metric?.navigationType ?? null,
-    deviceCategory,
-    pagePath: window.location.pathname,
-  });
+  void loadGrowthMetricsModule()
+    .then((module) => {
+      module.trackGrowthMetric(module.GROWTH_METRICS.WEB_VITAL_REPORTED, {
+        metricName: metric?.name ?? "unknown",
+        value: Number(metricValue.toFixed(4)),
+        delta: Number(metricDelta.toFixed(4)),
+        rating: metric?.rating ?? "unknown",
+        metricId: metric?.id ?? null,
+        navigationType: metric?.navigationType ?? null,
+        deviceCategory,
+        pagePath: window.location.pathname,
+      });
+    })
+    .catch(() => {
+      // noop
+    });
 });

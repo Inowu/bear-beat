@@ -183,6 +183,14 @@
   }
 }
 
+@supports (content-visibility: auto) {
+  /* Skip paint/layout of below-the-fold sections until they approach viewport. */
+  .home-main > *:not(:first-child) {
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 920px;
+  }
+}
+
 .home-h2 {
   margin: 0 0 12px;
   color: var(--ph-text-heading);

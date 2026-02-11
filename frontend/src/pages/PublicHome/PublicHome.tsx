@@ -512,7 +512,7 @@ export default function PublicHome() {
       <header className="home-topnav" aria-label="Navegación">
         <div className="ph__container home-topnav__inner">
           <Link to="/" className="home-topnav__brand" aria-label="Bear Beat" aria-current="page">
-            <img src={Logo} alt="Bear Beat" />
+            <img src={Logo} alt="Bear Beat" width={40} height={40} />
           </Link>
           <div className="home-topnav__right" aria-label="Acciones">
             <nav className="home-topnav__nav" aria-label="Links">
@@ -597,7 +597,7 @@ export default function PublicHome() {
       <footer className="home-footer" aria-label="Footer">
         <div className="ph__container home-footer__inner">
           <div className="home-footer__brand">
-            <img src={Logo} alt="Bear Beat" />
+            <img src={Logo} alt="Bear Beat" width={46} height={46} />
             <p>Catálogo grande, descargas mensuales claras y activación guiada.</p>
           </div>
 
