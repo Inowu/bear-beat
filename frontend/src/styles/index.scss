@@ -1521,6 +1521,11 @@ html[data-theme="light"] {
   box-shadow: 0 0 0 3px var(--app-focus-ring);
 }
 
+/* Force phone-input library internals to respect the global UI typography. */
+:where(.react-tel-input, .react-tel-input *) {
+  font-family: var(--bb-font-ui) !important;
+}
+
 /* Legacy CTA/button harmonization across pages and admin tools */
 :where(
   .btn,
