@@ -43,7 +43,7 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
 
   const subscription = payload.data?.object;
 
-  const isProduct = Boolean(payload.data?.object.metadata.isProduct);
+  const isProduct = Boolean(payload.data?.object?.metadata?.isProduct);
 
   switch (payload.type) {
     case ConektaEvents.SUB_PAID:
@@ -121,9 +121,20 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
       break;
     case ConektaEvents.ORDER_VOIDED:
     case ConektaEvents.ORDER_DECLINED: {
-      const orderId = payload.data?.object.metadata?.orderId;
+      let orderId = toPositiveInt(payload.data?.object?.metadata?.orderId);
+      let orderSource = 'metadata.orderId';
 
-      log.info(`[CONEKTA_WH] Payment failed, canceling order ${orderId}`);
+      if (!orderId && !isProduct) {
+        const resolvedOrder = await resolveSubscriptionOrderFromPayload(payload);
+        if (resolvedOrder) {
+          orderId = resolvedOrder.id;
+          orderSource = resolvedOrder.source;
+        }
+      }
+
+      log.info(
+        `[CONEKTA_WH] Payment failed, canceling order ${orderId ?? 'unknown'} (source: ${orderSource})`,
+      );
 
       if (orderId && !isProduct) {
         const order = await prisma.orders.findFirst({
@@ -183,9 +194,20 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
       break;
     }
     case ConektaEvents.ORDER_EXPIRED: {
-      const orderId = payload.data?.object.metadata.orderId;
+      let orderId = toPositiveInt(payload.data?.object?.metadata?.orderId);
+      let orderSource = 'metadata.orderId';
 
-      log.info(`[CONEKTA_WH] Canceling order ${orderId}`);
+      if (!orderId && !isProduct) {
+        const resolvedOrder = await resolveSubscriptionOrderFromPayload(payload);
+        if (resolvedOrder) {
+          orderId = resolvedOrder.id;
+          orderSource = resolvedOrder.source;
+        }
+      }
+
+      log.info(
+        `[CONEKTA_WH] Canceling order ${orderId ?? 'unknown'} (source: ${orderSource})`,
+      );
 
       // Internal analytics: payment expired (cash/spei).
       try {
@@ -227,9 +249,20 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
     }
     case ConektaEvents.ORDER_CHARGED_BACK:
     case ConektaEvents.ORDER_CANCELED: {
-      const orderId = payload.data?.object.metadata.orderId;
+      let orderId = toPositiveInt(payload.data?.object?.metadata?.orderId);
+      let orderSource = 'metadata.orderId';
 
-      log.info(`[CONEKTA_WH] Canceling order ${orderId}`);
+      if (!orderId && !isProduct) {
+        const resolvedOrder = await resolveSubscriptionOrderFromPayload(payload);
+        if (resolvedOrder) {
+          orderId = resolvedOrder.id;
+          orderSource = resolvedOrder.source;
+        }
+      }
+
+      log.info(
+        `[CONEKTA_WH] Canceling order ${orderId ?? 'unknown'} (source: ${orderSource})`,
+      );
       await cancelOrder({
         prisma,
         orderId,
@@ -252,22 +285,34 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
         `[CONEKTA_WH] Paid order event received for user ${user.id}, payload: ${payloadStr} `,
       );
 
-      const orderId = payload.data?.object?.metadata?.orderId;
+      let orderIdNum = toPositiveInt(payload.data?.object?.metadata?.orderId);
+      let orderSource = 'metadata.orderId';
 
-      if (orderId == null || orderId === '') {
+      if (!orderIdNum && !isProduct) {
+        const resolvedOrder = await resolveSubscriptionOrderFromPayload(payload);
+        if (resolvedOrder) {
+          orderIdNum = resolvedOrder.id;
+          orderSource = resolvedOrder.source;
+        }
+      }
+
+      if (!orderIdNum) {
         log.error(
-          `[CONEKTA_WH] Order id not found in payload: ${payloadStr}, returning from conekta webhook`,
+          `[CONEKTA_WH] Order id could not be resolved from payload (metadata/invoice_id/txn_id): ${payloadStr}, returning from conekta webhook`,
         );
         return;
       }
 
-      const orderIdNum = Number(orderId);
+      log.info(
+        `[CONEKTA_WH] Processing paid order ${orderIdNum} (source: ${orderSource})`,
+      );
+
       let productOrPlan: Plans | products | null = null;
       let order: Orders | product_orders | null = null;
 
       if (isProduct) {
         log.info(
-          `[CONEKTA_WH] Updating product order ${orderId} to paid, payload: ${payloadStr}`,
+          `[CONEKTA_WH] Updating product order ${orderIdNum} to paid, payload: ${payloadStr}`,
         );
 
         order = await prisma.product_orders.update({
@@ -375,12 +420,15 @@ export const getCustomerIdFromPayload = async (
     case ConektaEvents.ORDER_EXPIRED:
     case ConektaEvents.ORDER_CANCELED:
     case ConektaEvents.ORDER_CHARGED_BACK: {
-      const orderIdMeta = payload.data?.object?.metadata?.orderId;
-      if (orderIdMeta) {
-        const ord = await prisma.orders.findFirst({
-          where: { id: Number(orderIdMeta) },
-          select: { user_id: true },
+      const metadataUserId = toPositiveInt(payload.data?.object?.metadata?.userId);
+      if (metadataUserId) {
+        user = await prisma.users.findFirst({
+          where: { id: metadataUserId },
         });
+      }
+
+      if (!user) {
+        const ord = await resolveSubscriptionOrderFromPayload(payload);
         if (ord?.user_id) {
           user = await prisma.users.findFirst({
             where: { id: ord.user_id },
@@ -416,6 +464,15 @@ export const getCustomerIdFromPayload = async (
           });
         }
       }
+
+      if (!user) {
+        const ord = await resolveSubscriptionOrderFromPayload(payload);
+        if (ord?.user_id) {
+          user = await prisma.users.findFirst({
+            where: { id: ord.user_id },
+          });
+        }
+      }
     }
     break;
     default:
@@ -423,6 +480,120 @@ export const getCustomerIdFromPayload = async (
   }
 
   return user;
+};
+
+type ResolvedSubscriptionOrder = {
+  id: number;
+  user_id: number;
+  plan_id: number | null;
+  source: 'metadata.orderId' | 'invoice_id' | 'txn_id';
+};
+
+const resolveSubscriptionOrderFromPayload = async (
+  payload: EventResponse,
+): Promise<ResolvedSubscriptionOrder | null> => {
+  const select = {
+    id: true,
+    user_id: true,
+    plan_id: true,
+  } as const;
+
+  const metadataOrderId = toPositiveInt(payload.data?.object?.metadata?.orderId);
+  if (metadataOrderId) {
+    const byMetadataOrderId = await prisma.orders.findFirst({
+      where: { id: metadataOrderId },
+      select,
+    });
+    if (byMetadataOrderId) {
+      return {
+        ...byMetadataOrderId,
+        source: 'metadata.orderId',
+      };
+    }
+  }
+
+  const conektaOrderId = toNonEmptyString(payload.data?.object?.id);
+  if (conektaOrderId) {
+    const byInvoiceId = await prisma.orders.findFirst({
+      where: { invoice_id: conektaOrderId },
+      orderBy: { id: 'desc' },
+      select,
+    });
+    if (byInvoiceId) {
+      return {
+        ...byInvoiceId,
+        source: 'invoice_id',
+      };
+    }
+  }
+
+  const txnCandidates = getConektaTxnCandidates(payload, conektaOrderId);
+  if (txnCandidates.length > 0) {
+    const byTxnId = await prisma.orders.findFirst({
+      where: {
+        txn_id: {
+          in: txnCandidates,
+        },
+      },
+      orderBy: { id: 'desc' },
+      select,
+    });
+    if (byTxnId) {
+      return {
+        ...byTxnId,
+        source: 'txn_id',
+      };
+    }
+  }
+
+  return null;
+};
+
+const getConektaTxnCandidates = (
+  payload: EventResponse,
+  conektaOrderId: string | null,
+): string[] => {
+  const chargesData = (payload.data?.object as any)?.charges?.data;
+  const chargeIds = Array.isArray(chargesData)
+    ? chargesData
+        .map((charge: any) => toNonEmptyString(charge?.id))
+        .filter((id): id is string => Boolean(id))
+    : [];
+
+  const candidates = [
+    ...(conektaOrderId ? [conektaOrderId] : []),
+    ...chargeIds,
+  ];
+
+  return Array.from(new Set(candidates));
+};
+
+const toPositiveInt = (value: unknown): number | undefined => {
+  const parsed =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string'
+        ? Number(value.trim())
+        : Number.NaN;
+
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    return undefined;
+  }
+
+  return parsed;
+};
+
+const toNonEmptyString = (value: unknown): string | null => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(value);
+  }
+
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
 };
 
 const getPlanFromPayload = async (
