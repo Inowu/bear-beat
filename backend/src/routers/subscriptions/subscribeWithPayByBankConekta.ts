@@ -8,6 +8,13 @@ import { log } from '../../server';
 import { hasActiveSubscription } from './utils/hasActiveSub';
 import { PaymentService } from './services/types';
 import { Orders, Plans, PrismaClient, Users } from '@prisma/client';
+import {
+  formatConektaErrorForClient,
+  getConektaErrorInfo,
+  isConektaCustomerReferenceError,
+  isConektaProductTypeError,
+  normalizeConektaPhoneE164Mx,
+} from './utils/conektaErrorHelpers';
 
 const payByBankEnabled =
   process.env.CONEKTA_PBB_ENABLED === '1' ||
@@ -136,8 +143,12 @@ export const subscribeWithPayByBankConekta = shieldedProcedure
 
       return { url, deepLink };
     } catch (e: any) {
-      const conektaMsg = e?.response?.data?.message || e?.message;
-      log.error(`[CONEKTA_PBB] Error creating order: ${conektaMsg}`, e?.response?.data);
+      const conektaMsg = formatConektaErrorForClient(e);
+      const conektaInfo = getConektaErrorInfo(e);
+      log.error(`[CONEKTA_PBB] Error creating order: ${conektaMsg}`, {
+        status: conektaInfo.status,
+        details: conektaInfo.detailMessages,
+      });
 
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
@@ -167,17 +178,21 @@ const createPayByBankOrder = async ({
   const amountCents = Math.round(Number(plan.price) * 100);
   const fallbackCustomerInfo = buildConektaCustomerInfo(user);
   const hasCustomerId = typeof customerId === 'string' && customerId.trim().length > 0;
-  const customerInfo = hasCustomerId
-    ? { customer_id: customerId.trim() }
-    : fallbackCustomerInfo;
+  const customerIdValue = customerId.trim();
   const shippingContact = buildConektaShippingContact(user, fallbackCustomerInfo);
-  // Official Pago Directo BBVA docs use v2.2 and a direct order charge with:
-  // - payment_method.type = "pay_by_bank"
-  // - payment_method.product_type = "bbva_pay_by_bank"
-  // It returns redirect_url / deep_link to complete the payment.
-  const orderPayload: any = {
+  const buildOrderPayload = (opts: { useCustomerId: boolean; includeProductType: boolean }): any => {
+    const paymentMethod: Record<string, unknown> = {
+      type: 'pay_by_bank',
+    };
+    if (opts.includeProductType) {
+      paymentMethod.product_type = 'bbva_pay_by_bank';
+    }
+
+    return {
     currency: 'MXN' as const,
-    customer_info: customerInfo,
+    customer_info: opts.useCustomerId
+      ? { customer_id: customerIdValue }
+      : fallbackCustomerInfo,
     line_items: [
       {
         name: plan.name,
@@ -187,10 +202,8 @@ const createPayByBankOrder = async ({
     ],
     charges: [
       {
-        payment_method: {
-          type: 'pay_by_bank',
-          product_type: 'bbva_pay_by_bank',
-        },
+        amount: amountCents,
+        payment_method: paymentMethod,
       },
     ],
     // Conekta's Pay by Bank examples include shipping fields as minimum required, even for digital goods.
@@ -200,33 +213,86 @@ const createPayByBankOrder = async ({
     metadata: {
       orderId: String(order.id),
       userId: String(user.id),
-      customerId: customerId,
+      customerId: opts.useCustomerId ? customerIdValue : null,
     },
     pre_authorize: false,
+    };
   };
 
-  if (fingerprint && typeof fingerprint === 'string') {
-    const safeFingerprint = fingerprint.trim();
-    if (safeFingerprint.length > 0) {
-      orderPayload.fingerprint = safeFingerprint;
+  const addFingerprint = (payload: any) => {
+    if (fingerprint && typeof fingerprint === 'string') {
+      const safeFingerprint = fingerprint.trim();
+      if (safeFingerprint.length > 0) {
+        payload.fingerprint = safeFingerprint;
+      }
+    }
+    return payload;
+  };
+
+  type Attempt = { useCustomerId: boolean; includeProductType: boolean };
+  const attemptsQueue: Attempt[] = [
+    { useCustomerId: hasCustomerId, includeProductType: true },
+  ];
+  const attempted = new Set<string>();
+  let conektaOrder;
+  let lastError: unknown;
+
+  while (attemptsQueue.length > 0) {
+    const attempt = attemptsQueue.shift()!;
+    const key = `${attempt.useCustomerId ? 'customer' : 'inline'}:${attempt.includeProductType ? 'productType' : 'noProductType'}`;
+    if (attempted.has(key)) continue;
+    attempted.add(key);
+
+    const payload = addFingerprint(buildOrderPayload(attempt));
+
+    try {
+      conektaOrder = await conektaOrders.createOrder(payload, undefined, undefined, {
+        headers: conektaPayByBankHeaders,
+      });
+      break;
+    } catch (apiError) {
+      lastError = apiError;
+      const info = getConektaErrorInfo(apiError);
+      log.warn(
+        `[CONEKTA_PBB] createOrder attempt failed (${key}): ${info.message}`,
+        {
+          status: info.status,
+          details: info.detailMessages,
+        },
+      );
+
+      if (attempt.useCustomerId && isConektaCustomerReferenceError(apiError)) {
+        attemptsQueue.push({
+          useCustomerId: false,
+          includeProductType: attempt.includeProductType,
+        });
+      }
+      if (attempt.includeProductType && isConektaProductTypeError(apiError)) {
+        attemptsQueue.push({
+          useCustomerId: attempt.useCustomerId,
+          includeProductType: false,
+        });
+      }
+
+      if (attempt.useCustomerId && attempt.includeProductType) {
+        const customerError = isConektaCustomerReferenceError(apiError);
+        const productTypeError = isConektaProductTypeError(apiError);
+        if (customerError && productTypeError) {
+          attemptsQueue.push({
+            useCustomerId: false,
+            includeProductType: false,
+          });
+        }
+      }
+
+      if (attemptsQueue.length === 0) {
+        throw apiError;
+      }
     }
   }
 
-  let conektaOrder;
-  try {
-    conektaOrder = await conektaOrders.createOrder(orderPayload, undefined, undefined, {
-      headers: conektaPayByBankHeaders,
-    });
-  } catch (apiError: any) {
-    const conektaData = apiError?.response?.data;
-    const details = conektaData?.details
-      ? JSON.stringify(conektaData.details)
-      : conektaData?.message || apiError?.message;
-    log.error(
-      `[CONEKTA_PBB] createOrder failed: ${details}. Full response:`,
-      conektaData || apiError?.response?.data,
-    );
-    throw apiError;
+  if (!conektaOrder) {
+    throw (lastError || new Error('No se pudo crear la orden de Pago Directo'));
   }
 
   const conektaChargeIdRaw = (conektaOrder.data as any)?.charges?.data?.[0]?.id;
@@ -254,7 +320,7 @@ function buildConektaCustomerInfo(user: Users): { name: string; email: string; p
   return {
     name: name.slice(0, 120),
     email: String(user.email || '').trim().slice(0, 200),
-    phone: normalizeConektaPhone(user.phone),
+    phone: normalizeConektaPhoneE164Mx(user.phone),
   };
 }
 
@@ -266,8 +332,7 @@ function buildConektaShippingContact(
   phone: string;
   address: { street1: string; postal_code: string; country: string; city?: string; state?: string };
 } {
-  const phoneDigits = normalizeConektaPhone(user.phone || customerInfo.phone);
-  const formattedPhone = phoneDigits ? `+52${phoneDigits}` : '+520000000000';
+  const formattedPhone = normalizeConektaPhoneE164Mx(user.phone || customerInfo.phone);
   const street =
     typeof user.address === 'string' && user.address.trim()
       ? user.address.trim().slice(0, 120)
@@ -301,24 +366,34 @@ function extractPayByBankRedirectData(
 
   const url =
     readValue(pm?.redirect_url) ||
+    readValue(pm?.redirect_uri) ||
+    readValue(pm?.direct_url) ||
+    readValue(pm?.redirectUri) ||
     readValue(pm?.url) ||
     readValue(charge?.redirect_url) ||
+    readValue(charge?.redirect_uri) ||
+    readValue(charge?.direct_url) ||
     readValue(conektaOrderData?.checkout?.url) ||
+    readValue(conektaOrderData?.checkout?.redirect_url) ||
+    readValue(conektaOrderData?.checkout?.redirect_uri) ||
+    readValue(conektaOrderData?.checkout?.direct_url) ||
     null;
 
-  const deepLink = readValue(pm?.deep_link) || readValue(pm?.deeplink) || null;
-  const status = readValue(charge?.status)?.toLowerCase() || '';
+  const deepLink =
+    readValue(pm?.deep_link)
+    || readValue(pm?.deeplink)
+    || readValue(pm?.deepLink)
+    || readValue(charge?.deep_link)
+    || readValue(charge?.deeplink)
+    || null;
+  const status =
+    readValue(charge?.status)?.toLowerCase()
+    || readValue(conektaOrderData?.payment_status)?.toLowerCase()
+    || '';
 
   return { url, deepLink, status };
 }
 
 function isPendingPayByBankStatus(status: string): boolean {
   return status === 'pending_payment' || status === 'pending_confirmation' || status === 'pending';
-}
-
-function normalizeConektaPhone(phone: string | null | undefined): string {
-  const digits = String(phone || '').replace(/\D/g, '');
-  // Conekta examples use 10-digit phone numbers; keep last 10 digits if longer.
-  if (digits.length >= 10) return digits.slice(-10);
-  return '9999999999';
 }

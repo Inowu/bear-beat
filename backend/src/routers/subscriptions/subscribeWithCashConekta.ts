@@ -9,10 +9,19 @@ import { log } from '../../server';
 import { hasActiveSubscription } from './utils/hasActiveSub';
 import { PaymentService } from './services/types';
 import { Orders, Plans, PrismaClient, Users } from '@prisma/client';
+import {
+  formatConektaErrorForClient,
+  getConektaErrorInfo,
+  isConektaCustomerReferenceError,
+  normalizeConektaPhoneE164Mx,
+} from './utils/conektaErrorHelpers';
 
 const cashEnabled =
   process.env.CONEKTA_OXXO_ENABLED === '1' ||
   process.env.CONEKTA_CASH_ENABLED === '1';
+const conektaCashHeaders = {
+  Accept: 'application/vnd.conekta-v2.2.0+json',
+};
 
 export const subscribeWithCashConekta = shieldedProcedure
   .input(
@@ -132,6 +141,9 @@ export const subscribeWithCashConekta = shieldedProcedure
         try {
           const conektaOrder = await conektaOrders.getOrderById(
             existingOrder.invoice_id!,
+            undefined,
+            undefined,
+            { headers: conektaCashHeaders },
           );
 
           const charge = conektaOrder.data.charges?.data?.[0] as any;
@@ -216,10 +228,14 @@ export const subscribeWithCashConekta = shieldedProcedure
 
         return conektaOrder.data.charges?.data?.[0].payment_method as any;
       } catch (e: any) {
-        const conektaMsg = e?.response?.data?.message || e?.message;
+        const conektaMsg = formatConektaErrorForClient(e);
+        const conektaInfo = getConektaErrorInfo(e);
         log.error(
           `[CONEKTA_CASH] Error creating order: ${conektaMsg}`,
-          e?.response?.data,
+          {
+            status: conektaInfo.status,
+            details: conektaInfo.detailMessages,
+          },
         );
 
         throw new TRPCError({
@@ -255,9 +271,8 @@ const createCashPaymentOrder = async ({
   );
   const amountCents = Math.round(Number(plan.price) * 100);
   const hasCustomerId = typeof customerId === 'string' && customerId.trim().length > 0;
-  const customerInfo = hasCustomerId
-    ? { customer_id: customerId.trim() }
-    : buildConektaCustomerInfo(user);
+  const customerIdValue = customerId.trim();
+  const fallbackCustomerInfo = buildConektaCustomerInfo(user);
 
   // SDK Conekta v6 (OpenAPI 2.1.0):
   // para SPEI recurrente se debe usar un payment_source_id de tipo spei_recurrent
@@ -269,7 +284,7 @@ const createCashPaymentOrder = async ({
         throw new Error('customer_id is required for spei_recurrent');
       }
       const existing = await conektaPaymentMethods.getCustomerPaymentMethods(
-        customerId,
+        customerIdValue,
       );
       const existingSpei = existing.data?.data?.find(
         (pm: any) => pm?.type === 'spei_recurrent',
@@ -279,7 +294,7 @@ const createCashPaymentOrder = async ({
         speiRecurrentSourceId = String(existingSpei.id);
       } else {
         const created = await conektaPaymentMethods.createCustomerPaymentMethods(
-          customerId,
+          customerIdValue,
           {
             type: 'spei_recurrent',
           } as any,
@@ -290,7 +305,7 @@ const createCashPaymentOrder = async ({
     } catch (e) {
       // No bloquear checkout: si falla spei_recurrent, seguimos con SPEI normal.
       log.error(
-        `[CONEKTA_SPEI_RECURRENT] Unable to ensure spei_recurrent payment source for customer ${customerId}: ${e}`,
+        `[CONEKTA_SPEI_RECURRENT] Unable to ensure spei_recurrent payment source for customer ${customerIdValue}: ${e}`,
       );
       speiRecurrentSourceId = null;
     }
@@ -304,9 +319,13 @@ const createCashPaymentOrder = async ({
     chargePaymentMethod.payment_source_id = speiRecurrentSourceId;
   }
 
-  const orderPayload: any = {
+  const buildOrderPayload = (
+    useCustomerId: boolean,
+  ): any => ({
     currency: 'MXN' as const,
-    customer_info: customerInfo,
+    customer_info: useCustomerId
+      ? { customer_id: customerIdValue }
+      : fallbackCustomerInfo,
     line_items: [
       {
         name: plan.name,
@@ -323,11 +342,12 @@ const createCashPaymentOrder = async ({
     metadata: {
       orderId: String(order.id),
       userId: String(user.id),
-      customerId: customerId,
+      customerId: useCustomerId ? customerIdValue : null,
     },
     pre_authorize: false,
-  };
+  });
 
+  let orderPayload = buildOrderPayload(hasCustomerId);
   if (fingerprint && typeof fingerprint === 'string') {
     const safeFingerprint = fingerprint.trim();
     if (safeFingerprint.length > 0) {
@@ -337,17 +357,50 @@ const createCashPaymentOrder = async ({
 
   let conektaOrder;
   try {
-    conektaOrder = await conektaOrders.createOrder(orderPayload);
-  } catch (apiError: any) {
-    const conektaData = apiError?.response?.data;
-    const details = conektaData?.details
-      ? JSON.stringify(conektaData.details)
-      : conektaData?.message || apiError?.message;
-    log.error(
-      `[CONEKTA_CASH] createOrder failed: ${details}. Full response:`,
-      conektaData || apiError?.response?.data,
+    conektaOrder = await conektaOrders.createOrder(
+      orderPayload,
+      undefined,
+      undefined,
+      { headers: conektaCashHeaders },
     );
-    throw apiError;
+  } catch (firstError) {
+    const firstInfo = getConektaErrorInfo(firstError);
+    const shouldRetryWithoutCustomer =
+      hasCustomerId && isConektaCustomerReferenceError(firstError);
+
+    if (!shouldRetryWithoutCustomer) {
+      log.error(
+        `[CONEKTA_CASH] createOrder failed: ${firstInfo.message}`,
+        {
+          status: firstInfo.status,
+          details: firstInfo.detailMessages,
+        },
+      );
+      throw firstError;
+    }
+
+    log.warn(
+      `[CONEKTA_CASH] createOrder failed with customer_id (${customerIdValue}). Retrying with customer_info object.`,
+      {
+        status: firstInfo.status,
+        details: firstInfo.detailMessages,
+      },
+    );
+
+    orderPayload = buildOrderPayload(false);
+    if (fingerprint && typeof fingerprint === 'string') {
+      const safeFingerprint = fingerprint.trim();
+      if (safeFingerprint.length > 0) {
+        orderPayload.fingerprint = safeFingerprint;
+      }
+    }
+
+    conektaOrder = await conektaOrders.createOrder(
+      orderPayload,
+      undefined,
+      undefined,
+      { headers: conektaCashHeaders },
+    );
   }
 
   const conektaChargeIdRaw = (conektaOrder.data as any)?.charges?.data?.[0]?.id;
@@ -381,12 +434,6 @@ function buildConektaCustomerInfo(user: Users): { name: string; email: string; p
   return {
     name: name.slice(0, 120),
     email: String(user.email || '').trim().slice(0, 200),
-    phone: normalizeConektaPhone(user.phone),
+    phone: normalizeConektaPhoneE164Mx(user.phone),
   };
-}
-
-function normalizeConektaPhone(phone: string | null | undefined): string {
-  const digits = String(phone || '').replace(/\D/g, '');
-  if (digits.length >= 10) return digits.slice(-10);
-  return '9999999999';
 }

@@ -4,6 +4,12 @@ import { SessionUser } from '../../auth/utils/serialize-user';
 import { conektaCustomers } from '../../../conekta';
 import { stripNonAlphabetic } from '../../auth/procedures/utils/formatUsername';
 import { log } from '../../../server';
+import {
+  formatConektaErrorForClient,
+  getConektaErrorInfo,
+  isConektaCustomerReferenceError,
+  normalizeConektaPhoneE164Mx,
+} from './conektaErrorHelpers';
 
 /**
  * Returns the conekta customer id for this user orCreates
@@ -37,11 +43,43 @@ export const getConektaCustomer = async ({
 
   let userConektaId: string = dbUser?.conekta_cusid ?? '';
 
+  if (userConektaId) {
+    try {
+      await conektaCustomers.getCustomerById(userConektaId);
+      return userConektaId;
+    } catch (error) {
+      if (isConektaCustomerReferenceError(error)) {
+        log.warn(
+          `[CONEKTA_CUSTOMER] Stored customer ${userConektaId} not found for user ${user.id}. Recreating customer.`,
+        );
+        await prisma.users.update({
+          where: { id: dbUser.id },
+          data: { conekta_cusid: null },
+        });
+        userConektaId = '';
+      } else {
+        const info = getConektaErrorInfo(error);
+        log.error(
+          `[CONEKTA_CUSTOMER] Could not validate customer ${userConektaId} for user ${user.id}: ${info.message}`,
+          {
+            status: info.status,
+            details: info.detailMessages,
+          },
+        );
+        return userConektaId;
+      }
+    }
+  }
+
   if (!userConektaId) {
+    const nameCandidate = stripNonAlphabetic(dbUser).trim();
+    const fallbackName = dbUser.username?.trim() || dbUser.email?.split('@')?.[0] || `User ${dbUser.id}`;
+    const normalizedPhone = normalizeConektaPhoneE164Mx(dbUser.phone);
+
     try {
       const conektaUser = await conektaCustomers.createCustomer({
-        name: stripNonAlphabetic(dbUser),
-        phone: dbUser.phone ?? '+5215555555555',
+        name: (nameCandidate || fallbackName).slice(0, 120),
+        phone: normalizedPhone,
         email: dbUser.email,
       });
 
@@ -55,12 +93,24 @@ export const getConektaCustomer = async ({
       });
 
       userConektaId = conektaUser.data.id;
-    } catch (e: any) {
+    } catch (error) {
+      const info = getConektaErrorInfo(error);
       log.error(
-        `There was an error creating the conekta customer for user ${
-          user.id
-        }, details: ${JSON.stringify(e.response?.data?.details)}`,
+        `[CONEKTA_CUSTOMER] There was an error creating customer for user ${user.id}: ${info.message}`,
+        {
+          status: info.status,
+          details: info.detailMessages,
+          phone: normalizedPhone,
+        },
       );
+
+      // Keep checkout resilient: payment flows can still proceed using customer_info fallback.
+      if (info.status === 401 || info.status === 403) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: `Conekta: ${formatConektaErrorForClient(error)}`,
+        });
+      }
     }
   }
 
