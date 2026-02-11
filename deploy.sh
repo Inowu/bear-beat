@@ -125,15 +125,10 @@ log "Installing dependencies (monorepo workspaces)..."
 ( cd "$ROOT_DIR" && npm install )
 
 log "Running Prisma migrations..."
-if ! ( cd "$BACKEND_DIR" && npx prisma migrate deploy ); then
-  log "Prisma migrate deploy failed. Attempting recovery for known failed migration..."
-  if ( cd "$BACKEND_DIR" && npx prisma migrate resolve --rolled-back 20260211130500_add_track_metadata_index ); then
-    log "Retrying Prisma migrations after recovery..."
-    ( cd "$BACKEND_DIR" && npx prisma migrate deploy )
-  else
-    die "Prisma migrations failed and auto-recovery did not succeed."
-  fi
-fi
+# Production already has one failed migration attempt for this id. Resolve it first
+# (no-op if not present) and then run deploy normally.
+( cd "$BACKEND_DIR" && npx prisma migrate resolve --rolled-back 20260211130500_add_track_metadata_index >/dev/null 2>&1 || true )
+( cd "$BACKEND_DIR" && npx prisma migrate deploy )
 
 log "Ensuring PayPal webhook IDs are configured..."
 ( cd "$BACKEND_DIR" && npm run paypal:webhooks:ensure )
