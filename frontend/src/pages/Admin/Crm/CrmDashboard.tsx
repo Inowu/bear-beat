@@ -2,10 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Activity,
   Clock,
+  Database,
   DollarSign,
   AlertTriangle,
   RefreshCw,
   Repeat,
+  TrendingUp,
   UserPlus,
   Users,
 } from "lucide-react";
@@ -135,6 +137,96 @@ function formatDecimal(value: number | null | undefined, digits = 2): string {
   return value.toFixed(digits);
 }
 
+function formatDateLabel(value: string, withTime = false): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("es-MX", {
+    dateStyle: "medium",
+    ...(withTime ? { timeStyle: "short" } : {}),
+  }).format(date);
+}
+
+function formatDay(value: string): string {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [year, month, day] = value.split("-").map(Number);
+    const stableDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+    return new Intl.DateTimeFormat("es-MX", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }).format(stableDate);
+  }
+  return formatDateLabel(value, false);
+}
+
+function formatReasonCode(reasonCode: string): string {
+  const normalized = reasonCode.trim().toLowerCase();
+  const alias: Record<string, string> = {
+    expensive: "Precio alto",
+    too_expensive: "Precio alto",
+    no_uso: "No lo usa",
+    no_use: "No lo usa",
+    no_content: "No encontró contenido",
+    payment_issue: "Problema de pago",
+    card_declined: "Tarjeta rechazada",
+    support: "Mala experiencia de soporte",
+  };
+
+  if (alias[normalized]) return alias[normalized];
+
+  return normalized
+    .replace(/[_-]+/g, " ")
+    .split(" ")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+function formatPaymentMethod(method: string | null): string {
+  if (!method) return "—";
+  const normalized = method.trim().toLowerCase();
+  const alias: Record<string, string> = {
+    stripe: "Stripe",
+    paypal: "PayPal",
+    conekta: "Conekta",
+    spei: "SPEI",
+    card: "Tarjeta",
+    cash: "Efectivo",
+  };
+  return alias[normalized] ?? method;
+}
+
+function formatStatus(status: string): string {
+  if (!status) return "—";
+  return status
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function getStatusTone(status: string): "ok" | "warn" | "error" | "neutral" {
+  const normalized = status.toLowerCase();
+  if (
+    normalized.includes("ok") ||
+    normalized.includes("success") ||
+    normalized.includes("done") ||
+    normalized.includes("completed")
+  ) {
+    return "ok";
+  }
+  if (normalized.includes("running") || normalized.includes("process")) {
+    return "warn";
+  }
+  if (normalized.includes("error") || normalized.includes("failed")) {
+    return "error";
+  }
+  return "neutral";
+}
+
+function rate(numerator: number, denominator: number): number {
+  if (!denominator || denominator <= 0) return 0;
+  return (numerator / denominator) * 100;
+}
+
 function KpiCard(props: {
   title: string;
   value: string;
@@ -156,6 +248,22 @@ function KpiCard(props: {
   );
 }
 
+function SignalCard(props: {
+  title: string;
+  value: string;
+  helper: string;
+  tone: "ok" | "warn" | "error";
+}) {
+  const { title, value, helper, tone } = props;
+  return (
+    <article className={`crm-signal-card crm-signal-card--${tone}`}>
+      <p className="crm-signal-card__title">{title}</p>
+      <p className="crm-signal-card__value">{value}</p>
+      <p className="crm-signal-card__helper">{helper}</p>
+    </article>
+  );
+}
+
 export function CrmDashboard() {
   const [rangeDays, setRangeDays] = useState<number>(30);
   const [autoRefresh, setAutoRefresh] = useState<boolean>(true);
@@ -165,6 +273,7 @@ export function CrmDashboard() {
   const [automation, setAutomation] = useState<AutomationStatusSnapshot | null>(null);
   const [actionToast, setActionToast] = useState<string>("");
   const [actionBusyKey, setActionBusyKey] = useState<string | null>(null);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
 
   const toast = (message: string) => {
     setActionToast(message);
@@ -199,6 +308,7 @@ export function CrmDashboard() {
       ]);
       setSnapshot(data);
       setAutomation(automationStatus);
+      setLastUpdatedAt(new Date());
     } catch {
       setError("No se pudo cargar el CRM. Intenta de nuevo.");
       setSnapshot(null);
@@ -222,8 +332,49 @@ export function CrmDashboard() {
 
   const rangeLabel = useMemo(() => {
     if (!snapshot) return "";
-    return `${snapshot.range.start} → ${snapshot.range.end}`;
+    return `${formatDateLabel(snapshot.range.start)} a ${formatDateLabel(snapshot.range.end)} (${snapshot.range.days} días)`;
   }, [snapshot]);
+
+  const dataSources = useMemo(
+    () => ["users", "orders", "download_history", "analytics_events", "subscription_cancellation_feedback"],
+    [],
+  );
+
+  const signals = useMemo(() => {
+    if (!snapshot) return [];
+    const registrationToPaidPct = rate(snapshot.kpis.newPaidUsers, snapshot.kpis.registrations);
+    const activationRiskTotal = snapshot.trialNoDownload24h.length + snapshot.paidNoDownload24h.length;
+    const cancellationPressurePct = rate(snapshot.kpis.cancellations, snapshot.kpis.paidOrders);
+
+    return [
+      {
+        title: "Conversión registro → primer pago",
+        value: formatPct(registrationToPaidPct),
+        helper: `${snapshot.kpis.newPaidUsers} de ${snapshot.kpis.registrations} registros del rango.`,
+        tone: registrationToPaidPct >= 15 ? "ok" : registrationToPaidPct >= 8 ? "warn" : "error",
+      },
+      {
+        title: "Riesgo de activación (24h)",
+        value: formatCompactNumber(activationRiskTotal),
+        helper: `${snapshot.trialNoDownload24h.length} trial + ${snapshot.paidNoDownload24h.length} pagados sin descarga.`,
+        tone: activationRiskTotal <= 5 ? "ok" : activationRiskTotal <= 20 ? "warn" : "error",
+      },
+      {
+        title: "Presión de cancelación",
+        value: formatPct(cancellationPressurePct),
+        helper: `${snapshot.kpis.cancellations} cancelaciones vs ${snapshot.kpis.paidOrders} órdenes pagadas.`,
+        tone: cancellationPressurePct <= 8 ? "ok" : cancellationPressurePct <= 18 ? "warn" : "error",
+      },
+    ] as const;
+  }, [snapshot]);
+
+  const updatedAtLabel = useMemo(() => {
+    if (!lastUpdatedAt) return "—";
+    return new Intl.DateTimeFormat("es-MX", {
+      dateStyle: "medium",
+      timeStyle: "medium",
+    }).format(lastUpdatedAt);
+  }, [lastUpdatedAt]);
 
   return (
     <AdminPageLayout
@@ -277,7 +428,26 @@ export function CrmDashboard() {
         </div>
       ) : snapshot ? (
         <div className="crm-wrap">
-          <p className="crm-range">{rangeLabel}</p>
+          <section className="crm-meta" aria-label="Contexto del panel CRM">
+            <p className="crm-range">{rangeLabel}</p>
+            <p className="crm-updated">
+              Última actualización: <strong>{updatedAtLabel}</strong>
+            </p>
+            <div className="crm-source-row">
+              <span className="crm-source-row__label">
+                <Database size={15} aria-hidden />
+                Métricas basadas en tablas reales:
+              </span>
+              <div className="crm-source-row__chips">
+                {dataSources.map((source) => (
+                  <span key={source} className="crm-chip">
+                    {source}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </section>
+
           {actionToast ? (
             <div className="crm-toast" role="status">
               {actionToast}
@@ -335,11 +505,32 @@ export function CrmDashboard() {
               helper="Promedio horas"
               icon={Clock}
             />
+            <KpiCard
+              title="Pago → primera descarga"
+              value={formatDecimal(snapshot.kpis.avgHoursPaidToFirstDownload, 2)}
+              helper="Promedio horas"
+              icon={TrendingUp}
+            />
           </div>
+
+          <section className="crm-signal-grid" aria-label="Señales operativas">
+            {signals.map((signal) => (
+              <SignalCard
+                key={signal.title}
+                title={signal.title}
+                value={signal.value}
+                helper={signal.helper}
+                tone={signal.tone}
+              />
+            ))}
+          </section>
 
           {automation ? (
             <section className="crm-section">
-              <h2 className="crm-section__title">Automations</h2>
+              <div className="crm-section__title-row">
+                <h2 className="crm-section__title">Automatizaciones</h2>
+                <span className="crm-counter">{automation.recentRuns.length}</span>
+              </div>
               <p className="crm-section__hint">
                 Acciones últimas 24h: <strong>{automation.actionsLast24h}</strong>
               </p>
@@ -357,9 +548,13 @@ export function CrmDashboard() {
                     {automation.recentRuns.map((run) => (
                       <tr key={run.id}>
                         <td>{run.id}</td>
-                        <td>{run.startedAt}</td>
-                        <td>{run.finishedAt ?? "—"}</td>
-                        <td>{run.status}</td>
+                        <td>{formatDateLabel(run.startedAt, true)}</td>
+                        <td>{run.finishedAt ? formatDateLabel(run.finishedAt, true) : "—"}</td>
+                        <td>
+                          <span className={`crm-status-pill crm-status-pill--${getStatusTone(run.status)}`}>
+                            {formatStatus(run.status)}
+                          </span>
+                        </td>
                       </tr>
                     ))}
                     {automation.recentRuns.length === 0 ? (
@@ -375,70 +570,83 @@ export function CrmDashboard() {
             </section>
           ) : null}
 
-          <section className="crm-section">
-            <h2 className="crm-section__title">Registros diarios (acumulado)</h2>
-            <div className="crm-table-wrap" tabIndex={0} aria-label="Tabla: registros diarios (desplazable)">
-              <table className="crm-table">
-                <thead>
-                  <tr>
-                    <th>Día</th>
-                    <th>Registros</th>
-                    <th>Acumulado</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {snapshot.registrationsDaily.slice(-14).map((row) => (
-                    <tr key={row.day}>
-                      <td>{row.day}</td>
-                      <td>{row.registrations}</td>
-                      <td>{row.cumulative}</td>
-                    </tr>
-                  ))}
-                  {snapshot.registrationsDaily.length === 0 ? (
+          <div className="crm-section-grid">
+            <section className="crm-section">
+              <div className="crm-section__title-row">
+                <h2 className="crm-section__title">Registros diarios</h2>
+                <span className="crm-counter">{snapshot.registrationsDaily.length}</span>
+              </div>
+              <p className="crm-section__hint">Últimos 14 días con acumulado para ver tendencia real.</p>
+              <div className="crm-table-wrap" tabIndex={0} aria-label="Tabla: registros diarios (desplazable)">
+                <table className="crm-table crm-table--compact">
+                  <thead>
                     <tr>
-                      <td colSpan={3} className="crm-table__empty">
-                        Sin datos en este rango.
-                      </td>
+                      <th>Día</th>
+                      <th>Registros</th>
+                      <th>Acumulado</th>
                     </tr>
-                  ) : null}
-                </tbody>
-              </table>
-            </div>
-          </section>
+                  </thead>
+                  <tbody>
+                    {snapshot.registrationsDaily.slice(-14).map((row) => (
+                      <tr key={row.day}>
+                        <td>{formatDay(row.day)}</td>
+                        <td>{row.registrations}</td>
+                        <td>{row.cumulative}</td>
+                      </tr>
+                    ))}
+                    {snapshot.registrationsDaily.length === 0 ? (
+                      <tr>
+                        <td colSpan={3} className="crm-table__empty">
+                          Sin datos en este rango.
+                        </td>
+                      </tr>
+                    ) : null}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section className="crm-section">
+              <div className="crm-section__title-row">
+                <h2 className="crm-section__title">Trial por día</h2>
+                <span className="crm-counter">{snapshot.trialsDaily.length}</span>
+              </div>
+              <p className="crm-section__hint">Eventos de inicio y conversión de prueba por día.</p>
+              <div className="crm-table-wrap" tabIndex={0} aria-label="Tabla: trial por día (desplazable)">
+                <table className="crm-table crm-table--compact">
+                  <thead>
+                    <tr>
+                      <th>Día</th>
+                      <th>Inicios</th>
+                      <th>Conversiones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {snapshot.trialsDaily.slice(-14).map((row) => (
+                      <tr key={row.day}>
+                        <td>{formatDay(row.day)}</td>
+                        <td>{row.trialStarts}</td>
+                        <td>{row.trialConversions}</td>
+                      </tr>
+                    ))}
+                    {snapshot.trialsDaily.length === 0 ? (
+                      <tr>
+                        <td colSpan={3} className="crm-table__empty">
+                          Aún no hay eventos de trial.
+                        </td>
+                      </tr>
+                    ) : null}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
 
           <section className="crm-section">
-            <h2 className="crm-section__title">Trial por día</h2>
-            <div className="crm-table-wrap" tabIndex={0} aria-label="Tabla: trial por día (desplazable)">
-              <table className="crm-table">
-                <thead>
-                  <tr>
-                    <th>Día</th>
-                    <th>Inicios</th>
-                    <th>Conversiones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {snapshot.trialsDaily.slice(-14).map((row) => (
-                    <tr key={row.day}>
-                      <td>{row.day}</td>
-                      <td>{row.trialStarts}</td>
-                      <td>{row.trialConversions}</td>
-                    </tr>
-                  ))}
-                  {snapshot.trialsDaily.length === 0 ? (
-                    <tr>
-                      <td colSpan={3} className="crm-table__empty">
-                        Aún no hay eventos de trial.
-                      </td>
-                    </tr>
-                  ) : null}
-                </tbody>
-              </table>
+            <div className="crm-section__title-row">
+              <h2 className="crm-section__title">Cancelaciones por razón</h2>
+              <span className="crm-counter">{snapshot.cancellationTopReasons.length}</span>
             </div>
-          </section>
-
-          <section className="crm-section">
-            <h2 className="crm-section__title">Cancelaciones (razones principales)</h2>
             <p className="crm-section__hint">
               Total en el rango: <strong>{snapshot.kpis.cancellations}</strong>
             </p>
@@ -453,7 +661,7 @@ export function CrmDashboard() {
                 <tbody>
                   {snapshot.cancellationTopReasons.map((row) => (
                     <tr key={row.reasonCode}>
-                      <td>{row.reasonCode}</td>
+                      <td>{formatReasonCode(row.reasonCode)}</td>
                       <td>{row.cancellations}</td>
                     </tr>
                   ))}
@@ -470,7 +678,10 @@ export function CrmDashboard() {
           </section>
 
           <section className="crm-section">
-            <h2 className="crm-section__title">Activación (primer download)</h2>
+            <div className="crm-section__title-row">
+              <h2 className="crm-section__title">Activación de valor</h2>
+              <span className="crm-counter">24h</span>
+            </div>
             <p className="crm-section__hint">
               Promedio horas desde primer pago a primer download:{" "}
               <strong>{formatDecimal(snapshot.kpis.avgHoursPaidToFirstDownload, 2)}</strong>
@@ -478,7 +689,10 @@ export function CrmDashboard() {
           </section>
 
           <section className="crm-section">
-            <h2 className="crm-section__title">Trial inició y no descargó en 24h</h2>
+            <div className="crm-section__title-row">
+              <h2 className="crm-section__title">Trial sin descarga en 24h</h2>
+              <span className="crm-counter">{snapshot.trialNoDownload24h.length}</span>
+            </div>
             <p className="crm-section__hint">
               Segmento crítico: necesitan onboarding para activar valor antes del día 7.
             </p>
@@ -502,7 +716,7 @@ export function CrmDashboard() {
                       <td>{row.username}</td>
                       <td>{row.email}</td>
                       <td>{row.phone ?? "—"}</td>
-                      <td>{row.trialStartedAt}</td>
+                      <td>{formatDateLabel(row.trialStartedAt, true)}</td>
                       <td>{row.planId ?? "—"}</td>
                       <td className="crm-actions">
                         <button
@@ -551,7 +765,10 @@ export function CrmDashboard() {
           </section>
 
           <section className="crm-section">
-            <h2 className="crm-section__title">Pagaron y no descargaron en 24h</h2>
+            <div className="crm-section__title-row">
+              <h2 className="crm-section__title">Pagaron y no descargaron en 24h</h2>
+              <span className="crm-counter">{snapshot.paidNoDownload24h.length}</span>
+            </div>
             <p className="crm-section__hint">
               Lista enfocada en primeras compras dentro del rango.
             </p>
@@ -576,9 +793,9 @@ export function CrmDashboard() {
                       <td>{row.username}</td>
                       <td>{row.email}</td>
                       <td>{row.phone ?? "—"}</td>
-                      <td>{row.paidAt}</td>
+                      <td>{formatDateLabel(row.paidAt, true)}</td>
                       <td>{row.planId ?? "—"}</td>
-                      <td>{row.paymentMethod ?? "—"}</td>
+                      <td>{formatPaymentMethod(row.paymentMethod)}</td>
                       <td className="crm-actions">
                         <button
                           type="button"
@@ -626,7 +843,10 @@ export function CrmDashboard() {
           </section>
 
           <section className="crm-section">
-            <h2 className="crm-section__title">Cancelaciones recientes</h2>
+            <div className="crm-section__title-row">
+              <h2 className="crm-section__title">Cancelaciones recientes</h2>
+              <span className="crm-counter">{snapshot.recentCancellations.length}</span>
+            </div>
             <p className="crm-section__hint">Con motivo y atribución (si existe).</p>
             <div className="crm-table-wrap" tabIndex={0} aria-label="Tabla: cancelaciones recientes (desplazable)">
               <table className="crm-table">
@@ -646,13 +866,13 @@ export function CrmDashboard() {
                 <tbody>
                   {snapshot.recentCancellations.map((row) => (
                     <tr key={row.id}>
-                      <td>{row.createdAt}</td>
+                      <td>{formatDateLabel(row.createdAt, true)}</td>
                       <td>{row.userId}</td>
                       <td>{row.username}</td>
                       <td>{row.email}</td>
                       <td>{row.phone ?? "—"}</td>
-                      <td>{row.paymentMethod ?? "—"}</td>
-                      <td>{row.reasonCode}</td>
+                      <td>{formatPaymentMethod(row.paymentMethod)}</td>
+                      <td>{formatReasonCode(row.reasonCode)}</td>
                       <td>{row.campaign ?? "—"}</td>
                       <td className="crm-actions">
                         <button

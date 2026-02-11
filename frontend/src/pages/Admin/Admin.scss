@@ -184,10 +184,16 @@ html[data-theme="dark"] .admin-theme::before {
   position: relative;
 }
 
+.search-input__field {
+  position: relative;
+  width: 100%;
+}
+
 .search-input__icon {
   position: absolute;
   left: 12px;
-  bottom: 13px;
+  top: 50%;
+  transform: translateY(-50%);
   color: var(--ad-text-muted);
   pointer-events: none;
 }

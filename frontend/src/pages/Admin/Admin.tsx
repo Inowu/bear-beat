@@ -48,7 +48,7 @@ export interface IAdminFilter {
   page: number;
   total: number;
   search: string;
-  active: number;
+  active: 0 | 1 | 2 | 3;
   limit: number;
 }
 
@@ -178,6 +178,7 @@ function Admin() {
         email: true,
         phone: true,
         active: true,
+        blocked: true,
         registered_on: true,
         role_id: true,
       };
@@ -189,27 +190,32 @@ function Admin() {
         select: baseSelect,
       };
       const countBody = { where: baseWhere, select: { id: true } };
+      const mapAdminUser = (u: any): IAdminUser => ({
+        email: u.email,
+        username: u.username,
+        active: u.active,
+        id: u.id,
+        registered_on: u.registered_on,
+        blocked: Boolean(u.blocked),
+        phone: u.phone ?? "",
+        role: u.role_id ?? 4,
+      });
 
       if (filt.active === 2) {
         const tempUsers = await trpc.users.findManyUsers.query(baseBody);
-        const transformedUsers: IAdminUser[] = tempUsers.map((u: any) => ({
-          email: u.email,
-          username: u.username,
-          active: u.active,
-          id: u.id,
-          registered_on: u.registered_on,
-          blocked: Boolean(u.blocked),
-          phone: u.phone ?? "",
-          role: u.role_id ?? 4,
-        }));
-        setUsers(transformedUsers);
+        setUsers(tempUsers.map(mapAdminUser));
         const totalUsersResponse = await trpc.users.findManyUsers.query(countBody);
+        setTotalUsers(totalUsersResponse.length);
+      } else if (filt.active === 3) {
+        const tempUsers = await trpc.users.getCancelledUsers.query(baseBody);
+        const totalUsersResponse = await trpc.users.getCancelledUsers.query(countBody);
+        setUsers(tempUsers.map(mapAdminUser));
         setTotalUsers(totalUsersResponse.length);
       } else {
         const query = filt.active === 1 ? trpc.users.getActiveUsers : trpc.users.getInactiveUsers;
         const tempUsers = await query.query(baseBody);
         const totalUsersResponse = await query.query(countBody);
-        setUsers(tempUsers);
+        setUsers(tempUsers.map(mapAdminUser));
         setTotalUsers(totalUsersResponse.length);
       }
     } catch {
@@ -339,7 +345,14 @@ function Admin() {
     : [];
 
   const colCount = filters.active !== 2 ? 6 : 5;
-  const activeFilterLabel = filters.active === 1 ? "Activos" : filters.active === 0 ? "Inactivos" : "Todos";
+  const activeFilterLabel =
+    filters.active === 1
+      ? "Membresía activa"
+      : filters.active === 0
+        ? "Sin membresía"
+        : filters.active === 3
+          ? "Cancelados"
+          : "Todos registrados";
   const rangeStart = totalUsers === 0 ? 0 : filters.page * filters.limit + 1;
   const rangeEnd = Math.min(filters.page * filters.limit + users.length, totalUsers);
   const retryUsersLoad = () => {
@@ -360,7 +373,7 @@ function Admin() {
                 </span>
               )}
             </div>
-            <p className="admin-subtitle">Controla accesos, soporte y acciones críticas desde un solo panel.</p>
+            <p className="admin-subtitle">Controla accesos y acciones críticas desde un solo panel.</p>
             <div className="admin-insights">
               <span className="insight-pill">
                 <Users size={14} />
@@ -382,11 +395,12 @@ function Admin() {
                 <select
                   id="admin-status-filter"
                   value={filters.active}
-                  onChange={(e) => startFilter("active", +e.target.value)}
+                  onChange={(e) => startFilter("active", Number(e.target.value) as IAdminFilter["active"])}
                 >
-                  <option value={2}>Todos</option>
-                  <option value={1}>Activos</option>
-                  <option value={0}>Inactivos</option>
+                  <option value={2}>Todos registrados</option>
+                  <option value={1}>Membresía activa</option>
+                  <option value={0}>Sin membresía</option>
+                  <option value={3}>Cancelados</option>
                 </select>
               </div>
               <div className="select-input">
@@ -404,13 +418,15 @@ function Admin() {
               </div>
               <div className="search-input">
                 <label htmlFor="admin-search-filter">Buscar</label>
-                <Search className="search-input__icon" size={18} />
-                <input
-                  id="admin-search-filter"
-                  placeholder="Buscar por email"
-                  value={filters.search}
-                  onChange={(e) => startFilter("search", e.target.value)}
-                />
+                <div className="search-input__field">
+                  <Search className="search-input__icon" size={18} />
+                  <input
+                    id="admin-search-filter"
+                    placeholder="Buscar por email"
+                    value={filters.search}
+                    onChange={(e) => startFilter("search", e.target.value)}
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -459,7 +475,7 @@ function Admin() {
                   <th>Email</th>
                   <th>Teléfono</th>
                   <th>Registro</th>
-                  {filters.active !== 2 && <th>Suscripción</th>}
+                  {filters.active !== 2 && <th>Membresía</th>}
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -517,8 +533,20 @@ function Admin() {
                         </td>
                         {filters.active !== 2 && (
                           <td>
-                            <span className={`badge ${filters.active === 1 ? "badge--success" : "badge--neutral"}`}>
-                              {filters.active === 1 ? "Activa" : "No activa"}
+                            <span
+                              className={`badge ${
+                                filters.active === 1
+                                  ? "badge--success"
+                                  : filters.active === 3
+                                    ? "badge--danger"
+                                    : "badge--neutral"
+                              }`}
+                            >
+                              {filters.active === 1
+                                ? "Activa"
+                                : filters.active === 3
+                                  ? "Cancelada"
+                                  : "Sin membresía"}
                             </span>
                           </td>
                         )}

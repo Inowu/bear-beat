@@ -10,13 +10,13 @@ interface IAdminFilter {
     page: number;
     total: number;
     search: string;
-    active: number;
+    active: 0 | 1 | 2 | 3;
     limit: number
 }
 interface ICondition {
     show: boolean;
     onHide: () => void;
-    filterUsers: (filters: IAdminFilter) => void;
+    filterUsers: (filters: IAdminFilter) => void | Promise<void>;
     filters: IAdminFilter;
 }
 export function DeleteUserModal (props: ICondition)  {

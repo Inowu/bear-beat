@@ -21,6 +21,7 @@ import {
   UserRound,
   Shield,
   LogOut,
+  Undo2,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -117,6 +118,7 @@ function AsideNavbar(props: AsideNavbarPropsI) {
                 <li><Link to="/admin/historialCheckout" {...linkProps}><FileText size={18} aria-hidden /> Checkout</Link></li>
                 <li><Link to="/admin/dominios-bloqueados" {...linkProps}><Ban size={18} aria-hidden /> Dominios</Link></li>
                 <li><Link to="/admin/telefonos-bloqueados" {...linkProps}><Phone size={18} aria-hidden /> Telefonos</Link></li>
+                <li><Link to="/" onClick={handleLinkClick}><Undo2 size={18} aria-hidden /> Modo usuario</Link></li>
                 <li>
                   <button
                     type="button"

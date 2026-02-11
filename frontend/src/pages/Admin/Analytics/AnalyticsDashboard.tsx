@@ -3,6 +3,9 @@ import {
   Activity,
   AlertTriangle,
   BarChart3,
+  CalendarClock,
+  CheckCircle2,
+  CircleHelp,
   CreditCard,
   DollarSign,
   Gauge,
@@ -217,11 +220,19 @@ function formatDecimal(value: number | null | undefined, digits = 2): string {
   return value.toFixed(digits);
 }
 
+function formatDateTime(value: string | null | undefined): string {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleString("es-MX");
+}
+
 export function AnalyticsDashboard() {
   const [rangeDays, setRangeDays] = useState<number>(30);
   const [manualAdSpend, setManualAdSpend] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<string>("");
 
   const [funnel, setFunnel] = useState<FunnelOverview | null>(null);
   const [series, setSeries] = useState<DailyPoint[]>([]);
@@ -270,6 +281,7 @@ export function AnalyticsDashboard() {
       setUx(uxResponse as UxSummary);
       setTopEvents(topEventsResponse as TopEventPoint[]);
       setAlerts(alertsResponse as HealthAlertsSnapshot);
+      setLastUpdatedAt(new Date().toISOString());
     } catch (fetchError) {
       const message =
         fetchError instanceof Error
@@ -287,39 +299,47 @@ export function AnalyticsDashboard() {
 
   const toolbar = (
     <div className="analytics-toolbar">
-      <label className="analytics-toolbar__range">
-        Ventana
-        <select
-          value={rangeDays}
-          onChange={(event) => setRangeDays(Number(event.target.value))}
+      <div className="analytics-toolbar__group">
+        <label className="analytics-toolbar__range">
+          Ventana de análisis
+          <select
+            value={rangeDays}
+            onChange={(event) => setRangeDays(Number(event.target.value))}
+          >
+            {RANGE_OPTIONS.map((days) => (
+              <option key={days} value={days}>
+                {days} días
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="analytics-toolbar__range">
+          Inversión mensual (MXN)
+          <input
+            type="number"
+            min={0}
+            step={0.01}
+            value={manualAdSpend}
+            onChange={(event) => setManualAdSpend(event.target.value)}
+            placeholder="Opcional"
+          />
+        </label>
+      </div>
+      <div className="analytics-toolbar__actions">
+        <span className="analytics-toolbar__updated">
+          <CalendarClock size={14} />
+          Última actualización: {formatDateTime(lastUpdatedAt)}
+        </span>
+        <button
+          type="button"
+          onClick={() => void fetchAnalytics()}
+          disabled={loading}
+          className="analytics-toolbar__refresh"
         >
-          {RANGE_OPTIONS.map((days) => (
-            <option key={days} value={days}>
-              {days} días
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="analytics-toolbar__range">
-        Ad spend mensual (MXN)
-        <input
-          type="number"
-          min={0}
-          step={0.01}
-          value={manualAdSpend}
-          onChange={(event) => setManualAdSpend(event.target.value)}
-          placeholder="Opcional"
-        />
-      </label>
-      <button
-        type="button"
-        onClick={() => void fetchAnalytics()}
-        disabled={loading}
-        className="analytics-toolbar__refresh"
-      >
-        <RefreshCw size={16} className={loading ? "is-spinning" : ""} />
-        {loading ? "Actualizando..." : "Actualizar"}
-      </button>
+          <RefreshCw size={16} className={loading ? "is-spinning" : ""} />
+          {loading ? "Actualizando..." : "Actualizar"}
+        </button>
+      </div>
     </div>
   );
 
@@ -397,13 +417,87 @@ export function AnalyticsDashboard() {
     ];
   }, [funnel, business]);
 
+  const quickGuideCards = useMemo(() => {
+    if (!funnel || !business || !ux) return [];
+    return [
+      {
+        id: "paid-rate",
+        title: "Conversión final",
+        value: formatPct(funnel.conversion.visitorToPaidPct),
+        helper: `De cada 100 visitantes, ${formatDecimal(funnel.conversion.visitorToPaidPct, 1)} terminan en pago.`,
+        icon: CheckCircle2,
+      },
+      {
+        id: "revenue-range",
+        title: "Ingreso del período",
+        value: formatCurrency(funnel.volume.grossRevenue),
+        helper: `Total de ${funnel.range.days} días.`,
+        icon: DollarSign,
+      },
+      {
+        id: "retention",
+        title: "Retención D30",
+        value: formatPct(funnel.conversion.retentionD30Pct),
+        helper: `${funnel.volume.retainedD30Users}/${funnel.volume.retentionD30Base} usuarios vuelven al mes.`,
+        icon: TrendingUp,
+      },
+      {
+        id: "poor-rate",
+        title: "Calidad UX (poor)",
+        value: formatPct(ux.totals.poorRatePct),
+        helper: "Mientras más bajo, mejor experiencia.",
+        icon: Gauge,
+      },
+      {
+        id: "churn",
+        title: "Churn mensual",
+        value: formatPct(business.kpis.churnMonthlyPct),
+        helper: `${business.cohorts.lostUsers}/${business.cohorts.previousActiveUsers} usuarios perdidos.`,
+        icon: AlertTriangle,
+      },
+      {
+        id: "payback",
+        title: "Recuperación CAC",
+        value: `${formatDecimal(business.kpis.paybackMonthsEstimate)} meses`,
+        helper: "Tiempo estimado para recuperar adquisición.",
+        icon: BarChart3,
+      },
+    ];
+  }, [funnel, business, ux]);
+
   return (
-    <AdminPageLayout title="Analytics de embudo" toolbar={toolbar}>
+    <AdminPageLayout title="Analítica del negocio" toolbar={toolbar}>
       <section className="analytics-dashboard">
         {error && (
           <div className="analytics-alert analytics-alert--error" role="alert">
             {error}
           </div>
+        )}
+
+        {funnel && business && ux && (
+          <section className="analytics-guide">
+            <header className="analytics-guide__head">
+              <h2>
+                <CircleHelp size={16} />
+                Cómo leer este panel
+              </h2>
+              <p>
+                1) Revisa conversión e ingreso. 2) Detecta dónde cae el embudo. 3) Valida si UX está frenando pagos.
+              </p>
+            </header>
+            <div className="analytics-guide__cards">
+              {quickGuideCards.map((card) => (
+                <article key={card.id} className="analytics-guide-card">
+                  <header>
+                    <span>{card.title}</span>
+                    <card.icon size={15} />
+                  </header>
+                  <strong>{card.value}</strong>
+                  <small>{card.helper}</small>
+                </article>
+              ))}
+            </div>
+          </section>
         )}
 
         {alerts && alerts.alerts.length > 0 && (
@@ -451,10 +545,11 @@ export function AnalyticsDashboard() {
 
                 <div className="analytics-panels">
                   <section className="analytics-panel">
-                    <h2>Serie diaria</h2>
+                    <h2>Actividad diaria del embudo</h2>
                     <p>
-                      Rango: {new Date(funnel.range.start).toLocaleDateString("es-MX")} a{" "}
-                      {new Date(funnel.range.end).toLocaleDateString("es-MX")}
+                      Evolución por día del período seleccionado:{" "}
+                      {new Date(funnel.range.start).toLocaleDateString("es-MX")} a{" "}
+                      {new Date(funnel.range.end).toLocaleDateString("es-MX")}.
                     </p>
                     <div className="analytics-table-wrap" tabIndex={0} aria-label="Tabla: serie diaria (desplazable)">
                       <table>
@@ -489,8 +584,8 @@ export function AnalyticsDashboard() {
                   </section>
 
                   <section className="analytics-panel">
-                    <h2>Atribución por canal</h2>
-                    <p>Top fuentes por visitantes, registros y pagos.</p>
+                    <h2>Canales que traen clientes</h2>
+                    <p>Compara qué fuente/campaña trae más visitas, registros y pagos.</p>
                     <div className="analytics-table-wrap" tabIndex={0} aria-label="Tabla: atribución por canal (desplazable)">
                       <table>
                         <thead>
@@ -530,8 +625,8 @@ export function AnalyticsDashboard() {
                   </section>
 
                   <section className="analytics-panel">
-                    <h2>Cancelaciones</h2>
-                    <p>Razones principales y campañas asociadas (últimos {rangeDays} días).</p>
+                    <h2>Por qué cancelan</h2>
+                    <p>Motivos principales y campañas asociadas de los últimos {rangeDays} días.</p>
                     <div className="analytics-table-wrap" tabIndex={0} aria-label="Tabla: cancelaciones (desplazable)">
                       <table>
                         <thead>
@@ -582,21 +677,21 @@ export function AnalyticsDashboard() {
                   </section>
 
                   <section className="analytics-panel">
-                    <h2>Unidad económica</h2>
-                    <p>Métricas de rentabilidad para decisiones de crecimiento.</p>
+                    <h2>Rentabilidad (unidad económica)</h2>
+                    <p>Indicadores para decidir si adquisición y monetización son sostenibles.</p>
                     <div className="analytics-table-wrap" tabIndex={0} aria-label="Tabla: unidad económica (desplazable)">
                       <table>
                         <tbody>
                           <tr>
-                            <th>MRR estimado (30d)</th>
+                            <th>Ingreso recurrente mensual estimado (MRR)</th>
                             <td>{formatCurrency(business.kpis.monthlyRecurringRevenueEstimate)}</td>
                           </tr>
                           <tr>
-                            <th>ARPU (rango)</th>
+                            <th>Ingreso promedio por usuario (ARPU, rango)</th>
                             <td>{formatCurrency(business.kpis.arpu)}</td>
                           </tr>
                           <tr>
-                            <th>ARPU mensual (30d)</th>
+                            <th>Ingreso promedio mensual por usuario (ARPU 30d)</th>
                             <td>{formatCurrency(business.kpis.monthlyArpuEstimate)}</td>
                           </tr>
                           <tr>
@@ -608,15 +703,15 @@ export function AnalyticsDashboard() {
                             <td>{formatCurrency(business.kpis.cacEstimate)}</td>
                           </tr>
                           <tr>
-                            <th>Payback estimado</th>
+                            <th>Payback estimado (recuperación CAC)</th>
                             <td>{formatDecimal(business.kpis.paybackMonthsEstimate)} meses</td>
                           </tr>
                           <tr>
-                            <th>Refund / cancel rate</th>
+                            <th>Tasa de reembolso/cancelación</th>
                             <td>{formatPct(business.kpis.refundRatePct)}</td>
                           </tr>
                           <tr>
-                            <th>Repeat purchase rate</th>
+                            <th>Tasa de recompra</th>
                             <td>{formatPct(business.kpis.repeatPurchaseRatePct)}</td>
                           </tr>
                         </tbody>
@@ -625,8 +720,8 @@ export function AnalyticsDashboard() {
                   </section>
 
                   <section className="analytics-panel">
-                    <h2>UX técnica (Web Vitals)</h2>
-                    <p>Calidad por ruta y dispositivo para detectar fricción real de conversión.</p>
+                    <h2>Experiencia del sitio (Web Vitals)</h2>
+                    <p>Calidad por ruta y dispositivo para detectar fricción real en conversión.</p>
                     <div className="analytics-table-wrap" tabIndex={0} aria-label="Tabla: resumen de Web Vitals (desplazable)">
                       <table>
                         <tbody>
@@ -720,8 +815,8 @@ export function AnalyticsDashboard() {
                   </section>
 
                   <section className="analytics-panel">
-                    <h2>Top eventos</h2>
-                    <p>Cobertura real de instrumentación y uso de producto.</p>
+                    <h2>Eventos más usados</h2>
+                    <p>Verifica qué acciones del producto ocurren más seguido en el período.</p>
                     <div className="analytics-table-wrap" tabIndex={0} aria-label="Tabla: top eventos (desplazable)">
                       <table>
                         <thead>

@@ -149,6 +149,60 @@ export const usersRouter = router({
 
       return activeUsers;
     }),
+  getCancelledUsers: shieldedProcedure
+    .input(UsersFindManySchema)
+    .query(async ({ ctx: { prisma }, input }) => {
+      const [cancelledOrderUsers, cancelledFeedbackUsers] = await Promise.all([
+        prisma.orders.findMany({
+          where: {
+            OR: [
+              { is_canceled: 1 },
+              { status: 3 },
+            ],
+          },
+          select: { user_id: true },
+          distinct: ['user_id'],
+        }),
+        prisma.subscriptionCancellationFeedback.findMany({
+          select: { user_id: true },
+          distinct: ['user_id'],
+        }),
+      ]);
+
+      const cancelledUserIds = Array.from(
+        new Set([
+          ...cancelledOrderUsers.map((row) => row.user_id),
+          ...cancelledFeedbackUsers.map((row) => row.user_id),
+        ]),
+      );
+
+      if (cancelledUserIds.length === 0) {
+        return [];
+      }
+
+      const cancelledUsers = await prisma.users.findMany({
+        ...input,
+        where: {
+          AND: [
+            {
+              ...input.where,
+            },
+            {
+              id: {
+                in: cancelledUserIds,
+              },
+            },
+            {
+              NOT: {
+                role_id: RolesIds.admin,
+              },
+            },
+          ],
+        },
+      });
+
+      return cancelledUsers;
+    }),
   getInactiveUsers: shieldedProcedure
     .input(UsersFindManySchema)
     .query(async ({ ctx: { prisma }, input }) => {
