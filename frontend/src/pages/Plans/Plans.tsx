@@ -5,11 +5,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { useUserContext } from '../../contexts/UserContext';
 import PlanCard from '../../components/PlanCard/PlanCard';
 import trpc from '../../api';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { trackManyChatConversion, MC_EVENTS } from '../../utils/manychatPixel';
-import { AlertTriangle, RefreshCw, Layers3 } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Layers3, ArrowRight } from 'lucide-react';
 import { formatInt, formatTB } from '../../utils/format';
 import PlansStickyCta from './PlansStickyCta';
+import Logo from '../../assets/images/osonuevo.png';
 
 function normalizeCurrency(value: unknown): "mxn" | "usd" | "" {
   const raw = `${value ?? ""}`.trim().toLowerCase();
@@ -227,6 +228,12 @@ function Plans() {
     if ((trialConfig.days ?? 0) <= 0 || (trialConfig.gb ?? 0) <= 0) return null;
     return `Prueba con tarjeta (Stripe): ${formatInt(trialConfig.days)} días + ${formatInt(trialConfig.gb)} GB.`;
   }, [trialConfig?.days, trialConfig?.enabled, trialConfig?.gb]);
+  const primaryCtaLabel = useMemo(() => {
+    if (!currentUser?.email) {
+      return hasTrial ? "Crear cuenta y empezar prueba" : "Crear cuenta y activar";
+    }
+    return "Activar ahora";
+  }, [currentUser?.email, hasTrial]);
 
   useEffect(() => {
     const hasSelected = selectedCurrency === "mxn" ? Boolean(plansByCurrency.mxn) : Boolean(plansByCurrency.usd);
@@ -239,6 +246,13 @@ function Plans() {
     if (selectedCurrency === "mxn") return plansByCurrency.mxn ?? plansByCurrency.usd;
     return plansByCurrency.usd ?? plansByCurrency.mxn;
   }, [plansByCurrency.mxn, plansByCurrency.usd, selectedCurrency]);
+  const selectedPriceLabel = useMemo(() => {
+    if (!primaryPlan) return null;
+    const currency = normalizeCurrency(primaryPlan.moneda) === "usd" ? "USD" : "MXN";
+    const locale = currency === "USD" ? "en-US" : "es-MX";
+    const amount = formatAmountCompact(primaryPlan.price, locale);
+    return `${currency} $${amount}/mes`;
+  }, [primaryPlan]);
 
   const handlePrimaryCta = () => {
     if (!primaryPlan) return;
@@ -281,6 +295,21 @@ function Plans() {
 
   return (
     <div className="plans-page">
+      <header className="plans-topnav" aria-label="Navegación pública">
+        <div className="plans-main-container plans-topnav__inner">
+          <Link to="/" className="plans-topnav__brand" aria-label="Bear Beat">
+            <img src={Logo} alt="Bear Beat" />
+          </Link>
+          <nav className="plans-topnav__nav" aria-label="Enlaces">
+            <Link to="/planes" className="plans-topnav__link is-active" aria-current="page">
+              Planes
+            </Link>
+            <Link to="/auth" className="plans-topnav__link">
+              Iniciar sesión
+            </Link>
+          </nav>
+        </div>
+      </header>
       <div className="plans-main-container">
         <section className="plans-hero" aria-label="Planes" data-testid="plans-hero">
           <h1 className="plans-page-title">Planes y precios</h1>
@@ -342,6 +371,27 @@ function Plans() {
               </div>
               <p className="plans-currency-micro">MXN: México (pago local). USD: internacional.</p>
               {heroTrialCopy && <p className="plans-trial-note">{heroTrialCopy}</p>}
+              <div className="plans-hero-primary" aria-live="polite">
+                <div className="plans-hero-primary-head">
+                  <p className="plans-hero-primary-kicker">{primaryPlan ? `Plan ${primaryPlan.name}` : "Plan disponible"}</p>
+                  <p className="plans-hero-primary-price">{selectedPriceLabel ?? "—"}</p>
+                </div>
+                <button
+                  type="button"
+                  className="plans-hero-primary-cta"
+                  data-testid="plans-hero-primary-cta"
+                  onClick={handlePrimaryCta}
+                  disabled={!primaryPlan}
+                >
+                  {primaryCtaLabel}
+                  <ArrowRight size={16} />
+                </button>
+                <ul className="plans-hero-trust" aria-label="Confianza">
+                  <li>Pago seguro</li>
+                  <li>Activación guiada</li>
+                  <li>Cancela cuando quieras</li>
+                </ul>
+              </div>
             </div>
           </div>
         </section>
@@ -380,11 +430,11 @@ function Plans() {
       ) : (
         <>
           <section className="plans-grid-heading" aria-label="Selección de plan">
-            <h2>{isCompareLayout ? "Compara y elige tu plan" : "Elige tu plan y activa hoy"}</h2>
+            <h2>{isCompareLayout ? "Compara rápido y elige" : "Tu plan listo para activar"}</h2>
             <p>
               {isCompareLayout
-                ? "Mismo catálogo y descargas. Solo cambia moneda y métodos de pago."
-                : "Activas en minutos y mantienes el control total desde tu cuenta."}
+                ? "Mismo catálogo y descargas. Solo cambia moneda y método de cobro."
+                : "Activas en minutos y mantienes control total desde tu cuenta."}
             </p>
           </section>
           <ul
@@ -418,7 +468,7 @@ function Plans() {
 
       <PlansStickyCta
         planId={primaryPlan?.id ?? null}
-        ctaLabel={!currentUser?.email ? (hasTrial ? "Crear cuenta y empezar prueba" : "Crear cuenta y activar") : "Activar ahora"}
+        ctaLabel={primaryCtaLabel}
         trial={trialConfig?.enabled ? { enabled: trialConfig.enabled, days: trialConfig.days, gb: trialConfig.gb } : null}
         onClick={handlePrimaryCta}
       />
