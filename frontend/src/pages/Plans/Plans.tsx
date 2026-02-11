@@ -7,9 +7,8 @@ import PlanCard from '../../components/PlanCard/PlanCard';
 import trpc from '../../api';
 import { Link, useNavigate } from 'react-router-dom';
 import { trackManyChatConversion, MC_EVENTS } from '../../utils/manychatPixel';
-import { AlertTriangle, RefreshCw, Layers3, ArrowRight } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Layers3 } from 'lucide-react';
 import { formatInt, formatTB } from '../../utils/format';
-import PlansStickyCta from './PlansStickyCta';
 import Logo from '../../assets/images/osonuevo.png';
 
 function normalizeCurrency(value: unknown): "mxn" | "usd" | "" {
@@ -55,21 +54,6 @@ function Plans() {
   const navigate = useNavigate();
   const preferredCurrency = useMemo(() => detectPreferredCurrency(), []);
   const [selectedCurrency, setSelectedCurrency] = useState<"mxn" | "usd">(preferredCurrency);
-  const [isCompareWidth, setIsCompareWidth] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(min-width: 920px)");
-    const update = () => setIsCompareWidth(mq.matches);
-    update();
-    if (typeof mq.addEventListener === "function") {
-      mq.addEventListener("change", update);
-      return () => mq.removeEventListener("change", update);
-    }
-    // Safari fallback.
-    mq.addListener(update);
-    return () => mq.removeListener(update);
-  }, []);
 
   const getPlans = async () => {
     setLoadError('');
@@ -264,16 +248,7 @@ function Plans() {
     navigate(target);
   };
 
-  const isCompareLayout = Boolean(isCompareWidth && plansByCurrency.mxn && plansByCurrency.usd);
-  const plansToRender = useMemo(() => {
-    if (!plansByCurrency.mxn && !plansByCurrency.usd) return [];
-    if (isCompareLayout) {
-      return preferredCurrency === "mxn"
-        ? ([plansByCurrency.mxn, plansByCurrency.usd].filter(Boolean) as IPlans[])
-        : ([plansByCurrency.usd, plansByCurrency.mxn].filter(Boolean) as IPlans[]);
-    }
-    return primaryPlan ? [primaryPlan] : [];
-  }, [isCompareLayout, plansByCurrency.mxn, plansByCurrency.usd, preferredCurrency, primaryPlan]);
+  const plansToRender = useMemo(() => (primaryPlan ? [primaryPlan] : []), [primaryPlan]);
 
   // Loader: mientras estemos cargando planes
   if (loader) {
@@ -308,92 +283,50 @@ function Plans() {
               Iniciar sesión
             </Link>
           </nav>
+          <button
+            type="button"
+            className="plans-topnav__cta"
+            onClick={handlePrimaryCta}
+            disabled={!primaryPlan}
+          >
+            {primaryCtaLabel}
+          </button>
         </div>
       </header>
-      <div className="plans-main-container">
+      <main className="plans-main-container">
         <section className="plans-hero" aria-label="Planes" data-testid="plans-hero">
-          <h1 className="plans-page-title">Planes y precios</h1>
-          <p className="plans-hero-subtitle">Activa en minutos y llega con repertorio listo.</p>
-          <div className="plans-hero-grid">
-            <div className="plans-hero-copy" aria-label="Qué incluye">
-              <ul className="plans-hero-chips" aria-label="Incluye">
-                <li className="plans-hero-chip bb-stat-pill">
-                  <span className="bb-stat-pill__value">{proofItems[1]?.value ?? "—"}</span>
-                  <span className="bb-stat-pill__label">catálogo</span>
-                </li>
-                <li className="plans-hero-chip bb-stat-pill">
-                  <span className="bb-stat-pill__value">
-                    {downloadQuotaGb ? `${formatInt(downloadQuotaGb)} GB/mes` : "—"}
-                  </span>
-                  <span className="bb-stat-pill__label">de descargas</span>
-                </li>
-                <li className="plans-hero-chip bb-stat-pill">
-                  <span className="bb-stat-pill__value">FTP + web</span>
-                  <span className="bb-stat-pill__label">(tú eliges)</span>
-                </li>
-              </ul>
-              <p className="plans-hero-micro">{heroMicrocopy}</p>
-              {(heroPriceLabels.mxn || heroPriceLabels.usd) && (
-                <p className="plans-hero-price-hint" aria-label="Referencia rápida de precios">
-                  {heroPriceLabels.mxn && <span className="plans-hero-price-tag">{heroPriceLabels.mxn}</span>}
-                  {heroPriceLabels.mxn && heroPriceLabels.usd && (
-                    <span className="plans-hero-price-sep" aria-hidden>
-                      •
-                    </span>
-                  )}
-                  {heroPriceLabels.usd && <span className="plans-hero-price-tag">{heroPriceLabels.usd}</span>}
-                </p>
+          <h1 className="plans-page-title">Precio simple, catálogo gigante</h1>
+          <p className="plans-hero-subtitle">
+            Activa en minutos y llega con repertorio listo para tu evento.
+          </p>
+          <ul className="plans-hero-chips" aria-label="Incluye">
+            <li className="plans-hero-chip bb-stat-pill">
+              <span className="bb-stat-pill__value">{proofItems[1]?.value ?? "—"}</span>
+              <span className="bb-stat-pill__label">catálogo total</span>
+            </li>
+            <li className="plans-hero-chip bb-stat-pill">
+              <span className="bb-stat-pill__value">
+                {downloadQuotaGb ? `${formatInt(downloadQuotaGb)} GB/mes` : "—"}
+              </span>
+              <span className="bb-stat-pill__label">de descargas</span>
+            </li>
+            <li className="plans-hero-chip bb-stat-pill">
+              <span className="bb-stat-pill__value">{proofItems[0]?.value ?? "—"}</span>
+              <span className="bb-stat-pill__label">archivos disponibles</span>
+            </li>
+          </ul>
+          <p className="plans-hero-micro">{heroMicrocopy}</p>
+          {(heroPriceLabels.mxn || heroPriceLabels.usd) && (
+            <p className="plans-hero-price-hint" aria-label="Referencia rápida de precios">
+              {heroPriceLabels.mxn && <span className="plans-hero-price-tag">{heroPriceLabels.mxn}</span>}
+              {heroPriceLabels.mxn && heroPriceLabels.usd && (
+                <span className="plans-hero-price-sep" aria-hidden>
+                  •
+                </span>
               )}
-            </div>
-            <div className="plans-hero-choice" aria-label="Moneda">
-              <h2 className="plans-hero-choice-title">Elige tu moneda</h2>
-              <div className="plans-currency-toggle bb-segmented" role="tablist" aria-label="Moneda">
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={selectedCurrency === "mxn"}
-                  className={["bb-segmented__btn", selectedCurrency === "mxn" ? "is-active" : ""].filter(Boolean).join(" ")}
-                  onClick={() => setSelectedCurrency("mxn")}
-                  disabled={!plansByCurrency.mxn}
-                >
-                  MXN
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={selectedCurrency === "usd"}
-                  className={["bb-segmented__btn", selectedCurrency === "usd" ? "is-active" : ""].filter(Boolean).join(" ")}
-                  onClick={() => setSelectedCurrency("usd")}
-                  disabled={!plansByCurrency.usd}
-                >
-                  USD
-                </button>
-              </div>
-              <p className="plans-currency-micro">MXN: México (pago local). USD: internacional.</p>
-              {heroTrialCopy && <p className="plans-trial-note">{heroTrialCopy}</p>}
-            </div>
-          </div>
-          <div className="plans-hero-primary plans-hero-primary--strip" aria-live="polite">
-            <div className="plans-hero-primary-head">
-              <p className="plans-hero-primary-kicker">{primaryPlan ? `Plan ${primaryPlan.name}` : "Plan disponible"}</p>
-              <p className="plans-hero-primary-price">{selectedPriceLabel ?? "—"}</p>
-            </div>
-            <button
-              type="button"
-              className="plans-hero-primary-cta"
-              data-testid="plans-hero-primary-cta"
-              onClick={handlePrimaryCta}
-              disabled={!primaryPlan}
-            >
-              {primaryCtaLabel}
-              <ArrowRight size={16} />
-            </button>
-            <ul className="plans-hero-trust" aria-label="Confianza">
-              <li>Pago seguro</li>
-              <li>Activación guiada</li>
-              <li>Cancela cuando quieras</li>
-            </ul>
-          </div>
+              {heroPriceLabels.usd && <span className="plans-hero-price-tag">{heroPriceLabels.usd}</span>}
+            </p>
+          )}
         </section>
       {loadError ? (
         <section className="plans-state-wrap">
@@ -428,50 +361,57 @@ function Plans() {
           </div>
         </section>
       ) : (
-        <>
-          <section className="plans-grid-heading" aria-label="Selección de plan">
-            <h2>{isCompareLayout ? "Compara rápido y elige" : "Tu plan listo para activar"}</h2>
-            <p>
-              {isCompareLayout
-                ? "Mismo catálogo y descargas. Solo cambia moneda y método de cobro."
-                : "Activas en minutos y mantienes control total desde tu cuenta."}
-            </p>
-          </section>
-          <ul
-            className={["plans-plan-grid", isCompareLayout ? "plans-plan-grid--compare" : ""].filter(Boolean).join(" ")}
-            aria-label="Planes disponibles"
-          >
-            {plansToRender.map((plan) => (
-              <li
-                key={`plan_${plan.id}`}
-                className={[
-                  "plans-plan-item",
-                  isCompareLayout && normalizeCurrency(plan.moneda) === selectedCurrency ? "is-selected" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
+        <section className="plans-offer" aria-label="Selección de plan">
+          <div className="plans-offer__head">
+            <div className="plans-offer__title-block">
+              <h2>Elige moneda y activa hoy</h2>
+              <p>Mismo catálogo, misma cuota mensual de descarga. Solo cambia la moneda y forma de cobro.</p>
+            </div>
+            <div className="plans-currency-toggle bb-segmented" role="tablist" aria-label="Moneda">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={selectedCurrency === "mxn"}
+                className={["bb-segmented__btn", selectedCurrency === "mxn" ? "is-active" : ""].filter(Boolean).join(" ")}
+                onClick={() => setSelectedCurrency("mxn")}
+                disabled={!plansByCurrency.mxn}
               >
+                MXN
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={selectedCurrency === "usd"}
+                className={["bb-segmented__btn", selectedCurrency === "usd" ? "is-active" : ""].filter(Boolean).join(" ")}
+                onClick={() => setSelectedCurrency("usd")}
+                disabled={!plansByCurrency.usd}
+              >
+                USD
+              </button>
+            </div>
+          </div>
+          <div className="plans-offer__meta">
+            <p className="plans-offer__price">{selectedPriceLabel ?? "—"}</p>
+            <p className="plans-currency-micro">MXN: México (pago local). USD: internacional.</p>
+            {heroTrialCopy && <p className="plans-trial-note plans-trial-note--offer">{heroTrialCopy}</p>}
+          </div>
+          <ul className="plans-plan-grid" aria-label="Planes disponibles">
+            {plansToRender.map((plan) => (
+              <li key={`plan_${plan.id}`} className="plans-plan-item is-selected">
                 <PlanCard
                   plan={plan}
                   getCurrentPlan={() => {}}
                   userEmail={currentUser?.email}
-                  showRecommendedBadge={normalizeCurrency(plan.moneda) === preferredCurrency}
+                  showRecommendedBadge={false}
                   variant="marketing"
                   trialConfig={trialConfig}
                 />
               </li>
             ))}
           </ul>
-        </>
+        </section>
       )}
-      </div>
-
-      <PlansStickyCta
-        planId={primaryPlan?.id ?? null}
-        ctaLabel={primaryCtaLabel}
-        trial={trialConfig?.enabled ? { enabled: trialConfig.enabled, days: trialConfig.days, gb: trialConfig.gb } : null}
-        onClick={handlePrimaryCta}
-      />
+      </main>
     </div>
   );
 }
