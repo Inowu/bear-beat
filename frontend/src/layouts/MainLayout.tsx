@@ -63,13 +63,22 @@ function MainLayout() {
     location.pathname.startsWith("/auth") ||
     location.pathname.startsWith("/planes") ||
     location.pathname.startsWith("/instrucciones") ||
-    location.pathname.startsWith("/legal");
+    location.pathname.startsWith("/legal") ||
+    location.pathname.startsWith("/comprar");
+
+  // Checkout / compra debe ser una superficie de foco (sin chrome lateral superior)
+  // para reducir distracciones y mejorar conversión.
+  const isCheckoutSurface = location.pathname.startsWith("/comprar");
 
   return (
     <div className="main-layout-main-container">
-      {userToken && <Navbar setAsideOpen={setAsideOpen} menuButtonRef={menuButtonRef} />}
+      {userToken && !isCheckoutSurface && (
+        <Navbar setAsideOpen={setAsideOpen} menuButtonRef={menuButtonRef} />
+      )}
       <div className="content-container">
-        {userToken && <AsideNavbar show={asideOpen} onHide={handleAsideHide} />}
+        {userToken && !isCheckoutSurface && (
+          <AsideNavbar show={asideOpen} onHide={handleAsideHide} />
+        )}
         {showDownload && currentUser !== null && <FileLoader />}
         {/* Guardrails visuales (altura mínima, tipografía consistente) deben aplicar en TODAS las rutas,
             incl. Auth/Planes/Instrucciones. Son mínimos y no pisan estilos específicos. */}

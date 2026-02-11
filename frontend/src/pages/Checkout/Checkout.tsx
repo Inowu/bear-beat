@@ -754,6 +754,14 @@ function Checkout() {
     `${formatInt(durationDays)} días por ciclo`,
     "Cancela cuando quieras",
   ];
+  const checkoutSteps = [
+    "Elige tu método",
+    "Completa el pago seguro",
+    "Activación guiada por chat",
+  ];
+  const methodAvailabilityText = isMxnPlan
+    ? "Tarjeta, PayPal, SPEI, BBVA y efectivo (según disponibilidad)."
+    : "Tarjeta y PayPal (según disponibilidad).";
   let continueLabel = "Continuar";
   if (processingMethod === "card") continueLabel = "Abriendo pasarela segura...";
   if (processingMethod === "spei") continueLabel = "Generando referencia SPEI (recurrente)...";
@@ -834,8 +842,16 @@ function Checkout() {
             <div className="checkout-header__copy">
               <h1 className="checkout-page-title">Activa tu acceso en 1 minuto</h1>
               <p className="checkout-page-subtitle">
-                Elige el método que prefieras y completa tu pago seguro en esta misma pantalla.
+                Flujo directo y seguro: elige cómo pagar y empieza a descargar en cuanto se confirme.
               </p>
+              <div className="checkout-steps" role="list" aria-label="Pasos del checkout">
+                {checkoutSteps.map((step, index) => (
+                  <span key={step} role="listitem">
+                    <strong>{index + 1}</strong>
+                    {step}
+                  </span>
+                ))}
+              </div>
               <div className="checkout-header__quickfacts" role="list" aria-label="Detalles rápidos del plan">
                 {quickFacts.map((fact) => (
                   <span key={fact} role="listitem">{fact}</span>
@@ -854,15 +870,8 @@ function Checkout() {
           </div>
           <div className="checkout-trust-strip" role="list" aria-label="Confianza de pago">
             <span role="listitem"><ShieldCheck size={16} aria-hidden /> Pago seguro</span>
-            <span role="listitem"><CreditCard size={16} aria-hidden /> Tarjeta / Stripe</span>
-            {hasPaypalPlan && <span role="listitem"><Wallet size={16} aria-hidden /> PayPal</span>}
-            {isMxnPlan && <span role="listitem"><Landmark size={16} aria-hidden /> SPEI (recurrente)</span>}
-            {isMxnPlan && conektaAvailability?.payByBankEnabled && (
-              <span role="listitem"><Building2 size={16} aria-hidden /> BBVA</span>
-            )}
-            {isMxnPlan && conektaAvailability?.oxxoEnabled && (
-              <span role="listitem"><Banknote size={16} aria-hidden /> Efectivo</span>
-            )}
+            <span role="listitem"><Check size={16} aria-hidden /> Activación inmediata</span>
+            <span role="listitem"><Wallet size={16} aria-hidden /> Métodos locales e internacionales</span>
             <span role="listitem"><Lock size={16} aria-hidden /> Cifrado bancario</span>
           </div>
           <PaymentMethodLogos
@@ -883,6 +892,7 @@ function Checkout() {
             ariaLabel="Métodos de pago disponibles en checkout"
           />
           <p className="checkout-header__support">
+            Métodos disponibles: {methodAvailabilityText}{" "}
             ¿Dudas para pagar?{" "}
             <a href={SUPPORT_CHAT_URL} target="_blank" rel="noopener noreferrer">
               Abrir soporte por chat
@@ -891,52 +901,16 @@ function Checkout() {
         </header>
 
         <div className="checkout-grid">
-          <aside className="checkout-card checkout-summary">
-            <h2 className="checkout-card__title">Resumen del plan</h2>
-            <p className="checkout-summary__plan-name">{plan.name}</p>
-            <p className="checkout-summary__price">
-              ${totalPrice} <span className="checkout-summary__currency">{plan.moneda ?? "MXN"}</span>
-            </p>
-            <p className="checkout-summary__mini">
-              Pago mensual con renovación automática.
-            </p>
-            <p className="checkout-summary__billing">
-              Se activa al confirmar el pago del primer ciclo.
-            </p>
-            <div className="checkout-summary__stats" role="list" aria-label="Detalles del plan">
-              <span role="listitem">{formatInt(quotaGb)} GB/mes</span>
-              <span role="listitem">{plan.duration} días</span>
-              <span role="listitem">Renovación automática</span>
-            </div>
-            {plan.description && (
-              <p className="checkout-summary__desc">{plan.description}</p>
-            )}
-            <ul className="checkout-summary__benefits">
-              {benefits.map((label, i) => (
-                <li key={i}>
-                  <span className="checkout-summary__check">
-                    <Check className="checkout-summary__check-icon" />
-                  </span>
-                  {label}
-                </li>
-              ))}
-            </ul>
-            <p className="checkout-summary__meta">
-              Activación inmediata al confirmar el pago.
-            </p>
-            {selectedMethod === "card" && trialConfig?.enabled && trialConfig.eligible !== false && (
-              <p className="checkout-summary__trial" role="note">
-                Incluye {formatInt(trialConfig.days)} días gratis con tarjeta (Stripe) · {formatInt(trialConfig.gb)} GB de descarga incluidos.
-              </p>
-            )}
-          </aside>
-
           <section className="checkout-card checkout-payment-card">
             <div className="checkout-payment-card__head">
               <h2 className="checkout-card__title">Elige cómo pagar</h2>
               <p className="checkout-payment-card__hint">
                 Tu acceso se activa al confirmar el pago.
               </p>
+            </div>
+            <div className="checkout-payment-card__total" aria-label={`Total actual ${totalPrice} ${plan.moneda ?? "MXN"}`}>
+              <span>Total del plan</span>
+              <strong>${totalPrice} <small>{plan.moneda ?? "MXN"} / mes</small></strong>
             </div>
             <div className="checkout-credentials" role="group" aria-label="Datos de tu cuenta">
               <div className="checkout-credentials__item">
@@ -961,7 +935,7 @@ function Checkout() {
               </div>
             </div>
             <p className="checkout-payment-card__microcopy">
-              Métodos disponibles para {plan.moneda ?? "MXN"}.
+              Selecciona un método para {plan.moneda ?? "MXN"} y continúa.
             </p>
             <div className="checkout-methods" role="radiogroup" aria-label="Método de pago">
               {availableMethods.map((method) => {
@@ -1055,6 +1029,46 @@ function Checkout() {
               </p>
             </div>
           </section>
+
+          <aside className="checkout-card checkout-summary">
+            <h2 className="checkout-card__title">Resumen del plan</h2>
+            <p className="checkout-summary__plan-name">{plan.name}</p>
+            <p className="checkout-summary__price">
+              ${totalPrice} <span className="checkout-summary__currency">{plan.moneda ?? "MXN"}</span>
+            </p>
+            <p className="checkout-summary__mini">
+              Pago mensual con renovación automática.
+            </p>
+            <p className="checkout-summary__billing">
+              Se activa al confirmar el pago del primer ciclo.
+            </p>
+            <div className="checkout-summary__stats" role="list" aria-label="Detalles del plan">
+              <span role="listitem">{formatInt(quotaGb)} GB/mes</span>
+              <span role="listitem">{plan.duration} días</span>
+              <span role="listitem">Renovación automática</span>
+            </div>
+            {plan.description && (
+              <p className="checkout-summary__desc">{plan.description}</p>
+            )}
+            <ul className="checkout-summary__benefits">
+              {benefits.map((label, i) => (
+                <li key={i}>
+                  <span className="checkout-summary__check">
+                    <Check className="checkout-summary__check-icon" />
+                  </span>
+                  {label}
+                </li>
+              ))}
+            </ul>
+            <p className="checkout-summary__meta">
+              Activación inmediata al confirmar el pago.
+            </p>
+            {selectedMethod === "card" && trialConfig?.enabled && trialConfig.eligible !== false && (
+              <p className="checkout-summary__trial" role="note">
+                Incluye {formatInt(trialConfig.days)} días gratis con tarjeta (Stripe) · {formatInt(trialConfig.gb)} GB de descarga incluidos.
+              </p>
+            )}
+          </aside>
         </div>
       </div>
 
