@@ -280,6 +280,17 @@ function MyAccount() {
     .slice(0, 2)
     .toUpperCase();
   const initials = normalizedInitials === "" ? "DJ" : normalizedInitials;
+  const membershipStatus = currentUser?.hasActiveSubscription
+    ? currentUser.isSubscriptionCancelled
+      ? "Cancela al final del ciclo"
+      : "Membresía activa"
+    : "Sin membresía activa";
+  const membershipTone = currentUser?.hasActiveSubscription
+    ? currentUser.isSubscriptionCancelled
+      ? "warning"
+      : "success"
+    : "muted";
+  const ftpStatus = currentUser?.ftpAccount ? "FTP habilitado" : "Sin acceso FTP";
 
   const getStatusBadge = (status: number) => {
     const map: Record<number, { label: string; varColor: string }> = {
@@ -309,6 +320,7 @@ function MyAccount() {
     <div className="my-account-main-container">
       <div className="ma-shell">
         <header className="ma-page-head">
+          <span className="ma-page-kicker">Panel de cuenta</span>
           <h1>Mi cuenta</h1>
           <p>Gestiona tu acceso, FTP y métodos de pago desde un solo lugar.</p>
         </header>
@@ -332,6 +344,12 @@ function MyAccount() {
             {currentUser?.phone && (
               <p className="ma-user-meta">{currentUser.phone}</p>
             )}
+            <div className="ma-status-row" aria-label="Estado de la cuenta">
+              <span className={`ma-status-pill ma-status-pill--${membershipTone}`}>
+                {membershipStatus}
+              </span>
+              <span className="ma-status-pill ma-status-pill--neutral">{ftpStatus}</span>
+            </div>
             <div className="ma-storage">
               <div className="ma-storage-head">
                 <span>Cuota mensual / usado este ciclo</span>
@@ -438,7 +456,7 @@ function MyAccount() {
                     <th>Fecha</th>
                     <th>Orden #</th>
                     <th>Precio</th>
-                    <th>Status</th>
+                    <th>Estado</th>
                   </tr>
                 </thead>
                 <tbody>
