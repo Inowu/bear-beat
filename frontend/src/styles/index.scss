@@ -25,12 +25,12 @@
   /* Light theme needs an “ink” accent for text/lines (neon cyan is too low-contrast on white). */
   --bb-accent-ink: #007C89;
   /* Ambient accents (for large surfaces; avoid "baby blue" washes) */
-  --bb-ambient-cyan: rgba(8, 225, 247, 0.022);
-  --bb-ambient-mint: rgba(0, 230, 193, 0.018);
+  --bb-ambient-cyan: rgba(8, 225, 247, 0.014);
+  --bb-ambient-mint: rgba(0, 230, 193, 0.011);
   /* Landing (public) background spots: tuned per theme to keep LIGHT premium (no wash)
      while DARK keeps the neon glow. Used by /, /planes, /legal. */
-  --bb-landing-spot-1: rgba(8, 225, 247, 0.045);
-  --bb-landing-spot-2: rgba(8, 225, 247, 0.03);
+  --bb-landing-spot-1: rgba(8, 225, 247, 0.028);
+  --bb-landing-spot-2: rgba(8, 225, 247, 0.02);
   --bb-danger: #FF2D2C;
   --bb-success: #39D834;
   --bb-warning: #FEBC2E;
@@ -41,17 +41,17 @@
   --bb-dark-300: #292929;
   --bb-dark-400: #1A1A1A;
   /* Light base: slightly cooler/cleaner than #EEEEEE to feel premium (2026) */
-  --bb-bg: #ECF2F7;
+  --bb-bg: #F3F7FA;
   --bb-surface: #FFFFFF;
-  --bb-surface-soft: #F4F7FA;
-  --bb-border: rgba(15, 23, 42, 0.16);
-  --bb-text-heading: #141A24;
-  --bb-text-body: #1F2937;
-  --bb-text-muted: #556070;
-  --bb-focus-ring: rgba(0, 124, 137, 0.34);
+  --bb-surface-soft: #F6FAFD;
+  --bb-border: rgba(15, 23, 42, 0.12);
+  --bb-text-heading: #111926;
+  --bb-text-body: #243043;
+  --bb-text-muted: #5B6678;
+  --bb-focus-ring: rgba(0, 124, 137, 0.28);
   /* Shadows: softer and more “glass + border” than heavy drop-shadows */
-  --bb-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
-  --bb-shadow-card: 0 16px 40px rgba(15, 23, 42, 0.11);
+  --bb-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
+  --bb-shadow-card: 0 18px 42px rgba(15, 23, 42, 0.1);
   --bb-shadow-glow: 0 0 16px rgba(8, 225, 247, 0.26);
   --bb-shadow-1: var(--bb-shadow);
   --bb-shadow-2: var(--bb-shadow-card);
@@ -81,7 +81,7 @@
   --bb-letter-spacing-body: 0;
   --bb-line-height-heading: 1.14;
   --bb-line-height-body: 1.58;
-  --app-font-weight-body: var(--bb-font-weight-medium);
+  --app-font-weight-body: 400;
   --app-font-weight-heading: var(--bb-font-weight-bold);
   --app-font-weight-heading-strong: var(--bb-font-weight-display);
   --app-font-size-body: 1.5rem;
@@ -108,18 +108,18 @@
   --theme-bg-secondary: var(--bb-surface);
   --theme-bg-gradient: linear-gradient(165deg, var(--bb-surface) 0%, var(--bb-bg) 100%);
   /* Light nav (premium/glass, no "baby blue") */
-  --theme-nav-bg: #FFFFFF;
+  --theme-nav-bg: #F8FBFD;
   --theme-nav-border-bottom: rgba(21, 42, 53, 0.1);
   --theme-nav-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
   --theme-nav-text: #15202B;
   /* Neutral light pills (avoid blue-ish nav wash) */
-  --theme-nav-item-bg: var(--bb-surface-soft);
-  --theme-nav-item-border: var(--bb-border);
+  --theme-nav-item-bg: #FFFFFF;
+  --theme-nav-item-border: rgba(15, 23, 42, 0.12);
   --theme-nav-danger-text: #BA1716;
   /* Light hover: subtle tint, avoid "baby blue" panels */
-  --theme-nav-item-hover-bg: color-mix(in srgb, var(--bb-cyan) 4%, #FFFFFF);
+  --theme-nav-item-hover-bg: color-mix(in srgb, var(--bb-cyan) 6%, #FFFFFF);
   --theme-nav-item-hover-text: #0F2028;
-  --theme-nav-item-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+  --theme-nav-item-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
   --theme-card-bg: var(--bb-surface);
   --theme-card-border: var(--bb-border);
   --theme-card-border-strong: color-mix(in srgb, var(--bb-accent-ink) 28%, transparent);
@@ -136,18 +136,18 @@
   --theme-ink: var(--bb-text-heading);
   --theme-heading: var(--bb-text-heading);
   --theme-strong: var(--bb-text-heading);
-  --theme-bg-muted: #E7EDF3;
+  --theme-bg-muted: #EDF3F8;
   --theme-bg-soft: var(--bb-surface-soft);
   --theme-stripe: rgba(0, 0, 0, 0.05);
-  --theme-edge: rgba(21, 42, 53, 0.15);
+  --theme-edge: rgba(21, 42, 53, 0.12);
   --theme-accent: var(--bb-accent-ink);
   --theme-accent-bright: var(--bb-cyan);
   --theme-accent-dim: var(--bb-accent-ink);
   --theme-accent-glow: rgba(8, 225, 247, 0.24);
   /* Soft accent surfaces in LIGHT should be subtle (avoid "baby blue" wash) */
-  --theme-accent-soft-bg: rgba(8, 225, 247, 0.038);
-  --theme-accent-soft-bg-2: rgba(8, 225, 247, 0.062);
-  --theme-accent-soft-bg-3: rgba(8, 225, 247, 0.09);
+  --theme-accent-soft-bg: rgba(8, 225, 247, 0.03);
+  --theme-accent-soft-bg-2: rgba(8, 225, 247, 0.05);
+  --theme-accent-soft-bg-3: rgba(8, 225, 247, 0.072);
   --theme-landing-bg: #000000;
   --theme-landing-text: #FFFFFF;
 
@@ -158,7 +158,7 @@
   --ph-text-heading: var(--bb-text-heading);
   --ph-text-body: var(--bb-text-body);
   --ph-text-muted: var(--bb-text-muted);
-  --ph-body-font-weight: 500;
+  --ph-body-font-weight: 400;
   --ph-btn-bg: var(--bb-gradient);
   --ph-btn-text: #0A0A0A;
   --ph-btn-hover-bg: var(--bb-cyan);
@@ -192,6 +192,7 @@
   --app-shadow: var(--bb-shadow);
   --app-shadow-card: var(--bb-shadow-card);
   --app-focus-ring: var(--bb-focus-ring);
+  --app-font-weight-body: var(--bb-font-weight-medium);
   --app-status-error: var(--bb-danger);
   --app-status-success: var(--bb-success);
   --app-status-warning: var(--bb-warning);
@@ -199,14 +200,14 @@
 
   --auth-input-border: var(--bb-border);
   /* Auth: en light, inputs con relleno suave (gris neutro) para separarse del panel blanco sin “baby blue”. */
-  --auth-input-bg: var(--bb-surface-soft);
+  --auth-input-bg: #F8FBFD;
   --auth-register-panel-bg: var(--bb-surface);
   --auth-register-text: var(--bb-text-heading);
   /* En light: inputs neutros (blancos) para evitar "baby blue" visual */
-  --auth-register-input-bg: var(--bb-surface-soft);
+  --auth-register-input-bg: #F8FBFD;
   --auth-register-input-border: var(--bb-border);
   --auth-register-input-focus: var(--bb-accent-ink);
-  --auth-register-icon: #66707D;
+  --auth-register-icon: #5D697B;
   --auth-register-icon-focus: var(--bb-accent-ink);
   --auth-register-btn-bg: var(--bb-gradient);
   --auth-register-btn-text: #0A0A0A;
@@ -329,8 +330,8 @@
   /* Admin: use neutral stripes in LIGHT; keep cyan for borders/CTAs only */
   --ad-row-hover: rgba(15, 23, 42, 0.035);
   /* Admin table rows must be opaque (avoid ambient cyan bleeding through). */
-  --ad-row-zebra-bg: #F7F8FA;
-  --ad-row-hover-bg: #EEF2F6;
+  --ad-row-zebra-bg: #F8FAFC;
+  --ad-row-hover-bg: #EEF3F8;
   --ad-header-bg: var(--bb-surface-soft);
   --ad-badge-success-bg: rgba(57, 216, 52, 0.12);
   --ad-badge-success-text: #208A1D;
@@ -423,6 +424,7 @@ html.dark,
   --ph-text-muted: var(--bb-text-muted);
   --ph-nav-bg: rgba(41, 41, 41, 0.96);
   --ph-footer-bg: #242424;
+  --ph-body-font-weight: 500;
 
   --auth-input-bg: var(--bb-surface-soft);
   --auth-input-border: var(--bb-border);
@@ -667,9 +669,17 @@ body {
    Keep `--app-bg` as a solid token (used by color-mix), so we override only `body` background. */
 html[data-theme="light"] body {
   background:
-    radial-gradient(900px 560px at 10% -10%, var(--bb-landing-spot-1), transparent 60%),
-    radial-gradient(860px 520px at 90% 10%, var(--bb-landing-spot-2), transparent 60%),
-    var(--app-bg);
+    radial-gradient(
+      940px 560px at 8% -8%,
+      color-mix(in srgb, var(--bb-landing-spot-1) 78%, transparent),
+      transparent 64%
+    ),
+    radial-gradient(
+      900px 540px at 92% 8%,
+      color-mix(in srgb, var(--bb-landing-spot-2) 80%, transparent),
+      transparent 64%
+    ),
+    linear-gradient(180deg, #F8FBFD 0%, var(--app-bg) 34%, var(--app-bg) 100%);
 }
 
 /* Chrome en Mac: fuentes más nítidas y capa GPU para evitar parpadeos */
@@ -738,6 +748,12 @@ textarea {
     border-color: var(--app-accent);
     box-shadow: 0 0 0 3px var(--app-focus-ring);
   }
+}
+
+html[data-theme="light"] :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  background: color-mix(in srgb, #FFFFFF 95%, var(--app-bg-soft));
+  border-color: color-mix(in srgb, var(--app-border) 92%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
 }
 
 /* iOS/Safari: `type="search"` trae un botón nativo (x) que rompe layouts con clear custom */
@@ -1149,6 +1165,13 @@ svg[role="img"] {
   color: var(--app-text-heading);
 }
 
+html[data-theme="light"] .modal-content input,
+html[data-theme="light"] .modal-content select,
+html[data-theme="light"] .modal-content textarea {
+  background: color-mix(in srgb, #ffffff 96%, var(--app-bg-soft));
+  border-color: color-mix(in srgb, var(--app-border) 92%, transparent);
+}
+
 .error-formik,
 .formik {
   color: var(--app-status-error);
@@ -1162,9 +1185,26 @@ svg[role="img"] {
   color: var(--app-status-warning);
 }
 
+html[data-theme="light"] :where(.error-formik, .formik, .auth-login-inline-error) {
+  color: #C32D2B;
+}
+
+html[data-theme="light"] :where(.success-message, .valid-feedback) {
+  color: #1D8C39;
+}
+
+html[data-theme="light"] :where(.warning-message) {
+  color: #8E6611;
+}
+
 /* Light: hovers de tablas neutrales (evita zebra/hover cian en superficies claras) */
 [data-theme="light"] .main-layout-main-container tbody tr:hover {
   background: rgba(15, 23, 42, 0.03);
+}
+
+html[data-theme="light"] .main-layout-main-container :where(.card, .panel, .module-card, .bb-surface) {
+  border-color: color-mix(in srgb, var(--app-border) 90%, transparent);
+  background: color-mix(in srgb, #ffffff 98%, var(--app-bg-card));
 }
 
 /* Chrome Mac: landing (PublicHome) sin scroll horizontal ni recorte */

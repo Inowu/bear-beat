@@ -5,7 +5,7 @@
   min-height: 100vh;
   padding: 0 0 44px;
   color: var(--ph-text-body);
-  overflow-x: clip;
+  overflow-x: hidden;
   background:
     radial-gradient(980px 560px at 10% 0%, var(--bb-landing-spot-1), transparent 62%),
     radial-gradient(920px 540px at 90% 8%, var(--bb-landing-spot-2), transparent 62%),
@@ -284,12 +284,14 @@
   list-style: none;
   display: grid;
   gap: 12px;
+  min-width: 0;
 }
 
 .plans-plan-item {
   width: 100%;
   max-width: 760px;
   margin: 0 auto;
+  min-width: 0;
 }
 
 .plans-plan-item.is-selected .plan-card-main-card {
@@ -415,22 +417,22 @@
 
 html[data-theme="light"] .plans-page {
   background:
-    radial-gradient(960px 560px at 10% 0%, color-mix(in srgb, var(--ph-accent) 2.8%, transparent), transparent 62%),
-    radial-gradient(920px 520px at 90% 8%, color-mix(in srgb, var(--ph-accent) 2.1%, transparent), transparent 62%),
+    radial-gradient(960px 560px at 10% 0%, color-mix(in srgb, var(--ph-accent) 2.1%, transparent), transparent 64%),
+    radial-gradient(920px 520px at 90% 8%, color-mix(in srgb, var(--ph-accent) 1.7%, transparent), transparent 64%),
     var(--ph-bg);
 }
 
 html[data-theme="light"] .plans-topnav {
-  border-bottom-color: color-mix(in srgb, var(--ph-border) 88%, transparent);
-  background: color-mix(in srgb, var(--ph-bg) 96%, white);
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+  border-bottom-color: color-mix(in srgb, var(--ph-border) 90%, transparent);
+  background: color-mix(in srgb, var(--ph-bg) 97%, white);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.055);
 }
 
 html[data-theme="light"] .plans-topnav__nav,
 html[data-theme="light"] .plans-hero,
 html[data-theme="light"] .plans-offer {
-  border-color: color-mix(in srgb, var(--ph-border) 88%, transparent);
-  background: color-mix(in srgb, #ffffff 97%, var(--ph-bg-card));
+  border-color: color-mix(in srgb, var(--ph-border) 90%, transparent);
+  background: color-mix(in srgb, #ffffff 99%, var(--ph-bg-card));
 }
 
 html[data-theme="light"] .plans-topnav__link {
@@ -440,18 +442,18 @@ html[data-theme="light"] .plans-topnav__link {
 html[data-theme="light"] .plans-topnav__link:hover,
 html[data-theme="light"] .plans-topnav__link.is-active,
 html[data-theme="light"] .plans-topnav__link[aria-current="page"] {
-  background: color-mix(in srgb, var(--ph-accent) 14%, #ffffff);
-  border-color: color-mix(in srgb, var(--ph-accent) 34%, transparent);
+  background: color-mix(in srgb, var(--ph-accent) 10%, #ffffff);
+  border-color: color-mix(in srgb, var(--ph-accent) 29%, transparent);
 }
 
 html[data-theme="light"] .plans-topnav__cta {
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.1);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.1);
 }
 
 html[data-theme="light"] .plans-hero-chip.bb-stat-pill,
 html[data-theme="light"] .plans-hero-price-tag {
-  border-color: color-mix(in srgb, var(--ph-border) 88%, transparent);
-  background: color-mix(in srgb, #ffffff 90%, var(--ph-bg-soft));
+  border-color: color-mix(in srgb, var(--ph-border) 90%, transparent);
+  background: color-mix(in srgb, #ffffff 94%, var(--ph-bg-soft));
 }
 
 html[data-theme="light"] .plans-plan-item.is-selected .plan-card-main-card {

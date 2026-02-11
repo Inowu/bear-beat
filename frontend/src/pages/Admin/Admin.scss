@@ -95,7 +95,7 @@ html[data-theme="dark"] .admin-theme::before {
   border: 1px solid color-mix(in srgb, var(--ad-border) 86%, transparent);
   background: color-mix(in srgb, var(--ad-row-hover) 84%, transparent);
   color: var(--ad-text-muted);
-  font-size: 1.02rem;
+  font-size: 1.08rem;
   font-weight: 700;
   letter-spacing: 0.01em;
 }
@@ -125,7 +125,7 @@ html[data-theme="dark"] .admin-theme::before {
   padding: 0 10px;
   background: color-mix(in srgb, var(--ad-card) 94%, transparent);
   color: var(--ad-text-muted);
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 700;
   letter-spacing: 0.01em;
   white-space: nowrap;
@@ -160,7 +160,7 @@ html[data-theme="dark"] .admin-theme::before {
 .select-input label,
 .search-input label {
   color: color-mix(in srgb, var(--ad-text-muted) 92%, transparent);
-  font-size: 0.82rem;
+  font-size: 0.86rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;

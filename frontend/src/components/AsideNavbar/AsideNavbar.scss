@@ -62,7 +62,7 @@ aside {
     .nav-group__title {
       margin: 0;
       padding: 0 6px;
-      font-size: 0.78rem;
+      font-size: 0.84rem;
       font-weight: 800;
       letter-spacing: 0.08em;
       text-transform: uppercase;
@@ -290,6 +290,7 @@ aside {
 
       .nav-group__title {
         color: color-mix(in srgb, var(--aside-overlay-text-muted) 92%, transparent);
+        font-size: 0.84rem;
       }
 
       .nav-link-item {

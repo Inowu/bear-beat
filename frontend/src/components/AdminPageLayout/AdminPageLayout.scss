@@ -107,7 +107,7 @@
     background: var(--ad-header-bg) !important;
     border-bottom: 1px solid color-mix(in srgb, var(--ad-border) 88%, transparent);
     color: var(--ad-text-muted) !important;
-    font-size: 0.85rem !important;
+    font-size: 0.9rem !important;
     font-weight: 800 !important;
     letter-spacing: 0.08em !important;
     text-transform: uppercase;
@@ -115,7 +115,7 @@
 
   tbody td {
     color: var(--ad-text) !important;
-    font-size: 0.95rem !important;
+    font-size: 1rem !important;
     font-weight: 600 !important;
     vertical-align: middle;
   }
@@ -376,7 +376,7 @@ html[data-theme="dark"] .admin-page-wrap::before {
   border: 1px solid color-mix(in srgb, var(--ad-accent) 52%, transparent);
   background: var(--app-gradient);
   color: var(--app-btn-text);
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 800;
   letter-spacing: 0.01em;
   box-shadow: var(--app-shadow);
@@ -396,7 +396,7 @@ html[data-theme="dark"] .admin-page-wrap :where(.btn-addUsers, .btn-addCoupon, .
   border: 1px solid color-mix(in srgb, var(--ad-input-border) 88%, transparent);
   background: color-mix(in srgb, var(--ad-input-bg) 96%, transparent);
   color: var(--ad-title);
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 600;
 }
 
