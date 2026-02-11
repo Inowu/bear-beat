@@ -466,7 +466,11 @@ export function AnalyticsDashboard() {
   }, [funnel, business, ux]);
 
   return (
-    <AdminPageLayout title="Analítica del negocio" toolbar={toolbar}>
+    <AdminPageLayout
+      title="Analítica del negocio"
+      subtitle="Mide conversión, ingresos y señales de riesgo para priorizar mejoras de UX y crecimiento."
+      toolbar={toolbar}
+    >
       <section className="analytics-dashboard">
         {error && (
           <div className="analytics-alert analytics-alert--error" role="alert">

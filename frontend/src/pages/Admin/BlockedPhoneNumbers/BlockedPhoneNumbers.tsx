@@ -111,7 +111,11 @@ export const BlockedPhoneNumbers = () => {
   );
 
   return (
-    <AdminPageLayout title="Teléfonos bloqueados" toolbar={toolbar}>
+    <AdminPageLayout
+      title="Teléfonos bloqueados"
+      subtitle="Bloquea teléfonos problemáticos para reducir fraude, spam y registros inválidos."
+      toolbar={toolbar}
+    >
       <ConditionModal
         show={phoneToDelete !== null}
         onHide={() => setPhoneToDelete(null)}

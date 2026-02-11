@@ -102,7 +102,11 @@ export const DownloadHistory = () => {
   );
 
   return (
-    <AdminPageLayout title="Historial de descargas" toolbar={toolbar}>
+    <AdminPageLayout
+      title="Historial de descargas"
+      subtitle="Monitorea qué se descarga, cuándo y por quién para resolver fricción operativa rápido."
+      toolbar={toolbar}
+    >
       <AddInstructionsModal showModal={showModal} onHideModal={() => setShowModal(false)} videoURL={videoURL} videoId={videoId} />
 
       <div className="rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50 hidden md:block">

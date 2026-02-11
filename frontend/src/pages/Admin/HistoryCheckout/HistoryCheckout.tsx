@@ -264,7 +264,11 @@ export const HistoryCheckout = () => {
   );
 
   return (
-    <AdminPageLayout title="Checkout abandonado" toolbar={toolbar}>
+    <AdminPageLayout
+      title="Checkout abandonado"
+      subtitle="Detecta leads sin pago, separa recuperados y prioriza seguimiento con datos accionables."
+      toolbar={toolbar}
+    >
       <div className="w-full overflow-x-hidden space-y-4">
         <section className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <article className="rounded-xl border border-gray-200 dark:border-bear-dark-100 p-3 bg-bear-light-100 dark:bg-bear-dark-500/40">

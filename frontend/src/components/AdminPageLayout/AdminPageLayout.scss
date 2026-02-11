@@ -29,6 +29,14 @@
     letter-spacing: 0.01em;
   }
 
+  .admin-page-wrap__subtitle {
+    margin: -2px 0 12px;
+    color: color-mix(in srgb, var(--ad-text-muted) 96%, transparent);
+    font-size: clamp(1rem, 0.96rem + 0.18vw, 1.12rem);
+    font-weight: 600;
+    line-height: 1.45;
+  }
+
   .admin-page-wrap__toolbar {
     display: flex;
     flex-wrap: wrap;
@@ -57,6 +65,47 @@
 
   .admin-page-wrap__toolbar > * {
     max-width: 100%;
+  }
+
+  :where(
+      p,
+      li,
+      label,
+      input,
+      select,
+      textarea,
+      button,
+      table,
+      thead,
+      tbody,
+      tfoot,
+      th,
+      td,
+      small,
+      span
+    ) {
+    font-family: var(--bb-font-ui);
+  }
+
+  :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    min-height: 44px;
+    border-radius: 11px;
+    border: 1px solid color-mix(in srgb, var(--ad-input-border) 88%, transparent);
+    background: color-mix(in srgb, var(--ad-input-bg) 96%, transparent);
+    color: var(--ad-title);
+    font-size: 1rem;
+    font-weight: 600;
+    transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+  }
+
+  :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea)::placeholder {
+    color: color-mix(in srgb, var(--ad-text-muted) 92%, transparent);
+  }
+
+  :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus-visible {
+    outline: none;
+    border-color: color-mix(in srgb, var(--ad-accent) 58%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--ad-accent) 24%, transparent);
   }
 
   button.p-2,
@@ -222,8 +271,17 @@
   [class*="bg-gray-200"],
   [class*="bg-gray-300"],
   [class*="bg-gray-400"],
+  [class*="bg-slate-700"],
+  [class*="bg-slate-600"],
   [class*="dark:bg-bear-dark-100/50"] {
     background-color: color-mix(in srgb, var(--ad-border) 72%, transparent) !important;
+  }
+
+  [class*="bg-slate-900/60"],
+  [class*="bg-slate-900/70"],
+  [class*="bg-slate-800/60"],
+  [class*="bg-slate-800/70"] {
+    background-color: color-mix(in srgb, var(--ad-row-hover) 78%, transparent) !important;
   }
 
   [class*="border-slate-800"],
@@ -341,9 +399,44 @@
   tr.border-slate-800:hover,
   [class*="hover:bg-slate-900"]:hover,
   [class*="hover:bg-slate-800"]:hover,
+  [class*="hover:bg-slate-700"]:hover,
+  [class*="hover:bg-slate-600"]:hover,
+  [class*="hover:bg-slate-900/60"]:hover,
+  [class*="hover:bg-slate-800/60"]:hover,
   [class*="hover:bg-gray-100"]:hover,
   [class*="dark:hover:bg-bear-dark-500"]:hover {
     background-color: color-mix(in srgb, var(--ad-row-hover) 88%, transparent) !important;
+  }
+
+  [class*="text-red-400"],
+  [class*="text-red-500"] {
+    color: var(--ad-badge-danger-text) !important;
+  }
+
+  [class*="text-emerald-300"],
+  [class*="text-emerald-400"],
+  [class*="text-emerald-500"] {
+    color: var(--ad-badge-success-text) !important;
+  }
+
+  [class*="bg-red-50"],
+  [class*="bg-red-500/10"] {
+    background-color: color-mix(in srgb, var(--ad-badge-danger-bg) 72%, transparent) !important;
+  }
+
+  [class*="bg-emerald-50"],
+  [class*="bg-emerald-500/10"] {
+    background-color: color-mix(in srgb, var(--ad-badge-success-bg) 72%, transparent) !important;
+  }
+
+  [class*="border-red-300"],
+  [class*="border-red-400"] {
+    border-color: color-mix(in srgb, var(--ad-badge-danger-text) 30%, transparent) !important;
+  }
+
+  [class*="border-emerald-300"],
+  [class*="border-emerald-400"] {
+    border-color: color-mix(in srgb, var(--ad-badge-success-text) 32%, transparent) !important;
   }
 }
 

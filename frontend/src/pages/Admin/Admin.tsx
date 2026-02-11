@@ -36,6 +36,7 @@ import CsvDownloader from "react-csv-downloader";
 import { exportUsers } from "./fuctions";
 import { of } from "await-of";
 import { AdminDrawer } from "../../components/AdminDrawer/AdminDrawer";
+import { AdminPageLayout } from "../../components/AdminPageLayout/AdminPageLayout";
 import {
   getAccessToken,
   getRefreshToken,
@@ -376,20 +377,90 @@ function Admin() {
     trpc.users.countUsers.query().then(setTotalRegistered).catch(() => setTotalRegistered(null));
   };
 
+  const toolbar = (
+    <div className="admin-users-toolbar">
+      <div className="filter-contain">
+        <div className="left-contain">
+          <div className="select-input">
+            <label htmlFor="admin-status-filter">Estado</label>
+            <select
+              id="admin-status-filter"
+              value={filters.active}
+              onChange={(e) => startFilter("active", Number(e.target.value) as IAdminFilter["active"])}
+            >
+              <option value={2}>Todos registrados</option>
+              <option value={1}>Membresía activa</option>
+              <option value={0}>Sin membresía</option>
+              <option value={3}>Cancelados</option>
+            </select>
+          </div>
+          <div className="select-input">
+            <label htmlFor="admin-limit-filter">Por página</label>
+            <select
+              id="admin-limit-filter"
+              value={filters.limit}
+              onChange={(e) => startFilter("limit", +e.target.value)}
+            >
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+              <option value={200}>200</option>
+            </select>
+          </div>
+          <div className="search-input">
+            <label htmlFor="admin-search-filter">Buscar</label>
+            <div className="search-input__field">
+              <Search className="search-input__icon" size={18} />
+              <input
+                id="admin-search-filter"
+                placeholder="Buscar por email"
+                value={filters.search}
+                onChange={(e) => startFilter("search", e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="header__actions">
+        <button type="button" className="btn-icon btn-primary" onClick={() => setShowModal(true)}>
+          <Plus size={18} /> Añadir
+        </button>
+        <CsvDownloader
+          filename="lista_de_usuarios"
+          extension=".csv"
+          separator=";"
+          wrapColumnChar=""
+          datas={transformUserData()}
+          text=""
+        >
+          <span className="btn-icon btn-secondary">
+            <Download size={18} /> Exportar
+          </span>
+        </CsvDownloader>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="admin-theme">
+    <AdminPageLayout
+      className="admin-users-wrap"
+      title="Usuarios"
+      subtitle="Controla accesos, segmenta por estado y ejecuta acciones críticas desde una sola vista."
+      toolbar={toolbar}
+    >
       <div className="admin-contain">
         <section className="admin-top-bar">
           <div className="admin-top-bar__intro">
             <div className="header__title-row">
-              <h1 className="admin-title">Usuarios</h1>
               {totalRegistered !== null && (
                 <span className="header__total-registered">
                   Registrados: {formatInt(totalRegistered)}
                 </span>
               )}
             </div>
-            <p className="admin-subtitle">Controla accesos y acciones críticas desde un solo panel.</p>
+            <p className="admin-subtitle">
+              Filtra por estado, revisa actividad reciente y aplica cambios sin salir del panel.
+            </p>
             <div className="admin-insights">
               <span className="insight-pill">
                 <Users size={14} />
@@ -403,65 +474,6 @@ function Admin() {
                 Mostrando {formatInt(rangeStart)}-{formatInt(rangeEnd)}
               </span>
             </div>
-          </div>
-          <div className="filter-contain">
-            <div className="left-contain">
-              <div className="select-input">
-                <label htmlFor="admin-status-filter">Estado</label>
-                <select
-                  id="admin-status-filter"
-                  value={filters.active}
-                  onChange={(e) => startFilter("active", Number(e.target.value) as IAdminFilter["active"])}
-                >
-                  <option value={2}>Todos registrados</option>
-                  <option value={1}>Membresía activa</option>
-                  <option value={0}>Sin membresía</option>
-                  <option value={3}>Cancelados</option>
-                </select>
-              </div>
-              <div className="select-input">
-                <label htmlFor="admin-limit-filter">Por página</label>
-                <select
-                  id="admin-limit-filter"
-                  value={filters.limit}
-                  onChange={(e) => startFilter("limit", +e.target.value)}
-                >
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                  <option value={200}>200</option>
-                </select>
-              </div>
-              <div className="search-input">
-                <label htmlFor="admin-search-filter">Buscar</label>
-                <div className="search-input__field">
-                  <Search className="search-input__icon" size={18} />
-                  <input
-                    id="admin-search-filter"
-                    placeholder="Buscar por email"
-                    value={filters.search}
-                    onChange={(e) => startFilter("search", e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="header__actions">
-            <button type="button" className="btn-icon btn-primary" onClick={() => setShowModal(true)}>
-              <Plus size={18} /> Añadir
-            </button>
-            <CsvDownloader
-              filename="lista_de_usuarios"
-              extension=".csv"
-              separator=";"
-              wrapColumnChar=""
-              datas={transformUserData()}
-              text=""
-            >
-              <span className="btn-icon btn-secondary">
-                <Download size={18} /> Exportar
-              </span>
-            </CsvDownloader>
           </div>
         </section>
 
@@ -764,7 +776,7 @@ function Admin() {
         user={selectUser}
         onDeleted={() => filterUsers(filters)}
       />
-    </div>
+    </AdminPageLayout>
   );
 }
 

@@ -167,6 +167,7 @@ export function CatalogStats() {
     return (
       <AdminPageLayout
         title="Estadísticas del catálogo"
+        subtitle="Visualiza volumen real por tipo y género para decidir qué contenido impulsar cada semana."
         toolbar={
           <button
             type="button"
@@ -184,7 +185,10 @@ export function CatalogStats() {
 
   if (loading && !data) {
     return (
-      <AdminPageLayout title="Estadísticas del catálogo">
+      <AdminPageLayout
+        title="Estadísticas del catálogo"
+        subtitle="Visualiza volumen real por tipo y género para decidir qué contenido impulsar cada semana."
+      >
         <div className="flex flex-col items-center justify-center py-12 gap-4">
           <Spinner size={3} width={0.3} color="var(--app-accent)" />
           <p className="text-slate-400 text-sm">Calculando estadísticas…</p>
@@ -226,7 +230,11 @@ export function CatalogStats() {
   );
 
   return (
-    <AdminPageLayout title="Estadísticas del catálogo" toolbar={toolbar}>
+    <AdminPageLayout
+      title="Estadísticas del catálogo"
+      subtitle="Visualiza volumen real por tipo y género para decidir qué contenido impulsar cada semana."
+      toolbar={toolbar}
+    >
       {data.error && (
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 mb-6">
           <p className="text-amber-200 text-sm">{data.error}</p>

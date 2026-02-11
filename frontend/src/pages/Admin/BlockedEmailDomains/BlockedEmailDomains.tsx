@@ -112,7 +112,11 @@ export const BlockedEmailDomains = () => {
   );
 
   return (
-    <AdminPageLayout title="Dominios bloqueados" toolbar={toolbar}>
+    <AdminPageLayout
+      title="Dominios bloqueados"
+      subtitle="Protege el registro filtrando dominios riesgosos y mantén la base de usuarios limpia."
+      toolbar={toolbar}
+    >
       <p className="text-slate-500 text-sm mb-4">No se permiten dominios públicos como {RESERVED_DOMAINS.slice(0, 4).join(", ")}…</p>
       <ConditionModal
         show={domainToDelete !== null}

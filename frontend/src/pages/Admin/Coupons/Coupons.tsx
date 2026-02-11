@@ -81,7 +81,10 @@ export const Coupons = () => {
 
   if (loader && coupons.length === 0) {
     return (
-      <AdminPageLayout title="Cupones">
+      <AdminPageLayout
+        title="Cupones"
+        subtitle="Crea y administra promociones activas para reducir fricción de compra y aumentar conversión."
+      >
         <div className="flex justify-center py-12">
           <Spinner size={3} width={0.3} color="var(--app-accent)" />
         </div>
@@ -90,7 +93,11 @@ export const Coupons = () => {
   }
 
   return (
-    <AdminPageLayout title="Cupones" toolbar={toolbar}>
+    <AdminPageLayout
+      title="Cupones"
+      subtitle="Crea y administra promociones activas para reducir fricción de compra y aumentar conversión."
+      toolbar={toolbar}
+    >
       <AddCouponModal showModal={show} onHideModal={closeModalAdd} getCoupons={getCoupons} />
       <EditCouponModal
         showModal={showEdit}

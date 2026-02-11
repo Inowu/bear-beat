@@ -290,7 +290,11 @@ export function LiveAnalytics() {
   );
 
   return (
-    <AdminPageLayout title="Live (tiempo real)" toolbar={toolbar}>
+    <AdminPageLayout
+      title="Live (tiempo real)"
+      subtitle="Supervisa actividad en vivo y detecta cuellos de conversión al momento."
+      toolbar={toolbar}
+    >
       <section className="analytics-dashboard live-dashboard">
         {error && (
           <div className="analytics-alert analytics-alert--error" role="alert">

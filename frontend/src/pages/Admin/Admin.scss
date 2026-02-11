@@ -1,39 +1,8 @@
 @import "src/styles/mixin.scss";
 @import "src/styles/_variables-theme.scss";
 
-.admin-theme {
-  position: relative;
-  isolation: isolate;
-  width: 100%;
+.admin-users-wrap {
   min-height: calc(100vh - 88px);
-  padding: clamp(12px, 1.6vw, 24px);
-  background: var(--ad-bg);
-  color: var(--ad-text);
-  font-family: var(--bb-font-ui);
-  overflow-x: hidden;
-  overflow: hidden;
-}
-
-.admin-theme::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background:
-    radial-gradient(circle at 95% -10%, var(--bb-ambient-cyan) 0%, transparent 52%),
-    radial-gradient(circle at -5% 110%, var(--bb-ambient-mint) 0%, transparent 50%);
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-html[data-theme="dark"] .admin-theme::before {
-  opacity: 1;
-}
-
-.admin-theme > * {
-  position: relative;
-  z-index: 1;
 }
 
 .admin-contain {
@@ -46,10 +15,9 @@ html[data-theme="dark"] .admin-theme::before {
 }
 
 .admin-top-bar {
-  display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(340px, 540px) auto;
-  gap: 14px;
-  align-items: end;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   border-radius: 18px;
   border: 1px solid color-mix(in srgb, var(--ad-border) 86%, transparent);
   background:
@@ -60,6 +28,14 @@ html[data-theme="dark"] .admin-theme::before {
     );
   box-shadow: var(--app-shadow-card);
   padding: clamp(12px, 1.2vw, 18px);
+}
+
+.admin-users-toolbar {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
 }
 
 .admin-top-bar__intro {
@@ -290,11 +266,11 @@ html[data-theme="dark"] .admin-theme::before {
 }
 
 /* Light: no neon glow halos. Keep glow for dark theme. */
-html[data-theme="light"] .admin-theme .btn-primary {
+html[data-theme="light"] .admin-users-wrap .btn-primary {
   box-shadow: var(--app-shadow);
 }
 
-html[data-theme="light"] .admin-theme .btn-primary:hover {
+html[data-theme="light"] .admin-users-wrap .btn-primary:hover {
   box-shadow: var(--app-shadow-card);
 }
 
@@ -887,30 +863,30 @@ html[data-theme="light"] .admin-theme .btn-primary:hover {
   display: none;
 }
 
-.admin-theme .pagination-container {
+.admin-users-wrap .pagination-container {
   background: transparent;
   border-color: color-mix(in srgb, var(--ad-border) 84%, transparent);
   color: var(--ad-text);
 }
 
-.admin-theme .pagination-container .left-text {
+.admin-users-wrap .pagination-container .left-text {
   color: var(--ad-text-muted);
 }
 
-.admin-theme .pagination-container .selected {
+.admin-users-wrap .pagination-container .selected {
   color: var(--ad-accent);
 }
 
-.admin-theme .pagination-container .unselected,
-.admin-theme .pagination-container .points {
+.admin-users-wrap .pagination-container .unselected,
+.admin-users-wrap .pagination-container .points {
   color: var(--ad-text);
 }
 
-.admin-theme .pagination-container svg {
+.admin-users-wrap .pagination-container svg {
   color: var(--ad-accent);
 }
 
-.admin-theme .pagination-container p {
+.admin-users-wrap .pagination-container p {
   color: var(--ad-accent);
 }
 
@@ -928,7 +904,7 @@ html[data-theme="light"] .admin-theme .btn-primary:hover {
 }
 
 @media (max-width: 1320px) {
-  .admin-top-bar {
+  .admin-users-toolbar {
     grid-template-columns: 1fr;
   }
 
@@ -948,10 +924,6 @@ html[data-theme="light"] .admin-theme .btn-primary:hover {
 }
 
 @media (max-width: 900px) {
-  .admin-theme {
-    padding: 8px;
-  }
-
   .admin-top-bar {
     gap: 10px;
     padding: 10px;

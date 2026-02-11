@@ -85,7 +85,10 @@ export const PlanAdmin = () => {
 
   if (loader && plans.length === 0) {
     return (
-      <AdminPageLayout title="Planes">
+      <AdminPageLayout
+        title="Planes"
+        subtitle="Gestiona catálogo comercial, precios y estado de activación por moneda y método de cobro."
+      >
         <div className="flex justify-center py-12">
           <Spinner size={3} width={0.3} color="var(--app-accent)" />
         </div>
@@ -94,7 +97,11 @@ export const PlanAdmin = () => {
   }
 
   return (
-    <AdminPageLayout title={`Planes — ${plans.length}`} toolbar={toolbar}>
+    <AdminPageLayout
+      title={`Planes — ${plans.length}`}
+      subtitle="Gestiona catálogo comercial, precios y estado de activación por moneda y método de cobro."
+      toolbar={toolbar}
+    >
       <AddPlanModal showModal={show} onHideModal={closeModalAdd} callPlans={getPlans} />
       <EditPlanModal showModal={showEdit} onHideModal={closeEditModalAdd} editingPlan={editingPlan} callPlans={getPlans} />
       <ConditionModal

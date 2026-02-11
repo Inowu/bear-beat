@@ -253,7 +253,11 @@ export const Ordens = () => {
   };
 
   return (
-    <AdminPageLayout title="Órdenes" toolbar={toolbar}>
+    <AdminPageLayout
+      title="Órdenes"
+      subtitle="Consulta pagos, filtra por método/estado y exporta la operación histórica en un clic."
+      toolbar={toolbar}
+    >
       <div className="w-full overflow-x-hidden">
         {/* Tabla desktop (patrón BEAR BEAT PRO) */}
         <div className="hidden md:block rounded-xl border border-gray-200 dark:border-bear-dark-100 overflow-hidden">

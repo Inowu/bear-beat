@@ -34,7 +34,10 @@ export const Storage = () => {
   const barWidth = pct > 5 ? pct + "%" : "5%";
 
   return (
-    <AdminPageLayout title="Almacenamiento del servidor">
+    <AdminPageLayout
+      title="Almacenamiento del servidor"
+      subtitle="Controla capacidad, reserva técnica y disponibilidad para evitar interrupciones operativas."
+    >
       {isLoading ? (
         <div className="flex justify-center py-12">
           <Spinner size={3} width={0.3} color="var(--app-accent)" />

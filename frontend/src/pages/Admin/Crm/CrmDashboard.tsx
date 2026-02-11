@@ -379,6 +379,7 @@ export function CrmDashboard() {
   return (
     <AdminPageLayout
       title="CRM"
+      subtitle="Orquesta activación, retención y cancelaciones en una sola vista operativa para el equipo."
       toolbar={
         <div className="crm-toolbar">
           <div className="crm-toolbar__group">
