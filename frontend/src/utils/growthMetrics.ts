@@ -643,13 +643,11 @@ async function flushQueuedEvents(): Promise<void> {
   const batch = queuedEvents.slice(0, FLUSH_BATCH_SIZE);
 
   try {
-    const token = getAccessToken();
     const response = await fetch(analyticsCollectUrl, {
       method: "POST",
       credentials: "omit",
       headers: {
         "content-type": "application/json",
-        ...(token ? { authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify({ events: batch }),
       keepalive: true,

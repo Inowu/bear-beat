@@ -80,10 +80,16 @@ async function main() {
             callback(null, true);
             return;
           }
-
-          callback(null, allowedOrigins.includes(origin));
+          if (allowedOrigins.includes(origin)) {
+            callback(null, origin);
+            return;
+          }
+          callback(null, false);
         },
         credentials: true,
+        methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
+        optionsSuccessStatus: 204,
       }),
     );
 
