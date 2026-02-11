@@ -734,18 +734,34 @@ function Checkout() {
     parseInt(plan?.price || "0", 10) -
     parseInt(plan?.price || "0", 10) * (discount / 100)
   ).toFixed(2);
+  const selectedMethodMeta = METHOD_META[selectedMethod];
 
   const quotaGb = Number(plan?.gigas ?? 500);
+  const durationDays = Number(plan?.duration ?? 0);
   const benefits = [
     "Descargas por FTP (recomendado para carpetas grandes)",
     `Cuota mensual clara: ${formatInt(quotaGb)} GB/mes`,
     "Cancela cuando quieras",
+  ];
+  const quickFacts = [
+    `${formatInt(quotaGb)} GB/mes`,
+    `${formatInt(durationDays)} días`,
+    `${availableMethods.length} método${availableMethods.length === 1 ? "" : "s"} de pago`,
   ];
   const checkoutSteps = [
     { step: "1", label: "Confirma tu plan" },
     { step: "2", label: "Elige método de pago" },
     { step: "3", label: "Activa y descarga" },
   ];
+  let continueLabel = "Continuar";
+  if (processingMethod === "card") continueLabel = "Abriendo pasarela segura...";
+  if (processingMethod === "spei") continueLabel = "Generando referencia SPEI (recurrente)...";
+  if (processingMethod === "bbva") continueLabel = "Abriendo pago BBVA...";
+  if (processingMethod === "oxxo") continueLabel = "Generando referencia de pago en efectivo...";
+  if (processingMethod === null && selectedMethod === "card") continueLabel = "Continuar con tarjeta segura";
+  if (processingMethod === null && selectedMethod === "spei") continueLabel = "Generar referencia SPEI (recurrente)";
+  if (processingMethod === null && selectedMethod === "bbva") continueLabel = "Continuar con BBVA";
+  if (processingMethod === null && selectedMethod === "oxxo") continueLabel = "Generar referencia de pago en efectivo";
 
   if (!priceId) {
     return (
@@ -820,6 +836,11 @@ function Checkout() {
               <p className="checkout-page-subtitle">
                 Elige tu método de pago y completa tu activación en la misma pantalla.
               </p>
+              <div className="checkout-header__quickfacts" role="list" aria-label="Detalles rápidos del plan">
+                {quickFacts.map((fact) => (
+                  <span key={fact} role="listitem">{fact}</span>
+                ))}
+              </div>
             </div>
             <div
               className="checkout-header__amount"
@@ -877,6 +898,9 @@ function Checkout() {
             <p className="checkout-summary__price">
               ${totalPrice} <span className="checkout-summary__currency">{plan.moneda ?? "MXN"}</span>
             </p>
+            <p className="checkout-summary__mini">
+              Pago mensual con renovación automática.
+            </p>
             <div className="checkout-summary__stats" role="list" aria-label="Detalles del plan">
               <span role="listitem">{formatInt(quotaGb)} GB/mes</span>
               <span role="listitem">{plan.duration} días</span>
@@ -920,6 +944,13 @@ function Checkout() {
               <div className="checkout-credentials__item">
                 <span className="checkout-credentials__label">Correo</span>
                 <span className="checkout-credentials__value">{currentUser?.email ?? "—"}</span>
+              </div>
+            </div>
+            <div className="checkout-selected-method" aria-live="polite">
+              <span className="checkout-selected-method__label">Método elegido</span>
+              <div className="checkout-selected-method__value">
+                <strong>{selectedMethodMeta.label}</strong>
+                <small>{selectedMethodMeta.description}</small>
               </div>
             </div>
             <div className="checkout-methods" role="radiogroup" aria-label="Método de pago">
@@ -1002,14 +1033,7 @@ function Checkout() {
                   disabled={processingMethod !== null}
                   data-testid="checkout-continue"
                 >
-                  {processingMethod === "card" && "Abriendo pasarela segura..."}
-                  {processingMethod === "spei" && "Generando referencia SPEI (recurrente)..."}
-                  {processingMethod === "bbva" && "Abriendo pago BBVA..."}
-                  {processingMethod === "oxxo" && "Generando referencia de pago en efectivo..."}
-                  {processingMethod === null && selectedMethod === "card" && "Continuar con tarjeta segura"}
-                  {processingMethod === null && selectedMethod === "spei" && "Generar referencia SPEI (recurrente)"}
-                  {processingMethod === null && selectedMethod === "bbva" && "Continuar con BBVA"}
-                  {processingMethod === null && selectedMethod === "oxxo" && "Generar referencia de pago en efectivo"}
+                  {continueLabel}
                 </button>
               )}
               <p className="checkout-payment-note">
