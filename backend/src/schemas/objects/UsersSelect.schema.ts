@@ -24,6 +24,8 @@ const Schema: z.ZodType<Prisma.UsersSelect> = z
     activationcode: z.boolean().optional(),
     mc_id: z.boolean().optional(),
     ip_registro: z.boolean().optional(),
+    blocked: z.boolean().optional(),
+    verified: z.boolean().optional(),
   })
   .strict();
 

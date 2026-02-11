@@ -98,6 +98,17 @@ function Admin() {
   const [drawerUser, setDrawerUser] = useState<IAdminUser | null>(null);
   const [loadError, setLoadError] = useState<string>("");
 
+  const getTrpcErrorMessage = (error: unknown): string => {
+    if (!error) return "";
+    if (error instanceof Error) return error.message;
+    if (typeof error === "object" && error !== null) {
+      const maybeError = error as { message?: unknown; data?: { message?: unknown } };
+      if (typeof maybeError?.data?.message === "string") return maybeError.data.message;
+      if (typeof maybeError?.message === "string") return maybeError.message;
+    }
+    return "";
+  };
+
   const closeModalAdd = () => setShowModal(false);
   const handleDeleteModal = () => setShowDeleteModal(!showDeleteModal);
   const closeBlockModal = () => setShowBlockModal(false);
@@ -218,10 +229,15 @@ function Admin() {
         setUsers(tempUsers.map(mapAdminUser));
         setTotalUsers(totalUsersResponse.length);
       }
-    } catch {
+    } catch (error) {
       setUsers([]);
       setTotalUsers(0);
-      setLoadError("No se pudieron cargar los usuarios. Revisa la conexión e intenta nuevamente.");
+      const detail = getTrpcErrorMessage(error).trim();
+      setLoadError(
+        detail
+          ? `No se pudieron cargar los usuarios. ${detail}`
+          : "No se pudieron cargar los usuarios. Revisa la conexión e intenta nuevamente.",
+      );
     } finally {
       setLoader(false);
       setTotalLoader(false);

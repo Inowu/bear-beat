@@ -97,6 +97,8 @@ const Schema: z.ZodType<Prisma.UsersOrderByWithRelationInput> = z
         z.lazy(() => SortOrderInputObjectSchema),
       ])
       .optional(),
+    blocked: z.lazy(() => SortOrderSchema).optional(),
+    verified: z.lazy(() => SortOrderSchema).optional(),
     role: z.lazy(() => RolesOrderByWithRelationInputObjectSchema).optional(),
   })
   .strict();

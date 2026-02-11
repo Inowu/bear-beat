@@ -101,6 +101,8 @@ const Schema: z.ZodType<Prisma.UsersWhereInput> = z
       .union([z.lazy(() => StringNullableFilterObjectSchema), z.string()])
       .optional()
       .nullable(),
+    blocked: z.boolean().optional(),
+    verified: z.boolean().optional(),
     role: z
       .lazy(() => RolesWhereInputObjectSchema)
       .optional()
