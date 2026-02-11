@@ -603,7 +603,6 @@ export default function PublicHome() {
 
           <div className="home-footer__links" aria-label="Enlaces">
             <Link to="/planes">Planes</Link>
-            <Link to="/legal">FAQ y Políticas</Link>
             <Link to="/auth">Iniciar sesión</Link>
           </div>
 

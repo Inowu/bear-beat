@@ -279,12 +279,6 @@ function AsideNavbar(props: AsideNavbarPropsI) {
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/legal" className={navLinkClassName} {...linkProps}>
-                    <FileText size={18} aria-hidden />
-                    FAQ y políticas
-                  </NavLink>
-                </li>
-                <li>
                   <button
                     type="button"
                     className="nav-link-item nav-link-item--danger"

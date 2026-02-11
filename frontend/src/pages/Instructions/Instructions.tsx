@@ -124,9 +124,6 @@ function Instructions() {
                 Ver mis credenciales FTP
                 <ArrowRight size={16} />
               </Link>
-              <Link to="/legal" className="home-cta home-cta--secondary instructions2026__btn instructions2026__btn--ghost">
-                FAQ y políticas
-              </Link>
               <a
                 href={SUPPORT_CHAT_URL}
                 target="_blank"
