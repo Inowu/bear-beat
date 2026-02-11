@@ -61,6 +61,12 @@ const getAllowedCorsOrigins = (): string[] => {
   return parsed.length ? parsed : DEFAULT_CORS_ORIGINS;
 };
 
+const toPositiveInt = (value: string | undefined, fallback = 0): number => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+  return Math.floor(parsed);
+};
+
 async function main() {
   try {
     const app = express();
@@ -227,6 +233,49 @@ async function main() {
             `[TRACK_METADATA] Boot scan failed: ${error?.message ?? 'unknown error'}`,
           );
         });
+    }
+
+    const trackMetadataScanIntervalMinutes = toPositiveInt(
+      process.env.TRACK_METADATA_SCAN_INTERVAL_MINUTES,
+      0,
+    );
+    if (trackMetadataScanIntervalMinutes > 0) {
+      const intervalMs = trackMetadataScanIntervalMinutes * 60 * 1000;
+      let scanInProgress = false;
+
+      const runIntervalScan = async () => {
+        if (scanInProgress) {
+          log.warn('[TRACK_METADATA] Interval scan skipped: previous scan still running');
+          return;
+        }
+
+        scanInProgress = true;
+        try {
+          const result = await rebuildTrackMetadataIndex({
+            clearBeforeInsert: false,
+          });
+          log.info(
+            `[TRACK_METADATA] Interval scan done: indexed=${result.indexedTracks}, skipped=${result.skippedFiles}`,
+          );
+        } catch (error: any) {
+          log.warn(
+            `[TRACK_METADATA] Interval scan failed: ${error?.message ?? 'unknown error'}`,
+          );
+        } finally {
+          scanInProgress = false;
+        }
+      };
+
+      const intervalRef = setInterval(() => {
+        void runIntervalScan();
+      }, intervalMs);
+      if (typeof intervalRef.unref === 'function') {
+        intervalRef.unref();
+      }
+
+      log.info(
+        `[TRACK_METADATA] Interval scan enabled every ${trackMetadataScanIntervalMinutes} minute(s)`,
+      );
     }
 
     try {
