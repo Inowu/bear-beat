@@ -1,5 +1,5 @@
 import z from 'zod';
-import { addDays, compareAsc } from 'date-fns';
+import { addDays } from 'date-fns';
 import { TRPCError } from '@trpc/server';
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
 import { getConektaCustomer } from './utils/getConektaCustomer';
@@ -134,17 +134,25 @@ export const subscribeWithCashConekta = shieldedProcedure
             existingOrder.invoice_id!,
           );
 
+          const charge = conektaOrder.data.charges?.data?.[0] as any;
+          const paymentMethodObj = charge?.payment_method as any;
+          const chargeStatus = String(charge?.status || '').toLowerCase();
+          const orderPaymentStatus = String(
+            (conektaOrder.data as any)?.payment_status || '',
+          ).toLowerCase();
+          const expiresAt =
+            typeof paymentMethodObj?.expires_at === 'number'
+              ? paymentMethodObj.expires_at
+              : 0;
+          const nowUnix = Math.floor(Date.now() / 1000);
+          const isPending =
+            chargeStatus === 'pending_payment' ||
+            chargeStatus === 'pending_confirmation' ||
+            orderPaymentStatus === 'pending_payment';
+          const isExpired = Boolean(expiresAt > 0 && nowUnix >= expiresAt);
+
           // Check if the order is expired
-          if (
-            compareAsc(
-              new Date(),
-              new Date(
-                ((conektaOrder.data.charges?.data?.[0].payment_method as any)
-                  ?.expires_at ?? 0) * 1000,
-              ),
-            ) >= 0 ||
-            conektaOrder.data.charges?.data?.[0].status !== 'pending_payment'
-          ) {
+          if (isExpired || !isPending) {
             log.info(
               `[CONEKTA_CASH] Order ${existingOrder.id} is expired, creating a new one`,
             );
@@ -163,11 +171,10 @@ export const subscribeWithCashConekta = shieldedProcedure
               user: fullUserForOrder,
             });
 
-            return newConektaOrder.data.charges?.data?.[0]
-              .payment_method as any;
+            return newConektaOrder.data.charges?.data?.[0].payment_method as any;
           }
 
-          return conektaOrder.data.charges?.data?.[0].payment_method as any;
+          return paymentMethodObj as any;
         } catch (e) {
           log.error(
             `[CONEKTA_CASH] There was an error getting the order with conekta: ${e}`,
@@ -243,50 +250,60 @@ const createCashPaymentOrder = async ({
   prisma: PrismaClient;
   user: Users;
 }) => {
-  const expiresAt = Math.floor(addDays(new Date(), 30).getTime() / 1000);
+  const expiresAt = Number(
+    Math.floor(addDays(new Date(), 30).getTime() / 1000).toFixed(0),
+  );
   const amountCents = Math.round(Number(plan.price) * 100);
-  const customerInfo =
-    paymentMethod === 'cash'
-      ? buildConektaCustomerInfo(user)
-      : {
-          // Needed for SPEI recurrent CLABE reuse.
-          customer_id: customerId,
-        };
+  const hasCustomerId = typeof customerId === 'string' && customerId.trim().length > 0;
+  const customerInfo = hasCustomerId
+    ? { customer_id: customerId.trim() }
+    : buildConektaCustomerInfo(user);
 
-  // Conekta \"SPEI recurrente\":
-  // 1) el cliente debe tener un payment_source tipo \"spei_recurrent\"
-  // 2) al crear la orden SPEI, incluir reuse_customer_clabe: true para reutilizar la misma CLABE
-  // Docs: https://developers.conekta.com/docs/cargos-con-referencia-recurrente
-  let reuseCustomerClabe = false;
+  // SDK Conekta v6 (OpenAPI 2.1.0):
+  // para SPEI recurrente se debe usar un payment_source_id de tipo spei_recurrent
+  // en charges[].payment_method.payment_source_id.
+  let speiRecurrentSourceId: string | null = null;
   if (paymentMethod === 'spei') {
     try {
+      if (!hasCustomerId) {
+        throw new Error('customer_id is required for spei_recurrent');
+      }
       const existing = await conektaPaymentMethods.getCustomerPaymentMethods(
         customerId,
       );
-      const hasSpeiRecurrent =
-        existing.data?.data?.some(
-          (pm: any) => pm?.type === 'spei_recurrent',
-        ) ?? false;
+      const existingSpei = existing.data?.data?.find(
+        (pm: any) => pm?.type === 'spei_recurrent',
+      );
 
-      if (!hasSpeiRecurrent) {
-        await conektaPaymentMethods.createCustomerPaymentMethods(customerId, {
-          type: 'spei_recurrent',
-        } as any);
+      if (existingSpei?.id) {
+        speiRecurrentSourceId = String(existingSpei.id);
+      } else {
+        const created = await conektaPaymentMethods.createCustomerPaymentMethods(
+          customerId,
+          {
+            type: 'spei_recurrent',
+          } as any,
+        );
+        const createdId = (created.data as any)?.id;
+        if (createdId) speiRecurrentSourceId = String(createdId);
       }
-
-      reuseCustomerClabe = true;
     } catch (e) {
-      // No bloquear el checkout si el payment_source no se puede crear/leer:
-      // seguimos con SPEI normal (CLABE puede cambiar por orden).
+      // No bloquear checkout: si falla spei_recurrent, seguimos con SPEI normal.
       log.error(
         `[CONEKTA_SPEI_RECURRENT] Unable to ensure spei_recurrent payment source for customer ${customerId}: ${e}`,
       );
-      reuseCustomerClabe = false;
+      speiRecurrentSourceId = null;
     }
   }
 
-  // Según SDK Conekta (get_order_cash_request): usar customer_id cuando existe
-  // y pre_authorize: false para pagos cash/spei.
+  const chargePaymentMethod: any = {
+    type: paymentMethod.toLowerCase() as 'cash' | 'spei',
+    expires_at: expiresAt,
+  };
+  if (paymentMethod === 'spei' && speiRecurrentSourceId) {
+    chargePaymentMethod.payment_source_id = speiRecurrentSourceId;
+  }
+
   const orderPayload: any = {
     currency: 'MXN' as const,
     customer_info: customerInfo,
@@ -300,10 +317,7 @@ const createCashPaymentOrder = async ({
     charges: [
       {
         amount: amountCents,
-        payment_method: {
-          type: paymentMethod.toLowerCase() as 'cash' | 'spei',
-          expires_at: expiresAt,
-        },
+        payment_method: chargePaymentMethod,
       },
     ],
     metadata: {
@@ -315,11 +329,10 @@ const createCashPaymentOrder = async ({
   };
 
   if (fingerprint && typeof fingerprint === 'string') {
-    orderPayload.fingerprint = fingerprint;
-  }
-
-  if (reuseCustomerClabe) {
-    orderPayload.reuse_customer_clabe = true;
+    const safeFingerprint = fingerprint.trim();
+    if (safeFingerprint.length > 0) {
+      orderPayload.fingerprint = safeFingerprint;
+    }
   }
 
   let conektaOrder;
