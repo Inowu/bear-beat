@@ -72,11 +72,13 @@
   width: 40px;
   height: 40px;
   border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--ph-shadow);
 }
 
 .home-topnav__brand[aria-current="page"] img {
-  box-shadow: 0 12px 46px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(8, 225, 247, 0.32);
+  box-shadow:
+    var(--ph-shadow-card),
+    0 0 0 1px color-mix(in srgb, var(--ph-accent) 55%, transparent);
 }
 
 .home-topnav__nav {
@@ -457,7 +459,7 @@
   overflow: hidden;
   aspect-ratio: 960 / 600;
   background:
-    linear-gradient(180deg, rgba(8, 225, 247, 0.08), transparent 56%),
+    linear-gradient(180deg, color-mix(in srgb, var(--ph-accent) 10%, transparent), transparent 56%),
     color-mix(in srgb, var(--ph-bg-soft) 86%, transparent);
   border: 1px solid color-mix(in srgb, var(--ph-border) 66%, transparent);
 }
@@ -1609,7 +1611,7 @@
   padding: 0;
   overflow: hidden;
   background:
-    linear-gradient(180deg, rgba(8, 225, 247, 0.08), transparent 56%),
+    linear-gradient(180deg, color-mix(in srgb, var(--ph-accent) 10%, transparent), transparent 56%),
     color-mix(in srgb, var(--ph-bg-soft) 86%, transparent);
   border: 1px solid color-mix(in srgb, var(--ph-border) 66%, transparent);
 }

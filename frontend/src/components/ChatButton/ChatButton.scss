@@ -6,8 +6,8 @@
   --chat-fab-glow: rgba(8, 225, 247, 0.45);
   --chat-fab-glow-hover: rgba(8, 225, 247, 0.68);
   --chat-fab-bg: color-mix(in srgb, var(--bb-surface) 92%, var(--bb-bg) 8%);
-  --chat-fab-border: color-mix(in srgb, var(--bb-cyan) 78%, var(--bb-border) 22%);
-  --chat-fab-icon: var(--bb-cyan);
+  --chat-fab-border: color-mix(in srgb, var(--app-accent) 62%, var(--bb-border));
+  --chat-fab-icon: var(--app-accent);
 
   position: fixed;
   bottom: calc(28px + var(--chat-fab-bottom-offset, 0px));
@@ -25,7 +25,7 @@
   );
   border: 1px solid var(--chat-fab-border);
   border-radius: 50%;
-  box-shadow: 0 0 20px var(--chat-fab-glow), 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 20px var(--chat-fab-glow), var(--app-shadow);
   color: var(--chat-fab-icon);
   text-decoration: none;
   cursor: pointer;
@@ -34,7 +34,7 @@
 
   &:hover {
     transform: scale(1.1);
-    box-shadow: 0 0 28px var(--chat-fab-glow-hover), 0 0 40px rgba(8, 225, 247, 0.24);
+    box-shadow: 0 0 28px var(--chat-fab-glow-hover), var(--app-shadow-card);
   }
 
   &:active {
@@ -55,10 +55,14 @@
 
 /* Light theme: menos glow y menos "cyberpunk" para verse premium y no distraer. */
 [data-theme="light"] .chat-fab {
-  --chat-fab-glow: rgba(8, 225, 247, 0.18);
-  --chat-fab-glow-hover: rgba(8, 225, 247, 0.28);
+  --chat-fab-glow: rgba(0, 124, 137, 0.16);
+  --chat-fab-glow-hover: rgba(0, 124, 137, 0.24);
   --chat-fab-bg: #FFFFFF;
-  --chat-fab-border: color-mix(in srgb, var(--bb-cyan) 52%, var(--bb-border));
+  --chat-fab-border: color-mix(in srgb, var(--app-accent) 46%, var(--bb-border));
+}
+
+[data-theme="light"] .chat-fab-badge {
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.16);
 }
 
 .chat-fab--inline {

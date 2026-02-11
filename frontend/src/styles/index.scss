@@ -22,13 +22,15 @@
   --bb-cyan: #08E1F7;
   --bb-mint: #00E6C1;
   --bb-gradient: linear-gradient(11deg, var(--bb-mint), var(--bb-cyan));
+  /* Light theme needs an “ink” accent for text/lines (neon cyan is too low-contrast on white). */
+  --bb-accent-ink: #007C89;
   /* Ambient accents (for large surfaces; avoid "baby blue" washes) */
   --bb-ambient-cyan: rgba(8, 225, 247, 0.022);
   --bb-ambient-mint: rgba(0, 230, 193, 0.018);
   /* Landing (public) background spots: tuned per theme to keep LIGHT premium (no wash)
      while DARK keeps the neon glow. Used by /, /planes, /legal. */
-  --bb-landing-spot-1: rgba(8, 225, 247, 0.06);
-  --bb-landing-spot-2: rgba(8, 225, 247, 0.04);
+  --bb-landing-spot-1: rgba(8, 225, 247, 0.045);
+  --bb-landing-spot-2: rgba(8, 225, 247, 0.03);
   --bb-danger: #FF2D2C;
   --bb-success: #39D834;
   --bb-warning: #FEBC2E;
@@ -39,18 +41,18 @@
   --bb-dark-300: #292929;
   --bb-dark-400: #1A1A1A;
   /* Light base: slightly cooler/cleaner than #EEEEEE to feel premium (2026) */
-  --bb-bg: #F3F6F8;
+  --bb-bg: #EEF2F6;
   --bb-surface: #FFFFFF;
-  --bb-surface-soft: #F6F7F8;
-  --bb-border: rgba(21, 42, 53, 0.14);
+  --bb-surface-soft: #F1F4F6;
+  --bb-border: rgba(15, 23, 42, 0.12);
   --bb-text-heading: #1A1A1A;
   --bb-text-body: #2A2A2A;
   --bb-text-muted: #5F5F5F;
-  --bb-focus-ring: rgba(8, 225, 247, 0.32);
+  --bb-focus-ring: rgba(0, 124, 137, 0.26);
   /* Shadows: softer and more “glass + border” than heavy drop-shadows */
-  --bb-shadow: 0 10px 26px rgba(15, 23, 42, 0.10);
-  --bb-shadow-card: 0 18px 48px rgba(15, 23, 42, 0.12);
-  --bb-shadow-glow: 0 0 18px rgba(8, 225, 247, 0.32);
+  --bb-shadow: 0 10px 24px rgba(15, 23, 42, 0.085);
+  --bb-shadow-card: 0 18px 46px rgba(15, 23, 42, 0.105);
+  --bb-shadow-glow: 0 0 16px rgba(8, 225, 247, 0.26);
   --bb-shadow-1: var(--bb-shadow);
   --bb-shadow-2: var(--bb-shadow-card);
   /* Spacing scale (theme-agnostic) */
@@ -90,25 +92,25 @@
   --border-main: var(--bb-border);
 
   /* Legacy semantic bridge (existing app vars) */
-  --theme-bg-primary: #F3F6F8;
-  --theme-bg-primary-end: #FFFFFF;
+  --theme-bg-primary: var(--bb-bg);
+  --theme-bg-primary-end: var(--bb-surface);
   --theme-bg-secondary: var(--bb-surface);
-  --theme-bg-gradient: linear-gradient(165deg, #FFFFFF 0%, #EDF2F5 100%);
+  --theme-bg-gradient: linear-gradient(165deg, var(--bb-surface) 0%, var(--bb-bg) 100%);
   /* Light nav (premium/glass, no "baby blue") */
   --theme-nav-bg: #FFFFFF;
   --theme-nav-border-bottom: rgba(21, 42, 53, 0.1);
   --theme-nav-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
   --theme-nav-text: #15202B;
   /* Neutral light pills (avoid blue-ish nav wash) */
-  --theme-nav-item-bg: #F5F6F8;
-  --theme-nav-item-border: rgba(21, 42, 53, 0.12);
+  --theme-nav-item-bg: var(--bb-surface-soft);
+  --theme-nav-item-border: var(--bb-border);
   /* Light hover: subtle tint, avoid "baby blue" panels */
-  --theme-nav-item-hover-bg: color-mix(in srgb, var(--bb-cyan) 7%, #FFFFFF);
+  --theme-nav-item-hover-bg: color-mix(in srgb, var(--bb-cyan) 4%, #FFFFFF);
   --theme-nav-item-hover-text: #0F2028;
   --theme-nav-item-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
   --theme-card-bg: var(--bb-surface);
   --theme-card-border: var(--bb-border);
-  --theme-card-border-strong: rgba(8, 225, 247, 0.22);
+  --theme-card-border-strong: color-mix(in srgb, var(--bb-accent-ink) 28%, transparent);
   --theme-card-shadow: var(--bb-shadow);
   --theme-card-shadow-hover: var(--bb-shadow-card);
   --theme-card-accent-line: linear-gradient(180deg, var(--bb-cyan) 0%, var(--bb-mint) 100%);
@@ -126,14 +128,14 @@
   --theme-bg-soft: var(--bb-surface-soft);
   --theme-stripe: rgba(0, 0, 0, 0.05);
   --theme-edge: rgba(21, 42, 53, 0.15);
-  --theme-accent: var(--bb-cyan);
+  --theme-accent: var(--bb-accent-ink);
   --theme-accent-bright: var(--bb-cyan);
-  --theme-accent-dim: var(--bb-cyan);
-  --theme-accent-glow: rgba(8, 225, 247, 0.42);
+  --theme-accent-dim: var(--bb-accent-ink);
+  --theme-accent-glow: rgba(8, 225, 247, 0.24);
   /* Soft accent surfaces in LIGHT should be subtle (avoid "baby blue" wash) */
-  --theme-accent-soft-bg: rgba(8, 225, 247, 0.035);
-  --theme-accent-soft-bg-2: rgba(8, 225, 247, 0.06);
-  --theme-accent-soft-bg-3: rgba(8, 225, 247, 0.085);
+  --theme-accent-soft-bg: rgba(8, 225, 247, 0.028);
+  --theme-accent-soft-bg-2: rgba(8, 225, 247, 0.045);
+  --theme-accent-soft-bg-3: rgba(8, 225, 247, 0.065);
   --theme-landing-bg: #000000;
   --theme-landing-text: #FFFFFF;
 
@@ -148,7 +150,7 @@
   --ph-btn-bg: var(--bb-gradient);
   --ph-btn-text: #0A0A0A;
   --ph-btn-hover-bg: var(--bb-cyan);
-  --ph-accent: var(--bb-cyan);
+  --ph-accent: var(--bb-accent-ink);
   --ph-accent-bright: var(--bb-cyan);
   --ph-shadow: var(--bb-shadow);
   --ph-shadow-card: var(--bb-shadow-card);
@@ -171,7 +173,7 @@
   --app-text-secondary: var(--bb-text-body);
   --app-text-muted: var(--bb-text-muted);
   --app-border: var(--bb-border);
-  --app-accent: var(--bb-cyan);
+  --app-accent: var(--bb-accent-ink);
   --app-accent-bright: var(--bb-cyan);
   --app-btn-bg: var(--bb-gradient);
   --app-btn-text: #0A0A0A;
@@ -191,9 +193,9 @@
   /* En light: inputs neutros (blancos) para evitar "baby blue" visual */
   --auth-register-input-bg: var(--bb-surface-soft);
   --auth-register-input-border: var(--bb-border);
-  --auth-register-input-focus: var(--bb-cyan);
+  --auth-register-input-focus: var(--bb-accent-ink);
   --auth-register-icon: #7A7A7A;
-  --auth-register-icon-focus: var(--bb-cyan);
+  --auth-register-icon-focus: var(--bb-accent-ink);
   --auth-register-btn-bg: var(--bb-gradient);
   --auth-register-btn-text: #0A0A0A;
   --auth-login-atmosphere-bg: var(--bb-bg);
@@ -202,8 +204,8 @@
   --auth-login-card-shadow: var(--bb-shadow-card);
   --auth-login-title: var(--bb-text-heading);
   --auth-login-subtitle: var(--bb-text-muted);
-  --auth-login-link: var(--bb-cyan);
-  --auth-login-link-hover: var(--bb-cyan);
+  --auth-login-link: var(--bb-accent-ink);
+  --auth-login-link-hover: var(--bb-accent-ink);
   --auth-login-btn-bg: var(--bb-gradient);
   --auth-login-btn-text: #0A0A0A;
 
@@ -214,7 +216,7 @@
   --plan-card-price: var(--bb-text-heading);
   --plan-card-price-currency: var(--bb-text-muted);
   --plan-card-gb-bg: var(--bb-surface-soft);
-  --plan-card-gb-value: var(--bb-cyan);
+  --plan-card-gb-value: var(--bb-accent-ink);
   --plan-card-gb-label: var(--bb-text-muted);
   --plan-card-subtitle: var(--bb-text-muted);
   --plan-card-benefit: var(--bb-text-body);
@@ -239,28 +241,28 @@
   --plan-card-badge-value-text: #0A0A0A;
   --plan-card-btn-hero-bg: var(--bb-gradient);
   --plan-card-btn-hero-glow: rgba(8, 225, 247, 0.34);
-  --plan-card-btn-outline-border: var(--bb-cyan);
-  --plan-card-btn-outline-color: var(--bb-cyan);
-  --plan-card-benefit-icon: var(--bb-cyan);
+  --plan-card-btn-outline-border: var(--bb-accent-ink);
+  --plan-card-btn-outline-color: var(--bb-accent-ink);
+  --plan-card-benefit-icon: var(--bb-accent-ink);
 
   --aside-backdrop-bg: rgba(13, 21, 27, 0.28);
   --aside-overlay-bg: color-mix(in srgb, #FFFFFF 96%, #F4F6F8);
   --aside-overlay-border: rgba(21, 42, 53, 0.12);
   --aside-overlay-text: #15202B;
   --aside-overlay-text-muted: #4A5A64;
-  --aside-overlay-hover: var(--bb-cyan);
+  --aside-overlay-hover: var(--bb-accent-ink);
   --aside-overlay-close-bg: rgba(8, 225, 247, 0.12);
   --aside-overlay-close-color: #15202B;
-  --aside-overlay-close-hover: var(--bb-cyan);
+  --aside-overlay-close-hover: var(--bb-accent-ink);
 
   --fb-bg: var(--bb-surface-soft);
   --fb-border: var(--bb-border);
   --fb-row-border: rgba(0, 0, 0, 0.08);
-  --fb-row-hover-bg: rgba(8, 225, 247, 0.05);
-  --fb-row-hover-border: var(--bb-cyan);
+  --fb-row-hover-bg: rgba(15, 23, 42, 0.03);
+  --fb-row-hover-border: var(--bb-accent-ink);
   --fb-text: var(--bb-text-heading);
   --fb-text-muted: var(--bb-text-muted);
-  --fb-accent: var(--bb-cyan);
+  --fb-accent: var(--bb-accent-ink);
   --fb-input-bg: var(--bb-surface);
   --fb-input-border: var(--bb-border);
   --fb-input-placeholder: #8A8A8A;
@@ -271,17 +273,17 @@
   --ma-card-bg: var(--bb-surface);
   --ma-card-border: var(--bb-border);
   --ma-title: var(--bb-text-heading);
-  --ma-accent: var(--bb-cyan);
+  --ma-accent: var(--bb-accent-ink);
   --ma-text: var(--bb-text-body);
   --ma-text-muted: var(--bb-text-muted);
   --ma-progress-bg: var(--bb-border);
   --ma-progress-fill: var(--bb-cyan);
-  --ma-avatar-ring: var(--bb-cyan);
+  --ma-avatar-ring: var(--bb-accent-ink);
   --ma-btn-cancel-bg: rgba(255, 45, 44, 0.12);
   --ma-btn-cancel-text: var(--bb-danger);
   --ma-btn-cancel-border: rgba(255, 45, 44, 0.3);
   --ma-add-card-border: var(--bb-border);
-  --ma-add-card-hover: var(--bb-cyan);
+  --ma-add-card-hover: var(--bb-accent-ink);
   --ma-badge-success: var(--bb-success);
   --ma-badge-pending: var(--bb-warning);
   --ma-badge-fail: var(--bb-danger);
@@ -294,9 +296,9 @@
   --in-title: var(--bb-text-heading);
   --in-text: var(--bb-text-body);
   --in-text-muted: var(--bb-text-muted);
-  --in-accent: var(--bb-cyan);
+  --in-accent: var(--bb-accent-ink);
   --in-stepper-line: var(--bb-border);
-  --in-step-circle: var(--bb-cyan);
+  --in-step-circle: var(--bb-accent-ink);
   --in-step-circle-text: #0A0A0A;
   --in-terminal-bg: var(--bb-surface-soft);
   --in-terminal-border: var(--bb-border);
@@ -307,7 +309,7 @@
   --ad-text: var(--bb-text-body);
   --ad-text-muted: var(--bb-text-muted);
   --ad-title: var(--bb-text-heading);
-  --ad-accent: var(--bb-cyan);
+  --ad-accent: var(--bb-accent-ink);
   --ad-accent-bg: var(--bb-cyan);
   --ad-input-bg: var(--bb-surface);
   --ad-input-border: var(--bb-border);
@@ -333,6 +335,7 @@
 [data-theme="dark"],
 html.dark,
 .dark {
+  --bb-accent-ink: var(--bb-cyan);
   --bb-ambient-cyan: rgba(8, 225, 247, 0.16);
   --bb-ambient-mint: rgba(0, 230, 193, 0.12);
   --bb-landing-spot-1: rgba(8, 225, 247, 0.12);
@@ -639,6 +642,15 @@ body {
   text-rendering: auto;
   background: var(--app-bg);
   color: var(--app-text-body);
+}
+
+/* Light: add subtle brand atmosphere without washing the UI.
+   Keep `--app-bg` as a solid token (used by color-mix), so we override only `body` background. */
+html[data-theme="light"] body {
+  background:
+    radial-gradient(900px 560px at 10% -10%, var(--bb-landing-spot-1), transparent 60%),
+    radial-gradient(860px 520px at 90% 10%, var(--bb-landing-spot-2), transparent 60%),
+    var(--app-bg);
 }
 
 /* Chrome en Mac: fuentes más nítidas y capa GPU para evitar parpadeos */
