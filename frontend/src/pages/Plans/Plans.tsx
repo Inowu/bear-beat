@@ -24,6 +24,16 @@ function detectPreferredCurrency(): "mxn" | "usd" {
   return lang.includes("mx") || lang.startsWith("es") ? "mxn" : "usd";
 }
 
+function formatAmountCompact(value: unknown, locale: string): string {
+  const amount = Number(value ?? 0);
+  if (!Number.isFinite(amount) || amount <= 0) return "—";
+  const hasDecimals = Math.abs(amount % 1) > 0;
+  return new Intl.NumberFormat(locale, {
+    minimumFractionDigits: hasDecimals ? 2 : 0,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
 function Plans() {
   const { currentUser } = useUserContext();
   const [plans, setPlans] = useState<IPlans[]>([]);
@@ -192,6 +202,14 @@ function Plans() {
     const usd = sortedPlans.find((plan) => normalizeCurrency(plan.moneda) === "usd") ?? null;
     return { mxn, usd };
   }, [sortedPlans]);
+  const heroPriceLabels = useMemo(() => {
+    const mxnAmount = plansByCurrency.mxn ? formatAmountCompact(plansByCurrency.mxn.price, "es-MX") : null;
+    const usdAmount = plansByCurrency.usd ? formatAmountCompact(plansByCurrency.usd.price, "en-US") : null;
+    return {
+      mxn: mxnAmount ? `MXN $${mxnAmount}/mes` : null,
+      usd: usdAmount ? `USD $${usdAmount}/mes` : null,
+    };
+  }, [plansByCurrency.mxn, plansByCurrency.usd]);
   const downloadQuotaGb = useMemo(() => {
     const values = sortedPlans.map((plan) => Number(plan.gigas ?? 0)).filter((v) => Number.isFinite(v) && v > 0);
     if (values.length === 0) return 0;
@@ -286,6 +304,17 @@ function Plans() {
                 </li>
               </ul>
               <p className="plans-hero-micro">{heroMicrocopy}</p>
+              {(heroPriceLabels.mxn || heroPriceLabels.usd) && (
+                <p className="plans-hero-price-hint" aria-label="Referencia rápida de precios">
+                  {heroPriceLabels.mxn && <span className="plans-hero-price-tag">{heroPriceLabels.mxn}</span>}
+                  {heroPriceLabels.mxn && heroPriceLabels.usd && (
+                    <span className="plans-hero-price-sep" aria-hidden>
+                      •
+                    </span>
+                  )}
+                  {heroPriceLabels.usd && <span className="plans-hero-price-tag">{heroPriceLabels.usd}</span>}
+                </p>
+              )}
             </div>
             <div className="plans-hero-choice" aria-label="Moneda">
               <h2 className="plans-hero-choice-title">Elige tu moneda</h2>
@@ -350,6 +379,14 @@ function Plans() {
         </section>
       ) : (
         <>
+          <section className="plans-grid-heading" aria-label="Selección de plan">
+            <h2>{isCompareLayout ? "Compara y elige tu plan" : "Elige tu plan y activa hoy"}</h2>
+            <p>
+              {isCompareLayout
+                ? "Mismo catálogo y descargas. Solo cambia moneda y métodos de pago."
+                : "Activas en minutos y mantienes el control total desde tu cuenta."}
+            </p>
+          </section>
           <ul
             className={["plans-plan-grid", isCompareLayout ? "plans-plan-grid--compare" : ""].filter(Boolean).join(" ")}
             aria-label="Planes disponibles"

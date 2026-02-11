@@ -53,6 +53,185 @@ html[data-theme="dark"] .plan-card-glow {
   border-color: color-mix(in srgb, var(--plan-card-monolith-border) 88%, transparent);
 }
 
+.plan-card-wrapper.is-marketing .plan-card-main-card {
+  gap: 12px;
+  padding: 18px 16px;
+  border-radius: 18px;
+  border-color: color-mix(in srgb, var(--plan-card-border) 80%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--app-accent) 4%, transparent), transparent 52%),
+    color-mix(in srgb, var(--plan-card-bg) 98%, transparent);
+}
+
+.plan-card-wrapper.is-marketing .plan-card-main-card:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--app-accent) 26%, transparent);
+}
+
+.plan-card-wrapper.is-marketing .plan-card-badge {
+  top: 12px;
+  right: 12px;
+  min-height: 24px;
+  padding: 0 9px;
+  font-size: 1.03rem;
+  letter-spacing: 0.045em;
+}
+
+.plan-card-wrapper.is-marketing .plan-card-head {
+  gap: 8px;
+  padding-right: 92px;
+}
+
+.plan-card-wrapper.is-marketing .plan-card-kicker {
+  min-height: 22px;
+  padding: 0 9px;
+  font-size: 1.08rem;
+}
+
+.plan-card-wrapper.is-marketing .plan-card-title {
+  font-size: clamp(1.56rem, 1.4rem + 0.56vw, 1.88rem);
+  line-height: 1.13;
+}
+
+.plan-card-wrapper.is-marketing .plan-card-price-row {
+  display: inline-flex;
+  width: fit-content;
+  padding: 6px 10px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--plan-card-border) 76%, transparent);
+  background: color-mix(in srgb, var(--app-bg-soft) 56%, transparent);
+}
+
+.plan-card-wrapper.is-marketing .plan-card-price-amount {
+  font-size: clamp(1.84rem, 1.68rem + 0.84vw, 2.3rem);
+}
+
+.plan-card-wrapper.is-marketing .plan-card-price-currency {
+  font-size: 1.14rem;
+  font-weight: 740;
+}
+
+.plan-card-wrapper.is-marketing .plan-card-highlights {
+  gap: 6px;
+}
+
+.plan-card-wrapper.is-marketing .plan-card-highlight-item {
+  align-items: flex-start;
+  gap: 7px;
+  padding: 7px 10px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--plan-card-border) 66%, transparent);
+  background: color-mix(in srgb, var(--app-bg-soft) 40%, transparent);
+  font-size: 1.17rem;
+  line-height: 1.32;
+}
+
+.plan-card-wrapper.is-marketing .plan-card-highlight-item::before {
+  width: 5px;
+  height: 5px;
+  margin-top: 0.55em;
+}
+
+.plan-card-wrapper.is-marketing .plan-card-benefits {
+  gap: 6px;
+}
+
+.plan-card-wrapper.is-marketing .plan-card-benefit-item {
+  align-items: flex-start;
+  gap: 7px;
+  padding: 7px 10px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--plan-card-border) 66%, transparent);
+  background: color-mix(in srgb, var(--app-bg-soft) 34%, transparent);
+  font-size: 1.14rem;
+  line-height: 1.32;
+}
+
+.plan-card-wrapper.is-marketing .plan-card-benefit-icon {
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+}
+
+.plan-card-wrapper.is-marketing .plan-card-benefits-toggle {
+  padding: 0;
+  font-size: 1.14rem;
+  text-underline-offset: 3px;
+}
+
+.plan-card-wrapper.is-marketing .plan-card-cta-section {
+  margin-top: 1px;
+  gap: 9px;
+  padding-top: 10px;
+}
+
+.plan-card-wrapper.is-marketing .plan-card-btn-hero {
+  min-height: 48px !important;
+  border-radius: 999px;
+  font-size: 1.4rem !important;
+  font-weight: 810 !important;
+  letter-spacing: 0.005em;
+}
+
+.plan-card-wrapper.is-marketing .plan-card-trial-note {
+  font-size: 1.04rem;
+  line-height: 1.4;
+}
+
+.plan-card-wrapper.is-marketing .plan-card-trust-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.plan-card-wrapper.is-marketing .plan-card-trust-row li {
+  justify-content: center;
+  min-height: 30px;
+  padding: 0 8px;
+  font-size: 0.99rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.plan-card-wrapper.is-marketing .plan-card-alt-toggle {
+  min-height: 43px !important;
+  border-radius: 999px;
+  font-size: 1.1rem !important;
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+
+.plan-card-wrapper.is-marketing .plan-card-alt-panel {
+  padding: 9px;
+  border-radius: 12px;
+}
+
+.plan-card-wrapper.is-marketing .plan-card-btn-outline {
+  min-height: 43px !important;
+  font-size: 1.1rem !important;
+  border-radius: 12px;
+}
+
+.plan-card-wrapper.is-marketing .plan-card-payment-logos {
+  justify-content: flex-start;
+}
+
+.plan-card-wrapper.is-marketing .plan-card-confidence {
+  text-align: left;
+  font-size: 1.03rem;
+}
+
+@media (min-width: 921px) {
+  .plan-card-wrapper.is-marketing .plan-card-benefits {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .plan-card-wrapper.is-marketing .plan-card-benefit-item {
+    min-height: 40px;
+  }
+}
+
 .plan-card-badge {
   position: absolute;
   top: 10px;
@@ -585,15 +764,15 @@ html[data-theme="dark"] .plan-card-btn-hero:hover {
   }
 
   .plan-card-wrapper.is-marketing .plan-card-title {
-    font-size: clamp(1.48rem, 1.25rem + 0.9vw, 1.72rem);
+    font-size: clamp(1.42rem, 1.22rem + 0.8vw, 1.66rem);
   }
 
   .plan-card-wrapper.is-marketing .plan-card-price-amount {
-    font-size: clamp(1.86rem, 1.6rem + 1.2vw, 2.2rem);
+    font-size: clamp(1.8rem, 1.58rem + 1.1vw, 2.1rem);
   }
 
   .plan-card-wrapper.is-marketing .plan-card-price-currency {
-    font-size: 1.15rem;
+    font-size: 1.06rem;
   }
 
   .plan-card-wrapper.is-marketing .plan-card-highlights {
@@ -602,11 +781,12 @@ html[data-theme="dark"] .plan-card-btn-hero:hover {
 
   .plan-card-wrapper.is-marketing .plan-card-highlight-item,
   .plan-card-wrapper.is-marketing .plan-card-benefit-item {
-    font-size: 1.16rem;
+    font-size: 1.1rem;
     line-height: 1.3;
   }
 
   .plan-card-wrapper.is-marketing .plan-card-benefits {
+    grid-template-columns: 1fr;
     gap: 6px;
   }
 
@@ -617,14 +797,14 @@ html[data-theme="dark"] .plan-card-btn-hero:hover {
 
   .plan-card-wrapper.is-marketing .plan-card-btn-hero {
     min-height: 46px !important;
-    font-size: 1.35rem !important;
+    font-size: 1.24rem !important;
     border-radius: 13px;
   }
 
   .plan-card-wrapper.is-marketing .plan-card-alt-toggle {
     min-height: 42px !important;
     border-radius: 13px;
-    font-size: 1.15rem !important;
+    font-size: 1.08rem !important;
   }
 
   .plan-card-wrapper.is-marketing .plan-card-secondary-buttons {
@@ -633,37 +813,32 @@ html[data-theme="dark"] .plan-card-btn-hero:hover {
 
   .plan-card-wrapper.is-marketing .plan-card-btn-outline {
     min-height: 42px !important;
-    font-size: 1.12rem !important;
+    font-size: 1.02rem !important;
     border-radius: 12px;
   }
 
-  /* Keep trust + payment methods in one row (horizontal scroll) to save vertical space. */
-  .plan-card-wrapper.is-marketing .plan-card-trust-row,
-  .plan-card-wrapper.is-marketing .plan-card-payment-logos {
-    justify-content: flex-start;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding-bottom: 2px;
-    scrollbar-width: none;
-  }
-
-  .plan-card-wrapper.is-marketing .plan-card-trust-row::-webkit-scrollbar,
-  .plan-card-wrapper.is-marketing .plan-card-payment-logos::-webkit-scrollbar {
-    display: none;
+  .plan-card-wrapper.is-marketing .plan-card-trust-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5px;
   }
 
   .plan-card-wrapper.is-marketing .plan-card-trust-row li {
-    flex: 0 0 auto;
-    white-space: nowrap;
-    min-height: 30px;
-    padding: 0 9px;
-    font-size: 1.05rem;
+    min-height: 28px;
+    font-size: 0.93rem;
+    white-space: normal;
+    text-overflow: clip;
+    text-align: center;
+    line-height: 1.2;
+    padding: 4px 6px;
+  }
+
+  .plan-card-wrapper.is-marketing .plan-card-payment-logos {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    row-gap: 6px;
   }
 
   .plan-card-wrapper.is-marketing .plan-card-payment-logos .payment-method-logos__item {
-    flex: 0 0 auto;
-    white-space: nowrap;
-    min-width: auto;
     min-height: 32px;
     padding: 0.28rem 0.5rem;
   }
@@ -676,6 +851,23 @@ html[data-theme="dark"] .plan-card-btn-hero:hover {
   .plan-card-wrapper.is-marketing .plan-card-payment-logos .payment-method-logos__item strong {
     font-size: 1.0rem;
   }
+}
+
+html[data-theme="light"] .plan-card-wrapper.is-marketing .plan-card-main-card {
+  border-color: color-mix(in srgb, var(--plan-card-border) 88%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--app-accent) 3%, transparent), transparent 60%),
+    color-mix(in srgb, var(--plan-card-bg) 100%, transparent);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+html[data-theme="light"] .plan-card-wrapper.is-marketing .plan-card-price-row,
+html[data-theme="light"] .plan-card-wrapper.is-marketing .plan-card-highlight-item,
+html[data-theme="light"] .plan-card-wrapper.is-marketing .plan-card-benefit-item,
+html[data-theme="light"] .plan-card-wrapper.is-marketing .plan-card-trust-row li,
+html[data-theme="light"] .plan-card-wrapper.is-marketing .plan-card-alt-panel {
+  border-color: color-mix(in srgb, var(--plan-card-border) 82%, transparent);
+  background: color-mix(in srgb, var(--app-bg-soft) 78%, transparent);
 }
 
 .resp-plan {

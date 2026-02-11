@@ -399,19 +399,15 @@ function SignUpForm() {
   const showPasswordConfirmationError = Boolean(
     (formik.touched.passwordConfirmation || formik.submitCount > 0) && formik.errors.passwordConfirmation,
   );
-  const usernameHelpId = "signup-username-help";
-  const phoneHelpId = "signup-phone-help";
-  const passwordHelpId = "signup-password-help";
-  const passwordConfirmationHelpId = "signup-password-confirmation-help";
   const usernameErrorId = "signup-username-error";
   const emailErrorId = "signup-email-error";
   const phoneErrorId = "signup-phone-error";
   const passwordErrorId = "signup-password-error";
   const passwordConfirmationErrorId = "signup-password-confirmation-error";
-  const describedByUsername = `${usernameHelpId} ${usernameErrorId}`;
-  const describedByPhone = `${phoneHelpId} ${phoneErrorId}`;
-  const describedByPassword = `${passwordHelpId} ${passwordErrorId}`;
-  const describedByPasswordConfirmation = `${passwordConfirmationHelpId} ${passwordConfirmationErrorId}`;
+  const describedByUsername = usernameErrorId;
+  const describedByPhone = phoneErrorId;
+  const describedByPassword = passwordErrorId;
+  const describedByPasswordConfirmation = passwordConfirmationErrorId;
   const submitLabel = useMemo(() => {
     const isCheckoutIntent = from.startsWith("/comprar") || from.startsWith("/checkout");
     if (isCheckoutIntent) return "Crear cuenta y activar";
@@ -429,37 +425,6 @@ function SignUpForm() {
         <div className="auth-login-card auth-login-card--signup">
           <img src={Logo} alt="Bear Beat" className="auth-login-logo" />
           <h1 className="auth-login-title">Crea tu cuenta</h1>
-          <p className="auth-login-sub">Activa en minutos y empieza con demos antes de descargar.</p>
-
-          <div className="auth-signup-benefits" role="list" aria-label="Beneficios">
-            <div className="auth-signup-benefit" role="listitem">
-              <span className="auth-signup-benefit__icon" aria-hidden>
-                ✓
-              </span>
-              <div className="auth-signup-benefit__copy">
-                <span className="auth-signup-benefit__title">Catálogo gigante</span>
-                <span className="auth-signup-benefit__desc">audios, videos y karaokes</span>
-              </div>
-            </div>
-            <div className="auth-signup-benefit" role="listitem">
-              <span className="auth-signup-benefit__icon" aria-hidden>
-                ✓
-              </span>
-              <div className="auth-signup-benefit__copy">
-                <span className="auth-signup-benefit__title">Descarga a tu modo</span>
-                <span className="auth-signup-benefit__desc">FTP o web</span>
-              </div>
-            </div>
-            <div className="auth-signup-benefit" role="listitem">
-              <span className="auth-signup-benefit__icon" aria-hidden>
-                ✓
-              </span>
-              <div className="auth-signup-benefit__copy">
-                <span className="auth-signup-benefit__title">Soporte por chat</span>
-                <span className="auth-signup-benefit__desc">te ayudamos a activar rápido</span>
-              </div>
-            </div>
-          </div>
 
           <form
             className="sign-up-form auth-form auth-login-form auth-signup-form"
@@ -488,9 +453,6 @@ function SignUpForm() {
                   aria-invalid={showUsernameError}
                   aria-describedby={describedByUsername}
                 />
-              </div>
-              <div className="auth-field-help" id={usernameHelpId}>
-                Opcional. Solo para personalizar tu cuenta.
               </div>
               <FieldError id={usernameErrorId} show={showUsernameError} message={formik.errors.username} />
             </div>
@@ -560,9 +522,6 @@ function SignUpForm() {
                   aria-describedby={describedByPhone}
                 />
               </div>
-              <div className="auth-field-help" id={phoneHelpId}>
-                Opcional. Solo lo usamos si tú pides soporte por WhatsApp.
-              </div>
               <FieldError id={phoneErrorId} show={showPhoneError} message={formik.errors.phone} />
             </div>
             <div className={`c-row ${showPasswordError ? "is-invalid" : ""}`}>
@@ -585,9 +544,6 @@ function SignUpForm() {
                   wrapperClassName="auth-login-password-wrap"
                 />
               </div>
-              <div className="auth-field-help" id={passwordHelpId}>
-                Mínimo 6 caracteres.
-              </div>
               <FieldError id={passwordErrorId} show={showPasswordError} message={formik.errors.password} />
             </div>
             <div className={`c-row ${showPasswordConfirmationError ? "is-invalid" : ""}`}>
@@ -609,9 +565,6 @@ function SignUpForm() {
                   inputClassName="auth-login-input auth-login-input-with-icon"
                   wrapperClassName="auth-login-password-wrap"
                 />
-              </div>
-              <div className="auth-field-help" id={passwordConfirmationHelpId}>
-                Debe coincidir con tu contraseña.
               </div>
               <FieldError
                 id={passwordConfirmationErrorId}

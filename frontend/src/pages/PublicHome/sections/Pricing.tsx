@@ -137,11 +137,11 @@ export default function Pricing(props: {
             <div id={mxnPanelId} role="tabpanel" aria-labelledby={mxnTabId} hidden={currency !== "mxn"}>
               <div className="pricing__card">
                 <div className="pricing__card-head">
-                  <div>
+                  <div className="pricing__plan">
                     <p className="pricing__pill">Pago mensual</p>
                     <h3 className="pricing__title">{mxnPlan.name ?? "Membresía Bear Beat"}</h3>
                   </div>
-                  <div className="pricing__price">
+                  <div className="pricing__price pricing__price-panel">
                     <span className="pricing__amount">
                       {formatCurrency(mxnPlan.price, "mxn", numberLocale)}
                     </span>
@@ -161,13 +161,16 @@ export default function Pricing(props: {
 
                 <ul className="pricing__includes" aria-label="Incluye">
                   <li>
-                    <CheckCircle2 size={16} aria-hidden /> Descargas: {formatInt(downloadQuotaGb)} GB/mes
+                    <CheckCircle2 size={16} aria-hidden />
+                    <span className="pricing__include-text">Descargas: {formatInt(downloadQuotaGb)} GB/mes</span>
                   </li>
                   <li>
-                    <CheckCircle2 size={16} aria-hidden /> Catálogo total: {catalogTBLabel} (eliges qué bajar)
+                    <CheckCircle2 size={16} aria-hidden />
+                    <span className="pricing__include-text">Catálogo total: {catalogTBLabel} (eliges qué bajar)</span>
                   </li>
                   <li>
-                    <CheckCircle2 size={16} aria-hidden /> Carpetas listas + guía por chat para activar
+                    <CheckCircle2 size={16} aria-hidden />
+                    <span className="pricing__include-text">Carpetas listas + guía por chat para activar</span>
                   </li>
                 </ul>
 
@@ -205,11 +208,11 @@ export default function Pricing(props: {
             <div id={usdPanelId} role="tabpanel" aria-labelledby={usdTabId} hidden={currency !== "usd"}>
               <div className="pricing__card">
                 <div className="pricing__card-head">
-                  <div>
+                  <div className="pricing__plan">
                     <p className="pricing__pill">Pago mensual</p>
                     <h3 className="pricing__title">{usdPlan.name ?? "Membresía Bear Beat"}</h3>
                   </div>
-                  <div className="pricing__price">
+                  <div className="pricing__price pricing__price-panel">
                     <span className="pricing__amount">
                       {formatCurrency(usdPlan.price, "usd", numberLocale)}
                     </span>
@@ -229,13 +232,16 @@ export default function Pricing(props: {
 
                 <ul className="pricing__includes" aria-label="Incluye">
                   <li>
-                    <CheckCircle2 size={16} aria-hidden /> Descargas: {formatInt(downloadQuotaGb)} GB/mes
+                    <CheckCircle2 size={16} aria-hidden />
+                    <span className="pricing__include-text">Descargas: {formatInt(downloadQuotaGb)} GB/mes</span>
                   </li>
                   <li>
-                    <CheckCircle2 size={16} aria-hidden /> Catálogo total: {catalogTBLabel} (eliges qué bajar)
+                    <CheckCircle2 size={16} aria-hidden />
+                    <span className="pricing__include-text">Catálogo total: {catalogTBLabel} (eliges qué bajar)</span>
                   </li>
                   <li>
-                    <CheckCircle2 size={16} aria-hidden /> Carpetas listas + guía por chat para activar
+                    <CheckCircle2 size={16} aria-hidden />
+                    <span className="pricing__include-text">Carpetas listas + guía por chat para activar</span>
                   </li>
                 </ul>
 

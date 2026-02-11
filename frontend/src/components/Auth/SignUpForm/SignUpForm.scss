@@ -1,90 +1,27 @@
 @import "src/styles/mixin.scss";
 
 .auth-login-card.auth-login-card--signup {
-  /* Match /auth (login) card proportions: tighter, more premium. */
-  max-width: 480px;
+  /* Register aligned with /auth visual rhythm but denser to reduce initial scroll. */
+  max-width: 440px;
+  padding: clamp(1.8rem, 2.4vh, 2.2rem) clamp(1.35rem, 2.5vw, 1.8rem);
 
   .auth-login-logo {
-    margin-bottom: 1.1rem;
+    margin-bottom: 0.85rem;
   }
 
-  .auth-login-sub {
-    margin-bottom: 1.15rem;
+  .auth-login-title {
+    margin-bottom: 0.95rem;
   }
-}
-
-/* Benefits: replace the old "label: description" bullets with compact chips.
-   Keeps the same copy, improves scanability + responsiveness. */
-.auth-signup-benefits {
-  margin: 0 0 16px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 10px;
-}
-
-.auth-signup-benefit {
-  min-width: 0;
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  border: 1px solid color-mix(in srgb, var(--auth-input-border) 86%, transparent);
-  background: color-mix(in srgb, var(--auth-input-bg) 88%, transparent);
-}
-
-.auth-signup-benefit__icon {
-  flex: 0 0 auto;
-  margin-top: 1px;
-  width: 18px;
-  height: 18px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--app-accent);
-  font-weight: 950;
-  line-height: 1;
-}
-
-.auth-signup-benefit__copy {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.auth-signup-benefit__title {
-  color: var(--auth-login-title);
-  font-weight: 850;
-  font-size: 1.3rem;
-  line-height: 1.25;
-}
-
-.auth-signup-benefit__desc {
-  color: color-mix(in srgb, var(--auth-login-subtitle) 92%, transparent);
-  font-weight: 650;
-  font-size: 1.2rem;
-  line-height: 1.3;
-  overflow-wrap: anywhere;
 }
 
 form.sign-up-form {
-  --signup-field-height: 54px;
+  --signup-field-height: 52px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 
   .c-row {
     position: relative;
-  }
-
-  .auth-field-help {
-    margin-top: 4px;
-    padding: 0 8px;
-    color: color-mix(in srgb, var(--auth-login-subtitle) 94%, transparent);
-    font-size: clamp(12px, 0.15vw + 11px, 13px);
-    font-weight: 550;
-    line-height: 1.35;
   }
 
   .c-row.is-invalid .signup-phone-wrap {
@@ -221,8 +158,8 @@ form.sign-up-form {
 
   .signup-submit-btn {
     width: 100%;
-    min-height: 54px;
-    padding: 13px 20px;
+    min-height: 50px;
+    padding: 12px 18px;
     border: none;
     border-radius: 999px;
     cursor: pointer;
@@ -278,9 +215,9 @@ form.sign-up-form {
     padding: 0 8px;
     text-align: center;
     color: color-mix(in srgb, var(--auth-login-subtitle) 96%, transparent);
-    font-size: clamp(12px, 0.15vw + 11px, 13px);
+    font-size: clamp(11px, 0.15vw + 10px, 12px);
     font-weight: 600;
-    line-height: 1.45;
+    line-height: 1.4;
   }
 
   .auth-signup-legal-link {
@@ -331,11 +268,11 @@ form.sign-up-form {
   }
 
   .error-formik {
-    margin-top: 4px;
+    margin-top: 3px;
     min-height: 1.35em;
     padding: 0 8px;
     color: var(--app-status-error);
-    font-size: clamp(12px, 0.2vw + 11px, 13px);
+    font-size: clamp(11px, 0.15vw + 10px, 12px);
     font-weight: 600;
     line-height: 1.35;
     overflow-wrap: anywhere;
@@ -344,12 +281,6 @@ form.sign-up-form {
       visibility: hidden;
     }
   }
-}
-
-[data-theme="dark"] .auth-signup-benefit,
-html.dark .auth-signup-benefit,
-.dark .auth-signup-benefit {
-  background: color-mix(in srgb, #0b0c0d 28%, var(--auth-input-bg));
 }
 
 [data-theme="light"] form.sign-up-form {
@@ -365,9 +296,18 @@ html.dark .auth-signup-benefit,
 }
 
 @include respond-to(sm) {
+  .auth-login-card.auth-login-card--signup {
+    max-width: 430px;
+    padding: 1.5rem 1.2rem;
+
+    .auth-login-logo {
+      margin-bottom: 0.7rem;
+    }
+  }
+
   form.sign-up-form {
-    --signup-field-height: 50px;
-    gap: 12px;
+    --signup-field-height: 48px;
+    gap: 10px;
 
     .signup-label {
       font-size: 13px;
@@ -375,20 +315,14 @@ html.dark .auth-signup-benefit,
     }
 
     .signup-submit-btn {
-      min-height: 50px;
-      font-size: 14px;
+      min-height: 48px;
+      font-size: 13.5px;
       letter-spacing: 0.03em;
     }
 
     .signup-link-back {
       font-size: 14px;
     }
-  }
-}
-
-@include respond-from(tablet) {
-  .auth-signup-benefits {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 

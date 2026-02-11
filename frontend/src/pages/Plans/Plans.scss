@@ -25,35 +25,47 @@
 }
 
 .plans-hero {
-  padding: 20px;
+  padding: 22px;
   border-radius: 20px;
   background: color-mix(in srgb, var(--ph-bg-card) 90%, transparent);
   border: 1px solid color-mix(in srgb, var(--ph-border) 72%, transparent);
   box-shadow: var(--ph-shadow-card);
+  position: relative;
+  overflow: hidden;
+}
+
+.plans-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--ph-accent) 84%, transparent), transparent 78%);
+  pointer-events: none;
 }
 
 .plans-page-title {
   margin: 0;
   color: var(--ph-text-heading);
   font-family: var(--bb-font-ui);
-  font-size: clamp(26px, 3.4vw, 34px);
+  font-size: clamp(24px, 3.2vw, 32px);
   font-weight: 900;
   letter-spacing: -0.01em;
-  line-height: 1.12;
+  line-height: 1.14;
 }
 
 .plans-hero-subtitle {
   margin: 10px 0 0;
   max-width: 70ch;
   color: color-mix(in srgb, var(--ph-text-body) 88%, transparent);
-  font-size: 16px;
-  line-height: 1.55;
+  font-size: 15px;
+  line-height: 1.58;
   font-weight: 600;
 }
 
 @media (max-width: 480px) {
   .plans-hero-subtitle {
-    font-size: 17px;
+    font-size: 15px;
   }
 }
 
@@ -85,17 +97,44 @@
 }
 
 .plans-hero-micro {
-  margin: 12px 0 0;
+  margin: 10px 0 0;
   color: color-mix(in srgb, var(--ph-text-muted) 92%, transparent);
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.45;
-  font-weight: 650;
+  font-weight: 700;
+}
+
+.plans-hero-price-hint {
+  margin: 8px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  color: color-mix(in srgb, var(--ph-text-body) 90%, transparent);
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.plans-hero-price-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ph-border) 72%, transparent);
+  background: color-mix(in srgb, var(--ph-bg-soft) 74%, transparent);
+  color: var(--ph-text-heading);
+}
+
+.plans-hero-price-sep {
+  color: color-mix(in srgb, var(--ph-text-muted) 90%, transparent);
 }
 
 .plans-hero-grid {
   margin: 16px 0 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 340px);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 332px);
   gap: 14px;
   align-items: start;
 }
@@ -110,30 +149,50 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
 }
 
 .plans-hero-chip {
-  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.plans-hero-chip.bb-stat-pill {
+  min-height: 46px;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 12px;
+}
+
+.plans-hero-chip .bb-stat-pill__value {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  font-size: clamp(15px, 1.4vw, 17px);
+  line-height: 1.18;
+}
+
+.plans-hero-chip .bb-stat-pill__label {
+  font-size: 10px;
+  letter-spacing: 0.08em;
 }
 
 .plans-hero-choice {
   min-width: 0;
-  padding: 14px 14px 13px;
+  padding: 14px;
   border-radius: 18px;
   border: 1px solid color-mix(in srgb, var(--ph-border) 72%, transparent);
   background: color-mix(in srgb, var(--ph-bg-card) 92%, transparent);
-  box-shadow: 0 10px 18px color-mix(in srgb, var(--app-text-heading) 8%, transparent);
+  box-shadow: 0 10px 20px color-mix(in srgb, var(--app-text-heading) 9%, transparent);
   display: grid;
-  gap: 10px;
+  gap: 9px;
 }
 
 .plans-hero-choice-title {
   margin: 0;
   color: var(--ph-text-heading);
-  font-size: 14px;
+  font-size: 13px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   font-weight: 950;
@@ -146,20 +205,30 @@
 .plans-currency-micro {
   margin: 0;
   color: color-mix(in srgb, var(--ph-text-muted) 92%, transparent);
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.45;
-  font-weight: 650;
+  font-weight: 700;
 }
 
 .plans-trial-note {
   margin: 0;
   color: color-mix(in srgb, var(--ph-text-muted) 92%, transparent);
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.45;
-  font-weight: 650;
+  font-weight: 700;
 }
 
-/* Mobile: reduce scroll by compacting the hero and making the stat chips a single-row scroll region. */
+@media (max-width: 920px) {
+  .plans-hero-chips {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .plans-hero-chip:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Mobile: compact without breaking readability. */
 @media (max-width: 640px) {
   .plans-hero {
     padding: 14px;
@@ -176,32 +245,22 @@
   }
 
   .plans-hero-chips {
-    /* Keep a single row in small screens to save vertical space. */
-    position: relative;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding: 2px 2px 6px;
-    scrollbar-width: none;
-  }
-
-  .plans-hero-chips::-webkit-scrollbar {
-    display: none;
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 
   .plans-hero-chip {
-    flex: 0 0 auto;
-    /* Slightly narrower than desktop so 1.5 chips fit on screen. */
-    min-width: 190px;
+    grid-column: 1;
   }
 
   .plans-hero-chip.bb-stat-pill {
     min-height: 40px;
     padding: 8px 10px;
-    gap: 8px;
+    gap: 7px;
   }
 
   .plans-hero-chip .bb-stat-pill__label {
-    font-size: 1.0rem;
+    font-size: 9px;
     letter-spacing: 0.07em;
   }
 
@@ -232,31 +291,31 @@
   .plans-currency-micro,
   .plans-trial-note,
   .plans-hero-micro {
-    font-size: 12.5px;
+    font-size: 11.5px;
   }
 }
 
 .plans-grid-heading {
   display: grid;
-  gap: 6px;
+  gap: 5px;
   padding: 0 2px;
 }
 
 .plans-grid-heading h2 {
   margin: 0;
   color: var(--ph-text-heading);
-  font-size: clamp(18px, 2.8vw, 22px);
+  font-size: clamp(19px, 2.4vw, 24px);
   font-weight: 900;
   letter-spacing: -0.01em;
-  line-height: 1.12;
+  line-height: 1.16;
 }
 
 .plans-grid-heading p {
   margin: 0;
   color: color-mix(in srgb, var(--ph-text-muted) 92%, transparent);
-  font-size: 14px;
-  font-weight: 650;
-  line-height: 1.5;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
 }
 
 .plans-plan-grid {
@@ -265,7 +324,7 @@
   list-style: none;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 16px;
+  gap: 14px;
   align-items: stretch;
   justify-items: center;
 }
@@ -420,4 +479,22 @@ html[data-theme="dark"] .plans-sticky__cta:hover {
   .plans-sticky {
     display: none;
   }
+}
+
+html[data-theme="light"] .plans-hero {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--ph-accent) 4%, transparent), transparent 62%),
+    color-mix(in srgb, var(--ph-bg-card) 98%, transparent);
+  border-color: color-mix(in srgb, var(--ph-border) 84%, transparent);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+}
+
+html[data-theme="light"] .plans-hero-choice {
+  border-color: color-mix(in srgb, var(--ph-border) 82%, transparent);
+  background: color-mix(in srgb, var(--ph-bg-card) 98%, transparent);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+}
+
+html[data-theme="light"] .plans-grid-heading p {
+  color: color-mix(in srgb, var(--ph-text-muted) 98%, transparent);
 }
