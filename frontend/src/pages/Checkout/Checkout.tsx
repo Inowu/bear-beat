@@ -713,6 +713,11 @@ function Checkout() {
 
   const handleContinuePayment = () => {
     interactedRef.current = true;
+    if (!availableMethods.includes(selectedMethod)) {
+      setSelectedMethod(availableMethods[0]);
+      setInlineError("Ese método no está disponible en este momento. Elige otra opción.");
+      return;
+    }
     if (!selectedMethod) {
       setInlineError("Selecciona un método de pago para continuar.");
       return;
