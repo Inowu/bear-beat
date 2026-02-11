@@ -37,6 +37,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { SUPPORT_CHAT_URL } from '../../utils/supportChat';
 import { GROWTH_METRICS, trackGrowthMetric } from '../../utils/growthMetrics';
 import { formatBytes } from '../../utils/format';
+import { inferTrackMetadata } from '../../utils/fileMetadata';
 
 interface IAlbumData {
   name: string;
@@ -1082,6 +1083,8 @@ function Home() {
                 const allowFolderDownload = isFolder && file.size != null && gbSize <= 50;
                 const fileCategoryLabel = getFileCategoryLabel(file);
                 const kind = getFileVisualKind(file);
+                const inferredTrack = isFolder ? null : inferTrackMetadata(file.name);
+                const displayFileName = inferredTrack?.displayName || file.name;
                 return (
                   <article
                     key={`explorer-${idx}`}
@@ -1110,10 +1113,29 @@ function Home() {
                     <div className="bb-row-main">
                       <div className="bb-file-copy">
                         <span className="bb-file-name" title={file.name}>
-                          {file.name}
+                          {displayFileName}
                         </span>
                         <div className="bb-file-meta">
                           <span className="bb-file-pill">{fileCategoryLabel}</span>
+                          {!isFolder && inferredTrack?.format && (
+                            <span className="bb-file-pill bb-file-pill--format">{inferredTrack.format}</span>
+                          )}
+                          {!isFolder && inferredTrack?.bpm && (
+                            <span className="bb-file-pill bb-file-pill--tempo">
+                              {inferredTrack.bpm} BPM
+                            </span>
+                          )}
+                          {!isFolder && inferredTrack?.camelot && (
+                            <span className="bb-file-pill bb-file-pill--key">{inferredTrack.camelot}</span>
+                          )}
+                          {!isFolder && inferredTrack?.version && (
+                            <span
+                              className="bb-file-pill bb-file-pill--version"
+                              title={inferredTrack.version}
+                            >
+                              {inferredTrack.version}
+                            </span>
+                          )}
                           <span className="bb-file-pill bb-file-pill--size">{sizeLabel}</span>
                         </div>
                       </div>

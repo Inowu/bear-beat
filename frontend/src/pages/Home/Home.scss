@@ -757,6 +757,31 @@ html[data-theme="light"] .bb-explorer-row:hover {
   letter-spacing: 0.01em;
 }
 
+.bb-file-pill--format {
+  color: color-mix(in srgb, var(--app-accent) 86%, var(--app-text-heading));
+  border-color: color-mix(in srgb, var(--app-accent) 32%, transparent);
+  background: color-mix(in srgb, var(--app-accent) 12%, transparent);
+}
+
+.bb-file-pill--tempo {
+  color: var(--app-text-heading);
+  border-color: color-mix(in srgb, var(--app-border) 88%, transparent);
+  background: color-mix(in srgb, var(--app-bg-card) 88%, transparent);
+}
+
+.bb-file-pill--key {
+  color: color-mix(in srgb, var(--app-accent) 84%, var(--app-text-heading));
+  border-color: color-mix(in srgb, var(--app-accent) 38%, transparent);
+  background: color-mix(in srgb, var(--app-accent) 10%, transparent);
+}
+
+.bb-file-pill--version {
+  max-width: min(42vw, 180px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .bb-file-pill--size {
   color: var(--app-text-body);
   font-variant-numeric: tabular-nums;
@@ -936,6 +961,10 @@ html[data-theme="light"] .bb-explorer-row:hover {
 
   .bb-file-pill {
     font-size: 0.78rem;
+  }
+
+  .bb-file-pill--version {
+    display: none;
   }
 }
 
