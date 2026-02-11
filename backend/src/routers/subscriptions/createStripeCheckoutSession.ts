@@ -300,9 +300,19 @@ export const createStripeCheckoutSession = shieldedProcedure
     });
 
     let uhUser: SubscriptionCheckResult | null = null;
-    const isUhUser = await checkIfUserIsFromUH(user.email);
-    if (isUhUser) {
-      uhUser = await checkIfUserIsSubscriber(isUhUser);
+    // Migration check is best-effort: never block Stripe checkout if the legacy provider (Firebase/UH)
+    // is temporarily unavailable or rate-limited.
+    try {
+      const isUhUser = await checkIfUserIsFromUH(user.email);
+      if (isUhUser) {
+        uhUser = await checkIfUserIsSubscriber(isUhUser);
+      }
+    } catch (migrationError) {
+      log.warn('[STRIPE_CHECKOUT_SESSION] UH migration check skipped', {
+        userId: user.id,
+        error: migrationError instanceof Error ? migrationError.message : migrationError,
+      });
+      uhUser = null;
     }
     const trialEnd = uhUser?.remainingDays
       ? Math.floor(addDays(new Date(), uhUser.remainingDays).getTime() / 1000)
