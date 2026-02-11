@@ -12,6 +12,9 @@ import { Orders, Plans, PrismaClient, Users } from '@prisma/client';
 const payByBankEnabled =
   process.env.CONEKTA_PBB_ENABLED === '1' ||
   process.env.CONEKTA_PAY_BY_BANK_ENABLED === '1';
+const conektaPayByBankHeaders = {
+  Accept: 'application/vnd.conekta-v2.2.0+json',
+};
 
 export const subscribeWithPayByBankConekta = shieldedProcedure
   .input(
@@ -79,16 +82,17 @@ export const subscribeWithPayByBankConekta = shieldedProcedure
 
     if (existingOrder?.invoice_id) {
       try {
-        const conektaOrder = await conektaOrders.getOrderById(existingOrder.invoice_id);
-        const charge = (conektaOrder.data as any)?.charges?.data?.[0];
-        const pm = charge?.payment_method;
-        const redirectUrl = typeof pm?.redirect_url === 'string' ? pm.redirect_url : null;
-        const deepLink = typeof pm?.deep_link === 'string' ? pm.deep_link : null;
-        const status = typeof charge?.status === 'string' ? charge.status.toLowerCase() : '';
+        const conektaOrder = await conektaOrders.getOrderById(
+          existingOrder.invoice_id,
+          undefined,
+          undefined,
+          { headers: conektaPayByBankHeaders },
+        );
+        const { url, deepLink, status } = extractPayByBankRedirectData(conektaOrder.data);
 
         // If still pending, reuse the same redirect URL.
-        if (redirectUrl && status === 'pending_payment') {
-          return { url: redirectUrl, deepLink };
+        if (url && isPendingPayByBankStatus(status)) {
+          return { url, deepLink };
         }
       } catch (e) {
         log.error(`[CONEKTA_PBB] Error reusing existing checkout: ${e}`);
@@ -121,10 +125,7 @@ export const subscribeWithPayByBankConekta = shieldedProcedure
         user: fullUser,
       });
 
-      const charge = (conektaOrder.data as any)?.charges?.data?.[0];
-      const pm = charge?.payment_method;
-      const url = typeof pm?.redirect_url === 'string' ? pm.redirect_url : null;
-      const deepLink = typeof pm?.deep_link === 'string' ? pm.deep_link : null;
+      const { url, deepLink } = extractPayByBankRedirectData(conektaOrder.data);
 
       if (!url) {
         throw new TRPCError({
@@ -164,9 +165,13 @@ const createPayByBankOrder = async ({
   user: Users;
 }) => {
   const amountCents = Math.round(Number(plan.price) * 100);
-  const customerInfo = buildConektaCustomerInfo(user);
-  const shippingContact = buildConektaShippingContact(user, customerInfo);
-  // Per official docs (2025-2026): Pago Directo BBVA uses a direct order charge with:
+  const fallbackCustomerInfo = buildConektaCustomerInfo(user);
+  const hasCustomerId = typeof customerId === 'string' && customerId.trim().length > 0;
+  const customerInfo = hasCustomerId
+    ? { customer_id: customerId.trim() }
+    : fallbackCustomerInfo;
+  const shippingContact = buildConektaShippingContact(user, fallbackCustomerInfo);
+  // Official Pago Directo BBVA docs use v2.2 and a direct order charge with:
   // - payment_method.type = "pay_by_bank"
   // - payment_method.product_type = "bbva_pay_by_bank"
   // It returns redirect_url / deep_link to complete the payment.
@@ -190,7 +195,7 @@ const createPayByBankOrder = async ({
     ],
     // Conekta's Pay by Bank examples include shipping fields as minimum required, even for digital goods.
     // Use a safe fallback address when the user has not provided one.
-    shipping_lines: [{ amount: 0, carrier: 'digital' }],
+    shipping_lines: [{ amount: 0, carrier: 'FEDEX', method: 'Digital delivery' }],
     shipping_contact: shippingContact,
     metadata: {
       orderId: String(order.id),
@@ -201,10 +206,28 @@ const createPayByBankOrder = async ({
   };
 
   if (fingerprint && typeof fingerprint === 'string') {
-    orderPayload.fingerprint = fingerprint;
+    const safeFingerprint = fingerprint.trim();
+    if (safeFingerprint.length > 0) {
+      orderPayload.fingerprint = safeFingerprint;
+    }
   }
 
-  const conektaOrder = await conektaOrders.createOrder(orderPayload);
+  let conektaOrder;
+  try {
+    conektaOrder = await conektaOrders.createOrder(orderPayload, undefined, undefined, {
+      headers: conektaPayByBankHeaders,
+    });
+  } catch (apiError: any) {
+    const conektaData = apiError?.response?.data;
+    const details = conektaData?.details
+      ? JSON.stringify(conektaData.details)
+      : conektaData?.message || apiError?.message;
+    log.error(
+      `[CONEKTA_PBB] createOrder failed: ${details}. Full response:`,
+      conektaData || apiError?.response?.data,
+    );
+    throw apiError;
+  }
 
   const conektaChargeIdRaw = (conektaOrder.data as any)?.charges?.data?.[0]?.id;
   const txnId =
@@ -252,7 +275,7 @@ function buildConektaShippingContact(
   const city =
     typeof user.city === 'string' && user.city.trim()
       ? user.city.trim().slice(0, 80)
-      : undefined;
+      : 'Ciudad de Mexico';
 
   return {
     receiver: (customerInfo?.name || user.username || `User ${user.id}`).slice(0, 120),
@@ -262,9 +285,35 @@ function buildConektaShippingContact(
       // Use a real-looking ZIP to satisfy validation (fallback is fine for digital).
       postal_code: '06100',
       country: 'MX',
-      ...(city ? { city } : {}),
+      city,
+      state: 'CDMX',
     },
   };
+}
+
+function extractPayByBankRedirectData(
+  conektaOrderData: any,
+): { url: string | null; deepLink: string | null; status: string } {
+  const charge = conektaOrderData?.charges?.data?.[0];
+  const pm = charge?.payment_method;
+  const readValue = (value: any): string | null =>
+    typeof value === 'string' && value.trim() ? value.trim() : null;
+
+  const url =
+    readValue(pm?.redirect_url) ||
+    readValue(pm?.url) ||
+    readValue(charge?.redirect_url) ||
+    readValue(conektaOrderData?.checkout?.url) ||
+    null;
+
+  const deepLink = readValue(pm?.deep_link) || readValue(pm?.deeplink) || null;
+  const status = readValue(charge?.status)?.toLowerCase() || '';
+
+  return { url, deepLink, status };
+}
+
+function isPendingPayByBankStatus(status: string): boolean {
+  return status === 'pending_payment' || status === 'pending_confirmation' || status === 'pending';
 }
 
 function normalizeConektaPhone(phone: string | null | undefined): string {
