@@ -18,14 +18,11 @@ import {
   Phone,
   BarChart3,
   X,
-  Headphones,
   UserRound,
   Shield,
   LogOut,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
-import { SUPPORT_CHAT_URL, openSupportChat } from "../../utils/supportChat";
 
 interface AsideNavbarPropsI {
   show: boolean;
@@ -83,17 +80,6 @@ function AsideNavbar(props: AsideNavbarPropsI) {
     closeDrawer();
   };
 
-  const handleSupportClick = () => {
-    trackManyChatConversion(MC_EVENTS.CLICK_CHAT);
-    closeDrawer();
-    openSupportChat();
-  };
-
-  const handleSupportLinkClick = () => {
-    trackManyChatConversion(MC_EVENTS.CLICK_CHAT);
-    handleLinkClick();
-  };
-
   const linkProps = { onClick: closeDrawer };
 
   // Mobile: when closed, unmount to avoid `aria-hidden-focus` violations in axe.
@@ -132,17 +118,6 @@ function AsideNavbar(props: AsideNavbarPropsI) {
                 <li><Link to="/admin/dominios-bloqueados" {...linkProps}><Ban size={18} aria-hidden /> Dominios</Link></li>
                 <li><Link to="/admin/telefonos-bloqueados" {...linkProps}><Phone size={18} aria-hidden /> Telefonos</Link></li>
                 <li>
-                  <a
-                    href={SUPPORT_CHAT_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={handleSupportLinkClick}
-                    aria-label="Abrir chat de soporte"
-                  >
-                    <Headphones size={18} aria-hidden /> Soporte
-                  </a>
-                </li>
-                <li>
                   <button
                     type="button"
                     onClick={() => {
@@ -170,17 +145,6 @@ function AsideNavbar(props: AsideNavbarPropsI) {
                 <li><Link to="/instrucciones" {...linkProps}><HelpCircle size={18} aria-hidden /> Instrucciones</Link></li>
                 <li><Link to="/legal" {...linkProps}><FileText size={18} aria-hidden /> FAQ y políticas</Link></li>
                 <li>
-                  <a
-                    href={SUPPORT_CHAT_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={handleSupportLinkClick}
-                    aria-label="Abrir chat de soporte"
-                  >
-                    <Headphones size={18} aria-hidden /> Soporte
-                  </a>
-                </li>
-                <li>
                   <button
                     type="button"
                     onClick={() => {
@@ -206,14 +170,6 @@ function AsideNavbar(props: AsideNavbarPropsI) {
           <X size={20} aria-hidden />
         </button>
       </div>
-      <button
-        type="button"
-        className="btnSupport btnSupport-float"
-        onClick={handleSupportClick}
-        aria-label="Abrir chat de soporte"
-      >
-        <Headphones size={24} aria-hidden />
-      </button>
     </aside>
   );
 }
