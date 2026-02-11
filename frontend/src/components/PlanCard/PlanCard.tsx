@@ -364,14 +364,17 @@ function PlanCard(props: PlanCardPropsI) {
     trialConfig?.enabled && trialConfig.eligible !== false
       ? `${formatInt(trialConfig.days)} días + ${formatInt(trialConfig.gb)} GB`
       : null;
-  const trialNearCtaCopy = (() => {
+	  const trialNearCtaCopy = (() => {
     if (!showTrialMessaging) return null;
     if (trialConfig?.eligible === false) {
       return "Prueba solo 1ª vez con tarjeta. En esta cuenta se activa al pagar.";
     }
     if (!formattedTrial) return null;
     if (isMxn) {
-      return `Prueba (${formattedTrial}) solo con tarjeta (Stripe). PayPal/SPEI/Efectivo activan sin prueba.`;
+      const alternatives = ["SPEI"];
+      if (showPaypalOption) alternatives.unshift("PayPal");
+      if (conektaAvailability?.oxxoEnabled) alternatives.push("Efectivo");
+      return `Prueba (${formattedTrial}) solo con tarjeta (Stripe). ${alternatives.join("/")} activan sin prueba.`;
     }
     return `Prueba (${formattedTrial}) solo con tarjeta (Stripe). PayPal activa sin prueba.`;
   })();

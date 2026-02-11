@@ -16,9 +16,8 @@ import {
   normalizeConektaPhoneE164Mx,
 } from './utils/conektaErrorHelpers';
 
-const cashEnabled =
-  process.env.CONEKTA_OXXO_ENABLED === '1' ||
-  process.env.CONEKTA_CASH_ENABLED === '1';
+// Temporary hard-disable for cash/OXXO until provider flow is stabilized in production.
+const cashEnabled = false;
 const conektaCashHeaders = {
   Accept: 'application/vnd.conekta-v2.2.0+json',
 };
