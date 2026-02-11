@@ -6,7 +6,7 @@
   padding: 1.5rem;
   background: var(--app-bg);
   color: var(--app-text-body);
-  font-family: "Poppins", sans-serif;
+  font-family: var(--bb-font-ui);
 }
 
 .error-fallback__card {
@@ -45,7 +45,7 @@
   min-height: 44px;
   font-size: var(--app-font-size-body);
   font-weight: 600;
-  font-family: "Poppins", sans-serif;
+  font-family: var(--bb-font-ui);
   color: var(--app-btn-text);
   background: var(--app-gradient);
   border: none;

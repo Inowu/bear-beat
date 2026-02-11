@@ -17,7 +17,7 @@
   align-items: center;
   justify-content: center;
   font-size: var(--app-font-size-body);
-  font-family: "Poppins", sans-serif;
+  font-family: var(--bb-font-ui);
   transition: background-color 0.3s ease, color 0.3s ease;
   max-width: 100%;
   background:
@@ -344,7 +344,7 @@
   .auth-split-title {
     font-size: clamp(2rem, 1.55rem + 0.65vw, 2.45rem);
     font-weight: 800;
-    font-family: "Poppins", sans-serif;
+    font-family: var(--bb-font-ui);
     color: var(--theme-landing-text);
     margin: 0;
     line-height: 1.16;
@@ -417,7 +417,7 @@
   .auth-split-form-title {
     font-size: clamp(26px, 1.35vw + 14px, 34px);
     font-weight: 800;
-    font-family: "Poppins", sans-serif;
+    font-family: var(--bb-font-ui);
     color: var(--auth-register-text);
     margin: 0 0 6px;
     text-align: center;

@@ -31,7 +31,7 @@ aside {
     padding: 14px 0 18px;
 
     .nav-title {
-      font-family: "Poppins", sans-serif;
+      font-family: var(--bb-font-ui);
       text-align: center;
       font-size: var(--app-font-size-h3);
       font-weight: 700;
@@ -233,7 +233,7 @@ aside {
       font-size: var(--app-font-size-h3);
       font-weight: 700;
       color: var(--aside-overlay-text);
-      font-family: "Poppins", sans-serif;
+      font-family: var(--bb-font-ui);
     }
 
     .aside-logo {

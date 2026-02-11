@@ -362,7 +362,7 @@ export default function PublicHome() {
   }, [topDownloads]);
 
   const onPrimaryCtaClick = useCallback(
-    (location: "hero" | "mid" | "pricing" | "footer" | "sticky") => {
+    (location: "hero" | "mid" | "pricing" | "footer" | "sticky" | "nav") => {
       trackGrowthMetric(GROWTH_METRICS.CTA_PRIMARY_CLICK, { location });
       trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, { id: "home_primary", location });
       trackManyChatConversion(MC_EVENTS.CLICK_CTA_REGISTER);
@@ -523,6 +523,15 @@ export default function PublicHome() {
                 Iniciar sesión
               </Link>
             </nav>
+            <Link
+              to="/auth/registro"
+              state={{ from: "/planes" }}
+              className="home-cta home-cta--primary home-topnav__cta"
+              data-testid="home-nav-primary-cta"
+              onClick={() => onPrimaryCtaClick("nav")}
+            >
+              {ctaPrimaryLabel}
+            </Link>
           </div>
         </div>
       </header>

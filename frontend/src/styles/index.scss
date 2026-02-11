@@ -73,9 +73,17 @@
   --bb-radius-pill: 999px;
   --bb-font-ui: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   --bb-font-brand: "Bear-font", "Poppins", sans-serif;
-  --app-font-weight-body: 500;
-  --app-font-weight-heading: 700;
-  --app-font-weight-heading-strong: 800;
+  --bb-font-weight-medium: 500;
+  --bb-font-weight-semibold: 600;
+  --bb-font-weight-bold: 700;
+  --bb-font-weight-display: 800;
+  --bb-letter-spacing-heading: -0.01em;
+  --bb-letter-spacing-body: 0;
+  --bb-line-height-heading: 1.14;
+  --bb-line-height-body: 1.58;
+  --app-font-weight-body: var(--bb-font-weight-medium);
+  --app-font-weight-heading: var(--bb-font-weight-bold);
+  --app-font-weight-heading-strong: var(--bb-font-weight-display);
   --app-font-size-body: 1.5rem;
   --app-font-size-body-lg: 1.6rem;
   --app-font-size-h4: 1.7rem;
@@ -617,12 +625,17 @@ h6 {
   margin: 0;
   color: var(--app-text-heading);
   font-weight: var(--app-font-weight-heading);
-  font-family: "Poppins", sans-serif;
+  font-family: var(--bb-font-ui);
+  line-height: var(--bb-line-height-heading);
+  letter-spacing: var(--bb-letter-spacing-heading);
+  text-wrap: balance;
 }
 h1 { font-size: var(--app-font-size-h1); font-weight: var(--app-font-weight-heading-strong); }
 h2 { font-size: var(--app-font-size-h2); }
 h3 { font-size: var(--app-font-size-h3); }
 h4 { font-size: var(--app-font-size-h4); }
+h5 { font-size: 1.55rem; }
+h6 { font-size: 1.4rem; }
 
 /* Móvil/tablet: 62.5% = 1rem 10px para espaciado compacto */
 html {
@@ -638,8 +651,9 @@ body {
   font-family: var(--bb-font-ui);
   font-size: var(--app-font-size-body);
   font-weight: var(--app-font-weight-body);
-  line-height: 1.45;
-  text-rendering: auto;
+  line-height: var(--bb-line-height-body);
+  letter-spacing: var(--bb-letter-spacing-body);
+  text-rendering: optimizeLegibility;
   background: var(--app-bg);
   color: var(--app-text-body);
 }
@@ -679,6 +693,17 @@ a {
 strong,
 b {
   font-weight: 700;
+}
+
+p,
+li,
+label,
+small,
+input,
+select,
+textarea,
+button {
+  letter-spacing: var(--bb-letter-spacing-body);
 }
 
 button,
@@ -1193,7 +1218,7 @@ svg[role="img"] {
   min-height: 44px;
   padding: 0 14px;
   border-radius: var(--bb-radius-pill);
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
@@ -1230,7 +1255,7 @@ svg[role="img"] {
   background: color-mix(in srgb, var(--app-bg-soft) 82%, transparent);
   color: var(--app-text-muted);
   font-size: 1.2rem;
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -1258,7 +1283,7 @@ svg[role="img"] {
 .bb-stat-pill__value {
   min-width: 0;
   color: var(--app-text-heading);
-  font-weight: 950;
+  font-weight: 800;
   letter-spacing: -0.01em;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1267,7 +1292,7 @@ svg[role="img"] {
 
 .bb-stat-pill__label {
   color: var(--app-text-muted);
-  font-weight: 900;
+  font-weight: 800;
   font-size: 1.1rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1300,7 +1325,7 @@ svg[role="img"] {
   justify-content: space-between;
   gap: 14px;
   font-size: 1.4rem;
-  font-weight: 850;
+  font-weight: 800;
   line-height: 1.35;
 }
 
@@ -1603,7 +1628,7 @@ html[data-theme="dark"] :where(
 
 .modal-content .modal-title {
   color: var(--app-text-heading);
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: -0.01em;
 }
 

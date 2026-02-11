@@ -62,7 +62,7 @@
   max-width: 430px;
   padding: 2.35rem 1.9rem;
   border-radius: 1rem;
-  font-family: "Poppins", sans-serif;
+  font-family: var(--bb-font-ui);
   transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.2s ease;
   background: var(--auth-login-card-bg);
   border: 1px solid var(--auth-login-card-border);
@@ -90,7 +90,7 @@
 .auth-login-title {
   font-size: clamp(28px, 1.4vw + 14px, 36px);
   font-weight: 800;
-  font-family: "Poppins", sans-serif;
+  font-family: var(--bb-font-ui);
   color: var(--auth-login-title);
   margin: 0 0 0.5rem;
   text-align: center;
@@ -122,7 +122,7 @@
     margin: 0 0 6px;
     padding: 0 8px;
     font-size: 13px;
-    font-weight: 750;
+    font-weight: 700;
     letter-spacing: 0.01em;
     color: color-mix(in srgb, var(--auth-login-subtitle) 92%, transparent);
   }
@@ -250,7 +250,7 @@
     background: transparent;
     color: var(--app-status-error);
     font-size: 1.25rem;
-    font-weight: 650;
+    font-weight: 600;
     line-height: 1.35;
     display: flex;
     align-items: center;
@@ -306,7 +306,7 @@
   .auth-login-register-copy {
     color: color-mix(in srgb, var(--auth-login-subtitle) 92%, transparent);
     font-size: 0.95rem;
-    font-weight: 650;
+    font-weight: 600;
     line-height: 1.4;
   }
 

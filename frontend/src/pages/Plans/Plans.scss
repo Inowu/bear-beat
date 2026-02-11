@@ -70,7 +70,7 @@
   color: color-mix(in srgb, var(--ph-text-body) 92%, transparent);
   text-decoration: none;
   font-size: 14px;
-  font-weight: 840;
+  font-weight: 800;
   letter-spacing: 0.01em;
   transition: border-color 140ms ease, background 140ms ease, color 140ms ease;
 }
@@ -136,7 +136,7 @@
   color: var(--ph-text-heading);
   font-family: var(--bb-font-ui);
   font-size: clamp(30px, 4.1vw, 46px);
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1.05;
   text-wrap: balance;
@@ -148,7 +148,7 @@
   color: color-mix(in srgb, var(--ph-text-body) 92%, transparent);
   font-size: clamp(15px, 1.3vw, 18px);
   line-height: 1.44;
-  font-weight: 640;
+  font-weight: 600;
 }
 
 .plans-hero-copy {
@@ -188,7 +188,7 @@
 
 .plans-hero-bullets strong {
   color: var(--ph-text-heading);
-  font-weight: 900;
+  font-weight: 800;
 }
 
 .plans-hero-micro {
@@ -196,7 +196,7 @@
   color: color-mix(in srgb, var(--ph-text-muted) 90%, transparent);
   font-size: 13px;
   line-height: 1.45;
-  font-weight: 740;
+  font-weight: 700;
 }
 
 .plans-hero-price-hint {
@@ -207,7 +207,7 @@
   gap: 8px;
   color: color-mix(in srgb, var(--ph-text-body) 90%, transparent);
   font-size: 12.5px;
-  font-weight: 760;
+  font-weight: 800;
   line-height: 1.35;
 }
 
@@ -294,7 +294,7 @@
   font-size: 12.8px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  font-weight: 920;
+  font-weight: 800;
 }
 
 .plans-currency-toggle {
@@ -357,7 +357,7 @@
   margin: 0;
   color: color-mix(in srgb, var(--ph-text-muted) 92%, transparent);
   font-size: 11px;
-  font-weight: 850;
+  font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -366,7 +366,7 @@
   margin: 0;
   color: var(--ph-text-heading);
   font-size: clamp(22px, 2.5vw, 30px);
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1.04;
 }
@@ -384,7 +384,7 @@
   gap: 8px;
   padding: 0 14px;
   font-size: 14.5px;
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: 0.01em;
   box-shadow: var(--ph-shadow);
   cursor: pointer;
@@ -429,7 +429,7 @@
   background: color-mix(in srgb, var(--ph-bg-soft) 70%, transparent);
   color: color-mix(in srgb, var(--ph-text-body) 92%, transparent);
   font-size: 10.8px;
-  font-weight: 760;
+  font-weight: 800;
   line-height: 1;
 }
 
@@ -553,7 +553,7 @@
   margin: 0;
   color: var(--ph-text-heading);
   font-size: clamp(19px, 2.4vw, 24px);
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: -0.01em;
   line-height: 1.16;
 }
@@ -690,7 +690,7 @@ html[data-theme="dark"] .plans-sticky__cta:hover {
 
 .plans-sticky__cta-label {
   font-size: 14px;
-  font-weight: 950;
+  font-weight: 800;
   letter-spacing: 0.01em;
   line-height: 1.1;
 }
@@ -698,7 +698,7 @@ html[data-theme="dark"] .plans-sticky__cta:hover {
 .plans-sticky__cta-micro {
   margin-top: 2px;
   font-size: 12px;
-  font-weight: 750;
+  font-weight: 700;
   color: color-mix(in srgb, var(--app-btn-text) 80%, transparent);
   line-height: 1.1;
 }

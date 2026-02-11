@@ -41,7 +41,8 @@ module.exports = {
         }
       },
       fontFamily: {
-        poppins: ["Poppins", "sans-serif"],
+        ui: ["var(--bb-font-ui)"],
+        poppins: ["var(--bb-font-ui)"],
         bear: ["Bear-font", "Poppins", "sans-serif"], // Arkhip para títulos
       },
       backgroundImage: {

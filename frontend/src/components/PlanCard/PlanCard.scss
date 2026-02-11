@@ -112,7 +112,7 @@ html[data-theme="dark"] .plan-card-glow {
 
 .plan-card-wrapper.is-marketing .plan-card-price-currency {
   font-size: 1.1rem;
-  font-weight: 760;
+  font-weight: 800;
 }
 
 .plan-card-wrapper.is-marketing .plan-card-highlights {
@@ -180,7 +180,7 @@ html[data-theme="dark"] .plan-card-glow {
   min-height: 46px !important;
   border-radius: 999px;
   font-size: 1.2rem !important;
-  font-weight: 860 !important;
+  font-weight: 800 !important;
   letter-spacing: 0.005em;
 }
 
@@ -361,7 +361,7 @@ html[data-theme="dark"] .plan-card-glow {
 
 .plan-card-highlight-item strong {
   color: var(--plan-card-title);
-  font-weight: 900;
+  font-weight: 800;
 }
 
 .plan-card-benefits {
@@ -414,7 +414,7 @@ html[data-theme="dark"] .plan-card-glow {
   width: fit-content;
   color: color-mix(in srgb, var(--app-accent) 84%, white);
   font-size: 1.3rem;
-  font-weight: 850;
+  font-weight: 800;
   letter-spacing: 0.01em;
   cursor: pointer;
   text-decoration: underline;
@@ -446,7 +446,7 @@ html[data-theme="dark"] .plan-card-glow {
   margin: 0;
   color: color-mix(in srgb, var(--plan-card-subtitle) 92%, transparent);
   font-size: 1.18rem;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.45;
   text-align: center;
 }
@@ -471,7 +471,7 @@ html[data-theme="dark"] .plan-card-glow {
   background: color-mix(in srgb, var(--app-bg-soft) 72%, transparent);
   color: color-mix(in srgb, var(--plan-card-subtitle) 92%, transparent);
   font-size: 1.15rem;
-  font-weight: 750;
+  font-weight: 700;
 }
 
 .plan-card-btn-hero {
@@ -579,7 +579,7 @@ html[data-theme="dark"] .plan-card-btn-hero:hover {
   background: color-mix(in srgb, var(--theme-accent-soft-bg) 92%, transparent);
   color: color-mix(in srgb, var(--app-accent) 86%, white);
   font-size: 1.05rem;
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -645,7 +645,7 @@ html[data-theme="dark"] .plan-card-btn-hero:hover {
   background: color-mix(in srgb, var(--app-bg-soft) 70%, transparent);
   color: color-mix(in srgb, var(--plan-card-title) 92%, transparent);
   font-size: 1.05rem;
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: 0.05em;
 }
 
@@ -681,7 +681,7 @@ html[data-theme="dark"] .plan-card-btn-hero:hover {
   margin: 0;
   color: color-mix(in srgb, var(--plan-card-subtitle) 92%, transparent);
   font-size: 1.15rem;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.45;
   text-align: center;
 }

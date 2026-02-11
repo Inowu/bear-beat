@@ -35,7 +35,7 @@
   background: color-mix(in srgb, var(--ph-bg-card) 95%, transparent);
   color: var(--ph-text-heading);
   font-size: 13px;
-  font-weight: 820;
+  font-weight: 800;
   line-height: 1;
   padding: 10px 12px;
   text-decoration: none;
@@ -85,7 +85,7 @@
   margin: 0;
   color: var(--ph-accent);
   font-size: 11px;
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -105,7 +105,7 @@
   color: color-mix(in srgb, var(--ph-text-body) 92%, transparent);
   font-size: clamp(16px, 1.22vw, 18.2px);
   line-height: 1.64;
-  font-weight: 560;
+  font-weight: 600;
 }
 
 .instructions2026__hero-actions {
@@ -120,7 +120,7 @@
   margin: 12px 0 0;
   color: color-mix(in srgb, var(--ph-text-muted) 94%, transparent);
   font-size: 13.8px;
-  font-weight: 640;
+  font-weight: 600;
   line-height: 1.5;
 }
 
@@ -130,7 +130,7 @@
   padding-inline: 19px;
   border-radius: 999px;
   font-size: 14.6px;
-  font-weight: 820;
+  font-weight: 800;
   letter-spacing: 0.01em;
 }
 
@@ -165,7 +165,7 @@
   margin: 0;
   color: color-mix(in srgb, var(--ph-text-muted) 88%, transparent);
   font-size: 12.2px;
-  font-weight: 860;
+  font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -174,7 +174,7 @@
   margin: 0;
   color: color-mix(in srgb, var(--ph-text-muted) 90%, transparent);
   font-size: 14px;
-  font-weight: 580;
+  font-weight: 600;
   line-height: 1.45;
 }
 
@@ -209,7 +209,7 @@
   text-transform: none;
   letter-spacing: 0.01em;
   font-size: 14.3px;
-  font-weight: 780;
+  font-weight: 800;
   color: color-mix(in srgb, var(--ph-text-body) 94%, transparent);
   transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease;
 }
@@ -230,7 +230,7 @@
   color: var(--ph-btn-text);
   background: var(--ph-btn-bg);
   font-size: 10.6px;
-  font-weight: 900;
+  font-weight: 800;
   flex-shrink: 0;
 }
 
@@ -282,7 +282,7 @@
   color: var(--ph-btn-text);
   background: var(--ph-btn-bg);
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 800;
 }
 
 .instructions2026__method-icon {
@@ -305,7 +305,7 @@
   margin: 0;
   color: var(--ph-text-heading);
   font-size: clamp(22px, 1.92vw, 26px);
-  font-weight: 820;
+  font-weight: 800;
   letter-spacing: -0.01em;
   line-height: 1.17;
 }
@@ -315,7 +315,7 @@
   color: color-mix(in srgb, var(--ph-text-muted) 92%, transparent);
   font-size: 15px;
   line-height: 1.58;
-  font-weight: 560;
+  font-weight: 600;
 }
 
 .instructions2026__steps {
@@ -333,7 +333,7 @@
   padding: 0;
   color: color-mix(in srgb, var(--ph-text-body) 94%, transparent);
   font-size: 15.1px;
-  font-weight: 580;
+  font-weight: 600;
   line-height: 1.62;
 }
 
@@ -385,7 +385,7 @@
   margin: 0;
   color: var(--ph-text-heading);
   font-size: clamp(21px, 2vw, 28px);
-  font-weight: 820;
+  font-weight: 800;
   letter-spacing: -0.01em;
   line-height: 1.14;
 }
@@ -406,7 +406,7 @@
   padding: 2px 0;
   color: color-mix(in srgb, var(--ph-text-body) 94%, transparent);
   font-size: 14.9px;
-  font-weight: 590;
+  font-weight: 600;
   line-height: 1.58;
 }
 

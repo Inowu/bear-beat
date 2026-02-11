@@ -238,7 +238,7 @@ form.sign-up-form {
 
   .auth-signup-legal-link {
     color: var(--app-accent);
-    font-weight: 750;
+    font-weight: 700;
     text-decoration: none;
 
     &:hover {
@@ -291,7 +291,7 @@ form.sign-up-form {
     background: transparent;
     color: var(--app-status-error);
     font-size: clamp(12px, 0.24vw + 11px, 13px);
-    font-weight: 650;
+    font-weight: 600;
     line-height: 1.35;
     display: flex;
     align-items: center;
@@ -316,7 +316,7 @@ form.sign-up-form {
   .auth-login-register-copy {
     color: color-mix(in srgb, var(--auth-login-subtitle) 92%, transparent);
     font-size: clamp(12px, 0.25vw + 11px, 14px);
-    font-weight: 650;
+    font-weight: 600;
     line-height: 1.35;
   }
 

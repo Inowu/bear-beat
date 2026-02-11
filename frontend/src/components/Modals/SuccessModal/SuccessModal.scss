@@ -12,7 +12,7 @@
       color: var(--app-status-success);
       font-size: var(--app-font-size-h2);
       font-weight: var(--app-font-weight-heading-strong);
-      font-family: "Poppins", sans-serif;
+      font-family: var(--bb-font-ui);
     }
     .bottom .content {
       color: var(--app-text-body);

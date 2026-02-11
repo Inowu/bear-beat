@@ -128,7 +128,7 @@
   gap: 6px;
   color: var(--ad-text-muted);
   font-size: 0.85rem;
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -198,7 +198,7 @@
 .crm-kpi-card__title {
   color: var(--ad-text-muted);
   font-size: 0.85rem;
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: 0.09em;
   text-transform: uppercase;
 }
@@ -206,7 +206,7 @@
 .crm-kpi-card__value {
   color: var(--ad-title);
   font-size: 1.7rem;
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: -0.01em;
   line-height: 1.1;
 }
@@ -236,7 +236,7 @@
   margin: 0;
   color: var(--ad-text-muted);
   font-size: 0.82rem;
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -245,7 +245,7 @@
   margin: 0;
   color: var(--ad-title);
   font-size: 1.5rem;
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: -0.02em;
 }
 
@@ -287,7 +287,7 @@
   margin: 0;
   color: var(--ad-title);
   font-size: 1.2rem;
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: 0.01em;
 }
 
@@ -309,7 +309,7 @@
   background: color-mix(in srgb, var(--ad-row-hover) 65%, transparent);
   color: var(--ad-title);
   font-size: 0.85rem;
-  font-weight: 900;
+  font-weight: 800;
 }
 
 .crm-section__hint {
@@ -371,7 +371,7 @@
   background: color-mix(in srgb, var(--ad-row-hover) 60%, transparent);
   color: var(--ad-title);
   font-size: 0.82rem;
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: 0.03em;
 }
 
@@ -401,7 +401,7 @@
   border: 1px solid color-mix(in srgb, var(--ad-accent) 55%, var(--ad-border));
   background: color-mix(in srgb, var(--ad-accent) 20%, transparent);
   color: var(--ad-title);
-  font-weight: 900;
+  font-weight: 800;
   font-size: 0.92rem;
   cursor: pointer;
   transition: transform 0.15s ease, opacity 0.15s ease;

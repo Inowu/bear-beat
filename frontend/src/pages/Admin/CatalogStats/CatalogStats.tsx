@@ -251,7 +251,7 @@ export function CatalogStats() {
         </div>
       </div>
 
-      <h2 className="text-white font-bold text-lg mb-4" style={{ fontFamily: "Poppins, sans-serif" }}>Por tipo</h2>
+      <h2 className="text-white font-bold text-lg mb-4" style={{ fontFamily: "var(--bb-font-ui)" }}>Por tipo</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
           <h3 className="text-slate-400 text-sm mb-1">Videos</h3>
@@ -273,7 +273,7 @@ export function CatalogStats() {
 
       {genres.length > 0 && (
         <>
-          <h2 className="text-white font-bold text-lg mb-2" style={{ fontFamily: "Poppins, sans-serif" }}>Por género</h2>
+          <h2 className="text-white font-bold text-lg mb-2" style={{ fontFamily: "var(--bb-font-ui)" }}>Por género</h2>
           <p className="text-slate-500 text-sm mb-4">Cada género = nombre de la carpeta (ej. Bachata).</p>
           <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
             <span className="text-slate-500 text-sm">Mostrando {from}-{to} de {genres.length}</span>

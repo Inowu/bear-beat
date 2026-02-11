@@ -2,7 +2,7 @@
 @import "../../../styles/landing-design.scss";
 
 .modal-container-plans {
-  font-family: "Poppins", sans-serif;
+  font-family: var(--bb-font-ui);
   font-size: var(--app-font-size-body);
 
   .go-back {
