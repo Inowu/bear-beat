@@ -26,6 +26,7 @@ import { SSEProvider } from "react-hooks-sse";
 import DownloadContextProvider from "./contexts/DownloadContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { sseEndpoint } from "./utils/runtimeConfig";
+import { initManyChatHandoff } from "./utils/manychatHandoff";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -295,7 +296,8 @@ const scheduleMonitoringInit = () => {
   }, 6500, 4500);
 };
 
-const MAIN_BUNDLE_HASH_RE = /(?:\/static\/js\/main\.|\/assets\/index-)([a-z0-9]+)\.(?:js|mjs)/i;
+// Vite's chunk hash can be base64url-ish (`A-Z a-z 0-9 _ -`), not only hex.
+const MAIN_BUNDLE_HASH_RE = /(?:\/static\/js\/main\.|\/assets\/index-)([a-z0-9_-]+)\.(?:js|mjs)/i;
 const CSS_CHUNK_RE = /(?:\/static\/css\/.+\.css|\/assets\/.+\.css)/i;
 const SHELL_RELOAD_GUARD_KEY = "bb-shell-reload-guard";
 const CHUNK_RELOAD_GUARD_KEY = "bb-chunk-reload-guard";
@@ -457,6 +459,9 @@ function installRuntimeStabilityGuards() {
 }
 
 installRuntimeStabilityGuards();
+
+// Capture and strip ManyChat handoff token from the URL before loading trackers (FB pixel, Hotjar, etc.).
+initManyChatHandoff();
 
 scheduleMonitoringInit();
 scheduleTrackersInit();

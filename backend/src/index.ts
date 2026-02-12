@@ -32,6 +32,10 @@ import {
 import { stripeProductsEndpoint } from './endpoints/webhooks/stripeProducts.endpoint';
 import { analyticsCollectEndpoint } from './endpoints/analytics.endpoint';
 import {
+  manyChatHandoffCreateEndpoint,
+  manyChatHandoffResolveEndpoint,
+} from './endpoints/manychat-handoff.endpoint';
+import {
   initializeRemoveUsersQueue,
   removeUsersQueue,
 } from './queue/removeUsers';
@@ -161,6 +165,15 @@ async function main() {
       express.json({ limit: '128kb' }),
       analyticsCollectEndpoint,
     );
+
+    // ManyChat -> Web handoff: generate a tokenized link and later resolve it in the browser.
+    app.post(
+      '/api/manychat/handoff',
+      express.json({ limit: '64kb' }),
+      express.urlencoded({ extended: true, limit: '64kb' }),
+      manyChatHandoffCreateEndpoint,
+    );
+    app.get('/api/manychat/handoff/resolve', manyChatHandoffResolveEndpoint);
 
     app.get('/api/analytics/health', (_req, res) => {
       res.json({

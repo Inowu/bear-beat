@@ -9,6 +9,7 @@ import {
   getRefreshToken,
   setAuthTokens,
 } from "../utils/authStorage";
+import { clearManyChatHandoff, getManyChatHandoffToken } from "../utils/manychatHandoff";
 
 interface UserContextI {
   currentUser: IUser | null;
@@ -139,6 +140,61 @@ const UserContextProvider = (props: any) => {
       setCurrentUser(null);
     }
   }, [userToken, startUser]);
+
+  // If the user came from a ManyChat handoff link, claim it once they're authenticated.
+  // This links the ManyChat contact to the web user (server-side) and then clears the local token.
+  useEffect(() => {
+    if (!userToken) return;
+    const token = getManyChatHandoffToken();
+    if (!token) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const result = await trpc.auth.claimManyChatHandoff.mutate({ token });
+        if (cancelled) return;
+        // Clear the token on any successful roundtrip (ok or known failure).
+        if (result && typeof result === "object" && "ok" in result) {
+          clearManyChatHandoff();
+        }
+      } catch {
+        // Keep the token; we can retry on the next auth refresh.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userToken]);
+
+  // If the user is already logged in and opens a new handoff link in the same session, claim it.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!userToken) return;
+
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<{ token?: string }>).detail;
+      const token = `${detail?.token ?? ""}`.trim() || getManyChatHandoffToken();
+      if (!token) return;
+
+      void trpc.auth
+        .claimManyChatHandoff
+        .mutate({ token })
+        .then((result: any) => {
+          if (result && typeof result === "object" && "ok" in result) {
+            clearManyChatHandoff();
+          }
+        })
+        .catch(() => {
+          // noop
+        });
+    };
+
+    window.addEventListener("bb:manychat-handoff", handler as EventListener);
+    return () => {
+      window.removeEventListener("bb:manychat-handoff", handler as EventListener);
+    };
+  }, [userToken]);
 
   useEffect(() => {
     if (currentUser === null) {

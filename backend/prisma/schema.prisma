@@ -282,6 +282,7 @@ model Users {
   checkout_logs            checkout_logs[]
   change_plan_transactions change_plan_transactions[]
   DownloadHistory          DownloadHistory[]
+  manyChatHandoffTokens    ManyChatHandoffToken[]     @relation("ManyChatHandoffClaimedUser")
 
   @@map("users")
 }
@@ -411,6 +412,24 @@ model checkout_logs {
   users              Users    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "checkout_logs_ibfk_1")
 
   @@index([user_id], map: "user_id")
+}
+
+model ManyChatHandoffToken {
+  id             Int       @id @default(autoincrement())
+  token          String    @unique(map: "uniq_mch_token") @db.VarChar(80)
+  contact_id     String?   @db.VarChar(64)
+  channel        String?   @db.VarChar(24)
+  payload_json   Json?
+  created_at     DateTime  @default(now()) @db.DateTime(0)
+  expires_at     DateTime  @db.DateTime(0)
+  resolved_at    DateTime? @db.DateTime(0)
+  claimed_at     DateTime? @db.DateTime(0)
+  claimed_user_id Int?
+  claimed_user   Users?    @relation("ManyChatHandoffClaimedUser", fields: [claimed_user_id], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "manychat_handoff_tokens_ibfk_1")
+
+  @@index([created_at], map: "idx_mch_created_at")
+  @@index([claimed_user_id], map: "idx_mch_claimed_user_id")
+  @@map("manychat_handoff_tokens")
 }
 
 model DeletedUsers {
