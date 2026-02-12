@@ -67,6 +67,7 @@
   justify-content: space-between;
   gap: 14px;
   padding: 14px 0;
+  min-width: 0;
 }
 
 .home-topnav__brand {
@@ -74,6 +75,7 @@
   align-items: center;
   gap: 10px;
   text-decoration: none;
+  flex-shrink: 0;
 }
 
 .home-topnav__brand img {
@@ -98,12 +100,21 @@
   border: 1px solid color-mix(in srgb, var(--ph-border) 80%, transparent);
   background: color-mix(in srgb, var(--ph-bg-card) 86%, transparent);
   backdrop-filter: blur(10px);
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.home-topnav__nav::-webkit-scrollbar {
+  display: none;
 }
 
 .home-topnav__right {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
 }
 
 .home-topnav__link {

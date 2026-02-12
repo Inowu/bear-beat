@@ -229,21 +229,18 @@ const UserContextProvider = (props: any) => {
 
     channel.addEventListener("message", handler);
 
+    // If this tab has no session yet, ask any other open tab for tokens ASAP.
+    // (Our earlier effect could miss this because BroadcastChannel readiness isn't reactive.)
+    if (!getAccessToken()) {
+      channel.postMessage({ type: "auth:request", senderId: broadcastSenderId } as AuthBroadcastMessage);
+    }
+
     return () => {
       channel.removeEventListener("message", handler);
       channel.close();
       authBroadcastRef.current = null;
     };
   }, [broadcastSenderId, loginLocal, logoutLocal]);
-
-  useEffect(() => {
-    // If there is no token in this tab, try to request it from another open tab of the same site.
-    // This keeps sessions consistent across tabs while still being sessionStorage-scoped.
-    if (typeof window === "undefined") return;
-    if (!authBroadcastRef.current) return;
-    if (getAccessToken()) return;
-    authBroadcastRef.current.postMessage({ type: "auth:request", senderId: broadcastSenderId } as AuthBroadcastMessage);
-  }, [broadcastSenderId, userToken]);
 
   useEffect(() => {
     if (userToken) {
