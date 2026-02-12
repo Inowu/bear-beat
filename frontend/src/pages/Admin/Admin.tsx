@@ -368,7 +368,7 @@ function Admin() {
       : filters.active === 0
         ? "Sin membresía"
         : filters.active === 3
-          ? "Cancelados"
+          ? "Cancelados (histórico)"
           : "Todos registrados";
   const rangeStart = totalUsers === 0 ? 0 : filters.page * filters.limit + 1;
   const rangeEnd = Math.min(filters.page * filters.limit + users.length, totalUsers);
@@ -391,7 +391,7 @@ function Admin() {
               <option value={2}>Todos registrados</option>
               <option value={1}>Membresía activa</option>
               <option value={0}>Sin membresía</option>
-              <option value={3}>Cancelados</option>
+              <option value={3}>Cancelados (histórico)</option>
             </select>
           </div>
           <div className="select-input">
@@ -577,7 +577,7 @@ function Admin() {
                               {filters.active === 1
                                 ? "Activa"
                                 : filters.active === 3
-                                  ? "Cancelada"
+                                  ? "Cancelada (hist.)"
                                   : "Sin membresía"}
                             </span>
                           </td>
