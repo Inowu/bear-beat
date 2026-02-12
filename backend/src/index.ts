@@ -24,6 +24,7 @@ import { conektaEndpoint } from './endpoints/webhooks/conekta.endpoint';
 import { stripeEndpoint } from './endpoints/webhooks/stripe.endpoint';
 import { paypalEndpoint } from './endpoints/webhooks/paypal.endpoint';
 import { stripePiEndpoint } from './endpoints/webhooks/stripePaymentIntents.endpoint';
+import { trackCoverEndpoint } from './endpoints/track-cover.endpoint';
 import {
   compressionQueue,
   initializeCompressionQueue,
@@ -150,6 +151,8 @@ async function main() {
     app.get('/download', downloadEndpoint);
 
     app.get('/download-dir', downloadDirEndpoint);
+
+    app.get('/track-cover', trackCoverEndpoint);
 
     app.get('/api/catalog-stats', catalogStatsEndpoint);
 

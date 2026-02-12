@@ -37,6 +37,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { GROWTH_METRICS, trackGrowthMetric } from '../../utils/growthMetrics';
 import { formatBytes } from '../../utils/format';
 import { inferTrackMetadata } from '../../utils/fileMetadata';
+import { apiBaseUrl } from '../../utils/runtimeConfig';
 
 interface IAlbumData {
   name: string;
@@ -1154,6 +1155,14 @@ function Home() {
                 const displayFileName = resolvedTrack?.displayName || file.name;
                 const trackTitle = resolvedTrack?.title || displayFileName;
                 const trackArtist = resolvedTrack?.artist;
+                const trackCoverUrl = resolvedTrack
+                  ? resolvedTrack.coverUrl ??
+                    (userToken
+                      ? `${apiBaseUrl}/track-cover?path=${encodeURIComponent(
+                        resolveFilePath(file),
+                      )}&token=${encodeURIComponent(userToken)}`
+                      : null)
+                  : null;
                 const trackCoverSeed = getTrackCoverSeed(
                   `${trackArtist ?? ''}${trackTitle}${file.path ?? ''}`.toLowerCase(),
                 );
@@ -1185,23 +1194,36 @@ function Home() {
                             '--bb-track-cover-hue': trackCoverSeed,
                           } as CSSProperties}
                         >
-                          {resolvedTrack.coverUrl ? (
+                          <span className="bb-track-cover-fallback" aria-hidden>
+                            {renderKindIcon(kind)}
+                          </span>
+                          {trackCoverUrl && (
                             <>
                               <img
-                                src={resolvedTrack.coverUrl}
+                                src={trackCoverUrl}
                                 alt=""
                                 loading="lazy"
                                 decoding="async"
                                 className="bb-track-cover-img"
+                                onError={(e) => {
+                                  // If cover extraction fails (no embedded image), keep fallback visible.
+                                  e.currentTarget.style.display = 'none';
+                                  const badge = e.currentTarget.parentElement?.querySelector(
+                                    '.bb-track-cover-badge',
+                                  ) as HTMLElement | null;
+                                  if (badge) badge.style.display = 'none';
+                                }}
+                                onLoad={(e) => {
+                                  const badge = e.currentTarget.parentElement?.querySelector(
+                                    '.bb-track-cover-badge',
+                                  ) as HTMLElement | null;
+                                  if (badge) badge.style.display = '';
+                                }}
                               />
-                              <span className="bb-track-cover-badge" aria-hidden>
+                              <span className="bb-track-cover-badge" aria-hidden style={{ display: 'none' }}>
                                 {renderKindIcon(kind)}
                               </span>
                             </>
-                          ) : (
-                            <span className="bb-track-cover-fallback" aria-hidden>
-                              {renderKindIcon(kind)}
-                            </span>
                           )}
                         </span>
                       ) : (

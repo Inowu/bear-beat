@@ -12,3 +12,4 @@ output
 audit/screenshots
 # Production audit artifacts (read-only, may include masked screenshots; keep untracked)
 audit-artifacts
+backend/covers
