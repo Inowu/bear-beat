@@ -76,6 +76,7 @@ Leyenda:
 | A-004 | Low | Abierto | Quick win | SEO | `sitemap.xml` con `lastmod` antiguo (2025-02-03) |
 | A-005 | Medium | Abierto | Proyecto | Frontend/Perf | Bundle principal grande y warnings de build (chunk > 500 kB, Sass `@import` deprecado) |
 | A-006 | High | Abierto | Proyecto | Dependencias | `npm audit` reporta vulnerabilidades **High** (backend y frontend), varias requieren upgrades major |
+| A-007 | Medium | Abierto | Quick win | Backend/API | CORS/headers en API prod parecen demasiado permisivos (`Access-Control-Allow-Origin: *`) y faltan headers de hardening |
 
 ## Detalle de hallazgos (con evidencia + remediación)
 
@@ -169,6 +170,23 @@ Leyenda:
   - Mantener `npm audit` en CI con baseline/allowlist temporal (si es inevitable) y fechas de remediación.
 - **Esfuerzo estimado:** **M/L** (por upgrades major + regresiones potenciales)
 - **Owner sugerido:** Backend + Frontend + AppSec
+
+### A-007 — CORS/headers permisivos en API producción (Medium)
+- **Evidencia (pasivo, prod API):**
+  - `audit-artifacts/prod-passive-2026-02-12/thebearbeatapi.lat.analytics-health.headers.txt`
+  - `audit-artifacts/prod-passive-2026-02-12/thebearbeatapi.lat.analytics-health.headers.allowed-origin.txt`
+  - `audit-artifacts/prod-passive-2026-02-12/thebearbeatapi.lat.analytics-health.headers.evil-origin.txt`
+- **Cómo reproducir (pasivo):**
+  - `curl -I https://thebearbeatapi.lat/api/analytics/health`
+  - `curl -I -H 'Origin: https://evil.example' https://thebearbeatapi.lat/api/analytics/health`
+- **Impacto:** si se replica en endpoints sensibles, un CORS demasiado abierto puede facilitar abuso desde sitios terceros (especialmente si hay auth basada en cookies) y reduce defensa en profundidad.
+- **Probabilidad:** media (la evidencia muestra wildcard en respuestas; falta confirmar alcance en endpoints con auth).
+- **Recomendación concreta:**
+  - Alinear configuración de CORS (allowlist) y revisar si `nginx` está inyectando headers globales.
+  - Confirmar que producción ejecuta el mismo comportamiento que el repo (evitar divergencia config-código).
+  - Agregar hardening headers en el dominio del API (HSTS, X-Content-Type-Options, etc.) cuando aplique.
+- **Esfuerzo estimado:** **S/M**
+- **Owner sugerido:** Backend + SRE/AppSec
 
 ## Checklist compliance/config (estado actual)
 Fuente (pasivo prod): `audit-artifacts/prod-passive-2026-02-12/thebearbeat.com.headers.txt`
