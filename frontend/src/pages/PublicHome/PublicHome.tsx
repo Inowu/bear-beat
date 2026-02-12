@@ -367,7 +367,7 @@ export default function PublicHome() {
       trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, { id: "home_primary", location });
       trackManyChatConversion(MC_EVENTS.CLICK_CTA_REGISTER);
     },
-    [findSectionByIds],
+    [],
   );
 
   const onSecondaryCtaClick = useCallback(
