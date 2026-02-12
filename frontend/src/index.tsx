@@ -295,6 +295,118 @@ const scheduleMonitoringInit = () => {
   }, 6500, 4500);
 };
 
+const MAIN_BUNDLE_HASH_RE = /\/static\/js\/main\.([a-z0-9]+)\.js/i;
+const SHELL_RELOAD_GUARD_KEY = "bb-shell-reload-guard";
+const CHUNK_RELOAD_GUARD_KEY = "bb-chunk-reload-guard";
+
+function readMainBundleHash(source: string | null | undefined): string | null {
+  if (!source) return null;
+  const match = source.match(MAIN_BUNDLE_HASH_RE);
+  return match?.[1] ?? null;
+}
+
+function getCurrentMainBundleHash(): string | null {
+  if (typeof document === "undefined") return null;
+  const script = document.querySelector("script[src*='/static/js/main.']");
+  const src = script?.getAttribute("src");
+  return readMainBundleHash(src);
+}
+
+async function getPublishedMainBundleHash(): Promise<string | null> {
+  try {
+    const res = await fetch(`/?bb_shell_check=${Date.now()}`, {
+      cache: "no-store",
+      credentials: "same-origin",
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    return readMainBundleHash(html);
+  } catch {
+    return null;
+  }
+}
+
+function isChunkLoadError(reason: unknown): boolean {
+  const text =
+    reason instanceof Error
+      ? `${reason.name} ${reason.message}`
+      : `${reason ?? ""}`;
+  const normalized = text.toLowerCase();
+  return (
+    normalized.includes("chunkloaderror") ||
+    normalized.includes("loading chunk") ||
+    normalized.includes("css chunk load failed") ||
+    normalized.includes("failed to fetch dynamically imported module")
+  );
+}
+
+function installRuntimeStabilityGuards() {
+  if (typeof window === "undefined" || typeof document === "undefined") return;
+
+  let shellCheckInFlight = false;
+  let lastShellCheck = 0;
+  const minShellCheckIntervalMs = 15000;
+
+  const runShellCheck = async () => {
+    const now = Date.now();
+    if (shellCheckInFlight) return;
+    if (now - lastShellCheck < minShellCheckIntervalMs) return;
+    lastShellCheck = now;
+    shellCheckInFlight = true;
+
+    try {
+      const currentHash = getCurrentMainBundleHash();
+      const publishedHash = await getPublishedMainBundleHash();
+      if (!currentHash || !publishedHash || currentHash === publishedHash) {
+        window.sessionStorage.removeItem(SHELL_RELOAD_GUARD_KEY);
+        return;
+      }
+
+      const guardValue = `${currentHash}->${publishedHash}`;
+      if (window.sessionStorage.getItem(SHELL_RELOAD_GUARD_KEY) === guardValue) return;
+
+      window.sessionStorage.setItem(SHELL_RELOAD_GUARD_KEY, guardValue);
+      window.location.reload();
+    } finally {
+      shellCheckInFlight = false;
+    }
+  };
+
+  const recoverChunkLoad = (reason: unknown) => {
+    if (!isChunkLoadError(reason)) return;
+    const guardValue = window.location.pathname + window.location.search;
+    if (window.sessionStorage.getItem(CHUNK_RELOAD_GUARD_KEY) === guardValue) return;
+    window.sessionStorage.setItem(CHUNK_RELOAD_GUARD_KEY, guardValue);
+    window.location.reload();
+  };
+
+  window.addEventListener("pageshow", (event) => {
+    if ((event as PageTransitionEvent).persisted) {
+      void runShellCheck();
+    }
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      void runShellCheck();
+    }
+  });
+
+  window.addEventListener("error", (event) => {
+    recoverChunkLoad(event.error ?? event.message);
+  });
+
+  window.addEventListener("unhandledrejection", (event) => {
+    recoverChunkLoad(event.reason);
+  });
+
+  window.setTimeout(() => {
+    void runShellCheck();
+  }, 1200);
+}
+
+installRuntimeStabilityGuards();
+
 scheduleMonitoringInit();
 scheduleTrackersInit();
 
