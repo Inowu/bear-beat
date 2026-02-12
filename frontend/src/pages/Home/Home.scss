@@ -663,6 +663,11 @@ html[data-theme="dark"] .bb-root-card.is-folder:hover {
   transition: background 0.16s ease, border-color 0.16s ease;
 }
 
+.bb-explorer-row.is-track {
+  /* Track rows use the cover thumbnail as the leading visual, so we need a wider first column. */
+  grid-template-columns: 60px minmax(0, 1fr) auto;
+}
+
 .bb-row-icon {
   display: flex;
   align-items: center;
@@ -691,10 +696,10 @@ html[data-theme="light"] .bb-explorer-row:hover {
 }
 
 .bb-file-copy--track {
-  display: grid;
-  grid-template-columns: 56px minmax(0, 1fr);
-  align-items: center;
-  gap: 10px;
+  /* The thumbnail lives in the row icon column; keep the copy stack clean. */
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .bb-track-copy {
@@ -706,6 +711,7 @@ html[data-theme="light"] .bb-explorer-row:hover {
 
 .bb-track-cover {
   --bb-track-cover-hue: 198;
+  position: relative;
   width: 56px;
   min-width: 56px;
   height: 56px;
@@ -726,6 +732,11 @@ html[data-theme="light"] .bb-explorer-row:hover {
       hsl(var(--bb-track-cover-hue) 72% 52% / 0.94),
       hsl(calc(var(--bb-track-cover-hue) + 72) 78% 44% / 0.94)
     );
+}
+
+.bb-track-cover--thumb {
+  /* Slightly crisper look when used as the leading thumbnail (list icon column). */
+  box-shadow: 0 10px 20px rgba(2, 6, 23, 0.22);
 }
 
 .bb-track-cover--video {
@@ -750,11 +761,39 @@ html[data-theme="light"] .bb-explorer-row:hover {
 
 .bb-track-cover-fallback {
   color: #f8fbff;
-  font-size: 1rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
   text-shadow: 0 2px 12px rgba(2, 6, 23, 0.38);
+}
+
+.bb-track-cover-fallback svg {
+  width: 22px;
+  height: 22px;
+  opacity: 0.92;
+}
+
+.bb-track-cover-badge {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(2, 6, 23, 0.46);
+  border: 1px solid rgba(248, 251, 255, 0.2);
+  box-shadow: 0 8px 14px rgba(2, 6, 23, 0.22);
+}
+
+.bb-track-cover-badge svg {
+  width: 14px;
+  height: 14px;
+  color: rgba(248, 251, 255, 0.92);
 }
 
 .bb-track-artist {
@@ -1039,9 +1078,12 @@ html[data-theme="light"] .bb-explorer-row:hover {
     padding: 10px 12px;
   }
 
+  .bb-explorer-row.is-track {
+    grid-template-columns: 52px minmax(0, 1fr) auto;
+  }
+
   .bb-file-copy--track {
-    grid-template-columns: 48px minmax(0, 1fr);
-    gap: 8px;
+    gap: 3px;
   }
 
   .bb-track-cover {
@@ -1049,6 +1091,19 @@ html[data-theme="light"] .bb-explorer-row:hover {
     min-width: 48px;
     height: 48px;
     border-radius: 10px;
+  }
+
+  .bb-track-cover-badge {
+    right: 5px;
+    bottom: 5px;
+    width: 20px;
+    height: 20px;
+    border-radius: 7px;
+  }
+
+  .bb-track-cover-badge svg {
+    width: 13px;
+    height: 13px;
   }
 
   .bb-track-artist {
@@ -1226,8 +1281,7 @@ html[data-theme="light"] .bb-explorer-row:hover {
   }
 
   .bb-file-copy--track {
-    grid-template-columns: 44px minmax(0, 1fr);
-    gap: 7px;
+    gap: 2px;
   }
 
   .bb-track-cover {

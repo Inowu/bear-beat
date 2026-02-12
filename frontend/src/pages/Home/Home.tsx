@@ -105,17 +105,6 @@ const formatDurationPill = (durationSeconds: number | null): string | null => {
   const secs = totalSeconds % 60;
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
-const getCoverInitials = (input: string): string => {
-  const parts = input
-    .split(/[\s\-_/]+/)
-    .map((part) => part.trim())
-    .filter(Boolean);
-  if (parts.length === 0) return 'BB';
-  if (parts.length === 1) {
-    return parts[0].slice(0, 2).toUpperCase();
-  }
-  return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
-};
 const buildTrackMetadata = (
   file: IFiles,
   kind: FileVisualKind,
@@ -1168,7 +1157,6 @@ function Home() {
                 const trackCoverSeed = getTrackCoverSeed(
                   `${trackArtist ?? ''}${trackTitle}${file.path ?? ''}`.toLowerCase(),
                 );
-                const trackCoverInitials = getCoverInitials(trackArtist || trackTitle || file.name);
                 const trackDurationPill = formatDurationPill(resolvedTrack?.durationSeconds ?? null);
                 return (
                   <article
@@ -1190,22 +1178,15 @@ function Home() {
                     }}
                   >
                     <div className="bb-row-icon" aria-hidden>
-                      <span className={`bb-kind-icon bb-kind-${kind}`}>
-                        {renderKindIcon(kind)}
-                      </span>
-                    </div>
-
-                    <div className="bb-row-main">
-                      <div className={`bb-file-copy ${resolvedTrack ? 'bb-file-copy--track' : ''}`}>
-                        {resolvedTrack && (
-                          <span
-                            className={`bb-track-cover bb-track-cover--${trackTheme ?? 'audio'}`}
-                            style={{
-                              '--bb-track-cover-hue': trackCoverSeed,
-                            } as CSSProperties}
-                            aria-hidden
-                          >
-                            {resolvedTrack.coverUrl ? (
+                      {resolvedTrack ? (
+                        <span
+                          className={`bb-track-cover bb-track-cover--${trackTheme ?? 'audio'} bb-track-cover--thumb`}
+                          style={{
+                            '--bb-track-cover-hue': trackCoverSeed,
+                          } as CSSProperties}
+                        >
+                          {resolvedTrack.coverUrl ? (
+                            <>
                               <img
                                 src={resolvedTrack.coverUrl}
                                 alt=""
@@ -1213,11 +1194,25 @@ function Home() {
                                 decoding="async"
                                 className="bb-track-cover-img"
                               />
-                            ) : (
-                              <span className="bb-track-cover-fallback">{trackCoverInitials}</span>
-                            )}
-                          </span>
-                        )}
+                              <span className="bb-track-cover-badge" aria-hidden>
+                                {renderKindIcon(kind)}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="bb-track-cover-fallback" aria-hidden>
+                              {renderKindIcon(kind)}
+                            </span>
+                          )}
+                        </span>
+                      ) : (
+                        <span className={`bb-kind-icon bb-kind-${kind}`}>
+                          {renderKindIcon(kind)}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="bb-row-main">
+                      <div className={`bb-file-copy ${resolvedTrack ? 'bb-file-copy--track' : ''}`}>
                         <div className="bb-track-copy">
                         <span className="bb-file-name" title={file.name}>
                           {resolvedTrack ? trackTitle : displayFileName}
@@ -1228,7 +1223,9 @@ function Home() {
                           </span>
                         )}
                         <div className="bb-file-meta">
-                          <span className="bb-file-pill">{fileCategoryLabel}</span>
+                          {!resolvedTrack && (
+                            <span className="bb-file-pill">{fileCategoryLabel}</span>
+                          )}
                           {resolvedTrack?.source === 'database' && (
                             <span className="bb-file-pill bb-file-pill--db">Meta</span>
                           )}
