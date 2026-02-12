@@ -21,12 +21,25 @@ require_cmd() {
 
 require_cmd git
 require_cmd npm
-require_cmd pm2
 require_cmd grep
 require_cmd sed
 require_cmd sudo
 require_cmd nginx
 require_cmd systemctl
+
+ensure_pm2() {
+  if command -v pm2 >/dev/null 2>&1; then
+    return 0
+  fi
+
+  # When using nvm, global npm packages are per-Node-version. After switching
+  # Node versions (ex. to Node 24 LTS), pm2 may no longer be present.
+  log "pm2 not found; installing pm2@5.3.1 globally for current Node..."
+  npm install -g "pm2@5.3.1"
+}
+
+ensure_pm2
+require_cmd pm2
 
 [ -d "$BACKEND_DIR" ] || die "Backend directory not found: $BACKEND_DIR"
 [ -f "$ENV_FILE" ] || die "Env file not found: $ENV_FILE"
