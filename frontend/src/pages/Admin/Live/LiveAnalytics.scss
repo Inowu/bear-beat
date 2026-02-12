@@ -11,12 +11,14 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 10px;
+  width: 100%;
 }
 
 .live-toolbar__group {
   display: inline-flex;
   flex-wrap: wrap;
   gap: 10px;
+  min-width: 0;
 }
 
 .live-toolbar__group--actions {
@@ -33,6 +35,7 @@
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  min-width: 0;
 }
 
 .live-toolbar__field select,
@@ -50,7 +53,7 @@
 }
 
 .live-toolbar__field input {
-  width: 170px;
+  width: 180px;
 }
 
 .live-toolbar__status {
@@ -111,6 +114,93 @@
 
 .live-toolbar__btn .is-spinning {
   animation: analytics-spin 1s linear infinite;
+}
+
+@media (max-width: 1080px) {
+  .live-toolbar__group--core,
+  .live-toolbar__group--filters,
+  .live-toolbar__group--actions {
+    flex: 1 1 100%;
+    margin-left: 0;
+  }
+
+  .live-toolbar__group--core,
+  .live-toolbar__group--filters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .live-toolbar__field {
+    width: 100%;
+  }
+
+  .live-toolbar__field input,
+  .live-toolbar__field select {
+    width: 100%;
+  }
+
+  .live-toolbar__group--actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .live-toolbar__status,
+  .live-toolbar__btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 760px) {
+  .live-toolbar {
+    gap: 12px;
+  }
+
+  .live-toolbar__group--core,
+  .live-toolbar__group--filters {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .live-toolbar__field {
+    gap: 4px;
+    font-size: 0.74rem;
+    letter-spacing: 0.04em;
+  }
+
+  .live-toolbar__field input,
+  .live-toolbar__field select {
+    min-height: 44px;
+    font-size: 1rem;
+  }
+
+  .live-toolbar__group--actions {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .live-toolbar__status {
+    grid-column: 1 / -1;
+  }
+
+  .live-toolbar__btn {
+    min-height: 44px;
+    font-size: 0.98rem;
+  }
+}
+
+@media (max-width: 460px) {
+  .live-toolbar__group--actions {
+    grid-template-columns: 1fr;
+  }
+
+  .live-toolbar__status,
+  .live-toolbar__btn {
+    min-height: 44px;
+  }
 }
 
 .live-context {

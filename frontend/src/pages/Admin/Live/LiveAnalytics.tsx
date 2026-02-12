@@ -218,7 +218,7 @@ export function LiveAnalytics() {
 
   const toolbar = (
     <div className="live-toolbar">
-      <div className="live-toolbar__group">
+      <div className="live-toolbar__group live-toolbar__group--core">
         <label className="live-toolbar__field">
           Ventana
           <select value={minutes} onChange={(e) => setMinutes(Number(e.target.value))}>
@@ -240,7 +240,7 @@ export function LiveAnalytics() {
           </select>
         </label>
       </div>
-      <div className="live-toolbar__group">
+      <div className="live-toolbar__group live-toolbar__group--filters">
         <label className="live-toolbar__field">
           Filtro evento
           <input
