@@ -1081,6 +1081,10 @@ html[data-theme="light"] .checkout-credentials__item {
   .checkout-page-subtitle {
     font-size: 1.1rem;
     line-height: 1.34;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .checkout-header__eyebrow {
@@ -1092,6 +1096,19 @@ html[data-theme="light"] .checkout-credentials__item {
 
   .checkout-header__main {
     gap: 10px;
+  }
+
+  // Mobile: keep the above-the-fold focused on choosing a payment method.
+  // The plan summary is already repeated below in the "Resumen del plan" card.
+  .checkout-steps,
+  .checkout-header__quickfacts,
+  .checkout-payment-logos,
+  .checkout-header__support {
+    display: none !important;
+  }
+
+  .checkout-trust-strip span:nth-child(n + 3) {
+    display: none;
   }
 
   .checkout-header__amount {
