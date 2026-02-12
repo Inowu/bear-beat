@@ -51,6 +51,7 @@ Leyenda:
 | A-002 | Critical | Mitigado (en rama) | Quick win | Backend/Permisos | `trpc-shield` a **fallback deny** + cobertura explícita para todas las `shieldedProcedure` + tests de cobertura |
 | A-003 | Medium | Abierto | Quick win | Frontend/Edge | Headers incompletos en producción (no se observa CSP / frame-ancestors / Permissions-Policy) |
 | A-004 | Low | Abierto | Quick win | SEO | `sitemap.xml` con `lastmod` antiguo (2025-02-03) |
+| A-005 | Medium | Abierto | Proyecto | Frontend/Perf | Bundle principal grande y warnings de build (chunk > 500 kB, Sass `@import` deprecado) |
 
 ## Detalle de hallazgos (con evidencia + remediación)
 
@@ -109,6 +110,22 @@ Leyenda:
 - **Esfuerzo estimado:** **S/M**
 - **Owner sugerido:** Frontend/SEO
 
+### A-005 — Bundle principal grande + warnings de build (Medium)
+- **Evidencia (local build):**
+  - `npm run build` reporta warnings de:
+    - Sass `@import` deprecado (migrar a `@use`/`@forward`).
+    - Chunks > 500 kB tras minificación (bundle principal grande).
+- **Cómo reproducir:**
+  - Ejecutar `npm run build` (en repo root).
+- **Impacto:** tiempos de carga y ejecución mayores (riesgo en LCP/INP), especialmente en mobile/datos limitados.
+- **Probabilidad:** alta (afecta a todos los usuarios).
+- **Recomendación concreta:**
+  - Code-splitting por ruta (React Router + `lazy()`), y/o `build.rollupOptions.output.manualChunks`.
+  - Reducir CSS global (evitar mega `index.css`, revisar Bootstrap import completo vs parcial).
+  - Migrar Sass `@import` → `@use` para compatibilidad futura.
+- **Esfuerzo estimado:** **M/L**
+- **Owner sugerido:** Frontend/Performance
+
 ## Checklist compliance/config (estado actual)
 Fuente (pasivo prod): `audit-artifacts/prod-passive-2026-02-12/thebearbeat.com.headers.txt`
 
@@ -125,8 +142,11 @@ Fuente (pasivo prod): `audit-artifacts/prod-passive-2026-02-12/thebearbeat.com.h
 - Backend:
   - Jest: `backend/test/*`
   - Agregado: tests anti-regresión para A-001 + A-002.
+  - Build local: `npm run build --workspace=backend` **OK** (TypeScript + Prisma generate; sin requerir DB).
 - Frontend:
   - Vitest: `npm test --workspace=frontend`
+  - Tests locales: **OK** (2026-02-12).
+  - Build local: `npm run build` **OK** (2026-02-12) con warnings (Sass `@import` deprecado; chunks > 500 kB).
 - E2E:
   - Playwright scripts existentes: `backend/scripts/smokeE2e.ts` y auditorías en `backend/scripts/auditFullSite.ts`
   - Pendiente: suite E2E completa de flujos críticos (registro/login/reset/checkout/acceso a descargas/roles).
@@ -167,4 +187,3 @@ Por ahora no bloquea. Puede ser necesario más adelante para:
 - Aplicar headers/redirects a nivel Netlify si no están versionados en repo o si el deploy no lo toma.
 - Revisar/activar Sentry/monitoring (tokens/DSN) si no están en CI/entornos.
 - Confirmar configuración de VPS/nginx (headers server-side, rate limiting, logs).
-
