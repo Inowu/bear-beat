@@ -3,6 +3,7 @@ import { TRPCError } from '@trpc/server';
 import bcrypt from 'bcrypt';
 import { publicProcedure } from '../../../procedures/public.procedure';
 import { generateTokens } from './utils/generateTokens';
+import { serializeUser } from '../utils/serialize-user';
 
 export const login = publicProcedure
   .input(
@@ -70,7 +71,7 @@ export const login = publicProcedure
       }
 
       const tokens = await generateTokens(prisma, user);
-      const loginData = { ...tokens, user: user };
+      const loginData = { ...tokens, user: serializeUser(user) };
 
       return loginData;
     },

@@ -6,7 +6,7 @@ import { publicProcedure } from '../../../procedures/public.procedure';
 import { RolesIds } from '../interfaces/roles.interface';
 import { ActiveState } from '../interfaces/active-state.interface';
 import { generateTokens } from '../procedures/utils/generateTokens';
-import stripe from '../../../stripe';
+import stripe, { isStripeConfigured } from '../../../stripe';
 import { conektaCustomers } from '../../../conekta';
 import { stripNonAlphabetic } from './utils/formatUsername';
 import { log } from '../../../server';
@@ -24,6 +24,7 @@ import {
 } from '../../../utils/blockedPhoneNumbers';
 import { verifyTurnstileToken } from '../../../utils/turnstile';
 import { getClientIpFromRequest } from '../../../analytics';
+import { serializeUser } from '../utils/serialize-user';
 
 function normalizeUsernameCandidate(value: string): string {
   const trimmed = `${value ?? ''}`.trim();
@@ -248,67 +249,89 @@ export const register = publicProcedure
         }
       }
 
-      try {
-        const customer = await stripe.customers.create({
-          email,
-          metadata: {
-            id: String(newUser.id),
-            userId: String(newUser.id),
-          },
-        });
+      if (isStripeConfigured()) {
+        try {
+          const customer = await stripe.customers.create({
+            email,
+            metadata: {
+              id: String(newUser.id),
+              userId: String(newUser.id),
+            },
+          });
 
-        await prisma.users.update({
-          where: {
-            id: newUser.id,
-          },
-          data: {
-            stripe_cusid: customer.id,
-          },
+          await prisma.users.update({
+            where: {
+              id: newUser.id,
+            },
+            data: {
+              stripe_cusid: customer.id,
+            },
+          });
+        } catch (e) {
+          log.error(
+            `There was an error creating the stripe customer for user ${newUser.id}`,
+          );
+        }
+      } else {
+        log.debug('[REGISTER] Stripe not configured; skipping customer creation', {
+          userId: newUser.id,
         });
-      } catch (e) {
-        log.error(
-          `There was an error creating the stripe customer for user ${newUser.id}`,
-        );
       }
 
-      try {
-        const customer = await conektaCustomers.createCustomer({
-          email,
-          name: stripNonAlphabetic(newUser),
-          phone: newUser.phone ?? '',
-          metadata: {
-            id: newUser.id,
-          },
-        });
+      const hasConektaKey = Boolean(
+        process.env.CONEKTA_KEY?.trim() || process.env.CONEKTA_TEST_KEY?.trim(),
+      );
+      if (hasConektaKey) {
+        try {
+          const customer = await conektaCustomers.createCustomer({
+            email,
+            name: stripNonAlphabetic(newUser),
+            phone: newUser.phone ?? '',
+            metadata: {
+              id: newUser.id,
+            },
+          });
 
-        await prisma.users.update({
-          where: {
-            id: newUser.id,
-          },
-          data: {
-            conekta_cusid: customer.data.id,
-          },
+          await prisma.users.update({
+            where: {
+              id: newUser.id,
+            },
+            data: {
+              conekta_cusid: customer.data.id,
+            },
+          });
+        } catch (e: any) {
+          log.error(
+            `There was an error creating the conekta customer for user ${
+              newUser.id
+            }, details: ${JSON.stringify(e.response?.data?.details)}`,
+          );
+        }
+      } else {
+        log.debug('[REGISTER] Conekta not configured; skipping customer creation', {
+          userId: newUser.id,
         });
-      } catch (e: any) {
-        log.error(
-          `There was an error creating the conekta customer for user ${
-            newUser.id
-          }, details: ${JSON.stringify(e.response?.data?.details)}`,
-        );
       }
 
-      try {
-        log.info('[REGISTER] Sending email to user');
-        await brevo.smtp.sendTransacEmail({
-          templateId: 3,
-          to: [{ email: newUser.email, name: newUser.username }],
-          params: {
-            NAME: newUser.username,
-            EMAIL: newUser.email,
-          },
+      const hasBrevoKey = Boolean(process.env.BREVO_API_KEY?.trim());
+      if (hasBrevoKey) {
+        try {
+          log.info('[REGISTER] Sending email to user');
+          await brevo.smtp.sendTransacEmail({
+            templateId: 3,
+            to: [{ email: newUser.email, name: newUser.username }],
+            params: {
+              NAME: newUser.username,
+              EMAIL: newUser.email,
+            },
+          });
+        } catch (e: any) {
+          log.error(`[REGISTER] Error while sending email ${e.message}`);
+        }
+      } else {
+        log.debug('[REGISTER] Brevo not configured; skipping welcome email', {
+          userId: newUser.id,
         });
-      } catch (e: any) {
-        log.error(`[REGISTER] Error while sending email ${e.message}`);
       }
 
       const userAgentRaw = req.headers['user-agent'];
@@ -389,7 +412,7 @@ export const register = publicProcedure
       return {
         ...tokens,
         message: 'Usuario fue creado correctamente',
-        user: newUser,
+        user: serializeUser(newUser),
       };
     },
   );
