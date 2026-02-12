@@ -2,6 +2,114 @@
 @import "src/styles/variables-theme.scss";
 @import "../../../styles/landing-design.scss";
 
+.downloads-history-toolbar {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.downloads-history-toolbar__field {
+  min-width: 130px;
+  max-width: 180px;
+}
+
+.downloads-history-toolbar__label {
+  color: color-mix(in srgb, var(--ad-text-muted) 96%, transparent);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.downloads-history-toolbar__select {
+  width: 100%;
+}
+
+.downloads-history-toolbar__cta {
+  min-height: 44px;
+  border-radius: 999px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.downloads-history-mobile-list {
+  border-radius: 14px;
+}
+
+.downloads-history-mobile-card {
+  min-height: 76px;
+}
+
+.downloads-history-mobile-card__name {
+  margin: 0;
+  color: var(--ad-title);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.downloads-history-mobile-card__email {
+  margin: 3px 0 0;
+  color: color-mix(in srgb, var(--ad-text-muted) 95%, transparent);
+  line-height: 1.35;
+}
+
+.downloads-history-mobile-card__meta {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.downloads-history-mobile-card__chip {
+  min-height: 22px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ad-border) 86%, transparent);
+  background: color-mix(in srgb, var(--ad-row-hover) 65%, transparent);
+  color: color-mix(in srgb, var(--ad-text) 94%, transparent);
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.downloads-history-mobile-card__chip.is-type {
+  color: color-mix(in srgb, var(--ad-accent) 88%, white);
+  border-color: color-mix(in srgb, var(--ad-accent) 36%, transparent);
+  background: color-mix(in srgb, var(--ad-accent) 14%, transparent);
+}
+
+.downloads-history-mobile-card__more {
+  min-width: 36px;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+}
+
+.downloads-history-mobile-empty {
+  display: grid;
+  gap: 5px;
+  color: color-mix(in srgb, var(--ad-text-muted) 95%, transparent);
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .downloads-history-toolbar__field,
+  .downloads-history-toolbar__cta {
+    width: 100%;
+    max-width: none;
+  }
+
+  .downloads-history-toolbar__cta {
+    justify-content: center;
+  }
+}
+
 .history-contain {
   display: flex;
   flex-direction: column;

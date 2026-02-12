@@ -26,5 +26,5 @@ POST-EVENTO (15 MIN)
 - géneros que mejor funcionaron
 - qué agregar para tu próximo show
 
-Soporte por chat:
-Si te atoras con activación o descarga, abre soporte desde la web de Bear Beat.
+Ayuda de activación:
+Si te atoras con activación o descarga, revisa Instrucciones y Mi Cuenta para validar tus credenciales.

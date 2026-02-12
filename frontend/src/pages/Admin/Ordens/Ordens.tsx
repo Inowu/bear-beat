@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import "./OrdensToolbar.scss";
 import Pagination from "../../../components/Pagination/Pagination";
 import trpc from "../../../api";
 import { useUserContext } from "../../../contexts/UserContext";
@@ -134,24 +135,25 @@ export const Ordens = () => {
   }, [filters]);
 
   const toolbar = (
-    <>
-      <div className="flex flex-wrap items-center gap-3 flex-1 min-w-0">
-        <div className="relative flex-1 min-w-[180px] max-w-md">
+    <div className="orders-toolbar" data-testid="orders-toolbar">
+      <div className="orders-toolbar__filters">
+        <div className="orders-toolbar__search">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 w-4 h-4" />
           <input
+            id="orders-search"
             type="text"
             placeholder="Buscar por email o teléfono"
             value={filters.searchData}
             onChange={(e) => startFilter("searchData", e.target.value)}
-            className="w-full bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 rounded-lg py-2 pl-9 pr-3 text-gray-900 dark:text-white text-sm placeholder-gray-500 focus:outline-none focus:border-bear-cyan focus:ring-1 focus:ring-bear-cyan"
+            className="orders-toolbar__control w-full bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 rounded-lg py-2 pl-9 pr-3 text-gray-900 dark:text-white text-sm placeholder-gray-500 focus:outline-none focus:border-bear-cyan focus:ring-1 focus:ring-bear-cyan"
           />
         </div>
-        <label className="inline-flex flex-col gap-1 text-xs font-semibold text-gray-600 dark:text-gray-400">
-          Método
+        <label className="orders-toolbar__field orders-toolbar__field--method inline-flex flex-col gap-1 text-xs font-semibold text-gray-600 dark:text-gray-400">
+          <span className="orders-toolbar__label">Método</span>
           <select
             value={filters.paymentMethod}
             onChange={(e) => startFilter("paymentMethod", e.target.value)}
-            className="bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
+            className="orders-toolbar__control bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
           >
             <option value="">Todos</option>
             <option value="Paypal">Paypal</option>
@@ -160,14 +162,14 @@ export const Ordens = () => {
             <option value="Admin">Admin</option>
           </select>
         </label>
-        <label className="inline-flex flex-col gap-1 text-xs font-semibold text-gray-600 dark:text-gray-400">
-          Estado
+        <label className="orders-toolbar__field orders-toolbar__field--status inline-flex flex-col gap-1 text-xs font-semibold text-gray-600 dark:text-gray-400">
+          <span className="orders-toolbar__label">Estado</span>
           <select
             value={filters.status}
             onChange={(e) =>
               startFilter("status", e.target.value === "" ? "" : Number(e.target.value))
             }
-            className="bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
+            className="orders-toolbar__control bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
           >
             <option value="">Todos</option>
             <option value={ORDER_STATUS.PAID}>Pagada</option>
@@ -177,22 +179,22 @@ export const Ordens = () => {
             <option value={ORDER_STATUS.EXPIRED}>Expirada</option>
           </select>
         </label>
-        <label className="inline-flex flex-col gap-1 text-xs font-semibold text-gray-600 dark:text-gray-400">
-          Desde
+        <label className="orders-toolbar__field orders-toolbar__field--start inline-flex flex-col gap-1 text-xs font-semibold text-gray-600 dark:text-gray-400">
+          <span className="orders-toolbar__label">Desde</span>
           <input
             type="date"
             value={filters.startDate}
             onChange={(e) => startFilter("startDate", e.target.value)}
-            className="bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
+            className="orders-toolbar__control bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
           />
         </label>
-        <label className="inline-flex flex-col gap-1 text-xs font-semibold text-gray-600 dark:text-gray-400">
-          Hasta
+        <label className="orders-toolbar__field orders-toolbar__field--end inline-flex flex-col gap-1 text-xs font-semibold text-gray-600 dark:text-gray-400">
+          <span className="orders-toolbar__label">Hasta</span>
           <input
             type="date"
             value={filters.endDate}
             onChange={(e) => startFilter("endDate", e.target.value)}
-            className="bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
+            className="orders-toolbar__control bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
           />
         </label>
         <button
@@ -205,16 +207,16 @@ export const Ordens = () => {
             const iso = `${yyyy}-${mm}-${dd}`;
             setFilters((prev) => ({ ...prev, startDate: iso, endDate: iso, page: 0 }));
           }}
-          className="bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm hover:opacity-95 focus:border-bear-cyan focus:outline-none"
+          className="orders-toolbar__control orders-toolbar__today bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm hover:opacity-95 focus:border-bear-cyan focus:outline-none"
         >
           Hoy
         </button>
-        <label className="inline-flex flex-col gap-1 text-xs font-semibold text-gray-600 dark:text-gray-400">
-          Por página
+        <label className="orders-toolbar__field orders-toolbar__field--limit inline-flex flex-col gap-1 text-xs font-semibold text-gray-600 dark:text-gray-400">
+          <span className="orders-toolbar__label">Por página</span>
           <select
             value={filters.limit}
             onChange={(e) => startFilter("limit", +e.target.value)}
-            className="bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
+            className="orders-toolbar__control bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
           >
             <option value={100}>100</option>
             <option value={200}>200</option>
@@ -230,12 +232,12 @@ export const Ordens = () => {
         datas={transformOrdersToExport}
         text=""
       >
-        <span className="inline-flex items-center gap-2 bg-bear-gradient text-bear-dark-500 hover:opacity-95 font-medium rounded-pill px-4 py-2 transition-colors">
+        <span className="orders-toolbar__export inline-flex items-center gap-2 bg-bear-gradient text-bear-dark-500 hover:opacity-95 font-medium rounded-pill px-4 py-2 transition-colors">
           <Download size={18} aria-hidden />
           Exportar
         </span>
       </CsvDownloader>
-    </>
+    </div>
   );
 
   const statusBadge = (status: number) => {

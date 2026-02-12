@@ -46,10 +46,8 @@ SI ALGO NO CONECTA
 ========================================
 - Revisa que Host, Usuario, Contraseña y Puerto estén copiados exactamente desde Mi Cuenta.
 - Cierra y abre de nuevo tu app FTP, luego reconecta.
-- Si el problema sigue, abre soporte por chat y te guiamos paso a paso.
-
-Soporte por chat:
-https://m.me/rn/104901938679498?topic=VIDEOS%20PARA%20DJ&cadence=daily
+- Si el problema sigue, revisa tus credenciales en Mi Cuenta e intenta de nuevo.
+- Si persiste, usa la sección Instrucciones para validar tu configuración paso a paso.
 
 Descargas oficiales:
 - FileZilla: https://filezilla-project.org/download.php?type=client

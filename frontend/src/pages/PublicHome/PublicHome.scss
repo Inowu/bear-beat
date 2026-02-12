@@ -244,6 +244,10 @@
   transition: transform 140ms ease, box-shadow 180ms ease, background 140ms ease, border-color 140ms ease, color 140ms ease;
 }
 
+.home-cta svg {
+  flex: 0 0 auto;
+}
+
 .home-cta:active {
   transform: translateY(1px);
 }
@@ -426,11 +430,31 @@
   flex: 1 1 220px;
 }
 
+@media (max-width: 640px) {
+  .home-hero__cta {
+    max-width: none;
+    gap: 10px;
+  }
+
+  .home-hero__cta-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .home-hero__cta-row .home-cta {
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 54px;
+  }
+}
+
 .home-hero__micro {
   margin: 0;
   color: color-mix(in srgb, var(--ph-text-muted) 92%, transparent);
-  font-size: 13.5px;
-  line-height: 1.42;
+  font-size: clamp(13.5px, 0.82vw, 14.25px);
+  line-height: 1.5;
+  letter-spacing: 0.004em;
   display: grid;
   gap: 6px;
   padding: 12px 14px;
@@ -445,25 +469,44 @@
   align-items: flex-start;
   gap: 8px;
   color: color-mix(in srgb, var(--ph-text-body) 92%, transparent);
-  font-weight: 600;
+  font-weight: var(--bb-font-weight-medium);
+}
+
+.home-hero__micro-row svg {
+  margin-top: 1px;
+  flex: 0 0 auto;
+  opacity: 0.9;
 }
 
 .home-hero__micro-row strong {
   color: var(--ph-text-heading);
+  font-weight: var(--bb-font-weight-bold);
+  letter-spacing: 0;
 }
 
 @media (max-width: 480px) {
   .home-hero__micro {
-    font-size: 13px;
+    font-size: 13.25px;
+    line-height: 1.46;
   }
 }
 
 .home-hero__cta-alt {
+  display: inline-flex;
+  align-items: center;
   width: fit-content;
   color: color-mix(in srgb, var(--ph-accent) 86%, var(--ph-text-body));
   text-decoration: none;
   font-weight: 600;
   font-size: 13.5px;
+}
+
+@media (max-width: 640px) {
+  .home-hero__cta-alt {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
 }
 
 .home-hero__cta-alt:hover {
@@ -717,6 +760,12 @@
   }
 }
 
+@media (max-width: 640px) {
+  .inside-preview__cta {
+    min-height: 52px;
+  }
+}
+
 /* D. TRUST BAR */
 .trust-bar {
   padding: 14px 0 34px;
@@ -936,6 +985,17 @@
   margin-top: 16px;
 }
 
+@media (max-width: 640px) {
+  .catalog-demo__cta {
+    display: grid;
+  }
+
+  .catalog-demo__cta .home-cta {
+    width: 100%;
+    min-height: 52px;
+  }
+}
+
 /* E. SOCIAL PROOF */
 .social-proof {
   padding: 42px 0;
@@ -957,6 +1017,13 @@
 
 .social-proof__more {
   height: fit-content;
+}
+
+@media (max-width: 640px) {
+  .social-proof__more {
+    width: 100%;
+    min-height: 52px;
+  }
 }
 
 .social-proof__grid {
@@ -1415,6 +1482,14 @@
 
 .activation-steps__cta .home-cta {
   min-width: min(360px, 100%);
+}
+
+@media (max-width: 640px) {
+  .activation-steps__cta .home-cta {
+    width: 100%;
+    min-width: 0;
+    min-height: 52px;
+  }
 }
 
 /* H. PRICING */

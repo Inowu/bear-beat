@@ -9,7 +9,6 @@ import {
   Play,
   Download,
   BookOpen,
-  MessageCircle,
   FileMusic,
   FileVideoCamera,
   FileArchive,
@@ -35,7 +34,6 @@ import Pagination from '../../components/Pagination/Pagination';
 import { UsersUHModal } from '../../components/Modals/UsersUHModal/UsersUHModal';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
-import { SUPPORT_CHAT_URL } from '../../utils/supportChat';
 import { GROWTH_METRICS, trackGrowthMetric } from '../../utils/growthMetrics';
 import { formatBytes } from '../../utils/format';
 import { inferTrackMetadata } from '../../utils/fileMetadata';
@@ -936,23 +934,6 @@ function Home() {
                 <BookOpen size={18} aria-hidden />
                 <span className="bb-quick-label">Guía FTP</span>
               </Link>
-              <a
-                href={SUPPORT_CHAT_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bb-home-quick-btn bb-home-quick-btn--link bb-home-quick-btn--icon"
-                onClick={() => {
-                  trackGrowthMetric(GROWTH_METRICS.SUPPORT_CHAT_OPENED, {
-                    source: 'home_library_quick_action',
-                    pagePath: `/${pastFile.join('/')}`,
-                  });
-                }}
-                aria-label="Soporte por chat"
-                title="Soporte por chat"
-              >
-                <MessageCircle size={18} aria-hidden />
-                <span className="bb-quick-label">Soporte</span>
-              </a>
             </div>
           </div>
 

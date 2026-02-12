@@ -3,8 +3,6 @@
 @import "src/styles/_variables-theme.scss";
 
 .auth-main-container.auth-page {
-  /* Allow pages to bump the floating chat button up when needed (short viewports). */
-  --chat-fab-bottom-offset: 0px;
   box-sizing: border-box;
   position: relative;
   isolation: isolate;
@@ -65,13 +63,6 @@
     .auth-tagline-sep {
       color: var(--app-text-muted);
     }
-  }
-}
-
-/* Short screens (landscape phones / small laptops): avoid the floating chat button covering the primary CTA. */
-@media (max-height: 760px) {
-  .auth-main-container.auth-page {
-    --chat-fab-bottom-offset: 96px;
   }
 }
 
@@ -490,17 +481,6 @@
 html.dark .auth-split {
   border-color: rgba(8, 225, 247, 0.28);
   background: rgba(13, 15, 16, 0.84);
-}
-
-.auth-split-right .chat-fab--inline {
-  margin: 0 auto;
-  align-self: center;
-  min-width: 168px;
-  justify-content: center;
-}
-
-.auth-split-right .chat-fab--inline .chat-fab-badge {
-  font-size: clamp(13px, 0.35vw + 11px, 14px);
 }
 
 @include respond-to(sm) {

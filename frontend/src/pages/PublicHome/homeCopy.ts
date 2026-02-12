@@ -108,7 +108,7 @@ export const HOME_FAQ_ITEMS: HomeFaqItem[] = [
     id: "support",
     question: "¿Qué pasa si no logro activar o descargar?",
     answer:
-      "Te ayudamos por soporte en chat para activar cuenta, validar credenciales FTP y resolver incidencias de pago o acceso.",
+      "Te ayudamos con activación guiada para validar credenciales FTP y resolver incidencias de pago o acceso.",
   },
   {
     id: "payments",

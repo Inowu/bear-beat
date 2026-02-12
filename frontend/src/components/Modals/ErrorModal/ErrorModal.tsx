@@ -3,7 +3,6 @@ import "../Modal.scss";
 import "./ErrorModal.scss";
 import { AlertTriangle, X } from "lucide-react";
 import { IUser } from "../../../interfaces/User";
-import { openSupportChat } from "../../../utils/supportChat";
 import { toErrorMessage } from "../../../utils/errorMessage";
 interface IError {
   show: boolean;
@@ -16,7 +15,7 @@ export function ErrorModal(props: IError) {
   const raw = toErrorMessage(message).trim();
   const friendly =
     raw ||
-    "Ocurrió un error al procesar tu solicitud. Intenta de nuevo o abre soporte por chat.";
+    "Ocurrió un error al procesar tu solicitud. Intenta de nuevo en unos segundos.";
   return (
     <Modal show={show} onHide={onHide} centered className="container-error-modal">
       <div className="modal-container error-modal">
@@ -33,17 +32,7 @@ export function ErrorModal(props: IError) {
         </div>
         <div className="bottom">
           <p className="content">{friendly}</p>
-          <p className="error-modal__hint">
-            Si esto te está bloqueando, te ayudamos por chat en tiempo real.
-          </p>
           <div className="button-container-2">
-            <button
-              type="button"
-              className="btn-option-5"
-              onClick={() => openSupportChat("error_modal")}
-            >
-              Abrir soporte
-            </button>
             <button type="button" className="btn-success" onClick={onHide}>
               Cerrar
             </button>

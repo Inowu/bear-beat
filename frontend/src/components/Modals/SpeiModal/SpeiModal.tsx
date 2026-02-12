@@ -2,7 +2,6 @@ import React, { useState, useCallback } from "react";
 import { Modal } from "react-bootstrap";
 import { Check, Copy, Landmark, ShieldCheck, X } from "lucide-react";
 import { ISpeiData } from "../../../interfaces/Plans";
-import { openSupportChat } from "../../../utils/supportChat";
 import "../Modal.scss";
 import "./SpeiModal.scss";
 
@@ -128,9 +127,6 @@ export function SpeiModal(props: ISpei) {
           </div>
 
           <div className="button-container-2">
-            <button type="button" className="btn-option-5" onClick={() => openSupportChat("spei_modal")}>
-              Abrir soporte
-            </button>
             <button type="button" className="btn-success" onClick={onHide}>
               Listo, ya pagué
             </button>

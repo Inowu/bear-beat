@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { MessageCircle, ShieldCheck, WalletCards, FileText, CircleHelp, ChevronDown, ArrowUp } from "lucide-react";
-import { SUPPORT_CHAT_URL } from "../../utils/supportChat";
+import { ShieldCheck, WalletCards, FileText, CircleHelp, ChevronDown, ArrowUp } from "lucide-react";
 import "./Legal.scss";
 
 const LEGAL_LAST_UPDATED_LABEL = "6 de febrero de 2026";
@@ -31,7 +30,7 @@ const FAQ_ITEMS = [
   {
     question: "¿Qué pasa si tengo problemas al activar o descargar?",
     answer:
-      "Te ayudamos por soporte en chat para activar cuenta, validar credenciales FTP y resolver incidencias de pago o acceso.",
+      "Revisa la guía de /instrucciones y tus credenciales FTP en Mi Cuenta. Si falla el pago, intenta nuevamente con otro método disponible.",
   },
   {
     question: "¿Guardan mi número completo de tarjeta?",
@@ -168,24 +167,17 @@ function Legal() {
           <p className="legal2026__eyebrow">Centro legal y ayuda</p>
           <h1>Preguntas frecuentes, privacidad y reembolsos</h1>
           <p className="legal2026__lead">
-            Información basada en el funcionamiento actual del sitio y el flujo real de cuenta, pagos y soporte.
+            Información basada en el funcionamiento actual del sitio y el flujo real de cuenta y pagos.
           </p>
           <p className="legal2026__updated">Última actualización: {LEGAL_LAST_UPDATED_LABEL}</p>
           <div className="legal2026__hero-actions">
             <Link to="/instrucciones" className="legal2026__btn legal2026__btn--ghost">
               Ver instrucciones de descarga
             </Link>
-            <a
-              href={SUPPORT_CHAT_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="legal2026__btn legal2026__btn--primary"
-            >
-              <MessageCircle size={16} />
-              Abrir soporte por chat
-            </a>
+            <Link to="/planes" className="legal2026__btn legal2026__btn--primary">
+              Ver planes
+            </Link>
           </div>
-          <p className="legal2026__hero-note">Se abre en una nueva pestaña (Messenger).</p>
         </header>
 
         <nav className="legal2026__quick-nav bb-segmented" aria-label="Contenido">
@@ -289,7 +281,7 @@ function Legal() {
             </p>
             <h3>5. Derechos del usuario</h3>
             <p>
-              Puedes solicitar corrección o actualización de tu información desde tu cuenta y por soporte en chat.
+              Puedes solicitar corrección o actualización de tu información directamente desde tu cuenta.
             </p>
           </div>
           <a className="legal2026__backtop" href="#legal-top">
@@ -310,16 +302,16 @@ function Legal() {
             </p>
             <h3>2. Reembolsos</h3>
             <p>
-              Las solicitudes de reembolso se revisan caso por caso por soporte, considerando si hubo falla técnica
+              Las solicitudes de reembolso se revisan caso por caso, considerando si hubo falla técnica
               real de activación o acceso. No existe reembolso automático general para pagos ya procesados.
             </p>
-            <h3>3. Casos que requieren soporte inmediato</h3>
+            <h3>3. Casos que requieren revisión inmediata</h3>
             <ul>
               <li>Cobro duplicado</li>
               <li>Activación incompleta</li>
               <li>Imposibilidad de acceso</li>
             </ul>
-            <p>Estos casos deben reportarse por chat para revisión prioritaria.</p>
+            <p>Estos casos deben reportarse desde tu cuenta para revisión prioritaria.</p>
             <h3>4. Canales de pago</h3>
             <p>
               El procesamiento de pagos depende del método elegido (Tarjeta/PayPal/SPEI), y tiempos de reflejo o
@@ -355,7 +347,7 @@ function Legal() {
             </p>
             <h3>4. Contacto</h3>
             <p>
-              Para soporte técnico, dudas de cobro o aclaraciones sobre estas políticas, usa el canal oficial de chat.
+              Para dudas de cobro o aclaraciones sobre estas políticas, usa los canales oficiales dentro de tu cuenta.
             </p>
             <h3>5. Marcas de terceros</h3>
             <p>

@@ -170,7 +170,7 @@ export default function Pricing(props: {
                   </li>
                   <li>
                     <CheckCircle2 size={16} aria-hidden />
-                    <span className="pricing__include-text">Carpetas listas + guía por chat para activar</span>
+                    <span className="pricing__include-text">Carpetas listas + guía de activación incluida</span>
                   </li>
                 </ul>
 
@@ -241,7 +241,7 @@ export default function Pricing(props: {
                   </li>
                   <li>
                     <CheckCircle2 size={16} aria-hidden />
-                    <span className="pricing__include-text">Carpetas listas + guía por chat para activar</span>
+                    <span className="pricing__include-text">Carpetas listas + guía de activación incluida</span>
                   </li>
                 </ul>
 

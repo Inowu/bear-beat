@@ -1,7 +1,46 @@
 @import "src/styles/mixin.scss";
 
+.auth-login-atmosphere {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 16px;
+  position: relative;
+  background: var(--auth-login-atmosphere-bg);
+  transition: background 0.2s ease;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      ellipse 80% 60% at 50% 40%,
+      rgba(8, 225, 247, 0.14) 0%,
+      transparent 55%
+    );
+    opacity: 0;
+  }
+
+  html[data-theme="dark"] &::before {
+    opacity: 1;
+  }
+}
+
 .auth-login-card.auth-login-card--signup {
-  /* Register aligned with /auth visual rhythm but denser to reduce initial scroll. */
+  /* Register uses the same base card system as login, with slightly denser rhythm. */
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  border-radius: 1rem;
+  font-family: var(--bb-font-ui);
+  background: var(--auth-login-card-bg);
+  border: 1px solid var(--auth-login-card-border);
+  box-shadow: var(--auth-login-card-shadow, var(--app-shadow-card));
+  color: var(--auth-register-text);
   max-width: 480px;
   padding: clamp(1.7rem, 2.3vh, 2.1rem) clamp(1.3rem, 2.4vw, 1.7rem);
 
@@ -24,19 +63,125 @@
   }
 }
 
+.auth-login-logo {
+  display: block;
+  height: 42px;
+  width: auto;
+  max-width: 148px;
+  margin: 0 auto 1.2rem;
+  object-fit: contain;
+}
+
+.auth-login-title {
+  margin: 0 0 0.5rem;
+  text-align: center;
+  color: var(--auth-login-title);
+  font-family: var(--bb-font-ui);
+  font-size: clamp(28px, 1.4vw + 14px, 36px);
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.auth-login-sub {
+  margin: 0 0 1.35rem;
+  text-align: center;
+  color: var(--auth-login-subtitle);
+  font-size: var(--app-font-size-body);
+  line-height: 1.42;
+}
+
 form.sign-up-form {
   --signup-field-height: 52px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 
   .c-row {
     position: relative;
   }
 
+  .auth-field-label {
+    margin-bottom: 4px;
+  }
+
   .c-row.is-invalid .signup-phone-wrap {
     border-color: color-mix(in srgb, var(--app-status-error) 78%, var(--auth-input-border));
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--app-status-error) 20%, transparent);
+  }
+
+  .c-row.is-invalid .auth-login-input-wrap {
+    border-color: color-mix(in srgb, var(--app-status-error) 78%, var(--auth-input-border));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--app-status-error) 20%, transparent);
+  }
+
+  .auth-login-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: var(--signup-field-height);
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--auth-input-border) 92%, transparent);
+    background: color-mix(in srgb, var(--auth-input-bg) 96%, transparent);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--auth-input-border) 22%, transparent);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .auth-login-input-wrap:focus-within {
+    border-color: var(--app-accent);
+    box-shadow: 0 0 0 3px var(--app-focus-ring);
+  }
+
+  .auth-login-input-wrap:focus-within .auth-login-input-icon {
+    color: var(--app-accent);
+  }
+
+  .auth-login-input-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    color: var(--auth-register-icon);
+    pointer-events: none;
+    transition: color 0.2s ease;
+  }
+
+  .auth-login-input {
+    width: 100%;
+    min-height: var(--signup-field-height);
+    padding: 13px 16px;
+    border: none;
+    border-radius: 999px;
+    box-sizing: border-box;
+    background: transparent;
+    color: var(--auth-register-text);
+    font-size: clamp(15px, 0.4vw + 13px, 16px);
+    font-weight: 600;
+
+    &::placeholder {
+      color: var(--auth-register-text);
+      opacity: 0.68;
+    }
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  .auth-login-input-with-icon {
+    padding-left: 50px;
+  }
+
+  .auth-login-password-wrap {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .auth-login-input-wrap .password-input.auth-login-input-with-icon {
+    min-height: var(--signup-field-height);
+    padding-left: 50px !important;
   }
 
   .c-row--phone {
@@ -212,11 +357,11 @@ form.sign-up-form {
   }
 
   .auth-signup-optional-grid {
-    margin-top: 2px;
-    padding-top: 2px;
+    margin-top: 0;
+    padding-top: 0;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 10px;
+    gap: 8px;
   }
 
   /* Light: CTA sin halo neón (premium/limpio). Dark: conserva glow. */
@@ -347,9 +492,9 @@ form.sign-up-form {
   }
 
   .error-formik {
-    margin-top: 3px;
-    min-height: 1.35em;
-    padding: 0 8px;
+    margin-top: 2px;
+    min-height: 0;
+    padding: 0 6px;
     color: var(--app-status-error);
     font-size: clamp(12px, 0.16vw + 11px, 13px);
     font-weight: 600;
@@ -357,12 +502,17 @@ form.sign-up-form {
     overflow-wrap: anywhere;
 
     &[aria-hidden="true"] {
-      visibility: hidden;
+      display: none;
     }
   }
 }
 
 [data-theme="light"] form.sign-up-form {
+  .auth-login-input-wrap {
+    border-color: color-mix(in srgb, var(--auth-input-border) 92%, transparent);
+    background: color-mix(in srgb, #ffffff 97%, var(--auth-input-bg));
+  }
+
   .c-row--phone .signup-phone-wrap {
     /* Light: neutral fill (premium), sin "baby blue" */
     background: color-mix(in srgb, var(--auth-input-bg) 96%, transparent);
@@ -372,6 +522,12 @@ form.sign-up-form {
   .signup-phone-icon-wrap {
     background: color-mix(in srgb, var(--auth-input-bg) 90%, transparent);
   }
+}
+
+html[data-theme="light"] .auth-login-atmosphere {
+  background:
+    radial-gradient(560px 320px at 50% 32%, color-mix(in srgb, var(--app-accent) 4.2%, transparent), transparent 70%),
+    var(--auth-login-atmosphere-bg);
 }
 
 html[data-theme="light"] .auth-login-card.auth-login-card--signup {
@@ -411,7 +567,7 @@ html[data-theme="light"] form.sign-up-form .turnstile-widget-wrap {
 
   form.sign-up-form {
     --signup-field-height: 48px;
-    gap: 9px;
+    gap: 7px;
 
     .signup-label {
       font-size: 13px;
@@ -429,7 +585,7 @@ html[data-theme="light"] form.sign-up-form .turnstile-widget-wrap {
     }
 
     .auth-signup-optional-grid {
-      gap: 9px;
+      gap: 7px;
     }
   }
 }

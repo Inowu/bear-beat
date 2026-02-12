@@ -8,7 +8,7 @@ const STEPS = [
   },
   {
     title: "Recibe ayuda real",
-    body: "Te guiamos por chat para activar y entrar a tus carpetas sin fricción.",
+    body: "Te guiamos paso a paso para activar y entrar a tus carpetas sin fricción.",
   },
   {
     title: "Descarga lo que necesitas",
@@ -28,7 +28,7 @@ export default function ActivationSteps(props: {
         <div className="activation-steps__head">
           <h2 className="home-h2">De pago a cabina en minutos</h2>
           <p className="home-sub">
-            Activación guiada por chat para que descargues hoy mismo.
+            Activación guiada para que descargues hoy mismo.
           </p>
         </div>
 

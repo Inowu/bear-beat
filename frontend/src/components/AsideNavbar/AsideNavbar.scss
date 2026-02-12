@@ -2,7 +2,7 @@
 
 aside {
   width: 100%;
-  max-width: 300px;
+  max-width: 292px;
   padding: 0 16px;
   background-color: var(--theme-nav-bg);
   position: sticky;
@@ -33,11 +33,11 @@ aside {
     .nav-title {
       font-family: var(--bb-font-ui);
       text-align: center;
-      font-size: var(--app-font-size-h3);
+      font-size: clamp(2.1rem, 0.38vw + 1.9rem, 2.5rem);
       font-weight: 700;
       color: var(--theme-nav-text);
       margin: 0 0 10px;
-      letter-spacing: 0.01em;
+      letter-spacing: -0.01em;
     }
 
     .nav-links-wrap {
@@ -62,9 +62,9 @@ aside {
     .nav-group__title {
       margin: 0;
       padding: 0 6px;
-      font-size: 0.84rem;
-      font-weight: 800;
-      letter-spacing: 0.08em;
+      font-size: 1.08rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
       color: color-mix(in srgb, var(--theme-nav-text) 70%, transparent);
     }
@@ -88,13 +88,14 @@ aside {
       align-items: center;
       gap: 12px;
       padding: 10px 14px;
-      border-radius: 12px;
+      border-radius: 14px;
       border: 1px solid var(--theme-nav-item-border, transparent);
       background: var(--theme-nav-item-bg);
       box-shadow: var(--theme-nav-item-shadow, none);
       color: var(--theme-nav-text);
-      font-size: var(--app-font-size-body);
-      font-weight: 700;
+      font-size: clamp(1.3rem, 0.18vw + 1.22rem, 1.42rem);
+      font-weight: 600;
+      line-height: 1.15;
       text-decoration: none;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
@@ -274,7 +275,7 @@ aside {
       padding-top: 1.25rem;
 
       .nav-title {
-        font-size: 1.02rem;
+        font-size: 1.22rem;
         text-align: left;
         color: var(--aside-overlay-text-muted);
         margin-bottom: 10px;
@@ -290,14 +291,14 @@ aside {
 
       .nav-group__title {
         color: color-mix(in srgb, var(--aside-overlay-text-muted) 92%, transparent);
-        font-size: 0.84rem;
+        font-size: 1.02rem;
       }
 
       .nav-link-item {
         background: color-mix(in srgb, var(--aside-overlay-bg) 82%, transparent);
         border-color: color-mix(in srgb, var(--aside-overlay-border) 92%, transparent);
         color: var(--aside-overlay-text);
-        font-size: 0.94rem;
+        font-size: 1.34rem;
         min-height: 44px;
       }
 

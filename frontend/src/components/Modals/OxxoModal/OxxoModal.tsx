@@ -2,7 +2,6 @@ import React, { useCallback, useState } from "react";
 import { Modal } from "react-bootstrap";
 import { Check, Copy, Store, X } from "lucide-react";
 import { IOxxoData } from "interfaces/Plans";
-import { openSupportChat } from "../../../utils/supportChat";
 import "../Modal.scss";
 import "./OxxoModal.scss";
 interface IOxxo {
@@ -111,15 +110,12 @@ export function OxxoModal(props: IOxxo) {
                 Paga la cantidad <strong>exacta</strong> para que se asigne correctamente.
               </p>
               <p className="oxxo-modal__hint">
-                Si ya pagaste y no se activó en 48 hrs, abre soporte y lo revisamos.
+                Si ya pagaste y no se activó en 48 hrs, vuelve a revisar tu estado de pago desde tu cuenta.
               </p>
             </div>
           </div>
 
           <div className="button-container-2">
-            <button type="button" className="btn-option-5" onClick={() => openSupportChat("oxxo_modal")}>
-              Abrir soporte
-            </button>
             <button type="button" className="btn-success" onClick={onHide}>
               Listo, ya pagué
             </button>

@@ -17,6 +17,12 @@ interface IAdminFilter {
   limit: number;
 }
 
+const formatDownloadSize = (rawSize: bigint | number | string) => {
+  const bytes = Number(rawSize ?? 0);
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0.00 GB";
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+};
+
 export const DownloadHistory = () => {
   const { currentUser } = useUserContext();
   const navigate = useNavigate();
@@ -81,10 +87,14 @@ export const DownloadHistory = () => {
   }, []);
 
   const toolbar = (
-    <>
-      <label className="inline-flex flex-col gap-1 text-sm text-slate-300">
-        Por página
-        <Select value={filters.limit} onChange={(e) => startFilter("limit", +e.target.value)}>
+    <div className="downloads-history-toolbar" data-testid="downloads-history-toolbar">
+      <label className="downloads-history-toolbar__field inline-flex flex-col gap-1 text-sm text-slate-300">
+        <span className="downloads-history-toolbar__label">Por página</span>
+        <Select
+          className="downloads-history-toolbar__select"
+          value={filters.limit}
+          onChange={(e) => startFilter("limit", +e.target.value)}
+        >
           <option value={100}>100</option>
           <option value={200}>200</option>
           <option value={500}>500</option>
@@ -93,12 +103,12 @@ export const DownloadHistory = () => {
       <button
         type="button"
         onClick={() => setShowModal(true)}
-        className="inline-flex items-center gap-2 bg-bear-gradient hover:opacity-95 text-bear-dark-500 font-medium rounded-lg px-4 py-2 transition-opacity"
+        className="downloads-history-toolbar__cta inline-flex items-center gap-2 bg-bear-gradient hover:opacity-95 text-bear-dark-500 font-medium rounded-lg px-4 py-2 transition-opacity"
       >
         <Plus size={18} />
         Añadir instrucciones
       </button>
-    </>
+    </div>
   );
 
   return (
@@ -130,14 +140,15 @@ export const DownloadHistory = () => {
             </thead>
             <tbody className="bg-slate-950">
               {!loader
-                ? history.map((his, index) => {
-                    const gb = Number(his.size) / (1024 * 1024 * 1024);
+                ? history.length > 0
+                  ? history.map((his, index) => {
+                    const sizeLabel = formatDownloadSize(his.size);
                     return (
                       <tr key={`h_${index}`} className="border-b border-slate-800 hover:bg-slate-900/60 transition-colors">
                         <td className="py-3 px-4 text-sm text-slate-300 truncate" title={his.email}>{his.email}</td>
                         <td className="py-3 px-4 text-sm text-slate-300 hidden xl:table-cell truncate" title={his.phone ?? ""}>{his.phone}</td>
                         <td className="py-3 px-4 text-sm text-slate-300 truncate" title={his.fileName}>{his.fileName}</td>
-                        <td className="py-3 px-4 text-sm text-slate-300">{gb.toFixed(2)} GB</td>
+                        <td className="py-3 px-4 text-sm text-slate-300">{sizeLabel}</td>
                         <td className="py-3 px-4 text-sm text-slate-300">{his.date.toLocaleDateString()}</td>
                         <td className="py-3 px-4">
                           <span className="inline-flex text-xs px-2 py-1 rounded-full bg-slate-500/10 text-slate-400">
@@ -147,6 +158,13 @@ export const DownloadHistory = () => {
                       </tr>
                     );
                   })
+                  : (
+                    <tr>
+                      <td colSpan={6} className="py-10 px-4 text-center text-sm text-slate-400">
+                        No hay descargas registradas para este rango.
+                      </td>
+                    </tr>
+                  )
                 : ARRAY_10.map((_, i) => (
                     <tr key={`s_${i}`} className="border-b border-slate-800">
                       <td colSpan={6} className="py-4 animate-pulse bg-slate-800/50" />
@@ -171,32 +189,43 @@ export const DownloadHistory = () => {
         </div>
       </div>
 
-      <div className="md:hidden flex flex-col rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50">
+      <div className="downloads-history-mobile-list md:hidden flex flex-col rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50">
         {!loader
-          ? history.map((his, index) => {
-              const gb = Number(his.size) / (1024 * 1024 * 1024);
+          ? history.length > 0
+            ? history.map((his, index) => {
+              const sizeLabel = formatDownloadSize(his.size);
               return (
                 <button
                   key={`m_${index}`}
-                  className="flex items-center justify-between gap-3 min-h-[64px] px-4 py-3 border-b border-slate-800 hover:bg-slate-900/60 active:bg-slate-800"
+                  className="downloads-history-mobile-card flex items-start justify-between gap-3 px-4 py-3 border-b border-slate-800 hover:bg-slate-900/60 active:bg-slate-800"
                   onClick={() => setDrawerItem(his)}
                   type="button"
                 >
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-white text-sm truncate">{his.fileName}</p>
-                    <p className="text-slate-400 text-xs">{his.email} · {gb.toFixed(2)} GB</p>
+                  <div className="min-w-0 flex-1 text-left">
+                    <p className="downloads-history-mobile-card__name text-sm truncate">{his.fileName}</p>
+                    <p className="downloads-history-mobile-card__email text-xs truncate">{his.email}</p>
+                    <div className="downloads-history-mobile-card__meta">
+                      <span className="downloads-history-mobile-card__chip">{sizeLabel}</span>
+                      <span className="downloads-history-mobile-card__chip">{his.date.toLocaleDateString()}</span>
+                      <span className="downloads-history-mobile-card__chip is-type">
+                        {his.isFolder ? "Carpeta" : "Archivo"}
+                      </span>
+                    </div>
                   </div>
-                  <span className="shrink-0 text-xs px-2 py-1 rounded-full bg-slate-500/10 text-slate-400">
-                    {his.isFolder ? "Carpeta" : "Archivo"}
-                  </span>
-                  <span className="p-2 text-slate-400" aria-hidden>
+                  <span className="downloads-history-mobile-card__more p-2 text-slate-400" aria-hidden>
                     <MoreVertical size={20} />
                   </span>
                 </button>
               );
             })
+            : (
+              <div className="downloads-history-mobile-empty px-4 py-6">
+                <p className="text-sm">No hay descargas registradas.</p>
+                <p className="text-xs">Cuando haya actividad, aparecerá aquí.</p>
+              </div>
+            )
           : ARRAY_10.map((_, i) => (
-              <div key={`s_${i}`} className="min-h-[64px] px-4 py-3 border-b border-slate-800 animate-pulse bg-slate-800/30" />
+              <div key={`s_${i}`} className="min-h-[76px] px-4 py-3 border-b border-slate-800 animate-pulse bg-slate-800/30" />
             ))}
       </div>
 

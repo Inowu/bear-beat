@@ -70,6 +70,7 @@ interface PlanCardPropsI {
   userPhone?: string;
   showRecommendedBadge?: boolean;
   variant?: "default" | "marketing";
+  compactMarketingCopy?: boolean;
   trialConfig?: {
     enabled: boolean;
     days: number;
@@ -85,9 +86,11 @@ function PlanCard(props: PlanCardPropsI) {
     userEmail,
     showRecommendedBadge = true,
     variant = "default",
+    compactMarketingCopy = false,
     trialConfig,
   } = props;
   const isMarketing = variant === "marketing";
+  const isCompactMarketing = isMarketing && compactMarketingCopy;
 	  const [showSuccess, setShowSuccess] = useState<boolean>(false);
 	  const [showCancelModal, setShowCancelModal] = useState<boolean>(false);
   const [showChangeModal, setShowChangeModal] = useState<boolean>(false);
@@ -322,7 +325,10 @@ function PlanCard(props: PlanCardPropsI) {
   }, [isMxn]);
   const showBadge = isMxn && !currentPlan && showRecommendedBadge;
   const includedBenefits = DEFAULT_BENEFITS;
-  const visibleBenefits = isMarketing && !showAllBenefits ? includedBenefits.slice(0, 3) : includedBenefits;
+  const marketingBenefitLimit = isCompactMarketing ? 2 : 3;
+  const visibleBenefits =
+    isMarketing && !showAllBenefits ? includedBenefits.slice(0, marketingBenefitLimit) : includedBenefits;
+  const showBenefitsToggle = isMarketing && !isCompactMarketing && includedBenefits.length > 3;
   const hasPaypalPlan = ppPlan !== null && Boolean(ppPlan.paypal_plan_id || ppPlan.paypal_plan_id_test);
   const showPaypalOption = hasPaypalPlan;
   const planCurrency = (plan.moneda ?? "MXN").toUpperCase();
@@ -384,7 +390,8 @@ function PlanCard(props: PlanCardPropsI) {
       className={
         "plan-card-wrapper plan-card-monolith " +
         (plan.moneda === "usd" ? "resp-plan " : "") +
-        (isMarketing ? "is-marketing " : "")
+        (isMarketing ? "is-marketing " : "") +
+        (isCompactMarketing ? "is-marketing-compact " : "")
       }
     >
       <div className="plan-card-glow" aria-hidden />
@@ -398,7 +405,7 @@ function PlanCard(props: PlanCardPropsI) {
         {currentPlan && <span className="plan-card-badge plan-card-badge--actual">Actual</span>}
         {showBadge && <span className="plan-card-badge plan-card-badge--value">MÁS ELEGIDO</span>}
         <header className="c-row plan-card-head">
-          <p className="plan-card-kicker">{isMxn ? "Pago local" : "Pago internacional"}</p>
+          {!isCompactMarketing && <p className="plan-card-kicker">{isMxn ? "Pago local" : "Pago internacional"}</p>}
           <h2 className="plan-card-title">{plan.name}</h2>
           <div className="plan-card-price-row">
             <span className="plan-card-price-amount">{formattedPlanPrice}</span>
@@ -420,7 +427,7 @@ function PlanCard(props: PlanCardPropsI) {
             </li>
           ))}
         </ul>
-        {isMarketing && includedBenefits.length > 3 && (
+        {showBenefitsToggle && (
           <button
             type="button"
             className="plan-card-benefits-toggle"
@@ -450,11 +457,11 @@ function PlanCard(props: PlanCardPropsI) {
               >
                 <Unlock aria-hidden /> {primaryCtaLabel}
               </button>
-                    {trialNearCtaCopy && <p className="plan-card-trial-note">{trialNearCtaCopy}</p>}
-                    {isMarketing && (
+                    {trialNearCtaCopy && !isCompactMarketing && <p className="plan-card-trial-note">{trialNearCtaCopy}</p>}
+                    {isMarketing && !isCompactMarketing && (
                       <ul className="plan-card-trust-row" aria-label="Confianza">
                         <li>Pago seguro</li>
-                        <li>Soporte por chat 1 a 1</li>
+                        <li>Activación guiada 1 a 1</li>
                         <li>Cancela cuando quieras</li>
                       </ul>
                     )}
@@ -658,7 +665,11 @@ function PlanCard(props: PlanCardPropsI) {
 	            className="plan-card-payment-logos"
 	            ariaLabel={`Métodos de pago disponibles para ${plan.name}`}
 	          />
-		          <p className="plan-card-confidence">{isMarketing ? "Activación guiada por chat." : "Activación guiada por chat después del pago."}</p>
+            {!isCompactMarketing && (
+		          <p className="plan-card-confidence">
+                {isMarketing ? "Activación guiada." : "Activación guiada después del pago."}
+              </p>
+            )}
 		        </div>
 		      </div>
       <CancellationReasonModal

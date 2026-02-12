@@ -140,8 +140,8 @@
   max-width: 64ch;
   color: color-mix(in srgb, var(--ph-text-body) 94%, transparent);
   font-size: clamp(1.45rem, 1.5vw, 1.9rem);
-  line-height: 1.45;
-  font-weight: 600;
+  line-height: 1.42;
+  font-weight: 500;
 }
 
 .plans-hero-chips {
@@ -187,7 +187,7 @@
   gap: 8px;
   color: color-mix(in srgb, var(--ph-text-body) 92%, transparent);
   font-size: 1.2rem;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .plans-hero-price-tag {
@@ -235,9 +235,9 @@
 .plans-offer__title-block p {
   margin: 0;
   color: color-mix(in srgb, var(--ph-text-muted) 94%, transparent);
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   font-weight: 600;
-  line-height: 1.46;
+  line-height: 1.44;
 }
 
 .plans-currency-toggle {
@@ -261,9 +261,9 @@
 .plans-currency-micro {
   margin: 0;
   color: color-mix(in srgb, var(--ph-text-muted) 92%, transparent);
-  font-size: 1.18rem;
-  font-weight: 700;
-  line-height: 1.42;
+  font-size: 1.16rem;
+  font-weight: 600;
+  line-height: 1.46;
 }
 
 .plans-trial-note {
@@ -307,6 +307,20 @@
   align-items: center;
   justify-content: center;
   padding: 8px;
+}
+
+.plans-loader {
+  min-height: clamp(340px, 58vh, 640px);
+  padding: 16px;
+}
+
+.plans-loader .app-state-panel {
+  width: min(560px, 100%);
+  min-height: 210px;
+}
+
+.plans-loader .app-state-title {
+  letter-spacing: -0.01em;
 }
 
 @media (min-width: 980px) {
@@ -371,7 +385,7 @@
   }
 
   .plans-page-title {
-    font-size: clamp(3.5rem, 9vw, 4.4rem);
+    font-size: clamp(3.3rem, 8.6vw, 4.2rem);
     line-height: 1.03;
   }
 
@@ -399,11 +413,11 @@
   }
 
   .plans-offer__title-block h2 {
-    font-size: 2.4rem;
+    font-size: 2.2rem;
   }
 
   .plans-offer__title-block p {
-    font-size: 1.25rem;
+    font-size: 1.18rem;
   }
 
   .plans-offer__price {
@@ -412,6 +426,16 @@
 
   .plans-plan-item {
     max-width: none;
+  }
+
+  .plans-loader {
+    min-height: clamp(320px, 56vh, 560px);
+    padding: 12px;
+  }
+
+  .plans-loader .app-state-panel {
+    min-height: 190px;
+    border-radius: 14px;
   }
 }
 

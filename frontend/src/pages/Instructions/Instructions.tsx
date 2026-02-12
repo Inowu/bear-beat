@@ -8,12 +8,10 @@ import {
   ExternalLink,
   FolderSearch,
   HardDriveDownload,
-  MessageCircle,
   MousePointerClick,
   ShieldCheck,
   WifiOff,
 } from "lucide-react";
-import { SUPPORT_CHAT_URL } from "../../utils/supportChat";
 import Logo from "../../assets/images/osonuevo.png";
 
 const FILEZILLA_URL = "https://filezilla-project.org/download.php?type=client";
@@ -124,17 +122,7 @@ function Instructions() {
                 Ver mis credenciales FTP
                 <ArrowRight size={16} />
               </Link>
-              <a
-                href={SUPPORT_CHAT_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="home-cta home-cta--secondary instructions2026__btn instructions2026__btn--ghost"
-              >
-                <MessageCircle size={16} />
-                Soporte por chat
-              </a>
             </div>
-            <p className="instructions2026__hero-note">Soporte por chat abre en una nueva pestaña.</p>
           </header>
 
           <section className="instructions2026__navigator" aria-label="Selector de método">
@@ -231,18 +219,15 @@ function Instructions() {
               </li>
               <li>
                 <WifiOff size={16} aria-hidden />
-                Si el problema sigue, abre soporte por chat y te ayudamos paso a paso.
+                Si el problema sigue, vuelve a validar tus credenciales FTP y prueba reconectar.
               </li>
             </ul>
-            <a
-              href={SUPPORT_CHAT_URL}
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              to="/micuenta"
               className="home-cta home-cta--primary instructions2026__btn instructions2026__btn--primary"
             >
-              <MessageCircle size={16} />
-              Abrir soporte por chat
-            </a>
+              Revisar credenciales FTP
+            </Link>
           </section>
         </div>
       </section>

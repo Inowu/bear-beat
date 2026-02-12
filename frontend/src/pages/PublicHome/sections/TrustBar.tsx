@@ -1,4 +1,4 @@
-import { MessageCircle, Database, HardDriveDownload, LibraryBig } from "lucide-react";
+import { Sparkles, Database, HardDriveDownload, LibraryBig } from "lucide-react";
 
 export default function TrustBar(props: {
   totalFilesLabel: string;
@@ -29,9 +29,9 @@ export default function TrustBar(props: {
           </span>
         </div>
         <div className="trust-bar__item" role="listitem">
-          <MessageCircle size={18} aria-hidden />
+          <Sparkles size={18} aria-hidden />
           <span>
-            Soporte por chat <strong>1 a 1</strong>
+            Activación guiada <strong>1 a 1</strong>
           </span>
         </div>
       </div>

@@ -85,6 +85,15 @@ html[data-theme="dark"] .plan-card-glow {
   padding-right: 88px;
 }
 
+.plan-card-wrapper.is-marketing.is-marketing-compact .plan-card-main-card {
+  gap: 9px;
+}
+
+.plan-card-wrapper.is-marketing.is-marketing-compact .plan-card-head {
+  gap: 4px;
+  padding-right: 0;
+}
+
 .plan-card-wrapper.is-marketing .plan-card-kicker {
   min-height: 21px;
   padding: 0 8px;
@@ -145,6 +154,10 @@ html[data-theme="dark"] .plan-card-glow {
   gap: 5px;
 }
 
+.plan-card-wrapper.is-marketing.is-marketing-compact .plan-card-benefits {
+  gap: 4px;
+}
+
 .plan-card-wrapper.is-marketing .plan-card-benefit-item {
   align-items: center;
   gap: 7px;
@@ -176,6 +189,11 @@ html[data-theme="dark"] .plan-card-glow {
   margin-top: 0;
   gap: 8px;
   padding-top: 9px;
+}
+
+.plan-card-wrapper.is-marketing.is-marketing-compact .plan-card-cta-section {
+  gap: 7px;
+  padding-top: 7px;
 }
 
 .plan-card-wrapper.is-marketing .plan-card-btn-hero {

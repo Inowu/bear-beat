@@ -200,18 +200,28 @@ function Plans() {
     if (values.length === 0) return 0;
     return Math.max(...values);
   }, [sortedPlans]);
-  const heroMicrocopy = "Pago mensual. Cancela cuando quieras.";
   const hasTrial = useMemo(() => {
     if (!trialConfig?.enabled) return false;
     if (trialConfig.eligible === false) return false;
     return Number.isFinite(trialConfig.days) && (trialConfig.days ?? 0) > 0;
   }, [trialConfig?.days, trialConfig?.eligible, trialConfig?.enabled]);
-  const heroTrialCopy = useMemo(() => {
-    if (!trialConfig?.enabled) return null;
-    if (!Number.isFinite(trialConfig.days) || !Number.isFinite(trialConfig.gb)) return null;
-    if ((trialConfig.days ?? 0) <= 0 || (trialConfig.gb ?? 0) <= 0) return null;
-    return `Prueba con tarjeta (Stripe): ${formatInt(trialConfig.days)} días + ${formatInt(trialConfig.gb)} GB.`;
-  }, [trialConfig?.days, trialConfig?.enabled, trialConfig?.gb]);
+  const offerSupportCopy = useMemo(() => {
+    const trialDays = Number(trialConfig?.days ?? 0);
+    const trialGb = Number(trialConfig?.gb ?? 0);
+    if (
+      hasTrial &&
+      Number.isFinite(trialDays) &&
+      Number.isFinite(trialGb) &&
+      trialDays > 0 &&
+      trialGb > 0
+    ) {
+      return `Prueba ${formatInt(trialDays)} días + ${formatInt(trialGb)} GB (solo tarjeta).`;
+    }
+    if (trialConfig?.enabled && trialConfig?.eligible === false) {
+      return "Esta cuenta activa al pagar. Cancela cuando quieras.";
+    }
+    return "Pago mensual. Cancela cuando quieras.";
+  }, [hasTrial, trialConfig?.days, trialConfig?.eligible, trialConfig?.enabled, trialConfig?.gb]);
   const primaryCtaLabel = useMemo(() => {
     if (!currentUser?.email) {
       return hasTrial ? "Crear cuenta y empezar prueba" : "Crear cuenta y activar";
@@ -253,16 +263,13 @@ function Plans() {
   // Loader: mientras estemos cargando planes
   if (loader) {
     return (
-      <div
-        className="global-loader"
-        style={{ minHeight: '60vh', padding: '16px' }}
-      >
+      <div className="global-loader plans-loader">
         <div className="app-state-panel is-loading" role="status" aria-live="polite">
           <span className="app-state-icon" aria-hidden>
             <Spinner size={2.8} width={0.25} color="var(--app-accent)" />
           </span>
-          <h2 className="app-state-title">Cargando planes</h2>
-          <p className="app-state-copy">Estamos preparando la mejor opción para tu membresía.</p>
+          <h2 className="app-state-title">Preparando planes</h2>
+          <p className="app-state-copy">Estamos cargando tu mejor opción para activar hoy.</p>
         </div>
       </div>
     );
@@ -297,7 +304,7 @@ function Plans() {
         <section className="plans-hero" aria-label="Planes" data-testid="plans-hero">
           <h1 className="plans-page-title">Precio simple, catálogo gigante</h1>
           <p className="plans-hero-subtitle">
-            Activa en minutos y llega con repertorio listo para tu evento.
+            Activa hoy y llega con repertorio listo.
           </p>
           <ul className="plans-hero-chips" aria-label="Incluye">
             <li className="plans-hero-chip bb-stat-pill">
@@ -315,7 +322,6 @@ function Plans() {
               <span className="bb-stat-pill__label">archivos disponibles</span>
             </li>
           </ul>
-          <p className="plans-hero-micro">{heroMicrocopy}</p>
           {(heroPriceLabels.mxn || heroPriceLabels.usd) && (
             <p className="plans-hero-price-hint" aria-label="Referencia rápida de precios">
               {heroPriceLabels.mxn && <span className="plans-hero-price-tag">{heroPriceLabels.mxn}</span>}
@@ -364,8 +370,8 @@ function Plans() {
         <section className="plans-offer" aria-label="Selección de plan">
           <div className="plans-offer__head">
             <div className="plans-offer__title-block">
-              <h2>Elige moneda y activa hoy</h2>
-              <p>Mismo catálogo, misma cuota mensual de descarga. Solo cambia la moneda y forma de cobro.</p>
+              <h2>Elige tu moneda</h2>
+              <p>Mismo plan, elige MXN o USD.</p>
             </div>
             <div className="plans-currency-toggle bb-segmented" role="tablist" aria-label="Moneda">
               <button
@@ -392,8 +398,7 @@ function Plans() {
           </div>
           <div className="plans-offer__meta">
             <p className="plans-offer__price">{selectedPriceLabel ?? "—"}</p>
-            <p className="plans-currency-micro">MXN: México (pago local). USD: internacional.</p>
-            {heroTrialCopy && <p className="plans-trial-note plans-trial-note--offer">{heroTrialCopy}</p>}
+            <p className="plans-currency-micro">{offerSupportCopy}</p>
           </div>
           <ul className="plans-plan-grid" aria-label="Planes disponibles">
             {plansToRender.map((plan) => (
@@ -404,6 +409,7 @@ function Plans() {
                   userEmail={currentUser?.email}
                   showRecommendedBadge={false}
                   variant="marketing"
+                  compactMarketingCopy={true}
                   trialConfig={trialConfig}
                 />
               </li>

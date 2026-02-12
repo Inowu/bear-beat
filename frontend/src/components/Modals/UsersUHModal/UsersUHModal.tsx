@@ -10,7 +10,6 @@ import trpc from '../../../api';
 import { useCookies } from 'react-cookie';
 import { SuccessModal } from '../SuccessModal/SuccessModal';
 import { ErrorModal } from '../ErrorModal/ErrorModal';
-import { SUPPORT_CHAT_URL } from '../../../utils/supportChat';
 
 interface IUsersUHModal {
   showModal: boolean;
@@ -23,7 +22,7 @@ export function UsersUHModal(props: IUsersUHModal) {
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<any>('');
   const [card, setCard] = useState<any>(null);
-  const { paymentMethods, cardLoad, getPaymentMethods, startUser } =
+  const { paymentMethods, cardLoad, startUser } =
     useUserContext();
   const [loader, setLoader] = useState<boolean>(false);
   const [cookies] = useCookies(['_fbp']);
@@ -112,14 +111,7 @@ export function UsersUHModal(props: IUsersUHModal) {
               </div>
               <div className="div-bottom">
                 <p>¿Todavía tienes dudas?</p>
-                <a
-                  className="blue"
-                  href={SUPPORT_CHAT_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Abrir soporte por chat
-                </a>
+                <span className="blue">Te ayudamos desde tu panel de cuenta</span>
               </div>
             </div>
             <div className="right">

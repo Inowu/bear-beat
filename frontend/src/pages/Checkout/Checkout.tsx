@@ -22,7 +22,6 @@ import { SpeiModal } from "../../components/Modals/SpeiModal/SpeiModal";
 import { OxxoModal } from "../../components/Modals/OxxoModal/OxxoModal";
 import PayPalComponent from "../../components/PayPal/PayPalComponent";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../utils/growthMetrics";
-import { SUPPORT_CHAT_URL } from "../../utils/supportChat";
 import PaymentMethodLogos from "../../components/PaymentMethodLogos/PaymentMethodLogos";
 import { useCookies } from "react-cookie";
 import { trackInitiateCheckout } from "../../utils/facebookPixel";
@@ -428,7 +427,7 @@ function Checkout() {
         /mutation.*procedure|createStripeCheckoutSession/i.test(msg);
       setErrorMessage(
         isProcedureMissing
-          ? "El pago con tarjeta no está disponible en este momento. Intenta SPEI (recurrente) o abre soporte por chat."
+          ? "El pago con tarjeta no está disponible en este momento. Intenta SPEI (recurrente) u otro método disponible."
           : msg || "Error al preparar el pago. Intenta de nuevo."
       );
       trackGrowthMetric(GROWTH_METRICS.CHECKOUT_ERROR, {
@@ -480,7 +479,7 @@ function Checkout() {
         const msg =
           error?.data?.message ??
           error?.message ??
-          "No pudimos generar la referencia. Intenta de nuevo o abre soporte por chat.";
+          "No pudimos generar la referencia. Intenta de nuevo o usa otro método disponible.";
         trackGrowthMetric(GROWTH_METRICS.CHECKOUT_ERROR, {
           method: "spei",
           planId: plan.id,
@@ -532,7 +531,7 @@ function Checkout() {
       const msg =
         error?.data?.message ??
         error?.message ??
-        "No pudimos generar la referencia de pago en efectivo. Intenta de nuevo o abre soporte por chat.";
+        "No pudimos generar la referencia de pago en efectivo. Intenta de nuevo o usa otro método disponible.";
       trackGrowthMetric(GROWTH_METRICS.CHECKOUT_ERROR, {
         method: "oxxo",
         planId: plan.id,
@@ -747,7 +746,7 @@ function Checkout() {
   const benefits = [
     `${formatInt(quotaGb)} GB por mes para descargas`,
     "Catálogo organizado para cabina (audio, video y karaoke)",
-    "Soporte por chat para activar más rápido",
+    "Activación guiada para empezar más rápido",
   ];
   const quickFacts = [
     `${formatInt(quotaGb)} GB/mes`,
@@ -757,7 +756,7 @@ function Checkout() {
   const checkoutSteps = [
     "Elige tu método",
     "Completa el pago seguro",
-    "Activación guiada por chat",
+    "Activación guiada",
   ];
   const methodAvailabilityText = isMxnPlan
     ? "Tarjeta, PayPal, SPEI, BBVA y efectivo (según disponibilidad)."
@@ -891,13 +890,7 @@ function Checkout() {
             className="checkout-payment-logos"
             ariaLabel="Métodos de pago disponibles en checkout"
           />
-          <p className="checkout-header__support">
-            Métodos disponibles: {methodAvailabilityText}{" "}
-            ¿Dudas para pagar?{" "}
-            <a href={SUPPORT_CHAT_URL} target="_blank" rel="noopener noreferrer">
-              Abrir soporte por chat
-            </a>
-          </p>
+          <p className="checkout-header__support">Métodos disponibles: {methodAvailabilityText}</p>
         </header>
 
         <div className="checkout-grid">
@@ -1021,11 +1014,7 @@ function Checkout() {
                 </button>
               )}
               <p className="checkout-payment-note">
-                Si te atoras en cualquier paso, te ayudamos en tiempo real por chat:{" "}
-                <a href={SUPPORT_CHAT_URL} target="_blank" rel="noopener noreferrer">
-                  abrir soporte ahora
-                </a>
-                .
+                Si te atoras en cualquier paso, intenta nuevamente o cambia de método de pago.
               </p>
             </div>
           </section>
