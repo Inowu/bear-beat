@@ -16,6 +16,10 @@ import AuthRoute from "./functions/AuthRoute";
 import LandingOrAuthRoute from "./functions/LandingOrAuthRoute";
 import HomeOrLanding from "./functions/HomeOrLanding";
 import NotAuthRoute from "./functions/NotAuthRoute";
+import LoginForm from "./components/Auth/LoginForm/LoginForm";
+import SignUpForm from "./components/Auth/SignUpForm/SignUpForm";
+import ForgotPasswordForm from "./components/Auth/ForgotPasswordForm/ForgotPasswordForm";
+import ResetPassword from "./components/Auth/ResetPassword/ResetPassword";
 import { SSEProvider } from "react-hooks-sse";
 import DownloadContextProvider from "./contexts/DownloadContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -67,10 +71,6 @@ class AppErrorBoundary extends React.Component<AppErrorBoundaryProps, AppErrorBo
 }
 
 const Auth = lazy(() => import("./pages/Auth/Auth"));
-const LoginForm = lazy(() => import("./components/Auth/LoginForm/LoginForm"));
-const SignUpForm = lazy(() => import("./components/Auth/SignUpForm/SignUpForm"));
-const ForgotPasswordForm = lazy(() => import("./components/Auth/ForgotPasswordForm/ForgotPasswordForm"));
-const ResetPassword = lazy(() => import("./components/Auth/ResetPassword/ResetPassword"));
 const Instructions = lazy(() => import("./pages/Instructions/Instructions"));
 const Legal = lazy(() => import("./pages/Legal/Legal"));
 const MyAccount = lazy(() => import("./pages/MyAccount/MyAccount"));
@@ -277,16 +277,14 @@ const scheduleIdleTask = (task: () => Promise<void> | void, timeout = 2000, fall
 const scheduleTrackersInit = () => {
   if (typeof window === "undefined") return;
   scheduleIdleTask(async () => {
-    const [facebookPixel, growthMetrics, hotjar, manychat] = await Promise.all([
+    const [facebookPixel, growthMetrics, hotjar] = await Promise.all([
       import("./utils/facebookPixel"),
       loadGrowthMetricsModule(),
       import("./utils/hotjar"),
-      import("./utils/manychatWidget"),
     ]);
     facebookPixel.initFacebookPixel();
     growthMetrics.initGrowthMetrics();
     hotjar.initHotjar();
-    manychat.scheduleManychatWidget();
   }, 4500, 3500);
 };
 
