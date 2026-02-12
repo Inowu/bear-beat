@@ -178,17 +178,31 @@
   }
 
   .live-toolbar__group--actions {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
   }
 
   .live-toolbar__status {
     grid-column: 1 / -1;
+    min-height: 42px;
+    font-size: 0.82rem;
+    letter-spacing: 0.03em;
   }
 
   .live-toolbar__btn {
     min-height: 44px;
-    font-size: 0.98rem;
+    font-size: 0.94rem;
+    padding-inline: 12px;
+  }
+
+  .live-context__chips {
+    gap: 6px;
+  }
+
+  .live-chip {
+    min-height: 28px;
+    font-size: 0.76rem;
+    max-width: 100%;
   }
 }
 

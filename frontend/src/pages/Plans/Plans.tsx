@@ -300,7 +300,7 @@ function Plans() {
           </button>
         </div>
       </header>
-      <main className="plans-main-container">
+      <div className="plans-main-container">
         <section className="plans-hero" aria-label="Planes" data-testid="plans-hero">
           <h1 className="plans-page-title">Precio simple, catálogo gigante</h1>
           <p className="plans-hero-subtitle">
@@ -417,7 +417,7 @@ function Plans() {
           </ul>
         </section>
       )}
-      </main>
+      </div>
     </div>
   );
 }

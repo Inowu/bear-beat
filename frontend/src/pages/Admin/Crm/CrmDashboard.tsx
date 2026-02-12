@@ -396,14 +396,18 @@ export function CrmDashboard() {
                 ))}
               </select>
             </label>
-            <label className="crm-toolbar__toggle">
-              <input
-                type="checkbox"
-                checked={autoRefresh}
-                onChange={(e) => setAutoRefresh(e.target.checked)}
-              />
-              Actualizar en vivo
-            </label>
+            <button
+              type="button"
+              className={`crm-toolbar__toggle ${autoRefresh ? "is-on" : "is-off"}`}
+              role="switch"
+              aria-checked={autoRefresh}
+              onClick={() => setAutoRefresh((prev) => !prev)}
+            >
+              <span className="crm-toolbar__toggle-knob" aria-hidden>
+                {autoRefresh ? "✓" : ""}
+              </span>
+              <span className="crm-toolbar__toggle-text">Actualizar en vivo</span>
+            </button>
           </div>
           <div className="crm-toolbar__group">
             <button type="button" className="crm-toolbar__btn" onClick={() => void refresh()}>

@@ -521,11 +521,17 @@ html[data-theme="light"] .admin-page-wrap :where(.search-input input, .input, .s
       padding: 8px;
     }
 
-    .admin-page-wrap__toolbar input,
+    .admin-page-wrap__toolbar input:not([type="checkbox"]):not([type="radio"]),
     .admin-page-wrap__toolbar select,
     .admin-page-wrap__toolbar button {
       min-height: 44px;
       width: 100%;
+    }
+
+    .admin-page-wrap__toolbar input[type="checkbox"],
+    .admin-page-wrap__toolbar input[type="radio"] {
+      width: auto;
+      min-height: 0;
     }
   }
 }

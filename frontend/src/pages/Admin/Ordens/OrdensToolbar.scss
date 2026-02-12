@@ -94,14 +94,29 @@
 }
 
 @media (max-width: 560px) {
+  .orders-toolbar {
+    gap: 8px;
+    align-items: stretch;
+  }
+
   .orders-toolbar__filters {
     grid-template-columns: 1fr;
+    gap: 8px;
   }
 
   .orders-toolbar__search,
-  .orders-toolbar__field,
-  .orders-toolbar__today {
+  .orders-toolbar__field--method,
+  .orders-toolbar__field--status,
+  .orders-toolbar__field--start,
+  .orders-toolbar__field--end,
+  .orders-toolbar__today,
+  .orders-toolbar__field--limit {
     grid-column: 1 / -1;
+  }
+
+  .orders-toolbar__today {
+    width: 100%;
+    justify-content: center;
   }
 
   .orders-toolbar__label {
@@ -110,5 +125,21 @@
 
   .orders-toolbar__export {
     width: 100%;
+    min-height: 46px;
+  }
+}
+
+@media (max-width: 420px) {
+  .orders-toolbar__filters {
+    grid-template-columns: 1fr;
+  }
+
+  .orders-toolbar__field--method,
+  .orders-toolbar__field--status,
+  .orders-toolbar__field--start,
+  .orders-toolbar__field--end,
+  .orders-toolbar__today,
+  .orders-toolbar__field--limit {
+    grid-column: 1 / -1;
   }
 }

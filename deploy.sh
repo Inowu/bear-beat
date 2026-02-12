@@ -60,10 +60,39 @@ ensure_env_default() {
   printf "\n%s=%s\n" "$key" "$value" >> "$ENV_FILE"
 }
 
+use_repo_node_version() {
+  local nvmrc_path="${BACKEND_DIR}/.nvmrc"
+  [ -f "$nvmrc_path" ] || return 0
+
+  local target_version
+  target_version="$(tr -d ' \t\r\n' < "$nvmrc_path")"
+  [ -n "$target_version" ] || return 0
+
+  if [ -s "${HOME}/.nvm/nvm.sh" ]; then
+    # shellcheck source=/dev/null
+    . "${HOME}/.nvm/nvm.sh"
+    if command -v nvm >/dev/null 2>&1; then
+      log "Selecting Node ${target_version} from backend/.nvmrc..."
+      nvm install "$target_version" >/dev/null
+      nvm use "$target_version" >/dev/null
+    fi
+  fi
+
+  if command -v node >/dev/null 2>&1; then
+    local current_node
+    current_node="$(node -v)"
+    if [[ "${current_node#v}" != "${target_version#v}"* ]]; then
+      log "Warning: backend/.nvmrc expects ${target_version}, current Node is ${current_node}."
+    fi
+  fi
+}
+
 log "Pulling latest changes..."
 # Descartar cambios locales (ej. package-lock.json) para que pull no falle
 git -C "$ROOT_DIR" reset --hard HEAD
 git -C "$ROOT_DIR" pull --ff-only
+
+use_repo_node_version
 
 log "Ensuring ANALYTICS_IP_SALT is set (privacy: hash IPs in internal analytics)..."
 if ! grep -q '^ANALYTICS_IP_SALT=' "$ENV_FILE"; then

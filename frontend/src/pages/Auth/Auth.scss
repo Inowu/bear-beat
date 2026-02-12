@@ -269,6 +269,102 @@
   margin-right: auto;
 }
 
+/* Fallback hardening: si el CSS del chunk de Login/Signup tarda o falla,
+   mantenemos layout premium y estable para evitar “pantalla desalineada”. */
+.auth-main-container .auth-login-atmosphere {
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 14px;
+}
+
+.auth-main-container .auth-login-card {
+  width: 100%;
+  max-width: 480px;
+}
+
+.auth-main-container .auth-login-card.auth-login-card--signup {
+  width: 100%;
+  max-width: 500px;
+  padding: clamp(1.45rem, 2.1vh, 2rem) clamp(1.2rem, 2.4vw, 1.6rem);
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--auth-input-border) 86%, transparent);
+  background: color-mix(in srgb, var(--auth-login-card-bg) 97%, transparent);
+  box-shadow: var(--auth-login-card-shadow, var(--app-shadow-card));
+}
+
+.auth-main-container .auth-login-card.auth-login-card--signup .auth-login-title {
+  margin-bottom: 0.5rem;
+}
+
+.auth-main-container .auth-login-card.auth-login-card--signup .auth-login-sub {
+  margin-bottom: 1rem;
+}
+
+.auth-main-container form.sign-up-form {
+  gap: 8px;
+}
+
+.auth-main-container form.sign-up-form .auth-field-label {
+  margin-bottom: 4px;
+}
+
+.auth-main-container form.sign-up-form .auth-login-register-wrap {
+  margin-top: 0;
+}
+
+/* Registro: fallback explícito para evitar “empaque roto” si un chunk CSS tarda/falla. */
+.auth-main-container .auth-signup-form {
+  display: grid;
+  gap: 8px;
+}
+
+.auth-main-container .auth-signup-form .c-row {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+}
+
+.auth-main-container .auth-signup-form .auth-field-label {
+  margin: 0;
+  padding: 0 4px;
+  font-size: clamp(13px, 0.32vw + 12px, 14px);
+  font-weight: 700;
+  color: color-mix(in srgb, var(--auth-login-subtitle) 94%, transparent);
+}
+
+.auth-main-container .auth-signup-form .auth-login-input-wrap,
+.auth-main-container .auth-signup-form .signup-phone-wrap {
+  min-height: 50px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--auth-input-border) 90%, transparent);
+  background: color-mix(in srgb, var(--auth-input-bg) 96%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--auth-input-border) 20%, transparent);
+}
+
+.auth-main-container .auth-signup-form .auth-login-input,
+.auth-main-container .auth-signup-form .password-input,
+.auth-main-container .auth-signup-form .signup-phone-input {
+  min-height: 50px;
+  font-size: clamp(15px, 0.26vw + 14px, 16px);
+}
+
+/* Safari/iOS autofill guard: evita fondos inesperados en campos auth. */
+.auth-main-container .auth-signup-form input:-webkit-autofill,
+.auth-main-container .auth-signup-form input:-webkit-autofill:hover,
+.auth-main-container .auth-signup-form input:-webkit-autofill:focus,
+.auth-main-container .auth-login-form input:-webkit-autofill,
+.auth-main-container .auth-login-form input:-webkit-autofill:hover,
+.auth-main-container .auth-login-form input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--auth-register-text);
+  box-shadow:
+    0 0 0 1000px color-mix(in srgb, var(--auth-input-bg) 96%, transparent) inset,
+    0 0 0 1px color-mix(in srgb, var(--auth-input-border) 90%, transparent) inset;
+  transition: background-color 9999s ease-out 0s;
+}
+
 // ----- Register: Split Screen -----
 .auth-split {
   width: min(1120px, 100%);
@@ -484,6 +580,25 @@ html.dark .auth-split {
 }
 
 @include respond-to(sm) {
+  .auth-main-container .auth-signup-form {
+    gap: 7px;
+  }
+
+  .auth-main-container .auth-signup-form .c-row {
+    gap: 3px;
+  }
+
+  .auth-main-container .auth-signup-form .auth-login-input-wrap,
+  .auth-main-container .auth-signup-form .signup-phone-wrap {
+    min-height: 48px;
+  }
+
+  .auth-main-container .auth-signup-form .auth-login-input,
+  .auth-main-container .auth-signup-form .password-input,
+  .auth-main-container .auth-signup-form .signup-phone-input {
+    min-height: 48px;
+  }
+
   .auth-split {
     border-radius: 18px;
   }
@@ -543,13 +658,8 @@ html.dark .auth-split {
       line-height: 1.5;
     }
   }
-  .auth-main-container form.auth-form,
-  .auth-main-container > form .c-row,
-  .auth-main-container form .c-row {
-    gap: 18px;
-  }
-  .auth-main-container > form,
-  .auth-main-container form {
-    gap: 20px;
+
+  .auth-main-container .auth-login-atmosphere {
+    padding: 24px 18px;
   }
 }

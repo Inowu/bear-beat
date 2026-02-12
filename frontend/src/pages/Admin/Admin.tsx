@@ -98,6 +98,7 @@ function Admin() {
   const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(null);
   const [drawerUser, setDrawerUser] = useState<IAdminUser | null>(null);
   const [loadError, setLoadError] = useState<string>("");
+  const [membershipFilterDegraded, setMembershipFilterDegraded] = useState<boolean>(false);
 
   const getTrpcErrorMessage = (error: unknown): string => {
     if (!error) return "";
@@ -179,40 +180,41 @@ function Admin() {
   };
 
   const filterUsers = async (filt: IAdminFilter) => {
+    const baseWhere = { email: { startsWith: filt.search } };
+    const baseSelect = {
+      id: true,
+      username: true,
+      email: true,
+      phone: true,
+      active: true,
+      blocked: true,
+      registered_on: true,
+      role_id: true,
+    };
+    const baseBody = {
+      take: filt.limit,
+      skip: filt.page * filt.limit,
+      where: baseWhere,
+      orderBy: { registered_on: "desc" as const },
+      select: baseSelect,
+    };
+    const countBody = { where: baseWhere, select: { id: true } };
+    const mapAdminUser = (u: any): IAdminUser => ({
+      email: u.email,
+      username: u.username,
+      active: u.active,
+      id: u.id,
+      registered_on: u.registered_on,
+      blocked: Boolean(u.blocked),
+      phone: u.phone ?? "",
+      role: u.role_id ?? 4,
+    });
+
     setLoadError("");
+    setMembershipFilterDegraded(false);
     setLoader(true);
     setTotalLoader(true);
     try {
-      const baseWhere = { email: { startsWith: filt.search } };
-      const baseSelect = {
-        id: true,
-        username: true,
-        email: true,
-        phone: true,
-        active: true,
-        blocked: true,
-        registered_on: true,
-        role_id: true,
-      };
-      const baseBody = {
-        take: filt.limit,
-        skip: filt.page * filt.limit,
-        where: baseWhere,
-        orderBy: { registered_on: "desc" as const },
-        select: baseSelect,
-      };
-      const countBody = { where: baseWhere, select: { id: true } };
-      const mapAdminUser = (u: any): IAdminUser => ({
-        email: u.email,
-        username: u.username,
-        active: u.active,
-        id: u.id,
-        registered_on: u.registered_on,
-        blocked: Boolean(u.blocked),
-        phone: u.phone ?? "",
-        role: u.role_id ?? 4,
-      });
-
       if (filt.active === 2) {
         const tempUsers = await trpc.users.findManyUsers.query(baseBody);
         setUsers(tempUsers.map(mapAdminUser));
@@ -231,14 +233,27 @@ function Admin() {
         setTotalUsers(totalUsersResponse.length);
       }
     } catch (error) {
-      setUsers([]);
-      setTotalUsers(0);
-      const detail = getTrpcErrorMessage(error).trim();
-      setLoadError(
-        detail
-          ? `No se pudieron cargar los usuarios. ${detail}`
-          : "No se pudieron cargar los usuarios. Revisa la conexión e intenta nuevamente.",
-      );
+      try {
+        const fallbackUsers = await trpc.users.findManyUsers.query(baseBody);
+        const fallbackCount = await trpc.users.findManyUsers.query(countBody);
+        setUsers(fallbackUsers.map(mapAdminUser));
+        setTotalUsers(fallbackCount.length);
+        setMembershipFilterDegraded(filt.active !== 2);
+        setLoadError(
+          filt.active === 2
+            ? ""
+            : "No se pudo aplicar el filtro de membresía. Mostrando usuarios registrados.",
+        );
+      } catch (fallbackError) {
+        setUsers([]);
+        setTotalUsers(0);
+        const detail = getTrpcErrorMessage(fallbackError).trim() || getTrpcErrorMessage(error).trim();
+        setLoadError(
+          detail
+            ? `No se pudieron cargar los usuarios. ${detail}`
+            : "No se pudieron cargar los usuarios. Revisa la conexión e intenta nuevamente.",
+        );
+      }
     } finally {
       setLoader(false);
       setTotalLoader(false);
@@ -361,7 +376,8 @@ function Admin() {
       ]
     : [];
 
-  const colCount = filters.active !== 2 ? 6 : 5;
+  const showMembershipColumn = filters.active !== 2 && !membershipFilterDegraded;
+  const colCount = showMembershipColumn ? 6 : 5;
   const activeFilterLabel =
     filters.active === 1
       ? "Membresía activa"
@@ -381,8 +397,8 @@ function Admin() {
     <div className="admin-users-toolbar">
       <div className="filter-contain">
         <div className="left-contain">
-          <div className="select-input">
-            <label htmlFor="admin-status-filter">Estado</label>
+          <div className="select-input select-input--status">
+            <label htmlFor="admin-status-filter">Estado de membresía</label>
             <select
               id="admin-status-filter"
               value={filters.active}
@@ -394,7 +410,7 @@ function Admin() {
               <option value={3}>Cancelados (histórico)</option>
             </select>
           </div>
-          <div className="select-input">
+          <div className="select-input select-input--limit">
             <label htmlFor="admin-limit-filter">Por página</label>
             <select
               id="admin-limit-filter"
@@ -475,9 +491,14 @@ function Admin() {
               </span>
             </div>
             <p className="admin-status-legend">
-              Nota: <strong>Habilitado/Bloqueado</strong> = acceso de cuenta.{" "}
+              Nota: <strong>Cuenta habilitada/Bloqueada</strong> = acceso de cuenta.{" "}
               <strong>Membresía</strong> = estado del plan.
             </p>
+            {membershipFilterDegraded && (
+              <p className="admin-status-legend">
+                No se pudo resolver membresía en este momento. Se muestra lista general.
+              </p>
+            )}
           </div>
         </section>
 
@@ -507,7 +528,7 @@ function Admin() {
                   <th>Email</th>
                   <th>Teléfono</th>
                   <th>Registro</th>
-                  {filters.active !== 2 && <th>Membresía</th>}
+                  {showMembershipColumn && <th>Membresía</th>}
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -553,7 +574,7 @@ function Admin() {
                           <div className="admin-cell-stack">
                             <span className="admin-cell-value" title={user.email}>{user.email}</span>
                             <span className={`badge badge--tiny ${user.blocked ? "badge--danger" : "badge--success"}`}>
-                              {user.blocked ? "Bloqueado" : "Habilitado"}
+                              {user.blocked ? "Cuenta bloqueada" : "Cuenta habilitada"}
                             </span>
                           </div>
                         </td>
@@ -563,7 +584,7 @@ function Admin() {
                         <td>
                           <span className="date-pill">{formatDateShort(user.registered_on)}</span>
                         </td>
-                        {filters.active !== 2 && (
+                        {showMembershipColumn && (
                           <td>
                             <span
                               className={`badge ${
@@ -651,7 +672,7 @@ function Admin() {
                   : ARRAY_10.map((_, index) => (
                       <tr key={`load_${index}`} className="tr-load">
                         <td /><td /><td /><td />
-                        {filters.active !== 2 && <td />}
+                        {showMembershipColumn && <td />}
                         <td />
                       </tr>
                     ))}
@@ -714,7 +735,7 @@ function Admin() {
                         </div>
                       </div>
                       <span className={`admin-mobile-status ${user.blocked ? "is-blocked" : "is-active"}`}>
-                        {user.blocked ? "Bloqueado" : "Habilitado"}
+                        {user.blocked ? "Bloqueada" : "Habilitada"}
                       </span>
                       <span className="admin-mobile-card__menu" aria-hidden>
                         <MoreVertical size={20} />

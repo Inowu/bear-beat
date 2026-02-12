@@ -16,6 +16,8 @@ import AuthRoute from "./functions/AuthRoute";
 import LandingOrAuthRoute from "./functions/LandingOrAuthRoute";
 import HomeOrLanding from "./functions/HomeOrLanding";
 import NotAuthRoute from "./functions/NotAuthRoute";
+import Auth from "./pages/Auth/Auth";
+import Plans from "./pages/Plans/Plans";
 import LoginForm from "./components/Auth/LoginForm/LoginForm";
 import SignUpForm from "./components/Auth/SignUpForm/SignUpForm";
 import ForgotPasswordForm from "./components/Auth/ForgotPasswordForm/ForgotPasswordForm";
@@ -70,11 +72,9 @@ class AppErrorBoundary extends React.Component<AppErrorBoundaryProps, AppErrorBo
   }
 }
 
-const Auth = lazy(() => import("./pages/Auth/Auth"));
 const Instructions = lazy(() => import("./pages/Instructions/Instructions"));
 const Legal = lazy(() => import("./pages/Legal/Legal"));
 const MyAccount = lazy(() => import("./pages/MyAccount/MyAccount"));
-const Plans = lazy(() => import("./pages/Plans/Plans"));
 const Checkout = lazy(() => import("./pages/Checkout/Checkout"));
 const CheckoutSuccess = lazy(() => import("./pages/Checkout/CheckoutSuccess"));
 const PlanUpgrade = lazy(() =>
@@ -295,9 +295,11 @@ const scheduleMonitoringInit = () => {
   }, 6500, 4500);
 };
 
-const MAIN_BUNDLE_HASH_RE = /\/static\/js\/main\.([a-z0-9]+)\.js/i;
+const MAIN_BUNDLE_HASH_RE = /(?:\/static\/js\/main\.|\/assets\/index-)([a-z0-9]+)\.(?:js|mjs)/i;
+const CSS_CHUNK_RE = /(?:\/static\/css\/.+\.css|\/assets\/.+\.css)/i;
 const SHELL_RELOAD_GUARD_KEY = "bb-shell-reload-guard";
 const CHUNK_RELOAD_GUARD_KEY = "bb-chunk-reload-guard";
+const CSS_CHUNK_RELOAD_GUARD_KEY = "bb-css-chunk-reload-guard";
 
 function readMainBundleHash(source: string | null | undefined): string | null {
   if (!source) return null;
@@ -307,8 +309,12 @@ function readMainBundleHash(source: string | null | undefined): string | null {
 
 function getCurrentMainBundleHash(): string | null {
   if (typeof document === "undefined") return null;
-  const script = document.querySelector("script[src*='/static/js/main.']");
-  const src = script?.getAttribute("src");
+  const script = (
+    document.querySelector("script[src*='/static/js/main.']") ||
+    document.querySelector("script[src*='/assets/index-'][type='module']") ||
+    document.querySelector("script[src*='/assets/index-']")
+  ) as HTMLScriptElement | null;
+  const src = script?.getAttribute("src") || script?.src;
   return readMainBundleHash(src);
 }
 
@@ -347,10 +353,10 @@ function installRuntimeStabilityGuards() {
   let lastShellCheck = 0;
   const minShellCheckIntervalMs = 15000;
 
-  const runShellCheck = async () => {
+  const runShellCheck = async (force = false) => {
     const now = Date.now();
     if (shellCheckInFlight) return;
-    if (now - lastShellCheck < minShellCheckIntervalMs) return;
+    if (!force && now - lastShellCheck < minShellCheckIntervalMs) return;
     lastShellCheck = now;
     shellCheckInFlight = true;
 
@@ -380,29 +386,74 @@ function installRuntimeStabilityGuards() {
     window.location.reload();
   };
 
+  const recoverStylesheetLoad = (target: EventTarget | null, reason: unknown) => {
+    const link = target instanceof HTMLLinkElement ? target : null;
+    const href = link?.href ?? "";
+    const reasonText = `${reason ?? ""}`.toLowerCase();
+    const looksLikeCssChunkError =
+      reasonText.includes("css chunk load failed") ||
+      reasonText.includes("loading css chunk");
+    const looksLikeRuntimeStylesheet = Boolean(href && CSS_CHUNK_RE.test(href));
+    if (!looksLikeCssChunkError && !looksLikeRuntimeStylesheet) return;
+
+    const guardValue = href || `${window.location.pathname}${window.location.search}`;
+    if (window.sessionStorage.getItem(CSS_CHUNK_RELOAD_GUARD_KEY) === guardValue) return;
+    window.sessionStorage.setItem(CSS_CHUNK_RELOAD_GUARD_KEY, guardValue);
+    window.location.reload();
+  };
+
   window.addEventListener("pageshow", (event) => {
     if ((event as PageTransitionEvent).persisted) {
-      void runShellCheck();
+      void runShellCheck(true);
     }
+  });
+
+  window.addEventListener("focus", () => {
+    void runShellCheck(true);
+  });
+
+  window.addEventListener("popstate", () => {
+    void runShellCheck(true);
   });
 
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
-      void runShellCheck();
+      void runShellCheck(true);
     }
   });
 
   window.addEventListener("error", (event) => {
     recoverChunkLoad(event.error ?? event.message);
-  });
+    recoverStylesheetLoad(event.target ?? null, event.error ?? event.message);
+  }, true);
 
   window.addEventListener("unhandledrejection", (event) => {
     recoverChunkLoad(event.reason);
+    recoverStylesheetLoad(null, event.reason);
   });
+
+  const originalPushState = window.history.pushState;
+  const originalReplaceState = window.history.replaceState;
+
+  window.history.pushState = function pushState(...args) {
+    const result = originalPushState.apply(this, args as Parameters<History["pushState"]>);
+    void runShellCheck(true);
+    return result;
+  };
+
+  window.history.replaceState = function replaceState(...args) {
+    const result = originalReplaceState.apply(this, args as Parameters<History["replaceState"]>);
+    void runShellCheck(true);
+    return result;
+  };
 
   window.setTimeout(() => {
     void runShellCheck();
   }, 1200);
+
+  window.setInterval(() => {
+    void runShellCheck();
+  }, 30000);
 }
 
 installRuntimeStabilityGuards();

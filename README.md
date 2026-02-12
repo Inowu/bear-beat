@@ -8,7 +8,7 @@
 
 ### Requisitos
 
-- **Node.js** v18 (recomendado; el backend usa `.nvmrc` con `v18.18.2`)
+- **Node.js** v24 LTS (recomendado; el repo fija versión en `/.nvmrc`, `backend/.nvmrc` y `frontend/.nvmrc`)
 - **npm** (viene con Node)
 - **Docker** y **Docker Compose** (para MySQL y, opcionalmente, Redis)
 - **Git**

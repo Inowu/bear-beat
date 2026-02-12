@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: bearbeat_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply backend migrations (test DB)
+        run: npx prisma migrate deploy --schema backend/prisma/schema.prisma
+        env:
+          DATABASE_URL: mysql://root:root@127.0.0.1:3306/bearbeat_test
+          JWT_SECRET: test-secret
+          NODE_ENV: test
+
+      - name: Backend tests
+        run: npm test --workspace=backend -- --runInBand
+        env:
+          DATABASE_URL: mysql://root:root@127.0.0.1:3306/bearbeat_test
+          JWT_SECRET: test-secret
+          NODE_ENV: test
+
+      - name: Build backend
+        run: npm run build --workspace=backend
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Frontend tests
+        run: npm test --workspace=frontend

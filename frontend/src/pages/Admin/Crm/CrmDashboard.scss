@@ -40,20 +40,53 @@
 }
 
 .crm-toolbar__toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+  min-height: 44px;
+  padding: 0 10px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--ad-border) 82%, transparent);
+  background: color-mix(in srgb, var(--ad-row-hover) 62%, transparent);
   color: var(--ad-text);
   font-weight: 700;
   font-size: 0.95rem;
   letter-spacing: 0;
   text-transform: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
 
-  input {
-    width: 18px;
-    height: 18px;
-    accent-color: var(--ad-accent);
-  }
+.crm-toolbar__toggle:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--ad-accent) 50%, var(--ad-border));
+}
+
+.crm-toolbar__toggle-knob {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  border: 1px solid color-mix(in srgb, var(--ad-border) 80%, transparent);
+  background: color-mix(in srgb, var(--ad-card) 94%, transparent);
+  color: var(--ad-title);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.crm-toolbar__toggle.is-on .crm-toolbar__toggle-knob {
+  border-color: color-mix(in srgb, var(--ad-accent) 54%, transparent);
+  background: color-mix(in srgb, var(--ad-accent) 86%, transparent);
+  color: var(--app-btn-text);
+}
+
+.crm-toolbar__toggle-text {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.2em;
 }
 
 .crm-toolbar__btn {
@@ -439,13 +472,9 @@
   .crm-toolbar__group {
     width: 100%;
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 8px;
     align-items: stretch;
-  }
-
-  .crm-toolbar__group:last-child {
-    grid-template-columns: 1fr;
   }
 
   .crm-toolbar__label {
@@ -464,17 +493,17 @@
   .crm-toolbar__toggle {
     width: 100%;
     min-height: 44px;
-    border-radius: 12px;
-    border: 1px solid color-mix(in srgb, var(--ad-border) 82%, transparent);
-    background: color-mix(in srgb, var(--ad-row-hover) 62%, transparent);
-    padding: 0 10px;
     font-size: 0.92rem;
     line-height: 1.25;
+    justify-content: flex-start;
+    gap: 10px;
   }
 
-  .crm-toolbar__toggle input {
-    width: 17px;
-    height: 17px;
+  .crm-toolbar__toggle-knob {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    font-size: 0.96rem;
   }
 
   .crm-toolbar__btn {

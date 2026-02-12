@@ -10,10 +10,13 @@
     "concurrently": "^8.2.2",
     "react-facebook-pixel": "^1.0.4",
     "react-hooks-sse": "^2.1.0",
-    "yup": "^1.2.0"
+    "yup": "^1.7.1"
   },
   "workspaces": [
     "frontend",
     "backend"
-  ]
+  ],
+  "engines": {
+    "node": "24.x"
+  }
 }

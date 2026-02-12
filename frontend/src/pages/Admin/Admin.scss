@@ -133,7 +133,7 @@
 
 .left-contain {
   display: grid;
-  grid-template-columns: 132px 132px minmax(0, 1fr);
+  grid-template-columns: minmax(180px, 0.82fr) minmax(108px, 0.46fr) minmax(0, 1fr);
   gap: 8px;
   align-items: end;
 }
@@ -158,13 +158,14 @@
 .select-input select {
   width: 100%;
   min-height: 44px;
-  padding: 0 12px;
+  padding: 0 34px 0 12px;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--ad-input-border) 88%, transparent);
   background: color-mix(in srgb, var(--ad-input-bg) 94%, transparent);
   color: var(--ad-title);
-  font-size: 1.02rem;
+  font-size: 0.98rem;
   font-weight: 600;
+  min-width: 0;
   outline: none;
   transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
 }
@@ -928,7 +929,7 @@ html[data-theme="light"] .admin-users-wrap .btn-primary:hover {
 
 @media (max-width: 1080px) {
   .left-contain {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr) minmax(102px, 118px);
   }
 
   .search-input {
@@ -943,8 +944,8 @@ html[data-theme="light"] .admin-users-wrap .btn-primary:hover {
   }
 
   .left-contain {
-    /* Mobile: mantener 2 columnas para reducir altura (estado + página) */
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    /* Mobile: Estado necesita más ancho para no truncar el valor seleccionado. */
+    grid-template-columns: minmax(0, 1fr) minmax(96px, 112px);
   }
 
   .search-input {
@@ -986,7 +987,29 @@ html[data-theme="light"] .admin-users-wrap .btn-primary:hover {
     align-items: stretch;
   }
 
+  .left-contain {
+    grid-template-columns: minmax(0, 1fr) minmax(88px, 104px);
+  }
+
+  .select-input label,
+  .search-input label {
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+  }
+
   .btn-icon {
     width: 100%;
+  }
+}
+
+@media (max-width: 390px) {
+  .left-contain {
+    grid-template-columns: 1fr;
+  }
+
+  .select-input--status,
+  .select-input--limit,
+  .search-input {
+    grid-column: 1 / -1;
   }
 }

@@ -1,11 +1,11 @@
-# Build desde la raíz del monorepo para que publish sea frontend/build (no frontend/frontend/build)
+# Build desde la raíz del monorepo para que publish sea frontend/dist (Vite)
 [build]
   base = "."
   command = "npm run build"
-  publish = "frontend/build"
+  publish = "frontend/dist"
 
-# En CI, CRA trata warnings como errores; desactivar para que el build termine
 [build.environment]
+  NODE_VERSION = "24"
   CI = "false"
   REACT_APP_ENVIRONMENT = "production"
 
@@ -19,3 +19,34 @@
   REACT_APP_HOTJAR_ENABLED = "1"
   # 0 = solo conversión (recomendado) | 1 = todo el sitio (excepto /admin)
   REACT_APP_UX_TRACK_ALL = "0"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Cache-Control = "no-store, no-cache, must-revalidate"
+    Pragma = "no-cache"
+    Expires = "0"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate"
+    Pragma = "no-cache"
+    Expires = "0"
+
+[[headers]]
+  for = "/manifest.json"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate"
+
+[[headers]]
+  for = "/asset-manifest.json"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

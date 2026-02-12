@@ -94,14 +94,14 @@ form.sign-up-form {
   --signup-field-height: 52px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 
   .c-row {
     position: relative;
   }
 
   .auth-field-label {
-    margin-bottom: 4px;
+    margin-bottom: 3px;
   }
 
   .c-row.is-invalid .signup-phone-wrap {
@@ -361,7 +361,7 @@ form.sign-up-form {
     padding-top: 0;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 8px;
+    gap: 6px;
   }
 
   /* Light: CTA sin halo neón (premium/limpio). Dark: conserva glow. */
@@ -554,7 +554,7 @@ html[data-theme="light"] form.sign-up-form .turnstile-widget-wrap {
 @include respond-to(sm) {
   .auth-login-card.auth-login-card--signup {
     max-width: 430px;
-    padding: 1.45rem 1.15rem;
+    padding: 1.35rem 1.1rem;
 
     .auth-login-logo {
       margin-bottom: 0.7rem;
@@ -567,7 +567,7 @@ html[data-theme="light"] form.sign-up-form .turnstile-widget-wrap {
 
   form.sign-up-form {
     --signup-field-height: 48px;
-    gap: 7px;
+    gap: 6px;
 
     .signup-label {
       font-size: 13px;
@@ -585,7 +585,7 @@ html[data-theme="light"] form.sign-up-form .turnstile-widget-wrap {
     }
 
     .auth-signup-optional-grid {
-      gap: 7px;
+      gap: 6px;
     }
   }
 }

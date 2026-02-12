@@ -1,5 +1,5 @@
-@import "~bootstrap/scss/bootstrap";
-@import "~flag-icons/css/flag-icons.min.css";
+@import "bootstrap/scss/bootstrap";
+@import "flag-icons/css/flag-icons.min.css";
 @import "./_variables-theme.scss";
 @import "./mixin.scss";
 @import "./_mobile-app.scss";
@@ -41,10 +41,10 @@
   --bb-dark-300: #292929;
   --bb-dark-400: #1A1A1A;
   /* Light base: neutral slate-light (avoid washed white while keeping clarity). */
-  --bb-bg: #E3EBF2;
-  --bb-surface: #EEF3F8;
-  --bb-surface-soft: #E8EEF5;
-  --bb-border: rgba(15, 23, 42, 0.17);
+  --bb-bg: #D1DAE4;
+  --bb-surface: #E0E7EF;
+  --bb-surface-soft: #D8E0E9;
+  --bb-border: rgba(15, 23, 42, 0.2);
   --bb-text-heading: #111926;
   --bb-text-body: #243043;
   --bb-text-muted: #5B6678;
@@ -108,12 +108,12 @@
   --theme-bg-secondary: var(--bb-surface);
   --theme-bg-gradient: linear-gradient(165deg, var(--bb-surface) 0%, var(--bb-bg) 100%);
   /* Light nav (premium/glass, no "baby blue") */
-  --theme-nav-bg: #EAF1F6;
+  --theme-nav-bg: #D8E1EA;
   --theme-nav-border-bottom: rgba(21, 42, 53, 0.1);
   --theme-nav-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
   --theme-nav-text: #15202B;
   /* Neutral light pills (avoid blue-ish nav wash) */
-  --theme-nav-item-bg: #F3F7FB;
+  --theme-nav-item-bg: #E6ECF3;
   --theme-nav-item-border: rgba(15, 23, 42, 0.12);
   --theme-nav-danger-text: #BA1716;
   /* Light hover: subtle tint, avoid "baby blue" panels */
@@ -136,7 +136,7 @@
   --theme-ink: var(--bb-text-heading);
   --theme-heading: var(--bb-text-heading);
   --theme-strong: var(--bb-text-heading);
-  --theme-bg-muted: #E4EBF2;
+  --theme-bg-muted: #DCE4EC;
   --theme-bg-soft: var(--bb-surface-soft);
   --theme-stripe: rgba(0, 0, 0, 0.05);
   --theme-edge: rgba(21, 42, 53, 0.12);
@@ -168,7 +168,7 @@
   --ph-shadow-card: var(--bb-shadow-card);
   --ph-glow: rgba(8, 225, 247, 0.24);
   --ph-glow-strong: rgba(8, 225, 247, 0.34);
-  --ph-nav-bg: #EEF3F8;
+  --ph-nav-bg: #DCE4ED;
   --ph-footer-bg: var(--bb-surface);
   --ph-pain-bad: var(--bb-danger);
   --ph-pain-good: var(--bb-success);
@@ -200,10 +200,10 @@
 
   --auth-input-border: var(--bb-border);
   /* Auth: en light, inputs con relleno suave (gris neutro) para separarse del panel blanco sin “baby blue”. */
-  --auth-input-bg: #ECF2F7;
+  --auth-input-bg: #DCE4ED;
   --auth-register-panel-bg: var(--bb-surface);
   --auth-register-text: var(--bb-text-heading);
-  --auth-register-input-bg: #ECF2F7;
+  --auth-register-input-bg: #DCE4ED;
   --auth-register-input-border: var(--bb-border);
   --auth-register-input-focus: var(--bb-accent-ink);
   --auth-register-icon: #5D697B;
@@ -329,8 +329,8 @@
   /* Admin: use neutral stripes in LIGHT; keep cyan for borders/CTAs only */
   --ad-row-hover: rgba(15, 23, 42, 0.035);
   /* Admin table rows must be opaque (avoid ambient cyan bleeding through). */
-  --ad-row-zebra-bg: #EDF2F7;
-  --ad-row-hover-bg: #E3EAF1;
+  --ad-row-zebra-bg: #E7EDF4;
+  --ad-row-hover-bg: #DCE5EE;
   --ad-header-bg: var(--bb-surface-soft);
   --ad-badge-success-bg: rgba(57, 216, 52, 0.12);
   --ad-badge-success-text: #208A1D;

@@ -328,7 +328,7 @@ export function AnalyticsDashboard() {
       <div className="analytics-toolbar__actions">
         <span className="analytics-toolbar__updated">
           <CalendarClock size={14} />
-          Última actualización: {formatDateTime(lastUpdatedAt)}
+          Actualizado: {formatDateTime(lastUpdatedAt)}
         </span>
         <button
           type="button"

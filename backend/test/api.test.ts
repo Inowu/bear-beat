@@ -15,8 +15,24 @@ describe("TRPC API (smoke)", () => {
 
   let normalUserId = 0;
   let adminUserId = 0;
+  let normalRoleId = RolesIds.normal;
+  let adminRoleId = RolesIds.admin;
 
   beforeAll(async () => {
+    const normalRole = await prisma.roles.upsert({
+      where: { name: RolesNames.normal },
+      update: {},
+      create: { name: RolesNames.normal },
+    });
+    normalRoleId = normalRole.id;
+
+    const adminRole = await prisma.roles.upsert({
+      where: { name: RolesNames.admin },
+      update: {},
+      create: { name: RolesNames.admin },
+    });
+    adminRoleId = adminRole.id;
+
     const hash = await bcrypt.hash(password, 10);
 
     const normal = await prisma.users.upsert({
@@ -24,7 +40,7 @@ describe("TRPC API (smoke)", () => {
       update: {
         username: "jest-user",
         password: hash,
-        role_id: RolesIds.normal,
+        role_id: normalRoleId,
         active: 1,
         verified: true,
         blocked: false,
@@ -33,7 +49,7 @@ describe("TRPC API (smoke)", () => {
         username: "jest-user",
         email: normalEmail,
         password: hash,
-        role_id: RolesIds.normal,
+        role_id: normalRoleId,
         active: 1,
         verified: true,
         blocked: false,
@@ -46,7 +62,7 @@ describe("TRPC API (smoke)", () => {
       update: {
         username: "jest-admin",
         password: hash,
-        role_id: RolesIds.admin,
+        role_id: adminRoleId,
         active: 1,
         verified: true,
         blocked: false,
@@ -55,7 +71,7 @@ describe("TRPC API (smoke)", () => {
         username: "jest-admin",
         email: adminEmail,
         password: hash,
-        role_id: RolesIds.admin,
+        role_id: adminRoleId,
         active: 1,
         verified: true,
         blocked: false,

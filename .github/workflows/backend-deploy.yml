@@ -27,7 +27,19 @@ jobs:
           script: |
             set -e
             export PATH="/usr/local/bin:/usr/bin:$PATH"
-            [ -f ~/.nvm/nvm.sh ] && { . ~/.nvm/nvm.sh; nvm use default 2>/dev/null || true; }
             [ -f ~/.profile ] && . ~/.profile
             [ -f ~/.bashrc ] && . ~/.bashrc
-            cd bear-beat && bash ./deploy.sh
+            cd bear-beat
+            if [ -f ~/.nvm/nvm.sh ]; then
+              . ~/.nvm/nvm.sh
+              if [ -f backend/.nvmrc ]; then
+                NODE_VERSION="$(tr -d ' \t\r\n' < backend/.nvmrc)"
+                if [ -n "$NODE_VERSION" ]; then
+                  nvm install "$NODE_VERSION"
+                  nvm use "$NODE_VERSION"
+                fi
+              else
+                nvm use default 2>/dev/null || true
+              fi
+            fi
+            bash ./deploy.sh

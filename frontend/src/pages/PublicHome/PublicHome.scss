@@ -452,8 +452,8 @@
 .home-hero__micro {
   margin: 0;
   color: color-mix(in srgb, var(--ph-text-muted) 92%, transparent);
-  font-size: clamp(13.5px, 0.82vw, 14.25px);
-  line-height: 1.5;
+  font-size: clamp(13.8px, 0.84vw, 14.5px);
+  line-height: 1.48;
   letter-spacing: 0.004em;
   display: grid;
   gap: 6px;
@@ -468,8 +468,8 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  color: color-mix(in srgb, var(--ph-text-body) 92%, transparent);
-  font-weight: var(--bb-font-weight-medium);
+  color: color-mix(in srgb, var(--ph-text-body) 95%, transparent);
+  font-weight: var(--bb-font-weight-semibold);
 }
 
 .home-hero__micro-row svg {

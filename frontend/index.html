@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0a0a0b" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Bear Beat" />
+    <meta name="format-detection" content="telephone=no" />
+    <title>Bear Beat – Membresía para DJs (videos, remixes y karaokes) | 14.14 TB + 500 GB/mes</title>
+    <meta
+      name="description"
+      content="Membresía para DJs: video remixes, audios y karaokes. Catálogo 14.14 TB, 500 GB/mes. Prueba 7 días + 100 GB (solo tarjeta, 1ª vez)."
+    />
+    <meta
+      name="keywords"
+      content="música para DJs, librería DJ, descarga música DJ, FTP DJ, Bear Beat, música por género, videos DJ, 500 GB"
+    />
+    <meta name="author" content="Bear Beat" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://thebearbeat.com/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://thebearbeat.com/" />
+    <meta property="og:title" content="Bear Beat – Membresía para DJs (videos, remixes y karaokes)" />
+    <meta
+      property="og:description"
+      content="Catálogo 14.14 TB, 500 GB/mes. Prueba 7 días + 100 GB (solo tarjeta, 1ª vez)."
+    />
+    <meta property="og:image" content="https://thebearbeat.com/logo512.png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+    <meta property="og:image:alt" content="Bear Beat – Librería de música y videos para DJs" />
+    <meta property="og:locale" content="es_MX" />
+    <meta property="og:site_name" content="Bear Beat" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://thebearbeat.com/" />
+    <meta name="twitter:title" content="Bear Beat – Membresía para DJs (videos, remixes y karaokes)" />
+    <meta
+      name="twitter:description"
+      content="Catálogo 14.14 TB, 500 GB/mes. Prueba 7 días + 100 GB (solo tarjeta, 1ª vez)."
+    />
+    <meta name="twitter:image" content="https://thebearbeat.com/logo512.png" />
+    <meta name="twitter:image:alt" content="Bear Beat – Librería de música y videos para DJs" />
+
+    <link rel="icon" href="/logoOso.png" />
+    <link rel="apple-touch-icon" href="/logoOso.png" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <script type="application/ld+json">
+      {"@context":"https://schema.org","@type":"WebSite","@id":"https://thebearbeat.com/#website","name":"Bear Beat","url":"https://thebearbeat.com/","description":"Librería de música y videos exclusivos para DJs. 500 GB cada mes por FTP, contenido organizado por géneros.","publisher":{"@id":"https://thebearbeat.com/#organization"},"potentialAction":{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://thebearbeat.com/?q={search_term_string}"},"query-input":"required name=search_term_string"}}
+    </script>
+    <script type="application/ld+json">
+      {"@context":"https://schema.org","@type":"Organization","@id":"https://thebearbeat.com/#organization","name":"Bear Beat","url":"https://thebearbeat.com/","logo":"https://thebearbeat.com/logo512.png","description":"Librería de música y videos para DJs. Suscripción con descarga FTP masiva."}
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <noscript>
+      <img
+        height="1"
+        width="1"
+        style="display: none"
+        src="https://www.facebook.com/tr?id=1325763147585869&ev=PageView&noscript=1"
+        alt=""
+      />
+    </noscript>
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem("bear-theme");
+          var theme = "dark";
+          if (stored === "light") theme = "light";
+          else if (stored === "dark") theme = "dark";
+          else if (stored === "system") {
+            theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+          } else if (stored === "schedule") {
+            var h = new Date().getHours();
+            theme = h >= 6 && h < 21 ? "light" : "dark";
+          }
+          document.documentElement.setAttribute("data-theme", theme);
+          document.documentElement.classList.toggle("dark", theme === "dark");
+          var isMac =
+            typeof navigator !== "undefined" &&
+            navigator.platform &&
+            navigator.platform.toLowerCase().indexOf("mac") >= 0;
+          var isChrome = typeof window !== "undefined" && window.chrome && (window.chrome.runtime || !window.opr);
+          if (isMac && isChrome) document.documentElement.classList.add("chrome-mac");
+        } catch (e) {}
+      })();
+    </script>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <script type="module" src="/src/index.tsx"></script>
+  </body>
+</html>
