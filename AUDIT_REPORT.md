@@ -212,6 +212,13 @@ Regla: medición profunda + load solo en **STAGING**.
   - Rutas privadas disallow: `/admin`, `/micuenta`, `/descargas`, `/comprar`, etc.
 - Accesibilidad: pendiente `axe`/Lighthouse + teclado/foco en flujos críticos.
 
+## AppSec checks ejecutados (sin tocar producción)
+- Dependency audit (`npm audit`): ver `audit-artifacts/appsec-2026-02-12/deps/npm-audit.summary.md`.
+- Secret scan (patrones high-confidence en archivos trackeados): **0 matches**  
+  Evidencia: `audit-artifacts/appsec-2026-02-12/secrets/secret-scan.summary.md`.
+- Quick scan de “risky sinks” (open redirect / DOM sinks): 3 matches para revisión manual  
+  Evidencia: `audit-artifacts/appsec-2026-02-12/sast/rg-risky-sinks.txt`.
+
 ## Monitoreo / alertas / backups (pendiente)
 Pendiente:
 - Confirmar Sentry (FE/BE) y tasas de error (sin exponer PII).
