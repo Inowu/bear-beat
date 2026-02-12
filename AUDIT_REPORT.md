@@ -39,6 +39,29 @@ Estado: los fixes están implementados en código y cubiertos por tests; **pendi
 - Webhooks: `/webhooks.*` (PayPal/Stripe/Conekta)
 - Descargas: endpoints `/download`, `/download-dir`, `/track-cover`
 
+## Comandos planificados (safe vs potentially risky)
+
+### Safe (no invasivos / no destructivos)
+- Repo/lectura: `git status`, `git log`, `rg`, `cat`, `sed`
+- Builds/tests locales:
+  - `npm run build --workspace=backend`
+  - `npm test --workspace=frontend`
+  - `npm run build` (frontend)
+- Producción (pasivo):
+  - `curl -I https://thebearbeat.com/` (headers)
+  - `curl https://thebearbeat.com/robots.txt`
+  - `curl https://thebearbeat.com/sitemap.xml`
+  - Lighthouse “light” (una corrida puntual; sin throttling/carga agresiva)
+
+### Potentially risky (solo STAGING; NO producción)
+- STAGING local:
+  - `docker compose -f backend/docker-compose.staging.yml up -d`
+  - `npx prisma migrate deploy --schema backend/prisma/schema.prisma` (solo DB local)
+  - Seeds: `npm run seed:* --workspace=backend` (solo DB local, con guardrails)
+  - DAST (ZAP baseline), load/perf (k6/artillery) contra `localhost`
+- Infra/deploy:
+  - cualquier `deploy.sh`, cambios de `nginx/pm2`, rotación de llaves, cambios en VPS/Netlify
+
 ## Hallazgos priorizados (Critical → Low)
 
 Leyenda:
