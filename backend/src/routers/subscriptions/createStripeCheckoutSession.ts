@@ -319,10 +319,11 @@ export const createStripeCheckoutSession = shieldedProcedure
             },
             ...(effectiveTrialEnd ? { trial_end: effectiveTrialEnd } : {}),
           },
-          allow_promotion_codes: true,
+          // Stripe Checkout enforces: allow_promotion_codes XOR discounts.
+          // If we auto-apply a coupon (offers / requested), we must not also enable promo-code entry.
           ...(withDiscount && resolvedCoupon.couponCode
             ? { discounts: [{ coupon: resolvedCoupon.couponCode }] }
-            : {}),
+            : { allow_promotion_codes: true }),
         },
         { idempotencyKey: `stripe-checkout-order-${order.id}` },
       );

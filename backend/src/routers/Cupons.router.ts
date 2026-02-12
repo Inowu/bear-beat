@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
+import Stripe from 'stripe';
 import { shieldedProcedure } from '../procedures/shielded.procedure';
 import { router } from '../trpc';
 import { CuponsAggregateSchema } from '../schemas/aggregateCupons.schema';
@@ -14,7 +15,7 @@ import { CuponsGroupBySchema } from '../schemas/groupByCupons.schema';
 import { CuponsUpdateManySchema } from '../schemas/updateManyCupons.schema';
 import { CuponsUpdateOneSchema } from '../schemas/updateOneCupons.schema';
 import { CuponsUpsertSchema } from '../schemas/upsertOneCupons.schema';
-import stripeInstance from '../stripe';
+import stripeInstance, { isStripeConfigured } from '../stripe';
 import { log } from '../server';
 
 export const cuponsRouter = router({
@@ -77,15 +78,97 @@ export const cuponsRouter = router({
     .input(CuponsCreateOneSchema)
     .mutation(async ({ input, ctx: { prisma } }) => {
       try {
-        stripeInstance.coupons.create({
-          name: input.data.code,
-          id: input.data.code,
-          percent_off: input.data.discount,
-        });
+        const code = String((input.data as any)?.code ?? '').trim();
+        if (!code) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'El código es requerido' });
+        }
+        if (code.length > 15) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'El código del cupón no puede exceder 15 caracteres',
+          });
+        }
 
-        await prisma.cupons.create(input);
+        const percentOff = Number((input.data as any)?.discount);
+        if (!Number.isFinite(percentOff) || percentOff <= 0 || percentOff > 100) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'El descuento debe ser un número entre 1 y 100' });
+        }
+
+        const isActive = Number((input.data as any)?.active) === 1;
+
+        // Keep Stripe in sync with DB coupons to prevent checkout failures when applying discounts.
+        if (isStripeConfigured()) {
+          let stripeCoupon: Stripe.Coupon | null = null;
+          try {
+            stripeCoupon = await stripeInstance.coupons.retrieve(code);
+          } catch (e: any) {
+            const isMissing =
+              e?.code === 'resource_missing' ||
+              (typeof e?.message === 'string' && e.message.toLowerCase().includes('no such coupon'));
+            if (!isMissing) throw e;
+          }
+
+          if (!stripeCoupon) {
+            await stripeInstance.coupons.create({
+              name: code,
+              id: code,
+              percent_off: percentOff,
+              duration: 'once',
+            });
+          } else {
+            const existingPercentOff = stripeCoupon.percent_off;
+            const hasPercentOff = typeof existingPercentOff === 'number';
+            if (!hasPercentOff || Number(existingPercentOff) !== percentOff) {
+              throw new TRPCError({
+                code: 'BAD_REQUEST',
+                message: `En Stripe ya existe un cupón con el código ${code} pero con un descuento diferente. Usa otro código.`,
+              });
+            }
+          }
+
+          // If Checkout uses allow_promotion_codes, the customer-facing code is a Promotion Code.
+          // Create (or keep updated) a promotion code with the same value as our coupon code.
+          try {
+            const existing = await stripeInstance.promotionCodes.list({ code, limit: 1 });
+            const promo = existing.data[0] ?? null;
+            if (!promo) {
+              await stripeInstance.promotionCodes.create({
+                promotion: { type: 'coupon', coupon: code },
+                code,
+                active: isActive,
+              });
+            } else {
+              const promoCouponRaw = promo.promotion?.coupon ?? null;
+              const promoCouponId =
+                typeof promoCouponRaw === 'string' ? promoCouponRaw : promoCouponRaw?.id ?? null;
+              if (promoCouponId !== code) {
+                throw new TRPCError({
+                  code: 'BAD_REQUEST',
+                  message: `En Stripe ya existe un promotion code ${code} asociado a otro cupón. Usa otro código.`,
+                });
+              }
+              if (promo.active !== isActive) {
+                await stripeInstance.promotionCodes.update(promo.id, { active: isActive });
+              }
+            }
+          } catch (e: any) {
+            log.warn('[COUPONS] Promotion code sync skipped', {
+              code,
+              error: e instanceof Error ? e.message : e,
+            });
+          }
+        } else {
+          log.warn('[COUPONS] Stripe not configured; creating coupon in DB only (local/dev)', { code });
+        }
+
+        await prisma.cupons.create({
+          ...(input.select ? { select: input.select } : {}),
+          data: { ...(input.data as any), code, discount: percentOff },
+        });
+        return { code };
       } catch (e: any) {
         log.error(`[COUPONS] Error creating coupon: ${e.message}`);
+        if (e instanceof TRPCError) throw e;
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Error al crear cupón',
@@ -145,13 +228,33 @@ export const cuponsRouter = router({
       }
 
       try {
-        await prisma.cupons.update({
+        const updated = await prisma.cupons.update({
           where: input.where,
           data: {
             description: input.data.description,
             active: input.data.active,
           },
+          select: { code: true, active: true },
         });
+
+        // Keep Stripe promotion code active flag in sync with DB.
+        if (isStripeConfigured() && input.data.active !== undefined) {
+          const isActive = Number(updated.active) === 1;
+          try {
+            const existing = await stripeInstance.promotionCodes.list({ code: updated.code, limit: 1 });
+            const promo = existing.data[0] ?? null;
+            if (promo && promo.active !== isActive) {
+              await stripeInstance.promotionCodes.update(promo.id, { active: isActive });
+            }
+          } catch (e: any) {
+            log.warn('[COUPONS] Promotion code active sync skipped', {
+              code: updated.code,
+              error: e instanceof Error ? e.message : e,
+            });
+          }
+        }
+
+        return updated;
       } catch (e: any) {
         log.error(`[COUPONS] Error updating coupon: ${e.message}`);
         throw new TRPCError({

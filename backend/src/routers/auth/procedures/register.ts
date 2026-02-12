@@ -245,7 +245,8 @@ export const register = publicProcedure
         const customer = await stripe.customers.create({
           email,
           metadata: {
-            id: newUser.id,
+            id: String(newUser.id),
+            userId: String(newUser.id),
           },
         });
 

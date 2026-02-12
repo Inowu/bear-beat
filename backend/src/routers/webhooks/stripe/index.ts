@@ -547,7 +547,7 @@ export const getUserFromPayload = async (
         );
       }
 
-      return customerId;
+      return null;
     }
   }
 
