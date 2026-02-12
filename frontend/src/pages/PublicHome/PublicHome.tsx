@@ -392,7 +392,8 @@ export default function PublicHome() {
       const targetTopOffset = () => {
         const stickyNav = document.querySelector<HTMLElement>(".home-topnav");
         const navHeight = stickyNav?.offsetHeight ?? 80;
-        return Math.max(12, navHeight + 10);
+        const navTop = stickyNav ? Math.max(0, stickyNav.getBoundingClientRect().top) : 0;
+        return Math.max(12, navTop + navHeight + 10);
       };
 
       const scrollToTarget = (element: HTMLElement | null, behavior: ScrollBehavior = "smooth") => {
@@ -442,8 +443,11 @@ export default function PublicHome() {
       const target = document.getElementById("faq");
       if (!target) return;
 
-      const navHeight = document.querySelector<HTMLElement>(".home-topnav")?.offsetHeight ?? 80;
-      const top = Math.max(0, window.scrollY + target.getBoundingClientRect().top - (navHeight + 10));
+      const stickyNav = document.querySelector<HTMLElement>(".home-topnav");
+      const navHeight = stickyNav?.offsetHeight ?? 80;
+      const navTop = stickyNav ? Math.max(0, stickyNav.getBoundingClientRect().top) : 0;
+      const offset = Math.max(12, navTop + navHeight + 10);
+      const top = Math.max(0, window.scrollY + target.getBoundingClientRect().top - offset);
       window.scrollTo({ top, behavior: options.behavior ?? "smooth" });
       const first = target.querySelector<HTMLElement>(".home-faq__summary");
       const title = target.querySelector<HTMLElement>("h2");
