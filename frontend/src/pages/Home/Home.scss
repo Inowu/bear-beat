@@ -893,6 +893,13 @@ html[data-theme="light"] .bb-explorer-row:hover {
   background: color-mix(in srgb, var(--app-bg-card) 88%, transparent);
 }
 
+.bb-file-pill--energy {
+  color: color-mix(in srgb, var(--app-status-warning) 84%, var(--app-text-heading));
+  border-color: color-mix(in srgb, var(--app-status-warning) 38%, transparent);
+  background: color-mix(in srgb, var(--app-status-warning) 10%, transparent);
+  font-variant-numeric: tabular-nums;
+}
+
 .bb-file-pill--key {
   color: color-mix(in srgb, var(--app-accent) 84%, var(--app-text-heading));
   border-color: color-mix(in srgb, var(--app-accent) 38%, transparent);

@@ -13,6 +13,7 @@ export type InferredTrackMetadata = {
   displayName: string;
   bpm: number | null;
   camelot: string | null;
+  energyLevel: number | null;
   format: string | null;
   version: string | null;
   coverUrl: string | null;
@@ -231,6 +232,7 @@ export function inferTrackMetadataFromName(name: string): InferredTrackMetadata 
     displayName,
     bpm: tempoKeyMeta.bpm,
     camelot: tempoKeyMeta.camelot,
+    energyLevel: null,
     format: extension ? extension.toUpperCase() : null,
     version: versionMeta.version,
     coverUrl: null,

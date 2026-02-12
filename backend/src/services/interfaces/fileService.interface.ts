@@ -4,6 +4,7 @@ export interface ITrackMetadata {
   displayName: string | null;
   bpm: number | null;
   camelot: string | null;
+  energyLevel: number | null;
   format: string | null;
   version: string | null;
   coverUrl: string | null;

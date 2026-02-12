@@ -1,4 +1,5 @@
 import { TrackMetadata } from '@prisma/client';
+import path from 'path';
 import { prisma } from '../db';
 import { IFileStat } from '../services/interfaces/fileService.interface';
 import { log } from '../server';
@@ -8,6 +9,7 @@ import {
   inferTrackMetadataFromName,
   normalizeCatalogPath,
 } from './inferTrackMetadata';
+import { getEmbeddedTrackTags } from './embeddedTags';
 
 const TRACK_METADATA_QUERY_BATCH = 400;
 const SPOTIFY_MISS_RETRY_HOURS = Number(process.env.TRACK_METADATA_SPOTIFY_MISS_RETRY_HOURS ?? 24);
@@ -20,6 +22,7 @@ const trackMetadataSelect = {
   displayName: true,
   bpm: true,
   camelot: true,
+  energyLevel: true,
   format: true,
   version: true,
   coverUrl: true,
@@ -35,6 +38,7 @@ type SelectedTrackMetadata = Pick<
   'displayName' |
   'bpm' |
   'camelot' |
+  'energyLevel' |
   'format' |
   'version' |
   'coverUrl' |
@@ -48,6 +52,7 @@ export type TrackMetadataView = {
   displayName: string | null;
   bpm: number | null;
   camelot: string | null;
+  energyLevel: number | null;
   format: string | null;
   version: string | null;
   coverUrl: string | null;
@@ -78,6 +83,10 @@ function toTrackMetadataView(record: SelectedTrackMetadata): TrackMetadataView {
     displayName: normalizeText(record.displayName),
     bpm: typeof record.bpm === 'number' && Number.isFinite(record.bpm) ? record.bpm : null,
     camelot: normalizeText(record.camelot),
+    energyLevel:
+      typeof record.energyLevel === 'number' && Number.isFinite(record.energyLevel)
+        ? record.energyLevel
+        : null,
     format: normalizeText(record.format),
     version: normalizeText(record.version),
     coverUrl: normalizeText(record.coverUrl),
@@ -114,6 +123,7 @@ export function toTrackMetadataCreateInput(
     displayName: metadata.displayName,
     bpm: metadata.bpm,
     camelot: metadata.camelot,
+    energyLevel: metadata.energyLevel,
     format: metadata.format,
     version: metadata.version,
     coverUrl: metadata.coverUrl,
@@ -190,26 +200,115 @@ export async function syncTrackMetadataForFiles<T extends Pick<IFileStat, 'name'
 ): Promise<number> {
   if (!files.length) return 0;
 
-  const candidateRows = files
-    .filter((file) => file.type === '-' && Boolean(file.path))
-    .map((file) => inferTrackMetadataFromFile(file))
-    .filter((value): value is NonNullable<ReturnType<typeof inferTrackMetadataFromFile>> => Boolean(value));
+  const songsPath = `${process.env.SONGS_PATH ?? ''}`.trim();
+  const embeddedConcurrencyRaw = Number(process.env.TRACK_METADATA_EMBEDDED_TAGS_CONCURRENCY ?? 6);
+  const embeddedConcurrency =
+    Number.isFinite(embeddedConcurrencyRaw) && embeddedConcurrencyRaw > 0
+      ? Math.max(1, Math.min(12, Math.floor(embeddedConcurrencyRaw)))
+      : 6;
 
-  if (!candidateRows.length) {
+  const candidates = files
+    .filter((file) => file.type === '-' && Boolean(file.path))
+    .map((file) => {
+      const inferred = inferTrackMetadataFromName(file.name);
+      return inferred ? { file, inferred } : null;
+    })
+    .filter((value): value is { file: T; inferred: InferredTrackMetadata } => Boolean(value));
+
+  if (!candidates.length) {
     return 0;
   }
 
-  const existingMap = await getTrackMetadataMapByPaths(candidateRows.map((row) => row.path));
-  const missingRows = candidateRows.filter((row) => !existingMap.has(normalizeCatalogPath(row.path)));
+  const rows: Array<ReturnType<typeof toTrackMetadataCreateInput>> = [];
+
+  for (let idx = 0; idx < candidates.length; idx += embeddedConcurrency) {
+    const chunk = candidates.slice(idx, idx + embeddedConcurrency);
+    const chunkRows = await Promise.all(
+      chunk.map(async ({ file, inferred }) => {
+        const catalogPath = normalizeCatalogPath(file.path as string);
+        const absolutePath =
+          songsPath && catalogPath !== '/'
+            ? path.join(songsPath, catalogPath.replace(/^\/+/, ''))
+            : null;
+
+        let merged = inferred;
+        if (absolutePath) {
+          const stat = file as Partial<IFileStat>;
+          const embedded = await getEmbeddedTrackTags(absolutePath, {
+            mtimeMs: typeof stat.modification === 'number' ? stat.modification : undefined,
+            size: typeof stat.size === 'number' ? stat.size : undefined,
+          });
+
+          const artist = embedded.artist ?? merged.artist;
+          const title = embedded.title ?? merged.title;
+          const displayName = artist ? `${artist} - ${title}` : title;
+
+          merged = {
+            ...merged,
+            artist,
+            title,
+            displayName: displayName || merged.displayName,
+            bpm: embedded.bpm ?? merged.bpm,
+            camelot: embedded.camelot ?? merged.camelot,
+            energyLevel: embedded.energyLevel ?? merged.energyLevel,
+            durationSeconds: embedded.durationSeconds ?? merged.durationSeconds,
+          };
+        }
+
+        return toTrackMetadataCreateInput(catalogPath, file.name, merged);
+      }),
+    );
+
+    rows.push(...chunkRows);
+  }
+
+  const existingRows = await prisma.trackMetadata.findMany({
+    where: {
+      path: { in: rows.map((row) => normalizeCatalogPath(row.path)) },
+    },
+    select: {
+      path: true,
+    },
+  });
+
+  const existingSet = new Set(existingRows.map((row) => normalizeCatalogPath(row.path)));
+  const missingRows = rows.filter((row) => !existingSet.has(normalizeCatalogPath(row.path)));
+  const updateRows = rows.filter((row) => existingSet.has(normalizeCatalogPath(row.path)));
 
   if (!missingRows.length) {
-    return 0;
+    // We still want to update existing rows (embedded tags may have changed).
+    if (updateRows.length === 0) return 0;
   }
 
-  const created = await prisma.trackMetadata.createMany({
-    data: missingRows,
-    skipDuplicates: true,
-  });
+  const created = missingRows.length
+    ? await prisma.trackMetadata.createMany({
+      data: missingRows,
+      skipDuplicates: true,
+    })
+    : { count: 0 };
+
+  if (updateRows.length) {
+    // Preserve coverUrl + source (Spotify pipeline) when refreshing embedded tag metadata.
+    await Promise.all(
+      updateRows.map((row) =>
+        prisma.trackMetadata.update({
+          where: { path: normalizeCatalogPath(row.path) },
+          data: {
+            name: row.name,
+            artist: row.artist,
+            title: row.title,
+            displayName: row.displayName,
+            bpm: row.bpm,
+            camelot: row.camelot,
+            energyLevel: row.energyLevel,
+            format: row.format,
+            version: row.version,
+            durationSeconds: row.durationSeconds,
+          },
+        }),
+      ),
+    );
+  }
 
   const freshPaths = missingRows.map((row) => row.path);
   if (freshPaths.length > 0 && isSpotifyMetadataEnabled()) {

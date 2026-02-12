@@ -376,6 +376,7 @@ model TrackMetadata {
   displayName     String?  @map("display_name") @db.VarChar(600)
   bpm             Int?
   camelot         String?  @db.VarChar(4)
+  energyLevel     Int?     @map("energy_level")
   format          String?  @db.VarChar(10)
   version         String?  @db.VarChar(80)
   coverUrl        String?  @map("cover_url") @db.VarChar(1000)

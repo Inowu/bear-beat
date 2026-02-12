@@ -13,6 +13,18 @@ const COVER_MISS_TTL_MS = 24 * 60 * 60 * 1000;
 const coverMissCache = new Map<string, number>(); // key -> expiresAt
 const coverInFlight = new Map<string, Promise<boolean>>(); // key -> generation promise
 
+type FfprobeStream = {
+  index?: number;
+  codec_type?: string;
+  disposition?: {
+    attached_pic?: number;
+  };
+};
+
+type FfprobeStreamsResponse = {
+  streams?: FfprobeStream[];
+};
+
 const toText = (value: unknown): string => `${value ?? ''}`.trim();
 
 function sanitizeCatalogRelativePath(value: unknown): string | null {
@@ -50,7 +62,79 @@ async function fileExists(filePath: string): Promise<boolean> {
   }
 }
 
-async function generateCoverJpeg(inputPath: string, outputPath: string): Promise<boolean> {
+async function ffprobeStreams(fullPath: string): Promise<FfprobeStreamsResponse | null> {
+  try {
+    const { stdout } = await execFileAsync(
+      'ffprobe',
+      [
+        '-v',
+        'error',
+        '-print_format',
+        'json',
+        '-show_entries',
+        'stream=index,codec_type,disposition',
+        fullPath,
+      ],
+      {
+        timeout: 12_000,
+        maxBuffer: 1024 * 1024,
+      },
+    );
+    return JSON.parse(stdout) as FfprobeStreamsResponse;
+  } catch (error: any) {
+    log.debug?.(
+      `[TRACK_COVER] ffprobe failed for "${Path.basename(fullPath)}": ${error?.message ?? 'unknown error'}`,
+    );
+    return null;
+  }
+}
+
+async function resolveCoverStreamIndex(
+  inputPath: string,
+): Promise<number | null | undefined> {
+  const probe = await ffprobeStreams(inputPath);
+  if (!probe) return undefined;
+
+  const streams = Array.isArray(probe.streams) ? probe.streams : [];
+  const attached = streams.find(
+    (stream) =>
+      stream?.codec_type === 'video' &&
+      stream?.disposition?.attached_pic === 1 &&
+      typeof stream.index === 'number' &&
+      Number.isFinite(stream.index),
+  );
+  if (attached && typeof attached.index === 'number') {
+    return attached.index;
+  }
+
+  const firstVideo = streams.find(
+    (stream) =>
+      stream?.codec_type === 'video' &&
+      typeof stream.index === 'number' &&
+      Number.isFinite(stream.index),
+  );
+  if (firstVideo && typeof firstVideo.index === 'number') {
+    return firstVideo.index;
+  }
+
+  // No video streams at all -> no embedded cover and no video frame fallback.
+  return null;
+}
+
+type CoverGenerationResult = {
+  ok: boolean;
+  cacheableMiss: boolean;
+};
+
+async function generateCoverJpeg(inputPath: string, outputPath: string): Promise<CoverGenerationResult> {
+  const streamIndex = await resolveCoverStreamIndex(inputPath);
+  if (streamIndex === null) {
+    return { ok: false, cacheableMiss: true };
+  }
+
+  const mapValue =
+    typeof streamIndex === 'number' ? `0:${streamIndex}` : '0:v:0';
+
   try {
     await execFileAsync(
       'ffmpeg',
@@ -62,7 +146,7 @@ async function generateCoverJpeg(inputPath: string, outputPath: string): Promise
         '-i',
         inputPath,
         '-map',
-        '0:v:0',
+        mapValue,
         '-frames:v',
         '1',
         '-q:v',
@@ -74,14 +158,21 @@ async function generateCoverJpeg(inputPath: string, outputPath: string): Promise
       },
     );
   } catch (error: any) {
-    // Typical "no cover" case: Stream map '0:v:0' matches no streams.
+    // Typical "no cover" case: no attached picture stream, and no video stream.
+    const message = `${error?.message ?? ''}`.toLowerCase();
+    const cacheableMiss =
+      message.includes('matches no streams') ||
+      message.includes('stream map') ||
+      message.includes('attached_pic') ||
+      message.includes('unknown stream');
     log.debug?.(
       `[TRACK_COVER] ffmpeg extract failed for "${inputPath}": ${error?.message ?? 'unknown error'}`,
     );
-    return false;
+    return { ok: false, cacheableMiss };
   }
 
-  return fileExists(outputPath);
+  const ok = await fileExists(outputPath);
+  return { ok, cacheableMiss: true };
 }
 
 async function ensureCoverCached(fullPath: string, coverPath: string, cacheKey: string): Promise<boolean> {
@@ -102,9 +193,11 @@ async function ensureCoverCached(fullPath: string, coverPath: string, cacheKey: 
       // best effort
     }
 
-    const ok = await generateCoverJpeg(fullPath, coverPath);
-    if (!ok) {
-      coverMissCache.set(cacheKey, Date.now() + COVER_MISS_TTL_MS);
+    const result = await generateCoverJpeg(fullPath, coverPath);
+    if (!result.ok) {
+      if (result.cacheableMiss) {
+        coverMissCache.set(cacheKey, Date.now() + COVER_MISS_TTL_MS);
+      }
       return false;
     }
     return true;
@@ -164,4 +257,3 @@ export const trackCoverEndpoint = async (req: Request, res: Response) => {
   res.setHeader('Cache-Control', 'private, max-age=604800, immutable');
   return res.sendFile(coverPath);
 };
-

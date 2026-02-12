@@ -70,6 +70,7 @@ type ResolvedTrackMetadata = {
   displayName: string;
   bpm: number | null;
   camelot: string | null;
+  energyLevel: number | null;
   format: string | null;
   version: string | null;
   coverUrl: string | null;
@@ -125,6 +126,7 @@ const buildTrackMetadata = (
     '';
   const bpm = normalizeOptionalNumber(backend?.bpm) ?? inferred.bpm;
   const camelot = normalizeOptionalText(backend?.camelot) ?? inferred.camelot;
+  const energyLevel = normalizeOptionalNumber(backend?.energyLevel);
   const format = normalizeOptionalText(backend?.format) ?? inferred.format;
   const version = normalizeOptionalText(backend?.version) ?? inferred.version;
   const coverUrl = normalizeOptionalText(backend?.coverUrl);
@@ -141,6 +143,7 @@ const buildTrackMetadata = (
     displayName,
     bpm,
     camelot,
+    energyLevel,
     format,
     version,
     coverUrl,
@@ -1257,6 +1260,14 @@ function Home() {
                           {resolvedTrack?.bpm && (
                             <span className="bb-file-pill bb-file-pill--tempo">
                               {resolvedTrack.bpm} BPM
+                            </span>
+                          )}
+                          {resolvedTrack?.energyLevel && (
+                            <span
+                              className="bb-file-pill bb-file-pill--energy"
+                              title={`Energy ${resolvedTrack.energyLevel}`}
+                            >
+                              E{resolvedTrack.energyLevel}
                             </span>
                           )}
                           {resolvedTrack?.camelot && (
