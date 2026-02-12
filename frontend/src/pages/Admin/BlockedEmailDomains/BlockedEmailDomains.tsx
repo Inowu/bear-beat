@@ -8,6 +8,7 @@ import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLa
 import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
 import { Plus, MoreVertical, Trash2 } from "lucide-react";
 import { toErrorMessage } from "../../../utils/errorMessage";
+import "./BlockedEmailDomains.scss";
 
 const DOMAIN_REGEX = /^(?!-)[a-z0-9-]+(\.[a-z0-9-]+)+$/;
 const RESERVED_DOMAINS = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "live.com", "icloud.com", "protonmail.com", "aol.com"];
@@ -92,19 +93,17 @@ export const BlockedEmailDomains = () => {
   }, []);
 
   const toolbar = (
-    <form onSubmit={handleAddDomain} className="flex flex-wrap items-center gap-3 flex-1 min-w-0">
-      <input
-        type="text"
-        placeholder="ej. spamdomain.com"
-        value={newDomain}
-        onChange={(e) => setNewDomain(e.target.value)}
-        className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-bear-cyan min-w-[180px] max-w-xs"
-      />
-      <button
-        type="submit"
-        disabled={saving}
-        className="inline-flex items-center gap-2 bg-bear-gradient hover:opacity-95 text-bear-dark-500 font-medium rounded-lg px-4 py-2 transition-opacity disabled:opacity-50"
-      >
+    <form onSubmit={handleAddDomain} className="blocked-domains-toolbar">
+      <label className="blocked-domains-toolbar__field">
+        Dominio a bloquear
+        <input
+          type="text"
+          placeholder="ej. spamdomain.com"
+          value={newDomain}
+          onChange={(e) => setNewDomain(e.target.value)}
+        />
+      </label>
+      <button type="submit" disabled={saving} className="blocked-domains-toolbar__btn">
         <Plus size={18} />
         Agregar dominio
       </button>
@@ -117,95 +116,105 @@ export const BlockedEmailDomains = () => {
       subtitle="Protege el registro filtrando dominios riesgosos y mantén la base de usuarios limpia."
       toolbar={toolbar}
     >
-      <p className="text-slate-500 text-sm mb-4">No se permiten dominios públicos como {RESERVED_DOMAINS.slice(0, 4).join(", ")}…</p>
-      <ConditionModal
-        show={domainToDelete !== null}
-        onHide={() => setDomainToDelete(null)}
-        title="Eliminar dominio"
-        message="¿Eliminar este dominio de la lista?"
-        action={() => domainToDelete ? handleRemoveDomain(domainToDelete) : Promise.resolve()}
-      />
+      <section className="blocked-domains-page">
+        <p className="blocked-domains-note">
+          No se permiten dominios públicos como {RESERVED_DOMAINS.slice(0, 4).join(", ")}…
+        </p>
+        <ConditionModal
+          show={domainToDelete !== null}
+          onHide={() => setDomainToDelete(null)}
+          title="Eliminar dominio"
+          message="¿Eliminar este dominio de la lista?"
+          action={() => (domainToDelete ? handleRemoveDomain(domainToDelete) : Promise.resolve())}
+        />
 
-      {loader ? (
-        <div className="flex justify-center py-12">
-          <Spinner size={3} width={0.3} color="var(--app-accent)" />
-        </div>
-      ) : blockedDomains.length === 0 ? (
-        <p className="text-slate-400 py-8 text-center">No hay dominios bloqueados.</p>
-      ) : (
-        <>
-          <div className="rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50 hidden md:block">
-            <div
-              className="overflow-x-auto"
-              tabIndex={0}
-              role="region"
-              aria-label="Tabla de dominios bloqueados (desliza para ver más)"
-              data-scroll-region
-            >
-              <table className="w-full">
-                <thead className="bg-slate-900">
-                  <tr>
-                    <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Dominio</th>
-                    <th className="text-slate-400 uppercase text-xs tracking-wider text-right py-3 px-4">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-slate-950">
-                  {blockedDomains.map((domain) => (
-                    <tr key={`d_${domain}`} className="border-b border-slate-800 hover:bg-slate-900/60 transition-colors">
-                      <td className="py-3 px-4 text-sm text-slate-300">{domain}</td>
-                      <td className="py-3 px-4 text-right">
-                        <button
-                          type="button"
-                          onClick={() => setDomainToDelete(domain)}
-                          disabled={saving}
-                          className="p-2 text-slate-400 hover:text-red-400 transition-colors rounded-lg hover:bg-slate-800 disabled:opacity-50"
-                          title="Eliminar"
-                          aria-label={`Eliminar dominio ${domain}`}
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+        {loader ? (
+          <div className="blocked-domains-state">
+            <Spinner size={3} width={0.3} color="var(--app-accent)" />
           </div>
-
-          <div className="md:hidden flex flex-col rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50">
-            {blockedDomains.map((domain) => (
-              <button
-                type="button"
-                key={`m_${domain}`}
-                className="flex items-center justify-between gap-3 min-h-[64px] w-full px-4 py-3 border-b border-slate-800 hover:bg-slate-900/60 active:bg-slate-800 text-left"
-                onClick={() => setDrawerDomain(domain)}
-                aria-label={`Ver acciones para ${domain}`}
+        ) : blockedDomains.length === 0 ? (
+          <p className="blocked-domains-state blocked-domains-state--empty">
+            No hay dominios bloqueados.
+          </p>
+        ) : (
+          <>
+            <div className="blocked-domains-table-wrap hidden md:block">
+              <div
+                className="blocked-domains-table-scroll"
+                tabIndex={0}
+                role="region"
+                aria-label="Tabla de dominios bloqueados (desliza para ver más)"
+                data-scroll-region
               >
-                <p className="font-medium text-white text-sm truncate flex-1 min-w-0">{domain}</p>
-                <span className="p-2 text-slate-400 hover:text-bear-cyan rounded-lg" aria-hidden>
-                  <MoreVertical size={20} />
-                </span>
-              </button>
-            ))}
-          </div>
+                <table className="blocked-domains-table">
+                  <thead>
+                    <tr>
+                      <th>Dominio</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {blockedDomains.map((domain) => (
+                      <tr key={`d_${domain}`}>
+                        <td>{domain}</td>
+                        <td>
+                          <button
+                            type="button"
+                            onClick={() => setDomainToDelete(domain)}
+                            disabled={saving}
+                            className="blocked-domains-delete-btn"
+                            title="Eliminar"
+                            aria-label={`Eliminar dominio ${domain}`}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
 
-          <AdminDrawer
-            open={drawerDomain !== null}
-            onClose={() => setDrawerDomain(null)}
-            title={drawerDomain ?? "Dominio"}
-            user={undefined}
-            actions={
-              drawerDomain
-                ? [{ id: "delete", label: "Eliminar de la lista", onClick: () => setDomainToDelete(drawerDomain), variant: "danger" }]
-                : []
-            }
-          >
-            {drawerDomain && <p className="text-slate-300 text-sm">Dominio bloqueado: <strong className="text-white">{drawerDomain}</strong></p>}
-          </AdminDrawer>
-        </>
-      )}
+            <div className="blocked-domains-mobile-list md:hidden">
+              {blockedDomains.map((domain) => (
+                <button
+                  type="button"
+                  key={`m_${domain}`}
+                  className="blocked-domains-mobile-item"
+                  onClick={() => setDrawerDomain(domain)}
+                  aria-label={`Ver acciones para ${domain}`}
+                >
+                  <p>{domain}</p>
+                  <span aria-hidden>
+                    <MoreVertical size={20} />
+                  </span>
+                </button>
+              ))}
+            </div>
 
-      <ErrorModal show={showError} onHide={() => setShowError(false)} message={errorMessage} />
+            <AdminDrawer
+              open={drawerDomain !== null}
+              onClose={() => setDrawerDomain(null)}
+              title={drawerDomain ?? "Dominio"}
+              user={undefined}
+              actions={
+                drawerDomain
+                  ? [{ id: "delete", label: "Eliminar de la lista", onClick: () => setDomainToDelete(drawerDomain), variant: "danger" }]
+                  : []
+              }
+            >
+              {drawerDomain && (
+                <p className="blocked-domains-drawer-copy">
+                  Dominio bloqueado: <strong>{drawerDomain}</strong>
+                </p>
+              )}
+            </AdminDrawer>
+          </>
+        )}
+
+        <ErrorModal show={showError} onHide={() => setShowError(false)} message={errorMessage} />
+      </section>
     </AdminPageLayout>
   );
 };
