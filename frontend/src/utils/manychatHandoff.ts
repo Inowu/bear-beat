@@ -87,23 +87,31 @@ export function captureManyChatHandoffFromUrl(): string | null {
   try {
     const url = new URL(window.location.href);
     const token = (url.searchParams.get("mc_t") ?? "").trim();
-    if (!token) return null;
+    const mcpToken = (url.searchParams.get("mcp_token") ?? "").trim();
+    if (!token && !mcpToken) return null;
 
-    setManyChatHandoffToken(token);
+    if (token) {
+      setManyChatHandoffToken(token);
+    }
 
-    // Remove mc_t from the URL ASAP to avoid leaking it to third-party trackers.
+    // Remove tokens from the URL ASAP to avoid leaking them to third-party trackers.
+    // Note: ManyChat's widget/pixel reads `mcp_token` on load; we include the ManyChat scripts
+    // before our app bundle so it can capture it first.
     url.searchParams.delete("mc_t");
+    url.searchParams.delete("mcp_token");
     const next = `${url.pathname}${url.search}${url.hash}`;
     window.history.replaceState(null, "", next);
 
     // Notify listeners (useful when the user is already logged in and opens a new handoff link).
-    try {
-      window.dispatchEvent(new CustomEvent("bb:manychat-handoff", { detail: { token } }));
-    } catch {
-      // noop
+    if (token) {
+      try {
+        window.dispatchEvent(new CustomEvent("bb:manychat-handoff", { detail: { token } }));
+      } catch {
+        // noop
+      }
     }
 
-    return token;
+    return token || null;
   } catch {
     return null;
   }
