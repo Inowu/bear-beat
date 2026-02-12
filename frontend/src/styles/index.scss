@@ -40,11 +40,11 @@
   --bb-dark-200: #2A2A2A;
   --bb-dark-300: #292929;
   --bb-dark-400: #1A1A1A;
-  /* Light base: slightly cooler/cleaner than #EEEEEE to feel premium (2026) */
-  --bb-bg: #F3F7FA;
-  --bb-surface: #FFFFFF;
-  --bb-surface-soft: #F6FAFD;
-  --bb-border: rgba(15, 23, 42, 0.12);
+  /* Light base: neutral slate-light (avoid washed white while keeping clarity). */
+  --bb-bg: #E3EBF2;
+  --bb-surface: #EEF3F8;
+  --bb-surface-soft: #E8EEF5;
+  --bb-border: rgba(15, 23, 42, 0.17);
   --bb-text-heading: #111926;
   --bb-text-body: #243043;
   --bb-text-muted: #5B6678;
@@ -108,12 +108,12 @@
   --theme-bg-secondary: var(--bb-surface);
   --theme-bg-gradient: linear-gradient(165deg, var(--bb-surface) 0%, var(--bb-bg) 100%);
   /* Light nav (premium/glass, no "baby blue") */
-  --theme-nav-bg: #F8FBFD;
+  --theme-nav-bg: #EAF1F6;
   --theme-nav-border-bottom: rgba(21, 42, 53, 0.1);
   --theme-nav-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
   --theme-nav-text: #15202B;
   /* Neutral light pills (avoid blue-ish nav wash) */
-  --theme-nav-item-bg: #FFFFFF;
+  --theme-nav-item-bg: #F3F7FB;
   --theme-nav-item-border: rgba(15, 23, 42, 0.12);
   --theme-nav-danger-text: #BA1716;
   /* Light hover: subtle tint, avoid "baby blue" panels */
@@ -136,7 +136,7 @@
   --theme-ink: var(--bb-text-heading);
   --theme-heading: var(--bb-text-heading);
   --theme-strong: var(--bb-text-heading);
-  --theme-bg-muted: #EDF3F8;
+  --theme-bg-muted: #E4EBF2;
   --theme-bg-soft: var(--bb-surface-soft);
   --theme-stripe: rgba(0, 0, 0, 0.05);
   --theme-edge: rgba(21, 42, 53, 0.12);
@@ -168,7 +168,7 @@
   --ph-shadow-card: var(--bb-shadow-card);
   --ph-glow: rgba(8, 225, 247, 0.24);
   --ph-glow-strong: rgba(8, 225, 247, 0.34);
-  --ph-nav-bg: #FFFFFF;
+  --ph-nav-bg: #EEF3F8;
   --ph-footer-bg: var(--bb-surface);
   --ph-pain-bad: var(--bb-danger);
   --ph-pain-good: var(--bb-success);
@@ -200,11 +200,10 @@
 
   --auth-input-border: var(--bb-border);
   /* Auth: en light, inputs con relleno suave (gris neutro) para separarse del panel blanco sin “baby blue”. */
-  --auth-input-bg: #F8FBFD;
+  --auth-input-bg: #ECF2F7;
   --auth-register-panel-bg: var(--bb-surface);
   --auth-register-text: var(--bb-text-heading);
-  /* En light: inputs neutros (blancos) para evitar "baby blue" visual */
-  --auth-register-input-bg: #F8FBFD;
+  --auth-register-input-bg: #ECF2F7;
   --auth-register-input-border: var(--bb-border);
   --auth-register-input-focus: var(--bb-accent-ink);
   --auth-register-icon: #5D697B;
@@ -259,7 +258,7 @@
   --plan-card-benefit-icon: var(--bb-accent-ink);
 
   --aside-backdrop-bg: rgba(13, 21, 27, 0.28);
-  --aside-overlay-bg: color-mix(in srgb, #FFFFFF 96%, #F4F6F8);
+  --aside-overlay-bg: color-mix(in srgb, var(--bb-surface) 88%, var(--bb-bg));
   --aside-overlay-border: rgba(21, 42, 53, 0.12);
   --aside-overlay-text: #15202B;
   --aside-overlay-text-muted: #4A5A64;
@@ -330,8 +329,8 @@
   /* Admin: use neutral stripes in LIGHT; keep cyan for borders/CTAs only */
   --ad-row-hover: rgba(15, 23, 42, 0.035);
   /* Admin table rows must be opaque (avoid ambient cyan bleeding through). */
-  --ad-row-zebra-bg: #F8FAFC;
-  --ad-row-hover-bg: #EEF3F8;
+  --ad-row-zebra-bg: #EDF2F7;
+  --ad-row-hover-bg: #E3EAF1;
   --ad-header-bg: var(--bb-surface-soft);
   --ad-badge-success-bg: rgba(57, 216, 52, 0.12);
   --ad-badge-success-text: #208A1D;
@@ -679,7 +678,7 @@ html[data-theme="light"] body {
       color-mix(in srgb, var(--bb-landing-spot-2) 80%, transparent),
       transparent 64%
     ),
-    linear-gradient(180deg, #F8FBFD 0%, var(--app-bg) 34%, var(--app-bg) 100%);
+    linear-gradient(180deg, #EAF1F6 0%, var(--app-bg) 34%, var(--app-bg) 100%);
 }
 
 /* Chrome en Mac: fuentes más nítidas y capa GPU para evitar parpadeos */
@@ -751,9 +750,9 @@ textarea {
 }
 
 html[data-theme="light"] :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
-  background: color-mix(in srgb, #FFFFFF 95%, var(--app-bg-soft));
-  border-color: color-mix(in srgb, var(--app-border) 92%, transparent);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  background: color-mix(in srgb, var(--app-bg-card) 72%, var(--app-bg-soft));
+  border-color: color-mix(in srgb, var(--app-border) 96%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 /* iOS/Safari: `type="search"` trae un botón nativo (x) que rompe layouts con clear custom */
@@ -1168,8 +1167,8 @@ svg[role="img"] {
 html[data-theme="light"] .modal-content input,
 html[data-theme="light"] .modal-content select,
 html[data-theme="light"] .modal-content textarea {
-  background: color-mix(in srgb, #ffffff 96%, var(--app-bg-soft));
-  border-color: color-mix(in srgb, var(--app-border) 92%, transparent);
+  background: color-mix(in srgb, var(--app-bg-card) 70%, var(--app-bg-soft));
+  border-color: color-mix(in srgb, var(--app-border) 96%, transparent);
 }
 
 .error-formik,
@@ -1203,8 +1202,8 @@ html[data-theme="light"] :where(.warning-message) {
 }
 
 html[data-theme="light"] .main-layout-main-container :where(.card, .panel, .module-card, .bb-surface) {
-  border-color: color-mix(in srgb, var(--app-border) 90%, transparent);
-  background: color-mix(in srgb, #ffffff 98%, var(--app-bg-card));
+  border-color: color-mix(in srgb, var(--app-border) 94%, transparent);
+  background: color-mix(in srgb, var(--app-bg-card) 84%, var(--app-bg-soft));
 }
 
 /* Chrome Mac: landing (PublicHome) sin scroll horizontal ni recorte */
@@ -1393,46 +1392,46 @@ html[data-theme="light"] .main-layout-main-container :where(.card, .panel, .modu
 
 html[data-theme="light"] {
   .bb-card {
-    border-color: color-mix(in srgb, var(--app-border) 92%, transparent);
-    background: color-mix(in srgb, #ffffff 99%, var(--app-bg-card));
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.075);
+    border-color: color-mix(in srgb, var(--app-border) 96%, transparent);
+    background: color-mix(in srgb, var(--app-bg-card) 88%, var(--app-bg-soft));
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.09);
   }
 
   .bb-card--soft {
-    background: color-mix(in srgb, #ffffff 94%, var(--app-bg-soft));
-    border-color: color-mix(in srgb, var(--app-border) 88%, transparent);
+    background: color-mix(in srgb, var(--app-bg-soft) 86%, var(--app-bg));
+    border-color: color-mix(in srgb, var(--app-border) 92%, transparent);
   }
 
   .bb-segmented {
-    border-color: color-mix(in srgb, var(--app-border) 90%, transparent);
-    background: color-mix(in srgb, #ffffff 96%, var(--app-bg-card));
-    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
+    border-color: color-mix(in srgb, var(--app-border) 94%, transparent);
+    background: color-mix(in srgb, var(--app-bg-card) 84%, var(--app-bg-soft));
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
   }
 
   .bb-segmented__btn {
-    color: color-mix(in srgb, var(--app-text-body) 98%, transparent);
+    color: color-mix(in srgb, var(--app-text-body) 96%, transparent);
     letter-spacing: 0.045em;
   }
 
   .bb-segmented__btn[aria-selected="true"],
   .bb-segmented__btn.is-active {
-    background: color-mix(in srgb, var(--app-accent) 14%, #ffffff);
-    border-color: color-mix(in srgb, var(--app-accent) 34%, transparent);
+    background: color-mix(in srgb, var(--app-accent) 16%, var(--app-bg-card));
+    border-color: color-mix(in srgb, var(--app-accent) 38%, transparent);
   }
 
   .bb-badge {
-    border-color: color-mix(in srgb, var(--app-border) 90%, transparent);
-    background: color-mix(in srgb, #ffffff 84%, var(--app-bg-soft));
+    border-color: color-mix(in srgb, var(--app-border) 94%, transparent);
+    background: color-mix(in srgb, var(--app-bg-soft) 78%, var(--app-bg));
   }
 
   .bb-stat-pill {
-    border-color: color-mix(in srgb, var(--app-border) 90%, transparent);
-    background: color-mix(in srgb, #ffffff 98%, var(--app-bg-card));
+    border-color: color-mix(in srgb, var(--app-border) 94%, transparent);
+    background: color-mix(in srgb, var(--app-bg-card) 86%, var(--app-bg-soft));
   }
 
   .bb-accordion__item {
-    border-color: color-mix(in srgb, var(--app-border) 90%, transparent);
-    background: color-mix(in srgb, #ffffff 94%, var(--app-bg-soft));
+    border-color: color-mix(in srgb, var(--app-border) 94%, transparent);
+    background: color-mix(in srgb, var(--app-bg-soft) 84%, var(--app-bg));
   }
 
   .bb-accordion__panel {
@@ -1743,8 +1742,8 @@ html[data-theme="dark"] :where(
 }
 
 html[data-theme="light"] .modal-content {
-  border-color: color-mix(in srgb, var(--app-border) 92%, transparent) !important;
-  background: color-mix(in srgb, #ffffff 99%, var(--app-bg-card)) !important;
+  border-color: color-mix(in srgb, var(--app-border) 96%, transparent) !important;
+  background: color-mix(in srgb, var(--app-bg-card) 90%, var(--app-bg-soft)) !important;
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16) !important;
 }
 
