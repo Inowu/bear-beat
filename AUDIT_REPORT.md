@@ -75,6 +75,7 @@ Leyenda:
 | A-003 | Medium | Abierto | Quick win | Frontend/Edge | Headers incompletos en producción (no se observa CSP / frame-ancestors / Permissions-Policy) |
 | A-004 | Low | Abierto | Quick win | SEO | `sitemap.xml` con `lastmod` antiguo (2025-02-03) |
 | A-005 | Medium | Abierto | Proyecto | Frontend/Perf | Bundle principal grande y warnings de build (chunk > 500 kB, Sass `@import` deprecado) |
+| A-006 | High | Abierto | Proyecto | Dependencias | `npm audit` reporta vulnerabilidades **High** (backend y frontend), varias requieren upgrades major |
 
 ## Detalle de hallazgos (con evidencia + remediación)
 
@@ -148,6 +149,26 @@ Leyenda:
   - Migrar Sass `@import` → `@use` para compatibilidad futura.
 - **Esfuerzo estimado:** **M/L**
 - **Owner sugerido:** Frontend/Performance
+
+### A-006 — Vulnerabilidades High en dependencias (High)
+- **Evidencia:**
+  - `npm audit` (JSON) guardado en:
+    - `audit-artifacts/appsec-2026-02-12/deps/npm-audit.root.json`
+    - `audit-artifacts/appsec-2026-02-12/deps/npm-audit.frontend.json`
+    - `audit-artifacts/appsec-2026-02-12/deps/npm-audit.backend.json`
+  - Resumen (high/critical): `audit-artifacts/appsec-2026-02-12/deps/npm-audit.summary.md`
+- **Cómo reproducir:**
+  - `npm audit` (root / `frontend` / `backend`).
+- **Impacto:** riesgo de seguridad por CVEs/GHSAs en librerías; algunas afectan SSRF/DoS y bypasses de validación.
+- **Probabilidad:** media (depende de rutas de ejecución, pero la exposición suele ser amplia con deps web).
+- **Recomendación concreta:**
+  - Plan de upgrade por etapas (idealmente PRs separados) para deps con fix available:
+    - `conekta` (implica actualizar `axios` transitive)
+    - `fastify` y `@fastify/secure-session` (validar si se usan en runtime; si no se usan, remover deps)
+    - toolchain Prisma generators (`prisma-trpc-generator`, etc.) con compatibilidad.
+  - Mantener `npm audit` en CI con baseline/allowlist temporal (si es inevitable) y fechas de remediación.
+- **Esfuerzo estimado:** **M/L** (por upgrades major + regresiones potenciales)
+- **Owner sugerido:** Backend + Frontend + AppSec
 
 ## Checklist compliance/config (estado actual)
 Fuente (pasivo prod): `audit-artifacts/prod-passive-2026-02-12/thebearbeat.com.headers.txt`
