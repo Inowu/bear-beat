@@ -384,19 +384,19 @@ function MyAccount() {
               <>
                 <div className="ma-ftp-list">
                   <FtpRow
-                    label="HOST"
+                    label="Host"
                     value={currentUser.ftpAccount.host}
                     copyToClipboard={copyToClipboard}
                     copyFeedback={copyFeedback}
                   />
                   <FtpRow
-                    label="USUARIO"
+                    label="Usuario"
                     value={currentUser.ftpAccount.userid}
                     copyToClipboard={copyToClipboard}
                     copyFeedback={copyFeedback}
                   />
                   <FtpRow
-                    label="PASSWORD"
+                    label="Contraseña"
                     value={currentUser.ftpAccount.passwd}
                     copyToClipboard={copyToClipboard}
                     copyFeedback={copyFeedback}
@@ -405,7 +405,7 @@ function MyAccount() {
                     onToggleSecret={() => setShowFtpPass((s) => !s)}
                   />
                   <FtpRow
-                    label="PUERTO"
+                    label="Puerto"
                     value={String(currentUser.ftpAccount.port)}
                     copyToClipboard={copyToClipboard}
                     copyFeedback={copyFeedback}
@@ -631,7 +631,7 @@ function FtpRow({
   return (
     <div className="ma-ftp-row">
       <span className="ma-ftp-label">{label}:</span>
-      <code className="ma-ftp-value">{displayValue}</code>
+      <span className="ma-ftp-value">{displayValue}</span>
       <div className="ma-ftp-actions-inline">
         {secret && onToggleSecret && (
           <button
