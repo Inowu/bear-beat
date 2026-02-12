@@ -30,6 +30,9 @@ jobs:
             [ -f ~/.profile ] && . ~/.profile
             [ -f ~/.bashrc ] && . ~/.bashrc
             cd bear-beat
+            # Ensure deploy.sh (and backend/.nvmrc) are up-to-date before executing.
+            git fetch origin main
+            git reset --hard origin/main
             if [ -f ~/.nvm/nvm.sh ]; then
               . ~/.nvm/nvm.sh
               if [ -f backend/.nvmrc ]; then
