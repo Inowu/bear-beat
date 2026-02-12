@@ -171,19 +171,28 @@ export const BlockedPhoneNumbers = () => {
               </div>
             </div>
 
-            <div className="blocked-phones-mobile-list md:hidden">
+            <div className="admin-mobile-list md:hidden">
               {blockedNumbers.map((phone) => (
                 <button
                   type="button"
                   key={`m_${phone}`}
-                  className="blocked-phones-mobile-item"
+                  className="admin-mobile-card"
                   onClick={() => setDrawerPhone(phone)}
                   aria-label={`Ver acciones para ${phone}`}
                 >
-                  <p>{phone}</p>
-                  <span aria-hidden>
-                    <MoreVertical size={20} />
-                  </span>
+                  <div className="admin-mobile-card__head">
+                    <div className="admin-mobile-card__identity">
+                      <div className="admin-mobile-card__avatar">{phone.charAt(0)}</div>
+                      <div className="admin-mobile-card__copy">
+                        <p className="admin-mobile-card__name">{phone}</p>
+                        <p className="admin-mobile-card__email">Teléfono bloqueado</p>
+                      </div>
+                    </div>
+                    <span className="admin-mobile-status is-blocked">Bloqueado</span>
+                    <span className="admin-mobile-card__menu" aria-hidden>
+                      <MoreVertical size={20} />
+                    </span>
+                  </div>
                 </button>
               ))}
             </div>

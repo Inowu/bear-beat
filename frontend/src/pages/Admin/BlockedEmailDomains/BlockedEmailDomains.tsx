@@ -176,19 +176,28 @@ export const BlockedEmailDomains = () => {
               </div>
             </div>
 
-            <div className="blocked-domains-mobile-list md:hidden">
+            <div className="admin-mobile-list md:hidden">
               {blockedDomains.map((domain) => (
                 <button
                   type="button"
                   key={`m_${domain}`}
-                  className="blocked-domains-mobile-item"
+                  className="admin-mobile-card"
                   onClick={() => setDrawerDomain(domain)}
                   aria-label={`Ver acciones para ${domain}`}
                 >
-                  <p>{domain}</p>
-                  <span aria-hidden>
-                    <MoreVertical size={20} />
-                  </span>
+                  <div className="admin-mobile-card__head">
+                    <div className="admin-mobile-card__identity">
+                      <div className="admin-mobile-card__avatar">{domain.charAt(0).toUpperCase()}</div>
+                      <div className="admin-mobile-card__copy">
+                        <p className="admin-mobile-card__name">{domain}</p>
+                        <p className="admin-mobile-card__email">Dominio bloqueado</p>
+                      </div>
+                    </div>
+                    <span className="admin-mobile-status is-blocked">Bloqueado</span>
+                    <span className="admin-mobile-card__menu" aria-hidden>
+                      <MoreVertical size={20} />
+                    </span>
+                  </div>
                 </button>
               ))}
             </div>

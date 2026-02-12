@@ -367,7 +367,7 @@ export default function PublicHome() {
       trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, { id: "home_primary", location });
       trackManyChatConversion(MC_EVENTS.CLICK_CTA_REGISTER);
     },
-    [],
+    [findSectionByIds],
   );
 
   const onSecondaryCtaClick = useCallback(
@@ -378,14 +378,47 @@ export default function PublicHome() {
     [],
   );
 
+  const findSectionByIds = useCallback((ids: string[]) => {
+    for (const id of ids) {
+      const section = document.getElementById(id);
+      if (section) return section;
+    }
+    return null;
+  }, []);
+
   const scrollToDemo = useCallback(
     (options: { behavior?: ScrollBehavior; focusSearch?: boolean } = {}) => {
       if (typeof window === "undefined") return;
-      const section = document.getElementById("demo");
+      const targetTopOffset = () => {
+        const stickyNav = document.querySelector<HTMLElement>(".home-topnav");
+        const navHeight = stickyNav?.offsetHeight ?? 80;
+        return Math.max(12, navHeight + 10);
+      };
+
+      const scrollToTarget = (element: HTMLElement | null, behavior: ScrollBehavior = "smooth") => {
+        if (!element) return;
+        const top = Math.max(0, window.scrollY + element.getBoundingClientRect().top - targetTopOffset());
+        window.scrollTo({
+          top,
+          behavior,
+        });
+      };
+
+      const fallbackDemoSection = document.getElementById("demo");
+      const section =
+        findSectionByIds([
+          "top100",
+          "top-audios",
+          "top-videos",
+          "top-karaokes",
+          "catalogo",
+          "demo",
+        ]) ?? fallbackDemoSection;
+
       if (section) {
-        section.scrollIntoView({ behavior: options.behavior ?? "smooth", block: "start" });
+        scrollToTarget(section, options.behavior ?? "smooth");
       }
-      window.history.replaceState(null, "", "#demo");
+      window.history.replaceState(null, "", "#top100");
       if (options.focusSearch) {
         // Avoid opening the keyboard; focus the first demo play button when the user explicitly clicks "Ver demo".
         window.setTimeout(() => {
@@ -398,6 +431,28 @@ export default function PublicHome() {
           jump?.focus({ preventScroll: true });
         }, 0);
       }
+    },
+    [],
+  );
+
+  const scrollToFaq = useCallback(
+    (options: { behavior?: ScrollBehavior } = {}) => {
+      if (typeof window === "undefined") return;
+
+      const target = document.getElementById("faq");
+      if (!target) return;
+
+      const navHeight = document.querySelector<HTMLElement>(".home-topnav")?.offsetHeight ?? 80;
+      const top = Math.max(0, window.scrollY + target.getBoundingClientRect().top - (navHeight + 10));
+      window.scrollTo({ top, behavior: options.behavior ?? "smooth" });
+      const first = target.querySelector<HTMLElement>(".home-faq__summary");
+      const title = target.querySelector<HTMLElement>("h2");
+      window.setTimeout(() => {
+        if (first && first.getAttribute("aria-expanded") === "false") {
+          first.click();
+        }
+        title?.focus({ preventScroll: true });
+      }, 0);
     },
     [],
   );
@@ -419,9 +474,20 @@ export default function PublicHome() {
   }, [showDemo]);
 
   useEffect(() => {
-    if (location.hash !== "#demo") return;
-    scrollToDemo({ behavior: "auto", focusSearch: false });
-  }, [location.hash, scrollToDemo]);
+    if (
+      location.hash === "#demo" ||
+      location.hash === "#top100" ||
+      location.hash === "#top-audios" ||
+      location.hash === "#top-videos" ||
+      location.hash === "#top-karaokes"
+    ) {
+      scrollToDemo({ behavior: "auto", focusSearch: false });
+      return;
+    }
+    if (location.hash === "#faq") {
+      scrollToFaq({ behavior: "auto" });
+    }
+  }, [location.hash, scrollToDemo, scrollToFaq]);
 
   const onFaqExpand = useCallback((id: string) => {
     trackGrowthMetric(GROWTH_METRICS.FAQ_EXPAND, { question: id });
@@ -574,7 +640,7 @@ export default function PublicHome() {
           onMoreClick={() => onSecondaryCtaClick("top_downloads")}
         />
 
-        <Compatibility />
+        <Compatibility onFaqScroll={scrollToFaq} />
 
         <ActivationSteps ctaLabel={ctaPrimaryLabel} onPrimaryCtaClick={() => onPrimaryCtaClick("mid")} />
 

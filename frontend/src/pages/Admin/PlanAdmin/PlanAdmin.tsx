@@ -182,28 +182,35 @@ export const PlanAdmin = () => {
       </div>
 
       {/* Mobile: lista compacta + drawer */}
-      <div className="md:hidden flex flex-col gap-0 rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50">
+      <div className="admin-mobile-list md:hidden">
         {plans.map((plan, index) => (
           <button
             key={`m_${index}`}
-            className="flex items-center justify-between gap-3 min-h-[64px] px-4 py-3 border-b border-slate-800 hover:bg-slate-900/60 active:bg-slate-800 transition-colors"
+            className="admin-mobile-card"
             onClick={() => setDrawerPlan(plan)}
             type="button"
           >
-            <div className="min-w-0 flex-1">
-              <p className="font-semibold text-white text-sm truncate">{plan.name}</p>
-              <p className="text-slate-400 text-xs">{plan.moneda?.toUpperCase()} · {plan.price}</p>
+            <div className="admin-mobile-card__head">
+              <div className="admin-mobile-card__identity">
+                <div className="admin-mobile-card__avatar">
+                  {(plan.name || "P").charAt(0).toUpperCase()}
+                </div>
+                <div className="admin-mobile-card__copy">
+                  <p className="admin-mobile-card__name">{plan.name}</p>
+                  <p className="admin-mobile-card__email">{plan.moneda?.toUpperCase()} · {plan.price}</p>
+                </div>
+              </div>
+              <span className={`admin-mobile-status ${plan.activated === 1 ? "is-active" : "is-blocked"}`}>
+                {plan.activated === 1 ? "Activo" : "Inactivo"}
+              </span>
+              <span className="admin-mobile-card__menu" aria-hidden>
+                <MoreVertical size={20} />
+              </span>
             </div>
-            <span
-              className={`shrink-0 text-xs px-2 py-1 rounded-full ${
-                plan.activated === 1 ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-500/10 text-slate-400"
-              }`}
-            >
-              {plan.activated === 1 ? "Activo" : "Inactivo"}
-            </span>
-            <span className="p-2 text-slate-400" aria-hidden>
-              <MoreVertical size={20} />
-            </span>
+            <div className="admin-mobile-card__foot">
+              <span>{getPaymentMethod(plan)}</span>
+              <span>{plan.description || "Sin descripción"}</span>
+            </div>
           </button>
         ))}
       </div>

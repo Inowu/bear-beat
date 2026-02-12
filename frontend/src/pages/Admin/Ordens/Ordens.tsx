@@ -145,7 +145,7 @@ export const Ordens = () => {
             placeholder="Buscar por email o teléfono"
             value={filters.searchData}
             onChange={(e) => startFilter("searchData", e.target.value)}
-            className="orders-toolbar__control w-full bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 rounded-lg py-2 pl-9 pr-3 text-gray-900 dark:text-white text-sm placeholder-gray-500 focus:outline-none focus:border-bear-cyan focus:ring-1 focus:ring-bear-cyan"
+            className="orders-toolbar__control orders-toolbar__control--input w-full bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 rounded-lg py-2 pl-9 pr-3 text-gray-900 dark:text-white text-sm placeholder-gray-500 focus:outline-none focus:border-bear-cyan focus:ring-1 focus:ring-bear-cyan"
           />
         </div>
         <label className="orders-toolbar__field orders-toolbar__field--method inline-flex flex-col gap-1 text-xs font-semibold text-gray-600 dark:text-gray-400">
@@ -153,7 +153,7 @@ export const Ordens = () => {
           <select
             value={filters.paymentMethod}
             onChange={(e) => startFilter("paymentMethod", e.target.value)}
-            className="orders-toolbar__control bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
+            className="orders-toolbar__control orders-toolbar__control--select bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
           >
             <option value="">Todos</option>
             <option value="Paypal">Paypal</option>
@@ -169,7 +169,7 @@ export const Ordens = () => {
             onChange={(e) =>
               startFilter("status", e.target.value === "" ? "" : Number(e.target.value))
             }
-            className="orders-toolbar__control bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
+            className="orders-toolbar__control orders-toolbar__control--select bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
           >
             <option value="">Todos</option>
             <option value={ORDER_STATUS.PAID}>Pagada</option>
@@ -185,7 +185,7 @@ export const Ordens = () => {
             type="date"
             value={filters.startDate}
             onChange={(e) => startFilter("startDate", e.target.value)}
-            className="orders-toolbar__control bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
+            className="orders-toolbar__control orders-toolbar__control--date bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
           />
         </label>
         <label className="orders-toolbar__field orders-toolbar__field--end inline-flex flex-col gap-1 text-xs font-semibold text-gray-600 dark:text-gray-400">
@@ -194,7 +194,7 @@ export const Ordens = () => {
             type="date"
             value={filters.endDate}
             onChange={(e) => startFilter("endDate", e.target.value)}
-            className="orders-toolbar__control bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
+            className="orders-toolbar__control orders-toolbar__control--date bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
           />
         </label>
         <button
@@ -215,8 +215,8 @@ export const Ordens = () => {
           <span className="orders-toolbar__label">Por página</span>
           <select
             value={filters.limit}
-            onChange={(e) => startFilter("limit", +e.target.value)}
-            className="orders-toolbar__control bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
+          onChange={(e) => startFilter("limit", +e.target.value)}
+            className="orders-toolbar__control orders-toolbar__control--select bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
           >
             <option value={100}>100</option>
             <option value={200}>200</option>
@@ -245,9 +245,7 @@ export const Ordens = () => {
     const isPaid = status === ORDER_STATUS.PAID;
     return (
       <span
-        className={`inline-flex text-xs px-2 py-1 rounded-full ${
-          isPaid ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-500/10 text-slate-400"
-        }`}
+        className={`orders-toolbar__status ${isPaid ? "orders-toolbar__status--paid" : "orders-toolbar__status--muted"}`}
       >
         {s}
       </span>
@@ -325,35 +323,41 @@ export const Ordens = () => {
       </div>
 
         {/* Cards móvil (patrón BEAR BEAT PRO) */}
-        <div className="block md:hidden grid grid-cols-1 gap-4 w-full">
+        <div className="orders-toolbar__mobile-list block md:hidden grid grid-cols-1 gap-4 w-full">
           {!loader
             ? ordens.map((orden, index) => (
                 <button
                   key={`m_${index}`}
-                  className="bg-bear-light-100 dark:bg-bear-dark-500 p-4 rounded-lg border border-gray-200 dark:border-bear-dark-100"
+                  className="orders-toolbar__mobile-card"
                   onClick={() => setDrawerOrder(orden)}
                   type="button"
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-200 truncate">{orden.email}</p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">{orden.total_price} · {orden.date_order.toLocaleDateString()}</p>
+                  <div className="orders-toolbar__mobile-card__content">
+                    <div className="orders-toolbar__mobile-card__main">
+                      <p className="orders-toolbar__mobile-card__title">{orden.email}</p>
+                      <p className="orders-toolbar__mobile-card__meta">{orden.payment_method ?? "—"}</p>
+                      <p className="orders-toolbar__mobile-card__meta">
+                        {orden.total_price} · {orden.date_order.toLocaleDateString()}
+                      </p>
                     </div>
                     {statusBadge(orden.status)}
-                    <span className="p-2 text-gray-500 dark:text-gray-400 flex-shrink-0" aria-hidden>
+                    <span className="orders-toolbar__mobile-card__more" aria-hidden>
                       <MoreVertical size={20} />
                     </span>
                   </div>
                 </button>
               ))
             : ARRAY_10.map((_, i) => (
-                <div key={`s_${i}`} className="bg-bear-light-100 dark:bg-bear-dark-500 p-4 rounded-lg border border-gray-200 dark:border-bear-dark-100 animate-pulse">
+                <div
+                  key={`s_${i}`}
+                  className="orders-toolbar__mobile-card orders-toolbar__mobile-card--skeleton"
+                >
                   <div className="h-12 bg-gray-200 dark:bg-bear-dark-100/50 rounded" />
                 </div>
               ))}
         </div>
 
-        <div className="md:hidden mt-4">
+        <div className="md:hidden mt-4 orders-toolbar__mobile-pagination">
           <Pagination
             totalLoader={totalLoader}
             totalData={totalOrdens}

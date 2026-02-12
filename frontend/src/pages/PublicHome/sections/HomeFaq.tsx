@@ -24,6 +24,16 @@ export default function HomeFaq(props: {
 
     const openFromHash = () => {
       const hash = window.location.hash;
+      if (hash === "#faq") {
+        if (HOME_FAQ_ITEMS.length === 0) return;
+        const first = HOME_FAQ_ITEMS[0];
+        if (!first) return;
+        setOpenIds((prev) => ({ ...prev, [first.id]: true }));
+        const section = document.getElementById("faq");
+        section?.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+
       if (!hash || !hash.startsWith("#faq-")) return;
       const el = document.querySelector(hash);
       if (!(el instanceof HTMLElement)) return;
@@ -64,7 +74,7 @@ export default function HomeFaq(props: {
   }, [faqSchemaJson]);
 
   return (
-    <section className="home-faq" aria-label="Preguntas frecuentes">
+    <section id="faq" className="home-faq" aria-label="Preguntas frecuentes">
       <div className="ph__container">
         <h2 className="home-h2">FAQ</h2>
         <p className="home-sub">

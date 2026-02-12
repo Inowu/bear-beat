@@ -51,6 +51,126 @@
   min-width: 0;
 }
 
+.orders-toolbar__control--input,
+.orders-toolbar__control--select,
+.orders-toolbar__control--date {
+  height: 44px;
+  border-radius: 10px;
+  transition: border-color 0.14s ease, background-color 0.14s ease;
+}
+
+.orders-toolbar__status {
+  min-height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  white-space: nowrap;
+  line-height: 1;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.orders-toolbar__status--paid {
+  color: var(--ad-badge-success-text);
+  background: color-mix(in srgb, var(--ad-badge-success-bg) 92%, transparent);
+  border-color: color-mix(in srgb, var(--ad-badge-success-text) 32%, transparent);
+}
+
+.orders-toolbar__status--muted {
+  color: var(--ad-badge-neutral-text);
+  background: color-mix(in srgb, var(--ad-badge-neutral-bg) 88%, transparent);
+  border-color: color-mix(in srgb, var(--ad-text-muted) 42%, transparent);
+}
+
+.orders-toolbar__mobile-list {
+  width: 100%;
+  max-width: 100%;
+}
+
+.orders-toolbar__mobile-card {
+  text-align: left;
+  padding: 11px 12px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--ad-border) 84%, transparent);
+  background: color-mix(in srgb, var(--ad-card) 96%, transparent);
+  width: 100%;
+  transition: border-color 0.16s ease, background 0.16s ease;
+}
+
+.orders-toolbar__mobile-card:hover,
+.orders-toolbar__mobile-card:active {
+  border-color: color-mix(in srgb, var(--ad-accent) 42%, transparent);
+  background: color-mix(in srgb, var(--ad-row-hover) 80%, transparent);
+}
+
+.orders-toolbar__mobile-card__content {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.orders-toolbar__mobile-card__main {
+  min-width: 0;
+}
+
+.orders-toolbar__mobile-card__title {
+  margin: 0;
+  color: var(--ad-title);
+  font-size: 0.98rem;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.orders-toolbar__mobile-card__meta {
+  margin: 4px 0 0;
+  color: var(--ad-text-muted);
+  font-size: 0.84rem;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.orders-toolbar__mobile-card__more {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--ad-border) 74%, transparent);
+  background: color-mix(in srgb, var(--ad-card) 88%, transparent);
+  color: var(--ad-text-muted);
+}
+
+.orders-toolbar__mobile-card--skeleton {
+  pointer-events: none;
+}
+
+.orders-toolbar__mobile-card--skeleton > div {
+  border-radius: 10px;
+  animation: admin-skeleton 1.2s ease-in-out infinite;
+  background: color-mix(in srgb, var(--ad-row-hover) 80%, transparent);
+}
+
+.orders-toolbar__mobile-pagination {
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--ad-border) 82%, transparent);
+  background: color-mix(in srgb, var(--ad-card) 96%, transparent);
+  padding: 10px 8px;
+}
+
 .orders-toolbar__today {
   white-space: nowrap;
   font-weight: 700;

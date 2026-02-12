@@ -1,7 +1,11 @@
 import { Link } from "react-router-dom";
 import { HOME_COMPATIBILITY_ITEMS } from "../homeCopy";
 
-export default function Compatibility() {
+type CompatibilityProps = {
+  onFaqScroll?: () => void;
+};
+
+export default function Compatibility({ onFaqScroll }: CompatibilityProps) {
   const ftp = HOME_COMPATIBILITY_ITEMS[0];
   const web = HOME_COMPATIBILITY_ITEMS[1];
   const formats = HOME_COMPATIBILITY_ITEMS[2];
@@ -45,9 +49,15 @@ export default function Compatibility() {
           <Link to="/instrucciones" className="home-link">
             Ver instrucciones de descarga →
           </Link>
-          <a href="#faq-formats" className="home-link">
+          <button
+            type="button"
+            className="home-link"
+            onClick={() => {
+              onFaqScroll?.();
+            }}
+          >
             Ver formatos en el FAQ →
-          </a>
+          </button>
         </div>
       </div>
     </section>

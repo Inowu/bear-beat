@@ -189,7 +189,7 @@ export const DownloadHistory = () => {
         </div>
       </div>
 
-      <div className="downloads-history-mobile-list md:hidden flex flex-col rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50">
+      <div className="admin-mobile-list md:hidden">
         {!loader
           ? history.length > 0
             ? history.map((his, index) => {
@@ -197,24 +197,30 @@ export const DownloadHistory = () => {
               return (
                 <button
                   key={`m_${index}`}
-                  className="downloads-history-mobile-card flex items-start justify-between gap-3 px-4 py-3 border-b border-slate-800 hover:bg-slate-900/60 active:bg-slate-800"
+                  className="admin-mobile-card"
                   onClick={() => setDrawerItem(his)}
                   type="button"
                 >
-                  <div className="min-w-0 flex-1 text-left">
-                    <p className="downloads-history-mobile-card__name text-sm truncate">{his.fileName}</p>
-                    <p className="downloads-history-mobile-card__email text-xs truncate">{his.email}</p>
-                    <div className="downloads-history-mobile-card__meta">
-                      <span className="downloads-history-mobile-card__chip">{sizeLabel}</span>
-                      <span className="downloads-history-mobile-card__chip">{his.date.toLocaleDateString()}</span>
-                      <span className="downloads-history-mobile-card__chip is-type">
-                        {his.isFolder ? "Carpeta" : "Archivo"}
-                      </span>
+                  <div className="admin-mobile-card__head">
+                    <div className="admin-mobile-card__identity">
+                      <div className="admin-mobile-card__avatar">{his.isFolder ? "F" : "A"}</div>
+                      <div className="admin-mobile-card__copy">
+                        <p className="admin-mobile-card__name">{his.fileName}</p>
+                        <p className="admin-mobile-card__email">{his.email}</p>
+                      </div>
                     </div>
+                    <span className="admin-mobile-status is-active">
+                      {his.isFolder ? "Carpeta" : "Archivo"}
+                    </span>
+                    <span className="admin-mobile-card__menu" aria-hidden>
+                      <MoreVertical size={20} />
+                    </span>
                   </div>
-                  <span className="downloads-history-mobile-card__more p-2 text-slate-400" aria-hidden>
-                    <MoreVertical size={20} />
-                  </span>
+                  <div className="admin-mobile-card__foot">
+                    <span>{sizeLabel}</span>
+                    <span>{his.date.toLocaleDateString()}</span>
+                    <span>{his.phone || "—"}</span>
+                  </div>
                 </button>
               );
             })
@@ -225,11 +231,21 @@ export const DownloadHistory = () => {
               </div>
             )
           : ARRAY_10.map((_, i) => (
-              <div key={`s_${i}`} className="min-h-[76px] px-4 py-3 border-b border-slate-800 animate-pulse bg-slate-800/30" />
+              <div key={`s_${i}`} className="admin-mobile-card admin-mobile-card--skeleton">
+                <div className="admin-mobile-card__head">
+                  <div className="admin-mobile-card__identity">
+                    <div className="admin-mobile-card__avatar" />
+                    <div className="admin-mobile-card__copy">
+                      <p className="admin-mobile-card__name">—</p>
+                      <p className="admin-mobile-card__email">—</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             ))}
       </div>
 
-      <div className="md:hidden mt-4">
+      <div className="admin-pagination-mobile">
         <Pagination
           totalLoader={totalLoader}
           totalData={totalHistory}

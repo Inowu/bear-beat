@@ -263,6 +263,7 @@ export default function SocialProof(props: {
 
   return (
     <section id="demo" className="social-proof" aria-label="Descargas destacadas" data-testid="home-demo-section">
+      <span id="top100" className="social-proof__anchor" aria-hidden="true" />
       <div className="ph__container">
         <div className="social-proof__head">
           <div>

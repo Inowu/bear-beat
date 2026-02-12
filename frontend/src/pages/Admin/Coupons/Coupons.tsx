@@ -179,29 +179,33 @@ export const Coupons = () => {
             </div>
           </div>
 
-          <div className="md:hidden flex flex-col rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50">
+          <div className="admin-mobile-list md:hidden">
             {coupons.map((c, index) => (
               <button
                 type="button"
                 key={`m_${index}`}
-                className="flex items-center justify-between gap-3 min-h-[64px] w-full px-4 py-3 border-b border-slate-800 hover:bg-slate-900/60 active:bg-slate-800 text-left"
+                className="admin-mobile-card"
                 onClick={() => setDrawerCoupon(c)}
                 aria-label={`Ver acciones del cupón ${c.code}`}
               >
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-white text-sm">{c.code}</p>
-                  <p className="text-slate-400 text-xs">{c.discount} % descuento</p>
+                <div className="admin-mobile-card__head">
+                  <div className="admin-mobile-card__identity">
+                    <div className="admin-mobile-card__avatar">{c.code?.charAt(0).toUpperCase()}</div>
+                    <div className="admin-mobile-card__copy">
+                      <p className="admin-mobile-card__name">{c.code}</p>
+                      <p className="admin-mobile-card__email">{c.discount} % descuento</p>
+                    </div>
+                  </div>
+                  <span className={`admin-mobile-status ${c.active === 1 ? "is-active" : "is-blocked"}`}>
+                    {c.active === 1 ? "Activo" : "Inactivo"}
+                  </span>
+                  <span className="admin-mobile-card__menu" aria-hidden>
+                    <MoreVertical size={20} />
+                  </span>
                 </div>
-                <span
-                  className={`shrink-0 text-xs px-2 py-1 rounded-full ${
-                    c.active === 1 ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-500/10 text-slate-400"
-                  }`}
-                >
-                  {c.active === 1 ? "Activo" : "Inactivo"}
-                </span>
-                <span className="p-2 text-slate-400 hover:text-bear-cyan rounded-lg" aria-hidden>
-                  <MoreVertical size={20} />
-                </span>
+                <div className="admin-mobile-card__foot">
+                  <span>{c.description || "Sin descripción"}</span>
+                </div>
               </button>
             ))}
           </div>

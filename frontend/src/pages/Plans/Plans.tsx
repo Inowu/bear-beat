@@ -282,20 +282,22 @@ function Plans() {
           <Link to="/" className="plans-topnav__brand" aria-label="Bear Beat">
             <img src={Logo} alt="Bear Beat" />
           </Link>
-          <nav className="plans-topnav__nav" aria-label="Enlaces">
-            <Link to="/planes" className="plans-topnav__link is-active" aria-current="page">
-              Planes
-            </Link>
-            {userToken ? (
-              <Link to="/micuenta" className="plans-topnav__link">
-                Mi cuenta
+          <div className="plans-topnav__right" aria-label="Acciones">
+            <nav className="plans-topnav__nav" aria-label="Enlaces">
+              <Link to="/planes" className="plans-topnav__link is-active" aria-current="page">
+                Planes
               </Link>
-            ) : (
-              <Link to="/auth" state={{ from: "/planes" }} className="plans-topnav__link">
-                Iniciar sesión
-              </Link>
-            )}
-          </nav>
+              {userToken ? (
+                <Link to="/micuenta" className="plans-topnav__link">
+                  Mi cuenta
+                </Link>
+              ) : (
+                <Link to="/auth" state={{ from: "/planes" }} className="plans-topnav__link">
+                  Iniciar sesión
+                </Link>
+              )}
+            </nav>
+          </div>
           <button
             type="button"
             className="plans-topnav__cta"
