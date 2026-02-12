@@ -56,6 +56,65 @@ const warnMissingConfig = (method: string) => {
   log.warn(`[MANYCHAT] MC_API_KEY not configured; skipping ManyChat calls (first seen in ${method})`);
 };
 
+type ManyChatCustomField = {
+  id?: number | string | null;
+  name?: string | null;
+};
+
+const CUSTOM_FIELDS_CACHE_TTL_MS = 5 * 60 * 1000;
+let customFieldsCache:
+  | { fetchedAt: number; byName: Map<string, number> }
+  | null = null;
+
+async function fetchCustomFieldsByName(): Promise<Map<string, number>> {
+  const res = await client.get('/fb/page/getCustomFields');
+  const fields = res.data?.data ?? res.data?.fields ?? res.data;
+  if (!Array.isArray(fields)) return new Map();
+
+  const byName = new Map<string, number>();
+  for (const item of fields as ManyChatCustomField[]) {
+    const name = String(item?.name ?? '').trim();
+    const id = Number(item?.id ?? 0);
+    if (!name || !Number.isFinite(id) || id <= 0) continue;
+    byName.set(name.toLowerCase(), id);
+  }
+  return byName;
+}
+
+async function getCustomFieldId(fieldKey: string): Promise<number | null> {
+  const key = String(fieldKey ?? '').trim().toLowerCase();
+  if (!key) return null;
+
+  const now = Date.now();
+  const isFresh =
+    customFieldsCache && now - customFieldsCache.fetchedAt < CUSTOM_FIELDS_CACHE_TTL_MS;
+
+  if (!isFresh) {
+    try {
+      const byName = await fetchCustomFieldsByName();
+      customFieldsCache = { fetchedAt: now, byName };
+    } catch (error: any) {
+      log.error('[MANYCHAT] Error fetching custom fields', {
+        message: error instanceof Error ? error.message : String(error ?? ''),
+      });
+      return null;
+    }
+  }
+
+  let id = customFieldsCache?.byName.get(key) ?? null;
+  if (id) return id;
+
+  // If missing, refresh once (handles recently-added fields without waiting TTL).
+  try {
+    const byName = await fetchCustomFieldsByName();
+    customFieldsCache = { fetchedAt: now, byName };
+    id = customFieldsCache.byName.get(key) ?? null;
+    return id;
+  } catch {
+    return null;
+  }
+}
+
 export const manyChat = {
   getInfo: async function (mcId: ManyChatSubscriberId): Promise<Record<any, any> | null> {
     if (!isManyChatConfigured()) {
@@ -146,17 +205,26 @@ export const manyChat = {
       warnMissingConfig('setCustomField');
       return null;
     }
+
+    const fieldId = await getCustomFieldId(fieldKey);
+    if (!fieldId) {
+      log.warn('[MANYCHAT] Custom field not found; skipping setCustomField', {
+        subscriberId: mcId,
+        fieldKey,
+      });
+      return null;
+    }
     try {
       const response = await client.post('/fb/subscriber/setCustomField', {
         subscriber_id: mcId,
-        field_name: fieldKey,
+        field_id: fieldId,
         field_value: fieldValue,
       });
 
       return response.data.data;
     } catch (error: any) {
       log.error(
-        `[MANYCHAT] Error setting custom field for subscriber ${mcId}: ${
+        `[MANYCHAT] Error setting custom field for subscriber ${mcId} (${fieldKey}): ${
           JSON.stringify((error as AxiosError).response?.data) || error.message
         }`,
       );
