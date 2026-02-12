@@ -58,10 +58,9 @@
   padding: 4px;
   max-width: 100%;
   white-space: nowrap;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-x: contain;
-  scrollbar-width: none;
+  /* iOS/Safari: `border-radius` + `overflow: auto` puede renderizarse “deformado”.
+     Aquí solo hay 2 links, así que evitamos scroll y forzamos clipping limpio. */
+  overflow: hidden;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--ph-border) 80%, transparent);
   background: color-mix(in srgb, var(--ph-bg-card) 92%, transparent);
