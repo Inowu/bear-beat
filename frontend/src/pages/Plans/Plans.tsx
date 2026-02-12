@@ -310,9 +310,23 @@ function Plans() {
       </header>
       <div className="plans-main-container">
         <section className="plans-hero" aria-label="Planes" data-testid="plans-hero">
-          <h1 className="plans-page-title">Precio simple, catálogo gigante</h1>
+          <h1 className="plans-page-title">
+            <span className="plans-page-title__desktop">Precio simple, catálogo gigante</span>
+            <span className="plans-page-title__mobile">Planes</span>
+          </h1>
           <p className="plans-hero-subtitle">
             Activa hoy y llega con repertorio listo.
+          </p>
+          <p className="plans-hero-compactline" aria-label="Incluye">
+            <span>{proofItems[1]?.value ?? "—"} catálogo</span>
+            <span className="plans-hero-compactline__sep" aria-hidden>
+              •
+            </span>
+            <span>{downloadQuotaGb ? `${formatInt(downloadQuotaGb)} GB/mes` : "—"} descargas</span>
+            <span className="plans-hero-compactline__sep" aria-hidden>
+              •
+            </span>
+            <span>{proofItems[0]?.value ?? "—"} archivos</span>
           </p>
           <ul className="plans-hero-chips" aria-label="Incluye">
             <li className="plans-hero-chip bb-stat-pill">
@@ -405,6 +419,17 @@ function Plans() {
                     USD
                   </button>
                 </div>
+                {(heroPriceLabels.mxn || heroPriceLabels.usd) && (
+                  <p className="plans-offer__price-hint" aria-label="Referencia rápida de precios">
+                    {heroPriceLabels.mxn && <span className="plans-offer__price-tag">{heroPriceLabels.mxn}</span>}
+                    {heroPriceLabels.mxn && heroPriceLabels.usd && (
+                      <span className="plans-offer__price-sep" aria-hidden>
+                        •
+                      </span>
+                    )}
+                    {heroPriceLabels.usd && <span className="plans-offer__price-tag">{heroPriceLabels.usd}</span>}
+                  </p>
+                )}
               </div>
 
               <div className="plans-offer__meta">
