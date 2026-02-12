@@ -17,6 +17,29 @@ function getFirstLastName(user: Users): { first_name: string; last_name: string 
   };
 }
 
+// ManyChat subscriber IDs are long numeric strings (often > 2^53). Never coerce to Number.
+type ManyChatSubscriberId = string;
+const MAX_PRISMA_INT = 2147483647;
+
+function normalizeSubscriberId(raw: unknown): ManyChatSubscriberId | null {
+  if (raw === null || raw === undefined) return null;
+  const s = String(raw).trim();
+  if (!s) return null;
+  // Defensive: avoid sending "1e+21" / non-digit garbage to ManyChat API.
+  if (!/^[0-9]+$/.test(s)) return null;
+  return s;
+}
+
+function toPrismaInt(id: ManyChatSubscriberId): number | null {
+  // Avoid Number precision issues by only parsing when we know it fits within Prisma Int.
+  // (10 digits max is safely below 2^53.)
+  if (id.length > 10) return null;
+  const n = Number(id);
+  if (!Number.isInteger(n)) return null;
+  if (n <= 0 || n > MAX_PRISMA_INT) return null;
+  return n;
+}
+
 const MC_API_KEY = (process.env.MC_API_KEY || '').trim();
 
 const client = axios.create({
@@ -34,14 +57,14 @@ const warnMissingConfig = (method: string) => {
 };
 
 export const manyChat = {
-  getInfo: async function (mcId: number): Promise<Record<any, any> | null> {
+  getInfo: async function (mcId: ManyChatSubscriberId): Promise<Record<any, any> | null> {
     if (!isManyChatConfigured()) {
       warnMissingConfig('getInfo');
       return null;
     }
     try {
       const response = await client(
-        `/fb/subscriber/getInfo?subscriber_id=${mcId}`,
+        `/fb/subscriber/getInfo?subscriber_id=${encodeURIComponent(mcId)}`,
       );
 
       return response.data.data;
@@ -115,7 +138,7 @@ export const manyChat = {
     }
   },
   setCustomField: async function (
-    mcId: number,
+    mcId: ManyChatSubscriberId,
     fieldKey: string,
     fieldValue: string,
   ) {
@@ -143,7 +166,7 @@ export const manyChat = {
   },
   updateSubscriber: async function (
     user: Partial<Users>,
-    mcId: number,
+    mcId: ManyChatSubscriberId,
     consentPhrase: string,
   ) {
     if (!isManyChatConfigured()) {
@@ -213,7 +236,7 @@ export const manyChat = {
       return null;
     }
 
-    const subscriberId = Number(mcId);
+    const subscriberId = mcId;
     const tagRaw = String(tag || '').trim();
     if (!tagRaw) return null;
 
@@ -262,9 +285,8 @@ export const manyChat = {
     return tryAddByName();
   },
   getManyChatId: async function (user: Users) {
-    let mcId = user.mc_id;
-
-    if (mcId) return mcId;
+    const mcIdFromDb = normalizeSubscriberId(user.mc_id);
+    if (mcIdFromDb) return mcIdFromDb;
 
     if (!isManyChatConfigured()) {
       warnMissingConfig('getManyChatId');
@@ -281,7 +303,7 @@ export const manyChat = {
         `[MANYCHAT:RETRIEVE_OR_CREATE] User ${user.id} found in many chat by email`,
       );
 
-      return existingSubscriberByEmail?.[0].id;
+      return normalizeSubscriberId(existingSubscriberByEmail?.[0]?.id);
     }
 
     const existingSubscriberByPhone = user.phone
@@ -293,7 +315,7 @@ export const manyChat = {
         `[MANYCHAT:RETRIEVE_OR_CREATE] User ${user.id} found in many chat by phone`,
       );
 
-      return existingSubscriberByPhone?.[0].id;
+      return normalizeSubscriberId(existingSubscriberByPhone?.[0]?.id);
     }
 
     log.info(
@@ -304,31 +326,38 @@ export const manyChat = {
 
     if (!subscriber) return null;
 
+    const createdId = normalizeSubscriberId((subscriber as any).id);
+    if (!createdId) return null;
+
     log.info(
-      `[MANYCHAT:RETRIEVE_OR_CREATE] Created new subscriber with id ${subscriber.id} for user ${user.id}`,
+      `[MANYCHAT:RETRIEVE_OR_CREATE] Created new subscriber with id ${createdId} for user ${user.id}`,
     );
 
     log.info(
-      `[MANYCHAT:RETRIEVE_OR_CREATE] Updating user ${user.id} with mc_id ${subscriber.id}`,
+      `[MANYCHAT:RETRIEVE_OR_CREATE] Updating user ${user.id} with mc_id ${createdId}`,
     );
 
-    await this.updateSubscriber(user, subscriber.id, 'Consent');
+    await this.updateSubscriber(user, createdId, 'Consent');
 
     try {
-      await prisma.users.update({
-        where: {
-          id: user.id,
-        },
-        data: {
-          mc_id: Number(subscriber.id),
-        },
-      });
+      const mcIdInt = toPrismaInt(createdId);
+      // Persist only when it fits in Prisma Int. ManyChat IDs are usually bigger; that's OK.
+      if (mcIdInt) {
+        await prisma.users.update({
+          where: {
+            id: user.id,
+          },
+          data: {
+            mc_id: mcIdInt,
+          },
+        });
+      }
     } catch (e: any) {
       log.error(
-        `[MANYCHAT:GET_ID] Error updating user ${user.id} with mc_id ${subscriber.id}: ${e.message}`,
+        `[MANYCHAT:GET_ID] Error updating user ${user.id} with mc_id ${createdId}: ${e.message}`,
       );
     }
 
-    return subscriber.id;
+    return createdId;
   },
 };

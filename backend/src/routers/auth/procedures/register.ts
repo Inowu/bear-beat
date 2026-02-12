@@ -337,16 +337,6 @@ export const register = publicProcedure
 
       // If the user arrived from a ManyChat flow (IG/FB/WhatsApp), claim the handoff token and
       // (best-effort) link the ManyChat contact id to this user to make tags/custom fields reliable.
-      const MAX_PRISMA_INT = 2147483647;
-      const tryParseMcId = (raw: string | null | undefined): number | null => {
-        const s = `${raw ?? ''}`.trim();
-        if (!s) return null;
-        const n = Number(s);
-        if (!Number.isInteger(n)) return null;
-        if (n <= 0 || n > MAX_PRISMA_INT) return null;
-        return n;
-      };
-
       if (mcHandoffToken) {
         try {
           const claimed = await claimManyChatHandoffToken({
@@ -356,46 +346,26 @@ export const register = publicProcedure
           });
 
           if (claimed.ok) {
-            const mcId = tryParseMcId(claimed.contactId);
+            const contactId = `${claimed.contactId ?? ''}`.trim();
 
             // Best-effort: push system fields (email/phone) into the existing ManyChat contact.
-            // We also use this call as a quick validation: only persist mc_id if ManyChat accepts it.
-            let updateOk = false;
-            if (mcId) {
+            // ManyChat IDs are long numeric strings; do NOT coerce to Number.
+            if (contactId) {
               try {
-                const updated = await manyChat.updateSubscriber(
+                await manyChat.updateSubscriber(
                   {
                     first_name: newUser.first_name,
                     last_name: newUser.last_name,
                     phone: newUser.phone ?? undefined,
                     email: newUser.email,
                   },
-                  mcId,
+                  contactId,
                   'Consent',
                 );
-                updateOk = Boolean(updated);
               } catch {
-                updateOk = false;
+                // noop
               }
             }
-
-            // Persist the contact id into users.mc_id (only if it fits in Prisma Int and looks valid).
-            if (mcId && updateOk && !newUser.mc_id) {
-              try {
-                await prisma.users.update({
-                  where: { id: newUser.id },
-                  data: { mc_id: mcId },
-                });
-                newUser = { ...newUser, mc_id: mcId };
-              } catch (e: any) {
-                log.warn('[REGISTER] Failed to persist mc_id from ManyChat handoff (non-blocking)', {
-                  userId: newUser.id,
-                  mcId,
-                  error: e instanceof Error ? e.message : e,
-                });
-              }
-            }
-
           }
         } catch (error) {
           log.debug('[REGISTER] ManyChat handoff claim skipped (non-blocking)', {

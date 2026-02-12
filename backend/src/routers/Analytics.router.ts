@@ -292,10 +292,10 @@ export const analyticsRouter = router({
       try {
         const mcId = await manyChat.getManyChatId(user);
         if (mcId) {
-          manyChat.setCustomField(Number(mcId), 'bb_offer_code', offer.couponCode ?? '').catch(() => {});
-          manyChat.setCustomField(Number(mcId), 'bb_offer_pct', String(offer.percentOff)).catch(() => {});
+          manyChat.setCustomField(mcId, 'bb_offer_code', offer.couponCode ?? '').catch(() => {});
+          manyChat.setCustomField(mcId, 'bb_offer_pct', String(offer.percentOff)).catch(() => {});
           manyChat
-            .setCustomField(Number(mcId), 'bb_offer_expires_at', expiresAt.toISOString())
+            .setCustomField(mcId, 'bb_offer_expires_at', expiresAt.toISOString())
             .catch(() => {});
         }
       } catch {
