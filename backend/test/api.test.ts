@@ -8,6 +8,37 @@ import { RolesIds, RolesNames } from "../src/routers/auth/interfaces/roles.inter
 
 jest.setTimeout(60_000);
 
+const collectKeysDeep = (
+  value: unknown,
+  out: Set<string>,
+  seen: WeakSet<object> = new WeakSet(),
+) => {
+  if (!value || typeof value !== "object") return;
+
+  if (seen.has(value)) return;
+  seen.add(value);
+
+  if (Array.isArray(value)) {
+    for (const item of value) collectKeysDeep(item, out, seen);
+    return;
+  }
+
+  for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+    out.add(k);
+    collectKeysDeep(v, out, seen);
+  }
+};
+
+const expectNoSensitiveKeys = (value: unknown) => {
+  const keys = new Set<string>();
+  collectKeysDeep(value, keys);
+
+  const forbidden = ["password", "activationcode", "refresh_token", "ip_registro"];
+  for (const key of forbidden) {
+    expect(keys.has(key)).toBe(false);
+  }
+};
+
 describe("TRPC API (smoke)", () => {
   const normalEmail = "jest-user@local.test";
   const adminEmail = "jest-admin@local.test";
@@ -86,7 +117,7 @@ describe("TRPC API (smoke)", () => {
   });
 
   const caller = testRouter.createCaller({
-    req: {} as any,
+    req: { headers: {} } as any,
     res: {} as any,
     prisma,
     session: null,
@@ -123,6 +154,7 @@ describe("TRPC API (smoke)", () => {
     });
     expect(res.token).toBeDefined();
     expect(res.refreshToken).toBeDefined();
+    expectNoSensitiveKeys(res);
   });
 
   it("login: rejects invalid password", async () => {
@@ -136,6 +168,20 @@ describe("TRPC API (smoke)", () => {
       expect(cause).toBeInstanceOf(TRPCError);
       expect(getHTTPStatusCodeFromError(cause as TRPCError)).toBe(401);
     }
+  });
+
+  it("register: does not leak sensitive fields", async () => {
+    const email = `jest-register-${Date.now()}@local.test`;
+    const res = await caller.auth.register({
+      email,
+      password,
+      url: "http://localhost:3000/auth/registro",
+      turnstileToken: "__TURNSTILE_LOCAL_BYPASS__",
+    });
+    expect(res.token).toBeDefined();
+    expect(res.refreshToken).toBeDefined();
+    expect(res.message).toBeDefined();
+    expectNoSensitiveKeys(res);
   });
 
   it("me: rejects when not authenticated", async () => {
