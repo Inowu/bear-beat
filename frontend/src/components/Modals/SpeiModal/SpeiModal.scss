@@ -158,6 +158,7 @@
     color: var(--app-text-heading);
     letter-spacing: -0.02em;
     line-height: 1;
+    font-variant-numeric: tabular-nums;
   }
 
   .spei-modal__copy {
@@ -239,14 +240,13 @@
   }
 
   .button-container-2 {
-    margin-top: 2px;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+    margin-top: 6px;
+    display: flex;
+    justify-content: flex-end;
 
     .btn-option-5,
     .btn-success {
-      width: 100%;
+      width: min(320px, 100%);
       min-height: 50px;
       border-radius: 999px;
       font-size: 1.34rem;
@@ -326,10 +326,10 @@ html[data-theme="light"] .spei-modal {
     }
 
     .button-container-2 {
-      grid-template-columns: 1fr;
+      justify-content: center;
 
       .btn-success {
-        order: -1;
+        width: 100%;
       }
     }
   }

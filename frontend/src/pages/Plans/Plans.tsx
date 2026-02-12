@@ -35,7 +35,7 @@ function formatAmountCompact(value: unknown, locale: string): string {
 }
 
 function Plans() {
-  const { currentUser } = useUserContext();
+  const { userToken, currentUser } = useUserContext();
   const [plans, setPlans] = useState<IPlans[]>([]);
   const [catalogSummary, setCatalogSummary] = useState<{
     totalFiles: number;
@@ -223,11 +223,11 @@ function Plans() {
     return "Pago mensual. Cancela cuando quieras.";
   }, [hasTrial, trialConfig?.days, trialConfig?.eligible, trialConfig?.enabled, trialConfig?.gb]);
   const primaryCtaLabel = useMemo(() => {
-    if (!currentUser?.email) {
+    if (!userToken) {
       return hasTrial ? "Crear cuenta y empezar prueba" : "Crear cuenta y activar";
     }
     return "Activar ahora";
-  }, [currentUser?.email, hasTrial]);
+  }, [hasTrial, userToken]);
 
   useEffect(() => {
     const hasSelected = selectedCurrency === "mxn" ? Boolean(plansByCurrency.mxn) : Boolean(plansByCurrency.usd);
@@ -251,7 +251,7 @@ function Plans() {
   const handlePrimaryCta = () => {
     if (!primaryPlan) return;
     const target = `/comprar?priceId=${primaryPlan.id}`;
-    if (!currentUser?.email) {
+    if (!userToken) {
       navigate("/auth/registro", { state: { from: target } });
       return;
     }
@@ -286,9 +286,15 @@ function Plans() {
             <Link to="/planes" className="plans-topnav__link is-active" aria-current="page">
               Planes
             </Link>
-            <Link to="/auth" className="plans-topnav__link">
-              Iniciar sesión
-            </Link>
+            {userToken ? (
+              <Link to="/micuenta" className="plans-topnav__link">
+                Mi cuenta
+              </Link>
+            ) : (
+              <Link to="/auth" state={{ from: "/planes" }} className="plans-topnav__link">
+                Iniciar sesión
+              </Link>
+            )}
           </nav>
           <button
             type="button"
@@ -368,53 +374,81 @@ function Plans() {
         </section>
       ) : (
         <section className="plans-offer" aria-label="Selección de plan">
-          <div className="plans-offer__head">
-            <div className="plans-offer__title-block">
-              <h2>Elige tu moneda</h2>
-              <p>Mismo plan, elige MXN o USD.</p>
+          <div className="plans-offer__layout">
+            <div className="plans-offer__left">
+              <div className="plans-offer__head">
+                <div className="plans-offer__title-block">
+                  <h2>Elige tu moneda</h2>
+                  <p>Mismo plan, elige MXN o USD.</p>
+                </div>
+                <div className="plans-currency-toggle bb-segmented" role="tablist" aria-label="Moneda">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={selectedCurrency === "mxn"}
+                    className={["bb-segmented__btn", selectedCurrency === "mxn" ? "is-active" : ""].filter(Boolean).join(" ")}
+                    onClick={() => setSelectedCurrency("mxn")}
+                    disabled={!plansByCurrency.mxn}
+                  >
+                    MXN
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={selectedCurrency === "usd"}
+                    className={["bb-segmented__btn", selectedCurrency === "usd" ? "is-active" : ""].filter(Boolean).join(" ")}
+                    onClick={() => setSelectedCurrency("usd")}
+                    disabled={!plansByCurrency.usd}
+                  >
+                    USD
+                  </button>
+                </div>
+              </div>
+
+              <div className="plans-offer__meta">
+                <p className="plans-offer__price">{selectedPriceLabel ?? "—"}</p>
+                <p className="plans-currency-micro">{offerSupportCopy}</p>
+              </div>
+
+              <ul className="plans-offer__bullets" aria-label="Incluye">
+                <li>{downloadQuotaGb ? `${formatInt(downloadQuotaGb)} GB/mes de descargas` : "Descargas mensuales incluidas"}</li>
+                <li>Catálogo completo ({proofItems[1]?.value ?? "—"})</li>
+                <li>Carpetas listas por género y temporada</li>
+                <li>Soporte por chat para activar</li>
+                <li>Cancela cuando quieras</li>
+              </ul>
+
+              <div className="plans-offer__links" aria-label="Ayuda">
+                <Link to="/instrucciones" className="plans-offer__link">
+                  Ver cómo descargar
+                </Link>
+                <span className="plans-offer__link-sep" aria-hidden>
+                  •
+                </span>
+                <Link to="/legal" className="plans-offer__link">
+                  FAQ y políticas
+                </Link>
+              </div>
             </div>
-            <div className="plans-currency-toggle bb-segmented" role="tablist" aria-label="Moneda">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={selectedCurrency === "mxn"}
-                className={["bb-segmented__btn", selectedCurrency === "mxn" ? "is-active" : ""].filter(Boolean).join(" ")}
-                onClick={() => setSelectedCurrency("mxn")}
-                disabled={!plansByCurrency.mxn}
-              >
-                MXN
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={selectedCurrency === "usd"}
-                className={["bb-segmented__btn", selectedCurrency === "usd" ? "is-active" : ""].filter(Boolean).join(" ")}
-                onClick={() => setSelectedCurrency("usd")}
-                disabled={!plansByCurrency.usd}
-              >
-                USD
-              </button>
+
+            <div className="plans-offer__right">
+              <ul className="plans-plan-grid" aria-label="Plan seleccionado">
+                {plansToRender.map((plan) => (
+                  <li key={`plan_${plan.id}`} className="plans-plan-item is-selected">
+                    <PlanCard
+                      plan={plan}
+                      getCurrentPlan={() => {}}
+                      userEmail={currentUser?.email}
+                      showRecommendedBadge={false}
+                      variant="marketing"
+                      compactMarketingCopy={true}
+                      trialConfig={trialConfig}
+                    />
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
-          <div className="plans-offer__meta">
-            <p className="plans-offer__price">{selectedPriceLabel ?? "—"}</p>
-            <p className="plans-currency-micro">{offerSupportCopy}</p>
-          </div>
-          <ul className="plans-plan-grid" aria-label="Planes disponibles">
-            {plansToRender.map((plan) => (
-              <li key={`plan_${plan.id}`} className="plans-plan-item is-selected">
-                <PlanCard
-                  plan={plan}
-                  getCurrentPlan={() => {}}
-                  userEmail={currentUser?.email}
-                  showRecommendedBadge={false}
-                  variant="marketing"
-                  compactMarketingCopy={true}
-                  trialConfig={trialConfig}
-                />
-              </li>
-            ))}
-          </ul>
         </section>
       )}
       </div>

@@ -1,5 +1,5 @@
 import AsideNavbar from "../components/AsideNavbar/AsideNavbar";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, useNavigationType } from "react-router-dom";
 import Navbar from "../components/Navbar/Navbar";
 import { useUserContext } from "../contexts/UserContext";
 import { useEffect, useRef, useState } from "react";
@@ -14,6 +14,7 @@ function MainLayout() {
   const { userToken, currentUser } = useUserContext();
   const { showDownload } = useDownloadContext();
   const location = useLocation();
+  const navigationType = useNavigationType();
 
   const [asideOpen, setAsideOpen] = useState<boolean>(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
@@ -27,6 +28,16 @@ function MainLayout() {
   useEffect(() => {
     setAsideOpen(false);
   }, [location]);
+
+  useEffect(() => {
+    // React Router preserva scroll por defecto: si navegas desde el footer de una
+    // pagina larga a una corta puedes "caer" en un offset vacío (se ve negro).
+    // Solo forzamos scroll-to-top en navegaciones normales; en back/forward (POP)
+    // dejamos que el navegador restaure el scroll.
+    if (typeof window === "undefined") return;
+    if (navigationType === "POP") return;
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [location.pathname, location.search, navigationType]);
 
   useEffect(() => {
     applyRouteSeo(location.pathname);
@@ -70,13 +81,22 @@ function MainLayout() {
   // para reducir distracciones y mejorar conversión.
   const isCheckoutSurface = location.pathname.startsWith("/comprar");
 
+  // Superficies "marketing" (publicas) que traen su propio topnav y no deben
+  // mezclar chrome del producto, aunque exista sesion.
+  const isMarketingSurface =
+    location.pathname.startsWith("/planes") ||
+    location.pathname.startsWith("/instrucciones") ||
+    location.pathname.startsWith("/legal");
+
+  const showAppChrome = Boolean(userToken) && !isCheckoutSurface && !isMarketingSurface;
+
   return (
     <div className="main-layout-main-container">
-      {userToken && !isCheckoutSurface && (
+      {showAppChrome && (
         <Navbar setAsideOpen={setAsideOpen} menuButtonRef={menuButtonRef} />
       )}
       <div className="content-container">
-        {userToken && !isCheckoutSurface && (
+        {showAppChrome && (
           <AsideNavbar show={asideOpen} onHide={handleAsideHide} />
         )}
         {showDownload && currentUser !== null && <FileLoader />}

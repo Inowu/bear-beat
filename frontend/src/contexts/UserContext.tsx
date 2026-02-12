@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import trpc from "../api";
 import * as Sentry from "@sentry/react";
 import { IPaymentMethod, IUser } from "../interfaces/User";
@@ -10,6 +10,18 @@ import {
   setAuthTokens,
 } from "../utils/authStorage";
 import { clearManyChatHandoff, getManyChatHandoffToken } from "../utils/manychatHandoff";
+
+const AUTH_BROADCAST_CHANNEL = "bb-auth";
+type AuthBroadcastMessage =
+  | { type: "auth:request"; senderId: string }
+  | { type: "auth:tokens"; senderId: string; token: string; refreshToken: string }
+  | { type: "auth:logout"; senderId: string };
+
+function isNetworkError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  const lowered = message.toLowerCase();
+  return lowered.includes("failed to fetch") || lowered.includes("network");
+}
 
 interface UserContextI {
   currentUser: IUser | null;
@@ -51,9 +63,44 @@ const UserContextProvider = (props: any) => {
   const [paymentMethods, setPaymentMethods] = useState<IPaymentMethod[]>([]);
   const [cardLoad, setCardLoad] = useState<boolean>(false);
 
-  function handleLogin(token: string, refreshToken: string) {
+  const broadcastSenderId = useMemo(
+    () => `tab_${Math.random().toString(36).slice(2)}_${Date.now().toString(36)}`,
+    []
+  );
+  const authBroadcastRef = useRef<BroadcastChannel | null>(null);
+
+  const broadcastAuthTokens = useCallback(
+    (token: string, refreshToken: string) => {
+      if (typeof window === "undefined") return;
+      if (!authBroadcastRef.current) return;
+      const message: AuthBroadcastMessage = {
+        type: "auth:tokens",
+        senderId: broadcastSenderId,
+        token,
+        refreshToken,
+      };
+      authBroadcastRef.current.postMessage(message);
+    },
+    [broadcastSenderId]
+  );
+
+  const broadcastLogout = useCallback(() => {
+    if (typeof window === "undefined") return;
+    if (!authBroadcastRef.current) return;
+    const message: AuthBroadcastMessage = { type: "auth:logout", senderId: broadcastSenderId };
+    authBroadcastRef.current.postMessage(message);
+  }, [broadcastSenderId]);
+
+  const loginLocal = useCallback((token: string, refreshToken: string) => {
     setAuthTokens(token, refreshToken);
     setUserToken(token);
+  }, []);
+
+  function handleLogin(token: string, refreshToken: string) {
+    loginLocal(token, refreshToken);
+    // UX: si el usuario abre otra pestaña (ManyChat / links externos) mientras ya tiene sesion,
+    // sincronizamos tokens para evitar que vea "Iniciar sesion" en superficies publicas.
+    broadcastAuthTokens(token, refreshToken);
   }
   function resetCard() {
     setFileChange(true);
@@ -61,7 +108,8 @@ const UserContextProvider = (props: any) => {
   function closeFile() {
     setFileChange(false);
   }
-  function handleLogout(redirectToHome: boolean = false) {
+
+  const logoutLocal = useCallback((redirectToHome: boolean = false) => {
     setCurrentUser(null);
     clearAuthTokens();
     clearAdminAccessBackup();
@@ -70,11 +118,13 @@ const UserContextProvider = (props: any) => {
     if (redirectToHome && typeof window !== "undefined") {
       window.location.assign("/");
     }
+  }, []);
+
+  function handleLogout(redirectToHome: boolean = false) {
+    logoutLocal(redirectToHome);
+    broadcastLogout();
   }
-  const isNetworkError = (error: unknown) => {
-    const message = error instanceof Error ? error.message : String(error ?? "");
-    return message.toLowerCase().includes("failed to fetch") || message.toLowerCase().includes("network");
-  };
+
   const getPaymentMethods = async () => {
     setCardLoad(true);
     try {
@@ -91,17 +141,20 @@ const UserContextProvider = (props: any) => {
     if (refreshToken === null) return "none" as const;
     try {
       const token = await trpc.auth.refresh.query({ refreshToken });
-      handleLogin(token.token, token.refreshToken);
+      // Important: keep other tabs in sync when we refresh.
+      loginLocal(token.token, token.refreshToken);
+      broadcastAuthTokens(token.token, token.refreshToken);
       return "success" as const;
     }
     catch (error) {
       if (isNetworkError(error)) {
         return "network" as const;
       }
-      handleLogout();
+      logoutLocal(false);
+      broadcastLogout();
       return "denied" as const;
     }
-  }, []);
+  }, [broadcastAuthTokens, broadcastLogout, loginLocal, logoutLocal]);
 
   const startUser = useCallback(async () => {
     try {
@@ -132,6 +185,65 @@ const UserContextProvider = (props: any) => {
     }
     setLoading(false);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!("BroadcastChannel" in window)) return;
+
+    const channel = new BroadcastChannel(AUTH_BROADCAST_CHANNEL);
+    authBroadcastRef.current = channel;
+
+    const handler = (event: MessageEvent) => {
+      const data = event.data as Partial<AuthBroadcastMessage> | null;
+      if (!data || typeof data !== "object") return;
+      if (data.senderId === broadcastSenderId) return;
+
+      if (data.type === "auth:request") {
+        const token = getAccessToken();
+        const refreshToken = getRefreshToken();
+        if (!token || !refreshToken) return;
+        const response: AuthBroadcastMessage = {
+          type: "auth:tokens",
+          senderId: broadcastSenderId,
+          token,
+          refreshToken,
+        };
+        channel.postMessage(response);
+        return;
+      }
+
+      if (data.type === "auth:tokens") {
+        const token = typeof data.token === "string" ? data.token : "";
+        const refreshToken = typeof data.refreshToken === "string" ? data.refreshToken : "";
+        if (!token || !refreshToken) return;
+        if (getAccessToken() === token) return;
+        loginLocal(token, refreshToken);
+        return;
+      }
+
+      if (data.type === "auth:logout") {
+        if (!getAccessToken()) return;
+        logoutLocal(false);
+      }
+    };
+
+    channel.addEventListener("message", handler);
+
+    return () => {
+      channel.removeEventListener("message", handler);
+      channel.close();
+      authBroadcastRef.current = null;
+    };
+  }, [broadcastSenderId, loginLocal, logoutLocal]);
+
+  useEffect(() => {
+    // If there is no token in this tab, try to request it from another open tab of the same site.
+    // This keeps sessions consistent across tabs while still being sessionStorage-scoped.
+    if (typeof window === "undefined") return;
+    if (!authBroadcastRef.current) return;
+    if (getAccessToken()) return;
+    authBroadcastRef.current.postMessage({ type: "auth:request", senderId: broadcastSenderId } as AuthBroadcastMessage);
+  }, [broadcastSenderId, userToken]);
 
   useEffect(() => {
     if (userToken) {

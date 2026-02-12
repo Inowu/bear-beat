@@ -26,7 +26,7 @@ html.dark,
 }
 
 body {
-  font-family: var(--bb-font-ui, "Poppins", sans-serif);
+  font-family: var(--bb-font-ui, "Manrope", sans-serif);
   @apply bg-bg-main text-text-main transition-colors duration-300 antialiased;
   margin: 0;
   padding: 0;

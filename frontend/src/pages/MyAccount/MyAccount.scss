@@ -350,7 +350,7 @@
 }
 
 .ma-mono {
-  font-family: var(--bb-font-ui);
+  font-family: var(--bb-font-mono);
   font-size: 1.24rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -478,16 +478,16 @@
 .ma-ftp-value {
   color: var(--ma-text);
   font-size: 1.46rem;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.28;
   text-align: left;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: var(--bb-font-ui);
+  font-family: var(--bb-font-mono);
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0;
+  letter-spacing: 0.01em;
 }
 
 .ma-ftp-actions-inline {

@@ -3,7 +3,7 @@
  * Colores alineados con --app-* / --ph-* del diseño.
  */
 
-const FONT_FAMILY = "Poppins, sans-serif";
+const FONT_FAMILY = "Manrope, sans-serif";
 const BORDER_RADIUS = "12px";
 
 const LIGHT = {

@@ -13,6 +13,7 @@ import {
   WifiOff,
 } from "lucide-react";
 import Logo from "../../assets/images/osonuevo.png";
+import { useUserContext } from "../../contexts/UserContext";
 
 const FILEZILLA_URL = "https://filezilla-project.org/download.php?type=client";
 const AIR_EXPLORER_URL = "https://www.airexplorer.net/en/download/";
@@ -85,6 +86,8 @@ const DOWNLOAD_METHODS: DownloadMethod[] = [
 ];
 
 function Instructions() {
+  const { userToken } = useUserContext();
+
   return (
     <div className="instructions2026" role="region" aria-label="Instrucciones de descarga">
       <a className="instructions2026__skip" href="#instructions-main">
@@ -101,9 +104,15 @@ function Instructions() {
               <Link to="/planes" className="home-topnav__link">
                 Planes
               </Link>
-              <Link to="/auth" className="home-topnav__link">
-                Iniciar sesión
-              </Link>
+              {userToken ? (
+                <Link to="/micuenta" className="home-topnav__link">
+                  Mi cuenta
+                </Link>
+              ) : (
+                <Link to="/auth" state={{ from: "/instrucciones" }} className="home-topnav__link">
+                  Iniciar sesión
+                </Link>
+              )}
             </nav>
           </div>
         </div>
@@ -118,10 +127,24 @@ function Instructions() {
               Elige tu método favorito: FileZilla, Air Explorer o descarga directa en la web.
             </p>
             <div className="instructions2026__hero-actions">
-              <Link to="/micuenta" className="home-cta home-cta--primary instructions2026__btn instructions2026__btn--primary">
-                Ver mis credenciales FTP
-                <ArrowRight size={16} />
-              </Link>
+              {userToken ? (
+                <Link
+                  to="/micuenta"
+                  className="home-cta home-cta--primary instructions2026__btn instructions2026__btn--primary"
+                >
+                  Ver mis credenciales FTP
+                  <ArrowRight size={16} />
+                </Link>
+              ) : (
+                <Link
+                  to="/auth/registro"
+                  state={{ from: "/micuenta" }}
+                  className="home-cta home-cta--primary instructions2026__btn instructions2026__btn--primary"
+                >
+                  Crear cuenta para ver FTP
+                  <ArrowRight size={16} />
+                </Link>
+              )}
             </div>
           </header>
 
