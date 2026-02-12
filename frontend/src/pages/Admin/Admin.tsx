@@ -474,6 +474,10 @@ function Admin() {
                 Mostrando {formatInt(rangeStart)}-{formatInt(rangeEnd)}
               </span>
             </div>
+            <p className="admin-status-legend">
+              Nota: <strong>Habilitado/Bloqueado</strong> = acceso de cuenta.{" "}
+              <strong>Membresía</strong> = estado del plan.
+            </p>
           </div>
         </section>
 
@@ -549,7 +553,7 @@ function Admin() {
                           <div className="admin-cell-stack">
                             <span className="admin-cell-value" title={user.email}>{user.email}</span>
                             <span className={`badge badge--tiny ${user.blocked ? "badge--danger" : "badge--success"}`}>
-                              {user.blocked ? "Bloqueado" : "Activo"}
+                              {user.blocked ? "Bloqueado" : "Habilitado"}
                             </span>
                           </div>
                         </td>
@@ -710,7 +714,7 @@ function Admin() {
                         </div>
                       </div>
                       <span className={`admin-mobile-status ${user.blocked ? "is-blocked" : "is-active"}`}>
-                        {user.blocked ? "Bloqueado" : "Activo"}
+                        {user.blocked ? "Bloqueado" : "Habilitado"}
                       </span>
                       <span className="admin-mobile-card__menu" aria-hidden>
                         <MoreVertical size={20} />

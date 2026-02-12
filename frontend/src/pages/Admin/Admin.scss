@@ -91,6 +91,19 @@
   gap: 8px;
 }
 
+.admin-status-legend {
+  margin: 0;
+  color: color-mix(in srgb, var(--ad-text-muted) 94%, transparent);
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.admin-status-legend strong {
+  color: var(--ad-title);
+  font-weight: 700;
+}
+
 .insight-pill {
   min-height: 30px;
   display: inline-flex;
