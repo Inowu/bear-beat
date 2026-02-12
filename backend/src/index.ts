@@ -42,8 +42,15 @@ import {
 import { downloadDirEndpoint } from './endpoints/download-dir.endpoint';
 import { catalogStatsEndpoint } from './endpoints/catalog-stats.endpoint';
 
+const envFileOverride = String(process.env.ENV_FILE || '').trim();
+const envPath = envFileOverride
+  ? path.isAbsolute(envFileOverride)
+    ? envFileOverride
+    : path.resolve(process.cwd(), envFileOverride)
+  : path.resolve(__dirname, '../.env');
+
 config({
-  path: path.resolve(__dirname, '../.env'),
+  path: envPath,
 });
 
 const DEFAULT_CORS_ORIGINS = [
