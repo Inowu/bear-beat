@@ -81,7 +81,11 @@ export async function rebuildTrackMetadataIndex(
 
   const logger = options.logger ?? log;
   const chunkSize = Math.max(50, options.chunkSize ?? DEFAULT_CHUNK_SIZE);
-  const clearBeforeInsert = options.clearBeforeInsert ?? true;
+  // Default to incremental scans to avoid wiping manual cover URLs or Spotify results.
+  const clearBeforeInsert =
+    typeof options.clearBeforeInsert === 'boolean'
+      ? options.clearBeforeInsert
+      : process.env.TRACK_METADATA_SCAN_CLEAR_BEFORE_INSERT === '1';
   const spotifyCoversEnabled =
     options.spotifyCovers ?? (process.env.TRACK_METADATA_SPOTIFY_SCAN_ON_REBUILD === '1');
   const spotifyCoverMax = Number.isFinite(options.spotifyCoverMax as number)

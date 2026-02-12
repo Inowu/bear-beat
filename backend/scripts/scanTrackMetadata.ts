@@ -10,9 +10,10 @@ async function main() {
     Number.isFinite(spotifyCoverMaxRaw) && spotifyCoverMaxRaw > 0
       ? Math.floor(spotifyCoverMaxRaw)
       : 400;
+  const clearBeforeInsert = process.env.TRACK_METADATA_SCAN_CLEAR_BEFORE_INSERT === '1';
   const result = await rebuildTrackMetadataIndex({
     chunkSize,
-    clearBeforeInsert: true,
+    clearBeforeInsert,
     spotifyCovers: process.env.TRACK_METADATA_SPOTIFY_SCAN_ON_REBUILD === '1',
     spotifyCoverMax,
   });
