@@ -8,6 +8,7 @@ import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLa
 import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
 import { Plus, MoreVertical, Trash2 } from "lucide-react";
 import { toErrorMessage } from "../../../utils/errorMessage";
+import "./BlockedPhoneNumbers.scss";
 
 const PHONE_REGEX = /^\+\d{1,4}\s\d{4,14}$/;
 
@@ -91,19 +92,17 @@ export const BlockedPhoneNumbers = () => {
   }, []);
 
   const toolbar = (
-    <form onSubmit={handleAddPhone} className="flex flex-wrap items-center gap-3 flex-1 min-w-0">
-      <input
-        type="text"
-        placeholder="ej. +52 6621258651"
-        value={newPhone}
-        onChange={(e) => setNewPhone(e.target.value)}
-        className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-bear-cyan min-w-[180px] max-w-xs"
-      />
-      <button
-        type="submit"
-        disabled={saving}
-        className="inline-flex items-center gap-2 bg-bear-gradient hover:opacity-95 text-bear-dark-500 font-medium rounded-lg px-4 py-2 transition-opacity disabled:opacity-50"
-      >
+    <form onSubmit={handleAddPhone} className="blocked-phones-toolbar">
+      <label className="blocked-phones-toolbar__field">
+        Teléfono a bloquear
+        <input
+          type="text"
+          placeholder="ej. +52 6621258651"
+          value={newPhone}
+          onChange={(e) => setNewPhone(e.target.value)}
+        />
+      </label>
+      <button type="submit" disabled={saving} className="blocked-phones-toolbar__btn">
         <Plus size={18} />
         Agregar teléfono
       </button>
@@ -116,93 +115,101 @@ export const BlockedPhoneNumbers = () => {
       subtitle="Bloquea teléfonos problemáticos para reducir fraude, spam y registros inválidos."
       toolbar={toolbar}
     >
-      <ConditionModal
-        show={phoneToDelete !== null}
-        onHide={() => setPhoneToDelete(null)}
-        title="Eliminar teléfono"
-        message="¿Eliminar este teléfono de la lista?"
-        action={() => phoneToDelete ? handleRemovePhone(phoneToDelete) : Promise.resolve()}
-      />
-      {loader ? (
-        <div className="flex justify-center py-12">
-          <Spinner size={3} width={0.3} color="var(--app-accent)" />
-        </div>
-      ) : blockedNumbers.length === 0 ? (
-        <p className="text-slate-400 py-8 text-center">No hay teléfonos bloqueados.</p>
-      ) : (
-        <>
-          <div className="rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50 hidden md:block">
-            <div
-              className="overflow-x-auto"
-              tabIndex={0}
-              role="region"
-              aria-label="Tabla de teléfonos bloqueados (desliza para ver más)"
-              data-scroll-region
-            >
-              <table className="w-full">
-                <thead className="bg-slate-900">
-                  <tr>
-                    <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Teléfono</th>
-                    <th className="text-slate-400 uppercase text-xs tracking-wider text-right py-3 px-4">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-slate-950">
-                  {blockedNumbers.map((phone) => (
-                    <tr key={`p_${phone}`} className="border-b border-slate-800 hover:bg-slate-900/60 transition-colors">
-                      <td className="py-3 px-4 text-sm text-slate-300">{phone}</td>
-                      <td className="py-3 px-4 text-right">
-                        <button
-                          type="button"
-                          onClick={() => setPhoneToDelete(phone)}
-                          disabled={saving}
-                          className="p-2 text-slate-400 hover:text-red-400 transition-colors rounded-lg hover:bg-slate-800 disabled:opacity-50"
-                          title="Eliminar"
-                          aria-label={`Eliminar teléfono ${phone}`}
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+      <section className="blocked-phones-page">
+        <ConditionModal
+          show={phoneToDelete !== null}
+          onHide={() => setPhoneToDelete(null)}
+          title="Eliminar teléfono"
+          message="¿Eliminar este teléfono de la lista?"
+          action={() => (phoneToDelete ? handleRemovePhone(phoneToDelete) : Promise.resolve())}
+        />
+        {loader ? (
+          <div className="blocked-phones-state">
+            <Spinner size={3} width={0.3} color="var(--app-accent)" />
           </div>
-
-          <div className="md:hidden flex flex-col rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50">
-            {blockedNumbers.map((phone) => (
-              <button
-                type="button"
-                key={`m_${phone}`}
-                className="flex items-center justify-between gap-3 min-h-[64px] w-full px-4 py-3 border-b border-slate-800 hover:bg-slate-900/60 active:bg-slate-800 text-left"
-                onClick={() => setDrawerPhone(phone)}
-                aria-label={`Ver acciones para ${phone}`}
+        ) : blockedNumbers.length === 0 ? (
+          <p className="blocked-phones-state blocked-phones-state--empty">
+            No hay teléfonos bloqueados.
+          </p>
+        ) : (
+          <>
+            <div className="blocked-phones-table-wrap hidden md:block">
+              <div
+                className="blocked-phones-table-scroll"
+                tabIndex={0}
+                role="region"
+                aria-label="Tabla de teléfonos bloqueados (desliza para ver más)"
+                data-scroll-region
               >
-                <p className="font-medium text-white text-sm truncate flex-1 min-w-0">{phone}</p>
-                <span className="p-2 text-slate-400 hover:text-bear-cyan rounded-lg" aria-hidden>
-                  <MoreVertical size={20} />
-                </span>
-              </button>
-            ))}
-          </div>
+                <table className="blocked-phones-table">
+                  <thead>
+                    <tr>
+                      <th>Teléfono</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {blockedNumbers.map((phone) => (
+                      <tr key={`p_${phone}`}>
+                        <td>{phone}</td>
+                        <td>
+                          <button
+                            type="button"
+                            onClick={() => setPhoneToDelete(phone)}
+                            disabled={saving}
+                            className="blocked-phones-delete-btn"
+                            title="Eliminar"
+                            aria-label={`Eliminar teléfono ${phone}`}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
 
-          <AdminDrawer
-            open={drawerPhone !== null}
-            onClose={() => setDrawerPhone(null)}
-            title={drawerPhone ?? "Teléfono"}
-            user={undefined}
-            actions={
-              drawerPhone
-                ? [{ id: "delete", label: "Eliminar de la lista", onClick: () => setPhoneToDelete(drawerPhone), variant: "danger" }]
-                : []
-            }
-          >
-            {drawerPhone && <p className="text-slate-300 text-sm">Teléfono bloqueado: <strong className="text-white">{drawerPhone}</strong></p>}
-          </AdminDrawer>
-        </>
-      )}
+            <div className="blocked-phones-mobile-list md:hidden">
+              {blockedNumbers.map((phone) => (
+                <button
+                  type="button"
+                  key={`m_${phone}`}
+                  className="blocked-phones-mobile-item"
+                  onClick={() => setDrawerPhone(phone)}
+                  aria-label={`Ver acciones para ${phone}`}
+                >
+                  <p>{phone}</p>
+                  <span aria-hidden>
+                    <MoreVertical size={20} />
+                  </span>
+                </button>
+              ))}
+            </div>
 
-      <ErrorModal show={showError} onHide={() => setShowError(false)} message={errorMessage} />
+            <AdminDrawer
+              open={drawerPhone !== null}
+              onClose={() => setDrawerPhone(null)}
+              title={drawerPhone ?? "Teléfono"}
+              user={undefined}
+              actions={
+                drawerPhone
+                  ? [{ id: "delete", label: "Eliminar de la lista", onClick: () => setPhoneToDelete(drawerPhone), variant: "danger" }]
+                  : []
+              }
+            >
+              {drawerPhone && (
+                <p className="blocked-phones-drawer-copy">
+                  Teléfono bloqueado: <strong>{drawerPhone}</strong>
+                </p>
+              )}
+            </AdminDrawer>
+          </>
+        )}
+
+        <ErrorModal show={showError} onHide={() => setShowError(false)} message={errorMessage} />
+      </section>
     </AdminPageLayout>
   );
 };

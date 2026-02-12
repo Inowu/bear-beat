@@ -1,0 +1,222 @@
+@import "src/styles/_variables-theme.scss";
+
+.blocked-phones-page {
+  display: grid;
+  gap: 12px;
+}
+
+.blocked-phones-toolbar {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.blocked-phones-toolbar__field {
+  display: grid;
+  gap: 6px;
+  color: var(--ad-text-muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.blocked-phones-toolbar__field input {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 12px;
+}
+
+.blocked-phones-toolbar__btn {
+  min-height: 44px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--ad-accent) 56%, transparent);
+  background: var(--app-gradient);
+  color: var(--app-btn-text);
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.98rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.blocked-phones-toolbar__btn:hover {
+  transform: translateY(-1px);
+}
+
+.blocked-phones-toolbar__btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.blocked-phones-state {
+  min-height: 160px;
+  display: grid;
+  place-items: center;
+}
+
+.blocked-phones-state--empty {
+  margin: 0;
+  color: var(--ad-text-muted);
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.blocked-phones-table-wrap {
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--ad-border) 84%, transparent);
+  background: color-mix(in srgb, var(--ad-card) 96%, transparent);
+  overflow: hidden;
+}
+
+.blocked-phones-table-scroll {
+  width: 100%;
+  overflow: auto;
+}
+
+.blocked-phones-table-scroll:focus-visible {
+  outline: 2px solid var(--ad-accent);
+  outline-offset: 2px;
+}
+
+.blocked-phones-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.blocked-phones-table th {
+  padding: 12px 14px;
+  text-align: left;
+  color: var(--ad-text-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.blocked-phones-table th:last-child,
+.blocked-phones-table td:last-child {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.blocked-phones-table td {
+  padding: 12px 14px;
+  color: var(--ad-text);
+  font-size: 0.95rem;
+  font-weight: 700;
+  border-top: 1px solid color-mix(in srgb, var(--ad-border) 70%, transparent);
+}
+
+.blocked-phones-delete-btn {
+  width: 40px;
+  height: 40px;
+  border: 1px solid color-mix(in srgb, var(--ad-border) 82%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ad-card) 94%, transparent);
+  color: var(--ad-text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.blocked-phones-delete-btn:hover {
+  transform: translateY(-1px);
+  color: var(--app-status-error);
+  border-color: color-mix(in srgb, var(--app-status-error) 52%, var(--ad-border));
+}
+
+.blocked-phones-delete-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.blocked-phones-mobile-list {
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--ad-border) 82%, transparent);
+  background: color-mix(in srgb, var(--ad-card) 96%, transparent);
+  overflow: hidden;
+}
+
+.blocked-phones-mobile-item {
+  width: 100%;
+  min-height: 66px;
+  padding: 0 12px;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--ad-border) 70%, transparent);
+  background: transparent;
+  color: var(--ad-title);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.blocked-phones-mobile-item:last-child {
+  border-bottom: 0;
+}
+
+.blocked-phones-mobile-item p {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.blocked-phones-mobile-item span {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--ad-border) 82%, transparent);
+  background: color-mix(in srgb, var(--ad-row-hover) 62%, transparent);
+  color: var(--ad-text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.blocked-phones-drawer-copy {
+  margin: 0;
+  color: var(--ad-text-muted);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.blocked-phones-drawer-copy strong {
+  color: var(--ad-title);
+}
+
+@media (max-width: 760px) {
+  .blocked-phones-toolbar {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .blocked-phones-toolbar__field {
+    font-size: 0.74rem;
+    letter-spacing: 0.04em;
+    gap: 4px;
+  }
+
+  .blocked-phones-toolbar__btn {
+    width: 100%;
+  }
+}
