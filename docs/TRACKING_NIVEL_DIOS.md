@@ -17,6 +17,9 @@ Tracking completo: tags API, pixel, custom fields y carritos abandonados.
 | `CHECKOUT_PLAN_ORO` | Entra a checkout con plan Oro | Plans.findManyPlans |
 | `CHECKOUT_PLAN_CURIOSO` | Entra a checkout con plan Curioso | Plans.findManyPlans |
 | `SUCCESSFUL_PAYMENT` | Pago exitoso (Stripe, PayPal, Conekta) | Webhooks, subscribe flows |
+| `TRIAL_STARTED` | Trial iniciado (Stripe) | Stripe webhooks |
+| `TRIAL_CONVERTED` | Trial convertido a pago (Stripe) | Stripe webhooks |
+| `SUBSCRIPTION_RENEWED` | Renovación (Stripe/PayPal) | Stripe/PayPal webhooks |
 | `CANCELLED_SUBSCRIPTION` | Usuario cancela suscripción | cancelServicesSubscriptions |
 | `FAILED_PAYMENT` | Pago fallido (Stripe, PayPal, Conekta) | Webhooks |
 
@@ -24,17 +27,38 @@ Tracking completo: tags API, pixel, custom fields y carritos abandonados.
 
 ## 2. Custom Fields (Backend)
 
-Al entrar a checkout, se guardan en ManyChat:
+Al entrar a checkout y/o al crear ofertas, se guardan en ManyChat:
 
 | Campo | Valor |
 |-------|-------|
 | `ultimo_plan_checkout` | Nombre del plan (ej. "Plan Oro") |
 | `ultimo_precio_checkout` | Precio del plan |
+| `bb_offer_code` | Cupón (si existe) |
+| `bb_offer_pct` | Porcentaje de descuento (si existe) |
+| `bb_offer_expires_at` | Expiración ISO (si existe) |
 
 **Configuración en ManyChat:**  
 1. Settings → Fields → User Fields → + New User Field  
-2. Crear campos con **Key** exacto: `ultimo_plan_checkout` (text) y `ultimo_precio_checkout` (text)  
+2. Crear campos con **Key** exacto (Text): `ultimo_plan_checkout`, `ultimo_precio_checkout`, `bb_offer_code`, `bb_offer_pct`, `bb_offer_expires_at`  
 3. Los valores se rellenan automáticamente cuando el usuario entra a checkout
+
+---
+
+## 2.1 Automatizaciones (Backend automation runner)
+
+El backend tiene un "automation runner" que puede poner tags para re-engagement/ofertas. En ManyChat puedes hacer Rules con **Trigger: Tag added**:
+
+| Tag | Qué significa |
+|-----|---------------|
+| `AUTOMATION_TRIAL_NO_DOWNLOAD_24H` | Trial iniciado y sin descargas en 24h |
+| `AUTOMATION_PAID_NO_DOWNLOAD_24H` | Pagó y sin descargas en 24h |
+| `AUTOMATION_REGISTERED_NO_PURCHASE_7D` | Registrado hace 7 días y no compró |
+| `AUTOMATION_ACTIVE_NO_DOWNLOAD_7D` | Activo y sin descargas en 7 días |
+| `AUTOMATION_ACTIVE_NO_DOWNLOAD_14D` | Activo y sin descargas en 14 días |
+| `AUTOMATION_ACTIVE_NO_DOWNLOAD_21D` | Activo y sin descargas en 21 días |
+| `AUTOMATION_PLANS_OFFER_10` | Oferta 10% (planes vistos, no checkout) |
+| `AUTOMATION_PLANS_OFFER_30` | Escalación oferta 30% |
+| `AUTOMATION_PLANS_OFFER_50` | Escalación oferta 50% |
 
 ---
 

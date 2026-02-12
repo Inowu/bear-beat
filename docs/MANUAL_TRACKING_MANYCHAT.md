@@ -6,7 +6,7 @@ Todo el código está listo. Este manual indica qué hacer tú para que funcione
 
 ## 1. Lo que ya está configurado (no hagas nada)
 
-- ✅ API ManyChat: 7 tags (registro, planes, checkout, pago, cancelación, pago fallido)
+- ✅ API ManyChat: tags core + automatizaciones (ver `docs/MANYCHAT_ETIQUETAS.md`)
 - ✅ ManyChat Pixel: eventos de conversión en toda la web
 - ✅ Facebook Pixel: init + eventos Lead, Purchase, ViewPlans
 - ✅ Scripts ManyChat en `index.html`
@@ -49,7 +49,7 @@ cd backend && npm run manychat:tags
 cd backend && npm run manychat:create-tags
 ```
 
-**Sincronizar (recomendado):** borra de ManyChat las etiquetas que no usamos y crea las 7 que sí usamos. Ver lista en `docs/MANYCHAT_ETIQUETAS.md`.
+**Sincronizar (recomendado):** borra de ManyChat las etiquetas que no usamos y crea las que sí usamos. Ver lista en `docs/MANYCHAT_ETIQUETAS.md`.
 ```bash
 cd backend && npm run manychat:sync
 ```
@@ -100,7 +100,7 @@ Haz deploy del frontend y backend (por ejemplo con tu flujo habitual: Git, Netli
 | Cancelar suscripción | CANCELLED_SUBSCRIPTION | bear_beat_cancel_subscription |
 | Cambiar plan | - | bear_beat_change_plan |
 
-Solo existen 7 tags en el código; ver lista completa en `docs/MANYCHAT_ETIQUETAS.md`.
+La lista completa de tags (core + automatizaciones) está en `docs/MANYCHAT_ETIQUETAS.md`.
 
 ---
 
@@ -137,7 +137,7 @@ cd backend && npm run manychat:tags
 # Crear tags que falten (no borra nada)
 cd backend && npm run manychat:create-tags
 
-# Sincronizar: borrar etiquetas no usadas y crear las 7 que usamos
+# Sincronizar: borrar etiquetas no usadas y crear las que usamos
 cd backend && npm run manychat:sync
 ```
 
@@ -146,7 +146,7 @@ cd backend && npm run manychat:sync
 ## 8. Resumen rápido
 
 1. ✅ MC_API_KEY en `backend/.env` (local y producción)
-2. ✅ Ejecutar `manychat:sync` para dejar solo las 7 etiquetas que usamos (opcional pero recomendado)
+2. ✅ (Opcional) Ejecutar `manychat:sync` para sincronizar tags (es destructivo; ver `docs/MANYCHAT_ETIQUETAS.md`)
 3. ✅ O bien `manychat:tags` + `manychat:create-tags` sin borrar nada
 4. ✅ Deploy frontend y backend
 5. ✅ Probar registro y compra para validar tags

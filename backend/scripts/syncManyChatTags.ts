@@ -24,20 +24,43 @@ if (fs.existsSync(envPath)) {
 
 const MC_API_KEY = process.env.MC_API_KEY;
 
-/** Etiquetas que SÍ usamos en el código (nombre en ManyChat) */
-const TAG_NAMES: Record<string, string> = {
+/** Tags que deben existir y cuyos IDs viven en backend/src/many-chat/tags.ts */
+const CORE_TAG_NAMES: Record<string, string> = {
   USER_CHECKED_PLANS: "Usuario revisó planes",
   USER_REGISTERED: "Usuario registrado",
   CHECKOUT_PLAN_ORO: "Checkout Plan Oro",
   CHECKOUT_PLAN_CURIOSO: "Checkout Plan Curioso",
   SUCCESSFUL_PAYMENT: "Pago exitoso",
+  TRIAL_STARTED: "Trial iniciado",
+  TRIAL_CONVERTED: "Trial convertido",
+  SUBSCRIPTION_RENEWED: "Renovación de suscripción",
   CANCELLED_SUBSCRIPTION: "Canceló suscripción",
   FAILED_PAYMENT: "Pago fallido",
 };
 
-const USED_NAMES = new Set(
-  Object.values(TAG_NAMES).map((n) => n.toLowerCase().trim())
-);
+/**
+ * Tags extra (no viven en tags.ts) pero se usan en ManyChat flows/automatizaciones y/o backend automation runner.
+ * OJO: Estos tags deben existir para que ManyChat `addTagByName` funcione.
+ */
+const EXTRA_TAG_NAMES: string[] = [
+  // Flow tag (ManyChat UI)
+  "Interesado Demo",
+  // Backend automation runner tags
+  "AUTOMATION_TRIAL_NO_DOWNLOAD_24H",
+  "AUTOMATION_PAID_NO_DOWNLOAD_24H",
+  "AUTOMATION_REGISTERED_NO_PURCHASE_7D",
+  "AUTOMATION_ACTIVE_NO_DOWNLOAD_7D",
+  "AUTOMATION_ACTIVE_NO_DOWNLOAD_14D",
+  "AUTOMATION_ACTIVE_NO_DOWNLOAD_21D",
+  "AUTOMATION_PLANS_OFFER_10",
+  "AUTOMATION_PLANS_OFFER_30",
+  "AUTOMATION_PLANS_OFFER_50",
+];
+
+const USED_NAMES = new Set([
+  ...Object.values(CORE_TAG_NAMES).map((n) => n.toLowerCase().trim()),
+  ...EXTRA_TAG_NAMES.map((n) => n.toLowerCase().trim()),
+]);
 
 const api = axios.create({
   baseURL: "https://api.manychat.com",
@@ -105,7 +128,7 @@ async function main() {
   const byName = new Map(existing.map((t) => [t.name.toLowerCase(), t]));
   const results: Record<string, number> = {};
 
-  for (const [key, name] of Object.entries(TAG_NAMES)) {
+  for (const [key, name] of Object.entries(CORE_TAG_NAMES)) {
     const found = byName.get(name.toLowerCase());
     if (found) {
       console.log(`   ✅ "${name}" ya existe (id: ${found.id})`);
@@ -121,13 +144,27 @@ async function main() {
     }
   }
 
+  for (const name of EXTRA_TAG_NAMES) {
+    const found = byName.get(name.toLowerCase());
+    if (found) {
+      console.log(`   ✅ "${name}" ya existe (id: ${found.id})`);
+    } else {
+      console.log(`   ➕ Creando "${name}"...`);
+      const id = await createTag(name);
+      if (id) {
+        console.log(`      ✅ Creado con id: ${id}`);
+        existing.push({ id, name });
+      }
+    }
+  }
+
   console.log("\n📋 4. Resumen final – etiquetas en ManyChat (las que usamos):\n");
   if (Object.keys(results).length === 0) {
     console.log("   ⚠️ No hay etiquetas para mostrar.");
     return;
   }
   Object.entries(results).forEach(([key, id]) => {
-    const name = TAG_NAMES[key];
+    const name = CORE_TAG_NAMES[key];
     console.log(`   ${name}: ${id}`);
   });
 
