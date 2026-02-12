@@ -1,0 +1,28 @@
+version: "3.8"
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: bearbeat-staging-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: bearbeat_staging
+    ports:
+      - "3307:3306"
+    volumes:
+      - bearbeat-staging-mysql:/var/lib/mysql
+
+  redis:
+    image: redis:7
+    container_name: bearbeat-staging-redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    volumes:
+      - bearbeat-staging-redis:/data
+
+volumes:
+  bearbeat-staging-mysql:
+  bearbeat-staging-redis:
+
