@@ -386,19 +386,107 @@ export default function PublicHome() {
     return null;
   }, []);
 
+  type ScrollAlignmentOptions = {
+    maxDurationMs?: number;
+    thresholdPx?: number;
+    onDone?: () => void;
+  };
+
+  const scrollAlignmentTokenRef = useRef(0);
+
+  const getHomeStickyTopOffset = useCallback(() => {
+    const stickyNav = document.querySelector<HTMLElement>(".home-topnav");
+    if (!stickyNav) return 12;
+
+    const rect = stickyNav.getBoundingClientRect();
+    const navHeight = stickyNav.offsetHeight || rect.height || 80;
+
+    // If the nav isn't visible (sticky not supported due to an ancestor overflow, etc.),
+    // don't reserve space for it.
+    if (rect.bottom <= 0) return 12;
+
+    const navTop = Math.max(0, rect.top);
+    return Math.max(12, navTop + navHeight + 10);
+  }, []);
+
+  const alignScrollToTarget = useCallback(
+    (getTarget: () => HTMLElement | null, options: ScrollAlignmentOptions = {}) => {
+      if (typeof window === "undefined") return;
+
+      const token = (scrollAlignmentTokenRef.current += 1);
+      const maxDurationMs = Math.max(250, options.maxDurationMs ?? 5200);
+      const thresholdPx = Math.max(0, options.thresholdPx ?? 22);
+      const start = window.performance?.now ? window.performance.now() : Date.now();
+
+      let lastY = window.scrollY;
+      let lastDelta = Number.NaN;
+      let stableScroll = 0;
+      let stableDelta = 0;
+
+      const tick = () => {
+        if (scrollAlignmentTokenRef.current !== token) return;
+
+        const now = window.performance?.now ? window.performance.now() : Date.now();
+        const elapsed = now - start;
+        const el = getTarget();
+
+        if (!el) {
+          if (elapsed >= maxDurationMs) {
+            options.onDone?.();
+            return;
+          }
+          window.requestAnimationFrame(tick);
+          return;
+        }
+
+        const desiredTop = getHomeStickyTopOffset();
+        const delta = el.getBoundingClientRect().top - desiredTop;
+
+        const y = window.scrollY;
+        if (Math.abs(y - lastY) < 1) stableScroll += 1;
+        else stableScroll = 0;
+        lastY = y;
+
+        if (Number.isFinite(lastDelta) && Math.abs(delta - lastDelta) < 1) stableDelta += 1;
+        else stableDelta = 0;
+        lastDelta = delta;
+
+        // We're stable and aligned.
+        if (stableScroll >= 10 && stableDelta >= 10 && Math.abs(delta) <= thresholdPx) {
+          options.onDone?.();
+          return;
+        }
+
+        // Smooth scroll / layout shifts can pause for a few frames. Only correct after scrollY is stable.
+        if (stableScroll >= 6 && Math.abs(delta) > thresholdPx) {
+          window.scrollTo({ top: Math.max(0, y + delta), behavior: "auto" });
+          stableScroll = 0;
+          stableDelta = 0;
+        }
+
+        if (elapsed >= maxDurationMs) {
+          if (Math.abs(delta) > thresholdPx) {
+            window.scrollTo({ top: Math.max(0, window.scrollY + delta), behavior: "auto" });
+          }
+          options.onDone?.();
+          return;
+        }
+
+        window.requestAnimationFrame(tick);
+      };
+
+      window.requestAnimationFrame(tick);
+    },
+    [getHomeStickyTopOffset],
+  );
+
   const scrollToDemo = useCallback(
     (options: { behavior?: ScrollBehavior; focusSearch?: boolean } = {}) => {
       if (typeof window === "undefined") return;
-      const targetTopOffset = () => {
-        const stickyNav = document.querySelector<HTMLElement>(".home-topnav");
-        const navHeight = stickyNav?.offsetHeight ?? 80;
-        const navTop = stickyNav ? Math.max(0, stickyNav.getBoundingClientRect().top) : 0;
-        return Math.max(12, navTop + navHeight + 10);
-      };
 
       const scrollToTarget = (element: HTMLElement | null, behavior: ScrollBehavior = "smooth") => {
         if (!element) return;
-        const top = Math.max(0, window.scrollY + element.getBoundingClientRect().top - targetTopOffset());
+        const top = Math.max(0, window.scrollY + element.getBoundingClientRect().top - getHomeStickyTopOffset());
         window.scrollTo({
           top,
           behavior,
@@ -416,8 +504,15 @@ export default function PublicHome() {
           "demo",
         ]) ?? fallbackDemoSection;
 
+      const getFinalTarget = () => (document.getElementById("top100") as HTMLElement | null) ?? section;
+
       if (section) {
         scrollToTarget(section, options.behavior ?? "smooth");
+        alignScrollToTarget(getFinalTarget, {
+          // Mobile: content-visibility and images can change section height while/after we scroll.
+          // Keep correcting until the anchor is actually aligned (or we time out).
+          maxDurationMs: options.behavior === "auto" ? 4200 : 5600,
+        });
       }
       window.history.replaceState(null, "", "#top100");
       if (options.focusSearch) {
@@ -433,32 +528,41 @@ export default function PublicHome() {
         }, 0);
       }
     },
-    [],
+    [alignScrollToTarget, findSectionByIds, getHomeStickyTopOffset],
   );
 
   const scrollToFaq = useCallback(
     (options: { behavior?: ScrollBehavior } = {}) => {
       if (typeof window === "undefined") return;
 
-      const target = document.getElementById("faq");
+      const getFaqTarget = () => document.getElementById("faq") as HTMLElement | null;
+
+      const target = getFaqTarget();
       if (!target) return;
 
-      const stickyNav = document.querySelector<HTMLElement>(".home-topnav");
-      const navHeight = stickyNav?.offsetHeight ?? 80;
-      const navTop = stickyNav ? Math.max(0, stickyNav.getBoundingClientRect().top) : 0;
-      const offset = Math.max(12, navTop + navHeight + 10);
-      const top = Math.max(0, window.scrollY + target.getBoundingClientRect().top - offset);
+      const top = Math.max(0, window.scrollY + target.getBoundingClientRect().top - getHomeStickyTopOffset());
       window.scrollTo({ top, behavior: options.behavior ?? "smooth" });
-      const first = target.querySelector<HTMLElement>(".home-faq__summary");
-      const title = target.querySelector<HTMLElement>("h2");
-      window.setTimeout(() => {
-        if (first && first.getAttribute("aria-expanded") === "false") {
-          first.click();
-        }
-        title?.focus({ preventScroll: true });
-      }, 0);
+      window.history.replaceState(null, "", "#faq");
+
+      alignScrollToTarget(getFaqTarget, {
+        maxDurationMs: options.behavior === "auto" ? 4200 : 5600,
+        onDone: () => {
+          const finalTarget = getFaqTarget();
+          if (!finalTarget) return;
+
+          const first = finalTarget.querySelector<HTMLElement>(".home-faq__summary");
+          const title = finalTarget.querySelector<HTMLElement>("h2");
+          if (first && first.getAttribute("aria-expanded") === "false") {
+            first.click();
+          }
+          title?.focus({ preventScroll: true });
+
+          // Expanding can shift the heading slightly; do a short realign pass.
+          alignScrollToTarget(getFaqTarget, { maxDurationMs: 1100 });
+        },
+      });
     },
-    [],
+    [alignScrollToTarget, getHomeStickyTopOffset],
   );
 
   const onDemoScroll = useCallback(() => {
