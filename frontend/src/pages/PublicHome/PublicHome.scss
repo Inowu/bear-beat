@@ -314,7 +314,7 @@
 .activation-steps,
 .pricing,
 .home-faq {
-  scroll-margin-top: 92px;
+  scroll-margin-top: calc(92px + env(safe-area-inset-top, 0px));
 }
 
 /* A. HERO */
@@ -1014,7 +1014,7 @@
 
 .social-proof__anchor {
   display: block;
-  scroll-margin-top: 94px;
+  scroll-margin-top: calc(94px + env(safe-area-inset-top, 0px));
 }
 
 .social-proof__head {
