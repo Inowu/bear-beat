@@ -76,7 +76,9 @@ async function main() {
     app.use(
       expressWinston.logger({
         transports: [new winston.transports.Console()],
-        format: winston.format.json(),
+        // `express-winston` and `winston` can resolve different `logform` typings.
+        // Keep runtime JSON logging and avoid a type-only mismatch.
+        format: winston.format.json() as any,
       }),
     );
 

@@ -43,6 +43,15 @@ CI:
 
 Backend:
 
+- `@trpc/server` -> `10.45.4`
+- `axios` -> `^1.13.5`
+- `conekta` -> `^6.0.3`
+- `dd-trace` -> `^4.55.0`
+- `express` -> `^4.22.1`
+- `firebase-admin` -> `^13.6.1`
+- `prisma-zod-generator` -> `0.8.15`
+- `twilio` -> `^5.12.1`
+- `zod` -> `^3.25.76`
 - `body-parser` -> `^1.20.4`
 - `compression` -> `^1.8.1`
 - `cors` -> `^2.8.6`
@@ -51,6 +60,9 @@ Backend:
 
 Frontend:
 
+- `@trpc/client` -> `10.45.4`
+- `ejs` -> `^3.1.10`
+- `react-router-dom` -> `^6.30.3`
 - `axios` -> `^1.13.5`
 - `bootstrap` -> `^5.3.8`
 - `formik` -> `^2.4.9`
@@ -63,6 +75,9 @@ Frontend:
 Root:
 
 - `yup` -> `^1.7.1`
+- `axios` -> `^1.13.5`
+- `overrides` para forzar versión segura de `axios` donde aplica
+- `overrides` para `@types/request@2.48.13` (evita arrastrar `form-data` vulnerable por tipados legacy)
 
 Notas:
 
@@ -82,6 +97,11 @@ Riesgos residuales:
 - Warnings de ESLint en frontend existentes (no bloqueantes).
 - Warnings de Sass deprecado (`@import`) durante `vite build` (no bloqueantes hoy, pero conviene migrar a `@use/@forward` en una fase separada).
 - `backend` smoke tests dependen de una DB disponible y configurada.
+- `npm audit` queda en **15 vulnerabilidades** (11 high, 4 low, 0 moderate, 0 critical) por dependencias que requieren cambios mayores o sin parche compatible:
+  - `conekta` (para cerrar axios transitive requiere migrar a major 7)
+  - `@fastify/secure-session` / `fastify` (requieren major para parche completo)
+  - `prisma-trpc-generator` chain (requiere major)
+  - `pm2` (advisory sin fix disponible al momento)
 
 Checklist rápida de paridad:
 
