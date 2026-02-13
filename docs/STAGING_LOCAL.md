@@ -120,6 +120,12 @@ ENV_FILE=.env.staging.local \
 npm run e2e:smoke --workspace=backend
 ```
 
+Reset password (sin email providers; genera un usuario local + token en DB local y valida el flujo UI):
+```bash
+ENV_FILE=.env.staging.local \
+npm run e2e:reset-password --workspace=backend
+```
+
 ## 7) Apagar STAGING local
 ```bash
 docker compose -f backend/docker-compose.staging.yml down

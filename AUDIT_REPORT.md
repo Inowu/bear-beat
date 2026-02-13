@@ -230,7 +230,12 @@ Fuente (pasivo prod): `audit-artifacts/prod-passive-2026-02-12/thebearbeat.com.h
   - Tests locales: **OK** (2026-02-12).
   - Build local: `npm run build` **OK** (2026-02-12) con warnings (Sass `@import` deprecado; chunks > 500 kB).
 - E2E:
-  - Playwright scripts existentes: `backend/scripts/smokeE2e.ts` y auditorías en `backend/scripts/auditFullSite.ts`
+  - Playwright smoke: `backend/scripts/smokeE2e.ts` (registro → planes → checkout success mock + login/admin opcional).
+    - Hardening: contextos aislados para evitar “session bleed” por BroadcastChannel + guardrail para no correr en localhost si el frontend apunta a API prod.
+    - Evidencia: `audit-artifacts/staging-local-2026-02-12/e2e.smoke.r5.txt`.
+  - Playwright smoke (nuevo): reset password local sin email providers `backend/scripts/e2eResetPassword.ts` (`npm run e2e:reset-password --workspace=backend`).
+    - Evidencia: `audit-artifacts/staging-local-2026-02-12/e2e.reset-password.r1.txt`.
+  - Auditorías existentes: `backend/scripts/auditFullSite.ts`.
   - Pendiente: suite E2E completa de flujos críticos (registro/login/reset/checkout/acceso a descargas/roles).
 
 ## Performance / Web Vitals (pendiente de medición)
