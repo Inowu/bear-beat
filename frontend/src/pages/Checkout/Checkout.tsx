@@ -2,6 +2,9 @@ import "./Checkout.scss";
 import { useUserContext } from "../../contexts/UserContext";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTheme } from "../../contexts/ThemeContext";
+import brandMarkBlack from "../../assets/brand/bearbeat-mark-black.png";
+import brandMarkCyan from "../../assets/brand/bearbeat-mark-cyan.png";
 import trpc from "../../api";
 import { IPlans, IOxxoData, ISpeiData } from "interfaces/Plans";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
@@ -15,8 +18,8 @@ import {
   Landmark,
   Lock,
   Wallet,
-  ShieldCheck,
 } from "lucide-react";
+import { FaStripe } from "react-icons/fa";
 import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
 import { SpeiModal } from "../../components/Modals/SpeiModal/SpeiModal";
 import { OxxoModal } from "../../components/Modals/OxxoModal/OxxoModal";
@@ -36,13 +39,13 @@ const METHOD_META: Record<
   { label: string; description: string; Icon: typeof CreditCard }
 > = {
   card: {
-    label: "Tarjeta",
+    label: "Tarjeta de Crédito o Débito",
     description: "Pago inmediato con Stripe",
     Icon: CreditCard,
   },
   spei: {
     label: "SPEI",
-    description: "Transferencia bancaria (CLABE reutilizable)",
+    description: "Transferencia interbancaria en MXN, CLABE",
     Icon: Landmark,
   },
   bbva: {
@@ -52,7 +55,7 @@ const METHOD_META: Record<
   },
   paypal: {
     label: "PayPal",
-    description: "Paga con tu cuenta PayPal",
+    description: "Paga con tu cuenta o tarjetas guardadas",
     Icon: Wallet,
   },
   oxxo: {
@@ -91,6 +94,7 @@ const pickBestPlanCandidate = (candidates: IPlans[]): IPlans | null => {
 };
 
 function Checkout() {
+  const { theme } = useTheme();
   const [plan, setPlan] = useState<IPlans | null>(null);
   const [trialConfig, setTrialConfig] = useState<{
     enabled: boolean;
@@ -100,10 +104,12 @@ function Checkout() {
   } | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
+  const brandMark = theme === "light" ? brandMarkBlack : brandMarkCyan;
   const [redirecting, setRedirecting] = useState(false);
   const [showRedirectHelp, setShowRedirectHelp] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<CheckoutMethod>("card");
   const [processingMethod, setProcessingMethod] = useState<CheckoutMethod | null>(null);
+  const [paypalReady, setPaypalReady] = useState(false);
   const [inlineError, setInlineError] = useState<string | null>(null);
   const [showSpeiModal, setShowSpeiModal] = useState(false);
   const [speiData, setSpeiData] = useState<ISpeiData | null>(null);
@@ -316,6 +322,7 @@ function Checkout() {
     setShowRedirectHelp(false);
     setInlineError(null);
     setSelectedMethod("card");
+    setPaypalReady(false);
     setSpeiData(null);
     setShowSpeiModal(false);
     if (priceId) getPlans(priceId);
@@ -700,6 +707,7 @@ function Checkout() {
   const handleSelectMethod = (method: CheckoutMethod) => {
     interactedRef.current = true;
     setInlineError(null);
+    setPaypalReady(false);
     setSelectedMethod(method);
     trackGrowthMetric(GROWTH_METRICS.CHECKOUT_METHOD_SELECTED, {
       method,
@@ -729,7 +737,9 @@ function Checkout() {
     if (selectedMethod === "oxxo") startOxxoCheckout();
     if (selectedMethod === "bbva") startBbvaCheckout();
     if (selectedMethod === "paypal") {
-      setInlineError("Usa el botón de PayPal para completar tu pago.");
+      setInlineError(null);
+      setPaypalReady(true);
+      return;
     }
   };
 
@@ -738,59 +748,53 @@ function Checkout() {
     parseInt(plan?.price || "0", 10) -
     parseInt(plan?.price || "0", 10) * (discount / 100)
   ).toFixed(2);
-  const selectedMethodMeta = METHOD_META[selectedMethod];
-  const SelectedMethodIcon = selectedMethodMeta.Icon;
+  const currencyCode = (plan?.moneda ? String(plan.moneda) : "MXN").toUpperCase();
+  const planName = plan?.name?.trim() || "Plan Oro";
 
   const quotaGb = Number(plan?.gigas ?? 500);
-  const durationDays = Number(plan?.duration ?? 0);
-  const cycleFact =
-    Number.isFinite(durationDays) && durationDays > 0
-      ? `${formatInt(durationDays)} días por ciclo`
-      : "Pago mensual";
-  const benefits = [
-    `${formatInt(quotaGb)} GB por mes para descargas`,
-    "Catálogo organizado para cabina (audio, video y karaoke)",
-    "Activación guiada para empezar más rápido",
+  const summaryBullets = [
+    `${formatInt(quotaGb)} GB de descargas al mes`,
+    "Catálogo organizado para cabina",
+    "Activación inmediata",
   ];
-  const quickFacts = [
-    `${formatInt(quotaGb)} GB/mes`,
-    cycleFact,
-    "Cancela cuando quieras",
-  ];
-  const checkoutSteps = [
-    "Elige tu método",
-    "Completa el pago seguro",
-    "Activación guiada",
-  ];
-  const methodAvailabilityText = isMxnPlan
-    ? "Tarjeta, PayPal, SPEI, BBVA y efectivo (según disponibilidad)."
-    : "Tarjeta y PayPal (según disponibilidad).";
+
   let continueLabel = "Continuar";
   if (processingMethod === "card") continueLabel = "Abriendo pasarela segura...";
   if (processingMethod === "spei") continueLabel = "Generando referencia SPEI...";
   if (processingMethod === "bbva") continueLabel = "Abriendo pago BBVA...";
   if (processingMethod === "oxxo") continueLabel = "Generando referencia de pago en efectivo...";
-  if (processingMethod === null && selectedMethod === "card") continueLabel = "Continuar con tarjeta segura";
+  if (processingMethod === "paypal") continueLabel = "Procesando PayPal...";
+  if (processingMethod === null && selectedMethod === "card") {
+    continueLabel = `Pagar $${totalPrice} ${currencyCode} de forma segura`;
+  }
+  if (processingMethod === null && selectedMethod === "paypal") continueLabel = "Continuar a PayPal";
   if (processingMethod === null && selectedMethod === "spei") continueLabel = "Generar referencia SPEI";
   if (processingMethod === null && selectedMethod === "bbva") continueLabel = "Continuar con BBVA";
   if (processingMethod === null && selectedMethod === "oxxo") continueLabel = "Generar referencia de pago en efectivo";
 
+  const TopBrand = (
+    <header className="checkout2026__top" aria-label="Bear Beat">
+      <Link to="/planes" className="checkout2026__brand" aria-label="Bear Beat">
+        <img src={brandMark} alt="Bear Beat" width={40} height={40} />
+      </Link>
+    </header>
+  );
+
   if (!priceId) {
     return (
-      <div className="checkout-main-container">
+      <div className="checkout-main-container checkout2026">
+        {TopBrand}
         <div className="checkout-inner">
-          <header className="checkout-header checkout-card">
-            <h1 className="checkout-page-title">Activar acceso</h1>
-            <p className="checkout-page-subtitle">
-              Elige un plan en la página de planes para continuar.
-            </p>
-          </header>
-          <Link
-            to="/planes"
-            className="checkout-cta-btn checkout-cta-btn--primary checkout-empty-link"
-          >
-            Ver planes
-          </Link>
+          <div className="checkout-one-state" role="status" aria-live="polite">
+            <h1 className="checkout-one-state__title">Completa tu pago</h1>
+            <p className="checkout-one-state__text">Selecciona un plan en la página de planes para continuar.</p>
+            <Link
+              to="/planes"
+              className="checkout-cta-btn checkout-cta-btn--primary checkout-empty-link"
+            >
+              Ver planes
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -801,8 +805,10 @@ function Checkout() {
     const providerName =
       redirectingProvider === "stripe" ? "Stripe" : "BBVA (Conekta)";
     return (
-      <div className="checkout-main-container checkout-main-container--redirecting">
-        <div className="checkout-one-state">
+      <div className="checkout-main-container checkout2026">
+        {TopBrand}
+        <div className="checkout-inner checkout2026__center">
+          <div className="checkout-one-state">
           <Spinner size={5} width={0.4} color="var(--app-accent)" />
           <h2 className="checkout-one-state__title">Preparando tu pago</h2>
           <p className="checkout-one-state__text">
@@ -816,6 +822,7 @@ function Checkout() {
               </Link>
             </div>
           )}
+          </div>
         </div>
       </div>
     );
@@ -824,192 +831,182 @@ function Checkout() {
   // Plan aún cargando → una sola pantalla de carga
   if (!plan) {
     return (
-      <div className="checkout-main-container checkout-main-container--redirecting">
-        <div className="checkout-one-state">
-          <Spinner size={5} width={0.4} color="var(--app-accent)" />
-          <p className="checkout-one-state__text">Cargando plan…</p>
+      <div className="checkout-main-container checkout2026">
+        {TopBrand}
+        <div className="checkout-inner checkout2026__center">
+          <div className="checkout-one-state" role="status" aria-live="polite">
+            <Spinner size={5} width={0.4} color="var(--app-accent)" />
+            <p className="checkout-one-state__text">Cargando plan…</p>
+          </div>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="checkout-main-container">
-      <div className="checkout-inner">
-        <header className="checkout-header checkout-card">
-          <span className="checkout-header__eyebrow">
-            <ShieldCheck size={14} aria-hidden />
-            Checkout protegido
-          </span>
-          <div className="checkout-header__main">
-            <div className="checkout-header__copy">
-              <h1 className="checkout-page-title">Activa tu acceso en 1 minuto</h1>
-              <p className="checkout-page-subtitle">
-                Flujo directo y seguro: elige cómo pagar y empieza a descargar en cuanto se confirme.
-              </p>
-              <div className="checkout-steps" role="list" aria-label="Pasos del checkout">
-                {checkoutSteps.map((step, index) => (
-                  <span key={step} role="listitem">
-                    <strong>{index + 1}</strong>
-                    {step}
-                  </span>
-                ))}
-              </div>
-              <div className="checkout-header__quickfacts" role="list" aria-label="Detalles rápidos del plan">
-                {quickFacts.map((fact) => (
-                  <span key={fact} role="listitem">{fact}</span>
-                ))}
-              </div>
-            </div>
-            <div
-              className="checkout-header__amount"
-              aria-label={`Total ${totalPrice} ${plan.moneda ?? "MXN"}`}
-            >
-              <span>Plan seleccionado</span>
-              <small className="checkout-header__amount-plan">{plan.name}</small>
-              <strong>${totalPrice}</strong>
-              <small>{plan.moneda ?? "MXN"} / mes</small>
-            </div>
-          </div>
-          <div className="checkout-trust-strip" role="list" aria-label="Confianza de pago">
-            <span role="listitem"><ShieldCheck size={16} aria-hidden /> Pago seguro</span>
-            <span role="listitem"><Check size={16} aria-hidden /> Activación inmediata</span>
-            <span role="listitem"><Wallet size={16} aria-hidden /> Métodos locales e internacionales</span>
-            <span role="listitem"><Lock size={16} aria-hidden /> Cifrado bancario</span>
-          </div>
-          <PaymentMethodLogos
-            methods={
-              isMxnPlan
-                ? (conektaAvailability?.oxxoEnabled
-                    ? (hasPaypalPlan
-                        ? ["visa", "mastercard", "amex", "paypal", "spei", "oxxo"]
-                        : ["visa", "mastercard", "amex", "spei", "oxxo"])
-                    : (hasPaypalPlan
-                        ? ["visa", "mastercard", "amex", "paypal", "spei"]
-                        : ["visa", "mastercard", "amex", "spei"]))
-                : (hasPaypalPlan
-                    ? ["visa", "mastercard", "amex", "paypal"]
-                    : ["visa", "mastercard", "amex"])
-            }
-            className="checkout-payment-logos"
-            ariaLabel="Métodos de pago disponibles en checkout"
-          />
-          <p className="checkout-header__support">Métodos disponibles: {methodAvailabilityText}</p>
-        </header>
+  const methodsForUi: CheckoutMethod[] = (["card", "paypal", "spei"] as const).filter((method) =>
+    availableMethods.includes(method),
+  );
+  if (availableMethods.includes(selectedMethod) && !methodsForUi.includes(selectedMethod)) {
+    methodsForUi.push(selectedMethod);
+  }
 
-        <div className="checkout-grid">
-          <section className="checkout-card checkout-payment-card">
-            <div className="checkout-payment-card__head">
-              <h2 className="checkout-card__title">Elige cómo pagar</h2>
-              <p className="checkout-payment-card__hint">
-                Tu acceso se activa al confirmar el pago.
-              </p>
-            </div>
-            <div className="checkout-payment-card__total" aria-label={`Total actual ${totalPrice} ${plan.moneda ?? "MXN"}`}>
-              <span>Total del plan</span>
-              <strong>${totalPrice} <small>{plan.moneda ?? "MXN"} / mes</small></strong>
-            </div>
-            <div className="checkout-credentials" role="group" aria-label="Datos de tu cuenta">
-              <div className="checkout-credentials__item">
-                <span className="checkout-credentials__label">Nombre</span>
-                <span className="checkout-credentials__value">{currentUser?.username ?? "—"}</span>
-              </div>
-              <div className="checkout-credentials__item">
-                <span className="checkout-credentials__label">Correo</span>
-                <span className="checkout-credentials__value">{currentUser?.email ?? "—"}</span>
-              </div>
-            </div>
-            <div className="checkout-selected-method" aria-live="polite">
-              <span className="checkout-selected-method__label">Método elegido</span>
-              <div className="checkout-selected-method__value">
-                <span className="checkout-selected-method__icon" aria-hidden>
-                  <SelectedMethodIcon size={17} />
+  const summaryMonthlyLabel = `$${totalPrice} ${currencyCode}/mes`;
+  const summaryTodayLabel = `$${totalPrice} ${currencyCode}`;
+
+  const summaryContent = (
+    <>
+      <h2 className="checkout2026__summaryTitle">Resumen de compra</h2>
+      <div className="checkout2026__summaryRow">
+        <span className="checkout2026__summaryPlan">Plan Oro</span>
+        <span className="checkout2026__summaryPrice">{summaryMonthlyLabel}</span>
+      </div>
+      <p className="checkout2026__summarySub">Renovación automática. Cancela cuando quieras.</p>
+      <div className="checkout2026__divider" aria-hidden />
+      <ul className="checkout2026__summaryBullets" aria-label="Beneficios incluidos">
+        {summaryBullets.map((item) => (
+          <li key={item}>
+            <span className="checkout2026__miniCheck" aria-hidden>
+              <Check size={14} />
+            </span>
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+      <div className="checkout2026__divider" aria-hidden />
+      <div className="checkout2026__summaryTotal" aria-label="Total a pagar hoy">
+        <span>Total a pagar hoy:</span>
+        <strong>{summaryTodayLabel}</strong>
+      </div>
+      <div className="checkout2026__summaryFooter">
+        <p>Pagos procesados de forma segura con encriptación de 256-bits.</p>
+        <span className="checkout2026__stripe" aria-label="Stripe">
+          <FaStripe aria-hidden />
+          <span>Stripe</span>
+        </span>
+      </div>
+    </>
+  );
+
+  const shouldShowPaypalInline =
+    selectedMethod === "paypal" &&
+    paypalReady &&
+    processingMethod === null &&
+    hasPaypalPlan &&
+    Boolean(currentUser?.email) &&
+    Boolean(paypalPlan);
+
+  return (
+    <div className="checkout-main-container checkout2026">
+      {TopBrand}
+      <div className="checkout-inner">
+        <div className="checkout-grid checkout2026__grid">
+          <section className="checkout-card checkout2026__flow" aria-label="Completa tu pago">
+            <header className="checkout2026__flowHead">
+              <h1 className="checkout2026__title">Completa tu pago</h1>
+              <p className="checkout2026__subtitle">
+                <span className="checkout2026__subtitleIcon" aria-hidden>
+                  <Lock size={16} />
                 </span>
-                <div>
-                  <strong>{selectedMethodMeta.label}</strong>
-                  <small>{selectedMethodMeta.description}</small>
+                Checkout seguro. Activa tu acceso en 1 minuto.
+              </p>
+            </header>
+
+            <section className="checkout2026__block" aria-label="Tu cuenta">
+              <h2 className="checkout2026__blockTitle">Tu Cuenta</h2>
+              <div className="checkout2026__readonly">
+                <div className="checkout2026__field">
+                  <span className="checkout2026__fieldLabel">Nombre</span>
+                  <span className="checkout2026__fieldValue">{currentUser?.username ?? "—"}</span>
+                </div>
+                <div className="checkout2026__field">
+                  <span className="checkout2026__fieldLabel">Correo</span>
+                  <span className="checkout2026__fieldValue">{currentUser?.email ?? "—"}</span>
                 </div>
               </div>
-            </div>
-            <p className="checkout-payment-card__microcopy">
-              Selecciona un método para {plan.moneda ?? "MXN"} y continúa.
-            </p>
-            <div className="checkout-methods" role="radiogroup" aria-label="Método de pago">
-              {availableMethods.map((method) => {
-                const { Icon } = METHOD_META[method];
-                let { label, description } = METHOD_META[method];
-                if (method === "card" && trialConfig?.enabled && trialConfig.eligible !== false) {
-                  label = `Tarjeta (${trialConfig.days} días gratis)`;
-                  description = `Incluye ${trialConfig.gb} GB de descarga. Luego cobro automático.`;
-                }
-                return (
-                  <button
-                    key={method}
-                    type="button"
-                    className={`checkout-method ${selectedMethod === method ? "is-active" : ""}`}
-                    onClick={() => handleSelectMethod(method)}
-                    aria-pressed={selectedMethod === method}
-                    data-testid={`checkout-method-${method}`}
-                  >
-                    <span className="checkout-method__top">
-                      <span className="checkout-method__icon" aria-hidden>
-                        <Icon size={18} />
-                      </span>
-                      <span className="checkout-method__copy">
-                        <strong>{label}</strong>
-                        <small>{description}</small>
-                      </span>
-                    </span>
-                    <span className="checkout-method__state" aria-hidden>
-                      {selectedMethod === method ? "Seleccionado" : "Elegir"}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-            {inlineError && <p className="checkout-inline-error">{inlineError}</p>}
-            <div className="checkout-payment-actions">
-              {selectedMethod === "paypal" ? (
-                <div className="checkout-paypal-panel">
-                  <p className="checkout-paypal-panel__hint">
-                    Completa tu pago seguro con PayPal:
-                  </p>
-                  {hasPaypalPlan && currentUser?.email ? (
-                    <PayPalComponent
-                      plan={paypalPlan!}
-                      type="subscription"
-                      onApprove={(data: any) => {
-                        void startPaypalCheckout(data);
-                      }}
-                      onClick={() => {
-                        interactedRef.current = true;
-                        trackManyChatConversion(MC_EVENTS.CLICK_PAYPAL);
-                        setInlineError(null);
-                        trackGrowthMetric(GROWTH_METRICS.CHECKOUT_METHOD_SELECTED, {
-                          method: "paypal",
-                          surface: "paypal_button",
-                          planId: plan?.id ?? null,
-                          currency: plan?.moneda?.toUpperCase() ?? null,
-                          amount: Number(plan?.price) || null,
-                        });
-                      }}
-                    />
-                  ) : (
+            </section>
+
+            <section className="checkout2026__block" aria-label="Elige cómo pagar">
+              <h2 className="checkout2026__blockTitle">Elige cómo pagar</h2>
+              <div className="checkout-methods checkout2026__methods" role="radiogroup" aria-label="Método de pago">
+                {methodsForUi.map((method) => {
+                  const { Icon, label, description } = METHOD_META[method];
+                  const isActive = selectedMethod === method;
+                  const logoMethods =
+                    method === "card"
+                      ? (["visa", "mastercard"] as const)
+                      : method === "paypal"
+                        ? (["paypal"] as const)
+                        : method === "spei"
+                          ? (["spei"] as const)
+                          : null;
+
+                  return (
                     <button
+                      key={method}
                       type="button"
-                      className="checkout-cta-btn checkout-cta-btn--ghost"
-                      onClick={() =>
-                        navigate("/auth/registro", { state: { from: `${location.pathname}${location.search}` } })
-                      }
+                      role="radio"
+                      aria-checked={isActive}
+                      className={`checkout-method ${isActive ? "is-active" : ""}`}
+                      onClick={() => handleSelectMethod(method)}
+                      data-testid={`checkout-method-${method}`}
                     >
-                      Inicia sesión para pagar con PayPal
+                      <span className="checkout-method__top">
+                        <span className="checkout-method__icon" aria-hidden>
+                          <Icon size={18} />
+                        </span>
+                        <span className="checkout-method__copy">
+                          <strong>{label}</strong>
+                          <small>{description}</small>
+                        </span>
+                      </span>
+                      <span className="checkout-method__right" aria-hidden>
+                        {logoMethods && (
+                          <PaymentMethodLogos
+                            methods={[...logoMethods]}
+                            size="sm"
+                            className="checkout2026__methodLogos"
+                            ariaLabel="Métodos aceptados"
+                          />
+                        )}
+                        <span className="checkout-method__check" aria-hidden>
+                          <Check size={18} />
+                        </span>
+                      </span>
                     </button>
-                  )}
+                  );
+                })}
+              </div>
+            </section>
+
+            {inlineError && <p className="checkout-inline-error">{inlineError}</p>}
+
+            <div className="checkout-payment-actions checkout2026__actions" aria-label="Acción">
+              {shouldShowPaypalInline ? (
+                <div className="checkout2026__paypal">
+                  <PayPalComponent
+                    plan={paypalPlan!}
+                    type="subscription"
+                    onApprove={(data: any) => {
+                      void startPaypalCheckout(data);
+                    }}
+                    onClick={() => {
+                      interactedRef.current = true;
+                      trackManyChatConversion(MC_EVENTS.CLICK_PAYPAL);
+                      setInlineError(null);
+                      trackGrowthMetric(GROWTH_METRICS.CHECKOUT_METHOD_SELECTED, {
+                        method: "paypal",
+                        surface: "paypal_button",
+                        planId: plan?.id ?? null,
+                        currency: plan?.moneda?.toUpperCase() ?? null,
+                        amount: Number(plan?.price) || null,
+                      });
+                    }}
+                  />
                 </div>
               ) : (
                 <button
                   type="button"
-                  className="checkout-cta-btn checkout-cta-btn--primary"
+                  className="checkout-cta-btn checkout-cta-btn--primary checkout2026__cta"
                   onClick={handleContinuePayment}
                   disabled={processingMethod !== null}
                   data-testid="checkout-continue"
@@ -1017,52 +1014,18 @@ function Checkout() {
                   {continueLabel}
                 </button>
               )}
-              <p className="checkout-payment-note">
-                Si te atoras en cualquier paso, intenta nuevamente o cambia de método de pago.
-              </p>
             </div>
           </section>
 
-          <aside className="checkout-card checkout-summary">
-            <h2 className="checkout-card__title">Resumen del plan</h2>
-            <p className="checkout-summary__plan-name">{plan.name}</p>
-            <p className="checkout-summary__price">
-              ${totalPrice} <span className="checkout-summary__currency">{plan.moneda ?? "MXN"}</span>
-            </p>
-            <p className="checkout-summary__mini">
-              Pago mensual con renovación automática.
-            </p>
-            <p className="checkout-summary__billing">
-              Se activa al confirmar el pago del primer ciclo.
-            </p>
-            <div className="checkout-summary__stats" role="list" aria-label="Detalles del plan">
-              <span role="listitem">{formatInt(quotaGb)} GB/mes</span>
-              <span role="listitem">
-                {Number.isFinite(durationDays) && durationDays > 0 ? `${formatInt(durationDays)} días` : "Mensual"}
-              </span>
-              <span role="listitem">Renovación automática</span>
-            </div>
-            {plan.description && (
-              <p className="checkout-summary__desc">{plan.description}</p>
-            )}
-            <ul className="checkout-summary__benefits">
-              {benefits.map((label, i) => (
-                <li key={i}>
-                  <span className="checkout-summary__check">
-                    <Check className="checkout-summary__check-icon" />
-                  </span>
-                  {label}
-                </li>
-              ))}
-            </ul>
-            <p className="checkout-summary__meta">
-              Activación inmediata al confirmar el pago.
-            </p>
-            {selectedMethod === "card" && trialConfig?.enabled && trialConfig.eligible !== false && (
-              <p className="checkout-summary__trial" role="note">
-                Incluye {formatInt(trialConfig.days)} días gratis con tarjeta (Stripe) · {formatInt(trialConfig.gb)} GB de descarga incluidos.
-              </p>
-            )}
+          <aside className="checkout-card checkout-summary checkout2026__summary" aria-label="Resumen de compra">
+            <details className="checkout2026__summaryAccordion">
+              <summary className="checkout2026__summarySummary">
+                <span>Resumen de compra</span>
+                <strong>{summaryTodayLabel}</strong>
+              </summary>
+              <div className="checkout2026__summaryBody">{summaryContent}</div>
+            </details>
+            <div className="checkout2026__summaryStatic">{summaryContent}</div>
           </aside>
         </div>
       </div>
