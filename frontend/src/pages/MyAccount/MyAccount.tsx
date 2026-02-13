@@ -252,10 +252,47 @@ function MyAccount() {
   };
 
   const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text).then(() => {
+    const onSuccess = () => {
       setCopyFeedback(label);
-      setTimeout(() => setCopyFeedback(null), 1500);
-    });
+      window.setTimeout(() => setCopyFeedback(null), 1500);
+    };
+
+    const fallbackCopy = () => {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.top = "-9999px";
+      textarea.style.left = "-9999px";
+      document.body.appendChild(textarea);
+      textarea.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(textarea);
+      if (!ok) throw new Error("copy_failed");
+      onSuccess();
+    };
+
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard
+        .writeText(text)
+        .then(onSuccess)
+        .catch(() => {
+          try {
+            fallbackCopy();
+          } catch {
+            setErrorMessage("No se pudo copiar. Intenta copiar manualmente.");
+            setShowError(true);
+          }
+        });
+      return;
+    }
+
+    try {
+      fallbackCopy();
+    } catch {
+      setErrorMessage("No se pudo copiar. Intenta copiar manualmente.");
+      setShowError(true);
+    }
   };
 
   useEffect(() => {
@@ -313,6 +350,24 @@ function MyAccount() {
       </span>
     );
   };
+
+  if (!currentUser) {
+    return (
+      <div className="my-account-main-container">
+        <div className="ma-shell">
+          <div className="global-loader" aria-busy="true" aria-live="polite">
+            <div className="app-state-panel is-loading" role="status">
+              <span className="app-state-icon" aria-hidden>
+                <Spinner size={2.8} width={0.25} color="var(--ma-accent)" />
+              </span>
+              <h2 className="app-state-title">Cargando tu cuenta</h2>
+              <p className="app-state-copy">Estamos preparando tus credenciales y tus métodos de pago.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="my-account-main-container">

@@ -194,12 +194,22 @@ function Instructions() {
                     )}
 
                     {method.showFtpButton && (
-                      <Link
-                        to="/micuenta"
-                        className="home-cta home-cta--secondary instructions2026__btn instructions2026__btn--ghost"
-                      >
-                        Ver credenciales FTP
-                      </Link>
+                      userToken ? (
+                        <Link
+                          to="/micuenta"
+                          className="home-cta home-cta--secondary instructions2026__btn instructions2026__btn--ghost"
+                        >
+                          Ver credenciales FTP
+                        </Link>
+                      ) : (
+                        <Link
+                          to="/auth"
+                          state={{ from: "/micuenta" }}
+                          className="home-cta home-cta--secondary instructions2026__btn instructions2026__btn--ghost"
+                        >
+                          Iniciar sesión para ver FTP
+                        </Link>
+                      )
                     )}
                   </div>
                 </article>
@@ -223,12 +233,22 @@ function Instructions() {
                 Si el problema sigue, vuelve a validar tus credenciales FTP y prueba reconectar.
               </li>
             </ul>
-            <Link
-              to="/micuenta"
-              className="home-cta home-cta--primary instructions2026__btn instructions2026__btn--primary"
-            >
-              Revisar credenciales FTP
-            </Link>
+            {userToken ? (
+              <Link
+                to="/micuenta"
+                className="home-cta home-cta--primary instructions2026__btn instructions2026__btn--primary"
+              >
+                Revisar credenciales FTP
+              </Link>
+            ) : (
+              <Link
+                to="/auth"
+                state={{ from: "/micuenta" }}
+                className="home-cta home-cta--primary instructions2026__btn instructions2026__btn--primary"
+              >
+                Revisar credenciales FTP
+              </Link>
+            )}
           </section>
         </div>
       </section>

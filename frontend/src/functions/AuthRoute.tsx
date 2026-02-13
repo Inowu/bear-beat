@@ -1,6 +1,8 @@
 import { ReactNode, useEffect } from "react";
 import { useUserContext } from "../contexts/UserContext";
 import { useLocation, useNavigate } from "react-router-dom";
+import { getAccessToken } from "../utils/authStorage";
+import { Spinner } from "../components/Spinner/Spinner";
 
 interface AuthRoutePropsI {
   children: ReactNode;
@@ -13,6 +15,8 @@ function AuthRoute({ children }: AuthRoutePropsI) {
 
   useEffect(() => {
     if (!userToken) {
+      // If a token exists in storage, the session is likely hydrating; avoid redirecting prematurely.
+      if (getAccessToken()) return;
       const returnUrl = location.pathname + location.search;
       const isCheckoutStart =
         returnUrl.startsWith("/comprar") && !returnUrl.startsWith("/comprar/success");
@@ -22,7 +26,20 @@ function AuthRoute({ children }: AuthRoutePropsI) {
   }, [userToken, navigate, location.pathname, location.search]);
 
   if (!userToken) {
-    return null;
+    const isHydrating = Boolean(getAccessToken());
+    return (
+      <div className="global-loader" aria-busy="true" aria-live="polite">
+        <div className="app-state-panel is-loading" role="status">
+          <span className="app-state-icon" aria-hidden>
+            <Spinner size={2.8} width={0.25} color="var(--app-accent)" />
+          </span>
+          <h2 className="app-state-title">{isHydrating ? "Cargando tu sesión" : "Redirigiendo"}</h2>
+          <p className="app-state-copy">
+            {isHydrating ? "Un momento…" : "Abriendo inicio de sesión…"}
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return <>{children}</>;
