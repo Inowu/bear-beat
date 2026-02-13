@@ -126,6 +126,12 @@ ENV_FILE=.env.staging.local \
 npm run e2e:reset-password --workspace=backend
 ```
 
+Negative flows (auth gating + credenciales inválidas + checkout error mocked):
+```bash
+ENV_FILE=.env.staging.local \
+npm run e2e:negative --workspace=backend
+```
+
 ## 7) Apagar STAGING local
 ```bash
 docker compose -f backend/docker-compose.staging.yml down

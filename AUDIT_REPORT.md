@@ -1,6 +1,6 @@
 # Auditoría QA + AppSec + Performance + SRE — The Bear Beat
 
-Fecha: **2026-02-12**  
+Fecha: **2026-02-13**  
 Rama de trabajo: `codex/audit/2026-02-12`  
 Reglas operativas: **sin pruebas destructivas/DAST activo/load en producción**, sin exfiltrar PII/secretos.
 
@@ -235,6 +235,9 @@ Fuente (pasivo prod): `audit-artifacts/prod-passive-2026-02-12/thebearbeat.com.h
     - Evidencia: `audit-artifacts/staging-local-2026-02-12/e2e.smoke.r5.txt`.
   - Playwright smoke (nuevo): reset password local sin email providers `backend/scripts/e2eResetPassword.ts` (`npm run e2e:reset-password --workspace=backend`).
     - Evidencia: `audit-artifacts/staging-local-2026-02-12/e2e.reset-password.r1.txt`.
+  - Playwright (nuevo): flujos negativos + gating `backend/scripts/e2eNegativeFlows.ts` (`npm run e2e:negative --workspace=backend`).
+    - Cubre: redirect anon `/descargas`, credenciales inválidas (login), redirect non-admin fuera de `/admin`, y error handling de checkout (mocked).
+    - Evidencia: `audit-artifacts/staging-local-2026-02-13/e2e.negative.r4.txt`.
   - Auditorías existentes: `backend/scripts/auditFullSite.ts`.
   - Pendiente: suite E2E completa de flujos críticos (registro/login/reset/checkout/acceso a descargas/roles).
 
