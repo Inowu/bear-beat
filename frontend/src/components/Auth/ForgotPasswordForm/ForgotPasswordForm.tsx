@@ -6,7 +6,9 @@ import * as Yup from "yup";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import Turnstile, { type TurnstileRef } from "../../../components/Turnstile/Turnstile";
-import Logo from "../../../assets/images/osonuevo.png";
+import { useTheme } from "../../../contexts/ThemeContext";
+import brandLockupBlack from "../../../assets/brand/bearbeat-lockup-black.png";
+import brandLockupCyan from "../../../assets/brand/bearbeat-lockup-cyan.png";
 import {
   shouldBypassTurnstile,
   TURNSTILE_BYPASS_TOKEN,
@@ -28,6 +30,8 @@ function ForgotPasswordForm() {
   const [requestStatus, setRequestStatus] = useState<"idle" | "sending" | "sent">("idle");
   const [turnstileToken, setTurnstileToken] = useState<string>("");
   const [turnstileError, setTurnstileError] = useState<string>("");
+  const { theme } = useTheme();
+  const brandLockup = theme === "light" ? brandLockupBlack : brandLockupCyan;
   const [turnstileReset, setTurnstileReset] = useState<number>(0);
   const [turnstilePendingSubmit, setTurnstilePendingSubmit] = useState(false);
   const turnstileRef = useRef<TurnstileRef | null>(null);
@@ -160,7 +164,7 @@ function ForgotPasswordForm() {
   return (
     <div className="auth-login-atmosphere">
       <div className="auth-login-card">
-        <img src={Logo} alt="Bear Beat" className="auth-login-logo" />
+        <img src={brandLockup} alt="Bear Beat" className="auth-login-logo" />
         <h1 className="auth-login-title">Recuperar Acceso</h1>
         <p className="auth-login-sub auth-recover-sub">
           Ingresa tu correo asociado y te enviamos un enlace seguro.

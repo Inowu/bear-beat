@@ -6,6 +6,7 @@ import { PasswordInput } from "../../PasswordInput/PasswordInput";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFormik } from "formik";
 import { useUserContext } from "../../../contexts/UserContext";
+import { useTheme } from "../../../contexts/ThemeContext";
 import * as Yup from "yup";
 import trpc from "../../../api";
 import { useCookies } from "react-cookie";
@@ -19,7 +20,8 @@ import {
   TURNSTILE_BYPASS_TOKEN,
 } from "../../../utils/turnstile";
 import { toErrorMessage } from "../../../utils/errorMessage";
-import Logo from "../../../assets/images/osonuevo.png";
+import brandLockupBlack from "../../../assets/brand/bearbeat-lockup-black.png";
+import brandLockupCyan from "../../../assets/brand/bearbeat-lockup-cyan.png";
 
 function FieldError(props: { id: string; show: boolean; message?: string }) {
   const { id, show, message } = props;
@@ -51,6 +53,8 @@ function inferErrorCode(message: string): string {
 function SignUpForm() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { theme } = useTheme();
+  const brandLockup = theme === "light" ? brandLockupBlack : brandLockupCyan;
   // Default conversion path after signup is /planes (unless the user came from a protected route / checkout).
   const from = (location.state as { from?: string } | null)?.from ?? "/planes";
   const [loader, setLoader] = useState<boolean>(false);
@@ -423,7 +427,7 @@ function SignUpForm() {
     <>
       <div className="auth-login-atmosphere">
         <div className="auth-login-card auth-login-card--signup">
-          <img src={Logo} alt="Bear Beat" className="auth-login-logo" />
+          <img src={brandLockup} alt="Bear Beat" className="auth-login-logo" />
           <h1 className="auth-login-title">Crea tu cuenta</h1>
           <p className="auth-login-sub auth-login-sub--signup">
             Activa tu cuenta en minutos y empieza a descargar.
