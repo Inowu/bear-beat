@@ -32,7 +32,7 @@ NODE_ENV=development
 PORT=5001
 CLIENT_URL=http://localhost:3000
 
-DATABASE_URL=mysql://root:root@127.0.0.1:3307/bearbeat_staging
+DATABASE_URL=mysql://root:root@127.0.0.1:3310/bearbeat_staging
 JWT_SECRET=change-me-local-only
 
 REDIS_HOST=127.0.0.1
@@ -59,10 +59,10 @@ REACT_APP_TRPC_URL=http://localhost:5001/trpc
 ```
 
 ## 3) Migraciones de DB (solo DB local)
-Esto aplica migraciones Prisma **solo** a `bearbeat_staging` (puerto `3307`).
+Esto aplica migraciones Prisma **solo** a `bearbeat_staging` (puerto `3310` por default).
 
 ```bash
-DATABASE_URL="mysql://root:root@127.0.0.1:3307/bearbeat_staging" \
+DATABASE_URL="mysql://root:root@127.0.0.1:3310/bearbeat_staging" \
 npx prisma migrate deploy --schema backend/prisma/schema.prisma
 ```
 
@@ -122,4 +122,3 @@ npm run e2e:smoke --workspace=backend
 ```bash
 docker compose -f backend/docker-compose.staging.yml down
 ```
-
