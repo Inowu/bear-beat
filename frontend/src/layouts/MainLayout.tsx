@@ -6,8 +6,8 @@ import { useEffect, useRef, useState } from "react";
 import { useDownloadContext } from "../contexts/DownloadContext";
 import { FileLoader } from "../components/FileLoader/FileLoader";
 import { applyRouteSeo } from "../utils/seo";
-import { GROWTH_METRICS, trackGrowthMetric } from "../utils/growthMetrics";
-import { hotjarStateChange } from "../utils/hotjar";
+import { GROWTH_METRICS, trackGrowthMetricBridge } from "../utils/growthMetricsBridge";
+import { queueHotjarStateChange } from "../utils/hotjarBridge";
 import "./MainLayout.scss";
 
 function MainLayout() {
@@ -59,14 +59,14 @@ function MainLayout() {
               ? "home"
               : "app";
 
-    trackGrowthMetric(GROWTH_METRICS.PAGE_VIEW, {
+    trackGrowthMetricBridge(GROWTH_METRICS.PAGE_VIEW, {
       pagePath: location.pathname,
       pageQuery: location.search,
       section,
     });
 
     // Hotjar SPA state change (conversion surfaces only, see utils/hotjar.ts).
-    hotjarStateChange(currentKey);
+    queueHotjarStateChange(currentKey);
   }, [location.pathname, location.search]);
 
   const isFullWidth =

@@ -14,19 +14,14 @@ import MainLayout from "./layouts/MainLayout";
 import UserContextProvider from "./contexts/UserContext";
 import AuthRoute from "./functions/AuthRoute";
 import LandingOrAuthRoute from "./functions/LandingOrAuthRoute";
-import HomeOrLanding from "./functions/HomeOrLanding";
 import NotAuthRoute from "./functions/NotAuthRoute";
-import Auth from "./pages/Auth/Auth";
-import Plans from "./pages/Plans/Plans";
-import LoginForm from "./components/Auth/LoginForm/LoginForm";
-import SignUpForm from "./components/Auth/SignUpForm/SignUpForm";
-import ForgotPasswordForm from "./components/Auth/ForgotPasswordForm/ForgotPasswordForm";
-import ResetPassword from "./components/Auth/ResetPassword/ResetPassword";
 import { SSEProvider } from "react-hooks-sse";
 import DownloadContextProvider from "./contexts/DownloadContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { sseEndpoint } from "./utils/runtimeConfig";
 import { initManyChatHandoff } from "./utils/manychatHandoff";
+import { bindHotjarStateChange } from "./utils/hotjarBridge";
+import { bindGrowthMetricBridge, trackGrowthMetricBridge } from "./utils/growthMetricsBridge";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -73,6 +68,13 @@ class AppErrorBoundary extends React.Component<AppErrorBoundaryProps, AppErrorBo
   }
 }
 
+const HomeOrLanding = lazy(() => import("./functions/HomeOrLanding"));
+const Auth = lazy(() => import("./pages/Auth/Auth"));
+const Plans = lazy(() => import("./pages/Plans/Plans"));
+const LoginForm = lazy(() => import("./components/Auth/LoginForm/LoginForm"));
+const SignUpForm = lazy(() => import("./components/Auth/SignUpForm/SignUpForm"));
+const ForgotPasswordForm = lazy(() => import("./components/Auth/ForgotPasswordForm/ForgotPasswordForm"));
+const ResetPassword = lazy(() => import("./components/Auth/ResetPassword/ResetPassword"));
 const Instructions = lazy(() => import("./pages/Instructions/Instructions"));
 const Legal = lazy(() => import("./pages/Legal/Legal"));
 const MyAccount = lazy(() => import("./pages/MyAccount/MyAccount"));
@@ -155,7 +157,7 @@ const router = createBrowserRouter([
         path: "",
         element: <LandingOrAuthRoute />,
         children: [
-          { path: "", element: <HomeOrLanding /> },
+          { path: "", element: withRouteSuspense(<HomeOrLanding />) },
           { path: "instrucciones", element: withRouteSuspense(<Instructions />) },
           { path: "legal", element: withRouteSuspense(<Legal />) },
           {
@@ -259,41 +261,76 @@ function loadGrowthMetricsModule() {
   return growthMetricsModulePromise;
 }
 
-const scheduleIdleTask = (task: () => Promise<void> | void, timeout = 2000, fallbackDelay = 1200) => {
+const scheduleIdleTask = (task: () => Promise<void> | void, minDelayMs = 1200, idleTimeoutMs = 2000) => {
   if (typeof window === "undefined") return;
-  const maybeWindow = window as Window & {
-    requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
-  };
-  if (typeof maybeWindow.requestIdleCallback === "function") {
-    maybeWindow.requestIdleCallback(() => {
-      void task();
-    }, { timeout });
-    return;
-  }
+  // We want a *minimum* delay to protect first paint; requestIdleCallback's timeout
+  // is a *maximum* delay, so we gate it behind a real timer.
   window.setTimeout(() => {
+    const maybeWindow = window as Window & {
+      requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
+    };
+    if (typeof maybeWindow.requestIdleCallback === "function") {
+      maybeWindow.requestIdleCallback(() => {
+        void task();
+      }, { timeout: idleTimeoutMs });
+      return;
+    }
     void task();
-  }, fallbackDelay);
+  }, minDelayMs);
 };
 
 const scheduleTrackersInit = () => {
   if (typeof window === "undefined") return;
-  scheduleIdleTask(async () => {
-    const [facebookPixel, growthMetrics, hotjar] = await Promise.all([
-      import("./utils/facebookPixel"),
-      loadGrowthMetricsModule(),
-      import("./utils/hotjar"),
-    ]);
-    facebookPixel.initFacebookPixel();
-    growthMetrics.initGrowthMetrics();
-    hotjar.initHotjar();
-  }, 4500, 3500);
+  const isMobile = window.matchMedia("(max-width: 768px)").matches;
+  const minDelayMs = isMobile ? 6500 : 3000;
+  const idleTimeoutMs = isMobile ? 4500 : 2500;
+
+  let initPromise: Promise<void> | null = null;
+  const initOnce = () => {
+    if (initPromise) return initPromise;
+    initPromise = (async () => {
+      const [facebookPixel, growthMetrics, hotjar] = await Promise.all([
+        import("./utils/facebookPixel"),
+        loadGrowthMetricsModule(),
+        import("./utils/hotjar"),
+      ]);
+
+      facebookPixel.initFacebookPixel();
+
+      growthMetrics.initGrowthMetrics();
+      bindGrowthMetricBridge((metric, payload) => {
+        growthMetrics.trackGrowthMetric(metric as any, payload);
+      });
+
+      hotjar.initHotjar();
+      bindHotjarStateChange(hotjar.hotjarStateChange);
+    })().catch(() => {
+      // Best-effort: don't break the app if a tracker fails.
+    });
+
+    return initPromise;
+  };
+
+  const startOnInteraction = () => {
+    scheduleIdleTask(initOnce, 0, idleTimeoutMs);
+  };
+
+  // Load earlier if the user shows intent (avoid missing short sessions),
+  // otherwise wait for the fallback delay to protect first paint.
+  window.addEventListener("pointerdown", startOnInteraction, { once: true, passive: true });
+  window.addEventListener("keydown", startOnInteraction, { once: true });
+  scheduleIdleTask(initOnce, minDelayMs, idleTimeoutMs);
 };
 
 const scheduleMonitoringInit = () => {
   if (typeof window === "undefined") return;
+  const isMobile = window.matchMedia("(max-width: 768px)").matches;
+  const minDelayMs = isMobile ? 12_000 : 6500;
+  const idleTimeoutMs = isMobile ? 6000 : 4500;
+
   scheduleIdleTask(async () => {
     await import("./instrument");
-  }, 6500, 4500);
+  }, minDelayMs, idleTimeoutMs);
 };
 
 // Vite's chunk hash can be base64url-ish (`A-Z a-z 0-9 _ -`), not only hex.
@@ -500,20 +537,14 @@ reportWebVitals((metric: any) => {
     ? "mobile"
     : "desktop";
 
-  void loadGrowthMetricsModule()
-    .then((module) => {
-      module.trackGrowthMetric(module.GROWTH_METRICS.WEB_VITAL_REPORTED, {
-        metricName: metric?.name ?? "unknown",
-        value: Number(metricValue.toFixed(4)),
-        delta: Number(metricDelta.toFixed(4)),
-        rating: metric?.rating ?? "unknown",
-        metricId: metric?.id ?? null,
-        navigationType: metric?.navigationType ?? null,
-        deviceCategory,
-        pagePath: window.location.pathname,
-      });
-    })
-    .catch(() => {
-      // noop
-    });
+  trackGrowthMetricBridge("web_vital_reported", {
+    metricName: metric?.name ?? "unknown",
+    value: Number(metricValue.toFixed(4)),
+    delta: Number(metricDelta.toFixed(4)),
+    rating: metric?.rating ?? "unknown",
+    metricId: metric?.id ?? null,
+    navigationType: metric?.navigationType ?? null,
+    deviceCategory,
+    pagePath: window.location.pathname,
+  });
 });
