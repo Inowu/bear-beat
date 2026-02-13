@@ -31,26 +31,28 @@
     # Disable high-risk browser features not needed by the site.
     Permissions-Policy = "geolocation=(), microphone=(), camera=(), usb=()"
     X-Permitted-Cross-Domain-Policies = "none"
-    Cache-Control = "no-store, no-cache, must-revalidate"
+    # Performance: allow caching but always revalidate HTML/documents.
+    # Hashed assets are long-term cached (see /assets/* below).
+    Cache-Control = "no-cache"
     Pragma = "no-cache"
     Expires = "0"
 
 [[headers]]
   for = "/index.html"
   [headers.values]
-    Cache-Control = "no-store, no-cache, must-revalidate"
+    Cache-Control = "no-cache"
     Pragma = "no-cache"
     Expires = "0"
 
 [[headers]]
   for = "/manifest.json"
   [headers.values]
-    Cache-Control = "no-store, no-cache, must-revalidate"
+    Cache-Control = "no-cache"
 
 [[headers]]
   for = "/asset-manifest.json"
   [headers.values]
-    Cache-Control = "no-store, no-cache, must-revalidate"
+    Cache-Control = "no-cache"
 
 [[headers]]
   for = "/assets/*"
