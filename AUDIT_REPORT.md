@@ -5,7 +5,7 @@ Rama de trabajo: `codex/audit/2026-02-12`
 Reglas operativas: **sin pruebas destructivas/DAST activo/load en producción**, sin exfiltrar PII/secretos.
 
 ## Resumen ejecutivo (no técnico, 1 página)
-Este sitio es **crítico** porque maneja **membresías/suscripciones**, acceso a contenido y flujos de pago. En el repositorio se confirmaron **2 riesgos críticos**:
+Este sitio es **crítico** porque maneja **membresías/suscripciones**, acceso a contenido y flujos de pago. En el repositorio se confirmaron **3 riesgos críticos**:
 
 1. **Exposición de datos sensibles en respuestas de autenticación (A-001, Critical).**  
    Riesgo: si el backend devuelve campos sensibles (ej. `password`, códigos de activación, tokens), un atacante o un cliente comprometido podría recolectarlos y escalar a **toma de cuenta** o abuso de sesión.
@@ -13,9 +13,13 @@ Este sitio es **crítico** porque maneja **membresías/suscripciones**, acceso a
 2. **Control de acceso permisivo por defecto en la capa de permisos (A-002, Critical).**  
    Riesgo: procedimientos protegidos sin regla explícita podían quedar **accesibles por omisión** (por “fallback allow”), abriendo la puerta a **acceso no autorizado** a funciones internas/admin o datos.
 
+3. **Descargas: riesgo de “path traversal/IDOR” en endpoints de descarga (A-009, Critical).**  
+   Riesgo: un usuario autenticado podía manipular parámetros (`path`/`dirName`) para intentar acceder a archivos fuera del catálogo permitido o descargar ZIPs que no correspondían a su job, resultando en **exfiltración de archivos** o **acceso indebido a contenido**.
+
 Qué se hizo para mitigar (sin tocar producción):
 - Se **sanitizaron** las respuestas de `auth.login` y `auth.register` para retornar solo un “user DTO” seguro (sin campos sensibles) y se agregaron **tests anti-regresión** que fallan si reaparecen esos campos.
 - Se cambió la política de permisos a **fallback deny** y se completó la cobertura de reglas para el **100%** de las `shieldedProcedure`. Además, se agregaron tests que fallan si aparece una `shieldedProcedure` nueva sin su regla en `permissions`.
+- Se endurecieron los endpoints `/download` y `/download-dir` con **validación de paths** (deny-by-default) y chequeo de consistencia `dirName` vs `downloadUrl` generado por el servidor, más tests anti-regresión.
 
 Estado: los fixes están implementados en código y cubiertos por tests; **pendiente** desplegar vía PR/merge y validar end-to-end en un **STAGING** aislado (local reproducible).
 
@@ -74,6 +78,7 @@ Leyenda:
 |---|---|---|---|---|---|
 | A-001 | Critical | Mitigado (en rama) | Quick win | Backend/Auth | Sanitizar respuestas de `auth.login`/`auth.register` para evitar fuga de campos sensibles + tests anti-regresión |
 | A-002 | Critical | Mitigado (en rama) | Quick win | Backend/Permisos | `trpc-shield` a **fallback deny** + cobertura explícita para todas las `shieldedProcedure` + tests de cobertura |
+| A-009 | Critical | Mitigado (en rama) | Quick win | Backend/Descargas | Prevenir **path traversal + IDOR** en `/download` y `/download-dir` + tests anti-regresión |
 | A-003 | Medium | Abierto | Quick win | Frontend/Edge | Headers incompletos en producción (no se observa CSP / frame-ancestors / Permissions-Policy) |
 | A-004 | Low | Abierto | Quick win | SEO | `sitemap.xml` con `lastmod` antiguo (2025-02-03) |
 | A-005 | Medium | Abierto | Proyecto | Frontend/Perf | Bundle principal grande y warnings de build (chunk > 500 kB, Sass `@import` deprecado) |
@@ -112,6 +117,26 @@ Leyenda:
 - **Recomendación concreta:** mantener **deny-by-default** y forzar cobertura con test estático (ya agregado).
 - **Esfuerzo estimado:** **M**
 - **Owner sugerido:** Backend/AppSec
+
+### A-009 — Path traversal / IDOR en endpoints de descargas (Critical)
+- **Evidencia (código):**
+  - Fixes:
+    - `backend/src/endpoints/download.endpoint.ts`: ahora valida que `path` permanezca bajo `SONGS_PATH` (deny-by-default).
+    - `backend/src/endpoints/download-dir.endpoint.ts`: valida `dirName` como filename seguro y requiere que coincida con el `downloadUrl` generado por el worker (evita IDOR).
+    - Helper: `backend/src/utils/safePaths.ts`
+  - Tests anti-regresión: `backend/test/downloadEndpoints.security.test.ts`
+- **Cómo reproducir (antes del fix):**
+  1. Obtener un `token` válido (sesión).
+  2. Probar `/download?token=...&path=../../...` (o variantes) para intentar salir de `SONGS_PATH`.
+  3. Probar `/download-dir?token=...&jobId=<job propio>&dirName=<otro zip existente>` para forzar descargar otro archivo.
+- **Impacto:** exfiltración de archivos o bypass de control de acceso a descargas; superficie directa de negocio (contenido premium).
+- **Probabilidad:** media-alta (input controlable; depende de layout/permisos del filesystem, pero la clase de bug es explotable).
+- **Recomendación concreta:**
+  - Mantener **deny-by-default** para rutas de filesystem (resolver siempre bajo un root y rechazar escapes).
+  - En `/download-dir`, validar `dirName` contra el `downloadUrl` server-side para evitar IDOR.
+  - (Defensa extra, pendiente): migrar de `token` en query string a tokens de descarga de vida corta (reduce fugas por referer/historial).
+- **Esfuerzo estimado:** **S/M**
+- **Owner sugerido:** Backend + AppSec
 
 ### A-003 — Headers de seguridad incompletos en producción (Medium)
 - **Evidencia (pasivo, prod):**
