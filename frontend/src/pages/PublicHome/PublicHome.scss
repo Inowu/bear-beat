@@ -242,6 +242,17 @@
   text-overflow: ellipsis;
 }
 
+/* The 3rd stat is descriptive (not numeric); avoid truncation for clarity. */
+.home-hero__stats .home-stat:nth-child(3) .home-stat__value {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+
+.home-hero__stats .home-stat:nth-child(3) .home-stat__label {
+  white-space: normal;
+}
+
 .home-stat__label {
   display: block;
   color: color-mix(in srgb, var(--ph-text-muted) 92%, transparent);

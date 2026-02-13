@@ -10,6 +10,7 @@ type PublicTopNavProps = {
   brandAriaCurrent?: boolean;
   loginFrom?: string;
   cta?: ReactNode;
+  plansTo?: string;
 };
 
 export default function PublicTopNav({
@@ -17,10 +18,12 @@ export default function PublicTopNav({
   brandAriaCurrent,
   loginFrom,
   cta,
+  plansTo = "/planes",
 }: PublicTopNavProps) {
   const { userToken } = useUserContext();
   const { theme } = useTheme();
   const brandMark = theme === "light" ? brandMarkBlack : brandMarkCyan;
+  const usePlansAsHashLink = plansTo.includes("#");
 
   return (
     <header
@@ -38,12 +41,18 @@ export default function PublicTopNav({
         </Link>
         <div className="home-topnav__right" aria-label="Acciones">
           <nav className="home-topnav__nav" aria-label="Links">
-            <NavLink
-              to="/planes"
-              className={({ isActive }) => `home-topnav__link${isActive ? " is-active" : ""}`}
-            >
-              Planes
-            </NavLink>
+            {usePlansAsHashLink ? (
+              <Link to={plansTo} className="home-topnav__link">
+                Planes
+              </Link>
+            ) : (
+              <NavLink
+                to={plansTo}
+                className={({ isActive }) => `home-topnav__link${isActive ? " is-active" : ""}`}
+              >
+                Planes
+              </NavLink>
+            )}
             {userToken ? (
               <NavLink
                 to="/micuenta"

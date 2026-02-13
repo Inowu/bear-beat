@@ -174,6 +174,35 @@ export default function PublicHome() {
   const pricingRef = useRef<HTMLDivElement | null>(null);
   const pricingViewedRef = useRef(false);
 
+  const prefetchRegisterOnceRef = useRef(false);
+  const prefetchRegisterRoute = useCallback(() => {
+    if (prefetchRegisterOnceRef.current) return;
+    prefetchRegisterOnceRef.current = true;
+
+    void Promise.all([
+      import("../Auth/Auth"),
+      import("../../components/Auth/SignUpForm/SignUpForm"),
+    ]).catch(() => {
+      // Best-effort: allow retry if the prefetch fails.
+      prefetchRegisterOnceRef.current = false;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const onIntent = () => {
+      prefetchRegisterRoute();
+    };
+
+    window.addEventListener("pointerdown", onIntent, { once: true, passive: true });
+    window.addEventListener("keydown", onIntent, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", onIntent);
+      window.removeEventListener("keydown", onIntent);
+    };
+  }, [prefetchRegisterRoute]);
+
   useEffect(() => {
     trackGrowthMetric(GROWTH_METRICS.HOME_VIEW, { section: "home" });
     trackManyChatConversion(MC_EVENTS.VIEW_HOME);
@@ -570,6 +599,26 @@ export default function PublicHome() {
     [alignScrollToTarget, getHomeStickyTopOffset],
   );
 
+  const scrollToPricing = useCallback(
+    (options: { behavior?: ScrollBehavior } = {}) => {
+      if (typeof window === "undefined") return;
+
+      const getPricingTarget = () => document.getElementById("precio") as HTMLElement | null;
+
+      const target = getPricingTarget();
+      if (!target) return;
+
+      const top = Math.max(0, window.scrollY + target.getBoundingClientRect().top - getHomeStickyTopOffset());
+      window.scrollTo({ top, behavior: options.behavior ?? "smooth" });
+      window.history.replaceState(null, "", "#precio");
+
+      alignScrollToTarget(getPricingTarget, {
+        maxDurationMs: options.behavior === "auto" ? 4200 : 5600,
+      });
+    },
+    [alignScrollToTarget, getHomeStickyTopOffset],
+  );
+
   const onDemoScroll = useCallback(() => {
     trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, { location: "hero_block" });
     scrollToDemo({ behavior: "smooth", focusSearch: true });
@@ -597,10 +646,14 @@ export default function PublicHome() {
       scrollToDemo({ behavior: "auto", focusSearch: false });
       return;
     }
+    if (location.hash === "#precio") {
+      scrollToPricing({ behavior: "auto" });
+      return;
+    }
     if (location.hash === "#faq") {
       scrollToFaq({ behavior: "auto" });
     }
-  }, [location.hash, scrollToDemo, scrollToFaq]);
+  }, [location.hash, scrollToDemo, scrollToFaq, scrollToPricing]);
 
   const onFaqExpand = useCallback((id: string) => {
     trackGrowthMetric(GROWTH_METRICS.FAQ_EXPAND, { question: id });
@@ -690,6 +743,7 @@ export default function PublicHome() {
       </a>
       <PublicTopNav
         brandAriaCurrent
+        plansTo="/#precio"
         cta={
           <Link
             to="/auth/registro"
@@ -697,6 +751,8 @@ export default function PublicHome() {
             className="home-cta home-cta--primary home-topnav__cta"
             data-testid="home-nav-primary-cta"
             onClick={() => onPrimaryCtaClick("nav")}
+            onPointerEnter={prefetchRegisterRoute}
+            onFocus={prefetchRegisterRoute}
           >
             {ctaPrimaryLabel}
           </Link>
@@ -769,7 +825,7 @@ export default function PublicHome() {
           </div>
 
           <div className="home-footer__links" aria-label="Enlaces">
-            <Link to="/planes">Planes</Link>
+            <Link to="/#precio">Planes</Link>
             <Link to="/auth">Iniciar sesión</Link>
           </div>
 
@@ -780,6 +836,8 @@ export default function PublicHome() {
               className="home-cta home-cta--primary"
               data-testid="home-footer-primary-cta"
               onClick={() => onPrimaryCtaClick("footer")}
+              onPointerEnter={prefetchRegisterRoute}
+              onFocus={prefetchRegisterRoute}
             >
               {ctaPrimaryLabel}
             </Link>

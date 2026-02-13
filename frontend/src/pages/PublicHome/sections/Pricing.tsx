@@ -95,7 +95,7 @@ export default function Pricing(props: {
   const showAltPaymentsNoteUsd = Boolean(hasTrial && usdAltPaymentLabel);
 
   return (
-    <section className="pricing" aria-label="Precio">
+    <section id="precio" className="pricing" aria-label="Precio">
       <div className="ph__container">
         <div className="pricing__head">
           <h2 className="home-h2">Precio simple, catálogo gigante</h2>
