@@ -91,45 +91,52 @@ export const downloadDirEndpoint = async (req: Request, res: Response) => {
   }
 
   const downloadUrl = `${download.downloadUrl ?? ''}`.trim();
-  if (!downloadUrl) {
-    log.error(
-      `[DOWNLOAD] Missing downloadUrl for user ${user.id} and jobId ${jobId}`,
-    );
-    return res
-      .status(404)
-      .send({ error: 'Ocurrió un error al descargar la carpeta' });
-  }
+  const expectedSuffix = `-${user.id}-${jobId}.zip`;
 
   let expectedDirName = '';
   let expectedJobId = '';
-  try {
-    const parsed = new URL(downloadUrl);
-    expectedDirName = `${parsed.searchParams.get('dirName') ?? ''}`.trim();
-    expectedJobId = `${parsed.searchParams.get('jobId') ?? ''}`.trim();
-  } catch {
-    // ignore parse errors; handled below.
+  if (downloadUrl) {
+    try {
+      const parsed = new URL(downloadUrl);
+      expectedDirName = `${parsed.searchParams.get('dirName') ?? ''}`.trim();
+      expectedJobId = `${parsed.searchParams.get('jobId') ?? ''}`.trim();
+    } catch {
+      // ignore parse errors; handled below.
+    }
   }
 
-  if (!expectedDirName || !isSafeFileName(expectedDirName)) {
-    log.error(
-      `[DOWNLOAD] Invalid dirName in downloadUrl for user ${user.id} and jobId ${jobId}`,
-    );
-    return res.status(404).send({ error: 'Ocurrió un error al descargar la carpeta' });
-  }
+  if (expectedDirName) {
+    if (!isSafeFileName(expectedDirName)) {
+      log.error(
+        `[DOWNLOAD] Invalid dirName in downloadUrl for user ${user.id} and jobId ${jobId}`,
+      );
+      return res.status(404).send({ error: 'Ocurrió un error al descargar la carpeta' });
+    }
 
-  if (expectedJobId && expectedJobId !== jobId) {
-    log.error(
-      `[DOWNLOAD] jobId mismatch for user ${user.id}: url=${expectedJobId} req=${jobId}`,
-    );
-    return res.status(404).send({ error: 'Ocurrió un error al descargar la carpeta' });
-  }
+    if (expectedJobId && expectedJobId !== jobId) {
+      log.error(
+        `[DOWNLOAD] jobId mismatch for user ${user.id}: url=${expectedJobId} req=${jobId}`,
+      );
+      return res.status(404).send({ error: 'Ocurrió un error al descargar la carpeta' });
+    }
 
-  if (providedDirName !== expectedDirName) {
-    // Prevent IDOR: the requested file name must match the server-generated download URL.
-    log.warn(
-      `[DOWNLOAD] dirName mismatch for user ${user.id}: expected=${expectedDirName} got=${providedDirName}`,
-    );
-    return res.status(404).send({ error: 'Ocurrió un error al descargar la carpeta' });
+    if (providedDirName !== expectedDirName) {
+      // Prevent IDOR: the requested file name must match the server-generated download URL.
+      log.warn(
+        `[DOWNLOAD] dirName mismatch for user ${user.id}: expected=${expectedDirName} got=${providedDirName}`,
+      );
+      return res.status(404).send({ error: 'Ocurrió un error al descargar la carpeta' });
+    }
+  } else {
+    // Reliability fallback: if downloadUrl wasn't persisted (e.g., DB hiccup), still allow
+    // downloading only the zip that matches the worker naming scheme for this user+job.
+    if (!providedDirName.endsWith(expectedSuffix)) {
+      log.error(
+        `[DOWNLOAD] Missing downloadUrl and dirName does not match expected suffix for user ${user.id} and jobId ${jobId}`,
+      );
+      return res.status(404).send({ error: 'Ocurrió un error al descargar la carpeta' });
+    }
+    expectedDirName = providedDirName;
   }
 
   const compressedRoot = Path.resolve(
