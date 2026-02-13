@@ -3,13 +3,15 @@ import { IPlans } from '../../interfaces/Plans';
 import { Spinner } from '../../components/Spinner/Spinner';
 import { useEffect, useMemo, useState } from 'react';
 import { useUserContext } from '../../contexts/UserContext';
+import { useTheme } from "../../contexts/ThemeContext";
 import PlanCard from '../../components/PlanCard/PlanCard';
 import trpc from '../../api';
 import { Link, useNavigate } from 'react-router-dom';
 import { trackManyChatConversion, MC_EVENTS } from '../../utils/manychatPixel';
 import { AlertTriangle, RefreshCw, Layers3 } from 'lucide-react';
 import { formatInt, formatTB } from '../../utils/format';
-import Logo from '../../assets/images/osonuevo.png';
+import brandMarkBlack from "../../assets/brand/bearbeat-mark-black.png";
+import brandMarkCyan from "../../assets/brand/bearbeat-mark-cyan.png";
 
 function normalizeCurrency(value: unknown): "mxn" | "usd" | "" {
   const raw = `${value ?? ""}`.trim().toLowerCase();
@@ -36,6 +38,8 @@ function formatAmountCompact(value: unknown, locale: string): string {
 
 function Plans() {
   const { userToken, currentUser } = useUserContext();
+  const { theme } = useTheme();
+  const brandMark = theme === "light" ? brandMarkBlack : brandMarkCyan;
   const [plans, setPlans] = useState<IPlans[]>([]);
   const [catalogSummary, setCatalogSummary] = useState<{
     totalFiles: number;
@@ -280,7 +284,7 @@ function Plans() {
       <header className="plans-topnav" aria-label="Navegación pública">
         <div className="plans-main-container plans-topnav__inner">
           <Link to="/" className="plans-topnav__brand" aria-label="Bear Beat">
-            <img src={Logo} alt="Bear Beat" />
+            <img src={brandMark} alt="Bear Beat" />
           </Link>
           <div className="plans-topnav__right" aria-label="Acciones">
             <nav className="plans-topnav__nav" aria-label="Enlaces">

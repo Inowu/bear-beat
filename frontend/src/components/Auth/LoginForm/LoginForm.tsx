@@ -7,7 +7,9 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useEffect, useRef, useState } from "react";
 import { Spinner } from "../../../components/Spinner/Spinner";
-import Logo from "../../../assets/images/osonuevo.png";
+import { useTheme } from "../../../contexts/ThemeContext";
+import brandLockupBlack from "../../../assets/brand/bearbeat-lockup-black.png";
+import brandLockupCyan from "../../../assets/brand/bearbeat-lockup-cyan.png";
 import { trackManyChatConversion, MC_EVENTS } from "../../../utils/manychatPixel";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../../utils/growthMetrics";
 import { toErrorMessage } from "../../../utils/errorMessage";
@@ -26,6 +28,8 @@ function inferErrorCode(message: string): string {
 function LoginForm() {
   const [loader, setLoader] = useState<boolean>(false);
   const [inlineError, setInlineError] = useState<string>("");
+  const { theme } = useTheme();
+  const brandLockup = theme === "light" ? brandLockupBlack : brandLockupCyan;
   const { handleLogin } = useUserContext();
   const navigate = useNavigate();
   const location = useLocation();
@@ -125,7 +129,7 @@ function LoginForm() {
     <>
       <div className="auth-login-atmosphere">
         <div className="auth-login-card">
-          <img src={Logo} alt="Bear Beat" className="auth-login-logo" />
+          <img src={brandLockup} alt="Bear Beat" className="auth-login-logo" />
           <h1 className="auth-login-title text-text-main">Bienvenido, DJ.</h1>
           <p className="auth-login-sub text-text-muted">
             Tu cabina está lista. Ingresa para descargar.
