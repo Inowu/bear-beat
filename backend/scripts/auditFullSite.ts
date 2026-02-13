@@ -828,7 +828,9 @@ async function collectRouteResult(
         const accessibleName = sanitize(getLabelText(h) || visibleText || placeholder || "");
 
         const hasSvg = Boolean(h.querySelector("svg"));
-        const hasText = Boolean((h.innerText || "").trim());
+        // `content-visibility: auto` can keep below-the-fold text un-rendered, making `innerText` empty.
+        // Fall back to `textContent` so we don't misclassify real text labels as "icon-only".
+        const hasText = Boolean((h.innerText || h.textContent || "").trim());
         const isIconOnly = hasSvg && !hasText && !ariaLabel;
 
         return {
