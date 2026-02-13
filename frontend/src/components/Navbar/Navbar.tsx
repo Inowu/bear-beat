@@ -76,8 +76,9 @@ function Navbar(props: NavbarPropsI) {
         >
           <Menu size={20} aria-hidden />
         </button>
-        <img src={brandMark} alt="Bear Beat" />
-        <h2>Bear Beat</h2>
+        <Link to="/" className="nav-brand" aria-label="Bear Beat">
+          <img src={brandMark} alt="" aria-hidden />
+        </Link>
       </div>
       <div className="nav-right">
         <div className="theme-toggle-wrap" ref={menuRef}>
