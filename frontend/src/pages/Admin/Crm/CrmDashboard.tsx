@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import trpc from "../../../api";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
+import Pagination from "../../../components/Pagination/Pagination";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import "./CrmDashboard.scss";
 
@@ -105,8 +106,11 @@ interface CrmSnapshot {
   registrationsDaily: CrmDailyRegistrationPoint[];
   trialsDaily: CrmDailyTrialPoint[];
   cancellationTopReasons: CrmCancellationReasonPoint[];
+  recentCancellationsTotal: number;
   recentCancellations: CrmRecentCancellationPoint[];
+  trialNoDownload24hTotal: number;
   trialNoDownload24h: CrmTrialNoDownloadPoint[];
+  paidNoDownload24hTotal: number;
   paidNoDownload24h: CrmPaidNoDownloadPoint[];
 }
 
@@ -274,6 +278,10 @@ export function CrmDashboard() {
   const [actionToast, setActionToast] = useState<string>("");
   const [actionBusyKey, setActionBusyKey] = useState<string | null>(null);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
+  const [recentCancellationsPage, setRecentCancellationsPage] = useState<number>(0);
+  const [trialNoDownloadPage, setTrialNoDownloadPage] = useState<number>(0);
+  const [paidNoDownloadPage, setPaidNoDownloadPage] = useState<number>(0);
+  const listLimit = 100;
 
   const toast = (message: string) => {
     setActionToast(message);
@@ -300,7 +308,10 @@ export function CrmDashboard() {
       const [data, automationStatus] = await Promise.all([
         trpc.analytics.getAnalyticsCrmDashboard.query({
           days: rangeDays,
-          limit: 100,
+          limit: listLimit,
+          recentCancellationsPage,
+          trialNoDownloadPage,
+          paidNoDownloadPage,
         }) as Promise<CrmSnapshot>,
         trpc.analytics.getAutomationStatus
           .query({ runsLimit: 12 })
@@ -316,7 +327,7 @@ export function CrmDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [rangeDays]);
+  }, [rangeDays, listLimit, recentCancellationsPage, trialNoDownloadPage, paidNoDownloadPage]);
 
   useEffect(() => {
     void refresh();
@@ -343,7 +354,7 @@ export function CrmDashboard() {
   const signals = useMemo(() => {
     if (!snapshot) return [];
     const registrationToPaidPct = rate(snapshot.kpis.newPaidUsers, snapshot.kpis.registrations);
-    const activationRiskTotal = snapshot.trialNoDownload24h.length + snapshot.paidNoDownload24h.length;
+    const activationRiskTotal = snapshot.trialNoDownload24hTotal + snapshot.paidNoDownload24hTotal;
     const cancellationPressurePct = rate(snapshot.kpis.cancellations, snapshot.kpis.paidOrders);
 
     return [
@@ -356,7 +367,7 @@ export function CrmDashboard() {
       {
         title: "Riesgo de activación (24h)",
         value: formatCompactNumber(activationRiskTotal),
-        helper: `${snapshot.trialNoDownload24h.length} trial + ${snapshot.paidNoDownload24h.length} pagados sin descarga.`,
+        helper: `${snapshot.trialNoDownload24hTotal} trial + ${snapshot.paidNoDownload24hTotal} pagados sin descarga.`,
         tone: activationRiskTotal <= 5 ? "ok" : activationRiskTotal <= 20 ? "warn" : "error",
       },
       {
@@ -387,7 +398,12 @@ export function CrmDashboard() {
               Rango
               <select
                 value={rangeDays}
-                onChange={(e) => setRangeDays(Number(e.target.value))}
+                onChange={(e) => {
+                  setRangeDays(Number(e.target.value));
+                  setRecentCancellationsPage(0);
+                  setTrialNoDownloadPage(0);
+                  setPaidNoDownloadPage(0);
+                }}
               >
                 {RANGE_OPTIONS.map((d) => (
                   <option key={d} value={d}>
@@ -799,7 +815,7 @@ export function CrmDashboard() {
           <section className="crm-section">
             <div className="crm-section__title-row">
               <h2 className="crm-section__title">Trial sin descarga en 24h</h2>
-              <span className="crm-counter">{snapshot.trialNoDownload24h.length}</span>
+              <span className="crm-counter">{snapshot.trialNoDownload24hTotal.toLocaleString("es-MX")}</span>
             </div>
             <p className="crm-section__hint">
               Segmento crítico: necesitan onboarding para activar valor antes del día 7.
@@ -938,12 +954,22 @@ export function CrmDashboard() {
                 ))
               )}
             </div>
+            <Pagination
+              title="trial sin descarga (24h)"
+              totalData={snapshot.trialNoDownload24hTotal}
+              totalLoader={loading}
+              startFilter={(_key, value) =>
+                setTrialNoDownloadPage(typeof value === "number" ? value : Number(value))
+              }
+              currentPage={trialNoDownloadPage}
+              limit={listLimit}
+            />
           </section>
 
           <section className="crm-section">
             <div className="crm-section__title-row">
               <h2 className="crm-section__title">Pagaron y no descargaron en 24h</h2>
-              <span className="crm-counter">{snapshot.paidNoDownload24h.length}</span>
+              <span className="crm-counter">{snapshot.paidNoDownload24hTotal.toLocaleString("es-MX")}</span>
             </div>
             <p className="crm-section__hint">
               Lista enfocada en primeras compras dentro del rango.
@@ -1088,12 +1114,22 @@ export function CrmDashboard() {
                 ))
               )}
             </div>
+            <Pagination
+              title="pagaron sin descarga (24h)"
+              totalData={snapshot.paidNoDownload24hTotal}
+              totalLoader={loading}
+              startFilter={(_key, value) =>
+                setPaidNoDownloadPage(typeof value === "number" ? value : Number(value))
+              }
+              currentPage={paidNoDownloadPage}
+              limit={listLimit}
+            />
           </section>
 
           <section className="crm-section">
             <div className="crm-section__title-row">
               <h2 className="crm-section__title">Cancelaciones recientes</h2>
-              <span className="crm-counter">{snapshot.recentCancellations.length}</span>
+              <span className="crm-counter">{snapshot.recentCancellationsTotal.toLocaleString("es-MX")}</span>
             </div>
             <p className="crm-section__hint">Con motivo y atribución (si existe).</p>
             <div className="crm-table-wrap" tabIndex={0} aria-label="Tabla: cancelaciones recientes (desplazable)">
@@ -1236,6 +1272,16 @@ export function CrmDashboard() {
                 ))
               )}
             </div>
+            <Pagination
+              title="cancelaciones"
+              totalData={snapshot.recentCancellationsTotal}
+              totalLoader={loading}
+              startFilter={(_key, value) =>
+                setRecentCancellationsPage(typeof value === "number" ? value : Number(value))
+              }
+              currentPage={recentCancellationsPage}
+              limit={listLimit}
+            />
           </section>
         </div>
       ) : null}

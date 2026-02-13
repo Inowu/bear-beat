@@ -289,8 +289,11 @@ interface AnalyticsCrmDashboardSnapshot {
   registrationsDaily: AnalyticsCrmDailyRegistrationPoint[];
   trialsDaily: AnalyticsCrmDailyTrialPoint[];
   cancellationTopReasons: AnalyticsCrmCancellationReasonPoint[];
+  recentCancellationsTotal: number;
   recentCancellations: AnalyticsCrmRecentCancellationPoint[];
+  trialNoDownload24hTotal: number;
   trialNoDownload24h: AnalyticsCrmTrialNoDownloadPoint[];
+  paidNoDownload24hTotal: number;
   paidNoDownload24h: AnalyticsCrmPaidNoDownloadPoint[];
 }
 
@@ -1513,12 +1516,27 @@ export const getAnalyticsCrmDashboard = async (
   prisma: PrismaClient,
   daysInput?: number,
   limitInput?: number,
+  pagesInput?: {
+    recentCancellationsPage?: number;
+    trialNoDownloadPage?: number;
+    paidNoDownloadPage?: number;
+  },
 ): Promise<AnalyticsCrmDashboardSnapshot> => {
   const { days, startDate } = resolveRange(daysInput);
   const limit =
     typeof limitInput === 'number' && Number.isFinite(limitInput)
-      ? Math.max(10, Math.min(300, Math.floor(limitInput)))
-      : 60;
+      ? Math.max(10, Math.min(100, Math.floor(limitInput)))
+      : 100;
+  const normalizePage = (value?: number) =>
+    typeof value === 'number' && Number.isFinite(value) && value > 0
+      ? Math.floor(value)
+      : 0;
+  const recentCancellationsPage = normalizePage(pagesInput?.recentCancellationsPage);
+  const trialNoDownloadPage = normalizePage(pagesInput?.trialNoDownloadPage);
+  const paidNoDownloadPage = normalizePage(pagesInput?.paidNoDownloadPage);
+  const recentCancellationsOffset = recentCancellationsPage * limit;
+  const trialNoDownloadOffset = trialNoDownloadPage * limit;
+  const paidNoDownloadOffset = paidNoDownloadPage * limit;
 
   if (!process.env.DATABASE_URL) {
     return {
@@ -1546,8 +1564,11 @@ export const getAnalyticsCrmDashboard = async (
       registrationsDaily: [],
       trialsDaily: [],
       cancellationTopReasons: [],
+      recentCancellationsTotal: 0,
       recentCancellations: [],
+      trialNoDownload24hTotal: 0,
       trialNoDownload24h: [],
+      paidNoDownload24hTotal: 0,
       paidNoDownload24h: [],
     };
   }
@@ -1566,11 +1587,14 @@ export const getAnalyticsCrmDashboard = async (
     trialDailyRows,
     cancellationsTotalRows,
     cancellationRows,
+    recentCancellationTotalRows,
     recentCancellationRows,
     involuntaryCancellationRows,
     activationAvgRows,
     registerToPaidAvgRows,
+    trialNoDownloadTotalRows,
     trialNoDownloadRows,
+    paidNoDownloadTotalRows,
     paidNoDownloadRows,
   ] = await Promise.all([
     prisma.$queryRaw<Array<{ totalUsers: bigint | number }>>(Prisma.sql`
@@ -1670,6 +1694,13 @@ export const getAnalyticsCrmDashboard = async (
       ORDER BY cancellations DESC
       LIMIT 8
     `),
+    prisma.$queryRaw<Array<{ total: bigint | number }>>(Prisma.sql`
+      SELECT COUNT(*) AS total
+      FROM subscription_cancellation_feedback scf
+      INNER JOIN users u
+        ON u.id = scf.user_id
+      WHERE scf.created_at >= ${startDateOnly}
+    `),
     prisma.$queryRaw<
       Array<{
         id: number;
@@ -1704,7 +1735,7 @@ export const getAnalyticsCrmDashboard = async (
         ON u.id = scf.user_id
       WHERE scf.created_at >= ${startDateOnly}
       ORDER BY scf.created_at DESC
-      LIMIT ${limit}
+      LIMIT ${limit} OFFSET ${recentCancellationsOffset}
     `),
     prisma.$queryRaw<Array<{ involuntaryCancellations: bigint | number }>>(Prisma.sql`
       SELECT
@@ -1750,6 +1781,21 @@ export const getAnalyticsCrmDashboard = async (
       WHERE fp.first_paid_at >= ${startDateOnly}
         AND fp.first_paid_at >= u.registered_on
     `),
+    prisma.$queryRaw<Array<{ total: bigint | number }>>(Prisma.sql`
+      SELECT COUNT(*) AS total
+      FROM analytics_events ae
+      INNER JOIN users u
+        ON u.id = ae.user_id
+      LEFT JOIN download_history dh
+        ON dh.userId = ae.user_id
+        AND dh.date >= ae.event_ts
+        AND dh.date < DATE_ADD(ae.event_ts, INTERVAL 24 HOUR)
+      WHERE ae.event_ts >= ${startDateOnly}
+        AND ae.event_name = 'trial_started'
+        AND ae.user_id IS NOT NULL
+        AND ae.event_ts < DATE_SUB(NOW(), INTERVAL 24 HOUR)
+        AND dh.id IS NULL
+    `),
     prisma.$queryRaw<
       Array<{
         userId: number;
@@ -1780,7 +1826,34 @@ export const getAnalyticsCrmDashboard = async (
         AND ae.event_ts < DATE_SUB(NOW(), INTERVAL 24 HOUR)
         AND dh.id IS NULL
       ORDER BY ae.event_ts DESC
-      LIMIT ${limit}
+      LIMIT ${limit} OFFSET ${trialNoDownloadOffset}
+    `),
+    prisma.$queryRaw<Array<{ total: bigint | number }>>(Prisma.sql`
+      SELECT COUNT(*) AS total
+      FROM (
+        SELECT fp.user_id
+        FROM (
+          SELECT user_id, MIN(date_order) AS first_paid_at
+          FROM orders
+          WHERE status = 1
+            AND is_plan = 1
+            AND (is_canceled IS NULL OR is_canceled = 0)
+          GROUP BY user_id
+        ) fp
+        INNER JOIN orders o
+          ON o.user_id = fp.user_id
+          AND o.date_order = fp.first_paid_at
+          AND o.status = 1
+          AND o.is_plan = 1
+        LEFT JOIN download_history dh
+          ON dh.userId = fp.user_id
+          AND dh.date >= fp.first_paid_at
+          AND dh.date < DATE_ADD(fp.first_paid_at, INTERVAL 24 HOUR)
+        WHERE fp.first_paid_at >= ${startDateOnly}
+          AND fp.first_paid_at < DATE_SUB(NOW(), INTERVAL 24 HOUR)
+        GROUP BY fp.user_id, fp.first_paid_at, o.plan_id, o.payment_method
+        HAVING COUNT(dh.id) = 0
+      ) AS groups_count
     `),
     prisma.$queryRaw<
       Array<{
@@ -1825,7 +1898,7 @@ export const getAnalyticsCrmDashboard = async (
       GROUP BY u.id, u.username, u.email, u.phone, fp.first_paid_at, o.plan_id, o.payment_method
       HAVING COUNT(dh.id) = 0
       ORDER BY fp.first_paid_at DESC
-      LIMIT ${limit}
+      LIMIT ${limit} OFFSET ${paidNoDownloadOffset}
     `),
   ]);
 
@@ -1862,9 +1935,12 @@ export const getAnalyticsCrmDashboard = async (
   const cancellationsTotal = numberFromUnknown(
     cancellationsTotalRows?.[0]?.cancellations,
   );
+  const recentCancellationsTotal = numberFromUnknown(recentCancellationTotalRows?.[0]?.total);
   const involuntaryCancellations = numberFromUnknown(
     involuntaryCancellationRows?.[0]?.involuntaryCancellations,
   );
+  const trialNoDownload24hTotal = numberFromUnknown(trialNoDownloadTotalRows?.[0]?.total);
+  const paidNoDownload24hTotal = numberFromUnknown(paidNoDownloadTotalRows?.[0]?.total);
 
   const activationAvgMinutesRaw = activationAvgRows?.[0]?.avgMinutes;
   const avgMinutesPaidToFirstDownload =
@@ -1914,6 +1990,7 @@ export const getAnalyticsCrmDashboard = async (
       reasonCode: row.reasonCode,
       cancellations: numberFromUnknown(row.cancellations),
     })),
+    recentCancellationsTotal,
     recentCancellations: recentCancellationRows.map((row) => ({
       id: Number(row.id),
       userId: Number(row.userId),
@@ -1928,6 +2005,7 @@ export const getAnalyticsCrmDashboard = async (
       medium: row.medium ?? null,
       campaign: row.campaign ?? null,
     })),
+    trialNoDownload24hTotal,
     trialNoDownload24h: trialNoDownloadRows.map((row) => ({
       userId: Number(row.userId),
       username: row.username,
@@ -1936,6 +2014,7 @@ export const getAnalyticsCrmDashboard = async (
       trialStartedAt: normalizeDateOutput(row.trialStartedAt),
       planId: row.planId == null ? null : numberFromUnknown(row.planId),
     })),
+    paidNoDownload24hTotal,
     paidNoDownload24h: paidNoDownloadRows.map((row) => ({
       userId: Number(row.userId),
       username: row.username,

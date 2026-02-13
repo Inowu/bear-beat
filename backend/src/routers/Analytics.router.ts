@@ -82,7 +82,10 @@ const analyticsLiveSnapshotInputSchema = z
 const analyticsCrmDashboardInputSchema = z
   .object({
     days: z.number().int().min(7).max(365).optional(),
-    limit: z.number().int().min(10).max(300).optional(),
+    limit: z.number().int().min(10).max(100).optional(),
+    recentCancellationsPage: z.number().int().min(0).max(5000).optional(),
+    trialNoDownloadPage: z.number().int().min(0).max(5000).optional(),
+    paidNoDownloadPage: z.number().int().min(0).max(5000).optional(),
   })
   .optional();
 
@@ -216,7 +219,11 @@ export const analyticsRouter = router({
     .input(analyticsCrmDashboardInputSchema)
     .query(async ({ ctx, input }) => {
       assertAdminRole(ctx.session?.user?.role);
-      return getAnalyticsCrmDashboard(ctx.prisma, input?.days, input?.limit);
+      return getAnalyticsCrmDashboard(ctx.prisma, input?.days, input?.limit, {
+        recentCancellationsPage: input?.recentCancellationsPage,
+        trialNoDownloadPage: input?.trialNoDownloadPage,
+        paidNoDownloadPage: input?.paidNoDownloadPage,
+      });
     }),
   getAutomationStatus: shieldedProcedure
     .input(automationStatusInputSchema)
