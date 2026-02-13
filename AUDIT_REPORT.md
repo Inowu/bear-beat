@@ -31,7 +31,9 @@ Estado: los fixes están implementados en código y cubiertos por tests; **pendi
 ### STAGING
 - Detectado deploy de branch en Netlify: `https://staging--incredible-druid-62114b.netlify.app` (frontend).  
   No hay evidencia confirmada de backend STAGING separado; por seguridad, **DAST/load** se planifican contra **STAGING local**.
-- STAGING local reproducible: ver `docs/STAGING_LOCAL.md`.
+- STAGING local reproducible: ver `docs/STAGING_LOCAL.md` (MySQL default `3310`, Redis `6380`).
+  - Validado (local): `prisma migrate deploy` aplicado en DB local + `npm test --workspace=backend` pasando.
+  - Evidencia: `audit-artifacts/staging-local-2026-02-12/prisma.migrate-deploy.txt` y `audit-artifacts/staging-local-2026-02-12/backend.jest.r3.txt`.
 
 ### Puntos de entrada (alto nivel)
 - Web: rutas públicas + app autenticada + `/admin`
@@ -77,6 +79,7 @@ Leyenda:
 | A-005 | Medium | Abierto | Proyecto | Frontend/Perf | Bundle principal grande y warnings de build (chunk > 500 kB, Sass `@import` deprecado) |
 | A-006 | High | Abierto | Proyecto | Dependencias | `npm audit` reporta vulnerabilidades **High** (backend y frontend), varias requieren upgrades major |
 | A-007 | Medium | Abierto | Quick win | Backend/API | CORS/headers en API prod parecen demasiado permisivos (`Access-Control-Allow-Origin: *`) y faltan headers de hardening |
+| A-008 | Medium | Mitigado (en rama) | Quick win | QA/AppSec | Tests/smoke podían disparar integraciones externas si `.env` tenía secretos; se aisló carga de env y se deshabilitaron integraciones en `NODE_ENV=test` |
 
 ## Detalle de hallazgos (con evidencia + remediación)
 
@@ -188,6 +191,21 @@ Leyenda:
 - **Esfuerzo estimado:** **S/M**
 - **Owner sugerido:** Backend + SRE/AppSec
 
+### A-008 — Tests podían ejecutar integraciones externas por carga de `.env` (Medium)
+- **Evidencia (código):**
+  - `backend/src/utils/loadEnv.ts`: carga de env centralizada con `ENV_FILE`; en `NODE_ENV=test` usa `.env.example` por default.
+  - `backend/jest.config.js` + `backend/test/setupEnv.ts`: Jest deja de cargar `backend/.env` automáticamente.
+  - `backend/src/routers/auth/procedures/register.ts`: en `NODE_ENV=test` se omiten llamadas externas (Stripe/Conekta/Brevo/Facebook/ManyChat).
+- **Cómo reproducir (antes del fix):**
+  1. Tener un `backend/.env` con keys reales (ManyChat/Facebook/Stripe/etc.).
+  2. Correr tests o smoke que ejecuten `auth.register`.
+  3. Observar llamadas externas best-effort (riesgo de “side effects” y datos hacia terceros).
+- **Impacto:** riesgo de efectos colaterales (eventos/usuarios creados en 3ros) y posible fuga accidental de datos desde entornos de test/dev.
+- **Probabilidad:** media (común en equipos con `.env` local configurado).
+- **Recomendación concreta:** mantener `ENV_FILE` en STAGING local y deshabilitar integraciones en tests (ya mitigado en rama).
+- **Esfuerzo estimado:** **S**
+- **Owner sugerido:** Backend + QA/AppSec
+
 ## Checklist compliance/config (estado actual)
 Fuente (pasivo prod): `audit-artifacts/prod-passive-2026-02-12/thebearbeat.com.headers.txt`
 
@@ -204,6 +222,8 @@ Fuente (pasivo prod): `audit-artifacts/prod-passive-2026-02-12/thebearbeat.com.h
 - Backend:
   - Jest: `backend/test/*`
   - Agregado: tests anti-regresión para A-001 + A-002.
+  - Ajuste: Jest ahora carga env de forma segura (evita `backend/.env` por defecto) para prevenir side effects en tests (ver A-008).
+  - Ejecutado (local STAGING DB): `npm test --workspace=backend -- --runInBand` **OK** (evidencia: `audit-artifacts/staging-local-2026-02-12/backend.jest.r3.txt`).
   - Build local: `npm run build --workspace=backend` **OK** (TypeScript + Prisma generate; sin requerir DB).
 - Frontend:
   - Vitest: `npm test --workspace=frontend`
@@ -244,7 +264,7 @@ Pendiente:
 - Backups + restore drill (MySQL) y rotación de secretos.
 
 ## Plan de ejecución (restante)
-1. **STAGING local**: completar y validar `docs/STAGING_LOCAL.md` (Docker + migraciones + seeds).
+1. **STAGING local**: Docker compose + migraciones + tests unit/integration validados; pendiente seeds + E2E (`docs/STAGING_LOCAL.md`).
 2. **Fase 1 (QA)**: E2E Playwright/Cypress para flujos críticos en STAGING.
 3. **Fase 2 (AppSec)**: SAST + dependency audit + secret scanning (repo + historial).
 4. **Fase 3 (Perf)**: Lighthouse + profiling + (final) load test con k6/artillery en STAGING.
