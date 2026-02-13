@@ -495,7 +495,9 @@ export function LiveAnalytics() {
                               <td title={evt.visitorId ?? "Sin visitor"}>
                                 {formatCompactId(evt.visitorId)}
                               </td>
-                              <td title={formatUtm(evt)}>{formatUtm(evt)}</td>
+                              <td title={formatUtm(evt)}>
+                                <span className="live-utm">{formatUtm(evt)}</span>
+                              </td>
                             </tr>
                           ))
                         )}

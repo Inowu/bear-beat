@@ -65,6 +65,31 @@
 
   .admin-page-wrap__toolbar > * {
     max-width: 100%;
+    min-width: 0;
+  }
+
+  /* Standard scroll-wrap for admin tables (prevents mobile overflow). */
+  .analytics-table-wrap,
+  .crm-table-wrap {
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .analytics-table-wrap table,
+  .crm-table-wrap table {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .analytics-table-wrap th,
+  .analytics-table-wrap td,
+  .crm-table-wrap th,
+  .crm-table-wrap td {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    white-space: normal;
   }
 
   :where(

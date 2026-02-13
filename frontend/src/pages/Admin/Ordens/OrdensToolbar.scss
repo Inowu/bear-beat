@@ -227,6 +227,16 @@
       "start end"
       "today limit";
     gap: 8px;
+
+    /* Native date inputs need more width on very small screens (iPhone). */
+    @media (max-width: 420px) {
+      grid-template-areas:
+        "search search"
+        "method status"
+        "start start"
+        "end end"
+        "today limit";
+    }
   }
 
   .orders-toolbar__search {

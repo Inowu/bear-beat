@@ -252,6 +252,21 @@
   gap: 8px;
 }
 
+.live-filter-pill {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.live-utm {
+  display: block;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+}
+
 .live-chip {
   min-height: 30px;
   padding: 0 10px;
