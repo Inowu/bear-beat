@@ -113,7 +113,7 @@ export const PlanAdmin = () => {
       />
 
       {/* Desktop: tabla */}
-      <div className="rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50 hidden md:block">
+      <div className="admin-table-panel rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50">
         <div
           className="overflow-x-auto max-h-[60vh] overflow-y-auto"
           tabIndex={0}
@@ -182,7 +182,7 @@ export const PlanAdmin = () => {
       </div>
 
       {/* Mobile: lista compacta + drawer */}
-      <div className="admin-mobile-list md:hidden">
+      <div className="admin-mobile-list">
         {plans.map((plan, index) => (
           <button
             key={`m_${index}`}

@@ -119,7 +119,7 @@ export const DownloadHistory = () => {
     >
       <AddInstructionsModal showModal={showModal} onHideModal={() => setShowModal(false)} videoURL={videoURL} videoId={videoId} />
 
-      <div className="rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50 hidden md:block">
+      <div className="admin-table-panel rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50">
         <div
           className="overflow-x-auto max-h-[60vh] overflow-y-auto"
           tabIndex={0}
@@ -189,7 +189,7 @@ export const DownloadHistory = () => {
         </div>
       </div>
 
-      <div className="admin-mobile-list md:hidden">
+      <div className="admin-mobile-list">
         {!loader
           ? history.length > 0
             ? history.map((his, index) => {

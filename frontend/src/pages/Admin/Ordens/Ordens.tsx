@@ -260,7 +260,7 @@ export const Ordens = () => {
     >
       <div className="w-full overflow-x-hidden">
         {/* Tabla desktop (patrón BEAR BEAT PRO) */}
-        <div className="hidden md:block rounded-xl border border-gray-200 dark:border-bear-dark-100 overflow-hidden">
+        <div className="admin-table-panel rounded-xl border border-gray-200 dark:border-bear-dark-100 overflow-hidden">
           <div
             className="overflow-x-auto max-h-[60vh] overflow-y-auto"
             tabIndex={0}
@@ -323,12 +323,12 @@ export const Ordens = () => {
       </div>
 
         {/* Cards móvil (patrón BEAR BEAT PRO) */}
-        <div className="orders-toolbar__mobile-list block md:hidden grid grid-cols-1 gap-4 w-full">
+        <div className="admin-mobile-list orders-toolbar__mobile-list">
           {!loader
             ? ordens.map((orden, index) => (
                 <button
                   key={`m_${index}`}
-                  className="orders-toolbar__mobile-card"
+                  className="admin-mobile-card orders-toolbar__mobile-card"
                   onClick={() => setDrawerOrder(orden)}
                   type="button"
                 >
@@ -354,10 +354,10 @@ export const Ordens = () => {
                 >
                   <div className="h-12 bg-gray-200 dark:bg-bear-dark-100/50 rounded" />
                 </div>
-              ))}
+                  ))}
         </div>
 
-        <div className="md:hidden mt-4 orders-toolbar__mobile-pagination">
+        <div className="admin-pagination-mobile mt-4 orders-toolbar__mobile-pagination">
           <Pagination
             totalLoader={totalLoader}
             totalData={totalOrdens}

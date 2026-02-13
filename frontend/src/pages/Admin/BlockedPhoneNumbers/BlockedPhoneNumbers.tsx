@@ -133,7 +133,7 @@ export const BlockedPhoneNumbers = () => {
           </p>
         ) : (
           <>
-            <div className="blocked-phones-table-wrap hidden md:block">
+            <div className="admin-table-panel blocked-phones-table-wrap">
               <div
                 className="blocked-phones-table-scroll"
                 tabIndex={0}
@@ -171,7 +171,7 @@ export const BlockedPhoneNumbers = () => {
               </div>
             </div>
 
-            <div className="admin-mobile-list md:hidden">
+            <div className="admin-mobile-list">
               {blockedNumbers.map((phone) => (
                 <button
                   type="button"

@@ -117,7 +117,7 @@ export const Coupons = () => {
         <p className="text-slate-400 py-8 text-center">No se encontraron cupones.</p>
       ) : (
         <>
-          <div className="rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50 hidden md:block">
+          <div className="admin-table-panel rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50">
             <div
               className="overflow-x-auto max-h-[60vh] overflow-y-auto"
               tabIndex={0}
@@ -179,7 +179,7 @@ export const Coupons = () => {
             </div>
           </div>
 
-          <div className="admin-mobile-list md:hidden">
+          <div className="admin-mobile-list">
             {coupons.map((c, index) => (
               <button
                 type="button"

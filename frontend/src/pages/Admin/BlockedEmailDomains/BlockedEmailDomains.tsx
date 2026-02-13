@@ -138,7 +138,7 @@ export const BlockedEmailDomains = () => {
           </p>
         ) : (
           <>
-            <div className="blocked-domains-table-wrap hidden md:block">
+            <div className="admin-table-panel blocked-domains-table-wrap">
               <div
                 className="blocked-domains-table-scroll"
                 tabIndex={0}
@@ -176,7 +176,7 @@ export const BlockedEmailDomains = () => {
               </div>
             </div>
 
-            <div className="admin-mobile-list md:hidden">
+            <div className="admin-mobile-list">
               {blockedDomains.map((domain) => (
                 <button
                   type="button"
