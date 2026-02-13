@@ -4,6 +4,7 @@ import trpc from "../../api";
 import { useTheme } from "../../contexts/ThemeContext";
 import brandMarkBlack from "../../assets/brand/bearbeat-mark-black.png";
 import brandMarkCyan from "../../assets/brand/bearbeat-mark-cyan.png";
+import PublicTopNav from "../../components/PublicTopNav/PublicTopNav";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../utils/growthMetrics";
 import { FALLBACK_GENRES, type GenreStats } from "./fallbackGenres";
@@ -687,32 +688,20 @@ export default function PublicHome() {
       <a className="home-skip" href="#home-main">
         Saltar al contenido
       </a>
-      <header className="home-topnav" aria-label="Navegación">
-        <div className="ph__container home-topnav__inner">
-          <Link to="/" className="home-topnav__brand" aria-label="Bear Beat" aria-current="page">
-            <img src={brandMark} alt="Bear Beat" width={40} height={40} />
+      <PublicTopNav
+        brandAriaCurrent
+        cta={
+          <Link
+            to="/auth/registro"
+            state={{ from: "/planes" }}
+            className="home-cta home-cta--primary home-topnav__cta"
+            data-testid="home-nav-primary-cta"
+            onClick={() => onPrimaryCtaClick("nav")}
+          >
+            {ctaPrimaryLabel}
           </Link>
-          <div className="home-topnav__right" aria-label="Acciones">
-            <nav className="home-topnav__nav" aria-label="Links">
-              <Link to="/planes" className="home-topnav__link">
-                Planes
-              </Link>
-              <Link to="/auth" className="home-topnav__link">
-                Iniciar sesión
-              </Link>
-            </nav>
-            <Link
-              to="/auth/registro"
-              state={{ from: "/planes" }}
-              className="home-cta home-cta--primary home-topnav__cta"
-              data-testid="home-nav-primary-cta"
-              onClick={() => onPrimaryCtaClick("nav")}
-            >
-              {ctaPrimaryLabel}
-            </Link>
-          </div>
-        </div>
-      </header>
+        }
+      />
 
       <div id="home-main" className="home-main">
         <HomeHero

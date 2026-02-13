@@ -12,9 +12,7 @@ import {
   ShieldCheck,
   WifiOff,
 } from "lucide-react";
-import { useTheme } from "../../contexts/ThemeContext";
-import brandMarkBlack from "../../assets/brand/bearbeat-mark-black.png";
-import brandMarkCyan from "../../assets/brand/bearbeat-mark-cyan.png";
+import PublicTopNav from "../../components/PublicTopNav/PublicTopNav";
 import { useUserContext } from "../../contexts/UserContext";
 
 const FILEZILLA_URL = "https://filezilla-project.org/download.php?type=client";
@@ -89,8 +87,6 @@ const DOWNLOAD_METHODS: DownloadMethod[] = [
 
 function Instructions() {
   const { userToken } = useUserContext();
-  const { theme } = useTheme();
-  const brandMark = theme === "light" ? brandMarkBlack : brandMarkCyan;
 
   return (
     <div className="instructions2026" role="region" aria-label="Instrucciones de descarga">
@@ -98,29 +94,7 @@ function Instructions() {
         Saltar al contenido
       </a>
 
-      <header className="home-topnav instructions2026__topnav" aria-label="Navegación pública">
-        <div className="ph__container home-topnav__inner">
-          <Link to="/" className="home-topnav__brand" aria-label="Bear Beat">
-            <img src={brandMark} alt="Bear Beat" />
-          </Link>
-          <div className="home-topnav__right" aria-label="Acciones">
-            <nav className="home-topnav__nav" aria-label="Links">
-              <Link to="/planes" className="home-topnav__link">
-                Planes
-              </Link>
-              {userToken ? (
-                <Link to="/micuenta" className="home-topnav__link">
-                  Mi cuenta
-                </Link>
-              ) : (
-                <Link to="/auth" state={{ from: "/instrucciones" }} className="home-topnav__link">
-                  Iniciar sesión
-                </Link>
-              )}
-            </nav>
-          </div>
-        </div>
-      </header>
+      <PublicTopNav className="instructions2026__topnav" loginFrom="/instrucciones" />
 
       <section id="instructions-main" className="instructions2026__main" aria-label="Contenido principal de instrucciones">
         <div className="ph__container instructions2026__container">
