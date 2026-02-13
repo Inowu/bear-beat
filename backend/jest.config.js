@@ -7,7 +7,7 @@ module.exports = {
   roots: ["<rootDir>/test"],
   testMatch: ["**/*.test.ts"],
   // Match backend runtime behavior (SlowBuffer polyfill + dotenv).
-  setupFiles: ["dotenv/config", "<rootDir>/src/polyfills.ts"],
+  setupFiles: ["<rootDir>/test/setupEnv.ts", "<rootDir>/src/polyfills.ts"],
   // Workspaces: @prisma/client is installed at repo root, but Jest resolves modules
   // relative to `rootDir` and may not walk up like Node's default resolver.
   moduleNameMapper: {
