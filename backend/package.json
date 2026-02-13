@@ -20,6 +20,7 @@
     "seed:audit-plan": "node -r ts-node/register scripts/seedAuditPlan.ts",
     "paypal:webhooks:ensure": "node -r ts-node/register scripts/ensurePaypalWebhooks.ts",
     "e2e:smoke": "node -r ts-node/register scripts/smokeE2e.ts",
+    "e2e:reset-password": "node -r ts-node/register scripts/e2eResetPassword.ts",
     "db:hygiene:backup": "node -r ts-node/register scripts/dbHygiene.ts backup",
     "db:hygiene:audit": "node -r ts-node/register scripts/dbHygiene.ts audit",
     "db:hygiene:quarantine": "node -r ts-node/register scripts/dbHygiene.ts quarantine",
