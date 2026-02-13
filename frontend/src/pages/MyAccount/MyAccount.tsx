@@ -19,7 +19,9 @@ import {
   FileDown,
   Trash2,
 } from "lucide-react";
-import { FaCcAmex, FaCcMastercard, FaCcVisa } from "react-icons/fa";
+import visaLogo from "../../assets/images/cards/visa.png";
+import mastercardLogo from "../../assets/images/cards/master.png";
+import amexLogo from "../../assets/images/cards/express.png";
 import { getCompleted, transformBiteToGb } from "../../functions/functions";
 import { IOrders, IQuota, IFtpAccount } from "interfaces/User";
 import { Link } from "react-router-dom";
@@ -565,17 +567,23 @@ function MyAccount() {
                             : rawBrand === "amex" || rawBrand === "american_express"
                               ? "amex"
                               : "amex";
-                      const BrandIcon =
+                      const brandLogo =
                         brandKey === "visa"
-                          ? FaCcVisa
+                          ? visaLogo
                           : brandKey === "mastercard"
-                            ? FaCcMastercard
-                            : FaCcAmex;
+                            ? mastercardLogo
+                            : amexLogo;
+                      const brandLabel =
+                        brandKey === "visa"
+                          ? "Visa"
+                          : brandKey === "mastercard"
+                            ? "Mastercard"
+                            : "American Express";
 
                       return (
-                        <BrandIcon
-                          role="img"
-                          aria-label={`Logo de tarjeta ${rawBrand || "tarjeta"}`}
+                        <img
+                          src={brandLogo}
+                          alt={brandLabel}
                           className={`ma-card-brand ma-card-brand--${brandKey}`}
                         />
                       );

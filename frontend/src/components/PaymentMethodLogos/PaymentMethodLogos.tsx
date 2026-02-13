@@ -1,6 +1,8 @@
 import { Landmark } from "lucide-react";
-import { FaCcAmex, FaCcMastercard, FaCcVisa, FaPaypal } from "react-icons/fa";
 import type { ReactNode } from "react";
+import visaLogo from "../../assets/images/cards/visa.png";
+import mastercardLogo from "../../assets/images/cards/master.png";
+import amexLogo from "../../assets/images/cards/express.png";
 import "./PaymentMethodLogos.scss";
 
 export type PaymentMethodId =
@@ -29,7 +31,9 @@ const METHOD_DEFINITIONS: Record<PaymentMethodId, PaymentMethodDefinition> = {
   visa: {
     label: "Visa",
     icon: (
-      <FaCcVisa
+      <img
+        src={visaLogo}
+        alt=""
         aria-hidden
         className="payment-method-logos__card-icon payment-method-logos__card-icon--visa"
       />
@@ -38,7 +42,9 @@ const METHOD_DEFINITIONS: Record<PaymentMethodId, PaymentMethodDefinition> = {
   mastercard: {
     label: "Mastercard",
     icon: (
-      <FaCcMastercard
+      <img
+        src={mastercardLogo}
+        alt=""
         aria-hidden
         className="payment-method-logos__card-icon payment-method-logos__card-icon--mastercard"
       />
@@ -47,7 +53,9 @@ const METHOD_DEFINITIONS: Record<PaymentMethodId, PaymentMethodDefinition> = {
   amex: {
     label: "American Express",
     icon: (
-      <FaCcAmex
+      <img
+        src={amexLogo}
+        alt=""
         aria-hidden
         className="payment-method-logos__card-icon payment-method-logos__card-icon--amex"
       />
@@ -55,7 +63,6 @@ const METHOD_DEFINITIONS: Record<PaymentMethodId, PaymentMethodDefinition> = {
   },
   paypal: {
     label: "PayPal",
-    icon: <FaPaypal aria-hidden className="payment-method-logos__paypal-icon" />,
     showText: true,
   },
   spei: {

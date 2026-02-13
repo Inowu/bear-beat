@@ -19,7 +19,6 @@ import {
   Lock,
   Wallet,
 } from "lucide-react";
-import { FaStripe } from "react-icons/fa";
 import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
 import { SpeiModal } from "../../components/Modals/SpeiModal/SpeiModal";
 import { OxxoModal } from "../../components/Modals/OxxoModal/OxxoModal";
@@ -895,7 +894,6 @@ function Checkout() {
       <div className="checkout2026__summaryFooter">
         <p>Pagos procesados de forma segura con encriptación de 256-bits.</p>
         <span className="checkout2026__stripe" aria-label="Stripe">
-          <FaStripe aria-hidden />
           <span>Stripe</span>
         </span>
       </div>
