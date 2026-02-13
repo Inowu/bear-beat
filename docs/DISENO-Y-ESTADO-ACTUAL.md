@@ -13,13 +13,18 @@ Toda la app (Home público, Auth, Admin, modales, alertas) usa **el mismo tamañ
 
 | Archivo | Qué define |
 |--------|------------|
-| `frontend/src/styles/_variables-theme.scss` | Variables `--app-*` y `--ph-*` (PublicHome). Se aplican según `[data-theme="light"]` o `[data-theme="dark"]` en `<html>`. |
+| `frontend/src/styles/index.scss` | **Fuente de verdad**: design tokens `--bb-*`, `--app-*`, `--ph-*` + base global (body, headings, inputs, botones). Se aplican según `[data-theme]` y/o `.dark` en `<html>`. |
+| `frontend/src/index.css` | Bridge de tokens para Tailwind (`--bg-*`, `--text-*`, etc.) y estilos de primer paint. |
+| `frontend/src/styles/_variables-theme.scss` | Capa legacy (no-op) para compatibilidad; ya no redefine tokens globales. |
 
 ### Variables de tipografía (`--app-*`)
 
-- **Body / texto general:** `--app-font-size-body` = `clamp(1.05rem, 3.5vw, 1.9rem)`
-- **Body grande:** `--app-font-size-body-lg`
-- **Títulos:** `--app-font-size-h4` … `--app-font-size-h1` (escala con `clamp`)
+Valores actuales (ver `frontend/src/styles/index.scss`):
+
+- **Body / texto general:** `--app-font-size-body` = `1.5rem` (con `html { font-size: 62.5%; }` => `1rem = 10px`, entonces `1.5rem = 15px`)
+- **Body grande:** `--app-font-size-body-lg` = `1.6rem`
+- **Títulos:** `--app-font-size-h4` = `1.7rem`, `--app-font-size-h3` = `1.95rem`, `--app-font-size-h2` = `2.4rem`, `--app-font-size-h1` = `3rem`
+- **Otros:** `--app-font-size-label` = `1.3rem`, `--app-font-size-caption` = `1.2rem`, `--app-font-size-button` = `1.45rem`
 - **Pesos:** `--app-font-weight-body` (500), `--app-font-weight-heading` (700), `--app-font-weight-heading-strong` (800)
 
 ### Variables de color y superficie
@@ -40,8 +45,8 @@ Toda la app (Home público, Auth, Admin, modales, alertas) usa **el mismo tamañ
 | Páginas (Admin, Home, Auth, Instructions, etc.) | Usan variables `--app-*` o importan `landing-design.scss` para mantener el mismo estilo. |
 
 ### Regla para nuevos componentes
-- **No usar** `font-size` en `px` o `rem` fijos.
-- Usar siempre: `font-size: var(--app-font-size-body)` (o `-body-lg`, `-h4`, `-h3`, `-h2`, `-h1` según jerarquía).
+- **App/Auth/Admin:** evitar `font-size` hardcodeado; usar `var(--app-font-size-*)` según jerarquía.
+- **Marketing (PublicHome/Planes/Legal/Instrucciones):** se permite `clamp()` si la jerarquía visual lo requiere, pero mantener coherencia con los tokens (no inventar escalas nuevas por sección).
 - Colores: `color: var(--app-text-heading)` / `var(--app-text-body)` / `var(--app-text-muted)`; fondos `var(--app-bg-card)` etc.
 
 ---
@@ -53,10 +58,10 @@ Toda la app (Home público, Auth, Admin, modales, alertas) usa **el mismo tamañ
 | Ruta | Componente | Requiere login | Descripción |
 |------|------------|----------------|-------------|
 | `/` | `HomeOrLanding` | No | Muestra **PublicHome** (no logueado) o **Home** (logueado). |
-| `/instrucciones` | `Instructions` | No* | Cómo usar la app / descargar. |
+| `/instrucciones` | `Instructions` | No | Cómo usar la app / descargar. |
 | `/micuenta` | `MyAccount` | Sí | Datos del usuario, cuenta. |
 | `/descargas` | `Downloads` | Sí | Historial/gestión de descargas. |
-| `/planes` | `Plans` | Sí | Ver/contratar planes. Si ya tiene plan activo, puede redirigir a Home. |
+| `/planes` | `Plans` | No | Ver/contratar planes. Si ya tiene plan activo, redirige a Home. |
 | `/comprar` | `Checkout` | Sí | Checkout de compra. |
 | `/actualizar-planes` | `PlanUpgrade` | Sí | Cambio de plan. |
 | `/admin` | Redirige a `/admin/usuarios` | Sí | Panel admin. |
