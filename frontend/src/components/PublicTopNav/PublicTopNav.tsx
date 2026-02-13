@@ -1,4 +1,5 @@
 import { Link, NavLink } from "react-router-dom";
+import type { ReactNode } from "react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useUserContext } from "../../contexts/UserContext";
 import brandMarkBlack from "../../assets/brand/bearbeat-mark-black.png";
@@ -8,7 +9,7 @@ type PublicTopNavProps = {
   className?: string;
   brandAriaCurrent?: boolean;
   loginFrom?: string;
-  cta?: React.ReactNode;
+  cta?: ReactNode;
 };
 
 export default function PublicTopNav({
@@ -66,4 +67,3 @@ export default function PublicTopNav({
     </header>
   );
 }
-
