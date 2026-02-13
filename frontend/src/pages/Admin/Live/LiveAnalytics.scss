@@ -366,6 +366,76 @@
   gap: 8px;
 }
 
+.live-mobile-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.live-mobile-card__path {
+  margin: 8px 0 0;
+  color: var(--ad-title);
+  font-size: 0.95rem;
+  font-weight: 750;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.live-mobile-kv {
+  margin: 10px 0 0;
+  display: grid;
+  gap: 8px;
+}
+
+.live-mobile-kv__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.live-mobile-kv__row dt {
+  margin: 0;
+  color: var(--ad-text-muted);
+  font-size: 0.74rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.live-mobile-kv__row dd {
+  margin: 0;
+  min-width: 0;
+  color: var(--ad-text);
+  font-size: 0.98rem;
+  font-weight: 750;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.live-mobile-card__utm {
+  margin-top: 10px;
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.live-mobile-card__utm-label {
+  color: var(--ad-text-muted);
+  font-size: 0.74rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .live-filter-pill {
   min-height: 30px;
   border-radius: 999px;
@@ -445,6 +515,13 @@
 
 .live-foot strong {
   color: var(--ad-title);
+}
+
+@media (max-width: 900px) {
+  /* Mobile admin pattern: replace wide table with admin-mobile-list cards. */
+  .live-stream .analytics-table-wrap {
+    display: none;
+  }
 }
 
 @media (min-width: 900px) {

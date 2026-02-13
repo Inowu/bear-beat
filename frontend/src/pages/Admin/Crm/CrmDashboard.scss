@@ -389,6 +389,100 @@
   padding: 14px;
 }
 
+.crm-mobile-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.crm-mobile-card__copy {
+  min-width: 0;
+}
+
+.crm-mobile-card__title {
+  margin: 0;
+  color: var(--ad-title);
+  font-size: 1.02rem;
+  font-weight: 800;
+  line-height: 1.15;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.crm-mobile-card__subtitle {
+  margin: 6px 0 0;
+  color: var(--ad-text-muted);
+  font-size: 0.9rem;
+  font-weight: 650;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.crm-mobile-card__note {
+  margin: 8px 0 0;
+  color: var(--ad-text-muted);
+  font-size: 0.9rem;
+  font-weight: 650;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.crm-mobile-card__actions {
+  margin-top: 10px;
+}
+
+.crm-mobile-kv {
+  margin: 10px 0 0;
+  display: grid;
+  gap: 8px;
+}
+
+.crm-mobile-kv__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.crm-mobile-kv__row dt {
+  margin: 0;
+  color: var(--ad-text-muted);
+  font-size: 0.74rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.crm-mobile-kv__row dd {
+  margin: 0;
+  min-width: 0;
+  color: var(--ad-text);
+  font-size: 0.98rem;
+  font-weight: 750;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.crm-mobile-kv__row dd.is-wrap {
+  text-align: left;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .crm-toast {
   padding: 10px 12px;
   border-radius: 14px;
@@ -464,6 +558,22 @@
   background: transparent;
   border-color: color-mix(in srgb, var(--ad-border) 80%, transparent);
   color: var(--ad-text);
+}
+
+@media (max-width: 900px) {
+  /* Mobile admin pattern: hide wide tables, show admin-mobile-list cards. */
+  .crm-table-wrap {
+    display: none;
+  }
+
+  .crm-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .crm-action-btn {
+    width: 100%;
+  }
 }
 
 @media (max-width: 1024px) {

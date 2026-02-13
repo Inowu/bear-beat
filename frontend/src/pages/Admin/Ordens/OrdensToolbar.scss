@@ -237,6 +237,19 @@
         "end end"
         "today limit";
     }
+
+    /* Ultra small screens: stack every control to avoid any overflow. */
+    @media (max-width: 390px) {
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        "search"
+        "method"
+        "status"
+        "start"
+        "end"
+        "today"
+        "limit";
+    }
   }
 
   .orders-toolbar__search {

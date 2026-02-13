@@ -471,7 +471,7 @@ export function AnalyticsDashboard() {
       subtitle="Mide conversión, ingresos y señales de riesgo para priorizar mejoras de UX y crecimiento."
       toolbar={toolbar}
     >
-      <section className="analytics-dashboard">
+      <section className="analytics-dashboard analytics-dashboard--biz">
         {error && (
           <div className="analytics-alert analytics-alert--error" role="alert">
             {error}
@@ -585,6 +585,42 @@ export function AnalyticsDashboard() {
                         </tbody>
                       </table>
                     </div>
+                    <div className="admin-mobile-list" aria-label="Serie diaria (móvil)">
+                      {series.length === 0 ? (
+                        <div className="admin-mobile-empty">
+                          <h2>Sin eventos</h2>
+                          <p>Sin eventos para este rango.</p>
+                        </div>
+                      ) : (
+                        series.map((point) => (
+                          <article key={`m_series_${point.day}`} className="admin-mobile-card">
+                            <header className="analytics-mobile-card__head">
+                              <div className="analytics-mobile-card__copy">
+                                <p className="analytics-mobile-card__title">{point.day}</p>
+                              </div>
+                            </header>
+                            <dl className="analytics-mobile-kv">
+                              <div className="analytics-mobile-kv__row">
+                                <dt>Visitantes</dt>
+                                <dd>{point.visitors.toLocaleString("es-MX")}</dd>
+                              </div>
+                              <div className="analytics-mobile-kv__row">
+                                <dt>Registros</dt>
+                                <dd>{point.registrations.toLocaleString("es-MX")}</dd>
+                              </div>
+                              <div className="analytics-mobile-kv__row">
+                                <dt>Checkout</dt>
+                                <dd>{point.checkoutStarted.toLocaleString("es-MX")}</dd>
+                              </div>
+                              <div className="analytics-mobile-kv__row">
+                                <dt>Pagos</dt>
+                                <dd>{point.purchases.toLocaleString("es-MX")}</dd>
+                              </div>
+                            </dl>
+                          </article>
+                        ))
+                      )}
+                    </div>
                   </section>
 
                   <section className="analytics-panel">
@@ -625,6 +661,57 @@ export function AnalyticsDashboard() {
                           )}
                         </tbody>
                       </table>
+                    </div>
+                    <div className="admin-mobile-list" aria-label="Atribución por canal (móvil)">
+                      {attribution.length === 0 ? (
+                        <div className="admin-mobile-empty">
+                          <h2>Sin atribución</h2>
+                          <p>Aún no hay atribución capturada.</p>
+                        </div>
+                      ) : (
+                        attribution.map((item) => (
+                          <article
+                            key={`m_attr_${item.source}:${item.campaign}:${item.medium}`}
+                            className="admin-mobile-card"
+                          >
+                            <header className="analytics-mobile-card__head">
+                              <div className="analytics-mobile-card__copy">
+                                <p className="analytics-mobile-card__title">{item.source}</p>
+                                <p className="analytics-mobile-card__subtitle">
+                                  {item.campaign || "—"}
+                                  {item.medium ? ` · ${item.medium}` : ""}
+                                </p>
+                              </div>
+                            </header>
+                            <dl className="analytics-mobile-kv">
+                              <div className="analytics-mobile-kv__row">
+                                <dt>Visitantes</dt>
+                                <dd>{item.visitors.toLocaleString("es-MX")}</dd>
+                              </div>
+                              <div className="analytics-mobile-kv__row">
+                                <dt>Registros</dt>
+                                <dd>{item.registrations.toLocaleString("es-MX")}</dd>
+                              </div>
+                              <div className="analytics-mobile-kv__row">
+                                <dt>Checkout</dt>
+                                <dd>{item.checkouts.toLocaleString("es-MX")}</dd>
+                              </div>
+                              <div className="analytics-mobile-kv__row">
+                                <dt>Pagos</dt>
+                                <dd>{item.purchases.toLocaleString("es-MX")}</dd>
+                              </div>
+                              <div className="analytics-mobile-kv__row">
+                                <dt>Ingreso</dt>
+                                <dd>{formatCurrency(item.revenue)}</dd>
+                              </div>
+                              <div className="analytics-mobile-kv__row">
+                                <dt>AOV</dt>
+                                <dd>{formatCurrency(item.aov)}</dd>
+                              </div>
+                            </dl>
+                          </article>
+                        ))
+                      )}
                     </div>
                   </section>
 
@@ -670,6 +757,42 @@ export function AnalyticsDashboard() {
                           )}
                         </tbody>
                       </table>
+                    </div>
+                    <div className="admin-mobile-list" aria-label="Cancelaciones (móvil)">
+                      {!cancellations || cancellations.reasons.length === 0 ? (
+                        <div className="admin-mobile-empty">
+                          <h2>Sin cancelaciones</h2>
+                          <p>Aún no hay cancelaciones registradas en este rango.</p>
+                        </div>
+                      ) : (
+                        cancellations.reasons.map((reason) => (
+                          <article key={`m_cancel_${reason.reasonCode}`} className="admin-mobile-card">
+                            <header className="analytics-mobile-card__head">
+                              <div className="analytics-mobile-card__copy">
+                                <p className="analytics-mobile-card__title">
+                                  {formatCancellationReason(reason.reasonCode)}
+                                </p>
+                                <p className="analytics-mobile-card__subtitle">
+                                  {reason.cancellations.toLocaleString("es-MX")} cancelaciones
+                                </p>
+                              </div>
+                            </header>
+                            {reason.topCampaigns.length > 0 ? (
+                              <div className="analytics-mobile-lines" aria-label="Top campañas">
+                                {reason.topCampaigns.map((campaign) => (
+                                  <p
+                                    key={`m_cancel_${reason.reasonCode}:${campaign.source}:${campaign.campaign}:${campaign.medium}`}
+                                    className="analytics-mobile-line"
+                                  >
+                                    {campaign.source}/{campaign.campaign} (
+                                    {campaign.cancellations.toLocaleString("es-MX")})
+                                  </p>
+                                ))}
+                              </div>
+                            ) : null}
+                          </article>
+                        ))
+                      )}
                     </div>
                     {cancellations && cancellations.totalCancellations > 0 ? (
                       <small style={{ display: "block", marginTop: 8, color: "var(--ad-text-muted)", fontWeight: 700 }}>
@@ -721,6 +844,50 @@ export function AnalyticsDashboard() {
                         </tbody>
                       </table>
                     </div>
+                    <div className="admin-mobile-list" aria-label="Unidad económica (móvil)">
+                      <article className="admin-mobile-card">
+                        <header className="analytics-mobile-card__head">
+                          <div className="analytics-mobile-card__copy">
+                            <p className="analytics-mobile-card__title">Unidad económica</p>
+                            <p className="analytics-mobile-card__subtitle">{rangeDays} días</p>
+                          </div>
+                        </header>
+                        <dl className="analytics-mobile-kv">
+                          <div className="analytics-mobile-kv__row">
+                            <dt>MRR</dt>
+                            <dd>{formatCurrency(business.kpis.monthlyRecurringRevenueEstimate)}</dd>
+                          </div>
+                          <div className="analytics-mobile-kv__row">
+                            <dt>ARPU</dt>
+                            <dd>{formatCurrency(business.kpis.arpu)}</dd>
+                          </div>
+                          <div className="analytics-mobile-kv__row">
+                            <dt>ARPU 30d</dt>
+                            <dd>{formatCurrency(business.kpis.monthlyArpuEstimate)}</dd>
+                          </div>
+                          <div className="analytics-mobile-kv__row">
+                            <dt>LTV</dt>
+                            <dd>{formatCurrency(business.kpis.ltvEstimate)}</dd>
+                          </div>
+                          <div className="analytics-mobile-kv__row">
+                            <dt>CAC</dt>
+                            <dd>{formatCurrency(business.kpis.cacEstimate)}</dd>
+                          </div>
+                          <div className="analytics-mobile-kv__row">
+                            <dt>Payback</dt>
+                            <dd>{formatDecimal(business.kpis.paybackMonthsEstimate)} meses</dd>
+                          </div>
+                          <div className="analytics-mobile-kv__row">
+                            <dt>Refund</dt>
+                            <dd>{formatPct(business.kpis.refundRatePct)}</dd>
+                          </div>
+                          <div className="analytics-mobile-kv__row">
+                            <dt>Recompra</dt>
+                            <dd>{formatPct(business.kpis.repeatPurchaseRatePct)}</dd>
+                          </div>
+                        </dl>
+                      </article>
+                    </div>
                   </section>
 
                   <section className="analytics-panel">
@@ -751,6 +918,38 @@ export function AnalyticsDashboard() {
                           </tr>
                         </tbody>
                       </table>
+                    </div>
+                    <div className="admin-mobile-list" aria-label="Web Vitals (resumen móvil)">
+                      <article className="admin-mobile-card">
+                        <header className="analytics-mobile-card__head">
+                          <div className="analytics-mobile-card__copy">
+                            <p className="analytics-mobile-card__title">Resumen</p>
+                            <p className="analytics-mobile-card__subtitle">{rangeDays} días</p>
+                          </div>
+                        </header>
+                        <dl className="analytics-mobile-kv">
+                          <div className="analytics-mobile-kv__row">
+                            <dt>Sesiones</dt>
+                            <dd>{ux.totals.samples.toLocaleString("es-MX")}</dd>
+                          </div>
+                          <div className="analytics-mobile-kv__row">
+                            <dt>Poor %</dt>
+                            <dd>{formatPct(ux.totals.poorRatePct)}</dd>
+                          </div>
+                          <div className="analytics-mobile-kv__row">
+                            <dt>LCP</dt>
+                            <dd>{formatDecimal(ux.totals.lcpAvg)} ms</dd>
+                          </div>
+                          <div className="analytics-mobile-kv__row">
+                            <dt>CLS</dt>
+                            <dd>{formatDecimal(ux.totals.clsAvg, 4)}</dd>
+                          </div>
+                          <div className="analytics-mobile-kv__row">
+                            <dt>INP</dt>
+                            <dd>{formatDecimal(ux.totals.inpAvg)} ms</dd>
+                          </div>
+                        </dl>
+                      </article>
                     </div>
                     <div className="analytics-table-wrap" tabIndex={0} aria-label="Tabla: Web Vitals por ruta (desplazable)">
                       <table>
@@ -784,6 +983,46 @@ export function AnalyticsDashboard() {
                         </tbody>
                       </table>
                     </div>
+                    <div className="admin-mobile-list" aria-label="Web Vitals por ruta (móvil)">
+                      {ux.routes.length === 0 ? (
+                        <div className="admin-mobile-empty">
+                          <h2>Sin datos</h2>
+                          <p>Aún no hay Web Vitals registrados.</p>
+                        </div>
+                      ) : (
+                        ux.routes.map((item) => (
+                          <article key={`m_ux_route_${item.pagePath}`} className="admin-mobile-card">
+                            <header className="analytics-mobile-card__head">
+                              <div className="analytics-mobile-card__copy">
+                                <p className="analytics-mobile-card__title">{item.pagePath}</p>
+                              </div>
+                            </header>
+                            <dl className="analytics-mobile-kv">
+                              <div className="analytics-mobile-kv__row">
+                                <dt>Muestras</dt>
+                                <dd>{item.samples.toLocaleString("es-MX")}</dd>
+                              </div>
+                              <div className="analytics-mobile-kv__row">
+                                <dt>Poor %</dt>
+                                <dd>{formatPct(item.poorRatePct)}</dd>
+                              </div>
+                              <div className="analytics-mobile-kv__row">
+                                <dt>LCP</dt>
+                                <dd>{formatDecimal(item.lcpAvg)}</dd>
+                              </div>
+                              <div className="analytics-mobile-kv__row">
+                                <dt>CLS</dt>
+                                <dd>{formatDecimal(item.clsAvg, 4)}</dd>
+                              </div>
+                              <div className="analytics-mobile-kv__row">
+                                <dt>INP</dt>
+                                <dd>{formatDecimal(item.inpAvg)}</dd>
+                              </div>
+                            </dl>
+                          </article>
+                        ))
+                      )}
+                    </div>
                     <div className="analytics-table-wrap" tabIndex={0} aria-label="Tabla: Web Vitals por dispositivo (desplazable)">
                       <table>
                         <thead>
@@ -815,6 +1054,46 @@ export function AnalyticsDashboard() {
                           )}
                         </tbody>
                       </table>
+                    </div>
+                    <div className="admin-mobile-list" aria-label="Web Vitals por dispositivo (móvil)">
+                      {ux.devices.length === 0 ? (
+                        <div className="admin-mobile-empty">
+                          <h2>Sin datos</h2>
+                          <p>Sin datos por dispositivo.</p>
+                        </div>
+                      ) : (
+                        ux.devices.map((item) => (
+                          <article key={`m_ux_device_${item.deviceCategory}`} className="admin-mobile-card">
+                            <header className="analytics-mobile-card__head">
+                              <div className="analytics-mobile-card__copy">
+                                <p className="analytics-mobile-card__title">{item.deviceCategory}</p>
+                              </div>
+                            </header>
+                            <dl className="analytics-mobile-kv">
+                              <div className="analytics-mobile-kv__row">
+                                <dt>Muestras</dt>
+                                <dd>{item.samples.toLocaleString("es-MX")}</dd>
+                              </div>
+                              <div className="analytics-mobile-kv__row">
+                                <dt>Poor %</dt>
+                                <dd>{formatPct(item.poorRatePct)}</dd>
+                              </div>
+                              <div className="analytics-mobile-kv__row">
+                                <dt>LCP</dt>
+                                <dd>{formatDecimal(item.lcpAvg)}</dd>
+                              </div>
+                              <div className="analytics-mobile-kv__row">
+                                <dt>CLS</dt>
+                                <dd>{formatDecimal(item.clsAvg, 4)}</dd>
+                              </div>
+                              <div className="analytics-mobile-kv__row">
+                                <dt>INP</dt>
+                                <dd>{formatDecimal(item.inpAvg)}</dd>
+                              </div>
+                            </dl>
+                          </article>
+                        ))
+                      )}
                     </div>
                   </section>
 
@@ -850,6 +1129,42 @@ export function AnalyticsDashboard() {
                           )}
                         </tbody>
                       </table>
+                    </div>
+                    <div className="admin-mobile-list" aria-label="Top eventos (móvil)">
+                      {topEvents.length === 0 ? (
+                        <div className="admin-mobile-empty">
+                          <h2>Sin eventos</h2>
+                          <p>Sin eventos en el rango seleccionado.</p>
+                        </div>
+                      ) : (
+                        topEvents.map((item) => (
+                          <article
+                            key={`m_event_${item.eventName}:${item.eventCategory}`}
+                            className="admin-mobile-card"
+                          >
+                            <header className="analytics-mobile-card__head">
+                              <div className="analytics-mobile-card__copy">
+                                <p className="analytics-mobile-card__title">{item.eventName}</p>
+                                <p className="analytics-mobile-card__subtitle">{item.eventCategory}</p>
+                              </div>
+                            </header>
+                            <dl className="analytics-mobile-kv">
+                              <div className="analytics-mobile-kv__row">
+                                <dt>Total</dt>
+                                <dd>{item.totalEvents.toLocaleString("es-MX")}</dd>
+                              </div>
+                              <div className="analytics-mobile-kv__row">
+                                <dt>Visitantes</dt>
+                                <dd>{item.uniqueVisitors.toLocaleString("es-MX")}</dd>
+                              </div>
+                              <div className="analytics-mobile-kv__row">
+                                <dt>Sesiones</dt>
+                                <dd>{item.uniqueSessions.toLocaleString("es-MX")}</dd>
+                              </div>
+                            </dl>
+                          </article>
+                        ))
+                      )}
                     </div>
                   </section>
                 </div>

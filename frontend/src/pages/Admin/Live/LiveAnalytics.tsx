@@ -504,6 +504,51 @@ export function LiveAnalytics() {
                       </tbody>
                     </table>
                   </div>
+                  <div className="admin-mobile-list live-mobile-list" aria-label="Eventos (móvil)">
+                    {filteredEvents.length === 0 ? (
+                      <div className="admin-mobile-empty">
+                        <h2>Sin eventos</h2>
+                        <p>No hay eventos para los filtros actuales.</p>
+                      </div>
+                    ) : (
+                      filteredEvents.map((evt, index) => (
+                        <article
+                          key={`m_${evt.ts}:${evt.sessionId}:${evt.visitorId}:${evt.name}:${index}`}
+                          className="admin-mobile-card live-mobile-card"
+                        >
+                          <header className="live-mobile-card__head">
+                            <span className="live-time" title={formatTs(evt.ts)}>
+                              {formatTime(evt.ts)}
+                            </span>
+                            <span className={`live-event-pill live-event-pill--${eventTone(evt.name)}`}>
+                              {evt.name}
+                            </span>
+                          </header>
+                          <p className="live-mobile-card__path" title={evt.pagePath ?? "Sin ruta"}>
+                            {evt.pagePath ?? "—"}
+                          </p>
+                          <dl className="live-mobile-kv">
+                            <div className="live-mobile-kv__row">
+                              <dt>Usuario</dt>
+                              <dd>{evt.userId ? `#${evt.userId}` : "Anónimo"}</dd>
+                            </div>
+                            <div className="live-mobile-kv__row">
+                              <dt>Session</dt>
+                              <dd title={evt.sessionId ?? "Sin session"}>{formatCompactId(evt.sessionId)}</dd>
+                            </div>
+                            <div className="live-mobile-kv__row">
+                              <dt>Visitor</dt>
+                              <dd title={evt.visitorId ?? "Sin visitor"}>{formatCompactId(evt.visitorId)}</dd>
+                            </div>
+                          </dl>
+                          <div className="live-mobile-card__utm" title={formatUtm(evt)}>
+                            <span className="live-mobile-card__utm-label">UTM</span>
+                            <span className="live-utm">{formatUtm(evt)}</span>
+                          </div>
+                        </article>
+                      ))
+                    )}
+                  </div>
                   <div className="analytics-foot live-foot">
                     <p>
                       Lectura rápida: identificación por usuario en stream{" "}
