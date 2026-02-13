@@ -2371,11 +2371,12 @@ interface AnalyticsLiveSnapshot {
   activeVisitors: number;
   activeSessions: number;
   activeCheckouts: number;
+  eventsTotal: number;
   events: AnalyticsLiveEventPoint[];
 }
 
 const DEFAULT_LIVE_WINDOW_MINUTES = 10;
-const DEFAULT_LIVE_LIMIT = 200;
+const DEFAULT_LIVE_LIMIT = 100;
 const MAX_LIVE_LIMIT = 500;
 const MAX_LIVE_WINDOW_MINUTES = 120;
 
@@ -2383,6 +2384,7 @@ export const getAnalyticsLiveSnapshot = async (
   prisma: PrismaClient,
   minutesInput?: number,
   limitInput?: number,
+  pageInput?: number,
 ): Promise<AnalyticsLiveSnapshot> => {
   const minutes = minutesInput
     ? Math.max(1, Math.min(MAX_LIVE_WINDOW_MINUTES, Math.floor(minutesInput)))
@@ -2390,6 +2392,11 @@ export const getAnalyticsLiveSnapshot = async (
   const limit = limitInput
     ? Math.max(1, Math.min(MAX_LIVE_LIMIT, Math.floor(limitInput)))
     : DEFAULT_LIVE_LIMIT;
+  const page =
+    typeof pageInput === 'number' && Number.isFinite(pageInput) && pageInput > 0
+      ? Math.floor(pageInput)
+      : 0;
+  const offset = page * limit;
 
   const now = new Date();
   const windowStart = new Date(now.getTime() - minutes * 60 * 1000);
@@ -2404,13 +2411,14 @@ export const getAnalyticsLiveSnapshot = async (
       activeVisitors: 0,
       activeSessions: 0,
       activeCheckouts: 0,
+      eventsTotal: 0,
       events: [],
     };
   }
 
   await ensureAnalyticsEventsTable(prisma);
 
-  const [activityRows, checkoutRows, eventRows] = await Promise.all([
+  const [activityRows, checkoutRows, totalRows, eventRows] = await Promise.all([
     prisma.$queryRaw<
       Array<{
         activeVisitors: bigint | number;
@@ -2448,6 +2456,11 @@ export const getAnalyticsLiveSnapshot = async (
       ) paid ON paid.session_id = checkout.session_id
       WHERE paid.session_id IS NULL
     `),
+    prisma.$queryRaw<Array<{ eventsTotal: bigint | number }>>(Prisma.sql`
+      SELECT COUNT(*) AS eventsTotal
+      FROM analytics_events
+      WHERE event_ts >= ${windowStart}
+    `),
     prisma.$queryRaw<
       Array<{
         eventTs: Date | string;
@@ -2474,7 +2487,7 @@ export const getAnalyticsLiveSnapshot = async (
       FROM analytics_events
       WHERE event_ts >= ${windowStart}
       ORDER BY event_ts DESC
-      LIMIT ${limit}
+      LIMIT ${limit} OFFSET ${offset}
     `),
   ]);
 
@@ -2490,6 +2503,7 @@ export const getAnalyticsLiveSnapshot = async (
     activeVisitors: numberFromUnknown(activity?.activeVisitors ?? 0),
     activeSessions: numberFromUnknown(activity?.activeSessions ?? 0),
     activeCheckouts: numberFromUnknown(checkout?.activeCheckouts ?? 0),
+    eventsTotal: numberFromUnknown(totalRows?.[0]?.eventsTotal),
     events: eventRows.map((row) => {
       const tsValue = row.eventTs instanceof Date ? row.eventTs : new Date(row.eventTs);
       return {

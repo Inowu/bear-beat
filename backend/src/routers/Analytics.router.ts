@@ -76,6 +76,7 @@ const analyticsLiveSnapshotInputSchema = z
   .object({
     minutes: z.number().int().min(1).max(120).optional(),
     limit: z.number().int().min(1).max(500).optional(),
+    page: z.number().int().min(0).max(5000).optional(),
   })
   .optional();
 
@@ -213,7 +214,7 @@ export const analyticsRouter = router({
     .input(analyticsLiveSnapshotInputSchema)
     .query(async ({ ctx, input }) => {
       assertAdminRole(ctx.session?.user?.role);
-      return getAnalyticsLiveSnapshot(ctx.prisma, input?.minutes, input?.limit);
+      return getAnalyticsLiveSnapshot(ctx.prisma, input?.minutes, input?.limit, input?.page);
     }),
   getAnalyticsCrmDashboard: shieldedProcedure
     .input(analyticsCrmDashboardInputSchema)

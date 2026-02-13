@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import trpc from "../../../api";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
+import Pagination from "../../../components/Pagination/Pagination";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import "../Analytics/AnalyticsDashboard.scss";
 import "./LiveAnalytics.scss";
@@ -35,6 +36,7 @@ interface LiveSnapshot {
   activeVisitors: number;
   activeSessions: number;
   activeCheckouts: number;
+  eventsTotal: number;
   events: LiveEventPoint[];
 }
 
@@ -99,6 +101,7 @@ function formatUtm(evt: LiveEventPoint): string {
 export function LiveAnalytics() {
   const [minutes, setMinutes] = useState<number>(10);
   const [limit, setLimit] = useState<number>(100);
+  const [page, setPage] = useState<number>(0);
   const [paused, setPaused] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
@@ -114,6 +117,7 @@ export function LiveAnalytics() {
       const data = await trpc.analytics.getAnalyticsLiveSnapshot.query({
         minutes,
         limit,
+        page,
       });
       setSnapshot(data as LiveSnapshot);
       setLastUpdatedAt(new Date().toISOString());
@@ -126,7 +130,7 @@ export function LiveAnalytics() {
     } finally {
       setLoading(false);
     }
-  }, [minutes, limit]);
+  }, [minutes, limit, page]);
 
   useEffect(() => {
     void fetchLive();
@@ -134,12 +138,13 @@ export function LiveAnalytics() {
 
   useEffect(() => {
     const id = window.setInterval(() => {
-      if (paused) return;
+      // Only auto-refresh when looking at the first page (latest events).
+      if (paused || page > 0) return;
       if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
       void fetchLive();
     }, 4000);
     return () => window.clearInterval(id);
-  }, [fetchLive, paused]);
+  }, [fetchLive, paused, page]);
 
   const filteredEvents = useMemo(() => {
     if (!snapshot) return [];
@@ -165,7 +170,7 @@ export function LiveAnalytics() {
     }
 
     const eventsPerMinute = snapshot.window.minutes > 0
-      ? snapshot.events.length / snapshot.window.minutes
+      ? (snapshot.eventsTotal || snapshot.events.length) / snapshot.window.minutes
       : 0;
     const checkoutPressurePct = rate(snapshot.activeCheckouts, snapshot.activeSessions);
     const identifiedEvents = snapshot.events.filter((evt) => evt.userId !== null).length;
@@ -221,7 +226,13 @@ export function LiveAnalytics() {
       <div className="live-toolbar__group live-toolbar__group--core">
         <label className="live-toolbar__field">
           Ventana
-          <select value={minutes} onChange={(e) => setMinutes(Number(e.target.value))}>
+          <select
+            value={minutes}
+            onChange={(e) => {
+              setMinutes(Number(e.target.value));
+              setPage(0);
+            }}
+          >
             {MINUTES_OPTIONS.map((value) => (
               <option key={value} value={value}>
                 {value} min
@@ -231,8 +242,14 @@ export function LiveAnalytics() {
         </label>
         <label className="live-toolbar__field">
           Límite
-          <select value={limit} onChange={(e) => setLimit(Number(e.target.value))}>
-            {[50, 100, 200, 300, 500].map((value) => (
+          <select
+            value={limit}
+            onChange={(e) => {
+              setLimit(Number(e.target.value));
+              setPage(0);
+            }}
+          >
+            {[100, 200, 500].map((value) => (
               <option key={value} value={value}>
                 {value}
               </option>
@@ -271,7 +288,14 @@ export function LiveAnalytics() {
         </span>
         <button
           type="button"
-          onClick={() => setPaused((prev) => !prev)}
+          onClick={() => {
+            // Reanudar siempre vuelve a la primera página (modo "live").
+            setPaused((prev) => {
+              const next = !prev;
+              if (!next) setPage(0);
+              return next;
+            });
+          }}
           className="live-toolbar__btn"
         >
           {paused ? "Reanudar" : "Pausar"}
@@ -364,8 +388,10 @@ export function LiveAnalytics() {
                       <span>Eventos capturados</span>
                       <Activity size={16} />
                     </header>
-                    <strong>{snapshot.events.length.toLocaleString("es-MX")}</strong>
-                    <small>Límite actual: {limit}</small>
+                    <strong>{snapshot.eventsTotal.toLocaleString("es-MX")}</strong>
+                    <small>
+                      Página {page + 1} · {snapshot.events.length.toLocaleString("es-MX")} mostrados
+                    </small>
                   </article>
                   <article className="analytics-kpi-card live-kpi-card">
                     <header>
@@ -426,7 +452,8 @@ export function LiveAnalytics() {
                       <h2>Stream de eventos</h2>
                       <p>
                         Mostrando {filteredEvents.length.toLocaleString("es-MX")} de{" "}
-                        {snapshot.events.length.toLocaleString("es-MX")} eventos.
+                        {snapshot.events.length.toLocaleString("es-MX")} eventos (total{" "}
+                        {snapshot.eventsTotal.toLocaleString("es-MX")}).
                       </p>
                     </div>
                     <div className="live-stream__meta">
@@ -549,6 +576,19 @@ export function LiveAnalytics() {
                       ))
                     )}
                   </div>
+                  <Pagination
+                    title="eventos"
+                    totalData={snapshot.eventsTotal}
+                    totalLoader={loading}
+                    startFilter={(_key, value) => {
+                      const nextPage = typeof value === "number" ? value : Number(value);
+                      if (!Number.isFinite(nextPage)) return;
+                      setPage(nextPage);
+                      if (nextPage > 0) setPaused(true);
+                    }}
+                    currentPage={page}
+                    limit={limit}
+                  />
                   <div className="analytics-foot live-foot">
                     <p>
                       Lectura rápida: identificación por usuario en stream{" "}
