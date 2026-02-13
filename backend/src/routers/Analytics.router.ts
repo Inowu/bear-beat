@@ -31,7 +31,8 @@ const analyticsRangeInputSchema = z
 const analyticsAttributionInputSchema = z
   .object({
     days: z.number().int().min(7).max(365).optional(),
-    limit: z.number().int().min(1).max(40).optional(),
+    limit: z.number().int().min(1).max(100).optional(),
+    page: z.number().int().min(0).max(5000).optional(),
   })
   .optional();
 
@@ -45,14 +46,16 @@ const analyticsBusinessInputSchema = z
 const analyticsUxInputSchema = z
   .object({
     days: z.number().int().min(7).max(365).optional(),
-    routesLimit: z.number().int().min(3).max(50).optional(),
+    routesLimit: z.number().int().min(3).max(100).optional(),
+    routesPage: z.number().int().min(0).max(5000).optional(),
   })
   .optional();
 
 const analyticsTopEventsInputSchema = z
   .object({
     days: z.number().int().min(7).max(365).optional(),
-    limit: z.number().int().min(5).max(60).optional(),
+    limit: z.number().int().min(5).max(100).optional(),
+    page: z.number().int().min(0).max(5000).optional(),
   })
   .optional();
 
@@ -161,6 +164,7 @@ export const analyticsRouter = router({
         ctx.prisma,
         input?.days,
         input?.limit,
+        input?.page,
       );
     }),
   getAnalyticsBusinessMetrics: shieldedProcedure
@@ -173,13 +177,18 @@ export const analyticsRouter = router({
     .input(analyticsUxInputSchema)
     .query(async ({ ctx, input }) => {
       assertAdminRole(ctx.session?.user?.role);
-      return getAnalyticsUxQuality(ctx.prisma, input?.days, input?.routesLimit);
+      return getAnalyticsUxQuality(
+        ctx.prisma,
+        input?.days,
+        input?.routesLimit,
+        input?.routesPage,
+      );
     }),
   getAnalyticsTopEvents: shieldedProcedure
     .input(analyticsTopEventsInputSchema)
     .query(async ({ ctx, input }) => {
       assertAdminRole(ctx.session?.user?.role);
-      return getAnalyticsTopEvents(ctx.prisma, input?.days, input?.limit);
+      return getAnalyticsTopEvents(ctx.prisma, input?.days, input?.limit, input?.page);
     }),
   getAnalyticsAlerts: shieldedProcedure
     .input(analyticsAlertsInputSchema)

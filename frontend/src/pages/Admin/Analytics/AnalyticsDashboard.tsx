@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import trpc from "../../../api";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
+import Pagination from "../../../components/Pagination/Pagination";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import "./AnalyticsDashboard.scss";
 
@@ -149,6 +150,7 @@ interface UxSummary {
     end: string;
   };
   totals: UxPoint;
+  routesTotal: number;
   routes: UxRoutePoint[];
   devices: UxDevicePoint[];
 }
@@ -175,6 +177,11 @@ interface HealthAlert {
 interface HealthAlertsSnapshot {
   generatedAt: string;
   alerts: HealthAlert[];
+}
+
+interface PaginatedResult<T> {
+  total: number;
+  data: T[];
 }
 
 const RANGE_OPTIONS = [7, 14, 30, 60, 90, 120];
@@ -237,10 +244,18 @@ export function AnalyticsDashboard() {
   const [funnel, setFunnel] = useState<FunnelOverview | null>(null);
   const [series, setSeries] = useState<DailyPoint[]>([]);
   const [attribution, setAttribution] = useState<AttributionPoint[]>([]);
+  const [attributionTotal, setAttributionTotal] = useState<number>(0);
+  const [attributionPage, setAttributionPage] = useState<number>(0);
+  const [attributionLimit] = useState<number>(100);
   const [cancellations, setCancellations] = useState<CancellationReasonsSnapshot | null>(null);
   const [business, setBusiness] = useState<BusinessMetrics | null>(null);
   const [ux, setUx] = useState<UxSummary | null>(null);
   const [topEvents, setTopEvents] = useState<TopEventPoint[]>([]);
+  const [topEventsTotal, setTopEventsTotal] = useState<number>(0);
+  const [topEventsPage, setTopEventsPage] = useState<number>(0);
+  const [topEventsLimit] = useState<number>(100);
+  const [uxRoutesPage, setUxRoutesPage] = useState<number>(0);
+  const [uxRoutesLimit] = useState<number>(100);
   const [alerts, setAlerts] = useState<HealthAlertsSnapshot | null>(null);
 
   const fetchAnalytics = useCallback(async () => {
@@ -265,21 +280,37 @@ export function AnalyticsDashboard() {
       ] = await Promise.all([
         trpc.analytics.getAnalyticsFunnelOverview.query({ days: rangeDays }),
         trpc.analytics.getAnalyticsDailySeries.query({ days: rangeDays }),
-        trpc.analytics.getAnalyticsAttribution.query({ days: rangeDays, limit: 12 }),
+        trpc.analytics.getAnalyticsAttribution.query({
+          days: rangeDays,
+          limit: attributionLimit,
+          page: attributionPage,
+        }),
         trpc.analytics.getAnalyticsCancellationReasons.query({ days: rangeDays, topCampaigns: 5 }),
         trpc.analytics.getAnalyticsBusinessMetrics.query({ days: rangeDays, adSpend }),
-        trpc.analytics.getAnalyticsUxQuality.query({ days: rangeDays, routesLimit: 12 }),
-        trpc.analytics.getAnalyticsTopEvents.query({ days: rangeDays, limit: 20 }),
+        trpc.analytics.getAnalyticsUxQuality.query({
+          days: rangeDays,
+          routesLimit: uxRoutesLimit,
+          routesPage: uxRoutesPage,
+        }),
+        trpc.analytics.getAnalyticsTopEvents.query({
+          days: rangeDays,
+          limit: topEventsLimit,
+          page: topEventsPage,
+        }),
         trpc.analytics.getAnalyticsAlerts.query({ days: rangeDays }),
       ]);
 
       setFunnel(funnelResponse as FunnelOverview);
       setSeries(seriesResponse as DailyPoint[]);
-      setAttribution(attributionResponse as AttributionPoint[]);
+      const attributionPaged = attributionResponse as PaginatedResult<AttributionPoint>;
+      setAttribution(attributionPaged.data);
+      setAttributionTotal(attributionPaged.total);
       setCancellations(cancellationsResponse as CancellationReasonsSnapshot);
       setBusiness(businessResponse as BusinessMetrics);
       setUx(uxResponse as UxSummary);
-      setTopEvents(topEventsResponse as TopEventPoint[]);
+      const topEventsPaged = topEventsResponse as PaginatedResult<TopEventPoint>;
+      setTopEvents(topEventsPaged.data);
+      setTopEventsTotal(topEventsPaged.total);
       setAlerts(alertsResponse as HealthAlertsSnapshot);
       setLastUpdatedAt(new Date().toISOString());
     } catch (fetchError) {
@@ -291,7 +322,16 @@ export function AnalyticsDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [rangeDays, manualAdSpend]);
+  }, [
+    rangeDays,
+    manualAdSpend,
+    attributionLimit,
+    attributionPage,
+    uxRoutesLimit,
+    uxRoutesPage,
+    topEventsLimit,
+    topEventsPage,
+  ]);
 
   useEffect(() => {
     void fetchAnalytics();
@@ -304,7 +344,13 @@ export function AnalyticsDashboard() {
           Ventana de análisis
           <select
             value={rangeDays}
-            onChange={(event) => setRangeDays(Number(event.target.value))}
+            onChange={(event) => {
+              // Reset pagination to keep tables stable when the window changes.
+              setRangeDays(Number(event.target.value));
+              setAttributionPage(0);
+              setTopEventsPage(0);
+              setUxRoutesPage(0);
+            }}
           >
             {RANGE_OPTIONS.map((days) => (
               <option key={days} value={days}>
@@ -713,6 +759,16 @@ export function AnalyticsDashboard() {
                         ))
                       )}
                     </div>
+                    <Pagination
+                      title="canales"
+                      totalData={attributionTotal}
+                      totalLoader={loading}
+                      startFilter={(_key, value) =>
+                        setAttributionPage(typeof value === "number" ? value : Number(value))
+                      }
+                      currentPage={attributionPage}
+                      limit={attributionLimit}
+                    />
                   </section>
 
                   <section className="analytics-panel">
@@ -1023,6 +1079,16 @@ export function AnalyticsDashboard() {
                         ))
                       )}
                     </div>
+                    <Pagination
+                      title="rutas"
+                      totalData={ux.routesTotal}
+                      totalLoader={loading}
+                      startFilter={(_key, value) =>
+                        setUxRoutesPage(typeof value === "number" ? value : Number(value))
+                      }
+                      currentPage={uxRoutesPage}
+                      limit={uxRoutesLimit}
+                    />
                     <div className="analytics-table-wrap" tabIndex={0} aria-label="Tabla: Web Vitals por dispositivo (desplazable)">
                       <table>
                         <thead>
@@ -1166,6 +1232,16 @@ export function AnalyticsDashboard() {
                         ))
                       )}
                     </div>
+                    <Pagination
+                      title="eventos"
+                      totalData={topEventsTotal}
+                      totalLoader={loading}
+                      startFilter={(_key, value) =>
+                        setTopEventsPage(typeof value === "number" ? value : Number(value))
+                      }
+                      currentPage={topEventsPage}
+                      limit={topEventsLimit}
+                    />
                   </section>
                 </div>
 

@@ -224,19 +224,11 @@
     grid-template-areas:
       "search search"
       "method status"
-      "start end"
+      /* iOS native date inputs can overflow inside 2 columns; stack them for safety. */
+      "start start"
+      "end end"
       "today limit";
     gap: 8px;
-
-    /* Native date inputs need more width on very small screens (iPhone). */
-    @media (max-width: 420px) {
-      grid-template-areas:
-        "search search"
-        "method status"
-        "start start"
-        "end end"
-        "today limit";
-    }
 
     /* Ultra small screens: stack every control to avoid any overflow. */
     @media (max-width: 390px) {

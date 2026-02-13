@@ -5,7 +5,7 @@ import { z } from 'zod';
 const MAX_BATCH_SIZE = 40;
 const DEFAULT_RANGE_DAYS = 30;
 const DEFAULT_ATTRIBUTION_LIMIT = 12;
-const MAX_ATTRIBUTION_LIMIT = 40;
+const MAX_ATTRIBUTION_LIMIT = 100;
 const SESSION_INACTIVITY_MINUTES = 30;
 
 const analyticsEventCategorySchema = z.enum([
@@ -200,6 +200,7 @@ interface AnalyticsUxSummary {
     clsAvg: number | null;
     inpAvg: number | null;
   };
+  routesTotal: number;
   routes: AnalyticsUxRoutePoint[];
   devices: AnalyticsUxDevicePoint[];
 }
@@ -903,9 +904,10 @@ export const getAnalyticsAttributionBreakdown = async (
   prisma: PrismaClient,
   daysInput?: number,
   limitInput?: number,
-): Promise<AnalyticsAttributionPoint[]> => {
+  pageInput?: number,
+): Promise<{ total: number; data: AnalyticsAttributionPoint[] }> => {
   if (!process.env.DATABASE_URL) {
-    return [];
+    return { total: 0, data: [] };
   }
 
   await ensureAnalyticsEventsTable(prisma);
@@ -913,42 +915,63 @@ export const getAnalyticsAttributionBreakdown = async (
   const limit = limitInput
     ? Math.max(1, Math.min(MAX_ATTRIBUTION_LIMIT, Math.floor(limitInput)))
     : DEFAULT_ATTRIBUTION_LIMIT;
+  const page =
+    typeof pageInput === 'number' && Number.isFinite(pageInput) && pageInput > 0
+      ? Math.floor(pageInput)
+      : 0;
+  const offset = page * limit;
 
-  const rows = await prisma.$queryRaw<
-    Array<{
-      source: string | null;
-      medium: string | null;
-      campaign: string | null;
-      visitors: bigint | number;
-      registrations: bigint | number;
-      checkouts: bigint | number;
-      purchases: bigint | number;
-      revenue: unknown;
-    }>
-  >(Prisma.sql`
-    SELECT
-      COALESCE(NULLIF(utm_source, ''), 'direct') AS source,
-      COALESCE(NULLIF(utm_medium, ''), 'none') AS medium,
-      COALESCE(NULLIF(utm_campaign, ''), '(none)') AS campaign,
-      COUNT(DISTINCT CASE
-        WHEN event_name = 'page_view'
-          THEN COALESCE(visitor_id, session_id, CONCAT('anon:', event_id))
-      END) AS visitors,
-      COUNT(CASE WHEN event_name = 'registration_completed' THEN 1 END) AS registrations,
-      COUNT(CASE WHEN event_name = 'checkout_started' THEN 1 END) AS checkouts,
-      COUNT(CASE WHEN event_name = 'payment_success' THEN 1 END) AS purchases,
-      COALESCE(SUM(CASE
-        WHEN event_name = 'payment_success' THEN COALESCE(amount, 0)
-        ELSE 0
-      END), 0) AS revenue
-    FROM analytics_events
-    WHERE event_ts >= ${startDate}
-    GROUP BY source, medium, campaign
-    ORDER BY purchases DESC, registrations DESC, visitors DESC
-    LIMIT ${limit}
-  `);
+  const [totalRows, rows] = await Promise.all([
+    prisma.$queryRaw<Array<{ total: bigint | number }>>(Prisma.sql`
+      SELECT COUNT(*) AS total
+      FROM (
+        SELECT 1
+        FROM analytics_events
+        WHERE event_ts >= ${startDate}
+        GROUP BY
+          COALESCE(NULLIF(utm_source, ''), 'direct'),
+          COALESCE(NULLIF(utm_medium, ''), 'none'),
+          COALESCE(NULLIF(utm_campaign, ''), '(none)')
+      ) AS groups_count
+    `),
+    prisma.$queryRaw<
+      Array<{
+        source: string | null;
+        medium: string | null;
+        campaign: string | null;
+        visitors: bigint | number;
+        registrations: bigint | number;
+        checkouts: bigint | number;
+        purchases: bigint | number;
+        revenue: unknown;
+      }>
+    >(Prisma.sql`
+      SELECT
+        COALESCE(NULLIF(utm_source, ''), 'direct') AS source,
+        COALESCE(NULLIF(utm_medium, ''), 'none') AS medium,
+        COALESCE(NULLIF(utm_campaign, ''), '(none)') AS campaign,
+        COUNT(DISTINCT CASE
+          WHEN event_name = 'page_view'
+            THEN COALESCE(visitor_id, session_id, CONCAT('anon:', event_id))
+        END) AS visitors,
+        COUNT(CASE WHEN event_name = 'registration_completed' THEN 1 END) AS registrations,
+        COUNT(CASE WHEN event_name = 'checkout_started' THEN 1 END) AS checkouts,
+        COUNT(CASE WHEN event_name = 'payment_success' THEN 1 END) AS purchases,
+        COALESCE(SUM(CASE
+          WHEN event_name = 'payment_success' THEN COALESCE(amount, 0)
+          ELSE 0
+        END), 0) AS revenue
+      FROM analytics_events
+      WHERE event_ts >= ${startDate}
+      GROUP BY source, medium, campaign
+      ORDER BY purchases DESC, registrations DESC, visitors DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `),
+  ]);
 
-  return rows.map((row) => {
+  const total = numberFromUnknown(totalRows?.[0]?.total);
+
+  const data = rows.map((row) => {
     const purchases = numberFromUnknown(row.purchases);
     const revenue = roundNumber(numberFromUnknown(row.revenue), 2);
     return {
@@ -963,6 +986,8 @@ export const getAnalyticsAttributionBreakdown = async (
       aov: purchases > 0 ? roundNumber(revenue / purchases, 2) : 0,
     };
   });
+
+  return { total, data };
 };
 
 export const getAnalyticsBusinessMetrics = async (
@@ -1215,6 +1240,7 @@ export const getAnalyticsUxQuality = async (
   prisma: PrismaClient,
   daysInput?: number,
   routesLimitInput?: number,
+  routesPageInput?: number,
 ): Promise<AnalyticsUxSummary> => {
   if (!process.env.DATABASE_URL) {
     const { days, startDate } = resolveRange(daysInput);
@@ -1232,6 +1258,7 @@ export const getAnalyticsUxQuality = async (
         clsAvg: null,
         inpAvg: null,
       },
+      routesTotal: 0,
       routes: [],
       devices: [],
     };
@@ -1240,10 +1267,15 @@ export const getAnalyticsUxQuality = async (
   await ensureAnalyticsEventsTable(prisma);
   const { days, startDate } = resolveRange(daysInput);
   const routesLimit = routesLimitInput
-    ? Math.max(3, Math.min(50, Math.floor(routesLimitInput)))
+    ? Math.max(3, Math.min(100, Math.floor(routesLimitInput)))
     : 12;
+  const routesPage =
+    typeof routesPageInput === 'number' && Number.isFinite(routesPageInput) && routesPageInput > 0
+      ? Math.floor(routesPageInput)
+      : 0;
+  const routesOffset = routesPage * routesLimit;
 
-  const [totalsRows, routeRows, deviceRows] = await Promise.all([
+  const [totalsRows, routesTotalRows, routeRows, deviceRows] = await Promise.all([
     prisma.$queryRaw<
       Array<{
         samples: bigint | number;
@@ -1268,6 +1300,12 @@ export const getAnalyticsUxQuality = async (
           WHEN JSON_UNQUOTE(JSON_EXTRACT(metadata_json, '$.metricName')) IN ('INP', 'FID')
             THEN CAST(JSON_UNQUOTE(JSON_EXTRACT(metadata_json, '$.value')) AS DECIMAL(14,4))
         END) AS inpAvg
+      FROM analytics_events
+      WHERE event_name = 'web_vital_reported'
+        AND event_ts >= ${startDate}
+    `),
+    prisma.$queryRaw<Array<{ routesTotal: bigint | number }>>(Prisma.sql`
+      SELECT COUNT(DISTINCT COALESCE(NULLIF(page_path, ''), '/unknown')) AS routesTotal
       FROM analytics_events
       WHERE event_name = 'web_vital_reported'
         AND event_ts >= ${startDate}
@@ -1303,7 +1341,7 @@ export const getAnalyticsUxQuality = async (
         AND event_ts >= ${startDate}
       GROUP BY pagePath
       ORDER BY poorCount DESC, samples DESC
-      LIMIT ${routesLimit}
+      LIMIT ${routesLimit} OFFSET ${routesOffset}
     `),
     prisma.$queryRaw<
       Array<{
@@ -1382,6 +1420,7 @@ export const getAnalyticsUxQuality = async (
       totals.clsAvg,
       totals.inpAvg,
     ),
+    routesTotal: numberFromUnknown(routesTotalRows?.[0]?.routesTotal),
     routes: routeRows.map((row) => ({
       pagePath: row.pagePath || '/unknown',
       ...normalizeUxPoint(
@@ -1409,44 +1448,65 @@ export const getAnalyticsTopEvents = async (
   prisma: PrismaClient,
   daysInput?: number,
   limitInput?: number,
-): Promise<AnalyticsTopEventPoint[]> => {
+  pageInput?: number,
+): Promise<{ total: number; data: AnalyticsTopEventPoint[] }> => {
   if (!process.env.DATABASE_URL) {
-    return [];
+    return { total: 0, data: [] };
   }
 
   await ensureAnalyticsEventsTable(prisma);
   const { startDate } = resolveRange(daysInput);
-  const limit = limitInput ? Math.max(5, Math.min(60, Math.floor(limitInput))) : 20;
+  const limit = limitInput ? Math.max(5, Math.min(100, Math.floor(limitInput))) : 20;
+  const page =
+    typeof pageInput === 'number' && Number.isFinite(pageInput) && pageInput > 0
+      ? Math.floor(pageInput)
+      : 0;
+  const offset = page * limit;
 
-  const rows = await prisma.$queryRaw<
-    Array<{
-      eventName: string;
-      eventCategory: string;
-      totalEvents: bigint | number;
-      uniqueVisitors: bigint | number;
-      uniqueSessions: bigint | number;
-    }>
-  >(Prisma.sql`
-    SELECT
-      event_name AS eventName,
-      event_category AS eventCategory,
-      COUNT(*) AS totalEvents,
-      COUNT(DISTINCT visitor_id) AS uniqueVisitors,
-      COUNT(DISTINCT session_id) AS uniqueSessions
-    FROM analytics_events
-    WHERE event_ts >= ${startDate}
-    GROUP BY event_name, event_category
-    ORDER BY totalEvents DESC
-    LIMIT ${limit}
-  `);
+  const [totalRows, rows] = await Promise.all([
+    prisma.$queryRaw<Array<{ total: bigint | number }>>(Prisma.sql`
+      SELECT COUNT(*) AS total
+      FROM (
+        SELECT 1
+        FROM analytics_events
+        WHERE event_ts >= ${startDate}
+        GROUP BY event_name, event_category
+      ) AS groups_count
+    `),
+    prisma.$queryRaw<
+      Array<{
+        eventName: string;
+        eventCategory: string;
+        totalEvents: bigint | number;
+        uniqueVisitors: bigint | number;
+        uniqueSessions: bigint | number;
+      }>
+    >(Prisma.sql`
+      SELECT
+        event_name AS eventName,
+        event_category AS eventCategory,
+        COUNT(*) AS totalEvents,
+        COUNT(DISTINCT visitor_id) AS uniqueVisitors,
+        COUNT(DISTINCT session_id) AS uniqueSessions
+      FROM analytics_events
+      WHERE event_ts >= ${startDate}
+      GROUP BY event_name, event_category
+      ORDER BY totalEvents DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `),
+  ]);
 
-  return rows.map((row) => ({
+  const total = numberFromUnknown(totalRows?.[0]?.total);
+
+  const data = rows.map((row) => ({
     eventName: row.eventName,
     eventCategory: row.eventCategory,
     totalEvents: numberFromUnknown(row.totalEvents),
     uniqueVisitors: numberFromUnknown(row.uniqueVisitors),
     uniqueSessions: numberFromUnknown(row.uniqueSessions),
   }));
+
+  return { total, data };
 };
 
 export const getAnalyticsCrmDashboard = async (
