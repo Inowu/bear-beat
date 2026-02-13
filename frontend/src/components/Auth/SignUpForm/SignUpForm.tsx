@@ -20,6 +20,7 @@ import {
   TURNSTILE_BYPASS_TOKEN,
 } from "../../../utils/turnstile";
 import { toErrorMessage } from "../../../utils/errorMessage";
+import type { IPlans } from "../../../interfaces/Plans";
 import brandLockupBlack from "../../../assets/brand/bearbeat-lockup-black.png";
 import brandLockupCyan from "../../../assets/brand/bearbeat-lockup-cyan.png";
 
@@ -57,6 +58,21 @@ function SignUpForm() {
   const brandLockup = theme === "light" ? brandLockupBlack : brandLockupCyan;
   // Default conversion path after signup is /planes (unless the user came from a protected route / checkout).
   const from = (location.state as { from?: string } | null)?.from ?? "/planes";
+  const checkoutPlanId = useMemo(() => {
+    if (typeof window === "undefined") return null;
+    const isCheckoutIntent = from.startsWith("/comprar") || from.startsWith("/checkout");
+    if (!isCheckoutIntent) return null;
+    try {
+      const url = new URL(from, window.location.origin);
+      const raw = url.searchParams.get("priceId");
+      const parsed = raw ? Number(raw) : NaN;
+      return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+    } catch {
+      return null;
+    }
+  }, [from]);
+  const [checkoutPlan, setCheckoutPlan] = useState<IPlans | null>(null);
+  const [checkoutPlanLoading, setCheckoutPlanLoading] = useState(false);
   const [loader, setLoader] = useState<boolean>(false);
   const { handleLogin } = useUserContext();
   const [dialCode, setDialCode] = useState<string>("52");
@@ -79,6 +95,49 @@ function SignUpForm() {
     gb: number;
     eligible: boolean | null;
   } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!checkoutPlanId) {
+      setCheckoutPlan(null);
+      setCheckoutPlanLoading(false);
+      return;
+    }
+    setCheckoutPlanLoading(true);
+    (async () => {
+      try {
+        const plans: IPlans[] = await trpc.plans.findManyPlans.query({
+          where: { activated: 1, id: checkoutPlanId },
+        } as any);
+        if (!cancelled) setCheckoutPlan(plans?.[0] ?? null);
+      } catch {
+        if (!cancelled) setCheckoutPlan(null);
+      } finally {
+        if (!cancelled) setCheckoutPlanLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [checkoutPlanId]);
+
+  const checkoutPlanPriceLabel = useMemo(() => {
+    if (!checkoutPlan) return null;
+    const currency = (checkoutPlan.moneda ?? "MXN").toUpperCase();
+    const amount = Number(checkoutPlan.price ?? 0);
+    if (!Number.isFinite(amount) || amount <= 0) return null;
+    const locale = currency === "USD" ? "en-US" : "es-MX";
+    try {
+      return new Intl.NumberFormat(locale, {
+        style: "currency",
+        currency,
+        minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
+        maximumFractionDigits: 2,
+      }).format(amount);
+    } catch {
+      return `${currency} $${amount}`;
+    }
+  }, [checkoutPlan]);
 
   const validationSchema = Yup.object().shape({
     email: Yup.string().required("El correo es requerido").email("El formato del correo no es correcto"),
@@ -428,6 +487,25 @@ function SignUpForm() {
       <div className="auth-login-atmosphere">
         <div className="auth-login-card auth-login-card--signup">
           <img src={brandLockup} alt="Bear Beat" className="auth-login-logo" />
+          {(checkoutPlanLoading || checkoutPlan) && (
+            <div className="auth-checkout-summary" role="note" aria-label="Plan seleccionado">
+              <span className="auth-checkout-summary__label">Plan seleccionado</span>
+              <div className="auth-checkout-summary__row">
+                <strong className="auth-checkout-summary__name">
+                  {checkoutPlan?.name ?? "Cargando…"}
+                </strong>
+                {checkoutPlanPriceLabel && (
+                  <span className="auth-checkout-summary__price">
+                    {checkoutPlanPriceLabel}
+                    <span className="auth-checkout-summary__price-suffix">/mes</span>
+                  </span>
+                )}
+              </div>
+              <p className="auth-checkout-summary__hint">
+                Crea tu cuenta para continuar con el pago seguro.
+              </p>
+            </div>
+          )}
           <h1 className="auth-login-title">Crea tu cuenta</h1>
           <p className="auth-login-sub auth-login-sub--signup">
             Activa tu cuenta en minutos y empieza a descargar.

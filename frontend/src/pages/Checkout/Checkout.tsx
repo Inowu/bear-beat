@@ -41,7 +41,7 @@ const METHOD_META: Record<
     Icon: CreditCard,
   },
   spei: {
-    label: "SPEI (recurrente)",
+    label: "SPEI",
     description: "Transferencia bancaria (CLABE reutilizable)",
     Icon: Landmark,
   },
@@ -344,7 +344,7 @@ function Checkout() {
       ? (requested as CheckoutMethod)
       : null;
     setSelectedMethod(
-      requestedAsMethod ?? (plan.moneda?.toUpperCase() === "MXN" ? "spei" : "card"),
+      requestedAsMethod ?? "card",
     );
   }, [plan, checkManyChat, requestedMethod]);
 
@@ -743,6 +743,10 @@ function Checkout() {
 
   const quotaGb = Number(plan?.gigas ?? 500);
   const durationDays = Number(plan?.duration ?? 0);
+  const cycleFact =
+    Number.isFinite(durationDays) && durationDays > 0
+      ? `${formatInt(durationDays)} días por ciclo`
+      : "Pago mensual";
   const benefits = [
     `${formatInt(quotaGb)} GB por mes para descargas`,
     "Catálogo organizado para cabina (audio, video y karaoke)",
@@ -750,7 +754,7 @@ function Checkout() {
   ];
   const quickFacts = [
     `${formatInt(quotaGb)} GB/mes`,
-    `${formatInt(durationDays)} días por ciclo`,
+    cycleFact,
     "Cancela cuando quieras",
   ];
   const checkoutSteps = [
@@ -763,11 +767,11 @@ function Checkout() {
     : "Tarjeta y PayPal (según disponibilidad).";
   let continueLabel = "Continuar";
   if (processingMethod === "card") continueLabel = "Abriendo pasarela segura...";
-  if (processingMethod === "spei") continueLabel = "Generando referencia SPEI (recurrente)...";
+  if (processingMethod === "spei") continueLabel = "Generando referencia SPEI...";
   if (processingMethod === "bbva") continueLabel = "Abriendo pago BBVA...";
   if (processingMethod === "oxxo") continueLabel = "Generando referencia de pago en efectivo...";
   if (processingMethod === null && selectedMethod === "card") continueLabel = "Continuar con tarjeta segura";
-  if (processingMethod === null && selectedMethod === "spei") continueLabel = "Generar referencia SPEI (recurrente)";
+  if (processingMethod === null && selectedMethod === "spei") continueLabel = "Generar referencia SPEI";
   if (processingMethod === null && selectedMethod === "bbva") continueLabel = "Continuar con BBVA";
   if (processingMethod === null && selectedMethod === "oxxo") continueLabel = "Generar referencia de pago en efectivo";
 
@@ -1033,7 +1037,9 @@ function Checkout() {
             </p>
             <div className="checkout-summary__stats" role="list" aria-label="Detalles del plan">
               <span role="listitem">{formatInt(quotaGb)} GB/mes</span>
-              <span role="listitem">{plan.duration} días</span>
+              <span role="listitem">
+                {Number.isFinite(durationDays) && durationDays > 0 ? `${formatInt(durationDays)} días` : "Mensual"}
+              </span>
               <span role="listitem">Renovación automática</span>
             </div>
             {plan.description && (

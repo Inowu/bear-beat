@@ -14,7 +14,10 @@ function AuthRoute({ children }: AuthRoutePropsI) {
   useEffect(() => {
     if (!userToken) {
       const returnUrl = location.pathname + location.search;
-      navigate("/auth", { state: { from: returnUrl }, replace: true });
+      const isCheckoutStart =
+        returnUrl.startsWith("/comprar") && !returnUrl.startsWith("/comprar/success");
+      // Conversion-first: if the user is trying to buy/activate, default to signup (they can still switch to login).
+      navigate(isCheckoutStart ? "/auth/registro" : "/auth", { state: { from: returnUrl }, replace: true });
     }
   }, [userToken, navigate, location.pathname, location.search]);
 

@@ -10,6 +10,7 @@ import { trackManyChatConversion, MC_EVENTS } from '../../utils/manychatPixel';
 import { AlertTriangle, RefreshCw, Layers3 } from 'lucide-react';
 import { formatInt, formatTB } from '../../utils/format';
 import PublicTopNav from "../../components/PublicTopNav/PublicTopNav";
+import PlansStickyCta from './PlansStickyCta';
 
 function normalizeCurrency(value: unknown): "mxn" | "usd" | "" {
   const raw = `${value ?? ""}`.trim().toLowerCase();
@@ -461,6 +462,16 @@ function Plans() {
         </section>
       )}
       </div>
+      <PlansStickyCta
+        planId={primaryPlan?.id ?? null}
+        ctaLabel={primaryCtaLabel}
+        trial={
+          trialConfig
+            ? { enabled: Boolean(trialConfig.enabled), days: Number(trialConfig.days ?? 0), gb: Number(trialConfig.gb ?? 0) }
+            : null
+        }
+        onClick={handlePrimaryCta}
+      />
     </div>
   );
 }

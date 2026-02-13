@@ -465,7 +465,7 @@ function PlanCard(props: PlanCardPropsI) {
                         <li>Cancela cuando quieras</li>
                       </ul>
                     )}
-                    {isMxn && (
+                    {isMxn && !isMarketing && (
                       <div className="plan-card-alt-payments">
                         <button
                           type="button"

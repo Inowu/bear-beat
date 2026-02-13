@@ -63,6 +63,63 @@
   }
 }
 
+.auth-checkout-summary {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--app-accent) 32%, var(--auth-login-card-border));
+  background: color-mix(in srgb, var(--theme-accent-soft-bg-2) 72%, var(--auth-login-card-bg));
+  display: grid;
+  gap: 6px;
+  text-align: left;
+}
+
+.auth-checkout-summary__label {
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--auth-login-subtitle);
+}
+
+.auth-checkout-summary__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.auth-checkout-summary__name {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--auth-login-title);
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.auth-checkout-summary__price {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: var(--app-accent);
+  white-space: nowrap;
+}
+
+.auth-checkout-summary__price-suffix {
+  margin-left: 4px;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--auth-login-subtitle);
+}
+
+.auth-checkout-summary__hint {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+  line-height: 1.35;
+  color: var(--auth-login-subtitle);
+}
+
 .auth-login-logo {
   display: block;
   height: 42px;
