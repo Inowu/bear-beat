@@ -31,6 +31,7 @@ export function VerifyUpdatePhoneModal(props: IVerifyPhoneModal) {
   const [countryCode, setCountryCode] = useState<string>("mx");
   const [disableConfirmPhone, setDisableConfirmPhone] = useState<boolean>(true);
   const [codeSent, setCodeSent] = useState<boolean>(false);
+  const [deliveryChannel, setDeliveryChannel] = useState<"whatsapp" | "sms" | null>(null);
 
   const closeModal = () => {
     setShow(false);
@@ -106,6 +107,9 @@ export function VerifyUpdatePhoneModal(props: IVerifyPhoneModal) {
     } else {
       setDisableConfirmPhone(false);
       setCodeSent(true);
+      // Backend may fall back to SMS if WhatsApp delivery fails.
+      const channel = (verification as any)?.channel;
+      setDeliveryChannel(channel === "sms" ? "sms" : channel === "whatsapp" ? "whatsapp" : null);
     }
     setSendingCodeLoader(false);
   };
@@ -133,6 +137,7 @@ export function VerifyUpdatePhoneModal(props: IVerifyPhoneModal) {
     if (showModal) {
       setDisableConfirmPhone(true);
       setCodeSent(false);
+      setDeliveryChannel(null);
       formik.setFieldValue("code", "");
     }
   }, [showModal]);
@@ -181,7 +186,15 @@ export function VerifyUpdatePhoneModal(props: IVerifyPhoneModal) {
         </div>
         {codeSent && (
           <div className="c-row">
-            <p>Se ha enviado el codigo a su WhatsApp</p>
+            <p>
+              Se ha enviado el código a{" "}
+              {deliveryChannel === "sms"
+                ? "tu SMS"
+                : deliveryChannel === "whatsapp"
+                  ? "tu WhatsApp"
+                  : "tu teléfono"}
+              .
+            </p>
           </div>
         )}
 

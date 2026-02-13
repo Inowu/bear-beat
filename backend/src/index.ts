@@ -195,6 +195,21 @@ async function main() {
       });
     });
 
+    app.get('/health/comms', (_req, res) => {
+      const has = (key: string): boolean => Boolean(process.env[key]?.trim());
+      res.json({
+        ok: true,
+        brevo: {
+          configured: has('BREVO_API_KEY'),
+        },
+        twilio: {
+          configured: has('TWILIO_ACCOUNT_SID') && has('TWILIO_AUTH_TOKEN'),
+          verifyConfigured: has('TWILIO_VERIFY_SID'),
+          messagingConfigured: has('TWILIO_CONTENT_SID') && has('TWILIO_MESSAGING_SID'),
+        },
+      });
+    });
+
     app.get('/health/sentry', (_req, res) => {
       res.json({
         ok: true,
