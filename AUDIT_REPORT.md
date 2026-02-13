@@ -23,6 +23,8 @@ Qué se hizo para mitigar (sin tocar producción):
 
 Estado: los fixes están implementados en código y cubiertos por tests; **pendiente** desplegar vía PR/merge y validar end-to-end en un **STAGING** aislado (local reproducible).
 
+Además, se ejecutaron mediciones **pasivas** en producción (headers/robots/sitemap + Lighthouse puntual) y DAST baseline en STAGING local (ZAP baseline), sin interrumpir producción.
+
 ## Inventario (Fase 0 — descubrimiento)
 
 ### Stack / repos
@@ -86,6 +88,8 @@ Leyenda:
 | A-010 | High | Abierto | Proyecto | AppSec/Secrets | `gitleaks` detecta **potenciales secretos** en historial git (requiere triage y posible rotación/rewrite) |
 | A-007 | Medium | Abierto | Quick win | Backend/API | CORS/headers en API prod parecen demasiado permisivos (`Access-Control-Allow-Origin: *`) y faltan headers de hardening |
 | A-008 | Medium | Mitigado (en rama) | Quick win | QA/AppSec | Tests/smoke podían disparar integraciones externas si `.env` tenía secretos; se aisló carga de env y se deshabilitaron integraciones en `NODE_ENV=test` |
+| A-011 | Medium | Abierto | Proyecto | Backend/DB | **Drift de esquema**: tabla `products` no existe en migraciones locales (riesgo de divergencia prod↔staging) |
+| A-012 | Medium | Abierto | Quick win | Backend/FTP | `/trpc/ftp.storage` responde 500 en STAGING local (admin) por dependencia no configurada |
 
 ## Detalle de hallazgos (con evidencia + remediación)
 
@@ -144,6 +148,9 @@ Leyenda:
   - Captura de headers: `audit-artifacts/prod-passive-2026-02-12/thebearbeat.com.headers.txt`
   - Observado: `strict-transport-security`, `x-content-type-options`, `referrer-policy`
   - No observado (en esa respuesta): `content-security-policy`, `permissions-policy`, `x-frame-options` o `frame-ancestors` (CSP).
+- **Evidencia (DAST baseline, STAGING local):**
+  - ZAP baseline (frontend local build): `audit-artifacts/dast-2026-02-13/zap/zap-frontend.html`
+  - Alerts principales: CSP missing, anti-clickjacking missing, Permissions-Policy missing, X-Content-Type-Options missing (staging local).
 - **Cómo reproducir:**
   - `curl -I https://thebearbeat.com/` (solo lectura).
 - **Impacto:** menor defensa en profundidad contra XSS, clickjacking, y abuso de APIs del navegador.
@@ -182,20 +189,20 @@ Leyenda:
 
 ### A-006 — Vulnerabilidades High en dependencias (High)
 - **Evidencia:**
-  - `npm audit` (JSON) guardado en:
-    - `audit-artifacts/appsec-2026-02-12/deps/npm-audit.root.json`
-    - `audit-artifacts/appsec-2026-02-12/deps/npm-audit.frontend.json`
-    - `audit-artifacts/appsec-2026-02-12/deps/npm-audit.backend.json`
-  - Resumen (high/critical): `audit-artifacts/appsec-2026-02-12/deps/npm-audit.summary.md`
+  - `npm audit --workspaces`:
+    - JSON: `audit-artifacts/appsec-2026-02-13/deps/npm-audit.json`
+    - Texto: `audit-artifacts/appsec-2026-02-13/deps/npm-audit.txt`
+  - Resumen actual: **15 vulnerabilidades** (11 high, 4 low).
 - **Cómo reproducir:**
   - `npm audit` (root / `frontend` / `backend`).
 - **Impacto:** riesgo de seguridad por CVEs/GHSAs en librerías; algunas afectan SSRF/DoS y bypasses de validación.
 - **Probabilidad:** media (depende de rutas de ejecución, pero la exposición suele ser amplia con deps web).
 - **Recomendación concreta:**
   - Plan de upgrade por etapas (idealmente PRs separados) para deps con fix available:
-    - `conekta` (implica actualizar `axios` transitive)
-    - `fastify` y `@fastify/secure-session` (validar si se usan en runtime; si no se usan, remover deps)
-    - toolchain Prisma generators (`prisma-trpc-generator`, etc.) con compatibilidad.
+    - `conekta` (trae `axios` vulnerable como dependencia transitiva en versiones actuales).
+    - `@fastify/secure-session` / `fastify` (validar si realmente se usan en runtime; si no, remover del tree).
+    - toolchain Prisma generators (`prisma-trpc-generator`, `prisma-trpc-shield-generator`) por `cross-spawn/tmp` vulnerables.
+    - `pm2`: advisory sin fix (mitigar: reducir superficie, hardening y monitoreo; evaluar alternativa).
   - Mantener `npm audit` en CI con baseline/allowlist temporal (si es inevitable) y fechas de remediación.
 - **Esfuerzo estimado:** **M/L** (por upgrades major + regresiones potenciales)
 - **Owner sugerido:** Backend + Frontend + AppSec
@@ -269,7 +276,7 @@ Fuente (pasivo prod): `audit-artifacts/prod-passive-2026-02-12/thebearbeat.com.h
   - Build local: `npm run build --workspace=backend` **OK** (TypeScript + Prisma generate; sin requerir DB).
 - Frontend:
   - Vitest: `npm test --workspace=frontend`
-  - Tests locales: **OK** (2026-02-12).
+  - Tests locales: **OK** (2026-02-13). Evidencia: `audit-artifacts/staging-local-2026-02-13/frontend.vitest.txt`.
   - Build local: `npm run build` **OK** (2026-02-12) con warnings (Sass `@import` deprecado; chunks > 500 kB).
 - E2E:
   - Playwright smoke: `backend/scripts/smokeE2e.ts` (registro → planes → checkout success mock + login/admin opcional).
@@ -283,31 +290,82 @@ Fuente (pasivo prod): `audit-artifacts/prod-passive-2026-02-12/thebearbeat.com.h
   - Auditorías existentes: `backend/scripts/auditFullSite.ts`.
   - Pendiente: suite E2E completa de flujos críticos (registro/login/reset/checkout/acceso a descargas/roles).
 
-## Performance / Web Vitals (pendiente de medición)
-Pendiente ejecutar Lighthouse/Web Vitals en:
-- Landing `/`
-- Registro `/auth/registro`
-- Login `/auth`
-- Planes `/planes`
-- Checkout `/comprar`
-- App `/micuenta`, `/descargas`
+## Performance / Web Vitals (Lighthouse)
 
-Regla: medición profunda + load solo en **STAGING**.
+### Producción (pasivo, sin carga agresiva)
+Evidencia: `audit-artifacts/perf-2026-02-13/lighthouse-prod-passive/summary.md`
 
-## Accesibilidad (WCAG) y SEO técnico (parcial)
-- SEO (pasivo):
-  - `robots.txt` existe y referencia `sitemap.xml` (ver `audit-artifacts/prod-passive-2026-02-12/robots.body.txt`)
-  - Rutas privadas disallow: `/admin`, `/micuenta`, `/descargas`, `/comprar`, etc.
-- Accesibilidad: pendiente `axe`/Lighthouse + teclado/foco en flujos críticos.
+Resumen (Lighthouse):
+- `/`:
+  - Desktop: Performance **97**, LCP **1.0s**, CLS **0.014**
+  - Mobile: *Lighthouse no pudo calcular LCP (NO_LCP)*; se registró FCP **3.9s**
+- `/planes`:
+  - Desktop: Performance **92**, LCP **1.6s**
+  - Mobile: Performance **62**, LCP **7.1s**, TBT **90ms**
+- `/auth`:
+  - Desktop: Performance **96**, LCP **1.1s**
+  - Mobile: Performance **63**, LCP **6.9s**
+
+Interpretación (no técnica):
+- En **desktop** el sitio está en buen estado.
+- En **mobile** hay margen de mejora (LCP ~7s en páginas de conversión como Planes/Auth).
+
+### STAGING local (referencial)
+Se generaron reportes de Lighthouse en local para comparación, pero **no** representan producción (sin CDN/HTTPS, diferente caching):
+- Dev server (referencial): `audit-artifacts/perf-2026-02-13/lighthouse/summary.md`
+- Production build local (`vite preview`, referencial): `audit-artifacts/perf-2026-02-13/lighthouse-preview/summary.md`
+
+## Accesibilidad (WCAG) y SEO técnico
+
+### SEO (pasivo, producción)
+- `robots.txt` existe y referencia `sitemap.xml` (ver `audit-artifacts/prod-passive-2026-02-12/robots.body.txt`)
+- Rutas privadas disallow: `/admin`, `/micuenta`, `/descargas`, `/comprar`, etc.
+
+### Accesibilidad (axe, STAGING local)
+- Evidencia (STAGING local): `audit-artifacts/fullsite-2026-02-13-r2/a11y-report.md`
+  - Rutas auditadas: 27
+  - Violaciones axe: **0**
+- Hallazgos heurísticos (quick wins): botones icon-only sin label (ver `audit-artifacts/fullsite-2026-02-13-r2/cro-findings.md`).
+
+Pendiente (manual): navegación teclado/foco y formularios en flujos críticos (registro/login/checkout) con un set de casos WCAG básico.
 
 ## AppSec checks ejecutados (sin tocar producción)
-- Dependency audit (`npm audit`): ver `audit-artifacts/appsec-2026-02-12/deps/npm-audit.summary.md`.
+- Dependency audit (`npm audit --workspaces`): ver `audit-artifacts/appsec-2026-02-13/deps/npm-audit.txt`.
 - Secret scan (patrones high-confidence en archivos trackeados): **0 matches**  
   Evidencia: `audit-artifacts/appsec-2026-02-12/secrets/secret-scan.summary.md`.
 - Secret scan (historial git, `gitleaks --redact`): **8 hallazgos** (redacted; requiere triage)  
   Evidencia: `audit-artifacts/appsec-2026-02-13/secrets/gitleaks.summary.md`.
 - Quick scan de “risky sinks” (open redirect / DOM sinks): 3 matches para revisión manual  
   Evidencia: `audit-artifacts/appsec-2026-02-12/sast/rg-risky-sinks.txt`.
+- DAST baseline (solo STAGING local, ZAP baseline):
+  - Frontend: `audit-artifacts/dast-2026-02-13/zap/zap-frontend.html`
+  - Backend (endpoint health): `audit-artifacts/dast-2026-02-13/zap/zap-backend-analytics-health.html`
+
+## Hallazgos adicionales (STAGING local)
+
+### A-011 — Drift de esquema: tabla `products` ausente en migraciones (Medium)
+- **Evidencia:**
+  - Fullsite local mostraba errores 500 en `/micuenta` al llamar `trpc.products.getProducts` por falta de tabla (mitigado en no-producción con fallback vacío).
+  - Mitigación local: `backend/src/routers/products/getProducts.ts` retorna `[]` en `NODE_ENV!=production` si Prisma devuelve `P2021`.
+  - QA fullsite (r2) después de mitigación: `audit-artifacts/fullsite-2026-02-13-r2/qa-fullsite.md` (sin 500 en `/micuenta`).
+- **Impacto:** divergencia prod↔staging/CI: migraciones no representan el estado real de producción; riesgo de romper staging, QA, y futuros deploys/migraciones.
+- **Probabilidad:** alta (ya ocurrió en local).
+- **Recomendación concreta:**
+  - Crear la migración Prisma faltante para `products` (fuente de verdad: esquema).
+  - Agregar check en CI: levantar DB vacía + `prisma migrate deploy` + smoke que toque `getProducts` (para asegurar que existe).
+- **Esfuerzo estimado:** **M**
+- **Owner sugerido:** Backend + SRE
+
+### A-012 — `ftp.storage` 500 en STAGING local (Medium)
+- **Evidencia:**
+  - QA fullsite local: `audit-artifacts/fullsite-2026-02-13-r2/qa-fullsite.md` (ruta `/admin/almacenamiento` genera `GET /trpc/ftp.storage -> 500`).
+- **Impacto:** admin “Almacenamiento” inutilizable en STAGING local; reduce cobertura E2E/QA y puede esconder bugs reales.
+- **Probabilidad:** alta en entornos sin `storage_server`/FTP configurado.
+- **Recomendación concreta:**
+  - En `NODE_ENV!=production`, devolver estado “no configurado” en `ftp.storage` si el servicio/host no está disponible.
+  - Documentar variables requeridas (host/puerto/credenciales) y agregar healthcheck del storage server.
+- **Esfuerzo estimado:** **S/M**
+- **Owner sugerido:** Backend + SRE
 
 ## Monitoreo / alertas / backups (pendiente)
 Pendiente:
