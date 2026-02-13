@@ -1,5 +1,6 @@
 import React from "react";
 import "./AdminPageLayout.scss";
+import "../../pages/Admin/Admin.scss";
 
 interface AdminPageLayoutProps {
   title: string;
