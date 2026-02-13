@@ -15,6 +15,7 @@ import { getClientIpFromRequest } from '../../analytics';
 import { resolveCheckoutCoupon } from '../../offers';
 import { getMarketingTrialConfigFromEnv } from '../../utils/trialConfig';
 import { ensureStripePriceId, StripePriceKey } from './utils/ensureStripePriceId';
+import { sanitizeTrackingUrl } from '../../utils/trackingUrl';
 
 /**
  * Crea una Stripe Checkout Session (redirect a la página de pago de Stripe).
@@ -33,9 +34,10 @@ export const createStripeCheckoutSession = shieldedProcedure
       fbc: z.string().optional(),
       url: z.string().optional(),
       eventId: z.string().optional(),
+      purchaseEventId: z.string().optional(),
     }),
   )
-  .mutation(async ({ input: { planId, successUrl, cancelUrl, coupon, fbp, fbc, url, eventId }, ctx: { prisma, session, req } }) => {
+  .mutation(async ({ input: { planId, successUrl, cancelUrl, coupon, fbp, fbc, url, eventId, purchaseEventId }, ctx: { prisma, session, req } }) => {
     const user = session!.user!;
 
     const plan = await prisma.plans.findFirst({
@@ -96,6 +98,7 @@ export const createStripeCheckoutSession = shieldedProcedure
         url: redirectUrl,
         sessionId: mockSessionId,
         mocked: true,
+        serverSidePurchaseTracking: false,
       };
     }
 
@@ -295,6 +298,22 @@ export const createStripeCheckoutSession = shieldedProcedure
       }
     }
 
+    const safeMetaValue = (value: unknown, maxLen = 480): string | undefined => {
+      const raw = typeof value === 'string' ? value : value != null ? String(value) : '';
+      const trimmed = raw.trim();
+      return trimmed ? trimmed.slice(0, maxLen) : undefined;
+    };
+
+    const subscriptionMarketingMetadata: Record<string, string> = {};
+    const metaFbp = safeMetaValue(fbp);
+    const metaFbc = safeMetaValue(fbc);
+    const metaPurchaseEventId = safeMetaValue(purchaseEventId, 120);
+    const metaSourceUrl = safeMetaValue(url ? sanitizeTrackingUrl(url, 480) : '', 480);
+    if (metaFbp) subscriptionMarketingMetadata.bb_fbp = metaFbp;
+    if (metaFbc) subscriptionMarketingMetadata.bb_fbc = metaFbc;
+    if (metaPurchaseEventId) subscriptionMarketingMetadata.bb_purchase_event_id = metaPurchaseEventId;
+    if (metaSourceUrl) subscriptionMarketingMetadata.bb_source_url = metaSourceUrl;
+
     const createSession = async (withDiscount: boolean) =>
       stripeInstance.checkout.sessions.create(
         {
@@ -316,6 +335,7 @@ export const createStripeCheckoutSession = shieldedProcedure
             metadata: {
               orderId: String(order.id),
               ...trialMetadata,
+              ...subscriptionMarketingMetadata,
             },
             ...(effectiveTrialEnd ? { trial_end: effectiveTrialEnd } : {}),
           },
@@ -349,6 +369,7 @@ export const createStripeCheckoutSession = shieldedProcedure
       return {
         url: stripeSession.url,
         sessionId: stripeSession.id,
+        serverSidePurchaseTracking: true,
       };
     } catch (e: unknown) {
       // Never break checkout due to an auto-offer coupon mismatch in Stripe. Retry without the discount.
@@ -370,7 +391,7 @@ export const createStripeCheckoutSession = shieldedProcedure
             } catch {
               // noop
             }
-            return { url: stripeSession.url, sessionId: stripeSession.id };
+            return { url: stripeSession.url, sessionId: stripeSession.id, serverSidePurchaseTracking: true };
           }
         } catch (retryError) {
           log.error('[STRIPE_CHECKOUT_SESSION] Retry without coupon failed', {

@@ -385,6 +385,7 @@ function Checkout() {
     const value = Number(plan.price) || 0;
     const currency = (plan.moneda?.toUpperCase() || "USD").toUpperCase();
     const initiateCheckoutEventId = generateEventId("init_checkout");
+    const purchaseEventId = generateEventId("purchase");
     trackInitiateCheckout({ value, currency, eventId: initiateCheckoutEventId });
 
     try {
@@ -395,6 +396,9 @@ function Checkout() {
           value,
           currency,
           at: new Date().toISOString(),
+          purchaseEventId,
+          method: "card",
+          serverSidePurchaseTracking: false,
         }),
       );
     } catch {
@@ -416,8 +420,19 @@ function Checkout() {
         fbc: cookies._fbc,
         url: window.location.href,
         eventId: initiateCheckoutEventId,
+        purchaseEventId,
       });
       if (result?.url) {
+        try {
+          const raw = window.sessionStorage.getItem(pendingPurchaseStorageKey);
+          const pending = raw ? JSON.parse(raw) : null;
+          if (pending && typeof pending === "object") {
+            pending.serverSidePurchaseTracking = Boolean((result as any)?.serverSidePurchaseTracking);
+            window.sessionStorage.setItem(pendingPurchaseStorageKey, JSON.stringify(pending));
+          }
+        } catch {
+          // noop
+        }
         checkoutHandedOffRef.current = true;
         window.location.href = result.url;
         return;
@@ -646,7 +661,7 @@ function Checkout() {
       interactedRef.current = true;
       const value = Number(plan.price) || 0;
       const currency = (plan.moneda?.toUpperCase() || "USD").toUpperCase();
-      const eventId = generateEventId("purchase");
+      const purchaseEventId = generateEventId("purchase");
 
       try {
         await trpc.subscriptions.subscribeWithPaypal.mutate({
@@ -655,7 +670,7 @@ function Checkout() {
           fbp: cookies._fbp,
           fbc: cookies._fbc,
           url: window.location.href,
-          eventId,
+          eventId: purchaseEventId,
         });
 
         try {
@@ -666,6 +681,8 @@ function Checkout() {
               value,
               currency,
               at: new Date().toISOString(),
+              purchaseEventId,
+              method: "paypal",
             }),
           );
         } catch {

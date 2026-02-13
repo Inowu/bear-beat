@@ -21,6 +21,7 @@ import { paypal as uhPaypal } from '../../migration/uhPaypal';
 import axios, { AxiosError } from 'axios';
 import { ingestAnalyticsEvents } from '../../../analytics';
 import { markUserOffersRedeemed } from '../../../offers';
+import { facebook } from '../../../facebook';
 
 export const stripeSubscriptionWebhook = async (req: Request) => {
   const payload: Stripe.Event = JSON.parse(getStripeWebhookBody(req));
@@ -146,6 +147,22 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
     case StripeEvents.SUBSCRIPTION_UPDATED:
       switch (subscription.status) {
         case 'active': {
+          const orderIdRaw = subscription?.metadata?.orderId;
+          const orderId = Number(orderIdRaw);
+          let orderWasPaidBefore = true;
+          if (Number.isFinite(orderId) && orderId > 0) {
+            try {
+              const order = await prisma.orders.findFirst({
+                where: { id: orderId },
+                select: { status: true },
+              });
+              orderWasPaidBefore = order?.status === OrderStatus.PAID;
+            } catch {
+              // If we can't determine the order state, skip server-side Purchase to avoid duplicates.
+              orderWasPaidBefore = true;
+            }
+          }
+
           const prevStatus = typeof previousAttributes?.status === 'string'
             ? String(previousAttributes.status).toLowerCase()
             : null;
@@ -207,6 +224,43 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
             service: PaymentService.STRIPE,
             expirationDate: new Date(subscription.current_period_end * 1000),
           });
+
+          // Facebook CAPI Purchase (server-side): send once per order (avoid double counting renewals/updates).
+          if (!orderWasPaidBefore) {
+            try {
+              const meta = (subscription?.metadata ?? {}) as Record<string, unknown>;
+              const purchaseEventId =
+                typeof meta.bb_purchase_event_id === 'string'
+                  ? meta.bb_purchase_event_id.trim().slice(0, 120)
+                  : '';
+              const fbp =
+                typeof meta.bb_fbp === 'string' ? meta.bb_fbp.trim().slice(0, 480) : '';
+              const fbc =
+                typeof meta.bb_fbc === 'string' ? meta.bb_fbc.trim().slice(0, 480) : '';
+              const sourceUrl =
+                typeof meta.bb_source_url === 'string'
+                  ? meta.bb_source_url.trim().slice(0, 1000)
+                  : 'https://thebearbeat.com/planes';
+
+              const value = Number(plan.price) || 0;
+              const currency = (plan.moneda || 'USD').toUpperCase();
+
+              await facebook.setEvent(
+                'Purchase',
+                null,
+                null,
+                { fbp: fbp || null, fbc: fbc || null, eventId: purchaseEventId || null },
+                sourceUrl,
+                user,
+                { value, currency },
+              );
+            } catch (e) {
+              log.debug('[STRIPE_WH] CAPI Purchase skipped (non-blocking)', {
+                userId: user.id,
+                error: e instanceof Error ? e.message : e,
+              });
+            }
+          }
 
           // Offers/coupons: mark user offers redeemed and persist coupon usage (Checkout Sessions path).
           try {

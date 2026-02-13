@@ -1,6 +1,7 @@
 import { Users } from '@prisma/client';
 import * as bizSdk from 'facebook-nodejs-business-sdk';
 import { log } from '../server';
+import { sanitizeTrackingUrl } from '../utils/trackingUrl';
 
 const EventRequest = bizSdk.EventRequest;
 const UserData = bizSdk.UserData;
@@ -24,6 +25,27 @@ export type FacebookMarketingContext = {
   fbc?: string | null;
   eventId?: string | null;
 };
+
+function normalizePhoneDigits(input: string): string {
+  const digits = `${input ?? ''}`.replace(/\D/g, '');
+  // Meta expects digits only with country code; skip obviously-bad values.
+  return digits.length >= 8 ? digits : '';
+}
+
+function normalizePersonField(input: string | null | undefined, maxLen = 120): string {
+  const value = `${input ?? ''}`.trim().toLowerCase();
+  if (!value) return '';
+  // Keep it simple: strip repeated whitespace, avoid sending huge strings.
+  return value.replace(/\s+/g, ' ').slice(0, maxLen);
+}
+
+function normalizeCountry(input: string | null | undefined): string {
+  const value = `${input ?? ''}`.trim().toLowerCase();
+  if (!value) return '';
+  // Expect two-letter ISO country code in lowercase.
+  const normalized = value.replace(/[^a-z]/g, '').slice(0, 2);
+  return normalized.length === 2 ? normalized : '';
+}
 
 /**
  * Envía un evento al Conversions API de Meta (CAPI).
@@ -49,13 +71,27 @@ export const facebook = {
 
     const timestamp = Math.floor(Date.now() / 1000);
 
+    const email = `${user.email ?? ''}`.trim().toLowerCase();
     const userData = new UserData()
-      .setEmails([user.email])
+      .setEmails(email ? [email] : [])
       .setExternalId(String(user.id));
 
+    const firstName = normalizePersonField(user.first_name, 80);
+    if (firstName) userData.setFirstName(firstName);
+
+    const lastName = normalizePersonField(user.last_name, 80);
+    if (lastName) userData.setLastName(lastName);
+
+    const city = normalizePersonField(user.city, 120);
+    if (city) userData.setCity(city);
+
+    const country = normalizeCountry(user.country_id);
+    if (country) userData.setCountry(country);
+
     const phone = typeof user.phone === 'string' ? user.phone.trim() : '';
-    if (phone) {
-      userData.setPhones([phone]);
+    const phoneDigits = normalizePhoneDigits(phone);
+    if (phoneDigits) {
+      userData.setPhones([phoneDigits]);
     }
 
     if (remoteAddress) {
@@ -82,7 +118,7 @@ export const facebook = {
       .setEventName(eventName)
       .setEventTime(timestamp)
       .setUserData(userData)
-      .setEventSourceUrl(sourceUrl)
+      .setEventSourceUrl(sanitizeTrackingUrl(sourceUrl) || sourceUrl)
       .setActionSource('website');
 
     const eventId =
@@ -100,13 +136,19 @@ export const facebook = {
 
     const eventRequest = new EventRequest(access_token, pixel_id).setEvents([serverEvent]);
 
-    eventRequest
-      .execute()
-      .then((response: unknown) => {
-        log.info('[FACEBOOK] CAPI event sent', { eventName, response: (response as any)?.toString?.() ?? response });
-      })
-      .catch((err: unknown) => {
-        log.error('[FACEBOOK] CAPI error', { eventName, err: err instanceof Error ? err.message : err });
+    try {
+      const response: unknown = await eventRequest.execute();
+      log.info('[FACEBOOK] CAPI event sent', {
+        eventName,
+        response: (response as any)?.toString?.() ?? response,
       });
+      return response;
+    } catch (err: unknown) {
+      log.error('[FACEBOOK] CAPI error', {
+        eventName,
+        err: err instanceof Error ? err.message : err,
+      });
+      throw err;
+    }
   },
 };

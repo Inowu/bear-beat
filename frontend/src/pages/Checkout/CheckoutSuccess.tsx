@@ -54,7 +54,10 @@ function CheckoutSuccess() {
           ? pending.currency.trim().toUpperCase()
           : "USD";
 
-      const eventId = generateEventId("purchase");
+      const eventId =
+        typeof pending?.purchaseEventId === "string" && pending.purchaseEventId.trim()
+          ? pending.purchaseEventId.trim()
+          : generateEventId("purchase");
 
       // Meta Pixel (browser) + ManyChat Pixel
       trackPurchase({ value, currency, eventId });
@@ -78,19 +81,25 @@ function CheckoutSuccess() {
         eventId,
       });
 
-      // Meta CAPI (server) con dedupe usando el mismo eventId
-      try {
-        await trpc.users.sendFacebookEvent.mutate({
-          event: "Purchase",
-          url: window.location.href,
-          fbp: cookies._fbp,
-          fbc: cookies._fbc,
-          eventId,
-          value,
-          currency,
-        });
-      } catch {
-        // No bloquear UX por tracking
+      const method = typeof pending?.method === "string" ? pending.method : "";
+      const serverSidePurchaseTracking = pending?.serverSidePurchaseTracking === true;
+
+      // Meta CAPI fallback (server) only when server-side purchase tracking is not enabled yet.
+      // For PayPal, the backend already sends Purchase on subscription creation.
+      if (!serverSidePurchaseTracking && method === "card") {
+        try {
+          await trpc.users.sendFacebookEvent.mutate({
+            event: "Purchase",
+            url: window.location.href,
+            fbp: cookies._fbp,
+            fbc: cookies._fbc,
+            eventId,
+            value,
+            currency,
+          });
+        } catch {
+          // No bloquear UX por tracking
+        }
       }
 
       try {
