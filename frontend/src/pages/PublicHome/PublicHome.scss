@@ -102,8 +102,10 @@
   backdrop-filter: blur(10px);
   min-width: 0;
   max-width: 100%;
-  overflow-x: auto;
-  scrollbar-width: none;
+  overflow: hidden;
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  mask-image: radial-gradient(white, black);
+  transform: translateZ(0);
 }
 
 .home-topnav__nav::-webkit-scrollbar {

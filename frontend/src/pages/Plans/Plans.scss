@@ -61,6 +61,9 @@
   /* iOS/Safari: `border-radius` + `overflow: auto` puede renderizarse “deformado”.
      Aquí solo hay 2 links, así que evitamos scroll y forzamos clipping limpio. */
   overflow: hidden;
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  mask-image: radial-gradient(white, black);
+  transform: translateZ(0);
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--ph-border) 80%, transparent);
   background: color-mix(in srgb, var(--ph-bg-card) 92%, transparent);
