@@ -775,7 +775,7 @@ export default function PublicHome() {
       <footer className="home-footer" aria-label="Footer">
         <div className="ph__container home-footer__inner">
           <div className="home-footer__brand">
-            <img src={Logo} alt="Bear Beat" width={46} height={46} />
+            <img src={brandMark} alt="Bear Beat" width={46} height={46} />
             <p>Catálogo grande, descargas mensuales claras y activación guiada.</p>
           </div>
 
