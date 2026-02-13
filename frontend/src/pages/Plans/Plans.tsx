@@ -288,7 +288,7 @@ function Plans() {
           </Link>
           <div className="plans-topnav__right" aria-label="Acciones">
             <nav className="plans-topnav__nav" aria-label="Enlaces">
-              <Link to="/planes" className="plans-topnav__link is-active" aria-current="page">
+              <Link to="/planes" className="plans-topnav__link">
                 Planes
               </Link>
               {userToken ? (

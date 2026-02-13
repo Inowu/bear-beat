@@ -44,9 +44,9 @@
 }
 
 .plans-topnav__brand img {
-  width: 38px;
-  height: 38px;
-  border-radius: 11px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   box-shadow: var(--ph-shadow);
 }
 
@@ -66,7 +66,9 @@
   transform: translateZ(0);
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--ph-border) 80%, transparent);
-  background: color-mix(in srgb, var(--ph-bg-card) 92%, transparent);
+  background: color-mix(in srgb, var(--ph-bg-card) 86%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
 }
 
 .plans-topnav__nav::-webkit-scrollbar {
@@ -74,20 +76,21 @@
 }
 
 .plans-topnav__link {
-  min-height: 38px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  min-height: 40px;
   padding: 0 14px;
   border-radius: 999px;
   border: 1px solid transparent;
+  background: transparent;
   text-decoration: none;
   white-space: nowrap;
-  color: color-mix(in srgb, var(--ph-text-body) 94%, transparent);
-  font-size: 1.1rem;
-  font-weight: 800;
-  letter-spacing: 0.01em;
-  transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease;
+  color: color-mix(in srgb, var(--ph-text-body) 92%, transparent);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.005em;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
 }
 
 .plans-topnav__right {
@@ -98,12 +101,16 @@
   margin-left: auto;
 }
 
-.plans-topnav__link:hover,
 .plans-topnav__link.is-active,
 .plans-topnav__link[aria-current="page"] {
   color: var(--ph-text-heading);
-  border-color: color-mix(in srgb, var(--ph-accent) 26%, transparent);
-  background: color-mix(in srgb, var(--ph-accent) 12%, transparent);
+  background: color-mix(in srgb, var(--ph-accent) 14%, transparent);
+  border-color: color-mix(in srgb, var(--ph-accent) 18%, transparent);
+}
+
+.plans-topnav__link:hover {
+  color: var(--ph-text-heading);
+  background: color-mix(in srgb, var(--ph-accent) 10%, transparent);
 }
 
 .plans-topnav__cta {
@@ -528,10 +535,15 @@
     padding: 3px;
   }
 
+  .plans-topnav__brand img {
+    width: 36px;
+    height: 36px;
+  }
+
   .plans-topnav__link {
-    min-height: 32px;
-    padding: 0 10px;
-    font-size: 0.95rem;
+    min-height: 38px;
+    padding: 0 12px;
+    font-size: 13px;
   }
 
   .plans-topnav__cta {
