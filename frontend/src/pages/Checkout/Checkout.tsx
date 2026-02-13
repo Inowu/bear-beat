@@ -109,7 +109,6 @@ function Checkout() {
   const [showRedirectHelp, setShowRedirectHelp] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<CheckoutMethod>("card");
   const [processingMethod, setProcessingMethod] = useState<CheckoutMethod | null>(null);
-  const [paypalReady, setPaypalReady] = useState(false);
   const [inlineError, setInlineError] = useState<string | null>(null);
   const [showSpeiModal, setShowSpeiModal] = useState(false);
   const [speiData, setSpeiData] = useState<ISpeiData | null>(null);
@@ -322,7 +321,6 @@ function Checkout() {
     setShowRedirectHelp(false);
     setInlineError(null);
     setSelectedMethod("card");
-    setPaypalReady(false);
     setSpeiData(null);
     setShowSpeiModal(false);
     if (priceId) getPlans(priceId);
@@ -707,7 +705,6 @@ function Checkout() {
   const handleSelectMethod = (method: CheckoutMethod) => {
     interactedRef.current = true;
     setInlineError(null);
-    setPaypalReady(false);
     setSelectedMethod(method);
     trackGrowthMetric(GROWTH_METRICS.CHECKOUT_METHOD_SELECTED, {
       method,
@@ -736,20 +733,21 @@ function Checkout() {
     if (selectedMethod === "spei") startCashCheckout();
     if (selectedMethod === "oxxo") startOxxoCheckout();
     if (selectedMethod === "bbva") startBbvaCheckout();
-    if (selectedMethod === "paypal") {
-      setInlineError(null);
-      setPaypalReady(true);
-      return;
-    }
+    if (selectedMethod === "paypal") return;
   };
 
-  const discount = 0;
-  const totalPrice = (
-    parseInt(plan?.price || "0", 10) -
-    parseInt(plan?.price || "0", 10) * (discount / 100)
-  ).toFixed(2);
   const currencyCode = (plan?.moneda ? String(plan.moneda) : "MXN").toUpperCase();
   const planName = plan?.name?.trim() || "Plan Oro";
+  const discount = 0;
+
+  const rawPrice = Number(plan?.price ?? 0);
+  const safePrice = Number.isFinite(rawPrice) ? rawPrice : 0;
+  const totalPriceNumber = safePrice - safePrice * (discount / 100);
+  const moneyLocale = currencyCode === "USD" ? "en-US" : "es-MX";
+  const totalPrice = new Intl.NumberFormat(moneyLocale, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(totalPriceNumber);
 
   const quotaGb = Number(plan?.gigas ?? 500);
   const summaryBullets = [
@@ -857,7 +855,7 @@ function Checkout() {
     <>
       <h2 className="checkout2026__summaryTitle">Resumen de compra</h2>
       <div className="checkout2026__summaryRow">
-        <span className="checkout2026__summaryPlan">Plan Oro</span>
+        <span className="checkout2026__summaryPlan">{planName}</span>
         <span className="checkout2026__summaryPrice">{summaryMonthlyLabel}</span>
       </div>
       <p className="checkout2026__summarySub">Renovación automática. Cancela cuando quieras.</p>
@@ -889,7 +887,6 @@ function Checkout() {
 
   const shouldShowPaypalInline =
     selectedMethod === "paypal" &&
-    paypalReady &&
     processingMethod === null &&
     hasPaypalPlan &&
     Boolean(currentUser?.email) &&
@@ -948,6 +945,7 @@ function Checkout() {
                       aria-checked={isActive}
                       className={`checkout-method ${isActive ? "is-active" : ""}`}
                       onClick={() => handleSelectMethod(method)}
+                      disabled={processingMethod !== null}
                       data-testid={`checkout-method-${method}`}
                     >
                       <span className="checkout-method__top">
@@ -982,7 +980,10 @@ function Checkout() {
 
             <div className="checkout-payment-actions checkout2026__actions" aria-label="Acción">
               {shouldShowPaypalInline ? (
-                <div className="checkout2026__paypal">
+                <div
+                  className={`checkout2026__paypal ${processingMethod !== null ? "is-processing" : ""}`}
+                  aria-busy={processingMethod !== null}
+                >
                   <PayPalComponent
                     plan={paypalPlan!}
                     type="subscription"
@@ -1020,7 +1021,12 @@ function Checkout() {
           <aside className="checkout-card checkout-summary checkout2026__summary" aria-label="Resumen de compra">
             <details className="checkout2026__summaryAccordion">
               <summary className="checkout2026__summarySummary">
-                <span>Resumen de compra</span>
+                <span className="checkout2026__summarySummaryLeft">
+                  <span>Resumen de compra</span>
+                  <small>
+                    {planName} · {summaryMonthlyLabel}
+                  </small>
+                </span>
                 <strong>{summaryTodayLabel}</strong>
               </summary>
               <div className="checkout2026__summaryBody">{summaryContent}</div>
