@@ -41,19 +41,20 @@
   --bb-dark-200: #2A2A2A;
   --bb-dark-300: #292929;
   --bb-dark-400: #1A1A1A;
-  /* Light base: neutral slate-light (avoid washed white while keeping clarity). */
-  --bb-bg: #D1DAE4;
-  --bb-surface: #E0E7EF;
-  --bb-surface-soft: #D8E0E9;
-  --bb-border: rgba(15, 23, 42, 0.2);
-  --bb-text-heading: #111926;
-  --bb-text-body: #243043;
-  --bb-text-muted: #5B6678;
-  --bb-focus-ring: rgba(0, 124, 137, 0.28);
-  /* Shadows: softer and more “glass + border” than heavy drop-shadows */
-  --bb-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
-  --bb-shadow-card: 0 18px 42px rgba(15, 23, 42, 0.1);
-  --bb-shadow-glow: 0 0 16px rgba(8, 225, 247, 0.26);
+  /* Light base: bright + crisp hierarchy (avoid “dark theme turned white”). */
+  --bb-bg: #F3F7FA;
+  --bb-surface: #FFFFFF;
+  --bb-surface-soft: #F8FBFD;
+  --bb-border: rgba(15, 23, 42, 0.12);
+  --bb-text-heading: #0B1220;
+  --bb-text-body: #1F2A3A;
+  --bb-text-muted: #556274;
+  --bb-focus-ring: rgba(0, 124, 137, 0.22);
+  /* Shadows: lighter in LIGHT; rely more on border + subtle depth. */
+  --bb-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  --bb-shadow-card: 0 18px 46px rgba(15, 23, 42, 0.12);
+  /* Light glow is intentionally subtle to avoid neon haze on white surfaces. */
+  --bb-shadow-glow: 0 0 14px rgba(8, 225, 247, 0.16);
   --bb-shadow-1: var(--bb-shadow);
   --bb-shadow-2: var(--bb-shadow-card);
   /* Spacing scale (theme-agnostic) */
@@ -110,13 +111,13 @@
   --theme-bg-secondary: var(--bb-surface);
   --theme-bg-gradient: linear-gradient(165deg, var(--bb-surface) 0%, var(--bb-bg) 100%);
   /* Light nav (premium/glass, no "baby blue") */
-  --theme-nav-bg: #D8E1EA;
-  --theme-nav-border-bottom: rgba(21, 42, 53, 0.1);
-  --theme-nav-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
-  --theme-nav-text: #15202B;
+  --theme-nav-bg: color-mix(in srgb, #ffffff 88%, var(--bb-bg));
+  --theme-nav-border-bottom: color-mix(in srgb, var(--bb-border) 92%, transparent);
+  --theme-nav-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+  --theme-nav-text: var(--bb-text-heading);
   /* Neutral light pills (avoid blue-ish nav wash) */
-  --theme-nav-item-bg: #E6ECF3;
-  --theme-nav-item-border: rgba(15, 23, 42, 0.12);
+  --theme-nav-item-bg: color-mix(in srgb, #ffffff 78%, var(--bb-bg));
+  --theme-nav-item-border: color-mix(in srgb, var(--bb-border) 96%, transparent);
   --theme-nav-danger-text: #BA1716;
   /* Light hover: subtle tint, avoid "baby blue" panels */
   --theme-nav-item-hover-bg: color-mix(in srgb, var(--bb-cyan) 6%, #FFFFFF);
@@ -138,14 +139,14 @@
   --theme-ink: var(--bb-text-heading);
   --theme-heading: var(--bb-text-heading);
   --theme-strong: var(--bb-text-heading);
-  --theme-bg-muted: #DCE4EC;
+  --theme-bg-muted: color-mix(in srgb, #ffffff 66%, var(--bb-bg));
   --theme-bg-soft: var(--bb-surface-soft);
   --theme-stripe: rgba(0, 0, 0, 0.05);
-  --theme-edge: rgba(21, 42, 53, 0.12);
+  --theme-edge: color-mix(in srgb, var(--bb-border) 90%, transparent);
   --theme-accent: var(--bb-accent-ink);
   --theme-accent-bright: var(--bb-cyan);
   --theme-accent-dim: var(--bb-accent-ink);
-  --theme-accent-glow: rgba(8, 225, 247, 0.24);
+  --theme-accent-glow: rgba(8, 225, 247, 0.16);
   /* Soft accent surfaces in LIGHT should be subtle (avoid "baby blue" wash) */
   --theme-accent-soft-bg: rgba(8, 225, 247, 0.03);
   --theme-accent-soft-bg-2: rgba(8, 225, 247, 0.05);
@@ -168,9 +169,9 @@
   --ph-accent-bright: var(--bb-cyan);
   --ph-shadow: var(--bb-shadow);
   --ph-shadow-card: var(--bb-shadow-card);
-  --ph-glow: rgba(8, 225, 247, 0.24);
-  --ph-glow-strong: rgba(8, 225, 247, 0.34);
-  --ph-nav-bg: #DCE4ED;
+  --ph-glow: rgba(8, 225, 247, 0.18);
+  --ph-glow-strong: rgba(8, 225, 247, 0.24);
+  --ph-nav-bg: color-mix(in srgb, #ffffff 84%, var(--bb-bg));
   --ph-footer-bg: var(--bb-surface);
   --ph-pain-bad: var(--bb-danger);
   --ph-pain-good: var(--bb-success);
@@ -201,11 +202,11 @@
   --app-gradient: var(--bb-gradient);
 
   --auth-input-border: var(--bb-border);
-  /* Auth: en light, inputs con relleno suave (gris neutro) para separarse del panel blanco sin “baby blue”. */
-  --auth-input-bg: #DCE4ED;
+  /* Auth: en light, inputs con relleno suave (neutral) para separar del panel blanco sin verse "sucio". */
+  --auth-input-bg: color-mix(in srgb, #ffffff 48%, var(--bb-bg));
   --auth-register-panel-bg: var(--bb-surface);
   --auth-register-text: var(--bb-text-heading);
-  --auth-register-input-bg: #DCE4ED;
+  --auth-register-input-bg: color-mix(in srgb, #ffffff 48%, var(--bb-bg));
   --auth-register-input-border: var(--bb-border);
   --auth-register-input-focus: var(--bb-accent-ink);
   --auth-register-icon: #5D697B;
@@ -238,8 +239,8 @@
   --plan-card-paypal-text: var(--bb-text-muted);
   --plan-card-btn-bg: var(--bb-gradient);
   --plan-card-btn-text: #0A0A0A;
-  --plan-card-btn-glow: rgba(8, 225, 247, 0.32);
-  --plan-card-glow-bg: rgba(8, 225, 247, 0.08);
+  --plan-card-btn-glow: rgba(8, 225, 247, 0.22);
+  --plan-card-glow-bg: rgba(8, 225, 247, 0.05);
   --plan-card-shadow: var(--bb-shadow);
   --plan-card-shadow-hover: var(--bb-shadow-card);
   --plan-card-secondary-bg: var(--bb-surface-soft);
@@ -254,7 +255,7 @@
   --plan-card-badge-value-bg: var(--bb-cyan);
   --plan-card-badge-value-text: #0A0A0A;
   --plan-card-btn-hero-bg: var(--bb-gradient);
-  --plan-card-btn-hero-glow: rgba(8, 225, 247, 0.34);
+  --plan-card-btn-hero-glow: rgba(8, 225, 247, 0.24);
   --plan-card-btn-outline-border: var(--bb-accent-ink);
   --plan-card-btn-outline-color: var(--bb-accent-ink);
   --plan-card-benefit-icon: var(--bb-accent-ink);
@@ -363,6 +364,8 @@ html.dark,
   --bb-text-muted: #B8B8B8;
   --bb-shadow: 0 10px 32px rgba(0, 0, 0, 0.38);
   --bb-shadow-card: 0 16px 44px rgba(0, 0, 0, 0.42);
+  /* Keep DARK glow strength stable when tweaking LIGHT tokens. */
+  --bb-shadow-glow: 0 0 16px rgba(8, 225, 247, 0.26);
   --bb-focus-ring: rgba(8, 225, 247, 0.4);
 
   --bg-main: var(--bb-bg);
@@ -396,6 +399,7 @@ html.dark,
   --theme-accent: var(--bb-cyan);
   --theme-accent-bright: var(--bb-cyan);
   --theme-accent-dim: var(--bb-cyan);
+  --theme-accent-glow: rgba(8, 225, 247, 0.24);
   --theme-accent-soft-bg: rgba(8, 225, 247, 0.14);
   --theme-accent-soft-bg-2: rgba(8, 225, 247, 0.22);
   --theme-accent-soft-bg-3: rgba(8, 225, 247, 0.3);
@@ -426,6 +430,8 @@ html.dark,
   --ph-nav-bg: rgba(41, 41, 41, 0.96);
   --ph-footer-bg: #242424;
   --ph-body-font-weight: 500;
+  --ph-glow: rgba(8, 225, 247, 0.24);
+  --ph-glow-strong: rgba(8, 225, 247, 0.34);
 
   --auth-input-bg: var(--bb-surface-soft);
   --auth-input-border: var(--bb-border);
@@ -457,11 +463,14 @@ html.dark,
   --plan-card-paypal-text: var(--bb-text-muted);
   --plan-card-btn-bg: var(--bb-gradient);
   --plan-card-btn-text: #0A0A0A;
+  --plan-card-btn-glow: rgba(8, 225, 247, 0.32);
+  --plan-card-glow-bg: rgba(8, 225, 247, 0.08);
   --plan-card-progress-track-bg: #3B3B3B;
   --plan-card-progress-fill: var(--bb-cyan);
   --plan-card-badge-value-bg: var(--bb-cyan);
   --plan-card-badge-value-text: #0A0A0A;
   --plan-card-btn-hero-bg: var(--bb-gradient);
+  --plan-card-btn-hero-glow: rgba(8, 225, 247, 0.34);
   --plan-card-btn-outline-border: var(--bb-cyan);
   --plan-card-btn-outline-color: var(--bb-cyan);
   --plan-card-benefit-icon: var(--bb-cyan);
@@ -1021,11 +1030,26 @@ html.dark .bb-surface::before,
   background: var(--theme-bg-primary);
 }
 .paypal-buttons {
-  .buttons-container{
-    .paypal-button-container{
-      .paypal-button-tagline{
-        .paypal-button-text{
-          color: white;
+  .buttons-container {
+    .paypal-button-container {
+      .paypal-button-tagline {
+        .paypal-button-text {
+          /* PayPal tagline text must stay readable in LIGHT and DARK. */
+          color: var(--app-text-heading);
+        }
+      }
+    }
+  }
+}
+
+html[data-theme="dark"] .paypal-buttons,
+html.dark .paypal-buttons,
+.dark .paypal-buttons {
+  .buttons-container {
+    .paypal-button-container {
+      .paypal-button-tagline {
+        .paypal-button-text {
+          color: #ffffff;
         }
       }
     }

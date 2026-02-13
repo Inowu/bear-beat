@@ -194,7 +194,7 @@ $admin-mobile-radius: 14px;
           gap: 10px;
           padding-top: 14px;
           margin-top: 6px;
-          border-top: 1px solid rgba(255, 255, 255, 0.12);
+          border-top: 1px solid var(--ad-border);
 
           &::before {
             width: 100%;
