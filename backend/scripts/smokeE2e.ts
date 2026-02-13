@@ -1,7 +1,7 @@
 import "./_loadEnv";
 import path from "path";
 import { spawn } from "child_process";
-import { chromium } from "playwright";
+import { chromium, type Browser, type BrowserContext } from "playwright";
 
 /**
  * Dev-only smoke checks using Playwright (no @playwright/test runner).
@@ -86,6 +86,8 @@ async function main() {
   const startingServers = process.env.SMOKE_START_SERVERS === "1";
 
   const { child } = spawnDevServersIfNeeded();
+  let browser: Browser | null = null;
+  let ctx: BrowserContext | null = null;
   try {
     // CRA + TS typecheck can be slow on first boot (cold cache). Give it more time.
     await waitForHttpOk(baseUrl, 180_000);
@@ -101,8 +103,8 @@ async function main() {
       await waitForHttpOk(`${apiBase}/api/analytics/health`, 120_000);
     }
 
-    const browser = await chromium.launch({ headless: true });
-    const ctx = await browser.newContext({
+    browser = await chromium.launch({ headless: true });
+    ctx = await browser.newContext({
       viewport: { width: 1280, height: 800 },
     });
     const page = await ctx.newPage();
@@ -172,19 +174,28 @@ async function main() {
     });
 
     if (!skipSignup) {
-      // LOGIN (nuevo usuario) en una tab limpia (sessionStorage es per-tab)
-      const loginPage = await ctx.newPage();
+      // LOGIN (nuevo usuario) en un BrowserContext separado:
+      // - Tokens viven en sessionStorage (per-tab), pero el app usa BroadcastChannel para sincronizarlos.
+      // - Un newPage() dentro del mismo context puede "heredar" la sesión via broadcast -> no veríamos el login form.
+      const loginCtx = await browser.newContext({
+        viewport: { width: 1280, height: 800 },
+      });
+      const loginPage = await loginCtx.newPage();
       await loginPage.goto(`${baseUrl}/auth`, { waitUntil: "domcontentloaded", timeout: 60_000 });
       await loginPage.locator("input[name='username']").fill(smokeUserEmail);
       await loginPage.locator("input[name='password']").fill(smokeUserPassword);
       await loginPage.locator("[data-testid='login-submit']").click();
       await loginPage.waitForURL((url) => !url.pathname.startsWith("/auth"), { timeout: 25_000 });
-      await loginPage.close();
+      await loginCtx.close();
     }
 
     // Optional: login + admin
     if (loginEmail && loginPassword) {
-      const adminPage = await ctx.newPage();
+      // Admin check should also run in an isolated context to avoid session bleed / BroadcastChannel sync.
+      const adminCtx = await browser.newContext({
+        viewport: { width: 1280, height: 800 },
+      });
+      const adminPage = await adminCtx.newPage();
       await adminPage.goto(`${baseUrl}/auth`, { waitUntil: "domcontentloaded", timeout: 60_000 });
       await adminPage.locator("input[name='username']").fill(loginEmail);
       await adminPage.locator("input[name='password']").fill(loginPassword);
@@ -193,15 +204,21 @@ async function main() {
 
       await adminPage.goto(`${baseUrl}/admin/usuarios`, { waitUntil: "domcontentloaded", timeout: 60_000 });
       await adminPage.getByRole("heading", { name: "Usuarios" }).first().waitFor({ state: "visible", timeout: 25_000 });
-      await adminPage.close();
+      await adminCtx.close();
     }
 
     await ctx.close();
+    ctx = null;
     await browser.close();
+    browser = null;
 
     // eslint-disable-next-line no-console
     console.log("Smoke e2e OK.");
   } finally {
+    // If an error happened mid-run, make a best-effort attempt to release Playwright resources,
+    // otherwise the node process can hang with an orphaned browser.
+    await ctx?.close().catch(() => null);
+    await browser?.close().catch(() => null);
     safeKill(child);
   }
 }
