@@ -26,6 +26,8 @@ docker ps --filter name=bearbeat-staging-
 cp backend/.env.example backend/.env.staging.local
 ```
 
+Nota: cuando ejecutas scripts con `--workspace=backend`, el `cwd` es `backend/`. Por eso en los comandos se usa `ENV_FILE=.env.staging.local` (no `backend/.env.staging.local`).
+
 2. Editar `backend/.env.staging.local` y definir **mínimo**:
 ```bash
 NODE_ENV=development
@@ -76,12 +78,12 @@ export AUDIT_SEED_PASSWORD="un-password-largo-de-10+"
 
 2. Crear/actualizar admin local:
 ```bash
-ENV_FILE=backend/.env.staging.local npm run seed:audit-user --workspace=backend
+ENV_FILE=.env.staging.local npm run seed:audit-user --workspace=backend
 ```
 
 3. Crear/actualizar planes mínimos:
 ```bash
-ENV_FILE=backend/.env.staging.local npm run seed:audit-plan --workspace=backend
+ENV_FILE=.env.staging.local npm run seed:audit-plan --workspace=backend
 ```
 
 Credenciales default:
@@ -91,7 +93,7 @@ Credenciales default:
 ## 5) Arrancar backend + frontend
 Backend:
 ```bash
-ENV_FILE=backend/.env.staging.local npm run dev --workspace=backend
+ENV_FILE=.env.staging.local npm run dev --workspace=backend
 ```
 
 Frontend:
@@ -114,7 +116,7 @@ REACT_APP_ENVIRONMENT=development \
 REACT_APP_API_BASE_URL=http://localhost:5001 \
 SMOKE_LOGIN_EMAIL="audit-admin@local.test" \
 SMOKE_LOGIN_PASSWORD="$AUDIT_SEED_PASSWORD" \
-ENV_FILE=backend/.env.staging.local \
+ENV_FILE=.env.staging.local \
 npm run e2e:smoke --workspace=backend
 ```
 
