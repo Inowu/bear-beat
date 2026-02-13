@@ -315,6 +315,11 @@ Se generaron reportes de Lighthouse en local para comparación, pero **no** repr
 - Dev server (referencial): `audit-artifacts/perf-2026-02-13/lighthouse/summary.md`
 - Production build local (`vite preview`, referencial): `audit-artifacts/perf-2026-02-13/lighthouse-preview/summary.md`
 
+### Load test (k6, STAGING local)
+- Script + output: `audit-artifacts/load-2026-02-13/k6.smoke.out.txt`
+- Config: 5 VUs, 30s, endpoints `GET /api/analytics/health` y `GET /health/sentry`
+- Resultados (p95): `http_req_duration p(95)=4.07ms`, `http_req_failed=0%`
+
 ## Accesibilidad (WCAG) y SEO técnico
 
 ### SEO (pasivo, producción)
@@ -368,10 +373,23 @@ Pendiente (manual): navegación teclado/foco y formularios en flujos críticos (
 - **Owner sugerido:** Backend + SRE
 
 ## Monitoreo / alertas / backups (pendiente)
-Pendiente:
-- Confirmar Sentry (FE/BE) y tasas de error (sin exponer PII).
-- Dashboards/alertas (latencia p95/p99 en endpoints críticos, tasa de fallos de checkout, cola de jobs).
-- Backups + restore drill (MySQL) y rotación de secretos.
+Recomendación (accionable, sin tocar prod):
+- Uptime checks:
+  - FE: `GET https://thebearbeat.com/` (200, y tiempo de respuesta)
+  - BE: `GET https://thebearbeatapi.lat/health/sentry` y/o `GET https://thebearbeatapi.lat/api/analytics/health`
+- Alertas mínimas (SRE):
+  - 5xx rate > 1% (5 min)
+  - Latencia p95 > 500ms en endpoints core (5-10 min)
+  - p99 > 1500ms (5-10 min)
+  - Saturación de CPU/RAM en VPS + disco (thresholds por instancia)
+- Errores de negocio (membresías):
+  - Checkout failures por provider (Stripe/PayPal/Conekta) y por reason
+  - Webhooks: tasa de verificación de firma fallida + idempotencia (duplicados)
+  - Descargas: errores 4xx/5xx por endpoint + tamaño/tiempo promedio de ZIPs
+- Backups/DR:
+  - Backups diarios de MySQL (snapshots) + retención (ej. 14-30 días)
+  - Restore drill trimestral (medir RTO/RPO)
+  - Rotación de secretos con runbook (y alertas si se usan claves viejas)
 
 ## Plan de ejecución (restante)
 1. **STAGING local**: Docker compose + migraciones + tests unit/integration validados; pendiente seeds + E2E (`docs/STAGING_LOCAL.md`).
