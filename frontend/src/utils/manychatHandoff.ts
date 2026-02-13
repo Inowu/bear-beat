@@ -94,11 +94,10 @@ export function captureManyChatHandoffFromUrl(): string | null {
       setManyChatHandoffToken(token);
     }
 
-    // Remove tokens from the URL ASAP to avoid leaking them to third-party trackers.
-    // Note: ManyChat's widget/pixel reads `mcp_token` on load; we include the ManyChat scripts
-    // before our app bundle so it can capture it first.
+    // Remove `mc_t` ASAP (only we need it). For `mcp_token`, we intentionally keep it around
+    // briefly so ManyChat's widget/pixel can read it, then strip it in `initManyChatHandoff()`
+    // before initializing other trackers (Meta pixel, Hotjar, etc).
     url.searchParams.delete("mc_t");
-    url.searchParams.delete("mcp_token");
     const next = `${url.pathname}${url.search}${url.hash}`;
     window.history.replaceState(null, "", next);
 
@@ -150,17 +149,69 @@ export async function resolveManyChatHandoffToken(token: string): Promise<Resolv
   }
 }
 
-export function initManyChatHandoff(): void {
-  if (typeof window === "undefined") return;
+export function initManyChatHandoff(): Promise<void> {
+  if (typeof window === "undefined") return Promise.resolve();
   // Capture (and strip) synchronously.
   const token = captureManyChatHandoffFromUrl() ?? getManyChatHandoffToken();
-  if (!token) return;
+  const url = new URL(window.location.href);
+  const hasMcpToken = Boolean((url.searchParams.get("mcp_token") ?? "").trim());
 
   // Resolve in the background (best-effort).
-  const existing = getStoredManyChatHandoffPayload();
-  if (existing?.token === token && existing?.data?.ok) return;
+  if (token) {
+    const existing = getStoredManyChatHandoffPayload();
+    if (!(existing?.token === token && existing?.data?.ok)) {
+      window.setTimeout(() => {
+        void resolveManyChatHandoffToken(token);
+      }, 0);
+    }
+  }
 
-  window.setTimeout(() => {
-    void resolveManyChatHandoffToken(token);
-  }, 0);
+  // If `mcp_token` exists, keep it in the URL until ManyChat's widget/pixel becomes ready (or a timeout),
+  // then strip it to prevent leaking it to other trackers.
+  if (!hasMcpToken) return Promise.resolve();
+
+  const isMobile = window.matchMedia("(max-width: 768px)").matches;
+  const maxWaitMs = isMobile ? 6500 : 3000;
+  const pollEveryMs = 120;
+  const startedAt = Date.now();
+
+  const stripMcpToken = (): void => {
+    try {
+      const nextUrl = new URL(window.location.href);
+      const current = (nextUrl.searchParams.get("mcp_token") ?? "").trim();
+      if (!current) return;
+      nextUrl.searchParams.delete("mcp_token");
+      const next = `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`;
+      window.history.replaceState(null, "", next);
+    } catch {
+      // noop
+    }
+  };
+
+  return new Promise((resolve) => {
+    const stripAndResolve = () => {
+      stripMcpToken();
+      resolve();
+    };
+
+    const tick = () => {
+      const pixelReady =
+        typeof (window as any).MC_PIXEL?.fireLogConversionEvent === "function" ||
+        typeof (window as any).MC_PIXEL?.fireLogMoneyEvent === "function";
+
+      if (pixelReady) {
+        stripAndResolve();
+        return;
+      }
+
+      if (Date.now() - startedAt > maxWaitMs) {
+        stripAndResolve();
+        return;
+      }
+
+      window.setTimeout(tick, pollEveryMs);
+    };
+
+    window.setTimeout(tick, 0);
+  });
 }

@@ -279,7 +279,7 @@ const scheduleIdleTask = (task: () => Promise<void> | void, minDelayMs = 1200, i
   }, minDelayMs);
 };
 
-const scheduleTrackersInit = () => {
+const scheduleTrackersInit = (gate?: Promise<void> | null) => {
   if (typeof window === "undefined") return;
   const isMobile = window.matchMedia("(max-width: 768px)").matches;
   const minDelayMs = isMobile ? 6500 : 3000;
@@ -289,6 +289,13 @@ const scheduleTrackersInit = () => {
   const initOnce = () => {
     if (initPromise) return initPromise;
     initPromise = (async () => {
+      if (gate) {
+        try {
+          await gate;
+        } catch {
+          // noop
+        }
+      }
       const [facebookPixel, growthMetrics, hotjar] = await Promise.all([
         import("./utils/facebookPixel"),
         loadGrowthMetricsModule(),
@@ -497,11 +504,12 @@ function installRuntimeStabilityGuards() {
 
 installRuntimeStabilityGuards();
 
-// Capture and strip ManyChat handoff token from the URL before loading trackers (FB pixel, Hotjar, etc.).
-initManyChatHandoff();
+// Capture ManyChat handoff params ASAP. If `mcp_token` is present, we temporarily keep it so
+// ManyChat can read it, then strip it before initializing other trackers.
+const trackersGate = initManyChatHandoff();
 
 scheduleMonitoringInit();
-scheduleTrackersInit();
+scheduleTrackersInit(trackersGate);
 
 root.render(
   <React.StrictMode>

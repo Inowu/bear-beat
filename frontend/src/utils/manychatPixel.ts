@@ -23,7 +23,9 @@ type McQueuedEvent =
 
 const MAX_QUEUE = 50;
 const FLUSH_INTERVAL_MS = 800;
-const FLUSH_MAX_MS = 15_000;
+// Some users land via ManyChat links on slow mobile networks. Keep a longer window so
+// we don't drop early conversion events before the widget/pixel finishes loading.
+const FLUSH_MAX_MS = 60_000;
 
 let queue: McQueuedEvent[] = [];
 let flushTimer: number | null = null;
