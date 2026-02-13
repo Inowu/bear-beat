@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
-import { config } from 'dotenv';
+import { loadEnvOnce } from '../../utils/loadEnv';
 
-config();
+loadEnvOnce();
 
 let stripe: Stripe;
 

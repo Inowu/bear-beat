@@ -1,8 +1,7 @@
-import path from 'path';
-import { config } from 'dotenv';
 import * as Sentry from '@sentry/node';
+import { loadEnvOnce } from './utils/loadEnv';
 
-config({ path: path.resolve(__dirname, '../.env') });
+loadEnvOnce();
 
 const resolveNumber = (
   value: string | undefined,

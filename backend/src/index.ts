@@ -3,7 +3,6 @@ import './instrument';
 import path from 'path';
 import pm2 from 'pm2';
 import * as Sentry from '@sentry/node';
-import { config } from 'dotenv';
 import { createExpressMiddleware } from '@trpc/server/adapters/express';
 import express from 'express';
 import cors from 'cors';
@@ -41,17 +40,6 @@ import {
 } from './queue/removeUsers';
 import { downloadDirEndpoint } from './endpoints/download-dir.endpoint';
 import { catalogStatsEndpoint } from './endpoints/catalog-stats.endpoint';
-
-const envFileOverride = String(process.env.ENV_FILE || '').trim();
-const envPath = envFileOverride
-  ? path.isAbsolute(envFileOverride)
-    ? envFileOverride
-    : path.resolve(process.cwd(), envFileOverride)
-  : path.resolve(__dirname, '../.env');
-
-config({
-  path: envPath,
-});
 
 const DEFAULT_CORS_ORIGINS = [
   'http://localhost:3000',

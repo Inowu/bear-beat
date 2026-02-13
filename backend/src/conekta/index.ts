@@ -5,9 +5,9 @@ import {
   Configuration,
   OrdersApi,
 } from 'conekta';
-import { config } from 'dotenv';
+import { loadEnvOnce } from '../utils/loadEnv';
 
-config();
+loadEnvOnce();
 
 const hasLiveKey = Boolean(process.env.CONEKTA_KEY?.trim());
 const hasTestKey = Boolean(process.env.CONEKTA_TEST_KEY?.trim());

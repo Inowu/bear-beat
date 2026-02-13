@@ -1,10 +1,7 @@
 import winston, { format } from 'winston';
-import { config } from 'dotenv';
-import path from 'path';
+import { loadEnvOnce } from './utils/loadEnv';
 
-config({
-  path: path.resolve(__dirname, '../.env'),
-});
+loadEnvOnce();
 
 export const log = winston.createLogger({
   level: 'info',

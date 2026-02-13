@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
-import { config } from 'dotenv';
+import { loadEnvOnce } from '../utils/loadEnv';
 
-config();
+loadEnvOnce();
 
 const hasLiveKey = Boolean(process.env.STRIPE_KEY?.trim());
 const hasTestKey = Boolean(process.env.STRIPE_TEST_KEY?.trim());

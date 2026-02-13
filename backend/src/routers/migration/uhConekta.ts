@@ -5,9 +5,9 @@ import {
   Configuration,
   OrdersApi,
 } from 'conekta';
-import { config } from 'dotenv';
+import { loadEnvOnce } from '../../utils/loadEnv';
 
-config();
+loadEnvOnce();
 
 const apiKey = process.env.NODE_ENV === 'production' ? process.env.CONEKTA_UH_KEY : process.env.CONEKTA_UH_TEST_KEY;
 
