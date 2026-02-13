@@ -109,6 +109,39 @@ async function main() {
     });
     const page = await ctx.newPage();
 
+    // Guardrail: avoid accidental smoke runs against production APIs when using localhost.
+    // (frontend/.env.local can be set to production to allow devs to browse prod data locally.)
+    const baseHostname = new URL(baseUrl).hostname;
+    const isLocalBase =
+      baseHostname === "localhost" || baseHostname === "127.0.0.1";
+    if (isLocalBase) {
+      await page.goto(`${baseUrl}/`, {
+        waitUntil: "domcontentloaded",
+        timeout: 60_000,
+      });
+      await page.getByRole("heading", { level: 1 }).waitFor({
+        state: "visible",
+        timeout: 15_000,
+      });
+      const feConfig = await page.evaluate(() => ({
+        environment: (process.env.REACT_APP_ENVIRONMENT || "").trim(),
+        apiBaseUrl: (process.env.REACT_APP_API_BASE_URL || "").trim(),
+        trpcUrl: (process.env.REACT_APP_TRPC_URL || "").trim(),
+      }));
+
+      const pointsToProd =
+        feConfig.environment === "production" ||
+        feConfig.apiBaseUrl.includes("thebearbeatapi.lat") ||
+        feConfig.trpcUrl.includes("thebearbeatapi.lat");
+
+      if (pointsToProd) {
+        throw new Error(
+          `Refusing to run smoke e2e on localhost when the frontend is configured for production APIs (REACT_APP_ENVIRONMENT=${feConfig.environment || "unset"}). ` +
+            `Start the frontend with REACT_APP_ENVIRONMENT=development and REACT_APP_API_BASE_URL=http://localhost:5001 (see docs/STAGING_LOCAL.md).`,
+        );
+      }
+    }
+
     // Some local environments block "local.test" (anti-fraud / disposable domains).
     // Use a neutral domain to keep smoke e2e reproducible.
     const smokeUserEmail = `smoke-${Date.now()}@gmail.com`;
