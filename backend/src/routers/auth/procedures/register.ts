@@ -260,7 +260,6 @@ export const register = publicProcedure
               userId: String(newUser.id),
             },
           });
-
           await prisma.users.update({
             where: {
               id: newUser.id,
