@@ -1,7 +1,10 @@
 import "./AsideNavbar.scss";
 import { useUserContext } from "../../contexts/UserContext";
+import { useTheme } from "../../contexts/ThemeContext";
 import { useLocation } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
+import brandMarkBlack from "../../assets/brand/bearbeat-mark-black.png";
+import brandMarkCyan from "../../assets/brand/bearbeat-mark-cyan.png";
 import {
   Activity,
   Users,
@@ -32,6 +35,7 @@ interface AsideNavbarPropsI {
 
 function AsideNavbar(props: AsideNavbarPropsI) {
   const { currentUser, resetCard, handleLogout } = useUserContext();
+  const { theme } = useTheme();
   const { show, onHide } = props;
   const location = useLocation();
   const closeBtnRef = useRef<HTMLButtonElement>(null);
@@ -59,6 +63,7 @@ function AsideNavbar(props: AsideNavbarPropsI) {
   }, []);
 
   const drawerOpen = isDesktop ? true : show;
+  const brandMark = theme === "light" ? brandMarkBlack : brandMarkCyan;
 
   useEffect(() => {
     if (isDesktop || !show) return;
@@ -101,6 +106,14 @@ function AsideNavbar(props: AsideNavbarPropsI) {
       )}
       <div className="aside-inner" onClick={(e) => e.stopPropagation()}>
         <div className="aside-drawer-header">
+          <Link
+            to="/"
+            onClick={handleLinkClick}
+            className="aside-drawer-brand"
+            aria-label="Bear Beat"
+          >
+            <img src={brandMark} alt="Bear Beat" width={32} height={32} />
+          </Link>
           <span className="aside-drawer-title">Menú</span>
         </div>
         <div className="nav-container">

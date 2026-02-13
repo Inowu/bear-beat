@@ -100,17 +100,35 @@ aside {
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
+      position: relative;
+      overflow: hidden;
       transition:
         border-color 0.2s ease,
         background-color 0.2s ease,
         color 0.2s ease,
+        box-shadow 0.2s ease,
         transform 0.18s ease;
+
+      &::before {
+        content: "";
+        position: absolute;
+        left: 8px;
+        top: 50%;
+        width: 3px;
+        height: 18px;
+        border-radius: 999px;
+        background: var(--app-accent-bright);
+        transform: translateY(-50%);
+        opacity: 0;
+        transition: opacity 0.18s ease;
+      }
 
       &:hover,
       &:focus-visible {
         color: var(--theme-nav-item-hover-text);
         background: var(--theme-nav-item-hover-bg);
         border-color: color-mix(in srgb, var(--app-accent) 28%, var(--theme-nav-item-border, transparent));
+        box-shadow: var(--theme-nav-item-shadow, none);
         outline: none;
       }
 
@@ -122,6 +140,11 @@ aside {
         border-color: color-mix(in srgb, var(--app-accent) 52%, var(--theme-nav-item-border, transparent));
         background: color-mix(in srgb, var(--app-accent-bright) 14%, var(--theme-nav-item-bg));
         color: var(--theme-nav-item-hover-text);
+        box-shadow: var(--theme-nav-item-shadow, none);
+      }
+
+      &.is-active::before {
+        opacity: 1;
       }
 
       &--secondary {
@@ -186,7 +209,10 @@ aside {
       position: fixed;
       inset: 0;
       z-index: 0;
-      background: var(--aside-backdrop-bg, rgba(0, 0, 0, 0.35));
+      background:
+        radial-gradient(900px 520px at 18% 0%, rgba(8, 225, 247, 0.18), transparent 60%),
+        radial-gradient(820px 540px at 82% 12%, rgba(0, 230, 193, 0.14), transparent 60%),
+        var(--aside-backdrop-bg, rgba(0, 0, 0, 0.38));
       pointer-events: auto;
     }
 
@@ -223,12 +249,45 @@ aside {
     .aside-drawer-header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-start;
+      gap: 12px;
       flex-shrink: 0;
       padding: 1rem 1.25rem;
       padding-top: calc(1rem + env(safe-area-inset-top, 0));
       padding-right: 3.5rem;
       border-bottom: 1px solid var(--aside-overlay-border);
+    }
+
+    .aside-drawer-brand {
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+      border-radius: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid color-mix(in srgb, var(--aside-overlay-border) 92%, transparent);
+      background:
+        linear-gradient(
+          170deg,
+          color-mix(in srgb, var(--app-accent-bright) 14%, transparent),
+          transparent 60%
+        ),
+        color-mix(in srgb, var(--aside-overlay-bg) 92%, transparent);
+      text-decoration: none;
+    }
+
+    .aside-drawer-brand:focus-visible {
+      outline: 2px solid var(--app-focus-ring);
+      outline-offset: 3px;
+    }
+
+    .aside-drawer-brand img {
+      width: 32px;
+      height: 32px;
+      border-radius: 0;
+      box-shadow: none;
+      filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.18));
     }
 
     .aside-drawer-title {
@@ -287,6 +346,7 @@ aside {
         overflow-x: hidden;
         min-height: 0;
         flex: 1;
+        padding-bottom: 12px;
       }
 
       .nav-group__title {
@@ -300,16 +360,21 @@ aside {
         color: var(--aside-overlay-text);
         font-size: 1.34rem;
         min-height: 44px;
+        box-shadow: none;
       }
 
       .nav-link-item:hover,
       .nav-link-item:focus-visible {
         color: var(--aside-overlay-hover);
+        background: color-mix(in srgb, var(--app-accent) 10%, var(--aside-overlay-bg));
+        border-color: color-mix(in srgb, var(--app-accent) 40%, var(--aside-overlay-border));
+        box-shadow: 0 14px 30px rgba(0, 0, 0, 0.25);
       }
 
       .nav-link-item.is-active {
         border-color: color-mix(in srgb, var(--app-accent) 58%, var(--aside-overlay-border));
         background: color-mix(in srgb, var(--app-accent-bright) 14%, var(--aside-overlay-bg));
+        box-shadow: 0 16px 34px rgba(0, 0, 0, 0.28);
       }
     }
   }
