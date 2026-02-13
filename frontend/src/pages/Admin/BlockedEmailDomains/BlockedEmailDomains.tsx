@@ -6,17 +6,20 @@ import { Spinner } from "../../../components/Spinner/Spinner";
 import { useUserContext } from "../../../contexts/UserContext";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
+import Pagination from "../../../components/Pagination/Pagination";
 import { Plus, MoreVertical, Trash2 } from "lucide-react";
 import { toErrorMessage } from "../../../utils/errorMessage";
 import "./BlockedEmailDomains.scss";
 
 const DOMAIN_REGEX = /^(?!-)[a-z0-9-]+(\.[a-z0-9-]+)+$/;
 const RESERVED_DOMAINS = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "live.com", "icloud.com", "protonmail.com", "aol.com"];
+const PAGE_SIZE = 100;
 
 export const BlockedEmailDomains = () => {
   const { currentUser } = useUserContext();
   const navigate = useNavigate();
   const [blockedDomains, setBlockedDomains] = useState<string[]>([]);
+  const [page, setPage] = useState<number>(0);
   const [newDomain, setNewDomain] = useState<string>("");
   const [loader, setLoader] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
@@ -92,6 +95,17 @@ export const BlockedEmailDomains = () => {
     loadDomains();
   }, []);
 
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(blockedDomains.length / PAGE_SIZE));
+    setPage((prev) => Math.min(prev, totalPages - 1));
+  }, [blockedDomains.length]);
+
+  const pageDomains = blockedDomains.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const startFilter = (key: string, value: string | number) => {
+    if (key !== "page") return;
+    setPage(Number(value));
+  };
+
   const toolbar = (
     <form onSubmit={handleAddDomain} className="blocked-domains-toolbar">
       <label className="blocked-domains-toolbar__field">
@@ -154,7 +168,7 @@ export const BlockedEmailDomains = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {blockedDomains.map((domain) => (
+                    {pageDomains.map((domain) => (
                       <tr key={`d_${domain}`}>
                         <td>{domain}</td>
                         <td>
@@ -172,12 +186,25 @@ export const BlockedEmailDomains = () => {
                       </tr>
                     ))}
                   </tbody>
+                  <tfoot>
+                    <tr>
+                      <td colSpan={2} className="py-3 px-4">
+                        <Pagination
+                          totalData={blockedDomains.length}
+                          title="dominios"
+                          startFilter={startFilter}
+                          currentPage={page}
+                          limit={PAGE_SIZE}
+                        />
+                      </td>
+                    </tr>
+                  </tfoot>
                 </table>
               </div>
             </div>
 
             <div className="admin-mobile-list">
-              {blockedDomains.map((domain) => (
+              {pageDomains.map((domain) => (
                 <button
                   type="button"
                   key={`m_${domain}`}
@@ -200,6 +227,16 @@ export const BlockedEmailDomains = () => {
                   </div>
                 </button>
               ))}
+            </div>
+
+            <div className="admin-pagination-mobile">
+              <Pagination
+                totalData={blockedDomains.length}
+                title="dominios"
+                startFilter={startFilter}
+                currentPage={page}
+                limit={PAGE_SIZE}
+              />
             </div>
 
             <AdminDrawer

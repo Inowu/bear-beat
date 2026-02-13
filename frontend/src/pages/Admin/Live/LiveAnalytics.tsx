@@ -98,7 +98,7 @@ function formatUtm(evt: LiveEventPoint): string {
 
 export function LiveAnalytics() {
   const [minutes, setMinutes] = useState<number>(10);
-  const [limit, setLimit] = useState<number>(200);
+  const [limit, setLimit] = useState<number>(100);
   const [paused, setPaused] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");

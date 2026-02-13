@@ -10,7 +10,10 @@ import { ConditionModal } from "../../../components/Modals";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
+import Pagination from "../../../components/Pagination/Pagination";
 import { Plus, MoreVertical, Edit2, Trash2 } from "lucide-react";
+
+const PAGE_SIZE = 100;
 
 export const PlanAdmin = () => {
   const { currentUser } = useUserContext();
@@ -18,6 +21,7 @@ export const PlanAdmin = () => {
   const [show, setShow] = useState<boolean>(false);
   const [showEdit, setShowEdit] = useState<boolean>(false);
   const [plans, setPlans] = useState<IPlans[]>([]);
+  const [page, setPage] = useState<number>(0);
   const [loader, setLoader] = useState<boolean>(true);
   const [editingPlan, setEditingPlan] = useState<IPlans | null>(null);
   const [drawerPlan, setDrawerPlan] = useState<IPlans | null>(null);
@@ -69,6 +73,17 @@ export const PlanAdmin = () => {
   useEffect(() => {
     getPlans();
   }, []);
+
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(plans.length / PAGE_SIZE));
+    setPage((prev) => Math.min(prev, totalPages - 1));
+  }, [plans.length]);
+
+  const pagePlans = plans.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const startFilter = (key: string, value: string | number) => {
+    if (key !== "page") return;
+    setPage(Number(value));
+  };
 
   const toolbar = (
     <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
@@ -134,9 +149,9 @@ export const PlanAdmin = () => {
               </tr>
             </thead>
             <tbody className="bg-slate-950">
-              {plans.map((plan, index) => (
+              {pagePlans.map((plan) => (
                 <tr
-                  key={`plan_${index}`}
+                  key={plan.id}
                   className="border-b border-slate-800 hover:bg-slate-900/60 transition-colors"
                 >
                   <td className="py-3 px-4 text-sm text-slate-300">{plan.name}</td>
@@ -177,15 +192,28 @@ export const PlanAdmin = () => {
                 </tr>
               ))}
             </tbody>
+            <tfoot className="bg-slate-900">
+              <tr>
+                <td colSpan={7} className="py-3 px-4">
+                  <Pagination
+                    totalData={plans.length}
+                    title="planes"
+                    startFilter={startFilter}
+                    currentPage={page}
+                    limit={PAGE_SIZE}
+                  />
+                </td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </div>
 
       {/* Mobile: lista compacta + drawer */}
       <div className="admin-mobile-list">
-        {plans.map((plan, index) => (
+        {pagePlans.map((plan) => (
           <button
-            key={`m_${index}`}
+            key={`m_${plan.id}`}
             className="admin-mobile-card"
             onClick={() => setDrawerPlan(plan)}
             type="button"
@@ -213,6 +241,16 @@ export const PlanAdmin = () => {
             </div>
           </button>
         ))}
+      </div>
+
+      <div className="admin-pagination-mobile">
+        <Pagination
+          totalData={plans.length}
+          title="planes"
+          startFilter={startFilter}
+          currentPage={page}
+          limit={PAGE_SIZE}
+        />
       </div>
 
       <AdminDrawer

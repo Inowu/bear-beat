@@ -6,16 +6,19 @@ import { Spinner } from "../../../components/Spinner/Spinner";
 import { useUserContext } from "../../../contexts/UserContext";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
+import Pagination from "../../../components/Pagination/Pagination";
 import { Plus, MoreVertical, Trash2 } from "lucide-react";
 import { toErrorMessage } from "../../../utils/errorMessage";
 import "./BlockedPhoneNumbers.scss";
 
 const PHONE_REGEX = /^\+\d{1,4}\s\d{4,14}$/;
+const PAGE_SIZE = 100;
 
 export const BlockedPhoneNumbers = () => {
   const { currentUser } = useUserContext();
   const navigate = useNavigate();
   const [blockedNumbers, setBlockedNumbers] = useState<string[]>([]);
+  const [page, setPage] = useState<number>(0);
   const [newPhone, setNewPhone] = useState<string>("");
   const [loader, setLoader] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
@@ -91,6 +94,17 @@ export const BlockedPhoneNumbers = () => {
     loadNumbers();
   }, []);
 
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(blockedNumbers.length / PAGE_SIZE));
+    setPage((prev) => Math.min(prev, totalPages - 1));
+  }, [blockedNumbers.length]);
+
+  const pageNumbers = blockedNumbers.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const startFilter = (key: string, value: string | number) => {
+    if (key !== "page") return;
+    setPage(Number(value));
+  };
+
   const toolbar = (
     <form onSubmit={handleAddPhone} className="blocked-phones-toolbar">
       <label className="blocked-phones-toolbar__field">
@@ -149,7 +163,7 @@ export const BlockedPhoneNumbers = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {blockedNumbers.map((phone) => (
+                    {pageNumbers.map((phone) => (
                       <tr key={`p_${phone}`}>
                         <td>{phone}</td>
                         <td>
@@ -167,12 +181,25 @@ export const BlockedPhoneNumbers = () => {
                       </tr>
                     ))}
                   </tbody>
+                  <tfoot>
+                    <tr>
+                      <td colSpan={2} className="py-3 px-4">
+                        <Pagination
+                          totalData={blockedNumbers.length}
+                          title="teléfonos"
+                          startFilter={startFilter}
+                          currentPage={page}
+                          limit={PAGE_SIZE}
+                        />
+                      </td>
+                    </tr>
+                  </tfoot>
                 </table>
               </div>
             </div>
 
             <div className="admin-mobile-list">
-              {blockedNumbers.map((phone) => (
+              {pageNumbers.map((phone) => (
                 <button
                   type="button"
                   key={`m_${phone}`}
@@ -195,6 +222,16 @@ export const BlockedPhoneNumbers = () => {
                   </div>
                 </button>
               ))}
+            </div>
+
+            <div className="admin-pagination-mobile">
+              <Pagination
+                totalData={blockedNumbers.length}
+                title="teléfonos"
+                startFilter={startFilter}
+                currentPage={page}
+                limit={PAGE_SIZE}
+              />
             </div>
 
             <AdminDrawer

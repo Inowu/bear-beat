@@ -300,7 +300,7 @@ export function CrmDashboard() {
       const [data, automationStatus] = await Promise.all([
         trpc.analytics.getAnalyticsCrmDashboard.query({
           days: rangeDays,
-          limit: 80,
+          limit: 100,
         }) as Promise<CrmSnapshot>,
         trpc.analytics.getAutomationStatus
           .query({ runsLimit: 12 })

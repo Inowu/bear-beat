@@ -10,7 +10,10 @@ import { Spinner } from "../../../components/Spinner/Spinner";
 import { IAdminCoupons } from "interfaces/admin";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
+import Pagination from "../../../components/Pagination/Pagination";
 import { Plus, MoreVertical, Edit2, Trash2 } from "lucide-react";
+
+const PAGE_SIZE = 100;
 
 export const Coupons = () => {
   const { currentUser } = useUserContext();
@@ -18,6 +21,7 @@ export const Coupons = () => {
   const [show, setShow] = useState<boolean>(false);
   const [showEdit, setShowEdit] = useState<boolean>(false);
   const [coupons, setCoupons] = useState<IAdminCoupons[]>([]);
+  const [page, setPage] = useState<number>(0);
   const [loader, setLoader] = useState<boolean>(true);
   const [editingCoupon, setEditingCoupon] = useState<IAdminCoupons | null>(null);
   const [drawerCoupon, setDrawerCoupon] = useState<IAdminCoupons | null>(null);
@@ -65,6 +69,17 @@ export const Coupons = () => {
   useEffect(() => {
     getCoupons();
   }, []);
+
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(coupons.length / PAGE_SIZE));
+    setPage((prev) => Math.min(prev, totalPages - 1));
+  }, [coupons.length]);
+
+  const pageCoupons = coupons.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const startFilter = (key: string, value: string | number) => {
+    if (key !== "page") return;
+    setPage(Number(value));
+  };
 
   const toolbar = (
     <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
@@ -136,8 +151,8 @@ export const Coupons = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-slate-950">
-                  {coupons.map((c, index) => (
-                    <tr key={`coupon_${index}`} className="border-b border-slate-800 hover:bg-slate-900/60 transition-colors">
+                  {pageCoupons.map((c) => (
+                    <tr key={c.code} className="border-b border-slate-800 hover:bg-slate-900/60 transition-colors">
                       <td className="py-3 px-4 text-sm text-slate-300 font-medium">{c.code}</td>
                       <td className="py-3 px-4 text-sm text-slate-300 hidden lg:table-cell">{c.description}</td>
                       <td className="py-3 px-4 text-sm text-slate-300">{c.discount} %</td>
@@ -175,15 +190,28 @@ export const Coupons = () => {
                     </tr>
                   ))}
                 </tbody>
+                <tfoot className="bg-slate-900">
+                  <tr>
+                    <td colSpan={5} className="py-3 px-4">
+                      <Pagination
+                        totalData={coupons.length}
+                        title="cupones"
+                        startFilter={startFilter}
+                        currentPage={page}
+                        limit={PAGE_SIZE}
+                      />
+                    </td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
           </div>
 
           <div className="admin-mobile-list">
-            {coupons.map((c, index) => (
+            {pageCoupons.map((c) => (
               <button
                 type="button"
-                key={`m_${index}`}
+                key={`m_${c.code}`}
                 className="admin-mobile-card"
                 onClick={() => setDrawerCoupon(c)}
                 aria-label={`Ver acciones del cupón ${c.code}`}
@@ -208,6 +236,16 @@ export const Coupons = () => {
                 </div>
               </button>
             ))}
+          </div>
+
+          <div className="admin-pagination-mobile">
+            <Pagination
+              totalData={coupons.length}
+              title="cupones"
+              startFilter={startFilter}
+              currentPage={page}
+              limit={PAGE_SIZE}
+            />
           </div>
 
           <AdminDrawer

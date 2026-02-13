@@ -60,10 +60,7 @@ interface IExportUserRow {
   phone?: string | null;
 }
 
-const getInitialPageLimit = () => {
-  if (typeof window === "undefined") return 50;
-  return window.innerWidth <= 900 ? 25 : 50;
-};
+const getInitialPageLimit = () => 100;
 
 function Admin() {
   const { currentUser, handleLogin } = useUserContext();
