@@ -6,6 +6,7 @@ import { log } from '../server';
 import { prisma } from '../db';
 import { JobStatus } from '../queue/jobStatus';
 import { fileService } from '../ftp';
+import { isSafeFileName, resolvePathWithinRoot } from '../utils/safePaths';
 
 export const downloadDirEndpoint = async (req: Request, res: Response) => {
   const token = req.query.token as string;
@@ -24,14 +25,14 @@ export const downloadDirEndpoint = async (req: Request, res: Response) => {
     return res.status(401).send({ error: 'Unauthorized' });
   }
 
-  const dirName = req.query.dirName as string;
   const jobId = req.query.jobId as string;
 
-  if (!dirName || typeof dirName !== 'string') {
+  if (!jobId || typeof jobId !== 'string') {
     return res.status(400).send({ error: 'Bad request' });
   }
 
-  if (!jobId || typeof jobId !== 'string') {
+  const providedDirName = req.query.dirName as string;
+  if (!providedDirName || typeof providedDirName !== 'string' || !isSafeFileName(providedDirName)) {
     return res.status(400).send({ error: 'Bad request' });
   }
 
@@ -45,21 +46,6 @@ export const downloadDirEndpoint = async (req: Request, res: Response) => {
       error: 'Debes verificar tu WhatsApp antes de descargar',
     });
   }
-
-  const fullPath = Path.resolve(
-    __dirname,
-    `../../${process.env.COMPRESSED_DIRS_NAME}/${dirName}`,
-  );
-  const dirExists = await fileService.exists(fullPath);
-
-  if (!dirExists) {
-    log.error(
-      `[DOWNLOAD] Directory with path ${fullPath} not found for user ${user.id} and jobId ${jobId}`,
-    );
-    return res.status(404).send({ error: 'Esa carpeta no existe' });
-  }
-
-  log.info(`[DOWNLOAD] Downloading directory ${fullPath} for user ${user.id}`);
 
   const job = await prisma.jobs.findFirst({
     where: {
@@ -84,6 +70,7 @@ export const downloadDirEndpoint = async (req: Request, res: Response) => {
   const download = await prisma.dir_downloads.findFirst({
     where: {
       jobId: job.id,
+      userId: user.id,
     },
   });
 
@@ -102,6 +89,67 @@ export const downloadDirEndpoint = async (req: Request, res: Response) => {
     );
     return res.status(400).send({ error: 'Este url ha expirado' });
   }
+
+  const downloadUrl = `${download.downloadUrl ?? ''}`.trim();
+  if (!downloadUrl) {
+    log.error(
+      `[DOWNLOAD] Missing downloadUrl for user ${user.id} and jobId ${jobId}`,
+    );
+    return res
+      .status(404)
+      .send({ error: 'Ocurrió un error al descargar la carpeta' });
+  }
+
+  let expectedDirName = '';
+  let expectedJobId = '';
+  try {
+    const parsed = new URL(downloadUrl);
+    expectedDirName = `${parsed.searchParams.get('dirName') ?? ''}`.trim();
+    expectedJobId = `${parsed.searchParams.get('jobId') ?? ''}`.trim();
+  } catch {
+    // ignore parse errors; handled below.
+  }
+
+  if (!expectedDirName || !isSafeFileName(expectedDirName)) {
+    log.error(
+      `[DOWNLOAD] Invalid dirName in downloadUrl for user ${user.id} and jobId ${jobId}`,
+    );
+    return res.status(404).send({ error: 'Ocurrió un error al descargar la carpeta' });
+  }
+
+  if (expectedJobId && expectedJobId !== jobId) {
+    log.error(
+      `[DOWNLOAD] jobId mismatch for user ${user.id}: url=${expectedJobId} req=${jobId}`,
+    );
+    return res.status(404).send({ error: 'Ocurrió un error al descargar la carpeta' });
+  }
+
+  if (providedDirName !== expectedDirName) {
+    // Prevent IDOR: the requested file name must match the server-generated download URL.
+    log.warn(
+      `[DOWNLOAD] dirName mismatch for user ${user.id}: expected=${expectedDirName} got=${providedDirName}`,
+    );
+    return res.status(404).send({ error: 'Ocurrió un error al descargar la carpeta' });
+  }
+
+  const compressedRoot = Path.resolve(
+    __dirname,
+    `../../${process.env.COMPRESSED_DIRS_NAME}`,
+  );
+  const fullPath = resolvePathWithinRoot(compressedRoot, expectedDirName);
+  if (!fullPath) {
+    return res.status(400).send({ error: 'Bad request' });
+  }
+
+  const dirExists = await fileService.exists(fullPath);
+  if (!dirExists) {
+    log.error(
+      `[DOWNLOAD] Directory with path ${fullPath} not found for user ${user.id} and jobId ${jobId}`,
+    );
+    return res.status(404).send({ error: 'Esa carpeta no existe' });
+  }
+
+  log.info(`[DOWNLOAD] Downloading directory ${fullPath} for user ${user.id}`);
 
   try {
     // Can fail with weird characters

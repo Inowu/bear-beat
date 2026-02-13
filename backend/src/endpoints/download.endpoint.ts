@@ -6,6 +6,7 @@ import { prisma } from '../db';
 import { SessionUser } from '../routers/auth/utils/serialize-user';
 import { log } from '../server';
 import { extendedAccountPostfix } from '../utils/constants';
+import { resolvePathWithinRoot } from '../utils/safePaths';
 
 export const downloadEndpoint = async (req: Request, res: Response) => {
   const token = req.query.token as string;
@@ -24,13 +25,20 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
     return res.status(401).send({ error: 'Unauthorized' });
   }
 
-  const path = req.query.path as string;
+  const requestedPath = req.query.path as string;
+  if (!requestedPath || typeof requestedPath !== 'string') {
+    return res.status(400).send({ error: 'Bad request' });
+  }
 
-  const fullPath = Path.join(process.env.SONGS_PATH as string, path);
+  const songsRoot = String(process.env.SONGS_PATH || '').trim();
+  const fullPath = resolvePathWithinRoot(songsRoot, requestedPath);
+  if (!fullPath) {
+    return res.status(400).send({ error: 'Bad request' });
+  }
   const fileExists = await fileService.exists(fullPath);
 
   if (!fileExists) {
-    return res.status(500).send({ error: 'Este archivo o carpeta no existe' });
+    return res.status(404).send({ error: 'Este archivo o carpeta no existe' });
   }
 
   const dbUser = await prisma.users.findFirst({
@@ -190,7 +198,7 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
         userId: user.id,
         size: fileStat.size,
         date: new Date(),
-        fileName: path,
+        fileName: requestedPath,
         isFolder: false,
       },
     });
