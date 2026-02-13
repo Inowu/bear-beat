@@ -4,6 +4,8 @@
  * Ideal: configurar REACT_APP_FB_PIXEL_ID en variables de entorno (Netlify / .env).
  */
 
+import { ensureMetaAttributionCookies } from "./metaAttributionCookies";
+
 // Pixel ID no es secreto. Este fallback coincide con el <noscript> de public/index.html
 // para que el pixel funcione aunque falte el env var en el build.
 const DEFAULT_PIXEL_ID = "1325763147585869";
@@ -16,11 +18,45 @@ declare global {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     fbq?: (...args: any[]) => void;
     _fbq?: unknown;
+    fbqLoaded?: boolean;
   }
 }
 
 function isFbqReady(): boolean {
   return typeof window !== "undefined" && typeof window.fbq === "function";
+}
+
+type FbQueuedEvent = {
+  action: "track" | "trackCustom";
+  eventName: string;
+  params?: Record<string, unknown>;
+  eventId?: string;
+};
+
+const MAX_QUEUE = 80;
+let queued: FbQueuedEvent[] = [];
+
+function enqueue(event: FbQueuedEvent): void {
+  queued.push(event);
+  if (queued.length > MAX_QUEUE) queued = queued.slice(-MAX_QUEUE);
+}
+
+function flushQueueIfReady(): void {
+  if (!isFbqReady()) return;
+  if (!queued.length) return;
+  const pending = queued;
+  queued = [];
+  for (const item of pending) {
+    try {
+      if (item.eventId) {
+        window.fbq!(item.action, item.eventName, item.params, { eventID: item.eventId });
+      } else {
+        window.fbq!(item.action, item.eventName, item.params);
+      }
+    } catch {
+      // Best-effort: never break UX for tracking.
+    }
+  }
 }
 
 /**
@@ -33,7 +69,13 @@ export function initFacebookPixel(): void {
   const id = PIXEL_ID;
 
   // Evitar doble init
-  if (typeof (window as any).fbqLoaded === "boolean" && (window as any).fbqLoaded) return;
+  if (typeof window.fbqLoaded === "boolean" && window.fbqLoaded) {
+    flushQueueIfReady();
+    return;
+  }
+
+  // Ensure attribution cookies exist early for browser + CAPI tracking.
+  ensureMetaAttributionCookies();
 
   (function (f: Window, b: Document, e: string, v: string, n?: any, t?: HTMLScriptElement, s?: Element) {
     if (f.fbq) return;
@@ -54,7 +96,8 @@ export function initFacebookPixel(): void {
 
   window.fbq("init", id);
   window.fbq("track", "PageView");
-  (window as any).fbqLoaded = true;
+  window.fbqLoaded = true;
+  flushQueueIfReady();
 }
 
 function fireFbq(
@@ -63,7 +106,13 @@ function fireFbq(
   params?: Record<string, unknown>,
   eventId?: string
 ): void {
-  if (!isFbqReady()) return;
+  if (typeof window === "undefined") return;
+  // Ensure cookies also exist when events fire before delayed tracker init.
+  ensureMetaAttributionCookies();
+  if (!isFbqReady()) {
+    enqueue({ action, eventName, params, eventId });
+    return;
+  }
   try {
     if (eventId) {
       window.fbq!(action, eventName, params, { eventID: eventId });
@@ -97,6 +146,13 @@ export function trackCustomEvent(
   eventId?: string
 ): void {
   fireFbq("trackCustom", eventName, params, eventId);
+}
+
+/**
+ * PageView: necesario para SPAs (route changes).
+ */
+export function trackPageView(options?: { eventId?: string }): void {
+  fireFbq("track", "PageView", undefined, options?.eventId);
 }
 
 /**

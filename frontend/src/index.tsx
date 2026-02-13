@@ -22,6 +22,7 @@ import { sseEndpoint } from "./utils/runtimeConfig";
 import { initManyChatHandoff } from "./utils/manychatHandoff";
 import { bindHotjarStateChange } from "./utils/hotjarBridge";
 import { bindGrowthMetricBridge, trackGrowthMetricBridge } from "./utils/growthMetricsBridge";
+import { ensureMetaAttributionCookies } from "./utils/metaAttributionCookies";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -311,6 +312,21 @@ const scheduleTrackersInit = (gate?: Promise<void> | null) => {
 
       hotjar.initHotjar();
       bindHotjarStateChange(hotjar.hotjarStateChange);
+
+      // SPA support: fire PageView on route changes after pixel is initialized.
+      try {
+        let lastKey = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+        router.subscribe((state: any) => {
+          const loc = state?.location;
+          if (!loc) return;
+          const nextKey = `${loc.pathname ?? ""}${loc.search ?? ""}${loc.hash ?? ""}`;
+          if (!nextKey || nextKey === lastKey) return;
+          lastKey = nextKey;
+          facebookPixel.trackPageView();
+        });
+      } catch {
+        // noop
+      }
     })().catch(() => {
       // Best-effort: don't break the app if a tracker fails.
     });
@@ -503,6 +519,10 @@ function installRuntimeStabilityGuards() {
 }
 
 installRuntimeStabilityGuards();
+
+// Ensure `_fbp/_fbc` exist early so checkout + server-side CAPI can always attach attribution,
+// even when tracker init is delayed for performance.
+ensureMetaAttributionCookies();
 
 // Capture ManyChat handoff params ASAP. If `mcp_token` is present, we temporarily keep it so
 // ManyChat can read it, then strip it before initializing other trackers.
