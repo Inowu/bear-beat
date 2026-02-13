@@ -19,6 +19,7 @@ import {
   FileDown,
   Trash2,
 } from "lucide-react";
+import { FaCcAmex, FaCcMastercard, FaCcVisa } from "react-icons/fa";
 import { getCompleted, transformBiteToGb } from "../../functions/functions";
 import { IOrders, IQuota, IFtpAccount } from "interfaces/User";
 import { Link } from "react-router-dom";
@@ -29,10 +30,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useUserContext } from "../../contexts/UserContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { getStripeAppearance } from "../../utils/stripeAppearance";
-import Amex from "../../assets/images/cards/express.png";
-import Mastercard from "../../assets/images/cards/master.png";
 import trpc from "../../api";
-import Visa from "../../assets/images/cards/visa.png";
 
 import { GROWTH_METRICS, getGrowthAttribution, trackGrowthMetric } from "../../utils/growthMetrics";
 import { formatDateShort, formatInt } from "../../utils/format";
@@ -497,22 +495,36 @@ function MyAccount() {
               </button>
             )}
           </div>
-          {!cardLoad ? (
+              {!cardLoad ? (
             <div className="ma-cards-grid">
               {paymentMethods.map((x: any, index: number) => (
                 <article key={"cards_" + index} className="ma-card-item">
                   <div className="ma-card-top">
-                    <img
-                      src={
-                        x.card.brand === "visa"
-                          ? Visa
-                          : x.card.brand === "mastercard"
-                            ? Mastercard
-                            : Amex
-                      }
-                      alt={`Logo de tarjeta ${x.card.brand}`}
-                      className="ma-card-brand"
-                    />
+                    {(() => {
+                      const rawBrand = `${x?.card?.brand ?? ""}`.toLowerCase();
+                      const brandKey =
+                        rawBrand === "visa"
+                          ? "visa"
+                          : rawBrand === "mastercard"
+                            ? "mastercard"
+                            : rawBrand === "amex" || rawBrand === "american_express"
+                              ? "amex"
+                              : "amex";
+                      const BrandIcon =
+                        brandKey === "visa"
+                          ? FaCcVisa
+                          : brandKey === "mastercard"
+                            ? FaCcMastercard
+                            : FaCcAmex;
+
+                      return (
+                        <BrandIcon
+                          role="img"
+                          aria-label={`Logo de tarjeta ${rawBrand || "tarjeta"}`}
+                          className={`ma-card-brand ma-card-brand--${brandKey}`}
+                        />
+                      );
+                    })()}
                     <div className="ma-card-actions">
                       {paymentMethods.length > 1 && (
                         <button

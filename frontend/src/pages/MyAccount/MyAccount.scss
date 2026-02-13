@@ -393,8 +393,20 @@
 .ma-card-brand {
   height: 26px;
   width: auto;
-  object-fit: contain;
   opacity: 0.92;
+  display: block;
+}
+
+.ma-card-brand--visa {
+  color: #1a1f71;
+}
+
+.ma-card-brand--mastercard {
+  color: #eb001b;
+}
+
+.ma-card-brand--amex {
+  color: #2e77bb;
 }
 
 .ma-card-actions {

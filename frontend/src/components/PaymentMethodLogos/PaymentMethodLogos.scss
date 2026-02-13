@@ -19,7 +19,8 @@
   gap: 0.32rem;
   box-shadow: 0 1px 0 color-mix(in srgb, #ffffff 24%, transparent) inset;
 
-  img {
+  img,
+  .payment-method-logos__card-icon {
     display: block;
     width: auto;
     max-width: 58px;
@@ -50,7 +51,8 @@
   min-width: 78px;
   padding: 0.45rem 0.7rem;
 
-  img {
+  img,
+  .payment-method-logos__card-icon {
     max-width: 68px;
     height: 20px;
   }
@@ -68,6 +70,18 @@
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.55) inset,
     0 12px 20px rgba(0, 0, 0, 0.12);
+}
+
+.payment-method-logos__item--visa .payment-method-logos__card-icon {
+  color: #1a1f71;
+}
+
+.payment-method-logos__item--mastercard .payment-method-logos__card-icon {
+  color: #eb001b;
+}
+
+.payment-method-logos__item--amex .payment-method-logos__card-icon {
+  color: #2e77bb;
 }
 
 .payment-method-logos__item--paypal {
@@ -147,7 +161,8 @@ html.dark .payment-method-logos__item--oxxo strong,
     min-width: 68px;
     padding: 0.32rem 0.55rem;
 
-    img {
+    img,
+    .payment-method-logos__card-icon {
       max-width: 56px;
       height: 18px;
     }

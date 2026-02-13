@@ -1,8 +1,6 @@
 import { Landmark } from "lucide-react";
-import { FaPaypal } from "react-icons/fa";
-import AmexLogo from "../../assets/images/cards/express.png";
-import MastercardLogo from "../../assets/images/cards/master.png";
-import VisaLogo from "../../assets/images/cards/visa.png";
+import { FaCcAmex, FaCcMastercard, FaCcVisa, FaPaypal } from "react-icons/fa";
+import type { ReactNode } from "react";
 import "./PaymentMethodLogos.scss";
 
 export type PaymentMethodId =
@@ -23,41 +21,55 @@ interface PaymentMethodLogosProps {
 
 interface PaymentMethodDefinition {
   label: string;
-  type: "image" | "brand";
-  imageSrc?: string;
+  icon?: ReactNode;
+  showText?: boolean;
 }
 
 const METHOD_DEFINITIONS: Record<PaymentMethodId, PaymentMethodDefinition> = {
   visa: {
     label: "Visa",
-    type: "image",
-    imageSrc: VisaLogo,
+    icon: (
+      <FaCcVisa
+        aria-hidden
+        className="payment-method-logos__card-icon payment-method-logos__card-icon--visa"
+      />
+    ),
   },
   mastercard: {
     label: "Mastercard",
-    type: "image",
-    imageSrc: MastercardLogo,
+    icon: (
+      <FaCcMastercard
+        aria-hidden
+        className="payment-method-logos__card-icon payment-method-logos__card-icon--mastercard"
+      />
+    ),
   },
   amex: {
     label: "American Express",
-    type: "image",
-    imageSrc: AmexLogo,
+    icon: (
+      <FaCcAmex
+        aria-hidden
+        className="payment-method-logos__card-icon payment-method-logos__card-icon--amex"
+      />
+    ),
   },
   paypal: {
     label: "PayPal",
-    type: "brand",
+    icon: <FaPaypal aria-hidden className="payment-method-logos__paypal-icon" />,
+    showText: true,
   },
   spei: {
     label: "SPEI",
-    type: "brand",
+    icon: <Landmark size={15} aria-hidden className="payment-method-logos__spei-icon" />,
+    showText: true,
   },
   oxxo: {
     label: "Efectivo",
-    type: "brand",
+    showText: true,
   },
   transfer: {
     label: "Transferencia",
-    type: "brand",
+    showText: true,
   },
 };
 
@@ -85,15 +97,8 @@ function PaymentMethodLogos({
             title={definition.label}
             aria-label={definition.label}
           >
-            {definition.type === "image" && definition.imageSrc ? (
-              <img src={definition.imageSrc} alt={definition.label} loading="lazy" />
-            ) : (
-              <>
-                {method === "paypal" && <FaPaypal aria-hidden />}
-                {method === "spei" && <Landmark size={15} aria-hidden />}
-                <strong>{definition.label}</strong>
-              </>
-            )}
+            {definition.icon}
+            {definition.showText && <strong>{definition.label}</strong>}
           </span>
         );
       })}
