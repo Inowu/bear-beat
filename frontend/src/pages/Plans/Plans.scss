@@ -255,36 +255,49 @@
 
 .plans2026__cta {
   width: 100%;
-  min-height: 56px;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--ph-accent-bright) 54%, transparent);
-  background: var(--ph-accent-bright);
-  color: #061014;
-  font-size: 1.5rem;
-  font-weight: 950;
-  letter-spacing: 0.01em;
+  appearance: none;
+  border: 1px solid transparent;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 54px;
+  border-radius: 999px;
+  padding: 12px 18px;
+  text-decoration: none;
+  font-weight: 700;
+  letter-spacing: 0.004em;
+  background: var(--ph-btn-bg);
+  color: var(--ph-btn-text);
+  border-color: color-mix(in srgb, var(--ph-accent) 34%, transparent);
   box-shadow:
-    0 16px 30px color-mix(in srgb, var(--ph-glow) 44%, transparent),
+    0 14px 32px color-mix(in srgb, var(--ph-glow) 46%, transparent),
     var(--ph-shadow);
-  transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease;
+  transition:
+    transform 140ms ease,
+    box-shadow 180ms ease,
+    background 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease;
 }
 
 .plans2026__cta:hover {
-  transform: translateY(-1px) scale(1.01);
+  background: var(--ph-btn-hover-bg);
+  border-color: color-mix(in srgb, var(--ph-accent) 54%, transparent);
+  transform: translateY(-1px);
   box-shadow:
-    0 18px 34px color-mix(in srgb, var(--ph-glow) 56%, transparent),
+    0 16px 36px color-mix(in srgb, var(--ph-glow) 56%, transparent),
     var(--ph-shadow-card);
-  filter: saturate(1.05);
 }
 
 .plans2026__cta:active {
-  transform: translateY(0px) scale(0.995);
+  transform: translateY(1px);
 }
 
 .plans2026__cta:focus-visible {
   outline: 2px solid var(--app-focus-ring);
-  outline-offset: 3px;
+  outline-offset: 2px;
 }
 
 .plans2026__cta:disabled {
@@ -292,7 +305,6 @@
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
-  filter: none;
 }
 
 .plans2026__trust {
