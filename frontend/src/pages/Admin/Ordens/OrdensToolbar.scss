@@ -112,7 +112,7 @@
 .orders-toolbar__mobile-card__content {
   min-width: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 8px;
   align-items: center;
 }
@@ -220,22 +220,48 @@
   }
 
   .orders-toolbar__filters {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      "search search"
+      "method status"
+      "start end"
+      "today limit";
     gap: 8px;
   }
 
-  .orders-toolbar__search,
-  .orders-toolbar__field--method,
-  .orders-toolbar__field--status,
-  .orders-toolbar__field--start,
-  .orders-toolbar__field--end,
-  .orders-toolbar__today,
-  .orders-toolbar__field--limit {
+  .orders-toolbar__search {
+    grid-area: search;
     grid-column: 1 / -1;
+  }
+
+  .orders-toolbar__field--method {
+    grid-area: method;
+  }
+
+  .orders-toolbar__field--status {
+    grid-area: status;
+  }
+
+  .orders-toolbar__field--start {
+    grid-area: start;
+  }
+
+  .orders-toolbar__field--end {
+    grid-area: end;
+  }
+
+  .orders-toolbar__today {
+    grid-area: today;
+  }
+
+  .orders-toolbar__field--limit {
+    grid-area: limit;
   }
 
   .orders-toolbar__today {
     width: 100%;
+    display: inline-flex;
+    align-items: center;
     justify-content: center;
   }
 
@@ -252,6 +278,18 @@
 @media (max-width: 420px) {
   .orders-toolbar__filters {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "search"
+      "method"
+      "status"
+      "start"
+      "end"
+      "today"
+      "limit";
+  }
+
+  .orders-toolbar__search {
+    grid-area: search;
   }
 
   .orders-toolbar__field--method,
