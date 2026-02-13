@@ -1,7 +1,7 @@
 # Auditoría QA + AppSec + Performance + SRE — The Bear Beat
 
 Fecha: **2026-02-13**  
-Rama de trabajo: `codex/audit/2026-02-12`  
+Rama de trabajo: `codex/audit/2026-02-13`  
 Reglas operativas: **sin pruebas destructivas/DAST activo/load en producción**, sin exfiltrar PII/secretos.
 
 ## Resumen ejecutivo (no técnico, 1 página)
@@ -21,7 +21,7 @@ Qué se hizo para mitigar (sin tocar producción):
 - Se cambió la política de permisos a **fallback deny** y se completó la cobertura de reglas para el **100%** de las `shieldedProcedure`. Además, se agregaron tests que fallan si aparece una `shieldedProcedure` nueva sin su regla en `permissions`.
 - Se endurecieron los endpoints `/download` y `/download-dir` con **validación de paths** (deny-by-default) y chequeo de consistencia `dirName` vs `downloadUrl` generado por el servidor, más tests anti-regresión.
 
-Estado: los fixes están implementados en código y cubiertos por tests; **pendiente** desplegar vía PR/merge y validar end-to-end en un **STAGING** aislado (local reproducible).
+Estado: los fixes críticos están implementados en código y cubiertos por tests/CI. Producción se valida con checks pasivos (headers/Lighthouse) y pruebas activas solo en STAGING.
 
 Además, se ejecutaron mediciones **pasivas** en producción (headers/robots/sitemap + Lighthouse puntual) y DAST baseline en STAGING local (ZAP baseline), sin interrumpir producción.
 
@@ -78,18 +78,18 @@ Leyenda:
 
 | ID | Sev | Estado | Tipo | Área | Resumen |
 |---|---|---|---|---|---|
-| A-001 | Critical | Mitigado (en rama) | Quick win | Backend/Auth | Sanitizar respuestas de `auth.login`/`auth.register` para evitar fuga de campos sensibles + tests anti-regresión |
-| A-002 | Critical | Mitigado (en rama) | Quick win | Backend/Permisos | `trpc-shield` a **fallback deny** + cobertura explícita para todas las `shieldedProcedure` + tests de cobertura |
-| A-009 | Critical | Mitigado (en rama) | Quick win | Backend/Descargas | Prevenir **path traversal + IDOR** en `/download` y `/download-dir` + tests anti-regresión |
-| A-003 | Medium | Abierto | Quick win | Frontend/Edge | Headers incompletos en producción (no se observa CSP / frame-ancestors / Permissions-Policy) |
+| A-001 | Critical | Mitigado (en main) | Quick win | Backend/Auth | Sanitizar respuestas de `auth.login`/`auth.register` para evitar fuga de campos sensibles + tests anti-regresión |
+| A-002 | Critical | Mitigado (en main) | Quick win | Backend/Permisos | `trpc-shield` a **fallback deny** + cobertura explícita para todas las `shieldedProcedure` + tests de cobertura |
+| A-009 | Critical | Mitigado (en main) | Quick win | Backend/Descargas | Prevenir **path traversal + IDOR** en `/download` y `/download-dir` + tests anti-regresión |
+| A-003 | Medium | Mitigado (en rama) | Quick win | Frontend/Edge | Headers incompletos en producción (agregado: `frame-ancestors`/`X-Frame-Options`, `Permissions-Policy`) |
 | A-004 | Low | Abierto | Quick win | SEO | `sitemap.xml` con `lastmod` antiguo (2025-02-03) |
 | A-005 | Medium | Abierto | Proyecto | Frontend/Perf | Bundle principal grande y warnings de build (chunk > 500 kB, Sass `@import` deprecado) |
 | A-006 | High | Abierto | Proyecto | Dependencias | `npm audit` reporta vulnerabilidades **High** (backend y frontend), varias requieren upgrades major |
 | A-010 | High | Abierto | Proyecto | AppSec/Secrets | `gitleaks` detecta **potenciales secretos** en historial git (requiere triage y posible rotación/rewrite) |
 | A-007 | Medium | Abierto | Quick win | Backend/API | CORS/headers en API prod parecen demasiado permisivos (`Access-Control-Allow-Origin: *`) y faltan headers de hardening |
-| A-008 | Medium | Mitigado (en rama) | Quick win | QA/AppSec | Tests/smoke podían disparar integraciones externas si `.env` tenía secretos; se aisló carga de env y se deshabilitaron integraciones en `NODE_ENV=test` |
+| A-008 | Medium | Mitigado (en main) | Quick win | QA/AppSec | Tests/smoke podían disparar integraciones externas si `.env` tenía secretos; se aisló carga de env y se deshabilitaron integraciones en `NODE_ENV=test` |
 | A-011 | Medium | Abierto | Proyecto | Backend/DB | **Drift de esquema**: tabla `products` no existe en migraciones locales (riesgo de divergencia prod↔staging) |
-| A-012 | Medium | Abierto | Quick win | Backend/FTP | `/trpc/ftp.storage` responde 500 en STAGING local (admin) por dependencia no configurada |
+| A-012 | Medium | Mitigado (en rama) | Quick win | Backend/FTP | `/trpc/ftp.storage` ya no responde 500 en STAGING local cuando falta `storage_server` |
 
 ## Detalle de hallazgos (con evidencia + remediación)
 
@@ -159,6 +159,9 @@ Leyenda:
   - CSP con `frame-ancestors 'none'` o allowlist.
   - `Permissions-Policy` restrictiva.
   - `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload` (si el dominio y subdominios lo soportan).
+- **Mitigación aplicada (en rama):**
+  - Frontend/Netlify: agregado `Content-Security-Policy: frame-ancestors 'none'` + `X-Frame-Options: DENY` + `Permissions-Policy` + `X-Permitted-Cross-Domain-Policies: none`.
+  - Evidencia (código): `netlify.toml` y `frontend/public/_headers`.
 - **Esfuerzo estimado:** **S/M**
 - **Owner sugerido:** Frontend + SRE/AppSec
 
@@ -192,7 +195,9 @@ Leyenda:
   - `npm audit --workspaces`:
     - JSON: `audit-artifacts/appsec-2026-02-13/deps/npm-audit.json`
     - Texto: `audit-artifacts/appsec-2026-02-13/deps/npm-audit.txt`
-  - Resumen actual: **15 vulnerabilidades** (11 high, 4 low).
+  - Resumen (antes): **15 vulnerabilidades** (11 high, 4 low).
+  - Resumen (después de limpiar deps no usadas, en rama): **7 vulnerabilidades** (5 high, 2 low).  
+    Evidencia: `audit-artifacts/appsec-2026-02-13/deps/npm-audit.after-hardening.txt`
 - **Cómo reproducir:**
   - `npm audit` (root / `frontend` / `backend`).
 - **Impacto:** riesgo de seguridad por CVEs/GHSAs en librerías; algunas afectan SSRF/DoS y bypasses de validación.
@@ -200,8 +205,7 @@ Leyenda:
 - **Recomendación concreta:**
   - Plan de upgrade por etapas (idealmente PRs separados) para deps con fix available:
     - `conekta` (trae `axios` vulnerable como dependencia transitiva en versiones actuales).
-    - `@fastify/secure-session` / `fastify` (validar si realmente se usan en runtime; si no, remover del tree).
-    - toolchain Prisma generators (`prisma-trpc-generator`, `prisma-trpc-shield-generator`) por `cross-spawn/tmp` vulnerables.
+    - `cross-spawn`, `tar`, `tmp` (pueden resolverse con `npm audit fix` y/o bumps menores).
     - `pm2`: advisory sin fix (mitigar: reducir superficie, hardening y monitoreo; evaluar alternativa).
   - Mantener `npm audit` en CI con baseline/allowlist temporal (si es inevitable) y fechas de remediación.
 - **Esfuerzo estimado:** **M/L** (por upgrades major + regresiones potenciales)
@@ -262,9 +266,9 @@ Fuente (pasivo prod): `audit-artifacts/prod-passive-2026-02-12/thebearbeat.com.h
 - HSTS: **Parcial** (presente `max-age=31536000`; falta evaluar `includeSubDomains/preload`)
 - `X-Content-Type-Options: nosniff`: **OK**
 - `Referrer-Policy`: **OK** (`strict-origin-when-cross-origin`)
-- CSP (`Content-Security-Policy`): **Pendiente**
-- Anti-clickjacking (`frame-ancestors`/`X-Frame-Options`): **Pendiente**
-- `Permissions-Policy`: **Pendiente**
+- CSP (`Content-Security-Policy`): **Mitigado (en rama)** (`frame-ancestors 'none'`)
+- Anti-clickjacking (`frame-ancestors`/`X-Frame-Options`): **Mitigado (en rama)**
+- `Permissions-Policy`: **Mitigado (en rama)**
 - Cookies `Secure/HttpOnly/SameSite`: **Pendiente** (no se observaron `Set-Cookie` en la respuesta HTML; revisar rutas autenticadas/API)
 
 ## Estado de tests / cobertura
@@ -369,6 +373,9 @@ Pendiente (manual): navegación teclado/foco y formularios en flujos críticos (
 - **Recomendación concreta:**
   - En `NODE_ENV!=production`, devolver estado “no configurado” en `ftp.storage` si el servicio/host no está disponible.
   - Documentar variables requeridas (host/puerto/credenciales) y agregar healthcheck del storage server.
+- **Mitigación aplicada (en rama):**
+  - En `NODE_ENV!=production`, `ftp.storage` retorna stats vacíos cuando el storage server no responde (evita 500 y permite cubrir admin en STAGING).
+  - Evidencia (código): `backend/src/routers/file-actions/storage.ts`
 - **Esfuerzo estimado:** **S/M**
 - **Owner sugerido:** Backend + SRE
 

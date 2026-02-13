@@ -71,10 +71,6 @@
     "typescript": "^5.1.6"
   },
   "dependencies": {
-    "@fastify/compress": "^6.4.0",
-    "@fastify/cors": "^8.3.0",
-    "@fastify/passport": "^2.3.0",
-    "@fastify/secure-session": "^6.2.0",
     "@getbrevo/brevo": "^1.0.1",
     "@prisma/client": "^5.9.1",
     "@sentry/node": "^10.38.0",
@@ -100,8 +96,6 @@
     "express-winston": "^4.2.0",
     "facebook-nodejs-business-sdk": "^19.0.3",
     "fast-folder-size": "^2.2.0",
-    "fastify": "^4.21.0",
-    "fastify-plugin": "^4.5.1",
     "firebase": "^11.0.2",
     "firebase-admin": "^13.6.1",
     "fluent-ffmpeg": "^2.1.2",
@@ -110,8 +104,6 @@
     "node-rsa": "^1.1.1",
     "passport-jwt": "^4.0.1",
     "pm2": "^5.3.1",
-    "prisma-trpc-generator": "1.4.1",
-    "prisma-zod-generator": "0.8.15",
     "ssh2-sftp-client": "^9.1.0",
     "stripe": "^20.3.1",
     "superjson": "^1.13.1",
@@ -120,7 +112,6 @@
     "twilio": "^5.12.1",
     "uuid": "^9.0.1",
     "winston": "^3.10.0",
-    "zod": "^3.25.76",
-    "zod-prisma-types": "2.7.7"
+    "zod": "^3.25.76"
   }
 }

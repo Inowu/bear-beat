@@ -5,10 +5,21 @@ import { log } from '../../server';
 
 export const storage = shieldedProcedure.query(async () => {
   try {
-    const response = await axios('http://0.0.0.0:8123/');
+    const storageServerUrl =
+      process.env.STORAGE_SERVER_URL?.trim() || 'http://0.0.0.0:8123/';
+    const response = await axios(storageServerUrl);
 
     return response.data;
   } catch (e: unknown) {
+    if (process.env.NODE_ENV !== 'production') {
+      log.warn('[STORAGE] Storage server unavailable; returning empty stats in non-production.');
+      return {
+        used_storage: 0,
+        total_storage: 0,
+        available_storage: 0,
+      };
+    }
+
     if (axios.isAxiosError(e)) {
       const error = e as AxiosError;
 

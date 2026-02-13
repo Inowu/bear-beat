@@ -73,6 +73,24 @@ async function main() {
     const port = Number(process.env.PORT) || 5001;
     const allowedOrigins = getAllowedCorsOrigins();
 
+    app.disable('x-powered-by');
+
+    // Security headers (defense-in-depth). Keep this safe for APIs + static demos.
+    app.use((_req, res, next) => {
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('Referrer-Policy', 'no-referrer');
+      res.setHeader('X-Frame-Options', 'DENY');
+      res.setHeader(
+        'Permissions-Policy',
+        'geolocation=(), microphone=(), camera=(), usb=()',
+      );
+      // Clickjacking protection (primary). Avoid a restrictive CSP here because this
+      // server also serves internal static demos under `/demos`.
+      res.setHeader('Content-Security-Policy', "frame-ancestors 'none';");
+      res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
+      next();
+    });
+
     app.use(
       expressWinston.logger({
         transports: [new winston.transports.Console()],
