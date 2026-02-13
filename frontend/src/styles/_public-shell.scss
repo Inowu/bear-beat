@@ -58,10 +58,11 @@
 .home-topnav__brand img {
   width: 40px;
   height: 40px;
-  border-radius: 12px;
-  box-shadow:
-    var(--ph-shadow-card),
-    0 0 0 1px color-mix(in srgb, var(--ph-accent) 55%, transparent);
+  /* Avoid the square halo/outline around a transparent PNG.
+     `drop-shadow` follows the non-transparent pixels (looks like the real logo). */
+  border-radius: 0;
+  box-shadow: none;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.22));
 }
 
 .home-topnav__nav {
@@ -109,11 +110,13 @@
   transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
 }
 
+/* Keep the segmented control consistent across pages.
+   (The active state was being perceived as a different design.) */
 .home-topnav__link.is-active,
 .home-topnav__link[aria-current="page"] {
-  color: var(--ph-text-heading);
-  background: color-mix(in srgb, var(--ph-accent) 14%, transparent);
-  border-color: color-mix(in srgb, var(--ph-accent) 18%, transparent);
+  color: color-mix(in srgb, var(--ph-text-body) 92%, transparent);
+  background: transparent;
+  border-color: transparent;
 }
 
 .home-topnav__link:hover {
@@ -183,10 +186,15 @@ html[data-theme="light"] .home-topnav__link {
 
 html[data-theme="light"] .home-topnav__link.is-active,
 html[data-theme="light"] .home-topnav__link[aria-current="page"] {
-  background: color-mix(in srgb, var(--ph-accent) 10%, #ffffff);
-  border-color: color-mix(in srgb, var(--ph-accent) 27%, transparent);
+  color: color-mix(in srgb, var(--ph-text-body) 98%, transparent);
+  background: transparent;
+  border-color: transparent;
 }
 
 html[data-theme="light"] .home-topnav__cta {
   box-shadow: 0 10px 22px rgba(15, 23, 42, 0.1);
+}
+
+html[data-theme="light"] .home-topnav__brand img {
+  filter: drop-shadow(0 10px 18px rgba(15, 23, 42, 0.14));
 }
