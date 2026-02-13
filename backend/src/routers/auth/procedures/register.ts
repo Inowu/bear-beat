@@ -249,7 +249,9 @@ export const register = publicProcedure
         }
       }
 
-      if (isStripeConfigured()) {
+      const isTestEnv = process.env.NODE_ENV === 'test';
+
+      if (!isTestEnv && isStripeConfigured()) {
         try {
           const customer = await stripe.customers.create({
             email,
@@ -281,7 +283,7 @@ export const register = publicProcedure
       const hasConektaKey = Boolean(
         process.env.CONEKTA_KEY?.trim() || process.env.CONEKTA_TEST_KEY?.trim(),
       );
-      if (hasConektaKey) {
+      if (!isTestEnv && hasConektaKey) {
         try {
           const customer = await conektaCustomers.createCustomer({
             email,
@@ -314,7 +316,7 @@ export const register = publicProcedure
       }
 
       const hasBrevoKey = Boolean(process.env.BREVO_API_KEY?.trim());
-      if (hasBrevoKey) {
+      if (!isTestEnv && hasBrevoKey) {
         try {
           log.info('[REGISTER] Sending email to user');
           await brevo.smtp.sendTransacEmail({
@@ -342,25 +344,31 @@ export const register = publicProcedure
             ? userAgentRaw[0] ?? null
             : null;
 
-      try {
-        log.info('[REGISTER] Sending sign up event to Facebook CAPI');
-        await facebook.setEvent(
-          'CompleteRegistration',
-          clientIp,
-          userAgent,
-          { fbp, fbc, eventId },
-          url,
-          newUser,
-        );
-      } catch (error) {
-        log.error('[REGISTER] Error sending CAPI event', {
-          error: error instanceof Error ? error.message : error,
+      if (!isTestEnv) {
+        try {
+          log.info('[REGISTER] Sending sign up event to Facebook CAPI');
+          await facebook.setEvent(
+            'CompleteRegistration',
+            clientIp,
+            userAgent,
+            { fbp, fbc, eventId },
+            url,
+            newUser,
+          );
+        } catch (error) {
+          log.error('[REGISTER] Error sending CAPI event', {
+            error: error instanceof Error ? error.message : error,
+          });
+        }
+      } else {
+        log.debug('[REGISTER] Test environment: skipping Facebook CAPI event', {
+          userId: newUser.id,
         });
       }
 
       // If the user arrived from a ManyChat flow (IG/FB/WhatsApp), claim the handoff token and
       // (best-effort) link the ManyChat contact id to this user to make tags/custom fields reliable.
-      if (mcHandoffToken) {
+      if (!isTestEnv && mcHandoffToken) {
         try {
           const claimed = await claimManyChatHandoffToken({
             prisma,
@@ -397,12 +405,18 @@ export const register = publicProcedure
           });
         }
       }
-      // This implicitly creates a new subscriber in ManyChat or retrieves an existing one
-      try {
-        await manyChat.addTagToUser(newUser, 'USER_REGISTERED');
-      } catch (error) {
-        log.warn('[REGISTER] ManyChat tag failed (non-blocking)', {
-          error: error instanceof Error ? error.message : error,
+      if (!isTestEnv) {
+        // This implicitly creates a new subscriber in ManyChat or retrieves an existing one
+        try {
+          await manyChat.addTagToUser(newUser, 'USER_REGISTERED');
+        } catch (error) {
+          log.warn('[REGISTER] ManyChat tag failed (non-blocking)', {
+            error: error instanceof Error ? error.message : error,
+            userId: newUser.id,
+          });
+        }
+      } else {
+        log.debug('[REGISTER] Test environment: skipping ManyChat integration', {
           userId: newUser.id,
         });
       }
