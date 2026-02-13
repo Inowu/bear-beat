@@ -83,6 +83,7 @@ Leyenda:
 | A-004 | Low | Abierto | Quick win | SEO | `sitemap.xml` con `lastmod` antiguo (2025-02-03) |
 | A-005 | Medium | Abierto | Proyecto | Frontend/Perf | Bundle principal grande y warnings de build (chunk > 500 kB, Sass `@import` deprecado) |
 | A-006 | High | Abierto | Proyecto | Dependencias | `npm audit` reporta vulnerabilidades **High** (backend y frontend), varias requieren upgrades major |
+| A-010 | High | Abierto | Proyecto | AppSec/Secrets | `gitleaks` detecta **potenciales secretos** en historial git (requiere triage y posible rotación/rewrite) |
 | A-007 | Medium | Abierto | Quick win | Backend/API | CORS/headers en API prod parecen demasiado permisivos (`Access-Control-Allow-Origin: *`) y faltan headers de hardening |
 | A-008 | Medium | Mitigado (en rama) | Quick win | QA/AppSec | Tests/smoke podían disparar integraciones externas si `.env` tenía secretos; se aisló carga de env y se deshabilitaron integraciones en `NODE_ENV=test` |
 
@@ -199,6 +200,22 @@ Leyenda:
 - **Esfuerzo estimado:** **M/L** (por upgrades major + regresiones potenciales)
 - **Owner sugerido:** Backend + Frontend + AppSec
 
+### A-010 — Potenciales secretos en historial git (gitleaks) (High)
+- **Evidencia:**
+  - `gitleaks detect` (historial completo) reporta **8 hallazgos**.  
+    Evidencia redacted: `audit-artifacts/appsec-2026-02-13/secrets/gitleaks.summary.md` y `audit-artifacts/appsec-2026-02-13/secrets/gitleaks.report.json`.
+- **Cómo reproducir:**
+  - En repo: ejecutar `gitleaks detect --redact` (no correr contra prod; solo en repo).
+- **Impacto:** si alguno de los tokens/keys fuese real, permitiría abuso de servicios externos (email/analytics/pagos) o exposición de datos.
+- **Probabilidad:** media (varios hallazgos pueden ser **falsos positivos**: ejemplos en Swagger types, fixtures, etc.); requiere triage.
+- **Recomendación concreta:**
+  - Triage por hallazgo: confirmar si es un secreto real o un ejemplo/fixture.
+  - Si es real: **rotar la credencial** en el proveedor + invalidar sesiones/tokens según aplique.
+  - Remover del repo/historial: usar `git filter-repo`/BFG para borrar blobs (requiere coordinación y fuerza-push).
+  - Añadir `gitleaks` al pipeline CI como gate (con allowlist temporal solo para falsos positivos).
+- **Esfuerzo estimado:** **M/L**
+- **Owner sugerido:** AppSec + SRE + Backend/Frontend (según el origen)
+
 ### A-007 — CORS/headers permisivos en API producción (Medium)
 - **Evidencia (pasivo, prod API):**
   - `audit-artifacts/prod-passive-2026-02-12/thebearbeatapi.lat.analytics-health.headers.txt`
@@ -248,7 +265,7 @@ Fuente (pasivo prod): `audit-artifacts/prod-passive-2026-02-12/thebearbeat.com.h
   - Jest: `backend/test/*`
   - Agregado: tests anti-regresión para A-001 + A-002.
   - Ajuste: Jest ahora carga env de forma segura (evita `backend/.env` por defecto) para prevenir side effects en tests (ver A-008).
-  - Ejecutado (local STAGING DB): `npm test --workspace=backend -- --runInBand` **OK** (evidencia: `audit-artifacts/staging-local-2026-02-12/backend.jest.r3.txt`).
+  - Ejecutado (local STAGING DB): `npm test --workspace=backend -- --runInBand` **OK** (evidencia: `audit-artifacts/staging-local-2026-02-13/backend.jest.r4.txt`).
   - Build local: `npm run build --workspace=backend` **OK** (TypeScript + Prisma generate; sin requerir DB).
 - Frontend:
   - Vitest: `npm test --workspace=frontend`
@@ -287,6 +304,8 @@ Regla: medición profunda + load solo en **STAGING**.
 - Dependency audit (`npm audit`): ver `audit-artifacts/appsec-2026-02-12/deps/npm-audit.summary.md`.
 - Secret scan (patrones high-confidence en archivos trackeados): **0 matches**  
   Evidencia: `audit-artifacts/appsec-2026-02-12/secrets/secret-scan.summary.md`.
+- Secret scan (historial git, `gitleaks --redact`): **8 hallazgos** (redacted; requiere triage)  
+  Evidencia: `audit-artifacts/appsec-2026-02-13/secrets/gitleaks.summary.md`.
 - Quick scan de “risky sinks” (open redirect / DOM sinks): 3 matches para revisión manual  
   Evidencia: `audit-artifacts/appsec-2026-02-12/sast/rg-risky-sinks.txt`.
 
