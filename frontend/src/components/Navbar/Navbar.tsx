@@ -2,7 +2,8 @@ import { useUserContext } from "../../contexts/UserContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import type { ThemeMode } from "../../contexts/ThemeContext";
 import { useNavigate } from "react-router-dom";
-import osoLogo from "../../assets/images/oso-icon.png";
+import brandMarkBlack from "../../assets/brand/bearbeat-mark-black.png";
+import brandMarkCyan from "../../assets/brand/bearbeat-mark-cyan.png";
 import "./Navbar.scss";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -39,6 +40,7 @@ function Navbar(props: NavbarPropsI) {
   const { mode, theme, setMode } = useTheme();
   const navigate = useNavigate();
   const { setAsideOpen, menuButtonRef } = props;
+  const brandMark = theme === "light" ? brandMarkBlack : brandMarkCyan;
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const adminAccessBackup = getAdminAccessBackup();
@@ -74,7 +76,7 @@ function Navbar(props: NavbarPropsI) {
         >
           <Menu size={20} aria-hidden />
         </button>
-        <img src={osoLogo} alt="Bear Beat logo" />
+        <img src={brandMark} alt="Bear Beat" />
         <h2>Bear Beat</h2>
       </div>
       <div className="nav-right">

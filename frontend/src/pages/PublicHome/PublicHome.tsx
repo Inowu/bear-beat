@@ -1,7 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import trpc from "../../api";
-import Logo from "../../assets/images/osonuevo.png";
+import { useTheme } from "../../contexts/ThemeContext";
+import brandMarkBlack from "../../assets/brand/bearbeat-mark-black.png";
+import brandMarkCyan from "../../assets/brand/bearbeat-mark-cyan.png";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../utils/growthMetrics";
 import { FALLBACK_GENRES, type GenreStats } from "./fallbackGenres";
@@ -159,6 +161,8 @@ function formatMonthlyDualHint(mxnAmount: number | null | undefined, usdAmount: 
 
 export default function PublicHome() {
   const location = useLocation();
+  const { theme } = useTheme();
+  const brandMark = theme === "light" ? brandMarkBlack : brandMarkCyan;
   const preferredCurrency = useMemo(() => detectPreferredCurrency(), []);
   const [trialConfig, setTrialConfig] = useState<TrialConfigResponse | null>(null);
   const [catalogSummary, setCatalogSummary] = useState<PublicCatalogSummary | null>(null);
@@ -686,7 +690,7 @@ export default function PublicHome() {
       <header className="home-topnav" aria-label="Navegación">
         <div className="ph__container home-topnav__inner">
           <Link to="/" className="home-topnav__brand" aria-label="Bear Beat" aria-current="page">
-            <img src={Logo} alt="Bear Beat" width={40} height={40} />
+            <img src={brandMark} alt="Bear Beat" width={40} height={40} />
           </Link>
           <div className="home-topnav__right" aria-label="Acciones">
             <nav className="home-topnav__nav" aria-label="Links">
