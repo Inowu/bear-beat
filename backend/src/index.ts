@@ -40,6 +40,7 @@ import {
 } from './queue/removeUsers';
 import { downloadDirEndpoint } from './endpoints/download-dir.endpoint';
 import { catalogStatsEndpoint } from './endpoints/catalog-stats.endpoint';
+import { stripeOxxoHealthEndpoint } from './endpoints/stripe-oxxo-health.endpoint';
 
 const DEFAULT_CORS_ORIGINS = [
   'http://localhost:3000',
@@ -216,6 +217,10 @@ async function main() {
         sentry: getSentryBackendStatus(),
       });
     });
+
+    // Public: quick readiness check for the separate Stripe account that powers OXXO.
+    // Returns only booleans + safe error codes (no secrets).
+    app.get('/health/stripe-oxxo', stripeOxxoHealthEndpoint);
 
     // Debug endpoint for validating Sentry wiring.
     // Disable by default in production (avoid noise and abuse).

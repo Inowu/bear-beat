@@ -44,6 +44,32 @@ const extractOxxoVoucher = (
   };
 };
 
+type StripeErrorShape = {
+  type?: unknown;
+  code?: unknown;
+  statusCode?: unknown;
+  requestId?: unknown;
+  message?: unknown;
+};
+
+const toSafeString = (value: unknown, maxLen = 160): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  return trimmed.slice(0, maxLen);
+};
+
+const sanitizeStripeError = (err: unknown) => {
+  const e = err as StripeErrorShape;
+  return {
+    type: toSafeString(e?.type, 60),
+    code: toSafeString(e?.code, 80),
+    statusCode: typeof e?.statusCode === 'number' ? e.statusCode : null,
+    requestId: toSafeString(e?.requestId, 80),
+    message: toSafeString(e?.message),
+  };
+};
+
 /**
  * Stripe OXXO (cash) flow:
  * - Creates a PaymentIntent in a separate Stripe account (configured via STRIPE_OXXO_* env vars)
@@ -180,35 +206,76 @@ export const subscribeWithOxxoStripe = shieldedProcedure
       return 3;
     })();
 
-    const pi = await stripeOxxoInstance.paymentIntents.create(
-      {
-        amount: amountCents,
-        currency: 'mxn',
-        confirm: true,
-        payment_method_types: ['oxxo'],
-        payment_method_data: {
-          type: 'oxxo',
-          billing_details: {
-            email: user.email,
-            name: user.username,
+    let pi: Stripe.PaymentIntent;
+    try {
+      pi = await stripeOxxoInstance.paymentIntents.create(
+        {
+          amount: amountCents,
+          currency: 'mxn',
+          confirm: true,
+          payment_method_types: ['oxxo'],
+          payment_method_data: {
+            type: 'oxxo',
+            billing_details: {
+              email: user.email,
+              name: user.username,
+            },
+          } as any,
+          payment_method_options: {
+            oxxo: {
+              expires_after_days: expiresAfterDays,
+            },
+          } as any,
+          description: `Plan ${plan.name} (OXXO)`,
+          metadata: {
+            orderId: String(order.id),
+            userId: String(user.id),
+            planId: String(plan.id),
+            bb_kind: 'plan',
+            bb_provider: 'stripe_oxxo',
           },
-        } as any,
-        payment_method_options: {
-          oxxo: {
-            expires_after_days: expiresAfterDays,
-          },
-        } as any,
-        description: `Plan ${plan.name} (OXXO)`,
-        metadata: {
-          orderId: String(order.id),
-          userId: String(user.id),
-          planId: String(plan.id),
-          bb_kind: 'plan',
-          bb_provider: 'stripe_oxxo',
         },
-      },
-      { idempotencyKey: `stripe-oxxo-order-${order.id}` },
-    );
+        { idempotencyKey: `stripe-oxxo-order-${order.id}` },
+      );
+    } catch (err) {
+      const stripeError = sanitizeStripeError(err);
+      log.error('[STRIPE_OXXO] Failed to create PaymentIntent', {
+        orderId: order.id,
+        userId: user.id,
+        planId: plan.id,
+        ...stripeError,
+      });
+
+      const type = stripeError.type ?? '';
+      const code = stripeError.code ?? '';
+      const typeLower = type.toLowerCase();
+      const codeLower = code.toLowerCase();
+      const message = (stripeError.message ?? '').toLowerCase();
+
+      const isAuthError = typeLower === 'stripeauthenticationerror';
+      const isPaymentMethodUnavailable =
+        codeLower === 'payment_method_unactivated'
+        || message.includes('oxxo')
+        || message.includes('payment method');
+      const isAccountDisabled =
+        message.includes('charges are disabled')
+        || message.includes('account cannot')
+        || message.includes('not enabled for live charges');
+
+      const reasonCode = [type, code].filter(Boolean).join(':') || 'unknown';
+      const userMessage = isAuthError
+        ? 'No pudimos autenticar el pago en efectivo. Intenta de nuevo o usa tarjeta/SPEI.'
+        : isAccountDisabled
+          ? 'La cuenta de pagos en efectivo no está lista para cobrar en vivo. Usa tarjeta/SPEI por ahora.'
+          : isPaymentMethodUnavailable
+            ? 'El pago en efectivo (OXXO) no está habilitado en este momento. Usa tarjeta/SPEI.'
+            : `No pudimos generar la referencia de pago en efectivo. Usa tarjeta/SPEI. (Código: ${reasonCode})`;
+
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: userMessage,
+      });
+    }
 
     const voucher = extractOxxoVoucher(pi as Stripe.PaymentIntent);
     if (!voucher) {
