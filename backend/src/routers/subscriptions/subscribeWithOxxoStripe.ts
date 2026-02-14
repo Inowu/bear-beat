@@ -7,12 +7,46 @@ import stripeOxxoInstance, { isStripeOxxoConfigured } from '../../stripe/oxxo';
 import { OrderStatus } from './interfaces/order-status.interface';
 import { PaymentService } from './services/types';
 import type { Stripe } from 'stripe';
+import bwipjs from 'bwip-js';
 
 const toPositiveInt = (value: unknown): number | null => {
   const n = typeof value === 'number' ? value : Number(value);
   if (!Number.isFinite(n)) return null;
   const i = Math.trunc(n);
   return i > 0 ? i : null;
+};
+
+const tryGenerateOxxoBarcodeDataUrl = async (referenceRaw: unknown): Promise<string> => {
+  const reference = typeof referenceRaw === 'string' ? referenceRaw.trim() : '';
+  if (!reference || reference.length < 6 || reference.length > 64) return '';
+
+  try {
+    const png: Buffer = await new Promise((resolve, reject) => {
+      (bwipjs as any).toBuffer(
+        {
+          bcid: 'code128',
+          text: reference,
+          scale: 3,
+          height: 10,
+          includetext: false,
+          paddingwidth: 10,
+          paddingheight: 8,
+          backgroundcolor: 'FFFFFF',
+        },
+        (err: unknown, buffer: Buffer) => {
+          if (err) return reject(err);
+          return resolve(buffer);
+        },
+      );
+    });
+
+    return `data:image/png;base64,${png.toString('base64')}`;
+  } catch (err) {
+    log.warn('[STRIPE_OXXO] Failed to render barcode image', {
+      error: err instanceof Error ? err.message : err,
+    });
+    return '';
+  }
 };
 
 const extractOxxoVoucher = (
@@ -185,11 +219,12 @@ export const subscribeWithOxxoStripe = shieldedProcedure
         const isStillPending = status === 'requires_action' || status === 'requires_payment_method' || status === 'processing';
 
         if (voucher && !isExpired && isStillPending) {
+          const barcodeDataUrl = await tryGenerateOxxoBarcodeDataUrl(voucher.reference);
           return {
             object: 'cash_payment',
             type: 'oxxo',
             reference: voucher.reference,
-            barcode_url: '',
+            barcode_url: barcodeDataUrl,
             hosted_voucher_url: voucher.hostedVoucherUrl,
             expires_at: expiresAt,
             auth_code: null,
@@ -320,6 +355,8 @@ export const subscribeWithOxxoStripe = shieldedProcedure
       });
     }
 
+    const barcodeDataUrl = await tryGenerateOxxoBarcodeDataUrl(voucher.reference);
+
     try {
       await prisma.orders.update({
         where: { id: order.id },
@@ -340,7 +377,7 @@ export const subscribeWithOxxoStripe = shieldedProcedure
       object: 'cash_payment',
       type: 'oxxo',
       reference: voucher.reference,
-      barcode_url: '',
+      barcode_url: barcodeDataUrl,
       hosted_voucher_url: voucher.hostedVoucherUrl,
       expires_at: voucher.expiresAt ?? 0,
       auth_code: null,

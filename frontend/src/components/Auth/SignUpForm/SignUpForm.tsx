@@ -525,6 +525,14 @@ function SignUpForm() {
     Number.isFinite(trialConfig?.gb) &&
     (trialConfig?.gb ?? 0) > 0;
 
+  const checkoutSubtitle = useMemo(() => {
+    if (!isCheckoutIntent) return "";
+    if (showCheckoutTrial) {
+      return "En el siguiente paso eliges tu método de pago y activas tu prueba. Hoy no se cobra nada (solo validamos tu tarjeta).";
+    }
+    return "En el siguiente paso eliges tu método de pago y activas tu acceso.";
+  }, [isCheckoutIntent, showCheckoutTrial]);
+
   const checkoutPlanQuotaGb = useMemo(() => {
     const quota = Number((checkoutPlan as any)?.gigas ?? 0);
     return Number.isFinite(quota) && quota > 0 ? quota : null;
@@ -808,14 +816,16 @@ function SignUpForm() {
         </Link>
         .
       </p>
-      <div className="c-row auth-login-register-wrap">
-        <span className="auth-login-register-copy">
-          ¿Ya tienes cuenta?{" "}
-          <Link to="/auth" state={{ from }} className="auth-login-register">
-            Inicia sesión
-          </Link>
-        </span>
-      </div>
+      {!isCheckoutIntent && (
+        <div className="c-row auth-login-register-wrap">
+          <span className="auth-login-register-copy">
+            ¿Ya tienes cuenta?{" "}
+            <Link to="/auth" state={{ from }} className="auth-login-register">
+              Inicia sesión
+            </Link>
+          </span>
+        </div>
+      )}
     </form>
   );
 
@@ -839,13 +849,22 @@ function SignUpForm() {
             <div className="checkout-intent-shell__grid" aria-label="Crear cuenta">
               <section className="checkout-intent-card checkout-intent-card--flow" aria-label="Crea tu cuenta">
                 <div className="checkout-intent-shell__head">
-                  <div className="checkout-intent-shell__kicker" aria-hidden>
-                    Paso 1 de 2
-                  </div>
                   <h1 className="checkout-intent-shell__title">Crea tu cuenta</h1>
                   <p className="checkout-intent-shell__subtitle">
-                    En el siguiente paso eliges tu método de pago y activas tu acceso.
+                    {checkoutSubtitle}
                   </p>
+                  <div className="checkout-intent-shell__trust" aria-label="Checkout seguro">
+                    <span className="checkout-intent-shell__trustItem">
+                      <Lock aria-hidden />
+                      <span>Checkout seguro</span>
+                    </span>
+                    <span className="checkout-intent-shell__trustDot" aria-hidden>
+                      ·
+                    </span>
+                    <span className="checkout-intent-shell__trustItem">
+                      <span>Cancela cuando quieras</span>
+                    </span>
+                  </div>
                 </div>
                 {FormContent}
               </section>
