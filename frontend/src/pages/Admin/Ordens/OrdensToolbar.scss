@@ -11,6 +11,7 @@
 .orders-toolbar__filters {
   flex: 1 1 760px;
   min-width: 0;
+  max-width: 100%;
   display: grid;
   gap: 10px;
   align-items: end;
@@ -49,6 +50,11 @@
 .orders-toolbar__control {
   width: 100%;
   min-width: 0;
+  max-width: 100%;
+  display: block;
+  /* Some mobile browsers (notably iOS WebKit) can treat date/select inputs as having
+     an intrinsic min-inline-size; ensure they can always shrink within the grid. */
+  min-inline-size: 0;
 }
 
 .orders-toolbar__control--input,
