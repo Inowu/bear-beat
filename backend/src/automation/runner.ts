@@ -286,7 +286,13 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 
 	        safeAddManyChatTag(user, 'AUTOMATION_TRIAL_NO_DOWNLOAD_24H').catch(() => {});
 	        const templateId = parseNumber(process.env.AUTOMATION_EMAIL_TRIAL_NO_DOWNLOAD_TEMPLATE_ID, 0);
-	        if (emailAutomationsEnabled && templateId > 0 && user.email_marketing_opt_in && canSendEmail()) {
+	        if (
+	          emailAutomationsEnabled
+	          && templateId > 0
+	          && user.email_marketing_opt_in
+	          && user.email_marketing_news_opt_in
+	          && canSendEmail()
+	        ) {
 	          const url = appendQueryParams(`${resolveClientUrl()}/`, {
 	            utm_source: 'email',
 	            utm_medium: 'automation',
@@ -358,7 +364,13 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 
 	        safeAddManyChatTag(user, 'AUTOMATION_PAID_NO_DOWNLOAD_24H').catch(() => {});
 	        const templateId = parseNumber(process.env.AUTOMATION_EMAIL_PAID_NO_DOWNLOAD_TEMPLATE_ID, 0);
-	        if (emailAutomationsEnabled && templateId > 0 && user.email_marketing_opt_in && canSendEmail()) {
+	        if (
+	          emailAutomationsEnabled
+	          && templateId > 0
+	          && user.email_marketing_opt_in
+	          && user.email_marketing_news_opt_in
+	          && canSendEmail()
+	        ) {
 	          const url = appendQueryParams(`${resolveClientUrl()}/`, {
 	            utm_source: 'email',
 	            utm_medium: 'automation',
@@ -453,7 +465,14 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
         ]);
         safeAddManyChatTag(user, `AUTOMATION_REGISTERED_NO_PURCHASE_OFFER_${offer.percentOff}`).catch(() => {});
 
-	        if (emailAutomationsEnabled && templateId > 0 && user.email_marketing_opt_in && offer.couponCode && canSendEmail()) {
+	        if (
+	          emailAutomationsEnabled
+	          && templateId > 0
+	          && user.email_marketing_opt_in
+	          && user.email_marketing_offers_opt_in
+	          && offer.couponCode
+	          && canSendEmail()
+	        ) {
 	          const url = appendQueryParams(`${resolveClientUrl()}/planes`, {
 	            utm_source: 'email',
 	            utm_medium: 'automation',
@@ -633,13 +652,17 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
         if (!created) continue;
 
         const user = await prisma.users.findFirst({ where: { id: userId } });
-        if (user) {
-          safeAddManyChatTag(user, 'AUTOMATION_CHECKOUT_ABANDONED_1H').catch(() => {});
-        }
+        if (!user || user.blocked) continue;
+        safeAddManyChatTag(user, 'AUTOMATION_CHECKOUT_ABANDONED_1H').catch(() => {});
 
 	        const templateId = parseNumber(process.env.AUTOMATION_EMAIL_CHECKOUT_ABANDONED_1H_TEMPLATE_ID, 0);
-	        const emailOptIn = Boolean(row.emailMarketingOptIn);
-	        if (emailAutomationsEnabled && templateId > 0 && emailOptIn && canSendEmail()) {
+	        if (
+	          emailAutomationsEnabled
+	          && templateId > 0
+	          && user.email_marketing_opt_in
+	          && user.email_marketing_news_opt_in
+	          && canSendEmail()
+	        ) {
 	          const base = resolveClientUrl();
 	          const rawUrl = row.planId ? `${base}/comprar?priceId=${row.planId}` : `${base}/planes`;
 	          const url = appendQueryParams(rawUrl, {
@@ -650,7 +673,7 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
           });
           const unsubscribeUrl = buildMarketingUnsubscribeUrl(userId) ?? undefined;
           const tpl = emailTemplates.automationCheckoutAbandoned({
-            name: row.username,
+            name: user.username,
             url,
             planName: row.planName ?? null,
             price: row.planPrice ? String(row.planPrice) : null,
@@ -661,7 +684,7 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	            userId,
 	            actionKey: 'checkout_abandoned',
 	            stage: 1,
-	            toEmail: row.email,
+	            toEmail: user.email,
 	            subject: tpl.subject,
 	            html: tpl.html,
 	            text: tpl.text,
@@ -753,13 +776,17 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
         if (!created) continue;
 
         const user = await prisma.users.findFirst({ where: { id: userId } });
-        if (user) {
-          safeAddManyChatTag(user, 'AUTOMATION_CHECKOUT_ABANDONED_24H').catch(() => {});
-        }
+        if (!user || user.blocked) continue;
+        safeAddManyChatTag(user, 'AUTOMATION_CHECKOUT_ABANDONED_24H').catch(() => {});
 
 	        const templateId = parseNumber(process.env.AUTOMATION_EMAIL_CHECKOUT_ABANDONED_24H_TEMPLATE_ID, 0);
-	        const emailOptIn = Boolean(row.emailMarketingOptIn);
-	        if (emailAutomationsEnabled && templateId > 0 && emailOptIn && canSendEmail()) {
+	        if (
+	          emailAutomationsEnabled
+	          && templateId > 0
+	          && user.email_marketing_opt_in
+	          && user.email_marketing_news_opt_in
+	          && canSendEmail()
+	        ) {
 	          const base = resolveClientUrl();
 	          const rawUrl = row.planId ? `${base}/comprar?priceId=${row.planId}` : `${base}/planes`;
 	          const url = appendQueryParams(rawUrl, {
@@ -770,7 +797,7 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
           });
           const unsubscribeUrl = buildMarketingUnsubscribeUrl(userId) ?? undefined;
           const tpl = emailTemplates.automationCheckoutAbandoned({
-            name: row.username,
+            name: user.username,
             url,
             planName: row.planName ?? null,
             price: row.planPrice ? String(row.planPrice) : null,
@@ -781,7 +808,7 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	            userId,
 	            actionKey: 'checkout_abandoned',
 	            stage: 24,
-	            toEmail: row.email,
+	            toEmail: user.email,
 	            subject: tpl.subject,
 	            html: tpl.html,
 	            text: tpl.text,
@@ -858,13 +885,17 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
         if (!created) continue;
 
         const user = await prisma.users.findFirst({ where: { id: userId } });
-        if (user) {
-          safeAddManyChatTag(user, 'AUTOMATION_TRIAL_EXPIRING_24H').catch(() => {});
-        }
+        if (!user || user.blocked) continue;
+        safeAddManyChatTag(user, 'AUTOMATION_TRIAL_EXPIRING_24H').catch(() => {});
 
 	        const templateId = parseNumber(process.env.AUTOMATION_EMAIL_TRIAL_EXPIRING_24H_TEMPLATE_ID, 0);
-	        const emailOptIn = Boolean(row.emailMarketingOptIn);
-	        if (emailAutomationsEnabled && templateId > 0 && emailOptIn && canSendEmail()) {
+	        if (
+	          emailAutomationsEnabled
+	          && templateId > 0
+	          && user.email_marketing_opt_in
+	          && user.email_marketing_news_opt_in
+	          && canSendEmail()
+	        ) {
 	          const url = appendQueryParams(`${resolveClientUrl()}/planes`, {
 	            utm_source: 'email',
 	            utm_medium: 'automation',
@@ -873,7 +904,7 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	          });
 	          const unsubscribeUrl = buildMarketingUnsubscribeUrl(userId) ?? undefined;
 	          const tpl = emailTemplates.automationTrialExpiring24h({
-	            name: row.username,
+	            name: user.username,
 	            url,
 	            unsubscribeUrl,
 	          });
@@ -881,7 +912,7 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	            userId,
 	            actionKey: 'trial_expiring',
 	            stage: 24,
-	            toEmail: row.email,
+	            toEmail: user.email,
 	            subject: tpl.subject,
 	            html: tpl.html,
 	            text: tpl.text,
@@ -942,7 +973,13 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
         safeAddManyChatTag(user, tag).catch(() => {});
 
 	        const templateId = parseNumber(process.env.AUTOMATION_EMAIL_ACTIVE_NO_DOWNLOAD_TEMPLATE_ID, 0);
-	        if (emailAutomationsEnabled && templateId > 0 && user.email_marketing_opt_in && canSendEmail()) {
+	        if (
+	          emailAutomationsEnabled
+	          && templateId > 0
+	          && user.email_marketing_opt_in
+	          && user.email_marketing_news_opt_in
+	          && canSendEmail()
+	        ) {
 	          const url = appendQueryParams(`${resolveClientUrl()}/`, {
 	            utm_source: 'email',
 	            utm_medium: 'automation',
@@ -1092,6 +1129,7 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
         ` : Prisma.sql``}
         WHERE du_active.id IS NULL
           AND u.email_marketing_opt_in = 1
+          AND u.email_marketing_offers_opt_in = 1
           AND aal.id IS NULL
           ${stageDays === 7 ? Prisma.sql`AND aal_legacy.id IS NULL` : Prisma.sql``}
           AND EXISTS (
@@ -1143,7 +1181,14 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
         safeAddManyChatTag(user, `AUTOMATION_WINBACK_LAPSED_${stageDays}D_OFFER_${offer.percentOff}`).catch(() => {});
 
         const templateId = parseNumber(process.env.AUTOMATION_EMAIL_WINBACK_LAPSED_TEMPLATE_ID, 0);
-        if (emailAutomationsEnabled && templateId > 0 && user.email_marketing_opt_in && offer.couponCode && canSendEmail()) {
+        if (
+          emailAutomationsEnabled
+          && templateId > 0
+          && user.email_marketing_opt_in
+          && user.email_marketing_offers_opt_in
+          && offer.couponCode
+          && canSendEmail()
+        ) {
           const url = appendQueryParams(`${resolveClientUrl()}/planes`, {
             utm_source: 'email',
             utm_medium: 'automation',
@@ -1252,7 +1297,14 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	        safeAddManyChatTag(user, 'AUTOMATION_PLANS_OFFER_10').catch(() => {});
 	
 	        const offerEmailTemplateId = parseNumber(process.env.AUTOMATION_EMAIL_PLANS_OFFER_TEMPLATE_ID, 0);
-	        if (emailAutomationsEnabled && offerEmailTemplateId > 0 && user.email_marketing_opt_in && offer.couponCode && canSendEmail()) {
+	        if (
+	          emailAutomationsEnabled
+	          && offerEmailTemplateId > 0
+	          && user.email_marketing_opt_in
+	          && user.email_marketing_offers_opt_in
+	          && offer.couponCode
+	          && canSendEmail()
+	        ) {
 	          const url = appendQueryParams(`${resolveClientUrl()}/planes`, {
 	            utm_source: 'email',
 	            utm_medium: 'automation',
@@ -1361,7 +1413,14 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	        safeAddManyChatTag(user, 'AUTOMATION_PLANS_OFFER_30').catch(() => {});
 	
 	        const offerEmailTemplateId = parseNumber(process.env.AUTOMATION_EMAIL_PLANS_OFFER_TEMPLATE_ID, 0);
-	        if (emailAutomationsEnabled && offerEmailTemplateId > 0 && user.email_marketing_opt_in && offer.couponCode && canSendEmail()) {
+	        if (
+	          emailAutomationsEnabled
+	          && offerEmailTemplateId > 0
+	          && user.email_marketing_opt_in
+	          && user.email_marketing_offers_opt_in
+	          && offer.couponCode
+	          && canSendEmail()
+	        ) {
 	          const url = appendQueryParams(`${resolveClientUrl()}/planes`, {
 	            utm_source: 'email',
 	            utm_medium: 'automation',
@@ -1467,7 +1526,14 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	        safeAddManyChatTag(user, 'AUTOMATION_PLANS_OFFER_50').catch(() => {});
 	
 	        const offerEmailTemplateId = parseNumber(process.env.AUTOMATION_EMAIL_PLANS_OFFER_TEMPLATE_ID, 0);
-	        if (emailAutomationsEnabled && offerEmailTemplateId > 0 && user.email_marketing_opt_in && offer.couponCode && canSendEmail()) {
+	        if (
+	          emailAutomationsEnabled
+	          && offerEmailTemplateId > 0
+	          && user.email_marketing_opt_in
+	          && user.email_marketing_offers_opt_in
+	          && offer.couponCode
+	          && canSendEmail()
+	        ) {
 	          const url = appendQueryParams(`${resolveClientUrl()}/planes`, {
 	            utm_source: 'email',
 	            utm_medium: 'automation',

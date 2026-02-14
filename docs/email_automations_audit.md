@@ -79,21 +79,22 @@ Leyenda:
 
 ## Winback (Recuperación)
 
-- Winback por email (7/30/60): `PARCIAL`
+- Winback por email (7/30/60): `EXISTE`
   - Evidencia:
-    - Runner: `backend/src/automation/runner.ts` (regla `winback_lapsed` con cadencia 7/30/60).
-    - Existe un script de campaña (segmentos `lapsed`/`never_paid`): `backend/scripts/campaignWinback.ts`.
-  - Gaps:
-    - Falta enforcement explícito de preferencias por categoría (solo existe `email_marketing_opt_in` global).
+    - Runner: `backend/src/automation/runner.ts` (regla `winback_lapsed` con cadencia 7/30/60; respeta `email_marketing_opt_in` + `email_marketing_offers_opt_in`).
+    - Script de campaña (segmentos `lapsed`/`never_paid`): `backend/scripts/campaignWinback.ts` (respeta `email_marketing_opt_in` + `email_marketing_offers_opt_in`).
+  - Notas:
+    - La categoría `digest` existe en preferencias, pero hoy no hay envíos tipo digest (solo se usa para futuros emails).
 
 ## Preferencias (Transaccional vs Marketing)
 
 - Unsubscribe marketing: `EXISTE`
   - Evidencia:
     - Firma/verificación: `backend/src/comms/unsubscribe.ts`
-    - Endpoint público: `backend/src/endpoints/comms-unsubscribe.endpoint.ts` (`GET /api/comms/unsubscribe`), setea `users.email_marketing_opt_in=false`.
+    - Endpoint público: `backend/src/endpoints/comms-unsubscribe.endpoint.ts` (`GET /api/comms/unsubscribe`), setea `users.email_marketing_opt_in=false` y desactiva categorías.
 
-- Centro de preferencias (categorías): `NO EXISTE`
+- Centro de preferencias (categorías): `EXISTE`
   - Evidencia:
-    - Solo existe `users.email_marketing_opt_in` (global) en `backend/prisma/schema.prisma`.
-    - No hay UI/ruta para categorías (novedades/ofertas/digest) ni tabla/campos dedicados.
+    - Campos por categoría: `backend/prisma/schema.prisma` (`email_marketing_news_opt_in`, `email_marketing_offers_opt_in`, `email_marketing_digest_opt_in`).
+    - API (autenticada): `backend/src/routers/comms` (`getEmailPreferences`, `updateEmailPreferences`).
+    - UI (Mi cuenta): `frontend/src/pages/MyAccount/MyAccount.tsx` (panel “Preferencias de email”).

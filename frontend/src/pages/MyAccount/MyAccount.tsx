@@ -17,6 +17,7 @@ import {
   Eye,
   EyeOff,
   FileDown,
+  Mail,
   Trash2,
 } from "src/icons";
 import visaLogo from "../../assets/images/cards/visa.png";
@@ -72,6 +73,16 @@ function MyAccount() {
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
   const [showCancelReasonModal, setShowCancelReasonModal] = useState(false);
+  const [emailPrefs, setEmailPrefs] = useState<null | {
+    enabled: boolean;
+    news: boolean;
+    offers: boolean;
+    digest: boolean;
+    updatedAt: Date | null;
+  }>(null);
+  const [emailPrefsLoading, setEmailPrefsLoading] = useState(false);
+  const [emailPrefsSaving, setEmailPrefsSaving] = useState(false);
+  const [emailPrefsNotice, setEmailPrefsNotice] = useState<string | null>(null);
 
   const closeCondition = () => setShowCondition(false);
   const openCondition = () => setShowCondition(true);
@@ -224,6 +235,62 @@ function MyAccount() {
       setPortalLoading(false);
     }
   };
+
+  const loadEmailPreferences = async () => {
+    if (!currentUser) return;
+    setEmailPrefsLoading(true);
+    try {
+      const result = await trpc.comms.getEmailPreferences.query();
+      const marketing = result?.marketingEmail;
+      if (marketing) {
+        setEmailPrefs({
+          enabled: Boolean(marketing.enabled),
+          news: Boolean(marketing.news),
+          offers: Boolean(marketing.offers),
+          digest: Boolean(marketing.digest),
+          updatedAt: marketing.updatedAt ? new Date(marketing.updatedAt) : null,
+        });
+      }
+    } catch {
+      // Non-blocking: keep the account page usable.
+      setEmailPrefsNotice("No se pudieron cargar tus preferencias de email.");
+    } finally {
+      setEmailPrefsLoading(false);
+    }
+  };
+
+  const updateEmailPreferences = async (patch: {
+    enabled?: boolean;
+    news?: boolean;
+    offers?: boolean;
+    digest?: boolean;
+  }) => {
+    setEmailPrefsSaving(true);
+    try {
+      const result = await trpc.comms.updateEmailPreferences.mutate(patch);
+      const marketing = result?.marketingEmail;
+      if (marketing) {
+        setEmailPrefs({
+          enabled: Boolean(marketing.enabled),
+          news: Boolean(marketing.news),
+          offers: Boolean(marketing.offers),
+          digest: Boolean(marketing.digest),
+          updatedAt: marketing.updatedAt ? new Date(marketing.updatedAt) : null,
+        });
+      }
+      setEmailPrefsNotice("Guardado.");
+      window.setTimeout(() => setEmailPrefsNotice(null), 2000);
+    } catch {
+      setEmailPrefsNotice("No se pudo guardar. Intenta de nuevo.");
+    } finally {
+      setEmailPrefsSaving(false);
+    }
+  };
+
+  useEffect(() => {
+    loadEmailPreferences();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.id]);
 
   const downloadXMLFile = (ftpAccount: IFtpAccount) => {
     const { host, passwd, port, userid } = ftpAccount;
@@ -653,6 +720,81 @@ function MyAccount() {
             </div>
           )}
         </section>
+
+        <section className="ma-panel ma-comms-panel" aria-label="Preferencias de email">
+          <div className="ma-panel-head">
+            <Mail size={18} />
+            <h2>Preferencias de email</h2>
+          </div>
+          <p className="ma-pref-note">
+            Los correos transaccionales (seguridad, pagos, cancelación y soporte) son necesarios para operar el servicio y siempre estarán activos.
+          </p>
+
+          {emailPrefsLoading ? (
+            <div className="ma-loading-cards">
+              <Spinner size={3.2} width={0.35} color="var(--ma-accent)" />
+            </div>
+          ) : !emailPrefs ? (
+            <div className="ma-empty-card">
+              <p>{emailPrefsNotice ?? "No se pudieron cargar tus preferencias de email."}</p>
+              <button
+                type="button"
+                className="ma-btn ma-btn-soft"
+                onClick={loadEmailPreferences}
+                disabled={emailPrefsSaving}
+              >
+                Reintentar
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="ma-pref-list">
+                <PrefToggle
+                  id="bb-email-marketing-enabled"
+                  title="Promociones y novedades por email"
+                  description="Activa o desactiva todos los correos de marketing."
+                  checked={emailPrefs.enabled}
+                  disabled={emailPrefsSaving}
+                  onChange={(next) => updateEmailPreferences({ enabled: next })}
+                />
+                <div className={`ma-pref-sublist ${emailPrefs.enabled ? "" : "is-disabled"}`}>
+                  <PrefToggle
+                    id="bb-email-marketing-news"
+                    title="Novedades y tips"
+                    description="Guías rápidas, recordatorios y mejoras del servicio."
+                    checked={emailPrefs.news}
+                    disabled={!emailPrefs.enabled || emailPrefsSaving}
+                    onChange={(next) => updateEmailPreferences({ news: next })}
+                  />
+                  <PrefToggle
+                    id="bb-email-marketing-offers"
+                    title="Ofertas y cupones"
+                    description="Descuentos, cupones personales y winback."
+                    checked={emailPrefs.offers}
+                    disabled={!emailPrefs.enabled || emailPrefsSaving}
+                    onChange={(next) => updateEmailPreferences({ offers: next })}
+                  />
+                  <PrefToggle
+                    id="bb-email-marketing-digest"
+                    title="Digest"
+                    description="Resumen periódico de novedades (si aplica)."
+                    checked={emailPrefs.digest}
+                    disabled={!emailPrefs.enabled || emailPrefsSaving}
+                    onChange={(next) => updateEmailPreferences({ digest: next })}
+                  />
+                </div>
+              </div>
+
+              <p className="ma-pref-meta" aria-live="polite">
+                {emailPrefsNotice
+                  ? emailPrefsNotice
+                  : emailPrefs.updatedAt
+                    ? `Última actualización: ${formatDateShort(emailPrefs.updatedAt)}`
+                    : "Puedes cambiar tus preferencias cuando quieras."}
+              </p>
+            </>
+          )}
+        </section>
       </div>
 
       <ErrorModal show={showError} onHide={closeError} message={errorMessage} />
@@ -706,6 +848,42 @@ function MyAccount() {
         />
       </Elements>
     </div>
+  );
+}
+
+function PrefToggle({
+  id,
+  title,
+  description,
+  checked,
+  disabled,
+  onChange,
+}: {
+  id: string;
+  title: string;
+  description: string;
+  checked: boolean;
+  disabled: boolean;
+  onChange: (next: boolean) => void;
+}) {
+  return (
+    <label htmlFor={id} className={`ma-pref-row ${disabled ? "is-disabled" : ""}`}>
+      <span className="ma-pref-copy">
+        <span className="ma-pref-title">{title}</span>
+        <span className="ma-pref-desc">{description}</span>
+      </span>
+      <span className="ma-pref-control">
+        <input
+          id={id}
+          className="ma-switch-input"
+          type="checkbox"
+          checked={checked}
+          disabled={disabled}
+          onChange={(event) => onChange(event.target.checked)}
+        />
+        <span className="ma-switch" aria-hidden="true" />
+      </span>
+    </label>
   );
 }
 
