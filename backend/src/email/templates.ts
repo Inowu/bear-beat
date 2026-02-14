@@ -253,6 +253,70 @@ export const emailTemplates = {
     };
   },
 
+  automationPlansOffer: (params: {
+    name: string;
+    url: string;
+    couponCode: string;
+    percentOff: number;
+    expiresAt: string;
+    unsubscribeUrl?: string;
+  }) => {
+    const { name, url, couponCode, percentOff, expiresAt, unsubscribeUrl } = params;
+    const pct = Math.max(0, Math.min(99, Math.floor(Number(percentOff) || 0)));
+    const safeCoupon = String(couponCode || '').trim();
+    const subject = `[Bear Beat] Cupón ${pct}% para activar tu plan`;
+
+    const contentHtml = `
+      <h1 style="margin:0 0 10px 0;font-family:Arial, sans-serif;font-size:22px;line-height:1.2;color:#111;">${escapeHtml(
+        `Tu cupón ${pct}% está listo`,
+      )}</h1>
+      <p style="margin:0 0 12px 0;font-family:Arial, sans-serif;color:#111;line-height:1.6;">
+        Hola <strong>${escapeHtml(name)}</strong>, te guardamos un cupón de <strong>${escapeHtml(
+          pct,
+        )}%</strong> para activar tu plan.
+      </p>
+      <div style="margin:14px 0 12px 0;background:#f6f8fa;border:1px solid #e5e7eb;border-radius:12px;padding:14px;">
+        <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;font-size:12px;color:#6b7280;margin-bottom:8px;">
+          Código
+        </div>
+        <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;font-size:20px;font-weight:900;letter-spacing:0.08em;color:#111;">
+          ${escapeHtml(safeCoupon)}
+        </div>
+        <div style="margin-top:10px;font-family:Arial, sans-serif;font-size:12px;color:#6b7280;line-height:1.5;">
+          Válido hasta: <strong>${escapeHtml(expiresAt)}</strong>
+        </div>
+      </div>
+      <div style="margin:16px 0 14px 0;">
+        ${renderButton({ href: url, label: `Activar con ${pct}%` })}
+      </div>
+      <p style="margin:0;font-family:Arial, sans-serif;color:#374151;line-height:1.6;font-size:13px;">
+        Normalmente se aplica automáticamente al entrar con tu cuenta. Si te lo pide, pega el código en el checkout.
+      </p>
+      <p style="margin:12px 0 0 0;font-family:Arial, sans-serif;color:#374151;line-height:1.6;font-size:13px;">
+        Enlace directo: <span style="word-break:break-all;">${escapeHtml(url)}</span>
+      </p>
+    `.trim();
+
+    const text =
+      `Tu cupón ${pct}% está listo\n\n` +
+      `Hola ${name}, te guardamos un cupón de ${pct}% para activar tu plan.\n\n` +
+      `Código: ${safeCoupon}\n` +
+      `Válido hasta: ${expiresAt}\n\n` +
+      `Link: ${url}\n\n` +
+      `Si te lo pide, pega el código en el checkout.\n`;
+
+    return {
+      subject,
+      html: renderLayout({
+        title: subject,
+        preheader: `Cupón ${pct}% por tiempo limitado`,
+        contentHtml,
+        unsubscribeUrl,
+      }),
+      text: appendMarketingUnsubscribeText(text, unsubscribeUrl),
+    };
+  },
+
   analyticsAlerts: (params: { days: number; count: number; detailsText: string; generatedAt: string }) => {
     const { days, count, detailsText, generatedAt } = params;
     const subject = `[Bear Beat] Alerts de analytics (${count}) · ${days}d`;

@@ -25,6 +25,7 @@ Todos los emails salen del **backend** y se envían con **Amazon SES** (AWS SDK)
 | 7 | **Automatización: plan pagado sin descargas (24h)** | Cuando el usuario paga su primer plan y no descarga en 24h (automation runner) | `automationPaidNoDownload24h` | `email` del usuario | `NAME`, `URL` |
 | 8 | **Automatización: registrado sin compra (7d)** | Cuando el usuario se registró hace 7 días y no compró (automation runner) | `automationRegisteredNoPurchase7d` | `email` del usuario | `NAME`, `URL` |
 | 9 | **Alertas internas de analytics** | Script/cron que envía alertas cuando hay métricas fuera de umbral | `analyticsAlerts` | Lista `ANALYTICS_ALERTS_EMAIL_TO` | `days`, `count`, `detailsText`, `generatedAt` |
+| 10 | **Automatización: oferta (cupón) tras ver planes** | Si el usuario ve `/planes` y no inicia checkout en 12h. Escala a 30% tras 2 días y 50% tras 15 días (si sigue sin comprar) | `automationPlansOffer` | `email` del usuario | `NAME`, `URL`, `couponCode`, `percentOff`, `expiresAt` |
 
 Fuera de esto, no hay más puntos en el repo que envíen emails. Cualquier otro email que quieras (por ejemplo recordatorios, facturas, etc.) habría que añadirlo y definir el HTML/subject en `backend/src/email/templates.ts`.
 
@@ -94,6 +95,7 @@ Fuera de esto, no hay más puntos en el repo que envíen emails. Cualquier otro 
 | `automationTrialNoDownload24h` | Automatización: prueba activa sin descargas (24h) | `NAME`, `URL` |
 | `automationPaidNoDownload24h` | Automatización: plan pagado sin descargas (24h) | `NAME`, `URL` |
 | `automationRegisteredNoPurchase7d` | Automatización: registrado sin compra (7d) | `NAME`, `URL` |
+| `automationPlansOffer` | Automatización: oferta (cupón) tras ver planes sin checkout | `NAME`, `URL`, `couponCode`, `percentOff`, `expiresAt` |
 | `analyticsAlerts` | Alertas internas de analytics (script/cron) | `days`, `count`, `detailsText`, `generatedAt` |
 
 Los textos/diseño se editan en el repo (templates en `backend/src/email/templates.ts`).
@@ -104,6 +106,7 @@ Los textos/diseño se editan en el repo (templates en `backend/src/email/templat
 
 - **Recuperar contraseña:** Además del email, se envía el mismo enlace por **WhatsApp** (Twilio) si el usuario tiene teléfono en BD.
 - **Automations (emails):** Se envían desde `backend/src/automation/runner.ts` y están detrás de flags tipo `AUTOMATION_EMAIL_*_TEMPLATE_ID` (por compatibilidad histórica). Si el valor es `> 0`, se envía el email.
+- **Oferta por email (cupón):** Flag: `AUTOMATION_EMAIL_PLANS_OFFER_TEMPLATE_ID` (si `> 0`, se envía).
 - **Consent / desuscripción (promos):** Los emails incluyen enlace para **cancelar promociones**. Esto desactiva `email_marketing_opt_in` para el usuario (no afecta emails transaccionales como pagos o reset password). Endpoint: `/api/comms/unsubscribe` (firma HMAC con `EMAIL_PREFERENCES_SECRET`). Las automatizaciones por email respetan `email_marketing_opt_in`.
 - **Alertas de analytics:** Se envían desde `backend/scripts/analyticsAlerts.ts` (ejecutar con `npm run analytics:alerts` en el workspace `backend`). Requiere `ANALYTICS_ALERTS_EMAIL_TO`.
 - **Errores:** Si SES falla, se registra en logs y en algunos flujos se devuelve un mensaje neutral al usuario; la lógica de negocio (crear usuario, guardar token, activar plan) ya se habrá ejecutado.

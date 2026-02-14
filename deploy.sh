@@ -184,6 +184,7 @@ fi
 # Default free trial config (Stripe only). Override in backend/.env if needed.
 ensure_env_default "BB_TRIAL_DAYS" "7"
 ensure_env_default "BB_TRIAL_GB" "100"
+ensure_env_default "AUTOMATION_EMAIL_PLANS_OFFER_TEMPLATE_ID" "1"
 ensure_env_default "TRACK_METADATA_SCAN_ON_BOOT" "0"
 ensure_env_default "TRACK_METADATA_SCAN_INTERVAL_MINUTES" "60"
 ensure_env_default "TRACK_METADATA_SPOTIFY_ENABLED" "0"

@@ -519,6 +519,28 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
         ]);
         safeAddManyChatTag(user, 'AUTOMATION_PLANS_OFFER_10').catch(() => {});
 
+        const offerEmailTemplateId = parseNumber(process.env.AUTOMATION_EMAIL_PLANS_OFFER_TEMPLATE_ID, 0);
+        if (offerEmailTemplateId > 0 && user.email_marketing_opt_in && offer.couponCode) {
+          const url = `${resolveClientUrl()}/planes`;
+          const unsubscribeUrl = buildMarketingUnsubscribeUrl(user.id) ?? undefined;
+          const expiresAtText = `${expiresAt.toISOString().replace('T', ' ').slice(0, 16)} UTC`;
+          const tpl = emailTemplates.automationPlansOffer({
+            name: user.username,
+            url,
+            couponCode: offer.couponCode,
+            percentOff: offer.percentOff,
+            expiresAt: expiresAtText,
+            unsubscribeUrl,
+          });
+          await safeSendAutomationEmail({
+            toEmail: user.email,
+            toName: user.username,
+            subject: tpl.subject,
+            html: tpl.html,
+            text: tpl.text,
+          });
+        }
+
         // Optional WhatsApp: send a link to plans (login required).
         await safeSendTwilioLink(user, `${resolveClientUrl()}/planes`);
 
@@ -597,6 +619,29 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
           { key: 'bb_offer_expires_at', value: expiresAt.toISOString() },
         ]);
         safeAddManyChatTag(user, 'AUTOMATION_PLANS_OFFER_30').catch(() => {});
+
+        const offerEmailTemplateId = parseNumber(process.env.AUTOMATION_EMAIL_PLANS_OFFER_TEMPLATE_ID, 0);
+        if (offerEmailTemplateId > 0 && user.email_marketing_opt_in && offer.couponCode) {
+          const url = `${resolveClientUrl()}/planes`;
+          const unsubscribeUrl = buildMarketingUnsubscribeUrl(user.id) ?? undefined;
+          const expiresAtText = `${expiresAt.toISOString().replace('T', ' ').slice(0, 16)} UTC`;
+          const tpl = emailTemplates.automationPlansOffer({
+            name: user.username,
+            url,
+            couponCode: offer.couponCode,
+            percentOff: offer.percentOff,
+            expiresAt: expiresAtText,
+            unsubscribeUrl,
+          });
+          await safeSendAutomationEmail({
+            toEmail: user.email,
+            toName: user.username,
+            subject: tpl.subject,
+            html: tpl.html,
+            text: tpl.text,
+          });
+        }
+
         bump('plans_offer_30');
       }
     }
@@ -672,6 +717,29 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
           { key: 'bb_offer_expires_at', value: expiresAt.toISOString() },
         ]);
         safeAddManyChatTag(user, 'AUTOMATION_PLANS_OFFER_50').catch(() => {});
+
+        const offerEmailTemplateId = parseNumber(process.env.AUTOMATION_EMAIL_PLANS_OFFER_TEMPLATE_ID, 0);
+        if (offerEmailTemplateId > 0 && user.email_marketing_opt_in && offer.couponCode) {
+          const url = `${resolveClientUrl()}/planes`;
+          const unsubscribeUrl = buildMarketingUnsubscribeUrl(user.id) ?? undefined;
+          const expiresAtText = `${expiresAt.toISOString().replace('T', ' ').slice(0, 16)} UTC`;
+          const tpl = emailTemplates.automationPlansOffer({
+            name: user.username,
+            url,
+            couponCode: offer.couponCode,
+            percentOff: offer.percentOff,
+            expiresAt: expiresAtText,
+            unsubscribeUrl,
+          });
+          await safeSendAutomationEmail({
+            toEmail: user.email,
+            toName: user.username,
+            subject: tpl.subject,
+            html: tpl.html,
+            text: tpl.text,
+          });
+        }
+
         bump('plans_offer_50');
       }
     }
