@@ -1,4 +1,4 @@
-import { Download, Sparkles, Search } from "src/icons";
+import { Download, Ticket, Search } from "src/icons";
 import { HOME_HERO_MICROCOPY_TRIAL } from "../homeCopy";
 
 export default function HowItWorks(props: { trial: { enabled: boolean; days: number; gb: number } | null }) {
@@ -17,7 +17,7 @@ export default function HowItWorks(props: { trial: { enabled: boolean; days: num
         <ul className="how-it-works__grid" aria-label="Pasos">
           <li className="how-it-works__card">
             <span className="how-it-works__icon" aria-hidden>
-              <Sparkles size={18} />
+              <Ticket size={18} />
             </span>
             <h3>Activa tu prueba</h3>
             <p>{step1Copy}</p>

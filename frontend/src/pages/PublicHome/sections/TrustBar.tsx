@@ -1,4 +1,4 @@
-import { Sparkles, Database, HardDriveDownload, LibraryBig } from "src/icons";
+import { User, Database, HardDriveDownload, LibraryBig } from "src/icons";
 
 export default function TrustBar(props: {
   totalFilesLabel: string;
@@ -29,7 +29,7 @@ export default function TrustBar(props: {
           </span>
         </div>
         <div className="trust-bar__item" role="listitem">
-          <Sparkles size={18} aria-hidden />
+          <User size={18} aria-hidden />
           <span>
             Activación guiada <strong>1 a 1</strong>
           </span>

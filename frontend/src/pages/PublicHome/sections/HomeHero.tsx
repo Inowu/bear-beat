@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, CirclePlay, Lock, Sparkles } from "src/icons";
+import { ArrowRight, CirclePlay, Lock, Ticket } from "src/icons";
 import {
   HOME_HERO_MICROCOPY_BASE,
   HOME_HERO_MICROCOPY_TRIAL,
@@ -77,7 +77,7 @@ export default function HomeHero(props: {
               {trialLabel ? (
                 <>
                   <span className="home-hero__micro-row">
-                    <Sparkles size={16} aria-hidden />
+                    <Ticket size={16} aria-hidden />
                     <span>
                       <strong>{trialLabel}</strong> {HOME_HERO_MICROCOPY_TRIAL}
                     </span>
