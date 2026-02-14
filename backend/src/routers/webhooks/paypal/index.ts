@@ -53,9 +53,10 @@ const getPaypalSubscriptionId = (payload: Record<string, any>): string | null =>
 export const paypalSubscriptionWebhook = async (req: Request) => {
   const payload = parsePaypalPayload(req);
 
-  log.info(
-    `[PAYPAL_WH] Handling Paypal webhook, payload: ${JSON.stringify(payload)}`,
-  );
+  log.info('[PAYPAL_WH] Handling Paypal webhook', {
+    eventType: payload?.event_type ?? null,
+    eventId: payload?.id ?? payload?.event_id ?? null,
+  });
 
   const subId = getPaypalSubscriptionId(payload);
   if (!subId) {
@@ -73,7 +74,9 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
 
   if (!order) {
     // Probably never happening (in prod) but just in case
-    log.error(`[PAYPAL_WH] Order with txn_id ${subId} not found`);
+    log.error('[PAYPAL_WH] Order not found for subscription webhook', {
+      eventType: payload?.event_type ?? null,
+    });
     return;
   }
 

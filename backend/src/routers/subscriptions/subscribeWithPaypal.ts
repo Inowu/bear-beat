@@ -61,7 +61,7 @@ export const subscribeWithPaypal = shieldedProcedure
 
           if (subscription.status === 'ACTIVE') {
             log.info(
-              `[MIGRATION] Cancelling active paypal subscription for user ${user.email}`,
+              `[MIGRATION] Cancelling active paypal subscription for user ${user.id}`,
             );
 
             try {
@@ -80,14 +80,15 @@ export const subscribeWithPaypal = shieldedProcedure
               );
 
               log.info(
-                `[MIGRATION] Active paypal subscription cancelled for user ${user.email}`,
+                `[MIGRATION] Active paypal subscription cancelled for user ${user.id}`,
               );
             } catch (e) {
-              log.error(
-                `[MIGRATION] An error happened while cancelling active paypal subscription for user ${
-                  user.email
-                }: ${(e as AxiosError).response?.data}`,
-              );
+              const axiosErr = e as AxiosError;
+              log.error('[MIGRATION] Failed to cancel active PayPal subscription', {
+                userId: user.id,
+                status: axiosErr.response?.status ?? null,
+                error: axiosErr.message,
+              });
 
               throw new TRPCError({
                 code: 'INTERNAL_SERVER_ERROR',

@@ -216,6 +216,11 @@ async function main(): Promise<void> {
   console.log(`[CAMPAIGN] Segment=${segment} found=${rows.length} csv=${outPath}`);
 
   if (!shouldSend) return;
+  if ((process.env.EMAIL_AUTOMATIONS_ENABLED || '1').trim() === '0') {
+    // eslint-disable-next-line no-console
+    console.log('[CAMPAIGN] EMAIL_AUTOMATIONS_ENABLED=0; refusing to send campaign emails.');
+    return;
+  }
   if (!isEmailConfigured()) {
     throw new Error('Email (SES) is not configured. Missing AWS_REGION/SES_FROM_EMAIL (or credentials).');
   }

@@ -335,11 +335,10 @@ export const register = publicProcedure
             },
           });
         } catch (e: any) {
-          log.error(
-            `There was an error creating the conekta customer for user ${
-              newUser.id
-            }, details: ${JSON.stringify(e.response?.data?.details)}`,
-          );
+          log.error('[REGISTER] Failed to create Conekta customer (non-blocking)', {
+            userId: newUser.id,
+            error: e instanceof Error ? e.message : e,
+          });
         }
       } else {
         log.debug('[REGISTER] Conekta not configured; skipping customer creation', {
