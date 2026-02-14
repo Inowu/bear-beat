@@ -488,6 +488,14 @@ function SignUpForm() {
     return hasTrial ? "Crear cuenta y empezar prueba" : "Crear cuenta y activar";
   }, [isCheckoutIntent, trialConfig?.days, trialConfig?.eligible, trialConfig?.enabled]);
 
+  const showCheckoutTrial =
+    Boolean(trialConfig?.enabled) &&
+    trialConfig?.eligible !== false &&
+    Number.isFinite(trialConfig?.days) &&
+    (trialConfig?.days ?? 0) > 0 &&
+    Number.isFinite(trialConfig?.gb) &&
+    (trialConfig?.gb ?? 0) > 0;
+
   const checkoutPlanQuotaGb = useMemo(() => {
     const quota = Number((checkoutPlan as any)?.gigas ?? 0);
     return Number.isFinite(quota) && quota > 0 ? quota : null;
@@ -498,16 +506,91 @@ function SignUpForm() {
     if (checkoutPlanQuotaGb) items.push(`${formatInt(checkoutPlanQuotaGb)} GB de descargas al mes`);
     items.push("Acceso inmediato al catálogo para cabina");
     items.push("Renovación automática. Cancela cuando quieras.");
-    const hasTrial =
-      Boolean(trialConfig?.enabled) &&
-      trialConfig?.eligible !== false &&
-      Number.isFinite(trialConfig?.days) &&
-      (trialConfig?.days ?? 0) > 0 &&
-      Number.isFinite(trialConfig?.gb) &&
-      (trialConfig?.gb ?? 0) > 0;
-    if (hasTrial) items.unshift(`Prueba de ${trialConfig!.days} días (${formatInt(trialConfig!.gb)} GB)`);
+    if (showCheckoutTrial) items.unshift(`Prueba de ${trialConfig!.days} días (${formatInt(trialConfig!.gb)} GB)`);
     return items;
-  }, [checkoutPlanQuotaGb, trialConfig?.days, trialConfig?.eligible, trialConfig?.enabled, trialConfig?.gb]);
+  }, [checkoutPlanQuotaGb, showCheckoutTrial, trialConfig?.days, trialConfig?.gb]);
+
+  const optionalHasValue = Boolean(formik.values.username.trim() || formik.values.phone.trim());
+  const optionalHasError = Boolean(
+    (formik.submitCount > 0 || formik.touched.username || formik.touched.phone) &&
+      (formik.errors.username || formik.errors.phone),
+  );
+  const [optionalOpen, setOptionalOpen] = useState<boolean>(() =>
+    isCheckoutIntent ? optionalHasValue || optionalHasError : true,
+  );
+  useEffect(() => {
+    if (!isCheckoutIntent) return;
+    if (optionalHasValue || optionalHasError) setOptionalOpen(true);
+  }, [isCheckoutIntent, optionalHasError, optionalHasValue]);
+
+  const OptionalFields = (
+    <div className="auth-signup-optional-grid">
+      <div className={`c-row ${showUsernameError ? "is-invalid" : ""}`}>
+        <label htmlFor="username" className="auth-field-label">
+          Nombre (opcional)
+        </label>
+        <div className="auth-login-input-wrap">
+          <User className="auth-login-input-icon" aria-hidden />
+          <input
+            placeholder="DJ Kubo"
+            type="text"
+            id="username"
+            name="username"
+            autoComplete="name"
+            value={formik.values.username}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            className="auth-login-input auth-login-input-with-icon"
+            aria-invalid={showUsernameError}
+            aria-describedby={describedByUsername}
+          />
+        </div>
+        <FieldError id={usernameErrorId} show={showUsernameError} message={formik.errors.username} />
+      </div>
+      <div className={`c-row c-row--phone ${showPhoneError ? "is-invalid" : ""}`}>
+        <label htmlFor="phone" className="auth-field-label">
+          WhatsApp (opcional)
+        </label>
+        <div className="signup-phone-wrap">
+          <div className="signup-phone-flag-wrap">
+            <span className={`signup-phone-flag ${countryFlagClass}`} aria-hidden title={selectedCountry?.name} />
+            <select
+              className="signup-phone-select-overlay"
+              value={dialCode}
+              onChange={(e) => setDialCode(e.target.value)}
+              aria-label="País (solo bandera visible)"
+              title={selectedCountry?.name}
+            >
+              {allowedCountryOptions.map((c) => (
+                <option key={c.code} value={c.dial_code.slice(1)}>
+                  {c.dial_code} {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <span className="signup-phone-icon-wrap">
+            <Phone className="signup-input-icon" aria-hidden />
+          </span>
+          <input
+            className="signup-phone-input"
+            placeholder="5512345678"
+            id="phone"
+            name="phone"
+            value={formik.values.phone}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            type="tel"
+            inputMode="numeric"
+            autoComplete="tel-national"
+            maxLength={15}
+            aria-invalid={showPhoneError}
+            aria-describedby={describedByPhone}
+          />
+        </div>
+        <FieldError id={phoneErrorId} show={showPhoneError} message={formik.errors.phone} />
+      </div>
+    </div>
+  );
 
   const FormContent = (
     <form
@@ -529,6 +612,7 @@ function SignUpForm() {
             id="email"
             name="email"
             autoComplete="email"
+            autoFocus={isCheckoutIntent}
             value={formik.values.email}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
@@ -592,72 +676,18 @@ function SignUpForm() {
           message={formik.errors.passwordConfirmation}
         />
       </div>
-      <div className="auth-signup-optional-grid">
-        <div className={`c-row ${showUsernameError ? "is-invalid" : ""}`}>
-          <label htmlFor="username" className="auth-field-label">
-            Nombre (opcional)
-          </label>
-          <div className="auth-login-input-wrap">
-            <User className="auth-login-input-icon" aria-hidden />
-            <input
-              placeholder="DJ Kubo"
-              type="text"
-              id="username"
-              name="username"
-              autoComplete="name"
-              value={formik.values.username}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              className="auth-login-input auth-login-input-with-icon"
-              aria-invalid={showUsernameError}
-              aria-describedby={describedByUsername}
-            />
-          </div>
-          <FieldError id={usernameErrorId} show={showUsernameError} message={formik.errors.username} />
-        </div>
-        <div className={`c-row c-row--phone ${showPhoneError ? "is-invalid" : ""}`}>
-          <label htmlFor="phone" className="auth-field-label">
-            WhatsApp (opcional)
-          </label>
-          <div className="signup-phone-wrap">
-            <div className="signup-phone-flag-wrap">
-              <span className={`signup-phone-flag ${countryFlagClass}`} aria-hidden title={selectedCountry?.name} />
-              <select
-                className="signup-phone-select-overlay"
-                value={dialCode}
-                onChange={(e) => setDialCode(e.target.value)}
-                aria-label="País (solo bandera visible)"
-                title={selectedCountry?.name}
-              >
-                {allowedCountryOptions.map((c) => (
-                  <option key={c.code} value={c.dial_code.slice(1)}>
-                    {c.dial_code} {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <span className="signup-phone-icon-wrap">
-              <Phone className="signup-input-icon" aria-hidden />
-            </span>
-            <input
-              className="signup-phone-input"
-              placeholder="5512345678"
-              id="phone"
-              name="phone"
-              value={formik.values.phone}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              type="tel"
-              inputMode="numeric"
-              autoComplete="tel-national"
-              maxLength={15}
-              aria-invalid={showPhoneError}
-              aria-describedby={describedByPhone}
-            />
-          </div>
-          <FieldError id={phoneErrorId} show={showPhoneError} message={formik.errors.phone} />
-        </div>
-      </div>
+      {isCheckoutIntent ? (
+        <details
+          className="auth-signup-optional"
+          open={optionalOpen}
+          onToggle={(e) => setOptionalOpen((e.target as HTMLDetailsElement).open)}
+        >
+          <summary className="auth-signup-optional__summary">Agregar nombre y WhatsApp (opcional)</summary>
+          {OptionalFields}
+        </details>
+      ) : (
+        OptionalFields
+      )}
       <Turnstile
         ref={turnstileRef}
         invisible
@@ -707,7 +737,7 @@ function SignUpForm() {
   return (
     <>
       {isCheckoutIntent ? (
-        <div className="auth-split" aria-label="Registro para continuar al pago">
+        <div className="auth-split auth-split--checkout" aria-label="Registro para continuar al pago">
           <section className="auth-split-panel auth-split-left" aria-label="Resumen">
             <div className="auth-split-left-bg" aria-hidden />
             <img src={brandLockupOnDark} alt="Bear Beat" className="auth-split-logo" />
@@ -747,6 +777,48 @@ function SignUpForm() {
 
           <section className="auth-split-panel auth-split-right" aria-label="Formulario">
             <div className="auth-split-form">
+              <div className="auth-checkout-mobile" aria-label="Resumen de compra (móvil)">
+                <img src={brandLockup} alt="Bear Beat" className="auth-checkout-mobile__logo" />
+                <div className="auth-checkout-mobile__top">
+                  <span className="auth-checkout-mobile__kicker">Paso 1 de 2</span>
+                  {showCheckoutTrial && (
+                    <span className="auth-checkout-mobile__trial">
+                      Prueba {trialConfig!.days} días
+                    </span>
+                  )}
+                </div>
+                {checkoutPlanId !== null && (
+                  <div
+                    className="auth-checkout-summary auth-checkout-summary--mobile"
+                    role="note"
+                    aria-label="Plan seleccionado"
+                  >
+                    <span className="auth-checkout-summary__label">Plan seleccionado</span>
+                    <div className="auth-checkout-summary__row">
+                      <strong className="auth-checkout-summary__name">
+                        {checkoutPlan?.name ?? (checkoutPlanLoading ? "Cargando…" : "Plan seleccionado")}
+                      </strong>
+                      {checkoutPlanPriceLabel && (
+                        <span className="auth-checkout-summary__price">
+                          {checkoutPlanPriceLabel}
+                          <span className="auth-checkout-summary__price-suffix">/mes</span>
+                        </span>
+                      )}
+                    </div>
+                    <p className="auth-checkout-summary__hint">
+                      El pago se realiza en el siguiente paso, dentro del checkout seguro.
+                    </p>
+                  </div>
+                )}
+                <details className="auth-checkout-mobile__details">
+                  <summary className="auth-checkout-mobile__detailsSummary">Ver lo que incluye</summary>
+                  <ul className="auth-checkout-mobile__bullets" aria-label="Beneficios">
+                    {checkoutLeftBullets.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </details>
+              </div>
               <h2 className="auth-split-form-title">Crea tu cuenta</h2>
               <p className="auth-split-form-sub">
                 Después te llevamos al checkout para elegir método de pago.

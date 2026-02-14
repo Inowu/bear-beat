@@ -5,44 +5,7 @@
   font-family: var(--bb-font-ui);
   font-size: var(--app-font-size-body);
 
-  .go-back {
-    color: var(--app-accent);
-    width: fit-content;
-    margin: 0;
-    text-decoration: underline;
-    cursor: pointer;
-    font-style: italic;
-    font-size: var(--app-font-size-body);
-    min-height: 44px;
-    display: inline-flex;
-    align-items: center;
-    &:hover {
-      color: var(--app-text-heading);
-    }
-  }
-  .bottom {
-    .title {
-      color: var(--app-text-heading);
-      font-size: var(--app-font-size-body);
-    }
-  }
-  .add-card {
-    color: var(--app-accent);
-    width: fit-content;
-    font-weight: var(--app-font-weight-heading);
-    margin: 0;
-    cursor: pointer;
-    font-size: var(--app-font-size-body);
-    min-height: 44px;
-    display: inline-flex;
-    align-items: center;
-    &:hover {
-      color: var(--app-text-heading);
-    }
-  }
   button {
-    white-space: nowrap;
-    padding-inline: 30px;
     min-height: 48px;
     font-size: var(--app-font-size-body);
   }
@@ -56,4 +19,330 @@
     color: var(--app-accent);
     font-size: var(--app-font-size-body);
   }
+}
+
+.bb-plans-modal {
+  padding: 16px 16px 18px;
+  display: grid;
+  gap: 14px;
+}
+
+.bb-plans-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.bb-plans-modal__headCopy {
+  display: grid;
+  gap: 6px;
+}
+
+.bb-plans-modal__kicker {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--app-accent) 34%, var(--app-border));
+  background: var(--theme-accent-soft-bg);
+  color: var(--app-accent);
+  font-size: 0.9rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.bb-plans-modal__title {
+  margin: 0;
+  color: var(--app-text-heading);
+  font-size: 1.8rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.bb-plans-modal__close {
+  appearance: none;
+  border: 1px solid color-mix(in srgb, var(--app-border) 84%, transparent);
+  background: color-mix(in srgb, var(--app-bg-card) 92%, transparent);
+  color: var(--app-text-muted);
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease, color 140ms ease;
+}
+
+.bb-plans-modal__close:hover {
+  border-color: color-mix(in srgb, var(--app-accent) 40%, transparent);
+  background: color-mix(in srgb, var(--app-accent) 10%, transparent);
+  color: var(--app-text-heading);
+  transform: translateY(-1px);
+}
+
+.bb-plans-modal__close:active {
+  transform: translateY(0);
+}
+
+.bb-plans-modal__close:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--app-focus-ring);
+}
+
+.bb-plans-modal__closeIcon {
+  width: 22px;
+  height: 22px;
+}
+
+.bb-plans-modal__intro {
+  margin: 0;
+  color: var(--app-text-body);
+  font-size: 1.15rem;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.bb-plans-modal__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+@media (min-width: 560px) {
+  .bb-plans-modal__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.bb-gb-card {
+  appearance: none;
+  border: 1px solid color-mix(in srgb, var(--app-border) 86%, transparent);
+  background: color-mix(in srgb, var(--app-bg-card) 94%, transparent);
+  border-radius: 18px;
+  padding: 12px 12px;
+  display: grid;
+  gap: 10px;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 140ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.bb-gb-card:hover {
+  border-color: color-mix(in srgb, var(--app-accent-bright) 54%, var(--app-border));
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--app-accent-bright) 16%, transparent);
+  transform: translateY(-1px);
+}
+
+.bb-gb-card:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--app-accent-bright) 24%, transparent);
+  border-color: color-mix(in srgb, var(--app-accent-bright) 72%, var(--app-border));
+}
+
+.bb-gb-card.is-best {
+  border-color: color-mix(in srgb, var(--app-accent) 48%, transparent);
+  background: color-mix(in srgb, var(--app-accent) 10%, var(--app-bg-card));
+}
+
+.bb-gb-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.bb-gb-card__name {
+  color: var(--app-text-heading);
+  font-weight: 900;
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
+}
+
+.bb-gb-card__badge {
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--app-status-success) 38%, transparent);
+  background: color-mix(in srgb, var(--app-status-success) 12%, transparent);
+  color: var(--app-status-success);
+  font-weight: 900;
+  font-size: 0.92rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.bb-gb-card__mid {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.bb-gb-card__amount {
+  color: var(--app-text-heading);
+  font-weight: 950;
+  font-size: 1.6rem;
+  letter-spacing: -0.02em;
+}
+
+.bb-gb-card__price {
+  color: var(--app-accent);
+  font-weight: 950;
+  font-size: 1.35rem;
+  white-space: nowrap;
+}
+
+.bb-gb-card__sub {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  color: var(--app-text-muted);
+  font-weight: 700;
+  font-size: 1.02rem;
+}
+
+.bb-gb-card__pergb {
+  color: color-mix(in srgb, var(--app-text-muted) 92%, transparent);
+  white-space: nowrap;
+}
+
+.bb-plans-modal__foot {
+  margin: 0;
+  color: var(--app-text-muted);
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.bb-plans-modal__empty {
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--app-border) 84%, transparent);
+  background: color-mix(in srgb, var(--app-bg-soft) 88%, transparent);
+  padding: 12px;
+  color: var(--app-text-muted);
+  font-weight: 700;
+}
+
+.bb-plans-modal__back {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--app-accent);
+  cursor: pointer;
+  padding: 0;
+  min-height: 44px;
+  width: fit-content;
+  font-weight: 850;
+  text-decoration: underline;
+}
+
+.bb-plans-modal__back:hover {
+  color: var(--app-text-heading);
+}
+
+.bb-plans-modal__summary {
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--app-border) 84%, transparent);
+  background: color-mix(in srgb, var(--app-bg-soft) 88%, transparent);
+  padding: 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.bb-plans-modal__summary span {
+  color: var(--app-text-muted);
+  font-size: 0.95rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.bb-plans-modal__summary strong {
+  color: var(--app-text-heading);
+  font-size: 1.2rem;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+
+.bb-plans-modal__field {
+  display: grid;
+  gap: 8px;
+}
+
+.bb-plans-modal__label {
+  margin: 0;
+  color: var(--app-text-muted);
+  font-size: 0.98rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.bb-plans-modal__cardInput {
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--app-border) 84%, transparent);
+  background: color-mix(in srgb, var(--app-bg-card) 92%, transparent);
+  padding: 12px 12px;
+}
+
+.bb-plans-modal__ctaRow {
+  display: grid;
+  gap: 10px;
+}
+
+.bb-plans-modal__cta {
+  width: 100%;
+  min-height: 56px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: var(--app-btn-bg);
+  color: var(--app-btn-text);
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 180ms ease, background 140ms ease, opacity 140ms ease;
+  box-shadow:
+    0 14px 32px color-mix(in srgb, var(--ph-glow) 46%, transparent),
+    var(--app-shadow);
+}
+
+.bb-plans-modal__cta:hover:not(:disabled) {
+  background: var(--ph-btn-hover-bg);
+  transform: translateY(-1px);
+  box-shadow:
+    0 16px 36px color-mix(in srgb, var(--ph-glow) 56%, transparent),
+    var(--app-shadow-card);
+}
+
+.bb-plans-modal__cta:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+  transform: none;
+  box-shadow: none;
+}
+
+.bb-plans-modal__cta:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--app-focus-ring);
+}
+
+.bb-plans-modal__ctaHint {
+  margin: 0;
+  color: var(--app-text-muted);
+  font-weight: 700;
+  font-size: 1.05rem;
+  line-height: 1.35;
 }

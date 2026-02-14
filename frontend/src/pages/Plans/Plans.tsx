@@ -117,9 +117,10 @@ function Plans() {
   }, []);
 
   useEffect(() => {
-    // Usuarios con plan activo no deben ver /planes (evitar doble membresía) → home
-    if (currentUser?.hasActiveSubscription && !currentUser.isSubscriptionCancelled) {
-      navigate("/", { replace: true });
+    // Evitar doble membresía: si ya tiene acceso activo (aunque haya cancelado la renovación),
+    // empujar a /micuenta para recargar GB extra desde ahí.
+    if (currentUser?.hasActiveSubscription) {
+      navigate("/micuenta", { replace: true });
     }
   }, [currentUser, navigate]);
 

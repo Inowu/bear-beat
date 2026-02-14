@@ -139,6 +139,175 @@
   color: var(--auth-login-subtitle);
 }
 
+.auth-checkout-summary.auth-checkout-summary--mobile {
+  margin: 0;
+  border-color: color-mix(in srgb, var(--app-accent) 22%, var(--auth-login-card-border));
+  background: color-mix(in srgb, var(--theme-accent-soft-bg-2) 58%, var(--auth-login-card-bg));
+}
+
+.auth-checkout-mobile {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 6px;
+  text-align: left;
+
+  @include respond-from(md) {
+    display: none;
+  }
+}
+
+.auth-checkout-mobile__logo {
+  height: 34px;
+  width: auto;
+  max-width: 160px;
+  object-fit: contain;
+}
+
+.auth-checkout-mobile__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.auth-checkout-mobile__kicker {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--app-accent) 30%, var(--auth-login-card-border));
+  background: var(--theme-accent-soft-bg);
+  color: var(--app-accent);
+  font-size: 0.84rem;
+  font-weight: 900;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.auth-checkout-mobile__trial {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--app-status-success) 34%, var(--auth-login-card-border));
+  background: color-mix(in srgb, var(--app-status-success) 12%, transparent);
+  color: var(--app-status-success);
+  font-size: 0.84rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.auth-checkout-mobile__details {
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--auth-input-border) 72%, transparent);
+  background: color-mix(in srgb, var(--auth-input-bg) 92%, transparent);
+  padding: 10px 12px;
+}
+
+.auth-checkout-mobile__detailsSummary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-weight: 850;
+  font-size: 0.96rem;
+  color: var(--auth-login-title);
+}
+
+.auth-checkout-mobile__detailsSummary::-webkit-details-marker {
+  display: none;
+}
+
+.auth-checkout-mobile__detailsSummary::after {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid color-mix(in srgb, var(--auth-login-subtitle) 74%, transparent);
+  border-bottom: 2px solid color-mix(in srgb, var(--auth-login-subtitle) 74%, transparent);
+  transform: rotate(45deg);
+  transition: transform 160ms ease;
+  flex-shrink: 0;
+}
+
+.auth-checkout-mobile__details[open] > .auth-checkout-mobile__detailsSummary::after {
+  transform: rotate(-135deg);
+}
+
+.auth-checkout-mobile__bullets {
+  list-style: none;
+  padding: 10px 0 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.auth-checkout-mobile__bullets li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 1.05rem;
+  line-height: 1.35;
+  color: var(--auth-register-text);
+
+  &::before {
+    content: "✓";
+    color: var(--app-accent);
+    font-weight: 900;
+    flex-shrink: 0;
+    line-height: 1.1;
+  }
+}
+
+.auth-signup-optional {
+  margin-top: 6px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--auth-input-border) 72%, transparent);
+  background: color-mix(in srgb, var(--auth-input-bg) 92%, transparent);
+  padding: 10px 12px;
+}
+
+.auth-signup-optional__summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--auth-login-title);
+  font-weight: 850;
+  font-size: 0.96rem;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.auth-signup-optional__summary::-webkit-details-marker {
+  display: none;
+}
+
+.auth-signup-optional__summary::after {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid color-mix(in srgb, var(--auth-login-subtitle) 74%, transparent);
+  border-bottom: 2px solid color-mix(in srgb, var(--auth-login-subtitle) 74%, transparent);
+  transform: rotate(45deg);
+  transition: transform 160ms ease;
+  flex-shrink: 0;
+}
+
+.auth-signup-optional[open] > .auth-signup-optional__summary::after {
+  transform: rotate(-135deg);
+}
+
+.auth-signup-optional .auth-signup-optional-grid {
+  margin-top: 12px;
+}
+
 .auth-login-logo {
   display: block;
   height: 42px;

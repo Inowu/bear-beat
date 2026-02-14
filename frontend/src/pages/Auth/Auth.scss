@@ -383,6 +383,19 @@
   }
 }
 
+.auth-split.auth-split--checkout {
+  // Mobile-first CRO: show the form immediately; the plan/benefits live inside the form card.
+  .auth-split-left {
+    display: none;
+  }
+
+  @include respond-from(md) {
+    .auth-split-left {
+      display: flex;
+    }
+  }
+}
+
 .auth-split-panel {
   padding: clamp(22px, 2.4vw, 34px);
   min-width: 0;

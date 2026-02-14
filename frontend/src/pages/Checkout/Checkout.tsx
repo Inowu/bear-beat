@@ -379,7 +379,8 @@ function Checkout() {
     interactedRef.current = true;
     const origin = window.location.origin;
     const successUrl = `${origin}/comprar/success?session_id={CHECKOUT_SESSION_ID}`;
-    const cancelUrl = `${origin}/planes`;
+    // CRO: if the user cancels in Stripe, send them back to the same checkout so they can retry / switch method.
+    const cancelUrl = `${origin}${location.pathname}${location.search || ""}`;
 
     try {
       await trpc.checkoutLogs.registerCheckoutLog.mutate();
@@ -468,7 +469,7 @@ function Checkout() {
       setRedirecting(false);
       setProcessingMethod(null);
     }
-  }, [priceId, plan?.id]);
+  }, [cookies._fbc, cookies._fbp, location.pathname, location.search, plan?.id, plan?.moneda, plan?.price, priceId]);
 
   const startCashCheckout = useCallback(
     async () => {
@@ -769,12 +770,26 @@ function Checkout() {
     maximumFractionDigits: 2,
   }).format(totalPriceNumber);
 
+  const trialDays = Number(trialConfig?.days ?? 0);
+  const trialGb = Number(trialConfig?.gb ?? 0);
+  const isTrialEligible =
+    Boolean(trialConfig?.enabled) &&
+    trialConfig?.eligible === true &&
+    Number.isFinite(trialDays) &&
+    trialDays > 0 &&
+    Number.isFinite(trialGb) &&
+    trialGb > 0;
+  const isCardTrial = selectedMethod === "card" && isTrialEligible;
+
   const quotaGb = Number(plan?.gigas ?? 500);
   const summaryBullets = [
     `${formatInt(quotaGb)} GB de descargas al mes`,
     "Catálogo organizado para cabina",
     "Activación inmediata",
   ];
+  if (isCardTrial) {
+    summaryBullets.unshift(`Prueba de ${trialDays} días (${formatInt(trialGb)} GB)`);
+  }
 
   let continueLabel = "Continuar";
   if (processingMethod === "card") continueLabel = "Abriendo pasarela segura...";
@@ -783,7 +798,9 @@ function Checkout() {
   if (processingMethod === "oxxo") continueLabel = "Generando referencia de pago en efectivo...";
   if (processingMethod === "paypal") continueLabel = "Procesando PayPal...";
   if (processingMethod === null && selectedMethod === "card") {
-    continueLabel = `Pagar $${totalPrice} ${currencyCode} de forma segura`;
+    continueLabel = isCardTrial
+      ? `Empezar prueba (hoy $0)`
+      : `Pagar $${totalPrice} ${currencyCode} de forma segura`;
   }
   if (processingMethod === null && selectedMethod === "paypal") continueLabel = "Continuar a PayPal";
   if (processingMethod === null && selectedMethod === "spei") continueLabel = "Generar referencia SPEI";
@@ -866,7 +883,11 @@ function Checkout() {
   const methodsForUi: CheckoutMethod[] = methodOrder.filter((method) => availableMethods.includes(method));
 
   const summaryMonthlyLabel = `$${totalPrice} ${currencyCode}/mes`;
-  const summaryTodayLabel = `$${totalPrice} ${currencyCode}`;
+  const summaryTodayLabel = isCardTrial ? `$0 ${currencyCode}` : `$${totalPrice} ${currencyCode}`;
+  const summarySubCopy = isCardTrial
+    ? `Hoy $0. Después ${summaryMonthlyLabel}. Renovación automática. Cancela cuando quieras.`
+    : "Renovación automática. Cancela cuando quieras.";
+  const summaryTotalLabel = isCardTrial ? "Total hoy:" : "Total a pagar hoy:";
 
   const summaryContent = (
     <>
@@ -875,7 +896,7 @@ function Checkout() {
         <span className="checkout2026__summaryPlan">{planName}</span>
         <span className="checkout2026__summaryPrice">{summaryMonthlyLabel}</span>
       </div>
-      <p className="checkout2026__summarySub">Renovación automática. Cancela cuando quieras.</p>
+      <p className="checkout2026__summarySub">{summarySubCopy}</p>
       <div className="checkout2026__divider" aria-hidden />
       <ul className="checkout2026__summaryBullets" aria-label="Beneficios incluidos">
         {summaryBullets.map((item) => (
@@ -889,7 +910,7 @@ function Checkout() {
       </ul>
       <div className="checkout2026__divider" aria-hidden />
       <div className="checkout2026__summaryTotal" aria-label="Total a pagar hoy">
-        <span>Total a pagar hoy:</span>
+        <span>{summaryTotalLabel}</span>
         <strong>{summaryTodayLabel}</strong>
       </div>
       <div className="checkout2026__summaryFooter">
@@ -908,6 +929,75 @@ function Checkout() {
     Boolean(currentUser?.email) &&
     Boolean(paypalPlan);
 
+  const methodHelp = (() => {
+    const monthly = summaryMonthlyLabel;
+    const trialHint =
+      isTrialEligible && selectedMethod !== "card"
+        ? `Tip: con tarjeta puedes iniciar una prueba de ${trialDays} días (hoy $0).`
+        : null;
+
+    switch (selectedMethod) {
+      case "card":
+        return {
+          title: isCardTrial ? "Tarjeta (prueba disponible)" : "Tarjeta",
+          items: isCardTrial
+            ? [
+                `Hoy $0: empiezas tu prueba de ${trialDays} días (${formatInt(trialGb)} GB).`,
+                `Después: ${monthly}. Puedes cancelar cuando quieras.`,
+                "Activación inmediata al confirmar el checkout.",
+              ]
+            : [
+                "Pago inmediato. Activación en 1 minuto.",
+                `Renovación automática: ${monthly}. Cancela cuando quieras.`,
+                "No necesitas enviar comprobante.",
+              ],
+          hint: null,
+        };
+      case "paypal":
+        return {
+          title: "PayPal",
+          items: [
+            "Autoriza el pago en PayPal. Activación inmediata.",
+            `Renovación automática: ${monthly}. Cancela cuando quieras.`,
+            "No necesitas enviar comprobante.",
+          ],
+          hint: trialHint,
+        };
+      case "spei":
+        return {
+          title: "SPEI",
+          items: [
+            "Generamos CLABE/referencia para transferir.",
+            "Activación automática al confirmar tu transferencia (depende del banco).",
+            "No necesitas enviar comprobante.",
+          ],
+          hint: trialHint,
+        };
+      case "bbva":
+        return {
+          title: "BBVA",
+          items: [
+            "Te redirigimos a BBVA para autorizar el pago.",
+            "Activación automática al confirmar (sin comprobantes).",
+            "Si no te redirige, reintenta desde esta página.",
+          ],
+          hint: trialHint,
+        };
+      case "oxxo":
+        return {
+          title: "Efectivo (OXXO)",
+          items: [
+            "Generamos una referencia para pagar en tienda.",
+            "Activación automática al confirmar el pago (puede tardar hasta 48 hrs).",
+            "No necesitas enviar comprobante.",
+          ],
+          hint: trialHint,
+        };
+      default:
+        return { title: "Pago", items: [], hint: null };
+    }
+  })();
+
   return (
     <div className="checkout-main-container checkout2026">
       {TopBrand}
@@ -915,6 +1005,9 @@ function Checkout() {
         <div className="checkout-grid checkout2026__grid">
           <section className="checkout-card checkout2026__flow" aria-label="Completa tu pago">
             <header className="checkout2026__flowHead">
+              <div className="checkout2026__kicker" aria-label="Progreso">
+                Paso 2 de 2
+              </div>
               <h1 className="checkout2026__title">Completa tu pago</h1>
               <p className="checkout2026__subtitle">
                 <span className="checkout2026__subtitleIcon" aria-hidden>
@@ -944,6 +1037,12 @@ function Checkout() {
                 {methodsForUi.map((method) => {
                   const { Icon, label, description } = METHOD_META[method];
                   const isActive = selectedMethod === method;
+                  const methodState =
+                    method === "card"
+                      ? isTrialEligible
+                        ? `Prueba ${trialDays} días`
+                        : "Más rápido"
+                      : null;
                   const logoMethods =
                     method === "card"
                       ? (["visa", "mastercard"] as const)
@@ -974,6 +1073,7 @@ function Checkout() {
                         </span>
                       </span>
                       <span className="checkout-method__right" aria-hidden>
+                        {methodState && <span className="checkout-method__state">{methodState}</span>}
                         {logoMethods && (
                           <PaymentMethodLogos
                             methods={[...logoMethods]}
@@ -989,6 +1089,17 @@ function Checkout() {
                     </button>
                   );
                 })}
+              </div>
+              <div className="checkout2026__methodHelp" role="note" aria-label="Qué sucede después">
+                <div className="checkout2026__methodHelpHead">
+                  <span className="checkout2026__methodHelpTitle">{methodHelp.title}</span>
+                  {methodHelp.hint && <span className="checkout2026__methodHelpHint">{methodHelp.hint}</span>}
+                </div>
+                <ul className="checkout2026__methodHelpList">
+                  {methodHelp.items.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
               </div>
             </section>
 
