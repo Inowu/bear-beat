@@ -134,6 +134,23 @@
     font-size: 1.02rem;
     line-height: 1.42;
   }
+
+  .checkout2026__priceAmount {
+    font-size: clamp(3.2rem, 11vw, 4.4rem);
+  }
+
+  .checkout2026__benefitText {
+    font-size: 1.22rem;
+  }
+
+  .checkout2026__methodBtn {
+    font-size: 0.92rem;
+    padding: 0 12px;
+  }
+
+  .checkout2026__methodBlurb {
+    font-size: 1.08rem;
+  }
 }
 
 .checkout2026__top {
@@ -263,6 +280,271 @@
   position: relative;
   overflow: hidden;
   padding: clamp(18px, 2.2vw, 26px);
+}
+
+.checkout2026__card {
+  display: grid;
+  gap: 14px;
+}
+
+.checkout2026__cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.checkout2026__planPill {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ph-border) 78%, transparent);
+  background: color-mix(in srgb, var(--ph-bg-soft) 78%, transparent);
+  color: var(--ph-text-heading);
+  font-size: 1.1rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.checkout2026__trialPill {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ph-accent) 34%, var(--ph-border));
+  background: color-mix(in srgb, var(--ph-accent) 16%, var(--ph-bg-card));
+  color: var(--ph-text-heading);
+  font-size: 0.92rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.checkout2026__price {
+  text-align: center;
+  display: grid;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.checkout2026__priceAmount {
+  color: var(--ph-text-heading);
+  font-size: clamp(4rem, 6.6vw, 6.1rem);
+  line-height: 0.96;
+  font-weight: 950;
+  letter-spacing: -0.04em;
+}
+
+.checkout2026__priceSuffix {
+  color: color-mix(in srgb, var(--ph-text-muted) 96%, transparent);
+  font-size: 1.1rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.checkout2026__benefits {
+  list-style: none;
+  padding: 0;
+  margin: 2px 0 0;
+  display: grid;
+  gap: 10px;
+}
+
+.checkout2026__benefit {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.checkout2026__benefitIcon {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--ph-accent-bright) 42%, transparent);
+  background: color-mix(in srgb, var(--ph-accent-bright) 12%, transparent);
+  color: var(--ph-accent-bright);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.checkout2026__benefitText {
+  color: color-mix(in srgb, var(--ph-text-body) 96%, transparent);
+  font-size: 1.36rem;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.checkout2026__methodSection {
+  display: grid;
+  gap: 10px;
+}
+
+.checkout2026__sectionLabel {
+  margin: 0;
+  color: color-mix(in srgb, var(--ph-text-muted) 96%, transparent);
+  font-size: 0.98rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.checkout2026__methodSwitch {
+  width: min(520px, 100%);
+  margin: 0 auto;
+  padding: 4px;
+  display: flex;
+  gap: 6px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ph-border) 78%, transparent);
+  background: color-mix(in srgb, var(--ph-bg-soft) 70%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  max-width: 100%;
+}
+
+.checkout2026__methodSwitch::-webkit-scrollbar {
+  display: none;
+}
+
+.checkout2026__methodBtn {
+  flex: 0 0 auto;
+  appearance: none;
+  border: 1px solid transparent;
+  background: transparent;
+  min-height: 40px;
+  border-radius: 999px;
+  cursor: pointer;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.02rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ph-text-muted) 96%, transparent);
+  transition:
+    transform 140ms ease,
+    box-shadow 180ms ease,
+    background 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease;
+  white-space: nowrap;
+}
+
+.checkout2026__methodBtn:hover {
+  border-color: color-mix(in srgb, var(--ph-accent) 34%, transparent);
+  background: color-mix(in srgb, var(--ph-accent) 12%, transparent);
+}
+
+.checkout2026__methodBtn:active {
+  transform: translateY(1px);
+}
+
+.checkout2026__methodBtn:focus-visible {
+  outline: 2px solid var(--app-focus-ring);
+  outline-offset: 2px;
+}
+
+.checkout2026__methodBtn[aria-checked="true"] {
+  color: var(--ph-text-heading);
+  background: color-mix(in srgb, var(--ph-accent) 16%, var(--ph-bg-card));
+  border-color: color-mix(in srgb, var(--ph-accent) 18%, transparent);
+  box-shadow: 0 10px 22px color-mix(in srgb, #000000 22%, transparent);
+}
+
+.checkout2026__methodBtnIcon {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ph-accent-bright);
+  flex-shrink: 0;
+}
+
+.checkout2026__methodBlurb {
+  margin: 0;
+  color: color-mix(in srgb, var(--ph-text-body) 94%, transparent);
+  font-size: 1.18rem;
+  font-weight: 650;
+  line-height: 1.45;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.checkout2026__methodHint {
+  margin: -4px 0 0;
+  color: var(--ph-accent-bright);
+  font-size: 1.06rem;
+  font-weight: 750;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.checkout2026__trust {
+  margin-top: 2px;
+  padding-top: 12px;
+  border-top: 1px solid color-mix(in srgb, var(--ph-border) 72%, transparent);
+  display: grid;
+  gap: 8px;
+  text-align: center;
+}
+
+.checkout2026__paymentLogos {
+  justify-content: center;
+}
+
+.checkout2026__trustCopy {
+  margin: 0;
+  color: color-mix(in srgb, var(--ph-text-muted) 96%, transparent);
+  font-size: 1.18rem;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.checkout2026__links {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: color-mix(in srgb, var(--ph-text-muted) 94%, transparent);
+  font-size: 1.14rem;
+  font-weight: 750;
+}
+
+.checkout2026__link {
+  color: color-mix(in srgb, var(--ph-accent-bright) 92%, transparent);
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.checkout2026__link:hover {
+  text-decoration: underline;
+}
+
+.checkout2026__linkSep {
+  opacity: 0.6;
 }
 
 .checkout-card::before {
