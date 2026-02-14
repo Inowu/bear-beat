@@ -76,7 +76,8 @@ export default defineConfig(({ mode }) => {
             },
             sourcemaps: {
               // Upload + then delete sourcemaps so they're not publicly accessible.
-              filesToDeleteAfterUpload: "dist/**/*.map",
+              // Use an absolute glob so it works regardless of the build CWD (workspace vs repo root).
+              filesToDeleteAfterUpload: path.resolve(__dirname, "dist/**/*.map"),
             },
           })
         : []),
