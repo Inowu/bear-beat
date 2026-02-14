@@ -96,13 +96,21 @@ const deriveOxxoOwnerName = (usernameRaw: unknown, emailRaw: unknown): string =>
       .trim();
 
     const parts = lettersOnly.split(' ').filter(Boolean);
-    // Stripe OXXO requires a full name where first and last name are each >= 2 characters.
-    const goodParts = parts.filter((p) => p.length >= 2);
+    // Stripe OXXO validates the owner name quite strictly. Avoid 2-letter "DJ"/initials and
+    // always return 2 words with enough characters.
+    const goodParts = parts.filter((p) => p.length >= 3);
+
+    const toTitleCase = (s: string) =>
+      s
+        .split(' ')
+        .filter(Boolean)
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
     if (goodParts.length >= 2) {
       // Keep it simple: first + last name only to avoid single-letter middles.
-      return `${goodParts[0]} ${goodParts[goodParts.length - 1]}`.slice(0, 60).trim();
+      return toTitleCase(`${goodParts[0]} ${goodParts[goodParts.length - 1]}`.slice(0, 60).trim());
     }
-    if (goodParts.length === 1) return `${goodParts[0]} Beat`.slice(0, 60).trim();
+    if (goodParts.length === 1) return toTitleCase(`${goodParts[0]} Beat`.slice(0, 60).trim());
     return '';
   };
 
