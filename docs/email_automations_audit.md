@@ -43,16 +43,22 @@ Leyenda:
 
 ## Dunning (Pagos Fallidos)
 
-- Secuencia D0/D1/D3/D7/D14 por email: `NO EXISTE`
+- Secuencia D0/D1/D3/D7/D14 por email: `PARCIAL`
   - Evidencia:
-    - No hay `action_key`/jobs dedicados a dunning en `backend/src/automation/runner.ts`.
-    - No hay templates de “pago fallido / actualiza tu pago” en `backend/src/email/templates.ts` orientados a dunning.
+    - `backend/src/automation/runner.ts` (`action_key='dunning_payment_failed'` con stages 0/1/3/7/14)
+    - Template: `backend/src/email/templates.ts` (`dunningPaymentFailed`)
+    - Link de actualizacion (Stripe): `backend/src/endpoints/billing-portal.endpoint.ts` + `backend/src/billing/stripeBillingPortalLink.ts`
+  - Gaps:
+    - Reactivacion (email "pago recuperado") no implementada.
+    - Soft-lock opcional no implementado (solo notificacion).
 
 - Señales/analytics de “payment_failed”: `PARCIAL`
   - Evidencia:
-    - Stripe: `backend/src/routers/webhooks/stripe/index.ts` ingiere eventos internos `payment_failed` (analytics), pero no dispara emails.
-    - PayPal: `backend/src/routers/webhooks/paypal/index.ts` ingiere eventos internos `payment_failed` (analytics), pero no dispara emails.
-    - Conekta: `backend/src/routers/webhooks/conekta/index.ts` ingiere eventos internos `payment_failed` (analytics), pero no dispara emails.
+    - Stripe: `backend/src/routers/webhooks/stripe/index.ts` ingiere eventos internos `payment_failed` (billing).
+    - PayPal: `backend/src/routers/webhooks/paypal/index.ts` ingiere eventos internos `payment_failed` (billing).
+    - Runner: `backend/src/automation/runner.ts` consume `payment_failed` y dispara la secuencia si `DUNNING_ENABLED=1`.
+  - Gaps:
+    - Falta normalizar triggers a `invoice.payment_failed` en Stripe (hoy se basa en transiciones/errores ya integrados).
 
 ## Cancelación + Fin de Acceso
 

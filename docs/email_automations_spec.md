@@ -60,6 +60,12 @@ Prohibido loguear:
 
 ## Dunning (Pagos Fallidos)
 
+### Control (Feature Flag)
+
+- `DUNNING_ENABLED`:
+  - `0` (default): dunning apagado.
+  - `1`: dunning encendido (envios D0/D1/D3/D7/D14).
+
 ### Disparadores
 
 - Se inicia secuencia cuando el proveedor reporta un fallo de cobro de membresía:
@@ -110,6 +116,8 @@ Cuando el proveedor confirme pago exitoso:
 - CTA debe llevar a un flujo de actualización de método de pago:
   - Preferido: Stripe Billing Portal (session por usuario).
   - Alternativa: página propia que crea sesión/checkout para update.
+  - Nota: si se usa magic link, requiere un secret:
+    - `EMAIL_LINKS_SECRET` (o fallback: `EMAIL_PREFERENCES_SECRET`).
 
 ## Cancelación (Voluntaria) + Fin de Acceso
 
@@ -178,4 +186,3 @@ Segmentos recomendados:
 - El acceso puede ser:
   - Autenticado (usuario logueado), o
   - Tokenizado con firma/expiración (sin exponer PII).
-

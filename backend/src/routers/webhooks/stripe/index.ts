@@ -416,10 +416,13 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
           break;
         }
         case 'past_due': {
-          log.info('[STRIPE_WH] Subscription past_due; canceling subscription', {
+          const dunningEnabled = (process.env.DUNNING_ENABLED || '0').trim() === '1';
+
+          log.info('[STRIPE_WH] Subscription past_due', {
             userId: user.id,
             subscriptionId: subscription.id,
             eventId: payload.id,
+            dunningEnabled,
           });
 
           try {
@@ -428,7 +431,8 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
             log.error(`[STRIPE] Error adding FAILED_PAYMENT tag for user ${user.id}: ${e}`);
           }
 
-          // Internal analytics: payment failed + involuntary cancellation.
+          // Internal analytics: payment failed (billing). When dunning is enabled,
+          // do NOT mark this as an involuntary cancellation yet.
           try {
             await ingestAnalyticsEvents({
               prisma,
@@ -448,19 +452,23 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
                     orderId: subscription?.metadata?.orderId ?? null,
                   },
                 },
-                {
-                  eventId: `stripe:${payload.id}:subscription_cancel_involuntary`.slice(0, 80),
-                  eventName: 'subscription_cancel_involuntary',
-                  eventCategory: 'retention',
-                  eventTs: new Date().toISOString(),
-                  userId: user.id,
-                  metadata: {
-                    provider: 'stripe',
-                    reason: 'past_due',
-                    stripeSubscriptionId: subscription.id,
-                    orderId: subscription?.metadata?.orderId ?? null,
-                  },
-                },
+                ...(dunningEnabled
+                  ? []
+                  : [
+                      {
+                        eventId: `stripe:${payload.id}:subscription_cancel_involuntary`.slice(0, 80),
+                        eventName: 'subscription_cancel_involuntary',
+                        eventCategory: 'retention' as const,
+                        eventTs: new Date().toISOString(),
+                        userId: user.id,
+                        metadata: {
+                          provider: 'stripe',
+                          reason: 'past_due',
+                          stripeSubscriptionId: subscription.id,
+                          orderId: subscription?.metadata?.orderId ?? null,
+                        },
+                      },
+                    ]),
               ],
               sessionUserId: user.id,
             });
@@ -470,13 +478,15 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
             });
           }
 
-          await cancelSubscription({
-            prisma,
-            user,
-            plan: getStripeSubscriptionPriceId(subscription),
-            service: PaymentService.STRIPE,
-            reason: OrderStatus.EXPIRED,
-          });
+          if (!dunningEnabled) {
+            await cancelSubscription({
+              prisma,
+              user,
+              plan: getStripeSubscriptionPriceId(subscription),
+              service: PaymentService.STRIPE,
+              reason: OrderStatus.EXPIRED,
+            });
+          }
 
           break;
         }
