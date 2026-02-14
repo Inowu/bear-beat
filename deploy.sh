@@ -125,7 +125,7 @@ PY
 fi
 
 log "Ensuring EMAIL_PREFERENCES_SECRET is set (sign unsubscribe links)..."
-existing_email_pref_secret="$(grep '^EMAIL_PREFERENCES_SECRET=' "$ENV_FILE" | head -n 1 | sed 's/^EMAIL_PREFERENCES_SECRET=//')"
+existing_email_pref_secret="$({ grep '^EMAIL_PREFERENCES_SECRET=' "$ENV_FILE" | head -n 1 | sed 's/^EMAIL_PREFERENCES_SECRET=//'; } || true)"
 existing_email_pref_secret="$(printf '%s' "$existing_email_pref_secret" | tr -d ' \t\r\n')"
 if [ -z "$existing_email_pref_secret" ]; then
   if command -v openssl >/dev/null 2>&1; then
