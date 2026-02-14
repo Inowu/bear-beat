@@ -145,35 +145,61 @@ function SignUpForm() {
     }
   }, [checkoutPlan]);
 
-  const validationSchema = Yup.object().shape({
-    email: Yup.string().required("El correo es requerido").email("El formato del correo no es correcto"),
-    // Nombre de usuario es opcional (conversion-first). Si lo ingresan, validarlo.
-    username: Yup.string()
-      .matches(/^[a-zA-Z0-9 ]*$/, { message: "No uses caracteres especiales", excludeEmptyString: true })
-      .matches(/[a-zA-Z]/, { message: "Incluye al menos una letra", excludeEmptyString: true })
-      .test(
-        "min-if-present",
-        "Usa al menos 3 caracteres",
-        (value) => !value || value.trim().length >= 3,
-      )
-      .notRequired(),
-    password: Yup.string()
-      .required("La contraseña es requerida")
-      .min(6, "La contraseña debe contener al menos 6 caracteres"),
-    // WhatsApp is optional (conversion-first). If present, validate format.
-    phone: Yup.string()
-      .matches(/^[0-9]{7,14}$/, { message: "El teléfono no es válido", excludeEmptyString: true })
-      .notRequired(),
-    passwordConfirmation: Yup.string()
-      .required("Debe confirmar la contraseña")
-      .oneOf([Yup.ref("password")], "Ambas contraseñas deben ser iguales"),
-  });
+  const validationSchema = useMemo(
+    () =>
+      Yup.object().shape({
+        email: Yup.string()
+          .required("El correo es requerido")
+          .email("El formato del correo no es correcto"),
+        // Nombre de usuario es opcional (conversion-first). Si lo ingresan, validarlo.
+        username: Yup.string()
+          .matches(/^[a-zA-Z0-9 ]*$/, {
+            message: "No uses caracteres especiales",
+            excludeEmptyString: true,
+          })
+          .matches(/[a-zA-Z]/, {
+            message: "Incluye al menos una letra",
+            excludeEmptyString: true,
+          })
+          .test(
+            "min-if-present",
+            "Usa al menos 3 caracteres",
+            (value) => !value || value.trim().length >= 3,
+          )
+          .notRequired(),
+        password: Yup.string()
+          .required("La contraseña es requerida")
+          .min(6, "La contraseña debe contener al menos 6 caracteres"),
+        // WhatsApp is optional (conversion-first). If present, validate format.
+        phone: Yup.string()
+          .matches(/^[0-9]{7,14}$/, {
+            message: "El teléfono no es válido",
+            excludeEmptyString: true,
+          })
+          .notRequired(),
+        // CRO: In the checkout-intent flow we remove the confirmation field to reduce friction.
+        passwordConfirmation: isCheckoutIntent
+          ? Yup.string().oneOf([Yup.ref("password")], "Ambas contraseñas deben ser iguales").notRequired()
+          : Yup.string()
+              .required("Debe confirmar la contraseña")
+              .oneOf([Yup.ref("password")], "Ambas contraseñas deben ser iguales"),
+        acceptSupportComms: Yup.bool()
+          .oneOf([true], "Debes aceptar recibir mensajes transaccionales y de soporte")
+          .required("Debes aceptar recibir mensajes transaccionales y de soporte"),
+        marketingOptInEmail: Yup.bool().notRequired(),
+        marketingOptInWhatsApp: Yup.bool().notRequired(),
+      }),
+    [isCheckoutIntent],
+  );
   const initialValues = {
     username: "",
     password: "",
     email: "",
     phone: "",
     passwordConfirmation: "",
+    acceptSupportComms: true,
+    marketingOptInEmail: true,
+    marketingOptInWhatsApp: false,
   };
 
   const getEmailDomain = (email: string) => {
@@ -236,6 +262,9 @@ function SignUpForm() {
         password: values.password,
         email: values.email,
         phone: formattedPhone,
+        acceptSupportComms: values.acceptSupportComms,
+        marketingOptInEmail: values.marketingOptInEmail,
+        marketingOptInWhatsApp: values.marketingOptInWhatsApp && Boolean(formattedPhone),
         fbp: cookies._fbp,
         fbc: cookies._fbc,
         url: window.location.href,
@@ -479,7 +508,7 @@ function SignUpForm() {
   const describedByPassword = passwordErrorId;
   const describedByPasswordConfirmation = passwordConfirmationErrorId;
   const submitLabel = useMemo(() => {
-    if (isCheckoutIntent) return "Crear cuenta y continuar al pago";
+    if (isCheckoutIntent) return "Continuar al pago";
     const hasTrial =
       Boolean(trialConfig?.enabled) &&
       trialConfig?.eligible !== false &&
@@ -506,10 +535,13 @@ function SignUpForm() {
     if (checkoutPlanQuotaGb) items.push(`${formatInt(checkoutPlanQuotaGb)} GB de descargas al mes`);
     items.push("Acceso inmediato al catálogo para cabina");
     items.push("Renovación automática. Cancela cuando quieras.");
-    if (showCheckoutTrial) items.unshift(`Prueba de ${trialConfig!.days} días (${formatInt(trialConfig!.gb)} GB)`);
+    if (showCheckoutTrial) {
+      items.unshift(`Prueba de ${trialConfig!.days} días con tarjeta (${formatInt(trialConfig!.gb)} GB)`);
+    }
     return items;
   }, [checkoutPlanQuotaGb, showCheckoutTrial, trialConfig?.days, trialConfig?.gb]);
 
+  const shouldShowPasswordConfirmation = !isCheckoutIntent;
   const optionalHasValue = Boolean(formik.values.username.trim() || formik.values.phone.trim());
   const optionalHasError = Boolean(
     (formik.submitCount > 0 || formik.touched.username || formik.touched.phone) &&
@@ -628,10 +660,10 @@ function SignUpForm() {
         </div>
         <FieldError id={emailErrorId} show={showEmailError} message={formik.errors.email} />
       </div>
-      <div className={`c-row ${showPasswordError ? "is-invalid" : ""}`}>
-        <label htmlFor="password" className="auth-field-label">
-          Contraseña
-        </label>
+        <div className={`c-row ${showPasswordError ? "is-invalid" : ""}`}>
+          <label htmlFor="password" className="auth-field-label">
+            Contraseña
+          </label>
         <div className="auth-login-input-wrap">
           <Lock className="auth-login-input-icon" aria-hidden />
           <PasswordInput
@@ -650,32 +682,34 @@ function SignUpForm() {
         </div>
         <FieldError id={passwordErrorId} show={showPasswordError} message={formik.errors.password} />
       </div>
-      <div className={`c-row ${showPasswordConfirmationError ? "is-invalid" : ""}`}>
-        <label htmlFor="passwordConfirmation" className="auth-field-label">
-          Repetir contraseña
-        </label>
-        <div className="auth-login-input-wrap">
-          <Lock className="auth-login-input-icon" aria-hidden />
-          <PasswordInput
-            placeholder="Repite tu contraseña"
-            id="passwordConfirmation"
-            name="passwordConfirmation"
-            autoComplete="new-password"
-            value={formik.values.passwordConfirmation}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            aria-invalid={showPasswordConfirmationError}
-            aria-describedby={describedByPasswordConfirmation}
-            inputClassName="auth-login-input auth-login-input-with-icon"
-            wrapperClassName="auth-login-password-wrap"
+      {shouldShowPasswordConfirmation && (
+        <div className={`c-row ${showPasswordConfirmationError ? "is-invalid" : ""}`}>
+          <label htmlFor="passwordConfirmation" className="auth-field-label">
+            Repetir contraseña
+          </label>
+          <div className="auth-login-input-wrap">
+            <Lock className="auth-login-input-icon" aria-hidden />
+            <PasswordInput
+              placeholder="Repite tu contraseña"
+              id="passwordConfirmation"
+              name="passwordConfirmation"
+              autoComplete="new-password"
+              value={formik.values.passwordConfirmation}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              aria-invalid={showPasswordConfirmationError}
+              aria-describedby={describedByPasswordConfirmation}
+              inputClassName="auth-login-input auth-login-input-with-icon"
+              wrapperClassName="auth-login-password-wrap"
+            />
+          </div>
+          <FieldError
+            id={passwordConfirmationErrorId}
+            show={showPasswordConfirmationError}
+            message={formik.errors.passwordConfirmation}
           />
         </div>
-        <FieldError
-          id={passwordConfirmationErrorId}
-          show={showPasswordConfirmationError}
-          message={formik.errors.passwordConfirmation}
-        />
-      </div>
+      )}
       {isCheckoutIntent ? (
         <details
           className="auth-signup-optional"
@@ -712,6 +746,57 @@ function SignUpForm() {
           {loader ? "Creando..." : submitLabel}
         </span>
       </button>
+      <div className="auth-signup-consents" aria-label="Preferencias de comunicación">
+        <label className="auth-consent-item">
+          <input
+            type="checkbox"
+            name="acceptSupportComms"
+            checked={formik.values.acceptSupportComms}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            className="auth-consent-checkbox"
+          />
+          <span>
+            Acepto recibir mensajes <strong>transaccionales y de soporte</strong> por WhatsApp/SMS/email.
+          </span>
+        </label>
+        {formik.touched.acceptSupportComms && formik.errors.acceptSupportComms && (
+          <div className="error-formik" role="alert">
+            {formik.errors.acceptSupportComms}
+          </div>
+        )}
+        <label className="auth-consent-item">
+          <input
+            type="checkbox"
+            name="marketingOptInEmail"
+            checked={formik.values.marketingOptInEmail}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            className="auth-consent-checkbox"
+          />
+          <span>
+            Quiero recibir <strong>promociones y novedades</strong> por email.
+          </span>
+        </label>
+        {`${formik.values.phone ?? ""}`.trim() && (
+          <label className="auth-consent-item">
+            <input
+              type="checkbox"
+              name="marketingOptInWhatsApp"
+              checked={formik.values.marketingOptInWhatsApp}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              className="auth-consent-checkbox"
+            />
+            <span>
+              Quiero recibir <strong>promociones</strong> por WhatsApp (opcional).
+            </span>
+          </label>
+        )}
+        <div className="auth-consent-hint">
+          Puedes desuscribirte de promociones en cualquier momento desde cualquier email.
+        </div>
+      </div>
       <p className="auth-signup-legal">
         Al crear tu cuenta aceptas{" "}
         <Link to="/legal#terminos" className="auth-signup-legal-link">
@@ -737,95 +822,120 @@ function SignUpForm() {
   return (
     <>
       {isCheckoutIntent ? (
-        <div className="auth-split auth-split--checkout" aria-label="Registro para continuar al pago">
-          <section className="auth-split-panel auth-split-left" aria-label="Resumen">
-            <div className="auth-split-left-bg" aria-hidden />
-            <img src={brandLockupOnDark} alt="Bear Beat" className="auth-split-logo" />
-            <div className="auth-split-kicker">Paso 1 de 2</div>
-            <h1 className="auth-split-title">Crea tu cuenta y continúa al pago seguro</h1>
-
-            {checkoutPlanId !== null && (
-              <div className="auth-checkout-summary auth-checkout-summary--split" role="note" aria-label="Plan seleccionado">
-                <span className="auth-checkout-summary__label">Plan seleccionado</span>
-                <div className="auth-checkout-summary__row">
-                  <strong className="auth-checkout-summary__name">
-                    {checkoutPlan?.name ?? (checkoutPlanLoading ? "Cargando…" : "Plan seleccionado")}
-                  </strong>
-                  {checkoutPlanPriceLabel && (
-                    <span className="auth-checkout-summary__price">
-                      {checkoutPlanPriceLabel}
-                      <span className="auth-checkout-summary__price-suffix">/mes</span>
-                    </span>
-                  )}
-                </div>
-                <p className="auth-checkout-summary__hint">
-                  El pago se realiza en el siguiente paso, dentro del checkout seguro.
-                </p>
+        <div className="checkout-intent-shell" aria-label="Registro para continuar al pago">
+          <div className="checkout-intent-shell__inner">
+            <header className="checkout-intent-shell__top" aria-label="Bear Beat">
+              <img src={brandLockupOnDark} alt="Bear Beat" className="checkout-intent-shell__logo" />
+              <div className="checkout-intent-shell__topRight">
+                <span className="checkout-intent-shell__step" aria-label="Progreso">
+                  Paso 1 de 2
+                </span>
+                <Link to="/auth" state={{ from }} className="checkout-intent-shell__login">
+                  Ya tengo cuenta
+                </Link>
               </div>
-            )}
+            </header>
 
-            <ul className="auth-split-list" aria-label="Beneficios">
-              {checkoutLeftBullets.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-
-            <p className="auth-split-testimonial">
-              Tip: ¿Ya tienes cuenta? Inicia sesión y termina tu compra en menos de 1 minuto.
-            </p>
-          </section>
-
-          <section className="auth-split-panel auth-split-right" aria-label="Formulario">
-            <div className="auth-split-form">
-              <div className="auth-checkout-mobile" aria-label="Resumen de compra (móvil)">
-                <img src={brandLockup} alt="Bear Beat" className="auth-checkout-mobile__logo" />
-                <div className="auth-checkout-mobile__top">
-                  <span className="auth-checkout-mobile__kicker">Paso 1 de 2</span>
-                  {showCheckoutTrial && (
-                    <span className="auth-checkout-mobile__trial">
-                      Prueba {trialConfig!.days} días
-                    </span>
-                  )}
+            <div className="checkout-intent-shell__grid" aria-label="Crear cuenta">
+              <section className="checkout-intent-card checkout-intent-card--flow" aria-label="Crea tu cuenta">
+                <div className="checkout-intent-shell__head">
+                  <div className="checkout-intent-shell__kicker" aria-hidden>
+                    Paso 1 de 2
+                  </div>
+                  <h1 className="checkout-intent-shell__title">Crea tu cuenta</h1>
+                  <p className="checkout-intent-shell__subtitle">
+                    En el siguiente paso eliges tu método de pago y activas tu acceso.
+                  </p>
                 </div>
-                {checkoutPlanId !== null && (
-                  <div
-                    className="auth-checkout-summary auth-checkout-summary--mobile"
-                    role="note"
-                    aria-label="Plan seleccionado"
-                  >
-                    <span className="auth-checkout-summary__label">Plan seleccionado</span>
-                    <div className="auth-checkout-summary__row">
-                      <strong className="auth-checkout-summary__name">
-                        {checkoutPlan?.name ?? (checkoutPlanLoading ? "Cargando…" : "Plan seleccionado")}
-                      </strong>
-                      {checkoutPlanPriceLabel && (
-                        <span className="auth-checkout-summary__price">
-                          {checkoutPlanPriceLabel}
-                          <span className="auth-checkout-summary__price-suffix">/mes</span>
+                {FormContent}
+              </section>
+
+              <aside className="checkout-intent-card checkout-intent-card--summary" aria-label="Resumen de compra">
+                <details className="checkout-intent-summary__accordion">
+                  <summary className="checkout-intent-summary__summary">
+                    <span className="checkout-intent-summary__summaryLeft">
+                      <span>Resumen de compra</span>
+                      <small>
+                        {(checkoutPlan?.name ?? (checkoutPlanLoading ? "Cargando…" : "Plan seleccionado")).trim()}
+                        {checkoutPlanPriceLabel ? ` · ${checkoutPlanPriceLabel}/mes` : ""}
+                      </small>
+                    </span>
+                    {showCheckoutTrial ? (
+                      <strong>Prueba con tarjeta</strong>
+                    ) : (
+                      <strong>{checkoutPlanPriceLabel ? `${checkoutPlanPriceLabel}/mes` : "—"}</strong>
+                    )}
+                  </summary>
+                  <div className="checkout-intent-summary__body">
+                    <div className="checkout-intent-summary__labelRow">
+                      <span className="checkout-intent-summary__label">Plan seleccionado</span>
+                      {showCheckoutTrial && (
+                        <span className="checkout-intent-summary__badge">
+                          Prueba {trialConfig!.days} días (tarjeta)
                         </span>
                       )}
                     </div>
-                    <p className="auth-checkout-summary__hint">
+                    <div className="checkout-intent-summary__row">
+                      <strong className="checkout-intent-summary__name">
+                        {checkoutPlan?.name ?? (checkoutPlanLoading ? "Cargando…" : "Plan seleccionado")}
+                      </strong>
+                      {checkoutPlanPriceLabel && (
+                        <span className="checkout-intent-summary__price">
+                          {checkoutPlanPriceLabel}
+                          <span className="checkout-intent-summary__suffix">/mes</span>
+                        </span>
+                      )}
+                    </div>
+                    <p className="checkout-intent-summary__hint">
                       El pago se realiza en el siguiente paso, dentro del checkout seguro.
                     </p>
+                    <ul className="checkout-intent-summary__bullets" aria-label="Beneficios">
+                      {checkoutLeftBullets.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                    <p className="checkout-intent-summary__fineprint">
+                      Pagos procesados de forma segura. Cancela cuando quieras.
+                    </p>
                   </div>
-                )}
-                <details className="auth-checkout-mobile__details">
-                  <summary className="auth-checkout-mobile__detailsSummary">Ver lo que incluye</summary>
-                  <ul className="auth-checkout-mobile__bullets" aria-label="Beneficios">
+                </details>
+
+                <div className="checkout-intent-summary__static">
+                  <h2 className="checkout-intent-summary__title">Resumen de compra</h2>
+                  <div className="checkout-intent-summary__labelRow">
+                    <span className="checkout-intent-summary__label">Plan seleccionado</span>
+                    {showCheckoutTrial && (
+                      <span className="checkout-intent-summary__badge">
+                        Prueba {trialConfig!.days} días (tarjeta)
+                      </span>
+                    )}
+                  </div>
+                  <div className="checkout-intent-summary__row">
+                    <strong className="checkout-intent-summary__name">
+                      {checkoutPlan?.name ?? (checkoutPlanLoading ? "Cargando…" : "Plan seleccionado")}
+                    </strong>
+                    {checkoutPlanPriceLabel && (
+                      <span className="checkout-intent-summary__price">
+                        {checkoutPlanPriceLabel}
+                        <span className="checkout-intent-summary__suffix">/mes</span>
+                      </span>
+                    )}
+                  </div>
+                  <p className="checkout-intent-summary__hint">
+                    El pago se realiza en el siguiente paso, dentro del checkout seguro.
+                  </p>
+                  <ul className="checkout-intent-summary__bullets" aria-label="Beneficios">
                     {checkoutLeftBullets.map((item) => (
                       <li key={item}>{item}</li>
                     ))}
                   </ul>
-                </details>
-              </div>
-              <h2 className="auth-split-form-title">Crea tu cuenta</h2>
-              <p className="auth-split-form-sub">
-                Después te llevamos al checkout para elegir método de pago.
-              </p>
-              {FormContent}
+                  <p className="checkout-intent-summary__fineprint">
+                    Pagos procesados de forma segura. Cancela cuando quieras.
+                  </p>
+                </div>
+              </aside>
             </div>
-          </section>
+          </div>
         </div>
       ) : (
         <div className="auth-login-atmosphere">

@@ -63,6 +63,393 @@
   }
 }
 
+/* ==========================================================================
+   Checkout-Intent Signup (Paso 1 de 2)
+   Purpose-built layout for /comprar -> /auth/registro to feel like a premium checkout.
+   ========================================================================== */
+.checkout-intent-shell {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+}
+
+.checkout-intent-shell__inner {
+  width: min(1140px, 100%);
+  margin: 0 auto;
+  display: grid;
+  gap: 14px;
+}
+
+.checkout-intent-shell__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0 8px;
+}
+
+.checkout-intent-shell__logo {
+  width: auto;
+  height: 32px;
+  max-width: 180px;
+  object-fit: contain;
+}
+
+.checkout-intent-shell__topRight {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.checkout-intent-shell__step {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--app-accent) 38%, var(--app-border));
+  background: var(--theme-accent-soft-bg);
+  color: var(--app-accent);
+  font-size: 0.92rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.checkout-intent-shell__login {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--app-border) 86%, transparent);
+  background: color-mix(in srgb, var(--app-bg-soft) 84%, transparent);
+  color: var(--app-text-heading);
+  font-weight: 800;
+  font-size: 0.98rem;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    border-color: color-mix(in srgb, var(--app-accent) 32%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-soft-bg-2) 64%, var(--app-bg-soft));
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--app-focus-ring);
+  }
+}
+
+.checkout-intent-shell__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: clamp(12px, 1.6vw, 20px);
+  align-items: start;
+
+  @media (min-width: 1080px) {
+    grid-template-columns: minmax(0, 1.14fr) minmax(0, 0.86fr);
+  }
+}
+
+.checkout-intent-card {
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--app-border) 86%, transparent);
+  background: color-mix(in srgb, var(--app-bg-card) 97%, transparent);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, #ffffff 30%, transparent) inset,
+    0 12px 28px color-mix(in srgb, #000000 11%, transparent);
+  padding: clamp(14px, 1.6vw, 22px);
+}
+
+html[data-theme="dark"] .checkout-intent-card,
+html.dark .checkout-intent-card,
+.dark .checkout-intent-card {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 14px 34px rgba(0, 0, 0, 0.36);
+}
+
+.checkout-intent-card--flow {
+  display: grid;
+  gap: 14px;
+}
+
+.checkout-intent-shell__head {
+  display: grid;
+  gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--app-border) 78%, transparent);
+}
+
+.checkout-intent-shell__kicker {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--app-accent) 36%, var(--app-border));
+  background: var(--theme-accent-soft-bg);
+  color: var(--app-accent);
+  font-size: 0.9rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.checkout-intent-shell__title {
+  margin: 0;
+  color: var(--app-text-heading);
+  font-size: clamp(2.05rem, 2.8vw, 2.7rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  font-weight: var(--app-font-weight-heading-strong);
+  text-wrap: balance;
+}
+
+.checkout-intent-shell__subtitle {
+  margin: 0;
+  color: var(--app-text-muted);
+  font-size: 1.22rem;
+  font-weight: 650;
+  line-height: 1.45;
+  max-width: 60ch;
+}
+
+.checkout-intent-card--summary {
+  /* Mobile: show summary first (accordion), like /comprar step 2. */
+  order: -1;
+
+  @media (min-width: 1080px) {
+    order: 0;
+    position: sticky;
+    top: 18px;
+  }
+}
+
+.checkout-intent-summary__accordion {
+  border: none;
+}
+
+.checkout-intent-summary__summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 4px 12px;
+  color: var(--app-text-heading);
+  font-weight: 850;
+  font-size: 1.22rem;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.checkout-intent-summary__summary::-webkit-details-marker {
+  display: none;
+}
+
+.checkout-intent-summary__summaryLeft {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.checkout-intent-summary__summaryLeft small {
+  color: var(--app-text-muted);
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.checkout-intent-summary__accordion > .checkout-intent-summary__summary::after {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-right: 2px solid color-mix(in srgb, var(--app-text-muted) 78%, transparent);
+  border-bottom: 2px solid color-mix(in srgb, var(--app-text-muted) 78%, transparent);
+  transform: rotate(45deg);
+  transition: transform 160ms ease;
+  flex-shrink: 0;
+}
+
+.checkout-intent-summary__accordion[open] > .checkout-intent-summary__summary::after {
+  transform: rotate(-135deg);
+}
+
+.checkout-intent-summary__body {
+  padding-top: 2px;
+}
+
+.checkout-intent-summary__static {
+  display: none;
+}
+
+@media (min-width: 1080px) {
+  .checkout-intent-summary__accordion {
+    display: none;
+  }
+
+  .checkout-intent-summary__static {
+    display: block;
+  }
+}
+
+.checkout-intent-summary__title {
+  margin: 0 0 10px;
+  font-size: 1.04rem;
+  color: var(--app-text-muted);
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+}
+
+.checkout-intent-summary__labelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.checkout-intent-summary__label {
+  font-size: 0.92rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--app-text-muted);
+}
+
+.checkout-intent-summary__badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--app-status-success) 36%, transparent);
+  background: color-mix(in srgb, var(--app-status-success) 12%, transparent);
+  color: var(--app-status-success);
+  font-size: 0.9rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.checkout-intent-summary__row {
+  margin-top: 8px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.checkout-intent-summary__name {
+  font-size: 1.55rem;
+  font-weight: 950;
+  color: var(--app-text-heading);
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.checkout-intent-summary__price {
+  font-size: 1.35rem;
+  font-weight: 850;
+  color: var(--app-text-heading);
+  white-space: nowrap;
+}
+
+.checkout-intent-summary__suffix {
+  margin-left: 4px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--app-text-muted);
+}
+
+.checkout-intent-summary__hint {
+  margin: 8px 0 0;
+  color: var(--app-text-muted);
+  font-size: 1.16rem;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.checkout-intent-summary__bullets {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+  display: grid;
+  gap: 10px;
+}
+
+.checkout-intent-summary__bullets li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--app-text-body);
+  font-size: 1.18rem;
+  font-weight: 650;
+  line-height: 1.42;
+
+  &::before {
+    content: "✓";
+    color: var(--app-accent);
+    font-weight: 950;
+    flex-shrink: 0;
+    line-height: 1.1;
+    margin-top: 2px;
+  }
+}
+
+.checkout-intent-summary__fineprint {
+  margin: 12px 0 0;
+  color: var(--app-text-muted);
+  font-size: 1.08rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+/* Form polish inside checkout intent (less "pill", more premium). */
+.checkout-intent-shell form.sign-up-form {
+  gap: 12px;
+
+  .auth-login-input-wrap,
+  .signup-phone-wrap {
+    border-radius: 16px;
+  }
+
+  .auth-login-input,
+  .password-input,
+  .signup-phone-input {
+    border-radius: 16px;
+  }
+
+  .signup-submit-btn {
+    border-radius: 16px;
+    text-transform: none;
+    letter-spacing: 0;
+    box-shadow: var(--app-shadow-card);
+  }
+
+  .signup-submit-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: var(--app-shadow-card);
+  }
+}
+
 .auth-checkout-summary {
   margin: 0 0 14px;
   padding: 10px 12px;
@@ -626,6 +1013,46 @@ form.sign-up-form {
     font-size: clamp(12px, 0.16vw + 11px, 13px);
     font-weight: 600;
     line-height: 1.4;
+  }
+
+  .auth-signup-consents {
+    margin: 10px 0 2px;
+    padding: 0 6px;
+    display: grid;
+    gap: 8px;
+    text-align: left;
+  }
+
+  .auth-consent-item {
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+    font-size: clamp(12px, 0.18vw + 11px, 13px);
+    line-height: 1.35;
+    font-weight: 650;
+    color: color-mix(in srgb, var(--auth-login-subtitle) 98%, transparent);
+    cursor: pointer;
+
+    strong {
+      font-weight: 900;
+      color: color-mix(in srgb, var(--auth-login-title) 92%, transparent);
+    }
+  }
+
+  .auth-consent-checkbox {
+    margin-top: 2px;
+    width: 16px;
+    height: 16px;
+    accent-color: var(--app-accent);
+    cursor: pointer;
+  }
+
+  .auth-consent-hint {
+    margin-top: 2px;
+    font-size: 12px;
+    line-height: 1.35;
+    color: color-mix(in srgb, var(--auth-login-subtitle) 86%, transparent);
   }
 
   .auth-signup-legal-link {
