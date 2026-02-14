@@ -83,6 +83,9 @@ export const commsUnsubscribeEndpoint = async (req: Request, res: Response) => {
       where: { id: userId },
       data: {
         email_marketing_opt_in: false,
+        email_marketing_news_opt_in: false,
+        email_marketing_offers_opt_in: false,
+        email_marketing_digest_opt_in: false,
         marketing_opt_in_updated_at: new Date(),
       },
     });

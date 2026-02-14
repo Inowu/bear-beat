@@ -109,6 +109,7 @@ async function queryLapsed(params: {
       AND aal.stage = ${stage}
     WHERE u.blocked = 0
       AND u.email_marketing_opt_in = 1
+      AND u.email_marketing_offers_opt_in = 1
       AND aal.id IS NULL
       AND EXISTS (
         SELECT 1
@@ -156,6 +157,7 @@ async function queryNeverPaid(params: {
       AND aal_auto.stage = 7
     WHERE u.blocked = 0
       AND u.email_marketing_opt_in = 1
+      AND u.email_marketing_offers_opt_in = 1
       AND aal_offer.id IS NULL
       AND (${stage} > 1 OR aal_auto.id IS NULL)
       AND u.verified = 1
