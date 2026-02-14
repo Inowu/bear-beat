@@ -35,6 +35,7 @@ import {
   manyChatHandoffResolveEndpoint,
 } from './endpoints/manychat-handoff.endpoint';
 import { commsUnsubscribeEndpoint } from './endpoints/comms-unsubscribe.endpoint';
+import { billingPortalEndpoint } from './endpoints/billing-portal.endpoint';
 import {
   initializeRemoveUsersQueue,
   removeUsersQueue,
@@ -197,6 +198,9 @@ async function main() {
       express.urlencoded({ extended: false, limit: '8kb' }),
       commsUnsubscribeEndpoint,
     );
+
+    // Public: expiring magic link to open Stripe Billing Portal (used by dunning emails).
+    app.get('/api/billing/portal', billingPortalEndpoint);
 
     app.get('/api/analytics/health', (_req, res) => {
       res.json({

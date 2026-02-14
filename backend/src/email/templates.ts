@@ -1059,7 +1059,7 @@ export const emailTemplates = {
     };
   },
 
-	  automationActiveNoDownload: (params: { name: string; url: string; days: number; unsubscribeUrl?: string }) => {
+  automationActiveNoDownload: (params: { name: string; url: string; days: number; unsubscribeUrl?: string }) => {
 	    const { name, url, days, unsubscribeUrl } = params;
 	    const safeDays = Math.max(1, Math.min(60, Math.floor(Number(days) || 0)));
 	    const subject = `[Bear Beat] Llevas ${safeDays} días sin descargar`;
@@ -1110,6 +1110,87 @@ export const emailTemplates = {
       subject,
       html: renderLayout({ title: subject, preheader: 'Tu acceso sigue activo.', contentHtml, unsubscribeUrl }),
       text: appendMarketingUnsubscribeText(text, unsubscribeUrl),
+    };
+  },
+
+  dunningPaymentFailed: (params: {
+    name: string;
+    ctaUrl: string;
+    stageDays: 0 | 1 | 3 | 7 | 14;
+    accessUntil?: string | null;
+    supportUrl?: string | null;
+  }) => {
+    const { name, ctaUrl, stageDays, accessUntil, supportUrl } = params;
+    const safeName = String(name || '').trim() || 'DJ';
+    const title =
+      stageDays === 0
+        ? 'Accion requerida: actualiza tu pago'
+        : stageDays === 1
+          ? 'Recordatorio: tu pago no paso'
+          : stageDays === 3
+            ? 'Evita que tu acceso se pause'
+            : stageDays === 7
+              ? 'Ultimo aviso: actualiza tu pago'
+              : 'Tu acceso puede estar pausado';
+    const subject = `[Bear Beat] ${title}`;
+
+    const accessLine = accessUntil
+      ? `<div style="margin-top:10px;font-family:${FONT_UI};font-size:13px;line-height:1.6;color:${COLORS.muted};">
+           Acceso actual: <strong style="color:${COLORS.ink};">hasta ${escapeHtml(accessUntil)}</strong>
+         </div>`
+      : '';
+
+    const supportLine = supportUrl
+      ? `<div style="margin-top:10px;font-family:${FONT_UI};font-size:13px;line-height:1.6;color:${COLORS.muted};">
+           Si necesitas ayuda: <a href="${escapeHtml(supportUrl)}" style="${LINK_STYLE}">Soporte</a>
+         </div>`
+      : '';
+
+    const contentHtml = `
+      <div style="margin:0 0 12px 0;">
+        ${renderPill('Facturacion')}
+      </div>
+      <h1 style="${H1_STYLE_SM}">
+        ${escapeHtml(title)}
+      </h1>
+      <p style="${LEAD_STYLE}">
+        Hola <strong>${escapeHtml(safeName)}</strong>. Intentamos renovar tu membresia y el pago fue rechazado.
+        Para evitar interrupciones, actualiza tu metodo de pago.
+      </p>
+      ${accessLine}
+      ${renderCard({
+        marginTop: 14,
+        innerHtml: `
+          <div style="${SECTION_LABEL_STYLE}">Arreglalo en 1 minuto</div>
+          <div style="margin-top:10px;">
+            ${renderChecklist([
+              'Abre el portal de pagos.',
+              'Actualiza tarjeta / metodo.',
+              'Listo: tu acceso sigue sin pausas.',
+            ])}
+          </div>
+        `,
+      })}
+      <div style="margin:18px 0 10px 0;">
+        ${renderButton({ href: ctaUrl, label: 'Actualizar pago' })}
+      </div>
+      ${supportLine}
+      <p style="margin:12px 0 0 0;font-family:${FONT_UI};font-size:13px;line-height:1.65;color:${COLORS.muted};">
+        Enlace directo: <span style="word-break:break-all;color:${COLORS.ink};">${escapeHtml(ctaUrl)}</span>
+      </p>
+    `.trim();
+
+    const text =
+      `${title}\n\n` +
+      `Hola ${safeName}. Intentamos renovar tu membresia y el pago fue rechazado.\n` +
+      (accessUntil ? `Acceso actual: hasta ${accessUntil}\n` : '') +
+      `\nActualizar pago: ${ctaUrl}\n` +
+      (supportUrl ? `Soporte: ${supportUrl}\n` : '');
+
+    return {
+      subject,
+      html: renderLayout({ title: subject, preheader: 'Actualiza tu pago para evitar interrupciones.', contentHtml }),
+      text,
     };
   },
 

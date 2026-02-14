@@ -391,13 +391,16 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
         `[PAYPAL_WH] Payment failed (${payload.event_type}), subscription id ${subId}`,
       );
 
+      const dunningEnabled = (process.env.DUNNING_ENABLED || '0').trim() === '1';
+
       try {
         await manyChat.addTagToUser(user, 'FAILED_PAYMENT');
       } catch (e) {
         log.error(`[PAYPAL] Error adding FAILED_PAYMENT tag for user ${user.id}: ${e}`);
       }
 
-      // Internal analytics: payment failed + involuntary cancellation.
+      // Internal analytics: payment failed (billing). When dunning is enabled,
+      // do NOT mark this as an involuntary cancellation yet.
       try {
         await ingestAnalyticsEvents({
           prisma,
@@ -420,22 +423,26 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
                 orderId: order.id,
               },
             },
-            {
-              eventId: `paypal:${payload.id || payload.event_id}:subscription_cancel_involuntary`.slice(0, 80),
-              eventName: 'subscription_cancel_involuntary',
-              eventCategory: 'retention',
-              eventTs: new Date().toISOString(),
-              userId: user.id,
-              metadata: {
-                provider: 'paypal',
-                reason:
-                  payload.event_type === PaypalEvent.BILLING_SUBSCRIPTION_PAYMENT_FAILED
-                    ? 'billing_subscription_payment_failed'
-                    : 'payment_sale_denied',
-                paypalSubscriptionId: subId,
-                orderId: order.id,
-              },
-            },
+            ...(dunningEnabled
+              ? []
+              : [
+                  {
+                    eventId: `paypal:${payload.id || payload.event_id}:subscription_cancel_involuntary`.slice(0, 80),
+                    eventName: 'subscription_cancel_involuntary',
+                    eventCategory: 'retention' as const,
+                    eventTs: new Date().toISOString(),
+                    userId: user.id,
+                    metadata: {
+                      provider: 'paypal',
+                      reason:
+                        payload.event_type === PaypalEvent.BILLING_SUBSCRIPTION_PAYMENT_FAILED
+                          ? 'billing_subscription_payment_failed'
+                          : 'payment_sale_denied',
+                      paypalSubscriptionId: subId,
+                      orderId: order.id,
+                    },
+                  },
+                ]),
           ],
           sessionUserId: user.id,
         });
@@ -445,13 +452,15 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
         });
       }
 
-      await cancelSubscription({
-        prisma,
-        user,
-        plan: plan[getPlanKey(PaymentService.PAYPAL)]!,
-        service: PaymentService.PAYPAL,
-        reason: OrderStatus.FAILED,
-      });
+      if (!dunningEnabled) {
+        await cancelSubscription({
+          prisma,
+          user,
+          plan: plan[getPlanKey(PaymentService.PAYPAL)]!,
+          service: PaymentService.PAYPAL,
+          reason: OrderStatus.FAILED,
+        });
+      }
 
       break;
     }

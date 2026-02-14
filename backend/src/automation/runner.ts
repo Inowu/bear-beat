@@ -7,6 +7,8 @@ import { ensureAnalyticsEventsTableExists } from '../analytics';
 import { OFFER_KEYS, markUserOffersRedeemed, upsertUserOfferAndCoupon } from '../offers';
 import { twilio } from '../twilio';
 import { buildMarketingUnsubscribeUrl } from '../comms/unsubscribe';
+import { buildStripeBillingPortalUrl } from '../billing/stripeBillingPortalLink';
+import { computeDunningStageDays } from '../billing/dunning';
 
 type AutomationChannel = 'manychat' | 'email' | 'twilio' | 'admin' | 'system';
 
@@ -1416,6 +1418,133 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	        }
 
         bump('plans_offer_50');
+      }
+    }
+
+    // Dunning: subscription payment failed (D0/D1/D3/D7/D14).
+    // Transactional: does NOT require marketing opt-in.
+    {
+      const dunningEnabled = (process.env.DUNNING_ENABLED || '0').trim() === '1';
+      if (emailAutomationsEnabled && dunningEnabled && canSendEmail()) {
+        const lookbackDays = Math.max(
+          7,
+          Math.min(120, Math.floor(parseNumber(process.env.DUNNING_LOOKBACK_DAYS, 30))),
+        );
+
+        const rows = await prisma.$queryRaw<
+          Array<{ userId: number; failedAt: Date; provider: string | null; reason: string | null }>
+        >(Prisma.sql`
+          SELECT
+            ae.user_id AS userId,
+            ae.event_ts AS failedAt,
+            JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.provider')) AS provider,
+            JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.reason')) AS reason
+          FROM analytics_events ae
+          INNER JOIN (
+            SELECT user_id, MAX(event_ts) AS max_ts
+            FROM analytics_events
+            WHERE event_name = 'payment_failed'
+              AND user_id IS NOT NULL
+              AND event_ts >= DATE_SUB(NOW(), INTERVAL ${lookbackDays} DAY)
+              AND JSON_UNQUOTE(JSON_EXTRACT(metadata_json, '$.provider')) IN ('stripe', 'paypal')
+              AND JSON_UNQUOTE(JSON_EXTRACT(metadata_json, '$.reason')) IN (
+                'past_due',
+                'billing_subscription_payment_failed',
+                'payment_sale_denied'
+              )
+            GROUP BY user_id
+          ) last
+            ON last.user_id = ae.user_id
+            AND last.max_ts = ae.event_ts
+          LEFT JOIN users u
+            ON u.id = ae.user_id
+          LEFT JOIN orders o_paid
+            ON o_paid.user_id = ae.user_id
+            AND o_paid.is_plan = 1
+            AND o_paid.status = 1
+            AND o_paid.date_order > ae.event_ts
+          WHERE u.blocked = 0
+            AND o_paid.id IS NULL
+          ORDER BY ae.event_ts DESC
+          LIMIT ${limit}
+        `);
+
+        const now = new Date();
+
+        for (const row of rows) {
+          if (!canSendEmail()) break;
+          const user = await prisma.users.findFirst({
+            where: { id: row.userId },
+            select: { id: true, email: true, username: true, blocked: true },
+          });
+          if (!user || user.blocked) continue;
+
+          const stageDays = computeDunningStageDays(row.failedAt, now);
+          if (stageDays == null) continue;
+
+          // Idempotency: do not send the same stage more than once.
+          const { created } = await createActionLog({
+            prisma,
+            userId: user.id,
+            actionKey: 'dunning_payment_failed',
+            stage: stageDays,
+            channel: 'system',
+            metadata: {
+              provider: row.provider ?? null,
+              reason: row.reason ?? null,
+              failedAt: row.failedAt.toISOString(),
+            },
+          });
+          if (!created) continue;
+
+          // Include the latest known access end date (if any) for urgency.
+          let accessUntilText: string | null = null;
+          try {
+            const lastAccess = await prisma.descargasUser.findFirst({
+              where: { user_id: user.id },
+              orderBy: [{ date_end: 'desc' }, { id: 'desc' }],
+              select: { date_end: true },
+            });
+            if (lastAccess?.date_end instanceof Date) {
+              accessUntilText = lastAccess.date_end.toISOString().slice(0, 10);
+            }
+          } catch {
+            // ignore
+          }
+
+          const accountUrl = appendQueryParams(`${resolveClientUrl()}/micuenta`, {
+            utm_source: 'email',
+            utm_medium: 'transactional',
+            utm_campaign: `dunning_d${stageDays}`,
+            utm_content: 'cta_account',
+          });
+
+          // Prefer a direct portal link for Stripe, else fall back to account page.
+          const ctaUrl =
+            row.provider === 'stripe'
+              ? buildStripeBillingPortalUrl({ userId: user.id }) || accountUrl
+              : accountUrl;
+
+          const tpl = emailTemplates.dunningPaymentFailed({
+            name: user.username,
+            ctaUrl,
+            stageDays,
+            accessUntil: accessUntilText,
+            supportUrl: accountUrl,
+          });
+
+          await safeSendAutomationEmail({
+            userId: user.id,
+            actionKey: 'dunning_payment_failed',
+            stage: stageDays,
+            toEmail: user.email,
+            subject: tpl.subject,
+            html: tpl.html,
+            text: tpl.text,
+          });
+          noteEmailSent();
+          bump(`dunning_d${stageDays}`);
+        }
       }
     }
 
