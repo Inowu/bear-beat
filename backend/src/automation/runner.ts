@@ -381,14 +381,16 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
           AND o.status = 1
           AND o.is_plan = 1
           AND (o.is_canceled IS NULL OR o.is_canceled = 0)
-        LEFT JOIN automation_action_logs aal
-          ON aal.user_id = u.id
-          AND aal.action_key = 'registered_no_purchase'
-          AND aal.stage = 7
-        WHERE u.registered_on <= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
-          AND u.registered_on >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-          AND u.blocked = 0
-          AND u.verified = 1
+	        LEFT JOIN automation_action_logs aal
+	          ON aal.user_id = u.id
+	          AND (
+	            (aal.action_key = 'registered_no_purchase' AND aal.stage = 7)
+	            OR (aal.action_key = 'registered_no_purchase_offer')
+	          )
+	        WHERE u.registered_on <= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+	          AND u.registered_on >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+	          AND u.blocked = 0
+	          AND u.verified = 1
           AND o.id IS NULL
           AND aal.id IS NULL
         ORDER BY u.registered_on DESC

@@ -146,13 +146,18 @@ async function queryNeverPaid(params: {
     LEFT JOIN descargas_user du
       ON du.user_id = u.id
       AND du.date_end > NOW()
-    LEFT JOIN automation_action_logs aal
-      ON aal.user_id = u.id
-      AND aal.action_key = 'registered_no_purchase_offer'
-      AND aal.stage = ${stage}
+    LEFT JOIN automation_action_logs aal_offer
+      ON aal_offer.user_id = u.id
+      AND aal_offer.action_key = 'registered_no_purchase_offer'
+      AND aal_offer.stage = ${stage}
+    LEFT JOIN automation_action_logs aal_auto
+      ON aal_auto.user_id = u.id
+      AND aal_auto.action_key = 'registered_no_purchase'
+      AND aal_auto.stage = 7
     WHERE u.blocked = 0
       AND u.email_marketing_opt_in = 1
-      AND aal.id IS NULL
+      AND aal_offer.id IS NULL
+      AND (${stage} > 1 OR aal_auto.id IS NULL)
       AND u.verified = 1
       AND u.registered_on < DATE_SUB(NOW(), INTERVAL ${minRegisteredDays} DAY)
       AND u.registered_on >= DATE_SUB(NOW(), INTERVAL ${lookbackDays} DAY)
