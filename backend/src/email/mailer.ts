@@ -179,3 +179,77 @@ export async function sendPlanActivatedEmail(params: { userId: number; toEmail: 
     });
   }
 }
+
+export async function sendCancellationConfirmedEmail(params: {
+  userId: number;
+  toEmail: string;
+  toName: string;
+  planName: string;
+  accessUntil: string;
+}): Promise<void> {
+  const { userId, toEmail, toName, planName, accessUntil } = params;
+  try {
+    const base = resolveClientUrl();
+    const reactivateUrl = appendQueryParams(`${base}/planes`, {
+      utm_source: 'email',
+      utm_medium: 'transactional',
+      utm_campaign: 'cancel_confirmed',
+      utm_content: 'cta_reactivate',
+    });
+    const accountUrl = appendQueryParams(`${base}/micuenta`, {
+      utm_source: 'email',
+      utm_medium: 'transactional',
+      utm_campaign: 'cancel_confirmed',
+      utm_content: 'link_account',
+    });
+    const tpl = emailTemplates.cancellationConfirmed({
+      name: toName,
+      planName,
+      accessUntil,
+      accountUrl,
+      reactivateUrl,
+    });
+    await sendEmail({ to: [toEmail], subject: tpl.subject, html: tpl.html, text: tpl.text });
+  } catch (e) {
+    log.warn('[EMAIL] Cancellation confirmed email failed (non-blocking)', {
+      userId,
+      error: e instanceof Error ? e.message : e,
+    });
+  }
+}
+
+export async function sendCancellationEndingSoonEmail(params: {
+  userId: number;
+  toEmail: string;
+  toName: string;
+  accessUntil: string;
+}): Promise<void> {
+  const { userId, toEmail, toName, accessUntil } = params;
+  try {
+    const base = resolveClientUrl();
+    const reactivateUrl = appendQueryParams(`${base}/planes`, {
+      utm_source: 'email',
+      utm_medium: 'transactional',
+      utm_campaign: 'cancel_ending_soon',
+      utm_content: 'cta_reactivate',
+    });
+    const accountUrl = appendQueryParams(`${base}/micuenta`, {
+      utm_source: 'email',
+      utm_medium: 'transactional',
+      utm_campaign: 'cancel_ending_soon',
+      utm_content: 'link_account',
+    });
+    const tpl = emailTemplates.cancellationEndingSoon({
+      name: toName,
+      accessUntil,
+      accountUrl,
+      reactivateUrl,
+    });
+    await sendEmail({ to: [toEmail], subject: tpl.subject, html: tpl.html, text: tpl.text });
+  } catch (e) {
+    log.warn('[EMAIL] Cancellation ending soon email failed (non-blocking)', {
+      userId,
+      error: e instanceof Error ? e.message : e,
+    });
+  }
+}
