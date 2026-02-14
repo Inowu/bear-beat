@@ -30,6 +30,18 @@ const isTwilioConfigured = (): boolean =>
 
 const resolveClientUrl = (): string => (process.env.CLIENT_URL || 'https://thebearbeat.com').trim();
 
+const appendQueryParams = (baseUrl: string, params: Record<string, string>): string => {
+  try {
+    const url = new URL(baseUrl);
+    for (const [key, value] of Object.entries(params)) {
+      url.searchParams.set(key, value);
+    }
+    return url.toString();
+  } catch {
+    return baseUrl;
+  }
+};
+
 async function safeAddManyChatTag(user: Users, tag: any): Promise<void> {
   try {
     await manyChat.addTagToUser(user, tag);
@@ -191,6 +203,15 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
   };
 
   const limit = Math.max(20, Math.min(500, Math.floor(parseNumber(process.env.AUTOMATION_RUNNER_LIMIT, DEFAULT_LIMIT))));
+  const maxEmailsPerRun = Math.max(
+    0,
+    Math.min(2000, Math.floor(parseNumber(process.env.AUTOMATION_EMAIL_MAX_PER_RUN, 120))),
+  );
+  let emailsSent = 0;
+  const canSendEmail = (): boolean => emailsSent < maxEmailsPerRun;
+  const noteEmailSent = () => {
+    emailsSent += 1;
+  };
 
   try {
     const stats: Record<string, number> = {};
@@ -254,8 +275,13 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 
         safeAddManyChatTag(user, 'AUTOMATION_TRIAL_NO_DOWNLOAD_24H').catch(() => {});
         const templateId = parseNumber(process.env.AUTOMATION_EMAIL_TRIAL_NO_DOWNLOAD_TEMPLATE_ID, 0);
-        if (templateId > 0 && user.email_marketing_opt_in) {
-          const url = `${resolveClientUrl()}/`;
+        if (templateId > 0 && user.email_marketing_opt_in && canSendEmail()) {
+          const url = appendQueryParams(`${resolveClientUrl()}/`, {
+            utm_source: 'email',
+            utm_medium: 'automation',
+            utm_campaign: 'trial_no_download_24h',
+            utm_content: 'cta',
+          });
           const unsubscribeUrl = buildMarketingUnsubscribeUrl(user.id) ?? undefined;
           const tpl = emailTemplates.automationTrialNoDownload24h({ name: user.username, url, unsubscribeUrl });
           await safeSendAutomationEmail({
@@ -265,6 +291,7 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
             html: tpl.html,
             text: tpl.text,
           });
+          noteEmailSent();
         }
         bump('trial_no_download');
       }
@@ -318,8 +345,13 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 
         safeAddManyChatTag(user, 'AUTOMATION_PAID_NO_DOWNLOAD_24H').catch(() => {});
         const templateId = parseNumber(process.env.AUTOMATION_EMAIL_PAID_NO_DOWNLOAD_TEMPLATE_ID, 0);
-        if (templateId > 0 && user.email_marketing_opt_in) {
-          const url = `${resolveClientUrl()}/`;
+        if (templateId > 0 && user.email_marketing_opt_in && canSendEmail()) {
+          const url = appendQueryParams(`${resolveClientUrl()}/`, {
+            utm_source: 'email',
+            utm_medium: 'automation',
+            utm_campaign: 'paid_no_download_24h',
+            utm_content: 'cta',
+          });
           const unsubscribeUrl = buildMarketingUnsubscribeUrl(user.id) ?? undefined;
           const tpl = emailTemplates.automationPaidNoDownload24h({ name: user.username, url, unsubscribeUrl });
           await safeSendAutomationEmail({
@@ -329,6 +361,7 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
             html: tpl.html,
             text: tpl.text,
           });
+          noteEmailSent();
         }
         bump('paid_no_download');
       }
@@ -378,8 +411,13 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 
         safeAddManyChatTag(user, 'AUTOMATION_REGISTERED_NO_PURCHASE_7D').catch(() => {});
         const templateId = parseNumber(process.env.AUTOMATION_EMAIL_REGISTERED_NO_PURCHASE_TEMPLATE_ID, 0);
-        if (templateId > 0 && user.email_marketing_opt_in) {
-          const url = `${resolveClientUrl()}/planes`;
+        if (templateId > 0 && user.email_marketing_opt_in && canSendEmail()) {
+          const url = appendQueryParams(`${resolveClientUrl()}/planes`, {
+            utm_source: 'email',
+            utm_medium: 'automation',
+            utm_campaign: 'registered_no_purchase_7d',
+            utm_content: 'cta',
+          });
           const unsubscribeUrl = buildMarketingUnsubscribeUrl(user.id) ?? undefined;
           const tpl = emailTemplates.automationRegisteredNoPurchase7d({ name: user.username, url, unsubscribeUrl });
           await safeSendAutomationEmail({
@@ -389,8 +427,409 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
             html: tpl.html,
             text: tpl.text,
           });
+          noteEmailSent();
         }
         bump('registered_no_purchase');
+      }
+    }
+
+    // Rule 3b: registered 24h+ ago but WhatsApp not verified (required to download)
+    {
+      const rows = await prisma.$queryRaw<
+        Array<{ userId: number; email: string; username: string; registeredOn: Date }>
+      >(Prisma.sql`
+        SELECT
+          u.id AS userId,
+          u.email AS email,
+          u.username AS username,
+          u.registered_on AS registeredOn
+        FROM users u
+        LEFT JOIN automation_action_logs aal
+          ON aal.user_id = u.id
+          AND aal.action_key = 'verify_whatsapp'
+          AND aal.stage = 24
+        WHERE u.registered_on <= DATE_SUB(CURDATE(), INTERVAL 1 DAY)
+          AND u.registered_on >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+          AND u.blocked = 0
+          AND u.verified = 0
+          AND aal.id IS NULL
+        ORDER BY u.registered_on DESC
+        LIMIT ${limit}
+      `);
+
+      for (const row of rows) {
+        const userId = Number(row.userId);
+        if (!userId) continue;
+
+        const { created } = await createActionLog({
+          prisma,
+          userId,
+          actionKey: 'verify_whatsapp',
+          stage: 24,
+          channel: 'system',
+          metadata: { registeredOn: row.registeredOn.toISOString() },
+        });
+        if (!created) continue;
+
+        const user = await prisma.users.findFirst({ where: { id: userId } });
+        if (!user || user.blocked) continue;
+
+        safeAddManyChatTag(user, 'AUTOMATION_VERIFY_WHATSAPP_24H').catch(() => {});
+
+        const templateId = parseNumber(process.env.AUTOMATION_EMAIL_VERIFY_WHATSAPP_24H_TEMPLATE_ID, 0);
+        if (templateId > 0 && canSendEmail()) {
+          const url = appendQueryParams(`${resolveClientUrl()}/micuenta`, {
+            utm_source: 'email',
+            utm_medium: 'automation',
+            utm_campaign: 'verify_whatsapp_24h',
+            utm_content: 'cta',
+          });
+          const tpl = emailTemplates.automationVerifyWhatsApp24h({ name: user.username, url });
+          await safeSendAutomationEmail({
+            toEmail: user.email,
+            toName: user.username,
+            subject: tpl.subject,
+            html: tpl.html,
+            text: tpl.text,
+          });
+          noteEmailSent();
+        }
+
+        bump('verify_whatsapp_24h');
+      }
+    }
+
+    // Rule 3c: checkout started, no purchase after 1h
+    {
+      const rows = await prisma.$queryRaw<
+        Array<{
+          userId: number;
+          email: string;
+          username: string;
+          emailMarketingOptIn: number;
+          checkoutStartedAt: Date;
+          planId: number | null;
+          planName: string | null;
+          planPrice: any | null;
+          planCurrency: string | null;
+        }>
+      >(Prisma.sql`
+        SELECT
+          cs.user_id AS userId,
+          u.email AS email,
+          u.username AS username,
+          u.email_marketing_opt_in AS emailMarketingOptIn,
+          cs.checkout_started_at AS checkoutStartedAt,
+          cs.plan_id AS planId,
+          p.name AS planName,
+          p.price AS planPrice,
+          p.moneda AS planCurrency
+        FROM (
+          SELECT
+            ae.user_id,
+            MAX(ae.event_ts) AS checkout_started_at,
+            MAX(CAST(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.planId')) AS UNSIGNED)) AS plan_id
+          FROM analytics_events ae
+          WHERE ae.event_name = 'checkout_started'
+            AND ae.user_id IS NOT NULL
+            AND ae.event_ts >= DATE_SUB(NOW(), INTERVAL 14 DAY)
+            AND ae.event_ts < DATE_SUB(NOW(), INTERVAL 1 HOUR)
+          GROUP BY ae.user_id
+        ) cs
+        INNER JOIN users u
+          ON u.id = cs.user_id
+          AND u.blocked = 0
+        LEFT JOIN plans p
+          ON p.id = cs.plan_id
+        LEFT JOIN orders o
+          ON o.user_id = cs.user_id
+          AND o.status = 1
+          AND o.is_plan = 1
+          AND (o.is_canceled IS NULL OR o.is_canceled = 0)
+          AND o.date_order > cs.checkout_started_at
+        LEFT JOIN descargas_user du
+          ON du.user_id = cs.user_id
+          AND du.date_end > NOW()
+        LEFT JOIN automation_action_logs aal
+          ON aal.user_id = cs.user_id
+          AND aal.action_key = 'checkout_abandoned'
+          AND aal.stage = 1
+        WHERE o.id IS NULL
+          AND du.id IS NULL
+          AND aal.id IS NULL
+        ORDER BY cs.checkout_started_at DESC
+        LIMIT ${limit}
+      `);
+
+      for (const row of rows) {
+        const userId = Number(row.userId);
+        if (!userId) continue;
+
+        const { created } = await createActionLog({
+          prisma,
+          userId,
+          actionKey: 'checkout_abandoned',
+          stage: 1,
+          channel: 'system',
+          metadata: {
+            checkoutStartedAt: row.checkoutStartedAt.toISOString(),
+            planId: row.planId ?? null,
+          },
+        });
+        if (!created) continue;
+
+        const user = await prisma.users.findFirst({ where: { id: userId } });
+        if (user) {
+          safeAddManyChatTag(user, 'AUTOMATION_CHECKOUT_ABANDONED_1H').catch(() => {});
+        }
+
+        const templateId = parseNumber(process.env.AUTOMATION_EMAIL_CHECKOUT_ABANDONED_1H_TEMPLATE_ID, 0);
+        const emailOptIn = Boolean(row.emailMarketingOptIn);
+        if (templateId > 0 && emailOptIn && canSendEmail()) {
+          const base = resolveClientUrl();
+          const rawUrl = row.planId ? `${base}/comprar?priceId=${row.planId}` : `${base}/planes`;
+          const url = appendQueryParams(rawUrl, {
+            utm_source: 'email',
+            utm_medium: 'automation',
+            utm_campaign: 'checkout_abandoned_1h',
+            utm_content: 'cta',
+          });
+          const unsubscribeUrl = buildMarketingUnsubscribeUrl(userId) ?? undefined;
+          const tpl = emailTemplates.automationCheckoutAbandoned({
+            name: row.username,
+            url,
+            planName: row.planName ?? null,
+            price: row.planPrice ? String(row.planPrice) : null,
+            currency: row.planCurrency ?? null,
+            unsubscribeUrl,
+          });
+          await safeSendAutomationEmail({
+            toEmail: row.email,
+            toName: row.username,
+            subject: tpl.subject,
+            html: tpl.html,
+            text: tpl.text,
+          });
+          noteEmailSent();
+        }
+
+        bump('checkout_abandoned_1h');
+      }
+    }
+
+    // Rule 3d: checkout started, no purchase after 24h
+    {
+      const rows = await prisma.$queryRaw<
+        Array<{
+          userId: number;
+          email: string;
+          username: string;
+          emailMarketingOptIn: number;
+          checkoutStartedAt: Date;
+          planId: number | null;
+          planName: string | null;
+          planPrice: any | null;
+          planCurrency: string | null;
+        }>
+      >(Prisma.sql`
+        SELECT
+          cs.user_id AS userId,
+          u.email AS email,
+          u.username AS username,
+          u.email_marketing_opt_in AS emailMarketingOptIn,
+          cs.checkout_started_at AS checkoutStartedAt,
+          cs.plan_id AS planId,
+          p.name AS planName,
+          p.price AS planPrice,
+          p.moneda AS planCurrency
+        FROM (
+          SELECT
+            ae.user_id,
+            MAX(ae.event_ts) AS checkout_started_at,
+            MAX(CAST(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.planId')) AS UNSIGNED)) AS plan_id
+          FROM analytics_events ae
+          WHERE ae.event_name = 'checkout_started'
+            AND ae.user_id IS NOT NULL
+            AND ae.event_ts >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+            AND ae.event_ts < DATE_SUB(NOW(), INTERVAL 24 HOUR)
+          GROUP BY ae.user_id
+        ) cs
+        INNER JOIN users u
+          ON u.id = cs.user_id
+          AND u.blocked = 0
+        LEFT JOIN plans p
+          ON p.id = cs.plan_id
+        LEFT JOIN orders o
+          ON o.user_id = cs.user_id
+          AND o.status = 1
+          AND o.is_plan = 1
+          AND (o.is_canceled IS NULL OR o.is_canceled = 0)
+          AND o.date_order > cs.checkout_started_at
+        LEFT JOIN descargas_user du
+          ON du.user_id = cs.user_id
+          AND du.date_end > NOW()
+        LEFT JOIN automation_action_logs aal
+          ON aal.user_id = cs.user_id
+          AND aal.action_key = 'checkout_abandoned'
+          AND aal.stage = 24
+        WHERE o.id IS NULL
+          AND du.id IS NULL
+          AND aal.id IS NULL
+        ORDER BY cs.checkout_started_at DESC
+        LIMIT ${limit}
+      `);
+
+      for (const row of rows) {
+        const userId = Number(row.userId);
+        if (!userId) continue;
+
+        const { created } = await createActionLog({
+          prisma,
+          userId,
+          actionKey: 'checkout_abandoned',
+          stage: 24,
+          channel: 'system',
+          metadata: {
+            checkoutStartedAt: row.checkoutStartedAt.toISOString(),
+            planId: row.planId ?? null,
+          },
+        });
+        if (!created) continue;
+
+        const user = await prisma.users.findFirst({ where: { id: userId } });
+        if (user) {
+          safeAddManyChatTag(user, 'AUTOMATION_CHECKOUT_ABANDONED_24H').catch(() => {});
+        }
+
+        const templateId = parseNumber(process.env.AUTOMATION_EMAIL_CHECKOUT_ABANDONED_24H_TEMPLATE_ID, 0);
+        const emailOptIn = Boolean(row.emailMarketingOptIn);
+        if (templateId > 0 && emailOptIn && canSendEmail()) {
+          const base = resolveClientUrl();
+          const rawUrl = row.planId ? `${base}/comprar?priceId=${row.planId}` : `${base}/planes`;
+          const url = appendQueryParams(rawUrl, {
+            utm_source: 'email',
+            utm_medium: 'automation',
+            utm_campaign: 'checkout_abandoned_24h',
+            utm_content: 'cta',
+          });
+          const unsubscribeUrl = buildMarketingUnsubscribeUrl(userId) ?? undefined;
+          const tpl = emailTemplates.automationCheckoutAbandoned({
+            name: row.username,
+            url,
+            planName: row.planName ?? null,
+            price: row.planPrice ? String(row.planPrice) : null,
+            currency: row.planCurrency ?? null,
+            unsubscribeUrl,
+          });
+          await safeSendAutomationEmail({
+            toEmail: row.email,
+            toName: row.username,
+            subject: tpl.subject,
+            html: tpl.html,
+            text: tpl.text,
+          });
+          noteEmailSent();
+        }
+
+        bump('checkout_abandoned_24h');
+      }
+    }
+
+    // Rule 3e: trial ending in ~24h and no purchase
+    {
+      const trialDays = Math.max(1, Math.min(30, Math.floor(parseNumber(process.env.BB_TRIAL_DAYS, 7))));
+      const startMin = new Date(Date.now() - trialDays * 24 * 60 * 60 * 1000);
+      const startMax = new Date(Date.now() - (trialDays - 1) * 24 * 60 * 60 * 1000);
+
+      const rows = await prisma.$queryRaw<
+        Array<{ userId: number; email: string; username: string; emailMarketingOptIn: number; trialStartedAt: Date }>
+      >(Prisma.sql`
+        SELECT
+          t.user_id AS userId,
+          u.email AS email,
+          u.username AS username,
+          u.email_marketing_opt_in AS emailMarketingOptIn,
+          t.trial_started_at AS trialStartedAt
+        FROM (
+          SELECT
+            user_id,
+            MAX(event_ts) AS trial_started_at
+          FROM analytics_events
+          WHERE event_name = 'trial_started'
+            AND user_id IS NOT NULL
+            AND event_ts >= DATE_SUB(NOW(), INTERVAL 60 DAY)
+          GROUP BY user_id
+        ) t
+        INNER JOIN users u
+          ON u.id = t.user_id
+          AND u.blocked = 0
+        LEFT JOIN orders o
+          ON o.user_id = t.user_id
+          AND o.status = 1
+          AND o.is_plan = 1
+          AND (o.is_canceled IS NULL OR o.is_canceled = 0)
+          AND o.date_order > t.trial_started_at
+        LEFT JOIN descargas_user du
+          ON du.user_id = t.user_id
+          AND du.date_end > NOW()
+        LEFT JOIN automation_action_logs aal
+          ON aal.user_id = t.user_id
+          AND aal.action_key = 'trial_expiring'
+          AND aal.stage = 24
+        WHERE t.trial_started_at >= ${startMin}
+          AND t.trial_started_at < ${startMax}
+          AND o.id IS NULL
+          AND du.id IS NULL
+          AND aal.id IS NULL
+        ORDER BY t.trial_started_at DESC
+        LIMIT ${limit}
+      `);
+
+      for (const row of rows) {
+        const userId = Number(row.userId);
+        if (!userId) continue;
+
+        const { created } = await createActionLog({
+          prisma,
+          userId,
+          actionKey: 'trial_expiring',
+          stage: 24,
+          channel: 'system',
+          metadata: { trialStartedAt: row.trialStartedAt.toISOString(), trialDays },
+        });
+        if (!created) continue;
+
+        const user = await prisma.users.findFirst({ where: { id: userId } });
+        if (user) {
+          safeAddManyChatTag(user, 'AUTOMATION_TRIAL_EXPIRING_24H').catch(() => {});
+        }
+
+        const templateId = parseNumber(process.env.AUTOMATION_EMAIL_TRIAL_EXPIRING_24H_TEMPLATE_ID, 0);
+        const emailOptIn = Boolean(row.emailMarketingOptIn);
+        if (templateId > 0 && emailOptIn && canSendEmail()) {
+          const url = appendQueryParams(`${resolveClientUrl()}/planes`, {
+            utm_source: 'email',
+            utm_medium: 'automation',
+            utm_campaign: 'trial_expiring_24h',
+            utm_content: 'cta',
+          });
+          const unsubscribeUrl = buildMarketingUnsubscribeUrl(userId) ?? undefined;
+          const tpl = emailTemplates.automationTrialExpiring24h({
+            name: row.username,
+            url,
+            unsubscribeUrl,
+          });
+          await safeSendAutomationEmail({
+            toEmail: row.email,
+            toName: row.username,
+            subject: tpl.subject,
+            html: tpl.html,
+            text: tpl.text,
+          });
+          noteEmailSent();
+        }
+
+        bump('trial_expiring_24h');
       }
     }
 
@@ -441,6 +880,32 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
               ? 'AUTOMATION_ACTIVE_NO_DOWNLOAD_14D'
               : 'AUTOMATION_ACTIVE_NO_DOWNLOAD_21D';
         safeAddManyChatTag(user, tag).catch(() => {});
+
+        const templateId = parseNumber(process.env.AUTOMATION_EMAIL_ACTIVE_NO_DOWNLOAD_TEMPLATE_ID, 0);
+        if (templateId > 0 && user.email_marketing_opt_in && canSendEmail()) {
+          const url = appendQueryParams(`${resolveClientUrl()}/`, {
+            utm_source: 'email',
+            utm_medium: 'automation',
+            utm_campaign: `active_no_download_${days}d`,
+            utm_content: 'cta',
+          });
+          const unsubscribeUrl = buildMarketingUnsubscribeUrl(user.id) ?? undefined;
+          const tpl = emailTemplates.automationActiveNoDownload({
+            name: user.username,
+            url,
+            days,
+            unsubscribeUrl,
+          });
+          await safeSendAutomationEmail({
+            toEmail: user.email,
+            toName: user.username,
+            subject: tpl.subject,
+            html: tpl.html,
+            text: tpl.text,
+          });
+          noteEmailSent();
+        }
+
         bump(`active_no_download_${days}d`);
       }
     }
@@ -520,8 +985,13 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
         safeAddManyChatTag(user, 'AUTOMATION_PLANS_OFFER_10').catch(() => {});
 
         const offerEmailTemplateId = parseNumber(process.env.AUTOMATION_EMAIL_PLANS_OFFER_TEMPLATE_ID, 0);
-        if (offerEmailTemplateId > 0 && user.email_marketing_opt_in && offer.couponCode) {
-          const url = `${resolveClientUrl()}/planes`;
+        if (offerEmailTemplateId > 0 && user.email_marketing_opt_in && offer.couponCode && canSendEmail()) {
+          const url = appendQueryParams(`${resolveClientUrl()}/planes`, {
+            utm_source: 'email',
+            utm_medium: 'automation',
+            utm_campaign: `plans_offer_${offer.percentOff}`,
+            utm_content: 'cta',
+          });
           const unsubscribeUrl = buildMarketingUnsubscribeUrl(user.id) ?? undefined;
           const expiresAtText = `${expiresAt.toISOString().replace('T', ' ').slice(0, 16)} UTC`;
           const tpl = emailTemplates.automationPlansOffer({
@@ -539,6 +1009,7 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
             html: tpl.html,
             text: tpl.text,
           });
+          noteEmailSent();
         }
 
         // Optional WhatsApp: send a link to plans (login required).
@@ -621,8 +1092,13 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
         safeAddManyChatTag(user, 'AUTOMATION_PLANS_OFFER_30').catch(() => {});
 
         const offerEmailTemplateId = parseNumber(process.env.AUTOMATION_EMAIL_PLANS_OFFER_TEMPLATE_ID, 0);
-        if (offerEmailTemplateId > 0 && user.email_marketing_opt_in && offer.couponCode) {
-          const url = `${resolveClientUrl()}/planes`;
+        if (offerEmailTemplateId > 0 && user.email_marketing_opt_in && offer.couponCode && canSendEmail()) {
+          const url = appendQueryParams(`${resolveClientUrl()}/planes`, {
+            utm_source: 'email',
+            utm_medium: 'automation',
+            utm_campaign: `plans_offer_${offer.percentOff}`,
+            utm_content: 'cta',
+          });
           const unsubscribeUrl = buildMarketingUnsubscribeUrl(user.id) ?? undefined;
           const expiresAtText = `${expiresAt.toISOString().replace('T', ' ').slice(0, 16)} UTC`;
           const tpl = emailTemplates.automationPlansOffer({
@@ -640,6 +1116,7 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
             html: tpl.html,
             text: tpl.text,
           });
+          noteEmailSent();
         }
 
         bump('plans_offer_30');
@@ -719,8 +1196,13 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
         safeAddManyChatTag(user, 'AUTOMATION_PLANS_OFFER_50').catch(() => {});
 
         const offerEmailTemplateId = parseNumber(process.env.AUTOMATION_EMAIL_PLANS_OFFER_TEMPLATE_ID, 0);
-        if (offerEmailTemplateId > 0 && user.email_marketing_opt_in && offer.couponCode) {
-          const url = `${resolveClientUrl()}/planes`;
+        if (offerEmailTemplateId > 0 && user.email_marketing_opt_in && offer.couponCode && canSendEmail()) {
+          const url = appendQueryParams(`${resolveClientUrl()}/planes`, {
+            utm_source: 'email',
+            utm_medium: 'automation',
+            utm_campaign: `plans_offer_${offer.percentOff}`,
+            utm_content: 'cta',
+          });
           const unsubscribeUrl = buildMarketingUnsubscribeUrl(user.id) ?? undefined;
           const expiresAtText = `${expiresAt.toISOString().replace('T', ' ').slice(0, 16)} UTC`;
           const tpl = emailTemplates.automationPlansOffer({
@@ -738,6 +1220,7 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
             html: tpl.html,
             text: tpl.text,
           });
+          noteEmailSent();
         }
 
         bump('plans_offer_50');

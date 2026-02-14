@@ -26,6 +26,11 @@ Todos los emails salen del **backend** y se envían con **Amazon SES** (AWS SDK)
 | 8 | **Automatización: registrado sin compra (7d)** | Cuando el usuario se registró hace 7 días y no compró (automation runner) | `automationRegisteredNoPurchase7d` | `email` del usuario | `NAME`, `URL` |
 | 9 | **Alertas internas de analytics** | Script/cron que envía alertas cuando hay métricas fuera de umbral | `analyticsAlerts` | Lista `ANALYTICS_ALERTS_EMAIL_TO` | `days`, `count`, `detailsText`, `generatedAt` |
 | 10 | **Automatización: oferta (cupón) tras ver planes** | Si el usuario ve `/planes` y no inicia checkout en 12h. Escala a 30% tras 2 días y 50% tras 15 días (si sigue sin comprar) | `automationPlansOffer` | `email` del usuario | `NAME`, `URL`, `couponCode`, `percentOff`, `expiresAt` |
+| 11 | **Automatización: verificar WhatsApp (24h)** | Si el usuario se registró hace 24h+ y no verificó WhatsApp (requerido para descargar) | `automationVerifyWhatsApp24h` | `email` del usuario | `NAME`, `URL` |
+| 12 | **Automatización: checkout sin compra (1h)** | Si el usuario inicia checkout y no compra en 1 hora | `automationCheckoutAbandoned` | `email` del usuario | `NAME`, `URL` (y opcional `planName/price/currency`) |
+| 13 | **Automatización: checkout sin compra (24h)** | Si el usuario inicia checkout y no compra en 24 horas | `automationCheckoutAbandoned` | `email` del usuario | `NAME`, `URL` (y opcional `planName/price/currency`) |
+| 14 | **Automatización: prueba expira (24h)** | Si el usuario inició prueba y está a ~24h de expirar sin comprar | `automationTrialExpiring24h` | `email` del usuario | `NAME`, `URL` |
+| 15 | **Automatización: activo sin descargas (7/14/21d)** | Si el usuario tiene plan activo pero no descarga en 7/14/21 días | `automationActiveNoDownload` | `email` del usuario | `NAME`, `URL`, `days` |
 
 Fuera de esto, no hay más puntos en el repo que envíen emails. Cualquier otro email que quieras (por ejemplo recordatorios, facturas, etc.) habría que añadirlo y definir el HTML/subject en `backend/src/email/templates.ts`.
 
@@ -96,6 +101,10 @@ Fuera de esto, no hay más puntos en el repo que envíen emails. Cualquier otro 
 | `automationPaidNoDownload24h` | Automatización: plan pagado sin descargas (24h) | `NAME`, `URL` |
 | `automationRegisteredNoPurchase7d` | Automatización: registrado sin compra (7d) | `NAME`, `URL` |
 | `automationPlansOffer` | Automatización: oferta (cupón) tras ver planes sin checkout | `NAME`, `URL`, `couponCode`, `percentOff`, `expiresAt` |
+| `automationVerifyWhatsApp24h` | Automatización: verificar WhatsApp (24h) | `NAME`, `URL` |
+| `automationCheckoutAbandoned` | Automatización: checkout sin compra | `NAME`, `URL` (y opcional `planName/price/currency`) |
+| `automationTrialExpiring24h` | Automatización: prueba expira (24h) | `NAME`, `URL` |
+| `automationActiveNoDownload` | Automatización: activo sin descargas (7/14/21d) | `NAME`, `URL`, `days` |
 | `analyticsAlerts` | Alertas internas de analytics (script/cron) | `days`, `count`, `detailsText`, `generatedAt` |
 
 Los textos/diseño se editan en el repo (templates en `backend/src/email/templates.ts`).
@@ -106,6 +115,7 @@ Los textos/diseño se editan en el repo (templates en `backend/src/email/templat
 
 - **Recuperar contraseña:** Además del email, se envía el mismo enlace por **WhatsApp** (Twilio) si el usuario tiene teléfono en BD.
 - **Automations (emails):** Se envían desde `backend/src/automation/runner.ts` y están detrás de flags tipo `AUTOMATION_EMAIL_*_TEMPLATE_ID` (por compatibilidad histórica). Si el valor es `> 0`, se envía el email.
+- **Límite por corrida:** `AUTOMATION_EMAIL_MAX_PER_RUN` limita cuántos emails manda el runner en una sola corrida (protege entregabilidad).
 - **Oferta por email (cupón):** Flag: `AUTOMATION_EMAIL_PLANS_OFFER_TEMPLATE_ID` (si `> 0`, se envía).
 - **Consent / desuscripción (promos):** Los emails incluyen enlace para **cancelar promociones**. Esto desactiva `email_marketing_opt_in` para el usuario (no afecta emails transaccionales como pagos o reset password). Endpoint: `/api/comms/unsubscribe` (firma HMAC con `EMAIL_PREFERENCES_SECRET`). Las automatizaciones por email respetan `email_marketing_opt_in`.
 - **Alertas de analytics:** Se envían desde `backend/scripts/analyticsAlerts.ts` (ejecutar con `npm run analytics:alerts` en el workspace `backend`). Requiere `ANALYTICS_ALERTS_EMAIL_TO`.
