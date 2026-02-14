@@ -1,7 +1,9 @@
-import { Api } from './brevo';
+export {
+  isEmailConfigured,
+  sendEmail,
+  sendWelcomeEmail,
+  sendPasswordResetEmail,
+  sendPlanActivatedEmail,
+} from './mailer';
 
-export const brevo = new Api({
-  baseApiParams: {
-    headers: { 'api-key': process.env.BREVO_API_KEY as string },
-  },
-});
+export { isSesConfigured, sendSesEmail } from './ses';

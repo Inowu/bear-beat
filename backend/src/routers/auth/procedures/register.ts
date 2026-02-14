@@ -10,7 +10,7 @@ import stripe, { isStripeConfigured } from '../../../stripe';
 import { conektaCustomers } from '../../../conekta';
 import { stripNonAlphabetic } from './utils/formatUsername';
 import { log } from '../../../server';
-import { brevo } from '../../../email';
+import { isEmailConfigured, sendWelcomeEmail } from '../../../email';
 import { manyChat } from '../../../many-chat';
 import { claimManyChatHandoffToken } from '../../../many-chat/handoff';
 import { facebook } from '../../../facebook';
@@ -314,23 +314,19 @@ export const register = publicProcedure
         });
       }
 
-      const hasBrevoKey = Boolean(process.env.BREVO_API_KEY?.trim());
-      if (!isTestEnv && hasBrevoKey) {
+      if (!isTestEnv && isEmailConfigured()) {
         try {
           log.info('[REGISTER] Sending email to user');
-          await brevo.smtp.sendTransacEmail({
-            templateId: 3,
-            to: [{ email: newUser.email, name: newUser.username }],
-            params: {
-              NAME: newUser.username,
-              EMAIL: newUser.email,
-            },
+          await sendWelcomeEmail({
+            toEmail: newUser.email,
+            toName: newUser.username,
+            toAccountEmail: newUser.email,
           });
         } catch (e: any) {
           log.error(`[REGISTER] Error while sending email ${e.message}`);
         }
       } else {
-        log.debug('[REGISTER] Brevo not configured; skipping welcome email', {
+        log.debug('[REGISTER] Email not configured; skipping welcome email', {
           userId: newUser.id,
         });
       }

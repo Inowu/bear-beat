@@ -3,10 +3,10 @@ import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { publicProcedure } from '../../../procedures/public.procedure';
 import { log } from '../../../server';
-import { brevo } from '../../../email';
 import { addHours } from 'date-fns';
 import { twilio } from '../../../twilio';
 import { verifyTurnstileToken } from '../../../utils/turnstile';
+import { isEmailConfigured, sendPasswordResetEmail } from '../../../email';
 
 export const forgotPassword = publicProcedure
   .input(
@@ -19,8 +19,6 @@ export const forgotPassword = publicProcedure
   )
   .mutation(async ({ input: { email, turnstileToken }, ctx: { prisma, req } }) => {
     await verifyTurnstileToken({ token: turnstileToken, remoteIp: req.ip });
-
-    const hasBrevoKey = Boolean(process.env.BREVO_API_KEY?.trim());
 
     const user = await prisma.users.findFirst({
       where: {
@@ -55,23 +53,16 @@ export const forgotPassword = publicProcedure
 
     const link = `${process.env.CLIENT_URL}/auth/reset-password?token=${token}&userId=${user.id}`;
 
-    if (hasBrevoKey) {
-      try {
-        await brevo.smtp.sendTransacEmail({
-          templateId: 1,
-          to: [{ email: user.email, name: user.username }],
-          params: {
-            NAME: user.username,
-            EMAIL: user.email,
-            LINK: link,
-          },
-        });
-      } catch (e) {
-        // Don't reveal delivery errors to the user; frontend already shows neutral copy.
-        log.error('[FORGOT_PASSWORD] Brevo send failed', e);
-      }
+    if (isEmailConfigured()) {
+      // Best-effort: never break the flow on delivery errors.
+      await sendPasswordResetEmail({
+        toEmail: user.email,
+        toName: user.username,
+        toAccountEmail: user.email,
+        link,
+      });
     } else {
-      log.warn('[FORGOT_PASSWORD] Brevo not configured; skipping email send');
+      log.warn('[FORGOT_PASSWORD] Email not configured; skipping email send');
     }
 
     // Optional WhatsApp: best-effort (do not break the flow).

@@ -191,4 +191,18 @@
     height: auto;
     display: block;
   }
+
+  .oxxo-modal__voucher-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--app-accent) 35%, transparent);
+    background: var(--theme-accent-soft-bg);
+    color: var(--app-text-heading);
+    font-weight: 800;
+    text-decoration: none;
+  }
 }

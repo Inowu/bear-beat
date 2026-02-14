@@ -428,6 +428,28 @@
     z-index: 1;
   }
 
+  .auth-split-logo {
+    width: auto;
+    height: 38px;
+    max-width: 180px;
+    object-fit: contain;
+  }
+
+  .auth-split-kicker {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    border: 1px solid rgba(8, 225, 247, 0.3);
+    background: rgba(8, 225, 247, 0.1);
+    color: rgba(242, 244, 245, 0.92);
+    font-size: 0.9rem;
+    font-weight: 850;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
   .auth-split-title {
     font-size: clamp(2rem, 1.55rem + 0.65vw, 2.45rem);
     font-weight: 800;
@@ -534,6 +556,15 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+  }
+
+  .auth-split-form-sub {
+    margin: -2px 0 10px;
+    text-align: center;
+    color: color-mix(in srgb, var(--auth-login-subtitle) 92%, transparent);
+    font-size: clamp(14px, 0.2vw + 13px, 15px);
+    font-weight: 650;
+    line-height: 1.4;
   }
 
   @include respond-from(md) {

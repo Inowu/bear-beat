@@ -13,6 +13,7 @@ import brandLockupCyan from "../../../assets/brand/bearbeat-lockup-cyan.png";
 import { trackManyChatConversion, MC_EVENTS } from "../../../utils/manychatPixel";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../../utils/growthMetrics";
 import { toErrorMessage } from "../../../utils/errorMessage";
+import { clearAuthReturnUrl, readAuthReturnUrl } from "../../../utils/authReturnUrl";
 import "./LoginForm.scss";
 
 function inferErrorCode(message: string): string {
@@ -33,7 +34,9 @@ function LoginForm() {
   const { handleLogin } = useUserContext();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as { from?: string } | null)?.from ?? "/";
+  const fromCandidate =
+    (location.state as { from?: string } | null)?.from ?? readAuthReturnUrl() ?? "/";
+  const from = typeof fromCandidate === "string" && fromCandidate.startsWith("/") ? fromCandidate : "/";
   const validationSchema = Yup.object().shape({
     username: Yup.string()
       .required("El correo es requerido")
@@ -65,6 +68,7 @@ function LoginForm() {
           trackGrowthMetric(GROWTH_METRICS.LOGIN_SUCCESS, { from });
           trackGrowthMetric(GROWTH_METRICS.AUTH_SUCCESS, { flow: "login", from });
           handleLogin(login.token, login.refreshToken);
+          clearAuthReturnUrl();
           navigate(from, { replace: true });
         }
 

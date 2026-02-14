@@ -137,6 +137,13 @@ function Checkout() {
   const hasPaypalPlan = Boolean(paypalPlan?.paypal_plan_id || paypalPlan?.paypal_plan_id_test);
 
   useEffect(() => {
+    // Evitar doble membresía: si ya tiene un plan activo, empujar a recarga de GB extra en /micuenta.
+    if (currentUser?.hasActiveSubscription) {
+      navigate("/micuenta", { replace: true });
+    }
+  }, [currentUser?.hasActiveSubscription, navigate]);
+
+  useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
@@ -537,11 +544,8 @@ function Checkout() {
     }
 
     try {
-      const fingerprint = await getConektaFingerprint();
-      const response = await trpc.subscriptions.subscribeWithCashConekta.mutate({
+      const response = await trpc.subscriptions.subscribeWithOxxoStripe.mutate({
         planId: plan.id,
-        paymentMethod: "cash",
-        fingerprint,
       });
       checkoutHandedOffRef.current = true;
       setOxxoData(response as IOxxoData);

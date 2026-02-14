@@ -11,7 +11,7 @@ import stripeInstance from '../../../stripe';
 import { prisma } from '../../../db';
 import { PaymentService } from '../../subscriptions/services/types';
 import { OrderStatus } from '../../subscriptions/interfaces/order-status.interface';
-import { brevo } from '../../../email';
+import { sendPlanActivatedEmail } from '../../../email';
 import { manyChat } from '../../../many-chat';
 import { TRPCError } from '@trpc/server';
 import { checkIfUserIsFromUH, checkIfUserIsSubscriber, SubscriptionCheckResult } from '../../migration/checkUHSubscriber';
@@ -186,16 +186,13 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
           // Email + ManyChat: only on first paid activation / trial conversion (avoid spamming on renewals).
           if (isInitialPaidActivation || isTrialConversion) {
             try {
-              await brevo.smtp.sendTransacEmail({
-                templateId: 2,
-                to: [{ email: user.email, name: user.username }],
-                params: {
-                  NAME: user.username,
-                  plan_name: plan.name,
-                  price: plan.price,
-                  currency: plan.moneda.toUpperCase(),
-                  ORDER: subscription.metadata.orderId,
-                },
+              await sendPlanActivatedEmail({
+                toEmail: user.email,
+                toName: user.username,
+                planName: plan.name,
+                price: plan.price,
+                currency: plan.moneda.toUpperCase(),
+                orderId: subscription.metadata.orderId,
               });
             } catch (e) {
               log.error(`[STRIPE] Error while sending email ${e}`);

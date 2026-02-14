@@ -15,12 +15,14 @@ import { trackLead } from "../../../utils/facebookPixel";
 import { trackManyChatConversion, MC_EVENTS } from "../../../utils/manychatPixel";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../../utils/growthMetrics";
 import { generateEventId } from "../../../utils/marketingIds";
+import { clearAuthReturnUrl, readAuthReturnUrl } from "../../../utils/authReturnUrl";
 import {
   shouldBypassTurnstile,
   TURNSTILE_BYPASS_TOKEN,
 } from "../../../utils/turnstile";
 import { toErrorMessage } from "../../../utils/errorMessage";
 import type { IPlans } from "../../../interfaces/Plans";
+import { formatInt } from "../../../utils/format";
 import brandLockupBlack from "../../../assets/brand/bearbeat-lockup-black.png";
 import brandLockupCyan from "../../../assets/brand/bearbeat-lockup-cyan.png";
 
@@ -56,11 +58,15 @@ function SignUpForm() {
   const location = useLocation();
   const { theme } = useTheme();
   const brandLockup = theme === "light" ? brandLockupBlack : brandLockupCyan;
+  const brandLockupOnDark = brandLockupCyan;
   // Default conversion path after signup is /planes (unless the user came from a protected route / checkout).
-  const from = (location.state as { from?: string } | null)?.from ?? "/planes";
+  const fromCandidate =
+    (location.state as { from?: string } | null)?.from ?? readAuthReturnUrl() ?? "/planes";
+  const from =
+    typeof fromCandidate === "string" && fromCandidate.startsWith("/") ? fromCandidate : "/planes";
+  const isCheckoutIntent = from.startsWith("/comprar") || from.startsWith("/checkout");
   const checkoutPlanId = useMemo(() => {
     if (typeof window === "undefined") return null;
-    const isCheckoutIntent = from.startsWith("/comprar") || from.startsWith("/checkout");
     if (!isCheckoutIntent) return null;
     try {
       const url = new URL(from, window.location.origin);
@@ -250,6 +256,7 @@ function SignUpForm() {
 
         trackGrowthMetric(GROWTH_METRICS.AUTH_SUCCESS, { flow: "signup", from });
         handleLogin(register.token, register.refreshToken);
+        clearAuthReturnUrl();
         navigate(from, { replace: true });
       } catch (error: any) {
         const errorMessage = toErrorMessage(error);
@@ -472,239 +479,294 @@ function SignUpForm() {
   const describedByPassword = passwordErrorId;
   const describedByPasswordConfirmation = passwordConfirmationErrorId;
   const submitLabel = useMemo(() => {
-    const isCheckoutIntent = from.startsWith("/comprar") || from.startsWith("/checkout");
-    if (isCheckoutIntent) return "Crear cuenta y activar";
+    if (isCheckoutIntent) return "Crear cuenta y continuar al pago";
     const hasTrial =
       Boolean(trialConfig?.enabled) &&
       trialConfig?.eligible !== false &&
       Number.isFinite(trialConfig?.days) &&
       (trialConfig?.days ?? 0) > 0;
     return hasTrial ? "Crear cuenta y empezar prueba" : "Crear cuenta y activar";
-  }, [from, trialConfig?.days, trialConfig?.eligible, trialConfig?.enabled]);
+  }, [isCheckoutIntent, trialConfig?.days, trialConfig?.eligible, trialConfig?.enabled]);
+
+  const checkoutPlanQuotaGb = useMemo(() => {
+    const quota = Number((checkoutPlan as any)?.gigas ?? 0);
+    return Number.isFinite(quota) && quota > 0 ? quota : null;
+  }, [checkoutPlan]);
+
+  const checkoutLeftBullets = useMemo(() => {
+    const items: string[] = [];
+    if (checkoutPlanQuotaGb) items.push(`${formatInt(checkoutPlanQuotaGb)} GB de descargas al mes`);
+    items.push("Acceso inmediato al catálogo para cabina");
+    items.push("Renovación automática. Cancela cuando quieras.");
+    const hasTrial =
+      Boolean(trialConfig?.enabled) &&
+      trialConfig?.eligible !== false &&
+      Number.isFinite(trialConfig?.days) &&
+      (trialConfig?.days ?? 0) > 0 &&
+      Number.isFinite(trialConfig?.gb) &&
+      (trialConfig?.gb ?? 0) > 0;
+    if (hasTrial) items.unshift(`Prueba de ${trialConfig!.days} días (${formatInt(trialConfig!.gb)} GB)`);
+    return items;
+  }, [checkoutPlanQuotaGb, trialConfig?.days, trialConfig?.eligible, trialConfig?.enabled, trialConfig?.gb]);
+
+  const FormContent = (
+    <form
+      className="sign-up-form auth-form auth-login-form auth-signup-form"
+      autoComplete="on"
+      onSubmit={(e) => {
+        e.preventDefault();
+        formik.handleSubmit(e);
+      }}
+    >
+      <div className={`c-row ${showEmailError ? "is-invalid" : ""}`}>
+        <label htmlFor="email" className="auth-field-label">
+          Correo electrónico
+        </label>
+        <div className="auth-login-input-wrap">
+          <Mail className="auth-login-input-icon" aria-hidden />
+          <input
+            placeholder="correo@ejemplo.com"
+            id="email"
+            name="email"
+            autoComplete="email"
+            value={formik.values.email}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            type="email"
+            inputMode="email"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            className="auth-login-input auth-login-input-with-icon"
+            aria-invalid={showEmailError}
+            aria-describedby={emailErrorId}
+          />
+        </div>
+        <FieldError id={emailErrorId} show={showEmailError} message={formik.errors.email} />
+      </div>
+      <div className={`c-row ${showPasswordError ? "is-invalid" : ""}`}>
+        <label htmlFor="password" className="auth-field-label">
+          Contraseña
+        </label>
+        <div className="auth-login-input-wrap">
+          <Lock className="auth-login-input-icon" aria-hidden />
+          <PasswordInput
+            placeholder="Mínimo 6 caracteres"
+            id="password"
+            name="password"
+            autoComplete="new-password"
+            value={formik.values.password}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            aria-invalid={showPasswordError}
+            aria-describedby={describedByPassword}
+            inputClassName="auth-login-input auth-login-input-with-icon"
+            wrapperClassName="auth-login-password-wrap"
+          />
+        </div>
+        <FieldError id={passwordErrorId} show={showPasswordError} message={formik.errors.password} />
+      </div>
+      <div className={`c-row ${showPasswordConfirmationError ? "is-invalid" : ""}`}>
+        <label htmlFor="passwordConfirmation" className="auth-field-label">
+          Repetir contraseña
+        </label>
+        <div className="auth-login-input-wrap">
+          <Lock className="auth-login-input-icon" aria-hidden />
+          <PasswordInput
+            placeholder="Repite tu contraseña"
+            id="passwordConfirmation"
+            name="passwordConfirmation"
+            autoComplete="new-password"
+            value={formik.values.passwordConfirmation}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            aria-invalid={showPasswordConfirmationError}
+            aria-describedby={describedByPasswordConfirmation}
+            inputClassName="auth-login-input auth-login-input-with-icon"
+            wrapperClassName="auth-login-password-wrap"
+          />
+        </div>
+        <FieldError
+          id={passwordConfirmationErrorId}
+          show={showPasswordConfirmationError}
+          message={formik.errors.passwordConfirmation}
+        />
+      </div>
+      <div className="auth-signup-optional-grid">
+        <div className={`c-row ${showUsernameError ? "is-invalid" : ""}`}>
+          <label htmlFor="username" className="auth-field-label">
+            Nombre (opcional)
+          </label>
+          <div className="auth-login-input-wrap">
+            <User className="auth-login-input-icon" aria-hidden />
+            <input
+              placeholder="DJ Kubo"
+              type="text"
+              id="username"
+              name="username"
+              autoComplete="name"
+              value={formik.values.username}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              className="auth-login-input auth-login-input-with-icon"
+              aria-invalid={showUsernameError}
+              aria-describedby={describedByUsername}
+            />
+          </div>
+          <FieldError id={usernameErrorId} show={showUsernameError} message={formik.errors.username} />
+        </div>
+        <div className={`c-row c-row--phone ${showPhoneError ? "is-invalid" : ""}`}>
+          <label htmlFor="phone" className="auth-field-label">
+            WhatsApp (opcional)
+          </label>
+          <div className="signup-phone-wrap">
+            <div className="signup-phone-flag-wrap">
+              <span className={`signup-phone-flag ${countryFlagClass}`} aria-hidden title={selectedCountry?.name} />
+              <select
+                className="signup-phone-select-overlay"
+                value={dialCode}
+                onChange={(e) => setDialCode(e.target.value)}
+                aria-label="País (solo bandera visible)"
+                title={selectedCountry?.name}
+              >
+                {allowedCountryOptions.map((c) => (
+                  <option key={c.code} value={c.dial_code.slice(1)}>
+                    {c.dial_code} {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <span className="signup-phone-icon-wrap">
+              <Phone className="signup-input-icon" aria-hidden />
+            </span>
+            <input
+              className="signup-phone-input"
+              placeholder="5512345678"
+              id="phone"
+              name="phone"
+              value={formik.values.phone}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              type="tel"
+              inputMode="numeric"
+              autoComplete="tel-national"
+              maxLength={15}
+              aria-invalid={showPhoneError}
+              aria-describedby={describedByPhone}
+            />
+          </div>
+          <FieldError id={phoneErrorId} show={showPhoneError} message={formik.errors.phone} />
+        </div>
+      </div>
+      <Turnstile
+        ref={turnstileRef}
+        invisible
+        onVerify={handleTurnstileSuccess}
+        onExpire={handleTurnstileExpire}
+        onError={handleTurnstileError}
+        resetSignal={turnstileReset}
+      />
+      {turnstileError && <div className="error-formik">{turnstileError}</div>}
+      <div className="auth-login-inline-error" role="alert" aria-live="polite">
+        {inlineError}
+      </div>
+      <button
+        type="submit"
+        className="signup-submit-btn"
+        data-testid="signup-submit"
+        disabled={loader}
+        aria-busy={loader || undefined}
+      >
+        <span className="signup-submit-content">
+          {loader && <span className="signup-submit-spinner" aria-hidden />}
+          {loader ? "Creando..." : submitLabel}
+        </span>
+      </button>
+      <p className="auth-signup-legal">
+        Al crear tu cuenta aceptas{" "}
+        <Link to="/legal#terminos" className="auth-signup-legal-link">
+          Términos
+        </Link>{" "}
+        y{" "}
+        <Link to="/legal#privacidad" className="auth-signup-legal-link">
+          Privacidad
+        </Link>
+        .
+      </p>
+      <div className="c-row auth-login-register-wrap">
+        <span className="auth-login-register-copy">
+          ¿Ya tienes cuenta?{" "}
+          <Link to="/auth" state={{ from }} className="auth-login-register">
+            Inicia sesión
+          </Link>
+        </span>
+      </div>
+    </form>
+  );
 
   return (
     <>
-      <div className="auth-login-atmosphere">
-        <div className="auth-login-card auth-login-card--signup">
-          <img src={brandLockup} alt="Bear Beat" className="auth-login-logo" />
-          {(checkoutPlanLoading || checkoutPlan) && (
-            <div className="auth-checkout-summary" role="note" aria-label="Plan seleccionado">
-              <span className="auth-checkout-summary__label">Plan seleccionado</span>
-              <div className="auth-checkout-summary__row">
-                <strong className="auth-checkout-summary__name">
-                  {checkoutPlan?.name ?? "Cargando…"}
-                </strong>
-                {checkoutPlanPriceLabel && (
-                  <span className="auth-checkout-summary__price">
-                    {checkoutPlanPriceLabel}
-                    <span className="auth-checkout-summary__price-suffix">/mes</span>
-                  </span>
-                )}
-              </div>
-              <p className="auth-checkout-summary__hint">
-                Crea tu cuenta para continuar con el pago seguro.
-              </p>
-            </div>
-          )}
-          <h1 className="auth-login-title">Crea tu cuenta</h1>
-          <p className="auth-login-sub auth-login-sub--signup">
-            Activa tu cuenta en minutos y empieza a descargar.
-          </p>
+      {isCheckoutIntent ? (
+        <div className="auth-split" aria-label="Registro para continuar al pago">
+          <section className="auth-split-panel auth-split-left" aria-label="Resumen">
+            <div className="auth-split-left-bg" aria-hidden />
+            <img src={brandLockupOnDark} alt="Bear Beat" className="auth-split-logo" />
+            <div className="auth-split-kicker">Paso 1 de 2</div>
+            <h1 className="auth-split-title">Crea tu cuenta y continúa al pago seguro</h1>
 
-          <form
-            className="sign-up-form auth-form auth-login-form auth-signup-form"
-            autoComplete="on"
-            onSubmit={(e) => {
-              e.preventDefault();
-              formik.handleSubmit(e);
-            }}
-          >
-            <div className={`c-row ${showEmailError ? "is-invalid" : ""}`}>
-              <label htmlFor="email" className="auth-field-label">
-                Correo electrónico
-              </label>
-              <div className="auth-login-input-wrap">
-                <Mail className="auth-login-input-icon" aria-hidden />
-                <input
-                  placeholder="correo@ejemplo.com"
-                  id="email"
-                  name="email"
-                  autoComplete="email"
-                  value={formik.values.email}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  type="email"
-                  inputMode="email"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  className="auth-login-input auth-login-input-with-icon"
-                  aria-invalid={showEmailError}
-                  aria-describedby={emailErrorId}
-                />
-              </div>
-              <FieldError id={emailErrorId} show={showEmailError} message={formik.errors.email} />
-            </div>
-            <div className={`c-row ${showPasswordError ? "is-invalid" : ""}`}>
-              <label htmlFor="password" className="auth-field-label">
-                Contraseña
-              </label>
-              <div className="auth-login-input-wrap">
-                <Lock className="auth-login-input-icon" aria-hidden />
-                <PasswordInput
-                  placeholder="Mínimo 6 caracteres"
-                  id="password"
-                  name="password"
-                  autoComplete="new-password"
-                  value={formik.values.password}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  aria-invalid={showPasswordError}
-                  aria-describedby={describedByPassword}
-                  inputClassName="auth-login-input auth-login-input-with-icon"
-                  wrapperClassName="auth-login-password-wrap"
-                />
-              </div>
-              <FieldError id={passwordErrorId} show={showPasswordError} message={formik.errors.password} />
-            </div>
-            <div className={`c-row ${showPasswordConfirmationError ? "is-invalid" : ""}`}>
-              <label htmlFor="passwordConfirmation" className="auth-field-label">
-                Repetir contraseña
-              </label>
-              <div className="auth-login-input-wrap">
-                <Lock className="auth-login-input-icon" aria-hidden />
-                <PasswordInput
-                  placeholder="Repite tu contraseña"
-                  id="passwordConfirmation"
-                  name="passwordConfirmation"
-                  autoComplete="new-password"
-                  value={formik.values.passwordConfirmation}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  aria-invalid={showPasswordConfirmationError}
-                  aria-describedby={describedByPasswordConfirmation}
-                  inputClassName="auth-login-input auth-login-input-with-icon"
-                  wrapperClassName="auth-login-password-wrap"
-                />
-              </div>
-              <FieldError
-                id={passwordConfirmationErrorId}
-                show={showPasswordConfirmationError}
-                message={formik.errors.passwordConfirmation}
-              />
-            </div>
-            <div className="auth-signup-optional-grid">
-              <div className={`c-row ${showUsernameError ? "is-invalid" : ""}`}>
-                <label htmlFor="username" className="auth-field-label">
-                  Nombre (opcional)
-                </label>
-                <div className="auth-login-input-wrap">
-                  <User className="auth-login-input-icon" aria-hidden />
-                  <input
-                    placeholder="DJ Kubo"
-                    type="text"
-                    id="username"
-                    name="username"
-                    autoComplete="name"
-                    value={formik.values.username}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    className="auth-login-input auth-login-input-with-icon"
-                    aria-invalid={showUsernameError}
-                    aria-describedby={describedByUsername}
-                  />
+            {checkoutPlanId !== null && (
+              <div className="auth-checkout-summary auth-checkout-summary--split" role="note" aria-label="Plan seleccionado">
+                <span className="auth-checkout-summary__label">Plan seleccionado</span>
+                <div className="auth-checkout-summary__row">
+                  <strong className="auth-checkout-summary__name">
+                    {checkoutPlan?.name ?? (checkoutPlanLoading ? "Cargando…" : "Plan seleccionado")}
+                  </strong>
+                  {checkoutPlanPriceLabel && (
+                    <span className="auth-checkout-summary__price">
+                      {checkoutPlanPriceLabel}
+                      <span className="auth-checkout-summary__price-suffix">/mes</span>
+                    </span>
+                  )}
                 </div>
-                <FieldError id={usernameErrorId} show={showUsernameError} message={formik.errors.username} />
+                <p className="auth-checkout-summary__hint">
+                  El pago se realiza en el siguiente paso, dentro del checkout seguro.
+                </p>
               </div>
-              <div className={`c-row c-row--phone ${showPhoneError ? "is-invalid" : ""}`}>
-                <label htmlFor="phone" className="auth-field-label">
-                  WhatsApp (opcional)
-                </label>
-                <div className="signup-phone-wrap">
-                  <div className="signup-phone-flag-wrap">
-                    <span className={`signup-phone-flag ${countryFlagClass}`} aria-hidden title={selectedCountry?.name} />
-                    <select
-                      className="signup-phone-select-overlay"
-                      value={dialCode}
-                      onChange={(e) => setDialCode(e.target.value)}
-                      aria-label="País (solo bandera visible)"
-                      title={selectedCountry?.name}
-                    >
-                      {allowedCountryOptions.map((c) => (
-                        <option key={c.code} value={c.dial_code.slice(1)}>
-                          {c.dial_code} {c.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <span className="signup-phone-icon-wrap">
-                    <Phone className="signup-input-icon" aria-hidden />
-                  </span>
-                  <input
-                    className="signup-phone-input"
-                    placeholder="5512345678"
-                    id="phone"
-                    name="phone"
-                    value={formik.values.phone}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    type="tel"
-                    inputMode="numeric"
-                    autoComplete="tel-national"
-                    maxLength={15}
-                    aria-invalid={showPhoneError}
-                    aria-describedby={describedByPhone}
-                  />
-                </div>
-                <FieldError id={phoneErrorId} show={showPhoneError} message={formik.errors.phone} />
-              </div>
-            </div>
-            <Turnstile
-              ref={turnstileRef}
-              invisible
-              onVerify={handleTurnstileSuccess}
-              onExpire={handleTurnstileExpire}
-              onError={handleTurnstileError}
-              resetSignal={turnstileReset}
-            />
-            {turnstileError && <div className="error-formik">{turnstileError}</div>}
-            <div className="auth-login-inline-error" role="alert" aria-live="polite">
-              {inlineError}
-            </div>
-            <button
-              type="submit"
-              className="signup-submit-btn"
-              data-testid="signup-submit"
-              disabled={loader}
-              aria-busy={loader || undefined}
-            >
-              <span className="signup-submit-content">
-                {loader && <span className="signup-submit-spinner" aria-hidden />}
-                {loader ? "Creando..." : submitLabel}
-              </span>
-            </button>
-            <p className="auth-signup-legal">
-              Al crear tu cuenta aceptas{" "}
-              <Link to="/legal#terminos" className="auth-signup-legal-link">
-                Términos
-              </Link>{" "}
-              y{" "}
-              <Link to="/legal#privacidad" className="auth-signup-legal-link">
-                Privacidad
-              </Link>
-              .
+            )}
+
+            <ul className="auth-split-list" aria-label="Beneficios">
+              {checkoutLeftBullets.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+
+            <p className="auth-split-testimonial">
+              Tip: ¿Ya tienes cuenta? Inicia sesión y termina tu compra en menos de 1 minuto.
             </p>
-            <div className="c-row auth-login-register-wrap">
-              <span className="auth-login-register-copy">
-                ¿Ya tienes cuenta?{" "}
-                <Link to="/auth" state={{ from }} className="auth-login-register">
-                  Inicia sesión
-                </Link>
-              </span>
+          </section>
+
+          <section className="auth-split-panel auth-split-right" aria-label="Formulario">
+            <div className="auth-split-form">
+              <h2 className="auth-split-form-title">Crea tu cuenta</h2>
+              <p className="auth-split-form-sub">
+                Después te llevamos al checkout para elegir método de pago.
+              </p>
+              {FormContent}
             </div>
-          </form>
+          </section>
         </div>
-      </div>
+      ) : (
+        <div className="auth-login-atmosphere">
+          <div className="auth-login-card auth-login-card--signup">
+            <img src={brandLockup} alt="Bear Beat" className="auth-login-logo" />
+            <h1 className="auth-login-title">Crea tu cuenta</h1>
+            <p className="auth-login-sub auth-login-sub--signup">
+              Activa tu cuenta en minutos y empieza a descargar.
+            </p>
+            {FormContent}
+          </div>
+        </div>
+      )}
     </>
   );
 }

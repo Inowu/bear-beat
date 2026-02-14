@@ -71,6 +71,7 @@
     "typescript": "^5.1.6"
   },
   "dependencies": {
+    "@aws-sdk/client-sesv2": "^3.990.0",
     "@getbrevo/brevo": "^1.0.1",
     "@prisma/client": "^5.9.1",
     "@sentry/node": "^10.38.0",

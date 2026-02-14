@@ -29,7 +29,7 @@ export const hasActiveSubscription = async ({
     customerId?: never;
     prisma: PrismaClient;
     service: PaymentService.ADMIN;
-  }) => {
+}) => {
   const existingSubscription = await prisma.descargasUser.findFirst({
     where: {
       AND: [
@@ -41,37 +41,19 @@ export const hasActiveSubscription = async ({
         },
       ],
     },
+    select: { id: true, order_id: true, date_end: true },
   });
 
   if (existingSubscription) {
-    const orderId = existingSubscription.order_id;
-
-    if (!orderId) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'There is already an active subscription for this user',
-      });
-    } else {
-      const order = await prisma.orders.findFirst({
-        where: {
-          id: orderId,
-        },
-      });
-
-      if (!order) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'There is already an active subscription for this user',
-        });
-      } else {
-        if (!order.is_canceled) {
-          throw new TRPCError({
-            code: 'BAD_REQUEST',
-            message: 'There is already an active subscription for this user',
-          });
-        }
-      }
-    }
+    const endIso = existingSubscription.date_end instanceof Date
+      ? existingSubscription.date_end.toISOString().slice(0, 10)
+      : '';
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message: endIso
+        ? `Ya tienes una membresía activa hasta ${endIso}. Para evitar doble membresía no puedes comprar otro plan todavía. Si se te acabaron los GB, compra GB extra en Mi cuenta.`
+        : 'Ya tienes una membresía activa. Para evitar doble membresía no puedes comprar otro plan todavía. Si se te acabaron los GB, compra GB extra en Mi cuenta.',
+    });
   }
 
   switch (service) {

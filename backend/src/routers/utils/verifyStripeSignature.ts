@@ -28,3 +28,28 @@ export const verifyStripeSignature = (req: Request, secret: string) => {
     return false;
   }
 };
+
+export const verifyStripeSignatureAny = (
+  req: Request,
+  secrets: Array<string | undefined | null>,
+): boolean => {
+  const sig = req.headers['stripe-signature'];
+  if (!sig) return false;
+
+  let lastErr: unknown = null;
+  for (const candidate of secrets) {
+    const secret = typeof candidate === 'string' ? candidate.trim() : '';
+    if (!secret) continue;
+    try {
+      stripeInstance.webhooks.constructEvent(req.body as Buffer | string, sig, secret);
+      return true;
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+
+  if (lastErr) {
+    log.error(`[STRIPE_WH] Error verifying signature: ${lastErr}`);
+  }
+  return false;
+};

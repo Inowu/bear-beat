@@ -1,12 +1,16 @@
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
+import { isStripeOxxoConfigured } from '../../stripe/oxxo';
 
 export const getConektaAvailability = shieldedProcedure.query(async () => {
-  // Temporary hard-disable for cash/OXXO until provider flow is stabilized in production.
-  const cashEnabled = false;
-  // Temporary hard-disable for BBVA pay-by-bank until provider flow is stabilized in production.
-  const payByBankEnabled = false;
+  // Conekta cash + BBVA pay-by-bank are currently hard-disabled in backend procedures.
+  // Keep them hidden in the UI until those flows are re-enabled end-to-end.
+  const conektaCashEnabled = false;
+  const conektaPayByBankEnabled = false;
+
+  // Stripe OXXO (separate account): enabled when STRIPE_OXXO_KEY/STRIPE_OXXO_TEST_KEY are set.
+  const stripeOxxoEnabled = isStripeOxxoConfigured();
   return {
-    oxxoEnabled: cashEnabled,
-    payByBankEnabled: payByBankEnabled,
+    oxxoEnabled: conektaCashEnabled || stripeOxxoEnabled,
+    payByBankEnabled: conektaPayByBankEnabled,
   };
 });

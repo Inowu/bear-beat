@@ -22,28 +22,24 @@ export const quota = shieldedProcedure
   .query(async ({ ctx: { prisma, session } }) => {
     const user = session!.user!;
 
-    const ftpUserExtended = await prisma.ftpUser.findFirst({
-      where: {
-        AND: [
-          {
-            user_id: user.id,
+    const [ftpUserRegular, ftpUserExtended] = await Promise.all([
+      prisma.ftpUser.findFirst({
+        where: {
+          user_id: user.id,
+          NOT: {
+            userid: { endsWith: extendedAccountPostfix },
           },
-          {
-            userid: {
-              endsWith: extendedAccountPostfix,
-            },
-          },
-        ],
-      },
-    });
+        },
+      }),
+      prisma.ftpUser.findFirst({
+        where: {
+          user_id: user.id,
+          userid: { endsWith: extendedAccountPostfix },
+        },
+      }),
+    ]);
 
-    const ftpUser = await prisma.ftpUser.findFirst({
-      where: {
-        user_id: user.id,
-      },
-    });
-
-    if (!ftpUser) {
+    if (!ftpUserRegular && !ftpUserExtended) {
       return {
         regular: {
           used: BigInt(0),
@@ -56,75 +52,37 @@ export const quota = shieldedProcedure
       };
     }
 
-    const quotaLimit = await prisma.ftpQuotaLimits.findFirst({
-      where: {
-        name: ftpUser.userid,
-      },
-    });
+    const [quotaLimit, quotaUsed, quotaLimitExtended, quotaUsedExtended] =
+      await Promise.all([
+        ftpUserRegular
+          ? prisma.ftpQuotaLimits.findFirst({
+              where: { name: ftpUserRegular.userid },
+            })
+          : Promise.resolve(null),
+        ftpUserRegular
+          ? prisma.ftpquotatallies.findFirst({
+              where: { name: ftpUserRegular.userid },
+            })
+          : Promise.resolve(null),
+        ftpUserExtended
+          ? prisma.ftpQuotaLimits.findFirst({
+              where: { name: ftpUserExtended.userid },
+            })
+          : Promise.resolve(null),
+        ftpUserExtended
+          ? prisma.ftpquotatallies.findFirst({
+              where: { name: ftpUserExtended.userid },
+            })
+          : Promise.resolve(null),
+      ]);
 
-    const quotaUsed = await prisma.ftpquotatallies.findFirst({
-      where: {
-        name: ftpUser.userid,
-      },
-    });
+    const regularQuota = quotaLimit && quotaUsed
+      ? { used: quotaUsed.bytes_out_used, available: quotaLimit.bytes_out_avail }
+      : { used: BigInt(0), available: BigInt(0) };
 
-    if (!quotaLimit || !quotaUsed) {
-      return {
-        regular: {
-          used: BigInt(0),
-          available: BigInt(0),
-        },
-        extended: {
-          used: BigInt(0),
-          available: BigInt(0),
-        },
-      };
-    }
+    const extendedQuota = quotaLimitExtended && quotaUsedExtended
+      ? { used: quotaUsedExtended.bytes_out_used, available: quotaLimitExtended.bytes_out_avail }
+      : { used: BigInt(0), available: BigInt(0) };
 
-    const regularQuota = {
-      used: quotaUsed.bytes_out_used,
-      available: quotaLimit.bytes_out_avail,
-    };
-
-    if (!ftpUserExtended) {
-      return {
-        regular: regularQuota,
-        extended: {
-          used: BigInt(0),
-          available: BigInt(0),
-        },
-      };
-    }
-
-    const quotaLimitExtended = await prisma.ftpQuotaLimits.findFirst({
-      where: {
-        name: ftpUserExtended.userid,
-      },
-    });
-
-    const quotaUsedExtended = await prisma.ftpquotatallies.findFirst({
-      where: {
-        name: ftpUserExtended.userid,
-      },
-    });
-
-    if (!quotaUsedExtended || !quotaLimitExtended) {
-      return {
-        regular: regularQuota,
-        extended: {
-          used: BigInt(0),
-          available: BigInt(0),
-        },
-      };
-    }
-
-    const extendedQuota = {
-      used: quotaUsedExtended.bytes_out_used,
-      available: quotaLimitExtended.bytes_out_avail,
-    };
-
-    return {
-      regular: regularQuota,
-      extended: extendedQuota,
-    };
+    return { regular: regularQuota, extended: extendedQuota };
   });

@@ -13,6 +13,7 @@ import { subscribeWithPaypal } from './subscribeWithPaypal';
 import { subscribeWithStripe } from './subscribeWithStripe';
 import { createStripeCheckoutSession } from './createStripeCheckoutSession';
 import { changeSubscriptionPlan } from './changeSubscriptionPlan';
+import { subscribeWithOxxoStripe } from './subscribeWithOxxoStripe';
 
 export const subscriptionsRouter = router({
   getConektaAvailability,
@@ -20,6 +21,7 @@ export const subscriptionsRouter = router({
   subscribeWithCashConekta,
   subscribeWithPayByBankConekta,
   subscribeWithStripe,
+  subscribeWithOxxoStripe,
   createStripeCheckoutSession,
   subscribeWithPaypal,
   requestSubscriptionCancellation,

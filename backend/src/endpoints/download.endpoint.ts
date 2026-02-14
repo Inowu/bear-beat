@@ -124,13 +124,23 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
       .send({ error: 'No hay quotas activas para este usuario' });
   }
 
-  const hasRemainingGb =
-    quotaTallies.bytes_out_used < quotaLimits.bytes_out_avail;
+  const fileStat = await fileService.stat(fullPath);
 
-  if ((activePlans.length === 0 || !hasRemainingGb) && extendedAccount) {
-    log.info(`[DOWNLOAD] Using extended account for user ${user.id}`);
-    regularFtpUser = extendedAccount;
-    useExtendedAccount = true;
+  const availableBytesRegular =
+    quotaLimits.bytes_out_avail - quotaTallies.bytes_out_used;
+
+  // Use extended account when:
+  // 1) user has no active plan (only extra GB should allow downloads), OR
+  // 2) regular quota is not enough for this specific file download.
+  if (extendedAccount) {
+    const shouldUseExtended =
+      activePlans.length === 0 || availableBytesRegular < BigInt(fileStat.size);
+
+    if (shouldUseExtended) {
+      log.info(`[DOWNLOAD] Using extended account for user ${user.id}`);
+      regularFtpUser = extendedAccount;
+      useExtendedAccount = true;
+    }
   }
 
   if (useExtendedAccount && extendedAccount) {
@@ -157,8 +167,6 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
       .status(400)
       .send({ error: 'No hay quotas activas para este usuario' });
   }
-
-  const fileStat = await fileService.stat(fullPath);
 
   const availableBytes =
     quotaLimits.bytes_out_avail - quotaTallies.bytes_out_used;

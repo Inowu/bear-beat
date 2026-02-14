@@ -132,6 +132,18 @@ upsert_env "CLIENT_URL" "https://thebearbeat.com"
 # Only set defaults; don't override manual disables (critical during incident response).
 ensure_env_default "CONEKTA_PBB_ENABLED" "1"
 ensure_env_default "CONEKTA_OXXO_ENABLED" "1"
+
+log "Optionally injecting Stripe OXXO secrets from deploy environment..."
+# Usage (avoid printing secrets):
+#   DEPLOY_STRIPE_OXXO_KEY="sk_live_..." \\
+#   DEPLOY_STRIPE_OXXO_WH_PI_SECRET="whsec_..." \\
+#   ./deploy.sh
+if [ -n "${DEPLOY_STRIPE_OXXO_KEY:-}" ]; then
+  upsert_env "STRIPE_OXXO_KEY" "${DEPLOY_STRIPE_OXXO_KEY}"
+fi
+if [ -n "${DEPLOY_STRIPE_OXXO_WH_PI_SECRET:-}" ]; then
+  upsert_env "STRIPE_OXXO_WH_PI_SECRET" "${DEPLOY_STRIPE_OXXO_WH_PI_SECRET}"
+fi
 # Default free trial config (Stripe only). Override in backend/.env if needed.
 ensure_env_default "BB_TRIAL_DAYS" "7"
 ensure_env_default "BB_TRIAL_GB" "100"

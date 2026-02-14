@@ -74,6 +74,25 @@
   text-align: left;
 }
 
+.auth-checkout-summary.auth-checkout-summary--split {
+  margin: 0 0 10px;
+  border-color: rgba(8, 225, 247, 0.28);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.auth-checkout-summary.auth-checkout-summary--split .auth-checkout-summary__label {
+  color: rgba(242, 244, 245, 0.78);
+}
+
+.auth-checkout-summary.auth-checkout-summary--split .auth-checkout-summary__name {
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.auth-checkout-summary.auth-checkout-summary--split .auth-checkout-summary__price-suffix,
+.auth-checkout-summary.auth-checkout-summary--split .auth-checkout-summary__hint {
+  color: rgba(242, 244, 245, 0.78);
+}
+
 .auth-checkout-summary__label {
   font-size: 0.82rem;
   font-weight: 900;

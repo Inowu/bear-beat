@@ -159,12 +159,15 @@ function MyAccount() {
 
   const getQuota = async () => {
     if (currentUser !== null) {
-      let body: any = {
-        isExtended: currentUser.extendedFtpAccount,
-      };
       try {
-        const quota: any = await trpc.ftp.quota.query(body);
-        if (getCompleted(quota.used, quota.available) >= 99) {
+        const quota: any = await trpc.ftp.quota.query();
+        const regularRemaining: bigint =
+          (quota?.regular?.available ?? BigInt(0)) - (quota?.regular?.used ?? BigInt(0));
+        const extendedRemaining: bigint =
+          (quota?.extended?.available ?? BigInt(0)) - (quota?.extended?.used ?? BigInt(0));
+
+        // Modal de recarga: solo cuando ya no quedan GB (regular + extra).
+        if (currentUser?.hasActiveSubscription && regularRemaining <= BigInt(0) && extendedRemaining <= BigInt(0)) {
           openPlan();
         }
         setQuota(quota);
@@ -311,6 +314,18 @@ function MyAccount() {
   const storagePercent = quota?.regular
     ? getCompleted(quota.regular.used, quota.regular.available)
     : 0;
+  const remainingRegularBytes: bigint = quota?.regular
+    ? quota.regular.available - quota.regular.used
+    : BigInt(0);
+  const remainingExtendedBytes: bigint = quota?.extended
+    ? quota.extended.available - quota.extended.used
+    : BigInt(0);
+  const remainingRegularGb = quota?.regular
+    ? transformBiteToGb(remainingRegularBytes > BigInt(0) ? remainingRegularBytes : BigInt(0))
+    : 0;
+  const remainingExtendedGb = quota?.extended
+    ? transformBiteToGb(remainingExtendedBytes > BigInt(0) ? remainingExtendedBytes : BigInt(0))
+    : 0;
   const initialsSource = (currentUser?.username ?? currentUser?.email ?? "DJ").trim();
   const normalizedInitials = initialsSource
     .replace(/[^A-Za-z0-9]/g, "")
@@ -419,6 +434,16 @@ function MyAccount() {
               <p className="ma-storage-amount">
                 {formatInt(availableGb)} GB/mes · usados: {formatInt(usedGb)} GB este ciclo
               </p>
+              {currentUser?.hasActiveSubscription && (
+                <>
+                  <p className="ma-storage-amount">
+                    Te quedan: {formatInt(remainingRegularGb)} GB este ciclo · GB extra disponibles: {formatInt(remainingExtendedGb)} GB
+                  </p>
+                  <button type="button" onClick={openPlan} className="ma-btn ma-btn-soft">
+                    Recargar GB extra
+                  </button>
+                </>
+              )}
             </div>
           </div>
           {currentUser?.hasActiveSubscription &&

@@ -40,6 +40,8 @@ export interface IOxxoData {
   barcode_url: string;
   cashier_id: null;
   expires_at: number;
+  /** Stripe OXXO: hosted voucher URL (HTML/PDF) to present to the user */
+  hosted_voucher_url?: string;
   object: string;
   reference: string;
   service_name: string;
@@ -73,6 +75,8 @@ export interface IGBPlans {
   amount: number;
   id: number;
   name: string;
+  price?: number | string | null;
+  moneda?: string | null;
 }
 export interface ICreatePlans {
   description: string;

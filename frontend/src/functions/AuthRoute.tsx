@@ -3,6 +3,7 @@ import { useUserContext } from "../contexts/UserContext";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getAccessToken } from "../utils/authStorage";
 import { Spinner } from "../components/Spinner/Spinner";
+import { writeAuthReturnUrl } from "../utils/authReturnUrl";
 
 interface AuthRoutePropsI {
   children: ReactNode;
@@ -18,6 +19,8 @@ function AuthRoute({ children }: AuthRoutePropsI) {
       // If a token exists in storage, the session is likely hydrating; avoid redirecting prematurely.
       if (getAccessToken()) return;
       const returnUrl = location.pathname + location.search;
+      // Persist returnUrl so refresh/back-forward on /auth doesn't lose the checkout context.
+      writeAuthReturnUrl(returnUrl);
       const isCheckoutStart =
         returnUrl.startsWith("/comprar") && !returnUrl.startsWith("/comprar/success");
       // Conversion-first: if the user is trying to buy/activate, default to signup (they can still switch to login).

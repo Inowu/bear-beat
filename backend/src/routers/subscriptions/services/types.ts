@@ -3,6 +3,7 @@ import { SessionUser } from '../../auth/utils/serialize-user';
 
 export enum PaymentService {
   STRIPE = 'Stripe',
+  STRIPE_OXXO = 'Stripe OXXO',
   CONEKTA = 'Conekta',
   ADMIN = 'ADMIN',
   STRIPE_RENOVACION = 'Stripe Renovacion',

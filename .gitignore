@@ -13,3 +13,14 @@ audit/screenshots
 # Production audit artifacts (read-only, may include masked screenshots; keep untracked)
 audit-artifacts
 backend/covers
+
+# Environment files (secrets)
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+frontend/.env
+frontend/.env.*
+!frontend/.env.example

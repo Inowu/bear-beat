@@ -1,12 +1,12 @@
 import { Prisma, PrismaClient, Users } from '@prisma/client';
 import { log } from '../server';
-import { brevo } from '../email';
+import { isEmailConfigured, sendEmail } from '../email';
 import { manyChat } from '../many-chat';
 import { ensureAnalyticsEventsTableExists } from '../analytics';
 import { OFFER_KEYS, markUserOffersRedeemed, upsertUserOfferAndCoupon } from '../offers';
 import { twilio } from '../twilio';
 
-type AutomationChannel = 'manychat' | 'brevo' | 'twilio' | 'admin' | 'system';
+type AutomationChannel = 'manychat' | 'email' | 'twilio' | 'admin' | 'system';
 
 const DEFAULT_LIMIT = 200;
 
@@ -19,8 +19,6 @@ const parseNumber = (raw: string | undefined, fallback: number): number => {
 };
 
 const isConfigured = (key: string): boolean => Boolean(process.env[key]?.trim());
-
-const isBrevoConfigured = (): boolean => isConfigured('BREVO_API_KEY');
 
 const isTwilioConfigured = (): boolean =>
   isConfigured('TWILIO_ACCOUNT_SID') &&
@@ -61,24 +59,26 @@ async function safeSetManyChatCustomFields(
   }
 }
 
-async function safeSendBrevoTemplate(params: {
-  templateId: number;
+async function safeSendAutomationEmail(params: {
   toEmail: string;
   toName: string;
-  vars?: Record<string, unknown>;
+  subject: string;
+  html: string;
+  text: string;
 }): Promise<void> {
-  if (!isBrevoConfigured()) return;
-  const { templateId, toEmail, toName, vars } = params;
+  if (!isEmailConfigured()) return;
+  const { toEmail, subject, html, text } = params;
   try {
-    await brevo.smtp.sendTransacEmail({
-      templateId,
-      to: [{ email: toEmail, name: toName }],
-      params: vars || {},
+    await sendEmail({
+      to: [toEmail],
+      subject,
+      html,
+      text,
     });
   } catch (e) {
-    log.warn('[AUTOMATION] Brevo send failed', {
-      templateId,
+    log.warn('[AUTOMATION] Email send failed', {
       toEmail,
+      subject,
       error: e instanceof Error ? e.message : e,
     });
   }
@@ -252,15 +252,18 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
         safeAddManyChatTag(user, 'AUTOMATION_TRIAL_NO_DOWNLOAD_24H').catch(() => {});
         const templateId = parseNumber(process.env.AUTOMATION_EMAIL_TRIAL_NO_DOWNLOAD_TEMPLATE_ID, 0);
         if (templateId > 0) {
-          await safeSendBrevoTemplate({
-            templateId,
-            toEmail: user.email,
-            toName: user.username,
-            vars: {
-              NAME: user.username,
-              URL: `${resolveClientUrl()}/`,
-            },
-          });
+          const url = `${resolveClientUrl()}/`;
+          const subject = '[Bear Beat] Tu prueba sigue activa';
+          const text = `Hola ${user.username},\n\nTu prueba sigue activa. Entra aquí para empezar:\n${url}\n`;
+          const html = `
+            <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+              <h2>Tu prueba sigue activa</h2>
+              <p>Hola <strong>${user.username}</strong>,</p>
+              <p>Entra aquí para empezar:</p>
+              <p><a href="${url}">${url}</a></p>
+            </div>
+          `.trim();
+          await safeSendAutomationEmail({ toEmail: user.email, toName: user.username, subject, html, text });
         }
         bump('trial_no_download');
       }
@@ -315,15 +318,18 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
         safeAddManyChatTag(user, 'AUTOMATION_PAID_NO_DOWNLOAD_24H').catch(() => {});
         const templateId = parseNumber(process.env.AUTOMATION_EMAIL_PAID_NO_DOWNLOAD_TEMPLATE_ID, 0);
         if (templateId > 0) {
-          await safeSendBrevoTemplate({
-            templateId,
-            toEmail: user.email,
-            toName: user.username,
-            vars: {
-              NAME: user.username,
-              URL: `${resolveClientUrl()}/`,
-            },
-          });
+          const url = `${resolveClientUrl()}/`;
+          const subject = '[Bear Beat] Tu plan está activo';
+          const text = `Hola ${user.username},\n\nTu plan está activo. Entra aquí para comenzar tus descargas:\n${url}\n`;
+          const html = `
+            <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+              <h2>Tu plan está activo</h2>
+              <p>Hola <strong>${user.username}</strong>,</p>
+              <p>Entra aquí para comenzar tus descargas:</p>
+              <p><a href="${url}">${url}</a></p>
+            </div>
+          `.trim();
+          await safeSendAutomationEmail({ toEmail: user.email, toName: user.username, subject, html, text });
         }
         bump('paid_no_download');
       }
@@ -374,15 +380,18 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
         safeAddManyChatTag(user, 'AUTOMATION_REGISTERED_NO_PURCHASE_7D').catch(() => {});
         const templateId = parseNumber(process.env.AUTOMATION_EMAIL_REGISTERED_NO_PURCHASE_TEMPLATE_ID, 0);
         if (templateId > 0) {
-          await safeSendBrevoTemplate({
-            templateId,
-            toEmail: user.email,
-            toName: user.username,
-            vars: {
-              NAME: user.username,
-              URL: `${resolveClientUrl()}/planes`,
-            },
-          });
+          const url = `${resolveClientUrl()}/planes`;
+          const subject = '[Bear Beat] Elige tu plan';
+          const text = `Hola ${user.username},\n\nElige tu plan aquí:\n${url}\n`;
+          const html = `
+            <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+              <h2>Elige tu plan</h2>
+              <p>Hola <strong>${user.username}</strong>,</p>
+              <p>Puedes elegir tu plan aquí:</p>
+              <p><a href="${url}">${url}</a></p>
+            </div>
+          `.trim();
+          await safeSendAutomationEmail({ toEmail: user.email, toName: user.username, subject, html, text });
         }
         bump('registered_no_purchase');
       }

@@ -182,13 +182,21 @@ export const downloadDir = shieldedProcedure
       });
     }
 
-    const hasRemainingGb =
-      quotaTallies.bytes_out_used < quotaLimits.bytes_out_avail;
+    const availableBytesRegular =
+      quotaLimits.bytes_out_avail - quotaTallies.bytes_out_used;
 
-    if ((activePlans.length === 0 || !hasRemainingGb) && extendedAccount) {
-      log.info(`[DOWNLOAD] Using extended account for user ${user.id}`);
-      regularFtpUser = extendedAccount;
-      useExtendedAccount = true;
+    // Use extended account when:
+    // 1) user has no active plan (only extra GB should allow downloads), OR
+    // 2) regular quota is not enough for this specific folder download.
+    if (extendedAccount) {
+      const shouldUseExtended =
+        activePlans.length === 0 || availableBytesRegular < BigInt(dirSize);
+
+      if (shouldUseExtended) {
+        log.info(`[DOWNLOAD] Using extended account for user ${user.id}`);
+        regularFtpUser = extendedAccount;
+        useExtendedAccount = true;
+      }
     }
 
     if (useExtendedAccount && extendedAccount) {

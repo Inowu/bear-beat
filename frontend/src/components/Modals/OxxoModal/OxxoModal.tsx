@@ -27,6 +27,13 @@ export function OxxoModal(props: IOxxo) {
   const reference = String(oxxoData?.reference ?? "").trim();
   const hasReference = reference.length >= 6;
 
+  const barcodeUrl = String(oxxoData?.barcode_url ?? "").trim();
+  const hostedVoucherUrl = String((oxxoData as any)?.hosted_voucher_url ?? "").trim();
+  const barcodeLooksLikeImage =
+    !!barcodeUrl &&
+    (barcodeUrl.startsWith("data:image/") || /\.(png|jpe?g|gif|webp|svg)(\\?|$)/i.test(barcodeUrl));
+  const voucherUrl = hostedVoucherUrl || (!barcodeLooksLikeImage ? barcodeUrl : "");
+
   const copyToClipboard = useCallback((text: string, setter: (v: boolean) => void) => {
     navigator.clipboard.writeText(text).then(
       () => {
@@ -80,9 +87,21 @@ export function OxxoModal(props: IOxxo) {
                 </p>
               )}
 
-              {!!oxxoData?.barcode_url && (
+              {barcodeLooksLikeImage && (
                 <div className="oxxo-modal__barcode">
-                  <img src={oxxoData.barcode_url} alt="Código de barras para pago en efectivo" />
+                  <img src={barcodeUrl} alt="Código de barras para pago en efectivo" />
+                </div>
+              )}
+              {!!voucherUrl && (
+                <div className="oxxo-modal__barcode">
+                  <a
+                    className="oxxo-modal__voucher-link"
+                    href={voucherUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Ver comprobante / código de barras
+                  </a>
                 </div>
               )}
 

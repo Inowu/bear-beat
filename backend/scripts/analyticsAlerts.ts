@@ -1,7 +1,7 @@
 import path from 'path';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
-import { brevo } from '../src/email';
+import { isEmailConfigured, sendEmail } from '../src/email';
 import { getAnalyticsHealthAlerts } from '../src/analytics';
 import { log } from '../src/server';
 
@@ -32,8 +32,6 @@ async function main(): Promise<void> {
 
   const days = Math.max(7, Math.min(365, Math.floor(parseNumber(process.env.ANALYTICS_ALERTS_DAYS, 14))));
   const recipients = resolveRecipientList(process.env.ANALYTICS_ALERTS_EMAIL_TO);
-  const templateIdRaw = (process.env.ANALYTICS_ALERTS_BREVO_TEMPLATE_ID || '').trim();
-  const templateId = templateIdRaw ? Number(templateIdRaw) : null;
 
   const prisma = new PrismaClient();
   try {
@@ -54,8 +52,8 @@ async function main(): Promise<void> {
       return;
     }
 
-    if (!process.env.BREVO_API_KEY) {
-      log.warn('[ANALYTICS_ALERTS] Alerts found but BREVO_API_KEY is not configured.', {
+    if (!isEmailConfigured()) {
+      log.warn('[ANALYTICS_ALERTS] Alerts found but SES email is not configured.', {
         recipients,
       });
       return;
@@ -78,42 +76,11 @@ async function main(): Promise<void> {
       </div>
     `.trim();
 
-    if (templateId && Number.isFinite(templateId) && templateId > 0) {
-      await brevo.smtp.sendTransacEmail({
-        templateId: Math.floor(templateId),
-        to: recipients.map((email) => ({ email })),
-        params: {
-          DAYS: days,
-          ALERTS_COUNT: actionable.length,
-          GENERATED_AT: snapshot.generatedAt,
-          ALERTS_TEXT: textLines,
-        },
-      });
-      log.info('[ANALYTICS_ALERTS] Email sent via template.', {
-        templateId: Math.floor(templateId),
-        recipients,
-        alerts: actionable.map((alert) => alert.id),
-      });
-      return;
-    }
-
-    const senderEmail =
-      (process.env.ANALYTICS_ALERTS_EMAIL_FROM || process.env.BREVO_SENDER_EMAIL || '').trim();
-    const senderName =
-      (process.env.ANALYTICS_ALERTS_EMAIL_FROM_NAME || process.env.BREVO_SENDER_NAME || 'Bear Beat').trim();
-
-    if (!senderEmail) {
-      log.warn('[ANALYTICS_ALERTS] Missing sender email. Set ANALYTICS_ALERTS_EMAIL_FROM.', {
-        recipients,
-      });
-      return;
-    }
-
-    await brevo.smtp.sendTransacEmail({
-      sender: { email: senderEmail, name: senderName },
-      to: recipients.map((email) => ({ email })),
+    await sendEmail({
+      to: recipients,
       subject,
-      htmlContent,
+      html: htmlContent,
+      text: textLines,
     });
 
     log.info('[ANALYTICS_ALERTS] Email sent.', {
@@ -131,4 +98,3 @@ main().catch((error) => {
   });
   process.exitCode = 1;
 });
-

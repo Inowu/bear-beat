@@ -6,7 +6,7 @@ import { log } from '../../../server';
 import { OrderStatus } from '../interfaces/order-status.interface';
 import { Params, PaymentService } from './types';
 import { SessionUser } from '../../auth/utils/serialize-user';
-import { brevo } from '../../../email';
+import { sendPlanActivatedEmail } from '../../../email';
 
 export const subscribe = async ({
   prisma,
@@ -134,19 +134,16 @@ export const subscribe = async ({
         });
 
         try {
-          await brevo.smtp.sendTransacEmail({
-            templateId: 2,
-            to: [{ email: user.email, name: user.username }],
-            params: {
-              NAME: user.username,
-              plan_name: dbPlan.name,
-              price: dbPlan.price,
-              currency: dbPlan.moneda.toUpperCase(),
-              ORDER: selectedOrderId,
-            },
+          await sendPlanActivatedEmail({
+            toEmail: user.email,
+            toName: user.username,
+            planName: dbPlan.name,
+            price: dbPlan.price,
+            currency: dbPlan.moneda.toUpperCase(),
+            orderId: selectedOrderId,
           });
         } catch (e) {
-          log.error(`[STRIPE] Error while sending email ${e}`);
+          log.error(`[SUBSCRIPTION] Error while sending email ${e}`);
         }
       }
 

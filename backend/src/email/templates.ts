@@ -1,0 +1,160 @@
+const escapeHtml = (value: unknown): string => {
+  const str = String(value ?? '');
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+};
+
+const renderLayout = (params: { title: string; preheader?: string; contentHtml: string }): string => {
+  const { title, preheader, contentHtml } = params;
+  const safeTitle = escapeHtml(title);
+  const safePreheader = preheader ? escapeHtml(preheader) : '';
+
+  return `
+    <!doctype html>
+    <html lang="es">
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>${safeTitle}</title>
+      </head>
+      <body style="margin:0;padding:0;background:#f6f8fa;">
+        <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">
+          ${safePreheader}
+        </div>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f8fa;padding:24px 12px;">
+          <tr>
+            <td align="center">
+              <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.06);">
+                <tr>
+                  <td style="padding:22px 22px 8px 22px;">
+                    <div style="font-family:Arial, sans-serif;font-size:18px;font-weight:700;color:#111;">Bear Beat</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:0 22px 22px 22px;">
+                    ${contentHtml}
+                  </td>
+                </tr>
+              </table>
+              <div style="font-family:Arial, sans-serif;color:#6b7280;font-size:12px;line-height:1.4;padding:12px 8px;">
+                Si no solicitaste este correo, puedes ignorarlo.
+              </div>
+            </td>
+          </tr>
+        </table>
+      </body>
+    </html>
+  `.trim();
+};
+
+const renderButton = (params: { href: string; label: string }): string => {
+  const { href, label } = params;
+  const safeHref = escapeHtml(href);
+  const safeLabel = escapeHtml(label);
+  return `
+    <a href="${safeHref}" style="display:inline-block;background:#111827;color:#ffffff;text-decoration:none;padding:12px 16px;border-radius:10px;font-family:Arial, sans-serif;font-weight:700;">
+      ${safeLabel}
+    </a>
+  `.trim();
+};
+
+export const emailTemplates = {
+  welcome: (params: { name: string; email: string }) => {
+    const { name, email } = params;
+    const title = 'Bienvenido a Bear Beat';
+    const contentHtml = `
+      <h1 style="margin:0 0 10px 0;font-family:Arial, sans-serif;font-size:22px;line-height:1.2;color:#111;">${escapeHtml(title)}</h1>
+      <p style="margin:0 0 12px 0;font-family:Arial, sans-serif;color:#111;line-height:1.6;">
+        Hola <strong>${escapeHtml(name)}</strong>, tu cuenta ya está lista.
+      </p>
+      <p style="margin:0 0 0 0;font-family:Arial, sans-serif;color:#374151;line-height:1.6;">
+        Email registrado: <strong>${escapeHtml(email)}</strong>
+      </p>
+    `.trim();
+
+    const text = `Bienvenido a Bear Beat\n\nHola ${name}, tu cuenta ya está lista.\nEmail registrado: ${email}\n`;
+    return {
+      subject: title,
+      html: renderLayout({ title, preheader: 'Tu cuenta ya está lista.', contentHtml }),
+      text,
+    };
+  },
+
+  passwordReset: (params: { name: string; email: string; link: string }) => {
+    const { name, email, link } = params;
+    const title = 'Restablece tu contraseña';
+    const contentHtml = `
+      <h1 style="margin:0 0 10px 0;font-family:Arial, sans-serif;font-size:22px;line-height:1.2;color:#111;">${escapeHtml(title)}</h1>
+      <p style="margin:0 0 12px 0;font-family:Arial, sans-serif;color:#111;line-height:1.6;">
+        Hola <strong>${escapeHtml(name)}</strong>, recibimos una solicitud para restablecer tu contraseña.
+      </p>
+      <div style="margin:16px 0 14px 0;">
+        ${renderButton({ href: link, label: 'Restablecer contraseña' })}
+      </div>
+      <p style="margin:0;font-family:Arial, sans-serif;color:#374151;line-height:1.6;font-size:13px;">
+        Si el botón no funciona, copia y pega este enlace en tu navegador:<br />
+        <span style="word-break:break-all;">${escapeHtml(link)}</span>
+      </p>
+      <p style="margin:14px 0 0 0;font-family:Arial, sans-serif;color:#6b7280;line-height:1.6;font-size:12px;">
+        Cuenta: ${escapeHtml(email)}
+      </p>
+    `.trim();
+
+    const text =
+      `Restablece tu contraseña\n\n` +
+      `Hola ${name}, recibimos una solicitud para restablecer tu contraseña.\n` +
+      `Enlace: ${link}\n\n` +
+      `Cuenta: ${email}\n`;
+
+    return {
+      subject: title,
+      html: renderLayout({ title, preheader: 'Enlace para restablecer tu contraseña.', contentHtml }),
+      text,
+    };
+  },
+
+  planActivated: (params: { name: string; planName: string; price: unknown; currency: string; orderId: unknown }) => {
+    const { name, planName, price, currency, orderId } = params;
+    const title = 'Tu plan está activo';
+    const contentHtml = `
+      <h1 style="margin:0 0 10px 0;font-family:Arial, sans-serif;font-size:22px;line-height:1.2;color:#111;">${escapeHtml(title)}</h1>
+      <p style="margin:0 0 12px 0;font-family:Arial, sans-serif;color:#111;line-height:1.6;">
+        Hola <strong>${escapeHtml(name)}</strong>, tu suscripción fue activada correctamente.
+      </p>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin-top:10px;">
+        <tr>
+          <td style="padding:10px 0;font-family:Arial, sans-serif;color:#374151;">Plan</td>
+          <td style="padding:10px 0;font-family:Arial, sans-serif;color:#111;text-align:right;font-weight:700;">${escapeHtml(planName)}</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 0;font-family:Arial, sans-serif;color:#374151;">Precio</td>
+          <td style="padding:10px 0;font-family:Arial, sans-serif;color:#111;text-align:right;font-weight:700;">${escapeHtml(price)} ${escapeHtml(currency)}</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 0;font-family:Arial, sans-serif;color:#374151;">Orden</td>
+          <td style="padding:10px 0;font-family:Arial, sans-serif;color:#111;text-align:right;font-weight:700;">#${escapeHtml(orderId)}</td>
+        </tr>
+      </table>
+      <p style="margin:14px 0 0 0;font-family:Arial, sans-serif;color:#6b7280;line-height:1.6;font-size:12px;">
+        Si tienes dudas, responde a este correo o contacta a soporte.
+      </p>
+    `.trim();
+
+    const text =
+      `Tu plan está activo\n\n` +
+      `Hola ${name}, tu suscripción fue activada correctamente.\n` +
+      `Plan: ${planName}\n` +
+      `Precio: ${price} ${currency}\n` +
+      `Orden: #${orderId}\n`;
+
+    return {
+      subject: title,
+      html: renderLayout({ title, preheader: `Plan activo: ${planName}`, contentHtml }),
+      text,
+    };
+  },
+};

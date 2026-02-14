@@ -199,8 +199,8 @@ async function main() {
       const has = (key: string): boolean => Boolean(process.env[key]?.trim());
       res.json({
         ok: true,
-        brevo: {
-          configured: has('BREVO_API_KEY'),
+        ses: {
+          configured: (has('AWS_REGION') || has('AWS_DEFAULT_REGION')) && has('SES_FROM_EMAIL'),
         },
         twilio: {
           configured: has('TWILIO_ACCOUNT_SID') && has('TWILIO_AUTH_TOKEN'),

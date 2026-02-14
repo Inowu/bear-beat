@@ -18,15 +18,17 @@ import {
   RefreshCw,
 } from "src/icons";
 import PreviewModal from '../../components/PreviewModal/PreviewModal';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import trpc from '../../api';
 import { IFiles, ITrackMetadata } from 'interfaces/Files';
 import { sortArrayByName } from '../../functions/functions';
 import { Spinner } from '../../components/Spinner/Spinner';
 import { useUserContext } from '../../contexts/UserContext';
+import { useTheme } from '../../contexts/ThemeContext';
+import { getStripeAppearance } from '../../utils/stripeAppearance';
 import { ErrorModal } from '../../components/Modals/ErrorModal/ErrorModal';
-import { VerifyUpdatePhoneModal } from '../../components/Modals';
+import { PlansModal, SuccessModal, VerifyUpdatePhoneModal } from '../../components/Modals';
 import { useDownloadContext } from '../../contexts/DownloadContext';
 import { ConditionModal } from '../../components/Modals/ConditionModal/ContitionModal';
 import { of } from 'await-of';
@@ -167,11 +169,13 @@ const stripeKey =
 const stripePromise = loadStripe(stripeKey);
 
 function Home() {
+  const { theme } = useTheme();
   const { fileChange, closeFile, userToken, currentUser, startUser } = useUserContext();
   const { setShowDownload, setCurrentFile, setFileData } = useDownloadContext();
   const [showPreviewModal, setShowPreviewModal] = useState<boolean>(false);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [showConditionModal, setShowConditionModal] = useState<boolean>(false);
+  const [showPlan, setShowPlan] = useState<boolean>(false);
   const [albumData, setAlbumData] = useState<IAlbumData>({} as IAlbumData);
   const [error, setError] = useState<boolean>(false);
   const [errMsg, setErrMsg] = useState<any>('');
@@ -189,6 +193,9 @@ function Home() {
   const [index, setIndex] = useState<number>(-1);
   const [show, setShow] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<any>('');
+  const [showSuccess, setShowSuccess] = useState<boolean>(false);
+  const [successTitle, setSuccessTitle] = useState<string>('');
+  const [successMessage, setSuccessMessage] = useState<string>('');
   const [paginationLoader, setPaginationLoader] = useState(false);
   const [showPagination, setShowPagination] = useState(false);
   const [totalSearch, setTotalSearch] = useState(0);
@@ -202,6 +209,8 @@ function Home() {
   const [pendingDownload, setPendingDownload] = useState<PendingDownload | null>(null);
   const searchRequestRef = useRef(0);
   const lastTrackedSearchRef = useRef<string>('');
+
+  const stripeOptions = useMemo(() => ({ appearance: getStripeAppearance(theme) }), [theme]);
 
   const getFileVisualKind = (file: IFiles): FileVisualKind => {
     if (file.type === 'd') {
@@ -319,6 +328,16 @@ function Home() {
 
   const closeError = () => {
     setShow(false);
+  };
+  const closeSuccess = () => {
+    setShowSuccess(false);
+  };
+  const closePlan = () => {
+    setShowPlan(false);
+  };
+  const isOutOfGbMessage = (value: unknown): boolean => {
+    const msg = `${value ?? ''}`.toLowerCase();
+    return msg.includes('suficientes bytes');
   };
   const goToRoot = async () => {
     setLoadError('');
@@ -601,6 +620,10 @@ function Home() {
         queueDownloadVerification({ file, index, type: 'folder' });
         return;
       }
+      if (currentUser?.hasActiveSubscription && isOutOfGbMessage(error?.message ?? error)) {
+        setShowPlan(true);
+        return;
+      }
       trackGrowthMetric(GROWTH_METRICS.FILE_DOWNLOAD_FAILED, {
         fileType: 'folder',
         reason: error?.message ?? 'unknown_error',
@@ -637,6 +660,13 @@ function Home() {
 
         if (response.status === 403 || isVerificationRequiredMessage(backendMessage)) {
           queueDownloadVerification(pending);
+          setLoadDownload(false);
+          setIndex(-1);
+          return;
+        }
+
+        if (currentUser?.hasActiveSubscription && isOutOfGbMessage(backendMessage)) {
+          setShowPlan(true);
           setLoadDownload(false);
           setIndex(-1);
           return;
@@ -860,8 +890,20 @@ function Home() {
           setFileToShow(null);
         }}
       />
-      <Elements stripe={stripePromise}>
+      <Elements stripe={stripePromise} options={stripeOptions}>
         <UsersUHModal showModal={showModal} onHideModal={closeModalAdd} />
+        <PlansModal
+          show={showPlan}
+          onHide={closePlan}
+          intro="Te quedaste sin GB disponibles para descargar. Recarga GB extra y sigue descargando."
+          dataModals={{
+            setShowError: setShow,
+            setShowSuccess: setShowSuccess,
+            setSuccessMessage: setSuccessMessage,
+            setErrorMessage: setErrorMessage,
+            setSuccessTitle: setSuccessTitle,
+          }}
+        />
       </Elements>
       <div className="bb-home-overview">
         <div className="bb-library-header">
@@ -1427,6 +1469,12 @@ function Home() {
         onHide={closeError}
         message={errorMessage}
         user={currentUser}
+      />
+      <SuccessModal
+        show={showSuccess}
+        onHide={closeSuccess}
+        title={successTitle}
+        message={successMessage}
       />
       <ErrorModal show={error} onHide={handleError} message={errMsg} />
     </div>

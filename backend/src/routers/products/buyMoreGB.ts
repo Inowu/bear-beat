@@ -19,7 +19,7 @@ export const buyMoreGB = shieldedProcedure
     z.union([
       z.object({
         productId: z.number(),
-        paymentMethod: z.string(),
+        paymentMethod: z.string().optional(),
         service: z.literal(PaymentService.STRIPE),
         orderId: z.never().optional(),
       }),
@@ -66,21 +66,42 @@ export const buyMoreGB = shieldedProcedure
           });
 
           try {
+            const productKey =
+              process.env.NODE_ENV === 'production'
+                ? 'stripe_product_id'
+                : 'stripe_product_test_id';
+            const stripeProductId = product[productKey];
+            if (!stripeProductId) {
+              throw new TRPCError({
+                code: 'BAD_REQUEST',
+                message: 'Este producto no tiene configuración de Stripe.',
+              });
+            }
+
             const stripePrices = await stripeInstance.prices.list({
-              product:
-                product[
-                  process.env.NODE_ENV === 'production'
-                    ? 'stripe_product_id'
-                    : 'stripe_product_test_id'
-                ],
+              product: stripeProductId,
+              active: true,
+              limit: 1,
             });
 
+            const firstPrice = stripePrices.data?.[0];
+            const unitAmount = firstPrice?.unit_amount;
+            const currency = firstPrice?.currency;
+            if (typeof unitAmount !== 'number' || !currency) {
+              throw new TRPCError({
+                code: 'BAD_REQUEST',
+                message: 'Este producto no tiene un precio activo en Stripe.',
+              });
+            }
+
+            const pm = typeof paymentMethod === 'string' ? paymentMethod.trim() : '';
             const pi = await stripeInstance.paymentIntents.create(
               {
                 customer: stripeCustomer,
-                currency: stripePrices.data[0].currency,
-                amount: stripePrices.data[0].unit_amount as number,
-                payment_method: paymentMethod,
+                currency,
+                amount: unitAmount,
+                ...(pm ? { payment_method: pm } : {}),
+                payment_method_types: ['card'],
                 metadata: {
                   productOrderId: String(productOrder.id),
                 },
@@ -116,17 +137,6 @@ export const buyMoreGB = shieldedProcedure
         case PaymentService.CONEKTA: {
           const conektaCustomer = await getConektaCustomer({ prisma, user });
 
-          const productOrder = await prisma.product_orders.create({
-            data: {
-              service: PaymentService.STRIPE,
-              product_id: product.id,
-              status: OrderStatus.PENDING,
-              user_id: user.id,
-              created_at: new Date(),
-              payment_method: service,
-            },
-          });
-
           const existingOrder = await prisma.product_orders.findFirst({
             where: {
               AND: [
@@ -136,15 +146,24 @@ export const buyMoreGB = shieldedProcedure
                 {
                   status: OrderStatus.PENDING,
                 },
+                {
+                  service: PaymentService.CONEKTA,
+                },
+                {
+                  product_id: product.id,
+                },
               ],
             },
+            orderBy: { id: 'desc' },
           });
 
           if (existingOrder) {
             try {
-              const conektaOrder = await conektaOrders.getOrderById(
-                existingOrder.txn_id!,
-              );
+              const existingTxn = `${existingOrder.txn_id ?? ''}`.trim();
+              if (!existingTxn) {
+                throw new Error('Missing txn_id for existing conekta product order');
+              }
+              const conektaOrder = await conektaOrders.getOrderById(existingTxn);
 
               // Check if the order is expired
               if (
@@ -167,7 +186,7 @@ export const buyMoreGB = shieldedProcedure
                   product,
                   customerId: conektaCustomer,
                   paymentMethod: 'cash',
-                  order: productOrder,
+                  order: existingOrder,
                   prisma,
                   user,
                 });
@@ -188,7 +207,27 @@ export const buyMoreGB = shieldedProcedure
             }
           }
 
-          break;
+          const productOrder = await prisma.product_orders.create({
+            data: {
+              service: PaymentService.CONEKTA,
+              product_id: product.id,
+              status: OrderStatus.PENDING,
+              user_id: user.id,
+              created_at: new Date(),
+              payment_method: service,
+            },
+          });
+
+          const conektaOrder = await createCashPaymentOrder({
+            product,
+            customerId: conektaCustomer,
+            paymentMethod: 'cash',
+            order: productOrder,
+            prisma,
+            user,
+          });
+
+          return conektaOrder.data.charges?.data?.[0].payment_method as any;
         }
         case PaymentService.PAYPAL: {
           log.info(
@@ -274,13 +313,12 @@ const createCashPaymentOrder = async ({
     },
   });
 
-  await prisma.orders.update({
+  await prisma.product_orders.update({
     where: {
       id: order.id,
     },
     data: {
-      invoice_id: conektaOrder.data.id,
-      txn_id: (conektaOrder.data.object as any).id,
+      txn_id: conektaOrder.data.id,
     },
   });
 

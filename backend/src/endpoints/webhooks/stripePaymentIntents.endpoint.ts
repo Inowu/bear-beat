@@ -1,13 +1,13 @@
 import { Request, Response } from 'express';
-import { verifyStripeSignature } from '../../routers/utils/verifyStripeSignature';
+import { verifyStripeSignatureAny } from '../../routers/utils/verifyStripeSignature';
 import { log } from '../../server';
 import { stripeInvoiceWebhook } from '../../routers/webhooks/stripe/paymentIntentsWh';
 
 export const stripePiEndpoint = async (req: Request, res: Response) => {
-  const isValid = verifyStripeSignature(
-    req,
-    process.env.STRIPE_WH_PI_SECRET as string,
-  );
+  const isValid = verifyStripeSignatureAny(req, [
+    process.env.STRIPE_WH_PI_SECRET,
+    process.env.STRIPE_OXXO_WH_PI_SECRET,
+  ]);
 
   if (!isValid) {
     return res.status(400).send('Invalid signature');
