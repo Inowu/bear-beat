@@ -28,13 +28,14 @@ const appendQueryParams = (baseUrl: string, params: Record<string, string>): str
 const COLORS = {
   // Email theme: match Bear Beat's neon-on-dark brand.
   // Keep it simple + readable across Gmail/Outlook clients.
-  bg: '#020617',
+  // NOTE: avoid rgba() for text colors; some email clients render it poorly.
+  bg: '#070A12',
   card: '#0B1220',
-  cardSoft: '#111926',
-  border: 'rgba(255, 255, 255, 0.12)',
-  ink: '#F7F7F7',
-  text: 'rgba(247, 247, 247, 0.86)',
-  muted: 'rgba(247, 247, 247, 0.66)',
+  cardSoft: '#111A2A',
+  border: '#22304A',
+  ink: '#F8FAFC',
+  text: '#E8EEF7',
+  muted: '#B9C7DA',
   dark: '#000000',
   cyan: '#08E1F7',
   mint: '#00E6C1',
@@ -78,7 +79,7 @@ const renderLayout = (params: {
         <meta name="supported-color-schemes" content="dark light" />
         <title>${safeTitle}</title>
       </head>
-      <body style="margin:0;padding:0;background:${COLORS.bg};">
+      <body style="margin:0;padding:0;background:${COLORS.bg};color:${COLORS.ink};">
         <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">
           ${safePreheader}
         </div>
