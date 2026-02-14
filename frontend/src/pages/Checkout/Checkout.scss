@@ -7,7 +7,7 @@
   overflow-x: hidden;
   box-sizing: border-box;
   --checkout-pad: clamp(12px, 2.1vw, 30px);
-  padding: var(--checkout-pad);
+  padding: 0;
   background:
     radial-gradient(
       860px 420px at 8% -8%,
@@ -19,26 +19,121 @@
       var(--bb-landing-spot-2),
       transparent 62%
     ),
-    var(--app-bg);
-  color: var(--app-text-body);
+    var(--ph-bg);
+  color: var(--ph-text-body);
   font-family: var(--bb-font-ui);
   /* Marketing surfaces (/planes -> /comprar) should keep a consistent type scale. */
   font-size: 1rem;
   line-height: 1.55;
+
+  /* Keep /comprar visually consistent with /planes by remapping app tokens locally. */
+  --app-bg: var(--ph-bg);
+  --app-bg-soft: var(--ph-bg-soft);
+  --app-bg-card: var(--ph-bg-card);
+  --app-border: var(--ph-border);
+  --app-text-heading: var(--ph-text-heading);
+  --app-text-body: var(--ph-text-body);
+  --app-text-muted: var(--ph-text-muted);
+  --app-accent: var(--ph-accent);
+  --app-accent-bright: var(--ph-accent-bright);
+  --app-btn-bg: var(--ph-btn-bg);
+  --app-btn-text: var(--ph-btn-text);
+  --app-shadow: var(--ph-shadow);
+  --app-shadow-card: var(--ph-shadow-card);
+
+  --theme-accent-soft-bg: color-mix(in srgb, var(--ph-accent-bright) 10%, transparent);
+  --theme-accent-soft-bg-2: color-mix(in srgb, var(--ph-accent-bright) 14%, transparent);
+  --theme-accent-soft-bg-3: color-mix(in srgb, var(--ph-accent-bright) 18%, transparent);
 }
 
-html[data-theme="dark"] .checkout-main-container,
-html.dark .checkout-main-container,
-.dark .checkout-main-container {
-  background:
-    radial-gradient(860px 440px at 8% -8%, rgba(8, 225, 247, 0.17), transparent 62%),
-    radial-gradient(860px 500px at 92% -16%, rgba(0, 230, 193, 0.14), transparent 66%),
-    var(--app-bg);
+.checkout2026__main {
+  padding: clamp(12px, 1.8vw, 22px) 0 clamp(44px, 5vw, 74px);
 }
 
-.checkout-inner {
-  width: min(1140px, 100%);
+.checkout2026__container {
+  width: min(900px, calc(100% - 40px));
   margin: 0 auto;
+  display: grid;
+  gap: clamp(8px, 1.4vw, 16px);
+}
+
+.checkout2026__center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 0 44px;
+}
+
+.checkout2026__hero {
+  display: grid;
+  gap: 6px;
+  text-align: left;
+}
+
+.checkout2026__hero h1 {
+  margin: 0;
+  color: var(--ph-text-heading);
+  font-size: clamp(2.6rem, 3.6vw, 4.1rem);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.checkout2026__heroSubtitle {
+  margin: 0;
+  max-width: 62ch;
+  color: color-mix(in srgb, var(--ph-text-body) 94%, transparent);
+  font-size: clamp(1.2rem, 1.1vw, 1.55rem);
+  font-weight: 600;
+  line-height: 1.55;
+}
+
+.checkout2026__topCta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.checkout2026__cardHint {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--app-text-muted);
+  font-size: 1.2rem;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.checkout2026__cardHintIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--app-accent) 40%, transparent);
+  background: color-mix(in srgb, var(--theme-accent-soft-bg-2) 84%, transparent);
+  color: var(--app-accent);
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .checkout2026__container {
+    width: min(900px, calc(100% - 28px));
+  }
+
+  .checkout2026__hero h1 {
+    font-size: clamp(1.9rem, 6.8vw, 2.55rem);
+  }
+
+  .checkout2026__heroSubtitle {
+    font-size: 1.02rem;
+    line-height: 1.42;
+  }
 }
 
 .checkout2026__top {
@@ -105,8 +200,8 @@ html.dark .checkout-main-container,
   min-height: 32px;
   padding: 0 12px;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--app-accent) 38%, var(--app-border));
-  background: var(--theme-accent-soft-bg);
+  border: 1px solid color-mix(in srgb, var(--app-border) 78%, transparent);
+  background: color-mix(in srgb, var(--app-bg-soft) 78%, transparent);
   color: var(--app-accent);
   font-size: 0.9rem;
   font-weight: 900;
@@ -143,13 +238,6 @@ html.dark .checkout-main-container,
   }
 }
 
-.checkout2026__center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px 0 44px;
-}
-
 .checkout-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -163,30 +251,22 @@ html.dark .checkout-main-container,
 
 .checkout-card {
   border-radius: 24px;
-  border: 1px solid color-mix(in srgb, var(--app-border) 82%, transparent);
+  border: 1px solid color-mix(in srgb, var(--app-border) 78%, transparent);
   background:
     radial-gradient(
       520px 220px at 12% 0%,
-      color-mix(in srgb, var(--app-accent) 6%, transparent),
+      color-mix(in srgb, var(--app-accent) 9%, transparent),
       transparent 70%
     ),
-    color-mix(in srgb, var(--app-bg-card) 96%, transparent);
+    color-mix(in srgb, var(--app-bg-card) 94%, transparent);
   box-shadow: var(--app-shadow-card);
   position: relative;
   overflow: hidden;
-  padding: clamp(16px, 1.8vw, 24px);
+  padding: clamp(18px, 2.2vw, 26px);
 }
 
 .checkout-card::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--app-accent-bright), var(--app-accent));
-  opacity: 0.9;
-  pointer-events: none;
+  display: none;
 }
 
 .checkout-card > * {
@@ -612,16 +692,7 @@ html.dark .checkout-card,
   }
 }
 
-.checkout2026__summary {
-  /* Mobile: show summary first (accordion). */
-  order: -1;
-}
-
 @media (min-width: 1080px) {
-  .checkout2026__summary {
-    order: 0;
-  }
-
   .checkout2026__summary.checkout-summary {
     top: 32px;
   }

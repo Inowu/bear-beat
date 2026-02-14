@@ -8,6 +8,7 @@ import { trackPurchase } from "../../utils/facebookPixel";
 import { generateEventId } from "../../utils/marketingIds";
 import trpc from "../../api";
 import { useCookies } from "react-cookie";
+import PublicTopNav from "../../components/PublicTopNav/PublicTopNav";
 
 function CheckoutSuccess() {
   const [searchParams] = useSearchParams();
@@ -114,43 +115,40 @@ function CheckoutSuccess() {
   }, [sessionId, cookies._fbp, cookies._fbc]);
 
   return (
-    <div className="checkout-main-container">
-      <div className="checkout-inner">
-        <header className="checkout-header">
-          <h1 className="checkout-page-title">Pago realizado</h1>
-          <p className="checkout-page-subtitle">
-            Gracias por tu compra. Tu acceso está siendo activado.
-          </p>
-        </header>
-
-        <div className="checkout-card checkout-success-card">
-          <div className="checkout-success-card__icon-wrap">
-            <span className="checkout-summary__check checkout-success-card__icon">
-              <Check className="checkout-success-card__icon-check" />
-            </span>
-          </div>
-          <p className="checkout-summary__desc checkout-success-card__desc">
-            En unos segundos tendrás acceso a todo el catálogo. Si no ves los cambios, recarga la página o cierra sesión y vuelve a entrar.
-          </p>
-          <ul className="checkout-success-card__steps">
-            <li>Entra al explorador y valida tu acceso.</li>
-            <li>Si aún no aparece, cierra sesión y vuelve a iniciar.</li>
-          </ul>
-          {sessionId && (
-            <p className="checkout-summary__meta checkout-success-card__meta">
-              Referencia: {sessionId.slice(0, 20)}…
+    <div className="checkout-main-container checkout2026">
+      <PublicTopNav className="checkout2026__topnav" plansTo="/planes" />
+      <main className="checkout2026__main" aria-label="Checkout">
+        <div className="checkout2026__container checkout2026__center">
+          <div className="checkout-card checkout-success-card">
+            <div className="checkout-success-card__icon-wrap">
+              <span className="checkout-summary__check checkout-success-card__icon">
+                <Check className="checkout-success-card__icon-check" />
+              </span>
+            </div>
+            <h1 className="checkout-one-state__title">Pago realizado</h1>
+            <p className="checkout-summary__desc checkout-success-card__desc">
+              Gracias por tu compra. Tu acceso está siendo activado.
             </p>
-          )}
-          <div className="checkout-success-card__actions">
-            <Link to="/" className="checkout-cta-btn checkout-cta-btn--primary">
-              Ir al explorador
-            </Link>
-            <Link to="/micuenta" className="checkout-cta-btn checkout-cta-btn--ghost">
-              Ir a mi cuenta
-            </Link>
+            <ul className="checkout-success-card__steps">
+              <li>Entra al explorador y valida tu acceso.</li>
+              <li>Si aún no aparece, recarga la página o cierra sesión y vuelve a iniciar.</li>
+            </ul>
+            {sessionId && (
+              <p className="checkout-summary__meta checkout-success-card__meta">
+                Referencia: {sessionId.slice(0, 20)}…
+              </p>
+            )}
+            <div className="checkout-success-card__actions">
+              <Link to="/" className="checkout-cta-btn checkout-cta-btn--primary">
+                Ir al explorador
+              </Link>
+              <Link to="/micuenta" className="checkout-cta-btn checkout-cta-btn--ghost">
+                Ir a mi cuenta
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

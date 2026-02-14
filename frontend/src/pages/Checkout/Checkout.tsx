@@ -2,9 +2,6 @@ import "./Checkout.scss";
 import { useUserContext } from "../../contexts/UserContext";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useTheme } from "../../contexts/ThemeContext";
-import brandMarkBlack from "../../assets/brand/bearbeat-mark-black.png";
-import brandMarkCyan from "../../assets/brand/bearbeat-mark-cyan.png";
 import trpc from "../../api";
 import { IPlans, IOxxoData, ISpeiData } from "interfaces/Plans";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
@@ -30,6 +27,7 @@ import { trackInitiateCheckout } from "../../utils/facebookPixel";
 import { generateEventId } from "../../utils/marketingIds";
 import { getConektaFingerprint } from "../../utils/conektaCollect";
 import { formatInt } from "../../utils/format";
+import PublicTopNav from "../../components/PublicTopNav/PublicTopNav";
 
 type CheckoutMethod = "card" | "spei" | "oxxo" | "bbva" | "paypal";
 
@@ -93,7 +91,6 @@ const pickBestPlanCandidate = (candidates: IPlans[]): IPlans | null => {
 };
 
 function Checkout() {
-  const { theme } = useTheme();
   const [plan, setPlan] = useState<IPlans | null>(null);
   const [trialConfig, setTrialConfig] = useState<{
     enabled: boolean;
@@ -103,7 +100,6 @@ function Checkout() {
   } | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
-  const brandMark = theme === "light" ? brandMarkBlack : brandMarkCyan;
   const [redirecting, setRedirecting] = useState(false);
   const [showRedirectHelp, setShowRedirectHelp] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<CheckoutMethod>("card");
@@ -819,40 +815,39 @@ function Checkout() {
   if (processingMethod === null && selectedMethod === "bbva") continueLabel = "Continuar con BBVA";
   if (processingMethod === null && selectedMethod === "oxxo") continueLabel = "Generar referencia de pago en efectivo";
 
-  const TopBrand = (
-    <header className="checkout2026__top" aria-label="Bear Beat">
-      <div className="checkout-inner checkout2026__topInner">
-        <Link to="/planes" className="checkout2026__brand" aria-label="Volver a planes">
-          <img src={brandMark} alt="Bear Beat" width={40} height={40} />
-        </Link>
-        <div className="checkout2026__topRight" aria-label="Progreso">
+  const TopNav = (
+    <PublicTopNav
+      className="checkout2026__topnav"
+      brandTo="/planes"
+      plansTo="/planes"
+      cta={
+        <div className="checkout2026__topCta" aria-label="Progreso">
           <span className="checkout2026__step" aria-label="Paso 2 de 2">
             Paso 2 de 2
           </span>
-          <Link to="/planes" className="checkout2026__back">
-            Cambiar plan
-          </Link>
         </div>
-      </div>
-    </header>
+      }
+    />
   );
 
   if (!priceId) {
     return (
       <div className="checkout-main-container checkout2026">
-        {TopBrand}
-        <div className="checkout-inner">
-          <div className="checkout-one-state" role="status" aria-live="polite">
-            <h1 className="checkout-one-state__title">Completa tu pago</h1>
-            <p className="checkout-one-state__text">Selecciona un plan en la página de planes para continuar.</p>
-            <Link
-              to="/planes"
-              className="checkout-cta-btn checkout-cta-btn--primary checkout-empty-link"
-            >
-              Ver planes
-            </Link>
+        {TopNav}
+        <main className="checkout2026__main" aria-label="Checkout">
+          <div className="checkout2026__container checkout2026__center">
+            <div className="checkout-one-state" role="status" aria-live="polite">
+              <h1 className="checkout-one-state__title">Completa tu pago</h1>
+              <p className="checkout-one-state__text">Selecciona un plan en la página de planes para continuar.</p>
+              <Link
+                to="/planes"
+                className="checkout-cta-btn checkout-cta-btn--primary checkout-empty-link"
+              >
+                Ver planes
+              </Link>
+            </div>
           </div>
-        </div>
+        </main>
       </div>
     );
   }
@@ -863,24 +858,26 @@ function Checkout() {
       redirectingProvider === "stripe" ? "Stripe" : "BBVA (Conekta)";
     return (
       <div className="checkout-main-container checkout2026">
-        {TopBrand}
-        <div className="checkout-inner checkout2026__center">
-          <div className="checkout-one-state">
-          <Spinner size={5} width={0.4} color="var(--app-accent)" />
-          <h2 className="checkout-one-state__title">Preparando tu pago</h2>
-          <p className="checkout-one-state__text">
-            Serás redirigido a la pasarela segura de {providerName} en un momento…
-          </p>
-          {showRedirectHelp && (
-            <div className="checkout-one-state__help">
-              <p>Si no te redirige, vuelve a intentar desde planes.</p>
-              <Link to="/planes" className="checkout-cta-btn checkout-cta-btn--ghost">
-                Volver a planes
-              </Link>
+        {TopNav}
+        <main className="checkout2026__main" aria-label="Checkout">
+          <div className="checkout2026__container checkout2026__center">
+            <div className="checkout-one-state">
+              <Spinner size={5} width={0.4} color="var(--app-accent)" />
+              <h2 className="checkout-one-state__title">Preparando tu pago</h2>
+              <p className="checkout-one-state__text">
+                Serás redirigido a la pasarela segura de {providerName} en un momento…
+              </p>
+              {showRedirectHelp && (
+                <div className="checkout-one-state__help">
+                  <p>Si no te redirige, vuelve a intentar desde planes.</p>
+                  <Link to="/planes" className="checkout-cta-btn checkout-cta-btn--ghost">
+                    Volver a planes
+                  </Link>
+                </div>
+              )}
             </div>
-          )}
           </div>
-        </div>
+        </main>
       </div>
     );
   }
@@ -889,13 +886,15 @@ function Checkout() {
   if (!plan) {
     return (
       <div className="checkout-main-container checkout2026">
-        {TopBrand}
-        <div className="checkout-inner checkout2026__center">
-          <div className="checkout-one-state" role="status" aria-live="polite">
-            <Spinner size={5} width={0.4} color="var(--app-accent)" />
-            <p className="checkout-one-state__text">Cargando plan…</p>
+        {TopNav}
+        <main className="checkout2026__main" aria-label="Checkout">
+          <div className="checkout2026__container checkout2026__center">
+            <div className="checkout-one-state" role="status" aria-live="polite">
+              <Spinner size={5} width={0.4} color="var(--app-accent)" />
+              <p className="checkout-one-state__text">Cargando plan…</p>
+            </div>
           </div>
-        </div>
+        </main>
       </div>
     );
   }
@@ -1023,27 +1022,34 @@ function Checkout() {
 
   return (
     <div className="checkout-main-container checkout2026">
-      {TopBrand}
-      <div className="checkout-inner">
-        <div className="checkout-grid checkout2026__grid">
-          <section className="checkout-card checkout2026__flow" aria-label="Completa tu pago">
-            <header className="checkout2026__flowHead">
-              <div className="checkout2026__eyebrow" aria-label="Plan seleccionado">
-                <span className="checkout2026__eyebrowPlan">{planName}</span>
-                <span className="checkout2026__eyebrowDot" aria-hidden>
-                  ·
-                </span>
-                <span className="checkout2026__eyebrowPrice">{summaryMonthlyLabel}</span>
-                {eyebrowTag && <span className="checkout2026__eyebrowTag">{eyebrowTag}</span>}
-              </div>
-              <h1 className="checkout2026__title">Completa tu pago</h1>
-              <p className="checkout2026__subtitle">
-                <span className="checkout2026__subtitleIcon" aria-hidden>
-                  <Lock size={16} />
-                </span>
-                Checkout seguro. Activa tu acceso en 1 minuto.
-              </p>
-            </header>
+      {TopNav}
+      <main className="checkout2026__main" aria-label="Checkout">
+        <div className="checkout2026__container">
+          <header className="checkout2026__hero">
+            <h1>Completa tu pago.</h1>
+            <p className="checkout2026__heroSubtitle">
+              Checkout seguro. Activa tu acceso en 1 minuto.
+            </p>
+          </header>
+
+          <div className="checkout-grid checkout2026__grid">
+            <section className="checkout-card checkout2026__flow" aria-label="Completa tu pago">
+              <header className="checkout2026__flowHead">
+                <div className="checkout2026__eyebrow" aria-label="Plan seleccionado">
+                  <span className="checkout2026__eyebrowPlan">{planName}</span>
+                  <span className="checkout2026__eyebrowDot" aria-hidden>
+                    ·
+                  </span>
+                  <span className="checkout2026__eyebrowPrice">{summaryMonthlyLabel}</span>
+                  {eyebrowTag && <span className="checkout2026__eyebrowTag">{eyebrowTag}</span>}
+                </div>
+                <p className="checkout2026__cardHint">
+                  <span className="checkout2026__cardHintIcon" aria-hidden>
+                    <Lock size={16} />
+                  </span>
+                  Pagos cifrados y activación inmediata.
+                </p>
+              </header>
 
             <section className="checkout2026__block" aria-label="Tu cuenta">
               <h2 className="checkout2026__blockTitle">Tu cuenta</h2>
@@ -1229,7 +1235,8 @@ function Checkout() {
             <div className="checkout2026__summaryStatic">{summaryContent}</div>
           </section>
         </div>
-      </div>
+        </div>
+      </main>
 
       <ErrorModal
         show={showError}

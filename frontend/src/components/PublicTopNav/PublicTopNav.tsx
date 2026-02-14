@@ -8,6 +8,7 @@ import brandMarkCyan from "../../assets/brand/bearbeat-mark-cyan.png";
 type PublicTopNavProps = {
   className?: string;
   brandAriaCurrent?: boolean;
+  brandTo?: string;
   loginFrom?: string;
   cta?: ReactNode;
   plansTo?: string;
@@ -16,6 +17,7 @@ type PublicTopNavProps = {
 export default function PublicTopNav({
   className,
   brandAriaCurrent,
+  brandTo = "/",
   loginFrom,
   cta,
   plansTo = "/planes",
@@ -32,7 +34,7 @@ export default function PublicTopNav({
     >
       <div className="ph__container home-topnav__inner">
         <Link
-          to="/"
+          to={brandTo}
           className="home-topnav__brand"
           aria-label="Bear Beat"
           aria-current={brandAriaCurrent ? "page" : undefined}
