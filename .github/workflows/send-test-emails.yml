@@ -6,12 +6,10 @@ on:
       to_email:
         description: Email address that will receive the test templates
         required: true
-        type: string
       only_templates:
         description: Optional: comma-separated template keys to send (ex. winbackLapsedOffer)
         required: false
         default: ""
-        type: string
 
 concurrency:
   group: send-test-emails

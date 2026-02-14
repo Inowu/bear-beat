@@ -1,4 +1,4 @@
-name: Campaign: winback + never-paid
+name: "Campaign: winback + never-paid"
 
 on:
   workflow_dispatch:
@@ -6,45 +6,35 @@ on:
       segment:
         description: Target segment
         required: true
-        type: choice
-        options:
-          - lapsed
-          - never_paid
+        default: "lapsed"
       percent_off:
         description: Percent discount (1-99)
         required: false
         default: "50"
-        type: string
       expires_days:
         description: Coupon validity (days)
         required: false
         default: "3"
-        type: string
       lookback_days:
         description: Only include users within this lookback window (days)
         required: false
         default: "365"
-        type: string
       min_days:
         description: Minimum days since lapse/registration (days)
         required: false
         default: "3"
-        type: string
       stage:
         description: Offer stage (use a new stage to resend with a new coupon later)
         required: false
         default: "1"
-        type: string
       limit:
         description: Max users to process
         required: false
         default: "500"
-        type: string
       send:
         description: Actually send emails (unchecked = dry-run + CSV only)
         required: false
-        default: false
-        type: boolean
+        default: "false"
 
 concurrency:
   group: campaign-winback
@@ -94,4 +84,3 @@ jobs:
               --stage="${{ inputs.stage }}" \
               --limit="${{ inputs.limit }}" \
               $SEND_FLAG
-
