@@ -17,8 +17,9 @@
   # No es un secreto (es un ID de tag / script público).
   REACT_APP_CONTENTSQUARE_TAG_ID = "6e820b371a0f9"
   REACT_APP_HOTJAR_ENABLED = "1"
-  # 0 = solo conversión (recomendado) | 1 = todo el sitio (excepto /admin)
-  REACT_APP_UX_TRACK_ALL = "0"
+  # 0 = solo conversión | 1 = todo el sitio (excepto /admin)
+  # Nota: necesario si quieres ver grabaciones también dentro de la app (no solo LP/Auth/Checkout).
+  REACT_APP_UX_TRACK_ALL = "1"
 
 [[headers]]
   for = "/*"
