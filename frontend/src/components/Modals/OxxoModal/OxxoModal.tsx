@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from "react";
 import { Modal } from "react-bootstrap";
-import { Check, Copy, Store, X } from "lucide-react";
+import { Check, Copy, Store, X } from "src/icons";
 import { IOxxoData } from "interfaces/Plans";
 import "../Modal.scss";
 import "./OxxoModal.scss";

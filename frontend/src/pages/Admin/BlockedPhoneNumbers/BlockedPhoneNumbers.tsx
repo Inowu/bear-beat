@@ -7,7 +7,7 @@ import { useUserContext } from "../../../contexts/UserContext";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
 import Pagination from "../../../components/Pagination/Pagination";
-import { Plus, MoreVertical, Trash2 } from "lucide-react";
+import { Plus, MoreVertical, Trash2 } from "src/icons";
 import { toErrorMessage } from "../../../utils/errorMessage";
 import "./BlockedPhoneNumbers.scss";
 

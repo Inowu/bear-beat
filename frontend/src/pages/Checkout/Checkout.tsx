@@ -18,7 +18,7 @@ import {
   Landmark,
   Lock,
   Wallet,
-} from "lucide-react";
+} from "src/icons";
 import { ErrorModal } from "../../components/Modals/ErrorModal/ErrorModal";
 import { SpeiModal } from "../../components/Modals/SpeiModal/SpeiModal";
 import { OxxoModal } from "../../components/Modals/OxxoModal/OxxoModal";

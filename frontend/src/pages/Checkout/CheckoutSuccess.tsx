@@ -1,6 +1,6 @@
 import { useSearchParams, Link } from "react-router-dom";
 import "./Checkout.scss";
-import { Check } from "lucide-react";
+import { Check } from "src/icons";
 import { useEffect, useRef } from "react";
 import { trackManyChatConversion, trackManyChatPurchase, MC_EVENTS } from "../../utils/manychatPixel";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../utils/growthMetrics";

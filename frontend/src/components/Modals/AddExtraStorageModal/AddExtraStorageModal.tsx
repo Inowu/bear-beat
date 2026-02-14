@@ -4,7 +4,7 @@ import { ErrorModal } from "../ErrorModal/ErrorModal";
 import { handleChangeBigint } from "../../../functions/functions";
 import { Modal } from "react-bootstrap";
 import { of } from "await-of";
-import { XCircle } from "lucide-react";
+import { XCircle } from "src/icons";
 import { Spinner } from "../../Spinner/Spinner";
 import { SuccessModal } from "../SuccessModal/SuccessModal";
 import { useCallback, useEffect, useState } from "react";

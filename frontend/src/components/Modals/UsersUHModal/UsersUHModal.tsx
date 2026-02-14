@@ -1,7 +1,7 @@
 import { CardElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import '../Modal.scss';
 import { Modal } from 'react-bootstrap';
-import { CreditCard, RefreshCw, X } from 'lucide-react';
+import { CreditCard, RefreshCw, X } from "src/icons";
 import { IPaymentMethod } from 'interfaces/User';
 import { useState } from 'react';
 import { useUserContext } from '../../../contexts/UserContext';

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ShieldCheck, WalletCards, FileText, CircleHelp, ChevronDown, ArrowUp } from "lucide-react";
+import { ShieldCheck, WalletCards, FileText, CircleHelp, ChevronDown, ArrowUp } from "src/icons";
 import "./Legal.scss";
 
 const LEGAL_LAST_UPDATED_LABEL = "6 de febrero de 2026";

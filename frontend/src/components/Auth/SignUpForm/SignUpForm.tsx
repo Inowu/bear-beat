@@ -1,7 +1,7 @@
 import "./SignUpForm.scss";
 import { detectUserCountry, findDialCode, allowedCountryOptions } from "../../../utils/country_codes";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Lock, Mail, Phone, User } from "lucide-react";
+import { Lock, Mail, Phone, User } from "src/icons";
 import { PasswordInput } from "../../PasswordInput/PasswordInput";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFormik } from "formik";

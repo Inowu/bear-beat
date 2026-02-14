@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Modal } from 'react-bootstrap'
 import './../Modal.scss'
-import { XCircle } from 'lucide-react'
+import { XCircle } from "src/icons"
 import trpc from "../../../api";
 import { Spinner } from '../../../components/Spinner/Spinner';
 import { ErrorModal } from '../ErrorModal/ErrorModal';

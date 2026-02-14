@@ -13,7 +13,7 @@ import {
   TrendingUp,
   UserPlus,
   Users,
-} from "lucide-react";
+} from "src/icons";
 import trpc from "../../../api";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import Pagination from "../../../components/Pagination/Pagination";

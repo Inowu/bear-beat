@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowRight, CheckCircle2 } from "src/icons";
 import { useId, useMemo, useState } from "react";
 import PaymentMethodLogos, { type PaymentMethodId } from "../../../components/PaymentMethodLogos/PaymentMethodLogos";
 import { HOME_HERO_MICROCOPY_BASE, HOME_HERO_MICROCOPY_TRIAL } from "../homeCopy";

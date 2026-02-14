@@ -1,4 +1,4 @@
-import { Sparkles, Database, HardDriveDownload, LibraryBig } from "lucide-react";
+import { Sparkles, Database, HardDriveDownload, LibraryBig } from "src/icons";
 
 export default function TrustBar(props: {
   totalFilesLabel: string;

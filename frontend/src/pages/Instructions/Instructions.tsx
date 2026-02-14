@@ -1,6 +1,6 @@
 import "./Instructions.scss";
 import { Link } from "react-router-dom";
-import type { LucideIcon } from "lucide-react";
+import type { AppIcon } from "src/icons";
 import {
   ArrowRight,
   CheckCircle2,
@@ -11,7 +11,7 @@ import {
   MousePointerClick,
   ShieldCheck,
   WifiOff,
-} from "lucide-react";
+} from "src/icons";
 import PublicTopNav from "../../components/PublicTopNav/PublicTopNav";
 import { useUserContext } from "../../contexts/UserContext";
 
@@ -22,7 +22,7 @@ interface DownloadMethod {
   id: "filezilla" | "air-explorer" | "web";
   title: string;
   subtitle: string;
-  icon: LucideIcon;
+  icon: AppIcon;
   steps: string[];
   tip: string;
   ctaLabel: string;

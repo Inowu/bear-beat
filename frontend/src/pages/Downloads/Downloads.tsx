@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { FolderDown, Music } from "lucide-react";
+import { FolderDown, Music } from "src/icons";
 import { IDownloads } from "interfaces/Files";
 import trpc from "../../api";
 import { Spinner } from "../../components/Spinner/Spinner";
 import { Button, EmptyState } from "../../components/ui";
-import { RefreshCw, AlertTriangle } from "lucide-react";
+import { RefreshCw, AlertTriangle } from "src/icons";
 
 function Downloads() {
   const [downloads, setDownloads] = useState<IDownloads[] | null>(null);

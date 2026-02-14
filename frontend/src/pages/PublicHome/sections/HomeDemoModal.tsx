@@ -1,5 +1,5 @@
 import { Modal } from "react-bootstrap";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2 } from "src/icons";
 import { Link } from "react-router-dom";
 import CatalogPreviewWebp from "../../../assets/images/home-catalog-preview.webp";
 import CatalogPreviewPng from "../../../assets/images/home-catalog-preview.png";

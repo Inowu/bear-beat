@@ -1,7 +1,7 @@
 import './../Modal.scss'
 import './SuccessModal.scss'
 import { Modal } from 'react-bootstrap'
-import { XCircle } from 'lucide-react';
+import { XCircle } from "src/icons";
 interface ISuccess {
   show: boolean;
   onHide: () => void;

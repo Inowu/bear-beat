@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { Lock } from "lucide-react";
+import { Lock } from "src/icons";
 import trpc from "../../../api";
 import { PasswordInput } from "../../PasswordInput/PasswordInput";
 import { useFormik } from "formik";

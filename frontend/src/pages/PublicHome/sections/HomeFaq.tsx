@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown } from "src/icons";
 import { HOME_FAQ_ITEMS } from "../homeCopy";
 
 export default function HomeFaq(props: {

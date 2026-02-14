@@ -6,7 +6,7 @@ import { ErrorModal } from "../ErrorModal/ErrorModal";
 import { findCountryCode, twoDigitsCountryCodes } from "../../../utils/country_codes";
 import { Modal } from "react-bootstrap";
 import { of } from "await-of";
-import { XCircle } from "lucide-react";
+import { XCircle } from "src/icons";
 import { Spinner } from "../../Spinner/Spinner";
 import { SuccessModal } from "../SuccessModal/SuccessModal";
 import { useFormik } from "formik";

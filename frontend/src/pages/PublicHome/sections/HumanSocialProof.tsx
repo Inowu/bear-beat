@@ -1,4 +1,4 @@
-import { User } from "lucide-react";
+import { User } from "src/icons";
 import { HOME_TESTIMONIALS, type HomeTestimonial } from "../homeTestimonials";
 
 export default function HumanSocialProof(props: {

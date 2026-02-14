@@ -10,8 +10,6 @@
   --text-main: #111926;
   --text-muted: #5B6678;
   --border-main: rgba(15, 23, 42, 0.12);
-  /* Subtle refinement for outline iconography (less "cartoon", more premium). */
-  --bb-icon-stroke: 1.75;
   color-scheme: light;
 }
 
@@ -24,13 +22,11 @@ html.dark,
   --text-main: #F7F7F7;
   --text-muted: #B8B8B8;
   --border-main: #404040;
-  --bb-icon-stroke: 1.75;
   color-scheme: dark;
 }
 
-/* Global icon system (Lucide is the primary icon set). */
-.lucide {
-  stroke-width: var(--bb-icon-stroke);
+/* Global icon system (Phosphor uses a consistent 256x256 viewBox). */
+svg[viewBox="0 0 256 256"] {
   shape-rendering: geometricPrecision;
 }
 

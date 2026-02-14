@@ -29,7 +29,7 @@ import {
   Filter,
   AlertTriangle,
   RefreshCw,
-} from "lucide-react";
+} from "src/icons";
 import Pagination from "../../components/Pagination/Pagination";
 import { ARRAY_10 } from "../../utils/Constants";
 import CsvDownloader from "react-csv-downloader";

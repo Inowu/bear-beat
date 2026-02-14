@@ -1,4 +1,4 @@
-import { Landmark } from "lucide-react";
+import { Landmark } from "src/icons";
 import type { ReactNode } from "react";
 import visaLogo from "../../assets/images/cards/visa.png";
 import mastercardLogo from "../../assets/images/cards/master.png";

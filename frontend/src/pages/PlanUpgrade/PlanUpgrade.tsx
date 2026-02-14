@@ -6,7 +6,7 @@ import PlanCard from "../../components/PlanCard/PlanCard";
 import { useNavigate } from "react-router-dom";
 import { useUserContext } from "../../contexts/UserContext";
 import { Button, EmptyState, Alert } from "../../components/ui";
-import { ArrowRight, RefreshCw, Shield } from "lucide-react";
+import { ArrowRight, RefreshCw, Shield } from "src/icons";
 
 export const PlanUpgrade = () => {
   const { currentUser } = useUserContext();

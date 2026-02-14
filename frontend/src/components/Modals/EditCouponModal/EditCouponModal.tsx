@@ -5,7 +5,7 @@ import * as Yup from "yup";
 import { useState, useEffect } from "react";
 import { Spinner } from "../../Spinner/Spinner";
 import { Modal } from "react-bootstrap";
-import { XCircle } from "lucide-react";
+import { XCircle } from "src/icons";
 import trpc from "../../../api";
 import { SuccessModal } from "../SuccessModal/SuccessModal";
 

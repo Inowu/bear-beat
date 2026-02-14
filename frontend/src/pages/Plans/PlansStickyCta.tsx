@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { X } from "lucide-react";
+import { X } from "src/icons";
 
 const STORAGE_KEY = "bb.plans.stickyCta.dismissed.v1";
 

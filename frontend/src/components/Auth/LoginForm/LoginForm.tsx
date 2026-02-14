@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Lock, Mail } from "lucide-react";
+import { Lock, Mail } from "src/icons";
 import { PasswordInput } from "../../PasswordInput/PasswordInput";
 import { useUserContext } from "../../../contexts/UserContext";
 import trpc from "../../../api";

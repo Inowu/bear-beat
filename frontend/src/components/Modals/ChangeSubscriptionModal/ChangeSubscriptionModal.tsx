@@ -1,6 +1,6 @@
 import './../Modal.scss'
 import { Modal } from 'react-bootstrap'
-import { XCircle } from 'lucide-react'
+import { XCircle } from "src/icons"
 import { Spinner } from '../../../components/Spinner/Spinner';
 import { useState } from 'react'
 import { IPlans } from "../../../interfaces/Plans";

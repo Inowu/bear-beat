@@ -1,4 +1,4 @@
-import { Download, Sparkles, Search } from "lucide-react";
+import { Download, Sparkles, Search } from "src/icons";
 import { HOME_HERO_MICROCOPY_TRIAL } from "../homeCopy";
 
 export default function HowItWorks(props: { trial: { enabled: boolean; days: number; gb: number } | null }) {

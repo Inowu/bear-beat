@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import trpc from "../../api";
 import { Link, useNavigate } from "react-router-dom";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
-import { AlertTriangle, Check, Layers3, RefreshCw } from "lucide-react";
+import { AlertTriangle, Check, Layers3, RefreshCw } from "src/icons";
 import { formatInt, formatTB } from "../../utils/format";
 import PublicTopNav from "../../components/PublicTopNav/PublicTopNav";
 import PaymentMethodLogos from "../../components/PaymentMethodLogos/PaymentMethodLogos";

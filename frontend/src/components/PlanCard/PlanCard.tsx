@@ -18,7 +18,7 @@ import { trackPurchase, trackViewPlans } from "../../utils/facebookPixel";
 import { trackManyChatConversion, trackManyChatPurchase, MC_EVENTS } from "../../utils/manychatPixel";
 import { generateEventId } from "../../utils/marketingIds";
 import { GROWTH_METRICS, getGrowthAttribution, trackGrowthMetric } from "../../utils/growthMetrics";
-import { Download, FolderOpen, HeartCrack, Music, Unlock, Zap } from "lucide-react";
+import { Download, FolderOpen, HeartCrack, Music, Unlock, Zap } from "src/icons";
 import { formatInt } from "../../utils/format";
 
 // Copy persuasivo CRO: texto aburrido → gancho emocional

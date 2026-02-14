@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { Modal } from "react-bootstrap";
-import { Loader2, Play } from "lucide-react";
+import { Loader2, Play } from "src/icons";
 import trpc from "../../../api";
 import { apiBaseUrl } from "../../../utils/runtimeConfig";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../../utils/growthMetrics";

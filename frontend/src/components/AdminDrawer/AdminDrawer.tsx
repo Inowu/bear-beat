@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { X } from "lucide-react";
+import { X } from "src/icons";
 import { IAdminUser, USER_ROLES } from "../../interfaces/admin";
 import "./AdminDrawer.scss";
 

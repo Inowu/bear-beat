@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import './Plans.scss'
 import { Modal } from 'react-bootstrap'
 import trpc from "../../../api";
-import { XCircle } from 'lucide-react';
+import { XCircle } from "src/icons";
 import { IGBPlans } from '../../../interfaces/Plans';
 import { useUserContext } from "../../../contexts/UserContext";
 import { IPaymentMethod } from 'interfaces/User';

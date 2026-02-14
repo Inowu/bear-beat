@@ -16,7 +16,7 @@ import {
   X,
   AlertTriangle,
   RefreshCw,
-} from 'lucide-react';
+} from "src/icons";
 import PreviewModal from '../../components/PreviewModal/PreviewModal';
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
@@ -836,18 +836,18 @@ function Home() {
 
   const renderKindIcon = (kind: FileVisualKind) => {
     if (kind === 'folder') {
-      return <Folder strokeWidth={2} />;
+      return <Folder />;
     }
     if (kind === 'audio') {
-      return <FileMusic strokeWidth={2} />;
+      return <FileMusic />;
     }
     if (kind === 'video') {
-      return <FileVideoCamera strokeWidth={2} />;
+      return <FileVideoCamera />;
     }
     if (kind === 'archive') {
-      return <FileArchive strokeWidth={2} />;
+      return <FileArchive />;
     }
-    return <File strokeWidth={2} />;
+    return <File />;
   };
 
   return (
@@ -890,7 +890,7 @@ function Home() {
               </button>
               <div className="bb-home-title-wrap">
                 <h2 className="bb-home-title">
-                  <FolderOpen className="bb-home-title-icon" strokeWidth={2} />
+                  <FolderOpen className="bb-home-title-icon" />
                   Tu biblioteca
                 </h2>
                 <p className="bb-home-subtitle">{currentRouteLabel}</p>

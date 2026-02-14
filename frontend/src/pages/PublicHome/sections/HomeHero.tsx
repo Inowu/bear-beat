@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, CirclePlay, Lock, Sparkles } from "lucide-react";
+import { ArrowRight, CirclePlay, Lock, Sparkles } from "src/icons";
 import {
   HOME_HERO_MICROCOPY_BASE,
   HOME_HERO_MICROCOPY_TRIAL,

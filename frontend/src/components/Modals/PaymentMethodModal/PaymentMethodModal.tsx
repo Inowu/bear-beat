@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Modal } from 'react-bootstrap';
-import { XCircle } from 'lucide-react';
+import { XCircle } from "src/icons";
 import { CardElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import './../Modal.scss';
 import trpc from '../../../api';

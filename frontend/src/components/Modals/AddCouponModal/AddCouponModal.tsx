@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Spinner } from "../../Spinner/Spinner";
 import { SuccessModal } from "../SuccessModal/SuccessModal";
 import { Modal } from "react-bootstrap";
-import { XCircle } from "lucide-react";
+import { XCircle } from "src/icons";
 import trpc from "../../../api";
 
 interface IAddCouponModal {

@@ -8,7 +8,7 @@ import { useState } from "react";
 import { Spinner } from "../../Spinner/Spinner";
 import { SuccessModal } from "../SuccessModal/SuccessModal";
 import { Modal } from "react-bootstrap";
-import { XCircle } from "lucide-react";
+import { XCircle } from "src/icons";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/material.css";
 import es from "react-phone-input-2/lang/es.json";

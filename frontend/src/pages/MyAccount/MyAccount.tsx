@@ -18,7 +18,7 @@ import {
   EyeOff,
   FileDown,
   Trash2,
-} from "lucide-react";
+} from "src/icons";
 import visaLogo from "../../assets/images/cards/visa.png";
 import mastercardLogo from "../../assets/images/cards/master.png";
 import amexLogo from "../../assets/images/cards/express.png";

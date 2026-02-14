@@ -23,6 +23,7 @@ import { initManyChatHandoff } from "./utils/manychatHandoff";
 import { bindHotjarStateChange } from "./utils/hotjarBridge";
 import { bindGrowthMetricBridge, trackGrowthMetricBridge } from "./utils/growthMetricsBridge";
 import { ensureMetaAttributionCookies } from "./utils/metaAttributionCookies";
+import { IconContext } from "src/icons";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -534,19 +535,21 @@ scheduleTrackersInit(trackersGate);
 root.render(
   <React.StrictMode>
     <AppErrorBoundary>
-    <ThemeProvider>
-      <UserContextProvider>
-        <DownloadContextProvider>
-          {sseEndpoint ? (
-            <SSEProvider endpoint={sseEndpoint}>
-              <RouterProvider router={router} />
-            </SSEProvider>
-          ) : (
-            <RouterProvider router={router} />
-          )}
-        </DownloadContextProvider>
-      </UserContextProvider>
-    </ThemeProvider>
+      <IconContext.Provider value={{ color: "currentColor", size: "1em", weight: "regular" }}>
+        <ThemeProvider>
+          <UserContextProvider>
+            <DownloadContextProvider>
+              {sseEndpoint ? (
+                <SSEProvider endpoint={sseEndpoint}>
+                  <RouterProvider router={router} />
+                </SSEProvider>
+              ) : (
+                <RouterProvider router={router} />
+              )}
+            </DownloadContextProvider>
+          </UserContextProvider>
+        </ThemeProvider>
+      </IconContext.Provider>
     </AppErrorBoundary>
   </React.StrictMode>
 );

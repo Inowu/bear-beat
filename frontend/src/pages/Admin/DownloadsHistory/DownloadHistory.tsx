@@ -9,7 +9,7 @@ import trpc from "../../../api";
 import { useUserContext } from "../../../contexts/UserContext";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
-import { Plus, MoreVertical } from "lucide-react";
+import { Plus, MoreVertical } from "src/icons";
 import { Select } from "../../../components/ui";
 
 interface IAdminFilter {

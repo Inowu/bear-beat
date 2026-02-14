@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import CsvDownloader from "react-csv-downloader";
-import { Download, MoreVertical } from "lucide-react";
+import { Download, MoreVertical } from "src/icons";
 import trpc from "../../../api";
 import { useUserContext } from "../../../contexts/UserContext";
 import Pagination from "../../../components/Pagination/Pagination";

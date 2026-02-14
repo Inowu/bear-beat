@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { Modal } from "react-bootstrap";
-import { Check, Copy, Landmark, ShieldCheck, X } from "lucide-react";
+import { Check, Copy, Landmark, ShieldCheck, X } from "src/icons";
 import { ISpeiData } from "../../../interfaces/Plans";
 import "../Modal.scss";
 import "./SpeiModal.scss";

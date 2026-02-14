@@ -1,5 +1,5 @@
 import { Modal } from 'react-bootstrap';
-import { Pause, Play } from 'lucide-react';
+import { Pause, Play } from "src/icons";
 import { useEffect, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
 import './PreviewModal.scss';

@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Music } from "lucide-react";
+import { Music } from "src/icons";
 import { Spinner } from "../../components/Spinner/Spinner";
 import "./FileLoader.scss";
 import { useUserContext } from "../../contexts/UserContext";

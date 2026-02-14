@@ -1,7 +1,7 @@
 import { Modal } from "react-bootstrap";
 import "../Modal.scss";
 import "./ErrorModal.scss";
-import { AlertTriangle, X } from "lucide-react";
+import { AlertTriangle, X } from "src/icons";
 import { IUser } from "../../../interfaces/User";
 import { toErrorMessage } from "../../../utils/errorMessage";
 interface IError {

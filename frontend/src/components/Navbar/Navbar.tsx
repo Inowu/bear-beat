@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import brandMarkBlack from "../../assets/brand/bearbeat-mark-black.png";
 import brandMarkCyan from "../../assets/brand/bearbeat-mark-cyan.png";
 import "./Navbar.scss";
-import type { LucideIcon } from "lucide-react";
+import type { AppIcon } from "src/icons";
 import {
   Menu,
   Shield,
@@ -15,7 +15,7 @@ import {
   Clock,
   UserRound,
   LogOut,
-} from "lucide-react";
+} from "src/icons";
 import { Link } from "react-router-dom";
 import { SetStateAction, useState, useRef, useEffect } from "react";
 import {
@@ -28,7 +28,7 @@ interface NavbarPropsI {
   menuButtonRef?: React.RefObject<HTMLButtonElement | null>;
 }
 
-const THEME_OPTIONS: { value: ThemeMode; label: string; Icon: LucideIcon }[] = [
+const THEME_OPTIONS: { value: ThemeMode; label: string; Icon: AppIcon }[] = [
   { value: "light", label: "Claro", Icon: Sun },
   { value: "dark", label: "Oscuro", Icon: Moon },
   { value: "system", label: "Según sistema", Icon: Monitor },

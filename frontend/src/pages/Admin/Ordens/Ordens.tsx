@@ -6,7 +6,7 @@ import trpc from "../../../api";
 import { useUserContext } from "../../../contexts/UserContext";
 import { ARRAY_10 } from "../../../utils/Constants";
 import CsvDownloader from "react-csv-downloader";
-import { Search, Download, MoreVertical } from "lucide-react";
+import { Search, Download, MoreVertical } from "src/icons";
 import { IAdminOrders, ORDER_STATUS } from "../../../interfaces/admin";
 import { of } from "await-of";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";

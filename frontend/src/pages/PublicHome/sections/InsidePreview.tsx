@@ -1,4 +1,4 @@
-import { CirclePlay } from "lucide-react";
+import { CirclePlay } from "src/icons";
 import CatalogPreviewWebp from "../../../assets/images/home-catalog-preview.webp";
 import CatalogPreviewPng from "../../../assets/images/home-catalog-preview.png";
 

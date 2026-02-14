@@ -25,7 +25,7 @@ import {
   Shield,
   LogOut,
   Undo2,
-} from "lucide-react";
+} from "src/icons";
 import { Link, NavLink } from "react-router-dom";
 
 interface AsideNavbarPropsI {

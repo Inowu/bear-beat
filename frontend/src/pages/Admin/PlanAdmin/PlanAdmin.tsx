@@ -11,7 +11,7 @@ import { Spinner } from "../../../components/Spinner/Spinner";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
 import Pagination from "../../../components/Pagination/Pagination";
-import { Plus, MoreVertical, Edit2, Trash2 } from "lucide-react";
+import { Plus, MoreVertical, Edit2, Trash2 } from "src/icons";
 
 const PAGE_SIZE = 100;
 

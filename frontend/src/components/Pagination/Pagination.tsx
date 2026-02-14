@@ -1,6 +1,6 @@
 import React from "react";
 import "./Pagination.scss";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "src/icons";
 import { showPages } from "./PaginationMethods";
 import { Spinner } from "../../components/Spinner/Spinner";
 interface IPagination {

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Mail } from "lucide-react";
+import { Mail } from "src/icons";
 import trpc from "../../../api";
 import { useFormik } from "formik";
 import * as Yup from "yup";

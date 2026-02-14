@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { X } from "lucide-react";
+import { X } from "src/icons";
 
 const STORAGE_KEY = "bb.home.stickyCta.dismissed.v1";
 

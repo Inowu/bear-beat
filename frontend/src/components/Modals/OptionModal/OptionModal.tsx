@@ -4,7 +4,7 @@ import { ErrorModal } from '../ErrorModal/ErrorModal'
 import { SuccessModal } from '../SuccessModal/SuccessModal'
 import { IPlans } from 'interfaces/Plans';
 import { Modal } from 'react-bootstrap'
-import { XCircle } from 'lucide-react'
+import { XCircle } from "src/icons"
 import { useState } from 'react'
 import trpc from "../../../api";
 interface IError {

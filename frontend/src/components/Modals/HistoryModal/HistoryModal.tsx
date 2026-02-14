@@ -3,7 +3,7 @@ import './HistoryModal.scss'
 import { ARRAY_10 } from "../../../utils/Constants";
 import { IAdminDownloadHistory, IAdminUser } from "../../../interfaces/admin";
 import { Modal } from 'react-bootstrap'
-import { XCircle } from 'lucide-react'
+import { XCircle } from "src/icons"
 import { useState, useEffect, useCallback } from 'react'
 import Pagination from "../../../components/Pagination/Pagination";
 import trpc from "../../../api";

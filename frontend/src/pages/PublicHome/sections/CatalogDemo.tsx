@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Search } from "lucide-react";
+import { Search } from "src/icons";
 import { useMemo, useState } from "react";
 import { HOME_CTA_SECONDARY_LABEL } from "../homeCopy";
 import { formatGB, formatInt, normalizeSearchKey } from "../homeFormat";
