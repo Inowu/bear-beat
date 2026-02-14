@@ -7,7 +7,7 @@ on:
         description: Email address that will receive the test templates
         required: true
       only_templates:
-        description: Optional: comma-separated template keys to send (ex. winbackLapsedOffer)
+        description: "Optional: comma-separated template keys to send (ex. winbackLapsedOffer)"
         required: false
         default: ""
 
