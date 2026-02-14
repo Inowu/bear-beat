@@ -80,9 +80,14 @@ const extractOxxoVoucher = (
   };
 };
 
-const deriveOxxoOwnerName = (usernameRaw: unknown, emailRaw: unknown): string => {
-  const username = typeof usernameRaw === 'string' ? usernameRaw : '';
-  const email = typeof emailRaw === 'string' ? emailRaw : '';
+const deriveOxxoOwnerName = (params: {
+  fullNameRaw?: unknown;
+  usernameRaw?: unknown;
+  emailRaw?: unknown;
+}): string => {
+  const fullName = typeof params.fullNameRaw === 'string' ? params.fullNameRaw : '';
+  const username = typeof params.usernameRaw === 'string' ? params.usernameRaw : '';
+  const email = typeof params.emailRaw === 'string' ? params.emailRaw : '';
   const emailPrefix = email.includes('@') ? email.split('@')[0] ?? '' : email;
 
   const sanitize = (value: string): string => {
@@ -96,7 +101,7 @@ const deriveOxxoOwnerName = (usernameRaw: unknown, emailRaw: unknown): string =>
       .trim();
 
     const parts = lettersOnly.split(' ').filter(Boolean);
-    // Stripe OXXO validates the owner name quite strictly. Avoid 2-letter "DJ"/initials and
+    // Stripe OXXO validates the owner name quite strictly. Avoid 1-2 letter initials and
     // always return 2 words with enough characters.
     const goodParts = parts.filter((p) => p.length >= 3);
 
@@ -110,16 +115,19 @@ const deriveOxxoOwnerName = (usernameRaw: unknown, emailRaw: unknown): string =>
       // Keep it simple: first + last name only to avoid single-letter middles.
       return toTitleCase(`${goodParts[0]} ${goodParts[goodParts.length - 1]}`.slice(0, 60).trim());
     }
-    if (goodParts.length === 1) return toTitleCase(`${goodParts[0]} Beat`.slice(0, 60).trim());
+    if (goodParts.length === 1) {
+      // If we only have one usable token, duplicate it to satisfy "first + last" validations.
+      return toTitleCase(`${goodParts[0]} ${goodParts[0]}`.slice(0, 60).trim());
+    }
     return '';
   };
 
-  const candidates = [username, emailPrefix, 'Bear Beat'];
+  const candidates = [fullName, username, emailPrefix];
   for (const candidate of candidates) {
     const cleaned = sanitize(candidate);
     if (cleaned && cleaned.length >= 3) return cleaned;
   }
-  return 'Bear Beat';
+  return 'Cliente Cliente';
 };
 
 type StripeErrorShape = {
@@ -287,7 +295,22 @@ export const subscribeWithOxxoStripe = shieldedProcedure
 
     let pi: Stripe.PaymentIntent;
     try {
-      const ownerName = deriveOxxoOwnerName(user.username, user.email);
+      const dbUser = await prisma.users.findFirst({
+        where: { id: user.id },
+        select: {
+          first_name: true,
+          last_name: true,
+          username: true,
+          email: true,
+        },
+      });
+
+      const fullNameCandidate = `${dbUser?.first_name ?? ''} ${dbUser?.last_name ?? ''}`.trim();
+      const ownerName = deriveOxxoOwnerName({
+        fullNameRaw: fullNameCandidate,
+        usernameRaw: dbUser?.username ?? user.username,
+        emailRaw: dbUser?.email ?? user.email,
+      });
       pi = await stripeOxxoInstance.paymentIntents.create(
         {
           amount: amountCents,
@@ -333,6 +356,7 @@ export const subscribeWithOxxoStripe = shieldedProcedure
       const message = (stripeError.message ?? '').toLowerCase();
 
       const isAuthError = typeLower === 'stripeauthenticationerror';
+      const isInvalidOwnerName = codeLower === 'invalid_owner_name' || message.includes('owner name');
       const isPaymentMethodUnavailable =
         codeLower === 'payment_method_unactivated'
         || message.includes('oxxo')
@@ -345,6 +369,8 @@ export const subscribeWithOxxoStripe = shieldedProcedure
       const reasonCode = [type, code].filter(Boolean).join(':') || 'unknown';
       const userMessage = isAuthError
         ? 'No pudimos autenticar el pago en efectivo. Intenta de nuevo o usa tarjeta/SPEI.'
+        : isInvalidOwnerName
+          ? 'Para generar la referencia OXXO necesitamos tu nombre completo (nombre + apellido). Actualízalo en tu cuenta o intenta con tarjeta/SPEI.'
         : isAccountDisabled
           ? 'La cuenta de pagos en efectivo no está lista para cobrar en vivo. Usa tarjeta/SPEI por ahora.'
           : isPaymentMethodUnavailable

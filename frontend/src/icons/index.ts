@@ -83,7 +83,7 @@ export {
   Spinner as Loader2,
   Storefront as Store,
   Sun,
-  Ticket,
+  Tag as Ticket,
   Trash as Trash2,
   TrendUp as TrendingUp,
   User,

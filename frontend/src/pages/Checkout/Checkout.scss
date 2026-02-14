@@ -162,21 +162,42 @@ html.dark .checkout-main-container,
 }
 
 .checkout-card {
-  border-radius: 20px;
-  border: 1px solid color-mix(in srgb, var(--app-border) 86%, transparent);
-  background: color-mix(in srgb, var(--app-bg-card) 97%, transparent);
-  box-shadow:
-    0 1px 0 color-mix(in srgb, #ffffff 32%, transparent) inset,
-    0 12px 28px color-mix(in srgb, #000000 11%, transparent);
-  padding: clamp(14px, 1.6vw, 22px);
+  border-radius: 24px;
+  border: 1px solid color-mix(in srgb, var(--app-border) 82%, transparent);
+  background:
+    radial-gradient(
+      520px 220px at 12% 0%,
+      color-mix(in srgb, var(--app-accent) 6%, transparent),
+      transparent 70%
+    ),
+    color-mix(in srgb, var(--app-bg-card) 96%, transparent);
+  box-shadow: var(--app-shadow-card);
+  position: relative;
+  overflow: hidden;
+  padding: clamp(16px, 1.8vw, 24px);
+}
+
+.checkout-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--app-accent-bright), var(--app-accent));
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.checkout-card > * {
+  position: relative;
+  z-index: 1;
 }
 
 html[data-theme="dark"] .checkout-card,
 html.dark .checkout-card,
 .dark .checkout-card {
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.04) inset,
-    0 14px 34px rgba(0, 0, 0, 0.36);
+  box-shadow: 0 18px 54px rgba(0, 0, 0, 0.44);
 }
 
 .checkout2026__flow {
@@ -204,6 +225,51 @@ html.dark .checkout-card,
   font-weight: 900;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+}
+
+.checkout2026__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  width: fit-content;
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--app-border) 86%, transparent);
+  background: color-mix(in srgb, var(--app-bg-soft) 82%, transparent);
+  color: var(--app-text-heading);
+  font-size: 1.02rem;
+  font-weight: 850;
+  letter-spacing: 0.01em;
+  gap: 8px;
+}
+
+.checkout2026__eyebrowPlan {
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.checkout2026__eyebrowDot {
+  opacity: 0.55;
+}
+
+.checkout2026__eyebrowPrice {
+  font-weight: 850;
+  color: color-mix(in srgb, var(--app-text-body) 92%, transparent);
+}
+
+.checkout2026__eyebrowTag {
+  min-height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--app-accent) 32%, var(--app-border));
+  background: color-mix(in srgb, var(--theme-accent-soft-bg-2) 68%, var(--app-bg-card));
+  color: var(--app-accent);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.86rem;
 }
 
 .checkout2026__title {
@@ -1404,8 +1470,8 @@ html.dark .checkout-method.is-active,
 }
 
 .checkout2026__consent.is-error {
-  border-color: color-mix(in srgb, var(--app-status-danger) 48%, var(--app-border));
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--app-status-danger) 20%, transparent);
+  border-color: color-mix(in srgb, var(--app-status-error) 48%, var(--app-border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--app-status-error) 20%, transparent);
 }
 
 .checkout2026__consentRow {
@@ -1673,6 +1739,16 @@ html[data-theme="light"] .checkout-one-state {
     0 14px 30px rgba(15, 23, 42, 0.08);
 }
 
+html[data-theme="light"] .checkout-card::before {
+  opacity: 0.62;
+}
+
+html[data-theme="light"] .checkout2026__top {
+  background: color-mix(in srgb, #ffffff 92%, var(--ph-bg));
+  border-bottom-color: color-mix(in srgb, var(--ph-border) 78%, transparent);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
 html[data-theme="light"] .checkout-header__amount,
 html[data-theme="light"] .checkout-summary__trial,
 html[data-theme="light"] .checkout-selected-method,
@@ -1717,9 +1793,9 @@ html[data-theme="light"] .checkout-method:hover {
 }
 
 html[data-theme="light"] .checkout-method.is-active {
-  border-color: color-mix(in srgb, var(--app-accent) 36%, var(--app-border));
-  background: color-mix(in srgb, var(--app-accent) 7%, #ffffff);
-  box-shadow: 0 10px 24px color-mix(in srgb, var(--app-accent) 11%, transparent);
+  border-color: color-mix(in srgb, var(--app-accent) 32%, var(--app-border));
+  background: color-mix(in srgb, var(--app-accent) 4.2%, #ffffff);
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--app-accent) 9%, transparent);
 }
 
 html[data-theme="light"] .checkout-paypal-panel {

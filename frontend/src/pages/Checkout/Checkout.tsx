@@ -910,6 +910,7 @@ function Checkout() {
     ? `Hoy $0. Después ${summaryMonthlyLabel}. Renovación automática. Cancela cuando quieras.`
     : "Renovación automática. Cancela cuando quieras.";
   const summaryTotalLabel = isCardTrial ? "Total hoy:" : "Total a pagar hoy:";
+  const eyebrowTag = isTrialEligible ? `Prueba ${trialDays} días` : null;
 
   const summaryContent = (
     <>
@@ -1027,8 +1028,13 @@ function Checkout() {
         <div className="checkout-grid checkout2026__grid">
           <section className="checkout-card checkout2026__flow" aria-label="Completa tu pago">
             <header className="checkout2026__flowHead">
-              <div className="checkout2026__kicker" aria-label="Progreso">
-                Paso 2 de 2
+              <div className="checkout2026__eyebrow" aria-label="Plan seleccionado">
+                <span className="checkout2026__eyebrowPlan">{planName}</span>
+                <span className="checkout2026__eyebrowDot" aria-hidden>
+                  ·
+                </span>
+                <span className="checkout2026__eyebrowPrice">{summaryMonthlyLabel}</span>
+                {eyebrowTag && <span className="checkout2026__eyebrowTag">{eyebrowTag}</span>}
               </div>
               <h1 className="checkout2026__title">Completa tu pago</h1>
               <p className="checkout2026__subtitle">
@@ -1040,7 +1046,7 @@ function Checkout() {
             </header>
 
             <section className="checkout2026__block" aria-label="Tu cuenta">
-              <h2 className="checkout2026__blockTitle">Tu Cuenta</h2>
+              <h2 className="checkout2026__blockTitle">Tu cuenta</h2>
               <div className="checkout2026__readonly">
                 <div className="checkout2026__field">
                   <span className="checkout2026__fieldLabel">Nombre</span>
@@ -1059,20 +1065,22 @@ function Checkout() {
                 {methodsForUi.map((method) => {
                   const { Icon, label, description } = METHOD_META[method];
                   const isActive = selectedMethod === method;
+                  // Keep the selector calm: show "extra" pills/logos only on the active method.
                   const methodState =
-                    method === "card"
+                    isActive && method === "card"
                       ? isTrialEligible
                         ? `Prueba ${trialDays} días`
                         : "Más rápido"
                       : null;
-                  const logoMethods =
-                    method === "card"
+                  const logoMethods = isActive
+                    ? method === "card"
                       ? (["visa", "mastercard"] as const)
                       : method === "paypal"
                         ? (["paypal"] as const)
                         : method === "spei"
                           ? (["spei"] as const)
-                          : null;
+                          : null
+                    : null;
 
                   return (
                     <button
