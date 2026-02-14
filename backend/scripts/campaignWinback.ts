@@ -91,8 +91,9 @@ async function queryLapsed(params: {
   limit: number;
   lookbackDays: number;
   minLapsedDays: number;
+  stage: number;
 }): Promise<LapsedRow[]> {
-  const { limit, lookbackDays, minLapsedDays } = params;
+  const { limit, lookbackDays, minLapsedDays, stage } = params;
   return prisma.$queryRaw<LapsedRow[]>(Prisma.sql`
     SELECT
       u.id AS userId,
@@ -102,8 +103,13 @@ async function queryLapsed(params: {
     FROM descargas_user du
     INNER JOIN users u
       ON u.id = du.user_id
+    LEFT JOIN automation_action_logs aal
+      ON aal.user_id = u.id
+      AND aal.action_key = 'winback_lapsed'
+      AND aal.stage = ${stage}
     WHERE u.blocked = 0
       AND u.email_marketing_opt_in = 1
+      AND aal.id IS NULL
       AND EXISTS (
         SELECT 1
         FROM orders o
@@ -123,8 +129,9 @@ async function queryNeverPaid(params: {
   limit: number;
   lookbackDays: number;
   minRegisteredDays: number;
+  stage: number;
 }): Promise<NeverPaidRow[]> {
-  const { limit, lookbackDays, minRegisteredDays } = params;
+  const { limit, lookbackDays, minRegisteredDays, stage } = params;
   return prisma.$queryRaw<NeverPaidRow[]>(Prisma.sql`
     SELECT
       u.id AS userId,
@@ -139,8 +146,13 @@ async function queryNeverPaid(params: {
     LEFT JOIN descargas_user du
       ON du.user_id = u.id
       AND du.date_end > NOW()
+    LEFT JOIN automation_action_logs aal
+      ON aal.user_id = u.id
+      AND aal.action_key = 'registered_no_purchase_offer'
+      AND aal.stage = ${stage}
     WHERE u.blocked = 0
       AND u.email_marketing_opt_in = 1
+      AND aal.id IS NULL
       AND u.verified = 1
       AND u.registered_on < DATE_SUB(NOW(), INTERVAL ${minRegisteredDays} DAY)
       AND u.registered_on >= DATE_SUB(NOW(), INTERVAL ${lookbackDays} DAY)
@@ -176,9 +188,9 @@ async function main(): Promise<void> {
 
   let rows: Array<LapsedRow | NeverPaidRow> = [];
   if (segment === 'lapsed') {
-    rows = await queryLapsed({ limit, lookbackDays, minLapsedDays: minDays });
+    rows = await queryLapsed({ limit, lookbackDays, minLapsedDays: minDays, stage });
   } else {
-    rows = await queryNeverPaid({ limit, lookbackDays, minRegisteredDays: minDays });
+    rows = await queryNeverPaid({ limit, lookbackDays, minRegisteredDays: minDays, stage });
   }
 
   const csvHeader =
@@ -308,4 +320,3 @@ main()
   .finally(async () => {
     await prisma.$disconnect().catch(() => {});
   });
-
