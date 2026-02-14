@@ -74,6 +74,7 @@ async function main(): Promise<void> {
 
   const expiresAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
   const expiresAtText = `${expiresAt.toISOString().replace('T', ' ').slice(0, 16)} UTC`;
+  const accessUntil = `${expiresAt.toISOString().slice(0, 10)}`;
 
   const samples: Array<{ key: string; subject: string; html: string; text: string }> = [
     {
@@ -106,6 +107,35 @@ async function main(): Promise<void> {
         catalogUrl,
         accountUrl,
         unsubscribeUrl,
+      }),
+    },
+    {
+      key: 'cancellationConfirmed',
+      ...emailTemplates.cancellationConfirmed({
+        name: 'Gustavo',
+        planName: 'Plan Oro',
+        accessUntil,
+        accountUrl,
+        reactivateUrl: plansUrl,
+      }),
+    },
+    {
+      key: 'cancellationEndingSoon',
+      ...emailTemplates.cancellationEndingSoon({
+        name: 'Gustavo',
+        accessUntil,
+        accountUrl,
+        reactivateUrl: plansUrl,
+      }),
+    },
+    {
+      key: 'dunningPaymentFailed',
+      ...emailTemplates.dunningPaymentFailed({
+        name: 'Gustavo',
+        ctaUrl: accountUrl,
+        stageDays: 0,
+        accessUntil,
+        supportUrl: accountUrl,
       }),
     },
     {
