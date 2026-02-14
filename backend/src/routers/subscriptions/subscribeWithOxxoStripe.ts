@@ -44,6 +44,35 @@ const extractOxxoVoucher = (
   };
 };
 
+const deriveOxxoOwnerName = (usernameRaw: unknown, emailRaw: unknown): string => {
+  const username = typeof usernameRaw === 'string' ? usernameRaw : '';
+  const email = typeof emailRaw === 'string' ? emailRaw : '';
+  const emailPrefix = email.includes('@') ? email.split('@')[0] ?? '' : email;
+
+  const sanitize = (value: string): string => {
+    const normalized = value
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '');
+
+    const lettersOnly = normalized
+      .replace(/[^a-zA-Z ]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    const parts = lettersOnly.split(' ').filter(Boolean);
+    if (parts.length >= 2) return parts.slice(0, 4).join(' ').slice(0, 60).trim();
+    if (parts.length === 1) return `${parts[0]} Beat`.slice(0, 60).trim();
+    return '';
+  };
+
+  const candidates = [username, emailPrefix, 'Bear Beat'];
+  for (const candidate of candidates) {
+    const cleaned = sanitize(candidate);
+    if (cleaned && cleaned.length >= 3) return cleaned;
+  }
+  return 'Bear Beat';
+};
+
 type StripeErrorShape = {
   type?: unknown;
   code?: unknown;
@@ -208,6 +237,7 @@ export const subscribeWithOxxoStripe = shieldedProcedure
 
     let pi: Stripe.PaymentIntent;
     try {
+      const ownerName = deriveOxxoOwnerName(user.username, user.email);
       pi = await stripeOxxoInstance.paymentIntents.create(
         {
           amount: amountCents,
@@ -218,7 +248,7 @@ export const subscribeWithOxxoStripe = shieldedProcedure
             type: 'oxxo',
             billing_details: {
               email: user.email,
-              name: user.username,
+              name: ownerName,
             },
           } as any,
           payment_method_options: {
