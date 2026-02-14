@@ -1,0 +1,97 @@
+name: Campaign: winback + never-paid
+
+on:
+  workflow_dispatch:
+    inputs:
+      segment:
+        description: Target segment
+        required: true
+        type: choice
+        options:
+          - lapsed
+          - never_paid
+      percent_off:
+        description: Percent discount (1-99)
+        required: false
+        default: "50"
+        type: string
+      expires_days:
+        description: Coupon validity (days)
+        required: false
+        default: "3"
+        type: string
+      lookback_days:
+        description: Only include users within this lookback window (days)
+        required: false
+        default: "365"
+        type: string
+      min_days:
+        description: Minimum days since lapse/registration (days)
+        required: false
+        default: "3"
+        type: string
+      stage:
+        description: Offer stage (use a new stage to resend with a new coupon later)
+        required: false
+        default: "1"
+        type: string
+      limit:
+        description: Max users to process
+        required: false
+        default: "500"
+        type: string
+      send:
+        description: Actually send emails (unchecked = dry-run + CSV only)
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: campaign-winback
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run via SSH (production backend)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            export PATH="/usr/local/bin:/usr/bin:$PATH"
+            [ -f ~/.profile ] && . ~/.profile
+            [ -f ~/.bashrc ] && . ~/.bashrc
+            cd bear-beat
+            git fetch origin main
+            git reset --hard origin/main
+            if [ -f ~/.nvm/nvm.sh ]; then
+              . ~/.nvm/nvm.sh
+              if [ -f backend/.nvmrc ]; then
+                NODE_VERSION="$(tr -d ' \t\r\n' < backend/.nvmrc)"
+                if [ -n "$NODE_VERSION" ]; then
+                  nvm install "$NODE_VERSION"
+                  nvm use "$NODE_VERSION"
+                fi
+              else
+                nvm use default 2>/dev/null || true
+              fi
+            fi
+            cd backend
+            SEND_FLAG=""
+            if [ "${{ inputs.send }}" = "true" ]; then
+              SEND_FLAG="--send"
+            fi
+            node -r ts-node/register scripts/campaignWinback.ts \
+              --segment="${{ inputs.segment }}" \
+              --percentOff="${{ inputs.percent_off }}" \
+              --expiresDays="${{ inputs.expires_days }}" \
+              --lookbackDays="${{ inputs.lookback_days }}" \
+              --minDays="${{ inputs.min_days }}" \
+              --stage="${{ inputs.stage }}" \
+              --limit="${{ inputs.limit }}" \
+              $SEND_FLAG
+

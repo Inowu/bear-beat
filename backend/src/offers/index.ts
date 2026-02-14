@@ -5,6 +5,8 @@ import { log } from '../server';
 
 export const OFFER_KEYS = {
   PLANS_NO_CHECKOUT: 'plans_no_checkout',
+  WINBACK_LAPSED: 'winback_lapsed',
+  REGISTERED_NO_PURCHASE: 'registered_no_purchase',
 } as const;
 
 export type OfferKey = (typeof OFFER_KEYS)[keyof typeof OFFER_KEYS];
@@ -25,10 +27,15 @@ export type ResolvedCheckoutCoupon =
 
 const MAX_COUPON_CODE_LEN = 15;
 
-export function resolveOfferCouponCode(userId: number, percentOff: number): string {
+export function resolveOfferCouponCode(params: { userId: number; percentOff: number; offerKey?: OfferKey }): string {
   // Fits Cupons.code VARCHAR(15) and Stripe coupon id.
-  const prefix = `BB${Math.max(0, Math.min(99, Math.floor(percentOff)))}`;
-  const code = `${prefix}U${userId}`;
+  const pct = Math.max(0, Math.min(99, Math.floor(Number(params.percentOff) || 0)));
+
+  // Keep existing plans-view offers on the legacy code path (U) to avoid surprising users.
+  const variant =
+    params.offerKey === OFFER_KEYS.WINBACK_LAPSED ? 'W' : params.offerKey === OFFER_KEYS.REGISTERED_NO_PURCHASE ? 'R' : 'U';
+
+  const code = `BB${pct}${variant}${params.userId}`;
   return code.slice(0, MAX_COUPON_CODE_LEN);
 }
 
@@ -105,7 +112,7 @@ export async function upsertUserOfferAndCoupon(params: {
   expiresAt: Date;
 }): Promise<{ offerId: number; couponCode: string | null; percentOff: number }> {
   const { prisma, userId, offerKey, stage, percentOff, expiresAt } = params;
-  const code = resolveOfferCouponCode(userId, percentOff);
+  const code = resolveOfferCouponCode({ userId, percentOff, offerKey });
 
   const existing = await prisma.userOffer.findFirst({
     where: {
@@ -273,4 +280,3 @@ export async function markUserOffersRedeemed(params: {
     });
   }
 }
-

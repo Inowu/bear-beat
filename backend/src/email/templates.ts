@@ -611,6 +611,154 @@ export const emailTemplates = {
     };
   },
 
+  winbackLapsedOffer: (params: {
+    name: string;
+    url: string;
+    couponCode: string;
+    percentOff: number;
+    expiresAt: string;
+    unsubscribeUrl?: string;
+  }) => {
+    const { name, url, couponCode, percentOff, expiresAt, unsubscribeUrl } = params;
+    const pct = Math.max(0, Math.min(99, Math.floor(Number(percentOff) || 0)));
+    const safeCoupon = String(couponCode || '').trim();
+    const subject = `[Bear Beat] Regresa con ${pct}% (por tiempo limitado)`;
+
+    const contentHtml = `
+      <h1 style="margin:0 0 10px 0;font-family:${FONT_BRAND};font-size:26px;line-height:1.16;letter-spacing:-0.01em;font-weight:950;color:${COLORS.ink};">
+        ${escapeHtml(`Te guardamos ${pct}% para volver`)}
+      </h1>
+      <p style="margin:0 0 12px 0;font-size:16px;line-height:1.7;color:${COLORS.text};">
+        Hola <strong>${escapeHtml(name)}</strong>. Tu acceso ya no est&aacute; activo, pero te dejamos un cup&oacute;n personal para que vuelvas
+        hoy y descargues lo que necesitas para tu set (sin estar improvisando en cabina).
+      </p>
+      <div style="margin:14px 0 12px 0;background:${COLORS.cardSoft};border:1px solid ${COLORS.border};border-radius:14px;padding:14px;">
+        <div style="font-family:${FONT_MONO};font-size:12px;color:${COLORS.muted};margin-bottom:8px;">
+          C&oacute;digo personal
+        </div>
+        <div style="font-family:${FONT_MONO};font-size:20px;font-weight:950;letter-spacing:0.08em;color:${COLORS.ink};">
+          ${escapeHtml(safeCoupon)}
+        </div>
+        <div style="margin-top:10px;font-size:12px;color:${COLORS.muted};line-height:1.5;">
+          V&aacute;lido hasta: <strong style="color:${COLORS.ink};">${escapeHtml(expiresAt)}</strong>
+        </div>
+      </div>
+      <div style="margin:0 0 14px 0;background:${COLORS.cardSoft};border:1px solid ${COLORS.border};border-radius:14px;padding:14px;">
+        <div style="font-size:12px;line-height:1.3;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:${COLORS.muted};">
+          Vuelve y gana esto
+        </div>
+        <ul style="margin:10px 0 0 18px;padding:0;color:${COLORS.text};font-size:14px;line-height:1.65;">
+          <li>Video remixes, audios y karaokes listos para cabina</li>
+          <li>Organizado por carpetas para encontrar r&aacute;pido</li>
+          <li>Descargas por FTP (recomendado) o por web</li>
+          <li>Pago seguro &bull; Cancela cuando quieras</li>
+        </ul>
+      </div>
+      <div style="margin:16px 0 14px 0;">
+        ${renderButton({ href: url, label: `Reactivar con ${pct}%` })}
+      </div>
+      <p style="margin:0;font-size:13px;line-height:1.65;color:${COLORS.muted};">
+        Normalmente se aplica autom&aacute;ticamente al entrar con tu cuenta. Si te lo pide, pega el c&oacute;digo en el checkout.
+      </p>
+      <p style="margin:12px 0 0 0;font-size:13px;line-height:1.65;color:${COLORS.muted};">
+        Enlace directo: <span style="word-break:break-all;color:${COLORS.ink};">${escapeHtml(url)}</span>
+      </p>
+    `.trim();
+
+    const text =
+      `Te guardamos ${pct}% para volver\n\n` +
+      `Hola ${name}. Tu acceso ya no está activo, pero te dejamos un cupón personal por tiempo limitado.\n\n` +
+      `Código: ${safeCoupon}\n` +
+      `Válido hasta: ${expiresAt}\n\n` +
+      `Reactivar: ${url}\n\n` +
+      `Normalmente se aplica automático. Si te lo pide, pega el código en el checkout.\n`;
+
+    return {
+      subject,
+      html: renderLayout({
+        title: subject,
+        preheader: `Cupón personal ${pct}% por tiempo limitado`,
+        contentHtml,
+        unsubscribeUrl,
+      }),
+      text: appendMarketingUnsubscribeText(text, unsubscribeUrl),
+    };
+  },
+
+  registeredNoPurchaseOffer: (params: {
+    name: string;
+    url: string;
+    couponCode: string;
+    percentOff: number;
+    expiresAt: string;
+    unsubscribeUrl?: string;
+  }) => {
+    const { name, url, couponCode, percentOff, expiresAt, unsubscribeUrl } = params;
+    const pct = Math.max(0, Math.min(99, Math.floor(Number(percentOff) || 0)));
+    const safeCoupon = String(couponCode || '').trim();
+    const subject = `[Bear Beat] Activa hoy con ${pct}% (cupón personal)`;
+
+    const contentHtml = `
+      <h1 style="margin:0 0 10px 0;font-family:${FONT_BRAND};font-size:26px;line-height:1.16;letter-spacing:-0.01em;font-weight:950;color:${COLORS.ink};">
+        ${escapeHtml(`Tu cupón ${pct}% para activar hoy`)}
+      </h1>
+      <p style="margin:0 0 12px 0;font-size:16px;line-height:1.7;color:${COLORS.text};">
+        Hola <strong>${escapeHtml(name)}</strong>. Vimos que te registraste pero no activaste.
+        Si haces cabina, esto te ahorra horas: un cat&aacute;logo gigante (video remixes, audios y karaokes) organizado por carpetas para encontrar r&aacute;pido.
+      </p>
+      <div style="margin:14px 0 12px 0;background:${COLORS.cardSoft};border:1px solid ${COLORS.border};border-radius:14px;padding:14px;">
+        <div style="font-family:${FONT_MONO};font-size:12px;color:${COLORS.muted};margin-bottom:8px;">
+          C&oacute;digo
+        </div>
+        <div style="font-family:${FONT_MONO};font-size:20px;font-weight:950;letter-spacing:0.08em;color:${COLORS.ink};">
+          ${escapeHtml(safeCoupon)}
+        </div>
+        <div style="margin-top:10px;font-size:12px;color:${COLORS.muted};line-height:1.5;">
+          V&aacute;lido hasta: <strong style="color:${COLORS.ink};">${escapeHtml(expiresAt)}</strong>
+        </div>
+      </div>
+      <div style="margin:0 0 14px 0;background:${COLORS.cardSoft};border:1px solid ${COLORS.border};border-radius:14px;padding:14px;">
+        <div style="font-size:12px;line-height:1.3;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:${COLORS.muted};">
+          Por qu&eacute; te conviene
+        </div>
+        <ul style="margin:10px 0 0 18px;padding:0;color:${COLORS.text};font-size:14px;line-height:1.65;">
+          <li>Carpetas por a&ntilde;o/mes/semana/g&eacute;nero</li>
+          <li>FTP recomendado para bajar r&aacute;pido y sin fallas</li>
+          <li>Nuevos contenidos cada semana</li>
+          <li>Cancela cuando quieras</li>
+        </ul>
+      </div>
+      <div style="margin:16px 0 14px 0;">
+        ${renderButton({ href: url, label: `Ver planes y activar (${pct}%)` })}
+      </div>
+      <p style="margin:0;font-size:13px;line-height:1.65;color:${COLORS.muted};">
+        Normalmente se aplica autom&aacute;ticamente al entrar con tu cuenta. Si te lo pide, pega el c&oacute;digo en el checkout.
+      </p>
+      <p style="margin:12px 0 0 0;font-size:13px;line-height:1.65;color:${COLORS.muted};">
+        Enlace directo: <span style="word-break:break-all;color:${COLORS.ink};">${escapeHtml(url)}</span>
+      </p>
+    `.trim();
+
+    const text =
+      `Tu cupón ${pct}% para activar hoy\n\n` +
+      `Hola ${name}. Vimos que te registraste pero no activaste.\n\n` +
+      `Código: ${safeCoupon}\n` +
+      `Válido hasta: ${expiresAt}\n\n` +
+      `Ver planes y activar: ${url}\n\n` +
+      `Normalmente se aplica automático. Si te lo pide, pega el código en el checkout.\n`;
+
+    return {
+      subject,
+      html: renderLayout({
+        title: subject,
+        preheader: `Cupón ${pct}% para activar hoy`,
+        contentHtml,
+        unsubscribeUrl,
+      }),
+      text: appendMarketingUnsubscribeText(text, unsubscribeUrl),
+    };
+  },
+
   automationVerifyWhatsApp24h: (params: { name: string; url: string }) => {
     const { name, url } = params;
     const subject = `[Bear Beat] Verifica tu WhatsApp para descargar`;
