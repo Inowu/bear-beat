@@ -44,17 +44,17 @@
   --bb-dark-400: #1A1A1A;
   /* Light base: bright + crisp hierarchy (avoid “dark theme turned white”). */
   /* App/LP background (LIGHT): slightly deeper so white surfaces don't "blend" on mobile. */
-  --bb-bg: #E2ECF3;
+  --bb-bg: #D6E4EF;
   --bb-surface: #FFFFFF;
-  --bb-surface-soft: #F2F7FB;
-  --bb-border: rgba(15, 23, 42, 0.16);
+  --bb-surface-soft: #ECF3F9;
+  --bb-border: rgba(15, 23, 42, 0.12);
   --bb-text-heading: #0B1220;
   --bb-text-body: #1F2A3A;
   --bb-text-muted: #556274;
   --bb-focus-ring: rgba(0, 124, 137, 0.22);
   /* Shadows: lighter in LIGHT; rely more on border + subtle depth. */
-  --bb-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
-  --bb-shadow-card: 0 18px 46px rgba(15, 23, 42, 0.12);
+  --bb-shadow: 0 12px 28px rgba(15, 23, 42, 0.09);
+  --bb-shadow-card: 0 22px 56px rgba(15, 23, 42, 0.11);
   /* Light glow: keep it VERY subtle to avoid a "neon haze" look on white surfaces. */
   --bb-shadow-glow: 0 0 10px rgba(8, 225, 247, 0.08);
   --bb-shadow-1: var(--bb-shadow);
@@ -150,9 +150,9 @@
   --theme-accent-dim: var(--bb-accent-ink);
   --theme-accent-glow: rgba(8, 225, 247, 0.08);
   /* Soft accent surfaces in LIGHT should be subtle (avoid "baby blue" wash) */
-  --theme-accent-soft-bg: rgba(8, 225, 247, 0.018);
-  --theme-accent-soft-bg-2: rgba(8, 225, 247, 0.028);
-  --theme-accent-soft-bg-3: rgba(8, 225, 247, 0.04);
+  --theme-accent-soft-bg: rgba(8, 225, 247, 0.04);
+  --theme-accent-soft-bg-2: rgba(8, 225, 247, 0.06);
+  --theme-accent-soft-bg-3: rgba(8, 225, 247, 0.085);
   --theme-landing-bg: #000000;
   --theme-landing-text: #FFFFFF;
 
