@@ -19,13 +19,19 @@ cleanup() {
   fi
 
   echo "[test:local] Stopping test DB..."
-  docker compose -p "$COMPOSE_PROJECT" -f "$COMPOSE_FILE" down -v >/dev/null 2>&1 || true
+  docker compose \
+    -p "$COMPOSE_PROJECT" \
+    -f "$COMPOSE_FILE" \
+    down -v >/dev/null 2>&1 || true
 }
 
 trap cleanup EXIT
 
 echo "[test:local] Starting MySQL (port ${TEST_MYSQL_PORT}, db ${TEST_DB_NAME})..."
-docker compose -p "$COMPOSE_PROJECT" -f "$COMPOSE_FILE" up -d
+docker compose \
+  -p "$COMPOSE_PROJECT" \
+  -f "$COMPOSE_FILE" \
+  up -d
 
 echo "[test:local] Waiting for MySQL healthcheck..."
 deadline=$((SECONDS + 90))

@@ -4,6 +4,7 @@ import { loadEnvOnce } from "../src/utils/loadEnv";
 // loadEnvOnce() defaults to backend/.env.example when NODE_ENV === "test", unless ENV_FILE overrides.
 loadEnvOnce();
 
+// Keep this file strictly ASCII (GitHub warns on hidden/bidi Unicode in diffs).
 // Safety: never allow tests to run against staging/prod databases.
 // Use `npm run test:local` (repo root) to run CI-parity tests against a disposable local DB.
 const dbUrl = String(process.env.DATABASE_URL || "").trim();
