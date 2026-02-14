@@ -48,4 +48,7 @@ jobs:
             # Optional: inject Stripe OXXO separate-account secrets into backend/.env (deploy.sh upserts).
             export DEPLOY_STRIPE_OXXO_KEY="${{ secrets.STRIPE_OXXO_KEY }}"
             export DEPLOY_STRIPE_OXXO_WH_PI_SECRET="${{ secrets.STRIPE_OXXO_WH_PI_SECRET }}"
+            # Optional: inject AWS SES credentials into backend/.env (deploy.sh upserts).
+            export DEPLOY_AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}"
+            export DEPLOY_AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}"
             bash ./deploy.sh
