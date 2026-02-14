@@ -193,6 +193,9 @@
     display: block;
     object-fit: contain;
     image-rendering: crisp-edges;
+    /* Avoid any global dark-theme image filters turning the barcode into a white block. */
+    filter: none;
+    mix-blend-mode: normal;
   }
 
   .oxxo-modal__voucher {

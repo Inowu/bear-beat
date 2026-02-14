@@ -26,11 +26,13 @@ const tryGenerateOxxoBarcodeDataUrl = async (referenceRaw: unknown): Promise<str
         {
           bcid: 'code128',
           text: reference,
-          scale: 3,
-          height: 10,
+          // Make the barcode chunky enough to remain readable inside the modal.
+          scale: 4,
+          height: 14,
           includetext: false,
           paddingwidth: 10,
           paddingheight: 8,
+          barcolor: '000000',
           backgroundcolor: 'FFFFFF',
         },
         (err: unknown, buffer: Buffer) => {
@@ -94,8 +96,13 @@ const deriveOxxoOwnerName = (usernameRaw: unknown, emailRaw: unknown): string =>
       .trim();
 
     const parts = lettersOnly.split(' ').filter(Boolean);
-    if (parts.length >= 2) return parts.slice(0, 4).join(' ').slice(0, 60).trim();
-    if (parts.length === 1) return `${parts[0]} Beat`.slice(0, 60).trim();
+    // Stripe OXXO requires a full name where first and last name are each >= 2 characters.
+    const goodParts = parts.filter((p) => p.length >= 2);
+    if (goodParts.length >= 2) {
+      // Keep it simple: first + last name only to avoid single-letter middles.
+      return `${goodParts[0]} ${goodParts[goodParts.length - 1]}`.slice(0, 60).trim();
+    }
+    if (goodParts.length === 1) return `${goodParts[0]} Beat`.slice(0, 60).trim();
     return '';
   };
 
