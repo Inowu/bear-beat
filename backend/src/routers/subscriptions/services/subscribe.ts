@@ -135,6 +135,7 @@ export const subscribe = async ({
 
         try {
           await sendPlanActivatedEmail({
+            userId: user.id,
             toEmail: user.email,
             toName: user.username,
             planName: dbPlan.name,

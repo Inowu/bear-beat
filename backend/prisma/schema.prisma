@@ -272,6 +272,11 @@ model Users {
   ip_registro              String?                    @db.Text
   token_expiration         DateTime?                  @db.DateTime(0)
   refresh_token            String?                    @db.VarChar(250)
+  /// Marketing consent: email is opt-in by default; WhatsApp/SMS require explicit opt-in.
+  email_marketing_opt_in   Boolean                    @default(true)
+  whatsapp_marketing_opt_in Boolean                   @default(false)
+  sms_marketing_opt_in     Boolean                    @default(false)
+  marketing_opt_in_updated_at DateTime?               @db.DateTime(0)
   /// One-time marketing trial guard (set when a trial subscription starts).
   trial_used_at            DateTime?                  @db.DateTime(0)
   blocked                  Boolean                    @default(false)

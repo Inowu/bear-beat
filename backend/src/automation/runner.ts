@@ -6,6 +6,7 @@ import { manyChat } from '../many-chat';
 import { ensureAnalyticsEventsTableExists } from '../analytics';
 import { OFFER_KEYS, markUserOffersRedeemed, upsertUserOfferAndCoupon } from '../offers';
 import { twilio } from '../twilio';
+import { buildMarketingUnsubscribeUrl } from '../comms/unsubscribe';
 
 type AutomationChannel = 'manychat' | 'email' | 'twilio' | 'admin' | 'system';
 
@@ -88,6 +89,7 @@ async function safeSendAutomationEmail(params: {
 async function safeSendTwilioLink(user: Users, url: string): Promise<void> {
   if (!isTwilioConfigured()) return;
   if (!user.phone) return;
+  if (!user.whatsapp_marketing_opt_in) return;
   try {
     await twilio.sendMessage(user.phone, url);
   } catch (e) {
@@ -252,9 +254,10 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 
         safeAddManyChatTag(user, 'AUTOMATION_TRIAL_NO_DOWNLOAD_24H').catch(() => {});
         const templateId = parseNumber(process.env.AUTOMATION_EMAIL_TRIAL_NO_DOWNLOAD_TEMPLATE_ID, 0);
-        if (templateId > 0) {
+        if (templateId > 0 && user.email_marketing_opt_in) {
           const url = `${resolveClientUrl()}/`;
-          const tpl = emailTemplates.automationTrialNoDownload24h({ name: user.username, url });
+          const unsubscribeUrl = buildMarketingUnsubscribeUrl(user.id) ?? undefined;
+          const tpl = emailTemplates.automationTrialNoDownload24h({ name: user.username, url, unsubscribeUrl });
           await safeSendAutomationEmail({
             toEmail: user.email,
             toName: user.username,
@@ -315,9 +318,10 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 
         safeAddManyChatTag(user, 'AUTOMATION_PAID_NO_DOWNLOAD_24H').catch(() => {});
         const templateId = parseNumber(process.env.AUTOMATION_EMAIL_PAID_NO_DOWNLOAD_TEMPLATE_ID, 0);
-        if (templateId > 0) {
+        if (templateId > 0 && user.email_marketing_opt_in) {
           const url = `${resolveClientUrl()}/`;
-          const tpl = emailTemplates.automationPaidNoDownload24h({ name: user.username, url });
+          const unsubscribeUrl = buildMarketingUnsubscribeUrl(user.id) ?? undefined;
+          const tpl = emailTemplates.automationPaidNoDownload24h({ name: user.username, url, unsubscribeUrl });
           await safeSendAutomationEmail({
             toEmail: user.email,
             toName: user.username,
@@ -374,9 +378,10 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 
         safeAddManyChatTag(user, 'AUTOMATION_REGISTERED_NO_PURCHASE_7D').catch(() => {});
         const templateId = parseNumber(process.env.AUTOMATION_EMAIL_REGISTERED_NO_PURCHASE_TEMPLATE_ID, 0);
-        if (templateId > 0) {
+        if (templateId > 0 && user.email_marketing_opt_in) {
           const url = `${resolveClientUrl()}/planes`;
-          const tpl = emailTemplates.automationRegisteredNoPurchase7d({ name: user.username, url });
+          const unsubscribeUrl = buildMarketingUnsubscribeUrl(user.id) ?? undefined;
+          const tpl = emailTemplates.automationRegisteredNoPurchase7d({ name: user.username, url, unsubscribeUrl });
           await safeSendAutomationEmail({
             toEmail: user.email,
             toName: user.username,

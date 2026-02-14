@@ -1,6 +1,7 @@
 import { log } from '../server';
 import { emailTemplates } from './templates';
 import { isSesConfigured, sendSesEmail, type SendSesEmailParams } from './ses';
+import { buildMarketingUnsubscribeUrl } from '../comms/unsubscribe';
 
 export const isEmailConfigured = (): boolean => isSesConfigured();
 
@@ -16,10 +17,11 @@ export async function sendEmail(params: SendSesEmailParams): Promise<{ messageId
   return sendSesEmail(params);
 }
 
-export async function sendWelcomeEmail(params: { toEmail: string; toName: string; toAccountEmail: string }): Promise<void> {
-  const { toEmail, toName, toAccountEmail } = params;
+export async function sendWelcomeEmail(params: { userId: number; toEmail: string; toName: string; toAccountEmail: string }): Promise<void> {
+  const { userId, toEmail, toName, toAccountEmail } = params;
   try {
-    const tpl = emailTemplates.welcome({ name: toName, email: toAccountEmail });
+    const unsubscribeUrl = buildMarketingUnsubscribeUrl(userId) ?? undefined;
+    const tpl = emailTemplates.welcome({ name: toName, email: toAccountEmail, unsubscribeUrl });
     await sendEmail({ to: [toEmail], subject: tpl.subject, html: tpl.html, text: tpl.text });
   } catch (e) {
     log.warn('[EMAIL] Welcome email failed (non-blocking)', {
@@ -29,10 +31,11 @@ export async function sendWelcomeEmail(params: { toEmail: string; toName: string
   }
 }
 
-export async function sendPasswordResetEmail(params: { toEmail: string; toName: string; toAccountEmail: string; link: string }): Promise<void> {
-  const { toEmail, toName, toAccountEmail, link } = params;
+export async function sendPasswordResetEmail(params: { userId: number; toEmail: string; toName: string; toAccountEmail: string; link: string }): Promise<void> {
+  const { userId, toEmail, toName, toAccountEmail, link } = params;
   try {
-    const tpl = emailTemplates.passwordReset({ name: toName, email: toAccountEmail, link });
+    const unsubscribeUrl = buildMarketingUnsubscribeUrl(userId) ?? undefined;
+    const tpl = emailTemplates.passwordReset({ name: toName, email: toAccountEmail, link, unsubscribeUrl });
     await sendEmail({ to: [toEmail], subject: tpl.subject, html: tpl.html, text: tpl.text });
   } catch (e) {
     log.warn('[EMAIL] Password reset email failed (non-blocking)', {
@@ -42,15 +45,17 @@ export async function sendPasswordResetEmail(params: { toEmail: string; toName: 
   }
 }
 
-export async function sendPlanActivatedEmail(params: { toEmail: string; toName: string; planName: string; price: unknown; currency: string; orderId: unknown }): Promise<void> {
-  const { toEmail, toName, planName, price, currency, orderId } = params;
+export async function sendPlanActivatedEmail(params: { userId: number; toEmail: string; toName: string; planName: string; price: unknown; currency: string; orderId: unknown }): Promise<void> {
+  const { userId, toEmail, toName, planName, price, currency, orderId } = params;
   try {
+    const unsubscribeUrl = buildMarketingUnsubscribeUrl(userId) ?? undefined;
     const tpl = emailTemplates.planActivated({
       name: toName,
       planName,
       price,
       currency,
       orderId,
+      unsubscribeUrl,
     });
     await sendEmail({ to: [toEmail], subject: tpl.subject, html: tpl.html, text: tpl.text });
   } catch (e) {

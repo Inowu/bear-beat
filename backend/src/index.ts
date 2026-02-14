@@ -34,6 +34,7 @@ import {
   manyChatHandoffCreateEndpoint,
   manyChatHandoffResolveEndpoint,
 } from './endpoints/manychat-handoff.endpoint';
+import { commsUnsubscribeEndpoint } from './endpoints/comms-unsubscribe.endpoint';
 import {
   initializeRemoveUsersQueue,
   removeUsersQueue,
@@ -188,6 +189,14 @@ async function main() {
       manyChatHandoffCreateEndpoint,
     );
     app.get('/api/manychat/handoff/resolve', manyChatHandoffResolveEndpoint);
+
+    // Public unsubscribe (email marketing). Supports GET (human click) and POST (one-click).
+    app.get('/api/comms/unsubscribe', commsUnsubscribeEndpoint);
+    app.post(
+      '/api/comms/unsubscribe',
+      express.urlencoded({ extended: false, limit: '8kb' }),
+      commsUnsubscribeEndpoint,
+    );
 
     app.get('/api/analytics/health', (_req, res) => {
       res.json({

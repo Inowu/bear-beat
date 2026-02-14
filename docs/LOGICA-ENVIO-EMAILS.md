@@ -104,6 +104,7 @@ Los textos/diseño se editan en el repo (templates en `backend/src/email/templat
 
 - **Recuperar contraseña:** Además del email, se envía el mismo enlace por **WhatsApp** (Twilio) si el usuario tiene teléfono en BD.
 - **Automations (emails):** Se envían desde `backend/src/automation/runner.ts` y están detrás de flags tipo `AUTOMATION_EMAIL_*_TEMPLATE_ID` (por compatibilidad histórica). Si el valor es `> 0`, se envía el email.
+- **Consent / desuscripción (promos):** Los emails incluyen enlace para **cancelar promociones**. Esto desactiva `email_marketing_opt_in` para el usuario (no afecta emails transaccionales como pagos o reset password). Endpoint: `/api/comms/unsubscribe` (firma HMAC con `EMAIL_PREFERENCES_SECRET`). Las automatizaciones por email respetan `email_marketing_opt_in`.
 - **Alertas de analytics:** Se envían desde `backend/scripts/analyticsAlerts.ts` (ejecutar con `npm run analytics:alerts` en el workspace `backend`). Requiere `ANALYTICS_ALERTS_EMAIL_TO`.
 - **Errores:** Si SES falla, se registra en logs y en algunos flujos se devuelve un mensaje neutral al usuario; la lógica de negocio (crear usuario, guardar token, activar plan) ya se habrá ejecutado.
 - **Variables de entorno:** `AWS_REGION` y `SES_FROM_EMAIL` deben estar definidas en el backend para que cualquier envío funcione.

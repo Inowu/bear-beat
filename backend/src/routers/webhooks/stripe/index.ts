@@ -187,6 +187,7 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
           if (isInitialPaidActivation || isTrialConversion) {
             try {
               await sendPlanActivatedEmail({
+                userId: user.id,
                 toEmail: user.email,
                 toName: user.username,
                 planName: plan.name,

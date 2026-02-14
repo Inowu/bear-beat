@@ -56,6 +56,7 @@ export const forgotPassword = publicProcedure
     if (isEmailConfigured()) {
       // Best-effort: never break the flow on delivery errors.
       await sendPasswordResetEmail({
+        userId: user.id,
         toEmail: user.email,
         toName: user.username,
         toAccountEmail: user.email,

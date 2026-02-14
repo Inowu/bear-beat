@@ -8,10 +8,11 @@ const escapeHtml = (value: unknown): string => {
     .replace(/'/g, '&#39;');
 };
 
-const renderLayout = (params: { title: string; preheader?: string; contentHtml: string }): string => {
-  const { title, preheader, contentHtml } = params;
+const renderLayout = (params: { title: string; preheader?: string; contentHtml: string; unsubscribeUrl?: string }): string => {
+  const { title, preheader, contentHtml, unsubscribeUrl } = params;
   const safeTitle = escapeHtml(title);
   const safePreheader = preheader ? escapeHtml(preheader) : '';
+  const safeUnsubUrl = unsubscribeUrl ? escapeHtml(unsubscribeUrl) : '';
 
   return `
     <!doctype html>
@@ -42,6 +43,7 @@ const renderLayout = (params: { title: string; preheader?: string; contentHtml: 
               </table>
               <div style="font-family:Arial, sans-serif;color:#6b7280;font-size:12px;line-height:1.4;padding:12px 8px;">
                 Si no solicitaste este correo, puedes ignorarlo.
+                ${unsubscribeUrl ? `<div style="padding-top:6px;"><a href="${safeUnsubUrl}" style="color:#6b7280;text-decoration:underline;text-underline-offset:3px;">Cancelar promociones</a></div>` : ''}
               </div>
             </td>
           </tr>
@@ -62,9 +64,15 @@ const renderButton = (params: { href: string; label: string }): string => {
   `.trim();
 };
 
+const appendMarketingUnsubscribeText = (text: string, unsubscribeUrl?: string): string => {
+  const url = (unsubscribeUrl || '').trim();
+  if (!url) return text;
+  return `${text}\n\nCancelar promociones: ${url}\n`;
+};
+
 export const emailTemplates = {
-  welcome: (params: { name: string; email: string }) => {
-    const { name, email } = params;
+  welcome: (params: { name: string; email: string; unsubscribeUrl?: string }) => {
+    const { name, email, unsubscribeUrl } = params;
     const title = 'Bienvenido a Bear Beat';
     const contentHtml = `
       <h1 style="margin:0 0 10px 0;font-family:Arial, sans-serif;font-size:22px;line-height:1.2;color:#111;">${escapeHtml(title)}</h1>
@@ -79,13 +87,13 @@ export const emailTemplates = {
     const text = `Bienvenido a Bear Beat\n\nHola ${name}, tu cuenta ya está lista.\nEmail registrado: ${email}\n`;
     return {
       subject: title,
-      html: renderLayout({ title, preheader: 'Tu cuenta ya está lista.', contentHtml }),
-      text,
+      html: renderLayout({ title, preheader: 'Tu cuenta ya está lista.', contentHtml, unsubscribeUrl }),
+      text: appendMarketingUnsubscribeText(text, unsubscribeUrl),
     };
   },
 
-  passwordReset: (params: { name: string; email: string; link: string }) => {
-    const { name, email, link } = params;
+  passwordReset: (params: { name: string; email: string; link: string; unsubscribeUrl?: string }) => {
+    const { name, email, link, unsubscribeUrl } = params;
     const title = 'Restablece tu contraseña';
     const contentHtml = `
       <h1 style="margin:0 0 10px 0;font-family:Arial, sans-serif;font-size:22px;line-height:1.2;color:#111;">${escapeHtml(title)}</h1>
@@ -112,13 +120,13 @@ export const emailTemplates = {
 
     return {
       subject: title,
-      html: renderLayout({ title, preheader: 'Enlace para restablecer tu contraseña.', contentHtml }),
-      text,
+      html: renderLayout({ title, preheader: 'Enlace para restablecer tu contraseña.', contentHtml, unsubscribeUrl }),
+      text: appendMarketingUnsubscribeText(text, unsubscribeUrl),
     };
   },
 
-  planActivated: (params: { name: string; planName: string; price: unknown; currency: string; orderId: unknown }) => {
-    const { name, planName, price, currency, orderId } = params;
+  planActivated: (params: { name: string; planName: string; price: unknown; currency: string; orderId: unknown; unsubscribeUrl?: string }) => {
+    const { name, planName, price, currency, orderId, unsubscribeUrl } = params;
     const title = 'Tu plan está activo';
     const contentHtml = `
       <h1 style="margin:0 0 10px 0;font-family:Arial, sans-serif;font-size:22px;line-height:1.2;color:#111;">${escapeHtml(title)}</h1>
@@ -153,13 +161,13 @@ export const emailTemplates = {
 
     return {
       subject: title,
-      html: renderLayout({ title, preheader: `Plan activo: ${planName}`, contentHtml }),
-      text,
+      html: renderLayout({ title, preheader: `Plan activo: ${planName}`, contentHtml, unsubscribeUrl }),
+      text: appendMarketingUnsubscribeText(text, unsubscribeUrl),
     };
   },
 
-  automationTrialNoDownload24h: (params: { name: string; url: string }) => {
-    const { name, url } = params;
+  automationTrialNoDownload24h: (params: { name: string; url: string; unsubscribeUrl?: string }) => {
+    const { name, url, unsubscribeUrl } = params;
     const title = 'Tu prueba sigue activa';
     const subject = `[Bear Beat] ${title}`;
     const contentHtml = `
@@ -182,13 +190,13 @@ export const emailTemplates = {
 
     return {
       subject,
-      html: renderLayout({ title: subject, preheader: 'Tu prueba sigue activa.', contentHtml }),
-      text,
+      html: renderLayout({ title: subject, preheader: 'Tu prueba sigue activa.', contentHtml, unsubscribeUrl }),
+      text: appendMarketingUnsubscribeText(text, unsubscribeUrl),
     };
   },
 
-  automationPaidNoDownload24h: (params: { name: string; url: string }) => {
-    const { name, url } = params;
+  automationPaidNoDownload24h: (params: { name: string; url: string; unsubscribeUrl?: string }) => {
+    const { name, url, unsubscribeUrl } = params;
     const title = 'Tu plan está activo';
     const subject = `[Bear Beat] ${title}`;
     const contentHtml = `
@@ -211,13 +219,13 @@ export const emailTemplates = {
 
     return {
       subject,
-      html: renderLayout({ title: subject, preheader: 'Tu plan está activo.', contentHtml }),
-      text,
+      html: renderLayout({ title: subject, preheader: 'Tu plan está activo.', contentHtml, unsubscribeUrl }),
+      text: appendMarketingUnsubscribeText(text, unsubscribeUrl),
     };
   },
 
-  automationRegisteredNoPurchase7d: (params: { name: string; url: string }) => {
-    const { name, url } = params;
+  automationRegisteredNoPurchase7d: (params: { name: string; url: string; unsubscribeUrl?: string }) => {
+    const { name, url, unsubscribeUrl } = params;
     const title = 'Elige tu plan';
     const subject = `[Bear Beat] ${title}`;
     const contentHtml = `
@@ -240,8 +248,8 @@ export const emailTemplates = {
 
     return {
       subject,
-      html: renderLayout({ title: subject, preheader: 'Elige tu plan.', contentHtml }),
-      text,
+      html: renderLayout({ title: subject, preheader: 'Elige tu plan.', contentHtml, unsubscribeUrl }),
+      text: appendMarketingUnsubscribeText(text, unsubscribeUrl),
     };
   },
 

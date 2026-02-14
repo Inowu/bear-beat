@@ -124,6 +124,24 @@ PY
   printf "\nANALYTICS_IP_SALT=%s\n" "$salt" >> "$ENV_FILE"
 fi
 
+log "Ensuring EMAIL_PREFERENCES_SECRET is set (sign unsubscribe links)..."
+existing_email_pref_secret="$(grep '^EMAIL_PREFERENCES_SECRET=' "$ENV_FILE" | head -n 1 | sed 's/^EMAIL_PREFERENCES_SECRET=//')"
+existing_email_pref_secret="$(printf '%s' "$existing_email_pref_secret" | tr -d ' \t\r\n')"
+if [ -z "$existing_email_pref_secret" ]; then
+  if command -v openssl >/dev/null 2>&1; then
+    secret="$(openssl rand -hex 32)"
+  elif command -v python3 >/dev/null 2>&1; then
+    secret="$(python3 - <<'PY'
+import secrets
+print(secrets.token_hex(32))
+PY
+    )"
+  else
+    die "Missing required command to generate EMAIL_PREFERENCES_SECRET: install openssl or python3"
+  fi
+  upsert_env "EMAIL_PREFERENCES_SECRET" "$secret"
+fi
+
 log "Ensuring NODE_ENV is set to production (payments + webhooks rely on it in some modules)..."
 ensure_env_default "NODE_ENV" "production"
 
@@ -138,6 +156,7 @@ log "Ensuring Amazon SES env vars are set (email sending)..."
 ensure_env_default "AWS_REGION" "us-east-2"
 ensure_env_default "SES_FROM_EMAIL" "noreply@thebearbeat.com"
 ensure_env_default "SES_FROM_NAME" "Bear Beat"
+ensure_env_default "PUBLIC_API_URL" "https://thebearbeatapi.lat"
 
 log "Optionally injecting AWS SES credentials from deploy environment..."
 # Usage (avoid printing secrets):

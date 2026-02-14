@@ -109,6 +109,13 @@ export const register = publicProcedure
         .string()
         .optional()
         .transform((v) => `${v ?? ''}`.trim()),
+      // Consent flags (conversion-first defaults).
+      // Transactional/support comms are required to operate the service (security + account access).
+      acceptSupportComms: z.boolean().optional().default(true),
+      // Marketing/promotions: email is opt-in by default; WhatsApp/SMS require explicit opt-in.
+      marketingOptInEmail: z.boolean().optional().default(true),
+      marketingOptInWhatsApp: z.boolean().optional().default(false),
+      marketingOptInSms: z.boolean().optional().default(false),
       turnstileToken: z
         .string()
         .min(1, 'La verificación de seguridad es requerida'),
@@ -116,7 +123,22 @@ export const register = publicProcedure
   )
   .mutation(
     async ({
-      input: { username, email, password, phone, fbp, fbc, eventId, url, mcHandoffToken, turnstileToken },
+      input: {
+        username,
+        email,
+        password,
+        phone,
+        fbp,
+        fbc,
+        eventId,
+        url,
+        mcHandoffToken,
+        acceptSupportComms,
+        marketingOptInEmail,
+        marketingOptInWhatsApp,
+        marketingOptInSms,
+        turnstileToken,
+      },
       ctx: { req, prisma },
     }) => {
       const clientIp = getClientIpFromRequest(req);
@@ -176,6 +198,13 @@ export const register = publicProcedure
         }
       }
 
+      if (!acceptSupportComms) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Debes aceptar recibir mensajes transaccionales y de soporte para crear tu cuenta',
+        });
+      }
+
       const usernameFromEmail = normalizeUsernameCandidate(email.split('@')[0] ?? '');
       const finalUsername = username
         ? normalizeUsernameCandidate(username)
@@ -201,6 +230,10 @@ export const register = publicProcedure
         phone: normalizedPhone || null,
         role_id: RolesIds.normal,
         ip_registro: clientIp ?? req.ip,
+        email_marketing_opt_in: Boolean(marketingOptInEmail),
+        whatsapp_marketing_opt_in: Boolean(marketingOptInWhatsApp) && Boolean(normalizedPhone),
+        sms_marketing_opt_in: Boolean(marketingOptInSms),
+        marketing_opt_in_updated_at: new Date(),
         // `registered_on` is stored as DATE in MySQL (@db.Date). Use Date objects so Prisma
         // formats it correctly for the database.
         registered_on: new Date(),
@@ -318,6 +351,7 @@ export const register = publicProcedure
         try {
           log.info('[REGISTER] Sending email to user');
           await sendWelcomeEmail({
+            userId: newUser.id,
             toEmail: newUser.email,
             toName: newUser.username,
             toAccountEmail: newUser.email,

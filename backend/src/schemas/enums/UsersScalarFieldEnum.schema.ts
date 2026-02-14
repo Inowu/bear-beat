@@ -23,6 +23,10 @@ export const UsersScalarFieldEnumSchema = z.enum([
   'ip_registro',
   'token_expiration',
   'refresh_token',
+  'email_marketing_opt_in',
+  'whatsapp_marketing_opt_in',
+  'sms_marketing_opt_in',
+  'marketing_opt_in_updated_at',
   'trial_used_at',
   'blocked',
   'verified'
