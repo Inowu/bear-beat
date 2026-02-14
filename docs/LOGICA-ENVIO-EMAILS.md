@@ -21,8 +21,12 @@ Todos los emails salen del **backend** y se envían con **Amazon SES** (AWS SDK)
 | 3 | **Compra/activación de plan (Stripe)** | Cuando Stripe confirma la suscripción activa (webhook) | `planActivated` | `email` del usuario | `NAME`, `plan_name`, `price`, `currency`, `ORDER` |
 | 4 | **Compra/activación de plan (Conekta)** | Cuando Conekta confirma pago de suscripción (webhook) | `planActivated` | `email` del usuario | `NAME`, `plan_name`, `price`, `currency`, `ORDER` |
 | 5 | **Compra/activación de plan (PayPal o Admin)** | Cuando se activa la suscripción vía PayPal o manual (admin) en el flujo de `subscribe()` | `planActivated` | `email` del usuario | `NAME`, `plan_name`, `price`, `currency`, `ORDER` |
+| 6 | **Automatización: prueba activa sin descargas (24h)** | Cuando el usuario inicia prueba y no descarga en 24h (automation runner) | `automationTrialNoDownload24h` | `email` del usuario | `NAME`, `URL` |
+| 7 | **Automatización: plan pagado sin descargas (24h)** | Cuando el usuario paga su primer plan y no descarga en 24h (automation runner) | `automationPaidNoDownload24h` | `email` del usuario | `NAME`, `URL` |
+| 8 | **Automatización: registrado sin compra (7d)** | Cuando el usuario se registró hace 7 días y no compró (automation runner) | `automationRegisteredNoPurchase7d` | `email` del usuario | `NAME`, `URL` |
+| 9 | **Alertas internas de analytics** | Script/cron que envía alertas cuando hay métricas fuera de umbral | `analyticsAlerts` | Lista `ANALYTICS_ALERTS_EMAIL_TO` | `days`, `count`, `detailsText`, `generatedAt` |
 
-No hay más puntos en el código que envíen emails. Cualquier otro email que quieras (por ejemplo recordatorios, facturas, etc.) habría que añadirlo y definir el HTML/subject en `backend/src/email/templates.ts`.
+Fuera de esto, no hay más puntos en el repo que envíen emails. Cualquier otro email que quieras (por ejemplo recordatorios, facturas, etc.) habría que añadirlo y definir el HTML/subject en `backend/src/email/templates.ts`.
 
 ---
 
@@ -87,6 +91,10 @@ No hay más puntos en el código que envíen emails. Cualquier otro email que qu
 | `passwordReset` | Recuperar contraseña       | `NAME`, `EMAIL`, `LINK`         |
 | `planActivated` | Confirmación de compra/plan | `NAME`, `plan_name`, `price`, `currency`, `ORDER` |
 | `welcome` | Bienvenida / registro       | `NAME`, `EMAIL`                 |
+| `automationTrialNoDownload24h` | Automatización: prueba activa sin descargas (24h) | `NAME`, `URL` |
+| `automationPaidNoDownload24h` | Automatización: plan pagado sin descargas (24h) | `NAME`, `URL` |
+| `automationRegisteredNoPurchase7d` | Automatización: registrado sin compra (7d) | `NAME`, `URL` |
+| `analyticsAlerts` | Alertas internas de analytics (script/cron) | `days`, `count`, `detailsText`, `generatedAt` |
 
 Los textos/diseño se editan en el repo (templates en `backend/src/email/templates.ts`).
 
@@ -95,6 +103,8 @@ Los textos/diseño se editan en el repo (templates en `backend/src/email/templat
 ## Notas
 
 - **Recuperar contraseña:** Además del email, se envía el mismo enlace por **WhatsApp** (Twilio) si el usuario tiene teléfono en BD.
+- **Automations (emails):** Se envían desde `backend/src/automation/runner.ts` y están detrás de flags tipo `AUTOMATION_EMAIL_*_TEMPLATE_ID` (por compatibilidad histórica). Si el valor es `> 0`, se envía el email.
+- **Alertas de analytics:** Se envían desde `backend/scripts/analyticsAlerts.ts` (ejecutar con `npm run analytics:alerts` en el workspace `backend`). Requiere `ANALYTICS_ALERTS_EMAIL_TO`.
 - **Errores:** Si SES falla, se registra en logs y en algunos flujos se devuelve un mensaje neutral al usuario; la lógica de negocio (crear usuario, guardar token, activar plan) ya se habrá ejecutado.
 - **Variables de entorno:** `AWS_REGION` y `SES_FROM_EMAIL` deben estar definidas en el backend para que cualquier envío funcione.
 - **CLIENT_URL:** En el email de recuperar contraseña, el enlace se arma con `process.env.CLIENT_URL`; debe apuntar a la URL del frontend (ej. `https://thebearbeat.com`).

@@ -157,4 +157,117 @@ export const emailTemplates = {
       text,
     };
   },
+
+  automationTrialNoDownload24h: (params: { name: string; url: string }) => {
+    const { name, url } = params;
+    const title = 'Tu prueba sigue activa';
+    const subject = `[Bear Beat] ${title}`;
+    const contentHtml = `
+      <h1 style="margin:0 0 10px 0;font-family:Arial, sans-serif;font-size:22px;line-height:1.2;color:#111;">${escapeHtml(
+        title,
+      )}</h1>
+      <p style="margin:0 0 12px 0;font-family:Arial, sans-serif;color:#111;line-height:1.6;">
+        Hola <strong>${escapeHtml(name)}</strong>, tu prueba sigue activa.
+      </p>
+      <div style="margin:16px 0 14px 0;">
+        ${renderButton({ href: url, label: 'Empezar ahora' })}
+      </div>
+      <p style="margin:0;font-family:Arial, sans-serif;color:#374151;line-height:1.6;font-size:13px;">
+        Si el botón no funciona, copia y pega este enlace en tu navegador:<br />
+        <span style="word-break:break-all;">${escapeHtml(url)}</span>
+      </p>
+    `.trim();
+
+    const text = `Hola ${name},\n\nTu prueba sigue activa. Entra aquí para empezar:\n${url}\n`;
+
+    return {
+      subject,
+      html: renderLayout({ title: subject, preheader: 'Tu prueba sigue activa.', contentHtml }),
+      text,
+    };
+  },
+
+  automationPaidNoDownload24h: (params: { name: string; url: string }) => {
+    const { name, url } = params;
+    const title = 'Tu plan está activo';
+    const subject = `[Bear Beat] ${title}`;
+    const contentHtml = `
+      <h1 style="margin:0 0 10px 0;font-family:Arial, sans-serif;font-size:22px;line-height:1.2;color:#111;">${escapeHtml(
+        title,
+      )}</h1>
+      <p style="margin:0 0 12px 0;font-family:Arial, sans-serif;color:#111;line-height:1.6;">
+        Hola <strong>${escapeHtml(name)}</strong>, tu plan está activo.
+      </p>
+      <div style="margin:16px 0 14px 0;">
+        ${renderButton({ href: url, label: 'Ir a Bear Beat' })}
+      </div>
+      <p style="margin:0;font-family:Arial, sans-serif;color:#374151;line-height:1.6;font-size:13px;">
+        Si el botón no funciona, copia y pega este enlace en tu navegador:<br />
+        <span style="word-break:break-all;">${escapeHtml(url)}</span>
+      </p>
+    `.trim();
+
+    const text = `Hola ${name},\n\nTu plan está activo. Entra aquí para comenzar tus descargas:\n${url}\n`;
+
+    return {
+      subject,
+      html: renderLayout({ title: subject, preheader: 'Tu plan está activo.', contentHtml }),
+      text,
+    };
+  },
+
+  automationRegisteredNoPurchase7d: (params: { name: string; url: string }) => {
+    const { name, url } = params;
+    const title = 'Elige tu plan';
+    const subject = `[Bear Beat] ${title}`;
+    const contentHtml = `
+      <h1 style="margin:0 0 10px 0;font-family:Arial, sans-serif;font-size:22px;line-height:1.2;color:#111;">${escapeHtml(
+        title,
+      )}</h1>
+      <p style="margin:0 0 12px 0;font-family:Arial, sans-serif;color:#111;line-height:1.6;">
+        Hola <strong>${escapeHtml(name)}</strong>, aquí puedes elegir tu plan:
+      </p>
+      <div style="margin:16px 0 14px 0;">
+        ${renderButton({ href: url, label: 'Ver planes' })}
+      </div>
+      <p style="margin:0;font-family:Arial, sans-serif;color:#374151;line-height:1.6;font-size:13px;">
+        Si el botón no funciona, copia y pega este enlace en tu navegador:<br />
+        <span style="word-break:break-all;">${escapeHtml(url)}</span>
+      </p>
+    `.trim();
+
+    const text = `Hola ${name},\n\nElige tu plan aquí:\n${url}\n`;
+
+    return {
+      subject,
+      html: renderLayout({ title: subject, preheader: 'Elige tu plan.', contentHtml }),
+      text,
+    };
+  },
+
+  analyticsAlerts: (params: { days: number; count: number; detailsText: string; generatedAt: string }) => {
+    const { days, count, detailsText, generatedAt } = params;
+    const subject = `[Bear Beat] Alerts de analytics (${count}) · ${days}d`;
+    const contentHtml = `
+      <h1 style="margin:0 0 10px 0;font-family:Arial, sans-serif;font-size:22px;line-height:1.2;color:#111;">${escapeHtml(
+        subject,
+      )}</h1>
+      <p style="margin:0 0 12px 0;font-family:Arial, sans-serif;color:#111;line-height:1.6;">
+        Ventana: últimos <strong>${escapeHtml(days)}</strong> días.
+      </p>
+      <pre style="white-space: pre-wrap; background: #f6f8fa; padding: 12px; border-radius: 10px; border: 1px solid #e5e7eb;">${escapeHtml(
+        detailsText,
+      )}</pre>
+      <p style="margin:12px 0 0 0;font-family:Arial, sans-serif;color:#6b7280;line-height:1.6;font-size:12px;">
+        Generado: ${escapeHtml(generatedAt)}
+      </p>
+    `.trim();
+
+    const text = `${subject}\n\n${detailsText}\n\nGenerado: ${generatedAt}\n`;
+    return {
+      subject,
+      html: renderLayout({ title: subject, preheader: `${count} alert(s) en los últimos ${days} días`, contentHtml }),
+      text,
+    };
+  },
 };

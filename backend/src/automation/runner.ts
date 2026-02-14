@@ -1,6 +1,7 @@
 import { Prisma, PrismaClient, Users } from '@prisma/client';
 import { log } from '../server';
 import { isEmailConfigured, sendEmail } from '../email';
+import { emailTemplates } from '../email/templates';
 import { manyChat } from '../many-chat';
 import { ensureAnalyticsEventsTableExists } from '../analytics';
 import { OFFER_KEYS, markUserOffersRedeemed, upsertUserOfferAndCoupon } from '../offers';
@@ -253,17 +254,14 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
         const templateId = parseNumber(process.env.AUTOMATION_EMAIL_TRIAL_NO_DOWNLOAD_TEMPLATE_ID, 0);
         if (templateId > 0) {
           const url = `${resolveClientUrl()}/`;
-          const subject = '[Bear Beat] Tu prueba sigue activa';
-          const text = `Hola ${user.username},\n\nTu prueba sigue activa. Entra aquí para empezar:\n${url}\n`;
-          const html = `
-            <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-              <h2>Tu prueba sigue activa</h2>
-              <p>Hola <strong>${user.username}</strong>,</p>
-              <p>Entra aquí para empezar:</p>
-              <p><a href="${url}">${url}</a></p>
-            </div>
-          `.trim();
-          await safeSendAutomationEmail({ toEmail: user.email, toName: user.username, subject, html, text });
+          const tpl = emailTemplates.automationTrialNoDownload24h({ name: user.username, url });
+          await safeSendAutomationEmail({
+            toEmail: user.email,
+            toName: user.username,
+            subject: tpl.subject,
+            html: tpl.html,
+            text: tpl.text,
+          });
         }
         bump('trial_no_download');
       }
@@ -319,17 +317,14 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
         const templateId = parseNumber(process.env.AUTOMATION_EMAIL_PAID_NO_DOWNLOAD_TEMPLATE_ID, 0);
         if (templateId > 0) {
           const url = `${resolveClientUrl()}/`;
-          const subject = '[Bear Beat] Tu plan está activo';
-          const text = `Hola ${user.username},\n\nTu plan está activo. Entra aquí para comenzar tus descargas:\n${url}\n`;
-          const html = `
-            <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-              <h2>Tu plan está activo</h2>
-              <p>Hola <strong>${user.username}</strong>,</p>
-              <p>Entra aquí para comenzar tus descargas:</p>
-              <p><a href="${url}">${url}</a></p>
-            </div>
-          `.trim();
-          await safeSendAutomationEmail({ toEmail: user.email, toName: user.username, subject, html, text });
+          const tpl = emailTemplates.automationPaidNoDownload24h({ name: user.username, url });
+          await safeSendAutomationEmail({
+            toEmail: user.email,
+            toName: user.username,
+            subject: tpl.subject,
+            html: tpl.html,
+            text: tpl.text,
+          });
         }
         bump('paid_no_download');
       }
@@ -381,17 +376,14 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
         const templateId = parseNumber(process.env.AUTOMATION_EMAIL_REGISTERED_NO_PURCHASE_TEMPLATE_ID, 0);
         if (templateId > 0) {
           const url = `${resolveClientUrl()}/planes`;
-          const subject = '[Bear Beat] Elige tu plan';
-          const text = `Hola ${user.username},\n\nElige tu plan aquí:\n${url}\n`;
-          const html = `
-            <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-              <h2>Elige tu plan</h2>
-              <p>Hola <strong>${user.username}</strong>,</p>
-              <p>Puedes elegir tu plan aquí:</p>
-              <p><a href="${url}">${url}</a></p>
-            </div>
-          `.trim();
-          await safeSendAutomationEmail({ toEmail: user.email, toName: user.username, subject, html, text });
+          const tpl = emailTemplates.automationRegisteredNoPurchase7d({ name: user.username, url });
+          await safeSendAutomationEmail({
+            toEmail: user.email,
+            toName: user.username,
+            subject: tpl.subject,
+            html: tpl.html,
+            text: tpl.text,
+          });
         }
         bump('registered_no_purchase');
       }

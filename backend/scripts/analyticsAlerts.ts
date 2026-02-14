@@ -2,6 +2,7 @@ import path from 'path';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
 import { isEmailConfigured, sendEmail } from '../src/email';
+import { emailTemplates } from '../src/email/templates';
 import { getAnalyticsHealthAlerts } from '../src/analytics';
 import { log } from '../src/server';
 
@@ -59,7 +60,6 @@ async function main(): Promise<void> {
       return;
     }
 
-    const subject = `[Bear Beat] Alerts de analytics (${actionable.length}) · ${days}d`;
     const textLines = actionable
       .map(
         (alert) =>
@@ -67,20 +67,18 @@ async function main(): Promise<void> {
       )
       .join('\\n\\n');
 
-    const htmlContent = `
-      <div style="font-family: Arial, sans-serif; line-height: 1.5;">
-        <h2>Alerts de analytics (${actionable.length})</h2>
-        <p>Ventana: últimos <strong>${days}</strong> días.</p>
-        <pre style="white-space: pre-wrap; background: #f6f8fa; padding: 12px; border-radius: 10px;">${textLines}</pre>
-        <p style="color:#666; font-size: 12px;">Generado: ${snapshot.generatedAt}</p>
-      </div>
-    `.trim();
+    const tpl = emailTemplates.analyticsAlerts({
+      days,
+      count: actionable.length,
+      detailsText: textLines,
+      generatedAt: snapshot.generatedAt,
+    });
 
     await sendEmail({
       to: recipients,
-      subject,
-      html: htmlContent,
-      text: textLines,
+      subject: tpl.subject,
+      html: tpl.html,
+      text: tpl.text,
     });
 
     log.info('[ANALYTICS_ALERTS] Email sent.', {

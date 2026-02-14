@@ -133,6 +133,24 @@ upsert_env "CLIENT_URL" "https://thebearbeat.com"
 ensure_env_default "CONEKTA_PBB_ENABLED" "1"
 ensure_env_default "CONEKTA_OXXO_ENABLED" "1"
 
+log "Ensuring Amazon SES env vars are set (email sending)..."
+# Non-secret defaults. Credentials can be injected below or set directly in backend/.env.
+ensure_env_default "AWS_REGION" "us-east-2"
+ensure_env_default "SES_FROM_EMAIL" "noreply@thebearbeat.com"
+ensure_env_default "SES_FROM_NAME" "Bear Beat"
+
+log "Optionally injecting AWS SES credentials from deploy environment..."
+# Usage (avoid printing secrets):
+#   DEPLOY_AWS_ACCESS_KEY_ID="AKIA..." \\
+#   DEPLOY_AWS_SECRET_ACCESS_KEY="..." \\
+#   ./deploy.sh
+if [ -n "${DEPLOY_AWS_ACCESS_KEY_ID:-}" ]; then
+  upsert_env "AWS_ACCESS_KEY_ID" "${DEPLOY_AWS_ACCESS_KEY_ID}"
+fi
+if [ -n "${DEPLOY_AWS_SECRET_ACCESS_KEY:-}" ]; then
+  upsert_env "AWS_SECRET_ACCESS_KEY" "${DEPLOY_AWS_SECRET_ACCESS_KEY}"
+fi
+
 log "Optionally injecting Stripe OXXO secrets from deploy environment..."
 # Usage (avoid printing secrets):
 #   DEPLOY_STRIPE_OXXO_KEY="sk_live_..." \\
