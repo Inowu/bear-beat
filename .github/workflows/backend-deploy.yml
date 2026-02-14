@@ -45,4 +45,7 @@ jobs:
                 nvm use default 2>/dev/null || true
               fi
             fi
+            # Optional: inject Stripe OXXO separate-account secrets into backend/.env (deploy.sh upserts).
+            export DEPLOY_STRIPE_OXXO_KEY="${{ secrets.STRIPE_OXXO_KEY }}"
+            export DEPLOY_STRIPE_OXXO_WH_PI_SECRET="${{ secrets.STRIPE_OXXO_WH_PI_SECRET }}"
             bash ./deploy.sh

@@ -197,6 +197,7 @@ export const permissions = shield<Context>(
     subscribeWithCardConekta: isLoggedIn,
     subscribeWithCashConekta: isLoggedIn,
     subscribeWithPayByBankConekta: isLoggedIn,
+    subscribeWithOxxoStripe: isLoggedIn,
     conektaSubscriptionWebhook: isValidConektaSignature,
     stripeSubscriptionWebhook: isValidStripeSignature,
     subscribeWithPaypal: isLoggedIn,
