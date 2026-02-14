@@ -1,0 +1,47 @@
+name: Send test emails
+
+on:
+  workflow_dispatch:
+    inputs:
+      to_email:
+        description: Email address that will receive the test templates
+        required: true
+        type: string
+
+concurrency:
+  group: send-test-emails
+  cancel-in-progress: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send via SSH (production backend)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            export PATH="/usr/local/bin:/usr/bin:$PATH"
+            [ -f ~/.profile ] && . ~/.profile
+            [ -f ~/.bashrc ] && . ~/.bashrc
+            cd bear-beat
+            git fetch origin main
+            git reset --hard origin/main
+            if [ -f ~/.nvm/nvm.sh ]; then
+              . ~/.nvm/nvm.sh
+              if [ -f backend/.nvmrc ]; then
+                NODE_VERSION="$(tr -d ' \t\r\n' < backend/.nvmrc)"
+                if [ -n "$NODE_VERSION" ]; then
+                  nvm install "$NODE_VERSION"
+                  nvm use "$NODE_VERSION"
+                fi
+              else
+                nvm use default 2>/dev/null || true
+              fi
+            fi
+            cd backend
+            node -r ts-node/register scripts/sendTestEmails.ts "${{ inputs.to_email }}"
+
