@@ -32,11 +32,9 @@ import HomeFaq from "./sections/HomeFaq";
 import HomeDemoModal from "./sections/HomeDemoModal";
 import StickyMobileCta from "./sections/StickyMobileCta";
 import "./PublicHome.scss";
+import { FALLBACK_CATALOG_TOTAL_FILES, FALLBACK_CATALOG_TOTAL_GB } from "../../utils/catalogFallback";
 
 const TOP_DOWNLOADS_DAYS = 120;
-
-const FALLBACK_TOTAL_FILES = 195_727;
-const FALLBACK_TOTAL_GB = 12_350.1;
 
 type TrialConfigResponse = {
   enabled: boolean;
@@ -340,8 +338,8 @@ export default function PublicHome() {
 
   const effectiveTotalFiles = hasLiveCatalog
     ? Number(catalogSummary?.totalFiles ?? 0)
-    : FALLBACK_TOTAL_FILES;
-  const effectiveTotalGB = hasLiveCatalog ? Number(catalogSummary?.totalGB ?? 0) : FALLBACK_TOTAL_GB;
+    : FALLBACK_CATALOG_TOTAL_FILES;
+  const effectiveTotalGB = hasLiveCatalog ? Number(catalogSummary?.totalGB ?? 0) : FALLBACK_CATALOG_TOTAL_GB;
   const effectiveTotalTB = effectiveTotalGB / 1000;
 
   const totalTBLabel = formatTB(effectiveTotalTB);
