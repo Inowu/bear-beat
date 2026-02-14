@@ -179,7 +179,7 @@ function SignUpForm() {
           .notRequired(),
         // CRO: In the checkout-intent flow we remove the confirmation field to reduce friction.
         passwordConfirmation: isCheckoutIntent
-          ? Yup.string().oneOf([Yup.ref("password")], "Ambas contraseñas deben ser iguales").notRequired()
+          ? Yup.string().notRequired()
           : Yup.string()
               .required("Debe confirmar la contraseña")
               .oneOf([Yup.ref("password")], "Ambas contraseñas deben ser iguales"),
@@ -850,7 +850,11 @@ function SignUpForm() {
                 {FormContent}
               </section>
 
-              <aside className="checkout-intent-card checkout-intent-card--summary" aria-label="Resumen de compra">
+              {/* Avoid <aside>: some third-party widgets ship global `aside { position: fixed; opacity: 0 }` rules on mobile. */}
+              <section
+                className="checkout-intent-card checkout-intent-card--summary"
+                aria-label="Resumen de compra"
+              >
                 <details className="checkout-intent-summary__accordion">
                   <summary className="checkout-intent-summary__summary">
                     <span className="checkout-intent-summary__summaryLeft">
@@ -933,7 +937,7 @@ function SignUpForm() {
                     Pagos procesados de forma segura. Cancela cuando quieras.
                   </p>
                 </div>
-              </aside>
+              </section>
             </div>
           </div>
         </div>

@@ -1145,7 +1145,8 @@ function Checkout() {
             </div>
           </section>
 
-          <aside className="checkout-card checkout-summary checkout2026__summary" aria-label="Resumen de compra">
+          {/* Avoid <aside>: some third-party widgets ship global `aside { position: fixed; opacity: 0 }` rules on mobile. */}
+          <section className="checkout-card checkout-summary checkout2026__summary" aria-label="Resumen de compra">
             <details className="checkout2026__summaryAccordion">
               <summary className="checkout2026__summarySummary">
                 <span className="checkout2026__summarySummaryLeft">
@@ -1159,7 +1160,7 @@ function Checkout() {
               <div className="checkout2026__summaryBody">{summaryContent}</div>
             </details>
             <div className="checkout2026__summaryStatic">{summaryContent}</div>
-          </aside>
+          </section>
         </div>
       </div>
 
