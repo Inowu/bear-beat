@@ -52,7 +52,7 @@ export async function checkIfUserIsSubscriber(user: UHUser): Promise<Subscriptio
   // Add better error handling for subscription checks
   try {
     if (user.stripe_id) {
-      log.info(`[MIGRATION] Checking stripe subscription for user ${user.email}`);
+      log.info('[MIGRATION] Checking stripe subscription');
 
       try {
         const stripeCustomer = await stripe.customers.retrieve(user.stripe_id);
@@ -79,9 +79,11 @@ export async function checkIfUserIsSubscriber(user: UHUser): Promise<Subscriptio
         }
       } catch (e: any) {
         if (e.raw.code === 'resource_missing') {
-          log.info(`[MIGRATION] Stripe subscription not found: ${user.stripe_id}`);
+          log.info('[MIGRATION] Stripe subscription not found');
         } else {
-          log.error(`[MIGRATION] An error happened while checking stripe subscription: ${user.stripe_id}: ${e}`);
+          log.error('[MIGRATION] An error happened while checking stripe subscription', {
+            error: e instanceof Error ? e.message : e,
+          });
 
           return null;
         }
@@ -93,7 +95,7 @@ export async function checkIfUserIsSubscriber(user: UHUser): Promise<Subscriptio
   }
 
   if (user.conektaId && user.conektaSubId) {
-    log.info(`[MIGRATION] Checking conekta subscription for user ${user.email}`);
+    log.info('[MIGRATION] Checking conekta subscription');
     try {
       const customer = await uhConektaCustomers.getCustomerById(user.conektaId);
       const subscription = customer.data.subscription;
@@ -103,9 +105,11 @@ export async function checkIfUserIsSubscriber(user: UHUser): Promise<Subscriptio
       }
     } catch (e: any) {
       if (e.response.status === 404) {
-        log.info(`[MIGRATION] Conekta subscription not found: ${user.conektaId}`);
+        log.info('[MIGRATION] Conekta subscription not found');
       } else {
-        log.error(`[MIGRATION] An error happened while checking conekta subscription: ${user.conektaId}: ${e}`);
+        log.error('[MIGRATION] An error happened while checking conekta subscription', {
+          error: e instanceof Error ? e.message : e,
+        });
 
         return null;
       }
@@ -113,7 +117,7 @@ export async function checkIfUserIsSubscriber(user: UHUser): Promise<Subscriptio
   }
 
   if (user.paypalSubscription) {
-    log.info(`[MIGRATION] Checking paypal subscription for user ${user.email}`);
+    log.info('[MIGRATION] Checking paypal subscription');
     try {
       const subscription = (await axios(`${paypal.paypalUrl()}/v1/billing/subscriptions/${user.paypalSubscription}`, {
         headers: {
@@ -126,18 +130,20 @@ export async function checkIfUserIsSubscriber(user: UHUser): Promise<Subscriptio
       }
     } catch (e: any) {
       if (e.response.status === 404) {
-        log.info(`[MIGRATION] Paypal subscription not found: ${user.paypalSubscription}`);
+        log.info('[MIGRATION] Paypal subscription not found');
 
         return null;
       } else {
-        log.error(`[MIGRATION] An error happened while checking paypal subscription: ${user.paypalSubscription}: ${e}`);
+        log.error('[MIGRATION] An error happened while checking paypal subscription', {
+          error: e instanceof Error ? e.message : e,
+        });
 
         return null;
       }
     }
   }
 
-  log.info(`[MIGRATION] User has no subscription: ${user.email}`);
+  log.info('[MIGRATION] User has no subscription');
 
   return null;
 }
@@ -169,7 +175,7 @@ export const checkUHSubscriber = publicProcedure
       try {
         uhUser = await checkIfUserIsFromUH(email);
       } catch (e) {
-        console.error(`Error fetching user ${email} in UH: ${e}`);
+        log.error('[MIGRATION] Error fetching user in UH', { error: e instanceof Error ? e.message : e });
 
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
@@ -177,7 +183,7 @@ export const checkUHSubscriber = publicProcedure
         });
       }
 
-      log.info(`[MIGRATION] Checking user ${email} in UH`);
+      log.info('[MIGRATION] Checking user in UH');
 
       if (!uhUser) {
         throw new TRPCError({
@@ -186,12 +192,12 @@ export const checkUHSubscriber = publicProcedure
         })
       }
 
-      log.info(`[MIGRATION] User ${email} found in UH`);
+      log.info('[MIGRATION] User found in UH');
 
       const subscription = await checkIfUserIsSubscriber(uhUser);
 
       if (subscription) {
-        log.info(`[MIGRATION] User ${email} has subscription: ${subscription.service}`);
+        log.info('[MIGRATION] User has subscription', { service: subscription.service });
       }
 
       return subscription;

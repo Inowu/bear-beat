@@ -128,11 +128,11 @@ export const manyChat = {
 
       return response.data.data;
     } catch (error: any) {
-      log.error(
-        `[MANYCHAT] Error getting many chat subscriber information: ${
-          JSON.stringify((error as AxiosError).response?.data) || error.message
-        }`,
-      );
+      const axiosErr = error as AxiosError;
+      log.error('[MANYCHAT] getInfo failed', {
+        status: axiosErr.response?.status ?? null,
+        error: axiosErr.message,
+      });
 
       return null;
     }
@@ -152,11 +152,12 @@ export const manyChat = {
 
       return response.data.data;
     } catch (error: any) {
-      log.error(
-        `[MANYCHAT] Error finding subcriber by custom field: ${JSON.stringify(
-          (error as AxiosError).response?.data,
-        )}`,
-      );
+      const axiosErr = error as AxiosError;
+      log.error('[MANYCHAT] findByCustomField failed', {
+        fieldKey: customFieldKey,
+        status: axiosErr.response?.status ?? null,
+        error: axiosErr.message,
+      });
 
       return null;
     }
@@ -185,13 +186,12 @@ export const manyChat = {
 
       return response.data.data;
     } catch (error: any) {
-      log.error(
-        `[MANYCHAT] Error while creating many chat subscriber for user ${
-          user.id
-        }, data: ${JSON.stringify(
-          (error as AxiosError).response?.config.data,
-        )}, error: ${JSON.stringify((error as AxiosError).response?.data)}`,
-      );
+      const axiosErr = error as AxiosError;
+      log.error('[MANYCHAT] createSubscriber failed', {
+        userId: user.id,
+        status: axiosErr.response?.status ?? null,
+        error: axiosErr.message,
+      });
 
       return null;
     }
@@ -223,11 +223,13 @@ export const manyChat = {
 
       return response.data.data;
     } catch (error: any) {
-      log.error(
-        `[MANYCHAT] Error setting custom field for subscriber ${mcId} (${fieldKey}): ${
-          JSON.stringify((error as AxiosError).response?.data) || error.message
-        }`,
-      );
+      const axiosErr = error as AxiosError;
+      log.error('[MANYCHAT] setCustomField failed', {
+        subscriberId: mcId,
+        fieldKey,
+        status: axiosErr.response?.status ?? null,
+        error: axiosErr.message,
+      });
 
       return null;
     }
@@ -256,11 +258,13 @@ export const manyChat = {
 
       return response.data.data;
     } catch (error: any) {
-      log.error(
-        `[MANYCHAT] Error updating subscriber ${user.id}: ${
-          JSON.stringify((error as AxiosError).response?.data) || error.message
-        }`,
-      );
+      const axiosErr = error as AxiosError;
+      log.error('[MANYCHAT] updateSubscriber failed', {
+        userId: user.id ?? null,
+        subscriberId: mcId,
+        status: axiosErr.response?.status ?? null,
+        error: axiosErr.message,
+      });
       return null;
     }
   },
@@ -280,11 +284,12 @@ export const manyChat = {
 
       return response.data.data;
     } catch (error: any) {
-      log.error(
-        `[MANYCHAT] Error finding subcriber by system field: ${
-          JSON.stringify((error as AxiosError).response?.data) || error.message
-        }`,
-      );
+      const axiosErr = error as AxiosError;
+      log.error('[MANYCHAT] findBySystemField failed', {
+        systemField,
+        status: axiosErr.response?.status ?? null,
+        error: axiosErr.message,
+      });
 
       return null;
     }
@@ -322,10 +327,14 @@ export const manyChat = {
         log.info(`[MANYCHAT] Tag "${tagName}" added via addTagByName to subscriber ${subscriberId}`);
         return response.data;
       } catch (fallbackError: any) {
-        const fbData = (fallbackError as AxiosError).response?.data;
-        log.error(
-          `[MANYCHAT] addTagByName failed for user ${user.id}, subscriber ${subscriberId}, tag "${tagName}": ${JSON.stringify(fbData) || fallbackError.message}`,
-        );
+        const axiosErr = fallbackError as AxiosError;
+        log.error('[MANYCHAT] addTagByName failed', {
+          userId: user.id,
+          subscriberId,
+          tagName,
+          status: axiosErr.response?.status ?? null,
+          error: axiosErr.message,
+        });
         return null;
       }
     };
@@ -340,11 +349,15 @@ export const manyChat = {
         log.info(`[MANYCHAT] Tag ${tagRaw} (id ${tagId}) added to subscriber ${subscriberId}`);
         return response.data;
       } catch (error: any) {
-        const errData = (error as AxiosError).response?.data;
-        const errStr = JSON.stringify(errData) || error.message;
-        log.warn(
-          `[MANYCHAT] addTag by ID failed for user ${user.id}, subscriber ${subscriberId}, tag ${tagRaw} (id ${tagId}): ${errStr}. Trying addTagByName...`,
-        );
+        const axiosErr = error as AxiosError;
+        log.warn('[MANYCHAT] addTag by ID failed; retrying by name', {
+          userId: user.id,
+          subscriberId,
+          tag: tagRaw,
+          tagId,
+          status: axiosErr.response?.status ?? null,
+          error: axiosErr.message,
+        });
         return tryAddByName();
       }
     }

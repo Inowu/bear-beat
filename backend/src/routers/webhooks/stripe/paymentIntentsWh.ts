@@ -81,17 +81,21 @@ export const stripeInvoiceWebhook = async (req: Request) => {
     ?? (await getUserFromPayload(prisma, payload, metaUserId));
 
   if (!user) {
-    log.error(
-      `[STRIPE_WH] User not found in event: ${payload.type}, payload: ${payloadStr}`,
-    );
+    log.error('[STRIPE_WH] User not found in event', {
+      eventType: payload.type,
+      eventId: payload.id,
+      paymentIntentId,
+    });
     return;
   }
 
   switch (payload.type) {
     case StripeEvents.PAYMENT_INTENT_FAILED: {
-      log.info(
-        `[STRIPE_WH] Payment intent failed for user ${user.id}, payload: ${payloadStr}`,
-      );
+      log.info('[STRIPE_WH] Payment intent failed', {
+        userId: user.id,
+        eventId: payload.id,
+        paymentIntentId,
+      });
 
       if (productOrderId) {
         const order = await prisma.product_orders.findFirst({
@@ -99,9 +103,12 @@ export const stripeInvoiceWebhook = async (req: Request) => {
         });
 
         if (!order) {
-          log.warn(
-            `[STRIPE_WH] Product order not found for user ${user.id}, payload: ${payloadStr}`,
-          );
+          log.warn('[STRIPE_WH] Product order not found for payment intent', {
+            userId: user.id,
+            eventId: payload.id,
+            paymentIntentId,
+            productOrderId,
+          });
           return;
         }
 
@@ -118,9 +125,12 @@ export const stripeInvoiceWebhook = async (req: Request) => {
         });
 
         if (!order) {
-          log.warn(
-            `[STRIPE_WH] Plan order not found for user ${user.id}, payload: ${payloadStr}`,
-          );
+          log.warn('[STRIPE_WH] Plan order not found for payment intent', {
+            userId: user.id,
+            eventId: payload.id,
+            paymentIntentId,
+            planOrderId,
+          });
           return;
         }
 
@@ -138,14 +148,17 @@ export const stripeInvoiceWebhook = async (req: Request) => {
       }
 
       log.warn(
-        `[STRIPE_WH] Payment intent for user ${user.id} does not have a productOrderId/orderId, no action taken. payload: ${payloadStr}`,
+        '[STRIPE_WH] Payment intent without resolvable order id; no action taken',
+        { userId: user.id, eventId: payload.id, paymentIntentId },
       );
       break;
     }
     case StripeEvents.PAYMENT_INTENT_SUCCEEDED: {
-      log.info(
-        `[STRIPE_WH] Payment intent for user ${user.id}, payload: ${payloadStr}`,
-      );
+      log.info('[STRIPE_WH] Payment intent succeeded', {
+        userId: user.id,
+        eventId: payload.id,
+        paymentIntentId,
+      });
 
       if (productOrderId) {
         await addGBToAccount({
@@ -162,16 +175,21 @@ export const stripeInvoiceWebhook = async (req: Request) => {
         });
 
         if (!order) {
-          log.warn(
-            `[STRIPE_WH] Plan order not found for user ${user.id}, payload: ${payloadStr}`,
-          );
+          log.warn('[STRIPE_WH] Plan order not found for payment intent', {
+            userId: user.id,
+            eventId: payload.id,
+            paymentIntentId,
+            planOrderId,
+          });
           return;
         }
 
         if (order.status === OrderStatus.PAID) {
-          log.info(
-            `[STRIPE_WH] Plan order ${order.id} already paid, skipping. payload: ${payloadStr}`,
-          );
+          log.info('[STRIPE_WH] Plan order already paid; skipping', {
+            userId: user.id,
+            orderId: order.id,
+            eventId: payload.id,
+          });
           return;
         }
 
@@ -180,9 +198,7 @@ export const stripeInvoiceWebhook = async (req: Request) => {
           : null;
 
         if (!plan) {
-          log.warn(
-            `[STRIPE_WH] Plan not found for order ${order.id}, payload: ${payloadStr}`,
-          );
+          log.warn('[STRIPE_WH] Plan not found for order', { userId: user.id, orderId: order.id, eventId: payload.id });
           return;
         }
 
@@ -220,14 +236,13 @@ export const stripeInvoiceWebhook = async (req: Request) => {
       }
 
       log.info(
-        `[STRIPE_WH] Payment intent for user ${user.id} does not have a productOrderId/orderId, no action taken. payload: ${payloadStr}`,
+        '[STRIPE_WH] Payment intent without resolvable order id; no action taken',
+        { userId: user.id, eventId: payload.id, paymentIntentId },
       );
       break;
     }
     default: {
-      log.info(
-        `[STRIPE_WH] Unhandled event ${payload.type}, payload: ${payloadStr}`,
-      );
+      log.info('[STRIPE_WH] Unhandled event', { eventType: payload.type, eventId: payload.id });
     }
   }
 };
@@ -268,11 +283,7 @@ const shouldHandleEvent = (payload: Stripe.Event): boolean => {
     case StripeEvents.PAYMENT_INTENT_FAILED:
       return true;
     default:
-      log.info(
-        `[STRIPE_WH] Uhandled event ${payload.type}, payload: ${JSON.stringify(
-          payload,
-        )}`,
-      );
+      log.info('[STRIPE_WH] Ignoring unsupported Stripe invoice event', { eventType: payload.type, eventId: payload.id });
       return false;
   }
 };

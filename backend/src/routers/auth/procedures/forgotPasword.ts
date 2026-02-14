@@ -27,7 +27,7 @@ export const forgotPassword = publicProcedure
     });
 
     if (!user) {
-      log.info(`[FORGOT_PASSWORD] User with email ${email} not found`);
+      log.info('[FORGOT_PASSWORD] User not found');
       // Security UX: always return the same response.
       return {
         message:
@@ -49,7 +49,7 @@ export const forgotPassword = publicProcedure
       },
     });
 
-    log.info(`[FORGOT_PASSWORD] Sending email to ${user.email}`);
+    log.info('[FORGOT_PASSWORD] Sending password reset email', { userId: user.id });
 
     const link = `${process.env.CLIENT_URL}/auth/reset-password?token=${token}&userId=${user.id}`;
 
@@ -69,7 +69,7 @@ export const forgotPassword = publicProcedure
     // Optional WhatsApp: best-effort (do not break the flow).
     if (user.phone) {
       try {
-        log.info(`[TWILIO_SEND_MESSAGE] Sending WhatsApp to ${user.phone}`);
+        log.info('[TWILIO] Sending WhatsApp password reset link', { userId: user.id });
         await twilio.sendMessage(user.phone, link);
       } catch (error) {
         log.error('[TWILIO_SEND_MESSAGE_ERROR]', error);

@@ -18,25 +18,27 @@ import { ingestAnalyticsEvents } from '../../../analytics';
 
 export const conektaSubscriptionWebhook = async (req: Request) => {
   const payload: EventResponse = JSON.parse(req.body as any);
-  const payloadStr = req.body;
 
   if (!shouldHandleEvent(payload)) return;
 
   const user = await getCustomerIdFromPayload(payload);
 
   if (!user) {
-    log.error(
-      `[CONEKTA_WH] User not found in event: ${payload.type}, payload: ${payloadStr}`,
-    );
+    log.error('[CONEKTA_WH] User not found in event', {
+      eventType: payload.type ?? null,
+      eventId: (payload as any)?.id ?? null,
+    });
     return;
   }
 
   const plan = await getPlanFromPayload(payload);
 
   if (!plan && payload.type?.startsWith('subscription')) {
-    log.error(
-      `[CONEKTA_WH] Plan not found in event: ${payload.type}, payload: ${payloadStr}`,
-    );
+    log.error('[CONEKTA_WH] Plan not found in event', {
+      eventType: payload.type ?? null,
+      eventId: (payload as any)?.id ?? null,
+      userId: user.id,
+    });
 
     return;
   }
@@ -47,9 +49,7 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
 
   switch (payload.type) {
     case ConektaEvents.SUB_PAID:
-      log.info(
-        `[CONEKTA_WH] Creating subscription for user ${user.id}, subscription id: ${subscription.id}, payload: ${payloadStr}`,
-      );
+      log.info('[CONEKTA_WH] Creating subscription', { userId: user.id, subscriptionId: subscription.id });
 
       try {
         await manyChat.addTagToUser(user, 'SUCCESSFUL_PAYMENT');
@@ -69,9 +69,11 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
       });
       break;
     case ConektaEvents.SUB_UPDATED:
-      log.info(
-        `[CONEKTA_WH] Updating subscription for user ${user.id}, subscription status: ${subscription.status}, subscription id: ${subscription.id}, payload: ${payloadStr}`,
-      );
+      log.info('[CONEKTA_WH] Updating subscription', {
+        userId: user.id,
+        subscriptionId: subscription.id,
+        status: subscription.status,
+      });
       if (payload.data?.object.status !== 'active') {
         // Internal analytics: provider-side cancellation (best-effort involuntary signal).
         try {
@@ -109,9 +111,7 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
       }
       break;
     case ConektaEvents.SUB_CANCELED:
-      log.info(
-        `[CONEKTA_WH] Canceling subscription for user ${user.id}, subscription id: ${subscription.id}, payload: ${payloadStr}`,
-      );
+      log.info('[CONEKTA_WH] Canceling subscription', { userId: user.id, subscriptionId: subscription.id });
       await cancelSubscription({
         prisma,
         user,
@@ -275,15 +275,19 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
       const paymentMethodObj = payload.data?.object?.charges?.data?.[0]?.payment_method;
       const pmObjectType = typeof paymentMethodObj?.object === 'string' ? paymentMethodObj.object : '';
       if (pmObjectType.startsWith('card')) {
-        log.info(
-          `[CONEKTA_WH] Ignoring card payment for user ${user.id}, payload: ${payloadStr}`,
-        );
+        log.info('[CONEKTA_WH] Ignoring card payment event', {
+          userId: user.id,
+          eventType: payload.type ?? null,
+          eventId: (payload as any)?.id ?? null,
+        });
         return;
       }
 
-      log.info(
-        `[CONEKTA_WH] Paid order event received for user ${user.id}, payload: ${payloadStr} `,
-      );
+      log.info('[CONEKTA_WH] Paid order event received', {
+        userId: user.id,
+        eventType: payload.type ?? null,
+        eventId: (payload as any)?.id ?? null,
+      });
 
       let orderIdNum = toPositiveInt(payload.data?.object?.metadata?.orderId);
       let orderSource = 'metadata.orderId';
@@ -297,9 +301,11 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
       }
 
       if (!orderIdNum) {
-        log.error(
-          `[CONEKTA_WH] Order id could not be resolved from payload (metadata/invoice_id/txn_id): ${payloadStr}, returning from conekta webhook`,
-        );
+        log.error('[CONEKTA_WH] Order id could not be resolved from event; skipping', {
+          userId: user.id,
+          eventType: payload.type ?? null,
+          eventId: (payload as any)?.id ?? null,
+        });
         return;
       }
 
@@ -311,9 +317,7 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
       let order: Orders | product_orders | null = null;
 
       if (isProduct) {
-        log.info(
-          `[CONEKTA_WH] Updating product order ${orderIdNum} to paid, payload: ${payloadStr}`,
-        );
+        log.info('[CONEKTA_WH] Updating product order to paid', { userId: user.id, orderId: orderIdNum });
 
         order = await prisma.product_orders.update({
           where: {
@@ -341,9 +345,7 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
       }
 
       if (!order || !productOrPlan) {
-        log.error(
-          `[CONEKTA_WH] Order or product not found in payload: ${payloadStr}, returning from conekta webhook`,
-        );
+        log.error('[CONEKTA_WH] Order or product not found; skipping', { userId: user.id, orderId: orderIdNum, isProduct });
         return;
       }
 
@@ -392,9 +394,7 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
       break;
     }
     default:
-      log.info(
-        `[CONEKTA_WH] Unhandled event ${payload.type}, payload: ${payloadStr}`,
-      );
+      log.info('[CONEKTA_WH] Unhandled event', { eventType: payload.type ?? null, eventId: (payload as any)?.id ?? null });
   }
 };
 
@@ -629,11 +629,10 @@ const shouldHandleEvent = (payload: EventResponse): boolean => {
     case ConektaEvents.ORDER_CHARGED_BACK:
       return true;
     default:
-      log.info(
-        `[CONEKTA_WH] Uhandled event ${payload.type}, payload: ${JSON.stringify(
-          payload,
-        )}`,
-      );
+      log.info('[CONEKTA_WH] Ignoring unsupported Conekta event', {
+        eventType: payload.type ?? null,
+        eventId: (payload as any)?.id ?? null,
+      });
       return false;
   }
 };

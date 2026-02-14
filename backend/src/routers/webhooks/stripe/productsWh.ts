@@ -20,20 +20,20 @@ export const stripeProductsWebhook = async (req: Request) => {
 
   switch (payload.type) {
     case StripeEvents.PRODUCT_UPDATED: {
-      await handleProductUpdated(payload.data.object as Stripe.Product, payloadBody);
+      await handleProductUpdated(payload.data.object as Stripe.Product);
       break;
     }
     case StripeEvents.PRICE_UPDATED: {
-      await handlePriceUpdated(payload.data.object as Stripe.Price, payloadBody);
+      await handlePriceUpdated(payload.data.object as Stripe.Price);
       break;
     }
     default:
-      log.info(`[STRIPE_WH] Unhandled event ${payload.type}, payload: ${payloadBody}`);
+      log.info('[STRIPE_WH] Unhandled event', { eventType: payload.type, eventId: payload.id });
   }
 };
 
-async function handleProductUpdated(product: Stripe.Product, payloadBody: string) {
-  log.info(`[STRIPE_WH] Updating Stripe product ${product.id}, payload: ${payloadBody}`);
+async function handleProductUpdated(product: Stripe.Product) {
+  log.info('[STRIPE_WH] Updating Stripe product', { productId: product.id });
 
   let productPrices: Stripe.Price[] = [];
   try {
@@ -81,8 +81,8 @@ async function handleProductUpdated(product: Stripe.Product, payloadBody: string
   });
 }
 
-async function handlePriceUpdated(price: Stripe.Price, payloadBody: string) {
-  log.info(`[STRIPE_WH] Updating Stripe price ${price.id}, payload: ${payloadBody}`);
+async function handlePriceUpdated(price: Stripe.Price) {
+  log.info('[STRIPE_WH] Updating Stripe price', { priceId: price.id });
 
   const plan = await prisma.plans.findFirst({
     where: { [stripePriceKey]: price.id } as any,
@@ -107,7 +107,7 @@ const shouldHandleEvent = (payload: Stripe.Event): boolean => {
     case StripeEvents.PRICE_UPDATED:
       return true;
     default:
-      log.info(`[STRIPE_WH] Unhandled event ${payload.type}, payload: ${JSON.stringify(payload)}`);
+      log.info('[STRIPE_WH] Ignoring unsupported Stripe event', { eventType: payload.type, eventId: payload.id });
       return false;
   }
 };
