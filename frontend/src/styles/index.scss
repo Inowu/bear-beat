@@ -43,10 +43,11 @@
   --bb-dark-300: #292929;
   --bb-dark-400: #1A1A1A;
   /* Light base: bright + crisp hierarchy (avoid “dark theme turned white”). */
-  --bb-bg: #EEF3F7;
+  /* App/LP background (LIGHT): slightly deeper so white surfaces don't "blend" on mobile. */
+  --bb-bg: #E2ECF3;
   --bb-surface: #FFFFFF;
-  --bb-surface-soft: #F1F6FA;
-  --bb-border: rgba(15, 23, 42, 0.14);
+  --bb-surface-soft: #F2F7FB;
+  --bb-border: rgba(15, 23, 42, 0.16);
   --bb-text-heading: #0B1220;
   --bb-text-body: #1F2A3A;
   --bb-text-muted: #556274;
@@ -695,6 +696,19 @@ html[data-theme="light"] body {
       transparent 64%
     ),
     linear-gradient(180deg, #F5F9FC 0%, var(--app-bg) 34%, var(--app-bg) 100%);
+}
+
+/* App (MainLayout) in LIGHT: add a soft atmosphere so surfaces don't feel like stacked white sheets. */
+html[data-theme="light"] .main-layout-main-container {
+  background-color: var(--app-bg);
+  background-image:
+    radial-gradient(820px 420px at 6% -6%, color-mix(in srgb, var(--bb-cyan) 2.2%, transparent), transparent 62%),
+    radial-gradient(820px 460px at 94% 0%, color-mix(in srgb, var(--bb-mint) 1.9%, transparent), transparent 64%),
+    linear-gradient(180deg, #F7FAFD 0%, var(--app-bg) 36%, var(--app-bg) 100%);
+}
+
+html[data-theme="light"] .content-container {
+  background: transparent;
 }
 
 /* Chrome en Mac: fuentes más nítidas y capa GPU para evitar parpadeos */

@@ -1,5 +1,71 @@
 @import "src/styles/mixin.scss";
 
+/* ==========================================================================
+   LIGHT MODE (App)
+   Goal: avoid "white on white on white" stacking and remove translucent layers
+   that read like styles are fighting each other on mobile Safari.
+   ========================================================================== */
+
+html[data-theme="light"] .home-main-container {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+html[data-theme="light"] .bb-home-overview {
+  background: color-mix(in srgb, var(--app-bg-card) 92%, var(--app-bg-soft));
+  border-color: color-mix(in srgb, var(--app-border) 96%, transparent);
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.08);
+}
+
+html[data-theme="light"] .bb-search-input {
+  background: #ffffff;
+  border-color: color-mix(in srgb, var(--app-border) 92%, transparent);
+  box-shadow:
+    0 1px 0 rgba(15, 23, 42, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+html[data-theme="light"] .bb-search-input:focus {
+  background: #ffffff;
+  border-color: color-mix(in srgb, var(--app-accent) 42%, var(--app-border));
+}
+
+html[data-theme="light"] .bb-search-clear {
+  background: #ffffff;
+  border-color: color-mix(in srgb, var(--app-border) 90%, transparent);
+}
+
+html[data-theme="light"] .bb-content-stage {
+  background: color-mix(in srgb, var(--app-bg-card) 92%, var(--app-bg-soft));
+  border-color: color-mix(in srgb, var(--app-border) 96%, transparent);
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.08);
+}
+
+html[data-theme="light"] .bb-content-stage.is-root {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  padding: 0;
+  min-height: auto;
+}
+
+html[data-theme="light"] .bb-root-card {
+  border-color: color-mix(in srgb, var(--app-border) 96%, transparent);
+  background: #ffffff;
+  box-shadow: 0 12px 22px rgba(15, 23, 42, 0.06);
+}
+
+html[data-theme="light"] .bb-root-size {
+  background: color-mix(in srgb, #ffffff 82%, var(--app-bg-soft));
+  border-color: color-mix(in srgb, var(--app-border) 92%, transparent);
+}
+
+html[data-theme="light"] .bb-open-cta {
+  background: color-mix(in srgb, var(--app-accent) 8%, #ffffff);
+  border-color: color-mix(in srgb, var(--app-accent) 26%, transparent);
+}
+
 .home-main-container {
   position: relative;
   isolation: isolate;
@@ -1246,19 +1312,6 @@ html[data-theme="dark"] .bb-explorer-row:hover {
     border-radius: 12px;
   }
 
-  html[data-theme="light"] .home-main-container {
-    /* Mobile LIGHT: avoid nested "card within card" surfaces (reads as too white / conflicting layers). */
-    background: transparent;
-    border-color: transparent;
-    box-shadow: none;
-  }
-
-  html[data-theme="light"] .bb-home-overview {
-    background: color-mix(in srgb, var(--app-bg-card) 92%, var(--app-bg-soft));
-    border-color: color-mix(in srgb, var(--app-border) 96%, transparent);
-    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
-  }
-
   .bb-library-left {
     gap: 8px;
   }
@@ -1334,13 +1387,6 @@ html[data-theme="dark"] .bb-explorer-row:hover {
     padding: 8px;
   }
 
-  html[data-theme="light"] .bb-content-stage.is-root {
-    background: transparent;
-    border-color: transparent;
-    box-shadow: none;
-    padding: 0;
-  }
-
   .bb-root-grid {
     grid-template-columns: 1fr;
   }
@@ -1352,12 +1398,6 @@ html[data-theme="dark"] .bb-explorer-row:hover {
     min-height: 88px;
     padding: 12px;
     gap: 12px;
-  }
-
-  html[data-theme="light"] .bb-root-card {
-    background: color-mix(in srgb, var(--app-bg-card) 92%, var(--app-bg-soft));
-    border-color: color-mix(in srgb, var(--app-border) 96%, transparent);
-    box-shadow: 0 10px 18px rgba(15, 23, 42, 0.05);
   }
 
   .bb-root-stack {
