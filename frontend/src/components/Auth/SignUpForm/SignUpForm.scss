@@ -776,6 +776,13 @@ form.sign-up-form {
     margin-bottom: 3px;
   }
 
+  .auth-field-optional {
+    font-size: 0.92em;
+    font-weight: 650;
+    color: color-mix(in srgb, var(--auth-login-subtitle) 82%, transparent);
+    letter-spacing: 0.01em;
+  }
+
   .c-row.is-invalid .signup-phone-wrap {
     border-color: color-mix(in srgb, var(--app-status-error) 78%, var(--auth-input-border));
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--app-status-error) 20%, transparent);
@@ -886,8 +893,8 @@ form.sign-up-form {
 
   .signup-phone-flag-wrap {
     position: relative;
-    width: 52px;
-    min-width: 52px;
+    width: 48px;
+    min-width: 48px;
     flex-shrink: 0;
     border-right: 1px solid color-mix(in srgb, var(--auth-input-border) 78%, transparent);
     background: color-mix(in srgb, var(--auth-input-bg) 88%, transparent);
@@ -934,20 +941,6 @@ form.sign-up-form {
       color: var(--auth-register-text);
       font-size: var(--app-font-size-body);
     }
-  }
-
-  .signup-phone-icon-wrap {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 46px;
-    flex-shrink: 0;
-    border-right: 1px solid color-mix(in srgb, var(--auth-input-border) 78%, transparent);
-    background: color-mix(in srgb, var(--auth-input-bg) 88%, transparent);
-  }
-
-  .signup-phone-wrap:focus-within .signup-phone-icon-wrap .signup-input-icon {
-    color: var(--app-accent);
   }
 
   .signup-phone-input {
@@ -1059,7 +1052,7 @@ form.sign-up-form {
     margin: 10px 0 2px;
     padding: 0 6px;
     display: grid;
-    gap: 8px;
+    gap: 6px;
     text-align: left;
   }
 
@@ -1070,14 +1063,9 @@ form.sign-up-form {
     align-items: start;
     font-size: clamp(12px, 0.18vw + 11px, 13px);
     line-height: 1.35;
-    font-weight: 650;
+    font-weight: 600;
     color: color-mix(in srgb, var(--auth-login-subtitle) 98%, transparent);
     cursor: pointer;
-
-    strong {
-      font-weight: 900;
-      color: color-mix(in srgb, var(--auth-login-title) 92%, transparent);
-    }
   }
 
   .auth-consent-checkbox {
@@ -1089,7 +1077,7 @@ form.sign-up-form {
   }
 
   .auth-consent-hint {
-    margin-top: 2px;
+    margin-top: 0;
     font-size: 12px;
     line-height: 1.35;
     color: color-mix(in srgb, var(--auth-login-subtitle) 86%, transparent);
@@ -1230,8 +1218,7 @@ form.sign-up-form {
     background: color-mix(in srgb, var(--auth-input-bg) 96%, transparent);
   }
 
-  .signup-phone-flag-wrap,
-  .signup-phone-icon-wrap {
+  .signup-phone-flag-wrap {
     background: color-mix(in srgb, var(--auth-input-bg) 90%, transparent);
   }
 }

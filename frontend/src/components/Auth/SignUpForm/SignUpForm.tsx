@@ -1,7 +1,7 @@
 import "./SignUpForm.scss";
 import { detectUserCountry, findDialCode, allowedCountryOptions } from "../../../utils/country_codes";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Lock, Mail, Phone, User } from "src/icons";
+import { Lock, Mail, User } from "src/icons";
 import { PasswordInput } from "../../PasswordInput/PasswordInput";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFormik } from "formik";
@@ -177,12 +177,9 @@ function SignUpForm() {
             excludeEmptyString: true,
           })
           .notRequired(),
-        // CRO: In the checkout-intent flow we remove the confirmation field to reduce friction.
-        passwordConfirmation: isCheckoutIntent
-          ? Yup.string().notRequired()
-          : Yup.string()
-              .required("Debe confirmar la contraseña")
-              .oneOf([Yup.ref("password")], "Ambas contraseñas deben ser iguales"),
+        passwordConfirmation: Yup.string()
+          .required("Debe confirmar la contraseña")
+          .oneOf([Yup.ref("password")], "Ambas contraseñas deben ser iguales"),
         acceptSupportComms: Yup.bool()
           .oneOf([true], "Debes aceptar recibir mensajes transaccionales y de soporte")
           .required("Debes aceptar recibir mensajes transaccionales y de soporte"),
@@ -549,86 +546,71 @@ function SignUpForm() {
     return items;
   }, [checkoutPlanQuotaGb, showCheckoutTrial, trialConfig?.days, trialConfig?.gb]);
 
-  const shouldShowPasswordConfirmation = !isCheckoutIntent;
-  const optionalHasValue = Boolean(formik.values.username.trim() || formik.values.phone.trim());
-  const optionalHasError = Boolean(
-    (formik.submitCount > 0 || formik.touched.username || formik.touched.phone) &&
-      (formik.errors.username || formik.errors.phone),
+  const NameField = (
+    <div className={`c-row ${showUsernameError ? "is-invalid" : ""}`}>
+      <label htmlFor="username" className="auth-field-label">
+        Nombre <span className="auth-field-optional">(opcional)</span>
+      </label>
+      <div className="auth-login-input-wrap">
+        <User className="auth-login-input-icon" aria-hidden />
+        <input
+          placeholder="DJ Kubo"
+          type="text"
+          id="username"
+          name="username"
+          autoComplete="name"
+          autoFocus={isCheckoutIntent}
+          value={formik.values.username}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
+          className="auth-login-input auth-login-input-with-icon"
+          aria-invalid={showUsernameError}
+          aria-describedby={describedByUsername}
+        />
+      </div>
+      <FieldError id={usernameErrorId} show={showUsernameError} message={formik.errors.username} />
+    </div>
   );
-  const [optionalOpen, setOptionalOpen] = useState<boolean>(() =>
-    isCheckoutIntent ? optionalHasValue || optionalHasError : true,
-  );
-  useEffect(() => {
-    if (!isCheckoutIntent) return;
-    if (optionalHasValue || optionalHasError) setOptionalOpen(true);
-  }, [isCheckoutIntent, optionalHasError, optionalHasValue]);
 
-  const OptionalFields = (
-    <div className="auth-signup-optional-grid">
-      <div className={`c-row ${showUsernameError ? "is-invalid" : ""}`}>
-        <label htmlFor="username" className="auth-field-label">
-          Nombre (opcional)
-        </label>
-        <div className="auth-login-input-wrap">
-          <User className="auth-login-input-icon" aria-hidden />
-          <input
-            placeholder="DJ Kubo"
-            type="text"
-            id="username"
-            name="username"
-            autoComplete="name"
-            value={formik.values.username}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            className="auth-login-input auth-login-input-with-icon"
-            aria-invalid={showUsernameError}
-            aria-describedby={describedByUsername}
-          />
+  const WhatsAppField = (
+    <div className={`c-row c-row--phone ${showPhoneError ? "is-invalid" : ""}`}>
+      <label htmlFor="phone" className="auth-field-label">
+        WhatsApp <span className="auth-field-optional">(opcional)</span>
+      </label>
+      <div className="signup-phone-wrap">
+        <div className="signup-phone-flag-wrap">
+          <span className={`signup-phone-flag ${countryFlagClass}`} aria-hidden title={selectedCountry?.name} />
+          <select
+            className="signup-phone-select-overlay"
+            value={dialCode}
+            onChange={(e) => setDialCode(e.target.value)}
+            aria-label="País (solo bandera visible)"
+            title={selectedCountry?.name}
+          >
+            {allowedCountryOptions.map((c) => (
+              <option key={c.code} value={c.dial_code.slice(1)}>
+                {c.dial_code} {c.name}
+              </option>
+            ))}
+          </select>
         </div>
-        <FieldError id={usernameErrorId} show={showUsernameError} message={formik.errors.username} />
+        <input
+          className="signup-phone-input"
+          placeholder="5512345678"
+          id="phone"
+          name="phone"
+          value={formik.values.phone}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
+          type="tel"
+          inputMode="numeric"
+          autoComplete="tel-national"
+          maxLength={15}
+          aria-invalid={showPhoneError}
+          aria-describedby={describedByPhone}
+        />
       </div>
-      <div className={`c-row c-row--phone ${showPhoneError ? "is-invalid" : ""}`}>
-        <label htmlFor="phone" className="auth-field-label">
-          WhatsApp (opcional)
-        </label>
-        <div className="signup-phone-wrap">
-          <div className="signup-phone-flag-wrap">
-            <span className={`signup-phone-flag ${countryFlagClass}`} aria-hidden title={selectedCountry?.name} />
-            <select
-              className="signup-phone-select-overlay"
-              value={dialCode}
-              onChange={(e) => setDialCode(e.target.value)}
-              aria-label="País (solo bandera visible)"
-              title={selectedCountry?.name}
-            >
-              {allowedCountryOptions.map((c) => (
-                <option key={c.code} value={c.dial_code.slice(1)}>
-                  {c.dial_code} {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <span className="signup-phone-icon-wrap">
-            <Phone className="signup-input-icon" aria-hidden />
-          </span>
-          <input
-            className="signup-phone-input"
-            placeholder="5512345678"
-            id="phone"
-            name="phone"
-            value={formik.values.phone}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            type="tel"
-            inputMode="numeric"
-            autoComplete="tel-national"
-            maxLength={15}
-            aria-invalid={showPhoneError}
-            aria-describedby={describedByPhone}
-          />
-        </div>
-        <FieldError id={phoneErrorId} show={showPhoneError} message={formik.errors.phone} />
-      </div>
+      <FieldError id={phoneErrorId} show={showPhoneError} message={formik.errors.phone} />
     </div>
   );
 
@@ -641,6 +623,7 @@ function SignUpForm() {
         formik.handleSubmit(e);
       }}
     >
+      {NameField}
       <div className={`c-row ${showEmailError ? "is-invalid" : ""}`}>
         <label htmlFor="email" className="auth-field-label">
           Correo electrónico
@@ -652,7 +635,6 @@ function SignUpForm() {
             id="email"
             name="email"
             autoComplete="email"
-            autoFocus={isCheckoutIntent}
             value={formik.values.email}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
@@ -690,46 +672,33 @@ function SignUpForm() {
         </div>
         <FieldError id={passwordErrorId} show={showPasswordError} message={formik.errors.password} />
       </div>
-      {shouldShowPasswordConfirmation && (
-        <div className={`c-row ${showPasswordConfirmationError ? "is-invalid" : ""}`}>
-          <label htmlFor="passwordConfirmation" className="auth-field-label">
-            Repetir contraseña
-          </label>
-          <div className="auth-login-input-wrap">
-            <Lock className="auth-login-input-icon" aria-hidden />
-            <PasswordInput
-              placeholder="Repite tu contraseña"
-              id="passwordConfirmation"
-              name="passwordConfirmation"
-              autoComplete="new-password"
-              value={formik.values.passwordConfirmation}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              aria-invalid={showPasswordConfirmationError}
-              aria-describedby={describedByPasswordConfirmation}
-              inputClassName="auth-login-input auth-login-input-with-icon"
-              wrapperClassName="auth-login-password-wrap"
-            />
-          </div>
-          <FieldError
-            id={passwordConfirmationErrorId}
-            show={showPasswordConfirmationError}
-            message={formik.errors.passwordConfirmation}
+      <div className={`c-row ${showPasswordConfirmationError ? "is-invalid" : ""}`}>
+        <label htmlFor="passwordConfirmation" className="auth-field-label">
+          Repetir contraseña
+        </label>
+        <div className="auth-login-input-wrap">
+          <Lock className="auth-login-input-icon" aria-hidden />
+          <PasswordInput
+            placeholder="Repite tu contraseña"
+            id="passwordConfirmation"
+            name="passwordConfirmation"
+            autoComplete="new-password"
+            value={formik.values.passwordConfirmation}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            aria-invalid={showPasswordConfirmationError}
+            aria-describedby={describedByPasswordConfirmation}
+            inputClassName="auth-login-input auth-login-input-with-icon"
+            wrapperClassName="auth-login-password-wrap"
           />
         </div>
-      )}
-      {isCheckoutIntent ? (
-        <details
-          className="auth-signup-optional"
-          open={optionalOpen}
-          onToggle={(e) => setOptionalOpen((e.target as HTMLDetailsElement).open)}
-        >
-          <summary className="auth-signup-optional__summary">Agregar nombre y WhatsApp (opcional)</summary>
-          {OptionalFields}
-        </details>
-      ) : (
-        OptionalFields
-      )}
+        <FieldError
+          id={passwordConfirmationErrorId}
+          show={showPasswordConfirmationError}
+          message={formik.errors.passwordConfirmation}
+        />
+      </div>
+      {WhatsAppField}
       <Turnstile
         ref={turnstileRef}
         invisible
@@ -765,7 +734,7 @@ function SignUpForm() {
             className="auth-consent-checkbox"
           />
           <span>
-            Acepto recibir mensajes <strong>transaccionales y de soporte</strong> por WhatsApp/SMS/email.
+            Acepto recibir mensajes transaccionales y de soporte por WhatsApp/SMS/email.
           </span>
         </label>
         {formik.touched.acceptSupportComms && formik.errors.acceptSupportComms && (
@@ -783,7 +752,7 @@ function SignUpForm() {
             className="auth-consent-checkbox"
           />
           <span>
-            Quiero recibir <strong>promociones y novedades</strong> por email.
+            Quiero recibir promociones y novedades por email.
           </span>
         </label>
         {`${formik.values.phone ?? ""}`.trim() && (
@@ -797,7 +766,7 @@ function SignUpForm() {
               className="auth-consent-checkbox"
             />
             <span>
-              Quiero recibir <strong>promociones</strong> por WhatsApp (opcional).
+              Quiero recibir promociones por WhatsApp (opcional).
             </span>
           </label>
         )}
