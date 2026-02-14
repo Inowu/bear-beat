@@ -3,7 +3,8 @@
     "start": "NODE_PATH=$(npm root --quiet -g) node concurrently.js",
     "start:fe": "npm run start --workspace=frontend",
     "start:be": "npm run dev --workspace=backend",
-    "build": "npm run build --workspace=frontend"
+    "build": "npm run build --workspace=frontend",
+    "test:local": "bash scripts/test-local.sh"
   },
   "dependencies": {
     "axios": "^1.13.5",

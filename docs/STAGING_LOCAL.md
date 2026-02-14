@@ -61,12 +61,33 @@ REACT_APP_TRPC_URL=http://localhost:5001/trpc
 ```
 
 ## 3) Migraciones de DB (solo DB local)
-Esto aplica migraciones Prisma **solo** a `bearbeat_staging` (puerto `3310` por default).
+Antes de aplicar migraciones, revisa el estado para confirmar si STAGING local está atrasado.
+
+### 3.1) Ver estado de migraciones (STAGING local)
+```bash
+DATABASE_URL="mysql://root:root@127.0.0.1:3310/bearbeat_staging" \
+npx prisma migrate status --schema backend/prisma/schema.prisma
+```
+
+### 3.2) Aplicar migraciones (STAGING local)
+Esto aplica migraciones Prisma **solo** a `bearbeat_staging` (puerto `3310` por default). No hace resets.
 
 ```bash
 DATABASE_URL="mysql://root:root@127.0.0.1:3310/bearbeat_staging" \
 npx prisma migrate deploy --schema backend/prisma/schema.prisma
 ```
+
+### Nota importante: tests no deben correr contra STAGING
+Los tests (`npm test --workspace=backend`) deben correr contra una DB **de test** (`bearbeat_test`) como en CI.
+
+Para replicar CI localmente sin depender de `bearbeat_staging`:
+```bash
+npm run test:local
+```
+
+Variables opcionales:
+- `TEST_MYSQL_PORT` (default `3306`)
+- `TEST_KEEP_DB=1` para no apagar la DB al terminar
 
 ## 4) Seeds (usuarios/planes de prueba)
 Estos scripts se rehúsan a correr si `DATABASE_URL` **no parece local** (guardrail).
