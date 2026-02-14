@@ -192,6 +192,16 @@
     display: block;
   }
 
+  .oxxo-modal__voucher {
+    margin-top: 8px;
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--app-border) 86%, transparent);
+    background: color-mix(in srgb, var(--app-bg-soft) 70%, transparent);
+    padding: 10px;
+    display: grid;
+    gap: 8px;
+  }
+
   .oxxo-modal__voucher-link {
     display: inline-flex;
     align-items: center;
@@ -204,5 +214,13 @@
     color: var(--app-text-heading);
     font-weight: 800;
     text-decoration: none;
+  }
+
+  .oxxo-modal__voucher-hint {
+    margin: 0;
+    color: var(--app-text-muted);
+    font-size: 1.15rem;
+    font-weight: 600;
+    line-height: 1.35;
   }
 }

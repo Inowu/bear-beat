@@ -93,15 +93,18 @@ export function OxxoModal(props: IOxxo) {
                 </div>
               )}
               {!!voucherUrl && (
-                <div className="oxxo-modal__barcode">
+                <div className="oxxo-modal__voucher">
                   <a
                     className="oxxo-modal__voucher-link"
                     href={voucherUrl}
                     target="_blank"
                     rel="noreferrer"
                   >
-                    Ver comprobante / código de barras
+                    Abrir comprobante con código de barras
                   </a>
+                  <p className="oxxo-modal__voucher-hint">
+                    Se abre en otra pestaña. Puedes descargarlo o mostrarlo en caja para pagar.
+                  </p>
                 </div>
               )}
 
