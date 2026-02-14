@@ -1018,11 +1018,59 @@ function Checkout() {
       <div className="checkout-main-container checkout2026">
         {TopNav}
         <main className="checkout2026__main" aria-label="Checkout">
-          <div className="checkout2026__container checkout2026__center">
-            <div className="checkout-one-state" role="status" aria-live="polite">
-              <Spinner size={5} width={0.4} color="var(--app-accent)" />
-              <p className="checkout-one-state__text">Cargando plan…</p>
-            </div>
+          <div className="checkout2026__container">
+            <header className="checkout2026__hero">
+              <h1>Completa tu pago.</h1>
+              <p className="checkout2026__heroSubtitle">Checkout seguro. Activa tu acceso en 1 minuto.</p>
+            </header>
+
+            <section
+              className="checkout-card checkout2026__card checkout2026__card--skeleton"
+              aria-label="Cargando plan"
+              role="status"
+              aria-live="polite"
+              aria-busy="true"
+            >
+              <p className="checkout2026__skeletonStatus">Cargando plan…</p>
+
+              <div className="checkout2026__cardHead" aria-hidden>
+                <span className="checkout2026__sk checkout2026__sk--pill" />
+                <span className="checkout2026__sk checkout2026__sk--pill checkout2026__sk--pillSmall" />
+              </div>
+
+              <div className="checkout2026__price" aria-hidden>
+                <span className="checkout2026__sk checkout2026__sk--price" />
+                <span className="checkout2026__sk checkout2026__sk--suffix" />
+              </div>
+
+              <ul className="checkout2026__skeletonBenefits" aria-hidden>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <li key={i} className="checkout2026__benefit">
+                    <span className="checkout2026__sk checkout2026__sk--benefitIcon" />
+                    <span className="checkout2026__sk checkout2026__sk--benefitLine" />
+                  </li>
+                ))}
+              </ul>
+
+              <div className="checkout2026__divider" aria-hidden />
+
+              <section className="checkout2026__methodSection" aria-hidden>
+                <span className="checkout2026__sk checkout2026__sk--sectionLabel" />
+                <div className="checkout2026__skeletonMethodSwitch">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <span key={i} className="checkout2026__sk checkout2026__sk--methodBtn" />
+                  ))}
+                </div>
+                <div className="checkout2026__skeletonBlurb">
+                  <span className="checkout2026__sk checkout2026__sk--blurbLine" />
+                  <span className="checkout2026__sk checkout2026__sk--blurbLine checkout2026__sk--blurbLineShort" />
+                </div>
+              </section>
+
+              <div className="checkout2026__actions" aria-hidden>
+                <span className="checkout2026__sk checkout2026__sk--cta" />
+              </div>
+            </section>
           </div>
         </main>
       </div>
