@@ -109,6 +109,7 @@ function Checkout() {
   const [selectedMethod, setSelectedMethod] = useState<CheckoutMethod>("card");
   const [processingMethod, setProcessingMethod] = useState<CheckoutMethod | null>(null);
   const [inlineError, setInlineError] = useState<string | null>(null);
+  const [acceptRecurring, setAcceptRecurring] = useState(true);
   const [showSpeiModal, setShowSpeiModal] = useState(false);
   const [speiData, setSpeiData] = useState<ISpeiData | null>(null);
   const [showOxxoModal, setShowOxxoModal] = useState(false);
@@ -326,6 +327,7 @@ function Checkout() {
     setRedirecting(false);
     setShowRedirectHelp(false);
     setInlineError(null);
+    setAcceptRecurring(true);
     setSelectedMethod("card");
     setSpeiData(null);
     setShowSpeiModal(false);
@@ -372,6 +374,10 @@ function Checkout() {
 
   const startStripeCheckout = useCallback(async () => {
     if (!priceId || !plan?.id) return;
+    if (!acceptRecurring) {
+      setInlineError("Para continuar debes aceptar el cobro recurrente (renovación automática).");
+      return;
+    }
     setProcessingMethod("card");
     setRedirectingProvider("stripe");
     setRedirecting(true);
@@ -421,6 +427,7 @@ function Checkout() {
     try {
       const result = await trpc.subscriptions.createStripeCheckoutSession.mutate({
         planId: plan.id,
+        acceptRecurring,
         successUrl,
         cancelUrl,
         fbp: cookies._fbp,
@@ -469,7 +476,7 @@ function Checkout() {
       setRedirecting(false);
       setProcessingMethod(null);
     }
-  }, [cookies._fbc, cookies._fbp, location.pathname, location.search, plan?.id, plan?.moneda, plan?.price, priceId]);
+  }, [acceptRecurring, cookies._fbc, cookies._fbp, location.pathname, location.search, plan?.id, plan?.moneda, plan?.price, priceId]);
 
   const startCashCheckout = useCallback(
     async () => {
@@ -671,6 +678,7 @@ function Checkout() {
         await trpc.subscriptions.subscribeWithPaypal.mutate({
           planId: paypalPlan.id,
           subscriptionId,
+          acceptRecurring,
           fbp: cookies._fbp,
           fbc: cookies._fbc,
           url: window.location.href,
@@ -712,7 +720,7 @@ function Checkout() {
         setProcessingMethod(null);
       }
     },
-    [paypalPlan?.id, plan?.id, plan?.price, plan?.moneda, cookies._fbp, cookies._fbc, navigate],
+    [acceptRecurring, paypalPlan?.id, plan?.id, plan?.price, plan?.moneda, cookies._fbp, cookies._fbc, navigate],
   );
 
   useEffect(() => {
@@ -748,6 +756,10 @@ function Checkout() {
       return;
     }
     if (selectedMethod === "card") {
+      if (!acceptRecurring) {
+        setInlineError("Para continuar debes aceptar el cobro recurrente (renovación automática).");
+        return;
+      }
       startStripeCheckout();
       return;
     }
@@ -1103,6 +1115,39 @@ function Checkout() {
               </div>
             </section>
 
+            {(selectedMethod === "card" || selectedMethod === "paypal") && (
+              <section
+                className={`checkout2026__consent ${!acceptRecurring ? "is-error" : ""}`}
+                aria-label="Consentimiento de cobro recurrente"
+              >
+                <label className="checkout2026__consentRow">
+                  <input
+                    type="checkbox"
+                    checked={acceptRecurring}
+                    onChange={(e) => {
+                      interactedRef.current = true;
+                      setAcceptRecurring(e.target.checked);
+                      setInlineError(null);
+                    }}
+                    disabled={processingMethod !== null}
+                  />
+                  <span className="checkout2026__consentCopy">
+                    <strong>Acepto renovación automática</strong>
+                    <span>
+                      {isCardTrial
+                        ? `Hoy $0. Después ${summaryMonthlyLabel} hasta que cancele.`
+                        : `${summaryMonthlyLabel} hasta que cancele.`}
+                    </span>
+                  </span>
+                </label>
+                <p className="checkout2026__consentFineprint">
+                  Puedes cancelar cuando quieras desde <Link to="/micuenta">Mi cuenta</Link>. Al continuar aceptas{" "}
+                  <Link to="/legal#terminos">Términos</Link>, <Link to="/legal#privacidad">Privacidad</Link> y{" "}
+                  <Link to="/legal#reembolsos">Reembolsos</Link>.
+                </p>
+              </section>
+            )}
+
             {inlineError && <p className="checkout-inline-error">{inlineError}</p>}
 
             <div className="checkout-payment-actions checkout2026__actions" aria-label="Acción">
@@ -1114,6 +1159,10 @@ function Checkout() {
                   <PayPalComponent
                     plan={paypalPlan!}
                     type="subscription"
+                    canProceed={acceptRecurring}
+                    onBlocked={() => {
+                      setInlineError("Para continuar debes aceptar el cobro recurrente (renovación automática).");
+                    }}
                     onApprove={(data: any) => {
                       void startPaypalCheckout(data);
                     }}

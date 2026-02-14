@@ -12,12 +12,19 @@ import { manyChat } from '../../many-chat';
 import { checkIfUserIsSubscriber } from '../migration/checkUHSubscriber';
 import { getClientIpFromRequest } from '../../analytics';
 import { getPlanKey } from '../../utils/getPlanKey';
+import {
+  BILLING_CONSENT_TYPE_RECURRING,
+  BILLING_CONSENT_VERSION,
+  buildRecurringBillingConsentText,
+} from '../../utils/billingConsent';
+import { sanitizeTrackingUrl } from '../../utils/trackingUrl';
 
 export const subscribeWithPaypal = shieldedProcedure
   .input(
     z.object({
       planId: z.number(),
       subscriptionId: z.string(),
+      acceptRecurring: z.boolean().optional(),
       fbp: z.string().optional(),
       fbc: z.string().optional(),
       eventId: z.string().optional(),
@@ -26,11 +33,12 @@ export const subscribeWithPaypal = shieldedProcedure
   )
   .mutation(
     async ({
-      input: { planId, subscriptionId, fbp, fbc, eventId, url },
+      input: { planId, subscriptionId, acceptRecurring, fbp, fbc, eventId, url },
       ctx: { prisma, session, req },
     }) => {
       const user = session!.user!;
       let migrationUser = null;
+      const recurringAccepted = acceptRecurring ?? true;
 
       if (process.env.UH_MIGRATION_ACTIVE === 'true') {
         migrationUser = await checkIfUserIsSubscriber({
@@ -109,6 +117,13 @@ export const subscribeWithPaypal = shieldedProcedure
         });
       }
 
+      if (!recurringAccepted) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Debes aceptar el cobro recurrente para continuar.',
+        });
+      }
+
       try {
         const paypalToken = await paypal.getToken();
 
@@ -153,6 +168,66 @@ export const subscribeWithPaypal = shieldedProcedure
           service: PaymentService.PAYPAL,
           expirationDate: new Date(subscription.billing_info.next_billing_time),
         });
+
+        try {
+          const clientIp = getClientIpFromRequest(req);
+          const userAgentRaw = req.headers['user-agent'];
+          const userAgent =
+            typeof userAgentRaw === 'string'
+              ? userAgentRaw
+              : Array.isArray(userAgentRaw)
+                ? userAgentRaw[0] ?? null
+                : null;
+
+          const order = await prisma.orders.findFirst({
+            where: {
+              user_id: user.id,
+              txn_id: subscriptionId,
+              payment_method: PaymentService.PAYPAL,
+              is_plan: 1,
+            },
+            orderBy: { date_order: 'desc' },
+            select: { id: true },
+          });
+
+          const existingConsent = await prisma.billingConsent.findFirst({
+            where: {
+              provider: 'paypal',
+              provider_ref: subscriptionId,
+              consent_type: BILLING_CONSENT_TYPE_RECURRING,
+            },
+            select: { id: true },
+          });
+
+          if (!existingConsent) {
+            await prisma.billingConsent.create({
+              data: {
+                user_id: user.id,
+                order_id: order?.id ?? null,
+                plan_id: resolvedPlan.id,
+                provider: 'paypal',
+                provider_ref: subscriptionId,
+                consent_type: BILLING_CONSENT_TYPE_RECURRING,
+                consent_version: BILLING_CONSENT_VERSION,
+                consent_text: buildRecurringBillingConsentText({
+                  amount: resolvedPlan.price,
+                  currency: resolvedPlan.moneda,
+                  trialDays: 0,
+                }),
+                accepted: true,
+                ip_address: clientIp,
+                user_agent: userAgent,
+                page_url: url ? sanitizeTrackingUrl(url, 1000) : null,
+              },
+            });
+          }
+        } catch (consentError) {
+          log.warn('[PAYPAL] Failed to store billing consent (non-blocking)', {
+            userId: user.id,
+            subscriptionId,
+            error: consentError instanceof Error ? consentError.message : consentError,
+          });
+        }
 
         if (existingUser) {
           const clientIp = getClientIpFromRequest(req);

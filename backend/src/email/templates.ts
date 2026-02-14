@@ -14,20 +14,23 @@ const resolveClientUrl = (): string => {
 };
 
 const COLORS = {
-  bg: '#F3F7FA',
-  card: '#FFFFFF',
-  cardSoft: '#F8FBFD',
-  border: 'rgba(15, 23, 42, 0.12)',
-  ink: '#0B1220',
-  text: '#1F2A3A',
-  muted: '#556274',
-  dark: '#0B1220',
+  // Email theme: match Bear Beat's neon-on-dark brand.
+  // Keep it simple + readable across Gmail/Outlook clients.
+  bg: '#020617',
+  card: '#0B1220',
+  cardSoft: '#111926',
+  border: 'rgba(255, 255, 255, 0.12)',
+  ink: '#F7F7F7',
+  text: 'rgba(247, 247, 247, 0.86)',
+  muted: 'rgba(247, 247, 247, 0.66)',
+  dark: '#000000',
   cyan: '#08E1F7',
   mint: '#00E6C1',
-  accentInk: '#007C89',
+  accentInk: '#08E1F7',
 } as const;
 
 const FONT_UI = `Manrope, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif`;
+const FONT_BRAND = `"Bear-font", Manrope, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif`;
 const FONT_MONO =
   `ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace`;
 
@@ -59,7 +62,8 @@ const renderLayout = (params: {
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="color-scheme" content="light only" />
+        <meta name="color-scheme" content="dark light" />
+        <meta name="supported-color-schemes" content="dark light" />
         <title>${safeTitle}</title>
       </head>
       <body style="margin:0;padding:0;background:${COLORS.bg};">
@@ -71,7 +75,7 @@ const renderLayout = (params: {
             <td align="center" style="padding:28px 12px;">
               <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;">
                 <tr>
-                  <td style="border-radius:18px;overflow:hidden;border:1px solid ${COLORS.border};box-shadow:0 18px 46px rgba(15, 23, 42, 0.12);">
+                  <td style="border-radius:18px;overflow:hidden;border:1px solid ${COLORS.border};box-shadow:0 24px 70px rgba(0, 0, 0, 0.72), 0 0 0 1px rgba(8, 225, 247, 0.10);">
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${COLORS.card}" style="background:${COLORS.card};">
                       <tr>
                         <td height="6" bgcolor="${COLORS.cyan}" style="height:6px;line-height:6px;font-size:0;background:${COLORS.cyan};background-image:linear-gradient(11deg, ${COLORS.mint}, ${COLORS.cyan});">
@@ -79,17 +83,13 @@ const renderLayout = (params: {
                         </td>
                       </tr>
                       <tr>
-                        <td bgcolor="${COLORS.dark}" style="background:${COLORS.dark};padding:18px 22px;">
-                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                            <tr>
-                              <td valign="middle" style="padding:0;">
-                                <img src="${logoUrl}" width="148" alt="Bear Beat" style="display:block;border:0;outline:none;text-decoration:none;height:auto;max-width:148px;" />
-                              </td>
-                              <td valign="middle" align="right" style="padding:0;font-family:${FONT_UI};font-size:12px;line-height:1.3;color:rgba(255,255,255,0.72);">
-                                ${clientUrlShort}
-                              </td>
-                            </tr>
-                          </table>
+                        <td bgcolor="${COLORS.card}" style="background:${COLORS.card};padding:26px 22px 18px 22px;text-align:center;">
+                          <a href="${escapeHtml(clientUrl)}" style="text-decoration:none;display:inline-block;">
+                            <img src="${logoUrl}" width="176" alt="Bear Beat" style="display:block;border:0;outline:none;text-decoration:none;height:auto;max-width:176px;margin:0 auto;" />
+                          </a>
+                          <div style="margin-top:10px;font-family:${FONT_UI};font-size:12px;line-height:1.4;color:${COLORS.muted};letter-spacing:0.14em;text-transform:uppercase;">
+                            ${clientUrlShort}
+                          </div>
                         </td>
                       </tr>
                       <tr>
@@ -131,8 +131,8 @@ const renderButton = (params: { href: string; label: string }): string => {
   return `
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;">
       <tr>
-        <td align="center" bgcolor="${COLORS.cyan}" style="border-radius:14px;background:${COLORS.cyan};background-image:linear-gradient(11deg, ${COLORS.mint}, ${COLORS.cyan});">
-          <a href="${safeHref}" style="display:inline-block;padding:12px 18px;font-family:${FONT_UI};font-size:16px;line-height:1.2;font-weight:900;letter-spacing:-0.01em;color:${COLORS.dark};text-decoration:none;border-radius:14px;">
+        <td align="center" bgcolor="${COLORS.cyan}" style="border-radius:14px;background:${COLORS.cyan};background-image:linear-gradient(11deg, ${COLORS.mint}, ${COLORS.cyan});box-shadow:0 14px 30px rgba(8, 225, 247, 0.14);">
+          <a href="${safeHref}" style="display:inline-block;padding:12px 18px;font-family:${FONT_UI};font-size:16px;line-height:1.2;font-weight:950;letter-spacing:-0.01em;color:${COLORS.dark};text-decoration:none;border-radius:14px;">
             ${safeLabel}
           </a>
         </td>
@@ -158,7 +158,7 @@ export const emailTemplates = {
     const { name, email, plansUrl, accountUrl, unsubscribeUrl } = params;
     const subject = `Bienvenido a Bear Beat, ${String(name || '').trim() || 'DJ'}`;
     const contentHtml = `
-      <h1 style="margin:0 0 10px 0;font-size:28px;line-height:1.15;letter-spacing:-0.01em;font-weight:950;color:${COLORS.ink};">
+      <h1 style="margin:0 0 10px 0;font-family:${FONT_BRAND};font-size:28px;line-height:1.15;letter-spacing:-0.01em;font-weight:950;color:${COLORS.ink};">
         Bienvenido, ${escapeHtml(name)}
       </h1>
       <p style="margin:0 0 16px 0;font-size:16px;line-height:1.7;color:${COLORS.text};">
@@ -203,7 +203,7 @@ export const emailTemplates = {
     const { name, email, link, unsubscribeUrl } = params;
     const title = 'Restablece tu contraseña';
     const contentHtml = `
-      <h1 style="margin:0 0 10px 0;font-size:26px;line-height:1.16;letter-spacing:-0.01em;font-weight:950;color:${COLORS.ink};">
+      <h1 style="margin:0 0 10px 0;font-family:${FONT_BRAND};font-size:26px;line-height:1.16;letter-spacing:-0.01em;font-weight:950;color:${COLORS.ink};">
         ${escapeHtml(title)}
       </h1>
       <p style="margin:0 0 14px 0;font-size:16px;line-height:1.7;color:${COLORS.text};">
@@ -247,7 +247,7 @@ export const emailTemplates = {
     const { name, planName, price, currency, orderId, catalogUrl, accountUrl, unsubscribeUrl } = params;
     const title = 'Tu plan está activo';
     const contentHtml = `
-      <h1 style="margin:0 0 10px 0;font-size:26px;line-height:1.16;letter-spacing:-0.01em;font-weight:950;color:${COLORS.ink};">
+      <h1 style="margin:0 0 10px 0;font-family:${FONT_BRAND};font-size:26px;line-height:1.16;letter-spacing:-0.01em;font-weight:950;color:${COLORS.ink};">
         ${escapeHtml(title)}
       </h1>
       <p style="margin:0 0 14px 0;font-size:16px;line-height:1.7;color:${COLORS.text};">
@@ -269,6 +269,10 @@ export const emailTemplates = {
           </tr>
         </table>
       </div>
+      <p style="margin:0 0 14px 0;font-size:13px;line-height:1.65;color:${COLORS.muted};">
+        Renovación automática: tu suscripción se renueva cada mes hasta que canceles. Puedes cancelar cuando quieras desde
+        <a href="${escapeHtml(accountUrl)}" style="color:${COLORS.accentInk};text-decoration:underline;text-underline-offset:3px;">Mi cuenta</a>.
+      </p>
       <div style="margin:18px 0 0 0;">
         ${renderButton({ href: catalogUrl, label: 'Ir al catálogo' })}
       </div>
@@ -284,7 +288,8 @@ export const emailTemplates = {
       `Hola ${name}, tu suscripción fue activada correctamente.\n` +
       `Plan: ${planName}\n` +
       `Precio: ${price} ${currency}\n` +
-      `Orden: #${orderId}\n`;
+      `Orden: #${orderId}\n` +
+      `Renovación automática: se renueva cada mes hasta cancelar. Cancela desde Mi cuenta:\n${accountUrl}\n`;
 
     return {
       subject: title,
@@ -298,7 +303,7 @@ export const emailTemplates = {
     const title = 'Tu prueba sigue activa';
     const subject = `[Bear Beat] ${title}`;
     const contentHtml = `
-      <h1 style="margin:0 0 10px 0;font-size:26px;line-height:1.16;letter-spacing:-0.01em;font-weight:950;color:${COLORS.ink};">
+      <h1 style="margin:0 0 10px 0;font-family:${FONT_BRAND};font-size:26px;line-height:1.16;letter-spacing:-0.01em;font-weight:950;color:${COLORS.ink};">
         ${escapeHtml(title)}
       </h1>
       <p style="margin:0 0 12px 0;font-size:16px;line-height:1.7;color:${COLORS.text};">
@@ -337,7 +342,7 @@ export const emailTemplates = {
     const title = 'Tu plan está activo';
     const subject = `[Bear Beat] ${title}`;
     const contentHtml = `
-      <h1 style="margin:0 0 10px 0;font-size:26px;line-height:1.16;letter-spacing:-0.01em;font-weight:950;color:${COLORS.ink};">
+      <h1 style="margin:0 0 10px 0;font-family:${FONT_BRAND};font-size:26px;line-height:1.16;letter-spacing:-0.01em;font-weight:950;color:${COLORS.ink};">
         ${escapeHtml(title)}
       </h1>
       <p style="margin:0 0 12px 0;font-size:16px;line-height:1.7;color:${COLORS.text};">
@@ -366,7 +371,7 @@ export const emailTemplates = {
     const title = 'Elige tu plan';
     const subject = `[Bear Beat] ${title}`;
     const contentHtml = `
-      <h1 style="margin:0 0 10px 0;font-size:26px;line-height:1.16;letter-spacing:-0.01em;font-weight:950;color:${COLORS.ink};">
+      <h1 style="margin:0 0 10px 0;font-family:${FONT_BRAND};font-size:26px;line-height:1.16;letter-spacing:-0.01em;font-weight:950;color:${COLORS.ink};">
         ${escapeHtml(title)}
       </h1>
       <p style="margin:0 0 12px 0;font-size:16px;line-height:1.7;color:${COLORS.text};">
@@ -411,7 +416,7 @@ export const emailTemplates = {
     const subject = `[Bear Beat] Cupón ${pct}% para activar tu plan`;
 
     const contentHtml = `
-      <h1 style="margin:0 0 10px 0;font-size:26px;line-height:1.16;letter-spacing:-0.01em;font-weight:950;color:${COLORS.ink};">
+      <h1 style="margin:0 0 10px 0;font-family:${FONT_BRAND};font-size:26px;line-height:1.16;letter-spacing:-0.01em;font-weight:950;color:${COLORS.ink};">
         ${escapeHtml(`Tu cupón ${pct}% está listo`)}
       </h1>
       <p style="margin:0 0 12px 0;font-size:16px;line-height:1.7;color:${COLORS.text};">
@@ -463,7 +468,7 @@ export const emailTemplates = {
     const { name, url } = params;
     const subject = `[Bear Beat] Verifica tu WhatsApp para descargar`;
     const contentHtml = `
-      <h1 style="margin:0 0 10px 0;font-size:26px;line-height:1.16;letter-spacing:-0.01em;font-weight:950;color:${COLORS.ink};">
+      <h1 style="margin:0 0 10px 0;font-family:${FONT_BRAND};font-size:26px;line-height:1.16;letter-spacing:-0.01em;font-weight:950;color:${COLORS.ink};">
         Verifica tu WhatsApp (1 minuto)
       </h1>
       <p style="margin:0 0 12px 0;font-size:16px;line-height:1.7;color:${COLORS.text};">
@@ -508,7 +513,7 @@ export const emailTemplates = {
         : '';
 
     const contentHtml = `
-      <h1 style="margin:0 0 10px 0;font-size:26px;line-height:1.16;letter-spacing:-0.01em;font-weight:950;color:${COLORS.ink};">
+      <h1 style="margin:0 0 10px 0;font-family:${FONT_BRAND};font-size:26px;line-height:1.16;letter-spacing:-0.01em;font-weight:950;color:${COLORS.ink};">
         Te quedaste a un paso
       </h1>
       <p style="margin:0 0 10px 0;font-size:16px;line-height:1.7;color:${COLORS.text};">
@@ -548,7 +553,7 @@ export const emailTemplates = {
     const { name, url, unsubscribeUrl } = params;
     const subject = `[Bear Beat] Tu prueba termina en 24h`;
     const contentHtml = `
-      <h1 style="margin:0 0 10px 0;font-size:26px;line-height:1.16;letter-spacing:-0.01em;font-weight:950;color:${COLORS.ink};">
+      <h1 style="margin:0 0 10px 0;font-family:${FONT_BRAND};font-size:26px;line-height:1.16;letter-spacing:-0.01em;font-weight:950;color:${COLORS.ink};">
         Tu prueba termina en 24h
       </h1>
       <p style="margin:0 0 12px 0;font-size:16px;line-height:1.7;color:${COLORS.text};">
@@ -578,7 +583,7 @@ export const emailTemplates = {
     const safeDays = Math.max(1, Math.min(60, Math.floor(Number(days) || 0)));
     const subject = `[Bear Beat] Llevas ${safeDays} días sin descargar`;
     const contentHtml = `
-      <h1 style="margin:0 0 10px 0;font-size:26px;line-height:1.16;letter-spacing:-0.01em;font-weight:950;color:${COLORS.ink};">
+      <h1 style="margin:0 0 10px 0;font-family:${FONT_BRAND};font-size:26px;line-height:1.16;letter-spacing:-0.01em;font-weight:950;color:${COLORS.ink};">
         Vuelve a descargar hoy
       </h1>
       <p style="margin:0 0 12px 0;font-size:16px;line-height:1.7;color:${COLORS.text};">
@@ -609,7 +614,7 @@ export const emailTemplates = {
     const { days, count, detailsText, generatedAt } = params;
     const subject = `[Bear Beat] Alerts de analytics (${count}) · ${days}d`;
     const contentHtml = `
-      <h1 style="margin:0 0 10px 0;font-size:22px;line-height:1.2;letter-spacing:-0.01em;font-weight:950;color:${COLORS.ink};">
+      <h1 style="margin:0 0 10px 0;font-family:${FONT_BRAND};font-size:22px;line-height:1.2;letter-spacing:-0.01em;font-weight:950;color:${COLORS.ink};">
         ${escapeHtml(subject)}
       </h1>
       <p style="margin:0 0 12px 0;font-size:14px;line-height:1.65;color:${COLORS.text};">

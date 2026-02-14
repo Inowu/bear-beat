@@ -13,6 +13,11 @@ import { addDays } from 'date-fns';
 import { facebook } from '../../facebook';
 import { getClientIpFromRequest } from '../../analytics';
 import { resolveCheckoutCoupon } from '../../offers';
+import {
+  BILLING_CONSENT_TYPE_RECURRING,
+  BILLING_CONSENT_VERSION,
+  buildRecurringBillingConsentText,
+} from '../../utils/billingConsent';
 import { getMarketingTrialConfigFromEnv } from '../../utils/trialConfig';
 import { ensureStripePriceId, StripePriceKey } from './utils/ensureStripePriceId';
 import { sanitizeTrackingUrl } from '../../utils/trackingUrl';
@@ -27,6 +32,7 @@ export const createStripeCheckoutSession = shieldedProcedure
   .input(
     z.object({
       planId: z.number(),
+      acceptRecurring: z.boolean().optional(),
       successUrl: z.string().url(),
       cancelUrl: z.string().url(),
       coupon: z.string().optional(),
@@ -37,8 +43,9 @@ export const createStripeCheckoutSession = shieldedProcedure
       purchaseEventId: z.string().optional(),
     }),
   )
-  .mutation(async ({ input: { planId, successUrl, cancelUrl, coupon, fbp, fbc, url, eventId, purchaseEventId }, ctx: { prisma, session, req } }) => {
+  .mutation(async ({ input: { planId, acceptRecurring, successUrl, cancelUrl, coupon, fbp, fbc, url, eventId, purchaseEventId }, ctx: { prisma, session, req } }) => {
     const user = session!.user!;
+    const recurringAccepted = acceptRecurring ?? true;
 
     const plan = await prisma.plans.findFirst({
       where: { id: planId },
@@ -48,6 +55,13 @@ export const createStripeCheckoutSession = shieldedProcedure
       throw new TRPCError({
         code: 'NOT_FOUND',
         message: 'Ese plan no existe',
+      });
+    }
+
+    if (!recurringAccepted) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Debes aceptar el cobro recurrente para continuar.',
       });
     }
 
@@ -298,6 +312,18 @@ export const createStripeCheckoutSession = shieldedProcedure
       }
     }
 
+    const consentTrialDays = effectiveTrialEnd
+      ? Math.max(
+          0,
+          Math.ceil((effectiveTrialEnd * 1000 - Date.now()) / (1000 * 60 * 60 * 24)),
+        )
+      : 0;
+    const consentText = buildRecurringBillingConsentText({
+      amount: plan.price,
+      currency: plan.moneda,
+      trialDays: consentTrialDays,
+    });
+
     const safeMetaValue = (value: unknown, maxLen = 480): string | undefined => {
       const raw = typeof value === 'string' ? value : value != null ? String(value) : '';
       const trimmed = raw.trim();
@@ -330,12 +356,14 @@ export const createStripeCheckoutSession = shieldedProcedure
           metadata: {
             orderId: String(order.id),
             userId: String(user.id),
+            bb_consent_version: BILLING_CONSENT_VERSION,
           },
           subscription_data: {
             metadata: {
               orderId: String(order.id),
               ...trialMetadata,
               ...subscriptionMarketingMetadata,
+              bb_consent_version: BILLING_CONSENT_VERSION,
             },
             ...(effectiveTrialEnd ? { trial_end: effectiveTrialEnd } : {}),
           },
@@ -365,6 +393,39 @@ export const createStripeCheckoutSession = shieldedProcedure
       }
 
       log.info(`[STRIPE_CHECKOUT_SESSION] Created session ${stripeSession.id} for order ${order.id}`);
+
+      try {
+        const clientIp = getClientIpFromRequest(req);
+        const userAgentRaw = req.headers['user-agent'];
+        const userAgent =
+          typeof userAgentRaw === 'string'
+            ? userAgentRaw
+            : Array.isArray(userAgentRaw)
+              ? userAgentRaw[0] ?? null
+              : null;
+
+        await prisma.billingConsent.create({
+          data: {
+            user_id: user.id,
+            order_id: order.id,
+            plan_id: plan.id,
+            provider: 'stripe',
+            provider_ref: stripeSession.id,
+            consent_type: BILLING_CONSENT_TYPE_RECURRING,
+            consent_version: BILLING_CONSENT_VERSION,
+            consent_text: consentText,
+            accepted: true,
+            ip_address: clientIp,
+            user_agent: userAgent,
+            page_url: url ? sanitizeTrackingUrl(url, 1000) : null,
+          },
+        });
+      } catch (consentError) {
+        log.warn('[STRIPE_CHECKOUT_SESSION] Failed to store billing consent (non-blocking)', {
+          orderId: order.id,
+          error: consentError instanceof Error ? consentError.message : consentError,
+        });
+      }
 
       return {
         url: stripeSession.url,

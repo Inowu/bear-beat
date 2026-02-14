@@ -155,6 +155,29 @@ model SubscriptionCancellationFeedback {
   @@map("subscription_cancellation_feedback")
 }
 
+model BillingConsent {
+  id              Int      @id @default(autoincrement())
+  user_id         Int
+  order_id        Int?
+  plan_id         Int
+  provider        String   @db.VarChar(20)
+  provider_ref    String?  @db.VarChar(120)
+  consent_type    String   @db.VarChar(40)
+  consent_version String   @db.VarChar(32)
+  consent_text    String   @db.Text
+  accepted        Boolean  @default(true)
+  ip_address      String?  @db.VarChar(120)
+  user_agent      String?  @db.Text
+  page_url        String?  @db.VarChar(1000)
+  created_at      DateTime @default(now()) @db.DateTime(0)
+
+  @@index([user_id], map: "idx_billing_consents_user_id")
+  @@index([order_id], map: "idx_billing_consents_order_id")
+  @@index([provider, provider_ref], map: "idx_billing_consents_provider_ref")
+  @@index([plan_id], map: "idx_billing_consents_plan_id")
+  @@map("billing_consents")
+}
+
 model AutomationRunLog {
   id          Int      @id @default(autoincrement())
   started_at  DateTime @default(now()) @db.DateTime(0)

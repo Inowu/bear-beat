@@ -16,6 +16,8 @@ import "./PayPalComponent.scss";
 interface Props {
     onApprove: (order: any) => void;
     onClick: () => void;
+    canProceed?: boolean;
+    onBlocked?: () => void;
     type: 'subscription' | 'order',
     plan: IPlans
 }
@@ -25,6 +27,8 @@ export default function PayPalComponent(props: Props) {
     const disableFunding: string[] = ["paylater", "credit", "venmo"];
     const buttonsRef = useRef<{ render: (selector: string) => Promise<unknown> } | null>(null);
     const isMountedRef = useRef(true);
+    const canProceedRef = useRef<boolean | undefined>(props.canProceed);
+    const onBlockedRef = useRef<(() => void) | undefined>(props.onBlocked);
     const buttonId = `paypal-button-container-${props.plan.id}`;
 
     useEffect(() => {
@@ -37,6 +41,11 @@ export default function PayPalComponent(props: Props) {
             buttonsRef.current = null;
         };
     }, []);
+
+    useEffect(() => {
+        canProceedRef.current = props.canProceed;
+        onBlockedRef.current = props.onBlocked;
+    }, [props.canProceed, props.onBlocked]);
 
     const handleManyChat = async () => {
         try {
@@ -79,6 +88,10 @@ export default function PayPalComponent(props: Props) {
             : process.env.REACT_APP_PAYPAL_CLIENT_ID!;
 
         async function onClickButton(data: any, actions: OnClickActions) {
+            if (canProceedRef.current === false) {
+                onBlockedRef.current?.();
+                return actions.reject();
+            }
             props.onClick();
             void trpc.checkoutLogs.registerCheckoutLog.mutate().catch(() => { });
             handleManyChat();
@@ -102,7 +115,7 @@ export default function PayPalComponent(props: Props) {
                 return actions.reject();
             }
 
-            actions.resolve();
+            return actions.resolve();
         }
 
         async function createOrder(data: any, actions: CreateOrderActions) {
