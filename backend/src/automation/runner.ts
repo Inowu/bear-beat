@@ -411,7 +411,32 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 
         safeAddManyChatTag(user, 'AUTOMATION_REGISTERED_NO_PURCHASE_7D').catch(() => {});
         const templateId = parseNumber(process.env.AUTOMATION_EMAIL_REGISTERED_NO_PURCHASE_TEMPLATE_ID, 0);
-        if (templateId > 0 && user.email_marketing_opt_in && canSendEmail()) {
+        const percentOff = Math.max(
+          1,
+          Math.min(99, Math.floor(parseNumber(process.env.AUTOMATION_REGISTERED_NO_PURCHASE_PERCENT_OFF, 30))),
+        );
+        const expiresDays = Math.max(
+          1,
+          Math.min(30, Math.floor(parseNumber(process.env.AUTOMATION_REGISTERED_NO_PURCHASE_EXPIRES_DAYS, 3))),
+        );
+        const expiresAt = new Date(Date.now() + expiresDays * 24 * 60 * 60 * 1000);
+        const offer = await upsertUserOfferAndCoupon({
+          prisma,
+          userId: user.id,
+          offerKey: OFFER_KEYS.REGISTERED_NO_PURCHASE,
+          stage: 1,
+          percentOff,
+          expiresAt,
+        });
+
+        await safeSetManyChatCustomFields(user, [
+          { key: 'bb_offer_code', value: offer.couponCode ?? '' },
+          { key: 'bb_offer_pct', value: String(offer.percentOff) },
+          { key: 'bb_offer_expires_at', value: expiresAt.toISOString() },
+        ]);
+        safeAddManyChatTag(user, `AUTOMATION_REGISTERED_NO_PURCHASE_OFFER_${offer.percentOff}`).catch(() => {});
+
+        if (templateId > 0 && user.email_marketing_opt_in && offer.couponCode && canSendEmail()) {
           const url = appendQueryParams(`${resolveClientUrl()}/planes`, {
             utm_source: 'email',
             utm_medium: 'automation',
@@ -419,7 +444,15 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
             utm_content: 'cta',
           });
           const unsubscribeUrl = buildMarketingUnsubscribeUrl(user.id) ?? undefined;
-          const tpl = emailTemplates.automationRegisteredNoPurchase7d({ name: user.username, url, unsubscribeUrl });
+          const expiresAtText = `${expiresAt.toISOString().replace('T', ' ').slice(0, 16)} UTC`;
+          const tpl = emailTemplates.registeredNoPurchaseOffer({
+            name: user.username,
+            url,
+            couponCode: offer.couponCode,
+            percentOff: offer.percentOff,
+            expiresAt: expiresAtText,
+            unsubscribeUrl,
+          });
           await safeSendAutomationEmail({
             toEmail: user.email,
             toName: user.username,
@@ -907,6 +940,130 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
         }
 
         bump(`active_no_download_${days}d`);
+      }
+    }
+
+    // Rule 4b: lapsed subscription (ended recently) -> winback offer
+    {
+      const stage = 1;
+      const minDays = Math.max(
+        1,
+        Math.min(3650, Math.floor(parseNumber(process.env.AUTOMATION_WINBACK_LAPSED_MIN_DAYS, 7))),
+      );
+      const lookbackDays = Math.max(
+        7,
+        Math.min(3650, Math.floor(parseNumber(process.env.AUTOMATION_WINBACK_LAPSED_LOOKBACK_DAYS, 365))),
+      );
+      const percentOff = Math.max(
+        1,
+        Math.min(99, Math.floor(parseNumber(process.env.AUTOMATION_WINBACK_LAPSED_PERCENT_OFF, 50))),
+      );
+      const expiresDays = Math.max(
+        1,
+        Math.min(30, Math.floor(parseNumber(process.env.AUTOMATION_WINBACK_LAPSED_EXPIRES_DAYS, 3))),
+      );
+
+      const rows = await prisma.$queryRaw<
+        Array<{ userId: number; email: string; username: string; lastEndedAt: Date }>
+      >(Prisma.sql`
+        SELECT
+          u.id AS userId,
+          u.email AS email,
+          u.username AS username,
+          MAX(du.date_end) AS lastEndedAt
+        FROM descargas_user du
+        INNER JOIN users u
+          ON u.id = du.user_id
+          AND u.blocked = 0
+        LEFT JOIN descargas_user du_active
+          ON du_active.user_id = u.id
+          AND du_active.date_end > NOW()
+        LEFT JOIN automation_action_logs aal
+          ON aal.user_id = u.id
+          AND aal.action_key = 'winback_lapsed'
+          AND aal.stage = ${stage}
+        WHERE du_active.id IS NULL
+          AND u.email_marketing_opt_in = 1
+          AND aal.id IS NULL
+          AND EXISTS (
+            SELECT 1
+            FROM orders o
+            WHERE o.user_id = u.id
+              AND o.status = 1
+              AND o.is_plan = 1
+          )
+        GROUP BY u.id, u.email, u.username
+        HAVING lastEndedAt < DATE_SUB(NOW(), INTERVAL ${minDays} DAY)
+          AND lastEndedAt >= DATE_SUB(NOW(), INTERVAL ${lookbackDays} DAY)
+        ORDER BY lastEndedAt DESC
+        LIMIT ${limit}
+      `);
+
+      for (const row of rows) {
+        const userId = Number(row.userId);
+        if (!userId) continue;
+        const user = await prisma.users.findFirst({ where: { id: userId } });
+        if (!user || user.blocked) continue;
+
+        const { created } = await createActionLog({
+          prisma,
+          userId,
+          actionKey: 'winback_lapsed',
+          stage,
+          channel: 'system',
+          metadata: { lastEndedAt: row.lastEndedAt.toISOString(), percentOff, expiresDays },
+        });
+        if (!created) continue;
+
+        const expiresAt = new Date(Date.now() + expiresDays * 24 * 60 * 60 * 1000);
+        const offer = await upsertUserOfferAndCoupon({
+          prisma,
+          userId,
+          offerKey: OFFER_KEYS.WINBACK_LAPSED,
+          stage,
+          percentOff,
+          expiresAt,
+        });
+
+        await safeSetManyChatCustomFields(user, [
+          { key: 'bb_offer_code', value: offer.couponCode ?? '' },
+          { key: 'bb_offer_pct', value: String(offer.percentOff) },
+          { key: 'bb_offer_expires_at', value: expiresAt.toISOString() },
+        ]);
+        safeAddManyChatTag(user, `AUTOMATION_WINBACK_LAPSED_OFFER_${offer.percentOff}`).catch(() => {});
+
+        const templateId = parseNumber(process.env.AUTOMATION_EMAIL_WINBACK_LAPSED_TEMPLATE_ID, 0);
+        if (templateId > 0 && user.email_marketing_opt_in && offer.couponCode && canSendEmail()) {
+          const url = appendQueryParams(`${resolveClientUrl()}/planes`, {
+            utm_source: 'email',
+            utm_medium: 'automation',
+            utm_campaign: `winback_lapsed_${offer.percentOff}`,
+            utm_content: 'cta',
+          });
+          const unsubscribeUrl = buildMarketingUnsubscribeUrl(user.id) ?? undefined;
+          const expiresAtText = `${expiresAt.toISOString().replace('T', ' ').slice(0, 16)} UTC`;
+          const tpl = emailTemplates.winbackLapsedOffer({
+            name: user.username,
+            url,
+            couponCode: offer.couponCode,
+            percentOff: offer.percentOff,
+            expiresAt: expiresAtText,
+            unsubscribeUrl,
+          });
+          await safeSendAutomationEmail({
+            toEmail: user.email,
+            toName: user.username,
+            subject: tpl.subject,
+            html: tpl.html,
+            text: tpl.text,
+          });
+          noteEmailSent();
+        }
+
+        // Optional WhatsApp: send a link to plans (login required).
+        await safeSendTwilioLink(user, `${resolveClientUrl()}/planes`);
+
+        bump('winback_lapsed');
       }
     }
 
