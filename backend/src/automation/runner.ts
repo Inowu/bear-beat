@@ -970,15 +970,88 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
       }
     }
 
-    // Rule 4b: lapsed subscription (ended recently) -> winback offer
+    // Rule 4b: cancelled subscription -> reminder 3 days before access ends (transactional).
+    // (Only for users who cancelled: orders.is_canceled = 1)
     {
-      const stage = 1;
-      const minDays = Math.max(
-        1,
-        Math.min(3650, Math.floor(parseNumber(process.env.AUTOMATION_WINBACK_LAPSED_MIN_DAYS, 7))),
-      );
+      const rows = await prisma.$queryRaw<
+        Array<{ userId: number; email: string; username: string; accessUntil: Date }>
+      >(Prisma.sql`
+        SELECT
+          du.user_id AS userId,
+          u.email AS email,
+          u.username AS username,
+          du.date_end AS accessUntil
+        FROM descargas_user du
+        INNER JOIN orders o
+          ON o.id = du.order_id
+          AND o.is_canceled = 1
+        INNER JOIN users u
+          ON u.id = du.user_id
+          AND u.blocked = 0
+        LEFT JOIN descargas_user du_next
+          ON du_next.user_id = du.user_id
+          AND du_next.date_end > du.date_end
+        LEFT JOIN automation_action_logs aal
+          ON aal.user_id = du.user_id
+          AND aal.action_key = 'cancel_access_end_reminder'
+          AND aal.stage = 3
+        WHERE du.date_end = DATE_ADD(CURDATE(), INTERVAL 3 DAY)
+          AND du_next.id IS NULL
+          AND aal.id IS NULL
+        ORDER BY du.user_id DESC
+        LIMIT ${limit}
+      `);
+
+      for (const row of rows) {
+        if (!emailAutomationsEnabled || !canSendEmail()) break;
+
+        const { created } = await createActionLog({
+          prisma,
+          userId: Number(row.userId),
+          actionKey: 'cancel_access_end_reminder',
+          stage: 3,
+          channel: 'system',
+          metadata: { accessUntil: row.accessUntil.toISOString().slice(0, 10) },
+        });
+        if (!created) continue;
+
+        const accessUntilText = row.accessUntil instanceof Date ? row.accessUntil.toISOString().slice(0, 10) : '';
+        const accountUrl = appendQueryParams(`${resolveClientUrl()}/micuenta`, {
+          utm_source: 'email',
+          utm_medium: 'transactional',
+          utm_campaign: 'cancel_ending_soon',
+          utm_content: 'link_account',
+        });
+        const reactivateUrl = appendQueryParams(`${resolveClientUrl()}/planes`, {
+          utm_source: 'email',
+          utm_medium: 'transactional',
+          utm_campaign: 'cancel_ending_soon',
+          utm_content: 'cta_reactivate',
+        });
+        const tpl = emailTemplates.cancellationEndingSoon({
+          name: row.username,
+          accessUntil: accessUntilText,
+          accountUrl,
+          reactivateUrl,
+        });
+        await safeSendAutomationEmail({
+          userId: Number(row.userId),
+          actionKey: 'cancel_access_end_reminder',
+          stage: 3,
+          toEmail: row.email,
+          subject: tpl.subject,
+          html: tpl.html,
+          text: tpl.text,
+        });
+        noteEmailSent();
+        bump('cancel_access_end_reminder_3d');
+      }
+    }
+
+    // Rule 4c: winback cadence 7/30/60 days after access ended (marketing only).
+    for (const stageDays of [7, 30, 60]) {
       const lookbackDays = Math.max(
-        7,
+        60,
         Math.min(3650, Math.floor(parseNumber(process.env.AUTOMATION_WINBACK_LAPSED_LOOKBACK_DAYS, 365))),
       );
       const percentOff = Math.max(
@@ -1008,10 +1081,17 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
         LEFT JOIN automation_action_logs aal
           ON aal.user_id = u.id
           AND aal.action_key = 'winback_lapsed'
-          AND aal.stage = ${stage}
+          AND aal.stage = ${stageDays}
+        ${stageDays === 7 ? Prisma.sql`
+        LEFT JOIN automation_action_logs aal_legacy
+          ON aal_legacy.user_id = u.id
+          AND aal_legacy.action_key = 'winback_lapsed'
+          AND aal_legacy.stage = 1
+        ` : Prisma.sql``}
         WHERE du_active.id IS NULL
           AND u.email_marketing_opt_in = 1
           AND aal.id IS NULL
+          ${stageDays === 7 ? Prisma.sql`AND aal_legacy.id IS NULL` : Prisma.sql``}
           AND EXISTS (
             SELECT 1
             FROM orders o
@@ -1020,8 +1100,8 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
               AND o.is_plan = 1
           )
         GROUP BY u.id, u.email, u.username
-        HAVING lastEndedAt < DATE_SUB(NOW(), INTERVAL ${minDays} DAY)
-          AND lastEndedAt >= DATE_SUB(NOW(), INTERVAL ${lookbackDays} DAY)
+        HAVING lastEndedAt = DATE_SUB(CURDATE(), INTERVAL ${stageDays} DAY)
+          AND lastEndedAt >= DATE_SUB(CURDATE(), INTERVAL ${lookbackDays} DAY)
         ORDER BY lastEndedAt DESC
         LIMIT ${limit}
       `);
@@ -1029,6 +1109,7 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
       for (const row of rows) {
         const userId = Number(row.userId);
         if (!userId) continue;
+
         const user = await prisma.users.findFirst({ where: { id: userId } });
         if (!user || user.blocked) continue;
 
@@ -1036,7 +1117,7 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
           prisma,
           userId,
           actionKey: 'winback_lapsed',
-          stage,
+          stage: stageDays,
           channel: 'system',
           metadata: { lastEndedAt: row.lastEndedAt.toISOString(), percentOff, expiresDays },
         });
@@ -1047,7 +1128,7 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
           prisma,
           userId,
           offerKey: OFFER_KEYS.WINBACK_LAPSED,
-          stage,
+          stage: stageDays,
           percentOff,
           expiresAt,
         });
@@ -1057,42 +1138,40 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
           { key: 'bb_offer_pct', value: String(offer.percentOff) },
           { key: 'bb_offer_expires_at', value: expiresAt.toISOString() },
         ]);
-        safeAddManyChatTag(user, `AUTOMATION_WINBACK_LAPSED_OFFER_${offer.percentOff}`).catch(() => {});
+        safeAddManyChatTag(user, `AUTOMATION_WINBACK_LAPSED_${stageDays}D_OFFER_${offer.percentOff}`).catch(() => {});
 
-	        const templateId = parseNumber(process.env.AUTOMATION_EMAIL_WINBACK_LAPSED_TEMPLATE_ID, 0);
-	        if (emailAutomationsEnabled && templateId > 0 && user.email_marketing_opt_in && offer.couponCode && canSendEmail()) {
-	          const url = appendQueryParams(`${resolveClientUrl()}/planes`, {
-	            utm_source: 'email',
-	            utm_medium: 'automation',
-	            utm_campaign: `winback_lapsed_${offer.percentOff}`,
-	            utm_content: 'cta',
-	          });
+        const templateId = parseNumber(process.env.AUTOMATION_EMAIL_WINBACK_LAPSED_TEMPLATE_ID, 0);
+        if (emailAutomationsEnabled && templateId > 0 && user.email_marketing_opt_in && offer.couponCode && canSendEmail()) {
+          const url = appendQueryParams(`${resolveClientUrl()}/planes`, {
+            utm_source: 'email',
+            utm_medium: 'automation',
+            utm_campaign: `winback_lapsed_${stageDays}d_${offer.percentOff}`,
+            utm_content: 'cta',
+          });
           const unsubscribeUrl = buildMarketingUnsubscribeUrl(user.id) ?? undefined;
           const expiresAtText = `${expiresAt.toISOString().replace('T', ' ').slice(0, 16)} UTC`;
           const tpl = emailTemplates.winbackLapsedOffer({
             name: user.username,
             url,
             couponCode: offer.couponCode,
-	            percentOff: offer.percentOff,
-	            expiresAt: expiresAtText,
-	            unsubscribeUrl,
-	          });
-	          await safeSendAutomationEmail({
-	            userId: user.id,
-	            actionKey: 'winback_lapsed',
-	            stage,
-	            toEmail: user.email,
-	            subject: tpl.subject,
-	            html: tpl.html,
-	            text: tpl.text,
-	          });
-	          noteEmailSent();
-	        }
+            percentOff: offer.percentOff,
+            expiresAt: expiresAtText,
+            unsubscribeUrl,
+          });
+          await safeSendAutomationEmail({
+            userId: user.id,
+            actionKey: 'winback_lapsed',
+            stage: stageDays,
+            toEmail: user.email,
+            subject: tpl.subject,
+            html: tpl.html,
+            text: tpl.text,
+          });
+          noteEmailSent();
+        }
 
-        // Optional WhatsApp: send a link to plans (login required).
         await safeSendTwilioLink(user, `${resolveClientUrl()}/planes`);
-
-        bump('winback_lapsed');
+        bump(`winback_lapsed_${stageDays}d`);
       }
     }
 

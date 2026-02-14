@@ -465,6 +465,125 @@ export const emailTemplates = {
     };
   },
 
+  cancellationConfirmed: (params: {
+    name: string;
+    planName: string;
+    accessUntil: string;
+    accountUrl: string;
+    reactivateUrl: string;
+  }) => {
+    const { name, planName, accessUntil, accountUrl, reactivateUrl } = params;
+    const safeName = String(name || '').trim() || 'DJ';
+    const title = 'Cancelacion confirmada';
+    const subject = `[Bear Beat] ${title}`;
+
+    const contentHtml = `
+      <div style="margin:0 0 12px 0;">
+        ${renderPill('Suscripcion')}
+      </div>
+      <h1 style="${H1_STYLE_SM}">
+        ${escapeHtml(title)}
+      </h1>
+      <p style="${LEAD_STYLE}">
+        Hola <strong>${escapeHtml(safeName)}</strong>. Tu cancelacion fue registrada.
+        Vas a conservar el acceso hasta el fin de tu periodo pagado.
+      </p>
+      ${renderCard({
+        marginTop: 14,
+        innerHtml: `
+          <div style="${SECTION_LABEL_STYLE}">Detalle</div>
+          <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin-top:6px;">
+            <tr>
+              <td style="padding:8px 0;font-family:${FONT_UI};font-size:13px;line-height:1.55;color:${COLORS.muted};">Plan</td>
+              <td style="padding:8px 0;font-family:${FONT_UI};font-size:13px;line-height:1.55;color:${COLORS.ink};text-align:right;font-weight:950;">${escapeHtml(planName)}</td>
+            </tr>
+            <tr>
+              <td style="padding:8px 0;font-family:${FONT_UI};font-size:13px;line-height:1.55;color:${COLORS.muted};">Acceso hasta</td>
+              <td style="padding:8px 0;font-family:${FONT_UI};font-size:13px;line-height:1.55;color:${COLORS.ink};text-align:right;font-weight:950;">${escapeHtml(accessUntil)}</td>
+            </tr>
+          </table>
+        `,
+      })}
+      <div style="margin:18px 0 10px 0;">
+        ${renderButton({ href: reactivateUrl, label: 'Reactivar' })}
+      </div>
+      <p style="margin:0;font-family:${FONT_UI};font-size:13px;line-height:1.65;color:${COLORS.muted};">
+        Puedes gestionar tu cuenta en cualquier momento desde <a href="${escapeHtml(accountUrl)}" style="${LINK_STYLE}">Mi cuenta</a>.
+      </p>
+    `.trim();
+
+    const text =
+      `Cancelacion confirmada\n\n` +
+      `Hola ${safeName}. Tu cancelacion fue registrada.\n` +
+      `Plan: ${planName}\n` +
+      `Acceso hasta: ${accessUntil}\n\n` +
+      `Reactivar: ${reactivateUrl}\n` +
+      `Mi cuenta: ${accountUrl}\n`;
+
+    return {
+      subject,
+      html: renderLayout({ title: subject, preheader: `Acceso hasta ${accessUntil}`, contentHtml }),
+      text,
+    };
+  },
+
+  cancellationEndingSoon: (params: {
+    name: string;
+    accessUntil: string;
+    accountUrl: string;
+    reactivateUrl: string;
+  }) => {
+    const { name, accessUntil, accountUrl, reactivateUrl } = params;
+    const safeName = String(name || '').trim() || 'DJ';
+    const title = 'Tu acceso termina pronto';
+    const subject = `[Bear Beat] ${title}`;
+
+    const contentHtml = `
+      <div style="margin:0 0 12px 0;">
+        ${renderPill('Recordatorio')}
+      </div>
+      <h1 style="${H1_STYLE_SM}">
+        ${escapeHtml(title)}
+      </h1>
+      <p style="${LEAD_STYLE}">
+        Hola <strong>${escapeHtml(safeName)}</strong>. Tu acceso a Bear Beat termina el
+        <strong style="color:${COLORS.ink};">${escapeHtml(accessUntil)}</strong>.
+        Si quieres seguir descargando sin interrupciones, reactiva hoy.
+      </p>
+      ${renderCard({
+        marginTop: 14,
+        innerHtml: `
+          <div style="${SECTION_LABEL_STYLE}">Para evitar interrupciones</div>
+          <div style="margin-top:10px;">
+            ${renderChecklist([
+              'Reactiva tu membresia.',
+              'Verifica tu WhatsApp si aun no lo hiciste.',
+              'Descarga por FTP para carpetas grandes.',
+            ])}
+          </div>
+        `,
+      })}
+      <div style="margin:18px 0 10px 0;">
+        ${renderButton({ href: reactivateUrl, label: 'Reactivar ahora' })}
+      </div>
+      <p style="margin:0;font-family:${FONT_UI};font-size:13px;line-height:1.65;color:${COLORS.muted};">
+        Mi cuenta: <a href="${escapeHtml(accountUrl)}" style="${LINK_STYLE}">suscripcion / soporte</a>
+      </p>
+    `.trim();
+
+    const text =
+      `Tu acceso termina pronto\n\n` +
+      `Hola ${safeName}. Tu acceso termina el ${accessUntil}.\n\n` +
+      `Reactivar: ${reactivateUrl}\n` +
+      `Mi cuenta: ${accountUrl}\n`;
+
+    return {
+      subject,
+      html: renderLayout({ title: subject, preheader: `Termina el ${accessUntil}`, contentHtml }),
+      text,
+    };
+  },
+
 	  automationTrialNoDownload24h: (params: { name: string; url: string; unsubscribeUrl?: string }) => {
 	    const { name, url, unsubscribeUrl } = params;
 	    const title = 'Tu primera descarga en 3 pasos';

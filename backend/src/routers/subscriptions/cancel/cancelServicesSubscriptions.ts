@@ -2,10 +2,11 @@ import { TRPCError } from '@trpc/server';
 import { PaymentService } from '../services/types';
 import { cancelStripeSubscription } from './cancelStripeSubscription';
 import { cancelPaypalSubscription } from './cancelPaypalSubscription';
-import { PrismaClient, Users } from '@prisma/client';
+import { Prisma, PrismaClient, Users } from '@prisma/client';
 import { SessionUser } from '../../auth/utils/serialize-user';
 import { manyChat } from '../../../many-chat';
 import { log } from '../../../server';
+import { sendCancellationConfirmedEmail } from '../../../email';
 
 interface CancellationAttributionInput {
   source?: string | null;
@@ -75,6 +76,10 @@ export const cancelServicesSubscriptions = async ({
     });
   }
 
+  const planName = order.plan_id
+    ? (await prisma.plans.findFirst({ where: { id: order.plan_id }, select: { name: true } }))?.name
+    : null;
+
   try {
     await prisma.subscriptionCancellationFeedback.create({
       data: {
@@ -127,6 +132,50 @@ export const cancelServicesSubscriptions = async ({
   });
   if (dbUser) {
     manyChat.addTagToUser(dbUser, 'CANCELLED_SUBSCRIPTION').catch(() => {});
+
+    const emailAutomationsEnabledFlag = (process.env.EMAIL_AUTOMATIONS_ENABLED || '1').trim();
+    const emailAutomationsEnabled = emailAutomationsEnabledFlag !== '0';
+
+    if (emailAutomationsEnabled) {
+      // Idempotency: do not send twice if user double-clicks cancellation.
+      try {
+        await prisma.automationActionLog.create({
+          data: {
+            user_id: dbUser.id,
+            action_key: 'cancel_confirmed',
+            stage: 0,
+            channel: 'system',
+            metadata_json: {
+              accessUntil: activeSubscription.date_end instanceof Date ? activeSubscription.date_end.toISOString().slice(0, 10) : null,
+              orderId: order.id,
+            },
+          },
+          select: { id: true },
+        });
+
+        const accessUntilText =
+          activeSubscription.date_end instanceof Date
+            ? activeSubscription.date_end.toISOString().slice(0, 10)
+            : '';
+
+        await sendCancellationConfirmedEmail({
+          userId: dbUser.id,
+          toEmail: dbUser.email,
+          toName: dbUser.username,
+          planName: planName || 'Membresia Bear Beat',
+          accessUntil: accessUntilText,
+        });
+      } catch (e: any) {
+        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+          // Already logged; skip.
+        } else {
+          log.warn('[CANCEL_SUBSCRIPTION] Cancellation email skipped', {
+            userId: dbUser.id,
+            error: e instanceof Error ? e.message : e,
+          });
+        }
+      }
+    }
   }
 
   // Don't update descargar_user and quota tallies since after billing cycle they won't be able to download ever again.

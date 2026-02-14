@@ -56,14 +56,16 @@ Leyenda:
 
 ## Cancelación + Fin de Acceso
 
-- Email de confirmación de cancelación (transaccional): `NO EXISTE`
+- Email de confirmación de cancelación (transaccional): `EXISTE`
   - Evidencia:
-    - La cancelación actual existe a nivel de acceso/DB: `backend/src/routers/subscriptions/services/cancelSubscription.ts`.
-    - No hay envío de email asociado a cancelación en ese flujo.
+    - Template: `backend/src/email/templates.ts` (`cancellationConfirmed`)
+    - Envío: `backend/src/routers/subscriptions/cancel/cancelServicesSubscriptions.ts` (idempotente via `automation_action_logs`)
+    - Mailer: `backend/src/email/mailer.ts` (`sendCancellationConfirmedEmail`)
 
-- Recordatorio 3 días antes de fin de acceso: `NO EXISTE`
+- Recordatorio 3 días antes de fin de acceso: `EXISTE`
   - Evidencia:
-    - No hay job/scheduler que evalúe `date_end` (fin de acceso) para notificar.
+    - Runner: `backend/src/automation/runner.ts` (`action_key='cancel_access_end_reminder'`, `stage=3`)
+    - Template: `backend/src/email/templates.ts` (`cancellationEndingSoon`)
 
 - Email al terminar acceso (opcional): `NO EXISTE`
   - Evidencia:
@@ -73,10 +75,9 @@ Leyenda:
 
 - Winback por email (7/30/60): `PARCIAL`
   - Evidencia:
-    - Existe un flujo de winback “lapsed” en runner: `backend/src/automation/runner.ts` (regla `winback_lapsed`).
+    - Runner: `backend/src/automation/runner.ts` (regla `winback_lapsed` con cadencia 7/30/60).
     - Existe un script de campaña (segmentos `lapsed`/`never_paid`): `backend/scripts/campaignWinback.ts`.
   - Gaps:
-    - Cadencias 7/30/60 no están formalizadas como secuencia completa con jobs/ventanas.
     - Falta enforcement explícito de preferencias por categoría (solo existe `email_marketing_opt_in` global).
 
 ## Preferencias (Transaccional vs Marketing)
