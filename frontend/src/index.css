@@ -4,12 +4,12 @@
 
 /* Token bridge for Tailwind utilities and first paint */
 :root {
-  --bg-main: #F3F7FA;
+  --bg-main: #EEF3F7;
   --bg-card: #FFFFFF;
-  --bg-input: #F8FBFD;
+  --bg-input: #F1F6FA;
   --text-main: #111926;
   --text-muted: #5B6678;
-  --border-main: rgba(15, 23, 42, 0.12);
+  --border-main: rgba(15, 23, 42, 0.14);
   color-scheme: light;
 }
 
