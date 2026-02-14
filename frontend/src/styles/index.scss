@@ -30,8 +30,9 @@
   --bb-ambient-mint: rgba(0, 230, 193, 0.011);
   /* Landing (public) background spots: tuned per theme to keep LIGHT premium (no wash)
      while DARK keeps the neon glow. Used by /, /planes, /legal. */
-  --bb-landing-spot-1: rgba(8, 225, 247, 0.028);
-  --bb-landing-spot-2: rgba(8, 225, 247, 0.02);
+  /* LIGHT: these spots must be barely-there; too much reads like a bad color-invert layer. */
+  --bb-landing-spot-1: rgba(8, 225, 247, 0.02);
+  --bb-landing-spot-2: rgba(8, 225, 247, 0.014);
   --bb-danger: #FF2D2C;
   --bb-success: #39D834;
   --bb-warning: #FEBC2E;
@@ -54,7 +55,7 @@
   --bb-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
   --bb-shadow-card: 0 18px 46px rgba(15, 23, 42, 0.12);
   /* Light glow: keep it VERY subtle to avoid a "neon haze" look on white surfaces. */
-  --bb-shadow-glow: 0 0 12px rgba(8, 225, 247, 0.12);
+  --bb-shadow-glow: 0 0 10px rgba(8, 225, 247, 0.08);
   --bb-shadow-1: var(--bb-shadow);
   --bb-shadow-2: var(--bb-shadow-card);
   /* Spacing scale (theme-agnostic) */
@@ -146,11 +147,11 @@
   --theme-accent: var(--bb-accent-ink);
   --theme-accent-bright: var(--bb-cyan);
   --theme-accent-dim: var(--bb-accent-ink);
-  --theme-accent-glow: rgba(8, 225, 247, 0.12);
+  --theme-accent-glow: rgba(8, 225, 247, 0.08);
   /* Soft accent surfaces in LIGHT should be subtle (avoid "baby blue" wash) */
-  --theme-accent-soft-bg: rgba(8, 225, 247, 0.03);
-  --theme-accent-soft-bg-2: rgba(8, 225, 247, 0.05);
-  --theme-accent-soft-bg-3: rgba(8, 225, 247, 0.072);
+  --theme-accent-soft-bg: rgba(8, 225, 247, 0.018);
+  --theme-accent-soft-bg-2: rgba(8, 225, 247, 0.028);
+  --theme-accent-soft-bg-3: rgba(8, 225, 247, 0.04);
   --theme-landing-bg: #000000;
   --theme-landing-text: #FFFFFF;
 
@@ -170,8 +171,8 @@
   --ph-shadow: var(--bb-shadow);
   --ph-shadow-card: var(--bb-shadow-card);
   /* Public glow tokens power hero/pricing shadows; in LIGHT they must be restrained. */
-  --ph-glow: rgba(8, 225, 247, 0.12);
-  --ph-glow-strong: rgba(8, 225, 247, 0.18);
+  --ph-glow: rgba(8, 225, 247, 0.08);
+  --ph-glow-strong: rgba(8, 225, 247, 0.12);
   --ph-nav-bg: color-mix(in srgb, #ffffff 84%, var(--bb-bg));
   --ph-footer-bg: var(--bb-surface);
   --ph-pain-bad: var(--bb-danger);
@@ -227,7 +228,7 @@
 
   --plan-card-bg: var(--bb-surface);
   --plan-card-border: var(--bb-border);
-  --plan-card-border-hover: rgba(8, 225, 247, 0.4);
+  --plan-card-border-hover: rgba(8, 225, 247, 0.28);
   --plan-card-title: var(--bb-text-heading);
   --plan-card-price: var(--bb-text-heading);
   --plan-card-price-currency: var(--bb-text-muted);
@@ -241,8 +242,8 @@
   --plan-card-btn-bg: var(--bb-gradient);
   --plan-card-btn-text: #0A0A0A;
   /* Plan cards: LIGHT should feel crisp, not like dark-mode neon pasted on white. */
-  --plan-card-btn-glow: rgba(8, 225, 247, 0.14);
-  --plan-card-glow-bg: rgba(8, 225, 247, 0.03);
+  --plan-card-btn-glow: rgba(8, 225, 247, 0.1);
+  --plan-card-glow-bg: rgba(8, 225, 247, 0.02);
   --plan-card-shadow: var(--bb-shadow);
   --plan-card-shadow-hover: var(--bb-shadow-card);
   --plan-card-secondary-bg: var(--bb-surface-soft);
@@ -257,7 +258,7 @@
   --plan-card-badge-value-bg: var(--bb-cyan);
   --plan-card-badge-value-text: #0A0A0A;
   --plan-card-btn-hero-bg: var(--bb-gradient);
-  --plan-card-btn-hero-glow: rgba(8, 225, 247, 0.18);
+  --plan-card-btn-hero-glow: rgba(8, 225, 247, 0.14);
   --plan-card-btn-outline-border: var(--bb-accent-ink);
   --plan-card-btn-outline-color: var(--bb-accent-ink);
   --plan-card-benefit-icon: var(--bb-accent-ink);

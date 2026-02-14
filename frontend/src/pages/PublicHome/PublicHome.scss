@@ -2118,6 +2118,19 @@ html[data-theme="light"] .public-home {
     var(--ph-bg);
 }
 
+html[data-theme="light"] .home-cta--secondary {
+  /* LIGHT: avoid translucent pills that look like "colors covering each other". */
+  background: color-mix(in srgb, #ffffff 96%, var(--ph-bg-soft));
+  border-color: color-mix(in srgb, var(--ph-border) 92%, transparent);
+  color: var(--ph-accent);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.06);
+}
+
+html[data-theme="light"] .home-cta--secondary:hover {
+  background: color-mix(in srgb, var(--ph-accent) 8%, #ffffff);
+  border-color: color-mix(in srgb, var(--ph-accent) 28%, var(--ph-border));
+}
+
 html[data-theme="light"] .home-visual,
 html[data-theme="light"] .how-it-works__card,
 html[data-theme="light"] .trust-bar__item,
