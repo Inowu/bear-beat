@@ -861,12 +861,9 @@ function Checkout() {
     );
   }
 
-  const methodsForUi: CheckoutMethod[] = (["card", "paypal", "spei"] as const).filter((method) =>
-    availableMethods.includes(method),
-  );
-  if (availableMethods.includes(selectedMethod) && !methodsForUi.includes(selectedMethod)) {
-    methodsForUi.push(selectedMethod);
-  }
+  // Show every available payment method (CRO: users need to see OXXO when enabled).
+  const methodOrder: CheckoutMethod[] = ["card", "paypal", "spei", "oxxo", "bbva"];
+  const methodsForUi: CheckoutMethod[] = methodOrder.filter((method) => availableMethods.includes(method));
 
   const summaryMonthlyLabel = `$${totalPrice} ${currencyCode}/mes`;
   const summaryTodayLabel = `$${totalPrice} ${currencyCode}`;
