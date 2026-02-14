@@ -180,6 +180,7 @@ export default function Pricing(props: {
                     state={{ from: "/planes" }}
                     className="home-cta home-cta--primary"
                     data-testid="home-pricing-primary-cta"
+                    aria-label={ctaLabel}
                     onClick={onPrimaryCtaClick}
                   >
                     {ctaLabel}
@@ -251,6 +252,7 @@ export default function Pricing(props: {
                     state={{ from: "/planes" }}
                     className="home-cta home-cta--primary"
                     data-testid="home-pricing-primary-cta"
+                    aria-label={ctaLabel}
                     onClick={onPrimaryCtaClick}
                   >
                     {ctaLabel}
