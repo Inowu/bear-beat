@@ -169,9 +169,10 @@
 }
 
 html[data-theme="light"] .home-topnav {
-  background: color-mix(in srgb, var(--ph-bg) 97%, #ffffff);
-  border-bottom-color: color-mix(in srgb, var(--ph-border) 90%, transparent);
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.055);
+  /* More "white glass" so the nav doesn't blend into the page background in LIGHT. */
+  background: color-mix(in srgb, #ffffff 86%, var(--ph-bg));
+  border-bottom-color: color-mix(in srgb, var(--ph-border) 92%, transparent);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
 }
 
 html[data-theme="light"] .home-topnav__nav {

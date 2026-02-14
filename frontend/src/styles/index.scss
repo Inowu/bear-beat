@@ -53,8 +53,8 @@
   /* Shadows: lighter in LIGHT; rely more on border + subtle depth. */
   --bb-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
   --bb-shadow-card: 0 18px 46px rgba(15, 23, 42, 0.12);
-  /* Light glow is intentionally subtle to avoid neon haze on white surfaces. */
-  --bb-shadow-glow: 0 0 14px rgba(8, 225, 247, 0.16);
+  /* Light glow: keep it VERY subtle to avoid a "neon haze" look on white surfaces. */
+  --bb-shadow-glow: 0 0 12px rgba(8, 225, 247, 0.12);
   --bb-shadow-1: var(--bb-shadow);
   --bb-shadow-2: var(--bb-shadow-card);
   /* Spacing scale (theme-agnostic) */
@@ -146,7 +146,7 @@
   --theme-accent: var(--bb-accent-ink);
   --theme-accent-bright: var(--bb-cyan);
   --theme-accent-dim: var(--bb-accent-ink);
-  --theme-accent-glow: rgba(8, 225, 247, 0.16);
+  --theme-accent-glow: rgba(8, 225, 247, 0.12);
   /* Soft accent surfaces in LIGHT should be subtle (avoid "baby blue" wash) */
   --theme-accent-soft-bg: rgba(8, 225, 247, 0.03);
   --theme-accent-soft-bg-2: rgba(8, 225, 247, 0.05);
@@ -169,8 +169,9 @@
   --ph-accent-bright: var(--bb-cyan);
   --ph-shadow: var(--bb-shadow);
   --ph-shadow-card: var(--bb-shadow-card);
-  --ph-glow: rgba(8, 225, 247, 0.18);
-  --ph-glow-strong: rgba(8, 225, 247, 0.24);
+  /* Public glow tokens power hero/pricing shadows; in LIGHT they must be restrained. */
+  --ph-glow: rgba(8, 225, 247, 0.12);
+  --ph-glow-strong: rgba(8, 225, 247, 0.18);
   --ph-nav-bg: color-mix(in srgb, #ffffff 84%, var(--bb-bg));
   --ph-footer-bg: var(--bb-surface);
   --ph-pain-bad: var(--bb-danger);
@@ -239,8 +240,9 @@
   --plan-card-paypal-text: var(--bb-text-muted);
   --plan-card-btn-bg: var(--bb-gradient);
   --plan-card-btn-text: #0A0A0A;
-  --plan-card-btn-glow: rgba(8, 225, 247, 0.22);
-  --plan-card-glow-bg: rgba(8, 225, 247, 0.05);
+  /* Plan cards: LIGHT should feel crisp, not like dark-mode neon pasted on white. */
+  --plan-card-btn-glow: rgba(8, 225, 247, 0.14);
+  --plan-card-glow-bg: rgba(8, 225, 247, 0.03);
   --plan-card-shadow: var(--bb-shadow);
   --plan-card-shadow-hover: var(--bb-shadow-card);
   --plan-card-secondary-bg: var(--bb-surface-soft);
@@ -255,7 +257,7 @@
   --plan-card-badge-value-bg: var(--bb-cyan);
   --plan-card-badge-value-text: #0A0A0A;
   --plan-card-btn-hero-bg: var(--bb-gradient);
-  --plan-card-btn-hero-glow: rgba(8, 225, 247, 0.24);
+  --plan-card-btn-hero-glow: rgba(8, 225, 247, 0.18);
   --plan-card-btn-outline-border: var(--bb-accent-ink);
   --plan-card-btn-outline-color: var(--bb-accent-ink);
   --plan-card-benefit-icon: var(--bb-accent-ink);
@@ -678,7 +680,9 @@ body {
 /* Light: add subtle brand atmosphere without washing the UI.
    Keep `--app-bg` as a solid token (used by color-mix), so we override only `body` background. */
 html[data-theme="light"] body {
-  background:
+  /* Keep a solid background-color for iOS overscroll + translucent layers. */
+  background-color: var(--app-bg);
+  background-image:
     radial-gradient(
       940px 560px at 8% -8%,
       color-mix(in srgb, var(--bb-landing-spot-1) 78%, transparent),
@@ -689,7 +693,7 @@ html[data-theme="light"] body {
       color-mix(in srgb, var(--bb-landing-spot-2) 80%, transparent),
       transparent 64%
     ),
-    linear-gradient(180deg, #EAF1F6 0%, var(--app-bg) 34%, var(--app-bg) 100%);
+    linear-gradient(180deg, #F5F9FC 0%, var(--app-bg) 34%, var(--app-bg) 100%);
 }
 
 /* Chrome en Mac: fuentes más nítidas y capa GPU para evitar parpadeos */
