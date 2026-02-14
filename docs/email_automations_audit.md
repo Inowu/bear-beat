@@ -15,6 +15,24 @@ Leyenda:
     - `backend/src/email/mailer.ts` (`sendEmail`, `sendWelcomeEmail`, etc.)
     - `backend/.env.example` (variables `AWS_REGION`, `SES_FROM_EMAIL`, `SES_FROM_NAME`)
 
+## Controles Operativos (Seguridad)
+
+- Kill switch de automatizaciones de email: `EXISTE`
+  - Evidencia:
+    - `backend/src/automation/runner.ts` (lee `EMAIL_AUTOMATIONS_ENABLED` y salta envíos)
+    - `backend/scripts/campaignWinback.ts` (respeta `EMAIL_AUTOMATIONS_ENABLED=0`)
+
+- Modo “sink” fuera de producción (no emails reales): `EXISTE`
+  - Evidencia:
+    - `backend/src/email/mailer.ts` (fuerza `sink` en no-prod; opcional `EMAIL_SINK_DIR`)
+    - `backend/.env.example` (`EMAIL_DELIVERY_MODE`, `EMAIL_SINK_DIR`)
+
+- Logs sin PII/payloads completos: `PARCIAL`
+  - Evidencia:
+    - Se removieron logs con emails/payloads completos en varios webhooks y mailer.
+  - Gaps:
+    - Aún hay logs y herramientas internas que podrían requerir una revisión adicional para eliminar identificadores externos no esenciales.
+
 ## Automatizaciones Existentes (Marketing)
 
 - Runner de automatizaciones (tick periódico): `EXISTE`
@@ -72,4 +90,3 @@ Leyenda:
   - Evidencia:
     - Solo existe `users.email_marketing_opt_in` (global) en `backend/prisma/schema.prisma`.
     - No hay UI/ruta para categorías (novedades/ofertas/digest) ni tabla/campos dedicados.
-
