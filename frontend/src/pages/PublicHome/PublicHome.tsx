@@ -72,9 +72,9 @@ type PublicTopDownloadsResponse = {
 };
 
 function detectPreferredCurrency(): "mxn" | "usd" {
-  if (typeof window === "undefined") return "usd";
-  const lang = navigator.language?.toLowerCase() ?? "";
-  return lang.includes("mx") || lang.startsWith("es") ? "mxn" : "usd";
+  // Business default: always lead with MXN on the public home page.
+  // Users can still toggle to USD in the pricing section when both are available.
+  return "mxn";
 }
 
 function parsePrice(value: string | null | undefined): number {
