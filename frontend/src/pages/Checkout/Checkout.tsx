@@ -821,9 +821,19 @@ function Checkout() {
 
   const TopBrand = (
     <header className="checkout2026__top" aria-label="Bear Beat">
-      <Link to="/planes" className="checkout2026__brand" aria-label="Bear Beat">
-        <img src={brandMark} alt="Bear Beat" width={40} height={40} />
-      </Link>
+      <div className="checkout-inner checkout2026__topInner">
+        <Link to="/planes" className="checkout2026__brand" aria-label="Volver a planes">
+          <img src={brandMark} alt="Bear Beat" width={40} height={40} />
+        </Link>
+        <div className="checkout2026__topRight" aria-label="Progreso">
+          <span className="checkout2026__step" aria-label="Paso 2 de 2">
+            Paso 2 de 2
+          </span>
+          <Link to="/planes" className="checkout2026__back">
+            Cambiar plan
+          </Link>
+        </div>
+      </div>
     </header>
   );
 

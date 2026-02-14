@@ -6,7 +6,8 @@
   max-width: 100vw;
   overflow-x: hidden;
   box-sizing: border-box;
-  padding: clamp(12px, 2.1vw, 30px);
+  --checkout-pad: clamp(12px, 2.1vw, 30px);
+  padding: var(--checkout-pad);
   background:
     radial-gradient(
       860px 420px at 8% -8%,
@@ -21,7 +22,9 @@
     var(--app-bg);
   color: var(--app-text-body);
   font-family: var(--bb-font-ui);
-  font-size: var(--app-font-size-body);
+  /* Marketing surfaces (/planes -> /comprar) should keep a consistent type scale. */
+  font-size: 1rem;
+  line-height: 1.55;
 }
 
 html[data-theme="dark"] .checkout-main-container,
@@ -42,10 +45,22 @@ html.dark .checkout-main-container,
   position: sticky;
   top: max(0px, env(safe-area-inset-top));
   z-index: 70;
+  /* Full-bleed header (match /planes look) even though the checkout container is padded. */
+  margin: calc(-1 * var(--checkout-pad)) calc(-1 * var(--checkout-pad)) 0;
+  background: color-mix(in srgb, var(--ph-bg) 84%, transparent);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid color-mix(in srgb, var(--ph-border) 74%, transparent);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
+}
+
+.checkout2026__topInner {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  padding: 8px 0 10px;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px var(--checkout-pad);
+  min-width: 0;
 }
 
 .checkout2026__brand {
@@ -58,6 +73,7 @@ html.dark .checkout-main-container,
   text-decoration: none;
   color: inherit;
   -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
 }
 
 .checkout2026__brand:focus-visible {
@@ -72,6 +88,59 @@ html.dark .checkout-main-container,
   box-shadow: none;
   /* Follow non-transparent pixels (avoid the square halo on PNG). */
   filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.2));
+}
+
+.checkout2026__topRight {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.checkout2026__step {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--app-accent) 38%, var(--app-border));
+  background: var(--theme-accent-soft-bg);
+  color: var(--app-accent);
+  font-size: 0.9rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.checkout2026__back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--app-border) 86%, transparent);
+  background: color-mix(in srgb, var(--app-bg-soft) 84%, transparent);
+  color: var(--app-text-heading);
+  font-weight: 800;
+  font-size: 0.98rem;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    border-color: color-mix(in srgb, var(--app-accent) 32%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-soft-bg-2) 64%, var(--app-bg-soft));
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--app-focus-ring);
+  }
 }
 
 .checkout2026__center {
