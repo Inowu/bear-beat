@@ -35,7 +35,9 @@ export function OptionModal(props: IError) {
       onHide();
       setShowSuccess(true);
     } catch (error: any) {
-      console.log(error);
+      if (import.meta.env.DEV) {
+        console.warn("[ADMIN][OPTION_MODAL] Failed to activate subscription.");
+      }
       setErrorMessage(error.message)
       setShowError(true);
     }

@@ -31,8 +31,10 @@ export const Coupons = () => {
     try {
       const data: any = await trpc.cupons.findManyCupons.query({ where: {} });
       setCoupons(data);
-    } catch (error) {
-      console.log(error);
+    } catch {
+      if (import.meta.env.DEV) {
+        console.warn("[ADMIN][COUPONS] Failed to load coupons.");
+      }
     } finally {
       setLoader(false);
     }
@@ -51,8 +53,10 @@ export const Coupons = () => {
       setDrawerCoupon(null);
       setCouponToDelete(null);
       getCoupons();
-    } catch (error) {
-      console.log(error);
+    } catch {
+      if (import.meta.env.DEV) {
+        console.warn("[ADMIN][COUPONS] Failed to delete coupon.");
+      }
     }
   };
 

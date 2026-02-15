@@ -31,8 +31,10 @@ export const PlanAdmin = () => {
     try {
       const data: any = await trpc.plans.findManyPlans.query({ where: {} });
       setPlans(data);
-    } catch (error) {
-      console.log(error);
+    } catch {
+      if (import.meta.env.DEV) {
+        console.warn("[ADMIN][PLANS] Failed to load plans.");
+      }
     } finally {
       setLoader(false);
     }
@@ -50,8 +52,10 @@ export const PlanAdmin = () => {
       setDrawerPlan(null);
       setPlanToDelete(null);
       getPlans();
-    } catch (error) {
-      console.log(error);
+    } catch {
+      if (import.meta.env.DEV) {
+        console.warn("[ADMIN][PLANS] Failed to delete plan.");
+      }
     }
   };
 

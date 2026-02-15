@@ -147,8 +147,10 @@ export const HistoryCheckout = () => {
       setHistory(Array.isArray(response?.items) ? response.items : []);
       setSummary(response?.summary ?? DEFAULT_SUMMARY);
       setTotalHistory(response?.total ?? 0);
-    } catch (error) {
-      console.log(error);
+    } catch {
+      if (import.meta.env.DEV) {
+        console.warn("[ADMIN][CHECKOUT_HISTORY] Failed to load checkout lead history.");
+      }
       setHistory([]);
       setSummary(DEFAULT_SUMMARY);
       setTotalHistory(0);
@@ -185,8 +187,10 @@ export const HistoryCheckout = () => {
         Método: formatPaymentMethod(item.lastPaidMethod),
         "Horas desde checkout": String(item.hoursSinceCheckout),
       }));
-    } catch (error) {
-      console.log(error);
+    } catch {
+      if (import.meta.env.DEV) {
+        console.warn("[ADMIN][CHECKOUT_HISTORY] Failed to export checkout lead history.");
+      }
       return [];
     }
   };
