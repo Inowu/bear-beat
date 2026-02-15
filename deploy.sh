@@ -293,12 +293,12 @@ log "Normalizing nginx CORS config (remove wildcard headers; let app enforce all
 # That makes audits noisy and can be unsafe if cookies are ever used for auth.
 # We rely on the Express `cors()` allowlist in `backend/src/index.ts`, so strip the wildcard overrides.
 sudo sed -i.bak -E \
-  -e "/add_header[[:space:]]+Access-Control-Allow-Origin[[:space:]]+['\\\"]?\\*['\\\"]?/d" \
-  -e "/add_header[[:space:]]+Access-Control-Allow-Methods[[:space:]]+['\\\"]?\\*['\\\"]?/d" \
-  -e "/add_header[[:space:]]+Access-Control-Allow-Headers[[:space:]]+['\\\"]?\\*['\\\"]?/d" \
-  -e "/proxy_hide_header[[:space:]]+Access-Control-Allow-Origin/d" \
-  -e "/proxy_hide_header[[:space:]]+Access-Control-Allow-Methods/d" \
-  -e "/proxy_hide_header[[:space:]]+Access-Control-Allow-Headers/d" \
+  -e "/add_header[^;]*Access-Control-Allow-Origin[^;]*\\*/d" \
+  -e "/add_header[^;]*Access-Control-Allow-Methods[^;]*\\*/d" \
+  -e "/add_header[^;]*Access-Control-Allow-Headers[^;]*\\*/d" \
+  -e "/proxy_hide_header[^;]*Access-Control-Allow-Origin/d" \
+  -e "/proxy_hide_header[^;]*Access-Control-Allow-Methods/d" \
+  -e "/proxy_hide_header[^;]*Access-Control-Allow-Headers/d" \
   -e "/proxy_set_header[[:space:]]+Origin[[:space:]]+\\\"\\\"/d" \
   -e "/proxy_set_header[[:space:]]+Origin[[:space:]]+''/d" \
   "$NGINX_CONF"
