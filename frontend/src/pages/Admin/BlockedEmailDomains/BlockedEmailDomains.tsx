@@ -9,7 +9,6 @@ import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
 import Pagination from "../../../components/Pagination/Pagination";
 import { Plus, MoreVertical, Trash2 } from "src/icons";
 import { toErrorMessage } from "../../../utils/errorMessage";
-import "./BlockedEmailDomains.scss";
 
 const DOMAIN_REGEX = /^(?!-)[a-z0-9-]+(\.[a-z0-9-]+)+$/;
 const RESERVED_DOMAINS = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "live.com", "icloud.com", "protonmail.com", "aol.com"];
@@ -107,17 +106,22 @@ export const BlockedEmailDomains = () => {
   };
 
   const toolbar = (
-    <form onSubmit={handleAddDomain} className="blocked-domains-toolbar">
-      <label className="blocked-domains-toolbar__field">
+    <form onSubmit={handleAddDomain} className="flex flex-wrap items-end gap-2 w-full">
+      <label className="inline-flex flex-col gap-1 text-sm text-text-muted min-w-[260px] flex-1">
         Dominio a bloquear
         <input
           type="text"
           placeholder="ej. spamdomain.com"
           value={newDomain}
           onChange={(e) => setNewDomain(e.target.value)}
+          className="min-h-[44px] rounded-xl px-3 border border-border bg-bg-card text-text-main"
         />
       </label>
-      <button type="submit" disabled={saving} className="blocked-domains-toolbar__btn">
+      <button
+        type="submit"
+        disabled={saving}
+        className="inline-flex items-center justify-center gap-2 bg-bear-gradient text-bear-dark-500 hover:opacity-95 font-medium rounded-pill px-4 py-2 transition-colors disabled:opacity-50"
+      >
         <Plus size={18} />
         Agregar dominio
       </button>
@@ -130,8 +134,8 @@ export const BlockedEmailDomains = () => {
       subtitle="Protege el registro filtrando dominios riesgosos y mantén la base de usuarios limpia."
       toolbar={toolbar}
     >
-      <section className="blocked-domains-page">
-        <p className="blocked-domains-note">
+      <section className="grid gap-3">
+        <p className="text-text-muted text-sm font-medium">
           No se permiten dominios públicos como {RESERVED_DOMAINS.slice(0, 4).join(", ")}…
         </p>
         <ConditionModal
@@ -143,45 +147,45 @@ export const BlockedEmailDomains = () => {
         />
 
         {loader ? (
-          <div className="blocked-domains-state">
+          <div className="flex flex-col items-center justify-center py-12 gap-4">
             <Spinner size={3} width={0.3} color="var(--app-accent)" />
           </div>
         ) : blockedDomains.length === 0 ? (
-          <p className="blocked-domains-state blocked-domains-state--empty">
-            No hay dominios bloqueados.
-          </p>
+          <p className="text-text-muted text-sm font-medium text-center py-8">No hay dominios bloqueados.</p>
         ) : (
           <>
-            <div className="admin-table-panel blocked-domains-table-wrap">
+            <div className="admin-table-panel">
               <div
-                className="blocked-domains-table-scroll"
+                className="overflow-x-auto max-h-[60vh] overflow-y-auto"
                 tabIndex={0}
                 role="region"
                 aria-label="Tabla de dominios bloqueados (desliza para ver más)"
                 data-scroll-region
               >
-                <table className="blocked-domains-table">
-                  <thead>
+                <table className="w-full">
+                  <thead className="sticky top-0 z-10">
                     <tr>
-                      <th>Dominio</th>
-                      <th>Acciones</th>
+                      <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Dominio</th>
+                      <th className="uppercase text-xs tracking-wider text-right py-3 px-4 w-[140px]">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
                     {pageDomains.map((domain) => (
-                      <tr key={`d_${domain}`}>
-                        <td>{domain}</td>
-                        <td>
-                          <button
-                            type="button"
-                            onClick={() => setDomainToDelete(domain)}
-                            disabled={saving}
-                            className="blocked-domains-delete-btn"
-                            title="Eliminar"
-                            aria-label={`Eliminar dominio ${domain}`}
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                      <tr key={`d_${domain}`} className="border-b transition-colors">
+                        <td className="py-3 px-4 text-sm">{domain}</td>
+                        <td className="py-3 px-4 text-right">
+                          <div className="table-actions">
+                            <button
+                              type="button"
+                              onClick={() => setDomainToDelete(domain)}
+                              disabled={saving}
+                              className="btn-cell btn-cell--danger"
+                              title="Eliminar"
+                              aria-label={`Eliminar dominio ${domain}`}
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -251,7 +255,7 @@ export const BlockedEmailDomains = () => {
               }
             >
               {drawerDomain && (
-                <p className="blocked-domains-drawer-copy">
+                <p className="text-text-muted text-sm font-medium">
                   Dominio bloqueado: <strong>{drawerDomain}</strong>
                 </p>
               )}
