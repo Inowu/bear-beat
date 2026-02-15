@@ -133,10 +133,10 @@ export const Coupons = () => {
       />
 
       {coupons.length === 0 ? (
-        <p className="text-slate-400 py-8 text-center">No se encontraron cupones.</p>
+        <p className="text-text-muted py-8 text-center">No se encontraron cupones.</p>
       ) : (
         <>
-          <div className="admin-table-panel rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50">
+          <div className="admin-table-panel">
             <div
               className="overflow-x-auto max-h-[60vh] overflow-y-auto"
               tabIndex={0}
@@ -145,36 +145,34 @@ export const Coupons = () => {
               data-scroll-region
             >
               <table className="w-full min-w-[500px]">
-                <thead className="bg-slate-900 sticky top-0 z-10">
+                <thead className="sticky top-0 z-10">
                   <tr>
-                    <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Código</th>
-                    <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4 hidden lg:table-cell">Descripción</th>
-                    <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Descuento</th>
-                    <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Activo</th>
-                    <th className="text-slate-400 uppercase text-xs tracking-wider text-right py-3 px-4">Acciones</th>
+                    <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Código</th>
+                    <th className="uppercase text-xs tracking-wider text-left py-3 px-4 hidden lg:table-cell">Descripción</th>
+                    <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Descuento</th>
+                    <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Activo</th>
+                    <th className="uppercase text-xs tracking-wider text-right py-3 px-4">Acciones</th>
                   </tr>
                 </thead>
-                <tbody className="bg-slate-950">
+                <tbody>
                   {pageCoupons.map((c) => (
-                    <tr key={c.code} className="border-b border-slate-800 hover:bg-slate-900/60 transition-colors">
-                      <td className="py-3 px-4 text-sm text-slate-300 font-medium">{c.code}</td>
-                      <td className="py-3 px-4 text-sm text-slate-300 hidden lg:table-cell">{c.description}</td>
-                      <td className="py-3 px-4 text-sm text-slate-300">{c.discount} %</td>
+                    <tr key={c.code} className="border-b transition-colors">
+                      <td className="py-3 px-4 text-sm font-medium">{c.code}</td>
+                      <td className="py-3 px-4 text-sm hidden lg:table-cell">{c.description}</td>
+                      <td className="py-3 px-4 text-sm">{c.discount} %</td>
                       <td className="py-3 px-4">
                         <span
-                          className={`inline-flex text-xs px-2 py-1 rounded-full ${
-                            c.active === 1 ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-500/10 text-slate-400"
-                          }`}
+                          className={`badge badge--tiny ${c.active === 1 ? "badge--success" : "badge--neutral"}`}
                         >
                           {c.active === 1 ? "Activo" : "No activo"}
                         </span>
                       </td>
                       <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1">
+                        <div className="table-actions">
                           <button
                             type="button"
                             onClick={() => handleEditCoupon(c)}
-                            className="p-2 text-slate-400 hover:text-bear-cyan transition-colors rounded-lg hover:bg-slate-800"
+                            className="btn-cell"
                             title="Editar"
                             aria-label={`Editar cupón ${c.code}`}
                           >
@@ -183,7 +181,7 @@ export const Coupons = () => {
                           <button
                             type="button"
                             onClick={() => setCouponToDelete(c)}
-                            className="p-2 text-slate-400 hover:text-red-400 transition-colors rounded-lg hover:bg-slate-800"
+                            className="btn-cell btn-cell--danger"
                             title="Eliminar"
                             aria-label={`Eliminar cupón ${c.code}`}
                           >
@@ -194,7 +192,7 @@ export const Coupons = () => {
                     </tr>
                   ))}
                 </tbody>
-                <tfoot className="bg-slate-900">
+                <tfoot>
                   <tr>
                     <td colSpan={5} className="py-3 px-4">
                       <Pagination
@@ -267,10 +265,10 @@ export const Coupons = () => {
             }
           >
             {drawerCoupon && (
-              <div className="space-y-2 text-sm text-slate-300">
-                <p><span className="text-slate-500">Descripción:</span> {drawerCoupon.description}</p>
-                <p><span className="text-slate-500">Descuento:</span> {drawerCoupon.discount} %</p>
-                <p><span className="text-slate-500">Estado:</span> {drawerCoupon.active === 1 ? "Activo" : "No activo"}</p>
+              <div className="space-y-2 text-sm">
+                <p><span className="text-text-muted">Descripción:</span> {drawerCoupon.description}</p>
+                <p><span className="text-text-muted">Descuento:</span> {drawerCoupon.discount} %</p>
+                <p><span className="text-text-muted">Estado:</span> {drawerCoupon.active === 1 ? "Activo" : "No activo"}</p>
               </div>
             )}
           </AdminDrawer>
