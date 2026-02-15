@@ -164,19 +164,18 @@ export const buyMoreGB = shieldedProcedure
                 throw new Error('Missing txn_id for existing conekta product order');
               }
               const conektaOrder = await conektaOrders.getOrderById(existingTxn);
+              const charge = (conektaOrder.data.charges as any)?.data?.[0] as any;
+              const paymentMethodObj = charge?.payment_method as any;
+              const expiresAt = Number(paymentMethodObj?.expires_at ?? 0);
+              const chargeStatus = String(charge?.status ?? '').toLowerCase();
 
               // Check if the order is expired
               if (
                 compareAsc(
                   new Date(),
-                  new Date(
-                    ((
-                      conektaOrder.data.charges?.data?.[0].payment_method as any
-                    )?.expires_at ?? 0) * 1000,
-                  ),
+                  new Date(expiresAt * 1000),
                 ) >= 0 ||
-                conektaOrder.data.charges?.data?.[0].status !==
-                  'pending_payment'
+                chargeStatus !== 'pending_payment'
               ) {
                 log.info(
                   `[CONEKTA_CASH] Order ${conektaOrder.data.id} is expired, creating new one`,
@@ -191,10 +190,10 @@ export const buyMoreGB = shieldedProcedure
                   user,
                 });
 
-                return newOrder.data.charges?.data?.[0].payment_method as any;
+                return ((newOrder.data.charges as any)?.data?.[0]?.payment_method ?? null) as any;
               }
 
-              return conektaOrder.data.charges?.data?.[0].payment_method as any;
+              return (paymentMethodObj ?? null) as any;
             } catch (e) {
               log.error(
                 `[CONEKTA_CASH] There was an error getting the order with conekta: ${e}`,
@@ -218,20 +217,20 @@ export const buyMoreGB = shieldedProcedure
             },
           });
 
-          const conektaOrder = await createCashPaymentOrder({
-            product,
-            customerId: conektaCustomer,
-            paymentMethod: 'cash',
-            order: productOrder,
-            prisma,
-            user,
-          });
+	          const conektaOrder = await createCashPaymentOrder({
+	            product,
+	            customerId: conektaCustomer,
+	            paymentMethod: 'cash',
+	            order: productOrder,
+	            prisma,
+	            user,
+	          });
 
-          return conektaOrder.data.charges?.data?.[0].payment_method as any;
-        }
-        case PaymentService.PAYPAL: {
-          log.info(
-            `[PRODUCT:PURCHASE] Creating paypal order for user ${user.id}`,
+	          return ((conektaOrder.data.charges as any)?.data?.[0]?.payment_method ?? null) as any;
+	        }
+	        case PaymentService.PAYPAL: {
+	          log.info(
+	            `[PRODUCT:PURCHASE] Creating paypal order for user ${user.id}`,
           );
 
           const productOrder = await prisma.product_orders.create({
