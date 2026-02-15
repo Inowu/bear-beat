@@ -134,8 +134,8 @@ function LoginForm() {
       <div className="auth-login-atmosphere">
         <div className="auth-login-card">
           <img src={brandLockup} alt="Bear Beat" className="auth-login-logo" />
-          <h1 className="auth-login-title text-text-main">Bienvenido, DJ.</h1>
-          <p className="auth-login-sub text-text-muted">
+          <h1 className="auth-login-title">Bienvenido, DJ.</h1>
+          <p className="auth-login-sub">
             Tu cabina está lista. Ingresa para descargar.
           </p>
           <form className="auth-form auth-login-form" onSubmit={formik.handleSubmit} autoComplete="on">
@@ -208,7 +208,7 @@ function LoginForm() {
                 INGRESAR
               </button>
             ) : (
-              <div className="flex justify-center py-2">
+              <div className="auth-login-spinner">
                 <Spinner size={3} width={0.3} color="var(--app-accent)" />
               </div>
             )}

@@ -267,6 +267,15 @@
     background: color-mix(in srgb, var(--app-status-error) 12%, transparent);
   }
 
+  .auth-login-spinner {
+    width: 100%;
+    min-height: 54px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 0;
+  }
+
 	  .auth-login-submit-btn {
 	    width: 100%;
 	    min-height: 54px;
