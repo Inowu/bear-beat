@@ -158,7 +158,7 @@ export const PlanUpgrade = () => {
           justifyContent: "center",
         }}
       >
-        <h1 className="visually-hidden">Actualizar plan</h1>
+        <h1 className="sr-only">Actualizar plan</h1>
         <Spinner size={5} width={0.5} color="var(--app-accent)" />
       </div>
     );
