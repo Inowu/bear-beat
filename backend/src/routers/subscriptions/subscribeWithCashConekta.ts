@@ -145,7 +145,7 @@ export const subscribeWithCashConekta = shieldedProcedure
             { headers: conektaCashHeaders },
           );
 
-          const charge = conektaOrder.data.charges?.data?.[0] as any;
+          const charge = (conektaOrder.data.charges as any)?.data?.[0] as any;
           const paymentMethodObj = charge?.payment_method as any;
           const chargeStatus = String(charge?.status || '').toLowerCase();
           const orderPaymentStatus = String(
@@ -178,16 +178,16 @@ export const subscribeWithCashConekta = shieldedProcedure
               paymentMethod,
               fingerprint,
               order: existingOrder,
-              prisma,
-              user: fullUserForOrder,
-            });
+	            prisma,
+	            user: fullUserForOrder,
+	          });
 
-            return newConektaOrder.data.charges?.data?.[0].payment_method as any;
-          }
+	            return ((newConektaOrder.data.charges as any)?.data?.[0]?.payment_method ?? null) as any;
+	          }
 
-          return paymentMethodObj as any;
-        } catch (e) {
-          log.error(
+	          return paymentMethodObj as any;
+	        } catch (e) {
+	          log.error(
             `[CONEKTA_CASH] There was an error getting the order with conekta: ${e}`,
           );
         }
@@ -221,15 +221,15 @@ export const subscribeWithCashConekta = shieldedProcedure
           paymentMethod,
           fingerprint,
           order,
-          prisma,
-          user: fullUser,
-        });
+	          prisma,
+	          user: fullUser,
+	        });
 
-        return conektaOrder.data.charges?.data?.[0].payment_method as any;
-      } catch (e: any) {
-        const conektaMsg = formatConektaErrorForClient(e);
-        const conektaInfo = getConektaErrorInfo(e);
-        log.error(
+	        return ((conektaOrder.data.charges as any)?.data?.[0]?.payment_method ?? null) as any;
+	      } catch (e: any) {
+	        const conektaMsg = formatConektaErrorForClient(e);
+	        const conektaInfo = getConektaErrorInfo(e);
+	        log.error(
           `[CONEKTA_CASH] Error creating order: ${conektaMsg}`,
           {
             status: conektaInfo.status,
@@ -279,15 +279,15 @@ const createCashPaymentOrder = async ({
   let speiRecurrentSourceId: string | null = null;
   if (paymentMethod === 'spei') {
     try {
-      if (!hasCustomerId) {
-        throw new Error('customer_id is required for spei_recurrent');
-      }
-      const existing = await conektaPaymentMethods.getCustomerPaymentMethods(
-        customerIdValue,
-      );
-      const existingSpei = existing.data?.data?.find(
-        (pm: any) => pm?.type === 'spei_recurrent',
-      );
+	      if (!hasCustomerId) {
+	        throw new Error('customer_id is required for spei_recurrent');
+	      }
+	      const existing = await conektaPaymentMethods.getCustomerPaymentMethods(
+	        customerIdValue,
+	      );
+	      const existingSpei = (existing.data as any)?.data?.find(
+	        (pm: any) => pm?.type === 'spei_recurrent',
+	      );
 
       if (existingSpei?.id) {
         speiRecurrentSourceId = String(existingSpei.id);

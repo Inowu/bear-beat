@@ -60,7 +60,7 @@ export const subscribeWithCardConekta = shieldedProcedure
             {
               type: 'card',
               token_id: cardToken,
-            },
+            } as any,
           );
 
         if (makeDefault) {
