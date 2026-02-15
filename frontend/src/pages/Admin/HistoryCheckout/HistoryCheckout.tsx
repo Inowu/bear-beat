@@ -88,6 +88,15 @@ function formatDateTime(value: string | null | undefined): string {
   }).format(date);
 }
 
+function formatDateShort(value: string | null | undefined): string {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return new Intl.DateTimeFormat("es-MX", {
+    dateStyle: "short",
+  }).format(date);
+}
+
 function formatCurrency(value: number | null | undefined): string {
   if (value == null || Number.isNaN(value)) return "—";
   return new Intl.NumberFormat("es-MX", {
@@ -205,7 +214,7 @@ export const HistoryCheckout = () => {
 
   const toolbar = (
     <div className="flex flex-wrap items-end gap-2 w-full">
-      <label className="inline-flex flex-col gap-1 text-sm text-gray-700 dark:text-gray-300">
+      <label className="inline-flex flex-col gap-1 text-sm text-text-muted">
         Estado
         <Select
           value={filters.status}
@@ -216,7 +225,7 @@ export const HistoryCheckout = () => {
           <option value="all">Todos</option>
         </Select>
       </label>
-      <label className="inline-flex flex-col gap-1 text-sm text-gray-700 dark:text-gray-300">
+      <label className="inline-flex flex-col gap-1 text-sm text-text-muted">
         Ventana
         <Select
           value={filters.days}
@@ -229,17 +238,17 @@ export const HistoryCheckout = () => {
           ))}
         </Select>
       </label>
-      <label className="inline-flex flex-col gap-1 text-sm text-gray-700 dark:text-gray-300 min-w-[220px] flex-1">
+      <label className="inline-flex flex-col gap-1 text-sm text-text-muted min-w-[220px] flex-1">
         Buscar
         <input
           type="text"
           value={filters.search}
           onChange={(e) => startFilter("search", e.target.value)}
           placeholder="email, usuario o teléfono"
-          className="min-h-[44px] rounded-xl px-3 border border-gray-300 dark:border-bear-dark-100 bg-transparent"
+          className="min-h-[44px] rounded-xl px-3 border border-border bg-bg-card text-text-main"
         />
       </label>
-      <label className="inline-flex flex-col gap-1 text-sm text-gray-700 dark:text-gray-300">
+      <label className="inline-flex flex-col gap-1 text-sm text-text-muted">
         Por página
         <Select
           value={filters.limit}
@@ -275,32 +284,32 @@ export const HistoryCheckout = () => {
     >
       <div className="w-full overflow-x-hidden space-y-4">
         <section className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <article className="rounded-xl border border-gray-200 dark:border-bear-dark-100 p-3 bg-bear-light-100 dark:bg-bear-dark-500/40">
-            <p className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">Leads en ventana</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-200">{summary.totalCandidates.toLocaleString("es-MX")}</p>
-            <p className="text-xs text-gray-600 dark:text-gray-400">Últimos {filters.days} días</p>
+          <article className="rounded-xl border bg-bg-card p-3">
+            <p className="text-xs uppercase tracking-wider text-text-muted">Leads en ventana</p>
+            <p className="text-2xl font-bold text-text-main">{summary.totalCandidates.toLocaleString("es-MX")}</p>
+            <p className="text-xs text-text-muted">Últimos {filters.days} días</p>
           </article>
-          <article className="rounded-xl border border-red-300/40 dark:border-red-400/30 p-3 bg-red-50/40 dark:bg-red-500/10">
-            <p className="text-xs uppercase tracking-wider text-red-700 dark:text-red-300">Abandonados</p>
-            <p className="text-2xl font-bold text-red-800 dark:text-red-200">{summary.abandoned.toLocaleString("es-MX")}</p>
-            <p className="text-xs text-red-700/80 dark:text-red-300/80">Sin pago después del último checkout</p>
+          <article className="rounded-xl border bg-bg-card p-3">
+            <span className="badge badge--tiny badge--danger">Abandonados</span>
+            <p className="mt-2 text-2xl font-bold text-text-main">{summary.abandoned.toLocaleString("es-MX")}</p>
+            <p className="text-xs text-text-muted">Sin pago después del último checkout</p>
           </article>
-          <article className="rounded-xl border border-emerald-300/40 dark:border-emerald-400/30 p-3 bg-emerald-50/40 dark:bg-emerald-500/10">
-            <p className="text-xs uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Recuperados</p>
-            <p className="text-2xl font-bold text-emerald-800 dark:text-emerald-200">{summary.recovered.toLocaleString("es-MX")}</p>
-            <p className="text-xs text-emerald-700/80 dark:text-emerald-300/80">Pagaron después del último checkout</p>
+          <article className="rounded-xl border bg-bg-card p-3">
+            <span className="badge badge--tiny badge--success">Recuperados</span>
+            <p className="mt-2 text-2xl font-bold text-text-main">{summary.recovered.toLocaleString("es-MX")}</p>
+            <p className="text-xs text-text-muted">Pagaron después del último checkout</p>
           </article>
         </section>
 
-        <div className="rounded-xl border border-gray-200 dark:border-bear-dark-100 p-3 bg-bear-light-100 dark:bg-bear-dark-500/40">
-          <p className="text-sm text-gray-700 dark:text-gray-300">
+        <div className="rounded-xl border bg-bg-card p-3">
+          <p className="text-sm text-text-muted">
             Vista actual: <strong>{STATUS_LABELS[filters.status]}</strong> · Mostrando{" "}
             <strong>{summary.showing.toLocaleString("es-MX")}</strong> de{" "}
             <strong>{totalHistory.toLocaleString("es-MX")}</strong> registros.
           </p>
         </div>
 
-        <div className="hidden md:block rounded-xl border border-gray-200 dark:border-bear-dark-100 overflow-hidden">
+        <div className="admin-table-panel">
           <div
             className="overflow-x-auto max-h-[60vh] overflow-y-auto"
             tabIndex={0}
@@ -308,57 +317,67 @@ export const HistoryCheckout = () => {
             aria-label="Leads de checkout (tabla desplazable)"
             data-scroll-region
           >
-            <table className="w-full text-left text-sm border-collapse">
-              <thead>
+            <table className="w-full table-fixed">
+              <thead className="sticky top-0 z-10">
                 <tr>
-                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100">Usuario</th>
-                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100">Teléfono</th>
-                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100">Último checkout</th>
-                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100">Último pago</th>
-                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100">Método</th>
-                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100">Estado lead</th>
+                  <th className="uppercase text-xs tracking-wider text-left py-3 px-4 w-[260px]">Usuario</th>
+                  <th className="uppercase text-xs tracking-wider text-left py-3 px-4 w-[150px]">Teléfono</th>
+                  <th className="uppercase text-xs tracking-wider text-left py-3 px-4 w-[170px]">Último checkout</th>
+                  <th className="uppercase text-xs tracking-wider text-left py-3 px-4 w-[170px]">Último pago</th>
+                  <th className="uppercase text-xs tracking-wider text-left py-3 px-4 w-[140px]">Método</th>
+                  <th className="uppercase text-xs tracking-wider text-left py-3 px-4 w-[200px]">Estado lead</th>
                 </tr>
               </thead>
-              <tbody className="bg-bear-light-100 dark:bg-bear-dark-900 divide-y divide-gray-200 dark:divide-bear-dark-100">
+              <tbody>
                 {!loader
-                  ? history.map((his) => (
-                      <tr key={`ch_${his.id}`} className="border-b border-gray-200 dark:border-bear-dark-100 hover:bg-gray-100 dark:hover:bg-bear-dark-500/50 transition-colors">
-                        <td className="py-4 px-4 text-gray-700 dark:text-gray-300">
-                          <p className="font-semibold">{his.email}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            @{his.username || "—"} · ID {his.userId}
-                          </p>
-                        </td>
-                        <td className="py-4 px-4 text-gray-700 dark:text-gray-300">{his.phone || "—"}</td>
-                        <td className="py-4 px-4 text-gray-700 dark:text-gray-300">
-                          <p>{formatDateTime(his.lastCheckoutDate)}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">hace {his.hoursSinceCheckout} h</p>
-                        </td>
-                        <td className="py-4 px-4 text-gray-700 dark:text-gray-300">{formatDateTime(his.lastPaidDate)}</td>
-                        <td className="py-4 px-4 text-gray-700 dark:text-gray-300">
-                          {formatPaymentMethod(his.lastPaidMethod)}
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{formatCurrency(his.lastPaidAmount)}</p>
-                        </td>
-                        <td className="py-4 px-4">
-                          <span
-                            className={`inline-flex text-xs px-2 py-1 rounded-full ${
-                              his.leadStatus === "abandoned"
-                                ? "bg-red-500/10 text-red-500 dark:text-red-300"
-                                : "bg-emerald-500/10 text-emerald-500 dark:text-emerald-300"
-                            }`}
-                          >
-                            {getLeadStatusLabel(his.leadStatus)}
-                          </span>
-                        </td>
-                      </tr>
-                    ))
+                  ? history.length > 0
+                    ? history.map((his) => (
+                        <tr key={`ch_${his.id}`} className="border-b transition-colors">
+                          <td className="py-3 px-4 text-sm min-w-[260px]">
+                            <p className="font-semibold truncate" title={his.email}>
+                              {his.email}
+                            </p>
+                            <p className="text-xs text-text-muted truncate" title={his.username ? `@${his.username}` : ""}>
+                              @{his.username || "—"} · ID {his.userId}
+                            </p>
+                          </td>
+                          <td className="py-3 px-4 text-sm truncate" title={his.phone ?? ""}>{his.phone || "—"}</td>
+                          <td className="py-3 px-4 text-sm">
+                            <p>{formatDateTime(his.lastCheckoutDate)}</p>
+                            <p className="text-xs text-text-muted">hace {his.hoursSinceCheckout} h</p>
+                          </td>
+                          <td className="py-3 px-4 text-sm">{formatDateTime(his.lastPaidDate)}</td>
+                          <td className="py-3 px-4 text-sm">
+                            {formatPaymentMethod(his.lastPaidMethod)}
+                            <p className="text-xs text-text-muted">{formatCurrency(his.lastPaidAmount)}</p>
+                          </td>
+                          <td className="py-3 px-4">
+                            <span
+                              className={[
+                                "badge",
+                                "badge--tiny",
+                                his.leadStatus === "abandoned" ? "badge--danger" : "badge--success",
+                              ].join(" ")}
+                            >
+                              {getLeadStatusLabel(his.leadStatus)}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    : (
+                        <tr>
+                          <td colSpan={6} className="py-10 px-4 text-center text-sm text-text-muted">
+                            No hay leads para este filtro.
+                          </td>
+                        </tr>
+                      )
                   : ARRAY_10.map((_, i) => (
-                      <tr key={`s_${i}`} className="border-b border-gray-200 dark:border-bear-dark-100">
-                        <td colSpan={6} className="py-4 px-4 animate-pulse bg-gray-200 dark:bg-bear-dark-100/50" />
+                      <tr key={`s_${i}`} className="border-b">
+                        <td colSpan={6} className="py-4 animate-pulse bg-bg-input" />
                       </tr>
                     ))}
               </tbody>
-              <tfoot className="bg-bear-light-100 dark:bg-bear-dark-500 border-t border-gray-200 dark:border-bear-dark-100">
+              <tfoot>
                 <tr>
                   <td colSpan={6} className="p-4">
                     <Pagination
@@ -376,45 +395,63 @@ export const HistoryCheckout = () => {
           </div>
         </div>
 
-        <div className="block md:hidden grid grid-cols-1 gap-4 w-full">
+        <div className="admin-mobile-list">
           {!loader
-            ? history.map((his) => (
-                <button
-                  key={`m_${his.id}`}
-                  className="bg-bear-light-100 dark:bg-bear-dark-500 p-4 rounded-lg border border-gray-200 dark:border-bear-dark-100"
-                  onClick={() => setDrawerItem(his)}
-                  type="button"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-200 truncate">{his.email}</p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
-                        Checkout: {formatDateTime(his.lastCheckoutDate)}
-                      </p>
-                    </div>
-                    <span
-                      className={`flex-shrink-0 text-[11px] px-2 py-1 rounded-full ${
-                        his.leadStatus === "abandoned"
-                          ? "bg-red-500/10 text-red-500 dark:text-red-300"
-                          : "bg-emerald-500/10 text-emerald-500 dark:text-emerald-300"
-                      }`}
+            ? history.length > 0
+              ? history.map((his) => {
+                  const avatar = (his.email || his.username || "L").trim().charAt(0).toUpperCase();
+                  const statusClass = his.leadStatus === "abandoned" ? "is-blocked" : "is-active";
+                  const statusLabel = his.leadStatus === "abandoned" ? "Abandonado" : "Recuperado";
+                  return (
+                    <button
+                      key={`m_${his.id}`}
+                      className="admin-mobile-card"
+                      onClick={() => setDrawerItem(his)}
+                      type="button"
                     >
-                      {his.leadStatus === "abandoned" ? "Abandonado" : "Recuperado"}
-                    </span>
-                    <span className="flex-shrink-0 text-gray-500 dark:text-gray-400" aria-hidden>
-                      <MoreVertical size={20} />
-                    </span>
+                      <div className="admin-mobile-card__head">
+                        <div className="admin-mobile-card__identity">
+                          <div className="admin-mobile-card__avatar">{avatar}</div>
+                          <div className="admin-mobile-card__copy">
+                            <p className="admin-mobile-card__name">{his.email}</p>
+                            <p className="admin-mobile-card__email">@{his.username || "—"} · ID {his.userId}</p>
+                          </div>
+                        </div>
+                        <span className={`admin-mobile-status ${statusClass}`}>{statusLabel}</span>
+                        <span className="admin-mobile-card__menu" aria-hidden>
+                          <MoreVertical size={20} />
+                        </span>
+                      </div>
+                      <div className="admin-mobile-card__foot">
+                        <span>Checkout: {formatDateShort(his.lastCheckoutDate)}</span>
+                        <span>hace {his.hoursSinceCheckout} h</span>
+                        <span>Pago: {formatDateShort(his.lastPaidDate)}</span>
+                      </div>
+                    </button>
+                  );
+                })
+              : (
+                  <div className="admin-mobile-empty">
+                    <h2>No hay leads</h2>
+                    <p>Prueba cambiar el estado o la ventana de días.</p>
                   </div>
-                </button>
-              ))
+                )
             : ARRAY_10.map((_, i) => (
-                <div key={`sm_${i}`} className="bg-bear-light-100 dark:bg-bear-dark-500 p-4 rounded-lg border border-gray-200 dark:border-bear-dark-100 animate-pulse">
-                  <div className="h-12 bg-gray-200 dark:bg-bear-dark-100/50 rounded" />
+                <div key={`sm_${i}`} className="admin-mobile-card admin-mobile-card--skeleton">
+                  <div className="admin-mobile-card__head">
+                    <div className="admin-mobile-card__identity">
+                      <div className="admin-mobile-card__avatar" />
+                      <div className="admin-mobile-card__copy">
+                        <p className="admin-mobile-card__name">—</p>
+                        <p className="admin-mobile-card__email">—</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ))}
         </div>
 
-        <div className="md:hidden mt-4">
+        <div className="admin-pagination-mobile mt-4">
           <Pagination
             totalLoader={totalLoader}
             totalData={totalHistory}
@@ -428,17 +465,17 @@ export const HistoryCheckout = () => {
 
       <AdminDrawer open={drawerItem !== null} onClose={() => setDrawerItem(null)} title={drawerItem?.email ?? "Lead checkout"} user={undefined}>
         {drawerItem && (
-          <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-            <p><span className="text-gray-500">Usuario:</span> @{drawerItem.username || "—"} (ID {drawerItem.userId})</p>
-            <p><span className="text-gray-500">Email:</span> {drawerItem.email}</p>
-            <p><span className="text-gray-500">Teléfono:</span> {drawerItem.phone || "—"}</p>
-            <p><span className="text-gray-500">Último checkout:</span> {formatDateTime(drawerItem.lastCheckoutDate)}</p>
-            <p><span className="text-gray-500">Horas desde checkout:</span> {drawerItem.hoursSinceCheckout}</p>
-            <p><span className="text-gray-500">Último pago:</span> {formatDateTime(drawerItem.lastPaidDate)}</p>
-            <p><span className="text-gray-500">Método:</span> {formatPaymentMethod(drawerItem.lastPaidMethod)}</p>
-            <p><span className="text-gray-500">Monto último pago:</span> {formatCurrency(drawerItem.lastPaidAmount)}</p>
-            <p><span className="text-gray-500">Estado del lead:</span> {getLeadStatusLabel(drawerItem.leadStatus)}</p>
-            <p><span className="text-gray-500">Estado cuenta:</span> {drawerItem.userActive ? "Activa" : "Inactiva"}</p>
+          <div className="space-y-2 text-sm">
+            <p><span className="text-text-muted">Usuario:</span> @{drawerItem.username || "—"} (ID {drawerItem.userId})</p>
+            <p><span className="text-text-muted">Email:</span> {drawerItem.email}</p>
+            <p><span className="text-text-muted">Teléfono:</span> {drawerItem.phone || "—"}</p>
+            <p><span className="text-text-muted">Último checkout:</span> {formatDateTime(drawerItem.lastCheckoutDate)}</p>
+            <p><span className="text-text-muted">Horas desde checkout:</span> {drawerItem.hoursSinceCheckout}</p>
+            <p><span className="text-text-muted">Último pago:</span> {formatDateTime(drawerItem.lastPaidDate)}</p>
+            <p><span className="text-text-muted">Método:</span> {formatPaymentMethod(drawerItem.lastPaidMethod)}</p>
+            <p><span className="text-text-muted">Monto último pago:</span> {formatCurrency(drawerItem.lastPaidAmount)}</p>
+            <p><span className="text-text-muted">Estado del lead:</span> {getLeadStatusLabel(drawerItem.leadStatus)}</p>
+            <p><span className="text-text-muted">Estado cuenta:</span> {drawerItem.userActive ? "Activa" : "Inactiva"}</p>
           </div>
         )}
       </AdminDrawer>
