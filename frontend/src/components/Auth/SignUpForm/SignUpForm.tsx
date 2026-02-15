@@ -362,7 +362,9 @@ function SignUpForm() {
         setDialCode(code);
       }
     } catch (error) {
-      console.error("There was an error while trying to get user's location.", error);
+      if (import.meta.env.DEV) {
+        console.warn("[SIGNUP] Failed to detect user country.", error);
+      }
     }
   }, []);
 
@@ -439,7 +441,9 @@ function SignUpForm() {
         const domains = await trpc.blockedEmailDomains.listBlockedEmailDomains.query();
         setBlockedDomains(domains);
       } catch (error) {
-        console.error("No se pudieron cargar los dominios bloqueados.", error);
+        if (import.meta.env.DEV) {
+          console.warn("[SIGNUP] Failed to load blocked email domains.", error);
+        }
       }
     };
 
@@ -452,7 +456,9 @@ function SignUpForm() {
         const numbers = await trpc.blockedPhoneNumbers.listBlockedPhoneNumbers.query();
         setBlockedPhoneNumbers(numbers);
       } catch (error) {
-        console.error("No se pudieron cargar los telefonos bloqueados.", error);
+        if (import.meta.env.DEV) {
+          console.warn("[SIGNUP] Failed to load blocked phone numbers.", error);
+        }
       }
     };
 
