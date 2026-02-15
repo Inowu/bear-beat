@@ -135,6 +135,8 @@ function checkoutErrorTitle(method: CheckoutMethod, reason?: string): string {
   switch (reason) {
     case "card_declined":
       return "Tu banco rechazó la transacción";
+    case "invalid_coupon":
+      return "Cupón no válido";
     case "unauthorized":
       return "Tu sesión expiró";
     case "network_error":
@@ -202,6 +204,20 @@ function normalizeCheckoutError(opts: {
       hint: "Al iniciar sesión regresaremos a tu checkout para que puedas completar el pago.",
       reason: "unauthorized",
       errorCode: "unauthorized",
+    };
+  }
+
+  const isInvalidCoupon =
+    opts.method === "card" &&
+    /coupon|promotion code|promo code/i.test(msg) &&
+    /no such|invalid|expired/i.test(msg);
+
+  if (isInvalidCoupon) {
+    return {
+      userMessage: "El cupón no es válido o ya expiró. Puedes continuar sin cupón.",
+      hint: "Si el cupón venía en el enlace, quítalo e intenta de nuevo.",
+      reason: "invalid_coupon",
+      errorCode: "invalid_coupon",
     };
   }
 
@@ -325,6 +341,14 @@ function Checkout() {
   const searchParams = new URLSearchParams(location.search);
   const priceId = searchParams.get("priceId");
   const requestedMethod = searchParams.get("method");
+  const couponParamRaw = searchParams.get("coupon") ?? searchParams.get("cupon");
+  const couponCode = (() => {
+    const raw = typeof couponParamRaw === "string" ? couponParamRaw.trim() : "";
+    if (!raw) return null;
+    // Avoid passing arbitrary/unbounded strings to the backend from the URL.
+    if (!/^[a-z0-9_-]{3,32}$/i.test(raw)) return null;
+    return raw;
+  })();
   const { currentUser, handleLogout } = useUserContext();
   const [cookies] = useCookies(["_fbp", "_fbc"]);
 
@@ -405,6 +429,38 @@ function Checkout() {
       reason?: string;
       retry?: (() => void) | null;
     }) => {
+      if (opts.reason === "invalid_coupon") {
+        const actions: ErrorModalAction[] = [
+          {
+            label: "Continuar sin cupón",
+            variant: "primary",
+            onClick: () => {
+              const nextParams = new URLSearchParams(location.search);
+              nextParams.delete("coupon");
+              nextParams.delete("cupon");
+              const nextSearch = nextParams.toString();
+              closeErrorModal();
+              navigate(
+                { pathname: location.pathname, search: nextSearch ? `?${nextSearch}` : "" },
+                { replace: true },
+              );
+            },
+          },
+          {
+            label: "Cerrar",
+            variant: "secondary",
+            onClick: () => closeErrorModal(),
+          },
+        ];
+
+        setErrorTitle(checkoutErrorTitle(opts.method, opts.reason));
+        setErrorHint(opts.hint ?? null);
+        setErrorMessage(opts.userMessage);
+        setErrorActions(actions);
+        setShowError(true);
+        return;
+      }
+
       if (opts.reason === "unauthorized") {
         const actions: ErrorModalAction[] = [
           {
@@ -488,7 +544,16 @@ function Checkout() {
       setErrorActions(actions.length ? actions : null);
       setShowError(true);
     },
-    [availableMethods.join("|"), closeErrorModal, focusCheckoutMethodButton, handleLogout, navigate, selectCheckoutMethod],
+    [
+      availableMethods.join("|"),
+      closeErrorModal,
+      focusCheckoutMethodButton,
+      handleLogout,
+      location.pathname,
+      location.search,
+      navigate,
+      selectCheckoutMethod,
+    ],
   );
 
   useEffect(() => {
@@ -733,6 +798,7 @@ function Checkout() {
         acceptRecurring,
         successUrl,
         cancelUrl,
+        coupon: couponCode ?? undefined,
         fbp: cookies._fbp,
         fbc: cookies._fbc,
         url: window.location.href,
