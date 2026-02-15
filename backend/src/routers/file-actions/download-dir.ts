@@ -138,7 +138,7 @@ export const downloadDir = shieldedProcedure
     let useExtendedAccount = false;
 
     if (ftpAccounts.length === 0 || !regularFtpUser) {
-      log.error(`[DOWNLOAD] This user does not have an ftp user (${user.id})`);
+      log.error('[DOWNLOAD] This user does not have an ftp user');
 
       throw new TRPCError({
         code: 'BAD_REQUEST',
@@ -171,9 +171,7 @@ export const downloadDir = shieldedProcedure
 
     if (!quotaLimits || !quotaTallies) {
       log.error(
-        `${logPrefix(useExtendedAccount)} This user does not have quotas (${
-          user.id
-        })`,
+        `${logPrefix(useExtendedAccount)} This user does not have quotas`,
       );
 
       throw new TRPCError({
@@ -193,7 +191,7 @@ export const downloadDir = shieldedProcedure
         activePlans.length === 0 || availableBytesRegular < BigInt(dirSize);
 
       if (shouldUseExtended) {
-        log.info(`[DOWNLOAD] Using extended account for user ${user.id}`);
+        log.info('[DOWNLOAD] Using extended account');
         regularFtpUser = extendedAccount;
         useExtendedAccount = true;
       }
@@ -215,9 +213,7 @@ export const downloadDir = shieldedProcedure
 
     if (!quotaLimits || !quotaTallies) {
       log.error(
-        `${logPrefix(useExtendedAccount)} This user does not have quotas (${
-          user.id
-        })`,
+        `${logPrefix(useExtendedAccount)} This user does not have quotas`,
       );
       throw new TRPCError({
         code: 'BAD_REQUEST',
@@ -229,11 +225,11 @@ export const downloadDir = shieldedProcedure
       quotaLimits.bytes_out_avail - quotaTallies.bytes_out_used;
 
     if (availableBytes < dirSize) {
-      log.error(
-        `${logPrefix(useExtendedAccount)} Not enough bytes left, user id: ${
-          user.id
-        }, song path: ${fullPath}`,
-      );
+      log.error(`${logPrefix(useExtendedAccount)} Not enough bytes left`, {
+        availableBytes: availableBytes.toString(),
+        requiredBytes: String(dirSize),
+        path,
+      });
 
       throw new TRPCError({
         code: 'BAD_REQUEST',
@@ -284,9 +280,7 @@ export const downloadDir = shieldedProcedure
         quotaTalliesId: quotaTallies.id,
       } as CompressionJob);
 
-      log.info(
-        `[DOWNLOAD:DIR] Added job ${job.id} to queue for user ${user.id}`,
-      );
+      log.info(`[DOWNLOAD:DIR] Added job ${job.id} to queue`);
 
       const dbJob = await prisma.jobs.create({
         data: {
@@ -309,7 +303,7 @@ export const downloadDir = shieldedProcedure
 
       // Pre-update the bytes used and update it back later if the job fails
       // This is necessary so the user cannot use more bytes than they have
-      log.info(`[DOWNLOAD:DIR] Pre-updating bytes used for user ${user.id}`);
+      log.info('[DOWNLOAD:DIR] Pre-updating bytes used');
       await prisma.ftpquotatallies.update({
         where: {
           id: quotaTallies.id,
@@ -320,12 +314,10 @@ export const downloadDir = shieldedProcedure
       });
 
       log.info(
-        `[DOWNLOAD:DIR] Initiating directory compression job ${job.id}, user: ${user.id}`,
+        `[DOWNLOAD:DIR] Initiating directory compression job ${job.id}`,
       );
 
-      log.info(
-        `[DOWNLOAD:DIR] Starting compression worker for user ${user.id}`,
-      );
+      log.info('[DOWNLOAD:DIR] Starting compression worker');
 
       await new Promise((res, rej) => {
         pm2.start(
