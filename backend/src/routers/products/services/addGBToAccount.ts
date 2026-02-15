@@ -26,12 +26,12 @@ export const addGBToAccount = async ({
     const order = rows?.[0] ?? null;
 
     if (!order) {
-      log.error(`[PRODUCT:ADD_GB] Order ${orderId} not found`);
+      log.error('[PRODUCT:ADD_GB] Product order not found');
       return;
     }
 
     if (order.status === OrderStatus.PAID) {
-      log.info(`[PRODUCT:ADD_GB] Order ${orderId} already paid, skipping.`);
+      log.info('[PRODUCT:ADD_GB] Product order already paid, skipping.');
       return;
     }
 
@@ -49,7 +49,7 @@ export const addGBToAccount = async ({
     });
 
     if (!ftpAccounts || ftpAccounts.length === 0) {
-      log.error(`[PRODUCT:ADD_GB] User ${user.id} has no FTP accounts`);
+      log.error('[PRODUCT:ADD_GB] User has no FTP accounts');
       return;
     }
 
@@ -59,7 +59,7 @@ export const addGBToAccount = async ({
 
     if (!subscriptionAccount) {
       log.error(
-        `[PRODUCT:ADD_GB] User ${user.id} has no subscription FTP account, could not find a non-extended account`,
+        '[PRODUCT:ADD_GB] User has no subscription FTP account, could not find a non-extended account',
       );
       return;
     }
@@ -72,7 +72,7 @@ export const addGBToAccount = async ({
 
     if (!extendedFtpAccount) {
       log.info(
-        `[PRODUCT:ADD_GB] Creating extended cuota FTP account for user ${user.id}`,
+        '[PRODUCT:ADD_GB] Creating extended cuota FTP account',
       );
 
       extendedFtpAccount = await tx.ftpUser.create({
@@ -110,7 +110,7 @@ export const addGBToAccount = async ({
       });
 
       log.info(
-        `[PRODUCT:ADD_GB] Extended cuota FTP account created, added ${product.amount} GB to user ${user.id}`,
+        `[PRODUCT:ADD_GB] Extended cuota FTP account created, added ${product.amount} GB`,
       );
       return;
     }
@@ -123,7 +123,7 @@ export const addGBToAccount = async ({
 
     if (!existingLimits) {
       log.info(
-        `[PRODUCT:ADD_GB] No limits found for user ${user.id}, creating new ftp quota limits`,
+        '[PRODUCT:ADD_GB] No limits found, creating new ftp quota limits',
       );
 
       existingLimits = await tx.ftpQuotaLimits.create({
@@ -142,7 +142,7 @@ export const addGBToAccount = async ({
       Number(existingLimits.bytes_out_avail) + gbToBytes(Number(product.amount));
 
     log.info(
-      `[PRODUCT:ADD_GB] Adding ${product.amount} GB to user ${user.id}, previous limit was ${existingLimits.bytes_out_avail}`,
+      `[PRODUCT:ADD_GB] Adding ${product.amount} GB, previous limit was ${existingLimits.bytes_out_avail}`,
     );
 
     await tx.ftpQuotaLimits.update({
@@ -160,7 +160,7 @@ export const addGBToAccount = async ({
     });
 
     log.info(
-      `[PRODUCT:ADD_GB] Added ${product.amount} GB to user ${user.id}, new limit is ${newBytesOutAvail}`,
+      `[PRODUCT:ADD_GB] Added ${product.amount} GB, new limit is ${newBytesOutAvail}`,
     );
   });
 };
