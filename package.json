@@ -14,12 +14,9 @@
     "yup": "^1.7.1"
   },
   "overrides": {
-    "axios": "1.13.5",
+    "axios": "^1.13.5",
     "conekta": {
-      "axios": "1.13.5"
-    },
-    "twilio": {
-      "axios": "1.13.5"
+      "axios": "^1.13.5"
     },
     "@types/request": "2.48.13"
   },
