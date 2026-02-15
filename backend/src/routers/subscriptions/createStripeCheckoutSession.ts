@@ -104,7 +104,6 @@ export const createStripeCheckoutSession = shieldedProcedure
       }
 
       log.warn('[STRIPE_CHECKOUT_SESSION] Stripe not configured, returning mock checkout URL (local dev only).', {
-        userId: user.id,
         planId: plan.id,
       });
 
@@ -118,7 +117,7 @@ export const createStripeCheckoutSession = shieldedProcedure
 
     const stripeCustomer = await getStripeCustomer(prisma, user);
 
-    log.info(`[STRIPE_CHECKOUT_SESSION] User ${user.id} creating checkout session for plan ${planId}`);
+    log.info('[STRIPE_CHECKOUT_SESSION] Creating checkout session', { planId });
 
     await hasActiveSubscription({
       user,
@@ -225,8 +224,7 @@ export const createStripeCheckoutSession = shieldedProcedure
       }
     } catch (migrationError) {
       log.warn('[STRIPE_CHECKOUT_SESSION] UH migration check skipped', {
-        userId: user.id,
-        error: migrationError instanceof Error ? migrationError.message : migrationError,
+        errorType: migrationError instanceof Error ? migrationError.name : typeof migrationError,
       });
       uhUser = null;
     }
@@ -235,7 +233,9 @@ export const createStripeCheckoutSession = shieldedProcedure
       : undefined;
 
     if (uhUser) {
-      log.info(`[STRIPE_CHECKOUT_SESSION] Migration user ${user.id}, trial_end: ${trialEnd}`);
+      log.info('[STRIPE_CHECKOUT_SESSION] Migration trial applied', {
+        remainingDays: uhUser.remainingDays,
+      });
     }
 
     // Marketing trial (7 days, 100GB, etc): only for users with no previous paid plan orders.
@@ -289,14 +289,12 @@ export const createStripeCheckoutSession = shieldedProcedure
         }
 
         if (samePhoneUsedTrialOrPaid) {
-          log.info(
-            `[STRIPE_CHECKOUT_SESSION] Marketing trial blocked for user ${user.id} (same phone already used)`,
-          );
+          log.info('[STRIPE_CHECKOUT_SESSION] Marketing trial blocked (same phone already used)');
         } else {
           isMarketingTrial = true;
           marketingTrialEnd = Math.floor(addDays(new Date(), bbTrialDays).getTime() / 1000);
           log.info(
-            `[STRIPE_CHECKOUT_SESSION] Marketing trial enabled for user ${user.id}, trial_end: ${marketingTrialEnd}, days: ${bbTrialDays}, gb: ${bbTrialGb}`,
+            `[STRIPE_CHECKOUT_SESSION] Marketing trial enabled (days: ${bbTrialDays}, gb: ${bbTrialGb})`,
           );
         }
       }
@@ -392,7 +390,7 @@ export const createStripeCheckoutSession = shieldedProcedure
         });
       }
 
-      log.info(`[STRIPE_CHECKOUT_SESSION] Created session ${stripeSession.id} for order ${order.id}`);
+      log.info('[STRIPE_CHECKOUT_SESSION] Created checkout session');
 
       try {
         const clientIp = getClientIpFromRequest(req);
@@ -422,8 +420,7 @@ export const createStripeCheckoutSession = shieldedProcedure
         });
       } catch (consentError) {
         log.warn('[STRIPE_CHECKOUT_SESSION] Failed to store billing consent (non-blocking)', {
-          orderId: order.id,
-          error: consentError instanceof Error ? consentError.message : consentError,
+          errorType: consentError instanceof Error ? consentError.name : typeof consentError,
         });
       }
 
@@ -436,9 +433,7 @@ export const createStripeCheckoutSession = shieldedProcedure
       // Never break checkout due to an auto-offer coupon mismatch in Stripe. Retry without the discount.
       if (resolvedCoupon.source === 'offer' && resolvedCoupon.couponCode && isStripeCouponError(e)) {
         log.warn('[STRIPE_CHECKOUT_SESSION] Offer coupon rejected by Stripe, retrying without discount', {
-          orderId: order.id,
-          coupon: resolvedCoupon.couponCode,
-          error: e instanceof Error ? e.message : e,
+          errorType: e instanceof Error ? e.name : typeof e,
         });
         try {
           const stripeSession = await createSession(false);
@@ -456,12 +451,13 @@ export const createStripeCheckoutSession = shieldedProcedure
           }
         } catch (retryError) {
           log.error('[STRIPE_CHECKOUT_SESSION] Retry without coupon failed', {
-            orderId: order.id,
-            error: retryError instanceof Error ? retryError.message : retryError,
+            errorType: retryError instanceof Error ? retryError.name : typeof retryError,
           });
         }
       }
-      log.error(`[STRIPE_CHECKOUT_SESSION] Error: ${e}`);
+      log.error('[STRIPE_CHECKOUT_SESSION] Error creating checkout session', {
+        errorType: e instanceof Error ? e.name : typeof e,
+      });
       const msg = e instanceof Error ? e.message : 'Error al crear la sesión de pago';
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
