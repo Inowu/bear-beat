@@ -40,6 +40,7 @@ function formatMoneyFixed(value: unknown, locale: string): string {
 function Plans() {
   const { currentUser } = useUserContext();
   const navigate = useNavigate();
+  const checkoutPrefetchedRef = useRef(false);
 
   const [plansByCurrency, setPlansByCurrency] = useState<{ mxn: PublicBestPlan | null; usd: PublicBestPlan | null }>({
     mxn: null,
@@ -186,6 +187,22 @@ function Plans() {
 
     navigate(`/comprar?priceId=${selectedPlan.planId}`);
   }, [navigate, selectedCurrency, selectedPlan]);
+
+  const prefetchCheckout = useCallback(() => {
+    if (checkoutPrefetchedRef.current) return;
+    checkoutPrefetchedRef.current = true;
+
+    try {
+      const connection = (navigator as any)?.connection;
+      if (connection?.saveData) return;
+      const effectiveType = typeof connection?.effectiveType === "string" ? connection.effectiveType : "";
+      if (/2g/i.test(effectiveType)) return;
+    } catch {
+      // noop
+    }
+
+    void import("../Checkout/Checkout");
+  }, []);
 
   return (
     <div className="plans2026">
@@ -363,6 +380,9 @@ function Plans() {
                   type="button"
                   className="plans2026__cta"
                   onClick={handleActivate}
+                  onMouseEnter={prefetchCheckout}
+                  onFocus={prefetchCheckout}
+                  onTouchStart={prefetchCheckout}
                   disabled={!selectedPlan}
                   data-testid="plans-activate"
                 >
