@@ -1,4 +1,9 @@
 /* PayPal buttons render into iframes; reserve space so the layout doesn't jump. */
+.paypal-root {
+  width: 100%;
+  position: relative;
+}
+
 .paypal-container {
   width: 100%;
   min-height: 50px;
@@ -19,4 +24,56 @@
   border: 0 !important;
   border-radius: 999px !important;
   background: transparent !important;
+}
+
+.paypal-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 0 14px;
+  border-radius: 999px;
+  text-align: center;
+}
+
+.paypal-fallback__text {
+  font-size: 0.95rem;
+  font-weight: 650;
+  line-height: 1.2;
+  color: var(--app-text-muted, #4b5563);
+}
+
+.paypal-fallback--loading {
+  pointer-events: none;
+  background: color-mix(in srgb, var(--app-bg-card, #ffffff) 82%, transparent);
+  border: 1px solid color-mix(in srgb, var(--app-border, rgba(0, 0, 0, 0.12)) 78%, transparent);
+}
+
+.paypal-fallback--error {
+  pointer-events: auto;
+  background: color-mix(in srgb, var(--app-bg-card, #ffffff) 94%, transparent);
+  border: 1px solid color-mix(in srgb, var(--app-border, rgba(0, 0, 0, 0.14)) 86%, transparent);
+}
+
+.paypal-fallback__retry {
+  appearance: none;
+  border: 1px solid color-mix(in srgb, var(--app-border, rgba(0, 0, 0, 0.18)) 88%, transparent);
+  background: color-mix(in srgb, var(--app-btn-bg, #111827) 10%, transparent);
+  color: var(--app-text-heading, #111827);
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: 750;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.paypal-fallback__retry:hover {
+  background: color-mix(in srgb, var(--app-btn-bg, #111827) 14%, transparent);
+}
+
+.paypal-fallback__retry:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--app-focus-ring, rgba(59, 130, 246, 0.55));
 }
