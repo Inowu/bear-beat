@@ -28,6 +28,7 @@
     "db:hygiene:purge": "node -r ts-node/register scripts/dbHygiene.ts purge",
     "analytics:alerts": "node -r ts-node/register scripts/analyticsAlerts.ts",
     "downloadHistory:rollup:backfill": "node -r ts-node/register scripts/backfillDownloadHistoryRollupDaily.ts",
+    "downloadHistory:purge": "node -r ts-node/register scripts/purgeDownloadHistory.ts",
     "canary:checkout": "node -r ts-node/register scripts/canaryCheckout.ts",
     "compile": "tsc --noEmit",
     "build": "rm -rf build && npx prisma generate && tsc",
