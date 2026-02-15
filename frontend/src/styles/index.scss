@@ -1657,10 +1657,7 @@ html[data-theme="light"] {
   .btn-addDomain,
   .btn-addPhone,
   .btn-option-4,
-  .btn-success,
-  .crm-toolbar__btn,
-  .live-toolbar__btn,
-  .analytics-toolbar__refresh
+  .btn-success
 ) {
   min-height: 44px;
   border-radius: var(--bb-radius-pill);
@@ -1679,9 +1676,7 @@ html[data-theme="light"] {
   .btn-addDomain,
   .btn-addPhone,
   .btn-option-4,
-  .btn-success,
-  .analytics-toolbar__refresh,
-  .live-toolbar__btn--primary
+  .btn-success
 ) {
   background: var(--app-gradient);
   color: var(--app-btn-text);
@@ -1697,9 +1692,7 @@ html[data-theme="dark"] :where(
   .btn-addDomain,
   .btn-addPhone,
   .btn-option-4,
-  .btn-success,
-  .analytics-toolbar__refresh,
-  .live-toolbar__btn--primary
+  .btn-success
 ) {
   box-shadow: 0 12px 24px color-mix(in srgb, var(--app-accent) 28%, transparent);
 }
