@@ -51,7 +51,7 @@ export default function PayPalComponent(props: Props) {
         try {
             await manychatApi("USER_CHECKED_PLANS");
         } catch (error) {
-            console.log(error);
+            // Best-effort only; do not block PayPal flow.
         }
     };
 
@@ -77,7 +77,9 @@ export default function PayPalComponent(props: Props) {
                 if (!isMountedRef.current) return;
                 const isContainerRemoved = /container.*removed|removed from DOM/i.test(String(err?.message ?? ""));
                 if (isContainerRemoved) return;
-                console.warn("Warning - Caught an error when attempting to render component", err);
+                if (import.meta.env.DEV) {
+                    console.warn("Warning - Caught an error when attempting to render component", err);
+                }
             });
         }
     }
@@ -151,7 +153,9 @@ export default function PayPalComponent(props: Props) {
                 });
                 return sub;
             } catch (e: any) {
-                console.log(e?.message);
+                if (import.meta.env.DEV) {
+                    console.warn("[PAYPAL] createSubscription failed", e?.message ?? e);
+                }
             }
             return "";
         }
