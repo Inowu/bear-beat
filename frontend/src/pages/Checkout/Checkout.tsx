@@ -315,6 +315,17 @@ function Checkout() {
     }
   }, []);
 
+  const focusRecurringConsent = useCallback(() => {
+    const el = document.querySelector<HTMLInputElement>('[data-testid="checkout-recurring-consent"]');
+    if (!el) return;
+    el.focus();
+    try {
+      el.scrollIntoView({ block: "center", behavior: "smooth" });
+    } catch {
+      el.scrollIntoView();
+    }
+  }, []);
+
   const selectCheckoutMethod = useCallback(
     (method: CheckoutMethod, surface: "selector" | "error_modal") => {
       interactedRef.current = true;
@@ -602,6 +613,7 @@ function Checkout() {
     if (!priceId || !plan?.id) return;
     if (!acceptRecurring) {
       setInlineError("Para continuar debes aceptar el cobro recurrente (renovación automática).");
+      focusRecurringConsent();
       return;
     }
     setProcessingMethod("card");
@@ -720,7 +732,7 @@ function Checkout() {
       setRedirecting(false);
       setProcessingMethod(null);
     }
-  }, [acceptRecurring, cookies._fbc, cookies._fbp, location.pathname, location.search, plan?.id, plan?.moneda, plan?.price, priceId, availableMethods.join("|"), openCheckoutError]);
+  }, [acceptRecurring, cookies._fbc, cookies._fbp, focusRecurringConsent, location.pathname, location.search, plan?.id, plan?.moneda, plan?.price, priceId, availableMethods.join("|"), openCheckoutError]);
 
   const startCashCheckout = useCallback(
     async () => {
@@ -1040,8 +1052,12 @@ function Checkout() {
   const handleContinuePayment = () => {
     interactedRef.current = true;
     if (!availableMethods.includes(selectedMethod)) {
-      setSelectedMethod(availableMethods[0]);
+      const fallbackMethod = availableMethods[0];
+      setSelectedMethod(fallbackMethod);
       setInlineError("Ese método no está disponible en este momento. Elige otra opción.");
+      if (fallbackMethod) {
+        window.setTimeout(() => focusCheckoutMethodButton(fallbackMethod), 0);
+      }
       return;
     }
     if (!selectedMethod) {
@@ -1051,6 +1067,7 @@ function Checkout() {
     if (selectedMethod === "card") {
       if (!acceptRecurring) {
         setInlineError("Para continuar debes aceptar el cobro recurrente (renovación automática).");
+        focusRecurringConsent();
         return;
       }
       startStripeCheckout();
@@ -1147,6 +1164,9 @@ function Checkout() {
   if (redirecting) {
     const providerName =
       redirectingProvider === "stripe" ? "Stripe" : "BBVA (Conekta)";
+    const currentMethod = processingMethod ?? selectedMethod;
+    const altMethod = pickCheckoutAlternateMethod(currentMethod, availableMethods);
+    const retryLabel = checkoutRetryActionLabel(currentMethod);
     return (
       <div className="checkout-main-container checkout2026">
         {TopNav}
@@ -1160,7 +1180,35 @@ function Checkout() {
               </p>
               {showRedirectHelp && (
                 <div className="checkout-one-state__help">
-                  <p>Si no te redirige, vuelve a intentar desde planes.</p>
+                  <p>Si no te redirige, intenta reintentar o cambiar de m\u00e9todo.</p>
+                  <button
+                    type="button"
+                    className="checkout-cta-btn checkout-cta-btn--primary"
+                    onClick={() => {
+                      if (redirectingProvider === "stripe") {
+                        void startStripeCheckout();
+                      } else {
+                        void startBbvaCheckout();
+                      }
+                    }}
+                  >
+                    {retryLabel}
+                  </button>
+                  {altMethod && (
+                    <button
+                      type="button"
+                      className="checkout-cta-btn checkout-cta-btn--ghost"
+                      onClick={() => {
+                        setRedirecting(false);
+                        setProcessingMethod(null);
+                        setShowRedirectHelp(false);
+                        selectCheckoutMethod(altMethod, "selector");
+                        window.setTimeout(() => focusCheckoutMethodButton(altMethod), 0);
+                      }}
+                    >
+                      {checkoutSwitchActionLabel(altMethod)}
+                    </button>
+                  )}
                   <Link to="/planes" className="checkout-cta-btn checkout-cta-btn--ghost">
                     Volver a planes
                   </Link>
@@ -1392,20 +1440,21 @@ function Checkout() {
               {trialHint && <p className="checkout2026__methodHint">{trialHint}</p>}
             </section>
 
-            {(selectedMethod === "card" || selectedMethod === "paypal") && (
-              <section
-                className={`checkout2026__consent ${!acceptRecurring ? "is-error" : ""}`}
-                aria-label="Consentimiento de cobro recurrente"
-              >
-                <label className="checkout2026__consentRow">
-                  <input
-                    type="checkbox"
-                    checked={acceptRecurring}
-                    onChange={(e) => {
-                      interactedRef.current = true;
-                      setAcceptRecurring(e.target.checked);
-                      setInlineError(null);
-                    }}
+              {(selectedMethod === "card" || selectedMethod === "paypal") && (
+                <section
+                  className={`checkout2026__consent ${!acceptRecurring ? "is-error" : ""}`}
+                  aria-label="Consentimiento de cobro recurrente"
+                >
+                  <label className="checkout2026__consentRow">
+                    <input
+                      type="checkbox"
+                      checked={acceptRecurring}
+                      data-testid="checkout-recurring-consent"
+                      onChange={(e) => {
+                        interactedRef.current = true;
+                        setAcceptRecurring(e.target.checked);
+                        setInlineError(null);
+                      }}
                     disabled={processingMethod !== null}
                   />
                   <span className="checkout2026__consentCopy">
@@ -1425,7 +1474,11 @@ function Checkout() {
               </section>
             )}
 
-            {inlineError && <p className="checkout-inline-error">{inlineError}</p>}
+            {inlineError && (
+              <p className="checkout-inline-error" role="alert" aria-live="assertive">
+                {inlineError}
+              </p>
+            )}
 
             <div className="checkout-payment-actions checkout2026__actions" aria-label="Acción">
               {shouldShowPaypalInline ? (
@@ -1439,6 +1492,7 @@ function Checkout() {
                     canProceed={acceptRecurring}
                     onBlocked={() => {
                       setInlineError("Para continuar debes aceptar el cobro recurrente (renovación automática).");
+                      focusRecurringConsent();
                     }}
                     onApprove={(data: any) => {
                       void startPaypalCheckout(data);
@@ -1476,7 +1530,7 @@ function Checkout() {
                 className="checkout2026__paymentLogos"
                 ariaLabel="Métodos de pago disponibles"
               />
-              <p className="checkout2026__trustCopy">Esta cuenta activa al pagar. Cancela cuando quieras.</p>
+              <p className="checkout2026__trustCopy">Tu cuenta se activa al pagar. Cancela cuando quieras.</p>
               <p className="checkout2026__links" aria-label="Ayuda">
                 <Link to="/instrucciones" className="checkout2026__link">
                   Ver cómo descargar

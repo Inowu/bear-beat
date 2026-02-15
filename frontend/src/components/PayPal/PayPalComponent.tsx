@@ -9,7 +9,7 @@ import {
     CreateOrderActions,
     OnClickActions
 } from "@paypal/paypal-js/types/components/buttons"
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import trpc from "../../api";
 import "./PayPalComponent.scss";
 
@@ -29,6 +29,9 @@ export default function PayPalComponent(props: Props) {
     const isMountedRef = useRef(true);
     const canProceedRef = useRef<boolean | undefined>(props.canProceed);
     const onBlockedRef = useRef<(() => void) | undefined>(props.onBlocked);
+    const attemptRef = useRef(0);
+    const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+    const [errorCopy, setErrorCopy] = useState("");
     const buttonId = `paypal-button-container-${props.plan.id}`;
 
     useEffect(() => {
@@ -64,7 +67,7 @@ export default function PayPalComponent(props: Props) {
         tagline: false,
     };
 
-    function render(options: PayPalButtonsComponentOptions) {
+    function render(options: PayPalButtonsComponentOptions, attemptId: number) {
         if (!isMountedRef.current) return;
         const container = document.getElementById(buttonId);
         if (!container || !container.isConnected) return;
@@ -73,21 +76,43 @@ export default function PayPalComponent(props: Props) {
             container.replaceChildren();
             const buttons = window.paypal.Buttons(options);
             buttonsRef.current = buttons;
-            buttons.render(`#${buttonId}`).catch((err: any) => {
+            buttons.render(`#${buttonId}`).then(() => {
                 if (!isMountedRef.current) return;
+                if (attemptId !== attemptRef.current) return;
+                setStatus("ready");
+                setErrorCopy("");
+            }).catch((err: any) => {
+                if (!isMountedRef.current) return;
+                if (attemptId !== attemptRef.current) return;
                 const isContainerRemoved = /container.*removed|removed from DOM/i.test(String(err?.message ?? ""));
                 if (isContainerRemoved) return;
                 if (import.meta.env.DEV) {
                     console.warn("[PAYPAL] Failed to render buttons.");
                 }
+                setStatus("error");
+                setErrorCopy("No pudimos cargar PayPal. Intenta de nuevo o elige otro método.");
             });
+            return;
         }
+        if (attemptId !== attemptRef.current) return;
+        setStatus("error");
+        setErrorCopy("No pudimos cargar PayPal. Intenta de nuevo o elige otro método.");
     }
 
     function loadAndRender(transactionType = props.type) {
-        const clientId = process.env.REACT_APP_ENVIRONMENT === 'development'
-            ? process.env.REACT_APP_PAYPAL_CLIENT_TEST_ID!
-            : process.env.REACT_APP_PAYPAL_CLIENT_ID!;
+        const attemptId = ++attemptRef.current;
+        setStatus("loading");
+        setErrorCopy("");
+
+        const isDevEnv = process.env.REACT_APP_ENVIRONMENT === "development";
+        const resolvedClientId = isDevEnv ? process.env.REACT_APP_PAYPAL_CLIENT_TEST_ID : process.env.REACT_APP_PAYPAL_CLIENT_ID;
+        const clientId = typeof resolvedClientId === "string" && resolvedClientId.trim() ? resolvedClientId.trim() : null;
+
+        if (!clientId) {
+            setStatus("error");
+            setErrorCopy("PayPal no está disponible en este momento. Elige otro método de pago.");
+            return;
+        }
 
         async function onClickButton(data: any, actions: OnClickActions) {
             if (canProceedRef.current === false) {
@@ -194,7 +219,16 @@ export default function PayPalComponent(props: Props) {
                         fundingSource: "paypal",
                         onApprove: onApproveOrder,
                         createOrder,
-                    });
+                    }, attemptId);
+                })
+                .catch(() => {
+                    if (!isMountedRef.current) return;
+                    if (attemptId !== attemptRef.current) return;
+                    if (import.meta.env.DEV) {
+                        console.warn("[PAYPAL] Failed to load PayPal SDK.");
+                    }
+                    setStatus("error");
+                    setErrorCopy("No pudimos cargar PayPal. Revisa tu conexión e intenta de nuevo.");
                 });
         } else {
             loadScript({
@@ -212,12 +246,47 @@ export default function PayPalComponent(props: Props) {
                         onApprove: onApproveSubsciption,
                         createSubscription,
                         onClick: onClickButton,
-                    });
+                    }, attemptId);
+                })
+                .catch(() => {
+                    if (!isMountedRef.current) return;
+                    if (attemptId !== attemptRef.current) return;
+                    if (import.meta.env.DEV) {
+                        console.warn("[PAYPAL] Failed to load PayPal SDK.");
+                    }
+                    setStatus("error");
+                    setErrorCopy("No pudimos cargar PayPal. Revisa tu conexión e intenta de nuevo.");
                 });
         }
     }
 
+    const showFallback = status !== "ready";
+    const fallbackText =
+        status === "loading"
+            ? "Cargando PayPal..."
+            : errorCopy || "No pudimos cargar PayPal. Intenta de nuevo o elige otro método.";
+
     return (
-        <div className='paypal-container' id={`${buttonId}`}></div>
+        <div className="paypal-root" aria-busy={status === "loading"} aria-live="polite">
+            <div className='paypal-container' id={`${buttonId}`}></div>
+            {showFallback && (
+                <div
+                    className={`paypal-fallback paypal-fallback--${status}`}
+                    role="status"
+                    aria-label={status === "loading" ? "Cargando PayPal" : "Error con PayPal"}
+                >
+                    <span className="paypal-fallback__text">{fallbackText}</span>
+                    {status === "error" && (
+                        <button
+                            type="button"
+                            className="paypal-fallback__retry"
+                            onClick={() => loadAndRender()}
+                        >
+                            Reintentar
+                        </button>
+                    )}
+                </div>
+            )}
+        </div>
     );
 }
