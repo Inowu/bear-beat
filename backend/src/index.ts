@@ -106,8 +106,10 @@ async function main() {
     app.use(
       cors({
         origin(origin, callback) {
+          // If there is no Origin header, treat as a non-browser/server-to-server request.
+          // Do not emit wildcard CORS headers for these requests.
           if (!origin) {
-            callback(null, true);
+            callback(null, false);
             return;
           }
           if (allowedOrigins.includes(origin)) {
