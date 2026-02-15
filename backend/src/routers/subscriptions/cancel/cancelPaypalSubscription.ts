@@ -41,9 +41,7 @@ export const cancelPaypalSubscription = async ({
   });
 
   if (!order) {
-    log.error(
-      `[PAYPAL:CANCEL] Order ${descargasUser.order_id} not found. User: ${user.id}`,
-    );
+    log.error('[PAYPAL:CANCEL] Order not found for active subscription');
 
     throw new TRPCError({
       code: 'BAD_REQUEST',
@@ -66,13 +64,13 @@ export const cancelPaypalSubscription = async ({
       },
     );
 
-    log.info(`[PAYPAL:CANCEL] Cancelled subscription for user ${user.id}`);
+    log.info('[PAYPAL:CANCEL] Cancelled subscription');
 
     return { message: 'Tu suscripción ha sido cancelada con correctamente.' };
   } catch (e) {
-    log.error(
-      `[PAYPAL:CANCEL] An error happened while creating subscription with paypal ${e}`,
-    );
+    log.error('[PAYPAL:CANCEL] Failed to cancel subscription', {
+      errorType: e instanceof Error ? e.name : typeof e,
+    });
 
     return { error: 'Ocurrió un error al cancelar la suscripción.' };
   }

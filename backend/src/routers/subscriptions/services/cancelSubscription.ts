@@ -48,7 +48,7 @@ export const cancelSubscription = async ({
 
   if (!download) {
     log.info(
-      `[CANCEL_SUB] No active subscription for user ${user.id}, no action taken to cancel subscription`,
+      '[CANCEL_SUB] No active subscription; no action taken',
     );
 
     return;
@@ -62,7 +62,7 @@ export const cancelSubscription = async ({
 
   if (!ftpUser) {
     log.info(
-      `[CANCEL_SUB] No ftp user found for user ${user.id}, no action taken to cancel subscription`,
+      '[CANCEL_SUB] No ftp user found; no action taken',
     );
     return;
   }
@@ -75,7 +75,7 @@ export const cancelSubscription = async ({
 
   if (!quotaTallies) {
     log.info(
-      `[CANCEL_SUB] No quota tallies found for user ${user.id}, no action taken to cancel subscription`,
+      '[CANCEL_SUB] No quota tallies found; no action taken',
     );
     return;
   }
@@ -88,7 +88,7 @@ export const cancelSubscription = async ({
 
   if (!planOrder) {
     log.error(
-      `[CANCEL_SUB] No order found for user ${user.id}, no action taken to cancel subscription`,
+      '[CANCEL_SUB] No order found; no action taken',
     );
     return;
   }
@@ -103,7 +103,7 @@ export const cancelSubscription = async ({
 
   if (plan) gb = Number(plan.gigas);
 
-  log.info(`[CANCEL_SUB] Cancelling subscription for user ${user.id}`);
+  log.info('[CANCEL_SUB] Cancelling subscription', { reason, service });
 
   if (reason === OrderStatus.EXPIRED || reason === OrderStatus.FAILED) {
     await prisma.$transaction([
