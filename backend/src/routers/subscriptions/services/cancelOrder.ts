@@ -14,7 +14,7 @@ export const cancelOrder = async ({
   reason?: OrderStatus;
 }) => {
   if (!orderId) {
-    log.warn('No orderId found on cancelOrder handler');
+    log.warn('[CANCEL_ORDER] Called without orderId');
     return;
   }
 
@@ -25,7 +25,7 @@ export const cancelOrder = async ({
   });
 
   if (!order) {
-    log.warn(`No order found in cancelOrder handler for id ${orderId}`);
+    log.warn('[CANCEL_ORDER] Order not found');
     return;
   }
 

@@ -34,7 +34,7 @@ export const subscribe = async ({
   const orderId = Number.isFinite(orderIdRaw) && orderIdRaw > 0 ? orderIdRaw : 0;
 
   if (!plan) {
-    log.info(`[SUBSCRIPTION] Fetching order with id ${orderId}`);
+    log.info('[SUBSCRIPTION] Fetching order');
     const order = await prisma.orders.findFirstOrThrow({
       where: {
         id: orderId,
@@ -47,7 +47,7 @@ export const subscribe = async ({
     // }
 
     if (!order.plan_id) {
-      log.error(`[SUBSCRIPTION] This order did not have a plan id, ${orderId}`);
+      log.error('[SUBSCRIPTION] Order missing plan_id');
 
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
@@ -65,7 +65,7 @@ export const subscribe = async ({
 
   if (!dbPlan) {
     log.warn(
-      `[SUBSCRIPTION] Could not find plans with id ${plan?.id}, orderId ${orderId}. No action was taken`,
+      `[SUBSCRIPTION] Could not find plan with id ${plan?.id ?? 'unknown'}. No action was taken`,
     );
 
     return;
@@ -81,7 +81,7 @@ export const subscribe = async ({
 
   // Hasn't subscribed before
   if (!ftpUser) {
-    log.info(`[SUBSCRIPTION] Creating new subscription for user ${user.id}`);
+    log.info('[SUBSCRIPTION] Creating new subscription');
 
     try {
       const formattedUsername = user.username.toLowerCase().replace(/ /g, '.');
@@ -164,7 +164,7 @@ export const subscribe = async ({
       log.error(`Error while creating ftp user: ${e}`);
     }
   } else {
-    log.info(`[SUBSCRIPTION] Renovating subscription for user ${user.id}`);
+    log.info('[SUBSCRIPTION] Renovating subscription');
 
     try {
       const [existingTallies, existingLimits] = await Promise.all([
@@ -244,7 +244,7 @@ export const subscribe = async ({
         }),
       ]);
 
-      log.info(`[SUBSCRIPTION] Creating order for user ${user.id}`);
+      log.info('[SUBSCRIPTION] Creating renewal order');
 
       const createdOrder = await insertOrderOrUpdate(
         prisma,
@@ -265,7 +265,7 @@ export const subscribe = async ({
       });
       if (existingDescargasForPeriod) {
         log.info(
-          `[SUBSCRIPTION] Descargas already exists for user ${user.id} for period ending ${expirationDate.toISOString()}, skipping insert`,
+          `[SUBSCRIPTION] Descargas already exists for period ending ${expirationDate.toISOString()}, skipping insert`,
         );
       } else {
         await insertInDescargas({
@@ -370,7 +370,7 @@ const insertFtpQuotas = ({
   const gbBytes = gbToBytes(quotaGb);
 
   log.info(
-    `[SUBSCRIPTION] Inserting ftp quotas for user ${user.id}, bytes_out_avail: ${gbBytes}`,
+    `[SUBSCRIPTION] Inserting ftp quotas, bytes_out_avail: ${gbBytes}`,
   );
 
   const formattedUsername = user.username.toLowerCase().replace(/ /g, '.');
