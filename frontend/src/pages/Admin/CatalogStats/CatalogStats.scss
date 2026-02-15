@@ -1,5 +1,5 @@
-@import "src/styles/mixin.scss";
-@import "../../../styles/landing-design.scss";
+@use "src/styles/mixin" as *;
+@use "src/styles/landing-design" as *;
 
 $text-primary: var(--ad-title);
 $text-muted: var(--ad-text-muted);

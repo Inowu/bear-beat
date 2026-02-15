@@ -1,4 +1,4 @@
-@import "src/styles/mixin.scss";
+@use "src/styles/mixin" as *;
 @import "flag-icons/css/flag-icons.min.css";
 
 .auth-login-atmosphere {

@@ -1,5 +1,4 @@
-@import "src/styles/mixin.scss";
-@import "src/styles/_variables-theme.scss";
+@use "src/styles/mixin" as *;
 
 .plans2026 {
   min-height: 100vh;

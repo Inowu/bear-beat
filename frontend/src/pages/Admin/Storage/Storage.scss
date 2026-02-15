@@ -1,6 +1,5 @@
-@import "src/styles/mixin.scss";
-@import "src/styles/variables-theme.scss";
-@import "../../../styles/landing-design.scss";
+@use "src/styles/mixin" as *;
+@use "src/styles/landing-design" as *;
 
 // Mobile-first — tipografía y colores como Home (light/dark con --app-*)
 .storage {

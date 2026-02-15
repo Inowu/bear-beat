@@ -1,18 +1,9 @@
-// Bootstrap Lite: keep only what react-bootstrap Modal needs (modal/backdrop/close/fade).
-// We intentionally avoid pulling the full Bootstrap bundle (grid/utilities/forms/etc) to reduce CSS weight.
-@import "bootstrap/scss/functions";
-@import "bootstrap/scss/variables";
-@import "bootstrap/scss/variables-dark";
-@import "bootstrap/scss/maps";
-@import "bootstrap/scss/mixins";
-@import "bootstrap/scss/root";
-@import "bootstrap/scss/transitions";
-@import "bootstrap/scss/close";
-@import "bootstrap/scss/modal";
-@import "./_variables-theme.scss";
-@import "./mixin.scss";
-@import "./_mobile-app.scss";
-@import "./_public-shell.scss";
+// Bootstrap Lite: we only need modal/backdrop/close/fade for react-bootstrap <Modal />.
+// We load it as plain CSS (src/styles/bootstrap-modal-lite.css) to avoid Sass `@import`
+// deprecation warnings and keep the CSS footprint small.
+
+@use "./_mobile-app";
+@use "./_public-shell";
 @font-face {
   font-family: "Bear Font2";
   src: url("../assets/fonts/Arkhip_font.otf");
