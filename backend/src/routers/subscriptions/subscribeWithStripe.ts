@@ -46,7 +46,7 @@ export const subscribeWithStripe = shieldedProcedure
 
     const stripeCustomer = await getStripeCustomer(prisma, user);
 
-    log.info(`[STRIPE_SUBSCRIBE] User ${user.id} is subscribing to plan ${planId}. Stripe customer: ${stripeCustomer}`)
+    log.info('[STRIPE_SUBSCRIBE] Starting subscription', { planId });
 
     await hasActiveSubscription({
       user,
@@ -110,10 +110,9 @@ export const subscribeWithStripe = shieldedProcedure
         });
       } catch (error) {
         log.error('[STRIPE_SUBSCRIBE] Missing Stripe price and auto-setup failed', {
-          userId: user.id,
           planId: plan.id,
           priceKey,
-          error: error instanceof Error ? error.message : error,
+          errorType: error instanceof Error ? error.name : typeof error,
         });
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
@@ -146,23 +145,27 @@ export const subscribeWithStripe = shieldedProcedure
       const trialEnd = migrationUser?.remainingDays ? parseInt((addDays(new Date(), migrationUser.remainingDays).getTime() / 1000).toFixed(0)) : undefined;
 
       if (migrationUser) {
-        log.info(`[STRIPE_SUBSCRIBE:MIGRATION] User ${user.id} has a migration subscription, remaining days: ${migrationUser.remainingDays}. Adding trial to subscription: ${trialEnd}`);
+        log.info('[STRIPE_SUBSCRIBE:MIGRATION] Applying migration trial to subscription', {
+          remainingDays: migrationUser.remainingDays,
+        });
       }
 
       if (paymentMethod) {
-        log.info(`[STRIPE_SUBSCRIBE:MIGRATION] Payment method provided, attaching to customer: ${paymentMethod} - ${customerId}`);
+        log.info('[STRIPE_SUBSCRIBE:MIGRATION] Attaching payment method to customer');
         try {
           await stripeInstance.paymentMethods.attach(paymentMethod, {
             customer: customerId,
           });
         } catch (e) {
-          log.error(`[STRIPE_SUBSCRIBE:MIGRATION] Error attaching payment method to customer: ${e}`);
+          log.error('[STRIPE_SUBSCRIBE:MIGRATION] Failed to attach payment method to customer', {
+            errorType: e instanceof Error ? e.name : typeof e,
+          });
           throw new TRPCError({
             code: 'INTERNAL_SERVER_ERROR',
             message: 'Ocurrió un error al crear el método de pago',
           });
         }
-        log.info(`[STRIPE_SUBSCRIBE:MIGRATION] Payment method attached to customer: ${paymentMethod}. Updating customer with default payment method`);
+        log.info('[STRIPE_SUBSCRIBE:MIGRATION] Payment method attached; updating default payment method');
         await stripeInstance.customers.update(customerId, {
           invoice_settings: {
             default_payment_method: paymentMethod,
@@ -205,10 +208,7 @@ export const subscribeWithStripe = shieldedProcedure
         // Never break the flow due to an auto-offer coupon mismatch in Stripe.
         if (resolvedCoupon.source === 'offer' && resolvedCoupon.couponCode && isStripeCouponError(err)) {
           log.warn('[STRIPE_SUBSCRIBE] Offer coupon rejected by Stripe, retrying without coupon', {
-            userId: user.id,
-            orderId: order.id,
-            coupon: resolvedCoupon.couponCode,
-            error: err instanceof Error ? err.message : err,
+            errorType: err instanceof Error ? err.name : typeof err,
           });
           droppedOfferCoupon = true;
           subscription = await createSubscription(null);
@@ -242,10 +242,8 @@ export const subscribeWithStripe = shieldedProcedure
             });
           }
         } catch (e) {
-          log.debug('[STRIPE_SUBSCRIBE] Failed to persist cuponsUsed', {
-            userId: user.id,
-            coupon: resolvedCoupon.couponCode,
-            error: e instanceof Error ? e.message : e,
+          log.debug('[STRIPE_SUBSCRIBE] Failed to persist coupon usage (non-blocking)', {
+            errorType: e instanceof Error ? e.name : typeof e,
           });
         }
       }
@@ -291,7 +289,7 @@ export const subscribeWithStripe = shieldedProcedure
       return await runStripeSubscribe(stripeCustomer);
     } catch (e) {
       if (isNoSuchCustomerError(e)) {
-        log.warn(`[STRIPE] No such customer detected, clearing stripe_cusid for user ${user.id} and retrying`);
+        log.warn('[STRIPE] No such customer detected, clearing stripe_cusid and retrying');
         await prisma.users.update({
           where: { id: user.id },
           data: { stripe_cusid: null },
@@ -300,14 +298,18 @@ export const subscribeWithStripe = shieldedProcedure
         try {
           return await runStripeSubscribe(stripeCustomerRetry);
         } catch (retryErr) {
-          log.error(`[STRIPE] Retry failed: ${retryErr}`);
+          log.error('[STRIPE] Subscribe retry failed', {
+            errorType: retryErr instanceof Error ? retryErr.name : typeof retryErr,
+          });
           throw new TRPCError({
             code: 'INTERNAL_SERVER_ERROR',
             message: 'Ocurrió un error al crear la suscripción',
           });
         }
       }
-      log.error(`[STRIPE] Error creating subscription: ${e}`);
+      log.error('[STRIPE] Error creating subscription', {
+        errorType: e instanceof Error ? e.name : typeof e,
+      });
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
         message: 'Ocurrió un error al crear la suscripción',
