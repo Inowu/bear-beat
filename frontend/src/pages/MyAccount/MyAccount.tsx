@@ -501,6 +501,9 @@ function MyAccount() {
               <p className="ma-storage-amount">
                 {formatInt(availableGb)} GB/mes · usados: {formatInt(usedGb)} GB este ciclo
               </p>
+              <p className="ma-storage-amount">
+                La cuota mensual es lo que puedes descargar cada ciclo. El catálogo total es lo disponible para elegir.
+              </p>
               {currentUser?.hasActiveSubscription && (
                 <>
                   <p className="ma-storage-amount">
