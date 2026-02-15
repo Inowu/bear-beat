@@ -1,5 +1,5 @@
 // Login: tarjeta central, atmósfera con glow (dark), contraste dual theme
-@import "src/styles/mixin.scss";
+@use "src/styles/mixin" as *;
 
 .auth-login-atmosphere {
   flex: 1;

@@ -2,16 +2,16 @@
 // Admin móvil: tablas como tarjetas + botones y headers táctiles
 // Aplica a max-width 768px (tablet y móvil)
 // ============================================================
-@import "src/styles/mixin.scss";
-@import "src/styles/_variables-theme.scss";
-@import "src/styles/landing-design.scss";
+@use "src/styles/mixin" as *;
+@use "src/styles/landing-design" as *;
 
 $admin-mobile-card-padding: 18px;
 $admin-mobile-gap: 14px;
 $admin-mobile-touch: 48px;
 $admin-mobile-radius: 14px;
 
-@include respond-to(tablet) {
+@mixin apply {
+  @include respond-to(tablet) {
   // ----- Contenedores de página admin (header + filtros) -----
   .admin-contain,
   .ordens-contain,
@@ -298,5 +298,6 @@ $admin-mobile-radius: 14px;
         min-height: 48px;
       }
     }
+  }
   }
 }

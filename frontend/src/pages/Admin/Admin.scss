@@ -1,5 +1,4 @@
-@import "src/styles/mixin.scss";
-@import "src/styles/_variables-theme.scss";
+@use "src/styles/mixin" as *;
 
 .admin-users-wrap {
   min-height: calc(100vh - 88px);

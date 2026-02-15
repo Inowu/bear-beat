@@ -6,7 +6,7 @@
 // - Contenedores tipo “pantalla” (app-screen)
 // - Feedback táctil (:active)
 // ============================================================
-@import "src/styles/mixin.scss";
+@use "src/styles/mixin" as *;
 
 // ---------- Contenedores tipo pantalla (todas las secciones) ----------
 // Misma sensación que una pantalla nativa: ancho controlado, sin scroll horizontal, relleno mínimo

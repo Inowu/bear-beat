@@ -1,5 +1,4 @@
-@import "../../../styles/_variables-theme.scss";
-@import "../../../styles/landing-design.scss";
+@use "src/styles/landing-design" as *;
 
 .container-verify-phone-modal .modal-content {
   flex-direction: row;

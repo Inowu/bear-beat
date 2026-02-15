@@ -1,4 +1,4 @@
-@import "src/styles/mixin.scss";
+@use "src/styles/mixin" as *;
 
 .instructions2026 {
   position: relative;

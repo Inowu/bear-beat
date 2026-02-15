@@ -1,6 +1,6 @@
-@import "src/styles/mixin.scss";
-@import "src/styles/variables-theme.scss";
-@import "../../../styles/landing-design.scss";
+@use "src/styles/mixin" as *;
+@use "src/styles/landing-design" as *;
+@use "src/styles/admin-tables-mobile" as adminTablesMobile;
 
 // Mobile-first — tipografía como Home (light/dark)
 .coupons-contain {
@@ -111,7 +111,7 @@
   }
 }
 
-@import "src/styles/admin-tables-mobile";
+@include adminTablesMobile.apply;
 
 @include respond-from(tablet) {
   .coupons-contain {

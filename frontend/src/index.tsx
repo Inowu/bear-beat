@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
+import "./styles/bootstrap-modal-lite.css";
 import "./styles/index.scss";
 import reportWebVitals from "./reportWebVitals";
 import { ErrorFallback } from "./components/ErrorFallback/ErrorFallback";
