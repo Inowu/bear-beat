@@ -331,7 +331,13 @@ function Plans() {
                 </div>
 
                 <div
-                  className={`plans2026__currency-switch is-${selectedCurrency}`}
+                  className={[
+                    "bb-segmented",
+                    "bb-segmented--switch",
+                    selectedCurrency === "usd" ? "is-usd" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
                   role="radiogroup"
                   aria-label="Moneda"
                 >
@@ -339,7 +345,12 @@ function Plans() {
                     type="button"
                     role="radio"
                     aria-checked={selectedCurrency === "mxn"}
-                    className="plans2026__currency-btn"
+                    className={[
+                      "bb-segmented__btn",
+                      selectedCurrency === "mxn" ? "is-active" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
                     onClick={() => selectCurrency("mxn")}
                     disabled={!plansByCurrency.mxn}
                   >
@@ -349,7 +360,12 @@ function Plans() {
                     type="button"
                     role="radio"
                     aria-checked={selectedCurrency === "usd"}
-                    className="plans2026__currency-btn"
+                    className={[
+                      "bb-segmented__btn",
+                      selectedCurrency === "usd" ? "is-active" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
                     onClick={() => selectCurrency("usd")}
                     disabled={!plansByCurrency.usd}
                   >
