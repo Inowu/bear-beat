@@ -59,9 +59,7 @@ export const downloadDirEndpoint = async (req: Request, res: Response) => {
   });
 
   if (!job) {
-    log.error(
-      `[DOWNLOAD] Job not found for user ${user.id} and jobId ${jobId}`,
-    );
+    log.error(`[DOWNLOAD] Job not found for jobId ${jobId}`);
     return res
       .status(404)
       .send({ error: 'Ocurrió un error al descargar la carpeta' });
@@ -75,18 +73,14 @@ export const downloadDirEndpoint = async (req: Request, res: Response) => {
   });
 
   if (!download) {
-    log.error(
-      `[DOWNLOAD] Download not found for user ${user.id} and jobId ${jobId}`,
-    );
+    log.error(`[DOWNLOAD] Download not found for jobId ${jobId}`);
     return res
       .status(404)
       .send({ error: 'Ocurrió un error al descargar la carpeta' });
   }
 
   if (download.expirationDate && new Date() >= download.expirationDate) {
-    log.error(
-      `[DOWNLOAD] Download expired for user ${user.id} and jobId ${jobId}`,
-    );
+    log.error(`[DOWNLOAD] Download expired for jobId ${jobId}`);
     return res.status(400).send({ error: 'Este url ha expirado' });
   }
 
@@ -108,14 +102,14 @@ export const downloadDirEndpoint = async (req: Request, res: Response) => {
   if (expectedDirName) {
     if (!isSafeFileName(expectedDirName)) {
       log.error(
-        `[DOWNLOAD] Invalid dirName in downloadUrl for user ${user.id} and jobId ${jobId}`,
+        `[DOWNLOAD] Invalid dirName in downloadUrl for jobId ${jobId}`,
       );
       return res.status(404).send({ error: 'Ocurrió un error al descargar la carpeta' });
     }
 
     if (expectedJobId && expectedJobId !== jobId) {
       log.error(
-        `[DOWNLOAD] jobId mismatch for user ${user.id}: url=${expectedJobId} req=${jobId}`,
+        `[DOWNLOAD] jobId mismatch: url=${expectedJobId} req=${jobId}`,
       );
       return res.status(404).send({ error: 'Ocurrió un error al descargar la carpeta' });
     }
@@ -123,7 +117,7 @@ export const downloadDirEndpoint = async (req: Request, res: Response) => {
     if (providedDirName !== expectedDirName) {
       // Prevent IDOR: the requested file name must match the server-generated download URL.
       log.warn(
-        `[DOWNLOAD] dirName mismatch for user ${user.id}: expected=${expectedDirName} got=${providedDirName}`,
+        `[DOWNLOAD] dirName mismatch: expected=${expectedDirName} got=${providedDirName}`,
       );
       return res.status(404).send({ error: 'Ocurrió un error al descargar la carpeta' });
     }
@@ -132,7 +126,7 @@ export const downloadDirEndpoint = async (req: Request, res: Response) => {
     // downloading only the zip that matches the worker naming scheme for this user+job.
     if (!providedDirName.endsWith(expectedSuffix)) {
       log.error(
-        `[DOWNLOAD] Missing downloadUrl and dirName does not match expected suffix for user ${user.id} and jobId ${jobId}`,
+        `[DOWNLOAD] Missing downloadUrl and dirName does not match expected suffix for jobId ${jobId}`,
       );
       return res.status(404).send({ error: 'Ocurrió un error al descargar la carpeta' });
     }
@@ -151,12 +145,12 @@ export const downloadDirEndpoint = async (req: Request, res: Response) => {
   const dirExists = await fileService.exists(fullPath);
   if (!dirExists) {
     log.error(
-      `[DOWNLOAD] Directory with path ${fullPath} not found for user ${user.id} and jobId ${jobId}`,
+      `[DOWNLOAD] Directory not found for jobId ${jobId}`,
     );
     return res.status(404).send({ error: 'Esa carpeta no existe' });
   }
 
-  log.info(`[DOWNLOAD] Downloading directory ${fullPath} for user ${user.id}`);
+  log.info(`[DOWNLOAD] Downloading directory for jobId ${jobId}`);
 
   try {
     // Can fail with weird characters

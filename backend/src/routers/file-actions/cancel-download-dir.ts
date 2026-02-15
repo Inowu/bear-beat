@@ -73,9 +73,7 @@ export const cancelDirDownload = shieldedProcedure
       });
     }
 
-    log.info(
-      `[DOWNLOAD:DIR:CANCEL] Updating quota tallies for user ${user.id}`,
-    );
+    log.info('[DOWNLOAD:DIR:CANCEL] Updating quota tallies');
     try {
       await prisma.ftpquotatallies.update({
         where: {
@@ -89,7 +87,7 @@ export const cancelDirDownload = shieldedProcedure
       });
     } catch (e: any) {
       log.error(
-        `[DOWNLOAD:DIR:CANCEL] Error while updating quota tallies for user ${user.id}: ${e.message}`,
+        `[DOWNLOAD:DIR:CANCEL] Error while updating quota tallies: ${e.message}`,
       );
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
