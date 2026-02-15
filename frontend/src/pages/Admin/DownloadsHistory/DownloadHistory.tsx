@@ -54,8 +54,10 @@ export const DownloadHistory = () => {
       });
       setHistory(res.data);
       setTotalHistory(res.count);
-    } catch (error) {
-      console.log(error);
+    } catch {
+      if (import.meta.env.DEV) {
+        console.warn("[ADMIN][DOWNLOAD_HISTORY] Failed to load download history.");
+      }
     } finally {
       setLoader(false);
       setTotalLoader(false);
@@ -69,8 +71,10 @@ export const DownloadHistory = () => {
         setVideoURL(c.value);
         setVideoId(c.id);
       }
-    } catch (e) {
-      console.error(e);
+    } catch {
+      if (import.meta.env.DEV) {
+        console.warn("[ADMIN][DOWNLOAD_HISTORY] Failed to load config videoURL.");
+      }
     }
   };
 

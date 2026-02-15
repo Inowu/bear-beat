@@ -58,16 +58,24 @@ export function HistoryModal(props: ICondition) {
         }
         const [tempHistory, errorHistory] = await of(trpc.downloadHistory.getDownloadHistory.query(body));
         if (!tempHistory || errorHistory) {
-            console.error(errorHistory);
+            if (import.meta.env.DEV) {
+                console.warn("[ADMIN][HISTORY_MODAL] Failed to load download history.");
+            }
             setErrorMessage(errorHistory?.message!);
             setShowError(true);
+            setLoader(false);
+            setTotalLoader(false);
             return;
         }
 
         const [tempGigas, errorGigas] = await of(trpc.downloadHistory.getRemainingGigas.query({ userId: user.id })); if (!tempGigas || errorGigas) {
-            console.error(errorGigas);
+            if (import.meta.env.DEV) {
+                console.warn("[ADMIN][HISTORY_MODAL] Failed to load remaining gigas.");
+            }
             setErrorMessage(errorGigas?.message!);
             setShowError(true);
+            setLoader(false);
+            setTotalLoader(false);
             return;
         }
 

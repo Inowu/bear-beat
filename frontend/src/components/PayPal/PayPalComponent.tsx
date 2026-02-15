@@ -78,7 +78,7 @@ export default function PayPalComponent(props: Props) {
                 const isContainerRemoved = /container.*removed|removed from DOM/i.test(String(err?.message ?? ""));
                 if (isContainerRemoved) return;
                 if (import.meta.env.DEV) {
-                    console.warn("Warning - Caught an error when attempting to render component", err);
+                    console.warn("[PAYPAL] Failed to render buttons.");
                 }
             });
         }
@@ -154,7 +154,7 @@ export default function PayPalComponent(props: Props) {
                 return sub;
             } catch (e: any) {
                 if (import.meta.env.DEV) {
-                    console.warn("[PAYPAL] createSubscription failed", e?.message ?? e);
+                    console.warn("[PAYPAL] createSubscription failed.");
                 }
             }
             return "";

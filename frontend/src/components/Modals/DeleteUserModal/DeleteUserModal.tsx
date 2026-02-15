@@ -27,8 +27,7 @@ export function DeleteUserModal (props: ICondition)  {
     const removeUsersInactive =async () => {
         setLoader(true);
         try{
-            const usr = await trpc.users.removeInactiveUsers.mutate();
-            console.log(usr);
+            await trpc.users.removeInactiveUsers.mutate();
             onHide();
             setLoader(false);
         }catch(error: any){
