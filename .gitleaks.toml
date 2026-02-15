@@ -1,0 +1,7 @@
+title = "bear-beat gitleaks config"
+
+[allowlist]
+description = "Ignore generated audit artifacts with high-entropy payloads (base64, large JSON)."
+paths = [
+  '''docs/audit/lighthouse/.*''',
+]

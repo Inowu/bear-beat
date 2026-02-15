@@ -1,0 +1,29 @@
+name: Secret Scan
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      # Important: we intentionally scan the *working tree only* (no git history),
+      # since the repo has legacy history findings that require rotation/rewrite
+      # work and would otherwise block every PR.
+      - name: gitleaks (no-git)
+        uses: docker://zricethezav/gitleaks:latest
+        with:
+          args: >-
+            detect
+            --no-git
+            --redact
+            --verbose
+            --source .

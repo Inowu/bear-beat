@@ -160,8 +160,8 @@ ensure_env_default "PUBLIC_API_URL" "https://thebearbeatapi.lat"
 
 log "Optionally injecting AWS SES credentials from deploy environment..."
 # Usage (avoid printing secrets):
-#   DEPLOY_AWS_ACCESS_KEY_ID="AKIA..." \\
-#   DEPLOY_AWS_SECRET_ACCESS_KEY="..." \\
+#   DEPLOY_AWS_ACCESS_KEY_ID="AWS_ACCESS_KEY_ID_HERE" \\
+#   DEPLOY_AWS_SECRET_ACCESS_KEY="AWS_SECRET_ACCESS_KEY_HERE" \\
 #   ./deploy.sh
 if [ -n "${DEPLOY_AWS_ACCESS_KEY_ID:-}" ]; then
   upsert_env "AWS_ACCESS_KEY_ID" "${DEPLOY_AWS_ACCESS_KEY_ID}"
@@ -172,8 +172,8 @@ fi
 
 log "Optionally injecting Stripe OXXO secrets from deploy environment..."
 # Usage (avoid printing secrets):
-#   DEPLOY_STRIPE_OXXO_KEY="sk_live_..." \\
-#   DEPLOY_STRIPE_OXXO_WH_PI_SECRET="whsec_..." \\
+#   DEPLOY_STRIPE_OXXO_KEY="STRIPE_LIVE_SECRET_KEY_HERE" \\
+#   DEPLOY_STRIPE_OXXO_WH_PI_SECRET="STRIPE_WEBHOOK_SECRET_HERE" \\
 #   ./deploy.sh
 if [ -n "${DEPLOY_STRIPE_OXXO_KEY:-}" ]; then
   upsert_env "STRIPE_OXXO_KEY" "${DEPLOY_STRIPE_OXXO_KEY}"
