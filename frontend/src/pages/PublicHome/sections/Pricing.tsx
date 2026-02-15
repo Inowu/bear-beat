@@ -11,6 +11,8 @@ export type TrialSummary = {
   gb: number;
 };
 
+export type PricingStatus = "loading" | "loaded" | "error";
+
 export type PricingPlan = {
   currency: "mxn" | "usd";
   name: string;
@@ -49,6 +51,7 @@ function getAltPaymentLabelForPlan(plan: PricingPlan | null): string {
 
 export default function Pricing(props: {
   plans: { mxn?: PricingPlan | null; usd?: PricingPlan | null };
+  status: PricingStatus;
   defaultCurrency: "mxn" | "usd";
   numberLocale: string;
   catalogTBLabel: string;
@@ -59,6 +62,7 @@ export default function Pricing(props: {
 }) {
   const {
     plans,
+    status,
     defaultCurrency,
     numberLocale,
     catalogTBLabel,
@@ -70,6 +74,8 @@ export default function Pricing(props: {
 
   const hasMxn = Boolean(plans.mxn);
   const hasUsd = Boolean(plans.usd);
+  const isLoading = status === "loading" && !hasMxn && !hasUsd;
+  const isError = status === "error" && !hasMxn && !hasUsd;
   const initialCurrency: "mxn" | "usd" = useMemo(() => {
     if (defaultCurrency === "mxn" && hasMxn) return "mxn";
     if (defaultCurrency === "usd" && hasUsd) return "usd";
@@ -133,6 +139,49 @@ export default function Pricing(props: {
         )}
 
         <div className="pricing__panels" aria-label="Plan">
+          {isLoading && (
+            <div
+              className="pricing__card pricing__card--skeleton"
+              aria-label="Cargando precio"
+              role="status"
+              aria-live="polite"
+              aria-busy="true"
+            >
+              <p className="pricing__skeletonStatus">Cargando precio…</p>
+
+              <div className="pricing__card-head" aria-hidden>
+                <div className="pricing__plan">
+                  <span className="pricing__sk pricing__sk--pill" />
+                  <span className="pricing__sk pricing__sk--title" />
+                </div>
+                <div className="pricing__price pricing__price-panel">
+                  <span className="pricing__sk pricing__sk--amount" />
+                  <span className="pricing__sk pricing__sk--per" />
+                </div>
+              </div>
+
+              <ul className="pricing__includes pricing__includes--skeleton" aria-hidden>
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <li key={i}>
+                    <span className="pricing__sk pricing__sk--icon" />
+                    <span className="pricing__sk pricing__sk--line" />
+                  </li>
+                ))}
+              </ul>
+
+              <div className="pricing__cta" aria-hidden>
+                <span className="pricing__sk pricing__sk--cta" />
+              </div>
+            </div>
+          )}
+
+          {isError && (
+            <div className="pricing__card pricing__card--error" role="status" aria-live="polite">
+              <p className="pricing__errorTitle">No pudimos cargar el precio.</p>
+              <p className="pricing__errorText">Recarga la página o intenta en unos minutos.</p>
+            </div>
+          )}
+
           {hasMxn && mxnPlan && (
             <div id={mxnPanelId} role="tabpanel" aria-labelledby={mxnTabId} hidden={currency !== "mxn"}>
               <div className="pricing__card">

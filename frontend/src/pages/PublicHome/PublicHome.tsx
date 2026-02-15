@@ -109,6 +109,7 @@ export default function PublicHome() {
     mxn: null,
     usd: null,
   });
+  const [pricingStatus, setPricingStatus] = useState<"loading" | "loaded" | "error">("loading");
   const [showDemo, setShowDemo] = useState(false);
 
   const pricingRef = useRef<HTMLDivElement | null>(null);
@@ -217,12 +218,13 @@ export default function PublicHome() {
     let cancelled = false;
 
     (async () => {
+      if (!cancelled) setPricingStatus("loading");
       try {
         const response: any = await trpc.plans.getPublicBestPlans.query();
         const mxn = response?.mxn ?? null;
         const usd = response?.usd ?? null;
         if (cancelled) return;
-        setPricingPlans({
+        const nextPlans = {
           mxn: mxn
             ? ({
                 currency: "mxn",
@@ -241,9 +243,14 @@ export default function PublicHome() {
                 hasPaypal: Boolean(usd?.hasPaypal),
               } satisfies PricingPlan)
             : null,
-        });
+        };
+        setPricingPlans(nextPlans);
+        setPricingStatus(nextPlans.mxn || nextPlans.usd ? "loaded" : "error");
       } catch {
-        if (!cancelled) setPricingPlans({ mxn: null, usd: null });
+        if (!cancelled) {
+          setPricingPlans({ mxn: null, usd: null });
+          setPricingStatus("error");
+        }
       }
     })();
 
@@ -754,6 +761,7 @@ export default function PublicHome() {
         <div ref={pricingRef}>
           <Pricing
             plans={pricingPlans}
+            status={pricingStatus}
             defaultCurrency={preferredCurrency}
             numberLocale={HOME_NUMBER_LOCALE}
             catalogTBLabel={totalTBLabel}
