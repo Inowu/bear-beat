@@ -85,7 +85,7 @@ Leyenda:
 | A-004 | Low | Mitigado (en main) | Quick win | SEO | `sitemap.xml` con `lastmod` antiguo (2025-02-03) |
 | A-005 | Medium | Mitigado (en main) | Proyecto | Frontend/Perf | Bundle principal grande y warnings de build (chunk > 500 kB, Sass `@import` deprecado) |
 | A-006 | High | Mitigado (en rama) | Proyecto | Dependencias | `npm audit` High mitigado forzando `conekta→axios` a `axios@1.13.5`; queda solo advisory **Low** en `pm2` (sin fix) |
-| A-010 | High | Abierto | Proyecto | AppSec/Secrets | `gitleaks` detecta **potenciales secretos** en historial git (requiere triage y posible rotación/rewrite) |
+| A-010 | High | Parcial (en rama) | Proyecto | AppSec/Secrets | `gitleaks` detecta **potenciales secretos** en historial git (se agregó guardrail en CI para evitar nuevos; historial sigue pendiente) |
 | A-007 | Medium | Mitigado (en main) | Quick win | Backend/API | CORS/headers en API prod parecen demasiado permisivos (`Access-Control-Allow-Origin: *`) y faltan headers de hardening |
 | A-008 | Medium | Mitigado (en main) | Quick win | QA/AppSec | Tests/smoke podían disparar integraciones externas si `.env` tenía secretos; se aisló carga de env y se deshabilitaron integraciones en `NODE_ENV=test` |
 | A-011 | Medium | Mitigado (en main) | Proyecto | Backend/DB | **Drift de esquema**: tabla `products` no existe en migraciones locales (riesgo de divergencia prod↔staging) |
@@ -210,6 +210,7 @@ Leyenda:
 - **Evidencia:**
   - `gitleaks detect` (historial completo) reporta **8 hallazgos**.  
     Evidencia redacted: `audit-artifacts/appsec-2026-02-13/secrets/gitleaks.summary.md` y `audit-artifacts/appsec-2026-02-13/secrets/gitleaks.report.json`.
+  - Guardrail (CI): `.github/workflows/gitleaks.yml` ejecuta `gitleaks detect --no-git --redact` para evitar nuevos secretos en el working tree (sin bloquear por hallazgos históricos).
 - **Cómo reproducir:**
   - En repo: ejecutar `gitleaks detect --redact` (no correr contra prod; solo en repo).
 - **Impacto:** si alguno de los tokens/keys fuese real, permitiría abuso de servicios externos (email/analytics/pagos) o exposición de datos.
