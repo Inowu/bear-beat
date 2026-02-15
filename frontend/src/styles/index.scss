@@ -1406,6 +1406,137 @@ html[data-theme="light"] .main-layout-main-container :where(.card, .panel, .modu
   }
 }
 
+/* ==========================================================================
+   Marketing primitives shared across public routes (Home/Planes/Instructions)
+   ========================================================================== */
+
+.home-h2 {
+  margin: 0 0 12px;
+  color: var(--ph-text-heading);
+  font-size: clamp(24px, 3.2vw, 34px);
+  letter-spacing: -0.014em;
+  line-height: 1.14;
+  font-weight: 700;
+  text-wrap: balance;
+}
+
+.home-sub {
+  margin: 0;
+  color: color-mix(in srgb, var(--ph-text-body) 88%, transparent);
+  font-size: clamp(16px, 1.05vw, 18px);
+  line-height: 1.58;
+  font-weight: 500;
+  letter-spacing: 0;
+  max-width: 68ch;
+}
+
+@media (max-width: 480px) {
+  .home-sub {
+    font-size: 15px;
+  }
+}
+
+.home-link {
+  color: var(--ph-accent);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.home-link:hover {
+  text-decoration: underline;
+}
+
+.home-link:focus-visible {
+  outline: 2px solid var(--app-focus-ring);
+  outline-offset: 2px;
+}
+
+.home-cta {
+  appearance: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 50px;
+  border-radius: 999px;
+  padding: 12px 18px;
+  text-decoration: none;
+  font-weight: 700;
+  letter-spacing: 0.004em;
+  transition: transform 140ms ease, box-shadow 180ms ease, background 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.home-cta svg {
+  flex: 0 0 auto;
+}
+
+.home-cta:active {
+  transform: translateY(1px);
+}
+
+.home-cta:focus-visible {
+  outline: 2px solid var(--app-focus-ring);
+  outline-offset: 2px;
+}
+
+.home-cta--primary {
+  background: var(--ph-btn-bg);
+  color: var(--ph-btn-text);
+  border-color: color-mix(in srgb, var(--ph-accent) 34%, transparent);
+  box-shadow:
+    0 14px 32px color-mix(in srgb, var(--ph-glow) 46%, transparent),
+    var(--ph-shadow);
+}
+
+.home-cta--primary:hover {
+  background: var(--ph-btn-hover-bg);
+  border-color: color-mix(in srgb, var(--ph-accent) 54%, transparent);
+  transform: translateY(-1px);
+  box-shadow:
+    0 16px 36px color-mix(in srgb, var(--ph-glow) 56%, transparent),
+    var(--ph-shadow-card);
+}
+
+.home-cta--secondary {
+  background: color-mix(in srgb, var(--ph-bg-card) 86%, transparent);
+  color: var(--ph-accent);
+  border: 1px solid color-mix(in srgb, var(--ph-accent) 34%, transparent);
+}
+
+.home-cta--secondary:hover {
+  background: color-mix(in srgb, var(--ph-accent) 11%, transparent);
+  border-color: color-mix(in srgb, var(--ph-accent) 48%, transparent);
+}
+
+html[data-theme="light"] .home-cta--secondary {
+  /* LIGHT: avoid translucent pills that look like "colors covering each other". */
+  background: color-mix(in srgb, #ffffff 96%, var(--ph-bg-soft));
+  border-color: color-mix(in srgb, var(--ph-border) 92%, transparent);
+  color: var(--ph-accent);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.06);
+}
+
+html[data-theme="light"] .home-cta--secondary:hover {
+  background: color-mix(in srgb, var(--ph-accent) 8%, #ffffff);
+  border-color: color-mix(in srgb, var(--ph-accent) 28%, var(--ph-border));
+}
+
+html[data-theme="light"] .home-sub {
+  color: color-mix(in srgb, var(--ph-text-body) 96%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-cta {
+    transition: none !important;
+  }
+
+  .home-cta:active {
+    transform: none !important;
+  }
+}
+
 .bb-badge {
   min-height: 26px;
   display: inline-flex;
