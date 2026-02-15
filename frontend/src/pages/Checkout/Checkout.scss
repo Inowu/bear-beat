@@ -518,6 +518,16 @@
   line-height: 1.5;
 }
 
+.checkout2026__limitsNote {
+  margin: 6px 0 0;
+  color: color-mix(in srgb, var(--ph-text-muted) 96%, transparent);
+  font-size: 1.06rem;
+  font-weight: 650;
+  line-height: 1.45;
+  text-align: center;
+  text-wrap: balance;
+}
+
 .checkout2026__methodSection {
   display: grid;
   gap: 10px;

@@ -134,18 +134,19 @@ function Plans() {
     const totalGB = hasLive ? toNumber(catalogSummary?.totalGB) : FALLBACK_CATALOG_TOTAL_GB;
     const totalTB = totalGB / 1000;
 
-    const planGigasCandidates = [
-      toNumber(plansByCurrency.mxn?.gigas),
-      toNumber(plansByCurrency.usd?.gigas),
-    ].filter((v) => Number.isFinite(v) && v > 0);
-    const quotaGb = planGigasCandidates.length ? Math.max(...planGigasCandidates) : 500;
+    const selectedCandidate =
+      selectedCurrency === "mxn" ? toNumber(plansByCurrency.mxn?.gigas) : toNumber(plansByCurrency.usd?.gigas);
+    const fallbackCandidate =
+      selectedCurrency === "mxn" ? toNumber(plansByCurrency.usd?.gigas) : toNumber(plansByCurrency.mxn?.gigas);
+
+    const quotaGb = selectedCandidate > 0 ? selectedCandidate : fallbackCandidate > 0 ? fallbackCandidate : 500;
 
     return {
       totalFiles,
       totalTB,
       quotaGb,
     };
-  }, [catalogSummary, plansByCurrency.mxn?.gigas, plansByCurrency.usd?.gigas]);
+  }, [catalogSummary, plansByCurrency.mxn?.gigas, plansByCurrency.usd?.gigas, selectedCurrency]);
 
   const price = useMemo(() => {
     if (!selectedPlan) return { amount: "—", currencyLabel: selectedCurrency.toUpperCase() };
@@ -312,13 +313,17 @@ function Plans() {
                 </article>
                 <article className="plans2026__bento-card">
                   <p className="plans2026__bento-value">{formatInt(stats.quotaGb)} GB/mes</p>
-                  <p className="plans2026__bento-label">Descargas rápidas</p>
+                  <p className="plans2026__bento-label">Cuota mensual</p>
                 </article>
                 <article className="plans2026__bento-card">
                   <p className="plans2026__bento-value">{formatInt(stats.totalFiles)}</p>
                   <p className="plans2026__bento-label">Archivos listos</p>
                 </article>
               </section>
+
+              <p className="plans2026__limitsNote">
+                La cuota mensual es lo que puedes descargar cada ciclo. El catálogo total es lo disponible para elegir.
+              </p>
 
               <section className="plans2026__card" aria-label="Plan Oro">
                 <div className="plans2026__card-head">

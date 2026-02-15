@@ -171,6 +171,16 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.plans2026__limitsNote {
+  margin: 2px 0 0;
+  color: color-mix(in srgb, var(--ph-text-muted) 96%, transparent);
+  font-size: 1.06rem;
+  font-weight: 650;
+  line-height: 1.45;
+  text-align: center;
+  text-wrap: balance;
+}
+
 .plans2026__bento-card {
   border-radius: 16px;
   border: 1px solid color-mix(in srgb, var(--ph-border) 76%, transparent);

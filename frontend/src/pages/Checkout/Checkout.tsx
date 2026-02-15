@@ -860,7 +860,7 @@ function Checkout() {
 
   const quotaGb = Number(plan?.gigas ?? 500);
   const benefitList = [
-    `${formatInt(quotaGb)} GB/mes de descargas rápidas.`,
+    `Cuota mensual: ${formatInt(quotaGb)} GB/mes de descargas rápidas.`,
     "Catálogo completo (eliges qué descargar).",
     "Catálogo pensado para cabina en vivo.",
     "Búsqueda rápida por género y temporada.",
@@ -1126,6 +1126,10 @@ function Checkout() {
                 </li>
               ))}
             </ul>
+
+            <p className="checkout2026__limitsNote">
+              La cuota mensual es lo que puedes descargar cada ciclo. El catálogo total es lo disponible para elegir.
+            </p>
 
             <div className="checkout2026__divider" aria-hidden />
 
