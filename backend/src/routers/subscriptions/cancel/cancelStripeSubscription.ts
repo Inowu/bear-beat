@@ -39,13 +39,15 @@ export const cancelStripeSubscription = async ({
   const subscription = activeSubscription[0];
 
   try {
-    log.info(`[STRIPE:CANCEL] Canceling subscription ${subscription.id}`);
+    log.info('[STRIPE:CANCEL] Canceling subscription');
 
     await stripeInstance.subscriptions.cancel(subscription.id);
 
     return { message: 'Tu suscripción ha sido cancelada con correctamente.' };
   } catch (e: any) {
-    log.error(`[STRIPE:CANCEL] Error canceling subscription: ${e.message}`);
+    log.error('[STRIPE:CANCEL] Error canceling subscription', {
+      errorType: e instanceof Error ? e.name : typeof e,
+    });
 
     throw new TRPCError({
       code: 'INTERNAL_SERVER_ERROR',
