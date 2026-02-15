@@ -89,7 +89,7 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
   let useExtendedAccount = false;
 
   if (ftpAccounts.length === 0 || !regularFtpUser) {
-    log.error(`[DOWNLOAD] This user does not have an ftp user (${user.id})`);
+    log.error('[DOWNLOAD] This user does not have an ftp user');
 
     return res
       .status(400)
@@ -142,7 +142,7 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
       activePlans.length === 0 || availableBytesRegular < BigInt(fileStat.size);
 
     if (shouldUseExtended) {
-      log.info(`[DOWNLOAD] Using extended account for user ${user.id}`);
+      log.info('[DOWNLOAD] Using extended account');
       regularFtpUser = extendedAccount;
       useExtendedAccount = true;
     }
@@ -164,9 +164,7 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
 
   if (!quotaLimits || !quotaTallies) {
     log.error(
-      `${logPrefix(useExtendedAccount)} This user does not have quotas (${
-        user.id
-      })`,
+      `${logPrefix(useExtendedAccount)} This user does not have quotas`,
     );
     return res
       .status(400)
@@ -177,11 +175,11 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
     quotaLimits.bytes_out_avail - quotaTallies.bytes_out_used;
 
   if (availableBytes < fileStat.size) {
-    log.error(
-      `${logPrefix(useExtendedAccount)} Not enough bytes left, user id: ${
-        user.id
-      }, song path: ${fullPath}`,
-    );
+    log.error(`${logPrefix(useExtendedAccount)} Not enough bytes left`, {
+      availableBytes: availableBytes.toString(),
+      requiredBytes: String(fileStat.size),
+      path: requestedPath,
+    });
 
     return res
       .status(400)
@@ -189,9 +187,7 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
   }
 
   log.info(
-    `${logPrefix(
-      useExtendedAccount,
-    )} id: ${user?.id}, username: ${user?.username}, bytes available left: ${availableBytes}`,
+    `${logPrefix(useExtendedAccount)} bytes available left: ${availableBytes}`,
   );
 
   await prisma.ftpquotatallies.update({
