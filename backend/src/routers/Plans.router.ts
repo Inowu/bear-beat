@@ -24,12 +24,54 @@ import { paypal } from '../paypal';
 import { manyChat } from '../many-chat';
 import { getMarketingTrialConfigFromEnv } from '../utils/trialConfig';
 import { StripePriceKey } from './subscriptions/utils/ensureStripePriceId';
+import type { Plans } from '@prisma/client';
 
 type StripeRecurringInterval = 'day' | 'week' | 'month' | 'year';
 
 function normalizeRecurringInterval(value: unknown): StripeRecurringInterval {
   if (value === 'day' || value === 'week' || value === 'month' || value === 'year') return value;
   return 'month';
+}
+
+function nonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function hasValidStripePriceId(plan: Plans, stripeKey: keyof Plans): boolean {
+  const stripeId = plan[stripeKey];
+  return nonEmptyString(stripeId) && stripeId.startsWith('price_');
+}
+
+function hasPaypalPlanId(plan: Plans, paypalKey: keyof Plans): boolean {
+  const paypalPlanId = plan[paypalKey];
+  return nonEmptyString(paypalPlanId);
+}
+
+function pickBestCheckoutPlanCandidate(opts: {
+  candidates: Plans[];
+  stripeKey: keyof Plans;
+  paypalKey: keyof Plans;
+}): Plans | null {
+  const { candidates, stripeKey, paypalKey } = opts;
+  if (!Array.isArray(candidates) || candidates.length === 0) return null;
+
+  let best: Plans | null = null;
+  let bestScore = -1;
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    let score = 0;
+    if (hasValidStripePriceId(candidate, stripeKey)) score += 10;
+    if (hasPaypalPlanId(candidate, paypalKey)) score += 2;
+    // Prefer lower ids as a deterministic tie-breaker (legacy plans often have lower ids).
+    score += -candidate.id / 10_000;
+
+    if (score > bestScore) {
+      bestScore = score;
+      best = candidate;
+    }
+  }
+
+  return best;
 }
 
 async function resolveStripeProductAndRecurring(
@@ -154,6 +196,143 @@ export const plansRouter = router({
       eligible,
     };
   }),
+  resolveCheckoutPlan: shieldedProcedure
+    .input(
+      z.object({
+        planId: z.number().int().positive(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const requestedPlanId = input.planId;
+      const stripeKey = getPlanKey(PaymentService.STRIPE);
+      const paypalKey = getPlanKey(PaymentService.PAYPAL);
+
+      // Production audits are READ-ONLY. When the auditor sets this header, avoid
+      // triggering external side-effects (ManyChat tags/custom fields) from a query.
+      const auditReadOnlyHeader = ctx.req?.headers?.['x-bb-audit-readonly'];
+      const isAuditReadOnly = auditReadOnlyHeader === '1';
+
+      const requestedPlan = await ctx.prisma.plans.findFirst({
+        where: {
+          activated: 1,
+          id: requestedPlanId,
+        },
+      });
+
+      if (!requestedPlan) {
+        return {
+          requestedPlanId,
+          resolvedPlanId: null,
+          plan: null,
+          paypalPlan: null,
+        };
+      }
+
+      let resolvedPlan = requestedPlan;
+
+      // Conversion hardening: legacy plan ids may be linked from ads/bookmarks.
+      // If the requested plan lacks a Stripe Price ID (price_*), auto-switch to a sibling
+      // with the same name/price/currency that has a valid Stripe Price configured.
+      if (!hasValidStripePriceId(requestedPlan, stripeKey)) {
+        const siblings = await ctx.prisma.plans.findMany({
+          where: {
+            activated: 1,
+            name: requestedPlan.name,
+            moneda: requestedPlan.moneda,
+            price: requestedPlan.price,
+          },
+          orderBy: { id: 'asc' },
+        });
+
+        const best = pickBestCheckoutPlanCandidate({
+          candidates: siblings,
+          stripeKey,
+          paypalKey,
+        });
+        if (best) resolvedPlan = best;
+      }
+
+      let paypalPlan: Plans | null = null;
+      if (hasPaypalPlanId(resolvedPlan, paypalKey)) {
+        paypalPlan = resolvedPlan;
+      } else {
+        // PayPal can be configured on a sibling plan with the same currency/price.
+        // Prefer exact name matches, but fall back to currency/price matches for legacy data.
+        const paypalSiblingsByName = await ctx.prisma.plans.findMany({
+          where: {
+            activated: 1,
+            name: resolvedPlan.name,
+            moneda: resolvedPlan.moneda,
+            price: resolvedPlan.price,
+          },
+          orderBy: { id: 'asc' },
+        });
+
+        let paypalCandidates = paypalSiblingsByName.filter((row) => hasPaypalPlanId(row, paypalKey));
+        if (paypalCandidates.length === 0) {
+          const paypalSiblings = await ctx.prisma.plans.findMany({
+            where: {
+              activated: 1,
+              moneda: resolvedPlan.moneda,
+              price: resolvedPlan.price,
+            },
+            orderBy: { id: 'asc' },
+          });
+          paypalCandidates = paypalSiblings.filter((row) => hasPaypalPlanId(row, paypalKey));
+        }
+
+        paypalPlan = pickBestCheckoutPlanCandidate({
+          candidates: paypalCandidates,
+          stripeKey,
+          paypalKey,
+        });
+      }
+
+      // Marketing attribution: mirror legacy behavior from `findManyPlans` so checkout links
+      // still tag the logged-in user with the last plan they tried to buy.
+      if (!isAuditReadOnly && ctx.session?.user?.id) {
+        try {
+          const user = await ctx.prisma.users.findFirst({
+            where: { id: ctx.session.user.id },
+          });
+          if (user) {
+            const name = (resolvedPlan?.name ?? '').toString();
+            if (name.includes('Oro')) {
+              manyChat.addTagToUser(user, 'CHECKOUT_PLAN_ORO').catch(() => {});
+            } else if (name.includes('Curioso')) {
+              manyChat.addTagToUser(user, 'CHECKOUT_PLAN_CURIOSO').catch(() => {});
+            }
+
+            let mcId: string | null = null;
+            try {
+              mcId = await manyChat.getManyChatId(user);
+            } catch {
+              mcId = null;
+            }
+
+            if (mcId) {
+              manyChat.setCustomField(mcId, 'ultimo_plan_checkout', name).catch(() => {});
+              manyChat
+                .setCustomField(
+                  mcId,
+                  'ultimo_precio_checkout',
+                  String(resolvedPlan.price ?? ''),
+                )
+                .catch(() => {});
+            }
+          }
+        } catch {
+          // Best-effort only; do not break checkout plan resolution query.
+        }
+      }
+
+      return {
+        requestedPlanId,
+        resolvedPlanId: resolvedPlan.id,
+        plan: resolvedPlan,
+        paypalPlan,
+      };
+    }),
   createStripePlan: shieldedProcedure
     .input(
       z.intersection(

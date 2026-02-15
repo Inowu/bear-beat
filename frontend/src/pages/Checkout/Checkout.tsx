@@ -172,34 +172,6 @@ function normalizeCheckoutError(opts: {
   }
 }
 
-const pickBestPlanCandidate = (candidates: IPlans[]): IPlans | null => {
-  if (!Array.isArray(candidates) || candidates.length === 0) return null;
-
-  const hasStripePrice = (plan: IPlans) =>
-    typeof (plan as any)?.stripe_prod_id === "string" &&
-    String((plan as any).stripe_prod_id).startsWith("price_");
-  const hasPaypal = (plan: IPlans) =>
-    Boolean((plan as any)?.paypal_plan_id || (plan as any)?.paypal_plan_id_test);
-
-  let best: IPlans | null = null;
-  let bestScore = -1;
-  for (const candidate of candidates) {
-    if (!candidate) continue;
-    let score = 0;
-    if (hasStripePrice(candidate)) score += 10;
-    if (hasPaypal(candidate)) score += 2;
-    // Prefer lower ids as a deterministic tie-breaker (legacy plans often have lower ids).
-    const tieBreaker = typeof candidate.id === "number" ? -candidate.id / 10_000 : 0;
-    score += tieBreaker;
-
-    if (score > bestScore) {
-      bestScore = score;
-      best = candidate;
-    }
-  }
-  return best;
-};
-
 function Checkout() {
   const [plan, setPlan] = useState<IPlans | null>(null);
   const [trialConfig, setTrialConfig] = useState<{
@@ -224,10 +196,12 @@ function Checkout() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showError, setShowError] = useState(false);
   const [paypalPlan, setPaypalPlan] = useState<IPlans | null>(null);
+  const [planStatus, setPlanStatus] = useState<"idle" | "loading" | "loaded" | "not_found" | "error">("idle");
   const checkoutStartedRef = useRef(false);
   const checkoutHandedOffRef = useRef(false);
   const abandonTrackedRef = useRef(false);
   const interactedRef = useRef(false);
+  const skipPlanReloadRef = useRef(false);
   const searchParams = new URLSearchParams(location.search);
   const priceId = searchParams.get("priceId");
   const requestedMethod = searchParams.get("method");
@@ -289,42 +263,6 @@ function Checkout() {
     };
   }, [isMxnPlan]);
 
-  useEffect(() => {
-    let cancelled = false;
-    if (!plan) {
-      setPaypalPlan(null);
-      return;
-    }
-
-    const resolvePaypalPlan = async () => {
-      if (plan.paypal_plan_id || plan.paypal_plan_id_test) {
-        if (!cancelled) setPaypalPlan(plan);
-        return;
-      }
-      try {
-        const siblings = await trpc.plans.findManyPlans.query({
-          where: {
-            activated: 1,
-            moneda: (plan.moneda ?? "").toLowerCase(),
-            price: +plan.price,
-            OR: [{ paypal_plan_id: { not: null } }, { paypal_plan_id_test: { not: "" } }],
-          },
-        } as any);
-        const match =
-          siblings.find((candidate: IPlans) => candidate?.paypal_plan_id || candidate?.paypal_plan_id_test) ??
-          null;
-        if (!cancelled) setPaypalPlan(match);
-      } catch {
-        if (!cancelled) setPaypalPlan(null);
-      }
-    };
-
-    void resolvePaypalPlan();
-    return () => {
-      cancelled = true;
-    };
-  }, [plan?.id, plan?.moneda, plan?.price, plan?.paypal_plan_id, plan?.paypal_plan_id_test]);
-
   const availableMethods = useMemo<CheckoutMethod[]>(() => {
     if (!isMxnPlan) return hasPaypalPlan ? ["card", "paypal"] : ["card"];
     const methods: CheckoutMethod[] = ["card"];
@@ -362,50 +300,39 @@ function Checkout() {
 
   const getPlans = useCallback(async (id: string | null) => {
     if (!id) return;
-    const id_plan = +id;
-    const body = { where: { activated: 1, id: id_plan } };
     try {
-      const plans: IPlans[] = await trpc.plans.findManyPlans.query(body);
-      let p = plans?.[0] ?? null;
+      const id_plan = Number(id);
+      if (!Number.isFinite(id_plan) || id_plan <= 0) {
+        setPlan(null);
+        setPaypalPlan(null);
+        setPlanStatus("not_found");
+        return;
+      }
 
-      // Conversion hardening: old/legacy plan ids may still be linked from ads or bookmarks.
-      // If the requested plan lacks a Stripe Price ID (price_*), auto-switch to a sibling plan
-      // with the same name/price that has a valid Stripe Price configured.
-      if (p) {
-        const stripeId = (p as any)?.stripe_prod_id;
-        const hasValidStripePrice = typeof stripeId === "string" && stripeId.startsWith("price_");
-        if (!hasValidStripePrice) {
-          try {
-            const siblingBody: any = {
-              where: {
-                activated: 1,
-                name: p.name,
-                price: +p.price,
-              },
-            };
-            const siblings: IPlans[] = await trpc.plans.findManyPlans.query(siblingBody);
-            const best = pickBestPlanCandidate(siblings);
-            if (best && typeof best.id === "number" && best.id !== p.id) {
-              const nextParams = new URLSearchParams(location.search);
-              nextParams.set("priceId", String(best.id));
-              navigate(
-                { pathname: location.pathname, search: `?${nextParams.toString()}` },
-                { replace: true },
-              );
-              setPlan(best);
-              checkManyChat(best);
-              return;
-            }
-          } catch {
-            // fallback to requested plan
-          }
-        }
+      setPlanStatus("loading");
+      const resolved = await trpc.plans.resolveCheckoutPlan.query({ planId: id_plan } as any);
+      const p: IPlans | null = (resolved as any)?.plan ?? null;
+      const pPaypal: IPlans | null = (resolved as any)?.paypalPlan ?? null;
+      const resolvedPlanId = (resolved as any)?.resolvedPlanId;
+
+      if (p && typeof resolvedPlanId === "number" && resolvedPlanId !== id_plan) {
+        skipPlanReloadRef.current = true;
+        const nextParams = new URLSearchParams(location.search);
+        nextParams.set("priceId", String(resolvedPlanId));
+        navigate(
+          { pathname: location.pathname, search: `?${nextParams.toString()}` },
+          { replace: true },
+        );
       }
 
       setPlan(p);
+      setPaypalPlan(pPaypal);
+      setPlanStatus(p ? "loaded" : "not_found");
       if (p) checkManyChat(p);
     } catch {
       setPlan(null);
+      setPaypalPlan(null);
+      setPlanStatus("error");
     }
   }, [checkManyChat, location.pathname, location.search, navigate]);
 
@@ -426,6 +353,10 @@ function Checkout() {
   );
 
   useEffect(() => {
+    if (skipPlanReloadRef.current) {
+      skipPlanReloadRef.current = false;
+      return;
+    }
     checkoutStartedRef.current = false;
     checkoutHandedOffRef.current = false;
     abandonTrackedRef.current = false;
@@ -437,8 +368,10 @@ function Checkout() {
     setSelectedMethod("card");
     setSpeiData(null);
     setShowSpeiModal(false);
+    setPlan(null);
+    setPaypalPlan(null);
+    setPlanStatus(priceId ? "loading" : "idle");
     if (priceId) getPlans(priceId);
-    else setPlan(null);
   }, [priceId, getPlans]);
 
   useEffect(() => {
@@ -1014,6 +947,43 @@ function Checkout() {
 
   // Plan aún cargando → una sola pantalla de carga
   if (!plan) {
+    if (planStatus === "error" || planStatus === "not_found") {
+      const title =
+        planStatus === "not_found"
+          ? "Este plan ya no está disponible."
+          : "No pudimos cargar el plan.";
+      const text =
+        planStatus === "not_found"
+          ? "El enlace puede estar desactualizado. Selecciona un plan para continuar."
+          : "Ocurrió un error al cargar tu plan. Intenta de nuevo o selecciona un plan.";
+
+      return (
+        <div className="checkout-main-container checkout2026">
+          {TopNav}
+          <main className="checkout2026__main" aria-label="Checkout">
+            <div className="checkout2026__container checkout2026__center">
+              <div className="checkout-one-state" role="status" aria-live="polite">
+                <h1 className="checkout-one-state__title">{title}</h1>
+                <p className="checkout-one-state__text">{text}</p>
+                <div className="checkout-one-state__help">
+                  <button
+                    type="button"
+                    className="checkout-cta-btn checkout-cta-btn--primary"
+                    onClick={() => getPlans(priceId)}
+                  >
+                    Reintentar
+                  </button>
+                  <Link to="/planes" className="checkout-cta-btn checkout-cta-btn--ghost">
+                    Ver planes
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+      );
+    }
+
     return (
       <div className="checkout-main-container checkout2026">
         {TopNav}
