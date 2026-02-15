@@ -1,7 +1,7 @@
 import "./Checkout.scss";
 import { useUserContext } from "../../contexts/UserContext";
 import { useLocation, useNavigate, Link } from "react-router-dom";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import trpc from "../../api";
 import { IPlans, IOxxoData, ISpeiData } from "interfaces/Plans";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
@@ -259,6 +259,9 @@ function normalizeCheckoutError(opts: {
 
 function Checkout() {
   const [plan, setPlan] = useState<IPlans | null>(null);
+  const [checkoutSummary, setCheckoutSummary] = useState<{ currency: string | null; price: number | null } | null>(
+    null,
+  );
   const [trialConfig, setTrialConfig] = useState<{
     enabled: boolean;
     days: number;
@@ -346,6 +349,18 @@ function Checkout() {
   const pendingPurchaseStorageKey = "bb.checkout.pendingPurchase";
 
   const hasPaypalPlan = Boolean(paypalPlan?.paypal_plan_id || paypalPlan?.paypal_plan_id_test);
+
+  const checkoutCurrency = useMemo(() => {
+    const raw = checkoutSummary?.currency ?? plan?.moneda;
+    const normalized = String(raw ?? "").trim().toUpperCase();
+    return normalized || null;
+  }, [checkoutSummary?.currency, plan?.moneda]);
+
+  const checkoutAmount = useMemo(() => {
+    const raw = checkoutSummary?.price ?? plan?.price;
+    const n = Number(raw ?? 0);
+    return Number.isFinite(n) ? n : 0;
+  }, [checkoutSummary?.price, plan?.price]);
 
   useEffect(() => {
     // Evitar doble membresía: si ya tiene un plan activo, empujar a recarga de GB extra en /micuenta.
@@ -452,6 +467,7 @@ function Checkout() {
       if (!Number.isFinite(id_plan) || id_plan <= 0) {
         setPlan(null);
         setPaypalPlan(null);
+        setCheckoutSummary(null);
         setPlanStatus("not_found");
         return;
       }
@@ -482,14 +498,19 @@ function Checkout() {
         // Nothing else to compute for a missing plan.
         setAvailableMethods(["card"]);
         setTrialConfig({ enabled: false, days: 0, gb: 0, eligible: null });
+        setCheckoutSummary(null);
         return;
       }
 
-      const backendMethods = checkout && typeof checkout === "object" && Array.isArray((checkout as any).availableMethods)
-        ? ((checkout as any).availableMethods as CheckoutMethod[])
-        : null;
+      const backendMethods =
+        checkout && typeof checkout === "object" && Array.isArray((checkout as any).availableMethods)
+          ? ((checkout as any).availableMethods as CheckoutMethod[])
+          : null;
       const backendTrialConfig =
-        checkout && typeof checkout === "object" && (checkout as any).trialConfig && typeof (checkout as any).trialConfig === "object"
+        checkout &&
+        typeof checkout === "object" &&
+        (checkout as any).trialConfig &&
+        typeof (checkout as any).trialConfig === "object"
           ? ((checkout as any).trialConfig as {
               enabled: boolean;
               days: number;
@@ -498,53 +519,22 @@ function Checkout() {
             })
           : null;
 
-      const hasBackendCheckoutConfig = Boolean(
-        backendMethods && backendMethods.length > 0 && backendTrialConfig,
-      );
+      const backendCurrency =
+        checkout && typeof checkout === "object" && typeof (checkout as any).currency === "string"
+          ? String((checkout as any).currency).trim().toUpperCase()
+          : null;
+      const backendPriceRaw =
+        checkout && typeof checkout === "object" ? Number((checkout as any).price ?? Number.NaN) : Number.NaN;
+      const backendPrice =
+        Number.isFinite(backendPriceRaw) && backendPriceRaw > 0 ? backendPriceRaw : null;
 
-      if (hasBackendCheckoutConfig) {
-        setAvailableMethods(backendMethods!);
-        setTrialConfig(backendTrialConfig!);
-      } else {
-        // Backwards-compatible fallback: if backend doesn't return checkout config, compute via legacy calls.
-        // Trial config (best-effort).
-        try {
-          const cfg = await trpc.plans.getTrialConfig.query();
-          setTrialConfig(cfg);
-        } catch {
-          setTrialConfig({ enabled: false, days: 0, gb: 0, eligible: null });
-        }
-
-        // Payment methods.
-        const moneda = typeof p?.moneda === "string" ? p.moneda.trim().toUpperCase() : "";
-        const paypalAvailable = Boolean(pPaypal?.paypal_plan_id || pPaypal?.paypal_plan_id_test);
-        if (moneda !== "MXN") {
-          setAvailableMethods(paypalAvailable ? ["card", "paypal"] : ["card"]);
-        } else {
-          let availability: { oxxoEnabled: boolean; payByBankEnabled: boolean } = {
-            oxxoEnabled: false,
-            payByBankEnabled: false,
-          };
-          try {
-            const result = await trpc.subscriptions.getConektaAvailability.query();
-            availability = {
-              oxxoEnabled: Boolean(result?.oxxoEnabled),
-              payByBankEnabled: Boolean(result?.payByBankEnabled),
-            };
-          } catch {
-            // noop
-          }
-          const methods: CheckoutMethod[] = ["card"];
-          if (paypalAvailable) methods.push("paypal");
-          methods.push("spei");
-          if (availability.payByBankEnabled) methods.push("bbva");
-          if (availability.oxxoEnabled) methods.push("oxxo");
-          setAvailableMethods(methods);
-        }
-      }
+      setCheckoutSummary({ currency: backendCurrency, price: backendPrice });
+      setAvailableMethods(backendMethods && backendMethods.length > 0 ? backendMethods : ["card"]);
+      setTrialConfig(backendTrialConfig ?? { enabled: false, days: 0, gb: 0, eligible: null });
     } catch {
       setPlan(null);
       setPaypalPlan(null);
+      setCheckoutSummary(null);
       setAvailableMethods(["card"]);
       setTrialConfig({ enabled: false, days: 0, gb: 0, eligible: null });
       setPlanStatus("error");
@@ -586,6 +576,7 @@ function Checkout() {
     setShowSpeiModal(false);
     setPlan(null);
     setPaypalPlan(null);
+    setCheckoutSummary(null);
     setPlanStatus(priceId ? "loading" : "idle");
     if (priceId) getPlans(priceId);
   }, [priceId, getPlans, closeErrorModal]);
@@ -1097,12 +1088,11 @@ function Checkout() {
     if (selectedMethod === "paypal") return;
   };
 
-  const currencyCode = (plan?.moneda ? String(plan.moneda) : "MXN").toUpperCase();
+  const currencyCode = (checkoutCurrency ?? (plan?.moneda ? String(plan.moneda) : "MXN")).toUpperCase();
   const planName = plan?.name?.trim() || "Plan Oro";
   const discount = 0;
 
-  const rawPrice = Number(plan?.price ?? 0);
-  const safePrice = Number.isFinite(rawPrice) ? rawPrice : 0;
+  const safePrice = checkoutAmount;
   const totalPriceNumber = safePrice - safePrice * (discount / 100);
   const moneyLocale = currencyCode === "USD" ? "en-US" : "es-MX";
   const totalPrice = new Intl.NumberFormat(moneyLocale, {
