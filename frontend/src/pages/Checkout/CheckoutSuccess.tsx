@@ -242,7 +242,7 @@ function CheckoutSuccess() {
   return (
     <div className="checkout-main-container checkout2026">
       <PublicTopNav className="checkout2026__topnav" plansTo="/planes" />
-      <main className="checkout2026__main" aria-label="Checkout">
+      <section className="checkout2026__main" aria-label="Checkout">
         <div className="checkout2026__container checkout2026__center">
           <div className="checkout-card checkout-success-card">
             <div className="checkout-success-card__icon-wrap">
@@ -299,7 +299,7 @@ function CheckoutSuccess() {
             </div>
           </div>
         </div>
-      </main>
+      </section>
     </div>
   );
 }
