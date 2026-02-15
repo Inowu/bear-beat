@@ -60,9 +60,7 @@ export const subscribeWithPaypal = shieldedProcedure
           ).data;
 
           if (subscription.status === 'ACTIVE') {
-            log.info(
-              `[MIGRATION] Cancelling active paypal subscription for user ${user.id}`,
-            );
+            log.info('[MIGRATION] Cancelling active PayPal subscription');
 
             try {
               await axios.post(
@@ -79,15 +77,12 @@ export const subscribeWithPaypal = shieldedProcedure
                 },
               );
 
-              log.info(
-                `[MIGRATION] Active paypal subscription cancelled for user ${user.id}`,
-              );
+              log.info('[MIGRATION] Active PayPal subscription cancelled');
             } catch (e) {
               const axiosErr = e as AxiosError;
               log.error('[MIGRATION] Failed to cancel active PayPal subscription', {
-                userId: user.id,
                 status: axiosErr.response?.status ?? null,
-                error: axiosErr.message,
+                errorType: axiosErr.name,
               });
 
               throw new TRPCError({
@@ -224,9 +219,7 @@ export const subscribeWithPaypal = shieldedProcedure
           }
         } catch (consentError) {
           log.warn('[PAYPAL] Failed to store billing consent (non-blocking)', {
-            userId: user.id,
-            subscriptionId,
-            error: consentError instanceof Error ? consentError.message : consentError,
+            errorType: consentError instanceof Error ? consentError.name : typeof consentError,
           });
         }
 
@@ -270,9 +263,9 @@ export const subscribeWithPaypal = shieldedProcedure
           throw e;
         }
 
-        log.error(
-          `[PAYPAL] An error happened while creating subscription with paypal ${e}`,
-        );
+        log.error('[PAYPAL] Failed to create subscription', {
+          errorType: e instanceof Error ? e.name : typeof e,
+        });
 
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
