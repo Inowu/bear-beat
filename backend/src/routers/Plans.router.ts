@@ -872,39 +872,55 @@ export const plansRouter = router({
   findManyPlans: shieldedProcedure
     .input(PlansFindManySchema)
     .query(async ({ ctx, input }) => {
-      const findManyPlans = await ctx.prisma.plans.findMany(input);
+      const plans = await ctx.prisma.plans.findMany(input);
       // Production audits are READ-ONLY. When the auditor sets this header, avoid
       // triggering external side-effects (ManyChat tags/custom fields) from a query.
       const auditReadOnlyHeader = ctx.req?.headers?.['x-bb-audit-readonly'];
       const isAuditReadOnly = auditReadOnlyHeader === '1';
 
-      if (!isAuditReadOnly && ctx.session?.user?.id && findManyPlans.length > 0) {
-        const user = await ctx.prisma.users.findFirst({
-          where: { id: ctx.session.user.id },
-        });
-        if (user) {
-          const whereAny = input.where as Record<string, unknown> | undefined;
-          const hasSinglePlanId =
-            whereAny?.id !== undefined && findManyPlans.length === 1;
-          if (hasSinglePlanId) {
-            const plan = findManyPlans[0];
-            const name = (plan?.name ?? '').toString();
-            if (name.includes('Oro')) {
-              manyChat.addTagToUser(user, 'CHECKOUT_PLAN_ORO').catch(() => {});
-            } else if (name.includes('Curioso')) {
-              manyChat.addTagToUser(user, 'CHECKOUT_PLAN_CURIOSO').catch(() => {});
+      if (!isAuditReadOnly && ctx.session?.user?.id && plans.length > 0) {
+        try {
+          const user = await ctx.prisma.users.findFirst({
+            where: { id: ctx.session.user.id },
+          });
+          if (user) {
+            const whereAny = input.where as Record<string, unknown> | undefined;
+            const hasSinglePlanId = whereAny?.id !== undefined && plans.length === 1;
+            if (hasSinglePlanId) {
+              const plan = plans[0];
+              const name = (plan?.name ?? '').toString();
+              if (name.includes('Oro')) {
+                void manyChat.addTagToUser(user, 'CHECKOUT_PLAN_ORO').catch(() => {});
+              } else if (name.includes('Curioso')) {
+                void manyChat.addTagToUser(user, 'CHECKOUT_PLAN_CURIOSO').catch(() => {});
+              }
+
+              // Do not block the query result on ManyChat (network) calls.
+              void manyChat
+                .getManyChatId(user)
+                .then((mcId) => {
+                  if (!mcId || !plan) return;
+                  void manyChat
+                    .setCustomField(mcId, 'ultimo_plan_checkout', name)
+                    .catch(() => {});
+                  void manyChat
+                    .setCustomField(
+                      mcId,
+                      'ultimo_precio_checkout',
+                      String(plan.price ?? ''),
+                    )
+                    .catch(() => {});
+                })
+                .catch(() => {});
+            } else {
+              void manyChat.addTagToUser(user, 'USER_CHECKED_PLANS').catch(() => {});
             }
-            const mcId = await manyChat.getManyChatId(user);
-            if (mcId && plan) {
-              manyChat.setCustomField(mcId, 'ultimo_plan_checkout', name).catch(() => {});
-              manyChat.setCustomField(mcId, 'ultimo_precio_checkout', String(plan.price ?? '')).catch(() => {});
-            }
-          } else {
-            manyChat.addTagToUser(user, 'USER_CHECKED_PLANS').catch(() => {});
           }
+        } catch {
+          // Best-effort only; do not break plan listing on tracking failures.
         }
       }
-      return findManyPlans;
+      return plans;
     }),
   findUniquePlans: shieldedProcedure
     .input(PlansFindUniqueSchema)
