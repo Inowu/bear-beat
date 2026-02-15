@@ -188,7 +188,6 @@ export const manyChat = {
     } catch (error: any) {
       const axiosErr = error as AxiosError;
       log.error('[MANYCHAT] createSubscriber failed', {
-        userId: user.id,
         status: axiosErr.response?.status ?? null,
         error: axiosErr.message,
       });
@@ -209,7 +208,6 @@ export const manyChat = {
     const fieldId = await getCustomFieldId(fieldKey);
     if (!fieldId) {
       log.warn('[MANYCHAT] Custom field not found; skipping setCustomField', {
-        subscriberId: mcId,
         fieldKey,
       });
       return null;
@@ -225,7 +223,6 @@ export const manyChat = {
     } catch (error: any) {
       const axiosErr = error as AxiosError;
       log.error('[MANYCHAT] setCustomField failed', {
-        subscriberId: mcId,
         fieldKey,
         status: axiosErr.response?.status ?? null,
         error: axiosErr.message,
@@ -260,8 +257,6 @@ export const manyChat = {
     } catch (error: any) {
       const axiosErr = error as AxiosError;
       log.error('[MANYCHAT] updateSubscriber failed', {
-        userId: user.id ?? null,
-        subscriberId: mcId,
         status: axiosErr.response?.status ?? null,
         error: axiosErr.message,
       });
@@ -305,7 +300,7 @@ export const manyChat = {
     const mcId = await this.getManyChatId(user);
 
     if (!mcId) {
-      log.warn(`[MANYCHAT] No mc_id for user ${user.id}, cannot add tag ${tag}`);
+      log.warn(`[MANYCHAT] No mc_id available, cannot add tag ${tag}`);
       return null;
     }
 
@@ -324,13 +319,11 @@ export const manyChat = {
           subscriber_id: subscriberId,
           tag_name: tagName,
         });
-        log.info(`[MANYCHAT] Tag "${tagName}" added via addTagByName to subscriber ${subscriberId}`);
+        log.info(`[MANYCHAT] Tag "${tagName}" added via addTagByName`);
         return response.data;
       } catch (fallbackError: any) {
         const axiosErr = fallbackError as AxiosError;
         log.error('[MANYCHAT] addTagByName failed', {
-          userId: user.id,
-          subscriberId,
           tagName,
           status: axiosErr.response?.status ?? null,
           error: axiosErr.message,
@@ -346,13 +339,11 @@ export const manyChat = {
           subscriber_id: subscriberId,
           tag_id: tagId,
         });
-        log.info(`[MANYCHAT] Tag ${tagRaw} (id ${tagId}) added to subscriber ${subscriberId}`);
+        log.info(`[MANYCHAT] Tag ${tagRaw} (id ${tagId}) added`);
         return response.data;
       } catch (error: any) {
         const axiosErr = error as AxiosError;
         log.warn('[MANYCHAT] addTag by ID failed; retrying by name', {
-          userId: user.id,
-          subscriberId,
           tag: tagRaw,
           tagId,
           status: axiosErr.response?.status ?? null,
@@ -380,9 +371,7 @@ export const manyChat = {
     );
 
     if (existingSubscriberByEmail?.length) {
-      log.info(
-        `[MANYCHAT:RETRIEVE_OR_CREATE] User ${user.id} found in many chat by email`,
-      );
+      log.info('[MANYCHAT:RETRIEVE_OR_CREATE] Subscriber found in ManyChat by email');
 
       return normalizeSubscriberId(existingSubscriberByEmail?.[0]?.id);
     }
@@ -392,15 +381,13 @@ export const manyChat = {
       : null;
 
     if (existingSubscriberByPhone?.length) {
-      log.info(
-        `[MANYCHAT:RETRIEVE_OR_CREATE] User ${user.id} found in many chat by phone`,
-      );
+      log.info('[MANYCHAT:RETRIEVE_OR_CREATE] Subscriber found in ManyChat by phone');
 
       return normalizeSubscriberId(existingSubscriberByPhone?.[0]?.id);
     }
 
     log.info(
-      `[MANYCHAT:RETRIEVE_OR_CREATE] User ${user.id} wasn't found in many chat, creating a new subscriber...`,
+      "[MANYCHAT:RETRIEVE_OR_CREATE] Subscriber wasn't found in ManyChat, creating a new subscriber...",
     );
 
     const subscriber = await this.createSubscriber(user, 'Consent');
@@ -410,13 +397,7 @@ export const manyChat = {
     const createdId = normalizeSubscriberId((subscriber as any).id);
     if (!createdId) return null;
 
-    log.info(
-      `[MANYCHAT:RETRIEVE_OR_CREATE] Created new subscriber with id ${createdId} for user ${user.id}`,
-    );
-
-    log.info(
-      `[MANYCHAT:RETRIEVE_OR_CREATE] Updating user ${user.id} with mc_id ${createdId}`,
-    );
+    log.info('[MANYCHAT:RETRIEVE_OR_CREATE] Created new subscriber');
 
     await this.updateSubscriber(user, createdId, 'Consent');
 
@@ -435,7 +416,7 @@ export const manyChat = {
       }
     } catch (e: any) {
       log.error(
-        `[MANYCHAT:GET_ID] Error updating user ${user.id} with mc_id ${createdId}: ${e.message}`,
+        `[MANYCHAT:GET_ID] Error updating user with mc_id: ${e.message}`,
       );
     }
 
