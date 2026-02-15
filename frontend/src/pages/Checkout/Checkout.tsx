@@ -896,7 +896,7 @@ function Checkout() {
     return (
       <div className="checkout-main-container checkout2026">
         {TopNav}
-        <main className="checkout2026__main" aria-label="Checkout">
+        <section className="checkout2026__main" aria-label="Checkout">
           <div className="checkout2026__container checkout2026__center">
             <div className="checkout-one-state" role="status" aria-live="polite">
               <h1 className="checkout-one-state__title">Completa tu pago</h1>
@@ -909,7 +909,7 @@ function Checkout() {
               </Link>
             </div>
           </div>
-        </main>
+        </section>
       </div>
     );
   }
@@ -921,7 +921,7 @@ function Checkout() {
     return (
       <div className="checkout-main-container checkout2026">
         {TopNav}
-        <main className="checkout2026__main" aria-label="Checkout">
+        <section className="checkout2026__main" aria-label="Checkout">
           <div className="checkout2026__container checkout2026__center">
             <div className="checkout-one-state" role="status" aria-live="polite" aria-busy="true">
               <span className="checkout2026__sk checkout2026__sk--redirectBar" aria-hidden />
@@ -939,7 +939,7 @@ function Checkout() {
               )}
             </div>
           </div>
-        </main>
+        </section>
       </div>
     );
   }
@@ -959,7 +959,7 @@ function Checkout() {
       return (
         <div className="checkout-main-container checkout2026">
           {TopNav}
-          <main className="checkout2026__main" aria-label="Checkout">
+          <section className="checkout2026__main" aria-label="Checkout">
             <div className="checkout2026__container checkout2026__center">
               <div className="checkout-one-state" role="status" aria-live="polite">
                 <h1 className="checkout-one-state__title">{title}</h1>
@@ -978,7 +978,7 @@ function Checkout() {
                 </div>
               </div>
             </div>
-          </main>
+          </section>
         </div>
       );
     }
@@ -986,7 +986,7 @@ function Checkout() {
     return (
       <div className="checkout-main-container checkout2026">
         {TopNav}
-        <main className="checkout2026__main" aria-label="Checkout">
+        <section className="checkout2026__main" aria-label="Checkout">
           <div className="checkout2026__container">
             <header className="checkout2026__hero">
               <h1>Completa tu pago.</h1>
@@ -1041,7 +1041,7 @@ function Checkout() {
               </div>
             </section>
           </div>
-        </main>
+        </section>
       </div>
     );
   }
@@ -1093,7 +1093,7 @@ function Checkout() {
   return (
     <div className="checkout-main-container checkout2026">
       {TopNav}
-      <main className="checkout2026__main" aria-label="Checkout">
+      <section className="checkout2026__main" aria-label="Checkout">
         <div className="checkout2026__container">
           <header className="checkout2026__hero">
             <h1>Completa tu pago.</h1>
@@ -1262,7 +1262,7 @@ function Checkout() {
             </div>
           </section>
         </div>
-      </main>
+      </section>
 
       <ErrorModal
         show={showError}

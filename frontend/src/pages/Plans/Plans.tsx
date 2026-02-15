@@ -209,7 +209,7 @@ function Plans() {
     <div className="plans2026">
       <PublicTopNav loginFrom="/planes" />
 
-      <main className="plans2026__main" aria-label="Planes y precios">
+      <section className="plans2026__main" aria-label="Planes y precios">
         <div className="plans2026__container">
           <header className="plans2026__hero">
             <h1>Precio simple, catálogo gigante.</h1>
@@ -419,7 +419,7 @@ function Plans() {
             </>
           )}
         </div>
-      </main>
+      </section>
     </div>
   );
 }
