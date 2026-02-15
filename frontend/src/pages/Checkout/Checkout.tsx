@@ -147,6 +147,10 @@ function checkoutErrorTitle(method: CheckoutMethod, reason?: string): string {
       return "No se abrió la página de pago";
     case "missing_subscription_id":
       return "No se completó PayPal";
+    case "checkout_cancelled":
+      return "Pago cancelado";
+    case "paypal_cancelled":
+      return "Pago cancelado";
     default:
       break;
   }
@@ -360,9 +364,12 @@ function Checkout() {
   const abandonTrackedRef = useRef(false);
   const interactedRef = useRef(false);
   const skipPlanReloadRef = useRef(false);
+  const checkoutCancelHandledRef = useRef(false);
   const searchParams = new URLSearchParams(location.search);
   const priceId = searchParams.get("priceId");
   const requestedMethod = searchParams.get("method");
+  const checkoutCancelled = searchParams.get("cancelled");
+  const checkoutCancelledMethod = searchParams.get("cancelled_method");
   const couponParamRaw = searchParams.get("coupon") ?? searchParams.get("cupon");
   const couponCode = (() => {
     const raw = typeof couponParamRaw === "string" ? couponParamRaw.trim() : "";
@@ -397,6 +404,16 @@ function Checkout() {
     const el = document.querySelector<HTMLElement>(`[data-testid="checkout-method-${method}"]`);
     if (!el) return;
     el.focus();
+    try {
+      el.scrollIntoView({ block: "center", behavior: "smooth" });
+    } catch {
+      el.scrollIntoView();
+    }
+  }, []);
+
+  const focusPaypalWidget = useCallback(() => {
+    const el = document.querySelector<HTMLElement>('[data-testid="checkout-paypal-root"]');
+    if (!el) return;
     try {
       el.scrollIntoView({ block: "center", behavior: "smooth" });
     } catch {
@@ -781,7 +798,13 @@ function Checkout() {
     const origin = window.location.origin;
     const successUrl = `${origin}/comprar/success?session_id={CHECKOUT_SESSION_ID}`;
     // CRO: if the user cancels in Stripe, send them back to the same checkout so they can retry / switch method.
-    const cancelUrl = `${origin}${location.pathname}${location.search || ""}`;
+    const cancelUrl = (() => {
+      const url = new URL(`${origin}${location.pathname}${location.search || ""}`);
+      url.searchParams.set("cancelled", "1");
+      url.searchParams.set("cancelled_method", "card");
+      url.searchParams.set("method", "card");
+      return url.toString();
+    })();
 
     try {
       await trpc.checkoutLogs.registerCheckoutLog.mutate();
@@ -892,6 +915,62 @@ function Checkout() {
       setProcessingMethod(null);
     }
   }, [acceptRecurring, cookies._fbc, cookies._fbp, focusRecurringConsent, location.pathname, location.search, plan?.id, plan?.moneda, plan?.price, priceId, availableMethods.join("|"), openCheckoutError]);
+
+  useEffect(() => {
+    if (!plan) return;
+    if (checkoutCancelHandledRef.current) return;
+    if (checkoutCancelled !== "1") return;
+
+    checkoutCancelHandledRef.current = true;
+
+    const cancelledMethodRaw =
+      typeof checkoutCancelledMethod === "string" ? checkoutCancelledMethod.trim().toLowerCase() : "";
+    const cancelledMethod: CheckoutMethod =
+      (["card", "paypal", "spei", "oxxo", "bbva"] as const).includes(cancelledMethodRaw as any)
+        ? (cancelledMethodRaw as CheckoutMethod)
+        : "card";
+
+    const alt = buildAltMethodHint(cancelledMethod, availableMethods);
+    const suffix = alt ? ` ${alt}` : "";
+    const value = Number(plan.price) || 0;
+    const currency = (plan.moneda?.toUpperCase() || "USD").toUpperCase();
+
+    openCheckoutError({
+      method: cancelledMethod,
+      userMessage: `No se completó el pago. No se hizo ningún cobro.${suffix}`,
+      hint: "Puedes reintentar o elegir otro método de pago.",
+      reason: "checkout_cancelled",
+      retry: cancelledMethod === "card" ? startStripeCheckout : null,
+    });
+
+    trackGrowthMetric(GROWTH_METRICS.CHECKOUT_ERROR, {
+      method: cancelledMethod,
+      planId: plan.id,
+      currency,
+      amount: value,
+      reason: "checkout_cancelled",
+      errorCode: "checkout_cancelled",
+    });
+
+    const nextParams = new URLSearchParams(location.search);
+    nextParams.delete("cancelled");
+    nextParams.delete("cancelled_method");
+    const nextSearch = nextParams.toString();
+    navigate(
+      { pathname: location.pathname, search: nextSearch ? `?${nextSearch}` : "" },
+      { replace: true },
+    );
+  }, [
+    availableMethods.join("|"),
+    checkoutCancelled,
+    checkoutCancelledMethod,
+    location.pathname,
+    location.search,
+    navigate,
+    openCheckoutError,
+    plan,
+    startStripeCheckout,
+  ]);
 
   const startCashCheckout = useCallback(
     async () => {
@@ -1120,7 +1199,7 @@ function Checkout() {
           userMessage: `No recibimos la referencia de PayPal. Intenta de nuevo.${suffix}`,
           hint: "Si se cerró PayPal o falló la ventana, vuelve a intentarlo o cambia de método.",
           reason: "missing_subscription_id",
-          retry: () => focusCheckoutMethodButton("paypal"),
+          retry: focusPaypalWidget,
         });
         trackGrowthMetric(GROWTH_METRICS.CHECKOUT_ERROR, {
           method: "paypal",
@@ -1187,13 +1266,13 @@ function Checkout() {
           userMessage: normalized.userMessage,
           hint: normalized.hint,
           reason: normalized.reason,
-          retry: () => focusCheckoutMethodButton("paypal"),
+          retry: focusPaypalWidget,
         });
       } finally {
         setProcessingMethod(null);
       }
     },
-    [acceptRecurring, paypalPlan?.id, plan?.id, plan?.price, plan?.moneda, cookies._fbp, cookies._fbc, navigate, availableMethods.join("|"), openCheckoutError, focusCheckoutMethodButton],
+    [acceptRecurring, paypalPlan?.id, plan?.id, plan?.price, plan?.moneda, cookies._fbp, cookies._fbc, navigate, availableMethods.join("|"), openCheckoutError, focusPaypalWidget],
   );
 
   useEffect(() => {
@@ -1492,7 +1571,6 @@ function Checkout() {
     selectedMethod === "paypal" &&
     processingMethod === null &&
     hasPaypalPlan &&
-    Boolean(currentUser?.email) &&
     Boolean(paypalPlan);
 
   const methodBlurb = (() => {
@@ -1664,6 +1742,7 @@ function Checkout() {
               {shouldShowPaypalInline ? (
                 <div
                   className={`checkout2026__paypal ${processingMethod !== null ? "is-processing" : ""}`}
+                  data-testid="checkout-paypal-root"
                   aria-busy={processingMethod !== null}
                 >
                   <PayPalComponent
@@ -1673,6 +1752,53 @@ function Checkout() {
                     onBlocked={() => {
                       setInlineError("Para continuar debes aceptar el cobro recurrente (renovación automática).");
                       focusRecurringConsent();
+                    }}
+                    onCancel={() => {
+                      const alt = buildAltMethodHint("paypal", availableMethods);
+                      const suffix = alt ? ` ${alt}` : "";
+                      const value = Number(plan?.price) || 0;
+                      const currency = (plan?.moneda?.toUpperCase() || "USD").toUpperCase();
+
+                      openCheckoutError({
+                        method: "paypal",
+                        userMessage: `No se completó PayPal. Puedes reintentar.${suffix}`,
+                        hint: "Si cerraste PayPal por error, vuelve a intentarlo o cambia de método.",
+                        reason: "paypal_cancelled",
+                        retry: focusPaypalWidget,
+                      });
+
+                      trackGrowthMetric(GROWTH_METRICS.CHECKOUT_ERROR, {
+                        method: "paypal",
+                        planId: plan?.id ?? null,
+                        currency,
+                        amount: value,
+                        reason: "paypal_cancelled",
+                        errorCode: "paypal_cancelled",
+                      });
+                    }}
+                    onError={(err: unknown) => {
+                      const normalized = normalizeCheckoutError({
+                        method: "paypal",
+                        error: err,
+                        availableMethods,
+                      });
+                      const value = Number(plan?.price) || 0;
+                      const currency = (plan?.moneda?.toUpperCase() || "USD").toUpperCase();
+                      trackGrowthMetric(GROWTH_METRICS.CHECKOUT_ERROR, {
+                        method: "paypal",
+                        planId: plan?.id ?? null,
+                        currency,
+                        amount: value,
+                        reason: normalized.reason,
+                        errorCode: normalized.errorCode,
+                      });
+                      openCheckoutError({
+                        method: "paypal",
+                        userMessage: normalized.userMessage,
+                        hint: normalized.hint,
+                        reason: normalized.reason,
+                        retry: focusPaypalWidget,
+                      });
                     }}
                     onApprove={(data: any) => {
                       void startPaypalCheckout(data);

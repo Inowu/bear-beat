@@ -18,6 +18,8 @@ interface Props {
     onClick: () => void;
     canProceed?: boolean;
     onBlocked?: () => void;
+    onCancel?: () => void;
+    onError?: (error: unknown) => void;
     type: 'subscription' | 'order',
     plan: IPlans
 }
@@ -29,6 +31,8 @@ export default function PayPalComponent(props: Props) {
     const isMountedRef = useRef(true);
     const canProceedRef = useRef<boolean | undefined>(props.canProceed);
     const onBlockedRef = useRef<(() => void) | undefined>(props.onBlocked);
+    const onCancelRef = useRef<(() => void) | undefined>(props.onCancel);
+    const onErrorRef = useRef<((error: unknown) => void) | undefined>(props.onError);
     const attemptRef = useRef(0);
     const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
     const [errorCopy, setErrorCopy] = useState("");
@@ -48,7 +52,9 @@ export default function PayPalComponent(props: Props) {
     useEffect(() => {
         canProceedRef.current = props.canProceed;
         onBlockedRef.current = props.onBlocked;
-    }, [props.canProceed, props.onBlocked]);
+        onCancelRef.current = props.onCancel;
+        onErrorRef.current = props.onError;
+    }, [props.canProceed, props.onBlocked, props.onCancel, props.onError]);
 
     const handleManyChat = async () => {
         try {
@@ -122,27 +128,36 @@ export default function PayPalComponent(props: Props) {
             props.onClick();
             void trpc.checkoutLogs.registerCheckoutLog.mutate().catch(() => { });
             handleManyChat();
-            // Revisar si el usuario tiene una suscripcion activa
-            const me = await trpc.auth.me.query();
-            if (me.hasActiveSubscription) return actions.reject();
-            const existingOrder = await trpc.orders.ownOrders.query({
-                where: {
-                    AND: [
-                        {
-                            status: 0,
-                        },
-                        {
-                            payment_method: "Paypal",
-                        },
-                    ],
-                },
-            });
+            try {
+                // Revisar si el usuario tiene una suscripcion activa
+                const me = await trpc.auth.me.query();
+                if (me.hasActiveSubscription) return actions.reject();
+                const existingOrder = await trpc.orders.ownOrders.query({
+                    where: {
+                        AND: [
+                            {
+                                status: 0,
+                            },
+                            {
+                                payment_method: "Paypal",
+                            },
+                        ],
+                    },
+                });
 
-            if (existingOrder.length > 0) {
+                if (existingOrder.length > 0) {
+                    return actions.reject();
+                }
+
+                return actions.resolve();
+            } catch (err: any) {
+                if (!isMountedRef.current) return actions.reject();
+                if (attemptId !== attemptRef.current) return actions.reject();
+                onErrorRef.current?.(err);
+                setStatus("error");
+                setErrorCopy("No pudimos validar PayPal. Revisa tu conexión e intenta de nuevo.");
                 return actions.reject();
             }
-
-            return actions.resolve();
         }
 
         async function createOrder(data: any, actions: CreateOrderActions) {
@@ -181,6 +196,11 @@ export default function PayPalComponent(props: Props) {
                 if (import.meta.env.DEV) {
                     console.warn("[PAYPAL] createSubscription failed.");
                 }
+                if (isMountedRef.current && attemptId === attemptRef.current) {
+                    setStatus("error");
+                    setErrorCopy("No pudimos completar PayPal. Intenta de nuevo o elige otro método.");
+                }
+                onErrorRef.current?.(e);
             }
             return "";
         }
@@ -219,6 +239,14 @@ export default function PayPalComponent(props: Props) {
                         fundingSource: "paypal",
                         onApprove: onApproveOrder,
                         createOrder,
+                        onCancel: () => onCancelRef.current?.(),
+                        onError: (err: any) => {
+                            if (!isMountedRef.current) return;
+                            if (attemptId !== attemptRef.current) return;
+                            onErrorRef.current?.(err);
+                            setStatus("error");
+                            setErrorCopy("No pudimos completar PayPal. Intenta de nuevo o elige otro método.");
+                        },
                     }, attemptId);
                 })
                 .catch(() => {
@@ -246,6 +274,14 @@ export default function PayPalComponent(props: Props) {
                         onApprove: onApproveSubsciption,
                         createSubscription,
                         onClick: onClickButton,
+                        onCancel: () => onCancelRef.current?.(),
+                        onError: (err: any) => {
+                            if (!isMountedRef.current) return;
+                            if (attemptId !== attemptRef.current) return;
+                            onErrorRef.current?.(err);
+                            setStatus("error");
+                            setErrorCopy("No pudimos completar PayPal. Intenta de nuevo o elige otro método.");
+                        },
                     }, attemptId);
                 })
                 .catch(() => {
