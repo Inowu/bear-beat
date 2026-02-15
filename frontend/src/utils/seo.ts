@@ -2,15 +2,17 @@
  * SEO por ruta: actualiza <title>, meta description, canonical y og/twitter url al navegar (SPA).
  */
 
+import { FALLBACK_CATALOG_TOTAL_TB_LABEL } from "./catalogFallback";
+
 const BASE_URL = "https://thebearbeat.com";
 const BASE_TITLE = "Bear Beat";
 const BASE_DESC = "Librería de música y videos exclusivos para DJs. 500 GB cada mes por FTP, contenido organizado por géneros.";
 const HOME_DESC =
-  "Membresía para DJs: video remixes, audios y karaokes. Catálogo 14.14 TB, 500 GB/mes. Prueba 7 días + 100 GB (solo tarjeta, 1ª vez).";
+  `Membresía para DJs: video remixes, audios y karaokes. Catálogo ${FALLBACK_CATALOG_TOTAL_TB_LABEL}, 500 GB/mes. Prueba 7 días + 100 GB (solo tarjeta, 1ª vez).`;
 
 export const ROUTE_SEO: Record<string, { title: string; description: string }> = {
   "/": {
-    title: `${BASE_TITLE} – Membresía para DJs (videos, remixes y karaokes) | 14.14 TB + 500 GB/mes`,
+    title: `${BASE_TITLE} – Membresía para DJs (videos, remixes y karaokes) | ${FALLBACK_CATALOG_TOTAL_TB_LABEL} + 500 GB/mes`,
     description: HOME_DESC,
   },
   "/auth": {
@@ -30,9 +32,9 @@ export const ROUTE_SEO: Record<string, { title: string; description: string }> =
     description: "Establece tu nueva contraseña de Bear Beat.",
   },
   "/planes": {
-    title: `Planes y precios | ${BASE_TITLE} – 14.14 TB + 500 GB/mes (MXN o USD)`,
+    title: `Planes y precios | ${BASE_TITLE} – ${FALLBACK_CATALOG_TOTAL_TB_LABEL} + 500 GB/mes (MXN o USD)`,
     description:
-      "Elige MXN (México) o USD (internacional). Catálogo 14.14 TB, 500 GB/mes. Prueba 7 días + 100 GB (solo tarjeta, 1ª vez).",
+      `Elige MXN (México) o USD (internacional). Catálogo ${FALLBACK_CATALOG_TOTAL_TB_LABEL}, 500 GB/mes. Prueba 7 días + 100 GB (solo tarjeta, 1ª vez).`,
   },
   "/comprar": {
     title: `Comprar | ${BASE_TITLE}`,

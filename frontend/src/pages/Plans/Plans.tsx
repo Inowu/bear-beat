@@ -7,6 +7,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 import { AlertTriangle, Check, Layers3, RefreshCw } from "src/icons";
 import { formatInt, formatTB } from "../../utils/format";
+import { FALLBACK_CATALOG_TOTAL_FILES, FALLBACK_CATALOG_TOTAL_GB } from "../../utils/catalogFallback";
 import PublicTopNav from "../../components/PublicTopNav/PublicTopNav";
 import PaymentMethodLogos from "../../components/PaymentMethodLogos/PaymentMethodLogos";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../utils/growthMetrics";
@@ -172,8 +173,8 @@ function Plans() {
       toNumber(catalogSummary?.totalFiles) > 0 &&
       toNumber(catalogSummary?.totalGB) > 0;
 
-    const totalFiles = hasLive ? toNumber(catalogSummary?.totalFiles) : 248_321;
-    const totalGB = hasLive ? toNumber(catalogSummary?.totalGB) : 14_140;
+    const totalFiles = hasLive ? toNumber(catalogSummary?.totalFiles) : FALLBACK_CATALOG_TOTAL_FILES;
+    const totalGB = hasLive ? toNumber(catalogSummary?.totalGB) : FALLBACK_CATALOG_TOTAL_GB;
     const totalTB = totalGB / 1000;
 
     const planGigasCandidates = [
