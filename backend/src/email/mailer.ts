@@ -124,7 +124,6 @@ export async function sendWelcomeEmail(params: { userId: number; toEmail: string
     await sendEmail({ to: [toEmail], subject: tpl.subject, html: tpl.html, text: tpl.text });
   } catch (e) {
     log.warn('[EMAIL] Welcome email failed (non-blocking)', {
-      userId,
       error: e instanceof Error ? e.message : e,
     });
   }
@@ -138,7 +137,6 @@ export async function sendPasswordResetEmail(params: { userId: number; toEmail: 
     await sendEmail({ to: [toEmail], subject: tpl.subject, html: tpl.html, text: tpl.text });
   } catch (e) {
     log.warn('[EMAIL] Password reset email failed (non-blocking)', {
-      userId,
       error: e instanceof Error ? e.message : e,
     });
   }
@@ -174,7 +172,6 @@ export async function sendPlanActivatedEmail(params: { userId: number; toEmail: 
     await sendEmail({ to: [toEmail], subject: tpl.subject, html: tpl.html, text: tpl.text });
   } catch (e) {
     log.warn('[EMAIL] Plan activated email failed (non-blocking)', {
-      userId,
       error: e instanceof Error ? e.message : e,
     });
   }
@@ -212,7 +209,6 @@ export async function sendCancellationConfirmedEmail(params: {
     await sendEmail({ to: [toEmail], subject: tpl.subject, html: tpl.html, text: tpl.text });
   } catch (e) {
     log.warn('[EMAIL] Cancellation confirmed email failed (non-blocking)', {
-      userId,
       error: e instanceof Error ? e.message : e,
     });
   }
@@ -248,7 +244,6 @@ export async function sendCancellationEndingSoonEmail(params: {
     await sendEmail({ to: [toEmail], subject: tpl.subject, html: tpl.html, text: tpl.text });
   } catch (e) {
     log.warn('[EMAIL] Cancellation ending soon email failed (non-blocking)', {
-      userId,
       error: e instanceof Error ? e.message : e,
     });
   }

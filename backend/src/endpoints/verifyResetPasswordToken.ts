@@ -10,7 +10,7 @@ export const verifyResetPasswordToken = async (req: Request, res: Response) => {
   const token = req.query.token as string;
 
   if (!token || typeof token !== 'string') {
-    log.error(`[RESET_PASSWORD] Invalid token ${token}`);
+    log.warn('[RESET_PASSWORD] Missing or invalid token');
     return res.redirect(
       'http://thebearbeat.com/reset-password?error=invalid_token',
     );

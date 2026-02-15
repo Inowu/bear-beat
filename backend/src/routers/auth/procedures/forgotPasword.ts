@@ -49,7 +49,7 @@ export const forgotPassword = publicProcedure
       },
     });
 
-    log.info('[FORGOT_PASSWORD] Sending password reset email', { userId: user.id });
+    log.info('[FORGOT_PASSWORD] Sending password reset email');
 
     const link = `${process.env.CLIENT_URL}/auth/reset-password?token=${token}&userId=${user.id}`;
 
@@ -69,10 +69,17 @@ export const forgotPassword = publicProcedure
     // Optional WhatsApp: best-effort (do not break the flow).
     if (user.phone) {
       try {
-        log.info('[TWILIO] Sending WhatsApp password reset link', { userId: user.id });
+        log.info('[TWILIO] Sending WhatsApp password reset link');
         await twilio.sendMessage(user.phone, link);
       } catch (error) {
-        log.error('[TWILIO_SEND_MESSAGE_ERROR]', error);
+        const meta: Record<string, unknown> = {};
+        if (error && typeof error === 'object') {
+          const anyErr = error as any;
+          if (typeof anyErr.code === 'string' || typeof anyErr.code === 'number') meta.code = anyErr.code;
+          if (typeof anyErr.status === 'number') meta.status = anyErr.status;
+          if (typeof anyErr.moreInfo === 'string') meta.moreInfo = anyErr.moreInfo;
+        }
+        log.error('[TWILIO] WhatsApp password reset send failed', meta);
       }
     }
 
