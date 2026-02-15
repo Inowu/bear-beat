@@ -19,7 +19,7 @@ jobs:
       # since the repo has legacy history findings that require rotation/rewrite
       # work and would otherwise block every PR.
       - name: gitleaks (no-git)
-        uses: gitleaks/gitleaks-action@v2
+        uses: docker://zricethezav/gitleaks:latest
         with:
           args: >-
             detect
