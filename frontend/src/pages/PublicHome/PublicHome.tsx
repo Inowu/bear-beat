@@ -8,7 +8,6 @@ import PublicTopNav from "../../components/PublicTopNav/PublicTopNav";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../utils/growthMetrics";
 import { FALLBACK_GENRES, type GenreStats } from "./fallbackGenres";
-import type { IPlans } from "../../interfaces/Plans";
 import { getHomeCtaPrimaryLabel, HOME_HERO_MICROCOPY_BASE, HOME_HERO_MICROCOPY_TRIAL } from "./homeCopy";
 import {
   HOME_NUMBER_LOCALE,
@@ -75,71 +74,11 @@ function detectPreferredCurrency(): "mxn" | "usd" {
   return "mxn";
 }
 
-function parsePrice(value: string | null | undefined): number {
-  const raw = `${value ?? ""}`.trim();
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function normalizeCurrency(value: string | null | undefined): "mxn" | "usd" | null {
-  const cur = `${value ?? ""}`.trim().toLowerCase();
-  if (cur === "mxn") return "mxn";
-  if (cur === "usd") return "usd";
-  return null;
-}
-
-function hasPaypal(plan: IPlans): boolean {
-  return Boolean(plan.paypal_plan_id || plan.paypal_plan_id_test);
-}
-
-function pickBestPlan(plans: IPlans[], currency: "mxn" | "usd"): IPlans | null {
-  let best: IPlans | null = null;
-
-  for (const plan of plans) {
-    if (plan.id === 41) continue;
-    const planCurrency = normalizeCurrency(plan.moneda);
-    if (planCurrency !== currency) continue;
-
-    const price = parsePrice(plan.price);
-    const gigas = Number(plan.gigas ?? 0);
-    if (price <= 0 || gigas <= 0) continue;
-
-    if (!best) {
-      best = plan;
-      continue;
-    }
-
-    const bestPrice = parsePrice(best.price);
-    const bestPaypal = hasPaypal(best) ? 1 : 0;
-    const candidatePaypal = hasPaypal(plan) ? 1 : 0;
-
-    if (
-      price < bestPrice ||
-      (price === bestPrice && candidatePaypal > bestPaypal) ||
-      (price === bestPrice && candidatePaypal === bestPaypal && plan.id < best.id)
-    ) {
-      best = plan;
-    }
-  }
-
-  return best;
-}
-
 function prettyMediaName(value: string): string {
   const name = `${value ?? ""}`.trim();
   if (!name) return "";
   const noExt = name.replace(/\.[a-z0-9]{2,5}$/i, "");
   return noExt.replace(/[_]+/g, " ").replace(/\s+/g, " ").trim();
-}
-
-function toPricingPlan(plan: IPlans, currency: "mxn" | "usd"): PricingPlan {
-  return {
-    currency,
-    name: (plan.name ?? "").trim() || "Membresía Bear Beat",
-    price: parsePrice(plan.price),
-    gigas: Number(plan.gigas ?? 0),
-    hasPaypal: hasPaypal(plan),
-  };
 }
 
 function formatMonthlyCurrencyHint(amount: number | null | undefined, currency: "mxn" | "usd"): string {
@@ -166,7 +105,10 @@ export default function PublicHome() {
   const [trialConfig, setTrialConfig] = useState<TrialConfigResponse | null>(null);
   const [catalogSummary, setCatalogSummary] = useState<PublicCatalogSummary | null>(null);
   const [topDownloads, setTopDownloads] = useState<PublicTopDownloadsResponse | null>(null);
-  const [plans, setPlans] = useState<IPlans[]>([]);
+  const [pricingPlans, setPricingPlans] = useState<{ mxn: PricingPlan | null; usd: PricingPlan | null }>({
+    mxn: null,
+    usd: null,
+  });
   const [showDemo, setShowDemo] = useState(false);
 
   const pricingRef = useRef<HTMLDivElement | null>(null);
@@ -276,12 +218,32 @@ export default function PublicHome() {
 
     (async () => {
       try {
-        const body = { where: { activated: 1 } };
-        const fetched = (await trpc.plans.findManyPlans.query(body)) as unknown;
-        const asArray = Array.isArray(fetched) ? (fetched as IPlans[]) : [];
-        if (!cancelled) setPlans(asArray);
+        const response: any = await trpc.plans.getPublicBestPlans.query();
+        const mxn = response?.mxn ?? null;
+        const usd = response?.usd ?? null;
+        if (cancelled) return;
+        setPricingPlans({
+          mxn: mxn
+            ? ({
+                currency: "mxn",
+                name: String(mxn?.name ?? "").trim() || "Membresía Bear Beat",
+                price: Number(mxn?.price ?? 0),
+                gigas: Number(mxn?.gigas ?? 0),
+                hasPaypal: Boolean(mxn?.hasPaypal),
+              } satisfies PricingPlan)
+            : null,
+          usd: usd
+            ? ({
+                currency: "usd",
+                name: String(usd?.name ?? "").trim() || "Membresía Bear Beat",
+                price: Number(usd?.price ?? 0),
+                gigas: Number(usd?.gigas ?? 0),
+                hasPaypal: Boolean(usd?.hasPaypal),
+              } satisfies PricingPlan)
+            : null,
+        });
       } catch {
-        if (!cancelled) setPlans([]);
+        if (!cancelled) setPricingPlans({ mxn: null, usd: null });
       }
     })();
 
@@ -307,16 +269,6 @@ export default function PublicHome() {
     }
     return HOME_HERO_MICROCOPY_BASE;
   }, [trialSummary?.enabled]);
-
-  const pricingPlans = useMemo(() => {
-    const bestMxn = pickBestPlan(plans, "mxn");
-    const bestUsd = pickBestPlan(plans, "usd");
-
-    return {
-      mxn: bestMxn ? toPricingPlan(bestMxn, "mxn") : null,
-      usd: bestUsd ? toPricingPlan(bestUsd, "usd") : null,
-    } as { mxn: PricingPlan | null; usd: PricingPlan | null };
-  }, [plans]);
 
   const afterPriceLabel = useMemo(() => {
     return formatMonthlyDualHint(pricingPlans.mxn?.price, pricingPlans.usd?.price);
