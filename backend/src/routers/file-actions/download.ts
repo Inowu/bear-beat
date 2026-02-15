@@ -3,6 +3,11 @@ import { TRPCError } from '@trpc/server';
 import { fileService } from '../../ftp';
 import { log } from '../../server';
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
+import {
+  inferDownloadHistoryRollupCategories,
+  normalizeDownloadHistoryFileName,
+  toUtcDay,
+} from '../../utils/downloadHistoryRollup';
 
 export const download = shieldedProcedure
   .input(
@@ -68,7 +73,7 @@ export const download = shieldedProcedure
 
     if (!ftpUser) {
       log.error(
-        `[File Download] This user does not have an ftp user (${user.id})`,
+        `[File Download] This user does not have an ftp user`,
       );
 
       throw new TRPCError({
@@ -110,20 +115,69 @@ export const download = shieldedProcedure
       });
     }
 
-    await prisma.downloadHistory.create({
-      data: {
-        userId: user.id,
-        size: fileStat.size,
-        date: new Date(),
-        fileName: path,
-        isFolder: false
+    const downloadedAt = new Date();
+    try {
+      await prisma.downloadHistory.create({
+        data: {
+          userId: user.id,
+          size: fileStat.size,
+          date: downloadedAt,
+          fileName: path,
+          isFolder: false,
+        },
+      });
+    } catch (e: any) {
+      log.warn(
+        `[File Download] Failed to write download_history: ${e?.message ?? e}`,
+      );
+    }
+
+    const normalizedFileName = normalizeDownloadHistoryFileName(path);
+    const categories = normalizedFileName
+      ? inferDownloadHistoryRollupCategories(normalizedFileName)
+      : [];
+    if (normalizedFileName && categories.length > 0) {
+      const day = toUtcDay(downloadedAt);
+      for (const category of categories) {
+        try {
+          await prisma.downloadHistoryRollupDaily.upsert({
+            where: {
+              category_day_fileName: {
+                category,
+                day,
+                fileName: normalizedFileName,
+              },
+            },
+            create: {
+              category,
+              day,
+              fileName: normalizedFileName,
+              downloads: BigInt(1),
+              totalBytes: BigInt(fileStat.size),
+              lastDownload: downloadedAt,
+            },
+            update: {
+              downloads: {
+                increment: BigInt(1),
+              },
+              totalBytes: {
+                increment: BigInt(fileStat.size),
+              },
+              lastDownload: downloadedAt,
+            },
+          });
+        } catch (e: any) {
+          log.warn(
+            `[File Download] Failed to write download_history_rollup_daily: ${e?.message ?? e}`,
+          );
+        }
       }
-    });
+    }
 
     const stream = await fileService.get(fullPath);
 
     log.info(
-      `[File Download] id: ${user?.id}, username: ${user?.username}, bytes: ${availableBytes}`,
+      `[File Download] bytes: ${availableBytes}`,
     );
 
     await prisma.$transaction([

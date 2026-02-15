@@ -405,6 +405,21 @@ model DownloadHistory {
   @@map("download_history")
 }
 
+model DownloadHistoryRollupDaily {
+  // Category for public "Top Downloads" (audio/video/karaoke). Stored as string for easy raw SQL/backfills.
+  category   String   @db.VarChar(16)
+  // Daily bucket. Use UTC day boundaries in app/scripts for stable rollups.
+  day        DateTime @db.Date
+  fileName   String   @db.VarChar(500)
+  downloads  BigInt   @default(0) @db.UnsignedBigInt
+  totalBytes BigInt   @default(0) @db.UnsignedBigInt
+  lastDownload DateTime @db.DateTime(0)
+
+  @@id([category, day, fileName])
+  @@index([day], map: "idx_dh_rollup_day")
+  @@map("download_history_rollup_daily")
+}
+
 model TrackMetadata {
   id              Int      @id @default(autoincrement())
   path            String   @unique(map: "uniq_track_metadata_path") @db.VarChar(700)
