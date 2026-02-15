@@ -50,6 +50,9 @@ const DEFAULT_CORS_ORIGINS = [
   'http://localhost:4173',
   'https://thebearbeat.com',
   'https://www.thebearbeat.com',
+  // Netlify previews/staging (public marketing QA).
+  'https://staging--incredible-druid-62114b.netlify.app',
+  'https://deploy-preview-*--incredible-druid-62114b.netlify.app',
 ];
 
 const getAllowedCorsOrigins = (): string[] => {
@@ -62,6 +65,20 @@ const getAllowedCorsOrigins = (): string[] => {
     .filter(Boolean);
 
   return parsed.length ? parsed : DEFAULT_CORS_ORIGINS;
+};
+
+const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const matchesCorsOriginPattern = (pattern: string, origin: string): boolean => {
+  if (!pattern.includes('*')) return pattern === origin;
+  const re = new RegExp(`^${escapeRegex(pattern).replace(/\\\*/g, '.*')}$`);
+  return re.test(origin);
+};
+
+const isAllowedCorsOrigin = (origin: string, allowedOrigins: string[]): boolean => {
+  const needle = origin.trim();
+  if (!needle) return false;
+  return allowedOrigins.some((pattern) => matchesCorsOriginPattern(pattern, needle));
 };
 
 const toPositiveInt = (value: string | undefined, fallback = 0): number => {
@@ -112,8 +129,8 @@ async function main() {
             callback(null, false);
             return;
           }
-          if (allowedOrigins.includes(origin)) {
-            callback(null, origin);
+          if (isAllowedCorsOrigin(origin, allowedOrigins)) {
+            callback(null, origin.trim());
             return;
           }
           callback(null, false);
