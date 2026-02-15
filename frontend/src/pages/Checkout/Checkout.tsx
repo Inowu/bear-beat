@@ -170,6 +170,7 @@ function normalizeCheckoutError(opts: {
   method: CheckoutMethod;
   error: unknown;
   availableMethods: CheckoutMethod[];
+  couponCode?: string | null;
 }): {
   userMessage: string;
   hint?: string;
@@ -193,9 +194,10 @@ function normalizeCheckoutError(opts: {
   const altSuffix = alt ? ` ${alt}` : "";
 
   const trpcCode = extractTrpcCode(opts.error);
+  const mentionsCoupon = /cup[oó]n|coupon|promotion code|promo code/i.test(raw);
   const isUnauthorized =
     trpcCode === "UNAUTHORIZED" ||
-    trpcCode === "FORBIDDEN" ||
+    (trpcCode === "FORBIDDEN" && !mentionsCoupon) ||
     /unauthorized|forbidden|not authorized|no autorizado|sesion expirada|session expired|jwt expired/i.test(raw);
 
   if (isUnauthorized) {
@@ -207,14 +209,34 @@ function normalizeCheckoutError(opts: {
     };
   }
 
-  const isInvalidCoupon =
-    opts.method === "card" &&
-    /coupon|promotion code|promo code/i.test(msg) &&
-    /no such|invalid|expired/i.test(msg);
+  const isInvalidCoupon = (() => {
+    if (opts.method !== "card") return false;
+    if (!opts.couponCode) return false;
+
+    const mentionsCoupon = /cup[oó]n|coupon|promotion code|promo code/i.test(raw);
+    if (!mentionsCoupon) return false;
+
+    const trpcCouponCodes = new Set(["NOT_FOUND", "BAD_REQUEST", "FORBIDDEN"]);
+    const isTrpcCouponError = trpcCode ? trpcCouponCodes.has(trpcCode) : false;
+
+    const msgLooksLikeCouponFailure =
+      /no such|invalid|expired|expir|no existe|no encontrado|ya fue usado|ya usado|no est[aá] disponible|not available|already used|redeemed/i.test(
+        msg,
+      );
+
+    return isTrpcCouponError || msgLooksLikeCouponFailure;
+  })();
 
   if (isInvalidCoupon) {
+    const usedCopy = /ya fue usado|ya usado|already used|redeemed/i.test(msg);
+    const forbiddenCopy = /no est[aá] disponible|not available/i.test(msg) || trpcCode === "FORBIDDEN";
+    const userMessage = forbiddenCopy
+      ? "Este cupón no está disponible para tu cuenta. Puedes continuar sin cupón."
+      : usedCopy
+        ? "Este cupón ya fue usado. Puedes continuar sin cupón."
+        : "El cupón no es válido o ya expiró. Puedes continuar sin cupón.";
     return {
-      userMessage: "El cupón no es válido o ya expiró. Puedes continuar sin cupón.",
+      userMessage,
       hint: "Si el cupón venía en el enlace, quítalo e intenta de nuevo.",
       reason: "invalid_coupon",
       errorCode: "invalid_coupon",
@@ -346,7 +368,7 @@ function Checkout() {
     const raw = typeof couponParamRaw === "string" ? couponParamRaw.trim() : "";
     if (!raw) return null;
     // Avoid passing arbitrary/unbounded strings to the backend from the URL.
-    if (!/^[a-z0-9_-]{3,32}$/i.test(raw)) return null;
+    if (!/^[a-z0-9_-]{2,32}$/i.test(raw)) return null;
     return raw;
   })();
   const { currentUser, handleLogout } = useUserContext();
@@ -844,6 +866,7 @@ function Checkout() {
         method: "card",
         error: err,
         availableMethods,
+        couponCode,
       });
       openCheckoutError({
         method: "card",
