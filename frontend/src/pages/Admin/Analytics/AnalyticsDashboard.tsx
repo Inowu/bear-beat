@@ -18,6 +18,7 @@ import trpc from "../../../api";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import Pagination from "../../../components/Pagination/Pagination";
 import { Spinner } from "../../../components/Spinner/Spinner";
+import { Input, Select } from "../../../components/ui";
 import "./AnalyticsDashboard.scss";
 
 interface FunnelOverview {
@@ -338,51 +339,54 @@ export function AnalyticsDashboard() {
   }, [fetchAnalytics]);
 
   const toolbar = (
-    <div className="analytics-toolbar">
-      <div className="analytics-toolbar__group">
-        <label className="analytics-toolbar__range">
-          Ventana de análisis
-          <select
-            value={rangeDays}
-            onChange={(event) => {
-              // Reset pagination to keep tables stable when the window changes.
-              setRangeDays(Number(event.target.value));
-              setAttributionPage(0);
-              setTopEventsPage(0);
-              setUxRoutesPage(0);
-            }}
-          >
-            {RANGE_OPTIONS.map((days) => (
-              <option key={days} value={days}>
-                {days} días
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="analytics-toolbar__range">
-          Inversión mensual (MXN)
-          <input
-            type="number"
-            min={0}
-            step={0.01}
-            value={manualAdSpend}
-            onChange={(event) => setManualAdSpend(event.target.value)}
-            placeholder="Opcional"
-          />
-        </label>
-      </div>
-      <div className="analytics-toolbar__actions">
-        <span className="analytics-toolbar__updated">
-          <CalendarClock size={14} />
+    <div className="flex flex-wrap items-end gap-2 w-full">
+      <label className="inline-flex flex-col gap-1 text-sm text-text-muted min-w-[220px]">
+        Ventana de análisis
+        <Select
+          value={rangeDays}
+          onChange={(event) => {
+            // Reset pagination to keep tables stable when the window changes.
+            setRangeDays(Number(event.target.value));
+            setAttributionPage(0);
+            setTopEventsPage(0);
+            setUxRoutesPage(0);
+          }}
+        >
+          {RANGE_OPTIONS.map((days) => (
+            <option key={days} value={days}>
+              {days} días
+            </option>
+          ))}
+        </Select>
+      </label>
+
+      <label className="inline-flex flex-col gap-1 text-sm text-text-muted min-w-[220px]">
+        Inversión mensual (MXN)
+        <Input
+          type="number"
+          min={0}
+          step={0.01}
+          value={manualAdSpend}
+          onChange={(event) => setManualAdSpend(event.target.value)}
+          placeholder="Opcional"
+        />
+      </label>
+
+      <div className="ml-auto flex flex-wrap items-center gap-2">
+        <span
+          className="inline-flex items-center gap-2 min-h-[44px] rounded-xl px-3 border border-border bg-bg-card text-text-muted text-sm font-medium"
+          role="status"
+        >
+          <CalendarClock size={16} aria-hidden />
           Actualizado: {formatDateTime(lastUpdatedAt)}
         </span>
         <button
           type="button"
           onClick={() => void fetchAnalytics()}
           disabled={loading}
-          className="analytics-toolbar__refresh"
+          className="inline-flex items-center gap-2 bg-bear-gradient text-bear-dark-500 hover:opacity-95 font-medium rounded-pill px-4 py-2 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
         >
-          <RefreshCw size={16} className={loading ? "is-spinning" : ""} />
+          <RefreshCw size={16} className={loading ? "animate-spin" : ""} aria-hidden />
           {loading ? "Actualizando..." : "Actualizar"}
         </button>
       </div>
