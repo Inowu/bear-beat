@@ -27,4 +27,3 @@ jobs:
             --redact
             --verbose
             --source .
-            --exclude-path docs/audit/lighthouse
