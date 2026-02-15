@@ -253,71 +253,6 @@
   text-transform: uppercase;
 }
 
-.plans2026__currency-switch {
-  position: relative;
-  width: min(280px, 100%);
-  margin: 0 auto;
-  padding: 4px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--ph-border) 78%, transparent);
-  background: color-mix(in srgb, var(--ph-bg-soft) 70%, transparent);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  overflow: hidden;
-  transform: translateZ(0);
-}
-
-.plans2026__currency-switch::before {
-  content: "";
-  position: absolute;
-  top: 4px;
-  bottom: 4px;
-  left: 4px;
-  width: calc(50% - 4px);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--ph-accent) 16%, var(--ph-bg-card));
-  border: 1px solid color-mix(in srgb, var(--ph-accent) 18%, transparent);
-  box-shadow: 0 10px 22px color-mix(in srgb, #000000 22%, transparent);
-  transition: transform 160ms ease;
-}
-
-.plans2026__currency-switch.is-usd::before {
-  transform: translateX(100%);
-}
-
-.plans2026__currency-btn {
-  position: relative;
-  z-index: 1;
-  appearance: none;
-  border: none;
-  background: transparent;
-  min-height: 40px;
-  border-radius: 999px;
-  cursor: pointer;
-  font-size: 1.2rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--ph-text-muted) 96%, transparent);
-  transition: color 140ms ease;
-}
-
-.plans2026__currency-btn[aria-checked="true"] {
-  color: var(--ph-text-heading);
-}
-
-.plans2026__currency-btn:focus-visible {
-  outline: 2px solid var(--app-focus-ring);
-  outline-offset: 3px;
-}
-
-.plans2026__currency-btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
 .plans2026__price {
   text-align: center;
   display: grid;
@@ -553,20 +488,8 @@ html[data-theme="light"] .plans2026__card {
   box-shadow: 0 12px 26px rgba(15, 23, 42, 0.055);
 }
 
-html[data-theme="light"] .plans2026__currency-switch {
-  border-color: color-mix(in srgb, var(--ph-border) 92%, transparent);
-  background: color-mix(in srgb, #ffffff 98.8%, var(--ph-bg-soft));
-}
-
-html[data-theme="light"] .plans2026__currency-switch::before {
-  background: color-mix(in srgb, var(--ph-accent) 10%, #ffffff);
-  border-color: color-mix(in srgb, var(--ph-accent) 22%, transparent);
-  box-shadow: 0 12px 22px rgba(15, 23, 42, 0.12);
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .plans2026__cta,
-  .plans2026__currency-switch::before {
+  .plans2026__cta {
     transition: none !important;
   }
 }
