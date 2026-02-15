@@ -19,7 +19,7 @@ export const canBuyMoreGB = async ({
   });
 
   if (!userFTP) {
-    log.info(`[PRODUCT:PURCHASE] User ${user.id} does not have an FTP`);
+    log.info('[PRODUCT:PURCHASE] User does not have an FTP');
 
     throw new TRPCError({
       code: 'BAD_REQUEST',
@@ -34,7 +34,7 @@ export const canBuyMoreGB = async ({
   });
 
   if (!quotaLimits) {
-    log.info(`[PRODUCT:PURCHASE] User ${user.id} does not have a quota limit`);
+    log.info('[PRODUCT:PURCHASE] User does not have a quota limit');
 
     throw new TRPCError({
       code: 'BAD_REQUEST',
@@ -49,7 +49,7 @@ export const canBuyMoreGB = async ({
   });
 
   if (!quotaTallies) {
-    log.info(`[PRODUCT:PURCHASE] User ${user.id} does not have quota tallies`);
+    log.info('[PRODUCT:PURCHASE] User does not have quota tallies');
 
     throw new TRPCError({
       code: 'BAD_REQUEST',
@@ -60,7 +60,7 @@ export const canBuyMoreGB = async ({
   // This causes problems when the user has space available but it is not enough to download a file
 
   // if (quotaTallies.bytes_out_used < quotaLimits.bytes_out_avail) {
-  //   log.info(`[PRODUCT:PURCHASE] User ${user.id} still has storage available`);
+  //   log.info('[PRODUCT:PURCHASE] User still has storage available');
   //
   //   throw new TRPCError({
   //     code: 'CONFLICT',

@@ -251,7 +251,7 @@ export const usersRouter = router({
       });
 
       if (!user) {
-        log.error(`[BLOCK_USER] User ${userId} not found`);
+        log.error('[BLOCK_USER] User not found');
         throw new TRPCError({
           code: 'NOT_FOUND',
           message: 'Usuario no encontrado',
@@ -259,7 +259,7 @@ export const usersRouter = router({
       }
 
       try {
-        log.info(`[BLOCK_USER] Canceling subscription for user ${userId}`);
+        log.info('[BLOCK_USER] Canceling subscription for blocked user');
         await cancelServicesSubscriptions({
           prisma,
           user,
@@ -270,12 +270,12 @@ export const usersRouter = router({
           },
         });
       } catch (e) {
-        log.error(
-          `[BLOCK_USER] Error cancelling subscription for user ${userId}, ${e}`,
-        );
+        log.error('[BLOCK_USER] Error cancelling subscription', {
+          errorType: e instanceof Error ? e.name : typeof e,
+        });
       }
 
-      log.info(`[BLOCK_USER] Blocking user ${userId}`);
+      log.info('[BLOCK_USER] Blocking user');
 
       await prisma.users.update({
         where: {

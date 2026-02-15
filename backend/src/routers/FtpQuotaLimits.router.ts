@@ -152,7 +152,7 @@ export const ftpquotalimitsRouter = router({
       let useExtendedAccount = false;
 
       if (ftpAccounts.length === 0 || !regularFtpUser) {
-        log.error(`[GET_QUOTA_LIMITS] This user does not have an ftp user (${userId})`);
+        log.error('[GET_QUOTA_LIMITS] User does not have an ftp user');
 
         throw new TRPCError({
           code: 'BAD_REQUEST',
@@ -175,7 +175,7 @@ export const ftpquotalimitsRouter = router({
 
       if (!quotaLimits) {
         log.error(
-          `[GET_QUOTA_LIMITS] This user does not have quotas (${userId})`,
+          '[GET_QUOTA_LIMITS] User does not have quotas',
         );
 
         throw new TRPCError({
