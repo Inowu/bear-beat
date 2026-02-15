@@ -10,6 +10,7 @@ import { fileService } from '../ftp';
 import { log } from '../server';
 import { router } from '../trpc';
 import { extendedAccountPostfix } from '../utils/constants';
+import { toUtcDay } from '../utils/downloadHistoryRollup';
 
 interface DownloadHistory {
   id: number;
@@ -30,6 +31,11 @@ interface TopDownloadRow {
   downloads: bigint | number;
   lastDownload: Date;
   totalBytes: bigint | number;
+}
+
+interface RollupCoverageRow {
+  category: string;
+  minDay: Date | string | null;
 }
 
 interface TopDownloadItem {
@@ -199,6 +205,99 @@ const getTopDownloadsByKind = async (
     .filter((item): item is TopDownloadItem => item !== null);
 };
 
+const getTopDownloadsRollup = async (
+  prisma: PrismaClient,
+  category: TopDownloadCategory,
+  limit: number,
+  sinceDays: number,
+): Promise<TopDownloadItem[]> => {
+  const sinceDate = new Date(Date.now() - sinceDays * 24 * 60 * 60 * 1000);
+  const sinceDay = toUtcDay(sinceDate);
+  const sinceSql = sinceDays > 0 ? Prisma.sql`AND r.day >= ${sinceDay}` : Prisma.empty;
+
+  const query = Prisma.sql`
+    SELECT
+      r.fileName AS fileName,
+      SUM(r.downloads) AS downloads,
+      MAX(r.lastDownload) AS lastDownload,
+      SUM(r.totalBytes) AS totalBytes
+    FROM download_history_rollup_daily r
+    WHERE r.category = ${category}
+      AND r.fileName IS NOT NULL
+      AND r.fileName <> ''
+      ${sinceSql}
+    GROUP BY r.fileName
+    ORDER BY downloads DESC, lastDownload DESC
+    LIMIT ${limit};
+  `;
+
+  const rows = await prisma.$queryRaw<TopDownloadRow[]>(query);
+
+  return rows
+    .map((row) => {
+      const normalizedPath = normalizeCatalogPath(row.fileName);
+      const rowKind = getKindFromPath(normalizedPath);
+      if (!normalizedPath || !rowKind) {
+        return null;
+      }
+
+      if (category === 'audio' || category === 'video') {
+        if (rowKind !== category) {
+          return null;
+        }
+      }
+
+      const totalBytes = Number(row.totalBytes ?? 0);
+
+      return {
+        path: normalizedPath,
+        name: path.basename(normalizedPath),
+        type: category,
+        downloads: Number(row.downloads ?? 0),
+        totalGb: totalBytes / (1024 * 1024 * 1024),
+        lastDownload: new Date(row.lastDownload).toISOString(),
+      } as TopDownloadItem;
+    })
+    .filter((item): item is TopDownloadItem => item !== null);
+};
+
+const isPublicTopRollupReady = async (
+  prisma: PrismaClient,
+  sinceDays: number,
+): Promise<boolean> => {
+  if (sinceDays <= 0) {
+    return false;
+  }
+
+  const sinceDate = new Date(Date.now() - sinceDays * 24 * 60 * 60 * 1000);
+  const sinceDay = toUtcDay(sinceDate);
+
+  try {
+    const rows = await prisma.$queryRaw<RollupCoverageRow[]>(Prisma.sql`
+      SELECT category, MIN(day) AS minDay
+      FROM download_history_rollup_daily
+      WHERE category IN ('audio', 'video', 'karaoke')
+      GROUP BY category;
+    `);
+
+    const minDayByCategory = new Map<string, Date>();
+    for (const row of rows) {
+      if (!row?.category || !row?.minDay) continue;
+      const parsed = new Date(row.minDay);
+      if (!Number.isNaN(parsed.getTime())) {
+        minDayByCategory.set(row.category, parsed);
+      }
+    }
+
+    return (['audio', 'video', 'karaoke'] as const).every((category) => {
+      const minDay = minDayByCategory.get(category);
+      return Boolean(minDay && minDay.getTime() <= sinceDay.getTime());
+    });
+  } catch {
+    return false;
+  }
+};
+
 const getTopDownloadsKaraoke = async (
   prisma: PrismaClient,
   limit: number,
@@ -301,11 +400,18 @@ const getPublicTopDownloadsCached = async (
   }
 
   const refreshPromise = (async () => {
-    const [audio, video, karaoke] = await Promise.all([
-      getTopDownloadsByKind(prisma, 'audio', limit, sinceDays),
-      getTopDownloadsByKind(prisma, 'video', limit, sinceDays),
-      getTopDownloadsKaraoke(prisma, limit, sinceDays),
-    ]);
+    const canUseRollup = await isPublicTopRollupReady(prisma, sinceDays);
+    const [audio, video, karaoke] = canUseRollup
+      ? await Promise.all([
+          getTopDownloadsRollup(prisma, 'audio', limit, sinceDays),
+          getTopDownloadsRollup(prisma, 'video', limit, sinceDays),
+          getTopDownloadsRollup(prisma, 'karaoke', limit, sinceDays),
+        ])
+      : await Promise.all([
+          getTopDownloadsByKind(prisma, 'audio', limit, sinceDays),
+          getTopDownloadsByKind(prisma, 'video', limit, sinceDays),
+          getTopDownloadsKaraoke(prisma, limit, sinceDays),
+        ]);
 
     const snapshot: PublicTopDownloadsSnapshot = {
       limit,

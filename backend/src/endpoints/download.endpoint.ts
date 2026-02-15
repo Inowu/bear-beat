@@ -6,6 +6,11 @@ import { prisma } from '../db';
 import { SessionUser } from '../routers/auth/utils/serialize-user';
 import { log } from '../server';
 import { extendedAccountPostfix } from '../utils/constants';
+import {
+  inferDownloadHistoryRollupCategories,
+  normalizeDownloadHistoryFileName,
+  toUtcDay,
+} from '../utils/downloadHistoryRollup';
 import { resolvePathWithinRoot } from '../utils/safePaths';
 
 export const downloadEndpoint = async (req: Request, res: Response) => {
@@ -200,20 +205,63 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
 
   // Observability: log successful file downloads so PublicHome can show "Top 100" real.
   // Never break the download if analytics logging fails.
+  const downloadedAt = new Date();
   try {
     await prisma.downloadHistory.create({
       data: {
         userId: user.id,
         size: fileStat.size,
-        date: new Date(),
+        date: downloadedAt,
         fileName: requestedPath,
         isFolder: false,
       },
     });
   } catch (e: any) {
     log.warn(
-      `[DOWNLOAD] Failed to write download_history for user ${user.id}: ${e?.message ?? e}`,
+      `[DOWNLOAD] Failed to write download_history: ${e?.message ?? e}`,
     );
+  }
+
+  const normalizedFileName = normalizeDownloadHistoryFileName(requestedPath);
+  const categories = normalizedFileName
+    ? inferDownloadHistoryRollupCategories(normalizedFileName)
+    : [];
+  if (normalizedFileName && categories.length > 0) {
+    const day = toUtcDay(downloadedAt);
+    for (const category of categories) {
+      try {
+        await prisma.downloadHistoryRollupDaily.upsert({
+          where: {
+            category_day_fileName: {
+              category,
+              day,
+              fileName: normalizedFileName,
+            },
+          },
+          create: {
+            category,
+            day,
+            fileName: normalizedFileName,
+            downloads: BigInt(1),
+            totalBytes: BigInt(fileStat.size),
+            lastDownload: downloadedAt,
+          },
+          update: {
+            downloads: {
+              increment: BigInt(1),
+            },
+            totalBytes: {
+              increment: BigInt(fileStat.size),
+            },
+            lastDownload: downloadedAt,
+          },
+        });
+      } catch (e: any) {
+        log.warn(
+          `[DOWNLOAD] Failed to write download_history_rollup_daily: ${e?.message ?? e}`,
+        );
+      }
+    }
   }
 
   try {

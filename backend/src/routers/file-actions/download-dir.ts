@@ -242,26 +242,33 @@ export const downloadDir = shieldedProcedure
     }
 
     try {
-      log.info(`[DOWNLOAD:DIR] User ${user.id} is downloading ${path}`);
+      log.info(`[DOWNLOAD:DIR] Downloading ${path}`);
 
+      const downloadedAt = new Date();
       const dirDownload = await prisma.dir_downloads.create({
         data: {
           userId: user.id,
-          date: new Date(),
+          date: downloadedAt,
           size: fastFolderSizeSync(fullPath),
           dirName: Path.basename(fullPath),
         },
       });
 
-      await prisma.downloadHistory.create({
-        data: {
-          userId: user.id,
-          size: dirSize,
-          date: new Date(),
-          fileName: path,
-          isFolder: true
-        }
-      });
+      try {
+        await prisma.downloadHistory.create({
+          data: {
+            userId: user.id,
+            size: dirSize,
+            date: downloadedAt,
+            fileName: path,
+            isFolder: true,
+          },
+        });
+      } catch (e: any) {
+        log.warn(
+          `[DOWNLOAD:DIR] Failed to write download_history: ${e?.message ?? e}`,
+        );
+      }
 
       const job = await compressionQueue.add(`compress-${user.id}`, {
         songsAbsolutePath: fullPath,
