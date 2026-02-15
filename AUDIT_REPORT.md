@@ -84,7 +84,7 @@ Leyenda:
 | A-003 | Medium | Mitigado (en main) | Quick win | Frontend/Edge | Headers incompletos en producción (agregado: `frame-ancestors`/`X-Frame-Options`, `Permissions-Policy`) |
 | A-004 | Low | Mitigado (en main) | Quick win | SEO | `sitemap.xml` con `lastmod` antiguo (2025-02-03) |
 | A-005 | Medium | Mitigado (en main) | Proyecto | Frontend/Perf | Bundle principal grande y warnings de build (chunk > 500 kB, Sass `@import` deprecado) |
-| A-006 | High | Parcial (en main) | Proyecto | Dependencias | `npm audit` reporta vulnerabilidades **High** (quedan issues upstream en `conekta→axios` y advisory low en `pm2`) |
+| A-006 | High | Mitigado (en rama) | Proyecto | Dependencias | `npm audit` High mitigado forzando `conekta→axios` a `axios@1.13.5`; queda solo advisory **Low** en `pm2` (sin fix) |
 | A-010 | High | Abierto | Proyecto | AppSec/Secrets | `gitleaks` detecta **potenciales secretos** en historial git (requiere triage y posible rotación/rewrite) |
 | A-007 | Medium | Mitigado (en main) | Quick win | Backend/API | CORS/headers en API prod parecen demasiado permisivos (`Access-Control-Allow-Origin: *`) y faltan headers de hardening |
 | A-008 | Medium | Mitigado (en main) | Quick win | QA/AppSec | Tests/smoke podían disparar integraciones externas si `.env` tenía secretos; se aisló carga de env y se deshabilitaron integraciones en `NODE_ENV=test` |
@@ -195,19 +195,14 @@ Leyenda:
   - `npm audit --workspaces`:
     - JSON: `audit-artifacts/appsec-2026-02-13/deps/npm-audit.json`
     - Texto: `audit-artifacts/appsec-2026-02-13/deps/npm-audit.txt`
-  - Resumen (antes): **15 vulnerabilidades** (11 high, 4 low).
-  - Resumen (después de limpiar deps no usadas, en rama): **7 vulnerabilidades** (5 high, 2 low).  
-    Evidencia: `audit-artifacts/appsec-2026-02-13/deps/npm-audit.after-hardening.txt`
+  - Estado actual (en rama): `npm audit --workspaces` reporta **1 vulnerabilidad Low** (pm2; sin fix disponible).
+  - Nota: `conekta@7.0.7` fija `axios@1.12.2` (advisory High). Se forzó el árbol de dependencias a usar `axios@1.13.5` vía `overrides` + hardening del lockfile (sin rotación de credenciales).
 - **Cómo reproducir:**
   - `npm audit` (root / `frontend` / `backend`).
 - **Impacto:** riesgo de seguridad por CVEs/GHSAs en librerías; algunas afectan SSRF/DoS y bypasses de validación.
 - **Probabilidad:** media (depende de rutas de ejecución, pero la exposición suele ser amplia con deps web).
 - **Recomendación concreta:**
-  - Plan de upgrade por etapas (idealmente PRs separados) para deps con fix available:
-    - `conekta` (trae `axios` vulnerable como dependencia transitiva en versiones actuales).
-    - `cross-spawn`, `tar`, `tmp` (pueden resolverse con `npm audit fix` y/o bumps menores).
-    - `pm2`: advisory sin fix (mitigar: reducir superficie, hardening y monitoreo; evaluar alternativa).
-  - Mantener `npm audit` en CI con baseline/allowlist temporal (si es inevitable) y fechas de remediación.
+  - `pm2`: advisory sin fix (mitigar: reducir superficie, hardening y monitoreo; evaluar alternativa a mediano plazo).
 - **Esfuerzo estimado:** **M/L** (por upgrades major + regresiones potenciales)
 - **Owner sugerido:** Backend + Frontend + AppSec
 
