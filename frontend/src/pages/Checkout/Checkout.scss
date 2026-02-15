@@ -464,6 +464,48 @@
   text-transform: uppercase;
 }
 
+.checkout2026__couponPill {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ph-border) 78%, transparent);
+  background: color-mix(in srgb, var(--ph-bg-soft) 78%, transparent);
+  color: var(--ph-text-heading);
+  font-size: 0.92rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.checkout2026__couponRemove {
+  border: 0;
+  background: transparent;
+  color: color-mix(in srgb, var(--ph-text-muted) 92%, transparent);
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.checkout2026__couponRemove:hover {
+  color: var(--ph-text-heading);
+}
+
+.checkout2026__couponRemove:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
 .checkout2026__price {
   text-align: center;
   display: grid;

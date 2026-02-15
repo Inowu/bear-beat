@@ -382,6 +382,17 @@ function Checkout() {
     setErrorActions(null);
   }, []);
 
+  const removeCouponFromUrl = useCallback(() => {
+    const nextParams = new URLSearchParams(location.search);
+    nextParams.delete("coupon");
+    nextParams.delete("cupon");
+    const nextSearch = nextParams.toString();
+    navigate(
+      { pathname: location.pathname, search: nextSearch ? `?${nextSearch}` : "" },
+      { replace: true },
+    );
+  }, [location.pathname, location.search, navigate]);
+
   const focusCheckoutMethodButton = useCallback((method: CheckoutMethod) => {
     const el = document.querySelector<HTMLElement>(`[data-testid="checkout-method-${method}"]`);
     if (!el) return;
@@ -457,15 +468,8 @@ function Checkout() {
             label: "Continuar sin cupón",
             variant: "primary",
             onClick: () => {
-              const nextParams = new URLSearchParams(location.search);
-              nextParams.delete("coupon");
-              nextParams.delete("cupon");
-              const nextSearch = nextParams.toString();
               closeErrorModal();
-              navigate(
-                { pathname: location.pathname, search: nextSearch ? `?${nextSearch}` : "" },
-                { replace: true },
-              );
+              removeCouponFromUrl();
             },
           },
           {
@@ -574,6 +578,7 @@ function Checkout() {
       location.pathname,
       location.search,
       navigate,
+      removeCouponFromUrl,
       selectCheckoutMethod,
     ],
   );
@@ -1515,6 +1520,12 @@ function Checkout() {
       ? `Tip: con tarjeta puedes iniciar una prueba de ${trialDays} días (hoy $0).`
       : null;
 
+  const couponHint = couponCode
+    ? selectedMethod === "card"
+      ? "Tip: el cupón se aplicará en la pasarela de Stripe."
+      : "Tip: este cupón se aplica al pagar con tarjeta."
+    : null;
+
   const paymentMethods: PaymentMethodId[] = ["visa", "mastercard"];
   if (availableMethods.includes("paypal") && hasPaypalPlan) paymentMethods.push("paypal");
   if (availableMethods.includes("spei")) paymentMethods.push("spei");
@@ -1537,6 +1548,20 @@ function Checkout() {
             <div className="checkout2026__cardHead">
               <p className="checkout2026__planPill">{planName}</p>
               {trialPill && <p className="checkout2026__trialPill">{trialPill}</p>}
+              {couponCode && (
+                <p className="checkout2026__couponPill">
+                  <span>{`Cupón: ${couponCode}`}</span>
+                  <button
+                    type="button"
+                    className="checkout2026__couponRemove"
+                    onClick={removeCouponFromUrl}
+                    disabled={processingMethod !== null}
+                    aria-label="Quitar cupón"
+                  >
+                    Quitar
+                  </button>
+                </p>
+              )}
             </div>
 
             <div className="checkout2026__price" aria-label={`Precio ${currencyCode}`}>
@@ -1592,6 +1617,7 @@ function Checkout() {
               </div>
               <p className="checkout2026__methodBlurb">{methodBlurb}</p>
               {trialHint && <p className="checkout2026__methodHint">{trialHint}</p>}
+              {couponHint && <p className="checkout2026__methodHint">{couponHint}</p>}
             </section>
 
               {(selectedMethod === "card" || selectedMethod === "paypal") && (
