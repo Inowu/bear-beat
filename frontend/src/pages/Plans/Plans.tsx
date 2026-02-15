@@ -399,7 +399,7 @@ function Plans() {
 
                 <button
                   type="button"
-                  className="plans2026__cta"
+                  className="home-cta home-cta--primary home-cta--block"
                   onClick={handleActivate}
                   onMouseEnter={prefetchCheckout}
                   onFocus={prefetchCheckout}
