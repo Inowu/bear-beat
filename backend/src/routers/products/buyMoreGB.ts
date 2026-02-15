@@ -46,9 +46,7 @@ export const buyMoreGB = shieldedProcedure
 
       const product = await canBuyMoreGB({ prisma, user, productId });
 
-      log.info(
-        `[PRODUCT:PURCHASE] Purchasing product ${product.id}, user ${user.id}`,
-      );
+      log.info('[PRODUCT:PURCHASE] Purchasing product', { productId: product.id, service });
 
       switch (service) {
         case PaymentService.STRIPE: {
@@ -118,7 +116,7 @@ export const buyMoreGB = shieldedProcedure
               },
             });
 
-            log.info(`[PRODUCT:PURCHASE] Payment intent ${pi.id} created`);
+            log.info('[PRODUCT:PURCHASE] Payment intent created');
 
             return {
               message:
@@ -178,7 +176,7 @@ export const buyMoreGB = shieldedProcedure
                 chargeStatus !== 'pending_payment'
               ) {
                 log.info(
-                  `[CONEKTA_CASH] Order ${conektaOrder.data.id} is expired, creating new one`,
+                  '[CONEKTA_CASH] Existing order expired, creating a new one',
                 );
 
                 const newOrder = await createCashPaymentOrder({
@@ -196,7 +194,8 @@ export const buyMoreGB = shieldedProcedure
               return (paymentMethodObj ?? null) as any;
             } catch (e) {
               log.error(
-                `[CONEKTA_CASH] There was an error getting the order with conekta: ${e}`,
+                '[CONEKTA_CASH] Failed to fetch existing order from Conekta',
+                { errorType: e instanceof Error ? e.name : typeof e },
               );
 
               throw new TRPCError({
@@ -230,8 +229,8 @@ export const buyMoreGB = shieldedProcedure
 	        }
 	        case PaymentService.PAYPAL: {
 	          log.info(
-	            `[PRODUCT:PURCHASE] Creating paypal order for user ${user.id}`,
-          );
+	            '[PRODUCT:PURCHASE] Creating PayPal order',
+	          );
 
           const productOrder = await prisma.product_orders.create({
             data: {
