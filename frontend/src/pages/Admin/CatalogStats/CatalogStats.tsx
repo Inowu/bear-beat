@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
-import "./CatalogStats.scss";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
+import { Alert } from "../../../components/ui/Alert/Alert";
 import { getAccessToken } from "../../../utils/authStorage";
 
 const API_BASE =
@@ -236,12 +236,14 @@ export function CatalogStats() {
       toolbar={toolbar}
     >
       {data.error && (
-        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 mb-6">
-          <p className="text-amber-200 text-sm">{data.error}</p>
+        <Alert tone="warning" className="mb-6">
+          <p className="text-sm">{data.error}</p>
           {data.totalFiles === 0 && (
-            <p className="text-text-muted text-xs mt-2">Configura SONGS_PATH en el servidor o revisa el acceso al catálogo FTP.</p>
+            <p className="text-text-muted text-xs mt-2">
+              Configura SONGS_PATH en el servidor o revisa el acceso al catálogo FTP.
+            </p>
           )}
-        </div>
+        </Alert>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
@@ -259,7 +261,7 @@ export function CatalogStats() {
         </div>
       </div>
 
-      <h2 className="text-text-main font-bold text-lg mb-4" style={{ fontFamily: "var(--bb-font-ui)" }}>Por tipo</h2>
+      <h2 className="text-text-main font-bold text-lg mb-4 font-ui">Por tipo</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="rounded-xl border border-border bg-bg-card p-4">
           <h3 className="text-text-muted text-sm mb-1">Videos</h3>
@@ -281,7 +283,7 @@ export function CatalogStats() {
 
       {genres.length > 0 && (
         <>
-          <h2 className="text-text-main font-bold text-lg mb-2" style={{ fontFamily: "var(--bb-font-ui)" }}>Por género</h2>
+          <h2 className="text-text-main font-bold text-lg mb-2 font-ui">Por género</h2>
           <p className="text-text-muted text-sm mb-4">Cada género = nombre de la carpeta (ej. Bachata).</p>
           <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
             <span className="text-text-muted text-sm">Mostrando {from}-{to} de {genres.length}</span>
