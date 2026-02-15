@@ -3,6 +3,7 @@ import { TRPCError } from '@trpc/server';
 import axios from 'axios';
 import { shieldedProcedure } from '../procedures/shielded.procedure';
 import { router } from '../trpc';
+import type { Context } from '../context';
 import { PlansAggregateSchema } from '../schemas/aggregatePlans.schema';
 import { PlansCreateManySchema } from '../schemas/createManyPlans.schema';
 import { PlansCreateOneSchema } from '../schemas/createOnePlans.schema';
@@ -25,8 +26,11 @@ import { manyChat } from '../many-chat';
 import { getMarketingTrialConfigFromEnv } from '../utils/trialConfig';
 import { StripePriceKey } from './subscriptions/utils/ensureStripePriceId';
 import type { Plans } from '@prisma/client';
+import { isStripeOxxoConfigured } from '../stripe/oxxo';
 
 type StripeRecurringInterval = 'day' | 'week' | 'month' | 'year';
+
+type CheckoutMethod = 'card' | 'paypal' | 'spei' | 'oxxo' | 'bbva';
 
 function normalizeRecurringInterval(value: unknown): StripeRecurringInterval {
   if (value === 'day' || value === 'week' || value === 'month' || value === 'year') return value;
@@ -132,78 +136,87 @@ async function resolveStripeProductAndRecurring(
   });
 }
 
-export const plansRouter = router({
-  getTrialConfig: shieldedProcedure.query(async ({ ctx }) => {
-    const config = getMarketingTrialConfigFromEnv();
+async function computeTrialConfigForUser(
+  ctx: Pick<Context, 'prisma' | 'session'>,
+): Promise<{
+  enabled: boolean;
+  days: number;
+  gb: number;
+  eligible: boolean | null;
+}> {
+  const config = getMarketingTrialConfigFromEnv();
 
-    // `eligible` is best-effort: null when unauthenticated / unknown.
-    let eligible: boolean | null = null;
-    const userId = ctx.session?.user?.id;
-    if (userId) {
-      const user = await ctx.prisma.users.findFirst({
-        where: { id: userId },
-        select: { trial_used_at: true, phone: true },
-      });
-      if (user) {
-        if (!config.enabled || user.trial_used_at) {
-          eligible = false;
-        } else {
-          const previousPaidPlanOrder = await ctx.prisma.orders.findFirst({
-            where: {
-              user_id: userId,
-              status: OrderStatus.PAID,
-              is_plan: 1,
-            },
-            select: { id: true },
-          });
-          eligible = !previousPaidPlanOrder;
+  // `eligible` is best-effort: null when unauthenticated / unknown.
+  let eligible: boolean | null = null;
+  const userId = ctx.session?.user?.id;
+  if (userId) {
+    const user = await ctx.prisma.users.findFirst({
+      where: { id: userId },
+      select: { trial_used_at: true, phone: true },
+    });
+    if (user) {
+      if (!config.enabled || user.trial_used_at) {
+        eligible = false;
+      } else {
+        const previousPaidPlanOrder = await ctx.prisma.orders.findFirst({
+          where: {
+            user_id: userId,
+            status: OrderStatus.PAID,
+            is_plan: 1,
+          },
+          select: { id: true },
+        });
+        eligible = !previousPaidPlanOrder;
 
-          // Anti-abuse guard: if another account with the same phone already used a trial
-          // or has a paid plan, treat this user as not eligible for a new "first time" trial.
-          const phone = (user.phone ?? '').trim();
-          if (eligible && phone) {
-            try {
-              const samePhoneUsers = await ctx.prisma.users.findMany({
+        // Anti-abuse guard: if another account with the same phone already used a trial
+        // or has a paid plan, treat this user as not eligible for a new "first time" trial.
+        const phone = (user.phone ?? '').trim();
+        if (eligible && phone) {
+          try {
+            const samePhoneUsers = await ctx.prisma.users.findMany({
+              where: {
+                id: { not: userId },
+                phone,
+              },
+              select: { id: true, trial_used_at: true },
+              take: 5,
+            });
+
+            const samePhoneHasTrial = samePhoneUsers.some((row) => Boolean(row.trial_used_at));
+            let samePhoneHasPaid = false;
+            if (!samePhoneHasTrial && samePhoneUsers.length > 0) {
+              const paid = await ctx.prisma.orders.findFirst({
                 where: {
-                  id: { not: userId },
-                  phone,
+                  user_id: { in: samePhoneUsers.map((row) => row.id) },
+                  status: OrderStatus.PAID,
+                  is_plan: 1,
                 },
-                select: { id: true, trial_used_at: true },
-                take: 5,
+                select: { id: true },
               });
-
-              const samePhoneHasTrial = samePhoneUsers.some((row) => Boolean(row.trial_used_at));
-              let samePhoneHasPaid = false;
-              if (!samePhoneHasTrial && samePhoneUsers.length > 0) {
-                const paid = await ctx.prisma.orders.findFirst({
-                  where: {
-                    user_id: { in: samePhoneUsers.map((row) => row.id) },
-                    status: OrderStatus.PAID,
-                    is_plan: 1,
-                  },
-                  select: { id: true },
-                });
-                samePhoneHasPaid = Boolean(paid);
-              }
-
-              if (samePhoneHasTrial || samePhoneHasPaid) {
-                eligible = false;
-              }
-            } catch {
-              // Best-effort only; do not break trial config query.
+              samePhoneHasPaid = Boolean(paid);
             }
+
+            if (samePhoneHasTrial || samePhoneHasPaid) {
+              eligible = false;
+            }
+          } catch {
+            // Best-effort only; do not break trial config computation.
           }
         }
       }
     }
+  }
 
-    return {
-      enabled: config.enabled,
-      days: config.days,
-      gb: config.gb,
-      eligible,
-    };
-  }),
+  return {
+    enabled: config.enabled,
+    days: config.days,
+    gb: config.gb,
+    eligible,
+  };
+}
+
+export const plansRouter = router({
+  getTrialConfig: shieldedProcedure.query(async ({ ctx }) => computeTrialConfigForUser(ctx)),
   resolveCheckoutPlan: shieldedProcedure
     .input(
       z.object({
@@ -233,6 +246,7 @@ export const plansRouter = router({
           resolvedPlanId: null,
           plan: null,
           paypalPlan: null,
+          checkout: null,
         };
       }
 
@@ -334,11 +348,37 @@ export const plansRouter = router({
         }
       }
 
+      const currencyCode = String(resolvedPlan.moneda ?? '')
+        .trim()
+        .toUpperCase();
+      const conektaAvailability = {
+        // Conekta cash + BBVA pay-by-bank are currently hard-disabled in backend procedures.
+        // Keep them hidden in the UI until those flows are re-enabled end-to-end.
+        oxxoEnabled: isStripeOxxoConfigured(),
+        payByBankEnabled: false,
+      };
+      const methods: CheckoutMethod[] = ['card'];
+      if (paypalPlan) methods.push('paypal');
+      if (currencyCode === 'MXN') {
+        methods.push('spei');
+        if (conektaAvailability.payByBankEnabled) methods.push('bbva');
+        if (conektaAvailability.oxxoEnabled) methods.push('oxxo');
+      }
+
+      const trialConfig = await computeTrialConfigForUser(ctx);
+
       return {
         requestedPlanId,
         resolvedPlanId: resolvedPlan.id,
         plan: resolvedPlan,
         paypalPlan,
+        checkout: {
+          currency: currencyCode || null,
+          price: toFiniteNumber(resolvedPlan.price),
+          availableMethods: methods,
+          trialConfig,
+          conektaAvailability,
+        },
       };
     }),
   getPublicBestPlans: shieldedProcedure.query(async ({ ctx }) => {
