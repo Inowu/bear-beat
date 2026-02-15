@@ -39,7 +39,7 @@ export const changePassword = publicProcedure
 
     const newPassword = bcrypt.hashSync(password, 10);
 
-    log.info(`[CHANGE_PASSWORD] Changing password for user ${user.id}`);
+    log.info('[CHANGE_PASSWORD] Changing password');
 
     await prisma.users.update({
       where: {

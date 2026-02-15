@@ -41,7 +41,7 @@ export const activatePlanForUser = shieldedProcedure
       });
     }
 
-    log.info('[ADMIN] Activating plan for user', { userId: user.id, planId: plan.id });
+    log.info('[ADMIN] Activating plan for user', { planId: plan.id });
 
     await hasActiveSubscription({
       user,
