@@ -426,7 +426,7 @@ function MyAccount() {
     const { label, varColor } = map[status] ?? { label: "—", varColor: "var(--ma-text-muted)" };
     return (
       <span
-        className="inline-flex items-center rounded-full border px-2 py-0.5 font-medium ma-badge"
+        className="ma-badge"
         style={{
           fontSize: "var(--app-font-size-body)",
           color: varColor,

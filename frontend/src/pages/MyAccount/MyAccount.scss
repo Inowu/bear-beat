@@ -546,6 +546,10 @@
 }
 
 .ma-badge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid currentColor;
+  padding: 2px 8px;
   font-size: 1.16rem !important;
   font-weight: 600 !important;
   border-radius: 999px !important;
