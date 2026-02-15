@@ -1,5 +1,4 @@
 import trpc from "../../../api";
-import "./PlanAdmin.scss";
 import { useUserContext } from "../../../contexts/UserContext";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";

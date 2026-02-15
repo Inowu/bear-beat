@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import trpc from "../../../api";
 import { useUserContext } from "../../../contexts/UserContext";
-import "./Coupons.scss";
 import { AddCouponModal } from "../../../components/Modals/AddCouponModal/AddCouponModal";
 import { EditCouponModal } from "../../../components/Modals/EditCouponModal/EditCouponModal";
 import { ConditionModal } from "../../../components/Modals";
