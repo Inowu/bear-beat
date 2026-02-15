@@ -74,6 +74,14 @@ function pickBestCheckoutPlanCandidate(opts: {
   return best;
 }
 
+function toFiniteNumber(value: unknown): number {
+  if (typeof value === 'bigint') return Number(value);
+  const n = Number(value);
+  if (Number.isFinite(n)) return n;
+  const parsed = Number.parseFloat(String(value ?? ''));
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 async function resolveStripeProductAndRecurring(
   stripeIdentifier: string,
 ): Promise<{
@@ -333,6 +341,76 @@ export const plansRouter = router({
         paypalPlan,
       };
     }),
+  getPublicBestPlans: shieldedProcedure.query(async ({ ctx }) => {
+    const stripeKey = getPlanKey(PaymentService.STRIPE);
+    const paypalKey = getPlanKey(PaymentService.PAYPAL);
+
+    // Production audits are READ-ONLY. When the auditor sets this header, avoid
+    // triggering external side-effects (ManyChat tags/custom fields) from a query.
+    const auditReadOnlyHeader = ctx.req?.headers?.['x-bb-audit-readonly'];
+    const isAuditReadOnly = auditReadOnlyHeader === '1';
+
+    const allPlans = await ctx.prisma.plans.findMany({
+      where: {
+        activated: 1,
+        id: { not: 41 },
+      },
+      orderBy: { id: 'asc' },
+    });
+
+    const normalizeCurrency = (value: unknown): 'mxn' | 'usd' | null => {
+      const cur = String(value ?? '').trim().toLowerCase();
+      if (cur === 'mxn') return 'mxn';
+      if (cur === 'usd') return 'usd';
+      return null;
+    };
+
+    const candidates = allPlans.filter((plan) => {
+      const currency = normalizeCurrency(plan.moneda);
+      if (!currency) return false;
+      const price = toFiniteNumber(plan.price);
+      const gigas = toFiniteNumber(plan.gigas);
+      return price > 0 && gigas > 0;
+    });
+
+    const mxnBest = pickBestCheckoutPlanCandidate({
+      candidates: candidates.filter((plan) => normalizeCurrency(plan.moneda) === 'mxn'),
+      stripeKey,
+      paypalKey,
+    });
+    const usdBest = pickBestCheckoutPlanCandidate({
+      candidates: candidates.filter((plan) => normalizeCurrency(plan.moneda) === 'usd'),
+      stripeKey,
+      paypalKey,
+    });
+
+    if (!isAuditReadOnly && ctx.session?.user?.id) {
+      try {
+        const user = await ctx.prisma.users.findFirst({
+          where: { id: ctx.session.user.id },
+        });
+        if (user) {
+          manyChat.addTagToUser(user, 'USER_CHECKED_PLANS').catch(() => {});
+        }
+      } catch {
+        // Best-effort only; do not break the query.
+      }
+    }
+
+    const toPublic = (plan: Plans, currency: 'mxn' | 'usd') => ({
+      planId: plan.id,
+      currency,
+      name: (plan.name ?? '').toString().trim() || 'Membresía Bear Beat',
+      price: toFiniteNumber(plan.price),
+      gigas: toFiniteNumber(plan.gigas),
+      hasPaypal: hasPaypalPlanId(plan, paypalKey),
+    });
+
+    return {
+      mxn: mxnBest ? toPublic(mxnBest, 'mxn') : null,
+      usd: usdBest ? toPublic(usdBest, 'usd') : null,
+    };
+  }),
   createStripePlan: shieldedProcedure
     .input(
       z.intersection(

@@ -1,5 +1,4 @@
 import "./Plans.scss";
-import type { IPlans } from "../../interfaces/Plans";
 import { Spinner } from "../../components/Spinner/Spinner";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import trpc from "../../api";
@@ -9,53 +8,25 @@ import { AlertTriangle, Check, Layers3, RefreshCw } from "src/icons";
 import { formatInt, formatTB } from "../../utils/format";
 import { FALLBACK_CATALOG_TOTAL_FILES, FALLBACK_CATALOG_TOTAL_GB } from "../../utils/catalogFallback";
 import PublicTopNav from "../../components/PublicTopNav/PublicTopNav";
-import PaymentMethodLogos from "../../components/PaymentMethodLogos/PaymentMethodLogos";
+import PaymentMethodLogos, { type PaymentMethodId } from "../../components/PaymentMethodLogos/PaymentMethodLogos";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../utils/growthMetrics";
 import { useUserContext } from "../../contexts/UserContext";
 
 type CurrencyKey = "mxn" | "usd";
 
-function normalizeCurrency(value: unknown): CurrencyKey | "" {
-  const raw = `${value ?? ""}`.trim().toLowerCase();
-  if (raw === "mxn") return "mxn";
-  if (raw === "usd") return "usd";
-  return "";
-}
+type PublicBestPlan = {
+  planId: number;
+  currency: CurrencyKey;
+  name: string;
+  price: number;
+  gigas: number;
+  hasPaypal: boolean;
+};
 
 function toNumber(value: unknown): number {
   if (typeof value === "bigint") return Number(value);
   const n = Number(value ?? 0);
   return Number.isFinite(n) ? n : 0;
-}
-
-function hasStripePrice(plan: IPlans): boolean {
-  const stripeId = (plan as any)?.stripe_prod_id;
-  return typeof stripeId === "string" && stripeId.startsWith("price_");
-}
-
-function hasPaypal(plan: IPlans): boolean {
-  return Boolean((plan as any)?.paypal_plan_id || (plan as any)?.paypal_plan_id_test);
-}
-
-function pickBestPlanCandidate(candidates: IPlans[]): IPlans | null {
-  if (!Array.isArray(candidates) || candidates.length === 0) return null;
-
-  let best: IPlans | null = null;
-  let bestScore = -1;
-  for (const candidate of candidates) {
-    if (!candidate) continue;
-    let score = 0;
-    if (hasStripePrice(candidate)) score += 10;
-    if (hasPaypal(candidate)) score += 2;
-    // Prefer lower ids as a deterministic tie-breaker (legacy plans often have lower ids).
-    score += typeof candidate.id === "number" ? -candidate.id / 10_000 : 0;
-
-    if (score > bestScore) {
-      bestScore = score;
-      best = candidate;
-    }
-  }
-  return best;
 }
 
 function formatMoneyFixed(value: unknown, locale: string): string {
@@ -71,7 +42,10 @@ function Plans() {
   const { currentUser } = useUserContext();
   const navigate = useNavigate();
 
-  const [plans, setPlans] = useState<IPlans[]>([]);
+  const [plansByCurrency, setPlansByCurrency] = useState<{ mxn: PublicBestPlan | null; usd: PublicBestPlan | null }>({
+    mxn: null,
+    usd: null,
+  });
   const [catalogSummary, setCatalogSummary] = useState<{
     totalFiles: number;
     totalGB: number;
@@ -86,13 +60,15 @@ function Plans() {
   const getPlans = useCallback(async () => {
     setLoadError("");
     setLoader(true);
-    const body = { where: { activated: 1 } };
     try {
-      const result: any = await trpc.plans.findManyPlans.query(body);
-      setPlans(Array.isArray(result) ? (result as IPlans[]) : []);
+      const result: any = await trpc.plans.getPublicBestPlans.query();
+      setPlansByCurrency({
+        mxn: (result?.mxn as PublicBestPlan | null) ?? null,
+        usd: (result?.usd as PublicBestPlan | null) ?? null,
+      });
     } catch {
       setLoadError("No pudimos cargar los planes en este momento. Intenta nuevamente.");
-      setPlans([]);
+      setPlansByCurrency({ mxn: null, usd: null });
     } finally {
       setLoader(false);
     }
@@ -125,25 +101,6 @@ function Plans() {
     }
   }, [currentUser, navigate]);
 
-  const validPlans = useMemo(() => {
-    return plans.filter((plan) => {
-      if (!plan) return false;
-      if (plan.id === 41) return false;
-      const price = toNumber(plan.price);
-      const gigas = toNumber(plan.gigas);
-      if (price <= 0 || gigas <= 0) return false;
-      const currency = normalizeCurrency(plan.moneda);
-      if (!currency) return false;
-      return true;
-    });
-  }, [plans]);
-
-  const plansByCurrency = useMemo(() => {
-    const mxn = pickBestPlanCandidate(validPlans.filter((plan) => normalizeCurrency(plan.moneda) === "mxn"));
-    const usd = pickBestPlanCandidate(validPlans.filter((plan) => normalizeCurrency(plan.moneda) === "usd"));
-    return { mxn, usd };
-  }, [validPlans]);
-
   useEffect(() => {
     if (selectedCurrency === "mxn" && !plansByCurrency.mxn && plansByCurrency.usd) {
       setSelectedCurrency("usd");
@@ -156,11 +113,11 @@ function Plans() {
 
   useEffect(() => {
     if (viewTrackedRef.current) return;
-    if (validPlans.length === 0) return;
+    if (!plansByCurrency.mxn && !plansByCurrency.usd) return;
     viewTrackedRef.current = true;
     trackManyChatConversion(MC_EVENTS.VIEW_PLANS);
     trackGrowthMetric(GROWTH_METRICS.PRICING_VIEW, { currencyDefault: "mxn" });
-  }, [validPlans.length]);
+  }, [plansByCurrency.mxn, plansByCurrency.usd]);
 
   const selectedPlan = useMemo(() => {
     return selectedCurrency === "mxn" ? plansByCurrency.mxn : plansByCurrency.usd;
@@ -201,9 +158,11 @@ function Plans() {
   }, [selectedCurrency, selectedPlan]);
 
   const paymentMethods = useMemo(() => {
-    if (selectedCurrency === "mxn") return ["visa", "mastercard", "paypal", "spei"] as const;
-    return ["visa", "mastercard", "paypal"] as const;
-  }, [selectedCurrency]);
+    const methods: PaymentMethodId[] = ["visa", "mastercard"];
+    if (selectedPlan?.hasPaypal) methods.push("paypal");
+    if (selectedCurrency === "mxn") methods.push("spei");
+    return methods;
+  }, [selectedCurrency, selectedPlan?.hasPaypal]);
 
   const selectCurrency = (next: CurrencyKey) => {
     if (next === selectedCurrency) return;
@@ -221,12 +180,12 @@ function Plans() {
     trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
       id: "plans_primary_checkout",
       location: "plans",
-      planId: selectedPlan.id,
+      planId: selectedPlan.planId,
       currency: selectedCurrency.toUpperCase(),
       amount: toNumber(selectedPlan.price) || null,
     });
 
-    navigate(`/comprar?priceId=${selectedPlan.id}`);
+    navigate(`/comprar?priceId=${selectedPlan.planId}`);
   }, [navigate, selectedCurrency, selectedPlan]);
 
   if (loader) {
@@ -272,7 +231,7 @@ function Plans() {
                 </div>
               </div>
             </section>
-          ) : validPlans.length === 0 || (!plansByCurrency.mxn && !plansByCurrency.usd) ? (
+          ) : (!plansByCurrency.mxn && !plansByCurrency.usd) ? (
             <section className="plans2026__state">
               <div className="app-state-panel is-empty">
                 <span className="app-state-icon" aria-hidden>
