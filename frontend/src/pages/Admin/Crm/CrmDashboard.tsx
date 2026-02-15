@@ -15,6 +15,7 @@ import trpc from "../../../api";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import Pagination from "../../../components/Pagination/Pagination";
 import { Spinner } from "../../../components/Spinner/Spinner";
+import { Select } from "../../../components/ui";
 import "./CrmDashboard.scss";
 
 interface CrmDailyRegistrationPoint {
@@ -392,45 +393,58 @@ export function CrmDashboard() {
       title="CRM"
       subtitle="Orquesta activación, retención y cancelaciones en una sola vista operativa para el equipo."
       toolbar={
-        <div className="crm-toolbar">
-          <div className="crm-toolbar__group">
-            <label className="crm-toolbar__label">
-              Rango
-              <select
-                value={rangeDays}
-                onChange={(e) => {
-                  setRangeDays(Number(e.target.value));
-                  setRecentCancellationsPage(0);
-                  setTrialNoDownloadPage(0);
-                  setPaidNoDownloadPage(0);
-                }}
-              >
-                {RANGE_OPTIONS.map((d) => (
-                  <option key={d} value={d}>
-                    {d} días
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button
-              type="button"
-              className={`crm-toolbar__toggle ${autoRefresh ? "is-on" : "is-off"}`}
-              role="switch"
-              aria-checked={autoRefresh}
-              onClick={() => setAutoRefresh((prev) => !prev)}
+        <div className="flex flex-wrap items-end gap-2 w-full">
+          <label className="inline-flex flex-col gap-1 text-sm text-text-muted min-w-[180px]">
+            Rango
+            <Select
+              value={rangeDays}
+              onChange={(e) => {
+                setRangeDays(Number(e.target.value));
+                setRecentCancellationsPage(0);
+                setTrialNoDownloadPage(0);
+                setPaidNoDownloadPage(0);
+              }}
             >
-              <span className="crm-toolbar__toggle-knob" aria-hidden>
-                {autoRefresh ? "✓" : ""}
-              </span>
-              <span className="crm-toolbar__toggle-text">Actualizar en vivo</span>
-            </button>
-          </div>
-          <div className="crm-toolbar__group">
-            <button type="button" className="crm-toolbar__btn" onClick={() => void refresh()}>
-              <RefreshCw size={18} aria-hidden />
-              Refrescar
-            </button>
-          </div>
+              {RANGE_OPTIONS.map((d) => (
+                <option key={d} value={d}>
+                  {d} días
+                </option>
+              ))}
+            </Select>
+          </label>
+
+          <button
+            type="button"
+            role="switch"
+            aria-checked={autoRefresh}
+            onClick={() => setAutoRefresh((prev) => !prev)}
+            className="inline-flex items-center gap-3 min-h-[44px] rounded-xl px-4 border border-border bg-bg-card text-text-main font-semibold hover:bg-bg-input transition-colors"
+          >
+            <span
+              className={[
+                "relative inline-flex items-center w-11 h-6 rounded-full border border-border transition-colors",
+                autoRefresh ? "bg-bear-gradient" : "bg-bg-input",
+              ].join(" ")}
+              aria-hidden
+            >
+              <span
+                className={[
+                  "absolute left-0.5 top-0.5 w-5 h-5 rounded-full bg-bg-card shadow-sm transition-transform",
+                  autoRefresh ? "translate-x-5" : "translate-x-0",
+                ].join(" ")}
+              />
+            </span>
+            <span className="text-sm">Actualizar en vivo</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => void refresh()}
+            className="ml-auto inline-flex items-center gap-2 bg-bear-gradient text-bear-dark-500 hover:opacity-95 font-medium rounded-pill px-4 py-2 transition-colors"
+          >
+            <RefreshCw size={18} aria-hidden />
+            Refrescar
+          </button>
         </div>
       }
     >
@@ -442,7 +456,11 @@ export function CrmDashboard() {
       ) : error ? (
         <div className="crm-state crm-state--error" role="alert">
           <p>{error}</p>
-          <button type="button" className="crm-toolbar__btn" onClick={() => void refresh()}>
+          <button
+            type="button"
+            onClick={() => void refresh()}
+            className="inline-flex items-center gap-2 bg-bear-gradient text-bear-dark-500 hover:opacity-95 font-medium rounded-pill px-4 py-2 transition-colors"
+          >
             <RefreshCw size={18} aria-hidden />
             Reintentar
           </button>
