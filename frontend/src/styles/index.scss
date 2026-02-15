@@ -1,4 +1,14 @@
-@import "bootstrap/scss/bootstrap";
+// Bootstrap Lite: keep only what react-bootstrap Modal needs (modal/backdrop/close/fade).
+// We intentionally avoid pulling the full Bootstrap bundle (grid/utilities/forms/etc) to reduce CSS weight.
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
+@import "bootstrap/scss/variables-dark";
+@import "bootstrap/scss/maps";
+@import "bootstrap/scss/mixins";
+@import "bootstrap/scss/root";
+@import "bootstrap/scss/transitions";
+@import "bootstrap/scss/close";
+@import "bootstrap/scss/modal";
 @import "flag-icons/css/flag-icons.min.css";
 @import "./_variables-theme.scss";
 @import "./mixin.scss";
@@ -783,6 +793,16 @@ html[data-theme="light"] :where(input:not([type="checkbox"]):not([type="radio"])
   background: color-mix(in srgb, var(--app-bg-card) 72%, var(--app-bg-soft));
   border-color: color-mix(in srgb, var(--app-border) 96%, transparent);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+/* Bootstrap form class bridge:
+   We keep these legacy class names in a few modals, without shipping the full Bootstrap forms CSS. */
+.form-control,
+.form-select {
+  padding: 12px 16px;
+  font-family: var(--bb-font-ui);
+  font-size: var(--app-font-size-body);
+  line-height: 1.4;
 }
 
 /* iOS/Safari: `type="search"` trae un botón nativo (x) que rompe layouts con clear custom */
