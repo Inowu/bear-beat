@@ -50,6 +50,121 @@
   margin-top: 6px;
 }
 
+.plans2026__card--skeleton {
+  pointer-events: none;
+}
+
+.plans2026__skeletonStatus {
+  margin: 0;
+  text-align: center;
+  color: color-mix(in srgb, var(--ph-text-muted) 96%, transparent);
+  font-size: 1.02rem;
+  font-weight: 750;
+}
+
+.plans2026__sk {
+  display: block;
+  background: color-mix(in srgb, var(--ph-border) 52%, transparent);
+  animation: plans-skeleton 1.2s ease-in-out infinite;
+}
+
+@keyframes plans-skeleton {
+  0%,
+  100% {
+    opacity: 0.52;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plans2026__sk {
+    animation: none;
+  }
+}
+
+.plans2026__sk--bentoValue {
+  height: 32px;
+  width: min(170px, 70%);
+  margin: 0 auto;
+  border-radius: 14px;
+}
+
+.plans2026__sk--bentoLabel {
+  height: 14px;
+  width: min(140px, 62%);
+  margin: 0 auto;
+  border-radius: 999px;
+}
+
+.plans2026__sk--pill {
+  height: 30px;
+  width: min(220px, 100%);
+  border-radius: 999px;
+}
+
+.plans2026__currency-skeleton {
+  position: relative;
+  width: min(280px, 100%);
+  margin: 0 auto;
+  padding: 4px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ph-border) 78%, transparent);
+  background: color-mix(in srgb, var(--ph-bg-soft) 70%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+  transform: translateZ(0);
+}
+
+.plans2026__sk--currencyBtn {
+  height: 40px;
+  width: 100%;
+  border-radius: 999px;
+}
+
+.plans2026__sk--price {
+  height: clamp(4rem, 6.6vw, 6.1rem);
+  width: min(280px, 78%);
+  margin: 0 auto;
+  border-radius: 18px;
+}
+
+.plans2026__sk--suffix {
+  height: 18px;
+  width: min(180px, 62%);
+  margin: 0 auto;
+  border-radius: 999px;
+}
+
+.plans2026__sk--benefitIcon {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+}
+
+.plans2026__sk--benefitLine {
+  height: 18px;
+  width: 100%;
+  border-radius: 999px;
+  margin-top: 4px;
+}
+
+.plans2026__actions {
+  display: flex;
+  justify-content: center;
+}
+
+.plans2026__sk--cta {
+  height: 54px;
+  width: min(520px, 100%);
+  border-radius: 999px;
+}
+
 .plans2026__bento {
   display: grid;
   gap: 8px;

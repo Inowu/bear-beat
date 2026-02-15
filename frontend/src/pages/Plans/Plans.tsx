@@ -1,5 +1,4 @@
 import "./Plans.scss";
-import { Spinner } from "../../components/Spinner/Spinner";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import trpc from "../../api";
 import { Link, useNavigate } from "react-router-dom";
@@ -188,20 +187,6 @@ function Plans() {
     navigate(`/comprar?priceId=${selectedPlan.planId}`);
   }, [navigate, selectedCurrency, selectedPlan]);
 
-  if (loader) {
-    return (
-      <div className="global-loader plans-loader">
-        <div className="app-state-panel is-loading" role="status" aria-live="polite">
-          <span className="app-state-icon" aria-hidden>
-            <Spinner size={2.8} width={0.25} color="var(--app-accent)" />
-          </span>
-          <h2 className="app-state-title">Preparando planes</h2>
-          <p className="app-state-copy">Estamos cargando tu mejor opción para activar hoy.</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="plans2026">
       <PublicTopNav loginFrom="/planes" />
@@ -215,7 +200,61 @@ function Plans() {
             </p>
           </header>
 
-          {loadError ? (
+          {loader ? (
+            <>
+              <section
+                className="plans2026__bento plans2026__bento--skeleton"
+                aria-label="Cargando valor incluido"
+                role="status"
+                aria-live="polite"
+                aria-busy="true"
+              >
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <article key={i} className="plans2026__bento-card" aria-hidden>
+                    <span className="plans2026__sk plans2026__sk--bentoValue" />
+                    <span className="plans2026__sk plans2026__sk--bentoLabel" />
+                  </article>
+                ))}
+              </section>
+
+              <section
+                className="plans2026__card plans2026__card--skeleton"
+                aria-label="Cargando plan"
+                role="status"
+                aria-live="polite"
+                aria-busy="true"
+              >
+                <p className="plans2026__skeletonStatus">Cargando tu mejor opción…</p>
+
+                <div className="plans2026__card-head" aria-hidden>
+                  <span className="plans2026__sk plans2026__sk--pill" />
+                </div>
+
+                <div className="plans2026__currency-skeleton" aria-hidden>
+                  <span className="plans2026__sk plans2026__sk--currencyBtn" />
+                  <span className="plans2026__sk plans2026__sk--currencyBtn" />
+                </div>
+
+                <div className="plans2026__price" aria-hidden>
+                  <span className="plans2026__sk plans2026__sk--price" />
+                  <span className="plans2026__sk plans2026__sk--suffix" />
+                </div>
+
+                <ul className="plans2026__benefits" aria-hidden>
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <li key={i} className="plans2026__benefit">
+                      <span className="plans2026__sk plans2026__sk--benefitIcon" />
+                      <span className="plans2026__sk plans2026__sk--benefitLine" />
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="plans2026__actions" aria-hidden>
+                  <span className="plans2026__sk plans2026__sk--cta" />
+                </div>
+              </section>
+            </>
+          ) : loadError ? (
             <section className="plans2026__state">
               <div className="app-state-panel is-error" role="alert">
                 <span className="app-state-icon" aria-hidden>
