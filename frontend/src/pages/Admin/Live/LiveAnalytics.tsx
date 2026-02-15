@@ -12,6 +12,7 @@ import trpc from "../../../api";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import Pagination from "../../../components/Pagination/Pagination";
 import { Spinner } from "../../../components/Spinner/Spinner";
+import { Input, Select } from "../../../components/ui";
 import "../Analytics/AnalyticsDashboard.scss";
 import "./LiveAnalytics.scss";
 
@@ -222,66 +223,64 @@ export function LiveAnalytics() {
   }, [lastUpdatedAt]);
 
   const toolbar = (
-    <div className="live-toolbar">
-      <div className="live-toolbar__group live-toolbar__group--core">
-        <label className="live-toolbar__field">
-          Ventana
-          <select
-            value={minutes}
-            onChange={(e) => {
-              setMinutes(Number(e.target.value));
-              setPage(0);
-            }}
-          >
-            {MINUTES_OPTIONS.map((value) => (
-              <option key={value} value={value}>
-                {value} min
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="live-toolbar__field">
-          Límite
-          <select
-            value={limit}
-            onChange={(e) => {
-              setLimit(Number(e.target.value));
-              setPage(0);
-            }}
-          >
-            {[100, 200, 500].map((value) => (
-              <option key={value} value={value}>
-                {value}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <div className="live-toolbar__group live-toolbar__group--filters">
-        <label className="live-toolbar__field">
-          Filtro evento
-          <input
-            type="text"
-            value={filterEvent}
-            onChange={(e) => setFilterEvent(e.target.value)}
-            placeholder="payment_success"
-          />
-        </label>
-        <label className="live-toolbar__field">
-          Filtro ruta
-          <input
-            type="text"
-            value={filterPath}
-            onChange={(e) => setFilterPath(e.target.value)}
-            placeholder="/comprar"
-          />
-        </label>
-      </div>
-      <div className="live-toolbar__group live-toolbar__group--actions">
+    <div className="flex flex-wrap items-end gap-2 w-full">
+      <label className="inline-flex flex-col gap-1 text-sm text-text-muted min-w-[170px]">
+        Ventana
+        <Select
+          value={minutes}
+          onChange={(e) => {
+            setMinutes(Number(e.target.value));
+            setPage(0);
+          }}
+        >
+          {MINUTES_OPTIONS.map((value) => (
+            <option key={value} value={value}>
+              {value} min
+            </option>
+          ))}
+        </Select>
+      </label>
+
+      <label className="inline-flex flex-col gap-1 text-sm text-text-muted min-w-[150px]">
+        Límite
+        <Select
+          value={limit}
+          onChange={(e) => {
+            setLimit(Number(e.target.value));
+            setPage(0);
+          }}
+        >
+          {[100, 200, 500].map((value) => (
+            <option key={value} value={value}>
+              {value}
+            </option>
+          ))}
+        </Select>
+      </label>
+
+      <label className="inline-flex flex-col gap-1 text-sm text-text-muted min-w-[220px] flex-1">
+        Filtro evento
+        <Input
+          type="text"
+          value={filterEvent}
+          onChange={(e) => setFilterEvent(e.target.value)}
+          placeholder="payment_success"
+        />
+      </label>
+
+      <label className="inline-flex flex-col gap-1 text-sm text-text-muted min-w-[220px] flex-1">
+        Filtro ruta
+        <Input
+          type="text"
+          value={filterPath}
+          onChange={(e) => setFilterPath(e.target.value)}
+          placeholder="/comprar"
+        />
+      </label>
+
+      <div className="ml-auto flex flex-wrap items-center gap-2">
         <span
-          className={`live-toolbar__status ${
-            paused ? "live-toolbar__status--paused" : "live-toolbar__status--live"
-          }`}
+          className={`badge ${paused ? "badge--neutral" : "badge--success"}`}
           role="status"
         >
           {paused ? "En pausa" : "En vivo"}
@@ -296,7 +295,7 @@ export function LiveAnalytics() {
               return next;
             });
           }}
-          className="live-toolbar__btn"
+          className="min-h-[44px] rounded-xl px-4 border border-border bg-bg-card text-text-main font-semibold hover:bg-bg-input transition-colors"
         >
           {paused ? "Reanudar" : "Pausar"}
         </button>
@@ -304,9 +303,9 @@ export function LiveAnalytics() {
           type="button"
           onClick={() => void fetchLive()}
           disabled={loading}
-          className="live-toolbar__btn live-toolbar__btn--primary"
+          className="inline-flex items-center gap-2 bg-bear-gradient text-bear-dark-500 hover:opacity-95 font-medium rounded-pill px-4 py-2 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
         >
-          <RefreshCw size={16} className={loading ? "is-spinning" : ""} />
+          <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
           {loading ? "Actualizando..." : "Actualizar"}
         </button>
       </div>
