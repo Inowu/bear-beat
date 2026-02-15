@@ -37,7 +37,6 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
     log.error('[CONEKTA_WH] Plan not found in event', {
       eventType: payload.type ?? null,
       eventId: (payload as any)?.id ?? null,
-      userId: user.id,
     });
 
     return;
@@ -49,12 +48,14 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
 
   switch (payload.type) {
     case ConektaEvents.SUB_PAID:
-      log.info('[CONEKTA_WH] Creating subscription', { userId: user.id, subscriptionId: subscription.id });
+      log.info('[CONEKTA_WH] Creating subscription', { eventId: (payload as any)?.id ?? null });
 
       try {
         await manyChat.addTagToUser(user, 'SUCCESSFUL_PAYMENT');
       } catch (e) {
-        log.error(`[CONEKTA] Error while adding tag to user ${user.id}: ${e}`);
+        log.error('[CONEKTA_WH] Error while adding ManyChat tag', {
+          errorType: e instanceof Error ? e.name : typeof e,
+        });
       }
 
       await subscribe({
@@ -70,9 +71,8 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
       break;
     case ConektaEvents.SUB_UPDATED:
       log.info('[CONEKTA_WH] Updating subscription', {
-        userId: user.id,
-        subscriptionId: subscription.id,
         status: subscription.status,
+        eventId: (payload as any)?.id ?? null,
       });
       if (payload.data?.object.status !== 'active') {
         // Internal analytics: provider-side cancellation (best-effort involuntary signal).
@@ -111,7 +111,7 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
       }
       break;
     case ConektaEvents.SUB_CANCELED:
-      log.info('[CONEKTA_WH] Canceling subscription', { userId: user.id, subscriptionId: subscription.id });
+      log.info('[CONEKTA_WH] Canceling subscription', { eventId: (payload as any)?.id ?? null });
       await cancelSubscription({
         prisma,
         user,
@@ -132,9 +132,11 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
         }
       }
 
-      log.info(
-        `[CONEKTA_WH] Payment failed, canceling order ${orderId ?? 'unknown'} (source: ${orderSource})`,
-      );
+      log.info('[CONEKTA_WH] Payment failed, canceling order', {
+        orderSource,
+        hasOrderId: Boolean(orderId),
+        isProduct,
+      });
 
       if (orderId && !isProduct) {
         const order = await prisma.orders.findFirst({
@@ -149,7 +151,9 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
             try {
               await manyChat.addTagToUser(orderUser, 'FAILED_PAYMENT');
             } catch (e) {
-              log.error(`[CONEKTA] Error adding FAILED_PAYMENT tag for user ${orderUser.id}: ${e}`);
+              log.error('[CONEKTA_WH] Error adding FAILED_PAYMENT tag', {
+                errorType: e instanceof Error ? e.name : typeof e,
+              });
             }
           }
         }
@@ -205,9 +209,11 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
         }
       }
 
-      log.info(
-        `[CONEKTA_WH] Canceling order ${orderId ?? 'unknown'} (source: ${orderSource})`,
-      );
+      log.info('[CONEKTA_WH] Canceling order', {
+        orderSource,
+        hasOrderId: Boolean(orderId),
+        isProduct,
+      });
 
       // Internal analytics: payment expired (cash/spei).
       try {
@@ -260,9 +266,11 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
         }
       }
 
-      log.info(
-        `[CONEKTA_WH] Canceling order ${orderId ?? 'unknown'} (source: ${orderSource})`,
-      );
+      log.info('[CONEKTA_WH] Canceling order', {
+        orderSource,
+        hasOrderId: Boolean(orderId),
+        isProduct,
+      });
       await cancelOrder({
         prisma,
         orderId,
@@ -276,7 +284,6 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
       const pmObjectType = typeof paymentMethodObj?.object === 'string' ? paymentMethodObj.object : '';
       if (pmObjectType.startsWith('card')) {
         log.info('[CONEKTA_WH] Ignoring card payment event', {
-          userId: user.id,
           eventType: payload.type ?? null,
           eventId: (payload as any)?.id ?? null,
         });
@@ -284,7 +291,6 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
       }
 
       log.info('[CONEKTA_WH] Paid order event received', {
-        userId: user.id,
         eventType: payload.type ?? null,
         eventId: (payload as any)?.id ?? null,
       });
@@ -302,22 +308,22 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
 
       if (!orderIdNum) {
         log.error('[CONEKTA_WH] Order id could not be resolved from event; skipping', {
-          userId: user.id,
           eventType: payload.type ?? null,
           eventId: (payload as any)?.id ?? null,
         });
         return;
       }
 
-      log.info(
-        `[CONEKTA_WH] Processing paid order ${orderIdNum} (source: ${orderSource})`,
-      );
+      log.info('[CONEKTA_WH] Processing paid order', {
+        orderSource,
+        isProduct,
+      });
 
       let productOrPlan: Plans | products | null = null;
       let order: Orders | product_orders | null = null;
 
       if (isProduct) {
-        log.info('[CONEKTA_WH] Updating product order to paid', { userId: user.id, orderId: orderIdNum });
+        log.info('[CONEKTA_WH] Updating product order to paid');
 
         order = await prisma.product_orders.update({
           where: {
@@ -345,7 +351,7 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
       }
 
       if (!order || !productOrPlan) {
-        log.error('[CONEKTA_WH] Order or product not found; skipping', { userId: user.id, orderId: orderIdNum, isProduct });
+        log.error('[CONEKTA_WH] Order or product not found; skipping', { isProduct });
         return;
       }
 
@@ -359,9 +365,9 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
         try {
           await manyChat.addTagToUser(user, 'SUCCESSFUL_PAYMENT');
         } catch (e) {
-          log.error(
-            `[CONEKTA] Error while adding tag to user ${user.id}: ${e}`,
-          );
+          log.error('[CONEKTA_WH] Error while adding ManyChat tag', {
+            errorType: e instanceof Error ? e.name : typeof e,
+          });
         }
 
         await subscribe({
@@ -388,7 +394,9 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
           orderId: order.id,
         });
       } catch (e) {
-        log.error(`[CONEKTA] Error while sending email ${e}`);
+        log.error('[CONEKTA_WH] Plan activated email failed (non-blocking)', {
+          errorType: e instanceof Error ? e.name : typeof e,
+        });
       }
 
       break;
