@@ -2,15 +2,12 @@
 set -euo pipefail
 
 echo "NO EJECUTADO AUTOMATICAMENTE. REVISA ANTES."
-echo "Este script SOLO imprime comandos. No borra nada por si solo."
-echo
-echo "Base (segun origin/HEAD): origin/main"
 echo
 echo "# Local branches (SAFE TO DELETE)"
-echo "git branch -d prod-audit-uxui-cro-2026-02-10"
+echo git branch -d codex/home-polish-2026-02-10
 echo
-echo "# Remote branches on origin (SAFE TO DELETE)"
-echo "git push origin --delete prod-audit-uxui-cro-2026-02-10"
+echo "# Remote branches (SAFE TO DELETE)"
+echo git push origin --delete codex/home-polish-2026-02-10
 echo
-echo "# Force (si confirmas) - NO INCLUIDO"
-echo "# (No usar -D sin revisar ramas en REVIEW/DO NOT DELETE)"
+echo "# Force delete (si confirmas)"
+echo "# (vacío por defecto; no usar -D salvo que se justifique)"
