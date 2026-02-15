@@ -312,60 +312,6 @@
   line-height: 1.5;
 }
 
-.plans2026__cta {
-  width: 100%;
-  appearance: none;
-  border: 1px solid transparent;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  min-height: 54px;
-  border-radius: 999px;
-  padding: 12px 18px;
-  text-decoration: none;
-  font-weight: 700;
-  letter-spacing: 0.004em;
-  background: var(--ph-btn-bg);
-  color: var(--ph-btn-text);
-  border-color: color-mix(in srgb, var(--ph-accent) 34%, transparent);
-  box-shadow:
-    0 14px 32px color-mix(in srgb, var(--ph-glow) 46%, transparent),
-    var(--ph-shadow);
-  transition:
-    transform 140ms ease,
-    box-shadow 180ms ease,
-    background 140ms ease,
-    border-color 140ms ease,
-    color 140ms ease;
-}
-
-.plans2026__cta:hover {
-  background: var(--ph-btn-hover-bg);
-  border-color: color-mix(in srgb, var(--ph-accent) 54%, transparent);
-  transform: translateY(-1px);
-  box-shadow:
-    0 16px 36px color-mix(in srgb, var(--ph-glow) 56%, transparent),
-    var(--ph-shadow-card);
-}
-
-.plans2026__cta:active {
-  transform: translateY(1px);
-}
-
-.plans2026__cta:focus-visible {
-  outline: 2px solid var(--app-focus-ring);
-  outline-offset: 2px;
-}
-
-.plans2026__cta:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
 .plans2026__trust {
   margin-top: 2px;
   padding-top: 12px;
@@ -486,10 +432,4 @@ html[data-theme="light"] .plans2026__card {
   border-color: color-mix(in srgb, var(--ph-border) 92%, transparent);
   background: color-mix(in srgb, #ffffff 99.2%, var(--ph-bg-card));
   box-shadow: 0 12px 26px rgba(15, 23, 42, 0.055);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .plans2026__cta {
-    transition: none !important;
-  }
 }

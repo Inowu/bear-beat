@@ -1468,12 +1468,23 @@ html[data-theme="light"] .main-layout-main-container :where(.card, .panel, .modu
   transition: transform 140ms ease, box-shadow 180ms ease, background 140ms ease, border-color 140ms ease, color 140ms ease;
 }
 
+.home-cta--block {
+  width: 100%;
+}
+
 .home-cta svg {
   flex: 0 0 auto;
 }
 
 .home-cta:active {
   transform: translateY(1px);
+}
+
+.home-cta:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .home-cta:focus-visible {
@@ -1490,7 +1501,7 @@ html[data-theme="light"] .main-layout-main-container :where(.card, .panel, .modu
     var(--ph-shadow);
 }
 
-.home-cta--primary:hover {
+.home-cta--primary:hover:not(:disabled) {
   background: var(--ph-btn-hover-bg);
   border-color: color-mix(in srgb, var(--ph-accent) 54%, transparent);
   transform: translateY(-1px);
@@ -1505,7 +1516,7 @@ html[data-theme="light"] .main-layout-main-container :where(.card, .panel, .modu
   border: 1px solid color-mix(in srgb, var(--ph-accent) 34%, transparent);
 }
 
-.home-cta--secondary:hover {
+.home-cta--secondary:hover:not(:disabled) {
   background: color-mix(in srgb, var(--ph-accent) 11%, transparent);
   border-color: color-mix(in srgb, var(--ph-accent) 48%, transparent);
 }
@@ -1518,7 +1529,7 @@ html[data-theme="light"] .home-cta--secondary {
   box-shadow: 0 10px 20px rgba(15, 23, 42, 0.06);
 }
 
-html[data-theme="light"] .home-cta--secondary:hover {
+html[data-theme="light"] .home-cta--secondary:hover:not(:disabled) {
   background: color-mix(in srgb, var(--ph-accent) 8%, #ffffff);
   border-color: color-mix(in srgb, var(--ph-accent) 28%, var(--ph-border));
 }
