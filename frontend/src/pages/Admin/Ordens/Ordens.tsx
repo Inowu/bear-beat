@@ -138,22 +138,22 @@ export const Ordens = () => {
     <div className="orders-toolbar" data-testid="orders-toolbar">
       <div className="orders-toolbar__filters">
         <div className="orders-toolbar__search">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 w-4 h-4" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted w-4 h-4" />
           <input
             id="orders-search"
             type="text"
             placeholder="Buscar por email o teléfono"
             value={filters.searchData}
             onChange={(e) => startFilter("searchData", e.target.value)}
-            className="orders-toolbar__control orders-toolbar__control--input w-full bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 rounded-lg py-2 pl-9 pr-3 text-gray-900 dark:text-white text-sm placeholder-gray-500 focus:outline-none focus:border-bear-cyan focus:ring-1 focus:ring-bear-cyan"
+            className="orders-toolbar__control orders-toolbar__control--input w-full py-2 pl-9 pr-3"
           />
         </div>
-        <label className="orders-toolbar__field orders-toolbar__field--method inline-flex flex-col gap-1 text-xs font-semibold text-gray-600 dark:text-gray-400">
+        <label className="orders-toolbar__field orders-toolbar__field--method inline-flex flex-col gap-1 text-xs font-semibold">
           <span className="orders-toolbar__label">Método</span>
           <select
             value={filters.paymentMethod}
             onChange={(e) => startFilter("paymentMethod", e.target.value)}
-            className="orders-toolbar__control orders-toolbar__control--select bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
+            className="orders-toolbar__control orders-toolbar__control--select px-3 py-2"
           >
             <option value="">Todos</option>
             <option value="Paypal">Paypal</option>
@@ -162,14 +162,14 @@ export const Ordens = () => {
             <option value="Admin">Admin</option>
           </select>
         </label>
-        <label className="orders-toolbar__field orders-toolbar__field--status inline-flex flex-col gap-1 text-xs font-semibold text-gray-600 dark:text-gray-400">
+        <label className="orders-toolbar__field orders-toolbar__field--status inline-flex flex-col gap-1 text-xs font-semibold">
           <span className="orders-toolbar__label">Estado</span>
           <select
             value={filters.status}
             onChange={(e) =>
               startFilter("status", e.target.value === "" ? "" : Number(e.target.value))
             }
-            className="orders-toolbar__control orders-toolbar__control--select bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
+            className="orders-toolbar__control orders-toolbar__control--select px-3 py-2"
           >
             <option value="">Todos</option>
             <option value={ORDER_STATUS.PAID}>Pagada</option>
@@ -179,22 +179,22 @@ export const Ordens = () => {
             <option value={ORDER_STATUS.EXPIRED}>Expirada</option>
           </select>
         </label>
-        <label className="orders-toolbar__field orders-toolbar__field--start inline-flex flex-col gap-1 text-xs font-semibold text-gray-600 dark:text-gray-400">
+        <label className="orders-toolbar__field orders-toolbar__field--start inline-flex flex-col gap-1 text-xs font-semibold">
           <span className="orders-toolbar__label">Desde</span>
           <input
             type="date"
             value={filters.startDate}
             onChange={(e) => startFilter("startDate", e.target.value)}
-            className="orders-toolbar__control orders-toolbar__control--date bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
+            className="orders-toolbar__control orders-toolbar__control--date px-3 py-2"
           />
         </label>
-        <label className="orders-toolbar__field orders-toolbar__field--end inline-flex flex-col gap-1 text-xs font-semibold text-gray-600 dark:text-gray-400">
+        <label className="orders-toolbar__field orders-toolbar__field--end inline-flex flex-col gap-1 text-xs font-semibold">
           <span className="orders-toolbar__label">Hasta</span>
           <input
             type="date"
             value={filters.endDate}
             onChange={(e) => startFilter("endDate", e.target.value)}
-            className="orders-toolbar__control orders-toolbar__control--date bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
+            className="orders-toolbar__control orders-toolbar__control--date px-3 py-2"
           />
         </label>
         <button
@@ -207,16 +207,16 @@ export const Ordens = () => {
             const iso = `${yyyy}-${mm}-${dd}`;
             setFilters((prev) => ({ ...prev, startDate: iso, endDate: iso, page: 0 }));
           }}
-          className="orders-toolbar__control orders-toolbar__today bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm hover:opacity-95 focus:border-bear-cyan focus:outline-none"
+          className="orders-toolbar__control orders-toolbar__today bg-bg-card hover:bg-bg-input border border-border text-text-main rounded-lg px-3 py-2 transition-colors"
         >
           Hoy
         </button>
-        <label className="orders-toolbar__field orders-toolbar__field--limit inline-flex flex-col gap-1 text-xs font-semibold text-gray-600 dark:text-gray-400">
+        <label className="orders-toolbar__field orders-toolbar__field--limit inline-flex flex-col gap-1 text-xs font-semibold">
           <span className="orders-toolbar__label">Por página</span>
           <select
             value={filters.limit}
           onChange={(e) => startFilter("limit", +e.target.value)}
-            className="orders-toolbar__control orders-toolbar__control--select bg-bear-light-100 dark:bg-bear-dark-300 border border-gray-300 dark:border-bear-dark-100 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-bear-cyan focus:outline-none"
+            className="orders-toolbar__control orders-toolbar__control--select px-3 py-2"
           >
             <option value={100}>100</option>
             <option value={200}>200</option>
@@ -260,7 +260,7 @@ export const Ordens = () => {
     >
       <div className="w-full overflow-x-hidden">
         {/* Tabla desktop (patrón BEAR BEAT PRO) */}
-        <div className="admin-table-panel rounded-xl border border-gray-200 dark:border-bear-dark-100 overflow-hidden">
+        <div className="admin-table-panel">
           <div
             className="overflow-x-auto max-h-[60vh] overflow-y-auto"
             tabIndex={0}
@@ -271,40 +271,40 @@ export const Ordens = () => {
             <table className="w-full text-left text-sm border-collapse table-fixed">
               <thead>
                 <tr>
-                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100 w-[90px]">No. Orden</th>
-                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100 w-[220px]">Correo</th>
-                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium hidden xl:table-cell border-b border-gray-200 dark:border-bear-dark-100 w-[160px]">Teléfono</th>
-                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100 w-[120px]">Método</th>
-                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium hidden 2xl:table-cell border-b border-gray-200 dark:border-bear-dark-100 w-[170px]">Id suscripción</th>
-                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100 w-[110px]">Precio</th>
-                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100 w-[120px]">Fecha</th>
-                  <th className="bg-bear-light-100 dark:bg-bear-dark-500 text-gray-600 dark:text-gray-400 p-4 sticky top-0 z-10 text-left font-medium border-b border-gray-200 dark:border-bear-dark-100 w-[120px]">Estado</th>
+                  <th className="p-4 w-[90px]">No. Orden</th>
+                  <th className="p-4 w-[220px]">Correo</th>
+                  <th className="p-4 hidden xl:table-cell w-[160px]">Teléfono</th>
+                  <th className="p-4 w-[120px]">Método</th>
+                  <th className="p-4 hidden 2xl:table-cell w-[170px]">Id suscripción</th>
+                  <th className="p-4 w-[110px]">Precio</th>
+                  <th className="p-4 w-[120px]">Fecha</th>
+                  <th className="p-4 w-[120px]">Estado</th>
                 </tr>
               </thead>
-              <tbody className="bg-bear-light-100 dark:bg-bear-dark-900 divide-y divide-gray-200 dark:divide-bear-dark-100">
+              <tbody>
                 {!loader
                   ? ordens.map((orden, index) => (
                       <tr
                         key={`order_${index}`}
-                        className="border-b border-gray-200 dark:border-bear-dark-100 hover:bg-gray-100 dark:hover:bg-bear-dark-500/50 transition-colors"
+                        className="border-b transition-colors"
                       >
-                        <td className="py-4 px-4 text-gray-700 dark:text-gray-300">{orden.id}</td>
-                        <td className="py-4 px-4 text-gray-700 dark:text-gray-300 truncate" title={orden.email}>{orden.email}</td>
-                        <td className="py-4 px-4 text-gray-700 dark:text-gray-300 hidden xl:table-cell truncate" title={orden.phone ?? ""}>{orden.phone}</td>
-                        <td className="py-4 px-4 text-gray-700 dark:text-gray-300 truncate" title={orden.payment_method ?? "—"}>{orden.payment_method ?? "—"}</td>
-                        <td className="py-4 px-4 text-gray-700 dark:text-gray-300 hidden 2xl:table-cell truncate" title={orden.txn_id ?? ""}>{orden.txn_id}</td>
-                        <td className="py-4 px-4 text-gray-700 dark:text-gray-300">{orden.total_price}</td>
-                        <td className="py-4 px-4 text-gray-700 dark:text-gray-300">{orden.date_order.toLocaleDateString()}</td>
+                        <td className="py-4 px-4">{orden.id}</td>
+                        <td className="py-4 px-4 truncate" title={orden.email}>{orden.email}</td>
+                        <td className="py-4 px-4 hidden xl:table-cell truncate" title={orden.phone ?? ""}>{orden.phone}</td>
+                        <td className="py-4 px-4 truncate" title={orden.payment_method ?? "—"}>{orden.payment_method ?? "—"}</td>
+                        <td className="py-4 px-4 hidden 2xl:table-cell truncate" title={orden.txn_id ?? ""}>{orden.txn_id}</td>
+                        <td className="py-4 px-4">{orden.total_price}</td>
+                        <td className="py-4 px-4">{orden.date_order.toLocaleDateString()}</td>
                         <td className="py-4 px-4">{statusBadge(orden.status)}</td>
                       </tr>
                     ))
                   : ARRAY_10.map((_, i) => (
-                      <tr key={`skeleton_${i}`} className="border-b border-gray-200 dark:border-bear-dark-100">
-                        <td colSpan={8} className="py-4 px-4 animate-pulse bg-gray-200 dark:bg-bear-dark-100/50" />
+                      <tr key={`skeleton_${i}`} className="border-b">
+                        <td colSpan={8} className="py-4 px-4 animate-pulse bg-bg-input" />
                       </tr>
                     ))}
               </tbody>
-              <tfoot className="bg-bear-light-100 dark:bg-bear-dark-500 border-t border-gray-200 dark:border-bear-dark-100">
+              <tfoot>
                 <tr>
                   <td colSpan={8} className="p-4">
                     <Pagination
@@ -352,7 +352,7 @@ export const Ordens = () => {
                   key={`s_${i}`}
                   className="orders-toolbar__mobile-card orders-toolbar__mobile-card--skeleton"
                 >
-                  <div className="h-12 bg-gray-200 dark:bg-bear-dark-100/50 rounded" />
+                  <div className="h-12 bg-bg-input rounded" />
                 </div>
                   ))}
         </div>
@@ -376,14 +376,14 @@ export const Ordens = () => {
         user={undefined}
       >
         {drawerOrder && (
-          <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-            <p><span className="text-gray-500 dark:text-gray-500">Correo:</span> {drawerOrder.email}</p>
-            <p><span className="text-gray-500 dark:text-gray-500">Teléfono:</span> {drawerOrder.phone}</p>
-            <p><span className="text-gray-500 dark:text-gray-500">Método:</span> {drawerOrder.payment_method ?? "—"}</p>
-            <p><span className="text-gray-500 dark:text-gray-500">Id suscripción:</span> {drawerOrder.txn_id}</p>
-            <p><span className="text-gray-500 dark:text-gray-500">Precio:</span> {drawerOrder.total_price}</p>
-            <p><span className="text-gray-500 dark:text-gray-500">Fecha:</span> {drawerOrder.date_order.toLocaleDateString()}</p>
-            <p><span className="text-gray-500 dark:text-gray-500">Estado:</span> {getOrderStatusString(drawerOrder.status)}</p>
+          <div className="space-y-2 text-sm">
+            <p><span className="text-text-muted">Correo:</span> {drawerOrder.email}</p>
+            <p><span className="text-text-muted">Teléfono:</span> {drawerOrder.phone}</p>
+            <p><span className="text-text-muted">Método:</span> {drawerOrder.payment_method ?? "—"}</p>
+            <p><span className="text-text-muted">Id suscripción:</span> {drawerOrder.txn_id}</p>
+            <p><span className="text-text-muted">Precio:</span> {drawerOrder.total_price}</p>
+            <p><span className="text-text-muted">Fecha:</span> {drawerOrder.date_order.toLocaleDateString()}</p>
+            <p><span className="text-text-muted">Estado:</span> {getOrderStatusString(drawerOrder.status)}</p>
           </div>
         )}
       </AdminDrawer>

@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import trpc from "../../../api";
 import { getCompleted, transformBiteToGb } from "../../../functions/functions";
-import "./Storage.scss";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
+import { Alert } from "../../../components/ui";
 
 export const Storage = () => {
   const [storage, setStorage] = useState<any>({
@@ -45,32 +45,36 @@ export const Storage = () => {
           <Spinner size={3} width={0.3} color="var(--app-accent)" />
         </div>
       ) : (
-        <div className="rounded-xl border border-gray-200 dark:border-bear-dark-100 bg-bear-light-100 dark:bg-bear-dark-500/80 p-6 max-w-2xl">
+        <div className="rounded-xl border bg-bg-card p-6 max-w-2xl">
           {loadError && (
-            <div className="mb-4 rounded-lg border border-amber-300/70 bg-amber-50 text-amber-900 px-4 py-3 text-sm dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-200">
+            <Alert tone="warning" title="Métricas degradadas" className="mb-4">
               {loadError}
-            </div>
+            </Alert>
           )}
-          <h2 className="text-bear-dark-900 dark:text-white font-bold text-lg mb-4 font-poppins">
-            Espacio usado
-          </h2>
-          <p className="text-gray-700 dark:text-gray-300 text-sm mb-4">
+          <h2 className="font-bold text-lg mb-4 text-text-main">Espacio usado</h2>
+          <p className="text-sm mb-4 text-text-muted">
             {transformBiteToGb(storage.used_storage)} GB de {transformBiteToGb(storage.total_storage)} GB
           </p>
-          <div className="h-4 rounded-lg bg-gray-200 dark:bg-bear-dark-100 overflow-hidden flex">
+          <div className="h-4 rounded-lg bg-bg-input overflow-hidden flex">
             <div
-              className="bg-gray-400 dark:bg-bear-dark-300 shrink-0"
-              style={{ width: "5%", minWidth: "5%" }}
+              className="shrink-0"
+              style={{ width: "5%", minWidth: "5%", background: "var(--app-status-warning)" }}
               title="Reservado"
             />
             <div
-              className="bg-bear-cyan transition-all duration-500"
-              style={{ width: barWidth }}
+              className="transition-all duration-500"
+              style={{ width: barWidth, background: "var(--app-accent)" }}
             />
           </div>
-          <div className="mt-4 space-y-2 text-sm text-gray-600 dark:text-gray-400">
-            <p>Espacio reservado: <span className="text-gray-700 dark:text-gray-300">{transformBiteToGb(storage.reserved_space)} GB</span></p>
-            <p>Espacio disponible: <span className="text-gray-700 dark:text-gray-300">{transformBiteToGb(storage.available_storage)} GB</span></p>
+          <div className="mt-4 space-y-2 text-sm text-text-muted">
+            <p>
+              Espacio reservado:{" "}
+              <span className="text-text-main">{transformBiteToGb(storage.reserved_space)} GB</span>
+            </p>
+            <p>
+              Espacio disponible:{" "}
+              <span className="text-text-main">{transformBiteToGb(storage.available_storage)} GB</span>
+            </p>
           </div>
         </div>
       )}
