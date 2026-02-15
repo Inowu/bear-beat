@@ -1,7 +1,7 @@
 import "./Checkout.scss";
 import { useUserContext } from "../../contexts/UserContext";
 import { useLocation, useNavigate, Link } from "react-router-dom";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import trpc from "../../api";
 import { IPlans, IOxxoData, ISpeiData } from "interfaces/Plans";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
@@ -19,7 +19,7 @@ import { SpeiModal } from "../../components/Modals/SpeiModal/SpeiModal";
 import { OxxoModal } from "../../components/Modals/OxxoModal/OxxoModal";
 import PayPalComponent from "../../components/PayPal/PayPalComponent";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../utils/growthMetrics";
-import PaymentMethodLogos from "../../components/PaymentMethodLogos/PaymentMethodLogos";
+import PaymentMethodLogos, { PaymentMethodId } from "../../components/PaymentMethodLogos/PaymentMethodLogos";
 import { useCookies } from "react-cookie";
 import { trackInitiateCheckout } from "../../utils/facebookPixel";
 import { generateEventId } from "../../utils/marketingIds";
@@ -270,6 +270,7 @@ function Checkout() {
   const [redirecting, setRedirecting] = useState(false);
   const [showRedirectHelp, setShowRedirectHelp] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<CheckoutMethod>("card");
+  const [availableMethods, setAvailableMethods] = useState<CheckoutMethod[]>(["card"]);
   const [processingMethod, setProcessingMethod] = useState<CheckoutMethod | null>(null);
   const [inlineError, setInlineError] = useState<string | null>(null);
   const [acceptRecurring, setAcceptRecurring] = useState(true);
@@ -344,11 +345,6 @@ function Checkout() {
 
   const pendingPurchaseStorageKey = "bb.checkout.pendingPurchase";
 
-  const isMxnPlan = plan?.moneda?.toUpperCase() === "MXN";
-  const [conektaAvailability, setConektaAvailability] = useState<{
-    oxxoEnabled: boolean;
-    payByBankEnabled: boolean;
-  } | null>(null);
   const hasPaypalPlan = Boolean(paypalPlan?.paypal_plan_id || paypalPlan?.paypal_plan_id_test);
 
   useEffect(() => {
@@ -357,55 +353,6 @@ function Checkout() {
       navigate("/micuenta", { replace: true });
     }
   }, [currentUser?.hasActiveSubscription, navigate]);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const cfg = await trpc.plans.getTrialConfig.query();
-        if (!cancelled) setTrialConfig(cfg);
-      } catch {
-        if (!cancelled) setTrialConfig({ enabled: false, days: 0, gb: 0, eligible: null });
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    if (!isMxnPlan) {
-      setConektaAvailability(null);
-      return;
-    }
-    (async () => {
-      try {
-        const result = await trpc.subscriptions.getConektaAvailability.query();
-        if (!cancelled) {
-          setConektaAvailability({
-            oxxoEnabled: Boolean(result?.oxxoEnabled),
-            payByBankEnabled: Boolean(result?.payByBankEnabled),
-          });
-        }
-      } catch {
-        if (!cancelled) setConektaAvailability({ oxxoEnabled: false, payByBankEnabled: false });
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [isMxnPlan]);
-
-  const availableMethods = useMemo<CheckoutMethod[]>(() => {
-    if (!isMxnPlan) return hasPaypalPlan ? ["card", "paypal"] : ["card"];
-    const methods: CheckoutMethod[] = ["card"];
-    if (hasPaypalPlan) methods.push("paypal");
-    methods.push("spei");
-    if (conektaAvailability?.payByBankEnabled) methods.push("bbva");
-    if (conektaAvailability?.oxxoEnabled) methods.push("oxxo");
-    return methods;
-  }, [isMxnPlan, hasPaypalPlan, conektaAvailability?.oxxoEnabled, conektaAvailability?.payByBankEnabled]);
 
   const openCheckoutError = useCallback(
     (opts: {
@@ -514,6 +461,7 @@ function Checkout() {
       const p: IPlans | null = (resolved as any)?.plan ?? null;
       const pPaypal: IPlans | null = (resolved as any)?.paypalPlan ?? null;
       const resolvedPlanId = (resolved as any)?.resolvedPlanId;
+      const checkout = (resolved as any)?.checkout ?? null;
 
       if (p && typeof resolvedPlanId === "number" && resolvedPlanId !== id_plan) {
         skipPlanReloadRef.current = true;
@@ -529,9 +477,76 @@ function Checkout() {
       setPaypalPlan(pPaypal);
       setPlanStatus(p ? "loaded" : "not_found");
       if (p) checkManyChat(p);
+
+      if (!p) {
+        // Nothing else to compute for a missing plan.
+        setAvailableMethods(["card"]);
+        setTrialConfig({ enabled: false, days: 0, gb: 0, eligible: null });
+        return;
+      }
+
+      const backendMethods = checkout && typeof checkout === "object" && Array.isArray((checkout as any).availableMethods)
+        ? ((checkout as any).availableMethods as CheckoutMethod[])
+        : null;
+      const backendTrialConfig =
+        checkout && typeof checkout === "object" && (checkout as any).trialConfig && typeof (checkout as any).trialConfig === "object"
+          ? ((checkout as any).trialConfig as {
+              enabled: boolean;
+              days: number;
+              gb: number;
+              eligible?: boolean | null;
+            })
+          : null;
+
+      const hasBackendCheckoutConfig = Boolean(
+        backendMethods && backendMethods.length > 0 && backendTrialConfig,
+      );
+
+      if (hasBackendCheckoutConfig) {
+        setAvailableMethods(backendMethods!);
+        setTrialConfig(backendTrialConfig!);
+      } else {
+        // Backwards-compatible fallback: if backend doesn't return checkout config, compute via legacy calls.
+        // Trial config (best-effort).
+        try {
+          const cfg = await trpc.plans.getTrialConfig.query();
+          setTrialConfig(cfg);
+        } catch {
+          setTrialConfig({ enabled: false, days: 0, gb: 0, eligible: null });
+        }
+
+        // Payment methods.
+        const moneda = typeof p?.moneda === "string" ? p.moneda.trim().toUpperCase() : "";
+        const paypalAvailable = Boolean(pPaypal?.paypal_plan_id || pPaypal?.paypal_plan_id_test);
+        if (moneda !== "MXN") {
+          setAvailableMethods(paypalAvailable ? ["card", "paypal"] : ["card"]);
+        } else {
+          let availability: { oxxoEnabled: boolean; payByBankEnabled: boolean } = {
+            oxxoEnabled: false,
+            payByBankEnabled: false,
+          };
+          try {
+            const result = await trpc.subscriptions.getConektaAvailability.query();
+            availability = {
+              oxxoEnabled: Boolean(result?.oxxoEnabled),
+              payByBankEnabled: Boolean(result?.payByBankEnabled),
+            };
+          } catch {
+            // noop
+          }
+          const methods: CheckoutMethod[] = ["card"];
+          if (paypalAvailable) methods.push("paypal");
+          methods.push("spei");
+          if (availability.payByBankEnabled) methods.push("bbva");
+          if (availability.oxxoEnabled) methods.push("oxxo");
+          setAvailableMethods(methods);
+        }
+      }
     } catch {
       setPlan(null);
       setPaypalPlan(null);
+      setAvailableMethods(["card"]);
+      setTrialConfig({ enabled: false, days: 0, gb: 0, eligible: null });
       setPlanStatus("error");
     }
   }, [checkManyChat, location.pathname, location.search, navigate]);
@@ -1365,10 +1380,11 @@ function Checkout() {
       ? `Tip: con tarjeta puedes iniciar una prueba de ${trialDays} días (hoy $0).`
       : null;
 
-  const paymentMethods =
-    currencyCode === "MXN"
-      ? (["visa", "mastercard", "paypal", "spei"] as const)
-      : (["visa", "mastercard", "paypal"] as const);
+  const paymentMethods: PaymentMethodId[] = ["visa", "mastercard"];
+  if (availableMethods.includes("paypal") && hasPaypalPlan) paymentMethods.push("paypal");
+  if (availableMethods.includes("spei")) paymentMethods.push("spei");
+  if (availableMethods.includes("oxxo")) paymentMethods.push("oxxo");
+  if (availableMethods.includes("bbva")) paymentMethods.push("transfer");
 
   return (
     <div className="checkout-main-container checkout2026">
@@ -1529,7 +1545,7 @@ function Checkout() {
 
             <div className="checkout2026__trust" aria-label="Confianza">
               <PaymentMethodLogos
-                methods={[...paymentMethods]}
+                methods={paymentMethods}
                 className="checkout2026__paymentLogos"
                 ariaLabel="Métodos de pago disponibles"
               />
