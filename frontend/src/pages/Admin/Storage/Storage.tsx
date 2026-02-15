@@ -13,14 +13,16 @@ export const Storage = () => {
     reserved_space: 0,
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const getStorage = async () => {
     try {
       let data = await trpc.ftp.storage.query();
       const reservedSpace = data.total_storage * 0.05;
       setStorage({ ...data, reserved_space: reservedSpace });
+      setLoadError(data?.degraded ? "No pudimos obtener las métricas del servidor. Mostrando valores en 0 por ahora." : null);
     } catch (error) {
-      console.log(error);
+      setLoadError("No pudimos obtener las métricas del servidor. Mostrando valores en 0 por ahora.");
     } finally {
       setIsLoading(false);
     }
@@ -44,6 +46,11 @@ export const Storage = () => {
         </div>
       ) : (
         <div className="rounded-xl border border-gray-200 dark:border-bear-dark-100 bg-bear-light-100 dark:bg-bear-dark-500/80 p-6 max-w-2xl">
+          {loadError && (
+            <div className="mb-4 rounded-lg border border-amber-300/70 bg-amber-50 text-amber-900 px-4 py-3 text-sm dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-200">
+              {loadError}
+            </div>
+          )}
           <h2 className="text-bear-dark-900 dark:text-white font-bold text-lg mb-4 font-poppins">
             Espacio usado
           </h2>
