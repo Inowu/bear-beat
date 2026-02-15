@@ -183,7 +183,9 @@ function MyAccount() {
         }
         setQuota(quota);
       } catch (error) {
-        console.log(error);
+        if (import.meta.env.DEV) {
+          console.warn("[MYACCOUNT] Failed to load quota.");
+        }
       }
     }
   };
@@ -205,7 +207,9 @@ function MyAccount() {
       );
       setOrders(allorders);
     } catch (error: any) {
-      console.log(error.message);
+      if (import.meta.env.DEV) {
+        console.warn("[MYACCOUNT] Failed to load orders.");
+      }
     }
   };
 
