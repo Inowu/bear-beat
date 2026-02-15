@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./OrdensToolbar.scss";
 import Pagination from "../../../components/Pagination/Pagination";
 import trpc from "../../../api";
 import { useUserContext } from "../../../contexts/UserContext";
@@ -11,6 +10,7 @@ import { IAdminOrders, ORDER_STATUS } from "../../../interfaces/admin";
 import { of } from "await-of";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
+import { Input, Select } from "../../../components/ui";
 
 interface IAdminFilter {
   active: number;
@@ -135,95 +135,93 @@ export const Ordens = () => {
   }, [filters]);
 
   const toolbar = (
-    <div className="orders-toolbar" data-testid="orders-toolbar">
-      <div className="orders-toolbar__filters">
-        <div className="orders-toolbar__search">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted w-4 h-4" />
-          <input
+    <div className="flex flex-wrap items-end gap-2 w-full" data-testid="orders-toolbar">
+      <label className="inline-flex flex-col gap-1 text-sm text-text-muted min-w-[240px] flex-1">
+        Buscar
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted w-4 h-4" aria-hidden />
+          <Input
             id="orders-search"
             type="text"
             placeholder="Buscar por email o teléfono"
             value={filters.searchData}
             onChange={(e) => startFilter("searchData", e.target.value)}
-            className="orders-toolbar__control orders-toolbar__control--input w-full py-2 pl-9 pr-3"
+            className="pl-9"
           />
         </div>
-        <label className="orders-toolbar__field orders-toolbar__field--method inline-flex flex-col gap-1 text-xs font-semibold">
-          <span className="orders-toolbar__label">Método</span>
-          <select
-            value={filters.paymentMethod}
-            onChange={(e) => startFilter("paymentMethod", e.target.value)}
-            className="orders-toolbar__control orders-toolbar__control--select px-3 py-2"
-          >
-            <option value="">Todos</option>
-            <option value="Paypal">Paypal</option>
-            <option value="Stripe">Stripe</option>
-            <option value="Conekta">Conekta (SPEI/Efectivo/BBVA)</option>
-            <option value="Admin">Admin</option>
-          </select>
-        </label>
-        <label className="orders-toolbar__field orders-toolbar__field--status inline-flex flex-col gap-1 text-xs font-semibold">
-          <span className="orders-toolbar__label">Estado</span>
-          <select
-            value={filters.status}
-            onChange={(e) =>
-              startFilter("status", e.target.value === "" ? "" : Number(e.target.value))
-            }
-            className="orders-toolbar__control orders-toolbar__control--select px-3 py-2"
-          >
-            <option value="">Todos</option>
-            <option value={ORDER_STATUS.PAID}>Pagada</option>
-            <option value={ORDER_STATUS.PENDING}>Pendiente</option>
-            <option value={ORDER_STATUS.FAILED}>Fallida</option>
-            <option value={ORDER_STATUS.CANCELLED}>Cancelada</option>
-            <option value={ORDER_STATUS.EXPIRED}>Expirada</option>
-          </select>
-        </label>
-        <label className="orders-toolbar__field orders-toolbar__field--start inline-flex flex-col gap-1 text-xs font-semibold">
-          <span className="orders-toolbar__label">Desde</span>
-          <input
-            type="date"
-            value={filters.startDate}
-            onChange={(e) => startFilter("startDate", e.target.value)}
-            className="orders-toolbar__control orders-toolbar__control--date px-3 py-2"
-          />
-        </label>
-        <label className="orders-toolbar__field orders-toolbar__field--end inline-flex flex-col gap-1 text-xs font-semibold">
-          <span className="orders-toolbar__label">Hasta</span>
-          <input
-            type="date"
-            value={filters.endDate}
-            onChange={(e) => startFilter("endDate", e.target.value)}
-            className="orders-toolbar__control orders-toolbar__control--date px-3 py-2"
-          />
-        </label>
-        <button
-          type="button"
-          onClick={() => {
-            const today = new Date();
-            const yyyy = today.getFullYear();
-            const mm = String(today.getMonth() + 1).padStart(2, "0");
-            const dd = String(today.getDate()).padStart(2, "0");
-            const iso = `${yyyy}-${mm}-${dd}`;
-            setFilters((prev) => ({ ...prev, startDate: iso, endDate: iso, page: 0 }));
-          }}
-          className="orders-toolbar__control orders-toolbar__today bg-bg-card hover:bg-bg-input border border-border text-text-main rounded-lg px-3 py-2 transition-colors"
+      </label>
+
+      <label className="inline-flex flex-col gap-1 text-sm text-text-muted min-w-[200px]">
+        Método
+        <Select
+          value={filters.paymentMethod}
+          onChange={(e) => startFilter("paymentMethod", e.target.value)}
         >
-          Hoy
-        </button>
-        <label className="orders-toolbar__field orders-toolbar__field--limit inline-flex flex-col gap-1 text-xs font-semibold">
-          <span className="orders-toolbar__label">Por página</span>
-          <select
-            value={filters.limit}
-          onChange={(e) => startFilter("limit", +e.target.value)}
-            className="orders-toolbar__control orders-toolbar__control--select px-3 py-2"
-          >
-            <option value={100}>100</option>
-            <option value={200}>200</option>
-            <option value={500}>500</option>
-          </select>
-        </label>
-      </div>
+          <option value="">Todos</option>
+          <option value="Paypal">Paypal</option>
+          <option value="Stripe">Stripe</option>
+          <option value="Conekta">Conekta (SPEI/Efectivo/BBVA)</option>
+          <option value="Admin">Admin</option>
+        </Select>
+      </label>
+
+      <label className="inline-flex flex-col gap-1 text-sm text-text-muted min-w-[200px]">
+        Estado
+        <Select
+          value={filters.status}
+          onChange={(e) => startFilter("status", e.target.value === "" ? "" : Number(e.target.value))}
+        >
+          <option value="">Todos</option>
+          <option value={ORDER_STATUS.PAID}>Pagada</option>
+          <option value={ORDER_STATUS.PENDING}>Pendiente</option>
+          <option value={ORDER_STATUS.FAILED}>Fallida</option>
+          <option value={ORDER_STATUS.CANCELLED}>Cancelada</option>
+          <option value={ORDER_STATUS.EXPIRED}>Expirada</option>
+        </Select>
+      </label>
+
+      <label className="inline-flex flex-col gap-1 text-sm text-text-muted min-w-[190px]">
+        Desde
+        <Input
+          type="date"
+          value={filters.startDate}
+          onChange={(e) => startFilter("startDate", e.target.value)}
+        />
+      </label>
+
+      <label className="inline-flex flex-col gap-1 text-sm text-text-muted min-w-[190px]">
+        Hasta
+        <Input
+          type="date"
+          value={filters.endDate}
+          onChange={(e) => startFilter("endDate", e.target.value)}
+        />
+      </label>
+
+      <button
+        type="button"
+        onClick={() => {
+          const today = new Date();
+          const yyyy = today.getFullYear();
+          const mm = String(today.getMonth() + 1).padStart(2, "0");
+          const dd = String(today.getDate()).padStart(2, "0");
+          const iso = `${yyyy}-${mm}-${dd}`;
+          setFilters((prev) => ({ ...prev, startDate: iso, endDate: iso, page: 0 }));
+        }}
+        className="min-h-[44px] rounded-xl px-4 border border-border bg-bg-card text-text-main font-semibold hover:bg-bg-input transition-colors"
+      >
+        Hoy
+      </button>
+
+      <label className="inline-flex flex-col gap-1 text-sm text-text-muted min-w-[150px]">
+        Por página
+        <Select value={filters.limit} onChange={(e) => startFilter("limit", +e.target.value)}>
+          <option value={100}>100</option>
+          <option value={200}>200</option>
+          <option value={500}>500</option>
+        </Select>
+      </label>
+
       <CsvDownloader
         filename="lista_de_ordenes"
         extension=".csv"
@@ -232,7 +230,7 @@ export const Ordens = () => {
         datas={transformOrdersToExport}
         text=""
       >
-        <span className="orders-toolbar__export inline-flex items-center gap-2 bg-bear-gradient text-bear-dark-500 hover:opacity-95 font-medium rounded-pill px-4 py-2 transition-colors">
+        <span className="inline-flex items-center gap-2 bg-bear-gradient text-bear-dark-500 hover:opacity-95 font-medium rounded-pill px-4 py-2 transition-colors">
           <Download size={18} aria-hidden />
           Exportar
         </span>
@@ -242,14 +240,13 @@ export const Ordens = () => {
 
   const statusBadge = (status: number) => {
     const s = getOrderStatusString(status);
-    const isPaid = status === ORDER_STATUS.PAID;
-    return (
-      <span
-        className={`orders-toolbar__status ${isPaid ? "orders-toolbar__status--paid" : "orders-toolbar__status--muted"}`}
-      >
-        {s}
-      </span>
-    );
+    const variant =
+      status === ORDER_STATUS.PAID
+        ? "badge--success"
+        : status === ORDER_STATUS.PENDING
+          ? "badge--neutral"
+          : "badge--danger";
+    return <span className={`badge badge--tiny ${variant}`}>{s}</span>;
   };
 
   return (
@@ -323,41 +320,66 @@ export const Ordens = () => {
       </div>
 
         {/* Cards móvil (patrón BEAR BEAT PRO) */}
-        <div className="admin-mobile-list orders-toolbar__mobile-list">
+        <div className="admin-mobile-list">
           {!loader
-            ? ordens.map((orden, index) => (
-                <button
-                  key={`m_${index}`}
-                  className="admin-mobile-card orders-toolbar__mobile-card"
-                  onClick={() => setDrawerOrder(orden)}
-                  type="button"
-                >
-                  <div className="orders-toolbar__mobile-card__content">
-                    <div className="orders-toolbar__mobile-card__main">
-                      <p className="orders-toolbar__mobile-card__title">{orden.email}</p>
-                      <p className="orders-toolbar__mobile-card__meta">{orden.payment_method ?? "—"}</p>
-                      <p className="orders-toolbar__mobile-card__meta">
-                        {orden.total_price} · {orden.date_order.toLocaleDateString()}
-                      </p>
+            ? ordens.length > 0
+              ? ordens.map((orden, index) => (
+                  <button
+                    key={`m_${index}`}
+                    className="admin-mobile-card"
+                    onClick={() => setDrawerOrder(orden)}
+                    type="button"
+                    aria-label={`Ver orden ${orden.id}`}
+                  >
+                    <div className="admin-mobile-card__head">
+                      <div className="admin-mobile-card__identity">
+                        <div className="admin-mobile-card__avatar">
+                          {(orden.email || "?").charAt(0).toUpperCase()}
+                        </div>
+                        <div className="admin-mobile-card__copy">
+                          <p className="admin-mobile-card__name">Orden #{orden.id}</p>
+                          <p className="admin-mobile-card__email">{orden.email}</p>
+                        </div>
+                      </div>
+                      {statusBadge(orden.status)}
+                      <span className="admin-mobile-card__menu" aria-hidden>
+                        <MoreVertical size={20} />
+                      </span>
                     </div>
-                    {statusBadge(orden.status)}
-                    <span className="orders-toolbar__mobile-card__more" aria-hidden>
-                      <MoreVertical size={20} />
-                    </span>
+                    <div className="admin-mobile-card__foot">
+                      <span>{orden.payment_method ?? "—"}</span>
+                      <span>{orden.total_price}</span>
+                      <span>{orden.date_order.toLocaleDateString()}</span>
+                    </div>
+                  </button>
+                ))
+              : (
+                  <div className="admin-mobile-empty">
+                    <h2>No hay órdenes</h2>
+                    <p>Prueba ajustar los filtros para ver resultados.</p>
                   </div>
-                </button>
-              ))
+                )
             : ARRAY_10.map((_, i) => (
-                <div
-                  key={`s_${i}`}
-                  className="orders-toolbar__mobile-card orders-toolbar__mobile-card--skeleton"
-                >
-                  <div className="h-12 bg-bg-input rounded" />
+                <div key={`s_${i}`} className="admin-mobile-card admin-mobile-card--skeleton">
+                  <div className="admin-mobile-card__head">
+                    <div className="admin-mobile-card__identity">
+                      <div className="admin-mobile-card__avatar" />
+                      <div className="admin-mobile-card__copy">
+                        <p className="admin-mobile-card__name">—</p>
+                        <p className="admin-mobile-card__email">—</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="admin-mobile-card__foot">
+                    <span>—</span>
+                    <span>—</span>
+                    <span>—</span>
+                  </div>
                 </div>
-                  ))}
+              ))}
         </div>
 
-        <div className="admin-pagination-mobile mt-4 orders-toolbar__mobile-pagination">
+        <div className="admin-pagination-mobile mt-4">
           <Pagination
             totalLoader={totalLoader}
             totalData={totalOrdens}
