@@ -554,6 +554,16 @@ html[data-theme="light"] .admin-users-wrap .btn-primary:hover {
   background: color-mix(in srgb, var(--ad-row-hover) 88%, transparent);
 }
 
+.btn-cell--danger {
+  color: var(--ad-badge-danger-text);
+}
+
+.btn-cell--danger:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--ad-badge-danger-text) 38%, transparent);
+  color: var(--ad-badge-danger-text);
+  background: color-mix(in srgb, var(--ad-badge-danger-bg) 84%, transparent);
+}
+
 .btn-cell:disabled {
   opacity: 0.45;
   cursor: not-allowed;

@@ -132,7 +132,7 @@ export const PlanAdmin = () => {
       />
 
       {/* Desktop: tabla */}
-      <div className="admin-table-panel rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50">
+      <div className="admin-table-panel">
         <div
           className="overflow-x-auto max-h-[60vh] overflow-y-auto"
           tabIndex={0}
@@ -141,43 +141,41 @@ export const PlanAdmin = () => {
           data-scroll-region
         >
           <table className="w-full min-w-[700px]">
-            <thead className="bg-slate-900 sticky top-0 z-10">
+            <thead className="sticky top-0 z-10">
               <tr>
-                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Nombre</th>
-                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Método de pago</th>
-                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4 hidden lg:table-cell">Descripción</th>
-                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Moneda</th>
-                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Precio</th>
-                <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Activo</th>
-                <th className="text-slate-400 uppercase text-xs tracking-wider text-right py-3 px-4">Acciones</th>
+                <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Nombre</th>
+                <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Método de pago</th>
+                <th className="uppercase text-xs tracking-wider text-left py-3 px-4 hidden lg:table-cell">Descripción</th>
+                <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Moneda</th>
+                <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Precio</th>
+                <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Activo</th>
+                <th className="uppercase text-xs tracking-wider text-right py-3 px-4">Acciones</th>
               </tr>
             </thead>
-            <tbody className="bg-slate-950">
+            <tbody>
               {pagePlans.map((plan) => (
                 <tr
                   key={plan.id}
-                  className="border-b border-slate-800 hover:bg-slate-900/60 transition-colors"
+                  className="border-b transition-colors"
                 >
-                  <td className="py-3 px-4 text-sm text-slate-300">{plan.name}</td>
-                  <td className="py-3 px-4 text-sm text-slate-300">{getPaymentMethod(plan)}</td>
-                  <td className="py-3 px-4 text-sm text-slate-300 hidden lg:table-cell">{plan.description}</td>
-                  <td className="py-3 px-4 text-sm text-slate-300">{plan.moneda?.toUpperCase()}</td>
-                  <td className="py-3 px-4 text-sm text-slate-300">{plan.price}</td>
+                  <td className="py-3 px-4 text-sm">{plan.name}</td>
+                  <td className="py-3 px-4 text-sm">{getPaymentMethod(plan)}</td>
+                  <td className="py-3 px-4 text-sm hidden lg:table-cell">{plan.description}</td>
+                  <td className="py-3 px-4 text-sm">{plan.moneda?.toUpperCase()}</td>
+                  <td className="py-3 px-4 text-sm">{plan.price}</td>
                   <td className="py-3 px-4">
                     <span
-                      className={`inline-flex text-xs px-2 py-1 rounded-full ${
-                        plan.activated === 1 ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-500/10 text-slate-400"
-                      }`}
+                      className={`badge badge--tiny ${plan.activated === 1 ? "badge--success" : "badge--neutral"}`}
                     >
                       {plan.activated === 1 ? "Activo" : "No activo"}
                     </span>
                   </td>
                   <td className="py-3 px-4 text-right">
-                    <div className="flex items-center justify-end gap-1">
+                    <div className="table-actions">
                       <button
                         type="button"
                         onClick={() => handleEditPlan(plan)}
-                        className="p-2 text-slate-400 hover:text-bear-cyan transition-colors rounded-lg hover:bg-slate-800"
+                        className="btn-cell"
                         aria-label="Editar plan"
                       >
                         <Edit2 size={16} aria-hidden />
@@ -186,7 +184,7 @@ export const PlanAdmin = () => {
                         type="button"
                         onClick={() => setPlanToDelete(plan)}
                         disabled={plan.paypal_plan_id != null}
-                        className="p-2 text-slate-400 hover:text-red-400 transition-colors rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="btn-cell btn-cell--danger"
                         aria-label="Eliminar plan"
                       >
                         <Trash2 size={16} aria-hidden />
@@ -196,7 +194,7 @@ export const PlanAdmin = () => {
                 </tr>
               ))}
             </tbody>
-            <tfoot className="bg-slate-900">
+            <tfoot>
               <tr>
                 <td colSpan={7} className="py-3 px-4">
                   <Pagination
@@ -278,12 +276,12 @@ export const PlanAdmin = () => {
         }
       >
         {drawerPlan && (
-          <div className="space-y-2 text-sm text-slate-300">
-            <p><span className="text-slate-500">Método:</span> {getPaymentMethod(drawerPlan)}</p>
-            <p><span className="text-slate-500">Descripción:</span> {drawerPlan.description}</p>
-            <p><span className="text-slate-500">Moneda:</span> {drawerPlan.moneda?.toUpperCase()}</p>
-            <p><span className="text-slate-500">Precio:</span> {drawerPlan.price}</p>
-            <p><span className="text-slate-500">Estado:</span> {drawerPlan.activated === 1 ? "Activo" : "No activo"}</p>
+          <div className="space-y-2 text-sm">
+            <p><span className="text-text-muted">Método:</span> {getPaymentMethod(drawerPlan)}</p>
+            <p><span className="text-text-muted">Descripción:</span> {drawerPlan.description}</p>
+            <p><span className="text-text-muted">Moneda:</span> {drawerPlan.moneda?.toUpperCase()}</p>
+            <p><span className="text-text-muted">Precio:</span> {drawerPlan.price}</p>
+            <p><span className="text-text-muted">Estado:</span> {drawerPlan.activated === 1 ? "Activo" : "No activo"}</p>
           </div>
         )}
       </AdminDrawer>

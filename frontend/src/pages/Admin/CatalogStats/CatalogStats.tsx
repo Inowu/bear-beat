@@ -178,7 +178,7 @@ export function CatalogStats() {
           </button>
         }
       >
-        <p className="text-slate-400 py-8">No hay datos guardados. Haz clic en Actualizar para cargar (puede tardar unos segundos).</p>
+        <p className="text-text-muted py-8">No hay datos guardados. Haz clic en Actualizar para cargar (puede tardar unos segundos).</p>
       </AdminPageLayout>
     );
   }
@@ -191,7 +191,7 @@ export function CatalogStats() {
       >
         <div className="flex flex-col items-center justify-center py-12 gap-4">
           <Spinner size={3} width={0.3} color="var(--app-accent)" />
-          <p className="text-slate-400 text-sm">Calculando estadísticas…</p>
+          <p className="text-text-muted text-sm">Calculando estadísticas…</p>
         </div>
       </AdminPageLayout>
     );
@@ -209,7 +209,7 @@ export function CatalogStats() {
   const toolbar = (
     <div className="flex flex-wrap items-center gap-3">
       {savedAt && (
-        <span className="text-slate-500 text-sm">Datos del {new Date(savedAt).toLocaleString("es")}</span>
+        <span className="text-text-muted text-sm">Datos del {new Date(savedAt).toLocaleString("es")}</span>
       )}
       <button
         type="button"
@@ -239,73 +239,73 @@ export function CatalogStats() {
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 mb-6">
           <p className="text-amber-200 text-sm">{data.error}</p>
           {data.totalFiles === 0 && (
-            <p className="text-slate-400 text-xs mt-2">Configura SONGS_PATH en el servidor o revisa el acceso al catálogo FTP.</p>
+            <p className="text-text-muted text-xs mt-2">Configura SONGS_PATH en el servidor o revisa el acceso al catálogo FTP.</p>
           )}
         </div>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-          <h2 className="text-slate-400 text-xs uppercase tracking-wider mb-1">Archivos totales</h2>
-          <p className="text-white text-2xl font-bold">{data.totalFiles.toLocaleString()}</p>
+        <div className="rounded-xl border border-border bg-bg-card p-4">
+          <h2 className="text-text-muted text-xs uppercase tracking-wider mb-1">Archivos totales</h2>
+          <p className="text-text-main text-2xl font-bold">{data.totalFiles.toLocaleString()}</p>
         </div>
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-          <h2 className="text-slate-400 text-xs uppercase tracking-wider mb-1">GB totales</h2>
-          <p className="text-white text-2xl font-bold">{data.totalGB.toLocaleString()}</p>
+        <div className="rounded-xl border border-border bg-bg-card p-4">
+          <h2 className="text-text-muted text-xs uppercase tracking-wider mb-1">GB totales</h2>
+          <p className="text-text-main text-2xl font-bold">{data.totalGB.toLocaleString()}</p>
         </div>
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-          <h2 className="text-slate-400 text-xs uppercase tracking-wider mb-1">Géneros únicos</h2>
-          <p className="text-white text-2xl font-bold">{(data.totalGenres ?? 0).toLocaleString()}</p>
+        <div className="rounded-xl border border-border bg-bg-card p-4">
+          <h2 className="text-text-muted text-xs uppercase tracking-wider mb-1">Géneros únicos</h2>
+          <p className="text-text-main text-2xl font-bold">{(data.totalGenres ?? 0).toLocaleString()}</p>
         </div>
       </div>
 
-      <h2 className="text-white font-bold text-lg mb-4" style={{ fontFamily: "var(--bb-font-ui)" }}>Por tipo</h2>
+      <h2 className="text-text-main font-bold text-lg mb-4" style={{ fontFamily: "var(--bb-font-ui)" }}>Por tipo</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-          <h3 className="text-slate-400 text-sm mb-1">Videos</h3>
-          <p className="text-slate-300 text-sm">{data.videos.toLocaleString()} archivos · {data.gbVideos.toLocaleString()} GB</p>
+        <div className="rounded-xl border border-border bg-bg-card p-4">
+          <h3 className="text-text-muted text-sm mb-1">Videos</h3>
+          <p className="text-text-main text-sm">{data.videos.toLocaleString()} archivos · {data.gbVideos.toLocaleString()} GB</p>
         </div>
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-          <h3 className="text-slate-400 text-sm mb-1">Audios</h3>
-          <p className="text-slate-300 text-sm">{data.audios.toLocaleString()} archivos · {data.gbAudios.toLocaleString()} GB</p>
+        <div className="rounded-xl border border-border bg-bg-card p-4">
+          <h3 className="text-text-muted text-sm mb-1">Audios</h3>
+          <p className="text-text-main text-sm">{data.audios.toLocaleString()} archivos · {data.gbAudios.toLocaleString()} GB</p>
         </div>
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-          <h3 className="text-slate-400 text-sm mb-1">Karaokes</h3>
-          <p className="text-slate-300 text-sm">{data.karaokes.toLocaleString()} archivos · {data.gbKaraokes.toLocaleString()} GB</p>
+        <div className="rounded-xl border border-border bg-bg-card p-4">
+          <h3 className="text-text-muted text-sm mb-1">Karaokes</h3>
+          <p className="text-text-main text-sm">{data.karaokes.toLocaleString()} archivos · {data.gbKaraokes.toLocaleString()} GB</p>
         </div>
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-          <h3 className="text-slate-400 text-sm mb-1">Otros</h3>
-          <p className="text-slate-300 text-sm">{data.other.toLocaleString()} archivos</p>
+        <div className="rounded-xl border border-border bg-bg-card p-4">
+          <h3 className="text-text-muted text-sm mb-1">Otros</h3>
+          <p className="text-text-main text-sm">{data.other.toLocaleString()} archivos</p>
         </div>
       </div>
 
       {genres.length > 0 && (
         <>
-          <h2 className="text-white font-bold text-lg mb-2" style={{ fontFamily: "var(--bb-font-ui)" }}>Por género</h2>
-          <p className="text-slate-500 text-sm mb-4">Cada género = nombre de la carpeta (ej. Bachata).</p>
+          <h2 className="text-text-main font-bold text-lg mb-2" style={{ fontFamily: "var(--bb-font-ui)" }}>Por género</h2>
+          <p className="text-text-muted text-sm mb-4">Cada género = nombre de la carpeta (ej. Bachata).</p>
           <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-            <span className="text-slate-500 text-sm">Mostrando {from}-{to} de {genres.length}</span>
+            <span className="text-text-muted text-sm">Mostrando {from}-{to} de {genres.length}</span>
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 disabled={page <= 0}
                 onClick={() => setGenrePage((p) => Math.max(0, p - 1))}
-                className="bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white text-sm rounded-lg px-3 py-1.5"
+                className="bg-bg-card hover:bg-bg-input disabled:opacity-50 text-text-main text-sm rounded-lg px-3 py-1.5 border border-border transition-colors"
               >
                 Anterior
               </button>
-              <span className="text-slate-400 text-sm">Página {page + 1} de {totalPages}</span>
+              <span className="text-text-muted text-sm">Página {page + 1} de {totalPages}</span>
               <button
                 type="button"
                 disabled={page >= totalPages - 1}
                 onClick={() => setGenrePage((p) => Math.min(totalPages - 1, p + 1))}
-                className="bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white text-sm rounded-lg px-3 py-1.5"
+                className="bg-bg-card hover:bg-bg-input disabled:opacity-50 text-text-main text-sm rounded-lg px-3 py-1.5 border border-border transition-colors"
               >
                 Siguiente
               </button>
             </div>
           </div>
-          <div className="rounded-xl border border-slate-800 overflow-hidden bg-slate-900/50">
+          <div className="admin-table-panel">
             <div
               className="overflow-x-auto max-h-[50vh] overflow-y-auto"
               tabIndex={0}
@@ -314,19 +314,19 @@ export function CatalogStats() {
               data-scroll-region
             >
               <table className="w-full">
-                <thead className="bg-slate-900 sticky top-0">
+                <thead className="sticky top-0">
                   <tr>
-                    <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Género</th>
-                    <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">Archivos</th>
-                    <th className="text-slate-400 uppercase text-xs tracking-wider text-left py-3 px-4">GB</th>
+                    <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Género</th>
+                    <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Archivos</th>
+                    <th className="uppercase text-xs tracking-wider text-left py-3 px-4">GB</th>
                   </tr>
                 </thead>
-                <tbody className="bg-slate-950">
+                <tbody>
                   {pageGenres.map((g) => (
-                    <tr key={g.name} className="border-b border-slate-800 hover:bg-slate-900/60 transition-colors">
-                      <td className="py-3 px-4 text-sm text-slate-300">{g.name}</td>
-                      <td className="py-3 px-4 text-sm text-slate-300">{g.files.toLocaleString()}</td>
-                      <td className="py-3 px-4 text-sm text-slate-300">{g.gb.toLocaleString()}</td>
+                    <tr key={g.name} className="border-b transition-colors">
+                      <td className="py-3 px-4 text-sm">{g.name}</td>
+                      <td className="py-3 px-4 text-sm">{g.files.toLocaleString()}</td>
+                      <td className="py-3 px-4 text-sm">{g.gb.toLocaleString()}</td>
                     </tr>
                   ))}
                 </tbody>
