@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./DownloadHistory.scss";
 import { AddInstructionsModal } from "../../../components/Modals";
 import { ARRAY_10 } from "../../../utils/Constants";
 import { IAdminDownloadHistory } from "../../../interfaces/admin";
@@ -91,11 +90,10 @@ export const DownloadHistory = () => {
   }, []);
 
   const toolbar = (
-    <div className="downloads-history-toolbar" data-testid="downloads-history-toolbar">
-      <label className="downloads-history-toolbar__field inline-flex flex-col gap-1 text-sm">
-        <span className="downloads-history-toolbar__label">Por página</span>
+    <div className="flex flex-wrap items-end gap-2 w-full" data-testid="downloads-history-toolbar">
+      <label className="inline-flex flex-col gap-1 text-sm text-text-muted min-w-[220px]">
+        Por página
         <Select
-          className="downloads-history-toolbar__select"
           value={filters.limit}
           onChange={(e) => startFilter("limit", +e.target.value)}
         >
@@ -107,7 +105,7 @@ export const DownloadHistory = () => {
       <button
         type="button"
         onClick={() => setShowModal(true)}
-        className="downloads-history-toolbar__cta inline-flex items-center gap-2 bg-bear-gradient hover:opacity-95 text-bear-dark-500 font-medium rounded-lg px-4 py-2 transition-opacity"
+        className="inline-flex items-center gap-2 bg-bear-gradient hover:opacity-95 text-bear-dark-500 font-medium rounded-pill px-4 py-2 transition-opacity"
       >
         <Plus size={18} />
         Añadir instrucciones
@@ -229,9 +227,9 @@ export const DownloadHistory = () => {
               );
             })
             : (
-              <div className="downloads-history-mobile-empty px-4 py-6">
-                <p className="text-sm">No hay descargas registradas.</p>
-                <p className="text-xs">Cuando haya actividad, aparecerá aquí.</p>
+              <div className="px-4 py-6 text-center">
+                <p className="text-text-main text-sm font-medium">No hay descargas registradas.</p>
+                <p className="text-text-muted text-xs mt-1">Cuando haya actividad, aparecerá aquí.</p>
               </div>
             )
           : ARRAY_10.map((_, i) => (
