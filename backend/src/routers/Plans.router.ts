@@ -32,6 +32,8 @@ type StripeRecurringInterval = 'day' | 'week' | 'month' | 'year';
 
 type CheckoutMethod = 'card' | 'paypal' | 'spei' | 'oxxo' | 'bbva';
 
+const CHECKOUT_METHOD_ORDER: CheckoutMethod[] = ['card', 'paypal', 'spei', 'oxxo', 'bbva'];
+
 function normalizeRecurringInterval(value: unknown): StripeRecurringInterval {
   if (value === 'day' || value === 'week' || value === 'month' || value === 'year') return value;
   return 'month';
@@ -357,15 +359,22 @@ export const plansRouter = router({
         oxxoEnabled: isStripeOxxoConfigured(),
         payByBankEnabled: false,
       };
-      const methods: CheckoutMethod[] = ['card'];
-      if (paypalPlan) methods.push('paypal');
+      const availableMethodSet = new Set<CheckoutMethod>(['card']);
+      if (paypalPlan) availableMethodSet.add('paypal');
       if (currencyCode === 'MXN') {
-        methods.push('spei');
-        if (conektaAvailability.payByBankEnabled) methods.push('bbva');
-        if (conektaAvailability.oxxoEnabled) methods.push('oxxo');
+        availableMethodSet.add('spei');
+        if (conektaAvailability.payByBankEnabled) availableMethodSet.add('bbva');
+        if (conektaAvailability.oxxoEnabled) availableMethodSet.add('oxxo');
       }
+      const methods: CheckoutMethod[] = CHECKOUT_METHOD_ORDER.filter((method) =>
+        availableMethodSet.has(method),
+      );
 
       const trialConfig = await computeTrialConfigForUser(ctx);
+      const quotaGbRaw = toFiniteNumber(resolvedPlan.gigas);
+      const quotaGb = quotaGbRaw > 0 ? quotaGbRaw : 500;
+      const planDisplayName =
+        (resolvedPlan.name ?? '').toString().trim() || 'Membresía Bear Beat';
 
       return {
         requestedPlanId,
@@ -373,11 +382,15 @@ export const plansRouter = router({
         plan: resolvedPlan,
         paypalPlan,
         checkout: {
-          currency: currencyCode || null,
+          currency: currencyCode || 'USD',
           price: toFiniteNumber(resolvedPlan.price),
           availableMethods: methods,
           trialConfig,
           conektaAvailability,
+          planDisplayName,
+          quotaGb,
+          requiresRecurringConsentMethods: ['card', 'paypal'],
+          trialAllowedMethods: ['card'],
         },
       };
     }),
