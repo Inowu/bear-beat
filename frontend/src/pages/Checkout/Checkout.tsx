@@ -6,7 +6,6 @@ import trpc from "../../api";
 import { IPlans, IOxxoData, ISpeiData } from "interfaces/Plans";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 import { manychatApi } from "../../api/manychat";
-import { Spinner } from "../../components/Spinner/Spinner";
 import {
   Banknote,
   Building2,
@@ -924,8 +923,8 @@ function Checkout() {
         {TopNav}
         <main className="checkout2026__main" aria-label="Checkout">
           <div className="checkout2026__container checkout2026__center">
-            <div className="checkout-one-state">
-              <Spinner size={5} width={0.4} color="var(--app-accent)" />
+            <div className="checkout-one-state" role="status" aria-live="polite" aria-busy="true">
+              <span className="checkout2026__sk checkout2026__sk--redirectBar" aria-hidden />
               <h2 className="checkout-one-state__title">Preparando tu pago</h2>
               <p className="checkout-one-state__text">
                 Serás redirigido a la pasarela segura de {providerName} en un momento…
