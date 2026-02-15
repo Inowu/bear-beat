@@ -92,7 +92,7 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
   });
 
   if (!plan) {
-    log.error(`[PAYPAL_WH] Plan with id ${planId} not found`);
+    log.error('[PAYPAL_WH] Plan not found for subscription webhook');
     return;
   }
 
@@ -103,7 +103,7 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
   });
 
   if (!user) {
-    log.error(`[PAYPAL_WH] User with id ${order.user_id} not found`);
+    log.error('[PAYPAL_WH] User not found for subscription webhook');
     return;
   }
 
@@ -132,14 +132,17 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
   switch (payload.event_type) {
     case PaypalEvent.BILLING_SUBSCRIPTION_ACTIVATED:
     case PaypalEvent.BILLING_SUBSCRIPTION_REACTIVATED:
-      log.info(
-        `[PAYPAL_WH] Activating subscription, subscription id ${payload.resource.id}`,
-      );
+      log.info('[PAYPAL_WH] Activating subscription', {
+        eventType: payload.event_type ?? null,
+        eventId: payload?.id ?? payload?.event_id ?? null,
+      });
 
       try {
         await manyChat.addTagToUser(user, 'SUCCESSFUL_PAYMENT');
       } catch (e) {
-        log.error(`[PAYPAL] Error while adding tag to user ${user.id}: ${e}`);
+        log.error('[PAYPAL_WH] Error while adding ManyChat tag', {
+          errorType: e instanceof Error ? e.name : typeof e,
+        });
       }
 
       await subscribe({
@@ -155,9 +158,10 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
 
       break;
     case PaypalEvent.BILLING_SUBSCRIPTION_UPDATED:
-      log.info(
-        `[PAYPAL_WH] Updating subscription, subscription id ${payload.resource.id}`,
-      );
+      log.info('[PAYPAL_WH] Updating subscription', {
+        status: payload.resource.status ?? null,
+        eventId: payload?.id ?? payload?.event_id ?? null,
+      });
 
       if (activeSub) {
         const subscriptionOrder = await prisma.orders.findFirst({
@@ -168,7 +172,7 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
 
         if (!subscriptionOrder) {
           log.error(
-            `[PAYPAL_WH] Subscription updated, but order with txn_id ${subId} not found`,
+            '[PAYPAL_WH] Subscription updated, but matching order not found',
           );
           return;
         }
@@ -181,7 +185,7 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
 
         if (!currentPlan) {
           log.error(
-            `[PAYPAL_WH] Plan with id ${subscriptionOrder?.plan_id} not found`,
+            '[PAYPAL_WH] Current plan not found during subscription update',
           );
           return;
         }
@@ -198,9 +202,7 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
           currentPaypalPlanId &&
           currentPaypalPlanId !== incomingPaypalPlanId
         ) {
-          log.info(
-            `[PAYPAL_WH] Changing plans for user ${user.id}, from plan ${currentPaypalPlanId} to plan ${incomingPaypalPlanId}`,
-          );
+          log.info('[PAYPAL_WH] PayPal plan changed; updating subscription plan');
 
           const newPlan = await prisma.plans.findFirst({
             where: {
@@ -210,7 +212,7 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
 
           if (!newPlan) {
             log.error(
-              `[PAYPAL_WH] Error when changing plans, plan with id ${incomingPaypalPlanId} not found`,
+              '[PAYPAL_WH] New plan not found for PayPal plan change',
             );
             return;
           }
@@ -228,7 +230,9 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
         try {
           await manyChat.addTagToUser(user, 'SUCCESSFUL_PAYMENT');
         } catch (e) {
-          log.error(`[PAYPAL] Error while adding tag to user ${user.id}: ${e}`);
+          log.error('[PAYPAL_WH] Error while adding ManyChat tag', {
+            errorType: e instanceof Error ? e.name : typeof e,
+          });
         }
 
         await subscribe({
@@ -250,9 +254,9 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
         break;
       }
     case PaypalEvent.BILLING_SUBSCRIPTION_CANCELLED:
-      log.info(
-        `[PAYPAL_WH] Cancelling subscription, subscription id ${payload.resource.id}`,
-      );
+      log.info('[PAYPAL_WH] Cancelling subscription', {
+        eventId: payload?.id ?? payload?.event_id ?? null,
+      });
 
       await cancelSubscription({
         prisma,
@@ -265,9 +269,10 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
       break;
     case PaypalEvent.BILLING_SUBSCRIPTION_SUSPENDED:
     case PaypalEvent.BILLING_SUBSCRIPTION_EXPIRED:
-      log.info(
-        `[PAYPAL_WH] Subscription ${payload.event_type}, subscription id ${payload.resource.id}`,
-      );
+      log.info('[PAYPAL_WH] Subscription event', {
+        eventType: payload.event_type ?? null,
+        eventId: payload?.id ?? payload?.event_id ?? null,
+      });
 
       // Internal analytics: treat provider-side expiration as involuntary cancellation.
       try {
@@ -312,9 +317,9 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
 
       break;
     case PaypalEvent.PAYMENT_SALE_COMPLETED: {
-      log.info(
-        `[PAYPAL_WH] Payment completed, renovating subscription for user ${user.id}, subscription id ${payload.resource.id}`,
-      );
+      log.info('[PAYPAL_WH] Payment completed; renewing subscription', {
+        eventId: payload?.id ?? payload?.event_id ?? null,
+      });
 
       const existingOrder = await prisma.orders.findFirst({
         where: {
@@ -324,7 +329,7 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
 
       if (!existingOrder) {
         log.error(
-          `[PAYPAL_WH] Error while renovating paypal subscription for user ${user.id}, order with txn_id ${subId} not found`,
+          '[PAYPAL_WH] Renewal skipped; matching order not found',
         );
         return;
       }
@@ -363,14 +368,18 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
           );
         }
       } catch (e) {
-        log.error(`[PAYPAL_WH] Error while getting subscription ${e}`);
+        log.error('[PAYPAL_WH] Error while getting subscription', {
+          errorType: e instanceof Error ? e.name : typeof e,
+        });
       }
 
       try {
         // Renewal lifecycle tag (avoid triggering first-payment sequences every month).
         await manyChat.addTagToUser(user, 'SUBSCRIPTION_RENEWED');
       } catch (e) {
-        log.error(`[PAYPAL] Error while adding tag to user ${user.id}: ${e}`);
+        log.error('[PAYPAL_WH] Error while adding ManyChat tag', {
+          errorType: e instanceof Error ? e.name : typeof e,
+        });
       }
 
       await subscribe({
@@ -388,7 +397,7 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
     case PaypalEvent.BILLING_SUBSCRIPTION_PAYMENT_FAILED:
     case PaypalEvent.PAYMENT_SALE_DENIED: {
       log.info(
-        `[PAYPAL_WH] Payment failed (${payload.event_type}), subscription id ${subId}`,
+        `[PAYPAL_WH] Payment failed (${payload.event_type})`,
       );
 
       const dunningEnabled = (process.env.DUNNING_ENABLED || '0').trim() === '1';
@@ -396,7 +405,9 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
       try {
         await manyChat.addTagToUser(user, 'FAILED_PAYMENT');
       } catch (e) {
-        log.error(`[PAYPAL] Error adding FAILED_PAYMENT tag for user ${user.id}: ${e}`);
+        log.error('[PAYPAL_WH] Error adding FAILED_PAYMENT tag', {
+          errorType: e instanceof Error ? e.name : typeof e,
+        });
       }
 
       // Internal analytics: payment failed (billing). When dunning is enabled,
