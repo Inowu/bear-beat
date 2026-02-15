@@ -81,15 +81,15 @@ Leyenda:
 | A-001 | Critical | Mitigado (en main) | Quick win | Backend/Auth | Sanitizar respuestas de `auth.login`/`auth.register` para evitar fuga de campos sensibles + tests anti-regresión |
 | A-002 | Critical | Mitigado (en main) | Quick win | Backend/Permisos | `trpc-shield` a **fallback deny** + cobertura explícita para todas las `shieldedProcedure` + tests de cobertura |
 | A-009 | Critical | Mitigado (en main) | Quick win | Backend/Descargas | Prevenir **path traversal + IDOR** en `/download` y `/download-dir` + tests anti-regresión |
-| A-003 | Medium | Mitigado (en rama) | Quick win | Frontend/Edge | Headers incompletos en producción (agregado: `frame-ancestors`/`X-Frame-Options`, `Permissions-Policy`) |
-| A-004 | Low | Abierto | Quick win | SEO | `sitemap.xml` con `lastmod` antiguo (2025-02-03) |
-| A-005 | Medium | Abierto | Proyecto | Frontend/Perf | Bundle principal grande y warnings de build (chunk > 500 kB, Sass `@import` deprecado) |
-| A-006 | High | Abierto | Proyecto | Dependencias | `npm audit` reporta vulnerabilidades **High** (backend y frontend), varias requieren upgrades major |
+| A-003 | Medium | Mitigado (en main) | Quick win | Frontend/Edge | Headers incompletos en producción (agregado: `frame-ancestors`/`X-Frame-Options`, `Permissions-Policy`) |
+| A-004 | Low | Mitigado (en main) | Quick win | SEO | `sitemap.xml` con `lastmod` antiguo (2025-02-03) |
+| A-005 | Medium | Mitigado (en main) | Proyecto | Frontend/Perf | Bundle principal grande y warnings de build (chunk > 500 kB, Sass `@import` deprecado) |
+| A-006 | High | Parcial (en main) | Proyecto | Dependencias | `npm audit` reporta vulnerabilidades **High** (quedan issues upstream en `conekta→axios` y advisory low en `pm2`) |
 | A-010 | High | Abierto | Proyecto | AppSec/Secrets | `gitleaks` detecta **potenciales secretos** en historial git (requiere triage y posible rotación/rewrite) |
-| A-007 | Medium | Abierto | Quick win | Backend/API | CORS/headers en API prod parecen demasiado permisivos (`Access-Control-Allow-Origin: *`) y faltan headers de hardening |
+| A-007 | Medium | Mitigado (en main) | Quick win | Backend/API | CORS/headers en API prod parecen demasiado permisivos (`Access-Control-Allow-Origin: *`) y faltan headers de hardening |
 | A-008 | Medium | Mitigado (en main) | Quick win | QA/AppSec | Tests/smoke podían disparar integraciones externas si `.env` tenía secretos; se aisló carga de env y se deshabilitaron integraciones en `NODE_ENV=test` |
-| A-011 | Medium | Abierto | Proyecto | Backend/DB | **Drift de esquema**: tabla `products` no existe en migraciones locales (riesgo de divergencia prod↔staging) |
-| A-012 | Medium | Mitigado (en rama) | Quick win | Backend/FTP | `/trpc/ftp.storage` ya no responde 500 en STAGING local cuando falta `storage_server` |
+| A-011 | Medium | Mitigado (en main) | Proyecto | Backend/DB | **Drift de esquema**: tabla `products` no existe en migraciones locales (riesgo de divergencia prod↔staging) |
+| A-012 | Medium | Mitigado (en main) | Quick win | Backend/FTP | `/trpc/ftp.storage` ya no responde 500 en STAGING local cuando falta `storage_server` |
 
 ## Detalle de hallazgos (con evidencia + remediación)
 
