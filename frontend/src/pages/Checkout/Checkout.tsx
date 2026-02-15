@@ -135,6 +135,8 @@ function checkoutErrorTitle(method: CheckoutMethod, reason?: string): string {
   switch (reason) {
     case "card_declined":
       return "Tu banco rechazó la transacción";
+    case "unauthorized":
+      return "Tu sesión expiró";
     case "network_error":
       return "Problema de conexión";
     case "stripe_procedure_missing":
@@ -172,10 +174,36 @@ function normalizeCheckoutError(opts: {
   reason: string;
   errorCode: string;
 } {
+  const extractTrpcCode = (err: unknown): string | null => {
+    const anyErr = err as any;
+    const code =
+      typeof anyErr?.data?.code === "string"
+        ? anyErr.data.code
+        : typeof anyErr?.shape?.data?.code === "string"
+          ? anyErr.shape.data.code
+          : null;
+    return code ? String(code).trim().toUpperCase() : null;
+  };
+
   const raw = toErrorMessage(opts.error);
   const msg = raw.toLowerCase();
   const alt = buildAltMethodHint(opts.method, opts.availableMethods);
   const altSuffix = alt ? ` ${alt}` : "";
+
+  const trpcCode = extractTrpcCode(opts.error);
+  const isUnauthorized =
+    trpcCode === "UNAUTHORIZED" ||
+    trpcCode === "FORBIDDEN" ||
+    /unauthorized|forbidden|not authorized|no autorizado|sesion expirada|session expired|jwt expired/i.test(raw);
+
+  if (isUnauthorized) {
+    return {
+      userMessage: "Tu sesión expiró. Vuelve a iniciar sesión para continuar.",
+      hint: "Al iniciar sesión regresaremos a tu checkout para que puedas completar el pago.",
+      reason: "unauthorized",
+      errorCode: "unauthorized",
+    };
+  }
 
   const isNetwork =
     /failed to fetch|networkerror|network error|timeout|timed out|load resource|err_/i.test(raw);
@@ -297,7 +325,7 @@ function Checkout() {
   const searchParams = new URLSearchParams(location.search);
   const priceId = searchParams.get("priceId");
   const requestedMethod = searchParams.get("method");
-  const { currentUser } = useUserContext();
+  const { currentUser, handleLogout } = useUserContext();
   const [cookies] = useCookies(["_fbp", "_fbc"]);
 
   const closeErrorModal = useCallback(() => {
@@ -377,6 +405,34 @@ function Checkout() {
       reason?: string;
       retry?: (() => void) | null;
     }) => {
+      if (opts.reason === "unauthorized") {
+        const actions: ErrorModalAction[] = [
+          {
+            label: "Iniciar sesión",
+            variant: "primary",
+            onClick: () => {
+              closeErrorModal();
+              handleLogout(false);
+            },
+          },
+          {
+            label: "Volver a planes",
+            variant: "secondary",
+            onClick: () => {
+              closeErrorModal();
+              navigate("/planes");
+            },
+          },
+        ];
+
+        setErrorTitle(checkoutErrorTitle(opts.method, opts.reason));
+        setErrorHint(opts.hint ?? null);
+        setErrorMessage(opts.userMessage);
+        setErrorActions(actions);
+        setShowError(true);
+        return;
+      }
+
       const alt = pickCheckoutAlternateMethod(opts.method, availableMethods);
       const title = checkoutErrorTitle(opts.method, opts.reason);
       const switchAction =
@@ -432,7 +488,7 @@ function Checkout() {
       setErrorActions(actions.length ? actions : null);
       setShowError(true);
     },
-    [availableMethods.join("|"), closeErrorModal, focusCheckoutMethodButton, selectCheckoutMethod],
+    [availableMethods.join("|"), closeErrorModal, focusCheckoutMethodButton, handleLogout, navigate, selectCheckoutMethod],
   );
 
   useEffect(() => {
