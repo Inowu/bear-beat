@@ -27,6 +27,7 @@ import { generateEventId } from "../../utils/marketingIds";
 import { getConektaFingerprint } from "../../utils/conektaCollect";
 import { formatInt } from "../../utils/format";
 import PublicTopNav from "../../components/PublicTopNav/PublicTopNav";
+import { toErrorMessage } from "../../utils/errorMessage";
 
 type CheckoutMethod = "card" | "spei" | "oxxo" | "bbva" | "paypal";
 
@@ -68,6 +69,108 @@ const METHOD_SWITCH_LABEL: Record<CheckoutMethod, string> = {
   bbva: "BBVA",
   oxxo: "Efectivo",
 };
+
+function formatSpanishDisjunction(values: string[]): string {
+  const list = values.map((v) => v.trim()).filter(Boolean);
+  if (list.length === 0) return "";
+  if (list.length === 1) return list[0]!;
+  if (list.length === 2) return `${list[0]} o ${list[1]}`;
+  return `${list.slice(0, -1).join(", ")} o ${list[list.length - 1]}`;
+}
+
+function buildAltMethodHint(method: CheckoutMethod, available: CheckoutMethod[]): string {
+  const others = (Array.isArray(available) ? available : []).filter((m) => m !== method);
+  const labels = others.map((m) => METHOD_SWITCH_LABEL[m] ?? m);
+  const copy = formatSpanishDisjunction(labels);
+  if (!copy) return "";
+  return `Intenta con ${copy}.`;
+}
+
+function normalizeCheckoutError(opts: {
+  method: CheckoutMethod;
+  error: unknown;
+  availableMethods: CheckoutMethod[];
+}): {
+  userMessage: string;
+  reason: string;
+  errorCode: string;
+} {
+  const raw = toErrorMessage(opts.error);
+  const msg = raw.toLowerCase();
+  const alt = buildAltMethodHint(opts.method, opts.availableMethods);
+  const altSuffix = alt ? ` ${alt}` : "";
+
+  const isNetwork =
+    /failed to fetch|networkerror|network error|timeout|timed out|load resource|err_/i.test(raw);
+
+  const isStripeProcedureMissing =
+    opts.method === "card" &&
+    /mutation.*procedure|createStripeCheckoutSession/i.test(raw);
+
+  const isDecline =
+    opts.method === "card" &&
+    /card_declined|declined|insufficient funds|insufficient_funds|incorrect cvc|incorrect_cvc|expired card|expired_card|do not honor|stolen|lost/i.test(
+      msg,
+    );
+
+  if (isStripeProcedureMissing) {
+    return {
+      userMessage: `El pago con tarjeta no está disponible en este momento.${altSuffix}`,
+      reason: "stripe_procedure_missing",
+      errorCode: "method_unavailable",
+    };
+  }
+
+  if (isNetwork) {
+    return {
+      userMessage: `No pudimos conectar para procesar tu pago. Revisa tu internet e intenta de nuevo.${altSuffix}`,
+      reason: "network_error",
+      errorCode: "network_error",
+    };
+  }
+
+  if (isDecline) {
+    return {
+      userMessage: `Tu banco rechazó el cobro. Intenta con otra tarjeta o con otro método.${altSuffix}`,
+      reason: "card_declined",
+      errorCode: "card_declined",
+    };
+  }
+
+  switch (opts.method) {
+    case "paypal":
+      return {
+        userMessage: `No se pudo completar el pago con PayPal. Intenta de nuevo.${altSuffix}`,
+        reason: "paypal_failed",
+        errorCode: "provider_error",
+      };
+    case "spei":
+      return {
+        userMessage: `No pudimos generar la referencia SPEI. Intenta de nuevo.${altSuffix}`,
+        reason: "spei_failed",
+        errorCode: "provider_error",
+      };
+    case "oxxo":
+      return {
+        userMessage: `No pudimos generar la referencia de pago en efectivo. Intenta de nuevo.${altSuffix}`,
+        reason: "oxxo_failed",
+        errorCode: "provider_error",
+      };
+    case "bbva":
+      return {
+        userMessage: `No pudimos abrir el pago BBVA. Intenta de nuevo.${altSuffix}`,
+        reason: "bbva_failed",
+        errorCode: "provider_error",
+      };
+    case "card":
+    default:
+      return {
+        userMessage: `No pudimos preparar el pago con tarjeta. Intenta de nuevo.${altSuffix}`,
+        reason: "card_failed",
+        errorCode: "provider_error",
+      };
+  }
+}
 
 const pickBestPlanCandidate = (candidates: IPlans[]): IPlans | null => {
   if (!Array.isArray(candidates) || candidates.length === 0) return null;
@@ -454,32 +557,40 @@ function Checkout() {
         window.location.href = result.url;
         return;
       }
-      setErrorMessage("No se pudo abrir la página de pago. Intenta de nuevo.");
-      setShowError(true);
-      setRedirecting(false);
-      setProcessingMethod(null);
-    } catch (err: any) {
-      const msg = err?.message ?? "";
-      const isProcedureMissing =
-        /mutation.*procedure|createStripeCheckoutSession/i.test(msg);
-      setErrorMessage(
-        isProcedureMissing
-          ? "El pago con tarjeta no está disponible en este momento. Intenta SPEI (recurrente) u otro método disponible."
-          : msg || "Error al preparar el pago. Intenta de nuevo."
-      );
+      const alt = buildAltMethodHint("card", availableMethods);
+      const suffix = alt ? ` ${alt}` : "";
+      setErrorMessage(`No se pudo abrir la página de pago. Intenta de nuevo.${suffix}`);
       trackGrowthMetric(GROWTH_METRICS.CHECKOUT_ERROR, {
         method: "card",
         planId: plan.id,
         currency,
         amount: value,
-        reason: msg || "stripe_checkout_failed",
-        errorCode: isProcedureMissing ? "procedure_missing" : "provider_error",
+        reason: "missing_redirect_url",
+        errorCode: "missing_redirect_url",
+      });
+      setShowError(true);
+      setRedirecting(false);
+      setProcessingMethod(null);
+    } catch (err: any) {
+      const normalized = normalizeCheckoutError({
+        method: "card",
+        error: err,
+        availableMethods,
+      });
+      setErrorMessage(normalized.userMessage);
+      trackGrowthMetric(GROWTH_METRICS.CHECKOUT_ERROR, {
+        method: "card",
+        planId: plan.id,
+        currency,
+        amount: value,
+        reason: normalized.reason,
+        errorCode: normalized.errorCode,
       });
       setShowError(true);
       setRedirecting(false);
       setProcessingMethod(null);
     }
-  }, [acceptRecurring, cookies._fbc, cookies._fbp, location.pathname, location.search, plan?.id, plan?.moneda, plan?.price, priceId]);
+  }, [acceptRecurring, cookies._fbc, cookies._fbp, location.pathname, location.search, plan?.id, plan?.moneda, plan?.price, priceId, availableMethods.join("|")]);
 
   const startCashCheckout = useCallback(
     async () => {
@@ -491,10 +602,10 @@ function Checkout() {
       trackManyChatConversion(MC_EVENTS.CLICK_BUY);
       trackGrowthMetric(GROWTH_METRICS.CHECKOUT_METHOD_SELECTED, {
         method: "spei",
-      planId: plan.id,
-      currency: (plan.moneda?.toUpperCase() || "USD").toUpperCase(),
-      amount: Number(plan.price) || null,
-    });
+        planId: plan.id,
+        currency: (plan.moneda?.toUpperCase() || "USD").toUpperCase(),
+        amount: Number(plan.price) || null,
+      });
 
       try {
         await trpc.checkoutLogs.registerCheckoutLog.mutate();
@@ -513,25 +624,26 @@ function Checkout() {
         setSpeiData(response as ISpeiData);
         setShowSpeiModal(true);
       } catch (error: any) {
-        const msg =
-          error?.data?.message ??
-          error?.message ??
-          "No pudimos generar la referencia. Intenta de nuevo o usa otro método disponible.";
+        const normalized = normalizeCheckoutError({
+          method: "spei",
+          error,
+          availableMethods,
+        });
         trackGrowthMetric(GROWTH_METRICS.CHECKOUT_ERROR, {
           method: "spei",
           planId: plan.id,
           currency: (plan.moneda?.toUpperCase() || "USD").toUpperCase(),
           amount: Number(plan.price) || null,
-          reason: msg,
-          errorCode: "provider_error",
+          reason: normalized.reason,
+          errorCode: normalized.errorCode,
         });
-        setErrorMessage(msg);
+        setErrorMessage(normalized.userMessage);
         setShowError(true);
       } finally {
         setProcessingMethod(null);
       }
     },
-    [plan?.id]
+    [plan?.id, plan?.moneda, plan?.price, availableMethods.join("|")]
   );
 
   const startOxxoCheckout = useCallback(async () => {
@@ -562,24 +674,25 @@ function Checkout() {
       setOxxoData(response as IOxxoData);
       setShowOxxoModal(true);
     } catch (error: any) {
-      const msg =
-        error?.data?.message ??
-        error?.message ??
-        "No pudimos generar la referencia de pago en efectivo. Intenta de nuevo o usa otro método disponible.";
+      const normalized = normalizeCheckoutError({
+        method: "oxxo",
+        error,
+        availableMethods,
+      });
       trackGrowthMetric(GROWTH_METRICS.CHECKOUT_ERROR, {
         method: "oxxo",
         planId: plan.id,
         currency: (plan.moneda?.toUpperCase() || "USD").toUpperCase(),
         amount: Number(plan.price) || null,
-        reason: msg,
-        errorCode: "provider_error",
+        reason: normalized.reason,
+        errorCode: normalized.errorCode,
       });
-      setErrorMessage(msg);
+      setErrorMessage(normalized.userMessage);
       setShowError(true);
     } finally {
       setProcessingMethod(null);
     }
-  }, [plan?.id]);
+  }, [plan?.id, plan?.moneda, plan?.price, availableMethods.join("|")]);
 
   const startBbvaCheckout = useCallback(async () => {
     if (!plan?.id) return;
@@ -634,29 +747,40 @@ function Checkout() {
         window.location.href = result.url;
         return;
       }
-      setErrorMessage("No se pudo abrir el pago BBVA. Intenta SPEI/Efectivo o tarjeta.");
-      setShowError(true);
-      setRedirecting(false);
-      setProcessingMethod(null);
-    } catch (error: any) {
-      const msg =
-        error?.data?.message ??
-        error?.message ??
-        "No pudimos abrir el pago BBVA. Intenta SPEI/Efectivo o tarjeta.";
+      const alt = buildAltMethodHint("bbva", availableMethods);
+      const suffix = alt ? ` ${alt}` : "";
+      setErrorMessage(`No se pudo abrir el pago BBVA. Intenta de nuevo.${suffix}`);
       trackGrowthMetric(GROWTH_METRICS.CHECKOUT_ERROR, {
         method: "bbva",
         planId: plan.id,
         currency,
         amount: value,
-        reason: msg,
-        errorCode: "provider_error",
+        reason: "missing_redirect_url",
+        errorCode: "missing_redirect_url",
       });
-      setErrorMessage(msg);
+      setShowError(true);
+      setRedirecting(false);
+      setProcessingMethod(null);
+    } catch (error: any) {
+      const normalized = normalizeCheckoutError({
+        method: "bbva",
+        error,
+        availableMethods,
+      });
+      trackGrowthMetric(GROWTH_METRICS.CHECKOUT_ERROR, {
+        method: "bbva",
+        planId: plan.id,
+        currency,
+        amount: value,
+        reason: normalized.reason,
+        errorCode: normalized.errorCode,
+      });
+      setErrorMessage(normalized.userMessage);
       setShowError(true);
       setRedirecting(false);
       setProcessingMethod(null);
     }
-  }, [plan?.id]);
+  }, [plan?.id, plan?.moneda, plan?.price, availableMethods.join("|")]);
 
   const startPaypalCheckout = useCallback(
     async (data: any) => {
@@ -666,7 +790,9 @@ function Checkout() {
           ? data.subscriptionID.trim()
           : null;
       if (!subscriptionId) {
-        setErrorMessage("No recibimos la referencia de PayPal. Intenta de nuevo.");
+        const alt = buildAltMethodHint("paypal", availableMethods);
+        const suffix = alt ? ` ${alt}` : "";
+        setErrorMessage(`No recibimos la referencia de PayPal. Intenta de nuevo.${suffix}`);
         setShowError(true);
         return;
       }
@@ -707,23 +833,26 @@ function Checkout() {
         checkoutHandedOffRef.current = true;
         navigate("/comprar/success", { replace: true });
       } catch (error: any) {
-        const msg =
-          error?.data?.message ?? error?.message ?? "No se pudo completar el pago con PayPal.";
+        const normalized = normalizeCheckoutError({
+          method: "paypal",
+          error,
+          availableMethods,
+        });
         trackGrowthMetric(GROWTH_METRICS.CHECKOUT_ERROR, {
           method: "paypal",
           planId: plan.id,
           currency,
           amount: value,
-          reason: msg,
-          errorCode: "provider_error",
+          reason: normalized.reason,
+          errorCode: normalized.errorCode,
         });
-        setErrorMessage(msg);
+        setErrorMessage(normalized.userMessage);
         setShowError(true);
       } finally {
         setProcessingMethod(null);
       }
     },
-    [acceptRecurring, paypalPlan?.id, plan?.id, plan?.price, plan?.moneda, cookies._fbp, cookies._fbc, navigate],
+    [acceptRecurring, paypalPlan?.id, plan?.id, plan?.price, plan?.moneda, cookies._fbp, cookies._fbc, navigate, availableMethods.join("|")],
   );
 
   useEffect(() => {
@@ -889,11 +1018,59 @@ function Checkout() {
       <div className="checkout-main-container checkout2026">
         {TopNav}
         <main className="checkout2026__main" aria-label="Checkout">
-          <div className="checkout2026__container checkout2026__center">
-            <div className="checkout-one-state" role="status" aria-live="polite">
-              <Spinner size={5} width={0.4} color="var(--app-accent)" />
-              <p className="checkout-one-state__text">Cargando plan…</p>
-            </div>
+          <div className="checkout2026__container">
+            <header className="checkout2026__hero">
+              <h1>Completa tu pago.</h1>
+              <p className="checkout2026__heroSubtitle">Checkout seguro. Activa tu acceso en 1 minuto.</p>
+            </header>
+
+            <section
+              className="checkout-card checkout2026__card checkout2026__card--skeleton"
+              aria-label="Cargando plan"
+              role="status"
+              aria-live="polite"
+              aria-busy="true"
+            >
+              <p className="checkout2026__skeletonStatus">Cargando plan…</p>
+
+              <div className="checkout2026__cardHead" aria-hidden>
+                <span className="checkout2026__sk checkout2026__sk--pill" />
+                <span className="checkout2026__sk checkout2026__sk--pill checkout2026__sk--pillSmall" />
+              </div>
+
+              <div className="checkout2026__price" aria-hidden>
+                <span className="checkout2026__sk checkout2026__sk--price" />
+                <span className="checkout2026__sk checkout2026__sk--suffix" />
+              </div>
+
+              <ul className="checkout2026__skeletonBenefits" aria-hidden>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <li key={i} className="checkout2026__benefit">
+                    <span className="checkout2026__sk checkout2026__sk--benefitIcon" />
+                    <span className="checkout2026__sk checkout2026__sk--benefitLine" />
+                  </li>
+                ))}
+              </ul>
+
+              <div className="checkout2026__divider" aria-hidden />
+
+              <section className="checkout2026__methodSection" aria-hidden>
+                <span className="checkout2026__sk checkout2026__sk--sectionLabel" />
+                <div className="checkout2026__skeletonMethodSwitch">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <span key={i} className="checkout2026__sk checkout2026__sk--methodBtn" />
+                  ))}
+                </div>
+                <div className="checkout2026__skeletonBlurb">
+                  <span className="checkout2026__sk checkout2026__sk--blurbLine" />
+                  <span className="checkout2026__sk checkout2026__sk--blurbLine checkout2026__sk--blurbLineShort" />
+                </div>
+              </section>
+
+              <div className="checkout2026__actions" aria-hidden>
+                <span className="checkout2026__sk checkout2026__sk--cta" />
+              </div>
+            </section>
           </div>
         </main>
       </div>

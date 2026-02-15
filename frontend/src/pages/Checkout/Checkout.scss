@@ -287,6 +287,136 @@
   gap: 14px;
 }
 
+.checkout2026__card--skeleton {
+  pointer-events: none;
+}
+
+.checkout2026__skeletonStatus {
+  margin: 0;
+  text-align: center;
+  color: color-mix(in srgb, var(--ph-text-muted) 96%, transparent);
+  font-size: 1.02rem;
+  font-weight: 750;
+}
+
+.checkout2026__sk {
+  display: block;
+  background: color-mix(in srgb, var(--ph-border) 52%, transparent);
+  animation: checkout-skeleton 1.2s ease-in-out infinite;
+}
+
+@keyframes checkout-skeleton {
+  0%,
+  100% {
+    opacity: 0.52;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .checkout2026__sk {
+    animation: none;
+  }
+}
+
+.checkout2026__sk--pill {
+  height: 30px;
+  width: min(220px, 100%);
+  border-radius: 999px;
+}
+
+.checkout2026__sk--pillSmall {
+  width: min(160px, 100%);
+}
+
+.checkout2026__sk--price {
+  height: clamp(4rem, 6.6vw, 6.1rem);
+  width: min(280px, 78%);
+  margin: 0 auto;
+  border-radius: 18px;
+}
+
+.checkout2026__sk--suffix {
+  height: 18px;
+  width: min(180px, 62%);
+  margin: 0 auto;
+  border-radius: 999px;
+}
+
+.checkout2026__skeletonBenefits {
+  list-style: none;
+  padding: 0;
+  margin: 2px 0 0;
+  display: grid;
+  gap: 10px;
+}
+
+.checkout2026__sk--benefitIcon {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+}
+
+.checkout2026__sk--benefitLine {
+  height: 18px;
+  width: 100%;
+  border-radius: 999px;
+  margin-top: 4px;
+}
+
+.checkout2026__sk--sectionLabel {
+  height: 16px;
+  width: min(210px, 70%);
+  border-radius: 999px;
+  margin: 0 auto;
+}
+
+.checkout2026__skeletonMethodSwitch {
+  width: min(520px, 100%);
+  margin: 0 auto;
+  padding: 6px;
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ph-border) 78%, transparent);
+  background: color-mix(in srgb, var(--ph-bg-soft) 70%, transparent);
+}
+
+.checkout2026__sk--methodBtn {
+  height: 40px;
+  width: min(120px, 42%);
+  border-radius: 999px;
+}
+
+.checkout2026__skeletonBlurb {
+  width: min(520px, 100%);
+  margin: 0 auto;
+  display: grid;
+  gap: 8px;
+}
+
+.checkout2026__sk--blurbLine {
+  height: 16px;
+  width: 100%;
+  border-radius: 999px;
+}
+
+.checkout2026__sk--blurbLineShort {
+  width: 78%;
+  margin: 0 auto;
+}
+
+.checkout2026__sk--cta {
+  height: 52px;
+  width: min(520px, 100%);
+  margin: 0 auto;
+  border-radius: 16px;
+}
+
 .checkout2026__cardHead {
   display: flex;
   align-items: center;
