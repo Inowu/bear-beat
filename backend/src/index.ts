@@ -117,6 +117,15 @@ async function main() {
         // `express-winston` and `winston` can resolve different `logform` typings.
         // Keep runtime JSON logging and avoid a type-only mismatch.
         format: winston.format.json() as any,
+        // Never log headers/query/body (PII/secrets). Keep a minimal request line only.
+        meta: false,
+        msg(req, res) {
+          const path =
+            typeof (req as any).path === 'string' && (req as any).path
+              ? (req as any).path
+              : String((req as any).originalUrl ?? (req as any).url ?? '').split('?')[0];
+          return `[HTTP] ${req.method} ${path} ${res.statusCode}`;
+        },
       }),
     );
 
