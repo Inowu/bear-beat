@@ -672,10 +672,15 @@ async function collectRouteResult(
   const blockedWrites: Array<{ url: string; method: string; reason: string }> = [];
 
   page.on("console", (msg) => {
-    consoleEvents.push({
-      type: msg.type(),
-      text: sanitizeText(msg.text()),
-    });
+    const type = msg.type();
+    const text = sanitizeText(msg.text());
+
+    // Audits run with a read-only guard that aborts writes (mutations, pixels, analytics).
+    // The browser emits noisy console errors like `net::ERR_BLOCKED_BY_CLIENT` for those aborts.
+    // Keep them out of "console errors" so findings focus on real app issues.
+    if (/ERR_BLOCKED_BY_CLIENT/i.test(text)) return;
+
+    consoleEvents.push({ type, text });
   });
 
   page.on("response", (res) => {
