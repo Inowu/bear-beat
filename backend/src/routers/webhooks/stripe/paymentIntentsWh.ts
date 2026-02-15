@@ -84,7 +84,6 @@ export const stripeInvoiceWebhook = async (req: Request) => {
     log.error('[STRIPE_WH] User not found in event', {
       eventType: payload.type,
       eventId: payload.id,
-      paymentIntentId,
     });
     return;
   }
@@ -92,9 +91,7 @@ export const stripeInvoiceWebhook = async (req: Request) => {
   switch (payload.type) {
     case StripeEvents.PAYMENT_INTENT_FAILED: {
       log.info('[STRIPE_WH] Payment intent failed', {
-        userId: user.id,
         eventId: payload.id,
-        paymentIntentId,
       });
 
       if (productOrderId) {
@@ -104,10 +101,7 @@ export const stripeInvoiceWebhook = async (req: Request) => {
 
         if (!order) {
           log.warn('[STRIPE_WH] Product order not found for payment intent', {
-            userId: user.id,
             eventId: payload.id,
-            paymentIntentId,
-            productOrderId,
           });
           return;
         }
@@ -126,10 +120,7 @@ export const stripeInvoiceWebhook = async (req: Request) => {
 
         if (!order) {
           log.warn('[STRIPE_WH] Plan order not found for payment intent', {
-            userId: user.id,
             eventId: payload.id,
-            paymentIntentId,
-            planOrderId,
           });
           return;
         }
@@ -142,22 +133,22 @@ export const stripeInvoiceWebhook = async (req: Request) => {
         try {
           await manyChat.addTagToUser(user, 'FAILED_PAYMENT');
         } catch (e) {
-          log.error(`[STRIPE_WH] Error adding FAILED_PAYMENT tag for user ${user.id}: ${e}`);
+          log.error('[STRIPE_WH] Error adding FAILED_PAYMENT tag', {
+            error: e instanceof Error ? e.message : e,
+          });
         }
         return;
       }
 
       log.warn(
         '[STRIPE_WH] Payment intent without resolvable order id; no action taken',
-        { userId: user.id, eventId: payload.id, paymentIntentId },
+        { eventId: payload.id },
       );
       break;
     }
     case StripeEvents.PAYMENT_INTENT_SUCCEEDED: {
       log.info('[STRIPE_WH] Payment intent succeeded', {
-        userId: user.id,
         eventId: payload.id,
-        paymentIntentId,
       });
 
       if (productOrderId) {
@@ -176,18 +167,13 @@ export const stripeInvoiceWebhook = async (req: Request) => {
 
         if (!order) {
           log.warn('[STRIPE_WH] Plan order not found for payment intent', {
-            userId: user.id,
             eventId: payload.id,
-            paymentIntentId,
-            planOrderId,
           });
           return;
         }
 
         if (order.status === OrderStatus.PAID) {
           log.info('[STRIPE_WH] Plan order already paid; skipping', {
-            userId: user.id,
-            orderId: order.id,
             eventId: payload.id,
           });
           return;
@@ -198,7 +184,7 @@ export const stripeInvoiceWebhook = async (req: Request) => {
           : null;
 
         if (!plan) {
-          log.warn('[STRIPE_WH] Plan not found for order', { userId: user.id, orderId: order.id, eventId: payload.id });
+          log.warn('[STRIPE_WH] Plan not found for order', { eventId: payload.id });
           return;
         }
 
@@ -215,7 +201,9 @@ export const stripeInvoiceWebhook = async (req: Request) => {
         try {
           await manyChat.addTagToUser(user, 'SUCCESSFUL_PAYMENT');
         } catch (e) {
-          log.error(`[STRIPE_WH] Error while adding tag to user ${user.id}: ${e}`);
+          log.error('[STRIPE_WH] Error while adding ManyChat tag', {
+            error: e instanceof Error ? e.message : e,
+          });
         }
 
         try {
@@ -229,7 +217,9 @@ export const stripeInvoiceWebhook = async (req: Request) => {
             orderId: order.id,
           });
         } catch (e) {
-          log.error(`[STRIPE_WH] Error while sending email ${e}`);
+          log.error('[STRIPE_WH] Plan activated email failed (non-blocking)', {
+            errorType: e instanceof Error ? e.name : typeof e,
+          });
         }
 
         return;
@@ -237,7 +227,7 @@ export const stripeInvoiceWebhook = async (req: Request) => {
 
       log.info(
         '[STRIPE_WH] Payment intent without resolvable order id; no action taken',
-        { userId: user.id, eventId: payload.id, paymentIntentId },
+        { eventId: payload.id },
       );
       break;
     }

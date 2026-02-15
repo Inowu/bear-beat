@@ -39,7 +39,7 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
   const plan = (await getPlanFromPayload(payload))!;
 
   if (!plan && payload.type?.startsWith('customer.subscription')) {
-    log.error('[STRIPE_WH] Plan not found in event', { eventType: payload.type, eventId: payload.id, userId: user.id });
+    log.error('[STRIPE_WH] Plan not found in event', { eventType: payload.type, eventId: payload.id });
 
     return;
   }
@@ -58,7 +58,10 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
   switch (payload.type) {
     case StripeEvents.SUBSCRIPTION_CREATED: {
       if (subscription.status === 'trialing') {
-        log.info(`[STRIPE_WH] A trial subscription was created for user ${user.id}, subscription id: ${subscription.id}, status: ${subscription.status}`);
+        log.info('[STRIPE_WH] Trial subscription created', {
+          eventId: payload.id,
+          status: subscription.status,
+        });
         const quotaGbRaw = subscription?.metadata?.bb_trial_gb;
         const quotaGb = quotaGbRaw != null && String(quotaGbRaw).trim()
           ? Number(String(quotaGbRaw).trim())
@@ -72,7 +75,6 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
           });
         } catch (e) {
           log.debug('[STRIPE_WH] trial_used_at update skipped', {
-            userId: user.id,
             error: e instanceof Error ? e.message : e,
           });
         }
@@ -122,7 +124,9 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
         try {
           await manyChat.addTagToUser(user, 'TRIAL_STARTED');
         } catch (e) {
-          log.error(`[STRIPE] Error while adding TRIAL_STARTED tag to user ${user.id}: ${e}`);
+          log.error('[STRIPE_WH] Error while adding TRIAL_STARTED tag', {
+            error: e instanceof Error ? e.message : e,
+          });
         }
 
         await cancelUhSubscription(user);
@@ -130,9 +134,10 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
       }
 
       if (subscription.status !== 'active') {
-        log.info(
-          `[STRIPE_WH] A subscription was created for user ${user.id}, subscription id: ${subscription.id}, status: ${subscription.status}`,
-        );
+        log.info('[STRIPE_WH] Subscription created (non-active)', {
+          eventId: payload.id,
+          status: subscription.status,
+        });
 
         return;
       }
@@ -175,9 +180,9 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
           const isInitialPaidActivation = !isRenewal && !isTrialConversion;
 
           log.info('[STRIPE_WH] Creating subscription', {
-            userId: user.id,
-            subscriptionId: subscription.id,
             eventId: payload.id,
+            isRenewal,
+            isTrialConversion,
           });
 
           // Email + ManyChat: only on first paid activation / trial conversion (avoid spamming on renewals).
@@ -193,7 +198,9 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
                 orderId: subscription.metadata.orderId,
               });
             } catch (e) {
-              log.error(`[STRIPE] Error while sending email ${e}`);
+              log.error('[STRIPE_WH] Plan activated email failed (non-blocking)', {
+                errorType: e instanceof Error ? e.name : typeof e,
+              });
             }
           }
 
@@ -207,7 +214,9 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
               await manyChat.addTagToUser(user, 'SUCCESSFUL_PAYMENT');
             }
           } catch (e) {
-            log.error(`[STRIPE] Error while adding tag to user ${user.id}: ${e}`);
+            log.error('[STRIPE_WH] Error while adding ManyChat tag', {
+              error: e instanceof Error ? e.message : e,
+            });
           }
 
           await subscribe({
@@ -251,7 +260,6 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
               );
             } catch (e) {
               log.debug('[STRIPE_WH] CAPI Purchase skipped (non-blocking)', {
-                userId: user.id,
                 error: e instanceof Error ? e.message : e,
               });
             }
@@ -290,7 +298,6 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
             }
           } catch (e) {
             log.debug('[STRIPE_WH] Coupon usage persist skipped', {
-              userId: user.id,
               error: e instanceof Error ? e.message : e,
             });
           }
@@ -349,15 +356,15 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
         }
         case 'incomplete_expired': {
           log.info('[STRIPE_WH] Incomplete subscription expired', {
-            userId: user.id,
-            subscriptionId: subscription.id,
             eventId: payload.id,
           });
 
           try {
             await manyChat.addTagToUser(user, 'FAILED_PAYMENT');
           } catch (e) {
-            log.error(`[STRIPE] Error adding FAILED_PAYMENT tag for user ${user.id}: ${e}`);
+            log.error('[STRIPE_WH] Error adding FAILED_PAYMENT tag', {
+              error: e instanceof Error ? e.message : e,
+            });
           }
 
           // Internal analytics: payment failed (pre-activation).
@@ -419,8 +426,6 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
           const dunningEnabled = (process.env.DUNNING_ENABLED || '0').trim() === '1';
 
           log.info('[STRIPE_WH] Subscription past_due', {
-            userId: user.id,
-            subscriptionId: subscription.id,
             eventId: payload.id,
             dunningEnabled,
           });
@@ -428,7 +433,9 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
           try {
             await manyChat.addTagToUser(user, 'FAILED_PAYMENT');
           } catch (e) {
-            log.error(`[STRIPE] Error adding FAILED_PAYMENT tag for user ${user.id}: ${e}`);
+            log.error('[STRIPE_WH] Error adding FAILED_PAYMENT tag', {
+              error: e instanceof Error ? e.message : e,
+            });
           }
 
           // Internal analytics: payment failed (billing). When dunning is enabled,
@@ -503,8 +510,6 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
       break;
     case StripeEvents.SUBSCRIPTION_DELETED:
       log.info('[STRIPE_WH] Canceling subscription (deleted event)', {
-        userId: user.id,
-        subscriptionId: subscription.id,
         eventId: payload.id,
       });
 
@@ -528,9 +533,7 @@ const getStripeSubscriptionPriceId = (subscription: any): string => {
 
   if (typeof priceId === 'string' && priceId.trim()) return priceId;
 
-  log.warn('[STRIPE_WH] Subscription event without resolvable plan/price id', {
-    subscriptionId: subscription?.id ?? null,
-  });
+  log.warn('[STRIPE_WH] Subscription event without resolvable plan/price id');
   return '';
 };
 
@@ -560,8 +563,7 @@ export const getUserFromPayload = async (
       const existingUser = await stripeInstance.customers.retrieve(customerId);
 
       log.info(
-        `[STRIPE_WH] No user with customerId ${customerId} was found, trying to update existing db user ${existingUser.id
-        }. Customer: ${JSON.stringify(existingUser)}`,
+        '[STRIPE_WH] No user matched Stripe customer id; attempting email-based recovery',
       );
 
       const dbUser = await prisma.users.findFirst({
@@ -572,8 +574,7 @@ export const getUserFromPayload = async (
 
       if (!dbUser) {
         log.error(
-          `[STRIPE_WH] No user was found with customer email ${(existingUser as any).email
-          }`,
+          '[STRIPE_WH] No user matched Stripe customer email during recovery',
         );
 
         return null;
@@ -589,26 +590,18 @@ export const getUserFromPayload = async (
       });
 
       log.info(
-        `[STRIPE_WH] Updated user ${dbUser.id} with stripe_cusid ${customerId}`,
+        '[STRIPE_WH] Updated user with Stripe customer id during recovery',
       );
 
       return dbUser;
     } catch (e: any) {
-      if (e.type === 'StripeInvalidRequestError') {
-        if (e.raw.code === 'resource_missing') {
-          log.error(
-            `[STRIPE_WH] Could not find customer with id ${customerId}`,
-          );
-        } else {
-          log.error(
-            `[STRIPE_WH] Stripe error when retrieving customer ${customerId}: ${e.raw.message}`,
-          );
-        }
-      } else {
-        log.error(
-          `[STRIPE_WH] An error happened when trying to update user with customer id ${customerId}: ${e.message}`,
-        );
-      }
+      const stripeCode = e?.raw?.code ?? null;
+      const errorType = typeof e?.type === 'string' ? e.type : null;
+      log.error('[STRIPE_WH] Stripe customer recovery failed', {
+        eventId: payload.id,
+        stripeCode,
+        errorType,
+      });
 
       return null;
     }
@@ -711,19 +704,18 @@ const cancelUhSubscription = async (user: Users) => {
 
         if (migrationUser) {
           log.info('[STRIPE_WH:MIGRATION] Starting cancellation for migrated subscription', {
-            userId: user.id,
             service: migrationUser.service,
           });
 
           switch (migrationUser.service) {
             case 'stripe':
-              await handleStripeMigration(migrationUser, { userId: user.id, userEmail: user.email });
+              await handleStripeMigration(migrationUser, { userEmail: user.email });
               break;
             case 'conekta':
-              await handleConektaMigration(migrationUser, { userId: user.id, userEmail: user.email });
+              await handleConektaMigration(migrationUser);
               break;
             case 'paypal':
-              await handlePaypalMigration(migrationUser, { userId: user.id, userEmail: user.email });
+              await handlePaypalMigration(migrationUser);
               break;
             default:
               throw new Error(`Unknown service: ${migrationUser.service}`);
@@ -733,8 +725,7 @@ const cancelUhSubscription = async (user: Users) => {
     }
   } catch (e) {
     log.error('[STRIPE_WH:MIGRATION] Failed to process migration', {
-      userId: user.id,
-      error: e instanceof Error ? e.message : e,
+      errorType: e instanceof Error ? e.name : typeof e,
     });
 
     throw new TRPCError({
@@ -746,16 +737,16 @@ const cancelUhSubscription = async (user: Users) => {
 
 async function handleStripeMigration(
   migrationUser: SubscriptionCheckResult,
-  params: { userId: number; userEmail: string },
+  params: { userEmail: string },
 ) {
-  const { userId, userEmail } = params;
+  const { userEmail } = params;
   const customer = await uhStripeInstance.customers.list({
     email: userEmail,
     limit: 1,
   });
 
   if (customer.data.length === 0) {
-    log.error('[STRIPE_WH:MIGRATION] No Stripe customer found for migrated email', { userId });
+    log.error('[STRIPE_WH:MIGRATION] No Stripe customer found for migrated email');
     throw new TRPCError({
       code: 'NOT_FOUND',
       message: 'No se encontró el cliente',
@@ -769,13 +760,12 @@ async function handleStripeMigration(
 
   for (const subscription of activeStripeSubscriptions.data) {
     try {
-      log.info('[STRIPE_WH:MIGRATION] Cancelling active Stripe subscription', { userId });
+      log.info('[STRIPE_WH:MIGRATION] Cancelling active Stripe subscription');
       await uhStripeInstance.subscriptions.cancel(subscription.id);
-      log.info('[STRIPE_WH:MIGRATION] Successfully cancelled Stripe subscription', { userId });
+      log.info('[STRIPE_WH:MIGRATION] Successfully cancelled Stripe subscription');
     } catch (e) {
       log.error('[STRIPE_WH:MIGRATION] Failed to cancel Stripe subscription', {
-        userId,
-        error: e instanceof Error ? e.message : e,
+        errorType: e instanceof Error ? e.name : null,
       });
       throw e;
     }
@@ -784,20 +774,17 @@ async function handleStripeMigration(
 
 async function handleConektaMigration(
   migrationUser: SubscriptionCheckResult,
-  params: { userId: number; userEmail: string },
 ) {
-  const { userId } = params;
   const activeConektaSubscriptions = await uhConektaSubscriptions.getSubscription(migrationUser.subscriptionId);
 
   if (activeConektaSubscriptions.data.status === 'active') {
     try {
-      log.info('[STRIPE_WH:MIGRATION] Cancelling active Conekta subscription', { userId });
+      log.info('[STRIPE_WH:MIGRATION] Cancelling active Conekta subscription');
       await uhConektaSubscriptions.cancelSubscription(migrationUser.subscriptionId);
-      log.info('[STRIPE_WH:MIGRATION] Successfully cancelled Conekta subscription', { userId });
+      log.info('[STRIPE_WH:MIGRATION] Successfully cancelled Conekta subscription');
     } catch (e) {
       log.error('[STRIPE_WH:MIGRATION] Failed to cancel Conekta subscription', {
-        userId,
-        error: e instanceof Error ? e.message : e,
+        errorType: e instanceof Error ? e.name : null,
       });
       throw e;
     }
@@ -806,9 +793,7 @@ async function handleConektaMigration(
 
 async function handlePaypalMigration(
   migrationUser: SubscriptionCheckResult,
-  params: { userId: number; userEmail: string },
 ) {
-  const { userId } = params;
   const subscription = (await axios(`${uhPaypal.paypalUrl()}/v1/billing/subscriptions/${migrationUser.subscriptionId}`, {
     headers: {
       Authorization: `Bearer ${await uhPaypal.getToken()}`,
@@ -816,7 +801,7 @@ async function handlePaypalMigration(
   })).data;
 
   if (subscription.status === 'ACTIVE') {
-    log.info('[STRIPE_WH:MIGRATION] Cancelling active PayPal subscription', { userId });
+    log.info('[STRIPE_WH:MIGRATION] Cancelling active PayPal subscription');
 
     try {
       await axios.post(`${uhPaypal.paypalUrl()}/v1/billing/subscriptions/${migrationUser.subscriptionId}/cancel`, {
@@ -827,13 +812,11 @@ async function handlePaypalMigration(
         }
       });
 
-      log.info('[STRIPE_WH:MIGRATION] Active PayPal subscription cancelled', { userId });
+      log.info('[STRIPE_WH:MIGRATION] Active PayPal subscription cancelled');
     } catch (e) {
       const axiosErr = e as AxiosError;
       log.error('[STRIPE_WH:MIGRATION] Failed to cancel PayPal subscription', {
-        userId,
         status: axiosErr.response?.status ?? null,
-        error: axiosErr.message,
       });
 
       throw new TRPCError({
