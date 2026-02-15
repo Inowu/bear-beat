@@ -96,6 +96,7 @@ export default function HomeFaq(props: {
                 aria-expanded={Boolean(openIds[item.id])}
                 aria-controls={`faq-panel-${item.id}`}
                 id={`faq-button-${item.id}`}
+                aria-label={item.question}
                 onClick={() => handleToggle(item.id)}
               >
                 <span>{item.question}</span>

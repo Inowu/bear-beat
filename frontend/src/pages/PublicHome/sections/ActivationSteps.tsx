@@ -47,6 +47,7 @@ export default function ActivationSteps(props: {
             state={{ from: "/planes" }}
             className="home-cta home-cta--primary"
             data-testid="home-mid-primary-cta"
+            aria-label={ctaLabel}
             onClick={onPrimaryCtaClick}
           >
             {ctaLabel}
