@@ -118,7 +118,7 @@ function checkoutSwitchActionLabel(method: CheckoutMethod): string {
 function checkoutRetryActionLabel(method: CheckoutMethod): string {
   switch (method) {
     case "paypal":
-      return "Intentar PayPal";
+      return "Reintentar PayPal";
     case "spei":
       return "Reintentar SPEI";
     case "oxxo":
@@ -443,7 +443,10 @@ function Checkout() {
 
       const preferSwitch =
         Boolean(switchAction) &&
-        (opts.reason === "card_declined" || opts.reason === "stripe_procedure_missing");
+        (opts.reason === "card_declined" ||
+          opts.reason === "stripe_procedure_missing" ||
+          opts.reason === "missing_subscription_id" ||
+          opts.reason === "paypal_failed");
 
       let primary: ErrorModalAction | null = null;
       let secondary: ErrorModalAction | null = null;
@@ -1180,7 +1183,7 @@ function Checkout() {
               </p>
               {showRedirectHelp && (
                 <div className="checkout-one-state__help">
-                  <p>Si no te redirige, intenta reintentar o cambiar de m\u00e9todo.</p>
+                  <p>Si no te redirige, reintenta o cambia de método.</p>
                   <button
                     type="button"
                     className="checkout-cta-btn checkout-cta-btn--primary"
