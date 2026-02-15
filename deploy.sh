@@ -288,6 +288,22 @@ sudo sed -i.bak -E "s#(proxy_pass[[:space:]]+http://localhost:)[0-9]+;#\1${targe
 sudo sed -i.bak -E "s#(proxy_pass[[:space:]]+http://127\.0\.0\.1:)[0-9]+;#\1${target_port};#" "$NGINX_CONF"
 sudo rm -f "${NGINX_CONF}.bak"
 
+log "Normalizing nginx CORS config (remove wildcard headers; let app enforce allowlist)..."
+# Some nginx configs inject permissive CORS headers (ex. `Access-Control-Allow-Origin: *`).
+# That makes audits noisy and can be unsafe if cookies are ever used for auth.
+# We rely on the Express `cors()` allowlist in `backend/src/index.ts`, so strip the wildcard overrides.
+sudo sed -i.bak -E \
+  -e "/add_header[[:space:]]+Access-Control-Allow-Origin[[:space:]]+['\\\"]?\\*['\\\"]?/d" \
+  -e "/add_header[[:space:]]+Access-Control-Allow-Methods[[:space:]]+['\\\"]?\\*['\\\"]?/d" \
+  -e "/add_header[[:space:]]+Access-Control-Allow-Headers[[:space:]]+['\\\"]?\\*['\\\"]?/d" \
+  -e "/proxy_hide_header[[:space:]]+Access-Control-Allow-Origin/d" \
+  -e "/proxy_hide_header[[:space:]]+Access-Control-Allow-Methods/d" \
+  -e "/proxy_hide_header[[:space:]]+Access-Control-Allow-Headers/d" \
+  -e "/proxy_set_header[[:space:]]+Origin[[:space:]]+\\\"\\\"/d" \
+  -e "/proxy_set_header[[:space:]]+Origin[[:space:]]+''/d" \
+  "$NGINX_CONF"
+sudo rm -f "${NGINX_CONF}.bak"
+
 log "Testing nginx configuration..."
 sudo nginx -t
 
