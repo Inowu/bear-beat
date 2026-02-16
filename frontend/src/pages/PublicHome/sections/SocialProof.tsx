@@ -60,7 +60,7 @@ function TopList(props: {
   const showKeyMeta = rows.length > 0 && rows.every((row) => Boolean(row.bpm) && Boolean(row.camelot));
 
   return (
-    <section id={sectionId} className="social-proof__col" aria-labelledby={headingId}>
+    <section id={sectionId} className="social-proof__col bb-market-surface" aria-labelledby={headingId}>
       <h3 id={headingId} className="social-proof__col-title">
         {title}
       </h3>
