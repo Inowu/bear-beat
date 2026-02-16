@@ -355,7 +355,7 @@ export default function SocialProof(props: {
         <Modal.Body>
           <p className="home-demo-modal__sub">Top 100 real por categoría (últimos meses).</p>
           {modalLoading && !modalTop && (
-            <div className="social-proof__modal-loading" role="status" aria-live="polite">
+            <div className="social-proof__modal-loading bb-market-surface" role="status" aria-live="polite">
               <Loader2 size={18} className="social-proof__spinner" aria-hidden />
               Cargando top 100…
             </div>
