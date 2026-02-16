@@ -17,7 +17,7 @@ export default function HumanSocialProof(props: {
 
         <div className="human-proof__grid" role="list" aria-label="Testimonios">
           {list.slice(0, 3).map((t) => (
-            <article key={t.id} className="human-proof__card" role="listitem">
+            <article key={t.id} className="human-proof__card bb-market-card" role="listitem">
               <div className="human-proof__card-head">
                 <div className="human-proof__avatar" aria-hidden>
                   <User size={16} />

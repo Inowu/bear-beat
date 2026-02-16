@@ -250,7 +250,7 @@ export default function SocialProof(props: {
     return (
       <section id="demo" className="social-proof" aria-label="Repertorio por categorías" data-testid="home-demo-section">
         <div className="ph__container">
-          <div className="social-proof__neutral" role="note">
+          <div className="social-proof__neutral bb-market-card" role="note">
             <h3>Repertorio listo por categorías</h3>
             <p>
               Video remixes, audios y karaokes organizados por carpetas para que descargues solo lo que necesitas.

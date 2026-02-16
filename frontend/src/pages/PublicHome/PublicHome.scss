@@ -1056,10 +1056,6 @@
 .social-proof__neutral {
   margin-top: 14px;
   padding: 14px;
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--ph-bg-card) 88%, transparent);
-  border: 1px solid color-mix(in srgb, var(--ph-border) 72%, transparent);
-  box-shadow: var(--ph-shadow);
 }
 
 .social-proof__neutral h3 {
@@ -1954,14 +1950,6 @@
   .human-proof__grid {
     grid-template-columns: 1fr;
   }
-}
-
-.human-proof__card {
-  padding: 16px;
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--ph-bg-card) 88%, transparent);
-  border: 1px solid color-mix(in srgb, var(--ph-border) 72%, transparent);
-  box-shadow: var(--ph-shadow);
 }
 
 .human-proof__card-head {
