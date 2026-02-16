@@ -266,19 +266,8 @@
 }
 
 .checkout-card {
-  border-radius: 24px;
-  border: 1px solid color-mix(in srgb, var(--app-border) 78%, transparent);
-  background:
-    radial-gradient(
-      520px 220px at 12% 0%,
-      color-mix(in srgb, var(--app-accent) 9%, transparent),
-      transparent 70%
-    ),
-    color-mix(in srgb, var(--app-bg-card) 94%, transparent);
-  box-shadow: var(--app-shadow-card);
   position: relative;
   overflow: hidden;
-  padding: clamp(18px, 2.2vw, 26px);
 }
 
 .checkout2026__card {
@@ -726,12 +715,6 @@
 .checkout-card > * {
   position: relative;
   z-index: 1;
-}
-
-html[data-theme="dark"] .checkout-card,
-html.dark .checkout-card,
-.dark .checkout-card {
-  box-shadow: 0 18px 54px rgba(0, 0, 0, 0.44);
 }
 
 .checkout2026__flow {
@@ -2255,17 +2238,12 @@ html[data-theme="light"] .checkout-main-container {
     var(--app-bg);
 }
 
-html[data-theme="light"] .checkout-card,
 html[data-theme="light"] .checkout-one-state {
   border-color: color-mix(in srgb, var(--app-border) 92%, transparent);
   background: color-mix(in srgb, #ffffff 99%, var(--app-bg-card));
   box-shadow:
     0 1px 0 color-mix(in srgb, #ffffff 96%, transparent) inset,
     0 14px 30px rgba(15, 23, 42, 0.08);
-}
-
-html[data-theme="light"] .checkout-card::before {
-  opacity: 0.62;
 }
 
 html[data-theme="light"] .checkout2026__top {
@@ -2351,11 +2329,6 @@ html[data-theme="light"] .checkout-credentials__item {
     padding-left: max(10px, env(safe-area-inset-left, 0));
     padding-right: max(10px, env(safe-area-inset-right, 0));
     padding-bottom: max(14px, env(safe-area-inset-bottom, 0) + 8px);
-  }
-
-  .checkout-card {
-    border-radius: 16px;
-    padding: 12px;
   }
 
   .checkout-payment-card {
@@ -2540,10 +2513,6 @@ html[data-theme="light"] .checkout-credentials__item {
 @media (max-width: 560px) {
   .checkout-main-container {
     padding-top: 8px;
-  }
-
-  .checkout-card {
-    padding: 10px;
   }
 
   .checkout-page-title {
