@@ -282,13 +282,8 @@
 }
 
 .home-visual {
-  border-radius: 22px;
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--ph-accent) 5%, transparent), transparent 62%),
-    color-mix(in srgb, var(--ph-bg-card) 90%, transparent);
-  border: 1px solid color-mix(in srgb, var(--ph-border) 72%, transparent);
-  box-shadow: var(--ph-shadow-card);
-  padding: 16px;
+  position: relative;
+  overflow: hidden;
 }
 
 .home-visual__head {
@@ -2068,7 +2063,6 @@ html[data-theme="light"] .public-home {
     var(--ph-bg);
 }
 
-html[data-theme="light"] .home-visual,
 html[data-theme="light"] .how-it-works__card,
 html[data-theme="light"] .trust-bar__item,
 html[data-theme="light"] .use-cases__card,
