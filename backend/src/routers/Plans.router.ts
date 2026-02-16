@@ -27,12 +27,25 @@ import { getMarketingTrialConfigFromEnv } from '../utils/trialConfig';
 import { StripePriceKey } from './subscriptions/utils/ensureStripePriceId';
 import type { Plans } from '@prisma/client';
 import { isStripeOxxoConfigured } from '../stripe/oxxo';
+import { getPublicCatalogSummarySnapshot } from './Catalog.router';
 
 type StripeRecurringInterval = 'day' | 'week' | 'month' | 'year';
 
 type CheckoutMethod = 'card' | 'paypal' | 'spei' | 'oxxo' | 'bbva';
 
 const CHECKOUT_METHOD_ORDER: CheckoutMethod[] = ['card', 'paypal', 'spei', 'oxxo', 'bbva'];
+
+const FALLBACK_CATALOG_TOTAL_FILES = 248_321;
+const FALLBACK_CATALOG_TOTAL_GB = 14_140;
+
+type PricingCurrency = 'mxn' | 'usd';
+
+function normalizePlanCurrency(value: unknown): PricingCurrency | null {
+  const cur = String(value ?? '').trim().toLowerCase();
+  if (cur === 'mxn') return 'mxn';
+  if (cur === 'usd') return 'usd';
+  return null;
+}
 
 function normalizeRecurringInterval(value: unknown): StripeRecurringInterval {
   if (value === 'day' || value === 'week' || value === 'month' || value === 'year') return value;
@@ -219,6 +232,153 @@ async function computeTrialConfigForUser(
 
 export const plansRouter = router({
   getTrialConfig: shieldedProcedure.query(async ({ ctx }) => computeTrialConfigForUser(ctx)),
+  getPublicPricingConfig: shieldedProcedure.query(async ({ ctx }) => {
+    const stripeKey = getPlanKey(PaymentService.STRIPE);
+    const paypalKey = getPlanKey(PaymentService.PAYPAL);
+
+    // Production audits are READ-ONLY. When the auditor sets this header, avoid
+    // triggering external side-effects (ManyChat tags/custom fields) from a query.
+    const auditReadOnlyHeader = ctx.req?.headers?.['x-bb-audit-readonly'];
+    const isAuditReadOnly = auditReadOnlyHeader === '1';
+
+    const [allPlans, trialConfig, catalogSummary] = await Promise.all([
+      ctx.prisma.plans.findMany({
+        where: {
+          activated: 1,
+          id: { not: 41 },
+        },
+        orderBy: { id: 'asc' },
+      }),
+      computeTrialConfigForUser(ctx),
+      getPublicCatalogSummarySnapshot().catch(() => null),
+    ]);
+
+    const candidates = allPlans.filter((plan) => {
+      const currency = normalizePlanCurrency(plan.moneda);
+      if (!currency) return false;
+      const price = toFiniteNumber(plan.price);
+      const gigas = toFiniteNumber(plan.gigas);
+      return price > 0 && gigas > 0;
+    });
+
+    const mxnBest = pickBestCheckoutPlanCandidate({
+      candidates: candidates.filter((plan) => normalizePlanCurrency(plan.moneda) === 'mxn'),
+      stripeKey,
+      paypalKey,
+    });
+    const usdBest = pickBestCheckoutPlanCandidate({
+      candidates: candidates.filter((plan) => normalizePlanCurrency(plan.moneda) === 'usd'),
+      stripeKey,
+      paypalKey,
+    });
+
+    if (!isAuditReadOnly && ctx.session?.user?.id) {
+      try {
+        const user = await ctx.prisma.users.findFirst({
+          where: { id: ctx.session.user.id },
+        });
+        if (user) {
+          manyChat.addTagToUser(user, 'USER_CHECKED_PLANS').catch(() => {});
+        }
+      } catch {
+        // Best-effort only; do not break the query.
+      }
+    }
+
+    const conektaAvailability = {
+      // Conekta cash + BBVA pay-by-bank are currently hard-disabled in backend procedures.
+      // Keep them hidden in the UI until those flows are re-enabled end-to-end.
+      oxxoEnabled: isStripeOxxoConfigured(),
+      payByBankEnabled: false,
+    };
+
+    const toPublic = (plan: Plans, currency: PricingCurrency) => {
+      const hasPaypal = hasPaypalPlanId(plan, paypalKey);
+      const currencyCode = currency === 'mxn' ? 'MXN' : 'USD';
+
+      const availableMethodSet = new Set<CheckoutMethod>(['card']);
+      if (hasPaypal) availableMethodSet.add('paypal');
+      if (currencyCode === 'MXN') {
+        availableMethodSet.add('spei');
+        if (conektaAvailability.payByBankEnabled) availableMethodSet.add('bbva');
+        if (conektaAvailability.oxxoEnabled) availableMethodSet.add('oxxo');
+      }
+      const availableMethods: CheckoutMethod[] = CHECKOUT_METHOD_ORDER.filter((method) =>
+        availableMethodSet.has(method),
+      );
+
+      const gigas = toFiniteNumber(plan.gigas);
+      const quotaGb = gigas > 0 ? gigas : 500;
+
+      return {
+        planId: plan.id,
+        currency,
+        name: (plan.name ?? '').toString().trim() || 'Membresía Bear Beat',
+        price: toFiniteNumber(plan.price),
+        gigas,
+        quotaGb,
+        hasPaypal,
+        availableMethods,
+      };
+    };
+
+    const plans = {
+      mxn: mxnBest ? toPublic(mxnBest, 'mxn') : null,
+      usd: usdBest ? toPublic(usdBest, 'usd') : null,
+    };
+
+    const currencyDefault: PricingCurrency = plans.mxn ? 'mxn' : plans.usd ? 'usd' : 'mxn';
+
+    const quotaGb = {
+      mxn: plans.mxn?.quotaGb ?? plans.usd?.quotaGb ?? 500,
+      usd: plans.usd?.quotaGb ?? plans.mxn?.quotaGb ?? 500,
+    };
+
+    const catalogHasLive = Boolean(
+      catalogSummary &&
+        !catalogSummary.error &&
+        toFiniteNumber(catalogSummary.totalFiles) > 0 &&
+        toFiniteNumber(catalogSummary.totalGB) > 0,
+    );
+    const effectiveTotalFiles = catalogHasLive
+      ? toFiniteNumber(catalogSummary?.totalFiles)
+      : FALLBACK_CATALOG_TOTAL_FILES;
+    const effectiveTotalGB = catalogHasLive
+      ? toFiniteNumber(catalogSummary?.totalGB)
+      : FALLBACK_CATALOG_TOTAL_GB;
+    const effectiveTotalTB = effectiveTotalGB / 1000;
+
+    return {
+      generatedAt: new Date().toISOString(),
+      currencyDefault,
+      conektaAvailability,
+      quotaGb,
+      trialConfig,
+      plans,
+      catalog: {
+        ...(catalogSummary ?? {
+          error: 'No se pudo obtener el resumen del catálogo.',
+          totalFiles: 0,
+          totalGB: 0,
+          videos: 0,
+          audios: 0,
+          karaokes: 0,
+          other: 0,
+          gbVideos: 0,
+          gbAudios: 0,
+          gbKaraokes: 0,
+          totalGenres: 0,
+          genresDetail: [],
+          generatedAt: new Date().toISOString(),
+          stale: true,
+        }),
+        effectiveTotalFiles,
+        effectiveTotalGB,
+        effectiveTotalTB,
+        isFallback: !catalogHasLive,
+      },
+    };
+  }),
   resolveCheckoutPlan: shieldedProcedure
     .input(
       z.object({
@@ -411,15 +571,8 @@ export const plansRouter = router({
       orderBy: { id: 'asc' },
     });
 
-    const normalizeCurrency = (value: unknown): 'mxn' | 'usd' | null => {
-      const cur = String(value ?? '').trim().toLowerCase();
-      if (cur === 'mxn') return 'mxn';
-      if (cur === 'usd') return 'usd';
-      return null;
-    };
-
     const candidates = allPlans.filter((plan) => {
-      const currency = normalizeCurrency(plan.moneda);
+      const currency = normalizePlanCurrency(plan.moneda);
       if (!currency) return false;
       const price = toFiniteNumber(plan.price);
       const gigas = toFiniteNumber(plan.gigas);
@@ -427,12 +580,12 @@ export const plansRouter = router({
     });
 
     const mxnBest = pickBestCheckoutPlanCandidate({
-      candidates: candidates.filter((plan) => normalizeCurrency(plan.moneda) === 'mxn'),
+      candidates: candidates.filter((plan) => normalizePlanCurrency(plan.moneda) === 'mxn'),
       stripeKey,
       paypalKey,
     });
     const usdBest = pickBestCheckoutPlanCandidate({
-      candidates: candidates.filter((plan) => normalizeCurrency(plan.moneda) === 'usd'),
+      candidates: candidates.filter((plan) => normalizePlanCurrency(plan.moneda) === 'usd'),
       stripeKey,
       paypalKey,
     });

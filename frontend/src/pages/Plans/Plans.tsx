@@ -46,11 +46,7 @@ function Plans() {
     mxn: null,
     usd: null,
   });
-  const [catalogSummary, setCatalogSummary] = useState<{
-    totalFiles: number;
-    totalGB: number;
-    error?: string;
-  } | null>(null);
+  const [pricingConfig, setPricingConfig] = useState<any>(null);
 
   const [loader, setLoader] = useState<boolean>(true);
   const [loadError, setLoadError] = useState<string>("");
@@ -61,13 +57,15 @@ function Plans() {
     setLoadError("");
     setLoader(true);
     try {
-      const result: any = await trpc.plans.getPublicBestPlans.query();
+      const result: any = await trpc.plans.getPublicPricingConfig.query();
+      setPricingConfig(result ?? null);
       setPlansByCurrency({
-        mxn: (result?.mxn as PublicBestPlan | null) ?? null,
-        usd: (result?.usd as PublicBestPlan | null) ?? null,
+        mxn: (result?.plans?.mxn as PublicBestPlan | null) ?? null,
+        usd: (result?.plans?.usd as PublicBestPlan | null) ?? null,
       });
     } catch {
       setLoadError("No pudimos cargar los planes en este momento. Intenta nuevamente.");
+      setPricingConfig(null);
       setPlansByCurrency({ mxn: null, usd: null });
     } finally {
       setLoader(false);
@@ -77,21 +75,6 @@ function Plans() {
   useEffect(() => {
     void getPlans();
   }, [getPlans]);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const summary: any = await trpc.catalog.getPublicCatalogSummary.query();
-        if (!cancelled) setCatalogSummary(summary);
-      } catch {
-        if (!cancelled) setCatalogSummary(null);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   useEffect(() => {
     // Evitar doble membresía: si ya tiene acceso activo (aunque haya cancelado la renovación),
@@ -124,29 +107,21 @@ function Plans() {
   }, [plansByCurrency.mxn, plansByCurrency.usd, selectedCurrency]);
 
   const stats = useMemo(() => {
-    const hasLive =
-      Boolean(catalogSummary) &&
-      !catalogSummary?.error &&
-      toNumber(catalogSummary?.totalFiles) > 0 &&
-      toNumber(catalogSummary?.totalGB) > 0;
-
-    const totalFiles = hasLive ? toNumber(catalogSummary?.totalFiles) : FALLBACK_CATALOG_TOTAL_FILES;
-    const totalGB = hasLive ? toNumber(catalogSummary?.totalGB) : FALLBACK_CATALOG_TOTAL_GB;
-    const totalTB = totalGB / 1000;
-
-    const selectedCandidate =
-      selectedCurrency === "mxn" ? toNumber(plansByCurrency.mxn?.gigas) : toNumber(plansByCurrency.usd?.gigas);
-    const fallbackCandidate =
-      selectedCurrency === "mxn" ? toNumber(plansByCurrency.usd?.gigas) : toNumber(plansByCurrency.mxn?.gigas);
-
-    const quotaGb = selectedCandidate > 0 ? selectedCandidate : fallbackCandidate > 0 ? fallbackCandidate : 500;
+    const totalFiles = toNumber(pricingConfig?.catalog?.effectiveTotalFiles) || FALLBACK_CATALOG_TOTAL_FILES;
+    const totalTB =
+      toNumber(pricingConfig?.catalog?.effectiveTotalTB) || FALLBACK_CATALOG_TOTAL_GB / 1000;
+    const quotaFromConfig =
+      selectedCurrency === "mxn"
+        ? toNumber(pricingConfig?.quotaGb?.mxn)
+        : toNumber(pricingConfig?.quotaGb?.usd);
+    const quotaGb = quotaFromConfig > 0 ? quotaFromConfig : 500;
 
     return {
       totalFiles,
       totalTB,
       quotaGb,
     };
-  }, [catalogSummary, plansByCurrency.mxn?.gigas, plansByCurrency.usd?.gigas, selectedCurrency]);
+  }, [pricingConfig, selectedCurrency]);
 
   const price = useMemo(() => {
     if (!selectedPlan) return { amount: "—", currencyLabel: selectedCurrency.toUpperCase() };
