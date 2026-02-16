@@ -295,6 +295,13 @@ export default function PublicHome() {
 
   const totalTBLabel = formatTB(effectiveTotalTB);
   const totalFilesLabel = formatInt(effectiveTotalFiles);
+  const hasLiveCatalog = Boolean(
+    catalogSummary &&
+      !catalogSummary.error &&
+      catalogSummary.isFallback !== true &&
+      Number(catalogSummary.totalFiles) > 0 &&
+      Number(catalogSummary.totalGB) > 0,
+  );
 
   const catalogGenres = useMemo<CatalogGenre[]>(() => {
     const source =
