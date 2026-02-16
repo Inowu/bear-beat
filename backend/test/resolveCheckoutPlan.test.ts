@@ -83,6 +83,13 @@ describe("plans.resolveCheckoutPlan", () => {
     expect(res.resolvedPlanId).toBe(stripePaypal.id);
     expect(res.plan?.id).toBe(stripePaypal.id);
     expect(res.paypalPlan?.id).toBe(stripePaypal.id);
+    expect(res.checkout?.currency).toBe("MXN");
+    expect(res.checkout?.price).toBe(350);
+    expect(res.checkout?.availableMethods.slice(0, 3)).toEqual(["card", "paypal", "spei"]);
+    expect(res.checkout?.planDisplayName).toBe(stripePaypal.name);
+    expect(res.checkout?.quotaGb).toBe(500);
+    expect(res.checkout?.requiresRecurringConsentMethods).toEqual(["card", "paypal"]);
+    expect(res.checkout?.trialAllowedMethods).toEqual(["card"]);
   });
 
   it("keeps requested plan when Stripe price is valid, but can return a PayPal-capable sibling", async () => {
@@ -124,5 +131,11 @@ describe("plans.resolveCheckoutPlan", () => {
     expect(res.resolvedPlanId).toBe(requested.id);
     expect(res.plan?.id).toBe(requested.id);
     expect(res.paypalPlan?.id).toBe(paypalSibling.id);
+    expect(res.checkout?.currency).toBe("USD");
+    expect(res.checkout?.availableMethods).toEqual(["card", "paypal"]);
+    expect(res.checkout?.planDisplayName).toBe(requested.name);
+    expect(res.checkout?.quotaGb).toBe(500);
+    expect(res.checkout?.requiresRecurringConsentMethods).toEqual(["card", "paypal"]);
+    expect(res.checkout?.trialAllowedMethods).toEqual(["card"]);
   });
 });
