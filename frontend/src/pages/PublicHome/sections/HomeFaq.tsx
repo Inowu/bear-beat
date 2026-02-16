@@ -86,7 +86,7 @@ export default function HomeFaq(props: {
             <div
               key={item.id}
               id={`faq-${item.id}`}
-              className={["home-faq__item", "bb-accordion__item", openIds[item.id] ? "is-open" : ""]
+              className={["home-faq__item", "bb-market-surface", "bb-accordion__item", openIds[item.id] ? "is-open" : ""]
                 .filter(Boolean)
                 .join(" ")}
             >
