@@ -1,4 +1,4 @@
-import { execSync } from "node:child_process";
+import { execSync, spawnSync } from "node:child_process";
 import path from "node:path";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
 import { defineConfig, loadEnv } from "vite";
@@ -22,6 +22,39 @@ const resolveSentryRelease = (fallback = ""): string => {
   } catch {
     return fallback;
   }
+};
+
+const validateSentryAuth = (opts: {
+  authToken?: string;
+  org?: string;
+  project?: string | string[];
+  url?: string;
+}): boolean => {
+  const authToken = typeof opts.authToken === "string" ? opts.authToken.trim() : "";
+  const org = typeof opts.org === "string" ? opts.org.trim() : "";
+  const projectRaw = opts.project;
+  const project =
+    typeof projectRaw === "string"
+      ? projectRaw.trim()
+      : Array.isArray(projectRaw)
+        ? String(projectRaw[0] ?? "").trim()
+        : "";
+
+  if (!authToken || !org || !project) return false;
+
+  const sentryCliPath = path.resolve(__dirname, "../node_modules/.bin/sentry-cli");
+  const result = spawnSync(sentryCliPath, ["info"], {
+    stdio: "ignore",
+    env: {
+      ...process.env,
+      SENTRY_AUTH_TOKEN: authToken,
+      SENTRY_ORG: org,
+      SENTRY_PROJECT: project,
+      ...(typeof opts.url === "string" && opts.url.trim() ? { SENTRY_URL: opts.url.trim() } : {}),
+    },
+  });
+
+  return result.status === 0;
 };
 
 export default defineConfig(({ mode }) => {
@@ -50,9 +83,7 @@ export default defineConfig(({ mode }) => {
   const sentryAuthToken = process.env.SENTRY_AUTH_TOKEN;
   const sentryOrg = process.env.SENTRY_ORG;
   const sentryProject = process.env.SENTRY_PROJECT;
-  const uploadSourcemaps =
-    mode === "production" &&
-    Boolean(sentryAuthToken && sentryOrg && sentryProject);
+  const sentryUrl = process.env.SENTRY_URL;
 
   const sentryProjectOption = sentryProject?.includes(",")
     ? sentryProject
@@ -60,6 +91,29 @@ export default defineConfig(({ mode }) => {
         .map((p) => p.trim())
         .filter(Boolean)
     : sentryProject;
+
+  const hasSentryConfig = Boolean(
+    mode === "production" &&
+      sentryAuthToken &&
+      sentryOrg &&
+      sentryProjectOption &&
+      (Array.isArray(sentryProjectOption) ? sentryProjectOption.length > 0 : true),
+  );
+
+  const uploadSourcemaps = hasSentryConfig
+    ? validateSentryAuth({
+        authToken: sentryAuthToken,
+        org: sentryOrg,
+        project: sentryProjectOption,
+        url: sentryUrl,
+      })
+    : false;
+
+  if (hasSentryConfig && !uploadSourcemaps) {
+    console.warn(
+      "[vite] Sentry sourcemap upload disabled: credentials are invalid or Sentry is unreachable. Build continues safely.",
+    );
+  }
 
   return {
     plugins: [
@@ -69,6 +123,11 @@ export default defineConfig(({ mode }) => {
             authToken: sentryAuthToken,
             org: sentryOrg,
             project: sentryProjectOption,
+            telemetry: false,
+            silent: true,
+            errorHandler: (err) => {
+              console.warn(`[vite] Sentry upload skipped: ${err.message}`);
+            },
             release: {
               name: sentryRelease,
               // Keep deploys robust: sourcemaps matter, commit association is optional.
