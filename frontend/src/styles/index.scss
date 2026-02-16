@@ -1451,6 +1451,14 @@ html[data-theme="light"] .main-layout-main-container :where(.card, .panel, .modu
   outline-offset: 2px;
 }
 
+.bb-market-card {
+  padding: 16px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--ph-bg-card) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ph-border) 72%, transparent);
+  box-shadow: var(--ph-shadow);
+}
+
 .home-cta {
   appearance: none;
   border: 1px solid transparent;

@@ -442,14 +442,6 @@
   }
 }
 
-.how-it-works__card {
-  padding: 16px;
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--ph-bg-card) 88%, transparent);
-  border: 1px solid color-mix(in srgb, var(--ph-border) 72%, transparent);
-  box-shadow: var(--ph-shadow);
-}
-
 .how-it-works__icon {
   width: 34px;
   height: 34px;
@@ -601,14 +593,6 @@
   .use-cases__grid {
     grid-template-columns: 1fr;
   }
-}
-
-.use-cases__card {
-  padding: 16px 16px;
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--ph-bg-card) 88%, transparent);
-  border: 1px solid color-mix(in srgb, var(--ph-border) 72%, transparent);
-  box-shadow: var(--ph-shadow);
 }
 
 .use-cases__card h3 {

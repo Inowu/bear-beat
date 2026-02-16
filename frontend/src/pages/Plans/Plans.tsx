@@ -417,7 +417,7 @@ function Plans() {
                     ariaLabel="Métodos de pago disponibles"
                   />
                   <p className="plans2026__trust-copy">
-                    Esta cuenta activa al pagar. Cancela cuando quieras.
+                    Tu cuenta se activa al pagar. Cancela cuando quieras.
                   </p>
                   <p className="plans2026__links" aria-label="Ayuda">
                     <Link to="/instrucciones" className="plans2026__link">
