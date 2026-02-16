@@ -30,8 +30,6 @@ import { toErrorMessage } from "../../utils/errorMessage";
 
 type CheckoutMethod = "card" | "spei" | "oxxo" | "bbva" | "paypal";
 
-const CHECKOUT_METHOD_ORDER: CheckoutMethod[] = ["card", "paypal", "spei", "oxxo", "bbva"];
-
 const METHOD_META: Record<
   CheckoutMethod,
   { label: string; description: string; Icon: typeof CreditCard }
@@ -91,10 +89,9 @@ function pickCheckoutAlternateMethod(
   method: CheckoutMethod,
   availableMethods: CheckoutMethod[],
 ): CheckoutMethod | null {
-  const available = new Set(Array.isArray(availableMethods) ? availableMethods : []);
-  for (const candidate of CHECKOUT_METHOD_ORDER) {
-    if (candidate === method) continue;
-    if (available.has(candidate)) return candidate;
+  const available = Array.isArray(availableMethods) ? availableMethods : [];
+  for (const candidate of available) {
+    if (candidate !== method) return candidate;
   }
   return null;
 }
@@ -329,9 +326,11 @@ function normalizeCheckoutError(opts: {
 
 function Checkout() {
   const [plan, setPlan] = useState<IPlans | null>(null);
-  const [checkoutSummary, setCheckoutSummary] = useState<{ currency: string | null; price: number | null } | null>(
-    null,
-  );
+  const [checkoutSummary, setCheckoutSummary] = useState<{ currency: string; price: number } | null>(null);
+  const [checkoutPlanDisplayName, setCheckoutPlanDisplayName] = useState<string | null>(null);
+  const [checkoutQuotaGb, setCheckoutQuotaGb] = useState<number | null>(null);
+  const [checkoutConsentMethods, setCheckoutConsentMethods] = useState<CheckoutMethod[]>(["card", "paypal"]);
+  const [checkoutTrialAllowedMethods, setCheckoutTrialAllowedMethods] = useState<CheckoutMethod[]>(["card"]);
   const [trialConfig, setTrialConfig] = useState<{
     enabled: boolean;
     days: number;
@@ -453,16 +452,14 @@ function Checkout() {
   const hasPaypalPlan = Boolean(paypalPlan?.paypal_plan_id || paypalPlan?.paypal_plan_id_test);
 
   const checkoutCurrency = useMemo(() => {
-    const raw = checkoutSummary?.currency ?? plan?.moneda;
-    const normalized = String(raw ?? "").trim().toUpperCase();
+    const normalized = String(checkoutSummary?.currency ?? "").trim().toUpperCase();
     return normalized || null;
-  }, [checkoutSummary?.currency, plan?.moneda]);
+  }, [checkoutSummary?.currency]);
 
   const checkoutAmount = useMemo(() => {
-    const raw = checkoutSummary?.price ?? plan?.price;
-    const n = Number(raw ?? 0);
+    const n = Number(checkoutSummary?.price ?? 0);
     return Number.isFinite(n) ? n : 0;
-  }, [checkoutSummary?.price, plan?.price]);
+  }, [checkoutSummary?.price]);
 
   useEffect(() => {
     // Evitar doble membresía: si ya tiene un plan activo, empujar a recarga de GB extra en /micuenta.
@@ -633,6 +630,10 @@ function Checkout() {
         setPlan(null);
         setPaypalPlan(null);
         setCheckoutSummary(null);
+        setCheckoutPlanDisplayName(null);
+        setCheckoutQuotaGb(null);
+        setCheckoutConsentMethods(["card", "paypal"]);
+        setCheckoutTrialAllowedMethods(["card"]);
         setPlanStatus("not_found");
         return;
       }
@@ -664,6 +665,10 @@ function Checkout() {
         setAvailableMethods(["card"]);
         setTrialConfig({ enabled: false, days: 0, gb: 0, eligible: null });
         setCheckoutSummary(null);
+        setCheckoutPlanDisplayName(null);
+        setCheckoutQuotaGb(null);
+        setCheckoutConsentMethods(["card", "paypal"]);
+        setCheckoutTrialAllowedMethods(["card"]);
         return;
       }
 
@@ -684,24 +689,61 @@ function Checkout() {
             })
           : null;
 
-      const backendCurrency =
+      const backendCurrencyRaw =
         checkout && typeof checkout === "object" && typeof (checkout as any).currency === "string"
           ? String((checkout as any).currency).trim().toUpperCase()
-          : null;
+          : "";
+      const planCurrencyRaw = p?.moneda ? String(p.moneda).trim().toUpperCase() : "";
+      const resolvedCurrency = backendCurrencyRaw || planCurrencyRaw || "USD";
+
       const backendPriceRaw =
         checkout && typeof checkout === "object" ? Number((checkout as any).price ?? Number.NaN) : Number.NaN;
       const backendPrice =
         Number.isFinite(backendPriceRaw) && backendPriceRaw > 0 ? backendPriceRaw : null;
+      const planPriceRaw = Number(p?.price ?? Number.NaN);
+      const resolvedPrice = backendPrice ?? (Number.isFinite(planPriceRaw) && planPriceRaw > 0 ? planPriceRaw : 0);
 
-      setCheckoutSummary({ currency: backendCurrency, price: backendPrice });
+      setCheckoutSummary({ currency: resolvedCurrency, price: resolvedPrice });
       setAvailableMethods(backendMethods && backendMethods.length > 0 ? backendMethods : ["card"]);
       setTrialConfig(backendTrialConfig ?? { enabled: false, days: 0, gb: 0, eligible: null });
+
+      const backendPlanName =
+        checkout && typeof checkout === "object" && typeof (checkout as any).planDisplayName === "string"
+          ? String((checkout as any).planDisplayName).trim()
+          : "";
+      setCheckoutPlanDisplayName(backendPlanName || p?.name?.trim() || null);
+
+      const backendQuotaRaw =
+        checkout && typeof checkout === "object" ? Number((checkout as any).quotaGb ?? Number.NaN) : Number.NaN;
+      const backendQuota =
+        Number.isFinite(backendQuotaRaw) && backendQuotaRaw > 0 ? backendQuotaRaw : null;
+      setCheckoutQuotaGb(backendQuota);
+
+      const isCheckoutMethod = (value: unknown): value is CheckoutMethod =>
+        value === "card" || value === "paypal" || value === "spei" || value === "oxxo" || value === "bbva";
+      const backendConsentRaw =
+        checkout && typeof checkout === "object" && Array.isArray((checkout as any).requiresRecurringConsentMethods)
+          ? ((checkout as any).requiresRecurringConsentMethods as unknown[])
+          : null;
+      const consent = backendConsentRaw ? backendConsentRaw.filter(isCheckoutMethod) : [];
+      setCheckoutConsentMethods(consent.length > 0 ? consent : ["card", "paypal"]);
+
+      const backendTrialAllowedRaw =
+        checkout && typeof checkout === "object" && Array.isArray((checkout as any).trialAllowedMethods)
+          ? ((checkout as any).trialAllowedMethods as unknown[])
+          : null;
+      const trialAllowed = backendTrialAllowedRaw ? backendTrialAllowedRaw.filter(isCheckoutMethod) : [];
+      setCheckoutTrialAllowedMethods(trialAllowed.length > 0 ? trialAllowed : ["card"]);
     } catch {
       setPlan(null);
       setPaypalPlan(null);
       setCheckoutSummary(null);
       setAvailableMethods(["card"]);
       setTrialConfig({ enabled: false, days: 0, gb: 0, eligible: null });
+      setCheckoutPlanDisplayName(null);
+      setCheckoutQuotaGb(null);
+      setCheckoutConsentMethods(["card", "paypal"]);
+      setCheckoutTrialAllowedMethods(["card"]);
       setPlanStatus("error");
     }
   }, [checkManyChat, location.pathname, location.search, navigate]);
@@ -742,6 +784,12 @@ function Checkout() {
     setPlan(null);
     setPaypalPlan(null);
     setCheckoutSummary(null);
+    setCheckoutPlanDisplayName(null);
+    setCheckoutQuotaGb(null);
+    setCheckoutConsentMethods(["card", "paypal"]);
+    setCheckoutTrialAllowedMethods(["card"]);
+    setAvailableMethods(["card"]);
+    setTrialConfig({ enabled: false, days: 0, gb: 0, eligible: null });
     setPlanStatus(priceId ? "loading" : "idle");
     if (priceId) getPlans(priceId);
   }, [priceId, getPlans, closeErrorModal]);
@@ -785,7 +833,7 @@ function Checkout() {
 
   const startStripeCheckout = useCallback(async () => {
     if (!priceId || !plan?.id) return;
-    if (!acceptRecurring) {
+    if (checkoutConsentMethods.includes("card") && !acceptRecurring) {
       setInlineError("Para continuar debes aceptar el cobro recurrente (renovación automática).");
       focusRecurringConsent();
       return;
@@ -914,7 +962,7 @@ function Checkout() {
       setRedirecting(false);
       setProcessingMethod(null);
     }
-  }, [acceptRecurring, cookies._fbc, cookies._fbp, focusRecurringConsent, location.pathname, location.search, plan?.id, plan?.moneda, plan?.price, priceId, availableMethods.join("|"), openCheckoutError]);
+  }, [acceptRecurring, checkoutConsentMethods.join("|"), cookies._fbc, cookies._fbp, focusRecurringConsent, location.pathname, location.search, plan?.id, plan?.moneda, plan?.price, priceId, availableMethods.join("|"), openCheckoutError]);
 
   useEffect(() => {
     if (!plan) return;
@@ -1222,7 +1270,7 @@ function Checkout() {
         await trpc.subscriptions.subscribeWithPaypal.mutate({
           planId: paypalPlan.id,
           subscriptionId,
-          acceptRecurring,
+          acceptRecurring: checkoutConsentMethods.includes("paypal") ? acceptRecurring : true,
           fbp: cookies._fbp,
           fbc: cookies._fbc,
           url: window.location.href,
@@ -1272,7 +1320,7 @@ function Checkout() {
         setProcessingMethod(null);
       }
     },
-    [acceptRecurring, paypalPlan?.id, plan?.id, plan?.price, plan?.moneda, cookies._fbp, cookies._fbc, navigate, availableMethods.join("|"), openCheckoutError, focusPaypalWidget],
+    [acceptRecurring, checkoutConsentMethods.join("|"), paypalPlan?.id, plan?.id, plan?.price, plan?.moneda, cookies._fbp, cookies._fbc, navigate, availableMethods.join("|"), openCheckoutError, focusPaypalWidget],
   );
 
   useEffect(() => {
@@ -1303,7 +1351,7 @@ function Checkout() {
       return;
     }
     if (selectedMethod === "card") {
-      if (!acceptRecurring) {
+      if (checkoutConsentMethods.includes("card") && !acceptRecurring) {
         setInlineError("Para continuar debes aceptar el cobro recurrente (renovación automática).");
         focusRecurringConsent();
         return;
@@ -1317,8 +1365,8 @@ function Checkout() {
     if (selectedMethod === "paypal") return;
   };
 
-  const currencyCode = (checkoutCurrency ?? (plan?.moneda ? String(plan.moneda) : "MXN")).toUpperCase();
-  const planName = plan?.name?.trim() || "Plan Oro";
+  const currencyCode = (checkoutCurrency ?? "USD").toUpperCase();
+  const planName = checkoutPlanDisplayName?.trim() || plan?.name?.trim() || "Plan Oro";
   const discount = 0;
 
   const safePrice = checkoutAmount;
@@ -1338,9 +1386,15 @@ function Checkout() {
     trialDays > 0 &&
     Number.isFinite(trialGb) &&
     trialGb > 0;
-  const isCardTrial = selectedMethod === "card" && isTrialEligible;
+  const isTrialMethod = checkoutTrialAllowedMethods.includes(selectedMethod);
+  const isMethodTrial = isTrialEligible && isTrialMethod;
 
-  const quotaGb = Number(plan?.gigas ?? 500);
+  const quotaGb = (() => {
+    const backend = Number(checkoutQuotaGb ?? Number.NaN);
+    if (Number.isFinite(backend) && backend > 0) return backend;
+    const fallback = Number(plan?.gigas ?? 500);
+    return Number.isFinite(fallback) && fallback > 0 ? fallback : 500;
+  })();
   const benefitList = [
     `Cuota mensual: ${formatInt(quotaGb)} GB/mes de descargas rápidas.`,
     "Catálogo completo (eliges qué descargar).",
@@ -1357,7 +1411,7 @@ function Checkout() {
   if (processingMethod === "oxxo") continueLabel = "Generando referencia de pago en efectivo...";
   if (processingMethod === "paypal") continueLabel = "Procesando PayPal...";
   if (processingMethod === null && selectedMethod === "card") {
-    continueLabel = isCardTrial
+    continueLabel = isMethodTrial
       ? `Empezar prueba (hoy $0)`
       : `Pagar $${totalPrice} ${currencyCode} de forma segura`;
   }
@@ -1560,12 +1614,11 @@ function Checkout() {
     );
   }
 
-  // Show every available payment method (CRO: users need to see OXXO when enabled).
-  const methodOrder: CheckoutMethod[] = ["card", "paypal", "spei", "oxxo", "bbva"];
-  const methodsForUi: CheckoutMethod[] = methodOrder.filter((method) => availableMethods.includes(method));
+  // Backend controls both payment method availability and ordering to avoid frontend drift.
+  const methodsForUi: CheckoutMethod[] = availableMethods;
 
   const summaryMonthlyLabel = `$${totalPrice} ${currencyCode}/mes`;
-  const trialPill = selectedMethod === "card" && isTrialEligible ? `Prueba ${trialDays} días` : null;
+  const trialPill = isMethodTrial ? `Prueba ${trialDays} días` : null;
 
   const shouldShowPaypalInline =
     selectedMethod === "paypal" &&
@@ -1577,7 +1630,7 @@ function Checkout() {
     const monthly = summaryMonthlyLabel;
     switch (selectedMethod) {
       case "card":
-        return isCardTrial
+        return isMethodTrial
           ? `Hoy $0: empiezas tu prueba de ${trialDays} días (${formatInt(trialGb)} GB). Después ${monthly}.`
           : `Pago inmediato. Activación en 1 minuto. Renovación automática: ${monthly}.`;
       case "paypal":
@@ -1594,7 +1647,7 @@ function Checkout() {
   })();
 
   const trialHint =
-    isTrialEligible && selectedMethod !== "card"
+    isTrialEligible && !checkoutTrialAllowedMethods.includes(selectedMethod)
       ? `Tip: con tarjeta puedes iniciar una prueba de ${trialDays} días (hoy $0).`
       : null;
 
@@ -1698,7 +1751,7 @@ function Checkout() {
               {couponHint && <p className="checkout2026__methodHint">{couponHint}</p>}
             </section>
 
-              {(selectedMethod === "card" || selectedMethod === "paypal") && (
+              {checkoutConsentMethods.includes(selectedMethod) && (
                 <section
                   className={`checkout2026__consent ${!acceptRecurring ? "is-error" : ""}`}
                   aria-label="Consentimiento de cobro recurrente"
@@ -1718,7 +1771,7 @@ function Checkout() {
                   <span className="checkout2026__consentCopy">
                     <strong>Acepto renovación automática</strong>
                     <span>
-                      {isCardTrial
+                      {isMethodTrial
                         ? `Hoy $0. Después ${summaryMonthlyLabel} hasta que cancele.`
                         : `${summaryMonthlyLabel} hasta que cancele.`}
                     </span>
@@ -1748,7 +1801,7 @@ function Checkout() {
                   <PayPalComponent
                     plan={paypalPlan!}
                     type="subscription"
-                    canProceed={acceptRecurring}
+                    canProceed={!checkoutConsentMethods.includes("paypal") || acceptRecurring}
                     onBlocked={() => {
                       setInlineError("Para continuar debes aceptar el cobro recurrente (renovación automática).");
                       focusRecurringConsent();
