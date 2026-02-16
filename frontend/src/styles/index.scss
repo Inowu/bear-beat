@@ -1463,6 +1463,57 @@ html[data-theme="light"] .main-layout-main-container :where(.card, .panel, .modu
   box-shadow: var(--ph-shadow);
 }
 
+.bb-hero-card {
+  border-radius: 24px;
+  border: 1px solid color-mix(in srgb, var(--bb-border) 78%, transparent);
+  background:
+    radial-gradient(
+      520px 220px at 12% 0%,
+      color-mix(in srgb, var(--bb-accent-ink) 9%, transparent),
+      transparent 70%
+    ),
+    color-mix(in srgb, var(--bb-surface) 94%, transparent);
+  box-shadow: var(--bb-shadow-card);
+  padding: clamp(18px, 2.2vw, 26px);
+}
+
+.bb-bento-card {
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--bb-border) 76%, transparent);
+  background:
+    linear-gradient(
+      170deg,
+      color-mix(in srgb, var(--bb-accent-ink) 5%, transparent),
+      transparent 58%
+    ),
+    color-mix(in srgb, var(--bb-surface) 92%, transparent);
+  box-shadow: var(--bb-shadow);
+  padding: 10px 12px;
+  display: grid;
+  gap: 4px;
+  text-align: center;
+}
+
+.bb-pill {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: var(--bb-radius-pill);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.bb-pill--soft {
+  border: 1px solid color-mix(in srgb, var(--bb-border) 78%, transparent);
+  background: color-mix(in srgb, var(--bb-surface-soft) 78%, transparent);
+  color: var(--bb-text-heading);
+  font-size: 1.1rem;
+  letter-spacing: 0.14em;
+}
+
 .home-cta {
   appearance: none;
   border: 1px solid transparent;

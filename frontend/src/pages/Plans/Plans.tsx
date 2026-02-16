@@ -203,7 +203,7 @@ function Plans() {
                 aria-busy="true"
               >
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <article key={i} className="plans2026__bento-card" aria-hidden>
+                  <article key={i} className="plans2026__bento-card bb-bento-card" aria-hidden>
                     <span className="plans2026__sk plans2026__sk--bentoValue" />
                     <span className="plans2026__sk plans2026__sk--bentoLabel" />
                   </article>
@@ -211,7 +211,7 @@ function Plans() {
               </section>
 
               <section
-                className="plans2026__card plans2026__card--skeleton"
+                className="plans2026__card bb-hero-card plans2026__card--skeleton"
                 aria-label="Cargando plan"
                 role="status"
                 aria-live="polite"
@@ -282,15 +282,15 @@ function Plans() {
           ) : (
             <>
               <section className="plans2026__bento" aria-label="Valor incluido">
-                <article className="plans2026__bento-card">
+                <article className="plans2026__bento-card bb-bento-card">
                   <p className="plans2026__bento-value">{formatTB(stats.totalTB)}</p>
                   <p className="plans2026__bento-label">Catálogo total</p>
                 </article>
-                <article className="plans2026__bento-card">
+                <article className="plans2026__bento-card bb-bento-card">
                   <p className="plans2026__bento-value">{formatInt(stats.quotaGb)} GB/mes</p>
                   <p className="plans2026__bento-label">Cuota mensual</p>
                 </article>
-                <article className="plans2026__bento-card">
+                <article className="plans2026__bento-card bb-bento-card">
                   <p className="plans2026__bento-value">{formatInt(stats.totalFiles)}</p>
                   <p className="plans2026__bento-label">Archivos listos</p>
                 </article>
@@ -300,9 +300,9 @@ function Plans() {
                 La cuota mensual es lo que puedes descargar cada ciclo. El catálogo total es lo disponible para elegir.
               </p>
 
-              <section className="plans2026__card" aria-label="Plan Oro">
+              <section className="plans2026__card bb-hero-card" aria-label="Plan Oro">
                 <div className="plans2026__card-head">
-                  <p className="plans2026__plan-name">Plan Oro</p>
+                  <p className="plans2026__plan-name bb-pill bb-pill--soft">Plan Oro</p>
                 </div>
 
                 <div
