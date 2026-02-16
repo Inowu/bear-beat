@@ -47,7 +47,7 @@ export default function CatalogDemo(props: {
               Busca un género y mira cómo está ordenado. Al activar ves el catálogo completo.
             </p>
           </div>
-          <div className="catalog-demo__search">
+          <div className="catalog-demo__search bb-market-surface">
             <Search size={18} aria-hidden />
             <input
               id="catalog-demo-search"
@@ -68,7 +68,7 @@ export default function CatalogDemo(props: {
 
         <div className="catalog-demo__grid" aria-label="Resultados de géneros">
           {results.map((g) => (
-            <article key={g.id} className="catalog-demo__card">
+            <article key={g.id} className="catalog-demo__card bb-market-surface">
               <strong>{g.name}</strong>
               <span>
                 {formatInt(g.files)} archivos · {formatGB(g.gb)}
