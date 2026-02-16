@@ -1562,7 +1562,7 @@ function Checkout() {
             </header>
 
             <section
-              className="checkout-card checkout2026__card checkout2026__card--skeleton"
+              className="checkout-card bb-hero-card checkout2026__card checkout2026__card--skeleton"
               aria-label="Cargando plan"
               role="status"
               aria-live="polite"
@@ -1675,7 +1675,7 @@ function Checkout() {
             </p>
           </header>
 
-          <section className="checkout-card checkout2026__card" aria-label="Completa tu pago">
+          <section className="checkout-card bb-hero-card checkout2026__card" aria-label="Completa tu pago">
             <div className="checkout2026__cardHead">
               <p className="checkout2026__planPill">{planName}</p>
               {trialPill && <p className="checkout2026__trialPill">{trialPill}</p>}

@@ -244,7 +244,7 @@ function CheckoutSuccess() {
       <PublicTopNav className="checkout2026__topnav" plansTo="/planes" />
       <section className="checkout2026__main" aria-label="Checkout">
         <div className="checkout2026__container checkout2026__center">
-          <div className="checkout-card checkout-success-card">
+          <div className="checkout-card bb-hero-card checkout-success-card">
             <div className="checkout-success-card__icon-wrap">
               <span className="checkout-summary__check checkout-success-card__icon">
                 {activationState === "active" ? (
