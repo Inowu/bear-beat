@@ -1955,34 +1955,12 @@
   font-size: 15px;
 }
 
-.home-visual,
-.how-it-works__card,
-.trust-bar__item,
-.use-cases__card,
-.catalog-demo__card,
-.social-proof__col,
-.social-proof__neutral,
-.compatibility__card,
-.activation-steps__card,
-.pricing__card,
-.home-faq__item,
-.human-proof__card {
+.public-home :is(.bb-market-surface, .bb-market-card, .bb-hero-card) {
   transition: transform 170ms ease, border-color 170ms ease, box-shadow 220ms ease, background 220ms ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .home-visual:hover,
-  .how-it-works__card:hover,
-  .trust-bar__item:hover,
-  .use-cases__card:hover,
-  .catalog-demo__card:hover,
-  .social-proof__col:hover,
-  .social-proof__neutral:hover,
-  .compatibility__card:hover,
-  .activation-steps__card:hover,
-  .pricing__card:hover,
-  .home-faq__item:hover,
-  .human-proof__card:hover {
+  .public-home :is(.bb-market-surface, .bb-market-card, .bb-hero-card):hover {
     transform: translateY(-2px);
     border-color: color-mix(in srgb, var(--ph-accent) 32%, var(--ph-border));
     box-shadow: var(--ph-shadow-card);
@@ -2063,16 +2041,7 @@ html[data-theme="light"] .public-home {
     var(--ph-bg);
 }
 
-html[data-theme="light"] .how-it-works__card,
-html[data-theme="light"] .trust-bar__item,
-html[data-theme="light"] .use-cases__card,
-html[data-theme="light"] .catalog-demo__search,
-html[data-theme="light"] .catalog-demo__card,
-html[data-theme="light"] .social-proof__col,
-html[data-theme="light"] .social-proof__neutral,
-html[data-theme="light"] .compatibility__card,
-html[data-theme="light"] .home-faq__item,
-html[data-theme="light"] .human-proof__card {
+html[data-theme="light"] .public-home :is(.bb-market-surface, .bb-market-card) {
   border-color: color-mix(in srgb, var(--ph-border) 90%, transparent);
   background: color-mix(in srgb, #ffffff 99%, var(--ph-bg-card));
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
