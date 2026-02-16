@@ -550,8 +550,6 @@
   gap: 11px;
   padding: 12px 14px;
   border-radius: 18px;
-  background: color-mix(in srgb, var(--ph-bg-card) 86%, transparent);
-  border: 1px solid color-mix(in srgb, var(--ph-border) 70%, transparent);
   color: color-mix(in srgb, var(--ph-text-body) 92%, transparent);
   font-weight: 600;
   letter-spacing: 0;
@@ -1022,8 +1020,6 @@
   gap: 8px;
   padding: 10px 12px;
   border-radius: 14px;
-  background: color-mix(in srgb, var(--ph-bg-card) 86%, transparent);
-  border: 1px solid color-mix(in srgb, var(--ph-border) 72%, transparent);
   color: color-mix(in srgb, var(--ph-text-muted) 92%, transparent);
   font-size: 13px;
   line-height: 1.2;
