@@ -430,56 +430,41 @@
   gap: 10px;
 }
 
-.checkout2026__planPill {
-  margin: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 30px;
-  padding: 0 12px;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--ph-border) 78%, transparent);
-  background: color-mix(in srgb, var(--ph-bg-soft) 78%, transparent);
-  color: var(--ph-text-heading);
-  font-size: 1.1rem;
-  font-weight: 900;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.checkout2026__trialPill {
-  margin: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 30px;
-  padding: 0 12px;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--ph-accent) 34%, var(--ph-border));
-  background: color-mix(in srgb, var(--ph-accent) 16%, var(--ph-bg-card));
-  color: var(--ph-text-heading);
-  font-size: 0.92rem;
-  font-weight: 900;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
+.checkout2026__planPill,
+.checkout2026__trialPill,
 .checkout2026__couponPill {
   margin: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
   min-height: 30px;
   padding: 0 12px;
   border-radius: 999px;
+  color: var(--ph-text-heading);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.checkout2026__planPill {
   border: 1px solid color-mix(in srgb, var(--ph-border) 78%, transparent);
   background: color-mix(in srgb, var(--ph-bg-soft) 78%, transparent);
-  color: var(--ph-text-heading);
+  font-size: 1.1rem;
+  letter-spacing: 0.14em;
+}
+
+.checkout2026__trialPill {
+  border: 1px solid color-mix(in srgb, var(--ph-accent) 34%, var(--ph-border));
+  background: color-mix(in srgb, var(--ph-accent) 16%, var(--ph-bg-card));
   font-size: 0.92rem;
-  font-weight: 900;
   letter-spacing: 0.12em;
-  text-transform: uppercase;
+}
+
+.checkout2026__couponPill {
+  gap: 10px;
+  border: 1px solid color-mix(in srgb, var(--ph-border) 78%, transparent);
+  background: color-mix(in srgb, var(--ph-bg-soft) 78%, transparent);
+  font-size: 0.92rem;
+  letter-spacing: 0.12em;
 }
 
 .checkout2026__couponRemove {
