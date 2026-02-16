@@ -57,6 +57,10 @@ type PublicCatalogSummary = {
   genresDetail: GenreStats[];
   generatedAt: string;
   stale: boolean;
+  effectiveTotalFiles?: number;
+  effectiveTotalGB?: number;
+  effectiveTotalTB?: number;
+  isFallback?: boolean;
 };
 
 type PublicTopDownloadsResponse = {
@@ -151,45 +155,76 @@ export default function PublicHome() {
 
   useEffect(() => {
     let cancelled = false;
+    let staleTimeout: number | null = null;
 
-    (async () => {
-      try {
-        const cfg = (await trpc.plans.getTrialConfig.query()) as TrialConfigResponse;
-        if (!cancelled) setTrialConfig(cfg);
-      } catch {
-        if (!cancelled) setTrialConfig({ enabled: false, days: 0, gb: 0, eligible: null });
-      }
-    })();
+    const applyPricingConfig = (response: any) => {
+      const cfg = response?.trialConfig;
+      setTrialConfig({
+        enabled: Boolean(cfg?.enabled),
+        days: Number(cfg?.days ?? 0),
+        gb: Number(cfg?.gb ?? 0),
+        eligible: cfg?.eligible ?? null,
+      });
 
-    return () => {
-      cancelled = true;
+      const catalog = (response?.catalog as PublicCatalogSummary | null) ?? null;
+      setCatalogSummary(catalog);
+
+      const mxn = response?.plans?.mxn ?? null;
+      const usd = response?.plans?.usd ?? null;
+      const nextPlans = {
+        mxn: mxn
+          ? ({
+              currency: "mxn",
+              name: String(mxn?.name ?? "").trim() || "Membresía Bear Beat",
+              price: Number(mxn?.price ?? 0),
+              gigas: Number(mxn?.gigas ?? 0),
+              hasPaypal: Boolean(mxn?.hasPaypal),
+            } satisfies PricingPlan)
+          : null,
+        usd: usd
+          ? ({
+              currency: "usd",
+              name: String(usd?.name ?? "").trim() || "Membresía Bear Beat",
+              price: Number(usd?.price ?? 0),
+              gigas: Number(usd?.gigas ?? 0),
+              hasPaypal: Boolean(usd?.hasPaypal),
+            } satisfies PricingPlan)
+          : null,
+      };
+
+      setPricingPlans(nextPlans);
+      setPricingStatus(nextPlans.mxn || nextPlans.usd ? "loaded" : "error");
     };
-  }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    const fetchCatalog = async () => {
+    const fetchPricingConfig = async () => {
+      if (!cancelled) setPricingStatus("loading");
       try {
-        const summary = (await trpc.catalog.getPublicCatalogSummary.query()) as PublicCatalogSummary;
+        const response: any = await trpc.plans.getPublicPricingConfig.query();
         if (cancelled) return;
-        setCatalogSummary(summary);
+        applyPricingConfig(response);
 
         // Stale-while-revalidate: retry once shortly after if server is refreshing.
-        if (summary?.stale && typeof window !== "undefined") {
-          window.setTimeout(() => {
-            if (!cancelled) void fetchCatalog();
+        if (response?.catalog?.stale && typeof window !== "undefined") {
+          if (staleTimeout) window.clearTimeout(staleTimeout);
+          staleTimeout = window.setTimeout(() => {
+            if (!cancelled) void fetchPricingConfig();
           }, 10_000);
         }
       } catch {
-        if (!cancelled) setCatalogSummary(null);
+        if (!cancelled) {
+          setTrialConfig({ enabled: false, days: 0, gb: 0, eligible: null });
+          setCatalogSummary(null);
+          setPricingPlans({ mxn: null, usd: null });
+          setPricingStatus("error");
+        }
       }
     };
 
-    void fetchCatalog();
+    void fetchPricingConfig();
 
     return () => {
       cancelled = true;
+      if (staleTimeout && typeof window !== "undefined") window.clearTimeout(staleTimeout);
     };
   }, []);
 
@@ -206,51 +241,6 @@ export default function PublicHome() {
         if (!cancelled) setTopDownloads(response);
       } catch {
         if (!cancelled) setTopDownloads(null);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
-      if (!cancelled) setPricingStatus("loading");
-      try {
-        const response: any = await trpc.plans.getPublicBestPlans.query();
-        const mxn = response?.mxn ?? null;
-        const usd = response?.usd ?? null;
-        if (cancelled) return;
-        const nextPlans = {
-          mxn: mxn
-            ? ({
-                currency: "mxn",
-                name: String(mxn?.name ?? "").trim() || "Membresía Bear Beat",
-                price: Number(mxn?.price ?? 0),
-                gigas: Number(mxn?.gigas ?? 0),
-                hasPaypal: Boolean(mxn?.hasPaypal),
-              } satisfies PricingPlan)
-            : null,
-          usd: usd
-            ? ({
-                currency: "usd",
-                name: String(usd?.name ?? "").trim() || "Membresía Bear Beat",
-                price: Number(usd?.price ?? 0),
-                gigas: Number(usd?.gigas ?? 0),
-                hasPaypal: Boolean(usd?.hasPaypal),
-              } satisfies PricingPlan)
-            : null,
-        };
-        setPricingPlans(nextPlans);
-        setPricingStatus(nextPlans.mxn || nextPlans.usd ? "loaded" : "error");
-      } catch {
-        if (!cancelled) {
-          setPricingPlans({ mxn: null, usd: null });
-          setPricingStatus("error");
-        }
       }
     })();
 
@@ -288,25 +278,30 @@ export default function PublicHome() {
 
   const downloadQuotaLabel = `${formatInt(downloadQuotaGb)} GB/mes`;
 
-  const hasLiveCatalog = Boolean(
-    catalogSummary &&
-      !catalogSummary.error &&
-      Number(catalogSummary.totalFiles ?? 0) > 0 &&
-      Number(catalogSummary.totalGB ?? 0) > 0,
-  );
+  const effectiveTotalFiles = (() => {
+    const raw = Number(catalogSummary?.effectiveTotalFiles ?? catalogSummary?.totalFiles ?? 0);
+    return Number.isFinite(raw) && raw > 0 ? raw : FALLBACK_CATALOG_TOTAL_FILES;
+  })();
 
-  const effectiveTotalFiles = hasLiveCatalog
-    ? Number(catalogSummary?.totalFiles ?? 0)
-    : FALLBACK_CATALOG_TOTAL_FILES;
-  const effectiveTotalGB = hasLiveCatalog ? Number(catalogSummary?.totalGB ?? 0) : FALLBACK_CATALOG_TOTAL_GB;
-  const effectiveTotalTB = effectiveTotalGB / 1000;
+  const effectiveTotalGB = (() => {
+    const raw = Number(catalogSummary?.effectiveTotalGB ?? catalogSummary?.totalGB ?? 0);
+    return Number.isFinite(raw) && raw > 0 ? raw : FALLBACK_CATALOG_TOTAL_GB;
+  })();
+
+  const effectiveTotalTB = (() => {
+    const raw = Number(catalogSummary?.effectiveTotalTB ?? 0);
+    return Number.isFinite(raw) && raw > 0 ? raw : effectiveTotalGB / 1000;
+  })();
 
   const totalTBLabel = formatTB(effectiveTotalTB);
   const totalFilesLabel = formatInt(effectiveTotalFiles);
 
   const catalogGenres = useMemo<CatalogGenre[]>(() => {
     const source =
-      hasLiveCatalog && catalogSummary && Array.isArray(catalogSummary.genresDetail) && catalogSummary.genresDetail.length > 0
+      catalogSummary &&
+      !catalogSummary.error &&
+      Array.isArray(catalogSummary.genresDetail) &&
+      catalogSummary.genresDetail.length > 0
         ? catalogSummary.genresDetail
         : FALLBACK_GENRES;
 
@@ -317,7 +312,7 @@ export default function PublicHome() {
       files: Number(g.files ?? 0),
       gb: Number(g.gb ?? 0),
     }));
-  }, [catalogSummary, hasLiveCatalog]);
+  }, [catalogSummary]);
 
   const socialAudio = useMemo(() => {
     const items = topDownloads?.audio ?? [];
