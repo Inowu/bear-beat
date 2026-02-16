@@ -22,7 +22,7 @@ export default function InsidePreview(props: {
           </button>
         </div>
 
-        <div className="home-visual">
+        <div className="home-visual bb-hero-card">
           <div className="home-visual__head">
             <strong>Vista real del catálogo</strong>
             <span className="inside-preview__hint">
