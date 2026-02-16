@@ -51,27 +51,28 @@ const refreshCatalogSummary = async (): Promise<PublicCatalogSummary> => {
   return inFlight;
 };
 
+export async function getPublicCatalogSummarySnapshot(): Promise<PublicCatalogSummary> {
+  const now = Date.now();
+  if (cached && now - cachedAt < CATALOG_SUMMARY_TTL_MS) {
+    return { ...cached, stale: false };
+  }
+
+  // Stale-while-revalidate: return stale immediately, refresh in the background.
+  if (cached) {
+    void refreshCatalogSummary();
+    return { ...cached, stale: true };
+  }
+
+  // First request: compute once, then cache.
+  return refreshCatalogSummary();
+}
+
 export const catalogRouter = router({
   /**
    * Public catalog snapshot for the landing page.
    * Uses a long TTL + singleflight refresh to avoid heavy scans per visitor.
    */
   getPublicCatalogSummary: publicProcedure.query(async () => {
-    const now = Date.now();
-    const isFresh = cached && now - cachedAt < CATALOG_SUMMARY_TTL_MS;
-
-    if (isFresh) {
-      return { ...cached, stale: false };
-    }
-
-    // Stale-while-revalidate: return stale immediately, refresh in the background.
-    if (cached) {
-      void refreshCatalogSummary();
-      return { ...cached, stale: true };
-    }
-
-    // First request: compute once, then cache.
-    return refreshCatalogSummary();
+    return getPublicCatalogSummarySnapshot();
   }),
 });
-
