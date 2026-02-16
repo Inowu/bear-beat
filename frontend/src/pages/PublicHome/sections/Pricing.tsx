@@ -152,7 +152,7 @@ export default function Pricing(props: {
         <div className="pricing__panels" aria-label="Plan">
           {isLoading && (
             <div
-              className="pricing__card pricing__card--skeleton"
+              className="pricing__card bb-hero-card pricing__card--skeleton"
               aria-label="Cargando precio"
               role="status"
               aria-live="polite"
@@ -187,7 +187,7 @@ export default function Pricing(props: {
           )}
 
           {isError && (
-            <div className="pricing__card pricing__card--error" role="status" aria-live="polite">
+            <div className="pricing__card bb-hero-card pricing__card--error" role="status" aria-live="polite">
               <p className="pricing__errorTitle">No pudimos cargar el precio.</p>
               <p className="pricing__errorText">Recarga la página o intenta en unos minutos.</p>
             </div>
@@ -195,7 +195,7 @@ export default function Pricing(props: {
 
           {hasMxn && mxnPlan && (
             <div id={mxnPanelId} role="tabpanel" aria-labelledby={mxnTabId} hidden={currency !== "mxn"}>
-              <div className="pricing__card">
+              <div className="pricing__card bb-hero-card">
                 <div className="pricing__card-head">
                   <div className="pricing__plan">
                     <p className="pricing__pill">Pago mensual</p>
@@ -267,7 +267,7 @@ export default function Pricing(props: {
 
           {hasUsd && usdPlan && (
             <div id={usdPanelId} role="tabpanel" aria-labelledby={usdTabId} hidden={currency !== "usd"}>
-              <div className="pricing__card">
+              <div className="pricing__card bb-hero-card">
                 <div className="pricing__card-head">
                   <div className="pricing__plan">
                     <p className="pricing__pill">Pago mensual</p>
