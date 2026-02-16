@@ -29,6 +29,153 @@ import PublicTopNav from "../../components/PublicTopNav/PublicTopNav";
 import { toErrorMessage } from "../../utils/errorMessage";
 
 type CheckoutMethod = "card" | "spei" | "oxxo" | "bbva" | "paypal";
+type CheckoutTrialConfig = {
+  enabled: boolean;
+  days: number;
+  gb: number;
+  eligible?: boolean | null;
+};
+
+const CHECKOUT_METHOD_VALUES = ["card", "paypal", "spei", "oxxo", "bbva"] as const;
+const DEFAULT_AVAILABLE_METHODS: CheckoutMethod[] = ["card"];
+const DEFAULT_CONSENT_METHODS: CheckoutMethod[] = ["card", "paypal"];
+const DEFAULT_TRIAL_ALLOWED_METHODS: CheckoutMethod[] = ["card"];
+const DEFAULT_TRIAL_CONFIG: CheckoutTrialConfig = { enabled: false, days: 0, gb: 0, eligible: null };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isCheckoutMethod(value: unknown): value is CheckoutMethod {
+  return typeof value === "string" && (CHECKOUT_METHOD_VALUES as readonly string[]).includes(value);
+}
+
+function parseCheckoutMethodList(value: unknown): CheckoutMethod[] {
+  if (!Array.isArray(value)) return [];
+  const parsed: CheckoutMethod[] = [];
+  for (const item of value) {
+    if (!isCheckoutMethod(item)) continue;
+    if (parsed.includes(item)) continue;
+    parsed.push(item);
+  }
+  return parsed;
+}
+
+function toPositiveNumber(value: unknown): number | null {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return n;
+}
+
+function parseTrialConfig(value: unknown): CheckoutTrialConfig {
+  if (!isRecord(value)) return DEFAULT_TRIAL_CONFIG;
+  const days = Number(value.days);
+  const gb = Number(value.gb);
+  const eligibleRaw = value.eligible;
+  const eligible =
+    typeof eligibleRaw === "boolean" || eligibleRaw === null ? eligibleRaw : null;
+  return {
+    enabled: Boolean(value.enabled),
+    days: Number.isFinite(days) ? days : 0,
+    gb: Number.isFinite(gb) ? gb : 0,
+    eligible,
+  };
+}
+
+function parseCheckoutMethodFromSearch(value: string | null): CheckoutMethod | null {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim().toLowerCase();
+  return isCheckoutMethod(normalized) ? normalized : null;
+}
+
+function pickPreferredCheckoutMethod(opts: {
+  requestedMethod: string | null;
+  availableMethods: CheckoutMethod[];
+  backendDefaultMethod: CheckoutMethod;
+}): CheckoutMethod {
+  const requested = parseCheckoutMethodFromSearch(opts.requestedMethod);
+  if (requested && opts.availableMethods.includes(requested)) return requested;
+  if (opts.availableMethods.includes(opts.backendDefaultMethod)) return opts.backendDefaultMethod;
+  return opts.availableMethods[0] ?? "card";
+}
+
+function normalizeCheckoutPayload(
+  checkoutRaw: unknown,
+  plan: IPlans | null,
+): {
+  summary: { currency: string; price: number };
+  availableMethods: CheckoutMethod[];
+  defaultMethod: CheckoutMethod;
+  trialConfig: CheckoutTrialConfig;
+  planDisplayName: string | null;
+  quotaGb: number | null;
+  consentMethods: CheckoutMethod[];
+  trialAllowedMethods: CheckoutMethod[];
+} {
+  const checkout = isRecord(checkoutRaw) ? checkoutRaw : null;
+  const availableMethodsRaw = parseCheckoutMethodList(checkout?.availableMethods);
+  const availableMethods =
+    availableMethodsRaw.length > 0 ? availableMethodsRaw : DEFAULT_AVAILABLE_METHODS;
+
+  const backendDefaultMethodRaw = checkout?.defaultMethod;
+  const defaultMethod =
+    isCheckoutMethod(backendDefaultMethodRaw) && availableMethods.includes(backendDefaultMethodRaw)
+      ? backendDefaultMethodRaw
+      : (availableMethods[0] ?? "card");
+
+  const backendCurrency =
+    typeof checkout?.currency === "string" ? checkout.currency.trim().toUpperCase() : "";
+  const planCurrency = plan?.moneda ? String(plan.moneda).trim().toUpperCase() : "";
+  const currency = backendCurrency || planCurrency || "USD";
+
+  const backendPrice = toPositiveNumber(checkout?.price);
+  const planPrice = toPositiveNumber(plan?.price);
+  const price = backendPrice ?? planPrice ?? 0;
+
+  const backendPlanName =
+    typeof checkout?.planDisplayName === "string" ? checkout.planDisplayName.trim() : "";
+  const planDisplayName = backendPlanName || plan?.name?.trim() || null;
+
+  const quotaGb = toPositiveNumber(checkout?.quotaGb);
+  const trialConfig = parseTrialConfig(checkout?.trialConfig);
+
+  const parsedConsent = parseCheckoutMethodList(checkout?.requiresRecurringConsentMethods).filter((method) =>
+    availableMethods.includes(method),
+  );
+  const fallbackConsent = DEFAULT_CONSENT_METHODS.filter((method) =>
+    availableMethods.includes(method),
+  );
+  const consentMethods =
+    parsedConsent.length > 0
+      ? parsedConsent
+      : fallbackConsent.length > 0
+        ? fallbackConsent
+        : [defaultMethod];
+
+  const parsedTrialAllowed = parseCheckoutMethodList(checkout?.trialAllowedMethods).filter((method) =>
+    availableMethods.includes(method),
+  );
+  const fallbackTrialAllowed = DEFAULT_TRIAL_ALLOWED_METHODS.filter((method) =>
+    availableMethods.includes(method),
+  );
+  const trialAllowedMethods =
+    parsedTrialAllowed.length > 0
+      ? parsedTrialAllowed
+      : fallbackTrialAllowed.length > 0
+        ? fallbackTrialAllowed
+        : [defaultMethod];
+
+  return {
+    summary: { currency, price },
+    availableMethods,
+    defaultMethod,
+    trialConfig,
+    planDisplayName,
+    quotaGb,
+    consentMethods,
+    trialAllowedMethods,
+  };
+}
 
 const METHOD_META: Record<
   CheckoutMethod,
@@ -329,20 +476,15 @@ function Checkout() {
   const [checkoutSummary, setCheckoutSummary] = useState<{ currency: string; price: number } | null>(null);
   const [checkoutPlanDisplayName, setCheckoutPlanDisplayName] = useState<string | null>(null);
   const [checkoutQuotaGb, setCheckoutQuotaGb] = useState<number | null>(null);
-  const [checkoutConsentMethods, setCheckoutConsentMethods] = useState<CheckoutMethod[]>(["card", "paypal"]);
-  const [checkoutTrialAllowedMethods, setCheckoutTrialAllowedMethods] = useState<CheckoutMethod[]>(["card"]);
-  const [trialConfig, setTrialConfig] = useState<{
-    enabled: boolean;
-    days: number;
-    gb: number;
-    eligible?: boolean | null;
-  } | null>(null);
+  const [checkoutConsentMethods, setCheckoutConsentMethods] = useState<CheckoutMethod[]>(() => [...DEFAULT_CONSENT_METHODS]);
+  const [checkoutTrialAllowedMethods, setCheckoutTrialAllowedMethods] = useState<CheckoutMethod[]>(() => [...DEFAULT_TRIAL_ALLOWED_METHODS]);
+  const [trialConfig, setTrialConfig] = useState<CheckoutTrialConfig | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const [redirecting, setRedirecting] = useState(false);
   const [showRedirectHelp, setShowRedirectHelp] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<CheckoutMethod>("card");
-  const [availableMethods, setAvailableMethods] = useState<CheckoutMethod[]>(["card"]);
+  const [availableMethods, setAvailableMethods] = useState<CheckoutMethod[]>(() => [...DEFAULT_AVAILABLE_METHODS]);
   const [processingMethod, setProcessingMethod] = useState<CheckoutMethod | null>(null);
   const [inlineError, setInlineError] = useState<string | null>(null);
   const [acceptRecurring, setAcceptRecurring] = useState(true);
@@ -632,18 +774,33 @@ function Checkout() {
         setCheckoutSummary(null);
         setCheckoutPlanDisplayName(null);
         setCheckoutQuotaGb(null);
-        setCheckoutConsentMethods(["card", "paypal"]);
-        setCheckoutTrialAllowedMethods(["card"]);
+        setCheckoutConsentMethods(DEFAULT_CONSENT_METHODS);
+        setCheckoutTrialAllowedMethods(DEFAULT_TRIAL_ALLOWED_METHODS);
+        setAvailableMethods(DEFAULT_AVAILABLE_METHODS);
+        setTrialConfig(DEFAULT_TRIAL_CONFIG);
+        setSelectedMethod("card");
         setPlanStatus("not_found");
         return;
       }
 
       setPlanStatus("loading");
-      const resolved = await trpc.plans.resolveCheckoutPlan.query({ planId: id_plan } as any);
-      const p: IPlans | null = (resolved as any)?.plan ?? null;
-      const pPaypal: IPlans | null = (resolved as any)?.paypalPlan ?? null;
-      const resolvedPlanId = (resolved as any)?.resolvedPlanId;
-      const checkout = (resolved as any)?.checkout ?? null;
+      const resolved = await trpc.plans.resolveCheckoutPlan.query({ planId: id_plan });
+      const resolvedRecord = isRecord(resolved) ? resolved : null;
+      const p: IPlans | null = isRecord(resolvedRecord?.plan) ? (resolvedRecord.plan as IPlans) : null;
+      const pPaypal: IPlans | null = isRecord(resolvedRecord?.paypalPlan)
+        ? (resolvedRecord.paypalPlan as IPlans)
+        : null;
+      const resolvedPlanIdRaw = resolvedRecord?.resolvedPlanId;
+      const resolvedPlanId =
+        typeof resolvedPlanIdRaw === "number" && Number.isFinite(resolvedPlanIdRaw)
+          ? resolvedPlanIdRaw
+          : null;
+      const normalizedCheckout = normalizeCheckoutPayload(resolvedRecord?.checkout, p);
+      const preferredMethod = pickPreferredCheckoutMethod({
+        requestedMethod,
+        availableMethods: normalizedCheckout.availableMethods,
+        backendDefaultMethod: normalizedCheckout.defaultMethod,
+      });
 
       if (p && typeof resolvedPlanId === "number" && resolvedPlanId !== id_plan) {
         skipPlanReloadRef.current = true;
@@ -662,91 +819,39 @@ function Checkout() {
 
       if (!p) {
         // Nothing else to compute for a missing plan.
-        setAvailableMethods(["card"]);
-        setTrialConfig({ enabled: false, days: 0, gb: 0, eligible: null });
+        setAvailableMethods(DEFAULT_AVAILABLE_METHODS);
+        setTrialConfig(DEFAULT_TRIAL_CONFIG);
         setCheckoutSummary(null);
         setCheckoutPlanDisplayName(null);
         setCheckoutQuotaGb(null);
-        setCheckoutConsentMethods(["card", "paypal"]);
-        setCheckoutTrialAllowedMethods(["card"]);
+        setCheckoutConsentMethods(DEFAULT_CONSENT_METHODS);
+        setCheckoutTrialAllowedMethods(DEFAULT_TRIAL_ALLOWED_METHODS);
+        setSelectedMethod("card");
         return;
       }
 
-      const backendMethods =
-        checkout && typeof checkout === "object" && Array.isArray((checkout as any).availableMethods)
-          ? ((checkout as any).availableMethods as CheckoutMethod[])
-          : null;
-      const backendTrialConfig =
-        checkout &&
-        typeof checkout === "object" &&
-        (checkout as any).trialConfig &&
-        typeof (checkout as any).trialConfig === "object"
-          ? ((checkout as any).trialConfig as {
-              enabled: boolean;
-              days: number;
-              gb: number;
-              eligible?: boolean | null;
-            })
-          : null;
-
-      const backendCurrencyRaw =
-        checkout && typeof checkout === "object" && typeof (checkout as any).currency === "string"
-          ? String((checkout as any).currency).trim().toUpperCase()
-          : "";
-      const planCurrencyRaw = p?.moneda ? String(p.moneda).trim().toUpperCase() : "";
-      const resolvedCurrency = backendCurrencyRaw || planCurrencyRaw || "USD";
-
-      const backendPriceRaw =
-        checkout && typeof checkout === "object" ? Number((checkout as any).price ?? Number.NaN) : Number.NaN;
-      const backendPrice =
-        Number.isFinite(backendPriceRaw) && backendPriceRaw > 0 ? backendPriceRaw : null;
-      const planPriceRaw = Number(p?.price ?? Number.NaN);
-      const resolvedPrice = backendPrice ?? (Number.isFinite(planPriceRaw) && planPriceRaw > 0 ? planPriceRaw : 0);
-
-      setCheckoutSummary({ currency: resolvedCurrency, price: resolvedPrice });
-      setAvailableMethods(backendMethods && backendMethods.length > 0 ? backendMethods : ["card"]);
-      setTrialConfig(backendTrialConfig ?? { enabled: false, days: 0, gb: 0, eligible: null });
-
-      const backendPlanName =
-        checkout && typeof checkout === "object" && typeof (checkout as any).planDisplayName === "string"
-          ? String((checkout as any).planDisplayName).trim()
-          : "";
-      setCheckoutPlanDisplayName(backendPlanName || p?.name?.trim() || null);
-
-      const backendQuotaRaw =
-        checkout && typeof checkout === "object" ? Number((checkout as any).quotaGb ?? Number.NaN) : Number.NaN;
-      const backendQuota =
-        Number.isFinite(backendQuotaRaw) && backendQuotaRaw > 0 ? backendQuotaRaw : null;
-      setCheckoutQuotaGb(backendQuota);
-
-      const isCheckoutMethod = (value: unknown): value is CheckoutMethod =>
-        value === "card" || value === "paypal" || value === "spei" || value === "oxxo" || value === "bbva";
-      const backendConsentRaw =
-        checkout && typeof checkout === "object" && Array.isArray((checkout as any).requiresRecurringConsentMethods)
-          ? ((checkout as any).requiresRecurringConsentMethods as unknown[])
-          : null;
-      const consent = backendConsentRaw ? backendConsentRaw.filter(isCheckoutMethod) : [];
-      setCheckoutConsentMethods(consent.length > 0 ? consent : ["card", "paypal"]);
-
-      const backendTrialAllowedRaw =
-        checkout && typeof checkout === "object" && Array.isArray((checkout as any).trialAllowedMethods)
-          ? ((checkout as any).trialAllowedMethods as unknown[])
-          : null;
-      const trialAllowed = backendTrialAllowedRaw ? backendTrialAllowedRaw.filter(isCheckoutMethod) : [];
-      setCheckoutTrialAllowedMethods(trialAllowed.length > 0 ? trialAllowed : ["card"]);
+      setCheckoutSummary(normalizedCheckout.summary);
+      setAvailableMethods(normalizedCheckout.availableMethods);
+      setSelectedMethod(preferredMethod);
+      setTrialConfig(normalizedCheckout.trialConfig);
+      setCheckoutPlanDisplayName(normalizedCheckout.planDisplayName);
+      setCheckoutQuotaGb(normalizedCheckout.quotaGb);
+      setCheckoutConsentMethods(normalizedCheckout.consentMethods);
+      setCheckoutTrialAllowedMethods(normalizedCheckout.trialAllowedMethods);
     } catch {
       setPlan(null);
       setPaypalPlan(null);
       setCheckoutSummary(null);
-      setAvailableMethods(["card"]);
-      setTrialConfig({ enabled: false, days: 0, gb: 0, eligible: null });
+      setAvailableMethods(DEFAULT_AVAILABLE_METHODS);
+      setTrialConfig(DEFAULT_TRIAL_CONFIG);
       setCheckoutPlanDisplayName(null);
       setCheckoutQuotaGb(null);
-      setCheckoutConsentMethods(["card", "paypal"]);
-      setCheckoutTrialAllowedMethods(["card"]);
+      setCheckoutConsentMethods(DEFAULT_CONSENT_METHODS);
+      setCheckoutTrialAllowedMethods(DEFAULT_TRIAL_ALLOWED_METHODS);
+      setSelectedMethod("card");
       setPlanStatus("error");
     }
-  }, [checkManyChat, location.pathname, location.search, navigate]);
+  }, [checkManyChat, location.pathname, location.search, navigate, requestedMethod]);
 
   const trackCheckoutAbandon = useCallback(
     (reason: string) => {
@@ -786,10 +891,10 @@ function Checkout() {
     setCheckoutSummary(null);
     setCheckoutPlanDisplayName(null);
     setCheckoutQuotaGb(null);
-    setCheckoutConsentMethods(["card", "paypal"]);
-    setCheckoutTrialAllowedMethods(["card"]);
-    setAvailableMethods(["card"]);
-    setTrialConfig({ enabled: false, days: 0, gb: 0, eligible: null });
+    setCheckoutConsentMethods(DEFAULT_CONSENT_METHODS);
+    setCheckoutTrialAllowedMethods(DEFAULT_TRIAL_ALLOWED_METHODS);
+    setAvailableMethods(DEFAULT_AVAILABLE_METHODS);
+    setTrialConfig(DEFAULT_TRIAL_CONFIG);
     setPlanStatus(priceId ? "loading" : "idle");
     if (priceId) getPlans(priceId);
   }, [priceId, getPlans, closeErrorModal]);
@@ -809,16 +914,7 @@ function Checkout() {
       amount: Number(plan.price) || null,
       method: "unknown",
     });
-    const requested = typeof requestedMethod === "string" ? requestedMethod.trim().toLowerCase() : "";
-    const requestedAsMethod = (["card", "spei", "bbva", "oxxo", "paypal"] as const).includes(
-      requested as any,
-    )
-      ? (requested as CheckoutMethod)
-      : null;
-    setSelectedMethod(
-      requestedAsMethod ?? "card",
-    );
-  }, [plan, checkManyChat, requestedMethod]);
+  }, [plan, checkManyChat]);
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -971,12 +1067,7 @@ function Checkout() {
 
     checkoutCancelHandledRef.current = true;
 
-    const cancelledMethodRaw =
-      typeof checkoutCancelledMethod === "string" ? checkoutCancelledMethod.trim().toLowerCase() : "";
-    const cancelledMethod: CheckoutMethod =
-      (["card", "paypal", "spei", "oxxo", "bbva"] as const).includes(cancelledMethodRaw as any)
-        ? (cancelledMethodRaw as CheckoutMethod)
-        : "card";
+    const cancelledMethod = parseCheckoutMethodFromSearch(checkoutCancelledMethod) ?? "card";
 
     const alt = buildAltMethodHint(cancelledMethod, availableMethods);
     const suffix = alt ? ` ${alt}` : "";

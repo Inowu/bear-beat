@@ -34,6 +34,8 @@ type StripeRecurringInterval = 'day' | 'week' | 'month' | 'year';
 type CheckoutMethod = 'card' | 'paypal' | 'spei' | 'oxxo' | 'bbva';
 
 const CHECKOUT_METHOD_ORDER: CheckoutMethod[] = ['card', 'paypal', 'spei', 'oxxo', 'bbva'];
+const RECURRING_CONSENT_METHODS: CheckoutMethod[] = ['card', 'paypal'];
+const TRIAL_ALLOWED_METHODS: CheckoutMethod[] = ['card'];
 
 const FALLBACK_CATALOG_TOTAL_FILES = 248_321;
 const FALLBACK_CATALOG_TOTAL_GB = 14_140;
@@ -99,6 +101,11 @@ function toFiniteNumber(value: unknown): number {
   if (Number.isFinite(n)) return n;
   const parsed = Number.parseFloat(String(value ?? ''));
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function pickDefaultCheckoutMethod(methods: CheckoutMethod[]): CheckoutMethod {
+  if (methods.includes('card')) return 'card';
+  return methods[0] ?? 'card';
 }
 
 async function resolveStripeProductAndRecurring(
@@ -529,6 +536,13 @@ export const plansRouter = router({
       const methods: CheckoutMethod[] = CHECKOUT_METHOD_ORDER.filter((method) =>
         availableMethodSet.has(method),
       );
+      const defaultMethod = pickDefaultCheckoutMethod(methods);
+      const recurringConsentMethods = RECURRING_CONSENT_METHODS.filter((method) =>
+        availableMethodSet.has(method),
+      );
+      const trialAllowedMethods = TRIAL_ALLOWED_METHODS.filter((method) =>
+        availableMethodSet.has(method),
+      );
 
       const trialConfig = await computeTrialConfigForUser(ctx);
       const quotaGbRaw = toFiniteNumber(resolvedPlan.gigas);
@@ -545,12 +559,13 @@ export const plansRouter = router({
           currency: currencyCode || 'USD',
           price: toFiniteNumber(resolvedPlan.price),
           availableMethods: methods,
+          defaultMethod,
           trialConfig,
           conektaAvailability,
           planDisplayName,
           quotaGb,
-          requiresRecurringConsentMethods: ['card', 'paypal'],
-          trialAllowedMethods: ['card'],
+          requiresRecurringConsentMethods: recurringConsentMethods,
+          trialAllowedMethods,
         },
       };
     }),
