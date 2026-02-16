@@ -44,13 +44,13 @@ export default function HomeDemoModal(props: {
         </div>
 
         <ul className="home-demo-modal__bullets" aria-label="Qué verás al activar">
-          <li>
+          <li className="bb-market-surface">
             <CheckCircle2 size={16} aria-hidden /> Secciones: Audios / Videos / Karaoke
           </li>
-          <li>
+          <li className="bb-market-surface">
             <CheckCircle2 size={16} aria-hidden /> Búsqueda por canción, artista o carpeta
           </li>
-          <li>
+          <li className="bb-market-surface">
             <CheckCircle2 size={16} aria-hidden /> Descargas por FTP (FileZilla/Air Explorer) o por web
           </li>
         </ul>
