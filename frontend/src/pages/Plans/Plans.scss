@@ -354,7 +354,7 @@
     gap: 7px;
   }
 
-  .plans2026__bento-card {
+  .plans2026 .bb-bento-card {
     padding: 8px 9px;
   }
 
@@ -384,8 +384,7 @@ html[data-theme="light"] .plans2026 {
     var(--ph-bg);
 }
 
-html[data-theme="light"] .plans2026__bento-card,
-html[data-theme="light"] .plans2026__card {
+html[data-theme="light"] .plans2026 :is(.bb-bento-card, .bb-hero-card) {
   border-color: color-mix(in srgb, var(--ph-border) 92%, transparent);
   background: color-mix(in srgb, #ffffff 99.2%, var(--ph-bg-card));
   box-shadow: 0 12px 26px rgba(15, 23, 42, 0.055);
