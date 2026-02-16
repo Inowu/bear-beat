@@ -15,21 +15,21 @@ export default function HowItWorks(props: { trial: { enabled: boolean; days: num
         </div>
 
         <ul className="how-it-works__grid" aria-label="Pasos">
-          <li className="how-it-works__card">
+          <li className="how-it-works__card bb-market-card">
             <span className="how-it-works__icon" aria-hidden>
               <Ticket size={18} />
             </span>
             <h3>Activa tu prueba</h3>
             <p>{step1Copy}</p>
           </li>
-          <li className="how-it-works__card">
+          <li className="how-it-works__card bb-market-card">
             <span className="how-it-works__icon" aria-hidden>
               <Search size={18} />
             </span>
             <h3>Encuentra en segundos</h3>
             <p>Carpetas listas por año/mes/semana/género para responder pedidos sin estrés.</p>
           </li>
-          <li className="how-it-works__card">
+          <li className="how-it-works__card bb-market-card">
             <span className="how-it-works__icon" aria-hidden>
               <Download size={18} />
             </span>
