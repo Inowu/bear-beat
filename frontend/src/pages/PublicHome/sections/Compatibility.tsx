@@ -20,13 +20,13 @@ export default function Compatibility({ onFaqScroll }: CompatibilityProps) {
         </p>
 
         <ul className="compatibility__compare" aria-label="Opciones de descarga">
-          <li className="compatibility__card compatibility__card--primary">
+          <li className="compatibility__card bb-market-surface compatibility__card--primary">
             <p className="compatibility__tag">FTP</p>
             <h3>{ftp?.title ?? "Descargas por FTP"}</h3>
             <p>{ftp?.body}</p>
             <p className="compatibility__hint">Recomendado para descargas grandes.</p>
           </li>
-          <li className="compatibility__card">
+          <li className="compatibility__card bb-market-surface">
             <p className="compatibility__tag">Web</p>
             <h3>{web?.title ?? "También por web"}</h3>
             <p>{web?.body}</p>
@@ -35,11 +35,11 @@ export default function Compatibility({ onFaqScroll }: CompatibilityProps) {
         </ul>
 
         <ul className="compatibility__extras" aria-label="Detalles">
-          <li className="compatibility__card compatibility__card--soft">
+          <li className="compatibility__card bb-market-surface compatibility__card--soft">
             <h3>{formats?.title ?? "Formatos comunes"}</h3>
             <p>{formats?.body}</p>
           </li>
-          <li className="compatibility__card compatibility__card--soft">
+          <li className="compatibility__card bb-market-surface compatibility__card--soft">
             <h3>{workflow?.title ?? "Tu software, tu forma"}</h3>
             <p>{workflow?.body}</p>
           </li>
