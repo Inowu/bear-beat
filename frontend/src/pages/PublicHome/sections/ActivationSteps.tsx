@@ -34,7 +34,7 @@ export default function ActivationSteps(props: {
 
         <ol className="activation-steps__grid" aria-label="Pasos de activación">
           {STEPS.map((step) => (
-            <li key={step.title} className="activation-steps__card">
+            <li key={step.title} className="activation-steps__card bb-market-surface">
               <h3>{step.title}</h3>
               <p>{step.body}</p>
             </li>

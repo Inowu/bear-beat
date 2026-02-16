@@ -1451,11 +1451,15 @@ html[data-theme="light"] .main-layout-main-container :where(.card, .panel, .modu
   outline-offset: 2px;
 }
 
+.bb-market-surface,
 .bb-market-card {
-  padding: 16px;
   border-radius: 18px;
   background: color-mix(in srgb, var(--ph-bg-card) 88%, transparent);
   border: 1px solid color-mix(in srgb, var(--ph-border) 72%, transparent);
+}
+
+.bb-market-card {
+  padding: 16px;
   box-shadow: var(--ph-shadow);
 }
 
