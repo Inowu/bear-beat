@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import trpc from "../api";
 import * as Sentry from "@sentry/react";
 import { IPaymentMethod, IUser } from "../interfaces/User";
@@ -7,14 +15,23 @@ import {
   clearAuthTokens,
   getAccessToken,
   getRefreshToken,
+  parseUserIdFromAuthToken,
   setAuthTokens,
 } from "../utils/authStorage";
-import { clearManyChatHandoff, getManyChatHandoffToken } from "../utils/manychatHandoff";
+import {
+  clearManyChatHandoff,
+  getManyChatHandoffToken,
+} from "../utils/manychatHandoff";
 
 const AUTH_BROADCAST_CHANNEL = "bb-auth";
 type AuthBroadcastMessage =
   | { type: "auth:request"; senderId: string }
-  | { type: "auth:tokens"; senderId: string; token: string; refreshToken: string }
+  | {
+      type: "auth:tokens";
+      senderId: string;
+      token: string;
+      refreshToken: string;
+    }
   | { type: "auth:logout"; senderId: string };
 
 function isNetworkError(error: unknown): boolean {
@@ -40,15 +57,15 @@ interface UserContextI {
 export const UserContext = createContext<UserContextI>({
   currentUser: null,
   userToken: "",
-  handleLogin: () => { },
-  handleLogout: () => { },
-  resetCard: () => { },
+  handleLogin: () => {},
+  handleLogout: () => {},
+  resetCard: () => {},
   fileChange: false,
-  closeFile: () => { },
-  startUser: () => { },
+  closeFile: () => {},
+  startUser: () => {},
   paymentMethods: [],
   cardLoad: false,
-  getPaymentMethods: () => { },
+  getPaymentMethods: () => {},
 });
 
 export function useUserContext() {
@@ -64,8 +81,9 @@ const UserContextProvider = (props: any) => {
   const [cardLoad, setCardLoad] = useState<boolean>(false);
 
   const broadcastSenderId = useMemo(
-    () => `tab_${Math.random().toString(36).slice(2)}_${Date.now().toString(36)}`,
-    []
+    () =>
+      `tab_${Math.random().toString(36).slice(2)}_${Date.now().toString(36)}`,
+    [],
   );
   const authBroadcastRef = useRef<BroadcastChannel | null>(null);
 
@@ -81,13 +99,16 @@ const UserContextProvider = (props: any) => {
       };
       authBroadcastRef.current.postMessage(message);
     },
-    [broadcastSenderId]
+    [broadcastSenderId],
   );
 
   const broadcastLogout = useCallback(() => {
     if (typeof window === "undefined") return;
     if (!authBroadcastRef.current) return;
-    const message: AuthBroadcastMessage = { type: "auth:logout", senderId: broadcastSenderId };
+    const message: AuthBroadcastMessage = {
+      type: "auth:logout",
+      senderId: broadcastSenderId,
+    };
     authBroadcastRef.current.postMessage(message);
   }, [broadcastSenderId]);
 
@@ -96,8 +117,39 @@ const UserContextProvider = (props: any) => {
     setUserToken(token);
   }, []);
 
+  const identifyAnalyticsUser = useCallback((token: string) => {
+    if (typeof window === "undefined") return;
+    const userId = parseUserIdFromAuthToken(token);
+    if (!userId) return;
+
+    void import("../utils/growthMetrics")
+      .then((metrics) => {
+        const identity = metrics.identifyGrowthUser(userId);
+        return trpc.analytics.identifyAnalyticsUser.mutate({
+          sessionId: identity.sessionId,
+          visitorId: identity.visitorId,
+          lookbackHours: 24,
+        });
+      })
+      .catch(() => {
+        // noop
+      });
+  }, []);
+
+  const clearAnalyticsIdentity = useCallback(() => {
+    if (typeof window === "undefined") return;
+    void import("../utils/growthMetrics")
+      .then((metrics) => {
+        metrics.clearGrowthUserIdentity();
+      })
+      .catch(() => {
+        // noop
+      });
+  }, []);
+
   function handleLogin(token: string, refreshToken: string) {
     loginLocal(token, refreshToken);
+    identifyAnalyticsUser(token);
     // UX: si el usuario abre otra pestaña (ManyChat / links externos) mientras ya tiene sesion,
     // sincronizamos tokens para evitar que vea "Iniciar sesion" en superficies publicas.
     broadcastAuthTokens(token, refreshToken);
@@ -109,16 +161,20 @@ const UserContextProvider = (props: any) => {
     setFileChange(false);
   }
 
-  const logoutLocal = useCallback((redirectToHome: boolean = false) => {
-    setCurrentUser(null);
-    clearAuthTokens();
-    clearAdminAccessBackup();
-    setUserToken(null);
+  const logoutLocal = useCallback(
+    (redirectToHome: boolean = false) => {
+      setCurrentUser(null);
+      clearAuthTokens();
+      clearAdminAccessBackup();
+      clearAnalyticsIdentity();
+      setUserToken(null);
 
-    if (redirectToHome && typeof window !== "undefined") {
-      window.location.assign("/");
-    }
-  }, []);
+      if (redirectToHome && typeof window !== "undefined") {
+        window.location.assign("/");
+      }
+    },
+    [clearAnalyticsIdentity],
+  );
 
   function handleLogout(redirectToHome: boolean = false) {
     logoutLocal(redirectToHome);
@@ -130,12 +186,11 @@ const UserContextProvider = (props: any) => {
     try {
       const cards: any = await trpc.subscriptions.listStripeCards.query();
       setPaymentMethods(cards.data);
-    }
-    catch {
+    } catch {
       setPaymentMethods([]);
     }
     setCardLoad(false);
-  }
+  };
   const startUserRefresh = useCallback(async () => {
     const refreshToken = getRefreshToken();
     if (refreshToken === null) return "none" as const;
@@ -145,8 +200,7 @@ const UserContextProvider = (props: any) => {
       loginLocal(token.token, token.refreshToken);
       broadcastAuthTokens(token.token, token.refreshToken);
       return "success" as const;
-    }
-    catch (error) {
+    } catch (error) {
       if (isNetworkError(error)) {
         return "network" as const;
       }
@@ -160,8 +214,7 @@ const UserContextProvider = (props: any) => {
     try {
       const user: any = await trpc.auth.me.query();
       setCurrentUser(user);
-    }
-    catch (error) {
+    } catch (error) {
       const refreshResult = await startUserRefresh();
       if (refreshResult === "success") {
         try {
@@ -214,10 +267,12 @@ const UserContextProvider = (props: any) => {
 
       if (data.type === "auth:tokens") {
         const token = typeof data.token === "string" ? data.token : "";
-        const refreshToken = typeof data.refreshToken === "string" ? data.refreshToken : "";
+        const refreshToken =
+          typeof data.refreshToken === "string" ? data.refreshToken : "";
         if (!token || !refreshToken) return;
         if (getAccessToken() === token) return;
         loginLocal(token, refreshToken);
+        identifyAnalyticsUser(token);
         return;
       }
 
@@ -232,7 +287,10 @@ const UserContextProvider = (props: any) => {
     // If this tab has no session yet, ask any other open tab for tokens ASAP.
     // (Our earlier effect could miss this because BroadcastChannel readiness isn't reactive.)
     if (!getAccessToken()) {
-      channel.postMessage({ type: "auth:request", senderId: broadcastSenderId } as AuthBroadcastMessage);
+      channel.postMessage({
+        type: "auth:request",
+        senderId: broadcastSenderId,
+      } as AuthBroadcastMessage);
     }
 
     return () => {
@@ -240,7 +298,7 @@ const UserContextProvider = (props: any) => {
       channel.close();
       authBroadcastRef.current = null;
     };
-  }, [broadcastSenderId, loginLocal, logoutLocal]);
+  }, [broadcastSenderId, identifyAnalyticsUser, loginLocal, logoutLocal]);
 
   useEffect(() => {
     if (userToken) {
@@ -283,11 +341,11 @@ const UserContextProvider = (props: any) => {
 
     const handler = (event: Event) => {
       const detail = (event as CustomEvent<{ token?: string }>).detail;
-      const token = `${detail?.token ?? ""}`.trim() || getManyChatHandoffToken();
+      const token =
+        `${detail?.token ?? ""}`.trim() || getManyChatHandoffToken();
       if (!token) return;
 
-      void trpc.auth
-        .claimManyChatHandoff
+      void trpc.auth.claimManyChatHandoff
         .mutate({ token })
         .then((result: any) => {
           if (result && typeof result === "object" && "ok" in result) {
@@ -301,17 +359,20 @@ const UserContextProvider = (props: any) => {
 
     window.addEventListener("bb:manychat-handoff", handler as EventListener);
     return () => {
-      window.removeEventListener("bb:manychat-handoff", handler as EventListener);
+      window.removeEventListener(
+        "bb:manychat-handoff",
+        handler as EventListener,
+      );
     };
   }, [userToken]);
 
   useEffect(() => {
     if (currentUser === null) {
-      setPaymentMethods([])
+      setPaymentMethods([]);
     } else {
       getPaymentMethods();
     }
-  }, [currentUser])
+  }, [currentUser]);
 
   useEffect(() => {
     if (!currentUser) {
@@ -351,7 +412,6 @@ const UserContextProvider = (props: any) => {
     paymentMethods,
     cardLoad,
     getPaymentMethods,
-
   };
 
   if (loading) return <></>;

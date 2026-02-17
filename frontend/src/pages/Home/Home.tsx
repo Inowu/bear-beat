@@ -41,6 +41,7 @@ import { formatBytes } from '../../utils/format';
 import { inferTrackMetadata } from '../../utils/fileMetadata';
 import { apiBaseUrl } from '../../utils/runtimeConfig';
 import { buildDemoPlaybackUrl } from '../../utils/demoUrl';
+import { isRetryableMediaError, retryWithJitter } from '../../utils/retry';
 import {
   ensureStripeReady,
   getStripeLoadFailureReason,
@@ -517,7 +518,16 @@ function Home() {
     setIndex(index);
     try {
       const path = resolveFilePath(file);
-      const filesDemo = await trpc.ftp.demo.query({ path });
+      const filesDemo = await retryWithJitter(
+        async () => await trpc.ftp.demo.query({ path }),
+        {
+          maxAttempts: 3,
+          baseDelayMs: 250,
+          maxDelayMs: 1800,
+          jitterMs: 450,
+          shouldRetry: isRetryableMediaError,
+        },
+      );
       const previewUrl = buildDemoPlaybackUrl(filesDemo.demo, apiBaseUrl);
       const previewSignature = `${file.name} ${path} ${previewUrl}`.toLowerCase();
       setFileToShow({

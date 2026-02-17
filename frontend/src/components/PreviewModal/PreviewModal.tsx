@@ -27,15 +27,52 @@ const formatTime = (seconds: number): string => {
   return `${minutes}:${restSeconds}`;
 };
 
+const MAX_MEDIA_LOAD_RETRIES = 2;
+const MEDIA_RETRY_BASE_DELAY_MS = 350;
+const MEDIA_RETRY_JITTER_MS = 450;
+
+const getMediaRetryDelayMs = (attempt: number): number => {
+  const safeAttempt = Math.max(1, Math.floor(attempt));
+  const backoffMs = MEDIA_RETRY_BASE_DELAY_MS * (2 ** (safeAttempt - 1));
+  const jitterMs = Math.floor(Math.random() * (MEDIA_RETRY_JITTER_MS + 1));
+  return backoffMs + jitterMs;
+};
+
+const withRetryCacheBust = (rawUrl: string, retryAttempt: number): string => {
+  if (!rawUrl || retryAttempt <= 0) {
+    return rawUrl;
+  }
+
+  try {
+    const parsed = new URL(
+      rawUrl,
+      typeof window !== 'undefined' ? window.location.origin : 'http://localhost',
+    );
+    parsed.searchParams.set('__retry', String(retryAttempt));
+    return parsed.toString();
+  } catch {
+    const separator = rawUrl.includes('?') ? '&' : '?';
+    return `${rawUrl}${separator}__retry=${retryAttempt}`;
+  }
+};
+
 function PreviewModal(props: PreviewModalPropsI) {
   const { show, onHide, file } = props;
   const resolvedKind = file?.kind === 'video' ? 'video' : 'audio';
   const isAudio = resolvedKind === 'audio';
   const mediaName = file?.name ?? '';
   const audioUrl = file?.url ?? '';
+  const [audioRetryAttempt, setAudioRetryAttempt] = useState(0);
+  const [videoRetryAttempt, setVideoRetryAttempt] = useState(0);
+  const audioPlaybackUrl = withRetryCacheBust(audioUrl, audioRetryAttempt);
+  const videoPlaybackUrl = withRetryCacheBust(file?.url ?? '', videoRetryAttempt);
   const waveformRef = useRef<HTMLDivElement | null>(null);
   const waveSurferRef = useRef<WaveSurfer | null>(null);
   const playStartTrackedForRef = useRef<string>('');
+  const audioRetryTimerRef = useRef<number | null>(null);
+  const videoRetryTimerRef = useRef<number | null>(null);
+  const scheduledAudioRetryRef = useRef<number>(-1);
+  const scheduledVideoRetryRef = useRef<number>(-1);
   const [isModalReady, setIsModalReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [waveDrawn, setWaveDrawn] = useState<boolean>(false);
@@ -45,10 +82,32 @@ function PreviewModal(props: PreviewModalPropsI) {
   const [videoLoadError, setVideoLoadError] = useState<string>('');
   const placeholderBars = Array.from({ length: 18 }, (_, idx) => idx);
 
+  const clearRetryTimer = (timerRef: { current: number | null }) => {
+    if (timerRef.current !== null && typeof window !== 'undefined') {
+      window.clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  useEffect(
+    () => () => {
+      clearRetryTimer(audioRetryTimerRef);
+      clearRetryTimer(videoRetryTimerRef);
+    },
+    [],
+  );
+
   useEffect(() => {
     if (!show) {
       setIsModalReady(false);
+      setAudioLoadError('');
       setVideoLoadError('');
+      setAudioRetryAttempt(0);
+      setVideoRetryAttempt(0);
+      scheduledAudioRetryRef.current = -1;
+      scheduledVideoRetryRef.current = -1;
+      clearRetryTimer(audioRetryTimerRef);
+      clearRetryTimer(videoRetryTimerRef);
     }
   }, [show]);
 
@@ -79,12 +138,18 @@ function PreviewModal(props: PreviewModalPropsI) {
     // Reset errors when switching between files while modal is open.
     setAudioLoadError('');
     setVideoLoadError('');
+    setAudioRetryAttempt(0);
+    setVideoRetryAttempt(0);
+    scheduledAudioRetryRef.current = -1;
+    scheduledVideoRetryRef.current = -1;
+    clearRetryTimer(audioRetryTimerRef);
+    clearRetryTimer(videoRetryTimerRef);
     setWaveDrawn(false);
   }, [show, file?.url]);
 
   useEffect(() => {
-    if (!show || !isModalReady || audioUrl === '' || !isAudio || !waveformRef.current) {
-      if (!show || audioUrl === '' || !isAudio) {
+    if (!show || !isModalReady || audioPlaybackUrl === '' || !isAudio || !waveformRef.current) {
+      if (!show || audioPlaybackUrl === '' || !isAudio) {
         setIsPlaying(false);
         setCurrentTime(0);
         setDuration(0);
@@ -126,6 +191,8 @@ function PreviewModal(props: PreviewModalPropsI) {
       // On some devices/browsers the redraw events can be delayed or missed.
       // "ready" is our reliable signal to swap the placeholder for the real waveform UI.
       setWaveDrawn(true);
+      setAudioLoadError('');
+      scheduledAudioRetryRef.current = -1;
       wave.play();
     };
     const handleRedraw = () => {
@@ -145,6 +212,24 @@ function PreviewModal(props: PreviewModalPropsI) {
       setIsPlaying(false);
     };
     const handleError = () => {
+      if (audioRetryAttempt < MAX_MEDIA_LOAD_RETRIES) {
+        const nextAttempt = audioRetryAttempt + 1;
+        if (scheduledAudioRetryRef.current !== nextAttempt) {
+          const delayMs = getMediaRetryDelayMs(nextAttempt);
+          scheduledAudioRetryRef.current = nextAttempt;
+          setAudioLoadError('La muestra tardó en cargar. Reintentando...');
+          clearRetryTimer(audioRetryTimerRef);
+          if (typeof window !== 'undefined') {
+            audioRetryTimerRef.current = window.setTimeout(() => {
+              setAudioRetryAttempt((currentAttempt) =>
+                currentAttempt >= nextAttempt ? currentAttempt : nextAttempt,
+              );
+              audioRetryTimerRef.current = null;
+            }, delayMs);
+          }
+        }
+        return;
+      }
       setAudioLoadError('No pudimos cargar esta muestra. Prueba con otro archivo.');
       setIsPlaying(false);
     };
@@ -158,7 +243,7 @@ function PreviewModal(props: PreviewModalPropsI) {
     wave.on('finish', handleFinish);
     wave.on('error', handleError);
 
-    wave.load(audioUrl);
+    wave.load(audioPlaybackUrl);
 
     return () => {
       wave.destroy();
@@ -168,7 +253,35 @@ function PreviewModal(props: PreviewModalPropsI) {
       setCurrentTime(0);
       setDuration(0);
     };
-  }, [show, isModalReady, audioUrl, isAudio]);
+  }, [show, isModalReady, audioPlaybackUrl, isAudio, audioRetryAttempt]);
+
+  const handleVideoError = () => {
+    if (videoRetryAttempt < MAX_MEDIA_LOAD_RETRIES) {
+      const nextAttempt = videoRetryAttempt + 1;
+      if (scheduledVideoRetryRef.current !== nextAttempt) {
+        const delayMs = getMediaRetryDelayMs(nextAttempt);
+        scheduledVideoRetryRef.current = nextAttempt;
+        setVideoLoadError('El demo tardó en cargar. Reintentando...');
+        clearRetryTimer(videoRetryTimerRef);
+        if (typeof window !== 'undefined') {
+          videoRetryTimerRef.current = window.setTimeout(() => {
+            setVideoRetryAttempt((currentAttempt) =>
+              currentAttempt >= nextAttempt ? currentAttempt : nextAttempt,
+            );
+            videoRetryTimerRef.current = null;
+          }, delayMs);
+        }
+      }
+      return;
+    }
+    setVideoLoadError('No pudimos cargar este video. Prueba con otro archivo.');
+  };
+
+  const handleVideoPlaying = () => {
+    scheduledVideoRetryRef.current = -1;
+    setVideoLoadError('');
+    markDemoPlayStarted();
+  };
 
   const toggleAudio = () => {
     const player = waveSurferRef.current;
@@ -246,23 +359,23 @@ function PreviewModal(props: PreviewModalPropsI) {
           {file && !isAudio && (
             <>
               <video
-                key={file.url}
-                src={file.url}
+                key={videoPlaybackUrl}
+                src={videoPlaybackUrl}
                 controls
                 autoPlay
                 preload="metadata"
                 controlsList="nodownload noplaybackrate"
                 disablePictureInPicture
                 playsInline
-                onPlaying={markDemoPlayStarted}
-                onError={() => setVideoLoadError('No pudimos cargar este video. Prueba con otro archivo.')}
+                onPlaying={handleVideoPlaying}
+                onError={handleVideoError}
                 onContextMenu={(e) => e.preventDefault()}
                 onDragStart={(e) => e.preventDefault()}
               />
               {videoLoadError !== '' && (
                 <div className="preview-video-error">
                   <p className="preview-wave-error">{videoLoadError}</p>
-                  <a className="preview-video-fallback" href={file.url} target="_blank" rel="noreferrer">
+                  <a className="preview-video-fallback" href={videoPlaybackUrl} target="_blank" rel="noreferrer">
                     Abrir demo en otra pestaña →
                   </a>
                 </div>

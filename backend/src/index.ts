@@ -1,5 +1,6 @@
 import './polyfills';
 import './instrument';
+import fs from 'fs';
 import path from 'path';
 import type { Request, Response, NextFunction } from 'express';
 import pm2 from 'pm2';
@@ -44,6 +45,7 @@ import {
 import { downloadDirEndpoint } from './endpoints/download-dir.endpoint';
 import { catalogStatsEndpoint } from './endpoints/catalog-stats.endpoint';
 import { stripeOxxoHealthEndpoint } from './endpoints/stripe-oxxo-health.endpoint';
+import { isMediaCdnEnabled } from './utils/demoMedia';
 
 const DEFAULT_CORS_ORIGINS = [
   'http://localhost:3000',
@@ -88,14 +90,184 @@ const toPositiveInt = (value: string | undefined, fallback = 0): number => {
   return Math.floor(parsed);
 };
 
+const resolveDirectoryFromEnv = (envVar: string, fallbackPath: string): string => {
+  const configured = `${process.env[envVar] ?? ''}`.trim();
+  if (!configured) return path.resolve(fallbackPath);
+  return path.isAbsolute(configured) ? configured : path.resolve(configured);
+};
+
+const toReadableDirectory = (rawPath: string | undefined): string | null => {
+  const normalized = `${rawPath ?? ''}`.trim();
+  if (!normalized) return null;
+  return path.isAbsolute(normalized) ? normalized : path.resolve(normalized);
+};
+
+const isReadableDirectory = (targetPath: string | null): boolean => {
+  if (!targetPath) return false;
+  try {
+    const stats = fs.statSync(targetPath);
+    if (!stats.isDirectory()) return false;
+    fs.accessSync(targetPath, fs.constants.R_OK);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const getClientIp = (req: Request): string => {
+  const fromForwarded = req.headers['x-forwarded-for'];
+  if (typeof fromForwarded === 'string' && fromForwarded.trim()) {
+    return fromForwarded.split(',')[0].trim();
+  }
+  if (Array.isArray(fromForwarded) && fromForwarded.length > 0) {
+    const first = `${fromForwarded[0] ?? ''}`.trim();
+    if (first) return first.split(',')[0].trim();
+  }
+
+  const fromRealIp = req.headers['x-real-ip'];
+  if (typeof fromRealIp === 'string' && fromRealIp.trim()) {
+    return fromRealIp.trim();
+  }
+
+  if (req.ip?.trim()) return req.ip.trim();
+  if (req.socket?.remoteAddress?.trim()) return req.socket.remoteAddress.trim();
+  return 'unknown';
+};
+
+interface SoftRateLimitEntry {
+  windowStartedAtMs: number;
+  count: number;
+  blockedUntilMs: number;
+  lastSeenAtMs: number;
+}
+
+const createSoftRateLimitMiddleware = (options: {
+  windowMs: number;
+  maxRequests: number;
+  blockMs: number;
+}) => {
+  const { windowMs, maxRequests, blockMs } = options;
+  const entries = new Map<string, SoftRateLimitEntry>();
+  let lastCleanupAtMs = Date.now();
+
+  const applyRateHeaders = (
+    res: Response,
+    limit: number,
+    remaining: number,
+    resetSeconds: number,
+  ) => {
+    const boundedRemaining = Math.max(0, remaining);
+    const boundedResetSeconds = Math.max(1, Math.floor(resetSeconds));
+    res.setHeader('RateLimit-Limit', String(limit));
+    res.setHeader('RateLimit-Remaining', String(boundedRemaining));
+    res.setHeader('RateLimit-Reset', String(boundedResetSeconds));
+    // Compatibility with older clients/proxies.
+    res.setHeader('X-RateLimit-Limit', String(limit));
+    res.setHeader('X-RateLimit-Remaining', String(boundedRemaining));
+    res.setHeader('X-RateLimit-Reset', String(boundedResetSeconds));
+  };
+
+  return (req: Request, res: Response, next: NextFunction) => {
+    const now = Date.now();
+    const clientIp = getClientIp(req);
+    let entry = entries.get(clientIp);
+
+    if (!entry) {
+      entry = {
+        windowStartedAtMs: now,
+        count: 0,
+        blockedUntilMs: 0,
+        lastSeenAtMs: now,
+      };
+      entries.set(clientIp, entry);
+    }
+
+    if (now - entry.windowStartedAtMs >= windowMs) {
+      entry.windowStartedAtMs = now;
+      entry.count = 0;
+      entry.blockedUntilMs = 0;
+    }
+
+    entry.lastSeenAtMs = now;
+
+    if (entry.blockedUntilMs > now) {
+      const retryAfterMs = Math.max(250, entry.blockedUntilMs - now);
+      const retryAfterSeconds = Math.max(1, Math.ceil(retryAfterMs / 1000));
+      applyRateHeaders(res, maxRequests, 0, retryAfterSeconds);
+      res.setHeader('Retry-After', String(retryAfterSeconds));
+      res.status(429).json({
+        error: 'demo_rate_limited',
+        message: 'Estamos recibiendo muchas solicitudes de demo. Reintenta en unos segundos.',
+        retryable: true,
+        retryAfterMs,
+      });
+      return;
+    }
+
+    entry.count += 1;
+    const windowRemainingMs = Math.max(0, entry.windowStartedAtMs + windowMs - now);
+    const windowRemainingSeconds = Math.max(1, Math.ceil(windowRemainingMs / 1000));
+    const remaining = maxRequests - entry.count;
+    applyRateHeaders(res, maxRequests, remaining, windowRemainingSeconds);
+
+    if (entry.count > maxRequests) {
+      entry.blockedUntilMs = now + blockMs;
+      const retryAfterSeconds = Math.max(1, Math.ceil(blockMs / 1000));
+      res.setHeader('Retry-After', String(retryAfterSeconds));
+      res.status(429).json({
+        error: 'demo_rate_limited',
+        message: 'Estamos recibiendo muchas solicitudes de demo. Reintenta en unos segundos.',
+        retryable: true,
+        retryAfterMs: blockMs,
+      });
+      return;
+    }
+
+    if (now - lastCleanupAtMs >= Math.max(60_000, windowMs)) {
+      const staleAfterMs = Math.max(windowMs * 4, 120_000);
+      for (const [key, value] of entries.entries()) {
+        if (value.blockedUntilMs <= now && now - value.lastSeenAtMs > staleAfterMs) {
+          entries.delete(key);
+        }
+      }
+      lastCleanupAtMs = now;
+    }
+
+    next();
+  };
+};
+
 async function main() {
   try {
     const app = express();
     const port = Number(process.env.PORT) || 5001;
     const allowedOrigins = getAllowedCorsOrigins();
+    const demosRootPath = resolveDirectoryFromEnv('DEMOS_PATH', path.join(__dirname, '../demos'));
+    const songsRootPath = toReadableDirectory(process.env.SONGS_PATH);
+    const demosCacheControl =
+      process.env.DEMOS_CACHE_CONTROL?.trim() ||
+      'public, max-age=1800, stale-while-revalidate=120';
+    const demosCdnCacheControl = process.env.DEMOS_CDN_CACHE_CONTROL?.trim() || null;
+    const demosSurrogateControl = process.env.DEMOS_SURROGATE_CONTROL?.trim() || null;
+    const demosRateLimitWindowMs = toPositiveInt(
+      process.env.DEMOS_RATE_LIMIT_WINDOW_MS,
+      10_000,
+    );
+    const demosRateLimitMax = toPositiveInt(process.env.DEMOS_RATE_LIMIT_MAX, 180);
+    const demosRateLimitBlockMs = toPositiveInt(
+      process.env.DEMOS_RATE_LIMIT_BLOCK_MS,
+      demosRateLimitWindowMs,
+    );
+    const demosRateLimitMiddleware =
+      demosRateLimitMax > 0
+        ? createSoftRateLimitMiddleware({
+            windowMs: demosRateLimitWindowMs,
+            maxRequests: demosRateLimitMax,
+            blockMs: demosRateLimitBlockMs,
+          })
+        : null;
 
     app.disable('x-powered-by');
-    const demosRootPath = path.resolve(__dirname, '../demos');
 
     // Security headers (defense-in-depth). Keep this safe for APIs + static demos.
     app.use((_req, res, next) => {
@@ -196,13 +368,26 @@ async function main() {
       conektaEndpoint,
     );
 
+    if (demosRateLimitMiddleware) {
+      app.use('/demos', demosRateLimitMiddleware);
+    }
+
     app.use(
       '/demos',
       express.static(demosRootPath, {
         fallthrough: true,
         index: false,
         acceptRanges: true,
-        maxAge: '30m',
+        cacheControl: false,
+        setHeaders(res) {
+          res.setHeader('Cache-Control', demosCacheControl);
+          if (demosCdnCacheControl) {
+            res.setHeader('CDN-Cache-Control', demosCdnCacheControl);
+          }
+          if (demosSurrogateControl) {
+            res.setHeader('Surrogate-Control', demosSurrogateControl);
+          }
+        },
       }),
     );
 
@@ -298,6 +483,36 @@ async function main() {
       res.json({
         ok: true,
         sentry: getSentryBackendStatus(),
+      });
+    });
+
+    app.get('/health/media', (_req, res) => {
+      const demosReadable = isReadableDirectory(demosRootPath);
+      const songsReadable = isReadableDirectory(songsRootPath);
+
+      res.json({
+        ok: demosReadable,
+        media: {
+          demos: {
+            readable: demosReadable,
+            cacheControl: demosCacheControl,
+            cdnCacheControl: demosCdnCacheControl,
+            surrogateControl: demosSurrogateControl,
+          },
+          songs: {
+            configured: Boolean(songsRootPath),
+            readable: songsReadable,
+          },
+          rateLimit: {
+            enabled: Boolean(demosRateLimitMiddleware),
+            maxRequests: demosRateLimitMax,
+            windowMs: demosRateLimitWindowMs,
+            blockMs: demosRateLimitBlockMs,
+          },
+          cdn: {
+            enabled: isMediaCdnEnabled(),
+          },
+        },
       });
     });
 

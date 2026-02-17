@@ -6,6 +6,7 @@ import { apiBaseUrl } from "../../../utils/runtimeConfig";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../../utils/growthMetrics";
 import { buildDemoPlaybackUrl } from "../../../utils/demoUrl";
 import { inferTrackMetadata, prettyMediaName } from "../../../utils/fileMetadata";
+import { isRetryableMediaError, retryWithJitter } from "../../../utils/retry";
 import { formatDownloads } from "../homeFormat";
 import PreviewModal from "../../../components/PreviewModal/PreviewModal";
 
@@ -206,9 +207,19 @@ export default function SocialProof(props: {
     setLoadingKey(row.key);
 
     try {
-      const result = (await trpc.downloadHistory.getPublicTopDemo.query({
-        path: row.path,
-      })) as { demo: string; kind: DemoKind; name?: string };
+      const result = (await retryWithJitter(
+        async () =>
+          await trpc.downloadHistory.getPublicTopDemo.query({
+            path: row.path,
+          }),
+        {
+          maxAttempts: 3,
+          baseDelayMs: 250,
+          maxDelayMs: 1800,
+          jitterMs: 450,
+          shouldRetry: isRetryableMediaError,
+        },
+      )) as { demo: string; kind: DemoKind; name?: string };
       const url = buildDemoPlaybackUrl(result.demo, apiBaseUrl);
       const kind: DemoKind = result.kind === "video" ? "video" : "audio";
 

@@ -7,6 +7,8 @@ const DEFAULT_RANGE_DAYS = 30;
 const DEFAULT_ATTRIBUTION_LIMIT = 12;
 const MAX_ATTRIBUTION_LIMIT = 100;
 const SESSION_INACTIVITY_MINUTES = 30;
+const DEFAULT_IDENTITY_LOOKBACK_HOURS = 24;
+const MAX_IDENTITY_LOOKBACK_HOURS = 72;
 const ANALYTICS_EXCLUDED_TEST_CAMPAIGNS = ['test', 'template_preview'];
 
 const ANALYTICS_PUBLIC_TRAFFIC_FILTER_SQL = Prisma.sql`
@@ -97,6 +99,14 @@ interface IngestAnalyticsEventsInput {
   userAgent?: string | null;
 }
 
+interface BackfillAnalyticsUserIdentityInput {
+  prisma: PrismaClient;
+  userId: number;
+  sessionId?: string | null;
+  visitorId?: string | null;
+  lookbackHours?: number;
+}
+
 interface RequestLike {
   headers?: Record<string, string | string[] | undefined>;
   ip?: string | null;
@@ -144,6 +154,19 @@ interface AnalyticsFunnelOverview {
     delta: number;
     deltaPct: number;
     likelyCauses: string[];
+  };
+  checkoutRecovery: {
+    abandonmentWindowMinMinutes: number;
+    abandonmentWindowMaxMinutes: number;
+    checkoutAttempts: number;
+    paidWithin30m: number;
+    abandonedNoPayment: number;
+    pendingUnder10m: number;
+    paymentFailedEvents: number;
+    topPaymentFailedReasons: Array<{
+      reasonCode: string;
+      total: number;
+    }>;
   };
 }
 
@@ -319,6 +342,8 @@ interface AnalyticsCrmDashboardSnapshot {
     cancellations: number;
     involuntaryCancellations: number;
     avgHoursPaidToFirstDownload: number | null;
+    medianHoursPaidToFirstDownload: number | null;
+    p90HoursPaidToFirstDownload: number | null;
     avgHoursRegisterToFirstPaid: number | null;
   };
   registrationsDaily: AnalyticsCrmDailyRegistrationPoint[];
@@ -328,6 +353,8 @@ interface AnalyticsCrmDashboardSnapshot {
   recentCancellations: AnalyticsCrmRecentCancellationPoint[];
   trialNoDownload24hTotal: number;
   trialNoDownload24h: AnalyticsCrmTrialNoDownloadPoint[];
+  paidNoDownload2hTotal: number;
+  paidNoDownload2h: AnalyticsCrmPaidNoDownloadPoint[];
   paidNoDownload24hTotal: number;
   paidNoDownload24h: AnalyticsCrmPaidNoDownloadPoint[];
 }
@@ -377,7 +404,10 @@ interface AnalyticsEventDbRow {
   userAgent: string | null;
 }
 
-const EVENT_CATEGORY_HINTS: Array<{ hint: string; category: AnalyticsEventCategory }> = [
+const EVENT_CATEGORY_HINTS: Array<{
+  hint: string;
+  category: AnalyticsEventCategory;
+}> = [
   { hint: 'page_', category: 'navigation' },
   { hint: 'lp_', category: 'acquisition' },
   { hint: 'lead_', category: 'acquisition' },
@@ -475,10 +505,32 @@ const calculateRate = (numerator: number, denominator: number): number => {
   return Math.round((numerator / denominator) * 10000) / 100;
 };
 
+const medianFromSorted = (sortedValues: number[]): number | null => {
+  const total = sortedValues.length;
+  if (!total) return null;
+  const mid = Math.floor(total / 2);
+  if (total % 2 === 1) return sortedValues[mid];
+  return (sortedValues[mid - 1] + sortedValues[mid]) / 2;
+};
+
+const percentileFromSorted = (
+  sortedValues: number[],
+  percentile: number,
+): number | null => {
+  const total = sortedValues.length;
+  if (!total) return null;
+  if (percentile <= 0) return sortedValues[0];
+  if (percentile >= 1) return sortedValues[total - 1];
+  const rank = Math.ceil(total * percentile);
+  const index = Math.max(0, Math.min(total - 1, rank - 1));
+  return sortedValues[index];
+};
+
 const normalizeDateOutput = (value: Date): string =>
   value.toISOString().slice(0, 19) + 'Z';
 
-const ipHashSalt = process.env.ANALYTICS_IP_SALT || process.env.JWT_SECRET || '';
+const ipHashSalt =
+  process.env.ANALYTICS_IP_SALT || process.env.JWT_SECRET || '';
 
 const hashIpAddress = (ipAddress: string | null): string | null => {
   if (!ipAddress) return null;
@@ -620,7 +672,8 @@ export const ingestAnalyticsEvents = async ({
     return { accepted: 0 };
   }
 
-  const insertRows = normalizedEvents.map((event) => Prisma.sql`
+  const insertRows = normalizedEvents.map(
+    (event) => Prisma.sql`
     (
       ${event.eventId},
       ${event.eventName},
@@ -647,7 +700,8 @@ export const ingestAnalyticsEvents = async ({
       ${event.ipHash},
       ${event.userAgent}
     )
-  `);
+  `,
+  );
 
   await prisma.$executeRaw(Prisma.sql`
     INSERT IGNORE INTO analytics_events (
@@ -681,12 +735,76 @@ export const ingestAnalyticsEvents = async ({
   return { accepted: normalizedEvents.length };
 };
 
+const normalizeIdentityLookbackHours = (value?: number): number => {
+  if (!value || !Number.isFinite(value)) return DEFAULT_IDENTITY_LOOKBACK_HOURS;
+  return Math.max(1, Math.min(MAX_IDENTITY_LOOKBACK_HOURS, Math.floor(value)));
+};
+
+export const backfillAnalyticsUserIdentity = async ({
+  prisma,
+  userId,
+  sessionId = null,
+  visitorId = null,
+  lookbackHours,
+}: BackfillAnalyticsUserIdentityInput): Promise<{
+  updated: number;
+  lookbackHours: number;
+  sessionId: string | null;
+  visitorId: string | null;
+}> => {
+  const normalizedUserId =
+    Number.isFinite(userId) && userId > 0 ? Math.floor(userId) : null;
+  const normalizedSessionId = toNullableTrimmedString(sessionId, 80);
+  const normalizedVisitorId = toNullableTrimmedString(visitorId, 80);
+  const normalizedLookbackHours = normalizeIdentityLookbackHours(lookbackHours);
+
+  if (!normalizedUserId || (!normalizedSessionId && !normalizedVisitorId)) {
+    return {
+      updated: 0,
+      lookbackHours: normalizedLookbackHours,
+      sessionId: normalizedSessionId,
+      visitorId: normalizedVisitorId,
+    };
+  }
+
+  await ensureAnalyticsEventsTable(prisma);
+
+  const matchClauses: Prisma.Sql[] = [];
+  if (normalizedSessionId) {
+    matchClauses.push(Prisma.sql`session_id = ${normalizedSessionId}`);
+  }
+  if (normalizedVisitorId) {
+    matchClauses.push(Prisma.sql`visitor_id = ${normalizedVisitorId}`);
+  }
+
+  const lookbackStart = new Date(
+    Date.now() - normalizedLookbackHours * 60 * 60 * 1000,
+  );
+
+  const updatedRows = await prisma.$executeRaw(Prisma.sql`
+    UPDATE analytics_events
+    SET user_id = ${normalizedUserId}
+    WHERE user_id IS NULL
+      AND event_ts >= ${lookbackStart}
+      AND (${Prisma.join(matchClauses, ' OR ')})
+  `);
+
+  return {
+    updated: numberFromUnknown(updatedRows),
+    lookbackHours: normalizedLookbackHours,
+    sessionId: normalizedSessionId,
+    visitorId: normalizedVisitorId,
+  };
+};
+
 const normalizeDaysInput = (days?: number): number => {
   if (!days || !Number.isFinite(days)) return DEFAULT_RANGE_DAYS;
   return Math.max(7, Math.min(365, Math.floor(days)));
 };
 
-const resolveRange = (daysInput?: number): { days: number; startDate: Date } => {
+const resolveRange = (
+  daysInput?: number,
+): { days: number; startDate: Date } => {
   const days = normalizeDaysInput(daysInput);
   const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
   return { days, startDate };
@@ -738,27 +856,46 @@ export const getAnalyticsFunnelOverview = async (
         deltaPct: 0,
         likelyCauses: ['No hay datos en este entorno.'],
       },
+      checkoutRecovery: {
+        abandonmentWindowMinMinutes: 10,
+        abandonmentWindowMaxMinutes: 30,
+        checkoutAttempts: 0,
+        paidWithin30m: 0,
+        abandonedNoPayment: 0,
+        pendingUnder10m: 0,
+        paymentFailedEvents: 0,
+        topPaymentFailedReasons: [],
+      },
     };
   }
 
   await ensureAnalyticsEventsTable(prisma);
   const { days, startDate } = resolveRange(daysInput);
 
-  const [eventRows, orderRows, activationRows, registrationRows, retentionBaseRows, retentionRows] =
-    await Promise.all([
-      prisma.$queryRaw<
-        Array<{
-          visitors: bigint | number;
-          lpToRegister: bigint | number;
-          registrations: bigint | number;
-          checkoutStarted: bigint | number;
-          eventPayments: bigint | number;
-          paymentSuccessEvents: bigint | number;
-          paymentSuccessRenewals: bigint | number;
-          paymentSuccessWithoutOrderId: bigint | number;
-          chatOpened: bigint | number;
-        }>
-      >(Prisma.sql`
+  const [
+    eventRows,
+    orderRows,
+    activationRows,
+    registrationRows,
+    retentionBaseRows,
+    retentionRows,
+    checkoutRecoveryRows,
+    paymentFailedReasonRows,
+  ] = await Promise.all([
+    prisma.$queryRaw<
+      Array<{
+        visitors: bigint | number;
+        lpToRegister: bigint | number;
+        registrations: bigint | number;
+        checkoutStarted: bigint | number;
+        eventPayments: bigint | number;
+        paymentSuccessEvents: bigint | number;
+        paymentSuccessRenewals: bigint | number;
+        paymentSuccessWithoutOrderId: bigint | number;
+        paymentFailedEvents: bigint | number;
+        chatOpened: bigint | number;
+      }>
+    >(Prisma.sql`
         SELECT
           COUNT(DISTINCT CASE
             WHEN event_name = 'page_view'
@@ -800,6 +937,9 @@ export const getAnalyticsFunnelOverview = async (
               ) IS NULL
               THEN 1
           END) AS paymentSuccessWithoutOrderId,
+          COUNT(CASE
+            WHEN event_name = 'payment_failed' THEN 1
+          END) AS paymentFailedEvents,
           COUNT(DISTINCT CASE
             WHEN event_name = 'support_chat_opened'
               THEN COALESCE(session_id, visitor_id, event_id)
@@ -808,13 +948,13 @@ export const getAnalyticsFunnelOverview = async (
         WHERE event_ts >= ${startDate}
           ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_SQL}
       `),
-      prisma.$queryRaw<
-        Array<{
-          paidOrders: bigint | number;
-          paidUsers: bigint | number;
-          grossRevenue: bigint | number;
-        }>
-      >(Prisma.sql`
+    prisma.$queryRaw<
+      Array<{
+        paidOrders: bigint | number;
+        paidUsers: bigint | number;
+        grossRevenue: bigint | number;
+      }>
+    >(Prisma.sql`
         SELECT
           COUNT(*) AS paidOrders,
           COUNT(DISTINCT user_id) AS paidUsers,
@@ -824,7 +964,7 @@ export const getAnalyticsFunnelOverview = async (
           AND date_order >= ${startDate}
           AND (is_canceled IS NULL OR is_canceled = 0)
       `),
-      prisma.$queryRaw<Array<{ activationD1Users: bigint | number }>>(Prisma.sql`
+    prisma.$queryRaw<Array<{ activationD1Users: bigint | number }>>(Prisma.sql`
         SELECT
           COUNT(DISTINCT u.id) AS activationD1Users
         FROM users u
@@ -834,13 +974,13 @@ export const getAnalyticsFunnelOverview = async (
           AND dh.date >= u.registered_on
           AND dh.date < DATE_ADD(u.registered_on, INTERVAL 1 DAY)
       `),
-      prisma.$queryRaw<Array<{ registrationCohort: bigint | number }>>(Prisma.sql`
+    prisma.$queryRaw<Array<{ registrationCohort: bigint | number }>>(Prisma.sql`
         SELECT
           COUNT(*) AS registrationCohort
         FROM users
         WHERE registered_on >= DATE(${startDate})
       `),
-      prisma.$queryRaw<Array<{ retentionD30Base: bigint | number }>>(Prisma.sql`
+    prisma.$queryRaw<Array<{ retentionD30Base: bigint | number }>>(Prisma.sql`
         SELECT
           COUNT(DISTINCT o.user_id) AS retentionD30Base
         FROM orders o
@@ -848,7 +988,7 @@ export const getAnalyticsFunnelOverview = async (
           AND (o.is_canceled IS NULL OR o.is_canceled = 0)
           AND o.date_order < DATE_SUB(NOW(), INTERVAL 30 DAY)
       `),
-      prisma.$queryRaw<Array<{ retainedD30Users: bigint | number }>>(Prisma.sql`
+    prisma.$queryRaw<Array<{ retainedD30Users: bigint | number }>>(Prisma.sql`
         SELECT
           COUNT(DISTINCT o.user_id) AS retainedD30Users
         FROM orders o
@@ -859,7 +999,87 @@ export const getAnalyticsFunnelOverview = async (
           AND o.date_order < DATE_SUB(NOW(), INTERVAL 30 DAY)
           AND dh.date >= DATE_SUB(NOW(), INTERVAL 30 DAY)
       `),
-    ]);
+    prisma.$queryRaw<
+      Array<{
+        checkoutAttempts: bigint | number;
+        paidWithin30m: bigint | number;
+        abandonedNoPayment: bigint | number;
+        pendingUnder10m: bigint | number;
+      }>
+    >(Prisma.sql`
+        SELECT
+          COUNT(*) AS checkoutAttempts,
+          COUNT(CASE
+            WHEN recovery.first_payment_ts IS NOT NULL
+              AND TIMESTAMPDIFF(MINUTE, recovery.checkout_ts, recovery.first_payment_ts) BETWEEN 0 AND 30
+              THEN 1
+          END) AS paidWithin30m,
+          COUNT(CASE
+            WHEN recovery.first_payment_ts IS NULL
+              AND recovery.checkout_ts <= DATE_SUB(NOW(), INTERVAL 10 MINUTE)
+              THEN 1
+            WHEN recovery.first_payment_ts IS NOT NULL
+              AND TIMESTAMPDIFF(MINUTE, recovery.checkout_ts, recovery.first_payment_ts) > 30
+              THEN 1
+          END) AS abandonedNoPayment,
+          COUNT(CASE
+            WHEN recovery.first_payment_ts IS NULL
+              AND recovery.checkout_ts > DATE_SUB(NOW(), INTERVAL 10 MINUTE)
+              THEN 1
+          END) AS pendingUnder10m
+        FROM (
+          SELECT
+            c.checkout_key,
+            c.checkout_ts,
+            MIN(ae.event_ts) AS first_payment_ts
+          FROM (
+            SELECT
+              COALESCE(session_id, visitor_id, CONCAT('anon:', event_id)) AS checkout_key,
+              MIN(event_ts) AS checkout_ts
+            FROM analytics_events
+            WHERE event_name = 'checkout_started'
+              AND event_ts >= ${startDate}
+              ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_SQL}
+            GROUP BY COALESCE(session_id, visitor_id, CONCAT('anon:', event_id))
+          ) c
+          LEFT JOIN analytics_events ae
+            ON ae.event_name = 'payment_success'
+            AND ae.event_ts >= ${startDate}
+            AND ae.event_ts >= c.checkout_ts
+            AND COALESCE(ae.session_id, ae.visitor_id, CONCAT('anon:', ae.event_id)) = c.checkout_key
+            ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL}
+          GROUP BY c.checkout_key, c.checkout_ts
+        ) recovery
+      `),
+    prisma.$queryRaw<
+      Array<{
+        reasonCode: string | null;
+        total: bigint | number;
+      }>
+    >(Prisma.sql`
+        SELECT
+          COALESCE(
+            NULLIF(JSON_UNQUOTE(JSON_EXTRACT(metadata_json, '$.decline_code')), ''),
+            CASE
+              WHEN LOWER(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(metadata_json, '$.requires_3ds')), 'false')) = 'true'
+                THEN '3ds_authentication_required'
+              ELSE NULL
+            END,
+            NULLIF(JSON_UNQUOTE(JSON_EXTRACT(metadata_json, '$.stripe_error_type')), ''),
+            NULLIF(JSON_UNQUOTE(JSON_EXTRACT(metadata_json, '$.stripe_error_code')), ''),
+            NULLIF(JSON_UNQUOTE(JSON_EXTRACT(metadata_json, '$.reason')), ''),
+            'unknown'
+          ) AS reasonCode,
+          COUNT(*) AS total
+        FROM analytics_events
+        WHERE event_name = 'payment_failed'
+          AND event_ts >= ${startDate}
+          ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_SQL}
+        GROUP BY reasonCode
+        ORDER BY total DESC
+        LIMIT 6
+      `),
+  ]);
 
   const eventVolume = eventRows[0] ?? {
     visitors: 0,
@@ -870,6 +1090,7 @@ export const getAnalyticsFunnelOverview = async (
     paymentSuccessEvents: 0,
     paymentSuccessRenewals: 0,
     paymentSuccessWithoutOrderId: 0,
+    paymentFailedEvents: 0,
     chatOpened: 0,
   };
   const orderVolume = orderRows[0] ?? {
@@ -881,25 +1102,52 @@ export const getAnalyticsFunnelOverview = async (
   const registrationVolume = registrationRows[0] ?? { registrationCohort: 0 };
   const retentionBaseVolume = retentionBaseRows[0] ?? { retentionD30Base: 0 };
   const retentionVolume = retentionRows[0] ?? { retainedD30Users: 0 };
+  const checkoutRecoveryVolume = checkoutRecoveryRows[0] ?? {
+    checkoutAttempts: 0,
+    paidWithin30m: 0,
+    abandonedNoPayment: 0,
+    pendingUnder10m: 0,
+  };
 
   const visitors = numberFromUnknown(eventVolume.visitors);
   const lpToRegister = numberFromUnknown(eventVolume.lpToRegister);
   const registrations = numberFromUnknown(eventVolume.registrations);
   const checkoutStarted = numberFromUnknown(eventVolume.checkoutStarted);
   const eventPayments = numberFromUnknown(eventVolume.eventPayments);
-  const paymentSuccessEvents = numberFromUnknown(eventVolume.paymentSuccessEvents);
-  const paymentSuccessRenewals = numberFromUnknown(eventVolume.paymentSuccessRenewals);
+  const paymentSuccessEvents = numberFromUnknown(
+    eventVolume.paymentSuccessEvents,
+  );
+  const paymentSuccessRenewals = numberFromUnknown(
+    eventVolume.paymentSuccessRenewals,
+  );
   const paymentSuccessWithoutOrderId = numberFromUnknown(
     eventVolume.paymentSuccessWithoutOrderId,
   );
+  const paymentFailedEvents = numberFromUnknown(eventVolume.paymentFailedEvents);
   const paidOrders = numberFromUnknown(orderVolume.paidOrders);
   const paidUsers = numberFromUnknown(orderVolume.paidUsers);
   const grossRevenue = numberFromUnknown(orderVolume.grossRevenue);
-  const activationD1Users = numberFromUnknown(activationVolume.activationD1Users);
-  const registrationCohort = numberFromUnknown(registrationVolume.registrationCohort);
-  const retentionD30Base = numberFromUnknown(retentionBaseVolume.retentionD30Base);
+  const activationD1Users = numberFromUnknown(
+    activationVolume.activationD1Users,
+  );
+  const registrationCohort = numberFromUnknown(
+    registrationVolume.registrationCohort,
+  );
+  const retentionD30Base = numberFromUnknown(
+    retentionBaseVolume.retentionD30Base,
+  );
   const retainedD30Users = numberFromUnknown(retentionVolume.retainedD30Users);
   const chatOpened = numberFromUnknown(eventVolume.chatOpened);
+  const checkoutAttempts = numberFromUnknown(checkoutRecoveryVolume.checkoutAttempts);
+  const paidWithin30m = numberFromUnknown(checkoutRecoveryVolume.paidWithin30m);
+  const abandonedNoPayment = numberFromUnknown(
+    checkoutRecoveryVolume.abandonedNoPayment,
+  );
+  const pendingUnder10m = numberFromUnknown(checkoutRecoveryVolume.pendingUnder10m);
+  const topPaymentFailedReasons = paymentFailedReasonRows.map((row) => ({
+    reasonCode: (row.reasonCode || 'unknown').trim() || 'unknown',
+    total: numberFromUnknown(row.total),
+  }));
 
   const paidSignal = eventPayments > 0 ? eventPayments : paidOrders;
   const paymentDelta = paymentSuccessEvents - paidOrders;
@@ -977,6 +1225,16 @@ export const getAnalyticsFunnelOverview = async (
       delta: paymentDelta,
       deltaPct: paymentDeltaPct,
       likelyCauses: reconciliationCauses,
+    },
+    checkoutRecovery: {
+      abandonmentWindowMinMinutes: 10,
+      abandonmentWindowMaxMinutes: 30,
+      checkoutAttempts,
+      paidWithin30m,
+      abandonedNoPayment,
+      pendingUnder10m,
+      paymentFailedEvents,
+      topPaymentFailedReasons,
     },
   };
 };
@@ -1164,7 +1422,9 @@ export const getAnalyticsBusinessMetrics = async (
   const { days, startDate } = resolveRange(daysInput);
   const now = new Date();
   const currentWindowStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-  const previousWindowStart = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+  const previousWindowStart = new Date(
+    now.getTime() - 60 * 24 * 60 * 60 * 1000,
+  );
 
   const [
     rangeOrdersRows,
@@ -1296,7 +1556,8 @@ export const getAnalyticsBusinessMetrics = async (
 
   const avgOrderValue = paidOrders > 0 ? grossRevenue / paidOrders : 0;
   const arpu = paidUsers > 0 ? grossRevenue / paidUsers : 0;
-  const monthlyArpuEstimate = currentActiveUsers > 0 ? currentRevenue / currentActiveUsers : 0;
+  const monthlyArpuEstimate =
+    currentActiveUsers > 0 ? currentRevenue / currentActiveUsers : 0;
   const refundRatePct = calculateRate(refundedOrders, paidOrders);
   const churnMonthlyPct = calculateRate(lostUsers, previousActiveUsers);
   const repeatPurchaseRatePct = calculateRate(repeatBuyerCount, paidUsers);
@@ -1398,21 +1659,24 @@ export const getAnalyticsUxQuality = async (
     ? Math.max(3, Math.min(100, Math.floor(routesLimitInput)))
     : 12;
   const routesPage =
-    typeof routesPageInput === 'number' && Number.isFinite(routesPageInput) && routesPageInput > 0
+    typeof routesPageInput === 'number' &&
+    Number.isFinite(routesPageInput) &&
+    routesPageInput > 0
       ? Math.floor(routesPageInput)
       : 0;
   const routesOffset = routesPage * routesLimit;
 
-  const [totalsRows, routesTotalRows, routeRows, deviceRows] = await Promise.all([
-    prisma.$queryRaw<
-      Array<{
-        samples: bigint | number;
-        poorCount: bigint | number;
-        lcpAvg: number | null;
-        clsAvg: number | null;
-        inpAvg: number | null;
-      }>
-    >(Prisma.sql`
+  const [totalsRows, routesTotalRows, routeRows, deviceRows] =
+    await Promise.all([
+      prisma.$queryRaw<
+        Array<{
+          samples: bigint | number;
+          poorCount: bigint | number;
+          lcpAvg: number | null;
+          clsAvg: number | null;
+          inpAvg: number | null;
+        }>
+      >(Prisma.sql`
       SELECT
         COUNT(*) AS samples,
         SUM(CASE WHEN JSON_UNQUOTE(JSON_EXTRACT(metadata_json, '$.rating')) = 'poor' THEN 1 ELSE 0 END) AS poorCount,
@@ -1433,23 +1697,23 @@ export const getAnalyticsUxQuality = async (
         AND event_ts >= ${startDate}
         ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_SQL}
     `),
-    prisma.$queryRaw<Array<{ routesTotal: bigint | number }>>(Prisma.sql`
+      prisma.$queryRaw<Array<{ routesTotal: bigint | number }>>(Prisma.sql`
       SELECT COUNT(DISTINCT COALESCE(NULLIF(page_path, ''), '/unknown')) AS routesTotal
       FROM analytics_events
       WHERE event_name = 'web_vital_reported'
         AND event_ts >= ${startDate}
         ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_SQL}
     `),
-    prisma.$queryRaw<
-      Array<{
-        pagePath: string | null;
-        samples: bigint | number;
-        poorCount: bigint | number;
-        lcpAvg: number | null;
-        clsAvg: number | null;
-        inpAvg: number | null;
-      }>
-    >(Prisma.sql`
+      prisma.$queryRaw<
+        Array<{
+          pagePath: string | null;
+          samples: bigint | number;
+          poorCount: bigint | number;
+          lcpAvg: number | null;
+          clsAvg: number | null;
+          inpAvg: number | null;
+        }>
+      >(Prisma.sql`
       SELECT
         COALESCE(NULLIF(page_path, ''), '/unknown') AS pagePath,
         COUNT(*) AS samples,
@@ -1474,16 +1738,16 @@ export const getAnalyticsUxQuality = async (
       ORDER BY poorCount DESC, samples DESC
       LIMIT ${routesLimit} OFFSET ${routesOffset}
     `),
-    prisma.$queryRaw<
-      Array<{
-        deviceCategory: string | null;
-        samples: bigint | number;
-        poorCount: bigint | number;
-        lcpAvg: number | null;
-        clsAvg: number | null;
-        inpAvg: number | null;
-      }>
-    >(Prisma.sql`
+      prisma.$queryRaw<
+        Array<{
+          deviceCategory: string | null;
+          samples: bigint | number;
+          poorCount: bigint | number;
+          lcpAvg: number | null;
+          clsAvg: number | null;
+          inpAvg: number | null;
+        }>
+      >(Prisma.sql`
       SELECT
         COALESCE(
           NULLIF(JSON_UNQUOTE(JSON_EXTRACT(metadata_json, '$.deviceCategory')), ''),
@@ -1510,7 +1774,7 @@ export const getAnalyticsUxQuality = async (
       GROUP BY deviceCategory
       ORDER BY samples DESC
     `),
-  ]);
+    ]);
 
   const totals = totalsRows[0] ?? {
     samples: 0,
@@ -1588,7 +1852,9 @@ export const getAnalyticsTopEvents = async (
 
   await ensureAnalyticsEventsTable(prisma);
   const { startDate } = resolveRange(daysInput);
-  const limit = limitInput ? Math.max(5, Math.min(100, Math.floor(limitInput))) : 20;
+  const limit = limitInput
+    ? Math.max(5, Math.min(100, Math.floor(limitInput)))
+    : 20;
   const page =
     typeof pageInput === 'number' && Number.isFinite(pageInput) && pageInput > 0
       ? Math.floor(pageInput)
@@ -1650,6 +1916,7 @@ export const getAnalyticsCrmDashboard = async (
   pagesInput?: {
     recentCancellationsPage?: number;
     trialNoDownloadPage?: number;
+    paidNoDownload2hPage?: number;
     paidNoDownloadPage?: number;
   },
 ): Promise<AnalyticsCrmDashboardSnapshot> => {
@@ -1662,11 +1929,15 @@ export const getAnalyticsCrmDashboard = async (
     typeof value === 'number' && Number.isFinite(value) && value > 0
       ? Math.floor(value)
       : 0;
-  const recentCancellationsPage = normalizePage(pagesInput?.recentCancellationsPage);
+  const recentCancellationsPage = normalizePage(
+    pagesInput?.recentCancellationsPage,
+  );
   const trialNoDownloadPage = normalizePage(pagesInput?.trialNoDownloadPage);
+  const paidNoDownload2hPage = normalizePage(pagesInput?.paidNoDownload2hPage);
   const paidNoDownloadPage = normalizePage(pagesInput?.paidNoDownloadPage);
   const recentCancellationsOffset = recentCancellationsPage * limit;
   const trialNoDownloadOffset = trialNoDownloadPage * limit;
+  const paidNoDownload2hOffset = paidNoDownload2hPage * limit;
   const paidNoDownloadOffset = paidNoDownloadPage * limit;
 
   if (!process.env.DATABASE_URL) {
@@ -1690,6 +1961,8 @@ export const getAnalyticsCrmDashboard = async (
         cancellations: 0,
         involuntaryCancellations: 0,
         avgHoursPaidToFirstDownload: null,
+        medianHoursPaidToFirstDownload: null,
+        p90HoursPaidToFirstDownload: null,
         avgHoursRegisterToFirstPaid: null,
       },
       registrationsDaily: [],
@@ -1699,6 +1972,8 @@ export const getAnalyticsCrmDashboard = async (
       recentCancellations: [],
       trialNoDownload24hTotal: 0,
       trialNoDownload24h: [],
+      paidNoDownload2hTotal: 0,
+      paidNoDownload2h: [],
       paidNoDownload24hTotal: 0,
       paidNoDownload24h: [],
     };
@@ -1720,10 +1995,12 @@ export const getAnalyticsCrmDashboard = async (
     recentCancellationTotalRows,
     recentCancellationRows,
     involuntaryCancellationRows,
-    activationAvgRows,
+    activationDurationRows,
     registerToPaidAvgRows,
     trialNoDownloadTotalRows,
     trialNoDownloadRows,
+    paidNoDownload2hTotalRows,
+    paidNoDownload2hRows,
     paidNoDownloadTotalRows,
     paidNoDownloadRows,
   ] = await Promise.all([
@@ -1731,7 +2008,9 @@ export const getAnalyticsCrmDashboard = async (
       SELECT COUNT(*) AS totalUsers
       FROM users
     `),
-    prisma.$queryRaw<Array<{ registrationsBefore: bigint | number }>>(Prisma.sql`
+    prisma.$queryRaw<
+      Array<{ registrationsBefore: bigint | number }>
+    >(Prisma.sql`
       SELECT COUNT(*) AS registrationsBefore
       FROM users
       WHERE registered_on < DATE(${startDateOnly})
@@ -1785,7 +2064,11 @@ export const getAnalyticsCrmDashboard = async (
         ON o.user_id = fp.user_id
     `),
     prisma.$queryRaw<
-      Array<{ day: string; trialStarts: bigint | number; trialConversions: bigint | number }>
+      Array<{
+        day: string;
+        trialStarts: bigint | number;
+        trialConversions: bigint | number;
+      }>
     >(Prisma.sql`
       SELECT
         DATE_FORMAT(event_ts, '%Y-%m-%d') AS day,
@@ -1858,7 +2141,9 @@ export const getAnalyticsCrmDashboard = async (
       ORDER BY scf.created_at DESC
       LIMIT ${limit} OFFSET ${recentCancellationsOffset}
     `),
-    prisma.$queryRaw<Array<{ involuntaryCancellations: bigint | number }>>(Prisma.sql`
+    prisma.$queryRaw<
+      Array<{ involuntaryCancellations: bigint | number }>
+    >(Prisma.sql`
       SELECT
         COUNT(DISTINCT user_id) AS involuntaryCancellations
       FROM analytics_events
@@ -1867,9 +2152,11 @@ export const getAnalyticsCrmDashboard = async (
         AND user_id IS NOT NULL
         ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_SQL}
     `),
-    prisma.$queryRaw<Array<{ avgMinutes: bigint | number | null }>>(Prisma.sql`
+    prisma.$queryRaw<
+      Array<{ minutesToFirstDownload: bigint | number | null }>
+    >(Prisma.sql`
       SELECT
-        AVG(TIMESTAMPDIFF(MINUTE, fp.first_paid_at, fd.first_download_at)) AS avgMinutes
+        TIMESTAMPDIFF(MINUTE, fp.first_paid_at, MIN(dh.date)) AS minutesToFirstDownload
       FROM (
         SELECT user_id, MIN(date_order) AS first_paid_at
         FROM orders
@@ -1878,14 +2165,11 @@ export const getAnalyticsCrmDashboard = async (
           AND (is_canceled IS NULL OR is_canceled = 0)
         GROUP BY user_id
       ) fp
-      INNER JOIN (
-        SELECT userId, MIN(date) AS first_download_at
-        FROM download_history
-        GROUP BY userId
-      ) fd
-        ON fd.userId = fp.user_id
+      INNER JOIN download_history dh
+        ON dh.userId = fp.user_id
+        AND dh.date >= fp.first_paid_at
       WHERE fp.first_paid_at >= ${startDateOnly}
-        AND fd.first_download_at >= fp.first_paid_at
+      GROUP BY fp.user_id, fp.first_paid_at
     `),
     prisma.$queryRaw<Array<{ avgMinutes: bigint | number | null }>>(Prisma.sql`
       SELECT
@@ -1972,11 +2256,11 @@ export const getAnalyticsCrmDashboard = async (
         LEFT JOIN download_history dh
           ON dh.userId = fp.user_id
           AND dh.date >= fp.first_paid_at
-          AND dh.date < DATE_ADD(fp.first_paid_at, INTERVAL 24 HOUR)
         WHERE fp.first_paid_at >= ${startDateOnly}
-          AND fp.first_paid_at < DATE_SUB(NOW(), INTERVAL 24 HOUR)
+          AND fp.first_paid_at < DATE_SUB(NOW(), INTERVAL 2 HOUR)
         GROUP BY fp.user_id, fp.first_paid_at, o.plan_id, o.payment_method
-        HAVING COUNT(dh.id) = 0
+        HAVING MIN(dh.date) IS NULL
+          OR MIN(dh.date) >= DATE_ADD(fp.first_paid_at, INTERVAL 2 HOUR)
       ) AS groups_count
     `),
     prisma.$queryRaw<
@@ -2016,11 +2300,83 @@ export const getAnalyticsCrmDashboard = async (
       LEFT JOIN download_history dh
         ON dh.userId = fp.user_id
         AND dh.date >= fp.first_paid_at
-        AND dh.date < DATE_ADD(fp.first_paid_at, INTERVAL 24 HOUR)
+      WHERE fp.first_paid_at >= ${startDateOnly}
+        AND fp.first_paid_at < DATE_SUB(NOW(), INTERVAL 2 HOUR)
+      GROUP BY u.id, u.username, u.email, u.phone, fp.first_paid_at, o.plan_id, o.payment_method
+      HAVING MIN(dh.date) IS NULL
+        OR MIN(dh.date) >= DATE_ADD(fp.first_paid_at, INTERVAL 2 HOUR)
+      ORDER BY fp.first_paid_at DESC
+      LIMIT ${limit} OFFSET ${paidNoDownload2hOffset}
+    `),
+    prisma.$queryRaw<Array<{ total: bigint | number }>>(Prisma.sql`
+      SELECT COUNT(*) AS total
+      FROM (
+        SELECT fp.user_id
+        FROM (
+          SELECT user_id, MIN(date_order) AS first_paid_at
+          FROM orders
+          WHERE status = 1
+            AND is_plan = 1
+            AND (is_canceled IS NULL OR is_canceled = 0)
+          GROUP BY user_id
+        ) fp
+        INNER JOIN orders o
+          ON o.user_id = fp.user_id
+          AND o.date_order = fp.first_paid_at
+          AND o.status = 1
+          AND o.is_plan = 1
+        LEFT JOIN download_history dh
+          ON dh.userId = fp.user_id
+          AND dh.date >= fp.first_paid_at
+        WHERE fp.first_paid_at >= ${startDateOnly}
+          AND fp.first_paid_at < DATE_SUB(NOW(), INTERVAL 24 HOUR)
+        GROUP BY fp.user_id, fp.first_paid_at, o.plan_id, o.payment_method
+        HAVING MIN(dh.date) IS NULL
+          OR MIN(dh.date) >= DATE_ADD(fp.first_paid_at, INTERVAL 24 HOUR)
+      ) AS groups_count
+    `),
+    prisma.$queryRaw<
+      Array<{
+        userId: number;
+        username: string;
+        email: string;
+        phone: string | null;
+        paidAt: Date;
+        planId: number | null;
+        paymentMethod: string | null;
+      }>
+    >(Prisma.sql`
+      SELECT
+        u.id AS userId,
+        u.username AS username,
+        u.email AS email,
+        u.phone AS phone,
+        fp.first_paid_at AS paidAt,
+        o.plan_id AS planId,
+        o.payment_method AS paymentMethod
+      FROM (
+        SELECT user_id, MIN(date_order) AS first_paid_at
+        FROM orders
+        WHERE status = 1
+          AND is_plan = 1
+          AND (is_canceled IS NULL OR is_canceled = 0)
+        GROUP BY user_id
+      ) fp
+      INNER JOIN orders o
+        ON o.user_id = fp.user_id
+        AND o.date_order = fp.first_paid_at
+        AND o.status = 1
+        AND o.is_plan = 1
+      INNER JOIN users u
+        ON u.id = fp.user_id
+      LEFT JOIN download_history dh
+        ON dh.userId = fp.user_id
+        AND dh.date >= fp.first_paid_at
       WHERE fp.first_paid_at >= ${startDateOnly}
         AND fp.first_paid_at < DATE_SUB(NOW(), INTERVAL 24 HOUR)
       GROUP BY u.id, u.username, u.email, u.phone, fp.first_paid_at, o.plan_id, o.payment_method
-      HAVING COUNT(dh.id) = 0
+      HAVING MIN(dh.date) IS NULL
+        OR MIN(dh.date) >= DATE_ADD(fp.first_paid_at, INTERVAL 24 HOUR)
       ORDER BY fp.first_paid_at DESC
       LIMIT ${limit} OFFSET ${paidNoDownloadOffset}
     `),
@@ -2043,11 +2399,18 @@ export const getAnalyticsCrmDashboard = async (
     point.cumulative = running;
   }
 
-  const registrations = registrationsDaily.reduce((sum, p) => sum + p.registrations, 0);
+  const registrations = registrationsDaily.reduce(
+    (sum, p) => sum + p.registrations,
+    0,
+  );
 
   const paidOrders = numberFromUnknown(paidOrdersRows?.[0]?.paidOrders);
-  const grossRevenue = roundNumber(numberFromUnknown(paidOrdersRows?.[0]?.grossRevenue), 2);
-  const avgOrderValue = paidOrders > 0 ? roundNumber(grossRevenue / paidOrders, 2) : 0;
+  const grossRevenue = roundNumber(
+    numberFromUnknown(paidOrdersRows?.[0]?.grossRevenue),
+    2,
+  );
+  const avgOrderValue =
+    paidOrders > 0 ? roundNumber(grossRevenue / paidOrders, 2) : 0;
 
   const newPaidUsers = numberFromUnknown(newVsRenewalRows?.[0]?.newPaidUsers);
   const renewalOrders = numberFromUnknown(newVsRenewalRows?.[0]?.renewalOrders);
@@ -2060,33 +2423,82 @@ export const getAnalyticsCrmDashboard = async (
 
   // Canonical source of truth for CRM trial KPIs:
   // use the same daily series rendered in "Trial por día" to avoid contradictory totals.
-  const trialStarts = trialsDaily.reduce((sum, row) => sum + row.trialStarts, 0);
-  const trialConversions = trialsDaily.reduce((sum, row) => sum + row.trialConversions, 0);
-  const trialConversionRatePct = trialStarts > 0 ? calculateRate(trialConversions, trialStarts) : 0;
+  const trialStarts = trialsDaily.reduce(
+    (sum, row) => sum + row.trialStarts,
+    0,
+  );
+  const trialConversions = trialsDaily.reduce(
+    (sum, row) => sum + row.trialConversions,
+    0,
+  );
+  const trialConversionRatePct =
+    trialStarts > 0 ? calculateRate(trialConversions, trialStarts) : 0;
 
   const cancellationsTotal = numberFromUnknown(
     cancellationsTotalRows?.[0]?.cancellations,
   );
-  const recentCancellationsTotal = numberFromUnknown(recentCancellationTotalRows?.[0]?.total);
+  const recentCancellationsTotal = numberFromUnknown(
+    recentCancellationTotalRows?.[0]?.total,
+  );
   const involuntaryCancellations = numberFromUnknown(
     involuntaryCancellationRows?.[0]?.involuntaryCancellations,
   );
-  const trialNoDownload24hTotal = numberFromUnknown(trialNoDownloadTotalRows?.[0]?.total);
-  const paidNoDownload24hTotal = numberFromUnknown(paidNoDownloadTotalRows?.[0]?.total);
+  const trialNoDownload24hTotal = numberFromUnknown(
+    trialNoDownloadTotalRows?.[0]?.total,
+  );
+  const paidNoDownload2hTotal = numberFromUnknown(
+    paidNoDownload2hTotalRows?.[0]?.total,
+  );
+  const paidNoDownload24hTotal = numberFromUnknown(
+    paidNoDownloadTotalRows?.[0]?.total,
+  );
 
-  const activationAvgMinutesRaw = activationAvgRows?.[0]?.avgMinutes;
+  const paidToFirstDownloadMinutes = activationDurationRows
+    .map((row) => nullableNumberFromUnknown(row.minutesToFirstDownload))
+    .filter(
+      (value): value is number =>
+        value !== null && Number.isFinite(value) && value >= 0,
+    )
+    .sort((a, b) => a - b);
+
+  const activationAvgMinutesRaw = paidToFirstDownloadMinutes.length
+    ? paidToFirstDownloadMinutes.reduce((sum, value) => sum + value, 0) /
+      paidToFirstDownloadMinutes.length
+    : null;
+  const activationMedianMinutesRaw = medianFromSorted(
+    paidToFirstDownloadMinutes,
+  );
+  const activationP90MinutesRaw = percentileFromSorted(
+    paidToFirstDownloadMinutes,
+    0.9,
+  );
   const avgMinutesPaidToFirstDownload =
-    activationAvgMinutesRaw == null ? null : numberFromUnknown(activationAvgMinutesRaw);
+    activationAvgMinutesRaw == null
+      ? null
+      : roundNumber(activationAvgMinutesRaw, 2);
   const avgHoursPaidToFirstDownload =
-    avgMinutesPaidToFirstDownload == null || Number.isNaN(avgMinutesPaidToFirstDownload)
+    avgMinutesPaidToFirstDownload == null ||
+    Number.isNaN(avgMinutesPaidToFirstDownload)
       ? null
       : roundNumber(avgMinutesPaidToFirstDownload / 60, 2);
+  const medianHoursPaidToFirstDownload =
+    activationMedianMinutesRaw == null ||
+    Number.isNaN(activationMedianMinutesRaw)
+      ? null
+      : roundNumber(activationMedianMinutesRaw / 60, 2);
+  const p90HoursPaidToFirstDownload =
+    activationP90MinutesRaw == null || Number.isNaN(activationP90MinutesRaw)
+      ? null
+      : roundNumber(activationP90MinutesRaw / 60, 2);
 
   const registerToPaidAvgMinutesRaw = registerToPaidAvgRows?.[0]?.avgMinutes;
   const avgMinutesRegisterToFirstPaid =
-    registerToPaidAvgMinutesRaw == null ? null : numberFromUnknown(registerToPaidAvgMinutesRaw);
+    registerToPaidAvgMinutesRaw == null
+      ? null
+      : numberFromUnknown(registerToPaidAvgMinutesRaw);
   const avgHoursRegisterToFirstPaid =
-    avgMinutesRegisterToFirstPaid == null || Number.isNaN(avgMinutesRegisterToFirstPaid)
+    avgMinutesRegisterToFirstPaid == null ||
+    Number.isNaN(avgMinutesRegisterToFirstPaid)
       ? null
       : roundNumber(avgMinutesRegisterToFirstPaid / 60, 2);
 
@@ -2110,6 +2522,8 @@ export const getAnalyticsCrmDashboard = async (
       cancellations: cancellationsTotal,
       involuntaryCancellations,
       avgHoursPaidToFirstDownload,
+      medianHoursPaidToFirstDownload,
+      p90HoursPaidToFirstDownload,
       avgHoursRegisterToFirstPaid,
     },
     registrationsDaily,
@@ -2141,6 +2555,16 @@ export const getAnalyticsCrmDashboard = async (
       phone: row.phone ?? null,
       trialStartedAt: normalizeDateOutput(row.trialStartedAt),
       planId: row.planId == null ? null : numberFromUnknown(row.planId),
+    })),
+    paidNoDownload2hTotal,
+    paidNoDownload2h: paidNoDownload2hRows.map((row) => ({
+      userId: Number(row.userId),
+      username: row.username,
+      email: row.email,
+      phone: row.phone ?? null,
+      paidAt: normalizeDateOutput(row.paidAt),
+      planId: row.planId == null ? null : Number(row.planId),
+      paymentMethod: row.paymentMethod ?? null,
     })),
     paidNoDownload24hTotal,
     paidNoDownload24h: paidNoDownloadRows.map((row) => ({
@@ -2176,7 +2600,8 @@ export const getAnalyticsHealthAlerts = async (
       id: 'visitor-to-register-critical',
       severity: 'critical',
       title: 'Conversión LP → Registro muy baja',
-      message: 'La proporción de visitantes que inicia registro está por debajo del mínimo saludable.',
+      message:
+        'La proporción de visitantes que inicia registro está por debajo del mínimo saludable.',
       metric: 'visitorToRegisterPct',
       value: funnel.conversion.visitorToRegisterPct,
       threshold: 6,
@@ -2228,7 +2653,8 @@ export const getAnalyticsHealthAlerts = async (
       id: 'churn-critical',
       severity: 'critical',
       title: 'Churn mensual crítico',
-      message: 'Una parte alta de pagadores del mes pasado no regresó este mes.',
+      message:
+        'Una parte alta de pagadores del mes pasado no regresó este mes.',
       metric: 'churnMonthlyPct',
       value: business.kpis.churnMonthlyPct,
       threshold: 30,
@@ -2268,7 +2694,8 @@ export const getAnalyticsHealthAlerts = async (
       id: 'ux-poor-critical',
       severity: 'critical',
       title: 'Experiencia técnica degradada (Web Vitals)',
-      message: 'Un porcentaje alto de sesiones reporta métricas en estado “poor”.',
+      message:
+        'Un porcentaje alto de sesiones reporta métricas en estado “poor”.',
       metric: 'webVitalsPoorRatePct',
       value: ux.totals.poorRatePct,
       threshold: 25,
@@ -2373,11 +2800,11 @@ export const getAnalyticsCancellationReasons = async (
 
     const [reasonRows, campaignRows, involuntaryRows] = await Promise.all([
       prisma.$queryRaw<
-      Array<{
-        reasonCode: string;
-        cancellations: bigint | number;
-      }>
-    >(Prisma.sql`
+        Array<{
+          reasonCode: string;
+          cancellations: bigint | number;
+        }>
+      >(Prisma.sql`
       SELECT
         reason_code AS reasonCode,
         COUNT(*) AS cancellations
@@ -2388,14 +2815,14 @@ export const getAnalyticsCancellationReasons = async (
       LIMIT ${MAX_CANCELLATION_REASON_LIMIT}
     `),
       prisma.$queryRaw<
-      Array<{
-        reasonCode: string;
-        source: string | null;
-        medium: string | null;
-        campaign: string | null;
-        cancellations: bigint | number;
-      }>
-    >(Prisma.sql`
+        Array<{
+          reasonCode: string;
+          source: string | null;
+          medium: string | null;
+          campaign: string | null;
+          cancellations: bigint | number;
+        }>
+      >(Prisma.sql`
       SELECT
         reason_code AS reasonCode,
         COALESCE(NULLIF(utm_source, ''), 'direct') AS source,
@@ -2408,7 +2835,9 @@ export const getAnalyticsCancellationReasons = async (
       ORDER BY cancellations DESC
       LIMIT ${MAX_CANCELLATION_CAMPAIGN_ROWS}
     `),
-      prisma.$queryRaw<Array<{ involuntaryCancellations: bigint | number }>>(Prisma.sql`
+      prisma.$queryRaw<
+        Array<{ involuntaryCancellations: bigint | number }>
+      >(Prisma.sql`
         SELECT
           COUNT(DISTINCT user_id) AS involuntaryCancellations
         FROM analytics_events
@@ -2426,7 +2855,8 @@ export const getAnalyticsCancellationReasons = async (
     const involuntaryCancellations = numberFromUnknown(
       involuntaryRows?.[0]?.involuntaryCancellations,
     );
-    const totalCancellations = voluntaryCancellations + involuntaryCancellations;
+    const totalCancellations =
+      voluntaryCancellations + involuntaryCancellations;
 
     const campaignByReason = campaignRows.reduce((map, row) => {
       const reasonCode = row.reasonCode || 'unknown';
@@ -2639,7 +3069,8 @@ export const getAnalyticsLiveSnapshot = async (
     activeCheckouts: numberFromUnknown(checkout?.activeCheckouts ?? 0),
     eventsTotal: numberFromUnknown(totalRows?.[0]?.eventsTotal),
     events: eventRows.map((row) => {
-      const tsValue = row.eventTs instanceof Date ? row.eventTs : new Date(row.eventTs);
+      const tsValue =
+        row.eventTs instanceof Date ? row.eventTs : new Date(row.eventTs);
       return {
         ts: normalizeDateOutput(tsValue),
         name: row.eventName,

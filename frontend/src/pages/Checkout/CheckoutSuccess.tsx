@@ -3,7 +3,11 @@ import "./Checkout.scss";
 import { Check } from "src/icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { trackManyChatConversion, trackManyChatPurchase, MC_EVENTS } from "../../utils/manychatPixel";
-import { GROWTH_METRICS, trackGrowthMetric } from "../../utils/growthMetrics";
+import {
+  GROWTH_METRICS,
+  markCheckoutPaymentSuccess,
+  trackGrowthMetric,
+} from "../../utils/growthMetrics";
 import { trackPurchase } from "../../utils/facebookPixel";
 import { generateEventId } from "../../utils/marketingIds";
 import trpc from "../../api";
@@ -197,6 +201,7 @@ function CheckoutSuccess() {
         currency,
         eventId,
       });
+      markCheckoutPaymentSuccess();
 
       const method = typeof pending?.method === "string" ? pending.method : "";
       const serverSidePurchaseTracking = pending?.serverSidePurchaseTracking === true;

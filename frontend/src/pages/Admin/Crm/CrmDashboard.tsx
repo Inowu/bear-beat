@@ -102,6 +102,8 @@ interface CrmSnapshot {
     cancellations: number;
     involuntaryCancellations: number;
     avgHoursPaidToFirstDownload: number | null;
+    medianHoursPaidToFirstDownload: number | null;
+    p90HoursPaidToFirstDownload: number | null;
     avgHoursRegisterToFirstPaid: number | null;
   };
   registrationsDaily: CrmDailyRegistrationPoint[];
@@ -111,6 +113,8 @@ interface CrmSnapshot {
   recentCancellations: CrmRecentCancellationPoint[];
   trialNoDownload24hTotal: number;
   trialNoDownload24h: CrmTrialNoDownloadPoint[];
+  paidNoDownload2hTotal: number;
+  paidNoDownload2h: CrmPaidNoDownloadPoint[];
   paidNoDownload24hTotal: number;
   paidNoDownload24h: CrmPaidNoDownloadPoint[];
 }
@@ -275,12 +279,16 @@ export function CrmDashboard() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [snapshot, setSnapshot] = useState<CrmSnapshot | null>(null);
-  const [automation, setAutomation] = useState<AutomationStatusSnapshot | null>(null);
+  const [automation, setAutomation] = useState<AutomationStatusSnapshot | null>(
+    null,
+  );
   const [actionToast, setActionToast] = useState<string>("");
   const [actionBusyKey, setActionBusyKey] = useState<string | null>(null);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
-  const [recentCancellationsPage, setRecentCancellationsPage] = useState<number>(0);
+  const [recentCancellationsPage, setRecentCancellationsPage] =
+    useState<number>(0);
   const [trialNoDownloadPage, setTrialNoDownloadPage] = useState<number>(0);
+  const [paidNoDownload2hPage, setPaidNoDownload2hPage] = useState<number>(0);
   const [paidNoDownloadPage, setPaidNoDownloadPage] = useState<number>(0);
   const listLimit = 100;
 
@@ -295,7 +303,8 @@ export function CrmDashboard() {
       await fn();
       toast("Listo.");
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "No se pudo completar la acción.";
+      const msg =
+        e instanceof Error ? e.message : "No se pudo completar la acción.";
       toast(msg);
     } finally {
       setActionBusyKey(null);
@@ -312,6 +321,7 @@ export function CrmDashboard() {
           limit: listLimit,
           recentCancellationsPage,
           trialNoDownloadPage,
+          paidNoDownload2hPage,
           paidNoDownloadPage,
         }) as Promise<CrmSnapshot>,
         trpc.analytics.getAutomationStatus
@@ -328,7 +338,14 @@ export function CrmDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [rangeDays, listLimit, recentCancellationsPage, trialNoDownloadPage, paidNoDownloadPage]);
+  }, [
+    rangeDays,
+    listLimit,
+    recentCancellationsPage,
+    trialNoDownloadPage,
+    paidNoDownload2hPage,
+    paidNoDownloadPage,
+  ]);
 
   useEffect(() => {
     void refresh();
@@ -348,34 +365,62 @@ export function CrmDashboard() {
   }, [snapshot]);
 
   const dataSources = useMemo(
-    () => ["users", "orders", "download_history", "analytics_events", "subscription_cancellation_feedback"],
+    () => [
+      "users",
+      "orders",
+      "download_history",
+      "analytics_events",
+      "subscription_cancellation_feedback",
+    ],
     [],
   );
 
   const signals = useMemo(() => {
     if (!snapshot) return [];
-    const registrationToPaidPct = rate(snapshot.kpis.newPaidUsers, snapshot.kpis.registrations);
-    const activationRiskTotal = snapshot.trialNoDownload24hTotal + snapshot.paidNoDownload24hTotal;
-    const cancellationPressurePct = rate(snapshot.kpis.cancellations, snapshot.kpis.paidOrders);
+    const registrationToPaidPct = rate(
+      snapshot.kpis.newPaidUsers,
+      snapshot.kpis.registrations,
+    );
+    const activationRiskTotal =
+      snapshot.trialNoDownload24hTotal + snapshot.paidNoDownload24hTotal;
+    const cancellationPressurePct = rate(
+      snapshot.kpis.cancellations,
+      snapshot.kpis.paidOrders,
+    );
 
     return [
       {
         title: "Conversión registro → primer pago",
         value: formatPct(registrationToPaidPct),
         helper: `${snapshot.kpis.newPaidUsers} de ${snapshot.kpis.registrations} registros del rango.`,
-        tone: registrationToPaidPct >= 15 ? "ok" : registrationToPaidPct >= 8 ? "warn" : "error",
+        tone:
+          registrationToPaidPct >= 15
+            ? "ok"
+            : registrationToPaidPct >= 8
+              ? "warn"
+              : "error",
       },
       {
         title: "Riesgo de activación (24h)",
         value: formatCompactNumber(activationRiskTotal),
-        helper: `${snapshot.trialNoDownload24hTotal} trial_started + ${snapshot.paidNoDownload24hTotal} pagados sin descarga.`,
-        tone: activationRiskTotal <= 5 ? "ok" : activationRiskTotal <= 20 ? "warn" : "error",
+        helper: `${snapshot.paidNoDownload2hTotal} pagados sin descarga en 2h · ${snapshot.trialNoDownload24hTotal} trial_started + ${snapshot.paidNoDownload24hTotal} pagados en 24h.`,
+        tone:
+          activationRiskTotal <= 5
+            ? "ok"
+            : activationRiskTotal <= 20
+              ? "warn"
+              : "error",
       },
       {
         title: "Presión de cancelación",
         value: formatPct(cancellationPressurePct),
         helper: `${snapshot.kpis.cancellations} cancelaciones vs ${snapshot.kpis.paidOrders} órdenes pagadas.`,
-        tone: cancellationPressurePct <= 8 ? "ok" : cancellationPressurePct <= 18 ? "warn" : "error",
+        tone:
+          cancellationPressurePct <= 8
+            ? "ok"
+            : cancellationPressurePct <= 18
+              ? "warn"
+              : "error",
       },
     ] as const;
   }, [snapshot]);
@@ -415,6 +460,7 @@ export function CrmDashboard() {
                 setRangeDays(Number(e.target.value));
                 setRecentCancellationsPage(0);
                 setTrialNoDownloadPage(0);
+                setPaidNoDownload2hPage(0);
                 setPaidNoDownloadPage(0);
               }}
             >
@@ -506,7 +552,11 @@ export function CrmDashboard() {
             </div>
           ) : null}
 
-          <div className="crm-kpi-grid" role="list" aria-label="KPIs principales">
+          <div
+            className="crm-kpi-grid"
+            role="list"
+            aria-label="KPIs principales"
+          >
             <KpiCard
               title="Usuarios totales"
               value={formatCompactNumber(snapshot.kpis.totalUsers)}
@@ -557,14 +607,20 @@ export function CrmDashboard() {
             />
             <KpiCard
               title="Registro → primer pago"
-              value={formatDecimal(snapshot.kpis.avgHoursRegisterToFirstPaid, 2)}
+              value={formatDecimal(
+                snapshot.kpis.avgHoursRegisterToFirstPaid,
+                2,
+              )}
               helper="Promedio horas"
               icon={Clock}
             />
             <KpiCard
               title="Pago → primera descarga"
-              value={formatDecimal(snapshot.kpis.avgHoursPaidToFirstDownload, 2)}
-              helper="Promedio horas"
+              value={formatDecimal(
+                snapshot.kpis.medianHoursPaidToFirstDownload,
+                2,
+              )}
+              helper={`Mediana horas · P90 ${formatDecimal(snapshot.kpis.p90HoursPaidToFirstDownload, 2)} · Promedio ${formatDecimal(snapshot.kpis.avgHoursPaidToFirstDownload, 2)}`}
               icon={TrendingUp}
             />
           </div>
@@ -585,12 +641,19 @@ export function CrmDashboard() {
             <section className="crm-section">
               <div className="crm-section__title-row">
                 <h2 className="crm-section__title">Automatizaciones</h2>
-                <span className="crm-counter">{automation.recentRuns.length}</span>
+                <span className="crm-counter">
+                  {automation.recentRuns.length}
+                </span>
               </div>
               <p className="crm-section__hint">
-                Acciones últimas 24h: <strong>{automation.actionsLast24h}</strong>
+                Acciones últimas 24h:{" "}
+                <strong>{automation.actionsLast24h}</strong>
               </p>
-              <div className="crm-table-wrap" tabIndex={0} aria-label="Tabla: historial de automations (desplazable)">
+              <div
+                className="crm-table-wrap"
+                tabIndex={0}
+                aria-label="Tabla: historial de automations (desplazable)"
+              >
                 <table className="crm-table">
                   <thead>
                     <tr>
@@ -605,9 +668,15 @@ export function CrmDashboard() {
                       <tr key={run.id}>
                         <td>{run.id}</td>
                         <td>{formatDateLabel(run.startedAt, true)}</td>
-                        <td>{run.finishedAt ? formatDateLabel(run.finishedAt, true) : "—"}</td>
                         <td>
-                          <span className={`crm-status-pill crm-status-pill--${getStatusTone(run.status)}`}>
+                          {run.finishedAt
+                            ? formatDateLabel(run.finishedAt, true)
+                            : "—"}
+                        </td>
+                        <td>
+                          <span
+                            className={`crm-status-pill crm-status-pill--${getStatusTone(run.status)}`}
+                          >
                             {formatStatus(run.status)}
                           </span>
                         </td>
@@ -623,7 +692,10 @@ export function CrmDashboard() {
                   </tbody>
                 </table>
               </div>
-              <div className="admin-mobile-list" aria-label="Automatizaciones (móvil)">
+              <div
+                className="admin-mobile-list"
+                aria-label="Automatizaciones (móvil)"
+              >
                 {automation.recentRuns.length === 0 ? (
                   <div className="admin-mobile-empty">
                     <h2>Sin corridas</h2>
@@ -631,20 +703,31 @@ export function CrmDashboard() {
                   </div>
                 ) : (
                   automation.recentRuns.map((run) => (
-                    <article key={`m_run_${run.id}`} className="admin-mobile-card">
+                    <article
+                      key={`m_run_${run.id}`}
+                      className="admin-mobile-card"
+                    >
                       <header className="crm-mobile-card__head">
                         <div className="crm-mobile-card__copy">
-                          <p className="crm-mobile-card__title">Run #{run.id}</p>
+                          <p className="crm-mobile-card__title">
+                            Run #{run.id}
+                          </p>
                           <p className="crm-mobile-card__subtitle">
                             {formatDateLabel(run.startedAt, true)} →{" "}
-                            {run.finishedAt ? formatDateLabel(run.finishedAt, true) : "—"}
+                            {run.finishedAt
+                              ? formatDateLabel(run.finishedAt, true)
+                              : "—"}
                           </p>
                         </div>
-                        <span className={`crm-status-pill crm-status-pill--${getStatusTone(run.status)}`}>
+                        <span
+                          className={`crm-status-pill crm-status-pill--${getStatusTone(run.status)}`}
+                        >
                           {formatStatus(run.status)}
                         </span>
                       </header>
-                      {run.error ? <p className="crm-mobile-card__note">{run.error}</p> : null}
+                      {run.error ? (
+                        <p className="crm-mobile-card__note">{run.error}</p>
+                      ) : null}
                     </article>
                   ))
                 )}
@@ -656,10 +739,18 @@ export function CrmDashboard() {
             <section className="crm-section">
               <div className="crm-section__title-row">
                 <h2 className="crm-section__title">Registros diarios</h2>
-                <span className="crm-counter">{snapshot.registrationsDaily.length}</span>
+                <span className="crm-counter">
+                  {snapshot.registrationsDaily.length}
+                </span>
               </div>
-              <p className="crm-section__hint">Últimos 14 días con acumulado para ver tendencia real.</p>
-              <div className="crm-table-wrap" tabIndex={0} aria-label="Tabla: registros diarios (desplazable)">
+              <p className="crm-section__hint">
+                Últimos 14 días con acumulado para ver tendencia real.
+              </p>
+              <div
+                className="crm-table-wrap"
+                tabIndex={0}
+                aria-label="Tabla: registros diarios (desplazable)"
+              >
                 <table className="crm-table crm-table--compact">
                   <thead>
                     <tr>
@@ -686,7 +777,10 @@ export function CrmDashboard() {
                   </tbody>
                 </table>
               </div>
-              <div className="admin-mobile-list" aria-label="Registros diarios (móvil)">
+              <div
+                className="admin-mobile-list"
+                aria-label="Registros diarios (móvil)"
+              >
                 {snapshot.registrationsDaily.length === 0 ? (
                   <div className="admin-mobile-empty">
                     <h2>Sin datos</h2>
@@ -694,10 +788,15 @@ export function CrmDashboard() {
                   </div>
                 ) : (
                   snapshot.registrationsDaily.slice(-14).map((row) => (
-                    <article key={`m_reg_${row.day}`} className="admin-mobile-card">
+                    <article
+                      key={`m_reg_${row.day}`}
+                      className="admin-mobile-card"
+                    >
                       <header className="crm-mobile-card__head">
                         <div className="crm-mobile-card__copy">
-                          <p className="crm-mobile-card__title">{formatDay(row.day)}</p>
+                          <p className="crm-mobile-card__title">
+                            {formatDay(row.day)}
+                          </p>
                         </div>
                       </header>
                       <dl className="crm-mobile-kv">
@@ -718,13 +817,22 @@ export function CrmDashboard() {
 
             <section className="crm-section">
               <div className="crm-section__title-row">
-                <h2 className="crm-section__title">Trial started (evento) por día</h2>
-                <span className="crm-counter">{snapshot.trialsDaily.length}</span>
+                <h2 className="crm-section__title">
+                  Trial started (evento) por día
+                </h2>
+                <span className="crm-counter">
+                  {snapshot.trialsDaily.length}
+                </span>
               </div>
               <p className="crm-section__hint">
-                Definición única de Trial: evento <code>trial_started</code> en <code>analytics_events</code>.
+                Definición única de Trial: evento <code>trial_started</code> en{" "}
+                <code>analytics_events</code>.
               </p>
-              <div className="crm-table-wrap" tabIndex={0} aria-label="Tabla: trial started por día (desplazable)">
+              <div
+                className="crm-table-wrap"
+                tabIndex={0}
+                aria-label="Tabla: trial started por día (desplazable)"
+              >
                 <table className="crm-table crm-table--compact">
                   <thead>
                     <tr>
@@ -749,7 +857,10 @@ export function CrmDashboard() {
                   </tbody>
                 </table>
               </div>
-              <div className="admin-mobile-list" aria-label="Trial started por día (móvil)">
+              <div
+                className="admin-mobile-list"
+                aria-label="Trial started por día (móvil)"
+              >
                 {snapshot.trialsDaily.length === 0 ? (
                   <div className="admin-mobile-empty">
                     <h2>Sin datos</h2>
@@ -757,10 +868,15 @@ export function CrmDashboard() {
                   </div>
                 ) : (
                   snapshot.trialsDaily.map((row) => (
-                    <article key={`m_trial_${row.day}`} className="admin-mobile-card">
+                    <article
+                      key={`m_trial_${row.day}`}
+                      className="admin-mobile-card"
+                    >
                       <header className="crm-mobile-card__head">
                         <div className="crm-mobile-card__copy">
-                          <p className="crm-mobile-card__title">{formatDay(row.day)}</p>
+                          <p className="crm-mobile-card__title">
+                            {formatDay(row.day)}
+                          </p>
                         </div>
                       </header>
                       <dl className="crm-mobile-kv">
@@ -779,12 +895,18 @@ export function CrmDashboard() {
           <section className="crm-section">
             <div className="crm-section__title-row">
               <h2 className="crm-section__title">Cancelaciones por razón</h2>
-              <span className="crm-counter">{snapshot.cancellationTopReasons.length}</span>
+              <span className="crm-counter">
+                {snapshot.cancellationTopReasons.length}
+              </span>
             </div>
             <p className="crm-section__hint">
               Total en el rango: <strong>{snapshot.kpis.cancellations}</strong>
             </p>
-            <div className="crm-table-wrap" tabIndex={0} aria-label="Tabla: cancelaciones por razón (desplazable)">
+            <div
+              className="crm-table-wrap"
+              tabIndex={0}
+              aria-label="Tabla: cancelaciones por razón (desplazable)"
+            >
               <table className="crm-table">
                 <thead>
                   <tr>
@@ -809,7 +931,10 @@ export function CrmDashboard() {
                 </tbody>
               </table>
             </div>
-            <div className="admin-mobile-list" aria-label="Cancelaciones por razón (móvil)">
+            <div
+              className="admin-mobile-list"
+              aria-label="Cancelaciones por razón (móvil)"
+            >
               {snapshot.cancellationTopReasons.length === 0 ? (
                 <div className="admin-mobile-empty">
                   <h2>Sin datos</h2>
@@ -817,10 +942,15 @@ export function CrmDashboard() {
                 </div>
               ) : (
                 snapshot.cancellationTopReasons.map((row) => (
-                  <article key={`m_reason_${row.reasonCode}`} className="admin-mobile-card">
+                  <article
+                    key={`m_reason_${row.reasonCode}`}
+                    className="admin-mobile-card"
+                  >
                     <header className="crm-mobile-card__head">
                       <div className="crm-mobile-card__copy">
-                        <p className="crm-mobile-card__title">{formatReasonCode(row.reasonCode)}</p>
+                        <p className="crm-mobile-card__title">
+                          {formatReasonCode(row.reasonCode)}
+                        </p>
                       </div>
                       <span className="crm-status-pill crm-status-pill--neutral">
                         {row.cancellations.toLocaleString("es-MX")}
@@ -838,20 +968,41 @@ export function CrmDashboard() {
               <span className="crm-counter">24h</span>
             </div>
             <p className="crm-section__hint">
-              Promedio horas desde primer pago a primer download:{" "}
-              <strong>{formatDecimal(snapshot.kpis.avgHoursPaidToFirstDownload, 2)}</strong>
+              Pago → primera descarga (desde <code>download_history</code>,
+              primer download después del primer pago): mediana{" "}
+              <strong>
+                {formatDecimal(snapshot.kpis.medianHoursPaidToFirstDownload, 2)}
+              </strong>{" "}
+              h, p90{" "}
+              <strong>
+                {formatDecimal(snapshot.kpis.p90HoursPaidToFirstDownload, 2)}
+              </strong>{" "}
+              h, promedio{" "}
+              <strong>
+                {formatDecimal(snapshot.kpis.avgHoursPaidToFirstDownload, 2)}
+              </strong>{" "}
+              h.
             </p>
           </section>
 
           <section className="crm-section">
             <div className="crm-section__title-row">
-              <h2 className="crm-section__title">Trial started sin descarga en 24h</h2>
-              <span className="crm-counter">{snapshot.trialNoDownload24hTotal.toLocaleString("es-MX")}</span>
+              <h2 className="crm-section__title">
+                Trial started sin descarga en 24h
+              </h2>
+              <span className="crm-counter">
+                {snapshot.trialNoDownload24hTotal.toLocaleString("es-MX")}
+              </span>
             </div>
             <p className="crm-section__hint">
-              Segmento crítico basado en <code>trial_started</code>: necesitan onboarding para activar valor antes del día 7.
+              Segmento crítico basado en <code>trial_started</code>: necesitan
+              onboarding para activar valor antes del día 7.
             </p>
-            <div className="crm-table-wrap" tabIndex={0} aria-label="Tabla: trial started sin descarga (24h) (desplazable)">
+            <div
+              className="crm-table-wrap"
+              tabIndex={0}
+              aria-label="Tabla: trial started sin descarga (24h) (desplazable)"
+            >
               <table className="crm-table">
                 <thead>
                   <tr>
@@ -877,14 +1028,21 @@ export function CrmDashboard() {
                         <button
                           type="button"
                           className="crm-action-btn"
-                          disabled={actionBusyKey === `trial-onboard-${row.userId}`}
+                          disabled={
+                            actionBusyKey === `trial-onboard-${row.userId}`
+                          }
                           onClick={() =>
-                            void runAction(`trial-onboard-${row.userId}`, async () => {
-                              await trpc.analytics.adminAddManyChatTag.mutate({
-                                userId: row.userId,
-                                tagName: "AUTOMATION_TRIAL_NO_DOWNLOAD_24H",
-                              });
-                            })
+                            void runAction(
+                              `trial-onboard-${row.userId}`,
+                              async () => {
+                                await trpc.analytics.adminAddManyChatTag.mutate(
+                                  {
+                                    userId: row.userId,
+                                    tagName: "AUTOMATION_TRIAL_NO_DOWNLOAD_24H",
+                                  },
+                                );
+                              },
+                            )
                           }
                         >
                           Onboarding
@@ -892,14 +1050,19 @@ export function CrmDashboard() {
                         <button
                           type="button"
                           className="crm-action-btn crm-action-btn--ghost"
-                          disabled={actionBusyKey === `trial-contact-${row.userId}`}
+                          disabled={
+                            actionBusyKey === `trial-contact-${row.userId}`
+                          }
                           onClick={() =>
-                            void runAction(`trial-contact-${row.userId}`, async () => {
-                              await trpc.analytics.adminMarkContacted.mutate({
-                                userId: row.userId,
-                                note: "trial_no_download_24h",
-                              });
-                            })
+                            void runAction(
+                              `trial-contact-${row.userId}`,
+                              async () => {
+                                await trpc.analytics.adminMarkContacted.mutate({
+                                  userId: row.userId,
+                                  note: "trial_no_download_24h",
+                                });
+                              },
+                            )
                           }
                         >
                           Contactado
@@ -917,7 +1080,10 @@ export function CrmDashboard() {
                 </tbody>
               </table>
             </div>
-            <div className="admin-mobile-list" aria-label="Trial started sin descarga (móvil)">
+            <div
+              className="admin-mobile-list"
+              aria-label="Trial started sin descarga (móvil)"
+            >
               {snapshot.trialNoDownload24h.length === 0 ? (
                 <div className="admin-mobile-empty">
                   <h2>Todo bien</h2>
@@ -925,7 +1091,10 @@ export function CrmDashboard() {
                 </div>
               ) : (
                 snapshot.trialNoDownload24h.map((row) => (
-                  <article key={`m_trial_no_dl_${row.userId}_${row.trialStartedAt}`} className="admin-mobile-card">
+                  <article
+                    key={`m_trial_no_dl_${row.userId}_${row.trialStartedAt}`}
+                    className="admin-mobile-card"
+                  >
                     <header className="crm-mobile-card__head">
                       <div className="crm-mobile-card__copy">
                         <p className="crm-mobile-card__title">
@@ -933,7 +1102,9 @@ export function CrmDashboard() {
                         </p>
                         <p className="crm-mobile-card__subtitle">{row.email}</p>
                       </div>
-                      <span className="crm-status-pill crm-status-pill--warn">24h</span>
+                      <span className="crm-status-pill crm-status-pill--warn">
+                        24h
+                      </span>
                     </header>
                     <dl className="crm-mobile-kv">
                       <div className="crm-mobile-kv__row">
@@ -953,14 +1124,19 @@ export function CrmDashboard() {
                       <button
                         type="button"
                         className="crm-action-btn"
-                        disabled={actionBusyKey === `trial-onboard-${row.userId}`}
+                        disabled={
+                          actionBusyKey === `trial-onboard-${row.userId}`
+                        }
                         onClick={() =>
-                          void runAction(`trial-onboard-${row.userId}`, async () => {
-                            await trpc.analytics.adminAddManyChatTag.mutate({
-                              userId: row.userId,
-                              tagName: "AUTOMATION_TRIAL_NO_DOWNLOAD_24H",
-                            });
-                          })
+                          void runAction(
+                            `trial-onboard-${row.userId}`,
+                            async () => {
+                              await trpc.analytics.adminAddManyChatTag.mutate({
+                                userId: row.userId,
+                                tagName: "AUTOMATION_TRIAL_NO_DOWNLOAD_24H",
+                              });
+                            },
+                          )
                         }
                       >
                         Onboarding
@@ -968,14 +1144,19 @@ export function CrmDashboard() {
                       <button
                         type="button"
                         className="crm-action-btn crm-action-btn--ghost"
-                        disabled={actionBusyKey === `trial-contact-${row.userId}`}
+                        disabled={
+                          actionBusyKey === `trial-contact-${row.userId}`
+                        }
                         onClick={() =>
-                          void runAction(`trial-contact-${row.userId}`, async () => {
-                            await trpc.analytics.adminMarkContacted.mutate({
-                              userId: row.userId,
-                              note: "trial_no_download_24h",
-                            });
-                          })
+                          void runAction(
+                            `trial-contact-${row.userId}`,
+                            async () => {
+                              await trpc.analytics.adminMarkContacted.mutate({
+                                userId: row.userId,
+                                note: "trial_no_download_24h",
+                              });
+                            },
+                          )
                         }
                       >
                         Contactado
@@ -990,7 +1171,9 @@ export function CrmDashboard() {
               totalData={snapshot.trialNoDownload24hTotal}
               totalLoader={loading}
               startFilter={(_key, value) =>
-                setTrialNoDownloadPage(typeof value === "number" ? value : Number(value))
+                setTrialNoDownloadPage(
+                  typeof value === "number" ? value : Number(value),
+                )
               }
               currentPage={trialNoDownloadPage}
               limit={listLimit}
@@ -999,13 +1182,222 @@ export function CrmDashboard() {
 
           <section className="crm-section">
             <div className="crm-section__title-row">
-              <h2 className="crm-section__title">Pagaron y no descargaron en 24h</h2>
-              <span className="crm-counter">{snapshot.paidNoDownload24hTotal.toLocaleString("es-MX")}</span>
+              <h2 className="crm-section__title">
+                Pagaron y no descargaron en 2h
+              </h2>
+              <span className="crm-counter">
+                {snapshot.paidNoDownload2hTotal.toLocaleString("es-MX")}
+              </span>
+            </div>
+            <p className="crm-section__hint">
+              Segmento de activación temprana para intervenir durante la ventana
+              de mayor intención.
+            </p>
+            <div
+              className="crm-table-wrap"
+              tabIndex={0}
+              aria-label="Tabla: pagaron y no descargaron (2h) (desplazable)"
+            >
+              <table className="crm-table">
+                <thead>
+                  <tr>
+                    <th>User ID</th>
+                    <th>Usuario</th>
+                    <th>Email</th>
+                    <th>Teléfono</th>
+                    <th>Pagó</th>
+                    <th>Plan</th>
+                    <th>Método</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {snapshot.paidNoDownload2h.map((row) => (
+                    <tr key={`${row.userId}-${row.paidAt}-2h`}>
+                      <td>{row.userId}</td>
+                      <td>{row.username}</td>
+                      <td>{row.email}</td>
+                      <td>{row.phone ?? "—"}</td>
+                      <td>{formatDateLabel(row.paidAt, true)}</td>
+                      <td>{row.planId ?? "—"}</td>
+                      <td>{formatPaymentMethod(row.paymentMethod)}</td>
+                      <td className="crm-actions">
+                        <button
+                          type="button"
+                          className="crm-action-btn"
+                          disabled={
+                            actionBusyKey === `paid2h-onboard-${row.userId}`
+                          }
+                          onClick={() =>
+                            void runAction(
+                              `paid2h-onboard-${row.userId}`,
+                              async () => {
+                                await trpc.analytics.adminAddManyChatTag.mutate(
+                                  {
+                                    userId: row.userId,
+                                    tagName: "AUTOMATION_PAID_NO_DOWNLOAD_2H",
+                                  },
+                                );
+                              },
+                            )
+                          }
+                        >
+                          Onboarding
+                        </button>
+                        <button
+                          type="button"
+                          className="crm-action-btn crm-action-btn--ghost"
+                          disabled={
+                            actionBusyKey === `paid2h-contact-${row.userId}`
+                          }
+                          onClick={() =>
+                            void runAction(
+                              `paid2h-contact-${row.userId}`,
+                              async () => {
+                                await trpc.analytics.adminMarkContacted.mutate({
+                                  userId: row.userId,
+                                  note: "paid_no_download_2h",
+                                });
+                              },
+                            )
+                          }
+                        >
+                          Contactado
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {snapshot.paidNoDownload2h.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="crm-table__empty">
+                        Todo bien: no hay usuarios en este segmento.
+                      </td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
+            <div
+              className="admin-mobile-list"
+              aria-label="Pagaron y no descargaron en 2h (móvil)"
+            >
+              {snapshot.paidNoDownload2h.length === 0 ? (
+                <div className="admin-mobile-empty">
+                  <h2>Todo bien</h2>
+                  <p>No hay usuarios en este segmento.</p>
+                </div>
+              ) : (
+                snapshot.paidNoDownload2h.map((row) => (
+                  <article
+                    key={`m_paid_no_dl_2h_${row.userId}_${row.paidAt}`}
+                    className="admin-mobile-card"
+                  >
+                    <header className="crm-mobile-card__head">
+                      <div className="crm-mobile-card__copy">
+                        <p className="crm-mobile-card__title">
+                          #{row.userId} {row.username}
+                        </p>
+                        <p className="crm-mobile-card__subtitle">{row.email}</p>
+                      </div>
+                      <span className="crm-status-pill crm-status-pill--warn">
+                        2h
+                      </span>
+                    </header>
+                    <dl className="crm-mobile-kv">
+                      <div className="crm-mobile-kv__row">
+                        <dt>Teléfono</dt>
+                        <dd>{row.phone ?? "—"}</dd>
+                      </div>
+                      <div className="crm-mobile-kv__row">
+                        <dt>Pagó</dt>
+                        <dd>{formatDateLabel(row.paidAt, true)}</dd>
+                      </div>
+                      <div className="crm-mobile-kv__row">
+                        <dt>Plan</dt>
+                        <dd>{row.planId ?? "—"}</dd>
+                      </div>
+                      <div className="crm-mobile-kv__row">
+                        <dt>Método</dt>
+                        <dd>{formatPaymentMethod(row.paymentMethod)}</dd>
+                      </div>
+                    </dl>
+                    <div className="crm-actions crm-mobile-card__actions">
+                      <button
+                        type="button"
+                        className="crm-action-btn"
+                        disabled={
+                          actionBusyKey === `paid2h-onboard-${row.userId}`
+                        }
+                        onClick={() =>
+                          void runAction(
+                            `paid2h-onboard-${row.userId}`,
+                            async () => {
+                              await trpc.analytics.adminAddManyChatTag.mutate({
+                                userId: row.userId,
+                                tagName: "AUTOMATION_PAID_NO_DOWNLOAD_2H",
+                              });
+                            },
+                          )
+                        }
+                      >
+                        Onboarding
+                      </button>
+                      <button
+                        type="button"
+                        className="crm-action-btn crm-action-btn--ghost"
+                        disabled={
+                          actionBusyKey === `paid2h-contact-${row.userId}`
+                        }
+                        onClick={() =>
+                          void runAction(
+                            `paid2h-contact-${row.userId}`,
+                            async () => {
+                              await trpc.analytics.adminMarkContacted.mutate({
+                                userId: row.userId,
+                                note: "paid_no_download_2h",
+                              });
+                            },
+                          )
+                        }
+                      >
+                        Contactado
+                      </button>
+                    </div>
+                  </article>
+                ))
+              )}
+            </div>
+            <Pagination
+              title="pagaron sin descarga (2h)"
+              totalData={snapshot.paidNoDownload2hTotal}
+              totalLoader={loading}
+              startFilter={(_key, value) =>
+                setPaidNoDownload2hPage(
+                  typeof value === "number" ? value : Number(value),
+                )
+              }
+              currentPage={paidNoDownload2hPage}
+              limit={listLimit}
+            />
+          </section>
+
+          <section className="crm-section">
+            <div className="crm-section__title-row">
+              <h2 className="crm-section__title">
+                Pagaron y no descargaron en 24h
+              </h2>
+              <span className="crm-counter">
+                {snapshot.paidNoDownload24hTotal.toLocaleString("es-MX")}
+              </span>
             </div>
             <p className="crm-section__hint">
               Lista enfocada en primeras compras dentro del rango.
             </p>
-            <div className="crm-table-wrap" tabIndex={0} aria-label="Tabla: pagaron y no descargaron (24h) (desplazable)">
+            <div
+              className="crm-table-wrap"
+              tabIndex={0}
+              aria-label="Tabla: pagaron y no descargaron (24h) (desplazable)"
+            >
               <table className="crm-table">
                 <thead>
                   <tr>
@@ -1033,14 +1425,21 @@ export function CrmDashboard() {
                         <button
                           type="button"
                           className="crm-action-btn"
-                          disabled={actionBusyKey === `paid-onboard-${row.userId}`}
+                          disabled={
+                            actionBusyKey === `paid-onboard-${row.userId}`
+                          }
                           onClick={() =>
-                            void runAction(`paid-onboard-${row.userId}`, async () => {
-                              await trpc.analytics.adminAddManyChatTag.mutate({
-                                userId: row.userId,
-                                tagName: "AUTOMATION_PAID_NO_DOWNLOAD_24H",
-                              });
-                            })
+                            void runAction(
+                              `paid-onboard-${row.userId}`,
+                              async () => {
+                                await trpc.analytics.adminAddManyChatTag.mutate(
+                                  {
+                                    userId: row.userId,
+                                    tagName: "AUTOMATION_PAID_NO_DOWNLOAD_24H",
+                                  },
+                                );
+                              },
+                            )
                           }
                         >
                           Onboarding
@@ -1048,14 +1447,19 @@ export function CrmDashboard() {
                         <button
                           type="button"
                           className="crm-action-btn crm-action-btn--ghost"
-                          disabled={actionBusyKey === `paid-contact-${row.userId}`}
+                          disabled={
+                            actionBusyKey === `paid-contact-${row.userId}`
+                          }
                           onClick={() =>
-                            void runAction(`paid-contact-${row.userId}`, async () => {
-                              await trpc.analytics.adminMarkContacted.mutate({
-                                userId: row.userId,
-                                note: "paid_no_download_24h",
-                              });
-                            })
+                            void runAction(
+                              `paid-contact-${row.userId}`,
+                              async () => {
+                                await trpc.analytics.adminMarkContacted.mutate({
+                                  userId: row.userId,
+                                  note: "paid_no_download_24h",
+                                });
+                              },
+                            )
                           }
                         >
                           Contactado
@@ -1073,7 +1477,10 @@ export function CrmDashboard() {
                 </tbody>
               </table>
             </div>
-            <div className="admin-mobile-list" aria-label="Pagaron y no descargaron (móvil)">
+            <div
+              className="admin-mobile-list"
+              aria-label="Pagaron y no descargaron (móvil)"
+            >
               {snapshot.paidNoDownload24h.length === 0 ? (
                 <div className="admin-mobile-empty">
                   <h2>Todo bien</h2>
@@ -1081,7 +1488,10 @@ export function CrmDashboard() {
                 </div>
               ) : (
                 snapshot.paidNoDownload24h.map((row) => (
-                  <article key={`m_paid_no_dl_${row.userId}_${row.paidAt}`} className="admin-mobile-card">
+                  <article
+                    key={`m_paid_no_dl_${row.userId}_${row.paidAt}`}
+                    className="admin-mobile-card"
+                  >
                     <header className="crm-mobile-card__head">
                       <div className="crm-mobile-card__copy">
                         <p className="crm-mobile-card__title">
@@ -1089,7 +1499,9 @@ export function CrmDashboard() {
                         </p>
                         <p className="crm-mobile-card__subtitle">{row.email}</p>
                       </div>
-                      <span className="crm-status-pill crm-status-pill--warn">24h</span>
+                      <span className="crm-status-pill crm-status-pill--warn">
+                        24h
+                      </span>
                     </header>
                     <dl className="crm-mobile-kv">
                       <div className="crm-mobile-kv__row">
@@ -1113,14 +1525,19 @@ export function CrmDashboard() {
                       <button
                         type="button"
                         className="crm-action-btn"
-                        disabled={actionBusyKey === `paid-onboard-${row.userId}`}
+                        disabled={
+                          actionBusyKey === `paid-onboard-${row.userId}`
+                        }
                         onClick={() =>
-                          void runAction(`paid-onboard-${row.userId}`, async () => {
-                            await trpc.analytics.adminAddManyChatTag.mutate({
-                              userId: row.userId,
-                              tagName: "AUTOMATION_PAID_NO_DOWNLOAD_24H",
-                            });
-                          })
+                          void runAction(
+                            `paid-onboard-${row.userId}`,
+                            async () => {
+                              await trpc.analytics.adminAddManyChatTag.mutate({
+                                userId: row.userId,
+                                tagName: "AUTOMATION_PAID_NO_DOWNLOAD_24H",
+                              });
+                            },
+                          )
                         }
                       >
                         Onboarding
@@ -1128,14 +1545,19 @@ export function CrmDashboard() {
                       <button
                         type="button"
                         className="crm-action-btn crm-action-btn--ghost"
-                        disabled={actionBusyKey === `paid-contact-${row.userId}`}
+                        disabled={
+                          actionBusyKey === `paid-contact-${row.userId}`
+                        }
                         onClick={() =>
-                          void runAction(`paid-contact-${row.userId}`, async () => {
-                            await trpc.analytics.adminMarkContacted.mutate({
-                              userId: row.userId,
-                              note: "paid_no_download_24h",
-                            });
-                          })
+                          void runAction(
+                            `paid-contact-${row.userId}`,
+                            async () => {
+                              await trpc.analytics.adminMarkContacted.mutate({
+                                userId: row.userId,
+                                note: "paid_no_download_24h",
+                              });
+                            },
+                          )
                         }
                       >
                         Contactado
@@ -1150,7 +1572,9 @@ export function CrmDashboard() {
               totalData={snapshot.paidNoDownload24hTotal}
               totalLoader={loading}
               startFilter={(_key, value) =>
-                setPaidNoDownloadPage(typeof value === "number" ? value : Number(value))
+                setPaidNoDownloadPage(
+                  typeof value === "number" ? value : Number(value),
+                )
               }
               currentPage={paidNoDownloadPage}
               limit={listLimit}
@@ -1160,10 +1584,18 @@ export function CrmDashboard() {
           <section className="crm-section">
             <div className="crm-section__title-row">
               <h2 className="crm-section__title">Cancelaciones recientes</h2>
-              <span className="crm-counter">{snapshot.recentCancellationsTotal.toLocaleString("es-MX")}</span>
+              <span className="crm-counter">
+                {snapshot.recentCancellationsTotal.toLocaleString("es-MX")}
+              </span>
             </div>
-            <p className="crm-section__hint">Con motivo y atribución (si existe).</p>
-            <div className="crm-table-wrap" tabIndex={0} aria-label="Tabla: cancelaciones recientes (desplazable)">
+            <p className="crm-section__hint">
+              Con motivo y atribución (si existe).
+            </p>
+            <div
+              className="crm-table-wrap"
+              tabIndex={0}
+              aria-label="Tabla: cancelaciones recientes (desplazable)"
+            >
               <table className="crm-table">
                 <thead>
                   <tr>
@@ -1193,14 +1625,19 @@ export function CrmDashboard() {
                         <button
                           type="button"
                           className="crm-action-btn"
-                          disabled={actionBusyKey === `cancel-offer-${row.userId}`}
+                          disabled={
+                            actionBusyKey === `cancel-offer-${row.userId}`
+                          }
                           onClick={() =>
-                            void runAction(`cancel-offer-${row.userId}`, async () => {
-                              await trpc.analytics.adminCreateOffer.mutate({
-                                userId: row.userId,
-                                percentOff: 10,
-                              });
-                            })
+                            void runAction(
+                              `cancel-offer-${row.userId}`,
+                              async () => {
+                                await trpc.analytics.adminCreateOffer.mutate({
+                                  userId: row.userId,
+                                  percentOff: 10,
+                                });
+                              },
+                            )
                           }
                         >
                           Cupón 10%
@@ -1208,14 +1645,19 @@ export function CrmDashboard() {
                         <button
                           type="button"
                           className="crm-action-btn crm-action-btn--ghost"
-                          disabled={actionBusyKey === `cancel-contact-${row.userId}`}
+                          disabled={
+                            actionBusyKey === `cancel-contact-${row.userId}`
+                          }
                           onClick={() =>
-                            void runAction(`cancel-contact-${row.userId}`, async () => {
-                              await trpc.analytics.adminMarkContacted.mutate({
-                                userId: row.userId,
-                                note: "recent_cancellation",
-                              });
-                            })
+                            void runAction(
+                              `cancel-contact-${row.userId}`,
+                              async () => {
+                                await trpc.analytics.adminMarkContacted.mutate({
+                                  userId: row.userId,
+                                  note: "recent_cancellation",
+                                });
+                              },
+                            )
                           }
                         >
                           Contactado
@@ -1233,7 +1675,10 @@ export function CrmDashboard() {
                 </tbody>
               </table>
             </div>
-            <div className="admin-mobile-list" aria-label="Cancelaciones recientes (móvil)">
+            <div
+              className="admin-mobile-list"
+              aria-label="Cancelaciones recientes (móvil)"
+            >
               {snapshot.recentCancellations.length === 0 ? (
                 <div className="admin-mobile-empty">
                   <h2>Sin cancelaciones</h2>
@@ -1241,7 +1686,10 @@ export function CrmDashboard() {
                 </div>
               ) : (
                 snapshot.recentCancellations.map((row) => (
-                  <article key={`m_cancel_${row.id}`} className="admin-mobile-card">
+                  <article
+                    key={`m_cancel_${row.id}`}
+                    className="admin-mobile-card"
+                  >
                     <header className="crm-mobile-card__head">
                       <div className="crm-mobile-card__copy">
                         <p className="crm-mobile-card__title">
@@ -1260,7 +1708,9 @@ export function CrmDashboard() {
                       </div>
                       <div className="crm-mobile-kv__row">
                         <dt>Motivo</dt>
-                        <dd className="is-wrap">{formatReasonCode(row.reasonCode)}</dd>
+                        <dd className="is-wrap">
+                          {formatReasonCode(row.reasonCode)}
+                        </dd>
                       </div>
                       <div className="crm-mobile-kv__row">
                         <dt>Campaña</dt>
@@ -1271,14 +1721,19 @@ export function CrmDashboard() {
                       <button
                         type="button"
                         className="crm-action-btn"
-                        disabled={actionBusyKey === `cancel-offer-${row.userId}`}
+                        disabled={
+                          actionBusyKey === `cancel-offer-${row.userId}`
+                        }
                         onClick={() =>
-                          void runAction(`cancel-offer-${row.userId}`, async () => {
-                            await trpc.analytics.adminCreateOffer.mutate({
-                              userId: row.userId,
-                              percentOff: 10,
-                            });
-                          })
+                          void runAction(
+                            `cancel-offer-${row.userId}`,
+                            async () => {
+                              await trpc.analytics.adminCreateOffer.mutate({
+                                userId: row.userId,
+                                percentOff: 10,
+                              });
+                            },
+                          )
                         }
                       >
                         Cupón 10%
@@ -1286,14 +1741,19 @@ export function CrmDashboard() {
                       <button
                         type="button"
                         className="crm-action-btn crm-action-btn--ghost"
-                        disabled={actionBusyKey === `cancel-contact-${row.userId}`}
+                        disabled={
+                          actionBusyKey === `cancel-contact-${row.userId}`
+                        }
                         onClick={() =>
-                          void runAction(`cancel-contact-${row.userId}`, async () => {
-                            await trpc.analytics.adminMarkContacted.mutate({
-                              userId: row.userId,
-                              note: "recent_cancellation",
-                            });
-                          })
+                          void runAction(
+                            `cancel-contact-${row.userId}`,
+                            async () => {
+                              await trpc.analytics.adminMarkContacted.mutate({
+                                userId: row.userId,
+                                note: "recent_cancellation",
+                              });
+                            },
+                          )
                         }
                       >
                         Contactado
@@ -1308,7 +1768,9 @@ export function CrmDashboard() {
               totalData={snapshot.recentCancellationsTotal}
               totalLoader={loading}
               startFilter={(_key, value) =>
-                setRecentCancellationsPage(typeof value === "number" ? value : Number(value))
+                setRecentCancellationsPage(
+                  typeof value === "number" ? value : Number(value),
+                )
               }
               currentPage={recentCancellationsPage}
               limit={listLimit}

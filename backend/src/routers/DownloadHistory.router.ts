@@ -10,6 +10,7 @@ import { fileService } from '../ftp';
 import { log } from '../server';
 import { router } from '../trpc';
 import { extendedAccountPostfix } from '../utils/constants';
+import { buildDemoPublicUrl } from '../utils/demoMedia';
 import { toUtcDay } from '../utils/downloadHistoryRollup';
 
 interface DownloadHistory {
@@ -566,7 +567,7 @@ export const downloadHistoryRouter = router({
       }
 
       return {
-        demo: `/demos/${encodedDemoFileName}`,
+        demo: buildDemoPublicUrl(encodedDemoFileName),
         kind: itemKind,
         name: path.basename(normalizedPath),
       };

@@ -18,7 +18,11 @@ import { ErrorModal, ErrorModalAction } from "../../components/Modals/ErrorModal
 import { SpeiModal } from "../../components/Modals/SpeiModal/SpeiModal";
 import { OxxoModal } from "../../components/Modals/OxxoModal/OxxoModal";
 import PayPalComponent from "../../components/PayPal/PayPalComponent";
-import { GROWTH_METRICS, trackGrowthMetric } from "../../utils/growthMetrics";
+import {
+  GROWTH_METRICS,
+  registerPendingCheckoutRecovery,
+  trackGrowthMetric,
+} from "../../utils/growthMetrics";
 import PaymentMethodLogos, { PaymentMethodId } from "../../components/PaymentMethodLogos/PaymentMethodLogos";
 import { useCookies } from "react-cookie";
 import { trackInitiateCheckout } from "../../utils/facebookPixel";
@@ -508,7 +512,6 @@ function Checkout() {
   const [planStatus, setPlanStatus] = useState<"idle" | "loading" | "loaded" | "not_found" | "error">("idle");
   const checkoutStartedRef = useRef(false);
   const checkoutHandedOffRef = useRef(false);
-  const abandonTrackedRef = useRef(false);
   const interactedRef = useRef(false);
   const skipPlanReloadRef = useRef(false);
   const checkoutCancelHandledRef = useRef(false);
@@ -860,22 +863,6 @@ function Checkout() {
     }
   }, [checkManyChat, location.pathname, location.search, navigate, requestedMethod]);
 
-  const trackCheckoutAbandon = useCallback(
-    (reason: string) => {
-      if (!interactedRef.current || checkoutHandedOffRef.current || abandonTrackedRef.current) return;
-      abandonTrackedRef.current = true;
-      trackManyChatConversion(MC_EVENTS.ABANDON_CHECKOUT);
-      trackGrowthMetric(GROWTH_METRICS.CHECKOUT_ABANDONED, {
-        reason,
-        method: selectedMethod,
-        planId: plan?.id ?? null,
-        currency: plan?.moneda?.toUpperCase() ?? null,
-        amount: Number(plan?.price) || null,
-      });
-    },
-    [plan?.id, plan?.moneda, selectedMethod]
-  );
-
   useEffect(() => {
     if (skipPlanReloadRef.current) {
       skipPlanReloadRef.current = false;
@@ -883,7 +870,6 @@ function Checkout() {
     }
     checkoutStartedRef.current = false;
     checkoutHandedOffRef.current = false;
-    abandonTrackedRef.current = false;
     interactedRef.current = false;
     closeErrorModal();
     setRedirecting(false);
@@ -923,17 +909,6 @@ function Checkout() {
     });
   }, [plan, checkManyChat]);
 
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      trackCheckoutAbandon("beforeunload");
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-      trackCheckoutAbandon("route_change");
-    };
-  }, [trackCheckoutAbandon]);
-
   const startStripeCheckout = useCallback(async () => {
     if (!priceId || !plan?.id) return;
     if (checkoutConsentMethods.includes("card") && !acceptRecurring) {
@@ -969,6 +944,12 @@ function Checkout() {
     const initiateCheckoutEventId = generateEventId("init_checkout");
     const purchaseEventId = generateEventId("purchase");
     trackInitiateCheckout({ value, currency, eventId: initiateCheckoutEventId });
+    registerPendingCheckoutRecovery({
+      method: "card",
+      planId: plan.id,
+      currency,
+      amount: value,
+    });
 
     try {
       window.sessionStorage.setItem(
@@ -1269,6 +1250,12 @@ function Checkout() {
     const currency = (plan.moneda?.toUpperCase() || "USD").toUpperCase();
     const initiateCheckoutEventId = generateEventId("init_checkout");
     trackInitiateCheckout({ value, currency, eventId: initiateCheckoutEventId });
+    registerPendingCheckoutRecovery({
+      method: "bbva",
+      planId: plan.id,
+      currency,
+      amount: value,
+    });
 
     try {
       window.sessionStorage.setItem(
@@ -1388,6 +1375,12 @@ function Checkout() {
       const value = Number(plan.price) || 0;
       const currency = (plan.moneda?.toUpperCase() || "USD").toUpperCase();
       const purchaseEventId = generateEventId("purchase");
+      registerPendingCheckoutRecovery({
+        method: "paypal",
+        planId: plan.id,
+        currency,
+        amount: value,
+      });
 
       try {
         await trpc.subscriptions.subscribeWithPaypal.mutate({

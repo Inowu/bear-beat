@@ -1,5 +1,5 @@
 import { trackCustomEvent } from "./facebookPixel";
-import { getAccessToken } from "./authStorage";
+import { getAccessToken, parseUserIdFromAuthToken } from "./authStorage";
 import { apiBaseUrl } from "./runtimeConfig";
 
 export const GROWTH_METRICS = {
@@ -104,6 +104,8 @@ const STORAGE_SESSION_ID = "bb.analytics.sessionId";
 const STORAGE_SESSION_TS = "bb.analytics.sessionTs";
 const STORAGE_ATTRIBUTION = "bb.analytics.attribution";
 const STORAGE_PENDING_QUEUE = "bb.analytics.pendingQueue";
+const STORAGE_IDENTIFIED_USER_ID = "bb.analytics.userId";
+const STORAGE_PENDING_CHECKOUT_RECOVERY = "bb.analytics.pendingCheckout";
 
 const SESSION_TTL_MS = 30 * 60 * 1000;
 const FLUSH_BATCH_SIZE = 20;
@@ -111,6 +113,27 @@ const FLUSH_DELAY_MS = 1200;
 const RETRY_DELAY_MS = 8000;
 const MAX_PERSISTED_EVENTS = 200;
 const TEST_UTM_CAMPAIGNS = new Set(["test", "template_preview"]);
+const CHECKOUT_ABANDON_WINDOW_MIN_MS = 10 * 60 * 1000;
+const CHECKOUT_ABANDON_WINDOW_MAX_MS = 30 * 60 * 1000;
+
+interface PendingCheckoutRecoveryState {
+  checkoutId: string;
+  startedAt: string;
+  sessionId: string;
+  visitorId: string;
+  userId: number | null;
+  planId: number | null;
+  method: string | null;
+  currency: string | null;
+  amount: number | null;
+}
+
+export interface PendingCheckoutRecoveryInput {
+  planId?: number | null;
+  method?: string | null;
+  currency?: string | null;
+  amount?: number | null;
+}
 
 const analyticsCollectUrl = `${apiBaseUrl}/api/analytics/collect`;
 
@@ -121,6 +144,9 @@ let queuedEvents: AnalyticsEventPayload[] = [];
 let lastPageViewFingerprint = "";
 let lastPageViewAt = 0;
 let analyticsRemoteDisabled = false;
+let pendingCheckoutRecoveryState: PendingCheckoutRecoveryState | null = null;
+let pendingCheckoutRecoveryTimer: number | null = null;
+let pendingCheckoutRecoveryInFlight = false;
 
 const eventCategoryMap: Record<GrowthMetricName, AnalyticsCategory> = {
   [GROWTH_METRICS.PAGE_VIEW]: "navigation",
@@ -170,44 +196,29 @@ const eventCategoryMap: Record<GrowthMetricName, AnalyticsCategory> = {
   [GROWTH_METRICS.WEB_VITAL_REPORTED]: "system",
 };
 
-const decodeJwtPayload = (token: string): unknown | null => {
-  const parts = token.split(".");
-  if (parts.length < 2) return null;
-  const payloadPart = parts[1];
-  if (!payloadPart) return null;
-
-  try {
-    const normalized = payloadPart.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = normalized.padEnd(
-      normalized.length + ((4 - (normalized.length % 4)) % 4),
-      "=",
-    );
-    const json = atob(padded);
-    return JSON.parse(json) as unknown;
-  } catch {
-    return null;
+const normalizePositiveUserId = (value: unknown): number | null => {
+  if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+    return Math.floor(value);
   }
-};
-
-const tryGetUserIdFromToken = (): number | null => {
-  if (typeof window === "undefined") return null;
-  const token = getAccessToken();
-  if (!token) return null;
-
-  const payload = decodeJwtPayload(token);
-  if (!payload || typeof payload !== "object") return null;
-
-  // Matches backend SessionUser shape (`id` at top-level).
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const candidate = (payload as any).id;
-  if (typeof candidate === "number" && Number.isFinite(candidate) && candidate > 0) {
-    return Math.floor(candidate);
-  }
-  if (typeof candidate === "string") {
-    const parsed = Number(candidate);
-    if (Number.isFinite(parsed) && parsed > 0) return Math.floor(parsed);
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return Math.floor(parsed);
+    }
   }
   return null;
+};
+
+const normalizePositiveInt = (value: unknown): number | null => {
+  const normalized = normalizePositiveUserId(value);
+  return normalized === null ? null : normalized;
+};
+
+const normalizeCurrencyCode = (value: unknown): string | null => {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim().toUpperCase();
+  if (!normalized) return null;
+  return normalized.slice(0, 8);
 };
 
 function safeStorageRead(
@@ -235,7 +246,10 @@ function safeStorageWrite(
   }
 }
 
-function safeStorageRemove(storage: Storage | null | undefined, key: string): void {
+function safeStorageRemove(
+  storage: Storage | null | undefined,
+  key: string,
+): void {
   if (!storage) return;
   try {
     storage.removeItem(key);
@@ -277,6 +291,200 @@ let memoryVisitorId: string | null = null;
 let memorySessionId: string | null = null;
 let memorySessionTs = 0;
 let memoryAttribution: AnalyticsAttribution | null = null;
+let memoryIdentifiedUserId: number | null = null;
+
+function readStoredIdentifiedUserId(): number | null {
+  if (typeof window === "undefined") return memoryIdentifiedUserId;
+  const localStorage = getSafeLocalStorage();
+  const raw = safeStorageRead(localStorage, STORAGE_IDENTIFIED_USER_ID);
+  const parsed = normalizePositiveUserId(raw);
+  if (parsed === null) return memoryIdentifiedUserId;
+  memoryIdentifiedUserId = parsed;
+  return parsed;
+}
+
+function persistIdentifiedUserId(userId: number | null): void {
+  if (typeof window !== "undefined") {
+    const localStorage = getSafeLocalStorage();
+    if (userId === null) {
+      safeStorageRemove(localStorage, STORAGE_IDENTIFIED_USER_ID);
+    } else {
+      safeStorageWrite(
+        localStorage,
+        STORAGE_IDENTIFIED_USER_ID,
+        String(userId),
+      );
+    }
+  }
+  memoryIdentifiedUserId = userId;
+}
+
+function resolveCurrentUserId(): number | null {
+  const token = getAccessToken();
+  const tokenUserId = parseUserIdFromAuthToken(token);
+  const normalizedTokenUserId = normalizePositiveUserId(tokenUserId);
+  if (normalizedTokenUserId !== null) {
+    if (memoryIdentifiedUserId !== normalizedTokenUserId) {
+      persistIdentifiedUserId(normalizedTokenUserId);
+    }
+    return normalizedTokenUserId;
+  }
+  if (!token) {
+    if (memoryIdentifiedUserId !== null) {
+      persistIdentifiedUserId(null);
+    }
+    return null;
+  }
+  return readStoredIdentifiedUserId();
+}
+
+function normalizePendingCheckoutRecoveryState(
+  raw: unknown,
+): PendingCheckoutRecoveryState | null {
+  if (!raw || typeof raw !== "object") return null;
+  const value = raw as Record<string, unknown>;
+  const checkoutId =
+    typeof value.checkoutId === "string" ? value.checkoutId.trim() : "";
+  const startedAt =
+    typeof value.startedAt === "string" ? value.startedAt.trim() : "";
+  if (!checkoutId || !startedAt || Number.isNaN(Date.parse(startedAt))) {
+    return null;
+  }
+
+  const sessionId =
+    typeof value.sessionId === "string" ? value.sessionId.trim() : "";
+  const visitorId =
+    typeof value.visitorId === "string" ? value.visitorId.trim() : "";
+  if (!sessionId || !visitorId) return null;
+
+  return {
+    checkoutId: checkoutId.slice(0, 80),
+    startedAt: new Date(startedAt).toISOString(),
+    sessionId: sessionId.slice(0, 80),
+    visitorId: visitorId.slice(0, 80),
+    userId: normalizePositiveInt(value.userId),
+    planId: normalizePositiveInt(value.planId),
+    method:
+      typeof value.method === "string" && value.method.trim()
+        ? value.method.trim().slice(0, 40)
+        : null,
+    currency: normalizeCurrencyCode(value.currency),
+    amount: isFiniteNumber(value.amount) ? value.amount : null,
+  };
+}
+
+function readPendingCheckoutRecoveryState(): PendingCheckoutRecoveryState | null {
+  if (pendingCheckoutRecoveryState) return pendingCheckoutRecoveryState;
+  if (typeof window === "undefined") return null;
+  const localStorage = getSafeLocalStorage();
+  const raw = safeStorageRead(localStorage, STORAGE_PENDING_CHECKOUT_RECOVERY);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    const normalized = normalizePendingCheckoutRecoveryState(parsed);
+    if (!normalized) {
+      safeStorageRemove(localStorage, STORAGE_PENDING_CHECKOUT_RECOVERY);
+      return null;
+    }
+    pendingCheckoutRecoveryState = normalized;
+    return normalized;
+  } catch {
+    safeStorageRemove(localStorage, STORAGE_PENDING_CHECKOUT_RECOVERY);
+    return null;
+  }
+}
+
+function persistPendingCheckoutRecoveryState(
+  state: PendingCheckoutRecoveryState | null,
+): void {
+  pendingCheckoutRecoveryState = state;
+  if (typeof window === "undefined") return;
+  const localStorage = getSafeLocalStorage();
+  if (!state) {
+    safeStorageRemove(localStorage, STORAGE_PENDING_CHECKOUT_RECOVERY);
+    return;
+  }
+  safeStorageWrite(
+    localStorage,
+    STORAGE_PENDING_CHECKOUT_RECOVERY,
+    JSON.stringify(state),
+  );
+}
+
+function clearPendingCheckoutRecoveryState(): void {
+  persistPendingCheckoutRecoveryState(null);
+  if (typeof window === "undefined") return;
+  if (pendingCheckoutRecoveryTimer !== null) {
+    window.clearTimeout(pendingCheckoutRecoveryTimer);
+    pendingCheckoutRecoveryTimer = null;
+  }
+}
+
+function getCheckoutAbandonReason(elapsedMs: number): string {
+  return elapsedMs <= CHECKOUT_ABANDON_WINDOW_MAX_MS
+    ? "no_payment_10_30m"
+    : "no_payment_over_30m";
+}
+
+function schedulePendingCheckoutRecoveryCheck(): void {
+  if (typeof window === "undefined") return;
+  if (pendingCheckoutRecoveryTimer !== null) {
+    window.clearTimeout(pendingCheckoutRecoveryTimer);
+    pendingCheckoutRecoveryTimer = null;
+  }
+  const state = readPendingCheckoutRecoveryState();
+  if (!state) return;
+  const startedAt = Date.parse(state.startedAt);
+  if (!Number.isFinite(startedAt)) {
+    clearPendingCheckoutRecoveryState();
+    return;
+  }
+
+  const elapsedMs = Date.now() - startedAt;
+  const delay =
+    elapsedMs >= CHECKOUT_ABANDON_WINDOW_MIN_MS
+      ? 500
+      : CHECKOUT_ABANDON_WINDOW_MIN_MS - elapsedMs + 500;
+
+  pendingCheckoutRecoveryTimer = window.setTimeout(() => {
+    pendingCheckoutRecoveryTimer = null;
+    evaluatePendingCheckoutRecovery();
+  }, Math.max(500, delay));
+}
+
+function evaluatePendingCheckoutRecovery(): void {
+  if (pendingCheckoutRecoveryInFlight) return;
+  pendingCheckoutRecoveryInFlight = true;
+
+  try {
+    const state = readPendingCheckoutRecoveryState();
+    if (!state) return;
+    const startedAt = Date.parse(state.startedAt);
+    if (!Number.isFinite(startedAt)) {
+      clearPendingCheckoutRecoveryState();
+      return;
+    }
+
+    const elapsedMs = Date.now() - startedAt;
+    if (elapsedMs < CHECKOUT_ABANDON_WINDOW_MIN_MS) {
+      schedulePendingCheckoutRecoveryCheck();
+      return;
+    }
+
+    clearPendingCheckoutRecoveryState();
+    trackGrowthMetric(GROWTH_METRICS.CHECKOUT_ABANDONED, {
+      reason: getCheckoutAbandonReason(elapsedMs),
+      method: state.method,
+      planId: state.planId,
+      currency: state.currency,
+      amount: state.amount,
+      source: "checkout_recovery",
+      flow: "inactivity_window_10_30m",
+    });
+  } finally {
+    pendingCheckoutRecoveryInFlight = false;
+  }
+}
 
 function getOrCreateVisitorId(): string {
   if (typeof window === "undefined") return "server";
@@ -338,7 +546,11 @@ function persistAttribution(attribution: AnalyticsAttribution | null): void {
     memoryAttribution = null;
     return;
   }
-  safeStorageWrite(localStorage, STORAGE_ATTRIBUTION, JSON.stringify(attribution));
+  safeStorageWrite(
+    localStorage,
+    STORAGE_ATTRIBUTION,
+    JSON.stringify(attribution),
+  );
   memoryAttribution = attribution;
 }
 
@@ -488,12 +700,17 @@ const getTrafficFlags = (
   eventPagePath: string | null,
 ): { isInternal: boolean; isTestCampaign: boolean } => {
   const section =
-    typeof payload.section === "string" ? payload.section.trim().toLowerCase() : null;
+    typeof payload.section === "string"
+      ? payload.section.trim().toLowerCase()
+      : null;
   const route =
-    typeof payload.route === "string" ? payload.route.trim().toLowerCase() : null;
+    typeof payload.route === "string"
+      ? payload.route.trim().toLowerCase()
+      : null;
   const explicitInternal = payload.isInternal === true;
   const currentPath =
-    typeof window !== "undefined" && typeof window.location?.pathname === "string"
+    typeof window !== "undefined" &&
+    typeof window.location?.pathname === "string"
       ? window.location.pathname
       : null;
   const campaign = normalizeCampaign(attribution?.campaign ?? null);
@@ -586,9 +803,7 @@ function buildAnalyticsEvent(
         : null;
 
   const pageUrl =
-    typeof window !== "undefined"
-      ? window.location.href.slice(0, 1000)
-      : null;
+    typeof window !== "undefined" ? window.location.href.slice(0, 1000) : null;
   const referrer =
     typeof document !== "undefined" && document.referrer
       ? document.referrer.slice(0, 1000)
@@ -606,7 +821,7 @@ function buildAnalyticsEvent(
     eventTs: new Date().toISOString(),
     sessionId: getOrCreateSessionId(),
     visitorId: getOrCreateVisitorId(),
-    userId: tryGetUserIdFromToken(),
+    userId: resolveCurrentUserId(),
     pagePath,
     pageUrl,
     referrer,
@@ -641,14 +856,45 @@ function persistPendingQueue(): void {
     return;
   }
   const trimmed = queuedEvents.slice(0, MAX_PERSISTED_EVENTS);
-  safeStorageWrite(localStorage, STORAGE_PENDING_QUEUE, JSON.stringify(trimmed));
+  safeStorageWrite(
+    localStorage,
+    STORAGE_PENDING_QUEUE,
+    JSON.stringify(trimmed),
+  );
+}
+
+function backfillPendingQueueUserId(
+  userId: number,
+  sessionId: string,
+  visitorId: string,
+): void {
+  loadPendingQueueFromStorage();
+  if (!queuedEvents.length) return;
+
+  let changed = false;
+  queuedEvents = queuedEvents.map((event) => {
+    if (event.userId !== null && event.userId !== undefined) return event;
+    if (event.sessionId !== sessionId && event.visitorId !== visitorId)
+      return event;
+    changed = true;
+    return {
+      ...event,
+      userId,
+    };
+  });
+
+  if (changed) {
+    persistPendingQueue();
+  }
 }
 
 function enqueueEvent(event: AnalyticsEventPayload): void {
   loadPendingQueueFromStorage();
   queuedEvents.push(event);
   if (queuedEvents.length > MAX_PERSISTED_EVENTS) {
-    queuedEvents = queuedEvents.slice(queuedEvents.length - MAX_PERSISTED_EVENTS);
+    queuedEvents = queuedEvents.slice(
+      queuedEvents.length - MAX_PERSISTED_EVENTS,
+    );
   }
   persistPendingQueue();
 }
@@ -768,11 +1014,72 @@ function ensureLifecycleListeners(): void {
   });
 }
 
+export interface GrowthIdentitySnapshot {
+  sessionId: string;
+  visitorId: string;
+  userId: number | null;
+}
+
+export function identifyGrowthUser(
+  userIdInput?: number | null,
+): GrowthIdentitySnapshot {
+  const sessionId = getOrCreateSessionId();
+  const visitorId = getOrCreateVisitorId();
+  const normalizedUserId = normalizePositiveUserId(userIdInput);
+  const resolvedUserId = normalizedUserId ?? resolveCurrentUserId();
+
+  if (resolvedUserId !== null) {
+    persistIdentifiedUserId(resolvedUserId);
+    backfillPendingQueueUserId(resolvedUserId, sessionId, visitorId);
+    if (queuedEvents.length) {
+      scheduleFlush(250);
+    }
+  }
+
+  return {
+    sessionId,
+    visitorId,
+    userId: resolvedUserId,
+  };
+}
+
+export function clearGrowthUserIdentity(): void {
+  persistIdentifiedUserId(null);
+}
+
+export function registerPendingCheckoutRecovery(
+  input: PendingCheckoutRecoveryInput = {},
+): void {
+  const state: PendingCheckoutRecoveryState = {
+    checkoutId: generateId("checkout"),
+    startedAt: new Date().toISOString(),
+    sessionId: getOrCreateSessionId(),
+    visitorId: getOrCreateVisitorId(),
+    userId: resolveCurrentUserId(),
+    planId: normalizePositiveInt(input.planId),
+    method:
+      typeof input.method === "string" && input.method.trim()
+        ? input.method.trim().slice(0, 40)
+        : null,
+    currency: normalizeCurrencyCode(input.currency),
+    amount: isFiniteNumber(input.amount) ? input.amount : null,
+  };
+
+  persistPendingCheckoutRecoveryState(state);
+  schedulePendingCheckoutRecoveryCheck();
+}
+
+export function markCheckoutPaymentSuccess(): void {
+  clearPendingCheckoutRecoveryState();
+}
+
 export function initGrowthMetrics(): void {
   if (typeof window === "undefined") return;
   captureAttributionFromLocation();
   ensureLifecycleListeners();
   loadPendingQueueFromStorage();
+  schedulePendingCheckoutRecoveryCheck();
+  evaluatePendingCheckoutRecovery();
   scheduleFlush(1800);
 }
 
@@ -785,6 +1092,16 @@ export function trackGrowthMetric(
   metric: GrowthMetricName,
   payload: Record<string, unknown> = {},
 ): void {
+  if (
+    metric === GROWTH_METRICS.CHECKOUT_SUCCESS ||
+    metric === GROWTH_METRICS.PAYMENT_SUCCESS ||
+    metric === GROWTH_METRICS.CHECKOUT_ABANDONED
+  ) {
+    clearPendingCheckoutRecoveryState();
+  } else {
+    evaluatePendingCheckoutRecovery();
+  }
+
   if (shouldSkipPageViewDuplicate(metric, payload)) return;
 
   const detail = {
@@ -816,6 +1133,7 @@ if (typeof window !== "undefined") {
   window.bbAnalyticsFlush = flushGrowthMetrics;
   window.bbAnalyticsStatus = () => {
     loadPendingQueueFromStorage();
+    const pendingCheckout = readPendingCheckoutRecoveryState();
     const localStorage = getSafeLocalStorage();
     const sessionStorage = getSafeSessionStorage();
     return {
@@ -823,8 +1141,12 @@ if (typeof window !== "undefined") {
       analyticsCollectUrl,
       remoteDisabled: analyticsRemoteDisabled,
       queuedEvents: queuedEvents.length,
-      visitorId: safeStorageRead(localStorage, STORAGE_VISITOR_ID) ?? memoryVisitorId,
-      sessionId: safeStorageRead(sessionStorage, STORAGE_SESSION_ID) ?? memorySessionId,
+      visitorId:
+        safeStorageRead(localStorage, STORAGE_VISITOR_ID) ?? memoryVisitorId,
+      sessionId:
+        safeStorageRead(sessionStorage, STORAGE_SESSION_ID) ?? memorySessionId,
+      userId: readStoredIdentifiedUserId(),
+      pendingCheckout,
       lastQueueSample: window.__bbGrowthQueue?.slice(-5) ?? [],
     };
   };

@@ -2,6 +2,7 @@ import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import {
   analyticsEventBatchSchema,
+  backfillAnalyticsUserIdentity,
   getAnalyticsBusinessMetrics,
   getAnalyticsCancellationReasons,
   getAnalyticsCrmDashboard,
@@ -80,12 +81,27 @@ const analyticsLiveSnapshotInputSchema = z
   })
   .optional();
 
+const analyticsIdentifyInputSchema = z
+  .object({
+    sessionId: z.string().max(80).optional().nullable(),
+    visitorId: z.string().max(80).optional().nullable(),
+    lookbackHours: z.number().int().min(1).max(72).optional(),
+  })
+  .refine(
+    (value) =>
+      Boolean(
+        `${value.sessionId ?? ''}`.trim() || `${value.visitorId ?? ''}`.trim(),
+      ),
+    { message: 'sessionId o visitorId son requeridos' },
+  );
+
 const analyticsCrmDashboardInputSchema = z
   .object({
     days: z.number().int().min(7).max(365).optional(),
     limit: z.number().int().min(10).max(100).optional(),
     recentCancellationsPage: z.number().int().min(0).max(5000).optional(),
     trialNoDownloadPage: z.number().int().min(0).max(5000).optional(),
+    paidNoDownload2hPage: z.number().int().min(0).max(5000).optional(),
     paidNoDownloadPage: z.number().int().min(0).max(5000).optional(),
   })
   .optional();
@@ -148,6 +164,38 @@ export const analyticsRouter = router({
         accepted: result.accepted,
       };
     }),
+  identifyAnalyticsUser: publicProcedure
+    .input(analyticsIdentifyInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      if (!process.env.DATABASE_URL) {
+        return {
+          updated: 0,
+          skipped: true,
+          reason: 'analytics-db-not-configured',
+        };
+      }
+
+      const userId = ctx.session?.user?.id ?? null;
+      if (!userId) {
+        throw new TRPCError({
+          code: 'UNAUTHORIZED',
+          message: 'Sesión requerida para identificar analytics',
+        });
+      }
+
+      const result = await backfillAnalyticsUserIdentity({
+        prisma: ctx.prisma,
+        userId,
+        sessionId: input.sessionId,
+        visitorId: input.visitorId,
+        lookbackHours: input.lookbackHours,
+      });
+
+      return {
+        updated: result.updated,
+        lookbackHours: result.lookbackHours,
+      };
+    }),
   getAnalyticsFunnelOverview: shieldedProcedure
     .input(analyticsRangeInputSchema)
     .query(async ({ ctx, input }) => {
@@ -175,7 +223,11 @@ export const analyticsRouter = router({
     .input(analyticsBusinessInputSchema)
     .query(async ({ ctx, input }) => {
       assertAdminRole(ctx.session?.user?.role);
-      return getAnalyticsBusinessMetrics(ctx.prisma, input?.days, input?.adSpend);
+      return getAnalyticsBusinessMetrics(
+        ctx.prisma,
+        input?.days,
+        input?.adSpend,
+      );
     }),
   getAnalyticsUxQuality: shieldedProcedure
     .input(analyticsUxInputSchema)
@@ -192,7 +244,12 @@ export const analyticsRouter = router({
     .input(analyticsTopEventsInputSchema)
     .query(async ({ ctx, input }) => {
       assertAdminRole(ctx.session?.user?.role);
-      return getAnalyticsTopEvents(ctx.prisma, input?.days, input?.limit, input?.page);
+      return getAnalyticsTopEvents(
+        ctx.prisma,
+        input?.days,
+        input?.limit,
+        input?.page,
+      );
     }),
   getAnalyticsAlerts: shieldedProcedure
     .input(analyticsAlertsInputSchema)
@@ -214,7 +271,12 @@ export const analyticsRouter = router({
     .input(analyticsLiveSnapshotInputSchema)
     .query(async ({ ctx, input }) => {
       assertAdminRole(ctx.session?.user?.role);
-      return getAnalyticsLiveSnapshot(ctx.prisma, input?.minutes, input?.limit, input?.page);
+      return getAnalyticsLiveSnapshot(
+        ctx.prisma,
+        input?.minutes,
+        input?.limit,
+        input?.page,
+      );
     }),
   getAnalyticsCrmDashboard: shieldedProcedure
     .input(analyticsCrmDashboardInputSchema)
@@ -223,6 +285,7 @@ export const analyticsRouter = router({
       return getAnalyticsCrmDashboard(ctx.prisma, input?.days, input?.limit, {
         recentCancellationsPage: input?.recentCancellationsPage,
         trialNoDownloadPage: input?.trialNoDownloadPage,
+        paidNoDownload2hPage: input?.paidNoDownload2hPage,
         paidNoDownloadPage: input?.paidNoDownloadPage,
       });
     }),
@@ -260,7 +323,10 @@ export const analyticsRouter = router({
         where: { id: input.userId },
       });
       if (!user) {
-        throw new TRPCError({ code: 'NOT_FOUND', message: 'Usuario no encontrado' });
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Usuario no encontrado',
+        });
       }
 
       await manyChat.addTagToUser(user, input.tagName);
@@ -290,7 +356,10 @@ export const analyticsRouter = router({
         where: { id: input.userId },
       });
       if (!user) {
-        throw new TRPCError({ code: 'NOT_FOUND', message: 'Usuario no encontrado' });
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Usuario no encontrado',
+        });
       }
 
       const expiresHours = input.expiresHours ?? 72;
@@ -309,10 +378,18 @@ export const analyticsRouter = router({
       try {
         const mcId = await manyChat.getManyChatId(user);
         if (mcId) {
-          manyChat.setCustomField(mcId, 'bb_offer_code', offer.couponCode ?? '').catch(() => {});
-          manyChat.setCustomField(mcId, 'bb_offer_pct', String(offer.percentOff)).catch(() => {});
           manyChat
-            .setCustomField(mcId, 'bb_offer_expires_at', expiresAt.toISOString())
+            .setCustomField(mcId, 'bb_offer_code', offer.couponCode ?? '')
+            .catch(() => {});
+          manyChat
+            .setCustomField(mcId, 'bb_offer_pct', String(offer.percentOff))
+            .catch(() => {});
+          manyChat
+            .setCustomField(
+              mcId,
+              'bb_offer_expires_at',
+              expiresAt.toISOString(),
+            )
             .catch(() => {});
         }
       } catch {
@@ -362,7 +439,10 @@ export const analyticsRouter = router({
         where: { id: input.userId },
       });
       if (!user) {
-        throw new TRPCError({ code: 'NOT_FOUND', message: 'Usuario no encontrado' });
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Usuario no encontrado',
+        });
       }
 
       await ctx.prisma.automationActionLog.create({

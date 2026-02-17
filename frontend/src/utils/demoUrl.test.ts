@@ -18,4 +18,10 @@ describe("demoUrl", () => {
       buildDemoPlaybackUrl("demos\\folder/track#demo.mp3", "https://thebearbeatapi.lat"),
     ).toBe("https://thebearbeatapi.lat/demos/folder/track%23demo.mp3");
   });
+
+  it("supports absolute CDN demo URLs", () => {
+    expect(
+      buildDemoPlaybackUrl("https://media.thebearbeat.com/demos/demo #1.mp4", "https://thebearbeatapi.lat"),
+    ).toBe("https://media.thebearbeat.com/demos/demo%20%231.mp4");
+  });
 });

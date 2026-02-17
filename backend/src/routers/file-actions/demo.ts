@@ -5,6 +5,7 @@ import { TRPCError } from '@trpc/server';
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
 import { fileService } from '../../ftp';
 import { log } from '../../server';
+import { buildDemoPublicUrl } from '../../utils/demoMedia';
 
 export const demo = shieldedProcedure
   .input(
@@ -39,7 +40,7 @@ export const demo = shieldedProcedure
 
     if (await fileService.exists(demoOutputPath)) {
       return {
-        demo: `/demos/${encodedDemoFileName}`,
+        demo: buildDemoPublicUrl(encodedDemoFileName),
       };
     }
 
@@ -56,7 +57,7 @@ export const demo = shieldedProcedure
     }
 
     return {
-      demo: `/demos/${encodedDemoFileName}`,
+      demo: buildDemoPublicUrl(encodedDemoFileName),
     };
   });
 

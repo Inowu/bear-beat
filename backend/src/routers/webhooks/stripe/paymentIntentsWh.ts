@@ -14,6 +14,7 @@ import { sendPlanActivatedEmail } from '../../../email';
 import { manyChat } from '../../../many-chat';
 import stripeInstance from '../../../stripe';
 import stripeOxxoInstance, { isStripeOxxoConfigured } from '../../../stripe/oxxo';
+import { ingestAnalyticsEvents } from '../../../analytics';
 import { ingestPaymentSuccessEvent } from '../../../analytics/paymentSuccess';
 
 const toPositiveInt = (value: unknown): number | null => {
@@ -21,6 +22,77 @@ const toPositiveInt = (value: unknown): number | null => {
   if (!Number.isFinite(n)) return null;
   const i = Math.trunc(n);
   return i > 0 ? i : null;
+};
+
+const toNullableString = (
+  value: unknown,
+  maxLength = 120,
+): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  if (!normalized) return null;
+  return normalized.slice(0, maxLength);
+};
+
+const resolveStripePaymentFailureContext = (
+  paymentIntent: Stripe.PaymentIntent,
+): {
+  reason: string;
+  declineCode: string | null;
+  stripeErrorType: string | null;
+  stripeErrorCode: string | null;
+  nextActionType: string | null;
+  requires3ds: boolean;
+  networkName: string | null;
+} => {
+  const lastError = paymentIntent.last_payment_error as
+    | Stripe.PaymentIntent.LastPaymentError
+    | null
+    | undefined;
+  const declineCode = toNullableString((lastError as any)?.decline_code, 80);
+  const stripeErrorType = toNullableString(lastError?.type, 80);
+  const stripeErrorCode = toNullableString(lastError?.code, 80);
+  const nextActionType = toNullableString((paymentIntent as any)?.next_action?.type, 80);
+  const networkName =
+    toNullableString((lastError as any)?.payment_method?.card?.network, 40)
+    ?? toNullableString(
+      (paymentIntent as any)?.charges?.data?.[0]?.payment_method_details?.card?.network,
+      40,
+    );
+
+  const requires3ds = Boolean(
+    nextActionType === 'use_stripe_sdk'
+      || stripeErrorCode === 'authentication_required'
+      || stripeErrorCode === 'payment_intent_authentication_failure'
+      || declineCode === 'authentication_required',
+  );
+
+  const isNetworkFailure = Boolean(
+    stripeErrorType === 'api_connection_error'
+      || stripeErrorCode === 'processing_error',
+  );
+
+  const reason = declineCode
+    ? `decline_${declineCode}`
+    : requires3ds
+      ? '3ds_authentication_required'
+      : isNetworkFailure
+        ? 'network_error'
+        : stripeErrorType
+          ? `stripe_${stripeErrorType}`
+          : stripeErrorCode
+            ? `stripe_code_${stripeErrorCode}`
+            : 'payment_intent_failed';
+
+  return {
+    reason,
+    declineCode,
+    stripeErrorType,
+    stripeErrorCode,
+    nextActionType,
+    requires3ds,
+    networkName,
+  };
 };
 
 export const stripeInvoiceWebhook = async (req: Request) => {
@@ -94,6 +166,52 @@ export const stripeInvoiceWebhook = async (req: Request) => {
       log.info('[STRIPE_WH] Payment intent failed', {
         eventId: payload.id,
       });
+      const failureContext = resolveStripePaymentFailureContext(resolvedPi);
+      const paymentCurrency =
+        typeof resolvedPi.currency === 'string'
+          ? resolvedPi.currency.toUpperCase()
+          : null;
+      const paymentAmount =
+        typeof resolvedPi.amount === 'number' && Number.isFinite(resolvedPi.amount)
+          ? Math.round((resolvedPi.amount / 100) * 100) / 100
+          : null;
+
+      const trackPaymentFailed = async (orderId: number | null, orderType: 'plan' | 'product' | 'unknown') => {
+        try {
+          await ingestAnalyticsEvents({
+            prisma,
+            events: [
+              {
+                eventId: `stripe:${payload.id}:payment_failed`.slice(0, 80),
+                eventName: 'payment_failed',
+                eventCategory: 'purchase',
+                eventTs: new Date().toISOString(),
+                userId: user.id,
+                currency: paymentCurrency,
+                amount: paymentAmount,
+                metadata: {
+                  provider: 'stripe',
+                  reason: failureContext.reason,
+                  orderId,
+                  orderType,
+                  stripePaymentIntentId: resolvedPi.id,
+                  decline_code: failureContext.declineCode,
+                  stripe_error_type: failureContext.stripeErrorType,
+                  stripe_error_code: failureContext.stripeErrorCode,
+                  stripe_next_action_type: failureContext.nextActionType,
+                  requires_3ds: failureContext.requires3ds,
+                  network: failureContext.networkName,
+                },
+              },
+            ],
+            sessionUserId: user.id,
+          });
+        } catch (e) {
+          log.debug('[STRIPE_WH] analytics payment_failed skipped (payment_intent)', {
+            error: e instanceof Error ? e.message : e,
+          });
+        }
+      };
 
       if (productOrderId) {
         const order = await prisma.product_orders.findFirst({
@@ -111,6 +229,7 @@ export const stripeInvoiceWebhook = async (req: Request) => {
           where: { id: order.id },
           data: { status: OrderStatus.FAILED },
         });
+        await trackPaymentFailed(order.id, 'product');
         return;
       }
 
@@ -138,9 +257,11 @@ export const stripeInvoiceWebhook = async (req: Request) => {
             error: e instanceof Error ? e.message : e,
           });
         }
+        await trackPaymentFailed(order.id, 'plan');
         return;
       }
 
+      await trackPaymentFailed(null, 'unknown');
       log.warn(
         '[STRIPE_WH] Payment intent without resolvable order id; no action taken',
         { eventId: payload.id },

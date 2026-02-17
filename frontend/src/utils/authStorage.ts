@@ -5,6 +5,10 @@ const REFRESH_TOKEN_KEY = "refreshToken";
 const ADMIN_ACCESS_BACKUP_KEY = "isAdminAccess";
 const STORAGE_UNAVAILABLE_METRIC = "auth_storage_unavailable";
 
+interface JwtPayloadWithId {
+  id?: unknown;
+}
+
 type StorageScope = "session" | "local";
 type StorageOperation = "access" | "read" | "write" | "remove";
 
@@ -15,6 +19,51 @@ export interface AdminAccessBackup {
 
 const memoryStore = new Map<string, string>();
 const storageWarningDedupe = new Set<string>();
+
+function decodeJwtPayload(token: string): JwtPayloadWithId | null {
+  const parts = token.split(".");
+  if (parts.length < 2) return null;
+  const payloadPart = parts[1];
+  if (!payloadPart || typeof atob !== "function") return null;
+
+  try {
+    const normalized = payloadPart.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(
+      normalized.length + ((4 - (normalized.length % 4)) % 4),
+      "=",
+    );
+    const payload = JSON.parse(atob(padded)) as unknown;
+    if (!payload || typeof payload !== "object") return null;
+    return payload as JwtPayloadWithId;
+  } catch {
+    return null;
+  }
+}
+
+export function parseUserIdFromAuthToken(
+  token: string | null | undefined,
+): number | null {
+  if (!token) return null;
+  const payload = decodeJwtPayload(token);
+  if (!payload) return null;
+
+  const candidate = payload.id;
+  if (
+    typeof candidate === "number" &&
+    Number.isFinite(candidate) &&
+    candidate > 0
+  ) {
+    return Math.floor(candidate);
+  }
+  if (typeof candidate === "string") {
+    const parsed = Number(candidate);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return Math.floor(parsed);
+    }
+  }
+
+  return null;
+}
 
 function reportStorageUnavailable(
   scope: StorageScope,
@@ -65,7 +114,11 @@ function getStorage(scope: StorageScope): Storage | null {
   }
 }
 
-function safeGet(storage: Storage | null, key: string, scope: StorageScope): string | null {
+function safeGet(
+  storage: Storage | null,
+  key: string,
+  scope: StorageScope,
+): string | null {
   if (!storage) return null;
   try {
     return storage.getItem(key);
@@ -91,7 +144,11 @@ function safeSet(
   }
 }
 
-function safeRemove(storage: Storage | null, key: string, scope: StorageScope): boolean {
+function safeRemove(
+  storage: Storage | null,
+  key: string,
+  scope: StorageScope,
+): boolean {
   if (!storage) return false;
   try {
     storage.removeItem(key);
@@ -148,7 +205,12 @@ export function setAuthTokens(token: string, refreshToken: string): void {
   memoryStore.set(ACCESS_TOKEN_KEY, token);
   memoryStore.set(REFRESH_TOKEN_KEY, refreshToken);
 
-  const tokenInSession = safeSet(sessionStorage, ACCESS_TOKEN_KEY, token, "session");
+  const tokenInSession = safeSet(
+    sessionStorage,
+    ACCESS_TOKEN_KEY,
+    token,
+    "session",
+  );
   const refreshInSession = safeSet(
     sessionStorage,
     REFRESH_TOKEN_KEY,
@@ -187,7 +249,12 @@ export function setAdminAccessBackup(backup: AdminAccessBackup): void {
   const localStorage = getStorage("local");
   memoryStore.set(ADMIN_ACCESS_BACKUP_KEY, raw);
 
-  const inSession = safeSet(sessionStorage, ADMIN_ACCESS_BACKUP_KEY, raw, "session");
+  const inSession = safeSet(
+    sessionStorage,
+    ADMIN_ACCESS_BACKUP_KEY,
+    raw,
+    "session",
+  );
   if (inSession) {
     safeRemove(localStorage, ADMIN_ACCESS_BACKUP_KEY, "local");
     return;

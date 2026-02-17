@@ -60,6 +60,19 @@ interface FunnelOverview {
     deltaPct: number;
     likelyCauses: string[];
   };
+  checkoutRecovery: {
+    abandonmentWindowMinMinutes: number;
+    abandonmentWindowMaxMinutes: number;
+    checkoutAttempts: number;
+    paidWithin30m: number;
+    abandonedNoPayment: number;
+    pendingUnder10m: number;
+    paymentFailedEvents: number;
+    topPaymentFailedReasons: Array<{
+      reasonCode: string;
+      total: number;
+    }>;
+  };
 }
 
 interface DailyPoint {
@@ -212,9 +225,26 @@ const CANCELLATION_REASON_LABELS: Record<string, string> = {
   admin_blocked: "Cancelación por admin (bloqueo)",
 };
 
+const PAYMENT_FAILURE_REASON_LABELS: Record<string, string> = {
+  "3ds_authentication_required": "3DS requerido",
+  "network_error": "Error de red",
+  "payment_intent_failed": "Intento de pago fallido",
+  "past_due": "Pago vencido",
+  "billing_subscription_payment_failed": "Fallo de cobro de suscripción",
+  "payment_sale_denied": "PayPal rechazó el cobro",
+  "incomplete_expired": "Intento expirado",
+  "order_expired": "Orden expirada",
+};
+
 function formatCancellationReason(code: string): string {
   const normalized = (code || "").trim();
   return CANCELLATION_REASON_LABELS[normalized] ?? normalized ?? "—";
+}
+
+function formatPaymentFailureReason(code: string): string {
+  const normalized = (code || "").trim();
+  if (!normalized) return "Desconocido";
+  return PAYMENT_FAILURE_REASON_LABELS[normalized] ?? normalized.replace(/_/g, " ");
 }
 
 function formatCompactNumber(value: number): string {
@@ -693,6 +723,60 @@ export function AnalyticsDashboard() {
                       <small style={{ display: "block", marginTop: 8, color: "var(--ad-text-muted)", fontWeight: 700 }}>
                         {funnel.paymentReconciliation.likelyCauses.join(" · ")}
                       </small>
+                    ) : null}
+                    <h3 style={{ marginTop: 20, marginBottom: 6 }}>Checkout recovery (10–30 min)</h3>
+                    <p style={{ marginTop: 0 }}>
+                      Ventana de abandono: {funnel.checkoutRecovery.abandonmentWindowMinMinutes}–
+                      {funnel.checkoutRecovery.abandonmentWindowMaxMinutes} min sin <code>payment_success</code>.
+                    </p>
+                    <div className="analytics-table-wrap" tabIndex={0} aria-label="Tabla: checkout recovery (desplazable)">
+                      <table>
+                        <tbody>
+                          <tr>
+                            <th>Checkouts analizados</th>
+                            <td>{funnel.checkoutRecovery.checkoutAttempts.toLocaleString("es-MX")}</td>
+                          </tr>
+                          <tr>
+                            <th>Pago dentro de 30 min</th>
+                            <td>{funnel.checkoutRecovery.paidWithin30m.toLocaleString("es-MX")}</td>
+                          </tr>
+                          <tr>
+                            <th>Sin pago (abandono)</th>
+                            <td>{funnel.checkoutRecovery.abandonedNoPayment.toLocaleString("es-MX")}</td>
+                          </tr>
+                          <tr>
+                            <th>Pendiente &lt;10 min</th>
+                            <td>{funnel.checkoutRecovery.pendingUnder10m.toLocaleString("es-MX")}</td>
+                          </tr>
+                          <tr>
+                            <th>Eventos payment_failed</th>
+                            <td>{funnel.checkoutRecovery.paymentFailedEvents.toLocaleString("es-MX")}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    {funnel.checkoutRecovery.topPaymentFailedReasons.length > 0 ? (
+                      <div style={{ marginTop: 10 }}>
+                        <strong style={{ display: "block", marginBottom: 6 }}>Razones de fallo más frecuentes</strong>
+                        <div className="analytics-table-wrap" tabIndex={0} aria-label="Tabla: razones de payment_failed (desplazable)">
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Razón</th>
+                                <th>Eventos</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {funnel.checkoutRecovery.topPaymentFailedReasons.map((item) => (
+                                <tr key={item.reasonCode}>
+                                  <td>{formatPaymentFailureReason(item.reasonCode)}</td>
+                                  <td>{item.total.toLocaleString("es-MX")}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
                     ) : null}
                   </section>
 
