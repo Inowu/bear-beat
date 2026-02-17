@@ -696,7 +696,7 @@ export default function PublicHome() {
   }, [pricingPlans.mxn, pricingPlans.usd]);
 
   return (
-    <div className="public-home">
+    <div className="public-home bb-marketing-page">
       <a className="home-skip" href="#home-main">
         Saltar al contenido
       </a>

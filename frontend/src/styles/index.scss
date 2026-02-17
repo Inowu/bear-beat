@@ -1451,6 +1451,58 @@ html[data-theme="light"] .main-layout-main-container :where(.card, .panel, .modu
   outline-offset: 2px;
 }
 
+.bb-marketing-page {
+  min-height: 100vh;
+  color: var(--ph-text-body);
+  overflow-x: clip;
+  background:
+    radial-gradient(900px 560px at 10% 0%, var(--bb-landing-spot-1), transparent 60%),
+    radial-gradient(860px 520px at 90% 10%, var(--bb-landing-spot-2), transparent 60%),
+    linear-gradient(180deg, color-mix(in srgb, var(--ph-bg) 96%, var(--ph-bg-soft) 4%) 0%, var(--ph-bg) 46%, var(--ph-bg) 100%);
+}
+
+.bb-marketing-container--narrow {
+  width: min(900px, calc(100% - 40px));
+  margin: 0 auto;
+}
+
+.bb-marketing-page :is(.bb-market-surface, .bb-market-card, .bb-hero-card, .bb-bento-card) {
+  transition: transform 170ms ease, border-color 170ms ease, box-shadow 220ms ease, background 220ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .bb-marketing-page :is(.bb-market-surface, .bb-market-card, .bb-hero-card, .bb-bento-card):hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--ph-accent) 32%, var(--ph-border));
+    box-shadow: var(--ph-shadow-card);
+  }
+}
+
+@media (max-width: 520px) {
+  .bb-marketing-container--narrow {
+    width: min(900px, calc(100% - 28px));
+  }
+}
+
+html[data-theme="light"] .bb-marketing-page {
+  background:
+    radial-gradient(940px 580px at 10% 0%, color-mix(in srgb, var(--ph-accent) 2.1%, transparent), transparent 64%),
+    radial-gradient(900px 540px at 90% 10%, color-mix(in srgb, var(--ph-accent) 1.7%, transparent), transparent 64%),
+    var(--ph-bg);
+}
+
+html[data-theme="light"] .bb-marketing-page :is(.bb-market-surface, .bb-market-card) {
+  border-color: color-mix(in srgb, var(--ph-border) 90%, transparent);
+  background: color-mix(in srgb, #ffffff 99%, var(--ph-bg-card));
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+html[data-theme="light"] .bb-marketing-page.bb-marketing-page--flat-cards :is(.bb-bento-card, .bb-hero-card) {
+  border-color: color-mix(in srgb, var(--ph-border) 92%, transparent);
+  background: color-mix(in srgb, #ffffff 99.2%, var(--ph-bg-card));
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.055);
+}
+
 .bb-market-surface,
 .bb-market-card {
   border-radius: 18px;
