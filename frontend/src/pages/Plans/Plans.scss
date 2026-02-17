@@ -1,11 +1,5 @@
 .plans2026 {
-  min-height: 100vh;
-  color: var(--ph-text-body);
-  overflow-x: hidden;
-  background:
-    radial-gradient(980px 560px at 10% 0%, var(--bb-landing-spot-1), transparent 62%),
-    radial-gradient(920px 540px at 90% 8%, var(--bb-landing-spot-2), transparent 62%),
-    var(--ph-bg);
+  overflow-x: clip;
 }
 
 .plans2026__main {
@@ -13,8 +7,6 @@
 }
 
 .plans2026__container {
-  width: min(900px, calc(100% - 40px));
-  margin: 0 auto;
   display: grid;
   gap: clamp(8px, 1.4vw, 16px);
 }
@@ -337,10 +329,6 @@
     padding: 10px 0 clamp(40px, 5vw, 68px);
   }
 
-  .plans2026__container {
-    width: min(900px, calc(100% - 28px));
-  }
-
   .plans2026__hero h1 {
     font-size: clamp(1.9rem, 6.8vw, 2.55rem);
   }
@@ -375,17 +363,4 @@
   .plans2026__benefit-text {
     font-size: 1.22rem;
   }
-}
-
-html[data-theme="light"] .plans2026 {
-  background:
-    radial-gradient(960px 560px at 10% 0%, color-mix(in srgb, var(--ph-accent) 2.1%, transparent), transparent 64%),
-    radial-gradient(920px 520px at 90% 8%, color-mix(in srgb, var(--ph-accent) 1.7%, transparent), transparent 64%),
-    var(--ph-bg);
-}
-
-html[data-theme="light"] .plans2026 :is(.bb-bento-card, .bb-hero-card) {
-  border-color: color-mix(in srgb, var(--ph-border) 92%, transparent);
-  background: color-mix(in srgb, #ffffff 99.2%, var(--ph-bg-card));
-  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.055);
 }

@@ -181,11 +181,11 @@ function Plans() {
   }, []);
 
   return (
-    <div className="plans2026">
+    <div className="plans2026 bb-marketing-page bb-marketing-page--flat-cards">
       <PublicTopNav loginFrom="/planes" />
 
       <section className="plans2026__main" aria-label="Planes y precios">
-        <div className="plans2026__container">
+        <div className="plans2026__container bb-marketing-container--narrow">
           <header className="plans2026__hero">
             <h1>Precio simple, catálogo gigante.</h1>
             <p className="plans2026__subtitle">
