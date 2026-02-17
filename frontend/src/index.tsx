@@ -364,6 +364,36 @@ const CSS_CHUNK_RE = /(?:\/static\/css\/.+\.css|\/assets\/.+\.css)/i;
 const SHELL_RELOAD_GUARD_KEY = "bb-shell-reload-guard";
 const CHUNK_RELOAD_GUARD_KEY = "bb-chunk-reload-guard";
 const CSS_CHUNK_RELOAD_GUARD_KEY = "bb-css-chunk-reload-guard";
+const runtimeSessionFallback = new Map<string, string>();
+
+function safeRuntimeSessionGet(key: string): string | null {
+  if (typeof window === "undefined") return runtimeSessionFallback.get(key) ?? null;
+  try {
+    return window.sessionStorage.getItem(key);
+  } catch {
+    return runtimeSessionFallback.get(key) ?? null;
+  }
+}
+
+function safeRuntimeSessionSet(key: string, value: string): void {
+  runtimeSessionFallback.set(key, value);
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(key, value);
+  } catch {
+    // noop
+  }
+}
+
+function safeRuntimeSessionRemove(key: string): void {
+  runtimeSessionFallback.delete(key);
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.removeItem(key);
+  } catch {
+    // noop
+  }
+}
 
 function readMainBundleHash(source: string | null | undefined): string | null {
   if (!source) return null;
@@ -406,8 +436,27 @@ function isChunkLoadError(reason: unknown): boolean {
     normalized.includes("chunkloaderror") ||
     normalized.includes("loading chunk") ||
     normalized.includes("css chunk load failed") ||
-    normalized.includes("failed to fetch dynamically imported module")
+    normalized.includes("failed to fetch dynamically imported module") ||
+    normalized.includes("importing a module script failed") ||
+    normalized.includes("text/html") ||
+    normalized.includes("mime type") ||
+    normalized.includes("unexpected token '<'")
   );
+}
+
+function unregisterLegacyServiceWorkers() {
+  if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
+  navigator.serviceWorker
+    .getRegistrations()
+    .then((registrations) => {
+      if (!registrations.length) return;
+      registrations.forEach((registration) => {
+        void registration.unregister();
+      });
+    })
+    .catch(() => {
+      // noop
+    });
 }
 
 function installRuntimeStabilityGuards() {
@@ -428,14 +477,14 @@ function installRuntimeStabilityGuards() {
       const currentHash = getCurrentMainBundleHash();
       const publishedHash = await getPublishedMainBundleHash();
       if (!currentHash || !publishedHash || currentHash === publishedHash) {
-        window.sessionStorage.removeItem(SHELL_RELOAD_GUARD_KEY);
+        safeRuntimeSessionRemove(SHELL_RELOAD_GUARD_KEY);
         return;
       }
 
       const guardValue = `${currentHash}->${publishedHash}`;
-      if (window.sessionStorage.getItem(SHELL_RELOAD_GUARD_KEY) === guardValue) return;
+      if (safeRuntimeSessionGet(SHELL_RELOAD_GUARD_KEY) === guardValue) return;
 
-      window.sessionStorage.setItem(SHELL_RELOAD_GUARD_KEY, guardValue);
+      safeRuntimeSessionSet(SHELL_RELOAD_GUARD_KEY, guardValue);
       window.location.reload();
     } finally {
       shellCheckInFlight = false;
@@ -445,8 +494,8 @@ function installRuntimeStabilityGuards() {
   const recoverChunkLoad = (reason: unknown) => {
     if (!isChunkLoadError(reason)) return;
     const guardValue = window.location.pathname + window.location.search;
-    if (window.sessionStorage.getItem(CHUNK_RELOAD_GUARD_KEY) === guardValue) return;
-    window.sessionStorage.setItem(CHUNK_RELOAD_GUARD_KEY, guardValue);
+    if (safeRuntimeSessionGet(CHUNK_RELOAD_GUARD_KEY) === guardValue) return;
+    safeRuntimeSessionSet(CHUNK_RELOAD_GUARD_KEY, guardValue);
     window.location.reload();
   };
 
@@ -461,8 +510,8 @@ function installRuntimeStabilityGuards() {
     if (!looksLikeCssChunkError && !looksLikeRuntimeStylesheet) return;
 
     const guardValue = href || `${window.location.pathname}${window.location.search}`;
-    if (window.sessionStorage.getItem(CSS_CHUNK_RELOAD_GUARD_KEY) === guardValue) return;
-    window.sessionStorage.setItem(CSS_CHUNK_RELOAD_GUARD_KEY, guardValue);
+    if (safeRuntimeSessionGet(CSS_CHUNK_RELOAD_GUARD_KEY) === guardValue) return;
+    safeRuntimeSessionSet(CSS_CHUNK_RELOAD_GUARD_KEY, guardValue);
     window.location.reload();
   };
 
@@ -520,6 +569,7 @@ function installRuntimeStabilityGuards() {
   }, 30000);
 }
 
+unregisterLegacyServiceWorkers();
 installRuntimeStabilityGuards();
 
 // Ensure `_fbp/_fbc` exist early so checkout + server-side CAPI can always attach attribution,

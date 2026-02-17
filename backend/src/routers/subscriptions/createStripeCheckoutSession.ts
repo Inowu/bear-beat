@@ -327,16 +327,43 @@ export const createStripeCheckoutSession = shieldedProcedure
       const trimmed = raw.trim();
       return trimmed ? trimmed.slice(0, maxLen) : undefined;
     };
+    const getUrlAttribution = (value: string | undefined) => {
+      if (!value) return {};
+      try {
+        const parsed = new URL(value);
+        const pick = (key: string, maxLen: number) =>
+          safeMetaValue(parsed.searchParams.get(key), maxLen);
+        return {
+          source: pick('utm_source', 120),
+          medium: pick('utm_medium', 120),
+          campaign: pick('utm_campaign', 180),
+          term: pick('utm_term', 180),
+          content: pick('utm_content', 180),
+          fbclid: pick('fbclid', 255),
+          gclid: pick('gclid', 255),
+        };
+      } catch {
+        return {};
+      }
+    };
 
     const subscriptionMarketingMetadata: Record<string, string> = {};
     const metaFbp = safeMetaValue(fbp);
     const metaFbc = safeMetaValue(fbc);
     const metaPurchaseEventId = safeMetaValue(purchaseEventId, 120);
     const metaSourceUrl = safeMetaValue(url ? sanitizeTrackingUrl(url, 480) : '', 480);
+    const urlAttribution = getUrlAttribution(url);
     if (metaFbp) subscriptionMarketingMetadata.bb_fbp = metaFbp;
     if (metaFbc) subscriptionMarketingMetadata.bb_fbc = metaFbc;
     if (metaPurchaseEventId) subscriptionMarketingMetadata.bb_purchase_event_id = metaPurchaseEventId;
     if (metaSourceUrl) subscriptionMarketingMetadata.bb_source_url = metaSourceUrl;
+    if (urlAttribution.source) subscriptionMarketingMetadata.bb_utm_source = urlAttribution.source;
+    if (urlAttribution.medium) subscriptionMarketingMetadata.bb_utm_medium = urlAttribution.medium;
+    if (urlAttribution.campaign) subscriptionMarketingMetadata.bb_utm_campaign = urlAttribution.campaign;
+    if (urlAttribution.term) subscriptionMarketingMetadata.bb_utm_term = urlAttribution.term;
+    if (urlAttribution.content) subscriptionMarketingMetadata.bb_utm_content = urlAttribution.content;
+    if (urlAttribution.fbclid) subscriptionMarketingMetadata.bb_fbclid = urlAttribution.fbclid;
+    if (urlAttribution.gclid) subscriptionMarketingMetadata.bb_gclid = urlAttribution.gclid;
 
     const createSession = async (withDiscount: boolean) =>
       stripeInstance.checkout.sessions.create(

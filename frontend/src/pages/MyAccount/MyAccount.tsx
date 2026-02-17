@@ -9,6 +9,7 @@ import {
   SuccessModal,
 } from "../../components/Modals";
 import { Elements } from "@stripe/react-stripe-js";
+import type { Stripe } from "@stripe/stripe-js";
 import {
   CreditCard,
   Server,
@@ -26,10 +27,9 @@ import amexLogo from "../../assets/images/cards/express.png";
 import { getCompleted, transformBiteToGb } from "../../functions/functions";
 import { IOrders, IQuota, IFtpAccount } from "interfaces/User";
 import { Link } from "react-router-dom";
-import { loadStripe } from "@stripe/stripe-js";
 import { saveAs } from "file-saver";
 import { Spinner } from "../../components/Spinner/Spinner";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useUserContext } from "../../contexts/UserContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { getStripeAppearance } from "../../utils/stripeAppearance";
@@ -37,13 +37,10 @@ import trpc from "../../api";
 
 import { GROWTH_METRICS, getGrowthAttribution, trackGrowthMetric } from "../../utils/growthMetrics";
 import { formatDateShort, formatInt } from "../../utils/format";
-
-const stripeKey =
-  process.env.REACT_APP_ENVIRONMENT === "development"
-    ? (process.env.REACT_APP_STRIPE_TEST_KEY as string)
-    : (process.env.REACT_APP_STRIPE_KEY as string);
-
-const stripePromise = loadStripe(stripeKey);
+import {
+  ensureStripeReady,
+  getStripeLoadFailureReason,
+} from "../../utils/stripeLoader";
 
 function MyAccount() {
   const { theme } = useTheme();
@@ -83,13 +80,55 @@ function MyAccount() {
   const [emailPrefsLoading, setEmailPrefsLoading] = useState(false);
   const [emailPrefsSaving, setEmailPrefsSaving] = useState(false);
   const [emailPrefsNotice, setEmailPrefsNotice] = useState<string | null>(null);
+  const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
+  const stripeWarmupRef = useRef<Promise<boolean> | null>(null);
 
   const closeCondition = () => setShowCondition(false);
   const openCondition = () => setShowCondition(true);
   const closeSuccess = () => setShowSuccess(false);
   const closeError = () => setShowError(false);
   const closePlan = () => setShowPlan(false);
-  const openPlan = () => setShowPlan(true);
+  const ensureStripeForSurface = async (
+    surface: "my_account_add_card" | "my_account_gb_topup",
+  ): Promise<boolean> => {
+    if (stripePromise) return true;
+    if (stripeWarmupRef.current) return stripeWarmupRef.current;
+
+    const warmup = (async () => {
+      try {
+        const stripe = await ensureStripeReady({ timeoutMs: 4500 });
+        setStripePromise(stripe.stripePromise);
+        return true;
+      } catch (error) {
+        trackGrowthMetric(GROWTH_METRICS.CHECKOUT_ERROR, {
+          method: "card",
+          reason: "stripe_js_load_failed",
+          errorCode: getStripeLoadFailureReason(error),
+          surface,
+        });
+        setErrorMessage(
+          "No cargó el pago con tarjeta. Reintenta para abrir el método de pago.",
+        );
+        setShowError(true);
+        return false;
+      } finally {
+        stripeWarmupRef.current = null;
+      }
+    })();
+
+    stripeWarmupRef.current = warmup;
+    return warmup;
+  };
+  const openPlan = async () => {
+    const ready = await ensureStripeForSurface("my_account_gb_topup");
+    if (!ready) return;
+    setShowPlan(true);
+  };
+  const openPaymentMethodModal = async () => {
+    const ready = await ensureStripeForSurface("my_account_add_card");
+    if (!ready) return;
+    setShowPaymentMethod(true);
+  };
 
   const startCancel = () => {
     setShowCancelReasonModal(true);
@@ -179,7 +218,7 @@ function MyAccount() {
 
         // Modal de recarga: solo cuando ya no quedan GB (regular + extra).
         if (currentUser?.hasActiveSubscription && regularRemaining <= BigInt(0) && extendedRemaining <= BigInt(0)) {
-          openPlan();
+          void openPlan();
         }
         setQuota(quota);
       } catch (error) {
@@ -513,7 +552,7 @@ function MyAccount() {
                   <p className="ma-storage-amount">
                     Te quedan: {formatInt(remainingRegularGb)} GB este ciclo · GB extra disponibles: {formatInt(remainingExtendedGb)} GB
                   </p>
-                  <button type="button" onClick={openPlan} className="ma-btn ma-btn-soft">
+                  <button type="button" onClick={() => void openPlan()} className="ma-btn ma-btn-soft">
                     Recargar GB extra
                   </button>
                 </>
@@ -714,7 +753,7 @@ function MyAccount() {
               ))}
               <button
                 type="button"
-                onClick={() => setShowPaymentMethod(!showPaymentMethod)}
+                onClick={() => void openPaymentMethodModal()}
                 className="ma-add-card"
               >
                 <CreditCard size={20} />
@@ -811,14 +850,16 @@ function MyAccount() {
         message={successMessage}
         title={successTitle}
       />
-      <Elements stripe={stripePromise} options={stripeOptions}>
-        <PaymentMethodModal
-          show={showPaymentMethod}
-          onHide={handlePaymentMethod}
-          message=""
-          title="Ingresa una nueva tarjeta"
-        />
-      </Elements>
+      {stripePromise && (
+        <Elements stripe={stripePromise} options={stripeOptions}>
+          <PaymentMethodModal
+            show={showPaymentMethod}
+            onHide={handlePaymentMethod}
+            message=""
+            title="Ingresa una nueva tarjeta"
+          />
+        </Elements>
+      )}
       <ConditionModal
         title={conditionTitle}
         message={conditionMessage}
@@ -841,19 +882,21 @@ function MyAccount() {
         }}
         onConfirm={({ reasonCode, reasonText }) => finishSubscription(reasonCode, reasonText)}
       />
-      <Elements stripe={stripePromise} options={stripeOptions}>
-        <PlansModal
-          show={showPlan}
-          onHide={closePlan}
-          dataModals={{
-            setShowError: setShowError,
-            setShowSuccess: setShowSuccess,
-            setSuccessMessage: setSuccessMessage,
-            setErrorMessage: setErrorMessage,
-            setSuccessTitle: setSuccessTitle,
-          }}
-        />
-      </Elements>
+      {stripePromise && (
+        <Elements stripe={stripePromise} options={stripeOptions}>
+          <PlansModal
+            show={showPlan}
+            onHide={closePlan}
+            dataModals={{
+              setShowError: setShowError,
+              setShowSuccess: setShowSuccess,
+              setSuccessMessage: setSuccessMessage,
+              setErrorMessage: setErrorMessage,
+              setSuccessTitle: setSuccessTitle,
+            }}
+          />
+        </Elements>
+      )}
     </div>
   );
 }

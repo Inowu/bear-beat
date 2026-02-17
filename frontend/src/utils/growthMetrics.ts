@@ -9,6 +9,7 @@ export const GROWTH_METRICS = {
   CTA_SECONDARY_CLICK: "cta_secondary_click",
   CTA_CLICK: "cta_click",
   VIEW_DEMO_CLICK: "view_demo_click",
+  DEMO_PLAY_STARTED: "demo_play_started",
   PRICING_VIEW: "pricing_view",
   FAQ_EXPAND: "faq_expand",
   FORM_SUBMIT: "form_submit",
@@ -109,6 +110,7 @@ const FLUSH_BATCH_SIZE = 20;
 const FLUSH_DELAY_MS = 1200;
 const RETRY_DELAY_MS = 8000;
 const MAX_PERSISTED_EVENTS = 200;
+const TEST_UTM_CAMPAIGNS = new Set(["test", "template_preview"]);
 
 const analyticsCollectUrl = `${apiBaseUrl}/api/analytics/collect`;
 
@@ -127,6 +129,7 @@ const eventCategoryMap: Record<GrowthMetricName, AnalyticsCategory> = {
   [GROWTH_METRICS.CTA_SECONDARY_CLICK]: "acquisition",
   [GROWTH_METRICS.CTA_CLICK]: "acquisition",
   [GROWTH_METRICS.VIEW_DEMO_CLICK]: "engagement",
+  [GROWTH_METRICS.DEMO_PLAY_STARTED]: "engagement",
   [GROWTH_METRICS.PRICING_VIEW]: "engagement",
   [GROWTH_METRICS.FAQ_EXPAND]: "engagement",
   [GROWTH_METRICS.FORM_SUBMIT]: "engagement",
@@ -469,6 +472,44 @@ const ALLOWED_PAYLOAD_KEYS = new Set<string>([
 const MAX_METADATA_STRING_LEN_DEFAULT = 240;
 const MAX_METADATA_STRING_LEN_REASON = 500;
 
+const normalizeCampaign = (value: string | null | undefined): string | null => {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim().toLowerCase();
+  return normalized || null;
+};
+
+const isAdminPath = (value: string | null | undefined): boolean =>
+  typeof value === "string" &&
+  (value === "/admin" || value.startsWith("/admin/"));
+
+const getTrafficFlags = (
+  payload: Record<string, unknown>,
+  attribution: AnalyticsAttribution | null,
+  eventPagePath: string | null,
+): { isInternal: boolean; isTestCampaign: boolean } => {
+  const section =
+    typeof payload.section === "string" ? payload.section.trim().toLowerCase() : null;
+  const route =
+    typeof payload.route === "string" ? payload.route.trim().toLowerCase() : null;
+  const explicitInternal = payload.isInternal === true;
+  const currentPath =
+    typeof window !== "undefined" && typeof window.location?.pathname === "string"
+      ? window.location.pathname
+      : null;
+  const campaign = normalizeCampaign(attribution?.campaign ?? null);
+  const isTestCampaign = campaign !== null && TEST_UTM_CAMPAIGNS.has(campaign);
+
+  const isInternal =
+    explicitInternal ||
+    section === "admin" ||
+    route === "admin" ||
+    isAdminPath(eventPagePath) ||
+    isAdminPath(currentPath) ||
+    isTestCampaign;
+
+  return { isInternal, isTestCampaign };
+};
+
 function sanitizeMetadataValue(key: string, value: unknown): unknown {
   if (value === null || value === undefined) return null;
   if (typeof value === "number") return Number.isFinite(value) ? value : null;
@@ -506,11 +547,19 @@ function sanitizePayload(
 function buildMetadata(
   metric: GrowthMetricName,
   payload: Record<string, unknown>,
+  attribution: AnalyticsAttribution | null,
+  pagePath: string | null,
 ): Record<string, unknown> {
   const metadata: Record<string, unknown> = {
     metric,
     ...sanitizePayload(metric, payload),
   };
+
+  const trafficFlags = getTrafficFlags(payload, attribution, pagePath);
+  metadata.isInternal = trafficFlags.isInternal;
+  metadata.is_internal = trafficFlags.isInternal;
+  metadata.isTestCampaign = trafficFlags.isTestCampaign;
+  metadata.trafficClass = trafficFlags.isInternal ? "internal" : "external";
 
   if (typeof window !== "undefined") {
     metadata.language = window.navigator.language;
@@ -564,7 +613,7 @@ function buildAnalyticsEvent(
     attribution,
     currency,
     amount,
-    metadata: buildMetadata(metric, payload),
+    metadata: buildMetadata(metric, payload, attribution, pagePath),
   };
 }
 

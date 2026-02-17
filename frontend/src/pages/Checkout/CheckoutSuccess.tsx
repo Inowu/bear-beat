@@ -190,15 +190,6 @@ function CheckoutSuccess() {
       trackManyChatConversion(MC_EVENTS.PAYMENT_SUCCESS);
       if (value > 0) trackManyChatPurchase(MC_EVENTS.PAYMENT_SUCCESS, value, currency);
 
-      // Analytics interno
-      trackGrowthMetric(GROWTH_METRICS.PAYMENT_SUCCESS, {
-        sessionId: sessionId ?? null,
-        planId: typeof pending?.planId === "number" ? pending.planId : null,
-        amount: value,
-        value,
-        currency,
-        eventId,
-      });
       trackGrowthMetric(GROWTH_METRICS.CHECKOUT_SUCCESS, {
         sessionId: sessionId ?? null,
         planId: typeof pending?.planId === "number" ? pending.planId : null,

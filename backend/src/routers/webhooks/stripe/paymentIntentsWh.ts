@@ -14,6 +14,7 @@ import { sendPlanActivatedEmail } from '../../../email';
 import { manyChat } from '../../../many-chat';
 import stripeInstance from '../../../stripe';
 import stripeOxxoInstance, { isStripeOxxoConfigured } from '../../../stripe/oxxo';
+import { ingestPaymentSuccessEvent } from '../../../analytics/paymentSuccess';
 
 const toPositiveInt = (value: unknown): number | null => {
   const n = typeof value === 'number' ? value : Number(value);
@@ -219,6 +220,31 @@ export const stripeInvoiceWebhook = async (req: Request) => {
         } catch (e) {
           log.error('[STRIPE_WH] Plan activated email failed (non-blocking)', {
             errorType: e instanceof Error ? e.name : typeof e,
+          });
+        }
+
+        try {
+          await ingestPaymentSuccessEvent({
+            prisma,
+            provider:
+              order.payment_method === PaymentService.STRIPE_OXXO
+                ? 'stripe_oxxo'
+                : 'stripe',
+            providerEventId: payload.id,
+            userId: user.id,
+            orderId: order.id,
+            planId: order.plan_id ?? null,
+            amount: Number(order.total_price) || 0,
+            currency: plan.moneda?.toUpperCase?.() ?? null,
+            isRenewal: false,
+            eventTs: new Date(),
+            metadata: {
+              stripePaymentIntentId: resolvedPi.id,
+            },
+          });
+        } catch (e) {
+          log.debug('[STRIPE_WH] analytics payment_success skipped (payment_intent)', {
+            error: e instanceof Error ? e.message : e,
           });
         }
 

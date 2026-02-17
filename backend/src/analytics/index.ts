@@ -7,6 +7,31 @@ const DEFAULT_RANGE_DAYS = 30;
 const DEFAULT_ATTRIBUTION_LIMIT = 12;
 const MAX_ATTRIBUTION_LIMIT = 100;
 const SESSION_INACTIVITY_MINUTES = 30;
+const ANALYTICS_EXCLUDED_TEST_CAMPAIGNS = ['test', 'template_preview'];
+
+const ANALYTICS_PUBLIC_TRAFFIC_FILTER_SQL = Prisma.sql`
+  AND NOT (
+    LOWER(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(metadata_json, '$.isInternal')), 'false')) = 'true'
+    OR LOWER(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(metadata_json, '$.is_internal')), 'false')) = 'true'
+    OR page_path = '/admin'
+    OR page_path LIKE '/admin/%'
+  )
+  AND LOWER(TRIM(COALESCE(utm_campaign, ''))) NOT IN (${Prisma.join(
+    ANALYTICS_EXCLUDED_TEST_CAMPAIGNS,
+  )})
+`;
+
+const ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL = Prisma.sql`
+  AND NOT (
+    LOWER(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.isInternal')), 'false')) = 'true'
+    OR LOWER(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.is_internal')), 'false')) = 'true'
+    OR ae.page_path = '/admin'
+    OR ae.page_path LIKE '/admin/%'
+  )
+  AND LOWER(TRIM(COALESCE(ae.utm_campaign, ''))) NOT IN (${Prisma.join(
+    ANALYTICS_EXCLUDED_TEST_CAMPAIGNS,
+  )})
+`;
 
 const analyticsEventCategorySchema = z.enum([
   'navigation',
@@ -93,6 +118,9 @@ interface AnalyticsFunnelOverview {
     registrations: number;
     checkoutStarted: number;
     eventPayments: number;
+    paymentSuccessEvents: number;
+    paymentSuccessRenewals: number;
+    paymentSuccessWithoutOrderId: number;
     paidOrders: number;
     paidUsers: number;
     grossRevenue: number;
@@ -109,6 +137,13 @@ interface AnalyticsFunnelOverview {
     visitorToPaidPct: number;
     activationD1Pct: number;
     retentionD30Pct: number;
+  };
+  paymentReconciliation: {
+    paidOrdersDb: number;
+    paymentSuccessEvents: number;
+    delta: number;
+    deltaPct: number;
+    likelyCauses: string[];
   };
 }
 
@@ -676,6 +711,9 @@ export const getAnalyticsFunnelOverview = async (
         registrations: 0,
         checkoutStarted: 0,
         eventPayments: 0,
+        paymentSuccessEvents: 0,
+        paymentSuccessRenewals: 0,
+        paymentSuccessWithoutOrderId: 0,
         paidOrders: 0,
         paidUsers: 0,
         grossRevenue: 0,
@@ -693,6 +731,13 @@ export const getAnalyticsFunnelOverview = async (
         activationD1Pct: 0,
         retentionD30Pct: 0,
       },
+      paymentReconciliation: {
+        paidOrdersDb: 0,
+        paymentSuccessEvents: 0,
+        delta: 0,
+        deltaPct: 0,
+        likelyCauses: ['No hay datos en este entorno.'],
+      },
     };
   }
 
@@ -708,6 +753,9 @@ export const getAnalyticsFunnelOverview = async (
           registrations: bigint | number;
           checkoutStarted: bigint | number;
           eventPayments: bigint | number;
+          paymentSuccessEvents: bigint | number;
+          paymentSuccessRenewals: bigint | number;
+          paymentSuccessWithoutOrderId: bigint | number;
           chatOpened: bigint | number;
         }>
       >(Prisma.sql`
@@ -732,12 +780,33 @@ export const getAnalyticsFunnelOverview = async (
             WHEN event_name = 'payment_success'
               THEN COALESCE(CAST(user_id AS CHAR), session_id, visitor_id, event_id)
           END) AS eventPayments,
+          COUNT(CASE
+            WHEN event_name = 'payment_success' THEN 1
+          END) AS paymentSuccessEvents,
+          COUNT(CASE
+            WHEN event_name = 'payment_success'
+              AND LOWER(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(metadata_json, '$.is_renewal')), 'false')) = 'true'
+              THEN 1
+          END) AS paymentSuccessRenewals,
+          COUNT(CASE
+            WHEN event_name = 'payment_success'
+              AND NULLIF(
+                CAST(JSON_UNQUOTE(JSON_EXTRACT(metadata_json, '$.order_id')) AS UNSIGNED),
+                0
+              ) IS NULL
+              AND NULLIF(
+                CAST(JSON_UNQUOTE(JSON_EXTRACT(metadata_json, '$.orderId')) AS UNSIGNED),
+                0
+              ) IS NULL
+              THEN 1
+          END) AS paymentSuccessWithoutOrderId,
           COUNT(DISTINCT CASE
             WHEN event_name = 'support_chat_opened'
               THEN COALESCE(session_id, visitor_id, event_id)
           END) AS chatOpened
         FROM analytics_events
         WHERE event_ts >= ${startDate}
+          ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_SQL}
       `),
       prisma.$queryRaw<
         Array<{
@@ -798,6 +867,9 @@ export const getAnalyticsFunnelOverview = async (
     registrations: 0,
     checkoutStarted: 0,
     eventPayments: 0,
+    paymentSuccessEvents: 0,
+    paymentSuccessRenewals: 0,
+    paymentSuccessWithoutOrderId: 0,
     chatOpened: 0,
   };
   const orderVolume = orderRows[0] ?? {
@@ -815,6 +887,11 @@ export const getAnalyticsFunnelOverview = async (
   const registrations = numberFromUnknown(eventVolume.registrations);
   const checkoutStarted = numberFromUnknown(eventVolume.checkoutStarted);
   const eventPayments = numberFromUnknown(eventVolume.eventPayments);
+  const paymentSuccessEvents = numberFromUnknown(eventVolume.paymentSuccessEvents);
+  const paymentSuccessRenewals = numberFromUnknown(eventVolume.paymentSuccessRenewals);
+  const paymentSuccessWithoutOrderId = numberFromUnknown(
+    eventVolume.paymentSuccessWithoutOrderId,
+  );
   const paidOrders = numberFromUnknown(orderVolume.paidOrders);
   const paidUsers = numberFromUnknown(orderVolume.paidUsers);
   const grossRevenue = numberFromUnknown(orderVolume.grossRevenue);
@@ -825,6 +902,41 @@ export const getAnalyticsFunnelOverview = async (
   const chatOpened = numberFromUnknown(eventVolume.chatOpened);
 
   const paidSignal = eventPayments > 0 ? eventPayments : paidOrders;
+  const paymentDelta = paymentSuccessEvents - paidOrders;
+  const paymentDeltaPct =
+    paidOrders > 0
+      ? Math.round((Math.abs(paymentDelta) / paidOrders) * 10000) / 100
+      : paymentSuccessEvents > 0
+        ? 100
+        : 0;
+
+  const reconciliationCauses: string[] = [];
+  if (paymentDelta === 0) {
+    reconciliationCauses.push('Sin diferencia entre DB y eventos en el rango.');
+  } else if (paymentDelta > 0) {
+    if (paymentSuccessRenewals > 0) {
+      reconciliationCauses.push(
+        `Eventos de renovación detectados (${paymentSuccessRenewals.toLocaleString('en-US')}).`,
+      );
+    }
+    if (paymentSuccessWithoutOrderId > 0) {
+      reconciliationCauses.push(
+        `Eventos sin order_id (${paymentSuccessWithoutOrderId.toLocaleString('en-US')}).`,
+      );
+    }
+    if (reconciliationCauses.length === 0) {
+      reconciliationCauses.push(
+        'Eventos de pago por encima de órdenes: revisar dedupe/backfill por proveedor.',
+      );
+    }
+  } else {
+    reconciliationCauses.push(
+      'Órdenes pagadas en DB sin evento payment_success correspondiente.',
+    );
+    reconciliationCauses.push(
+      'Revisar webhooks caídos o pagos offline/manuales no instrumentados.',
+    );
+  }
 
   return {
     range: {
@@ -839,6 +951,9 @@ export const getAnalyticsFunnelOverview = async (
       registrations,
       checkoutStarted,
       eventPayments,
+      paymentSuccessEvents,
+      paymentSuccessRenewals,
+      paymentSuccessWithoutOrderId,
       paidOrders,
       paidUsers,
       grossRevenue: Math.round(grossRevenue * 100) / 100,
@@ -855,6 +970,13 @@ export const getAnalyticsFunnelOverview = async (
       visitorToPaidPct: calculateRate(paidSignal, visitors),
       activationD1Pct: calculateRate(activationD1Users, registrationCohort),
       retentionD30Pct: calculateRate(retainedD30Users, retentionD30Base),
+    },
+    paymentReconciliation: {
+      paidOrdersDb: paidOrders,
+      paymentSuccessEvents,
+      delta: paymentDelta,
+      deltaPct: paymentDeltaPct,
+      likelyCauses: reconciliationCauses,
     },
   };
 };
@@ -890,6 +1012,7 @@ export const getAnalyticsDailySeries = async (
       COUNT(CASE WHEN event_name = 'payment_success' THEN 1 END) AS purchases
     FROM analytics_events
     WHERE event_ts >= ${startDate}
+      ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_SQL}
     GROUP BY DATE_FORMAT(event_ts, '%Y-%m-%d')
     ORDER BY day ASC
   `);
@@ -931,6 +1054,7 @@ export const getAnalyticsAttributionBreakdown = async (
         SELECT 1
         FROM analytics_events
         WHERE event_ts >= ${startDate}
+          ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_SQL}
         GROUP BY
           COALESCE(NULLIF(utm_source, ''), 'direct'),
           COALESCE(NULLIF(utm_medium, ''), 'none'),
@@ -966,6 +1090,7 @@ export const getAnalyticsAttributionBreakdown = async (
         END), 0) AS revenue
       FROM analytics_events
       WHERE event_ts >= ${startDate}
+        ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_SQL}
       GROUP BY source, medium, campaign
       ORDER BY purchases DESC, registrations DESC, visitors DESC
       LIMIT ${limit} OFFSET ${offset}
@@ -1306,12 +1431,14 @@ export const getAnalyticsUxQuality = async (
       FROM analytics_events
       WHERE event_name = 'web_vital_reported'
         AND event_ts >= ${startDate}
+        ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_SQL}
     `),
     prisma.$queryRaw<Array<{ routesTotal: bigint | number }>>(Prisma.sql`
       SELECT COUNT(DISTINCT COALESCE(NULLIF(page_path, ''), '/unknown')) AS routesTotal
       FROM analytics_events
       WHERE event_name = 'web_vital_reported'
         AND event_ts >= ${startDate}
+        ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_SQL}
     `),
     prisma.$queryRaw<
       Array<{
@@ -1342,6 +1469,7 @@ export const getAnalyticsUxQuality = async (
       FROM analytics_events
       WHERE event_name = 'web_vital_reported'
         AND event_ts >= ${startDate}
+        ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_SQL}
       GROUP BY pagePath
       ORDER BY poorCount DESC, samples DESC
       LIMIT ${routesLimit} OFFSET ${routesOffset}
@@ -1378,6 +1506,7 @@ export const getAnalyticsUxQuality = async (
       FROM analytics_events
       WHERE event_name = 'web_vital_reported'
         AND event_ts >= ${startDate}
+        ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_SQL}
       GROUP BY deviceCategory
       ORDER BY samples DESC
     `),
@@ -1473,6 +1602,7 @@ export const getAnalyticsTopEvents = async (
         SELECT 1
         FROM analytics_events
         WHERE event_ts >= ${startDate}
+          ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_SQL}
         GROUP BY event_name, event_category
       ) AS groups_count
     `),
@@ -1493,6 +1623,7 @@ export const getAnalyticsTopEvents = async (
         COUNT(DISTINCT session_id) AS uniqueSessions
       FROM analytics_events
       WHERE event_ts >= ${startDate}
+        ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_SQL}
       GROUP BY event_name, event_category
       ORDER BY totalEvents DESC
       LIMIT ${limit} OFFSET ${offset}
@@ -1583,7 +1714,6 @@ export const getAnalyticsCrmDashboard = async (
     registrationsDailyRows,
     paidOrdersRows,
     newVsRenewalRows,
-    trialRows,
     trialDailyRows,
     cancellationsTotalRows,
     cancellationRows,
@@ -1655,16 +1785,6 @@ export const getAnalyticsCrmDashboard = async (
         ON o.user_id = fp.user_id
     `),
     prisma.$queryRaw<
-      Array<{ trialStarts: bigint | number; trialConversions: bigint | number }>
-    >(Prisma.sql`
-      SELECT
-        COALESCE(SUM(CASE WHEN event_name = 'trial_started' THEN 1 ELSE 0 END), 0) AS trialStarts,
-        COALESCE(SUM(CASE WHEN event_name = 'trial_converted' THEN 1 ELSE 0 END), 0) AS trialConversions
-      FROM analytics_events
-      WHERE event_ts >= ${startDateOnly}
-        AND event_name IN ('trial_started', 'trial_converted')
-    `),
-    prisma.$queryRaw<
       Array<{ day: string; trialStarts: bigint | number; trialConversions: bigint | number }>
     >(Prisma.sql`
       SELECT
@@ -1674,6 +1794,7 @@ export const getAnalyticsCrmDashboard = async (
       FROM analytics_events
       WHERE event_ts >= ${startDateOnly}
         AND event_name IN ('trial_started', 'trial_converted')
+        ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_SQL}
       GROUP BY DATE_FORMAT(event_ts, '%Y-%m-%d')
       ORDER BY day ASC
     `),
@@ -1744,6 +1865,7 @@ export const getAnalyticsCrmDashboard = async (
       WHERE event_ts >= ${startDateOnly}
         AND event_name = 'subscription_cancel_involuntary'
         AND user_id IS NOT NULL
+        ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_SQL}
     `),
     prisma.$queryRaw<Array<{ avgMinutes: bigint | number | null }>>(Prisma.sql`
       SELECT
@@ -1794,6 +1916,7 @@ export const getAnalyticsCrmDashboard = async (
         AND ae.event_name = 'trial_started'
         AND ae.user_id IS NOT NULL
         AND ae.event_ts < DATE_SUB(NOW(), INTERVAL 24 HOUR)
+        ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL}
         AND dh.id IS NULL
     `),
     prisma.$queryRaw<
@@ -1824,6 +1947,7 @@ export const getAnalyticsCrmDashboard = async (
         AND ae.event_name = 'trial_started'
         AND ae.user_id IS NOT NULL
         AND ae.event_ts < DATE_SUB(NOW(), INTERVAL 24 HOUR)
+        ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL}
         AND dh.id IS NULL
       ORDER BY ae.event_ts DESC
       LIMIT ${limit} OFFSET ${trialNoDownloadOffset}
@@ -1928,8 +2052,16 @@ export const getAnalyticsCrmDashboard = async (
   const newPaidUsers = numberFromUnknown(newVsRenewalRows?.[0]?.newPaidUsers);
   const renewalOrders = numberFromUnknown(newVsRenewalRows?.[0]?.renewalOrders);
 
-  const trialStarts = numberFromUnknown(trialRows?.[0]?.trialStarts);
-  const trialConversions = numberFromUnknown(trialRows?.[0]?.trialConversions);
+  const trialsDaily = trialDailyRows.map((row) => ({
+    day: row.day,
+    trialStarts: numberFromUnknown(row.trialStarts),
+    trialConversions: numberFromUnknown(row.trialConversions),
+  }));
+
+  // Canonical source of truth for CRM trial KPIs:
+  // use the same daily series rendered in "Trial por día" to avoid contradictory totals.
+  const trialStarts = trialsDaily.reduce((sum, row) => sum + row.trialStarts, 0);
+  const trialConversions = trialsDaily.reduce((sum, row) => sum + row.trialConversions, 0);
   const trialConversionRatePct = trialStarts > 0 ? calculateRate(trialConversions, trialStarts) : 0;
 
   const cancellationsTotal = numberFromUnknown(
@@ -1981,11 +2113,7 @@ export const getAnalyticsCrmDashboard = async (
       avgHoursRegisterToFirstPaid,
     },
     registrationsDaily,
-    trialsDaily: trialDailyRows.map((row) => ({
-      day: row.day,
-      trialStarts: numberFromUnknown(row.trialStarts),
-      trialConversions: numberFromUnknown(row.trialConversions),
-    })),
+    trialsDaily,
     cancellationTopReasons: cancellationRows.map((row) => ({
       reasonCode: row.reasonCode,
       cancellations: numberFromUnknown(row.cancellations),
@@ -2287,6 +2415,7 @@ export const getAnalyticsCancellationReasons = async (
         WHERE event_ts >= ${startDate}
           AND event_name = 'subscription_cancel_involuntary'
           AND user_id IS NOT NULL
+          ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_SQL}
       `),
     ]);
 
@@ -2430,6 +2559,7 @@ export const getAnalyticsLiveSnapshot = async (
         COUNT(DISTINCT session_id) AS activeSessions
       FROM analytics_events
       WHERE event_ts >= ${windowStart}
+        ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_SQL}
     `),
     prisma.$queryRaw<
       Array<{
@@ -2444,6 +2574,7 @@ export const getAnalyticsLiveSnapshot = async (
         WHERE event_ts >= ${windowStart}
           AND event_name = 'checkout_started'
           AND session_id IS NOT NULL
+          ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_SQL}
         GROUP BY session_id
       ) checkout
       LEFT JOIN (
@@ -2452,6 +2583,7 @@ export const getAnalyticsLiveSnapshot = async (
         WHERE event_ts >= ${windowStart}
           AND event_name = 'payment_success'
           AND session_id IS NOT NULL
+          ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_SQL}
         GROUP BY session_id
       ) paid ON paid.session_id = checkout.session_id
       WHERE paid.session_id IS NULL
@@ -2460,6 +2592,7 @@ export const getAnalyticsLiveSnapshot = async (
       SELECT COUNT(*) AS eventsTotal
       FROM analytics_events
       WHERE event_ts >= ${windowStart}
+        ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_SQL}
     `),
     prisma.$queryRaw<
       Array<{
@@ -2486,6 +2619,7 @@ export const getAnalyticsLiveSnapshot = async (
         utm_campaign AS campaign
       FROM analytics_events
       WHERE event_ts >= ${windowStart}
+        ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_SQL}
       ORDER BY event_ts DESC
       LIMIT ${limit} OFFSET ${offset}
     `),

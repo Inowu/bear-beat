@@ -15,6 +15,7 @@ import { OrderStatus } from '../../subscriptions/interfaces/order-status.interfa
 import { addGBToAccount } from '../../products/services/addGBToAccount';
 import { manyChat } from '../../../many-chat';
 import { ingestAnalyticsEvents } from '../../../analytics';
+import { ingestPaymentSuccessEvent } from '../../../analytics/paymentSuccess';
 
 export const conektaSubscriptionWebhook = async (req: Request) => {
   const payload: EventResponse = JSON.parse(req.body as any);
@@ -321,6 +322,7 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
 
       let productOrPlan: Plans | products | null = null;
       let order: Orders | product_orders | null = null;
+      let planOrderStatusBefore: number | null = null;
 
       if (isProduct) {
         log.info('[CONEKTA_WH] Updating product order to paid');
@@ -334,6 +336,23 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
           },
         });
       } else {
+        const existingOrder = await prisma.orders.findFirst({
+          where: {
+            id: orderIdNum,
+          },
+          select: {
+            id: true,
+            status: true,
+            plan_id: true,
+            total_price: true,
+          },
+        });
+        if (!existingOrder) {
+          log.error('[CONEKTA_WH] Plan order not found before payment update');
+          return;
+        }
+        planOrderStatusBefore = existingOrder.status;
+
         order = (await prisma.orders.update({
           where: {
             id: orderIdNum,
@@ -345,7 +364,7 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
 
         productOrPlan = (await prisma.plans.findFirst({
           where: {
-            id: order.plan_id!,
+            id: existingOrder.plan_id!,
           },
         })) as Plans;
       }
@@ -381,6 +400,28 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
             Number(productOrPlan.duration) || 30,
           ),
         });
+
+        try {
+          await ingestPaymentSuccessEvent({
+            prisma,
+            provider: 'conekta',
+            providerEventId: (typeof (payload as any)?.id === 'string' && (payload as any).id) || null,
+            userId: user.id,
+            orderId: (order as Orders).id,
+            planId: (order as Orders).plan_id ?? null,
+            amount: Number((order as Orders).total_price ?? productOrPlan.price) || 0,
+            currency: productOrPlan?.moneda?.toUpperCase?.() ?? null,
+            isRenewal: planOrderStatusBefore === OrderStatus.PAID,
+            eventTs: new Date(),
+            metadata: {
+              conektaOrderId: (payload.data?.object as any)?.id ?? null,
+            },
+          });
+        } catch (e) {
+          log.debug('[CONEKTA_WH] analytics payment_success skipped', {
+            error: e instanceof Error ? e.message : e,
+          });
+        }
       }
 
       try {

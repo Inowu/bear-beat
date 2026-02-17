@@ -534,7 +534,7 @@ export const downloadHistoryRouter = router({
       const fileExists = await fileService.exists(fullPath);
       if (!fileExists) {
         throw new TRPCError({
-          code: 'BAD_REQUEST',
+          code: 'NOT_FOUND',
           message: 'No existe este archivo',
         });
       }
@@ -550,14 +550,23 @@ export const downloadHistoryRouter = router({
         process.env.DEMOS_PATH as string,
         demoFileName,
       );
+      const encodedDemoFileName = encodeURIComponent(demoFileName);
 
       if (!(await fileService.exists(demoOutputPath))) {
         log.info(`[PUBLIC_TOP_DEMOS] Generating demo for ${normalizedPath}`);
-        await generateDemo(fullPath, demoDuration, demoOutputPath, itemKind);
+        try {
+          await generateDemo(fullPath, demoDuration, demoOutputPath, itemKind);
+        } catch (error) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'No pudimos preparar el demo. Reintenta en unos segundos.',
+            cause: error,
+          });
+        }
       }
 
       return {
-        demo: `/demos/${demoFileName}`,
+        demo: `/demos/${encodedDemoFileName}`,
         kind: itemKind,
         name: path.basename(normalizedPath),
       };

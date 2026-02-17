@@ -15,11 +15,13 @@ export const demo = shieldedProcedure
   .query(async ({ input: { path: demoPath }, ctx: { prisma } }) => {
     const fullPath = path.join(process.env.SONGS_PATH as string, demoPath);
     const fileExists = await fileService.exists(fullPath);
+    const demoFileName = path.basename(demoPath);
+    const encodedDemoFileName = encodeURIComponent(demoFileName);
 
     if (!fileExists) {
       throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'That file does not exist',
+        code: 'NOT_FOUND',
+        message: 'No existe este archivo para demo',
       });
     }
 
@@ -32,21 +34,29 @@ export const demo = shieldedProcedure
     const demoDuration = config?.value ? Number(config.value) : 60;
     const demoOutputPath = path.join(
       process.env.DEMOS_PATH as string,
-      path.basename(demoPath),
+      demoFileName,
     );
 
     if (await fileService.exists(demoOutputPath)) {
       return {
-        demo: `/demos/${path.basename(demoPath)}`,
+        demo: `/demos/${encodedDemoFileName}`,
       };
     }
 
     log.info(`[DEMOS] Generating demo for ${demoPath}`);
 
-    await generateDemo(fullPath, demoDuration, demoOutputPath);
+    try {
+      await generateDemo(fullPath, demoDuration, demoOutputPath);
+    } catch (error) {
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'No pudimos preparar el demo. Reintenta en unos segundos.',
+        cause: error,
+      });
+    }
 
     return {
-      demo: `/demos/${path.basename(demoPath)}`,
+      demo: `/demos/${encodedDemoFileName}`,
     };
   });
 
