@@ -1,0 +1,139 @@
+{
+  "baseUrl": "https://thebearbeat.com",
+  "defaultMeta": {
+    "title": "Bear Beat",
+    "description": "Librería de música y videos exclusivos para DJs. 500 GB cada mes por FTP, contenido organizado por géneros.",
+    "ogImage": "https://thebearbeat.com/logo512.png",
+    "twitterImage": "https://thebearbeat.com/logo512.png"
+  },
+  "routes": [
+    {
+      "path": "/",
+      "title": "Bear Beat – Membresía para DJs (videos, remixes y karaokes) | 14.14 TB + 500 GB/mes",
+      "description": "Membresía para DJs: video remixes, audios y karaokes. Catálogo 14.14 TB, 500 GB/mes. Prueba 7 días + 100 GB (solo tarjeta, 1ª vez).",
+      "indexable": true,
+      "inSitemap": true,
+      "prerender": true,
+      "changefreq": "weekly",
+      "priority": "1.0"
+    },
+    {
+      "path": "/planes",
+      "title": "Planes y precios | Bear Beat – 14.14 TB + 500 GB/mes (MXN o USD)",
+      "description": "Elige MXN (México) o USD (internacional). Catálogo 14.14 TB, 500 GB/mes. Prueba 7 días + 100 GB (solo tarjeta, 1ª vez).",
+      "indexable": true,
+      "inSitemap": true,
+      "prerender": true,
+      "changefreq": "weekly",
+      "priority": "0.9"
+    },
+    {
+      "path": "/instrucciones",
+      "title": "Instrucciones de descarga | Bear Beat",
+      "description": "Cómo descargar tu librería con FileZilla o Air Explorer. Guía paso a paso.",
+      "indexable": true,
+      "inSitemap": true,
+      "prerender": true,
+      "changefreq": "monthly",
+      "priority": "0.7"
+    },
+    {
+      "path": "/legal",
+      "title": "Centro legal y FAQ | Bear Beat – privacidad, reembolsos y términos",
+      "description": "Consulta FAQ, política de privacidad, reembolsos, cancelaciones y términos de uso de Bear Beat.",
+      "indexable": true,
+      "inSitemap": true,
+      "prerender": true,
+      "changefreq": "monthly",
+      "priority": "0.6"
+    },
+    {
+      "path": "/auth",
+      "title": "Iniciar sesión | Bear Beat",
+      "description": "Inicia sesión en Bear Beat para acceder a tu librería de música y videos para DJs.",
+      "indexable": false,
+      "inSitemap": false,
+      "prerender": false
+    },
+    {
+      "path": "/auth/registro",
+      "title": "Registrarme | Bear Beat",
+      "description": "Crea tu cuenta en Bear Beat. Accede a 500 GB de música y videos para DJs cada mes por FTP.",
+      "indexable": false,
+      "inSitemap": false,
+      "prerender": false
+    },
+    {
+      "path": "/auth/recuperar",
+      "title": "Recuperar contraseña | Bear Beat",
+      "description": "Recupera el acceso a tu cuenta Bear Beat.",
+      "indexable": false,
+      "inSitemap": false,
+      "prerender": false
+    },
+    {
+      "path": "/auth/reset-password",
+      "title": "Nueva contraseña | Bear Beat",
+      "description": "Establece tu nueva contraseña de Bear Beat.",
+      "indexable": false,
+      "inSitemap": false,
+      "prerender": false
+    },
+    {
+      "path": "/auth/*",
+      "title": "Acceso | Bear Beat",
+      "description": "Acceso a tu cuenta Bear Beat.",
+      "indexable": false,
+      "inSitemap": false,
+      "prerender": false
+    },
+    {
+      "path": "/micuenta",
+      "title": "Mi cuenta | Bear Beat",
+      "description": "Gestiona tu suscripción, métodos de pago y datos de cuenta.",
+      "indexable": false,
+      "inSitemap": false,
+      "prerender": false
+    },
+    {
+      "path": "/descargas",
+      "title": "Mis descargas | Bear Beat",
+      "description": "Accede a tus descargas y gestiona tu librería de música para DJs.",
+      "indexable": false,
+      "inSitemap": false,
+      "prerender": false
+    },
+    {
+      "path": "/comprar",
+      "title": "Comprar | Bear Beat",
+      "description": "Elige tu plan y paga de forma segura con Visa, Mastercard, PayPal o SPEI.",
+      "indexable": false,
+      "inSitemap": false,
+      "prerender": false
+    },
+    {
+      "path": "/comprar/success",
+      "title": "Compra exitosa | Bear Beat",
+      "description": "Tu pago se confirmó correctamente. Continúa con la activación de tu cuenta.",
+      "indexable": false,
+      "inSitemap": false,
+      "prerender": false
+    },
+    {
+      "path": "/actualizar-planes",
+      "title": "Actualizar plan | Bear Beat",
+      "description": "Cambia o actualiza tu plan de Bear Beat.",
+      "indexable": false,
+      "inSitemap": false,
+      "prerender": false
+    },
+    {
+      "path": "/admin/*",
+      "title": "Admin | Bear Beat",
+      "description": "Panel interno de administración.",
+      "indexable": false,
+      "inSitemap": false,
+      "prerender": false
+    }
+  ]
+}

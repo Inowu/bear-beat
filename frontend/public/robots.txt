@@ -1,14 +1,6 @@
-# https://www.robotstxt.org/robotstxt.html
+# Bear Beat: keep robots aligned with sitemap + noindex policy.
+# Private routes are excluded from sitemap and marked noindex via meta/headers.
 User-agent: *
 Allow: /
-Allow: /planes
-Allow: /instrucciones
-Allow: /legal
-Disallow: /auth
-Disallow: /admin
-Disallow: /micuenta
-Disallow: /descargas
-Disallow: /comprar
-Disallow: /actualizar-planes
 
 Sitemap: https://thebearbeat.com/sitemap.xml

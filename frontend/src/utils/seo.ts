@@ -1,158 +1,106 @@
 /**
- * SEO por ruta: actualiza <title>, meta description, canonical y og/twitter url al navegar (SPA).
+ * SEO por ruta: actualiza <title>, description, canonical, OG y Twitter al navegar (SPA).
+ * La fuente de verdad vive en src/seo/routes.json.
  */
 
-import { FALLBACK_CATALOG_TOTAL_TB_LABEL } from "./catalogFallback";
-
-const BASE_URL = "https://thebearbeat.com";
-const BASE_TITLE = "Bear Beat";
-const BASE_DESC = "Librería de música y videos exclusivos para DJs. 500 GB cada mes por FTP, contenido organizado por géneros.";
-const HOME_DESC =
-  `Membresía para DJs: video remixes, audios y karaokes. Catálogo ${FALLBACK_CATALOG_TOTAL_TB_LABEL}, 500 GB/mes. Prueba 7 días + 100 GB (solo tarjeta, 1ª vez).`;
+import {
+  SEO_DEFAULT_META,
+  findSeoRoute,
+  normalizeSeoPath,
+  resolveSeoUrl,
+} from "../seo";
 
 type RouteSeo = {
   title: string;
   description: string;
-  imageUrl?: string;
   indexable: boolean;
+  canonicalPath?: string;
+  ogImage?: string;
+  twitterImage?: string;
 };
 
-type SeoFields = Pick<RouteSeo, "title" | "description" | "imageUrl">;
-
-export const ROUTE_SEO: Record<string, RouteSeo> = {
-  "/": {
-    title: `${BASE_TITLE} – Membresía para DJs (videos, remixes y karaokes) | ${FALLBACK_CATALOG_TOTAL_TB_LABEL} + 500 GB/mes`,
-    description: HOME_DESC,
-    indexable: true,
-  },
-  "/auth": {
-    title: `Iniciar sesión | ${BASE_TITLE}`,
-    description: "Inicia sesión en Bear Beat para acceder a tu librería de música y videos para DJs.",
-    indexable: false,
-  },
-  "/auth/registro": {
-    title: `Registrarme | ${BASE_TITLE}`,
-    description: "Crea tu cuenta en Bear Beat. Accede a 500 GB de música y videos para DJs cada mes por FTP.",
-    indexable: false,
-  },
-  "/auth/recuperar": {
-    title: `Recuperar contraseña | ${BASE_TITLE}`,
-    description: "Recupera el acceso a tu cuenta Bear Beat.",
-    indexable: false,
-  },
-  "/auth/reset-password": {
-    title: `Nueva contraseña | ${BASE_TITLE}`,
-    description: "Establece tu nueva contraseña de Bear Beat.",
-    indexable: false,
-  },
-  "/planes": {
-    title: `Planes y precios | ${BASE_TITLE} – ${FALLBACK_CATALOG_TOTAL_TB_LABEL} + 500 GB/mes (MXN o USD)`,
-    description:
-      `Elige MXN (México) o USD (internacional). Catálogo ${FALLBACK_CATALOG_TOTAL_TB_LABEL}, 500 GB/mes. Prueba 7 días + 100 GB (solo tarjeta, 1ª vez).`,
-    indexable: true,
-  },
-  "/comprar": {
-    title: `Comprar | ${BASE_TITLE}`,
-    description: "Elige tu plan y paga de forma segura con Visa, Mastercard, PayPal o SPEI.",
-    indexable: false,
-  },
-  "/comprar/success": {
-    title: `Compra exitosa | ${BASE_TITLE}`,
-    description: "Tu pago se confirmó correctamente. Continúa con la activación de tu cuenta.",
-    indexable: false,
-  },
-  "/instrucciones": {
-    title: `Instrucciones de descarga | ${BASE_TITLE}`,
-    description: "Cómo descargar tu librería con FileZilla o Air Explorer. Guía paso a paso.",
-    indexable: true,
-  },
-  "/legal": {
-    title: `Centro legal y FAQ | ${BASE_TITLE} – privacidad, reembolsos y términos`,
-    description: "Consulta FAQ, política de privacidad, reembolsos, cancelaciones y términos de uso de Bear Beat.",
-    indexable: true,
-  },
-  "/descargas": {
-    title: `Mis descargas | ${BASE_TITLE}`,
-    description: "Accede a tus descargas y gestiona tu librería de música para DJs.",
-    indexable: false,
-  },
-  "/micuenta": {
-    title: `Mi cuenta | ${BASE_TITLE}`,
-    description: "Gestiona tu suscripción, métodos de pago y datos de cuenta.",
-    indexable: false,
-  },
-  "/actualizar-planes": {
-    title: `Actualizar plan | ${BASE_TITLE}`,
-    description: "Cambia o actualiza tu plan de Bear Beat.",
-    indexable: false,
-  },
+const ensureMetaTag = (selector: string, attributes: Record<string, string>): HTMLMetaElement => {
+  let element = document.querySelector(selector) as HTMLMetaElement | null;
+  if (!element) {
+    element = document.createElement("meta");
+    Object.entries(attributes).forEach(([key, value]) => {
+      element!.setAttribute(key, value);
+    });
+    document.head.appendChild(element);
+  }
+  return element;
 };
 
-const DEFAULT_SEO: SeoFields = {
-  title: BASE_TITLE,
-  description: BASE_DESC,
+const ensureCanonicalLink = (): HTMLLinkElement => {
+  let element = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+  if (!element) {
+    element = document.createElement("link");
+    element.setAttribute("rel", "canonical");
+    document.head.appendChild(element);
+  }
+  return element;
 };
 
-/**
- * Aplica título, meta description, canonical y og/twitter url para la pathname actual.
- * Llamar desde un componente que use useLocation() y useEffect.
- */
 export function applyRouteSeo(pathname: string): void {
-  const path = pathname.endsWith("/") && pathname !== "/" ? pathname.slice(0, -1) : pathname;
-  const routeSeo = ROUTE_SEO[path];
-  const seo = routeSeo ?? DEFAULT_SEO;
-  const url = path === "" ? BASE_URL : `${BASE_URL}${path}`;
+  const normalizedPath = normalizeSeoPath(pathname);
+  const routeSeo = findSeoRoute(normalizedPath) as RouteSeo | null;
 
-  document.title = seo.title;
+  const title = routeSeo?.title ?? SEO_DEFAULT_META.title;
+  const description = routeSeo?.description ?? SEO_DEFAULT_META.description;
+  const indexable = routeSeo?.indexable === true;
+  const canonicalUrl = resolveSeoUrl(routeSeo?.canonicalPath ?? normalizedPath);
+  const ogImage = routeSeo?.ogImage ?? SEO_DEFAULT_META.ogImage;
+  const twitterImage = routeSeo?.twitterImage ?? ogImage;
+  const robotsContent = indexable ? "index, follow" : "noindex, nofollow";
 
-  const shouldNoIndex =
-    path.startsWith("/auth") ||
-    path.startsWith("/admin") ||
-    !routeSeo ||
-    routeSeo.indexable === false;
-  const robotsContent = shouldNoIndex ? "noindex, nofollow" : "index, follow";
-  let robots = document.querySelector('meta[name="robots"]');
-  if (!robots) {
-    robots = document.createElement("meta");
-    robots.setAttribute("name", "robots");
-    document.head.appendChild(robots);
-  }
-  robots.setAttribute("content", robotsContent);
+  document.title = title;
 
-  let googlebot = document.querySelector('meta[name="googlebot"]');
-  if (!googlebot) {
-    googlebot = document.createElement("meta");
-    googlebot.setAttribute("name", "googlebot");
-    document.head.appendChild(googlebot);
-  }
-  googlebot.setAttribute("content", robotsContent);
+  ensureMetaTag('meta[name="description"]', { name: "description" }).setAttribute(
+    "content",
+    description,
+  );
+  ensureMetaTag('meta[name="robots"]', { name: "robots" }).setAttribute(
+    "content",
+    robotsContent,
+  );
+  ensureMetaTag('meta[name="googlebot"]', { name: "googlebot" }).setAttribute(
+    "content",
+    robotsContent,
+  );
 
-  const metaDesc = document.querySelector('meta[name="description"]');
-  if (metaDesc) metaDesc.setAttribute("content", seo.description);
+  ensureMetaTag('meta[property="og:title"]', { property: "og:title" }).setAttribute(
+    "content",
+    title,
+  );
+  ensureMetaTag('meta[property="og:description"]', { property: "og:description" }).setAttribute(
+    "content",
+    description,
+  );
+  ensureMetaTag('meta[property="og:url"]', { property: "og:url" }).setAttribute(
+    "content",
+    canonicalUrl,
+  );
+  ensureMetaTag('meta[property="og:image"]', { property: "og:image" }).setAttribute(
+    "content",
+    ogImage,
+  );
 
-  const ogTitle = document.querySelector('meta[property="og:title"]');
-  if (ogTitle) ogTitle.setAttribute("content", seo.title);
+  ensureMetaTag('meta[name="twitter:title"]', { name: "twitter:title" }).setAttribute(
+    "content",
+    title,
+  );
+  ensureMetaTag('meta[name="twitter:description"]', { name: "twitter:description" }).setAttribute(
+    "content",
+    description,
+  );
+  ensureMetaTag('meta[name="twitter:url"]', { name: "twitter:url" }).setAttribute(
+    "content",
+    canonicalUrl,
+  );
+  ensureMetaTag('meta[name="twitter:image"]', { name: "twitter:image" }).setAttribute(
+    "content",
+    twitterImage,
+  );
 
-  const ogDesc = document.querySelector('meta[property="og:description"]');
-  if (ogDesc) ogDesc.setAttribute("content", seo.description);
-
-  const ogUrl = document.querySelector('meta[property="og:url"]');
-  if (ogUrl) ogUrl.setAttribute("content", url);
-
-  const twitterUrl = document.querySelector('meta[name="twitter:url"]');
-  if (twitterUrl) twitterUrl.setAttribute("content", url);
-
-  const twitterTitle = document.querySelector('meta[name="twitter:title"]');
-  if (twitterTitle) twitterTitle.setAttribute("content", seo.title);
-
-  const twitterDesc = document.querySelector('meta[name="twitter:description"]');
-  if (twitterDesc) twitterDesc.setAttribute("content", seo.description);
-
-  let canonical = document.querySelector('link[rel="canonical"]');
-  if (!canonical) {
-    canonical = document.createElement("link");
-    canonical.setAttribute("rel", "canonical");
-    document.head.appendChild(canonical);
-  }
-  canonical.setAttribute("href", url);
+  ensureCanonicalLink().setAttribute("href", canonicalUrl);
 }

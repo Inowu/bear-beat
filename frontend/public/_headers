@@ -30,3 +30,21 @@
 
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+
+/auth*
+  X-Robots-Tag: noindex, nofollow
+
+/admin*
+  X-Robots-Tag: noindex, nofollow
+
+/micuenta*
+  X-Robots-Tag: noindex, nofollow
+
+/descargas*
+  X-Robots-Tag: noindex, nofollow
+
+/comprar*
+  X-Robots-Tag: noindex, nofollow
+
+/actualizar-planes*
+  X-Robots-Tag: noindex, nofollow
