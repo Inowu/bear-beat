@@ -18,6 +18,11 @@ const sentryEnvironment =
   process.env.REACT_APP_ENVIRONMENT ||
   process.env.NODE_ENV ||
   "development";
+const normalizedSentryEnvironment = sentryEnvironment.trim().toLowerCase();
+const isLiveSentryEnvironment =
+  normalizedSentryEnvironment === "production" ||
+  normalizedSentryEnvironment === "prod" ||
+  normalizedSentryEnvironment === "live";
 const sentryRelease = process.env.REACT_APP_SENTRY_RELEASE;
 const sentryDebug = process.env.REACT_APP_SENTRY_DEBUG === "1";
 
@@ -83,6 +88,15 @@ if (sentryEnabled) {
 
       // Drop low-signal browser noise.
       const combined = `${message} ${excMessage}`.toLowerCase();
+
+      const isFrontendTestNoise =
+        combined.includes("frontend_test_exception") ||
+        combined.includes("frontend_unhandled_exception") ||
+        event.tags?.sentry_test === "true";
+      if (isLiveSentryEnvironment && isFrontendTestNoise) {
+        return null;
+      }
+
       if (
         combined.includes("resizeobserver loop limit exceeded") ||
         combined.includes("resizeobserver loop completed with undelivered notifications")
@@ -96,6 +110,17 @@ if (sentryEnabled) {
         combined.includes("fetch is aborted") ||
         combined.includes("signal is aborted") ||
         combined.includes("the user aborted a request")
+      ) {
+        return null;
+      }
+
+      // Expected media autoplay restrictions (Safari/iOS/embedded browsers).
+      if (
+        combined.includes("notallowederror") &&
+        (combined.includes("play()") ||
+          combined.includes("media") ||
+          combined.includes("user gesture") ||
+          combined.includes("allowed by the user agent"))
       ) {
         return null;
       }
@@ -156,13 +181,17 @@ export const sendFrontendSentryTestEvent = async (
     throw new Error("Sentry frontend no está habilitado");
   }
   if (typeof window !== "undefined") {
-    const raw = window.sessionStorage.getItem(TEST_EVENT_LAST_TS_KEY);
-    const lastTs = raw ? Number(raw) : NaN;
-    const now = Date.now();
-    if (Number.isFinite(lastTs) && now - lastTs < TEST_EVENT_COOLDOWN_MS) {
-      throw new Error("Espera unos segundos antes de volver a enviar otro test.");
+    try {
+      const raw = window.sessionStorage.getItem(TEST_EVENT_LAST_TS_KEY);
+      const lastTs = raw ? Number(raw) : NaN;
+      const now = Date.now();
+      if (Number.isFinite(lastTs) && now - lastTs < TEST_EVENT_COOLDOWN_MS) {
+        throw new Error("Espera unos segundos antes de volver a enviar otro test.");
+      }
+      window.sessionStorage.setItem(TEST_EVENT_LAST_TS_KEY, String(now));
+    } catch {
+      // ignore: sessionStorage can be blocked in Safari private mode.
     }
-    window.sessionStorage.setItem(TEST_EVENT_LAST_TS_KEY, String(now));
   }
   const eventId = Sentry.captureException(
     new Error(`FRONTEND_TEST_EXCEPTION:${label}`),

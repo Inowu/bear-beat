@@ -21,6 +21,11 @@ const sentryEnvironment =
   process.env.SENTRY_ENVIRONMENT ||
   process.env.NODE_ENV ||
   'development';
+const normalizedSentryEnvironment = sentryEnvironment.trim().toLowerCase();
+const isLiveSentryEnvironment =
+  normalizedSentryEnvironment === 'production' ||
+  normalizedSentryEnvironment === 'prod' ||
+  normalizedSentryEnvironment === 'live';
 const sentryRelease = process.env.SENTRY_RELEASE || process.env.npm_package_version;
 const sentryDebug = process.env.SENTRY_DEBUG === '1';
 
@@ -54,9 +59,17 @@ if (sentryEnabled) {
     profilesSampleRate,
     attachStacktrace: true,
     beforeSend(event) {
+      const message = typeof event.message === 'string' ? event.message : '';
+      const testMarker =
+        message.includes('BACKEND_TEST_EVENT:') ||
+        event.tags?.sentry_test === 'true';
+
+      if (isLiveSentryEnvironment && testMarker) {
+        return null;
+      }
+
       // In dev runtimes, only allow explicit test events unless overridden.
       if (!isProdRuntime && !captureDevErrors) {
-        const message = typeof event.message === 'string' ? event.message : '';
         const hasTestMarker =
           message.includes('BACKEND_TEST_EVENT:') ||
           message.includes('My first Sentry error') ||

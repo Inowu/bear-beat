@@ -4,6 +4,7 @@ import { Loader2, Play } from "src/icons";
 import trpc from "../../../api";
 import { apiBaseUrl } from "../../../utils/runtimeConfig";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../../utils/growthMetrics";
+import { buildDemoPlaybackUrl } from "../../../utils/demoUrl";
 import { inferTrackMetadata, prettyMediaName } from "../../../utils/fileMetadata";
 import { formatDownloads } from "../homeFormat";
 import PreviewModal from "../../../components/PreviewModal/PreviewModal";
@@ -208,7 +209,7 @@ export default function SocialProof(props: {
       const result = (await trpc.downloadHistory.getPublicTopDemo.query({
         path: row.path,
       })) as { demo: string; kind: DemoKind; name?: string };
-      const url = new URL(result.demo, apiBaseUrl).toString();
+      const url = buildDemoPlaybackUrl(result.demo, apiBaseUrl);
       const kind: DemoKind = result.kind === "video" ? "video" : "audio";
 
       trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, {

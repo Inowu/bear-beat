@@ -29,10 +29,17 @@ interface FunnelOverview {
   };
   volume: {
     visitors: number;
+    lpToRegister: number;
     registrations: number;
     checkoutStarted: number;
+    eventPayments: number;
+    paymentSuccessEvents: number;
+    paymentSuccessRenewals: number;
+    paymentSuccessWithoutOrderId: number;
     paidOrders: number;
+    paidUsers: number;
     grossRevenue: number;
+    chatOpened: number;
     activationD1Users: number;
     registrationCohort: number;
     retainedD30Users: number;
@@ -45,6 +52,13 @@ interface FunnelOverview {
     visitorToPaidPct: number;
     activationD1Pct: number;
     retentionD30Pct: number;
+  };
+  paymentReconciliation: {
+    paidOrdersDb: number;
+    paymentSuccessEvents: number;
+    delta: number;
+    deltaPct: number;
+    likelyCauses: string[];
   };
 }
 
@@ -221,6 +235,11 @@ function formatCurrency(value: number | null | undefined): string {
 
 function formatPct(value: number): string {
   return `${value.toFixed(2)}%`;
+}
+
+function formatSignedNumber(value: number): string {
+  const sign = value > 0 ? "+" : "";
+  return `${sign}${value.toLocaleString("es-MX")}`;
 }
 
 function formatDecimal(value: number | null | undefined, digits = 2): string {
@@ -419,9 +438,11 @@ export function AnalyticsDashboard() {
       },
       {
         id: "paid",
-        label: "Órdenes pagadas",
+        label: "Órdenes pagadas (DB)",
         value: formatCompactNumber(funnel.volume.paidOrders),
-        helper: `V→Pago ${formatPct(funnel.conversion.visitorToPaidPct)}`,
+        helper: `Eventos: ${formatCompactNumber(funnel.volume.paymentSuccessEvents)} · Δ ${formatSignedNumber(
+          funnel.paymentReconciliation.delta,
+        )}`,
         icon: Activity,
       },
       {
@@ -598,6 +619,83 @@ export function AnalyticsDashboard() {
                 </div>
 
                 <div className="analytics-panels">
+                  <section className="analytics-panel">
+                    <h2>Reconciliación de pagos (DB vs Events)</h2>
+                    <p>
+                      Compara órdenes pagadas en base de datos contra eventos <code>payment_success</code> instrumentados
+                      en backend.
+                    </p>
+                    <div className="analytics-table-wrap" tabIndex={0} aria-label="Tabla: reconciliación de pagos (desplazable)">
+                      <table>
+                        <tbody>
+                          <tr>
+                            <th>Paid Orders (DB)</th>
+                            <td>{funnel.paymentReconciliation.paidOrdersDb.toLocaleString("es-MX")}</td>
+                          </tr>
+                          <tr>
+                            <th>Payment Success (Events)</th>
+                            <td>{funnel.paymentReconciliation.paymentSuccessEvents.toLocaleString("es-MX")}</td>
+                          </tr>
+                          <tr>
+                            <th>Diferencia (Events - DB)</th>
+                            <td>
+                              {formatSignedNumber(funnel.paymentReconciliation.delta)} (
+                              {formatPct(funnel.paymentReconciliation.deltaPct)})
+                            </td>
+                          </tr>
+                          <tr>
+                            <th>Eventos marcados como renovación</th>
+                            <td>{funnel.volume.paymentSuccessRenewals.toLocaleString("es-MX")}</td>
+                          </tr>
+                          <tr>
+                            <th>Eventos sin order_id</th>
+                            <td>{funnel.volume.paymentSuccessWithoutOrderId.toLocaleString("es-MX")}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="admin-mobile-list" aria-label="Reconciliación de pagos (móvil)">
+                      <article className="admin-mobile-card">
+                        <header className="analytics-mobile-card__head">
+                          <div className="analytics-mobile-card__copy">
+                            <p className="analytics-mobile-card__title">DB vs Events</p>
+                            <p className="analytics-mobile-card__subtitle">{rangeDays} días</p>
+                          </div>
+                        </header>
+                        <dl className="analytics-mobile-kv">
+                          <div className="analytics-mobile-kv__row">
+                            <dt>Paid Orders (DB)</dt>
+                            <dd>{funnel.paymentReconciliation.paidOrdersDb.toLocaleString("es-MX")}</dd>
+                          </div>
+                          <div className="analytics-mobile-kv__row">
+                            <dt>Payment Success (Events)</dt>
+                            <dd>{funnel.paymentReconciliation.paymentSuccessEvents.toLocaleString("es-MX")}</dd>
+                          </div>
+                          <div className="analytics-mobile-kv__row">
+                            <dt>Delta</dt>
+                            <dd>
+                              {formatSignedNumber(funnel.paymentReconciliation.delta)} (
+                              {formatPct(funnel.paymentReconciliation.deltaPct)})
+                            </dd>
+                          </div>
+                          <div className="analytics-mobile-kv__row">
+                            <dt>Renovaciones (events)</dt>
+                            <dd>{funnel.volume.paymentSuccessRenewals.toLocaleString("es-MX")}</dd>
+                          </div>
+                          <div className="analytics-mobile-kv__row">
+                            <dt>Sin order_id</dt>
+                            <dd>{funnel.volume.paymentSuccessWithoutOrderId.toLocaleString("es-MX")}</dd>
+                          </div>
+                        </dl>
+                      </article>
+                    </div>
+                    {funnel.paymentReconciliation.likelyCauses.length > 0 ? (
+                      <small style={{ display: "block", marginTop: 8, color: "var(--ad-text-muted)", fontWeight: 700 }}>
+                        {funnel.paymentReconciliation.likelyCauses.join(" · ")}
+                      </small>
+                    ) : null}
+                  </section>
+
                   <section className="analytics-panel">
                     <h2>Actividad diaria del embudo</h2>
                     <p>

@@ -277,13 +277,6 @@ function PlanCard(props: PlanCardPropsI) {
       currency: (plan.moneda || "USD").toUpperCase(),
       eventId,
     });
-    trackGrowthMetric(GROWTH_METRICS.PAYMENT_SUCCESS, {
-      planId: ppPlan?.id ?? plan.id,
-      amount: Number(plan.price) || 0,
-      value: Number(plan.price) || 0,
-      currency: (plan.moneda || "USD").toUpperCase(),
-      eventId,
-    });
     trackManyChatConversion(MC_EVENTS.PAYMENT_SUCCESS);
     if ((Number(plan.price) || 0) > 0) {
       trackManyChatPurchase(

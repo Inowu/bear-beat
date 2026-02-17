@@ -22,6 +22,7 @@ import axios, { AxiosError } from 'axios';
 import { ingestAnalyticsEvents } from '../../../analytics';
 import { markUserOffersRedeemed } from '../../../offers';
 import { facebook } from '../../../facebook';
+import { ingestPaymentSuccessEvent } from '../../../analytics/paymentSuccess';
 
 export const stripeSubscriptionWebhook = async (req: Request) => {
   const payloadStr = getStripeWebhookBody(req);
@@ -229,21 +230,88 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
             expirationDate: new Date(subscription.current_period_end * 1000),
           });
 
+          const subscriptionMetadata = (subscription?.metadata ?? {}) as Record<string, unknown>;
+          const latestPaidOrder = await prisma.orders.findFirst({
+            where: {
+              user_id: user.id,
+              txn_id: subscription.id,
+              status: OrderStatus.PAID,
+              is_plan: 1,
+              OR: [{ is_canceled: null }, { is_canceled: 0 }],
+            },
+            orderBy: { date_order: 'desc' },
+            select: {
+              id: true,
+              plan_id: true,
+              total_price: true,
+              date_order: true,
+            },
+          });
+
+          const shouldEmitPaymentSuccess = !orderWasPaidBefore || isTrialConversion || isRenewal;
+          if (shouldEmitPaymentSuccess) {
+            const toMetaString = (key: string, maxLen = 255): string | null => {
+              const raw = subscriptionMetadata[key];
+              if (typeof raw !== 'string') return null;
+              const trimmed = raw.trim();
+              if (!trimmed) return null;
+              return trimmed.slice(0, maxLen);
+            };
+
+            try {
+              await ingestPaymentSuccessEvent({
+                prisma,
+                provider: 'stripe',
+                providerEventId: payload.id,
+                userId: user.id,
+                orderId:
+                  latestPaidOrder?.id
+                  ?? (Number.isFinite(orderId) && orderId > 0 ? orderId : null),
+                planId: latestPaidOrder?.plan_id ?? plan?.id ?? null,
+                amount: Number(latestPaidOrder?.total_price ?? plan?.price) || 0,
+                currency: plan?.moneda?.toUpperCase?.() ?? null,
+                isRenewal,
+                eventTs: latestPaidOrder?.date_order ?? new Date(),
+                sessionId: toMetaString('bb_session_id', 80),
+                visitorId: toMetaString('bb_visitor_id', 80),
+                attribution: {
+                  source: toMetaString('bb_utm_source', 120),
+                  medium: toMetaString('bb_utm_medium', 120),
+                  campaign: toMetaString('bb_utm_campaign', 180),
+                  term: toMetaString('bb_utm_term', 180),
+                  content: toMetaString('bb_utm_content', 180),
+                  fbclid: toMetaString('bb_fbclid', 255),
+                  gclid: toMetaString('bb_gclid', 255),
+                },
+                metadata: {
+                  stripeSubscriptionId: subscription.id,
+                },
+              });
+            } catch (e) {
+              log.debug('[STRIPE_WH] analytics payment_success skipped', {
+                error: e instanceof Error ? e.message : e,
+              });
+            }
+          }
+
           // Facebook CAPI Purchase (server-side): send once per order (avoid double counting renewals/updates).
           if (!orderWasPaidBefore) {
             try {
-              const meta = (subscription?.metadata ?? {}) as Record<string, unknown>;
               const purchaseEventId =
-                typeof meta.bb_purchase_event_id === 'string'
-                  ? meta.bb_purchase_event_id.trim().slice(0, 120)
+                typeof subscriptionMetadata.bb_purchase_event_id === 'string'
+                  ? subscriptionMetadata.bb_purchase_event_id.trim().slice(0, 120)
                   : '';
               const fbp =
-                typeof meta.bb_fbp === 'string' ? meta.bb_fbp.trim().slice(0, 480) : '';
+                typeof subscriptionMetadata.bb_fbp === 'string'
+                  ? subscriptionMetadata.bb_fbp.trim().slice(0, 480)
+                  : '';
               const fbc =
-                typeof meta.bb_fbc === 'string' ? meta.bb_fbc.trim().slice(0, 480) : '';
+                typeof subscriptionMetadata.bb_fbc === 'string'
+                  ? subscriptionMetadata.bb_fbc.trim().slice(0, 480)
+                  : '';
               const sourceUrl =
-                typeof meta.bb_source_url === 'string'
-                  ? meta.bb_source_url.trim().slice(0, 1000)
+                typeof subscriptionMetadata.bb_source_url === 'string'
+                  ? subscriptionMetadata.bb_source_url.trim().slice(0, 1000)
                   : 'https://thebearbeat.com/planes';
 
               const value = Number(plan.price) || 0;

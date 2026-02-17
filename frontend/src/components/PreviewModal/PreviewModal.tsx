@@ -2,6 +2,7 @@ import { Modal } from 'react-bootstrap';
 import { Pause, Play } from "src/icons";
 import { useEffect, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
+import { GROWTH_METRICS, trackGrowthMetric } from '../../utils/growthMetrics';
 import './PreviewModal.scss';
 
 interface PreviewModalPropsI {
@@ -34,6 +35,7 @@ function PreviewModal(props: PreviewModalPropsI) {
   const audioUrl = file?.url ?? '';
   const waveformRef = useRef<HTMLDivElement | null>(null);
   const waveSurferRef = useRef<WaveSurfer | null>(null);
+  const playStartTrackedForRef = useRef<string>('');
   const [isModalReady, setIsModalReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [waveDrawn, setWaveDrawn] = useState<boolean>(false);
@@ -49,6 +51,28 @@ function PreviewModal(props: PreviewModalPropsI) {
       setVideoLoadError('');
     }
   }, [show]);
+
+  useEffect(() => {
+    playStartTrackedForRef.current = '';
+  }, [show, file?.url, file?.kind]);
+
+  const markDemoPlayStarted = () => {
+    const currentUrl = file?.url?.trim();
+    if (!show || !currentUrl) return;
+
+    const dedupeKey = `${file?.kind ?? 'audio'}|${currentUrl}`;
+    if (playStartTrackedForRef.current === dedupeKey) return;
+    playStartTrackedForRef.current = dedupeKey;
+
+    trackGrowthMetric(GROWTH_METRICS.DEMO_PLAY_STARTED, {
+      fileType: file?.kind === 'video' ? 'video' : 'audio',
+      fileName: mediaName || null,
+      pagePath:
+        typeof window !== 'undefined' && window.location
+          ? `${window.location.pathname}${window.location.hash || ''}`
+          : null,
+    });
+  };
 
   useEffect(() => {
     if (!show) return;
@@ -112,6 +136,7 @@ function PreviewModal(props: PreviewModalPropsI) {
     };
     const handlePlay = () => {
       setIsPlaying(true);
+      markDemoPlayStarted();
     };
     const handlePause = () => {
       setIsPlaying(false);
@@ -229,6 +254,7 @@ function PreviewModal(props: PreviewModalPropsI) {
                 controlsList="nodownload noplaybackrate"
                 disablePictureInPicture
                 playsInline
+                onPlaying={markDemoPlayStarted}
                 onError={() => setVideoLoadError('No pudimos cargar este video. Prueba con otro archivo.')}
                 onContextMenu={(e) => e.preventDefault()}
                 onDragStart={(e) => e.preventDefault()}

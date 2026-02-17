@@ -12,12 +12,37 @@ import { manyChat } from '../../many-chat';
 import { checkIfUserIsSubscriber } from '../migration/checkUHSubscriber';
 import { getClientIpFromRequest } from '../../analytics';
 import { getPlanKey } from '../../utils/getPlanKey';
+import { OrderStatus } from './interfaces/order-status.interface';
 import {
   BILLING_CONSENT_TYPE_RECURRING,
   BILLING_CONSENT_VERSION,
   buildRecurringBillingConsentText,
 } from '../../utils/billingConsent';
 import { sanitizeTrackingUrl } from '../../utils/trackingUrl';
+import { ingestPaymentSuccessEvent } from '../../analytics/paymentSuccess';
+
+const parseAttributionFromUrl = (rawUrl: string) => {
+  try {
+    const parsed = new URL(rawUrl);
+    const read = (key: string): string | null => {
+      const value = parsed.searchParams.get(key);
+      if (!value) return null;
+      const trimmed = value.trim();
+      return trimmed || null;
+    };
+    return {
+      source: read('utm_source'),
+      medium: read('utm_medium'),
+      campaign: read('utm_campaign'),
+      term: read('utm_term'),
+      content: read('utm_content'),
+      fbclid: read('fbclid'),
+      gclid: read('gclid'),
+    };
+  } catch {
+    return null;
+  }
+};
 
 export const subscribeWithPaypal = shieldedProcedure
   .input(
@@ -155,6 +180,17 @@ export const subscribeWithPaypal = shieldedProcedure
             })
           : null;
         const resolvedPlan = planFromPaypal ?? plan;
+        const latestOrderBefore = await prisma.orders.findFirst({
+          where: {
+            user_id: user.id,
+            txn_id: subscriptionId,
+            payment_method: PaymentService.PAYPAL,
+            is_plan: 1,
+          },
+          orderBy: { date_order: 'desc' },
+          select: { status: true },
+        });
+        const orderWasPaidBefore = latestOrderBefore?.status === OrderStatus.PAID;
 
         await subscribe({
           prisma,
@@ -164,6 +200,49 @@ export const subscribeWithPaypal = shieldedProcedure
           service: PaymentService.PAYPAL,
           expirationDate: new Date(subscription.billing_info.next_billing_time),
         });
+
+        const latestPaidOrder = await prisma.orders.findFirst({
+          where: {
+            user_id: user.id,
+            txn_id: subscriptionId,
+            payment_method: PaymentService.PAYPAL,
+            is_plan: 1,
+            status: OrderStatus.PAID,
+            OR: [{ is_canceled: null }, { is_canceled: 0 }],
+          },
+          orderBy: { date_order: 'desc' },
+          select: {
+            id: true,
+            total_price: true,
+            plan_id: true,
+            date_order: true,
+          },
+        });
+
+        try {
+          await ingestPaymentSuccessEvent({
+            prisma,
+            provider: 'paypal',
+            providerEventId: subscriptionId,
+            userId: user.id,
+            orderId: latestPaidOrder?.id ?? null,
+            planId: latestPaidOrder?.plan_id ?? resolvedPlan.id,
+            amount: Number(latestPaidOrder?.total_price ?? resolvedPlan.price) || 0,
+            currency: resolvedPlan.moneda?.toUpperCase?.() ?? null,
+            isRenewal: orderWasPaidBefore,
+            eventTs: latestPaidOrder?.date_order ?? new Date(),
+            attribution: parseAttributionFromUrl(url),
+            metadata: {
+              paypalSubscriptionId: subscriptionId,
+              source: 'subscribe_with_paypal',
+            },
+          });
+        } catch (analyticsError) {
+          log.debug('[PAYPAL] analytics payment_success skipped', {
+            error:
+              analyticsError instanceof Error ? analyticsError.message : analyticsError,
+          });
+        }
 
         try {
           const clientIp = getClientIpFromRequest(req);

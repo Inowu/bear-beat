@@ -368,7 +368,7 @@ export function CrmDashboard() {
       {
         title: "Riesgo de activación (24h)",
         value: formatCompactNumber(activationRiskTotal),
-        helper: `${snapshot.trialNoDownload24hTotal} trial + ${snapshot.paidNoDownload24hTotal} pagados sin descarga.`,
+        helper: `${snapshot.trialNoDownload24hTotal} trial_started + ${snapshot.paidNoDownload24hTotal} pagados sin descarga.`,
         tone: activationRiskTotal <= 5 ? "ok" : activationRiskTotal <= 20 ? "warn" : "error",
       },
       {
@@ -378,6 +378,19 @@ export function CrmDashboard() {
         tone: cancellationPressurePct <= 8 ? "ok" : cancellationPressurePct <= 18 ? "warn" : "error",
       },
     ] as const;
+  }, [snapshot]);
+
+  const trialEventTotals = useMemo(() => {
+    if (!snapshot) {
+      return { trialStarts: 0, trialConversions: 0 };
+    }
+    return snapshot.trialsDaily.reduce(
+      (acc, row) => ({
+        trialStarts: acc.trialStarts + row.trialStarts,
+        trialConversions: acc.trialConversions + row.trialConversions,
+      }),
+      { trialStarts: 0, trialConversions: 0 },
+    );
   }, [snapshot]);
 
   const updatedAtLabel = useMemo(() => {
@@ -525,12 +538,16 @@ export function CrmDashboard() {
               icon={DollarSign}
             />
             <KpiCard
-              title="Trial"
-              value={`${formatCompactNumber(snapshot.kpis.trialStarts)} → ${formatCompactNumber(
-                snapshot.kpis.trialConversions,
-              )}`}
-              helper={`Conversión ${formatPct(snapshot.kpis.trialConversionRatePct)}`}
+              title="Trial started (evento)"
+              value={formatCompactNumber(trialEventTotals.trialStarts)}
+              helper="Evento canónico: trial_started (analytics_events)"
               icon={Clock}
+            />
+            <KpiCard
+              title="Trial → Paid (evento)"
+              value={formatCompactNumber(trialEventTotals.trialConversions)}
+              helper={`Conversión ${formatPct(snapshot.kpis.trialConversionRatePct)}`}
+              icon={TrendingUp}
             />
             <KpiCard
               title="Cancelaciones"
@@ -701,45 +718,45 @@ export function CrmDashboard() {
 
             <section className="crm-section">
               <div className="crm-section__title-row">
-                <h2 className="crm-section__title">Trial por día</h2>
+                <h2 className="crm-section__title">Trial started (evento) por día</h2>
                 <span className="crm-counter">{snapshot.trialsDaily.length}</span>
               </div>
-              <p className="crm-section__hint">Eventos de inicio y conversión de prueba por día.</p>
-              <div className="crm-table-wrap" tabIndex={0} aria-label="Tabla: trial por día (desplazable)">
+              <p className="crm-section__hint">
+                Definición única de Trial: evento <code>trial_started</code> en <code>analytics_events</code>.
+              </p>
+              <div className="crm-table-wrap" tabIndex={0} aria-label="Tabla: trial started por día (desplazable)">
                 <table className="crm-table crm-table--compact">
                   <thead>
                     <tr>
                       <th>Día</th>
-                      <th>Inicios</th>
-                      <th>Conversiones</th>
+                      <th>Trial started</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {snapshot.trialsDaily.slice(-14).map((row) => (
+                    {snapshot.trialsDaily.map((row) => (
                       <tr key={row.day}>
                         <td>{formatDay(row.day)}</td>
                         <td>{row.trialStarts}</td>
-                        <td>{row.trialConversions}</td>
                       </tr>
                     ))}
                     {snapshot.trialsDaily.length === 0 ? (
                       <tr>
-                        <td colSpan={3} className="crm-table__empty">
-                          Aún no hay eventos de trial.
+                        <td colSpan={2} className="crm-table__empty">
+                          Aún no hay eventos trial_started.
                         </td>
                       </tr>
                     ) : null}
                   </tbody>
                 </table>
               </div>
-              <div className="admin-mobile-list" aria-label="Trial por día (móvil)">
+              <div className="admin-mobile-list" aria-label="Trial started por día (móvil)">
                 {snapshot.trialsDaily.length === 0 ? (
                   <div className="admin-mobile-empty">
                     <h2>Sin datos</h2>
-                    <p>Aún no hay eventos de trial.</p>
+                    <p>Aún no hay eventos trial_started.</p>
                   </div>
                 ) : (
-                  snapshot.trialsDaily.slice(-14).map((row) => (
+                  snapshot.trialsDaily.map((row) => (
                     <article key={`m_trial_${row.day}`} className="admin-mobile-card">
                       <header className="crm-mobile-card__head">
                         <div className="crm-mobile-card__copy">
@@ -748,12 +765,8 @@ export function CrmDashboard() {
                       </header>
                       <dl className="crm-mobile-kv">
                         <div className="crm-mobile-kv__row">
-                          <dt>Inicios</dt>
+                          <dt>Trial started</dt>
                           <dd>{row.trialStarts}</dd>
-                        </div>
-                        <div className="crm-mobile-kv__row">
-                          <dt>Conversiones</dt>
-                          <dd>{row.trialConversions}</dd>
                         </div>
                       </dl>
                     </article>
@@ -832,13 +845,13 @@ export function CrmDashboard() {
 
           <section className="crm-section">
             <div className="crm-section__title-row">
-              <h2 className="crm-section__title">Trial sin descarga en 24h</h2>
+              <h2 className="crm-section__title">Trial started sin descarga en 24h</h2>
               <span className="crm-counter">{snapshot.trialNoDownload24hTotal.toLocaleString("es-MX")}</span>
             </div>
             <p className="crm-section__hint">
-              Segmento crítico: necesitan onboarding para activar valor antes del día 7.
+              Segmento crítico basado en <code>trial_started</code>: necesitan onboarding para activar valor antes del día 7.
             </p>
-            <div className="crm-table-wrap" tabIndex={0} aria-label="Tabla: trial sin descarga (24h) (desplazable)">
+            <div className="crm-table-wrap" tabIndex={0} aria-label="Tabla: trial started sin descarga (24h) (desplazable)">
               <table className="crm-table">
                 <thead>
                   <tr>
@@ -904,7 +917,7 @@ export function CrmDashboard() {
                 </tbody>
               </table>
             </div>
-            <div className="admin-mobile-list" aria-label="Trial sin descarga (móvil)">
+            <div className="admin-mobile-list" aria-label="Trial started sin descarga (móvil)">
               {snapshot.trialNoDownload24h.length === 0 ? (
                 <div className="admin-mobile-empty">
                   <h2>Todo bien</h2>
@@ -973,7 +986,7 @@ export function CrmDashboard() {
               )}
             </div>
             <Pagination
-              title="trial sin descarga (24h)"
+              title="trial started sin descarga (24h)"
               totalData={snapshot.trialNoDownload24hTotal}
               totalLoader={loading}
               startFilter={(_key, value) =>

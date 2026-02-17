@@ -20,6 +20,7 @@ import {
 import PreviewModal from '../../components/PreviewModal/PreviewModal';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
+import type { Stripe } from '@stripe/stripe-js';
 import trpc from '../../api';
 import { IFiles, ITrackMetadata } from 'interfaces/Files';
 import { sortArrayByName } from '../../functions/functions';
@@ -35,11 +36,15 @@ import { of } from 'await-of';
 import Pagination from '../../components/Pagination/Pagination';
 import { UsersUHModal } from '../../components/Modals/UsersUHModal/UsersUHModal';
 import { Elements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
 import { GROWTH_METRICS, trackGrowthMetric } from '../../utils/growthMetrics';
 import { formatBytes } from '../../utils/format';
 import { inferTrackMetadata } from '../../utils/fileMetadata';
 import { apiBaseUrl } from '../../utils/runtimeConfig';
+import { buildDemoPlaybackUrl } from '../../utils/demoUrl';
+import {
+  ensureStripeReady,
+  getStripeLoadFailureReason,
+} from '../../utils/stripeLoader';
 
 interface IAlbumData {
   name: string;
@@ -161,13 +166,6 @@ const getTrackCoverSeed = (value: string): number => {
   return Math.abs(hash);
 };
 
-const stripeKey =
-  process.env.REACT_APP_ENVIRONMENT === 'development'
-    ? (process.env.REACT_APP_STRIPE_TEST_KEY as string)
-    : (process.env.REACT_APP_STRIPE_KEY as string);
-
-const stripePromise = loadStripe(stripeKey);
-
 function Home() {
   const { theme } = useTheme();
   const { fileChange, closeFile, userToken, currentUser, startUser } = useUserContext();
@@ -207,8 +205,10 @@ function Home() {
   const [loadError, setLoadError] = useState<string>('');
   const [showVerifyModal, setShowVerifyModal] = useState<boolean>(false);
   const [pendingDownload, setPendingDownload] = useState<PendingDownload | null>(null);
+  const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
   const searchRequestRef = useRef(0);
   const lastTrackedSearchRef = useRef<string>('');
+  const stripeWarmupRef = useRef<Promise<boolean> | null>(null);
 
   const stripeOptions = useMemo(() => ({ appearance: getStripeAppearance(theme) }), [theme]);
 
@@ -335,6 +335,45 @@ function Home() {
   const closePlan = () => {
     setShowPlan(false);
   };
+  const ensureStripeForSurface = async (surface: 'home_migration' | 'home_gb_topup'): Promise<boolean> => {
+    if (stripePromise) return true;
+    if (stripeWarmupRef.current) return stripeWarmupRef.current;
+
+    const warmup = (async () => {
+      try {
+        const stripe = await ensureStripeReady({ timeoutMs: 4500 });
+        setStripePromise(stripe.stripePromise);
+        return true;
+      } catch (error) {
+        trackGrowthMetric(GROWTH_METRICS.CHECKOUT_ERROR, {
+          method: 'card',
+          reason: 'stripe_js_load_failed',
+          errorCode: getStripeLoadFailureReason(error),
+          surface,
+        });
+        setErrorMessage(
+          'No cargó el pago con tarjeta. Reintenta en unos segundos para abrir el checkout.',
+        );
+        setShow(true);
+        return false;
+      } finally {
+        stripeWarmupRef.current = null;
+      }
+    })();
+
+    stripeWarmupRef.current = warmup;
+    return warmup;
+  };
+  const openPlan = async () => {
+    const ready = await ensureStripeForSurface('home_gb_topup');
+    if (!ready) return;
+    setShowPlan(true);
+  };
+  const openMigrationModal = async () => {
+    const ready = await ensureStripeForSurface('home_migration');
+    if (!ready) return;
+    setShowModal(true);
+  };
   const isOutOfGbMessage = (value: unknown): boolean => {
     const msg = `${value ?? ''}`.toLowerCase();
     return msg.includes('suficientes bytes');
@@ -419,7 +458,7 @@ function Home() {
         userUH.subscriptionEmail &&
         !currentUser.hasActiveSubscription
       ) {
-        setShowModal(true);
+        void openMigrationModal();
       }
     } catch {
     }
@@ -478,8 +517,8 @@ function Home() {
     setIndex(index);
     try {
       const path = resolveFilePath(file);
-      const files_demo = await trpc.ftp.demo.query({ path: path });
-      const previewUrl = encodeURI('https://thebearbeatapi.lat' + files_demo.demo);
+      const filesDemo = await trpc.ftp.demo.query({ path });
+      const previewUrl = buildDemoPlaybackUrl(filesDemo.demo, apiBaseUrl);
       const previewSignature = `${file.name} ${path} ${previewUrl}`.toLowerCase();
       setFileToShow({
         url: previewUrl,
@@ -489,6 +528,11 @@ function Home() {
       setIndex(-1);
       setLoadFile(false);
       setShowPreviewModal(true);
+      trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, {
+        location: 'home_library',
+        kind: AUDIO_EXT_REGEX.test(previewSignature) ? 'audio' : 'video',
+        pagePath: path,
+      });
       trackGrowthMetric(GROWTH_METRICS.FILE_PREVIEW_OPENED, {
         fileType: AUDIO_EXT_REGEX.test(previewSignature) ? 'audio' : 'video',
         pagePath: path,
@@ -621,7 +665,7 @@ function Home() {
         return;
       }
       if (currentUser?.hasActiveSubscription && isOutOfGbMessage(error?.message ?? error)) {
-        setShowPlan(true);
+        void openPlan();
         return;
       }
       trackGrowthMetric(GROWTH_METRICS.FILE_DOWNLOAD_FAILED, {
@@ -666,7 +710,7 @@ function Home() {
         }
 
         if (currentUser?.hasActiveSubscription && isOutOfGbMessage(backendMessage)) {
-          setShowPlan(true);
+          void openPlan();
           setLoadDownload(false);
           setIndex(-1);
           return;
@@ -890,21 +934,23 @@ function Home() {
           setFileToShow(null);
         }}
       />
-      <Elements stripe={stripePromise} options={stripeOptions}>
-        <UsersUHModal showModal={showModal} onHideModal={closeModalAdd} />
-        <PlansModal
-          show={showPlan}
-          onHide={closePlan}
-          intro="Te quedaste sin GB disponibles para descargar. Recarga GB extra y sigue descargando."
-          dataModals={{
-            setShowError: setShow,
-            setShowSuccess: setShowSuccess,
-            setSuccessMessage: setSuccessMessage,
-            setErrorMessage: setErrorMessage,
-            setSuccessTitle: setSuccessTitle,
-          }}
-        />
-      </Elements>
+      {stripePromise && (
+        <Elements stripe={stripePromise} options={stripeOptions}>
+          <UsersUHModal showModal={showModal} onHideModal={closeModalAdd} />
+          <PlansModal
+            show={showPlan}
+            onHide={closePlan}
+            intro="Te quedaste sin GB disponibles para descargar. Recarga GB extra y sigue descargando."
+            dataModals={{
+              setShowError: setShow,
+              setShowSuccess: setShowSuccess,
+              setSuccessMessage: setSuccessMessage,
+              setErrorMessage: setErrorMessage,
+              setSuccessTitle: setSuccessTitle,
+            }}
+          />
+        </Elements>
+      )}
       <div className="bb-home-overview">
         <div className="bb-library-header">
           <div className="bb-library-top">

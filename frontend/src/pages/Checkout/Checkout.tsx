@@ -27,6 +27,10 @@ import { getConektaFingerprint } from "../../utils/conektaCollect";
 import { formatInt } from "../../utils/format";
 import PublicTopNav from "../../components/PublicTopNav/PublicTopNav";
 import { toErrorMessage } from "../../utils/errorMessage";
+import {
+  ensureStripeReady,
+  getStripeLoadFailureReason,
+} from "../../utils/stripeLoader";
 
 type CheckoutMethod = "card" | "spei" | "oxxo" | "bbva" | "paypal";
 type CheckoutTrialConfig = {
@@ -287,6 +291,8 @@ function checkoutErrorTitle(method: CheckoutMethod, reason?: string): string {
       return "Problema de conexión";
     case "stripe_procedure_missing":
       return "Tarjeta no disponible";
+    case "stripe_js_load_failed":
+      return "No cargó el pago con tarjeta";
     case "missing_redirect_url":
       return "No se abrió la página de pago";
     case "missing_subscription_id":
@@ -701,6 +707,7 @@ function Checkout() {
         Boolean(switchAction) &&
         (opts.reason === "card_declined" ||
           opts.reason === "stripe_procedure_missing" ||
+          opts.reason === "stripe_js_load_failed" ||
           opts.reason === "missing_subscription_id" ||
           opts.reason === "paypal_failed");
 
@@ -987,6 +994,31 @@ function Checkout() {
     });
 
     try {
+      try {
+        await ensureStripeReady({ timeoutMs: 4500 });
+      } catch (error) {
+        const alt = buildAltMethodHint("card", availableMethods);
+        const suffix = alt ? ` ${alt}` : "";
+        openCheckoutError({
+          method: "card",
+          userMessage: `No cargó el pago con tarjeta en este momento.${suffix}`,
+          hint: "Puedes reintentar o elegir PayPal/SPEI.",
+          reason: "stripe_js_load_failed",
+          retry: startStripeCheckout,
+        });
+        trackGrowthMetric(GROWTH_METRICS.CHECKOUT_ERROR, {
+          method: "card",
+          planId: plan.id,
+          currency,
+          amount: value,
+          reason: "stripe_js_load_failed",
+          errorCode: getStripeLoadFailureReason(error),
+        });
+        setRedirecting(false);
+        setProcessingMethod(null);
+        return;
+      }
+
       const result = await trpc.subscriptions.createStripeCheckoutSession.mutate({
         planId: plan.id,
         acceptRecurring,

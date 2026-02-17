@@ -1,6 +1,7 @@
 import './polyfills';
 import './instrument';
 import path from 'path';
+import type { Request, Response, NextFunction } from 'express';
 import pm2 from 'pm2';
 import * as Sentry from '@sentry/node';
 import { createExpressMiddleware } from '@trpc/server/adapters/express';
@@ -94,6 +95,7 @@ async function main() {
     const allowedOrigins = getAllowedCorsOrigins();
 
     app.disable('x-powered-by');
+    const demosRootPath = path.resolve(__dirname, '../demos');
 
     // Security headers (defense-in-depth). Keep this safe for APIs + static demos.
     app.use((_req, res, next) => {
@@ -194,7 +196,47 @@ async function main() {
       conektaEndpoint,
     );
 
-    app.use('/demos', express.static(path.resolve(__dirname, '../demos')));
+    app.use(
+      '/demos',
+      express.static(demosRootPath, {
+        fallthrough: true,
+        index: false,
+        acceptRanges: true,
+        maxAge: '30m',
+      }),
+    );
+
+    app.use('/demos', (_req: Request, res: Response) => {
+      res.status(404).json({
+        error: 'demo_not_found',
+        message: 'No encontramos este demo. Intenta con otro archivo.',
+      });
+    });
+
+    app.use(
+      '/demos',
+      (error: any, _req: Request, res: Response, next: NextFunction) => {
+        if (!error) {
+          next();
+          return;
+        }
+        if (res.headersSent) {
+          next(error);
+          return;
+        }
+
+        const errorCode =
+          typeof error?.code === 'string' && error.code ? error.code : 'unknown_error';
+        log.error(`[DEMOS] Upstream serving failure (${errorCode}): ${error?.message ?? ''}`);
+
+        res.status(502).json({
+          error: 'demo_upstream_failed',
+          message: 'No pudimos servir el demo en este momento. Reintenta en unos segundos.',
+          retryable: true,
+          retryAfterMs: 2500,
+        });
+      },
+    );
 
     app.get('/download', downloadEndpoint);
 

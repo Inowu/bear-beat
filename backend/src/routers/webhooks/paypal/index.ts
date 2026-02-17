@@ -13,6 +13,7 @@ import { paypal } from '../../../paypal';
 import { updateFtpUserInfo } from '../../subscriptions/changeSubscriptionPlan/updateSubscription';
 import { manyChat } from '../../../many-chat';
 import { ingestAnalyticsEvents } from '../../../analytics';
+import { ingestPaymentSuccessEvent } from '../../../analytics/paymentSuccess';
 
 const parsePaypalPayload = (req: Request): Record<string, any> => {
   const body = req.body as unknown;
@@ -333,6 +334,7 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
         );
         return;
       }
+      const orderWasPaidBefore = existingOrder.status === OrderStatus.PAID;
 
       const orderPlan = await prisma.plans.findFirst({
         where: {
@@ -390,6 +392,49 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
         expirationDate,
         service: PaymentService.PAYPAL,
       });
+
+      try {
+        const latestPaidOrder = await prisma.orders.findFirst({
+          where: {
+            user_id: user.id,
+            txn_id: subId,
+            payment_method: PaymentService.PAYPAL,
+            is_plan: 1,
+            status: OrderStatus.PAID,
+            OR: [{ is_canceled: null }, { is_canceled: 0 }],
+          },
+          orderBy: { date_order: 'desc' },
+          select: {
+            id: true,
+            plan_id: true,
+            total_price: true,
+            date_order: true,
+          },
+        });
+
+        await ingestPaymentSuccessEvent({
+          prisma,
+          provider: 'paypal',
+          providerEventId:
+            (typeof payload?.id === 'string' && payload.id)
+            || (typeof payload?.event_id === 'string' && payload.event_id)
+            || null,
+          userId: user.id,
+          orderId: latestPaidOrder?.id ?? existingOrder.id ?? null,
+          planId: latestPaidOrder?.plan_id ?? orderPlan?.id ?? null,
+          amount: Number(latestPaidOrder?.total_price ?? orderPlan?.price) || 0,
+          currency: orderPlan?.moneda?.toUpperCase?.() ?? null,
+          isRenewal: orderWasPaidBefore,
+          eventTs: latestPaidOrder?.date_order ?? new Date(),
+          metadata: {
+            paypalSubscriptionId: subId,
+          },
+        });
+      } catch (e) {
+        log.debug('[PAYPAL_WH] analytics payment_success skipped', {
+          error: e instanceof Error ? e.message : e,
+        });
+      }
 
       break;
     }
