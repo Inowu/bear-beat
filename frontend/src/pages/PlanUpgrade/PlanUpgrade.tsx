@@ -18,7 +18,8 @@ export const PlanUpgrade = () => {
 
   const toBigInt = (value: unknown): bigint => {
     if (typeof value === "bigint") return value;
-    if (typeof value === "number" && Number.isFinite(value)) return BigInt(Math.trunc(value));
+    if (typeof value === "number" && Number.isFinite(value))
+      return BigInt(Math.trunc(value));
     if (typeof value === "string" && value.trim()) {
       try {
         return BigInt(value.trim());
@@ -29,123 +30,69 @@ export const PlanUpgrade = () => {
     return BigInt(0);
   };
 
-  const getPlans = async (
-    plan_id: number,
-    stripe: string | null,
-    quotaBytes: bigint,
-    product_id: string | null,
-    moneda: string
-  ) => {
-    const gbSpend = quotaBytes / BigInt(1000000000);
+  const mapPlan = (raw: any): IPlans | null => {
+    if (!raw || typeof raw !== "object") return null;
+    const id = Number(raw.id);
+    if (!Number.isFinite(id) || id <= 0) return null;
+    return {
+      activated: Number(raw.activated ?? 0),
+      audio_ilimitado: null,
+      conekta_plan_id: null,
+      conekta_plan_id_test: null,
+      description: String(raw.description ?? ""),
+      duration: String(raw.duration ?? ""),
+      gigas: toBigInt(raw.gigas),
+      homedir: String(raw.homedir ?? ""),
+      id,
+      ilimitado_activo: null,
+      ilimitado_dias: null,
+      karaoke_ilimitado: null,
+      moneda: String(raw.moneda ?? ""),
+      name: String(raw.name ?? ""),
+      price: String(raw.price ?? ""),
+      stripe_prod_id: String(raw.stripe_prod_id ?? ""),
+      stripe_prod_id_test: String(raw.stripe_prod_id_test ?? ""),
+      paypal_plan_id: String(raw.paypal_plan_id ?? ""),
+      paypal_plan_id_test: String(raw.paypal_plan_id_test ?? ""),
+      tokens: null,
+      tokens_karaoke: null,
+      tokens_video: null,
+      video_ilimitado: null,
+      vip_activo: null,
+    };
+  };
+
+  const loadUpgradeOptions = async () => {
+    setLoader(true);
+    setLoadError("");
     try {
-      if (stripe !== null) {
-        const body = {
-          where: {
-            activated: 1,
-            paypal_plan_id: null,
-            moneda: moneda,
-            NOT: {
-              id: plan_id,
-            },
-          },
-        };
-        const fetchPlans: any = await trpc.plans.findManyPlans.query(body);
-        const filtered: any[] = (fetchPlans ?? []).filter((p: any) => toBigInt(p?.gigas) > gbSpend);
-        setPlans(filtered);
-      } else {
-        if (product_id === null) {
-          return;
-        }
-        const body = {
-          where: {
-            activated: 1,
-            stripe_prod_id: null,
-            moneda: moneda,
-            // paypal_product_id: product_id,
-            NOT: {
-              id: plan_id,
-            },
-          },
-        };
-        const fetchPlans: any = await trpc.plans.findManyPlans.query(body);
-        const paypalplans = (fetchPlans ?? []).filter(
-          (plan: any) => plan.paypal_product_id === product_id
-        );
-        const filteredPaypal = paypalplans.filter((p: any) => toBigInt(p?.gigas) > gbSpend);
-        setPlans(filteredPaypal);
-      }
-    } catch (error) {
+      const response: any = await trpc.plans.getUpgradeOptions.query();
+      const nextCurrentPlan = mapPlan(response?.currentPlan);
+      const upgradesRaw = Array.isArray(response?.upgradePlans)
+        ? response.upgradePlans
+        : [];
+      const nextPlans = upgradesRaw
+        .map((planRaw: any) => mapPlan(planRaw))
+        .filter((plan: IPlans | null): plan is IPlans => Boolean(plan));
+
+      setCurrentPlan(nextCurrentPlan);
+      setPlans(nextPlans);
+    } catch {
+      setCurrentPlan(null);
       setPlans([]);
-      setLoadError("No pudimos cargar los planes disponibles. Intenta de nuevo.");
+      setLoadError(
+        "No pudimos cargar las opciones para actualizar tu plan. Revisa tu conexión e intenta de nuevo.",
+      );
     } finally {
       setLoader(false);
     }
   };
-  const getCurrentPlan = async () => {
-    setLoader(true);
-    setLoadError("");
-    try {
-      if (currentUser !== null) {
-        let body: any = {
-          isExtended: currentUser.extendedFtpAccount,
-        };
-        const tempPlan = await trpc.auth.getCurrentSubscriptionPlan.query();
-        if (!tempPlan) {
-          setCurrentPlan(null);
-          setPlans([]);
-          setLoader(false);
-          return;
-        }
 
-        const quota: any = await trpc.ftp.quota.query(body);
-        const constructedPlan: IPlans = {
-          activated: tempPlan.activated,
-          audio_ilimitado: null,
-          conekta_plan_id: null,
-          conekta_plan_id_test: null,
-          description: tempPlan.description,
-          duration: tempPlan.duration,
-          gigas: tempPlan.gigas,
-          homedir: tempPlan.homedir,
-          id: tempPlan.id,
-          ilimitado_activo: null,
-          ilimitado_dias: null,
-          karaoke_ilimitado: null,
-          moneda: tempPlan.moneda,
-          name: tempPlan.name,
-          price: tempPlan.price.toString(),
-          stripe_prod_id: tempPlan.stripe_prod_id!,
-          stripe_prod_id_test: tempPlan.stripe_prod_id_test!,
-          paypal_plan_id: tempPlan.paypal_plan_id!,
-          paypal_plan_id_test: tempPlan.paypal_plan_id_test!,
-          tokens: null,
-          tokens_karaoke: null,
-          tokens_video: null,
-          video_ilimitado: null,
-          vip_activo: null,
-        }
-        getPlans(
-          tempPlan.id,
-          tempPlan.stripe_prod_id ? tempPlan.stripe_prod_id : tempPlan.stripe_prod_id_test,
-          toBigInt(quota?.regular?.used?.toString?.() ?? "0"),
-          tempPlan.paypal_product_id,
-          tempPlan.moneda
-        );
-        setCurrentPlan(constructedPlan);
-      }
-    } catch (error: any) {
-      setCurrentPlan(null);
-      setPlans([]);
-      setLoadError("No pudimos cargar tu plan actual. Revisa tu conexión e intenta de nuevo.");
-      setLoader(false);
-    }
-  };
   useEffect(() => {
     if (currentUser) {
-      getCurrentPlan();
+      void loadUpgradeOptions();
     }
   }, [currentUser]);
-
 
   if (loader) {
     return (
@@ -168,7 +115,8 @@ export const PlanUpgrade = () => {
       <header className="mb-6">
         <h1 className="text-text-main font-bold">Actualizar plan</h1>
         <p className="text-text-muted mt-2">
-          Sube de nivel cuando lo necesites. Si no tienes un plan activo, ve a Planes.
+          Sube de nivel cuando lo necesites. Si no tienes un plan activo, ve a
+          Planes.
         </p>
       </header>
 
@@ -181,7 +129,7 @@ export const PlanUpgrade = () => {
             <Button
               variant="secondary"
               leftIcon={<RefreshCw size={18} />}
-              onClick={() => void getCurrentPlan()}
+              onClick={() => void loadUpgradeOptions()}
             >
               Reintentar
             </Button>
@@ -217,7 +165,7 @@ export const PlanUpgrade = () => {
         <PlanCard
           currentPlan={true}
           plan={currentPlan}
-          getCurrentPlan={() => { }}
+          getCurrentPlan={() => {}}
           userEmail={currentUser?.email}
           userPhone={currentUser?.phone}
         />
@@ -226,8 +174,8 @@ export const PlanUpgrade = () => {
         return (
           <PlanCard
             plan={plan}
-            key={"plan_" + index}
-            getCurrentPlan={getCurrentPlan}
+            key={`plan_${plan.id}_${index}`}
+            getCurrentPlan={loadUpgradeOptions}
             userEmail={currentUser?.email}
             userPhone={currentUser?.phone}
           />
