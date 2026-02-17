@@ -5,3 +5,4 @@
 - **[DISENO-Y-ESTADO-ACTUAL.md](./DISENO-Y-ESTADO-ACTUAL.md)** – Sistema de diseño (tipografía, colores, variables `--app-*`), estado actual de la web: rutas, páginas, funciones por pantalla, modales y alertas. Referencia para mantener consistencia y para que cualquier desarrollador o IA entienda el proyecto.
 - **[FACEBOOK_META.md](./FACEBOOK_META.md)** – Configuración paso a paso del Pixel de Meta y de la Conversions API (variables de entorno, token, ID del pixel).
 - **[LOGICA-ENVIO-EMAILS.md](./LOGICA-ENVIO-EMAILS.md)** – Listado de todos los emails que envía la app: en qué acción se envían, con qué plantilla (en código) y qué parámetros. Incluye registro, recuperar contraseña y confirmación de compra (Stripe, Conekta, PayPal, Admin).
+- **[OPERACION_DOWNLOAD_HISTORY_ESCALABILIDAD.md](./OPERACION_DOWNLOAD_HISTORY_ESCALABILIDAD.md)** – Runbook de escalabilidad para `download_history`: archivado por lotes, purge seguro, particionado mensual y operación/rollback.

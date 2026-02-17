@@ -405,6 +405,26 @@ model DownloadHistory {
   @@map("download_history")
 }
 
+model DownloadHistoryArchive {
+  id         BigInt   @default(autoincrement()) @db.UnsignedBigInt
+  date       DateTime @db.DateTime(0)
+  sourceId   Int
+  userId     Int
+  size       BigInt
+  fileName   String   @db.VarChar(500)
+  isFolder   Boolean
+  archivedAt DateTime @default(now()) @db.DateTime(0)
+
+  @@id([id, date])
+  @@unique([sourceId, date], map: "uniq_dha_source_date")
+  @@index([date], map: "idx_dha_date")
+  @@index([sourceId], map: "idx_dha_source_id")
+  @@index([archivedAt], map: "idx_dha_archived_at")
+  @@index([userId, date], map: "idx_dha_user_date")
+  @@index([isFolder, date], map: "idx_dha_isfolder_date")
+  @@map("download_history_archive")
+}
+
 model DownloadHistoryRollupDaily {
   // Category for public "Top Downloads" (audio/video/karaoke). Stored as string for easy raw SQL/backfills.
   category   String   @db.VarChar(16)
