@@ -571,6 +571,21 @@ body {
   }
 }
 
+/* Shell base para rutas app/admin (no públicas). */
+.bb-app-page {
+  width: 100%;
+  min-width: 0;
+  min-height: calc(100vh - 88px);
+  color: var(--app-text-body);
+  font-family: var(--bb-font-ui);
+}
+
+@media (max-width: 1024px) {
+  .bb-app-page {
+    min-height: auto;
+  }
+}
+
 /* Web estándar: scroll en ventana del navegador (no en div interno) */
 /* Chrome Mac: suavizado de fuentes para que Poppins se vea nítido */
 html {

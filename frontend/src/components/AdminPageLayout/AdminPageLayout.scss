@@ -5,7 +5,6 @@
   isolation: isolate;
   width: 100%;
   max-width: 1500px;
-  min-height: calc(100vh - 88px);
   margin: 0 auto;
   padding: clamp(10px, 1.5vw, 24px);
   border-radius: clamp(14px, 2vw, 22px);
@@ -14,7 +13,6 @@
   background: var(--ad-card);
   color: var(--ad-text);
   box-shadow: var(--app-shadow-card);
-  font-family: var(--bb-font-ui);
   overflow-x: hidden;
   overflow: hidden;
 

@@ -18,7 +18,7 @@ export function AdminPageLayout({
   className,
   children,
 }: AdminPageLayoutProps) {
-  const classes = className ? `admin-page-wrap ${className}` : "admin-page-wrap";
+  const classes = className ? `admin-page-wrap bb-app-page ${className}` : "admin-page-wrap bb-app-page";
   return (
     <div className={classes}>
       <h1 className="admin-page-wrap__title">{title}</h1>

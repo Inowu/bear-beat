@@ -11,6 +11,7 @@
 // ---------- Contenedores tipo pantalla (todas las secciones) ----------
 // Misma sensación que una pantalla nativa: ancho controlado, sin scroll horizontal, relleno mínimo
 .app-screen,
+.bb-app-page,
 .main-layout-main-container .home-main-container,
 .main-layout-main-container .instructions-main-container,
 .main-layout-main-container .my-account-main-container,
@@ -30,6 +31,7 @@
 
 // Rellenar altura disponible en viewport (evita pantalla corta en móvil)
 .app-screen,
+.bb-app-page,
 .main-layout-main-container .home-main-container,
 .main-layout-main-container .instructions-main-container,
 .main-layout-main-container .my-account-main-container,

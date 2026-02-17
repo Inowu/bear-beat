@@ -441,7 +441,7 @@ function MyAccount() {
 
   if (!currentUser) {
     return (
-      <div className="my-account-main-container">
+      <div className="my-account-main-container bb-app-page">
         <div className="ma-shell">
           <div className="global-loader" aria-busy="true" aria-live="polite">
             <div className="app-state-panel is-loading" role="status">
@@ -458,7 +458,7 @@ function MyAccount() {
   }
 
   return (
-    <div className="my-account-main-container">
+    <div className="my-account-main-container bb-app-page">
       <div className="ma-shell">
         <header className="ma-page-head">
           <span className="ma-page-kicker">Panel de cuenta</span>

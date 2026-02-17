@@ -881,7 +881,7 @@ function Home() {
   };
 
   return (
-    <div className="home-main-container overflow-x-hidden">
+    <div className="home-main-container bb-app-page overflow-x-hidden">
       <PreviewModal
         show={showPreviewModal}
         file={fileToShow}

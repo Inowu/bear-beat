@@ -30,7 +30,7 @@ function Downloads() {
   const isEmpty = downloads !== null && downloads.length === 0 && !isError;
 
   return (
-    <div className="w-full bb-surface">
+    <div className="w-full bb-surface bb-app-page">
       <header className="mb-6">
         <div className="flex flex-wrap items-center gap-3">
           <FolderDown className="h-6 w-6 flex-shrink-0 text-bear-cyan" aria-hidden />
