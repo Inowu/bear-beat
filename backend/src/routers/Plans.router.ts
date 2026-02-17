@@ -28,6 +28,7 @@ import { StripePriceKey } from './subscriptions/utils/ensureStripePriceId';
 import type { Plans } from '@prisma/client';
 import { isStripeOxxoConfigured } from '../stripe/oxxo';
 import { getPublicCatalogSummarySnapshot } from './Catalog.router';
+import { getUserQuotaSnapshot } from './file-actions/quota';
 
 type StripeRecurringInterval = 'day' | 'week' | 'month' | 'year';
 
@@ -189,6 +190,42 @@ function formatMonthlyDualHint(
   const mxn = formatMonthlyCurrencyHint(mxnAmount, 'mxn');
   const usd = formatMonthlyCurrencyHint(usdAmount, 'usd');
   return `${mxn}/mes (${usd})`;
+}
+
+function toBigIntSafe(value: unknown): bigint {
+  if (typeof value === 'bigint') return value;
+  if (typeof value === 'number' && Number.isFinite(value))
+    return BigInt(Math.trunc(value));
+  if (typeof value === 'string' && value.trim()) {
+    try {
+      return BigInt(value.trim());
+    } catch {
+      return BigInt(0);
+    }
+  }
+  return BigInt(0);
+}
+
+async function resolveCurrentUserPlan(
+  ctx: Pick<Context, 'prisma' | 'session'>,
+): Promise<Plans | null> {
+  const userId = ctx.session?.user?.id;
+  if (!userId) return null;
+
+  const sub = await ctx.prisma.descargasUser.findFirst({
+    where: { user_id: userId },
+    orderBy: { id: 'desc' },
+  });
+  if (!sub?.order_id) return null;
+
+  const order = await ctx.prisma.orders.findFirst({
+    where: { id: sub.order_id },
+  });
+  if (!order?.plan_id) return null;
+
+  return ctx.prisma.plans.findFirst({
+    where: { id: order.plan_id },
+  });
 }
 
 async function resolveStripeProductAndRecurring(
@@ -512,6 +549,87 @@ export const plansRouter = router({
         effectiveTotalTB,
         isFallback: !catalogHasLive,
       },
+    };
+  }),
+  getUpgradeOptions: shieldedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.session?.user?.id;
+    const currentPlan = await resolveCurrentUserPlan(ctx);
+
+    if (!currentPlan || !userId) {
+      return {
+        currentPlan: null,
+        upgradePlans: [],
+        quotaUsedGb: 0,
+        billingRail: 'unknown' as const,
+      };
+    }
+
+    const quota = await getUserQuotaSnapshot({ prisma: ctx.prisma, userId });
+    const usedBytes = toBigIntSafe(quota?.regular?.used);
+    const quotaUsedGbBigInt = usedBytes / BigInt(1_000_000_000);
+
+    const stripeCandidate = String(
+      currentPlan.stripe_prod_id ?? currentPlan.stripe_prod_id_test ?? '',
+    ).trim();
+    const paypalProductId = String(currentPlan.paypal_product_id ?? '').trim();
+    const currency = String(currentPlan.moneda ?? '').trim();
+
+    const baseWhere: Record<string, unknown> = {
+      activated: 1,
+      NOT: {
+        id: currentPlan.id,
+      },
+    };
+    if (currency) {
+      baseWhere.moneda = currency;
+    }
+
+    let billingRail: 'stripe' | 'paypal' | 'unknown' = 'unknown';
+    let plans: Plans[] = [];
+
+    if (stripeCandidate) {
+      billingRail = 'stripe';
+      plans = await ctx.prisma.plans.findMany({
+        where: {
+          ...baseWhere,
+          paypal_plan_id: null,
+        },
+        orderBy: { id: 'asc' },
+      });
+    } else if (paypalProductId) {
+      billingRail = 'paypal';
+      const candidates = await ctx.prisma.plans.findMany({
+        where: {
+          ...baseWhere,
+          stripe_prod_id: null,
+        },
+        orderBy: { id: 'asc' },
+      });
+
+      plans = candidates.filter(
+        (plan) =>
+          String(plan.paypal_product_id ?? '').trim() === paypalProductId,
+      );
+    } else {
+      plans = await ctx.prisma.plans.findMany({
+        where: baseWhere,
+        orderBy: { id: 'asc' },
+      });
+    }
+
+    const upgradePlans = plans
+      .filter((plan) => toBigIntSafe(plan?.gigas) > quotaUsedGbBigInt)
+      .sort((a, b) => {
+        const byQuota = toFiniteNumber(a.gigas) - toFiniteNumber(b.gigas);
+        if (byQuota !== 0) return byQuota;
+        return a.id - b.id;
+      });
+
+    return {
+      currentPlan,
+      upgradePlans,
+      quotaUsedGb: Number(quotaUsedGbBigInt),
+      billingRail,
     };
   }),
   resolveCheckoutPlan: shieldedProcedure

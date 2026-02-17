@@ -98,6 +98,7 @@ export const permissions = shield<Context>(
     findManyPlans: allow,
     getTrialConfig: allow,
     getPublicPricingConfig: allow,
+    getUpgradeOptions: isLoggedIn,
     resolveCheckoutPlan: allow,
     getPublicBestPlans: allow,
     findManyRoles: isAdmin,
