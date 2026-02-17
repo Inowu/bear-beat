@@ -8,7 +8,11 @@ import PublicTopNav from "../../components/PublicTopNav/PublicTopNav";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../utils/growthMetrics";
 import { FALLBACK_GENRES, type GenreStats } from "./fallbackGenres";
-import { getHomeCtaPrimaryLabel, HOME_HERO_MICROCOPY_BASE, HOME_HERO_MICROCOPY_TRIAL } from "./homeCopy";
+import {
+  getHomeCtaPrimaryLabel,
+  HOME_HERO_MICROCOPY_BASE,
+  HOME_HERO_MICROCOPY_TRIAL,
+} from "./homeCopy";
 import {
   HOME_NUMBER_LOCALE,
   formatInt,
@@ -26,14 +30,29 @@ import HumanSocialProof from "./sections/HumanSocialProof";
 import SocialProof from "./sections/SocialProof";
 import Compatibility from "./sections/Compatibility";
 import ActivationSteps from "./sections/ActivationSteps";
-import Pricing, { type PricingPlan, type TrialSummary } from "./sections/Pricing";
+import Pricing, {
+  type PricingPlan,
+  type TrialSummary,
+} from "./sections/Pricing";
+import type { PaymentMethodId } from "../../components/PaymentMethodLogos/PaymentMethodLogos";
 import HomeFaq from "./sections/HomeFaq";
 import HomeDemoModal from "./sections/HomeDemoModal";
 import StickyMobileCta from "./sections/StickyMobileCta";
 import "./PublicHome.scss";
-import { FALLBACK_CATALOG_TOTAL_FILES, FALLBACK_CATALOG_TOTAL_GB } from "../../utils/catalogFallback";
 
 const TOP_DOWNLOADS_DAYS = 120;
+const DEFAULT_LIMITS_NOTE =
+  "La cuota mensual es lo que puedes descargar cada ciclo. El catálogo total es lo disponible para elegir.";
+const PAYMENT_METHOD_VALUES: PaymentMethodId[] = [
+  "visa",
+  "mastercard",
+  "amex",
+  "paypal",
+  "spei",
+  "oxxo",
+  "transfer",
+];
+type CurrencyKey = "mxn" | "usd";
 
 type TrialConfigResponse = {
   enabled: boolean;
@@ -72,11 +91,16 @@ type PublicTopDownloadsResponse = {
   sinceDays: number;
 };
 
-function detectPreferredCurrency(): "mxn" | "usd" {
-  // Business default: always lead with MXN on the public home page.
-  // Users can still toggle to USD in the pricing section when both are available.
-  return "mxn";
-}
+type PublicPricingUiSnapshot = {
+  defaultCurrency: CurrencyKey;
+  limitsNote: string;
+  afterPriceLabel: string;
+  stats: {
+    totalFiles: number;
+    totalTB: number;
+    quotaGbDefault: number;
+  };
+};
 
 function prettyMediaName(value: string): string {
   const name = `${value ?? ""}`.trim();
@@ -85,35 +109,59 @@ function prettyMediaName(value: string): string {
   return noExt.replace(/[_]+/g, " ").replace(/\s+/g, " ").trim();
 }
 
-function formatMonthlyCurrencyHint(amount: number | null | undefined, currency: "mxn" | "usd"): string {
-  const fallback = currency === "mxn" ? 350 : 18;
-  const code = currency === "mxn" ? "MXN" : "USD";
-  const value = Number(amount ?? 0);
-  const effective = Number.isFinite(value) && value > 0 ? value : fallback;
-  const hasDecimals = Math.round(effective) !== effective;
-  const formatted = hasDecimals ? effective.toFixed(2) : `${effective}`;
-  return `${code} $${formatted}`;
+function isPaymentMethodId(value: unknown): value is PaymentMethodId {
+  return (
+    typeof value === "string" &&
+    PAYMENT_METHOD_VALUES.includes(value as PaymentMethodId)
+  );
 }
 
-function formatMonthlyDualHint(mxnAmount: number | null | undefined, usdAmount: number | null | undefined): string {
-  const mxn = formatMonthlyCurrencyHint(mxnAmount, "mxn");
-  const usd = formatMonthlyCurrencyHint(usdAmount, "usd");
-  return `${mxn}/mes (${usd})`;
+function parsePaymentMethods(
+  value: unknown,
+  fallback: PaymentMethodId[],
+): PaymentMethodId[] {
+  if (!Array.isArray(value)) return fallback;
+  const parsed: PaymentMethodId[] = [];
+  for (const method of value) {
+    if (!isPaymentMethodId(method)) continue;
+    if (parsed.includes(method)) continue;
+    parsed.push(method);
+  }
+  return parsed.length > 0 ? parsed : fallback;
 }
 
 export default function PublicHome() {
   const location = useLocation();
   const { theme } = useTheme();
   const brandMark = theme === "light" ? brandMarkBlack : brandMarkCyan;
-  const preferredCurrency = useMemo(() => detectPreferredCurrency(), []);
-  const [trialConfig, setTrialConfig] = useState<TrialConfigResponse | null>(null);
-  const [catalogSummary, setCatalogSummary] = useState<PublicCatalogSummary | null>(null);
-  const [topDownloads, setTopDownloads] = useState<PublicTopDownloadsResponse | null>(null);
-  const [pricingPlans, setPricingPlans] = useState<{ mxn: PricingPlan | null; usd: PricingPlan | null }>({
+  const [pricingUi, setPricingUi] = useState<PublicPricingUiSnapshot>({
+    defaultCurrency: "mxn",
+    limitsNote: DEFAULT_LIMITS_NOTE,
+    afterPriceLabel: "MXN $350/mes (USD $18)",
+    stats: {
+      totalFiles: 0,
+      totalTB: 0,
+      quotaGbDefault: 500,
+    },
+  });
+  const preferredCurrency = pricingUi.defaultCurrency;
+  const [trialConfig, setTrialConfig] = useState<TrialConfigResponse | null>(
+    null,
+  );
+  const [catalogSummary, setCatalogSummary] =
+    useState<PublicCatalogSummary | null>(null);
+  const [topDownloads, setTopDownloads] =
+    useState<PublicTopDownloadsResponse | null>(null);
+  const [pricingPlans, setPricingPlans] = useState<{
+    mxn: PricingPlan | null;
+    usd: PricingPlan | null;
+  }>({
     mxn: null,
     usd: null,
   });
-  const [pricingStatus, setPricingStatus] = useState<"loading" | "loaded" | "error">("loading");
+  const [pricingStatus, setPricingStatus] = useState<
+    "loading" | "loaded" | "error"
+  >("loading");
   const [showDemo, setShowDemo] = useState(false);
 
   const pricingRef = useRef<HTMLDivElement | null>(null);
@@ -140,7 +188,10 @@ export default function PublicHome() {
       prefetchRegisterRoute();
     };
 
-    window.addEventListener("pointerdown", onIntent, { once: true, passive: true });
+    window.addEventListener("pointerdown", onIntent, {
+      once: true,
+      passive: true,
+    });
     window.addEventListener("keydown", onIntent, { once: true });
     return () => {
       window.removeEventListener("pointerdown", onIntent);
@@ -166,32 +217,99 @@ export default function PublicHome() {
         eligible: cfg?.eligible ?? null,
       });
 
-      const catalog = (response?.catalog as PublicCatalogSummary | null) ?? null;
+      const catalog =
+        (response?.catalog as PublicCatalogSummary | null) ?? null;
       setCatalogSummary(catalog);
 
       const mxn = response?.plans?.mxn ?? null;
       const usd = response?.plans?.usd ?? null;
-      const nextPlans = {
-        mxn: mxn
-          ? ({
-              currency: "mxn",
-              name: String(mxn?.name ?? "").trim() || "Membresía Bear Beat",
-              price: Number(mxn?.price ?? 0),
-              gigas: Number(mxn?.gigas ?? 0),
-              hasPaypal: Boolean(mxn?.hasPaypal),
-            } satisfies PricingPlan)
-          : null,
-        usd: usd
-          ? ({
-              currency: "usd",
-              name: String(usd?.name ?? "").trim() || "Membresía Bear Beat",
-              price: Number(usd?.price ?? 0),
-              gigas: Number(usd?.gigas ?? 0),
-              hasPaypal: Boolean(usd?.hasPaypal),
-            } satisfies PricingPlan)
-          : null,
+      const toPlan = (raw: any, currency: CurrencyKey): PricingPlan | null => {
+        if (!raw || typeof raw !== "object") return null;
+        const price = Number(raw?.price ?? 0);
+        const gigas = Number(raw?.gigas ?? 0);
+        const pricingMethodsFallback: PaymentMethodId[] =
+          currency === "mxn"
+            ? ["visa", "mastercard", "amex", "spei"]
+            : ["visa", "mastercard", "amex"];
+        const trialMethodsFallback: PaymentMethodId[] = [
+          "visa",
+          "mastercard",
+          "amex",
+        ];
+
+        return {
+          currency,
+          name: String(raw?.name ?? "").trim() || "Membresía Bear Beat",
+          price: Number.isFinite(price) ? price : 0,
+          gigas: Number.isFinite(gigas) ? gigas : 0,
+          hasPaypal: Boolean(raw?.hasPaypal),
+          pricingPaymentMethods: parsePaymentMethods(
+            raw?.pricingPaymentMethods,
+            pricingMethodsFallback,
+          ),
+          trialPricingPaymentMethods: parsePaymentMethods(
+            raw?.trialPricingPaymentMethods,
+            trialMethodsFallback,
+          ),
+          altPaymentLabel:
+            typeof raw?.altPaymentLabel === "string"
+              ? raw.altPaymentLabel.trim()
+              : "",
+        } satisfies PricingPlan;
       };
 
+      const nextPlans = {
+        mxn: toPlan(mxn, "mxn"),
+        usd: toPlan(usd, "usd"),
+      };
+
+      const defaultCurrencyRaw = String(
+        response?.ui?.defaultCurrency ?? response?.currencyDefault ?? "mxn",
+      )
+        .trim()
+        .toLowerCase();
+      const defaultCurrency: CurrencyKey =
+        defaultCurrencyRaw === "usd" ? "usd" : "mxn";
+      const totalFiles = Math.max(
+        0,
+        Number(response?.ui?.stats?.totalFiles ?? 0),
+      );
+      const totalTB = Math.max(0, Number(response?.ui?.stats?.totalTB ?? 0));
+      const quotaFromUi = Math.max(
+        0,
+        Number(response?.ui?.stats?.quotaGbDefault ?? 0),
+      );
+      const quotaFromPlans =
+        defaultCurrency === "mxn"
+          ? Number(nextPlans.mxn?.gigas ?? 0)
+          : Number(nextPlans.usd?.gigas ?? 0);
+      const quotaGbDefault =
+        Number.isFinite(quotaFromUi) && quotaFromUi > 0
+          ? quotaFromUi
+          : Number.isFinite(quotaFromPlans) && quotaFromPlans > 0
+            ? quotaFromPlans
+            : 500;
+      const limitsNoteRaw =
+        typeof response?.ui?.limitsNote === "string"
+          ? response.ui.limitsNote.trim()
+          : "";
+      const afterPriceLabelRaw =
+        typeof response?.ui?.afterPriceLabel === "string"
+          ? response.ui.afterPriceLabel.trim()
+          : "";
+
+      setPricingUi({
+        defaultCurrency,
+        limitsNote: limitsNoteRaw || DEFAULT_LIMITS_NOTE,
+        afterPriceLabel: afterPriceLabelRaw || "MXN $350/mes (USD $18)",
+        stats: {
+          totalFiles: Number.isFinite(totalFiles) ? totalFiles : 0,
+          totalTB: Number.isFinite(totalTB) ? totalTB : 0,
+          quotaGbDefault: Number.isFinite(quotaGbDefault)
+            ? quotaGbDefault
+            : 500,
+        },
+      });
       setPricingPlans(nextPlans);
       setPricingStatus(nextPlans.mxn || nextPlans.usd ? "loaded" : "error");
     };
@@ -215,6 +333,11 @@ export default function PublicHome() {
           setTrialConfig({ enabled: false, days: 0, gb: 0, eligible: null });
           setCatalogSummary(null);
           setPricingPlans({ mxn: null, usd: null });
+          setPricingUi((current) => ({
+            ...current,
+            defaultCurrency: "mxn",
+            limitsNote: DEFAULT_LIMITS_NOTE,
+          }));
           setPricingStatus("error");
         }
       }
@@ -224,7 +347,8 @@ export default function PublicHome() {
 
     return () => {
       cancelled = true;
-      if (staleTimeout && typeof window !== "undefined") window.clearTimeout(staleTimeout);
+      if (staleTimeout && typeof window !== "undefined")
+        window.clearTimeout(staleTimeout);
     };
   }, []);
 
@@ -233,10 +357,11 @@ export default function PublicHome() {
 
     (async () => {
       try {
-        const response = (await trpc.downloadHistory.getPublicTopDownloads.query({
-          limit: 25,
-          sinceDays: TOP_DOWNLOADS_DAYS,
-        })) as PublicTopDownloadsResponse;
+        const response =
+          (await trpc.downloadHistory.getPublicTopDownloads.query({
+            limit: 25,
+            sinceDays: TOP_DOWNLOADS_DAYS,
+          })) as PublicTopDownloadsResponse;
 
         if (!cancelled) setTopDownloads(response);
       } catch {
@@ -258,7 +383,10 @@ export default function PublicHome() {
     };
   }, [trialConfig]);
 
-  const ctaPrimaryLabel = useMemo(() => getHomeCtaPrimaryLabel(trialSummary), [trialSummary]);
+  const ctaPrimaryLabel = useMemo(
+    () => getHomeCtaPrimaryLabel(trialSummary),
+    [trialSummary],
+  );
   const footerMicrocopy = useMemo(() => {
     if (trialSummary?.enabled) {
       // Mantén el detalle de la prueba arriba (hero/pricing) y deja el footer en modo "micro".
@@ -267,40 +395,35 @@ export default function PublicHome() {
     return HOME_HERO_MICROCOPY_BASE;
   }, [trialSummary?.enabled]);
 
-  const afterPriceLabel = useMemo(() => {
-    return formatMonthlyDualHint(pricingPlans.mxn?.price, pricingPlans.usd?.price);
-  }, [pricingPlans.mxn?.price, pricingPlans.usd?.price]);
+  const afterPriceLabel = pricingUi.afterPriceLabel;
 
   const downloadQuotaGb = useMemo(() => {
-    const fromPlans = pricingPlans.mxn?.gigas ?? pricingPlans.usd?.gigas;
-    return Number.isFinite(fromPlans) && (fromPlans ?? 0) > 0 ? Number(fromPlans) : 500;
-  }, [pricingPlans.mxn?.gigas, pricingPlans.usd?.gigas]);
+    const fromUi = Number(pricingUi.stats.quotaGbDefault ?? 0);
+    if (Number.isFinite(fromUi) && fromUi > 0) return fromUi;
+    const fromPlans = Number(
+      pricingPlans.mxn?.gigas ?? pricingPlans.usd?.gigas ?? 0,
+    );
+    return Number.isFinite(fromPlans) && fromPlans > 0 ? fromPlans : 500;
+  }, [
+    pricingPlans.mxn?.gigas,
+    pricingPlans.usd?.gigas,
+    pricingUi.stats.quotaGbDefault,
+  ]);
 
   const downloadQuotaLabel = `${formatInt(downloadQuotaGb)} GB/mes`;
-
-  const effectiveTotalFiles = (() => {
-    const raw = Number(catalogSummary?.effectiveTotalFiles ?? catalogSummary?.totalFiles ?? 0);
-    return Number.isFinite(raw) && raw > 0 ? raw : FALLBACK_CATALOG_TOTAL_FILES;
-  })();
-
-  const effectiveTotalGB = (() => {
-    const raw = Number(catalogSummary?.effectiveTotalGB ?? catalogSummary?.totalGB ?? 0);
-    return Number.isFinite(raw) && raw > 0 ? raw : FALLBACK_CATALOG_TOTAL_GB;
-  })();
-
-  const effectiveTotalTB = (() => {
-    const raw = Number(catalogSummary?.effectiveTotalTB ?? 0);
-    return Number.isFinite(raw) && raw > 0 ? raw : effectiveTotalGB / 1000;
-  })();
-
+  const effectiveTotalFiles = Math.max(
+    0,
+    Number(pricingUi.stats.totalFiles ?? 0),
+  );
+  const effectiveTotalTB = Math.max(0, Number(pricingUi.stats.totalTB ?? 0));
   const totalTBLabel = formatTB(effectiveTotalTB);
   const totalFilesLabel = formatInt(effectiveTotalFiles);
   const hasLiveCatalog = Boolean(
     catalogSummary &&
-      !catalogSummary.error &&
-      catalogSummary.isFallback !== true &&
-      Number(catalogSummary.totalFiles) > 0 &&
-      Number(catalogSummary.totalGB) > 0,
+    !catalogSummary.error &&
+    catalogSummary.isFallback !== true &&
+    Number(catalogSummary.totalFiles) > 0 &&
+    Number(catalogSummary.totalGB) > 0,
   );
 
   const catalogGenres = useMemo<CatalogGenre[]>(() => {
@@ -324,7 +447,12 @@ export default function PublicHome() {
   const socialAudio = useMemo(() => {
     const items = topDownloads?.audio ?? [];
     return items
-      .filter((item) => item && typeof item.name === "string" && typeof item.path === "string")
+      .filter(
+        (item) =>
+          item &&
+          typeof item.name === "string" &&
+          typeof item.path === "string",
+      )
       .map((item) => ({
         path: item.path,
         name: prettyMediaName(item.name) || item.name,
@@ -335,7 +463,12 @@ export default function PublicHome() {
   const socialVideo = useMemo(() => {
     const items = topDownloads?.video ?? [];
     return items
-      .filter((item) => item && typeof item.name === "string" && typeof item.path === "string")
+      .filter(
+        (item) =>
+          item &&
+          typeof item.name === "string" &&
+          typeof item.path === "string",
+      )
       .map((item) => ({
         path: item.path,
         name: prettyMediaName(item.name) || item.name,
@@ -346,7 +479,12 @@ export default function PublicHome() {
   const socialKaraoke = useMemo(() => {
     const items = topDownloads?.karaoke ?? [];
     return items
-      .filter((item) => item && typeof item.name === "string" && typeof item.path === "string")
+      .filter(
+        (item) =>
+          item &&
+          typeof item.name === "string" &&
+          typeof item.path === "string",
+      )
       .map((item) => ({
         path: item.path,
         name: prettyMediaName(item.name) || item.name,
@@ -357,7 +495,10 @@ export default function PublicHome() {
   const onPrimaryCtaClick = useCallback(
     (location: "hero" | "mid" | "pricing" | "footer" | "sticky" | "nav") => {
       trackGrowthMetric(GROWTH_METRICS.CTA_PRIMARY_CLICK, { location });
-      trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, { id: "home_primary", location });
+      trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
+        id: "home_primary",
+        location,
+      });
       trackManyChatConversion(MC_EVENTS.CLICK_CTA_REGISTER);
     },
     [],
@@ -366,7 +507,10 @@ export default function PublicHome() {
   const onSecondaryCtaClick = useCallback(
     (location: "demo" | "top_downloads" | "modal_demo") => {
       trackGrowthMetric(GROWTH_METRICS.CTA_SECONDARY_CLICK, { location });
-      trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, { id: `home_secondary_${location}`, location });
+      trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
+        id: `home_secondary_${location}`,
+        location,
+      });
     },
     [],
   );
@@ -403,13 +547,18 @@ export default function PublicHome() {
   }, []);
 
   const alignScrollToTarget = useCallback(
-    (getTarget: () => HTMLElement | null, options: ScrollAlignmentOptions = {}) => {
+    (
+      getTarget: () => HTMLElement | null,
+      options: ScrollAlignmentOptions = {},
+    ) => {
       if (typeof window === "undefined") return;
 
       const token = (scrollAlignmentTokenRef.current += 1);
       const maxDurationMs = Math.max(250, options.maxDurationMs ?? 5200);
       const thresholdPx = Math.max(0, options.thresholdPx ?? 22);
-      const start = window.performance?.now ? window.performance.now() : Date.now();
+      const start = window.performance?.now
+        ? window.performance.now()
+        : Date.now();
 
       let lastY = window.scrollY;
       let lastDelta = Number.NaN;
@@ -419,7 +568,9 @@ export default function PublicHome() {
       const tick = () => {
         if (scrollAlignmentTokenRef.current !== token) return;
 
-        const now = window.performance?.now ? window.performance.now() : Date.now();
+        const now = window.performance?.now
+          ? window.performance.now()
+          : Date.now();
         const elapsed = now - start;
         const el = getTarget();
 
@@ -440,12 +591,17 @@ export default function PublicHome() {
         else stableScroll = 0;
         lastY = y;
 
-        if (Number.isFinite(lastDelta) && Math.abs(delta - lastDelta) < 1) stableDelta += 1;
+        if (Number.isFinite(lastDelta) && Math.abs(delta - lastDelta) < 1)
+          stableDelta += 1;
         else stableDelta = 0;
         lastDelta = delta;
 
         // We're stable and aligned.
-        if (stableScroll >= 10 && stableDelta >= 10 && Math.abs(delta) <= thresholdPx) {
+        if (
+          stableScroll >= 10 &&
+          stableDelta >= 10 &&
+          Math.abs(delta) <= thresholdPx
+        ) {
           options.onDone?.();
           return;
         }
@@ -459,7 +615,10 @@ export default function PublicHome() {
 
         if (elapsed >= maxDurationMs) {
           if (Math.abs(delta) > thresholdPx) {
-            window.scrollTo({ top: Math.max(0, window.scrollY + delta), behavior: "auto" });
+            window.scrollTo({
+              top: Math.max(0, window.scrollY + delta),
+              behavior: "auto",
+            });
           }
           options.onDone?.();
           return;
@@ -477,9 +636,17 @@ export default function PublicHome() {
     (options: { behavior?: ScrollBehavior; focusSearch?: boolean } = {}) => {
       if (typeof window === "undefined") return;
 
-      const scrollToTarget = (element: HTMLElement | null, behavior: ScrollBehavior = "smooth") => {
+      const scrollToTarget = (
+        element: HTMLElement | null,
+        behavior: ScrollBehavior = "smooth",
+      ) => {
         if (!element) return;
-        const top = Math.max(0, window.scrollY + element.getBoundingClientRect().top - getHomeStickyTopOffset());
+        const top = Math.max(
+          0,
+          window.scrollY +
+            element.getBoundingClientRect().top -
+            getHomeStickyTopOffset(),
+        );
         window.scrollTo({
           top,
           behavior,
@@ -497,7 +664,8 @@ export default function PublicHome() {
           "demo",
         ]) ?? fallbackDemoSection;
 
-      const getFinalTarget = () => (document.getElementById("top100") as HTMLElement | null) ?? section;
+      const getFinalTarget = () =>
+        (document.getElementById("top100") as HTMLElement | null) ?? section;
 
       if (section) {
         scrollToTarget(section, options.behavior ?? "smooth");
@@ -511,12 +679,16 @@ export default function PublicHome() {
       if (options.focusSearch) {
         // Avoid opening the keyboard; focus the first demo play button when the user explicitly clicks "Ver demo".
         window.setTimeout(() => {
-          const play = document.querySelector("[data-testid='home-topdemo-play']") as HTMLButtonElement | null;
+          const play = document.querySelector(
+            "[data-testid='home-topdemo-play']",
+          ) as HTMLButtonElement | null;
           if (play) {
             play.focus({ preventScroll: true });
             return;
           }
-          const jump = document.querySelector(".social-proof__jump-link") as HTMLAnchorElement | null;
+          const jump = document.querySelector(
+            ".social-proof__jump-link",
+          ) as HTMLAnchorElement | null;
           jump?.focus({ preventScroll: true });
         }, 0);
       }
@@ -528,12 +700,18 @@ export default function PublicHome() {
     (options: { behavior?: ScrollBehavior } = {}) => {
       if (typeof window === "undefined") return;
 
-      const getFaqTarget = () => document.getElementById("faq") as HTMLElement | null;
+      const getFaqTarget = () =>
+        document.getElementById("faq") as HTMLElement | null;
 
       const target = getFaqTarget();
       if (!target) return;
 
-      const top = Math.max(0, window.scrollY + target.getBoundingClientRect().top - getHomeStickyTopOffset());
+      const top = Math.max(
+        0,
+        window.scrollY +
+          target.getBoundingClientRect().top -
+          getHomeStickyTopOffset(),
+      );
       window.scrollTo({ top, behavior: options.behavior ?? "smooth" });
       window.history.replaceState(null, "", "#faq");
 
@@ -543,7 +721,8 @@ export default function PublicHome() {
           const finalTarget = getFaqTarget();
           if (!finalTarget) return;
 
-          const first = finalTarget.querySelector<HTMLElement>(".home-faq__summary");
+          const first =
+            finalTarget.querySelector<HTMLElement>(".home-faq__summary");
           const title = finalTarget.querySelector<HTMLElement>("h2");
           if (first && first.getAttribute("aria-expanded") === "false") {
             first.click();
@@ -562,12 +741,18 @@ export default function PublicHome() {
     (options: { behavior?: ScrollBehavior } = {}) => {
       if (typeof window === "undefined") return;
 
-      const getPricingTarget = () => document.getElementById("precio") as HTMLElement | null;
+      const getPricingTarget = () =>
+        document.getElementById("precio") as HTMLElement | null;
 
       const target = getPricingTarget();
       if (!target) return;
 
-      const top = Math.max(0, window.scrollY + target.getBoundingClientRect().top - getHomeStickyTopOffset());
+      const top = Math.max(
+        0,
+        window.scrollY +
+          target.getBoundingClientRect().top -
+          getHomeStickyTopOffset(),
+      );
       window.scrollTo({ top, behavior: options.behavior ?? "smooth" });
       window.history.replaceState(null, "", "#precio");
 
@@ -579,12 +764,16 @@ export default function PublicHome() {
   );
 
   const onDemoScroll = useCallback(() => {
-    trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, { location: "hero_block" });
+    trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, {
+      location: "hero_block",
+    });
     scrollToDemo({ behavior: "smooth", focusSearch: true });
   }, [scrollToDemo]);
 
   const onTourClick = useCallback(() => {
-    trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, { location: "hero_modal" });
+    trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, {
+      location: "hero_modal",
+    });
     setShowDemo(true);
   }, []);
 
@@ -631,7 +820,9 @@ export default function PublicHome() {
         if (!visible) return;
 
         pricingViewedRef.current = true;
-        trackGrowthMetric(GROWTH_METRICS.PRICING_VIEW, { currencyDefault: preferredCurrency });
+        trackGrowthMetric(GROWTH_METRICS.PRICING_VIEW, {
+          currencyDefault: preferredCurrency,
+        });
         observer.disconnect();
       },
       { threshold: 0.25 },
@@ -645,8 +836,13 @@ export default function PublicHome() {
   useEffect(() => {
     if (typeof document === "undefined") return;
 
-    const offers: Array<{ "@type": "Offer"; priceCurrency: string; price: number; url: string; availability: string }> =
-      [];
+    const offers: Array<{
+      "@type": "Offer";
+      priceCurrency: string;
+      price: number;
+      url: string;
+      availability: string;
+    }> = [];
 
     if (pricingPlans.usd && pricingPlans.usd.price > 0) {
       offers.push({
@@ -668,7 +864,9 @@ export default function PublicHome() {
       });
     }
 
-    const existing = document.querySelector("script[data-schema='bb-product']") as HTMLScriptElement | null;
+    const existing = document.querySelector(
+      "script[data-schema='bb-product']",
+    ) as HTMLScriptElement | null;
     if (offers.length === 0) {
       existing?.remove();
       return;
@@ -758,7 +956,10 @@ export default function PublicHome() {
 
         <Compatibility onFaqScroll={scrollToFaq} />
 
-        <ActivationSteps ctaLabel={ctaPrimaryLabel} onPrimaryCtaClick={() => onPrimaryCtaClick("mid")} />
+        <ActivationSteps
+          ctaLabel={ctaPrimaryLabel}
+          onPrimaryCtaClick={() => onPrimaryCtaClick("mid")}
+        />
 
         <div ref={pricingRef}>
           <Pricing
@@ -768,6 +969,7 @@ export default function PublicHome() {
             numberLocale={HOME_NUMBER_LOCALE}
             catalogTBLabel={totalTBLabel}
             downloadQuotaGb={downloadQuotaGb}
+            limitsNote={pricingUi.limitsNote}
             trial={trialSummary}
             ctaLabel={ctaPrimaryLabel}
             onPrimaryCtaClick={() => onPrimaryCtaClick("pricing")}
@@ -781,7 +983,9 @@ export default function PublicHome() {
         <div className="ph__container home-footer__inner">
           <div className="home-footer__brand">
             <img src={brandMark} alt="Bear Beat" width={46} height={46} />
-            <p>Catálogo grande, descargas mensuales claras y activación guiada.</p>
+            <p>
+              Catálogo grande, descargas mensuales claras y activación guiada.
+            </p>
           </div>
 
           <div className="home-footer__links" aria-label="Enlaces">
@@ -804,7 +1008,9 @@ export default function PublicHome() {
             <p className="home-footer__micro">{footerMicrocopy}</p>
           </div>
 
-          <p className="home-footer__copy">© Bear Beat. Todos los derechos reservados.</p>
+          <p className="home-footer__copy">
+            © Bear Beat. Todos los derechos reservados.
+          </p>
         </div>
       </footer>
 

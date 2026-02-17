@@ -5,13 +5,25 @@ import { Link, useNavigate } from "react-router-dom";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 import { AlertTriangle, Check, Layers3, RefreshCw } from "src/icons";
 import { formatInt, formatTB } from "../../utils/format";
-import { FALLBACK_CATALOG_TOTAL_FILES, FALLBACK_CATALOG_TOTAL_GB } from "../../utils/catalogFallback";
 import PublicTopNav from "../../components/PublicTopNav/PublicTopNav";
-import PaymentMethodLogos, { type PaymentMethodId } from "../../components/PaymentMethodLogos/PaymentMethodLogos";
+import PaymentMethodLogos, {
+  type PaymentMethodId,
+} from "../../components/PaymentMethodLogos/PaymentMethodLogos";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../utils/growthMetrics";
 import { useUserContext } from "../../contexts/UserContext";
 
 type CurrencyKey = "mxn" | "usd";
+const DEFAULT_LIMITS_NOTE =
+  "La cuota mensual es lo que puedes descargar cada ciclo. El catálogo total es lo disponible para elegir.";
+const PAYMENT_METHOD_VALUES: PaymentMethodId[] = [
+  "visa",
+  "mastercard",
+  "amex",
+  "paypal",
+  "spei",
+  "oxxo",
+  "transfer",
+];
 
 type PublicBestPlan = {
   planId: number;
@@ -20,12 +32,57 @@ type PublicBestPlan = {
   price: number;
   gigas: number;
   hasPaypal: boolean;
+  paymentMethods: PaymentMethodId[];
+};
+
+type PublicPricingUi = {
+  defaultCurrency: CurrencyKey;
+  limitsNote: string;
+  stats: {
+    totalFiles: number;
+    totalTB: number;
+    quotaGb: {
+      mxn: number;
+      usd: number;
+    };
+    quotaGbDefault: number;
+  };
 };
 
 function toNumber(value: unknown): number {
   if (typeof value === "bigint") return Number(value);
   const n = Number(value ?? 0);
   return Number.isFinite(n) ? n : 0;
+}
+
+function isPaymentMethodId(value: unknown): value is PaymentMethodId {
+  return (
+    typeof value === "string" &&
+    PAYMENT_METHOD_VALUES.includes(value as PaymentMethodId)
+  );
+}
+
+function parsePaymentMethods(
+  value: unknown,
+  fallback: PaymentMethodId[],
+): PaymentMethodId[] {
+  if (!Array.isArray(value)) return fallback;
+  const parsed: PaymentMethodId[] = [];
+  for (const method of value) {
+    if (!isPaymentMethodId(method)) continue;
+    if (parsed.includes(method)) continue;
+    parsed.push(method);
+  }
+  return parsed.length > 0 ? parsed : fallback;
+}
+
+function resolvePreferredCurrency(
+  preferred: CurrencyKey,
+  plans: { mxn: PublicBestPlan | null; usd: PublicBestPlan | null },
+): CurrencyKey {
+  if (preferred === "mxn" && plans.mxn) return "mxn";
+  if (preferred === "usd" && plans.usd) return "usd";
+  return plans.mxn ? "mxn" : "usd";
 }
 
 function formatMoneyFixed(value: unknown, locale: string): string {
@@ -42,11 +99,23 @@ function Plans() {
   const navigate = useNavigate();
   const checkoutPrefetchedRef = useRef(false);
 
-  const [plansByCurrency, setPlansByCurrency] = useState<{ mxn: PublicBestPlan | null; usd: PublicBestPlan | null }>({
+  const [plansByCurrency, setPlansByCurrency] = useState<{
+    mxn: PublicBestPlan | null;
+    usd: PublicBestPlan | null;
+  }>({
     mxn: null,
     usd: null,
   });
-  const [pricingConfig, setPricingConfig] = useState<any>(null);
+  const [pricingUi, setPricingUi] = useState<PublicPricingUi>({
+    defaultCurrency: "mxn",
+    limitsNote: DEFAULT_LIMITS_NOTE,
+    stats: {
+      totalFiles: 0,
+      totalTB: 0,
+      quotaGb: { mxn: 500, usd: 500 },
+      quotaGbDefault: 500,
+    },
+  });
 
   const [loader, setLoader] = useState<boolean>(true);
   const [loadError, setLoadError] = useState<string>("");
@@ -58,14 +127,106 @@ function Plans() {
     setLoader(true);
     try {
       const result: any = await trpc.plans.getPublicPricingConfig.query();
-      setPricingConfig(result ?? null);
-      setPlansByCurrency({
-        mxn: (result?.plans?.mxn as PublicBestPlan | null) ?? null,
-        usd: (result?.plans?.usd as PublicBestPlan | null) ?? null,
+      const toPlan = (
+        raw: any,
+        currency: CurrencyKey,
+      ): PublicBestPlan | null => {
+        if (!raw || typeof raw !== "object") return null;
+        const planId = Math.trunc(toNumber(raw.planId));
+        if (!Number.isFinite(planId) || planId <= 0) return null;
+        const paymentFallback: PaymentMethodId[] =
+          currency === "mxn"
+            ? ["visa", "mastercard", "spei"]
+            : ["visa", "mastercard"];
+
+        return {
+          planId,
+          currency,
+          name: String(raw.name ?? "").trim() || "Membresía Bear Beat",
+          price: toNumber(raw.price),
+          gigas: toNumber(raw.gigas),
+          hasPaypal: Boolean(raw.hasPaypal),
+          paymentMethods: parsePaymentMethods(
+            raw.paymentMethods,
+            paymentFallback,
+          ),
+        };
+      };
+
+      const nextPlans = {
+        mxn: toPlan(result?.plans?.mxn, "mxn"),
+        usd: toPlan(result?.plans?.usd, "usd"),
+      };
+
+      const defaultCurrencyRaw = String(
+        result?.ui?.defaultCurrency ?? result?.currencyDefault ?? "mxn",
+      )
+        .trim()
+        .toLowerCase();
+      const defaultCurrency: CurrencyKey =
+        defaultCurrencyRaw === "usd" ? "usd" : "mxn";
+      const totalFiles = Math.max(
+        0,
+        Math.trunc(toNumber(result?.ui?.stats?.totalFiles)),
+      );
+      const totalTB = Math.max(0, toNumber(result?.ui?.stats?.totalTB));
+      const quotaMxn = Math.max(
+        0,
+        Math.trunc(
+          toNumber(result?.ui?.stats?.quotaGb?.mxn ?? result?.quotaGb?.mxn),
+        ),
+      );
+      const quotaUsd = Math.max(
+        0,
+        Math.trunc(
+          toNumber(result?.ui?.stats?.quotaGb?.usd ?? result?.quotaGb?.usd),
+        ),
+      );
+      const quotaDefaultRaw = Math.max(
+        0,
+        Math.trunc(toNumber(result?.ui?.stats?.quotaGbDefault)),
+      );
+      const quotaDefaultFromPlans =
+        defaultCurrency === "mxn"
+          ? Math.trunc(toNumber(nextPlans.mxn?.gigas))
+          : Math.trunc(toNumber(nextPlans.usd?.gigas));
+      const quotaGbDefault =
+        quotaDefaultRaw > 0
+          ? quotaDefaultRaw
+          : quotaDefaultFromPlans > 0
+            ? quotaDefaultFromPlans
+            : 500;
+      const limitsNoteRaw =
+        typeof result?.ui?.limitsNote === "string"
+          ? result.ui.limitsNote.trim()
+          : "";
+      const limitsNote = limitsNoteRaw || DEFAULT_LIMITS_NOTE;
+
+      setPlansByCurrency(nextPlans);
+      setPricingUi({
+        defaultCurrency,
+        limitsNote,
+        stats: {
+          totalFiles,
+          totalTB,
+          quotaGb: {
+            mxn:
+              quotaMxn > 0
+                ? quotaMxn
+                : Math.max(500, Math.trunc(toNumber(nextPlans.mxn?.gigas))),
+            usd:
+              quotaUsd > 0
+                ? quotaUsd
+                : Math.max(500, Math.trunc(toNumber(nextPlans.usd?.gigas))),
+          },
+          quotaGbDefault,
+        },
       });
+      setSelectedCurrency(resolvePreferredCurrency(defaultCurrency, nextPlans));
     } catch {
-      setLoadError("No pudimos cargar los planes en este momento. Intenta nuevamente.");
-      setPricingConfig(null);
+      setLoadError(
+        "No pudimos cargar los planes en este momento. Intenta nuevamente.",
+      );
       setPlansByCurrency({ mxn: null, usd: null });
     } finally {
       setLoader(false);
@@ -85,11 +246,19 @@ function Plans() {
   }, [currentUser, navigate]);
 
   useEffect(() => {
-    if (selectedCurrency === "mxn" && !plansByCurrency.mxn && plansByCurrency.usd) {
+    if (
+      selectedCurrency === "mxn" &&
+      !plansByCurrency.mxn &&
+      plansByCurrency.usd
+    ) {
       setSelectedCurrency("usd");
       return;
     }
-    if (selectedCurrency === "usd" && !plansByCurrency.usd && plansByCurrency.mxn) {
+    if (
+      selectedCurrency === "usd" &&
+      !plansByCurrency.usd &&
+      plansByCurrency.mxn
+    ) {
       setSelectedCurrency("mxn");
     }
   }, [plansByCurrency.mxn, plansByCurrency.usd, selectedCurrency]);
@@ -99,32 +268,44 @@ function Plans() {
     if (!plansByCurrency.mxn && !plansByCurrency.usd) return;
     viewTrackedRef.current = true;
     trackManyChatConversion(MC_EVENTS.VIEW_PLANS);
-    trackGrowthMetric(GROWTH_METRICS.PRICING_VIEW, { currencyDefault: "mxn" });
-  }, [plansByCurrency.mxn, plansByCurrency.usd]);
+    trackGrowthMetric(GROWTH_METRICS.PRICING_VIEW, {
+      currencyDefault: pricingUi.defaultCurrency,
+    });
+  }, [plansByCurrency.mxn, plansByCurrency.usd, pricingUi.defaultCurrency]);
 
   const selectedPlan = useMemo(() => {
-    return selectedCurrency === "mxn" ? plansByCurrency.mxn : plansByCurrency.usd;
+    return selectedCurrency === "mxn"
+      ? plansByCurrency.mxn
+      : plansByCurrency.usd;
   }, [plansByCurrency.mxn, plansByCurrency.usd, selectedCurrency]);
 
   const stats = useMemo(() => {
-    const totalFiles = toNumber(pricingConfig?.catalog?.effectiveTotalFiles) || FALLBACK_CATALOG_TOTAL_FILES;
-    const totalTB =
-      toNumber(pricingConfig?.catalog?.effectiveTotalTB) || FALLBACK_CATALOG_TOTAL_GB / 1000;
-    const quotaFromConfig =
+    const totalFiles = pricingUi.stats.totalFiles;
+    const totalTB = pricingUi.stats.totalTB;
+    const quotaFromUi =
       selectedCurrency === "mxn"
-        ? toNumber(pricingConfig?.quotaGb?.mxn)
-        : toNumber(pricingConfig?.quotaGb?.usd);
-    const quotaGb = quotaFromConfig > 0 ? quotaFromConfig : 500;
+        ? pricingUi.stats.quotaGb.mxn
+        : pricingUi.stats.quotaGb.usd;
+    const quotaFromPlan = Math.trunc(toNumber(selectedPlan?.gigas));
+    const quotaGb =
+      quotaFromUi > 0
+        ? quotaFromUi
+        : quotaFromPlan > 0
+          ? quotaFromPlan
+          : pricingUi.stats.quotaGbDefault > 0
+            ? pricingUi.stats.quotaGbDefault
+            : 500;
 
     return {
       totalFiles,
       totalTB,
       quotaGb,
     };
-  }, [pricingConfig, selectedCurrency]);
+  }, [pricingUi.stats, selectedCurrency, selectedPlan?.gigas]);
 
   const price = useMemo(() => {
-    if (!selectedPlan) return { amount: "—", currencyLabel: selectedCurrency.toUpperCase() };
+    if (!selectedPlan)
+      return { amount: "—", currencyLabel: selectedCurrency.toUpperCase() };
     const currencyLabel = selectedCurrency.toUpperCase();
     const locale = selectedCurrency === "usd" ? "en-US" : "es-MX";
     return {
@@ -134,16 +315,20 @@ function Plans() {
   }, [selectedCurrency, selectedPlan]);
 
   const paymentMethods = useMemo(() => {
-    const methods: PaymentMethodId[] = ["visa", "mastercard"];
-    if (selectedPlan?.hasPaypal) methods.push("paypal");
-    if (selectedCurrency === "mxn") methods.push("spei");
-    return methods;
-  }, [selectedCurrency, selectedPlan?.hasPaypal]);
+    if (selectedPlan?.paymentMethods?.length)
+      return selectedPlan.paymentMethods;
+    return selectedCurrency === "mxn"
+      ? (["visa", "mastercard", "spei"] as PaymentMethodId[])
+      : (["visa", "mastercard"] as PaymentMethodId[]);
+  }, [selectedCurrency, selectedPlan?.paymentMethods]);
 
   const selectCurrency = (next: CurrencyKey) => {
     if (next === selectedCurrency) return;
     setSelectedCurrency(next);
-    trackGrowthMetric(GROWTH_METRICS.SEGMENT_SELECTED, { id: "plans_currency", value: next });
+    trackGrowthMetric(GROWTH_METRICS.SEGMENT_SELECTED, {
+      id: "plans_currency",
+      value: next,
+    });
   };
 
   const handleActivate = useCallback(() => {
@@ -171,7 +356,10 @@ function Plans() {
     try {
       const connection = (navigator as any)?.connection;
       if (connection?.saveData) return;
-      const effectiveType = typeof connection?.effectiveType === "string" ? connection.effectiveType : "";
+      const effectiveType =
+        typeof connection?.effectiveType === "string"
+          ? connection.effectiveType
+          : "";
       if (/2g/i.test(effectiveType)) return;
     } catch {
       // noop
@@ -203,7 +391,11 @@ function Plans() {
                 aria-busy="true"
               >
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <article key={i} className="plans2026__bento-card bb-bento-card" aria-hidden>
+                  <article
+                    key={i}
+                    className="plans2026__bento-card bb-bento-card"
+                    aria-hidden
+                  >
                     <span className="plans2026__sk plans2026__sk--bentoValue" />
                     <span className="plans2026__sk plans2026__sk--bentoLabel" />
                   </article>
@@ -217,7 +409,9 @@ function Plans() {
                 aria-live="polite"
                 aria-busy="true"
               >
-                <p className="plans2026__skeletonStatus">Cargando tu mejor opción…</p>
+                <p className="plans2026__skeletonStatus">
+                  Cargando tu mejor opción…
+                </p>
 
                 <div className="plans2026__card-head" aria-hidden>
                   <span className="plans2026__sk plans2026__sk--pill" />
@@ -253,7 +447,9 @@ function Plans() {
                 <span className="app-state-icon" aria-hidden>
                   <AlertTriangle />
                 </span>
-                <h2 className="app-state-title">No pudimos mostrar los planes</h2>
+                <h2 className="app-state-title">
+                  No pudimos mostrar los planes
+                </h2>
                 <p className="app-state-copy">{loadError}</p>
                 <div className="app-state-actions">
                   <button type="button" onClick={getPlans}>
@@ -263,14 +459,16 @@ function Plans() {
                 </div>
               </div>
             </section>
-          ) : (!plansByCurrency.mxn && !plansByCurrency.usd) ? (
+          ) : !plansByCurrency.mxn && !plansByCurrency.usd ? (
             <section className="plans2026__state">
               <div className="app-state-panel is-empty">
                 <span className="app-state-icon" aria-hidden>
                   <Layers3 />
                 </span>
                 <h2 className="app-state-title">No hay planes disponibles</h2>
-                <p className="app-state-copy">Actualiza la página en unos minutos para volver a intentarlo.</p>
+                <p className="app-state-copy">
+                  Actualiza la página en unos minutos para volver a intentarlo.
+                </p>
                 <div className="app-state-actions">
                   <button type="button" onClick={getPlans}>
                     <RefreshCw size={16} />
@@ -283,26 +481,35 @@ function Plans() {
             <>
               <section className="plans2026__bento" aria-label="Valor incluido">
                 <article className="plans2026__bento-card bb-bento-card">
-                  <p className="plans2026__bento-value">{formatTB(stats.totalTB)}</p>
+                  <p className="plans2026__bento-value">
+                    {formatTB(stats.totalTB)}
+                  </p>
                   <p className="plans2026__bento-label">Catálogo total</p>
                 </article>
                 <article className="plans2026__bento-card bb-bento-card">
-                  <p className="plans2026__bento-value">{formatInt(stats.quotaGb)} GB/mes</p>
+                  <p className="plans2026__bento-value">
+                    {formatInt(stats.quotaGb)} GB/mes
+                  </p>
                   <p className="plans2026__bento-label">Cuota mensual</p>
                 </article>
                 <article className="plans2026__bento-card bb-bento-card">
-                  <p className="plans2026__bento-value">{formatInt(stats.totalFiles)}</p>
+                  <p className="plans2026__bento-value">
+                    {formatInt(stats.totalFiles)}
+                  </p>
                   <p className="plans2026__bento-label">Archivos listos</p>
                 </article>
               </section>
 
-              <p className="plans2026__limitsNote">
-                La cuota mensual es lo que puedes descargar cada ciclo. El catálogo total es lo disponible para elegir.
-              </p>
+              <p className="plans2026__limitsNote">{pricingUi.limitsNote}</p>
 
-              <section className="plans2026__card bb-hero-card" aria-label="Plan Oro">
+              <section
+                className="plans2026__card bb-hero-card"
+                aria-label="Plan Oro"
+              >
                 <div className="plans2026__card-head">
-                  <p className="plans2026__plan-name bb-pill bb-pill--soft">Plan Oro</p>
+                  <p className="plans2026__plan-name bb-pill bb-pill--soft">
+                    Plan Oro
+                  </p>
                 </div>
 
                 <div
@@ -348,8 +555,13 @@ function Plans() {
                   </button>
                 </div>
 
-                <div className="plans2026__price" aria-label={`Precio ${price.currencyLabel}`}>
-                  <span className="plans2026__price-amount">{price.amount}</span>
+                <div
+                  className="plans2026__price"
+                  aria-label={`Precio ${price.currencyLabel}`}
+                >
+                  <span className="plans2026__price-amount">
+                    {price.amount}
+                  </span>
                   <span className="plans2026__price-suffix">
                     {price.currencyLabel} <span aria-hidden>/</span> mes
                   </span>
