@@ -1,9 +1,5 @@
 @use "src/styles/mixin" as *;
 
-.admin-users-wrap {
-  min-height: calc(100vh - 88px);
-}
-
 .admin-contain {
   width: 100%;
   max-width: 1480px;

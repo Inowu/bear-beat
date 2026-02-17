@@ -103,7 +103,6 @@ html[data-theme="light"] .bb-open-cta {
   position: relative;
   isolation: isolate;
   width: 100%;
-  min-height: calc(100vh - 90px);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -1233,7 +1232,6 @@ html[data-theme="dark"] .bb-explorer-row:hover {
 
 @media (max-width: 1024px) {
   .home-main-container {
-    min-height: auto;
     border-radius: 14px;
     padding: 10px;
   }

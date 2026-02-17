@@ -164,7 +164,7 @@ export const PlanUpgrade = () => {
     );
   }
   return (
-    <div className="plans-main-container">
+    <div className="plans-main-container bb-app-page">
       <header className="mb-6">
         <h1 className="text-text-main font-bold">Actualizar plan</h1>
         <p className="text-text-muted mt-2">
