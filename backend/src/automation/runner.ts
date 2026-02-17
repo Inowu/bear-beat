@@ -3,7 +3,7 @@ import { log } from '../server';
 import { isEmailConfigured, sendEmail } from '../email';
 import { emailTemplates } from '../email/templates';
 import { manyChat } from '../many-chat';
-import { ensureAnalyticsEventsTableExists } from '../analytics';
+import { ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL, ensureAnalyticsEventsTableExists } from '../analytics';
 import { OFFER_KEYS, markUserOffersRedeemed, upsertUserOfferAndCoupon } from '../offers';
 import { twilio } from '../twilio';
 import { buildMarketingUnsubscribeUrl } from '../comms/unsubscribe';
@@ -240,14 +240,15 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
           t.trial_started_at AS trialStartedAt
         FROM (
           SELECT
-            user_id,
-            MAX(event_ts) AS trial_started_at
-          FROM analytics_events
-          WHERE event_name = 'trial_started'
-            AND user_id IS NOT NULL
-            AND event_ts >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-            AND event_ts < DATE_SUB(NOW(), INTERVAL 24 HOUR)
-          GROUP BY user_id
+            ae.user_id,
+            MAX(ae.event_ts) AS trial_started_at
+          FROM analytics_events ae
+          WHERE ae.event_name = 'trial_started'
+            AND ae.user_id IS NOT NULL
+            AND ae.event_ts >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+            AND ae.event_ts < DATE_SUB(NOW(), INTERVAL 24 HOUR)
+            ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL}
+          GROUP BY ae.user_id
         ) t
         LEFT JOIN download_history dh
           ON dh.userId = t.user_id
@@ -316,7 +317,106 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
       }
     }
 
-    // Rule 2: paid but no download in 24h (first paid order)
+    // Rule 2a: first paid order, no download in 2h (quick activation push)
+    {
+      const rows = await prisma.$queryRaw<
+        Array<{ userId: number; paidAt: Date }>
+      >(Prisma.sql`
+        SELECT
+          fp.user_id AS userId,
+          fp.first_paid_at AS paidAt
+        FROM (
+          SELECT user_id, MIN(date_order) AS first_paid_at
+          FROM orders
+          WHERE status = 1
+            AND is_plan = 1
+            AND (is_canceled IS NULL OR is_canceled = 0)
+            AND date_order >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+            AND date_order < DATE_SUB(NOW(), INTERVAL 2 HOUR)
+          GROUP BY user_id
+        ) fp
+        LEFT JOIN download_history dh
+          ON dh.userId = fp.user_id
+          AND dh.date >= fp.first_paid_at
+          AND dh.date < DATE_ADD(fp.first_paid_at, INTERVAL 2 HOUR)
+        LEFT JOIN automation_action_logs aal
+          ON aal.user_id = fp.user_id
+          AND aal.action_key = 'paid_no_download'
+          AND aal.stage = 2
+        WHERE dh.id IS NULL
+          AND aal.id IS NULL
+        ORDER BY fp.first_paid_at DESC
+        LIMIT ${limit}
+      `);
+
+      for (const row of rows) {
+        const user = await prisma.users.findFirst({ where: { id: row.userId } });
+        if (!user || user.blocked) continue;
+
+        const { created } = await createActionLog({
+          prisma,
+          userId: user.id,
+          actionKey: 'paid_no_download',
+          stage: 2,
+          channel: 'system',
+          metadata: { paidAt: row.paidAt.toISOString() },
+        });
+        if (!created) continue;
+
+        safeAddManyChatTag(user, 'AUTOMATION_PAID_NO_DOWNLOAD_2H').catch(() => {});
+
+        const instructionsUrl = appendQueryParams(`${resolveClientUrl()}/instrucciones`, {
+          utm_source: 'email',
+          utm_medium: 'automation',
+          utm_campaign: 'paid_no_download_2h',
+          utm_content: 'cta_instructions',
+        });
+        const catalogUrl = appendQueryParams(`${resolveClientUrl()}/`, {
+          utm_source: 'email',
+          utm_medium: 'automation',
+          utm_campaign: 'paid_no_download_2h',
+          utm_content: 'link_catalog',
+        });
+        const recommendedFolder = (process.env.AUTOMATION_RECOMMENDED_FOLDER || 'Semana').trim() || 'Semana';
+
+        await safeSendTwilioLink(user, instructionsUrl);
+
+        const templateId = parseNumber(
+          process.env.AUTOMATION_EMAIL_PAID_NO_DOWNLOAD_2H_TEMPLATE_ID
+            || process.env.AUTOMATION_EMAIL_PAID_NO_DOWNLOAD_TEMPLATE_ID,
+          0,
+        );
+        if (
+          emailAutomationsEnabled
+          && templateId > 0
+          && user.email_marketing_opt_in
+          && user.email_marketing_news_opt_in
+          && canSendEmail()
+        ) {
+          const unsubscribeUrl = buildMarketingUnsubscribeUrl(user.id) ?? undefined;
+          const tpl = emailTemplates.automationPaidNoDownload2h({
+            name: user.username,
+            instructionsUrl,
+            catalogUrl,
+            recommendedFolder,
+            unsubscribeUrl,
+          });
+          await safeSendAutomationEmail({
+            userId: user.id,
+            actionKey: 'paid_no_download',
+            stage: 2,
+            toEmail: user.email,
+            subject: tpl.subject,
+            html: tpl.html,
+            text: tpl.text,
+          });
+          noteEmailSent();
+        }
+        bump('paid_no_download_2h');
+      }
+    }
+
+    // Rule 2b: paid but no download in 24h (first paid order)
     {
       const rows = await prisma.$queryRaw<
         Array<{ userId: number; paidAt: Date }>
@@ -572,7 +672,136 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
       }
     }
 
-    // Rule 3c: checkout started, no purchase after 1h
+    // Rule 3c: checkout abandoned event, no purchase after 15m (fast recovery)
+    {
+      const rows = await prisma.$queryRaw<
+        Array<{
+          userId: number;
+          email: string;
+          username: string;
+          emailMarketingOptIn: number;
+          checkoutAbandonedAt: Date;
+          planId: number | null;
+          planName: string | null;
+          planPrice: any | null;
+          planCurrency: string | null;
+        }>
+      >(Prisma.sql`
+        SELECT
+          ca.user_id AS userId,
+          u.email AS email,
+          u.username AS username,
+          u.email_marketing_opt_in AS emailMarketingOptIn,
+          ca.checkout_abandoned_at AS checkoutAbandonedAt,
+          ca.plan_id AS planId,
+          p.name AS planName,
+          p.price AS planPrice,
+          p.moneda AS planCurrency
+        FROM (
+          SELECT
+            ae.user_id,
+            MAX(ae.event_ts) AS checkout_abandoned_at,
+            MAX(CAST(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.planId')) AS UNSIGNED)) AS plan_id
+          FROM analytics_events ae
+          WHERE ae.event_name = 'checkout_abandoned'
+            AND ae.user_id IS NOT NULL
+            AND ae.event_ts >= DATE_SUB(NOW(), INTERVAL 14 DAY)
+            AND ae.event_ts < DATE_SUB(NOW(), INTERVAL 15 MINUTE)
+            ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL}
+          GROUP BY ae.user_id
+        ) ca
+        INNER JOIN users u
+          ON u.id = ca.user_id
+          AND u.blocked = 0
+        LEFT JOIN plans p
+          ON p.id = ca.plan_id
+        LEFT JOIN orders o
+          ON o.user_id = ca.user_id
+          AND o.status = 1
+          AND o.is_plan = 1
+          AND (o.is_canceled IS NULL OR o.is_canceled = 0)
+          AND o.date_order > ca.checkout_abandoned_at
+        LEFT JOIN descargas_user du
+          ON du.user_id = ca.user_id
+          AND du.date_end > NOW()
+        LEFT JOIN automation_action_logs aal
+          ON aal.user_id = ca.user_id
+          AND aal.action_key = 'checkout_abandoned'
+          AND aal.stage = 15
+        WHERE o.id IS NULL
+          AND du.id IS NULL
+          AND aal.id IS NULL
+        ORDER BY ca.checkout_abandoned_at DESC
+        LIMIT ${limit}
+      `);
+
+      for (const row of rows) {
+        const userId = Number(row.userId);
+        if (!userId) continue;
+
+        const { created } = await createActionLog({
+          prisma,
+          userId,
+          actionKey: 'checkout_abandoned',
+          stage: 15,
+          channel: 'system',
+          metadata: {
+            checkoutAbandonedAt: row.checkoutAbandonedAt.toISOString(),
+            planId: row.planId ?? null,
+          },
+        });
+        if (!created) continue;
+
+        const user = await prisma.users.findFirst({ where: { id: userId } });
+        if (!user || user.blocked) continue;
+        safeAddManyChatTag(user, 'AUTOMATION_CHECKOUT_ABANDONED_15M').catch(() => {});
+
+        const templateId = parseNumber(
+          process.env.AUTOMATION_EMAIL_CHECKOUT_ABANDONED_15M_TEMPLATE_ID
+            || process.env.AUTOMATION_EMAIL_CHECKOUT_ABANDONED_1H_TEMPLATE_ID,
+          0,
+        );
+        if (
+          emailAutomationsEnabled
+          && templateId > 0
+          && user.email_marketing_opt_in
+          && user.email_marketing_news_opt_in
+          && canSendEmail()
+        ) {
+          const base = resolveClientUrl();
+          const rawUrl = row.planId ? `${base}/comprar?priceId=${row.planId}` : `${base}/planes`;
+          const url = appendQueryParams(rawUrl, {
+            utm_source: 'email',
+            utm_medium: 'automation',
+            utm_campaign: 'checkout_abandoned_15m',
+            utm_content: 'cta',
+          });
+          const unsubscribeUrl = buildMarketingUnsubscribeUrl(userId) ?? undefined;
+          const tpl = emailTemplates.automationCheckoutAbandoned({
+            name: user.username,
+            url,
+            planName: row.planName ?? null,
+            price: row.planPrice ? String(row.planPrice) : null,
+            currency: row.planCurrency ?? null,
+            unsubscribeUrl,
+          });
+          await safeSendAutomationEmail({
+            userId,
+            actionKey: 'checkout_abandoned',
+            stage: 15,
+            toEmail: user.email,
+            subject: tpl.subject,
+            html: tpl.html,
+            text: tpl.text,
+          });
+          noteEmailSent();
+        }
+
+        bump('checkout_abandoned_15m');
+      }
+    }
+
+    // Rule 3d: checkout started, no purchase after 1h
     {
       const rows = await prisma.$queryRaw<
         Array<{
@@ -607,6 +836,7 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
             AND ae.user_id IS NOT NULL
             AND ae.event_ts >= DATE_SUB(NOW(), INTERVAL 14 DAY)
             AND ae.event_ts < DATE_SUB(NOW(), INTERVAL 1 HOUR)
+            ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL}
           GROUP BY ae.user_id
         ) cs
         INNER JOIN users u
@@ -696,7 +926,7 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
       }
     }
 
-    // Rule 3d: checkout started, no purchase after 24h
+    // Rule 3e: checkout started, no purchase after 24h
     {
       const rows = await prisma.$queryRaw<
         Array<{
@@ -731,6 +961,7 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
             AND ae.user_id IS NOT NULL
             AND ae.event_ts >= DATE_SUB(NOW(), INTERVAL 30 DAY)
             AND ae.event_ts < DATE_SUB(NOW(), INTERVAL 24 HOUR)
+            ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL}
           GROUP BY ae.user_id
         ) cs
         INNER JOIN users u
@@ -820,7 +1051,7 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
       }
     }
 
-    // Rule 3e: trial ending in ~24h and no purchase
+    // Rule 3f: trial ending in ~24h and no purchase
     {
       const trialDays = Math.max(1, Math.min(30, Math.floor(parseNumber(process.env.BB_TRIAL_DAYS, 7))));
       const startMin = new Date(Date.now() - trialDays * 24 * 60 * 60 * 1000);
@@ -837,13 +1068,14 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
           t.trial_started_at AS trialStartedAt
         FROM (
           SELECT
-            user_id,
-            MAX(event_ts) AS trial_started_at
-          FROM analytics_events
-          WHERE event_name = 'trial_started'
-            AND user_id IS NOT NULL
-            AND event_ts >= DATE_SUB(NOW(), INTERVAL 60 DAY)
-          GROUP BY user_id
+            ae.user_id,
+            MAX(ae.event_ts) AS trial_started_at
+          FROM analytics_events ae
+          WHERE ae.event_name = 'trial_started'
+            AND ae.user_id IS NOT NULL
+            AND ae.event_ts >= DATE_SUB(NOW(), INTERVAL 60 DAY)
+            ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL}
+          GROUP BY ae.user_id
         ) t
         INNER JOIN users u
           ON u.id = t.user_id
@@ -1222,7 +1454,7 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
       }
     }
 
-    // Rule 5: plans viewed, no checkout after 12h -> offer 10%
+    // Rule 5: plans viewed, no checkout started after 12h -> offer 10%
     {
       const rows = await prisma.$queryRaw<
         Array<{ userId: number; lastPlansViewAt: Date }>
@@ -1231,18 +1463,20 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
           pv.user_id AS userId,
           pv.last_plans_view_at AS lastPlansViewAt
         FROM (
-          SELECT user_id, MAX(event_ts) AS last_plans_view_at
-          FROM analytics_events
-          WHERE user_id IS NOT NULL
-            AND event_name = 'page_view'
-            AND (page_path LIKE '/planes%' OR page_path = '/planes')
-            AND event_ts >= DATE_SUB(NOW(), INTERVAL 14 DAY)
-          GROUP BY user_id
+          SELECT ae.user_id, MAX(ae.event_ts) AS last_plans_view_at
+          FROM analytics_events ae
+          WHERE ae.user_id IS NOT NULL
+            AND ae.event_name = 'page_view'
+            AND (ae.page_path LIKE '/planes%' OR ae.page_path = '/planes')
+            AND ae.event_ts >= DATE_SUB(NOW(), INTERVAL 14 DAY)
+            ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL}
+          GROUP BY ae.user_id
         ) pv
-        LEFT JOIN analytics_events co
-          ON co.user_id = pv.user_id
-          AND co.event_name = 'checkout_started'
-          AND co.event_ts > pv.last_plans_view_at
+        LEFT JOIN analytics_events ae
+          ON ae.user_id = pv.user_id
+          AND ae.event_name = 'checkout_started'
+          AND ae.event_ts > pv.last_plans_view_at
+          ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL}
         LEFT JOIN orders o
           ON o.user_id = pv.user_id
           AND o.status = 1
@@ -1257,7 +1491,7 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
           AND aal.action_key = 'plans_view_no_checkout'
           AND aal.stage = 1
         WHERE pv.last_plans_view_at < DATE_SUB(NOW(), INTERVAL 12 HOUR)
-          AND co.id IS NULL
+          AND ae.id IS NULL
           AND o.id IS NULL
           AND du.id IS NULL
           AND aal.id IS NULL
@@ -1586,18 +1820,19 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
             JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.reason')) AS reason
           FROM analytics_events ae
           INNER JOIN (
-            SELECT user_id, MAX(event_ts) AS max_ts
-            FROM analytics_events
-            WHERE event_name = 'payment_failed'
-              AND user_id IS NOT NULL
-              AND event_ts >= DATE_SUB(NOW(), INTERVAL ${lookbackDays} DAY)
-              AND JSON_UNQUOTE(JSON_EXTRACT(metadata_json, '$.provider')) IN ('stripe', 'paypal')
-              AND JSON_UNQUOTE(JSON_EXTRACT(metadata_json, '$.reason')) IN (
+            SELECT ae.user_id, MAX(ae.event_ts) AS max_ts
+            FROM analytics_events ae
+            WHERE ae.event_name = 'payment_failed'
+              AND ae.user_id IS NOT NULL
+              AND ae.event_ts >= DATE_SUB(NOW(), INTERVAL ${lookbackDays} DAY)
+              AND JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.provider')) IN ('stripe', 'paypal')
+              AND JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.reason')) IN (
                 'past_due',
                 'billing_subscription_payment_failed',
                 'payment_sale_denied'
               )
-            GROUP BY user_id
+              ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL}
+            GROUP BY ae.user_id
           ) last
             ON last.user_id = ae.user_id
             AND last.max_ts = ae.event_ts
@@ -1609,6 +1844,7 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
             AND o_paid.status = 1
             AND o_paid.date_order > ae.event_ts
           WHERE u.blocked = 0
+            ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL}
             AND o_paid.id IS NULL
           ORDER BY ae.event_ts DESC
           LIMIT ${limit}

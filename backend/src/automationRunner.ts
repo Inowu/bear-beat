@@ -2,6 +2,11 @@ import './polyfills';
 import { PrismaClient } from '@prisma/client';
 import { runAutomationForever, runAutomationOnce } from './automation/runner';
 import { log } from './server';
+import {
+  closeManyChatRetryQueue,
+  initializeManyChatRetryQueue,
+} from './queue/manyChat';
+import { processManyChatRetryJob } from './many-chat';
 
 const prisma = new PrismaClient();
 
@@ -12,6 +17,8 @@ async function main(): Promise<void> {
   log.info('[AUTOMATION] Starting automation runner', {
     mode: once ? 'once' : 'forever',
   });
+
+  initializeManyChatRetryQueue(processManyChatRetryJob);
 
   if (once) {
     await runAutomationOnce(prisma);
@@ -29,6 +36,11 @@ main()
     process.exitCode = 1;
   })
   .finally(async () => {
+    try {
+      await closeManyChatRetryQueue();
+    } catch {
+      // noop
+    }
     try {
       await prisma.$disconnect();
     } catch {

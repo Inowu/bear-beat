@@ -41,9 +41,29 @@ export const createStripeCheckoutSession = shieldedProcedure
       url: z.string().optional(),
       eventId: z.string().optional(),
       purchaseEventId: z.string().optional(),
+      sessionId: z.string().max(80).optional(),
+      visitorId: z.string().max(80).optional(),
+      checkoutId: z.string().max(80).optional(),
     }),
   )
-  .mutation(async ({ input: { planId, acceptRecurring, successUrl, cancelUrl, coupon, fbp, fbc, url, eventId, purchaseEventId }, ctx: { prisma, session, req } }) => {
+  .mutation(async ({
+    input: {
+      planId,
+      acceptRecurring,
+      successUrl,
+      cancelUrl,
+      coupon,
+      fbp,
+      fbc,
+      url,
+      eventId,
+      purchaseEventId,
+      sessionId,
+      visitorId,
+      checkoutId,
+    },
+    ctx: { prisma, session, req },
+  }) => {
     const user = session!.user!;
     const recurringAccepted = acceptRecurring ?? true;
 
@@ -352,11 +372,17 @@ export const createStripeCheckoutSession = shieldedProcedure
     const metaFbc = safeMetaValue(fbc);
     const metaPurchaseEventId = safeMetaValue(purchaseEventId, 120);
     const metaSourceUrl = safeMetaValue(url ? sanitizeTrackingUrl(url, 480) : '', 480);
+    const metaSessionId = safeMetaValue(sessionId, 80);
+    const metaVisitorId = safeMetaValue(visitorId, 80);
+    const metaCheckoutId = safeMetaValue(checkoutId, 80);
     const urlAttribution = getUrlAttribution(url);
     if (metaFbp) subscriptionMarketingMetadata.bb_fbp = metaFbp;
     if (metaFbc) subscriptionMarketingMetadata.bb_fbc = metaFbc;
     if (metaPurchaseEventId) subscriptionMarketingMetadata.bb_purchase_event_id = metaPurchaseEventId;
     if (metaSourceUrl) subscriptionMarketingMetadata.bb_source_url = metaSourceUrl;
+    if (metaSessionId) subscriptionMarketingMetadata.bb_session_id = metaSessionId;
+    if (metaVisitorId) subscriptionMarketingMetadata.bb_visitor_id = metaVisitorId;
+    if (metaCheckoutId) subscriptionMarketingMetadata.bb_checkout_id = metaCheckoutId;
     if (urlAttribution.source) subscriptionMarketingMetadata.bb_utm_source = urlAttribution.source;
     if (urlAttribution.medium) subscriptionMarketingMetadata.bb_utm_medium = urlAttribution.medium;
     if (urlAttribution.campaign) subscriptionMarketingMetadata.bb_utm_campaign = urlAttribution.campaign;

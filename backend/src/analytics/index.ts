@@ -23,7 +23,7 @@ const ANALYTICS_PUBLIC_TRAFFIC_FILTER_SQL = Prisma.sql`
   )})
 `;
 
-const ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL = Prisma.sql`
+export const ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL = Prisma.sql`
   AND NOT (
     LOWER(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.isInternal')), 'false')) = 'true'
     OR LOWER(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.is_internal')), 'false')) = 'true'

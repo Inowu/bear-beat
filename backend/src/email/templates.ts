@@ -709,9 +709,75 @@ export const emailTemplates = {
       `Guía de descarga: ${instructionsUrl}\n` +
       `Mi cuenta (cancelación/soporte): ${accountUrl}\n`;
 
+	    return {
+	      subject,
+	      html: renderLayout({ title: subject, preheader: 'Tu acceso está activo. Descarga hoy.', contentHtml, unsubscribeUrl }),
+	      text: appendMarketingUnsubscribeText(text, unsubscribeUrl),
+	    };
+	  },
+
+  automationPaidNoDownload2h: (params: {
+    name: string;
+    instructionsUrl: string;
+    catalogUrl: string;
+    recommendedFolder?: string | null;
+    unsubscribeUrl?: string;
+  }) => {
+    const { name, instructionsUrl, catalogUrl, recommendedFolder, unsubscribeUrl } = params;
+    const safeRecommendedFolder = String(recommendedFolder || 'Semana').trim() || 'Semana';
+    const subject = `[Bear Beat] Haz tu primera descarga hoy`;
+
+    const contentHtml = `
+      <div style="margin:0 0 12px 0;">
+        ${renderPill('Primeras 2 horas')}
+      </div>
+      <h1 style="${H1_STYLE_SM}">
+        Empieza en 3 pasos (menos de 5 min)
+      </h1>
+      <p style="${LEAD_STYLE}">
+        Hola <strong>${escapeHtml(name)}</strong>. Ya tienes acceso activo. Te recomendamos empezar por
+        la carpeta <strong style="color:${COLORS.ink};">${escapeHtml(safeRecommendedFolder)}</strong> y bajar tu primer bloque ahora.
+      </p>
+      ${renderCard({
+        innerHtml: `
+          <div style="${SECTION_LABEL_STYLE}">Ruta r&aacute;pida</div>
+          <div style="margin-top:10px;">
+            ${renderChecklist([
+              `Abre la gu&iacute;a de descarga (/instrucciones).`,
+              `Empieza por la carpeta: <strong style="color:${COLORS.ink};">${escapeHtml(safeRecommendedFolder)}</strong>.`,
+              `Si vas a bajar mucho material, usa FTP (FileZilla/Air Explorer).`,
+            ])}
+          </div>
+        `,
+      })}
+      <div style="margin:18px 0 10px 0;">
+        ${renderButton({ href: instructionsUrl, label: 'Abrir /instrucciones' })}
+      </div>
+      <div style="margin:10px 0 0 0;">
+        ${renderButtonSecondary({ href: catalogUrl, label: 'Ir al catálogo' })}
+      </div>
+      <p style="margin:12px 0 0 0;font-family:${FONT_UI};font-size:13px;line-height:1.65;color:${COLORS.muted};">
+        Gu&iacute;a: <a href="${escapeHtml(instructionsUrl)}" style="${LINK_STYLE}">/instrucciones</a>
+        &nbsp;&bull;&nbsp;
+        Cat&aacute;logo: <a href="${escapeHtml(catalogUrl)}" style="${LINK_STYLE}">abrir</a>
+      </p>
+    `.trim();
+
+    const text =
+      `Haz tu primera descarga hoy\n\n` +
+      `Hola ${name}. Tu acceso ya esta activo.\n` +
+      `Empieza por la carpeta recomendada: ${safeRecommendedFolder}\n\n` +
+      `Guia de descarga: ${instructionsUrl}\n` +
+      `Catalogo: ${catalogUrl}\n`;
+
     return {
       subject,
-      html: renderLayout({ title: subject, preheader: 'Tu acceso está activo. Descarga hoy.', contentHtml, unsubscribeUrl }),
+      html: renderLayout({
+        title: subject,
+        preheader: 'Empieza con una carpeta recomendada y descarga hoy.',
+        contentHtml,
+        unsubscribeUrl,
+      }),
       text: appendMarketingUnsubscribeText(text, unsubscribeUrl),
     };
   },

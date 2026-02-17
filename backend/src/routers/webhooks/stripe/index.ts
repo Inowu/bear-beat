@@ -248,7 +248,10 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
             },
           });
 
-          const shouldEmitPaymentSuccess = !orderWasPaidBefore || isTrialConversion || isRenewal;
+          const analyticsOrderId =
+            latestPaidOrder?.id
+            ?? (Number.isFinite(orderId) && orderId > 0 ? orderId : null);
+          const shouldEmitPaymentSuccess = analyticsOrderId != null;
           if (shouldEmitPaymentSuccess) {
             const toMetaString = (key: string, maxLen = 255): string | null => {
               const raw = subscriptionMetadata[key];
@@ -264,9 +267,7 @@ export const stripeSubscriptionWebhook = async (req: Request) => {
                 provider: 'stripe',
                 providerEventId: payload.id,
                 userId: user.id,
-                orderId:
-                  latestPaidOrder?.id
-                  ?? (Number.isFinite(orderId) && orderId > 0 ? orderId : null),
+                orderId: analyticsOrderId,
                 planId: latestPaidOrder?.plan_id ?? plan?.id ?? null,
                 amount: Number(latestPaidOrder?.total_price ?? plan?.price) || 0,
                 currency: plan?.moneda?.toUpperCase?.() ?? null,

@@ -32,6 +32,7 @@ export const GROWTH_METRICS = {
   REGISTRATION_ABANDONED: "registration_abandoned",
   PASSWORD_RECOVERY_REQUESTED: "password_recovery_requested",
   PASSWORD_RECOVERY_FAILED: "password_recovery_failed",
+  CHECKOUT_VIEW: "checkout_view",
   CHECKOUT_STARTED: "checkout_started",
   CHECKOUT_METHOD_SELECTED: "checkout_method_selected",
   CHECKOUT_ABANDONED: "checkout_abandoned",
@@ -135,6 +136,13 @@ export interface PendingCheckoutRecoveryInput {
   amount?: number | null;
 }
 
+export interface PendingCheckoutRecoverySnapshot {
+  checkoutId: string;
+  sessionId: string;
+  visitorId: string;
+  userId: number | null;
+}
+
 const analyticsCollectUrl = `${apiBaseUrl}/api/analytics/collect`;
 
 let hasLifecycleListeners = false;
@@ -178,6 +186,7 @@ const eventCategoryMap: Record<GrowthMetricName, AnalyticsCategory> = {
   [GROWTH_METRICS.REGISTRATION_ABANDONED]: "registration",
   [GROWTH_METRICS.PASSWORD_RECOVERY_REQUESTED]: "activation",
   [GROWTH_METRICS.PASSWORD_RECOVERY_FAILED]: "activation",
+  [GROWTH_METRICS.CHECKOUT_VIEW]: "checkout",
   [GROWTH_METRICS.CHECKOUT_STARTED]: "checkout",
   [GROWTH_METRICS.CHECKOUT_METHOD_SELECTED]: "checkout",
   [GROWTH_METRICS.CHECKOUT_ABANDONED]: "checkout",
@@ -486,7 +495,7 @@ function evaluatePendingCheckoutRecovery(): void {
   }
 }
 
-function getOrCreateVisitorId(): string {
+export function getOrCreateVisitorId(): string {
   if (typeof window === "undefined") return "server";
   const localStorage = getSafeLocalStorage();
   const existing = safeStorageRead(localStorage, STORAGE_VISITOR_ID);
@@ -498,7 +507,7 @@ function getOrCreateVisitorId(): string {
   return visitorId;
 }
 
-function getOrCreateSessionId(): string {
+export function getOrCreateSessionId(): string {
   if (typeof window === "undefined") return "server-session";
   const sessionStorage = getSafeSessionStorage();
   const now = Date.now();
@@ -1049,7 +1058,7 @@ export function clearGrowthUserIdentity(): void {
 
 export function registerPendingCheckoutRecovery(
   input: PendingCheckoutRecoveryInput = {},
-): void {
+): PendingCheckoutRecoverySnapshot {
   const state: PendingCheckoutRecoveryState = {
     checkoutId: generateId("checkout"),
     startedAt: new Date().toISOString(),
@@ -1067,6 +1076,12 @@ export function registerPendingCheckoutRecovery(
 
   persistPendingCheckoutRecoveryState(state);
   schedulePendingCheckoutRecoveryCheck();
+  return {
+    checkoutId: state.checkoutId,
+    sessionId: state.sessionId,
+    visitorId: state.visitorId,
+    userId: state.userId,
+  };
 }
 
 export function markCheckoutPaymentSuccess(): void {

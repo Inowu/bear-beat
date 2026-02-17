@@ -3,6 +3,10 @@ import { log } from '../server';
 import { Users } from '@prisma/client';
 import { ManyChatTags, manyChatTags, manyChatTagNames } from './tags';
 import { prisma } from '../db';
+import {
+  enqueueManyChatRetryJob,
+  type ManyChatRetryJobData,
+} from '../queue/manyChat';
 
 /** Obtiene first_name y last_name para ManyChat; usa username si están vacíos */
 function getFirstLastName(user: Users): { first_name: string; last_name: string } {
@@ -97,7 +101,7 @@ async function getCustomFieldId(fieldKey: string): Promise<number | null> {
       log.error('[MANYCHAT] Error fetching custom fields', {
         message: error instanceof Error ? error.message : String(error ?? ''),
       });
-      return null;
+      throw error;
     }
   }
 
@@ -110,8 +114,171 @@ async function getCustomFieldId(fieldKey: string): Promise<number | null> {
     customFieldsCache = { fetchedAt: now, byName };
     id = customFieldsCache.byName.get(key) ?? null;
     return id;
-  } catch {
+  } catch (error: any) {
+    log.error('[MANYCHAT] Error refreshing custom fields cache', {
+      message: error instanceof Error ? error.message : String(error ?? ''),
+    });
+    throw error;
+  }
+}
+
+const RETRYABLE_STATUS_CODES = new Set([408, 425, 429, 500, 502, 503, 504]);
+const RETRYABLE_ERROR_CODES = new Set([
+  'ECONNABORTED',
+  'ECONNRESET',
+  'ENOTFOUND',
+  'EAI_AGAIN',
+  'ETIMEDOUT',
+  'EPIPE',
+  'ENETUNREACH',
+]);
+
+function isRetryableManyChatError(error: unknown): boolean {
+  const axiosErr = error as AxiosError | null;
+  const status = axiosErr?.response?.status;
+  if (typeof status === 'number') {
+    return RETRYABLE_STATUS_CODES.has(status);
+  }
+
+  const code = (axiosErr as any)?.code;
+  if (typeof code === 'string' && RETRYABLE_ERROR_CODES.has(code)) {
+    return true;
+  }
+
+  // Network failures from Axios frequently arrive with no response object.
+  if (Boolean(axiosErr?.isAxiosError) && !axiosErr?.response) {
+    return true;
+  }
+
+  return false;
+}
+
+async function enqueueRetryJob(jobData: ManyChatRetryJobData): Promise<void> {
+  const jobId = await enqueueManyChatRetryJob(jobData);
+  if (!jobId) return;
+  log.warn('[MANYCHAT_RETRY] Enqueued retry job', {
+    jobId,
+    action: jobData.action,
+    userId: jobData.userId ?? null,
+  });
+}
+
+async function setCustomFieldForSubscriber(
+  mcId: ManyChatSubscriberId,
+  fieldKey: string,
+  fieldValue: string,
+): Promise<Record<any, any> | null> {
+  const fieldId = await getCustomFieldId(fieldKey);
+  if (!fieldId) {
+    log.warn('[MANYCHAT] Custom field not found; skipping setCustomField', {
+      fieldKey,
+    });
     return null;
+  }
+
+  try {
+    const response = await client.post('/fb/subscriber/setCustomField', {
+      subscriber_id: mcId,
+      field_id: fieldId,
+      field_value: fieldValue,
+    });
+    return response.data.data;
+  } catch (error: any) {
+    const axiosErr = error as AxiosError;
+    log.error('[MANYCHAT] setCustomField failed', {
+      fieldKey,
+      status: axiosErr.response?.status ?? null,
+      error: axiosErr.message,
+    });
+    throw error;
+  }
+}
+
+async function addTagToSubscriber(
+  subscriberId: ManyChatSubscriberId,
+  tag: ManyChatTags | string,
+): Promise<Record<any, any> | null> {
+  const tagRaw = String(tag || '').trim();
+  if (!tagRaw) return null;
+
+  const hasKey = Object.prototype.hasOwnProperty.call(manyChatTags, tagRaw);
+  const tagKey = hasKey ? (tagRaw as keyof typeof manyChatTags) : null;
+  const tagId = tagKey ? manyChatTags[tagKey] : null;
+  const tagName = tagKey ? manyChatTagNames[tagKey] : tagRaw;
+
+  const tryAddByName = async () => {
+    try {
+      const response = await client.post('/fb/subscriber/addTagByName', {
+        subscriber_id: subscriberId,
+        tag_name: tagName,
+      });
+      log.info(`[MANYCHAT] Tag "${tagName}" added via addTagByName`);
+      return response.data;
+    } catch (fallbackError: any) {
+      const axiosErr = fallbackError as AxiosError;
+      log.error('[MANYCHAT] addTagByName failed', {
+        tagName,
+        status: axiosErr.response?.status ?? null,
+        error: axiosErr.message,
+      });
+      throw fallbackError;
+    }
+  };
+
+  // 1. Intentar por ID
+  if (typeof tagId === 'number' && Number.isFinite(tagId) && tagId > 0) {
+    try {
+      const response = await client.post('/fb/subscriber/addTag', {
+        subscriber_id: subscriberId,
+        tag_id: tagId,
+      });
+      log.info(`[MANYCHAT] Tag ${tagRaw} (id ${tagId}) added`);
+      return response.data;
+    } catch (error: any) {
+      const axiosErr = error as AxiosError;
+      log.warn('[MANYCHAT] addTag by ID failed; retrying by name', {
+        tag: tagRaw,
+        tagId,
+        status: axiosErr.response?.status ?? null,
+        error: axiosErr.message,
+      });
+      return tryAddByName();
+    }
+  }
+
+  // If tagId is missing/0 (IDs differ across ManyChat workspaces), go straight to addTagByName.
+  return tryAddByName();
+}
+
+export async function processManyChatRetryJob(
+  jobData: ManyChatRetryJobData,
+): Promise<void> {
+  if (!isManyChatConfigured()) {
+    warnMissingConfig('processManyChatRetryJob');
+    return;
+  }
+
+  try {
+    if (jobData.action === 'set_custom_field') {
+      await setCustomFieldForSubscriber(
+        jobData.subscriberId,
+        jobData.fieldKey,
+        jobData.fieldValue,
+      );
+      return;
+    }
+
+    await addTagToSubscriber(jobData.subscriberId, jobData.tag);
+  } catch (error: any) {
+    if (isRetryableManyChatError(error)) throw error;
+
+    const axiosErr = error as AxiosError;
+    log.warn('[MANYCHAT_RETRY] Dropping non-retryable job failure', {
+      action: jobData.action,
+      userId: jobData.userId ?? null,
+      status: axiosErr.response?.status ?? null,
+      error: axiosErr.message,
+    });
   }
 }
 
@@ -205,29 +372,18 @@ export const manyChat = {
       return null;
     }
 
-    const fieldId = await getCustomFieldId(fieldKey);
-    if (!fieldId) {
-      log.warn('[MANYCHAT] Custom field not found; skipping setCustomField', {
-        fieldKey,
-      });
-      return null;
-    }
     try {
-      const response = await client.post('/fb/subscriber/setCustomField', {
-        subscriber_id: mcId,
-        field_id: fieldId,
-        field_value: fieldValue,
-      });
-
-      return response.data.data;
+      return await setCustomFieldForSubscriber(mcId, fieldKey, fieldValue);
     } catch (error: any) {
-      const axiosErr = error as AxiosError;
-      log.error('[MANYCHAT] setCustomField failed', {
-        fieldKey,
-        status: axiosErr.response?.status ?? null,
-        error: axiosErr.message,
-      });
-
+      if (isRetryableManyChatError(error)) {
+        await enqueueRetryJob({
+          action: 'set_custom_field',
+          subscriberId: mcId,
+          fieldKey,
+          fieldValue,
+          userId: null,
+        });
+      }
       return null;
     }
   },
@@ -308,53 +464,20 @@ export const manyChat = {
     const tagRaw = String(tag || '').trim();
     if (!tagRaw) return null;
 
-    const hasKey = Object.prototype.hasOwnProperty.call(manyChatTags, tagRaw);
-    const tagKey = hasKey ? (tagRaw as keyof typeof manyChatTags) : null;
-    const tagId = tagKey ? manyChatTags[tagKey] : null;
-    const tagName = tagKey ? manyChatTagNames[tagKey] : tagRaw;
-
-    const tryAddByName = async () => {
-      try {
-        const response = await client.post('/fb/subscriber/addTagByName', {
-          subscriber_id: subscriberId,
-          tag_name: tagName,
-        });
-        log.info(`[MANYCHAT] Tag "${tagName}" added via addTagByName`);
-        return response.data;
-      } catch (fallbackError: any) {
-        const axiosErr = fallbackError as AxiosError;
-        log.error('[MANYCHAT] addTagByName failed', {
-          tagName,
-          status: axiosErr.response?.status ?? null,
-          error: axiosErr.message,
-        });
-        return null;
-      }
-    };
-
-    // 1. Intentar por ID
-    if (typeof tagId === 'number' && Number.isFinite(tagId) && tagId > 0) {
-      try {
-        const response = await client.post('/fb/subscriber/addTag', {
-          subscriber_id: subscriberId,
-          tag_id: tagId,
-        });
-        log.info(`[MANYCHAT] Tag ${tagRaw} (id ${tagId}) added`);
-        return response.data;
-      } catch (error: any) {
-        const axiosErr = error as AxiosError;
-        log.warn('[MANYCHAT] addTag by ID failed; retrying by name', {
+    try {
+      const response = await addTagToSubscriber(subscriberId, tagRaw);
+      return response as Array<Record<any, any>> | null;
+    } catch (error: any) {
+      if (isRetryableManyChatError(error)) {
+        await enqueueRetryJob({
+          action: 'add_tag',
+          subscriberId,
           tag: tagRaw,
-          tagId,
-          status: axiosErr.response?.status ?? null,
-          error: axiosErr.message,
+          userId: user.id,
         });
-        return tryAddByName();
       }
+      return null;
     }
-
-    // If tagId is missing/0 (IDs differ across ManyChat workspaces), go straight to addTagByName.
-    return tryAddByName();
   },
   getManyChatId: async function (user: Users) {
     const mcIdFromDb = normalizeSubscriberId(user.mc_id);

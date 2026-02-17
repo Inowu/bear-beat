@@ -25,6 +25,10 @@ export class Queue {
   add() {
     return Promise.resolve({ id: "mock-job" });
   }
+
+  close() {
+    return Promise.resolve();
+  }
 }
 
 export class Worker<T = any> {
@@ -46,4 +50,3 @@ export class Worker<T = any> {
     return Promise.resolve();
   }
 }
-

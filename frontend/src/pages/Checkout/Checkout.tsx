@@ -20,6 +20,8 @@ import { OxxoModal } from "../../components/Modals/OxxoModal/OxxoModal";
 import PayPalComponent from "../../components/PayPal/PayPalComponent";
 import {
   GROWTH_METRICS,
+  getOrCreateSessionId,
+  getOrCreateVisitorId,
   registerPendingCheckoutRecovery,
   trackGrowthMetric,
 } from "../../utils/growthMetrics";
@@ -598,6 +600,19 @@ function Checkout() {
     [plan?.id, plan?.moneda, plan?.price],
   );
 
+  const trackCheckoutStarted = useCallback(
+    (method: CheckoutMethod, surface?: string) => {
+      trackGrowthMetric(GROWTH_METRICS.CHECKOUT_STARTED, {
+        method,
+        ...(surface ? { surface } : {}),
+        planId: plan?.id ?? null,
+        currency: plan?.moneda?.toUpperCase() ?? null,
+        amount: Number(plan?.price) || null,
+      });
+    },
+    [plan?.id, plan?.moneda, plan?.price],
+  );
+
   const pendingPurchaseStorageKey = "bb.checkout.pendingPurchase";
 
   const hasPaypalPlan = Boolean(paypalPlan?.paypal_plan_id || paypalPlan?.paypal_plan_id_test);
@@ -896,7 +911,7 @@ function Checkout() {
     if (!plan || checkoutStartedRef.current) return;
     checkoutStartedRef.current = true;
     checkManyChat(plan);
-    trackGrowthMetric(GROWTH_METRICS.CHECKOUT_STARTED, {
+    trackGrowthMetric(GROWTH_METRICS.CHECKOUT_VIEW, {
       planId: plan.id,
       currency: plan.moneda?.toUpperCase() ?? null,
       amount: Number(plan.price) || null,
@@ -944,12 +959,14 @@ function Checkout() {
     const initiateCheckoutEventId = generateEventId("init_checkout");
     const purchaseEventId = generateEventId("purchase");
     trackInitiateCheckout({ value, currency, eventId: initiateCheckoutEventId });
-    registerPendingCheckoutRecovery({
+    const checkoutRecovery = registerPendingCheckoutRecovery({
       method: "card",
       planId: plan.id,
       currency,
       amount: value,
     });
+    const sessionId = getOrCreateSessionId();
+    const visitorId = getOrCreateVisitorId();
 
     try {
       window.sessionStorage.setItem(
@@ -973,6 +990,7 @@ function Checkout() {
       currency,
       amount: value,
     });
+    trackCheckoutStarted("card");
 
     try {
       try {
@@ -1011,6 +1029,9 @@ function Checkout() {
         url: window.location.href,
         eventId: initiateCheckoutEventId,
         purchaseEventId,
+        sessionId,
+        visitorId,
+        checkoutId: checkoutRecovery.checkoutId,
       });
       if (result?.url) {
         try {
@@ -1071,7 +1092,7 @@ function Checkout() {
       setRedirecting(false);
       setProcessingMethod(null);
     }
-  }, [acceptRecurring, checkoutConsentMethods.join("|"), cookies._fbc, cookies._fbp, focusRecurringConsent, location.pathname, location.search, plan?.id, plan?.moneda, plan?.price, priceId, availableMethods.join("|"), openCheckoutError]);
+  }, [acceptRecurring, checkoutConsentMethods.join("|"), cookies._fbc, cookies._fbp, focusRecurringConsent, location.pathname, location.search, plan?.id, plan?.moneda, plan?.price, priceId, availableMethods.join("|"), openCheckoutError, trackCheckoutStarted]);
 
   useEffect(() => {
     if (!plan) return;
@@ -1138,6 +1159,7 @@ function Checkout() {
         currency: (plan.moneda?.toUpperCase() || "USD").toUpperCase(),
         amount: Number(plan.price) || null,
       });
+      trackCheckoutStarted("spei");
 
       try {
         await trpc.checkoutLogs.registerCheckoutLog.mutate();
@@ -1180,7 +1202,7 @@ function Checkout() {
         setProcessingMethod(null);
       }
     },
-    [plan?.id, plan?.moneda, plan?.price, availableMethods.join("|"), openCheckoutError]
+    [plan?.id, plan?.moneda, plan?.price, availableMethods.join("|"), openCheckoutError, trackCheckoutStarted]
   );
 
   const startOxxoCheckout = useCallback(async () => {
@@ -1196,6 +1218,7 @@ function Checkout() {
       currency: (plan.moneda?.toUpperCase() || "USD").toUpperCase(),
       amount: Number(plan.price) || null,
     });
+    trackCheckoutStarted("oxxo");
 
     try {
       await trpc.checkoutLogs.registerCheckoutLog.mutate();
@@ -1234,7 +1257,7 @@ function Checkout() {
     } finally {
       setProcessingMethod(null);
     }
-  }, [plan?.id, plan?.moneda, plan?.price, availableMethods.join("|"), openCheckoutError]);
+  }, [plan?.id, plan?.moneda, plan?.price, availableMethods.join("|"), openCheckoutError, trackCheckoutStarted]);
 
   const startBbvaCheckout = useCallback(async () => {
     if (!plan?.id) return;
@@ -1277,6 +1300,7 @@ function Checkout() {
       currency,
       amount: value,
     });
+    trackCheckoutStarted("bbva");
 
     try {
       await trpc.checkoutLogs.registerCheckoutLog.mutate();
@@ -1338,7 +1362,7 @@ function Checkout() {
       setRedirecting(false);
       setProcessingMethod(null);
     }
-  }, [plan?.id, plan?.moneda, plan?.price, availableMethods.join("|"), openCheckoutError]);
+  }, [plan?.id, plan?.moneda, plan?.price, availableMethods.join("|"), openCheckoutError, trackCheckoutStarted]);
 
   const startPaypalCheckout = useCallback(
     async (data: any) => {
@@ -1983,6 +2007,7 @@ function Checkout() {
                         currency: plan?.moneda?.toUpperCase() ?? null,
                         amount: Number(plan?.price) || null,
                       });
+                      trackCheckoutStarted("paypal", "paypal_button");
                     }}
                   />
                 </div>

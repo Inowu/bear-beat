@@ -42,10 +42,15 @@ import {
   initializeRemoveUsersQueue,
   removeUsersQueue,
 } from './queue/removeUsers';
+import {
+  closeManyChatRetryQueue,
+  initializeManyChatRetryQueue,
+} from './queue/manyChat';
 import { downloadDirEndpoint } from './endpoints/download-dir.endpoint';
 import { catalogStatsEndpoint } from './endpoints/catalog-stats.endpoint';
 import { stripeOxxoHealthEndpoint } from './endpoints/stripe-oxxo-health.endpoint';
 import { isMediaCdnEnabled } from './utils/demoMedia';
+import { processManyChatRetryJob } from './many-chat';
 
 const DEFAULT_CORS_ORIGINS = [
   'http://localhost:3000',
@@ -631,6 +636,8 @@ async function main() {
       initializeCompressionQueue();
 
       initializeRemoveUsersQueue();
+
+      initializeManyChatRetryQueue(processManyChatRetryJob);
     } catch (e: any) {
       log.error(`[QUEUE] Error while initializing queues: ${e.message}`);
     }
@@ -655,6 +662,7 @@ const closeConnections = async () => {
   if (removeUsersQueue) {
     await removeUsersQueue.close();
   }
+  await closeManyChatRetryQueue();
 };
 
 process.on('SIGTERM', async () => {
