@@ -32,25 +32,60 @@ import { getPublicCatalogSummarySnapshot } from './Catalog.router';
 type StripeRecurringInterval = 'day' | 'week' | 'month' | 'year';
 
 type CheckoutMethod = 'card' | 'paypal' | 'spei' | 'oxxo' | 'bbva';
+type PaymentMethodBadge =
+  | 'visa'
+  | 'mastercard'
+  | 'amex'
+  | 'paypal'
+  | 'spei'
+  | 'oxxo'
+  | 'transfer';
 
-const CHECKOUT_METHOD_ORDER: CheckoutMethod[] = ['card', 'paypal', 'spei', 'oxxo', 'bbva'];
+const CHECKOUT_METHOD_ORDER: CheckoutMethod[] = [
+  'card',
+  'paypal',
+  'spei',
+  'oxxo',
+  'bbva',
+];
 const RECURRING_CONSENT_METHODS: CheckoutMethod[] = ['card', 'paypal'];
 const TRIAL_ALLOWED_METHODS: CheckoutMethod[] = ['card'];
 
 const FALLBACK_CATALOG_TOTAL_FILES = 248_321;
 const FALLBACK_CATALOG_TOTAL_GB = 14_140;
+const LIMITS_NOTE_COPY =
+  'La cuota mensual es lo que puedes descargar cada ciclo. El catálogo total es lo disponible para elegir.';
+const PRICING_BASE_PAYMENT_BADGES: PaymentMethodBadge[] = [
+  'visa',
+  'mastercard',
+  'amex',
+];
+const PLANS_BASE_PAYMENT_BADGES: PaymentMethodBadge[] = ['visa', 'mastercard'];
+const TRIAL_PAYMENT_BADGES: PaymentMethodBadge[] = [
+  'visa',
+  'mastercard',
+  'amex',
+];
 
 type PricingCurrency = 'mxn' | 'usd';
 
 function normalizePlanCurrency(value: unknown): PricingCurrency | null {
-  const cur = String(value ?? '').trim().toLowerCase();
+  const cur = String(value ?? '')
+    .trim()
+    .toLowerCase();
   if (cur === 'mxn') return 'mxn';
   if (cur === 'usd') return 'usd';
   return null;
 }
 
 function normalizeRecurringInterval(value: unknown): StripeRecurringInterval {
-  if (value === 'day' || value === 'week' || value === 'month' || value === 'year') return value;
+  if (
+    value === 'day' ||
+    value === 'week' ||
+    value === 'month' ||
+    value === 'year'
+  )
+    return value;
   return 'month';
 }
 
@@ -108,6 +143,54 @@ function pickDefaultCheckoutMethod(methods: CheckoutMethod[]): CheckoutMethod {
   return methods[0] ?? 'card';
 }
 
+function buildPaymentBadges(opts: {
+  availableMethods: CheckoutMethod[];
+  baseBadges: PaymentMethodBadge[];
+}): PaymentMethodBadge[] {
+  const methods = Array.isArray(opts.availableMethods)
+    ? opts.availableMethods
+    : [];
+  const badges = new Set<PaymentMethodBadge>(opts.baseBadges);
+
+  if (methods.includes('paypal')) badges.add('paypal');
+  if (methods.includes('spei')) badges.add('spei');
+  if (methods.includes('oxxo')) badges.add('oxxo');
+  if (methods.includes('bbva')) badges.add('transfer');
+
+  return Array.from(badges);
+}
+
+function buildAltPaymentLabel(methods: CheckoutMethod[]): string {
+  const labels: string[] = [];
+  if (methods.includes('paypal')) labels.push('PayPal');
+  if (methods.includes('spei')) labels.push('SPEI');
+  if (methods.includes('oxxo')) labels.push('Efectivo');
+  if (methods.includes('bbva')) labels.push('Transferencia');
+  return labels.join(' / ');
+}
+
+function formatMonthlyCurrencyHint(
+  amount: number | null | undefined,
+  currency: PricingCurrency,
+): string {
+  const fallback = currency === 'mxn' ? 350 : 18;
+  const code = currency === 'mxn' ? 'MXN' : 'USD';
+  const value = Number(amount ?? 0);
+  const effective = Number.isFinite(value) && value > 0 ? value : fallback;
+  const hasDecimals = Math.round(effective) !== effective;
+  const formatted = hasDecimals ? effective.toFixed(2) : `${effective}`;
+  return `${code} $${formatted}`;
+}
+
+function formatMonthlyDualHint(
+  mxnAmount: number | null | undefined,
+  usdAmount: number | null | undefined,
+): string {
+  const mxn = formatMonthlyCurrencyHint(mxnAmount, 'mxn');
+  const usd = formatMonthlyCurrencyHint(usdAmount, 'usd');
+  return `${mxn}/mes (${usd})`;
+}
+
 async function resolveStripeProductAndRecurring(
   stripeIdentifier: string,
 ): Promise<{
@@ -116,7 +199,8 @@ async function resolveStripeProductAndRecurring(
 }> {
   if (stripeIdentifier.startsWith('price_')) {
     const price = await stripeInstance.prices.retrieve(stripeIdentifier);
-    const productId = typeof price.product === 'string' ? price.product : price.product.id;
+    const productId =
+      typeof price.product === 'string' ? price.product : price.product.id;
     return {
       productId,
       recurring: {
@@ -135,7 +219,9 @@ async function resolveStripeProductAndRecurring(
       });
     }
     const productId =
-      typeof legacyPlan.product === 'string' ? legacyPlan.product : legacyPlan.product.id;
+      typeof legacyPlan.product === 'string'
+        ? legacyPlan.product
+        : legacyPlan.product.id;
     return {
       productId,
       recurring: {
@@ -204,7 +290,9 @@ async function computeTrialConfigForUser(
               take: 5,
             });
 
-            const samePhoneHasTrial = samePhoneUsers.some((row) => Boolean(row.trial_used_at));
+            const samePhoneHasTrial = samePhoneUsers.some((row) =>
+              Boolean(row.trial_used_at),
+            );
             let samePhoneHasPaid = false;
             if (!samePhoneHasTrial && samePhoneUsers.length > 0) {
               const paid = await ctx.prisma.orders.findFirst({
@@ -238,7 +326,9 @@ async function computeTrialConfigForUser(
 }
 
 export const plansRouter = router({
-  getTrialConfig: shieldedProcedure.query(async ({ ctx }) => computeTrialConfigForUser(ctx)),
+  getTrialConfig: shieldedProcedure.query(async ({ ctx }) =>
+    computeTrialConfigForUser(ctx),
+  ),
   getPublicPricingConfig: shieldedProcedure.query(async ({ ctx }) => {
     const stripeKey = getPlanKey(PaymentService.STRIPE);
     const paypalKey = getPlanKey(PaymentService.PAYPAL);
@@ -269,12 +359,16 @@ export const plansRouter = router({
     });
 
     const mxnBest = pickBestCheckoutPlanCandidate({
-      candidates: candidates.filter((plan) => normalizePlanCurrency(plan.moneda) === 'mxn'),
+      candidates: candidates.filter(
+        (plan) => normalizePlanCurrency(plan.moneda) === 'mxn',
+      ),
       stripeKey,
       paypalKey,
     });
     const usdBest = pickBestCheckoutPlanCandidate({
-      candidates: candidates.filter((plan) => normalizePlanCurrency(plan.moneda) === 'usd'),
+      candidates: candidates.filter(
+        (plan) => normalizePlanCurrency(plan.moneda) === 'usd',
+      ),
       stripeKey,
       paypalKey,
     });
@@ -307,12 +401,22 @@ export const plansRouter = router({
       if (hasPaypal) availableMethodSet.add('paypal');
       if (currencyCode === 'MXN') {
         availableMethodSet.add('spei');
-        if (conektaAvailability.payByBankEnabled) availableMethodSet.add('bbva');
+        if (conektaAvailability.payByBankEnabled)
+          availableMethodSet.add('bbva');
         if (conektaAvailability.oxxoEnabled) availableMethodSet.add('oxxo');
       }
-      const availableMethods: CheckoutMethod[] = CHECKOUT_METHOD_ORDER.filter((method) =>
-        availableMethodSet.has(method),
+      const availableMethods: CheckoutMethod[] = CHECKOUT_METHOD_ORDER.filter(
+        (method) => availableMethodSet.has(method),
       );
+      const pricingPaymentMethods = buildPaymentBadges({
+        availableMethods,
+        baseBadges: PRICING_BASE_PAYMENT_BADGES,
+      });
+      const plansPaymentMethods = buildPaymentBadges({
+        availableMethods,
+        baseBadges: PLANS_BASE_PAYMENT_BADGES,
+      });
+      const altPaymentLabel = buildAltPaymentLabel(availableMethods);
 
       const gigas = toFiniteNumber(plan.gigas);
       const quotaGb = gigas > 0 ? gigas : 500;
@@ -326,6 +430,10 @@ export const plansRouter = router({
         quotaGb,
         hasPaypal,
         availableMethods,
+        paymentMethods: plansPaymentMethods,
+        pricingPaymentMethods,
+        trialPricingPaymentMethods: TRIAL_PAYMENT_BADGES,
+        altPaymentLabel,
       };
     };
 
@@ -334,7 +442,11 @@ export const plansRouter = router({
       usd: usdBest ? toPublic(usdBest, 'usd') : null,
     };
 
-    const currencyDefault: PricingCurrency = plans.mxn ? 'mxn' : plans.usd ? 'usd' : 'mxn';
+    const currencyDefault: PricingCurrency = plans.mxn
+      ? 'mxn'
+      : plans.usd
+        ? 'usd'
+        : 'mxn';
 
     const quotaGb = {
       mxn: plans.mxn?.quotaGb ?? plans.usd?.quotaGb ?? 500,
@@ -343,9 +455,9 @@ export const plansRouter = router({
 
     const catalogHasLive = Boolean(
       catalogSummary &&
-        !catalogSummary.error &&
-        toFiniteNumber(catalogSummary.totalFiles) > 0 &&
-        toFiniteNumber(catalogSummary.totalGB) > 0,
+      !catalogSummary.error &&
+      toFiniteNumber(catalogSummary.totalFiles) > 0 &&
+      toFiniteNumber(catalogSummary.totalGB) > 0,
     );
     const effectiveTotalFiles = catalogHasLive
       ? toFiniteNumber(catalogSummary?.totalFiles)
@@ -354,10 +466,26 @@ export const plansRouter = router({
       ? toFiniteNumber(catalogSummary?.totalGB)
       : FALLBACK_CATALOG_TOTAL_GB;
     const effectiveTotalTB = effectiveTotalGB / 1000;
+    const afterPriceLabel = formatMonthlyDualHint(
+      plans.mxn?.price,
+      plans.usd?.price,
+    );
 
     return {
       generatedAt: new Date().toISOString(),
       currencyDefault,
+      ui: {
+        defaultCurrency: currencyDefault,
+        limitsNote: LIMITS_NOTE_COPY,
+        afterPriceLabel,
+        stats: {
+          totalFiles: effectiveTotalFiles,
+          totalGB: effectiveTotalGB,
+          totalTB: effectiveTotalTB,
+          quotaGb,
+          quotaGbDefault: quotaGb[currencyDefault],
+        },
+      },
       conektaAvailability,
       quotaGb,
       trialConfig,
@@ -459,7 +587,9 @@ export const plansRouter = router({
           orderBy: { id: 'asc' },
         });
 
-        let paypalCandidates = paypalSiblingsByName.filter((row) => hasPaypalPlanId(row, paypalKey));
+        let paypalCandidates = paypalSiblingsByName.filter((row) =>
+          hasPaypalPlanId(row, paypalKey),
+        );
         if (paypalCandidates.length === 0) {
           const paypalSiblings = await ctx.prisma.plans.findMany({
             where: {
@@ -469,7 +599,9 @@ export const plansRouter = router({
             },
             orderBy: { id: 'asc' },
           });
-          paypalCandidates = paypalSiblings.filter((row) => hasPaypalPlanId(row, paypalKey));
+          paypalCandidates = paypalSiblings.filter((row) =>
+            hasPaypalPlanId(row, paypalKey),
+          );
         }
 
         paypalPlan = pickBestCheckoutPlanCandidate({
@@ -491,7 +623,9 @@ export const plansRouter = router({
             if (name.includes('Oro')) {
               manyChat.addTagToUser(user, 'CHECKOUT_PLAN_ORO').catch(() => {});
             } else if (name.includes('Curioso')) {
-              manyChat.addTagToUser(user, 'CHECKOUT_PLAN_CURIOSO').catch(() => {});
+              manyChat
+                .addTagToUser(user, 'CHECKOUT_PLAN_CURIOSO')
+                .catch(() => {});
             }
 
             let mcId: string | null = null;
@@ -502,7 +636,9 @@ export const plansRouter = router({
             }
 
             if (mcId) {
-              manyChat.setCustomField(mcId, 'ultimo_plan_checkout', name).catch(() => {});
+              manyChat
+                .setCustomField(mcId, 'ultimo_plan_checkout', name)
+                .catch(() => {});
               manyChat
                 .setCustomField(
                   mcId,
@@ -530,15 +666,16 @@ export const plansRouter = router({
       if (paypalPlan) availableMethodSet.add('paypal');
       if (currencyCode === 'MXN') {
         availableMethodSet.add('spei');
-        if (conektaAvailability.payByBankEnabled) availableMethodSet.add('bbva');
+        if (conektaAvailability.payByBankEnabled)
+          availableMethodSet.add('bbva');
         if (conektaAvailability.oxxoEnabled) availableMethodSet.add('oxxo');
       }
       const methods: CheckoutMethod[] = CHECKOUT_METHOD_ORDER.filter((method) =>
         availableMethodSet.has(method),
       );
       const defaultMethod = pickDefaultCheckoutMethod(methods);
-      const recurringConsentMethods = RECURRING_CONSENT_METHODS.filter((method) =>
-        availableMethodSet.has(method),
+      const recurringConsentMethods = RECURRING_CONSENT_METHODS.filter(
+        (method) => availableMethodSet.has(method),
       );
       const trialAllowedMethods = TRIAL_ALLOWED_METHODS.filter((method) =>
         availableMethodSet.has(method),
@@ -595,12 +732,16 @@ export const plansRouter = router({
     });
 
     const mxnBest = pickBestCheckoutPlanCandidate({
-      candidates: candidates.filter((plan) => normalizePlanCurrency(plan.moneda) === 'mxn'),
+      candidates: candidates.filter(
+        (plan) => normalizePlanCurrency(plan.moneda) === 'mxn',
+      ),
       stripeKey,
       paypalKey,
     });
     const usdBest = pickBestCheckoutPlanCandidate({
-      candidates: candidates.filter((plan) => normalizePlanCurrency(plan.moneda) === 'usd'),
+      candidates: candidates.filter(
+        (plan) => normalizePlanCurrency(plan.moneda) === 'usd',
+      ),
       stripeKey,
       paypalKey,
     });
@@ -644,7 +785,9 @@ export const plansRouter = router({
     .mutation(async ({ ctx: { prisma }, input: { data, interval } }) => {
       try {
         const priceKey = getPlanKey(PaymentService.STRIPE) as StripePriceKey;
-        const recurringInterval = normalizeRecurringInterval(interval?.toLowerCase());
+        const recurringInterval = normalizeRecurringInterval(
+          interval?.toLowerCase(),
+        );
         const currency = (data.moneda?.toLowerCase() || 'usd').trim();
         const unitAmount = Math.round(Number(data.price) * 100);
 
@@ -720,11 +863,13 @@ export const plansRouter = router({
       try {
         const priceKey = getPlanKey(PaymentService.STRIPE) as StripePriceKey;
         const stripeIdentifier = plan[priceKey] as string;
-        const { productId, recurring } = await resolveStripeProductAndRecurring(stripeIdentifier);
+        const { productId, recurring } =
+          await resolveStripeProductAndRecurring(stripeIdentifier);
 
         const productUpdate: Record<string, unknown> = {};
         if (data.name !== undefined) productUpdate.name = data.name as string;
-        if (data.activated !== undefined) productUpdate.active = Boolean(data.activated);
+        if (data.activated !== undefined)
+          productUpdate.active = Boolean(data.activated);
         if (data.description !== undefined) {
           productUpdate.description = (data.description as string) || '';
         }
@@ -740,7 +885,9 @@ export const plansRouter = router({
 
         let replacementPriceId: string | null = null;
         if (shouldCreateNewPrice) {
-          const unitAmount = Math.round(Number((data.price as any) ?? plan.price) * 100);
+          const unitAmount = Math.round(
+            Number((data.price as any) ?? plan.price) * 100,
+          );
           if (!Number.isFinite(unitAmount) || unitAmount <= 0) {
             throw new TRPCError({
               code: 'BAD_REQUEST',
@@ -748,7 +895,9 @@ export const plansRouter = router({
             });
           }
 
-          const currencyRaw = String((data.moneda as any) ?? plan.moneda ?? 'usd')
+          const currencyRaw = String(
+            (data.moneda as any) ?? plan.moneda ?? 'usd',
+          )
             .trim()
             .toLowerCase();
           const currency = /^[a-z]{3}$/.test(currencyRaw) ? currencyRaw : 'usd';
@@ -812,7 +961,8 @@ export const plansRouter = router({
       try {
         const priceKey = getPlanKey(PaymentService.STRIPE) as StripePriceKey;
         const stripeIdentifier = plan[priceKey] as string;
-        const { productId } = await resolveStripeProductAndRecurring(stripeIdentifier);
+        const { productId } =
+          await resolveStripeProductAndRecurring(stripeIdentifier);
 
         await stripeInstance.products.update(productId, { active: false });
 
@@ -1066,14 +1216,19 @@ export const plansRouter = router({
           });
           if (user) {
             const whereAny = input.where as Record<string, unknown> | undefined;
-            const hasSinglePlanId = whereAny?.id !== undefined && plans.length === 1;
+            const hasSinglePlanId =
+              whereAny?.id !== undefined && plans.length === 1;
             if (hasSinglePlanId) {
               const plan = plans[0];
               const name = (plan?.name ?? '').toString();
               if (name.includes('Oro')) {
-                void manyChat.addTagToUser(user, 'CHECKOUT_PLAN_ORO').catch(() => {});
+                void manyChat
+                  .addTagToUser(user, 'CHECKOUT_PLAN_ORO')
+                  .catch(() => {});
               } else if (name.includes('Curioso')) {
-                void manyChat.addTagToUser(user, 'CHECKOUT_PLAN_CURIOSO').catch(() => {});
+                void manyChat
+                  .addTagToUser(user, 'CHECKOUT_PLAN_CURIOSO')
+                  .catch(() => {});
               }
 
               // Do not block the query result on ManyChat (network) calls.
@@ -1094,7 +1249,9 @@ export const plansRouter = router({
                 })
                 .catch(() => {});
             } else {
-              void manyChat.addTagToUser(user, 'USER_CHECKED_PLANS').catch(() => {});
+              void manyChat
+                .addTagToUser(user, 'USER_CHECKED_PLANS')
+                .catch(() => {});
             }
           }
         } catch {

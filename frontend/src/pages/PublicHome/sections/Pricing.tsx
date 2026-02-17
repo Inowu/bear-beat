@@ -1,8 +1,13 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, CheckCircle2 } from "src/icons";
 import { useId, useMemo, useState } from "react";
-import PaymentMethodLogos, { type PaymentMethodId } from "../../../components/PaymentMethodLogos/PaymentMethodLogos";
-import { HOME_HERO_MICROCOPY_BASE, HOME_HERO_MICROCOPY_TRIAL } from "../homeCopy";
+import PaymentMethodLogos, {
+  type PaymentMethodId,
+} from "../../../components/PaymentMethodLogos/PaymentMethodLogos";
+import {
+  HOME_HERO_MICROCOPY_BASE,
+  HOME_HERO_MICROCOPY_TRIAL,
+} from "../homeCopy";
 import { formatInt } from "../homeFormat";
 
 export type TrialSummary = {
@@ -19,34 +24,25 @@ export type PricingPlan = {
   price: number;
   gigas: number;
   hasPaypal: boolean;
+  pricingPaymentMethods: PaymentMethodId[];
+  trialPricingPaymentMethods: PaymentMethodId[];
+  altPaymentLabel: string;
 };
 
-function formatCurrency(amount: number, currency: "mxn" | "usd", locale: string): string {
+function formatCurrency(
+  amount: number,
+  currency: "mxn" | "usd",
+  locale: string,
+): string {
   const code = currency === "mxn" ? "MXN" : "USD";
   try {
-    return new Intl.NumberFormat(locale, { style: "currency", currency: code }).format(amount);
+    return new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: code,
+    }).format(amount);
   } catch {
     return `${amount} ${code}`;
   }
-}
-
-function getPaymentMethodsForPlan(plan: PricingPlan | null, hasTrial: boolean): PaymentMethodId[] {
-  const methods = new Set<PaymentMethodId>(["visa", "mastercard", "amex"]);
-  if (!plan) return Array.from(methods);
-  // Trial is Stripe/card-only. Avoid showing PayPal/SPEI next to the trial message.
-  if (!hasTrial) {
-    if (plan.hasPaypal) methods.add("paypal");
-    if (plan.currency === "mxn") methods.add("spei");
-  }
-  return Array.from(methods);
-}
-
-function getAltPaymentLabelForPlan(plan: PricingPlan | null): string {
-  if (!plan) return "";
-  const items: string[] = [];
-  if (plan.hasPaypal) items.push("PayPal");
-  if (plan.currency === "mxn") items.push("SPEI");
-  return items.join(" / ");
 }
 
 export default function Pricing(props: {
@@ -56,6 +52,7 @@ export default function Pricing(props: {
   numberLocale: string;
   catalogTBLabel: string;
   downloadQuotaGb: number;
+  limitsNote: string;
   trial: TrialSummary | null;
   ctaLabel: string;
   onPrimaryCtaClick: () => void;
@@ -67,6 +64,7 @@ export default function Pricing(props: {
     numberLocale,
     catalogTBLabel,
     downloadQuotaGb,
+    limitsNote,
     trial,
     ctaLabel,
     onPrimaryCtaClick,
@@ -93,10 +91,40 @@ export default function Pricing(props: {
   const mxnPanelId = `${tabPrefix}-panel-mxn`;
   const usdPanelId = `${tabPrefix}-panel-usd`;
 
-  const mxnPaymentMethods = useMemo(() => getPaymentMethodsForPlan(mxnPlan, hasTrial), [mxnPlan, hasTrial]);
-  const usdPaymentMethods = useMemo(() => getPaymentMethodsForPlan(usdPlan, hasTrial), [usdPlan, hasTrial]);
-  const mxnAltPaymentLabel = useMemo(() => getAltPaymentLabelForPlan(mxnPlan), [mxnPlan]);
-  const usdAltPaymentLabel = useMemo(() => getAltPaymentLabelForPlan(usdPlan), [usdPlan]);
+  const mxnPaymentMethods = useMemo(() => {
+    if (!mxnPlan) return ["visa", "mastercard", "amex"] as PaymentMethodId[];
+    const trialMethods = Array.isArray(mxnPlan.trialPricingPaymentMethods)
+      ? mxnPlan.trialPricingPaymentMethods
+      : [];
+    const regularMethods = Array.isArray(mxnPlan.pricingPaymentMethods)
+      ? mxnPlan.pricingPaymentMethods
+      : [];
+    if (hasTrial && trialMethods.length > 0) return trialMethods;
+    return regularMethods.length > 0
+      ? regularMethods
+      : (["visa", "mastercard", "amex"] as PaymentMethodId[]);
+  }, [mxnPlan, hasTrial]);
+  const usdPaymentMethods = useMemo(() => {
+    if (!usdPlan) return ["visa", "mastercard", "amex"] as PaymentMethodId[];
+    const trialMethods = Array.isArray(usdPlan.trialPricingPaymentMethods)
+      ? usdPlan.trialPricingPaymentMethods
+      : [];
+    const regularMethods = Array.isArray(usdPlan.pricingPaymentMethods)
+      ? usdPlan.pricingPaymentMethods
+      : [];
+    if (hasTrial && trialMethods.length > 0) return trialMethods;
+    return regularMethods.length > 0
+      ? regularMethods
+      : (["visa", "mastercard", "amex"] as PaymentMethodId[]);
+  }, [usdPlan, hasTrial]);
+  const mxnAltPaymentLabel = useMemo(
+    () => (mxnPlan?.altPaymentLabel ?? "").trim(),
+    [mxnPlan],
+  );
+  const usdAltPaymentLabel = useMemo(
+    () => (usdPlan?.altPaymentLabel ?? "").trim(),
+    [usdPlan],
+  );
   const showAltPaymentsNoteMxn = Boolean(hasTrial && mxnAltPaymentLabel);
   const showAltPaymentsNoteUsd = Boolean(hasTrial && usdAltPaymentLabel);
 
@@ -126,7 +154,12 @@ export default function Pricing(props: {
           >
             <button
               type="button"
-              className={["bb-segmented__btn", currency === "mxn" ? "is-active" : ""].filter(Boolean).join(" ")}
+              className={[
+                "bb-segmented__btn",
+                currency === "mxn" ? "is-active" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
               onClick={() => setCurrency("mxn")}
               role="tab"
               id={mxnTabId}
@@ -137,7 +170,12 @@ export default function Pricing(props: {
             </button>
             <button
               type="button"
-              className={["bb-segmented__btn", currency === "usd" ? "is-active" : ""].filter(Boolean).join(" ")}
+              className={[
+                "bb-segmented__btn",
+                currency === "usd" ? "is-active" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
               onClick={() => setCurrency("usd")}
               role="tab"
               id={usdTabId}
@@ -171,7 +209,10 @@ export default function Pricing(props: {
                 </div>
               </div>
 
-              <ul className="pricing__includes pricing__includes--skeleton" aria-hidden>
+              <ul
+                className="pricing__includes pricing__includes--skeleton"
+                aria-hidden
+              >
                 {Array.from({ length: 3 }).map((_, i) => (
                   <li key={i}>
                     <span className="pricing__sk pricing__sk--icon" />
@@ -187,26 +228,45 @@ export default function Pricing(props: {
           )}
 
           {isError && (
-            <div className="pricing__card bb-hero-card pricing__card--error" role="status" aria-live="polite">
-              <p className="pricing__errorTitle">No pudimos cargar el precio.</p>
-              <p className="pricing__errorText">Recarga la página o intenta en unos minutos.</p>
+            <div
+              className="pricing__card bb-hero-card pricing__card--error"
+              role="status"
+              aria-live="polite"
+            >
+              <p className="pricing__errorTitle">
+                No pudimos cargar el precio.
+              </p>
+              <p className="pricing__errorText">
+                Recarga la página o intenta en unos minutos.
+              </p>
             </div>
           )}
 
           {hasMxn && mxnPlan && (
-            <div id={mxnPanelId} role="tabpanel" aria-labelledby={mxnTabId} hidden={currency !== "mxn"}>
+            <div
+              id={mxnPanelId}
+              role="tabpanel"
+              aria-labelledby={mxnTabId}
+              hidden={currency !== "mxn"}
+            >
               <div className="pricing__card bb-hero-card">
                 <div className="pricing__card-head">
                   <div className="pricing__plan">
                     <p className="pricing__pill">Pago mensual</p>
-                    <h3 className="pricing__title">{mxnPlan.name ?? "Membresía Bear Beat"}</h3>
+                    <h3 className="pricing__title">
+                      {mxnPlan.name ?? "Membresía Bear Beat"}
+                    </h3>
                   </div>
                   <div className="pricing__price pricing__price-panel">
                     <span className="pricing__amount">
                       {formatCurrency(mxnPlan.price, "mxn", numberLocale)}
                     </span>
                     <span className="pricing__per">/ mes</span>
-                    {hasTrial && <span className="pricing__after">Después de la prueba</span>}
+                    {hasTrial && (
+                      <span className="pricing__after">
+                        Después de la prueba
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -215,24 +275,33 @@ export default function Pricing(props: {
                     <strong>
                       Prueba: {trial.days} días + {formatInt(trial.gb)} GB
                     </strong>
-                    <div className="pricing__trial-sub">Solo tarjeta (Stripe), 1ª vez. {HOME_HERO_MICROCOPY_TRIAL}</div>
+                    <div className="pricing__trial-sub">
+                      Solo tarjeta (Stripe), 1ª vez. {HOME_HERO_MICROCOPY_TRIAL}
+                    </div>
                   </div>
                 )}
 
                 <ul className="pricing__includes" aria-label="Incluye">
                   <li>
                     <CheckCircle2 size={16} aria-hidden />
-                    <span className="pricing__include-text">Descargas: {formatInt(downloadQuotaGb)} GB/mes</span>
+                    <span className="pricing__include-text">
+                      Descargas: {formatInt(downloadQuotaGb)} GB/mes
+                    </span>
                   </li>
                   <li>
                     <CheckCircle2 size={16} aria-hidden />
-                    <span className="pricing__include-text">Catálogo total: {catalogTBLabel} (eliges qué bajar)</span>
+                    <span className="pricing__include-text">
+                      Catálogo total: {catalogTBLabel} (eliges qué bajar)
+                    </span>
                   </li>
                   <li>
                     <CheckCircle2 size={16} aria-hidden />
-                    <span className="pricing__include-text">Carpetas listas + guía de activación incluida</span>
+                    <span className="pricing__include-text">
+                      Carpetas listas + guía de activación incluida
+                    </span>
                   </li>
                 </ul>
+                <p className="pricing__micro">{limitsNote}</p>
 
                 <div className="pricing__cta">
                   <Link
@@ -256,7 +325,9 @@ export default function Pricing(props: {
                     />
                     {showAltPaymentsNoteMxn && (
                       <div className="pricing__payments-note" role="note">
-                        La prueba aplica solo con tarjeta. Otros métodos ({mxnAltPaymentLabel}) se muestran como opciones sin prueba al activar.
+                        La prueba aplica solo con tarjeta. Otros métodos (
+                        {mxnAltPaymentLabel}) se muestran como opciones sin
+                        prueba al activar.
                       </div>
                     )}
                   </div>
@@ -266,19 +337,30 @@ export default function Pricing(props: {
           )}
 
           {hasUsd && usdPlan && (
-            <div id={usdPanelId} role="tabpanel" aria-labelledby={usdTabId} hidden={currency !== "usd"}>
+            <div
+              id={usdPanelId}
+              role="tabpanel"
+              aria-labelledby={usdTabId}
+              hidden={currency !== "usd"}
+            >
               <div className="pricing__card bb-hero-card">
                 <div className="pricing__card-head">
                   <div className="pricing__plan">
                     <p className="pricing__pill">Pago mensual</p>
-                    <h3 className="pricing__title">{usdPlan.name ?? "Membresía Bear Beat"}</h3>
+                    <h3 className="pricing__title">
+                      {usdPlan.name ?? "Membresía Bear Beat"}
+                    </h3>
                   </div>
                   <div className="pricing__price pricing__price-panel">
                     <span className="pricing__amount">
                       {formatCurrency(usdPlan.price, "usd", numberLocale)}
                     </span>
                     <span className="pricing__per">/ mes</span>
-                    {hasTrial && <span className="pricing__after">Después de la prueba</span>}
+                    {hasTrial && (
+                      <span className="pricing__after">
+                        Después de la prueba
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -287,24 +369,34 @@ export default function Pricing(props: {
                     <strong>
                       Prueba: {trial.days} días + {formatInt(trial.gb)} GB
                     </strong>
-                    <div className="pricing__trial-sub">Solo tarjeta (Stripe), 1ª vez. Cancelas antes de que termine y no se cobra.</div>
+                    <div className="pricing__trial-sub">
+                      Solo tarjeta (Stripe), 1ª vez. Cancelas antes de que
+                      termine y no se cobra.
+                    </div>
                   </div>
                 )}
 
                 <ul className="pricing__includes" aria-label="Incluye">
                   <li>
                     <CheckCircle2 size={16} aria-hidden />
-                    <span className="pricing__include-text">Descargas: {formatInt(downloadQuotaGb)} GB/mes</span>
+                    <span className="pricing__include-text">
+                      Descargas: {formatInt(downloadQuotaGb)} GB/mes
+                    </span>
                   </li>
                   <li>
                     <CheckCircle2 size={16} aria-hidden />
-                    <span className="pricing__include-text">Catálogo total: {catalogTBLabel} (eliges qué bajar)</span>
+                    <span className="pricing__include-text">
+                      Catálogo total: {catalogTBLabel} (eliges qué bajar)
+                    </span>
                   </li>
                   <li>
                     <CheckCircle2 size={16} aria-hidden />
-                    <span className="pricing__include-text">Carpetas listas + guía de activación incluida</span>
+                    <span className="pricing__include-text">
+                      Carpetas listas + guía de activación incluida
+                    </span>
                   </li>
                 </ul>
+                <p className="pricing__micro">{limitsNote}</p>
 
                 <div className="pricing__cta">
                   <Link
@@ -328,7 +420,9 @@ export default function Pricing(props: {
                     />
                     {showAltPaymentsNoteUsd && (
                       <div className="pricing__payments-note" role="note">
-                        La prueba aplica solo con tarjeta. Otros métodos ({usdAltPaymentLabel}) se muestran como opciones sin prueba al activar.
+                        La prueba aplica solo con tarjeta. Otros métodos (
+                        {usdAltPaymentLabel}) se muestran como opciones sin
+                        prueba al activar.
                       </div>
                     )}
                   </div>
