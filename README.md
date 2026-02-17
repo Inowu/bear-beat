@@ -4,6 +4,16 @@
 
 ---
 
+## Mapa rápido (onboarding y auditoría)
+
+- **Contribución y flujo de trabajo:** [CONTRIBUTING.md](CONTRIBUTING.md)
+- **Seguridad y reporte responsable:** [SECURITY.md](SECURITY.md)
+- **Workflow de ramas y releases (estado vigente):** [docs/WORKFLOW_BRANCHES_RELEASES.md](docs/WORKFLOW_BRANCHES_RELEASES.md)
+- **Auditoría de ramas (snapshot actual):** [docs/branch-audit.md](docs/branch-audit.md)
+- **Índice de documentación funcional/técnica:** [docs/README.md](docs/README.md)
+
+---
+
 ## Qué necesitas para correr el proyecto en local y hacer cambios
 
 ### Requisitos

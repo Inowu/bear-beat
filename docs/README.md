@@ -1,8 +1,31 @@
 # Documentación Bear Beat
 
-- **[CAMBIOS-UX-MOBILE-APP-NATIVA-Y-DEPLOY.md](./CAMBIOS-UX-MOBILE-APP-NATIVA-Y-DEPLOY.md)** – **Recomendado para nuevos cambios.** UX/UI en todas las secciones, experiencia tipo app móvil nativa (safe areas, bottom sheet, feedback táctil), mensajes de error unificados y **deploy a producción** (Netlify con `--filter=thebearbeat`). Para que cualquier desarrollador entienda y mantenga estos cambios.
-- **[DOCUMENTACION_CAMBIOS.md](./DOCUMENTACION_CAMBIOS.md)** – Resumen de todo lo implementado: landing, diseño, Facebook Pixel y CAPI, responsive, móvil, temas, Admin Catálogo (REST), Netlify, deploy backend (GitHub Actions + deploy.sh), rutas y archivos clave.
-- **[DISENO-Y-ESTADO-ACTUAL.md](./DISENO-Y-ESTADO-ACTUAL.md)** – Sistema de diseño (tipografía, colores, variables `--app-*`), estado actual de la web: rutas, páginas, funciones por pantalla, modales y alertas. Referencia para mantener consistencia y para que cualquier desarrollador o IA entienda el proyecto.
-- **[FACEBOOK_META.md](./FACEBOOK_META.md)** – Configuración paso a paso del Pixel de Meta y de la Conversions API (variables de entorno, token, ID del pixel).
-- **[LOGICA-ENVIO-EMAILS.md](./LOGICA-ENVIO-EMAILS.md)** – Listado de todos los emails que envía la app: en qué acción se envían, con qué plantilla (en código) y qué parámetros. Incluye registro, recuperar contraseña y confirmación de compra (Stripe, Conekta, PayPal, Admin).
-- **[OPERACION_DOWNLOAD_HISTORY_ESCALABILIDAD.md](./OPERACION_DOWNLOAD_HISTORY_ESCALABILIDAD.md)** – Runbook de escalabilidad para `download_history`: archivado por lotes, purge seguro, particionado mensual y operación/rollback.
+## 1) Punto de entrada recomendado
+
+- **[WORKFLOW_BRANCHES_RELEASES.md](./WORKFLOW_BRANCHES_RELEASES.md)**: estrategia actual de ramas, releases, deploy y limpieza operativa.
+- **[branch-audit.md](./branch-audit.md)**: snapshot de ramas local/remoto actualizado (hoy).
+
+## 2) Estado funcional y técnico del producto
+
+- **[DISENO-Y-ESTADO-ACTUAL.md](./DISENO-Y-ESTADO-ACTUAL.md)**: sistema de diseño, rutas, páginas, modales y archivos clave.
+- **[DOCUMENTACION_CAMBIOS.md](./DOCUMENTACION_CAMBIOS.md)**: resumen amplio de cambios implementados (frontend/backend/deploy).
+- **[CAMBIOS-UX-MOBILE-APP-NATIVA-Y-DEPLOY.md](./CAMBIOS-UX-MOBILE-APP-NATIVA-Y-DEPLOY.md)**: guía recomendada para continuidad de UX/UI y deploy.
+
+## 3) Operación y runbooks
+
+- **[STAGING_LOCAL.md](./STAGING_LOCAL.md)**: entorno local reproducible (frontend + backend + MySQL + Redis) sin tocar producción.
+- **[OPERACION_DOWNLOAD_HISTORY_ESCALABILIDAD.md](./OPERACION_DOWNLOAD_HISTORY_ESCALABILIDAD.md)**: runbook de escalabilidad para `download_history`.
+- **[LOGICA-ENVIO-EMAILS.md](./LOGICA-ENVIO-EMAILS.md)**: mapa de automatizaciones de correo por flujo.
+- **[email_automations_spec.md](./email_automations_spec.md)**: especificación de modos/envíos de email por entorno.
+
+## 4) Integraciones y tracking
+
+- **[FACEBOOK_META.md](./FACEBOOK_META.md)**: configuración de Meta Pixel + Conversions API.
+- **[MANYCHAT_HANDOFF.md](./MANYCHAT_HANDOFF.md)** y **[MANYCHAT_ETIQUETAS.md](./MANYCHAT_ETIQUETAS.md)**: handoff y operación de tags/eventos.
+- **[MANUAL_TRACKING_MANYCHAT.md](./MANUAL_TRACKING_MANYCHAT.md)**: guía manual de verificación de tracking ManyChat.
+
+## 5) QA, auditoría y evidencia
+
+- Carpeta **`docs/audit/`**: resultados de auditorías UX/UI, accesibilidad, Lighthouse e inventarios.
+- **[qa-fullsite.md](./qa-fullsite.md)** y **[home-qa.md](./home-qa.md)**: checklist de pruebas manuales.
+- **[REPORTE-UX-UI-PRODUCCION-THEBEARBEAT.md](./REPORTE-UX-UI-PRODUCCION-THEBEARBEAT.md)** y **[REPORTE-UX-UI-RUTAS.md](./REPORTE-UX-UI-RUTAS.md)**: reportes de hallazgos y cobertura.

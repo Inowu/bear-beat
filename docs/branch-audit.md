@@ -1,72 +1,127 @@
-# Branch Audit
+# Branch Audit (actualizado)
 
-- Generated: 2026-02-10 10:18:56
-- Base branch (origin/HEAD): `origin/main`
+- Generado: **2026-02-17 14:47 EST**
+- Base branch: `origin/main`
 
-## Summary
+## Resumen ejecutivo
 
-This repo currently has 10 local branches and 11 remote branches under `origin/*` (excluding `origin/HEAD`).
+- Ramas locales: **18**
+- Ramas remotas (`origin/*`, sin `origin/HEAD` y sin alias `origin`): **27**
+- Estado de rama productiva: `main` <-> `origin/main` (**sin drift**).
+- Estado de `staging`: **0 ahead / 403 behind** contra `origin/main`.
 
-## Recommendations
+Conclusión operativa:
 
-### SAFE TO DELETE NOW
+- `main` es la rama de verdad para producción.
+- `staging` hoy está desactualizada para usarse como promoción.
+- Hay ramas legacy remotas de 2024 que deben revisarse para cierre/archivo.
 
-Local branches:
-- `codex/home-polish-2026-02-10`
+## Inventario local (completo)
 
-Remote branches (origin):
-- `codex/home-polish-2026-02-10`
+| Rama local | Upstream | Estado |
+| --- | --- | --- |
+| `main` | `origin/main` | `ahead:0 behind:0` |
+| `staging` | `origin/staging` | `ahead:0 behind:0` |
+| `ux-ui-cro-feb-2026` | `origin/ux-ui-cro-feb-2026` | `ahead:0 behind:0` |
+| `prod-audit-uxui-cro-2026-02-10` | `origin/prod-audit-uxui-cro-2026-02-10` | `ahead:0 behind:0` |
+| `codex/auth-login-polish-2026-02-10` | `origin/codex/auth-login-polish-2026-02-10` | `ahead:0 behind:0` |
+| `codex/home-demo-playback-2026-02-10` | `origin/codex/home-demo-playback-2026-02-10` | `ahead:0 behind:0` |
+| `codex/home-planes-demo-fixes-2026-02-10` | `origin/codex/home-planes-demo-fixes-2026-02-10` | `ahead:0 behind:0` |
+| `codex/home-plans-primitives-selectors` | `origin/codex/home-plans-primitives-selectors` | `ahead:0 behind:0` |
+| `codex/home-polish-2026-02-10` | `origin/codex/home-polish-2026-02-10` | `ahead:0 behind:0` |
+| `codex/legal-polish-2026-02-10` | `origin/codex/legal-polish-2026-02-10` | `ahead:0 behind:0` |
+| `codex/sentry-pipeline-hardening` | `origin/codex/sentry-pipeline-hardening` | `ahead:0 behind:0` |
+| `codex/ux-ui-cro-release-2026-02-10` | `origin/codex/ux-ui-cro-release-2026-02-10` | `ahead:0 behind:0` |
+| `codex/audit/2026-02-13` | `origin/codex/audit/2026-02-13 (gone)` | upstream eliminado |
+| `codex/a006-conekta-axios-override` | - | sin upstream |
+| `codex/audit/2026-02-12` | - | sin upstream |
+| `codex/checkout-skeleton` | - | sin upstream |
+| `codex/resolve-pr-57` | - | sin upstream |
+| `codex/winback-email` | - | sin upstream |
 
-### KEEP
+## Inventario remoto (completo, con señal de drift)
+
+`ahead_vs_main` y `behind_vs_main` se calculan contra `origin/main`.
+
+| Rama remota | Último commit | Drift vs `origin/main` |
+| --- | --- | --- |
+| `origin/main` | 2026-02-17 | `ahead:0 behind:0` |
+| `origin/staging` | 2026-02-08 | `ahead:0 behind:403` |
+| `origin/codex/backend-driven-pricing-ui-state` | 2026-02-17 | `ahead:1 behind:7` |
+| `origin/codex/backend-upgrade-options` | 2026-02-17 | `ahead:1 behind:6` |
+| `origin/codex/downloadhistory-scale-plan` | 2026-02-17 | `ahead:0 behind:4` |
+| `origin/codex/fix-checkoutlogs-403` | 2026-02-17 | `ahead:1 behind:11` |
+| `origin/codex/p0-hardening-release` | 2026-02-17 | `ahead:1 behind:3` |
+| `origin/codex/remove-main-push-rule` | 2026-02-17 | `ahead:1 behind:2` |
+| `origin/codex/unify-shell-all-routes` | 2026-02-17 | `ahead:1 behind:8` |
+| `origin/codex/visual-unification-all-routes` | 2026-02-17 | `ahead:1 behind:9` |
+| `origin/codex/visual-unification-point1` | 2026-02-17 | `ahead:1 behind:10` |
+| `origin/codex/checkout-backend-default-method` | 2026-02-15 | `ahead:1 behind:12` |
+| `origin/codex/home-plans-primitives-selectors` | 2026-02-15 | `ahead:1 behind:14` |
+| `origin/codex/home-visual-hero-card` | 2026-02-15 | `ahead:1 behind:15` |
+| `origin/codex/hotfix-has-live-catalog` | 2026-02-15 | `ahead:1 behind:16` |
+| `origin/codex/home-pricing-hero-card` | 2026-02-15 | `ahead:1 behind:17` |
+| `origin/codex/sentry-pipeline-hardening` | 2026-02-15 | `ahead:1 behind:13` |
+| `origin/codex/auth-login-polish-2026-02-10` | 2026-02-10 | `ahead:0 behind:375` |
+| `origin/codex/home-demo-playback-2026-02-10` | 2026-02-10 | `ahead:15 behind:389` |
+| `origin/codex/home-planes-demo-fixes-2026-02-10` | 2026-02-10 | `ahead:0 behind:377` |
+| `origin/codex/home-polish-2026-02-10` | 2026-02-10 | `ahead:0 behind:381` |
+| `origin/codex/legal-polish-2026-02-10` | 2026-02-10 | `ahead:0 behind:379` |
+| `origin/codex/ux-ui-cro-release-2026-02-10` | 2026-02-10 | `ahead:0 behind:357` |
+| `origin/prod-audit-uxui-cro-2026-02-10` | 2026-02-09 | `ahead:7 behind:390` |
+| `origin/ux-ui-cro-feb-2026` | 2026-02-09 | `ahead:5 behind:390` |
+| `origin/adding-phone-number-to-manychat` | 2024-05-06 | `ahead:1 behind:772` |
+| `origin/folderDownload` | 2024-02-15 | `ahead:1 behind:1086` |
+
+## Recomendaciones
+
+### Mantener (core)
 
 - `main`
 - `origin/main`
+
+### Mantener pero marcar como legacy temporal
+
 - `staging`
 - `origin/staging`
 
-### REVIEW
+Acción recomendada:
 
-- `codex/home-demo-playback-2026-02-10`
-- `prod-audit-uxui-cro-2026-02-10`
-- `origin/adding-phone-number-to-manychat`
-- `origin/codex/home-demo-playback-2026-02-10`
-- `origin/folderDownload`
-- `origin/prod-audit-uxui-cro-2026-02-10`
+1. No usar `staging` para promoción hasta rebase/sync formal contra `main`.
+2. Si no se va a reactivar, documentar su deprecación explícita.
 
-### DO NOT DELETE
+### Revisar para limpieza
 
-- `codex/auth-login-polish-2026-02-10`
-- `codex/branch-audit-2026-02-10`
-- `codex/home-planes-demo-fixes-2026-02-10`
-- `codex/legal-polish-2026-02-10`
-- `ux-ui-cro-feb-2026`
-- `origin/codex/auth-login-polish-2026-02-10`
-- `origin/codex/home-planes-demo-fixes-2026-02-10`
-- `origin/codex/legal-polish-2026-02-10`
-- `origin/ux-ui-cro-feb-2026`
+- Ramas locales sin upstream:
+  - `codex/a006-conekta-axios-override`
+  - `codex/audit/2026-02-12`
+  - `codex/checkout-skeleton`
+  - `codex/resolve-pr-57`
+  - `codex/winback-email`
+- Rama local con upstream eliminado:
+  - `codex/audit/2026-02-13`
+- Remotas legacy 2024:
+  - `origin/adding-phone-number-to-manychat`
+  - `origin/folderDownload`
 
-## Inventory (Per Ref)
+## Comandos para refrescar este documento
 
-| branch_name | ref_type | upstream | last_commit_date | last_commit_author | last_commit_subject | ahead/behind vs origin/main | merged_into_base? | has_pr? | pr_state | url | recommendation | reason |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| main | local | origin/main | 2026-02-10 09:02:20 -0500 | djkubo | Merge pull request #60 from Inowu/codex/home-polish-2026-02-10 | ahead:0 behind:0 | yes | no |  |  | KEEP | Rama long-lived / base. |
-| origin/main | remote |  | 2026-02-10 09:02:20 -0500 | djkubo | Merge pull request #60 from Inowu/codex/home-polish-2026-02-10 | ahead:0 behind:0 | yes | no |  |  | KEEP | Rama long-lived / base. |
-| codex/auth-login-polish-2026-02-10 | local | origin/codex/auth-login-polish-2026-02-10 | 2026-02-10 09:54:52 -0500 | Gustavo Garcia | fix(auth): align signup UI with login form | ahead:3 behind:0 | no | yes | OPEN | https://github.com/Inowu/bear-beat/pull/62 | DO NOT DELETE | PR OPEN asociado. |
-| codex/branch-audit-2026-02-10 | local | origin/main | 2026-02-10 09:02:20 -0500 | djkubo | Merge pull request #60 from Inowu/codex/home-polish-2026-02-10 | ahead:0 behind:0 | yes | no |  |  | DO NOT DELETE | Rama en uso por un worktree activo. |
-| codex/home-planes-demo-fixes-2026-02-10 | local | origin/codex/home-planes-demo-fixes-2026-02-10 | 2026-02-10 10:12:07 -0500 | Gustavo Garcia | fix(planes): simplify layout + clarify trial copy | ahead:3 behind:0 | no | yes | OPEN | https://github.com/Inowu/bear-beat/pull/63 | DO NOT DELETE | PR OPEN asociado. |
-| codex/legal-polish-2026-02-10 | local | origin/codex/legal-polish-2026-02-10 | 2026-02-10 09:21:26 -0500 | Gustavo Garcia | feat(legal): accessible TOC + FAQ accordion + schema | ahead:1 behind:0 | no | yes | OPEN | https://github.com/Inowu/bear-beat/pull/61 | DO NOT DELETE | PR OPEN asociado. |
-| ux-ui-cro-feb-2026 | local | origin/ux-ui-cro-feb-2026 | 2026-02-09 21:27:50 -0500 | Gustavo Garcia | chore: branch audit + cleanup plan (dry-run) | ahead:5 behind:10 | no | yes | OPEN | https://github.com/Inowu/bear-beat/pull/57 | DO NOT DELETE | PR OPEN asociado. |
-| origin/codex/auth-login-polish-2026-02-10 | remote |  | 2026-02-10 09:54:52 -0500 | Gustavo Garcia | fix(auth): align signup UI with login form | ahead:3 behind:0 | no | yes | OPEN | https://github.com/Inowu/bear-beat/pull/62 | DO NOT DELETE | PR OPEN asociado. |
-| origin/codex/home-planes-demo-fixes-2026-02-10 | remote |  | 2026-02-10 10:12:07 -0500 | Gustavo Garcia | fix(planes): simplify layout + clarify trial copy | ahead:3 behind:0 | no | yes | OPEN | https://github.com/Inowu/bear-beat/pull/63 | DO NOT DELETE | PR OPEN asociado. |
-| origin/codex/legal-polish-2026-02-10 | remote |  | 2026-02-10 09:21:26 -0500 | Gustavo Garcia | feat(legal): accessible TOC + FAQ accordion + schema | ahead:1 behind:0 | no | yes | OPEN | https://github.com/Inowu/bear-beat/pull/61 | DO NOT DELETE | PR OPEN asociado. |
-| origin/ux-ui-cro-feb-2026 | remote |  | 2026-02-09 21:27:50 -0500 | Gustavo Garcia | chore: branch audit + cleanup plan (dry-run) | ahead:5 behind:10 | no | yes | OPEN | https://github.com/Inowu/bear-beat/pull/57 | DO NOT DELETE | PR OPEN asociado. |
-| staging | local | origin/staging | 2026-02-08 18:48:29 -0500 | Gustavo Garcia | fix(home): cleaner conversion copy, mobile type, cover hero | ahead:0 behind:23 | yes | no |  |  | KEEP | Rama long-lived / base. |
-| origin/staging | remote |  | 2026-02-08 18:48:29 -0500 | Gustavo Garcia | fix(home): cleaner conversion copy, mobile type, cover hero | ahead:0 behind:23 | yes | no |  |  | KEEP | Rama long-lived / base. |
-| codex/home-demo-playback-2026-02-10 | local | origin/codex/home-demo-playback-2026-02-10 | 2026-02-10 03:06:27 -0500 | Gustavo Garcia | fix(auth): respetar redirect state en NotAuthRoute | ahead:15 behind:9 | no | yes | MERGED | https://github.com/Inowu/bear-beat/pull/59 | REVIEW | No está integrada a la base; requiere revisión. |
-| prod-audit-uxui-cro-2026-02-10 | local | origin/prod-audit-uxui-cro-2026-02-10 | 2026-02-09 22:43:56 -0500 | Gustavo Garcia | chore(audit): refresh local artifacts (post-fix rerun) | ahead:7 behind:10 | no | yes | MERGED | https://github.com/Inowu/bear-beat/pull/58 | REVIEW | No está integrada a la base; requiere revisión. |
-| origin/adding-phone-number-to-manychat | remote |  | 2024-05-06 16:40:08 -0700 | Luis Salcido | When creating a user in manychat we add phone number as custom field | ahead:1 behind:392 | no | no |  |  | REVIEW | No está integrada a la base; requiere revisión. |
-| origin/codex/home-demo-playback-2026-02-10 | remote |  | 2026-02-10 03:06:27 -0500 | Gustavo Garcia | fix(auth): respetar redirect state en NotAuthRoute | ahead:15 behind:9 | no | yes | MERGED | https://github.com/Inowu/bear-beat/pull/59 | REVIEW | No está integrada a la base; requiere revisión. |
-| origin/folderDownload | remote |  | 2024-02-15 13:17:51 -0700 | loretoInowu | console logged state objects to test them from a button | ahead:1 behind:706 | no | no |  |  | REVIEW | No está integrada a la base; requiere revisión. |
-| origin/prod-audit-uxui-cro-2026-02-10 | remote |  | 2026-02-09 22:43:56 -0500 | Gustavo Garcia | chore(audit): refresh local artifacts (post-fix rerun) | ahead:7 behind:10 | no | yes | MERGED | https://github.com/Inowu/bear-beat/pull/58 | REVIEW | No está integrada a la base; requiere revisión. |
-| codex/home-polish-2026-02-10 | local | origin/codex/home-polish-2026-02-10 | 2026-02-10 08:58:37 -0500 | Gustavo Garcia | fix(a11y): remove nested main + proper lists; signup default to /planes | ahead:0 behind:1 | yes | yes | MERGED | https://github.com/Inowu/bear-beat/pull/60 | SAFE TO DELETE | Ya está integrada en la base (merge-base). |
-| origin/codex/home-polish-2026-02-10 | remote |  | 2026-02-10 08:58:37 -0500 | Gustavo Garcia | fix(a11y): remove nested main + proper lists; signup default to /planes | ahead:0 behind:1 | yes | yes | MERGED | https://github.com/Inowu/bear-beat/pull/60 | SAFE TO DELETE | Ya está integrada en la base (merge-base). |
+```bash
+# timestamp
+date '+%Y-%m-%d %H:%M:%S %Z'
+
+# conteo de ramas
+echo "local=$(git for-each-ref refs/heads --format='%(refname:short)' | wc -l | tr -d ' ')"
+echo "remote=$(git for-each-ref refs/remotes/origin --format='%(refname:short)' | grep -v '^origin/HEAD$' | grep -v '^origin$' | wc -l | tr -d ' ')"
+
+# drift de staging
+git rev-list --left-right --count origin/staging...origin/main
+
+# ramas locales mergeadas a main
+git branch --merged main
+```
+
+## Nota de auditoría
+
+Este archivo es un snapshot operativo; no reemplaza la verificación de PRs abiertos/cerrados en GitHub.  
+Para estado de PRs, validar en GitHub antes de borrar ramas remotas.

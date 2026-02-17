@@ -1,0 +1,16 @@
+# Default owner for all files
+* @gustavogarcia
+
+# Backend critical paths
+/backend/ @gustavogarcia
+/.github/workflows/ @gustavogarcia
+/deploy.sh @gustavogarcia
+
+# Frontend
+/frontend/ @gustavogarcia
+
+# Documentation and governance
+/docs/ @gustavogarcia
+/AGENTS.md @gustavogarcia
+/CONTRIBUTING.md @gustavogarcia
+/SECURITY.md @gustavogarcia
