@@ -308,7 +308,9 @@ export const permissions = shield<Context>(
     // Missing shielded procedures: be explicit to avoid silent `trpc-shield` fallback behavior.
     logout: isLoggedIn,
     claimManyChatHandoff: isLoggedIn,
-    registerCheckoutLog: isLoggedIn,
+    // Checkout lead logging is best-effort and can be called from public surfaces.
+    // The procedure itself no-ops when there is no authenticated user.
+    registerCheckoutLog: allow,
     sendFacebookEvent: isLoggedIn,
     addAdditionalGBToQuotaLimit: isAdmin,
     removeUserByAdminAction: isAdmin,

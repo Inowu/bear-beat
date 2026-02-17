@@ -244,7 +244,13 @@ export const checkoutLogsRouter = router({
     }),
   registerCheckoutLog: shieldedProcedure.mutation(
     async ({ ctx: { prisma, session } }) => {
-      const user = session!.user!;
+      const user = session?.user;
+      if (!user?.id) {
+        return {
+          message: 'No se registró checkout: usuario no autenticado.',
+          recorded: false,
+        };
+      }
 
       const lastCheckout = await prisma.checkout_logs.findFirst({
         where: {
@@ -262,9 +268,7 @@ export const checkoutLogsRouter = router({
           },
         });
       } else {
-        log.info(
-          `[CHECKOUT_LOGS] Creating new checkout log for user ${user.id}`,
-        );
+        log.info('[CHECKOUT_LOGS] Creating new checkout log');
         await prisma.checkout_logs.create({
           data: {
             user_id: user.id,
@@ -275,6 +279,7 @@ export const checkoutLogsRouter = router({
 
       return {
         message: 'Log de checkout registrado exitosamente',
+        recorded: true,
       };
     },
   ),
