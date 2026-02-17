@@ -2,13 +2,6 @@
 
 .instructions2026 {
   position: relative;
-  min-height: 100vh;
-  color: var(--ph-text-body);
-  overflow-x: hidden;
-  background:
-    radial-gradient(900px 560px at 10% 0%, var(--bb-landing-spot-1), transparent 60%),
-    radial-gradient(860px 520px at 90% 10%, var(--bb-landing-spot-2), transparent 60%),
-    var(--ph-bg);
 }
 
 .instructions2026__topnav {
@@ -584,13 +577,6 @@
   .instructions2026__troubleshoot .instructions2026__btn {
     width: 100%;
   }
-}
-
-html[data-theme="light"] .instructions2026 {
-  background:
-    radial-gradient(940px 580px at 10% 0%, color-mix(in srgb, var(--ph-accent) 2.1%, transparent), transparent 62%),
-    radial-gradient(900px 560px at 90% 10%, color-mix(in srgb, var(--ph-accent) 1.6%, transparent), transparent 62%),
-    var(--ph-bg);
 }
 
 html[data-theme="light"] .instructions2026__hero {

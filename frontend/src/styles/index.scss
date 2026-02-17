@@ -1466,6 +1466,26 @@ html[data-theme="light"] .main-layout-main-container :where(.card, .panel, .modu
   margin: 0 auto;
 }
 
+.bb-marketing-container--wide {
+  width: min(1120px, calc(100% - 40px));
+  margin: 0 auto;
+}
+
+.bb-marketing-page.bb-marketing-page--checkout {
+  background:
+    radial-gradient(
+      860px 420px at 8% -8%,
+      var(--bb-landing-spot-1),
+      transparent 58%
+    ),
+    radial-gradient(
+      860px 460px at 92% -16%,
+      var(--bb-landing-spot-2),
+      transparent 62%
+    ),
+    var(--ph-bg);
+}
+
 .bb-marketing-page :is(.bb-market-surface, .bb-market-card, .bb-hero-card, .bb-bento-card) {
   transition: transform 170ms ease, border-color 170ms ease, box-shadow 220ms ease, background 220ms ease;
 }
@@ -1481,6 +1501,10 @@ html[data-theme="light"] .main-layout-main-container :where(.card, .panel, .modu
 @media (max-width: 520px) {
   .bb-marketing-container--narrow {
     width: min(900px, calc(100% - 28px));
+  }
+
+  .bb-marketing-container--wide {
+    width: min(1120px, calc(100% - 28px));
   }
 }
 
@@ -1501,6 +1525,32 @@ html[data-theme="light"] .bb-marketing-page.bb-marketing-page--flat-cards :is(.b
   border-color: color-mix(in srgb, var(--ph-border) 92%, transparent);
   background: color-mix(in srgb, #ffffff 99.2%, var(--ph-bg-card));
   box-shadow: 0 12px 26px rgba(15, 23, 42, 0.055);
+}
+
+html[data-theme="light"] .bb-marketing-page.bb-marketing-page--checkout {
+  background:
+    radial-gradient(
+      920px 460px at 8% -8%,
+      color-mix(in srgb, var(--app-accent) 4.6%, transparent),
+      transparent 62%
+    ),
+    radial-gradient(
+      920px 500px at 92% -12%,
+      color-mix(in srgb, var(--app-accent) 3.6%, transparent),
+      transparent 66%
+    ),
+    var(--app-bg);
+}
+
+.bb-auth-surface {
+  min-height: 100vh;
+  overflow-x: clip;
+  color: var(--app-text-body);
+  font-family: var(--bb-font-ui);
+}
+
+html[data-theme="light"] .bb-auth-surface {
+  color: var(--app-text-heading);
 }
 
 .bb-market-surface,

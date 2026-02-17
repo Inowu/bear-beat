@@ -8,7 +8,7 @@ function Auth() {
     trackManyChatConversion(MC_EVENTS.VIEW_AUTH);
   }, []);
   return (
-    <div className="auth-main-container auth-page">
+    <div className="auth-main-container auth-page bb-auth-surface">
       <Outlet />
     </div>
   );

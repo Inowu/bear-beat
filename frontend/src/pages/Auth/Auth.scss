@@ -5,16 +5,13 @@
   box-sizing: border-box;
   position: relative;
   isolation: isolate;
-  overflow-x: clip;
   width: 100%;
-  min-height: 100vh;
   padding: 24px 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: var(--app-font-size-body);
-  font-family: var(--bb-font-ui);
   transition: background-color 0.3s ease, color 0.3s ease;
   max-width: 100%;
   background:
@@ -25,8 +22,6 @@
       color-mix(in srgb, var(--bb-bg) 94%, #000000) 0%,
       var(--bb-bg) 100%
     );
-  color: var(--app-text-body);
-
   &::before {
     content: "";
     position: absolute;
@@ -70,7 +65,6 @@
     radial-gradient(circle at 12% 14%, color-mix(in srgb, var(--bb-ambient-cyan) 85%, transparent) 0%, transparent 48%),
     radial-gradient(circle at 88% 20%, color-mix(in srgb, var(--bb-ambient-mint) 85%, transparent) 0%, transparent 46%),
     linear-gradient(180deg, #FFFFFF 0%, var(--bb-bg) 100%);
-  color: var(--app-text-heading);
 }
 
 [data-theme="light"] .auth-main-container.auth-page::before {
