@@ -1,7 +1,6 @@
 import { useUserContext } from "../../contexts/UserContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import type { ThemeMode } from "../../contexts/ThemeContext";
-import { useNavigate } from "react-router-dom";
 import brandMarkBlack from "../../assets/brand/bearbeat-mark-black.png";
 import brandMarkCyan from "../../assets/brand/bearbeat-mark-cyan.png";
 import "./Navbar.scss";
@@ -18,10 +17,6 @@ import {
 } from "src/icons";
 import { Link } from "react-router-dom";
 import { SetStateAction, useState, useRef, useEffect } from "react";
-import {
-  clearAdminAccessBackup,
-  getAdminAccessBackup,
-} from "../../utils/authStorage";
 
 interface NavbarPropsI {
   setAsideOpen: React.Dispatch<SetStateAction<boolean>>;
@@ -36,14 +31,12 @@ const THEME_OPTIONS: { value: ThemeMode; label: string; Icon: AppIcon }[] = [
 ];
 
 function Navbar(props: NavbarPropsI) {
-  const { handleLogout, currentUser, handleLogin } = useUserContext();
+  const { handleLogout, currentUser } = useUserContext();
   const { mode, theme, setMode } = useTheme();
-  const navigate = useNavigate();
   const { setAsideOpen, menuButtonRef } = props;
   const brandMark = theme === "light" ? brandMarkBlack : brandMarkCyan;
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const adminAccessBackup = getAdminAccessBackup();
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -55,15 +48,6 @@ function Navbar(props: NavbarPropsI) {
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
-  const goBackAsAdmin = () => {
-    if (adminAccessBackup) {
-      handleLogin(adminAccessBackup.adminToken, adminAccessBackup.adminRefreshToken);
-      clearAdminAccessBackup();
-      navigate("/micuenta");
-    }
-  }
-  //   useEffect(() => {
-  // }, [currentUser])
   return (
     <nav>
       <div className="header">
@@ -121,14 +105,6 @@ function Navbar(props: NavbarPropsI) {
                 <Shield size={18} aria-hidden />
                 <span>Admin</span>
               </Link>
-            </li>
-          )}
-          {adminAccessBackup && (
-            <li>
-              <button type="button" className="nav-item" onClick={goBackAsAdmin}>
-                <Shield size={18} aria-hidden />
-                <span>Admin</span>
-              </button>
             </li>
           )}
           <li>

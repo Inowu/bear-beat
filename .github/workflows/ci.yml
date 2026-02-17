@@ -5,6 +5,7 @@ on:
     branches:
       - main
   pull_request:
+  workflow_dispatch:
 
 jobs:
   validate:
@@ -49,11 +50,65 @@ jobs:
           JWT_SECRET: test-secret
           NODE_ENV: test
 
+      - name: Frontend tests
+        run: npm test --workspace=frontend
+
       - name: Build backend
         run: npm run build --workspace=backend
 
-      - name: Build frontend
+      - name: Root build
         run: npm run build
 
-      - name: Frontend tests
-        run: npm test --workspace=frontend
+  staging-release-gates:
+    name: Staging Canary + UI Audit
+    runs-on: ubuntu-latest
+    needs: validate
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Checkout canary (staging)
+        run: npm run canary:checkout --workspace=backend
+        env:
+          CANARY_BASE_URL: ${{ secrets.CANARY_BASE_URL }}
+          CANARY_USERNAME: ${{ secrets.CANARY_USERNAME }}
+          CANARY_PASSWORD: ${{ secrets.CANARY_PASSWORD }}
+          CANARY_EXPECT_GATEWAY: ${{ secrets.CANARY_EXPECT_GATEWAY }}
+          CANARY_PAYMENT_METHOD: ${{ secrets.CANARY_PAYMENT_METHOD }}
+          CANARY_HEADLESS: "1"
+
+      - name: Full-site UI audit (staging, read-only)
+        id: audit_fullsite
+        continue-on-error: true
+        run: npm run audit:fullsite --workspace=backend
+        env:
+          AUDIT_BASE_URL: ${{ secrets.CANARY_BASE_URL }}
+          AUDIT_LOGIN_EMAIL: ${{ secrets.AUDIT_LOGIN_EMAIL }}
+          AUDIT_LOGIN_PASSWORD: ${{ secrets.AUDIT_LOGIN_PASSWORD }}
+          AUDIT_READ_ONLY: "1"
+          AUDIT_ARTIFACTS_DIR: audit-artifacts
+
+      - name: Upload UI audit artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-audit-${{ github.run_id }}
+          path: audit-artifacts/**
+          if-no-files-found: ignore
+
+      - name: UI audit warning
+        if: ${{ steps.audit_fullsite.outcome != 'success' }}
+        run: echo "::warning title=UI audit failed::audit:fullsite failed in best-effort mode. Review uploaded artifacts."

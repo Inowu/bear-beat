@@ -17,6 +17,7 @@ import { CuponsUpdateOneSchema } from '../schemas/updateOneCupons.schema';
 import { CuponsUpsertSchema } from '../schemas/upsertOneCupons.schema';
 import stripeInstance, { isStripeConfigured } from '../stripe';
 import { log } from '../server';
+import { createAdminAuditLog } from './utils/adminAuditLog';
 
 export const cuponsRouter = router({
   /**
@@ -76,7 +77,7 @@ export const cuponsRouter = router({
     }),
   createStripeCupon: shieldedProcedure
     .input(CuponsCreateOneSchema)
-    .mutation(async ({ input, ctx: { prisma } }) => {
+    .mutation(async ({ input, ctx: { prisma, session, req } }) => {
       try {
         const code = String((input.data as any)?.code ?? '').trim();
         if (!code) {
@@ -165,6 +166,22 @@ export const cuponsRouter = router({
           ...(input.select ? { select: input.select } : {}),
           data: { ...(input.data as any), code, discount: percentOff },
         });
+
+        const actorUserId = session?.user?.id;
+        if (actorUserId) {
+          await createAdminAuditLog({
+            prisma,
+            req,
+            actorUserId,
+            action: 'create_coupon',
+            metadata: {
+              code,
+              discount: percentOff,
+              active: isActive ? 1 : 0,
+            },
+          });
+        }
+
         return { code };
       } catch (e: any) {
         log.error(`[COUPONS] Error creating coupon: ${e.message}`);
@@ -181,7 +198,7 @@ export const cuponsRouter = router({
         code: z.string(),
       }),
     )
-    .mutation(async ({ input: { code }, ctx: { prisma } }) => {
+    .mutation(async ({ input: { code }, ctx: { prisma, session, req } }) => {
       try {
         try {
           await stripeInstance.coupons.retrieve(code);
@@ -196,6 +213,19 @@ export const cuponsRouter = router({
             code,
           },
         });
+
+        const actorUserId = session?.user?.id;
+        if (actorUserId) {
+          await createAdminAuditLog({
+            prisma,
+            req,
+            actorUserId,
+            action: 'delete_coupon',
+            metadata: {
+              code,
+            },
+          });
+        }
 
         log.info(`[COUPONS] Coupon ${code} was deleted`);
 
@@ -212,7 +242,7 @@ export const cuponsRouter = router({
     }),
   updateStripeCupon: shieldedProcedure
     .input(CuponsUpdateOneSchema)
-    .mutation(async ({ input, ctx: { prisma } }) => {
+    .mutation(async ({ input, ctx: { prisma, session, req } }) => {
       if (input.data.code) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
@@ -252,6 +282,20 @@ export const cuponsRouter = router({
               error: e instanceof Error ? e.message : e,
             });
           }
+        }
+
+        const actorUserId = session?.user?.id;
+        if (actorUserId) {
+          await createAdminAuditLog({
+            prisma,
+            req,
+            actorUserId,
+            action: 'update_coupon',
+            metadata: {
+              code: updated.code,
+              active: updated.active,
+            },
+          });
         }
 
         return updated;

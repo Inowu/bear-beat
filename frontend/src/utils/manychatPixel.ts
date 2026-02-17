@@ -1,7 +1,7 @@
 /**
  * ManyChat Pixel – eventos de conversión y dinero.
- * Requiere el script ManyChat Pixel en index.html (ManyChat Settings → Pixel).
- * Los eventos se disparan solo si MC_PIXEL está cargado.
+ * Los scripts de ManyChat ahora se cargan dinámicamente (ver manychatLoader.ts),
+ * así que los eventos se encolan y esperan a que MC_PIXEL esté listo.
  */
 
 declare global {

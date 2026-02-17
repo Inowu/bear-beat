@@ -1,0 +1,77 @@
+.not-found-page {
+  min-height: clamp(56vh, 68vh, 76vh);
+  display: grid;
+  place-items: center;
+  padding: clamp(1.25rem, 3vw, 2rem);
+}
+
+.not-found-card {
+  width: min(640px, 100%);
+  border-radius: 22px;
+  border: 1px solid color-mix(in srgb, var(--app-border) 84%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--app-bg-card) 99%, transparent) 0%,
+    color-mix(in srgb, var(--app-bg-soft) 96%, transparent) 100%
+  );
+  box-shadow: var(--app-shadow-card);
+  padding: clamp(1.25rem, 3vw, 2rem);
+  text-align: center;
+}
+
+.not-found-code {
+  margin: 0;
+  font-size: clamp(2.5rem, 8vw, 4.5rem);
+  line-height: 1;
+  font-weight: 800;
+  color: var(--app-accent);
+}
+
+.not-found-card h1 {
+  margin: 0.6rem 0 0;
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  color: var(--app-text-heading);
+}
+
+.not-found-copy {
+  margin: 0.85rem auto 0;
+  max-width: 42ch;
+  color: var(--app-text-muted);
+  line-height: 1.5;
+}
+
+.not-found-actions {
+  margin-top: 1.3rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  justify-content: center;
+}
+
+.not-found-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.65rem 1rem;
+  border-radius: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  border: 1px solid transparent;
+}
+
+.not-found-cta--primary {
+  background: var(--app-accent);
+  color: var(--app-btn-text);
+}
+
+.not-found-cta--primary:hover {
+  background: var(--app-accent-bright);
+  color: var(--app-btn-text);
+}
+
+.not-found-cta--secondary {
+  border-color: color-mix(in srgb, var(--app-border) 75%, transparent);
+  color: var(--app-text-heading);
+  background: color-mix(in srgb, var(--app-bg-card) 98%, transparent);
+}

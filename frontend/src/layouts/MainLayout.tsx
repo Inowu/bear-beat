@@ -1,5 +1,5 @@
 import AsideNavbar from "../components/AsideNavbar/AsideNavbar";
-import { Outlet, useLocation, useNavigationType } from "react-router-dom";
+import { Outlet, useLocation, useNavigate, useNavigationType } from "react-router-dom";
 import Navbar from "../components/Navbar/Navbar";
 import { useUserContext } from "../contexts/UserContext";
 import { useEffect, useRef, useState } from "react";
@@ -8,15 +8,23 @@ import { FileLoader } from "../components/FileLoader/FileLoader";
 import { applyRouteSeo } from "../utils/seo";
 import { GROWTH_METRICS, trackGrowthMetricBridge } from "../utils/growthMetricsBridge";
 import { queueHotjarStateChange } from "../utils/hotjarBridge";
+import {
+  clearAdminAccessBackup,
+  getAdminAccessBackup,
+} from "../utils/authStorage";
 import "./MainLayout.scss";
 
 function MainLayout() {
-  const { userToken, currentUser } = useUserContext();
+  const { userToken, currentUser, handleLogin } = useUserContext();
   const { showDownload } = useDownloadContext();
   const location = useLocation();
+  const navigate = useNavigate();
   const navigationType = useNavigationType();
 
   const [asideOpen, setAsideOpen] = useState<boolean>(false);
+  const [showImpersonationBanner, setShowImpersonationBanner] = useState<boolean>(
+    () => Boolean(getAdminAccessBackup()),
+  );
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const trackedPathRef = useRef<string>("");
 
@@ -28,6 +36,20 @@ function MainLayout() {
   useEffect(() => {
     setAsideOpen(false);
   }, [location]);
+
+  useEffect(() => {
+    setShowImpersonationBanner(Boolean(getAdminAccessBackup()));
+  }, [location.pathname, location.search, userToken]);
+
+  const handleReturnToAdmin = () => {
+    const adminAccessBackup = getAdminAccessBackup();
+    if (!adminAccessBackup) return;
+
+    handleLogin(adminAccessBackup.adminToken, adminAccessBackup.adminRefreshToken);
+    clearAdminAccessBackup();
+    setShowImpersonationBanner(false);
+    navigate("/admin/usuarios");
+  };
 
   useEffect(() => {
     // React Router preserva scroll por defecto: si navegas desde el footer de una
@@ -92,6 +114,14 @@ function MainLayout() {
 
   return (
     <div className="main-layout-main-container">
+      {showImpersonationBanner && (
+        <div className="impersonation-banner" role="status" aria-live="polite">
+          <p>Estás navegando como usuario (impersonación).</p>
+          <button type="button" onClick={handleReturnToAdmin}>
+            Volver a Admin
+          </button>
+        </div>
+      )}
       {showAppChrome && (
         <Navbar setAsideOpen={setAsideOpen} menuButtonRef={menuButtonRef} />
       )}

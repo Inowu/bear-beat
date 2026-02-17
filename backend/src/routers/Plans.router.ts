@@ -29,6 +29,7 @@ import type { Plans } from '@prisma/client';
 import { isStripeOxxoConfigured } from '../stripe/oxxo';
 import { getPublicCatalogSummarySnapshot } from './Catalog.router';
 import { getUserQuotaSnapshot } from './file-actions/quota';
+import { createAdminAuditLog } from './utils/adminAuditLog';
 
 type StripeRecurringInterval = 'day' | 'week' | 'month' | 'year';
 
@@ -900,62 +901,79 @@ export const plansRouter = router({
         }),
       ),
     )
-    .mutation(async ({ ctx: { prisma }, input: { data, interval } }) => {
-      try {
-        const priceKey = getPlanKey(PaymentService.STRIPE) as StripePriceKey;
-        const recurringInterval = normalizeRecurringInterval(
-          interval?.toLowerCase(),
-        );
-        const currency = (data.moneda?.toLowerCase() || 'usd').trim();
-        const unitAmount = Math.round(Number(data.price) * 100);
+    .mutation(
+      async ({ ctx: { prisma, session, req }, input: { data, interval } }) => {
+        try {
+          const priceKey = getPlanKey(PaymentService.STRIPE) as StripePriceKey;
+          const recurringInterval = normalizeRecurringInterval(
+            interval?.toLowerCase(),
+          );
+          const currency = (data.moneda?.toLowerCase() || 'usd').trim();
+          const unitAmount = Math.round(Number(data.price) * 100);
 
-        if (!Number.isFinite(unitAmount) || unitAmount <= 0) {
+          if (!Number.isFinite(unitAmount) || unitAmount <= 0) {
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message: 'El precio del plan debe ser mayor a cero',
+            });
+          }
+
+          const stripeProduct = await stripeInstance.products.create({
+            name: data.name,
+            active: data.activated == null ? true : Boolean(data.activated),
+            description: data.description,
+          });
+
+          const stripePrice = await stripeInstance.prices.create({
+            product: stripeProduct.id,
+            currency,
+            unit_amount: unitAmount,
+            recurring: {
+              interval: recurringInterval,
+              interval_count: 1,
+            },
+          });
+
+          const prismaPlan = await prisma.plans.create({
+            data: {
+              ...data,
+              [priceKey]: stripePrice.id,
+            },
+          });
+
+          const actorUserId = session?.user?.id;
+          if (actorUserId) {
+            await createAdminAuditLog({
+              prisma,
+              req,
+              actorUserId,
+              action: 'create_plan_stripe',
+              metadata: {
+                planId: prismaPlan.id,
+                currency,
+                interval: recurringInterval,
+              },
+            });
+          }
+
+          return prismaPlan;
+        } catch (e) {
+          log.error(
+            `[PLANS:CREATE_STRIPE_PLAN] An error ocurred while creating a stripe plan: ${JSON.stringify(
+              e,
+            )}`,
+          );
+
           throw new TRPCError({
-            code: 'BAD_REQUEST',
-            message: 'El precio del plan debe ser mayor a cero',
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Ocurrió un error al crear el plan de stripe',
           });
         }
-
-        const stripeProduct = await stripeInstance.products.create({
-          name: data.name,
-          active: data.activated == null ? true : Boolean(data.activated),
-          description: data.description,
-        });
-
-        const stripePrice = await stripeInstance.prices.create({
-          product: stripeProduct.id,
-          currency,
-          unit_amount: unitAmount,
-          recurring: {
-            interval: recurringInterval,
-            interval_count: 1,
-          },
-        });
-
-        const prismaPlan = await prisma.plans.create({
-          data: {
-            ...data,
-            [priceKey]: stripePrice.id,
-          },
-        });
-
-        return prismaPlan;
-      } catch (e) {
-        log.error(
-          `[PLANS:CREATE_STRIPE_PLAN] An error ocurred while creating a stripe plan: ${JSON.stringify(
-            e,
-          )}`,
-        );
-
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Ocurrió un error al crear el plan de stripe',
-        });
-      }
-    }),
+      },
+    ),
   updateStripePlan: shieldedProcedure
     .input(PlansUpdateOneSchema)
-    .mutation(async ({ ctx: { prisma }, input }) => {
+    .mutation(async ({ ctx: { prisma, session, req }, input }) => {
       const { where, data } = input;
 
       const plan = await prisma.plans.findUnique({
@@ -1037,6 +1055,21 @@ export const plansRouter = router({
           },
         });
 
+        const actorUserId = session?.user?.id;
+        if (actorUserId) {
+          await createAdminAuditLog({
+            prisma,
+            req,
+            actorUserId,
+            action: 'update_plan_stripe',
+            metadata: {
+              planId: prismaPlan.id,
+              replacementPriceId,
+              updatedFields: Object.keys(data as Record<string, unknown>),
+            },
+          });
+        }
+
         return prismaPlan;
       } catch (e) {
         log.error(
@@ -1053,7 +1086,7 @@ export const plansRouter = router({
     }),
   deleteStripePlan: shieldedProcedure
     .input(PlansDeleteOneSchema)
-    .mutation(async ({ ctx: { prisma }, input }) => {
+    .mutation(async ({ ctx: { prisma, session, req }, input }) => {
       const { where } = input;
 
       const plan = await prisma.plans.findUnique({
@@ -1091,6 +1124,20 @@ export const plansRouter = router({
           },
         });
 
+        const actorUserId = session?.user?.id;
+        if (actorUserId) {
+          await createAdminAuditLog({
+            prisma,
+            req,
+            actorUserId,
+            action: 'delete_plan_stripe',
+            metadata: {
+              planId: prismaPlan.id,
+              stripeId: stripeIdentifier,
+            },
+          });
+        }
+
         return prismaPlan;
       } catch (e) {
         log.error(
@@ -1114,30 +1161,81 @@ export const plansRouter = router({
         }),
       ),
     )
-    .mutation(async ({ ctx: { prisma }, input: { data, where, interval } }) => {
-      try {
-        const token = await paypal.getToken();
+    .mutation(
+      async ({
+        ctx: { prisma, session, req },
+        input: { data, where, interval },
+      }) => {
+        try {
+          const token = await paypal.getToken();
 
-        const planWithProduct = await prisma.plans.findFirst({
-          where: {
-            NOT: [
-              {
-                paypal_product_id: null,
-              },
-            ],
-          },
-        });
+          const planWithProduct = await prisma.plans.findFirst({
+            where: {
+              NOT: [
+                {
+                  paypal_product_id: null,
+                },
+              ],
+            },
+          });
 
-        let paypalProductId = planWithProduct?.paypal_product_id;
-        if (!paypalProductId) {
-          const productResponse = (
+          let paypalProductId = planWithProduct?.paypal_product_id;
+          if (!paypalProductId) {
+            const productResponse = (
+              await axios.post(
+                `${paypal.paypalUrl()}/v1/catalogs/products`,
+                {
+                  name: data.name,
+                  description: data.description || 'Bear Beat subscription',
+                  type: 'SERVICE',
+                  category: 'SOFTWARE',
+                },
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                  },
+                },
+              )
+            ).data;
+
+            paypalProductId = productResponse.id as string;
+          }
+
+          const planResponse = (
             await axios.post(
-              `${paypal.paypalUrl()}/v1/catalogs/products`,
+              `${paypal.paypalUrl()}/v1/billing/plans`,
               {
+                product_id: paypalProductId,
                 name: data.name,
-                description: data.description || 'Bear Beat subscription',
-                type: 'SERVICE',
-                category: 'SOFTWARE',
+                description: data.description,
+                status: 'ACTIVE',
+                billing_cycles: [
+                  {
+                    tenure_type: 'REGULAR',
+                    sequence: 1,
+                    total_cycles: 0,
+                    pricing_scheme: {
+                      fixed_price: {
+                        value: data.price,
+                        currency_code:
+                          (data.moneda as string)?.toUpperCase() || 'USD',
+                      },
+                    },
+                    frequency: {
+                      interval_unit: interval?.toUpperCase() || 'MONTH',
+                      interval_count: 1,
+                    },
+                  },
+                ],
+                payment_preferences: {
+                  auto_bill_outstanding: true,
+                  setup_fee: {
+                    value: '0',
+                    currency_code:
+                      (data.moneda as string)?.toUpperCase() || 'USD',
+                  },
+                },
               },
               {
                 headers: {
@@ -1148,80 +1246,51 @@ export const plansRouter = router({
             )
           ).data;
 
-          paypalProductId = productResponse.id as string;
+          const prismaPlan = await prisma.plans.create({
+            data: {
+              ...(data as any),
+              paypal_product_id: paypalProductId,
+              [getPlanKey(PaymentService.PAYPAL)]: planResponse.id,
+            },
+          });
+
+          const actorUserId = session?.user?.id;
+          if (actorUserId) {
+            await createAdminAuditLog({
+              prisma,
+              req,
+              actorUserId,
+              action: 'create_plan_paypal',
+              metadata: {
+                planId: prismaPlan.id,
+                paypalPlanId: planResponse.id,
+                sourcePlanId: where.id ?? null,
+              },
+            });
+          }
+
+          return prismaPlan;
+        } catch (e) {
+          log.error(
+            `[PLANS:CREATE_PAYPAL_PLAN] An error ocurred while creating a paypal plan: ${JSON.stringify(
+              e,
+            )}`,
+          );
+
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Ocurrió un error al crear el plan de paypal',
+          });
         }
-
-        const planResponse = (
-          await axios.post(
-            `${paypal.paypalUrl()}/v1/billing/plans`,
-            {
-              product_id: paypalProductId,
-              name: data.name,
-              description: data.description,
-              status: 'ACTIVE',
-              billing_cycles: [
-                {
-                  tenure_type: 'REGULAR',
-                  sequence: 1,
-                  total_cycles: 0,
-                  pricing_scheme: {
-                    fixed_price: {
-                      value: data.price,
-                      currency_code:
-                        (data.moneda as string)?.toUpperCase() || 'USD',
-                    },
-                  },
-                  frequency: {
-                    interval_unit: interval?.toUpperCase() || 'MONTH',
-                    interval_count: 1,
-                  },
-                },
-              ],
-              payment_preferences: {
-                auto_bill_outstanding: true,
-                setup_fee: {
-                  value: '0',
-                  currency_code:
-                    (data.moneda as string)?.toUpperCase() || 'USD',
-                },
-              },
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json',
-              },
-            },
-          )
-        ).data;
-
-        return await prisma.plans.create({
-          data: {
-            ...(data as any),
-            paypal_product_id: paypalProductId,
-            [getPlanKey(PaymentService.PAYPAL)]: planResponse.id,
-          },
-        });
-      } catch (e) {
-        log.error(
-          `[PLANS:CREATE_PAYPAL_PLAN] An error ocurred while creating a paypal plan: ${JSON.stringify(
-            e,
-          )}`,
-        );
-
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Ocurrió un error al crear el plan de paypal',
-        });
-      }
-    }),
+      },
+    ),
   deactivatePaypalPlan: shieldedProcedure
     .input(
       z.object({
         id: z.number(),
       }),
     )
-    .mutation(async ({ ctx: { prisma }, input: { id } }) => {
+    .mutation(async ({ ctx: { prisma, session, req }, input: { id } }) => {
       const plan = await prisma.plans.findUnique({
         where: {
           id,
@@ -1256,12 +1325,28 @@ export const plansRouter = router({
           },
         );
 
-        return await prisma.plans.update({
+        const updatedPlan = await prisma.plans.update({
           where: { id: plan.id },
           data: {
             [paypalPlanKey]: null,
           },
         });
+
+        const actorUserId = session?.user?.id;
+        if (actorUserId) {
+          await createAdminAuditLog({
+            prisma,
+            req,
+            actorUserId,
+            action: 'deactivate_plan_paypal',
+            metadata: {
+              planId: updatedPlan.id,
+              paypalPlanId,
+            },
+          });
+        }
+
+        return updatedPlan;
       } catch (e) {
         log.error(
           `[PLANS:CREATE_PAYPAL_PLAN] An error ocurred while creating a paypal plan: ${JSON.stringify(

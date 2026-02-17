@@ -8,6 +8,39 @@
   font-family: var(--bb-font-ui);
 }
 
+.impersonation-banner {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: color-mix(in srgb, var(--app-warning, #fbbf24) 78%, #111827);
+  color: #111827;
+  border-bottom: 1px solid color-mix(in srgb, #111827 12%, transparent);
+  font-weight: 700;
+}
+
+.impersonation-banner p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.impersonation-banner button {
+  min-height: 34px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 14px;
+  font-weight: 700;
+  cursor: pointer;
+  background: #111827;
+  color: #f9fafb;
+}
+
+.impersonation-banner button:hover {
+  opacity: 0.92;
+}
+
 .content-container {
   display: flex;
   flex: 1;
@@ -61,5 +94,11 @@
 
   .content-shell--app {
     padding: 16px 12px 22px;
+  }
+
+  .impersonation-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
 }

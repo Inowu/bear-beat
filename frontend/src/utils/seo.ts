@@ -10,59 +10,85 @@ const BASE_DESC = "Librería de música y videos exclusivos para DJs. 500 GB cad
 const HOME_DESC =
   `Membresía para DJs: video remixes, audios y karaokes. Catálogo ${FALLBACK_CATALOG_TOTAL_TB_LABEL}, 500 GB/mes. Prueba 7 días + 100 GB (solo tarjeta, 1ª vez).`;
 
-export const ROUTE_SEO: Record<string, { title: string; description: string }> = {
+type RouteSeo = {
+  title: string;
+  description: string;
+  imageUrl?: string;
+  indexable: boolean;
+};
+
+type SeoFields = Pick<RouteSeo, "title" | "description" | "imageUrl">;
+
+export const ROUTE_SEO: Record<string, RouteSeo> = {
   "/": {
     title: `${BASE_TITLE} – Membresía para DJs (videos, remixes y karaokes) | ${FALLBACK_CATALOG_TOTAL_TB_LABEL} + 500 GB/mes`,
     description: HOME_DESC,
+    indexable: true,
   },
   "/auth": {
     title: `Iniciar sesión | ${BASE_TITLE}`,
     description: "Inicia sesión en Bear Beat para acceder a tu librería de música y videos para DJs.",
+    indexable: false,
   },
   "/auth/registro": {
     title: `Registrarme | ${BASE_TITLE}`,
     description: "Crea tu cuenta en Bear Beat. Accede a 500 GB de música y videos para DJs cada mes por FTP.",
+    indexable: false,
   },
   "/auth/recuperar": {
     title: `Recuperar contraseña | ${BASE_TITLE}`,
     description: "Recupera el acceso a tu cuenta Bear Beat.",
+    indexable: false,
   },
   "/auth/reset-password": {
     title: `Nueva contraseña | ${BASE_TITLE}`,
     description: "Establece tu nueva contraseña de Bear Beat.",
+    indexable: false,
   },
   "/planes": {
     title: `Planes y precios | ${BASE_TITLE} – ${FALLBACK_CATALOG_TOTAL_TB_LABEL} + 500 GB/mes (MXN o USD)`,
     description:
       `Elige MXN (México) o USD (internacional). Catálogo ${FALLBACK_CATALOG_TOTAL_TB_LABEL}, 500 GB/mes. Prueba 7 días + 100 GB (solo tarjeta, 1ª vez).`,
+    indexable: true,
   },
   "/comprar": {
     title: `Comprar | ${BASE_TITLE}`,
     description: "Elige tu plan y paga de forma segura con Visa, Mastercard, PayPal o SPEI.",
+    indexable: false,
+  },
+  "/comprar/success": {
+    title: `Compra exitosa | ${BASE_TITLE}`,
+    description: "Tu pago se confirmó correctamente. Continúa con la activación de tu cuenta.",
+    indexable: false,
   },
   "/instrucciones": {
     title: `Instrucciones de descarga | ${BASE_TITLE}`,
     description: "Cómo descargar tu librería con FileZilla o Air Explorer. Guía paso a paso.",
+    indexable: true,
   },
   "/legal": {
     title: `Centro legal y FAQ | ${BASE_TITLE} – privacidad, reembolsos y términos`,
     description: "Consulta FAQ, política de privacidad, reembolsos, cancelaciones y términos de uso de Bear Beat.",
+    indexable: true,
   },
   "/descargas": {
     title: `Mis descargas | ${BASE_TITLE}`,
     description: "Accede a tus descargas y gestiona tu librería de música para DJs.",
+    indexable: false,
   },
   "/micuenta": {
     title: `Mi cuenta | ${BASE_TITLE}`,
     description: "Gestiona tu suscripción, métodos de pago y datos de cuenta.",
+    indexable: false,
   },
   "/actualizar-planes": {
     title: `Actualizar plan | ${BASE_TITLE}`,
     description: "Cambia o actualiza tu plan de Bear Beat.",
+    indexable: false,
   },
 };
 
-const DEFAULT_SEO = {
+const DEFAULT_SEO: SeoFields = {
   title: BASE_TITLE,
   description: BASE_DESC,
 };
@@ -73,13 +99,17 @@ const DEFAULT_SEO = {
  */
 export function applyRouteSeo(pathname: string): void {
   const path = pathname.endsWith("/") && pathname !== "/" ? pathname.slice(0, -1) : pathname;
-  const seo = ROUTE_SEO[path] ?? DEFAULT_SEO;
+  const routeSeo = ROUTE_SEO[path];
+  const seo = routeSeo ?? DEFAULT_SEO;
   const url = path === "" ? BASE_URL : `${BASE_URL}${path}`;
 
   document.title = seo.title;
 
-  // Robots: keep auth routes out of search results (login, signup, password reset).
-  const shouldNoIndex = path.startsWith("/auth");
+  const shouldNoIndex =
+    path.startsWith("/auth") ||
+    path.startsWith("/admin") ||
+    !routeSeo ||
+    routeSeo.indexable === false;
   const robotsContent = shouldNoIndex ? "noindex, nofollow" : "index, follow";
   let robots = document.querySelector('meta[name="robots"]');
   if (!robots) {

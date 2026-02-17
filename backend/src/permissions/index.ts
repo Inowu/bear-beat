@@ -12,7 +12,7 @@ const isAdmin = rule<Context>()(
 const isLoggedIn = rule<Context>()(async (ctx) => Boolean(ctx.session?.user));
 
 const isValidConektaSignature = rule<Context>()(async ({ req }) =>
-  verifyConektaSignature(req, JSON.parse(req.body as any)),
+  verifyConektaSignature(req),
 );
 
 const isValidStripeSignature = rule<Context>()(async ({ req }) =>
@@ -47,6 +47,8 @@ export const permissions = shield<Context>(
     myDirDownloads: isLoggedIn,
     getCheckoutLogs: isAdmin,
     getCheckoutLeads: isAdmin,
+    getAdminAuditLogs: isAdmin,
+    'adminAuditLogs.getAdminAuditLogs': isAdmin,
     getAnalyticsFunnelOverview: isAdmin,
     getAnalyticsDailySeries: isAdmin,
     getAnalyticsAttribution: isAdmin,

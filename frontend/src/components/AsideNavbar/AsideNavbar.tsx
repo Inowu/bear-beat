@@ -203,6 +203,12 @@ function AsideNavbar(props: AsideNavbarPropsI) {
                   <p className="nav-group__title">Seguridad y sistema</p>
                   <ul className="nav-list">
                     <li>
+                      <NavLink to="/admin/audit-logs" className={navLinkClassName} {...linkProps}>
+                        <FileText size={18} aria-hidden />
+                        Auditoría
+                      </NavLink>
+                    </li>
+                    <li>
                       <NavLink to="/admin/dominios-bloqueados" className={navLinkClassName} {...linkProps}>
                         <Ban size={18} aria-hidden />
                         Dominios

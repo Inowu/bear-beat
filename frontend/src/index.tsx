@@ -21,6 +21,12 @@ import DownloadContextProvider from "./contexts/DownloadContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { sseEndpoint } from "./utils/runtimeConfig";
 import { initManyChatHandoff } from "./utils/manychatHandoff";
+import {
+  hasManyChatMcpTokenInLocation,
+  loadManyChatScriptsOnce,
+  shouldLoadManyChatForPath,
+  syncManyChatWidgetVisibility,
+} from "./utils/manychatLoader";
 import { bindHotjarStateChange } from "./utils/hotjarBridge";
 import { bindGrowthMetricBridge, trackGrowthMetricBridge } from "./utils/growthMetricsBridge";
 import { ensureMetaAttributionCookies } from "./utils/metaAttributionCookies";
@@ -80,6 +86,7 @@ const ForgotPasswordForm = lazy(() => import("./components/Auth/ForgotPasswordFo
 const ResetPassword = lazy(() => import("./components/Auth/ResetPassword/ResetPassword"));
 const Instructions = lazy(() => import("./pages/Instructions/Instructions"));
 const Legal = lazy(() => import("./pages/Legal/Legal"));
+const NotFound = lazy(() => import("./pages/NotFound/NotFound"));
 const MyAccount = lazy(() => import("./pages/MyAccount/MyAccount"));
 const Checkout = lazy(() => import("./pages/Checkout/Checkout"));
 const CheckoutSuccess = lazy(() => import("./pages/Checkout/CheckoutSuccess"));
@@ -127,6 +134,9 @@ const BlockedPhoneNumbers = lazy(() =>
   import("./pages/Admin/BlockedPhoneNumbers/BlockedPhoneNumbers").then((module) => ({
     default: module.BlockedPhoneNumbers,
   })),
+);
+const AuditLogs = lazy(() =>
+  import("./pages/Admin/AuditLogs/AuditLogs").then((module) => ({ default: module.AuditLogs })),
 );
 
 function RouteLoader() {
@@ -229,6 +239,7 @@ const router = createBrowserRouter([
           { path: "cupones", element: withRouteSuspense(<Coupons />) },
           { path: "ordenes", element: withRouteSuspense(<Ordens />) },
           { path: "historialCheckout", element: withRouteSuspense(<HistoryCheckout />) },
+          { path: "audit-logs", element: withRouteSuspense(<AuditLogs />) },
           { path: "dominios-bloqueados", element: withRouteSuspense(<BlockedEmailDomains />) },
           { path: "telefonos-bloqueados", element: withRouteSuspense(<BlockedPhoneNumbers />) },
         ],
@@ -249,7 +260,7 @@ const router = createBrowserRouter([
       },
       {
         path: "*",
-        element: <Navigate to="/" replace />,
+        element: withRouteSuspense(<NotFound />),
       },
     ],
   },
@@ -345,6 +356,63 @@ const scheduleTrackersInit = (gate?: Promise<void> | null) => {
   window.addEventListener("pointerdown", startOnInteraction, { once: true, passive: true });
   window.addEventListener("keydown", startOnInteraction, { once: true });
   scheduleIdleTask(initOnce, minDelayMs, idleTimeoutMs);
+};
+
+const scheduleManyChatBootstrap = () => {
+  if (typeof window === "undefined") return;
+
+  const isMobile = window.matchMedia("(max-width: 768px)").matches;
+  const minDelayMs = isMobile ? 5600 : 2600;
+  const idleTimeoutMs = isMobile ? 4200 : 2600;
+
+  const maybeLoadManyChat = () => {
+    const pathname = window.location.pathname;
+    const hasMcpToken = hasManyChatMcpTokenInLocation();
+
+    syncManyChatWidgetVisibility(pathname);
+
+    if (!shouldLoadManyChatForPath(pathname, hasMcpToken)) return;
+    void loadManyChatScriptsOnce().catch(() => {
+      // noop
+    });
+  };
+
+  // Keep checkout clean even if the scripts were loaded on a previous route.
+  syncManyChatWidgetVisibility(window.location.pathname);
+
+  if (hasManyChatMcpTokenInLocation()) {
+    // Attribution-sensitive path: load immediately when mcp_token exists.
+    maybeLoadManyChat();
+  } else {
+    // Marketing routes load lazily to protect first paint and reduce checkout distractions.
+    const startOnInteraction = () => {
+      scheduleIdleTask(maybeLoadManyChat, 0, idleTimeoutMs);
+    };
+
+    window.addEventListener("pointerdown", startOnInteraction, { once: true, passive: true });
+    window.addEventListener("keydown", startOnInteraction, { once: true });
+    scheduleIdleTask(maybeLoadManyChat, minDelayMs, idleTimeoutMs);
+  }
+
+  let lastRouteKey = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  router.subscribe((state: any) => {
+    const loc = state?.location;
+    const pathname =
+      typeof loc?.pathname === "string" ? loc.pathname : window.location.pathname;
+    const search = typeof loc?.search === "string" ? loc.search : window.location.search;
+    const hash = typeof loc?.hash === "string" ? loc.hash : window.location.hash;
+    const nextKey = `${pathname}${search}${hash}`;
+    if (!nextKey || nextKey === lastRouteKey) return;
+    lastRouteKey = nextKey;
+
+    syncManyChatWidgetVisibility(pathname);
+
+    const hasMcpToken = hasManyChatMcpTokenInLocation();
+    if (!shouldLoadManyChatForPath(pathname, hasMcpToken)) return;
+    void loadManyChatScriptsOnce().catch(() => {
+      // noop
+    });
+  });
 };
 
 const scheduleMonitoringInit = () => {
@@ -575,6 +643,8 @@ installRuntimeStabilityGuards();
 // Ensure `_fbp/_fbc` exist early so checkout + server-side CAPI can always attach attribution,
 // even when tracker init is delayed for performance.
 ensureMetaAttributionCookies();
+
+scheduleManyChatBootstrap();
 
 // Capture ManyChat handoff params ASAP. If `mcp_token` is present, we temporarily keep it so
 // ManyChat can read it, then strip it before initializing other trackers.

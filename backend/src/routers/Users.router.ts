@@ -26,6 +26,7 @@ import { JobStatus } from '../queue/jobStatus';
 import { manyChat } from '../many-chat';
 import { facebook } from '../facebook';
 import { getClientIpFromRequest } from '../analytics';
+import { createAdminAuditLog } from './utils/adminAuditLog';
 
 const validateExistingData = async (data: any, prisma: any, id: number) => {
   if (data.username) {
@@ -243,7 +244,7 @@ export const usersRouter = router({
         userId: z.number(),
       }),
     )
-    .mutation(async ({ ctx: { prisma }, input: { userId } }) => {
+    .mutation(async ({ ctx: { prisma, session, req }, input: { userId } }) => {
       const user = await prisma.users.findFirst({
         where: {
           id: userId,
@@ -286,6 +287,17 @@ export const usersRouter = router({
         },
       });
 
+      const actorUserId = session?.user?.id;
+      if (actorUserId) {
+        await createAdminAuditLog({
+          prisma,
+          req,
+          actorUserId,
+          action: 'block_user',
+          targetUserId: user.id,
+        });
+      }
+
       return user;
     }),
   unblockUser: shieldedProcedure
@@ -294,7 +306,7 @@ export const usersRouter = router({
         userId: z.number(),
       }),
     )
-    .mutation(async ({ ctx: { prisma }, input: { userId } }) => {
+    .mutation(async ({ ctx: { prisma, session, req }, input: { userId } }) => {
       const user = await prisma.users.findFirst({
         where: {
           id: userId,
@@ -316,6 +328,17 @@ export const usersRouter = router({
           blocked: false,
         },
       });
+
+      const actorUserId = session?.user?.id;
+      if (actorUserId) {
+        await createAdminAuditLog({
+          prisma,
+          req,
+          actorUserId,
+          action: 'unblock_user',
+          targetUserId: user.id,
+        });
+      }
 
       return user;
     }),

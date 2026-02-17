@@ -1,0 +1,65 @@
+.audit-logs-toolbar {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: end;
+}
+
+.audit-logs-toolbar__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 150px;
+}
+
+.audit-logs-toolbar__field span {
+  color: color-mix(in srgb, var(--ad-text-muted) 92%, transparent);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.audit-logs-toolbar__field select,
+.audit-logs-toolbar__field input {
+  min-height: 42px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--ad-input-border) 88%, transparent);
+  background: color-mix(in srgb, var(--ad-input-bg) 96%, transparent);
+  color: var(--ad-title);
+  padding: 0 11px;
+  outline: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.audit-logs-toolbar__field select:focus,
+.audit-logs-toolbar__field input:focus {
+  border-color: color-mix(in srgb, var(--ad-accent) 58%, transparent);
+  box-shadow: 0 0 0 3px var(--ad-focus-ring);
+}
+
+.audit-logs-action {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ad-border) 82%, transparent);
+  background: color-mix(in srgb, var(--ad-row-hover) 82%, transparent);
+  font-size: 0.79rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.audit-logs-empty {
+  color: var(--ad-text-muted);
+}
+
+.audit-logs-user-agent {
+  display: inline-block;
+  max-width: 240px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

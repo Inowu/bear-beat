@@ -4,6 +4,7 @@ import { shieldedProcedure } from '../../../procedures/shielded.procedure';
 import { RolesIds, RolesNames } from '../interfaces/roles.interface';
 import { generateTokens } from './utils/generateTokens';
 import { serializeUser } from '../utils/serialize-user';
+import { createAdminAuditLog } from '../../utils/adminAuditLog';
 
 export const impersonateUser = shieldedProcedure
   .input(
@@ -11,7 +12,7 @@ export const impersonateUser = shieldedProcedure
       userId: z.number().int().positive(),
     }),
   )
-  .mutation(async ({ input: { userId }, ctx: { prisma, session } }) => {
+  .mutation(async ({ input: { userId }, ctx: { prisma, session, req } }) => {
     if (session?.user?.role !== RolesNames.admin) {
       throw new TRPCError({
         code: 'FORBIDDEN',
@@ -45,6 +46,16 @@ export const impersonateUser = shieldedProcedure
     }
 
     const tokens = await generateTokens(prisma, targetUser);
+    await createAdminAuditLog({
+      prisma,
+      req,
+      actorUserId: session.user.id,
+      action: 'impersonate_user',
+      targetUserId: targetUser.id,
+      metadata: {
+        targetRoleId: targetUser.role_id,
+      },
+    });
 
     return {
       ...tokens,

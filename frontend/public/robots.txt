@@ -1,11 +1,14 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
 Allow: /
+Allow: /planes
+Allow: /instrucciones
+Allow: /legal
+Disallow: /auth
 Disallow: /admin
 Disallow: /micuenta
 Disallow: /descargas
 Disallow: /comprar
 Disallow: /actualizar-planes
-Disallow: /instrucciones
 
 Sitemap: https://thebearbeat.com/sitemap.xml

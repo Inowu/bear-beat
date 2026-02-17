@@ -1,4 +1,5 @@
 import { apiBaseUrl } from "./runtimeConfig";
+import { loadManyChatScriptsOnce, waitForManyChatPixelReady } from "./manychatLoader";
 
 export type ManyChatHandoffSnapshot = {
   contactId: string | null;
@@ -173,7 +174,12 @@ export function initManyChatHandoff(): Promise<void> {
   const isMobile = window.matchMedia("(max-width: 768px)").matches;
   const maxWaitMs = isMobile ? 6500 : 3000;
   const pollEveryMs = 120;
-  const startedAt = Date.now();
+
+  // Dynamic-load ManyChat scripts when mcp_token exists so attribution is not lost.
+  // Any loading failure is tolerated: we still strip the token after timeout.
+  void loadManyChatScriptsOnce().catch(() => {
+    // noop
+  });
 
   const stripMcpToken = (): void => {
     try {
@@ -188,30 +194,10 @@ export function initManyChatHandoff(): Promise<void> {
     }
   };
 
-  return new Promise((resolve) => {
-    const stripAndResolve = () => {
-      stripMcpToken();
-      resolve();
-    };
-
-    const tick = () => {
-      const pixelReady =
-        typeof (window as any).MC_PIXEL?.fireLogConversionEvent === "function" ||
-        typeof (window as any).MC_PIXEL?.fireLogMoneyEvent === "function";
-
-      if (pixelReady) {
-        stripAndResolve();
-        return;
-      }
-
-      if (Date.now() - startedAt > maxWaitMs) {
-        stripAndResolve();
-        return;
-      }
-
-      window.setTimeout(tick, pollEveryMs);
-    };
-
-    window.setTimeout(tick, 0);
+  return waitForManyChatPixelReady({
+    maxWaitMs,
+    pollEveryMs,
+  }).then(() => {
+    stripMcpToken();
   });
 }
