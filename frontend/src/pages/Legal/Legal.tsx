@@ -157,8 +157,8 @@ function Legal() {
   }, []);
 
   return (
-    <div className="legal2026" role="region" aria-label="Centro legal y ayuda">
-      <div className="legal2026__container">
+    <div className="legal2026 bb-marketing-page" role="region" aria-label="Centro legal y ayuda">
+      <div className="legal2026__container bb-marketing-container--wide">
         <a className="legal2026__skip" href="#faq">
           Saltar al FAQ
         </a>

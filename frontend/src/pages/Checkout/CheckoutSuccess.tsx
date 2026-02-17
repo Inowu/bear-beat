@@ -240,7 +240,7 @@ function CheckoutSuccess() {
   }, [sessionId, cookies._fbp, cookies._fbc]);
 
   return (
-    <div className="checkout-main-container checkout2026">
+    <div className="checkout-main-container checkout2026 bb-marketing-page bb-marketing-page--checkout bb-marketing-page--flat-cards">
       <PublicTopNav className="checkout2026__topnav" plansTo="/planes" />
       <section className="checkout2026__main" aria-label="Checkout">
         <div className="checkout2026__container checkout2026__center">

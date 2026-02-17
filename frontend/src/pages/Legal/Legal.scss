@@ -2,12 +2,6 @@
 
 .legal2026 {
   position: relative;
-  min-height: 100vh;
-  color: var(--ph-text-body);
-  background:
-    radial-gradient(900px 560px at 10% 0%, var(--bb-landing-spot-1), transparent 60%),
-    radial-gradient(860px 520px at 90% 10%, var(--bb-landing-spot-2), transparent 60%),
-    var(--ph-bg);
   padding: 32px 0 46px;
 }
 
@@ -35,8 +29,6 @@
 }
 
 .legal2026__container {
-  width: min(1120px, calc(100% - 40px));
-  margin-inline: auto;
   display: grid;
   gap: 0.9rem;
 }
@@ -339,10 +331,6 @@
 }
 
 @include respond-to(phone) {
-  .legal2026__container {
-    width: min(1120px, calc(100% - 28px));
-  }
-
   .legal2026 {
     padding-top: 22px;
   }
@@ -422,13 +410,6 @@
   .legal2026__faq-actions button {
     width: 100%;
   }
-}
-
-html[data-theme="light"] .legal2026 {
-  background:
-    radial-gradient(940px 580px at 10% 0%, color-mix(in srgb, var(--ph-accent) 2.4%, transparent), transparent 64%),
-    radial-gradient(900px 560px at 90% 8%, color-mix(in srgb, var(--ph-accent) 1.9%, transparent), transparent 64%),
-    var(--ph-bg);
 }
 
 html[data-theme="light"] .legal2026__hero,

@@ -1,25 +1,10 @@
 
 .checkout-main-container {
-  min-height: 100vh;
   width: 100%;
   max-width: 100vw;
-  overflow-x: hidden;
   box-sizing: border-box;
   --checkout-pad: clamp(12px, 2.1vw, 30px);
   padding: 0;
-  background:
-    radial-gradient(
-      860px 420px at 8% -8%,
-      var(--bb-landing-spot-1),
-      transparent 58%
-    ),
-    radial-gradient(
-      860px 460px at 92% -16%,
-      var(--bb-landing-spot-2),
-      transparent 62%
-    ),
-    var(--ph-bg);
-  color: var(--ph-text-body);
   font-family: var(--bb-font-ui);
   /* Marketing surfaces (/planes -> /comprar) should keep a consistent type scale. */
   font-size: 1rem;
@@ -2221,21 +2206,6 @@ html.dark .checkout-method.is-active,
   @media (min-width: 520px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-}
-
-html[data-theme="light"] .checkout-main-container {
-  background:
-    radial-gradient(
-      920px 460px at 8% -8%,
-      color-mix(in srgb, var(--app-accent) 4.6%, transparent),
-      transparent 62%
-    ),
-    radial-gradient(
-      920px 500px at 92% -12%,
-      color-mix(in srgb, var(--app-accent) 3.6%, transparent),
-      transparent 66%
-    ),
-    var(--app-bg);
 }
 
 html[data-theme="light"] .checkout-one-state {

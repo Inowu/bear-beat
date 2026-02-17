@@ -89,7 +89,7 @@ function Instructions() {
   const { userToken } = useUserContext();
 
   return (
-    <div className="instructions2026" role="region" aria-label="Instrucciones de descarga">
+    <div className="instructions2026 bb-marketing-page" role="region" aria-label="Instrucciones de descarga">
       <a className="instructions2026__skip" href="#instructions-main">
         Saltar al contenido
       </a>
