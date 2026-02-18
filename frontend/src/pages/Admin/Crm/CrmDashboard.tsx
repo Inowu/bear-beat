@@ -77,8 +77,24 @@ interface AutomationRunRow {
   error: string | null;
 }
 
+interface AutomationActionBreakdownRow {
+  actionKey: string;
+  channel: string;
+  total: number;
+}
+
+interface AutomationCheckoutAbandonedSummary {
+  journeys: number;
+  emailSent: number;
+  whatsappSent: number;
+  manychatTagged: number;
+  recoveredUsers: number;
+}
+
 interface AutomationStatusSnapshot {
   actionsLast24h: number;
+  actionBreakdownLast24h?: AutomationActionBreakdownRow[];
+  checkoutAbandonedLast24h?: AutomationCheckoutAbandonedSummary | null;
   recentRuns: AutomationRunRow[];
 }
 
@@ -358,10 +374,14 @@ export function CrmDashboard() {
       setSnapshot(data);
       setAutomation(automationStatus);
       setLastUpdatedAt(new Date());
-    } catch {
+    } catch (error) {
+      console.warn("[ADMIN][CRM] refresh_failed", {
+        reason:
+          error instanceof Error
+            ? error.message
+            : "unknown_error",
+      });
       setError("No se pudo cargar el CRM. Intenta de nuevo.");
-      setSnapshot(null);
-      setAutomation(null);
     } finally {
       setLoading(false);
     }
@@ -539,9 +559,9 @@ export function CrmDashboard() {
           <Spinner size={3} width={0.3} color="var(--ad-accent)" />
           <p>Cargando CRM…</p>
         </div>
-      ) : error ? (
+      ) : !snapshot ? (
         <div className="crm-state crm-state--error" role="alert">
-          <p>{error}</p>
+          <p>{error || "No hay datos de CRM para mostrar."}</p>
           <button
             type="button"
             onClick={() => void refresh()}
@@ -553,6 +573,20 @@ export function CrmDashboard() {
         </div>
       ) : snapshot ? (
         <div className="crm-wrap">
+          {error ? (
+            <div className="crm-state crm-state--warning" role="status">
+              <p>{error}</p>
+              <button
+                type="button"
+                onClick={() => void refresh()}
+                className="inline-flex items-center gap-2 bg-bear-gradient text-bear-dark-500 hover:opacity-95 font-medium rounded-pill px-4 py-2 transition-colors"
+              >
+                <RefreshCw size={18} aria-hidden />
+                Reintentar
+              </button>
+            </div>
+          ) : null}
+
           <section className="crm-meta" aria-label="Contexto del panel CRM">
             <p className="crm-range">{rangeLabel}</p>
             <p className="crm-updated">
@@ -688,6 +722,27 @@ export function CrmDashboard() {
                 Acciones últimas 24h:{" "}
                 <strong>{automation.actionsLast24h}</strong>
               </p>
+              {automation.checkoutAbandonedLast24h ? (
+                <p className="crm-section__hint">
+                  Checkout abandonado 24h:{" "}
+                  <strong>{automation.checkoutAbandonedLast24h.journeys}</strong>
+                  {" "}journeys · Email{" "}
+                  <strong>{automation.checkoutAbandonedLast24h.emailSent}</strong>
+                  {" "}· WhatsApp{" "}
+                  <strong>{automation.checkoutAbandonedLast24h.whatsappSent}</strong>
+                  {" "}· Recuperados{" "}
+                  <strong>{automation.checkoutAbandonedLast24h.recoveredUsers}</strong>
+                </p>
+              ) : null}
+              {automation.actionBreakdownLast24h?.length ? (
+                <p className="crm-section__hint">
+                  Top acciones/canal 24h:{" "}
+                  {automation.actionBreakdownLast24h
+                    .slice(0, 4)
+                    .map((row) => `${row.actionKey}:${row.channel} (${row.total})`)
+                    .join(" · ")}
+                </p>
+              ) : null}
               <div
                 className="crm-table-wrap"
                 tabIndex={0}

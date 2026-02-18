@@ -2,6 +2,7 @@ import { createHash } from 'crypto';
 import { Prisma, PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import stripeInstance, { isStripeConfigured } from '../stripe';
+import { log } from '../server';
 
 const MAX_BATCH_SIZE = 40;
 const DEFAULT_RANGE_DAYS = 30;
@@ -2067,28 +2068,30 @@ export const getAnalyticsCrmDashboard = async (
 
   const startDateOnly = startDate; // already Date object
 
-  const [
-    totalUsersRows,
-    registrationsBeforeRows,
-    registrationsDailyRows,
-    paidOrdersRows,
-    newVsRenewalRows,
-    trialDailyRows,
-    cancellationsTotalRows,
-    cancellationRows,
-    recentCancellationTotalRows,
-    recentCancellationRows,
-    involuntaryCancellationRows,
-    activationDurationRows,
-    registerToPaidAvgRows,
-    trialNoDownloadTotalRows,
-    trialNoDownloadRows,
-    paidNoDownload2hTotalRows,
-    paidNoDownload2hRows,
-    paidNoDownloadTotalRows,
-    paidNoDownloadRows,
-    activeTrialsSnapshot,
-  ] = await Promise.all([
+  const crmQueryLabels = [
+    'totalUsersRows',
+    'registrationsBeforeRows',
+    'registrationsDailyRows',
+    'paidOrdersRows',
+    'newVsRenewalRows',
+    'trialDailyRows',
+    'cancellationsTotalRows',
+    'cancellationRows',
+    'recentCancellationTotalRows',
+    'recentCancellationRows',
+    'involuntaryCancellationRows',
+    'activationDurationRows',
+    'registerToPaidAvgRows',
+    'trialNoDownloadTotalRows',
+    'trialNoDownloadRows',
+    'paidNoDownload2hTotalRows',
+    'paidNoDownload2hRows',
+    'paidNoDownloadTotalRows',
+    'paidNoDownloadRows',
+    'activeTrialsSnapshot',
+  ] as const;
+
+  const crmResults = await Promise.allSettled([
     prisma.$queryRaw<Array<{ totalUsers: bigint | number }>>(Prisma.sql`
       SELECT COUNT(*) AS totalUsers
       FROM users
@@ -2480,6 +2483,134 @@ export const getAnalyticsCrmDashboard = async (
     `),
     getActiveStripeTrials(),
   ]);
+
+  const pickCrmResult = <T,>(index: number, fallback: T): T => {
+    const result = crmResults[index];
+    if (result?.status === 'fulfilled') {
+      return result.value as T;
+    }
+    const reason =
+      result && result.status === 'rejected'
+        ? result.reason instanceof Error
+          ? result.reason.message
+          : String(result.reason)
+        : 'missing_result';
+    log.warn('[ANALYTICS][CRM] Falling back after query failure', {
+      query: crmQueryLabels[index] ?? `query_${index}`,
+      reason,
+    });
+    return fallback;
+  };
+
+  const totalUsersRows = pickCrmResult<Array<{ totalUsers: bigint | number }>>(
+    0,
+    [],
+  );
+  const registrationsBeforeRows = pickCrmResult<
+    Array<{ registrationsBefore: bigint | number }>
+  >(1, []);
+  const registrationsDailyRows = pickCrmResult<
+    Array<{ day: string; registrations: bigint | number }>
+  >(2, []);
+  const paidOrdersRows = pickCrmResult<
+    Array<{ paidOrders: bigint | number; grossRevenue: bigint | number }>
+  >(3, []);
+  const newVsRenewalRows = pickCrmResult<
+    Array<{
+      newPaidUsers: bigint | number;
+      newPaidUsersFromRangeRegistrations: bigint | number;
+      renewalOrders: bigint | number;
+    }>
+  >(4, []);
+  const trialDailyRows = pickCrmResult<
+    Array<{
+      day: string;
+      trialStarts: bigint | number;
+      trialConversions: bigint | number;
+    }>
+  >(5, []);
+  const cancellationsTotalRows = pickCrmResult<
+    Array<{ cancellations: bigint | number }>
+  >(6, []);
+  const cancellationRows = pickCrmResult<
+    Array<{ reasonCode: string; cancellations: bigint | number }>
+  >(7, []);
+  const recentCancellationTotalRows = pickCrmResult<
+    Array<{ total: bigint | number }>
+  >(8, []);
+  const recentCancellationRows = pickCrmResult<
+    Array<{
+      id: number;
+      userId: number;
+      username: string;
+      email: string;
+      phone: string | null;
+      paymentMethod: string | null;
+      createdAt: Date;
+      reasonCode: string;
+      reasonText: string | null;
+      source: string | null;
+      medium: string | null;
+      campaign: string | null;
+    }>
+  >(9, []);
+  const involuntaryCancellationRows = pickCrmResult<
+    Array<{ involuntaryCancellations: bigint | number }>
+  >(10, []);
+  const activationDurationRows = pickCrmResult<
+    Array<{ minutesToFirstDownload: bigint | number | null }>
+  >(11, []);
+  const registerToPaidAvgRows = pickCrmResult<
+    Array<{ avgMinutes: bigint | number | null }>
+  >(12, []);
+  const trialNoDownloadTotalRows = pickCrmResult<
+    Array<{ total: bigint | number }>
+  >(13, []);
+  const trialNoDownloadRows = pickCrmResult<
+    Array<{
+      userId: number;
+      username: string;
+      email: string;
+      phone: string | null;
+      trialStartedAt: Date;
+      planId: bigint | number | null;
+    }>
+  >(14, []);
+  const paidNoDownload2hTotalRows = pickCrmResult<
+    Array<{ total: bigint | number }>
+  >(15, []);
+  const paidNoDownload2hRows = pickCrmResult<
+    Array<{
+      userId: number;
+      username: string;
+      email: string;
+      phone: string | null;
+      paidAt: Date;
+      planId: number | null;
+      paymentMethod: string | null;
+    }>
+  >(16, []);
+  const paidNoDownloadTotalRows = pickCrmResult<
+    Array<{ total: bigint | number }>
+  >(17, []);
+  const paidNoDownloadRows = pickCrmResult<
+    Array<{
+      userId: number;
+      username: string;
+      email: string;
+      phone: string | null;
+      paidAt: Date;
+      planId: number | null;
+      paymentMethod: string | null;
+    }>
+  >(18, []);
+  const activeTrialsSnapshot = pickCrmResult<{
+    activeTrialsNow: number | null;
+    activeTrialsSource: ActiveTrialsSource;
+  }>(19, {
+    activeTrialsNow: null,
+    activeTrialsSource: 'stripe-error',
+  });
 
   const totalUsers = numberFromUnknown(totalUsersRows?.[0]?.totalUsers);
   const registrationsBefore = numberFromUnknown(

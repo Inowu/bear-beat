@@ -13,6 +13,15 @@
   color: color-mix(in srgb, var(--app-status-error) 80%, var(--ad-text));
 }
 
+.crm-state--warning {
+  min-height: 0;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--app-status-warning) 50%, var(--ad-border));
+  background: color-mix(in srgb, var(--app-status-warning) 11%, var(--ad-card));
+  color: var(--ad-text);
+}
+
 .crm-wrap {
   display: grid;
   gap: 16px;

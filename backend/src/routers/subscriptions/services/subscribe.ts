@@ -7,6 +7,103 @@ import { OrderStatus } from '../interfaces/order-status.interface';
 import { Params, PaymentService } from './types';
 import { SessionUser } from '../../auth/utils/serialize-user';
 import { sendPlanActivatedEmail } from '../../../email';
+import { ingestPaymentSuccessEvent } from '../../../analytics/paymentSuccess';
+
+type PaymentSuccessProvider = 'stripe' | 'stripe_oxxo' | 'paypal' | 'conekta' | 'admin';
+
+const resolvePaymentSuccessProvider = (service: PaymentService): PaymentSuccessProvider | null => {
+  switch (service) {
+    case PaymentService.STRIPE:
+    case PaymentService.STRIPE_RENOVACION:
+    case PaymentService.STRIPE_PLAN_CHANGE:
+      return 'stripe';
+    case PaymentService.STRIPE_OXXO:
+      return 'stripe_oxxo';
+    case PaymentService.PAYPAL:
+    case PaymentService.PAYPAL_PLAN_CHANGE:
+      return 'paypal';
+    case PaymentService.CONEKTA:
+      return 'conekta';
+    case PaymentService.ADMIN:
+      return 'admin';
+    default:
+      return null;
+  }
+};
+
+const emitPaymentSuccessFromPaidOrder = async (params: {
+  prisma: PrismaClient;
+  user: Users | SessionUser;
+  order: Orders | null;
+  plan: Plans | null | undefined;
+  service: PaymentService;
+  subId: string;
+}): Promise<void> => {
+  const {
+    prisma,
+    user,
+    order,
+    plan,
+    service,
+    subId,
+  } = params;
+  if (!order || order.status !== OrderStatus.PAID) return;
+
+  const provider = resolvePaymentSuccessProvider(service);
+  if (!provider) return;
+
+  try {
+    const previousPaidOrder = await prisma.orders.findFirst({
+      where: {
+        user_id: user.id,
+        id: { not: order.id },
+        status: OrderStatus.PAID,
+        is_plan: 1,
+        ...(order.plan_id == null
+          ? { plan_id: null }
+          : { plan_id: order.plan_id }),
+        AND: [
+          {
+            OR: [{ is_canceled: null }, { is_canceled: 0 }],
+          },
+          {
+            OR: [
+              { date_order: { lt: order.date_order } },
+              {
+                date_order: order.date_order,
+                id: { lt: order.id },
+              },
+            ],
+          },
+        ],
+      },
+      select: { id: true },
+    });
+
+    await ingestPaymentSuccessEvent({
+      prisma,
+      provider,
+      providerEventId: subId || order.txn_id || order.invoice_id || `order_${order.id}`,
+      userId: user.id,
+      orderId: order.id,
+      planId: order.plan_id ?? null,
+      amount: Number(order.total_price) || Number(plan?.price) || 0,
+      currency: plan?.moneda?.toUpperCase?.() ?? null,
+      isRenewal: Boolean(previousPaidOrder?.id),
+      eventTs: order.date_order ?? new Date(),
+      metadata: {
+        source: 'subscribe_service',
+        paymentMethod: order.payment_method ?? null,
+        txnId: order.txn_id ?? null,
+        invoiceId: order.invoice_id ?? null,
+      },
+    });
+  } catch (error) {
+    log.debug('[SUBSCRIPTION] analytics payment_success skipped (subscribe service)', {
+      error: error instanceof Error ? error.message : error,
+    });
+  }
+};
 
 export const subscribe = async ({
   prisma,
@@ -84,6 +181,7 @@ export const subscribe = async ({
     log.info('[SUBSCRIPTION] Creating new subscription');
 
     try {
+      let settledPaidOrder: Orders | null = null;
       const formattedUsername = user.username.toLowerCase().replace(/ /g, '.');
       const responses = await prisma.$transaction([
         ...insertFtpQuotas({ prisma, user, plan: dbPlan, quotaGb }),
@@ -123,6 +221,7 @@ export const subscribe = async ({
           service,
         );
         selectedOrderId = createdOrder.id;
+        settledPaidOrder = createdOrder;
 
         await prisma.descargasUser.update({
           where: {
@@ -150,7 +249,7 @@ export const subscribe = async ({
 
       if (orderId) {
         if (!isTrial) {
-          await prisma.orders.update({
+          settledPaidOrder = await prisma.orders.update({
             where: {
               id: orderId,
             },
@@ -159,6 +258,17 @@ export const subscribe = async ({
             },
           });
         }
+      }
+
+      if (!isTrial) {
+        await emitPaymentSuccessFromPaidOrder({
+          prisma,
+          user,
+          order: settledPaidOrder,
+          plan: dbPlan,
+          service,
+          subId,
+        });
       }
     } catch (e) {
       log.error(`Error while creating ftp user: ${e}`);
@@ -276,6 +386,15 @@ export const subscribe = async ({
           prisma,
         });
       }
+
+      await emitPaymentSuccessFromPaidOrder({
+        prisma,
+        user,
+        order: createdOrder,
+        plan: dbPlan,
+        service,
+        subId,
+      });
     } catch (e) {
       log.error(`Error while renovating subscription: ${e}`);
     }

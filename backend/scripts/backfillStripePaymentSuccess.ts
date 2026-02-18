@@ -9,8 +9,11 @@ import { log } from '../src/server';
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_LOOKBACK_DAYS = 3650;
 const DEFAULT_BATCH_SIZE = 250;
+const DEFAULT_PROVIDERS_FLAG = 'stripe,paypal,conekta,admin';
 
-type StripeOrderRow = {
+type BackfillProvider = 'stripe' | 'stripe_oxxo' | 'paypal' | 'conekta' | 'admin';
+
+type PaidOrderRow = {
   id: number;
   userId: number;
   planId: number | null;
@@ -18,20 +21,45 @@ type StripeOrderRow = {
   dateOrder: Date;
   paymentMethod: string | null;
   txnId: string | null;
+  invoiceId: string | null;
   isPlan: number;
   currency: string | null;
 };
 
 type ExistingPaymentEventRow = {
   orderId: number | null;
+  paymentProvider: string | null;
+  providerEventId: string | null;
   stripeSubscriptionId: string | null;
   stripePaymentIntentId: string | null;
+  stripeInvoiceId: string | null;
+  paypalSubscriptionId: string | null;
+  conektaOrderId: string | null;
+  txnId: string | null;
+  invoiceId: string | null;
 };
 
 type RenewalRow = {
   orderId: number;
   isRenewal: number;
 };
+
+const PROVIDER_ALIASES: Record<string, BackfillProvider | 'all' | 'stripe_bundle'> = {
+  stripe: 'stripe_bundle',
+  stripe_oxxo: 'stripe_oxxo',
+  paypal: 'paypal',
+  conekta: 'conekta',
+  admin: 'admin',
+  all: 'all',
+};
+
+const SUPPORTED_PROVIDERS: BackfillProvider[] = [
+  'stripe',
+  'stripe_oxxo',
+  'paypal',
+  'conekta',
+  'admin',
+];
 
 const hasFlag = (args: string[], flag: string): boolean => args.includes(flag);
 
@@ -76,11 +104,6 @@ const toNullableTrimmedString = (
 const toNullableTxId = (value: unknown): string | null =>
   toNullableTrimmedString(value, 120);
 
-const resolveStripeProvider = (paymentMethod: string | null): string => {
-  const normalized = String(paymentMethod || '').toLowerCase();
-  return normalized.includes('oxxo') ? 'stripe_oxxo' : 'stripe';
-};
-
 const toCurrency = (value: unknown): string | null => {
   const normalized = toNullableTrimmedString(value, 8);
   return normalized ? normalized.toUpperCase() : null;
@@ -91,7 +114,55 @@ const toAmount = (value: unknown): number => {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
 };
 
-const fetchStripePaidOrdersBatch = async ({
+const resolveProviderFromPaymentMethod = (paymentMethod: string | null): BackfillProvider | null => {
+  const normalized = String(paymentMethod || '').toLowerCase();
+  if (!normalized) return null;
+  if (normalized.includes('stripe') && normalized.includes('oxxo')) return 'stripe_oxxo';
+  if (normalized.includes('stripe')) return 'stripe';
+  if (normalized.includes('paypal')) return 'paypal';
+  if (normalized.includes('conekta')) return 'conekta';
+  if (normalized === 'admin' || normalized.includes('admin')) return 'admin';
+  return null;
+};
+
+const parseProviders = (raw: string | null): Set<BackfillProvider> => {
+  const source = (raw || DEFAULT_PROVIDERS_FLAG).trim();
+  const parts = source
+    .split(',')
+    .map((entry) => entry.trim().toLowerCase())
+    .filter(Boolean);
+
+  if (!parts.length) {
+    throw new Error('No providers were parsed from --providers.');
+  }
+
+  const selected = new Set<BackfillProvider>();
+  for (const token of parts) {
+    const alias = PROVIDER_ALIASES[token];
+    if (!alias) {
+      throw new Error(
+        `Unsupported provider "${token}". Supported values: ${Object.keys(PROVIDER_ALIASES).join(', ')}`,
+      );
+    }
+
+    if (alias === 'all') {
+      for (const provider of SUPPORTED_PROVIDERS) selected.add(provider);
+      continue;
+    }
+
+    if (alias === 'stripe_bundle') {
+      selected.add('stripe');
+      selected.add('stripe_oxxo');
+      continue;
+    }
+
+    selected.add(alias);
+  }
+
+  return selected;
+};
+
+const fetchPaidOrdersBatch = async ({
   prisma,
   afterId,
   since,
@@ -103,8 +174,8 @@ const fetchStripePaidOrdersBatch = async ({
   since: Date;
   until: Date;
   batchSize: number;
-}): Promise<StripeOrderRow[]> =>
-  prisma.$queryRaw<StripeOrderRow[]>(Prisma.sql`
+}): Promise<PaidOrderRow[]> =>
+  prisma.$queryRaw<PaidOrderRow[]>(Prisma.sql`
     SELECT
       o.id AS id,
       o.user_id AS userId,
@@ -113,16 +184,17 @@ const fetchStripePaidOrdersBatch = async ({
       o.date_order AS dateOrder,
       o.payment_method AS paymentMethod,
       o.txn_id AS txnId,
+      o.invoice_id AS invoiceId,
       o.is_plan AS isPlan,
       p.moneda AS currency
     FROM orders o
     LEFT JOIN plans p ON p.id = o.plan_id
     WHERE o.id > ${afterId}
       AND o.status = ${OrderStatus.PAID}
+      AND o.is_plan = 1
       AND (o.is_canceled IS NULL OR o.is_canceled = 0)
       AND o.date_order >= ${since}
       AND o.date_order < ${until}
-      AND LOWER(COALESCE(o.payment_method, '')) LIKE ${'%stripe%'}
     ORDER BY o.id ASC
     LIMIT ${batchSize}
   `);
@@ -130,20 +202,25 @@ const fetchStripePaidOrdersBatch = async ({
 const fetchExistingPaymentEvents = async ({
   prisma,
   orderIds,
-  txnIds,
+  references,
 }: {
   prisma: PrismaClient;
   orderIds: number[];
-  txnIds: string[];
+  references: string[];
 }): Promise<ExistingPaymentEventRow[]> => {
   if (!orderIds.length) return [];
 
-  const txnCondition = txnIds.length
+  const refsCondition = references.length
     ? Prisma.sql`
-      OR NULLIF(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.stripeSubscriptionId')), '')
-        IN (${Prisma.join(txnIds)})
-      OR NULLIF(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.stripePaymentIntentId')), '')
-        IN (${Prisma.join(txnIds)})
+      OR NULLIF(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.providerEventId')), '') IN (${Prisma.join(references)})
+      OR NULLIF(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.provider_event_id')), '') IN (${Prisma.join(references)})
+      OR NULLIF(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.stripeSubscriptionId')), '') IN (${Prisma.join(references)})
+      OR NULLIF(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.stripePaymentIntentId')), '') IN (${Prisma.join(references)})
+      OR NULLIF(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.stripeInvoiceId')), '') IN (${Prisma.join(references)})
+      OR NULLIF(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.paypalSubscriptionId')), '') IN (${Prisma.join(references)})
+      OR NULLIF(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.conektaOrderId')), '') IN (${Prisma.join(references)})
+      OR NULLIF(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.txnId')), '') IN (${Prisma.join(references)})
+      OR NULLIF(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.invoiceId')), '') IN (${Prisma.join(references)})
     `
     : Prisma.empty;
 
@@ -159,10 +236,28 @@ const fetchExistingPaymentEvents = async ({
           0
         )
       ) AS orderId,
+      COALESCE(
+        NULLIF(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.paymentProvider')), ''),
+        NULLIF(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.payment_provider')), '')
+      ) AS paymentProvider,
+      COALESCE(
+        NULLIF(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.providerEventId')), ''),
+        NULLIF(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.provider_event_id')), '')
+      ) AS providerEventId,
       NULLIF(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.stripeSubscriptionId')), '')
         AS stripeSubscriptionId,
       NULLIF(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.stripePaymentIntentId')), '')
-        AS stripePaymentIntentId
+        AS stripePaymentIntentId,
+      NULLIF(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.stripeInvoiceId')), '')
+        AS stripeInvoiceId,
+      NULLIF(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.paypalSubscriptionId')), '')
+        AS paypalSubscriptionId,
+      NULLIF(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.conektaOrderId')), '')
+        AS conektaOrderId,
+      NULLIF(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.txnId')), '')
+        AS txnId,
+      NULLIF(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.invoiceId')), '')
+        AS invoiceId
     FROM analytics_events ae
     WHERE ae.event_name = 'payment_success'
       AND (
@@ -176,7 +271,7 @@ const fetchExistingPaymentEvents = async ({
             0
           )
         ) IN (${Prisma.join(orderIds)})
-        ${txnCondition}
+        ${refsCondition}
       )
   `);
 };
@@ -226,6 +321,15 @@ const fetchRenewalMap = async ({
   );
 };
 
+const collectReferenceValues = (order: PaidOrderRow): string[] => {
+  const references: string[] = [];
+  const txnId = toNullableTxId(order.txnId);
+  const invoiceId = toNullableTxId(order.invoiceId);
+  if (txnId) references.push(txnId);
+  if (invoiceId) references.push(invoiceId);
+  return references;
+};
+
 async function main(): Promise<void> {
   if (!process.env.DATABASE_URL) {
     log.warn('[PAYMENT_SUCCESS_BACKFILL] DATABASE_URL not configured. Skipping.');
@@ -246,6 +350,7 @@ async function main(): Promise<void> {
   const limit = limitRaw ? Math.max(1, parsePositiveInt(limitRaw, 0)) : null;
   const sinceArg = parseDateOption(getFlagValue(args, '--since'));
   const untilArg = parseDateOption(getFlagValue(args, '--until'));
+  const selectedProviders = parseProviders(getFlagValue(args, '--providers'));
 
   if ((getFlagValue(args, '--since') && !sinceArg) || (getFlagValue(args, '--until') && !untilArg)) {
     throw new Error(
@@ -268,12 +373,16 @@ async function main(): Promise<void> {
         until: until.toISOString(),
         batchSize,
         limit,
+        providers: [...selectedProviders],
       },
     );
   }
 
   const prisma = new PrismaClient();
   let scannedOrders = 0;
+  let scannedSupportedOrders = 0;
+  let skippedByProviderFilter = 0;
+  let skippedUnsupportedProvider = 0;
   let missingOrders = 0;
   let insertedEvents = 0;
   let failedEvents = 0;
@@ -284,7 +393,7 @@ async function main(): Promise<void> {
     await ensureAnalyticsEventsTableExists(prisma);
 
     while (!stopEarly) {
-      const batch = await fetchStripePaidOrdersBatch({
+      const batch = await fetchPaidOrdersBatch({
         prisma,
         afterId: lastSeenOrderId,
         since,
@@ -296,44 +405,83 @@ async function main(): Promise<void> {
       scannedOrders += batch.length;
       lastSeenOrderId = batch[batch.length - 1].id;
 
-      const orderIds = batch.map((row) => row.id);
-      const txnIds = Array.from(
-        new Set(
-          batch
-            .map((row) => toNullableTxId(row.txnId))
-            .filter((value): value is string => Boolean(value)),
-        ),
+      const candidateRows: Array<PaidOrderRow & { provider: BackfillProvider }> = [];
+      for (const row of batch) {
+        const provider = resolveProviderFromPaymentMethod(row.paymentMethod);
+        if (!provider) {
+          skippedUnsupportedProvider += 1;
+          continue;
+        }
+        scannedSupportedOrders += 1;
+        if (!selectedProviders.has(provider)) {
+          skippedByProviderFilter += 1;
+          continue;
+        }
+        candidateRows.push({ ...row, provider });
+      }
+
+      if (!candidateRows.length) {
+        log.info('[PAYMENT_SUCCESS_BACKFILL] Batch processed.', {
+          scannedOrders,
+          scannedSupportedOrders,
+          skippedByProviderFilter,
+          skippedUnsupportedProvider,
+          missingOrders,
+          insertedEvents,
+          failedEvents,
+        });
+        continue;
+      }
+
+      const orderIds = candidateRows.map((row) => row.id);
+      const references = Array.from(
+        new Set(candidateRows.flatMap((row) => collectReferenceValues(row))),
       );
 
       const existingRows = await fetchExistingPaymentEvents({
         prisma,
         orderIds,
-        txnIds,
+        references,
       });
 
       const existingOrderIds = new Set<number>();
-      const existingTxnIds = new Set<string>();
+      const existingReferences = new Set<string>();
       for (const row of existingRows) {
         if (Number.isFinite(Number(row.orderId)) && Number(row.orderId) > 0) {
           existingOrderIds.add(Number(row.orderId));
         }
 
-        const subscriptionId = toNullableTxId(row.stripeSubscriptionId);
-        if (subscriptionId) existingTxnIds.add(subscriptionId);
-        const paymentIntentId = toNullableTxId(row.stripePaymentIntentId);
-        if (paymentIntentId) existingTxnIds.add(paymentIntentId);
+        const refs = [
+          row.providerEventId,
+          row.stripeSubscriptionId,
+          row.stripePaymentIntentId,
+          row.stripeInvoiceId,
+          row.paypalSubscriptionId,
+          row.conektaOrderId,
+          row.txnId,
+          row.invoiceId,
+        ];
+        for (const ref of refs) {
+          const normalized = toNullableTxId(ref);
+          if (normalized) existingReferences.add(normalized);
+        }
       }
 
-      const missingBatch = batch.filter((row) => {
+      const missingBatch = candidateRows.filter((row) => {
         if (existingOrderIds.has(row.id)) return false;
-        const txnId = toNullableTxId(row.txnId);
-        if (txnId && existingTxnIds.has(txnId)) return false;
+        const rowReferences = collectReferenceValues(row);
+        if (rowReferences.some((reference) => existingReferences.has(reference))) {
+          return false;
+        }
         return true;
       });
 
       if (!missingBatch.length) {
         log.info('[PAYMENT_SUCCESS_BACKFILL] Batch processed.', {
           scannedOrders,
+          scannedSupportedOrders,
+          skippedByProviderFilter,
+          skippedUnsupportedProvider,
           missingOrders,
           insertedEvents,
           failedEvents,
@@ -366,7 +514,7 @@ async function main(): Promise<void> {
           try {
             await ingestPaymentSuccessEvent({
               prisma,
-              provider: resolveStripeProvider(order.paymentMethod),
+              provider: order.provider,
               providerEventId: `backfill_order_${order.id}`,
               userId: order.userId,
               orderId: order.id,
@@ -376,8 +524,10 @@ async function main(): Promise<void> {
               isRenewal: renewalMap.get(order.id) ?? false,
               eventTs: new Date(order.dateOrder),
               metadata: {
-                backfillSource: 'stripe_paid_order_without_payment_success',
+                backfillSource: 'paid_order_without_payment_success',
                 paymentMethod: toNullableTrimmedString(order.paymentMethod, 80),
+                txnId: toNullableTxId(order.txnId),
+                invoiceId: toNullableTxId(order.invoiceId),
               },
             });
             insertedEvents += 1;
@@ -392,6 +542,9 @@ async function main(): Promise<void> {
 
       log.info('[PAYMENT_SUCCESS_BACKFILL] Batch processed.', {
         scannedOrders,
+        scannedSupportedOrders,
+        skippedByProviderFilter,
+        skippedUnsupportedProvider,
         missingOrders,
         insertedEvents,
         failedEvents,
@@ -402,7 +555,11 @@ async function main(): Promise<void> {
       mode: apply ? 'apply' : 'dry-run',
       since: since.toISOString(),
       until: until.toISOString(),
+      providers: [...selectedProviders],
       scannedOrders,
+      scannedSupportedOrders,
+      skippedByProviderFilter,
+      skippedUnsupportedProvider,
       missingOrders,
       insertedEvents,
       failedEvents,
