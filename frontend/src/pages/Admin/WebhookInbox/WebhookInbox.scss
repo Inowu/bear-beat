@@ -1,0 +1,139 @@
+.webhook-inbox-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.webhook-inbox-toolbar__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 170px;
+  flex: 1 1 190px;
+}
+
+.webhook-inbox-toolbar__field span {
+  font-size: 0.8rem;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.webhook-inbox-toolbar__field input,
+.webhook-inbox-toolbar__field select {
+  min-height: 38px;
+}
+
+.webhook-inbox-empty {
+  opacity: 0.85;
+}
+
+.webhook-inbox-row--selected {
+  background: color-mix(in oklab, var(--ad-surface, #111827) 92%, var(--app-accent) 8%);
+}
+
+.webhook-inbox-event-id {
+  display: inline-block;
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.webhook-inbox-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  background: rgba(148, 163, 184, 0.16);
+}
+
+.webhook-inbox-status--processed {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.webhook-inbox-status--failed {
+  background: rgba(249, 115, 22, 0.15);
+  color: #f97316;
+}
+
+.webhook-inbox-status--ignored {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.webhook-inbox-status--processing,
+.webhook-inbox-status--enqueued,
+.webhook-inbox-status--received {
+  background: rgba(59, 130, 246, 0.14);
+  color: #60a5fa;
+}
+
+.webhook-inbox-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.webhook-inbox-detail {
+  margin-top: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 12px;
+  padding: 16px;
+  background: color-mix(in oklab, var(--ad-surface, #111827) 94%, white 6%);
+}
+
+.webhook-inbox-detail h2 {
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.webhook-inbox-detail__loader {
+  display: flex;
+  justify-content: center;
+  padding: 18px 0;
+}
+
+.webhook-inbox-detail__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px 14px;
+  margin-bottom: 14px;
+}
+
+.webhook-inbox-detail__grid p {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
+.webhook-inbox-detail__panels {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.webhook-inbox-detail__panels section h3 {
+  margin: 0 0 6px;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.webhook-inbox-detail__panels section pre {
+  margin: 0;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 10px;
+  padding: 10px;
+  max-height: 300px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  background: color-mix(in oklab, var(--ad-surface, #111827) 88%, black 12%);
+}
+

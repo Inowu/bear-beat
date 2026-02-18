@@ -1,5 +1,6 @@
 import { router } from '../trpc';
 import { adminAuditLogsRouter } from './AdminAuditLogs.router';
+import { webhookInboxRouter } from './WebhookInbox.router';
 import { checkoutLogsRouter } from './CheckoutLogs.router';
 import { analyticsRouter } from './Analytics.router';
 import { configsRouter } from './Config.router';
@@ -33,6 +34,7 @@ import { commsRouter } from './comms';
 
 export const appRouter = router({
   adminAuditLogs: adminAuditLogsRouter,
+  webhookInbox: webhookInboxRouter,
   auth: authRouter,
   ftp: ftpRouter,
   catalog: catalogRouter,

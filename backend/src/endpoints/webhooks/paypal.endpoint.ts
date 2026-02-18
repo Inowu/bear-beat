@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
-import { paypalSubscriptionWebhook } from '../../routers/webhooks/paypal';
-import { log } from '../../server';
 import { verifyPaypalSignature } from '../../routers/utils/verifyPaypalSignature';
+import { receiveWebhookIntoInbox } from './webhookInboxReception';
 
 export const paypalEndpoint = async (req: Request, res: Response) => {
   const isValid = await verifyPaypalSignature(req);
@@ -9,13 +8,14 @@ export const paypalEndpoint = async (req: Request, res: Response) => {
     return res.status(400).send('Invalid signature');
   }
 
-  try {
-    await paypalSubscriptionWebhook(req);
-
-    return res.status(200).end();
-  } catch (e) {
-    log.error(`[PAYPAL_WH] Error handling webhook: ${e}`);
-    // Return non-2xx so PayPal can retry on transient failures.
-    return res.status(500).end();
+  const result = await receiveWebhookIntoInbox({
+    provider: 'paypal',
+    req,
+    logPrefix: 'PAYPAL_WH',
+  });
+  if (!result.ok) {
+    return res.status(result.status).send(result.message);
   }
+
+  return res.status(200).end();
 };

@@ -209,6 +209,12 @@ function AsideNavbar(props: AsideNavbarPropsI) {
                       </NavLink>
                     </li>
                     <li>
+                      <NavLink to="/admin/webhook-inbox" className={navLinkClassName} {...linkProps}>
+                        <Activity size={18} aria-hidden />
+                        Webhook Inbox
+                      </NavLink>
+                    </li>
+                    <li>
                       <NavLink to="/admin/dominios-bloqueados" className={navLinkClassName} {...linkProps}>
                         <Ban size={18} aria-hidden />
                         Dominios

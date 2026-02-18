@@ -1,11 +1,11 @@
 import { createSign, generateKeyPairSync } from 'crypto';
 import type { Request, Response } from 'express';
 import { conektaEndpoint } from '../src/endpoints/webhooks/conekta.endpoint';
-import * as conektaWebhookModule from '../src/routers/webhooks/conekta';
 import {
   verifyConektaSignature,
 } from '../src/routers/utils/verifyConektaSignature';
 import * as conektaSignatureModule from '../src/routers/utils/verifyConektaSignature';
+import * as webhookInboxReceptionModule from '../src/endpoints/webhooks/webhookInboxReception';
 
 const ORIGINAL_ENV = {
   NODE_ENV: process.env.NODE_ENV,
@@ -154,14 +154,14 @@ describe('conektaEndpoint', () => {
     const verifySpy = jest
       .spyOn(conektaSignatureModule, 'verifyConektaSignature')
       .mockReturnValue(false);
-    const handlerSpy = jest
-      .spyOn(conektaWebhookModule, 'conektaSubscriptionWebhook')
-      .mockResolvedValue(undefined);
+    const receptionSpy = jest
+      .spyOn(webhookInboxReceptionModule, 'receiveWebhookIntoInbox')
+      .mockResolvedValue({ ok: true, duplicate: false });
 
     await conektaEndpoint(req, res);
 
     expect(verifySpy).toHaveBeenCalledWith(req);
-    expect(handlerSpy).not.toHaveBeenCalled();
+    expect(receptionSpy).not.toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.send).toHaveBeenCalledWith('Invalid signature');
   });
@@ -176,14 +176,18 @@ describe('conektaEndpoint', () => {
     const verifySpy = jest
       .spyOn(conektaSignatureModule, 'verifyConektaSignature')
       .mockReturnValue(true);
-    const handlerSpy = jest
-      .spyOn(conektaWebhookModule, 'conektaSubscriptionWebhook')
-      .mockResolvedValue(undefined);
+    const receptionSpy = jest
+      .spyOn(webhookInboxReceptionModule, 'receiveWebhookIntoInbox')
+      .mockResolvedValue({ ok: true, duplicate: false });
 
     await conektaEndpoint(req, res);
 
     expect(verifySpy).toHaveBeenCalledWith(req);
-    expect(handlerSpy).toHaveBeenCalledWith(req);
+    expect(receptionSpy).toHaveBeenCalledWith({
+      provider: 'conekta',
+      req,
+      logPrefix: 'CONEKTA_WH',
+    });
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.end).toHaveBeenCalled();
   });
@@ -195,12 +199,12 @@ describe('conektaEndpoint', () => {
     });
     const res = buildRes();
 
-    jest
-      .spyOn(conektaSignatureModule, 'verifyConektaSignature')
-      .mockReturnValue(true);
-    jest
-      .spyOn(conektaWebhookModule, 'conektaSubscriptionWebhook')
-      .mockRejectedValue(new SyntaxError('Unexpected token o in JSON at position 0'));
+    jest.spyOn(conektaSignatureModule, 'verifyConektaSignature').mockReturnValue(true);
+    jest.spyOn(webhookInboxReceptionModule, 'receiveWebhookIntoInbox').mockResolvedValue({
+      ok: false,
+      status: 400,
+      message: 'Invalid JSON payload',
+    });
 
     await conektaEndpoint(req, res);
 

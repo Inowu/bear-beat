@@ -138,6 +138,9 @@ const BlockedPhoneNumbers = lazy(() =>
 const AuditLogs = lazy(() =>
   import("./pages/Admin/AuditLogs/AuditLogs").then((module) => ({ default: module.AuditLogs })),
 );
+const WebhookInbox = lazy(() =>
+  import("./pages/Admin/WebhookInbox/WebhookInbox").then((module) => ({ default: module.WebhookInbox })),
+);
 
 function RouteLoader() {
   return (
@@ -240,6 +243,7 @@ const router = createBrowserRouter([
           { path: "ordenes", element: withRouteSuspense(<Ordens />) },
           { path: "historialCheckout", element: withRouteSuspense(<HistoryCheckout />) },
           { path: "audit-logs", element: withRouteSuspense(<AuditLogs />) },
+          { path: "webhook-inbox", element: withRouteSuspense(<WebhookInbox />) },
           { path: "dominios-bloqueados", element: withRouteSuspense(<BlockedEmailDomains />) },
           { path: "telefonos-bloqueados", element: withRouteSuspense(<BlockedPhoneNumbers />) },
         ],

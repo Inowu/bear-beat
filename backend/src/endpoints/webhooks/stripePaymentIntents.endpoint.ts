@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import { verifyStripeSignatureAny } from '../../routers/utils/verifyStripeSignature';
-import { log } from '../../server';
-import { stripeInvoiceWebhook } from '../../routers/webhooks/stripe/paymentIntentsWh';
+import { receiveWebhookIntoInbox } from './webhookInboxReception';
 
 export const stripePiEndpoint = async (req: Request, res: Response) => {
   const isValid = verifyStripeSignatureAny(req, [
@@ -13,13 +12,14 @@ export const stripePiEndpoint = async (req: Request, res: Response) => {
     return res.status(400).send('Invalid signature');
   }
 
-  try {
-    await stripeInvoiceWebhook(req);
-
-    return res.status(200).end();
-  } catch (e) {
-    log.error(`[STRIPE_WH] Error handling webhook: ${e}`);
-
-    return res.status(500).end();
+  const result = await receiveWebhookIntoInbox({
+    provider: 'stripe_pi',
+    req,
+    logPrefix: 'STRIPE_PI_WH',
+  });
+  if (!result.ok) {
+    return res.status(result.status).send(result.message);
   }
+
+  return res.status(200).end();
 };

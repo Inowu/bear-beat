@@ -46,11 +46,20 @@ import {
   closeManyChatRetryQueue,
   initializeManyChatRetryQueue,
 } from './queue/manyChat';
+import {
+  closeWebhookInboxQueue,
+  enqueueWebhookInboxJob,
+  initializeWebhookInboxQueue,
+} from './queue/webhookInbox';
 import { downloadDirEndpoint } from './endpoints/download-dir.endpoint';
 import { catalogStatsEndpoint } from './endpoints/catalog-stats.endpoint';
 import { stripeOxxoHealthEndpoint } from './endpoints/stripe-oxxo-health.endpoint';
 import { isMediaCdnEnabled } from './utils/demoMedia';
 import { processManyChatRetryJob } from './many-chat';
+import {
+  processWebhookInboxEvent,
+  sweepWebhookInboxEvents,
+} from './webhookInbox/service';
 
 const DEFAULT_CORS_ORIGINS = [
   'http://localhost:3000',
@@ -638,6 +647,17 @@ async function main() {
       initializeRemoveUsersQueue();
 
       initializeManyChatRetryQueue(processManyChatRetryJob);
+
+      initializeWebhookInboxQueue(
+        async ({ inboxId }) => {
+          await processWebhookInboxEvent(inboxId);
+        },
+        async () => {
+          await sweepWebhookInboxEvents(async (inboxId) => {
+            return enqueueWebhookInboxJob({ inboxId });
+          });
+        },
+      );
     } catch (e: any) {
       log.error(`[QUEUE] Error while initializing queues: ${e.message}`);
     }
@@ -663,6 +683,7 @@ const closeConnections = async () => {
     await removeUsersQueue.close();
   }
   await closeManyChatRetryQueue();
+  await closeWebhookInboxQueue();
 };
 
 process.on('SIGTERM', async () => {
