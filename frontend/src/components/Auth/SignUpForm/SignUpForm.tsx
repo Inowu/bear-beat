@@ -228,11 +228,12 @@ function SignUpForm() {
           .required("La contraseña es requerida")
           .min(6, "La contraseña debe contener al menos 6 caracteres"),
         phone: Yup.string()
-          .required("El WhatsApp es requerido")
-          .matches(/^[0-9]{7,14}$/, {
-            message: "El teléfono no es válido",
-            excludeEmptyString: true,
-          }),
+          .test(
+            "phone-if-present",
+            "El teléfono no es válido",
+            (value) => !value || /^[0-9]{7,14}$/.test(value.trim()),
+          )
+          .notRequired(),
         passwordConfirmation: Yup.string()
           .required("Debe confirmar la contraseña")
           .oneOf([Yup.ref("password")], "Ambas contraseñas deben ser iguales"),
@@ -673,7 +674,7 @@ function SignUpForm() {
   const WhatsAppField = (
     <div className={`c-row c-row--phone ${showPhoneError ? "is-invalid" : ""}`}>
       <label htmlFor="phone" className="auth-field-label">
-        WhatsApp
+        WhatsApp <span className="auth-field-optional">(opcional)</span>
       </label>
       <div className="signup-phone-wrap">
         <div className="signup-phone-flag-wrap">
@@ -833,7 +834,7 @@ function SignUpForm() {
           />
           <span className="auth-consent-copy">
             <strong>
-              Acepto mensajes transaccionales, de soporte y promociones por email y WhatsApp.
+              Acepto mensajes transaccionales, de soporte y promociones por email y, si lo proporciono, WhatsApp.
             </strong>
             <small>
               Solo para accesos, pagos, soporte y novedades de Bear Beat. Cero spam. Puedes desuscribirte de

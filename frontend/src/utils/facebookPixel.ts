@@ -6,10 +6,8 @@
 
 import { ensureMetaAttributionCookies } from "./metaAttributionCookies";
 
-// Pixel ID no es secreto. Este fallback coincide con el <noscript> de public/index.html
-// para que el pixel funcione aunque falte el env var en el build.
-const DEFAULT_PIXEL_ID = "1325763147585869";
-const PIXEL_ID = (process.env.REACT_APP_FB_PIXEL_ID || DEFAULT_PIXEL_ID).trim();
+const PIXEL_ID = `${process.env.REACT_APP_FB_PIXEL_ID ?? ""}`.trim();
+const HAS_PIXEL_ID = /^\d+$/.test(PIXEL_ID);
 
 declare global {
   interface Window {
@@ -65,7 +63,7 @@ function flushQueueIfReady(): void {
  */
 export function initFacebookPixel(): void {
   if (typeof window === "undefined" || typeof document === "undefined") return;
-  if (!PIXEL_ID) return;
+  if (!HAS_PIXEL_ID) return;
   const id = PIXEL_ID;
 
   // Evitar doble init
@@ -107,6 +105,7 @@ function fireFbq(
   eventId?: string
 ): void {
   if (typeof window === "undefined") return;
+  if (!HAS_PIXEL_ID) return;
   // Ensure cookies also exist when events fire before delayed tracker init.
   ensureMetaAttributionCookies();
   if (!isFbqReady()) {

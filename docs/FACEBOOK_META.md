@@ -23,10 +23,6 @@ Guía para dejar funcionando el Pixel en el frontend y la Conversions API (CAPI)
 
 Si esta variable no está definida, el pixel **no se carga** en la app (no hay ID por defecto en código).
 
-### Noscript (usuarios sin JavaScript)
-
-En `frontend/public/index.html` hay una etiqueta `<noscript>` con una imagen que envía un PageView a Meta. El `id` en la URL debe ser el **mismo** que `REACT_APP_FB_PIXEL_ID`. Si cambias de pixel, actualiza ese `id` en el HTML.
-
 ---
 
 ## 3. Backend – Conversions API (CAPI)

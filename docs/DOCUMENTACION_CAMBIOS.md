@@ -116,7 +116,7 @@ Se importa `landing-design.scss` o `_variables-theme.scss` donde haga falta. Par
 
 | Dónde     | Variable                 | Descripción |
 |----------|---------------------------|-------------|
-| Frontend | `REACT_APP_FB_PIXEL_ID`   | ID del pixel de Meta (ej. desde Meta Business Suite → Configuración de datos → Pixels). Debe coincidir con el ID en el `<noscript>` de `frontend/public/index.html` para usuarios sin JS. |
+| Frontend | `REACT_APP_FB_PIXEL_ID`   | ID del pixel de Meta (ej. desde Meta Business Suite → Configuración de datos → Pixels). Si no está definido, el frontend no inicializa Meta Pixel. |
 | Backend  | `FACEBOOK_PIXEL_ID`       | Mismo ID del pixel (mismo valor que en frontend). |
 | Backend  | `FACEBOOK_ACCESS_TOKEN`   | Token de acceso del pixel para CAPI. En Meta: Business Suite → Configuración de datos → Pixels → Tu pixel → Configuración → Conversions API → “Generar token de acceso”. Usar un token que no expire o renovarlo cuando caduque. |
 
@@ -134,7 +134,7 @@ Se importa `landing-design.scss` o `_variables-theme.scss` donde haga falta. Par
 
 ### Ajustes
 - Todas las páginas, layouts, modales y componentes principales con `@media` para móvil: tamaños de fuente, padding, flex-direction, ocultar elementos secundarios, tablas con `overflow-x: auto`.
-- `viewport-fit=cover` en el meta viewport de `frontend/public/index.html` para mejor comportamiento en móvil.
+- `viewport-fit=cover` en el meta viewport de `frontend/index.html` para mejor comportamiento en móvil.
 
 ---
 
@@ -215,7 +215,7 @@ Se importa `landing-design.scss` o `_variables-theme.scss` donde haga falta. Par
 ### Archivos principales
 - `frontend/src/contexts/ThemeContext.tsx` – `ThemeProvider` y `useTheme()`; modos: `light`, `dark`, `system`, `schedule`; persistencia en `localStorage`.
 - `frontend/src/styles/_variables-theme.scss` – variables CSS (`--theme-bg`, `--theme-text`, `--theme-nav-border-bottom`, etc.) para modo claro y oscuro; modo claro con más “vida” (gradiente sutil, sombras, acentos, `--theme-ink` / `--theme-heading` para títulos).
-- `frontend/public/index.html` – script inline que aplica el tema desde `localStorage` antes de que cargue React (evita flash).
+- `frontend/index.html` – script inline que aplica el tema desde `localStorage` antes de que cargue React (evita flash).
 
 ### UI
 - En la Navbar hay un botón de tema (sol/luna) que abre un menú: Claro, Oscuro, Según sistema, Por horario.
