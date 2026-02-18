@@ -23,7 +23,7 @@ import { sseEndpoint } from "./utils/runtimeConfig";
 import { initManyChatHandoff } from "./utils/manychatHandoff";
 import {
   hasManyChatMcpTokenInLocation,
-  loadManyChatScriptsOnce,
+  loadManyChatOnce,
   shouldLoadManyChatForPath,
   syncManyChatWidgetVisibility,
 } from "./utils/manychatLoader";
@@ -376,7 +376,7 @@ const scheduleManyChatBootstrap = () => {
     syncManyChatWidgetVisibility(pathname);
 
     if (!shouldLoadManyChatForPath(pathname, hasMcpToken)) return;
-    void loadManyChatScriptsOnce().catch(() => {
+    void loadManyChatOnce().catch(() => {
       // noop
     });
   };
@@ -413,7 +413,7 @@ const scheduleManyChatBootstrap = () => {
 
     const hasMcpToken = hasManyChatMcpTokenInLocation();
     if (!shouldLoadManyChatForPath(pathname, hasMcpToken)) return;
-    void loadManyChatScriptsOnce().catch(() => {
+    void loadManyChatOnce().catch(() => {
       // noop
     });
   });

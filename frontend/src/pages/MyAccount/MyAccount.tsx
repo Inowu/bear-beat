@@ -42,7 +42,6 @@ import {
   getStripeLoadFailureReason,
 } from "../../utils/stripeLoader";
 import {
-  loadManyChatScriptsOnce,
   openManyChatWidget,
   syncManyChatWidgetVisibility,
 } from "../../utils/manychatLoader";
@@ -284,15 +283,10 @@ function MyAccount() {
     }
   };
 
-  const openSupportChat = async () => {
+  const openSupportChat = () => {
     let openedWidget = false;
-    try {
-      await loadManyChatScriptsOnce();
-      syncManyChatWidgetVisibility(window.location.pathname);
-      openedWidget = openManyChatWidget();
-    } catch {
-      openedWidget = false;
-    }
+    syncManyChatWidgetVisibility(window.location.pathname);
+    openedWidget = openManyChatWidget();
 
     trackGrowthMetric(GROWTH_METRICS.SUPPORT_CHAT_OPENED, {
       surface: "my_account",

@@ -11,7 +11,6 @@ const SCRIPT_TIMEOUT_MS = 12_000;
 const MARKETING_PATHS = new Set<string>([
   "/",
   "/planes",
-  "/instrucciones",
   "/legal",
 ]);
 
@@ -34,8 +33,25 @@ function isCheckoutPath(pathname: string): boolean {
   return path.startsWith("/comprar") || path.startsWith("/checkout");
 }
 
+function isAuthPath(pathname: string): boolean {
+  return normalizePath(pathname).startsWith("/auth");
+}
+
 function isAdminPath(pathname: string): boolean {
   return normalizePath(pathname).startsWith("/admin");
+}
+
+function isMyAccountPath(pathname: string): boolean {
+  return normalizePath(pathname).startsWith("/micuenta");
+}
+
+function isManyChatBlockedUiPath(pathname: string): boolean {
+  return (
+    isCheckoutPath(pathname)
+    || isAuthPath(pathname)
+    || isAdminPath(pathname)
+    || isMyAccountPath(pathname)
+  );
 }
 
 function ensureManyChatHideStyles(): void {
@@ -177,7 +193,7 @@ export function isManyChatPixelReady(): boolean {
   );
 }
 
-export function loadManyChatScriptsOnce(): Promise<void> {
+export function loadManyChatOnce(): Promise<void> {
   if (typeof window === "undefined" || typeof document === "undefined") {
     return Promise.resolve();
   }
@@ -200,6 +216,9 @@ export function loadManyChatScriptsOnce(): Promise<void> {
 
   return manyChatLoadPromise;
 }
+
+// Backward-compatible alias for existing call sites.
+export const loadManyChatScriptsOnce = loadManyChatOnce;
 
 export function waitForManyChatPixelReady({
   maxWaitMs,
@@ -250,9 +269,7 @@ export function shouldLoadManyChatForPath(
 ): boolean {
   if (forceForAttribution) return true;
 
-  const path = normalizePath(pathname);
-  if (isCheckoutPath(path) || isAdminPath(path)) return false;
-  return isManyChatMarketingPath(path);
+  return isManyChatMarketingPath(pathname);
 }
 
 export function syncManyChatWidgetVisibility(pathname: string): void {
@@ -260,7 +277,7 @@ export function syncManyChatWidgetVisibility(pathname: string): void {
 
   ensureManyChatHideStyles();
 
-  const shouldHide = isCheckoutPath(pathname);
+  const shouldHide = isManyChatBlockedUiPath(pathname);
   document.body.classList.toggle(MANYCHAT_HIDE_CLASS, shouldHide);
 
   if (shouldHide) {
@@ -272,6 +289,10 @@ export function syncManyChatWidgetVisibility(pathname: string): void {
 }
 
 export function openManyChatWidget(): boolean {
+  if (typeof window !== "undefined" && isManyChatBlockedUiPath(window.location.pathname)) {
+    syncManyChatWidgetVisibility(window.location.pathname);
+    return false;
+  }
   // Try explicit open APIs first, then fall back to show.
   return invokeManyChatApi([
     "openWidget",
