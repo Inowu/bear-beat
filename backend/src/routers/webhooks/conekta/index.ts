@@ -17,8 +17,17 @@ import { manyChat } from '../../../many-chat';
 import { ingestAnalyticsEvents } from '../../../analytics';
 import { ingestPaymentSuccessEvent } from '../../../analytics/paymentSuccess';
 
-export const conektaSubscriptionWebhook = async (req: Request) => {
-  const payload: EventResponse = JSON.parse(req.body as any);
+const parseConektaPayload = (body: unknown): EventResponse => {
+  if (Buffer.isBuffer(body)) {
+    return JSON.parse(body.toString('utf8')) as EventResponse;
+  }
+  if (typeof body === 'string') {
+    return JSON.parse(body) as EventResponse;
+  }
+  return body as EventResponse;
+};
+
+export const processConektaWebhookPayload = async (payload: EventResponse) => {
 
   if (!shouldHandleEvent(payload)) return;
 
@@ -445,6 +454,11 @@ export const conektaSubscriptionWebhook = async (req: Request) => {
     default:
       log.info('[CONEKTA_WH] Unhandled event', { eventType: payload.type ?? null, eventId: (payload as any)?.id ?? null });
   }
+};
+
+export const conektaSubscriptionWebhook = async (req: Request) => {
+  const payload = parseConektaPayload(req.body);
+  await processConektaWebhookPayload(payload);
 };
 
 export const getCustomerIdFromPayload = async (
