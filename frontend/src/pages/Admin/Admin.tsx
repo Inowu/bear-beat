@@ -43,7 +43,7 @@ import {
   setAdminAccessBackup,
 } from "../../utils/authStorage";
 import { useSafeSSE } from "../../utils/sse";
-import { formatDateShort, formatInt } from "../../utils/format";
+import { formatDbDateOnly, formatInt } from "../../utils/format";
 
 export interface IAdminFilter {
   page: number;
@@ -168,10 +168,7 @@ function Admin() {
     return fetchUsers.map((user: IExportUserRow) => ({
       Usuario: user.username,
       Correo: user.email,
-      "Fecha de Registro": (user.registered_on instanceof Date
-        ? user.registered_on
-        : new Date(user.registered_on)
-      ).toLocaleDateString(),
+      "Fecha de Registro": formatDbDateOnly(user.registered_on),
       Teléfono: user.phone ?? "",
     }));
   };
@@ -579,7 +576,7 @@ function Admin() {
                           {user.phone || "—"}
                         </td>
                         <td>
-                          <span className="date-pill">{formatDateShort(user.registered_on)}</span>
+                          <span className="date-pill">{formatDbDateOnly(user.registered_on)}</span>
                         </td>
                         {showMembershipColumn && (
                           <td>
@@ -740,7 +737,7 @@ function Admin() {
                     </div>
                     <div className="admin-mobile-card__foot">
                       <span>{user.phone || "Sin teléfono"}</span>
-                      <span>{formatDateShort(user.registered_on)}</span>
+                      <span>{formatDbDateOnly(user.registered_on)}</span>
                     </div>
                   </button>
                 ))

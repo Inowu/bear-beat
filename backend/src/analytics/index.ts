@@ -1,6 +1,7 @@
 import { createHash } from 'crypto';
 import { Prisma, PrismaClient } from '@prisma/client';
 import { z } from 'zod';
+import stripeInstance, { isStripeConfigured } from '../stripe';
 
 const MAX_BATCH_SIZE = 40;
 const DEFAULT_RANGE_DAYS = 30;
@@ -10,6 +11,17 @@ const SESSION_INACTIVITY_MINUTES = 30;
 const DEFAULT_IDENTITY_LOOKBACK_HOURS = 24;
 const MAX_IDENTITY_LOOKBACK_HOURS = 72;
 const ANALYTICS_EXCLUDED_TEST_CAMPAIGNS = ['test', 'template_preview'];
+const ACTIVE_TRIALS_CACHE_TTL_MS = 60_000;
+
+type ActiveTrialsSource = 'stripe' | 'stripe-not-configured' | 'stripe-error';
+
+let activeStripeTrialsCache:
+  | {
+      expiresAt: number;
+      value: number | null;
+      source: ActiveTrialsSource;
+    }
+  | null = null;
 
 const ANALYTICS_PUBLIC_TRAFFIC_FILTER_SQL = Prisma.sql`
   AND NOT (
@@ -339,6 +351,8 @@ interface AnalyticsCrmDashboardSnapshot {
     trialStarts: number;
     trialConversions: number;
     trialConversionRatePct: number;
+    activeTrialsNow: number | null;
+    activeTrialsSource: ActiveTrialsSource;
     cancellations: number;
     involuntaryCancellations: number;
     avgHoursPaidToFirstDownload: number | null;
@@ -808,6 +822,72 @@ const resolveRange = (
   const days = normalizeDaysInput(daysInput);
   const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
   return { days, startDate };
+};
+
+const getActiveStripeTrials = async (): Promise<{
+  activeTrialsNow: number | null;
+  activeTrialsSource: ActiveTrialsSource;
+}> => {
+  if (!isStripeConfigured()) {
+    return {
+      activeTrialsNow: null,
+      activeTrialsSource: 'stripe-not-configured',
+    };
+  }
+
+  const now = Date.now();
+  if (activeStripeTrialsCache && activeStripeTrialsCache.expiresAt > now) {
+    return {
+      activeTrialsNow: activeStripeTrialsCache.value,
+      activeTrialsSource: activeStripeTrialsCache.source,
+    };
+  }
+
+  try {
+    let total = 0;
+    let startingAfter: string | undefined;
+    let hasMore = true;
+
+    while (hasMore) {
+      const page = await stripeInstance.subscriptions.list({
+        status: 'trialing',
+        limit: 100,
+        ...(startingAfter ? { starting_after: startingAfter } : {}),
+      });
+
+      total += page.data.length;
+      hasMore = page.has_more;
+      startingAfter = hasMore
+        ? page.data[page.data.length - 1]?.id ?? undefined
+        : undefined;
+
+      if (hasMore && !startingAfter) {
+        hasMore = false;
+      }
+    }
+
+    activeStripeTrialsCache = {
+      expiresAt: now + ACTIVE_TRIALS_CACHE_TTL_MS,
+      value: total,
+      source: 'stripe',
+    };
+
+    return {
+      activeTrialsNow: total,
+      activeTrialsSource: 'stripe',
+    };
+  } catch {
+    activeStripeTrialsCache = {
+      expiresAt: now + ACTIVE_TRIALS_CACHE_TTL_MS,
+      value: null,
+      source: 'stripe-error',
+    };
+
+    return {
+      activeTrialsNow: null,
+      activeTrialsSource: 'stripe-error',
+    };
+  }
 };
 
 export const getAnalyticsFunnelOverview = async (
@@ -1958,6 +2038,8 @@ export const getAnalyticsCrmDashboard = async (
         trialStarts: 0,
         trialConversions: 0,
         trialConversionRatePct: 0,
+        activeTrialsNow: null,
+        activeTrialsSource: 'stripe-not-configured',
         cancellations: 0,
         involuntaryCancellations: 0,
         avgHoursPaidToFirstDownload: null,
@@ -2003,6 +2085,7 @@ export const getAnalyticsCrmDashboard = async (
     paidNoDownload2hRows,
     paidNoDownloadTotalRows,
     paidNoDownloadRows,
+    activeTrialsSnapshot,
   ] = await Promise.all([
     prisma.$queryRaw<Array<{ totalUsers: bigint | number }>>(Prisma.sql`
       SELECT COUNT(*) AS totalUsers
@@ -2380,6 +2463,7 @@ export const getAnalyticsCrmDashboard = async (
       ORDER BY fp.first_paid_at DESC
       LIMIT ${limit} OFFSET ${paidNoDownloadOffset}
     `),
+    getActiveStripeTrials(),
   ]);
 
   const totalUsers = numberFromUnknown(totalUsersRows?.[0]?.totalUsers);
@@ -2519,6 +2603,8 @@ export const getAnalyticsCrmDashboard = async (
       trialStarts,
       trialConversions,
       trialConversionRatePct,
+      activeTrialsNow: activeTrialsSnapshot.activeTrialsNow,
+      activeTrialsSource: activeTrialsSnapshot.activeTrialsSource,
       cancellations: cancellationsTotal,
       involuntaryCancellations,
       avgHoursPaidToFirstDownload,

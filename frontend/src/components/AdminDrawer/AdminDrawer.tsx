@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { X } from "src/icons";
 import { IAdminUser, USER_ROLES } from "../../interfaces/admin";
+import { formatDbDateOnly } from "../../utils/format";
 import "./AdminDrawer.scss";
 
 export interface AdminDrawerAction {
@@ -28,12 +29,6 @@ export function AdminDrawer({
   children,
   actions = [],
 }: AdminDrawerProps) {
-  const formatRegisteredDate = (dateValue: Date | string) => {
-    const parsedDate = dateValue instanceof Date ? dateValue : new Date(dateValue);
-    if (Number.isNaN(parsedDate.getTime())) return "—";
-    return parsedDate.toLocaleDateString();
-  };
-
   const getRoleLabel = (role: number) => {
     if (role === USER_ROLES.ADMIN) return "Admin";
     if (role === USER_ROLES.SUBADMIN) return "Subadmin";
@@ -96,7 +91,7 @@ export function AdminDrawer({
                   <span className="admin-drawer__user-meta">{user.phone}</span>
                 )}
                 <span className="admin-drawer__user-meta">
-                  Registro: {formatRegisteredDate(user.registered_on)}
+                  Registro: {formatDbDateOnly(user.registered_on)}
                 </span>
               </div>
             </div>

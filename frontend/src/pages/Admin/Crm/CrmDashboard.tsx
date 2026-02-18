@@ -99,6 +99,8 @@ interface CrmSnapshot {
     trialStarts: number;
     trialConversions: number;
     trialConversionRatePct: number;
+    activeTrialsNow: number | null;
+    activeTrialsSource: "stripe" | "stripe-not-configured" | "stripe-error";
     cancellations: number;
     involuntaryCancellations: number;
     avgHoursPaidToFirstDownload: number | null;
@@ -226,6 +228,14 @@ function formatStatus(status: string): string {
   return status
     .replace(/_/g, " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function formatActiveTrialsSourceLabel(
+  source: "stripe" | "stripe-not-configured" | "stripe-error",
+): string {
+  if (source === "stripe") return "Stripe live: subscriptions trialing";
+  if (source === "stripe-not-configured") return "Stripe no configurado";
+  return "No disponible (error consultando Stripe)";
 }
 
 function getStatusTone(status: string): "ok" | "warn" | "error" | "neutral" {
@@ -607,6 +617,18 @@ export function CrmDashboard() {
               title="Trial started (evento)"
               value={formatCompactNumber(trialEventTotals.trialStarts)}
               helper="Evento canónico: trial_started (analytics_events)"
+              icon={Clock}
+            />
+            <KpiCard
+              title="Trials activos (Stripe)"
+              value={
+                snapshot.kpis.activeTrialsNow == null
+                  ? "—"
+                  : formatCompactNumber(snapshot.kpis.activeTrialsNow)
+              }
+              helper={formatActiveTrialsSourceLabel(
+                snapshot.kpis.activeTrialsSource,
+              )}
               icon={Clock}
             />
             <KpiCard

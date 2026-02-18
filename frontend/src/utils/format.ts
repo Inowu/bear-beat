@@ -24,6 +24,13 @@ const dfShort = new Intl.DateTimeFormat(APP_NUMBER_LOCALE, {
   year: "numeric",
 });
 
+const dfShortUtc = new Intl.DateTimeFormat(APP_NUMBER_LOCALE, {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
 export function formatInt(value: number): string {
   const n = Number(value);
   if (!Number.isFinite(n)) return "0";
@@ -74,6 +81,17 @@ export function formatDateShort(value: Date | string | number | null | undefined
   const d = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(d.getTime())) return "—";
   return dfShort.format(d);
+}
+
+/**
+ * Format fields persisted as SQL DATE (no time component) without timezone drift.
+ * This avoids showing D-1 in locales west of UTC when the API serializes midnight Z.
+ */
+export function formatDbDateOnly(value: Date | string | number | null | undefined): string {
+  if (value === null || value === undefined) return "—";
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return "—";
+  return dfShortUtc.format(d);
 }
 
 export function formatCurrency(
