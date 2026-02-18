@@ -60,7 +60,7 @@ interface IExportUserRow {
   phone?: string | null;
 }
 
-const getInitialPageLimit = () => 100;
+const getInitialPageLimit = () => 50;
 
 function Admin() {
   const { currentUser, handleLogin } = useUserContext();

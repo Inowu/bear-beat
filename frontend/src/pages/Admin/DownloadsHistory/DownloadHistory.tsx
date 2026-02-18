@@ -29,7 +29,7 @@ export const DownloadHistory = () => {
   const [totalLoader, setTotalLoader] = useState<boolean>(false);
   const [totalHistory, setTotalHistory] = useState(0);
   const [loader, setLoader] = useState<boolean>(true);
-  const [filters, setFilters] = useState<IAdminFilter>({ page: 0, limit: 100 });
+  const [filters, setFilters] = useState<IAdminFilter>({ page: 0, limit: 50 });
   const [showModal, setShowModal] = useState<boolean>(false);
   const [videoURL, setVideoURL] = useState<string>("");
   const [videoId, setVideoId] = useState<number>(0);
@@ -97,6 +97,7 @@ export const DownloadHistory = () => {
           value={filters.limit}
           onChange={(e) => startFilter("limit", +e.target.value)}
         >
+          <option value={50}>50</option>
           <option value={100}>100</option>
           <option value={200}>200</option>
           <option value={500}>500</option>

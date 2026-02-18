@@ -5,21 +5,13 @@ import { useLocation } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import brandMarkBlack from "../../assets/brand/bearbeat-mark-black.png";
 import brandMarkCyan from "../../assets/brand/bearbeat-mark-cyan.png";
+import { ADMIN_NAVIGATION_GROUPS } from "../../constants/adminNavigation";
 import {
-  Activity,
   Users,
   FolderOpen,
   ShoppingCart,
   HelpCircle,
-  Database,
-  Ticket,
-  Receipt,
-  FileText,
   ArrowUpCircle,
-  Download,
-  Ban,
-  Phone,
-  BarChart3,
   X,
   UserRound,
   Shield,
@@ -121,119 +113,21 @@ function AsideNavbar(props: AsideNavbarPropsI) {
           <div className="nav-links-wrap">
             {location.pathname.startsWith("/admin") ? (
               <div className="nav-admin-groups">
-                <section className="nav-group">
-                  <p className="nav-group__title">Operación</p>
-                  <ul className="nav-list">
-                    <li>
-                      <NavLink to="/admin/usuarios" className={navLinkClassName} {...linkProps}>
-                        <Users size={18} aria-hidden />
-                        Usuarios
-                      </NavLink>
-                    </li>
-                    <li>
-                      <NavLink to="/admin/ordenes" className={navLinkClassName} {...linkProps}>
-                        <Receipt size={18} aria-hidden />
-                        Órdenes
-                      </NavLink>
-                    </li>
-                    <li>
-                      <NavLink to="/admin/historialCheckout" className={navLinkClassName} {...linkProps}>
-                        <FileText size={18} aria-hidden />
-                        Checkout
-                      </NavLink>
-                    </li>
-                    <li>
-                      <NavLink to="/admin/historial-descargas" className={navLinkClassName} {...linkProps}>
-                        <Download size={18} aria-hidden />
-                        Descargas
-                      </NavLink>
-                    </li>
-                  </ul>
-                </section>
-
-                <section className="nav-group">
-                  <p className="nav-group__title">Comercial</p>
-                  <ul className="nav-list">
-                    <li>
-                      <NavLink to="/admin/planesAdmin" className={navLinkClassName} {...linkProps}>
-                        <ShoppingCart size={18} aria-hidden />
-                        Planes
-                      </NavLink>
-                    </li>
-                    <li>
-                      <NavLink to="/admin/cupones" className={navLinkClassName} {...linkProps}>
-                        <Ticket size={18} aria-hidden />
-                        Cupones
-                      </NavLink>
-                    </li>
-                  </ul>
-                </section>
-
-                <section className="nav-group">
-                  <p className="nav-group__title">Analítica</p>
-                  <ul className="nav-list">
-                    <li>
-                      <NavLink to="/admin/catalogo" className={navLinkClassName} {...linkProps}>
-                        <BarChart3 size={18} aria-hidden />
-                        Catálogo
-                      </NavLink>
-                    </li>
-                    <li>
-                      <NavLink to="/admin/analitica" className={navLinkClassName} {...linkProps}>
-                        <BarChart3 size={18} aria-hidden />
-                        Analítica
-                      </NavLink>
-                    </li>
-                    <li>
-                      <NavLink to="/admin/crm" className={navLinkClassName} {...linkProps}>
-                        <Users size={18} aria-hidden />
-                        CRM
-                      </NavLink>
-                    </li>
-                    <li>
-                      <NavLink to="/admin/live" className={navLinkClassName} {...linkProps}>
-                        <Activity size={18} aria-hidden />
-                        Live
-                      </NavLink>
-                    </li>
-                  </ul>
-                </section>
-
-                <section className="nav-group">
-                  <p className="nav-group__title">Seguridad y sistema</p>
-                  <ul className="nav-list">
-                    <li>
-                      <NavLink to="/admin/audit-logs" className={navLinkClassName} {...linkProps}>
-                        <FileText size={18} aria-hidden />
-                        Auditoría
-                      </NavLink>
-                    </li>
-                    <li>
-                      <NavLink to="/admin/webhook-inbox" className={navLinkClassName} {...linkProps}>
-                        <Activity size={18} aria-hidden />
-                        Webhook Inbox
-                      </NavLink>
-                    </li>
-                    <li>
-                      <NavLink to="/admin/dominios-bloqueados" className={navLinkClassName} {...linkProps}>
-                        <Ban size={18} aria-hidden />
-                        Dominios
-                      </NavLink>
-                    </li>
-                    <li>
-                      <NavLink to="/admin/telefonos-bloqueados" className={navLinkClassName} {...linkProps}>
-                        <Phone size={18} aria-hidden />
-                        Teléfonos
-                      </NavLink>
-                    </li>
-                    <li>
-                      <NavLink to="/admin/almacenamiento" className={navLinkClassName} {...linkProps}>
-                        <Database size={18} aria-hidden />
-                        Almacenamiento
-                      </NavLink>
-                    </li>
-                  </ul>
-                </section>
+                {ADMIN_NAVIGATION_GROUPS.map((group) => (
+                  <section key={group.id} className="nav-group">
+                    <p className="nav-group__title">{group.label}</p>
+                    <ul className="nav-list">
+                      {group.items.map((item) => (
+                        <li key={item.to}>
+                          <NavLink to={item.to} className={navLinkClassName} {...linkProps}>
+                            <item.Icon size={18} aria-hidden />
+                            {item.label}
+                          </NavLink>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                ))}
 
                 <section className="nav-group nav-group--actions">
                   <ul className="nav-list">

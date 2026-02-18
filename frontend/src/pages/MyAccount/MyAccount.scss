@@ -313,6 +313,29 @@
   font-family: var(--bb-font-ui);
 }
 
+.ma-storage-details {
+  margin: 0;
+  border: 1px dashed color-mix(in srgb, var(--ma-card-border) 72%, transparent);
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: color-mix(in srgb, var(--ma-progress-bg) 52%, transparent);
+}
+
+.ma-storage-details > summary {
+  cursor: pointer;
+  color: var(--ma-text);
+  font-size: 1.18rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.ma-storage-details > p {
+  margin: 8px 0 0;
+  color: var(--ma-text-muted);
+  font-size: 1.2rem;
+  line-height: 1.45;
+}
+
 .ma-storage-alert {
   margin: 0;
   padding: 8px 10px;
@@ -329,6 +352,69 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
+}
+
+.ma-workspace {
+  display: grid;
+  gap: 10px;
+}
+
+.ma-workspace-head {
+  display: grid;
+  gap: 4px;
+}
+
+.ma-workspace-head h2 {
+  margin: 0;
+  color: var(--ma-title);
+  font-size: clamp(1.84rem, 0.3vw + 1.66rem, 2.08rem);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.ma-workspace-head p {
+  margin: 0;
+  color: var(--ma-text-muted);
+  font-size: 1.26rem;
+  font-weight: 520;
+  line-height: 1.45;
+}
+
+.ma-workspace-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ma-workspace-tab {
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ma-card-border) 84%, transparent);
+  background: color-mix(in srgb, var(--ma-progress-bg) 72%, transparent);
+  color: var(--ma-text-muted);
+  font-size: 1.18rem;
+  font-weight: 680;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease, color 140ms ease, box-shadow 140ms ease;
+}
+
+.ma-workspace-tab:hover {
+  border-color: color-mix(in srgb, var(--ma-accent) 38%, transparent);
+  color: var(--ma-text);
+}
+
+.ma-workspace-tab.is-active {
+  border-color: color-mix(in srgb, var(--ma-accent) 48%, transparent);
+  background: color-mix(in srgb, var(--ma-accent) 12%, transparent);
+  color: color-mix(in srgb, var(--ma-accent) 84%, var(--ma-text));
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--ma-accent) 14%, transparent);
+}
+
+.ma-workspace-tab:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ma-accent) 22%, transparent);
 }
 
 .ma-panel-head {
@@ -785,6 +871,21 @@ html[data-theme="light"] .ma-ftp-row {
   background: color-mix(in srgb, #ffffff 98.7%, var(--ma-progress-bg));
 }
 
+html[data-theme="light"] .ma-storage-details {
+  border-color: color-mix(in srgb, var(--ma-card-border) 86%, transparent);
+  background: color-mix(in srgb, #ffffff 97.8%, var(--ma-progress-bg));
+}
+
+html[data-theme="light"] .ma-workspace-tab {
+  border-color: color-mix(in srgb, var(--ma-card-border) 88%, transparent);
+  background: color-mix(in srgb, #ffffff 98%, var(--ma-progress-bg));
+}
+
+html[data-theme="light"] .ma-workspace-tab.is-active {
+  border-color: color-mix(in srgb, var(--ma-accent) 44%, transparent);
+  background: color-mix(in srgb, var(--ma-accent) 9%, #ffffff);
+}
+
 html[data-theme="light"] .ma-table th {
   background: color-mix(in srgb, var(--ma-progress-bg) 32%, #ffffff);
 }
@@ -909,6 +1010,16 @@ html[data-theme="light"] .ma-add-card:hover {
 
   .ma-control-actions .ma-btn {
     width: 100%;
+  }
+
+  .ma-workspace-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ma-workspace-tab {
+    width: 100%;
+    justify-content: center;
   }
 
   .ma-panel {

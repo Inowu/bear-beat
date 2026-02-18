@@ -83,6 +83,86 @@ function toPositiveNumber(value: unknown): number | null {
   return n;
 }
 
+type CheckoutCurrencyKey = "mxn" | "usd";
+
+function readRegionFromLocale(locale: string): string | null {
+  const tag = `${locale ?? ""}`.trim();
+  if (!tag) return null;
+
+  try {
+    const parsed = new Intl.Locale(tag);
+    const region = parsed.region?.toUpperCase();
+    if (region) return region;
+  } catch {
+    // Fallback to regex parsing below.
+  }
+
+  const match = tag.match(/[-_]([a-z]{2})\b/i);
+  return match ? match[1].toUpperCase() : null;
+}
+
+function detectVisitorCheckoutCurrency(): CheckoutCurrencyKey | null {
+  if (typeof window === "undefined" || typeof navigator === "undefined") {
+    return null;
+  }
+
+  const localeCandidates: string[] = [];
+  if (Array.isArray(navigator.languages)) localeCandidates.push(...navigator.languages);
+  if (typeof navigator.language === "string") localeCandidates.push(navigator.language);
+  const intlLocale = Intl.DateTimeFormat().resolvedOptions().locale;
+  if (typeof intlLocale === "string" && intlLocale.trim()) localeCandidates.push(intlLocale);
+
+  for (const locale of localeCandidates) {
+    const region = readRegionFromLocale(locale);
+    if (region === "MX") return "mxn";
+    if (region === "US") return "usd";
+  }
+
+  return null;
+}
+
+function toPositiveInt(value: unknown): number | null {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return Math.floor(n);
+}
+
+function resolveDefaultCheckoutPlanId(config: unknown): number | null {
+  if (!isRecord(config)) return null;
+  const plans = isRecord(config.plans) ? config.plans : null;
+  if (!plans) return null;
+
+  const resolvePlanIdByCurrency = (currency: CheckoutCurrencyKey): number | null => {
+    const rawPlan = plans[currency];
+    if (!isRecord(rawPlan)) return null;
+    return toPositiveInt(rawPlan.planId);
+  };
+
+  const mxnPlanId = resolvePlanIdByCurrency("mxn");
+  const usdPlanId = resolvePlanIdByCurrency("usd");
+
+  const rawDefaultCurrency = String(
+    (isRecord(config.ui) ? config.ui.defaultCurrency : config.currencyDefault) ?? "mxn",
+  )
+    .trim()
+    .toLowerCase();
+  const defaultCurrency: CheckoutCurrencyKey = rawDefaultCurrency === "usd" ? "usd" : "mxn";
+  const preferredCurrency = detectVisitorCheckoutCurrency();
+
+  const orderedCurrencies: CheckoutCurrencyKey[] = [];
+  if (preferredCurrency) orderedCurrencies.push(preferredCurrency);
+  if (!orderedCurrencies.includes(defaultCurrency)) orderedCurrencies.push(defaultCurrency);
+  if (!orderedCurrencies.includes("mxn")) orderedCurrencies.push("mxn");
+  if (!orderedCurrencies.includes("usd")) orderedCurrencies.push("usd");
+
+  for (const currency of orderedCurrencies) {
+    const id = currency === "mxn" ? mxnPlanId : usdPlanId;
+    if (id) return id;
+  }
+
+  return mxnPlanId ?? usdPlanId ?? null;
+}
+
 function parseTrialConfig(value: unknown): CheckoutTrialConfig {
   if (!isRecord(value)) return DEFAULT_TRIAL_CONFIG;
   const days = Number(value.days);
@@ -538,6 +618,9 @@ function Checkout() {
   })();
   const { currentUser, handleLogout } = useUserContext();
   const [cookies] = useCookies(["_fbp", "_fbc"]);
+  const [autoPlanStatus, setAutoPlanStatus] = useState<"idle" | "resolving" | "failed">("idle");
+  const [autoPlanError, setAutoPlanError] = useState<string>("");
+  const [autoPlanRetryTick, setAutoPlanRetryTick] = useState(0);
 
   const closeErrorModal = useCallback(() => {
     setShowError(false);
@@ -546,6 +629,50 @@ function Checkout() {
     setErrorHint(null);
     setErrorActions(null);
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (priceId) {
+      setAutoPlanStatus("idle");
+      setAutoPlanError("");
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setAutoPlanStatus("resolving");
+    setAutoPlanError("");
+
+    (async () => {
+      try {
+        const config = await trpc.plans.getPublicPricingConfig.query();
+        if (cancelled) return;
+
+        const defaultPlanId = resolveDefaultCheckoutPlanId(config);
+        if (defaultPlanId) {
+          const nextParams = new URLSearchParams(location.search);
+          nextParams.set("priceId", String(defaultPlanId));
+          navigate(
+            { pathname: location.pathname, search: `?${nextParams.toString()}` },
+            { replace: true },
+          );
+          return;
+        }
+
+        setAutoPlanStatus("failed");
+        setAutoPlanError("No encontramos un plan activo para continuar. Elige uno manualmente.");
+      } catch {
+        if (cancelled) return;
+        setAutoPlanStatus("failed");
+        setAutoPlanError("No pudimos seleccionar un plan automáticamente.");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [autoPlanRetryTick, location.pathname, location.search, navigate, priceId]);
 
   const removeCouponFromUrl = useCallback(() => {
     const nextParams = new URLSearchParams(location.search);
@@ -1564,26 +1691,45 @@ function Checkout() {
       className="checkout2026__topnav"
       brandTo="/planes"
       plansTo="/planes"
-      loginFrom={priceId ? `/comprar?priceId=${priceId}` : "/planes"}
+      loginFrom={priceId ? `/comprar?priceId=${priceId}` : "/comprar"}
     />
   );
 
   if (!priceId) {
+    const resolving = autoPlanStatus !== "failed";
     return (
       <div className="checkout-main-container checkout2026 bb-marketing-page bb-marketing-page--checkout bb-marketing-page--flat-cards">
         {TopNav}
         <section className="checkout2026__main" aria-label="Checkout">
           <div className="checkout2026__container checkout2026__center">
-            <div className="checkout-one-state" role="status" aria-live="polite">
-              <h1 className="checkout-one-state__title">Completa tu pago</h1>
-              <p className="checkout-one-state__text">Selecciona un plan en la página de planes para continuar.</p>
-              <Link
-                to="/planes"
-                className="checkout-cta-btn checkout-cta-btn--primary checkout-empty-link"
-              >
-                Ver planes
-              </Link>
-            </div>
+            {resolving ? (
+              <div className="checkout-one-state" role="status" aria-live="polite" aria-busy="true">
+                <span className="checkout2026__sk checkout2026__sk--redirectBar" aria-hidden />
+                <h1 className="checkout-one-state__title">Preparando tu checkout</h1>
+                <p className="checkout-one-state__text">
+                  Seleccionando tu plan ideal según moneda para continuar al pago.
+                </p>
+              </div>
+            ) : (
+              <div className="checkout-one-state" role="status" aria-live="polite">
+                <h1 className="checkout-one-state__title">Completa tu pago</h1>
+                <p className="checkout-one-state__text">
+                  {autoPlanError || "No pudimos seleccionar un plan automáticamente."}
+                </p>
+                <div className="checkout-one-state__help">
+                  <button
+                    type="button"
+                    className="checkout-cta-btn checkout-cta-btn--primary"
+                    onClick={() => setAutoPlanRetryTick((value) => value + 1)}
+                  >
+                    Reintentar
+                  </button>
+                  <Link to="/planes" className="checkout-cta-btn checkout-cta-btn--ghost">
+                    Ver planes
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         </section>
       </div>

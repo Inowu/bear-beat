@@ -212,7 +212,15 @@ interface PaginatedResult<T> {
   data: T[];
 }
 
-const RANGE_OPTIONS = [7, 14, 30, 60, 90, 120];
+const RANGE_OPTIONS = [
+  { value: 1, label: "Últimas 24 horas" },
+  { value: 7, label: "7 días" },
+  { value: 14, label: "14 días" },
+  { value: 30, label: "30 días" },
+  { value: 60, label: "60 días" },
+  { value: 90, label: "90 días" },
+  { value: 120, label: "120 días" },
+];
 
 const CANCELLATION_REASON_LABELS: Record<string, string> = {
   too_expensive: "Es muy caro",
@@ -284,6 +292,14 @@ function formatDateTime(value: string | null | undefined): string {
   return date.toLocaleString("es-MX");
 }
 
+function formatRangeWindow(days: number): string {
+  return days <= 1 ? "24 horas" : `${days} días`;
+}
+
+function formatRecentWindow(days: number): string {
+  return days <= 1 ? "últimas 24 horas" : `últimos ${days} días`;
+}
+
 export function AnalyticsDashboard() {
   const [rangeDays, setRangeDays] = useState<number>(30);
   const [manualAdSpend, setManualAdSpend] = useState<string>("");
@@ -296,16 +312,16 @@ export function AnalyticsDashboard() {
   const [attribution, setAttribution] = useState<AttributionPoint[]>([]);
   const [attributionTotal, setAttributionTotal] = useState<number>(0);
   const [attributionPage, setAttributionPage] = useState<number>(0);
-  const [attributionLimit] = useState<number>(100);
+  const [attributionLimit] = useState<number>(50);
   const [cancellations, setCancellations] = useState<CancellationReasonsSnapshot | null>(null);
   const [business, setBusiness] = useState<BusinessMetrics | null>(null);
   const [ux, setUx] = useState<UxSummary | null>(null);
   const [topEvents, setTopEvents] = useState<TopEventPoint[]>([]);
   const [topEventsTotal, setTopEventsTotal] = useState<number>(0);
   const [topEventsPage, setTopEventsPage] = useState<number>(0);
-  const [topEventsLimit] = useState<number>(100);
+  const [topEventsLimit] = useState<number>(50);
   const [uxRoutesPage, setUxRoutesPage] = useState<number>(0);
-  const [uxRoutesLimit] = useState<number>(100);
+  const [uxRoutesLimit] = useState<number>(50);
   const [alerts, setAlerts] = useState<HealthAlertsSnapshot | null>(null);
 
   const fetchAnalytics = useCallback(async () => {
@@ -401,9 +417,9 @@ export function AnalyticsDashboard() {
             setUxRoutesPage(0);
           }}
         >
-          {RANGE_OPTIONS.map((days) => (
-            <option key={days} value={days}>
-              {days} días
+          {RANGE_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
             </option>
           ))}
         </Select>
@@ -479,7 +495,7 @@ export function AnalyticsDashboard() {
         id: "revenue",
         label: "Ingreso bruto",
         value: formatCurrency(funnel.volume.grossRevenue),
-        helper: `${funnel.range.days} días`,
+        helper: formatRangeWindow(funnel.range.days),
         icon: DollarSign,
       },
       {
@@ -532,7 +548,7 @@ export function AnalyticsDashboard() {
         id: "revenue-range",
         title: "Ingreso del período",
         value: formatCurrency(funnel.volume.grossRevenue),
-        helper: `Total de ${funnel.range.days} días.`,
+        helper: `Total de ${formatRangeWindow(funnel.range.days)}.`,
         icon: DollarSign,
       },
       {
@@ -689,7 +705,7 @@ export function AnalyticsDashboard() {
                         <header className="analytics-mobile-card__head">
                           <div className="analytics-mobile-card__copy">
                             <p className="analytics-mobile-card__title">DB vs Events</p>
-                            <p className="analytics-mobile-card__subtitle">{rangeDays} días</p>
+                            <p className="analytics-mobile-card__subtitle">{formatRangeWindow(rangeDays)}</p>
                           </div>
                         </header>
                         <dl className="analytics-mobile-kv">
@@ -959,7 +975,7 @@ export function AnalyticsDashboard() {
 
                   <section className="analytics-panel">
                     <h2>Por qué cancelan</h2>
-                    <p>Motivos principales y campañas asociadas de los últimos {rangeDays} días.</p>
+                    <p>Motivos principales y campañas asociadas de {formatRecentWindow(rangeDays)}.</p>
                     <div className="analytics-table-wrap" tabIndex={0} aria-label="Tabla: cancelaciones (desplazable)">
                       <table>
                         <thead>
@@ -1091,7 +1107,7 @@ export function AnalyticsDashboard() {
                         <header className="analytics-mobile-card__head">
                           <div className="analytics-mobile-card__copy">
                             <p className="analytics-mobile-card__title">Unidad económica</p>
-                            <p className="analytics-mobile-card__subtitle">{rangeDays} días</p>
+                            <p className="analytics-mobile-card__subtitle">{formatRangeWindow(rangeDays)}</p>
                           </div>
                         </header>
                         <dl className="analytics-mobile-kv">
@@ -1166,7 +1182,7 @@ export function AnalyticsDashboard() {
                         <header className="analytics-mobile-card__head">
                           <div className="analytics-mobile-card__copy">
                             <p className="analytics-mobile-card__title">Resumen</p>
-                            <p className="analytics-mobile-card__subtitle">{rangeDays} días</p>
+                            <p className="analytics-mobile-card__subtitle">{formatRangeWindow(rangeDays)}</p>
                           </div>
                         </header>
                         <dl className="analytics-mobile-kv">

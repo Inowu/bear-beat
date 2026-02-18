@@ -10,7 +10,7 @@ const API_BASE =
     : "https://thebearbeatapi.lat";
 
 const CACHE_KEY = "catalog-stats-cache";
-const PAGE_SIZE = 100;
+const PAGE_SIZE = 50;
 
 interface GenreStats {
   name: string;

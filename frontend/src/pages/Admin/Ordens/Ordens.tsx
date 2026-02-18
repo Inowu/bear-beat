@@ -45,7 +45,7 @@ export const Ordens = () => {
   const [filters, setFilters] = useState<IAdminFilter>({
     active: 1,
     endDate: "",
-    limit: 100,
+    limit: 50,
     page: 0,
     paymentMethod: "",
     searchData: "",
@@ -216,6 +216,7 @@ export const Ordens = () => {
       <label className="inline-flex flex-col gap-1 text-sm text-text-muted min-w-[150px]">
         Por página
         <Select value={filters.limit} onChange={(e) => startFilter("limit", +e.target.value)}>
+          <option value={50}>50</option>
           <option value={100}>100</option>
           <option value={200}>200</option>
           <option value={500}>500</option>

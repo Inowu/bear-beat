@@ -12,7 +12,7 @@ import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
 import Pagination from "../../../components/Pagination/Pagination";
 import { Plus, MoreVertical, Edit2, Trash2 } from "src/icons";
 
-const PAGE_SIZE = 100;
+const PAGE_SIZE = 50;
 
 export const Coupons = () => {
   const { currentUser } = useUserContext();

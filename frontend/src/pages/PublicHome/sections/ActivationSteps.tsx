@@ -18,9 +18,10 @@ const STEPS = [
 
 export default function ActivationSteps(props: {
   ctaLabel: string;
+  primaryCheckoutFrom?: string;
   onPrimaryCtaClick: () => void;
 }) {
-  const { ctaLabel, onPrimaryCtaClick } = props;
+  const { ctaLabel, primaryCheckoutFrom = "/planes", onPrimaryCtaClick } = props;
 
   return (
     <section className="activation-steps" aria-label="Activación rápida">
@@ -44,7 +45,7 @@ export default function ActivationSteps(props: {
         <div className="activation-steps__cta">
           <Link
             to="/auth/registro"
-            state={{ from: "/planes" }}
+            state={{ from: primaryCheckoutFrom }}
             className="home-cta home-cta--primary"
             data-testid="home-mid-primary-cta"
             aria-label={ctaLabel}

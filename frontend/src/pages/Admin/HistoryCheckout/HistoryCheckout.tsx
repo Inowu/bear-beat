@@ -134,7 +134,7 @@ export const HistoryCheckout = () => {
   const [loader, setLoader] = useState<boolean>(true);
   const [filters, setFilters] = useState<ICheckoutFilters>({
     page: 0,
-    limit: 100,
+    limit: 50,
     status: "abandoned",
     days: 30,
     search: "",

@@ -799,7 +799,7 @@ export const backfillAnalyticsUserIdentity = async ({
 
 const normalizeDaysInput = (days?: number): number => {
   if (!days || !Number.isFinite(days)) return DEFAULT_RANGE_DAYS;
-  return Math.max(7, Math.min(365, Math.floor(days)));
+  return Math.max(1, Math.min(365, Math.floor(days)));
 };
 
 const resolveRange = (
@@ -1924,7 +1924,7 @@ export const getAnalyticsCrmDashboard = async (
   const limit =
     typeof limitInput === 'number' && Number.isFinite(limitInput)
       ? Math.max(10, Math.min(100, Math.floor(limitInput)))
-      : 100;
+      : 50;
   const normalizePage = (value?: number) =>
     typeof value === 'number' && Number.isFinite(value) && value > 0
       ? Math.floor(value)
@@ -2935,9 +2935,9 @@ interface AnalyticsLiveSnapshot {
 }
 
 const DEFAULT_LIVE_WINDOW_MINUTES = 10;
-const DEFAULT_LIVE_LIMIT = 100;
+const DEFAULT_LIVE_LIMIT = 50;
 const MAX_LIVE_LIMIT = 500;
-const MAX_LIVE_WINDOW_MINUTES = 120;
+const MAX_LIVE_WINDOW_MINUTES = 1440;
 
 export const getAnalyticsLiveSnapshot = async (
   prisma: PrismaClient,

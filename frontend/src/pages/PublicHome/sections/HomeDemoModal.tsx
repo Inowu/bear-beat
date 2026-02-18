@@ -8,9 +8,10 @@ export default function HomeDemoModal(props: {
   show: boolean;
   onHide: () => void;
   ctaLabel: string;
+  primaryCheckoutFrom: string;
   onModalCtaClick: () => void;
 }) {
-  const { show, onHide, ctaLabel, onModalCtaClick } = props;
+  const { show, onHide, ctaLabel, primaryCheckoutFrom, onModalCtaClick } = props;
 
   return (
     <Modal
@@ -58,7 +59,7 @@ export default function HomeDemoModal(props: {
         <div className="home-demo-modal__actions">
           <Link
             to="/auth/registro"
-            state={{ from: "/planes" }}
+            state={{ from: primaryCheckoutFrom }}
             className="home-cta home-cta--primary home-demo-modal__cta"
             onClick={() => {
               onModalCtaClick();

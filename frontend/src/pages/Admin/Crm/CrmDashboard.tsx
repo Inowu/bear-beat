@@ -119,7 +119,15 @@ interface CrmSnapshot {
   paidNoDownload24h: CrmPaidNoDownloadPoint[];
 }
 
-const RANGE_OPTIONS = [7, 14, 30, 60, 90, 120];
+const RANGE_OPTIONS = [
+  { value: 1, label: "Últimas 24 horas" },
+  { value: 7, label: "7 días" },
+  { value: 14, label: "14 días" },
+  { value: 30, label: "30 días" },
+  { value: 60, label: "60 días" },
+  { value: 90, label: "90 días" },
+  { value: 120, label: "120 días" },
+];
 
 function formatCompactNumber(value: number): string {
   return new Intl.NumberFormat("es-MX", {
@@ -166,6 +174,14 @@ function formatDay(value: string): string {
     }).format(stableDate);
   }
   return formatDateLabel(value, false);
+}
+
+function formatRangeWindow(days: number): string {
+  return days <= 1 ? "24 horas" : `${days} días`;
+}
+
+function formatRecentWindow(days: number): string {
+  return days <= 1 ? "Últimas 24 horas" : `Últimos ${days} días`;
 }
 
 function formatReasonCode(reasonCode: string): string {
@@ -290,7 +306,7 @@ export function CrmDashboard() {
   const [trialNoDownloadPage, setTrialNoDownloadPage] = useState<number>(0);
   const [paidNoDownload2hPage, setPaidNoDownload2hPage] = useState<number>(0);
   const [paidNoDownloadPage, setPaidNoDownloadPage] = useState<number>(0);
-  const listLimit = 100;
+  const listLimit = 50;
 
   const toast = (message: string) => {
     setActionToast(message);
@@ -361,7 +377,7 @@ export function CrmDashboard() {
 
   const rangeLabel = useMemo(() => {
     if (!snapshot) return "";
-    return `${formatDateLabel(snapshot.range.start)} a ${formatDateLabel(snapshot.range.end)} (${snapshot.range.days} días)`;
+    return `${formatDateLabel(snapshot.range.start)} a ${formatDateLabel(snapshot.range.end)} (${formatRangeWindow(snapshot.range.days)})`;
   }, [snapshot]);
 
   const dataSources = useMemo(
@@ -464,9 +480,9 @@ export function CrmDashboard() {
                 setPaidNoDownloadPage(0);
               }}
             >
-              {RANGE_OPTIONS.map((d) => (
-                <option key={d} value={d}>
-                  {d} días
+              {RANGE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
                 </option>
               ))}
             </Select>
@@ -566,7 +582,7 @@ export function CrmDashboard() {
             <KpiCard
               title="Registros"
               value={formatCompactNumber(snapshot.kpis.registrations)}
-              helper={`Últimos ${snapshot.range.days} días`}
+              helper={formatRecentWindow(snapshot.range.days)}
               icon={UserPlus}
             />
             <KpiCard

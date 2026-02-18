@@ -37,7 +37,7 @@ interface AuditLogFilters {
 
 const DEFAULT_FILTERS: AuditLogFilters = {
   page: 0,
-  limit: 100,
+  limit: 50,
   action: "",
   targetUserId: "",
   dateFrom: "",

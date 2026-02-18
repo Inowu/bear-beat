@@ -12,7 +12,7 @@ import { toErrorMessage } from "../../../utils/errorMessage";
 
 const DOMAIN_REGEX = /^(?!-)[a-z0-9-]+(\.[a-z0-9-]+)+$/;
 const RESERVED_DOMAINS = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "live.com", "icloud.com", "protonmail.com", "aol.com"];
-const PAGE_SIZE = 100;
+const PAGE_SIZE = 50;
 
 export const BlockedEmailDomains = () => {
   const { currentUser } = useUserContext();

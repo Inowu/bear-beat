@@ -46,6 +46,8 @@ import {
   syncManyChatWidgetVisibility,
 } from "../../utils/manychatLoader";
 
+type WorkspaceTabId = "ftp" | "orders" | "payments" | "email";
+
 function MyAccount() {
   const { theme } = useTheme();
   const {
@@ -86,6 +88,7 @@ function MyAccount() {
   const [emailPrefsNotice, setEmailPrefsNotice] = useState<string | null>(null);
   const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
   const stripeWarmupRef = useRef<Promise<boolean> | null>(null);
+  const [activeWorkspaceTab, setActiveWorkspaceTab] = useState<WorkspaceTabId>("ftp");
 
   const closeCondition = () => setShowCondition(false);
   const openCondition = () => setShowCondition(true);
@@ -490,6 +493,38 @@ function MyAccount() {
       ? "warning"
       : "muted";
   const ftpStatus = hasFtpAccess ? "FTP habilitado" : "Sin acceso FTP";
+  const workspaceTabs: Array<{ id: WorkspaceTabId; label: string; helper: string }> = [
+    {
+      id: "ftp",
+      label: "Acceso FTP",
+      helper: "Tus credenciales y configuración FileZilla.",
+    },
+    {
+      id: "orders",
+      label: "Órdenes",
+      helper: "Tu historial de pagos y estados.",
+    },
+    {
+      id: "payments",
+      label: "Pagos",
+      helper: "Tarjetas, método por defecto y facturas.",
+    },
+    {
+      id: "email",
+      label: "Emails",
+      helper: "Control de promociones y novedades.",
+    },
+  ];
+  const activeWorkspaceHelper =
+    workspaceTabs.find((tab) => tab.id === activeWorkspaceTab)?.helper ??
+    "";
+
+  useEffect(() => {
+    if (!currentUser) return;
+    if (!hasFtpAccess && activeWorkspaceTab === "ftp") {
+      setActiveWorkspaceTab("payments");
+    }
+  }, [currentUser?.id, hasFtpAccess, activeWorkspaceTab]);
 
   const getStatusBadge = (status: number) => {
     const map: Record<number, { label: string; varColor: string }> = {
@@ -630,11 +665,19 @@ function MyAccount() {
                 />
               </div>
               <p className="ma-storage-amount">
-                {formatInt(availableGb)} GB/mes · usados: {formatInt(usedGb)} GB este ciclo
+                Usados este ciclo: {formatInt(usedGb)} GB de {formatInt(availableGb)} GB
               </p>
-              <p className="ma-storage-amount">
-                La cuota de descarga es lo que puedes descargar cada ciclo. El catálogo total es lo disponible para elegir.
-              </p>
+              {hasActiveSubscription && (
+                <p className="ma-storage-amount">
+                  Disponibles: {formatInt(remainingRegularGb)} GB · GB extra: {formatInt(remainingExtendedGb)} GB
+                </p>
+              )}
+              <details className="ma-storage-details">
+                <summary>¿Cómo funciona esta cuota?</summary>
+                <p>
+                  La cuota de descarga es lo que puedes bajar en cada ciclo. El catálogo total es lo que puedes elegir.
+                </p>
+              </details>
               {hasQuotaReached && (
                 <p className="ma-storage-alert">
                   {hasNoQuotaLeft
@@ -644,9 +687,6 @@ function MyAccount() {
               )}
               {hasActiveSubscription && (
                 <>
-                  <p className="ma-storage-amount">
-                    Te quedan: {formatInt(remainingRegularGb)} GB este ciclo · GB extra disponibles: {formatInt(remainingExtendedGb)} GB
-                  </p>
                   <button type="button" onClick={() => void openPlan()} className="ma-btn ma-btn-soft">
                     Comprar extra 100 GB
                   </button>
@@ -656,300 +696,353 @@ function MyAccount() {
           </div>
         </section>
 
-        <div className="ma-grid-two">
-          <section className="ma-panel ma-ftp-panel">
-            <div className="ma-panel-head">
-              <Server size={18} />
-              <h2>Credenciales FTP</h2>
-            </div>
-            {currentUser?.ftpAccount ? (
-              <>
-                <div className="ma-ftp-list">
-                  <FtpRow
-                    label="Host"
-                    value={currentUser.ftpAccount.host}
-                    copyToClipboard={copyToClipboard}
-                    copyFeedback={copyFeedback}
-                  />
-                  <FtpRow
-                    label="Usuario"
-                    value={currentUser.ftpAccount.userid}
-                    copyToClipboard={copyToClipboard}
-                    copyFeedback={copyFeedback}
-                  />
-                  <FtpRow
-                    label="Contraseña"
-                    value={currentUser.ftpAccount.passwd}
-                    copyToClipboard={copyToClipboard}
-                    copyFeedback={copyFeedback}
-                    secret
-                    showSecret={showFtpPass}
-                    onToggleSecret={() => setShowFtpPass((s) => !s)}
-                  />
-                  <FtpRow
-                    label="Puerto"
-                    value={String(currentUser.ftpAccount.port)}
-                    copyToClipboard={copyToClipboard}
-                    copyFeedback={copyFeedback}
-                  />
+        <section className="ma-workspace" aria-label="Gestión detallada de tu cuenta">
+          <div className="ma-workspace-head">
+            <h2>Gestión detallada</h2>
+            <p>{activeWorkspaceHelper}</p>
+          </div>
+          <nav className="ma-workspace-tabs" role="tablist" aria-label="Secciones de cuenta">
+            {workspaceTabs.map((tab) => {
+              const isActive = activeWorkspaceTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  id={`ma-tab-${tab.id}`}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  aria-controls={`ma-panel-${tab.id}`}
+                  className={`ma-workspace-tab ${isActive ? "is-active" : ""}`}
+                  onClick={() => setActiveWorkspaceTab(tab.id)}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </nav>
+
+          {activeWorkspaceTab === "ftp" && (
+            <section
+              id="ma-panel-ftp"
+              role="tabpanel"
+              aria-labelledby="ma-tab-ftp"
+              className="ma-panel ma-ftp-panel"
+            >
+              <div className="ma-panel-head">
+                <Server size={18} />
+                <h2>Credenciales FTP</h2>
+              </div>
+              {currentUser?.ftpAccount ? (
+                <>
+                  <div className="ma-ftp-list">
+                    <FtpRow
+                      label="Host"
+                      value={currentUser.ftpAccount.host}
+                      copyToClipboard={copyToClipboard}
+                      copyFeedback={copyFeedback}
+                    />
+                    <FtpRow
+                      label="Usuario"
+                      value={currentUser.ftpAccount.userid}
+                      copyToClipboard={copyToClipboard}
+                      copyFeedback={copyFeedback}
+                    />
+                    <FtpRow
+                      label="Contraseña"
+                      value={currentUser.ftpAccount.passwd}
+                      copyToClipboard={copyToClipboard}
+                      copyFeedback={copyFeedback}
+                      secret
+                      showSecret={showFtpPass}
+                      onToggleSecret={() => setShowFtpPass((s) => !s)}
+                    />
+                    <FtpRow
+                      label="Puerto"
+                      value={String(currentUser.ftpAccount.port)}
+                      copyToClipboard={copyToClipboard}
+                      copyFeedback={copyFeedback}
+                    />
+                  </div>
+                  <p className="ma-ftp-expiration">
+                    Expiración: {formatDateShort(currentUser.ftpAccount.expiration ?? null)}
+                  </p>
+                  <div className="ma-ftp-actions">
+                    <button
+                      type="button"
+                      onClick={() => downloadXMLFile(currentUser.ftpAccount!)}
+                      className="ma-btn ma-btn-soft"
+                    >
+                      <FileDown size={16} />
+                      Descargar XML FileZilla
+                    </button>
+                    <Link to="/instrucciones" className="ma-btn ma-btn-outline">
+                      Ver instrucciones
+                    </Link>
+                  </div>
+                </>
+              ) : (
+                <div className="ma-empty-card">
+                  <p>
+                    Aún no tienes un plan activo.{" "}
+                    <Link to="/planes">Ver planes</Link>
+                  </p>
                 </div>
-                <p className="ma-ftp-expiration">
-                  Expiración: {formatDateShort(currentUser.ftpAccount.expiration ?? null)}
-                </p>
-                <div className="ma-ftp-actions">
+              )}
+            </section>
+          )}
+
+          {activeWorkspaceTab === "orders" && (
+            <section
+              id="ma-panel-orders"
+              role="tabpanel"
+              aria-labelledby="ma-tab-orders"
+              className="ma-panel ma-orders-panel"
+            >
+              <div className="ma-panel-head">
+                <Clock size={18} />
+                <h2>Historial de órdenes</h2>
+              </div>
+              <div
+                className="ma-table-wrap"
+                tabIndex={0}
+                role="region"
+                aria-label="Historial de órdenes (desliza para ver más columnas)"
+                data-scroll-region
+              >
+                <table className="ma-table">
+                  <thead>
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Orden #</th>
+                      <th>Precio</th>
+                      <th>Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {orders.length > 0 ? (
+                      orders.map((order: IOrders, index: number) => (
+                        <tr key={"order_" + index} className="ma-table-row">
+                          <td>{formatDateShort(order.date_order)}</td>
+                          <td className="ma-mono">{order.id}</td>
+                          <td>${order.total_price}.00</td>
+                          <td>{getStatusBadge(order.status)}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={4} className="ma-table-empty">
+                          No hay órdenes en tu historial.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
+
+          {activeWorkspaceTab === "payments" && (
+            <section
+              id="ma-panel-payments"
+              role="tabpanel"
+              aria-labelledby="ma-tab-payments"
+              className="ma-panel ma-wallet-panel"
+            >
+              <div className="ma-panel-head">
+                <CreditCard size={18} />
+                <h2>Tarjetas</h2>
+                {paymentMethods.length > 0 && (
                   <button
                     type="button"
-                    onClick={() => downloadXMLFile(currentUser.ftpAccount!)}
-                    className="ma-btn ma-btn-soft"
+                    onClick={openBillingPortal}
+                    disabled={portalLoading}
+                    className="ma-btn ma-btn-outline ma-head-action"
                   >
-                    <FileDown size={16} />
-                    Descargar XML FileZilla
+                    {portalLoading ? "Abriendo…" : "Gestionar pagos y facturas"}
                   </button>
-                  <Link to="/instrucciones" className="ma-btn ma-btn-outline">
-                    Ver instrucciones
-                  </Link>
-                </div>
-              </>
-            ) : (
-              <div className="ma-empty-card">
-                <p>
-                  Aún no tienes un plan activo.{" "}
-                  <Link to="/planes">Ver planes</Link>
-                </p>
+                )}
               </div>
-            )}
-          </section>
-
-          <section className="ma-panel ma-orders-panel">
-            <div className="ma-panel-head">
-              <Clock size={18} />
-              <h2>Historial de órdenes</h2>
-            </div>
-            <div
-              className="ma-table-wrap"
-              tabIndex={0}
-              role="region"
-              aria-label="Historial de órdenes (desliza para ver más columnas)"
-              data-scroll-region
-            >
-              <table className="ma-table">
-                <thead>
-                  <tr>
-                    <th>Fecha</th>
-                    <th>Orden #</th>
-                    <th>Precio</th>
-                    <th>Estado</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {orders.length > 0 ? (
-                    orders.map((order: IOrders, index: number) => (
-                      <tr key={"order_" + index} className="ma-table-row">
-                        <td>{formatDateShort(order.date_order)}</td>
-                        <td className="ma-mono">{order.id}</td>
-                        <td>${order.total_price}.00</td>
-                        <td>{getStatusBadge(order.status)}</td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={4} className="ma-table-empty">
-                        No hay órdenes en tu historial.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        </div>
-
-        <section className="ma-panel ma-wallet-panel">
-          <div className="ma-panel-head">
-            <CreditCard size={18} />
-            <h2>Tarjetas</h2>
-            {paymentMethods.length > 0 && (
-              <button
-                type="button"
-                onClick={openBillingPortal}
-                disabled={portalLoading}
-                className="ma-btn ma-btn-outline ma-head-action"
-              >
-                {portalLoading ? "Abriendo…" : "Gestionar pagos y facturas"}
-              </button>
-            )}
-          </div>
               {!cardLoad ? (
-            <div className="ma-cards-grid">
-              {paymentMethods.map((x: any, index: number) => (
-                <article key={"cards_" + index} className="ma-card-item">
-                  <div className="ma-card-top">
-                    {(() => {
-                      const rawBrand = `${x?.card?.brand ?? ""}`.toLowerCase();
-                      const brandKey =
-                        rawBrand === "visa"
-                          ? "visa"
-                          : rawBrand === "mastercard"
-                            ? "mastercard"
-                            : rawBrand === "amex" || rawBrand === "american_express"
-                              ? "amex"
-                              : "amex";
-                      const brandLogo =
-                        brandKey === "visa"
-                          ? visaLogo
-                          : brandKey === "mastercard"
-                            ? mastercardLogo
-                            : amexLogo;
-                      const brandLabel =
-                        brandKey === "visa"
-                          ? "Visa"
-                          : brandKey === "mastercard"
-                            ? "Mastercard"
-                            : "American Express";
+                <div className="ma-cards-grid">
+                  {paymentMethods.map((x: any, index: number) => (
+                    <article key={"cards_" + index} className="ma-card-item">
+                      <div className="ma-card-top">
+                        {(() => {
+                          const rawBrand = `${x?.card?.brand ?? ""}`.toLowerCase();
+                          const brandKey =
+                            rawBrand === "visa"
+                              ? "visa"
+                              : rawBrand === "mastercard"
+                                ? "mastercard"
+                                : rawBrand === "amex" || rawBrand === "american_express"
+                                  ? "amex"
+                                  : "amex";
+                          const brandLogo =
+                            brandKey === "visa"
+                              ? visaLogo
+                              : brandKey === "mastercard"
+                                ? mastercardLogo
+                                : amexLogo;
+                          const brandLabel =
+                            brandKey === "visa"
+                              ? "Visa"
+                              : brandKey === "mastercard"
+                                ? "Mastercard"
+                                : "American Express";
 
-                      return (
-                        <img
-                          src={brandLogo}
-                          alt={brandLabel}
-                          className={`ma-card-brand ma-card-brand--${brandKey}`}
-                        />
-                      );
-                    })()}
-                    <div className="ma-card-actions">
-                      {paymentMethods.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => setDefaultPaymentMethod(x)}
-                          className="ma-btn ma-btn-outline ma-btn-small"
-                          aria-label="Usar esta tarjeta"
-                        >
-                          Usar esta
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => deletePaymentMethod(x)}
-                        className="ma-icon-btn ma-btn-delete"
-                        aria-label="Eliminar tarjeta"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                          return (
+                            <img
+                              src={brandLogo}
+                              alt={brandLabel}
+                              className={`ma-card-brand ma-card-brand--${brandKey}`}
+                            />
+                          );
+                        })()}
+                        <div className="ma-card-actions">
+                          {paymentMethods.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => setDefaultPaymentMethod(x)}
+                              className="ma-btn ma-btn-outline ma-btn-small"
+                              aria-label="Usar esta tarjeta"
+                            >
+                              Usar esta
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => deletePaymentMethod(x)}
+                            className="ma-icon-btn ma-btn-delete"
+                            aria-label="Eliminar tarjeta"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+                      <p className="ma-card-number">•••• •••• •••• {x.card.last4}</p>
+                      <p className="ma-card-date">{x.card.exp_month}/{x.card.exp_year}</p>
+                    </article>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => void openPaymentMethodModal()}
+                    className="ma-add-card"
+                  >
+                    <CreditCard size={20} />
+                    <span>Agregar tarjeta</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="ma-loading-cards">
+                  <Spinner size={4} width={0.4} color="var(--ma-accent)" />
+                </div>
+              )}
+            </section>
+          )}
+
+          {activeWorkspaceTab === "email" && (
+            <section
+              id="ma-panel-email"
+              role="tabpanel"
+              aria-labelledby="ma-tab-email"
+              className="ma-panel ma-comms-panel"
+              aria-label="Preferencias de email"
+            >
+              <div className="ma-panel-head">
+                <Mail size={18} />
+                <h2>Preferencias de email</h2>
+              </div>
+              <p className="ma-pref-note">
+                Los correos transaccionales (seguridad, pagos, cancelación y soporte) son necesarios para operar el servicio y siempre estarán activos.
+              </p>
+
+              {emailPrefsLoading ? (
+                <div className="ma-loading-cards">
+                  <Spinner size={3.2} width={0.35} color="var(--ma-accent)" />
+                </div>
+              ) : !emailPrefs ? (
+                <div className="ma-empty-card">
+                  <p>{emailPrefsNotice ?? "No se pudieron cargar tus preferencias de email."}</p>
+                  <button
+                    type="button"
+                    className="ma-btn ma-btn-soft"
+                    onClick={loadEmailPreferences}
+                    disabled={emailPrefsSaving}
+                  >
+                    Reintentar
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="ma-pref-list">
+                    <PrefToggle
+                      id="bb-email-marketing-enabled"
+                      title="Promociones y novedades por email"
+                      description="Activa o desactiva todos los correos de marketing."
+                      checked={emailPrefs.enabled}
+                      disabled={emailPrefsSaving}
+                      disabledReason={emailPrefsSaving ? "Estamos guardando tus cambios." : undefined}
+                      onChange={(next) => updateEmailPreferences({ enabled: next })}
+                    />
+                    <div className={`ma-pref-sublist ${emailPrefs.enabled ? "" : "is-disabled"}`}>
+                      <PrefToggle
+                        id="bb-email-marketing-news"
+                        title="Novedades y tips"
+                        description="Guías rápidas, recordatorios y mejoras del servicio."
+                        checked={emailPrefs.news}
+                        disabled={!emailPrefs.enabled || emailPrefsSaving}
+                        disabledReason={
+                          !emailPrefs.enabled
+                            ? "Activa 'Promociones y novedades por email' para editar esta opción."
+                            : emailPrefsSaving
+                              ? "Estamos guardando tus cambios."
+                              : undefined
+                        }
+                        onChange={(next) => updateEmailPreferences({ news: next })}
+                      />
+                      <PrefToggle
+                        id="bb-email-marketing-offers"
+                        title="Ofertas y cupones"
+                        description="Descuentos, cupones personales y winback."
+                        checked={emailPrefs.offers}
+                        disabled={!emailPrefs.enabled || emailPrefsSaving}
+                        disabledReason={
+                          !emailPrefs.enabled
+                            ? "Activa 'Promociones y novedades por email' para editar esta opción."
+                            : emailPrefsSaving
+                              ? "Estamos guardando tus cambios."
+                              : undefined
+                        }
+                        onChange={(next) => updateEmailPreferences({ offers: next })}
+                      />
+                      <PrefToggle
+                        id="bb-email-marketing-digest"
+                        title="Digest"
+                        description="Resumen periódico de novedades (si aplica)."
+                        checked={emailPrefs.digest}
+                        disabled={!emailPrefs.enabled || emailPrefsSaving}
+                        disabledReason={
+                          !emailPrefs.enabled
+                            ? "Activa 'Promociones y novedades por email' para editar esta opción."
+                            : emailPrefsSaving
+                              ? "Estamos guardando tus cambios."
+                              : undefined
+                        }
+                        onChange={(next) => updateEmailPreferences({ digest: next })}
+                      />
                     </div>
                   </div>
-                  <p className="ma-card-number">•••• •••• •••• {x.card.last4}</p>
-                  <p className="ma-card-date">{x.card.exp_month}/{x.card.exp_year}</p>
-                </article>
-              ))}
-              <button
-                type="button"
-                onClick={() => void openPaymentMethodModal()}
-                className="ma-add-card"
-              >
-                <CreditCard size={20} />
-                <span>Agregar tarjeta</span>
-              </button>
-            </div>
-          ) : (
-            <div className="ma-loading-cards">
-              <Spinner size={4} width={0.4} color="var(--ma-accent)" />
-            </div>
-          )}
-        </section>
 
-        <section className="ma-panel ma-comms-panel" aria-label="Preferencias de email">
-          <div className="ma-panel-head">
-            <Mail size={18} />
-            <h2>Preferencias de email</h2>
-          </div>
-          <p className="ma-pref-note">
-            Los correos transaccionales (seguridad, pagos, cancelación y soporte) son necesarios para operar el servicio y siempre estarán activos.
-          </p>
-
-          {emailPrefsLoading ? (
-            <div className="ma-loading-cards">
-              <Spinner size={3.2} width={0.35} color="var(--ma-accent)" />
-            </div>
-          ) : !emailPrefs ? (
-            <div className="ma-empty-card">
-              <p>{emailPrefsNotice ?? "No se pudieron cargar tus preferencias de email."}</p>
-              <button
-                type="button"
-                className="ma-btn ma-btn-soft"
-                onClick={loadEmailPreferences}
-                disabled={emailPrefsSaving}
-              >
-                Reintentar
-              </button>
-            </div>
-          ) : (
-            <>
-              <div className="ma-pref-list">
-                <PrefToggle
-                  id="bb-email-marketing-enabled"
-                  title="Promociones y novedades por email"
-                  description="Activa o desactiva todos los correos de marketing."
-                  checked={emailPrefs.enabled}
-                  disabled={emailPrefsSaving}
-                  disabledReason={emailPrefsSaving ? "Estamos guardando tus cambios." : undefined}
-                  onChange={(next) => updateEmailPreferences({ enabled: next })}
-                />
-                <div className={`ma-pref-sublist ${emailPrefs.enabled ? "" : "is-disabled"}`}>
-                  <PrefToggle
-                    id="bb-email-marketing-news"
-                    title="Novedades y tips"
-                    description="Guías rápidas, recordatorios y mejoras del servicio."
-                    checked={emailPrefs.news}
-                    disabled={!emailPrefs.enabled || emailPrefsSaving}
-                    disabledReason={
-                      !emailPrefs.enabled
-                        ? "Activa 'Promociones y novedades por email' para editar esta opción."
-                        : emailPrefsSaving
-                          ? "Estamos guardando tus cambios."
-                          : undefined
-                    }
-                    onChange={(next) => updateEmailPreferences({ news: next })}
-                  />
-                  <PrefToggle
-                    id="bb-email-marketing-offers"
-                    title="Ofertas y cupones"
-                    description="Descuentos, cupones personales y winback."
-                    checked={emailPrefs.offers}
-                    disabled={!emailPrefs.enabled || emailPrefsSaving}
-                    disabledReason={
-                      !emailPrefs.enabled
-                        ? "Activa 'Promociones y novedades por email' para editar esta opción."
-                        : emailPrefsSaving
-                          ? "Estamos guardando tus cambios."
-                          : undefined
-                    }
-                    onChange={(next) => updateEmailPreferences({ offers: next })}
-                  />
-                  <PrefToggle
-                    id="bb-email-marketing-digest"
-                    title="Digest"
-                    description="Resumen periódico de novedades (si aplica)."
-                    checked={emailPrefs.digest}
-                    disabled={!emailPrefs.enabled || emailPrefsSaving}
-                    disabledReason={
-                      !emailPrefs.enabled
-                        ? "Activa 'Promociones y novedades por email' para editar esta opción."
-                        : emailPrefsSaving
-                          ? "Estamos guardando tus cambios."
-                          : undefined
-                    }
-                    onChange={(next) => updateEmailPreferences({ digest: next })}
-                  />
-                </div>
-              </div>
-
-              <p className="ma-pref-meta" aria-live="polite">
-                {emailPrefsNotice
-                  ? emailPrefsNotice
-                  : emailPrefs.updatedAt
-                    ? `Última actualización: ${formatDateShort(emailPrefs.updatedAt)}`
-                    : "Puedes cambiar tus preferencias cuando quieras."}
-              </p>
-            </>
+                  <p className="ma-pref-meta" aria-live="polite">
+                    {emailPrefsNotice
+                      ? emailPrefsNotice
+                      : emailPrefs.updatedAt
+                        ? `Última actualización: ${formatDateShort(emailPrefs.updatedAt)}`
+                        : "Puedes cambiar tus preferencias cuando quieras."}
+                  </p>
+                </>
+              )}
+            </section>
           )}
         </section>
       </div>

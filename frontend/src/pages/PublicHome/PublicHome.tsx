@@ -339,6 +339,7 @@ export default function PublicHome() {
         ];
 
         return {
+          planId: Number(raw?.planId ?? 0),
           currency,
           name: String(raw?.name ?? "").trim() || "Membresía Bear Beat",
           price: Number.isFinite(price) ? price : 0,
@@ -497,6 +498,36 @@ export default function PublicHome() {
     () => getHomeCtaPrimaryLabel(trialSummary),
     [trialSummary],
   );
+  const primaryCheckoutFrom = useMemo(() => {
+    const preferredPlan =
+      preferredCurrency === "mxn" ? pricingPlans.mxn : pricingPlans.usd;
+    const fallbackPlan =
+      preferredCurrency === "mxn" ? pricingPlans.usd : pricingPlans.mxn;
+    const selectedPlan = preferredPlan ?? fallbackPlan;
+    const selectedPlanId = Number(selectedPlan?.planId ?? 0);
+
+    if (Number.isFinite(selectedPlanId) && selectedPlanId > 0) {
+      return `/comprar?priceId=${selectedPlanId}`;
+    }
+    return "/planes";
+  }, [preferredCurrency, pricingPlans.mxn, pricingPlans.usd]);
+  const primaryCheckoutPlanId = useMemo(() => {
+    const match = primaryCheckoutFrom.match(/[?&]priceId=(\d+)/);
+    if (!match) return null;
+    const parsed = Number(match[1]);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  }, [primaryCheckoutFrom]);
+  const primaryCheckoutCurrency = useMemo(() => {
+    if (!primaryCheckoutPlanId) return null;
+    if (pricingPlans.mxn?.planId === primaryCheckoutPlanId) return "MXN";
+    if (pricingPlans.usd?.planId === primaryCheckoutPlanId) return "USD";
+    return preferredCurrency.toUpperCase();
+  }, [
+    preferredCurrency,
+    pricingPlans.mxn?.planId,
+    pricingPlans.usd?.planId,
+    primaryCheckoutPlanId,
+  ]);
   const footerMicrocopy = useMemo(() => {
     if (trialSummary?.enabled) {
       // Mantén el detalle de la prueba arriba (hero/pricing) y deja el footer en modo "micro".
@@ -604,14 +635,23 @@ export default function PublicHome() {
 
   const onPrimaryCtaClick = useCallback(
     (location: "hero" | "mid" | "pricing" | "footer" | "sticky" | "nav") => {
-      trackGrowthMetric(GROWTH_METRICS.CTA_PRIMARY_CLICK, { location });
+      trackGrowthMetric(GROWTH_METRICS.CTA_PRIMARY_CLICK, {
+        location,
+        target: primaryCheckoutFrom,
+        planId: primaryCheckoutPlanId,
+        currency: primaryCheckoutCurrency,
+      });
       trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
         id: "home_primary",
         location,
+        target: primaryCheckoutFrom,
+        planId: primaryCheckoutPlanId,
+        currency: primaryCheckoutCurrency,
+        funnel: "fast_lane_checkout",
       });
       trackManyChatConversion(MC_EVENTS.CLICK_CTA_REGISTER);
     },
-    [],
+    [primaryCheckoutCurrency, primaryCheckoutFrom, primaryCheckoutPlanId],
   );
 
   const onSecondaryCtaClick = useCallback(
@@ -1014,7 +1054,7 @@ export default function PublicHome() {
         cta={
           <Link
             to="/auth/registro"
-            state={{ from: "/planes" }}
+            state={{ from: primaryCheckoutFrom }}
             className="home-cta home-cta--primary home-topnav__cta"
             data-testid="home-nav-primary-cta"
             onClick={() => onPrimaryCtaClick("nav")}
@@ -1033,6 +1073,7 @@ export default function PublicHome() {
           afterPriceLabel={afterPriceLabel}
           trial={trialSummary}
           ctaLabel={ctaPrimaryLabel}
+          primaryCheckoutFrom={primaryCheckoutFrom}
           onPrimaryCtaClick={() => onPrimaryCtaClick("hero")}
           onDemoScroll={onDemoScroll}
         />
@@ -1056,6 +1097,7 @@ export default function PublicHome() {
             limitsNote={pricingUi.limitsNote}
             trial={trialSummary}
             ctaLabel={ctaPrimaryLabel}
+            primaryCheckoutFrom={primaryCheckoutFrom}
             onPrimaryCtaClick={() => onPrimaryCtaClick("pricing")}
           />
         </div>
@@ -1102,7 +1144,7 @@ export default function PublicHome() {
           <div className="home-footer__cta" aria-label="Activar">
             <Link
               to="/auth/registro"
-              state={{ from: "/planes" }}
+              state={{ from: primaryCheckoutFrom }}
               className="home-cta home-cta--primary"
               data-testid="home-footer-primary-cta"
               onClick={() => onPrimaryCtaClick("footer")}
@@ -1124,12 +1166,14 @@ export default function PublicHome() {
         show={showDemo}
         onHide={() => setShowDemo(false)}
         ctaLabel={ctaPrimaryLabel}
+        primaryCheckoutFrom={primaryCheckoutFrom}
         onModalCtaClick={() => onSecondaryCtaClick("modal_demo")}
       />
 
       <StickyMobileCta
         ctaLabel={ctaPrimaryLabel}
         trial={trialSummary}
+        primaryCheckoutFrom={primaryCheckoutFrom}
         onPrimaryCtaClick={() => onPrimaryCtaClick("sticky")}
         onDemoClick={() => {
           onSecondaryCtaClick("sticky_demo");

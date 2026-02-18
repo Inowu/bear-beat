@@ -41,7 +41,14 @@ interface LiveSnapshot {
   events: LiveEventPoint[];
 }
 
-const MINUTES_OPTIONS = [5, 10, 15, 30, 60];
+const MINUTES_OPTIONS = [
+  { value: 5, label: "5 min" },
+  { value: 10, label: "10 min" },
+  { value: 15, label: "15 min" },
+  { value: 30, label: "30 min" },
+  { value: 60, label: "60 min" },
+  { value: 1440, label: "Últimas 24 horas" },
+];
 
 function formatTs(value: string): string {
   try {
@@ -78,6 +85,12 @@ function formatPct(value: number): string {
   return `${value.toFixed(1)}%`;
 }
 
+function formatWindowMinutes(minutes: number): string {
+  if (minutes >= 1440) return "24 horas";
+  if (minutes % 60 === 0 && minutes >= 60) return `${minutes / 60} h`;
+  return `${minutes} min`;
+}
+
 function eventTone(
   eventName: string,
 ): "positive" | "warning" | "danger" | "neutral" {
@@ -101,7 +114,7 @@ function formatUtm(evt: LiveEventPoint): string {
 
 export function LiveAnalytics() {
   const [minutes, setMinutes] = useState<number>(10);
-  const [limit, setLimit] = useState<number>(100);
+  const [limit, setLimit] = useState<number>(50);
   const [page, setPage] = useState<number>(0);
   const [paused, setPaused] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -233,9 +246,9 @@ export function LiveAnalytics() {
             setPage(0);
           }}
         >
-          {MINUTES_OPTIONS.map((value) => (
-            <option key={value} value={value}>
-              {value} min
+          {MINUTES_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
             </option>
           ))}
         </Select>
@@ -250,7 +263,7 @@ export function LiveAnalytics() {
             setPage(0);
           }}
         >
-          {[100, 200, 500].map((value) => (
+          {[50, 100, 200, 500].map((value) => (
             <option key={value} value={value}>
               {value}
             </option>
@@ -364,7 +377,7 @@ export function LiveAnalytics() {
                       <Users size={16} />
                     </header>
                     <strong>{snapshot.activeVisitors.toLocaleString("es-MX")}</strong>
-                    <small>Ventana: {snapshot.window.minutes} min</small>
+                    <small>Ventana: {formatWindowMinutes(snapshot.window.minutes)}</small>
                   </article>
                   <article className="analytics-kpi-card live-kpi-card">
                     <header>

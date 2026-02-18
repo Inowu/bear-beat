@@ -25,13 +25,13 @@ import { router } from '../trpc';
 
 const analyticsRangeInputSchema = z
   .object({
-    days: z.number().int().min(7).max(365).optional(),
+    days: z.number().int().min(1).max(365).optional(),
   })
   .optional();
 
 const analyticsAttributionInputSchema = z
   .object({
-    days: z.number().int().min(7).max(365).optional(),
+    days: z.number().int().min(1).max(365).optional(),
     limit: z.number().int().min(1).max(100).optional(),
     page: z.number().int().min(0).max(5000).optional(),
   })
@@ -39,14 +39,14 @@ const analyticsAttributionInputSchema = z
 
 const analyticsBusinessInputSchema = z
   .object({
-    days: z.number().int().min(7).max(365).optional(),
+    days: z.number().int().min(1).max(365).optional(),
     adSpend: z.number().min(0).max(999999999).optional(),
   })
   .optional();
 
 const analyticsUxInputSchema = z
   .object({
-    days: z.number().int().min(7).max(365).optional(),
+    days: z.number().int().min(1).max(365).optional(),
     routesLimit: z.number().int().min(3).max(100).optional(),
     routesPage: z.number().int().min(0).max(5000).optional(),
   })
@@ -54,7 +54,7 @@ const analyticsUxInputSchema = z
 
 const analyticsTopEventsInputSchema = z
   .object({
-    days: z.number().int().min(7).max(365).optional(),
+    days: z.number().int().min(1).max(365).optional(),
     limit: z.number().int().min(5).max(100).optional(),
     page: z.number().int().min(0).max(5000).optional(),
   })
@@ -62,20 +62,20 @@ const analyticsTopEventsInputSchema = z
 
 const analyticsAlertsInputSchema = z
   .object({
-    days: z.number().int().min(7).max(365).optional(),
+    days: z.number().int().min(1).max(365).optional(),
   })
   .optional();
 
 const analyticsCancellationReasonsInputSchema = z
   .object({
-    days: z.number().int().min(7).max(365).optional(),
+    days: z.number().int().min(1).max(365).optional(),
     topCampaigns: z.number().int().min(1).max(10).optional(),
   })
   .optional();
 
 const analyticsLiveSnapshotInputSchema = z
   .object({
-    minutes: z.number().int().min(1).max(120).optional(),
+    minutes: z.number().int().min(1).max(1440).optional(),
     limit: z.number().int().min(1).max(500).optional(),
     page: z.number().int().min(0).max(5000).optional(),
   })
@@ -97,7 +97,7 @@ const analyticsIdentifyInputSchema = z
 
 const analyticsCrmDashboardInputSchema = z
   .object({
-    days: z.number().int().min(7).max(365).optional(),
+    days: z.number().int().min(1).max(365).optional(),
     limit: z.number().int().min(10).max(100).optional(),
     recentCancellationsPage: z.number().int().min(0).max(5000).optional(),
     trialNoDownloadPage: z.number().int().min(0).max(5000).optional(),

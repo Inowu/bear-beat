@@ -59,7 +59,7 @@ const DEFAULT_FILTERS: WebhookInboxFilters = {
   provider: "",
   status: "",
   eventType: "",
-  limit: 200,
+  limit: 50,
 };
 
 const DEFAULT_PROVIDERS = ["stripe", "stripe_pi", "stripe_products", "paypal", "conekta"];

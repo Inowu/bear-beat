@@ -19,6 +19,7 @@ export type TrialSummary = {
 export type PricingStatus = "loading" | "loaded" | "error";
 
 export type PricingPlan = {
+  planId: number;
   currency: "mxn" | "usd";
   name: string;
   price: number;
@@ -55,6 +56,7 @@ export default function Pricing(props: {
   limitsNote: string;
   trial: TrialSummary | null;
   ctaLabel: string;
+  primaryCheckoutFrom: string;
   onPrimaryCtaClick: () => void;
 }) {
   const {
@@ -67,6 +69,7 @@ export default function Pricing(props: {
     limitsNote,
     trial,
     ctaLabel,
+    primaryCheckoutFrom,
     onPrimaryCtaClick,
   } = props;
 
@@ -132,6 +135,16 @@ export default function Pricing(props: {
   );
   const showAltPaymentsNoteMxn = Boolean(hasTrial && mxnAltPaymentLabel);
   const showAltPaymentsNoteUsd = Boolean(hasTrial && usdAltPaymentLabel);
+  const mxnCheckoutFrom = useMemo(() => {
+    const planId = Number(mxnPlan?.planId ?? 0);
+    if (Number.isFinite(planId) && planId > 0) return `/comprar?priceId=${planId}`;
+    return primaryCheckoutFrom;
+  }, [mxnPlan?.planId, primaryCheckoutFrom]);
+  const usdCheckoutFrom = useMemo(() => {
+    const planId = Number(usdPlan?.planId ?? 0);
+    if (Number.isFinite(planId) && planId > 0) return `/comprar?priceId=${planId}`;
+    return primaryCheckoutFrom;
+  }, [usdPlan?.planId, primaryCheckoutFrom]);
 
   return (
     <section id="precio" className="pricing" aria-label="Precio">
@@ -314,7 +327,7 @@ export default function Pricing(props: {
                 <div className="pricing__cta">
                   <Link
                     to="/auth/registro"
-                    state={{ from: "/planes" }}
+                    state={{ from: mxnCheckoutFrom }}
                     className="home-cta home-cta--primary"
                     data-testid="home-pricing-primary-cta"
                     aria-label={ctaLabel}
@@ -408,7 +421,7 @@ export default function Pricing(props: {
                 <div className="pricing__cta">
                   <Link
                     to="/auth/registro"
-                    state={{ from: "/planes" }}
+                    state={{ from: usdCheckoutFrom }}
                     className="home-cta home-cta--primary"
                     data-testid="home-pricing-primary-cta"
                     aria-label={ctaLabel}

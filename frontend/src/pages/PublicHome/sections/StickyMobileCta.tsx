@@ -23,10 +23,11 @@ function safeWriteLocalStorage(key: string, value: string): void {
 export default function StickyMobileCta(props: {
   ctaLabel: string;
   trial: { enabled: boolean; days: number; gb: number } | null;
+  primaryCheckoutFrom: string;
   onPrimaryCtaClick: () => void;
   onDemoClick: () => void;
 }) {
-  const { ctaLabel, trial, onPrimaryCtaClick, onDemoClick } = props;
+  const { ctaLabel, trial, primaryCheckoutFrom, onPrimaryCtaClick, onDemoClick } = props;
   const [dismissed, setDismissed] = useState(() => {
     if (typeof window === "undefined") return true;
     return safeReadLocalStorage(STORAGE_KEY) === "1";
@@ -205,7 +206,7 @@ export default function StickyMobileCta(props: {
       <div className="home-sticky__inner">
         <Link
           to="/auth/registro"
-          state={{ from: "/planes" }}
+          state={{ from: primaryCheckoutFrom }}
           className="home-cta home-cta--primary home-sticky__cta"
           onClick={onPrimaryCtaClick}
         >

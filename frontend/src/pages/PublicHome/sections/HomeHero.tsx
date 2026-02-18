@@ -22,10 +22,20 @@ export default function HomeHero(props: {
   afterPriceLabel: string;
   trial: TrialSummary | null;
   ctaLabel: string;
+  primaryCheckoutFrom: string;
   onPrimaryCtaClick: () => void;
   onDemoScroll: () => void;
 }) {
-  const { totalTBLabel, downloadQuotaLabel, afterPriceLabel, trial, ctaLabel, onPrimaryCtaClick, onDemoScroll } = props;
+  const {
+    totalTBLabel,
+    downloadQuotaLabel,
+    afterPriceLabel,
+    trial,
+    ctaLabel,
+    primaryCheckoutFrom,
+    onPrimaryCtaClick,
+    onDemoScroll,
+  } = props;
 
   const hasTrial = Boolean(trial?.enabled);
   const trialLabel =
@@ -65,7 +75,7 @@ export default function HomeHero(props: {
             <div className="home-hero__cta-row" role="group" aria-label="Acciones">
               <Link
                 to="/auth/registro"
-                state={{ from: "/planes" }}
+                state={{ from: primaryCheckoutFrom }}
                 className="home-cta home-cta--primary"
                 data-testid="home-cta-primary"
                 onClick={onPrimaryCtaClick}
@@ -84,7 +94,7 @@ export default function HomeHero(props: {
               ))}
             </div>
 
-            <Link to="/auth" state={{ from: "/planes" }} className="home-hero__cta-alt">
+            <Link to="/auth" state={{ from: primaryCheckoutFrom }} className="home-hero__cta-alt">
               ¿Ya tienes cuenta? Inicia sesión →
             </Link>
 

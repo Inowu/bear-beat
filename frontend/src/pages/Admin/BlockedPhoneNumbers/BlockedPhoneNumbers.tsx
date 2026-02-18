@@ -11,7 +11,7 @@ import { Plus, MoreVertical, Trash2 } from "src/icons";
 import { toErrorMessage } from "../../../utils/errorMessage";
 
 const PHONE_REGEX = /^\+\d{1,4}\s\d{4,14}$/;
-const PAGE_SIZE = 100;
+const PAGE_SIZE = 50;
 
 export const BlockedPhoneNumbers = () => {
   const { currentUser } = useUserContext();
