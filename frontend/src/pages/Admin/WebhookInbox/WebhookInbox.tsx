@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { RefreshCw } from "src/icons";
 import trpc from "../../../api";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
-import Pagination from "../../../components/Pagination/Pagination";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import { useUserContext } from "../../../contexts/UserContext";
 import "./WebhookInbox.scss";
@@ -13,20 +12,16 @@ interface WebhookInboxListItem {
   provider: string;
   eventId: string;
   eventType: string;
-  livemode: boolean | null;
   status: string;
   attempts: number;
   receivedAt: string;
   processedAt: string | null;
-  nextRetryAt: string | null;
   lastError: string | null;
 }
 
 interface WebhookInboxListResponse {
-  page: number;
-  limit: number;
-  total: number;
   items: WebhookInboxListItem[];
+  nextCursor: number | null;
 }
 
 interface WebhookInboxDetail {
@@ -49,26 +44,26 @@ interface WebhookInboxDetail {
 }
 
 interface WebhookInboxFilters {
-  page: number;
-  limit: number;
   provider: string;
   status: string;
   eventType: string;
-  eventId: string;
-  dateFrom: string;
-  dateTo: string;
+  limit: number;
+}
+
+interface FetchListOptions {
+  append?: boolean;
+  cursor?: number | null;
 }
 
 const DEFAULT_FILTERS: WebhookInboxFilters = {
-  page: 0,
-  limit: 100,
   provider: "",
   status: "",
   eventType: "",
-  eventId: "",
-  dateFrom: "",
-  dateTo: "",
+  limit: 200,
 };
+
+const DEFAULT_PROVIDERS = ["stripe", "stripe_pi", "stripe_products", "paypal", "conekta"];
+const DEFAULT_STATUSES = ["RECEIVED", "ENQUEUED", "PROCESSING", "PROCESSED", "FAILED", "IGNORED"];
 
 const formatDateTime = (value: string | null): string => {
   if (!value) return "—";
@@ -89,15 +84,24 @@ const formatJson = (value: unknown): string => {
   }
 };
 
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  if (!error) return fallback;
+  if (error instanceof Error) {
+    const trimmed = error.message.trim();
+    return trimmed || fallback;
+  }
+  return fallback;
+};
+
 export const WebhookInbox = () => {
   const navigate = useNavigate();
   const { currentUser } = useUserContext();
 
   const [filters, setFilters] = useState<WebhookInboxFilters>(DEFAULT_FILTERS);
   const [items, setItems] = useState<WebhookInboxListItem[]>([]);
-  const [total, setTotal] = useState(0);
+  const [nextCursor, setNextCursor] = useState<number | null>(null);
   const [loader, setLoader] = useState(true);
-  const [totalLoader, setTotalLoader] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [detail, setDetail] = useState<WebhookInboxDetail | null>(null);
@@ -105,62 +109,75 @@ export const WebhookInbox = () => {
   const [retryingId, setRetryingId] = useState<number | null>(null);
 
   const providers = useMemo(() => {
-    const values = new Set(["stripe", "stripe_pi", "stripe_products", "paypal", "conekta"]);
+    const values = new Set(DEFAULT_PROVIDERS);
     items.forEach((item) => values.add(item.provider));
     return Array.from(values);
   }, [items]);
 
   const statuses = useMemo(() => {
-    const values = new Set(["RECEIVED", "ENQUEUED", "PROCESSING", "PROCESSED", "FAILED", "IGNORED"]);
+    const values = new Set(DEFAULT_STATUSES);
     items.forEach((item) => values.add(item.status));
     return Array.from(values);
   }, [items]);
 
-  const fetchList = async (next: WebhookInboxFilters) => {
-    setLoader(true);
-    setTotalLoader(true);
+  const fetchList = async (
+    nextFilters: WebhookInboxFilters,
+    options: FetchListOptions = {},
+  ) => {
+    const append = Boolean(options.append);
+    if (!append) {
+      setLoader(true);
+    }
 
     try {
-      const response = (await trpc.webhookInbox.listWebhookInboxEvents.query({
-        page: next.page,
-        limit: next.limit,
-        provider: next.provider || undefined,
-        status: next.status || undefined,
-        eventType: next.eventType || undefined,
-        eventId: next.eventId || undefined,
-        dateFrom: next.dateFrom || undefined,
-        dateTo: next.dateTo || undefined,
+      const response = (await trpc.admin.webhookInbox.list.query({
+        provider: nextFilters.provider || undefined,
+        status: nextFilters.status || undefined,
+        q: nextFilters.eventType || undefined,
+        limit: nextFilters.limit,
+        cursor: options.cursor ?? undefined,
       })) as WebhookInboxListResponse;
 
       const nextItems = Array.isArray(response?.items) ? response.items : [];
-      setItems(nextItems);
-      setTotal(response?.total ?? 0);
-      setError("");
+      const resolvedNextCursor =
+        typeof response?.nextCursor === "number" ? response.nextCursor : null;
 
-      if (selectedId && !nextItems.some((item) => item.id === selectedId)) {
-        setSelectedId(null);
-        setDetail(null);
+      if (append) {
+        setItems((prev) => [...prev, ...nextItems]);
+      } else {
+        setItems(nextItems);
+        if (selectedId && !nextItems.some((item) => item.id === selectedId)) {
+          setSelectedId(null);
+          setDetail(null);
+        }
       }
-    } catch {
-      setItems([]);
-      setTotal(0);
-      setError("No se pudo cargar webhook inbox. Intenta nuevamente.");
+
+      setNextCursor(resolvedNextCursor);
+      setError("");
+    } catch (cause) {
+      if (!append) {
+        setItems([]);
+        setNextCursor(null);
+      }
+      setError(getErrorMessage(cause, "No se pudo cargar webhook inbox. Intenta nuevamente."));
     } finally {
-      setLoader(false);
-      setTotalLoader(false);
+      if (!append) {
+        setLoader(false);
+      }
     }
   };
 
   const fetchDetail = async (id: number) => {
     setDetailLoader(true);
     try {
-      const response = (await trpc.webhookInbox.getWebhookInboxEvent.query({
+      const response = (await trpc.admin.webhookInbox.get.query({
         id,
       })) as WebhookInboxDetail;
       setDetail(response);
-    } catch {
+      setError("");
+    } catch (cause) {
       setDetail(null);
-      setError("No se pudo cargar el detalle del evento.");
+      setError(getErrorMessage(cause, "No se pudo cargar el detalle del evento."));
     } finally {
       setDetailLoader(false);
     }
@@ -169,14 +186,14 @@ export const WebhookInbox = () => {
   const retryEvent = async (id: number) => {
     setRetryingId(id);
     try {
-      await trpc.webhookInbox.retryWebhookInboxEvent.mutate({ id });
+      await trpc.admin.webhookInbox.retry.mutate({ id });
       await fetchList(filters);
       if (selectedId === id) {
         await fetchDetail(id);
       }
       setError("");
-    } catch {
-      setError("No se pudo reintentar el evento.");
+    } catch (cause) {
+      setError(getErrorMessage(cause, "No se pudo reintentar el evento."));
     } finally {
       setRetryingId(null);
     }
@@ -185,21 +202,24 @@ export const WebhookInbox = () => {
   const startFilter = (key: keyof WebhookInboxFilters, value: string | number) => {
     const next: WebhookInboxFilters = {
       ...filters,
-      [key]: String(value),
+      [key]: value,
     } as WebhookInboxFilters;
-
-    if (key === "page") {
-      next.page = Number(value);
-    } else {
-      next.page = 0;
-    }
-
-    if (key === "limit") {
-      next.limit = Number(value);
-    }
 
     setFilters(next);
     void fetchList(next);
+  };
+
+  const loadMore = async () => {
+    if (!nextCursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      await fetchList(filters, {
+        append: true,
+        cursor: nextCursor,
+      });
+    } finally {
+      setLoadingMore(false);
+    }
   };
 
   useEffect(() => {
@@ -248,43 +268,16 @@ export const WebhookInbox = () => {
       </label>
 
       <label className="webhook-inbox-toolbar__field">
-        <span>Tipo de evento</span>
+        <span>Event Type</span>
         <input
           value={filters.eventType}
           onChange={(e) => startFilter("eventType", e.target.value)}
-          placeholder="customer.subscription.updated"
+          placeholder="BILLING.SUBSCRIPTION.ACTIVATED"
         />
       </label>
 
       <label className="webhook-inbox-toolbar__field">
-        <span>Event ID</span>
-        <input
-          value={filters.eventId}
-          onChange={(e) => startFilter("eventId", e.target.value)}
-          placeholder="evt_..."
-        />
-      </label>
-
-      <label className="webhook-inbox-toolbar__field">
-        <span>Desde</span>
-        <input
-          type="date"
-          value={filters.dateFrom}
-          onChange={(e) => startFilter("dateFrom", e.target.value)}
-        />
-      </label>
-
-      <label className="webhook-inbox-toolbar__field">
-        <span>Hasta</span>
-        <input
-          type="date"
-          value={filters.dateTo}
-          onChange={(e) => startFilter("dateTo", e.target.value)}
-        />
-      </label>
-
-      <label className="webhook-inbox-toolbar__field">
-        <span>Por página</span>
+        <span>Límite</span>
         <select
           value={filters.limit}
           onChange={(e) => startFilter("limit", Number(e.target.value))}
@@ -321,7 +314,7 @@ export const WebhookInbox = () => {
 
   return (
     <AdminPageLayout
-      title={`Webhook Inbox — ${total}`}
+      title={`Webhook Inbox — ${items.length}`}
       subtitle="Inspecciona eventos recibidos, estado de procesamiento y reintenta manualmente cuando aplique."
       toolbar={toolbar}
     >
@@ -339,23 +332,22 @@ export const WebhookInbox = () => {
           aria-label="Tabla de webhook inbox"
           data-scroll-region
         >
-          <table className="w-full min-w-[1240px]">
+          <table className="w-full min-w-[1040px]">
             <thead className="sticky top-0 z-10">
               <tr>
-                <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Fecha</th>
-                <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Proveedor</th>
-                <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Evento</th>
-                <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Tipo</th>
+                <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Received At</th>
+                <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Provider</th>
+                <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Event Type</th>
                 <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Status</th>
-                <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Intentos</th>
-                <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Siguiente retry</th>
+                <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Attempts</th>
+                <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Processed At</th>
                 <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {items.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="py-5 px-4 text-sm text-center webhook-inbox-empty">
+                  <td colSpan={7} className="py-5 px-4 text-sm text-center webhook-inbox-empty">
                     No hay eventos para los filtros seleccionados.
                   </td>
                 </tr>
@@ -367,11 +359,6 @@ export const WebhookInbox = () => {
                 >
                   <td className="py-3 px-4 text-sm whitespace-nowrap">{formatDateTime(item.receivedAt)}</td>
                   <td className="py-3 px-4 text-sm">{item.provider}</td>
-                  <td className="py-3 px-4 text-sm">
-                    <span className="webhook-inbox-event-id" title={item.eventId}>
-                      {item.eventId}
-                    </span>
-                  </td>
                   <td className="py-3 px-4 text-sm">{item.eventType}</td>
                   <td className="py-3 px-4 text-sm">
                     <span className={`webhook-inbox-status webhook-inbox-status--${item.status.toLowerCase()}`}>
@@ -379,7 +366,7 @@ export const WebhookInbox = () => {
                     </span>
                   </td>
                   <td className="py-3 px-4 text-sm">{item.attempts}</td>
-                  <td className="py-3 px-4 text-sm">{formatDateTime(item.nextRetryAt)}</td>
+                  <td className="py-3 px-4 text-sm">{formatDateTime(item.processedAt)}</td>
                   <td className="py-3 px-4 text-sm">
                     <div className="webhook-inbox-actions">
                       <button
@@ -389,35 +376,38 @@ export const WebhookInbox = () => {
                       >
                         Ver
                       </button>
-                      <button
-                        type="button"
-                        className="btn-icon btn-secondary"
-                        disabled={retryingId === item.id}
-                        onClick={() => void retryEvent(item.id)}
-                      >
-                        {retryingId === item.id ? "Reintentando..." : "Reintentar"}
-                      </button>
+                      {item.status === "FAILED" ? (
+                        <button
+                          type="button"
+                          className="btn-icon btn-secondary"
+                          disabled={retryingId === item.id}
+                          onClick={() => void retryEvent(item.id)}
+                        >
+                          {retryingId === item.id ? "Reintentando..." : "Reintentar"}
+                        </button>
+                      ) : (
+                        <span className="text-xs opacity-70">—</span>
+                      )}
                     </div>
                   </td>
                 </tr>
               ))}
             </tbody>
-            <tfoot>
-              <tr>
-                <td colSpan={8} className="py-3 px-4">
-                  <Pagination
-                    totalData={total}
-                    title="eventos"
-                    startFilter={startFilter}
-                    currentPage={filters.page}
-                    limit={filters.limit}
-                    totalLoader={totalLoader}
-                  />
-                </td>
-              </tr>
-            </tfoot>
           </table>
         </div>
+
+        {nextCursor && (
+          <div className="mt-4 flex justify-center">
+            <button
+              type="button"
+              className="btn-icon btn-secondary"
+              onClick={() => void loadMore()}
+              disabled={loadingMore}
+            >
+              {loadingMore ? "Cargando..." : "Cargar más"}
+            </button>
+          </div>
+        )}
       </div>
 
       {selectedId && (
