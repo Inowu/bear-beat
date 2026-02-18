@@ -205,7 +205,11 @@ const Turnstile = forwardRef<TurnstileRef, TurnstileProps>(function Turnstile(
   return (
     <div
       ref={containerRef}
-      className={invisible ? "turnstile-widget-wrap turnstile-invisible" : "turnstile-widget-wrap"}
+      className={
+        invisible
+          ? "turnstile-widget-wrap turnstile-invisible cf-turnstile"
+          : "turnstile-widget-wrap cf-turnstile"
+      }
       aria-hidden={invisible ? true : undefined}
     />
   );

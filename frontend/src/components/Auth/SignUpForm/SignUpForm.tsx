@@ -275,7 +275,7 @@ function SignUpForm() {
     onSubmit: async (values) => {
       setInlineError("");
       if (!turnstileToken && !turnstileBypassed) {
-        // Invisible Turnstile: execute only on submit to avoid showing the widget by default.
+        // If token is still missing, trigger Turnstile execution and wait for callback.
         setTurnstileError("Verificando seguridad...");
         setTurnstilePendingSubmit(true);
         setLoader(true);
@@ -800,7 +800,6 @@ function SignUpForm() {
       {WhatsAppField}
       <Turnstile
         ref={turnstileRef}
-        invisible
         onVerify={handleTurnstileSuccess}
         onExpire={handleTurnstileExpire}
         onError={handleTurnstileError}
