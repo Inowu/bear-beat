@@ -2262,10 +2262,12 @@ export const getAnalyticsCrmDashboard = async (
       SELECT
         DATE_FORMAT(event_ts, '%Y-%m-%d') AS day,
         COUNT(CASE WHEN event_name = 'trial_started' THEN 1 END) AS trialStarts,
-        COUNT(CASE WHEN event_name = 'trial_converted' THEN 1 END) AS trialConversions
+        COUNT(CASE
+          WHEN event_name IN ('trial_converted', 'trial_to_paid') THEN 1
+        END) AS trialConversions
       FROM analytics_events
       WHERE event_ts >= ${startDateOnly}
-        AND event_name IN ('trial_started', 'trial_converted')
+        AND event_name IN ('trial_started', 'trial_converted', 'trial_to_paid')
         ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_SQL}
       GROUP BY DATE_FORMAT(event_ts, '%Y-%m-%d')
       ORDER BY day ASC

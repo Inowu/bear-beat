@@ -34,16 +34,34 @@ export const processStripeWebhookPayload = async (payload: Stripe.Event) => {
     return;
   }
 
-  const plan = (await getPlanFromPayload(payload))!;
-
-  if (!plan && payload.type?.startsWith('customer.subscription')) {
-    log.error('[STRIPE_WH] Plan not found in event', { eventType: payload.type, eventId: payload.id });
-
-    return;
-  }
-
   const subscription = payload.data.object as any;
   const previousAttributes = (payload as any)?.data?.previous_attributes as any;
+  const normalizedSubscriptionStatus =
+    typeof subscription?.status === 'string'
+      ? String(subscription.status).toLowerCase()
+      : null;
+  const normalizedPreviousStatus =
+    typeof previousAttributes?.status === 'string'
+      ? String(previousAttributes.status).toLowerCase()
+      : null;
+  const canProceedWithoutPlan =
+    (payload.type === StripeEvents.SUBSCRIPTION_CREATED
+      && normalizedSubscriptionStatus === 'trialing')
+    || (payload.type === StripeEvents.SUBSCRIPTION_UPDATED
+      && normalizedSubscriptionStatus === 'active'
+      && normalizedPreviousStatus === 'trialing');
+  const plan = await getPlanFromPayload(payload);
+
+  if (!plan && payload.type?.startsWith('customer.subscription') && !canProceedWithoutPlan) {
+    log.error('[STRIPE_WH] Plan not found in event', { eventType: payload.type, eventId: payload.id });
+    return;
+  }
+  if (!plan && canProceedWithoutPlan) {
+    log.warn('[STRIPE_WH] Plan not resolved; continuing with analytics/order fallback', {
+      eventType: payload.type,
+      eventId: payload.id,
+    });
+  }
 
   // await addMetadataToSubscription({
   //   subId: subscription.id,
@@ -77,17 +95,39 @@ export const processStripeWebhookPayload = async (payload: Stripe.Event) => {
           });
         }
 
-        await subscribe({
-          subId: subscription.id,
-          prisma,
-          user,
-          plan: plan!,
-          orderId: subscription.metadata.orderId,
-          service: PaymentService.STRIPE,
-          expirationDate: new Date(subscription.current_period_end * 1000),
-          quotaGb,
-          isTrial: true,
-        });
+        const trialOrderIdRaw = Number(subscription?.metadata?.orderId);
+        const trialOrderId =
+          Number.isFinite(trialOrderIdRaw) && trialOrderIdRaw > 0
+            ? trialOrderIdRaw
+            : null;
+
+        if (trialOrderId) {
+          await subscribe({
+            subId: subscription.id,
+            prisma,
+            user,
+            orderId: trialOrderId,
+            service: PaymentService.STRIPE,
+            expirationDate: new Date(subscription.current_period_end * 1000),
+            quotaGb,
+            isTrial: true,
+          });
+        } else if (plan) {
+          await subscribe({
+            subId: subscription.id,
+            prisma,
+            user,
+            plan,
+            service: PaymentService.STRIPE,
+            expirationDate: new Date(subscription.current_period_end * 1000),
+            quotaGb,
+            isTrial: true,
+          });
+        } else {
+          log.error('[STRIPE_WH] Trial subscription without plan/orderId; skipping subscribe', {
+            eventId: payload.id,
+          });
+        }
 
         // Internal analytics (server-side): trial started.
         try {
@@ -184,7 +224,7 @@ export const processStripeWebhookPayload = async (payload: Stripe.Event) => {
           });
 
           // Email + ManyChat: only on first paid activation / trial conversion (avoid spamming on renewals).
-          if (isInitialPaidActivation || isTrialConversion) {
+          if (plan && (isInitialPaidActivation || isTrialConversion)) {
             try {
               await sendPlanActivatedEmail({
                 userId: user.id,
@@ -217,15 +257,29 @@ export const processStripeWebhookPayload = async (payload: Stripe.Event) => {
             });
           }
 
-          await subscribe({
-            subId: subscription.id,
-            prisma,
-            user,
-            plan: plan!,
-            orderId: subscription.metadata.orderId,
-            service: PaymentService.STRIPE,
-            expirationDate: new Date(subscription.current_period_end * 1000),
-          });
+          if (Number.isFinite(orderId) && orderId > 0) {
+            await subscribe({
+              subId: subscription.id,
+              prisma,
+              user,
+              orderId,
+              service: PaymentService.STRIPE,
+              expirationDate: new Date(subscription.current_period_end * 1000),
+            });
+          } else if (plan) {
+            await subscribe({
+              subId: subscription.id,
+              prisma,
+              user,
+              plan,
+              service: PaymentService.STRIPE,
+              expirationDate: new Date(subscription.current_period_end * 1000),
+            });
+          } else {
+            log.error('[STRIPE_WH] Active subscription update without plan/orderId; skipping subscribe', {
+              eventId: payload.id,
+            });
+          }
 
           const subscriptionMetadata = (subscription?.metadata ?? {}) as Record<string, unknown>;
           const latestPaidOrder = await prisma.orders.findFirst({
@@ -293,7 +347,7 @@ export const processStripeWebhookPayload = async (payload: Stripe.Event) => {
           }
 
           // Facebook CAPI Purchase (server-side): send once per order (avoid double counting renewals/updates).
-          if (!orderWasPaidBefore) {
+          if (!orderWasPaidBefore && plan) {
             try {
               const purchaseEventId =
                 typeof subscriptionMetadata.bb_purchase_event_id === 'string'
