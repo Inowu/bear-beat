@@ -56,6 +56,25 @@ const withRetryCacheBust = (rawUrl: string, retryAttempt: number): string => {
   }
 };
 
+const isPromiseLike = (value: unknown): value is Promise<unknown> =>
+  typeof value === 'object' &&
+  value !== null &&
+  typeof (value as { then?: unknown }).then === 'function';
+
+const isExpectedPlayRestrictionError = (error: unknown): boolean => {
+  const text =
+    error instanceof Error
+      ? `${error.name} ${error.message}`
+      : `${error ?? ''}`;
+  const normalized = text.toLowerCase();
+  return (
+    normalized.includes('notallowederror') ||
+    normalized.includes('user gesture') ||
+    normalized.includes('play() can only be initiated') ||
+    normalized.includes('request is not allowed by the user agent')
+  );
+};
+
 function PreviewModal(props: PreviewModalPropsI) {
   const { show, onHide, file } = props;
   const resolvedKind = file?.kind === 'video' ? 'video' : 'audio';
@@ -193,7 +212,7 @@ function PreviewModal(props: PreviewModalPropsI) {
       setWaveDrawn(true);
       setAudioLoadError('');
       scheduledAudioRetryRef.current = -1;
-      wave.play();
+      playAudioSafely(() => wave.play());
     };
     const handleRedraw = () => {
       setWaveDrawn(true);
@@ -283,6 +302,26 @@ function PreviewModal(props: PreviewModalPropsI) {
     markDemoPlayStarted();
   };
 
+  const playAudioSafely = (playbackAction: () => void | Promise<unknown>) => {
+    const onPlayError = (error: unknown) => {
+      // Expected in Safari/in-app browsers when autoplay is blocked.
+      if (isExpectedPlayRestrictionError(error)) {
+        setIsPlaying(false);
+        return;
+      }
+      setIsPlaying(false);
+    };
+
+    try {
+      const result = playbackAction();
+      if (isPromiseLike(result)) {
+        void result.catch(onPlayError);
+      }
+    } catch (error) {
+      onPlayError(error);
+    }
+  };
+
   const toggleAudio = () => {
     const player = waveSurferRef.current;
     if (!player) {
@@ -292,7 +331,7 @@ function PreviewModal(props: PreviewModalPropsI) {
       player.pause();
       return;
     }
-    player.play();
+    playAudioSafely(() => player.play());
   };
 
   return (

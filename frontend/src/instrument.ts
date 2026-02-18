@@ -125,6 +125,31 @@ if (sentryEnabled) {
         return null;
       }
 
+      // Some browsers omit NotAllowedError but still report expected autoplay blocks.
+      if (
+        combined.includes("play() can only be initiated by a user gesture") ||
+        combined.includes("request is not allowed by the user agent or the platform")
+      ) {
+        return null;
+      }
+
+      // In-app iOS webviews and third-party scripts can throw this without app impact.
+      if (
+        combined.includes("window.webkit.messagehandlers") ||
+        (combined.includes("webkit") && combined.includes("messagehandlers"))
+      ) {
+        return null;
+      }
+
+      // Turnstile can hang/fail in embedded browsers (low actionability for frontend fixes).
+      if (
+        combined.includes("cloudflare turnstile") ||
+        combined.includes("turnstile widget seem to have hung") ||
+        (combined.includes("turnstile") && combined.includes("300030"))
+      ) {
+        return null;
+      }
+
       // Replay (rrweb) may attempt to introspect cross-origin iframes (PayPal, etc).
       // These SecurityErrors are expected and not actionable.
       if (
