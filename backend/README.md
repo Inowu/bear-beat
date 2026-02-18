@@ -1,5 +1,12 @@
 # Deploying to production (https://thebearbeatapi.lat)
- 
+
+## Conekta webhook signature
+
+- Endpoint: `POST /webhooks.conekta`.
+- The endpoint expects `express.raw({ type: 'application/json' })` so `req.body` is a `Buffer`.
+- Signature is validated from the `Digest` header using RSA-SHA256 over the raw UTF-8 body.
+- Set `CONEKTA_WEBHOOK_PUBLIC_KEY` (PEM) to validate signatures. Legacy fallbacks: `CONEKTA_SIGNED_KEY` and `CONEKTA_SIGNED_TEST_KEY`.
+- In `production`, invalid/missing signature returns `401`.
 
 In order to enable zero-downtime deploys, the current deployment scheme consists of having two pm2 processes running (formerly docker containers): `bearbeat-blue` and `bearbeat-green`, these two instances run on port `5000` and `6000` respectively. To deploy a new version of the server, changes from the repository are pulled and the non-active instance is restarted with the new changes (If the active instance is `bearbeat-blue`, `bearbeat-green` gets restarted and vice versa).
 

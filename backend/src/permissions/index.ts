@@ -1,7 +1,6 @@
 import { allow, deny, rule, shield } from 'trpc-shield';
 import { Context } from '../context';
 import { RolesNames } from '../routers/auth/interfaces/roles.interface';
-import { verifyConektaSignature } from '../routers/utils/verifyConektaSignature';
 import { verifyStripeSignature } from '../routers/utils/verifyStripeSignature';
 import { TRPCError } from '@trpc/server';
 
@@ -10,10 +9,6 @@ const isAdmin = rule<Context>()(
 );
 
 const isLoggedIn = rule<Context>()(async (ctx) => Boolean(ctx.session?.user));
-
-const isValidConektaSignature = rule<Context>()(async ({ req }) =>
-  verifyConektaSignature(req),
-);
 
 const isValidStripeSignature = rule<Context>()(async ({ req }) =>
   verifyStripeSignature(req, process.env.STRIPE_WH_SECRET as string),
@@ -212,7 +207,7 @@ export const permissions = shield<Context>(
     subscribeWithCashConekta: isLoggedIn,
     subscribeWithPayByBankConekta: isLoggedIn,
     subscribeWithOxxoStripe: isLoggedIn,
-    conektaSubscriptionWebhook: isValidConektaSignature,
+    conektaSubscriptionWebhook: allow,
     stripeSubscriptionWebhook: isValidStripeSignature,
     subscribeWithPaypal: isLoggedIn,
     createStripeCheckoutSession: isLoggedIn,
