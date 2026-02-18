@@ -14,6 +14,7 @@ type RouteSeo = {
   title: string;
   description: string;
   indexable: boolean;
+  canonical?: string;
   canonicalPath?: string;
   ogImage?: string;
   twitterImage?: string;
@@ -48,7 +49,9 @@ export function applyRouteSeo(pathname: string): void {
   const title = routeSeo?.title ?? SEO_DEFAULT_META.title;
   const description = routeSeo?.description ?? SEO_DEFAULT_META.description;
   const indexable = routeSeo?.indexable === true;
-  const canonicalUrl = resolveSeoUrl(routeSeo?.canonicalPath ?? normalizedPath);
+  const canonicalUrl = resolveSeoUrl(
+    routeSeo?.canonical ?? routeSeo?.canonicalPath ?? normalizedPath,
+  );
   const ogImage = routeSeo?.ogImage ?? SEO_DEFAULT_META.ogImage;
   const twitterImage = routeSeo?.twitterImage ?? ogImage;
   const robotsContent = indexable ? "index, follow" : "noindex, nofollow";
