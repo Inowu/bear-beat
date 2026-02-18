@@ -1,5 +1,4 @@
 import type { Prisma, PrismaClient } from '@prisma/client';
-import { getClientIpFromRequest } from '../../analytics';
 import { log } from '../../server';
 
 type RequestLike = {
@@ -48,7 +47,8 @@ export const createAdminAuditLog = async ({
   metadata,
 }: CreateAdminAuditLogInput): Promise<void> => {
   try {
-    const ip = req ? getClientIpFromRequest(req) : null;
+    // Do not capture/store IP addresses in admin audit logs (PII).
+    const ip = null;
     const userAgent = normalizeUserAgent(req?.headers?.['user-agent']);
     const normalizedAction = trimToLength(
       action.trim(),

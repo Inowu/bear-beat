@@ -30,6 +30,7 @@ import { isStripeOxxoConfigured } from '../stripe/oxxo';
 import { getPublicCatalogSummarySnapshot } from './Catalog.router';
 import { getUserQuotaSnapshot } from './file-actions/quota';
 import { createAdminAuditLog } from './utils/adminAuditLog';
+import { RolesNames } from './auth/interfaces/roles.interface';
 
 type StripeRecurringInterval = 'day' | 'week' | 'month' | 'year';
 
@@ -374,7 +375,10 @@ export const plansRouter = router({
     // Production audits are READ-ONLY. When the auditor sets this header, avoid
     // triggering external side-effects (ManyChat tags/custom fields) from a query.
     const auditReadOnlyHeader = ctx.req?.headers?.['x-bb-audit-readonly'];
-    const isAuditReadOnly = auditReadOnlyHeader === '1';
+    const isPrivilegedRole =
+      ctx.session?.user?.role != null &&
+      ctx.session.user.role !== RolesNames.normal;
+    const isAuditReadOnly = auditReadOnlyHeader === '1' || isPrivilegedRole;
 
     const [allPlans, trialConfig, catalogSummary] = await Promise.all([
       ctx.prisma.plans.findMany({
@@ -647,7 +651,10 @@ export const plansRouter = router({
       // Production audits are READ-ONLY. When the auditor sets this header, avoid
       // triggering external side-effects (ManyChat tags/custom fields) from a query.
       const auditReadOnlyHeader = ctx.req?.headers?.['x-bb-audit-readonly'];
-      const isAuditReadOnly = auditReadOnlyHeader === '1';
+      const isPrivilegedRole =
+        ctx.session?.user?.role != null &&
+        ctx.session.user.role !== RolesNames.normal;
+      const isAuditReadOnly = auditReadOnlyHeader === '1' || isPrivilegedRole;
 
       const requestedPlan = await ctx.prisma.plans.findFirst({
         where: {
@@ -832,7 +839,10 @@ export const plansRouter = router({
     // Production audits are READ-ONLY. When the auditor sets this header, avoid
     // triggering external side-effects (ManyChat tags/custom fields) from a query.
     const auditReadOnlyHeader = ctx.req?.headers?.['x-bb-audit-readonly'];
-    const isAuditReadOnly = auditReadOnlyHeader === '1';
+    const isPrivilegedRole =
+      ctx.session?.user?.role != null &&
+      ctx.session.user.role !== RolesNames.normal;
+    const isAuditReadOnly = auditReadOnlyHeader === '1' || isPrivilegedRole;
 
     const allPlans = await ctx.prisma.plans.findMany({
       where: {
@@ -1410,7 +1420,10 @@ export const plansRouter = router({
       // Production audits are READ-ONLY. When the auditor sets this header, avoid
       // triggering external side-effects (ManyChat tags/custom fields) from a query.
       const auditReadOnlyHeader = ctx.req?.headers?.['x-bb-audit-readonly'];
-      const isAuditReadOnly = auditReadOnlyHeader === '1';
+      const isPrivilegedRole =
+        ctx.session?.user?.role != null &&
+        ctx.session.user.role !== RolesNames.normal;
+      const isAuditReadOnly = auditReadOnlyHeader === '1' || isPrivilegedRole;
 
       if (!isAuditReadOnly && ctx.session?.user?.id && plans.length > 0) {
         try {

@@ -22,13 +22,17 @@ export const PlanAdmin = () => {
   const [plans, setPlans] = useState<IPlans[]>([]);
   const [page, setPage] = useState<number>(0);
   const [loader, setLoader] = useState<boolean>(true);
+  const [showInactive, setShowInactive] = useState<boolean>(false);
   const [editingPlan, setEditingPlan] = useState<IPlans | null>(null);
   const [drawerPlan, setDrawerPlan] = useState<IPlans | null>(null);
   const [planToDelete, setPlanToDelete] = useState<IPlans | null>(null);
 
   const getPlans = async () => {
+    setLoader(true);
     try {
-      const data: any = await trpc.plans.findManyPlans.query({ where: {} });
+      const data: any = await trpc.plans.findManyPlans.query({
+        where: showInactive ? {} : { activated: 1 },
+      });
       setPlans(data);
     } catch {
       if (import.meta.env.DEV) {
@@ -75,7 +79,7 @@ export const PlanAdmin = () => {
 
   useEffect(() => {
     getPlans();
-  }, []);
+  }, [showInactive]);
 
   useEffect(() => {
     const totalPages = Math.max(1, Math.ceil(plans.length / PAGE_SIZE));
@@ -90,6 +94,20 @@ export const PlanAdmin = () => {
 
   const toolbar = (
     <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+      <label className="inline-flex flex-col gap-1 text-sm text-text-muted min-w-[220px]">
+        Mostrar
+        <select
+          className="min-h-[44px] rounded-xl px-3 border border-border bg-bg-card text-text-main"
+          value={showInactive ? "all" : "active"}
+          onChange={(event) => {
+            setPage(0);
+            setShowInactive(event.target.value === "all");
+          }}
+        >
+          <option value="active">Solo activos</option>
+          <option value="all">Activos + inactivos</option>
+        </select>
+      </label>
       <button
         type="button"
         onClick={() => setShow(true)}

@@ -23,6 +23,27 @@ interface IAdminFilter {
   status: number | "";
 }
 
+interface OrdersFinancialSummary {
+  totals: {
+    totalOrders: number;
+    grossRevenue: number;
+    avgOrderValue: number;
+  };
+  byPaymentMethod: Array<{
+    paymentMethod: string;
+    totalOrders: number;
+    grossRevenue: number;
+  }>;
+  trend: {
+    days: number | null;
+    points: Array<{
+      day: string;
+      totalOrders: number;
+      grossRevenue: number;
+    }>;
+  };
+}
+
 function getOrderStatusString(status: number) {
   switch (status) {
     case ORDER_STATUS.PENDING: return "Pendiente";
@@ -34,6 +55,56 @@ function getOrderStatusString(status: number) {
   }
 }
 
+function formatCurrency(value: number | null | undefined): string {
+  if (value == null || Number.isNaN(value)) return "—";
+  return new Intl.NumberFormat("es-MX", {
+    style: "currency",
+    currency: "MXN",
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+function Sparkline({ values }: { values: number[] }) {
+  const width = 360;
+  const height = 64;
+  const padding = 6;
+  if (!values.length) return <div className="text-sm text-text-muted">Sin datos</div>;
+
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = max - min || 1;
+
+  const points = values.map((v, i) => {
+    const x = padding + (i * (width - padding * 2)) / Math.max(1, values.length - 1);
+    const y = height - padding - ((v - min) * (height - padding * 2)) / span;
+    return { x, y };
+  });
+
+  const d = points
+    .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`)
+    .join(" ");
+
+  return (
+    <svg
+      width="100%"
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      preserveAspectRatio="none"
+      role="img"
+      aria-label="Tendencia"
+    >
+      <path
+        d={d}
+        fill="none"
+        stroke="var(--app-accent)"
+        strokeWidth={2.5}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export const Ordens = () => {
   const { currentUser } = useUserContext();
   const navigate = useNavigate();
@@ -42,6 +113,7 @@ export const Ordens = () => {
   const [totalOrdens, setTotalOrdens] = useState(0);
   const [loader, setLoader] = useState<boolean>(true);
   const [drawerOrder, setDrawerOrder] = useState<IAdminOrders | null>(null);
+  const [summary, setSummary] = useState<OrdersFinancialSummary | null>(null);
   const [filters, setFilters] = useState<IAdminFilter>({
     active: 1,
     endDate: "",
@@ -88,10 +160,26 @@ export const Ordens = () => {
       if (dateRange) {
         body.date_order = dateRange;
       }
-      const [res, err] = await of(trpc.orders.findManyOrdersWithUsers.query(body));
-      if (err || !res) return;
-      setOrdens(res.data);
-      setTotalOrdens(res.count);
+
+      const summaryBody: any = {
+        email: body.email,
+        paymentMethod: body.paymentMethod,
+        ...(body.status != null ? { status: body.status } : {}),
+        ...(body.date_order != null ? { date_order: body.date_order } : {}),
+      };
+
+      const [[res, err], [summaryRes]] = await Promise.all([
+        of(trpc.orders.findManyOrdersWithUsers.query(body)),
+        of(trpc.orders.getOrdersFinancialSummary.query(summaryBody)),
+      ]);
+
+      if (!err && res) {
+        setOrdens(res.data);
+        setTotalOrdens(res.count);
+      }
+      if (summaryRes) {
+        setSummary(summaryRes as OrdersFinancialSummary);
+      }
     } finally {
       setLoader(false);
       setTotalLoader(false);
@@ -257,6 +345,67 @@ export const Ordens = () => {
       toolbar={toolbar}
     >
       <div className="w-full overflow-x-hidden">
+        {summary ? (
+          <div className="admin-table-panel mb-4">
+            <div className="p-4 grid grid-cols-1 md:grid-cols-4 gap-3">
+              <div className="rounded-xl border border-border bg-bg-card p-4">
+                <p className="text-xs uppercase tracking-wider text-text-muted">Órdenes</p>
+                <p className="text-2xl font-bold">{summary.totals.totalOrders.toLocaleString("es-MX")}</p>
+              </div>
+              <div className="rounded-xl border border-border bg-bg-card p-4">
+                <p className="text-xs uppercase tracking-wider text-text-muted">Ingreso bruto</p>
+                <p className="text-2xl font-bold">{formatCurrency(summary.totals.grossRevenue)}</p>
+              </div>
+              <div className="rounded-xl border border-border bg-bg-card p-4">
+                <p className="text-xs uppercase tracking-wider text-text-muted">Ticket promedio</p>
+                <p className="text-2xl font-bold">{formatCurrency(summary.totals.avgOrderValue)}</p>
+              </div>
+              <div className="rounded-xl border border-border bg-bg-card p-4">
+                <p className="text-xs uppercase tracking-wider text-text-muted">Tendencia</p>
+                <Sparkline values={summary.trend.points.map((p) => p.grossRevenue)} />
+                <p className="text-xs text-text-muted mt-1">
+                  {summary.trend.days ? `Últimos ${summary.trend.days} días` : "Rango seleccionado"}
+                </p>
+              </div>
+            </div>
+
+            <div className="px-4 pb-4">
+              <div className="rounded-xl border border-border bg-bg-card overflow-hidden">
+                <div className="p-3 border-b border-border">
+                  <p className="font-semibold">Desglose por método</p>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[520px] text-left text-sm">
+                    <thead>
+                      <tr>
+                        <th className="p-3">Método</th>
+                        <th className="p-3">Órdenes</th>
+                        <th className="p-3">Ingreso</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {summary.byPaymentMethod.map((row) => (
+                        <tr key={row.paymentMethod} className="border-t border-border">
+                          <td className="p-3">{row.paymentMethod}</td>
+                          <td className="p-3">{row.totalOrders.toLocaleString("es-MX")}</td>
+                          <td className="p-3">{formatCurrency(row.grossRevenue)}</td>
+                        </tr>
+                      ))}
+                      {summary.byPaymentMethod.length === 0 ? (
+                        <tr>
+                          <td colSpan={3} className="p-3 text-text-muted">
+                            Sin datos para los filtros actuales.
+                          </td>
+                        </tr>
+                      ) : null}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         {/* Tabla desktop (patrón BEAR BEAT PRO) */}
         <div className="admin-table-panel">
           <div

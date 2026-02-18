@@ -17,6 +17,8 @@ import { OrdersUpdateOneSchema } from '../schemas/updateOneOrders.schema';
 import { OrdersUpsertSchema } from '../schemas/upsertOneOrders.schema';
 import { OrderStatus } from './subscriptions/interfaces/order-status.interface';
 import { PaymentService } from './subscriptions/services/types';
+import { RolesNames } from './auth/interfaces/roles.interface';
+import { createAdminAuditLog } from './utils/adminAuditLog';
 
 interface AdminOrders {
   city: string;
@@ -158,6 +160,189 @@ export const ordersRouter = router({
         };
       },
     ),
+  getOrdersFinancialSummary: shieldedProcedure
+    .input(
+      z
+        .object({
+          email: z.string().optional(),
+          phone: z.string().optional(),
+          status: z.nativeEnum(OrderStatus).optional(),
+          paymentMethod: z.string().optional(),
+          date_order: z
+            .union([
+              z.object({
+                gte: z.string().optional(),
+                lte: z.string().optional(),
+              }),
+              z.string(),
+            ])
+            .optional(),
+        })
+        .optional(),
+    )
+    .query(async ({ ctx: { prisma }, input }) => {
+      const whereClauses: Prisma.Sql[] = [];
+
+      const email = input?.email;
+      const phone = input?.phone;
+      const status = input?.status;
+      const paymentMethod = input?.paymentMethod;
+      const date_order = input?.date_order;
+
+      if (email) {
+        const likeValue = `%${email}%`;
+        const orderIdFromSearch = Number(email);
+        if (Number.isInteger(orderIdFromSearch)) {
+          whereClauses.push(
+            Prisma.sql`(u.email LIKE ${likeValue} OR u.phone LIKE ${likeValue} OR o.id = ${orderIdFromSearch})`,
+          );
+        } else {
+          whereClauses.push(
+            Prisma.sql`(u.email LIKE ${likeValue} OR u.phone LIKE ${likeValue})`,
+          );
+        }
+      }
+
+      if (phone) {
+        whereClauses.push(Prisma.sql`u.phone LIKE ${`%${phone}%`}`);
+      }
+
+      if (typeof status === 'number') {
+        whereClauses.push(Prisma.sql`o.status = ${status}`);
+      }
+
+      if (paymentMethod) {
+        whereClauses.push(
+          Prisma.sql`o.payment_method LIKE ${`%${paymentMethod}%`}`,
+        );
+      }
+
+      let hasExplicitDateFilter = false;
+      if (date_order) {
+        hasExplicitDateFilter = true;
+        if (typeof date_order === 'string') {
+          whereClauses.push(
+            Prisma.sql`o.date_order LIKE ${`%${date_order}%`}`,
+          );
+        } else if (typeof date_order === 'object') {
+          if (date_order.gte && date_order.lte) {
+            whereClauses.push(
+              Prisma.sql`o.date_order BETWEEN ${date_order.gte} AND ${date_order.lte}`,
+            );
+          } else if (date_order.gte) {
+            whereClauses.push(Prisma.sql`o.date_order >= ${date_order.gte}`);
+          } else if (date_order.lte) {
+            whereClauses.push(Prisma.sql`o.date_order <= ${date_order.lte}`);
+          }
+        }
+      }
+
+      const whereSql =
+        whereClauses.length > 0
+          ? Prisma.sql`WHERE ${Prisma.join(whereClauses, ' AND ')}`
+          : Prisma.empty;
+
+      const numberFromUnknown = (value: unknown): number => {
+        if (typeof value === 'bigint') return Number(value);
+        if (typeof value === 'number' && Number.isFinite(value)) return value;
+        if (typeof value === 'string') {
+          const parsed = Number(value);
+          return Number.isFinite(parsed) ? parsed : 0;
+        }
+        return 0;
+      };
+
+      const totalsRows = await prisma.$queryRaw<
+        Array<{
+          totalOrders: bigint | number;
+          grossRevenue: bigint | number;
+        }>
+      >(Prisma.sql`
+        SELECT
+          COUNT(*) AS totalOrders,
+          COALESCE(SUM(o.total_price), 0) AS grossRevenue
+        FROM orders o
+        INNER JOIN users u ON o.user_id = u.id
+        ${whereSql}
+      `);
+
+      const breakdownRows = await prisma.$queryRaw<
+        Array<{
+          paymentMethod: string | null;
+          totalOrders: bigint | number;
+          grossRevenue: bigint | number;
+        }>
+      >(Prisma.sql`
+        SELECT
+          COALESCE(NULLIF(TRIM(o.payment_method), ''), 'Unknown') AS paymentMethod,
+          COUNT(*) AS totalOrders,
+          COALESCE(SUM(o.total_price), 0) AS grossRevenue
+        FROM orders o
+        INNER JOIN users u ON o.user_id = u.id
+        ${whereSql}
+        GROUP BY paymentMethod
+        ORDER BY grossRevenue DESC
+      `);
+
+      const trendWhereClauses = [...whereClauses];
+      const now = new Date();
+      const fallbackTrendStart = new Date(
+        now.getTime() - 90 * 24 * 60 * 60 * 1000,
+      );
+      if (!hasExplicitDateFilter) {
+        trendWhereClauses.push(
+          Prisma.sql`o.date_order BETWEEN ${fallbackTrendStart} AND ${now}`,
+        );
+      }
+      const trendWhereSql =
+        trendWhereClauses.length > 0
+          ? Prisma.sql`WHERE ${Prisma.join(trendWhereClauses, ' AND ')}`
+          : Prisma.empty;
+
+      const trendRows = await prisma.$queryRaw<
+        Array<{
+          day: string;
+          totalOrders: bigint | number;
+          grossRevenue: bigint | number;
+        }>
+      >(Prisma.sql`
+        SELECT
+          DATE(o.date_order) AS day,
+          COUNT(*) AS totalOrders,
+          COALESCE(SUM(o.total_price), 0) AS grossRevenue
+        FROM orders o
+        INNER JOIN users u ON o.user_id = u.id
+        ${trendWhereSql}
+        GROUP BY day
+        ORDER BY day ASC
+      `);
+
+      const totals = totalsRows?.[0] ?? { totalOrders: 0, grossRevenue: 0 };
+      const totalOrders = numberFromUnknown(totals.totalOrders);
+      const grossRevenue = numberFromUnknown(totals.grossRevenue);
+      const avgOrderValue = totalOrders > 0 ? grossRevenue / totalOrders : 0;
+
+      return {
+        totals: {
+          totalOrders,
+          grossRevenue,
+          avgOrderValue,
+        },
+        byPaymentMethod: breakdownRows.map((row) => ({
+          paymentMethod: row.paymentMethod ?? 'Unknown',
+          totalOrders: numberFromUnknown(row.totalOrders),
+          grossRevenue: numberFromUnknown(row.grossRevenue),
+        })),
+        trend: {
+          days: hasExplicitDateFilter ? null : 90,
+          points: trendRows.map((row) => ({
+            day: row.day,
+            totalOrders: numberFromUnknown(row.totalOrders),
+            grossRevenue: numberFromUnknown(row.grossRevenue),
+          })),
+        },
+      };
+    }),
   createPaypalOrder: shieldedProcedure
     .input(
       z.object({
@@ -246,20 +431,63 @@ export const ordersRouter = router({
   cancelOrder: shieldedProcedure
     .input(
       z.object({
-        id: z.number(),
+        id: z.number().int().positive(),
       }),
     )
-    .mutation(async ({ ctx: { prisma }, input: { id } }) =>
-      prisma.orders.update({
-        where: {
-          id,
-        },
+    .mutation(async ({ ctx, input }) => {
+      const sessionUser = ctx.session?.user;
+      if (!sessionUser) {
+        throw new TRPCError({
+          code: 'UNAUTHORIZED',
+          message: 'Sesión requerida',
+        });
+      }
+
+      const existingOrder = await ctx.prisma.orders.findUnique({
+        where: { id: input.id },
+        select: { id: true, user_id: true, status: true },
+      });
+
+      if (!existingOrder) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Orden no encontrada',
+        });
+      }
+
+      const isAdmin = sessionUser.role === RolesNames.admin;
+      if (!isAdmin && existingOrder.user_id !== sessionUser.id) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'No autorizado',
+        });
+      }
+
+      const updatedOrder = await ctx.prisma.orders.update({
+        where: { id: existingOrder.id },
         data: {
           status: OrderStatus.CANCELLED,
           is_canceled: 1,
         },
-      }),
-    ),
+      });
+
+      if (isAdmin) {
+        await createAdminAuditLog({
+          prisma: ctx.prisma,
+          actorUserId: sessionUser.id,
+          action: 'cancel_order',
+          req: ctx.req,
+          targetUserId: existingOrder.user_id,
+          metadata: {
+            orderId: existingOrder.id,
+            previousStatus: existingOrder.status,
+            nextStatus: OrderStatus.CANCELLED,
+          },
+        });
+      }
+
+      return updatedOrder;
+    }),
   aggregateOrders: shieldedProcedure
     .input(OrdersAggregateSchema)
     .query(async ({ ctx, input }) => {
@@ -275,8 +503,27 @@ export const ordersRouter = router({
   createOneOrders: shieldedProcedure
     .input(OrdersCreateOneSchema)
     .mutation(async ({ ctx, input }) => {
-      const createOneOrders = await ctx.prisma.orders.create(input);
-      return createOneOrders;
+      const created = await ctx.prisma.orders.create(input);
+
+      if (ctx.session?.user?.role === RolesNames.admin) {
+        await createAdminAuditLog({
+          prisma: ctx.prisma,
+          actorUserId: ctx.session.user.id,
+          action: 'create_order',
+          req: ctx.req,
+          targetUserId: created.user_id,
+          metadata: {
+            orderId: created.id,
+            userId: created.user_id,
+            planId: created.plan_id ?? null,
+            status: created.status,
+            paymentMethod: created.payment_method ?? null,
+            totalPrice: created.total_price,
+          },
+        });
+      }
+
+      return created;
     }),
   deleteManyOrders: shieldedProcedure
     .input(OrdersDeleteManySchema)
@@ -287,8 +534,37 @@ export const ordersRouter = router({
   deleteOneOrders: shieldedProcedure
     .input(OrdersDeleteOneSchema)
     .mutation(async ({ ctx, input }) => {
-      const deleteOneOrders = await ctx.prisma.orders.delete(input);
-      return deleteOneOrders;
+      const orderId =
+        typeof (input as any)?.where?.id === 'number' ? (input as any).where.id : null;
+      const existing =
+        orderId != null
+          ? await ctx.prisma.orders.findUnique({
+              where: { id: orderId },
+              select: { id: true, user_id: true, status: true, total_price: true, payment_method: true, plan_id: true },
+            })
+          : null;
+
+      const deleted = await ctx.prisma.orders.delete(input);
+
+      if (ctx.session?.user?.role === RolesNames.admin) {
+        await createAdminAuditLog({
+          prisma: ctx.prisma,
+          actorUserId: ctx.session.user.id,
+          action: 'delete_order',
+          req: ctx.req,
+          targetUserId: existing?.user_id ?? deleted.user_id,
+          metadata: {
+            orderId: deleted.id,
+            userId: deleted.user_id,
+            planId: deleted.plan_id ?? null,
+            status: deleted.status,
+            paymentMethod: deleted.payment_method ?? null,
+            totalPrice: deleted.total_price,
+          },
+        });
+      }
+
+      return deleted;
     }),
   findFirstOrders: shieldedProcedure
     .input(OrdersFindFirstSchema)
@@ -344,8 +620,39 @@ export const ordersRouter = router({
   updateOneOrders: shieldedProcedure
     .input(OrdersUpdateOneSchema)
     .mutation(async ({ ctx, input }) => {
-      const updateOneOrders = await ctx.prisma.orders.update(input);
-      return updateOneOrders;
+      const orderId =
+        typeof (input as any)?.where?.id === 'number' ? (input as any).where.id : null;
+      const existing =
+        orderId != null
+          ? await ctx.prisma.orders.findUnique({
+              where: { id: orderId },
+              select: { id: true, user_id: true, status: true, total_price: true, payment_method: true, plan_id: true },
+            })
+          : null;
+
+      const updated = await ctx.prisma.orders.update(input);
+
+      if (ctx.session?.user?.role === RolesNames.admin) {
+        await createAdminAuditLog({
+          prisma: ctx.prisma,
+          actorUserId: ctx.session.user.id,
+          action: 'update_order',
+          req: ctx.req,
+          targetUserId: existing?.user_id ?? updated.user_id,
+          metadata: {
+            orderId: updated.id,
+            userId: updated.user_id,
+            planId: updated.plan_id ?? null,
+            paymentMethod: updated.payment_method ?? null,
+            statusFrom: existing?.status ?? null,
+            statusTo: updated.status,
+            totalPriceFrom: existing?.total_price ?? null,
+            totalPriceTo: updated.total_price,
+          },
+        });
+      }
+
+      return updated;
     }),
   upsertOneOrders: shieldedProcedure
     .input(OrdersUpsertSchema)
