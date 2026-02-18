@@ -1,4 +1,5 @@
 import { TRPCError } from '@trpc/server';
+import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import {
   analyticsEventBatchSchema,
@@ -294,18 +295,88 @@ export const analyticsRouter = router({
     .query(async ({ ctx, input }) => {
       assertAdminRole(ctx.session?.user?.role);
       const runsLimit = input?.runsLimit ?? 20;
+      const numberFromUnknown = (value: unknown): number => {
+        if (typeof value === 'number' && Number.isFinite(value)) return value;
+        if (typeof value === 'bigint') return Number(value);
+        if (typeof value === 'string') {
+          const parsed = Number(value);
+          return Number.isFinite(parsed) ? parsed : 0;
+        }
+        return 0;
+      };
       const runs = await ctx.prisma.automationRunLog.findMany({
         orderBy: { started_at: 'desc' },
         take: runsLimit,
       });
 
       const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
-      const actionsLast24h = await ctx.prisma.automationActionLog.count({
-        where: { sent_at: { gte: since } },
-      });
+      const [actionsLast24h, actionBreakdownRows, checkoutAbandonedRows] = await Promise.all([
+        ctx.prisma.automationActionLog.count({
+          where: { sent_at: { gte: since } },
+        }),
+        ctx.prisma.$queryRaw<
+          Array<{
+            actionKey: string;
+            channel: string;
+            total: number | bigint;
+          }>
+        >(Prisma.sql`
+          SELECT
+            action_key AS actionKey,
+            channel AS channel,
+            COUNT(*) AS total
+          FROM automation_action_logs
+          WHERE sent_at >= ${since}
+          GROUP BY action_key, channel
+          ORDER BY total DESC
+          LIMIT 50
+        `),
+        ctx.prisma.$queryRaw<
+          Array<{
+            journeys: number | bigint;
+            emailSent: number | bigint;
+            whatsappSent: number | bigint;
+            manychatTagged: number | bigint;
+            recoveredUsers: number | bigint;
+          }>
+        >(Prisma.sql`
+          SELECT
+            SUM(CASE WHEN aal.action_key = 'checkout_abandoned' THEN 1 ELSE 0 END) AS journeys,
+            SUM(CASE WHEN aal.action_key = 'checkout_abandoned_email' THEN 1 ELSE 0 END) AS emailSent,
+            SUM(CASE WHEN aal.action_key = 'checkout_abandoned_whatsapp' THEN 1 ELSE 0 END) AS whatsappSent,
+            SUM(CASE WHEN aal.action_key = 'checkout_abandoned_manychat' THEN 1 ELSE 0 END) AS manychatTagged,
+            COUNT(DISTINCT CASE
+              WHEN aal.action_key = 'checkout_abandoned'
+                AND EXISTS (
+                  SELECT 1
+                  FROM orders o
+                  WHERE o.user_id = aal.user_id
+                    AND o.status = 1
+                    AND o.is_plan = 1
+                    AND (o.is_canceled IS NULL OR o.is_canceled = 0)
+                    AND o.date_order > aal.sent_at
+                )
+              THEN aal.user_id
+            END) AS recoveredUsers
+          FROM automation_action_logs aal
+          WHERE aal.sent_at >= ${since}
+        `),
+      ]);
 
       return {
         actionsLast24h,
+        actionBreakdownLast24h: actionBreakdownRows.map((row) => ({
+          actionKey: row.actionKey,
+          channel: row.channel,
+          total: numberFromUnknown(row.total),
+        })),
+        checkoutAbandonedLast24h: {
+          journeys: numberFromUnknown(checkoutAbandonedRows[0]?.journeys),
+          emailSent: numberFromUnknown(checkoutAbandonedRows[0]?.emailSent),
+          whatsappSent: numberFromUnknown(checkoutAbandonedRows[0]?.whatsappSent),
+          manychatTagged: numberFromUnknown(checkoutAbandonedRows[0]?.manychatTagged),
+          recoveredUsers: numberFromUnknown(checkoutAbandonedRows[0]?.recoveredUsers),
+        },
         recentRuns: runs.map((run) => ({
           id: run.id,
           startedAt: run.started_at.toISOString(),

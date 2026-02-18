@@ -83,8 +83,8 @@ async function safeSendAutomationEmail(params: {
   subject: string;
   html: string;
   text: string;
-}): Promise<void> {
-  if (!isEmailConfigured()) return;
+}): Promise<boolean> {
+  if (!isEmailConfigured()) return false;
   const { userId, actionKey, stage, toEmail, subject, html, text } = params;
   try {
     await sendEmail({
@@ -93,6 +93,7 @@ async function safeSendAutomationEmail(params: {
       html,
       text,
     });
+    return true;
   } catch (e) {
     log.warn('[AUTOMATION] Email send failed', {
       userId,
@@ -100,38 +101,61 @@ async function safeSendAutomationEmail(params: {
       stage,
       error: e instanceof Error ? e.message : e,
     });
+    return false;
   }
 }
 
-async function safeSendTwilioLink(user: Users, url: string): Promise<void> {
-  if (!isTwilioConfigured()) return;
-  if (!user.phone) return;
-  if (!user.whatsapp_marketing_opt_in) return;
+async function safeSendTwilioLink(user: Users, url: string): Promise<boolean> {
+  if (!isTwilioConfigured()) return false;
+  const phone = String(user.phone || '').trim();
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length < 10 || digits.length > 15) return false;
+  if (!user.whatsapp_marketing_opt_in) return false;
   try {
-    await twilio.sendMessage(user.phone, url);
+    await twilio.sendMessage(phone, url);
+    return true;
   } catch (e) {
     log.warn('[AUTOMATION] Twilio send failed', {
       userId: user.id,
       error: e instanceof Error ? e.message : e,
     });
+    return false;
   }
 }
+
+const normalizeContextKey = (value?: string | null): string => {
+  if (typeof value !== 'string') return '';
+  const normalized = value.trim();
+  if (!normalized) return '';
+  return normalized.slice(0, 160);
+};
 
 async function createActionLog(params: {
   prisma: PrismaClient;
   userId: number;
   actionKey: string;
+  contextKey?: string | null;
   stage: number;
   channel: AutomationChannel;
   providerMessageId?: string | null;
   metadata?: Prisma.JsonObject;
 }): Promise<{ created: boolean }> {
-  const { prisma, userId, actionKey, stage, channel, providerMessageId, metadata } = params;
+  const {
+    prisma,
+    userId,
+    actionKey,
+    contextKey,
+    stage,
+    channel,
+    providerMessageId,
+    metadata,
+  } = params;
   try {
     await prisma.automationActionLog.create({
       data: {
         user_id: userId,
         action_key: actionKey,
+        context_key: normalizeContextKey(contextKey),
         stage,
         channel,
         provider_message_id: providerMessageId ?? null,
@@ -672,382 +696,213 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
       }
     }
 
-    // Rule 3c: checkout abandoned event, no purchase after 15m (fast recovery)
+    // Rule 3c/3d/3e: checkout abandoned (canonical source: checkout_logs) after 15m/1h/24h.
     {
-      const rows = await prisma.$queryRaw<
-        Array<{
-          userId: number;
-          email: string;
-          username: string;
-          emailMarketingOptIn: number;
-          checkoutAbandonedAt: Date;
-          planId: number | null;
-          planName: string | null;
-          planPrice: any | null;
-          planCurrency: string | null;
-        }>
-      >(Prisma.sql`
-        SELECT
-          ca.user_id AS userId,
-          u.email AS email,
-          u.username AS username,
-          u.email_marketing_opt_in AS emailMarketingOptIn,
-          ca.checkout_abandoned_at AS checkoutAbandonedAt,
-          ca.plan_id AS planId,
-          p.name AS planName,
-          p.price AS planPrice,
-          p.moneda AS planCurrency
-        FROM (
-          SELECT
-            ae.user_id,
-            MAX(ae.event_ts) AS checkout_abandoned_at,
-            MAX(CAST(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.planId')) AS UNSIGNED)) AS plan_id
-          FROM analytics_events ae
-          WHERE ae.event_name = 'checkout_abandoned'
-            AND ae.user_id IS NOT NULL
-            AND ae.event_ts >= DATE_SUB(NOW(), INTERVAL 14 DAY)
-            AND ae.event_ts < DATE_SUB(NOW(), INTERVAL 15 MINUTE)
-            ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL}
-          GROUP BY ae.user_id
-        ) ca
-        INNER JOIN users u
-          ON u.id = ca.user_id
-          AND u.blocked = 0
-        LEFT JOIN plans p
-          ON p.id = ca.plan_id
-        LEFT JOIN orders o
-          ON o.user_id = ca.user_id
-          AND o.status = 1
-          AND o.is_plan = 1
-          AND (o.is_canceled IS NULL OR o.is_canceled = 0)
-          AND o.date_order > ca.checkout_abandoned_at
-        LEFT JOIN descargas_user du
-          ON du.user_id = ca.user_id
-          AND du.date_end > NOW()
-        LEFT JOIN automation_action_logs aal
-          ON aal.user_id = ca.user_id
-          AND aal.action_key = 'checkout_abandoned'
-          AND aal.stage = 15
-        WHERE o.id IS NULL
-          AND du.id IS NULL
-          AND aal.id IS NULL
-        ORDER BY ca.checkout_abandoned_at DESC
-        LIMIT ${limit}
-      `);
+      type CheckoutAbandonedCandidate = {
+        userId: number;
+        checkoutAt: Date;
+        contextKey: string;
+        planId: number | null;
+        planName: string | null;
+        planPrice: Prisma.Decimal | number | string | null;
+        planCurrency: string | null;
+      };
 
-      for (const row of rows) {
-        const userId = Number(row.userId);
-        if (!userId) continue;
-
-        const { created } = await createActionLog({
-          prisma,
-          userId,
-          actionKey: 'checkout_abandoned',
+      const checkoutAbandonedStages = [
+        {
           stage: 15,
-          channel: 'system',
-          metadata: {
-            checkoutAbandonedAt: row.checkoutAbandonedAt.toISOString(),
-            planId: row.planId ?? null,
-          },
-        });
-        if (!created) continue;
+          waitMinutes: 15,
+          lookbackDays: 14,
+          manyChatTag: 'AUTOMATION_CHECKOUT_ABANDONED_15M',
+          templateId: parseNumber(
+            process.env.AUTOMATION_EMAIL_CHECKOUT_ABANDONED_15M_TEMPLATE_ID
+              || process.env.AUTOMATION_EMAIL_CHECKOUT_ABANDONED_1H_TEMPLATE_ID,
+            0,
+          ),
+          campaign: 'checkout_abandoned_15m',
+          bumpKey: 'checkout_abandoned_15m',
+        },
+        {
+          stage: 1,
+          waitMinutes: 60,
+          lookbackDays: 14,
+          manyChatTag: 'AUTOMATION_CHECKOUT_ABANDONED_1H',
+          templateId: parseNumber(process.env.AUTOMATION_EMAIL_CHECKOUT_ABANDONED_1H_TEMPLATE_ID, 0),
+          campaign: 'checkout_abandoned_1h',
+          bumpKey: 'checkout_abandoned_1h',
+        },
+        {
+          stage: 24,
+          waitMinutes: 24 * 60,
+          lookbackDays: 30,
+          manyChatTag: 'AUTOMATION_CHECKOUT_ABANDONED_24H',
+          templateId: parseNumber(process.env.AUTOMATION_EMAIL_CHECKOUT_ABANDONED_24H_TEMPLATE_ID, 0),
+          campaign: 'checkout_abandoned_24h',
+          bumpKey: 'checkout_abandoned_24h',
+        },
+      ] as const;
 
-        const user = await prisma.users.findFirst({ where: { id: userId } });
-        if (!user || user.blocked) continue;
-        safeAddManyChatTag(user, 'AUTOMATION_CHECKOUT_ABANDONED_15M').catch(() => {});
+      for (const stageConfig of checkoutAbandonedStages) {
+        const rows = await prisma.$queryRaw<Array<CheckoutAbandonedCandidate>>(Prisma.sql`
+          SELECT
+            ca.userId AS userId,
+            ca.checkoutAt AS checkoutAt,
+            ca.contextKey AS contextKey,
+            ca.planId AS planId,
+            p.name AS planName,
+            p.price AS planPrice,
+            p.moneda AS planCurrency
+          FROM (
+            SELECT
+              cl.user_id AS userId,
+              cl.last_checkout_date AS checkoutAt,
+              CONCAT('checkout:', DATE_FORMAT(cl.last_checkout_date, '%Y%m%d%H%i%s')) AS contextKey,
+              (
+                SELECT CAST(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.planId')), '') AS UNSIGNED)
+                FROM analytics_events ae
+                WHERE ae.user_id = cl.user_id
+                  AND ae.event_name IN ('checkout_started', 'checkout_start', 'checkout_method_selected', 'checkout_abandoned')
+                  AND ae.event_ts >= DATE_SUB(cl.last_checkout_date, INTERVAL 24 HOUR)
+                  AND ae.event_ts <= DATE_ADD(cl.last_checkout_date, INTERVAL 10 MINUTE)
+                  ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL}
+                ORDER BY ae.event_ts DESC
+                LIMIT 1
+              ) AS planId
+            FROM checkout_logs cl
+            INNER JOIN users u
+              ON u.id = cl.user_id
+              AND u.blocked = 0
+            LEFT JOIN orders o
+              ON o.user_id = cl.user_id
+              AND o.status = 1
+              AND o.is_plan = 1
+              AND (o.is_canceled IS NULL OR o.is_canceled = 0)
+              AND o.date_order > cl.last_checkout_date
+            LEFT JOIN descargas_user du
+              ON du.user_id = cl.user_id
+              AND du.date_end > NOW()
+            LEFT JOIN automation_action_logs aal
+              ON aal.user_id = cl.user_id
+              AND aal.action_key = 'checkout_abandoned'
+              AND aal.stage = ${stageConfig.stage}
+              AND aal.context_key = CONCAT('checkout:', DATE_FORMAT(cl.last_checkout_date, '%Y%m%d%H%i%s'))
+            WHERE cl.last_checkout_date >= DATE_SUB(NOW(), INTERVAL ${stageConfig.lookbackDays} DAY)
+              AND cl.last_checkout_date < DATE_SUB(NOW(), INTERVAL ${stageConfig.waitMinutes} MINUTE)
+              AND o.id IS NULL
+              AND du.id IS NULL
+              AND aal.id IS NULL
+            ORDER BY cl.last_checkout_date DESC
+            LIMIT ${limit}
+          ) ca
+          LEFT JOIN plans p
+            ON p.id = ca.planId
+          ORDER BY ca.checkoutAt DESC
+        `);
 
-        const templateId = parseNumber(
-          process.env.AUTOMATION_EMAIL_CHECKOUT_ABANDONED_15M_TEMPLATE_ID
-            || process.env.AUTOMATION_EMAIL_CHECKOUT_ABANDONED_1H_TEMPLATE_ID,
-          0,
-        );
-        if (
-          emailAutomationsEnabled
-          && templateId > 0
-          && user.email_marketing_opt_in
-          && user.email_marketing_news_opt_in
-          && canSendEmail()
-        ) {
-          const base = resolveClientUrl();
-          const rawUrl = row.planId ? `${base}/comprar?priceId=${row.planId}` : `${base}/planes`;
-          const url = appendQueryParams(rawUrl, {
-            utm_source: 'email',
-            utm_medium: 'automation',
-            utm_campaign: 'checkout_abandoned_15m',
-            utm_content: 'cta',
-          });
-          const unsubscribeUrl = buildMarketingUnsubscribeUrl(userId) ?? undefined;
-          const tpl = emailTemplates.automationCheckoutAbandoned({
-            name: user.username,
-            url,
-            planName: row.planName ?? null,
-            price: row.planPrice ? String(row.planPrice) : null,
-            currency: row.planCurrency ?? null,
-            unsubscribeUrl,
-          });
-          await safeSendAutomationEmail({
+        for (const row of rows) {
+          const userId = Number(row.userId);
+          if (!userId) continue;
+
+          const contextKey = normalizeContextKey(row.contextKey);
+          if (!contextKey) continue;
+
+          const { created } = await createActionLog({
+            prisma,
             userId,
             actionKey: 'checkout_abandoned',
-            stage: 15,
-            toEmail: user.email,
-            subject: tpl.subject,
-            html: tpl.html,
-            text: tpl.text,
+            contextKey,
+            stage: stageConfig.stage,
+            channel: 'system',
+            metadata: {
+              checkoutAt: row.checkoutAt.toISOString(),
+              planId: row.planId ?? null,
+              stageMinutes: stageConfig.waitMinutes,
+            },
           });
-          noteEmailSent();
+          if (!created) continue;
+
+          const user = await prisma.users.findFirst({ where: { id: userId } });
+          if (!user || user.blocked) continue;
+
+          await safeAddManyChatTag(user, stageConfig.manyChatTag);
+          await createActionLog({
+            prisma,
+            userId,
+            actionKey: 'checkout_abandoned_manychat',
+            contextKey,
+            stage: stageConfig.stage,
+            channel: 'manychat',
+            metadata: { tag: stageConfig.manyChatTag },
+          });
+
+          const base = resolveClientUrl();
+          const rawUrl = row.planId ? `${base}/comprar?priceId=${row.planId}` : `${base}/planes`;
+          const whatsappUrl = appendQueryParams(rawUrl, {
+            utm_source: 'whatsapp',
+            utm_medium: 'automation',
+            utm_campaign: stageConfig.campaign,
+            utm_content: 'cta',
+          });
+          const whatsappSent = await safeSendTwilioLink(user, whatsappUrl);
+          if (whatsappSent) {
+            await createActionLog({
+              prisma,
+              userId,
+              actionKey: 'checkout_abandoned_whatsapp',
+              contextKey,
+              stage: stageConfig.stage,
+              channel: 'twilio',
+              metadata: { campaign: stageConfig.campaign },
+            });
+          }
+
+          if (
+            emailAutomationsEnabled
+            && stageConfig.templateId > 0
+            && user.email_marketing_opt_in
+            && user.email_marketing_news_opt_in
+            && canSendEmail()
+          ) {
+            const emailUrl = appendQueryParams(rawUrl, {
+              utm_source: 'email',
+              utm_medium: 'automation',
+              utm_campaign: stageConfig.campaign,
+              utm_content: 'cta',
+            });
+            const unsubscribeUrl = buildMarketingUnsubscribeUrl(userId) ?? undefined;
+            const tpl = emailTemplates.automationCheckoutAbandoned({
+              name: user.username,
+              url: emailUrl,
+              planName: row.planName ?? null,
+              price: row.planPrice == null ? null : String(row.planPrice),
+              currency: row.planCurrency ?? null,
+              unsubscribeUrl,
+            });
+            const emailSent = await safeSendAutomationEmail({
+              userId,
+              actionKey: 'checkout_abandoned_email',
+              stage: stageConfig.stage,
+              toEmail: user.email,
+              subject: tpl.subject,
+              html: tpl.html,
+              text: tpl.text,
+            });
+            if (emailSent) {
+              noteEmailSent();
+              await createActionLog({
+                prisma,
+                userId,
+                actionKey: 'checkout_abandoned_email',
+                contextKey,
+                stage: stageConfig.stage,
+                channel: 'email',
+                metadata: { campaign: stageConfig.campaign },
+              });
+            }
+          }
+
+          bump(stageConfig.bumpKey);
         }
-
-        bump('checkout_abandoned_15m');
-      }
-    }
-
-    // Rule 3d: checkout started, no purchase after 1h
-    {
-      const rows = await prisma.$queryRaw<
-        Array<{
-          userId: number;
-          email: string;
-          username: string;
-          emailMarketingOptIn: number;
-          checkoutStartedAt: Date;
-          planId: number | null;
-          planName: string | null;
-          planPrice: any | null;
-          planCurrency: string | null;
-        }>
-      >(Prisma.sql`
-        SELECT
-          cs.user_id AS userId,
-          u.email AS email,
-          u.username AS username,
-          u.email_marketing_opt_in AS emailMarketingOptIn,
-          cs.checkout_started_at AS checkoutStartedAt,
-          cs.plan_id AS planId,
-          p.name AS planName,
-          p.price AS planPrice,
-          p.moneda AS planCurrency
-        FROM (
-          SELECT
-            ae.user_id,
-            MAX(ae.event_ts) AS checkout_started_at,
-            MAX(CAST(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.planId')) AS UNSIGNED)) AS plan_id
-          FROM analytics_events ae
-          WHERE ae.event_name = 'checkout_started'
-            AND ae.user_id IS NOT NULL
-            AND ae.event_ts >= DATE_SUB(NOW(), INTERVAL 14 DAY)
-            AND ae.event_ts < DATE_SUB(NOW(), INTERVAL 1 HOUR)
-            ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL}
-          GROUP BY ae.user_id
-        ) cs
-        INNER JOIN users u
-          ON u.id = cs.user_id
-          AND u.blocked = 0
-        LEFT JOIN plans p
-          ON p.id = cs.plan_id
-        LEFT JOIN orders o
-          ON o.user_id = cs.user_id
-          AND o.status = 1
-          AND o.is_plan = 1
-          AND (o.is_canceled IS NULL OR o.is_canceled = 0)
-          AND o.date_order > cs.checkout_started_at
-        LEFT JOIN descargas_user du
-          ON du.user_id = cs.user_id
-          AND du.date_end > NOW()
-        LEFT JOIN automation_action_logs aal
-          ON aal.user_id = cs.user_id
-          AND aal.action_key = 'checkout_abandoned'
-          AND aal.stage = 1
-        WHERE o.id IS NULL
-          AND du.id IS NULL
-          AND aal.id IS NULL
-        ORDER BY cs.checkout_started_at DESC
-        LIMIT ${limit}
-      `);
-
-      for (const row of rows) {
-        const userId = Number(row.userId);
-        if (!userId) continue;
-
-        const { created } = await createActionLog({
-          prisma,
-          userId,
-          actionKey: 'checkout_abandoned',
-          stage: 1,
-          channel: 'system',
-          metadata: {
-            checkoutStartedAt: row.checkoutStartedAt.toISOString(),
-            planId: row.planId ?? null,
-          },
-        });
-        if (!created) continue;
-
-        const user = await prisma.users.findFirst({ where: { id: userId } });
-        if (!user || user.blocked) continue;
-        safeAddManyChatTag(user, 'AUTOMATION_CHECKOUT_ABANDONED_1H').catch(() => {});
-
-	        const templateId = parseNumber(process.env.AUTOMATION_EMAIL_CHECKOUT_ABANDONED_1H_TEMPLATE_ID, 0);
-	        if (
-	          emailAutomationsEnabled
-	          && templateId > 0
-	          && user.email_marketing_opt_in
-	          && user.email_marketing_news_opt_in
-	          && canSendEmail()
-	        ) {
-	          const base = resolveClientUrl();
-	          const rawUrl = row.planId ? `${base}/comprar?priceId=${row.planId}` : `${base}/planes`;
-	          const url = appendQueryParams(rawUrl, {
-	            utm_source: 'email',
-            utm_medium: 'automation',
-            utm_campaign: 'checkout_abandoned_1h',
-            utm_content: 'cta',
-          });
-          const unsubscribeUrl = buildMarketingUnsubscribeUrl(userId) ?? undefined;
-          const tpl = emailTemplates.automationCheckoutAbandoned({
-            name: user.username,
-            url,
-            planName: row.planName ?? null,
-            price: row.planPrice ? String(row.planPrice) : null,
-	            currency: row.planCurrency ?? null,
-	            unsubscribeUrl,
-	          });
-	          await safeSendAutomationEmail({
-	            userId,
-	            actionKey: 'checkout_abandoned',
-	            stage: 1,
-	            toEmail: user.email,
-	            subject: tpl.subject,
-	            html: tpl.html,
-	            text: tpl.text,
-	          });
-	          noteEmailSent();
-	        }
-
-        bump('checkout_abandoned_1h');
-      }
-    }
-
-    // Rule 3e: checkout started, no purchase after 24h
-    {
-      const rows = await prisma.$queryRaw<
-        Array<{
-          userId: number;
-          email: string;
-          username: string;
-          emailMarketingOptIn: number;
-          checkoutStartedAt: Date;
-          planId: number | null;
-          planName: string | null;
-          planPrice: any | null;
-          planCurrency: string | null;
-        }>
-      >(Prisma.sql`
-        SELECT
-          cs.user_id AS userId,
-          u.email AS email,
-          u.username AS username,
-          u.email_marketing_opt_in AS emailMarketingOptIn,
-          cs.checkout_started_at AS checkoutStartedAt,
-          cs.plan_id AS planId,
-          p.name AS planName,
-          p.price AS planPrice,
-          p.moneda AS planCurrency
-        FROM (
-          SELECT
-            ae.user_id,
-            MAX(ae.event_ts) AS checkout_started_at,
-            MAX(CAST(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.planId')) AS UNSIGNED)) AS plan_id
-          FROM analytics_events ae
-          WHERE ae.event_name = 'checkout_started'
-            AND ae.user_id IS NOT NULL
-            AND ae.event_ts >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-            AND ae.event_ts < DATE_SUB(NOW(), INTERVAL 24 HOUR)
-            ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL}
-          GROUP BY ae.user_id
-        ) cs
-        INNER JOIN users u
-          ON u.id = cs.user_id
-          AND u.blocked = 0
-        LEFT JOIN plans p
-          ON p.id = cs.plan_id
-        LEFT JOIN orders o
-          ON o.user_id = cs.user_id
-          AND o.status = 1
-          AND o.is_plan = 1
-          AND (o.is_canceled IS NULL OR o.is_canceled = 0)
-          AND o.date_order > cs.checkout_started_at
-        LEFT JOIN descargas_user du
-          ON du.user_id = cs.user_id
-          AND du.date_end > NOW()
-        LEFT JOIN automation_action_logs aal
-          ON aal.user_id = cs.user_id
-          AND aal.action_key = 'checkout_abandoned'
-          AND aal.stage = 24
-        WHERE o.id IS NULL
-          AND du.id IS NULL
-          AND aal.id IS NULL
-        ORDER BY cs.checkout_started_at DESC
-        LIMIT ${limit}
-      `);
-
-      for (const row of rows) {
-        const userId = Number(row.userId);
-        if (!userId) continue;
-
-        const { created } = await createActionLog({
-          prisma,
-          userId,
-          actionKey: 'checkout_abandoned',
-          stage: 24,
-          channel: 'system',
-          metadata: {
-            checkoutStartedAt: row.checkoutStartedAt.toISOString(),
-            planId: row.planId ?? null,
-          },
-        });
-        if (!created) continue;
-
-        const user = await prisma.users.findFirst({ where: { id: userId } });
-        if (!user || user.blocked) continue;
-        safeAddManyChatTag(user, 'AUTOMATION_CHECKOUT_ABANDONED_24H').catch(() => {});
-
-	        const templateId = parseNumber(process.env.AUTOMATION_EMAIL_CHECKOUT_ABANDONED_24H_TEMPLATE_ID, 0);
-	        if (
-	          emailAutomationsEnabled
-	          && templateId > 0
-	          && user.email_marketing_opt_in
-	          && user.email_marketing_news_opt_in
-	          && canSendEmail()
-	        ) {
-	          const base = resolveClientUrl();
-	          const rawUrl = row.planId ? `${base}/comprar?priceId=${row.planId}` : `${base}/planes`;
-	          const url = appendQueryParams(rawUrl, {
-	            utm_source: 'email',
-            utm_medium: 'automation',
-            utm_campaign: 'checkout_abandoned_24h',
-            utm_content: 'cta',
-          });
-          const unsubscribeUrl = buildMarketingUnsubscribeUrl(userId) ?? undefined;
-          const tpl = emailTemplates.automationCheckoutAbandoned({
-            name: user.username,
-            url,
-            planName: row.planName ?? null,
-            price: row.planPrice ? String(row.planPrice) : null,
-	            currency: row.planCurrency ?? null,
-	            unsubscribeUrl,
-	          });
-	          await safeSendAutomationEmail({
-	            userId,
-	            actionKey: 'checkout_abandoned',
-	            stage: 24,
-	            toEmail: user.email,
-	            subject: tpl.subject,
-	            html: tpl.html,
-	            text: tpl.text,
-	          });
-	          noteEmailSent();
-	        }
-
-        bump('checkout_abandoned_24h');
       }
     }
 

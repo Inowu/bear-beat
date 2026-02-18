@@ -194,15 +194,17 @@ model AutomationActionLog {
   id                  Int      @id @default(autoincrement())
   user_id             Int
   action_key          String   @db.VarChar(80)
+  context_key         String   @default("") @db.VarChar(160)
   stage               Int      @default(0)
   channel             String   @db.VarChar(20)
   provider_message_id String?  @db.VarChar(120)
   sent_at             DateTime @default(now()) @db.DateTime(0)
   metadata_json       Json?
 
-  @@unique([user_id, action_key, stage], map: "uniq_automation_action_user_key_stage")
+  @@unique([user_id, action_key, stage, context_key], map: "uniq_automation_action_user_key_stage_context")
   @@index([user_id], map: "idx_automation_action_user_id")
   @@index([sent_at], map: "idx_automation_action_sent_at")
+  @@index([context_key], map: "idx_automation_action_context_key")
   @@map("automation_action_logs")
 }
 
