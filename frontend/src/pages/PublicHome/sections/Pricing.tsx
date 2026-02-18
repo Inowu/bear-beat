@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, CheckCircle2 } from "src/icons";
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import PaymentMethodLogos, {
   type PaymentMethodId,
 } from "../../../components/PaymentMethodLogos/PaymentMethodLogos";
@@ -74,13 +74,18 @@ export default function Pricing(props: {
   const hasUsd = Boolean(plans.usd);
   const isLoading = status === "loading" && !hasMxn && !hasUsd;
   const isError = status === "error" && !hasMxn && !hasUsd;
-  const initialCurrency: "mxn" | "usd" = useMemo(() => {
+  const resolvedDefaultCurrency: "mxn" | "usd" = useMemo(() => {
     if (defaultCurrency === "mxn" && hasMxn) return "mxn";
     if (defaultCurrency === "usd" && hasUsd) return "usd";
     return hasMxn ? "mxn" : "usd";
   }, [defaultCurrency, hasMxn, hasUsd]);
 
-  const [currency, setCurrency] = useState<"mxn" | "usd">(initialCurrency);
+  const [currency, setCurrency] = useState<"mxn" | "usd">(
+    resolvedDefaultCurrency,
+  );
+  useEffect(() => {
+    setCurrency(resolvedDefaultCurrency);
+  }, [resolvedDefaultCurrency]);
   const mxnPlan = plans.mxn ?? null;
   const usdPlan = plans.usd ?? null;
   const hasTrial = Boolean(trial?.enabled);
@@ -132,13 +137,13 @@ export default function Pricing(props: {
     <section id="precio" className="pricing" aria-label="Precio">
       <div className="ph__container">
         <div className="pricing__head">
-          <h2 className="home-h2">Precio simple, catálogo gigante</h2>
+          <h2 className="home-h2">Empieza hoy con precio claro</h2>
           <p className="home-sub">
             Catálogo total: <strong>{catalogTBLabel}</strong> • Cuota de descarga:{" "}
             <strong>{formatInt(downloadQuotaGb)} GB/mes</strong>
           </p>
           <p className="pricing__quotaExample">
-            500 GB/mes = aprox. 150-300 videos (depende del peso y calidad de cada archivo).
+            500 GB/mes = aprox. 3,000 videos (depende del peso y calidad de cada archivo).
           </p>
         </div>
 

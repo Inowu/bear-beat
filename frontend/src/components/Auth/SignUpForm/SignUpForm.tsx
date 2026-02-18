@@ -3,7 +3,14 @@ import { detectUserCountry, findDialCode, allowedCountryOptions } from "../../..
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Lock, Mail, User } from "src/icons";
 import { PasswordInput } from "../../PasswordInput/PasswordInput";
-import { useCallback, useEffect, useMemo, useRef, useState, type SyntheticEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from "react";
 import { useFormik } from "formik";
 import { useUserContext } from "../../../contexts/UserContext";
 import { useTheme } from "../../../contexts/ThemeContext";
@@ -80,7 +87,6 @@ function SignUpForm() {
   }, [from]);
   const [checkoutPlan, setCheckoutPlan] = useState<IPlans | null>(null);
   const [checkoutPlanLoading, setCheckoutPlanLoading] = useState(false);
-  const [isWhatsAppOptionalOpen, setIsWhatsAppOptionalOpen] = useState(false);
   const [loader, setLoader] = useState<boolean>(false);
   const { handleLogin } = useUserContext();
   const [dialCode, setDialCode] = useState<string>("52");
@@ -198,13 +204,12 @@ function SignUpForm() {
         password: Yup.string()
           .required("La contraseña es requerida")
           .min(6, "La contraseña debe contener al menos 6 caracteres"),
-        // WhatsApp is optional (conversion-first). If present, validate format.
         phone: Yup.string()
+          .required("El WhatsApp es requerido")
           .matches(/^[0-9]{7,14}$/, {
             message: "El teléfono no es válido",
             excludeEmptyString: true,
-          })
-          .notRequired(),
+          }),
         passwordConfirmation: Yup.string()
           .required("Debe confirmar la contraseña")
           .oneOf([Yup.ref("password")], "Ambas contraseñas deben ser iguales"),
@@ -223,7 +228,7 @@ function SignUpForm() {
     phone: "",
     passwordConfirmation: "",
     acceptSupportComms: true,
-    marketingOptInEmail: false,
+    marketingOptInEmail: true,
     marketingOptInWhatsApp: false,
   };
 
@@ -273,7 +278,7 @@ function SignUpForm() {
         setLoader(false);
         return;
       }
-      const rawPhone = isWhatsAppOptionalOpen ? `${values.phone ?? ""}`.trim() : "";
+      const rawPhone = `${values.phone ?? ""}`.trim();
       const formattedPhone = rawPhone ? `+${dialCode} ${rawPhone}` : "";
       const normalizedPhone = normalizePhoneNumber(formattedPhone);
       if (normalizedPhone && blockedPhoneNumbers.includes(normalizedPhone)) {
@@ -294,7 +299,7 @@ function SignUpForm() {
         acceptSupportComms: values.acceptSupportComms,
         marketingOptInEmail: values.marketingOptInEmail,
         marketingOptInWhatsApp:
-          isWhatsAppOptionalOpen && values.marketingOptInWhatsApp && Boolean(formattedPhone),
+          values.marketingOptInWhatsApp && Boolean(formattedPhone),
         fbp: cookies._fbp,
         fbc: cookies._fbc,
         url: window.location.href,
@@ -347,16 +352,12 @@ function SignUpForm() {
     },
   });
 
-  const handleWhatsAppOptionalToggle = useCallback(
-    (event: SyntheticEvent<HTMLDetailsElement>) => {
-      const expanded = event.currentTarget.open;
-      setIsWhatsAppOptionalOpen(expanded);
-      if (expanded) return;
-
-      // Keep hidden optional data out of submit payload unless user explicitly opens it.
-      formik.setFieldValue("phone", "", false);
-      formik.setFieldValue("marketingOptInWhatsApp", false, false);
-      formik.setFieldTouched("phone", false, false);
+  const handlePrimaryConsentChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const { checked } = event.target;
+      formik.setFieldValue("acceptSupportComms", checked, true);
+      // Single-consent UX: email marketing follows the main consent toggle.
+      formik.setFieldValue("marketingOptInEmail", checked, false);
     },
     [formik],
   );
@@ -632,7 +633,7 @@ function SignUpForm() {
   const WhatsAppField = (
     <div className={`c-row c-row--phone ${showPhoneError ? "is-invalid" : ""}`}>
       <label htmlFor="phone" className="auth-field-label">
-        WhatsApp <span className="auth-field-optional">(opcional)</span>
+        WhatsApp
       </label>
       <div className="signup-phone-wrap">
         <div className="signup-phone-flag-wrap">
@@ -755,18 +756,7 @@ function SignUpForm() {
           message={formik.errors.passwordConfirmation}
         />
       </div>
-      <details
-        className="auth-signup-optional"
-        open={isWhatsAppOptionalOpen}
-        onToggle={handleWhatsAppOptionalToggle}
-      >
-        <summary className="auth-signup-optional__summary">
-          Agregar WhatsApp para soporte más rápido
-        </summary>
-        <div className="auth-signup-optional-grid">
-          {WhatsAppField}
-        </div>
-      </details>
+      {WhatsAppField}
       <Turnstile
         ref={turnstileRef}
         invisible
@@ -792,18 +782,21 @@ function SignUpForm() {
         </span>
       </button>
       <div className="auth-signup-consents" aria-label="Preferencias de comunicación">
-        <label className="auth-consent-item">
+        <label className="auth-consent-item auth-consent-item--primary">
           <input
             type="checkbox"
             name="acceptSupportComms"
             checked={formik.values.acceptSupportComms}
-            onChange={formik.handleChange}
+            onChange={handlePrimaryConsentChange}
             onBlur={formik.handleBlur}
             className="auth-consent-checkbox"
           />
           <span className="auth-consent-copy">
-            <strong>Acepto mensajes transaccionales y de soporte.</strong>
-            <small>Solo para accesos, pagos y soporte. Cero spam.</small>
+            <strong>Acepto mensajes transaccionales, de soporte y promociones por email.</strong>
+            <small>
+              Solo para accesos, pagos, soporte y novedades de Bear Beat. Cero spam. Puedes desuscribirte de
+              promociones en cualquier momento.
+            </small>
           </span>
         </label>
         {formik.touched.acceptSupportComms && formik.errors.acceptSupportComms && (
@@ -811,20 +804,7 @@ function SignUpForm() {
             {formik.errors.acceptSupportComms}
           </div>
         )}
-        <label className="auth-consent-item">
-          <input
-            type="checkbox"
-            name="marketingOptInEmail"
-            checked={formik.values.marketingOptInEmail}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            className="auth-consent-checkbox"
-          />
-          <span>
-            Quiero recibir promociones y novedades por email (opcional).
-          </span>
-        </label>
-        {isWhatsAppOptionalOpen && `${formik.values.phone ?? ""}`.trim() && (
+        {`${formik.values.phone ?? ""}`.trim() && (
           <label className="auth-consent-item">
             <input
               type="checkbox"
@@ -835,14 +815,10 @@ function SignUpForm() {
               className="auth-consent-checkbox"
             />
             <span>
-              Quiero recibir promociones y novedades por WhatsApp (opcional).
+              Quiero recibir promociones y novedades por WhatsApp.
             </span>
           </label>
         )}
-        <div className="auth-consent-hint">
-          Si no aceptas marketing, solo recibirás mensajes transaccionales y de soporte. Puedes desuscribirte de
-          promociones en cualquier momento.
-        </div>
       </div>
       <p className="auth-signup-legal">
         Al crear tu cuenta aceptas{" "}

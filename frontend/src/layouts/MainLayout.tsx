@@ -52,14 +52,19 @@ function MainLayout() {
   };
 
   useEffect(() => {
-    // React Router preserva scroll por defecto: si navegas desde el footer de una
-    // pagina larga a una corta puedes "caer" en un offset vacío (se ve negro).
-    // Solo forzamos scroll-to-top en navegaciones normales; en back/forward (POP)
-    // dejamos que el navegador restaure el scroll.
+    // Scroll behavior by route:
+    // - If there is a hash, let the destination surface handle anchor alignment.
+    // - For "/" without hash, always reset to top (including back/forward).
+    // - For the rest, preserve POP restoration and only force top on normal nav.
     if (typeof window === "undefined") return;
+    if (location.hash) return;
+    if (location.pathname === "/") {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      return;
+    }
     if (navigationType === "POP") return;
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-  }, [location.pathname, location.search, navigationType]);
+  }, [location.pathname, location.search, location.hash, navigationType]);
 
   useEffect(() => {
     applyRouteSeo(location.pathname);

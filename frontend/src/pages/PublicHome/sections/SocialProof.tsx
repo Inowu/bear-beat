@@ -17,6 +17,7 @@ export type SocialTopItem = {
 };
 
 type DemoKind = "audio" | "video";
+type SocialCategoryKey = "audio" | "video" | "karaoke";
 
 function normalizeApiItems(value: unknown): SocialTopItem[] {
   const items = Array.isArray(value) ? value : [];
@@ -167,6 +168,7 @@ export default function SocialProof(props: {
   const [demoAlert, setDemoAlert] = useState<string | null>(null);
   const [previewFile, setPreviewFile] = useState<{ url: string; name: string; kind: DemoKind } | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<SocialCategoryKey | null>(null);
 
   useEffect(() => {
     if (!showMore) return;
@@ -250,6 +252,54 @@ export default function SocialProof(props: {
   const hasVideo = (video?.length ?? 0) > 0;
   const hasKaraoke = (karaoke?.length ?? 0) > 0;
   const hasAny = hasAudio || hasVideo || hasKaraoke;
+  const availableCategories = useMemo(
+    () =>
+      [
+        hasAudio
+          ? {
+              key: "audio" as SocialCategoryKey,
+              label: "Audios",
+              sectionId: "top-audios",
+              title: titleWithTopCount("Audios", audio.length),
+              items: audio,
+            }
+          : null,
+        hasVideo
+          ? {
+              key: "video" as SocialCategoryKey,
+              label: "Videos",
+              sectionId: "top-videos",
+              title: titleWithTopCount("Videos", video.length),
+              items: video,
+            }
+          : null,
+        hasKaraoke
+          ? {
+              key: "karaoke" as SocialCategoryKey,
+              label: "Karaokes",
+              sectionId: "top-karaokes",
+              title: titleWithTopCount("Karaokes", karaoke.length),
+              items: karaoke,
+            }
+          : null,
+      ].filter(Boolean) as Array<{
+        key: SocialCategoryKey;
+        label: string;
+        sectionId: string;
+        title: string;
+        items: SocialTopItem[];
+      }>,
+    [audio, hasAudio, hasKaraoke, hasVideo, karaoke, video],
+  );
+
+  useEffect(() => {
+    if (availableCategories.length === 0) {
+      if (activeCategory !== null) setActiveCategory(null);
+      return;
+    }
+    const hasCurrent = availableCategories.some((category) => category.key === activeCategory);
+    if (!hasCurrent) setActiveCategory(availableCategories[0].key);
+  }, [activeCategory, availableCategories]);
 
   const modalAudio = modalTop?.audio ?? audio;
   const modalVideo = modalTop?.video ?? video;
@@ -257,6 +307,7 @@ export default function SocialProof(props: {
   const modalHasAudio = (modalAudio?.length ?? 0) > 0;
   const modalHasVideo = (modalVideo?.length ?? 0) > 0;
   const modalHasKaraoke = (modalKaraoke?.length ?? 0) > 0;
+  const selectedCategory = availableCategories.find((category) => category.key === activeCategory) ?? null;
 
   if (!hasAny) {
     return (
@@ -280,23 +331,30 @@ export default function SocialProof(props: {
         <div className="social-proof__head">
           <div>
             <h2 className="home-h2">Lo que más se descarga</h2>
-            <p className="home-sub">Top real por categoría. Toca play para abrir un demo (aprox. 60s).</p>
-            <nav className="social-proof__jump" aria-label="Saltar a categoría">
-              {hasAudio && (
-                <a className="social-proof__jump-link" href="#top-audios">
-                  Audios
-                </a>
-              )}
-              {hasVideo && (
-                <a className="social-proof__jump-link" href="#top-videos">
-                  Videos
-                </a>
-              )}
-              {hasKaraoke && (
-                <a className="social-proof__jump-link" href="#top-karaokes">
-                  Karaokes
-                </a>
-              )}
+            <p className="home-sub">Top real por categoría. Escucha demos de 60s antes de decidir.</p>
+            <nav className="social-proof__jump" aria-label="Seleccionar categoría" role="tablist">
+              {availableCategories.map((category) => {
+                const isActive = selectedCategory?.key === category.key;
+                return (
+                  <button
+                    key={category.key}
+                    id={`social-proof-tab-${category.key}`}
+                    type="button"
+                    role="tab"
+                    className={[
+                      "social-proof__jump-link",
+                      isActive ? "is-active" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                    aria-selected={isActive}
+                    aria-controls={category.sectionId}
+                    onClick={() => setActiveCategory(category.key)}
+                  >
+                    {category.label}
+                  </button>
+                );
+              })}
             </nav>
             {demoAlert && (
               <p className="social-proof__alert" role="alert">
@@ -317,34 +375,12 @@ export default function SocialProof(props: {
         </div>
 
         <div className="social-proof__grid" aria-label="Top descargas">
-          {hasAudio && (
+          {selectedCategory && (
             <TopList
-              sectionId="top-audios"
-              title={titleWithTopCount("Audios", audio.length)}
-              items={audio}
-              maxRows={Math.min(5, audio.length)}
-              activeKey={activeKey}
-              loadingKey={loadingKey}
-              onOpenDemo={onOpenDemo}
-            />
-          )}
-          {hasVideo && (
-            <TopList
-              sectionId="top-videos"
-              title={titleWithTopCount("Videos", video.length)}
-              items={video}
-              maxRows={Math.min(5, video.length)}
-              activeKey={activeKey}
-              loadingKey={loadingKey}
-              onOpenDemo={onOpenDemo}
-            />
-          )}
-          {hasKaraoke && (
-            <TopList
-              sectionId="top-karaokes"
-              title={titleWithTopCount("Karaokes", karaoke.length)}
-              items={karaoke}
-              maxRows={Math.min(5, karaoke.length)}
+              sectionId={selectedCategory.sectionId}
+              title={selectedCategory.title}
+              items={selectedCategory.items}
+              maxRows={Math.min(5, selectedCategory.items.length)}
               activeKey={activeKey}
               loadingKey={loadingKey}
               onOpenDemo={onOpenDemo}

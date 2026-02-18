@@ -5,15 +5,15 @@ export default function HowItWorks(props: { trial: { enabled: boolean; days: num
   const { trial } = props;
   const step1Copy =
     trial?.enabled
-      ? `Activación en minutos. ${HOME_HERO_MICROCOPY_TRIAL}`
-      : `Activación en minutos. ${HOME_HERO_MICROCOPY_BASE}`;
+      ? `Alta rápida en pocos minutos. ${HOME_HERO_MICROCOPY_TRIAL}`
+      : `Alta rápida en pocos minutos. ${HOME_HERO_MICROCOPY_BASE}`;
 
   return (
     <section className="how-it-works" aria-label="Cómo funciona">
       <div className="ph__container">
         <div className="how-it-works__head">
-          <h2 className="home-h2">Cómo funciona</h2>
-          <p className="home-sub">3 pasos y llegas a cabina con repertorio listo.</p>
+          <h2 className="home-h2">Así arrancas hoy</h2>
+          <p className="home-sub">3 pasos simples para tener repertorio listo antes de tu evento.</p>
         </div>
 
         <ul className="how-it-works__grid" aria-label="Pasos">
@@ -21,7 +21,7 @@ export default function HowItWorks(props: { trial: { enabled: boolean; days: num
             <span className="how-it-works__icon" aria-hidden>
               <Ticket size={18} />
             </span>
-            <h3>Activa tu prueba</h3>
+            <h3>Activa tu cuenta</h3>
             <p>{step1Copy}</p>
           </li>
           <li className="how-it-works__card bb-market-card">
@@ -29,7 +29,7 @@ export default function HowItWorks(props: { trial: { enabled: boolean; days: num
               <Search size={18} />
             </span>
             <h3>Encuentra en segundos</h3>
-            <p>Carpetas listas por año/mes/semana/género para responder pedidos sin estrés.</p>
+            <p>Busca por canción, artista o carpeta y responde pedidos sin cortar el ritmo.</p>
           </li>
           <li className="how-it-works__card bb-market-card">
             <span className="how-it-works__icon" aria-hidden>

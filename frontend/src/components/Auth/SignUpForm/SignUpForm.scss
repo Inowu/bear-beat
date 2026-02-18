@@ -1050,10 +1050,10 @@ form.sign-up-form {
   }
 
   .auth-signup-consents {
-    margin: 10px 0 2px;
+    margin: 12px 0 2px;
     padding: 0 6px;
     display: grid;
-    gap: 6px;
+    gap: 8px;
     text-align: left;
   }
 
@@ -1069,19 +1069,35 @@ form.sign-up-form {
     cursor: pointer;
   }
 
+  .auth-consent-item--primary {
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--app-border) 84%, transparent);
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--app-accent) 7%, transparent), transparent 88%),
+      color-mix(in srgb, var(--app-bg-soft) 84%, transparent);
+    gap: 12px;
+
+    &:focus-within {
+      border-color: color-mix(in srgb, var(--app-accent) 52%, var(--app-border));
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--app-accent) 18%, transparent);
+    }
+  }
+
   .auth-consent-copy {
     display: grid;
-    gap: 2px;
+    gap: 3px;
   }
 
   .auth-consent-copy strong {
     font-weight: 700;
     color: color-mix(in srgb, var(--auth-login-title) 92%, transparent);
+    line-height: 1.35;
   }
 
   .auth-consent-copy small {
     font-size: 12px;
-    line-height: 1.35;
+    line-height: 1.4;
     color: color-mix(in srgb, var(--auth-login-subtitle) 86%, transparent);
   }
 
@@ -1093,11 +1109,10 @@ form.sign-up-form {
     cursor: pointer;
   }
 
-  .auth-consent-hint {
-    margin-top: 0;
-    font-size: 12px;
-    line-height: 1.35;
-    color: color-mix(in srgb, var(--auth-login-subtitle) 86%, transparent);
+  .auth-consent-item--primary .auth-consent-checkbox {
+    margin-top: 3px;
+    width: 18px;
+    height: 18px;
   }
 
   .auth-signup-legal-link {

@@ -23,38 +23,52 @@ export default function InsidePreview(props: {
         </div>
 
         <div className="home-visual bb-hero-card">
-          <div className="home-visual__head">
-            <strong>Vista real del catálogo</strong>
-            <span className="inside-preview__hint">
-              Toca para ampliar
-            </span>
+          <div className="home-visual__layout">
+            <div className="home-visual__meta">
+              <div className="home-visual__head">
+                <strong>Vista real del catálogo</strong>
+                <span className="inside-preview__hint">Captura real</span>
+              </div>
+              <ul className="home-visual__bullets" aria-label="Qué verás al activar">
+                <li>Audios / Videos / Karaoke</li>
+                <li>Búsqueda por canción, artista o carpeta</li>
+                <li>Guía FTP incluida</li>
+              </ul>
+              <p className="home-visual__note">Captura real del catálogo. Toca la imagen para verla completa.</p>
+            </div>
+
+            <div className="home-visual__media">
+              <div className="home-visual__toolbar" aria-hidden>
+                <span className="home-visual__traffic">
+                  <span />
+                  <span />
+                  <span />
+                </span>
+                <span className="home-visual__toolbar-label">Biblioteca Bear Beat</span>
+                <span className="home-visual__zoom-chip">Toca para ampliar</span>
+              </div>
+              <div className="home-visual__frame">
+                <button
+                  type="button"
+                  className="home-visual__frame-btn"
+                  onClick={onTourClick}
+                  aria-label="Abrir captura del catálogo en detalle"
+                >
+                  <picture>
+                    <source srcSet={CatalogPreviewWebp} type="image/webp" />
+                    <img
+                      src={CatalogPreviewPng}
+                      alt="Vista real del catálogo por dentro (biblioteca: Audios, Karaoke y Videos)"
+                      width={960}
+                      height={600}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </picture>
+                </button>
+              </div>
+            </div>
           </div>
-          <ul className="home-visual__bullets" aria-label="Qué verás al activar">
-            <li>Audios / Videos / Karaoke</li>
-            <li>Búsqueda por canción, artista o carpeta</li>
-            <li>Guía FTP incluida</li>
-          </ul>
-          <div className="home-visual__frame">
-            <button
-              type="button"
-              className="home-visual__frame-btn"
-              onClick={onTourClick}
-              aria-label="Abrir captura del catálogo en detalle"
-            >
-              <picture>
-                <source srcSet={CatalogPreviewWebp} type="image/webp" />
-                <img
-                  src={CatalogPreviewPng}
-                  alt="Vista real del catálogo por dentro (biblioteca: Audios, Karaoke y Videos)"
-                  width={960}
-                  height={600}
-                  loading="lazy"
-                  decoding="async"
-                />
-              </picture>
-            </button>
-          </div>
-          <p className="home-visual__note">Vista real del catálogo. Toca la captura para ver detalles.</p>
         </div>
       </div>
     </section>

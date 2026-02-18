@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, CirclePlay, Lock, Ticket } from "src/icons";
+import { ArrowRight, CheckCircle2, CirclePlay, Lock, Ticket } from "src/icons";
 import {
+  HOME_HERO_FIT_POINTS,
   HOME_HERO_MICROCOPY_BASE,
   HOME_HERO_MICROCOPY_TRIAL,
   HOME_HERO_SUBTITLE,
+  HOME_HERO_TRUST_ITEMS,
   HOME_HERO_TITLE,
 } from "../homeCopy";
 import { formatInt } from "../homeFormat";
@@ -35,6 +37,14 @@ export default function HomeHero(props: {
         <div className="home-hero__copy">
           <h1 className="home-hero__title">{HOME_HERO_TITLE}</h1>
           <p className="home-hero__sub">{HOME_HERO_SUBTITLE}</p>
+          <ul className="home-hero__fit" aria-label="Ideal para">
+            {HOME_HERO_FIT_POINTS.map((point) => (
+              <li key={point}>
+                <CheckCircle2 size={16} aria-hidden />
+                <span>{point}</span>
+              </li>
+            ))}
+          </ul>
 
           <div className="home-hero__stats" role="list" aria-label="Resumen">
             <div role="listitem" className="home-stat bb-stat-pill">
@@ -69,25 +79,9 @@ export default function HomeHero(props: {
               </button>
             </div>
             <div className="home-hero__trust-inline" role="note" aria-label="Confianza rápida">
-              <span>Pago seguro • Tarjeta, PayPal, SPEI y Efectivo • Cancela cuando quieras</span>
-            </div>
-            <div className="home-hero__cases" role="list" aria-label="Casos de uso reales">
-              <article role="listitem" className="home-hero__case">
-                <strong>Bodas y XV</strong>
-                <small>Entradas, vals y bloque latino listo.</small>
-              </article>
-              <article role="listitem" className="home-hero__case">
-                <strong>Antro</strong>
-                <small>Reggaetón, crossover y peak-time.</small>
-              </article>
-              <article role="listitem" className="home-hero__case">
-                <strong>Sonidero</strong>
-                <small>Cumbias, salsa y clásicos por carpeta.</small>
-              </article>
-              <article role="listitem" className="home-hero__case">
-                <strong>Evento mixto</strong>
-                <small>Set multigénero en minutos.</small>
-              </article>
+              {HOME_HERO_TRUST_ITEMS.map((item) => (
+                <span key={item}>{item}</span>
+              ))}
             </div>
 
             <Link to="/auth" state={{ from: "/planes" }} className="home-hero__cta-alt">

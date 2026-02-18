@@ -12,6 +12,7 @@ import PaymentMethodLogos, {
 import { GROWTH_METRICS, trackGrowthMetric } from "../../utils/growthMetrics";
 import { useUserContext } from "../../contexts/UserContext";
 import PlansStickyCta from "./PlansStickyCta";
+import { HOME_HERO_TRUST_ITEMS } from "../PublicHome/homeCopy";
 
 type CurrencyKey = "mxn" | "usd";
 const DEFAULT_LIMITS_NOTE =
@@ -699,7 +700,9 @@ function Plans() {
                   Activar
                 </button>
                 <div className="plans2026__ctaTrust" role="note" aria-label="Confianza rápida">
-                  <span>Pago seguro • Tarjeta, PayPal, SPEI y Efectivo • Cancela cuando quieras</span>
+                  {HOME_HERO_TRUST_ITEMS.map((item) => (
+                    <span key={item}>{item}</span>
+                  ))}
                 </div>
 
                 <div className="plans2026__trust" aria-label="Confianza">

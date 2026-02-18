@@ -6,12 +6,22 @@ export function getHomeCtaPrimaryLabel(trial: { enabled: boolean; days: number }
   return HOME_CTA_PRIMARY_LABEL_FALLBACK;
 }
 
-export const HOME_HERO_TITLE = "Nunca vuelvas a decir “No la tengo” en cabina.";
+export const HOME_HERO_TITLE = "Todo tu repertorio para cabina, listo para descargar hoy.";
 export const HOME_HERO_SUBTITLE =
-  "Membresía para DJs: video remixes, audios y karaokes organizados para descargar y llegar con repertorio listo.";
+  "Membresía para DJs de eventos y antros: audios, videos y karaokes organizados para encontrar rápido y responder pedidos sin estrés.";
+export const HOME_HERO_FIT_POINTS = [
+  "Hecho para DJs de eventos y antros",
+  "Descargas por FTP o web, sin depender de internet en cabina",
+  "Activación guiada para arrancar hoy mismo",
+] as const;
 
 export const HOME_HERO_MICROCOPY_BASE =
-  "Pago seguro • Tarjeta, PayPal, SPEI y Efectivo • Cancela cuando quieras";
+  "Pago seguro. Tarjeta, PayPal, SPEI y efectivo. Cancela cuando quieras.";
+export const HOME_HERO_TRUST_ITEMS = [
+  "Pago seguro",
+  "Tarjeta, PayPal, SPEI y efectivo",
+  "Cancela cuando quieras",
+] as const;
 export const HOME_HERO_MICROCOPY_TRIAL =
   "Prueba solo con tarjeta. Cancela antes de que termine y no se cobra.";
 
@@ -66,7 +76,7 @@ export const HOME_FAQ_ITEMS: HomeFaqItem[] = [
     id: "quota",
     question: "¿Qué significa 500 GB/mes en la práctica?",
     answer:
-      "Tienes una cuota de descarga de 500 GB/mes. Como referencia, 500 GB equivalen aprox. a 150-300 videos (depende del peso/calidad de cada archivo).",
+      "Tienes una cuota de descarga de 500 GB/mes. Como referencia, 500 GB equivalen aprox. a 3,000 videos (depende del peso/calidad de cada archivo).",
   },
   {
     id: "catalog-vs-quota",

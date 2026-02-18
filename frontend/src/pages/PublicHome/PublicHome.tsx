@@ -24,12 +24,10 @@ import HomeHero from "./sections/HomeHero";
 import HowItWorks from "./sections/HowItWorks";
 import InsidePreview from "./sections/InsidePreview";
 import TrustBar from "./sections/TrustBar";
-import UseCases from "./sections/UseCases";
 import CatalogDemo, { type CatalogGenre } from "./sections/CatalogDemo";
 import HumanSocialProof from "./sections/HumanSocialProof";
 import SocialProof from "./sections/SocialProof";
 import Compatibility from "./sections/Compatibility";
-import ActivationSteps from "./sections/ActivationSteps";
 import Pricing, {
   type PricingPlan,
   type TrialSummary,
@@ -53,6 +51,53 @@ const PAYMENT_METHOD_VALUES: PaymentMethodId[] = [
   "transfer",
 ];
 type CurrencyKey = "mxn" | "usd";
+
+const MEXICO_TIMEZONES = new Set<string>([
+  "America/Mexico_City",
+  "America/Cancun",
+  "America/Monterrey",
+  "America/Merida",
+  "America/Mazatlan",
+  "America/Chihuahua",
+  "America/Ciudad_Juarez",
+  "America/Ojinaga",
+  "America/Matamoros",
+  "America/Tijuana",
+  "America/Hermosillo",
+  "America/Bahia_Banderas",
+]);
+
+const UNITED_STATES_TIMEZONES = new Set<string>([
+  "America/New_York",
+  "America/Detroit",
+  "America/Kentucky/Louisville",
+  "America/Kentucky/Monticello",
+  "America/Indiana/Indianapolis",
+  "America/Indiana/Vincennes",
+  "America/Indiana/Winamac",
+  "America/Indiana/Marengo",
+  "America/Indiana/Petersburg",
+  "America/Indiana/Vevay",
+  "America/Chicago",
+  "America/Indiana/Tell_City",
+  "America/Indiana/Knox",
+  "America/Menominee",
+  "America/North_Dakota/Center",
+  "America/North_Dakota/New_Salem",
+  "America/North_Dakota/Beulah",
+  "America/Denver",
+  "America/Boise",
+  "America/Phoenix",
+  "America/Los_Angeles",
+  "America/Anchorage",
+  "America/Juneau",
+  "America/Sitka",
+  "America/Metlakatla",
+  "America/Yakutat",
+  "America/Nome",
+  "America/Adak",
+  "Pacific/Honolulu",
+]);
 
 type TrialConfigResponse = {
   enabled: boolean;
@@ -128,6 +173,62 @@ function parsePaymentMethods(
     parsed.push(method);
   }
   return parsed.length > 0 ? parsed : fallback;
+}
+
+function readRegionFromLocale(locale: string): string | null {
+  const tag = `${locale ?? ""}`.trim();
+  if (!tag) return null;
+
+  try {
+    const parsed = new Intl.Locale(tag);
+    const region = parsed.region?.toUpperCase();
+    if (region) return region;
+  } catch {
+    // Fallback to regex parsing below.
+  }
+
+  const match = tag.match(/[-_]([a-z]{2})\b/i);
+  return match ? match[1].toUpperCase() : null;
+}
+
+function detectVisitorCurrencyDefault(): CurrencyKey | null {
+  if (typeof window === "undefined" || typeof navigator === "undefined")
+    return null;
+
+  const localeCandidates: string[] = [];
+  if (Array.isArray(navigator.languages))
+    localeCandidates.push(...navigator.languages);
+  if (typeof navigator.language === "string")
+    localeCandidates.push(navigator.language);
+
+  const intlLocale = Intl.DateTimeFormat().resolvedOptions().locale;
+  if (typeof intlLocale === "string" && intlLocale.trim())
+    localeCandidates.push(intlLocale);
+
+  for (const locale of localeCandidates) {
+    const region = readRegionFromLocale(locale);
+    if (region === "MX") return "mxn";
+    if (region === "US") return "usd";
+  }
+
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+  if (MEXICO_TIMEZONES.has(timezone)) return "mxn";
+  if (UNITED_STATES_TIMEZONES.has(timezone) || timezone.startsWith("US/"))
+    return "usd";
+
+  return null;
+}
+
+function resolveCurrencyForPlans(
+  preferred: CurrencyKey | null,
+  fallback: CurrencyKey,
+  plans: { mxn: PricingPlan | null; usd: PricingPlan | null },
+): CurrencyKey {
+  if (preferred === "mxn" && plans.mxn) return "mxn";
+  if (preferred === "usd" && plans.usd) return "usd";
+  if (fallback === "mxn" && plans.mxn) return "mxn";
+  if (fallback === "usd" && plans.usd) return "usd";
+  return plans.mxn ? "mxn" : "usd";
 }
 
 export default function PublicHome() {
@@ -268,8 +369,14 @@ export default function PublicHome() {
       )
         .trim()
         .toLowerCase();
-      const defaultCurrency: CurrencyKey =
+      const defaultCurrencyFromApi: CurrencyKey =
         defaultCurrencyRaw === "usd" ? "usd" : "mxn";
+      const visitorCurrency = detectVisitorCurrencyDefault();
+      const defaultCurrency = resolveCurrencyForPlans(
+        visitorCurrency,
+        defaultCurrencyFromApi,
+        nextPlans,
+      );
       const totalFiles = Math.max(
         0,
         Number(response?.ui?.stats?.totalFiles ?? 0),
@@ -932,15 +1039,28 @@ export default function PublicHome() {
 
         <HowItWorks trial={trialSummary} />
 
-        <InsidePreview onDemoScroll={onDemoScroll} onTourClick={onTourClick} />
-
         <TrustBar
           totalFilesLabel={totalFilesLabel}
           totalTBLabel={totalTBLabel}
           downloadQuotaLabel={downloadQuotaLabel}
         />
 
-        <UseCases />
+        <div ref={pricingRef}>
+          <Pricing
+            plans={pricingPlans}
+            status={pricingStatus}
+            defaultCurrency={preferredCurrency}
+            numberLocale={HOME_NUMBER_LOCALE}
+            catalogTBLabel={totalTBLabel}
+            downloadQuotaGb={downloadQuotaGb}
+            limitsNote={pricingUi.limitsNote}
+            trial={trialSummary}
+            ctaLabel={ctaPrimaryLabel}
+            onPrimaryCtaClick={() => onPrimaryCtaClick("pricing")}
+          />
+        </div>
+
+        <InsidePreview onDemoScroll={onDemoScroll} onTourClick={onTourClick} />
 
         <CatalogDemo
           genres={catalogGenres}
@@ -961,26 +1081,6 @@ export default function PublicHome() {
         />
 
         <Compatibility onFaqScroll={scrollToFaq} />
-
-        <ActivationSteps
-          ctaLabel={ctaPrimaryLabel}
-          onPrimaryCtaClick={() => onPrimaryCtaClick("mid")}
-        />
-
-        <div ref={pricingRef}>
-          <Pricing
-            plans={pricingPlans}
-            status={pricingStatus}
-            defaultCurrency={preferredCurrency}
-            numberLocale={HOME_NUMBER_LOCALE}
-            catalogTBLabel={totalTBLabel}
-            downloadQuotaGb={downloadQuotaGb}
-            limitsNote={pricingUi.limitsNote}
-            trial={trialSummary}
-            ctaLabel={ctaPrimaryLabel}
-            onPrimaryCtaClick={() => onPrimaryCtaClick("pricing")}
-          />
-        </div>
 
         <HomeFaq onFaqExpand={onFaqExpand} />
       </div>
