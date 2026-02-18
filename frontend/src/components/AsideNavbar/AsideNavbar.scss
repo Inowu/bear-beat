@@ -177,6 +177,12 @@ aside {
   }
 }
 
+html[data-theme="light"] aside .nav-container .nav-link-item:not(.is-active):hover,
+html[data-theme="light"] aside .nav-container .nav-link-item:not(.is-active):focus-visible {
+  background: rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 0, 0, 0.14);
+}
+
 @include respond-to(desktop) {
   aside {
     position: fixed;

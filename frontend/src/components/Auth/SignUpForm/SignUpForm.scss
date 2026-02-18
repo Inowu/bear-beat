@@ -26,7 +26,10 @@
     opacity: 0;
   }
 
-  html[data-theme="dark"] &::before {
+  html[data-theme="dark"] &::before,
+  html.dark &::before,
+  .dark &::before,
+  .auth-main-container.auth-page.auth-page--dark &::before {
     opacity: 1;
   }
 }
@@ -174,7 +177,8 @@
 
 html[data-theme="dark"] .checkout-intent-card,
 html.dark .checkout-intent-card,
-.dark .checkout-intent-card {
+.dark .checkout-intent-card,
+.auth-main-container.auth-page.auth-page--dark .checkout-intent-card {
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.04) inset,
     0 14px 34px rgba(0, 0, 0, 0.36);
@@ -1031,11 +1035,13 @@ form.sign-up-form {
   }
 
   /* Light: CTA sin halo neón (premium/limpio). Dark: conserva glow. */
-  html[data-theme="light"] & .signup-submit-btn {
+  html[data-theme="light"] & .signup-submit-btn,
+  .auth-main-container.auth-page.auth-page--light & .signup-submit-btn {
     box-shadow: var(--app-shadow);
   }
 
-  html[data-theme="light"] & .signup-submit-btn:hover {
+  html[data-theme="light"] & .signup-submit-btn:hover,
+  .auth-main-container.auth-page.auth-page--light & .signup-submit-btn:hover {
     box-shadow: var(--app-shadow-card);
   }
 
@@ -1239,7 +1245,8 @@ form.sign-up-form {
   }
 }
 
-[data-theme="light"] form.sign-up-form {
+[data-theme="light"] form.sign-up-form,
+.auth-main-container.auth-page.auth-page--light form.sign-up-form {
   .auth-login-input-wrap {
     border-color: color-mix(in srgb, var(--auth-input-border) 92%, transparent);
     background: color-mix(in srgb, #ffffff 97%, var(--auth-input-bg));
@@ -1255,13 +1262,15 @@ form.sign-up-form {
   }
 }
 
-html[data-theme="light"] .auth-login-atmosphere {
+html[data-theme="light"] .auth-login-atmosphere,
+.auth-main-container.auth-page.auth-page--light .auth-login-atmosphere {
   background:
     radial-gradient(560px 320px at 50% 32%, color-mix(in srgb, var(--app-accent) 4.2%, transparent), transparent 70%),
     var(--auth-login-atmosphere-bg);
 }
 
-html[data-theme="light"] .auth-login-card.auth-login-card--signup {
+html[data-theme="light"] .auth-login-card.auth-login-card--signup,
+.auth-main-container.auth-page.auth-page--light .auth-login-card.auth-login-card--signup {
   border-color: color-mix(in srgb, var(--auth-login-card-border) 96%, transparent);
   background: color-mix(in srgb, #ffffff 99%, var(--auth-login-card-bg));
   box-shadow:
@@ -1269,15 +1278,18 @@ html[data-theme="light"] .auth-login-card.auth-login-card--signup {
     0 1px 0 rgba(255, 255, 255, 0.72) inset;
 }
 
-html[data-theme="light"] form.sign-up-form .signup-submit-btn {
+html[data-theme="light"] form.sign-up-form .signup-submit-btn,
+.auth-main-container.auth-page.auth-page--light form.sign-up-form .signup-submit-btn {
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.1);
 }
 
-html[data-theme="light"] form.sign-up-form .signup-submit-btn:hover:not(:disabled) {
+html[data-theme="light"] form.sign-up-form .signup-submit-btn:hover:not(:disabled),
+.auth-main-container.auth-page.auth-page--light form.sign-up-form .signup-submit-btn:hover:not(:disabled) {
   box-shadow: 0 14px 28px rgba(15, 23, 42, 0.12);
 }
 
-html[data-theme="light"] form.sign-up-form .turnstile-widget-wrap {
+html[data-theme="light"] form.sign-up-form .turnstile-widget-wrap,
+.auth-main-container.auth-page.auth-page--light form.sign-up-form .turnstile-widget-wrap {
   border-color: color-mix(in srgb, var(--auth-input-border) 94%, transparent);
   background: color-mix(in srgb, #ffffff 88%, var(--auth-input-bg));
 }

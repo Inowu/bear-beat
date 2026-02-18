@@ -30,6 +30,14 @@
   --theme-accent-soft-bg-3: color-mix(in srgb, var(--ph-accent-bright) 18%, transparent);
 }
 
+.checkout-main-container.checkout2026--dark {
+  color-scheme: dark;
+}
+
+.checkout-main-container.checkout2026--light {
+  color-scheme: light;
+}
+
 .checkout2026__main {
   padding: clamp(12px, 1.8vw, 22px) 0 clamp(44px, 5vw, 74px);
 }

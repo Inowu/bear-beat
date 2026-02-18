@@ -60,25 +60,37 @@
   }
 }
 
-[data-theme="light"] .auth-main-container.auth-page {
+.auth-main-container.auth-page.auth-page--dark {
+  color-scheme: dark;
+}
+
+.auth-main-container.auth-page.auth-page--light {
+  color-scheme: light;
+}
+
+[data-theme="light"] .auth-main-container.auth-page,
+.auth-main-container.auth-page.auth-page--light {
   background:
     radial-gradient(circle at 12% 14%, color-mix(in srgb, var(--bb-ambient-cyan) 85%, transparent) 0%, transparent 48%),
     radial-gradient(circle at 88% 20%, color-mix(in srgb, var(--bb-ambient-mint) 85%, transparent) 0%, transparent 46%),
     linear-gradient(180deg, #FFFFFF 0%, var(--bb-bg) 100%);
 }
 
-[data-theme="light"] .auth-main-container.auth-page::before {
+[data-theme="light"] .auth-main-container.auth-page::before,
+.auth-main-container.auth-page.auth-page--light::before {
   background-image:
     linear-gradient(rgba(21, 42, 53, 0.06) 1px, transparent 1px),
     linear-gradient(90deg, rgba(21, 42, 53, 0.06) 1px, transparent 1px);
   opacity: 0.08;
 }
 
-[data-theme="light"] .auth-main-container.auth-page .auth-tagline {
+[data-theme="light"] .auth-main-container.auth-page .auth-tagline,
+.auth-main-container.auth-page.auth-page--light .auth-tagline {
   color: color-mix(in srgb, var(--app-text-body) 94%, transparent);
 }
 
-[data-theme="light"] .auth-main-container.auth-page .auth-tagline .auth-tagline-sep {
+[data-theme="light"] .auth-main-container.auth-page .auth-tagline .auth-tagline-sep,
+.auth-main-container.auth-page.auth-page--light .auth-tagline .auth-tagline-sep {
   color: color-mix(in srgb, var(--app-text-muted) 96%, transparent);
 }
 
@@ -99,14 +111,17 @@
   }
 }
 
-[data-theme="light"] .auth-main-container > form {
+[data-theme="light"] .auth-main-container > form,
+.auth-main-container.auth-page.auth-page--light > form {
   background: var(--ph-bg-card);
   border-color: var(--ph-border);
   box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.2);
 }
 
 [data-theme="light"] .auth-main-container form .c-row input,
-[data-theme="light"] .auth-main-container form .password-input-wrap .password-input {
+[data-theme="light"] .auth-main-container form .password-input-wrap .password-input,
+.auth-main-container.auth-page.auth-page--light form .c-row input,
+.auth-main-container.auth-page.auth-page--light form .password-input-wrap .password-input {
   border-color: var(--auth-input-border);
   background: var(--auth-input-bg);
   color: var(--ph-text-heading);

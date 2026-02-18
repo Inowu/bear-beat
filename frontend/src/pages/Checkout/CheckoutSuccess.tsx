@@ -15,6 +15,7 @@ import { useCookies } from "react-cookie";
 import PublicTopNav from "../../components/PublicTopNav/PublicTopNav";
 import { Spinner } from "../../components/Spinner/Spinner";
 import { useUserContext } from "../../contexts/UserContext";
+import { useTheme } from "../../contexts/ThemeContext";
 
 type ActivationState = "checking" | "active" | "timeout";
 
@@ -27,6 +28,7 @@ function isLikelyNetworkError(error: unknown): boolean {
 }
 
 function CheckoutSuccess() {
+  const { theme } = useTheme();
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get("session_id");
   const trackedSuccessRef = useRef(false);
@@ -236,7 +238,16 @@ function CheckoutSuccess() {
   }, [sessionId, cookies._fbp, cookies._fbc]);
 
   return (
-    <div className="checkout-main-container checkout2026 bb-marketing-page bb-marketing-page--checkout bb-marketing-page--flat-cards">
+    <div
+      className={[
+        "checkout-main-container",
+        "checkout2026",
+        `checkout2026--${theme}`,
+        "bb-marketing-page",
+        "bb-marketing-page--checkout",
+        "bb-marketing-page--flat-cards",
+      ].join(" ")}
+    >
       <PublicTopNav className="checkout2026__topnav" plansTo="/planes" />
       <section className="checkout2026__main" aria-label="Checkout">
         <div className="checkout2026__container checkout2026__center">

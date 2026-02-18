@@ -118,6 +118,52 @@ function statusTone(status: string): "ok" | "warn" | "error" {
   return "warn";
 }
 
+function CrmSkeletonBlock({ className = "" }: { className?: string }) {
+  return <span className={["crm-sk", className].filter(Boolean).join(" ")} aria-hidden />;
+}
+
+function CrmTableSkeleton(props: {
+  columns: number;
+  rows: number;
+  compact?: boolean;
+  ariaLabel: string;
+}) {
+  const { columns, rows, compact = false, ariaLabel } = props;
+  return (
+    <div
+      className="crm-table-wrap crm-table-wrap--skeleton mt-4"
+      tabIndex={-1}
+      aria-hidden
+      aria-label={ariaLabel}
+    >
+      <table className={`crm-table${compact ? " crm-table--compact" : ""}`}>
+        <thead>
+          <tr>
+            {Array.from({ length: columns }).map((_, idx) => (
+              <th key={`th_${idx}`}>
+                <CrmSkeletonBlock className="crm-sk--th" />
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: rows }).map((_, rowIdx) => (
+            <tr key={`row_${rowIdx}`}>
+              {Array.from({ length: columns }).map((_, colIdx) => (
+                <td key={`row_${rowIdx}_col_${colIdx}`}>
+                  <CrmSkeletonBlock
+                    className={`crm-sk--cell ${colIdx === 0 ? "crm-sk--cell-strong" : ""}`}
+                  />
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export function CrmP2Panels({ rangeDays }: { rangeDays: number }) {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
@@ -178,9 +224,35 @@ export function CrmP2Panels({ rangeDays }: { rangeDays: number }) {
         {error ? <p className="text-danger-400 text-sm">{error}</p> : null}
 
         {loading && !segmentation ? (
-          <div className="crm-state">
-            <RefreshCw size={20} className="animate-spin" />
-            <p>Cargando segmentación…</p>
+          <div
+            className="crm-loading-panel"
+            role="status"
+            aria-live="polite"
+            aria-busy="true"
+            aria-label="Cargando segmentación CRM"
+          >
+            <div className="crm-kpi-grid" role="presentation" aria-hidden>
+              {Array.from({ length: 3 }).map((_, idx) => (
+                <article key={`seg_kpi_${idx}`} className="crm-kpi-card crm-kpi-card--skeleton">
+                  <div className="crm-kpi-card__top">
+                    <CrmSkeletonBlock className="crm-sk--icon" />
+                    <CrmSkeletonBlock className="crm-sk--title" />
+                  </div>
+                  <CrmSkeletonBlock className="crm-sk--value crm-sk--value-sm" />
+                </article>
+              ))}
+            </div>
+            <CrmTableSkeleton
+              columns={6}
+              rows={5}
+              compact
+              ariaLabel="Cargando segmentación por fuente"
+            />
+            <CrmTableSkeleton
+              columns={8}
+              rows={6}
+              ariaLabel="Cargando usuarios en riesgo de churn"
+            />
           </div>
         ) : segmentation ? (
           <>
@@ -302,9 +374,35 @@ export function CrmP2Panels({ rangeDays }: { rangeDays: number }) {
         </p>
 
         {loading && !paymentFailures ? (
-          <div className="crm-state">
-            <RefreshCw size={20} className="animate-spin" />
-            <p>Cargando payment_failed…</p>
+          <div
+            className="crm-loading-panel"
+            role="status"
+            aria-live="polite"
+            aria-busy="true"
+            aria-label="Cargando historial de payment_failed"
+          >
+            <div className="crm-kpi-grid" role="presentation" aria-hidden>
+              {Array.from({ length: 4 }).map((_, idx) => (
+                <article key={`pay_kpi_${idx}`} className="crm-kpi-card crm-kpi-card--skeleton">
+                  <div className="crm-kpi-card__top">
+                    <CrmSkeletonBlock className="crm-sk--icon" />
+                    <CrmSkeletonBlock className="crm-sk--title" />
+                  </div>
+                  <CrmSkeletonBlock className="crm-sk--value crm-sk--value-sm" />
+                </article>
+              ))}
+            </div>
+            <CrmTableSkeleton
+              columns={7}
+              rows={6}
+              ariaLabel="Cargando eventos payment_failed"
+            />
+            <CrmTableSkeleton
+              columns={5}
+              rows={5}
+              compact
+              ariaLabel="Cargando webhooks fallidos"
+            />
           </div>
         ) : paymentFailures ? (
           <>

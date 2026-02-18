@@ -2,6 +2,14 @@
   overflow-x: clip;
 }
 
+.plans2026.plans2026--dark {
+  color-scheme: dark;
+}
+
+.plans2026.plans2026--light {
+  color-scheme: light;
+}
+
 @media (max-width: 720px) {
   .plans2026 {
     padding-bottom: calc(94px + env(safe-area-inset-bottom));

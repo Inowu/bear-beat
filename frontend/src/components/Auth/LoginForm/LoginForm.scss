@@ -26,7 +26,10 @@
     opacity: 0;
   }
 
-  html[data-theme="dark"] &::before {
+  html[data-theme="dark"] &::before,
+  html.dark &::before,
+  .dark &::before,
+  .auth-main-container.auth-page.auth-page--dark &::before {
     opacity: 1;
   }
 }
@@ -50,7 +53,10 @@
   opacity: 0;
   z-index: 0;
 
-  html[data-theme="dark"] & {
+  html[data-theme="dark"] &,
+  html.dark &,
+  .dark &,
+  .auth-main-container.auth-page.auth-page--dark & {
     opacity: 0.85;
   }
 }
@@ -300,11 +306,13 @@
 	  }
 
 	  /* Light: CTA sin halo neón (premium/limpio). Dark: conserva glow. */
-	  html[data-theme="light"] & .auth-login-submit-btn {
+	  html[data-theme="light"] & .auth-login-submit-btn,
+    .auth-main-container.auth-page.auth-page--light & .auth-login-submit-btn {
 	    box-shadow: var(--app-shadow);
 	  }
 
-	  html[data-theme="light"] & .auth-login-submit-btn:hover {
+	  html[data-theme="light"] & .auth-login-submit-btn:hover,
+    .auth-main-container.auth-page.auth-page--light & .auth-login-submit-btn:hover {
 	    box-shadow: var(--app-shadow-card);
 	  }
 

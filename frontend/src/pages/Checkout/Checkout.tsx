@@ -45,6 +45,7 @@ import {
   isTrialVisibleForMethod,
   type CheckoutMethod,
 } from "./checkoutMessaging";
+import { useTheme } from "../../contexts/ThemeContext";
 type CheckoutTrialConfig = {
   enabled: boolean;
   days: number;
@@ -578,6 +579,7 @@ function normalizeCheckoutError(opts: {
 }
 
 function Checkout() {
+  const { theme } = useTheme();
   const [plan, setPlan] = useState<IPlans | null>(null);
   const [checkoutSummary, setCheckoutSummary] = useState<{ currency: string; price: number } | null>(null);
   const [checkoutPlanDisplayName, setCheckoutPlanDisplayName] = useState<string | null>(null);
@@ -634,6 +636,14 @@ function Checkout() {
   const [autoPlanStatus, setAutoPlanStatus] = useState<"idle" | "resolving" | "failed">("idle");
   const [autoPlanError, setAutoPlanError] = useState<string>("");
   const [autoPlanRetryTick, setAutoPlanRetryTick] = useState(0);
+  const checkoutPageClassName = [
+    "checkout-main-container",
+    "checkout2026",
+    `checkout2026--${theme}`,
+    "bb-marketing-page",
+    "bb-marketing-page--checkout",
+    "bb-marketing-page--flat-cards",
+  ].join(" ");
 
   const closeErrorModal = useCallback(() => {
     setShowError(false);
@@ -1730,7 +1740,7 @@ function Checkout() {
   if (!priceId) {
     const resolving = autoPlanStatus !== "failed";
     return (
-      <div className="checkout-main-container checkout2026 bb-marketing-page bb-marketing-page--checkout bb-marketing-page--flat-cards">
+      <div className={checkoutPageClassName}>
         {TopNav}
         <section className="checkout2026__main" aria-label="Checkout">
           <div className="checkout2026__container checkout2026__center">
@@ -1776,7 +1786,7 @@ function Checkout() {
     const altMethod = pickCheckoutAlternateMethod(currentMethod, availableMethods);
     const retryLabel = checkoutRetryActionLabel(currentMethod);
     return (
-      <div className="checkout-main-container checkout2026 bb-marketing-page bb-marketing-page--checkout bb-marketing-page--flat-cards">
+      <div className={checkoutPageClassName}>
         {TopNav}
         <section className="checkout2026__main" aria-label="Checkout">
           <div className="checkout2026__container checkout2026__center">
@@ -1842,7 +1852,7 @@ function Checkout() {
           : "Ocurrió un error al cargar tu plan. Intenta de nuevo o selecciona un plan.";
 
       return (
-        <div className="checkout-main-container checkout2026 bb-marketing-page bb-marketing-page--checkout bb-marketing-page--flat-cards">
+        <div className={checkoutPageClassName}>
           {TopNav}
           <section className="checkout2026__main" aria-label="Checkout">
             <div className="checkout2026__container checkout2026__center">
@@ -1869,7 +1879,7 @@ function Checkout() {
     }
 
     return (
-      <div className="checkout-main-container checkout2026 bb-marketing-page bb-marketing-page--checkout bb-marketing-page--flat-cards">
+      <div className={checkoutPageClassName}>
         {TopNav}
         <section className="checkout2026__main" aria-label="Checkout">
           <div className="checkout2026__container">
@@ -1980,7 +1990,7 @@ function Checkout() {
   if (availableMethods.includes("bbva")) paymentMethods.push("transfer");
 
   return (
-    <div className="checkout-main-container checkout2026 bb-marketing-page bb-marketing-page--checkout bb-marketing-page--flat-cards">
+    <div className={checkoutPageClassName}>
       {TopNav}
       <section className="checkout2026__main" aria-label="Checkout">
         <div className="checkout2026__container">

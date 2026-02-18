@@ -20,6 +20,8 @@ import {
 } from "../../../utils/authReturnUrl";
 import "./LoginForm.scss";
 
+const SIMPLE_EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 function inferErrorCode(message: string): string {
   const m = `${message ?? ""}`.toLowerCase();
   if (!m) return "unknown";
@@ -63,8 +65,12 @@ function LoginForm() {
   const authStorageEventTrackedRef = useRef(false);
   const validationSchema = Yup.object().shape({
     username: Yup.string()
+      .transform((value) => (typeof value === "string" ? value.trim() : value))
       .required("El correo es requerido")
-      .email("El formato del correo no es correcto"),
+      .test("valid-email", "Ingresa un correo válido", (value) => {
+        if (!value) return true;
+        return SIMPLE_EMAIL_REGEX.test(value);
+      }),
     password: Yup.string()
       .required("La contraseña es requerida")
       .min(3, "La contraseña debe contener al menos 3 caracteres"),
@@ -82,7 +88,7 @@ function LoginForm() {
       trackGrowthMetric(GROWTH_METRICS.FORM_SUBMIT, { formId: "login" });
       trackGrowthMetric(GROWTH_METRICS.AUTH_START, { flow: "login", from });
       let body = {
-        username: values.username,
+        username: values.username.trim(),
         password: values.password,
       };
       try {
@@ -178,7 +184,12 @@ function LoginForm() {
           <p className="auth-login-sub">
             Tu cabina está lista. Ingresa para descargar.
           </p>
-          <form className="auth-form auth-login-form" onSubmit={formik.handleSubmit} autoComplete="on">
+          <form
+            className="auth-form auth-login-form"
+            onSubmit={formik.handleSubmit}
+            autoComplete="on"
+            noValidate
+          >
             <div className={`c-row ${showUsernameError ? "is-invalid" : ""}`}>
               <label htmlFor="username" className="auth-field-label">
                 Correo electrónico

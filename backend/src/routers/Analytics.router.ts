@@ -215,6 +215,123 @@ const parseMonthKeyRange = (monthKeyRaw: string): { start: Date; end: Date; mont
   return { start, end, monthKey };
 };
 
+const ANALYTICS_QUERY_CACHE_TTL_MS = 60 * 1000;
+const ANALYTICS_QUERY_CACHE_MAX_ENTRIES = 500;
+
+type AnalyticsQueryCacheEntry = {
+  cachedAt: number;
+  lastAccessAt: number;
+  data: unknown | null;
+  inFlight: Promise<unknown> | null;
+};
+
+const analyticsQueryCache = new Map<string, AnalyticsQueryCacheEntry>();
+
+const getAnalyticsQueryCacheKey = (queryName: string, input: unknown): string => {
+  try {
+    return `${queryName}:${JSON.stringify(input ?? null)}`;
+  } catch {
+    return `${queryName}:[unserializable-input]`;
+  }
+};
+
+const trimAnalyticsQueryCache = (): void => {
+  if (analyticsQueryCache.size <= ANALYTICS_QUERY_CACHE_MAX_ENTRIES) {
+    return;
+  }
+
+  const overflow = analyticsQueryCache.size - ANALYTICS_QUERY_CACHE_MAX_ENTRIES;
+  const sortedEntries = [...analyticsQueryCache.entries()].sort(
+    (a, b) => a[1].lastAccessAt - b[1].lastAccessAt,
+  );
+
+  for (let i = 0; i < overflow; i += 1) {
+    const key = sortedEntries[i]?.[0];
+    if (!key) continue;
+    analyticsQueryCache.delete(key);
+  }
+};
+
+const clearAnalyticsQueryCache = (queryName?: string): void => {
+  if (!queryName) {
+    analyticsQueryCache.clear();
+    return;
+  }
+
+  const prefix = `${queryName}:`;
+  for (const key of analyticsQueryCache.keys()) {
+    if (key.startsWith(prefix)) {
+      analyticsQueryCache.delete(key);
+    }
+  }
+};
+
+const getAnalyticsQueryCached = async <T>(
+  queryName: string,
+  input: unknown,
+  fetcher: () => Promise<T>,
+): Promise<T> => {
+  const key = getAnalyticsQueryCacheKey(queryName, input);
+  const now = Date.now();
+  const existing = analyticsQueryCache.get(key);
+
+  if (
+    existing &&
+    existing.data !== null &&
+    now - existing.cachedAt < ANALYTICS_QUERY_CACHE_TTL_MS
+  ) {
+    existing.lastAccessAt = now;
+    return existing.data as T;
+  }
+
+  if (existing?.inFlight) {
+    return existing.inFlight as Promise<T>;
+  }
+
+  const refreshPromise = (async () => {
+    const result = await fetcher();
+    analyticsQueryCache.set(key, {
+      cachedAt: Date.now(),
+      lastAccessAt: Date.now(),
+      data: result,
+      inFlight: null,
+    });
+    trimAnalyticsQueryCache();
+    return result;
+  })().catch((error) => {
+    const current = analyticsQueryCache.get(key);
+    if (current) {
+      analyticsQueryCache.set(key, {
+        ...current,
+        inFlight: null,
+        lastAccessAt: Date.now(),
+      });
+    } else {
+      analyticsQueryCache.delete(key);
+    }
+    throw error;
+  });
+
+  if (existing && existing.data !== null) {
+    analyticsQueryCache.set(key, {
+      ...existing,
+      lastAccessAt: now,
+      inFlight: refreshPromise,
+    });
+    return existing.data as T;
+  }
+
+  analyticsQueryCache.set(key, {
+    cachedAt: 0,
+    lastAccessAt: now,
+    data: null,
+    inFlight: refreshPromise,
+  });
+  trimAnalyticsQueryCache();
+
+  return refreshPromise;
+};
+
 export const analyticsRouter = router({
   trackAnalyticsEvents: publicProcedure
     .input(analyticsEventBatchSchema)
@@ -278,127 +395,157 @@ export const analyticsRouter = router({
     .input(analyticsRangeInputSchema)
     .query(async ({ ctx, input }) => {
       assertAdminRole(ctx.session?.user?.role);
-      return getAnalyticsFunnelOverview(ctx.prisma, input?.days);
+      return getAnalyticsQueryCached(
+        'getAnalyticsFunnelOverview',
+        { days: input?.days ?? null },
+        () => getAnalyticsFunnelOverview(ctx.prisma, input?.days),
+      );
     }),
   getAnalyticsDailySeries: shieldedProcedure
     .input(analyticsRangeInputSchema)
     .query(async ({ ctx, input }) => {
       assertAdminRole(ctx.session?.user?.role);
-      return getAnalyticsDailySeries(ctx.prisma, input?.days);
+      return getAnalyticsQueryCached(
+        'getAnalyticsDailySeries',
+        { days: input?.days ?? null },
+        () => getAnalyticsDailySeries(ctx.prisma, input?.days),
+      );
     }),
   getAnalyticsAttribution: shieldedProcedure
     .input(analyticsAttributionInputSchema)
     .query(async ({ ctx, input }) => {
       assertAdminRole(ctx.session?.user?.role);
-      return getAnalyticsAttributionBreakdown(
-        ctx.prisma,
-        input?.days,
-        input?.limit,
-        input?.page,
+      return getAnalyticsQueryCached(
+        'getAnalyticsAttribution',
+        {
+          days: input?.days ?? null,
+          limit: input?.limit ?? null,
+          page: input?.page ?? null,
+        },
+        () =>
+          getAnalyticsAttributionBreakdown(
+            ctx.prisma,
+            input?.days,
+            input?.limit,
+            input?.page,
+          ),
       );
     }),
   getAnalyticsBusinessMetrics: shieldedProcedure
     .input(analyticsBusinessInputSchema)
     .query(async ({ ctx, input }) => {
       assertAdminRole(ctx.session?.user?.role);
-      return getAnalyticsBusinessMetrics(
-        ctx.prisma,
-        input?.days,
-        input?.adSpend,
+      return getAnalyticsQueryCached(
+        'getAnalyticsBusinessMetrics',
+        {
+          days: input?.days ?? null,
+          adSpend: input?.adSpend ?? null,
+        },
+        () =>
+          getAnalyticsBusinessMetrics(
+            ctx.prisma,
+            input?.days,
+            input?.adSpend,
+          ),
       );
     }),
   getAnalyticsAdSpendMonthly: shieldedProcedure
     .input(analyticsAdSpendMonthlyInputSchema)
     .query(async ({ ctx, input }) => {
       assertAdminRole(ctx.session?.user?.role);
-      const { start, end, monthKey } = parseMonthKeyRange(
-        input?.month ?? getCurrentMonthKey(),
+      const month = input?.month ?? getCurrentMonthKey();
+      return getAnalyticsQueryCached(
+        'getAnalyticsAdSpendMonthly',
+        { month },
+        async () => {
+          const { start, end, monthKey } = parseMonthKeyRange(month);
+
+          const [spendRows, acquisitionRows] = await Promise.all([
+            ctx.prisma.adSpendMonthly.findMany({
+              where: { month_key: monthKey },
+              orderBy: [{ channel: 'asc' }, { currency: 'asc' }],
+            }),
+            (async () => {
+              if (!process.env.DATABASE_URL) return [];
+              await ensureAnalyticsEventsTableExists(ctx.prisma);
+
+              const isRenewalFalseSql = Prisma.sql`
+                LOWER(
+                  COALESCE(
+                    JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.isRenewal')),
+                    JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.is_renewal')),
+                    'false'
+                  )
+                ) = 'false'
+              `;
+
+              const rows = await ctx.prisma.$queryRaw<
+                Array<{
+                  channel: string;
+                  newPaidUsers: bigint | number;
+                }>
+              >(Prisma.sql`
+                SELECT
+                  COALESCE(NULLIF(TRIM(ae.utm_source), ''), '(direct)') AS channel,
+                  COUNT(DISTINCT ae.user_id) AS newPaidUsers
+                FROM analytics_events ae
+                INNER JOIN (
+                  SELECT
+                    ae.user_id AS user_id,
+                    MIN(ae.event_ts) AS first_ts
+                  FROM analytics_events ae
+                  WHERE ae.user_id IS NOT NULL
+                    AND ae.event_name = 'payment_success'
+                    AND ${isRenewalFalseSql}
+                    ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL}
+                  GROUP BY ae.user_id
+                ) first_pay
+                  ON first_pay.user_id = ae.user_id
+                  AND first_pay.first_ts = ae.event_ts
+                WHERE ae.user_id IS NOT NULL
+                  AND ae.event_name = 'payment_success'
+                  AND ${isRenewalFalseSql}
+                  AND ae.event_ts >= ${start}
+                  AND ae.event_ts < ${end}
+                  ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL}
+                GROUP BY channel
+                ORDER BY newPaidUsers DESC
+                LIMIT 200
+              `);
+
+              return rows;
+            })(),
+          ]);
+
+          const numberFromUnknown = (value: unknown): number => {
+            if (typeof value === 'number' && Number.isFinite(value)) return value;
+            if (typeof value === 'bigint') return Number(value);
+            if (typeof value === 'string') {
+              const parsed = Number(value);
+              return Number.isFinite(parsed) ? parsed : 0;
+            }
+            return 0;
+          };
+
+          return {
+            month: monthKey,
+            range: { start: start.toISOString(), end: end.toISOString() },
+            spend: spendRows.map((row) => ({
+              id: row.id,
+              month: row.month_key,
+              channel: row.channel,
+              currency: row.currency,
+              amount: Number(row.amount),
+              createdAt: row.created_at.toISOString(),
+              updatedAt: row.updated_at.toISOString(),
+            })),
+            acquisition: acquisitionRows.map((row) => ({
+              channel: row.channel,
+              newPaidUsers: numberFromUnknown(row.newPaidUsers),
+            })),
+          };
+        },
       );
-
-      const [spendRows, acquisitionRows] = await Promise.all([
-        ctx.prisma.adSpendMonthly.findMany({
-          where: { month_key: monthKey },
-          orderBy: [{ channel: 'asc' }, { currency: 'asc' }],
-        }),
-        (async () => {
-          if (!process.env.DATABASE_URL) return [];
-          await ensureAnalyticsEventsTableExists(ctx.prisma);
-
-          const isRenewalFalseSql = Prisma.sql`
-            LOWER(
-              COALESCE(
-                JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.isRenewal')),
-                JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.is_renewal')),
-                'false'
-              )
-            ) = 'false'
-          `;
-
-          const rows = await ctx.prisma.$queryRaw<
-            Array<{
-              channel: string;
-              newPaidUsers: bigint | number;
-            }>
-          >(Prisma.sql`
-            SELECT
-              COALESCE(NULLIF(TRIM(ae.utm_source), ''), '(direct)') AS channel,
-              COUNT(DISTINCT ae.user_id) AS newPaidUsers
-            FROM analytics_events ae
-            INNER JOIN (
-              SELECT
-                ae.user_id AS user_id,
-                MIN(ae.event_ts) AS first_ts
-              FROM analytics_events ae
-              WHERE ae.user_id IS NOT NULL
-                AND ae.event_name = 'payment_success'
-                AND ${isRenewalFalseSql}
-                ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL}
-              GROUP BY ae.user_id
-            ) first_pay
-              ON first_pay.user_id = ae.user_id
-              AND first_pay.first_ts = ae.event_ts
-            WHERE ae.user_id IS NOT NULL
-              AND ae.event_name = 'payment_success'
-              AND ${isRenewalFalseSql}
-              AND ae.event_ts >= ${start}
-              AND ae.event_ts < ${end}
-              ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL}
-            GROUP BY channel
-            ORDER BY newPaidUsers DESC
-            LIMIT 200
-          `);
-
-          return rows;
-        })(),
-      ]);
-
-      const numberFromUnknown = (value: unknown): number => {
-        if (typeof value === 'number' && Number.isFinite(value)) return value;
-        if (typeof value === 'bigint') return Number(value);
-        if (typeof value === 'string') {
-          const parsed = Number(value);
-          return Number.isFinite(parsed) ? parsed : 0;
-        }
-        return 0;
-      };
-
-      return {
-        month: monthKey,
-        range: { start: start.toISOString(), end: end.toISOString() },
-        spend: spendRows.map((row) => ({
-          id: row.id,
-          month: row.month_key,
-          channel: row.channel,
-          currency: row.currency,
-          amount: Number(row.amount),
-          createdAt: row.created_at.toISOString(),
-          updatedAt: row.updated_at.toISOString(),
-        })),
-        acquisition: acquisitionRows.map((row) => ({
-          channel: row.channel,
-          newPaidUsers: numberFromUnknown(row.newPaidUsers),
-        })),
-      };
     }),
   upsertAnalyticsAdSpendMonthly: shieldedProcedure
     .input(analyticsAdSpendMonthlyUpsertSchema)
@@ -440,6 +587,8 @@ export const analyticsRouter = router({
         },
       });
 
+      clearAnalyticsQueryCache();
+
       return {
         id: row.id,
         month: row.month_key,
@@ -479,44 +628,76 @@ export const analyticsRouter = router({
         },
       });
 
+      clearAnalyticsQueryCache();
+
       return { deleted: true };
     }),
   getAnalyticsUxQuality: shieldedProcedure
     .input(analyticsUxInputSchema)
     .query(async ({ ctx, input }) => {
       assertAdminRole(ctx.session?.user?.role);
-      return getAnalyticsUxQuality(
-        ctx.prisma,
-        input?.days,
-        input?.routesLimit,
-        input?.routesPage,
+      return getAnalyticsQueryCached(
+        'getAnalyticsUxQuality',
+        {
+          days: input?.days ?? null,
+          routesLimit: input?.routesLimit ?? null,
+          routesPage: input?.routesPage ?? null,
+        },
+        () =>
+          getAnalyticsUxQuality(
+            ctx.prisma,
+            input?.days,
+            input?.routesLimit,
+            input?.routesPage,
+          ),
       );
     }),
   getAnalyticsTopEvents: shieldedProcedure
     .input(analyticsTopEventsInputSchema)
     .query(async ({ ctx, input }) => {
       assertAdminRole(ctx.session?.user?.role);
-      return getAnalyticsTopEvents(
-        ctx.prisma,
-        input?.days,
-        input?.limit,
-        input?.page,
+      return getAnalyticsQueryCached(
+        'getAnalyticsTopEvents',
+        {
+          days: input?.days ?? null,
+          limit: input?.limit ?? null,
+          page: input?.page ?? null,
+        },
+        () =>
+          getAnalyticsTopEvents(
+            ctx.prisma,
+            input?.days,
+            input?.limit,
+            input?.page,
+          ),
       );
     }),
   getAnalyticsAlerts: shieldedProcedure
     .input(analyticsAlertsInputSchema)
     .query(async ({ ctx, input }) => {
       assertAdminRole(ctx.session?.user?.role);
-      return getAnalyticsHealthAlerts(ctx.prisma, input?.days);
+      return getAnalyticsQueryCached(
+        'getAnalyticsAlerts',
+        { days: input?.days ?? null },
+        () => getAnalyticsHealthAlerts(ctx.prisma, input?.days),
+      );
     }),
   getAnalyticsCancellationReasons: shieldedProcedure
     .input(analyticsCancellationReasonsInputSchema)
     .query(async ({ ctx, input }) => {
       assertAdminRole(ctx.session?.user?.role);
-      return getAnalyticsCancellationReasons(
-        ctx.prisma,
-        input?.days,
-        input?.topCampaigns,
+      return getAnalyticsQueryCached(
+        'getAnalyticsCancellationReasons',
+        {
+          days: input?.days ?? null,
+          topCampaigns: input?.topCampaigns ?? null,
+        },
+        () =>
+          getAnalyticsCancellationReasons(
+            ctx.prisma,
+            input?.days,
+            input?.topCampaigns,
+          ),
       );
     }),
   getAnalyticsLiveSnapshot: shieldedProcedure

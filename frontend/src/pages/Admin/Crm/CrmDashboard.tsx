@@ -14,7 +14,6 @@ import {
 import trpc from "../../../api";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import Pagination from "../../../components/Pagination/Pagination";
-import { Spinner } from "../../../components/Spinner/Spinner";
 import { Select } from "../../../components/ui";
 import { CrmP2Panels } from "./CrmP2Panels";
 import "./CrmDashboard.scss";
@@ -341,6 +340,119 @@ function SignalCard(props: {
   );
 }
 
+function CrmSkeletonBlock({ className = "" }: { className?: string }) {
+  return <span className={["crm-sk", className].filter(Boolean).join(" ")} aria-hidden />;
+}
+
+function CrmTableSkeleton(props: {
+  columns: number;
+  rows: number;
+  compact?: boolean;
+  ariaLabel: string;
+}) {
+  const { columns, rows, compact = false, ariaLabel } = props;
+  return (
+    <div
+      className="crm-table-wrap crm-table-wrap--skeleton"
+      tabIndex={-1}
+      aria-hidden
+      aria-label={ariaLabel}
+    >
+      <table className={`crm-table${compact ? " crm-table--compact" : ""}`}>
+        <thead>
+          <tr>
+            {Array.from({ length: columns }).map((_, idx) => (
+              <th key={`th_${idx}`}>
+                <CrmSkeletonBlock className="crm-sk--th" />
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: rows }).map((_, rowIdx) => (
+            <tr key={`row_${rowIdx}`}>
+              {Array.from({ length: columns }).map((_, colIdx) => (
+                <td key={`row_${rowIdx}_col_${colIdx}`}>
+                  <CrmSkeletonBlock
+                    className={`crm-sk--cell ${colIdx === 0 ? "crm-sk--cell-strong" : ""}`}
+                  />
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function CrmDashboardLoadingSkeleton() {
+  return (
+    <div
+      className="crm-wrap crm-wrap--loading"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      aria-label="Cargando panel CRM"
+    >
+      <section className="crm-meta crm-meta--skeleton" aria-hidden>
+        <CrmSkeletonBlock className="crm-sk--line" />
+        <CrmSkeletonBlock className="crm-sk--line crm-sk--line-short" />
+        <div className="crm-source-row">
+          <CrmSkeletonBlock className="crm-sk--line crm-sk--line-tiny" />
+          <div className="crm-source-row__chips">
+            {Array.from({ length: 5 }).map((_, idx) => (
+              <CrmSkeletonBlock key={`chip_${idx}`} className="crm-sk--chip" />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="crm-kpi-grid" role="presentation" aria-hidden>
+        {Array.from({ length: 11 }).map((_, idx) => (
+          <article key={`kpi_${idx}`} className="crm-kpi-card crm-kpi-card--skeleton">
+            <div className="crm-kpi-card__top">
+              <CrmSkeletonBlock className="crm-sk--icon" />
+              <CrmSkeletonBlock className="crm-sk--title" />
+            </div>
+            <CrmSkeletonBlock className="crm-sk--value" />
+            <CrmSkeletonBlock className="crm-sk--helper" />
+          </article>
+        ))}
+      </div>
+
+      <section className="crm-signal-grid" role="presentation" aria-hidden>
+        {Array.from({ length: 3 }).map((_, idx) => (
+          <article key={`signal_${idx}`} className="crm-signal-card crm-signal-card--skeleton">
+            <CrmSkeletonBlock className="crm-sk--title" />
+            <CrmSkeletonBlock className="crm-sk--value crm-sk--value-sm" />
+            <CrmSkeletonBlock className="crm-sk--helper" />
+          </article>
+        ))}
+      </section>
+
+      <section className="crm-section" aria-hidden>
+        <CrmSkeletonBlock className="crm-sk--section-title" />
+        <CrmTableSkeleton
+          columns={8}
+          rows={6}
+          ariaLabel="Cargando tabla de cancelaciones recientes"
+        />
+      </section>
+
+      <section className="crm-section" aria-hidden>
+        <CrmSkeletonBlock className="crm-sk--section-title" />
+        <CrmTableSkeleton
+          columns={7}
+          rows={5}
+          compact
+          ariaLabel="Cargando tabla de usuarios con riesgo"
+        />
+      </section>
+    </div>
+  );
+}
+
 export function CrmDashboard() {
   const [rangeDays, setRangeDays] = useState<number>(30);
   const [autoRefresh, setAutoRefresh] = useState<boolean>(true);
@@ -580,10 +692,7 @@ export function CrmDashboard() {
       }
     >
       {loading && !snapshot ? (
-        <div className="crm-state">
-          <Spinner size={3} width={0.3} color="var(--ad-accent)" />
-          <p>Cargando CRM…</p>
-        </div>
+        <CrmDashboardLoadingSkeleton />
       ) : !snapshot ? (
         <div className="crm-state crm-state--error" role="alert">
           <p>{error || "No hay datos de CRM para mostrar."}</p>

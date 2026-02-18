@@ -17,7 +17,6 @@ import {
 import trpc from "../../../api";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import Pagination from "../../../components/Pagination/Pagination";
-import { Spinner } from "../../../components/Spinner/Spinner";
 import { Input, Select } from "../../../components/ui";
 import "./AnalyticsDashboard.scss";
 
@@ -243,6 +242,51 @@ interface PaginatedResult<T> {
   data: T[];
 }
 
+const ANALYTICS_KPI_SKELETON_COUNT = 9;
+const ANALYTICS_PANEL_SKELETON_COUNT = 8;
+const ANALYTICS_TABLE_SKELETON_ROWS = 5;
+
+function AnalyticsDashboardSkeleton() {
+  return (
+    <div className="analytics-skeleton-layout" role="status" aria-live="polite">
+      <p className="analytics-skeleton-copy">Calculando métricas...</p>
+
+      <section className="analytics-guide analytics-guide--skeleton" aria-hidden="true">
+        <div className="analytics-skeleton-line analytics-skeleton-line--title" />
+        <div className="analytics-skeleton-line analytics-skeleton-line--text" />
+        <div className="analytics-skeleton-line analytics-skeleton-line--text analytics-skeleton-line--short" />
+      </section>
+
+      <div className="analytics-kpi-grid" aria-hidden="true">
+        {Array.from({ length: ANALYTICS_KPI_SKELETON_COUNT }).map((_, idx) => (
+          <article key={`kpi-skeleton-${idx}`} className="analytics-kpi-card analytics-kpi-card--skeleton">
+            <div className="analytics-skeleton-line analytics-skeleton-line--label" />
+            <div className="analytics-skeleton-line analytics-skeleton-line--value" />
+            <div className="analytics-skeleton-line analytics-skeleton-line--helper" />
+          </article>
+        ))}
+      </div>
+
+      <div className="analytics-panels analytics-panels--skeleton" aria-hidden="true">
+        {Array.from({ length: ANALYTICS_PANEL_SKELETON_COUNT }).map((_, panelIdx) => (
+          <section key={`panel-skeleton-${panelIdx}`} className="analytics-panel analytics-panel--skeleton">
+            <div className="analytics-skeleton-line analytics-skeleton-line--panel-title" />
+            <div className="analytics-skeleton-line analytics-skeleton-line--panel-text" />
+            <div className="analytics-skeleton-table">
+              {Array.from({ length: ANALYTICS_TABLE_SKELETON_ROWS }).map((__, rowIdx) => (
+                <div key={`row-${panelIdx}-${rowIdx}`} className="analytics-skeleton-table__row">
+                  <div className="analytics-skeleton-line analytics-skeleton-line--cell" />
+                  <div className="analytics-skeleton-line analytics-skeleton-line--cell analytics-skeleton-line--short" />
+                </div>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const RANGE_OPTIONS = [
   { value: 1, label: "Últimas 24 horas" },
   { value: 7, label: "7 días" },
@@ -365,6 +409,8 @@ export function AnalyticsDashboard() {
   const [attributionTotal, setAttributionTotal] = useState<number>(0);
   const [attributionPage, setAttributionPage] = useState<number>(0);
   const [attributionLimit] = useState<number>(50);
+  const [hideSourcesWithoutPayments, setHideSourcesWithoutPayments] =
+    useState<boolean>(false);
   const [cancellations, setCancellations] = useState<CancellationReasonsSnapshot | null>(null);
   const [business, setBusiness] = useState<BusinessMetrics | null>(null);
   const [ux, setUx] = useState<UxSummary | null>(null);
@@ -655,6 +701,11 @@ export function AnalyticsDashboard() {
 
   const quickGuideCards = useMemo(() => {
     if (!funnel || !business || !ux) return [];
+    const hasUxSamples = ux.totals.samples > 0;
+    const hasPaybackEstimate =
+      business.kpis.paybackMonthsEstimate != null &&
+      Number.isFinite(business.kpis.paybackMonthsEstimate);
+
     return [
       {
         id: "paid-rate",
@@ -680,8 +731,12 @@ export function AnalyticsDashboard() {
       {
         id: "poor-rate",
         title: "Calidad UX (poor)",
-        value: formatPct(ux.totals.poorRatePct),
-        helper: "Mientras más bajo, mejor experiencia.",
+        value: hasUxSamples
+          ? formatPct(ux.totals.poorRatePct)
+          : "Sin datos suficientes",
+        helper: hasUxSamples
+          ? "Mientras más bajo, mejor experiencia."
+          : "Aún no hay sesiones medidas en el rango.",
         icon: Gauge,
       },
       {
@@ -694,12 +749,23 @@ export function AnalyticsDashboard() {
       {
         id: "payback",
         title: "Recuperación CAC",
-        value: `${formatDecimal(business.kpis.paybackMonthsEstimate)} meses`,
-        helper: "Tiempo estimado para recuperar adquisición.",
+        value: hasPaybackEstimate
+          ? `${formatDecimal(business.kpis.paybackMonthsEstimate)} meses`
+          : "N/A",
+        helper: hasPaybackEstimate
+          ? "Tiempo estimado para recuperar adquisición."
+          : "Sin datos suficientes para estimar payback.",
         icon: BarChart3,
       },
     ];
   }, [funnel, business, ux]);
+
+  const attributionVisible = useMemo(() => {
+    if (!hideSourcesWithoutPayments) return attribution;
+    return attribution.filter((item) => item.purchases > 0);
+  }, [attribution, hideSourcesWithoutPayments]);
+
+  const showInitialSkeleton = loading && (!funnel || !business || !ux);
 
   return (
     <AdminPageLayout
@@ -761,11 +827,8 @@ export function AnalyticsDashboard() {
           </section>
         )}
 
-        {loading && !funnel ? (
-          <div className="analytics-loading">
-            <Spinner size={3} width={0.3} color="var(--app-accent)" />
-            <p>Calculando métricas...</p>
-          </div>
+        {showInitialSkeleton ? (
+          <AnalyticsDashboardSkeleton />
         ) : (
           <>
             {funnel && business && ux && (
@@ -993,6 +1056,18 @@ export function AnalyticsDashboard() {
                   <section className="analytics-panel">
                     <h2>Canales que traen clientes</h2>
                     <p>Compara qué fuente/campaña trae más visitas, registros y pagos.</p>
+                    <div className="analytics-panel__controls">
+                      <label className="analytics-checkbox">
+                        <input
+                          type="checkbox"
+                          checked={hideSourcesWithoutPayments}
+                          onChange={(event) =>
+                            setHideSourcesWithoutPayments(event.target.checked)
+                          }
+                        />
+                        <span>Ocultar fuentes sin pagos</span>
+                      </label>
+                    </div>
                     <div className="analytics-table-wrap" tabIndex={0} aria-label="Tabla: atribución por canal (desplazable)">
                       <table>
                         <thead>
@@ -1008,12 +1083,16 @@ export function AnalyticsDashboard() {
                           </tr>
                         </thead>
                         <tbody>
-                          {attribution.length === 0 ? (
+                          {attributionVisible.length === 0 ? (
                             <tr>
-                              <td colSpan={8}>Aún no hay atribución capturada.</td>
+                              <td colSpan={8}>
+                                {attribution.length === 0
+                                  ? "Aún no hay atribución capturada."
+                                  : "No hay fuentes con pagos en esta página."}
+                              </td>
                             </tr>
                           ) : (
-                            attribution.map((item) => (
+                            attributionVisible.map((item) => (
                               <tr key={`${item.source}:${item.campaign}:${item.medium}`}>
                                 <td>{item.source}</td>
                                 <td>{item.campaign}</td>
@@ -1030,13 +1109,21 @@ export function AnalyticsDashboard() {
                       </table>
                     </div>
                     <div className="admin-mobile-list" aria-label="Atribución por canal (móvil)">
-                      {attribution.length === 0 ? (
+                      {attributionVisible.length === 0 ? (
                         <div className="admin-mobile-empty">
-                          <h2>Sin atribución</h2>
-                          <p>Aún no hay atribución capturada.</p>
+                          <h2>
+                            {attribution.length === 0
+                              ? "Sin atribución"
+                              : "Sin fuentes con pagos"}
+                          </h2>
+                          <p>
+                            {attribution.length === 0
+                              ? "Aún no hay atribución capturada."
+                              : "Activa \"Ocultar fuentes sin pagos\" y esta página quedó sin resultados."}
+                          </p>
                         </div>
                       ) : (
-                        attribution.map((item) => (
+                        attributionVisible.map((item) => (
                           <article
                             key={`m_attr_${item.source}:${item.campaign}:${item.medium}`}
                             className="admin-mobile-card"

@@ -11,6 +11,7 @@ import PaymentMethodLogos, {
 } from "../../components/PaymentMethodLogos/PaymentMethodLogos";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../utils/growthMetrics";
 import { useUserContext } from "../../contexts/UserContext";
+import { useTheme } from "../../contexts/ThemeContext";
 import PlansStickyCta from "./PlansStickyCta";
 
 type CurrencyKey = "mxn" | "usd";
@@ -121,6 +122,7 @@ function parsePlansEntry(value: string | null): PlansEntry | null {
 
 function Plans() {
   const { currentUser } = useUserContext();
+  const { theme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const checkoutPrefetchedRef = useRef(false);
@@ -486,7 +488,14 @@ function Plans() {
   );
 
   return (
-    <div className="plans2026 bb-marketing-page bb-marketing-page--flat-cards">
+    <div
+      className={[
+        "plans2026",
+        `plans2026--${theme}`,
+        "bb-marketing-page",
+        "bb-marketing-page--flat-cards",
+      ].join(" ")}
+    >
       <PublicTopNav
         loginFrom={`${location.pathname}${location.search}`}
         cta={plansTopCta}

@@ -9,6 +9,126 @@
   font-weight: 700;
 }
 
+.crm-wrap--loading {
+  position: relative;
+}
+
+.crm-loading-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.crm-kpi-card--skeleton,
+.crm-signal-card--skeleton,
+.crm-table-wrap--skeleton {
+  pointer-events: none;
+}
+
+.crm-sk {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ad-border) 68%, transparent);
+}
+
+.crm-sk::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    color-mix(in srgb, var(--ad-card) 78%, transparent) 50%,
+    transparent 80%
+  );
+  animation: crmShimmer 1.25s ease-in-out infinite;
+}
+
+@keyframes crmShimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crm-sk::after {
+    animation: none;
+  }
+}
+
+.crm-sk--line {
+  width: min(520px, 100%);
+  height: 12px;
+}
+
+.crm-sk--line-short {
+  width: min(320px, 76%);
+}
+
+.crm-sk--line-tiny {
+  width: 180px;
+}
+
+.crm-sk--chip {
+  width: 124px;
+  height: 28px;
+}
+
+.crm-sk--icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+}
+
+.crm-sk--title {
+  width: 62%;
+  height: 12px;
+}
+
+.crm-sk--value {
+  width: 50%;
+  height: 30px;
+}
+
+.crm-sk--value-sm {
+  width: 46%;
+  height: 24px;
+}
+
+.crm-sk--helper {
+  width: 72%;
+  height: 10px;
+}
+
+.crm-sk--section-title {
+  width: min(280px, 56%);
+  height: 18px;
+}
+
+.crm-sk--th {
+  width: 74%;
+  height: 10px;
+  margin: 0 auto;
+}
+
+.crm-sk--cell {
+  width: 68%;
+  height: 12px;
+  margin: 0 auto;
+}
+
+.crm-sk--cell-strong {
+  width: 82%;
+}
+
+.crm-table-wrap--skeleton thead th,
+.crm-table-wrap--skeleton tbody td {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
 .crm-state--error {
   color: color-mix(in srgb, var(--app-status-error) 80%, var(--ad-text));
 }
