@@ -28,6 +28,7 @@
     "db:hygiene:purge": "node -r ts-node/register scripts/dbHygiene.ts purge",
     "analytics:alerts": "node -r ts-node/register scripts/analyticsAlerts.ts",
     "analytics:payment-success:backfill": "node -r ts-node/register scripts/backfillStripePaymentSuccess.ts",
+    "analytics:trial-events:backfill": "node -r ts-node/register scripts/backfillStripeTrialEvents.ts",
     "downloadHistory:rollup:backfill": "node -r ts-node/register scripts/backfillDownloadHistoryRollupDaily.ts",
     "downloadHistory:purge": "node -r ts-node/register scripts/purgeDownloadHistory.ts",
     "downloadHistory:partitions": "node -r ts-node/register scripts/manageDownloadHistoryPartitions.ts",
