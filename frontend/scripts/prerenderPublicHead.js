@@ -14,6 +14,8 @@ function readSeoConfig(cwd) {
   return JSON.parse(fs.readFileSync(configPath, "utf8"));
 }
 
+const REQUIRED_PRERENDER_PUBLIC_PATHS = ["/", "/planes", "/legal"];
+
 function normalizePath(pathname) {
   const base = String(pathname || "/").split("?")[0].split("#")[0] || "/";
   if (base === "/") return "/";
@@ -43,7 +45,7 @@ function replaceOrInsert(html, regex, replacement) {
 function applyHead(html, route, config) {
   const canonicalUrl = toAbsoluteUrl(
     config.baseUrl,
-    route.canonicalPath || route.path,
+    route.canonical || route.canonicalPath || route.path,
   );
   const title = route.title || config.defaultMeta.title;
   const description = route.description || config.defaultMeta.description;
@@ -135,8 +137,18 @@ function main() {
 
   const template = fs.readFileSync(templatePath, "utf8");
   const prerenderRoutes = (config.routes || [])
-    .filter((route) => route && route.prerender === true)
+    .filter((route) => route && route.prerender === true && route.indexable === true)
     .filter((route) => typeof route.path === "string" && !route.path.includes("*"));
+
+  const prerenderPathSet = new Set(prerenderRoutes.map((route) => normalizePath(route.path)));
+  const missingRequired = REQUIRED_PRERENDER_PUBLIC_PATHS.filter(
+    (requiredPath) => !prerenderPathSet.has(requiredPath),
+  );
+  if (missingRequired.length > 0) {
+    throw new Error(
+      `Missing required prerender public routes: ${missingRequired.join(", ")}`,
+    );
+  }
 
   if (prerenderRoutes.length === 0) {
     console.log("[prerender:head] No prerender routes configured.");

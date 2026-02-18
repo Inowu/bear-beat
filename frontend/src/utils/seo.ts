@@ -14,6 +14,7 @@ type RouteSeo = {
   title: string;
   description: string;
   indexable: boolean;
+  canonical?: string;
   canonicalPath?: string;
   ogImage?: string;
   twitterImage?: string;
@@ -49,7 +50,9 @@ export function applyRouteSeo(pathname: string): void {
   const description = routeSeo?.description ?? SEO_DEFAULT_META.description;
   // Unknown routes must be noindex/nofollow by default.
   const indexable = routeSeo ? routeSeo.indexable === true : false;
-  const canonicalUrl = resolveSeoUrl(routeSeo?.canonicalPath ?? normalizedPath);
+  const canonicalUrl = resolveSeoUrl(
+    routeSeo?.canonical ?? routeSeo?.canonicalPath ?? normalizedPath,
+  );
   const ogImage = routeSeo?.ogImage ?? SEO_DEFAULT_META.ogImage;
   const twitterImage = routeSeo?.twitterImage ?? ogImage;
   const robotsContent = indexable ? "index, follow" : "noindex, nofollow";
