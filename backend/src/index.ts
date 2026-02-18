@@ -25,6 +25,7 @@ import { conektaEndpoint } from './endpoints/webhooks/conekta.endpoint';
 import { stripeEndpoint } from './endpoints/webhooks/stripe.endpoint';
 import { paypalEndpoint } from './endpoints/webhooks/paypal.endpoint';
 import { stripePiEndpoint } from './endpoints/webhooks/stripePaymentIntents.endpoint';
+import { sesSnsEndpoint } from './endpoints/webhooks/sesSns.endpoint';
 import { trackCoverEndpoint } from './endpoints/track-cover.endpoint';
 import {
   compressionQueue,
@@ -380,6 +381,12 @@ async function main() {
       '/webhooks.conekta',
       express.raw({ type: 'application/json' }),
       conektaEndpoint,
+    );
+
+    app.use(
+      '/webhooks.ses.sns',
+      express.text({ type: '*/*', limit: '512kb' }),
+      sesSnsEndpoint,
     );
 
     if (demosRateLimitMiddleware) {

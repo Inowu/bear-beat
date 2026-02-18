@@ -6,6 +6,7 @@ export type SendSesEmailParams = {
   html?: string;
   text?: string;
   replyTo?: string[];
+  tags?: Record<string, string | number | null | undefined>;
 };
 
 const resolveAwsRegion = (): string | null => {
@@ -49,7 +50,7 @@ const formatFromAddress = (): string => {
 };
 
 export async function sendSesEmail(params: SendSesEmailParams): Promise<{ messageId: string | null }> {
-  const { to, subject, html, text, replyTo } = params;
+  const { to, subject, html, text, replyTo, tags } = params;
 
   const toAddresses = (to || []).map((v) => String(v || '').trim()).filter(Boolean);
   if (toAddresses.length === 0) {
@@ -67,6 +68,14 @@ export async function sendSesEmail(params: SendSesEmailParams): Promise<{ messag
     throw new Error('sendSesEmail: missing "html" and "text" content');
   }
 
+  const emailTags = Object.entries(tags || {})
+    .map(([Name, rawValue]) => {
+      const value = rawValue == null ? '' : String(rawValue).trim();
+      return { Name: Name.trim(), Value: value.slice(0, 256) };
+    })
+    .filter((tag) => Boolean(tag.Name) && Boolean(tag.Value))
+    .slice(0, 20);
+
   const cmd = new SendEmailCommand({
     FromEmailAddress: formatFromAddress(),
     Destination: {
@@ -82,9 +91,9 @@ export async function sendSesEmail(params: SendSesEmailParams): Promise<{ messag
         },
       },
     },
+    EmailTags: emailTags,
   });
 
   const result = await getSesClient().send(cmd);
   return { messageId: result.MessageId ?? null };
 }
-

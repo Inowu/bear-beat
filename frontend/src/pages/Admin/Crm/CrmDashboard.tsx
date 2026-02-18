@@ -92,10 +92,34 @@ interface AutomationCheckoutAbandonedSummary {
   recoveredUsers: number;
 }
 
+interface AutomationEmailDeliveryStatusRow {
+  deliveryStatus: string;
+  total: number;
+}
+
+interface AutomationEmailTemplateMetricRow {
+  templateKey: string;
+  sent: number;
+  delivered: number;
+  opened: number;
+  clicked: number;
+  bounced: number;
+}
+
+interface AutomationFeatureFlags {
+  emailAutomationsEnabled: boolean;
+  registeredNoPurchase7dEnabled: boolean;
+}
+
 interface AutomationStatusSnapshot {
   actionsLast24h: number;
+  actionsCreatedLast24h?: number;
+  emailsSentLast24h?: number;
+  emailDeliveryStatusLast24h?: AutomationEmailDeliveryStatusRow[];
+  emailTemplateMetricsLast24h?: AutomationEmailTemplateMetricRow[];
   actionBreakdownLast24h?: AutomationActionBreakdownRow[];
   checkoutAbandonedLast24h?: AutomationCheckoutAbandonedSummary | null;
+  featureFlags?: AutomationFeatureFlags;
   recentRuns: AutomationRunRow[];
 }
 
@@ -722,9 +746,19 @@ export function CrmDashboard() {
                 </span>
               </div>
               <p className="crm-section__hint">
-                Acciones últimas 24h:{" "}
-                <strong>{automation.actionsLast24h}</strong>
+                Acciones creadas 24h:{" "}
+                <strong>{automation.actionsCreatedLast24h ?? automation.actionsLast24h}</strong>
+                {" "}· Emails enviados 24h:{" "}
+                <strong>{automation.emailsSentLast24h ?? 0}</strong>
               </p>
+              {automation.featureFlags ? (
+                <p className="crm-section__hint">
+                  Flags: Email automations{" "}
+                  <strong>{automation.featureFlags.emailAutomationsEnabled ? "ON" : "OFF"}</strong>
+                  {" "}· Registered no purchase 7d{" "}
+                  <strong>{automation.featureFlags.registeredNoPurchase7dEnabled ? "ON" : "OFF"}</strong>
+                </p>
+              ) : null}
               {automation.checkoutAbandonedLast24h ? (
                 <p className="crm-section__hint">
                   Checkout abandonado 24h:{" "}
@@ -745,6 +779,49 @@ export function CrmDashboard() {
                     .map((row) => `${row.actionKey}:${row.channel} (${row.total})`)
                     .join(" · ")}
                 </p>
+              ) : null}
+              {automation.emailDeliveryStatusLast24h?.length ? (
+                <p className="crm-section__hint">
+                  Delivery email 24h:{" "}
+                  {automation.emailDeliveryStatusLast24h
+                    .slice(0, 5)
+                    .map((row) => `${row.deliveryStatus} (${row.total})`)
+                    .join(" · ")}
+                </p>
+              ) : null}
+              {automation.emailTemplateMetricsLast24h?.length ? (
+                <div
+                  className="crm-table-wrap"
+                  tabIndex={0}
+                  aria-label="Tabla: métricas email por plantilla (desplazable)"
+                >
+                  <table className="crm-table crm-table--compact">
+                    <thead>
+                      <tr>
+                        <th>Template</th>
+                        <th>Enviados</th>
+                        <th>Entregados</th>
+                        <th>Abiertos</th>
+                        <th>Clicked</th>
+                        <th>Bounced</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {automation.emailTemplateMetricsLast24h
+                        .slice(0, 20)
+                        .map((row) => (
+                          <tr key={row.templateKey}>
+                            <td>{row.templateKey}</td>
+                            <td>{row.sent}</td>
+                            <td>{row.delivered}</td>
+                            <td>{row.opened}</td>
+                            <td>{row.clicked}</td>
+                            <td>{row.bounced}</td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
               ) : null}
               <div
                 className="crm-table-wrap"

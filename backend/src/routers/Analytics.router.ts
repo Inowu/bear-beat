@@ -589,9 +589,21 @@ export const analyticsRouter = router({
       });
 
       const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
-      const [actionsLast24h, actionBreakdownRows, checkoutAbandonedRows] = await Promise.all([
+      const [actionsCreatedLast24h, emailsSentLast24h, actionBreakdownRows, emailDeliveryStatusRows, checkoutAbandonedRows, templateSentRows, templateDeliveryRows] = await Promise.all([
         ctx.prisma.automationActionLog.count({
-          where: { sent_at: { gte: since } },
+          where: {
+            sent_at: { gte: since },
+            channel: 'system',
+          },
+        }),
+        ctx.prisma.automationActionLog.count({
+          where: {
+            sent_at: { gte: since },
+            channel: 'email',
+            delivery_status: {
+              in: ['sent', 'delivered', 'opened', 'clicked', 'bounced', 'complained'],
+            },
+          },
         }),
         ctx.prisma.$queryRaw<
           Array<{
@@ -609,6 +621,21 @@ export const analyticsRouter = router({
           GROUP BY action_key, channel
           ORDER BY total DESC
           LIMIT 50
+        `),
+        ctx.prisma.$queryRaw<
+          Array<{
+            deliveryStatus: string | null;
+            total: number | bigint;
+          }>
+        >(Prisma.sql`
+          SELECT
+            COALESCE(NULLIF(TRIM(delivery_status), ''), 'unknown') AS deliveryStatus,
+            COUNT(*) AS total
+          FROM automation_action_logs
+          WHERE sent_at >= ${since}
+            AND channel = 'email'
+          GROUP BY deliveryStatus
+          ORDER BY total DESC
         `),
         ctx.prisma.$queryRaw<
           Array<{
@@ -640,10 +667,103 @@ export const analyticsRouter = router({
           FROM automation_action_logs aal
           WHERE aal.sent_at >= ${since}
         `),
+        ctx.prisma.$queryRaw<
+          Array<{
+            templateKey: string | null;
+            sent: number | bigint;
+          }>
+        >(Prisma.sql`
+          SELECT
+            COALESCE(
+              NULLIF(TRIM(JSON_UNQUOTE(JSON_EXTRACT(aal.metadata_json, '$.templateKey'))), ''),
+              '(unknown)'
+            ) AS templateKey,
+            COUNT(*) AS sent
+          FROM automation_action_logs aal
+          WHERE aal.sent_at >= ${since}
+            AND aal.channel = 'email'
+            AND aal.delivery_status IN ('sent', 'delivered', 'opened', 'clicked', 'bounced', 'complained')
+          GROUP BY templateKey
+          ORDER BY sent DESC
+          LIMIT 100
+        `),
+        ctx.prisma.$queryRaw<
+          Array<{
+            templateKey: string | null;
+            delivered: number | bigint;
+            opened: number | bigint;
+            clicked: number | bigint;
+            bounced: number | bigint;
+          }>
+        >(Prisma.sql`
+          SELECT
+            COALESCE(NULLIF(TRIM(ede.template_key), ''), '(unknown)') AS templateKey,
+            COUNT(DISTINCT CASE WHEN ede.event_type = 'delivered' THEN ede.provider_message_id END) AS delivered,
+            COUNT(DISTINCT CASE WHEN ede.event_type = 'opened' THEN ede.provider_message_id END) AS opened,
+            COUNT(DISTINCT CASE WHEN ede.event_type = 'clicked' THEN ede.provider_message_id END) AS clicked,
+            COUNT(DISTINCT CASE WHEN ede.event_type = 'bounced' THEN ede.provider_message_id END) AS bounced
+          FROM email_delivery_events ede
+          WHERE ede.event_ts >= ${since}
+          GROUP BY templateKey
+          ORDER BY delivered DESC, opened DESC, clicked DESC
+          LIMIT 100
+        `),
       ]);
 
+      const templateMetricsMap = new Map<string, {
+        templateKey: string;
+        sent: number;
+        delivered: number;
+        opened: number;
+        clicked: number;
+        bounced: number;
+      }>();
+
+      templateSentRows.forEach((row) => {
+        const templateKey = row.templateKey || '(unknown)';
+        templateMetricsMap.set(templateKey, {
+          templateKey,
+          sent: numberFromUnknown(row.sent),
+          delivered: 0,
+          opened: 0,
+          clicked: 0,
+          bounced: 0,
+        });
+      });
+
+      templateDeliveryRows.forEach((row) => {
+        const templateKey = row.templateKey || '(unknown)';
+        const existing = templateMetricsMap.get(templateKey) || {
+          templateKey,
+          sent: 0,
+          delivered: 0,
+          opened: 0,
+          clicked: 0,
+          bounced: 0,
+        };
+        existing.delivered = numberFromUnknown(row.delivered);
+        existing.opened = numberFromUnknown(row.opened);
+        existing.clicked = numberFromUnknown(row.clicked);
+        existing.bounced = numberFromUnknown(row.bounced);
+        templateMetricsMap.set(templateKey, existing);
+      });
+
+      const emailTemplateMetricsLast24h = Array.from(templateMetricsMap.values()).sort((a, b) => (
+        b.sent - a.sent
+        || b.delivered - a.delivered
+        || b.opened - a.opened
+        || b.clicked - a.clicked
+      ));
+
       return {
-        actionsLast24h,
+        actionsLast24h: actionsCreatedLast24h,
+        actionsCreatedLast24h,
+        emailsSentLast24h,
+        emailDeliveryStatusLast24h: emailDeliveryStatusRows.map((row) => ({
+          deliveryStatus: row.deliveryStatus || 'unknown',
+          total: numberFromUnknown(row.total),
+        })),
+        emailTemplateMetricsLast24h,
         actionBreakdownLast24h: actionBreakdownRows.map((row) => ({
           actionKey: row.actionKey,
           channel: row.channel,
@@ -655,6 +775,11 @@ export const analyticsRouter = router({
           whatsappSent: numberFromUnknown(checkoutAbandonedRows[0]?.whatsappSent),
           manychatTagged: numberFromUnknown(checkoutAbandonedRows[0]?.manychatTagged),
           recoveredUsers: numberFromUnknown(checkoutAbandonedRows[0]?.recoveredUsers),
+        },
+        featureFlags: {
+          emailAutomationsEnabled: (process.env.EMAIL_AUTOMATIONS_ENABLED || '1').trim() !== '0',
+          registeredNoPurchase7dEnabled:
+            (process.env.AUTOMATION_REGISTERED_NO_PURCHASE_7D_ENABLED || '1').trim() !== '0',
         },
         recentRuns: runs.map((run) => ({
           id: run.id,

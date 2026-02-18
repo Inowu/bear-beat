@@ -11,6 +11,15 @@ import { buildStripeBillingPortalUrl } from '../billing/stripeBillingPortalLink'
 import { computeDunningStageDays } from '../billing/dunning';
 
 type AutomationChannel = 'manychat' | 'email' | 'twilio' | 'admin' | 'system';
+type AutomationDeliveryStatus =
+  | 'created'
+  | 'sent'
+  | 'delivered'
+  | 'opened'
+  | 'clicked'
+  | 'bounced'
+  | 'complained'
+  | 'failed';
 
 const DEFAULT_LIMIT = 200;
 
@@ -78,28 +87,113 @@ async function safeSetManyChatCustomFields(
 }
 
 async function safeSendAutomationEmail(params: {
+  prisma: PrismaClient;
   userId: number;
   actionKey: string;
+  contextKey?: string | null;
   stage: number;
   toEmail: string;
   subject: string;
   html: string;
   text: string;
+  templateKey?: string;
+  metadata?: Prisma.JsonObject;
 }): Promise<boolean> {
   if (!isEmailConfigured()) return false;
-  const { userId, actionKey, stage, toEmail, subject, html, text } = params;
+  const {
+    prisma,
+    userId,
+    actionKey,
+    contextKey,
+    stage,
+    toEmail,
+    subject,
+    html,
+    text,
+    templateKey,
+    metadata,
+  } = params;
+  const normalizedContextKey = normalizeContextKey(contextKey);
+  const resolvedActionKey = actionKey.endsWith('_email') ? actionKey : `${actionKey}_email`;
+  const resolvedTemplateKey = (templateKey || `${resolvedActionKey}_s${stage}`).trim().slice(0, 120);
+
+  const { created } = await createActionLog({
+    prisma,
+    userId,
+    actionKey: resolvedActionKey,
+    contextKey: normalizedContextKey,
+    stage,
+    channel: 'email',
+    deliveryStatus: 'created',
+    metadata: {
+      ...(metadata ?? {}),
+      templateKey: resolvedTemplateKey,
+      baseActionKey: actionKey,
+    },
+  });
+  if (!created) {
+    const existing = await prisma.automationActionLog.findUnique({
+      where: {
+        user_id_action_key_stage_context_key: {
+          user_id: userId,
+          action_key: resolvedActionKey,
+          stage,
+          context_key: normalizedContextKey,
+        },
+      },
+      select: { delivery_status: true },
+    });
+    // Retry only failed sends for the same journey.
+    if (existing?.delivery_status !== 'failed') return false;
+  }
+
+  const updateEmailLog = async (status: AutomationDeliveryStatus, providerMessageId: string | null) => {
+    await prisma.automationActionLog.update({
+      where: {
+        user_id_action_key_stage_context_key: {
+          user_id: userId,
+          action_key: resolvedActionKey,
+          stage,
+          context_key: normalizedContextKey,
+        },
+      },
+      data: {
+        delivery_status: status,
+        provider_message_id: providerMessageId,
+      },
+      select: { id: true },
+    });
+  };
   try {
-    await sendEmail({
+    const result = await sendEmail({
       to: [toEmail],
       subject,
       html,
       text,
+      tags: {
+        action_key: resolvedActionKey,
+        template_key: resolvedTemplateKey,
+        stage: String(stage),
+      },
     });
-    return true;
+    await updateEmailLog(result.messageId ? 'sent' : 'failed', result.messageId ?? null);
+    if (!result.messageId) {
+      log.warn('[AUTOMATION] Email send returned no provider message id', {
+        userId,
+        actionKey: resolvedActionKey,
+        stage,
+      });
+    }
+    return Boolean(result.messageId);
   } catch (e) {
+    try {
+      await updateEmailLog('failed', null);
+    } catch {
+      // noop: preserve main error handling
+    }
     log.warn('[AUTOMATION] Email send failed', {
       userId,
-      actionKey,
+      actionKey: resolvedActionKey,
       stage,
       error: e instanceof Error ? e.message : e,
     });
@@ -139,6 +233,7 @@ async function createActionLog(params: {
   contextKey?: string | null;
   stage: number;
   channel: AutomationChannel;
+  deliveryStatus?: AutomationDeliveryStatus;
   providerMessageId?: string | null;
   metadata?: Prisma.JsonObject;
 }): Promise<{ created: boolean }> {
@@ -149,6 +244,7 @@ async function createActionLog(params: {
     contextKey,
     stage,
     channel,
+    deliveryStatus,
     providerMessageId,
     metadata,
   } = params;
@@ -160,6 +256,7 @@ async function createActionLog(params: {
         context_key: normalizeContextKey(contextKey),
         stage,
         channel,
+        delivery_status: deliveryStatus ?? null,
         provider_message_id: providerMessageId ?? null,
         metadata_json: metadata,
       },
@@ -204,6 +301,12 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
   const emailAutomationsEnabled = emailAutomationsEnabledFlag !== '0';
   if (!emailAutomationsEnabled) {
     log.info('[AUTOMATION] Email automations disabled via EMAIL_AUTOMATIONS_ENABLED=0. Emails will be skipped.');
+  }
+
+  const registeredNoPurchase7dEnabledFlag = (process.env.AUTOMATION_REGISTERED_NO_PURCHASE_7D_ENABLED || '1').trim();
+  const registeredNoPurchase7dEnabled = registeredNoPurchase7dEnabledFlag !== '0';
+  if (!registeredNoPurchase7dEnabled) {
+    log.info('[AUTOMATION] registered_no_purchase_7d disabled via AUTOMATION_REGISTERED_NO_PURCHASE_7D_ENABLED=0.');
   }
 
   if (await shouldSkipRun(prisma)) {
@@ -328,7 +431,8 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	          });
 	          const unsubscribeUrl = buildMarketingUnsubscribeUrl(user.id) ?? undefined;
 	          const tpl = emailTemplates.automationTrialNoDownload24h({ name: user.username, url, unsubscribeUrl });
-	          await safeSendAutomationEmail({
+	          if (await safeSendAutomationEmail({
+            prisma,
 	            userId: user.id,
 	            actionKey: 'trial_no_download',
 	            stage: 24,
@@ -336,8 +440,10 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	            subject: tpl.subject,
 	            html: tpl.html,
 	            text: tpl.text,
-	          });
-	          noteEmailSent();
+	            templateKey: 'automation_trial_no_download_24h',
+	          })) {
+	            noteEmailSent();
+	          }
 	        }
         bump('trial_no_download');
       }
@@ -427,7 +533,8 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
             recommendedFolder,
             unsubscribeUrl,
           });
-          await safeSendAutomationEmail({
+          if (await safeSendAutomationEmail({
+            prisma,
             userId: user.id,
             actionKey: 'paid_no_download',
             stage: 2,
@@ -435,8 +542,10 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
             subject: tpl.subject,
             html: tpl.html,
             text: tpl.text,
-          });
-          noteEmailSent();
+            templateKey: 'automation_paid_no_download_2h',
+          })) {
+            noteEmailSent();
+          }
         }
         bump('paid_no_download_2h');
       }
@@ -505,7 +614,8 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	          });
 	          const unsubscribeUrl = buildMarketingUnsubscribeUrl(user.id) ?? undefined;
 	          const tpl = emailTemplates.automationPaidNoDownload24h({ name: user.username, url, unsubscribeUrl });
-	          await safeSendAutomationEmail({
+	          if (await safeSendAutomationEmail({
+            prisma,
 	            userId: user.id,
 	            actionKey: 'paid_no_download',
 	            stage: 24,
@@ -513,15 +623,17 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	            subject: tpl.subject,
 	            html: tpl.html,
 	            text: tpl.text,
-	          });
-	          noteEmailSent();
+	            templateKey: 'automation_paid_no_download_24h',
+	          })) {
+	            noteEmailSent();
+	          }
 	        }
         bump('paid_no_download');
       }
     }
 
     // Rule 3: registered 7d ago and no paid plan orders
-    {
+    if (registeredNoPurchase7dEnabled) {
       const rows = await prisma.$queryRaw<
         Array<{ userId: number; registeredOn: Date }>
       >(Prisma.sql`
@@ -615,7 +727,8 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	            expiresAt: expiresAtText,
 	            unsubscribeUrl,
 	          });
-	          await safeSendAutomationEmail({
+	          if (await safeSendAutomationEmail({
+            prisma,
 	            userId: user.id,
 	            actionKey: 'registered_no_purchase',
 	            stage: 7,
@@ -623,8 +736,10 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	            subject: tpl.subject,
 	            html: tpl.html,
 	            text: tpl.text,
-	          });
-	          noteEmailSent();
+	            templateKey: 'automation_registered_no_purchase_7d',
+	          })) {
+	            noteEmailSent();
+	          }
 	        }
         bump('registered_no_purchase');
       }
@@ -682,7 +797,8 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	            utm_content: 'cta',
 	          });
 	          const tpl = emailTemplates.automationVerifyWhatsApp24h({ name: user.username, url });
-	          await safeSendAutomationEmail({
+	          if (await safeSendAutomationEmail({
+            prisma,
 	            userId: user.id,
 	            actionKey: 'verify_whatsapp',
 	            stage: 24,
@@ -690,8 +806,10 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	            subject: tpl.subject,
 	            html: tpl.html,
 	            text: tpl.text,
-	          });
-	          noteEmailSent();
+	            templateKey: 'automation_verify_whatsapp_24h',
+	          })) {
+	            noteEmailSent();
+	          }
 	        }
 
         bump('verify_whatsapp_24h');
@@ -883,25 +1001,20 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
               unsubscribeUrl,
             });
             const emailSent = await safeSendAutomationEmail({
+            prisma,
               userId,
               actionKey: 'checkout_abandoned_email',
+              contextKey,
               stage: stageConfig.stage,
               toEmail: user.email,
               subject: tpl.subject,
               html: tpl.html,
               text: tpl.text,
+              templateKey: `automation_checkout_abandoned_${stageConfig.stage}`,
+              metadata: { campaign: stageConfig.campaign },
             });
             if (emailSent) {
               noteEmailSent();
-              await createActionLog({
-                prisma,
-                userId,
-                actionKey: 'checkout_abandoned_email',
-                contextKey,
-                stage: stageConfig.stage,
-                channel: 'email',
-                metadata: { campaign: stageConfig.campaign },
-              });
             }
           }
 
@@ -999,7 +1112,8 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	            url,
 	            unsubscribeUrl,
 	          });
-	          await safeSendAutomationEmail({
+	          if (await safeSendAutomationEmail({
+            prisma,
 	            userId,
 	            actionKey: 'trial_expiring',
 	            stage: 24,
@@ -1007,8 +1121,10 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	            subject: tpl.subject,
 	            html: tpl.html,
 	            text: tpl.text,
-	          });
-	          noteEmailSent();
+	            templateKey: 'automation_trial_expiring_24h',
+	          })) {
+	            noteEmailSent();
+	          }
 	        }
 
         bump('trial_expiring_24h');
@@ -1084,7 +1200,8 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	            days,
 	            unsubscribeUrl,
 	          });
-	          await safeSendAutomationEmail({
+	          if (await safeSendAutomationEmail({
+            prisma,
 	            userId: user.id,
 	            actionKey: 'active_no_download',
 	            stage: days,
@@ -1092,8 +1209,10 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	            subject: tpl.subject,
 	            html: tpl.html,
 	            text: tpl.text,
-	          });
-	          noteEmailSent();
+	            templateKey: `automation_active_no_download_${days}d`,
+	          })) {
+	            noteEmailSent();
+	          }
 	        }
 
         bump(`active_no_download_${days}d`);
@@ -1164,7 +1283,8 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
           accountUrl,
           reactivateUrl,
         });
-        await safeSendAutomationEmail({
+        if (await safeSendAutomationEmail({
+            prisma,
           userId: Number(row.userId),
           actionKey: 'cancel_access_end_reminder',
           stage: 3,
@@ -1172,8 +1292,10 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
           subject: tpl.subject,
           html: tpl.html,
           text: tpl.text,
-        });
-        noteEmailSent();
+          templateKey: 'automation_cancel_access_end_reminder_3d',
+        })) {
+          noteEmailSent();
+        }
         bump('cancel_access_end_reminder_3d');
       }
     }
@@ -1296,7 +1418,8 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
             expiresAt: expiresAtText,
             unsubscribeUrl,
           });
-          await safeSendAutomationEmail({
+          if (await safeSendAutomationEmail({
+            prisma,
             userId: user.id,
             actionKey: 'winback_lapsed',
             stage: stageDays,
@@ -1304,8 +1427,10 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
             subject: tpl.subject,
             html: tpl.html,
             text: tpl.text,
-          });
-          noteEmailSent();
+            templateKey: `automation_winback_lapsed_${stageDays}d`,
+          })) {
+            noteEmailSent();
+          }
         }
 
         await safeSendTwilioLink(user, `${resolveClientUrl()}/planes`);
@@ -1414,7 +1539,8 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	            expiresAt: expiresAtText,
 	            unsubscribeUrl,
 	          });
-	          await safeSendAutomationEmail({
+	          if (await safeSendAutomationEmail({
+            prisma,
 	            userId: user.id,
 	            actionKey: 'plans_view_no_checkout',
 	            stage: 1,
@@ -1422,8 +1548,10 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	            subject: tpl.subject,
 	            html: tpl.html,
 	            text: tpl.text,
-	          });
-	          noteEmailSent();
+	            templateKey: 'automation_plans_offer_stage_1',
+	          })) {
+	            noteEmailSent();
+	          }
 	        }
 
         // Optional WhatsApp: send a link to plans (login required).
@@ -1530,7 +1658,8 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	            expiresAt: expiresAtText,
 	            unsubscribeUrl,
 	          });
-	          await safeSendAutomationEmail({
+	          if (await safeSendAutomationEmail({
+            prisma,
 	            userId: user.id,
 	            actionKey: 'plans_view_no_checkout',
 	            stage: 2,
@@ -1538,8 +1667,10 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	            subject: tpl.subject,
 	            html: tpl.html,
 	            text: tpl.text,
-	          });
-	          noteEmailSent();
+	            templateKey: 'automation_plans_offer_stage_2',
+	          })) {
+	            noteEmailSent();
+	          }
 	        }
 
         bump('plans_offer_30');
@@ -1643,7 +1774,8 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	            expiresAt: expiresAtText,
 	            unsubscribeUrl,
 	          });
-	          await safeSendAutomationEmail({
+	          if (await safeSendAutomationEmail({
+            prisma,
 	            userId: user.id,
 	            actionKey: 'plans_view_no_checkout',
 	            stage: 3,
@@ -1651,8 +1783,10 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	            subject: tpl.subject,
 	            html: tpl.html,
 	            text: tpl.text,
-	          });
-	          noteEmailSent();
+	            templateKey: 'automation_plans_offer_stage_3',
+	          })) {
+	            noteEmailSent();
+	          }
 	        }
 
         bump('plans_offer_50');
@@ -1773,7 +1907,8 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
             supportUrl: accountUrl,
           });
 
-          await safeSendAutomationEmail({
+          if (await safeSendAutomationEmail({
+            prisma,
             userId: user.id,
             actionKey: 'dunning_payment_failed',
             stage: stageDays,
@@ -1781,8 +1916,10 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
             subject: tpl.subject,
             html: tpl.html,
             text: tpl.text,
-          });
-          noteEmailSent();
+            templateKey: `automation_dunning_payment_failed_d${stageDays}`,
+          })) {
+            noteEmailSent();
+          }
           bump(`dunning_d${stageDays}`);
         }
       }

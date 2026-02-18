@@ -197,6 +197,7 @@ model AutomationActionLog {
   context_key         String   @default("") @db.VarChar(160)
   stage               Int      @default(0)
   channel             String   @db.VarChar(20)
+  delivery_status     String?  @db.VarChar(32)
   provider_message_id String?  @db.VarChar(120)
   sent_at             DateTime @default(now()) @db.DateTime(0)
   metadata_json       Json?
@@ -206,6 +207,27 @@ model AutomationActionLog {
   @@index([sent_at], map: "idx_automation_action_sent_at")
   @@index([context_key], map: "idx_automation_action_context_key")
   @@map("automation_action_logs")
+}
+
+model EmailDeliveryEvent {
+  id                  Int      @id @default(autoincrement())
+  provider            String   @default("ses") @db.VarChar(20)
+  provider_event_id   String   @db.VarChar(120)
+  provider_message_id String   @db.VarChar(120)
+  event_type          String   @db.VarChar(32)
+  event_ts            DateTime @db.DateTime(3)
+  template_key        String?  @db.VarChar(120)
+  action_key          String?  @db.VarChar(80)
+  stage               Int?
+  metadata_json       Json?
+  created_at          DateTime @default(now()) @db.DateTime(0)
+
+  @@unique([provider, provider_event_id], map: "uniq_email_delivery_events_provider_event")
+  @@index([provider_message_id], map: "idx_email_delivery_events_provider_message_id")
+  @@index([event_ts], map: "idx_email_delivery_events_event_ts")
+  @@index([template_key], map: "idx_email_delivery_events_template_key")
+  @@index([event_type], map: "idx_email_delivery_events_event_type")
+  @@map("email_delivery_events")
 }
 
 model AdminAuditLog {
