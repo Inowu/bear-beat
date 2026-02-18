@@ -1,9 +1,11 @@
 import { Prisma } from '@prisma/client';
 import type { Request } from 'express';
+import type { Stripe } from 'stripe';
 import { prisma } from '../db';
 import { log } from '../server';
 import { processStripeWebhookPayload } from '../routers/webhooks/stripe';
-import { stripeInvoiceWebhook } from '../routers/webhooks/stripe/paymentIntentsWh';
+import { StripeEvents } from '../routers/webhooks/stripe/events';
+import { processStripePaymentWebhookPayload } from '../routers/webhooks/stripe/paymentIntentsWh';
 import { stripeProductsWebhook } from '../routers/webhooks/stripe/productsWh';
 import { processPaypalWebhookPayload } from '../routers/webhooks/paypal';
 import { processConektaWebhookPayload } from '../routers/webhooks/conekta';
@@ -29,6 +31,18 @@ const RETRYABLE_ERROR_CODES = new Set([
   'ETIMEDOUT',
   'EPIPE',
   'ENETUNREACH',
+]);
+const STRIPE_SUBSCRIPTION_EVENTS = new Set<string>([
+  StripeEvents.SUBSCRIPTION_CREATED,
+  StripeEvents.SUBSCRIPTION_UPDATED,
+  StripeEvents.SUBSCRIPTION_DELETED,
+]);
+const STRIPE_PAYMENT_EVENTS = new Set<string>([
+  StripeEvents.PAYMENT_INTENT_SUCCEEDED,
+  StripeEvents.PAYMENT_INTENT_FAILED,
+  StripeEvents.INVOICE_PAYMENT_FAILED,
+  StripeEvents.INVOICE_PAID,
+  StripeEvents.CHECKOUT_SESSION_COMPLETED,
 ]);
 
 interface PersistWebhookInboxEventInput {
@@ -105,10 +119,26 @@ const dispatchInboxEvent = async (
 
   switch (provider) {
     case 'stripe':
-      await processStripeWebhookPayload(JSON.parse(rawPayload));
-      return;
     case 'stripe_pi':
-      await stripeInvoiceWebhook(req);
+      {
+        const payload = JSON.parse(rawPayload) as Stripe.Event;
+        if (STRIPE_SUBSCRIPTION_EVENTS.has(payload.type)) {
+          await processStripeWebhookPayload(payload);
+          return;
+        }
+
+        if (STRIPE_PAYMENT_EVENTS.has(payload.type)) {
+          await processStripePaymentWebhookPayload(payload);
+          return;
+        }
+
+        if (provider === 'stripe') {
+          await processStripeWebhookPayload(payload);
+          return;
+        }
+
+        await processStripePaymentWebhookPayload(payload);
+      }
       return;
     case 'stripe_products':
       await stripeProductsWebhook(req);

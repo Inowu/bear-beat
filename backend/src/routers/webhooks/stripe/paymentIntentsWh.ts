@@ -185,6 +185,12 @@ const resolvePlanOrderFromInvoiceContext = async (params: {
 export const stripeInvoiceWebhook = async (req: Request) => {
   const payloadStr = getStripeWebhookBody(req);
   const payload: Stripe.Event = JSON.parse(payloadStr);
+  await processStripePaymentWebhookPayload(payload);
+};
+
+export const processStripePaymentWebhookPayload = async (
+  payload: Stripe.Event,
+) => {
 
   if (!shouldHandleEvent(payload)) return;
 

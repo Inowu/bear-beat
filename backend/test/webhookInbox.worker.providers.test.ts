@@ -24,7 +24,7 @@ jest.mock('../src/routers/webhooks/stripe', () => ({
 }));
 
 jest.mock('../src/routers/webhooks/stripe/paymentIntentsWh', () => ({
-  stripeInvoiceWebhook: jest.fn(),
+  processStripePaymentWebhookPayload: jest.fn(),
 }));
 
 jest.mock('../src/routers/webhooks/stripe/productsWh', () => ({
@@ -45,12 +45,16 @@ import {
   markProcessed,
   markProcessing,
 } from '../src/services/webhookInbox';
+import { processStripeWebhookPayload } from '../src/routers/webhooks/stripe';
+import { processStripePaymentWebhookPayload } from '../src/routers/webhooks/stripe/paymentIntentsWh';
 import { processPaypalWebhookPayload } from '../src/routers/webhooks/paypal';
 import { processConektaWebhookPayload } from '../src/routers/webhooks/conekta';
 
 const markFailedMock = markFailed as jest.Mock;
 const markProcessedMock = markProcessed as jest.Mock;
 const markProcessingMock = markProcessing as jest.Mock;
+const processStripeWebhookPayloadMock = processStripeWebhookPayload as jest.Mock;
+const processStripePaymentWebhookPayloadMock = processStripePaymentWebhookPayload as jest.Mock;
 const processPaypalWebhookPayloadMock = processPaypalWebhookPayload as jest.Mock;
 const processConektaWebhookPayloadMock = processConektaWebhookPayload as jest.Mock;
 
@@ -60,12 +64,60 @@ describe('processWebhookInboxEvent provider dispatch', () => {
     markFailedMock.mockReset();
     markProcessedMock.mockReset();
     markProcessingMock.mockReset();
+    processStripeWebhookPayloadMock.mockReset();
+    processStripePaymentWebhookPayloadMock.mockReset();
     processPaypalWebhookPayloadMock.mockReset();
     processConektaWebhookPayloadMock.mockReset();
 
     markProcessingMock.mockResolvedValue(true);
     markFailedMock.mockResolvedValue(undefined);
     markProcessedMock.mockResolvedValue(undefined);
+    processStripeWebhookPayloadMock.mockResolvedValue(undefined);
+    processStripePaymentWebhookPayloadMock.mockResolvedValue(undefined);
+  });
+
+  it('routes stripe payment events from stripe provider to payment handler', async () => {
+    findUniqueMock.mockResolvedValue({
+      id: 200,
+      provider: 'stripe',
+      status: 'RECEIVED',
+      attempts: 0,
+      payload_raw: '{"id":"evt_1","type":"invoice.paid","data":{"object":{}}}',
+      event_id: 'evt_1',
+      event_type: 'invoice.paid',
+    });
+
+    await processWebhookInboxEvent(200);
+
+    expect(processStripePaymentWebhookPayloadMock).toHaveBeenCalledWith({
+      id: 'evt_1',
+      type: 'invoice.paid',
+      data: { object: {} },
+    });
+    expect(processStripeWebhookPayloadMock).not.toHaveBeenCalled();
+    expect(markProcessedMock).toHaveBeenCalledWith(200);
+  });
+
+  it('routes subscription events from stripe_pi provider to subscription handler', async () => {
+    findUniqueMock.mockResolvedValue({
+      id: 204,
+      provider: 'stripe_pi',
+      status: 'RECEIVED',
+      attempts: 0,
+      payload_raw: '{"id":"evt_2","type":"customer.subscription.updated","data":{"object":{}}}',
+      event_id: 'evt_2',
+      event_type: 'customer.subscription.updated',
+    });
+
+    await processWebhookInboxEvent(204);
+
+    expect(processStripeWebhookPayloadMock).toHaveBeenCalledWith({
+      id: 'evt_2',
+      type: 'customer.subscription.updated',
+      data: { object: {} },
+    });
+    expect(processStripePaymentWebhookPayloadMock).not.toHaveBeenCalled();
+    expect(markProcessedMock).toHaveBeenCalledWith(204);
   });
 
   it('processes paypal payload and marks event as PROCESSED', async () => {
