@@ -5,8 +5,8 @@ import { log } from '../server';
 import { processStripeWebhookPayload } from '../routers/webhooks/stripe';
 import { stripeInvoiceWebhook } from '../routers/webhooks/stripe/paymentIntentsWh';
 import { stripeProductsWebhook } from '../routers/webhooks/stripe/productsWh';
-import { paypalSubscriptionWebhook } from '../routers/webhooks/paypal';
-import { conektaSubscriptionWebhook } from '../routers/webhooks/conekta';
+import { processPaypalWebhookPayload } from '../routers/webhooks/paypal';
+import { processConektaWebhookPayload } from '../routers/webhooks/conekta';
 import {
   computeBackoff,
   markFailed,
@@ -114,10 +114,10 @@ const dispatchInboxEvent = async (
       await stripeProductsWebhook(req);
       return;
     case 'paypal':
-      await paypalSubscriptionWebhook(req);
+      await processPaypalWebhookPayload(JSON.parse(rawPayload));
       return;
     case 'conekta':
-      await conektaSubscriptionWebhook(req);
+      await processConektaWebhookPayload(JSON.parse(rawPayload));
       return;
     default:
       throw new Error(`Unsupported webhook provider: ${provider}`);
@@ -206,6 +206,14 @@ export const processWebhookInboxEvent = async (
     return;
   }
 
+  log.info('[WEBHOOK_INBOX] Event processing transition', {
+    provider: event.provider,
+    eventId: event.event_id,
+    eventType: event.event_type,
+    inboxId: event.id,
+    status: 'PROCESSING',
+  });
+
   try {
     await dispatchInboxEvent(
       event.provider as WebhookInboxProvider,
@@ -213,6 +221,13 @@ export const processWebhookInboxEvent = async (
     );
 
     await markProcessed(event.id);
+    log.info('[WEBHOOK_INBOX] Event processing transition', {
+      provider: event.provider,
+      eventId: event.event_id,
+      eventType: event.event_type,
+      inboxId: event.id,
+      status: 'PROCESSED',
+    });
   } catch (error) {
     const attempt = event.attempts + 1;
     const retryable = isRetryableError(error);
@@ -223,11 +238,11 @@ export const processWebhookInboxEvent = async (
     const status = canRetry ? 'FAILED' : 'IGNORED';
     await markFailed(event.id, error, nextRetryAt);
 
-    log.warn('[WEBHOOK_INBOX] Event processing failed', {
-      inboxId: event.id,
+    log.warn('[WEBHOOK_INBOX] Event processing transition', {
       provider: event.provider,
-      eventType: event.event_type,
       eventId: event.event_id,
+      eventType: event.event_type,
+      inboxId: event.id,
       attempts: attempt,
       status,
       retryable: canRetry,

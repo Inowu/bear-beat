@@ -15,9 +15,7 @@ import { manyChat } from '../../../many-chat';
 import { ingestAnalyticsEvents } from '../../../analytics';
 import { ingestPaymentSuccessEvent } from '../../../analytics/paymentSuccess';
 
-const parsePaypalPayload = (req: Request): Record<string, any> => {
-  const body = req.body as unknown;
-
+const parsePaypalPayload = (body: unknown): Record<string, any> => {
   if (Buffer.isBuffer(body)) {
     const raw = body.toString('utf8').trim();
     return raw ? (JSON.parse(raw) as Record<string, any>) : {};
@@ -35,6 +33,9 @@ const parsePaypalPayload = (req: Request): Record<string, any> => {
   return {};
 };
 
+const getPaypalPayloadFromRequest = (req: Request): Record<string, any> =>
+  parsePaypalPayload(req.body);
+
 const getPaypalSubscriptionId = (payload: Record<string, any>): string | null => {
   const resource = payload?.resource ?? {};
   const candidates = [
@@ -51,8 +52,7 @@ const getPaypalSubscriptionId = (payload: Record<string, any>): string | null =>
   return (resolved as string | undefined) ?? null;
 };
 
-export const paypalSubscriptionWebhook = async (req: Request) => {
-  const payload = parsePaypalPayload(req);
+export const processPaypalWebhookPayload = async (payload: Record<string, any>) => {
 
   log.info('[PAYPAL_WH] Handling Paypal webhook', {
     eventType: payload?.event_type ?? null,
@@ -524,4 +524,9 @@ export const paypalSubscriptionWebhook = async (req: Request) => {
       log.info(`[PAYPAL_WH] Event type ${payload.event_type} not handled`);
       break;
   }
+};
+
+export const paypalSubscriptionWebhook = async (req: Request) => {
+  const payload = getPaypalPayloadFromRequest(req);
+  await processPaypalWebhookPayload(payload);
 };

@@ -1,7 +1,10 @@
 import { Request, Response } from 'express';
 import { verifyConektaSignature } from '../../routers/utils/verifyConektaSignature';
-import { receiveWebhookIntoInbox } from './webhookInboxReception';
 import { log } from '../../server';
+import { parseWebhookPayload, extractWebhookIdentity } from '../../webhookInbox/intake';
+import { persistEvent } from '../../services/webhookInbox';
+import { enqueueWebhookInboxJob } from '../../queues/webhookInbox.queue';
+import { markWebhookInboxEventEnqueued } from '../../webhookInbox/service';
 
 const getHeaderValue = (value: string | string[] | undefined): string => {
   if (Array.isArray(value)) {
@@ -50,24 +53,69 @@ export const conektaEndpoint = async (req: Request, res: Response) => {
     return res.status(isProduction ? 401 : 400).send('Invalid signature');
   }
 
+  let parsedPayload: ReturnType<typeof parseWebhookPayload>;
   try {
-    const result = await receiveWebhookIntoInbox({
-      provider: 'conekta',
-      req,
-      logPrefix: 'CONEKTA_WH',
-    });
-    if (!result.ok) {
-      log.error('[CONEKTA_WH] Failed to process webhook event.', {
-        status: result.status,
-        error: result.message,
-      });
-      return res.status(500).send('Webhook processing failed');
-    }
+    parsedPayload = parseWebhookPayload(req.body);
   } catch (error) {
-    log.error('[CONEKTA_WH] Unexpected webhook processing error.', {
+    log.warn('[CONEKTA_WH] Invalid JSON payload', {
       error: error instanceof Error ? error.message : String(error ?? ''),
     });
-    return res.status(500).send('Webhook processing failed');
+    return res.status(400).send('Invalid JSON payload');
+  }
+
+  const identity = extractWebhookIdentity('conekta', parsedPayload.payload);
+  if (!identity) {
+    return res.status(400).send('Invalid webhook payload');
+  }
+
+  try {
+    const persisted = await persistEvent({
+      provider: 'conekta',
+      eventId: identity.eventId,
+      eventType: identity.eventType,
+      livemode: identity.livemode,
+      headers: req.headers as Record<string, unknown>,
+      payloadRaw: parsedPayload.rawPayload,
+    });
+
+    log.info('[CONEKTA_WH] Inbox transition', {
+      provider: 'conekta',
+      eventId: identity.eventId,
+      eventType: identity.eventType,
+      inboxId: persisted.inboxId,
+      status: persisted.created ? 'RECEIVED' : 'DUPLICATE',
+    });
+
+    if (!persisted.created) {
+      return res.status(200).end();
+    }
+
+    const queued = await enqueueWebhookInboxJob({ inboxId: persisted.inboxId });
+    if (queued) {
+      await markWebhookInboxEventEnqueued(persisted.inboxId);
+      log.info('[CONEKTA_WH] Inbox transition', {
+        provider: 'conekta',
+        eventId: identity.eventId,
+        eventType: identity.eventType,
+        inboxId: persisted.inboxId,
+        status: 'ENQUEUED',
+      });
+    } else {
+      log.warn('[CONEKTA_WH] Persisted webhook but enqueue failed', {
+        provider: 'conekta',
+        eventId: identity.eventId,
+        eventType: identity.eventType,
+        inboxId: persisted.inboxId,
+      });
+    }
+  } catch (error) {
+    log.error('[CONEKTA_WH] Failed to persist/enqueue webhook event', {
+      provider: 'conekta',
+      eventId: identity.eventId,
+      eventType: identity.eventType,
+      error: error instanceof Error ? error.message : String(error ?? ''),
+    });
+    return res.status(500).send('Failed to persist webhook event');
   }
 
   return res.status(200).end();
