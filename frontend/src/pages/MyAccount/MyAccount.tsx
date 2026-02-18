@@ -48,6 +48,32 @@ import {
 
 type WorkspaceTabId = "ftp" | "orders" | "payments" | "email";
 
+function parseAccountExpiration(value: unknown): Date | null {
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      const endOfDay = new Date(`${trimmed}T23:59:59.999`);
+      return Number.isNaN(endOfDay.getTime()) ? null : endOfDay;
+    }
+
+    const parsed = new Date(trimmed);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  if (typeof value === "number") {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  return null;
+}
+
 function MyAccount() {
   const { theme } = useTheme();
   const {
@@ -464,14 +490,26 @@ function MyAccount() {
   const hasQuotaReached = storagePercent >= 100;
   const hasNoQuotaLeft = remainingRegularGb <= 0 && remainingExtendedGb <= 0;
   const hasActiveSubscription = Boolean(currentUser?.hasActiveSubscription);
-  const hasFtpAccess = Boolean(currentUser?.ftpAccount);
+  const hasFtpRecord = Boolean(currentUser?.ftpAccount);
+  const ftpExpiration = parseAccountExpiration(currentUser?.ftpAccount?.expiration ?? null);
+  const isFtpExpired = Boolean(ftpExpiration && ftpExpiration.getTime() < Date.now());
+  const hasFtpAccess = hasFtpRecord && !isFtpExpired;
   const hasAccessWithoutSubscription = !hasActiveSubscription && hasFtpAccess;
-  const cycleEndLabel = formatDateShort(currentUser?.ftpAccount?.expiration ?? null);
+  const hasExpiredFtpAccess = !hasActiveSubscription && hasFtpRecord && isFtpExpired;
+  const cycleEndLabel = formatDateShort(ftpExpiration ?? currentUser?.ftpAccount?.expiration ?? null);
   const cycleEndOrFallback = cycleEndLabel !== "—" ? cycleEndLabel : "el siguiente ciclo";
-  const nextBillingLabel = cycleEndLabel !== "—" ? cycleEndLabel : "Sin fecha disponible";
+  const nextBillingLabel = hasExpiredFtpAccess
+    ? cycleEndLabel !== "—"
+      ? cycleEndLabel
+      : "Vencido"
+    : cycleEndLabel !== "—"
+      ? cycleEndLabel
+      : "Sin fecha disponible";
   const nextBillingTitle = hasActiveSubscription && !currentUser?.isSubscriptionCancelled
     ? "Próximo cobro"
-    : "Próximo vencimiento";
+    : hasExpiredFtpAccess
+      ? "Acceso vencido"
+      : "Próximo vencimiento";
   const initialsSource = (currentUser?.username ?? currentUser?.email ?? "DJ").trim();
   const normalizedInitials = initialsSource
     .replace(/[^A-Za-z0-9]/g, "")
@@ -483,7 +521,9 @@ function MyAccount() {
       ? "Cancela al final del ciclo"
       : "Membresía activa"
     : hasAccessWithoutSubscription
-      ? "Acceso FTP vigente"
+      ? "Sin membresía (acceso FTP vigente)"
+      : hasExpiredFtpAccess
+        ? "Sin membresía (acceso FTP vencido)"
       : "Sin membresía activa";
   const membershipTone = hasActiveSubscription
     ? currentUser.isSubscriptionCancelled
@@ -491,8 +531,15 @@ function MyAccount() {
       : "success"
     : hasAccessWithoutSubscription
       ? "warning"
+      : hasExpiredFtpAccess
+        ? "danger"
       : "muted";
   const ftpStatus = hasFtpAccess ? "FTP habilitado" : "Sin acceso FTP";
+  const membershipCtaLabel = hasExpiredFtpAccess ? "Reactivar membresía" : "Activar membresía";
+  const membershipCtaMessage = hasExpiredFtpAccess
+    ? `Tu acceso FTP venció ${cycleEndOrFallback}. Activa tu membresía para recuperar descargas.`
+    : "Activa tu membresía para evitar interrupciones en tu acceso.";
+  const shouldShowQuota = hasFtpAccess || hasActiveSubscription;
   const workspaceTabs: Array<{ id: WorkspaceTabId; label: string; helper: string }> = [
     {
       id: "ftp",
@@ -615,10 +662,10 @@ function MyAccount() {
         {!hasActiveSubscription && (
           <section className="ma-top-cta" aria-label="Activar membresía">
             <p>
-              Activa tu membresía para evitar interrupciones en tu acceso.
+              {membershipCtaMessage}
             </p>
             <Link to="/planes" className="ma-btn ma-btn-outline">
-              Activar membresía
+              {membershipCtaLabel}
             </Link>
           </section>
         )}
@@ -653,44 +700,59 @@ function MyAccount() {
                 Tu FTP sigue vigente hasta {cycleEndOrFallback}. Activa tu membresía para mantener el acceso.
               </p>
             )}
-            <div className="ma-storage">
-              <div className="ma-storage-head">
-                <span>Cuota de descarga / usado este ciclo</span>
-                <strong>{storagePercentLabel}</strong>
-              </div>
-              <div className="ma-progress-track">
-                <div
-                  className="ma-progress-fill"
-                  style={{ width: `${storageFillPercent}%` }}
-                />
-              </div>
-              <p className="ma-storage-amount">
-                Usados este ciclo: {formatInt(usedGb)} GB de {formatInt(availableGb)} GB
+            {hasExpiredFtpAccess && (
+              <p className="ma-status-note">
+                Tu acceso FTP venció {cycleEndOrFallback}. Al reactivar tu membresía recuperas acceso y cuota.
               </p>
-              {hasActiveSubscription && (
-                <p className="ma-storage-amount">
-                  Disponibles: {formatInt(remainingRegularGb)} GB · GB extra: {formatInt(remainingExtendedGb)} GB
-                </p>
-              )}
-              <details className="ma-storage-details">
-                <summary>¿Cómo funciona esta cuota?</summary>
-                <p>
-                  La cuota de descarga es lo que puedes bajar en cada ciclo. El catálogo total es lo que puedes elegir.
-                </p>
-              </details>
-              {hasQuotaReached && (
-                <p className="ma-storage-alert">
-                  {hasNoQuotaLeft
-                    ? `Límite alcanzado. No puedes descargar más hasta ${cycleEndOrFallback}.`
-                    : "Llegaste a 100% de tu cuota regular. Puedes seguir usando GB extra si tienes disponibles."}
-                </p>
-              )}
-              {hasActiveSubscription && (
+            )}
+            <div className="ma-storage">
+              {shouldShowQuota ? (
                 <>
-                  <button type="button" onClick={() => void openPlan()} className="ma-btn ma-btn-soft">
-                    Comprar extra 100 GB
-                  </button>
+                  <div className="ma-storage-head">
+                    <span>Cuota de descarga / usado este ciclo</span>
+                    <strong>{storagePercentLabel}</strong>
+                  </div>
+                  <div className="ma-progress-track">
+                    <div
+                      className="ma-progress-fill"
+                      style={{ width: `${storageFillPercent}%` }}
+                    />
+                  </div>
+                  <p className="ma-storage-amount">
+                    Usados este ciclo: {formatInt(usedGb)} GB de {formatInt(availableGb)} GB
+                  </p>
+                  {hasActiveSubscription && (
+                    <p className="ma-storage-amount">
+                      Disponibles: {formatInt(remainingRegularGb)} GB · GB extra: {formatInt(remainingExtendedGb)} GB
+                    </p>
+                  )}
+                  <details className="ma-storage-details">
+                    <summary>¿Cómo funciona esta cuota?</summary>
+                    <p>
+                      La cuota de descarga es lo que puedes bajar en cada ciclo. El catálogo total es lo que puedes elegir.
+                    </p>
+                  </details>
+                  {hasQuotaReached && (
+                    <p className="ma-storage-alert">
+                      {hasNoQuotaLeft
+                        ? `Límite alcanzado. No puedes descargar más hasta ${cycleEndOrFallback}.`
+                        : "Llegaste a 100% de tu cuota regular. Puedes seguir usando GB extra si tienes disponibles."}
+                    </p>
+                  )}
+                  {hasActiveSubscription && (
+                    <>
+                      <button type="button" onClick={() => void openPlan()} className="ma-btn ma-btn-soft">
+                        Comprar extra 100 GB
+                      </button>
+                    </>
+                  )}
                 </>
+              ) : (
+                <div className="ma-empty-card">
+                  <p>
+                    No tienes cuota activa porque no hay acceso FTP vigente. Reactiva tu membresía para habilitar descargas.
+                  </p>
+                </div>
               )}
             </div>
           </div>
@@ -734,6 +796,11 @@ function MyAccount() {
               </div>
               {currentUser?.ftpAccount ? (
                 <>
+                  {isFtpExpired && (
+                    <p className="ma-status-note">
+                      Estas credenciales ya vencieron el {cycleEndOrFallback}. Reactiva tu membresía para volver a usarlas.
+                    </p>
+                  )}
                   <div className="ma-ftp-list">
                     <FtpRow
                       label="Host"

@@ -259,6 +259,12 @@
   background: color-mix(in srgb, var(--ma-badge-pending) 16%, transparent);
 }
 
+.ma-status-pill--danger {
+  color: color-mix(in srgb, var(--ma-badge-fail) 82%, var(--ma-text));
+  border-color: color-mix(in srgb, var(--ma-badge-fail) 48%, transparent);
+  background: color-mix(in srgb, var(--ma-badge-fail) 14%, transparent);
+}
+
 .ma-status-pill--muted,
 .ma-status-pill--neutral {
   color: var(--ma-text-muted);
