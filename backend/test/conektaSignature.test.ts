@@ -1,14 +1,12 @@
 import { createSign, generateKeyPairSync } from 'crypto';
 import type { Request, Response } from 'express';
 import { conektaEndpoint } from '../src/endpoints/webhooks/conekta.endpoint';
-import {
-  verifyConektaSignature,
-} from '../src/routers/utils/verifyConektaSignature';
-import * as conektaSignatureModule from '../src/routers/utils/verifyConektaSignature';
+import { verifyConektaSignature } from '../src/routers/utils/verifyConektaSignature';
 import * as webhookInboxReceptionModule from '../src/endpoints/webhooks/webhookInboxReception';
 
 const ORIGINAL_ENV = {
   NODE_ENV: process.env.NODE_ENV,
+  CONEKTA_WEBHOOK_PUBLIC_KEY: process.env.CONEKTA_WEBHOOK_PUBLIC_KEY,
   CONEKTA_SIGNED_KEY: process.env.CONEKTA_SIGNED_KEY,
   CONEKTA_SIGNED_TEST_KEY: process.env.CONEKTA_SIGNED_TEST_KEY,
 };
@@ -18,6 +16,13 @@ const restoreConektaSignatureEnv = () => {
     delete process.env.NODE_ENV;
   } else {
     process.env.NODE_ENV = ORIGINAL_ENV.NODE_ENV;
+  }
+
+  if (ORIGINAL_ENV.CONEKTA_WEBHOOK_PUBLIC_KEY === undefined) {
+    delete process.env.CONEKTA_WEBHOOK_PUBLIC_KEY;
+  } else {
+    process.env.CONEKTA_WEBHOOK_PUBLIC_KEY =
+      ORIGINAL_ENV.CONEKTA_WEBHOOK_PUBLIC_KEY;
   }
 
   if (ORIGINAL_ENV.CONEKTA_SIGNED_KEY === undefined) {
@@ -38,7 +43,7 @@ const toPemString = (key: string | Buffer): string =>
 
 const signPayload = (payload: Buffer, privateKeyPem: string): string => {
   const signer = createSign('RSA-SHA256');
-  signer.update(payload);
+  signer.update(payload.toString('utf8'), 'utf8');
   signer.end();
   return signer.sign(privateKeyPem).toString('base64');
 };
@@ -47,7 +52,7 @@ const buildReq = ({
   body,
   digest,
 }: {
-  body: Buffer | string;
+  body: unknown;
   digest?: string;
 }): Request =>
   ({
@@ -69,24 +74,18 @@ const buildRes = () => {
   };
 };
 
+const { privateKey, publicKey } = generateKeyPairSync('rsa', {
+  modulusLength: 2048,
+});
+
+const privateKeyPem = toPemString(
+  privateKey.export({ format: 'pem', type: 'pkcs1' }),
+);
+const publicKeyPem = toPemString(
+  publicKey.export({ format: 'pem', type: 'pkcs1' }),
+);
+
 describe('verifyConektaSignature', () => {
-  const { privateKey, publicKey } = generateKeyPairSync('rsa', {
-    modulusLength: 2048,
-  });
-
-  const privateKeyPem = toPemString(
-    privateKey.export({ format: 'pem', type: 'pkcs1' }),
-  );
-  const publicKeyPem = toPemString(
-    publicKey.export({ format: 'pem', type: 'pkcs1' }),
-  );
-
-  beforeEach(() => {
-    process.env.NODE_ENV = 'test';
-    process.env.CONEKTA_SIGNED_TEST_KEY = publicKeyPem;
-    delete process.env.CONEKTA_SIGNED_KEY;
-  });
-
   afterEach(() => {
     restoreConektaSignatureEnv();
     jest.restoreAllMocks();
@@ -95,17 +94,17 @@ describe('verifyConektaSignature', () => {
   it('returns true when digest matches raw body signature', () => {
     const payload = Buffer.from('{"id":"evt_1","type":"order.paid"}', 'utf8');
     const digest = signPayload(payload, privateKeyPem);
-    const req = buildReq({ body: payload, digest });
 
-    expect(verifyConektaSignature(req)).toBe(true);
+    expect(verifyConektaSignature(payload, digest, publicKeyPem)).toBe(true);
   });
 
   it('accepts digest header normalized as sha-256=<base64>', () => {
     const payload = Buffer.from('{"id":"evt_1","type":"order.paid"}', 'utf8');
     const digest = signPayload(payload, privateKeyPem);
-    const req = buildReq({ body: payload, digest: `sha-256=${digest}` });
 
-    expect(verifyConektaSignature(req)).toBe(true);
+    expect(
+      verifyConektaSignature(payload, `sha-256=${digest}`, publicKeyPem),
+    ).toBe(true);
   });
 
   it('returns false when digest does not match body signature', () => {
@@ -114,27 +113,19 @@ describe('verifyConektaSignature', () => {
       Buffer.from('{"id":"evt_2","type":"order.paid"}', 'utf8'),
       privateKeyPem,
     );
-    const req = buildReq({ body: payload, digest });
 
-    expect(verifyConektaSignature(req)).toBe(false);
+    expect(verifyConektaSignature(payload, digest, publicKeyPem)).toBe(false);
   });
 
   it('returns false when digest header is missing', () => {
     const payload = Buffer.from('{"id":"evt_1","type":"order.paid"}', 'utf8');
-    const req = buildReq({ body: payload });
-
-    expect(verifyConektaSignature(req)).toBe(false);
+    expect(verifyConektaSignature(payload, '', publicKeyPem)).toBe(false);
   });
 
-  it('returns false when signing key env is missing', () => {
-    delete process.env.CONEKTA_SIGNED_TEST_KEY;
-    delete process.env.CONEKTA_SIGNED_KEY;
-
+  it('returns false when signing public key is missing', () => {
     const payload = Buffer.from('{"id":"evt_1","type":"order.paid"}', 'utf8');
     const digest = signPayload(payload, privateKeyPem);
-    const req = buildReq({ body: payload, digest });
-
-    expect(verifyConektaSignature(req)).toBe(false);
+    expect(verifyConektaSignature(payload, digest, '')).toBe(false);
   });
 });
 
@@ -144,45 +135,47 @@ describe('conektaEndpoint', () => {
     restoreConektaSignatureEnv();
   });
 
-  it('returns 400 and does not process webhook when signature is invalid', async () => {
+  it('returns 401 and does not process webhook when signature is invalid in production', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.CONEKTA_WEBHOOK_PUBLIC_KEY = publicKeyPem;
+
+    const payload = Buffer.from('{"id":"evt_1"}', 'utf8');
+    const invalidDigest = signPayload(Buffer.from('{"id":"evt_2"}', 'utf8'), privateKeyPem);
     const req = buildReq({
-      body: Buffer.from('{"id":"evt_1"}', 'utf8'),
-      digest: 'invalid-signature',
+      body: payload,
+      digest: invalidDigest,
     });
     const res = buildRes();
 
-    const verifySpy = jest
-      .spyOn(conektaSignatureModule, 'verifyConektaSignature')
-      .mockReturnValue(false);
     const receptionSpy = jest
       .spyOn(webhookInboxReceptionModule, 'receiveWebhookIntoInbox')
       .mockResolvedValue({ ok: true, duplicate: false });
 
     await conektaEndpoint(req, res);
 
-    expect(verifySpy).toHaveBeenCalledWith(req);
     expect(receptionSpy).not.toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.status).toHaveBeenCalledWith(401);
     expect(res.send).toHaveBeenCalledWith('Invalid signature');
   });
 
   it('returns 200 when signature is valid and processing succeeds', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.CONEKTA_WEBHOOK_PUBLIC_KEY = publicKeyPem;
+
+    const payload = Buffer.from('{"id":"evt_1"}', 'utf8');
+    const digest = signPayload(payload, privateKeyPem);
     const req = buildReq({
-      body: Buffer.from('{"id":"evt_1"}', 'utf8'),
-      digest: 'signature',
+      body: payload,
+      digest,
     });
     const res = buildRes();
 
-    const verifySpy = jest
-      .spyOn(conektaSignatureModule, 'verifyConektaSignature')
-      .mockReturnValue(true);
     const receptionSpy = jest
       .spyOn(webhookInboxReceptionModule, 'receiveWebhookIntoInbox')
       .mockResolvedValue({ ok: true, duplicate: false });
 
     await conektaEndpoint(req, res);
 
-    expect(verifySpy).toHaveBeenCalledWith(req);
     expect(receptionSpy).toHaveBeenCalledWith({
       provider: 'conekta',
       req,
@@ -192,14 +185,18 @@ describe('conektaEndpoint', () => {
     expect(res.end).toHaveBeenCalled();
   });
 
-  it('returns 400 when webhook payload JSON is invalid', async () => {
+  it('returns 500 when processing fails after successful signature validation', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.CONEKTA_WEBHOOK_PUBLIC_KEY = publicKeyPem;
+
+    const payload = Buffer.from('{"id":"evt_1"}', 'utf8');
+    const digest = signPayload(payload, privateKeyPem);
     const req = buildReq({
-      body: Buffer.from('not-json', 'utf8'),
-      digest: 'signature',
+      body: payload,
+      digest,
     });
     const res = buildRes();
 
-    jest.spyOn(conektaSignatureModule, 'verifyConektaSignature').mockReturnValue(true);
     jest.spyOn(webhookInboxReceptionModule, 'receiveWebhookIntoInbox').mockResolvedValue({
       ok: false,
       status: 400,
@@ -208,7 +205,28 @@ describe('conektaEndpoint', () => {
 
     await conektaEndpoint(req, res);
 
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith('Webhook processing failed');
+  });
+
+  it('returns 400 when webhook body is not Buffer', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.CONEKTA_WEBHOOK_PUBLIC_KEY = publicKeyPem;
+
+    const req = buildReq({
+      body: { id: 'evt_1' },
+      digest: 'sha-256=irrelevant',
+    });
+    const res = buildRes();
+
+    const receptionSpy = jest
+      .spyOn(webhookInboxReceptionModule, 'receiveWebhookIntoInbox')
+      .mockResolvedValue({ ok: true, duplicate: false });
+
+    await conektaEndpoint(req, res);
+
+    expect(receptionSpy).not.toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.send).toHaveBeenCalledWith('Invalid JSON payload');
+    expect(res.send).toHaveBeenCalledWith('Invalid webhook payload');
   });
 });
