@@ -16,6 +16,7 @@ import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLa
 import Pagination from "../../../components/Pagination/Pagination";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import { Select } from "../../../components/ui";
+import { CrmP2Panels } from "./CrmP2Panels";
 import "./CrmDashboard.scss";
 
 interface CrmDailyRegistrationPoint {
@@ -709,6 +710,8 @@ export function CrmDashboard() {
               />
             ))}
           </section>
+
+          <CrmP2Panels rangeDays={rangeDays} />
 
           {automation ? (
             <section className="crm-section">

@@ -3409,3 +3409,839 @@ export const getAnalyticsLiveSnapshot = async (
     }),
   };
 };
+
+export interface AnalyticsCouponCurrencyBreakdown {
+  currency: string;
+  paidOrders: number;
+  grossRevenue: number;
+  discountGiven: number;
+  netRevenue: number;
+}
+
+export interface AnalyticsCouponMetricRow {
+  couponId: number;
+  code: string;
+  description: string | null;
+  discountPct: number;
+  active: number;
+  paidOrders: number;
+  uniqueUsers: number;
+  currency: string | null;
+  grossRevenue: number | null;
+  discountGiven: number | null;
+  netRevenue: number | null;
+  roiNetOverDiscount: number | null;
+  lastUsedAt: string | null;
+  currencyBreakdown: AnalyticsCouponCurrencyBreakdown[];
+}
+
+export interface AnalyticsCouponMetricsSnapshot {
+  range: {
+    days: number;
+    start: string;
+    end: string;
+  };
+  total: number;
+  items: AnalyticsCouponMetricRow[];
+}
+
+export const getAnalyticsCouponMetrics = async (
+  prisma: PrismaClient,
+  daysInput?: number,
+  limitInput?: number,
+  pageInput?: number,
+): Promise<AnalyticsCouponMetricsSnapshot> => {
+  const { days, startDate } = resolveRange(daysInput);
+  const limit =
+    typeof limitInput === 'number' && Number.isFinite(limitInput)
+      ? Math.max(1, Math.min(200, Math.floor(limitInput)))
+      : 50;
+  const page =
+    typeof pageInput === 'number' && Number.isFinite(pageInput) && pageInput > 0
+      ? Math.floor(pageInput)
+      : 0;
+  const offset = page * limit;
+
+  if (!process.env.DATABASE_URL) {
+    return {
+      range: {
+        days,
+        start: normalizeDateOutput(startDate),
+        end: normalizeDateOutput(new Date()),
+      },
+      total: 0,
+      items: [],
+    };
+  }
+
+  const [totalRows, metricRows] = await Promise.all([
+    prisma.$queryRaw<Array<{ total: bigint | number }>>(Prisma.sql`
+      SELECT COUNT(*) AS total
+      FROM (
+        SELECT 1
+        FROM orders o
+        INNER JOIN cupons c
+          ON c.id = o.cupon_id
+        WHERE o.status = 1
+          AND o.is_plan = 1
+          AND (o.is_canceled IS NULL OR o.is_canceled = 0)
+          AND o.cupon_id IS NOT NULL
+          AND o.date_order >= ${startDate}
+        GROUP BY c.id
+      ) AS groups_count
+    `),
+    prisma.$queryRaw<
+      Array<{
+        couponId: number;
+        code: string;
+        description: string | null;
+        discountPct: number;
+        active: number;
+        paidOrders: bigint | number;
+        uniqueUsers: bigint | number;
+        lastUsedAt: Date | string | null;
+      }>
+    >(Prisma.sql`
+      SELECT
+        c.id AS couponId,
+        c.code AS code,
+        c.description AS description,
+        c.discount AS discountPct,
+        c.active AS active,
+        COUNT(*) AS paidOrders,
+        COUNT(DISTINCT o.user_id) AS uniqueUsers,
+        MAX(o.date_order) AS lastUsedAt
+      FROM orders o
+      INNER JOIN cupons c
+        ON c.id = o.cupon_id
+      WHERE o.status = 1
+        AND o.is_plan = 1
+        AND (o.is_canceled IS NULL OR o.is_canceled = 0)
+        AND o.cupon_id IS NOT NULL
+        AND o.date_order >= ${startDate}
+      GROUP BY c.id
+      ORDER BY paidOrders DESC,
+        lastUsedAt DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `),
+  ]);
+
+  const total = numberFromUnknown(totalRows?.[0]?.total ?? 0);
+  const couponIds = metricRows
+    .map((row) => Number(row.couponId))
+    .filter((id) => Number.isFinite(id) && id > 0);
+
+  const currencyRows =
+    couponIds.length > 0
+      ? await prisma.$queryRaw<
+          Array<{
+            couponId: number;
+            currency: string | null;
+            paidOrders: bigint | number;
+            grossRevenue: bigint | number;
+            discountGiven: bigint | number;
+          }>
+        >(Prisma.sql`
+          SELECT
+            o.cupon_id AS couponId,
+            UPPER(COALESCE(NULLIF(p.moneda, ''), 'MXN')) AS currency,
+            COUNT(*) AS paidOrders,
+            COALESCE(SUM(o.total_price), 0) AS grossRevenue,
+            COALESCE(SUM(o.total_price * (o.discount / 100.0)), 0) AS discountGiven
+          FROM orders o
+          LEFT JOIN plans p
+            ON p.id = o.plan_id
+          WHERE o.status = 1
+            AND o.is_plan = 1
+            AND (o.is_canceled IS NULL OR o.is_canceled = 0)
+            AND o.cupon_id IN (${Prisma.join(couponIds)})
+            AND o.date_order >= ${startDate}
+          GROUP BY o.cupon_id, currency
+          ORDER BY grossRevenue DESC
+        `)
+      : [];
+
+  const currencyMap = new Map<number, AnalyticsCouponCurrencyBreakdown[]>();
+  for (const row of currencyRows) {
+    const couponId = Number(row.couponId);
+    const grossRevenue = numberFromUnknown(row.grossRevenue);
+    const discountGiven = numberFromUnknown(row.discountGiven);
+    const netRevenue = grossRevenue - discountGiven;
+    const item: AnalyticsCouponCurrencyBreakdown = {
+      currency: String(row.currency || 'MXN').toUpperCase(),
+      paidOrders: numberFromUnknown(row.paidOrders),
+      grossRevenue,
+      discountGiven,
+      netRevenue,
+    };
+    const existing = currencyMap.get(couponId) ?? [];
+    existing.push(item);
+    currencyMap.set(couponId, existing);
+  }
+
+  const items: AnalyticsCouponMetricRow[] = metricRows.map((row) => {
+    const breakdown = currencyMap.get(Number(row.couponId)) ?? [];
+    const singleCurrency = breakdown.length === 1 ? breakdown[0] : null;
+    const grossRevenue = singleCurrency ? singleCurrency.grossRevenue : null;
+    const discountGiven = singleCurrency ? singleCurrency.discountGiven : null;
+    const netRevenue = singleCurrency ? singleCurrency.netRevenue : null;
+    const roiNetOverDiscount =
+      discountGiven != null && discountGiven > 0 && netRevenue != null
+        ? netRevenue / discountGiven
+        : null;
+    const lastUsedAtValue =
+      row.lastUsedAt instanceof Date
+        ? row.lastUsedAt.toISOString()
+        : typeof row.lastUsedAt === 'string'
+          ? new Date(row.lastUsedAt).toISOString()
+          : null;
+
+    return {
+      couponId: Number(row.couponId),
+      code: row.code,
+      description: row.description,
+      discountPct: Number(row.discountPct ?? 0),
+      active: Number(row.active ?? 0),
+      paidOrders: numberFromUnknown(row.paidOrders),
+      uniqueUsers: numberFromUnknown(row.uniqueUsers),
+      currency: singleCurrency ? singleCurrency.currency : null,
+      grossRevenue,
+      discountGiven,
+      netRevenue,
+      roiNetOverDiscount,
+      lastUsedAt: lastUsedAtValue,
+      currencyBreakdown: breakdown,
+    };
+  });
+
+  return {
+    range: {
+      days,
+      start: normalizeDateOutput(startDate),
+      end: normalizeDateOutput(new Date()),
+    },
+    total,
+    items,
+  };
+};
+
+export interface PaymentFailuresOpsWebhookRow {
+  id: number;
+  provider: string;
+  eventId: string;
+  eventType: string;
+  status: string;
+  attempts: number;
+  receivedAt: string;
+  processedAt: string | null;
+  lastError: string | null;
+}
+
+export interface PaymentFailuresOpsFailureRow {
+  userId: number;
+  failedAt: string;
+  analyticsEventId: string;
+  provider: string | null;
+  providerEventId: string | null;
+  reason: string | null;
+  orderId: number | null;
+  orderType: string | null;
+  webhookStatus: {
+    provider: string;
+    status: string;
+    attempts: number;
+    lastError: string | null;
+    receivedAt: string;
+    processedAt: string | null;
+  } | null;
+  dunningStagesSent: number[];
+}
+
+export interface PaymentFailuresOpsSnapshot {
+  range: {
+    days: number;
+    start: string;
+    end: string;
+  };
+  kpis: {
+    paymentFailedEvents: number;
+    paymentFailedUsers: number;
+    dunningEmailsSent: number;
+    failedWebhooksLikelyPayment: number;
+  };
+  recentFailures: PaymentFailuresOpsFailureRow[];
+  recentFailedWebhooks: PaymentFailuresOpsWebhookRow[];
+}
+
+const scrubErrorForAdminUi = (raw: unknown): string | null => {
+  const text = typeof raw === 'string' ? raw : raw instanceof Error ? raw.message : '';
+  if (!text) return null;
+  // Best-effort: scrub obvious PII patterns from operational errors (keep UI safe for sharing).
+  return text
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '[redacted-email]')
+    .replace(/\+?\d[\d\s().-]{8,}\d/g, '[redacted-phone]')
+    .slice(0, 800);
+};
+
+export const getAnalyticsPaymentFailuresOps = async (
+  prisma: PrismaClient,
+  daysInput?: number,
+  limitInput?: number,
+): Promise<PaymentFailuresOpsSnapshot> => {
+  const { days, startDate } = resolveRange(daysInput);
+  const limit =
+    typeof limitInput === 'number' && Number.isFinite(limitInput)
+      ? Math.max(10, Math.min(200, Math.floor(limitInput)))
+      : 100;
+
+  if (!process.env.DATABASE_URL) {
+    return {
+      range: {
+        days,
+        start: normalizeDateOutput(startDate),
+        end: normalizeDateOutput(new Date()),
+      },
+      kpis: {
+        paymentFailedEvents: 0,
+        paymentFailedUsers: 0,
+        dunningEmailsSent: 0,
+        failedWebhooksLikelyPayment: 0,
+      },
+      recentFailures: [],
+      recentFailedWebhooks: [],
+    };
+  }
+
+  await ensureAnalyticsEventsTable(prisma);
+
+  const [paymentFailedAggRows, dunningRows, failedWebhookCountRows, failureRows, failedWebhookRows] =
+    await Promise.all([
+      prisma.$queryRaw<
+        Array<{ total: bigint | number; users: bigint | number }>
+      >(Prisma.sql`
+        SELECT
+          COUNT(*) AS total,
+          COUNT(DISTINCT user_id) AS users
+        FROM analytics_events
+        WHERE event_name = 'payment_failed'
+          AND event_ts >= ${startDate}
+          AND user_id IS NOT NULL
+          ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_SQL}
+      `),
+      prisma.automationActionLog.aggregate({
+        _count: { _all: true },
+        where: {
+          action_key: 'dunning_payment_failed',
+          sent_at: { gte: startDate },
+        },
+      }),
+      prisma.webhookInboxEvent.count({
+        where: {
+          received_at: { gte: startDate },
+          status: 'FAILED',
+          OR: [
+            { event_type: { contains: 'payment_failed' } },
+            { event_type: { contains: 'PAYMENT.FAILED' } },
+            { event_type: { contains: 'PAYMENT.DENIED' } },
+            { event_type: { contains: 'invoice.payment_failed' } },
+            { event_type: { contains: 'payment_intent.payment_failed' } },
+          ],
+        },
+      }),
+      prisma.$queryRaw<
+        Array<{
+          userId: number;
+          failedAt: Date | string;
+          analyticsEventId: string;
+          derivedProvider: string | null;
+          derivedProviderEventId: string | null;
+          provider: string | null;
+          reason: string | null;
+          orderId: bigint | number | null;
+          orderType: string | null;
+        }>
+      >(Prisma.sql`
+        SELECT
+          ae.user_id AS userId,
+          ae.event_ts AS failedAt,
+          ae.event_id AS analyticsEventId,
+          NULLIF(SUBSTRING_INDEX(ae.event_id, ':', 1), '') AS derivedProvider,
+          NULLIF(SUBSTRING_INDEX(SUBSTRING_INDEX(ae.event_id, ':', 2), ':', -1), '') AS derivedProviderEventId,
+          JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.provider')) AS provider,
+          JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.reason')) AS reason,
+          NULLIF(CAST(JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.orderId')) AS UNSIGNED), 0) AS orderId,
+          JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.orderType')) AS orderType
+        FROM analytics_events ae
+        WHERE ae.event_name = 'payment_failed'
+          AND ae.event_ts >= ${startDate}
+          AND ae.user_id IS NOT NULL
+          ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL}
+        ORDER BY ae.event_ts DESC
+        LIMIT ${limit}
+      `),
+      prisma.webhookInboxEvent.findMany({
+        where: {
+          received_at: { gte: startDate },
+          status: 'FAILED',
+          OR: [
+            { event_type: { contains: 'payment_failed' } },
+            { event_type: { contains: 'PAYMENT.FAILED' } },
+            { event_type: { contains: 'PAYMENT.DENIED' } },
+            { event_type: { contains: 'invoice.payment_failed' } },
+            { event_type: { contains: 'payment_intent.payment_failed' } },
+          ],
+        },
+        orderBy: [{ received_at: 'desc' }],
+        take: Math.min(100, limit),
+        select: {
+          id: true,
+          provider: true,
+          event_id: true,
+          event_type: true,
+          status: true,
+          attempts: true,
+          received_at: true,
+          processed_at: true,
+          last_error: true,
+        },
+      }),
+    ]);
+
+  const paymentFailedAgg = paymentFailedAggRows[0] ?? { total: 0, users: 0 };
+
+  const userIds = Array.from(
+    new Set(
+      failureRows
+        .map((row) => Number(row.userId))
+        .filter((id) => Number.isFinite(id) && id > 0),
+    ),
+  );
+
+  const providerEventIds = Array.from(
+    new Set(
+      failureRows
+        .map((row) => String(row.derivedProviderEventId ?? '').trim())
+        .filter(Boolean),
+    ),
+  );
+
+  const [dunningStageRows, webhookRowsForFailures] = await Promise.all([
+    userIds.length > 0
+      ? prisma.automationActionLog.groupBy({
+          by: ['user_id', 'stage'],
+          where: {
+            user_id: { in: userIds },
+            action_key: 'dunning_payment_failed',
+            sent_at: { gte: startDate },
+          },
+          _max: { sent_at: true },
+        })
+      : Promise.resolve([]),
+    providerEventIds.length > 0
+      ? prisma.webhookInboxEvent.findMany({
+          where: {
+            event_id: { in: providerEventIds },
+            provider: { in: ['stripe', 'stripe_pi', 'paypal', 'conekta'] },
+          },
+          select: {
+            provider: true,
+            event_id: true,
+            status: true,
+            attempts: true,
+            received_at: true,
+            processed_at: true,
+            last_error: true,
+          },
+        })
+      : Promise.resolve([]),
+  ]);
+
+  const dunningStagesByUser = new Map<number, number[]>();
+  for (const row of dunningStageRows as Array<{ user_id: number; stage: number }>) {
+    const userId = Number(row.user_id);
+    const stage = Number(row.stage);
+    if (!Number.isFinite(userId) || userId <= 0) continue;
+    if (!Number.isFinite(stage)) continue;
+    const existing = dunningStagesByUser.get(userId) ?? [];
+    if (!existing.includes(stage)) existing.push(stage);
+    dunningStagesByUser.set(userId, existing);
+  }
+  for (const stages of dunningStagesByUser.values()) {
+    stages.sort((a, b) => a - b);
+  }
+
+  const webhookByEventId = new Map<
+    string,
+    {
+      provider: string;
+      status: string;
+      attempts: number;
+      receivedAt: string;
+      processedAt: string | null;
+      lastError: string | null;
+    }
+  >();
+  for (const row of webhookRowsForFailures) {
+    const key = String(row.event_id);
+    // If multiple providers share the same event id (unlikely), prefer the non-failed one for signal.
+    const next = {
+      provider: row.provider,
+      status: row.status,
+      attempts: row.attempts,
+      receivedAt: row.received_at.toISOString(),
+      processedAt: row.processed_at ? row.processed_at.toISOString() : null,
+      lastError: scrubErrorForAdminUi(row.last_error),
+    };
+    const prev = webhookByEventId.get(key);
+    if (!prev) {
+      webhookByEventId.set(key, next);
+      continue;
+    }
+    if (prev.status === 'FAILED' && next.status !== 'FAILED') {
+      webhookByEventId.set(key, next);
+    }
+  }
+
+  const recentFailures: PaymentFailuresOpsFailureRow[] = failureRows.map((row) => {
+    const failedAtValue =
+      row.failedAt instanceof Date ? row.failedAt : new Date(row.failedAt);
+    const provider =
+      (row.provider && String(row.provider).trim()) ||
+      (row.derivedProvider && String(row.derivedProvider).trim()) ||
+      null;
+    const providerEventId =
+      row.derivedProviderEventId && String(row.derivedProviderEventId).trim()
+        ? String(row.derivedProviderEventId).trim()
+        : null;
+    const webhookStatus = providerEventId
+      ? webhookByEventId.get(providerEventId) ?? null
+      : null;
+
+    return {
+      userId: Number(row.userId),
+      failedAt: failedAtValue.toISOString(),
+      analyticsEventId: row.analyticsEventId,
+      provider,
+      providerEventId,
+      reason: row.reason ? String(row.reason) : null,
+      orderId: row.orderId == null ? null : numberFromUnknown(row.orderId),
+      orderType: row.orderType ? String(row.orderType) : null,
+      webhookStatus,
+      dunningStagesSent: dunningStagesByUser.get(Number(row.userId)) ?? [],
+    };
+  });
+
+  const recentFailedWebhooks: PaymentFailuresOpsWebhookRow[] = failedWebhookRows.map((row) => ({
+    id: row.id,
+    provider: row.provider,
+    eventId: row.event_id,
+    eventType: row.event_type,
+    status: row.status,
+    attempts: row.attempts,
+    receivedAt: row.received_at.toISOString(),
+    processedAt: row.processed_at ? row.processed_at.toISOString() : null,
+    lastError: scrubErrorForAdminUi(row.last_error),
+  }));
+
+  return {
+    range: {
+      days,
+      start: normalizeDateOutput(startDate),
+      end: normalizeDateOutput(new Date()),
+    },
+    kpis: {
+      paymentFailedEvents: numberFromUnknown(paymentFailedAgg.total),
+      paymentFailedUsers: numberFromUnknown(paymentFailedAgg.users),
+      dunningEmailsSent: Number(dunningRows._count._all ?? 0),
+      failedWebhooksLikelyPayment: Number(failedWebhookCountRows ?? 0),
+    },
+    recentFailures,
+    recentFailedWebhooks,
+  };
+};
+
+export interface AnalyticsCrmSourceSegmentRow {
+  source: string;
+  registrations: number;
+  activationD1Users: number;
+  activationD1Pct: number;
+  paidUsers: number;
+  paidPct: number;
+}
+
+export interface AnalyticsCrmChurnRiskSummary {
+  activeUsers: number;
+  activeNoDownload7dUsers: number;
+  activePaymentFailed14dUsers: number;
+}
+
+export interface AnalyticsCrmChurnRiskUserRow {
+  userId: number;
+  username: string;
+  email: string;
+  phone: string | null;
+  accessUntil: string;
+  lastDownloadAt: string | null;
+  lastPaymentFailedAt: string | null;
+  riskNoDownload7d: boolean;
+  riskPaymentFailed14d: boolean;
+}
+
+export interface AnalyticsCrmSegmentationSnapshot {
+  range: {
+    days: number;
+    start: string;
+    end: string;
+  };
+  bySource: AnalyticsCrmSourceSegmentRow[];
+  churnRisk: {
+    summary: AnalyticsCrmChurnRiskSummary;
+    users: AnalyticsCrmChurnRiskUserRow[];
+  };
+}
+
+export const getAnalyticsCrmSegmentation = async (
+  prisma: PrismaClient,
+  daysInput?: number,
+  sourceLimitInput?: number,
+  riskLimitInput?: number,
+): Promise<AnalyticsCrmSegmentationSnapshot> => {
+  const { days, startDate } = resolveRange(daysInput);
+  const sourceLimit =
+    typeof sourceLimitInput === 'number' && Number.isFinite(sourceLimitInput)
+      ? Math.max(3, Math.min(50, Math.floor(sourceLimitInput)))
+      : 15;
+  const riskLimit =
+    typeof riskLimitInput === 'number' && Number.isFinite(riskLimitInput)
+      ? Math.max(10, Math.min(200, Math.floor(riskLimitInput)))
+      : 50;
+
+  if (!process.env.DATABASE_URL) {
+    return {
+      range: {
+        days,
+        start: normalizeDateOutput(startDate),
+        end: normalizeDateOutput(new Date()),
+      },
+      bySource: [],
+      churnRisk: {
+        summary: {
+          activeUsers: 0,
+          activeNoDownload7dUsers: 0,
+          activePaymentFailed14dUsers: 0,
+        },
+        users: [],
+      },
+    };
+  }
+
+  await ensureAnalyticsEventsTable(prisma);
+
+  const now = new Date();
+  const noDownloadSince = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const paymentFailedSince = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+
+  const [sourceRows, activeSummaryRows, riskUserRows] = await Promise.all([
+    prisma.$queryRaw<
+      Array<{
+        source: string | null;
+        registrations: bigint | number;
+        activationD1Users: bigint | number;
+        paidUsers: bigint | number;
+      }>
+    >(Prisma.sql`
+      SELECT
+        COALESCE(NULLIF(TRIM(ae.utm_source), ''), '(direct)') AS source,
+        COUNT(DISTINCT ae.user_id) AS registrations,
+        COUNT(DISTINCT CASE WHEN dh.id IS NOT NULL THEN ae.user_id END) AS activationD1Users,
+        COUNT(DISTINCT CASE WHEN fp.user_id IS NOT NULL THEN ae.user_id END) AS paidUsers
+      FROM analytics_events ae
+      LEFT JOIN (
+        SELECT user_id, MIN(date_order) AS first_paid_at
+        FROM orders
+        WHERE status = 1
+          AND is_plan = 1
+          AND (is_canceled IS NULL OR is_canceled = 0)
+        GROUP BY user_id
+      ) fp
+        ON fp.user_id = ae.user_id
+        AND fp.first_paid_at >= ae.event_ts
+      LEFT JOIN download_history dh
+        ON dh.userId = ae.user_id
+        AND dh.date >= ae.event_ts
+        AND dh.date < DATE_ADD(ae.event_ts, INTERVAL 1 DAY)
+      WHERE ae.event_name = 'registration_completed'
+        AND ae.user_id IS NOT NULL
+        AND ae.event_ts >= ${startDate}
+        ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL}
+      GROUP BY source
+      ORDER BY registrations DESC
+      LIMIT ${sourceLimit}
+    `),
+    prisma.$queryRaw<
+      Array<{
+        activeUsers: bigint | number;
+        activeNoDownload7dUsers: bigint | number;
+        activePaymentFailed14dUsers: bigint | number;
+      }>
+    >(Prisma.sql`
+      SELECT
+        COUNT(*) AS activeUsers,
+        SUM(CASE WHEN last_download.lastDownloadAt IS NULL OR last_download.lastDownloadAt < ${noDownloadSince} THEN 1 ELSE 0 END) AS activeNoDownload7dUsers,
+        SUM(CASE WHEN last_failed.lastPaymentFailedAt IS NOT NULL AND last_failed.lastPaymentFailedAt >= ${paymentFailedSince} THEN 1 ELSE 0 END) AS activePaymentFailed14dUsers
+      FROM (
+        SELECT du.user_id AS userId, MAX(du.date_end) AS accessUntil
+        FROM descargas_user du
+        GROUP BY du.user_id
+        HAVING accessUntil >= DATE(${now})
+      ) active
+      LEFT JOIN (
+        SELECT dh.userId AS userId, MAX(dh.date) AS lastDownloadAt
+        FROM download_history dh
+        GROUP BY dh.userId
+      ) last_download
+        ON last_download.userId = active.userId
+      LEFT JOIN (
+        SELECT ae.user_id AS userId, MAX(ae.event_ts) AS lastPaymentFailedAt
+        FROM analytics_events ae
+        WHERE ae.event_name = 'payment_failed'
+          AND ae.user_id IS NOT NULL
+          AND ae.event_ts >= DATE_SUB(NOW(), INTERVAL 120 DAY)
+          ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL}
+        GROUP BY ae.user_id
+      ) last_failed
+        ON last_failed.userId = active.userId
+    `),
+    prisma.$queryRaw<
+      Array<{
+        userId: number;
+        username: string;
+        email: string;
+        phone: string | null;
+        accessUntil: Date | string;
+        lastDownloadAt: Date | string | null;
+        lastPaymentFailedAt: Date | string | null;
+      }>
+    >(Prisma.sql`
+      SELECT
+        u.id AS userId,
+        u.username AS username,
+        u.email AS email,
+        u.phone AS phone,
+        active.accessUntil AS accessUntil,
+        last_download.lastDownloadAt AS lastDownloadAt,
+        last_failed.lastPaymentFailedAt AS lastPaymentFailedAt
+      FROM (
+        SELECT du.user_id AS userId, MAX(du.date_end) AS accessUntil
+        FROM descargas_user du
+        GROUP BY du.user_id
+        HAVING accessUntil >= DATE(${now})
+      ) active
+      INNER JOIN users u
+        ON u.id = active.userId
+      LEFT JOIN (
+        SELECT dh.userId AS userId, MAX(dh.date) AS lastDownloadAt
+        FROM download_history dh
+        GROUP BY dh.userId
+      ) last_download
+        ON last_download.userId = active.userId
+      LEFT JOIN (
+        SELECT ae.user_id AS userId, MAX(ae.event_ts) AS lastPaymentFailedAt
+        FROM analytics_events ae
+        WHERE ae.event_name = 'payment_failed'
+          AND ae.user_id IS NOT NULL
+          AND ae.event_ts >= DATE_SUB(NOW(), INTERVAL 120 DAY)
+          ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL}
+        GROUP BY ae.user_id
+      ) last_failed
+        ON last_failed.userId = active.userId
+      WHERE (last_download.lastDownloadAt IS NULL OR last_download.lastDownloadAt < ${noDownloadSince})
+        OR (last_failed.lastPaymentFailedAt IS NOT NULL AND last_failed.lastPaymentFailedAt >= ${paymentFailedSince})
+      ORDER BY
+        (last_failed.lastPaymentFailedAt IS NOT NULL AND last_failed.lastPaymentFailedAt >= ${paymentFailedSince}) DESC,
+        (last_download.lastDownloadAt IS NULL OR last_download.lastDownloadAt < ${noDownloadSince}) DESC,
+        active.accessUntil ASC
+      LIMIT ${riskLimit}
+    `),
+  ]);
+
+  const bySource: AnalyticsCrmSourceSegmentRow[] = sourceRows.map((row) => {
+    const registrations = numberFromUnknown(row.registrations);
+    const activationD1Users = numberFromUnknown(row.activationD1Users);
+    const paidUsers = numberFromUnknown(row.paidUsers);
+    const activationD1Pct =
+      registrations > 0 ? (activationD1Users / registrations) * 100 : 0;
+    const paidPct = registrations > 0 ? (paidUsers / registrations) * 100 : 0;
+
+    return {
+      source: String(row.source || '(direct)'),
+      registrations,
+      activationD1Users,
+      activationD1Pct,
+      paidUsers,
+      paidPct,
+    };
+  });
+
+  const activeSummary = activeSummaryRows[0] ?? {
+    activeUsers: 0,
+    activeNoDownload7dUsers: 0,
+    activePaymentFailed14dUsers: 0,
+  };
+
+  const churnRiskUsers: AnalyticsCrmChurnRiskUserRow[] = riskUserRows.map((row) => {
+    const lastDownloadAt =
+      row.lastDownloadAt instanceof Date
+        ? row.lastDownloadAt.toISOString()
+        : typeof row.lastDownloadAt === 'string'
+          ? new Date(row.lastDownloadAt).toISOString()
+          : null;
+    const lastPaymentFailedAt =
+      row.lastPaymentFailedAt instanceof Date
+        ? row.lastPaymentFailedAt.toISOString()
+        : typeof row.lastPaymentFailedAt === 'string'
+          ? new Date(row.lastPaymentFailedAt).toISOString()
+          : null;
+    const accessUntilIso =
+      row.accessUntil instanceof Date
+        ? row.accessUntil.toISOString().slice(0, 10)
+        : typeof row.accessUntil === 'string'
+          ? new Date(row.accessUntil).toISOString().slice(0, 10)
+          : String(row.accessUntil);
+
+    const lastDownloadDate = lastDownloadAt ? new Date(lastDownloadAt) : null;
+    const lastFailedDate = lastPaymentFailedAt ? new Date(lastPaymentFailedAt) : null;
+
+    const riskNoDownload7d = !lastDownloadDate || lastDownloadDate < noDownloadSince;
+    const riskPaymentFailed14d = Boolean(lastFailedDate && lastFailedDate >= paymentFailedSince);
+
+    return {
+      userId: Number(row.userId),
+      username: row.username,
+      email: row.email,
+      phone: row.phone,
+      accessUntil: accessUntilIso,
+      lastDownloadAt,
+      lastPaymentFailedAt,
+      riskNoDownload7d,
+      riskPaymentFailed14d,
+    };
+  });
+
+  return {
+    range: {
+      days,
+      start: normalizeDateOutput(startDate),
+      end: normalizeDateOutput(new Date()),
+    },
+    bySource,
+    churnRisk: {
+      summary: {
+        activeUsers: numberFromUnknown(activeSummary.activeUsers),
+        activeNoDownload7dUsers: numberFromUnknown(activeSummary.activeNoDownload7dUsers),
+        activePaymentFailed14dUsers: numberFromUnknown(activeSummary.activePaymentFailed14dUsers),
+      },
+      users: churnRiskUsers,
+    },
+  };
+};

@@ -617,6 +617,189 @@ export const downloadHistoryRouter = router({
         data: results,
       };
     }),
+  getDownloadConsumptionDashboard: shieldedProcedure
+    .input(
+      z
+        .object({
+          days: z.number().int().min(1).max(365).optional(),
+          limitUsers: z.number().int().min(1).max(200).optional(),
+          limitUserDays: z.number().int().min(1).max(500).optional(),
+          abuseGbPerDayThreshold: z.number().min(0).max(5000).optional(),
+        })
+        .optional(),
+    )
+    .query(async ({ ctx: { prisma }, input }) => {
+      const days =
+        typeof input?.days === 'number' && Number.isFinite(input.days)
+          ? Math.max(1, Math.min(365, Math.floor(input.days)))
+          : 7;
+      const start = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+      const limitUsers =
+        typeof input?.limitUsers === 'number' && Number.isFinite(input.limitUsers)
+          ? Math.max(1, Math.min(200, Math.floor(input.limitUsers)))
+          : 50;
+      const limitUserDays =
+        typeof input?.limitUserDays === 'number' && Number.isFinite(input.limitUserDays)
+          ? Math.max(1, Math.min(500, Math.floor(input.limitUserDays)))
+          : 120;
+
+      const envThreshold = Number(
+        (process.env.DOWNLOAD_ABUSE_GB_PER_DAY_THRESHOLD || '').trim(),
+      );
+      const thresholdGbPerDay =
+        typeof input?.abuseGbPerDayThreshold === 'number' &&
+        Number.isFinite(input.abuseGbPerDayThreshold)
+          ? Math.max(0, Math.min(5000, input.abuseGbPerDayThreshold))
+          : Number.isFinite(envThreshold) && envThreshold > 0
+            ? envThreshold
+            : 20;
+      const thresholdBytes = thresholdGbPerDay * 1024 * 1024 * 1024;
+
+      const numberFromUnknown = (value: unknown): number => {
+        if (typeof value === 'bigint') return Number(value);
+        if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+        if (typeof value === 'string') {
+          const parsed = Number(value);
+          return Number.isFinite(parsed) ? parsed : 0;
+        }
+        return 0;
+      };
+
+      const bytesToGb = (bytes: unknown): number => numberFromUnknown(bytes) / (1024 * 1024 * 1024);
+
+      const [totalsRows, topUsersRows, topUserDaysRows] = await Promise.all([
+        prisma.$queryRaw<
+          Array<{
+            downloads: bigint | number;
+            totalBytes: bigint | number;
+            uniqueUsers: bigint | number;
+          }>
+        >(Prisma.sql`
+          SELECT
+            COUNT(*) AS downloads,
+            COALESCE(SUM(dh.size), 0) AS totalBytes,
+            COUNT(DISTINCT dh.userId) AS uniqueUsers
+          FROM download_history dh
+          WHERE dh.date >= ${start}
+        `),
+        prisma.$queryRaw<
+          Array<{
+            userId: number;
+            username: string;
+            email: string;
+            phone: string | null;
+            downloads: bigint | number;
+            totalBytes: bigint | number;
+            lastDownload: Date | string | null;
+          }>
+        >(Prisma.sql`
+          SELECT
+            dh.userId AS userId,
+            u.username AS username,
+            u.email AS email,
+            u.phone AS phone,
+            COUNT(*) AS downloads,
+            COALESCE(SUM(dh.size), 0) AS totalBytes,
+            MAX(dh.date) AS lastDownload
+          FROM download_history dh
+          INNER JOIN users u
+            ON u.id = dh.userId
+          WHERE dh.date >= ${start}
+          GROUP BY dh.userId, u.username, u.email, u.phone
+          ORDER BY totalBytes DESC
+          LIMIT ${limitUsers}
+        `),
+        prisma.$queryRaw<
+          Array<{
+            userId: number;
+            username: string;
+            email: string;
+            phone: string | null;
+            day: string;
+            downloads: bigint | number;
+            totalBytes: bigint | number;
+          }>
+        >(Prisma.sql`
+          SELECT
+            dh.userId AS userId,
+            u.username AS username,
+            u.email AS email,
+            u.phone AS phone,
+            DATE_FORMAT(dh.date, '%Y-%m-%d') AS day,
+            COUNT(*) AS downloads,
+            COALESCE(SUM(dh.size), 0) AS totalBytes
+          FROM download_history dh
+          INNER JOIN users u
+            ON u.id = dh.userId
+          WHERE dh.date >= ${start}
+          GROUP BY dh.userId, u.username, u.email, u.phone, day
+          ORDER BY totalBytes DESC
+          LIMIT ${limitUserDays}
+        `),
+      ]);
+
+      const totals = totalsRows[0] ?? { downloads: 0, totalBytes: 0, uniqueUsers: 0 };
+
+      const topUsers = topUsersRows.map((row) => {
+        const lastDownloadValue =
+          row.lastDownload instanceof Date
+            ? row.lastDownload.toISOString()
+            : typeof row.lastDownload === 'string'
+              ? new Date(row.lastDownload).toISOString()
+              : null;
+        const totalGb = bytesToGb(row.totalBytes);
+        return {
+          userId: Number(row.userId),
+          username: row.username,
+          email: row.email,
+          phone: row.phone,
+          downloads: numberFromUnknown(row.downloads),
+          totalBytes: numberFromUnknown(row.totalBytes),
+          totalGb,
+          lastDownload: lastDownloadValue,
+        };
+      });
+
+      const topUserDays = topUserDaysRows.map((row) => {
+        const totalGb = bytesToGb(row.totalBytes);
+        return {
+          userId: Number(row.userId),
+          username: row.username,
+          email: row.email,
+          phone: row.phone,
+          day: row.day,
+          downloads: numberFromUnknown(row.downloads),
+          totalBytes: numberFromUnknown(row.totalBytes),
+          totalGb,
+        };
+      });
+
+      const alerts = topUserDays
+        .filter((row) => numberFromUnknown(row.totalBytes) >= thresholdBytes)
+        .slice(0, 100)
+        .map((row) => ({
+          ...row,
+          thresholdGbPerDay,
+        }));
+
+      return {
+        range: {
+          days,
+          start: start.toISOString(),
+          end: new Date().toISOString(),
+        },
+        thresholdGbPerDay,
+        totals: {
+          downloads: numberFromUnknown(totals.downloads),
+          totalBytes: numberFromUnknown(totals.totalBytes),
+          totalGb: bytesToGb(totals.totalBytes),
+          uniqueUsers: numberFromUnknown(totals.uniqueUsers),
+        },
+        topUsers,
+        topUserDays,
+        alerts,
+      };
+    }),
   getRemainingGigas: shieldedProcedure
     .input(
       z.object({

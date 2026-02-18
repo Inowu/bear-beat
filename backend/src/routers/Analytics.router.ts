@@ -8,9 +8,12 @@ import {
   ensureAnalyticsEventsTableExists,
   getAnalyticsBusinessMetrics,
   getAnalyticsCancellationReasons,
+  getAnalyticsCouponMetrics,
   getAnalyticsCrmDashboard,
+  getAnalyticsCrmSegmentation,
   getAnalyticsHealthAlerts,
   getAnalyticsLiveSnapshot,
+  getAnalyticsPaymentFailuresOps,
   getAnalyticsTopEvents,
   getAnalyticsAttributionBreakdown,
   getAnalyticsDailySeries,
@@ -124,6 +127,29 @@ const analyticsCrmDashboardInputSchema = z
     trialNoDownloadPage: z.number().int().min(0).max(5000).optional(),
     paidNoDownload2hPage: z.number().int().min(0).max(5000).optional(),
     paidNoDownloadPage: z.number().int().min(0).max(5000).optional(),
+  })
+  .optional();
+
+const analyticsCrmSegmentationInputSchema = z
+  .object({
+    days: z.number().int().min(1).max(365).optional(),
+    sourceLimit: z.number().int().min(3).max(50).optional(),
+    riskLimit: z.number().int().min(10).max(200).optional(),
+  })
+  .optional();
+
+const analyticsCouponMetricsInputSchema = z
+  .object({
+    days: z.number().int().min(1).max(365).optional(),
+    limit: z.number().int().min(1).max(200).optional(),
+    page: z.number().int().min(0).max(5000).optional(),
+  })
+  .optional();
+
+const analyticsPaymentFailuresOpsInputSchema = z
+  .object({
+    days: z.number().int().min(1).max(365).optional(),
+    limit: z.number().int().min(10).max(200).optional(),
   })
   .optional();
 
@@ -514,6 +540,34 @@ export const analyticsRouter = router({
         paidNoDownload2hPage: input?.paidNoDownload2hPage,
         paidNoDownloadPage: input?.paidNoDownloadPage,
       });
+    }),
+  getAnalyticsCrmSegmentation: shieldedProcedure
+    .input(analyticsCrmSegmentationInputSchema)
+    .query(async ({ ctx, input }) => {
+      assertAdminRole(ctx.session?.user?.role);
+      return getAnalyticsCrmSegmentation(
+        ctx.prisma,
+        input?.days,
+        input?.sourceLimit,
+        input?.riskLimit,
+      );
+    }),
+  getAnalyticsCouponMetrics: shieldedProcedure
+    .input(analyticsCouponMetricsInputSchema)
+    .query(async ({ ctx, input }) => {
+      assertAdminRole(ctx.session?.user?.role);
+      return getAnalyticsCouponMetrics(
+        ctx.prisma,
+        input?.days,
+        input?.limit,
+        input?.page,
+      );
+    }),
+  getAnalyticsPaymentFailuresOps: shieldedProcedure
+    .input(analyticsPaymentFailuresOpsInputSchema)
+    .query(async ({ ctx, input }) => {
+      assertAdminRole(ctx.session?.user?.role);
+      return getAnalyticsPaymentFailuresOps(ctx.prisma, input?.days, input?.limit);
     }),
   getAutomationStatus: shieldedProcedure
     .input(automationStatusInputSchema)
