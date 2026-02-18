@@ -114,7 +114,9 @@ async function run(): Promise<void> {
     ]);
 
     await page.goto(`${baseUrl}/planes`, { waitUntil: 'domcontentloaded' });
-    const firstPlanCta = page.locator('.plan-card-btn-hero').first();
+    const firstPlanCta = page
+      .locator("button[data-testid^='plan-primary-cta-']")
+      .first();
     await firstPlanCta.waitFor({ state: 'visible', timeout: timeoutMs });
 
     await Promise.all([
