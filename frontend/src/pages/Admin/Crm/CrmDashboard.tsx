@@ -93,6 +93,7 @@ interface CrmSnapshot {
     registrations: number;
     paidOrders: number;
     newPaidUsers: number;
+    newPaidUsersFromRangeRegistrations: number;
     renewalOrders: number;
     grossRevenue: number;
     avgOrderValue: number;
@@ -404,7 +405,7 @@ export function CrmDashboard() {
   const signals = useMemo(() => {
     if (!snapshot) return [];
     const registrationToPaidPct = rate(
-      snapshot.kpis.newPaidUsers,
+      snapshot.kpis.newPaidUsersFromRangeRegistrations,
       snapshot.kpis.registrations,
     );
     const activationRiskTotal =
@@ -418,7 +419,7 @@ export function CrmDashboard() {
       {
         title: "Conversión registro → primer pago",
         value: formatPct(registrationToPaidPct),
-        helper: `${snapshot.kpis.newPaidUsers} de ${snapshot.kpis.registrations} registros del rango.`,
+        helper: `${snapshot.kpis.newPaidUsersFromRangeRegistrations} de ${snapshot.kpis.registrations} registros del rango.`,
         tone:
           registrationToPaidPct >= 15
             ? "ok"

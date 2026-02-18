@@ -345,6 +345,7 @@ interface AnalyticsCrmDashboardSnapshot {
     registrations: number;
     paidOrders: number;
     newPaidUsers: number;
+    newPaidUsersFromRangeRegistrations: number;
     renewalOrders: number;
     grossRevenue: number;
     avgOrderValue: number;
@@ -2032,6 +2033,7 @@ export const getAnalyticsCrmDashboard = async (
         registrations: 0,
         paidOrders: 0,
         newPaidUsers: 0,
+        newPaidUsersFromRangeRegistrations: 0,
         renewalOrders: 0,
         grossRevenue: 0,
         avgOrderValue: 0,
@@ -2122,10 +2124,21 @@ export const getAnalyticsCrmDashboard = async (
         AND (is_canceled IS NULL OR is_canceled = 0)
     `),
     prisma.$queryRaw<
-      Array<{ newPaidUsers: bigint | number; renewalOrders: bigint | number }>
+      Array<{
+        newPaidUsers: bigint | number;
+        newPaidUsersFromRangeRegistrations: bigint | number;
+        renewalOrders: bigint | number;
+      }>
     >(Prisma.sql`
       SELECT
         COUNT(CASE WHEN first_paid_at >= ${startDateOnly} THEN 1 END) AS newPaidUsers,
+        COUNT(
+          CASE
+            WHEN first_paid_at >= ${startDateOnly}
+              AND u.registered_on >= DATE(${startDateOnly})
+            THEN 1
+          END
+        ) AS newPaidUsersFromRangeRegistrations,
         COALESCE(SUM(CASE
           WHEN o.date_order >= ${startDateOnly}
             AND o.status = 1
@@ -2143,6 +2156,8 @@ export const getAnalyticsCrmDashboard = async (
           AND (is_canceled IS NULL OR is_canceled = 0)
         GROUP BY user_id
       ) fp
+      INNER JOIN users u
+        ON u.id = fp.user_id
       LEFT JOIN orders o
         ON o.user_id = fp.user_id
     `),
@@ -2497,6 +2512,9 @@ export const getAnalyticsCrmDashboard = async (
     paidOrders > 0 ? roundNumber(grossRevenue / paidOrders, 2) : 0;
 
   const newPaidUsers = numberFromUnknown(newVsRenewalRows?.[0]?.newPaidUsers);
+  const newPaidUsersFromRangeRegistrations = numberFromUnknown(
+    newVsRenewalRows?.[0]?.newPaidUsersFromRangeRegistrations,
+  );
   const renewalOrders = numberFromUnknown(newVsRenewalRows?.[0]?.renewalOrders);
 
   const trialsDaily = trialDailyRows.map((row) => ({
@@ -2597,6 +2615,7 @@ export const getAnalyticsCrmDashboard = async (
       registrations,
       paidOrders,
       newPaidUsers,
+      newPaidUsersFromRangeRegistrations,
       renewalOrders,
       grossRevenue,
       avgOrderValue,
