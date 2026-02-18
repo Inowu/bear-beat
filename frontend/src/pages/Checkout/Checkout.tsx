@@ -2027,7 +2027,10 @@ function Checkout() {
                   type="button"
                   className="checkout-cta-btn checkout-cta-btn--primary checkout2026__cta"
                   onClick={handleContinuePayment}
-                  disabled={processingMethod !== null}
+                  disabled={
+                    processingMethod !== null
+                    || (checkoutConsentMethods.includes(selectedMethod) && !acceptRecurring)
+                  }
                   data-testid="checkout-continue"
                 >
                   {continueLabel}

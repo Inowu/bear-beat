@@ -786,7 +786,7 @@ function SignUpForm() {
             className="auth-consent-checkbox"
           />
           <span>
-            Quiero recibir promociones y novedades por email.
+            Quiero recibir promociones y novedades por email (opcional).
           </span>
         </label>
         {isWhatsAppOptionalOpen && `${formik.values.phone ?? ""}`.trim() && (
@@ -800,12 +800,13 @@ function SignUpForm() {
               className="auth-consent-checkbox"
             />
             <span>
-              Quiero recibir promociones por WhatsApp (opcional).
+              Quiero recibir promociones y novedades por WhatsApp (opcional).
             </span>
           </label>
         )}
         <div className="auth-consent-hint">
-          Puedes desuscribirte de promociones en cualquier momento desde cualquier email.
+          Si no aceptas marketing, solo recibirás mensajes transaccionales y de soporte. Puedes desuscribirte de
+          promociones en cualquier momento.
         </div>
       </div>
       <p className="auth-signup-legal">
