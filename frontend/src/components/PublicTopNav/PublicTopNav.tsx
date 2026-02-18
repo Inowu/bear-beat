@@ -12,6 +12,7 @@ type PublicTopNavProps = {
   loginFrom?: string;
   cta?: ReactNode;
   plansTo?: string;
+  onPlansClick?: () => void;
 };
 
 export default function PublicTopNav({
@@ -21,6 +22,7 @@ export default function PublicTopNav({
   loginFrom,
   cta,
   plansTo = "/planes",
+  onPlansClick,
 }: PublicTopNavProps) {
   const { userToken } = useUserContext();
   const { theme } = useTheme();
@@ -44,13 +46,14 @@ export default function PublicTopNav({
         <div className="home-topnav__right" aria-label="Acciones">
           <nav className="home-topnav__nav" aria-label="Links">
             {usePlansAsHashLink ? (
-              <Link to={plansTo} className="home-topnav__link">
+              <Link to={plansTo} className="home-topnav__link" onClick={onPlansClick}>
                 Planes
               </Link>
             ) : (
               <NavLink
                 to={plansTo}
                 className={({ isActive }) => `home-topnav__link${isActive ? " is-active" : ""}`}
+                onClick={onPlansClick}
               >
                 Planes
               </NavLink>
@@ -58,7 +61,9 @@ export default function PublicTopNav({
             {userToken ? (
               <NavLink
                 to="/micuenta"
-                className={({ isActive }) => `home-topnav__link${isActive ? " is-active" : ""}`}
+                className={({ isActive }) =>
+                  `home-topnav__link home-topnav__link--account${isActive ? " is-active" : ""}`
+                }
               >
                 Mi cuenta
               </NavLink>
@@ -72,6 +77,16 @@ export default function PublicTopNav({
               </Link>
             )}
           </nav>
+          {userToken && (
+            <NavLink
+              to="/micuenta"
+              className={({ isActive }) =>
+                `home-topnav__mobile-account${isActive ? " is-active" : ""}`
+              }
+            >
+              Mi cuenta
+            </NavLink>
+          )}
           {cta}
         </div>
       </div>

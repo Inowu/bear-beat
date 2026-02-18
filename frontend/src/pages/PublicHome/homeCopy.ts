@@ -1,8 +1,8 @@
-export const HOME_CTA_PRIMARY_LABEL_FALLBACK = "Empezar prueba";
+export const HOME_CTA_PRIMARY_LABEL_FALLBACK = "Continuar al pago seguro";
 export const HOME_CTA_SECONDARY_LABEL = "Ver demo";
 
 export function getHomeCtaPrimaryLabel(trial: { enabled: boolean; days: number } | null): string {
-  if (trial?.enabled && Number.isFinite(trial.days) && trial.days > 0) return "Empezar prueba";
+  if (trial?.enabled && Number.isFinite(trial.days) && trial.days > 0) return "Iniciar prueba";
   return HOME_CTA_PRIMARY_LABEL_FALLBACK;
 }
 
@@ -16,11 +16,9 @@ export const HOME_HERO_FIT_POINTS = [
 ] as const;
 
 export const HOME_HERO_MICROCOPY_BASE =
-  "Pago seguro. Tarjeta, PayPal, SPEI y efectivo. Cancela cuando quieras.";
+  "Pago seguro. Activa en minutos y cancela cuando quieras.";
 export const HOME_HERO_TRUST_ITEMS = [
-  "Pago seguro",
-  "Tarjeta, PayPal, SPEI y efectivo",
-  "Cancela cuando quieras",
+  "Pago seguro con Tarjeta, PayPal, SPEI y efectivo.",
 ] as const;
 export const HOME_HERO_MICROCOPY_TRIAL =
   "Prueba solo con tarjeta. Cancela antes de que termine y no se cobra.";

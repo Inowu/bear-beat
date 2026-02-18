@@ -1,7 +1,7 @@
 import "./Plans.scss";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import trpc from "../../api";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 import { AlertTriangle, Check, Layers3, RefreshCw } from "src/icons";
 import { formatCatalogSizeMarketing, formatInt } from "../../utils/format";
@@ -14,6 +14,7 @@ import { useUserContext } from "../../contexts/UserContext";
 import PlansStickyCta from "./PlansStickyCta";
 
 type CurrencyKey = "mxn" | "usd";
+type PlansEntry = "fastlane" | "compare";
 const DEFAULT_LIMITS_NOTE =
   "La cuota de descarga es lo que puedes bajar en cada ciclo. El catálogo total es lo disponible para elegir.";
 const PAYMENT_METHOD_VALUES: PaymentMethodId[] = [
@@ -111,10 +112,24 @@ function formatPayNowMethodsLabel(methods: PaymentMethodId[]): string {
   return labels.length > 0 ? labels.join(" / ") : "Otros métodos";
 }
 
+function parsePlansEntry(value: string | null): PlansEntry | null {
+  if (!value) return null;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "fastlane" || normalized === "compare") return normalized;
+  return null;
+}
+
 function Plans() {
   const { currentUser } = useUserContext();
   const navigate = useNavigate();
+  const location = useLocation();
   const checkoutPrefetchedRef = useRef(false);
+  const compareTrackedRef = useRef(false);
+  const entry = useMemo(
+    () => parsePlansEntry(new URLSearchParams(location.search).get("entry")),
+    [location.search],
+  );
+  const isFastlaneEntry = entry === "fastlane";
 
   const [plansByCurrency, setPlansByCurrency] = useState<{
     mxn: PublicBestPlan | null;
@@ -312,6 +327,15 @@ function Plans() {
     });
   }, [plansByCurrency.mxn, plansByCurrency.usd, pricingUi.defaultCurrency]);
 
+  useEffect(() => {
+    if (entry !== "compare" || compareTrackedRef.current) return;
+    compareTrackedRef.current = true;
+    trackGrowthMetric(GROWTH_METRICS.PLANS_COMPARE_CLICK, {
+      source: "plans_view",
+      entry,
+    });
+  }, [entry]);
+
   const selectedPlan = useMemo(() => {
     return selectedCurrency === "mxn"
       ? plansByCurrency.mxn
@@ -379,6 +403,14 @@ function Plans() {
     };
   }, [paymentMethods, price.amount, price.currencyLabel, trialConfig]);
 
+  const primaryCtaLabel = trialPreview.applies
+    ? "Iniciar prueba"
+    : "Continuar al pago seguro";
+
+  const trustCopy = trialPreview.applies
+    ? "Tu prueba se activa con tarjeta. Cancela cuando quieras."
+    : "Tu cuenta se activa al pagar. Cancela cuando quieras.";
+
   const selectCurrency = (next: CurrencyKey) => {
     if (next === selectedCurrency) return;
     setSelectedCurrency(next);
@@ -390,6 +422,7 @@ function Plans() {
 
   const handleActivate = useCallback(() => {
     if (!selectedPlan) return;
+    const checkoutEntry: PlansEntry = entry === "fastlane" ? "fastlane" : "compare";
 
     trackManyChatConversion(MC_EVENTS.SELECT_PLAN);
     trackManyChatConversion(MC_EVENTS.CLICK_BUY);
@@ -401,10 +434,18 @@ function Plans() {
       planId: selectedPlan.planId,
       currency: selectedCurrency.toUpperCase(),
       amount: toNumber(selectedPlan.price) || null,
+      entry: checkoutEntry,
     });
+    if (checkoutEntry === "compare") {
+      trackGrowthMetric(GROWTH_METRICS.PLANS_COMPARE_CLICK, {
+        source: "plans_activate",
+        planId: selectedPlan.planId,
+        currency: selectedCurrency.toUpperCase(),
+      });
+    }
 
-    navigate(`/comprar?priceId=${selectedPlan.planId}`);
-  }, [navigate, selectedCurrency, selectedPlan]);
+    navigate(`/comprar?priceId=${selectedPlan.planId}&entry=${checkoutEntry}`);
+  }, [entry, navigate, selectedCurrency, selectedPlan]);
   const handleStickyDemo = useCallback(() => {
     trackGrowthMetric(GROWTH_METRICS.CTA_SECONDARY_CLICK, {
       location: "plans_sticky_demo",
@@ -438,21 +479,30 @@ function Plans() {
 
   const plansTopCta = (
     <div className="plans2026__topCta" aria-label="Progreso de compra">
-      <span className="plans2026__step">Paso 1 de 2</span>
+      <span className="plans2026__step">
+        {isFastlaneEntry ? "Comparación rápida" : "Paso 1 de 2"}
+      </span>
     </div>
   );
 
   return (
     <div className="plans2026 bb-marketing-page bb-marketing-page--flat-cards">
-      <PublicTopNav loginFrom="/planes" cta={plansTopCta} />
+      <PublicTopNav
+        loginFrom={`${location.pathname}${location.search}`}
+        cta={plansTopCta}
+      />
 
       <section className="plans2026__main" aria-label="Planes y precios">
         <div className="plans2026__container bb-marketing-container--narrow">
           <header className="plans2026__hero" data-testid="plans-hero">
-            <p className="plans2026__kicker">Paso 1 de 2</p>
+            <p className="plans2026__kicker">
+              {isFastlaneEntry ? "Compara y sigue" : "Paso 1 de 2"}
+            </p>
             <h1>Elige tu plan.</h1>
             <p className="plans2026__subtitle">
-              Primero eliges moneda y plan. En el siguiente paso completas el pago seguro.
+              {isFastlaneEntry
+                ? "Si quieres comparar antes de pagar, aquí eliges moneda y plan sin perder tu avance."
+                : "Primero eliges moneda y plan. En el siguiente paso completas el pago seguro."}
             </p>
           </header>
 
@@ -701,7 +751,7 @@ function Plans() {
                       : "plans-activate"
                   }
                 >
-                  Continuar al pago seguro
+                  {primaryCtaLabel}
                 </button>
 
                 <div className="plans2026__trust" aria-label="Confianza">
@@ -711,7 +761,7 @@ function Plans() {
                     ariaLabel="Métodos de pago disponibles"
                   />
                   <p className="plans2026__trust-copy">
-                    Tu cuenta se activa al pagar. Cancela cuando quieras.
+                    {trustCopy}
                   </p>
                   <p className="plans2026__links" aria-label="Ayuda">
                     <Link to="/instrucciones" className="plans2026__link">
@@ -732,7 +782,7 @@ function Plans() {
       </section>
       <PlansStickyCta
         planId={selectedPlan?.planId ?? null}
-        ctaLabel="Continuar al pago"
+        ctaLabel={primaryCtaLabel}
         trial={
           trialPreview.applies
             ? {

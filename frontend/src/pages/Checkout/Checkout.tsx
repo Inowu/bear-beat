@@ -84,6 +84,7 @@ function toPositiveNumber(value: unknown): number | null {
 }
 
 type CheckoutCurrencyKey = "mxn" | "usd";
+type CheckoutEntry = "fastlane" | "compare";
 
 function readRegionFromLocale(locale: string): string | null {
   const tag = `${locale ?? ""}`.trim();
@@ -182,6 +183,13 @@ function parseCheckoutMethodFromSearch(value: string | null): CheckoutMethod | n
   if (typeof value !== "string") return null;
   const normalized = value.trim().toLowerCase();
   return isCheckoutMethod(normalized) ? normalized : null;
+}
+
+function parseCheckoutEntry(value: string | null): CheckoutEntry | null {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "fastlane" || normalized === "compare") return normalized;
+  return null;
 }
 
 function pickPreferredCheckoutMethod(opts: {
@@ -585,7 +593,7 @@ function Checkout() {
   const [availableMethods, setAvailableMethods] = useState<CheckoutMethod[]>(() => [...DEFAULT_AVAILABLE_METHODS]);
   const [processingMethod, setProcessingMethod] = useState<CheckoutMethod | null>(null);
   const [inlineError, setInlineError] = useState<string | null>(null);
-  const [acceptRecurring, setAcceptRecurring] = useState(false);
+  const [acceptRecurring, setAcceptRecurring] = useState(true);
   const [showSpeiModal, setShowSpeiModal] = useState(false);
   const [speiData, setSpeiData] = useState<ISpeiData | null>(null);
   const [showOxxoModal, setShowOxxoModal] = useState(false);
@@ -605,6 +613,11 @@ function Checkout() {
   const checkoutCancelHandledRef = useRef(false);
   const searchParams = new URLSearchParams(location.search);
   const priceId = searchParams.get("priceId");
+  const checkoutEntry = parseCheckoutEntry(searchParams.get("entry"));
+  const plansCompareUrl =
+    checkoutEntry === "fastlane"
+      ? "/planes?entry=fastlane"
+      : "/planes?entry=compare";
   const requestedMethod = searchParams.get("method");
   const checkoutCancelled = searchParams.get("cancelled");
   const checkoutCancelledMethod = searchParams.get("cancelled_method");
@@ -741,9 +754,10 @@ function Checkout() {
         planId: plan?.id ?? null,
         currency: plan?.moneda?.toUpperCase() ?? null,
         amount: Number(plan?.price) || null,
+        entry: checkoutEntry,
       });
     },
-    [plan?.id, plan?.moneda, plan?.price],
+    [checkoutEntry, plan?.id, plan?.moneda, plan?.price],
   );
 
   const pendingPurchaseStorageKey = "bb.checkout.pendingPurchase";
@@ -813,11 +827,11 @@ function Checkout() {
           {
             label: "Volver a planes",
             variant: "secondary",
-            onClick: () => {
-              closeErrorModal();
-              navigate("/planes");
+              onClick: () => {
+                closeErrorModal();
+                navigate(plansCompareUrl);
+              },
             },
-          },
         ];
 
         setErrorTitle(checkoutErrorTitle(opts.method, opts.reason));
@@ -892,6 +906,7 @@ function Checkout() {
       location.pathname,
       location.search,
       navigate,
+      plansCompareUrl,
       removeCouponFromUrl,
       selectCheckoutMethod,
     ],
@@ -1023,7 +1038,7 @@ function Checkout() {
     setRedirecting(false);
     setShowRedirectHelp(false);
     setInlineError(null);
-    setAcceptRecurring(false);
+    setAcceptRecurring(true);
     setSelectedMethod("card");
     setSpeiData(null);
     setShowSpeiModal(false);
@@ -1048,14 +1063,16 @@ function Checkout() {
       planId: plan.id,
       currency: plan.moneda?.toUpperCase() ?? null,
       amount: Number(plan.price) || null,
+      entry: checkoutEntry,
     });
     trackGrowthMetric(GROWTH_METRICS.CHECKOUT_START, {
       planId: plan.id,
       currency: plan.moneda?.toUpperCase() ?? null,
       amount: Number(plan.price) || null,
       method: "unknown",
+      entry: checkoutEntry,
     });
-  }, [plan, checkManyChat]);
+  }, [plan, checkManyChat, checkoutEntry]);
 
   const startStripeCheckout = useCallback(async () => {
     if (!priceId || !plan?.id) return;
@@ -1684,10 +1701,17 @@ function Checkout() {
     isMethodTrial,
   });
 
+  const checkoutHeroTitle = isMethodTrial
+    ? "Inicia tu prueba."
+    : "Finaliza tu compra.";
+  const checkoutHeroSubtitle = isMethodTrial
+    ? "Paso 2 de 2: confirma tu tarjeta para activar tu prueba hoy."
+    : "Paso 2 de 2: confirma tu método de pago y activa en minutos.";
+
   const checkoutTopCta = (
     <div className="checkout2026__topCta" aria-label="Progreso de compra">
       <span className="checkout2026__step">Paso 2 de 2</span>
-      <Link to="/planes" className="checkout2026__back">
+      <Link to={plansCompareUrl} className="checkout2026__back">
         Cambiar plan
       </Link>
     </div>
@@ -1696,9 +1720,9 @@ function Checkout() {
   const TopNav = (
     <PublicTopNav
       className="checkout2026__topnav"
-      brandTo="/planes"
-      plansTo="/planes"
-      loginFrom={priceId ? `/comprar?priceId=${priceId}` : "/comprar"}
+      brandTo={plansCompareUrl}
+      plansTo={plansCompareUrl}
+      loginFrom={`${location.pathname}${location.search}`}
       cta={checkoutTopCta}
     />
   );
@@ -1732,7 +1756,7 @@ function Checkout() {
                   >
                     Reintentar
                   </button>
-                  <Link to="/planes" className="checkout-cta-btn checkout-cta-btn--ghost">
+                  <Link to={plansCompareUrl} className="checkout-cta-btn checkout-cta-btn--ghost">
                     Ver planes
                   </Link>
                 </div>
@@ -1793,7 +1817,7 @@ function Checkout() {
                       {checkoutSwitchActionLabel(altMethod)}
                     </button>
                   )}
-                  <Link to="/planes" className="checkout-cta-btn checkout-cta-btn--ghost">
+                  <Link to={plansCompareUrl} className="checkout-cta-btn checkout-cta-btn--ghost">
                     Volver a planes
                   </Link>
                 </div>
@@ -1833,7 +1857,7 @@ function Checkout() {
                   >
                     Reintentar
                   </button>
-                  <Link to="/planes" className="checkout-cta-btn checkout-cta-btn--ghost">
+                  <Link to={plansCompareUrl} className="checkout-cta-btn checkout-cta-btn--ghost">
                     Ver planes
                   </Link>
                 </div>
@@ -1961,10 +1985,8 @@ function Checkout() {
       <section className="checkout2026__main" aria-label="Checkout">
         <div className="checkout2026__container">
           <header className="checkout2026__hero">
-            <h1>Finaliza tu compra.</h1>
-            <p className="checkout2026__heroSubtitle">
-              Paso 2 de 2: confirma tu método de pago y activa en minutos.
-            </p>
+            <h1>{checkoutHeroTitle}</h1>
+            <p className="checkout2026__heroSubtitle">{checkoutHeroSubtitle}</p>
           </header>
 
           <section className="checkout-card bb-hero-card checkout2026__card" aria-label="Completa tu pago">
@@ -2062,11 +2084,11 @@ function Checkout() {
                     disabled={processingMethod !== null}
                   />
                   <span className="checkout2026__consentCopy">
-                    <strong>Acepto renovación automática</strong>
+                    <strong>Renovación automática</strong>
                     <span>
                       {isMethodTrial
-                        ? `Hoy $0. Después ${summaryMonthlyLabel} hasta que cancele.`
-                        : `${summaryMonthlyLabel} hasta que cancele.`}
+                        ? `Hoy $0. Después ${summaryMonthlyLabel}; se renueva hasta cancelar.`
+                        : `${summaryMonthlyLabel}; se renueva hasta cancelar.`}
                     </span>
                   </span>
                 </label>

@@ -22,7 +22,11 @@ import { trackLead } from "../../../utils/facebookPixel";
 import { trackManyChatConversion, MC_EVENTS } from "../../../utils/manychatPixel";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../../utils/growthMetrics";
 import { generateEventId } from "../../../utils/marketingIds";
-import { clearAuthReturnUrl, readAuthReturnUrl } from "../../../utils/authReturnUrl";
+import {
+  clearAuthReturnUrl,
+  normalizeAuthReturnUrl,
+  readAuthReturnUrl,
+} from "../../../utils/authReturnUrl";
 import {
   shouldBypassTurnstile,
   TURNSTILE_BYPASS_TOKEN,
@@ -67,12 +71,31 @@ function SignUpForm() {
   const { theme } = useTheme();
   const brandLockup = theme === "light" ? brandLockupBlack : brandLockupCyan;
   const brandLockupOnDark = brandLockupCyan;
+  const stateFromRaw = (location.state as { from?: string } | null)?.from;
+  const stateFrom =
+    typeof stateFromRaw === "string" ? normalizeAuthReturnUrl(stateFromRaw) : null;
+  const storedFromRaw = readAuthReturnUrl();
+  const allowStoredFrom = useMemo(() => {
+    if (stateFrom) return true;
+    if (typeof window === "undefined" || typeof document === "undefined")
+      return true;
+    if (!document.referrer) return false;
+    try {
+      return new URL(document.referrer).origin === window.location.origin;
+    } catch {
+      return false;
+    }
+  }, [stateFrom]);
+  const storedFrom = allowStoredFrom ? storedFromRaw : null;
+  const fromSource: "state" | "storage" | "default" = stateFrom
+    ? "state"
+    : storedFrom
+      ? "storage"
+      : "default";
   // Default conversion path after signup is /planes (unless the user came from a protected route / checkout).
-  const fromCandidate =
-    (location.state as { from?: string } | null)?.from ?? readAuthReturnUrl() ?? "/planes";
-  const from =
-    typeof fromCandidate === "string" && fromCandidate.startsWith("/") ? fromCandidate : "/planes";
+  const from = stateFrom ?? storedFrom ?? "/planes";
   const isCheckoutIntent = from.startsWith("/comprar") || from.startsWith("/checkout");
+  const authStorageEventTrackedRef = useRef(false);
   const checkoutPlanId = useMemo(() => {
     if (typeof window === "undefined") return null;
     if (!isCheckoutIntent) return null;
@@ -229,7 +252,7 @@ function SignUpForm() {
     passwordConfirmation: "",
     acceptSupportComms: true,
     marketingOptInEmail: true,
-    marketingOptInWhatsApp: false,
+    marketingOptInWhatsApp: true,
   };
 
   const getEmailDomain = (email: string) => {
@@ -356,11 +379,28 @@ function SignUpForm() {
     (event: ChangeEvent<HTMLInputElement>) => {
       const { checked } = event.target;
       formik.setFieldValue("acceptSupportComms", checked, true);
-      // Single-consent UX: email marketing follows the main consent toggle.
+      // Single-consent UX: marketing preferences follow the main consent toggle.
       formik.setFieldValue("marketingOptInEmail", checked, false);
+      formik.setFieldValue("marketingOptInWhatsApp", checked, false);
     },
     [formik],
   );
+
+  useEffect(() => {
+    if (fromSource !== "storage" || authStorageEventTrackedRef.current) return;
+    authStorageEventTrackedRef.current = true;
+    trackGrowthMetric(GROWTH_METRICS.AUTH_CONTEXT_FROM_STORAGE_USED, {
+      flow: "signup",
+      from,
+      path: location.pathname,
+    });
+  }, [from, fromSource, location.pathname]);
+
+  useEffect(() => {
+    if (allowStoredFrom) return;
+    if (!storedFromRaw) return;
+    clearAuthReturnUrl();
+  }, [allowStoredFrom, storedFromRaw]);
 
   useEffect(() => {
     if (!inlineError) return;
@@ -792,7 +832,9 @@ function SignUpForm() {
             className="auth-consent-checkbox"
           />
           <span className="auth-consent-copy">
-            <strong>Acepto mensajes transaccionales, de soporte y promociones por email.</strong>
+            <strong>
+              Acepto mensajes transaccionales, de soporte y promociones por email y WhatsApp.
+            </strong>
             <small>
               Solo para accesos, pagos, soporte y novedades de Bear Beat. Cero spam. Puedes desuscribirte de
               promociones en cualquier momento.
@@ -803,21 +845,6 @@ function SignUpForm() {
           <div className="error-formik" role="alert">
             {formik.errors.acceptSupportComms}
           </div>
-        )}
-        {`${formik.values.phone ?? ""}`.trim() && (
-          <label className="auth-consent-item">
-            <input
-              type="checkbox"
-              name="marketingOptInWhatsApp"
-              checked={formik.values.marketingOptInWhatsApp}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              className="auth-consent-checkbox"
-            />
-            <span>
-              Quiero recibir promociones y novedades por WhatsApp.
-            </span>
-          </label>
         )}
       </div>
       <p className="auth-signup-legal">

@@ -1,6 +1,5 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown } from "src/icons";
 import trpc from "../../api";
 import { useTheme } from "../../contexts/ThemeContext";
 import brandMarkBlack from "../../assets/brand/bearbeat-mark-black.png";
@@ -8,7 +7,6 @@ import brandMarkCyan from "../../assets/brand/bearbeat-mark-cyan.png";
 import PublicTopNav from "../../components/PublicTopNav/PublicTopNav";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../utils/growthMetrics";
-import { FALLBACK_GENRES, type GenreStats } from "./fallbackGenres";
 import {
   getHomeCtaPrimaryLabel,
   HOME_HERO_MICROCOPY_BASE,
@@ -18,24 +16,15 @@ import {
   formatCatalogSizeMarketing,
   HOME_NUMBER_LOCALE,
   formatInt,
-  normalizeGenreDisplayName,
-  normalizeSearchKey,
 } from "./homeFormat";
 import HomeHero from "./sections/HomeHero";
-import HowItWorks from "./sections/HowItWorks";
-import InsidePreview from "./sections/InsidePreview";
-import TrustBar from "./sections/TrustBar";
-import CatalogDemo, { type CatalogGenre } from "./sections/CatalogDemo";
-import HumanSocialProof from "./sections/HumanSocialProof";
 import SocialProof from "./sections/SocialProof";
-import Compatibility from "./sections/Compatibility";
 import Pricing, {
   type PricingPlan,
   type TrialSummary,
 } from "./sections/Pricing";
 import type { PaymentMethodId } from "../../components/PaymentMethodLogos/PaymentMethodLogos";
 import HomeFaq from "./sections/HomeFaq";
-import HomeDemoModal from "./sections/HomeDemoModal";
 import StickyMobileCta from "./sections/StickyMobileCta";
 import "./PublicHome.scss";
 
@@ -52,15 +41,6 @@ const PAYMENT_METHOD_VALUES: PaymentMethodId[] = [
   "transfer",
 ];
 type CurrencyKey = "mxn" | "usd";
-
-const HOME_DETAILS_HASH_TARGETS = new Set<string>([
-  "#detalles",
-  "#inside",
-  "#catalogo",
-  "#como-funciona",
-  "#testimonios",
-  "#compatibilidad",
-]);
 
 const MEXICO_TIMEZONES = new Set<string>([
   "America/Mexico_City",
@@ -114,27 +94,6 @@ type TrialConfigResponse = {
   days: number;
   gb: number;
   eligible?: boolean | null;
-};
-
-type PublicCatalogSummary = {
-  error?: string;
-  totalFiles: number;
-  totalGB: number;
-  videos: number;
-  audios: number;
-  karaokes: number;
-  other: number;
-  gbVideos: number;
-  gbAudios: number;
-  gbKaraokes: number;
-  totalGenres: number;
-  genresDetail: GenreStats[];
-  generatedAt: string;
-  stale: boolean;
-  effectiveTotalFiles?: number;
-  effectiveTotalGB?: number;
-  effectiveTotalTB?: number;
-  isFallback?: boolean;
 };
 
 type PublicTopDownloadsResponse = {
@@ -242,7 +201,6 @@ function resolveCurrencyForPlans(
 }
 
 export default function PublicHome() {
-  const location = useLocation();
   const { theme } = useTheme();
   const brandMark = theme === "light" ? brandMarkBlack : brandMarkCyan;
   const [pricingUi, setPricingUi] = useState<PublicPricingUiSnapshot>({
@@ -259,8 +217,6 @@ export default function PublicHome() {
   const [trialConfig, setTrialConfig] = useState<TrialConfigResponse | null>(
     null,
   );
-  const [catalogSummary, setCatalogSummary] =
-    useState<PublicCatalogSummary | null>(null);
   const [topDownloads, setTopDownloads] =
     useState<PublicTopDownloadsResponse | null>(null);
   const [pricingPlans, setPricingPlans] = useState<{
@@ -273,8 +229,6 @@ export default function PublicHome() {
   const [pricingStatus, setPricingStatus] = useState<
     "loading" | "loaded" | "error"
   >("loading");
-  const [showDemo, setShowDemo] = useState(false);
-  const [showExtendedDetails, setShowExtendedDetails] = useState(false);
 
   const pricingRef = useRef<HTMLDivElement | null>(null);
   const pricingViewedRef = useRef(false);
@@ -328,10 +282,6 @@ export default function PublicHome() {
         gb: Number(cfg?.gb ?? 0),
         eligible: cfg?.eligible ?? null,
       });
-
-      const catalog =
-        (response?.catalog as PublicCatalogSummary | null) ?? null;
-      setCatalogSummary(catalog);
 
       const mxn = response?.plans?.mxn ?? null;
       const usd = response?.plans?.usd ?? null;
@@ -453,7 +403,6 @@ export default function PublicHome() {
       } catch {
         if (!cancelled) {
           setTrialConfig({ enabled: false, days: 0, gb: 0, eligible: null });
-          setCatalogSummary(null);
           setPricingPlans({ mxn: null, usd: null });
           setPricingUi((current) => ({
             ...current,
@@ -518,10 +467,11 @@ export default function PublicHome() {
     const selectedPlanId = Number(selectedPlan?.planId ?? 0);
 
     if (Number.isFinite(selectedPlanId) && selectedPlanId > 0) {
-      return `/comprar?priceId=${selectedPlanId}`;
+      return `/comprar?priceId=${selectedPlanId}&entry=fastlane`;
     }
-    return "/planes";
+    return "/planes?entry=compare";
   }, [preferredCurrency, pricingPlans.mxn, pricingPlans.usd]);
+  const comparePlansTo = "/planes?entry=compare";
   const primaryCheckoutPlanId = useMemo(() => {
     const match = primaryCheckoutFrom.match(/[?&]priceId=(\d+)/);
     if (!match) return null;
@@ -563,38 +513,8 @@ export default function PublicHome() {
   ]);
 
   const downloadQuotaLabel = `${formatInt(downloadQuotaGb)} GB/mes`;
-  const effectiveTotalFiles = Math.max(
-    0,
-    Number(pricingUi.stats.totalFiles ?? 0),
-  );
   const effectiveTotalTB = Math.max(0, Number(pricingUi.stats.totalTB ?? 0));
   const totalTBLabel = formatCatalogSizeMarketing(effectiveTotalTB);
-  const totalFilesLabel = formatInt(effectiveTotalFiles);
-  const hasLiveCatalog = Boolean(
-    catalogSummary &&
-    !catalogSummary.error &&
-    catalogSummary.isFallback !== true &&
-    Number(catalogSummary.totalFiles) > 0 &&
-    Number(catalogSummary.totalGB) > 0,
-  );
-
-  const catalogGenres = useMemo<CatalogGenre[]>(() => {
-    const source =
-      catalogSummary &&
-      !catalogSummary.error &&
-      Array.isArray(catalogSummary.genresDetail) &&
-      catalogSummary.genresDetail.length > 0
-        ? catalogSummary.genresDetail
-        : FALLBACK_GENRES;
-
-    return source.map((g) => ({
-      id: g.name,
-      name: normalizeGenreDisplayName(g.name),
-      searchKey: normalizeSearchKey(normalizeGenreDisplayName(g.name)),
-      files: Number(g.files ?? 0),
-      gb: Number(g.gb ?? 0),
-    }));
-  }, [catalogSummary]);
 
   const socialAudio = useMemo(() => {
     const items = topDownloads?.audio ?? [];
@@ -646,11 +566,29 @@ export default function PublicHome() {
 
   const onPrimaryCtaClick = useCallback(
     (location: "hero" | "mid" | "pricing" | "footer" | "sticky" | "nav") => {
+      const entry = primaryCheckoutFrom.startsWith("/comprar")
+        ? "fastlane"
+        : "compare";
+      if (entry === "fastlane") {
+        trackGrowthMetric(GROWTH_METRICS.HOME_FASTLANE_CLICK, {
+          location,
+          entry,
+          target: primaryCheckoutFrom,
+          planId: primaryCheckoutPlanId,
+        });
+      } else {
+        trackGrowthMetric(GROWTH_METRICS.PLANS_COMPARE_CLICK, {
+          source: "home_fallback",
+          location,
+          target: primaryCheckoutFrom,
+        });
+      }
       trackGrowthMetric(GROWTH_METRICS.CTA_PRIMARY_CLICK, {
         location,
         target: primaryCheckoutFrom,
         planId: primaryCheckoutPlanId,
         currency: primaryCheckoutCurrency,
+        entry,
       });
       trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
         id: "home_primary",
@@ -659,6 +597,7 @@ export default function PublicHome() {
         planId: primaryCheckoutPlanId,
         currency: primaryCheckoutCurrency,
         funnel: "fast_lane_checkout",
+        entry,
       });
       trackManyChatConversion(MC_EVENTS.CLICK_CTA_REGISTER);
     },
@@ -666,7 +605,7 @@ export default function PublicHome() {
   );
 
   const onSecondaryCtaClick = useCallback(
-    (location: "demo" | "top_downloads" | "modal_demo" | "sticky_demo") => {
+    (location: "top_downloads" | "sticky_demo") => {
       trackGrowthMetric(GROWTH_METRICS.CTA_SECONDARY_CLICK, { location });
       trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
         id: `home_secondary_${location}`,
@@ -674,6 +613,16 @@ export default function PublicHome() {
       });
     },
     [],
+  );
+  const onComparePlansClick = useCallback(
+    (location: "topnav" | "footer") => {
+      trackGrowthMetric(GROWTH_METRICS.PLANS_COMPARE_CLICK, {
+        source: "home_compare",
+        location,
+        target: comparePlansTo,
+      });
+    },
+    [comparePlansTo],
   );
 
   const findSectionByIds = useCallback((ids: string[]) => {
@@ -836,7 +785,6 @@ export default function PublicHome() {
           maxDurationMs: options.behavior === "auto" ? 4200 : 5600,
         });
       }
-      window.history.replaceState(null, "", "#top100");
       if (options.focusSearch) {
         // Avoid opening the keyboard; focus the first demo play button when the user explicitly clicks "Ver demo".
         window.setTimeout(() => {
@@ -857,155 +805,12 @@ export default function PublicHome() {
     [alignScrollToTarget, findSectionByIds, getHomeStickyTopOffset],
   );
 
-  const scrollToFaq = useCallback(
-    (options: { behavior?: ScrollBehavior } = {}) => {
-      if (typeof window === "undefined") return;
-
-      const getFaqTarget = () =>
-        document.getElementById("faq") as HTMLElement | null;
-
-      const target = getFaqTarget();
-      if (!target) return;
-
-      const top = Math.max(
-        0,
-        window.scrollY +
-          target.getBoundingClientRect().top -
-          getHomeStickyTopOffset(),
-      );
-      window.scrollTo({ top, behavior: options.behavior ?? "smooth" });
-      window.history.replaceState(null, "", "#faq");
-
-      alignScrollToTarget(getFaqTarget, {
-        maxDurationMs: options.behavior === "auto" ? 4200 : 5600,
-        onDone: () => {
-          const finalTarget = getFaqTarget();
-          if (!finalTarget) return;
-
-          const first =
-            finalTarget.querySelector<HTMLElement>(".home-faq__summary");
-          const title = finalTarget.querySelector<HTMLElement>("h2");
-          if (first && first.getAttribute("aria-expanded") === "false") {
-            first.click();
-          }
-          title?.focus({ preventScroll: true });
-
-          // Expanding can shift the heading slightly; do a short realign pass.
-          alignScrollToTarget(getFaqTarget, { maxDurationMs: 1100 });
-        },
-      });
-    },
-    [alignScrollToTarget, getHomeStickyTopOffset],
-  );
-
-  const scrollToPricing = useCallback(
-    (options: { behavior?: ScrollBehavior } = {}) => {
-      if (typeof window === "undefined") return;
-
-      const getPricingTarget = () =>
-        document.getElementById("precio") as HTMLElement | null;
-
-      const target = getPricingTarget();
-      if (!target) return;
-
-      const top = Math.max(
-        0,
-        window.scrollY +
-          target.getBoundingClientRect().top -
-          getHomeStickyTopOffset(),
-      );
-      window.scrollTo({ top, behavior: options.behavior ?? "smooth" });
-      window.history.replaceState(null, "", "#precio");
-
-      alignScrollToTarget(getPricingTarget, {
-        maxDurationMs: options.behavior === "auto" ? 4200 : 5600,
-      });
-    },
-    [alignScrollToTarget, getHomeStickyTopOffset],
-  );
-
   const onDemoScroll = useCallback(() => {
     trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, {
       location: "hero_block",
     });
     scrollToDemo({ behavior: "smooth", focusSearch: true });
   }, [scrollToDemo]);
-
-  const onTourClick = useCallback(() => {
-    trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, {
-      location: "hero_modal",
-    });
-    setShowDemo(true);
-  }, []);
-
-  const onToggleExtendedDetails = useCallback(() => {
-    setShowExtendedDetails((current) => {
-      const next = !current;
-      trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
-        id: next ? "home_details_open" : "home_details_close",
-        location: "home_details_toggle",
-      });
-      return next;
-    });
-  }, []);
-
-  useEffect(() => {
-    if (!showDemo) return;
-    // Track that the user actually viewed the demo modal (separate from the click source).
-    trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, { location: "modal" });
-  }, [showDemo]);
-
-  useEffect(() => {
-    const normalizedHash = `${location.hash ?? ""}`.toLowerCase();
-
-    if (
-      normalizedHash === "#demo" ||
-      normalizedHash === "#top100" ||
-      normalizedHash === "#top-audios" ||
-      normalizedHash === "#top-videos" ||
-      normalizedHash === "#top-karaokes"
-    ) {
-      scrollToDemo({ behavior: "auto", focusSearch: false });
-      return;
-    }
-    if (normalizedHash === "#precio") {
-      scrollToPricing({ behavior: "auto" });
-      return;
-    }
-    if (normalizedHash === "#faq") {
-      scrollToFaq({ behavior: "auto" });
-      return;
-    }
-    if (HOME_DETAILS_HASH_TARGETS.has(normalizedHash)) {
-      setShowExtendedDetails(true);
-      if (typeof window === "undefined") return;
-
-      window.setTimeout(() => {
-        const id = normalizedHash.replace(/^#/, "");
-        const target = document.getElementById(id);
-        if (!target) return;
-
-        const top = Math.max(
-          0,
-          window.scrollY +
-            target.getBoundingClientRect().top -
-            getHomeStickyTopOffset(),
-        );
-        window.scrollTo({ top, behavior: "auto" });
-        alignScrollToTarget(
-          () => document.getElementById(id) as HTMLElement | null,
-          { maxDurationMs: 4200 },
-        );
-      }, 0);
-    }
-  }, [
-    alignScrollToTarget,
-    getHomeStickyTopOffset,
-    location.hash,
-    scrollToDemo,
-    scrollToFaq,
-    scrollToPricing,
-  ]);
 
   const onFaqExpand = useCallback((id: string) => {
     trackGrowthMetric(GROWTH_METRICS.FAQ_EXPAND, { question: id });
@@ -1104,7 +909,8 @@ export default function PublicHome() {
       </a>
       <PublicTopNav
         brandAriaCurrent
-        plansTo="/#precio"
+        plansTo={comparePlansTo}
+        onPlansClick={() => onComparePlansClick("topnav")}
         cta={
           <Link
             to="/auth/registro"
@@ -1132,12 +938,6 @@ export default function PublicHome() {
           onDemoScroll={onDemoScroll}
         />
 
-        <TrustBar
-          totalFilesLabel={totalFilesLabel}
-          totalTBLabel={totalTBLabel}
-          downloadQuotaLabel={downloadQuotaLabel}
-        />
-
         <div ref={pricingRef}>
           <Pricing
             plans={pricingPlans}
@@ -1161,68 +961,6 @@ export default function PublicHome() {
           onMoreClick={() => onSecondaryCtaClick("top_downloads")}
         />
 
-        <section id="detalles" className="home-details-toggle">
-          <div className="ph__container">
-            <div className="home-details-toggle__card bb-market-surface">
-              <div className="home-details-toggle__copy">
-                <h2 className="home-h2">¿Quieres validar más antes de activar?</h2>
-                <p className="home-sub">
-                  Vista real del catálogo, búsqueda por género, compatibilidad y
-                  testimonios en una sola sección.
-                </p>
-              </div>
-              <button
-                type="button"
-                className="home-cta home-cta--secondary home-details-toggle__btn"
-                onClick={onToggleExtendedDetails}
-                aria-expanded={showExtendedDetails}
-                aria-controls="home-details-content"
-              >
-                {showExtendedDetails
-                  ? "Ocultar detalles"
-                  : "Ver detalles completos"}
-                <ChevronDown
-                  size={18}
-                  aria-hidden
-                  className={showExtendedDetails ? "is-open" : undefined}
-                />
-              </button>
-            </div>
-          </div>
-        </section>
-
-        <div
-          id="home-details-content"
-          className={[
-            "home-details-content",
-            showExtendedDetails ? "is-open" : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          hidden={!showExtendedDetails}
-        >
-          <div id="inside">
-            <InsidePreview onDemoScroll={onDemoScroll} onTourClick={onTourClick} />
-          </div>
-          <CatalogDemo
-            genres={catalogGenres}
-            isFallback={!hasLiveCatalog}
-            onSecondaryCtaClick={() => {
-              onSecondaryCtaClick("demo");
-              onDemoScroll();
-            }}
-          />
-          <div id="como-funciona">
-            <HowItWorks trial={trialSummary} />
-          </div>
-          <div id="testimonios">
-            <HumanSocialProof />
-          </div>
-          <div id="compatibilidad">
-            <Compatibility onFaqScroll={scrollToFaq} />
-          </div>
-        </div>
-
         <HomeFaq onFaqExpand={onFaqExpand} />
       </div>
 
@@ -1236,7 +974,9 @@ export default function PublicHome() {
           </div>
 
           <div className="home-footer__links" aria-label="Enlaces">
-            <Link to="/#precio">Planes</Link>
+            <Link to={comparePlansTo} onClick={() => onComparePlansClick("footer")}>
+              Planes
+            </Link>
             <Link to="/auth">Iniciar sesión</Link>
           </div>
 
@@ -1260,14 +1000,6 @@ export default function PublicHome() {
           </p>
         </div>
       </footer>
-
-      <HomeDemoModal
-        show={showDemo}
-        onHide={() => setShowDemo(false)}
-        ctaLabel={ctaPrimaryLabel}
-        primaryCheckoutFrom={primaryCheckoutFrom}
-        onModalCtaClick={() => onSecondaryCtaClick("modal_demo")}
-      />
 
       <StickyMobileCta
         ctaLabel={ctaPrimaryLabel}

@@ -5,7 +5,7 @@ import { useUserContext } from "../../../contexts/UserContext";
 import trpc from "../../../api";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import { useTheme } from "../../../contexts/ThemeContext";
 import brandLockupBlack from "../../../assets/brand/bearbeat-lockup-black.png";
@@ -13,7 +13,11 @@ import brandLockupCyan from "../../../assets/brand/bearbeat-lockup-cyan.png";
 import { trackManyChatConversion, MC_EVENTS } from "../../../utils/manychatPixel";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../../utils/growthMetrics";
 import { toErrorMessage } from "../../../utils/errorMessage";
-import { clearAuthReturnUrl, readAuthReturnUrl } from "../../../utils/authReturnUrl";
+import {
+  clearAuthReturnUrl,
+  normalizeAuthReturnUrl,
+  readAuthReturnUrl,
+} from "../../../utils/authReturnUrl";
 import "./LoginForm.scss";
 
 function inferErrorCode(message: string): string {
@@ -34,9 +38,29 @@ function LoginForm() {
   const { handleLogin } = useUserContext();
   const navigate = useNavigate();
   const location = useLocation();
-  const fromCandidate =
-    (location.state as { from?: string } | null)?.from ?? readAuthReturnUrl() ?? "/";
-  const from = typeof fromCandidate === "string" && fromCandidate.startsWith("/") ? fromCandidate : "/";
+  const stateFromRaw = (location.state as { from?: string } | null)?.from;
+  const stateFrom =
+    typeof stateFromRaw === "string" ? normalizeAuthReturnUrl(stateFromRaw) : null;
+  const storedFromRaw = readAuthReturnUrl();
+  const allowStoredFrom = useMemo(() => {
+    if (stateFrom) return true;
+    if (typeof window === "undefined" || typeof document === "undefined")
+      return true;
+    if (!document.referrer) return false;
+    try {
+      return new URL(document.referrer).origin === window.location.origin;
+    } catch {
+      return false;
+    }
+  }, [stateFrom]);
+  const storedFrom = allowStoredFrom ? storedFromRaw : null;
+  const fromSource: "state" | "storage" | "default" = stateFrom
+    ? "state"
+    : storedFrom
+      ? "storage"
+      : "default";
+  const from = stateFrom ?? storedFrom ?? "/";
+  const authStorageEventTrackedRef = useRef(false);
   const validationSchema = Yup.object().shape({
     username: Yup.string()
       .required("El correo es requerido")
@@ -128,6 +152,22 @@ function LoginForm() {
     setInlineError("");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formik.values.username, formik.values.password]);
+
+  useEffect(() => {
+    if (fromSource !== "storage" || authStorageEventTrackedRef.current) return;
+    authStorageEventTrackedRef.current = true;
+    trackGrowthMetric(GROWTH_METRICS.AUTH_CONTEXT_FROM_STORAGE_USED, {
+      flow: "login",
+      from,
+      path: location.pathname,
+    });
+  }, [from, fromSource, location.pathname]);
+
+  useEffect(() => {
+    if (allowStoredFrom) return;
+    if (!storedFromRaw) return;
+    clearAuthReturnUrl();
+  }, [allowStoredFrom, storedFromRaw]);
 
   return (
     <>

@@ -5,7 +5,6 @@ import PaymentMethodLogos, {
   type PaymentMethodId,
 } from "../../../components/PaymentMethodLogos/PaymentMethodLogos";
 import {
-  HOME_HERO_MICROCOPY_BASE,
   HOME_HERO_MICROCOPY_TRIAL,
 } from "../homeCopy";
 import { formatInt } from "../homeFormat";
@@ -92,7 +91,7 @@ export default function Pricing(props: {
   const mxnPlan = plans.mxn ?? null;
   const usdPlan = plans.usd ?? null;
   const hasTrial = Boolean(trial?.enabled);
-  const microcopy = HOME_HERO_MICROCOPY_BASE;
+  const microcopy = "Pago seguro y activación inmediata.";
   const tabPrefix = useId();
   const mxnTabId = `${tabPrefix}-tab-mxn`;
   const usdTabId = `${tabPrefix}-tab-usd`;
@@ -137,12 +136,14 @@ export default function Pricing(props: {
   const showAltPaymentsNoteUsd = Boolean(hasTrial && usdAltPaymentLabel);
   const mxnCheckoutFrom = useMemo(() => {
     const planId = Number(mxnPlan?.planId ?? 0);
-    if (Number.isFinite(planId) && planId > 0) return `/comprar?priceId=${planId}`;
+    if (Number.isFinite(planId) && planId > 0)
+      return `/comprar?priceId=${planId}&entry=fastlane`;
     return primaryCheckoutFrom;
   }, [mxnPlan?.planId, primaryCheckoutFrom]);
   const usdCheckoutFrom = useMemo(() => {
     const planId = Number(usdPlan?.planId ?? 0);
-    if (Number.isFinite(planId) && planId > 0) return `/comprar?priceId=${planId}`;
+    if (Number.isFinite(planId) && planId > 0)
+      return `/comprar?priceId=${planId}&entry=fastlane`;
     return primaryCheckoutFrom;
   }, [usdPlan?.planId, primaryCheckoutFrom]);
 

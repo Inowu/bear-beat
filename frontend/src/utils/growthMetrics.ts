@@ -5,9 +5,11 @@ import { apiBaseUrl } from "./runtimeConfig";
 export const GROWTH_METRICS = {
   PAGE_VIEW: "page_view",
   HOME_VIEW: "home_view",
+  HOME_FASTLANE_CLICK: "home_fastlane_click",
   CTA_PRIMARY_CLICK: "cta_primary_click",
   CTA_SECONDARY_CLICK: "cta_secondary_click",
   CTA_CLICK: "cta_click",
+  PLANS_COMPARE_CLICK: "plans_compare_click",
   VIEW_DEMO_CLICK: "view_demo_click",
   DEMO_PLAY_STARTED: "demo_play_started",
   PRICING_VIEW: "pricing_view",
@@ -17,6 +19,7 @@ export const GROWTH_METRICS = {
   AUTH_START: "auth_start",
   AUTH_SUCCESS: "auth_success",
   AUTH_ERROR: "auth_error",
+  AUTH_CONTEXT_FROM_STORAGE_USED: "auth_context_from_storage_used",
   CHECKOUT_START: "checkout_start",
   CHECKOUT_SUCCESS: "checkout_success",
   CHECKOUT_ERROR: "checkout_error",
@@ -48,6 +51,7 @@ export const GROWTH_METRICS = {
   FILE_DOWNLOAD_ATTEMPTED: "file_download_attempted",
   FILE_DOWNLOAD_SUCCEEDED: "file_download_succeeded",
   FILE_DOWNLOAD_FAILED: "file_download_failed",
+  MYACCOUNT_FTP_COPY_CLICK: "myaccount_ftp_copy_click",
   WEB_VITAL_REPORTED: "web_vital_reported",
 } as const;
 
@@ -159,9 +163,11 @@ let pendingCheckoutRecoveryInFlight = false;
 const eventCategoryMap: Record<GrowthMetricName, AnalyticsCategory> = {
   [GROWTH_METRICS.PAGE_VIEW]: "navigation",
   [GROWTH_METRICS.HOME_VIEW]: "navigation",
+  [GROWTH_METRICS.HOME_FASTLANE_CLICK]: "acquisition",
   [GROWTH_METRICS.CTA_PRIMARY_CLICK]: "acquisition",
   [GROWTH_METRICS.CTA_SECONDARY_CLICK]: "acquisition",
   [GROWTH_METRICS.CTA_CLICK]: "acquisition",
+  [GROWTH_METRICS.PLANS_COMPARE_CLICK]: "engagement",
   [GROWTH_METRICS.VIEW_DEMO_CLICK]: "engagement",
   [GROWTH_METRICS.DEMO_PLAY_STARTED]: "engagement",
   [GROWTH_METRICS.PRICING_VIEW]: "engagement",
@@ -171,6 +177,7 @@ const eventCategoryMap: Record<GrowthMetricName, AnalyticsCategory> = {
   [GROWTH_METRICS.AUTH_START]: "activation",
   [GROWTH_METRICS.AUTH_SUCCESS]: "activation",
   [GROWTH_METRICS.AUTH_ERROR]: "activation",
+  [GROWTH_METRICS.AUTH_CONTEXT_FROM_STORAGE_USED]: "activation",
   [GROWTH_METRICS.CHECKOUT_START]: "checkout",
   [GROWTH_METRICS.CHECKOUT_SUCCESS]: "purchase",
   [GROWTH_METRICS.CHECKOUT_ERROR]: "checkout",
@@ -202,6 +209,7 @@ const eventCategoryMap: Record<GrowthMetricName, AnalyticsCategory> = {
   [GROWTH_METRICS.FILE_DOWNLOAD_ATTEMPTED]: "activation",
   [GROWTH_METRICS.FILE_DOWNLOAD_SUCCEEDED]: "activation",
   [GROWTH_METRICS.FILE_DOWNLOAD_FAILED]: "activation",
+  [GROWTH_METRICS.MYACCOUNT_FTP_COPY_CLICK]: "engagement",
   [GROWTH_METRICS.WEB_VITAL_REPORTED]: "system",
 };
 
