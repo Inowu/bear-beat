@@ -7,6 +7,7 @@ export type SeoRoute = {
   indexable: boolean;
   inSitemap: boolean;
   prerender: boolean;
+  canonical?: string;
   canonicalPath?: string;
   ogImage?: string;
   twitterImage?: string;
