@@ -51,7 +51,7 @@ type TurnstileOptions = {
 };
 
 export type TurnstileRef = {
-  execute: () => void;
+  execute: () => boolean;
 };
 
 type TurnstileProps = {
@@ -86,6 +86,7 @@ const Turnstile = forwardRef<TurnstileRef, TurnstileProps>(function Turnstile(
   const isBypassed = shouldBypassTurnstile();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const widgetIdRef = useRef<string | null>(null);
+  const pendingExecuteRef = useRef(false);
   const onVerifyRef = useRef(onVerify);
   const onExpireRef = useRef(onExpire);
   const onErrorRef = useRef(onError);
@@ -106,9 +107,17 @@ const Turnstile = forwardRef<TurnstileRef, TurnstileProps>(function Turnstile(
     ref,
     () => ({
       execute() {
-        if (window.turnstile && containerRef.current) {
-          window.turnstile.execute(containerRef.current);
+        if (!window.turnstile) {
+          pendingExecuteRef.current = true;
+          return false;
         }
+        const target = widgetIdRef.current ?? containerRef.current;
+        if (!target) {
+          pendingExecuteRef.current = true;
+          return false;
+        }
+        window.turnstile.execute(target);
+        return true;
       },
     }),
     []
@@ -147,6 +156,10 @@ const Turnstile = forwardRef<TurnstileRef, TurnstileProps>(function Turnstile(
       };
 
       widgetIdRef.current = window.turnstile.render(containerRef.current, options);
+      if (pendingExecuteRef.current) {
+        pendingExecuteRef.current = false;
+        window.turnstile.execute(widgetIdRef.current);
+      }
       if (intervalId) {
         window.clearInterval(intervalId);
         intervalId = undefined;
@@ -173,6 +186,7 @@ const Turnstile = forwardRef<TurnstileRef, TurnstileProps>(function Turnstile(
         window.turnstile.remove(widgetIdRef.current);
         widgetIdRef.current = null;
       }
+      pendingExecuteRef.current = false;
     };
   }, [invisible, isBypassed, size, theme]);
 
@@ -181,6 +195,7 @@ const Turnstile = forwardRef<TurnstileRef, TurnstileProps>(function Turnstile(
     if (window.turnstile && widgetIdRef.current) {
       window.turnstile.reset(widgetIdRef.current);
     }
+    pendingExecuteRef.current = false;
   }, [resetSignal, isBypassed]);
 
   if (isBypassed || !process.env.REACT_APP_TURNSTILE_SITE_KEY) {

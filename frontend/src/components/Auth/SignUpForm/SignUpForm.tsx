@@ -54,6 +54,7 @@ function inferErrorCode(message: string): string {
 }
 
 function SignUpForm() {
+  const TURNSTILE_VERIFY_TIMEOUT_MS = 18_000;
   const navigate = useNavigate();
   const location = useLocation();
   const { theme } = useTheme();
@@ -92,6 +93,7 @@ function SignUpForm() {
   const [turnstileReset, setTurnstileReset] = useState<number>(0);
   const [turnstilePendingSubmit, setTurnstilePendingSubmit] = useState(false);
   const turnstileRef = useRef<TurnstileRef | null>(null);
+  const turnstileTimeoutRef = useRef<number | null>(null);
   const turnstileBypassed = shouldBypassTurnstile();
   const registrationStartedRef = useRef(false);
   const registrationCompletedRef = useRef(false);
@@ -102,6 +104,31 @@ function SignUpForm() {
     gb: number;
     eligible: boolean | null;
   } | null>(null);
+
+  const clearTurnstileTimeout = useCallback(() => {
+    if (turnstileTimeoutRef.current !== null) {
+      window.clearTimeout(turnstileTimeoutRef.current);
+      turnstileTimeoutRef.current = null;
+    }
+  }, []);
+
+  const scheduleTurnstileTimeout = useCallback(() => {
+    clearTurnstileTimeout();
+    turnstileTimeoutRef.current = window.setTimeout(() => {
+      setTurnstileToken("");
+      setTurnstilePendingSubmit(false);
+      setLoader(false);
+      setTurnstileError("La verificación de seguridad tardó demasiado. Reintenta.");
+      setTurnstileReset((prev) => prev + 1);
+    }, TURNSTILE_VERIFY_TIMEOUT_MS);
+  }, [clearTurnstileTimeout]);
+
+  useEffect(
+    () => () => {
+      clearTurnstileTimeout();
+    },
+    [clearTurnstileTimeout],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -223,7 +250,11 @@ function SignUpForm() {
         setTurnstileError("Verificando seguridad...");
         setTurnstilePendingSubmit(true);
         setLoader(true);
-        turnstileRef.current?.execute();
+        const executed = turnstileRef.current?.execute() ?? false;
+        scheduleTurnstileTimeout();
+        if (!executed) {
+          setTurnstileError("Inicializando verificación de seguridad...");
+        }
         return;
       }
 
@@ -308,6 +339,7 @@ function SignUpForm() {
 
         setInlineError(errorMessage);
       } finally {
+        clearTurnstileTimeout();
         setLoader(false);
         setTurnstileToken("");
         setTurnstileReset((prev) => prev + 1);
@@ -482,23 +514,26 @@ function SignUpForm() {
   }, []);
 
   const handleTurnstileSuccess = useCallback((token: string) => {
+    clearTurnstileTimeout();
     setTurnstileToken(token);
     setTurnstileError("");
-  }, []);
+  }, [clearTurnstileTimeout]);
 
   const handleTurnstileExpire = useCallback(() => {
+    clearTurnstileTimeout();
     setTurnstileToken("");
     setTurnstileError("La verificación expiró, intenta de nuevo.");
     setTurnstilePendingSubmit(false);
     setLoader(false);
-  }, []);
+  }, [clearTurnstileTimeout]);
 
   const handleTurnstileError = useCallback(() => {
+    clearTurnstileTimeout();
     setTurnstileToken("");
     setTurnstileError("No se pudo verificar la seguridad.");
     setTurnstilePendingSubmit(false);
     setLoader(false);
-  }, []);
+  }, [clearTurnstileTimeout]);
 
   const selectedCountry = allowedCountryOptions.find((c) => c.dial_code.slice(1) === dialCode);
   const countryFlagClass = selectedCountry ? `fi fi-${selectedCountry.code.toLowerCase()}` : "fi";
