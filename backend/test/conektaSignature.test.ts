@@ -2,7 +2,26 @@ import { createSign, generateKeyPairSync } from 'crypto';
 import type { Request, Response } from 'express';
 import { conektaEndpoint } from '../src/endpoints/webhooks/conekta.endpoint';
 import { verifyConektaSignature } from '../src/routers/utils/verifyConektaSignature';
-import * as webhookInboxReceptionModule from '../src/endpoints/webhooks/webhookInboxReception';
+
+jest.mock('../src/services/webhookInbox', () => ({
+  persistEvent: jest.fn(),
+}));
+
+jest.mock('../src/queues/webhookInbox.queue', () => ({
+  enqueueWebhookInboxJob: jest.fn(),
+}));
+
+jest.mock('../src/webhookInbox/service', () => ({
+  markWebhookInboxEventEnqueued: jest.fn(),
+}));
+
+import { persistEvent } from '../src/services/webhookInbox';
+import { enqueueWebhookInboxJob } from '../src/queues/webhookInbox.queue';
+import { markWebhookInboxEventEnqueued } from '../src/webhookInbox/service';
+
+const persistEventMock = persistEvent as jest.Mock;
+const enqueueWebhookInboxJobMock = enqueueWebhookInboxJob as jest.Mock;
+const markWebhookInboxEventEnqueuedMock = markWebhookInboxEventEnqueued as jest.Mock;
 
 const ORIGINAL_ENV = {
   NODE_ENV: process.env.NODE_ENV,
@@ -130,6 +149,12 @@ describe('verifyConektaSignature', () => {
 });
 
 describe('conektaEndpoint', () => {
+  beforeEach(() => {
+    persistEventMock.mockReset();
+    enqueueWebhookInboxJobMock.mockReset();
+    markWebhookInboxEventEnqueuedMock.mockReset();
+  });
+
   afterEach(() => {
     jest.restoreAllMocks();
     restoreConektaSignatureEnv();
@@ -147,22 +172,18 @@ describe('conektaEndpoint', () => {
     });
     const res = buildRes();
 
-    const receptionSpy = jest
-      .spyOn(webhookInboxReceptionModule, 'receiveWebhookIntoInbox')
-      .mockResolvedValue({ ok: true, duplicate: false });
-
     await conektaEndpoint(req, res);
 
-    expect(receptionSpy).not.toHaveBeenCalled();
+    expect(persistEventMock).not.toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(401);
     expect(res.send).toHaveBeenCalledWith('Invalid signature');
   });
 
-  it('returns 200 when signature is valid and processing succeeds', async () => {
+  it('returns 200 when signature is valid and event is duplicate', async () => {
     process.env.NODE_ENV = 'production';
     process.env.CONEKTA_WEBHOOK_PUBLIC_KEY = publicKeyPem;
 
-    const payload = Buffer.from('{"id":"evt_1"}', 'utf8');
+    const payload = Buffer.from('{"id":"evt_1","type":"order.paid"}', 'utf8');
     const digest = signPayload(payload, privateKeyPem);
     const req = buildReq({
       body: payload,
@@ -170,26 +191,31 @@ describe('conektaEndpoint', () => {
     });
     const res = buildRes();
 
-    const receptionSpy = jest
-      .spyOn(webhookInboxReceptionModule, 'receiveWebhookIntoInbox')
-      .mockResolvedValue({ ok: true, duplicate: false });
+    persistEventMock.mockResolvedValue({
+      created: false,
+      inboxId: 33,
+    });
 
     await conektaEndpoint(req, res);
 
-    expect(receptionSpy).toHaveBeenCalledWith({
+    expect(persistEventMock).toHaveBeenCalledWith({
       provider: 'conekta',
-      req,
-      logPrefix: 'CONEKTA_WH',
+      eventId: 'evt_1',
+      eventType: 'order.paid',
+      livemode: null,
+      headers: req.headers,
+      payloadRaw: payload.toString('utf8'),
     });
+    expect(enqueueWebhookInboxJobMock).not.toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.end).toHaveBeenCalled();
   });
 
-  it('returns 500 when processing fails after successful signature validation', async () => {
+  it('returns 200 when signature is valid and event is enqueued', async () => {
     process.env.NODE_ENV = 'production';
     process.env.CONEKTA_WEBHOOK_PUBLIC_KEY = publicKeyPem;
 
-    const payload = Buffer.from('{"id":"evt_1"}', 'utf8');
+    const payload = Buffer.from('{"id":"evt_1","type":"order.paid"}', 'utf8');
     const digest = signPayload(payload, privateKeyPem);
     const req = buildReq({
       body: payload,
@@ -197,16 +223,39 @@ describe('conektaEndpoint', () => {
     });
     const res = buildRes();
 
-    jest.spyOn(webhookInboxReceptionModule, 'receiveWebhookIntoInbox').mockResolvedValue({
-      ok: false,
-      status: 400,
-      message: 'Invalid JSON payload',
+    persistEventMock.mockResolvedValue({
+      created: true,
+      inboxId: 34,
     });
+    enqueueWebhookInboxJobMock.mockResolvedValue(true);
+    markWebhookInboxEventEnqueuedMock.mockResolvedValue(undefined);
+
+    await conektaEndpoint(req, res);
+
+    expect(enqueueWebhookInboxJobMock).toHaveBeenCalledWith({ inboxId: 34 });
+    expect(markWebhookInboxEventEnqueuedMock).toHaveBeenCalledWith(34);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.end).toHaveBeenCalled();
+  });
+
+  it('returns 500 when persistence fails after successful signature validation', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.CONEKTA_WEBHOOK_PUBLIC_KEY = publicKeyPem;
+
+    const payload = Buffer.from('{"id":"evt_1","type":"order.paid"}', 'utf8');
+    const digest = signPayload(payload, privateKeyPem);
+    const req = buildReq({
+      body: payload,
+      digest,
+    });
+    const res = buildRes();
+
+    persistEventMock.mockRejectedValue(new Error('db_down'));
 
     await conektaEndpoint(req, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.send).toHaveBeenCalledWith('Webhook processing failed');
+    expect(res.send).toHaveBeenCalledWith('Failed to persist webhook event');
   });
 
   it('returns 400 when webhook body is not Buffer', async () => {
@@ -219,13 +268,9 @@ describe('conektaEndpoint', () => {
     });
     const res = buildRes();
 
-    const receptionSpy = jest
-      .spyOn(webhookInboxReceptionModule, 'receiveWebhookIntoInbox')
-      .mockResolvedValue({ ok: true, duplicate: false });
-
     await conektaEndpoint(req, res);
 
-    expect(receptionSpy).not.toHaveBeenCalled();
+    expect(persistEventMock).not.toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.send).toHaveBeenCalledWith('Invalid webhook payload');
   });

@@ -43,39 +43,46 @@ describe('persistEvent', () => {
     findFirstMock.mockReset();
   });
 
-  it('deduplicates by provider + eventId and returns existing inboxId', async () => {
-    createMock
-      .mockResolvedValueOnce({ id: 101 })
-      .mockRejectedValueOnce({
-        code: 'P2002',
-        meta: { target: ['provider', 'event_id'] },
+  it.each([
+    ['stripe', 'evt_stripe_123', 'customer.subscription.updated'],
+    ['paypal', 'WH-PAYPAL-123', 'BILLING.SUBSCRIPTION.ACTIVATED'],
+    ['conekta', 'evt_conekta_123', 'order.paid'],
+  ])(
+    'deduplicates provider=%s by provider + eventId and returns existing inboxId',
+    async (provider, eventId, eventType) => {
+      createMock
+        .mockResolvedValueOnce({ id: 101 })
+        .mockRejectedValueOnce({
+          code: 'P2002',
+          meta: { target: ['provider', 'event_id'] },
+        });
+
+      findFirstMock.mockResolvedValueOnce({ id: 101 });
+
+      const first = await persistEvent({
+        provider,
+        eventId,
+        eventType,
+        livemode: false,
+        headers: { sample: 'header' },
+        payloadRaw: `{"id":"${eventId}"}`,
       });
 
-    findFirstMock.mockResolvedValueOnce({ id: 101 });
+      const second = await persistEvent({
+        provider,
+        eventId,
+        eventType,
+        livemode: false,
+        headers: { sample: 'header' },
+        payloadRaw: `{"id":"${eventId}"}`,
+      });
 
-    const first = await persistEvent({
-      provider: 'stripe',
-      eventId: 'evt_123',
-      eventType: 'customer.subscription.updated',
-      livemode: false,
-      headers: { 'stripe-signature': 't=1,v1=abc' },
-      payloadRaw: '{"id":"evt_123"}',
-    });
-
-    const second = await persistEvent({
-      provider: 'stripe',
-      eventId: 'evt_123',
-      eventType: 'customer.subscription.updated',
-      livemode: false,
-      headers: { 'stripe-signature': 't=1,v1=abc' },
-      payloadRaw: '{"id":"evt_123"}',
-    });
-
-    expect(first).toEqual({ created: true, inboxId: 101 });
-    expect(second).toEqual({ created: false, inboxId: 101 });
-    expect(createMock).toHaveBeenCalledTimes(2);
-    expect(findFirstMock).toHaveBeenCalledTimes(1);
-  });
+      expect(first).toEqual({ created: true, inboxId: 101 });
+      expect(second).toEqual({ created: false, inboxId: 101 });
+      expect(createMock).toHaveBeenCalledTimes(2);
+      expect(findFirstMock).toHaveBeenCalledTimes(1);
+    },
+  );
 });
 
 describe('computeBackoff', () => {
