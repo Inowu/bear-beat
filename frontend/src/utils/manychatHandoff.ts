@@ -1,5 +1,5 @@
 import { apiBaseUrl } from "./runtimeConfig";
-import { loadManyChatScriptsOnce, waitForManyChatPixelReady } from "./manychatLoader";
+import { loadManyChatOnce, waitForManyChatPixelReady } from "./manychatLoader";
 
 export type ManyChatHandoffSnapshot = {
   contactId: string | null;
@@ -177,7 +177,7 @@ export function initManyChatHandoff(): Promise<void> {
 
   // Dynamic-load ManyChat scripts when mcp_token exists so attribution is not lost.
   // Any loading failure is tolerated: we still strip the token after timeout.
-  void loadManyChatScriptsOnce().catch(() => {
+  void loadManyChatOnce().catch(() => {
     // noop
   });
 
