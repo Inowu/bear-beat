@@ -44,9 +44,10 @@ const appendQueryParams = (baseUrl: string, params: Record<string, string>): str
   }
 };
 
-async function safeAddManyChatTag(user: Users, tag: any): Promise<void> {
+async function safeAddManyChatTag(user: Users, tag: any): Promise<boolean> {
   try {
     await manyChat.addTagToUser(user, tag);
+    return true;
   } catch (e) {
     // Shouldn't throw, but never break automations.
     log.debug('[AUTOMATION] ManyChat tag skipped', {
@@ -54,6 +55,7 @@ async function safeAddManyChatTag(user: Users, tag: any): Promise<void> {
       tag,
       error: e instanceof Error ? e.message : e,
     });
+    return false;
   }
 }
 
@@ -824,16 +826,18 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
           const user = await prisma.users.findFirst({ where: { id: userId } });
           if (!user || user.blocked) continue;
 
-          await safeAddManyChatTag(user, stageConfig.manyChatTag);
-          await createActionLog({
-            prisma,
-            userId,
-            actionKey: 'checkout_abandoned_manychat',
-            contextKey,
-            stage: stageConfig.stage,
-            channel: 'manychat',
-            metadata: { tag: stageConfig.manyChatTag },
-          });
+          const manyChatTagged = await safeAddManyChatTag(user, stageConfig.manyChatTag);
+          if (manyChatTagged) {
+            await createActionLog({
+              prisma,
+              userId,
+              actionKey: 'checkout_abandoned_manychat',
+              contextKey,
+              stage: stageConfig.stage,
+              channel: 'manychat',
+              metadata: { tag: stageConfig.manyChatTag },
+            });
+          }
 
           const base = resolveClientUrl();
           const rawUrl = row.planId ? `${base}/comprar?priceId=${row.planId}` : `${base}/planes`;
