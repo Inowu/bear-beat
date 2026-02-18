@@ -47,7 +47,8 @@ export function applyRouteSeo(pathname: string): void {
 
   const title = routeSeo?.title ?? SEO_DEFAULT_META.title;
   const description = routeSeo?.description ?? SEO_DEFAULT_META.description;
-  const indexable = routeSeo?.indexable === true;
+  // Unknown routes must be noindex/nofollow by default.
+  const indexable = routeSeo ? routeSeo.indexable === true : false;
   const canonicalUrl = resolveSeoUrl(routeSeo?.canonicalPath ?? normalizedPath);
   const ogImage = routeSeo?.ogImage ?? SEO_DEFAULT_META.ogImage;
   const twitterImage = routeSeo?.twitterImage ?? ogImage;
