@@ -423,7 +423,7 @@ function Admin() {
               <Search className="search-input__icon" size={18} />
               <input
                 id="admin-search-filter"
-                placeholder="Buscar por email"
+                placeholder="Buscar por email…"
                 value={filters.search}
                 onChange={(e) => startFilter("search", e.target.value)}
               />

@@ -185,7 +185,7 @@ export const AuditLogs = () => {
         <input
           value={filters.targetUserId}
           onChange={(e) => startFilter("targetUserId", e.target.value)}
-          placeholder="ID usuario"
+          placeholder="Buscar por ID de usuario…"
           inputMode="numeric"
         />
       </label>

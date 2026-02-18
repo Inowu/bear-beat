@@ -83,7 +83,7 @@ export default function HomeHero(props: {
                 {ctaLabel}
                 <ArrowRight size={18} aria-hidden />
               </Link>
-              <button type="button" className="home-cta home-cta--secondary" onClick={onDemoScroll}>
+              <button type="button" className="home-cta home-cta--secondary home-hero__cta-demo" onClick={onDemoScroll}>
                 <CirclePlay size={18} aria-hidden />
                 Ver demo
               </button>

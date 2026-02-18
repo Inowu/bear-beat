@@ -39,6 +39,31 @@ body {
   overflow-y: auto;
 }
 
+.skip-link {
+  position: absolute;
+  left: 12px;
+  top: 0;
+  z-index: 10000;
+  transform: translateY(-180%);
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--app-accent, #08e1f7);
+  color: #0a0a0b;
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1;
+  text-decoration: none;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+  transition: transform 0.16s ease;
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  transform: translateY(10px);
+  outline: 2px solid var(--app-focus-ring, #ffffff);
+  outline-offset: 2px;
+}
+
 #root {
   isolation: isolate;
   min-height: 100vh;

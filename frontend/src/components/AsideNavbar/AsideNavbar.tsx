@@ -17,6 +17,7 @@ import {
   Shield,
   LogOut,
   Undo2,
+  RefreshCw,
 } from "src/icons";
 import { Link, NavLink } from "react-router-dom";
 
@@ -79,6 +80,7 @@ function AsideNavbar(props: AsideNavbarPropsI) {
   };
 
   const linkProps = { onClick: closeDrawer };
+  const isLibraryRoute = location.pathname === "/";
 
   const navLinkClassName = ({ isActive }: { isActive: boolean }) =>
     `nav-link-item${isActive ? " is-active" : ""}`;
@@ -191,10 +193,26 @@ function AsideNavbar(props: AsideNavbarPropsI) {
                     Mi cuenta
                   </NavLink>
                 </li>
+                {isLibraryRoute && (
+                  <li>
+                    <button
+                      type="button"
+                      className="nav-link-item nav-link-item--secondary"
+                      onClick={() => {
+                        closeDrawer();
+                        window.location.reload();
+                      }}
+                      aria-label="Recargar biblioteca"
+                    >
+                      <RefreshCw size={18} aria-hidden />
+                      Recargar
+                    </button>
+                  </li>
+                )}
                 <li>
                   <NavLink to="/instrucciones" className={navLinkClassName} {...linkProps}>
                     <HelpCircle size={18} aria-hidden />
-                    Instrucciones
+                    Guía FTP
                   </NavLink>
                 </li>
                 <li>

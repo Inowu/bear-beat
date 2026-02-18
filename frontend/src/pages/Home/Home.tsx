@@ -1134,10 +1134,10 @@ function Home() {
                 </span>
               </button>
               <div className="bb-home-title-wrap">
-                <h2 className="bb-home-title">
+                <h1 className="bb-home-title">
                   <FolderOpen className="bb-home-title-icon" />
                   Tu biblioteca
-                </h2>
+                </h1>
                 <p className="bb-home-subtitle">{currentRouteLabel}</p>
               </div>
             </div>

@@ -194,12 +194,12 @@ function ForgotPasswordForm() {
                 aria-describedby={emailDescribedBy}
                 className="auth-login-input auth-recover-email-input"
               />
-              {showEmailError && (
-                <div className="error-formik" id={emailErrorId} role="alert">
-                  {formik.errors.email}
-                </div>
-              )}
             </div>
+            {showEmailError && (
+              <div className="error-formik auth-recover-email-error" id={emailErrorId} role="alert">
+                {formik.errors.email}
+              </div>
+            )}
             <p className="auth-recover-helper" id={emailHelpId}>
               {SAFE_COPY}
             </p>

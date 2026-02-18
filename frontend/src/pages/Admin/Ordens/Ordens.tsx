@@ -231,7 +231,7 @@ export const Ordens = () => {
           <Input
             id="orders-search"
             type="text"
-            placeholder="Buscar por email o teléfono"
+            placeholder="Buscar por email o teléfono…"
             value={filters.searchData}
             onChange={(e) => startFilter("searchData", e.target.value)}
             className="pl-9"

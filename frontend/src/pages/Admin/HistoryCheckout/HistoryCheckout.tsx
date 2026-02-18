@@ -244,7 +244,7 @@ export const HistoryCheckout = () => {
           type="text"
           value={filters.search}
           onChange={(e) => startFilter("search", e.target.value)}
-          placeholder="email, usuario o teléfono"
+          placeholder="Buscar por email, usuario o teléfono…"
           className="min-h-[44px] rounded-xl px-3 border border-border bg-bg-card text-text-main"
         />
       </label>

@@ -479,14 +479,6 @@ function Plans() {
     void import("../Checkout/Checkout");
   }, []);
 
-  const plansTopCta = (
-    <div className="plans2026__topCta" aria-label="Progreso de compra">
-      <span className="plans2026__step">
-        {isFastlaneEntry ? "Comparación rápida" : "Paso 1 de 2"}
-      </span>
-    </div>
-  );
-
   return (
     <div
       className={[
@@ -498,7 +490,6 @@ function Plans() {
     >
       <PublicTopNav
         loginFrom={`${location.pathname}${location.search}`}
-        cta={plansTopCta}
       />
 
       <section className="plans2026__main" aria-label="Planes y precios">

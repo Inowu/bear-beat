@@ -272,7 +272,7 @@ export const WebhookInbox = () => {
         <input
           value={filters.eventType}
           onChange={(e) => startFilter("eventType", e.target.value)}
-          placeholder="BILLING.SUBSCRIPTION.ACTIVATED"
+          placeholder="Buscar por tipo de evento…"
         />
       </label>
 

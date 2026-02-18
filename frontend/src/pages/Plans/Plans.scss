@@ -66,35 +66,6 @@
   line-height: 1.55;
 }
 
-.plans2026__topCta {
-  display: inline-flex;
-  align-items: center;
-  min-width: 0;
-  flex-shrink: 0;
-}
-
-.plans2026__step {
-  display: inline-flex;
-  align-items: center;
-  min-height: 32px;
-  padding: 0 12px;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--ph-border) 78%, transparent);
-  background: color-mix(in srgb, var(--ph-bg-soft) 78%, transparent);
-  color: var(--ph-accent);
-  font-size: 0.9rem;
-  font-weight: 900;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-@media (max-width: 820px) {
-  .plans2026__topCta {
-    display: none;
-  }
-}
-
 .plans2026__state {
   margin-top: 6px;
 }

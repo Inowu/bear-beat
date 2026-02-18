@@ -138,7 +138,7 @@ function MainLayout() {
         {/* Guardrails visuales (altura mínima, tipografía consistente) deben aplicar en TODAS las rutas,
             incl. Auth/Planes/Instrucciones. Son mínimos y no pisan estilos específicos. */}
         <div className="content-container-inner content-area-app">
-          <main className="main-layout-main">
+          <main id="main-content" className="main-layout-main" tabIndex={-1}>
             <div
               className={
                 isFullWidth

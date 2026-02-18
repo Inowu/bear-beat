@@ -128,6 +128,16 @@ nav {
       color: var(--theme-nav-item-hover-text);
     }
 
+    .nav-item--danger {
+      color: var(--theme-nav-danger-text, var(--app-status-error));
+    }
+
+    .nav-item--danger:hover {
+      color: var(--theme-nav-danger-text, var(--app-status-error));
+      background-color: color-mix(in srgb, var(--app-status-error) 10%, var(--theme-nav-item-bg));
+      border-color: color-mix(in srgb, var(--app-status-error) 34%, var(--theme-nav-item-border, transparent));
+    }
+
     .nav-item svg {
       flex-shrink: 0;
     }
@@ -322,6 +332,12 @@ nav {
     .header img {
       max-width: 54px;
     }
+  }
+
+  /* <=768px: compactar la barra superior para reducir consumo vertical en móviles angostos. */
+  @include respond-to(tablet) {
+    padding-inline: 0.75rem;
+    padding-block: 0.35rem;
   }
 
   @include respond-to(sm) {

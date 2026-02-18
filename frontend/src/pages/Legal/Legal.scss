@@ -160,9 +160,10 @@
 }
 
 .legal2026__quick-nav .bb-segmented__btn[aria-current="location"] {
-  background: color-mix(in srgb, var(--ph-accent) 16%, var(--ph-bg-card));
-  border-color: color-mix(in srgb, var(--ph-accent) 44%, transparent);
-  color: var(--ph-text-heading);
+  background: var(--ph-accent-bright);
+  border-color: color-mix(in srgb, var(--ph-accent) 64%, transparent);
+  color: var(--ph-btn-text);
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--ph-accent-bright) 26%, transparent);
 }
 
 .legal2026__section {
@@ -448,8 +449,10 @@ html[data-theme="light"] .legal2026__quick-nav .bb-segmented__btn {
 }
 
 html[data-theme="light"] .legal2026__quick-nav .bb-segmented__btn[aria-current="location"] {
-  background: color-mix(in srgb, var(--ph-accent) 12%, #ffffff);
-  border-color: color-mix(in srgb, var(--ph-accent) 28%, transparent);
+  background: var(--ph-accent-bright);
+  border-color: color-mix(in srgb, var(--ph-accent) 78%, var(--ph-border));
+  color: var(--ph-btn-text);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.14);
 }
 
 html[data-theme="light"] .legal2026__faq-actions button,

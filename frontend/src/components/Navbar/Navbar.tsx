@@ -116,7 +116,7 @@ function Navbar(props: NavbarPropsI) {
           <li>
             <button
               type="button"
-              className="nav-item"
+              className="nav-item nav-item--danger"
               onClick={() => handleLogout(true)}
             >
               <LogOut size={18} aria-hidden />

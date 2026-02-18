@@ -277,7 +277,7 @@ export function LiveAnalytics() {
           type="text"
           value={filterEvent}
           onChange={(e) => setFilterEvent(e.target.value)}
-          placeholder="payment_success"
+          placeholder="Buscar por evento…"
         />
       </label>
 
@@ -287,7 +287,7 @@ export function LiveAnalytics() {
           type="text"
           value={filterPath}
           onChange={(e) => setFilterPath(e.target.value)}
-          placeholder="/comprar"
+          placeholder="Buscar por ruta…"
         />
       </label>
 

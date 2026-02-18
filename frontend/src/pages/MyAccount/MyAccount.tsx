@@ -609,7 +609,7 @@ function MyAccount() {
               <span className="app-state-icon" aria-hidden>
                 <Spinner size={2.8} width={0.25} color="var(--ma-accent)" />
               </span>
-              <h2 className="app-state-title">Cargando tu cuenta</h2>
+              <h1 className="app-state-title">Cargando tu cuenta</h1>
               <p className="app-state-copy">Estamos preparando tus credenciales y tus métodos de pago.</p>
             </div>
           </div>
@@ -668,12 +668,14 @@ function MyAccount() {
 
         {!hasActiveSubscription && (
           <section className="ma-top-cta" aria-label="Activar membresía">
-            <p>
-              {membershipCtaMessage}
-            </p>
-            <Link to="/planes" className="ma-btn ma-btn-outline">
-              {membershipCtaLabel}
-            </Link>
+            <div className="ma-top-cta__group">
+              <p>
+                {membershipCtaMessage}
+              </p>
+              <Link to="/planes" className="ma-btn ma-btn-outline">
+                {membershipCtaLabel}
+              </Link>
+            </div>
           </section>
         )}
 
