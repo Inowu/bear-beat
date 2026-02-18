@@ -48,6 +48,7 @@
 .use-cases,
 .catalog-demo,
 .social-proof,
+.home-details-toggle,
 .compatibility,
 .activation-steps,
 .pricing,
@@ -1209,7 +1210,83 @@
   font-size: 15px;
 }
 
-/* F. COMPATIBILITY */
+/* F. DETAILS TOGGLE */
+.home-details-toggle {
+  padding: 8px 0 12px;
+}
+
+.home-details-toggle__card {
+  padding: 16px;
+  border-radius: 20px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.home-details-toggle__copy .home-sub {
+  margin: 8px 0 0;
+  max-width: 62ch;
+}
+
+.home-details-toggle__btn {
+  white-space: nowrap;
+}
+
+.home-details-toggle__btn svg {
+  transition: transform 180ms ease;
+}
+
+.home-details-toggle__btn svg.is-open {
+  transform: rotate(180deg);
+}
+
+.home-details-content {
+  padding-bottom: 8px;
+}
+
+.home-details-content[hidden] {
+  display: none !important;
+}
+
+.home-details-content.is-open {
+  animation: home-details-enter 180ms ease;
+}
+
+@keyframes home-details-enter {
+  from {
+    opacity: 0.02;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-details-toggle__btn svg {
+    transition: none;
+  }
+
+  .home-details-content.is-open {
+    animation: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .home-details-toggle__card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .home-details-toggle__btn {
+    width: 100%;
+    min-height: 52px;
+  }
+}
+
+/* G. COMPATIBILITY */
 .compatibility {
   padding: 42px 0;
 }

@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDown } from "src/icons";
 import trpc from "../../api";
 import { useTheme } from "../../contexts/ThemeContext";
 import brandMarkBlack from "../../assets/brand/bearbeat-mark-black.png";
@@ -51,6 +52,15 @@ const PAYMENT_METHOD_VALUES: PaymentMethodId[] = [
   "transfer",
 ];
 type CurrencyKey = "mxn" | "usd";
+
+const HOME_DETAILS_HASH_TARGETS = new Set<string>([
+  "#detalles",
+  "#inside",
+  "#catalogo",
+  "#como-funciona",
+  "#testimonios",
+  "#compatibilidad",
+]);
 
 const MEXICO_TIMEZONES = new Set<string>([
   "America/Mexico_City",
@@ -264,6 +274,7 @@ export default function PublicHome() {
     "loading" | "loaded" | "error"
   >("loading");
   const [showDemo, setShowDemo] = useState(false);
+  const [showExtendedDetails, setShowExtendedDetails] = useState(false);
 
   const pricingRef = useRef<HTMLDivElement | null>(null);
   const pricingViewedRef = useRef(false);
@@ -927,6 +938,17 @@ export default function PublicHome() {
     setShowDemo(true);
   }, []);
 
+  const onToggleExtendedDetails = useCallback(() => {
+    setShowExtendedDetails((current) => {
+      const next = !current;
+      trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
+        id: next ? "home_details_open" : "home_details_close",
+        location: "home_details_toggle",
+      });
+      return next;
+    });
+  }, []);
+
   useEffect(() => {
     if (!showDemo) return;
     // Track that the user actually viewed the demo modal (separate from the click source).
@@ -934,24 +956,56 @@ export default function PublicHome() {
   }, [showDemo]);
 
   useEffect(() => {
+    const normalizedHash = `${location.hash ?? ""}`.toLowerCase();
+
     if (
-      location.hash === "#demo" ||
-      location.hash === "#top100" ||
-      location.hash === "#top-audios" ||
-      location.hash === "#top-videos" ||
-      location.hash === "#top-karaokes"
+      normalizedHash === "#demo" ||
+      normalizedHash === "#top100" ||
+      normalizedHash === "#top-audios" ||
+      normalizedHash === "#top-videos" ||
+      normalizedHash === "#top-karaokes"
     ) {
       scrollToDemo({ behavior: "auto", focusSearch: false });
       return;
     }
-    if (location.hash === "#precio") {
+    if (normalizedHash === "#precio") {
       scrollToPricing({ behavior: "auto" });
       return;
     }
-    if (location.hash === "#faq") {
+    if (normalizedHash === "#faq") {
       scrollToFaq({ behavior: "auto" });
+      return;
     }
-  }, [location.hash, scrollToDemo, scrollToFaq, scrollToPricing]);
+    if (HOME_DETAILS_HASH_TARGETS.has(normalizedHash)) {
+      setShowExtendedDetails(true);
+      if (typeof window === "undefined") return;
+
+      window.setTimeout(() => {
+        const id = normalizedHash.replace(/^#/, "");
+        const target = document.getElementById(id);
+        if (!target) return;
+
+        const top = Math.max(
+          0,
+          window.scrollY +
+            target.getBoundingClientRect().top -
+            getHomeStickyTopOffset(),
+        );
+        window.scrollTo({ top, behavior: "auto" });
+        alignScrollToTarget(
+          () => document.getElementById(id) as HTMLElement | null,
+          { maxDurationMs: 4200 },
+        );
+      }, 0);
+    }
+  }, [
+    alignScrollToTarget,
+    getHomeStickyTopOffset,
+    location.hash,
+    scrollToDemo,
+    scrollToFaq,
+    scrollToPricing,
+  ]);
 
   const onFaqExpand = useCallback((id: string) => {
     trackGrowthMetric(GROWTH_METRICS.FAQ_EXPAND, { question: id });
@@ -1078,8 +1132,6 @@ export default function PublicHome() {
           onDemoScroll={onDemoScroll}
         />
 
-        <HowItWorks trial={trialSummary} />
-
         <TrustBar
           totalFilesLabel={totalFilesLabel}
           totalTBLabel={totalTBLabel}
@@ -1102,19 +1154,6 @@ export default function PublicHome() {
           />
         </div>
 
-        <InsidePreview onDemoScroll={onDemoScroll} onTourClick={onTourClick} />
-
-        <CatalogDemo
-          genres={catalogGenres}
-          isFallback={!hasLiveCatalog}
-          onSecondaryCtaClick={() => {
-            onSecondaryCtaClick("demo");
-            onDemoScroll();
-          }}
-        />
-
-        <HumanSocialProof />
-
         <SocialProof
           audio={socialAudio}
           video={socialVideo}
@@ -1122,7 +1161,67 @@ export default function PublicHome() {
           onMoreClick={() => onSecondaryCtaClick("top_downloads")}
         />
 
-        <Compatibility onFaqScroll={scrollToFaq} />
+        <section id="detalles" className="home-details-toggle">
+          <div className="ph__container">
+            <div className="home-details-toggle__card bb-market-surface">
+              <div className="home-details-toggle__copy">
+                <h2 className="home-h2">¿Quieres validar más antes de activar?</h2>
+                <p className="home-sub">
+                  Vista real del catálogo, búsqueda por género, compatibilidad y
+                  testimonios en una sola sección.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="home-cta home-cta--secondary home-details-toggle__btn"
+                onClick={onToggleExtendedDetails}
+                aria-expanded={showExtendedDetails}
+                aria-controls="home-details-content"
+              >
+                {showExtendedDetails
+                  ? "Ocultar detalles"
+                  : "Ver detalles completos"}
+                <ChevronDown
+                  size={18}
+                  aria-hidden
+                  className={showExtendedDetails ? "is-open" : undefined}
+                />
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <div
+          id="home-details-content"
+          className={[
+            "home-details-content",
+            showExtendedDetails ? "is-open" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          hidden={!showExtendedDetails}
+        >
+          <div id="inside">
+            <InsidePreview onDemoScroll={onDemoScroll} onTourClick={onTourClick} />
+          </div>
+          <CatalogDemo
+            genres={catalogGenres}
+            isFallback={!hasLiveCatalog}
+            onSecondaryCtaClick={() => {
+              onSecondaryCtaClick("demo");
+              onDemoScroll();
+            }}
+          />
+          <div id="como-funciona">
+            <HowItWorks trial={trialSummary} />
+          </div>
+          <div id="testimonios">
+            <HumanSocialProof />
+          </div>
+          <div id="compatibilidad">
+            <Compatibility onFaqScroll={scrollToFaq} />
+          </div>
+        </div>
 
         <HomeFaq onFaqExpand={onFaqExpand} />
       </div>
