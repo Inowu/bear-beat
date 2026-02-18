@@ -12,7 +12,6 @@ import PaymentMethodLogos, {
 import { GROWTH_METRICS, trackGrowthMetric } from "../../utils/growthMetrics";
 import { useUserContext } from "../../contexts/UserContext";
 import PlansStickyCta from "./PlansStickyCta";
-import { HOME_HERO_TRUST_ITEMS } from "../PublicHome/homeCopy";
 
 type CurrencyKey = "mxn" | "usd";
 const DEFAULT_LIMITS_NOTE =
@@ -437,16 +436,23 @@ function Plans() {
     void import("../Checkout/Checkout");
   }, []);
 
+  const plansTopCta = (
+    <div className="plans2026__topCta" aria-label="Progreso de compra">
+      <span className="plans2026__step">Paso 1 de 2</span>
+    </div>
+  );
+
   return (
     <div className="plans2026 bb-marketing-page bb-marketing-page--flat-cards">
-      <PublicTopNav loginFrom="/planes" />
+      <PublicTopNav loginFrom="/planes" cta={plansTopCta} />
 
       <section className="plans2026__main" aria-label="Planes y precios">
         <div className="plans2026__container bb-marketing-container--narrow">
           <header className="plans2026__hero" data-testid="plans-hero">
-            <h1>Precio simple, catálogo gigante.</h1>
+            <p className="plans2026__kicker">Paso 1 de 2</p>
+            <h1>Elige tu plan.</h1>
             <p className="plans2026__subtitle">
-              Activa hoy y llega a tu evento con el repertorio listo.
+              Primero eliges moneda y plan. En el siguiente paso completas el pago seguro.
             </p>
           </header>
 
@@ -639,11 +645,9 @@ function Plans() {
                 <ul className="plans2026__benefits" aria-label="Beneficios">
                   {[
                     `Cuota de descarga: ${formatInt(stats.quotaGb)} GB/mes.`,
-                    "Actualizaciones: semanales (nuevos packs).",
                     "Catálogo completo (eliges qué descargar).",
-                    "Catálogo pensado para cabina en vivo.",
-                    "Búsqueda rápida por género y temporada.",
-                    "Carpetas listas por género y temporada.",
+                    "Actualizaciones: semanales (nuevos packs).",
+                    "Carpetas listas para cabina por género y temporada.",
                     "Soporte por chat para activar.",
                   ].map((benefit) => (
                     <li key={benefit} className="plans2026__benefit">
@@ -697,13 +701,8 @@ function Plans() {
                       : "plans-activate"
                   }
                 >
-                  Activar
+                  Continuar al pago seguro
                 </button>
-                <div className="plans2026__ctaTrust" role="note" aria-label="Confianza rápida">
-                  {HOME_HERO_TRUST_ITEMS.map((item) => (
-                    <span key={item}>{item}</span>
-                  ))}
-                </div>
 
                 <div className="plans2026__trust" aria-label="Confianza">
                   <PaymentMethodLogos
@@ -733,7 +732,7 @@ function Plans() {
       </section>
       <PlansStickyCta
         planId={selectedPlan?.planId ?? null}
-        ctaLabel="Activar"
+        ctaLabel="Continuar al pago"
         trial={
           trialPreview.applies
             ? {

@@ -1670,11 +1670,9 @@ function Checkout() {
   })();
   const benefitList = [
     `Cuota de descarga: ${formatInt(quotaGb)} GB/mes.`,
-    "Actualizaciones: semanales (nuevos packs).",
     "Catálogo completo (eliges qué descargar).",
-    "Catálogo pensado para cabina en vivo.",
-    "Búsqueda rápida por género y temporada.",
-    "Carpetas listas por género y temporada.",
+    "Actualizaciones: semanales (nuevos packs).",
+    "Carpetas listas para cabina por género y temporada.",
     "Soporte por chat para activar.",
   ];
 
@@ -1686,12 +1684,22 @@ function Checkout() {
     isMethodTrial,
   });
 
+  const checkoutTopCta = (
+    <div className="checkout2026__topCta" aria-label="Progreso de compra">
+      <span className="checkout2026__step">Paso 2 de 2</span>
+      <Link to="/planes" className="checkout2026__back">
+        Cambiar plan
+      </Link>
+    </div>
+  );
+
   const TopNav = (
     <PublicTopNav
       className="checkout2026__topnav"
       brandTo="/planes"
       plansTo="/planes"
       loginFrom={priceId ? `/comprar?priceId=${priceId}` : "/comprar"}
+      cta={checkoutTopCta}
     />
   );
 
@@ -1842,8 +1850,8 @@ function Checkout() {
         <section className="checkout2026__main" aria-label="Checkout">
           <div className="checkout2026__container">
             <header className="checkout2026__hero">
-              <h1>Completa tu pago.</h1>
-              <p className="checkout2026__heroSubtitle">Checkout seguro. Activa tu acceso en 1 minuto.</p>
+              <h1>Finaliza tu compra.</h1>
+              <p className="checkout2026__heroSubtitle">Paso 2 de 2: confirma tu método de pago y activa en minutos.</p>
             </header>
 
             <section
@@ -1953,9 +1961,9 @@ function Checkout() {
       <section className="checkout2026__main" aria-label="Checkout">
         <div className="checkout2026__container">
           <header className="checkout2026__hero">
-            <h1>Completa tu pago.</h1>
+            <h1>Finaliza tu compra.</h1>
             <p className="checkout2026__heroSubtitle">
-              Checkout seguro. Activa tu acceso en 1 minuto.
+              Paso 2 de 2: confirma tu método de pago y activa en minutos.
             </p>
           </header>
 

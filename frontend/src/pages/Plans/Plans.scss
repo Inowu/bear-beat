@@ -23,6 +23,23 @@
   text-align: left;
 }
 
+.plans2026__kicker {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 30px;
+  padding: 0 11px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ph-accent) 34%, transparent);
+  background: color-mix(in srgb, var(--ph-accent) 10%, transparent);
+  color: var(--ph-accent);
+  font-size: 1.02rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .plans2026__hero h1 {
   margin: 0;
   color: var(--ph-text-heading);
@@ -39,6 +56,35 @@
   font-size: clamp(1.2rem, 1.1vw, 1.55rem);
   font-weight: 600;
   line-height: 1.55;
+}
+
+.plans2026__topCta {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.plans2026__step {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ph-border) 78%, transparent);
+  background: color-mix(in srgb, var(--ph-bg-soft) 78%, transparent);
+  color: var(--ph-accent);
+  font-size: 0.9rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+@media (max-width: 820px) {
+  .plans2026__topCta {
+    display: none;
+  }
 }
 
 .plans2026__state {
