@@ -135,6 +135,12 @@ interface BusinessMetrics {
     arpu: number;
     monthlyRecurringRevenueEstimate: number;
     monthlyArpuEstimate: number;
+    activeSubscribersNow: number;
+    activeSubscribersWithPlanNow: number;
+    mrrActiveSubscriptionsMxn: number;
+    mrrActiveSubscriptionsUsd: number;
+    arrActiveSubscriptionsMxn: number;
+    arrActiveSubscriptionsUsd: number;
     repeatPurchaseRatePct: number;
     refundRatePct: number;
     churnMonthlyPct: number;
@@ -152,6 +158,31 @@ interface BusinessMetrics {
     cacSource: "manual-input" | "env-default" | "not-available";
     adSpendUsed: number | null;
   };
+}
+
+interface AdSpendMonthlyRow {
+  id: number;
+  month: string;
+  channel: string;
+  currency: string;
+  amount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface AdSpendMonthlyAcquisitionRow {
+  channel: string;
+  newPaidUsers: number;
+}
+
+interface AdSpendMonthlyResponse {
+  month: string;
+  range: {
+    start: string;
+    end: string;
+  };
+  spend: AdSpendMonthlyRow[];
+  acquisition: AdSpendMonthlyAcquisitionRow[];
 }
 
 interface UxPoint {
@@ -271,6 +302,23 @@ function formatCurrency(value: number | null | undefined): string {
   }).format(value);
 }
 
+function formatCurrencyCode(value: number | null | undefined, currency: string): string {
+  if (value == null || Number.isNaN(value)) return "—";
+  const code = (currency || "MXN").toUpperCase();
+  return new Intl.NumberFormat("es-MX", {
+    style: "currency",
+    currency: code,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+function formatCurrencyPair(mxn: number, usd: number): string {
+  const parts: string[] = [];
+  if (mxn > 0) parts.push(`MXN ${formatCurrencyCode(mxn, "MXN")}`);
+  if (usd > 0) parts.push(`USD ${formatCurrencyCode(usd, "USD")}`);
+  return parts.length ? parts.join(" · ") : "—";
+}
+
 function formatPct(value: number): string {
   return `${value.toFixed(2)}%`;
 }
@@ -300,6 +348,10 @@ function formatRecentWindow(days: number): string {
   return days <= 1 ? "últimas 24 horas" : `últimos ${days} días`;
 }
 
+function normalizeChannelKey(value: string): string {
+  return (value || "").trim().toLowerCase();
+}
+
 export function AnalyticsDashboard() {
   const [rangeDays, setRangeDays] = useState<number>(30);
   const [manualAdSpend, setManualAdSpend] = useState<string>("");
@@ -323,6 +375,20 @@ export function AnalyticsDashboard() {
   const [uxRoutesPage, setUxRoutesPage] = useState<number>(0);
   const [uxRoutesLimit] = useState<number>(50);
   const [alerts, setAlerts] = useState<HealthAlertsSnapshot | null>(null);
+
+  const [adSpendMonth, setAdSpendMonth] = useState<string>(() => {
+    const now = new Date();
+    const yyyy = now.getUTCFullYear();
+    const mm = String(now.getUTCMonth() + 1).padStart(2, "0");
+    return `${yyyy}-${mm}`;
+  });
+  const [adSpendMonthly, setAdSpendMonthly] = useState<AdSpendMonthlyResponse | null>(null);
+  const [adSpendMonthlyLoading, setAdSpendMonthlyLoading] = useState<boolean>(false);
+  const [adSpendMonthlyError, setAdSpendMonthlyError] = useState<string>("");
+  const [adSpendDraft, setAdSpendDraft] = useState<Record<number, string>>({});
+  const [newSpendChannel, setNewSpendChannel] = useState<string>("");
+  const [newSpendCurrency, setNewSpendCurrency] = useState<"MXN" | "USD">("MXN");
+  const [newSpendAmount, setNewSpendAmount] = useState<string>("");
 
   const fetchAnalytics = useCallback(async () => {
     setLoading(true);
@@ -399,9 +465,54 @@ export function AnalyticsDashboard() {
     topEventsPage,
   ]);
 
+  const fetchAdSpendMonthly = useCallback(async () => {
+    setAdSpendMonthlyLoading(true);
+    setAdSpendMonthlyError("");
+    try {
+      const response = (await trpc.analytics.getAnalyticsAdSpendMonthly.query({
+        month: adSpendMonth,
+      })) as AdSpendMonthlyResponse;
+      setAdSpendMonthly(response);
+
+      const nextDraft: Record<number, string> = {};
+      for (const row of response?.spend ?? []) {
+        nextDraft[row.id] = String(row.amount ?? "");
+      }
+      setAdSpendDraft(nextDraft);
+    } catch (fetchError) {
+      setAdSpendMonthly(null);
+      const message =
+        fetchError instanceof Error
+          ? fetchError.message
+          : "No fue posible cargar Ad Spend.";
+      setAdSpendMonthlyError(message);
+    } finally {
+      setAdSpendMonthlyLoading(false);
+    }
+  }, [adSpendMonth]);
+
   useEffect(() => {
     void fetchAnalytics();
   }, [fetchAnalytics]);
+
+  useEffect(() => {
+    void fetchAdSpendMonthly();
+  }, [fetchAdSpendMonthly]);
+
+  const saveAdSpendRow = async (opts: { channel: string; currency: "MXN" | "USD"; amount: number }) => {
+    await trpc.analytics.upsertAnalyticsAdSpendMonthly.mutate({
+      month: adSpendMonth,
+      channel: opts.channel,
+      currency: opts.currency,
+      amount: opts.amount,
+    });
+    await fetchAdSpendMonthly();
+  };
+
+  const deleteAdSpendRow = async (id: number) => {
+    await trpc.analytics.deleteAnalyticsAdSpendMonthly.mutate({ id });
+    await fetchAdSpendMonthly();
+  };
 
   const toolbar = (
     <div className="flex flex-wrap items-end gap-2 w-full">
@@ -426,7 +537,7 @@ export function AnalyticsDashboard() {
       </label>
 
       <label className="inline-flex flex-col gap-1 text-sm text-text-muted min-w-[220px]">
-        Inversión mensual (MXN)
+        Ad Spend manual (MXN)
         <Input
           type="number"
           min={0}
@@ -533,6 +644,14 @@ export function AnalyticsDashboard() {
       },
     ];
   }, [funnel, business]);
+
+  const acquisitionByChannel = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const row of adSpendMonthly?.acquisition ?? []) {
+      map.set(normalizeChannelKey(row.channel), row.newPaidUsers);
+    }
+    return map;
+  }, [adSpendMonthly]);
 
   const quickGuideCards = useMemo(() => {
     if (!funnel || !business || !ux) return [];
@@ -1068,7 +1187,34 @@ export function AnalyticsDashboard() {
                       <table>
                         <tbody>
                           <tr>
-                            <th>Ingreso recurrente mensual estimado (MRR)</th>
+                            <th>Suscriptores activos (ahora)</th>
+                            <td>
+                              {business.kpis.activeSubscribersNow.toLocaleString("es-MX")}
+                              {business.kpis.activeSubscribersWithPlanNow
+                                ? ` (con plan: ${business.kpis.activeSubscribersWithPlanNow.toLocaleString("es-MX")})`
+                                : ""}
+                            </td>
+                          </tr>
+                          <tr>
+                            <th>MRR (suscripciones activas)</th>
+                            <td>
+                              {formatCurrencyPair(
+                                business.kpis.mrrActiveSubscriptionsMxn,
+                                business.kpis.mrrActiveSubscriptionsUsd,
+                              )}
+                            </td>
+                          </tr>
+                          <tr>
+                            <th>ARR (suscripciones activas)</th>
+                            <td>
+                              {formatCurrencyPair(
+                                business.kpis.arrActiveSubscriptionsMxn,
+                                business.kpis.arrActiveSubscriptionsUsd,
+                              )}
+                            </td>
+                          </tr>
+                          <tr>
+                            <th>Ingresos últimos 30d (no MRR)</th>
                             <td>{formatCurrency(business.kpis.monthlyRecurringRevenueEstimate)}</td>
                           </tr>
                           <tr>
@@ -1112,8 +1258,26 @@ export function AnalyticsDashboard() {
                         </header>
                         <dl className="analytics-mobile-kv">
                           <div className="analytics-mobile-kv__row">
+                            <dt>Suscriptores activos</dt>
+                            <dd>{business.kpis.activeSubscribersNow.toLocaleString("es-MX")}</dd>
+                          </div>
+                          <div className="analytics-mobile-kv__row">
                             <dt>MRR</dt>
-                            <dd>{formatCurrency(business.kpis.monthlyRecurringRevenueEstimate)}</dd>
+                            <dd>
+                              {formatCurrencyPair(
+                                business.kpis.mrrActiveSubscriptionsMxn,
+                                business.kpis.mrrActiveSubscriptionsUsd,
+                              )}
+                            </dd>
+                          </div>
+                          <div className="analytics-mobile-kv__row">
+                            <dt>ARR</dt>
+                            <dd>
+                              {formatCurrencyPair(
+                                business.kpis.arrActiveSubscriptionsMxn,
+                                business.kpis.arrActiveSubscriptionsUsd,
+                              )}
+                            </dd>
                           </div>
                           <div className="analytics-mobile-kv__row">
                             <dt>ARPU</dt>
@@ -1146,6 +1310,233 @@ export function AnalyticsDashboard() {
                         </dl>
                       </article>
                     </div>
+                  </section>
+
+                  <section className="analytics-panel">
+                    <h2>Ad Spend y CAC (mensual)</h2>
+                    <p>
+                      Captura inversión por canal y calcula CAC usando <strong>nuevos pagos</strong> (primer{" "}
+                      <code>payment_success</code> por usuario en el mes). El canal se empata por{" "}
+                      <code>utm_source</code>.
+                    </p>
+
+                    <div className="flex flex-wrap items-end gap-2">
+                      <label className="inline-flex flex-col gap-1 text-sm text-text-muted min-w-[220px]">
+                        Mes
+                        <Input
+                          type="month"
+                          value={adSpendMonth}
+                          onChange={(event) => setAdSpendMonth(event.target.value)}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => void fetchAdSpendMonthly()}
+                        disabled={adSpendMonthlyLoading}
+                        className="inline-flex items-center gap-2 min-h-[44px] rounded-xl px-4 border border-border bg-bg-card text-text-main font-semibold hover:bg-bg-input transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+                      >
+                        <RefreshCw size={16} className={adSpendMonthlyLoading ? "animate-spin" : ""} aria-hidden />
+                        {adSpendMonthlyLoading ? "Cargando..." : "Recargar"}
+                      </button>
+                      <span className="text-sm text-text-muted">
+                        {adSpendMonthly?.range?.start
+                          ? `${new Date(adSpendMonthly.range.start).toLocaleDateString("es-MX")} → ${new Date(
+                              adSpendMonthly.range.end,
+                            ).toLocaleDateString("es-MX")}`
+                          : null}
+                      </span>
+                    </div>
+
+                    {adSpendMonthlyError ? (
+                      <div className="admin-error-strip" style={{ marginTop: 12 }}>
+                        <p>{adSpendMonthlyError}</p>
+                      </div>
+                    ) : null}
+
+                    <div className="analytics-table-wrap" tabIndex={0} aria-label="Tabla: Ad Spend y CAC (mensual)">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Canal (utm_source)</th>
+                            <th>Moneda</th>
+                            <th>Ad Spend</th>
+                            <th>Nuevos pagos</th>
+                            <th>CAC</th>
+                            <th>Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {!adSpendMonthly && adSpendMonthlyLoading ? (
+                            <tr>
+                              <td colSpan={6}>Cargando...</td>
+                            </tr>
+                          ) : !adSpendMonthly || adSpendMonthly.spend.length === 0 ? (
+                            <tr>
+                              <td colSpan={6}>
+                                Aún no hay inversión registrada para este mes. Agrega un canal abajo.
+                              </td>
+                            </tr>
+                          ) : (
+                            adSpendMonthly.spend.map((row) => {
+                              const newPaidUsers =
+                                acquisitionByChannel.get(normalizeChannelKey(row.channel)) ?? 0;
+                              const amountRaw = adSpendDraft[row.id] ?? String(row.amount ?? "");
+                              const amount = Number(amountRaw);
+                              const amountOk =
+                                amountRaw.trim() !== "" && Number.isFinite(amount) && amount >= 0;
+                              const cac =
+                                amountOk && newPaidUsers > 0 ? amount / newPaidUsers : null;
+
+                              return (
+                                <tr key={row.id}>
+                                  <td>{row.channel}</td>
+                                  <td>{row.currency}</td>
+                                  <td>
+                                    <Input
+                                      type="number"
+                                      min={0}
+                                      step={0.01}
+                                      value={amountRaw}
+                                      onChange={(event) =>
+                                        setAdSpendDraft((prev) => ({
+                                          ...prev,
+                                          [row.id]: event.target.value,
+                                        }))
+                                      }
+                                    />
+                                  </td>
+                                  <td>{newPaidUsers.toLocaleString("es-MX")}</td>
+                                  <td>
+                                    {cac == null ? "—" : formatCurrencyCode(cac, row.currency)}
+                                  </td>
+                                  <td>
+                                    <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                                      <button
+                                        type="button"
+                                        className="min-h-[40px] rounded-xl px-3 border border-border bg-bg-card text-text-main font-semibold hover:bg-bg-input transition-colors"
+                                        onClick={async () => {
+                                          try {
+                                            if (!amountOk) {
+                                              setAdSpendMonthlyError("Ad Spend inválido (debe ser >= 0).");
+                                              return;
+                                            }
+                                            await saveAdSpendRow({
+                                              channel: row.channel,
+                                              currency: (row.currency?.toUpperCase() === "USD" ? "USD" : "MXN"),
+                                              amount,
+                                            });
+                                            setAdSpendMonthlyError("");
+                                          } catch (e) {
+                                            setAdSpendMonthlyError(
+                                              e instanceof Error ? e.message : "No fue posible guardar Ad Spend.",
+                                            );
+                                          }
+                                        }}
+                                      >
+                                        Guardar
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className="min-h-[40px] rounded-xl px-3 border border-border bg-bg-card text-red-600 font-semibold hover:bg-bg-input transition-colors"
+                                        onClick={async () => {
+                                          try {
+                                            await deleteAdSpendRow(row.id);
+                                            setAdSpendMonthlyError("");
+                                          } catch (e) {
+                                            setAdSpendMonthlyError(
+                                              e instanceof Error ? e.message : "No fue posible eliminar Ad Spend.",
+                                            );
+                                          }
+                                        }}
+                                      >
+                                        Eliminar
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap items-end gap-2">
+                      <label className="inline-flex flex-col gap-1 text-sm text-text-muted min-w-[240px]">
+                        Canal (utm_source)
+                        <Input
+                          type="text"
+                          value={newSpendChannel}
+                          onChange={(event) => setNewSpendChannel(event.target.value)}
+                          placeholder="Ej: facebook, google, youtube, (direct)"
+                        />
+                      </label>
+                      <label className="inline-flex flex-col gap-1 text-sm text-text-muted min-w-[160px]">
+                        Moneda
+                        <Select
+                          value={newSpendCurrency}
+                          onChange={(event) =>
+                            setNewSpendCurrency(event.target.value === "USD" ? "USD" : "MXN")
+                          }
+                        >
+                          <option value="MXN">MXN</option>
+                          <option value="USD">USD</option>
+                        </Select>
+                      </label>
+                      <label className="inline-flex flex-col gap-1 text-sm text-text-muted min-w-[200px]">
+                        Ad Spend
+                        <Input
+                          type="number"
+                          min={0}
+                          step={0.01}
+                          value={newSpendAmount}
+                          onChange={(event) => setNewSpendAmount(event.target.value)}
+                          placeholder="0"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-2 bg-bear-gradient text-bear-dark-500 hover:opacity-95 font-medium rounded-pill px-4 py-2 transition-colors"
+                        onClick={async () => {
+                          try {
+                            const channel = newSpendChannel.trim();
+                            const amount = Number(newSpendAmount);
+                            if (!channel) {
+                              setAdSpendMonthlyError("Canal requerido.");
+                              return;
+                            }
+                            if (!Number.isFinite(amount) || amount < 0) {
+                              setAdSpendMonthlyError("Ad Spend inválido (debe ser >= 0).");
+                              return;
+                            }
+                            await saveAdSpendRow({
+                              channel,
+                              currency: newSpendCurrency,
+                              amount,
+                            });
+                            setNewSpendChannel("");
+                            setNewSpendAmount("");
+                            setAdSpendMonthlyError("");
+                          } catch (e) {
+                            setAdSpendMonthlyError(
+                              e instanceof Error ? e.message : "No fue posible guardar Ad Spend.",
+                            );
+                          }
+                        }}
+                      >
+                        Guardar canal
+                      </button>
+                    </div>
+
+                    {adSpendMonthly?.acquisition?.length ? (
+                      <small style={{ display: "block", marginTop: 10, color: "var(--ad-text-muted)", fontWeight: 700 }}>
+                        Top canales (nuevos pagos):{" "}
+                        {adSpendMonthly.acquisition
+                          .slice(0, 8)
+                          .map((row) => `${row.channel} (${row.newPaidUsers})`)
+                          .join(" · ")}
+                      </small>
+                    ) : null}
                   </section>
 
                   <section className="analytics-panel">

@@ -225,6 +225,20 @@ model AdminAuditLog {
   @@map("admin_audit_logs")
 }
 
+model AdSpendMonthly {
+  id        Int      @id @default(autoincrement())
+  month_key String   @db.VarChar(7)
+  channel   String   @db.VarChar(80)
+  currency  String   @default("MXN") @db.VarChar(8)
+  amount    Decimal  @default(0) @db.Decimal(12, 2)
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @updatedAt @db.DateTime(0)
+
+  @@unique([month_key, channel, currency], map: "uniq_ad_spend_monthly_month_channel_currency")
+  @@index([month_key], map: "idx_ad_spend_monthly_month_key")
+  @@map("ad_spend_monthly")
+}
+
 model WebhookInboxEvent {
   id                   Int       @id @default(autoincrement())
   provider             String    @db.VarChar(32)

@@ -218,6 +218,12 @@ interface AnalyticsBusinessMetrics {
     arpu: number;
     monthlyRecurringRevenueEstimate: number;
     monthlyArpuEstimate: number;
+    activeSubscribersNow: number;
+    activeSubscribersWithPlanNow: number;
+    mrrActiveSubscriptionsMxn: number;
+    mrrActiveSubscriptionsUsd: number;
+    arrActiveSubscriptionsMxn: number;
+    arrActiveSubscriptionsUsd: number;
     repeatPurchaseRatePct: number;
     refundRatePct: number;
     churnMonthlyPct: number;
@@ -1480,6 +1486,12 @@ export const getAnalyticsBusinessMetrics = async (
         arpu: 0,
         monthlyRecurringRevenueEstimate: 0,
         monthlyArpuEstimate: 0,
+        activeSubscribersNow: 0,
+        activeSubscribersWithPlanNow: 0,
+        mrrActiveSubscriptionsMxn: 0,
+        mrrActiveSubscriptionsUsd: 0,
+        arrActiveSubscriptionsMxn: 0,
+        arrActiveSubscriptionsUsd: 0,
         repeatPurchaseRatePct: 0,
         refundRatePct: 0,
         churnMonthlyPct: 0,
@@ -1515,6 +1527,8 @@ export const getAnalyticsBusinessMetrics = async (
     previousUsersRows,
     lostUsersRows,
     newUsersRows,
+    activeSubscribersRows,
+    activeMrrRows,
   ] = await Promise.all([
     prisma.$queryRaw<
       Array<{
@@ -1611,6 +1625,53 @@ export const getAnalyticsBusinessMetrics = async (
         ON prev.user_id = curr.user_id
       WHERE prev.user_id IS NULL
     `),
+    prisma.$queryRaw<Array<{ activeSubscribers: bigint | number }>>(Prisma.sql`
+      SELECT
+        COUNT(DISTINCT du.user_id) AS activeSubscribers
+      FROM descargas_user du
+      WHERE du.date_end >= CURDATE()
+    `),
+    prisma.$queryRaw<
+      Array<{
+        currency: string | null;
+        activeSubscribers: bigint | number;
+        mrr: bigint | number | string;
+      }>
+    >(Prisma.sql`
+      SELECT
+        NULLIF(LOWER(TRIM(p.moneda)), '') AS currency,
+        COUNT(*) AS activeSubscribers,
+        COALESCE(SUM(p.price), 0) AS mrr
+      FROM (
+        SELECT du.user_id, du.order_id, du.id, du.date_end
+        FROM descargas_user du
+        INNER JOIN (
+          SELECT user_id, MAX(date_end) AS max_end
+          FROM descargas_user
+          WHERE date_end >= CURDATE()
+          GROUP BY user_id
+        ) latest_end
+          ON latest_end.user_id = du.user_id
+          AND latest_end.max_end = du.date_end
+        INNER JOIN (
+          SELECT user_id, date_end, MAX(id) AS max_id
+          FROM descargas_user
+          WHERE date_end >= CURDATE()
+          GROUP BY user_id, date_end
+        ) latest_row
+          ON latest_row.user_id = du.user_id
+          AND latest_row.date_end = du.date_end
+          AND latest_row.max_id = du.id
+      ) active_du
+      INNER JOIN orders o
+        ON o.id = active_du.order_id
+      INNER JOIN plans p
+        ON p.id = o.plan_id
+      WHERE o.status = 1
+        AND o.is_plan = 1
+        AND (o.is_canceled IS NULL OR o.is_canceled = 0)
+      GROUP BY currency
+    `),
   ]);
 
   const rangeOrders = rangeOrdersRows[0] ?? {
@@ -1635,6 +1696,27 @@ export const getAnalyticsBusinessMetrics = async (
   const previousActiveUsers = numberFromUnknown(previousWindow.previousUsers);
   const lostUsers = numberFromUnknown(lostWindow.lostUsers);
   const newUsers = numberFromUnknown(newWindow.newUsers);
+  const activeSubscribersNow = numberFromUnknown(
+    activeSubscribersRows?.[0]?.activeSubscribers ?? 0,
+  );
+
+  let activeSubscribersWithPlanNow = 0;
+  let mrrActiveSubscriptionsMxn = 0;
+  let mrrActiveSubscriptionsUsd = 0;
+  for (const row of activeMrrRows) {
+    const currency = String(row.currency ?? '')
+      .trim()
+      .toLowerCase();
+    const active = numberFromUnknown(row.activeSubscribers);
+    const mrr = numberFromUnknown(row.mrr);
+    if (active > 0) activeSubscribersWithPlanNow += active;
+    if (mrr <= 0) continue;
+    if (currency === 'mxn') mrrActiveSubscriptionsMxn += mrr;
+    if (currency === 'usd') mrrActiveSubscriptionsUsd += mrr;
+  }
+
+  const arrActiveSubscriptionsMxn = mrrActiveSubscriptionsMxn * 12;
+  const arrActiveSubscriptionsUsd = mrrActiveSubscriptionsUsd * 12;
 
   const avgOrderValue = paidOrders > 0 ? grossRevenue / paidOrders : 0;
   const arpu = paidUsers > 0 ? grossRevenue / paidUsers : 0;
@@ -1687,6 +1769,12 @@ export const getAnalyticsBusinessMetrics = async (
       arpu: roundNumber(arpu, 2),
       monthlyRecurringRevenueEstimate: roundNumber(currentRevenue, 2),
       monthlyArpuEstimate: roundNumber(monthlyArpuEstimate, 2),
+      activeSubscribersNow,
+      activeSubscribersWithPlanNow,
+      mrrActiveSubscriptionsMxn: roundNumber(mrrActiveSubscriptionsMxn, 2),
+      mrrActiveSubscriptionsUsd: roundNumber(mrrActiveSubscriptionsUsd, 2),
+      arrActiveSubscriptionsMxn: roundNumber(arrActiveSubscriptionsMxn, 2),
+      arrActiveSubscriptionsUsd: roundNumber(arrActiveSubscriptionsUsd, 2),
       repeatPurchaseRatePct: roundNumber(repeatPurchaseRatePct, 2),
       refundRatePct: roundNumber(refundRatePct, 2),
       churnMonthlyPct: roundNumber(churnMonthlyPct, 2),

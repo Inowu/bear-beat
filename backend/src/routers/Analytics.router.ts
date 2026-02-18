@@ -2,8 +2,10 @@ import { TRPCError } from '@trpc/server';
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import {
+  ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL,
   analyticsEventBatchSchema,
   backfillAnalyticsUserIdentity,
+  ensureAnalyticsEventsTableExists,
   getAnalyticsBusinessMetrics,
   getAnalyticsCancellationReasons,
   getAnalyticsCrmDashboard,
@@ -23,6 +25,7 @@ import { publicProcedure } from '../procedures/public.procedure';
 import { shieldedProcedure } from '../procedures/shielded.procedure';
 import { RolesNames } from './auth/interfaces/roles.interface';
 import { router } from '../trpc';
+import { createAdminAuditLog } from './utils/adminAuditLog';
 
 const analyticsRangeInputSchema = z
   .object({
@@ -44,6 +47,23 @@ const analyticsBusinessInputSchema = z
     adSpend: z.number().min(0).max(999999999).optional(),
   })
   .optional();
+
+const analyticsAdSpendMonthlyInputSchema = z
+  .object({
+    month: z.string().regex(/^\d{4}-\d{2}$/).optional(),
+  })
+  .optional();
+
+const analyticsAdSpendMonthlyUpsertSchema = z.object({
+  month: z.string().regex(/^\d{4}-\d{2}$/),
+  channel: z.string().trim().min(1).max(80),
+  currency: z.enum(['MXN', 'USD']).default('MXN'),
+  amount: z.number().min(0).max(999999999),
+});
+
+const analyticsAdSpendMonthlyDeleteSchema = z.object({
+  id: z.number().int().positive(),
+});
 
 const analyticsUxInputSchema = z
   .object({
@@ -138,6 +158,37 @@ const assertAdminRole = (role?: string): void => {
   }
 };
 
+const getCurrentMonthKey = (): string => {
+  const now = new Date();
+  const yyyy = now.getUTCFullYear();
+  const mm = String(now.getUTCMonth() + 1).padStart(2, '0');
+  return `${yyyy}-${mm}`;
+};
+
+const parseMonthKeyRange = (monthKeyRaw: string): { start: Date; end: Date; monthKey: string } => {
+  const trimmed = (monthKeyRaw || '').trim();
+  const match = /^(\d{4})-(\d{2})$/.exec(trimmed);
+  if (!match) {
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message: 'El mes debe tener formato YYYY-MM',
+    });
+  }
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) {
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message: 'El mes es inválido',
+    });
+  }
+
+  const start = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0));
+  const end = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0));
+  const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+  return { start, end, monthKey };
+};
+
 export const analyticsRouter = router({
   trackAnalyticsEvents: publicProcedure
     .input(analyticsEventBatchSchema)
@@ -229,6 +280,180 @@ export const analyticsRouter = router({
         input?.days,
         input?.adSpend,
       );
+    }),
+  getAnalyticsAdSpendMonthly: shieldedProcedure
+    .input(analyticsAdSpendMonthlyInputSchema)
+    .query(async ({ ctx, input }) => {
+      assertAdminRole(ctx.session?.user?.role);
+      const { start, end, monthKey } = parseMonthKeyRange(
+        input?.month ?? getCurrentMonthKey(),
+      );
+
+      const [spendRows, acquisitionRows] = await Promise.all([
+        ctx.prisma.adSpendMonthly.findMany({
+          where: { month_key: monthKey },
+          orderBy: [{ channel: 'asc' }, { currency: 'asc' }],
+        }),
+        (async () => {
+          if (!process.env.DATABASE_URL) return [];
+          await ensureAnalyticsEventsTableExists(ctx.prisma);
+
+          const isRenewalFalseSql = Prisma.sql`
+            LOWER(
+              COALESCE(
+                JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.isRenewal')),
+                JSON_UNQUOTE(JSON_EXTRACT(ae.metadata_json, '$.is_renewal')),
+                'false'
+              )
+            ) = 'false'
+          `;
+
+          const rows = await ctx.prisma.$queryRaw<
+            Array<{
+              channel: string;
+              newPaidUsers: bigint | number;
+            }>
+          >(Prisma.sql`
+            SELECT
+              COALESCE(NULLIF(TRIM(ae.utm_source), ''), '(direct)') AS channel,
+              COUNT(DISTINCT ae.user_id) AS newPaidUsers
+            FROM analytics_events ae
+            INNER JOIN (
+              SELECT
+                ae.user_id AS user_id,
+                MIN(ae.event_ts) AS first_ts
+              FROM analytics_events ae
+              WHERE ae.user_id IS NOT NULL
+                AND ae.event_name = 'payment_success'
+                AND ${isRenewalFalseSql}
+                ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL}
+              GROUP BY ae.user_id
+            ) first_pay
+              ON first_pay.user_id = ae.user_id
+              AND first_pay.first_ts = ae.event_ts
+            WHERE ae.user_id IS NOT NULL
+              AND ae.event_name = 'payment_success'
+              AND ${isRenewalFalseSql}
+              AND ae.event_ts >= ${start}
+              AND ae.event_ts < ${end}
+              ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL}
+            GROUP BY channel
+            ORDER BY newPaidUsers DESC
+            LIMIT 200
+          `);
+
+          return rows;
+        })(),
+      ]);
+
+      const numberFromUnknown = (value: unknown): number => {
+        if (typeof value === 'number' && Number.isFinite(value)) return value;
+        if (typeof value === 'bigint') return Number(value);
+        if (typeof value === 'string') {
+          const parsed = Number(value);
+          return Number.isFinite(parsed) ? parsed : 0;
+        }
+        return 0;
+      };
+
+      return {
+        month: monthKey,
+        range: { start: start.toISOString(), end: end.toISOString() },
+        spend: spendRows.map((row) => ({
+          id: row.id,
+          month: row.month_key,
+          channel: row.channel,
+          currency: row.currency,
+          amount: Number(row.amount),
+          createdAt: row.created_at.toISOString(),
+          updatedAt: row.updated_at.toISOString(),
+        })),
+        acquisition: acquisitionRows.map((row) => ({
+          channel: row.channel,
+          newPaidUsers: numberFromUnknown(row.newPaidUsers),
+        })),
+      };
+    }),
+  upsertAnalyticsAdSpendMonthly: shieldedProcedure
+    .input(analyticsAdSpendMonthlyUpsertSchema)
+    .mutation(async ({ ctx, input }) => {
+      assertAdminRole(ctx.session?.user?.role);
+      const { monthKey } = parseMonthKeyRange(input.month);
+      const channel = input.channel.trim();
+      const currency = input.currency.toUpperCase();
+
+      const row = await ctx.prisma.adSpendMonthly.upsert({
+        where: {
+          month_key_channel_currency: {
+            month_key: monthKey,
+            channel,
+            currency,
+          },
+        },
+        create: {
+          month_key: monthKey,
+          channel,
+          currency,
+          amount: input.amount,
+        },
+        update: {
+          amount: input.amount,
+        },
+      });
+
+      await createAdminAuditLog({
+        prisma: ctx.prisma,
+        actorUserId: ctx.session!.user!.id,
+        action: 'upsert_ad_spend_monthly',
+        req: ctx.req,
+        metadata: {
+          month: monthKey,
+          channel,
+          currency,
+          amount: input.amount,
+        },
+      });
+
+      return {
+        id: row.id,
+        month: row.month_key,
+        channel: row.channel,
+        currency: row.currency,
+        amount: Number(row.amount),
+        createdAt: row.created_at.toISOString(),
+        updatedAt: row.updated_at.toISOString(),
+      };
+    }),
+  deleteAnalyticsAdSpendMonthly: shieldedProcedure
+    .input(analyticsAdSpendMonthlyDeleteSchema)
+    .mutation(async ({ ctx, input }) => {
+      assertAdminRole(ctx.session?.user?.role);
+      const existing = await ctx.prisma.adSpendMonthly.findUnique({
+        where: { id: input.id },
+      });
+      if (!existing) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Registro no encontrado',
+        });
+      }
+
+      await ctx.prisma.adSpendMonthly.delete({ where: { id: input.id } });
+
+      await createAdminAuditLog({
+        prisma: ctx.prisma,
+        actorUserId: ctx.session!.user!.id,
+        action: 'delete_ad_spend_monthly',
+        req: ctx.req,
+        metadata: {
+          id: input.id,
+          month: existing.month_key,
+          channel: existing.channel,
+          currency: existing.currency,
+        },
+      });
+
+      return { deleted: true };
     }),
   getAnalyticsUxQuality: shieldedProcedure
     .input(analyticsUxInputSchema)
