@@ -56,10 +56,12 @@ const clickPaymentMethodIfNeeded = async (
   timeoutMs: number,
 ): Promise<void> => {
   if (!method) return;
-  const name = method === 'card' ? /tarjeta/i : /paypal/i;
-  const button = page.getByRole('button', { name }).first();
-  await button.waitFor({ state: 'visible', timeout: timeoutMs });
-  await button.click();
+  // Checkout 2026 uses buttons with role="radio" and stable data-testid hooks.
+  const testId =
+    method === 'card' ? 'checkout-method-card' : 'checkout-method-paypal';
+  const control = page.getByTestId(testId).first();
+  await control.waitFor({ state: 'visible', timeout: timeoutMs });
+  await control.click();
 };
 
 async function run(): Promise<void> {
