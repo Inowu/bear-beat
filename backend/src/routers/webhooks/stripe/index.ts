@@ -24,10 +24,7 @@ import { markUserOffersRedeemed } from '../../../offers';
 import { facebook } from '../../../facebook';
 import { ingestPaymentSuccessEvent } from '../../../analytics/paymentSuccess';
 
-export const stripeSubscriptionWebhook = async (req: Request) => {
-  const payloadStr = getStripeWebhookBody(req);
-  const payload: Stripe.Event = JSON.parse(payloadStr);
-
+export const processStripeWebhookPayload = async (payload: Stripe.Event) => {
   if (!shouldHandleEvent(payload)) return;
 
   const user = await getUserFromPayload(payload);
@@ -748,6 +745,12 @@ const getPlanFromPayload = async (
   }
 
   return plan;
+};
+
+export const stripeSubscriptionWebhook = async (req: Request) => {
+  const payloadStr = getStripeWebhookBody(req);
+  const payload: Stripe.Event = JSON.parse(payloadStr);
+  await processStripeWebhookPayload(payload);
 };
 
 const shouldHandleEvent = (payload: Stripe.Event): boolean => {

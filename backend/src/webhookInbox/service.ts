@@ -2,11 +2,17 @@ import { Prisma } from '@prisma/client';
 import type { Request } from 'express';
 import { prisma } from '../db';
 import { log } from '../server';
-import { stripeSubscriptionWebhook } from '../routers/webhooks/stripe';
+import { processStripeWebhookPayload } from '../routers/webhooks/stripe';
 import { stripeInvoiceWebhook } from '../routers/webhooks/stripe/paymentIntentsWh';
 import { stripeProductsWebhook } from '../routers/webhooks/stripe/productsWh';
 import { paypalSubscriptionWebhook } from '../routers/webhooks/paypal';
 import { conektaSubscriptionWebhook } from '../routers/webhooks/conekta';
+import {
+  computeBackoff,
+  markFailed,
+  markProcessed,
+  markProcessing,
+} from '../services/webhookInbox';
 import type { WebhookInboxIdentity, WebhookInboxProvider } from './types';
 import {
   hashWebhookPayload,
@@ -45,17 +51,9 @@ const toPositiveInt = (value: string | undefined, fallback: number): number => {
 };
 
 const maxAttempts = (): number => toPositiveInt(process.env.WEBHOOK_INBOX_MAX_ATTEMPTS, 12);
-const baseBackoffMs = (): number => toPositiveInt(process.env.WEBHOOK_INBOX_RETRY_BASE_MS, 30_000);
-const backoffCapMs = (): number => toPositiveInt(process.env.WEBHOOK_INBOX_RETRY_CAP_MS, 6 * 60 * 60 * 1000);
 const sweeperBatchSize = (): number => toPositiveInt(process.env.WEBHOOK_INBOX_SWEEP_BATCH_SIZE, 100);
 const sweeperStaleEnqueuedMs = (): number =>
   toPositiveInt(process.env.WEBHOOK_INBOX_STALE_ENQUEUED_MS, 5 * 60 * 1000);
-
-const computeBackoffMs = (attempt: number): number => {
-  const exponent = Math.max(0, attempt - 1);
-  const rawDelay = baseBackoffMs() * (2 ** exponent);
-  return Math.min(backoffCapMs(), rawDelay);
-};
 
 const isUniqueProviderEventError = (error: unknown): boolean => {
   if (!(error instanceof Prisma.PrismaClientKnownRequestError)) return false;
@@ -107,7 +105,7 @@ const dispatchInboxEvent = async (
 
   switch (provider) {
     case 'stripe':
-      await stripeSubscriptionWebhook(req);
+      await processStripeWebhookPayload(JSON.parse(rawPayload));
       return;
     case 'stripe_pi':
       await stripeInvoiceWebhook(req);
@@ -203,21 +201,8 @@ export const processWebhookInboxEvent = async (
     return;
   }
 
-  const claimed = await prisma.webhookInboxEvent.updateMany({
-    where: {
-      id: event.id,
-      status: {
-        in: ['RECEIVED', 'ENQUEUED', 'FAILED'],
-      },
-    },
-    data: {
-      status: 'PROCESSING',
-      processing_started_at: new Date(),
-      next_retry_at: null,
-    },
-  });
-
-  if (claimed.count === 0) {
+  const claimed = await markProcessing(event.id);
+  if (!claimed) {
     return;
   }
 
@@ -227,37 +212,16 @@ export const processWebhookInboxEvent = async (
       event.payload_raw,
     );
 
-    await prisma.webhookInboxEvent.update({
-      where: { id: event.id },
-      data: {
-        status: 'PROCESSED',
-        processed_at: new Date(),
-        last_error: null,
-        next_retry_at: null,
-        processing_started_at: null,
-      },
-    });
+    await markProcessed(event.id);
   } catch (error) {
     const attempt = event.attempts + 1;
     const retryable = isRetryableError(error);
     const canRetry = retryable && attempt < maxAttempts();
     const nextRetryAt = canRetry
-      ? new Date(Date.now() + computeBackoffMs(attempt))
+      ? new Date(Date.now() + computeBackoff(attempt))
       : null;
     const status = canRetry ? 'FAILED' : 'IGNORED';
-    const now = new Date();
-
-    await prisma.webhookInboxEvent.update({
-      where: { id: event.id },
-      data: {
-        status,
-        attempts: attempt,
-        next_retry_at: nextRetryAt,
-        last_error: toErrorMessage(error),
-        processing_started_at: null,
-        processed_at: status === 'IGNORED' ? now : null,
-      },
-    });
+    await markFailed(event.id, error, nextRetryAt);
 
     log.warn('[WEBHOOK_INBOX] Event processing failed', {
       inboxId: event.id,
@@ -310,4 +274,3 @@ export const sweepWebhookInboxEvents = async (
     enqueued,
   };
 };
-
