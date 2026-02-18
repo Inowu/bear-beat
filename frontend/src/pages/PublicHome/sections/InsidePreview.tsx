@@ -18,7 +18,7 @@ export default function InsidePreview(props: {
           </div>
           <button type="button" className="home-cta home-cta--secondary inside-preview__cta" onClick={onDemoScroll}>
             <CirclePlay size={18} aria-hidden />
-            Ver demo del catálogo
+            Ver demo
           </button>
         </div>
 

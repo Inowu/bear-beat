@@ -1,5 +1,6 @@
 import {
   APP_NUMBER_LOCALE,
+  formatCatalogSizeMarketing as formatCatalogSizeMarketingBase,
   formatGB as formatGBBase,
   formatInt as formatIntBase,
   formatTB as formatTBBase,
@@ -10,6 +11,7 @@ const HOME_NUMBER_LOCALE = APP_NUMBER_LOCALE;
 export const formatInt = formatIntBase;
 export const formatTB = formatTBBase;
 export const formatGB = formatGBBase;
+export const formatCatalogSizeMarketing = formatCatalogSizeMarketingBase;
 
 export function formatDownloads(value: number): string {
   return `${formatInt(value)} descargas`;

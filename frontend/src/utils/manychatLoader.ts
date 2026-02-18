@@ -71,8 +71,8 @@ function ensureManyChatHideStyles(): void {
   document.head.appendChild(style);
 }
 
-function invokeManyChatApi(methodCandidates: string[]): void {
-  if (typeof window === "undefined") return;
+function invokeManyChatApi(methodCandidates: string[]): boolean {
+  if (typeof window === "undefined") return false;
 
   const apis = [
     (window as any).MC_API,
@@ -88,12 +88,14 @@ function invokeManyChatApi(methodCandidates: string[]): void {
       if (typeof fn !== "function") continue;
       try {
         fn.call(api);
-        return;
+        return true;
       } catch {
         // noop
       }
     }
   }
+
+  return false;
 }
 
 function ensureScript(src: string, scriptId: string): Promise<void> {
@@ -267,4 +269,16 @@ export function syncManyChatWidgetVisibility(pathname: string): void {
   }
 
   invokeManyChatApi(["showWidget", "show"]);
+}
+
+export function openManyChatWidget(): boolean {
+  // Try explicit open APIs first, then fall back to show.
+  return invokeManyChatApi([
+    "openWidget",
+    "open",
+    "expand",
+    "maximize",
+    "showWidget",
+    "show",
+  ]);
 }

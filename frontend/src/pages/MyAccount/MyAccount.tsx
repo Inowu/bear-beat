@@ -41,6 +41,11 @@ import {
   ensureStripeReady,
   getStripeLoadFailureReason,
 } from "../../utils/stripeLoader";
+import {
+  loadManyChatScriptsOnce,
+  openManyChatWidget,
+  syncManyChatWidgetVisibility,
+} from "../../utils/manychatLoader";
 
 function MyAccount() {
   const { theme } = useTheme();
@@ -279,6 +284,26 @@ function MyAccount() {
     }
   };
 
+  const openSupportChat = async () => {
+    let openedWidget = false;
+    try {
+      await loadManyChatScriptsOnce();
+      syncManyChatWidgetVisibility(window.location.pathname);
+      openedWidget = openManyChatWidget();
+    } catch {
+      openedWidget = false;
+    }
+
+    trackGrowthMetric(GROWTH_METRICS.SUPPORT_CHAT_OPENED, {
+      surface: "my_account",
+      openedWidget,
+    });
+
+    if (!openedWidget) {
+      window.location.assign("/legal#faq");
+    }
+  };
+
   const loadEmailPreferences = async () => {
     if (!currentUser) return;
     setEmailPrefsLoading(true);
@@ -421,9 +446,10 @@ function MyAccount() {
   const availableGb = quota?.regular
     ? transformBiteToGb(quota.regular.available)
     : 10240;
-  const storagePercent = quota?.regular
+  const storagePercentRaw = quota?.regular
     ? getCompleted(quota.regular.used, quota.regular.available)
     : 0;
+  const storagePercent = Number.isFinite(storagePercentRaw) ? Math.max(0, storagePercentRaw) : 0;
   const remainingRegularBytes: bigint = quota?.regular
     ? quota.regular.available - quota.regular.used
     : BigInt(0);
@@ -436,23 +462,40 @@ function MyAccount() {
   const remainingExtendedGb = quota?.extended
     ? transformBiteToGb(remainingExtendedBytes > BigInt(0) ? remainingExtendedBytes : BigInt(0))
     : 0;
+  const storagePercentLabel = storagePercent > 100 ? "100%+" : `${storagePercent}%`;
+  const storageFillPercent = storagePercent <= 0 ? 0 : Math.min(100, Math.max(2, storagePercent));
+  const hasQuotaReached = storagePercent >= 100;
+  const hasNoQuotaLeft = remainingRegularGb <= 0 && remainingExtendedGb <= 0;
+  const hasActiveSubscription = Boolean(currentUser?.hasActiveSubscription);
+  const hasFtpAccess = Boolean(currentUser?.ftpAccount);
+  const hasAccessWithoutSubscription = !hasActiveSubscription && hasFtpAccess;
+  const cycleEndLabel = formatDateShort(currentUser?.ftpAccount?.expiration ?? null);
+  const cycleEndOrFallback = cycleEndLabel !== "—" ? cycleEndLabel : "el siguiente ciclo";
+  const nextBillingLabel = cycleEndLabel !== "—" ? cycleEndLabel : "Sin fecha disponible";
+  const nextBillingTitle = hasActiveSubscription && !currentUser?.isSubscriptionCancelled
+    ? "Próximo cobro"
+    : "Próximo vencimiento";
   const initialsSource = (currentUser?.username ?? currentUser?.email ?? "DJ").trim();
   const normalizedInitials = initialsSource
     .replace(/[^A-Za-z0-9]/g, "")
     .slice(0, 2)
     .toUpperCase();
   const initials = normalizedInitials === "" ? "DJ" : normalizedInitials;
-  const membershipStatus = currentUser?.hasActiveSubscription
+  const membershipStatus = hasActiveSubscription
     ? currentUser.isSubscriptionCancelled
       ? "Cancela al final del ciclo"
       : "Membresía activa"
-    : "Sin membresía activa";
-  const membershipTone = currentUser?.hasActiveSubscription
+    : hasAccessWithoutSubscription
+      ? "Acceso FTP vigente"
+      : "Sin membresía activa";
+  const membershipTone = hasActiveSubscription
     ? currentUser.isSubscriptionCancelled
       ? "warning"
       : "success"
-    : "muted";
-  const ftpStatus = currentUser?.ftpAccount ? "FTP habilitado" : "Sin acceso FTP";
+    : hasAccessWithoutSubscription
+      ? "warning"
+      : "muted";
+  const ftpStatus = hasFtpAccess ? "FTP habilitado" : "Sin acceso FTP";
 
   const getStatusBadge = (status: number) => {
     const map: Record<number, { label: string; varColor: string }> = {
@@ -505,6 +548,52 @@ function MyAccount() {
           <p>Gestiona tu acceso, FTP y métodos de pago desde un solo lugar.</p>
         </header>
 
+        <section className="ma-control-center" aria-label="Centro de control">
+          <div className="ma-control-stats">
+            <article className="ma-control-stat">
+              <span>Estado de membresía</span>
+              <strong>{membershipStatus}</strong>
+            </article>
+            <article className="ma-control-stat">
+              <span>{nextBillingTitle}</span>
+              <strong>{nextBillingLabel}</strong>
+            </article>
+          </div>
+          <div className="ma-control-actions">
+            {hasActiveSubscription && !currentUser.isSubscriptionCancelled && (
+              <button type="button" onClick={startCancel} className="ma-btn ma-btn-danger">
+                Cancelar
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={
+                paymentMethods.length > 0
+                  ? openBillingPortal
+                  : () => void openPaymentMethodModal()
+              }
+              disabled={portalLoading}
+              className="ma-btn ma-btn-outline"
+            >
+              {portalLoading ? "Abriendo..." : "Actualizar método"}
+            </button>
+            <button type="button" onClick={() => void openSupportChat()} className="ma-btn ma-btn-soft">
+              Soporte / Abrir chat
+            </button>
+          </div>
+        </section>
+
+        {!hasActiveSubscription && (
+          <section className="ma-top-cta" aria-label="Activar membresía">
+            <p>
+              Activa tu membresía para evitar interrupciones en tu acceso.
+            </p>
+            <Link to="/planes" className="ma-btn ma-btn-outline">
+              Activar membresía
+            </Link>
+          </section>
+        )}
+
         <section className="ma-panel ma-profile-panel">
           <div className="ma-avatar-block">
             <div className="ma-avatar">
@@ -530,41 +619,47 @@ function MyAccount() {
               </span>
               <span className="ma-status-pill ma-status-pill--neutral">{ftpStatus}</span>
             </div>
+            {hasAccessWithoutSubscription && (
+              <p className="ma-status-note">
+                Tu FTP sigue vigente hasta {cycleEndOrFallback}. Activa tu membresía para mantener el acceso.
+              </p>
+            )}
             <div className="ma-storage">
               <div className="ma-storage-head">
-                <span>Cuota mensual / usado este ciclo</span>
-                <strong>{storagePercent}%</strong>
+                <span>Cuota de descarga / usado este ciclo</span>
+                <strong>{storagePercentLabel}</strong>
               </div>
               <div className="ma-progress-track">
                 <div
                   className="ma-progress-fill"
-                  style={{ width: `${Math.min(100, Math.max(2, storagePercent))}%` }}
+                  style={{ width: `${storageFillPercent}%` }}
                 />
               </div>
               <p className="ma-storage-amount">
                 {formatInt(availableGb)} GB/mes · usados: {formatInt(usedGb)} GB este ciclo
               </p>
               <p className="ma-storage-amount">
-                La cuota mensual es lo que puedes descargar cada ciclo. El catálogo total es lo disponible para elegir.
+                La cuota de descarga es lo que puedes descargar cada ciclo. El catálogo total es lo disponible para elegir.
               </p>
-              {currentUser?.hasActiveSubscription && (
+              {hasQuotaReached && (
+                <p className="ma-storage-alert">
+                  {hasNoQuotaLeft
+                    ? `Límite alcanzado. No puedes descargar más hasta ${cycleEndOrFallback}.`
+                    : "Llegaste a 100% de tu cuota regular. Puedes seguir usando GB extra si tienes disponibles."}
+                </p>
+              )}
+              {hasActiveSubscription && (
                 <>
                   <p className="ma-storage-amount">
                     Te quedan: {formatInt(remainingRegularGb)} GB este ciclo · GB extra disponibles: {formatInt(remainingExtendedGb)} GB
                   </p>
                   <button type="button" onClick={() => void openPlan()} className="ma-btn ma-btn-soft">
-                    Recargar GB extra
+                    Comprar extra 100 GB
                   </button>
                 </>
               )}
             </div>
           </div>
-          {currentUser?.hasActiveSubscription &&
-            !currentUser.isSubscriptionCancelled && (
-              <button type="button" onClick={startCancel} className="ma-btn ma-btn-danger">
-                Cancelar suscripción
-              </button>
-            )}
         </section>
 
         <div className="ma-grid-two">
@@ -801,6 +896,7 @@ function MyAccount() {
                   description="Activa o desactiva todos los correos de marketing."
                   checked={emailPrefs.enabled}
                   disabled={emailPrefsSaving}
+                  disabledReason={emailPrefsSaving ? "Estamos guardando tus cambios." : undefined}
                   onChange={(next) => updateEmailPreferences({ enabled: next })}
                 />
                 <div className={`ma-pref-sublist ${emailPrefs.enabled ? "" : "is-disabled"}`}>
@@ -810,6 +906,13 @@ function MyAccount() {
                     description="Guías rápidas, recordatorios y mejoras del servicio."
                     checked={emailPrefs.news}
                     disabled={!emailPrefs.enabled || emailPrefsSaving}
+                    disabledReason={
+                      !emailPrefs.enabled
+                        ? "Activa 'Promociones y novedades por email' para editar esta opción."
+                        : emailPrefsSaving
+                          ? "Estamos guardando tus cambios."
+                          : undefined
+                    }
                     onChange={(next) => updateEmailPreferences({ news: next })}
                   />
                   <PrefToggle
@@ -818,6 +921,13 @@ function MyAccount() {
                     description="Descuentos, cupones personales y winback."
                     checked={emailPrefs.offers}
                     disabled={!emailPrefs.enabled || emailPrefsSaving}
+                    disabledReason={
+                      !emailPrefs.enabled
+                        ? "Activa 'Promociones y novedades por email' para editar esta opción."
+                        : emailPrefsSaving
+                          ? "Estamos guardando tus cambios."
+                          : undefined
+                    }
                     onChange={(next) => updateEmailPreferences({ offers: next })}
                   />
                   <PrefToggle
@@ -826,6 +936,13 @@ function MyAccount() {
                     description="Resumen periódico de novedades (si aplica)."
                     checked={emailPrefs.digest}
                     disabled={!emailPrefs.enabled || emailPrefsSaving}
+                    disabledReason={
+                      !emailPrefs.enabled
+                        ? "Activa 'Promociones y novedades por email' para editar esta opción."
+                        : emailPrefsSaving
+                          ? "Estamos guardando tus cambios."
+                          : undefined
+                    }
                     onChange={(next) => updateEmailPreferences({ digest: next })}
                   />
                 </div>
@@ -907,6 +1024,7 @@ function PrefToggle({
   description,
   checked,
   disabled,
+  disabledReason,
   onChange,
 }: {
   id: string;
@@ -914,15 +1032,24 @@ function PrefToggle({
   description: string;
   checked: boolean;
   disabled: boolean;
+  disabledReason?: string;
   onChange: (next: boolean) => void;
 }) {
+  const switchStateLabel = disabled ? "No editable" : checked ? "Activo" : "Inactivo";
+
   return (
-    <label htmlFor={id} className={`ma-pref-row ${disabled ? "is-disabled" : ""}`}>
+    <label htmlFor={id} className={`ma-pref-row ${disabled ? "is-disabled" : ""} ${checked ? "is-active" : ""}`}>
       <span className="ma-pref-copy">
         <span className="ma-pref-title">{title}</span>
         <span className="ma-pref-desc">{description}</span>
+        {disabled && disabledReason && (
+          <span className="ma-pref-disabled-reason">No editable: {disabledReason}</span>
+        )}
       </span>
       <span className="ma-pref-control">
+        <span className={`ma-switch-flag ${checked ? "is-on" : "is-off"} ${disabled ? "is-disabled" : ""}`}>
+          {switchStateLabel}
+        </span>
         <input
           id={id}
           className="ma-switch-input"

@@ -99,8 +99,8 @@ export function UsersUHModal(props: IUsersUHModal) {
                 exclusivos como:
                 <ul>
                   <li>Acceso a contenido exclusivo.</li>
-                  <li>500 GB de descarga al mes.</li>
-                  <li>Nuevas canciones diariamente.</li>
+                  <li>Cuota de descarga: 500 GB/mes.</li>
+                  <li>Actualizaciones: semanales (nuevos packs).</li>
                   <li>Listas de reproducción personalizadas.</li>
                   <li>Cancelación sin compromiso.</li>
                 </ul>
@@ -120,7 +120,7 @@ export function UsersUHModal(props: IUsersUHModal) {
                 <h3 className="blue">
                   <span>$199 </span> MXN
                 </h3>
-                <h3>500 GB al mes</h3>
+                <h3>Cuota de descarga: 500 GB/mes</h3>
               </div>
               <form className="checkout-form" onSubmit={onSubmit}>
                 <div className="c-row">

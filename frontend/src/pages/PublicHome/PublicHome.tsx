@@ -14,9 +14,9 @@ import {
   HOME_HERO_MICROCOPY_TRIAL,
 } from "./homeCopy";
 import {
+  formatCatalogSizeMarketing,
   HOME_NUMBER_LOCALE,
   formatInt,
-  formatTB,
   normalizeGenreDisplayName,
   normalizeSearchKey,
 } from "./homeFormat";
@@ -42,7 +42,7 @@ import "./PublicHome.scss";
 
 const TOP_DOWNLOADS_DAYS = 120;
 const DEFAULT_LIMITS_NOTE =
-  "La cuota mensual es lo que puedes descargar cada ciclo. El catálogo total es lo disponible para elegir.";
+  "La cuota de descarga es lo que puedes bajar en cada ciclo. El catálogo total es lo disponible para elegir.";
 const PAYMENT_METHOD_VALUES: PaymentMethodId[] = [
   "visa",
   "mastercard",
@@ -293,6 +293,9 @@ export default function PublicHome() {
         typeof response?.ui?.limitsNote === "string"
           ? response.ui.limitsNote.trim()
           : "";
+      const normalizedLimitsNote = limitsNoteRaw
+        ? limitsNoteRaw.replace(/cuota mensual/gi, "cuota de descarga")
+        : "";
       const afterPriceLabelRaw =
         typeof response?.ui?.afterPriceLabel === "string"
           ? response.ui.afterPriceLabel.trim()
@@ -300,7 +303,7 @@ export default function PublicHome() {
 
       setPricingUi({
         defaultCurrency,
-        limitsNote: limitsNoteRaw || DEFAULT_LIMITS_NOTE,
+        limitsNote: normalizedLimitsNote || DEFAULT_LIMITS_NOTE,
         afterPriceLabel: afterPriceLabelRaw || "MXN $350/mes (USD $18)",
         stats: {
           totalFiles: Number.isFinite(totalFiles) ? totalFiles : 0,
@@ -390,7 +393,7 @@ export default function PublicHome() {
   const footerMicrocopy = useMemo(() => {
     if (trialSummary?.enabled) {
       // Mantén el detalle de la prueba arriba (hero/pricing) y deja el footer en modo "micro".
-      return `Pago seguro (Stripe) • ${HOME_HERO_MICROCOPY_TRIAL}`;
+      return HOME_HERO_MICROCOPY_TRIAL;
     }
     return HOME_HERO_MICROCOPY_BASE;
   }, [trialSummary?.enabled]);
@@ -416,7 +419,7 @@ export default function PublicHome() {
     Number(pricingUi.stats.totalFiles ?? 0),
   );
   const effectiveTotalTB = Math.max(0, Number(pricingUi.stats.totalTB ?? 0));
-  const totalTBLabel = formatTB(effectiveTotalTB);
+  const totalTBLabel = formatCatalogSizeMarketing(effectiveTotalTB);
   const totalFilesLabel = formatInt(effectiveTotalFiles);
   const hasLiveCatalog = Boolean(
     catalogSummary &&
@@ -505,7 +508,7 @@ export default function PublicHome() {
   );
 
   const onSecondaryCtaClick = useCallback(
-    (location: "demo" | "top_downloads" | "modal_demo") => {
+    (location: "demo" | "top_downloads" | "modal_demo" | "sticky_demo") => {
       trackGrowthMetric(GROWTH_METRICS.CTA_SECONDARY_CLICK, { location });
       trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
         id: `home_secondary_${location}`,
@@ -942,7 +945,10 @@ export default function PublicHome() {
         <CatalogDemo
           genres={catalogGenres}
           isFallback={!hasLiveCatalog}
-          onSecondaryCtaClick={() => onSecondaryCtaClick("demo")}
+          onSecondaryCtaClick={() => {
+            onSecondaryCtaClick("demo");
+            onDemoScroll();
+          }}
         />
 
         <HumanSocialProof />
@@ -1025,6 +1031,10 @@ export default function PublicHome() {
         ctaLabel={ctaPrimaryLabel}
         trial={trialSummary}
         onPrimaryCtaClick={() => onPrimaryCtaClick("sticky")}
+        onDemoClick={() => {
+          onSecondaryCtaClick("sticky_demo");
+          onDemoScroll();
+        }}
       />
     </div>
   );

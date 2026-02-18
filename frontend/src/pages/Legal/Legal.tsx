@@ -10,7 +10,7 @@ const FAQ_ITEMS = [
   {
     question: "¿Qué incluye la membresía?",
     answer:
-      "Incluye acceso al catálogo para DJ y descarga de hasta 500 GB por ciclo mensual, con contenido organizado por carpetas para búsqueda rápida.",
+      "Incluye acceso al catálogo para DJ, cuota de descarga de 500 GB/mes y contenido organizado por carpetas para búsqueda rápida. Actualizaciones: semanales (nuevos packs).",
   },
   {
     question: "¿Qué métodos de pago manejan?",
@@ -337,7 +337,7 @@ function Legal() {
             </p>
             <h3>2. Descargas y cuota</h3>
             <p>
-              La membresía contempla límite de descarga por ciclo (500 GB) y acceso al catálogo conforme a la
+              La membresía contempla cuota de descarga por ciclo (500 GB/mes) y acceso al catálogo conforme a la
               disponibilidad del servicio.
             </p>
             <h3>3. Continuidad del servicio</h3>

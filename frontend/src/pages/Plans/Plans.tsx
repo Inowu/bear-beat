@@ -4,17 +4,18 @@ import trpc from "../../api";
 import { Link, useNavigate } from "react-router-dom";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 import { AlertTriangle, Check, Layers3, RefreshCw } from "src/icons";
-import { formatInt, formatTB } from "../../utils/format";
+import { formatCatalogSizeMarketing, formatInt } from "../../utils/format";
 import PublicTopNav from "../../components/PublicTopNav/PublicTopNav";
 import PaymentMethodLogos, {
   type PaymentMethodId,
 } from "../../components/PaymentMethodLogos/PaymentMethodLogos";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../utils/growthMetrics";
 import { useUserContext } from "../../contexts/UserContext";
+import PlansStickyCta from "./PlansStickyCta";
 
 type CurrencyKey = "mxn" | "usd";
 const DEFAULT_LIMITS_NOTE =
-  "La cuota mensual es lo que puedes descargar cada ciclo. El catálogo total es lo disponible para elegir.";
+  "La cuota de descarga es lo que puedes bajar en cada ciclo. El catálogo total es lo disponible para elegir.";
 const PAYMENT_METHOD_VALUES: PaymentMethodId[] = [
   "visa",
   "mastercard",
@@ -47,6 +48,13 @@ type PublicPricingUi = {
     };
     quotaGbDefault: number;
   };
+};
+
+type PublicTrialConfig = {
+  enabled: boolean;
+  days: number;
+  gb: number;
+  eligible?: boolean | null;
 };
 
 function toNumber(value: unknown): number {
@@ -94,6 +102,15 @@ function formatMoneyFixed(value: unknown, locale: string): string {
   }).format(amount);
 }
 
+function formatPayNowMethodsLabel(methods: PaymentMethodId[]): string {
+  const labels: string[] = [];
+  if (methods.includes("paypal")) labels.push("PayPal");
+  if (methods.includes("spei")) labels.push("SPEI");
+  if (methods.includes("oxxo")) labels.push("Efectivo");
+  if (methods.includes("transfer")) labels.push("Transferencia");
+  return labels.length > 0 ? labels.join(" / ") : "Otros métodos";
+}
+
 function Plans() {
   const { currentUser } = useUserContext();
   const navigate = useNavigate();
@@ -116,6 +133,9 @@ function Plans() {
       quotaGbDefault: 500,
     },
   });
+  const [trialConfig, setTrialConfig] = useState<PublicTrialConfig | null>(
+    null,
+  );
 
   const [loader, setLoader] = useState<boolean>(true);
   const [loadError, setLoadError] = useState<string>("");
@@ -157,6 +177,21 @@ function Plans() {
         mxn: toPlan(result?.plans?.mxn, "mxn"),
         usd: toPlan(result?.plans?.usd, "usd"),
       };
+      const trialRaw =
+        result?.trialConfig && typeof result.trialConfig === "object"
+          ? result.trialConfig
+          : null;
+      const nextTrialConfig: PublicTrialConfig | null = trialRaw
+        ? {
+            enabled: Boolean(trialRaw.enabled),
+            days: Math.max(0, Math.trunc(toNumber(trialRaw.days))),
+            gb: Math.max(0, Math.trunc(toNumber(trialRaw.gb))),
+            eligible:
+              typeof trialRaw.eligible === "boolean" || trialRaw.eligible === null
+                ? trialRaw.eligible
+                : null,
+          }
+        : null;
 
       const defaultCurrencyRaw = String(
         result?.ui?.defaultCurrency ?? result?.currencyDefault ?? "mxn",
@@ -200,7 +235,9 @@ function Plans() {
         typeof result?.ui?.limitsNote === "string"
           ? result.ui.limitsNote.trim()
           : "";
-      const limitsNote = limitsNoteRaw || DEFAULT_LIMITS_NOTE;
+      const limitsNote = limitsNoteRaw
+        ? limitsNoteRaw.replace(/cuota mensual/gi, "cuota de descarga")
+        : DEFAULT_LIMITS_NOTE;
 
       setPlansByCurrency(nextPlans);
       setPricingUi({
@@ -222,12 +259,14 @@ function Plans() {
           quotaGbDefault,
         },
       });
+      setTrialConfig(nextTrialConfig);
       setSelectedCurrency(resolvePreferredCurrency(defaultCurrency, nextPlans));
     } catch {
       setLoadError(
         "No pudimos cargar los planes en este momento. Intenta nuevamente.",
       );
       setPlansByCurrency({ mxn: null, usd: null });
+      setTrialConfig(null);
     } finally {
       setLoader(false);
     }
@@ -322,6 +361,24 @@ function Plans() {
       : (["visa", "mastercard"] as PaymentMethodId[]);
   }, [selectedCurrency, selectedPlan?.paymentMethods]);
 
+  const trialPreview = useMemo(() => {
+    const trialEnabled =
+      Boolean(trialConfig?.enabled) && trialConfig?.eligible !== false;
+    const trialDays = Math.max(0, Math.trunc(toNumber(trialConfig?.days)));
+    const trialGb = Math.max(0, Math.trunc(toNumber(trialConfig?.gb)));
+    const applies = trialEnabled && trialDays > 0 && trialGb > 0;
+    const monthlyLabel = `${price.amount} ${price.currencyLabel}/mes`;
+    const payNowMethodsLabel = formatPayNowMethodsLabel(paymentMethods);
+
+    return {
+      applies,
+      trialDays,
+      trialGb,
+      monthlyLabel,
+      payNowMethodsLabel,
+    };
+  }, [paymentMethods, price.amount, price.currencyLabel, trialConfig]);
+
   const selectCurrency = (next: CurrencyKey) => {
     if (next === selectedCurrency) return;
     setSelectedCurrency(next);
@@ -348,6 +405,17 @@ function Plans() {
 
     navigate(`/comprar?priceId=${selectedPlan.planId}`);
   }, [navigate, selectedCurrency, selectedPlan]);
+  const handleStickyDemo = useCallback(() => {
+    trackGrowthMetric(GROWTH_METRICS.CTA_SECONDARY_CLICK, {
+      location: "plans_sticky_demo",
+    });
+    trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
+      id: "plans_sticky_demo",
+      location: "plans_sticky",
+      currency: selectedCurrency.toUpperCase(),
+    });
+    navigate("/#demo");
+  }, [navigate, selectedCurrency]);
 
   const prefetchCheckout = useCallback(() => {
     if (checkoutPrefetchedRef.current) return;
@@ -374,7 +442,7 @@ function Plans() {
 
       <section className="plans2026__main" aria-label="Planes y precios">
         <div className="plans2026__container bb-marketing-container--narrow">
-          <header className="plans2026__hero">
+          <header className="plans2026__hero" data-testid="plans-hero">
             <h1>Precio simple, catálogo gigante.</h1>
             <p className="plans2026__subtitle">
               Activa hoy y llega a tu evento con el repertorio listo.
@@ -482,7 +550,7 @@ function Plans() {
               <section className="plans2026__bento" aria-label="Valor incluido">
                 <article className="plans2026__bento-card bb-bento-card">
                   <p className="plans2026__bento-value">
-                    {formatTB(stats.totalTB)}
+                    {formatCatalogSizeMarketing(stats.totalTB)}
                   </p>
                   <p className="plans2026__bento-label">Catálogo total</p>
                 </article>
@@ -490,7 +558,7 @@ function Plans() {
                   <p className="plans2026__bento-value">
                     {formatInt(stats.quotaGb)} GB/mes
                   </p>
-                  <p className="plans2026__bento-label">Cuota mensual</p>
+                  <p className="plans2026__bento-label">Cuota de descarga</p>
                 </article>
                 <article className="plans2026__bento-card bb-bento-card">
                   <p className="plans2026__bento-value">
@@ -569,6 +637,8 @@ function Plans() {
 
                 <ul className="plans2026__benefits" aria-label="Beneficios">
                   {[
+                    `Cuota de descarga: ${formatInt(stats.quotaGb)} GB/mes.`,
+                    "Actualizaciones: semanales (nuevos packs).",
                     "Catálogo completo (eliges qué descargar).",
                     "Catálogo pensado para cabina en vivo.",
                     "Búsqueda rápida por género y temporada.",
@@ -584,6 +654,34 @@ function Plans() {
                   ))}
                 </ul>
 
+                <section className="plans2026__billingPreview" aria-label="Resumen de cobro">
+                  {trialPreview.applies ? (
+                    <>
+                      <p className="plans2026__billingLine">
+                        <span>Con tarjeta</span>
+                        <strong>
+                          {`Hoy: $0 (prueba ${formatInt(trialPreview.trialDays)} días + ${formatInt(trialPreview.trialGb)} GB)`}
+                        </strong>
+                      </p>
+                      <p className="plans2026__billingLine">
+                        <span>Después</span>
+                        <strong>{`${trialPreview.monthlyLabel} (si no cancelas)`}</strong>
+                      </p>
+                      <p className="plans2026__billingHint">
+                        {trialPreview.payNowMethodsLabel}: pago hoy
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="plans2026__billingLine">
+                        <span>Pago hoy</span>
+                        <strong>{`${price.amount} ${price.currencyLabel}`}</strong>
+                      </p>
+                      <p className="plans2026__billingHint">Acceso inmediato</p>
+                    </>
+                  )}
+                </section>
+
                 <button
                   type="button"
                   className="home-cta home-cta--primary home-cta--block"
@@ -592,10 +690,17 @@ function Plans() {
                   onFocus={prefetchCheckout}
                   onTouchStart={prefetchCheckout}
                   disabled={!selectedPlan}
-                  data-testid="plans-activate"
+                  data-testid={
+                    selectedPlan
+                      ? `plan-primary-cta-${selectedPlan.planId}`
+                      : "plans-activate"
+                  }
                 >
-                  Activar Ahora
+                  Activar
                 </button>
+                <div className="plans2026__ctaTrust" role="note" aria-label="Confianza rápida">
+                  <span>Pago seguro • Tarjeta, PayPal, SPEI y Efectivo • Cancela cuando quieras</span>
+                </div>
 
                 <div className="plans2026__trust" aria-label="Confianza">
                   <PaymentMethodLogos
@@ -623,6 +728,21 @@ function Plans() {
           )}
         </div>
       </section>
+      <PlansStickyCta
+        planId={selectedPlan?.planId ?? null}
+        ctaLabel="Activar"
+        trial={
+          trialPreview.applies
+            ? {
+                enabled: true,
+                days: trialPreview.trialDays,
+                gb: trialPreview.trialGb,
+              }
+            : null
+        }
+        onClick={handleActivate}
+        onDemoClick={handleStickyDemo}
+      />
     </div>
   );
 }

@@ -1,10 +1,8 @@
-export const HOME_CTA_PRIMARY_LABEL_FALLBACK = "Activar acceso";
-export const HOME_CTA_SECONDARY_LABEL = "Ver los 200 géneros al activar";
+export const HOME_CTA_PRIMARY_LABEL_FALLBACK = "Empezar prueba";
+export const HOME_CTA_SECONDARY_LABEL = "Ver demo";
 
 export function getHomeCtaPrimaryLabel(trial: { enabled: boolean; days: number } | null): string {
-  if (trial?.enabled && Number.isFinite(trial.days) && trial.days > 0) {
-    return `Empezar prueba (${trial.days} días)`;
-  }
+  if (trial?.enabled && Number.isFinite(trial.days) && trial.days > 0) return "Empezar prueba";
   return HOME_CTA_PRIMARY_LABEL_FALLBACK;
 }
 
@@ -12,8 +10,10 @@ export const HOME_HERO_TITLE = "Nunca vuelvas a decir “No la tengo” en cabin
 export const HOME_HERO_SUBTITLE =
   "Membresía para DJs: video remixes, audios y karaokes organizados para descargar y llegar con repertorio listo.";
 
-export const HOME_HERO_MICROCOPY_BASE = "Pago seguro (Stripe) • Cancela cuando quieras";
-export const HOME_HERO_MICROCOPY_TRIAL = "Cancela antes de que termine y no se cobra.";
+export const HOME_HERO_MICROCOPY_BASE =
+  "Pago seguro • Tarjeta, PayPal, SPEI y Efectivo • Cancela cuando quieras";
+export const HOME_HERO_MICROCOPY_TRIAL =
+  "Prueba solo con tarjeta. Cancela antes de que termine y no se cobra.";
 
 export const HOME_USE_CASES = [
   {
@@ -60,19 +60,19 @@ export const HOME_FAQ_ITEMS: HomeFaqItem[] = [
     id: "includes",
     question: "¿Qué incluye la membresía?",
     answer:
-      "Incluye acceso al catálogo y descargas de hasta 500 GB por ciclo mensual, con contenido organizado por carpetas para búsqueda rápida.",
+      "Incluye acceso al catálogo, cuota de descarga de 500 GB/mes y contenido organizado por carpetas para búsqueda rápida. Actualizaciones: semanales (nuevos packs).",
   },
   {
     id: "quota",
     question: "¿Qué significa 500 GB/mes en la práctica?",
     answer:
-      "Tienes una cuota mensual de descarga. Tú eliges qué bajar del catálogo total según lo que necesites para tus eventos.",
+      "Tienes una cuota de descarga de 500 GB/mes. Como referencia, 500 GB equivalen aprox. a 150-300 videos (depende del peso/calidad de cada archivo).",
   },
   {
     id: "catalog-vs-quota",
-    question: "¿Catálogo total vs cuota mensual: qué es cada cosa?",
+    question: "¿Catálogo total vs cuota de descarga: qué es cada cosa?",
     answer:
-      "El catálogo total es el tamaño del repertorio disponible. La cuota mensual (500 GB/mes) es lo que puedes descargar cada ciclo.",
+      "El catálogo total es lo disponible para elegir. La cuota de descarga (500 GB/mes) es lo que puedes descargar en cada ciclo.",
   },
   {
     id: "how-download",
@@ -96,7 +96,7 @@ export const HOME_FAQ_ITEMS: HomeFaqItem[] = [
     id: "trial",
     question: "¿Cómo funciona la prueba gratis?",
     answer:
-      "Si está habilitada, aplica solo con tarjeta (Stripe) y solo la primera vez. Puedes cancelar antes de que termine y no se cobra.",
+      "Si está habilitada, aplica solo con tarjeta y solo la primera vez. Puedes cancelar antes de que termine y no se cobra.",
   },
   {
     id: "formats",

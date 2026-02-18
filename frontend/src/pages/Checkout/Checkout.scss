@@ -629,9 +629,19 @@
 
 .checkout2026__methodBlurb {
   margin: 0;
-  color: color-mix(in srgb, var(--ph-text-body) 94%, transparent);
-  font-size: 1.18rem;
-  font-weight: 650;
+  color: color-mix(in srgb, var(--ph-text-heading) 96%, transparent);
+  font-size: 1.22rem;
+  font-weight: 800;
+  line-height: 1.45;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.checkout2026__methodFineprint {
+  margin: -2px 0 0;
+  color: color-mix(in srgb, var(--ph-text-heading) 95%, transparent);
+  font-size: 1.1rem;
+  font-weight: 720;
   line-height: 1.45;
   text-align: center;
   text-wrap: balance;
@@ -2021,6 +2031,45 @@ html.dark .checkout-method.is-active,
   text-decoration: underline;
 }
 
+.checkout2026__chargeSummary {
+  margin-top: 8px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--app-border) 84%, transparent);
+  background: color-mix(in srgb, var(--app-bg-soft) 84%, var(--app-bg-card));
+  padding: 10px 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.checkout2026__chargeRow {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.checkout2026__chargeRow span {
+  color: color-mix(in srgb, var(--app-text-heading) 94%, transparent);
+  font-size: 1.06rem;
+  font-weight: 820;
+}
+
+.checkout2026__chargeRow strong {
+  color: var(--app-text-heading);
+  font-size: 1.14rem;
+  font-weight: 880;
+  text-align: right;
+}
+
+.checkout2026__chargeNote {
+  margin: 2px 0 0;
+  color: color-mix(in srgb, var(--app-text-heading) 94%, transparent);
+  font-size: 1.01rem;
+  font-weight: 760;
+  line-height: 1.4;
+}
+
 .checkout2026__actions {
   margin-top: 2px;
 }
@@ -2304,6 +2353,57 @@ html[data-theme="light"] .checkout-credentials__item {
   .checkout-payment-card {
     position: relative;
     gap: 10px;
+  }
+
+  .checkout2026__card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .checkout2026__cardHead {
+    order: 1;
+  }
+
+  .checkout2026__price {
+    order: 2;
+  }
+
+  .checkout2026__methodSection {
+    order: 3;
+  }
+
+  .checkout2026__consent {
+    order: 4;
+  }
+
+  .checkout-inline-error {
+    order: 5;
+  }
+
+  .checkout2026__chargeSummary {
+    order: 6;
+  }
+
+  .checkout2026__actions {
+    order: 7;
+    margin-top: 0;
+  }
+
+  .checkout2026__trust {
+    order: 8;
+  }
+
+  .checkout2026__divider {
+    display: none;
+  }
+
+  .checkout2026__benefits {
+    order: 9;
+  }
+
+  .checkout2026__limitsNote {
+    order: 10;
   }
 
   .checkout-header__amount {

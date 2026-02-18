@@ -9,6 +9,7 @@ import {
   Play,
   Download,
   BookOpen,
+  Server,
   FileMusic,
   FileVideoCamera,
   FileArchive,
@@ -207,6 +208,9 @@ function Home() {
   const [showVerifyModal, setShowVerifyModal] = useState<boolean>(false);
   const [pendingDownload, setPendingDownload] = useState<PendingDownload | null>(null);
   const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
+  const [isNewUserOnboarding, setIsNewUserOnboarding] = useState(false);
+  const [onboardingCheckLoading, setOnboardingCheckLoading] = useState(false);
+  const [recommendedDownloadLoading, setRecommendedDownloadLoading] = useState(false);
   const searchRequestRef = useRef(0);
   const lastTrackedSearchRef = useRef<string>('');
   const stripeWarmupRef = useRef<Promise<boolean> | null>(null);
@@ -462,6 +466,81 @@ function Home() {
         void openMigrationModal();
       }
     } catch {
+    }
+  };
+
+  const getRecommendedFolderPriority = (value: string): number => {
+    const text = value.toLocaleLowerCase('es-MX');
+    if (text.includes('audio')) return 0;
+    if (text.includes('video')) return 1;
+    if (text.includes('karaoke')) return 2;
+    return 3;
+  };
+
+  const findRecommendedDownloadTarget = async (): Promise<{
+    type: 'file' | 'folder';
+    file: IFiles;
+  } | null> => {
+    const root = await trpc.ftp.ls.query({ path: '' });
+    const folders = (root ?? [])
+      .filter((item: IFiles) => item.type === 'd')
+      .sort((a: IFiles, b: IFiles) => {
+        const byPriority =
+          getRecommendedFolderPriority(a.name) - getRecommendedFolderPriority(b.name);
+        if (byPriority !== 0) return byPriority;
+        return a.name.localeCompare(b.name, 'es-MX');
+      });
+
+    for (const folder of folders) {
+      const folderPath =
+        normalizeFilePath(folder.path).replace(/^\/+/, '') || folder.name;
+      const inside = await trpc.ftp.ls.query({ path: folderPath });
+      const sortedInside = sortArrayByName([...(inside ?? [])]) as IFiles[];
+      const firstFile = sortedInside.find((item) => item.type === '-');
+      if (firstFile) {
+        return { type: 'file', file: firstFile };
+      }
+
+      const firstSafeFolder = sortedInside.find((item) => {
+        if (item.type !== 'd') return false;
+        if (!Number.isFinite(item.size) || item.size <= 0) return false;
+        const gbSize = item.size / (1024 * 1024 * 1024);
+        return gbSize <= 50;
+      });
+      if (firstSafeFolder) {
+        return { type: 'folder', file: firstSafeFolder };
+      }
+    }
+
+    return null;
+  };
+
+  const handleRecommendedDownload = async () => {
+    if (recommendedDownloadLoading) return;
+    setRecommendedDownloadLoading(true);
+    setLoadError('');
+    try {
+      const target = await findRecommendedDownloadTarget();
+      if (!target) {
+        setLoadError('No encontramos un pack recomendado por ahora. Intenta desde Audios o Videos.');
+        return;
+      }
+
+      trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
+        id: 'home_onboarding_recommended_download',
+        location: 'home_onboarding',
+        targetType: target.type,
+      });
+
+      if (target.type === 'folder') {
+        await startAlbumDownload(target.file, -1);
+        return;
+      }
+      await downloadFile(target.file, -1);
+    } catch {
+      setLoadError('No se pudo preparar la descarga recomendada. Intenta nuevamente.');
+    } finally {
+      setRecommendedDownloadLoading(false);
     }
   };
 
@@ -875,6 +954,38 @@ function Home() {
     checkUHUser();
   }, [currentUser]);
   useEffect(() => {
+    let cancelled = false;
+    const checkOnboarding = async () => {
+      if (!currentUser?.id || !currentUser?.hasActiveSubscription) {
+        setIsNewUserOnboarding(false);
+        return;
+      }
+
+      setOnboardingCheckLoading(true);
+      try {
+        const downloads: any = await trpc.descargasuser.ownDescargas.query({});
+        const hasDownloads = Array.isArray(downloads) && downloads.length > 0;
+        if (!cancelled) {
+          setIsNewUserOnboarding(!hasDownloads);
+        }
+      } catch {
+        if (!cancelled) {
+          setIsNewUserOnboarding(false);
+        }
+      } finally {
+        if (!cancelled) {
+          setOnboardingCheckLoading(false);
+        }
+      }
+    };
+
+    void checkOnboarding();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser?.hasActiveSubscription, currentUser?.id]);
+  useEffect(() => {
     if (fileChange) {
       closeFile();
       getFiles();
@@ -897,6 +1008,11 @@ function Home() {
     : files;
   const sortedFiles = sortArrayByName(visibleFiles) as IFiles[];
   const isRootView = !showPagination && pastFile.length === 0;
+  const showFirstStepsOnboarding =
+    isRootView &&
+    !loader &&
+    currentUser?.hasActiveSubscription &&
+    isNewUserOnboarding;
   const formatSize = (sizeInBytes?: number | null) => formatBytes(sizeInBytes);
   const totalVisibleBytes = sortedFiles.reduce((total, file) => {
     if (file.size == null || !Number.isFinite(file.size)) {
@@ -962,6 +1078,37 @@ function Home() {
         </Elements>
       )}
       <div className="bb-home-overview">
+        {showFirstStepsOnboarding && (
+          <section className="bb-onboarding-strip" aria-label="Primeros pasos">
+            <div className="bb-onboarding-head">
+              <h3>Primer paso recomendado</h3>
+              <p>Haz esto una vez y empiezas a descargar más rápido.</p>
+            </div>
+            <div className="bb-onboarding-actions">
+              <Link to="/instrucciones" className="bb-onboarding-btn bb-onboarding-btn--link">
+                <BookOpen size={16} aria-hidden />
+                Cómo descargar (web)
+              </Link>
+              <Link to="/micuenta" className="bb-onboarding-btn bb-onboarding-btn--link">
+                <Server size={16} aria-hidden />
+                Configurar FTP
+              </Link>
+              <button
+                type="button"
+                className="bb-onboarding-btn bb-onboarding-btn--primary"
+                onClick={handleRecommendedDownload}
+                disabled={recommendedDownloadLoading || onboardingCheckLoading}
+              >
+                {recommendedDownloadLoading ? (
+                  <Spinner size={1.8} width={0.2} color="var(--app-accent)" />
+                ) : (
+                  <Download size={16} aria-hidden />
+                )}
+                Descargar primer pack recomendado
+              </button>
+            </div>
+          </section>
+        )}
         <div className="bb-library-header">
           <div className="bb-library-top">
             <div className="bb-library-left">

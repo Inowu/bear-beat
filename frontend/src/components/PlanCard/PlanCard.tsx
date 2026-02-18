@@ -25,7 +25,8 @@ import { formatInt } from "../../utils/format";
 const BENEFIT_COPY: Record<string, string> = {
   "Contenido exclusivo para DJs": "Catálogo pensado para cabina en vivo",
   "Todo organizado por géneros": "Búsqueda rápida por género y temporada",
-  "Nueva música cada semana": "Nuevos contenidos cada semana",
+  "Nueva música cada semana": "Actualizaciones semanales (nuevos packs)",
+  "Actualizaciones semanales (nuevos packs)": "Actualizaciones semanales (nuevos packs)",
   "Descargas con 1 click": "Descarga directa por FTP",
   "Renovación automática": "Cancela cuando quieras",
 };
@@ -34,6 +35,7 @@ const BENEFIT_ICONS: Record<string, React.ReactNode> = {
   "Contenido exclusivo para DJs": <Music className="plan-card-benefit-icon" aria-hidden />,
   "Todo organizado por géneros": <FolderOpen className="plan-card-benefit-icon" aria-hidden />,
   "Nueva música cada semana": <Zap className="plan-card-benefit-icon" aria-hidden />,
+  "Actualizaciones semanales (nuevos packs)": <Zap className="plan-card-benefit-icon" aria-hidden />,
   "Descargas con 1 click": <Download className="plan-card-benefit-icon" aria-hidden />,
   "Renovación automática": <HeartCrack className="plan-card-benefit-icon" aria-hidden />,
 };
@@ -41,7 +43,7 @@ const BENEFIT_ICONS: Record<string, React.ReactNode> = {
 const DEFAULT_BENEFITS = [
   "Contenido exclusivo para DJs",
   "Todo organizado por géneros",
-  "Nueva música cada semana",
+  "Actualizaciones semanales (nuevos packs)",
   "Descargas con 1 click",
   "Renovación automática",
 ];
@@ -343,9 +345,7 @@ function PlanCard(props: PlanCardPropsI) {
 	    ? (trialConfig?.enabled && trialConfig.eligible !== false && Number.isFinite(trialConfig.days) && (trialConfig.days ?? 0) > 0
         ? "Crear cuenta y empezar prueba"
         : "Crear cuenta y activar")
-	    : isMarketing
-	      ? "Activar ahora"
-	      : (isMxn ? "Activar plan MXN" : "Activar plan USD");
+	    : "Activar";
 	  const paymentLogos: PaymentMethodId[] = isMxn
 	    ? (conektaAvailability?.oxxoEnabled
 	      ? (showPaypalOption

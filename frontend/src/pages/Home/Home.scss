@@ -24,6 +24,18 @@ html[data-theme="light"] .bb-home-overview {
     inset 0 1px 0 rgba(255, 255, 255, 0.65);
 }
 
+html[data-theme="light"] .bb-onboarding-strip {
+  border-color: color-mix(in srgb, var(--app-accent) 24%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--app-accent) 7%, #ffffff), transparent 72%),
+    color-mix(in srgb, #ffffff 97%, var(--app-bg-soft));
+}
+
+html[data-theme="light"] .bb-onboarding-btn {
+  border-color: color-mix(in srgb, var(--app-border) 84%, transparent);
+  background: color-mix(in srgb, #ffffff 96%, var(--app-bg-soft));
+}
+
 html[data-theme="light"] .bb-search-input {
   background: color-mix(in srgb, #ffffff 84%, var(--app-bg-soft));
   border-color: color-mix(in srgb, var(--app-border) 86%, transparent);
@@ -152,6 +164,74 @@ html[data-theme="dark"] .home-main-container::before {
   border-radius: 16px;
   border: 1px solid color-mix(in srgb, var(--app-border) 82%, transparent);
   background: color-mix(in srgb, var(--app-bg-card) 99%, transparent);
+}
+
+.bb-onboarding-strip {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 13px;
+  border: 1px solid color-mix(in srgb, var(--app-accent) 26%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--app-accent) 9%, transparent), transparent 72%),
+    color-mix(in srgb, var(--app-bg-soft) 88%, var(--app-bg-card));
+}
+
+.bb-onboarding-head h3 {
+  margin: 0;
+  color: var(--app-text-heading);
+  font-size: 1.02rem;
+  font-weight: 780;
+  line-height: 1.3;
+}
+
+.bb-onboarding-head p {
+  margin: 2px 0 0;
+  color: var(--app-text-muted);
+  font-size: 0.91rem;
+  font-weight: 620;
+  line-height: 1.35;
+}
+
+.bb-onboarding-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.bb-onboarding-btn {
+  min-height: 40px;
+  border-radius: 11px;
+  border: 1px solid color-mix(in srgb, var(--app-border) 78%, transparent);
+  background: color-mix(in srgb, var(--app-bg-card) 94%, transparent);
+  color: var(--app-text-body);
+  font-family: var(--bb-font-ui);
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 10px;
+  text-align: center;
+  transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease;
+}
+
+.bb-onboarding-btn:hover {
+  border-color: color-mix(in srgb, var(--app-accent) 42%, transparent);
+  background: var(--theme-accent-soft-bg);
+  color: var(--app-text-heading);
+}
+
+.bb-onboarding-btn--primary {
+  border-color: color-mix(in srgb, var(--app-accent) 44%, transparent);
+  background: color-mix(in srgb, var(--app-accent) 13%, transparent);
+}
+
+.bb-onboarding-btn[disabled] {
+  opacity: 0.72;
+  cursor: not-allowed;
 }
 
 .bb-library-header {
@@ -1240,6 +1320,10 @@ html[data-theme="dark"] .bb-explorer-row:hover {
     padding: 10px;
   }
 
+  .bb-onboarding-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
   .bb-library-bar {
     grid-template-columns: 1fr;
   }
@@ -1274,6 +1358,14 @@ html[data-theme="dark"] .bb-explorer-row:hover {
   .bb-home-quick-btn {
     flex: 0 0 auto;
     white-space: nowrap;
+  }
+
+  .bb-onboarding-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .bb-onboarding-btn {
+    min-height: 42px;
   }
 
   .bb-explorer-row {

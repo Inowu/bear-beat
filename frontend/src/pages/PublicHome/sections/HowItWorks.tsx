@@ -1,10 +1,12 @@
 import { Download, Ticket, Search } from "src/icons";
-import { HOME_HERO_MICROCOPY_TRIAL } from "../homeCopy";
+import { HOME_HERO_MICROCOPY_BASE, HOME_HERO_MICROCOPY_TRIAL } from "../homeCopy";
 
 export default function HowItWorks(props: { trial: { enabled: boolean; days: number; gb: number } | null }) {
   const { trial } = props;
   const step1Copy =
-    trial?.enabled ? `Activación en minutos. ${HOME_HERO_MICROCOPY_TRIAL}` : "Activación en minutos. Pago seguro (Stripe).";
+    trial?.enabled
+      ? `Activación en minutos. ${HOME_HERO_MICROCOPY_TRIAL}`
+      : `Activación en minutos. ${HOME_HERO_MICROCOPY_BASE}`;
 
   return (
     <section className="how-it-works" aria-label="Cómo funciona">

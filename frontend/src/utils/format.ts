@@ -36,6 +36,15 @@ export function formatTB(tbValue: number): string {
   return `${nfTb2.format(n)} TB`;
 }
 
+// Marketing-safe label for catalog size to avoid brittle decimal promises in copy.
+export function formatCatalogSizeMarketing(tbValue: number, minFloorTB = 14): string {
+  const n = Number(tbValue);
+  const minFloor = Number.isFinite(minFloorTB) && minFloorTB > 0 ? Math.floor(minFloorTB) : 14;
+  if (!Number.isFinite(n) || n <= 0) return `${minFloor}+ TB`;
+  const floored = Math.max(1, Math.floor(n));
+  return `${Math.max(minFloor, floored)}+ TB`;
+}
+
 export function formatGB(gbValue: number): string {
   const n = Number(gbValue);
   if (!Number.isFinite(n) || n <= 0) return "0.0 GB";

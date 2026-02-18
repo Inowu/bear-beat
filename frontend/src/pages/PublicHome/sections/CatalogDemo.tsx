@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import { Search } from "src/icons";
 import { useMemo, useState } from "react";
 import { HOME_CTA_SECONDARY_LABEL } from "../homeCopy";
@@ -83,14 +82,9 @@ export default function CatalogDemo(props: {
         </div>
 
         <div className="catalog-demo__cta">
-          <Link
-            to="/auth/registro"
-            state={{ from: "/planes" }}
-            className="home-cta home-cta--secondary"
-            onClick={onSecondaryCtaClick}
-          >
-            {HOME_CTA_SECONDARY_LABEL} →
-          </Link>
+          <button type="button" className="home-cta home-cta--secondary" onClick={onSecondaryCtaClick}>
+            {HOME_CTA_SECONDARY_LABEL}
+          </button>
         </div>
       </div>
     </section>

@@ -25,7 +25,7 @@ export default function TrustBar(props: {
         <div className="trust-bar__item bb-market-surface" role="listitem">
           <HardDriveDownload size={18} aria-hidden />
           <span>
-            Descargas: <strong>{downloadQuotaLabel}</strong>
+            Cuota de descarga: <strong>{downloadQuotaLabel}</strong>
           </span>
         </div>
         <div className="trust-bar__item bb-market-surface" role="listitem">

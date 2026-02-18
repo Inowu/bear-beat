@@ -134,8 +134,11 @@ export default function Pricing(props: {
         <div className="pricing__head">
           <h2 className="home-h2">Precio simple, catálogo gigante</h2>
           <p className="home-sub">
-            Catálogo total: <strong>{catalogTBLabel}</strong> • Descargas:{" "}
+            Catálogo total: <strong>{catalogTBLabel}</strong> • Cuota de descarga:{" "}
             <strong>{formatInt(downloadQuotaGb)} GB/mes</strong>
+          </p>
+          <p className="pricing__quotaExample">
+            500 GB/mes = aprox. 150-300 videos (depende del peso y calidad de cada archivo).
           </p>
         </div>
 
@@ -276,7 +279,7 @@ export default function Pricing(props: {
                       Prueba: {trial.days} días + {formatInt(trial.gb)} GB
                     </strong>
                     <div className="pricing__trial-sub">
-                      Solo tarjeta (Stripe), 1ª vez. {HOME_HERO_MICROCOPY_TRIAL}
+                      Solo tarjeta, 1ª vez. {HOME_HERO_MICROCOPY_TRIAL}
                     </div>
                   </div>
                 )}
@@ -285,19 +288,19 @@ export default function Pricing(props: {
                   <li>
                     <CheckCircle2 size={16} aria-hidden />
                     <span className="pricing__include-text">
-                      Descargas: {formatInt(downloadQuotaGb)} GB/mes
+                      Cuota de descarga: {formatInt(downloadQuotaGb)} GB/mes
+                    </span>
+                  </li>
+                  <li>
+                    <CheckCircle2 size={16} aria-hidden />
+                    <span className="pricing__include-text">
+                      Actualizaciones: semanales (nuevos packs)
                     </span>
                   </li>
                   <li>
                     <CheckCircle2 size={16} aria-hidden />
                     <span className="pricing__include-text">
                       Catálogo total: {catalogTBLabel} (eliges qué bajar)
-                    </span>
-                  </li>
-                  <li>
-                    <CheckCircle2 size={16} aria-hidden />
-                    <span className="pricing__include-text">
-                      Carpetas listas + guía de activación incluida
                     </span>
                   </li>
                 </ul>
@@ -370,8 +373,7 @@ export default function Pricing(props: {
                       Prueba: {trial.days} días + {formatInt(trial.gb)} GB
                     </strong>
                     <div className="pricing__trial-sub">
-                      Solo tarjeta (Stripe), 1ª vez. Cancelas antes de que
-                      termine y no se cobra.
+                      Solo tarjeta, 1ª vez. {HOME_HERO_MICROCOPY_TRIAL}
                     </div>
                   </div>
                 )}
@@ -380,19 +382,19 @@ export default function Pricing(props: {
                   <li>
                     <CheckCircle2 size={16} aria-hidden />
                     <span className="pricing__include-text">
-                      Descargas: {formatInt(downloadQuotaGb)} GB/mes
+                      Cuota de descarga: {formatInt(downloadQuotaGb)} GB/mes
+                    </span>
+                  </li>
+                  <li>
+                    <CheckCircle2 size={16} aria-hidden />
+                    <span className="pricing__include-text">
+                      Actualizaciones: semanales (nuevos packs)
                     </span>
                   </li>
                   <li>
                     <CheckCircle2 size={16} aria-hidden />
                     <span className="pricing__include-text">
                       Catálogo total: {catalogTBLabel} (eliges qué bajar)
-                    </span>
-                  </li>
-                  <li>
-                    <CheckCircle2 size={16} aria-hidden />
-                    <span className="pricing__include-text">
-                      Carpetas listas + guía de activación incluida
                     </span>
                   </li>
                 </ul>

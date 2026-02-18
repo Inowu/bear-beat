@@ -37,8 +37,14 @@ import {
   ensureStripeReady,
   getStripeLoadFailureReason,
 } from "../../utils/stripeLoader";
-
-type CheckoutMethod = "card" | "spei" | "oxxo" | "bbva" | "paypal";
+import {
+  buildCheckoutChargeSummary,
+  buildCheckoutContinueLabel,
+  buildCheckoutMethodCopy,
+  hasVisibleTrialOffer,
+  isTrialVisibleForMethod,
+  type CheckoutMethod,
+} from "./checkoutMessaging";
 type CheckoutTrialConfig = {
   enabled: boolean;
   days: number;
@@ -160,7 +166,7 @@ function normalizeCheckoutPayload(
       ? parsedConsent
       : fallbackConsent.length > 0
         ? fallbackConsent
-        : [defaultMethod];
+        : [];
 
   const parsedTrialAllowed = parseCheckoutMethodList(checkout?.trialAllowedMethods).filter((method) =>
     availableMethods.includes(method),
@@ -173,7 +179,7 @@ function normalizeCheckoutPayload(
       ? parsedTrialAllowed
       : fallbackTrialAllowed.length > 0
         ? fallbackTrialAllowed
-        : [defaultMethod];
+        : [];
 
   return {
     summary: { currency, price },
@@ -499,7 +505,7 @@ function Checkout() {
   const [availableMethods, setAvailableMethods] = useState<CheckoutMethod[]>(() => [...DEFAULT_AVAILABLE_METHODS]);
   const [processingMethod, setProcessingMethod] = useState<CheckoutMethod | null>(null);
   const [inlineError, setInlineError] = useState<string | null>(null);
-  const [acceptRecurring, setAcceptRecurring] = useState(true);
+  const [acceptRecurring, setAcceptRecurring] = useState(false);
   const [showSpeiModal, setShowSpeiModal] = useState(false);
   const [speiData, setSpeiData] = useState<ISpeiData | null>(null);
   const [showOxxoModal, setShowOxxoModal] = useState(false);
@@ -890,7 +896,7 @@ function Checkout() {
     setRedirecting(false);
     setShowRedirectHelp(false);
     setInlineError(null);
-    setAcceptRecurring(true);
+    setAcceptRecurring(false);
     setSelectedMethod("card");
     setSpeiData(null);
     setShowSpeiModal(false);
@@ -1519,15 +1525,15 @@ function Checkout() {
 
   const trialDays = Number(trialConfig?.days ?? 0);
   const trialGb = Number(trialConfig?.gb ?? 0);
-  const isTrialEligible =
-    Boolean(trialConfig?.enabled) &&
-    trialConfig?.eligible === true &&
-    Number.isFinite(trialDays) &&
-    trialDays > 0 &&
-    Number.isFinite(trialGb) &&
-    trialGb > 0;
-  const isTrialMethod = checkoutTrialAllowedMethods.includes(selectedMethod);
-  const isMethodTrial = isTrialEligible && isTrialMethod;
+  const hasVisibleTrial = hasVisibleTrialOffer({
+    trialConfig,
+    trialAllowedMethods: checkoutTrialAllowedMethods,
+  });
+  const isMethodTrial = isTrialVisibleForMethod({
+    trialConfig,
+    method: selectedMethod,
+    trialAllowedMethods: checkoutTrialAllowedMethods,
+  });
 
   const quotaGb = (() => {
     const backend = Number(checkoutQuotaGb ?? Number.NaN);
@@ -1536,7 +1542,8 @@ function Checkout() {
     return Number.isFinite(fallback) && fallback > 0 ? fallback : 500;
   })();
   const benefitList = [
-    `Cuota mensual: ${formatInt(quotaGb)} GB/mes de descargas rápidas.`,
+    `Cuota de descarga: ${formatInt(quotaGb)} GB/mes.`,
+    "Actualizaciones: semanales (nuevos packs).",
     "Catálogo completo (eliges qué descargar).",
     "Catálogo pensado para cabina en vivo.",
     "Búsqueda rápida por género y temporada.",
@@ -1544,21 +1551,13 @@ function Checkout() {
     "Soporte por chat para activar.",
   ];
 
-  let continueLabel = "Continuar";
-  if (processingMethod === "card") continueLabel = "Abriendo pasarela segura...";
-  if (processingMethod === "spei") continueLabel = "Generando referencia SPEI...";
-  if (processingMethod === "bbva") continueLabel = "Abriendo pago BBVA...";
-  if (processingMethod === "oxxo") continueLabel = "Generando referencia de pago en efectivo...";
-  if (processingMethod === "paypal") continueLabel = "Procesando PayPal...";
-  if (processingMethod === null && selectedMethod === "card") {
-    continueLabel = isMethodTrial
-      ? `Empezar prueba (hoy $0)`
-      : `Pagar $${totalPrice} ${currencyCode} de forma segura`;
-  }
-  if (processingMethod === null && selectedMethod === "paypal") continueLabel = "Continuar a PayPal";
-  if (processingMethod === null && selectedMethod === "spei") continueLabel = "Generar referencia SPEI";
-  if (processingMethod === null && selectedMethod === "bbva") continueLabel = "Continuar con BBVA";
-  if (processingMethod === null && selectedMethod === "oxxo") continueLabel = "Generar referencia de pago en efectivo";
+  const continueLabel = buildCheckoutContinueLabel({
+    method: selectedMethod,
+    processingMethod,
+    totalPrice,
+    currencyCode,
+    isMethodTrial,
+  });
 
   const TopNav = (
     <PublicTopNav
@@ -1765,29 +1764,28 @@ function Checkout() {
     processingMethod === null &&
     hasPaypalPlan &&
     Boolean(paypalPlan);
-
-  const methodBlurb = (() => {
-    const monthly = summaryMonthlyLabel;
-    switch (selectedMethod) {
-      case "card":
-        return isMethodTrial
-          ? `Hoy $0: empiezas tu prueba de ${trialDays} días (${formatInt(trialGb)} GB). Después ${monthly}.`
-          : `Pago inmediato. Activación en 1 minuto. Renovación automática: ${monthly}.`;
-      case "paypal":
-        return `Autoriza el pago en PayPal. Activación inmediata. Renovación automática: ${monthly}.`;
-      case "spei":
-        return "Generamos CLABE/referencia para transferir. Activación automática al confirmar tu transferencia (depende del banco).";
-      case "bbva":
-        return "Te redirigimos a BBVA para autorizar el pago. Activación automática al confirmar (sin comprobantes).";
-      case "oxxo":
-        return "Generamos una referencia para pagar en tienda. Activación automática al confirmar (puede tardar hasta 48 hrs).";
-      default:
-        return "";
-    }
-  })();
+  const methodCopy = buildCheckoutMethodCopy({
+    method: selectedMethod,
+    totalPrice,
+    currencyCode,
+    monthlyLabel: summaryMonthlyLabel,
+    trialDays,
+    trialGbLabel: formatInt(trialGb),
+    isMethodTrial,
+  });
+  const chargeSummary = buildCheckoutChargeSummary({
+    method: selectedMethod,
+    totalPrice,
+    currencyCode,
+    monthlyLabel: summaryMonthlyLabel,
+    trialDays,
+    trialGbLabel: formatInt(trialGb),
+    isMethodTrial,
+    isAutoRenewMethod: checkoutConsentMethods.includes(selectedMethod),
+  });
 
   const trialHint =
-    isTrialEligible && !checkoutTrialAllowedMethods.includes(selectedMethod)
+    hasVisibleTrial && !checkoutTrialAllowedMethods.includes(selectedMethod)
       ? `Tip: con tarjeta puedes iniciar una prueba de ${trialDays} días (hoy $0).`
       : null;
 
@@ -1854,7 +1852,7 @@ function Checkout() {
             </ul>
 
             <p className="checkout2026__limitsNote">
-              La cuota mensual es lo que puedes descargar cada ciclo. El catálogo total es lo disponible para elegir.
+              La cuota de descarga es lo que puedes bajar cada ciclo. El catálogo total es lo disponible para elegir.
             </p>
 
             <div className="checkout2026__divider" aria-hidden />
@@ -1886,7 +1884,8 @@ function Checkout() {
                   );
                 })}
               </div>
-              <p className="checkout2026__methodBlurb">{methodBlurb}</p>
+              <p className="checkout2026__methodBlurb">{methodCopy.summaryLine}</p>
+              <p className="checkout2026__methodFineprint">{methodCopy.detailLine}</p>
               {trialHint && <p className="checkout2026__methodHint">{trialHint}</p>}
               {couponHint && <p className="checkout2026__methodHint">{couponHint}</p>}
             </section>
@@ -1930,6 +1929,18 @@ function Checkout() {
                 {inlineError}
               </p>
             )}
+
+            <section className="checkout2026__chargeSummary" aria-label="Resumen de cobro">
+              <p className="checkout2026__chargeRow">
+                <span>{chargeSummary.todayLabel}</span>
+                <strong>{chargeSummary.todayValue}</strong>
+              </p>
+              <p className="checkout2026__chargeRow">
+                <span>{chargeSummary.afterLabel}</span>
+                <strong>{chargeSummary.afterValue}</strong>
+              </p>
+              <p className="checkout2026__chargeNote">{chargeSummary.accountLine}</p>
+            </section>
 
             <div className="checkout-payment-actions checkout2026__actions" aria-label="Acción">
               {shouldShowPaypalInline ? (
@@ -2030,7 +2041,7 @@ function Checkout() {
                 className="checkout2026__paymentLogos"
                 ariaLabel="Métodos de pago disponibles"
               />
-              <p className="checkout2026__trustCopy">Tu cuenta se activa al pagar. Cancela cuando quieras.</p>
+              <p className="checkout2026__trustCopy">{methodCopy.trustLine}</p>
               <p className="checkout2026__links" aria-label="Ayuda">
                 <Link to="/instrucciones" className="checkout2026__link">
                   Ver cómo descargar

@@ -1,4 +1,5 @@
 import {
+  formatCatalogSizeMarketing,
   formatGB,
   formatInt,
   formatTB,
@@ -19,6 +20,14 @@ describe("PublicHome formatting utils", () => {
     expect(formatGB(1129.58)).toBe("1,129.6 GB");
   });
 
+  it("formats catalog TB copy as stable floor-plus label", () => {
+    expect(formatCatalogSizeMarketing(14.19)).toBe("14+ TB");
+  });
+
+  it("uses minimum floor when catalog value is unavailable", () => {
+    expect(formatCatalogSizeMarketing(0)).toBe("14+ TB");
+  });
+
   it("normalizes common genre typos/accents for display", () => {
     expect(normalizeGenreDisplayName("Reguetton")).toBe("Reggaetón");
     expect(normalizeGenreDisplayName("Pop Ingles")).toBe("Pop Inglés");
@@ -28,4 +37,3 @@ describe("PublicHome formatting utils", () => {
     expect(normalizeSearchKey("Reggaetón")).toBe("reggaeton");
   });
 });
-

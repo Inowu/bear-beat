@@ -24,8 +24,9 @@ export default function StickyMobileCta(props: {
   ctaLabel: string;
   trial: { enabled: boolean; days: number; gb: number } | null;
   onPrimaryCtaClick: () => void;
+  onDemoClick: () => void;
 }) {
-  const { ctaLabel, trial, onPrimaryCtaClick } = props;
+  const { ctaLabel, trial, onPrimaryCtaClick, onDemoClick } = props;
   const [dismissed, setDismissed] = useState(() => {
     if (typeof window === "undefined") return true;
     return safeReadLocalStorage(STORAGE_KEY) === "1";
@@ -211,6 +212,9 @@ export default function StickyMobileCta(props: {
           <span className="home-sticky__cta-label">{ctaLabel}</span>
           <span className="home-sticky__cta-micro">{stickyMicro}</span>
         </Link>
+        <button type="button" className="home-cta home-cta--secondary home-sticky__demo" onClick={onDemoClick}>
+          Ver demo
+        </button>
         <button type="button" className="home-sticky__close" onClick={dismiss} aria-label="Ocultar barra">
           <X size={16} aria-hidden />
         </button>

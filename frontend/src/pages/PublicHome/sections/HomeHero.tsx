@@ -43,7 +43,7 @@ export default function HomeHero(props: {
             </div>
             <div role="listitem" className="home-stat bb-stat-pill">
               <span className="home-stat__value bb-stat-pill__value">{downloadQuotaLabel}</span>
-              <span className="home-stat__label bb-stat-pill__label">de descarga</span>
+              <span className="home-stat__label bb-stat-pill__label">cuota de descarga</span>
             </div>
             <div role="listitem" className="home-stat bb-stat-pill">
               <span className="home-stat__value bb-stat-pill__value">Audios / Videos / Karaoke</span>
@@ -65,8 +65,29 @@ export default function HomeHero(props: {
               </Link>
               <button type="button" className="home-cta home-cta--secondary" onClick={onDemoScroll}>
                 <CirclePlay size={18} aria-hidden />
-                Ver demo del catálogo
+                Ver demo
               </button>
+            </div>
+            <div className="home-hero__trust-inline" role="note" aria-label="Confianza rápida">
+              <span>Pago seguro • Tarjeta, PayPal, SPEI y Efectivo • Cancela cuando quieras</span>
+            </div>
+            <div className="home-hero__cases" role="list" aria-label="Casos de uso reales">
+              <article role="listitem" className="home-hero__case">
+                <strong>Bodas y XV</strong>
+                <small>Entradas, vals y bloque latino listo.</small>
+              </article>
+              <article role="listitem" className="home-hero__case">
+                <strong>Antro</strong>
+                <small>Reggaetón, crossover y peak-time.</small>
+              </article>
+              <article role="listitem" className="home-hero__case">
+                <strong>Sonidero</strong>
+                <small>Cumbias, salsa y clásicos por carpeta.</small>
+              </article>
+              <article role="listitem" className="home-hero__case">
+                <strong>Evento mixto</strong>
+                <small>Set multigénero en minutos.</small>
+              </article>
             </div>
 
             <Link to="/auth" state={{ from: "/planes" }} className="home-hero__cta-alt">

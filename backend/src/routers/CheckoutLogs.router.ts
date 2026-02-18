@@ -28,9 +28,25 @@ const checkoutLeadsInputSchema = z
 const numberFromUnknown = (value: unknown): number => {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
   if (typeof value === 'bigint') return Number(value);
+  if (value instanceof Prisma.Decimal) {
+    const parsed = value.toNumber();
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
   if (typeof value === 'string') {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : 0;
+  }
+  if (typeof value === 'object' && value !== null) {
+    const maybeToNumber = (value as { toNumber?: () => number }).toNumber;
+    if (typeof maybeToNumber === 'function') {
+      const parsed = maybeToNumber.call(value);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+    const maybeToString = (value as { toString?: () => string }).toString;
+    if (typeof maybeToString === 'function') {
+      const parsed = Number(maybeToString.call(value));
+      if (Number.isFinite(parsed)) return parsed;
+    }
   }
   return 0;
 };
@@ -115,10 +131,6 @@ export const checkoutLogsRouter = router({
         [...baseConditions, statusCondition],
         ' AND ',
       )}`;
-      const baseWhereSql = Prisma.sql`${Prisma.join(
-        baseConditions,
-        ' AND ',
-      )}`;
 
       const [rows, countRows, summaryRows] = await Promise.all([
         prisma.$queryRaw<
@@ -194,7 +206,7 @@ export const checkoutLogsRouter = router({
             ON u.id = cl.user_id
           LEFT JOIN (${paidOrdersSubquery}) lp
             ON lp.userId = cl.user_id
-          WHERE ${baseWhereSql}
+          WHERE ${whereSql}
         `),
       ]);
 

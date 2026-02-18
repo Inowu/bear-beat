@@ -285,9 +285,11 @@ export const HistoryCheckout = () => {
       <div className="w-full overflow-x-hidden space-y-4">
         <section className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <article className="rounded-xl border bg-bg-card p-3">
-            <p className="text-xs uppercase tracking-wider text-text-muted">Leads en ventana</p>
+            <p className="text-xs uppercase tracking-wider text-text-muted">Leads (filtros aplicados)</p>
             <p className="text-2xl font-bold text-text-main">{summary.totalCandidates.toLocaleString("es-MX")}</p>
-            <p className="text-xs text-text-muted">Últimos {filters.days} días</p>
+            <p className="text-xs text-text-muted">
+              Últimos {filters.days} días · {STATUS_LABELS[filters.status]}
+            </p>
           </article>
           <article className="rounded-xl border bg-bg-card p-3">
             <span className="badge badge--tiny badge--danger">Abandonados</span>
@@ -306,6 +308,9 @@ export const HistoryCheckout = () => {
             Vista actual: <strong>{STATUS_LABELS[filters.status]}</strong> · Mostrando{" "}
             <strong>{summary.showing.toLocaleString("es-MX")}</strong> de{" "}
             <strong>{totalHistory.toLocaleString("es-MX")}</strong> registros.
+          </p>
+          <p className="text-xs text-text-muted mt-1">
+            Las métricas superiores usan exactamente los mismos filtros que esta tabla.
           </p>
         </div>
 

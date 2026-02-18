@@ -75,6 +75,76 @@
   line-height: 1.5;
 }
 
+.ma-control-center {
+  border: 1px solid color-mix(in srgb, var(--ma-card-border) 88%, transparent);
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--ma-accent) 8%, transparent), transparent 74%),
+    color-mix(in srgb, var(--ma-card-bg) 98%, transparent);
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.ma-control-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.ma-control-stat {
+  border: 1px solid color-mix(in srgb, var(--ma-card-border) 84%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ma-progress-bg) 86%, transparent);
+  padding: 9px 10px;
+  display: grid;
+  gap: 3px;
+}
+
+.ma-control-stat span {
+  color: var(--ma-text-muted);
+  font-size: 1.06rem;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.ma-control-stat strong {
+  color: var(--ma-title);
+  font-size: 1.34rem;
+  font-weight: 780;
+  line-height: 1.2;
+}
+
+.ma-control-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ma-top-cta {
+  position: sticky;
+  top: calc(10px + env(safe-area-inset-top));
+  z-index: 8;
+  border: 1px solid color-mix(in srgb, var(--ma-accent) 34%, transparent);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--ma-accent) 10%, transparent), transparent 72%),
+    color-mix(in srgb, var(--ma-card-bg) 96%, transparent);
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ma-top-cta p {
+  margin: 0;
+  color: var(--ma-text);
+  font-size: 1.24rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
 .ma-panel {
   border: 1px solid color-mix(in srgb, var(--ma-card-border) 88%, transparent);
   border-radius: 18px;
@@ -152,6 +222,14 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.ma-status-note {
+  margin: 4px 0 0;
+  color: color-mix(in srgb, var(--ma-text-muted) 94%, transparent);
+  font-size: 1.18rem;
+  font-weight: 600;
+  line-height: 1.45;
 }
 
 .ma-status-pill {
@@ -233,6 +311,18 @@
   font-size: 1.3rem;
   font-weight: 500;
   font-family: var(--bb-font-ui);
+}
+
+.ma-storage-alert {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--ma-badge-pending) 34%, transparent);
+  background: color-mix(in srgb, var(--ma-badge-pending) 10%, transparent);
+  color: color-mix(in srgb, var(--ma-text) 88%, var(--ma-badge-pending));
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.4;
 }
 
 .ma-grid-two {
@@ -650,9 +740,33 @@ html[data-theme="light"] .ma-table-empty {
   color: color-mix(in srgb, var(--ma-text-muted) 98%, transparent);
 }
 
+html[data-theme="light"] .ma-status-note,
+html[data-theme="light"] .ma-top-cta p {
+  color: color-mix(in srgb, var(--ma-text) 92%, transparent);
+}
+
 html[data-theme="light"] .ma-page-kicker {
   border-color: color-mix(in srgb, var(--ma-accent) 28%, transparent);
   background: color-mix(in srgb, var(--ma-accent) 8%, #ffffff);
+}
+
+html[data-theme="light"] .ma-control-center {
+  border-color: color-mix(in srgb, var(--ma-card-border) 88%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--ma-accent) 6%, #ffffff), transparent 74%),
+    color-mix(in srgb, #ffffff 98.6%, var(--ma-card-bg));
+}
+
+html[data-theme="light"] .ma-control-stat {
+  border-color: color-mix(in srgb, var(--ma-card-border) 88%, transparent);
+  background: color-mix(in srgb, #ffffff 97%, var(--ma-progress-bg));
+}
+
+html[data-theme="light"] .ma-top-cta {
+  border-color: color-mix(in srgb, var(--ma-accent) 26%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--ma-accent) 7%, #ffffff), transparent 72%),
+    color-mix(in srgb, #ffffff 98.4%, var(--ma-card-bg));
 }
 
 html[data-theme="light"] .ma-panel {
@@ -703,6 +817,35 @@ html[data-theme="light"] .ma-btn-danger {
   box-shadow: 0 8px 18px color-mix(in srgb, var(--app-status-error) 14%, transparent);
 }
 
+html[data-theme="light"] .ma-pref-row {
+  border-color: color-mix(in srgb, var(--ma-card-border) 88%, transparent);
+  background: color-mix(in srgb, #ffffff 98%, var(--ma-progress-bg));
+}
+
+html[data-theme="light"] .ma-pref-row.is-active {
+  border-color: color-mix(in srgb, var(--ma-accent) 42%, transparent);
+  background: color-mix(in srgb, var(--ma-accent) 9%, #ffffff);
+}
+
+html[data-theme="light"] .ma-switch {
+  border-color: color-mix(in srgb, var(--ma-card-border) 90%, transparent);
+  background: color-mix(in srgb, #f8fbff 96%, var(--ma-progress-bg));
+}
+
+html[data-theme="light"] .ma-switch-flag {
+  border-color: color-mix(in srgb, var(--ma-card-border) 88%, transparent);
+  background: color-mix(in srgb, #ffffff 96%, var(--ma-progress-bg));
+}
+
+html[data-theme="light"] .ma-switch-flag.is-on {
+  border-color: color-mix(in srgb, var(--ma-accent) 44%, transparent);
+  background: color-mix(in srgb, var(--ma-accent) 10%, #ffffff);
+}
+
+html[data-theme="light"] .ma-pref-disabled-reason {
+  color: color-mix(in srgb, var(--ma-text-muted) 92%, transparent);
+}
+
 html[data-theme="light"] .ma-add-card {
   border-color: color-mix(in srgb, var(--ma-card-border) 90%, transparent);
   background: color-mix(in srgb, #ffffff 98.5%, transparent);
@@ -714,14 +857,13 @@ html[data-theme="light"] .ma-add-card:hover {
 }
 
 @media (max-width: 1080px) {
+  .ma-control-stats {
+    grid-template-columns: 1fr;
+  }
+
   .ma-profile-panel {
     grid-template-columns: auto minmax(0, 1fr);
     align-items: start;
-  }
-
-  .ma-profile-panel > .ma-btn-danger {
-    grid-column: 1 / -1;
-    justify-self: start;
   }
 
   .ma-wallet-panel .ma-panel-head {
@@ -749,6 +891,24 @@ html[data-theme="light"] .ma-add-card:hover {
   .ma-shell {
     padding: 10px;
     gap: 12px;
+  }
+
+  .ma-top-cta {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ma-top-cta .ma-btn {
+    width: 100%;
+  }
+
+  .ma-control-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .ma-control-actions .ma-btn {
+    width: 100%;
   }
 
   .ma-panel {
@@ -913,6 +1073,12 @@ html[data-theme="light"] .ma-add-card:hover {
   transition: box-shadow 140ms ease, border-color 140ms ease, transform 140ms ease;
 }
 
+.ma-pref-row.is-active {
+  border-color: color-mix(in srgb, var(--ma-accent) 46%, var(--ma-card-border));
+  background: color-mix(in srgb, var(--ma-accent) 10%, var(--ma-progress-bg));
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--ma-accent) 14%, transparent);
+}
+
 .ma-pref-row:hover {
   border-color: color-mix(in srgb, var(--ma-accent) 40%, var(--ma-card-border));
   box-shadow: 0 10px 22px color-mix(in srgb, var(--ma-accent) 10%, transparent);
@@ -951,11 +1117,18 @@ html[data-theme="light"] .ma-add-card:hover {
   line-height: 1.45;
 }
 
+.ma-pref-disabled-reason {
+  color: color-mix(in srgb, var(--ma-text-muted) 94%, transparent);
+  font-size: 1.14rem;
+  font-weight: 650;
+  line-height: 1.38;
+}
+
 .ma-pref-control {
   flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  justify-items: end;
+  gap: 6px;
   position: relative;
 }
 
@@ -971,12 +1144,43 @@ html[data-theme="light"] .ma-add-card:hover {
   border: 0;
 }
 
+.ma-switch-flag {
+  min-height: 24px;
+  min-width: 78px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ma-card-border) 88%, transparent);
+  background: color-mix(in srgb, var(--ma-progress-bg) 62%, transparent);
+  color: var(--ma-text-muted);
+  font-size: 1.08rem;
+  font-weight: 730;
+  letter-spacing: 0.01em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.ma-switch-flag.is-on {
+  border-color: color-mix(in srgb, var(--ma-accent) 50%, transparent);
+  background: color-mix(in srgb, var(--ma-accent) 12%, transparent);
+  color: color-mix(in srgb, var(--ma-accent) 86%, var(--ma-title));
+}
+
+.ma-switch-flag.is-off {
+  color: color-mix(in srgb, var(--ma-text-muted) 96%, transparent);
+}
+
+.ma-switch-flag.is-disabled {
+  opacity: 0.86;
+}
+
 .ma-switch {
   width: 46px;
   height: 28px;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--ma-card-border) 90%, transparent);
-  background: color-mix(in srgb, var(--ma-progress-bg) 62%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ma-card-border) 94%, transparent);
+  background: color-mix(in srgb, var(--ma-progress-bg) 72%, transparent);
   position: relative;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
   transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
@@ -1004,8 +1208,10 @@ html[data-theme="light"] .ma-add-card:hover {
 
 .ma-switch-input:checked + .ma-switch {
   background: var(--bb-gradient);
-  border-color: color-mix(in srgb, var(--ma-accent) 46%, transparent);
-  box-shadow: 0 10px 20px color-mix(in srgb, var(--ma-accent) 12%, transparent);
+  border-color: color-mix(in srgb, var(--ma-accent) 62%, transparent);
+  box-shadow:
+    0 10px 20px color-mix(in srgb, var(--ma-accent) 20%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, #ffffff 22%, transparent);
 }
 
 .ma-switch-input:checked + .ma-switch::after {

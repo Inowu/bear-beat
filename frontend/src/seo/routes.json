@@ -2,15 +2,15 @@
   "baseUrl": "https://thebearbeat.com",
   "defaultMeta": {
     "title": "Bear Beat",
-    "description": "Librería de música y videos exclusivos para DJs. 500 GB cada mes por FTP, contenido organizado por géneros.",
+    "description": "Librería de música y videos exclusivos para DJs. Cuota de descarga 500 GB/mes por FTP. Actualizaciones semanales (nuevos packs), contenido organizado por géneros.",
     "ogImage": "https://thebearbeat.com/logo512.png",
     "twitterImage": "https://thebearbeat.com/logo512.png"
   },
   "routes": [
     {
       "path": "/",
-      "title": "Bear Beat – Membresía para DJs (videos, remixes y karaokes) | 14.14 TB + 500 GB/mes",
-      "description": "Membresía para DJs: video remixes, audios y karaokes. Catálogo 14.14 TB, 500 GB/mes. Prueba 7 días + 100 GB (solo tarjeta, 1ª vez).",
+      "title": "Bear Beat – Membresía para DJs (videos, remixes y karaokes) | 14+ TB + cuota 500 GB/mes",
+      "description": "Membresía para DJs: video remixes, audios y karaokes. Catálogo 14+ TB (se actualiza), cuota de descarga 500 GB/mes. Actualizaciones: semanales (nuevos packs). Prueba 7 días + 100 GB (solo tarjeta, 1ª vez).",
       "indexable": true,
       "inSitemap": true,
       "prerender": true,
@@ -19,8 +19,8 @@
     },
     {
       "path": "/planes",
-      "title": "Planes y precios | Bear Beat – 14.14 TB + 500 GB/mes (MXN o USD)",
-      "description": "Elige MXN (México) o USD (internacional). Catálogo 14.14 TB, 500 GB/mes. Prueba 7 días + 100 GB (solo tarjeta, 1ª vez).",
+      "title": "Planes y precios | Bear Beat – 14+ TB + cuota 500 GB/mes (MXN o USD)",
+      "description": "Elige MXN (México) o USD (internacional). Catálogo 14+ TB (se actualiza), cuota de descarga 500 GB/mes. Actualizaciones: semanales (nuevos packs). Prueba 7 días + 100 GB (solo tarjeta, 1ª vez).",
       "indexable": true,
       "inSitemap": true,
       "prerender": true,
@@ -58,7 +58,7 @@
     {
       "path": "/auth/registro",
       "title": "Registrarme | Bear Beat",
-      "description": "Crea tu cuenta en Bear Beat. Accede a 500 GB de música y videos para DJs cada mes por FTP.",
+      "description": "Crea tu cuenta en Bear Beat. Accede a una cuota de descarga de 500 GB/mes para música y videos de DJs por FTP.",
       "indexable": false,
       "inSitemap": false,
       "prerender": false
