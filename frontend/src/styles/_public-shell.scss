@@ -192,6 +192,44 @@
   }
 }
 
+@media (max-width: 860px) {
+  .home-topnav__inner {
+    flex-wrap: wrap;
+    align-items: center;
+    row-gap: 10px;
+  }
+
+  .home-topnav__right {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .home-topnav__nav {
+    min-width: 0;
+  }
+
+  .home-topnav__theme-btn {
+    justify-self: end;
+  }
+
+  .home-topnav__cta,
+  .home-topnav__mobile-account {
+    grid-column: 1 / -1;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .home-topnav__cta {
+    min-height: 44px;
+    padding-inline: 14px;
+    font-size: 12px;
+    letter-spacing: 0.01em;
+  }
+}
+
 @media (max-width: 520px) {
   .home-topnav__inner {
     padding: 10px 0;
