@@ -1041,8 +1041,7 @@ html[data-theme="light"] .home-hero__cta-demo:hover:not(:disabled) {
   border: none;
   background: transparent;
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
   gap: 12px;
   padding: 10px 0;
   text-align: left;
@@ -1122,10 +1121,8 @@ html[data-theme="light"] .home-hero__cta-demo:hover:not(:disabled) {
 }
 
 .social-proof__headline {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
+  display: block;
+  min-width: 0;
 }
 
 .social-proof__name {
@@ -1167,29 +1164,11 @@ html[data-theme="light"] .home-hero__cta-demo:hover:not(:disabled) {
     gap: 5px;
   }
 
-  .social-proof__headline {
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 4px 8px;
-  }
-
   .social-proof__name {
     white-space: normal;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
-  }
-
-  .social-proof__meta {
-    display: inline-flex;
-    align-items: center;
-    min-height: 20px;
-    padding: 0 8px;
-    border-radius: 999px;
-    border: 1px solid color-mix(in srgb, var(--ph-border) 78%, transparent);
-    background: color-mix(in srgb, var(--ph-bg-soft) 70%, transparent);
-    font-size: 11.5px;
-    line-height: 1;
   }
 
   .social-proof__row-meta {
@@ -1222,6 +1201,23 @@ html[data-theme="light"] .home-hero__cta-demo:hover:not(:disabled) {
   font-size: 11.5px;
   font-weight: 760;
   white-space: nowrap;
+}
+
+.social-proof__row-chip--downloads {
+  border-color: color-mix(in srgb, var(--ph-border) 78%, transparent);
+  background: color-mix(in srgb, var(--ph-bg-soft) 74%, transparent);
+  color: color-mix(in srgb, var(--ph-text-muted) 94%, transparent);
+}
+
+.social-proof__row-chip--format {
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.social-proof__row-chip--version {
+  max-width: 18ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .social-proof__artist {

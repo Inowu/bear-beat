@@ -47,7 +47,7 @@ function normalizeApiItems(value: unknown): SocialTopItem[] {
     .filter((item: any) => item && typeof item.path === "string" && typeof item.name === "string")
     .map((item: any) => ({
       path: item.path,
-      name: prettyMediaName(item.name) || item.name,
+      name: `${item.name ?? ""}`.trim(),
       downloads: Number(item.downloads ?? 0),
     }));
 }
@@ -117,16 +117,20 @@ function TopList(props: {
     return (items ?? []).slice(0, maxRows).map((item, idx) => {
       const raw = `${item.name ?? ""}`.trim();
       const parsed = inferTrackMetadata(raw);
-      const normalized = parsed.displayName || raw;
+      const normalized = parsed.displayName || prettyMediaName(raw) || raw;
       const rowKey = item.path ? item.path : `${raw}__${idx}`;
+      const version =
+        parsed.version && parsed.version.length <= 18 ? parsed.version : null;
       return {
         key: rowKey,
         path: item.path,
         artist: parsed.artist ?? "",
         track: parsed.title || normalized || raw,
         downloads: item.downloads,
+        format: parsed.format,
         bpm: parsed.bpm,
         camelot: parsed.camelot,
+        version,
       };
     });
   }, [items, maxRows]);
@@ -195,14 +199,20 @@ function TopList(props: {
                         item.track
                       )}
                     </span>
-                    <span className="social-proof__meta">{formatDownloads(item.downloads)}</span>
                   </span>
-                  {(item.bpm || item.camelot) && (
-                    <span className="social-proof__row-meta">
-                      {item.bpm && <span className="social-proof__row-chip">{item.bpm} BPM</span>}
-                      {item.camelot && <span className="social-proof__row-chip">{item.camelot}</span>}
+                  <span className="social-proof__row-meta">
+                    <span className="social-proof__row-chip social-proof__row-chip--downloads">
+                      {formatDownloads(item.downloads)}
                     </span>
-                  )}
+                    {item.format && (
+                      <span className="social-proof__row-chip social-proof__row-chip--format">{item.format}</span>
+                    )}
+                    {item.bpm && <span className="social-proof__row-chip">{item.bpm} BPM</span>}
+                    {item.camelot && <span className="social-proof__row-chip">{item.camelot}</span>}
+                    {item.version && (
+                      <span className="social-proof__row-chip social-proof__row-chip--version">{item.version}</span>
+                    )}
+                  </span>
                 </span>
               </Button>
           </div>
