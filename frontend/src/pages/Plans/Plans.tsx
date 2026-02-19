@@ -37,6 +37,7 @@ type PublicBestPlan = {
   price: number;
   gigas: number;
   hasPaypal: boolean;
+  availableMethods: string[];
   paymentMethods: PaymentMethodId[];
 };
 
@@ -203,6 +204,11 @@ function Plans() {
           price: toNumber(raw.price),
           gigas: toNumber(raw.gigas),
           hasPaypal: Boolean(raw.hasPaypal),
+          availableMethods: Array.isArray(raw.availableMethods)
+            ? raw.availableMethods
+                .map((method: unknown) => String(method ?? "").trim().toLowerCase())
+                .filter((method: string) => method.length > 0)
+            : [],
           paymentMethods: parsePaymentMethods(
             raw.paymentMethods,
             paymentFallback,
@@ -416,19 +422,48 @@ function Plans() {
   }, [selectedCurrency, selectedPlan]);
 
   const paymentMethods = useMemo(() => {
-    if (selectedPlan?.paymentMethods?.length)
-      return selectedPlan.paymentMethods;
-    return selectedCurrency === "mxn"
-      ? (["visa", "mastercard", "spei"] as PaymentMethodId[])
-      : (["visa", "mastercard"] as PaymentMethodId[]);
-  }, [selectedCurrency, selectedPlan?.paymentMethods]);
+    const badges = new Set<PaymentMethodId>(["visa", "mastercard"]);
+    const availableMethods = Array.isArray(selectedPlan?.availableMethods)
+      ? selectedPlan.availableMethods
+      : [];
+    const planBadges = Array.isArray(selectedPlan?.paymentMethods)
+      ? selectedPlan.paymentMethods
+      : [];
+
+    if (selectedPlan?.hasPaypal || availableMethods.includes("paypal")) {
+      badges.add("paypal");
+    }
+    if (availableMethods.includes("spei")) badges.add("spei");
+    if (availableMethods.includes("oxxo")) badges.add("oxxo");
+    if (availableMethods.includes("bbva")) badges.add("transfer");
+
+    for (const badge of planBadges) badges.add(badge);
+
+    if (selectedCurrency === "mxn") {
+      badges.add("spei");
+    }
+
+    return Array.from(badges);
+  }, [selectedCurrency, selectedPlan?.availableMethods, selectedPlan?.hasPaypal, selectedPlan?.paymentMethods]);
 
   const paypalAvailabilityHint = useMemo(() => {
-    const selectedHasPaypal = paymentMethods.includes("paypal");
+    const selectedHasPaypal = Boolean(
+      selectedPlan?.hasPaypal ||
+      selectedPlan?.availableMethods?.includes("paypal") ||
+      paymentMethods.includes("paypal"),
+    );
     if (selectedHasPaypal) return null;
 
-    const mxnHasPaypal = Boolean(plansByCurrency.mxn?.paymentMethods?.includes("paypal"));
-    const usdHasPaypal = Boolean(plansByCurrency.usd?.paymentMethods?.includes("paypal"));
+    const mxnHasPaypal = Boolean(
+      plansByCurrency.mxn?.hasPaypal ||
+      plansByCurrency.mxn?.availableMethods?.includes("paypal") ||
+      plansByCurrency.mxn?.paymentMethods?.includes("paypal"),
+    );
+    const usdHasPaypal = Boolean(
+      plansByCurrency.usd?.hasPaypal ||
+      plansByCurrency.usd?.availableMethods?.includes("paypal") ||
+      plansByCurrency.usd?.paymentMethods?.includes("paypal"),
+    );
     if (!mxnHasPaypal && !usdHasPaypal) return null;
 
     if (selectedCurrency === "usd" && mxnHasPaypal) {
@@ -438,7 +473,18 @@ function Plans() {
       return "PayPal disponible al pagar en USD.";
     }
     return null;
-  }, [paymentMethods, plansByCurrency.mxn?.paymentMethods, plansByCurrency.usd?.paymentMethods, selectedCurrency]);
+  }, [
+    paymentMethods,
+    plansByCurrency.mxn?.availableMethods,
+    plansByCurrency.mxn?.hasPaypal,
+    plansByCurrency.mxn?.paymentMethods,
+    plansByCurrency.usd?.availableMethods,
+    plansByCurrency.usd?.hasPaypal,
+    plansByCurrency.usd?.paymentMethods,
+    selectedCurrency,
+    selectedPlan?.availableMethods,
+    selectedPlan?.hasPaypal,
+  ]);
 
   const hasBothCurrencies = Boolean(plansByCurrency.mxn && plansByCurrency.usd);
 
