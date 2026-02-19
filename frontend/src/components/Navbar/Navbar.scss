@@ -130,12 +130,24 @@ nav {
 
     .nav-item--danger {
       color: var(--theme-nav-danger-text, var(--app-status-error));
+      background-color: color-mix(in srgb, var(--app-status-error) 12%, var(--theme-nav-item-bg));
+      border-color: color-mix(in srgb, var(--app-status-error) 34%, var(--theme-nav-item-border, transparent));
+    }
+
+    .nav-item--danger svg {
+      color: currentColor;
     }
 
     .nav-item--danger:hover {
       color: var(--theme-nav-danger-text, var(--app-status-error));
-      background-color: color-mix(in srgb, var(--app-status-error) 10%, var(--theme-nav-item-bg));
-      border-color: color-mix(in srgb, var(--app-status-error) 34%, var(--theme-nav-item-border, transparent));
+      background-color: color-mix(in srgb, var(--app-status-error) 18%, var(--theme-nav-item-bg));
+      border-color: color-mix(in srgb, var(--app-status-error) 48%, var(--theme-nav-item-border, transparent));
+    }
+
+    .nav-item--danger:focus-visible {
+      color: var(--theme-nav-danger-text, var(--app-status-error));
+      background-color: color-mix(in srgb, var(--app-status-error) 18%, var(--theme-nav-item-bg));
+      border-color: color-mix(in srgb, var(--app-status-error) 48%, var(--theme-nav-item-border, transparent));
     }
 
     .nav-item svg {

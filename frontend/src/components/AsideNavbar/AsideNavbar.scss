@@ -153,13 +153,24 @@ aside {
 
       &--danger {
         color: var(--theme-nav-danger-text, var(--app-status-error));
+        border-color: color-mix(in srgb, var(--app-status-error) 34%, var(--theme-nav-item-border, transparent));
+        background: color-mix(in srgb, var(--app-status-error) 10%, var(--theme-nav-item-bg));
+      }
+
+      &--danger::before {
+        background: var(--app-status-error);
+        opacity: 0.9;
+      }
+
+      &--danger svg {
+        color: currentColor;
       }
 
       &--danger:hover,
       &--danger:focus-visible {
         color: var(--theme-nav-danger-text, var(--app-status-error));
-        background: color-mix(in srgb, var(--app-status-error) 10%, var(--theme-nav-item-bg));
-        border-color: color-mix(in srgb, var(--app-status-error) 36%, var(--theme-nav-item-border, transparent));
+        background: color-mix(in srgb, var(--app-status-error) 16%, var(--theme-nav-item-bg));
+        border-color: color-mix(in srgb, var(--app-status-error) 52%, var(--theme-nav-item-border, transparent));
       }
 
       svg {
@@ -177,8 +188,8 @@ aside {
   }
 }
 
-html[data-theme="light"] aside .nav-container .nav-link-item:not(.is-active):hover,
-html[data-theme="light"] aside .nav-container .nav-link-item:not(.is-active):focus-visible {
+html[data-theme="light"] aside .nav-container .nav-link-item:not(.is-active):not(.nav-link-item--danger):hover,
+html[data-theme="light"] aside .nav-container .nav-link-item:not(.is-active):not(.nav-link-item--danger):focus-visible {
   background: rgba(0, 0, 0, 0.1);
   border-color: rgba(0, 0, 0, 0.14);
 }
@@ -381,6 +392,20 @@ html[data-theme="light"] aside .nav-container .nav-link-item:not(.is-active):foc
         border-color: color-mix(in srgb, var(--app-accent) 58%, var(--aside-overlay-border));
         background: color-mix(in srgb, var(--app-accent-bright) 14%, var(--aside-overlay-bg));
         box-shadow: 0 16px 34px rgba(0, 0, 0, 0.28);
+      }
+
+      .nav-link-item.nav-link-item--danger {
+        color: var(--theme-nav-danger-text, var(--app-status-error));
+        border-color: color-mix(in srgb, var(--app-status-error) 40%, var(--aside-overlay-border));
+        background: color-mix(in srgb, var(--app-status-error) 12%, var(--aside-overlay-bg));
+      }
+
+      .nav-link-item.nav-link-item--danger:hover,
+      .nav-link-item.nav-link-item--danger:focus-visible {
+        color: var(--theme-nav-danger-text, var(--app-status-error));
+        border-color: color-mix(in srgb, var(--app-status-error) 56%, var(--aside-overlay-border));
+        background: color-mix(in srgb, var(--app-status-error) 18%, var(--aside-overlay-bg));
+        box-shadow: 0 14px 30px rgba(0, 0, 0, 0.25);
       }
     }
   }
