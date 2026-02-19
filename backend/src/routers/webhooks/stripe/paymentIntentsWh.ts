@@ -665,6 +665,51 @@ const handleInvoiceEvent = async (payload: Stripe.Event): Promise<void> => {
       });
     }
 
+    if (planOrder && planOrder.status !== OrderStatus.PAID) {
+      const plan = planOrder.plan_id
+        ? await prisma.plans.findFirst({ where: { id: planOrder.plan_id } })
+        : null;
+
+      if (!plan) {
+        log.error('[STRIPE_WH] invoice.paid fallback skipped: plan not found', {
+          eventId: payload.id,
+          orderId: planOrder.id,
+        });
+      } else {
+        const fallbackExpirationDate =
+          (await resolveInvoiceSubscriptionPeriodEnd(subscriptionId))
+          ?? addDays(new Date(), Number(plan.duration) || 30);
+        const fallbackSubId =
+          subscriptionId
+          ?? paymentIntentId
+          ?? invoiceId
+          ?? `stripe_invoice_${payload.id}`;
+
+        log.warn('[STRIPE_WH] invoice.paid fallback activating subscription', {
+          eventId: payload.id,
+          orderId: planOrder.id,
+          hasSubscriptionId: Boolean(subscriptionId),
+        });
+
+        await subscribe({
+          prisma,
+          user,
+          orderId: planOrder.id,
+          subId: fallbackSubId,
+          service: PaymentService.STRIPE,
+          expirationDate: fallbackExpirationDate,
+        });
+
+        try {
+          await manyChat.addTagToUser(user, 'SUCCESSFUL_PAYMENT');
+        } catch (e) {
+          log.error('[STRIPE_WH] Error while adding ManyChat tag (invoice fallback)', {
+            error: e instanceof Error ? e.message : e,
+          });
+        }
+      }
+    }
+
     if (planOrder && planOrder.status === OrderStatus.PAID) {
       const plan = planOrder.plan_id
         ? await prisma.plans.findFirst({ where: { id: planOrder.plan_id } })
@@ -863,6 +908,20 @@ const resolveInvoicePaymentIntent = async (
   const paymentIntent = paymentIntentRef as Stripe.PaymentIntent;
   if (!paymentIntent?.id) return null;
   return resolvePaymentIntent(paymentIntent);
+};
+
+const resolveInvoiceSubscriptionPeriodEnd = async (
+  subscriptionId: string | null,
+): Promise<Date | null> => {
+  if (!subscriptionId) return null;
+  try {
+    const subscription = await stripeInstance.subscriptions.retrieve(subscriptionId);
+    const currentPeriodEnd = Number((subscription as any)?.current_period_end);
+    if (!Number.isFinite(currentPeriodEnd) || currentPeriodEnd <= 0) return null;
+    return new Date(currentPeriodEnd * 1000);
+  } catch {
+    return null;
+  }
 };
 
 const shouldHandleEvent = (payload: Stripe.Event): boolean => {

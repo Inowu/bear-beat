@@ -376,7 +376,7 @@ export const WebhookInbox = () => {
                       >
                         Ver
                       </button>
-                      {item.status === "FAILED" ? (
+                      {item.status === "FAILED" || item.status === "IGNORED" ? (
                         <button
                           type="button"
                           className="btn-icon btn-secondary"

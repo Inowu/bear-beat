@@ -23,6 +23,8 @@ const retryWebhookInboxInputSchema = z.object({
   id: z.number().int().positive(),
 });
 
+const RETRYABLE_STATUSES = ['FAILED', 'IGNORED'] as const;
+
 const assertAdminRole = (role?: string): void => {
   if (role !== RolesNames.admin) {
     throw new TRPCError({
@@ -161,17 +163,17 @@ export const adminWebhookInboxRouter = router({
         });
       }
 
-      if (row.status !== 'FAILED') {
+      if (!RETRYABLE_STATUSES.includes(row.status as any)) {
         throw new TRPCError({
           code: 'CONFLICT',
-          message: 'Solo se pueden reintentar eventos con estado FAILED',
+          message: 'Solo se pueden reintentar eventos con estado FAILED o IGNORED',
         });
       }
 
       const updated = await ctx.prisma.webhookInboxEvent.updateMany({
         where: {
           id: row.id,
-          status: 'FAILED',
+          status: row.status,
         },
         data: {
           status: 'RECEIVED',

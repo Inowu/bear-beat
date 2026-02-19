@@ -190,7 +190,42 @@ describe('admin.webhookInbox router', () => {
     });
   });
 
-  it('rejects retry when event status is not FAILED', async () => {
+  it('retries IGNORED events by setting RECEIVED and enqueueing the job', async () => {
+    const prismaMock = createPrismaMock();
+    const caller = createCaller(prismaMock);
+
+    prismaMock.webhookInboxEvent.findUnique.mockResolvedValue({
+      id: 178,
+      status: 'IGNORED',
+    });
+    prismaMock.webhookInboxEvent.updateMany.mockResolvedValue({
+      count: 1,
+    });
+    enqueueWebhookInboxJobMock.mockResolvedValue(true);
+
+    const result = await caller.admin.webhookInbox.retry({ id: 178 });
+
+    expect(prismaMock.webhookInboxEvent.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: 178,
+        status: 'IGNORED',
+      },
+      data: {
+        status: 'RECEIVED',
+        next_retry_at: null,
+        last_error: null,
+        processing_started_at: null,
+        processed_at: null,
+      },
+    });
+    expect(enqueueWebhookInboxJobMock).toHaveBeenCalledWith({ inboxId: 178 });
+    expect(result).toEqual({
+      ok: true,
+      queued: true,
+    });
+  });
+
+  it('rejects retry when event status is not FAILED/IGNORED', async () => {
     const prismaMock = createPrismaMock();
     const caller = createCaller(prismaMock);
 
