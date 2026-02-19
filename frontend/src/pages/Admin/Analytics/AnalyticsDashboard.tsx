@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Activity, AlertTriangle, BarChart3, CalendarClock, CheckCircle2, CircleHelp, CreditCard, DollarSign, Gauge, RefreshCw, TrendingUp, UserPlus, Users, } from "src/icons";
+  Activity, AlertTriangle, BarChart3, CalendarClock, CheckCircle2, CircleHelp, CreditCard, DollarSign, Gauge, RefreshCw, TrendingUp, UserPlus, Users,
+} from "src/icons";
 import trpc from "../../../api";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import Pagination from "../../../components/Pagination/Pagination";
@@ -1419,13 +1420,13 @@ export function AnalyticsDashboard() {
                         className="inline-flex items-center gap-2 min-h-[44px] rounded-xl px-4 border border-border bg-bg-card text-text-main font-semibold hover:bg-bg-input transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
                       >
                         <RefreshCw size={16} className={adSpendMonthlyLoading ? "animate-spin" : ""} aria-hidden />
-                        {adSpendMonthlyLoading ? <SkeletonRow width="68px" height="14px" /> : "Recargar"}
+                        {adSpendMonthlyLoading ? <SkeletonRow width="68px" height="14px" /> : "Actualizar"}
                       </Button>
                       <span className="text-sm text-text-muted">
                         {adSpendMonthly?.range?.start
                           ? `${new Date(adSpendMonthly.range.start).toLocaleDateString("es-MX")} → ${new Date(
-                              adSpendMonthly.range.end,
-                            ).toLocaleDateString("es-MX")}`
+                            adSpendMonthly.range.end,
+                          ).toLocaleDateString("es-MX")}`
                           : null}
                       </span>
                     </div>

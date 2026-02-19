@@ -152,14 +152,14 @@ aside {
       }
 
       &--danger {
-        color: var(--theme-nav-danger-text, var(--app-status-error));
-        border-color: color-mix(in srgb, var(--app-status-error) 34%, var(--theme-nav-item-border, transparent));
-        background: color-mix(in srgb, var(--app-status-error) 10%, var(--theme-nav-item-bg));
+        color: color-mix(in srgb, var(--theme-nav-text) 68%, transparent);
+        border-color: var(--theme-nav-item-border, transparent);
+        background: var(--theme-nav-item-bg);
       }
 
       &--danger::before {
         background: var(--app-status-error);
-        opacity: 0.9;
+        opacity: 0;
       }
 
       &--danger svg {
@@ -169,8 +169,13 @@ aside {
       &--danger:hover,
       &--danger:focus-visible {
         color: var(--theme-nav-danger-text, var(--app-status-error));
-        background: color-mix(in srgb, var(--app-status-error) 16%, var(--theme-nav-item-bg));
-        border-color: color-mix(in srgb, var(--app-status-error) 52%, var(--theme-nav-item-border, transparent));
+        background: color-mix(in srgb, var(--app-status-error) 10%, var(--theme-nav-item-bg));
+        border-color: color-mix(in srgb, var(--app-status-error) 34%, var(--theme-nav-item-border, transparent));
+      }
+
+      &--danger:hover::before,
+      &--danger:focus-visible::before {
+        opacity: 0.9;
       }
 
       svg {
@@ -286,11 +291,9 @@ html[data-theme="light"] aside .nav-container .nav-link-item:not(.is-active):not
       justify-content: center;
       border: 1px solid color-mix(in srgb, var(--aside-overlay-border) 92%, transparent);
       background:
-        linear-gradient(
-          170deg,
+        linear-gradient(170deg,
           color-mix(in srgb, var(--app-accent-bright) 14%, transparent),
-          transparent 60%
-        ),
+          transparent 60%),
         color-mix(in srgb, var(--aside-overlay-bg) 92%, transparent);
       text-decoration: none;
     }
@@ -396,16 +399,16 @@ html[data-theme="light"] aside .nav-container .nav-link-item:not(.is-active):not
       }
 
       .nav-link-item.nav-link-item--danger {
-        color: var(--theme-nav-danger-text, var(--app-status-error));
-        border-color: color-mix(in srgb, var(--app-status-error) 40%, var(--aside-overlay-border));
-        background: color-mix(in srgb, var(--app-status-error) 12%, var(--aside-overlay-bg));
+        color: color-mix(in srgb, var(--aside-overlay-text) 60%, transparent);
+        border-color: color-mix(in srgb, var(--aside-overlay-border) 70%, transparent);
+        background: color-mix(in srgb, var(--aside-overlay-bg) 82%, transparent);
       }
 
       .nav-link-item.nav-link-item--danger:hover,
       .nav-link-item.nav-link-item--danger:focus-visible {
         color: var(--theme-nav-danger-text, var(--app-status-error));
-        border-color: color-mix(in srgb, var(--app-status-error) 56%, var(--aside-overlay-border));
-        background: color-mix(in srgb, var(--app-status-error) 18%, var(--aside-overlay-bg));
+        border-color: color-mix(in srgb, var(--app-status-error) 40%, var(--aside-overlay-border));
+        background: color-mix(in srgb, var(--app-status-error) 12%, var(--aside-overlay-bg));
         box-shadow: 0 14px 30px rgba(0, 0, 0, 0.25);
       }
     }

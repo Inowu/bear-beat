@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Activity, Clock, Database, DollarSign, AlertTriangle, RefreshCw, Repeat, TrendingUp, UserPlus, Users, } from "src/icons";
+  Activity, Clock, Database, DollarSign, AlertTriangle, RefreshCw, Repeat, TrendingUp, UserPlus, Users,
+} from "src/icons";
 import trpc from "../../../api";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import Pagination from "../../../components/Pagination/Pagination";
@@ -676,7 +677,7 @@ export function CrmDashboard() {
             className="ml-auto inline-flex items-center gap-2 bg-bear-gradient text-bear-dark-500 hover:opacity-95 font-medium rounded-pill px-4 py-2 transition-colors"
           >
             <RefreshCw size={18} aria-hidden />
-            Refrescar
+            Actualizar
           </Button>
         </div>
       }

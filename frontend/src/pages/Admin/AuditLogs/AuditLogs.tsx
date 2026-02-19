@@ -225,7 +225,7 @@ export const AuditLogs = () => {
         onClick={() => void fetchAuditLogs(filters)}
       >
         <RefreshCw size={18} aria-hidden />
-        Recargar
+        Actualizar
       </Button>
     </div>
   );

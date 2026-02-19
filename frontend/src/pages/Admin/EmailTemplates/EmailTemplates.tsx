@@ -350,7 +350,7 @@ export function EmailTemplates() {
         }}
       >
         <RefreshCw size={18} aria-hidden />
-        Recargar
+        Actualizar
       </Button>
     </div>
   );

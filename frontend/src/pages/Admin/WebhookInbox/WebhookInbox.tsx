@@ -303,7 +303,7 @@ export const WebhookInbox = () => {
         onClick={() => void fetchList(filters)}
       >
         <RefreshCw size={18} aria-hidden />
-        Recargar
+        Actualizar
       </Button>
     </div>
   );
@@ -483,16 +483,16 @@ export const WebhookInbox = () => {
         actions={
           drawerItem && (drawerItem.status === "FAILED" || drawerItem.status === "IGNORED")
             ? [
-                {
-                  id: `retry_${drawerItem.id}`,
-                  label: retryingId === drawerItem.id ? "Reintentando..." : "Reintentar",
-                  onClick: () => {
-                    void retryEvent(drawerItem.id);
-                  },
-                  disabled: retryingId === drawerItem.id,
-                  variant: "secondary",
+              {
+                id: `retry_${drawerItem.id}`,
+                label: retryingId === drawerItem.id ? "Reintentando..." : "Reintentar",
+                onClick: () => {
+                  void retryEvent(drawerItem.id);
                 },
-              ]
+                disabled: retryingId === drawerItem.id,
+                variant: "secondary",
+              },
+            ]
             : []
         }
       >
