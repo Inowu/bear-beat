@@ -51,4 +51,5 @@ jobs:
             # Optional: inject AWS SES credentials into backend/.env (deploy.sh upserts).
             export DEPLOY_AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}"
             export DEPLOY_AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+            export DEPLOY_SES_CONFIGURATION_SET="${{ secrets.SES_CONFIGURATION_SET }}"
             bash ./deploy.sh

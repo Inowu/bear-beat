@@ -169,6 +169,9 @@ fi
 if [ -n "${DEPLOY_AWS_SECRET_ACCESS_KEY:-}" ]; then
   upsert_env "AWS_SECRET_ACCESS_KEY" "${DEPLOY_AWS_SECRET_ACCESS_KEY}"
 fi
+if [ -n "${DEPLOY_SES_CONFIGURATION_SET:-}" ]; then
+  upsert_env "SES_CONFIGURATION_SET" "${DEPLOY_SES_CONFIGURATION_SET}"
+fi
 
 log "Optionally injecting Stripe OXXO secrets from deploy environment..."
 # Usage (avoid printing secrets):
