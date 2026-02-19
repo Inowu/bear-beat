@@ -24,9 +24,8 @@ export default function PlansStickyCta(props: {
   ctaLabel: string;
   trial: { enabled: boolean; days: number; gb: number } | null;
   onClick: () => void;
-  onDemoClick: () => void;
 }) {
-  const { planId, ctaLabel, trial, onClick, onDemoClick } = props;
+  const { planId, ctaLabel, trial, onClick } = props;
   const [dismissed, setDismissed] = useState(() => {
     if (typeof window === "undefined") return true;
     return safeReadLocalStorage(STORAGE_KEY) === "1";
@@ -185,9 +184,6 @@ export default function PlansStickyCta(props: {
         <Button unstyled type="button" className="plans-sticky__cta" onClick={onClick}>
           <span className="plans-sticky__cta-label">{ctaLabel}</span>
           <span className="plans-sticky__cta-micro">{stickyMicro}</span>
-        </Button>
-        <Button unstyled type="button" className="plans-sticky__demo" onClick={onDemoClick}>
-          Escuchar demos ↓
         </Button>
         <Button unstyled type="button" className="plans-sticky__close" onClick={dismiss} aria-label="Ocultar barra">
           <X size={16} aria-hidden />

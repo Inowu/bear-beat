@@ -131,15 +131,6 @@ function getDailyPrice(monthlyPrice: number): number {
   return Math.floor(rawDaily * 10) / 10;
 }
 
-function formatPayNowMethodsLabel(methods: PaymentMethodId[]): string {
-  const labels: string[] = [];
-  if (methods.includes("paypal")) labels.push("PayPal");
-  if (methods.includes("spei")) labels.push("SPEI");
-  if (methods.includes("oxxo")) labels.push("Efectivo");
-  if (methods.includes("transfer")) labels.push("Transferencia");
-  return labels.length > 0 ? labels.join(" / ") : "Otros métodos";
-}
-
 function parsePlansEntry(value: string | null): PlansEntry | null {
   if (!value) return null;
   const normalized = value.trim().toLowerCase();
@@ -413,26 +404,16 @@ function Plans() {
     return formatMonthlyPriceWithCode(selectedPlan.price, selectedCurrency, locale);
   }, [selectedCurrency, selectedPlan]);
 
-  const dualMonthlyLabel = useMemo(() => {
-    const labels: string[] = [];
-    if (plansByCurrency.mxn) {
-      labels.push(
-        formatMonthlyPriceWithCode(plansByCurrency.mxn.price, "mxn", "es-MX"),
-      );
-    }
-    if (plansByCurrency.usd) {
-      labels.push(
-        formatMonthlyPriceWithCode(plansByCurrency.usd.price, "usd", "en-US"),
-      );
-    }
-    return labels.length > 0 ? labels.join(" · ") : selectedMonthlyLabel;
-  }, [plansByCurrency.mxn, plansByCurrency.usd, selectedMonthlyLabel]);
-
-  const usdDailyLabel = useMemo(() => {
-    const usdPrice = toNumber(plansByCurrency.usd?.price);
-    if (!Number.isFinite(usdPrice) || usdPrice <= 0) return null;
-    return `$${formatMoneyFixed(getDailyPrice(usdPrice), "en-US")} USD al día`;
-  }, [plansByCurrency.usd?.price]);
+  const selectedDailyLabel = useMemo(() => {
+    if (!selectedPlan) return null;
+    const monthly = toNumber(selectedPlan.price);
+    if (!Number.isFinite(monthly) || monthly <= 0) return null;
+    const daily = getDailyPrice(monthly);
+    if (!Number.isFinite(daily) || daily <= 0) return null;
+    const locale = selectedCurrency === "usd" ? "en-US" : "es-MX";
+    const code = selectedCurrency.toUpperCase();
+    return `$${formatMoneyFixed(daily, locale)} ${code} al día`;
+  }, [selectedCurrency, selectedPlan]);
 
   const paymentMethods = useMemo(() => {
     if (selectedPlan?.paymentMethods?.length)
@@ -442,34 +423,7 @@ function Plans() {
       : (["visa", "mastercard"] as PaymentMethodId[]);
   }, [selectedCurrency, selectedPlan?.paymentMethods]);
 
-  const allPaymentMethods = useMemo(() => {
-    const methods: PaymentMethodId[] = [];
-    const append = (items: PaymentMethodId[] | undefined) => {
-      if (!items?.length) return;
-      items.forEach((item) => {
-        if (!methods.includes(item)) methods.push(item);
-      });
-    };
-    append(plansByCurrency.mxn?.paymentMethods);
-    append(plansByCurrency.usd?.paymentMethods);
-    if (!methods.length) append(paymentMethods);
-    return methods;
-  }, [
-    paymentMethods,
-    plansByCurrency.mxn?.paymentMethods,
-    plansByCurrency.usd?.paymentMethods,
-  ]);
-
-  const paymentSafetyLine = useMemo(() => {
-    const extraMethods = formatPayNowMethodsLabel(allPaymentMethods).replaceAll(
-      " / ",
-      ", ",
-    );
-    if (!extraMethods || extraMethods === "Otros métodos") {
-      return "Pago seguro con tarjeta";
-    }
-    return `Pago seguro con tarjeta, ${extraMethods}`;
-  }, [allPaymentMethods]);
+  const hasBothCurrencies = Boolean(plansByCurrency.mxn && plansByCurrency.usd);
 
   const trialPreview = useMemo(() => {
     const trialEnabled =
@@ -492,13 +446,12 @@ function Plans() {
   const karaokesLabel = stats.karaokes > 0 ? formatInt(stats.karaokes) : "N/D";
   const benefits = useMemo(
     () => [
-      `${totalFilesLabel} archivos (audios, videos, karaokes)`,
-      `${formatInt(stats.quotaGb)} GB de descarga cada mes (~3,000 videos)`,
+      `${totalFilesLabel} archivos listos (audios, videos, karaokes)`,
+      `${formatInt(stats.quotaGb)} GB de descarga cada mes`,
       `${totalGenresLabel} géneros latinos organizados por carpetas`,
-      "BPM + Key incluidos en cada archivo",
-      "Packs nuevos cada semana (no mensuales)",
       `${karaokesLabel} karaokes de la A a la Z`,
-      "Activación guiada — te ayudamos a conectar",
+      "BPM + Key incluidos en cada archivo",
+      "Actualizaciones semanales + activación guiada",
     ],
     [karaokesLabel, stats.quotaGb, totalFilesLabel, totalGenresLabel],
   );
@@ -508,7 +461,7 @@ function Plans() {
     : "CONTINUAR AL PAGO SEGURO";
 
   const isAuthenticated = Boolean(userToken || currentUser);
-  const trustCopy = "Cancela cuando quieras desde tu cuenta. Sin contratos.";
+  const trustCopy = "Sin contratos. Puedes cancelar cuando quieras desde tu cuenta.";
 
   const selectCurrency = (next: CurrencyKey) => {
     if (next === selectedCurrency) return;
@@ -545,17 +498,6 @@ function Plans() {
 
     navigate(`/comprar?priceId=${selectedPlan.planId}&entry=${checkoutEntry}`);
   }, [entry, navigate, selectedCurrency, selectedPlan]);
-  const handleStickyDemo = useCallback(() => {
-    trackGrowthMetric(GROWTH_METRICS.CTA_SECONDARY_CLICK, {
-      location: "plans_sticky_demo",
-    });
-    trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
-      id: "plans_sticky_demo",
-      location: "plans_sticky",
-      currency: selectedCurrency.toUpperCase(),
-    });
-    navigate("/#demo");
-  }, [navigate, selectedCurrency]);
 
   const prefetchCheckout = useCallback(() => {
     if (checkoutPrefetchedRef.current) return;
@@ -589,13 +531,13 @@ function Plans() {
         <div className="plans2026__container bb-marketing-container--narrow">
           <header className="plans2026__hero" data-testid="plans-hero">
             <p className="plans2026__kicker">
-              Empieza tu prueba gratis en 2 minutos.
+              Un plan. Todo incluido.
             </p>
-            <h1>Plan Oro</h1>
+            <h1>Activa tu prueba gratis hoy.</h1>
             <p className="plans2026__subtitle">
               {isFastlaneEntry
-                ? "Activa tu cuenta hoy y avanza al checkout sin perder tu flujo."
-                : "Todo en un solo plan: audios, videos y karaoke listos para cabina."}
+                ? "Ya estás a un paso: elige moneda y termina tu pago seguro."
+                : "Elige moneda, confirma pago seguro y empieza a descargar en minutos."}
             </p>
           </header>
 
@@ -678,15 +620,66 @@ function Plans() {
                     PLAN ORO
                   </p>
                 </div>
+                {hasBothCurrencies ? (
+                  <>
+                    <p className="plans2026__currencyTitle">Selecciona tu moneda</p>
+                    <div
+                      className={[
+                        "bb-segmented",
+                        "bb-segmented--switch",
+                        selectedCurrency === "usd" ? "is-usd" : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                      role="radiogroup"
+                      aria-label="Moneda"
+                    >
+                      <Button unstyled
+                        type="button"
+                        role="radio"
+                        aria-checked={selectedCurrency === "mxn"}
+                        className={[
+                          "bb-segmented__btn",
+                          selectedCurrency === "mxn" ? "is-active" : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                        onClick={() => selectCurrency("mxn")}
+                        disabled={!plansByCurrency.mxn}
+                      >
+                        MXN
+                      </Button>
+                      <Button unstyled
+                        type="button"
+                        role="radio"
+                        aria-checked={selectedCurrency === "usd"}
+                        className={[
+                          "bb-segmented__btn",
+                          selectedCurrency === "usd" ? "is-active" : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                        onClick={() => selectCurrency("usd")}
+                        disabled={!plansByCurrency.usd}
+                      >
+                        USD
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <p className="plans2026__currencySingle">
+                    Moneda: {selectedCurrency.toUpperCase()}
+                  </p>
+                )}
 
                 <div
-                  className="plans2026__price plans2026__price--dual"
+                  className="plans2026__price"
                   aria-label="Precio mensual"
                 >
-                  <span className="plans2026__price-line">{dualMonthlyLabel}</span>
-                  {usdDailyLabel ? (
+                  <span className="plans2026__price-line">{selectedMonthlyLabel}</span>
+                  {selectedDailyLabel ? (
                     <span className="plans2026__price-daily">
-                      ({usdDailyLabel})
+                      ({selectedDailyLabel})
                     </span>
                   ) : null}
                 </div>
@@ -705,7 +698,7 @@ function Plans() {
                       </p>
                       <p className="plans2026__billingLine">
                         <span>DESPUÉS</span>
-                        <strong>Se activa tu membresía mensual</strong>
+                        <strong>{`${selectedMonthlyLabel} (si no cancelas)`}</strong>
                       </p>
                     </>
                   ) : (
@@ -715,77 +708,12 @@ function Plans() {
                         <strong>{selectedMonthlyLabel}</strong>
                       </p>
                       <p className="plans2026__billingLine">
-                        <span>DESPUÉS</span>
-                        <strong>Renovación mensual hasta que canceles</strong>
+                        <span>ACCESO</span>
+                        <strong>Inmediato</strong>
                       </p>
                     </>
                   )}
                 </section>
-
-                <p className="plans2026__includesTitle">Lo que incluye:</p>
-                <ul className="plans2026__benefits" aria-label="Beneficios">
-                  {benefits.map((benefit) => (
-                    <li key={benefit} className="plans2026__benefit">
-                      <span className="plans2026__benefit-icon" aria-hidden>
-                        <Check size={16} />
-                      </span>
-                      <span className="plans2026__benefit-text">{benefit}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <p className="plans2026__billingHint">
-                  {`💳 ${paymentSafetyLine}${plansByCurrency.mxn && plansByCurrency.usd ? " (según moneda)" : ""}`}
-                </p>
-                <PaymentMethodLogos
-                  methods={[...paymentMethods]}
-                  className="plans2026__payment-logos"
-                  ariaLabel="Métodos de pago disponibles"
-                />
-
-                <p className="plans2026__currencyTitle">Selecciona tu moneda</p>
-                <div
-                  className={[
-                    "bb-segmented",
-                    "bb-segmented--switch",
-                    selectedCurrency === "usd" ? "is-usd" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  role="radiogroup"
-                  aria-label="Moneda"
-                >
-                  <Button unstyled
-                    type="button"
-                    role="radio"
-                    aria-checked={selectedCurrency === "mxn"}
-                    className={[
-                      "bb-segmented__btn",
-                      selectedCurrency === "mxn" ? "is-active" : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                    onClick={() => selectCurrency("mxn")}
-                    disabled={!plansByCurrency.mxn}
-                  >
-                    MXN
-                  </Button>
-                  <Button unstyled
-                    type="button"
-                    role="radio"
-                    aria-checked={selectedCurrency === "usd"}
-                    className={[
-                      "bb-segmented__btn",
-                      selectedCurrency === "usd" ? "is-active" : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                    onClick={() => selectCurrency("usd")}
-                    disabled={!plansByCurrency.usd}
-                  >
-                    USD
-                  </Button>
-                </div>
 
                 <Button unstyled
                   type="button"
@@ -816,11 +744,32 @@ function Plans() {
                         state={{ from: `${location.pathname}${location.search}` }}
                         className="plans2026__link"
                       >
-                        Inicia sesión →
+                        Inicia sesión
                       </Link>
                     </p>
                   </div>
                 )}
+
+                <p className="plans2026__includesTitle">Lo que incluye:</p>
+                <ul className="plans2026__benefits" aria-label="Beneficios">
+                  {benefits.map((benefit) => (
+                    <li key={benefit} className="plans2026__benefit">
+                      <span className="plans2026__benefit-icon" aria-hidden>
+                        <Check size={16} />
+                      </span>
+                      <span className="plans2026__benefit-text">{benefit}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <p className="plans2026__billingHint">
+                  💳 Pago seguro. Activación en minutos.
+                </p>
+                <PaymentMethodLogos
+                  methods={[...paymentMethods]}
+                  className="plans2026__payment-logos"
+                  ariaLabel="Métodos de pago disponibles"
+                />
               </section>
             </div>
           )}
@@ -839,7 +788,6 @@ function Plans() {
             : null
         }
         onClick={handleActivate}
-        onDemoClick={handleStickyDemo}
       />
     </div>
   );
