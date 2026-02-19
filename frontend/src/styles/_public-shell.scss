@@ -38,6 +38,10 @@
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16);
 }
 
+body.home-mobile-menu-open {
+  overflow: hidden;
+}
+
 .home-topnav__inner {
   display: flex;
   align-items: center;
@@ -138,6 +142,10 @@
 }
 
 .home-topnav__mobile-menu {
+  display: none;
+}
+
+.home-topnav__mobile-overlay {
   display: none;
 }
 
@@ -249,23 +257,47 @@
 
   .home-topnav__mobile-menu {
     display: block;
+    position: relative;
+    z-index: 1;
     max-height: 0;
     overflow: hidden;
     border-top: 1px solid transparent;
-    transition: max-height 180ms ease, border-color 180ms ease, padding 180ms ease;
+    opacity: 0;
+    transform: translateY(-6px);
+    transition:
+      max-height 180ms ease,
+      border-color 180ms ease,
+      padding 180ms ease,
+      opacity 160ms ease,
+      transform 160ms ease;
     padding: 0;
   }
 
   .home-topnav__mobile-menu.is-open {
-    max-height: 360px;
+    max-height: min(68vh, 430px);
     padding: 10px 0 12px;
     border-top-color: color-mix(in srgb, var(--ph-border) 72%, transparent);
+    opacity: 1;
+    transform: translateY(0);
   }
 
   .home-topnav__mobile-menu-inner {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    max-height: min(62vh, 390px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .home-topnav__mobile-head {
+    margin: 0;
+    color: color-mix(in srgb, var(--ph-text-body) 84%, transparent);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0 2px;
   }
 
   .home-topnav__mobile-links {
@@ -308,8 +340,22 @@
     padding-inline: 14px;
     font-size: 12px;
     letter-spacing: 0.01em;
+    text-transform: none;
+    font-weight: 800;
     white-space: normal;
     text-align: center;
+  }
+
+  .home-topnav__mobile-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    top: calc(64px + env(safe-area-inset-top, 0px));
+    border: 0;
+    background: color-mix(in srgb, var(--ph-bg) 56%, transparent);
+    backdrop-filter: blur(3px);
+    z-index: 0;
+    cursor: pointer;
   }
 }
 
@@ -390,6 +436,10 @@ html[data-theme="light"] .home-topnav__mobile-link {
   border-color: color-mix(in srgb, var(--ph-border) 92%, transparent);
   background: color-mix(in srgb, var(--color-white) 99%, var(--ph-bg-card));
   color: color-mix(in srgb, var(--ph-text-body) 96%, transparent);
+}
+
+html[data-theme="light"] .home-topnav__mobile-head {
+  color: color-mix(in srgb, var(--ph-text-body) 74%, transparent);
 }
 
 html[data-theme="light"] .home-topnav__link.is-active,

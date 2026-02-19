@@ -39,6 +39,24 @@ export default function PublicTopNav({
     setMobileMenuOpen(false);
   }, [location.pathname, location.search, location.hash]);
 
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+
+    document.body.classList.toggle("home-mobile-menu-open", mobileMenuOpen);
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileMenuOpen(false);
+    };
+
+    if (mobileMenuOpen) {
+      document.addEventListener("keydown", handleEscape);
+    }
+
+    return () => {
+      document.body.classList.remove("home-mobile-menu-open");
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [mobileMenuOpen]);
+
   const handleToggleTheme = () => {
     setMode(nextTheme);
   };
@@ -128,6 +146,7 @@ export default function PublicTopNav({
         className={`home-topnav__mobile-menu${mobileMenuOpen ? " is-open" : ""}`}
       >
         <div className="ph__container home-topnav__mobile-menu-inner">
+          <div className="home-topnav__mobile-head">Navegación</div>
           <nav className="home-topnav__mobile-links" aria-label="Links móviles">
             {usePlansAsHashLink ? (
               <Link to={plansTo} className="home-topnav__mobile-link" onClick={handlePlansClick}>
@@ -170,6 +189,15 @@ export default function PublicTopNav({
           )}
         </div>
       </div>
+      {mobileMenuOpen && (
+        <Button
+          unstyled
+          type="button"
+          className="home-topnav__mobile-overlay"
+          onClick={closeMobileMenu}
+          aria-label="Cerrar menú"
+        />
+      )}
     </header>
   );
 }
