@@ -207,51 +207,50 @@ export default function GenresCoverage(props: {
           <h2 className="home-h2">{titleLead} géneros listos para cualquier evento</h2>
         </div>
 
-        <div className="genres-coverage__desktop" aria-label="Categorías de géneros">
-          {categorized.map((category) => (
-            <section key={category.key} className="genres-coverage__col bb-market-surface" aria-label={category.title}>
-              <h3 className="genres-coverage__title">{category.title}</h3>
-              <ul className="genres-coverage__list">
-                {category.genres.map((genre) => (
-                  <li key={`${category.key}-${genre.id}`}>
-                    <Link
-                      to="/auth/registro"
-                      state={{ from: buildGenreFilterUrl(genre.name) }}
-                      className="genres-coverage__genre-link"
-                      onClick={() => onGenreClick?.(genre)}
-                    >
-                      {genre.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))}
-        </div>
+        <div className="genres-coverage__lanes" aria-label="Carriles animados de géneros">
+          {categorized.map((category, index) => {
+            const reverse = index % 2 === 1;
+            return (
+              <section key={category.key} className="genres-coverage__lane bb-market-surface" aria-label={category.title}>
+                <header className="genres-coverage__lane-head">
+                  <h3 className="genres-coverage__title">{category.title}</h3>
+                  <span className="genres-coverage__count">{formatInt(category.genres.length)}</span>
+                </header>
 
-        <div className="genres-coverage__mobile" aria-label="Géneros por categoría">
-          {categorized.map((category, index) => (
-            <details key={`mobile-${category.key}`} className="genres-coverage__accordion bb-market-surface" open={index === 0}>
-              <summary className="genres-coverage__summary">
-                <span>{category.title}</span>
-                <span>{formatInt(category.genres.length)}</span>
-              </summary>
-              <ul className="genres-coverage__list">
-                {category.genres.map((genre) => (
-                  <li key={`mobile-${category.key}-${genre.id}`}>
-                    <Link
-                      to="/auth/registro"
-                      state={{ from: buildGenreFilterUrl(genre.name) }}
-                      className="genres-coverage__genre-link"
-                      onClick={() => onGenreClick?.(genre)}
+                {category.genres.length > 0 ? (
+                  <div className="genres-coverage__marquee" role="presentation">
+                    <div
+                      className={`genres-coverage__track ${reverse ? "is-reverse" : ""}`}
+                      aria-label={`Géneros en ${category.title}`}
                     >
-                      {genre.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </details>
-          ))}
+                      {[0, 1].map((replica) => (
+                        <div
+                          key={`${category.key}-replica-${replica}`}
+                          className={`genres-coverage__segment ${replica === 1 ? "is-clone" : ""}`}
+                          aria-hidden={replica === 1}
+                        >
+                          {category.genres.map((genre) => (
+                            <Link
+                              key={`${category.key}-${replica}-${genre.id}`}
+                              to="/auth/registro"
+                              state={{ from: buildGenreFilterUrl(genre.name) }}
+                              className="genres-coverage__chip"
+                              onClick={replica === 0 ? () => onGenreClick?.(genre) : undefined}
+                              tabIndex={replica === 1 ? -1 : undefined}
+                            >
+                              {genre.name}
+                            </Link>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="genres-coverage__empty">Actualizando géneros de esta categoría.</p>
+                )}
+              </section>
+            );
+          })}
         </div>
 
         <p className="genres-coverage__tail">
