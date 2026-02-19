@@ -7,6 +7,7 @@ import Pagination from "../../../components/Pagination/Pagination";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import { useUserContext } from "../../../contexts/UserContext";
 import "./AuditLogs.scss";
+import { Button, Input, Select } from "../../../components/ui";
 
 interface AdminAuditLogItem {
   id: number;
@@ -168,7 +169,7 @@ export const AuditLogs = () => {
     <div className="audit-logs-toolbar">
       <label className="audit-logs-toolbar__field">
         <span>Acción</span>
-        <select
+        <Select
           value={filters.action}
           onChange={(e) => startFilter("action", e.target.value)}
         >
@@ -178,11 +179,11 @@ export const AuditLogs = () => {
               {action}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
       <label className="audit-logs-toolbar__field">
         <span>Usuario objetivo</span>
-        <input
+        <Input
           value={filters.targetUserId}
           onChange={(e) => startFilter("targetUserId", e.target.value)}
           placeholder="Buscar por ID de usuario…"
@@ -191,7 +192,7 @@ export const AuditLogs = () => {
       </label>
       <label className="audit-logs-toolbar__field">
         <span>Desde</span>
-        <input
+        <Input
           type="date"
           value={filters.dateFrom}
           onChange={(e) => startFilter("dateFrom", e.target.value)}
@@ -199,7 +200,7 @@ export const AuditLogs = () => {
       </label>
       <label className="audit-logs-toolbar__field">
         <span>Hasta</span>
-        <input
+        <Input
           type="date"
           value={filters.dateTo}
           onChange={(e) => startFilter("dateTo", e.target.value)}
@@ -207,23 +208,23 @@ export const AuditLogs = () => {
       </label>
       <label className="audit-logs-toolbar__field">
         <span>Por página</span>
-        <select
+        <Select
           value={filters.limit}
           onChange={(e) => startFilter("limit", Number(e.target.value))}
         >
           <option value={50}>50</option>
           <option value={100}>100</option>
           <option value={200}>200</option>
-        </select>
+        </Select>
       </label>
-      <button
+      <Button unstyled
         type="button"
         className="btn-icon btn-secondary"
         onClick={() => void fetchAuditLogs(filters)}
       >
         <RefreshCw size={18} aria-hidden />
         Recargar
-      </button>
+      </Button>
     </div>
   );
 

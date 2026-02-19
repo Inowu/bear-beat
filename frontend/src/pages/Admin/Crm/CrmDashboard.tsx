@@ -1,20 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Activity,
-  Clock,
-  Database,
-  DollarSign,
-  AlertTriangle,
-  RefreshCw,
-  Repeat,
-  TrendingUp,
-  UserPlus,
-  Users,
-} from "src/icons";
+  Activity, Clock, Database, DollarSign, AlertTriangle, RefreshCw, Repeat, TrendingUp, UserPlus, Users, } from "src/icons";
 import trpc from "../../../api";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import Pagination from "../../../components/Pagination/Pagination";
-import { Select } from "../../../components/ui";
+import { Select, Button } from "../../../components/ui";
 import { CrmP2Panels } from "./CrmP2Panels";
 import "./CrmDashboard.scss";
 
@@ -656,7 +646,7 @@ export function CrmDashboard() {
             </Select>
           </label>
 
-          <button
+          <Button unstyled
             type="button"
             role="switch"
             aria-checked={autoRefresh}
@@ -678,16 +668,16 @@ export function CrmDashboard() {
               />
             </span>
             <span className="text-sm">Actualizar en vivo</span>
-          </button>
+          </Button>
 
-          <button
+          <Button unstyled
             type="button"
             onClick={() => void refresh()}
             className="ml-auto inline-flex items-center gap-2 bg-bear-gradient text-bear-dark-500 hover:opacity-95 font-medium rounded-pill px-4 py-2 transition-colors"
           >
             <RefreshCw size={18} aria-hidden />
             Refrescar
-          </button>
+          </Button>
         </div>
       }
     >
@@ -696,28 +686,28 @@ export function CrmDashboard() {
       ) : !snapshot ? (
         <div className="crm-state crm-state--error" role="alert">
           <p>{error || "No hay datos de CRM para mostrar."}</p>
-          <button
+          <Button unstyled
             type="button"
             onClick={() => void refresh()}
             className="inline-flex items-center gap-2 bg-bear-gradient text-bear-dark-500 hover:opacity-95 font-medium rounded-pill px-4 py-2 transition-colors"
           >
             <RefreshCw size={18} aria-hidden />
             Reintentar
-          </button>
+          </Button>
         </div>
       ) : snapshot ? (
         <div className="crm-wrap">
           {error ? (
             <div className="crm-state crm-state--warning" role="status">
               <p>{error}</p>
-              <button
+              <Button unstyled
                 type="button"
                 onClick={() => void refresh()}
                 className="inline-flex items-center gap-2 bg-bear-gradient text-bear-dark-500 hover:opacity-95 font-medium rounded-pill px-4 py-2 transition-colors"
               >
                 <RefreshCw size={18} aria-hidden />
                 Reintentar
-              </button>
+              </Button>
             </div>
           ) : null}
 
@@ -1308,7 +1298,7 @@ export function CrmDashboard() {
                       <td>{formatDateLabel(row.trialStartedAt, true)}</td>
                       <td>{row.planId ?? "—"}</td>
                       <td className="crm-actions">
-                        <button
+                        <Button unstyled
                           type="button"
                           className="crm-action-btn"
                           disabled={
@@ -1329,8 +1319,8 @@ export function CrmDashboard() {
                           }
                         >
                           Onboarding
-                        </button>
-                        <button
+                        </Button>
+                        <Button unstyled
                           type="button"
                           className="crm-action-btn crm-action-btn--ghost"
                           disabled={
@@ -1349,7 +1339,7 @@ export function CrmDashboard() {
                           }
                         >
                           Contactado
-                        </button>
+                        </Button>
                       </td>
                     </tr>
                   ))}
@@ -1404,7 +1394,7 @@ export function CrmDashboard() {
                       </div>
                     </dl>
                     <div className="crm-actions crm-mobile-card__actions">
-                      <button
+                      <Button unstyled
                         type="button"
                         className="crm-action-btn"
                         disabled={
@@ -1423,8 +1413,8 @@ export function CrmDashboard() {
                         }
                       >
                         Onboarding
-                      </button>
-                      <button
+                      </Button>
+                      <Button unstyled
                         type="button"
                         className="crm-action-btn crm-action-btn--ghost"
                         disabled={
@@ -1443,7 +1433,7 @@ export function CrmDashboard() {
                         }
                       >
                         Contactado
-                      </button>
+                      </Button>
                     </div>
                   </article>
                 ))
@@ -1505,7 +1495,7 @@ export function CrmDashboard() {
                       <td>{row.planId ?? "—"}</td>
                       <td>{formatPaymentMethod(row.paymentMethod)}</td>
                       <td className="crm-actions">
-                        <button
+                        <Button unstyled
                           type="button"
                           className="crm-action-btn"
                           disabled={
@@ -1526,8 +1516,8 @@ export function CrmDashboard() {
                           }
                         >
                           Onboarding
-                        </button>
-                        <button
+                        </Button>
+                        <Button unstyled
                           type="button"
                           className="crm-action-btn crm-action-btn--ghost"
                           disabled={
@@ -1546,7 +1536,7 @@ export function CrmDashboard() {
                           }
                         >
                           Contactado
-                        </button>
+                        </Button>
                       </td>
                     </tr>
                   ))}
@@ -1605,7 +1595,7 @@ export function CrmDashboard() {
                       </div>
                     </dl>
                     <div className="crm-actions crm-mobile-card__actions">
-                      <button
+                      <Button unstyled
                         type="button"
                         className="crm-action-btn"
                         disabled={
@@ -1624,8 +1614,8 @@ export function CrmDashboard() {
                         }
                       >
                         Onboarding
-                      </button>
-                      <button
+                      </Button>
+                      <Button unstyled
                         type="button"
                         className="crm-action-btn crm-action-btn--ghost"
                         disabled={
@@ -1644,7 +1634,7 @@ export function CrmDashboard() {
                         }
                       >
                         Contactado
-                      </button>
+                      </Button>
                     </div>
                   </article>
                 ))
@@ -1705,7 +1695,7 @@ export function CrmDashboard() {
                       <td>{row.planId ?? "—"}</td>
                       <td>{formatPaymentMethod(row.paymentMethod)}</td>
                       <td className="crm-actions">
-                        <button
+                        <Button unstyled
                           type="button"
                           className="crm-action-btn"
                           disabled={
@@ -1726,8 +1716,8 @@ export function CrmDashboard() {
                           }
                         >
                           Onboarding
-                        </button>
-                        <button
+                        </Button>
+                        <Button unstyled
                           type="button"
                           className="crm-action-btn crm-action-btn--ghost"
                           disabled={
@@ -1746,7 +1736,7 @@ export function CrmDashboard() {
                           }
                         >
                           Contactado
-                        </button>
+                        </Button>
                       </td>
                     </tr>
                   ))}
@@ -1805,7 +1795,7 @@ export function CrmDashboard() {
                       </div>
                     </dl>
                     <div className="crm-actions crm-mobile-card__actions">
-                      <button
+                      <Button unstyled
                         type="button"
                         className="crm-action-btn"
                         disabled={
@@ -1824,8 +1814,8 @@ export function CrmDashboard() {
                         }
                       >
                         Onboarding
-                      </button>
-                      <button
+                      </Button>
+                      <Button unstyled
                         type="button"
                         className="crm-action-btn crm-action-btn--ghost"
                         disabled={
@@ -1844,7 +1834,7 @@ export function CrmDashboard() {
                         }
                       >
                         Contactado
-                      </button>
+                      </Button>
                     </div>
                   </article>
                 ))
@@ -1905,7 +1895,7 @@ export function CrmDashboard() {
                       <td>{formatReasonCode(row.reasonCode)}</td>
                       <td>{row.campaign ?? "—"}</td>
                       <td className="crm-actions">
-                        <button
+                        <Button unstyled
                           type="button"
                           className="crm-action-btn"
                           disabled={
@@ -1924,8 +1914,8 @@ export function CrmDashboard() {
                           }
                         >
                           Cupón 10%
-                        </button>
-                        <button
+                        </Button>
+                        <Button unstyled
                           type="button"
                           className="crm-action-btn crm-action-btn--ghost"
                           disabled={
@@ -1944,7 +1934,7 @@ export function CrmDashboard() {
                           }
                         >
                           Contactado
-                        </button>
+                        </Button>
                       </td>
                     </tr>
                   ))}
@@ -2001,7 +1991,7 @@ export function CrmDashboard() {
                       </div>
                     </dl>
                     <div className="crm-actions crm-mobile-card__actions">
-                      <button
+                      <Button unstyled
                         type="button"
                         className="crm-action-btn"
                         disabled={
@@ -2020,8 +2010,8 @@ export function CrmDashboard() {
                         }
                       >
                         Cupón 10%
-                      </button>
-                      <button
+                      </Button>
+                      <Button unstyled
                         type="button"
                         className="crm-action-btn crm-action-btn--ghost"
                         disabled={
@@ -2040,7 +2030,7 @@ export function CrmDashboard() {
                         }
                       >
                         Contactado
-                      </button>
+                      </Button>
                     </div>
                   </article>
                 ))

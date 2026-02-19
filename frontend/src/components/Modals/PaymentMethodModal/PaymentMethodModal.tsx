@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Modal } from 'react-bootstrap';
+import { Modal } from "src/components/ui";
 import { XCircle } from "src/icons";
 import { CardElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import './../Modal.scss';
 import trpc from '../../../api';
 import { Spinner } from '../../../components/Spinner/Spinner';
-
+import { Button } from "src/components/ui";
 interface IError {
   show: boolean;
   onHide: any;
@@ -65,9 +65,9 @@ export function PaymentMethodModal(props: IError) {
             {loader ? (
               <Spinner size={4} width={0.4} color='var(--app-accent)' />
             ) : (
-              <button className='btn-success' onClick={create}>
+              <Button unstyled className='btn-success' onClick={create}>
                 Aceptar
-              </button>
+              </Button>
             )}
           </div>
         </div>

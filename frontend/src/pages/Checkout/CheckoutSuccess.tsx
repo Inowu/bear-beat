@@ -16,6 +16,7 @@ import PublicTopNav from "../../components/PublicTopNav/PublicTopNav";
 import { Spinner } from "../../components/Spinner/Spinner";
 import { useUserContext } from "../../contexts/UserContext";
 import { useTheme } from "../../contexts/ThemeContext";
+import { Button } from "src/components/ui";
 
 type ActivationState = "checking" | "active" | "timeout";
 
@@ -299,9 +300,9 @@ function CheckoutSuccess() {
                 Ir a mi cuenta
               </Link>
               {activationState === "timeout" ? (
-                <button type="button" className="checkout-cta-btn checkout-cta-btn--ghost" onClick={retryActivation}>
+                <Button unstyled type="button" className="checkout-cta-btn checkout-cta-btn--ghost" onClick={retryActivation}>
                   Reintentar verificación
-                </button>
+                </Button>
               ) : null}
             </div>
           </div>

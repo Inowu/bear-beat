@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import "./GenreTicker.scss";
-
+import { Button } from "src/components/ui";
 const ROW1 =
   "Cumbias Wepa (100GB) • Reggaeton Old School (1.1TB) • Corridos (75GB) • Video Remixes (11.5TB) • Banda (40GB) • Cumbias Sonideras • Norteñas • Sierreñas • ";
 const ROW2 =

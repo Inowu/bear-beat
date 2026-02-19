@@ -158,7 +158,7 @@
   background: color-mix(in srgb, var(--ma-card-bg) 98%, transparent);
   box-shadow:
     0 10px 28px color-mix(in srgb, var(--ma-title) 10%, transparent),
-    inset 0 1px 0 color-mix(in srgb, #ffffff 12%, transparent);
+    inset 0 1px 0 color-mix(in srgb, var(--color-white) 12%, transparent);
   padding: clamp(12px, 1.4vw, 20px);
 }
 
@@ -639,15 +639,15 @@
 }
 
 .ma-card-brand--visa {
-  color: #1a1f71;
+  color: var(--color-visa-blue);
 }
 
 .ma-card-brand--mastercard {
-  color: #eb001b;
+  color: var(--color-mastercard-red);
 }
 
 .ma-card-brand--amex {
-  color: #2e77bb;
+  color: var(--color-amex-blue);
 }
 
 .ma-card-actions {
@@ -900,39 +900,39 @@ html[data-theme="light"] .ma-top-cta p {
 
 html[data-theme="light"] .ma-page-kicker {
   border-color: color-mix(in srgb, var(--ma-accent) 28%, transparent);
-  background: color-mix(in srgb, var(--ma-accent) 8%, #ffffff);
+  background: color-mix(in srgb, var(--ma-accent) 8%, var(--color-white));
 }
 
 html[data-theme="light"] .ma-control-center {
   border-color: color-mix(in srgb, var(--ma-card-border) 88%, transparent);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--ma-accent) 6%, #ffffff), transparent 74%),
-    color-mix(in srgb, #ffffff 98.6%, var(--ma-card-bg));
+    linear-gradient(180deg, color-mix(in srgb, var(--ma-accent) 6%, var(--color-white)), transparent 74%),
+    color-mix(in srgb, var(--color-white) 98.6%, var(--ma-card-bg));
 }
 
 html[data-theme="light"] .ma-control-stat {
   border-color: color-mix(in srgb, var(--ma-card-border) 88%, transparent);
-  background: color-mix(in srgb, #ffffff 97%, var(--ma-progress-bg));
+  background: color-mix(in srgb, var(--color-white) 97%, var(--ma-progress-bg));
 }
 
 html[data-theme="light"] .ma-top-cta {
   border-color: color-mix(in srgb, var(--ma-accent) 26%, transparent);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--ma-accent) 7%, #ffffff), transparent 72%),
-    color-mix(in srgb, #ffffff 98.4%, var(--ma-card-bg));
+    linear-gradient(180deg, color-mix(in srgb, var(--ma-accent) 7%, var(--color-white)), transparent 72%),
+    color-mix(in srgb, var(--color-white) 98.4%, var(--ma-card-bg));
 }
 
 html[data-theme="light"] .ma-ftp-priority {
   border-color: color-mix(in srgb, var(--ma-accent) 28%, transparent);
-  background: color-mix(in srgb, var(--ma-accent) 6%, #ffffff);
+  background: color-mix(in srgb, var(--ma-accent) 6%, var(--color-white));
 }
 
 html[data-theme="light"] .ma-panel {
   border-color: color-mix(in srgb, var(--ma-card-border) 90%, transparent);
-  background: color-mix(in srgb, #ffffff 99%, var(--ma-card-bg));
+  background: color-mix(in srgb, var(--color-white) 99%, var(--ma-card-bg));
   box-shadow:
     0 14px 30px rgba(15, 23, 42, 0.08),
-    inset 0 1px 0 color-mix(in srgb, #ffffff 94%, transparent);
+    inset 0 1px 0 color-mix(in srgb, var(--color-white) 94%, transparent);
 }
 
 html[data-theme="light"] .ma-table-wrap,
@@ -940,30 +940,30 @@ html[data-theme="light"] .ma-empty-card,
 html[data-theme="light"] .ma-card-item,
 html[data-theme="light"] .ma-ftp-row {
   border-color: color-mix(in srgb, var(--ma-card-border) 90%, transparent);
-  background: color-mix(in srgb, #ffffff 98.7%, var(--ma-progress-bg));
+  background: color-mix(in srgb, var(--color-white) 98.7%, var(--ma-progress-bg));
 }
 
 html[data-theme="light"] .ma-storage-details {
   border-color: color-mix(in srgb, var(--ma-card-border) 86%, transparent);
-  background: color-mix(in srgb, #ffffff 97.8%, var(--ma-progress-bg));
+  background: color-mix(in srgb, var(--color-white) 97.8%, var(--ma-progress-bg));
 }
 
 html[data-theme="light"] .ma-workspace-tab {
   border-color: color-mix(in srgb, var(--ma-card-border) 88%, transparent);
-  background: color-mix(in srgb, #ffffff 98%, var(--ma-progress-bg));
+  background: color-mix(in srgb, var(--color-white) 98%, var(--ma-progress-bg));
 }
 
 html[data-theme="light"] .ma-workspace-tab.is-active {
   border-color: color-mix(in srgb, var(--ma-accent) 44%, transparent);
-  background: color-mix(in srgb, var(--ma-accent) 9%, #ffffff);
+  background: color-mix(in srgb, var(--ma-accent) 9%, var(--color-white));
 }
 
 html[data-theme="light"] .ma-table th {
-  background: color-mix(in srgb, var(--ma-progress-bg) 32%, #ffffff);
+  background: color-mix(in srgb, var(--ma-progress-bg) 32%, var(--color-white));
 }
 
 html[data-theme="light"] .ma-table-row:hover td {
-  background: color-mix(in srgb, var(--ma-accent) 4.8%, #ffffff);
+  background: color-mix(in srgb, var(--ma-accent) 4.8%, var(--color-white));
 }
 
 html[data-theme="light"] .ma-status-pill,
@@ -974,16 +974,16 @@ html[data-theme="light"] .ma-storage-head strong {
 
 html[data-theme="light"] .ma-btn-soft {
   border-color: color-mix(in srgb, var(--ma-card-border) 90%, transparent);
-  background: color-mix(in srgb, #ffffff 98%, var(--ma-progress-bg));
+  background: color-mix(in srgb, var(--color-white) 98%, var(--ma-progress-bg));
 }
 
 html[data-theme="light"] .ma-btn-soft:hover {
-  background: color-mix(in srgb, var(--ma-accent) 8%, #ffffff);
+  background: color-mix(in srgb, var(--ma-accent) 8%, var(--color-white));
 }
 
 html[data-theme="light"] .ma-btn-outline {
   border-color: color-mix(in srgb, var(--ma-accent) 42%, transparent);
-  background: color-mix(in srgb, #ffffff 98%, transparent);
+  background: color-mix(in srgb, var(--color-white) 98%, transparent);
 }
 
 html[data-theme="light"] .ma-btn-danger {
@@ -992,27 +992,27 @@ html[data-theme="light"] .ma-btn-danger {
 
 html[data-theme="light"] .ma-pref-row {
   border-color: color-mix(in srgb, var(--ma-card-border) 88%, transparent);
-  background: color-mix(in srgb, #ffffff 98%, var(--ma-progress-bg));
+  background: color-mix(in srgb, var(--color-white) 98%, var(--ma-progress-bg));
 }
 
 html[data-theme="light"] .ma-pref-row.is-active {
   border-color: color-mix(in srgb, var(--ma-accent) 42%, transparent);
-  background: color-mix(in srgb, var(--ma-accent) 9%, #ffffff);
+  background: color-mix(in srgb, var(--ma-accent) 9%, var(--color-white));
 }
 
 html[data-theme="light"] .ma-switch {
   border-color: color-mix(in srgb, var(--ma-card-border) 90%, transparent);
-  background: color-mix(in srgb, #f8fbff 96%, var(--ma-progress-bg));
+  background: color-mix(in srgb, var(--color-surface-frost) 96%, var(--ma-progress-bg));
 }
 
 html[data-theme="light"] .ma-switch-flag {
   border-color: color-mix(in srgb, var(--ma-card-border) 88%, transparent);
-  background: color-mix(in srgb, #ffffff 96%, var(--ma-progress-bg));
+  background: color-mix(in srgb, var(--color-white) 96%, var(--ma-progress-bg));
 }
 
 html[data-theme="light"] .ma-switch-flag.is-on {
   border-color: color-mix(in srgb, var(--ma-accent) 44%, transparent);
-  background: color-mix(in srgb, var(--ma-accent) 10%, #ffffff);
+  background: color-mix(in srgb, var(--ma-accent) 10%, var(--color-white));
 }
 
 html[data-theme="light"] .ma-pref-disabled-reason {
@@ -1021,11 +1021,11 @@ html[data-theme="light"] .ma-pref-disabled-reason {
 
 html[data-theme="light"] .ma-add-card {
   border-color: color-mix(in srgb, var(--ma-card-border) 90%, transparent);
-  background: color-mix(in srgb, #ffffff 98.5%, transparent);
+  background: color-mix(in srgb, var(--color-white) 98.5%, transparent);
 }
 
 html[data-theme="light"] .ma-add-card:hover {
-  background: color-mix(in srgb, var(--ma-accent) 8%, #ffffff);
+  background: color-mix(in srgb, var(--ma-accent) 8%, var(--color-white));
   box-shadow: 0 10px 24px color-mix(in srgb, var(--ma-accent) 12%, transparent);
 }
 
@@ -1262,7 +1262,7 @@ html[data-theme="light"] .ma-add-card:hover {
   padding: 12px 12px;
   border-radius: 16px;
   border: 1px solid color-mix(in srgb, var(--ma-card-border) 86%, transparent);
-  background: color-mix(in srgb, var(--ma-progress-bg) 26%, #ffffff);
+  background: color-mix(in srgb, var(--ma-progress-bg) 26%, var(--color-white));
   cursor: pointer;
   transition: box-shadow 140ms ease, border-color 140ms ease, transform 140ms ease;
 }
@@ -1405,7 +1405,7 @@ html[data-theme="light"] .ma-add-card:hover {
   border-color: color-mix(in srgb, var(--ma-accent) 62%, transparent);
   box-shadow:
     0 10px 20px color-mix(in srgb, var(--ma-accent) 20%, transparent),
-    inset 0 0 0 1px color-mix(in srgb, #ffffff 22%, transparent);
+    inset 0 0 0 1px color-mix(in srgb, var(--color-white) 22%, transparent);
 }
 
 .ma-switch-input:checked + .ma-switch::after {

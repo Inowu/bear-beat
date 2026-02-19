@@ -27,7 +27,7 @@ import type { PaymentMethodId } from "../../components/PaymentMethodLogos/Paymen
 import HomeFaq from "./sections/HomeFaq";
 import StickyMobileCta from "./sections/StickyMobileCta";
 import "./PublicHome.scss";
-
+import { Button } from "src/components/ui";
 const TOP_DOWNLOADS_DAYS = 120;
 const DEFAULT_LIMITS_NOTE =
   "La cuota de descarga es lo que puedes bajar en cada ciclo. El catálogo total es lo disponible para elegir.";

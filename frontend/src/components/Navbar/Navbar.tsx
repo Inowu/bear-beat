@@ -17,7 +17,7 @@ import {
 } from "src/icons";
 import { Link } from "react-router-dom";
 import { SetStateAction, useState, useRef, useEffect } from "react";
-
+import { Button } from "src/components/ui";
 interface NavbarPropsI {
   setAsideOpen: React.Dispatch<SetStateAction<boolean>>;
   menuButtonRef?: React.RefObject<HTMLButtonElement | null>;
@@ -53,7 +53,7 @@ function Navbar(props: NavbarPropsI) {
     <nav>
       <div className="header">
         {!hideMenuButton && (
-          <button
+          <Button unstyled
             type="button"
             ref={menuButtonRef as React.LegacyRef<HTMLButtonElement>}
             className="burger-btn"
@@ -61,7 +61,7 @@ function Navbar(props: NavbarPropsI) {
             aria-label="Abrir menú"
           >
             <Menu size={20} aria-hidden />
-          </button>
+          </Button>
         )}
         <Link to="/" className="nav-brand" aria-label="Bear Beat">
           <img src={brandMark} alt="" aria-hidden />
@@ -69,7 +69,7 @@ function Navbar(props: NavbarPropsI) {
       </div>
       <div className="nav-right">
         <div className="theme-toggle-wrap" ref={menuRef}>
-          <button
+          <Button unstyled
             type="button"
             className="theme-btn"
             onClick={() => setThemeMenuOpen((o) => !o)}
@@ -81,11 +81,11 @@ function Navbar(props: NavbarPropsI) {
             ) : (
               <Moon size={18} aria-hidden />
             )}
-          </button>
+          </Button>
           {themeMenuOpen && (
             <div className="theme-dropdown-menu">
               {THEME_OPTIONS.map(({ value, label, Icon }) => (
-                <button
+                <Button unstyled
                   key={value}
                   type="button"
                   className={mode === value ? "active" : ""}
@@ -96,7 +96,7 @@ function Navbar(props: NavbarPropsI) {
                 >
                   <Icon size={18} aria-hidden />
                   <span>{label}</span>
-                </button>
+                </Button>
               ))}
             </div>
           )}
@@ -117,14 +117,14 @@ function Navbar(props: NavbarPropsI) {
             </Link>
           </li>
           <li>
-            <button
+            <Button unstyled
               type="button"
               className="nav-item nav-item--danger"
               onClick={() => handleLogout(true)}
             >
               <LogOut size={18} aria-hidden />
               <span>Cerrar sesión</span>
-            </button>
+            </Button>
           </li>
         </ul>
       </div>

@@ -1,7 +1,7 @@
 import { CirclePlay } from "src/icons";
 import CatalogPreviewWebp from "../../../assets/images/home-catalog-preview.webp";
 import CatalogPreviewPng from "../../../assets/images/home-catalog-preview.png";
-
+import { Button } from "src/components/ui";
 export default function InsidePreview(props: {
   onDemoScroll: () => void;
   onTourClick: () => void;
@@ -16,10 +16,10 @@ export default function InsidePreview(props: {
             <h2 className="home-h2">Así se ve por dentro</h2>
             <p className="home-sub">Busca por canción, artista o carpeta y navega por Año / Mes / Semana / Género.</p>
           </div>
-          <button type="button" className="home-cta home-cta--secondary inside-preview__cta" onClick={onDemoScroll}>
+          <Button unstyled type="button" className="home-cta home-cta--secondary inside-preview__cta" onClick={onDemoScroll}>
             <CirclePlay size={18} aria-hidden />
             Ver demo
-          </button>
+          </Button>
         </div>
 
         <div className="home-visual bb-hero-card">
@@ -48,7 +48,7 @@ export default function InsidePreview(props: {
                 <span className="home-visual__zoom-chip">Toca para ampliar</span>
               </div>
               <div className="home-visual__frame">
-                <button
+                <Button unstyled
                   type="button"
                   className="home-visual__frame-btn"
                   onClick={onTourClick}
@@ -65,7 +65,7 @@ export default function InsidePreview(props: {
                       decoding="async"
                     />
                   </picture>
-                </button>
+                </Button>
               </div>
             </div>
           </div>

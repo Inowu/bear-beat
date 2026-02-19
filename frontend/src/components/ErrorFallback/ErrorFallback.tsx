@@ -1,6 +1,6 @@
 import React from "react";
 import "./ErrorFallback.scss";
-
+import { Button } from "src/components/ui";
 interface ErrorFallbackProps {
   /** Mensaje opcional del error (Sentry lo inyecta) */
   error?: Error;
@@ -21,13 +21,13 @@ export function ErrorFallback({ error }: ErrorFallbackProps) {
         {error?.message && (
           <p className="error-fallback__detail">{error.message}</p>
         )}
-        <button
+        <Button unstyled
           type="button"
           className="error-fallback__btn"
           onClick={handleReload}
         >
           Recargar página
-        </button>
+        </Button>
       </div>
     </div>
   );

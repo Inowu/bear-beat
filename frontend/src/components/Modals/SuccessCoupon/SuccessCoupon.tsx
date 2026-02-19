@@ -1,7 +1,8 @@
 import React from 'react'
 import './../Modal.scss'
-import { Modal } from 'react-bootstrap'
+import { Modal } from "src/components/ui"
 import { XCircle } from "src/icons";
+import { Button } from "src/components/ui";
 interface ISuccess {
     show: boolean;
     onHide: () => void;
@@ -23,9 +24,9 @@ export function SuccessCoupon(props: ISuccess) {
                         {message?.toString()}
                     </p>
                     <div className='button-container-2'>
-                        <button className='btn-success' onClick={onHide}>
+                        <Button unstyled className='btn-success' onClick={onHide}>
                             Aceptar
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </div>

@@ -626,7 +626,7 @@ html[data-theme="dark"] .admin-page-wrap :where(.btn-addUsers, .btn-addCoupon, .
 }
 
 html[data-theme="light"] .admin-page-wrap :where(.search-input input, .input, .select-input select, .select-input .date-input) {
-  background: color-mix(in srgb, #ffffff 98.8%, var(--ad-input-bg)) !important;
+  background: color-mix(in srgb, var(--color-white) 98.8%, var(--ad-input-bg)) !important;
   border-color: color-mix(in srgb, var(--ad-input-border) 92%, transparent) !important;
 }
 

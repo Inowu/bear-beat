@@ -20,7 +20,7 @@ import { generateEventId } from "../../utils/marketingIds";
 import { GROWTH_METRICS, getGrowthAttribution, trackGrowthMetric } from "../../utils/growthMetrics";
 import { Download, FolderOpen, HeartCrack, Music, Unlock, Zap } from "src/icons";
 import { formatInt } from "../../utils/format";
-
+import { Button } from "src/components/ui";
 // Copy persuasivo CRO: texto aburrido → gancho emocional
 const BENEFIT_COPY: Record<string, string> = {
   "Contenido exclusivo para DJs": "Catálogo pensado para cabina en vivo",
@@ -421,35 +421,35 @@ function PlanCard(props: PlanCardPropsI) {
           ))}
         </ul>
         {showBenefitsToggle && (
-          <button
+          <Button unstyled
             type="button"
             className="plan-card-benefits-toggle"
             onClick={() => setShowAllBenefits((prev) => !prev)}
             aria-expanded={showAllBenefits}
           >
             {showAllBenefits ? "Ver menos" : "Ver todo lo que incluye"}
-          </button>
+          </Button>
         )}
         <div className="plan-card-cta-section" id="abandonedCartBtn">
           {currentPlan ? (
-            <button className="plan-card-btn-cancel" onClick={handleCancelModal}>
+            <Button unstyled className="plan-card-btn-cancel" onClick={handleCancelModal}>
               Cancelar plan
-            </button>
+            </Button>
           ) : (
             <>
               {pathname === "/actualizar-planes" ? (
-                <button className="plan-card-btn-hero" onClick={handleChangeModal}>
+                <Button unstyled className="plan-card-btn-hero" onClick={handleChangeModal}>
                   <Unlock aria-hidden /> Cambiar plan
-                </button>
+                </Button>
               ) : (
                 <>
-              <button
+              <Button unstyled
                 className="plan-card-btn-hero"
                 onClick={() => handleCheckout(plan.id)}
                 data-testid={`plan-primary-cta-${plan.id}`}
               >
                 <Unlock aria-hidden /> {primaryCtaLabel}
-              </button>
+              </Button>
                     {trialNearCtaCopy && !isCompactMarketing && <p className="plan-card-trial-note">{trialNearCtaCopy}</p>}
                     {isMarketing && !isCompactMarketing && (
                       <ul className="plan-card-trust-row" aria-label="Confianza">
@@ -460,7 +460,7 @@ function PlanCard(props: PlanCardPropsI) {
                     )}
                     {isMxn && !isMarketing && (
                       <div className="plan-card-alt-payments">
-                        <button
+                        <Button unstyled
                           type="button"
                           className="plan-card-alt-toggle"
                           aria-expanded={showAltPayments}
@@ -468,7 +468,7 @@ function PlanCard(props: PlanCardPropsI) {
                           onClick={() => setShowAltPayments((prev) => !prev)}
 	                        >
 	                          {showAltPayments ? "Cerrar opciones" : "Otras formas de pago"}
-	                        </button>
+	                        </Button>
                         {showAltPayments && (
                           <div
                             id={`plan-alt-payments-${plan.id}`}
@@ -481,30 +481,30 @@ function PlanCard(props: PlanCardPropsI) {
                               {showTrialMessaging && <span className="plan-card-alt-badge">Sin prueba</span>}
                             </div>
                             <div className="plan-card-secondary-buttons">
-                              <button
+                              <Button unstyled
                                 type="button"
                                 className="plan-card-btn-outline"
                                 onClick={() => handleCheckoutWithMethod(plan.id, "spei")}
                               >
                                 <span className="plan-card-btn-label">SPEI (recurrente)</span>
-                              </button>
+                              </Button>
                               {conektaAvailability?.payByBankEnabled && (
-                                <button
+                                <Button unstyled
                                   type="button"
                                   className="plan-card-btn-outline"
                                   onClick={() => handleCheckoutWithMethod(plan.id, "bbva")}
                                 >
                                   <span className="plan-card-btn-label">BBVA (Pago directo)</span>
-                                </button>
+                                </Button>
                               )}
                               {conektaAvailability?.oxxoEnabled && (
-                                <button
+                                <Button unstyled
                                   type="button"
                                   className="plan-card-btn-outline"
                                   onClick={() => handleCheckoutWithMethod(plan.id, "oxxo")}
                                 >
                                   <span className="plan-card-btn-label">Efectivo</span>
-                                </button>
+                                </Button>
                               )}
                               {showPaypalOption &&
                                 (userEmail ? (
@@ -525,7 +525,7 @@ function PlanCard(props: PlanCardPropsI) {
                                     key={`paypal-button-component-${plan.id}`}
                                   />
                                 ) : (
-                                  <button
+                                  <Button unstyled
                                     type="button"
                                     className="plan-card-btn-outline"
                                     onClick={() => {
@@ -539,7 +539,7 @@ function PlanCard(props: PlanCardPropsI) {
                                     }}
                                   >
                                     <span className="plan-card-btn-label">PayPal</span>
-                                  </button>
+                                  </Button>
                                 ))}
                             </div>
                             {showTrialMessaging && (
@@ -552,7 +552,7 @@ function PlanCard(props: PlanCardPropsI) {
                     {!isMxn && showPaypalOption && (
                       isMarketing ? (
                         <div className="plan-card-secondary-payment">
-                          <button
+                          <Button unstyled
                             type="button"
                             className="plan-card-alt-toggle"
                             aria-expanded={showPaypal}
@@ -560,7 +560,7 @@ function PlanCard(props: PlanCardPropsI) {
                             onClick={() => setShowPaypal((prev) => !prev)}
                           >
                             {showPaypal ? "Ocultar PayPal" : "Pagar con PayPal"}
-                          </button>
+                          </Button>
                           {showPaypal && (
                             <div id={`plan-paypal-${plan.id}`} className="plan-card-alt-panel">
                               <span className="plan-card-secondary-label">
@@ -585,7 +585,7 @@ function PlanCard(props: PlanCardPropsI) {
                                     key={`paypal-button-component-${plan.id}`}
                                   />
                                 ) : (
-                                  <button
+                                  <Button unstyled
                                     type="button"
                                     className="plan-card-btn-outline"
                                     onClick={() => {
@@ -599,7 +599,7 @@ function PlanCard(props: PlanCardPropsI) {
                                     }}
                                   >
                                     PayPal
-                                  </button>
+                                  </Button>
                                 )}
                               </div>
                             </div>
@@ -629,7 +629,7 @@ function PlanCard(props: PlanCardPropsI) {
                                 key={`paypal-button-component-${plan.id}`}
                               />
                             ) : (
-                              <button
+                              <Button unstyled
                                 type="button"
                                 className="plan-card-btn-outline"
                                 onClick={() => {
@@ -643,7 +643,7 @@ function PlanCard(props: PlanCardPropsI) {
                                 }}
                               >
                                 PayPal
-                              </button>
+                              </Button>
                             )}
                           </div>
                         </div>

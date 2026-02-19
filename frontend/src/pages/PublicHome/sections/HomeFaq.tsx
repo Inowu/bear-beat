@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronDown } from "src/icons";
 import { HOME_FAQ_ITEMS } from "../homeCopy";
-
+import { Button } from "src/components/ui";
 export default function HomeFaq(props: {
   onFaqExpand?: (id: string) => void;
 }) {
@@ -90,7 +90,7 @@ export default function HomeFaq(props: {
                 .filter(Boolean)
                 .join(" ")}
             >
-              <button
+              <Button unstyled
                 type="button"
                 className="home-faq__summary bb-accordion__trigger"
                 aria-expanded={Boolean(openIds[item.id])}
@@ -101,7 +101,7 @@ export default function HomeFaq(props: {
               >
                 <span>{item.question}</span>
                 <ChevronDown size={18} aria-hidden />
-              </button>
+              </Button>
               <div
                 className="home-faq__body bb-accordion__panel"
                 id={`faq-panel-${item.id}`}

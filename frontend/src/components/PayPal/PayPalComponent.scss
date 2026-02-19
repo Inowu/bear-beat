@@ -42,26 +42,26 @@
   font-size: 0.95rem;
   font-weight: 650;
   line-height: 1.2;
-  color: var(--app-text-muted, #4b5563);
+  color: var(--app-text-muted, var(--color-slate-600));
 }
 
 .paypal-fallback--loading {
   pointer-events: none;
-  background: color-mix(in srgb, var(--app-bg-card, #ffffff) 82%, transparent);
+  background: color-mix(in srgb, var(--app-bg-card, var(--color-white)) 82%, transparent);
   border: 1px solid color-mix(in srgb, var(--app-border, rgba(0, 0, 0, 0.12)) 78%, transparent);
 }
 
 .paypal-fallback--error {
   pointer-events: auto;
-  background: color-mix(in srgb, var(--app-bg-card, #ffffff) 94%, transparent);
+  background: color-mix(in srgb, var(--app-bg-card, var(--color-white)) 94%, transparent);
   border: 1px solid color-mix(in srgb, var(--app-border, rgba(0, 0, 0, 0.14)) 86%, transparent);
 }
 
 .paypal-fallback__retry {
   appearance: none;
   border: 1px solid color-mix(in srgb, var(--app-border, rgba(0, 0, 0, 0.18)) 88%, transparent);
-  background: color-mix(in srgb, var(--app-btn-bg, #111827) 10%, transparent);
-  color: var(--app-text-heading, #111827);
+  background: color-mix(in srgb, var(--app-btn-bg, var(--color-ink-900)) 10%, transparent);
+  color: var(--app-text-heading, var(--color-ink-900));
   padding: 8px 12px;
   border-radius: 999px;
   font-weight: 750;
@@ -70,7 +70,7 @@
 }
 
 .paypal-fallback__retry:hover {
-  background: color-mix(in srgb, var(--app-btn-bg, #111827) 14%, transparent);
+  background: color-mix(in srgb, var(--app-btn-bg, var(--color-ink-900)) 14%, transparent);
 }
 
 .paypal-fallback__retry:focus-visible {

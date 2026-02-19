@@ -7,7 +7,7 @@ import { useDownloadContext } from "../../contexts/DownloadContext";
 import trpc from "../../api";
 import { useSafeSSE } from "../../utils/sse";
 import { formatBytes } from "../../utils/format";
-
+import { Button } from "src/components/ui";
 export const FileLoader = () => {
   const { currentUser, userToken } = useUserContext();
   const { currentFile, fileData, setShowDownload } = useDownloadContext();
@@ -73,7 +73,7 @@ export const FileLoader = () => {
               </div>
             </div>
             <div className="right-side">
-              <button onClick={stopDownloadAlbum}>Cancelar</button>
+              <Button unstyled onClick={stopDownloadAlbum}>Cancelar</Button>
               <p>{downloading.progress}% </p>
               <Spinner size={3} width={0.5} color="var(--app-accent)" />
             </div>

@@ -1,9 +1,10 @@
 import React, { useCallback, useState } from "react";
-import { Modal } from "react-bootstrap";
+import { Modal } from "src/components/ui";
 import { Check, Copy, Store, X } from "src/icons";
 import { IOxxoData } from "interfaces/Plans";
 import "../Modal.scss";
 import "./OxxoModal.scss";
+import { Button } from "src/components/ui";
 interface IOxxo {
     show: boolean;
     onHide: () => void;
@@ -59,9 +60,9 @@ export function OxxoModal(props: IOxxo) {
               </p>
             </div>
           </div>
-          <button type="button" className="oxxo-modal__close" onClick={onHide} aria-label="Cerrar">
+          <Button unstyled type="button" className="oxxo-modal__close" onClick={onHide} aria-label="Cerrar">
             <X aria-hidden />
-          </button>
+          </Button>
         </div>
 
         <div className="bottom">
@@ -71,7 +72,7 @@ export function OxxoModal(props: IOxxo) {
               {hasReference ? (
                 <div className="oxxo-modal__value-row">
                   <code className="oxxo-modal__code">{reference}</code>
-                  <button
+                  <Button unstyled
                     type="button"
                     className="oxxo-modal__copy"
                     onClick={() => copyToClipboard(reference, setCopiedRef)}
@@ -79,7 +80,7 @@ export function OxxoModal(props: IOxxo) {
                   >
                     {copiedRef ? <Check aria-hidden /> : <Copy aria-hidden />}
                     <span>{copiedRef ? "Copiado" : "Copiar"}</span>
-                  </button>
+                  </Button>
                 </div>
               ) : (
                 <p className="oxxo-modal__warning">
@@ -118,7 +119,7 @@ export function OxxoModal(props: IOxxo) {
               <span className="oxxo-modal__label">Monto a pagar</span>
               <div className="oxxo-modal__value-row">
                 <span className="oxxo-modal__amount">{amountText} MXN</span>
-                <button
+                <Button unstyled
                   type="button"
                   className="oxxo-modal__copy"
                   onClick={() => copyToClipboard(amountText, setCopiedAmount)}
@@ -126,7 +127,7 @@ export function OxxoModal(props: IOxxo) {
                 >
                   {copiedAmount ? <Check aria-hidden /> : <Copy aria-hidden />}
                   <span>{copiedAmount ? "Copiado" : "Copiar"}</span>
-                </button>
+                </Button>
               </div>
               <p className="oxxo-modal__warning">
                 Paga la cantidad <strong>exacta</strong> para que se asigne correctamente.
@@ -138,9 +139,9 @@ export function OxxoModal(props: IOxxo) {
           </div>
 
           <div className="button-container-2">
-            <button type="button" className="btn-success" onClick={onHide}>
+            <Button unstyled type="button" className="btn-success" onClick={onHide}>
               Listo, ya pagué
-            </button>
+            </Button>
           </div>
         </div>
       </div>

@@ -4,7 +4,7 @@ import {
   shouldBypassTurnstile,
   TURNSTILE_BYPASS_TOKEN,
 } from "../../utils/turnstile";
-
+import { Button } from "src/components/ui";
 const TURNSTILE_SCRIPT_SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 const TURNSTILE_SCRIPT_ATTR = "data-bb-turnstile";
 let turnstileScriptPromise: Promise<void> | null = null;

@@ -1,7 +1,7 @@
 import "../Modal.scss";
 import './VerifyPhoneModal.scss';
 import { ErrorModal } from "../ErrorModal/ErrorModal";
-import { Modal } from "react-bootstrap";
+import { Modal } from "src/components/ui";
 import { of } from "await-of";
 import { Spinner } from "../../Spinner/Spinner";
 import { SuccessModal } from "../SuccessModal/SuccessModal";
@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import * as Yup from "yup";
 import trpc from "../../../api";
+import { Button, Input } from "src/components/ui";
 
 
 interface IVerifyPhoneModal {
@@ -80,7 +81,7 @@ export function VerifyPhoneModal(props: IVerifyPhoneModal) {
                 <p>Se ha enviado un codigo a su WhatsApp para verificar la cuenta.</p>
                 <div className="c-row">
                     <label>Código</label>
-                    <input
+                    <Input
                         placeholder="Código"
                         type="name"
                         id="code"
@@ -93,9 +94,9 @@ export function VerifyPhoneModal(props: IVerifyPhoneModal) {
                     )}
                 </div>
                 {!loader ? (
-                    <button className="btn-option-4" type="submit">
+                    <Button unstyled className="btn-option-4" type="submit">
                         Confirmar
-                    </button>
+                    </Button>
                 ) : (
                     <div style={{ marginBottom: 10 }}>
                         <Spinner size={3} width={0.3} color="var(--app-accent)" />

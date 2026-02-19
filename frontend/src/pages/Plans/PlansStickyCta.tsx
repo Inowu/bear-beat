@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { X } from "src/icons";
-
+import { Button } from "src/components/ui";
 const STORAGE_KEY = "bb.plans.stickyCta.dismissed.v1";
 
 function safeReadLocalStorage(key: string): string | null {
@@ -182,16 +182,16 @@ export default function PlansStickyCta(props: {
   return (
     <div className="plans-sticky" role="region" aria-label="Acceso rápido">
       <div className="plans-sticky__inner">
-        <button type="button" className="plans-sticky__cta" onClick={onClick}>
+        <Button unstyled type="button" className="plans-sticky__cta" onClick={onClick}>
           <span className="plans-sticky__cta-label">{ctaLabel}</span>
           <span className="plans-sticky__cta-micro">{stickyMicro}</span>
-        </button>
-        <button type="button" className="plans-sticky__demo" onClick={onDemoClick}>
+        </Button>
+        <Button unstyled type="button" className="plans-sticky__demo" onClick={onDemoClick}>
           Ver demo
-        </button>
-        <button type="button" className="plans-sticky__close" onClick={dismiss} aria-label="Ocultar barra">
+        </Button>
+        <Button unstyled type="button" className="plans-sticky__close" onClick={dismiss} aria-label="Ocultar barra">
           <X size={16} aria-hidden />
-        </button>
+        </Button>
       </div>
     </div>
   );

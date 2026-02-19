@@ -1,7 +1,7 @@
 import "../Modal.scss";
 import "./VerifyUpdatePhoneModal.scss";
 import { ErrorModal } from "../ErrorModal/ErrorModal";
-import { Modal } from "react-bootstrap";
+import { Modal } from "src/components/ui";
 import { of } from "await-of";
 import { Spinner } from "../../Spinner/Spinner";
 import { SuccessModal } from "../SuccessModal/SuccessModal";
@@ -12,6 +12,7 @@ import trpc from "../../../api";
 import PhoneInput from "react-phone-input-2";
 import es from "react-phone-input-2/lang/es.json";
 import { findCountryCode, twoDigitsCountryCodes } from "../../../utils/country_codes";
+import { Button, Input } from "src/components/ui";
 
 interface IVerifyPhoneModal {
   showModal: boolean;
@@ -159,7 +160,7 @@ export function VerifyUpdatePhoneModal(props: IVerifyPhoneModal) {
             onlyCountries={twoDigitsCountryCodes.map((c) => c.toLowerCase())}
           />
           <p className="code">+{code}</p>
-          <input
+          <Input
             className="phone"
             placeholder="Teléfono"
             id="phone"
@@ -170,14 +171,14 @@ export function VerifyUpdatePhoneModal(props: IVerifyPhoneModal) {
           />
           {formik.errors.phone && <div className="error-formik">{formik.errors.phone}</div>}
           {!sendingCodeLoader ? (
-            <button
+            <Button unstyled
               type="button"
               className="btn-option-4"
               onClick={confirmPhone}
               disabled={sendingCodeLoader}
             >
               {codeSent ? "Reenviar" : "Enviar"}
-            </button>
+            </Button>
           ) : (
             <div style={{ marginBottom: 10 }}>
               <Spinner size={3} width={0.3} color="var(--app-accent)" />
@@ -200,7 +201,7 @@ export function VerifyUpdatePhoneModal(props: IVerifyPhoneModal) {
 
         <div className="c-row">
           <label>Código</label>
-          <input
+          <Input
             placeholder="Código"
             type="text"
             id="code"
@@ -211,17 +212,17 @@ export function VerifyUpdatePhoneModal(props: IVerifyPhoneModal) {
           {formik.errors.code && <div className="formik">{formik.errors.code}</div>}
         </div>
         {!loader ? (
-          <button className="btn-option-4" type="submit" disabled={disableConfirmPhone}>
+          <Button unstyled className="btn-option-4" type="submit" disabled={disableConfirmPhone}>
             Confirmar
-          </button>
+          </Button>
         ) : (
           <div style={{ marginBottom: 10 }}>
             <Spinner size={3} width={0.3} color="var(--app-accent)" />
           </div>
         )}
-        <button type="button" className="btn-option-5" onClick={closeWithoutVerify}>
+        <Button unstyled type="button" className="btn-option-5" onClick={closeWithoutVerify}>
           Ahora no
-        </button>
+        </Button>
         <ErrorModal show={show} onHide={closeModal} message={errorMessage} />
         <SuccessModal
           show={showSuccess}

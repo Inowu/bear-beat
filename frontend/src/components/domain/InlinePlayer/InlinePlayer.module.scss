@@ -1,0 +1,19 @@
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--bb-space-2);
+}
+
+.meta {
+  font-size: var(--app-font-size-label);
+  color: var(--app-text-muted);
+  white-space: nowrap;
+}
+
+.small {
+  gap: var(--bb-space-1);
+}
+
+.small .meta {
+  font-size: var(--app-font-size-caption);
+}

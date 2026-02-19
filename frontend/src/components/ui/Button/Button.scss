@@ -88,10 +88,3 @@
     background: color-mix(in srgb, var(--app-status-error) 26%, transparent);
   }
 }
-
-@keyframes bbSpin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-

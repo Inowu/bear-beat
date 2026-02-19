@@ -1,24 +1,7 @@
 import './Home.scss';
 import { Link } from 'react-router-dom';
 import {
-  FolderOpen,
-  Folder,
-  ArrowLeft,
-  ChevronRight,
-  Search,
-  Play,
-  Pause,
-  Download,
-  BookOpen,
-  Server,
-  FileMusic,
-  FileVideoCamera,
-  FileArchive,
-  Microphone,
-  File,
-  X,
-  RefreshCw,
-} from "src/icons";
+  FolderOpen, Folder, ArrowLeft, ChevronRight, Search, Play, Pause, Download, BookOpen, Server, FileMusic, FileVideoCamera, FileArchive, Microphone, File, X, RefreshCw, } from "src/icons";
 import PreviewModal from '../../components/PreviewModal/PreviewModal';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Stripe } from '@stripe/stripe-js';
@@ -44,10 +27,8 @@ import { apiBaseUrl } from '../../utils/runtimeConfig';
 import { buildDemoPlaybackUrl } from '../../utils/demoUrl';
 import { isRetryableMediaError, retryWithJitter } from '../../utils/retry';
 import {
-  ensureStripeReady,
-  getStripeLoadFailureReason,
-} from '../../utils/stripeLoader';
-import { Button, EmptyState, SkeletonCard, SkeletonRow, SkeletonTable } from "../../components/ui";
+  ensureStripeReady, getStripeLoadFailureReason, } from '../../utils/stripeLoader';
+import { Button, EmptyState, SkeletonCard, SkeletonRow, SkeletonTable, Input } from "../../components/ui";
 import { appToast, truncateToastLabel } from "../../utils/toast";
 import {
   MOBILE_LIBRARY_ROOT_EVENT,
@@ -1885,7 +1866,7 @@ function Home() {
                 <Server size={16} aria-hidden />
                 Configurar FTP
               </Link>
-              <button
+              <Button unstyled
                 type="button"
                 className="bb-onboarding-btn bb-onboarding-btn--primary"
                 onClick={handleRecommendedDownload}
@@ -1897,14 +1878,14 @@ function Home() {
                   <Download size={16} aria-hidden />
                 )}
                 Descargar primer pack recomendado
-              </button>
+              </Button>
             </div>
           </section>
         )}
         <div className="bb-library-header">
           <div className="bb-library-top">
             <div className="bb-library-left">
-              <button
+              <Button unstyled
                 type="button"
                 disabled={!canNavigateBack}
                 onClick={() => {
@@ -1924,7 +1905,7 @@ function Home() {
                 <span className="bb-back-label">
                   {isSearching ? 'Limpiar filtro' : showPagination ? 'Volver a carpeta' : 'Volver'}
                 </span>
-              </button>
+              </Button>
               <div className="bb-home-title-wrap">
                 <h1 className="bb-home-title">
                   <FolderOpen className="bb-home-title-icon" />
@@ -1935,7 +1916,7 @@ function Home() {
             </div>
 
             <div className="bb-home-quick-actions" aria-label="Acciones rápidas">
-              <button
+              <Button unstyled
                 type="button"
                 className="bb-home-quick-btn bb-home-quick-btn--icon"
                 onClick={() => {
@@ -1954,7 +1935,7 @@ function Home() {
               >
                 <RefreshCw size={18} aria-hidden />
                 <span className="bb-quick-label">Recargar</span>
-              </button>
+              </Button>
               <Link
                 to="/instrucciones"
                 className="bb-home-quick-btn bb-home-quick-btn--link bb-home-quick-btn--icon"
@@ -1970,7 +1951,7 @@ function Home() {
           <div className="bb-library-bar">
             <div className="bb-search-wrap">
               <Search className="bb-search-icon" aria-hidden />
-              <input
+              <Input
                 placeholder="Busca por canción, artista o carpeta"
                 value={searchValue}
                 className="bb-search-input"
@@ -1984,7 +1965,7 @@ function Home() {
                   }
                 }}
               />
-              <button
+              <Button unstyled
                 type="button"
                 className={`bb-search-clear ${searchValue !== '' ? 'is-visible' : ''}`}
                 onClick={clearSearch}
@@ -1994,13 +1975,13 @@ function Home() {
                 aria-hidden={searchValue === ''}
               >
                 <X size={14} aria-hidden />
-              </button>
+              </Button>
             </div>
             <div className="bb-search-pills" role="toolbar" aria-label="Filtros rápidos de búsqueda">
               {SEARCH_QUICK_FILTERS.map((filter) => {
                 const isActive = searchQuickFilter === filter.value;
                 return (
-                  <button
+                  <Button unstyled
                     key={filter.value}
                     type="button"
                     className={`bb-search-pill ${isActive ? 'is-active' : ''}`}
@@ -2013,7 +1994,7 @@ function Home() {
                     disabled={!isSearching}
                   >
                     {filter.label}
-                  </button>
+                  </Button>
                 );
               })}
             </div>
@@ -2022,9 +2003,9 @@ function Home() {
 	              <nav className="bb-breadcrumb" aria-label="Ruta" tabIndex={0} data-scroll-region>
 	                <ol className="bb-breadcrumb-list">
 	                  <li className="bb-breadcrumb-item">
-	                    <button type="button" onClick={goToRoot} className="bb-breadcrumb-link">
+	                    <Button unstyled type="button" onClick={goToRoot} className="bb-breadcrumb-link">
 	                      Inicio
-	                    </button>
+	                    </Button>
 	                  </li>
                   {!showPagination &&
                     pastFile.map((file: any, index) => {
@@ -2038,7 +2019,7 @@ function Home() {
 	                      }
                       return (
                         <li key={`folder_${index}`} className="bb-breadcrumb-item">
-                          <button
+                          <Button unstyled
                             type="button"
                             className="bb-breadcrumb-link"
                             onClick={() => {
@@ -2046,7 +2027,7 @@ function Home() {
                             }}
                           >
                             {file}
-                          </button>
+                          </Button>
                         </li>
                       );
                     })}
@@ -2120,7 +2101,7 @@ function Home() {
                   <h3 className="bb-recent-title">🆕 Recién Agregado</h3>
                   {recentPacks.length > 0 && (
                     <div className="bb-recent-nav">
-                      <button
+                      <Button unstyled
                         type="button"
                         className="bb-recent-nav-btn"
                         onClick={() => scrollRecentPacks('prev')}
@@ -2128,8 +2109,8 @@ function Home() {
                         title="Anterior"
                       >
                         <ArrowLeft size={16} aria-hidden />
-                      </button>
-                      <button
+                      </Button>
+                      <Button unstyled
                         type="button"
                         className="bb-recent-nav-btn"
                         onClick={() => scrollRecentPacks('next')}
@@ -2137,7 +2118,7 @@ function Home() {
                         title="Siguiente"
                       >
                         <ChevronRight size={16} aria-hidden />
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -2172,7 +2153,7 @@ function Home() {
                               </span>
                             </div>
                           </div>
-                          <button
+                          <Button unstyled
                             type="button"
                             className="bb-action-btn bb-action-btn--primary bb-action-btn--recent"
                             onClick={() => {
@@ -2182,7 +2163,7 @@ function Home() {
                           >
                             <span className="bb-action-label">ABRIR</span>
                             <ChevronRight className="bb-row-chevron" aria-hidden />
-                          </button>
+                          </Button>
                         </article>
                       );
                     })}
@@ -2261,7 +2242,7 @@ function Home() {
                           </div>
                           <div className="bb-for-you-actions">
                             {recommendation.hasPreview ? (
-                              <button
+                              <Button unstyled
                                 type="button"
                                 className="bb-action-btn bb-action-btn--ghost bb-for-you-preview"
                                 onClick={() => {
@@ -2278,11 +2259,11 @@ function Home() {
                                     <span className="bb-action-label">Preview</span>
                                   </>
                                 )}
-                              </button>
+                              </Button>
                             ) : (
                               <span className="bb-trending-no-preview" aria-hidden />
                             )}
-                            <button
+                            <Button unstyled
                               type="button"
                               className="bb-action-btn bb-action-btn--primary bb-for-you-open"
                               onClick={() => {
@@ -2292,7 +2273,7 @@ function Home() {
                             >
                               <span className="bb-action-label">ABRIR</span>
                               <ChevronRight className="bb-row-chevron" aria-hidden />
-                            </button>
+                            </Button>
                           </div>
                         </article>
                       );
@@ -2339,7 +2320,7 @@ function Home() {
                           </div>
                           <div className="bb-trending-actions">
                             {row.hasPreview ? (
-                              <button
+                              <Button unstyled
                                 type="button"
                                 className="bb-action-btn bb-action-btn--ghost bb-trending-preview"
                                 onClick={() => {
@@ -2356,7 +2337,7 @@ function Home() {
                                     <span className="bb-action-label">Preview</span>
                                   </>
                                 )}
-                              </button>
+                              </Button>
                             ) : (
                               <span className="bb-trending-no-preview" aria-hidden />
                             )}
@@ -2426,7 +2407,7 @@ function Home() {
                           <Spinner size={2} width={0.2} color="var(--app-accent)" />
                         </span>
                       ) : (
-                        <button
+                        <Button unstyled
                           type="button"
                           className="bb-action-btn bb-action-btn--ghost"
                           onClick={(e) => {
@@ -2438,7 +2419,7 @@ function Home() {
                         >
                           <Play size={16} />
                           <span className="bb-action-label">Escuchar</span>
-                        </button>
+                        </Button>
                       )
                     )}
                   </div>
@@ -2509,7 +2490,7 @@ function Home() {
                   >
                     <div className="bb-row-icon">
                       {hasInlinePreview ? (
-                        <button
+                        <Button unstyled
                           type="button"
                           className={`bb-row-inline-play ${isInlinePreviewActive && inlinePreviewPlaying ? 'is-playing' : ''}`}
                           onClick={(event) => {
@@ -2526,7 +2507,7 @@ function Home() {
                           ) : (
                             <Play size={16} aria-hidden />
                           )}
-                        </button>
+                        </Button>
                       ) : (
                         <span className={`bb-kind-icon bb-kind-${kind}`} aria-hidden>
                           {renderKindIcon(kind)}
@@ -2592,7 +2573,7 @@ function Home() {
                     <div className="bb-row-actions">
                       {isFolder ? (
                         <>
-                          <button
+                          <Button unstyled
                             type="button"
                             className="bb-action-btn bb-action-btn--primary"
                             onClick={(e) => {
@@ -2604,10 +2585,10 @@ function Home() {
                           >
                             <span className="bb-action-label">Abrir</span>
                             <ChevronRight className="bb-row-chevron" aria-hidden />
-                          </button>
+                          </Button>
 
                           {allowFolderDownload && (
-                            <button
+                            <Button unstyled
                               type="button"
                               className="bb-action-btn bb-action-btn--ghost"
                               onClick={(e) => {
@@ -2625,7 +2606,7 @@ function Home() {
                                   <span className="bb-action-label">Descargar</span>
                                 </>
                               )}
-                            </button>
+                            </Button>
                           )}
                         </>
                       ) : (
@@ -2639,7 +2620,7 @@ function Home() {
                                 <Spinner size={2} width={0.2} color="var(--app-accent)" />
                               </span>
                             ) : (
-                              <button
+                              <Button unstyled
                                 type="button"
                                 className="bb-action-btn bb-action-btn--ghost"
                                 onClick={(e) => {
@@ -2651,7 +2632,7 @@ function Home() {
                               >
                                 <Play size={18} aria-hidden />
                                 <span className="bb-action-label">Escuchar</span>
-                              </button>
+                              </Button>
                             )
                           )}
 
@@ -2661,7 +2642,7 @@ function Home() {
                                 <Spinner size={2} width={0.2} color="var(--app-accent)" />
                               </span>
                             ) : (
-                              <button
+                              <Button unstyled
                                 type="button"
                                 className="bb-action-btn bb-action-btn--primary"
                                 onClick={() => downloadFile(file, idx)}
@@ -2670,7 +2651,7 @@ function Home() {
                               >
                                 <Download size={18} aria-hidden />
                                 <span className="bb-action-label">Descargar</span>
-                              </button>
+                              </Button>
                             )
                           )}
                         </>

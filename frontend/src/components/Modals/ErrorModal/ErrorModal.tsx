@@ -1,10 +1,10 @@
-import { Modal } from "react-bootstrap";
+import { Modal } from "../../ui/Modal/Modal";
 import "../Modal.scss";
 import "./ErrorModal.scss";
 import { AlertTriangle, X } from "src/icons";
 import { IUser } from "../../../interfaces/User";
 import { toErrorMessage } from "../../../utils/errorMessage";
-
+import { Button } from "src/components/ui";
 export type ErrorModalAction = {
   label: string;
   onClick: () => void;
@@ -39,7 +39,7 @@ export function ErrorModal(props: IError) {
           },
         ];
   return (
-    <Modal show={show} onHide={onHide} centered className="container-error-modal">
+    <Modal open={show} onClose={onHide} className="container-error-modal">
       <div className="modal-container error-modal">
         <div className="header">
           <div className="error-modal__title-wrap">
@@ -48,9 +48,9 @@ export function ErrorModal(props: IError) {
             </span>
             <p className="title">{resolvedTitle}</p>
           </div>
-          <button type="button" className="error-modal__close" onClick={onHide} aria-label="Cerrar">
+          <Button unstyled type="button" className="error-modal__close" onClick={onHide} aria-label="Cerrar">
             <X aria-hidden />
-          </button>
+          </Button>
         </div>
         <div className="bottom">
           <p className="content">{friendly}</p>
@@ -59,14 +59,14 @@ export function ErrorModal(props: IError) {
             {resolvedActions.map((action, idx) => {
               const cls = action.variant === "secondary" ? "btn-option-5" : "btn-success";
               return (
-                <button
+                <Button unstyled
                   key={`${action.label}-${idx}`}
                   type="button"
                   className={cls}
                   onClick={() => action.onClick()}
                 >
                   {action.label}
-                </button>
+                </Button>
               );
             })}
           </div>

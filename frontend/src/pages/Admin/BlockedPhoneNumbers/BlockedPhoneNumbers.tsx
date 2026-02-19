@@ -9,6 +9,7 @@ import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
 import Pagination from "../../../components/Pagination/Pagination";
 import { Plus, MoreVertical, Trash2 } from "src/icons";
 import { toErrorMessage } from "../../../utils/errorMessage";
+import { Button, Input } from "../../../components/ui";
 
 const PHONE_REGEX = /^\+\d{1,4}\s\d{4,14}$/;
 const PAGE_SIZE = 50;
@@ -108,7 +109,7 @@ export const BlockedPhoneNumbers = () => {
     <form onSubmit={handleAddPhone} className="flex flex-wrap items-end gap-2 w-full">
       <label className="inline-flex flex-col gap-1 text-sm text-text-muted min-w-[260px] flex-1">
         Teléfono a bloquear
-        <input
+        <Input
           type="text"
           placeholder="ej. +52 6621258651"
           value={newPhone}
@@ -116,14 +117,14 @@ export const BlockedPhoneNumbers = () => {
           className="min-h-[44px] rounded-xl px-3 border border-border bg-bg-card text-text-main"
         />
       </label>
-      <button
+      <Button unstyled
         type="submit"
         disabled={saving}
         className="inline-flex items-center justify-center gap-2 bg-bear-gradient text-bear-dark-500 hover:opacity-95 font-medium rounded-pill px-4 py-2 transition-colors disabled:opacity-50"
       >
         <Plus size={18} />
         Agregar teléfono
-      </button>
+      </Button>
     </form>
   );
 
@@ -170,7 +171,7 @@ export const BlockedPhoneNumbers = () => {
                         <td className="py-3 px-4 text-sm">{phone}</td>
                         <td className="py-3 px-4 text-right">
                           <div className="table-actions">
-                            <button
+                            <Button unstyled
                               type="button"
                               onClick={() => setPhoneToDelete(phone)}
                               disabled={saving}
@@ -179,7 +180,7 @@ export const BlockedPhoneNumbers = () => {
                               aria-label={`Eliminar teléfono ${phone}`}
                             >
                               <Trash2 size={18} />
-                            </button>
+                            </Button>
                           </div>
                         </td>
                       </tr>
@@ -204,7 +205,7 @@ export const BlockedPhoneNumbers = () => {
 
             <div className="admin-mobile-list">
               {pageNumbers.map((phone) => (
-                <button
+                <Button unstyled
                   type="button"
                   key={`m_${phone}`}
                   className="admin-mobile-card"
@@ -224,7 +225,7 @@ export const BlockedPhoneNumbers = () => {
                       <MoreVertical size={20} />
                     </span>
                   </div>
-                </button>
+                </Button>
               ))}
             </div>
 

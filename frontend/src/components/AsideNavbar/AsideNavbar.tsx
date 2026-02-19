@@ -20,7 +20,7 @@ import {
   RefreshCw,
 } from "src/icons";
 import { Link, NavLink } from "react-router-dom";
-
+import { Button } from "src/components/ui";
 interface AsideNavbarPropsI {
   show: boolean;
   onHide: () => void;
@@ -140,7 +140,7 @@ function AsideNavbar(props: AsideNavbarPropsI) {
                       </Link>
                     </li>
                     <li>
-                      <button
+                      <Button unstyled
                         type="button"
                         className="nav-link-item nav-link-item--danger"
                         onClick={() => {
@@ -151,7 +151,7 @@ function AsideNavbar(props: AsideNavbarPropsI) {
                       >
                         <LogOut size={18} aria-hidden />
                         Cerrar sesión
-                      </button>
+                      </Button>
                     </li>
                   </ul>
                 </section>
@@ -195,7 +195,7 @@ function AsideNavbar(props: AsideNavbarPropsI) {
                 </li>
                 {isLibraryRoute && (
                   <li>
-                    <button
+                    <Button unstyled
                       type="button"
                       className="nav-link-item nav-link-item--secondary"
                       onClick={() => {
@@ -206,7 +206,7 @@ function AsideNavbar(props: AsideNavbarPropsI) {
                     >
                       <RefreshCw size={18} aria-hidden />
                       Recargar
-                    </button>
+                    </Button>
                   </li>
                 )}
                 <li>
@@ -216,7 +216,7 @@ function AsideNavbar(props: AsideNavbarPropsI) {
                   </NavLink>
                 </li>
                 <li>
-                  <button
+                  <Button unstyled
                     type="button"
                     className="nav-link-item nav-link-item--danger"
                     onClick={() => {
@@ -226,13 +226,13 @@ function AsideNavbar(props: AsideNavbarPropsI) {
                     aria-label="Cerrar sesión"
                   >
                     <LogOut size={18} aria-hidden /> Cerrar sesión
-                  </button>
+                  </Button>
                 </li>
               </ul>
             )}
           </div>
         </div>
-        <button
+        <Button unstyled
           type="button"
           className="aside-close-btn"
           onClick={onHide}
@@ -240,7 +240,7 @@ function AsideNavbar(props: AsideNavbarPropsI) {
           ref={closeBtnRef}
         >
           <X size={20} aria-hidden />
-        </button>
+        </Button>
       </div>
     </aside>
   );

@@ -1,9 +1,9 @@
-import { Modal } from "react-bootstrap";
+import { Modal } from "src/components/ui";
 import { CheckCircle2 } from "src/icons";
 import { Link } from "react-router-dom";
 import CatalogPreviewWebp from "../../../assets/images/home-catalog-preview.webp";
 import CatalogPreviewPng from "../../../assets/images/home-catalog-preview.png";
-
+import { Button } from "src/components/ui";
 export default function HomeDemoModal(props: {
   show: boolean;
   onHide: () => void;

@@ -6,11 +6,12 @@ import * as Yup from "yup";
 import { useState } from "react";
 import { Spinner } from "../../Spinner/Spinner";
 import { SuccessModal } from "../SuccessModal/SuccessModal";
-import { Modal } from "react-bootstrap";
+import { Modal } from "src/components/ui";
 import { XCircle } from "src/icons";
 import trpc from "../../../api";
 import { handleChangeBigint } from "../../../functions/functions";
 import { ICreatePlans } from "../../../interfaces/Plans";
+import { Button, Input, Select } from "src/components/ui";
 
 interface IAddPlanModal {
   showModal: boolean;
@@ -102,7 +103,7 @@ function AddPlanModal(props: IAddPlanModal) {
         <h2>Crear Plan</h2>
         <div className="c-row">
           <label>Plan Name</label>
-          <input
+          <Input
             placeholder="Name"
             type="text"
             id="name"
@@ -116,7 +117,7 @@ function AddPlanModal(props: IAddPlanModal) {
         </div>
         <div className="c-row">
           <label>Description</label>
-          <input
+          <Input
             placeholder="Description"
             type="text"
             id="description"
@@ -130,21 +131,21 @@ function AddPlanModal(props: IAddPlanModal) {
         </div>
         <div className="c-row">
           <label>Duration</label>
-          <select
+          <Select
             id="interval"
             defaultValue={formik.values.interval}
             onChange={formik.handleChange}
           >
             <option value={"month"}>Mes</option>
             <option value={"year"}>Año</option>
-          </select>
+          </Select>
           {formik.touched.interval && formik.errors.interval && (
             <div className="formik">{formik.errors.interval}</div>
           )}
         </div>
         <div className="c-row">
           <label>Gigas (gb)</label>
-          <input
+          <Input
             placeholder="gigas (GB)"
             type="number"
             id="gigas"
@@ -159,15 +160,15 @@ function AddPlanModal(props: IAddPlanModal) {
         <div className="c-row">
           <label>Curreny / Price</label>
           <div className="c-row-price">
-            <select
+            <Select
               id="moneda"
               value={formik.values.moneda}
               onChange={formik.handleChange}
             >
               <option value="USD">USD</option>
               <option value="MXN">MXN</option>
-            </select>
-            <input
+            </Select>
+            <Input
               placeholder="Price"
               type="number"
               id="price"
@@ -184,7 +185,7 @@ function AddPlanModal(props: IAddPlanModal) {
           {/* <label htmlFor="paymentMethod">Método de Pago</label>
           <br/> */}
           <label>Payment Type</label>
-          <select
+          <Select
             id="paymentMethod"
             name="paymentMethod"
             value={formik.values.paymentMethod}
@@ -193,23 +194,23 @@ function AddPlanModal(props: IAddPlanModal) {
             <option value="">Choose a payment method</option>
             <option value="stripe">Stripe</option>
             <option value="paypal">PayPal</option>
-          </select>
+          </Select>
           {formik.touched.paymentMethod && formik.errors.paymentMethod && (
             <div className="error-formik">{formik.errors.paymentMethod}</div>
           )}
         </div>
         {!loader ? (
-          <button className="btn-option-4" type="submit">
+          <Button unstyled className="btn-option-4" type="submit">
             Crear Plan
-          </button>
+          </Button>
         ) : (
           <div style={{ marginBottom: 10 }}>
             <Spinner size={3} width={0.3} color="var(--app-accent)" />
           </div>
         )}
-        <button className="btn-cancel" onClick={onHideModal} type="reset">
+        <Button unstyled className="btn-cancel" onClick={onHideModal} type="reset">
           Cancelar
-        </button>
+        </Button>
         <ErrorModal show={show} onHide={closeModal} message={errorMessage} />
         <SuccessModal
           show={showSuccess}

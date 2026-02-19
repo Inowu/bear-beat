@@ -1,23 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Activity,
-  AlertTriangle,
-  BarChart3,
-  CalendarClock,
-  CheckCircle2,
-  CircleHelp,
-  CreditCard,
-  DollarSign,
-  Gauge,
-  RefreshCw,
-  TrendingUp,
-  UserPlus,
-  Users,
-} from "src/icons";
+  Activity, AlertTriangle, BarChart3, CalendarClock, CheckCircle2, CircleHelp, CreditCard, DollarSign, Gauge, RefreshCw, TrendingUp, UserPlus, Users, } from "src/icons";
 import trpc from "../../../api";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import Pagination from "../../../components/Pagination/Pagination";
-import { Input, Select, SkeletonRow, SkeletonTable } from "../../../components/ui";
+import { Button, Input, Select, SkeletonRow, SkeletonTable } from "../../../components/ui";
 import "./AnalyticsDashboard.scss";
 
 interface FunnelOverview {
@@ -602,7 +589,7 @@ export function AnalyticsDashboard() {
           <CalendarClock size={16} aria-hidden />
           Actualizado: {formatDateTime(lastUpdatedAt)}
         </span>
-        <button
+        <Button unstyled
           type="button"
           onClick={() => void fetchAnalytics()}
           disabled={loading}
@@ -610,7 +597,7 @@ export function AnalyticsDashboard() {
         >
           <RefreshCw size={16} className={loading ? "animate-spin" : ""} aria-hidden />
           {loading ? "Actualizando..." : "Actualizar"}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -1066,7 +1053,7 @@ export function AnalyticsDashboard() {
                     <p>Compara qué fuente/campaña trae más visitas, registros y pagos.</p>
                     <div className="analytics-panel__controls">
                       <label className="analytics-checkbox">
-                        <input
+                        <Input
                           type="checkbox"
                           checked={hideSourcesWithoutPayments}
                           onChange={(event) =>
@@ -1424,7 +1411,7 @@ export function AnalyticsDashboard() {
                           onChange={(event) => setAdSpendMonth(event.target.value)}
                         />
                       </label>
-                      <button
+                      <Button unstyled
                         type="button"
                         onClick={() => void fetchAdSpendMonthly()}
                         disabled={adSpendMonthlyLoading}
@@ -1433,7 +1420,7 @@ export function AnalyticsDashboard() {
                       >
                         <RefreshCw size={16} className={adSpendMonthlyLoading ? "animate-spin" : ""} aria-hidden />
                         {adSpendMonthlyLoading ? <SkeletonRow width="68px" height="14px" /> : "Recargar"}
-                      </button>
+                      </Button>
                       <span className="text-sm text-text-muted">
                         {adSpendMonthly?.range?.start
                           ? `${new Date(adSpendMonthly.range.start).toLocaleDateString("es-MX")} → ${new Date(
@@ -1509,7 +1496,7 @@ export function AnalyticsDashboard() {
                                   </td>
                                   <td>
                                     <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                                      <button
+                                      <Button unstyled
                                         type="button"
                                         className="min-h-[40px] rounded-xl px-3 border border-border bg-bg-card text-text-main font-semibold hover:bg-bg-input transition-colors"
                                         onClick={async () => {
@@ -1532,8 +1519,8 @@ export function AnalyticsDashboard() {
                                         }}
                                       >
                                         Guardar
-                                      </button>
-                                      <button
+                                      </Button>
+                                      <Button unstyled
                                         type="button"
                                         className="min-h-[40px] rounded-xl px-3 border border-border bg-bg-card text-red-600 font-semibold hover:bg-bg-input transition-colors"
                                         onClick={async () => {
@@ -1548,7 +1535,7 @@ export function AnalyticsDashboard() {
                                         }}
                                       >
                                         Eliminar
-                                      </button>
+                                      </Button>
                                     </div>
                                   </td>
                                 </tr>
@@ -1592,7 +1579,7 @@ export function AnalyticsDashboard() {
                           placeholder="0"
                         />
                       </label>
-                      <button
+                      <Button unstyled
                         type="button"
                         className="inline-flex items-center gap-2 bg-bear-gradient text-bear-dark-500 hover:opacity-95 font-medium rounded-pill px-4 py-2 transition-colors"
                         onClick={async () => {
@@ -1623,7 +1610,7 @@ export function AnalyticsDashboard() {
                         }}
                       >
                         Guardar canal
-                      </button>
+                      </Button>
                     </div>
 
                     {adSpendMonthly?.acquisition?.length ? (

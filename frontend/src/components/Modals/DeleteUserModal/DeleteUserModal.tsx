@@ -1,11 +1,11 @@
 import React, { useState } from 'react'
-import { Modal } from 'react-bootstrap'
+import { Modal } from '../../ui/Modal/Modal'
 import './../Modal.scss'
 import { XCircle } from "src/icons"
 import trpc from "../../../api";
 import { Spinner } from '../../../components/Spinner/Spinner';
 import { ErrorModal } from '../ErrorModal/ErrorModal';
-
+import { Button } from "src/components/ui";
 interface IAdminFilter {
     page: number;
     total: number;
@@ -38,7 +38,7 @@ export function DeleteUserModal (props: ICondition)  {
     };
   return (
     <>
-      <Modal show={show} onHide={onHide} centered>
+      <Modal open={show} onClose={onHide}>
           <div className='modal-container success-modal'>
               <div className='header'>
                   <p className='title'>Eliminar usuarios</p>
@@ -49,14 +49,14 @@ export function DeleteUserModal (props: ICondition)  {
                       Estas por eliminar a los usuarios que no se han suscrito, ni se han suscrito en el pasado mes.
                   </p>
                   <div className='button-container'>
-                    <button className='btn-option-5' onClick={onHide}>
+                    <Button unstyled className='btn-option-5' onClick={onHide}>
                       Cancelar
-                    </button>
+                    </Button>
                     {
                       !loader 
-                      ? <button className='btn-option-4' onClick={removeUsersInactive}>
+                      ? <Button unstyled className='btn-option-4' onClick={removeUsersInactive}>
                         Confirmar
-                      </button>
+                      </Button>
                       : <div style={{width: 189}}><Spinner size={3} width={.3} color="var(--app-accent)"/></div>
                     }
                   </div>

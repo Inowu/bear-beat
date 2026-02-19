@@ -1,5 +1,8 @@
 export { Button } from "./Button/Button";
 export { IconButton } from "./IconButton/IconButton";
+export { Card } from "./Card/Card";
+export { Badge } from "./Badge/Badge";
+export { Modal } from "./Modal/Modal";
 export { Alert } from "./Alert/Alert";
 export { EmptyState } from "./EmptyState/EmptyState";
 export { Input } from "./Input/Input";

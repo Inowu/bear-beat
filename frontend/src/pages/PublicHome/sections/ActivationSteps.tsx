@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "src/icons";
-
+import { Button } from "src/components/ui";
 const STEPS = [
   {
     title: "Activa tu acceso",

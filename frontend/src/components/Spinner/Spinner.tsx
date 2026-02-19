@@ -1,5 +1,5 @@
 import "./Spinner.scss";
-
+import { Button } from "src/components/ui";
 interface SpinnerProps {
   size: number;
   width: number;

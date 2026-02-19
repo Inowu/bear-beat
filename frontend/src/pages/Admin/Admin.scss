@@ -674,16 +674,6 @@ html[data-theme="light"] .admin-users-wrap .btn-primary:hover {
   animation: admin-skeleton 1.2s ease-in-out infinite;
 }
 
-@keyframes admin-skeleton {
-  0%,
-  100% {
-    opacity: 0.56;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
 .admin-table tfoot th {
   padding: 10px 12px;
   background: color-mix(in srgb, var(--ad-header-bg) 88%, transparent);

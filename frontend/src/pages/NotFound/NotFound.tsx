@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import "./NotFound.scss";
-
+import { Button } from "src/components/ui";
 function NotFound() {
   return (
     <section className="not-found-page" aria-labelledby="not-found-title">

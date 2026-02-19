@@ -1,10 +1,10 @@
 import React, { useState, useCallback } from "react";
-import { Modal } from "react-bootstrap";
+import { Modal } from "src/components/ui";
 import { Check, Copy, Landmark, ShieldCheck, X } from "src/icons";
 import { ISpeiData } from "../../../interfaces/Plans";
 import "../Modal.scss";
 import "./SpeiModal.scss";
-
+import { Button } from "src/components/ui";
 interface ISpei {
   show: boolean;
   onHide: () => void;
@@ -64,9 +64,9 @@ export function SpeiModal(props: ISpei) {
               </p>
             </div>
           </div>
-          <button type="button" className="spei-modal__close" onClick={onHide} aria-label="Cerrar">
+          <Button unstyled type="button" className="spei-modal__close" onClick={onHide} aria-label="Cerrar">
             <X aria-hidden />
-          </button>
+          </Button>
         </div>
 
         <div className="bottom">
@@ -76,7 +76,7 @@ export function SpeiModal(props: ISpei) {
               {hasClabe ? (
                 <div className="spei-modal__value-row">
                   <code className="spei-modal__code">{clabe}</code>
-                  <button
+                  <Button unstyled
                     type="button"
                     className="spei-modal__copy"
                     onClick={() => copyToClipboard(clabe, setCopiedClabe)}
@@ -84,7 +84,7 @@ export function SpeiModal(props: ISpei) {
                   >
                     {copiedClabe ? <Check aria-hidden /> : <Copy aria-hidden />}
                     <span>{copiedClabe ? "Copiado" : "Copiar"}</span>
-                  </button>
+                  </Button>
                 </div>
               ) : (
                 <p className="spei-modal__warning">
@@ -103,7 +103,7 @@ export function SpeiModal(props: ISpei) {
               <span className="spei-modal__label">Monto a transferir</span>
               <div className="spei-modal__value-row">
                 <span className="spei-modal__amount">{amountText} MXN</span>
-                <button
+                <Button unstyled
                   type="button"
                   className="spei-modal__copy"
                   onClick={() => copyToClipboard(amountText, setCopiedAmount)}
@@ -111,7 +111,7 @@ export function SpeiModal(props: ISpei) {
                 >
                   {copiedAmount ? <Check aria-hidden /> : <Copy aria-hidden />}
                   <span>{copiedAmount ? "Copiado" : "Copiar"}</span>
-                </button>
+                </Button>
               </div>
               <p className="spei-modal__warning">
                 Transfiere la cantidad <strong>exacta</strong>, ni un peso más ni un peso menos.
@@ -127,9 +127,9 @@ export function SpeiModal(props: ISpei) {
           </div>
 
           <div className="button-container-2">
-            <button type="button" className="btn-success" onClick={onHide}>
+            <Button unstyled type="button" className="btn-success" onClick={onHide}>
               Listo, ya pagué
-            </button>
+            </Button>
           </div>
         </div>
       </div>

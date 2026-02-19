@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import { Alert } from "../../../components/ui/Alert/Alert";
-import { SkeletonRow, SkeletonTable } from "../../../components/ui";
+import { SkeletonRow, SkeletonTable, Button } from "../../../components/ui";
 import { getAccessToken } from "../../../utils/authStorage";
 
 const API_BASE =
@@ -169,13 +169,13 @@ export function CatalogStats() {
         title="Estadísticas del catálogo"
         subtitle="Visualiza volumen real por tipo y género para decidir qué contenido impulsar cada semana."
         toolbar={
-          <button
+          <Button unstyled
             type="button"
             onClick={() => fetchStats(true)}
             className="bg-bear-gradient hover:opacity-95 text-bear-dark-500 font-medium rounded-lg px-4 py-2 transition-opacity"
           >
             Actualizar estadísticas
-          </button>
+          </Button>
         }
       >
         <p className="text-text-muted py-8">No hay datos guardados. Haz clic en Actualizar para cargar (puede tardar unos segundos).</p>
@@ -213,7 +213,7 @@ export function CatalogStats() {
       {savedAt && (
         <span className="text-text-muted text-sm">Datos del {new Date(savedAt).toLocaleString("es")}</span>
       )}
-      <button
+      <Button unstyled
         type="button"
         onClick={() => fetchStats(true)}
         disabled={loading}
@@ -221,14 +221,14 @@ export function CatalogStats() {
         className="bg-bear-gradient hover:opacity-95 text-bear-dark-500 font-medium rounded-lg px-4 py-2 transition-opacity disabled:opacity-50"
       >
         {loading ? <SkeletonRow width="86px" height="14px" /> : "Actualizar"}
-      </button>
-      <button
+      </Button>
+      <Button unstyled
         type="button"
         onClick={handleExportCsv}
         className="bg-bg-card hover:bg-bg-input text-text-main font-medium rounded-lg px-4 py-2 border border-border transition-colors"
       >
         Exportar CSV
-      </button>
+      </Button>
     </div>
   );
 
@@ -292,23 +292,23 @@ export function CatalogStats() {
             <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
               <span className="text-text-muted text-sm">Mostrando {from}-{to} de {genres.length}</span>
               <div className="flex items-center gap-2">
-                <button
+                <Button unstyled
                   type="button"
                   disabled={page <= 0}
                   onClick={() => setGenrePage((p) => Math.max(0, p - 1))}
                   className="bg-bg-card hover:bg-bg-input disabled:opacity-50 text-text-main text-sm rounded-lg px-3 py-1.5 border border-border transition-colors"
                 >
                   Anterior
-                </button>
+                </Button>
                 <span className="text-text-muted text-sm">Página {page + 1} de {totalPages}</span>
-                <button
+                <Button unstyled
                   type="button"
                   disabled={page >= totalPages - 1}
                   onClick={() => setGenrePage((p) => Math.min(totalPages - 1, p + 1))}
                   className="bg-bg-card hover:bg-bg-input disabled:opacity-50 text-text-main text-sm rounded-lg px-3 py-1.5 border border-border transition-colors"
                 >
                   Siguiente
-                </button>
+                </Button>
               </div>
             </div>
             <div className="admin-table-panel">

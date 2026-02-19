@@ -4,10 +4,11 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useState, useEffect } from "react";
 import { Spinner } from "../../Spinner/Spinner";
-import { Modal } from "react-bootstrap";
+import { Modal } from "src/components/ui";
 import { XCircle } from "src/icons";
 import trpc from "../../../api";
 import { SuccessModal } from "../SuccessModal/SuccessModal";
+import { Button, Input, Select } from "src/components/ui";
 
 interface IEditCouponModal {
   showModal: boolean;
@@ -92,7 +93,7 @@ export const EditCouponModal = (props: IEditCouponModal) => {
         <XCircle className="icon" onClick={onHideModal} aria-label="Cerrar" />
         <h2>Editar Cupon</h2>
         <div className="c-row">
-          <input
+          <Input
             disabled
             placeholder="Code"
             type="text"
@@ -106,7 +107,7 @@ export const EditCouponModal = (props: IEditCouponModal) => {
           )}
         </div>
         <div className="c-row">
-          <input
+          <Input
             placeholder="Description"
             type="text"
             id="description"
@@ -119,7 +120,7 @@ export const EditCouponModal = (props: IEditCouponModal) => {
           )}
         </div>
         <div className="c-row">
-          <input
+          <Input
             disabled
             placeholder="Discount"
             id="discount"
@@ -133,7 +134,7 @@ export const EditCouponModal = (props: IEditCouponModal) => {
           )}
         </div>
         <div className="c-row">
-          <select
+          <Select
             id="active"
             name="active"
             value={formik.values.active}
@@ -144,21 +145,21 @@ export const EditCouponModal = (props: IEditCouponModal) => {
             </option>
             <option value="1">Active</option>
             <option value="0">No Active</option>
-          </select>
+          </Select>
           {formik.errors.active && (
             <div className="error-formik">{formik.errors.active}</div>
           )}
         </div>
         {!loader ? (
-          <button className="btn-option-4" type="submit">
+          <Button unstyled className="btn-option-4" type="submit">
             Modificar Cupon
-          </button>
+          </Button>
         ) : (
           <Spinner size={3} width={0.3} color="var(--app-accent)" />
         )}
-        <button className="btn-cancel" onClick={onHideModal} type="reset">
+        <Button unstyled className="btn-cancel" onClick={onHideModal} type="reset">
           Cancelar
-        </button>
+        </Button>
         <ErrorModal show={show} onHide={closeModal} message={errorMessage} />
         <SuccessModal
           show={showSuccess}

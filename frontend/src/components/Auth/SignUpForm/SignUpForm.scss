@@ -169,8 +169,8 @@
   border: 1px solid color-mix(in srgb, var(--app-border) 86%, transparent);
   background: color-mix(in srgb, var(--app-bg-card) 97%, transparent);
   box-shadow:
-    0 1px 0 color-mix(in srgb, #ffffff 30%, transparent) inset,
-    0 12px 28px color-mix(in srgb, #000000 11%, transparent);
+    0 1px 0 color-mix(in srgb, var(--color-white) 30%, transparent) inset,
+    0 12px 28px color-mix(in srgb, var(--color-black) 11%, transparent);
   padding: clamp(14px, 1.6vw, 22px);
   animation: bbCheckoutReveal 480ms cubic-bezier(0.21, 0.8, 0.28, 1) both;
 }
@@ -195,17 +195,6 @@ html.dark .checkout-intent-card,
 @media (prefers-reduced-motion: reduce) {
   .checkout-intent-card {
     animation: none;
-  }
-}
-
-@keyframes bbCheckoutReveal {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
   }
 }
 
@@ -1249,7 +1238,7 @@ form.sign-up-form {
 .auth-main-container.auth-page.auth-page--light form.sign-up-form {
   .auth-login-input-wrap {
     border-color: color-mix(in srgb, var(--auth-input-border) 92%, transparent);
-    background: color-mix(in srgb, #ffffff 97%, var(--auth-input-bg));
+    background: color-mix(in srgb, var(--color-white) 97%, var(--auth-input-bg));
   }
 
   .c-row--phone .signup-phone-wrap {
@@ -1272,7 +1261,7 @@ html[data-theme="light"] .auth-login-atmosphere,
 html[data-theme="light"] .auth-login-card.auth-login-card--signup,
 .auth-main-container.auth-page.auth-page--light .auth-login-card.auth-login-card--signup {
   border-color: color-mix(in srgb, var(--auth-login-card-border) 96%, transparent);
-  background: color-mix(in srgb, #ffffff 99%, var(--auth-login-card-bg));
+  background: color-mix(in srgb, var(--color-white) 99%, var(--auth-login-card-bg));
   box-shadow:
     0 16px 34px rgba(15, 23, 42, 0.082),
     0 1px 0 rgba(255, 255, 255, 0.72) inset;
@@ -1291,7 +1280,7 @@ html[data-theme="light"] form.sign-up-form .signup-submit-btn:hover:not(:disable
 html[data-theme="light"] form.sign-up-form .turnstile-widget-wrap,
 .auth-main-container.auth-page.auth-page--light form.sign-up-form .turnstile-widget-wrap {
   border-color: color-mix(in srgb, var(--auth-input-border) 94%, transparent);
-  background: color-mix(in srgb, #ffffff 88%, var(--auth-input-bg));
+  background: color-mix(in srgb, var(--color-white) 88%, var(--auth-input-bg));
 }
 
 @include respond-to(sm) {
@@ -1342,11 +1331,5 @@ html[data-theme="light"] form.sign-up-form .turnstile-widget-wrap,
     .signup-submit-spinner {
       animation: none;
     }
-  }
-}
-
-@keyframes signupSpin {
-  to {
-    transform: rotate(360deg);
   }
 }

@@ -11,7 +11,7 @@ import {
 } from "@paypal/paypal-js/types/components/buttons"
 import { useEffect, useRef, useState } from 'react'
 import trpc from "../../api";
-import { SkeletonRow } from "../ui";
+import { SkeletonRow } from "src/components/ui";
 import "./PayPalComponent.scss";
 
 interface Props {
@@ -324,13 +324,13 @@ export default function PayPalComponent(props: Props) {
                         <span className="paypal-fallback__text">{fallbackText}</span>
                     )}
                     {status === "error" && (
-                        <button
+                        <Button unstyled
                             type="button"
                             className="paypal-fallback__retry"
                             onClick={() => loadAndRender()}
                         >
                             Reintentar
-                        </button>
+                        </Button>
                     )}
                 </div>
             )}

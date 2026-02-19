@@ -11,7 +11,7 @@ import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLa
 import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
 import Pagination from "../../../components/Pagination/Pagination";
 import { Plus, MoreVertical, Edit2, Trash2, RefreshCw } from "src/icons";
-import { Select } from "../../../components/ui";
+import { Select, Button } from "../../../components/ui";
 
 const PAGE_SIZE = 50;
 
@@ -168,14 +168,14 @@ export const Coupons = () => {
 
   const toolbar = (
     <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-      <button
+      <Button unstyled
         type="button"
         onClick={() => setShow(true)}
         className="inline-flex items-center gap-2 bg-bear-gradient text-bear-dark-500 hover:opacity-95 font-medium rounded-pill px-4 py-2 transition-colors"
       >
         <Plus size={18} />
         Crear cupón
-      </button>
+      </Button>
     </div>
   );
 
@@ -232,7 +232,7 @@ export const Coupons = () => {
                   <option value={120}>120 días</option>
                 </Select>
               </label>
-              <button
+              <Button unstyled
                 type="button"
                 onClick={() => fetchCouponMetrics(metricsDays)}
                 disabled={metricsLoading}
@@ -241,7 +241,7 @@ export const Coupons = () => {
               >
                 <RefreshCw size={18} />
                 {metricsLoading ? "Actualizando…" : "Actualizar"}
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -363,7 +363,7 @@ export const Coupons = () => {
                       </td>
                       <td className="py-3 px-4 text-right">
                         <div className="table-actions">
-                          <button
+                          <Button unstyled
                             type="button"
                             onClick={() => handleEditCoupon(c)}
                             className="btn-cell"
@@ -371,8 +371,8 @@ export const Coupons = () => {
                             aria-label={`Editar cupón ${c.code}`}
                           >
                             <Edit2 size={16} />
-                          </button>
-                          <button
+                          </Button>
+                          <Button unstyled
                             type="button"
                             onClick={() => setCouponToDelete(c)}
                             className="btn-cell btn-cell--danger"
@@ -380,7 +380,7 @@ export const Coupons = () => {
                             aria-label={`Eliminar cupón ${c.code}`}
                           >
                             <Trash2 size={16} />
-                          </button>
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -405,7 +405,7 @@ export const Coupons = () => {
 
           <div className="admin-mobile-list">
             {pageCoupons.map((c) => (
-              <button
+              <Button unstyled
                 type="button"
                 key={`m_${c.code}`}
                 className="admin-mobile-card"
@@ -430,7 +430,7 @@ export const Coupons = () => {
                 <div className="admin-mobile-card__foot">
                   <span>{c.description || "Sin descripción"}</span>
                 </div>
-              </button>
+              </Button>
             ))}
           </div>
 

@@ -19,7 +19,7 @@
     radial-gradient(circle at 90% 18%, var(--bb-ambient-mint) 0%, transparent 40%),
     linear-gradient(
       165deg,
-      color-mix(in srgb, var(--bb-bg) 94%, #000000) 0%,
+      color-mix(in srgb, var(--bb-bg) 94%, var(--color-black)) 0%,
       var(--bb-bg) 100%
     );
   &::before {
@@ -73,7 +73,7 @@
   background:
     radial-gradient(circle at 12% 14%, color-mix(in srgb, var(--bb-ambient-cyan) 85%, transparent) 0%, transparent 48%),
     radial-gradient(circle at 88% 20%, color-mix(in srgb, var(--bb-ambient-mint) 85%, transparent) 0%, transparent 46%),
-    linear-gradient(180deg, #FFFFFF 0%, var(--bb-bg) 100%);
+    linear-gradient(180deg, var(--color-white) 0%, var(--bb-bg) 100%);
 }
 
 [data-theme="light"] .auth-main-container.auth-page::before,
@@ -422,7 +422,7 @@
   gap: 16px;
   background:
     radial-gradient(ellipse 100% 90% at 20% 0%, rgba(8, 225, 247, 0.16) 0%, transparent 54%),
-    linear-gradient(160deg, #0d0f10 0%, #131516 45%, #0d1011 100%);
+    linear-gradient(160deg, var(--color-ink-940) 0%, var(--color-ink-890) 45%, var(--color-ink-930) 100%);
   color: var(--theme-landing-text);
   border-bottom: 1px solid rgba(8, 225, 247, 0.22);
   min-height: 0;
@@ -594,13 +594,13 @@
 }
 
 [data-theme="light"] .auth-split {
-  background: color-mix(in srgb, #ffffff 98%, var(--bb-bg));
+  background: color-mix(in srgb, var(--color-white) 98%, var(--bb-bg));
   border-color: color-mix(in srgb, var(--ph-border) 88%, transparent);
   box-shadow: 0 24px 52px rgba(15, 23, 42, 0.13);
 }
 
 [data-theme="light"] .auth-split-form {
-  background: color-mix(in srgb, #ffffff 99%, var(--bb-surface-soft));
+  background: color-mix(in srgb, var(--color-white) 99%, var(--bb-surface-soft));
   border-color: color-mix(in srgb, var(--auth-register-input-border) 92%, transparent);
   box-shadow: 0 16px 34px rgba(15, 23, 42, 0.1);
 }
@@ -608,8 +608,8 @@
 [data-theme="light"] .auth-split-left {
   background:
     radial-gradient(ellipse 100% 92% at 18% 0%, rgba(8, 225, 247, 0.17) 0%, transparent 58%),
-    linear-gradient(160deg, #13171c 0%, #1a2027 48%, #14191f 100%);
-  color: #f8f8f8;
+    linear-gradient(160deg, var(--color-ink-880) 0%, var(--color-ink-850) 48%, var(--color-ink-875) 100%);
+  color: var(--color-neutral-100);
 }
 
 [data-theme="light"] .auth-split-left .auth-split-testimonial {
@@ -617,7 +617,7 @@
 }
 
 [data-theme="light"] .auth-split-right {
-  background: color-mix(in srgb, #ffffff 99%, var(--bb-bg));
+  background: color-mix(in srgb, var(--color-white) 99%, var(--bb-bg));
 }
 
 [data-theme="light"] .auth-split-right .auth-split-form-title {

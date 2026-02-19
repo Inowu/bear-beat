@@ -1,5 +1,5 @@
 import { User, Database, HardDriveDownload, LibraryBig } from "src/icons";
-
+import { Button } from "src/components/ui";
 export default function TrustBar(props: {
   totalFilesLabel: string;
   totalTBLabel: string;

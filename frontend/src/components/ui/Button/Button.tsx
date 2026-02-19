@@ -8,6 +8,7 @@ export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant;
   size?: ButtonSize;
   loading?: boolean;
+  unstyled?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
 };
@@ -17,6 +18,7 @@ export function Button(props: ButtonProps) {
     variant = "primary",
     size = "md",
     loading = false,
+    unstyled = false,
     leftIcon,
     rightIcon,
     disabled,
@@ -33,15 +35,21 @@ export function Button(props: ButtonProps) {
       type={rest.type ?? "button"}
       disabled={isDisabled}
       aria-busy={loading || undefined}
-      className={[
-        "bb-btn",
-        `bb-btn--${variant}`,
-        `bb-btn--${size}`,
-        loading ? "is-loading" : "",
-        className ?? "",
-      ]
-        .filter(Boolean)
-        .join(" ")}
+      className={
+        unstyled
+          ? [loading ? "is-loading" : "", className ?? ""]
+              .filter(Boolean)
+              .join(" ")
+          : [
+              "bb-btn",
+              `bb-btn--${variant}`,
+              `bb-btn--${size}`,
+              loading ? "is-loading" : "",
+              className ?? "",
+            ]
+              .filter(Boolean)
+              .join(" ")
+      }
     >
       {loading ? (
         <span className="bb-btn__spinner" aria-hidden />
@@ -59,4 +67,3 @@ export function Button(props: ButtonProps) {
     </button>
   );
 }
-

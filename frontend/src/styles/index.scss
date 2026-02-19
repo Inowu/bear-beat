@@ -4,6 +4,8 @@
 
 @use "./_mobile-app";
 @use "./_public-shell";
+@use "./animations";
+@use "./mixin" as *;
 @font-face {
   font-family: "Bear Font2";
   src: url("../assets/fonts/Arkhip_font.otf");
@@ -38,6 +40,60 @@
   --bb-danger: #FF2D2C;
   --bb-success: #39D834;
   --bb-warning: #FEBC2E;
+
+  /* Legacy hardcoded palette tokens (phase 0.1 normalization) */
+  --color-white: #FFFFFF;
+  --color-black: #000000;
+  --color-charcoal-950: #0A0A0A;
+  --color-midnight-950: #070B12;
+  --color-slate-900: #0F172A;
+  --color-ink-900: #111827;
+  --color-ink-890: #131516;
+  --color-ink-880: #13171C;
+  --color-ink-875: #14191F;
+  --color-ink-850: #1A2027;
+  --color-ink-800: #1F2A3A;
+  --color-slate-600: #4B5563;
+  --color-neutral-50: #F9FAFB;
+  --color-neutral-100: #F8F8F8;
+  --color-surface-frost: #F8FBFF;
+
+  --color-warning-400: #FBBF24;
+  --color-amber-500: #F59E0B;
+  --color-orange-500: #F97316;
+  --color-red-500: #EF4444;
+  --color-rose-500: #F43F5E;
+  --color-violet-500: #8B5CF6;
+  --color-blue-500: #3B82F6;
+  --color-blue-400: #60A5FA;
+  --color-teal-500: #14B8A6;
+  --color-green-500: #22C55E;
+  --color-emerald-500: #10B981;
+  --color-danger-500: var(--bb-danger);
+
+  --color-cyan-650: #007F93;
+  --color-cyan-700: #006F82;
+  --color-cyan-750: #006579;
+
+  --color-paypal-blue: #003087;
+  --color-visa-blue: #1A1F71;
+  --color-mastercard-red: #EB001B;
+  --color-amex-blue: #2E77BB;
+
+  --color-oxxo-red: #D70F2A;
+  --color-oxxo-yellow: #FFD200;
+  --color-oxxo-cream: #FFF3D0;
+  --color-oxxo-sand: #FFD97F;
+  --color-oxxo-maroon: #7A0B19;
+  --color-oxxo-brown: #3A2F14;
+
+  --color-metric-coral: #FF6E65;
+  --color-metric-amber: #F7B84B;
+  --color-metric-green: #4ED380;
+  --color-sand-300: #D9CAA9;
+  --color-burnt-brown: #2B0B00;
+  --color-ink-930: #0D1011;
+  --color-ink-940: #0D0F10;
 
   /* Brand neutrals */
   --bb-dark-100: #404040;
@@ -205,6 +261,15 @@
   --app-status-success: var(--bb-success);
   --app-status-warning: var(--bb-warning);
   --app-gradient: var(--bb-gradient);
+  --color-accent: var(--app-accent);
+  --color-bg-primary: var(--app-bg);
+  --color-text-muted: var(--app-text-muted);
+
+  --bg-surface: var(--app-bg-card);
+  --border-color: var(--app-border);
+  --radius-md: var(--bb-radius-md);
+  --radius-full: var(--bb-radius-pill);
+  --shadow-elevation: var(--app-shadow-card);
 
   --auth-input-border: var(--bb-border);
   /* Auth: en light, inputs con relleno suave (neutral) para separar del panel blanco sin verse "sucio". */
@@ -551,6 +616,15 @@ html.dark,
   box-sizing: border-box;
 }
 
+/* ---- PREMIUM LAYER ---- */
+*,
+*::before,
+*::after {
+  transition-property: background-color, color, border-color, opacity, box-shadow;
+  transition-duration: 150ms;
+  transition-timing-function: ease;
+}
+
 html,
 #root,
 body {
@@ -634,13 +708,13 @@ textarea,
 
 /* Focus visible global para accesibilidad (teclado) */
 *:focus-visible {
-  outline: 2px solid var(--color-teal);
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
 /* Scroll regions (overflow-x/y) need to be keyboard-focusable to allow arrow-key scroll. */
 [data-scroll-region]:focus-visible {
-  outline: 2px solid var(--color-teal);
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
   border-radius: 12px;
 }
@@ -840,11 +914,11 @@ button,
 }
 
 /* Touch targets móvil */
-@media (max-width: 768px) {
+@include mobile {
   button,
   a,
   [role="button"],
-  input,
+  input[type="checkbox"],
   select {
     min-height: 44px;
     min-width: 44px;
@@ -1951,9 +2025,22 @@ html[data-theme="light"] {
   letter-spacing: 0;
 }
 
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-text-muted);
+  border-radius: var(--radius-full);
+}
+
 ::selection {
-  background: color-mix(in srgb, var(--app-accent) 24%, transparent);
-  color: var(--app-text-heading);
+  background: var(--color-accent);
+  color: var(--color-bg-primary);
 }
 
 /* Legacy + Bootstrap control harmonization */

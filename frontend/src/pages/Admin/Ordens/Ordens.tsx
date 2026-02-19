@@ -10,7 +10,7 @@ import { IAdminOrders, ORDER_STATUS } from "../../../interfaces/admin";
 import { of } from "await-of";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
-import { Input, Select } from "../../../components/ui";
+import { Input, Select, Button } from "../../../components/ui";
 
 interface IAdminFilter {
   active: number;
@@ -286,7 +286,7 @@ export const Ordens = () => {
         />
       </label>
 
-      <button
+      <Button unstyled
         type="button"
         onClick={() => {
           const today = new Date();
@@ -299,7 +299,7 @@ export const Ordens = () => {
         className="min-h-[44px] rounded-xl px-4 border border-border bg-bg-card text-text-main font-semibold hover:bg-bg-input transition-colors"
       >
         Hoy
-      </button>
+      </Button>
 
       <label className="inline-flex flex-col gap-1 text-sm text-text-muted min-w-[150px]">
         Por página
@@ -474,7 +474,7 @@ export const Ordens = () => {
           {!loader
             ? ordens.length > 0
               ? ordens.map((orden, index) => (
-                  <button
+                  <Button unstyled
                     key={`m_${index}`}
                     className="admin-mobile-card"
                     onClick={() => setDrawerOrder(orden)}
@@ -501,7 +501,7 @@ export const Ordens = () => {
                       <span>{orden.total_price}</span>
                       <span>{orden.date_order.toLocaleDateString()}</span>
                     </div>
-                  </button>
+                  </Button>
                 ))
               : (
                   <div className="admin-mobile-empty">

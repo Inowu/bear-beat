@@ -2,7 +2,7 @@ import "../Modal.scss";
 import "./AddExtraStorageModal.scss";
 import { ErrorModal } from "../ErrorModal/ErrorModal";
 import { handleChangeBigint } from "../../../functions/functions";
-import { Modal } from "react-bootstrap";
+import { Modal } from "src/components/ui";
 import { of } from "await-of";
 import { XCircle } from "src/icons";
 import { Spinner } from "../../Spinner/Spinner";
@@ -12,6 +12,7 @@ import { useFormik } from "formik";
 import { useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 import trpc from "../../../api";
+import { Button, Input } from "src/components/ui";
 
 interface IVerifyPhoneModal {
     showModal: boolean;
@@ -97,7 +98,7 @@ export function AddExtraStorageModal(props: IVerifyPhoneModal) {
                 <p>El usuario cuenta con {currentGB} GBs actualmente.</p>
                 <div className="c-row">
                     <label>GB a agregar</label>
-                    <input
+                    <Input
                         placeholder="Gigas"
                         type="number"
                         id="additionalGigas"
@@ -110,9 +111,9 @@ export function AddExtraStorageModal(props: IVerifyPhoneModal) {
                     )}
                 </div>
                 {!loader ? (
-                    <button className="btn-option-4" type="submit" disabled={disableAddButton}>
+                    <Button unstyled className="btn-option-4" type="submit" disabled={disableAddButton}>
                         Agregar
-                    </button>
+                    </Button>
                 ) : (
                     <div style={{ marginBottom: 10 }}>
                         <Spinner size={3} width={0.3} color="var(--app-accent)" />

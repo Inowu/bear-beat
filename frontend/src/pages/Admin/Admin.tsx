@@ -4,6 +4,7 @@ import trpc from "../../api";
 import { IAdminUser, USER_ROLES } from "../../interfaces/admin";
 import "./Admin.scss";
 import { IPlans } from "../../interfaces/Plans";
+import { Button, Input, Select } from "../../components/ui";
 import {
   AddUsersModal,
   ConditionModal,
@@ -393,7 +394,7 @@ function Admin() {
         <div className="left-contain">
           <div className="select-input select-input--status">
             <label htmlFor="admin-status-filter">Estado de membresía</label>
-            <select
+            <Select
               id="admin-status-filter"
               value={filters.active}
               onChange={(e) => startFilter("active", Number(e.target.value) as IAdminFilter["active"])}
@@ -402,11 +403,11 @@ function Admin() {
               <option value={1}>Membresía activa</option>
               <option value={0}>Sin membresía</option>
               <option value={3}>Cancelados (histórico)</option>
-            </select>
+            </Select>
           </div>
           <div className="select-input select-input--limit">
             <label htmlFor="admin-limit-filter">Por página</label>
-            <select
+            <Select
               id="admin-limit-filter"
               value={filters.limit}
               onChange={(e) => startFilter("limit", +e.target.value)}
@@ -415,13 +416,13 @@ function Admin() {
               <option value={50}>50</option>
               <option value={100}>100</option>
               <option value={200}>200</option>
-            </select>
+            </Select>
           </div>
           <div className="search-input">
             <label htmlFor="admin-search-filter">Buscar</label>
             <div className="search-input__field">
               <Search className="search-input__icon" size={18} />
-              <input
+              <Input
                 id="admin-search-filter"
                 placeholder="Buscar por email…"
                 value={filters.search}
@@ -432,9 +433,9 @@ function Admin() {
         </div>
       </div>
       <div className="header__actions">
-        <button type="button" className="btn-icon btn-primary" onClick={() => setShowModal(true)}>
+        <Button unstyled type="button" className="btn-icon btn-primary" onClick={() => setShowModal(true)}>
           <Plus size={18} /> Añadir
-        </button>
+        </Button>
         <CsvDownloader
           filename="lista_de_usuarios"
           extension=".csv"
@@ -500,10 +501,10 @@ function Admin() {
           <section className="admin-error-strip" role="alert">
             <AlertTriangle size={16} />
             <p>{loadError}</p>
-            <button type="button" className="btn-icon btn-secondary" onClick={retryUsersLoad}>
+            <Button unstyled type="button" className="btn-icon btn-secondary" onClick={retryUsersLoad}>
               <RefreshCw size={16} />
               Reintentar
-            </button>
+            </Button>
           </section>
         )}
 
@@ -534,10 +535,10 @@ function Admin() {
                         <div className="admin-empty-state admin-empty-state--error">
                           <h2>No se pudieron mostrar los usuarios</h2>
                           <p>{loadError}</p>
-                          <button type="button" className="btn-icon btn-secondary" onClick={retryUsersLoad}>
+                          <Button unstyled type="button" className="btn-icon btn-secondary" onClick={retryUsersLoad}>
                             <RefreshCw size={16} />
                             Reintentar
-                          </button>
+                          </Button>
                         </div>
                       ) : (
                         <div className="admin-empty-state">
@@ -599,7 +600,7 @@ function Admin() {
                         )}
                         <td>
                           <div className="table-actions">
-                            <button
+                            <Button unstyled
                               type="button"
                               className="btn-cell"
                               onClick={() => handleEditUser(user)}
@@ -607,8 +608,8 @@ function Admin() {
                               aria-label="Editar usuario"
                             >
                               <Pencil size={16} />
-                            </button>
-                            <button
+                            </Button>
+                            <Button unstyled
                               type="button"
                               className="btn-cell"
                               onClick={() => signInAsUser(user)}
@@ -617,12 +618,12 @@ function Admin() {
                               aria-label="Acceder como usuario"
                             >
                               <LogIn size={16} />
-                            </button>
+                            </Button>
                             <div
                               className={`dropdown ${openDropdownIndex === index ? "open" : ""}`}
                               data-dropdown-index={index}
                             >
-                              <button
+                              <Button unstyled
                                 type="button"
                                 className="btn-cell"
                                 onMouseEnter={() => positioningAction(index)}
@@ -635,20 +636,20 @@ function Admin() {
                                 aria-label="Más acciones"
                               >
                                 <MoreVertical size={16} />
-                              </button>
+                              </Button>
                               <div className="dropdown-content" id={`dropdown-content-${index}`}>
-                                <button type="button" onClick={() => { setOpenDropdownIndex(null); giveSuscription(user); }}>Activar plan</button>
-                                <button type="button" onClick={() => { setOpenDropdownIndex(null); handleOpenHistory(user); }}>Historial</button>
-                                <button type="button" onClick={() => { setOpenDropdownIndex(null); handleOpenAddGB(user); }}>Agregar GB</button>
-                                <button
+                                <Button unstyled type="button" onClick={() => { setOpenDropdownIndex(null); giveSuscription(user); }}>Activar plan</Button>
+                                <Button unstyled type="button" onClick={() => { setOpenDropdownIndex(null); handleOpenHistory(user); }}>Historial</Button>
+                                <Button unstyled type="button" onClick={() => { setOpenDropdownIndex(null); handleOpenAddGB(user); }}>Agregar GB</Button>
+                                <Button unstyled
                                   type="button"
                                   className="dropdown-action--danger"
                                   onClick={() => { setOpenDropdownIndex(null); handleDeleteUser(user); }}
                                   disabled={user.role === USER_ROLES.ADMIN}
                                 >
                                   Eliminar
-                                </button>
-                                <button
+                                </Button>
+                                <Button unstyled
                                   type="button"
                                   onClick={() => {
                                     setOpenDropdownIndex(null);
@@ -656,7 +657,7 @@ function Admin() {
                                   }}
                                 >
                                   {user.blocked ? <><LockOpen size={14} /> Desbloquear</> : <><Lock size={14} /> Bloquear</>}
-                                </button>
+                                </Button>
                               </div>
                             </div>
                           </div>
@@ -698,10 +699,10 @@ function Admin() {
                     <>
                       <h2>No se pudieron mostrar los usuarios</h2>
                       <p>{loadError}</p>
-                      <button type="button" className="btn-icon btn-secondary" onClick={retryUsersLoad}>
+                      <Button unstyled type="button" className="btn-icon btn-secondary" onClick={retryUsersLoad}>
                         <RefreshCw size={16} />
                         Reintentar
-                      </button>
+                      </Button>
                     </>
                   ) : (
                     <>
@@ -712,7 +713,7 @@ function Admin() {
                 </div>
                 )
               : users.map((user, index) => (
-                  <button
+                  <Button unstyled
                     key={`mobile_${user.id}`}
                     className="admin-mobile-card"
                     onClick={() => openDrawer(user)}
@@ -739,7 +740,7 @@ function Admin() {
                       <span>{user.phone || "Sin teléfono"}</span>
                       <span>{formatDbDateOnly(user.registered_on)}</span>
                     </div>
-                  </button>
+                  </Button>
                 ))
             : ARRAY_10.map((_, i) => (
                 <div key={`skeleton_${i}`} className="admin-mobile-card admin-mobile-card--skeleton">

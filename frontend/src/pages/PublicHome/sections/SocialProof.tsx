@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
-import { Modal } from "react-bootstrap";
+import { Modal } from "src/components/ui";
 import { Loader2, Play } from "src/icons";
 import trpc from "../../../api";
 import { apiBaseUrl } from "../../../utils/runtimeConfig";
@@ -9,7 +9,7 @@ import { inferTrackMetadata, prettyMediaName } from "../../../utils/fileMetadata
 import { isRetryableMediaError, retryWithJitter } from "../../../utils/retry";
 import { formatDownloads } from "../homeFormat";
 import PreviewModal from "../../../components/PreviewModal/PreviewModal";
-import { SkeletonTable } from "../../../components/ui";
+import { SkeletonTable, Button } from "../../../components/ui";
 
 export type SocialTopItem = {
   path: string;
@@ -77,7 +77,7 @@ function TopList(props: {
 
           return (
             <div key={item.key} className="social-proof__row" role="listitem">
-              <button
+              <Button unstyled
                 type="button"
                 className="social-proof__row-btn"
                 onClick={() => {
@@ -133,7 +133,7 @@ function TopList(props: {
                   )}
                 </span>
                 <span className="social-proof__meta">{formatDownloads(item.downloads)}</span>
-              </button>
+              </Button>
           </div>
           );
         })}
@@ -337,7 +337,7 @@ export default function SocialProof(props: {
               {availableCategories.map((category) => {
                 const isActive = selectedCategory?.key === category.key;
                 return (
-                  <button
+                  <Button unstyled
                     key={category.key}
                     id={`social-proof-tab-${category.key}`}
                     type="button"
@@ -353,7 +353,7 @@ export default function SocialProof(props: {
                     onClick={() => setActiveCategory(category.key)}
                   >
                     {category.label}
-                  </button>
+                  </Button>
                 );
               })}
             </nav>
@@ -363,7 +363,7 @@ export default function SocialProof(props: {
               </p>
             )}
           </div>
-          <button
+          <Button unstyled
             type="button"
             className="home-cta home-cta--secondary social-proof__more"
             onClick={() => {
@@ -372,7 +372,7 @@ export default function SocialProof(props: {
             }}
           >
             Ver top 100 por categoría →
-          </button>
+          </Button>
         </div>
 
         <div className="social-proof__grid" aria-label="Top descargas">

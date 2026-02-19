@@ -6,6 +6,7 @@ import trpc from "../../api";
 import { IPlans, IOxxoData, ISpeiData } from "interfaces/Plans";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 import { manychatApi } from "../../api/manychat";
+import { Button, Input } from "../../components/ui";
 import {
   Banknote,
   Building2,
@@ -1759,13 +1760,13 @@ function Checkout() {
                   {autoPlanError || "No pudimos seleccionar un plan automáticamente."}
                 </p>
                 <div className="checkout-one-state__help">
-                  <button
+                  <Button unstyled
                     type="button"
                     className="checkout-cta-btn checkout-cta-btn--primary"
                     onClick={() => setAutoPlanRetryTick((value) => value + 1)}
                   >
                     Reintentar
-                  </button>
+                  </Button>
                   <Link to={plansCompareUrl} className="checkout-cta-btn checkout-cta-btn--ghost">
                     Ver planes
                   </Link>
@@ -1799,7 +1800,7 @@ function Checkout() {
               {showRedirectHelp && (
                 <div className="checkout-one-state__help">
                   <p>Si no te redirige, reintenta o cambia de método.</p>
-                  <button
+                  <Button unstyled
                     type="button"
                     className="checkout-cta-btn checkout-cta-btn--primary"
                     onClick={() => {
@@ -1811,9 +1812,9 @@ function Checkout() {
                     }}
                   >
                     {retryLabel}
-                  </button>
+                  </Button>
                   {altMethod && (
-                    <button
+                    <Button unstyled
                       type="button"
                       className="checkout-cta-btn checkout-cta-btn--ghost"
                       onClick={() => {
@@ -1825,7 +1826,7 @@ function Checkout() {
                       }}
                     >
                       {checkoutSwitchActionLabel(altMethod)}
-                    </button>
+                    </Button>
                   )}
                   <Link to={plansCompareUrl} className="checkout-cta-btn checkout-cta-btn--ghost">
                     Volver a planes
@@ -1860,13 +1861,13 @@ function Checkout() {
                 <h1 className="checkout-one-state__title">{title}</h1>
                 <p className="checkout-one-state__text">{text}</p>
                 <div className="checkout-one-state__help">
-                  <button
+                  <Button unstyled
                     type="button"
                     className="checkout-cta-btn checkout-cta-btn--primary"
                     onClick={() => getPlans(priceId)}
                   >
                     Reintentar
-                  </button>
+                  </Button>
                   <Link to={plansCompareUrl} className="checkout-cta-btn checkout-cta-btn--ghost">
                     Ver planes
                   </Link>
@@ -2006,7 +2007,7 @@ function Checkout() {
               {couponCode && (
                 <p className="checkout2026__couponPill">
                   <span>{`Cupón: ${couponCode}`}</span>
-                  <button
+                  <Button unstyled
                     type="button"
                     className="checkout2026__couponRemove"
                     onClick={removeCouponFromUrl}
@@ -2014,7 +2015,7 @@ function Checkout() {
                     aria-label="Quitar cupón"
                   >
                     Quitar
-                  </button>
+                  </Button>
                 </p>
               )}
             </div>
@@ -2052,7 +2053,7 @@ function Checkout() {
                   const label = METHOD_SWITCH_LABEL[method] ?? method;
 
                   return (
-                    <button
+                    <Button unstyled
                       key={method}
                       type="button"
                       role="radio"
@@ -2066,7 +2067,7 @@ function Checkout() {
                         <Icon size={16} />
                       </span>
                       <span className="checkout2026__methodBtnLabel">{label}</span>
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
@@ -2082,7 +2083,7 @@ function Checkout() {
                   aria-label="Consentimiento de cobro recurrente"
                 >
                   <label className="checkout2026__consentRow">
-                    <input
+                    <Input
                       type="checkbox"
                       checked={acceptRecurring}
                       data-testid="checkout-recurring-consent"
@@ -2209,7 +2210,7 @@ function Checkout() {
                   />
                 </div>
               ) : (
-                <button
+                <Button unstyled
                   type="button"
                   className="checkout-cta-btn checkout-cta-btn--primary checkout2026__cta"
                   onClick={handleContinuePayment}
@@ -2220,7 +2221,7 @@ function Checkout() {
                   data-testid="checkout-continue"
                 >
                   {continueLabel}
-                </button>
+                </Button>
               )}
             </div>
 

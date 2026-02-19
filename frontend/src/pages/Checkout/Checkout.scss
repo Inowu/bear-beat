@@ -294,16 +294,6 @@
   animation: checkout-skeleton 1.2s ease-in-out infinite;
 }
 
-@keyframes checkout-skeleton {
-  0%,
-  100% {
-    opacity: 0.52;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .checkout2026__sk {
     animation: none;
@@ -630,7 +620,7 @@
   color: var(--ph-text-heading);
   background: color-mix(in srgb, var(--ph-accent) 16%, var(--ph-bg-card));
   border-color: color-mix(in srgb, var(--ph-accent) 18%, transparent);
-  box-shadow: 0 10px 22px color-mix(in srgb, #000000 22%, transparent);
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--color-black) 22%, transparent);
 }
 
 .checkout2026__methodBtnIcon {
@@ -1748,7 +1738,7 @@
   border-color: color-mix(in srgb, var(--app-accent-bright) 76%, var(--app-border));
   background: color-mix(in srgb, var(--app-accent-bright) 9%, var(--app-bg-card));
   box-shadow:
-    0 1px 0 color-mix(in srgb, #ffffff 26%, transparent) inset,
+    0 1px 0 color-mix(in srgb, var(--color-white) 26%, transparent) inset,
     0 14px 30px color-mix(in srgb, var(--app-accent-bright) 14%, transparent);
 }
 
@@ -2273,14 +2263,14 @@ html.dark .checkout-method.is-active,
 
 html[data-theme="light"] .checkout-one-state {
   border-color: color-mix(in srgb, var(--app-border) 92%, transparent);
-  background: color-mix(in srgb, #ffffff 99%, var(--app-bg-card));
+  background: color-mix(in srgb, var(--color-white) 99%, var(--app-bg-card));
   box-shadow:
-    0 1px 0 color-mix(in srgb, #ffffff 96%, transparent) inset,
+    0 1px 0 color-mix(in srgb, var(--color-white) 96%, transparent) inset,
     0 14px 30px rgba(15, 23, 42, 0.08);
 }
 
 html[data-theme="light"] .checkout2026__top {
-  background: color-mix(in srgb, #ffffff 92%, var(--ph-bg));
+  background: color-mix(in srgb, var(--color-white) 92%, var(--ph-bg));
   border-bottom-color: color-mix(in srgb, var(--ph-border) 78%, transparent);
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
 }
@@ -2290,12 +2280,12 @@ html[data-theme="light"] .checkout-summary__trial,
 html[data-theme="light"] .checkout-selected-method,
 html[data-theme="light"] .checkout-payment-card__total {
   border-color: color-mix(in srgb, var(--app-accent) 32%, var(--app-border));
-  background: color-mix(in srgb, var(--theme-accent-soft-bg-2) 52%, #ffffff);
+  background: color-mix(in srgb, var(--theme-accent-soft-bg-2) 52%, var(--color-white));
 }
 
 html[data-theme="light"] .checkout-selected-method__icon {
   border-color: color-mix(in srgb, var(--app-accent) 30%, var(--app-border));
-  background: color-mix(in srgb, var(--theme-accent-soft-bg-2) 50%, #ffffff);
+  background: color-mix(in srgb, var(--theme-accent-soft-bg-2) 50%, var(--color-white));
 }
 
 html[data-theme="light"] .checkout-page-subtitle,
@@ -2316,12 +2306,12 @@ html[data-theme="light"] .checkout-header__quickfacts span,
 html[data-theme="light"] .checkout-summary__stats span,
 html[data-theme="light"] .checkout-method__state {
   border-color: color-mix(in srgb, var(--app-border) 88%, transparent);
-  background: color-mix(in srgb, #ffffff 98.6%, var(--app-bg-soft));
+  background: color-mix(in srgb, var(--color-white) 98.6%, var(--app-bg-soft));
 }
 
 html[data-theme="light"] .checkout-method {
   border-color: color-mix(in srgb, var(--app-border) 90%, transparent);
-  background: color-mix(in srgb, #ffffff 99%, var(--app-bg-card));
+  background: color-mix(in srgb, var(--color-white) 99%, var(--app-bg-card));
 }
 
 html[data-theme="light"] .checkout-method:hover {
@@ -2330,31 +2320,31 @@ html[data-theme="light"] .checkout-method:hover {
 
 html[data-theme="light"] .checkout-method.is-active {
   border-color: color-mix(in srgb, var(--app-accent) 32%, var(--app-border));
-  background: color-mix(in srgb, var(--app-accent) 4.2%, #ffffff);
+  background: color-mix(in srgb, var(--app-accent) 4.2%, var(--color-white));
   box-shadow: 0 10px 22px color-mix(in srgb, var(--app-accent) 9%, transparent);
 }
 
 html[data-theme="light"] .checkout-paypal-panel {
   border-color: color-mix(in srgb, var(--app-border) 88%, transparent);
-  background: color-mix(in srgb, #ffffff 99%, var(--app-bg-soft));
+  background: color-mix(in srgb, var(--color-white) 99%, var(--app-bg-soft));
 }
 
 html[data-theme="light"] .checkout-paypal-panel .paypal-container {
   border-radius: 12px;
   border: 1px solid color-mix(in srgb, var(--app-border) 74%, transparent);
-  background: color-mix(in srgb, var(--theme-accent-soft-bg) 38%, #ffffff);
+  background: color-mix(in srgb, var(--theme-accent-soft-bg) 38%, var(--color-white));
   padding: 3px;
 }
 
 html[data-theme="light"] .checkout-cta-btn--ghost {
   border-color: color-mix(in srgb, var(--app-border) 90%, transparent);
-  background: color-mix(in srgb, #ffffff 99%, var(--app-bg-card));
+  background: color-mix(in srgb, var(--color-white) 99%, var(--app-bg-card));
 }
 
 html[data-theme="light"] .checkout-credentials,
 html[data-theme="light"] .checkout-credentials__item {
   border-color: color-mix(in srgb, var(--app-border) 88%, transparent);
-  background: color-mix(in srgb, #ffffff 99%, var(--app-bg-soft));
+  background: color-mix(in srgb, var(--color-white) 99%, var(--app-bg-soft));
 }
 
 @media (max-width: 720px) {
@@ -2536,7 +2526,7 @@ html[data-theme="light"] .checkout-credentials__item {
     background: color-mix(in srgb, var(--app-bg-card) 94%, transparent);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 10px 22px color-mix(in srgb, #000000 16%, transparent);
+    box-shadow: 0 10px 22px color-mix(in srgb, var(--color-black) 16%, transparent);
   }
 
   .checkout-payment-logos {

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Activity, AlertTriangle, RefreshCw, Users } from "src/icons";
 import trpc from "../../../api";
-
+import { Button } from "src/components/ui";
 interface CrmSourceSegmentRow {
   source: string;
   registrations: number;
@@ -207,7 +207,7 @@ export function CrmP2Panels({ rangeDays }: { rangeDays: number }) {
       <section className="crm-section">
         <div className="crm-section__title-row">
           <h2 className="crm-section__title">Segmentación CRM (P2)</h2>
-          <button
+          <Button unstyled
             type="button"
             onClick={() => void refresh()}
             className="inline-flex items-center gap-2 bg-bg-card hover:bg-bg-input text-text-main font-medium rounded-pill px-4 py-2 border border-border transition-colors"
@@ -215,7 +215,7 @@ export function CrmP2Panels({ rangeDays }: { rangeDays: number }) {
           >
             <RefreshCw size={16} />
             {loading ? "Actualizando…" : "Actualizar"}
-          </button>
+          </Button>
         </div>
         <p className="crm-section__hint">
           Cohortes por fuente + riesgo churn (sin descarga 7d / payment_failed 14d).

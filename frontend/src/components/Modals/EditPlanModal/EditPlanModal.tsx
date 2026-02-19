@@ -6,13 +6,14 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useState, useEffect } from "react";
 import { Spinner } from "../../Spinner/Spinner";
-import { Modal } from "react-bootstrap";
+import { Modal } from "src/components/ui";
 import { XCircle } from "src/icons";
 import "react-phone-input-2/lib/material.css";
 import trpc from "../../../api";
 import { SuccessModal } from "../SuccessModal/SuccessModal";
 import { handleChangeBigint } from "../../../functions/functions";
 import { IUpdatePlans } from "../../../interfaces/Plans";
+import { Button, Input, Select } from "src/components/ui";
 
 interface IEditPlanModal {
   showModal: boolean;
@@ -121,7 +122,7 @@ function EditPlanModal(props: IEditPlanModal) {
         </div>
         <div className="c-row">
           <label>Plan Name</label>
-          <input
+          <Input
             placeholder="Name"
             type="name"
             id="name"
@@ -135,7 +136,7 @@ function EditPlanModal(props: IEditPlanModal) {
         </div>
         <div className="c-row">
           <label>Description</label>
-          <input
+          <Input
             placeholder="Description"
             type="text"
             id="description"
@@ -149,17 +150,17 @@ function EditPlanModal(props: IEditPlanModal) {
         </div>
         <div className="c-row">
           <label>Duration</label>
-          <select value={formik.values.interval} onChange={formik.handleChange}>
+          <Select value={formik.values.interval} onChange={formik.handleChange}>
             <option value={"month"}>Mes</option>
             <option value={"year"}>Año</option>
-          </select>
+          </Select>
           {formik.errors.interval && (
             <div className="error-formik">{formik.errors.interval}</div>
           )}
         </div>
         <div className="c-row">
           <label>Gigas (gb)</label>
-          <input
+          <Input
             placeholder="gigas"
             id="gigas"
             name="gigas"
@@ -174,7 +175,7 @@ function EditPlanModal(props: IEditPlanModal) {
         <div className="c-row">
           {/* <label htmlFor="paymentMethod">Método de Pago</label>
           <br/> */}
-          <select
+          <Select
             id="activated"
             name="activated"
             value={formik.values.activated}
@@ -182,20 +183,20 @@ function EditPlanModal(props: IEditPlanModal) {
           >
             <option value="1">Activo</option>
             <option value="0">No Activo</option>
-          </select>
+          </Select>
         </div>
         {!loader ? (
-          <button className="btn-option-4" type="submit">
+          <Button unstyled className="btn-option-4" type="submit">
             Editar Plan
-          </button>
+          </Button>
         ) : (
           <div style={{ marginBottom: 10 }}>
             <Spinner size={3} width={0.3} color="var(--app-accent)" />
           </div>
         )}
-        <button className="btn-cancel" onClick={onHideModal} type="reset">
+        <Button unstyled className="btn-cancel" onClick={onHideModal} type="reset">
           Cancelar
-        </button>
+        </Button>
         <ErrorModal show={show} onHide={closeModal} message={errorMessage} />
         <SuccessModal
           show={showSuccess}

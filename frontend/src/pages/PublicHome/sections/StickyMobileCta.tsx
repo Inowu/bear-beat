@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { X } from "src/icons";
-
+import { Button } from "src/components/ui";
 const STORAGE_KEY = "bb.home.stickyCta.dismissed.v1";
 
 function safeReadLocalStorage(key: string): string | null {
@@ -213,12 +213,12 @@ export default function StickyMobileCta(props: {
           <span className="home-sticky__cta-label">{ctaLabel}</span>
           <span className="home-sticky__cta-micro">{stickyMicro}</span>
         </Link>
-        <button type="button" className="home-cta home-cta--secondary home-sticky__demo" onClick={onDemoClick}>
+        <Button unstyled type="button" className="home-cta home-cta--secondary home-sticky__demo" onClick={onDemoClick}>
           Ver demo
-        </button>
-        <button type="button" className="home-sticky__close" onClick={dismiss} aria-label="Ocultar barra">
+        </Button>
+        <Button unstyled type="button" className="home-sticky__close" onClick={dismiss} aria-label="Ocultar barra">
           <X size={16} aria-hidden />
-        </button>
+        </Button>
       </div>
     </div>
   );

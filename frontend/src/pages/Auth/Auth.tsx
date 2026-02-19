@@ -3,7 +3,7 @@ import { Outlet } from "react-router-dom";
 import { useEffect } from "react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
-
+import { Button } from "src/components/ui";
 function Auth() {
   const { theme } = useTheme();
 

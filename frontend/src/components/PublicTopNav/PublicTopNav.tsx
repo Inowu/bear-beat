@@ -4,7 +4,7 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { useUserContext } from "../../contexts/UserContext";
 import brandMarkBlack from "../../assets/brand/bearbeat-mark-black.png";
 import brandMarkCyan from "../../assets/brand/bearbeat-mark-cyan.png";
-
+import { Button } from "src/components/ui";
 type PublicTopNavProps = {
   className?: string;
   brandAriaCurrent?: boolean;

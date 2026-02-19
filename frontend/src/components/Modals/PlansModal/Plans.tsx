@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import './Plans.scss';
-import { Modal } from 'react-bootstrap';
+import { Modal } from "src/components/ui";
 import trpc from "../../../api";
 import { XCircle } from "src/icons";
 import { IGBPlans } from '../../../interfaces/Plans';
@@ -8,6 +8,7 @@ import { useUserContext } from "../../../contexts/UserContext";
 import { IPaymentMethod } from 'interfaces/User';
 import { Spinner } from '../../../components/Spinner/Spinner';
 import { CardElement, useElements, useStripe } from '@stripe/react-stripe-js';
+import { Button, Select } from "src/components/ui";
 interface IPlan {
   show: boolean;
   onHide: () => void;
@@ -185,9 +186,9 @@ export function PlansModal(props: IPlan) {
             <span className="bb-plans-modal__kicker">Recarga</span>
             <h2 className="bb-plans-modal__title">Recargar GB extra</h2>
           </div>
-          <button type="button" className="bb-plans-modal__close" onClick={close} aria-label="Cerrar">
+          <Button unstyled type="button" className="bb-plans-modal__close" onClick={close} aria-label="Cerrar">
             <XCircle className="bb-plans-modal__closeIcon" aria-hidden />
-          </button>
+          </Button>
         </header>
 
         {selectPlan === null ? (
@@ -212,7 +213,7 @@ export function PlansModal(props: IPlan) {
                       : null;
 
                   return (
-                    <button
+                    <Button unstyled
                       key={x.id}
                       type="button"
                       className={`bb-gb-card ${isBestValue ? "is-best" : ""}`}
@@ -232,7 +233,7 @@ export function PlansModal(props: IPlan) {
                         <span>Se aplica en 1 a 2 minutos</span>
                         {perGbLabel && <span className="bb-gb-card__pergb">{perGbLabel}</span>}
                       </div>
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
@@ -245,9 +246,9 @@ export function PlansModal(props: IPlan) {
           </div>
         ) : (
           <div className="bb-plans-modal__step" aria-label="Pagar recarga">
-            <button type="button" className="bb-plans-modal__back" onClick={seePlans}>
+            <Button unstyled type="button" className="bb-plans-modal__back" onClick={seePlans}>
               Volver
-            </button>
+            </Button>
 
             <div className="bb-plans-modal__summary" role="note" aria-label="Paquete seleccionado">
               <span>Paquete seleccionado</span>
@@ -259,7 +260,7 @@ export function PlansModal(props: IPlan) {
                 <label className="bb-plans-modal__label" htmlFor="bb-gb-payment-method">
                   Método de pago
                 </label>
-                <select
+                <Select
                   id="bb-gb-payment-method"
                   onChange={(e: any) => setPaymentMethodId(String(e.target.value))}
                   value={paymentMethodId}
@@ -270,7 +271,7 @@ export function PlansModal(props: IPlan) {
                       {card.card.brand} termina en {card.card.last4}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
             )}
 
@@ -284,7 +285,7 @@ export function PlansModal(props: IPlan) {
             )}
 
             <div className="bb-plans-modal__ctaRow">
-              <button
+              <Button unstyled
                 type="button"
                 className="bb-plans-modal__cta"
                 onClick={buyPlan}
@@ -298,7 +299,7 @@ export function PlansModal(props: IPlan) {
                 ) : (
                   "Confirmar recarga"
                 )}
-              </button>
+              </Button>
               <p className="bb-plans-modal__ctaHint">El saldo se refleja en tu cuenta en 1 a 2 minutos.</p>
             </div>
           </div>

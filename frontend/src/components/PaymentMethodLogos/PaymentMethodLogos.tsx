@@ -4,7 +4,7 @@ import visaLogo from "../../assets/images/cards/visa.png";
 import mastercardLogo from "../../assets/images/cards/master.png";
 import amexLogo from "../../assets/images/cards/express.png";
 import "./PaymentMethodLogos.scss";
-
+import { Button } from "src/components/ui";
 export type PaymentMethodId =
   | "visa"
   | "mastercard"

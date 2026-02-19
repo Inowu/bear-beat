@@ -3,6 +3,7 @@ import { detectUserCountry, findDialCode, allowedCountryOptions } from "../../..
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Lock, Mail, User } from "src/icons";
 import { PasswordInput } from "../../PasswordInput/PasswordInput";
+import { Button, Input, Select, SkeletonRow } from "src/components/ui";
 import {
   useCallback,
   useEffect,
@@ -36,7 +37,6 @@ import type { IPlans } from "../../../interfaces/Plans";
 import { formatInt } from "../../../utils/format";
 import brandLockupBlack from "../../../assets/brand/bearbeat-lockup-black.png";
 import brandLockupCyan from "../../../assets/brand/bearbeat-lockup-cyan.png";
-import { SkeletonRow } from "../../ui";
 
 function FieldError(props: { id: string; show: boolean; message?: string }) {
   const { id, show, message } = props;
@@ -660,7 +660,7 @@ function SignUpForm() {
       </label>
       <div className="auth-login-input-wrap">
         <User className="auth-login-input-icon" aria-hidden />
-        <input
+        <Input
           placeholder="DJ Kubo"
           type="text"
           id="username"
@@ -687,7 +687,7 @@ function SignUpForm() {
       <div className="signup-phone-wrap">
         <div className="signup-phone-flag-wrap">
           <span className={`signup-phone-flag ${countryFlagClass}`} aria-hidden title={selectedCountry?.name} />
-          <select
+          <Select
             className="signup-phone-select-overlay"
             value={dialCode}
             onChange={(e) => setDialCode(e.target.value)}
@@ -699,9 +699,9 @@ function SignUpForm() {
                 {c.dial_code} {c.name}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
-        <input
+        <Input
           className="signup-phone-input"
           placeholder="5512345678"
           id="phone"
@@ -737,7 +737,7 @@ function SignUpForm() {
         </label>
         <div className="auth-login-input-wrap">
           <Mail className="auth-login-input-icon" aria-hidden />
-          <input
+          <Input
             placeholder="correo@ejemplo.com"
             id="email"
             name="email"
@@ -817,7 +817,7 @@ function SignUpForm() {
       <div className="auth-login-inline-error" role="alert" aria-live="polite">
         {inlineError}
       </div>
-      <button
+      <Button unstyled
         type="submit"
         className="signup-submit-btn"
         data-testid="signup-submit"
@@ -828,10 +828,10 @@ function SignUpForm() {
           {loader && <span className="signup-submit-spinner" aria-hidden />}
           {loader ? "Creando..." : submitLabel}
         </span>
-      </button>
+      </Button>
       <div className="auth-signup-consents" aria-label="Preferencias de comunicación">
         <label className="auth-consent-item auth-consent-item--primary">
-          <input
+          <Input
             type="checkbox"
             name="acceptSupportComms"
             checked={formik.values.acceptSupportComms}

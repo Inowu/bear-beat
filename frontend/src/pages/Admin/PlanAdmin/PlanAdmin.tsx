@@ -11,6 +11,7 @@ import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLa
 import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
 import Pagination from "../../../components/Pagination/Pagination";
 import { Plus, MoreVertical, Edit2, Trash2 } from "src/icons";
+import { Button, Select } from "../../../components/ui";
 
 const PAGE_SIZE = 50;
 
@@ -96,7 +97,7 @@ export const PlanAdmin = () => {
     <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
       <label className="inline-flex flex-col gap-1 text-sm text-text-muted min-w-[220px]">
         Mostrar
-        <select
+        <Select
           className="min-h-[44px] rounded-xl px-3 border border-border bg-bg-card text-text-main"
           value={showInactive ? "all" : "active"}
           onChange={(event) => {
@@ -106,16 +107,16 @@ export const PlanAdmin = () => {
         >
           <option value="active">Solo activos</option>
           <option value="all">Activos + inactivos</option>
-        </select>
+        </Select>
       </label>
-      <button
+      <Button unstyled
         type="button"
         onClick={() => setShow(true)}
         className="inline-flex items-center gap-2 bg-bear-gradient hover:opacity-95 text-bear-dark-500 font-medium rounded-lg px-4 py-2 transition-opacity"
       >
         <Plus size={18} />
         Crear Plan
-      </button>
+      </Button>
     </div>
   );
 
@@ -189,15 +190,15 @@ export const PlanAdmin = () => {
                   </td>
                   <td className="py-3 px-4 text-right">
                     <div className="table-actions">
-                      <button
+                      <Button unstyled
                         type="button"
                         onClick={() => handleEditPlan(plan)}
                         className="btn-cell"
                         aria-label="Editar plan"
                       >
                         <Edit2 size={16} aria-hidden />
-                      </button>
-                      <button
+                      </Button>
+                      <Button unstyled
                         type="button"
                         onClick={() => setPlanToDelete(plan)}
                         disabled={plan.paypal_plan_id != null}
@@ -205,7 +206,7 @@ export const PlanAdmin = () => {
                         aria-label="Eliminar plan"
                       >
                         <Trash2 size={16} aria-hidden />
-                      </button>
+                      </Button>
                     </div>
                   </td>
                 </tr>
@@ -231,7 +232,7 @@ export const PlanAdmin = () => {
       {/* Mobile: lista compacta + drawer */}
       <div className="admin-mobile-list">
         {pagePlans.map((plan) => (
-          <button
+          <Button unstyled
             key={`m_${plan.id}`}
             className="admin-mobile-card"
             onClick={() => setDrawerPlan(plan)}
@@ -258,7 +259,7 @@ export const PlanAdmin = () => {
               <span>{getPaymentMethod(plan)}</span>
               <span>{plan.description || "Sin descripción"}</span>
             </div>
-          </button>
+          </Button>
         ))}
       </div>
 

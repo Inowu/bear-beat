@@ -1,5 +1,5 @@
 import { HOME_USE_CASES } from "../homeCopy";
-
+import { Button } from "src/components/ui";
 export default function UseCases() {
   return (
     <section className="use-cases" aria-label="Cómo te salva en cabina">

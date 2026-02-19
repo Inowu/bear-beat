@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
-import { Modal } from 'react-bootstrap'
+import { Modal } from '../../ui/Modal/Modal'
 import './../Modal.scss'
 import { XCircle } from "src/icons"
 import { Spinner } from '../../../components/Spinner/Spinner';
+import { Button } from "src/components/ui";
 interface ICondition {
     show: boolean;
     onHide: () => void;
@@ -20,7 +21,7 @@ export function ConditionModal (props: ICondition)  {
       onHide();
     }
   return (
-    <Modal show={show} onHide={onHide} centered>
+    <Modal open={show} onClose={onHide}>
         <div className='modal-container success-modal'>
             <div className='header'>
                 <p className='title'>{title}</p>
@@ -31,14 +32,14 @@ export function ConditionModal (props: ICondition)  {
                     {message?.toString()}
                 </p>
                 <div className='button-container'>
-                  <button className='btn-option-5' onClick={onHide}>
+                  <Button unstyled className='btn-option-5' onClick={onHide}>
                     Cancelar
-                  </button>
+                  </Button>
                   {
                     !loader 
-                    ? <button className='btn-option-4' onClick={startAction}>
+                    ? <Button unstyled className='btn-option-4' onClick={startAction}>
                       Confirmar
-                    </button>
+                    </Button>
                     : <div style={{width: 189}}><Spinner size={3} width={.3} color="var(--app-accent)"/></div>
                   }
                 </div>

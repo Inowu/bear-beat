@@ -1,0 +1,27 @@
+.bb-ui-card {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.bb-ui-card--padding-sm {
+  padding: var(--bb-space-3);
+}
+
+.bb-ui-card--padding-md {
+  padding: var(--bb-space-4);
+}
+
+.bb-ui-card--padding-lg {
+  padding: var(--bb-space-6);
+}
+
+.bb-ui-card--hover {
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-elevation);
+    }
+  }
+}

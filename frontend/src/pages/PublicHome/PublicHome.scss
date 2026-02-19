@@ -232,7 +232,7 @@
 html[data-theme="light"] .home-hero__cta-demo {
   background: transparent;
   border-color: color-mix(in srgb, var(--ph-accent) 68%, transparent);
-  color: color-mix(in srgb, var(--ph-accent) 90%, #0f172a);
+  color: color-mix(in srgb, var(--ph-accent) 90%, var(--color-slate-900));
   box-shadow: none;
 }
 
@@ -480,15 +480,15 @@ html[data-theme="light"] .home-hero__cta-demo:hover:not(:disabled) {
 }
 
 .home-visual__traffic span:nth-child(1) {
-  background: color-mix(in srgb, #ff6e65 86%, transparent);
+  background: color-mix(in srgb, var(--color-metric-coral) 86%, transparent);
 }
 
 .home-visual__traffic span:nth-child(2) {
-  background: color-mix(in srgb, #f7b84b 86%, transparent);
+  background: color-mix(in srgb, var(--color-metric-amber) 86%, transparent);
 }
 
 .home-visual__traffic span:nth-child(3) {
-  background: color-mix(in srgb, #4ed380 82%, transparent);
+  background: color-mix(in srgb, var(--color-metric-green) 82%, transparent);
 }
 
 .home-visual__toolbar-label {
@@ -537,7 +537,7 @@ html[data-theme="light"] .home-hero__cta-demo:hover:not(:disabled) {
   inset: auto 0 0;
   height: 24%;
   pointer-events: none;
-  background: linear-gradient(180deg, transparent, color-mix(in srgb, #070b12 26%, transparent));
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--color-midnight-950) 26%, transparent));
 }
 
 .home-visual__frame-btn {
@@ -1223,15 +1223,6 @@ html[data-theme="light"] .home-hero__cta-demo:hover:not(:disabled) {
   overflow: hidden;
 }
 
-@keyframes social-proof-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .social-proof__neutral {
   margin-top: 14px;
   padding: 14px;
@@ -1291,17 +1282,6 @@ html[data-theme="light"] .home-hero__cta-demo:hover:not(:disabled) {
 
 .home-details-content.is-open {
   animation: home-details-enter 180ms ease;
-}
-
-@keyframes home-details-enter {
-  from {
-    opacity: 0.02;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1480,16 +1460,6 @@ html[data-theme="light"] .home-hero__cta-demo:hover:not(:disabled) {
   animation: pricing-skeleton 1.2s ease-in-out infinite;
 }
 
-@keyframes pricing-skeleton {
-  0%,
-  100% {
-    opacity: 0.52;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .pricing__sk {
     animation: none;
@@ -1640,7 +1610,7 @@ html[data-theme="light"] .home-hero__cta-demo:hover:not(:disabled) {
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--ph-accent) 10%, transparent), transparent 62%),
     color-mix(in srgb, var(--ph-bg-soft) 58%, transparent);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 8%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-white) 8%, transparent);
 }
 
 @media (max-width: 520px) {
@@ -2275,31 +2245,31 @@ html[data-theme="light"] .home-footer__micro {
 
 html[data-theme="light"] .home-hero__trust-inline span {
   border-color: color-mix(in srgb, var(--ph-border) 82%, transparent);
-  background: color-mix(in srgb, #ffffff 96%, var(--ph-bg-soft));
+  background: color-mix(in srgb, var(--color-white) 96%, var(--ph-bg-soft));
 }
 
 html[data-theme="light"] .home-footer {
   border-top-color: color-mix(in srgb, var(--ph-border) 86%, transparent);
-  background: color-mix(in srgb, #ffffff 97%, var(--ph-bg));
+  background: color-mix(in srgb, var(--color-white) 97%, var(--ph-bg));
 }
 
 html[data-theme="light"] .home-footer__inner {
   border-color: color-mix(in srgb, var(--ph-border) 88%, transparent);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--ph-accent) 3%, #ffffff), transparent 62%),
-    color-mix(in srgb, #ffffff 99%, var(--ph-bg-card));
+    linear-gradient(180deg, color-mix(in srgb, var(--ph-accent) 3%, var(--color-white)), transparent 62%),
+    color-mix(in srgb, var(--color-white) 99%, var(--ph-bg-card));
 }
 
 html[data-theme="light"] .home-footer__links a {
   border-color: color-mix(in srgb, var(--ph-border) 90%, transparent);
-  background: color-mix(in srgb, #ffffff 97%, var(--ph-bg-soft));
+  background: color-mix(in srgb, var(--color-white) 97%, var(--ph-bg-soft));
 }
 
 html[data-theme="light"] .home-footer__cta {
   border-color: color-mix(in srgb, var(--ph-accent) 24%, var(--ph-border));
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--ph-accent) 6%, #ffffff), transparent 68%),
-    color-mix(in srgb, #ffffff 97%, var(--ph-bg-soft));
+    linear-gradient(180deg, color-mix(in srgb, var(--ph-accent) 6%, var(--color-white)), transparent 68%),
+    color-mix(in srgb, var(--color-white) 97%, var(--ph-bg-soft));
 }
 
 html[data-theme="light"] .pricing__card {
@@ -2312,20 +2282,20 @@ html[data-theme="light"] .pricing__card {
 html[data-theme="light"] .pricing__price-panel {
   border-color: color-mix(in srgb, var(--ph-accent) 20%, var(--ph-border));
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--ph-accent) 9%, #ffffff), transparent 64%),
-    color-mix(in srgb, #ffffff 94%, var(--ph-bg-soft));
+    linear-gradient(180deg, color-mix(in srgb, var(--ph-accent) 9%, var(--color-white)), transparent 64%),
+    color-mix(in srgb, var(--color-white) 94%, var(--ph-bg-soft));
 }
 
 html[data-theme="light"] .pricing__trial,
 html[data-theme="light"] .pricing__payments {
   border-color: color-mix(in srgb, var(--ph-border) 82%, transparent);
-  background: color-mix(in srgb, #ffffff 94%, var(--ph-bg-soft));
+  background: color-mix(in srgb, var(--color-white) 94%, var(--ph-bg-soft));
 }
 
 html[data-theme="light"] .home-sticky {
   background: linear-gradient(
     to top,
-    color-mix(in srgb, #ffffff 94%, var(--ph-bg)) 0%,
+    color-mix(in srgb, var(--color-white) 94%, var(--ph-bg)) 0%,
     color-mix(in srgb, var(--ph-bg) 72%, transparent) 100%
   );
   border-top-color: color-mix(in srgb, var(--ph-border) 82%, transparent);
@@ -2333,29 +2303,7 @@ html[data-theme="light"] .home-sticky {
 
 html[data-theme="light"] .home-sticky__demo {
   border-color: color-mix(in srgb, var(--ph-border) 82%, transparent);
-  background: color-mix(in srgb, #ffffff 95%, var(--ph-bg-soft));
-}
-
-@keyframes home-fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes home-fade-down {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  background: color-mix(in srgb, var(--color-white) 95%, var(--ph-bg-soft));
 }
 
 @media (prefers-reduced-motion: no-preference) {

@@ -1,10 +1,10 @@
-import { Modal } from 'react-bootstrap';
+import { Modal } from "src/components/ui";
 import { Pause, Play } from "src/icons";
 import { useEffect, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
 import { GROWTH_METRICS, trackGrowthMetric } from '../../utils/growthMetrics';
 import './PreviewModal.scss';
-
+import { Button } from "src/components/ui";
 interface PreviewModalPropsI {
   file: {
     url: string;
@@ -378,7 +378,7 @@ function PreviewModal(props: PreviewModalPropsI) {
                 )}
               </div>
               <div className="preview-audio-controls">
-                <button
+                <Button unstyled
                   type="button"
                   className="preview-audio-toggle"
                   onClick={toggleAudio}
@@ -386,7 +386,7 @@ function PreviewModal(props: PreviewModalPropsI) {
                 >
                   {isPlaying ? <Pause size={16} /> : <Play size={16} />}
                   <span>{isPlaying ? 'Pausar' : 'Escuchar'}</span>
-                </button>
+                </Button>
                 <span className="preview-audio-time">
                   {formatTime(currentTime)} / {formatTime(duration)}
                 </span>
@@ -428,9 +428,9 @@ function PreviewModal(props: PreviewModalPropsI) {
           Esta muestra reproduce hasta 60 segundos en calidad reducida. Al descargar con tu plan recibes el
           archivo completo y en su calidad original.
         </p>
-        <button className="btn primary-pill linear-bg" onClick={onHide}>
+        <Button unstyled className="btn primary-pill linear-bg" onClick={onHide}>
           Cerrar
-        </button>
+        </Button>
       </Modal.Footer>
     </Modal>
   );

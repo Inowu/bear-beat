@@ -28,7 +28,7 @@
 }
 
 .webhook-inbox-row--selected {
-  background: color-mix(in oklab, var(--ad-surface, #111827) 92%, var(--app-accent) 8%);
+  background: color-mix(in oklab, var(--ad-surface, var(--color-ink-900)) 92%, var(--app-accent) 8%);
 }
 
 .webhook-inbox-event-id {
@@ -53,24 +53,24 @@
 
 .webhook-inbox-status--processed {
   background: rgba(16, 185, 129, 0.15);
-  color: #10b981;
+  color: var(--color-emerald-500);
 }
 
 .webhook-inbox-status--failed {
   background: rgba(249, 115, 22, 0.15);
-  color: #f97316;
+  color: var(--color-orange-500);
 }
 
 .webhook-inbox-status--ignored {
   background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
+  color: var(--color-red-500);
 }
 
 .webhook-inbox-status--processing,
 .webhook-inbox-status--enqueued,
 .webhook-inbox-status--received {
   background: rgba(59, 130, 246, 0.14);
-  color: #60a5fa;
+  color: var(--color-blue-400);
 }
 
 .webhook-inbox-actions {
@@ -83,7 +83,7 @@
   border: 1px solid rgba(148, 163, 184, 0.22);
   border-radius: 12px;
   padding: 16px;
-  background: color-mix(in oklab, var(--ad-surface, #111827) 94%, white 6%);
+  background: color-mix(in oklab, var(--ad-surface, var(--color-ink-900)) 94%, white 6%);
 }
 
 .webhook-inbox-detail h2 {
@@ -134,6 +134,6 @@
   word-break: break-word;
   font-size: 0.75rem;
   line-height: 1.35;
-  background: color-mix(in oklab, var(--ad-surface, #111827) 88%, black 12%);
+  background: color-mix(in oklab, var(--ad-surface, var(--color-ink-900)) 88%, black 12%);
 }
 

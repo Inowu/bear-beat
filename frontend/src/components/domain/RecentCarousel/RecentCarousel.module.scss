@@ -1,0 +1,25 @@
+.root {
+  display: grid;
+  gap: var(--bb-space-4);
+}
+
+.title {
+  margin: 0;
+  color: var(--app-text-heading);
+  font-size: var(--app-font-size-h3);
+  font-weight: var(--app-font-weight-heading);
+}
+
+.track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(260px, 320px);
+  gap: var(--bb-space-3);
+  overflow-x: auto;
+  padding-bottom: var(--bb-space-1);
+  scroll-snap-type: x proximity;
+}
+
+.slide {
+  scroll-snap-align: start;
+}

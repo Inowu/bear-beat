@@ -15,9 +15,9 @@
   justify-content: center;
   gap: 12px;
   padding: 8px 12px;
-  background: color-mix(in srgb, var(--app-warning, #fbbf24) 78%, #111827);
-  color: #111827;
-  border-bottom: 1px solid color-mix(in srgb, #111827 12%, transparent);
+  background: color-mix(in srgb, var(--app-warning, var(--color-warning-400)) 78%, var(--color-ink-900));
+  color: var(--color-ink-900);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-ink-900) 12%, transparent);
   font-weight: 700;
 }
 
@@ -33,8 +33,8 @@
   padding: 0 14px;
   font-weight: 700;
   cursor: pointer;
-  background: #111827;
-  color: #f9fafb;
+  background: var(--color-ink-900);
+  color: var(--color-neutral-50);
 }
 
 .impersonation-banner button:hover {
@@ -190,7 +190,7 @@
   .mobile-search-overlay__backdrop {
     position: absolute;
     inset: 0;
-    background: color-mix(in srgb, #0f172a 76%, transparent);
+    background: color-mix(in srgb, var(--color-slate-900) 76%, transparent);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
   }

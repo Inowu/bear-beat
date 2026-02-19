@@ -3,6 +3,7 @@ import "./Pagination.scss";
 import { ChevronLeft, ChevronRight } from "src/icons";
 import { showPages } from "./PaginationMethods";
 import { Spinner } from "../../components/Spinner/Spinner";
+import { Button } from "src/components/ui";
 interface IPagination {
   totalData: number;
   title: string;
@@ -45,7 +46,7 @@ function Pagination(props: IPagination) {
         <p className="left-text">Datos por página: {limit}</p>
       </div>
       <div className="right-side">
-        <button
+        <Button unstyled
           type="button"
           className="page-nav"
           aria-label="Página anterior"
@@ -53,7 +54,7 @@ function Pagination(props: IPagination) {
           disabled={!canGoBack}
         >
           <ChevronLeft aria-hidden />
-        </button>
+        </Button>
         {showPages(currentPage + 1, totalData, limit).map(
           (val: number | string, index: number) => {
             if (typeof val !== "number") {
@@ -66,7 +67,7 @@ function Pagination(props: IPagination) {
 
             const isCurrent = currentPage + 1 === val;
             return (
-              <button
+              <Button unstyled
                 key={"paginate_" + index}
                 type="button"
                 className={isCurrent ? "selected" : "unselected"}
@@ -76,11 +77,11 @@ function Pagination(props: IPagination) {
                 disabled={isCurrent}
               >
                 {val}
-              </button>
+              </Button>
             );
           }
         )}
-        <button
+        <Button unstyled
           type="button"
           className="page-nav"
           aria-label="Página siguiente"
@@ -88,7 +89,7 @@ function Pagination(props: IPagination) {
           disabled={!canGoForward}
         >
           <ChevronRight aria-hidden />
-        </button>
+        </Button>
       </div>
     </div>
   );

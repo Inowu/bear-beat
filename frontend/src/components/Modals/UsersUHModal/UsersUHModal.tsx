@@ -1,6 +1,6 @@
 import { CardElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import '../Modal.scss';
-import { Modal } from 'react-bootstrap';
+import { Modal } from "src/components/ui";
 import { CreditCard, RefreshCw, X } from "src/icons";
 import { IPaymentMethod } from 'interfaces/User';
 import { useState } from 'react';
@@ -10,6 +10,7 @@ import trpc from '../../../api';
 import { useCookies } from 'react-cookie';
 import { SuccessModal } from '../SuccessModal/SuccessModal';
 import { ErrorModal } from '../ErrorModal/ErrorModal';
+import { Button, Select } from "src/components/ui";
 
 interface IUsersUHModal {
   showModal: boolean;
@@ -155,7 +156,7 @@ export function UsersUHModal(props: IUsersUHModal) {
                       options={{ hidePostalCode: true }}
                     />
                   ) : (
-                    <select
+                    <Select
                       onChange={(e: any) => setCard(e.target.value)}
                       defaultValue={''}
                       style={{ color: 'var(--app-text-heading)' }}
@@ -172,14 +173,14 @@ export function UsersUHModal(props: IUsersUHModal) {
                           );
                         }
                       )}
-                    </select>
+                    </Select>
                   )}
                 </div>
                 <div className="div-bottom">
                   {loader ? (
                     <Spinner size={4} width={0.4} color="var(--app-accent)" />
                   ) : (
-                    <button className="btn">CONTRATAR PLAN AHORA</button>
+                    <Button unstyled className="btn">CONTRATAR PLAN AHORA</Button>
                   )}
                 </div>
               </form>

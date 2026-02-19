@@ -1,6 +1,6 @@
 import "../Modal.scss";
 import { ErrorModal } from "../ErrorModal/ErrorModal";
-import { Modal } from "react-bootstrap";
+import { Modal } from "../../ui/Modal/Modal";
 import { of } from "await-of";
 import { Spinner } from "../../Spinner/Spinner";
 import { SuccessModal } from "../SuccessModal/SuccessModal";
@@ -8,6 +8,7 @@ import { useFormik } from "formik";
 import { useEffect, useState } from "react";
 import * as Yup from "yup";
 import trpc from "../../../api";
+import { Button, Input } from "src/components/ui";
 
 
 interface IAddInstructions {
@@ -73,13 +74,13 @@ export function AddInstructionsModal(props: IAddInstructions) {
       }, [videoURL]);
 
     return (
-        <Modal show={showModal} centered>
+        <Modal open={showModal} onClose={onHideModal}>
             <form className="modal-addusers" onSubmit={formik.handleSubmit}>
                 <h2>Agregar video a Instrucciones</h2>
                 <p>Proporcione el link del video embebido para instrucciones.</p>
                 <div className="c-row">
                     <label>Vídeo URL</label>
-                    <input
+                    <Input
                         placeholder="URL"
                         type="url"
                         id="video"
@@ -92,9 +93,9 @@ export function AddInstructionsModal(props: IAddInstructions) {
                     )}
                 </div>
                 {!loader ? (
-                    <button className="btn-option-4" type="submit">
+                    <Button unstyled className="btn-option-4" type="submit">
                         Confirmar
-                    </button>
+                    </Button>
                 ) : (
                     <div style={{ marginBottom: 10 }}>
                         <Spinner size={3} width={0.3} color="var(--app-accent)" />

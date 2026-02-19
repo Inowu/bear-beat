@@ -9,6 +9,7 @@ import {
   HOME_HERO_TITLE,
 } from "../homeCopy";
 import { formatInt } from "../homeFormat";
+import { Button } from "src/components/ui";
 
 type TrialSummary = {
   enabled: boolean;
@@ -83,10 +84,10 @@ export default function HomeHero(props: {
                 {ctaLabel}
                 <ArrowRight size={18} aria-hidden />
               </Link>
-              <button type="button" className="home-cta home-cta--secondary home-hero__cta-demo" onClick={onDemoScroll}>
+              <Button unstyled type="button" className="home-cta home-cta--secondary home-hero__cta-demo" onClick={onDemoScroll}>
                 <CirclePlay size={18} aria-hidden />
                 Ver demo
-              </button>
+              </Button>
             </div>
             <div className="home-hero__trust-inline" role="note" aria-label="Confianza rápida">
               {HOME_HERO_TRUST_ITEMS.map((item) => (

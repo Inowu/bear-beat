@@ -1,0 +1,82 @@
+.bb-ui-badge {
+  --bb-ui-badge-bg: var(--bb-cyan);
+  --bb-ui-badge-fg: var(--color-white);
+  --bb-ui-badge-border: color-mix(in srgb, var(--bb-cyan) 52%, transparent);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border: 1px solid var(--bb-ui-badge-border);
+  border-radius: var(--radius-full);
+  background: var(--bb-ui-badge-bg);
+  color: var(--bb-ui-badge-fg);
+  font-family: var(--bb-font-ui);
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.bb-ui-badge--sm {
+  min-height: 20px;
+  padding: 0 8px;
+  font-size: 1.1rem;
+}
+
+.bb-ui-badge--md {
+  min-height: 24px;
+  padding: 0 10px;
+  font-size: 1.2rem;
+}
+
+.bb-ui-badge--default {
+  --bb-ui-badge-bg: var(--bb-cyan);
+  --bb-ui-badge-fg: var(--color-white);
+  --bb-ui-badge-border: color-mix(in srgb, var(--bb-cyan) 52%, transparent);
+}
+
+.bb-ui-badge--info {
+  --bb-ui-badge-bg: var(--app-accent);
+  --bb-ui-badge-fg: var(--color-white);
+  --bb-ui-badge-border: color-mix(in srgb, var(--app-accent) 52%, transparent);
+}
+
+.bb-ui-badge--success {
+  --bb-ui-badge-bg: var(--app-status-success);
+  --bb-ui-badge-fg: var(--color-white);
+  --bb-ui-badge-border: color-mix(in srgb, var(--app-status-success) 52%, transparent);
+}
+
+.bb-ui-badge--warning {
+  --bb-ui-badge-bg: var(--app-status-warning);
+  --bb-ui-badge-fg: var(--color-charcoal-950);
+  --bb-ui-badge-border: color-mix(in srgb, var(--app-status-warning) 58%, transparent);
+}
+
+.bb-ui-badge--error {
+  --bb-ui-badge-bg: var(--app-status-error);
+  --bb-ui-badge-fg: var(--color-white);
+  --bb-ui-badge-border: color-mix(in srgb, var(--app-status-error) 58%, transparent);
+}
+
+.bb-ui-badge--outline {
+  --bb-ui-badge-bg: transparent;
+  --bb-ui-badge-fg: var(--app-text-muted);
+  --bb-ui-badge-border: var(--border-color);
+}
+
+.bb-ui-badge--dot {
+  width: 8px;
+  min-width: 8px;
+  height: 8px;
+  min-height: 8px;
+  padding: 0;
+  border: 0;
+  font-size: 0;
+  line-height: 0;
+}
+
+.bb-ui-badge--outline.bb-ui-badge--dot {
+  background: var(--border-color);
+}

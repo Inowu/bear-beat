@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
-import { Modal } from 'react-bootstrap'
+import { Modal } from "src/components/ui"
 import './../Modal.scss'
 import { XCircle } from "src/icons"
 import trpc from "../../../api";
 import { Spinner } from '../../../components/Spinner/Spinner';
 import { IAdminUser } from '../../../interfaces/admin';
 import { ErrorModal } from '../ErrorModal/ErrorModal';
-
+import { Button } from "src/components/ui";
 interface ICondition {
     show: boolean;
     onHide: () => void;
@@ -48,14 +48,14 @@ export function DeleteUOneUserModal(props: ICondition) {
                           Estas por eliminar a este usuario para siempre, por favor confirma que deseas eliminarlo.
                       </p>
                       <div className='button-container'>
-                          <button className='btn-option-5' onClick={onHide}>
+                          <Button unstyled className='btn-option-5' onClick={onHide}>
                               Cancelar
-                          </button>
+                          </Button>
                           {
                               !loader
-                                  ? <button className='btn-option-4' onClick={removeUser}>
+                                  ? <Button unstyled className='btn-option-4' onClick={removeUser}>
                                       Confirmar
-                                  </button>
+                                  </Button>
                                   : <div style={{ width: 189 }}><Spinner size={3} width={.3} color="var(--app-accent)" /></div>
                           }
                       </div>

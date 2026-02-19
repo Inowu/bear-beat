@@ -57,24 +57,6 @@
   animation-duration: 50s;
 }
 
-@keyframes genre-ticker-scroll-left {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-33.333%);
-  }
-}
-
-@keyframes genre-ticker-scroll-right {
-  0% {
-    transform: translateX(-33.333%);
-  }
-  100% {
-    transform: translateX(0);
-  }
-}
-
   .genre-ticker__cta {
   display: block;
   text-align: center;

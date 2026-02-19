@@ -2,6 +2,7 @@ import { Search } from "src/icons";
 import { useMemo, useState } from "react";
 import { HOME_CTA_SECONDARY_LABEL } from "../homeCopy";
 import { formatGB, formatInt, normalizeSearchKey } from "../homeFormat";
+import { Button, Input } from "../../../components/ui";
 
 export type CatalogGenre = {
   id: string;
@@ -48,7 +49,7 @@ export default function CatalogDemo(props: {
           </div>
           <div className="catalog-demo__search bb-market-surface">
             <Search size={18} aria-hidden />
-            <input
+            <Input
               id="catalog-demo-search"
               type="search"
               value={query}
@@ -82,9 +83,9 @@ export default function CatalogDemo(props: {
         </div>
 
         <div className="catalog-demo__cta">
-          <button type="button" className="home-cta home-cta--secondary" onClick={onSecondaryCtaClick}>
+          <Button unstyled type="button" className="home-cta home-cta--secondary" onClick={onSecondaryCtaClick}>
             {HOME_CTA_SECONDARY_LABEL}
-          </button>
+          </Button>
         </div>
       </div>
     </section>

@@ -7,7 +7,7 @@ import * as Yup from "yup";
 import { useState } from "react";
 import { Spinner } from "../../Spinner/Spinner";
 import { SuccessModal } from "../SuccessModal/SuccessModal";
-import { Modal } from "react-bootstrap";
+import { Modal } from "src/components/ui";
 import { XCircle } from "src/icons";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/material.css";
@@ -15,6 +15,7 @@ import es from "react-phone-input-2/lang/es.json";
 import trpc from "../../../api";
 import { USER_ROLES } from "../../../interfaces/admin";
 import { twoDigitsCountryCodes } from "../../../utils/country_codes";
+import { Button, Input, Select } from "src/components/ui";
 
 interface IAddUsersModal {
   showModal: boolean;
@@ -90,7 +91,7 @@ export function AddUsersModal(props: IAddUsersModal) {
         <XCircle className="icon" onClick={onHideModal} aria-label="Cerrar" />
         <h2>Añadir Usuario</h2>
         <div className="c-row">
-          <input
+          <Input
             placeholder="Username"
             type="text"
             id="username"
@@ -101,7 +102,7 @@ export function AddUsersModal(props: IAddUsersModal) {
           {formik.errors.username && <div className="error-formik">{formik.errors.username}</div>}
         </div>
         <div className="c-row">
-          <input
+          <Input
             placeholder="E-mail"
             id="email"
             name="email"
@@ -113,14 +114,14 @@ export function AddUsersModal(props: IAddUsersModal) {
         </div>
         <div className="c-row">
           <label>Tipo de usuario</label>
-          <select id="role" defaultValue={formik.values.role} onChange={formik.handleChange}>
+          <Select id="role" defaultValue={formik.values.role} onChange={formik.handleChange}>
             <option value={USER_ROLES.ADMIN}>Admin</option>
             <option value={USER_ROLES.SUBADMIN}>Subadmin</option>
             <option value={USER_ROLES.EDITOR}>Editor</option>
             <option value={USER_ROLES.NORMAL} selected>
               Normal
             </option>
-          </select>
+          </Select>
         </div>
         <div className="c-row2">
           <PhoneInput
@@ -134,7 +135,7 @@ export function AddUsersModal(props: IAddUsersModal) {
             onChange={handlePhoneNumberChange}
           />
           <p className="code">+{code}</p>
-          <input
+          <Input
             className="phone"
             placeholder="Phone"
             id="phone"
@@ -170,17 +171,17 @@ export function AddUsersModal(props: IAddUsersModal) {
           )}
         </div>
         {!loader ? (
-          <button className="btn-option-4" type="submit">
+          <Button unstyled className="btn-option-4" type="submit">
             Añadir Usuario
-          </button>
+          </Button>
         ) : (
           <div style={{ marginBottom: 15 }}>
             <Spinner size={3} width={0.3} color="var(--app-accent)" />
           </div>
         )}
-        <button className="btn-cancel" onClick={onHideModal} type="reset">
+        <Button unstyled className="btn-cancel" onClick={onHideModal} type="reset">
           Cancelar
-        </button>
+        </Button>
         <ErrorModal show={show} onHide={closeModal} message={errorMessage} />
         <SuccessModal
           show={showSuccess}

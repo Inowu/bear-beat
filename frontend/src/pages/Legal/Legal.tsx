@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ShieldCheck, WalletCards, FileText, CircleHelp, ChevronDown, ArrowUp } from "src/icons";
 import "./Legal.scss";
-
+import { Button } from "src/components/ui";
 const LEGAL_LAST_UPDATED_LABEL = "6 de febrero de 2026";
 const LEGAL_LAST_UPDATED_ISO = "2026-02-06";
 
@@ -200,12 +200,12 @@ function Legal() {
             <h2>Preguntas frecuentes (FAQ)</h2>
           </div>
           <div className="legal2026__faq-actions" aria-label="Acciones de FAQ">
-            <button type="button" onClick={expandAllFaq}>
+            <Button unstyled type="button" onClick={expandAllFaq}>
               Expandir todo
-            </button>
-            <button type="button" onClick={collapseAllFaq}>
+            </Button>
+            <Button unstyled type="button" onClick={collapseAllFaq}>
               Contraer todo
-            </button>
+            </Button>
           </div>
           <div className="legal2026__faq-list bb-accordion">
             {FAQ_ITEMS.map((item, idx) => {
@@ -215,7 +215,7 @@ function Legal() {
               return (
                 <div key={item.question} className="legal2026__faq-item bb-accordion__item">
                   <h3 className="legal2026__faq-question">
-                    <button
+                    <Button unstyled
                       type="button"
                       className="legal2026__faq-trigger bb-accordion__trigger"
                       id={buttonId}
@@ -225,7 +225,7 @@ function Legal() {
                     >
                       <span>{item.question}</span>
                       <ChevronDown className="legal2026__faq-icon" size={18} aria-hidden />
-                    </button>
+                    </Button>
                   </h3>
                   <div
                     id={panelId}

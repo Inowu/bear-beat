@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Toaster } from "sonner";
 import { TOAST_DURATION_MS } from "../../utils/toast";
-
+import { Button } from "src/components/ui";
 const MOBILE_TOAST_QUERY = "(max-width: 768px)";
 
 function getIsMobileToastViewport(): boolean {

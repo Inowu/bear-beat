@@ -9,7 +9,7 @@ import { useUserContext } from "../../../contexts/UserContext";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
 import { Plus, MoreVertical, RefreshCw, AlertTriangle } from "src/icons";
-import { Select, SkeletonRow } from "../../../components/ui";
+import { Select, SkeletonRow, Button, Input } from "../../../components/ui";
 
 interface IAdminFilter {
   page: number;
@@ -208,14 +208,14 @@ export const DownloadHistory = () => {
               <option value={500}>500</option>
             </Select>
           </label>
-          <button
+          <Button unstyled
             type="button"
             onClick={() => setShowModal(true)}
             className="inline-flex items-center gap-2 bg-bear-gradient hover:opacity-95 text-bear-dark-500 font-medium rounded-pill px-4 py-2 transition-opacity"
           >
             <Plus size={18} />
             Añadir instrucciones
-          </button>
+          </Button>
         </>
       ) : (
         <>
@@ -232,7 +232,7 @@ export const DownloadHistory = () => {
           </label>
           <label className="inline-flex flex-col gap-1 text-sm text-text-muted min-w-[160px]">
             Umbral GB/día
-            <input
+            <Input
               type="number"
               min={0}
               step={1}
@@ -241,7 +241,7 @@ export const DownloadHistory = () => {
               className="bg-bg-card border border-border rounded-lg px-3 py-2 text-text-main"
             />
           </label>
-          <button
+          <Button unstyled
             type="button"
             onClick={() => fetchConsumption()}
             disabled={consumptionLoading}
@@ -250,7 +250,7 @@ export const DownloadHistory = () => {
           >
             <RefreshCw size={18} />
             {consumptionLoading ? <SkeletonRow width="78px" height="14px" /> : "Actualizar"}
-          </button>
+          </Button>
         </>
       )}
     </div>
@@ -342,7 +342,7 @@ export const DownloadHistory = () => {
                 ? history.map((his, index) => {
                   const sizeLabel = formatDownloadSize(his.size);
                   return (
-                    <button
+                    <Button unstyled
                       key={`m_${index}`}
                       className="admin-mobile-card"
                       onClick={() => setDrawerItem(his)}
@@ -368,7 +368,7 @@ export const DownloadHistory = () => {
                         <span>{his.date.toLocaleDateString()}</span>
                         <span>{his.phone || "—"}</span>
                       </div>
-                    </button>
+                    </Button>
                   );
                 })
                 : (

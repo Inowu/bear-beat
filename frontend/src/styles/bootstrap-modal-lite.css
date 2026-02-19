@@ -11,8 +11,8 @@
 
 :root {
   /* Minimal Bootstrap vars referenced by the extracted rules below. */
-  --bs-body-color: var(--app-text-body, #1f2a3a);
-  --bs-body-bg: var(--app-bg-card, #ffffff);
+  --bs-body-color: var(--app-text-body, var(--color-ink-800));
+  --bs-body-bg: var(--app-bg-card, var(--color-white));
   --bs-border-color: var(--app-border, rgba(15, 23, 42, 0.12));
   --bs-border-color-translucent: var(--bs-border-color);
   --bs-border-width: 1px;
@@ -35,7 +35,7 @@
 }
 
 .btn-close {
-  --bs-btn-close-color: #000;
+  --bs-btn-close-color: var(--color-black);
   --bs-btn-close-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414'/%3e%3c/svg%3e");
   --bs-btn-close-opacity: 0.5;
   --bs-btn-close-hover-opacity: 0.75;
@@ -165,7 +165,7 @@
 
 .modal-backdrop {
   --bs-backdrop-zindex: 1050;
-  --bs-backdrop-bg: #000;
+  --bs-backdrop-bg: var(--color-black);
   --bs-backdrop-opacity: 0.5;
   position: fixed;
   top: 0;

@@ -1,6 +1,6 @@
 import { Download, Ticket, Search } from "src/icons";
 import { HOME_HERO_MICROCOPY_BASE, HOME_HERO_MICROCOPY_TRIAL } from "../homeCopy";
-
+import { Button } from "src/components/ui";
 export default function HowItWorks(props: { trial: { enabled: boolean; days: number; gb: number } | null }) {
   const { trial } = props;
   const step1Copy =

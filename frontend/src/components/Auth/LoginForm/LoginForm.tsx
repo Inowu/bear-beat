@@ -13,6 +13,7 @@ import brandLockupCyan from "../../../assets/brand/bearbeat-lockup-cyan.png";
 import { trackManyChatConversion, MC_EVENTS } from "../../../utils/manychatPixel";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../../utils/growthMetrics";
 import { toErrorMessage } from "../../../utils/errorMessage";
+import { Button, Input } from "src/components/ui";
 import {
   clearAuthReturnUrl,
   normalizeAuthReturnUrl,
@@ -196,7 +197,7 @@ function LoginForm() {
               </label>
               <div className="auth-login-input-wrap">
                 <Mail className="auth-login-input-icon" aria-hidden />
-                <input
+                <Input
                   placeholder="correo@ejemplo.com"
                   type="email"
                   id="username"
@@ -255,9 +256,9 @@ function LoginForm() {
               {inlineError}
             </div>
             {!loader ? (
-              <button type="submit" className="auth-login-submit-btn" data-testid="login-submit">
+              <Button unstyled type="submit" className="auth-login-submit-btn" data-testid="login-submit">
                 INGRESAR
-              </button>
+              </Button>
             ) : (
               <div className="auth-login-spinner">
                 <Spinner size={3} width={0.3} color="var(--app-accent)" />

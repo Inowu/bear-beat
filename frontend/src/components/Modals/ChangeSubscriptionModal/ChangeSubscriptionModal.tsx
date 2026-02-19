@@ -1,11 +1,11 @@
 import './../Modal.scss'
-import { Modal } from 'react-bootstrap'
+import { Modal } from "src/components/ui"
 import { XCircle } from "src/icons"
 import { Spinner } from '../../../components/Spinner/Spinner';
 import { useState } from 'react'
 import { IPlans } from "../../../interfaces/Plans";
 import PayPalComponent from '../../PayPal/PayPalComponent';
-
+import { Button } from "src/components/ui";
 interface ICondition {
     show: boolean;
     onHide: () => void;
@@ -29,9 +29,9 @@ export function ChangeSubscriptionModal(props: ICondition) {
     const confirmButton = () => {
         if (plan.stripe_prod_id || plan.stripe_prod_id_test) {
             return (
-                <button className='btn-option-4' onClick={startAction}>
+                <Button unstyled className='btn-option-4' onClick={startAction}>
                     Confirmar
-                </button>
+                </Button>
             )
         }
 
@@ -57,9 +57,9 @@ export function ChangeSubscriptionModal(props: ICondition) {
                         {message?.toString()}
                     </p>
                     <div className='button-container'>
-                        <button className='btn-option-5' onClick={onHide}>
+                        <Button unstyled className='btn-option-5' onClick={onHide}>
                             Cancelar
-                        </button>
+                        </Button>
                         {
                             !loader
                                 ? confirmButton()

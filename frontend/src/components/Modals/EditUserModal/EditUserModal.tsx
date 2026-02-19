@@ -4,7 +4,7 @@ import { PasswordInput } from "../../PasswordInput/PasswordInput";
 import "react-phone-input-2/lib/material.css";
 import { ErrorModal } from "../ErrorModal/ErrorModal";
 import { findCountryCode, twoDigitsCountryCodes } from "../../../utils/country_codes";
-import { Modal } from "react-bootstrap";
+import { Modal } from "src/components/ui";
 import { of } from "await-of";
 import { XCircle } from "src/icons";
 import { Spinner } from "../../Spinner/Spinner";
@@ -17,6 +17,7 @@ import es from "react-phone-input-2/lang/es.json";
 import PhoneInput from "react-phone-input-2";
 import trpc from "../../../api";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../../utils/growthMetrics";
+import { Button, Input, Select } from "src/components/ui";
 
 interface IEditPlanModal {
   showModal: boolean;
@@ -158,7 +159,7 @@ export function EditUserModal(props: IEditPlanModal) {
         <h2>Editar Usuario</h2>
         <div className="c-row">
           <label>Nombre de usuario</label>
-          <input
+          <Input
             placeholder="Nombre"
             type="name"
             id="name"
@@ -170,7 +171,7 @@ export function EditUserModal(props: IEditPlanModal) {
         </div>
         <div className="c-row">
           <label>Correo</label>
-          <input
+          <Input
             placeholder="Correo electrónico"
             type="email"
             id="email"
@@ -182,7 +183,7 @@ export function EditUserModal(props: IEditPlanModal) {
         </div>
         <div className="c-row">
           <label>Tipo de usuario</label>
-          <select id="role" defaultValue={formik.values.role} onChange={formik.handleChange}>
+          <Select id="role" defaultValue={formik.values.role} onChange={formik.handleChange}>
             <option value={USER_ROLES.ADMIN} selected={editingUser.role === USER_ROLES.ADMIN}>
               Admin
             </option>
@@ -195,7 +196,7 @@ export function EditUserModal(props: IEditPlanModal) {
             <option value={USER_ROLES.NORMAL} selected={editingUser.role === USER_ROLES.NORMAL}>
               Normal
             </option>
-          </select>
+          </Select>
         </div>
         <div className="c-row2">
           <PhoneInput
@@ -209,7 +210,7 @@ export function EditUserModal(props: IEditPlanModal) {
             onChange={handlePhoneNumberChange}
           />
           <p className="code">+{code}</p>
-          <input
+          <Input
             className="phone"
             placeholder="Teléfono"
             id="phone"
@@ -233,17 +234,17 @@ export function EditUserModal(props: IEditPlanModal) {
           {formik.errors.password && <div className="error-formik">{formik.errors.password}</div>}
         </div>
         {!loader ? (
-          <button className="btn-option-4" type="submit">
+          <Button unstyled className="btn-option-4" type="submit">
             Editar Usuario
-          </button>
+          </Button>
         ) : (
           <div style={{ marginBottom: 10 }}>
             <Spinner size={3} width={0.3} color="var(--app-accent)" />
           </div>
         )}
-        <button className="btn-cancel" onClick={onHideModal} type="reset">
+        <Button unstyled className="btn-cancel" onClick={onHideModal} type="reset">
           Cancelar
-        </button>
+        </Button>
         <ErrorModal show={show} onHide={closeModal} message={errorMessage} />
         <SuccessModal
           show={showSuccess}

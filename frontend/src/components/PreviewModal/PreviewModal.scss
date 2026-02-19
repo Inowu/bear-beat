@@ -125,18 +125,6 @@
           opacity: 0.5;
         }
 
-        @keyframes preview-eq {
-          0%,
-          100% {
-            transform: scaleY(0.25);
-            opacity: 0.55;
-          }
-          50% {
-            transform: scaleY(1);
-            opacity: 1;
-          }
-        }
-
         .preview-audio-controls {
           display: flex;
           align-items: center;
@@ -186,7 +174,7 @@
 
         .preview-wave-error {
           margin: 0;
-          color: var(--app-status-danger, #ff2d2c);
+          color: var(--app-status-danger, var(--color-danger-500));
           font-size: 0.92rem;
           font-weight: 700;
           line-height: 1.4;

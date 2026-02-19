@@ -416,7 +416,7 @@
 html[data-theme="light"] .legal2026__hero,
 html[data-theme="light"] .legal2026__section {
   border-color: color-mix(in srgb, var(--ph-border) 90%, transparent);
-  background: color-mix(in srgb, #ffffff 99%, var(--ph-bg-card));
+  background: color-mix(in srgb, var(--color-white) 99%, var(--ph-bg-card));
   box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
 }
 
@@ -424,8 +424,8 @@ html[data-theme="light"] .legal2026__hero {
   background:
     linear-gradient(
       160deg,
-      color-mix(in srgb, #ffffff 99.5%, var(--ph-bg-card)),
-      color-mix(in srgb, var(--ph-accent) 2.2%, #ffffff)
+      color-mix(in srgb, var(--color-white) 99.5%, var(--ph-bg-card)),
+      color-mix(in srgb, var(--ph-accent) 2.2%, var(--color-white))
     );
 }
 
@@ -458,11 +458,11 @@ html[data-theme="light"] .legal2026__quick-nav .bb-segmented__btn[aria-current="
 html[data-theme="light"] .legal2026__faq-actions button,
 html[data-theme="light"] .legal2026__faq-item {
   border-color: color-mix(in srgb, var(--ph-border) 90%, transparent);
-  background: color-mix(in srgb, #ffffff 99%, var(--ph-bg-soft));
+  background: color-mix(in srgb, var(--color-white) 99%, var(--ph-bg-soft));
 }
 
 html[data-theme="light"] .legal2026__faq-actions button:hover {
-  background: color-mix(in srgb, var(--ph-accent) 7%, #ffffff);
+  background: color-mix(in srgb, var(--ph-accent) 7%, var(--color-white));
 }
 
 html[data-theme="light"] .legal2026__faq-panel {

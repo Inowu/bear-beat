@@ -4,7 +4,7 @@ import { RefreshCw } from "src/icons";
 import trpc from "../../../api";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import { Spinner } from "../../../components/Spinner/Spinner";
-import { SkeletonRow } from "../../../components/ui";
+import { SkeletonRow, Button, Input, Select } from "../../../components/ui";
 import { useUserContext } from "../../../contexts/UserContext";
 import "./WebhookInbox.scss";
 
@@ -240,7 +240,7 @@ export const WebhookInbox = () => {
     <div className="webhook-inbox-toolbar">
       <label className="webhook-inbox-toolbar__field">
         <span>Proveedor</span>
-        <select
+        <Select
           value={filters.provider}
           onChange={(e) => startFilter("provider", e.target.value)}
         >
@@ -250,12 +250,12 @@ export const WebhookInbox = () => {
               {provider}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
 
       <label className="webhook-inbox-toolbar__field">
         <span>Status</span>
-        <select
+        <Select
           value={filters.status}
           onChange={(e) => startFilter("status", e.target.value)}
         >
@@ -265,12 +265,12 @@ export const WebhookInbox = () => {
               {status}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
 
       <label className="webhook-inbox-toolbar__field">
         <span>Event Type</span>
-        <input
+        <Input
           value={filters.eventType}
           onChange={(e) => startFilter("eventType", e.target.value)}
           placeholder="Buscar por tipo de evento…"
@@ -279,24 +279,24 @@ export const WebhookInbox = () => {
 
       <label className="webhook-inbox-toolbar__field">
         <span>Límite</span>
-        <select
+        <Select
           value={filters.limit}
           onChange={(e) => startFilter("limit", Number(e.target.value))}
         >
           <option value={50}>50</option>
           <option value={100}>100</option>
           <option value={200}>200</option>
-        </select>
+        </Select>
       </label>
 
-      <button
+      <Button unstyled
         type="button"
         className="btn-icon btn-secondary"
         onClick={() => void fetchList(filters)}
       >
         <RefreshCw size={18} aria-hidden />
         Recargar
-      </button>
+      </Button>
     </div>
   );
 
@@ -370,22 +370,22 @@ export const WebhookInbox = () => {
                   <td className="py-3 px-4 text-sm">{formatDateTime(item.processedAt)}</td>
                   <td className="py-3 px-4 text-sm">
                     <div className="webhook-inbox-actions">
-                      <button
+                      <Button unstyled
                         type="button"
                         className="btn-icon btn-secondary"
                         onClick={() => setSelectedId(item.id)}
                       >
                         Ver
-                      </button>
+                      </Button>
                       {item.status === "FAILED" || item.status === "IGNORED" ? (
-                        <button
+                        <Button unstyled
                           type="button"
                           className="btn-icon btn-secondary"
                           disabled={retryingId === item.id}
                           onClick={() => void retryEvent(item.id)}
                         >
                           {retryingId === item.id ? "Reintentando..." : "Reintentar"}
-                        </button>
+                        </Button>
                       ) : (
                         <span className="text-xs opacity-70">—</span>
                       )}
@@ -399,7 +399,7 @@ export const WebhookInbox = () => {
 
         {nextCursor && (
           <div className="mt-4 flex justify-center">
-            <button
+            <Button unstyled
               type="button"
               className="btn-icon btn-secondary"
               onClick={() => void loadMore()}
@@ -407,7 +407,7 @@ export const WebhookInbox = () => {
               aria-label={loadingMore ? "Actualizando más eventos" : undefined}
             >
               {loadingMore ? <SkeletonRow width="82px" height="14px" /> : "Cargar más"}
-            </button>
+            </Button>
           </div>
         )}
       </div>

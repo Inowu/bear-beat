@@ -3,7 +3,7 @@ import { X } from "src/icons";
 import { IAdminUser, USER_ROLES } from "../../interfaces/admin";
 import { formatDbDateOnly } from "../../utils/format";
 import "./AdminDrawer.scss";
-
+import { Button } from "src/components/ui";
 export interface AdminDrawerAction {
   id: string;
   label: string;
@@ -63,14 +63,14 @@ export function AdminDrawer({
         <div className="admin-drawer__handle" aria-hidden />
         <div className="admin-drawer__header">
           <h2 className="admin-drawer__title">{title}</h2>
-          <button
+          <Button unstyled
             type="button"
             className="admin-drawer__close"
             onClick={onClose}
             aria-label="Cerrar"
           >
             <X size={20} />
-          </button>
+          </Button>
         </div>
         <div className="admin-drawer__body">
           {user && (
@@ -100,7 +100,7 @@ export function AdminDrawer({
           {actions.length > 0 && (
             <div className="admin-drawer__actions">
               {actions.map((a) => (
-                <button
+                <Button unstyled
                   key={a.id}
                   type="button"
                   className={`admin-drawer__btn admin-drawer__btn--${a.variant ?? "secondary"}`}
@@ -111,7 +111,7 @@ export function AdminDrawer({
                   disabled={a.disabled}
                 >
                   {a.label}
-                </button>
+                </Button>
               ))}
             </div>
           )}

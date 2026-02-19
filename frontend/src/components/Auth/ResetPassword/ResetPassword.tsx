@@ -12,7 +12,7 @@ import { useUserContext } from "../../../contexts/UserContext";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../../utils/growthMetrics";
 import { toErrorMessage } from "../../../utils/errorMessage";
 import "./ResetPassword.scss";
-
+import { Button } from "src/components/ui";
 function inferErrorCode(message: string): string {
   const m = `${message ?? ""}`.toLowerCase();
   if (!m) return "unknown";
@@ -166,9 +166,9 @@ function ResetPassword() {
         )}
       </div>
       {!loader ? (
-        <button className="btn auth-reset-submit" type="submit" data-testid="reset-submit">
+        <Button unstyled className="btn auth-reset-submit" type="submit" data-testid="reset-submit">
           Guardar contraseña
-        </button>
+        </Button>
       ) : (
         <Spinner size={3} width={0.3} color="var(--app-accent)" />
       )}

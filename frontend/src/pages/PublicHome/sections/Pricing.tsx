@@ -8,6 +8,7 @@ import {
   HOME_HERO_MICROCOPY_TRIAL,
 } from "../homeCopy";
 import { formatInt } from "../homeFormat";
+import { Button } from "src/components/ui";
 
 export type TrialSummary = {
   enabled: boolean;
@@ -174,7 +175,7 @@ export default function Pricing(props: {
             role="tablist"
             aria-label="Moneda"
           >
-            <button
+            <Button unstyled
               type="button"
               className={[
                 "bb-segmented__btn",
@@ -189,8 +190,8 @@ export default function Pricing(props: {
               aria-selected={currency === "mxn"}
             >
               MXN
-            </button>
-            <button
+            </Button>
+            <Button unstyled
               type="button"
               className={[
                 "bb-segmented__btn",
@@ -205,7 +206,7 @@ export default function Pricing(props: {
               aria-selected={currency === "usd"}
             >
               USD
-            </button>
+            </Button>
           </div>
         )}
 

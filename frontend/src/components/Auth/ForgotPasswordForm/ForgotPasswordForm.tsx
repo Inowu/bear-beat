@@ -9,6 +9,7 @@ import Turnstile, { type TurnstileRef } from "../../../components/Turnstile/Turn
 import { useTheme } from "../../../contexts/ThemeContext";
 import brandLockupBlack from "../../../assets/brand/bearbeat-lockup-black.png";
 import brandLockupCyan from "../../../assets/brand/bearbeat-lockup-cyan.png";
+import { Button, Input } from "src/components/ui";
 import {
   shouldBypassTurnstile,
   TURNSTILE_BYPASS_TOKEN,
@@ -176,7 +177,7 @@ function ForgotPasswordForm() {
             </label>
             <div className="auth-recover-email-wrap">
               <Mail className="auth-recover-email-icon" aria-hidden />
-              <input
+              <Input
                 placeholder="correo@ejemplo.com"
                 id="email"
                 name="email"
@@ -233,7 +234,7 @@ function ForgotPasswordForm() {
           >
             {statusMessage}
           </div>
-          <button
+          <Button unstyled
             className="auth-login-submit-btn"
             type="submit"
             data-testid="forgot-submit"
@@ -247,7 +248,7 @@ function ForgotPasswordForm() {
             ) : (
               "ENVIAR ENLACE"
             )}
-          </button>
+          </Button>
           <div className="c-row auth-login-register-wrap auth-recover-back-wrap">
             <Link to="/auth" className="auth-recover-back">
               ← Regresar a Iniciar Sesión

@@ -16,10 +16,3 @@
   animation: bb-spinner-spin 0.8s linear infinite;
   will-change: transform;
 }
-
-@keyframes bb-spinner-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-

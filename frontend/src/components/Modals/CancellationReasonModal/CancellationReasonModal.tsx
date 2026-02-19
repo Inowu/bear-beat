@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Modal } from "react-bootstrap";
+import { Modal } from "src/components/ui";
 import { XCircle } from "src/icons";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import "../Modal.scss";
+import { Button, Select } from "src/components/ui";
 
 export type CancellationReasonCode =
   | "too_expensive"
@@ -98,7 +99,7 @@ export function CancellationReasonModal(props: CancellationReasonModalProps) {
           <div className="c-row" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <span style={{ fontWeight: 600 }}>Motivo (requerido)</span>
-              <select
+              <Select
                 className="form-select"
                 value={reasonCode}
                 onChange={(event) => {
@@ -116,7 +117,7 @@ export function CancellationReasonModal(props: CancellationReasonModalProps) {
                     {reason.label}
                   </option>
                 ))}
-              </select>
+              </Select>
               {selectedReason?.helper && (
                 <small className="text-muted">{selectedReason.helper}</small>
               )}
@@ -159,17 +160,17 @@ export function CancellationReasonModal(props: CancellationReasonModalProps) {
           )}
 
           <div className="button-container">
-            <button className="btn-option-5" onClick={onHide} disabled={loader}>
+            <Button unstyled className="btn-option-5" onClick={onHide} disabled={loader}>
               Volver
-            </button>
+            </Button>
             {!loader ? (
-              <button
+              <Button unstyled
                 className="btn-option-4"
                 onClick={startConfirm}
                 disabled={!reasonCode}
               >
                 Confirmar cancelación
-              </button>
+              </Button>
             ) : (
               <div style={{ width: 189 }}>
                 <Spinner size={3} width={0.3} color="var(--app-accent)" />

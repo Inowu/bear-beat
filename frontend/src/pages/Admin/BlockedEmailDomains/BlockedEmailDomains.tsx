@@ -9,6 +9,7 @@ import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
 import Pagination from "../../../components/Pagination/Pagination";
 import { Plus, MoreVertical, Trash2 } from "src/icons";
 import { toErrorMessage } from "../../../utils/errorMessage";
+import { Button, Input } from "../../../components/ui";
 
 const DOMAIN_REGEX = /^(?!-)[a-z0-9-]+(\.[a-z0-9-]+)+$/;
 const RESERVED_DOMAINS = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "live.com", "icloud.com", "protonmail.com", "aol.com"];
@@ -109,7 +110,7 @@ export const BlockedEmailDomains = () => {
     <form onSubmit={handleAddDomain} className="flex flex-wrap items-end gap-2 w-full">
       <label className="inline-flex flex-col gap-1 text-sm text-text-muted min-w-[260px] flex-1">
         Dominio a bloquear
-        <input
+        <Input
           type="text"
           placeholder="ej. spamdomain.com"
           value={newDomain}
@@ -117,14 +118,14 @@ export const BlockedEmailDomains = () => {
           className="min-h-[44px] rounded-xl px-3 border border-border bg-bg-card text-text-main"
         />
       </label>
-      <button
+      <Button unstyled
         type="submit"
         disabled={saving}
         className="inline-flex items-center justify-center gap-2 bg-bear-gradient text-bear-dark-500 hover:opacity-95 font-medium rounded-pill px-4 py-2 transition-colors disabled:opacity-50"
       >
         <Plus size={18} />
         Agregar dominio
-      </button>
+      </Button>
     </form>
   );
 
@@ -175,7 +176,7 @@ export const BlockedEmailDomains = () => {
                         <td className="py-3 px-4 text-sm">{domain}</td>
                         <td className="py-3 px-4 text-right">
                           <div className="table-actions">
-                            <button
+                            <Button unstyled
                               type="button"
                               onClick={() => setDomainToDelete(domain)}
                               disabled={saving}
@@ -184,7 +185,7 @@ export const BlockedEmailDomains = () => {
                               aria-label={`Eliminar dominio ${domain}`}
                             >
                               <Trash2 size={18} />
-                            </button>
+                            </Button>
                           </div>
                         </td>
                       </tr>
@@ -209,7 +210,7 @@ export const BlockedEmailDomains = () => {
 
             <div className="admin-mobile-list">
               {pageDomains.map((domain) => (
-                <button
+                <Button unstyled
                   type="button"
                   key={`m_${domain}`}
                   className="admin-mobile-card"
@@ -229,7 +230,7 @@ export const BlockedEmailDomains = () => {
                       <MoreVertical size={20} />
                     </span>
                   </div>
-                </button>
+                </Button>
               ))}
             </div>
 

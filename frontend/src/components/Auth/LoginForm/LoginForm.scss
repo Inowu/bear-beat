@@ -390,7 +390,7 @@ html[data-theme="light"] .auth-login-atmosphere {
 
 html[data-theme="light"] .auth-login-card {
   border-color: color-mix(in srgb, var(--auth-login-card-border) 96%, transparent);
-  background: color-mix(in srgb, #ffffff 99%, var(--auth-login-card-bg));
+  background: color-mix(in srgb, var(--color-white) 99%, var(--auth-login-card-bg));
   box-shadow:
     0 16px 34px rgba(15, 23, 42, 0.082),
     0 1px 0 rgba(255, 255, 255, 0.72) inset;
@@ -402,7 +402,7 @@ html[data-theme="light"] .auth-login-form .auth-field-label {
 
 html[data-theme="light"] .auth-login-form .auth-login-input-wrap {
   border-color: color-mix(in srgb, var(--auth-input-border) 92%, transparent);
-  background: color-mix(in srgb, #ffffff 97%, var(--auth-input-bg));
+  background: color-mix(in srgb, var(--color-white) 97%, var(--auth-input-bg));
 }
 
 html[data-theme="light"] .auth-login-form .auth-login-input::placeholder {

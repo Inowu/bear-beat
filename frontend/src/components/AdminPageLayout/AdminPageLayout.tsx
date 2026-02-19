@@ -2,6 +2,7 @@ import React from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import "./AdminPageLayout.scss";
 import "../../pages/Admin/Admin.scss";
+import { Select } from "src/components/ui";
 import {
   ADMIN_NAVIGATION_GROUPS,
   getAdminNavigationItem,
@@ -46,7 +47,7 @@ export function AdminPageLayout({
           </div>
           <div className="admin-page-wrap__context-controls">
             <label htmlFor="admin-route-switcher">Cambiar sección</label>
-            <select
+            <Select
               id="admin-route-switcher"
               value={currentNavItem.to}
               onChange={(event) => {
@@ -64,7 +65,7 @@ export function AdminPageLayout({
                   ))}
                 </optgroup>
               ))}
-            </select>
+            </Select>
           </div>
           <nav className="admin-page-wrap__context-links" aria-label={`Atajos de ${currentGroup.label}`}>
             {currentGroup.items.map((item) => (

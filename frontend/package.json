@@ -34,7 +34,6 @@
     "framer-motion": "^12.33.0",
     "js-cookie": "^3.0.5",
     "react": "^18.2.0",
-    "react-bootstrap": "^2.10.10",
     "react-cookie": "^7.1.4",
     "react-csv-downloader": "^2.8.0",
     "react-dom": "^18.2.0",

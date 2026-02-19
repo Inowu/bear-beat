@@ -1,0 +1,24 @@
+.root {
+  display: grid;
+  gap: var(--bb-space-4);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--bb-space-2);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--app-font-size-h4);
+  font-weight: var(--app-font-weight-heading);
+  color: var(--app-text-heading);
+}
+
+.description {
+  margin: 0;
+  font-size: var(--app-font-size-label);
+  color: var(--app-text-muted);
+}

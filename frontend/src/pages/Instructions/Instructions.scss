@@ -582,8 +582,8 @@
 html[data-theme="light"] .instructions2026__hero {
   background: linear-gradient(
     162deg,
-    color-mix(in srgb, #ffffff 98.5%, var(--ph-bg-card)),
-    color-mix(in srgb, var(--ph-accent) 1.6%, #ffffff)
+    color-mix(in srgb, var(--color-white) 98.5%, var(--ph-bg-card)),
+    color-mix(in srgb, var(--ph-accent) 1.6%, var(--color-white))
   );
 }
 
@@ -598,31 +598,31 @@ html[data-theme="light"] .instructions2026__troubleshoot {
 html[data-theme="light"] .instructions2026__navigator,
 html[data-theme="light"] .instructions2026__method-card,
 html[data-theme="light"] .instructions2026__troubleshoot {
-  background: color-mix(in srgb, #ffffff 99.6%, var(--ph-bg-card));
+  background: color-mix(in srgb, var(--color-white) 99.6%, var(--ph-bg-card));
 }
 
 html[data-theme="light"] .instructions2026__quick-link {
-  background: color-mix(in srgb, #ffffff 99%, var(--ph-bg-soft));
+  background: color-mix(in srgb, var(--color-white) 99%, var(--ph-bg-soft));
   border-color: color-mix(in srgb, var(--ph-border) 92%, transparent);
 }
 
 html[data-theme="light"] .instructions2026__btn--ghost.home-cta--secondary {
-  background: color-mix(in srgb, #ffffff 99%, var(--ph-bg-soft));
+  background: color-mix(in srgb, var(--color-white) 99%, var(--ph-bg-soft));
 }
 
 html[data-theme="light"] .instructions2026__btn--ghost.home-cta--secondary:hover {
-  background: color-mix(in srgb, var(--ph-accent) 8%, #ffffff);
+  background: color-mix(in srgb, var(--ph-accent) 8%, var(--color-white));
 }
 
 html[data-theme="light"] .instructions2026__tip {
   border-color: color-mix(in srgb, var(--ph-accent) 18%, var(--ph-border));
-  background: color-mix(in srgb, var(--ph-accent) 7.6%, #ffffff);
+  background: color-mix(in srgb, var(--ph-accent) 7.6%, var(--color-white));
 }
 
 html[data-theme="light"] .instructions2026__troubleshoot {
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--app-status-warning) 6.5%, #ffffff), #ffffff 72%),
-    #ffffff;
+    linear-gradient(180deg, color-mix(in srgb, var(--app-status-warning) 6.5%, var(--color-white)), var(--color-white) 72%),
+    var(--color-white);
 }
 
 html[data-theme="light"] .instructions2026__topnav {
@@ -648,7 +648,7 @@ html[data-theme="light"] .instructions2026__quick-link {
 }
 
 html[data-theme="light"] .instructions2026__quick-link:hover {
-  background: color-mix(in srgb, var(--ph-accent) 7%, #ffffff);
+  background: color-mix(in srgb, var(--ph-accent) 7%, var(--color-white));
 }
 
 html[data-theme="light"] .instructions2026__method-head {
@@ -665,7 +665,7 @@ html[data-theme="light"] .instructions2026__method-actions .instructions2026__bt
 }
 
 html[data-theme="light"] .instructions2026__troubleshoot {
-  border-color: color-mix(in srgb, #d9caa9 82%, var(--ph-border));
+  border-color: color-mix(in srgb, var(--color-sand-300) 82%, var(--ph-border));
 }
 
 .instructions2026 a:focus-visible,

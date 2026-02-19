@@ -7,7 +7,7 @@ import { useUserContext } from "../../../contexts/UserContext";
 import Pagination from "../../../components/Pagination/Pagination";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
-import { Select } from "../../../components/ui";
+import { Select, Button, Input } from "../../../components/ui";
 import { ARRAY_10 } from "../../../utils/Constants";
 
 type LeadStatus = "abandoned" | "recovered" | "all";
@@ -240,7 +240,7 @@ export const HistoryCheckout = () => {
       </label>
       <label className="inline-flex flex-col gap-1 text-sm text-text-muted min-w-[220px] flex-1">
         Buscar
-        <input
+        <Input
           type="text"
           value={filters.search}
           onChange={(e) => startFilter("search", e.target.value)}
@@ -408,7 +408,7 @@ export const HistoryCheckout = () => {
                   const statusClass = his.leadStatus === "abandoned" ? "is-blocked" : "is-active";
                   const statusLabel = his.leadStatus === "abandoned" ? "Abandonado" : "Recuperado";
                   return (
-                    <button
+                    <Button unstyled
                       key={`m_${his.id}`}
                       className="admin-mobile-card"
                       onClick={() => setDrawerItem(his)}
@@ -432,7 +432,7 @@ export const HistoryCheckout = () => {
                         <span>hace {his.hoursSinceCheckout} h</span>
                         <span>Pago: {formatDateShort(his.lastPaidDate)}</span>
                       </div>
-                    </button>
+                    </Button>
                   );
                 })
               : (

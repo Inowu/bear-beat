@@ -13,6 +13,7 @@ import { GROWTH_METRICS, trackGrowthMetric } from "../../utils/growthMetrics";
 import { useUserContext } from "../../contexts/UserContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import PlansStickyCta from "./PlansStickyCta";
+import { Button } from "src/components/ui";
 
 type CurrencyKey = "mxn" | "usd";
 type PlansEntry = "fastlane" | "compare";
@@ -575,10 +576,10 @@ function Plans() {
                 </h2>
                 <p className="app-state-copy">{loadError}</p>
                 <div className="app-state-actions">
-                  <button type="button" onClick={getPlans}>
+                  <Button unstyled type="button" onClick={getPlans}>
                     <RefreshCw size={16} />
                     Reintentar
-                  </button>
+                  </Button>
                 </div>
               </div>
             </section>
@@ -593,10 +594,10 @@ function Plans() {
                   Actualiza la página en unos minutos para volver a intentarlo.
                 </p>
                 <div className="app-state-actions">
-                  <button type="button" onClick={getPlans}>
+                  <Button unstyled type="button" onClick={getPlans}>
                     <RefreshCw size={16} />
                     Actualizar
-                  </button>
+                  </Button>
                 </div>
               </div>
             </section>
@@ -646,7 +647,7 @@ function Plans() {
                   role="radiogroup"
                   aria-label="Moneda"
                 >
-                  <button
+                  <Button unstyled
                     type="button"
                     role="radio"
                     aria-checked={selectedCurrency === "mxn"}
@@ -660,8 +661,8 @@ function Plans() {
                     disabled={!plansByCurrency.mxn}
                   >
                     MXN
-                  </button>
-                  <button
+                  </Button>
+                  <Button unstyled
                     type="button"
                     role="radio"
                     aria-checked={selectedCurrency === "usd"}
@@ -675,7 +676,7 @@ function Plans() {
                     disabled={!plansByCurrency.usd}
                   >
                     USD
-                  </button>
+                  </Button>
                 </div>
 
                 <div
@@ -735,7 +736,7 @@ function Plans() {
                   )}
                 </section>
 
-                <button
+                <Button unstyled
                   type="button"
                   className="home-cta home-cta--primary home-cta--block"
                   onClick={handleActivate}
@@ -750,7 +751,7 @@ function Plans() {
                   }
                 >
                   {primaryCtaLabel}
-                </button>
+                </Button>
 
                 <div className="plans2026__trust" aria-label="Confianza">
                   <PaymentMethodLogos

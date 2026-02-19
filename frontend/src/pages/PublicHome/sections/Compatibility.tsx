@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { HOME_COMPATIBILITY_ITEMS } from "../homeCopy";
-
+import { Button } from "src/components/ui";
 type CompatibilityProps = {
   onFaqScroll?: () => void;
 };
@@ -49,7 +49,7 @@ export default function Compatibility({ onFaqScroll }: CompatibilityProps) {
           <Link to="/instrucciones" className="home-link">
             Ver instrucciones de descarga →
           </Link>
-          <button
+          <Button unstyled
             type="button"
             className="home-link"
             onClick={() => {
@@ -57,7 +57,7 @@ export default function Compatibility({ onFaqScroll }: CompatibilityProps) {
             }}
           >
             Ver formatos en el FAQ →
-          </button>
+          </Button>
         </div>
       </div>
     </section>

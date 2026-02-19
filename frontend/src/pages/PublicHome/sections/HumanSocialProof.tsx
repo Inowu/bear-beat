@@ -1,6 +1,6 @@
 import { User } from "src/icons";
 import { HOME_TESTIMONIALS, type HomeTestimonial } from "../homeTestimonials";
-
+import { Button } from "src/components/ui";
 export default function HumanSocialProof(props: {
   testimonials?: HomeTestimonial[];
 }) {

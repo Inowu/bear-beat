@@ -255,12 +255,6 @@
   width: 30%;
 }
 
-@keyframes analytics-shimmer {
-  100% {
-    transform: translateX(120%);
-  }
-}
-
 .analytics-kpi-grid {
   display: grid;
   grid-template-columns: repeat(1, minmax(0, 1fr));

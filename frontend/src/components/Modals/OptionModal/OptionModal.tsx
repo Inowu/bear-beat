@@ -3,10 +3,11 @@ import './OptionModal.scss'
 import { ErrorModal } from '../ErrorModal/ErrorModal'
 import { SuccessModal } from '../SuccessModal/SuccessModal'
 import { IPlans } from 'interfaces/Plans';
-import { Modal } from 'react-bootstrap'
+import { Modal } from "src/components/ui"
 import { XCircle } from "src/icons"
 import { useEffect, useState } from 'react'
 import trpc from "../../../api";
+import { Button, Input, Select } from "src/components/ui";
 interface IError {
   show: boolean;
   onHide: () => void;
@@ -122,15 +123,15 @@ export function OptionModal(props: IError) {
             </p>
             <div className='plan-options-container'>
               {plans.map((plan) => {
-                return <button key={`plan-button-${plan.id}`} className='plan-option-button' onClick={() => activateSubscription(plan.id)}>
+                return <Button unstyled key={`plan-button-${plan.id}`} className='plan-option-button' onClick={() => activateSubscription(plan.id)}>
                   {plan.name} - ${plan.price} {plan.moneda.toUpperCase()} - {plan.paypal_plan_id ? "PayPal" : "Stripe"}
-                </button>
+                </Button>
               })}
             </div>
             <div className="payment-reconcile-container">
               <p className="payment-reconcile-title">Activar por pago validado</p>
               <label htmlFor="option-modal-plan">Plan</label>
-              <select
+              <Select
                 id="option-modal-plan"
                 value={selectedPlanId ?? ""}
                 onChange={(e) => setSelectedPlanId(Number(e.target.value))}
@@ -140,10 +141,10 @@ export function OptionModal(props: IError) {
                     {plan.name} - ${plan.price} {plan.moneda.toUpperCase()}
                   </option>
                 ))}
-              </select>
+              </Select>
 
               <label htmlFor="option-modal-provider">Proveedor</label>
-              <select
+              <Select
                 id="option-modal-provider"
                 value={provider}
                 onChange={(e) =>
@@ -156,10 +157,10 @@ export function OptionModal(props: IError) {
                 <option value="stripe_oxxo">Stripe OXXO</option>
                 <option value="paypal">PayPal</option>
                 <option value="conekta">Conekta</option>
-              </select>
+              </Select>
 
               <label htmlFor="option-modal-payment-reference">Referencia de pago</label>
-              <input
+              <Input
                 id="option-modal-payment-reference"
                 value={paymentReference}
                 onChange={(e) => setPaymentReference(e.target.value)}
@@ -167,7 +168,7 @@ export function OptionModal(props: IError) {
               />
 
               <label className="payment-reconcile-checkbox">
-                <input
+                <Input
                   type="checkbox"
                   checked={createOrderIfMissing}
                   onChange={(e) => setCreateOrderIfMissing(e.target.checked)}
@@ -175,14 +176,14 @@ export function OptionModal(props: IError) {
                 Crear orden manual si no existe en BD
               </label>
 
-              <button
+              <Button unstyled
                 type="button"
                 className="plan-option-button payment-reconcile-button"
                 onClick={activateByPaymentReference}
                 disabled={activatingByPayment}
               >
                 {activatingByPayment ? "Activando..." : "Activar con referencia"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

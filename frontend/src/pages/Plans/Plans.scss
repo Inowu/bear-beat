@@ -88,16 +88,6 @@
   animation: plans-skeleton 1.2s ease-in-out infinite;
 }
 
-@keyframes plans-skeleton {
-  0%,
-  100% {
-    opacity: 0.52;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .plans2026__sk {
     animation: none;

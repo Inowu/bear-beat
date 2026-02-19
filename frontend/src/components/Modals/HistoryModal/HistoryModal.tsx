@@ -2,14 +2,14 @@ import './../Modal.scss'
 import './HistoryModal.scss'
 import { ARRAY_10 } from "../../../utils/Constants";
 import { IAdminDownloadHistory, IAdminUser } from "../../../interfaces/admin";
-import { Modal } from 'react-bootstrap'
+import { Modal } from "src/components/ui"
 import { XCircle } from "src/icons"
 import { useState, useEffect, useCallback } from 'react'
 import Pagination from "../../../components/Pagination/Pagination";
 import trpc from "../../../api";
 import { of } from 'await-of';
 import { ErrorModal } from '../ErrorModal/ErrorModal';
-
+import { Button } from "src/components/ui";
 interface ICondition {
     show: boolean;
     onHide: () => void;

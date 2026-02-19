@@ -46,12 +46,6 @@
   animation: crmShimmer 1.25s ease-in-out infinite;
 }
 
-@keyframes crmShimmer {
-  100% {
-    transform: translateX(100%);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .crm-sk::after {
     animation: none;

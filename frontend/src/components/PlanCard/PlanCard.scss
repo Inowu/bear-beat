@@ -933,7 +933,7 @@ html[data-theme="light"] .plan-card-wrapper.is-marketing .plan-card-btn-hero:hov
 html[data-theme="light"] .plan-card-wrapper.is-marketing .plan-card-btn-outline,
 html[data-theme="light"] .plan-card-wrapper.is-marketing .plan-card-alt-toggle {
   border-color: color-mix(in srgb, var(--plan-card-btn-outline-border) 82%, transparent);
-  background: color-mix(in srgb, #ffffff 88%, var(--app-bg-soft));
+  background: color-mix(in srgb, var(--color-white) 88%, var(--app-bg-soft));
 }
 
 .resp-plan {

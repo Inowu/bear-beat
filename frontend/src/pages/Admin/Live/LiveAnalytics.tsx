@@ -1,17 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Activity,
-  Clock,
-  CreditCard,
-  Database,
-  RefreshCw,
-  TrendingUp,
-  Users,
-} from "src/icons";
+  Activity, Clock, CreditCard, Database, RefreshCw, TrendingUp, Users, } from "src/icons";
 import trpc from "../../../api";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import Pagination from "../../../components/Pagination/Pagination";
-import { Input, Select, SkeletonRow, SkeletonTable } from "../../../components/ui";
+import { Input, Select, SkeletonRow, SkeletonTable, Button } from "../../../components/ui";
 import "../Analytics/AnalyticsDashboard.scss";
 import "./LiveAnalytics.scss";
 
@@ -297,7 +290,7 @@ export function LiveAnalytics() {
         >
           {paused ? "En pausa" : "En vivo"}
         </span>
-        <button
+        <Button unstyled
           type="button"
           onClick={() => {
             // Reanudar siempre vuelve a la primera página (modo "live").
@@ -310,8 +303,8 @@ export function LiveAnalytics() {
           className="min-h-[44px] rounded-xl px-4 border border-border bg-bg-card text-text-main font-semibold hover:bg-bg-input transition-colors"
         >
           {paused ? "Reanudar" : "Pausar"}
-        </button>
-        <button
+        </Button>
+        <Button unstyled
           type="button"
           onClick={() => void fetchLive()}
           disabled={loading}
@@ -319,7 +312,7 @@ export function LiveAnalytics() {
         >
           <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
           {loading ? "Actualizando..." : "Actualizar"}
-        </button>
+        </Button>
       </div>
     </div>
   );

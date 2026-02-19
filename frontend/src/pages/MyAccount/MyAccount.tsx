@@ -1,27 +1,9 @@
 import "./MyAccount.scss";
-import {
-  CancellationReasonModal,
-  type CancellationReasonCode,
-  ConditionModal,
-  ErrorModal,
-  PaymentMethodModal,
-  PlansModal,
-  SuccessModal,
-} from "../../components/Modals";
+import { CancellationReasonModal, type CancellationReasonCode, ConditionModal, ErrorModal, PaymentMethodModal, PlansModal, SuccessModal, } from "../../components/Modals";
 import { Elements } from "@stripe/react-stripe-js";
 import type { Stripe } from "@stripe/stripe-js";
 import {
-  CreditCard,
-  Server,
-  HardDriveDownload,
-  Clock,
-  Copy,
-  Eye,
-  EyeOff,
-  FileDown,
-  Mail,
-  Trash2,
-} from "src/icons";
+  CreditCard, Server, HardDriveDownload, Clock, Copy, Eye, EyeOff, FileDown, Mail, Trash2, } from "src/icons";
 import visaLogo from "../../assets/images/cards/visa.png";
 import mastercardLogo from "../../assets/images/cards/master.png";
 import amexLogo from "../../assets/images/cards/express.png";
@@ -39,14 +21,10 @@ import trpc from "../../api";
 import { GROWTH_METRICS, getGrowthAttribution, trackGrowthMetric } from "../../utils/growthMetrics";
 import { formatDateShort, formatInt } from "../../utils/format";
 import {
-  ensureStripeReady,
-  getStripeLoadFailureReason,
-} from "../../utils/stripeLoader";
+  ensureStripeReady, getStripeLoadFailureReason, } from "../../utils/stripeLoader";
 import {
-  openManyChatWidget,
-  syncManyChatWidgetVisibility,
-} from "../../utils/manychatLoader";
-import { SkeletonCard, SkeletonRow } from "../../components/ui";
+  openManyChatWidget, syncManyChatWidgetVisibility, } from "../../utils/manychatLoader";
+import { SkeletonCard, SkeletonRow, Button, Input } from "../../components/ui";
 import { appToast } from "../../utils/toast";
 
 type WorkspaceTabId = "orders" | "payments" | "email";
@@ -648,11 +626,11 @@ function MyAccount() {
           </div>
           <div className="ma-control-actions">
             {hasActiveSubscription && !currentUser.isSubscriptionCancelled && (
-              <button type="button" onClick={startCancel} className="ma-btn ma-btn-danger">
+              <Button unstyled type="button" onClick={startCancel} className="ma-btn ma-btn-danger">
                 Cancelar
-              </button>
+              </Button>
             )}
-            <button
+            <Button unstyled
               type="button"
               onClick={
                 paymentMethods.length > 0
@@ -663,10 +641,10 @@ function MyAccount() {
               className="ma-btn ma-btn-outline"
             >
               {portalLoading ? "Abriendo..." : "Actualizar método"}
-            </button>
-            <button type="button" onClick={() => void openSupportChat()} className="ma-btn ma-btn-soft">
+            </Button>
+            <Button unstyled type="button" onClick={() => void openSupportChat()} className="ma-btn ma-btn-soft">
               Soporte / Abrir chat
-            </button>
+            </Button>
           </div>
         </section>
 
@@ -734,7 +712,7 @@ function MyAccount() {
                 Expiración: {formatDateShort(currentUser.ftpAccount.expiration ?? null)}
               </p>
               <div className="ma-ftp-actions">
-                <button
+                <Button unstyled
                   type="button"
                   onClick={() =>
                     copyToClipboard(
@@ -746,15 +724,15 @@ function MyAccount() {
                   className="ma-btn ma-btn-outline"
                 >
                   Copiar acceso completo
-                </button>
-                <button
+                </Button>
+                <Button unstyled
                   type="button"
                   onClick={() => downloadXMLFile(currentUser.ftpAccount!)}
                   className="ma-btn ma-btn-soft"
                 >
                   <FileDown size={16} />
                   Descargar XML FileZilla
-                </button>
+                </Button>
                 <Link to="/instrucciones" className="ma-btn ma-btn-outline">
                   Ver instrucciones
                 </Link>
@@ -866,9 +844,9 @@ function MyAccount() {
                   </p>
                 )}
                 {hasActiveSubscription && (
-                  <button type="button" onClick={() => void openPlan()} className="ma-btn ma-btn-soft">
+                  <Button unstyled type="button" onClick={() => void openPlan()} className="ma-btn ma-btn-soft">
                     Comprar extra 100 GB
-                  </button>
+                  </Button>
                 )}
               </>
             ) : (
@@ -890,7 +868,7 @@ function MyAccount() {
             {workspaceTabs.map((tab) => {
               const isActive = activeWorkspaceTab === tab.id;
               return (
-                <button
+                <Button unstyled
                   key={tab.id}
                   id={`ma-tab-${tab.id}`}
                   type="button"
@@ -901,7 +879,7 @@ function MyAccount() {
                   onClick={() => setActiveWorkspaceTab(tab.id)}
                 >
                   {tab.label}
-                </button>
+                </Button>
               );
             })}
           </nav>
@@ -967,14 +945,14 @@ function MyAccount() {
                 <CreditCard size={18} />
                 <h2>Tarjetas</h2>
                 {paymentMethods.length > 0 && (
-                  <button
+                  <Button unstyled
                     type="button"
                     onClick={openBillingPortal}
                     disabled={portalLoading}
                     className="ma-btn ma-btn-outline ma-head-action"
                   >
                     {portalLoading ? "Abriendo…" : "Gestionar pagos y facturas"}
-                  </button>
+                  </Button>
                 )}
               </div>
               {!cardLoad ? (
@@ -1015,37 +993,37 @@ function MyAccount() {
                         })()}
                         <div className="ma-card-actions">
                           {paymentMethods.length > 1 && (
-                            <button
+                            <Button unstyled
                               type="button"
                               onClick={() => setDefaultPaymentMethod(x)}
                               className="ma-btn ma-btn-outline ma-btn-small"
                               aria-label="Usar esta tarjeta"
                             >
                               Usar esta
-                            </button>
+                            </Button>
                           )}
-                          <button
+                          <Button unstyled
                             type="button"
                             onClick={() => deletePaymentMethod(x)}
                             className="ma-icon-btn ma-btn-delete"
                             aria-label="Eliminar tarjeta"
                           >
                             <Trash2 size={16} />
-                          </button>
+                          </Button>
                         </div>
                       </div>
                       <p className="ma-card-number">•••• •••• •••• {x.card.last4}</p>
                       <p className="ma-card-date">{x.card.exp_month}/{x.card.exp_year}</p>
                     </article>
                   ))}
-                  <button
+                  <Button unstyled
                     type="button"
                     onClick={() => void openPaymentMethodModal()}
                     className="ma-add-card"
                   >
                     <CreditCard size={20} />
                     <span>Agregar tarjeta</span>
-                  </button>
+                  </Button>
                 </div>
               ) : (
                 <div className="ma-loading-cards">
@@ -1078,14 +1056,14 @@ function MyAccount() {
               ) : !emailPrefs ? (
                 <div className="ma-empty-card">
                   <p>{emailPrefsNotice ?? "No se pudieron cargar tus preferencias de email."}</p>
-                  <button
+                  <Button unstyled
                     type="button"
                     className="ma-btn ma-btn-soft"
                     onClick={loadEmailPreferences}
                     disabled={emailPrefsSaving}
                   >
                     Reintentar
-                  </button>
+                  </Button>
                 </div>
               ) : (
                 <>
@@ -1252,7 +1230,7 @@ function PrefToggle({
         <span className={`ma-switch-flag ${checked ? "is-on" : "is-off"} ${disabled ? "is-disabled" : ""}`}>
           {switchStateLabel}
         </span>
-        <input
+        <Input
           id={id}
           className="ma-switch-input"
           type="checkbox"
@@ -1295,7 +1273,7 @@ function FtpRow({
       <span className="ma-ftp-value">{displayValue}</span>
       <div className="ma-ftp-actions-inline">
         {secret && onToggleSecret && (
-          <button
+          <Button unstyled
             type="button"
             onClick={onToggleSecret}
             className="ma-icon-btn ma-ftp-icon"
@@ -1306,9 +1284,9 @@ function FtpRow({
             ) : (
               <Eye size={16} />
             )}
-          </button>
+          </Button>
         )}
-        <button
+        <Button unstyled
           type="button"
           onClick={() =>
             copyToClipboard(
@@ -1327,7 +1305,7 @@ function FtpRow({
           aria-label="Copiar"
         >
           <Copy size={16} />
-        </button>
+        </Button>
         {copied && <span className="ma-copy-ok">Copiado</span>}
       </div>
     </div>

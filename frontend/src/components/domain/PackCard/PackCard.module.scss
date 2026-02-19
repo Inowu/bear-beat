@@ -1,0 +1,28 @@
+.root {
+  display: grid;
+  gap: var(--bb-space-4);
+}
+
+.head {
+  display: grid;
+  gap: var(--bb-space-2);
+}
+
+.title {
+  margin: 0;
+  color: var(--app-text-heading);
+  font-size: var(--app-font-size-h4);
+  font-weight: var(--app-font-weight-heading);
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bb-space-2);
+}
+
+.description {
+  margin: 0;
+  color: var(--app-text-muted);
+  font-size: var(--app-font-size-label);
+}
