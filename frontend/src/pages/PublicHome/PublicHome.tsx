@@ -55,6 +55,10 @@ const PAYMENT_METHOD_VALUES: PaymentMethodId[] = [
 ];
 type CurrencyKey = "mxn" | "usd";
 const DAYS_PER_MONTH_FOR_DAILY_PRICE = 30;
+const DISPLAY_LOCALE_BY_CURRENCY: Record<CurrencyKey, string> = {
+  mxn: "es-MX",
+  usd: "en-US",
+};
 
 const MEXICO_TIMEZONES = new Set<string>([
   "America/Mexico_City",
@@ -187,13 +191,14 @@ function formatCurrency(
 function formatMonthlyPriceWithCode(
   amount: number,
   currency: "mxn" | "usd",
-  locale: string,
+  _locale: string,
 ): string {
   const code = currency === "mxn" ? "MXN" : "USD";
   const safeAmount = Number(amount);
   if (!Number.isFinite(safeAmount) || safeAmount <= 0) return `${code} $0/mes`;
   const hasDecimals = !Number.isInteger(safeAmount);
-  const formatted = formatCurrency(safeAmount, currency, locale, {
+  const displayLocale = DISPLAY_LOCALE_BY_CURRENCY[currency];
+  const formatted = formatCurrency(safeAmount, currency, displayLocale, {
     minimumFractionDigits: hasDecimals ? 2 : 0,
     maximumFractionDigits: 2,
   });
@@ -243,14 +248,14 @@ function buildHomeHeroAfterPriceLabel(input: {
   const usdDaily = formatCurrency(
     getDailyPrice(input.usdPlan.price),
     "usd",
-    input.numberLocale,
+    DISPLAY_LOCALE_BY_CURRENCY.usd,
     {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     },
   );
 
-  return `${base} · (${usdDaily} USD al día)`;
+  return `${base} · (${usdDaily}/día)`;
 }
 
 function buildCatalogGenresSnapshot(value: unknown): HomeCatalogGenre[] {

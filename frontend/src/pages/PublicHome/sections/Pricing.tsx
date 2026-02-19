@@ -29,6 +29,10 @@ export type PricingPlan = {
 };
 
 const DAYS_PER_MONTH_FOR_DAILY_PRICE = 30;
+const DISPLAY_LOCALE_BY_CURRENCY: Record<"mxn" | "usd", string> = {
+  mxn: "es-MX",
+  usd: "en-US",
+};
 
 function formatCurrency(
   amount: number,
@@ -60,19 +64,20 @@ function getDailyPrice(monthlyPrice: number): number {
 function formatMonthlyPriceWithCode(
   amount: number,
   currency: "mxn" | "usd",
-  locale: string,
+  _locale: string,
 ): string {
   const code = currency === "mxn" ? "MXN" : "USD";
   const hasDecimals = !Number.isInteger(amount);
-  const formatted = formatCurrency(amount, currency, locale, {
+  const displayLocale = DISPLAY_LOCALE_BY_CURRENCY[currency];
+  const formatted = formatCurrency(amount, currency, displayLocale, {
     minimumFractionDigits: hasDecimals ? 2 : 0,
     maximumFractionDigits: 2,
   });
   return `${code} ${formatted}/mes`;
 }
 
-function formatDailyPrice(amount: number, currency: "mxn" | "usd", locale: string): string {
-  return formatCurrency(amount, currency, locale, {
+function formatDailyPrice(amount: number, currency: "mxn" | "usd", _locale: string): string {
+  return formatCurrency(amount, currency, DISPLAY_LOCALE_BY_CURRENCY[currency], {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
@@ -247,7 +252,7 @@ export default function Pricing(props: {
 
     if (monthlyParts.length === 0) return "";
     if (usdPlan && Number(usdPlan.price) > 0) {
-      return `${monthlyParts.join(" · ")} · (${usdDaily} USD al día)`;
+      return `${monthlyParts.join(" · ")} · (${usdDaily}/día)`;
     }
     return monthlyParts.join(" · ");
   }, [mxnPlan, numberLocale, usdDaily, usdPlan]);
