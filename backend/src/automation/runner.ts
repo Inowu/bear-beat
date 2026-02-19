@@ -1188,32 +1188,70 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
     }
 
     // Rule 4: active subscription, no downloads in 7/14/21 days (requires at least one download)
-    for (const days of [7, 14, 21]) {
+    // Choose only the highest pending stage per user to avoid sending 7/14/21 all at once.
+    // Also use latest activation (order date of active access) as an anchor to avoid
+    // immediate reminders right after a fresh purchase/renewal.
+    {
       const rows = await prisma.$queryRaw<
-        Array<{ userId: number; lastDownloadAt: Date }>
+        Array<{
+          userId: number;
+          lastDownloadAt: Date;
+          lastActivationAt: Date | null;
+          referenceAt: Date;
+          stage: number;
+        }>
       >(Prisma.sql`
+        WITH activity AS (
+          SELECT
+            u.id AS userId,
+            MAX(dh.date) AS lastDownloadAt,
+            MAX(o.date_order) AS lastActivationAt
+          FROM descargas_user du
+          INNER JOIN users u
+            ON u.id = du.user_id
+          INNER JOIN download_history dh
+            ON dh.userId = du.user_id
+          LEFT JOIN orders o
+            ON o.id = du.order_id
+          WHERE du.date_end > NOW()
+            AND u.blocked = 0
+          GROUP BY u.id
+        ),
+        candidates AS (
+          SELECT
+            a.userId AS userId,
+            a.lastDownloadAt AS lastDownloadAt,
+            a.lastActivationAt AS lastActivationAt,
+            GREATEST(a.lastDownloadAt, IFNULL(a.lastActivationAt, a.lastDownloadAt)) AS referenceAt,
+            CASE
+              WHEN GREATEST(a.lastDownloadAt, IFNULL(a.lastActivationAt, a.lastDownloadAt)) < DATE_SUB(NOW(), INTERVAL 21 DAY) THEN 21
+              WHEN GREATEST(a.lastDownloadAt, IFNULL(a.lastActivationAt, a.lastDownloadAt)) < DATE_SUB(NOW(), INTERVAL 14 DAY) THEN 14
+              WHEN GREATEST(a.lastDownloadAt, IFNULL(a.lastActivationAt, a.lastDownloadAt)) < DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 7
+              ELSE NULL
+            END AS stage
+          FROM activity a
+        )
         SELECT
-          u.id AS userId,
-          MAX(dh.date) AS lastDownloadAt
-        FROM descargas_user du
-        INNER JOIN users u
-          ON u.id = du.user_id
-        INNER JOIN download_history dh
-          ON dh.userId = du.user_id
+          c.userId,
+          c.lastDownloadAt,
+          c.lastActivationAt,
+          c.referenceAt,
+          c.stage
+        FROM candidates c
         LEFT JOIN automation_action_logs aal
-          ON aal.user_id = du.user_id
+          ON aal.user_id = c.userId
           AND aal.action_key = 'active_no_download'
-          AND aal.stage = ${days}
-        WHERE du.date_end > NOW()
-          AND u.blocked = 0
-        GROUP BY u.id
-        HAVING lastDownloadAt < DATE_SUB(NOW(), INTERVAL ${days} DAY)
-          AND MAX(aal.id) IS NULL
-        ORDER BY lastDownloadAt ASC
+          AND aal.stage = c.stage
+        WHERE c.stage IS NOT NULL
+          AND aal.id IS NULL
+        ORDER BY c.referenceAt ASC
         LIMIT ${limit}
       `);
 
       for (const row of rows) {
+        const days = Number(row.stage);
+        if (days !== 7 && days !== 14 && days !== 21) continue;
+
         const user = await prisma.users.findFirst({ where: { id: row.userId } });
         if (!user || user.blocked) continue;
 
@@ -1223,7 +1261,11 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
           actionKey: 'active_no_download',
           stage: days,
           channel: 'system',
-          metadata: { lastDownloadAt: row.lastDownloadAt.toISOString() },
+          metadata: {
+            lastDownloadAt: row.lastDownloadAt.toISOString(),
+            lastActivationAt: row.lastActivationAt ? row.lastActivationAt.toISOString() : null,
+            referenceAt: row.referenceAt.toISOString(),
+          },
         });
         if (!created) continue;
 
@@ -1235,47 +1277,47 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
               : 'AUTOMATION_ACTIVE_NO_DOWNLOAD_21D';
         safeAddManyChatTag(user, tag).catch(() => {});
 
-	        const templateId = parseNumber(process.env.AUTOMATION_EMAIL_ACTIVE_NO_DOWNLOAD_TEMPLATE_ID, 0);
-	        if (
-	          emailAutomationsEnabled
-	          && templateId > 0
-	          && user.email_marketing_opt_in
-	          && user.email_marketing_news_opt_in
-	          && canSendEmail()
-	        ) {
-	          const url = appendQueryParams(`${resolveClientUrl()}/`, {
-	            utm_source: 'email',
-	            utm_medium: 'automation',
-	            utm_campaign: `active_no_download_${days}d`,
-	            utm_content: 'cta',
-	          });
+        const templateId = parseNumber(process.env.AUTOMATION_EMAIL_ACTIVE_NO_DOWNLOAD_TEMPLATE_ID, 0);
+        if (
+          emailAutomationsEnabled
+          && templateId > 0
+          && user.email_marketing_opt_in
+          && user.email_marketing_news_opt_in
+          && canSendEmail()
+        ) {
+          const url = appendQueryParams(`${resolveClientUrl()}/`, {
+            utm_source: 'email',
+            utm_medium: 'automation',
+            utm_campaign: `active_no_download_${days}d`,
+            utm_content: 'cta',
+          });
           const unsubscribeUrl = buildMarketingUnsubscribeUrl(user.id) ?? undefined;
           const tpl = emailTemplates.automationActiveNoDownload({
             name: user.username,
             url,
-	            days,
-	            unsubscribeUrl,
-	          });
-	          if (await safeSendAutomationEmail({
+            days,
+            unsubscribeUrl,
+          });
+          if (await safeSendAutomationEmail({
             prisma,
-	            userId: user.id,
-	            actionKey: 'active_no_download',
-	            stage: days,
-	            toEmail: user.email,
-	            subject: tpl.subject,
-	            html: tpl.html,
-	            text: tpl.text,
-	            templateKey: `automation_active_no_download_${days}d`,
-              templateVariables: {
-                NAME: user.username,
-                URL: url,
-                DAYS: days,
-                UNSUBSCRIBE_URL: unsubscribeUrl,
-              },
-	          })) {
-	            noteEmailSent();
-	          }
-	        }
+            userId: user.id,
+            actionKey: 'active_no_download',
+            stage: days,
+            toEmail: user.email,
+            subject: tpl.subject,
+            html: tpl.html,
+            text: tpl.text,
+            templateKey: `automation_active_no_download_${days}d`,
+            templateVariables: {
+              NAME: user.username,
+              URL: url,
+              DAYS: days,
+              UNSUBSCRIBE_URL: unsubscribeUrl,
+            },
+          })) {
+            noteEmailSent();
+          }
+        }
 
         bump(`active_no_download_${days}d`);
       }
