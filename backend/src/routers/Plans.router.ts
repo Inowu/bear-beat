@@ -172,6 +172,51 @@ function buildAltPaymentLabel(methods: CheckoutMethod[]): string {
   return labels.join(' / ');
 }
 
+function findPaypalCompanionPlan(opts: {
+  plan: Plans;
+  candidates: Plans[];
+  stripeKey: keyof Plans;
+  paypalKey: keyof Plans;
+}): Plans | null {
+  const { plan, candidates, stripeKey, paypalKey } = opts;
+  if (hasPaypalPlanId(plan, paypalKey)) return plan;
+
+  const targetCurrency = String(plan.moneda ?? '')
+    .trim()
+    .toUpperCase();
+  const targetPrice = String(plan.price ?? '').trim();
+  const targetName = String(plan.name ?? '').trim();
+
+  const hasSameCurrencyAndPrice = (row: Plans): boolean =>
+    String(row.moneda ?? '').trim().toUpperCase() === targetCurrency &&
+    String(row.price ?? '').trim() === targetPrice;
+
+  const withPaypal = candidates.filter((row) => hasPaypalPlanId(row, paypalKey));
+  const byName = withPaypal.filter(
+    (row) =>
+      hasSameCurrencyAndPrice(row) &&
+      String(row.name ?? '').trim() === targetName,
+  );
+  if (byName.length > 0) {
+    return pickBestCheckoutPlanCandidate({
+      candidates: byName,
+      stripeKey,
+      paypalKey,
+    });
+  }
+
+  const byCurrencyAndPrice = withPaypal.filter(hasSameCurrencyAndPrice);
+  if (byCurrencyAndPrice.length > 0) {
+    return pickBestCheckoutPlanCandidate({
+      candidates: byCurrencyAndPrice,
+      stripeKey,
+      paypalKey,
+    });
+  }
+
+  return null;
+}
+
 function formatMonthlyCurrencyHint(
   amount: number | null | undefined,
   currency: PricingCurrency,
@@ -436,7 +481,13 @@ export const plansRouter = router({
     };
 
     const toPublic = (plan: Plans, currency: PricingCurrency) => {
-      const hasPaypal = hasPaypalPlanId(plan, paypalKey);
+      const paypalCompanionPlan = findPaypalCompanionPlan({
+        plan,
+        candidates: allPlans,
+        stripeKey,
+        paypalKey,
+      });
+      const hasPaypal = Boolean(paypalCompanionPlan);
       const currencyCode = currency === 'mxn' ? 'MXN' : 'USD';
 
       const availableMethodSet = new Set<CheckoutMethod>(['card']);
@@ -894,7 +945,14 @@ export const plansRouter = router({
       name: (plan.name ?? '').toString().trim() || 'Membresía Bear Beat',
       price: toFiniteNumber(plan.price),
       gigas: toFiniteNumber(plan.gigas),
-      hasPaypal: hasPaypalPlanId(plan, paypalKey),
+      hasPaypal: Boolean(
+        findPaypalCompanionPlan({
+          plan,
+          candidates: allPlans,
+          stripeKey,
+          paypalKey,
+        }),
+      ),
     });
 
     return {
