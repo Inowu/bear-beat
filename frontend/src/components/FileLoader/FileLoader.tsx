@@ -36,10 +36,22 @@ export const FileLoader = () => {
     jobId: null,
     progress: 0,
   });
+  const queued = useSafeSSE(`compression:queued:${currentUser?.id}`, {
+    jobId: null,
+    progress: 0,
+    queueDepth: 0,
+  });
   const completed = useSafeSSE(`compression:completed:${currentUser?.id}`, {
     jobId: null,
     url: "",
   });
+  const isQueued = Boolean(queued.jobId) && Number(downloading.progress) === 0;
+  const queueDepth = Number(queued.queueDepth || 0);
+  const statusMessage = isQueued
+    ? queueDepth > 1
+      ? `En cola (${queueDepth} activas/en espera)`
+      : "En cola"
+    : "Comprimiendo";
   useEffect(() => {
     if (completed.url !== "") {
       const url = completed.url + "&token=" + userToken;
@@ -68,7 +80,7 @@ export const FileLoader = () => {
             </div>
             <div className="right-side">
               <Button unstyled onClick={stopDownloadAlbum}>Cancelar</Button>
-              <p>{downloading.progress}% </p>
+              <p>{isQueued ? statusMessage : `${downloading.progress}%`}</p>
               <Spinner size={3} width={0.5} color="var(--app-accent)" />
             </div>
           </div>

@@ -2,6 +2,7 @@ import { z } from 'zod';
 import Path from 'path';
 import pm2 from 'pm2';
 import { TRPCError } from '@trpc/server';
+import type { PrismaClient } from '@prisma/client';
 import { fileService } from '../../ftp';
 import { log } from '../../server';
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
@@ -12,6 +13,139 @@ import { logPrefix } from '../../endpoints/download.endpoint';
 import fastFolderSizeSync from 'fast-folder-size/sync';
 import { JobStatus } from '../../queue/jobStatus';
 import axios from 'axios';
+import { isSafeFileName, resolvePathWithinRoot } from '../../utils/safePaths';
+
+const getCompressedRoot = () =>
+  Path.resolve(
+    __dirname,
+    `../../../${process.env.COMPRESSED_DIRS_NAME}`,
+  );
+
+const parseZipNameFromDownloadUrl = (downloadUrl: string | null | undefined): string | null => {
+  const raw = `${downloadUrl ?? ''}`.trim();
+  if (!raw) return null;
+  try {
+    const parsed = new URL(raw);
+    const dirName = `${parsed.searchParams.get('dirName') ?? ''}`.trim();
+    return isSafeFileName(dirName) ? dirName : null;
+  } catch {
+    return null;
+  }
+};
+
+const ensureTokenizedDownloadUrl = (
+  downloadUrl: string,
+  queueJobId: string,
+  zipName: string,
+): string => {
+  const backendUrl = `${process.env.BACKEND_URL ?? ''}`.trim() || 'https://thebearbeatapi.lat';
+  const raw = `${downloadUrl ?? ''}`.trim();
+  if (!raw) {
+    return `${backendUrl}/download-dir?dirName=${encodeURIComponent(
+      zipName,
+    )}&jobId=${encodeURIComponent(queueJobId)}`;
+  }
+
+  try {
+    const parsed = new URL(raw);
+    parsed.searchParams.set('dirName', zipName);
+    parsed.searchParams.set('jobId', queueJobId);
+    return parsed.toString();
+  } catch {
+    return `${backendUrl}/download-dir?dirName=${encodeURIComponent(
+      zipName,
+    )}&jobId=${encodeURIComponent(queueJobId)}`;
+  }
+};
+
+const findReusableDownload = async ({
+  prisma,
+  userId,
+  requestPath,
+  dirSize,
+}: {
+  prisma: PrismaClient;
+  userId: number;
+  requestPath: string;
+  dirSize: number;
+}): Promise<{ jobId: string; downloadUrl: string } | null> => {
+  const activeDownloads = await prisma.dir_downloads.findMany({
+    where: {
+      userId,
+      dirName: Path.basename(requestPath),
+      size: BigInt(dirSize),
+      expirationDate: {
+        gt: new Date(),
+      },
+      jobId: {
+        not: null,
+      },
+    },
+    orderBy: {
+      date: 'desc',
+    },
+    take: 15,
+  });
+
+  if (activeDownloads.length === 0) {
+    return null;
+  }
+
+  const compressedRoot = getCompressedRoot();
+
+  for (const candidate of activeDownloads) {
+    if (!candidate.jobId) continue;
+
+    const dbJob = await prisma.jobs.findFirst({
+      where: {
+        id: candidate.jobId,
+        user_id: userId,
+        queue: process.env.COMPRESSION_QUEUE_NAME as string,
+        status: JobStatus.COMPLETED,
+      },
+    });
+
+    if (!dbJob?.jobId) {
+      continue;
+    }
+
+    const queueJob = await compressionQueue.getJob(dbJob.jobId);
+    const queuePath = `${queueJob?.data?.songsRelativePath ?? ''}`.trim();
+    if (!queuePath || queuePath !== requestPath) {
+      continue;
+    }
+
+    const queueJobId = `${dbJob.jobId}`.trim();
+    const expectedSuffix = `-${userId}-${queueJobId}.zip`;
+    const fromUrl = parseZipNameFromDownloadUrl(candidate.downloadUrl);
+    const fallbackZip = `${Path.basename(requestPath)}-${userId}-${queueJobId}.zip`;
+    const zipName = fromUrl ?? fallbackZip;
+    if (!isSafeFileName(zipName) || !zipName.endsWith(expectedSuffix)) {
+      continue;
+    }
+
+    const zipPath = resolvePathWithinRoot(compressedRoot, zipName);
+    if (!zipPath) {
+      continue;
+    }
+
+    const zipExists = await fileService.exists(zipPath);
+    if (!zipExists) {
+      continue;
+    }
+
+    return {
+      jobId: queueJobId,
+      downloadUrl: ensureTokenizedDownloadUrl(
+        `${candidate.downloadUrl ?? ''}`,
+        queueJobId,
+        zipName,
+      ),
+    };
+  }
+
+  return null;
+};
 
 export const downloadDir = shieldedProcedure
   .input(
@@ -237,6 +371,52 @@ export const downloadDir = shieldedProcedure
       });
     }
 
+    const reusableDownload = await findReusableDownload({
+      prisma,
+      userId: user.id,
+      requestPath: path,
+      dirSize,
+    });
+
+    if (reusableDownload) {
+      try {
+        await prisma.downloadHistory.create({
+          data: {
+            userId: user.id,
+            size: dirSize,
+            date: new Date(),
+            fileName: path,
+            isFolder: true,
+          },
+        });
+      } catch (e: any) {
+        log.warn(
+          `[DOWNLOAD:DIR] Failed to write download_history on cache hit: ${e?.message ?? e}`,
+        );
+      }
+
+      await prisma.ftpquotatallies.update({
+        where: {
+          id: quotaTallies.id,
+        },
+        data: {
+          bytes_out_used: {
+            increment: BigInt(dirSize),
+          },
+        },
+      });
+
+      log.info(
+        `[DOWNLOAD:DIR] Reusing existing zip for path ${path} (jobId=${reusableDownload.jobId})`,
+      );
+
+      return {
+        jobId: reusableDownload.jobId,
+        downloadUrl: reusableDownload.downloadUrl,
+        reused: true,
+      };
+    }
+
     try {
       log.info(`[DOWNLOAD:DIR] Downloading ${path}`);
 
@@ -309,13 +489,33 @@ export const downloadDir = shieldedProcedure
           id: quotaTallies.id,
         },
         data: {
-          bytes_out_used: quotaTallies.bytes_out_used + BigInt(dirSize),
+          bytes_out_used: {
+            increment: BigInt(dirSize),
+          },
         },
       });
 
       log.info(
         `[DOWNLOAD:DIR] Initiating directory compression job ${job.id}`,
       );
+
+      try {
+        const [waitingCount, activeCount] = await Promise.all([
+          compressionQueue.getWaitingCount(),
+          compressionQueue.getActiveCount(),
+        ]);
+
+        await axios.post(`${process.env.BACKEND_SSE_URL}/send-event`, {
+          eventName: `compression:queued:${user.id}`,
+          jobId: job.id,
+          progress: 0,
+          queueDepth: waitingCount + activeCount,
+        });
+      } catch (e: any) {
+        log.warn(
+          `[DOWNLOAD:DIR] Could not publish queued event: ${e?.message ?? e}`,
+        );
+      }
 
       log.info('[DOWNLOAD:DIR] Starting compression worker');
 
@@ -346,6 +546,7 @@ export const downloadDir = shieldedProcedure
 
       return {
         jobId: job.id,
+        reused: false,
       };
     } catch (e: any) {
       log.error(`[DOWNLOAD:DIR] Error while adding job: ${e.message}`);

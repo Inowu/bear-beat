@@ -1421,36 +1421,50 @@ function Home() {
 
     setLoadDownload(true);
     setIndex(index);
-    const domain =
-      process.env.REACT_APP_ENVIRONMENT === 'development'
-        ? 'http://localhost:5001'
-        : 'https://thebearbeatapi.lat';
-    const url =
-      domain +
-      '/download-dir?path=' +
-      encodeURIComponent(resolvedPath) +
-      '&token=' +
-      userToken;
-
-    await downloadAlbum(resolvedPath, file, url, index);
+    await downloadAlbum(resolvedPath, file, index);
     setLoadDownload(false);
     setIndex(-1);
+  };
+  const triggerBrowserDownload = (url: string, name: string) => {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   };
   const downloadAlbum = async (
     path: string,
     file: IFiles,
-    url: string,
     index: number,
   ) => {
     let body = {
       path: path,
     };
     try {
+      const response = await trpc.ftp.downloadDir.query(body);
+
+      if (response?.downloadUrl) {
+        setShowDownload(false);
+        triggerBrowserDownload(
+          `${response.downloadUrl}&token=${encodeURIComponent(userToken)}`,
+          file.name,
+        );
+        markItemAsDownloaded(path, 'd');
+        appToast.success(`Descarga iniciada: ${truncateToastLabel(file.name, 40)}`);
+        trackGrowthMetric(GROWTH_METRICS.FILE_DOWNLOAD_SUCCEEDED, {
+          fileType: 'folder',
+          pagePath: `/${path}`,
+          delivery: 'cached_zip',
+        });
+        return;
+      }
+
       setShowDownload(true);
-      await trpc.ftp.downloadDir.query(body);
       setCurrentFile(file);
       setFileData({
-        path: url,
+        path: '',
         name: file.name,
       });
       markItemAsDownloaded(path, 'd');

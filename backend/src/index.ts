@@ -61,6 +61,7 @@ import {
   processWebhookInboxEvent,
   sweepWebhookInboxEvents,
 } from './webhookInbox/service';
+import { runCompressedDirsCleanupSweep } from './utils/compressedDirsCleanup';
 
 const DEFAULT_CORS_ORIGINS = [
   'http://localhost:3000',
@@ -649,6 +650,51 @@ async function main() {
 
       log.info(
         `[TRACK_METADATA] Interval scan enabled every ${trackMetadataScanIntervalMinutes} minute(s)`,
+      );
+    }
+
+    const compressedDirsCleanupIntervalMinutes = toPositiveInt(
+      process.env.COMPRESSED_DIRS_CLEANUP_INTERVAL_MINUTES,
+      60,
+    );
+    if (compressedDirsCleanupIntervalMinutes > 0) {
+      let cleanupInProgress = false;
+
+      const runCleanupSweep = async () => {
+        if (cleanupInProgress) return;
+        cleanupInProgress = true;
+        try {
+          const result = await runCompressedDirsCleanupSweep();
+          if (
+            result.deletedRows > 0 ||
+            result.deletedFiles > 0 ||
+            result.missingFiles > 0 ||
+            result.errors > 0
+          ) {
+            log.info(
+              `[COMPRESSED_DIRS] Cleanup: expiredRows=${result.expiredRows} deletedRows=${result.deletedRows} deletedFiles=${result.deletedFiles} missingFiles=${result.missingFiles} errors=${result.errors}`,
+            );
+          }
+        } catch (error: any) {
+          log.warn(
+            `[COMPRESSED_DIRS] Cleanup sweep failed: ${error?.message ?? 'unknown error'}`,
+          );
+        } finally {
+          cleanupInProgress = false;
+        }
+      };
+
+      void runCleanupSweep();
+      const cleanupIntervalMs = compressedDirsCleanupIntervalMinutes * 60 * 1000;
+      const cleanupIntervalRef = setInterval(() => {
+        void runCleanupSweep();
+      }, cleanupIntervalMs);
+      if (typeof cleanupIntervalRef.unref === 'function') {
+        cleanupIntervalRef.unref();
+      }
+
+      log.info(
+        `[COMPRESSED_DIRS] Cleanup enabled every ${compressedDirsCleanupIntervalMinutes} minute(s)`,
       );
     }
 
