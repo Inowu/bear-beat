@@ -5,7 +5,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 import { AlertTriangle, Check, Layers3, RefreshCw } from "src/icons";
 import { formatInt } from "../../utils/format";
-import PublicTopNav from "../../components/PublicTopNav/PublicTopNav";
 import PaymentMethodLogos, {
   type PaymentMethodId,
 } from "../../components/PaymentMethodLogos/PaymentMethodLogos";
@@ -585,10 +584,6 @@ function Plans() {
         "bb-marketing-page--flat-cards",
       ].join(" ")}
     >
-      <PublicTopNav
-        loginFrom={`${location.pathname}${location.search}`}
-      />
-
       <section className="plans2026__main" aria-label="Planes y precios">
         <div className="plans2026__container bb-marketing-container--narrow">
           <header className="plans2026__hero" data-testid="plans-hero">
