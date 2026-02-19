@@ -2031,7 +2031,12 @@ function Checkout() {
 
             <section className="checkout2026__methodSection" aria-label="Método de pago">
               <p className="checkout2026__sectionLabel">Método de pago</p>
-              <div className="checkout2026__methodSwitch" role="radiogroup" aria-label="Elige cómo pagar">
+              <div
+                className={`checkout2026__methodSwitch ${methodsForUi.length <= 2 ? "is-compact" : ""}`}
+                role="radiogroup"
+                aria-label="Elige cómo pagar"
+                data-count={methodsForUi.length}
+              >
                 {methodsForUi.map((method) => {
                   const { Icon } = METHOD_META[method];
                   const isActive = selectedMethod === method;

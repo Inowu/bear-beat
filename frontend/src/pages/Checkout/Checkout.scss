@@ -572,6 +572,10 @@
   max-width: 100%;
 }
 
+.checkout2026__methodSwitch.is-compact {
+  overflow-x: hidden;
+}
+
 .checkout2026__methodSwitch::-webkit-scrollbar {
   display: none;
 }
@@ -600,6 +604,11 @@
     border-color 140ms ease,
     color 140ms ease;
   white-space: nowrap;
+}
+
+.checkout2026__methodSwitch.is-compact .checkout2026__methodBtn {
+  flex: 1 1 0;
+  justify-content: center;
 }
 
 .checkout2026__methodBtn:hover {
