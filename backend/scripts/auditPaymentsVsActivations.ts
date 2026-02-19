@@ -124,7 +124,7 @@ const calcPct = (part: number, total: number): number => {
   return roundPct((part / total) * 100);
 };
 
-const toDurationDays = (value: number | null | undefined): number => {
+const toDurationDays = (value: unknown): number => {
   const parsed = typeof value === 'number' ? value : Number(value);
   if (!Number.isFinite(parsed)) return 30;
   const rounded = Math.floor(parsed);
@@ -307,7 +307,7 @@ async function main(): Promise<void> {
 
     const planDurationById = new Map<number, number>();
     for (const row of planRows) {
-      planDurationById.set(row.id, toDurationDays(row.duration as number | null));
+      planDurationById.set(row.id, toDurationDays(row.duration));
     }
 
     const linkedByOrder = new Map<number, DescargasRow[]>();
@@ -448,4 +448,3 @@ main().catch((error) => {
   });
   process.exitCode = 1;
 });
-
