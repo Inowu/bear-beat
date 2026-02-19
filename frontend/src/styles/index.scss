@@ -22,6 +22,8 @@
   /* Brand core */
   --bb-cyan: #08E1F7;
   --bb-mint: #00E6C1;
+  --color-teal: var(--bb-cyan);
+  --color-muted: var(--bb-text-muted);
   --bb-gradient: linear-gradient(11deg, var(--bb-mint), var(--bb-cyan));
   /* Light theme needs an “ink” accent for text/lines (neon cyan is too low-contrast on white). */
   --bb-accent-ink: #007C89;
@@ -366,6 +368,7 @@ html.dark,
   --bb-text-heading: #F7F7F7;
   --bb-text-body: #E1E1E1;
   --bb-text-muted: #B8B8B8;
+  --color-muted: var(--bb-text-muted);
   --bb-shadow: 0 10px 32px rgba(0, 0, 0, 0.38);
   --bb-shadow-card: 0 16px 44px rgba(0, 0, 0, 0.42);
   /* Keep DARK glow strength stable when tweaking LIGHT tokens. */
@@ -629,20 +632,15 @@ textarea,
   touch-action: manipulation;
 }
 
-/* Focus visible para accesibilidad (teclado) */
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible,
-[role="button"]:focus-visible {
-  outline: 2px solid var(--app-accent);
+/* Focus visible global para accesibilidad (teclado) */
+*:focus-visible {
+  outline: 2px solid var(--color-teal);
   outline-offset: 2px;
 }
 
 /* Scroll regions (overflow-x/y) need to be keyboard-focusable to allow arrow-key scroll. */
 [data-scroll-region]:focus-visible {
-  outline: 2px solid var(--app-accent);
+  outline: 2px solid var(--color-teal);
   outline-offset: 2px;
   border-radius: 12px;
 }
@@ -841,15 +839,16 @@ button,
   transform: translateY(0);
 }
 
-/* Área táctil mínima 44px en controles principales (UX móvil) */
-button:not(.icon-only),
-.btn,
-.main-layout-main-container input[type="text"],
-.main-layout-main-container input[type="email"],
-.main-layout-main-container input[type="password"],
-.main-layout-main-container input[type="number"],
-.main-layout-main-container select {
-  min-height: 44px;
+/* Touch targets móvil */
+@media (max-width: 768px) {
+  button,
+  a,
+  [role="button"],
+  input,
+  select {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }
 
 button {
@@ -2186,4 +2185,34 @@ html[data-theme="light"] .modal-content {
 
 html[data-theme="light"] :where(.bb-alert, .analytics-alert, .crm-toast, .admin-error-strip) {
   box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+}
+
+/* Sonner toasts */
+.bb-toast {
+  border-radius: 12px !important;
+  border: 1px solid color-mix(in srgb, var(--app-border) 86%, transparent) !important;
+  background: color-mix(in srgb, var(--app-bg-card) 98%, transparent) !important;
+  color: var(--app-text-heading) !important;
+  box-shadow: var(--app-shadow) !important;
+  font-family: var(--bb-font-ui) !important;
+}
+
+.bb-toast--success {
+  border-color: color-mix(in srgb, var(--app-status-success) 52%, transparent) !important;
+  background: color-mix(in srgb, var(--app-status-success) 14%, var(--app-bg-card)) !important;
+}
+
+.bb-toast--error {
+  border-color: color-mix(in srgb, var(--app-status-error) 56%, transparent) !important;
+  background: color-mix(in srgb, var(--app-status-error) 14%, var(--app-bg-card)) !important;
+}
+
+.bb-toast--warning {
+  border-color: color-mix(in srgb, var(--app-status-warning) 60%, transparent) !important;
+  background: color-mix(in srgb, var(--app-status-warning) 18%, var(--app-bg-card)) !important;
+}
+
+.bb-toast--info {
+  border-color: color-mix(in srgb, var(--color-teal) 58%, transparent) !important;
+  background: color-mix(in srgb, var(--color-teal) 14%, var(--app-bg-card)) !important;
 }

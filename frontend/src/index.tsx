@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import "./index.css";
 import "./styles/bootstrap-modal-lite.css";
 import "./styles/index.scss";
+import "sonner/dist/styles.css";
 import reportWebVitals from "./reportWebVitals";
 import { ErrorFallback } from "./components/ErrorFallback/ErrorFallback";
 import {
@@ -31,6 +32,8 @@ import { bindHotjarStateChange } from "./utils/hotjarBridge";
 import { bindGrowthMetricBridge, trackGrowthMetricBridge } from "./utils/growthMetricsBridge";
 import { ensureMetaAttributionCookies } from "./utils/metaAttributionCookies";
 import { IconContext } from "src/icons";
+import { SkeletonTable } from "./components/ui";
+import { AppToaster } from "./components/Toast/AppToaster";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -149,13 +152,15 @@ function RouteLoader() {
         minHeight: "40vh",
         display: "grid",
         placeItems: "center",
-        color: "var(--theme-text-muted, #9ca3af)",
-        fontWeight: 600,
+        width: "min(620px, 100%)",
       }}
       aria-live="polite"
       aria-busy="true"
     >
-      Cargando...
+      <div className="bb-skeleton-shell" role="status">
+        <span className="sr-only">Actualizando ruta</span>
+        <SkeletonTable />
+      </div>
     </div>
   );
 }
@@ -236,6 +241,7 @@ const router = createBrowserRouter([
           { path: "planesAdmin", element: <Navigate replace to="/admin/planes" /> },
           { path: "almacenamiento", element: withRouteSuspense(<Storage />) },
           { path: "catalogo", element: withRouteSuspense(<CatalogStats />) },
+          { path: "analytics", element: <Navigate replace to="/admin/analitica" /> },
           { path: "analitica", element: withRouteSuspense(<AnalyticsDashboard />) },
           { path: "live", element: withRouteSuspense(<LiveAnalytics />) },
           { path: "crm", element: withRouteSuspense(<CrmDashboard />) },
@@ -666,6 +672,7 @@ root.render(
         <ThemeProvider>
           <UserContextProvider>
             <DownloadContextProvider>
+              <AppToaster />
               {sseEndpoint ? (
                 <SSEProvider endpoint={sseEndpoint}>
                   <RouterProvider router={router} />

@@ -5,4 +5,4 @@ export { EmptyState } from "./EmptyState/EmptyState";
 export { Input } from "./Input/Input";
 export { Select } from "./Select/Select";
 export { ToggleTabs } from "./ToggleTabs/ToggleTabs";
-
+export { SkeletonRow, SkeletonCard, SkeletonTable } from "./Skeleton/Skeleton";

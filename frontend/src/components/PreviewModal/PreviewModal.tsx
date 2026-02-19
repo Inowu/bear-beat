@@ -345,7 +345,7 @@ function PreviewModal(props: PreviewModalPropsI) {
       onEntered={() => setIsModalReady(true)}
       onExited={() => setIsModalReady(false)}
     >
-      <Modal.Header closeButton>
+      <Modal.Header closeButton closeLabel="Cerrar modal">
         <Modal.Title id="contained-modal-title-vcenter">
           Escucha una muestra
         </Modal.Title>

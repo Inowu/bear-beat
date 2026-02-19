@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { FolderDown, Music } from "src/icons";
+import { FolderDown, Music, RefreshCw } from "src/icons";
 import { IDownloads } from "interfaces/Files";
 import trpc from "../../api";
-import { Spinner } from "../../components/Spinner/Spinner";
-import { Button, EmptyState } from "../../components/ui";
-import { RefreshCw, AlertTriangle } from "src/icons";
+import { Button, EmptyState, SkeletonCard, SkeletonTable } from "../../components/ui";
 
 function Downloads() {
   const [downloads, setDownloads] = useState<IDownloads[] | null>(null);
@@ -41,9 +39,7 @@ function Downloads() {
       {isError && (
         <div className="min-h-[240px] flex items-center justify-center">
           <EmptyState
-            tone="danger"
-            icon={<AlertTriangle size={22} />}
-            title="No se pudo cargar"
+            variant="connection-error"
             description={loadError}
             action={
               <Button variant="secondary" leftIcon={<RefreshCw size={18} />} onClick={() => void retrieveDownloads()}>
@@ -54,29 +50,23 @@ function Downloads() {
         </div>
       )}
 
-      {(isLoading || isEmpty) && (
-        <div className="min-h-[260px] flex items-center justify-center">
-          <div
-            className={`app-state-panel ${isLoading ? "is-loading" : "is-empty"}`}
-            role={isLoading ? "status" : "note"}
-            aria-live={isLoading ? "polite" : undefined}
-          >
-            <span className="app-state-icon" aria-hidden>
-              {isLoading ? (
-                <Spinner size={2.6} width={0.25} color="var(--app-accent)" />
-              ) : (
-                <Music />
-              )}
-            </span>
-            <h2 className="app-state-title">
-              {isLoading ? "Cargando descargas" : "Aún no hay descargas"}
-            </h2>
-            <p className="app-state-copy">
-              {isLoading
-                ? "Estamos preparando tu historial."
-                : "Cuando descargues carpetas o archivos, aparecerán aquí."}
-            </p>
+      {isLoading && (
+        <div className="grid gap-4" role="status" aria-live="polite" aria-busy="true">
+          <span className="sr-only">Actualizando historial de descargas</span>
+          <div className="hidden md:block rounded-xl border border-border overflow-hidden p-4 bg-bg-card">
+            <SkeletonTable />
           </div>
+          <div className="grid md:hidden gap-4">
+            {Array.from({ length: 3 }).map((_, idx) => (
+              <SkeletonCard key={`dl-sk-${idx}`} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {isEmpty && (
+        <div className="min-h-[260px] flex items-center justify-center">
+          <EmptyState variant="downloads-empty" />
         </div>
       )}
 
@@ -84,7 +74,7 @@ function Downloads() {
       <div
         className={`hidden md:block rounded-xl border border-border overflow-hidden ${
           isLoading || isEmpty || isError ? "hidden" : ""
-        }`}
+        } bb-skeleton-fade-in`}
       >
         <table className="w-full text-left">
           <thead>
@@ -120,7 +110,11 @@ function Downloads() {
       </div>
 
       {/* Vista Móvil: tarjetas */}
-      <div className={`block md:hidden grid grid-cols-1 gap-4 ${isLoading || isEmpty || isError ? "hidden" : ""}`}>
+      <div
+        className={`block md:hidden grid grid-cols-1 gap-4 ${
+          isLoading || isEmpty || isError ? "hidden" : ""
+        } bb-skeleton-fade-in`}
+      >
         {downloads !== null && downloads.length > 0 &&
           downloads.map((download: IDownloads, index: number) => (
             <div

@@ -11,6 +11,7 @@ import {
 } from "@paypal/paypal-js/types/components/buttons"
 import { useEffect, useRef, useState } from 'react'
 import trpc from "../../api";
+import { SkeletonRow } from "../ui";
 import "./PayPalComponent.scss";
 
 interface Props {
@@ -299,7 +300,7 @@ export default function PayPalComponent(props: Props) {
     const showFallback = status !== "ready";
     const fallbackText =
         status === "loading"
-            ? "Cargando PayPal..."
+            ? ""
             : errorCopy || "No pudimos cargar PayPal. Intenta de nuevo o elige otro método.";
 
     return (
@@ -309,9 +310,19 @@ export default function PayPalComponent(props: Props) {
                 <div
                     className={`paypal-fallback paypal-fallback--${status}`}
                     role="status"
-                    aria-label={status === "loading" ? "Cargando PayPal" : "Error con PayPal"}
+                    aria-label={status === "loading" ? "Actualizando PayPal" : "Error con PayPal"}
                 >
-                    <span className="paypal-fallback__text">{fallbackText}</span>
+                    {status === "loading" ? (
+                        <>
+                            <span className="sr-only">Actualizando PayPal</span>
+                            <div className="bb-skeleton-stack" aria-hidden="true">
+                                <SkeletonRow height="14px" />
+                                <SkeletonRow width="74%" height="14px" />
+                            </div>
+                        </>
+                    ) : (
+                        <span className="paypal-fallback__text">{fallbackText}</span>
+                    )}
                     {status === "error" && (
                         <button
                             type="button"

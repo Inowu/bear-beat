@@ -1201,14 +1201,18 @@ html[data-theme="light"] .home-hero__cta-demo:hover:not(:disabled) {
 
 .social-proof__modal-loading {
   margin: 10px 0 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+  display: grid;
+  gap: 10px;
+  width: min(560px, 100%);
   padding: 10px 12px;
   border-radius: 14px;
   color: color-mix(in srgb, var(--ph-text-muted) 92%, transparent);
   font-size: 13px;
   line-height: 1.2;
+}
+
+.social-proof__modal-skeleton {
+  width: 100%;
 }
 
 .social-proof__sr-player {

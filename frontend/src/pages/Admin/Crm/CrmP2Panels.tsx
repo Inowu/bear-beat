@@ -229,7 +229,7 @@ export function CrmP2Panels({ rangeDays }: { rangeDays: number }) {
             role="status"
             aria-live="polite"
             aria-busy="true"
-            aria-label="Cargando segmentación CRM"
+            aria-label="Actualizando segmentación CRM"
           >
             <div className="crm-kpi-grid" role="presentation" aria-hidden>
               {Array.from({ length: 3 }).map((_, idx) => (
@@ -246,12 +246,12 @@ export function CrmP2Panels({ rangeDays }: { rangeDays: number }) {
               columns={6}
               rows={5}
               compact
-              ariaLabel="Cargando segmentación por fuente"
+              ariaLabel="Actualizando segmentación por fuente"
             />
             <CrmTableSkeleton
               columns={8}
               rows={6}
-              ariaLabel="Cargando usuarios en riesgo de churn"
+              ariaLabel="Actualizando usuarios en riesgo de churn"
             />
           </div>
         ) : segmentation ? (
@@ -379,7 +379,7 @@ export function CrmP2Panels({ rangeDays }: { rangeDays: number }) {
             role="status"
             aria-live="polite"
             aria-busy="true"
-            aria-label="Cargando historial de payment_failed"
+            aria-label="Actualizando historial de payment_failed"
           >
             <div className="crm-kpi-grid" role="presentation" aria-hidden>
               {Array.from({ length: 4 }).map((_, idx) => (
@@ -395,13 +395,13 @@ export function CrmP2Panels({ rangeDays }: { rangeDays: number }) {
             <CrmTableSkeleton
               columns={7}
               rows={6}
-              ariaLabel="Cargando eventos payment_failed"
+              ariaLabel="Actualizando eventos payment_failed"
             />
             <CrmTableSkeleton
               columns={5}
               rows={5}
               compact
-              ariaLabel="Cargando webhooks fallidos"
+              ariaLabel="Actualizando webhooks fallidos"
             />
           </div>
         ) : paymentFailures ? (

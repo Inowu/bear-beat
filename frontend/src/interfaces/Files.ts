@@ -18,6 +18,7 @@ export interface IFiles {
   path?: string;
   size: number;
   metadata?: ITrackMetadata | null;
+  already_downloaded?: boolean;
 }
 export interface IDownloads {
   dirName: string;

@@ -9,7 +9,7 @@ import { useUserContext } from "../../../contexts/UserContext";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
 import { Plus, MoreVertical, RefreshCw, AlertTriangle } from "src/icons";
-import { Select } from "../../../components/ui";
+import { Select, SkeletonRow } from "../../../components/ui";
 
 interface IAdminFilter {
   page: number;
@@ -245,10 +245,11 @@ export const DownloadHistory = () => {
             type="button"
             onClick={() => fetchConsumption()}
             disabled={consumptionLoading}
+            aria-label={consumptionLoading ? "Actualizando consumo por usuario" : undefined}
             className="inline-flex items-center gap-2 bg-bg-card hover:bg-bg-input text-text-main font-medium rounded-pill px-4 py-2 border border-border transition-colors disabled:opacity-50"
           >
             <RefreshCw size={18} />
-            {consumptionLoading ? "Cargando…" : "Actualizar"}
+            {consumptionLoading ? <SkeletonRow width="78px" height="14px" /> : "Actualizar"}
           </button>
         </>
       )}

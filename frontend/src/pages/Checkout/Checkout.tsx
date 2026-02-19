@@ -1890,12 +1890,12 @@ function Checkout() {
 
             <section
               className="checkout-card bb-hero-card checkout2026__card checkout2026__card--skeleton"
-              aria-label="Cargando plan"
+              aria-label="Actualizando plan"
               role="status"
               aria-live="polite"
               aria-busy="true"
             >
-              <p className="checkout2026__skeletonStatus">Cargando plan…</p>
+              <span className="sr-only">Actualizando plan seleccionado</span>
 
               <div className="checkout2026__cardHead" aria-hidden>
                 <span className="checkout2026__sk checkout2026__sk--pill" />
@@ -1992,7 +1992,7 @@ function Checkout() {
   return (
     <div className={checkoutPageClassName}>
       {TopNav}
-      <section className="checkout2026__main" aria-label="Checkout">
+      <section className="checkout2026__main bb-skeleton-fade-in" aria-label="Checkout">
         <div className="checkout2026__container">
           <header className="checkout2026__hero">
             <h1>{checkoutHeroTitle}</h1>

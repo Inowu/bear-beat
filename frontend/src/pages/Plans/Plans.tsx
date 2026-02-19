@@ -510,7 +510,7 @@ function Plans() {
             <>
               <section
                 className="plans2026__bento plans2026__bento--skeleton"
-                aria-label="Cargando valor incluido"
+                aria-label="Actualizando valor incluido"
                 role="status"
                 aria-live="polite"
                 aria-busy="true"
@@ -529,14 +529,12 @@ function Plans() {
 
               <section
                 className="plans2026__card bb-hero-card plans2026__card--skeleton"
-                aria-label="Cargando plan"
+                aria-label="Actualizando plan"
                 role="status"
                 aria-live="polite"
                 aria-busy="true"
               >
-                <p className="plans2026__skeletonStatus">
-                  Cargando tu mejor opción…
-                </p>
+                <span className="sr-only">Actualizando tu mejor opción</span>
 
                 <div className="plans2026__card-head" aria-hidden>
                   <span className="plans2026__sk plans2026__sk--pill" />
@@ -603,7 +601,7 @@ function Plans() {
               </div>
             </section>
           ) : (
-            <>
+            <div className="bb-skeleton-fade-in">
               <section className="plans2026__bento" aria-label="Valor incluido">
                 <article className="plans2026__bento-card bb-bento-card">
                   <p className="plans2026__bento-value">
@@ -776,7 +774,7 @@ function Plans() {
                   </p>
                 </div>
               </section>
-            </>
+            </div>
           )}
         </div>
       </section>

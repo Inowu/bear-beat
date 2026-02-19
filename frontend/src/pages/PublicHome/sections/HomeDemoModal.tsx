@@ -22,7 +22,7 @@ export default function HomeDemoModal(props: {
       className="home-demo-modal"
       aria-labelledby="home-demo-title"
     >
-      <Modal.Header closeButton>
+      <Modal.Header closeButton closeLabel="Cerrar modal">
         <Modal.Title id="home-demo-title">Así se ve por dentro</Modal.Title>
       </Modal.Header>
       <Modal.Body>

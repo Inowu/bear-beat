@@ -7,20 +7,20 @@ import {
   ChevronRight,
   Search,
   Play,
+  Pause,
   Download,
   BookOpen,
   Server,
   FileMusic,
   FileVideoCamera,
   FileArchive,
+  Microphone,
   File,
   X,
-  AlertTriangle,
   RefreshCw,
 } from "src/icons";
 import PreviewModal from '../../components/PreviewModal/PreviewModal';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { CSSProperties } from 'react';
 import type { Stripe } from '@stripe/stripe-js';
 import trpc from '../../api';
 import { IFiles, ITrackMetadata } from 'interfaces/Files';
@@ -47,6 +47,14 @@ import {
   ensureStripeReady,
   getStripeLoadFailureReason,
 } from '../../utils/stripeLoader';
+import { Button, EmptyState, SkeletonCard, SkeletonRow, SkeletonTable } from "../../components/ui";
+import { appToast, truncateToastLabel } from "../../utils/toast";
+import {
+  MOBILE_LIBRARY_ROOT_EVENT,
+  MOBILE_LIBRARY_ROOT_STORAGE_KEY,
+  MOBILE_SEARCH_QUERY_STORAGE_KEY,
+  MOBILE_SEARCH_SUBMIT_EVENT,
+} from "../../constants/mobileNavigation";
 
 interface IAlbumData {
   name: string;
@@ -69,10 +77,63 @@ interface PendingDownload {
   type: 'file' | 'folder';
 }
 
-type FileVisualKind = 'folder' | 'audio' | 'video' | 'archive' | 'file';
+type RecentPack = {
+  folderPath: string;
+  name: string;
+  fileCount: number | string | bigint;
+  addedAt: string | Date;
+  genre: string | null;
+};
+
+type RootNewFileCounts = {
+  Audios?: number;
+  Karaoke?: number;
+  Videos?: number;
+  [key: string]: number | undefined;
+};
+
+type PublicTopDownloadItem = {
+  path: string;
+  name: string;
+  downloads: number | string | bigint;
+  lastDownload?: string | Date;
+};
+
+type PublicTopDownloadsResponse = {
+  audio?: PublicTopDownloadItem[];
+  video?: PublicTopDownloadItem[];
+  karaoke?: PublicTopDownloadItem[];
+};
+
+type MonthlyTrendingRow = {
+  path: string;
+  name: string;
+  downloads: number;
+  format: string;
+  hasPreview: boolean;
+  lastDownloadMs: number;
+};
+
+type ForYouRecommendation = {
+  path: string;
+  name: string;
+  type: string;
+  size: number;
+  metadata: ITrackMetadata | null;
+  genre: string | null;
+  hasPreview: boolean;
+};
+
+type ForYouFeed = {
+  eligible: boolean;
+  totalDownloads: number;
+  recommendations: ForYouRecommendation[];
+};
+
+type FileVisualKind = 'folder' | 'audio' | 'video' | 'karaoke' | 'archive' | 'file';
 type PreviewKind = 'audio' | 'video';
 type MediaScope = 'audio' | 'video' | 'karaoke' | null;
-type TrackCardTheme = 'audio' | 'video';
+type SearchQuickFilter = 'audio' | 'video' | 'karaoke' | 'mp3' | 'wav';
 type ResolvedTrackMetadata = {
   artist: string | null;
   title: string;
@@ -92,6 +153,38 @@ const VIDEO_EXT_REGEX = /\.(mp4|mov|mkv|avi|wmv|webm|m4v)$/i;
 const AUDIO_PATH_REGEX = /(^|\/)audios?(\/|$)/i;
 const VIDEO_PATH_REGEX = /(^|\/)videos?(\/|$)/i;
 const KARAOKE_PATH_REGEX = /(^|\/)karaokes?(\/|$)/i;
+const PREVIEW_AUDIO_FORMATS = new Set([
+  'MP3',
+  'WAV',
+  'AAC',
+  'M4A',
+  'FLAC',
+  'OGG',
+  'AIFF',
+  'ALAC',
+]);
+const PREVIEW_VIDEO_FORMATS = new Set([
+  'MP4',
+  'MOV',
+  'MKV',
+  'AVI',
+  'WMV',
+  'WEBM',
+  'M4V',
+]);
+const MINUTE_MS = 60 * 1000;
+const HOUR_MS = 60 * MINUTE_MS;
+const DAY_MS = 24 * HOUR_MS;
+const WEEK_MS = 7 * DAY_MS;
+const MONTH_MS = 30 * DAY_MS;
+const YEAR_MS = 365 * DAY_MS;
+const SEARCH_QUICK_FILTERS: Array<{ value: SearchQuickFilter; label: string }> = [
+  { value: 'audio', label: 'Audio' },
+  { value: 'video', label: 'Video' },
+  { value: 'karaoke', label: 'Karaoke' },
+  { value: 'mp3', label: 'MP3' },
+  { value: 'wav', label: 'WAV' },
+];
 
 const normalizeFilePath = (value?: string): string => (value ?? '').replace(/\\/g, '/');
 const normalizeOptionalText = (value: unknown): string | null => {
@@ -104,25 +197,12 @@ const normalizeOptionalNumber = (value: unknown): number | null => {
   }
   return value;
 };
-const toTrackCardTheme = (kind: FileVisualKind): TrackCardTheme | null => {
-  if (kind === 'audio') return 'audio';
-  if (kind === 'video') return 'video';
-  return null;
-};
-const formatDurationPill = (durationSeconds: number | null): string | null => {
-  if (!durationSeconds || durationSeconds < 1) return null;
-  const totalSeconds = Math.floor(durationSeconds);
-  const mins = Math.floor(totalSeconds / 60);
-  const secs = totalSeconds % 60;
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
-};
 const buildTrackMetadata = (
   file: IFiles,
   kind: FileVisualKind,
 ): ResolvedTrackMetadata | null => {
   if (file.type === 'd') return null;
-  const trackTheme = toTrackCardTheme(kind);
-  if (!trackTheme) return null;
+  if (kind !== 'audio' && kind !== 'video' && kind !== 'karaoke') return null;
 
   const inferred = inferTrackMetadata(file.name);
   const backend = (file.metadata ?? null) as ITrackMetadata | null;
@@ -160,12 +240,179 @@ const buildTrackMetadata = (
     source: normalizeOptionalText(backend?.source) === 'database' ? 'database' : 'inferred',
   };
 };
-const getTrackCoverSeed = (value: string): number => {
-  let hash = 0;
-  for (let i = 0; i < value.length; i += 1) {
-    hash = (hash * 31 + value.charCodeAt(i)) % 360;
+
+type KeyTone = 'blue' | 'green' | 'teal' | 'amber' | 'violet' | 'rose';
+
+const resolveKeyTone = (value: string | null): KeyTone => {
+  const normalized = `${value ?? ''}`.trim().toUpperCase();
+  if (!normalized) return 'blue';
+
+  const camelotMatch = /^(\d{1,2})([AB])$/.exec(normalized);
+  if (camelotMatch) {
+    return camelotMatch[2] === 'A' ? 'green' : 'blue';
   }
-  return Math.abs(hash);
+
+  const note = /^([A-G])/.exec(normalized)?.[1];
+  if (note === 'A') return 'green';
+  if (note === 'B') return 'teal';
+  if (note === 'C') return 'blue';
+  if (note === 'D') return 'amber';
+  if (note === 'E') return 'rose';
+  if (note === 'F') return 'violet';
+  if (note === 'G') return 'teal';
+  return 'blue';
+};
+
+const getResolvedFormatBadge = (fileName: string, metadataFormat: string | null): string | null => {
+  const fromMetadata = normalizeOptionalText(metadataFormat);
+  if (fromMetadata) return fromMetadata.toUpperCase();
+  const ext = fileName.includes('.')
+    ? fileName.slice(fileName.lastIndexOf('.') + 1).trim()
+    : '';
+  if (!ext || ext.length > 5) return null;
+  return ext.toUpperCase();
+};
+
+const formatRecentPackAge = (value: string): string => {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return 'Hace poco';
+  }
+
+  const diffMs = Math.max(0, Date.now() - parsed.getTime());
+
+  if (diffMs >= YEAR_MS) {
+    const years = Math.floor(diffMs / YEAR_MS);
+    return `Hace ${years} año${years === 1 ? '' : 's'}`;
+  }
+  if (diffMs >= MONTH_MS) {
+    const months = Math.floor(diffMs / MONTH_MS);
+    return `Hace ${months} mes${months === 1 ? '' : 'es'}`;
+  }
+  if (diffMs >= WEEK_MS) {
+    const weeks = Math.floor(diffMs / WEEK_MS);
+    return `Hace ${weeks} semana${weeks === 1 ? '' : 's'}`;
+  }
+  if (diffMs >= DAY_MS) {
+    const days = Math.floor(diffMs / DAY_MS);
+    return `Hace ${days} día${days === 1 ? '' : 's'}`;
+  }
+  if (diffMs >= HOUR_MS) {
+    const hours = Math.floor(diffMs / HOUR_MS);
+    return `Hace ${hours} hora${hours === 1 ? '' : 's'}`;
+  }
+  if (diffMs >= MINUTE_MS) {
+    const minutes = Math.floor(diffMs / MINUTE_MS);
+    return `Hace ${minutes} min`;
+  }
+  return 'Hace unos segundos';
+};
+
+const formatRecentPackFileCount = (count: number): string =>
+  `${count} archivo${count === 1 ? '' : 's'}`;
+
+const formatNewBadgeLabel = (count: number): string =>
+  `· ${count} nuevo${count === 1 ? '' : 's'}`;
+
+const formatTrendingDownloads = (count: number): string =>
+  new Intl.NumberFormat('es-MX').format(Math.max(0, Math.floor(count)));
+
+const toTrendingNumber = (value: number | string | bigint): number => {
+  if (typeof value === 'bigint') {
+    const max = BigInt(Number.MAX_SAFE_INTEGER);
+    return Number(value > max ? max : value);
+  }
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  if (!Number.isFinite(value)) return 0;
+  return value;
+};
+
+const toTrendingTimestamp = (value?: string | Date): number => {
+  if (!value) return 0;
+  const parsed = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(parsed.getTime())) return 0;
+  return parsed.getTime();
+};
+
+const getTrendingFormatBadge = (nameOrPath: string): string => {
+  const cleaned = `${nameOrPath ?? ''}`.trim();
+  const ext = cleaned.includes('.')
+    ? cleaned.slice(cleaned.lastIndexOf('.') + 1).toUpperCase()
+    : '';
+  if (!ext) return 'FILE';
+  if (ext.length > 5) return 'FILE';
+  return ext;
+};
+
+const canTrendingPreview = (format: string): boolean =>
+  PREVIEW_AUDIO_FORMATS.has(format) || PREVIEW_VIDEO_FORMATS.has(format);
+
+const resolveRootBadgeKey = (folderName: string): string => {
+  const normalized = folderName.trim().toLocaleLowerCase('es-MX');
+  if (normalized.startsWith('audio')) return 'Audios';
+  if (normalized.startsWith('video')) return 'Videos';
+  if (normalized.startsWith('karaoke')) return 'Karaoke';
+  return folderName;
+};
+
+const buildMonthlyTrending = (payload: PublicTopDownloadsResponse | null): MonthlyTrendingRow[] => {
+  if (!payload) return [];
+
+  const merged = [
+    ...(Array.isArray(payload.audio) ? payload.audio : []),
+    ...(Array.isArray(payload.video) ? payload.video : []),
+    ...(Array.isArray(payload.karaoke) ? payload.karaoke : []),
+  ];
+
+  const byPath = new Map<string, MonthlyTrendingRow>();
+
+  merged.forEach((item) => {
+    const normalizedPath = normalizeFilePath(item?.path ?? '').replace(/^\/+/, '');
+    if (!normalizedPath) return;
+
+    const downloads = toTrendingNumber(item?.downloads ?? 0);
+    if (!Number.isFinite(downloads) || downloads <= 0) return;
+
+    const normalizedName = `${item?.name ?? ''}`.trim();
+    const name = normalizedName || normalizedPath.split('/').pop() || normalizedPath;
+    const format = getTrendingFormatBadge(name || normalizedPath);
+    const lastDownloadMs = toTrendingTimestamp(item?.lastDownload);
+
+    const row: MonthlyTrendingRow = {
+      path: normalizedPath,
+      name,
+      downloads: Math.floor(downloads),
+      format,
+      hasPreview: canTrendingPreview(format),
+      lastDownloadMs,
+    };
+
+    const previous = byPath.get(normalizedPath);
+    if (!previous) {
+      byPath.set(normalizedPath, row);
+      return;
+    }
+
+    if (row.downloads > previous.downloads) {
+      byPath.set(normalizedPath, row);
+      return;
+    }
+
+    if (row.downloads === previous.downloads && row.lastDownloadMs > previous.lastDownloadMs) {
+      byPath.set(normalizedPath, row);
+    }
+  });
+
+  return Array.from(byPath.values())
+    .sort((left, right) => {
+      if (right.downloads !== left.downloads) return right.downloads - left.downloads;
+      if (right.lastDownloadMs !== left.lastDownloadMs) return right.lastDownloadMs - left.lastDownloadMs;
+      return left.name.localeCompare(right.name, 'es-MX');
+    })
+    .slice(0, 10);
 };
 
 function Home() {
@@ -204,6 +451,7 @@ function Home() {
     page: 0,
   });
   const [searchValue, setSearchValue] = useState<string>('');
+  const [searchQuickFilter, setSearchQuickFilter] = useState<SearchQuickFilter | null>(null);
   const [loadError, setLoadError] = useState<string>('');
   const [showVerifyModal, setShowVerifyModal] = useState<boolean>(false);
   const [pendingDownload, setPendingDownload] = useState<PendingDownload | null>(null);
@@ -211,9 +459,28 @@ function Home() {
   const [isNewUserOnboarding, setIsNewUserOnboarding] = useState(false);
   const [onboardingCheckLoading, setOnboardingCheckLoading] = useState(false);
   const [recommendedDownloadLoading, setRecommendedDownloadLoading] = useState(false);
+  const [recentPacks, setRecentPacks] = useState<RecentPack[]>([]);
+  const [recentPacksLoading, setRecentPacksLoading] = useState(true);
+  const [newFileCounts, setNewFileCounts] = useState<RootNewFileCounts>({});
+  const [monthlyTrending, setMonthlyTrending] = useState<MonthlyTrendingRow[]>([]);
+  const [monthlyTrendingLoading, setMonthlyTrendingLoading] = useState(true);
+  const [monthlyTrendingPreviewPath, setMonthlyTrendingPreviewPath] = useState<string | null>(null);
+  const [forYouRecommendations, setForYouRecommendations] = useState<ForYouRecommendation[]>([]);
+  const [forYouLoading, setForYouLoading] = useState(true);
+  const [forYouEligible, setForYouEligible] = useState(false);
+  const [forYouPreviewPath, setForYouPreviewPath] = useState<string | null>(null);
+  const [inlinePreviewPath, setInlinePreviewPath] = useState<string | null>(null);
+  const [inlinePreviewProgress, setInlinePreviewProgress] = useState(0);
+  const [inlinePreviewPlaying, setInlinePreviewPlaying] = useState(false);
+  const [inlinePreviewLoadingPath, setInlinePreviewLoadingPath] = useState<string | null>(null);
+  const [inlineUnavailablePaths, setInlineUnavailablePaths] = useState<Record<string, true>>({});
   const searchRequestRef = useRef(0);
   const lastTrackedSearchRef = useRef<string>('');
   const stripeWarmupRef = useRef<Promise<boolean> | null>(null);
+  const recentCarouselRef = useRef<HTMLDivElement | null>(null);
+  const inlineAudioRef = useRef<HTMLAudioElement | null>(null);
+  const inlinePreviewRequestRef = useRef(0);
+  const inlineDemoUrlCacheRef = useRef<Map<string, string>>(new Map());
 
   const stripeOptions = useMemo(() => ({ appearance: getStripeAppearance(theme) }), [theme]);
 
@@ -223,6 +490,11 @@ function Home() {
     }
 
     const fileName = file.name.toLowerCase();
+    const normalizedPath = normalizeFilePath(file.path).toLowerCase();
+    const isKaraoke = KARAOKE_PATH_REGEX.test(normalizedPath) || fileName.includes('karaoke');
+    if (isKaraoke) {
+      return 'karaoke';
+    }
     if (/\.(mp3|wav|aac|m4a|flac|ogg|aiff|alac)$/i.test(fileName)) {
       return 'audio';
     }
@@ -246,10 +518,47 @@ function Home() {
     if (kind === 'video') {
       return 'Video';
     }
+    if (kind === 'karaoke') {
+      return 'Karaoke';
+    }
     if (kind === 'archive') {
       return 'Comprimido';
     }
     return 'Archivo';
+  };
+
+  const getRecentPackVisualKind = (pack: RecentPack): FileVisualKind => {
+    const haystack = `${pack.folderPath} ${pack.genre ?? ''}`.toLowerCase();
+    if (haystack.includes('video')) {
+      return 'video';
+    }
+    if (pack.genre) {
+      return 'audio';
+    }
+    return 'folder';
+  };
+
+  const matchesSearchQuickFilter = (file: IFiles, filter: SearchQuickFilter): boolean => {
+    if (file.type !== '-') {
+      return false;
+    }
+
+    const kind = getFileVisualKind(file);
+    if (filter === 'audio') {
+      return kind === 'audio';
+    }
+    if (filter === 'video') {
+      return kind === 'video';
+    }
+    if (filter === 'karaoke') {
+      return kind === 'karaoke';
+    }
+
+    const formatBadge = getResolvedFormatBadge(file.name, file.metadata?.format ?? null);
+    if (!formatBadge) return false;
+    if (filter === 'mp3') return formatBadge === 'MP3';
+    if (filter === 'wav') return formatBadge === 'WAV';
+    return false;
   };
 
   const resolveMediaScope = (segments: string[]): MediaScope => {
@@ -303,6 +612,128 @@ function Home() {
     }
     const joinedPath = [...pastFile, file.name].filter(Boolean).join('/');
     return `/${joinedPath}`;
+  };
+
+  const resolvePreviewPath = (file: IFiles): string =>
+    resolveFilePath(file).replace(/^\/+/, '');
+
+  const isInlineDemoUnavailableError = (error: unknown): boolean => {
+    const code = `${(error as any)?.data?.code ?? (error as any)?.shape?.data?.code ?? ''}`;
+    if (
+      code === 'NOT_FOUND' ||
+      code === 'BAD_REQUEST' ||
+      code === 'FORBIDDEN' ||
+      code === 'INTERNAL_SERVER_ERROR'
+    ) {
+      return true;
+    }
+    const message = `${(error as any)?.message ?? ''}`.toLowerCase();
+    return (
+      message.includes('no existe') ||
+      message.includes('no pudimos preparar el demo') ||
+      message.includes('solo se permiten')
+    );
+  };
+
+  const stopInlinePreviewAudio = (options: { clearSource?: boolean } = {}) => {
+    const audio = inlineAudioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+      if (options.clearSource) {
+        audio.removeAttribute('src');
+        audio.load();
+      }
+    }
+    inlinePreviewRequestRef.current += 1;
+    setInlinePreviewPath(null);
+    setInlinePreviewProgress(0);
+    setInlinePreviewPlaying(false);
+    setInlinePreviewLoadingPath(null);
+  };
+
+  const toggleInlineAudioPreview = async (file: IFiles) => {
+    const audio = inlineAudioRef.current;
+    if (!audio) return;
+
+    const normalizedPath = resolvePreviewPath(file);
+    if (!normalizedPath || inlinePreviewLoadingPath === normalizedPath) return;
+    if (inlineUnavailablePaths[normalizedPath]) return;
+
+    const isSameTrack = inlinePreviewPath === normalizedPath;
+    if (isSameTrack && !audio.paused && !audio.ended) {
+      audio.pause();
+      return;
+    }
+
+    if (isSameTrack && audio.paused && !audio.ended) {
+      try {
+        await audio.play();
+      } catch {
+        appToast.error("No pudimos reproducir el preview. Reintentar.");
+      }
+      return;
+    }
+
+    stopInlinePreviewAudio();
+    setInlinePreviewLoadingPath(normalizedPath);
+    const requestId = ++inlinePreviewRequestRef.current;
+
+    try {
+      let previewUrl = inlineDemoUrlCacheRef.current.get(normalizedPath);
+      if (!previewUrl) {
+        const demo = await retryWithJitter(
+          async () =>
+            await trpc.ftp.demo.query({
+              path: normalizedPath,
+            }),
+          {
+            maxAttempts: 3,
+            baseDelayMs: 250,
+            maxDelayMs: 1800,
+            jitterMs: 450,
+            shouldRetry: isRetryableMediaError,
+          },
+        );
+        previewUrl = buildDemoPlaybackUrl(demo.demo, apiBaseUrl);
+        inlineDemoUrlCacheRef.current.set(normalizedPath, previewUrl);
+      }
+
+      if (requestId !== inlinePreviewRequestRef.current) return;
+
+      audio.src = previewUrl;
+      audio.currentTime = 0;
+      setInlinePreviewPath(normalizedPath);
+      setInlinePreviewProgress(0);
+      await audio.play();
+      setInlinePreviewPlaying(true);
+
+      trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, {
+        location: 'home_library_inline',
+        kind: 'audio',
+        pagePath: normalizedPath,
+      });
+      trackGrowthMetric(GROWTH_METRICS.FILE_PREVIEW_OPENED, {
+        fileType: 'audio',
+        pagePath: normalizedPath,
+      });
+    } catch (error) {
+      if (requestId !== inlinePreviewRequestRef.current) return;
+
+      if (isInlineDemoUnavailableError(error)) {
+        setInlineUnavailablePaths((previous) => ({
+          ...previous,
+          [normalizedPath]: true,
+        }));
+      } else {
+        appToast.error("No pudimos cargar el preview. Reintentar.");
+      }
+      stopInlinePreviewAudio();
+    } finally {
+      if (requestId === inlinePreviewRequestRef.current) {
+        setInlinePreviewLoadingPath(null);
+      }
+    }
   };
 
   const isVerificationRequiredMessage = (message?: string): boolean => {
@@ -384,6 +815,7 @@ function Home() {
     return msg.includes('suficientes bytes');
   };
   const goToRoot = async () => {
+    stopInlinePreviewAudio();
     setLoadError('');
     setLoader(true);
     setShowPagination(false);
@@ -408,10 +840,10 @@ function Home() {
   const clearSearch = async () => {
     setLoadError('');
     setSearchValue('');
+    setSearchQuickFilter(null);
     lastTrackedSearchRef.current = '';
-    setShowPagination(false);
     setFilters((prev) => ({ ...prev, page: 0 }));
-    await goToFolder({});
+    await startSearch('');
   };
   const handleError = () => {
     setError(!error);
@@ -447,8 +879,244 @@ function Home() {
       setLoader(false);
     } catch {
       setLoadError('No se pudieron cargar los archivos. Intenta nuevamente en unos segundos.');
+      appToast.error("Error de red — Revisa tu conexión.");
       setLoader(false);
     }
+  };
+
+  const getRecentPacks = async () => {
+    setRecentPacksLoading(true);
+    try {
+      const packs = (await trpc.catalog.getRecentPacks.query()) as RecentPack[];
+      const normalized = (packs ?? [])
+        .filter((pack) => Boolean(pack?.folderPath) && Number(pack?.fileCount ?? 0) > 0)
+        .map((pack) => ({
+          ...pack,
+          folderPath: normalizeFilePath(pack.folderPath).replace(/^\/+|\/+$/g, ''),
+          name: `${pack.name ?? ''}`.trim() || 'Pack',
+          fileCount: Number(pack.fileCount ?? 0),
+          addedAt:
+            pack.addedAt instanceof Date
+              ? pack.addedAt.toISOString()
+              : `${pack.addedAt ?? ''}`,
+          genre: pack.genre ? `${pack.genre}` : null,
+        }));
+      setRecentPacks(normalized);
+    } catch {
+      setRecentPacks([]);
+    } finally {
+      setRecentPacksLoading(false);
+    }
+  };
+
+  const getNewFileCounts = async () => {
+    try {
+      const counts = (await trpc.catalog.getNewFileCounts.query()) as RootNewFileCounts;
+      setNewFileCounts(counts ?? {});
+    } catch {
+      setNewFileCounts({});
+    }
+  };
+
+  const getMonthlyTrending = async () => {
+    setMonthlyTrendingLoading(true);
+    try {
+      const response = (await trpc.downloadHistory.getPublicTopDownloads.query({
+        limit: 100,
+        sinceDays: 30,
+      })) as PublicTopDownloadsResponse;
+      setMonthlyTrending(buildMonthlyTrending(response));
+    } catch {
+      setMonthlyTrending([]);
+    } finally {
+      setMonthlyTrendingLoading(false);
+    }
+  };
+
+  const getForYouRecommendations = async () => {
+    setForYouLoading(true);
+    try {
+      const response = (await trpc.catalog.getForYouRecommendations.query()) as ForYouFeed;
+      const normalizedRecommendations = (response?.recommendations ?? [])
+        .filter((recommendation) => Boolean(recommendation?.path))
+        .map((recommendation) => ({
+          ...recommendation,
+          path: normalizeFilePath(recommendation.path).replace(/^\/+/, ''),
+          name: `${recommendation.name ?? ''}`.trim() || 'Track',
+          type: `${recommendation.type ?? '-'}`,
+          size:
+            typeof recommendation.size === 'number' && Number.isFinite(recommendation.size)
+              ? recommendation.size
+              : 0,
+          metadata:
+            recommendation.metadata && typeof recommendation.metadata === 'object'
+              ? recommendation.metadata
+              : null,
+          genre: recommendation.genre ? `${recommendation.genre}` : null,
+          hasPreview: Boolean(recommendation.hasPreview),
+        }));
+
+      setForYouEligible(Boolean(response?.eligible));
+      setForYouRecommendations(normalizedRecommendations);
+    } catch {
+      setForYouEligible(false);
+      setForYouRecommendations([]);
+    } finally {
+      setForYouLoading(false);
+    }
+  };
+
+  const openMonthlyTrendingPreview = async (row: MonthlyTrendingRow) => {
+    if (!row.hasPreview) return;
+    if (monthlyTrendingPreviewPath === row.path) return;
+
+    stopInlinePreviewAudio();
+    setMonthlyTrendingPreviewPath(row.path);
+    try {
+      const result = (await retryWithJitter(
+        async () =>
+          await trpc.downloadHistory.getPublicTopDemo.query({
+            path: row.path,
+          }),
+        {
+          maxAttempts: 3,
+          baseDelayMs: 250,
+          maxDelayMs: 1800,
+          jitterMs: 450,
+          shouldRetry: isRetryableMediaError,
+        },
+      )) as { demo: string; kind: PreviewKind; name?: string };
+
+      const previewUrl = buildDemoPlaybackUrl(result.demo, apiBaseUrl);
+      const kind: PreviewKind = result.kind === 'video' ? 'video' : 'audio';
+
+      setFileToShow({
+        url: previewUrl,
+        name: row.name || result.name || 'Preview',
+        kind,
+      });
+      setShowPreviewModal(true);
+
+      trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, {
+        location: 'home_trending',
+        kind,
+        source: 'top_descargas_mes',
+      });
+    } catch {
+      appToast.error("No pudimos cargar el preview. Reintentar.");
+    } finally {
+      setMonthlyTrendingPreviewPath(null);
+    }
+  };
+
+  const openForYouPreview = async (recommendation: ForYouRecommendation) => {
+    if (!recommendation.hasPreview) return;
+    if (forYouPreviewPath === recommendation.path) return;
+
+    stopInlinePreviewAudio();
+    setForYouPreviewPath(recommendation.path);
+    try {
+      const normalizedPath = `/${normalizeFilePath(recommendation.path).replace(/^\/+/, '')}`;
+      const filesDemo = await retryWithJitter(
+        async () =>
+          await trpc.ftp.demo.query({
+            path: normalizedPath,
+          }),
+        {
+          maxAttempts: 3,
+          baseDelayMs: 250,
+          maxDelayMs: 1800,
+          jitterMs: 450,
+          shouldRetry: isRetryableMediaError,
+        },
+      );
+
+      const previewUrl = buildDemoPlaybackUrl(filesDemo.demo, apiBaseUrl);
+      const previewSignature = `${recommendation.name} ${normalizedPath} ${previewUrl}`.toLowerCase();
+      const kind: PreviewKind = AUDIO_EXT_REGEX.test(previewSignature) ? 'audio' : 'video';
+
+      setFileToShow({
+        url: previewUrl,
+        name: recommendation.name,
+        kind,
+      });
+      setShowPreviewModal(true);
+
+      trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, {
+        location: 'home_for_you',
+        kind,
+      });
+      trackGrowthMetric(GROWTH_METRICS.FILE_PREVIEW_OPENED, {
+        fileType: kind,
+        pagePath: normalizedPath,
+      });
+    } catch {
+      appToast.error("No pudimos cargar el preview. Reintentar.");
+    } finally {
+      setForYouPreviewPath(null);
+    }
+  };
+
+  const openForYouLocation = async (recommendation: ForYouRecommendation) => {
+    const normalizedPath = normalizeFilePath(recommendation.path).replace(/^\/+|\/+$/g, '');
+    if (!normalizedPath) return;
+    const folderPath = normalizedPath.includes('/')
+      ? normalizedPath.slice(0, normalizedPath.lastIndexOf('/'))
+      : '';
+    if (!folderPath) {
+      await goToRoot();
+      return;
+    }
+
+    await openRecentPack({
+      folderPath,
+      name: recommendation.name,
+      fileCount: 1,
+      addedAt: new Date().toISOString(),
+      genre: recommendation.genre,
+    });
+  };
+
+  const scrollRecentPacks = (direction: 'prev' | 'next') => {
+    const node = recentCarouselRef.current;
+    if (!node) return;
+    const offset = Math.max(node.clientWidth * 0.8, 280);
+    node.scrollBy({
+      left: direction === 'next' ? offset : -offset,
+      behavior: 'smooth',
+    });
+  };
+
+  const openRecentPack = async (pack: RecentPack) => {
+    const targetPath = normalizeFilePath(pack.folderPath).replace(/^\/+|\/+$/g, '');
+    if (!targetPath) return;
+
+    stopInlinePreviewAudio();
+    setLoadError('');
+    setLoader(true);
+    setShowPagination(false);
+    setSearchValue('');
+    setFilters((prev) => ({ ...prev, page: 0 }));
+
+    const [nextFiles, filesError] = await of(
+      trpc.ftp.ls.query({
+        path: targetPath,
+      })
+    );
+
+    if (filesError && !nextFiles) {
+      setLoadError('No se pudo abrir este pack. Intenta de nuevo.');
+      setLoader(false);
+      return;
+    }
+
+    const safeNextFiles = nextFiles ?? [];
+    const segments = targetPath.split('/').filter(Boolean);
+    setPastFile(segments);
+    setfiles(safeNextFiles);
+    setFolderScopeFiles(safeNextFiles);
+    trackFolderNavigation(segments, 'next');
+    setLoader(false);
   };
 
   const checkUHUser = async () => {
@@ -545,6 +1213,7 @@ function Home() {
   };
 
   const goToFolder = async (query: QueryFolder) => {
+    stopInlinePreviewAudio();
     setLoadError('');
     setLoader(true);
     let fileStructure = [...pastFile];
@@ -593,6 +1262,7 @@ function Home() {
   };
 
   const playFile = async (file: IFiles, index: number) => {
+    stopInlinePreviewAudio();
     setLoadFile(true);
     setIndex(index);
     try {
@@ -662,6 +1332,7 @@ function Home() {
 
     if (!options.skipVerificationGate && !currentUser?.verified) {
       queueDownloadVerification({ file, index, type: 'file' });
+      appToast.info("Verifica tu cuenta para habilitar descargas.");
       return;
     }
 
@@ -706,6 +1377,7 @@ function Home() {
 
     if (!options.skipVerificationGate && !currentUser?.verified) {
       queueDownloadVerification({ file, index, type: 'folder' });
+      appToast.info("Verifica tu cuenta para habilitar descargas.");
       return;
     }
 
@@ -743,6 +1415,7 @@ function Home() {
         path: url,
         name: file.name,
       });
+      appToast.success(`Descarga iniciada: ${truncateToastLabel(file.name, 40)}`);
       trackGrowthMetric(GROWTH_METRICS.FILE_DOWNLOAD_SUCCEEDED, {
         fileType: 'folder',
         pagePath: `/${path}`,
@@ -754,6 +1427,7 @@ function Home() {
         return;
       }
       if (currentUser?.hasActiveSubscription && isOutOfGbMessage(error?.message ?? error)) {
+        appToast.warning("Sin GB disponibles. Recarga para continuar.");
         void openPlan();
         return;
       }
@@ -762,6 +1436,7 @@ function Home() {
         reason: error?.message ?? 'unknown_error',
         pagePath: `/${path}`,
       });
+      appToast.error("Error al descargar — Reintentar");
       setErrMsg(error.message);
       handleError();
     }
@@ -779,13 +1454,12 @@ function Home() {
         a.download = name;
         a.click();
         window.URL.revokeObjectURL(url);
+        appToast.success(`Descarga iniciada: ${truncateToastLabel(name, 40)}`);
         trackGrowthMetric(GROWTH_METRICS.FILE_DOWNLOAD_SUCCEEDED, {
           fileType: pending.type,
           pagePath: resolveFilePath(pending.file),
           delivery: 'direct',
         });
-        setLoadDownload(false);
-        setIndex(-1);
       } else {
         const payload = await response.json().catch(() => null);
         const backendMessage =
@@ -793,12 +1467,14 @@ function Home() {
 
         if (response.status === 403 || isVerificationRequiredMessage(backendMessage)) {
           queueDownloadVerification(pending);
+          appToast.info("Verifica tu cuenta para habilitar descargas.");
           setLoadDownload(false);
           setIndex(-1);
           return;
         }
 
         if (currentUser?.hasActiveSubscription && isOutOfGbMessage(backendMessage)) {
+          appToast.warning("Sin GB disponibles. Recarga para continuar.");
           void openPlan();
           setLoadDownload(false);
           setIndex(-1);
@@ -811,6 +1487,7 @@ function Home() {
           pagePath: resolveFilePath(pending.file),
           statusCode: response.status,
         });
+        appToast.error("Error al descargar — Reintentar");
         errorMethod(backendMessage);
       }
     } catch (error) {
@@ -819,7 +1496,11 @@ function Home() {
         reason: 'network_or_fetch_error',
         pagePath: resolveFilePath(pending.file),
       });
+      appToast.error("Error de red — Revisa tu conexión.");
       errorMethod('Para descargar se necesita tener gb disponibles');
+    } finally {
+      setLoadDownload(false);
+      setIndex(-1);
     }
   };
   const handleDownloadVerificationSuccess = async () => {
@@ -843,13 +1524,17 @@ function Home() {
       skipVerificationGate: true,
     });
   };
-  const startSearch = async (value: string) => {
+  const startSearch = async (
+    value: string,
+    options: { pathSegments?: string[]; page?: number; limit?: number } = {},
+  ) => {
     const requestId = ++searchRequestRef.current;
     setLoadError('');
     const trimmedValue = value.trim();
     setSearchValue(value);
-    const scope = resolveMediaScope(pastFile);
-    const shouldScopeByPath = pastFile.length > 0;
+    const pathSegments = options.pathSegments ?? pastFile;
+    const scope = resolveMediaScope(pathSegments);
+    const shouldScopeByPath = pathSegments.length > 0;
 
     setShowPagination(!shouldScopeByPath);
     setPaginationLoader(true);
@@ -866,29 +1551,12 @@ function Home() {
       return;
     }
 
-    if (shouldScopeByPath) {
-      setTotalSearch(folderScopeFiles.length);
-      if (trimmedValue.length >= 2) {
-        const searchKey = `${trimmedValue.toLowerCase()}::${pastFile.join('/')}`;
-        if (lastTrackedSearchRef.current !== searchKey) {
-          lastTrackedSearchRef.current = searchKey;
-          trackGrowthMetric(GROWTH_METRICS.FILE_SEARCH_PERFORMED, {
-            queryLength: trimmedValue.length,
-            queryText: trimmedValue.slice(0, 80),
-            scope: 'folder',
-            scopePath: pastFile.join('/'),
-            totalResults: folderScopeFiles.length,
-          });
-        }
-      }
-      setPaginationLoader(false);
-      return;
-    }
-
-    let body = {
+    const effectiveLimit = options.limit ?? filters.limit;
+    const effectivePage = options.page ?? filters.page;
+    const body = {
       query: trimmedValue,
-      limit: shouldScopeByPath ? 2000 : filters.limit,
-      offset: shouldScopeByPath ? 0 : filters.page * filters.limit,
+      limit: shouldScopeByPath ? 2000 : effectiveLimit,
+      offset: shouldScopeByPath ? 0 : effectivePage * effectiveLimit,
     };
     try {
       const result = await trpc.ftp.search.query(body);
@@ -906,7 +1574,7 @@ function Home() {
       });
 
       if (shouldScopeByPath) {
-        values = values.filter((file) => fileMatchesPathPrefix(file, pastFile));
+        values = values.filter((file) => fileMatchesPathPrefix(file, pathSegments));
       }
       if (scope) {
         values = values.filter((file) => fileMatchesScope(file, scope));
@@ -915,13 +1583,15 @@ function Home() {
       setfiles(values);
       setTotalSearch(shouldScopeByPath ? values.length : result.total);
       if (trimmedValue.length >= 2) {
-        const searchKey = `${trimmedValue.toLowerCase()}::global`;
+        const scopePath = pathSegments.join('/');
+        const searchKey = `${trimmedValue.toLowerCase()}::${scopePath || 'global'}`;
         if (lastTrackedSearchRef.current !== searchKey) {
           lastTrackedSearchRef.current = searchKey;
           trackGrowthMetric(GROWTH_METRICS.FILE_SEARCH_PERFORMED, {
             queryLength: trimmedValue.length,
             queryText: trimmedValue.slice(0, 80),
-            scope: scope ?? 'global',
+            scope: shouldScopeByPath ? scope ?? 'folder' : scope ?? 'global',
+            scopePath: scopePath || undefined,
             totalResults: shouldScopeByPath ? values.length : result.total,
           });
         }
@@ -932,6 +1602,7 @@ function Home() {
         return;
       }
       setLoadError('La búsqueda no está disponible en este momento. Intenta nuevamente.');
+      appToast.error("Error de red — Revisa tu conexión.");
       setPaginationLoader(false);
     }
   };
@@ -944,11 +1615,18 @@ function Home() {
 
     tempFilters[key] = value;
     setFilters(tempFilters);
-    startSearch(searchValue);
+    startSearch(searchValue, {
+      page: tempFilters.page,
+      limit: tempFilters.limit,
+    });
   };
 
   useEffect(() => {
     getFiles();
+    getRecentPacks();
+    getNewFileCounts();
+    getMonthlyTrending();
+    getForYouRecommendations();
   }, []);
   useEffect(() => {
     checkUHUser();
@@ -993,19 +1671,130 @@ function Home() {
     }
   }, [fileChange, closeFile]);
 
-  const normalizedSearchValue = searchValue.trim().toLocaleLowerCase('es-MX');
-  const shouldLocalFolderFilter =
-    pastFile.length > 0 && normalizedSearchValue !== '' && !showPagination;
-  const visibleFiles = shouldLocalFolderFilter
-    ? folderScopeFiles.filter((file) => {
-      const normalizedName = file.name.toLocaleLowerCase('es-MX');
-      const normalizedPath = normalizeFilePath(file.path).toLocaleLowerCase('es-MX');
-      return (
-        normalizedName.includes(normalizedSearchValue) ||
-        normalizedPath.includes(normalizedSearchValue)
-      );
-    })
-    : files;
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const executeMobileSearch = async (rawQuery: unknown) => {
+      const query = `${rawQuery ?? ''}`.trim();
+      await goToRoot();
+      setFilters((prev) => ({ ...prev, page: 0 }));
+      if (!query) {
+        await startSearch('', { pathSegments: [] });
+        return;
+      }
+      setSearchValue(query);
+    };
+
+    const handleMobileSearchSubmit = (event: Event) => {
+      const detail = (event as CustomEvent<{ query?: string }>).detail;
+      try {
+        window.sessionStorage.removeItem(MOBILE_SEARCH_QUERY_STORAGE_KEY);
+      } catch {
+        // no-op
+      }
+      void executeMobileSearch(detail?.query ?? '');
+    };
+
+    const handleMobileLibraryRoot = () => {
+      try {
+        window.sessionStorage.removeItem(MOBILE_LIBRARY_ROOT_STORAGE_KEY);
+      } catch {
+        // no-op
+      }
+      void goToRoot();
+    };
+
+    window.addEventListener(MOBILE_SEARCH_SUBMIT_EVENT, handleMobileSearchSubmit);
+    window.addEventListener(MOBILE_LIBRARY_ROOT_EVENT, handleMobileLibraryRoot);
+
+    try {
+      const queuedSearch = window.sessionStorage.getItem(MOBILE_SEARCH_QUERY_STORAGE_KEY);
+      if (queuedSearch !== null) {
+        window.sessionStorage.removeItem(MOBILE_SEARCH_QUERY_STORAGE_KEY);
+        void executeMobileSearch(queuedSearch);
+      } else {
+        const queuedLibraryRoot = window.sessionStorage.getItem(MOBILE_LIBRARY_ROOT_STORAGE_KEY);
+        if (queuedLibraryRoot === '1') {
+          window.sessionStorage.removeItem(MOBILE_LIBRARY_ROOT_STORAGE_KEY);
+          void goToRoot();
+        }
+      }
+    } catch {
+      // no-op: sessionStorage can be unavailable in private contexts
+    }
+
+    return () => {
+      window.removeEventListener(MOBILE_SEARCH_SUBMIT_EVENT, handleMobileSearchSubmit);
+      window.removeEventListener(MOBILE_LIBRARY_ROOT_EVENT, handleMobileLibraryRoot);
+    };
+  }, []);
+
+  useEffect(() => {
+    const trimmed = searchValue.trim();
+    if (trimmed === '') {
+      return;
+    }
+
+    const debounceTimer = window.setTimeout(() => {
+      void startSearch(searchValue);
+    }, 300);
+
+    return () => {
+      window.clearTimeout(debounceTimer);
+    };
+  }, [searchValue, pastFile]);
+
+  useEffect(() => {
+    const audio = inlineAudioRef.current;
+    if (!audio) return;
+
+    const handleTimeUpdate = () => {
+      const duration = audio.duration;
+      if (!Number.isFinite(duration) || duration <= 0) {
+        setInlinePreviewProgress(0);
+        return;
+      }
+      const ratio = Math.max(0, Math.min(1, audio.currentTime / duration));
+      setInlinePreviewProgress(ratio);
+    };
+
+    const handlePlay = () => {
+      setInlinePreviewPlaying(true);
+    };
+
+    const handlePause = () => {
+      setInlinePreviewPlaying(false);
+    };
+
+    const handleEnded = () => {
+      setInlinePreviewPlaying(false);
+      setInlinePreviewPath(null);
+      setInlinePreviewProgress(0);
+      setInlinePreviewLoadingPath(null);
+      audio.currentTime = 0;
+    };
+
+    audio.addEventListener('timeupdate', handleTimeUpdate);
+    audio.addEventListener('play', handlePlay);
+    audio.addEventListener('pause', handlePause);
+    audio.addEventListener('ended', handleEnded);
+
+    return () => {
+      audio.removeEventListener('timeupdate', handleTimeUpdate);
+      audio.removeEventListener('play', handlePlay);
+      audio.removeEventListener('pause', handlePause);
+      audio.removeEventListener('ended', handleEnded);
+      audio.pause();
+      audio.removeAttribute('src');
+      audio.load();
+    };
+  }, []);
+
+  const isSearching = searchValue.trim() !== '';
+  const visibleFiles =
+    isSearching && searchQuickFilter
+      ? files.filter((file) => matchesSearchQuickFilter(file, searchQuickFilter))
+      : files;
   const sortedFiles = sortArrayByName(visibleFiles) as IFiles[];
   const isRootView = !showPagination && pastFile.length === 0;
   const showFirstStepsOnboarding =
@@ -1023,7 +1812,6 @@ function Home() {
   const totalVisibleLabel = formatBytes(totalVisibleBytes);
   const itemCountLabel = visibleFiles.length === 1 ? 'elemento' : 'elementos';
   const hasLoadError = loadError.trim() !== '';
-  const isSearching = searchValue.trim() !== '';
   const canNavigateBack = isSearching || showPagination || pastFile.length > 0;
   const routeLabel = pastFile.length > 0 ? `Inicio / ${pastFile.join(' / ')}` : 'Inicio';
   const currentRouteLabel = showPagination
@@ -1044,6 +1832,9 @@ function Home() {
     if (kind === 'video') {
       return <FileVideoCamera />;
     }
+    if (kind === 'karaoke') {
+      return <Microphone />;
+    }
     if (kind === 'archive') {
       return <FileArchive />;
     }
@@ -1060,6 +1851,7 @@ function Home() {
           setFileToShow(null);
         }}
       />
+      <audio ref={inlineAudioRef} className="bb-inline-audio-element" preload="none" />
       {stripePromise && (
         <Elements stripe={stripePromise} options={stripeOptions}>
           <UsersUHModal showModal={showModal} onHideModal={closeModalAdd} />
@@ -1183,8 +1975,13 @@ function Home() {
                 value={searchValue}
                 className="bb-search-input"
                 onChange={(e: any) => {
+                  const nextValue = `${e.target.value ?? ''}`;
                   setFilters((prev) => ({ ...prev, page: 0 }));
-                  startSearch(e.target.value);
+                  setSearchValue(nextValue);
+                  if (nextValue.trim() === '') {
+                    setSearchQuickFilter(null);
+                    void startSearch('');
+                  }
                 }}
               />
               <button
@@ -1198,6 +1995,27 @@ function Home() {
               >
                 <X size={14} aria-hidden />
               </button>
+            </div>
+            <div className="bb-search-pills" role="toolbar" aria-label="Filtros rápidos de búsqueda">
+              {SEARCH_QUICK_FILTERS.map((filter) => {
+                const isActive = searchQuickFilter === filter.value;
+                return (
+                  <button
+                    key={filter.value}
+                    type="button"
+                    className={`bb-search-pill ${isActive ? 'is-active' : ''}`}
+                    onClick={() => {
+                      setSearchQuickFilter((current) =>
+                        current === filter.value ? null : filter.value,
+                      );
+                    }}
+                    aria-pressed={isActive}
+                    disabled={!isSearching}
+                  >
+                    {filter.label}
+                  </button>
+                );
+              })}
             </div>
 
 	            <div className="bb-library-route">
@@ -1254,30 +2072,28 @@ function Home() {
       </div>
 
       <div
-        className={`bb-content-stage ${!loader && isRootView ? 'is-root' : 'is-explorer'}`}
+        className={`bb-content-stage ${!loader && isRootView ? 'is-root' : 'is-explorer'} ${
+          loader ? "" : "bb-skeleton-fade-in"
+        }`}
         onContextMenu={(e) => e.preventDefault()}
       >
         {loader ? (
-          <div className="bb-stage-state">
-            <div className="app-state-panel is-loading" role="status" aria-live="polite">
-              <span className="app-state-icon" aria-hidden>
-                <Spinner size={2.8} width={0.25} color="var(--app-accent)" />
-              </span>
-              <h3 className="app-state-title">Cargando contenido</h3>
-              <p className="app-state-copy">Estamos preparando tu biblioteca para mostrarte todo de forma ordenada.</p>
+          <div className="bb-stage-state" role="status" aria-live="polite" aria-busy="true">
+            <div className="app-state-panel is-loading bb-skeleton-shell">
+              <span className="sr-only">Actualizando contenido de biblioteca</span>
+              <SkeletonTable />
+              <SkeletonRow width="64%" />
             </div>
           </div>
         ) : hasLoadError ? (
           <div className="bb-stage-state">
-            <div className="app-state-panel is-error" role="alert">
-              <span className="app-state-icon" aria-hidden>
-                <AlertTriangle />
-              </span>
-              <h3 className="app-state-title">No pudimos cargar esta vista</h3>
-              <p className="app-state-copy">{loadError}</p>
-              <div className="app-state-actions">
-                <button
-                  type="button"
+            <EmptyState
+              variant="connection-error"
+              description={loadError}
+              action={
+                <Button
+                  variant="secondary"
+                  leftIcon={<RefreshCw size={18} />}
                   onClick={() => {
                     if (showPagination && searchValue.trim() !== '') {
                       startSearch(searchValue);
@@ -1290,15 +2106,268 @@ function Home() {
                     getFiles();
                   }}
                 >
-                  <RefreshCw size={16} />
                   Reintentar
-                </button>
-              </div>
-            </div>
+                </Button>
+              }
+            />
           </div>
         ) : isRootView ? (
           sortedFiles.length > 0 ? (
           <div className="bb-root-stack">
+            {(recentPacksLoading || recentPacks.length > 0) && (
+              <section className="bb-recent-section" aria-label="Recién agregado">
+                <div className="bb-recent-head">
+                  <h3 className="bb-recent-title">🆕 Recién Agregado</h3>
+                  {recentPacks.length > 0 && (
+                    <div className="bb-recent-nav">
+                      <button
+                        type="button"
+                        className="bb-recent-nav-btn"
+                        onClick={() => scrollRecentPacks('prev')}
+                        aria-label="Ver packs recientes anteriores"
+                        title="Anterior"
+                      >
+                        <ArrowLeft size={16} aria-hidden />
+                      </button>
+                      <button
+                        type="button"
+                        className="bb-recent-nav-btn"
+                        onClick={() => scrollRecentPacks('next')}
+                        aria-label="Ver packs recientes siguientes"
+                        title="Siguiente"
+                      >
+                        <ChevronRight size={16} aria-hidden />
+                      </button>
+                    </div>
+                  )}
+                </div>
+                {recentPacksLoading ? (
+                  <div className="bb-recent-carousel bb-recent-carousel--loading" aria-hidden>
+                    {Array.from({ length: 4 }).map((_, idx) => (
+                      <div key={`recent-skeleton-${idx}`} className="bb-recent-card bb-recent-card--skeleton">
+                        <SkeletonCard />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bb-recent-carousel bb-skeleton-fade-in" ref={recentCarouselRef}>
+                    {recentPacks.map((pack) => {
+                      const kind = getRecentPackVisualKind(pack);
+                      return (
+                        <article
+                          key={`recent-pack-${pack.folderPath}`}
+                          className="bb-recent-card"
+                          onContextMenu={(e) => e.preventDefault()}
+                        >
+                          <div className="bb-recent-card-main">
+                            <span className={`bb-kind-icon bb-kind-${kind}`} aria-hidden>
+                              {renderKindIcon(kind)}
+                            </span>
+                            <div className="bb-recent-copy">
+                              <span className="bb-recent-name" title={pack.name}>
+                                {pack.name}
+                              </span>
+                              <span className="bb-recent-meta">
+                                {formatRecentPackFileCount(Number(pack.fileCount ?? 0))} · {formatRecentPackAge(`${pack.addedAt ?? ''}`)}
+                              </span>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            className="bb-action-btn bb-action-btn--primary bb-action-btn--recent"
+                            onClick={() => {
+                              openRecentPack(pack);
+                            }}
+                            aria-label={`Abrir pack ${pack.name}`}
+                          >
+                            <span className="bb-action-label">ABRIR</span>
+                            <ChevronRight className="bb-row-chevron" aria-hidden />
+                          </button>
+                        </article>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
+            )}
+            {(forYouLoading || forYouEligible) && (
+              <section className="bb-for-you-section" aria-label="Para ti">
+                <div className="bb-trending-head">
+                  <h3 className="bb-trending-title">🎯 Para Ti</h3>
+                </div>
+                {forYouLoading ? (
+                  <div className="bb-recent-carousel bb-recent-carousel--loading" aria-hidden>
+                    {Array.from({ length: 3 }).map((_, idx) => (
+                      <div key={`for-you-skeleton-${idx}`} className="bb-recent-card bb-recent-card--skeleton">
+                        <SkeletonCard />
+                      </div>
+                    ))}
+                  </div>
+                ) : forYouRecommendations.length > 0 ? (
+                  <div className="bb-recent-carousel bb-skeleton-fade-in">
+                    {forYouRecommendations.map((recommendation) => {
+                      const fileForKind: IFiles = {
+                        name: recommendation.name,
+                        type: recommendation.type,
+                        size: recommendation.size,
+                        path: recommendation.path,
+                        metadata: recommendation.metadata,
+                        already_downloaded: false,
+                      };
+                      const kind = getFileVisualKind(fileForKind);
+                      const artist = normalizeOptionalText(recommendation.metadata?.artist);
+                      const bpmLabel = recommendation.metadata?.bpm
+                        ? `${recommendation.metadata.bpm} BPM`
+                        : null;
+                      const keyLabel = normalizeOptionalText(recommendation.metadata?.camelot);
+                      const formatBadge = getResolvedFormatBadge(
+                        recommendation.name,
+                        recommendation.metadata?.format ?? null,
+                      );
+                      return (
+                        <article
+                          key={`for-you-${recommendation.path}`}
+                          className="bb-recent-card bb-for-you-card"
+                          onContextMenu={(e) => e.preventDefault()}
+                        >
+                          <div className="bb-recent-card-main">
+                            <span className={`bb-kind-icon bb-kind-${kind}`} aria-hidden>
+                              {renderKindIcon(kind)}
+                            </span>
+                            <div className="bb-for-you-copy">
+                              <span className="bb-recent-name" title={recommendation.name}>
+                                {recommendation.name}
+                              </span>
+                              {artist && (
+                                <span className="bb-for-you-artist" title={artist}>
+                                  {artist}
+                                </span>
+                              )}
+                              <div className="bb-for-you-meta">
+                                {recommendation.genre && (
+                                  <span className="bb-file-pill">{recommendation.genre}</span>
+                                )}
+                                {bpmLabel && (
+                                  <span className="bb-file-pill bb-file-pill--tempo">{bpmLabel}</span>
+                                )}
+                                {keyLabel && (
+                                  <span className="bb-file-pill bb-file-pill--key">{keyLabel}</span>
+                                )}
+                                {formatBadge && (
+                                  <span className="bb-file-pill bb-file-pill--format">{formatBadge}</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="bb-for-you-actions">
+                            {recommendation.hasPreview ? (
+                              <button
+                                type="button"
+                                className="bb-action-btn bb-action-btn--ghost bb-for-you-preview"
+                                onClick={() => {
+                                  void openForYouPreview(recommendation);
+                                }}
+                                aria-label={`Reproducir preview de ${recommendation.name}`}
+                                disabled={forYouPreviewPath === recommendation.path}
+                              >
+                                {forYouPreviewPath === recommendation.path ? (
+                                  <Spinner size={2} width={0.2} color="var(--app-accent)" />
+                                ) : (
+                                  <>
+                                    <Play size={16} aria-hidden />
+                                    <span className="bb-action-label">Preview</span>
+                                  </>
+                                )}
+                              </button>
+                            ) : (
+                              <span className="bb-trending-no-preview" aria-hidden />
+                            )}
+                            <button
+                              type="button"
+                              className="bb-action-btn bb-action-btn--primary bb-for-you-open"
+                              onClick={() => {
+                                void openForYouLocation(recommendation);
+                              }}
+                              aria-label={`Abrir ubicación de ${recommendation.name}`}
+                            >
+                              <span className="bb-action-label">ABRIR</span>
+                              <ChevronRight className="bb-row-chevron" aria-hidden />
+                            </button>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="bb-for-you-empty">
+                    Estamos preparando recomendaciones con tu historial reciente.
+                  </p>
+                )}
+              </section>
+            )}
+            {(monthlyTrendingLoading || monthlyTrending.length > 0) && (
+              <section className="bb-trending-section" aria-label="Top descargas del mes">
+                <div className="bb-trending-head">
+                  <h3 className="bb-trending-title">🔥 Top Descargas del Mes</h3>
+                </div>
+                {monthlyTrendingLoading ? (
+                  <div className="bb-trending-loading bb-skeleton-shell" role="status" aria-live="polite">
+                    <span className="sr-only">Cargando top descargas del mes</span>
+                    <SkeletonTable rows={5} />
+                  </div>
+                ) : (
+                  <ol className="bb-trending-list">
+                    {monthlyTrending.map((row, idx) => {
+                      const rank = idx + 1;
+                      const isTop3 = rank <= 3;
+                      return (
+                        <li
+                          key={`monthly-trending-${row.path}`}
+                          className={`bb-trending-row ${isTop3 ? `is-top-${rank}` : ''}`}
+                        >
+                          <span className="bb-trending-rank">#{rank}</span>
+                          <div className="bb-trending-main">
+                            <span className="bb-trending-name" title={row.name}>
+                              {row.name}
+                            </span>
+                            <div className="bb-trending-meta">
+                              <span className="bb-trending-format">{row.format}</span>
+                              <span className="bb-trending-count">
+                                {formatTrendingDownloads(row.downloads)} descargas
+                              </span>
+                            </div>
+                          </div>
+                          <div className="bb-trending-actions">
+                            {row.hasPreview ? (
+                              <button
+                                type="button"
+                                className="bb-action-btn bb-action-btn--ghost bb-trending-preview"
+                                onClick={() => {
+                                  openMonthlyTrendingPreview(row);
+                                }}
+                                aria-label={`Reproducir preview de ${row.name}`}
+                                disabled={monthlyTrendingPreviewPath === row.path}
+                              >
+                                {monthlyTrendingPreviewPath === row.path ? (
+                                  <Spinner size={2} width={0.2} color="var(--app-accent)" />
+                                ) : (
+                                  <>
+                                    <Play size={16} aria-hidden />
+                                    <span className="bb-action-label">Preview</span>
+                                  </>
+                                )}
+                              </button>
+                            ) : (
+                              <span className="bb-trending-no-preview" aria-hidden />
+                            )}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                )}
+              </section>
+            )}
             <div className="bb-root-intro">
               <h3>Empieza por una sección</h3>
               <p>Entra a Audios, Karaoke o Videos y encuentra tu pista más rápido.</p>
@@ -1308,6 +2377,8 @@ function Home() {
               const sizeLabel = formatSize(file.size);
               const isFolder = file.type === 'd';
               const kind = getFileVisualKind(file);
+              const rootBadgeKey = resolveRootBadgeKey(file.name);
+              const newCount = isFolder ? Number(newFileCounts[rootBadgeKey] ?? 0) : 0;
               return (
                 <article
                   key={`root-card-${idx}`}
@@ -1336,6 +2407,9 @@ function Home() {
                         {file.name}
                       </span>
                       <span className="bb-root-kind">{isFolder ? 'Carpeta principal' : getFileCategoryLabel(file)}</span>
+                      {isFolder && newCount > 0 && (
+                        <span className="bb-root-new-badge">{formatNewBadgeLabel(newCount)}</span>
+                      )}
                     </div>
                   </div>
                   <div className="bb-root-size">{sizeLabel}</div>
@@ -1375,15 +2449,10 @@ function Home() {
           </div>
           ) : (
             <div className="bb-stage-state">
-              <div className="app-state-panel is-empty">
-                <span className="app-state-icon" aria-hidden>
-                  <FolderOpen />
-                </span>
-                <h3 className="app-state-title">Tu raíz está vacía</h3>
-                <p className="app-state-copy">
-                  Cuando se detecte contenido aparecerá aquí automáticamente.
-                </p>
-              </div>
+              <EmptyState
+                variant="folder-empty"
+                description="Cuando se detecte contenido aparecerá aquí automáticamente."
+              />
             </div>
           )
         ) : (
@@ -1398,27 +2467,31 @@ function Home() {
                 const allowFolderDownload = isFolder && file.size != null && gbSize <= 50;
                 const fileCategoryLabel = getFileCategoryLabel(file);
                 const kind = getFileVisualKind(file);
-                const trackTheme = toTrackCardTheme(kind);
                 const resolvedTrack = buildTrackMetadata(file, kind);
-                const displayFileName = resolvedTrack?.displayName || file.name;
-                const trackTitle = resolvedTrack?.title || displayFileName;
                 const trackArtist = resolvedTrack?.artist;
-                const trackCoverUrl = resolvedTrack
-                  ? resolvedTrack.coverUrl ??
-                    (userToken
-                      ? `${apiBaseUrl}/track-cover?path=${encodeURIComponent(
-                        resolveFilePath(file),
-                      )}&token=${encodeURIComponent(userToken)}`
-                      : null)
-                  : null;
-                const trackCoverSeed = getTrackCoverSeed(
-                  `${trackArtist ?? ''}${trackTitle}${file.path ?? ''}`.toLowerCase(),
-                );
-                const trackDurationPill = formatDurationPill(resolvedTrack?.durationSeconds ?? null);
+                const bpmLabel = resolvedTrack?.bpm ? `${resolvedTrack.bpm} BPM` : null;
+                const keyLabel = normalizeOptionalText(resolvedTrack?.camelot);
+                const keyToneClass = keyLabel ? `is-${resolveKeyTone(keyLabel)}` : '';
+                const formatBadge = getResolvedFormatBadge(file.name, resolvedTrack?.format ?? null);
+                const alreadyDownloaded = file.type === '-' && Boolean(file.already_downloaded);
+                const resolvedPreviewPath = !isFolder ? resolvePreviewPath(file) : '';
+                const isAudioTrack = file.type === '-' && kind === 'audio';
+                const hasInlinePreview =
+                  isAudioTrack &&
+                  Boolean(resolvedPreviewPath) &&
+                  !inlineUnavailablePaths[resolvedPreviewPath];
+                const isInlinePreviewLoading =
+                  hasInlinePreview && inlinePreviewLoadingPath === resolvedPreviewPath;
+                const isInlinePreviewActive = hasInlinePreview && inlinePreviewPath === resolvedPreviewPath;
+                const inlineProgressPercent = `${Math.max(
+                  0,
+                  Math.min(100, Math.round(inlinePreviewProgress * 100)),
+                )}%`;
+                const showFilePreviewAction = !isFolder && kind !== 'audio';
                 return (
                   <article
                     key={`explorer-${idx}`}
-                    className={`bb-explorer-row ${isFolder ? 'is-folder' : 'is-file'} ${resolvedTrack ? 'is-track' : ''}`}
+                    className={`bb-explorer-row ${isFolder ? 'is-folder' : 'is-file'}`}
                     onContextMenu={(e) => e.preventDefault()}
                     onClick={() => {
                       if (isFolder) {
@@ -1434,105 +2507,86 @@ function Home() {
                       }
                     }}
                   >
-                    <div className="bb-row-icon" aria-hidden>
-                      {resolvedTrack ? (
-                        <span
-                          className={`bb-track-cover bb-track-cover--${trackTheme ?? 'audio'} bb-track-cover--thumb`}
-                          style={{
-                            '--bb-track-cover-hue': trackCoverSeed,
-                          } as CSSProperties}
+                    <div className="bb-row-icon">
+                      {hasInlinePreview ? (
+                        <button
+                          type="button"
+                          className={`bb-row-inline-play ${isInlinePreviewActive && inlinePreviewPlaying ? 'is-playing' : ''}`}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            void toggleInlineAudioPreview(file);
+                          }}
+                          title={isInlinePreviewActive && inlinePreviewPlaying ? 'Pausar preview' : 'Reproducir preview'}
+                          aria-label={isInlinePreviewActive && inlinePreviewPlaying ? 'Pausar preview' : 'Reproducir preview'}
                         >
-                          <span className="bb-track-cover-fallback" aria-hidden>
-                            {renderKindIcon(kind)}
-                          </span>
-                          {trackCoverUrl && (
-                            <>
-                              <img
-                                src={trackCoverUrl}
-                                alt=""
-                                loading="lazy"
-                                decoding="async"
-                                className="bb-track-cover-img"
-                                onError={(e) => {
-                                  // If cover extraction fails (no embedded image), keep fallback visible.
-                                  e.currentTarget.style.display = 'none';
-                                  const badge = e.currentTarget.parentElement?.querySelector(
-                                    '.bb-track-cover-badge',
-                                  ) as HTMLElement | null;
-                                  if (badge) badge.style.display = 'none';
-                                }}
-                                onLoad={(e) => {
-                                  const badge = e.currentTarget.parentElement?.querySelector(
-                                    '.bb-track-cover-badge',
-                                  ) as HTMLElement | null;
-                                  if (badge) badge.style.display = '';
-                                }}
-                              />
-                              <span className="bb-track-cover-badge" aria-hidden style={{ display: 'none' }}>
-                                {renderKindIcon(kind)}
-                              </span>
-                            </>
+                          {isInlinePreviewLoading ? (
+                            <Spinner size={1.7} width={0.2} color="var(--app-accent)" />
+                          ) : isInlinePreviewActive && inlinePreviewPlaying ? (
+                            <Pause size={16} aria-hidden />
+                          ) : (
+                            <Play size={16} aria-hidden />
                           )}
-                        </span>
+                        </button>
                       ) : (
-                        <span className={`bb-kind-icon bb-kind-${kind}`}>
+                        <span className={`bb-kind-icon bb-kind-${kind}`} aria-hidden>
                           {renderKindIcon(kind)}
                         </span>
                       )}
                     </div>
 
                     <div className="bb-row-main">
-                      <div className={`bb-file-copy ${resolvedTrack ? 'bb-file-copy--track' : ''}`}>
-                        <div className="bb-track-copy">
-                        <span className="bb-file-name" title={file.name}>
-                          {resolvedTrack ? trackTitle : displayFileName}
-                        </span>
-                        {resolvedTrack && trackArtist && (
-                          <span className="bb-track-artist" title={trackArtist}>
-                            {trackArtist}
+                      {isFolder ? (
+                        <div className="bb-file-copy">
+                          <span className="bb-file-name" title={file.name}>
+                            {file.name}
                           </span>
-                        )}
-                        <div className="bb-file-meta">
-                          {!resolvedTrack && (
+                          <div className="bb-file-meta">
                             <span className="bb-file-pill">{fileCategoryLabel}</span>
-                          )}
-                          {resolvedTrack?.source === 'database' && (
-                            <span className="bb-file-pill bb-file-pill--db">Meta</span>
-                          )}
-                          {resolvedTrack?.format && (
-                            <span className="bb-file-pill bb-file-pill--format">{resolvedTrack.format}</span>
-                          )}
-                          {resolvedTrack?.bpm && (
-                            <span className="bb-file-pill bb-file-pill--tempo">
-                              {resolvedTrack.bpm} BPM
-                            </span>
-                          )}
-                          {resolvedTrack?.energyLevel && (
-                            <span
-                              className="bb-file-pill bb-file-pill--energy"
-                              title={`Energy ${resolvedTrack.energyLevel}`}
-                            >
-                              E{resolvedTrack.energyLevel}
-                            </span>
-                          )}
-                          {resolvedTrack?.camelot && (
-                            <span className="bb-file-pill bb-file-pill--key">{resolvedTrack.camelot}</span>
-                          )}
-                          {resolvedTrack?.version && (
-                            <span
-                              className="bb-file-pill bb-file-pill--version"
-                              title={resolvedTrack.version}
-                            >
-                              {resolvedTrack.version}
-                            </span>
-                          )}
-                          {trackDurationPill && (
-                            <span className="bb-file-pill bb-file-pill--duration">{trackDurationPill}</span>
-                          )}
-                          <span className="bb-file-pill bb-file-pill--size">{sizeLabel}</span>
+                            <span className="bb-file-pill bb-file-pill--size">{sizeLabel}</span>
+                          </div>
                         </div>
+                      ) : (
+                        <div className="bb-track-columns">
+                          <div className="bb-track-col bb-track-col--name">
+                            <span className="bb-file-name" title={file.name}>
+                              {file.name}
+                            </span>
+                            {trackArtist && (
+                              <span className="bb-track-artist" title={trackArtist}>
+                                {trackArtist}
+                              </span>
+                            )}
+                            {isInlinePreviewActive && (
+                              <span className="bb-inline-preview-progress" aria-hidden>
+                                <span
+                                  className="bb-inline-preview-progress-fill"
+                                  style={{ width: inlineProgressPercent }}
+                                />
+                              </span>
+                            )}
+                          </div>
+                          <div className="bb-track-col bb-track-col--bpm">
+                            {bpmLabel && <span className="bb-track-bpm-badge">{bpmLabel}</span>}
+                          </div>
+                          <div className="bb-track-col bb-track-col--key">
+                            {keyLabel && (
+                              <span className={`bb-track-key-badge ${keyToneClass}`}>{keyLabel}</span>
+                            )}
+                          </div>
+                          <div className="bb-track-col bb-track-col--format">
+                            {formatBadge && <span className="bb-track-format-badge">{formatBadge}</span>}
+                          </div>
+                          <div className="bb-track-col bb-track-col--size">{sizeLabel}</div>
+                          <div className="bb-track-col bb-track-col--downloaded">
+                            {alreadyDownloaded && (
+                              <span className="bb-track-downloaded">
+                                <span className="bb-track-downloaded-check" aria-hidden>✓</span>
+                                <span className="bb-track-downloaded-text">ya descargado</span>
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
 
                     <div className="bb-row-actions">
@@ -1576,27 +2630,29 @@ function Home() {
                         </>
                       ) : (
                         <>
-                          {loadFile && index === idx ? (
-                            <span
-                              className="bb-action-btn bb-action-btn--ghost bb-action-btn--loading"
-                              aria-live="polite"
-                            >
-                              <Spinner size={2} width={0.2} color="var(--app-accent)" />
-                            </span>
-                          ) : (
-                            <button
-                              type="button"
-                              className="bb-action-btn bb-action-btn--ghost"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                playFile(file, idx);
-                              }}
-                              title="Escuchar muestra"
-                              aria-label="Escuchar muestra"
-                            >
-                              <Play size={18} aria-hidden />
-                              <span className="bb-action-label">Escuchar</span>
-                            </button>
+                          {showFilePreviewAction && (
+                            loadFile && index === idx ? (
+                              <span
+                                className="bb-action-btn bb-action-btn--ghost bb-action-btn--loading"
+                                aria-live="polite"
+                              >
+                                <Spinner size={2} width={0.2} color="var(--app-accent)" />
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                className="bb-action-btn bb-action-btn--ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  playFile(file, idx);
+                                }}
+                                title="Escuchar muestra"
+                                aria-label="Escuchar muestra"
+                              >
+                                <Play size={18} aria-hidden />
+                                <span className="bb-action-label">Escuchar</span>
+                              </button>
+                            )
                           )}
 
                           {file.type === '-' && (
@@ -1625,13 +2681,21 @@ function Home() {
               })}
             {sortedFiles.length === 0 && (
               <div className="bb-empty-state">
-                <div className="app-state-panel is-empty">
-                  <span className="app-state-icon" aria-hidden>
-                    <Search />
-                  </span>
-                  <h3 className="app-state-title">No se encontraron resultados</h3>
-                  <p className="app-state-copy">Prueba con otra búsqueda o vuelve a la carpeta anterior.</p>
-                </div>
+                <EmptyState
+                  variant={isSearching ? "search-empty" : "folder-empty"}
+                  description={
+                    isSearching
+                      ? "Prueba con otra búsqueda o limpia los filtros para ver todo el contenido."
+                      : undefined
+                  }
+                  action={
+                    isSearching ? (
+                      <Button variant="secondary" onClick={() => void clearSearch()}>
+                        Limpiar filtros
+                      </Button>
+                    ) : undefined
+                  }
+                />
               </div>
             )}
           </div>

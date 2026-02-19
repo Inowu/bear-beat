@@ -393,7 +393,7 @@ function CrmDashboardLoadingSkeleton() {
       role="status"
       aria-live="polite"
       aria-busy="true"
-      aria-label="Cargando panel CRM"
+      aria-label="Actualizando panel CRM"
     >
       <section className="crm-meta crm-meta--skeleton" aria-hidden>
         <CrmSkeletonBlock className="crm-sk--line" />
@@ -436,7 +436,7 @@ function CrmDashboardLoadingSkeleton() {
         <CrmTableSkeleton
           columns={8}
           rows={6}
-          ariaLabel="Cargando tabla de cancelaciones recientes"
+          ariaLabel="Actualizando tabla de cancelaciones recientes"
         />
       </section>
 
@@ -446,7 +446,7 @@ function CrmDashboardLoadingSkeleton() {
           columns={7}
           rows={5}
           compact
-          ariaLabel="Cargando tabla de usuarios con riesgo"
+          ariaLabel="Actualizando tabla de usuarios con riesgo"
         />
       </section>
     </div>

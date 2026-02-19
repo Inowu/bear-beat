@@ -7,7 +7,7 @@ interface SpinnerProps {
   label?: string;
 }
 export function Spinner(props: SpinnerProps) {
-  const label = props.label ?? "Cargando...";
+  const label = props.label ?? "Contenido en carga";
   return (
     <div className="bb-spinner-wrap" role="status" aria-live="polite" aria-busy="true">
       <div

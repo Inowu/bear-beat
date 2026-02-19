@@ -4,6 +4,7 @@ import { RefreshCw } from "src/icons";
 import trpc from "../../../api";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import { Spinner } from "../../../components/Spinner/Spinner";
+import { SkeletonRow } from "../../../components/ui";
 import { useUserContext } from "../../../contexts/UserContext";
 import "./WebhookInbox.scss";
 
@@ -403,8 +404,9 @@ export const WebhookInbox = () => {
               className="btn-icon btn-secondary"
               onClick={() => void loadMore()}
               disabled={loadingMore}
+              aria-label={loadingMore ? "Actualizando más eventos" : undefined}
             >
-              {loadingMore ? "Cargando..." : "Cargar más"}
+              {loadingMore ? <SkeletonRow width="82px" height="14px" /> : "Cargar más"}
             </button>
           </div>
         )}

@@ -102,3 +102,168 @@
     gap: 8px;
   }
 }
+
+.mobile-search-overlay,
+.mobile-tabbar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  body.bb-mobile-tabbar-visible {
+    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0) + 8px);
+  }
+
+  body.bb-mobile-search-open {
+    overflow: hidden;
+  }
+
+  .mobile-tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 220;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 4px;
+    min-height: 56px;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0));
+    border-top: 1px solid color-mix(in srgb, var(--app-border) 88%, transparent);
+    background: color-mix(in srgb, var(--app-bg-card) 84%, transparent);
+    backdrop-filter: blur(14px) saturate(1.06);
+    -webkit-backdrop-filter: blur(14px) saturate(1.06);
+  }
+
+  .mobile-tabbar__tab {
+    min-width: 44px;
+    min-height: 44px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--app-text-muted);
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    cursor: pointer;
+    transition: color 0.16s ease, background 0.16s ease;
+  }
+
+  .mobile-tabbar__icon {
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobile-tabbar__icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .mobile-tabbar__label {
+    font-size: 0.72rem;
+    font-weight: 650;
+    letter-spacing: 0.01em;
+  }
+
+  .mobile-tabbar__tab.is-active {
+    color: var(--app-accent);
+    background: color-mix(in srgb, var(--app-accent) 10%, transparent);
+  }
+
+  .mobile-tabbar__tab.is-active .mobile-tabbar__label {
+    font-weight: 800;
+  }
+
+  .mobile-search-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 260;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+  }
+
+  .mobile-search-overlay__backdrop {
+    position: absolute;
+    inset: 0;
+    background: color-mix(in srgb, #0f172a 76%, transparent);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  .mobile-search-overlay__sheet {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    min-height: 100%;
+    padding: calc(16px + env(safe-area-inset-top, 0)) 14px calc(16px + env(safe-area-inset-bottom, 0));
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: color-mix(in srgb, var(--app-bg) 96%, transparent);
+  }
+
+  .mobile-search-overlay__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .mobile-search-overlay__head h2 {
+    margin: 0;
+    color: var(--app-text-heading);
+    font-size: 1.35rem;
+    font-weight: 760;
+  }
+
+  .mobile-search-overlay__close {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    border: 1px solid color-mix(in srgb, var(--app-border) 82%, transparent);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--app-bg-soft) 78%, transparent);
+    color: var(--app-text-body);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .mobile-search-overlay__form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+
+  .mobile-search-overlay__input {
+    min-height: 52px;
+    border: 1px solid color-mix(in srgb, var(--app-border) 84%, transparent);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--app-bg-card) 90%, transparent);
+    color: var(--app-text-body);
+    padding: 0 14px;
+    font-size: 1rem;
+    font-weight: 560;
+  }
+
+  .mobile-search-overlay__submit {
+    min-height: 52px;
+    min-width: 88px;
+    border: 1px solid color-mix(in srgb, var(--app-accent) 44%, transparent);
+    border-radius: 12px;
+    background: var(--theme-accent-soft-bg-2);
+    color: var(--app-accent);
+    padding: 0 14px;
+    font-size: 0.9rem;
+    font-weight: 760;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+  }
+}

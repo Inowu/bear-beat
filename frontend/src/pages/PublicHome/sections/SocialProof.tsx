@@ -9,6 +9,7 @@ import { inferTrackMetadata, prettyMediaName } from "../../../utils/fileMetadata
 import { isRetryableMediaError, retryWithJitter } from "../../../utils/retry";
 import { formatDownloads } from "../homeFormat";
 import PreviewModal from "../../../components/PreviewModal/PreviewModal";
+import { SkeletonTable } from "../../../components/ui";
 
 export type SocialTopItem = {
   path: string;
@@ -72,7 +73,7 @@ function TopList(props: {
           const demoLabel = item.artist ? `${item.artist} – ${item.track}` : item.track;
           const isDisabled = !item.path || loadingKey === item.key;
           const rowButtonLabel =
-            loadingKey === item.key ? `Cargando demo: ${demoLabel}` : `Reproducir demo: ${demoLabel}`;
+            loadingKey === item.key ? `Reproduciendo demo: ${demoLabel}` : `Reproducir demo: ${demoLabel}`;
 
           return (
             <div key={item.key} className="social-proof__row" role="listitem">
@@ -397,15 +398,15 @@ export default function SocialProof(props: {
         className="home-demo-modal social-proof-modal"
         aria-labelledby="social-proof-title"
       >
-        <Modal.Header closeButton>
+        <Modal.Header closeButton closeLabel="Cerrar modal">
           <Modal.Title id="social-proof-title">Lo que más se descarga</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <p className="home-demo-modal__sub">Top 100 real por categoría (últimos meses).</p>
           {modalLoading && !modalTop && (
             <div className="social-proof__modal-loading bb-market-surface" role="status" aria-live="polite">
-              <Loader2 size={18} className="social-proof__spinner" aria-hidden />
-              Cargando top 100…
+              <span className="sr-only">Actualizando top 100</span>
+              <SkeletonTable className="social-proof__modal-skeleton" />
             </div>
           )}
           {modalError && (

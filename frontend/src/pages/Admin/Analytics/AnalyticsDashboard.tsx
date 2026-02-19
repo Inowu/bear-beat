@@ -17,7 +17,7 @@ import {
 import trpc from "../../../api";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import Pagination from "../../../components/Pagination/Pagination";
-import { Input, Select } from "../../../components/ui";
+import { Input, Select, SkeletonRow, SkeletonTable } from "../../../components/ui";
 import "./AnalyticsDashboard.scss";
 
 interface FunnelOverview {
@@ -249,7 +249,7 @@ const ANALYTICS_TABLE_SKELETON_ROWS = 5;
 function AnalyticsDashboardSkeleton() {
   return (
     <div className="analytics-skeleton-layout" role="status" aria-live="polite">
-      <p className="analytics-skeleton-copy">Calculando métricas...</p>
+      <span className="sr-only">Actualizando métricas</span>
 
       <section className="analytics-guide analytics-guide--skeleton" aria-hidden="true">
         <div className="analytics-skeleton-line analytics-skeleton-line--title" />
@@ -773,7 +773,15 @@ export function AnalyticsDashboard() {
       subtitle="Mide conversión, ingresos y señales de riesgo para priorizar mejoras de UX y crecimiento."
       toolbar={toolbar}
     >
-      <section className="analytics-dashboard analytics-dashboard--biz">
+      <section
+        className={[
+          "analytics-dashboard",
+          "analytics-dashboard--biz",
+          showInitialSkeleton ? "" : "bb-skeleton-fade-in",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
         {error && (
           <div className="analytics-alert analytics-alert--error" role="alert">
             {error}
@@ -1420,10 +1428,11 @@ export function AnalyticsDashboard() {
                         type="button"
                         onClick={() => void fetchAdSpendMonthly()}
                         disabled={adSpendMonthlyLoading}
+                        aria-label={adSpendMonthlyLoading ? "Actualizando ad spend mensual" : undefined}
                         className="inline-flex items-center gap-2 min-h-[44px] rounded-xl px-4 border border-border bg-bg-card text-text-main font-semibold hover:bg-bg-input transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
                       >
                         <RefreshCw size={16} className={adSpendMonthlyLoading ? "animate-spin" : ""} aria-hidden />
-                        {adSpendMonthlyLoading ? "Cargando..." : "Recargar"}
+                        {adSpendMonthlyLoading ? <SkeletonRow width="68px" height="14px" /> : "Recargar"}
                       </button>
                       <span className="text-sm text-text-muted">
                         {adSpendMonthly?.range?.start
@@ -1455,7 +1464,9 @@ export function AnalyticsDashboard() {
                         <tbody>
                           {!adSpendMonthly && adSpendMonthlyLoading ? (
                             <tr>
-                              <td colSpan={6}>Cargando...</td>
+                              <td colSpan={6}>
+                                <SkeletonTable />
+                              </td>
                             </tr>
                           ) : !adSpendMonthly || adSpendMonthly.spend.length === 0 ? (
                             <tr>

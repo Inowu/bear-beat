@@ -46,6 +46,8 @@ import {
   openManyChatWidget,
   syncManyChatWidgetVisibility,
 } from "../../utils/manychatLoader";
+import { SkeletonCard, SkeletonRow } from "../../components/ui";
+import { appToast } from "../../utils/toast";
 
 type WorkspaceTabId = "orders" | "payments" | "email";
 
@@ -223,6 +225,7 @@ function MyAccount() {
       setSuccessTitle("Tarjeta actualizada");
       setSuccessMessage("Esta tarjeta se usará para los próximos cobros.");
       setShowSuccess(true);
+      appToast.success("Tarjeta actualizada.");
     } catch (error) {
       setErrorMessage("No se pudo establecer la tarjeta. Intenta de nuevo.");
       setShowError(true);
@@ -371,9 +374,11 @@ function MyAccount() {
         });
       }
       setEmailPrefsNotice("Guardado.");
+      appToast.success("Cambios de cuenta guardados.");
       window.setTimeout(() => setEmailPrefsNotice(null), 2000);
     } catch {
       setEmailPrefsNotice("No se pudo guardar. Intenta de nuevo.");
+      appToast.error("Error de red — Revisa tu conexión.");
     } finally {
       setEmailPrefsSaving(false);
     }
@@ -605,12 +610,11 @@ function MyAccount() {
       <div className="my-account-main-container bb-app-page">
         <div className="ma-shell">
           <div className="global-loader" aria-busy="true" aria-live="polite">
-            <div className="app-state-panel is-loading" role="status">
-              <span className="app-state-icon" aria-hidden>
-                <Spinner size={2.8} width={0.25} color="var(--ma-accent)" />
-              </span>
-              <h1 className="app-state-title">Cargando tu cuenta</h1>
-              <p className="app-state-copy">Estamos preparando tus credenciales y tus métodos de pago.</p>
+            <div className="app-state-panel is-loading bb-skeleton-shell" role="status">
+              <span className="sr-only">Actualizando datos de tu cuenta</span>
+              <SkeletonCard />
+              <SkeletonRow width="58%" />
+              <SkeletonRow width="72%" />
             </div>
           </div>
         </div>
@@ -619,7 +623,7 @@ function MyAccount() {
   }
 
   return (
-    <div className="my-account-main-container bb-app-page">
+    <div className="my-account-main-container bb-app-page bb-skeleton-fade-in">
       <div className="ma-shell">
         <header className="ma-page-head">
           <span className="ma-page-kicker">Panel de cuenta</span>

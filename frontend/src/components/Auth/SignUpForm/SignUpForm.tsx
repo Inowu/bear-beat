@@ -36,6 +36,7 @@ import type { IPlans } from "../../../interfaces/Plans";
 import { formatInt } from "../../../utils/format";
 import brandLockupBlack from "../../../assets/brand/bearbeat-lockup-black.png";
 import brandLockupCyan from "../../../assets/brand/bearbeat-lockup-cyan.png";
+import { SkeletonRow } from "../../ui";
 
 function FieldError(props: { id: string; show: boolean; message?: string }) {
   const { id, show, message } = props;
@@ -645,6 +646,13 @@ function SignUpForm() {
     return items;
   }, [checkoutPlanQuotaGb, showCheckoutTrial, trialConfig?.days, trialConfig?.gb]);
 
+  const checkoutPlanNameText = (checkoutPlan?.name ?? "Plan seleccionado").trim();
+  const checkoutPlanNameNode = checkoutPlanLoading ? (
+    <SkeletonRow width="132px" height="12px" />
+  ) : (
+    checkoutPlanNameText
+  );
+
   const NameField = (
     <div className={`c-row ${showUsernameError ? "is-invalid" : ""}`}>
       <label htmlFor="username" className="auth-field-label">
@@ -921,8 +929,11 @@ function SignUpForm() {
                     <span className="checkout-intent-summary__summaryLeft">
                       <span>Resumen de compra</span>
                       <small>
-                        {(checkoutPlan?.name ?? (checkoutPlanLoading ? "Cargando…" : "Plan seleccionado")).trim()}
-                        {checkoutPlanPriceLabel ? ` · ${checkoutPlanPriceLabel}/mes` : ""}
+                        {checkoutPlanLoading ? (
+                          <SkeletonRow width="132px" height="12px" />
+                        ) : (
+                          `${checkoutPlanNameText}${checkoutPlanPriceLabel ? ` · ${checkoutPlanPriceLabel}/mes` : ""}`
+                        )}
                       </small>
                     </span>
                     {showCheckoutTrial ? (
@@ -942,7 +953,7 @@ function SignUpForm() {
                     </div>
                     <div className="checkout-intent-summary__row">
                       <strong className="checkout-intent-summary__name">
-                        {checkoutPlan?.name ?? (checkoutPlanLoading ? "Cargando…" : "Plan seleccionado")}
+                        {checkoutPlanNameNode}
                       </strong>
                       {checkoutPlanPriceLabel && (
                         <span className="checkout-intent-summary__price">
@@ -977,7 +988,7 @@ function SignUpForm() {
                   </div>
                   <div className="checkout-intent-summary__row">
                     <strong className="checkout-intent-summary__name">
-                      {checkoutPlan?.name ?? (checkoutPlanLoading ? "Cargando…" : "Plan seleccionado")}
+                      {checkoutPlanNameNode}
                     </strong>
                     {checkoutPlanPriceLabel && (
                       <span className="checkout-intent-summary__price">

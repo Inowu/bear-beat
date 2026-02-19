@@ -1,0 +1,86 @@
+.bb-skeleton {
+  display: block;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--app-bg-soft) 84%, var(--app-bg-card));
+  animation: bb-skeleton-pulse 1.2s ease-in-out infinite;
+  will-change: opacity;
+}
+
+.bb-skeleton-row {
+  width: 100%;
+  min-height: 14px;
+}
+
+.bb-skeleton-table {
+  width: 100%;
+  display: grid;
+  gap: 10px;
+}
+
+.bb-skeleton-card {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 12px;
+}
+
+.bb-skeleton-card__media {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+}
+
+.bb-skeleton-card__content {
+  display: grid;
+  gap: 8px;
+}
+
+.bb-skeleton-card__line--title {
+  max-width: 70%;
+}
+
+.bb-skeleton-card__line--body {
+  max-width: 46%;
+}
+
+.bb-skeleton-shell {
+  width: min(620px, 100%);
+  display: grid;
+  gap: 14px;
+}
+
+.bb-skeleton-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.bb-skeleton-fade-in {
+  animation: bb-skeleton-fade-in 200ms ease both;
+}
+
+@keyframes bb-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.56;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes bb-skeleton-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bb-skeleton,
+  .bb-skeleton-fade-in {
+    animation: none !important;
+  }
+}

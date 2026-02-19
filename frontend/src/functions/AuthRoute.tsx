@@ -2,7 +2,7 @@ import { ReactNode, useEffect } from "react";
 import { useUserContext } from "../contexts/UserContext";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getAccessToken } from "../utils/authStorage";
-import { Spinner } from "../components/Spinner/Spinner";
+import { SkeletonCard, SkeletonRow } from "../components/ui";
 import { writeAuthReturnUrl } from "../utils/authReturnUrl";
 
 interface AuthRoutePropsI {
@@ -32,14 +32,11 @@ function AuthRoute({ children }: AuthRoutePropsI) {
     const isHydrating = Boolean(getAccessToken());
     return (
       <div className="global-loader" aria-busy="true" aria-live="polite">
-        <div className="app-state-panel is-loading" role="status">
-          <span className="app-state-icon" aria-hidden>
-            <Spinner size={2.8} width={0.25} color="var(--app-accent)" />
-          </span>
-          <h2 className="app-state-title">{isHydrating ? "Cargando tu sesión" : "Redirigiendo"}</h2>
-          <p className="app-state-copy">
-            {isHydrating ? "Un momento…" : "Abriendo inicio de sesión…"}
-          </p>
+        <div className="app-state-panel is-loading bb-skeleton-shell" role="status">
+          <span className="sr-only">{isHydrating ? "Validando sesión" : "Redirigiendo al login"}</span>
+          <SkeletonCard />
+          <SkeletonRow width="52%" />
+          <SkeletonRow width="74%" />
         </div>
       </div>
     );

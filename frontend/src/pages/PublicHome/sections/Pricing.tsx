@@ -213,12 +213,12 @@ export default function Pricing(props: {
           {isLoading && (
             <div
               className="pricing__card bb-hero-card pricing__card--skeleton"
-              aria-label="Cargando precio"
+              aria-label="Actualizando precio"
               role="status"
               aria-live="polite"
               aria-busy="true"
             >
-              <p className="pricing__skeletonStatus">Cargando precio…</p>
+              <span className="sr-only">Actualizando precio del plan</span>
 
               <div className="pricing__card-head" aria-hidden>
                 <div className="pricing__plan">

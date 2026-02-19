@@ -21,6 +21,7 @@ export interface IFileStat {
   size: number;
   path?: string;
   metadata?: ITrackMetadata;
+  already_downloaded?: boolean;
 }
 
 export interface IFileService {

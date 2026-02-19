@@ -21,6 +21,7 @@ import { SetStateAction, useState, useRef, useEffect } from "react";
 interface NavbarPropsI {
   setAsideOpen: React.Dispatch<SetStateAction<boolean>>;
   menuButtonRef?: React.RefObject<HTMLButtonElement | null>;
+  hideMenuButton?: boolean;
 }
 
 const THEME_OPTIONS: { value: ThemeMode; label: string; Icon: AppIcon }[] = [
@@ -33,7 +34,7 @@ const THEME_OPTIONS: { value: ThemeMode; label: string; Icon: AppIcon }[] = [
 function Navbar(props: NavbarPropsI) {
   const { handleLogout, currentUser } = useUserContext();
   const { mode, theme, setMode } = useTheme();
-  const { setAsideOpen, menuButtonRef } = props;
+  const { setAsideOpen, menuButtonRef, hideMenuButton = false } = props;
   const brandMark = theme === "light" ? brandMarkBlack : brandMarkCyan;
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -51,15 +52,17 @@ function Navbar(props: NavbarPropsI) {
   return (
     <nav>
       <div className="header">
-        <button
-          type="button"
-          ref={menuButtonRef as React.LegacyRef<HTMLButtonElement>}
-          className="burger-btn"
-          onClick={() => setAsideOpen((prev) => !prev)}
-          aria-label="Abrir menú"
-        >
-          <Menu size={20} aria-hidden />
-        </button>
+        {!hideMenuButton && (
+          <button
+            type="button"
+            ref={menuButtonRef as React.LegacyRef<HTMLButtonElement>}
+            className="burger-btn"
+            onClick={() => setAsideOpen((prev) => !prev)}
+            aria-label="Abrir menú"
+          >
+            <Menu size={20} aria-hidden />
+          </button>
+        )}
         <Link to="/" className="nav-brand" aria-label="Bear Beat">
           <img src={brandMark} alt="" aria-hidden />
         </Link>

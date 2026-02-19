@@ -11,8 +11,7 @@ import {
 import trpc from "../../../api";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import Pagination from "../../../components/Pagination/Pagination";
-import { Spinner } from "../../../components/Spinner/Spinner";
-import { Input, Select } from "../../../components/ui";
+import { Input, Select, SkeletonRow, SkeletonTable } from "../../../components/ui";
 import "../Analytics/AnalyticsDashboard.scss";
 import "./LiveAnalytics.scss";
 
@@ -331,7 +330,7 @@ export function LiveAnalytics() {
       subtitle="Supervisa actividad en vivo y detecta cuellos de conversión al momento."
       toolbar={toolbar}
     >
-      <section className="analytics-dashboard live-dashboard">
+      <section className={`analytics-dashboard live-dashboard ${snapshot ? "bb-skeleton-fade-in" : ""}`}>
         {error && (
           <div className="analytics-alert analytics-alert--error" role="alert">
             {error}
@@ -339,9 +338,10 @@ export function LiveAnalytics() {
         )}
 
         {!snapshot && loading ? (
-          <div className="analytics-loading">
-            <Spinner size={3} width={0.3} color="var(--app-accent)" />
-            <p>Cargando vista Live...</p>
+          <div className="analytics-loading bb-skeleton-shell" role="status" aria-live="polite" aria-busy="true">
+            <span className="sr-only">Actualizando vista Live</span>
+            <SkeletonRow width="42%" height="18px" />
+            <SkeletonTable />
           </div>
         ) : (
           <>
