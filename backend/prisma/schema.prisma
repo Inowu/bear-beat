@@ -482,6 +482,7 @@ model DownloadHistory {
   // Scale: speed up "history by user" and "public top downloads (sinceDays)" queries.
   @@index([userId, date], map: "idx_download_history_user_date")
   @@index([isFolder, date], map: "idx_download_history_isfolder_date")
+  @@index([userId, isFolder, fileName], map: "idx_download_history_user_folder_file")
   @@map("download_history")
 }
 

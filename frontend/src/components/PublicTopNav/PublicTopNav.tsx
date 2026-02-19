@@ -145,8 +145,8 @@ export default function PublicTopNav({
         id={mobileMenuId}
         className={`home-topnav__mobile-menu${mobileMenuOpen ? " is-open" : ""}`}
       >
-        <div className="ph__container home-topnav__mobile-menu-inner">
-          <div className="home-topnav__mobile-head">Navegación</div>
+        <div className="home-topnav__mobile-menu-inner">
+          <div className="home-topnav__mobile-head">Menú</div>
           <nav className="home-topnav__mobile-links" aria-label="Links móviles">
             {usePlansAsHashLink ? (
               <Link to={plansTo} className="home-topnav__mobile-link" onClick={handlePlansClick}>

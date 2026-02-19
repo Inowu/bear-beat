@@ -5,13 +5,14 @@ import {
   enrichFilesWithTrackMetadata,
   inferTrackMetadataFromName,
   resolveChildCatalogPath,
-  syncTrackMetadataForFiles,
+  scheduleTrackMetadataSyncForFiles,
 } from '../../metadata';
 import { shieldedProcedure } from '../../procedures/shielded.procedure';
 import type { IFileStat } from '../../services/interfaces/fileService.interface';
 import { log } from '../../server';
 
 type LsFileRow = IFileStat & { already_downloaded?: boolean };
+const DOWNLOAD_HISTORY_LOOKUP_BATCH = 300;
 
 const normalizeDownloadHistoryPath = (value?: string): string => {
   const normalized = `${value ?? ''}`.trim().replace(/\\/g, '/');
@@ -56,18 +57,26 @@ const resolveDownloadedFileSet = async (
     new Set(candidatePaths.flatMap((value) => toDownloadHistoryLookupPath(value))),
   );
 
-  const rows = await prisma.downloadHistory.findMany({
-    where: {
-      userId,
-      isFolder: false,
-      fileName: {
-        in: lookupPaths,
+  const rows: Array<{ fileName: string }> = [];
+  for (let idx = 0; idx < lookupPaths.length; idx += DOWNLOAD_HISTORY_LOOKUP_BATCH) {
+    const chunk = lookupPaths.slice(idx, idx + DOWNLOAD_HISTORY_LOOKUP_BATCH);
+    if (!chunk.length) continue;
+
+    const chunkRows = await prisma.downloadHistory.findMany({
+      where: {
+        userId,
+        isFolder: false,
+        fileName: {
+          in: chunk,
+        },
       },
-    },
-    select: {
-      fileName: true,
-    },
-  });
+      select: {
+        fileName: true,
+      },
+    });
+
+    rows.push(...chunkRows);
+  }
 
   return new Set(
     rows
@@ -95,6 +104,17 @@ const attachAlreadyDownloadedFlag = (
     };
   });
 
+const attachInferredTrackMetadata = (rows: LsFileRow[]): LsFileRow[] =>
+  rows.map((file) => {
+    if (file.type !== '-' || file.metadata) return file;
+    const inferred = inferTrackMetadataFromName(file.name);
+    if (!inferred) return file;
+    return {
+      ...file,
+      metadata: inferred,
+    };
+  });
+
 export const ls = shieldedProcedure
   .input(
     z.object({
@@ -119,24 +139,14 @@ export const ls = shieldedProcedure
     };
 
     try {
-      await syncTrackMetadataForFiles(filesWithPath);
+      scheduleTrackMetadataSyncForFiles(filesWithPath);
       const withMetadata = await enrichFilesWithTrackMetadata(filesWithPath);
-      return withDownloadedFlag(withMetadata as LsFileRow[]);
+      return withDownloadedFlag(attachInferredTrackMetadata(withMetadata as LsFileRow[]));
     } catch (error: any) {
       log.warn(
         `[TRACK_METADATA] ls enrichment failed: ${error?.message ?? 'unknown error'}`,
       );
-      // Fallback: still return inferred metadata so the UI can render track pills/covers
-      // even if the DB migration wasn't applied or Prisma is temporarily unavailable.
-      const fallbackRows = filesWithPath.map((file) => {
-        if (file.type !== '-') return file;
-        const inferred = inferTrackMetadataFromName(file.name);
-        if (!inferred) return file;
-        return {
-          ...file,
-          metadata: inferred,
-        };
-      });
+      const fallbackRows = attachInferredTrackMetadata(filesWithPath);
       return withDownloadedFlag(fallbackRows as LsFileRow[]);
     }
   });

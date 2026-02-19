@@ -6,6 +6,7 @@ export {
   toCatalogRelativePath,
 } from './inferTrackMetadata';
 export {
+  __clearTrackMetadataSyncSchedulerForTests,
   backfillSpotifyCoversForCatalog,
   backfillSpotifyCoversForPaths,
   enrichFilesWithTrackMetadata,
@@ -13,6 +14,7 @@ export {
   getTrackMetadataMapByPaths,
   inferTrackMetadataFromFile,
   resolveChildCatalogPath,
+  scheduleTrackMetadataSyncForFiles,
   syncTrackMetadataForFiles,
   toTrackMetadataCreateInput,
 } from './store';

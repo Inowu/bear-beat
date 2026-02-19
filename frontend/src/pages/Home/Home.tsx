@@ -1641,11 +1641,31 @@ function Home() {
   };
 
   useEffect(() => {
-    getFiles();
-    getRecentPacks();
-    getNewFileCounts();
-    getMonthlyTrending();
-    getForYouRecommendations();
+    let cancelled = false;
+    let nonCriticalTimer: number | null = null;
+
+    const bootstrapHome = async () => {
+      await getFiles();
+      if (cancelled) return;
+
+      void getNewFileCounts();
+
+      nonCriticalTimer = window.setTimeout(() => {
+        if (cancelled) return;
+        void getRecentPacks();
+        void getMonthlyTrending();
+        void getForYouRecommendations();
+      }, 160);
+    };
+
+    void bootstrapHome();
+
+    return () => {
+      cancelled = true;
+      if (nonCriticalTimer !== null) {
+        window.clearTimeout(nonCriticalTimer);
+      }
+    };
   }, []);
   useEffect(() => {
     checkUHUser();

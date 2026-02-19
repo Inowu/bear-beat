@@ -14,6 +14,16 @@ import { getEmbeddedTrackTags } from './embeddedTags';
 const TRACK_METADATA_QUERY_BATCH = 400;
 const SPOTIFY_MISS_RETRY_HOURS = Number(process.env.TRACK_METADATA_SPOTIFY_MISS_RETRY_HOURS ?? 24);
 const SPOTIFY_DEFAULT_MAX_PER_CALL = Number(process.env.TRACK_METADATA_SPOTIFY_MAX_PER_CALL ?? 6);
+const TRACK_METADATA_SYNC_COOLDOWN_MS = Number(process.env.TRACK_METADATA_SYNC_COOLDOWN_MS ?? 5 * 60 * 1000);
+const TRACK_METADATA_SYNC_MAX_FILES_PER_CALL = Number(
+  process.env.TRACK_METADATA_SYNC_MAX_FILES_PER_CALL ?? 180,
+);
+const TRACK_METADATA_SYNC_RECENT_CACHE_MAX_ENTRIES = Number(
+  process.env.TRACK_METADATA_SYNC_RECENT_CACHE_MAX_ENTRIES ?? 12_000,
+);
+
+const trackMetadataSyncInFlightPaths = new Set<string>();
+const trackMetadataSyncRecentlyQueuedAt = new Map<string, number>();
 
 const trackMetadataSelect = {
   path: true,
@@ -195,6 +205,105 @@ export async function enrichFilesWithTrackMetadata<T extends IFileStat>(files: T
   });
 }
 
+function sanitizePositiveInt(value: number, fallback: number): number {
+  if (!Number.isFinite(value) || value <= 0) return fallback;
+  return Math.floor(value);
+}
+
+function pruneTrackMetadataSyncRecentCache(nowMs: number): void {
+  const maxEntries = sanitizePositiveInt(TRACK_METADATA_SYNC_RECENT_CACHE_MAX_ENTRIES, 12_000);
+  if (trackMetadataSyncRecentlyQueuedAt.size <= maxEntries) {
+    return;
+  }
+
+  const cooldownMs = sanitizePositiveInt(TRACK_METADATA_SYNC_COOLDOWN_MS, 5 * 60 * 1000);
+  for (const [pathValue, queuedAt] of trackMetadataSyncRecentlyQueuedAt.entries()) {
+    if (nowMs - queuedAt >= cooldownMs) {
+      trackMetadataSyncRecentlyQueuedAt.delete(pathValue);
+    }
+    if (trackMetadataSyncRecentlyQueuedAt.size <= maxEntries) {
+      return;
+    }
+  }
+
+  const overflow = trackMetadataSyncRecentlyQueuedAt.size - maxEntries;
+  if (overflow <= 0) return;
+
+  let removed = 0;
+  for (const pathValue of trackMetadataSyncRecentlyQueuedAt.keys()) {
+    trackMetadataSyncRecentlyQueuedAt.delete(pathValue);
+    removed += 1;
+    if (removed >= overflow) {
+      break;
+    }
+  }
+}
+
+export function __clearTrackMetadataSyncSchedulerForTests(): void {
+  trackMetadataSyncInFlightPaths.clear();
+  trackMetadataSyncRecentlyQueuedAt.clear();
+}
+
+export function scheduleTrackMetadataSyncForFiles<
+  T extends Pick<IFileStat, 'name' | 'path' | 'type'>,
+>(files: T[]): number {
+  if (!files.length) return 0;
+
+  const nowMs = Date.now();
+  const cooldownMs = sanitizePositiveInt(TRACK_METADATA_SYNC_COOLDOWN_MS, 5 * 60 * 1000);
+  const maxFilesPerCall = sanitizePositiveInt(TRACK_METADATA_SYNC_MAX_FILES_PER_CALL, 180);
+  const candidatesByPath = new Map<string, T>();
+
+  for (const file of files) {
+    if (file.type !== '-' || !file.path) continue;
+    const normalizedPath = normalizeCatalogPath(file.path);
+    if (!normalizedPath || normalizedPath === '/') continue;
+    if (trackMetadataSyncInFlightPaths.has(normalizedPath)) continue;
+
+    const lastQueuedAt = trackMetadataSyncRecentlyQueuedAt.get(normalizedPath) ?? 0;
+    if (nowMs - lastQueuedAt < cooldownMs) continue;
+    if (candidatesByPath.has(normalizedPath)) continue;
+
+    candidatesByPath.set(normalizedPath, {
+      ...file,
+      path: normalizedPath,
+    } as T);
+
+    if (candidatesByPath.size >= maxFilesPerCall) {
+      break;
+    }
+  }
+
+  const queuedFiles = Array.from(candidatesByPath.values());
+  if (!queuedFiles.length) {
+    return 0;
+  }
+
+  for (const file of queuedFiles) {
+    const normalizedPath = normalizeCatalogPath(file.path as string);
+    trackMetadataSyncInFlightPaths.add(normalizedPath);
+    trackMetadataSyncRecentlyQueuedAt.set(normalizedPath, nowMs);
+  }
+  pruneTrackMetadataSyncRecentCache(nowMs);
+
+  setTimeout(() => {
+    void syncTrackMetadataForFiles(queuedFiles)
+      .catch((error: any) => {
+        log.warn(
+          `[TRACK_METADATA] async sync failed: ${error?.message ?? 'unknown error'}`,
+        );
+      })
+      .finally(() => {
+        queuedFiles.forEach((file) => {
+          const normalizedPath = normalizeCatalogPath(file.path as string);
+          trackMetadataSyncInFlightPaths.delete(normalizedPath);
+        });
+      });
+  }, 0);
+
+  return queuedFiles.length;
+}
+
 export async function syncTrackMetadataForFiles<T extends Pick<IFileStat, 'name' | 'path' | 'type'>>(
   files: T[],
 ): Promise<number> {
@@ -319,11 +428,6 @@ export async function syncTrackMetadataForFiles<T extends Pick<IFileStat, 'name'
   }
 
   return created.count;
-}
-
-function sanitizePositiveInt(value: number, fallback: number): number {
-  if (!Number.isFinite(value) || value <= 0) return fallback;
-  return Math.floor(value);
 }
 
 function normalizeSpotifyBackfillPaths(paths: string[]): string[] {
