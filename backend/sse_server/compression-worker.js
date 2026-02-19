@@ -14,6 +14,14 @@ const prisma = new PrismaClient({
   log: ['error'],
 });
 
+const parsedZipCompressionLevel = Number(process.env.ZIP_COMPRESSION_LEVEL);
+const zipCompressionLevel =
+  Number.isInteger(parsedZipCompressionLevel) &&
+  parsedZipCompressionLevel >= 0 &&
+  parsedZipCompressionLevel <= 9
+    ? parsedZipCompressionLevel
+    : 1;
+
 const compressionWorker = new Worker(
   process.env.COMPRESSION_QUEUE_NAME,
   // Spawn a new process for each job
@@ -27,11 +35,11 @@ const compressionWorker = new Worker(
     }.zip`;
 
     const archive = archiver('zip', {
-      zlib: { level: 5 },
+      zlib: { level: zipCompressionLevel },
     });
 
     log.info(
-      `[COMPRESSION:START] Compressing ${songsAbsolutePath} to ${dirName}`,
+      `[COMPRESSION:START] Compressing ${songsAbsolutePath} to ${dirName} (zip level=${zipCompressionLevel})`,
     );
 
     const zippedDirPath = path.resolve(

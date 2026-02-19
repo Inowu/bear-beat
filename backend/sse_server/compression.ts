@@ -10,6 +10,13 @@ import { JobStatus } from './job-status';
 import { sse } from './';
 
 export const MAX_CONCURRENT_DOWNLOADS = 25;
+const parsedZipCompressionLevel = Number(process.env.ZIP_COMPRESSION_LEVEL);
+const ZIP_COMPRESSION_LEVEL =
+  Number.isInteger(parsedZipCompressionLevel) &&
+  parsedZipCompressionLevel >= 0 &&
+  parsedZipCompressionLevel <= 9
+    ? parsedZipCompressionLevel
+    : 1;
 
 export const createCompressionWorker = () => {
   const compressionWorker = new Worker(
@@ -25,11 +32,11 @@ export const createCompressionWorker = () => {
       }.zip`;
 
       const archive = archiver('zip', {
-        zlib: { level: 5 },
+        zlib: { level: ZIP_COMPRESSION_LEVEL },
       });
 
       log.info(
-        `[COMPRESSION:START] Compressing ${songsAbsolutePath} to ${dirName}`,
+        `[COMPRESSION:START] Compressing ${songsAbsolutePath} to ${dirName} (zip level=${ZIP_COMPRESSION_LEVEL})`,
       );
 
       const zippedDirPath = path.resolve(

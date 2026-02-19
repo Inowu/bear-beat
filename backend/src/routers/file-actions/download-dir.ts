@@ -245,7 +245,7 @@ export const downloadDir = shieldedProcedure
         data: {
           userId: user.id,
           date: downloadedAt,
-          size: fastFolderSizeSync(fullPath),
+          size: dirSize,
           dirName: Path.basename(fullPath),
         },
       });

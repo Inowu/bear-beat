@@ -11,21 +11,15 @@ import { Button } from "src/components/ui";
 export const FileLoader = () => {
   const { currentUser, userToken } = useUserContext();
   const { currentFile, fileData, setShowDownload } = useDownloadContext();
-  const startDownloadAlbum = async (url: string) => {
-    const a: any = document.createElement("a");
-    try {
-      const response = await fetch(url);
-      setShowDownload(false);
-      if (response.ok) {
-        a.href = url;
-        a.download = fileData.name;
-        a.click();
-        window.URL.revokeObjectURL(url);
-      } else {
-      }
-    } catch {
-      setShowDownload(false);
-    }
+  const startDownloadAlbum = (url: string) => {
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileData.name;
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setShowDownload(false);
   };
   const stopDownloadAlbum = async () => {
     try {
