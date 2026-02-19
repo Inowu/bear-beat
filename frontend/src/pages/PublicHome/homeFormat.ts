@@ -49,5 +49,11 @@ export function normalizeGenreDisplayName(raw: string): string {
   return name;
 }
 
+export function isSingleLetterGenreLabel(value: string): boolean {
+  const label = `${value ?? ""}`.trim();
+  if (!label) return false;
+  return /^[a-záéíóúüñ]$/i.test(label);
+}
+
 export type HomeNumberLocale = typeof HOME_NUMBER_LOCALE;
 export { HOME_NUMBER_LOCALE };

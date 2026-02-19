@@ -3,6 +3,7 @@ import {
   formatGB,
   formatInt,
   formatTB,
+  isSingleLetterGenreLabel,
   normalizeGenreDisplayName,
   normalizeSearchKey,
 } from "./homeFormat";
@@ -35,5 +36,12 @@ describe("PublicHome formatting utils", () => {
 
   it("normalizes search key (lowercase, no accents)", () => {
     expect(normalizeSearchKey("Reggaetón")).toBe("reggaeton");
+  });
+
+  it("identifies one-letter labels so they can be filtered from home genres", () => {
+    expect(isSingleLetterGenreLabel("A")).toBe(true);
+    expect(isSingleLetterGenreLabel("ñ")).toBe(true);
+    expect(isSingleLetterGenreLabel("R&B")).toBe(false);
+    expect(isSingleLetterGenreLabel("Cumbia")).toBe(false);
   });
 });

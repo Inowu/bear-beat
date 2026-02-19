@@ -17,6 +17,7 @@ import {
   formatCatalogSizeMarketing,
   formatInt,
   HOME_NUMBER_LOCALE,
+  isSingleLetterGenreLabel,
   normalizeGenreDisplayName,
   normalizeSearchKey,
 } from "./homeFormat";
@@ -262,6 +263,7 @@ function buildCatalogGenresSnapshot(value: unknown): HomeCatalogGenre[] {
         ? normalizeGenreDisplayName(row.name).trim()
         : "";
     if (!displayName) return;
+    if (isSingleLetterGenreLabel(displayName)) return;
 
     const searchKey = normalizeSearchKey(displayName);
     if (!searchKey) return;
