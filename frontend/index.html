@@ -63,33 +63,47 @@
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
+    <script>
+      (function () {
+        var THEME_STORAGE_KEY = "bear-theme";
+        var mode = "system";
+        var theme = "light";
+        var supportsMatchMedia = typeof window.matchMedia === "function";
+
+        try {
+          var storedMode = window.localStorage.getItem(THEME_STORAGE_KEY);
+          if (storedMode === "light" || storedMode === "dark" || storedMode === "system" || storedMode === "schedule") {
+            mode = storedMode;
+          }
+        } catch (e) {}
+
+        if (mode === "light") {
+          theme = "light";
+        } else if (mode === "dark") {
+          theme = "dark";
+        } else if (mode === "schedule") {
+          var hour = new Date().getHours();
+          theme = hour >= 6 && hour < 21 ? "light" : "dark";
+        } else {
+          theme = supportsMatchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+
+        var root = document.documentElement;
+        root.setAttribute("data-theme", theme);
+        root.setAttribute("data-theme-mode", mode);
+        root.classList.toggle("dark", theme === "dark");
+
+        var isMac =
+          typeof navigator !== "undefined" &&
+          navigator.platform &&
+          navigator.platform.toLowerCase().indexOf("mac") >= 0;
+        var isChrome = typeof window !== "undefined" && window.chrome && (window.chrome.runtime || !window.opr);
+        if (isMac && isChrome) root.classList.add("chrome-mac");
+      })();
+    </script>
   </head>
   <body>
     <a href="#main-content" class="skip-link">Ir al contenido</a>
-    <script>
-      (function () {
-        try {
-          var stored = localStorage.getItem("bear-theme");
-          var theme = "dark";
-          if (stored === "light") theme = "light";
-          else if (stored === "dark") theme = "dark";
-          else if (stored === "system") {
-            theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-          } else if (stored === "schedule") {
-            var h = new Date().getHours();
-            theme = h >= 6 && h < 21 ? "light" : "dark";
-          }
-          document.documentElement.setAttribute("data-theme", theme);
-          document.documentElement.classList.toggle("dark", theme === "dark");
-          var isMac =
-            typeof navigator !== "undefined" &&
-            navigator.platform &&
-            navigator.platform.toLowerCase().indexOf("mac") >= 0;
-          var isChrome = typeof window !== "undefined" && window.chrome && (window.chrome.runtime || !window.opr);
-          if (isMac && isChrome) document.documentElement.classList.add("chrome-mac");
-        } catch (e) {}
-      })();
-    </script>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
     <script type="module" src="/src/index.tsx"></script>

@@ -5,6 +5,7 @@ import { useUserContext } from "../../contexts/UserContext";
 import brandMarkBlack from "../../assets/brand/bearbeat-mark-black.png";
 import brandMarkCyan from "../../assets/brand/bearbeat-mark-cyan.png";
 import { Button } from "src/components/ui";
+import { Moon, Sun } from "src/icons";
 type PublicTopNavProps = {
   className?: string;
   brandAriaCurrent?: boolean;
@@ -25,9 +26,13 @@ export default function PublicTopNav({
   onPlansClick,
 }: PublicTopNavProps) {
   const { userToken } = useUserContext();
-  const { theme } = useTheme();
+  const { theme, setMode } = useTheme();
   const brandMark = theme === "light" ? brandMarkBlack : brandMarkCyan;
   const usePlansAsHashLink = plansTo.includes("#");
+  const nextTheme = theme === "dark" ? "light" : "dark";
+  const handleToggleTheme = () => {
+    setMode(nextTheme);
+  };
 
   return (
     <header
@@ -44,6 +49,17 @@ export default function PublicTopNav({
           <img src={brandMark} alt="Bear Beat" width={40} height={40} />
         </Link>
         <div className="home-topnav__right" aria-label="Acciones">
+          <Button
+            unstyled
+            type="button"
+            className="home-topnav__theme-btn"
+            onClick={handleToggleTheme}
+            aria-label={theme === "dark" ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}
+            aria-pressed={theme === "dark"}
+            title={theme === "dark" ? "Tema oscuro activo" : "Tema claro activo"}
+          >
+            {theme === "dark" ? <Moon size={18} aria-hidden /> : <Sun size={18} aria-hidden />}
+          </Button>
           <nav className="home-topnav__nav" aria-label="Links">
             {usePlansAsHashLink ? (
               <Link to={plansTo} className="home-topnav__link" onClick={onPlansClick}>

@@ -60,12 +60,47 @@
   }
 }
 
+.auth-theme-toggle {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  right: calc(env(safe-area-inset-right, 0px) + 12px);
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--app-border) 84%, transparent);
+  background: color-mix(in srgb, var(--app-bg-card) 86%, transparent);
+  color: var(--app-text-heading);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.auth-theme-toggle:hover {
+  background: color-mix(in srgb, var(--app-accent) 14%, transparent);
+  border-color: color-mix(in srgb, var(--app-accent) 50%, var(--app-border));
+}
+
+.auth-theme-toggle:focus-visible {
+  outline: 2px solid var(--app-focus-ring);
+  outline-offset: 2px;
+}
+
 .auth-main-container.auth-page.auth-page--dark {
   color-scheme: dark;
 }
 
 .auth-main-container.auth-page.auth-page--light {
   color-scheme: light;
+}
+
+.auth-main-container.auth-page.auth-page--light .auth-theme-toggle {
+  background: color-mix(in srgb, var(--color-white) 96%, var(--app-bg-card));
+  border-color: color-mix(in srgb, var(--app-border) 94%, transparent);
+  color: color-mix(in srgb, var(--app-text-body) 96%, transparent);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
 }
 
 [data-theme="light"] .auth-main-container.auth-page,

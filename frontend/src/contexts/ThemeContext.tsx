@@ -10,6 +10,7 @@ import React, {
 export type ThemeMode = "light" | "dark" | "system" | "schedule";
 
 const STORAGE_KEY = "bear-theme";
+const THEME_MODES: ThemeMode[] = ["light", "dark", "system", "schedule"];
 
 // Horario: 6:00–20:59 = light, 21:00–5:59 = dark (hora local)
 function isScheduleLight(): boolean {
@@ -39,12 +40,20 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [mode, setModeState] = useState<ThemeMode>(() => {
+    if (typeof window === "undefined") return "system";
+
     try {
-      const stored = localStorage.getItem(STORAGE_KEY) as ThemeMode | null;
-      if (stored && ["light", "dark", "system", "schedule"].includes(stored))
+      const stored = window.localStorage.getItem(STORAGE_KEY) as ThemeMode | null;
+      if (stored && THEME_MODES.includes(stored))
         return stored;
     } catch (_) {}
-    return "dark";
+
+    const rootMode = document.documentElement.getAttribute("data-theme-mode");
+    if (rootMode && THEME_MODES.includes(rootMode as ThemeMode)) {
+      return rootMode as ThemeMode;
+    }
+
+    return "system";
   });
 
   const [effectiveTheme, setEffectiveTheme] = useState<"light" | "dark">(() =>
@@ -54,7 +63,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const setMode = useCallback((newMode: ThemeMode) => {
     setModeState(newMode);
     try {
-      localStorage.setItem(STORAGE_KEY, newMode);
+      window.localStorage.setItem(STORAGE_KEY, newMode);
     } catch (_) {}
   }, []);
 
@@ -64,6 +73,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       setEffectiveTheme(next);
       const root = document.documentElement;
       root.setAttribute("data-theme", next);
+      root.setAttribute("data-theme-mode", mode);
       if (next === "dark") root.classList.add("dark");
       else root.classList.remove("dark");
     };
