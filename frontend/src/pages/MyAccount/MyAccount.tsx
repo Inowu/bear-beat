@@ -609,45 +609,6 @@ function MyAccount() {
           <p>Gestiona tu acceso, FTP y métodos de pago desde un solo lugar.</p>
         </header>
 
-        <section className="ma-control-center" aria-label="Centro de control">
-          <div className="ma-control-stats">
-            <article className="ma-control-stat">
-              <span>Estado de membresía</span>
-              <strong>{membershipStatus}</strong>
-            </article>
-            <article className="ma-control-stat">
-              <span>{nextBillingTitle}</span>
-              <strong>{nextBillingLabel}</strong>
-            </article>
-            <article className="ma-control-stat">
-              <span>Acceso FTP</span>
-              <strong>{ftpStatus}</strong>
-            </article>
-          </div>
-          <div className="ma-control-actions">
-            {hasActiveSubscription && !currentUser.isSubscriptionCancelled && (
-              <Button unstyled type="button" onClick={startCancel} className="ma-btn ma-btn-danger">
-                Cancelar
-              </Button>
-            )}
-            <Button unstyled
-              type="button"
-              onClick={
-                paymentMethods.length > 0
-                  ? openBillingPortal
-                  : () => void openPaymentMethodModal()
-              }
-              disabled={portalLoading}
-              className="ma-btn ma-btn-outline"
-            >
-              {portalLoading ? "Abriendo..." : "Actualizar método"}
-            </Button>
-            <Button unstyled type="button" onClick={() => void openSupportChat()} className="ma-btn ma-btn-soft">
-              Soporte / Abrir chat
-            </Button>
-          </div>
-        </section>
-
         {!hasActiveSubscription && (
           <section className="ma-top-cta" aria-label="Activar membresía">
             <div className="ma-top-cta__group">
@@ -661,202 +622,250 @@ function MyAccount() {
           </section>
         )}
 
-        <section className="ma-panel ma-ftp-quick-panel" aria-label="Acceso FTP rápido">
-          <div className="ma-panel-head">
-            <Server size={18} />
-            <h2>Acceso FTP rápido</h2>
-          </div>
-          {currentUser?.ftpAccount ? (
-            <>
-              <div className="ma-ftp-priority">
-                <span className={`ma-status-pill ma-status-pill--${ftpTone}`}>
-                  {ftpStatus}
-                </span>
-                <p>{ftpPriorityMessage}</p>
-              </div>
-              <p className="ma-ftp-quick-note">
-                {hasFtpAccess
-                  ? "Copia estas credenciales y conecta en FileZilla o Air Explorer."
-                  : `Estas credenciales vencieron ${cycleEndOrFallback}. Reactiva tu membresía para volver a usarlas.`}
-              </p>
-              <div className="ma-ftp-list">
-                <FtpRow
-                  label="Host"
-                  value={currentUser.ftpAccount.host}
-                  copyToClipboard={copyToClipboard}
-                  copyFeedback={copyFeedback}
-                />
-                <FtpRow
-                  label="Usuario"
-                  value={currentUser.ftpAccount.userid}
-                  copyToClipboard={copyToClipboard}
-                  copyFeedback={copyFeedback}
-                />
-                <FtpRow
-                  label="Contraseña"
-                  value={currentUser.ftpAccount.passwd}
-                  copyToClipboard={copyToClipboard}
-                  copyFeedback={copyFeedback}
-                  secret
-                  showSecret={showFtpPass}
-                  onToggleSecret={() => setShowFtpPass((s) => !s)}
-                />
-                <FtpRow
-                  label="Puerto"
-                  value={String(currentUser.ftpAccount.port)}
-                  copyToClipboard={copyToClipboard}
-                  copyFeedback={copyFeedback}
-                />
-              </div>
-              <p className="ma-ftp-expiration">
-                Expiración: {formatDateShort(currentUser.ftpAccount.expiration ?? null)}
-              </p>
-              <div className="ma-ftp-actions">
-                <Button unstyled
-                  type="button"
-                  onClick={() =>
-                    copyToClipboard(
-                      `Host: ${currentUser.ftpAccount.host}\nUsuario: ${currentUser.ftpAccount.userid}\nContraseña: ${currentUser.ftpAccount.passwd}\nPuerto: ${currentUser.ftpAccount.port}`,
-                      "Acceso FTP",
-                      "full_credentials",
-                    )
-                  }
-                  className="ma-btn ma-btn-outline"
-                >
-                  Copiar acceso completo
-                </Button>
-                <Button unstyled
-                  type="button"
-                  onClick={() => downloadXMLFile(currentUser.ftpAccount!)}
-                  className="ma-btn ma-btn-soft"
-                >
-                  <FileDown size={16} />
-                  Descargar XML FileZilla
-                </Button>
-                <Link to="/instrucciones" className="ma-btn ma-btn-outline">
-                  Ver instrucciones
-                </Link>
-                {hasFtpAccess && (
-                  <Link to="/descargas" className="ma-btn ma-btn-soft">
-                    Ir a mis descargas
-                  </Link>
-                )}
-                {!hasFtpAccess && (
-                  <Link to="/planes" className="ma-btn ma-btn-outline">
-                    Reactivar membresía
-                  </Link>
+        <section className="ma-grid-two ma-overview-grid" aria-label="Resumen principal de la cuenta">
+          <section className="ma-panel ma-profile-panel">
+            <div className="ma-avatar-block">
+              <div className="ma-avatar">
+                {currentUser?.profileImg ? (
+                  <img
+                    src={currentUser.profileImg}
+                    alt={`Foto de perfil de ${currentUser?.username ?? "usuario"}`}
+                  />
+                ) : (
+                  <span>{initials}</span>
                 )}
               </div>
-              <ol className="ma-ftp-steps" aria-label="Pasos rápidos de FTP">
-                <li>Copiar host, usuario, contraseña y puerto.</li>
-                <li>Conectar en FileZilla o Air Explorer.</li>
-                <li>Entrar a descargas y continuar tu flujo.</li>
-              </ol>
-            </>
-          ) : (
-            <div className="ma-empty-card">
-              <p>
-                Activa tu membresía para generar tus accesos FTP y descargar.
-              </p>
-              <Link to="/planes" className="ma-btn ma-btn-outline">
-                Ver planes
-              </Link>
             </div>
-          )}
-        </section>
-
-        <section className="ma-panel ma-profile-panel">
-          <div className="ma-avatar-block">
-            <div className="ma-avatar">
-              {currentUser?.profileImg ? (
-                <img
-                  src={currentUser.profileImg}
-                  alt={`Foto de perfil de ${currentUser?.username ?? "usuario"}`}
-                />
-              ) : (
-                <span>{initials}</span>
+            <div className="ma-profile-content">
+              <p className="ma-profile-eyebrow">Perfil y estado</p>
+              <p className="ma-user-name">{currentUser?.username ?? "Usuario"}</p>
+              <p className="ma-user-meta">{currentUser?.email ?? "Sin correo"}</p>
+              {currentUser?.phone && (
+                <p className="ma-user-meta">{currentUser.phone}</p>
+              )}
+              <div className="ma-status-row" aria-label="Estado de la cuenta">
+                <span className={`ma-status-pill ma-status-pill--${membershipTone}`}>
+                  {membershipStatus}
+                </span>
+                <span className={`ma-status-pill ma-status-pill--${ftpTone}`}>{ftpStatus}</span>
+              </div>
+              {hasAccessWithoutSubscription && (
+                <p className="ma-status-note">
+                  Tu FTP sigue vigente hasta {cycleEndOrFallback}. Activa tu membresía para mantener el acceso.
+                </p>
+              )}
+              {hasExpiredFtpAccess && (
+                <p className="ma-status-note">
+                  Tu acceso FTP venció {cycleEndOrFallback}. Al reactivar tu membresía recuperas acceso y cuota.
+                </p>
               )}
             </div>
-          </div>
-          <div className="ma-profile-content">
-            <p className="ma-user-name">{currentUser?.username ?? "Usuario"}</p>
-            <p className="ma-user-meta">{currentUser?.email ?? "Sin correo"}</p>
-            {currentUser?.phone && (
-              <p className="ma-user-meta">{currentUser.phone}</p>
-            )}
-            <div className="ma-status-row" aria-label="Estado de la cuenta">
-              <span className={`ma-status-pill ma-status-pill--${membershipTone}`}>
-                {membershipStatus}
-              </span>
-              <span className="ma-status-pill ma-status-pill--neutral">{ftpStatus}</span>
+          </section>
+
+          <section className="ma-control-center" aria-label="Acciones rápidas y estado">
+            <div className="ma-control-head">
+              <h2>Acciones rápidas</h2>
+              <p>Todo lo importante de tu cuenta en un solo bloque.</p>
             </div>
-            {hasAccessWithoutSubscription && (
-              <p className="ma-status-note">
-                Tu FTP sigue vigente hasta {cycleEndOrFallback}. Activa tu membresía para mantener el acceso.
-              </p>
-            )}
-            {hasExpiredFtpAccess && (
-              <p className="ma-status-note">
-                Tu acceso FTP venció {cycleEndOrFallback}. Al reactivar tu membresía recuperas acceso y cuota.
-              </p>
-            )}
-          </div>
+            <div className="ma-control-stats">
+              <article className="ma-control-stat">
+                <span>Estado de membresía</span>
+                <strong>{membershipStatus}</strong>
+              </article>
+              <article className="ma-control-stat">
+                <span>{nextBillingTitle}</span>
+                <strong>{nextBillingLabel}</strong>
+              </article>
+              <article className="ma-control-stat">
+                <span>Acceso FTP</span>
+                <strong>{ftpStatus}</strong>
+              </article>
+            </div>
+            <div className="ma-control-actions">
+              {hasActiveSubscription && !currentUser.isSubscriptionCancelled && (
+                <Button unstyled type="button" onClick={startCancel} className="ma-btn ma-btn-danger">
+                  Cancelar
+                </Button>
+              )}
+              <Button unstyled
+                type="button"
+                onClick={
+                  paymentMethods.length > 0
+                    ? openBillingPortal
+                    : () => void openPaymentMethodModal()
+                }
+                disabled={portalLoading}
+                className="ma-btn ma-btn-outline"
+              >
+                {portalLoading ? "Abriendo..." : "Actualizar método"}
+              </Button>
+              <Button unstyled type="button" onClick={() => void openSupportChat()} className="ma-btn ma-btn-soft">
+                Soporte / Abrir chat
+              </Button>
+            </div>
+          </section>
         </section>
 
-        <section className="ma-panel ma-quota-panel" aria-label="Cuota de descarga">
-          <div className="ma-panel-head">
-            <HardDriveDownload size={18} />
-            <h2>Cuota de descarga</h2>
-          </div>
-          <div className="ma-storage">
-            {shouldShowQuota ? (
+        <section className="ma-grid-two ma-access-grid" aria-label="Acceso FTP y cuota">
+          <section className="ma-panel ma-ftp-quick-panel" aria-label="Acceso FTP rápido">
+            <div className="ma-panel-head">
+              <Server size={18} />
+              <h2>Acceso FTP rápido</h2>
+            </div>
+            {currentUser?.ftpAccount ? (
               <>
-                <div className="ma-storage-head">
-                  <span>Uso del ciclo actual</span>
-                  <strong>{storagePercentLabel}</strong>
+                <div className="ma-ftp-priority">
+                  <span className={`ma-status-pill ma-status-pill--${ftpTone}`}>
+                    {ftpStatus}
+                  </span>
+                  <p>{ftpPriorityMessage}</p>
                 </div>
-                <div className="ma-progress-track">
-                  <div
-                    className="ma-progress-fill"
-                    style={{ width: `${storageFillPercent}%` }}
+                <p className="ma-ftp-quick-note">
+                  {hasFtpAccess
+                    ? "Copia estas credenciales y conecta en FileZilla o Air Explorer."
+                    : `Estas credenciales vencieron ${cycleEndOrFallback}. Reactiva tu membresía para volver a usarlas.`}
+                </p>
+                <div className="ma-ftp-list">
+                  <FtpRow
+                    label="Host"
+                    value={currentUser.ftpAccount.host}
+                    copyToClipboard={copyToClipboard}
+                    copyFeedback={copyFeedback}
+                  />
+                  <FtpRow
+                    label="Usuario"
+                    value={currentUser.ftpAccount.userid}
+                    copyToClipboard={copyToClipboard}
+                    copyFeedback={copyFeedback}
+                  />
+                  <FtpRow
+                    label="Contraseña"
+                    value={currentUser.ftpAccount.passwd}
+                    copyToClipboard={copyToClipboard}
+                    copyFeedback={copyFeedback}
+                    secret
+                    showSecret={showFtpPass}
+                    onToggleSecret={() => setShowFtpPass((s) => !s)}
+                  />
+                  <FtpRow
+                    label="Puerto"
+                    value={String(currentUser.ftpAccount.port)}
+                    copyToClipboard={copyToClipboard}
+                    copyFeedback={copyFeedback}
                   />
                 </div>
-                <p className="ma-storage-amount">
-                  Usados este ciclo: {formatInt(usedGb)} GB de {formatInt(availableGb)} GB
+                <p className="ma-ftp-expiration">
+                  Expiración: {formatDateShort(currentUser.ftpAccount.expiration ?? null)}
                 </p>
-                {hasActiveSubscription && (
-                  <p className="ma-storage-amount">
-                    Disponibles: {formatInt(remainingRegularGb)} GB · GB extra: {formatInt(remainingExtendedGb)} GB
-                  </p>
-                )}
-                <p className="ma-quota-meta">Cierre de ciclo: {cycleEndOrFallback}</p>
-                <details className="ma-storage-details">
-                  <summary>¿Cómo funciona esta cuota?</summary>
-                  <p>
-                    La cuota de descarga es lo que puedes bajar en cada ciclo. El catálogo total es lo que puedes elegir.
-                  </p>
-                </details>
-                {hasQuotaReached && (
-                  <p className="ma-storage-alert">
-                    {hasNoQuotaLeft
-                      ? `Límite alcanzado. No puedes descargar más hasta ${cycleEndOrFallback}.`
-                      : "Llegaste a 100% de tu cuota regular. Puedes seguir usando GB extra si tienes disponibles."}
-                  </p>
-                )}
-                {hasActiveSubscription && (
-                  <Button unstyled type="button" onClick={() => void openPlan()} className="ma-btn ma-btn-soft">
-                    Comprar extra 100 GB
+                <div className="ma-ftp-actions">
+                  <Button unstyled
+                    type="button"
+                    onClick={() =>
+                      copyToClipboard(
+                        `Host: ${currentUser.ftpAccount.host}\nUsuario: ${currentUser.ftpAccount.userid}\nContraseña: ${currentUser.ftpAccount.passwd}\nPuerto: ${currentUser.ftpAccount.port}`,
+                        "Acceso FTP",
+                        "full_credentials",
+                      )
+                    }
+                    className="ma-btn ma-btn-outline"
+                  >
+                    Copiar acceso completo
                   </Button>
-                )}
+                  <Button unstyled
+                    type="button"
+                    onClick={() => downloadXMLFile(currentUser.ftpAccount!)}
+                    className="ma-btn ma-btn-soft"
+                  >
+                    <FileDown size={16} />
+                    Descargar XML FileZilla
+                  </Button>
+                  <Link to="/instrucciones" className="ma-btn ma-btn-outline">
+                    Ver instrucciones
+                  </Link>
+                  {hasFtpAccess && (
+                    <Link to="/descargas" className="ma-btn ma-btn-soft">
+                      Ir a mis descargas
+                    </Link>
+                  )}
+                  {!hasFtpAccess && (
+                    <Link to="/planes" className="ma-btn ma-btn-outline">
+                      Reactivar membresía
+                    </Link>
+                  )}
+                </div>
+                <ol className="ma-ftp-steps" aria-label="Pasos rápidos de FTP">
+                  <li>Copiar host, usuario, contraseña y puerto.</li>
+                  <li>Conectar en FileZilla o Air Explorer.</li>
+                  <li>Entrar a descargas y continuar tu flujo.</li>
+                </ol>
               </>
             ) : (
               <div className="ma-empty-card">
                 <p>
-                  No tienes cuota activa porque no hay acceso FTP vigente. Reactiva tu membresía para habilitar descargas.
+                  Activa tu membresía para generar tus accesos FTP y descargar.
                 </p>
+                <Link to="/planes" className="ma-btn ma-btn-outline">
+                  Ver planes
+                </Link>
               </div>
             )}
-          </div>
+          </section>
+
+          <section className="ma-panel ma-quota-panel" aria-label="Cuota de descarga">
+            <div className="ma-panel-head">
+              <HardDriveDownload size={18} />
+              <h2>Cuota de descarga</h2>
+            </div>
+            <div className="ma-storage">
+              {shouldShowQuota ? (
+                <>
+                  <div className="ma-storage-head">
+                    <span>Uso del ciclo actual</span>
+                    <strong>{storagePercentLabel}</strong>
+                  </div>
+                  <div className="ma-progress-track">
+                    <div
+                      className="ma-progress-fill"
+                      style={{ width: `${storageFillPercent}%` }}
+                    />
+                  </div>
+                  <p className="ma-storage-amount">
+                    Usados este ciclo: {formatInt(usedGb)} GB de {formatInt(availableGb)} GB
+                  </p>
+                  {hasActiveSubscription && (
+                    <p className="ma-storage-amount">
+                      Disponibles: {formatInt(remainingRegularGb)} GB · GB extra: {formatInt(remainingExtendedGb)} GB
+                    </p>
+                  )}
+                  <p className="ma-quota-meta">Cierre de ciclo: {cycleEndOrFallback}</p>
+                  <details className="ma-storage-details">
+                    <summary>¿Cómo funciona esta cuota?</summary>
+                    <p>
+                      La cuota de descarga es lo que puedes bajar en cada ciclo. El catálogo total es lo que puedes elegir.
+                    </p>
+                  </details>
+                  {hasQuotaReached && (
+                    <p className="ma-storage-alert">
+                      {hasNoQuotaLeft
+                        ? `Límite alcanzado. No puedes descargar más hasta ${cycleEndOrFallback}.`
+                        : "Llegaste a 100% de tu cuota regular. Puedes seguir usando GB extra si tienes disponibles."}
+                    </p>
+                  )}
+                  {hasActiveSubscription && (
+                    <Button unstyled type="button" onClick={() => void openPlan()} className="ma-btn ma-btn-soft">
+                      Comprar extra 100 GB
+                    </Button>
+                  )}
+                </>
+              ) : (
+                <div className="ma-empty-card">
+                  <p>
+                    No tienes cuota activa porque no hay acceso FTP vigente. Reactiva tu membresía para habilitar descargas.
+                  </p>
+                </div>
+              )}
+            </div>
+          </section>
         </section>
 
         <section className="ma-workspace" aria-label="Opciones adicionales de tu cuenta">
