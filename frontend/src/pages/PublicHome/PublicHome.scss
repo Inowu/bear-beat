@@ -3098,6 +3098,37 @@ html[data-theme="light"] .home-hero__cta-demo:hover:not(:disabled) {
   }
 }
 
+/* Keep marketing copy blocks centered on wide desktop viewports (Mac included). */
+@media (min-width: 1200px) {
+  .home-hero__copy {
+    margin-inline: auto;
+  }
+
+  .home-hero__title,
+  .home-hero__sub,
+  .home-hero__fit,
+  .home-hero__cta {
+    margin-inline: auto;
+  }
+
+  .pricing__head {
+    max-width: 860px;
+    margin-inline: auto;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .pricing__toggle,
+  .pricing__panels {
+    margin-inline: auto;
+  }
+
+  .home-why__head {
+    margin-inline: auto;
+    text-align: center;
+  }
+}
+
 html[data-theme="light"] .home-hero__sub,
 html[data-theme="light"] .home-hero__micro-row,
 html[data-theme="light"] .home-visual__note,
