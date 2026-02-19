@@ -3098,40 +3098,136 @@ html[data-theme="light"] .home-hero__cta-demo:hover:not(:disabled) {
   }
 }
 
-/* Wide desktop alignment: center the content rail, keep copy left-aligned for readability. */
+/* Wide desktop layout: improve visual hierarchy and keep a consistent content rail. */
 @media (min-width: 1200px) {
+  .public-home {
+    --home-desktop-rail: min(1040px, 100%);
+  }
+
+  .home-hero {
+    padding: 62px 0 38px;
+  }
+
   .home-hero__copy {
-    max-width: 860px;
+    width: var(--home-desktop-rail);
+    max-width: none;
     margin-inline: auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    grid-template-areas:
+      "title stats"
+      "sub stats"
+      "fit cta";
+    column-gap: 30px;
+    row-gap: 14px;
+    align-items: start;
+  }
+
+  .home-hero__title {
+    grid-area: title;
+    margin-bottom: 0;
+    max-width: 15ch;
   }
 
   .home-hero__sub {
-    max-inline-size: 66ch;
+    grid-area: sub;
+    margin-bottom: 0;
+    max-inline-size: 62ch;
   }
 
   .home-hero__fit {
-    max-inline-size: 66ch;
+    grid-area: fit;
+    margin-bottom: 0;
+    max-inline-size: 62ch;
+  }
+
+  .home-hero__stats {
+    grid-area: stats;
+    margin: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .home-hero__cta {
+    grid-area: cta;
+    max-width: none;
+    align-self: start;
+  }
+
+  .home-hero__cta-row .home-cta {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .pricing .ph__container {
+    width: var(--home-desktop-rail);
+    display: grid;
+    grid-template-columns: minmax(0, 0.42fr) minmax(0, 0.58fr);
+    column-gap: 34px;
+    row-gap: 14px;
+    align-items: start;
   }
 
   .pricing__head {
-    max-width: 860px;
-    margin-inline: auto;
+    margin: 0;
+    max-width: none;
     justify-items: start;
     text-align: left;
   }
 
   .pricing__head .home-sub {
-    max-inline-size: 66ch;
+    max-inline-size: 42ch;
   }
 
-  .pricing__toggle,
+  .pricing__toggle {
+    margin: 0;
+    max-width: 280px;
+  }
+
   .pricing__panels {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    width: min(860px, 100%);
+    margin: 0;
+  }
+
+  .home-why__head,
+  .home-why__table-wrap,
+  .home-why__closing,
+  .genres-coverage__head,
+  .genres-coverage__lanes,
+  .genres-coverage__tail,
+  .inside-explorer__head,
+  .inside-explorer__card,
+  .inside-explorer__proof,
+  .home-faq .home-h2,
+  .home-faq .home-sub,
+  .home-faq__list,
+  .home-faq__post-cta {
+    width: var(--home-desktop-rail);
+    margin-inline: auto;
+  }
+
+  .social-proof > .ph__container > .social-proof__head,
+  .social-proof > .ph__container > .social-proof__grid,
+  .social-proof > .ph__container > .social-proof__weekly,
+  .social-proof > .ph__container > .social-proof__neutral {
+    width: var(--home-desktop-rail);
     margin-inline: auto;
   }
 
   .home-why__head {
-    margin-inline: auto;
+    max-width: none;
     text-align: left;
+  }
+
+  .home-why__head .home-sub {
+    max-inline-size: 64ch;
+  }
+
+  .genres-coverage__head,
+  .inside-explorer__head,
+  .home-faq .home-sub {
+    max-width: none;
   }
 }
 
