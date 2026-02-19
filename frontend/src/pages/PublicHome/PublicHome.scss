@@ -3098,24 +3098,30 @@ html[data-theme="light"] .home-hero__cta-demo:hover:not(:disabled) {
   }
 }
 
-/* Keep marketing copy blocks centered on wide desktop viewports (Mac included). */
+/* Wide desktop alignment: center the content rail, keep copy left-aligned for readability. */
 @media (min-width: 1200px) {
   .home-hero__copy {
+    max-width: 860px;
     margin-inline: auto;
   }
 
-  .home-hero__title,
-  .home-hero__sub,
-  .home-hero__fit,
-  .home-hero__cta {
-    margin-inline: auto;
+  .home-hero__sub {
+    max-inline-size: 66ch;
+  }
+
+  .home-hero__fit {
+    max-inline-size: 66ch;
   }
 
   .pricing__head {
     max-width: 860px;
     margin-inline: auto;
-    justify-items: center;
-    text-align: center;
+    justify-items: start;
+    text-align: left;
+  }
+
+  .pricing__head .home-sub {
+    max-inline-size: 66ch;
   }
 
   .pricing__toggle,
@@ -3125,7 +3131,7 @@ html[data-theme="light"] .home-hero__cta-demo:hover:not(:disabled) {
 
   .home-why__head {
     margin-inline: auto;
-    text-align: center;
+    text-align: left;
   }
 }
 
