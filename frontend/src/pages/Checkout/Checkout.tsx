@@ -616,6 +616,7 @@ function Checkout() {
   const searchParams = new URLSearchParams(location.search);
   const priceId = searchParams.get("priceId");
   const checkoutEntry = parseCheckoutEntry(searchParams.get("entry"));
+  const isFocusedCompareCheckout = checkoutEntry === "compare";
   const plansCompareUrl =
     checkoutEntry === "fastlane"
       ? "/planes?entry=fastlane"
@@ -640,10 +641,13 @@ function Checkout() {
     "checkout-main-container",
     "checkout2026",
     `checkout2026--${theme}`,
+    isFocusedCompareCheckout ? "checkout2026--focused" : "",
     "bb-marketing-page",
     "bb-marketing-page--checkout",
     "bb-marketing-page--flat-cards",
-  ].join(" ");
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const closeErrorModal = useCallback(() => {
     setShowError(false);
@@ -1716,7 +1720,9 @@ function Checkout() {
     : "Finaliza tu compra.";
   const checkoutHeroSubtitle = isMethodTrial
     ? "Paso 2 de 2: confirma tu tarjeta para activar tu prueba hoy."
-    : "Paso 2 de 2: confirma tu método de pago y activa en minutos.";
+    : isFocusedCompareCheckout
+      ? "Pago seguro. Activa en minutos."
+      : "Paso 2 de 2: confirma tu método de pago y activa en minutos.";
 
   if (!priceId) {
     const resolving = autoPlanStatus !== "failed";
@@ -2002,20 +2008,24 @@ function Checkout() {
               </span>
             </div>
 
-            <ul className="checkout2026__benefits" aria-label="Beneficios">
-              {benefitList.map((benefit) => (
-                <li key={benefit} className="checkout2026__benefit">
-                  <span className="checkout2026__benefitIcon" aria-hidden>
-                    <Check size={13} />
-                  </span>
-                  <span className="checkout2026__benefitText">{benefit}</span>
-                </li>
-              ))}
-            </ul>
+            {!isFocusedCompareCheckout && (
+              <>
+                <ul className="checkout2026__benefits" aria-label="Beneficios">
+                  {benefitList.map((benefit) => (
+                    <li key={benefit} className="checkout2026__benefit">
+                      <span className="checkout2026__benefitIcon" aria-hidden>
+                        <Check size={13} />
+                      </span>
+                      <span className="checkout2026__benefitText">{benefit}</span>
+                    </li>
+                  ))}
+                </ul>
 
-            <p className="checkout2026__limitsNote">
-              La cuota de descarga es lo que puedes bajar cada ciclo. El catálogo total es lo disponible para elegir.
-            </p>
+                <p className="checkout2026__limitsNote">
+                  La cuota de descarga es lo que puedes bajar cada ciclo. El catálogo total es lo disponible para elegir.
+                </p>
+              </>
+            )}
 
             <div className="checkout2026__divider" aria-hidden />
 
@@ -2206,18 +2216,24 @@ function Checkout() {
                 className="checkout2026__paymentLogos"
                 ariaLabel="Métodos de pago disponibles"
               />
-              <p className="checkout2026__trustCopy">{methodCopy.trustLine}</p>
-              <p className="checkout2026__links" aria-label="Ayuda">
-                <Link to="/instrucciones" className="checkout2026__link">
-                  Ver cómo descargar
-                </Link>
-                <span className="checkout2026__linkSep" aria-hidden>
-                  ·
-                </span>
-                <Link to="/legal" className="checkout2026__link">
-                  FAQ y políticas
-                </Link>
+              <p className="checkout2026__trustCopy">
+                {isFocusedCompareCheckout
+                  ? "Tu cuenta se activa al pagar. Puedes cancelar cuando quieras."
+                  : methodCopy.trustLine}
               </p>
+              {!isFocusedCompareCheckout && (
+                <p className="checkout2026__links" aria-label="Ayuda">
+                  <Link to="/instrucciones" className="checkout2026__link">
+                    Ver cómo descargar
+                  </Link>
+                  <span className="checkout2026__linkSep" aria-hidden>
+                    ·
+                  </span>
+                  <Link to="/legal" className="checkout2026__link">
+                    FAQ y políticas
+                  </Link>
+                </p>
+              )}
             </div>
           </section>
         </div>
