@@ -1,4 +1,4 @@
-import { Landmark } from "src/icons";
+import { CreditCard, Landmark } from "src/icons";
 import type { ReactNode } from "react";
 import visaLogo from "../../assets/images/cards/visa.png";
 import mastercardLogo from "../../assets/images/cards/master.png";
@@ -6,6 +6,7 @@ import amexLogo from "../../assets/images/cards/express.png";
 import "./PaymentMethodLogos.scss";
 import { Button } from "src/components/ui";
 export type PaymentMethodId =
+  | "card"
   | "visa"
   | "mastercard"
   | "amex"
@@ -28,6 +29,11 @@ interface PaymentMethodDefinition {
 }
 
 const METHOD_DEFINITIONS: Record<PaymentMethodId, PaymentMethodDefinition> = {
+  card: {
+    label: "Tarjeta",
+    icon: <CreditCard size={15} aria-hidden />,
+    showText: true,
+  },
   visa: {
     label: "Visa",
     icon: (

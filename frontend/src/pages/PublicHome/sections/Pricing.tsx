@@ -97,6 +97,42 @@ function mergePaymentMethods(
   return merged;
 }
 
+const DISPLAY_PAYMENT_METHOD_ORDER: PaymentMethodId[] = [
+  "card",
+  "paypal",
+  "spei",
+  "oxxo",
+  "transfer",
+];
+
+function collapseCardBrands(methods: PaymentMethodId[]): PaymentMethodId[] {
+  let hasCard = false;
+  const set = new Set<PaymentMethodId>();
+  for (const method of methods) {
+    if (method === "visa" || method === "mastercard" || method === "amex" || method === "card") {
+      hasCard = true;
+      continue;
+    }
+    set.add(method);
+  }
+  if (hasCard) set.add("card");
+
+  const ordered: PaymentMethodId[] = [];
+  for (const method of DISPLAY_PAYMENT_METHOD_ORDER) {
+    if (set.has(method)) ordered.push(method);
+  }
+  return ordered;
+}
+
+function getPaymentMethodLabel(method: PaymentMethodId): string {
+  if (method === "card" || method === "visa" || method === "mastercard" || method === "amex") return "Tarjeta";
+  if (method === "paypal") return "PayPal";
+  if (method === "spei") return "SPEI";
+  if (method === "oxxo") return "Efectivo";
+  if (method === "transfer") return "Transferencia";
+  return "";
+}
+
 export default function Pricing(props: {
   plans: { mxn?: PricingPlan | null; usd?: PricingPlan | null };
   status: PricingStatus;
@@ -181,16 +217,22 @@ export default function Pricing(props: {
       ? mergedMethods
       : (["visa", "mastercard", "amex"] as PaymentMethodId[]);
   }, [usdPlan, hasTrial]);
-  const mxnAltPaymentLabel = useMemo(
-    () => (mxnPlan?.altPaymentLabel ?? "").trim(),
-    [mxnPlan],
-  );
-  const usdAltPaymentLabel = useMemo(
-    () => (usdPlan?.altPaymentLabel ?? "").trim(),
-    [usdPlan],
-  );
-  const showAltPaymentsNoteMxn = Boolean(hasTrial && mxnAltPaymentLabel);
-  const showAltPaymentsNoteUsd = Boolean(hasTrial && usdAltPaymentLabel);
+  const marketingPaymentMethods = useMemo(() => {
+    const merged = mergePaymentMethods(mxnPaymentMethods, usdPaymentMethods);
+    const collapsed = collapseCardBrands(merged);
+    return collapsed.length > 0 ? collapsed : (["card"] as PaymentMethodId[]);
+  }, [mxnPaymentMethods, usdPaymentMethods]);
+  const trialAdditionalPaymentMethodsLabel = useMemo(() => {
+    const labels = Array.from(
+      new Set(
+        marketingPaymentMethods
+          .filter((method) => method !== "card")
+          .map((method) => getPaymentMethodLabel(method))
+          .filter(Boolean),
+      ),
+    );
+    return labels.join(" / ");
+  }, [marketingPaymentMethods]);
   const mxnCheckoutFrom = useMemo(() => {
     const planId = Number(mxnPlan?.planId ?? 0);
     if (Number.isFinite(planId) && planId > 0)
@@ -430,14 +472,17 @@ export default function Pricing(props: {
                   <p className="pricing__micro">{microcopy}</p>
                   <div className="pricing__payments">
                     <PaymentMethodLogos
-                      methods={mxnPaymentMethods}
+                      methods={marketingPaymentMethods}
                       size="md"
                       className="pricing__payment-logos"
                       ariaLabel="Métodos de pago aceptados"
                     />
-                    {showAltPaymentsNoteMxn && (
+                    {hasTrial && (
                       <div className="pricing__payments-note" role="note">
-                        La prueba aplica solo con tarjeta. {mxnAltPaymentLabel} también está disponible al activar sin prueba.
+                        La prueba aplica solo con tarjeta.
+                        {trialAdditionalPaymentMethodsLabel
+                          ? ` ${trialAdditionalPaymentMethodsLabel} también está disponible al activar sin prueba.`
+                          : ""}
                       </div>
                     )}
                   </div>
@@ -519,14 +564,17 @@ export default function Pricing(props: {
                   <p className="pricing__micro">{microcopy}</p>
                   <div className="pricing__payments">
                     <PaymentMethodLogos
-                      methods={usdPaymentMethods}
+                      methods={marketingPaymentMethods}
                       size="md"
                       className="pricing__payment-logos"
                       ariaLabel="Métodos de pago aceptados"
                     />
-                    {showAltPaymentsNoteUsd && (
+                    {hasTrial && (
                       <div className="pricing__payments-note" role="note">
-                        La prueba aplica solo con tarjeta. {usdAltPaymentLabel} también está disponible al activar sin prueba.
+                        La prueba aplica solo con tarjeta.
+                        {trialAdditionalPaymentMethodsLabel
+                          ? ` ${trialAdditionalPaymentMethodsLabel} también está disponible al activar sin prueba.`
+                          : ""}
                       </div>
                     )}
                   </div>

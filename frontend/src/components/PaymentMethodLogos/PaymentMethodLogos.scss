@@ -102,6 +102,15 @@
   }
 }
 
+.payment-method-logos__item--card {
+  border-color: color-mix(in srgb, var(--app-border) 84%, transparent);
+  background: color-mix(in srgb, var(--app-bg-soft) 64%, var(--app-bg-card));
+
+  svg {
+    color: color-mix(in srgb, var(--app-accent) 72%, var(--app-text-body));
+  }
+}
+
 .payment-method-logos__item--oxxo {
   border-color: color-mix(in srgb, var(--color-oxxo-red) 38%, var(--app-border));
   background: color-mix(in srgb, var(--color-oxxo-yellow) 22%, var(--app-bg-card));
