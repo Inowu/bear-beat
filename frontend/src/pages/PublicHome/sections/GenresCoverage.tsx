@@ -18,6 +18,38 @@ type CoverageCategory = {
   genres: HomeCatalogGenre[];
 };
 
+const LATINO_KEYWORDS = [
+  "reggaeton",
+  "dembow",
+  "cumbia",
+  "bachata",
+  "guaracha",
+  "salsa",
+  "merengue",
+  "corridos",
+  "banda",
+  "norteno",
+  "nortena",
+  "huapango",
+  "cubaton",
+  "vallenato",
+  "duranguense",
+  "punta",
+  "latino",
+  "latin",
+  "espanol",
+  "regional",
+  "mariachi",
+  "ranchera",
+  "grupera",
+  "sonidera",
+  "tropical",
+  "bolero",
+  "balada",
+  "timba",
+  "mambo",
+];
+
 const SPECIALTY_KEYWORDS = [
   "retro",
   "old school",
@@ -35,7 +67,13 @@ const SPECIALTY_KEYWORDS = [
 ];
 
 const INTERNATIONAL_KEYWORDS = [
+  "pop",
+  "reggae",
   "hip hop",
+  "trap",
+  "drill",
+  "jersey",
+  "twerk",
   "house",
   "electro",
   "edm",
@@ -47,20 +85,74 @@ const INTERNATIONAL_KEYWORDS = [
   "rock",
   "country",
   "dubstep",
+  "techno",
+  "trance",
+  "funk",
+  "disco",
+  "indie",
+  "alternative",
+  "alternativo",
   "nu disco",
   "afro house",
   "moombahton",
   "afro",
 ];
 
-function inferCoverageCategory(searchKey: string): CoverageCategoryKey {
+const DECADE_LABEL_REGEX = /\b(?:19|20)?(70|80|90|00)\s?s\b/;
+
+function hasKeyword(searchKey: string, keywords: string[]): boolean {
+  const normalized = ` ${searchKey.trim().toLowerCase()} `;
+  return keywords.some((keyword) => {
+    const token = `${keyword ?? ""}`.trim().toLowerCase();
+    if (!token) return false;
+    return normalized.includes(` ${token} `);
+  });
+}
+
+export function inferCoverageCategory(searchKey: string): CoverageCategoryKey {
   const normalized = `${searchKey ?? ""}`.trim().toLowerCase();
   if (!normalized) return "latinos";
-  if (SPECIALTY_KEYWORDS.some((keyword) => normalized.includes(keyword)))
+
+  if (
+    DECADE_LABEL_REGEX.test(normalized) ||
+    hasKeyword(normalized, SPECIALTY_KEYWORDS)
+  ) {
     return "specialties";
-  if (INTERNATIONAL_KEYWORDS.some((keyword) => normalized.includes(keyword)))
+  }
+
+  const hasLatinoSignals = hasKeyword(normalized, LATINO_KEYWORDS);
+  const hasInternationalSignals = hasKeyword(normalized, INTERNATIONAL_KEYWORDS);
+
+  if (hasLatinoSignals && !hasInternationalSignals) return "latinos";
+  if (hasInternationalSignals && !hasLatinoSignals) return "international";
+
+  if (hasLatinoSignals && hasInternationalSignals) {
+    if (
+      normalized.includes("latino") ||
+      normalized.includes("latin") ||
+      normalized.includes("espanol")
+    ) {
+      return "latinos";
+    }
     return "international";
-  return "latinos";
+  }
+
+  if (normalized.includes("urbano")) return "latinos";
+  return "international";
+}
+
+function dedupeGenres(genres: HomeCatalogGenre[]): HomeCatalogGenre[] {
+  const seen = new Set<string>();
+  const out: HomeCatalogGenre[] = [];
+
+  for (const genre of genres) {
+    const key = `${genre.searchKey ?? ""}`.trim().toLowerCase();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push(genre);
+  }
+
+  return out;
 }
 
 function buildGenreFilterUrl(genre: string): string {
@@ -93,17 +185,17 @@ export default function GenresCoverage(props: {
       {
         key: "latinos",
         title: "LATINOS",
-        genres: byCategory.latinos,
+        genres: dedupeGenres(byCategory.latinos),
       },
       {
         key: "international",
         title: "AMERICANOS / INTERNACIONALES",
-        genres: byCategory.international,
+        genres: dedupeGenres(byCategory.international),
       },
       {
         key: "specialties",
         title: "ESPECIALIDADES",
-        genres: byCategory.specialties,
+        genres: dedupeGenres(byCategory.specialties),
       },
     ];
   }, [genres]);

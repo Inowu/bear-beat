@@ -19,7 +19,7 @@ import {
   HOME_NUMBER_LOCALE,
   isSingleLetterGenreLabel,
   normalizeGenreDisplayName,
-  normalizeSearchKey,
+  normalizeGenreGroupingKey,
 } from "./homeFormat";
 import { buildMarketingVariables } from "../../utils/marketingSnapshot";
 import HomeHero from "./sections/HomeHero";
@@ -265,7 +265,7 @@ function buildCatalogGenresSnapshot(value: unknown): HomeCatalogGenre[] {
     if (!displayName) return;
     if (isSingleLetterGenreLabel(displayName)) return;
 
-    const searchKey = normalizeSearchKey(displayName);
+    const searchKey = normalizeGenreGroupingKey(displayName);
     if (!searchKey) return;
 
     const filesRaw = Number(row?.files ?? 0);

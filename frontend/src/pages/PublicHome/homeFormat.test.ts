@@ -5,6 +5,7 @@ import {
   formatTB,
   isSingleLetterGenreLabel,
   normalizeGenreDisplayName,
+  normalizeGenreGroupingKey,
   normalizeSearchKey,
 } from "./homeFormat";
 
@@ -32,6 +33,7 @@ describe("PublicHome formatting utils", () => {
   it("normalizes common genre typos/accents for display", () => {
     expect(normalizeGenreDisplayName("Reguetton")).toBe("Reggaetón");
     expect(normalizeGenreDisplayName("Pop Ingles")).toBe("Pop Inglés");
+    expect(normalizeGenreDisplayName("80's")).toBe("80s");
   });
 
   it("normalizes search key (lowercase, no accents)", () => {
@@ -43,5 +45,12 @@ describe("PublicHome formatting utils", () => {
     expect(isSingleLetterGenreLabel("ñ")).toBe(true);
     expect(isSingleLetterGenreLabel("R&B")).toBe(false);
     expect(isSingleLetterGenreLabel("Cumbia")).toBe(false);
+  });
+
+  it("normalizes grouping keys to collapse home duplicates", () => {
+    expect(normalizeGenreGroupingKey("80's")).toBe("80s");
+    expect(normalizeGenreGroupingKey("80s")).toBe("80s");
+    expect(normalizeGenreGroupingKey("Pop Latino")).toBe("pop latino");
+    expect(normalizeGenreGroupingKey("Latino Pop")).toBe("pop latino");
   });
 });
