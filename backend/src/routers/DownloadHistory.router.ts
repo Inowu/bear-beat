@@ -101,7 +101,6 @@ interface ExplorerPreviewFolderCandidate {
 
 const AUDIO_EXTENSIONS = [
   '.mp3',
-  '.wav',
   '.aac',
   '.m4a',
   '.flac',

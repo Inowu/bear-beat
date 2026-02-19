@@ -4,7 +4,7 @@ import path from 'path';
 import { promises as fs } from 'fs';
 
 const VIDEO_EXT = new Set(['.mp4', '.mkv', '.avi', '.mov', '.wmv', '.webm', '.m4v', '.flv']);
-const AUDIO_EXT = new Set(['.mp3', '.wav', '.flac', '.aac', '.m4a', '.ogg', '.wma']);
+const AUDIO_EXT = new Set(['.mp3', '.flac', '.aac', '.m4a', '.ogg', '.wma']);
 
 export interface GenreStats {
   name: string;

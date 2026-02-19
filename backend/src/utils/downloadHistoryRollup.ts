@@ -2,7 +2,6 @@ export type DownloadHistoryRollupCategory = 'audio' | 'video' | 'karaoke';
 
 const AUDIO_EXTENSIONS = [
   '.mp3',
-  '.wav',
   '.aac',
   '.m4a',
   '.flac',

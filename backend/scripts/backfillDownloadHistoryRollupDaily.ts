@@ -10,7 +10,6 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 const AUDIO_EXTENSIONS = [
   '.mp3',
-  '.wav',
   '.aac',
   '.m4a',
   '.flac',
@@ -203,4 +202,3 @@ main().catch((error) => {
   });
   process.exitCode = 1;
 });
-

@@ -5,7 +5,7 @@ const EXTENSION_REGEX = /\.([a-z0-9]{2,5})$/i;
 const VERSION_SUFFIX_REGEX =
   /\s[-–]\s*(original mix|extended mix|radio edit|remix|edit|intro|outro|clean|dirty|acapella|instrumental|mashup|bootleg|live|vip)\s*$/i;
 const TRACK_FILE_EXT_REGEX =
-  /\.(mp3|wav|aac|m4a|flac|ogg|aiff|alac|mp4|mov|mkv|avi|wmv|webm|m4v)$/i;
+  /\.(mp3|aac|m4a|flac|ogg|aiff|alac|mp4|mov|mkv|avi|wmv|webm|m4v)$/i;
 
 export type InferredTrackMetadata = {
   artist: string | null;

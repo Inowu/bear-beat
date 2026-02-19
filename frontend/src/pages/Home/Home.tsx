@@ -114,7 +114,7 @@ type ForYouFeed = {
 type FileVisualKind = 'folder' | 'audio' | 'video' | 'karaoke' | 'archive' | 'file';
 type PreviewKind = 'audio' | 'video';
 type MediaScope = 'audio' | 'video' | 'karaoke' | null;
-type SearchQuickFilter = 'audio' | 'video' | 'karaoke' | 'mp3' | 'wav';
+type SearchQuickFilter = 'audio' | 'video' | 'karaoke' | 'mp3';
 type ResolvedTrackMetadata = {
   artist: string | null;
   title: string;
@@ -129,14 +129,13 @@ type ResolvedTrackMetadata = {
   source: 'database' | 'inferred';
 };
 
-const AUDIO_EXT_REGEX = /\.(mp3|wav|aac|m4a|flac|ogg|aiff|alac)$/i;
+const AUDIO_EXT_REGEX = /\.(mp3|aac|m4a|flac|ogg|aiff|alac)$/i;
 const VIDEO_EXT_REGEX = /\.(mp4|mov|mkv|avi|wmv|webm|m4v)$/i;
 const AUDIO_PATH_REGEX = /(^|\/)audios?(\/|$)/i;
 const VIDEO_PATH_REGEX = /(^|\/)videos?(\/|$)/i;
 const KARAOKE_PATH_REGEX = /(^|\/)karaokes?(\/|$)/i;
 const PREVIEW_AUDIO_FORMATS = new Set([
   'MP3',
-  'WAV',
   'AAC',
   'M4A',
   'FLAC',
@@ -164,7 +163,6 @@ const SEARCH_QUICK_FILTERS: Array<{ value: SearchQuickFilter; label: string }> =
   { value: 'video', label: 'Video' },
   { value: 'karaoke', label: 'Karaoke' },
   { value: 'mp3', label: 'MP3' },
-  { value: 'wav', label: 'WAV' },
 ];
 
 const normalizeFilePath = (value?: string): string => (value ?? '').replace(/\\/g, '/');
@@ -483,7 +481,7 @@ function Home() {
     if (isKaraoke) {
       return 'karaoke';
     }
-    if (/\.(mp3|wav|aac|m4a|flac|ogg|aiff|alac)$/i.test(fileName)) {
+    if (/\.(mp3|aac|m4a|flac|ogg|aiff|alac)$/i.test(fileName)) {
       return 'audio';
     }
     if (/\.(mp4|mov|mkv|avi|wmv|webm|m4v)$/i.test(fileName)) {
@@ -545,7 +543,6 @@ function Home() {
     const formatBadge = getResolvedFormatBadge(file.name, file.metadata?.format ?? null);
     if (!formatBadge) return false;
     if (filter === 'mp3') return formatBadge === 'MP3';
-    if (filter === 'wav') return formatBadge === 'WAV';
     return false;
   };
 

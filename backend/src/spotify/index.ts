@@ -35,7 +35,7 @@ const normalizeForMatch = (value: string): string =>
 
 function sanitizeSpotifyQuery(value: string): string {
   return value
-    .replace(/\.(mp3|wav|aac|m4a|flac|ogg|aiff|alac|mp4|mov|mkv|avi|wmv|webm|m4v)$/i, '')
+    .replace(/\.(mp3|aac|m4a|flac|ogg|aiff|alac|mp4|mov|mkv|avi|wmv|webm|m4v)$/i, '')
     .replace(/\b(\d{2,3}\s*bpm|(?:1[0-2]|[1-9])[ab])\b/gi, ' ')
     .replace(
       /\b(original mix|extended mix|radio edit|remix|edit|intro|outro|clean|dirty|acapella|instrumental|mashup|bootleg|live|vip)\b/gi,

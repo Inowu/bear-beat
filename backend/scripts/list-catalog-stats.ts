@@ -11,7 +11,7 @@ import path from 'path';
 config();
 
 const VIDEO_EXT = new Set(['.mp4', '.mkv', '.avi', '.mov', '.wmv', '.webm', '.m4v', '.flv']);
-const AUDIO_EXT = new Set(['.mp3', '.wav', '.flac', '.aac', '.m4a', '.ogg', '.wma']);
+const AUDIO_EXT = new Set(['.mp3', '.flac', '.aac', '.m4a', '.ogg', '.wma']);
 
 interface Stats {
   totalFiles: number;
@@ -101,7 +101,7 @@ function main(): void {
   console.log(`  GB totales:       ${totalGB.toFixed(2)}`);
   console.log('\n--- Por tipo ---');
   console.log(`  Videos:   ${stats.videos.toLocaleString()} (extensiones: mp4, mkv, avi, mov, wmv, webm, m4v, flv)`);
-  console.log(`  Audios:   ${stats.audios.toLocaleString()} (extensiones: mp3, wav, flac, aac, m4a, ogg, wma)`);
+  console.log(`  Audios:   ${stats.audios.toLocaleString()} (extensiones: mp3, flac, aac, m4a, ogg, wma)`);
   console.log(`  Karaokes: ${stats.karaokes.toLocaleString()} (archivos en ruta que contiene "karaoke")`);
   console.log(`  Otros:    ${stats.other.toLocaleString()}`);
   console.log('\n--- Fin ---');

@@ -80,12 +80,11 @@ const RECENT_PACKS_GENRE_PATTERNS: Array<{ label: string; pattern: RegExp }> = [
   { label: 'Techno', pattern: /\btechno\b/i },
   { label: 'Electro', pattern: /\belectro\b/i },
 ];
-const AUDIO_FILE_REGEX = /\.(mp3|wav|aac|m4a|flac|ogg|aiff|alac)$/i;
+const AUDIO_FILE_REGEX = /\.(mp3|aac|m4a|flac|ogg|aiff|alac)$/i;
 const VIDEO_FILE_REGEX = /\.(mp4|mov|mkv|avi|wmv|webm|m4v)$/i;
-const MEDIA_FILE_REGEX = /\.(mp3|wav|aac|m4a|flac|ogg|aiff|alac|mp4|mov|mkv|avi|wmv|webm|m4v)$/i;
+const MEDIA_FILE_REGEX = /\.(mp3|aac|m4a|flac|ogg|aiff|alac|mp4|mov|mkv|avi|wmv|webm|m4v)$/i;
 const PREVIEWABLE_FORMATS = new Set([
   'MP3',
-  'WAV',
   'AAC',
   'M4A',
   'FLAC',
