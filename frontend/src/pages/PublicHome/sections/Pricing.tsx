@@ -194,7 +194,7 @@ export default function Pricing(props: {
       "Actualizaciones semanales (no mensuales como otros)",
       "BPM + Key en cada archivo (ahórrate horas de análisis)",
       "Carpetas organizadas por género, mes y semana",
-      `Karaoke: ${karaokesLabel} canciones de A a Z`,
+      `Karaoke: ${karaokesLabel} canciones en video listas para evento`,
       "Soporte para activar tu conexión en minutos",
     ],
     [karaokesLabel, totalFilesLabel, totalGenresLabel],

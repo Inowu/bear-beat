@@ -17,6 +17,23 @@ export type PublicExplorerPreviewSnapshot = {
   stale: boolean;
 };
 
+const FALLBACK_EXPLORER_PATH = ["Audios", "2026", "Febrero", "Semana 1", "Reggaeton"];
+
+const FALLBACK_EXPLORER_FILES: PublicExplorerPreviewFile[] = [
+  {
+    path: "Audios/2026/Febrero/Semana 1/Reggaeton/Bellakath ft. Gotay - Si te digo que si (7A - 87 BPM).mp3",
+    name: "Bellakath ft. Gotay - Si te digo que si (7A - 87 BPM).mp3",
+  },
+  {
+    path: "Audios/2026/Febrero/Semana 1/Reggaeton/Blessd x J Alvarez - Fanatico (6A - 98 BPM).mp3",
+    name: "Blessd x J Alvarez - Fanatico (6A - 98 BPM).mp3",
+  },
+  {
+    path: "Audios/2026/Febrero/Semana 1/Reggaeton/Cael Roldan - Gafas Prada (3A - 102 BPM).mp3",
+    name: "Cael Roldan - Gafas Prada (3A - 102 BPM).mp3",
+  },
+];
+
 function normalizeText(value: string): string {
   return `${value ?? ""}`.trim().toLowerCase();
 }
@@ -44,13 +61,21 @@ export default function InsideExplorer(props: {
   const { snapshot, loading } = props;
   const [query, setQuery] = useState("");
 
-  const explorerPath = useMemo(() => inferExplorerPath(snapshot), [snapshot]);
+  const explorerPath = useMemo(() => {
+    const inferred = inferExplorerPath(snapshot);
+    return inferred.length > 0 ? inferred : FALLBACK_EXPLORER_PATH;
+  }, [snapshot]);
+
+  const sourceRows = useMemo(() => {
+    const source = Array.isArray(snapshot?.files) ? snapshot.files : [];
+    if (source.length > 0) return source;
+    return FALLBACK_EXPLORER_FILES;
+  }, [snapshot?.files]);
 
   const rows = useMemo(() => {
-    const source = Array.isArray(snapshot?.files) ? snapshot.files : [];
     const normalizedQuery = normalizeText(query);
 
-    return source
+    return sourceRows
       .filter((row) => {
         if (!normalizedQuery) return true;
         const haystack = normalizeText(`${row.name} ${row.path}`);
@@ -64,7 +89,7 @@ export default function InsideExplorer(props: {
           camelot: metadata.camelot,
         };
       });
-  }, [query, snapshot?.files]);
+  }, [query, sourceRows]);
 
   const hasData = rows.length > 0;
 
@@ -73,10 +98,10 @@ export default function InsideExplorer(props: {
       <div className="ph__container">
         <div className="inside-explorer__head">
           <h2 className="home-h2" tabIndex={-1}>
-            Así se ven tus archivos listos para cabina
+            Así se ve tu librería lista para cabina
           </h2>
           <p className="home-sub">
-            Vista real del explorador: carpetas por año/mes/semana y archivos listos para mezclar.
+            Carpetas por año/mes/semana y nombres con BPM + Key para mezclar en segundos.
           </p>
         </div>
 
@@ -88,20 +113,16 @@ export default function InsideExplorer(props: {
           </div>
 
           <div className="inside-explorer__path" aria-label="Ruta actual del explorador">
-            {explorerPath.length > 0 ? (
-              explorerPath.map((segment, index) => (
-                <span
-                  key={`${segment}-${index}`}
-                  className={`inside-explorer__path-segment ${
-                    index === explorerPath.length - 1 ? "is-current" : ""
-                  }`}
-                >
-                  {segment}
-                </span>
-              ))
-            ) : (
-              <span className="inside-explorer__path-empty">Ruta de ejemplo</span>
-            )}
+            {explorerPath.map((segment, index) => (
+              <span
+                key={`${segment}-${index}`}
+                className={`inside-explorer__path-segment ${
+                  index === explorerPath.length - 1 ? "is-current" : ""
+                }`}
+              >
+                {segment}
+              </span>
+            ))}
           </div>
 
           <label className="inside-explorer__search" htmlFor="inside-explorer-search">
@@ -136,7 +157,7 @@ export default function InsideExplorer(props: {
             </ul>
           ) : (
             <p className="inside-explorer__empty">
-              No encontramos archivos para ese filtro. Prueba con otra palabra.
+              No hay coincidencias con ese filtro. Prueba por artista, track o género.
             </p>
           )}
         </div>

@@ -6,10 +6,6 @@ import brandMarkBlack from "../../assets/brand/bearbeat-mark-black.png";
 import brandMarkCyan from "../../assets/brand/bearbeat-mark-cyan.png";
 import PublicTopNav from "../../components/PublicTopNav/PublicTopNav";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
-import {
-  openManyChatWidget,
-  syncManyChatWidgetVisibility,
-} from "../../utils/manychatLoader";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../utils/growthMetrics";
 import {
   buildHomeFaqItems,
@@ -40,11 +36,11 @@ import type { PaymentMethodId } from "../../components/PaymentMethodLogos/Paymen
 import HomeFaq from "./sections/HomeFaq";
 import StickyMobileCta from "./sections/StickyMobileCta";
 import "./PublicHome.scss";
-import { Button } from "src/components/ui";
 const TOP_DOWNLOADS_DAYS = 120;
 const FOOTER_PLANS_CTA_LABEL = "¿Listo para tu primer gig con Bear Beat?";
 const FAQ_WHATSAPP_CTA_LABEL = "¿Tienes más dudas? Escríbenos por WhatsApp";
-const WHATSAPP_SUPPORT_URL = `${process.env.REACT_APP_WHATSAPP_SUPPORT_URL ?? ""}`.trim();
+const WHATSAPP_SUPPORT_NUMBER = "+15132828507";
+const WHATSAPP_SUPPORT_URL = `https://wa.me/${WHATSAPP_SUPPORT_NUMBER.replace(/\D/g, "")}`;
 const DEFAULT_LIMITS_NOTE =
   "La cuota de descarga es lo que puedes bajar en cada ciclo. El catálogo total es lo disponible para elegir.";
 const PAYMENT_METHOD_VALUES: PaymentMethodId[] = [
@@ -857,7 +853,7 @@ export default function PublicHome() {
     [comparePlansTo],
   );
   const onFaqWhatsappClick = useCallback(() => {
-    const target = WHATSAPP_SUPPORT_URL || "manychat_widget";
+    const target = WHATSAPP_SUPPORT_URL;
     trackGrowthMetric(GROWTH_METRICS.CTA_SECONDARY_CLICK, {
       location: "faq_whatsapp",
       target,
@@ -868,11 +864,6 @@ export default function PublicHome() {
       target,
     });
     trackManyChatConversion(MC_EVENTS.CLICK_CHAT);
-
-    if (!WHATSAPP_SUPPORT_URL && typeof window !== "undefined") {
-      syncManyChatWidgetVisibility(window.location.pathname);
-      openManyChatWidget();
-    }
   }, []);
 
   const findSectionByIds = useCallback((ids: string[]) => {
@@ -1247,7 +1238,7 @@ export default function PublicHome() {
           onFaqExpand={onFaqExpand}
           postCta={{
             label: FAQ_WHATSAPP_CTA_LABEL,
-            href: WHATSAPP_SUPPORT_URL || null,
+            href: WHATSAPP_SUPPORT_URL,
           }}
           onPostCtaClick={onFaqWhatsappClick}
         />

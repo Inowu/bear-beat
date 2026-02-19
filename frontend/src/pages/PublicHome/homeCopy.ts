@@ -12,7 +12,7 @@ export function getHomeCtaPrimaryLabel(trial: { enabled: boolean; days: number }
   return HOME_CTA_PRIMARY_LABEL_FALLBACK;
 }
 
-export const HOME_HERO_TITLE = "Nunca más te quedes sin LA canción que te piden.";
+export const HOME_HERO_TITLE = "Nunca más te quedes sin la canción que te piden.";
 
 function toSafeCounter(value: number): number {
   const n = Number(value);
