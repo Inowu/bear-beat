@@ -28,8 +28,8 @@ const parseConektaPayload = (body: unknown): EventResponse => {
 };
 
 export const processConektaWebhookPayload = async (payload: EventResponse) => {
-
   if (!shouldHandleEvent(payload)) return;
+  const isOrderPaidEvent = payload.type === ConektaEvents.ORDER_PAID;
 
   const user = await getCustomerIdFromPayload(payload);
 
@@ -38,6 +38,9 @@ export const processConektaWebhookPayload = async (payload: EventResponse) => {
       eventType: payload.type ?? null,
       eventId: (payload as any)?.id ?? null,
     });
+    if (isOrderPaidEvent) {
+      throw new Error('order.paid could not be matched to any user');
+    }
     return;
   }
 
@@ -77,6 +80,7 @@ export const processConektaWebhookPayload = async (payload: EventResponse) => {
         expirationDate: plan
           ? addDays(new Date(), Number(plan.duration))
           : addDays(new Date(), 30),
+        throwOnFailure: true,
       });
       break;
     case ConektaEvents.SUB_UPDATED:
@@ -321,7 +325,7 @@ export const processConektaWebhookPayload = async (payload: EventResponse) => {
           eventType: payload.type ?? null,
           eventId: (payload as any)?.id ?? null,
         });
-        return;
+        throw new Error('order.paid could not resolve internal order id');
       }
 
       log.info('[CONEKTA_WH] Processing paid order', {
@@ -358,7 +362,7 @@ export const processConektaWebhookPayload = async (payload: EventResponse) => {
         });
         if (!existingOrder) {
           log.error('[CONEKTA_WH] Plan order not found before payment update');
-          return;
+          throw new Error(`order.paid did not match a plan order (${orderIdNum})`);
         }
         planOrderStatusBefore = existingOrder.status;
 
@@ -408,7 +412,19 @@ export const processConektaWebhookPayload = async (payload: EventResponse) => {
             new Date(),
             Number(productOrPlan.duration) || 30,
           ),
+          throwOnFailure: true,
         });
+
+        const linkedActivation = await prisma.descargasUser.findFirst({
+          where: {
+            order_id: orderIdNum,
+            user_id: user.id,
+          },
+          select: { id: true },
+        });
+        if (!linkedActivation) {
+          throw new Error(`order.paid processed but activation row missing for order ${orderIdNum}`);
+        }
 
         try {
           await ingestPaymentSuccessEvent({

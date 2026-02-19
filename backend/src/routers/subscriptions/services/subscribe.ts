@@ -113,6 +113,7 @@ export const subscribe = async ({
   subId,
   service,
   expirationDate,
+  throwOnFailure = false,
   reusePaidOrderId = false,
   quotaGb: quotaGbInput,
   isTrial = false,
@@ -274,6 +275,9 @@ export const subscribe = async ({
       }
     } catch (e) {
       log.error(`Error while creating ftp user: ${e}`);
+      if (throwOnFailure) {
+        throw e;
+      }
     }
   } else {
     log.info('[SUBSCRIPTION] Renovating subscription');
@@ -400,6 +404,9 @@ export const subscribe = async ({
       });
     } catch (e) {
       log.error(`Error while renovating subscription: ${e}`);
+      if (throwOnFailure) {
+        throw e;
+      }
     }
   }
 };

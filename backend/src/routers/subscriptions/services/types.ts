@@ -22,6 +22,11 @@ export type Params =
       service: PaymentService;
       expirationDate: Date;
       /**
+       * When true, errors during subscription writes are re-thrown to caller
+       * (useful for webhook retry semantics).
+       */
+      throwOnFailure?: boolean;
+      /**
        * When true and orderId is provided, reuses the existing PAID order
        * instead of creating a new renewal order.
        */
@@ -39,6 +44,11 @@ export type Params =
       plan?: never;
       service: PaymentService;
       expirationDate: Date;
+      /**
+       * When true, errors during subscription writes are re-thrown to caller
+       * (useful for webhook retry semantics).
+       */
+      throwOnFailure?: boolean;
       /**
        * When true and orderId is provided, reuses the existing PAID order
        * instead of creating a new renewal order.
