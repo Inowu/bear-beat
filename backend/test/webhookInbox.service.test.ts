@@ -44,6 +44,45 @@ describe('persistEvent', () => {
   });
 
   it.each([
+    { target: ['provider', 'event_id'] },
+    { target: 'uniq_webhook_inbox_provider_event' },
+    { target: undefined },
+  ])(
+    'handles duplicate P2002 regardless of Prisma target shape: %p',
+    async ({ target }) => {
+      createMock
+        .mockResolvedValueOnce({ id: 101 })
+        .mockRejectedValueOnce({
+          code: 'P2002',
+          meta: target === undefined ? undefined : { target },
+        });
+      findFirstMock.mockResolvedValueOnce({ id: 101 });
+
+      const first = await persistEvent({
+        provider: 'stripe',
+        eventId: 'evt_dup_target_shape',
+        eventType: 'invoice.paid',
+        livemode: true,
+        headers: { sample: 'header' },
+        payloadRaw: '{"id":"evt_dup_target_shape"}',
+      });
+
+      const second = await persistEvent({
+        provider: 'stripe',
+        eventId: 'evt_dup_target_shape',
+        eventType: 'invoice.paid',
+        livemode: true,
+        headers: { sample: 'header' },
+        payloadRaw: '{"id":"evt_dup_target_shape"}',
+      });
+
+      expect(first).toEqual({ created: true, inboxId: 101 });
+      expect(second).toEqual({ created: false, inboxId: 101 });
+      expect(findFirstMock).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it.each([
     ['stripe', 'evt_stripe_123', 'customer.subscription.updated'],
     ['paypal', 'WH-PAYPAL-123', 'BILLING.SUBSCRIPTION.ACTIVATED'],
     ['conekta', 'evt_conekta_123', 'order.paid'],
@@ -83,6 +122,27 @@ describe('persistEvent', () => {
       expect(findFirstMock).toHaveBeenCalledTimes(1);
     },
   );
+
+  it('rethrows P2002 when provider+event row does not exist', async () => {
+    createMock.mockRejectedValueOnce({
+      code: 'P2002',
+      meta: { target: 'some_other_unique_constraint' },
+    });
+    findFirstMock.mockResolvedValueOnce(null);
+
+    await expect(
+      persistEvent({
+        provider: 'stripe',
+        eventId: 'evt_should_throw',
+        eventType: 'invoice.paid',
+        livemode: true,
+        headers: { sample: 'header' },
+        payloadRaw: '{"id":"evt_should_throw"}',
+      }),
+    ).rejects.toMatchObject({
+      code: 'P2002',
+    });
+  });
 });
 
 describe('computeBackoff', () => {

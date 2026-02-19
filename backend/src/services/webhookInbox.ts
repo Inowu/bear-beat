@@ -72,15 +72,10 @@ const isUniqueProviderEventError = (error: unknown): boolean => {
     code?: string;
     meta?: { target?: string[] | string };
   };
-  if (knownError?.code !== 'P2002') return false;
-
-  const rawTarget = knownError?.meta?.target;
-  const target = Array.isArray(rawTarget)
-    ? rawTarget.map((value) => String(value))
-    : typeof rawTarget === 'string'
-      ? [rawTarget]
-      : [];
-  return target.includes('provider') && target.includes('event_id');
+  // Prisma may return the unique target as ["provider","event_id"] or
+  // as the index name string (e.g. "uniq_webhook_inbox_provider_event").
+  // We resolve ambiguity by verifying existence with provider+event_id below.
+  return knownError?.code === 'P2002';
 };
 
 export const computeBackoff = (attempts: number): number => {

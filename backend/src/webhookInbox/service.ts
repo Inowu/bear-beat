@@ -71,9 +71,9 @@ const sweeperStaleEnqueuedMs = (): number =>
 
 const isUniqueProviderEventError = (error: unknown): boolean => {
   if (!(error instanceof Prisma.PrismaClientKnownRequestError)) return false;
-  if (error.code !== 'P2002') return false;
-  const target = (error.meta?.target as string[] | undefined) || [];
-  return target.includes('provider') && target.includes('event_id');
+  // Prisma may expose either the unique fields or the unique index name in target.
+  // We verify provider+event_id existence before treating it as duplicate.
+  return error.code === 'P2002';
 };
 
 const toErrorMessage = (error: unknown): string => {
@@ -181,7 +181,15 @@ export const persistWebhookInboxEvent = async ({
     return { kind: 'created', inboxId: event.id };
   } catch (error) {
     if (isUniqueProviderEventError(error)) {
-      return { kind: 'duplicate' };
+      const existing = await prisma.webhookInboxEvent.findFirst({
+        where: {
+          provider,
+          event_id: identity.eventId,
+        },
+        select: { id: true },
+      });
+
+      if (existing) return { kind: 'duplicate' };
     }
     throw error;
   }
