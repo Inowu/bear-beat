@@ -5,6 +5,7 @@ import { log } from '../server';
 import { emailTemplates } from './templates';
 import { isSesConfigured, sendSesEmail, type SendSesEmailParams } from './ses';
 import { buildMarketingUnsubscribeUrl } from '../comms/unsubscribe';
+import { resolveEmailTemplateContent } from './templateOverrides';
 
 type EmailDeliveryMode = 'ses' | 'sink';
 
@@ -121,7 +122,28 @@ export async function sendWelcomeEmail(params: { userId: number; toEmail: string
       accountUrl,
       unsubscribeUrl,
     });
-    await sendEmail({ to: [toEmail], subject: tpl.subject, html: tpl.html, text: tpl.text });
+    const resolvedTpl = await resolveEmailTemplateContent({
+      templateKey: 'welcome',
+      fallback: tpl,
+      variables: {
+        NAME: toName,
+        EMAIL: toAccountEmail,
+        PLANS_URL: plansUrl,
+        ACCOUNT_URL: accountUrl,
+        UNSUBSCRIBE_URL: unsubscribeUrl,
+      },
+    });
+    await sendEmail({
+      to: [toEmail],
+      subject: resolvedTpl.subject,
+      html: resolvedTpl.html,
+      text: resolvedTpl.text,
+      tags: {
+        action_key: 'transactional_welcome',
+        template_key: 'welcome',
+        stage: '0',
+      },
+    });
   } catch (e) {
     log.warn('[EMAIL] Welcome email failed (non-blocking)', {
       error: e instanceof Error ? e.message : e,
@@ -134,7 +156,27 @@ export async function sendPasswordResetEmail(params: { userId: number; toEmail: 
   try {
     const unsubscribeUrl = buildMarketingUnsubscribeUrl(userId) ?? undefined;
     const tpl = emailTemplates.passwordReset({ name: toName, email: toAccountEmail, link, unsubscribeUrl });
-    await sendEmail({ to: [toEmail], subject: tpl.subject, html: tpl.html, text: tpl.text });
+    const resolvedTpl = await resolveEmailTemplateContent({
+      templateKey: 'passwordReset',
+      fallback: tpl,
+      variables: {
+        NAME: toName,
+        EMAIL: toAccountEmail,
+        LINK: link,
+        UNSUBSCRIBE_URL: unsubscribeUrl,
+      },
+    });
+    await sendEmail({
+      to: [toEmail],
+      subject: resolvedTpl.subject,
+      html: resolvedTpl.html,
+      text: resolvedTpl.text,
+      tags: {
+        action_key: 'transactional_password_reset',
+        template_key: 'passwordReset',
+        stage: '0',
+      },
+    });
   } catch (e) {
     log.warn('[EMAIL] Password reset email failed (non-blocking)', {
       error: e instanceof Error ? e.message : e,
@@ -169,7 +211,31 @@ export async function sendPlanActivatedEmail(params: { userId: number; toEmail: 
       accountUrl,
       unsubscribeUrl,
     });
-    await sendEmail({ to: [toEmail], subject: tpl.subject, html: tpl.html, text: tpl.text });
+    const resolvedTpl = await resolveEmailTemplateContent({
+      templateKey: 'planActivated',
+      fallback: tpl,
+      variables: {
+        NAME: toName,
+        PLAN_NAME: planName,
+        PRICE: price,
+        CURRENCY: currency,
+        ORDER_ID: orderId,
+        CATALOG_URL: catalogUrl,
+        ACCOUNT_URL: accountUrl,
+        UNSUBSCRIBE_URL: unsubscribeUrl,
+      },
+    });
+    await sendEmail({
+      to: [toEmail],
+      subject: resolvedTpl.subject,
+      html: resolvedTpl.html,
+      text: resolvedTpl.text,
+      tags: {
+        action_key: 'transactional_plan_activated',
+        template_key: 'planActivated',
+        stage: '0',
+      },
+    });
   } catch (e) {
     log.warn('[EMAIL] Plan activated email failed (non-blocking)', {
       error: e instanceof Error ? e.message : e,
@@ -206,7 +272,28 @@ export async function sendCancellationConfirmedEmail(params: {
       accountUrl,
       reactivateUrl,
     });
-    await sendEmail({ to: [toEmail], subject: tpl.subject, html: tpl.html, text: tpl.text });
+    const resolvedTpl = await resolveEmailTemplateContent({
+      templateKey: 'cancellationConfirmed',
+      fallback: tpl,
+      variables: {
+        NAME: toName,
+        PLAN_NAME: planName,
+        ACCESS_UNTIL: accessUntil,
+        ACCOUNT_URL: accountUrl,
+        REACTIVATE_URL: reactivateUrl,
+      },
+    });
+    await sendEmail({
+      to: [toEmail],
+      subject: resolvedTpl.subject,
+      html: resolvedTpl.html,
+      text: resolvedTpl.text,
+      tags: {
+        action_key: 'transactional_cancellation_confirmed',
+        template_key: 'cancellationConfirmed',
+        stage: '0',
+      },
+    });
   } catch (e) {
     log.warn('[EMAIL] Cancellation confirmed email failed (non-blocking)', {
       error: e instanceof Error ? e.message : e,
@@ -241,7 +328,27 @@ export async function sendCancellationEndingSoonEmail(params: {
       accountUrl,
       reactivateUrl,
     });
-    await sendEmail({ to: [toEmail], subject: tpl.subject, html: tpl.html, text: tpl.text });
+    const resolvedTpl = await resolveEmailTemplateContent({
+      templateKey: 'cancellationEndingSoon',
+      fallback: tpl,
+      variables: {
+        NAME: toName,
+        ACCESS_UNTIL: accessUntil,
+        ACCOUNT_URL: accountUrl,
+        REACTIVATE_URL: reactivateUrl,
+      },
+    });
+    await sendEmail({
+      to: [toEmail],
+      subject: resolvedTpl.subject,
+      html: resolvedTpl.html,
+      text: resolvedTpl.text,
+      tags: {
+        action_key: 'transactional_cancellation_ending_soon',
+        template_key: 'cancellationEndingSoon',
+        stage: '0',
+      },
+    });
   } catch (e) {
     log.warn('[EMAIL] Cancellation ending soon email failed (non-blocking)', {
       error: e instanceof Error ? e.message : e,

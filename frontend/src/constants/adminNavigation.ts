@@ -6,6 +6,7 @@ import {
   Database,
   Download,
   FileText,
+  Mail,
   Phone,
   Receipt,
   ShoppingCart,
@@ -77,6 +78,7 @@ export const ADMIN_NAVIGATION_GROUPS: AdminNavigationGroup[] = [
     items: [
       { to: "/admin/audit-logs", label: "Auditoría", Icon: FileText },
       { to: "/admin/webhook-inbox", label: "Webhook Inbox", Icon: Activity },
+      { to: "/admin/email-templates", label: "Emails", Icon: Mail },
       { to: "/admin/dominios-bloqueados", label: "Dominios", Icon: Ban },
       { to: "/admin/telefonos-bloqueados", label: "Teléfonos", Icon: Phone },
       { to: "/admin/almacenamiento", label: "Almacenamiento", Icon: Database },
@@ -106,4 +108,3 @@ export function getAdminNavigationItem(pathname: string): AdminNavigationItem | 
     }) ?? null
   );
 }
-

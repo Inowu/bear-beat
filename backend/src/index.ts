@@ -487,10 +487,14 @@ async function main() {
 
     app.get('/health/comms', (_req, res) => {
       const has = (key: string): boolean => Boolean(process.env[key]?.trim());
+      const sesConfigurationSet = (process.env.SES_CONFIGURATION_SET || '').trim();
       res.json({
         ok: true,
         ses: {
           configured: (has('AWS_REGION') || has('AWS_DEFAULT_REGION')) && has('SES_FROM_EMAIL'),
+          configurationSetConfigured: Boolean(sesConfigurationSet),
+          configurationSetName: sesConfigurationSet || null,
+          snsWebhookPath: '/webhooks.ses.sns',
         },
         twilio: {
           configured: has('TWILIO_ACCOUNT_SID') && has('TWILIO_AUTH_TOKEN'),

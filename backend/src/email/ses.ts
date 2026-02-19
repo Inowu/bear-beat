@@ -21,6 +21,11 @@ const resolveFromEmail = (): { email: string; name?: string } | null => {
   return name ? { email, name } : { email };
 };
 
+const resolveConfigurationSetName = (): string | null => {
+  const value = (process.env.SES_CONFIGURATION_SET || '').trim();
+  return value || null;
+};
+
 export const isSesConfigured = (): boolean => {
   const region = resolveAwsRegion();
   const from = resolveFromEmail();
@@ -51,6 +56,7 @@ const formatFromAddress = (): string => {
 
 export async function sendSesEmail(params: SendSesEmailParams): Promise<{ messageId: string | null }> {
   const { to, subject, html, text, replyTo, tags } = params;
+  const configurationSetName = resolveConfigurationSetName();
 
   const toAddresses = (to || []).map((v) => String(v || '').trim()).filter(Boolean);
   if (toAddresses.length === 0) {
@@ -78,6 +84,7 @@ export async function sendSesEmail(params: SendSesEmailParams): Promise<{ messag
 
   const cmd = new SendEmailCommand({
     FromEmailAddress: formatFromAddress(),
+    ...(configurationSetName ? { ConfigurationSetName: configurationSetName } : {}),
     Destination: {
       ToAddresses: toAddresses,
     },

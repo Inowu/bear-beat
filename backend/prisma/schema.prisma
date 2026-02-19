@@ -230,6 +230,22 @@ model EmailDeliveryEvent {
   @@map("email_delivery_events")
 }
 
+model EmailTemplateOverride {
+  id                 Int      @id @default(autoincrement())
+  template_key       String   @unique(map: "uniq_email_template_overrides_template_key") @db.VarChar(120)
+  enabled            Boolean  @default(true)
+  subject            String?  @db.VarChar(191)
+  html               String?  @db.LongText
+  text               String?  @db.LongText
+  updated_by_user_id Int?
+  created_at         DateTime @default(now()) @db.DateTime(0)
+  updated_at         DateTime @updatedAt @db.DateTime(0)
+
+  @@index([enabled], map: "idx_email_template_overrides_enabled")
+  @@index([updated_at], map: "idx_email_template_overrides_updated_at")
+  @@map("email_template_overrides")
+}
+
 model AdminAuditLog {
   id             Int      @id @default(autoincrement())
   created_at     DateTime @default(now()) @db.DateTime(0)

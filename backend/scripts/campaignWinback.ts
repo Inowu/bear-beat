@@ -5,6 +5,7 @@ import './_loadEnv';
 import { prisma } from '../src/db';
 import { isEmailConfigured, sendEmail } from '../src/email';
 import { emailTemplates } from '../src/email/templates';
+import { resolveEmailTemplateContent } from '../src/email/templateOverrides';
 import { buildMarketingUnsubscribeUrl } from '../src/comms/unsubscribe';
 import { OFFER_KEYS, upsertUserOfferAndCoupon } from '../src/offers';
 
@@ -289,11 +290,34 @@ async function main(): Promise<void> {
               unsubscribeUrl,
             });
 
+      const templateKey =
+        segment === 'lapsed'
+          ? 'winbackLapsedOffer'
+          : 'registeredNoPurchaseOffer';
+      const resolvedTpl = await resolveEmailTemplateContent({
+        prisma,
+        templateKey,
+        fallback: tpl,
+        variables: {
+          NAME: row.username,
+          URL: url,
+          COUPON_CODE: offer.couponCode ?? '',
+          PERCENT_OFF: offer.percentOff,
+          EXPIRES_AT: expiresAtText,
+          UNSUBSCRIBE_URL: unsubscribeUrl,
+        },
+      });
+
       const result = await sendEmail({
         to: [row.email],
-        subject: tpl.subject,
-        html: tpl.html,
-        text: tpl.text,
+        subject: resolvedTpl.subject,
+        html: resolvedTpl.html,
+        text: resolvedTpl.text,
+        tags: {
+          action_key: 'campaign_winback',
+          template_key: templateKey,
+          stage: String(stage),
+        },
       });
 
       prisma.automationActionLog

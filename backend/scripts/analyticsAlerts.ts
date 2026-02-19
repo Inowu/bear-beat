@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
 import { isEmailConfigured, sendEmail } from '../src/email';
 import { emailTemplates } from '../src/email/templates';
+import { resolveEmailTemplateContent } from '../src/email/templateOverrides';
 import { getAnalyticsHealthAlerts } from '../src/analytics';
 import { log } from '../src/server';
 
@@ -73,12 +74,28 @@ async function main(): Promise<void> {
       detailsText: textLines,
       generatedAt: snapshot.generatedAt,
     });
+    const resolvedTpl = await resolveEmailTemplateContent({
+      prisma,
+      templateKey: 'analyticsAlerts',
+      fallback: tpl,
+      variables: {
+        DAYS: days,
+        COUNT: actionable.length,
+        DETAILS_TEXT: textLines,
+        GENERATED_AT: snapshot.generatedAt,
+      },
+    });
 
     await sendEmail({
       to: recipients,
-      subject: tpl.subject,
-      html: tpl.html,
-      text: tpl.text,
+      subject: resolvedTpl.subject,
+      html: resolvedTpl.html,
+      text: resolvedTpl.text,
+      tags: {
+        action_key: 'ops_analytics_alerts',
+        template_key: 'analyticsAlerts',
+        stage: '0',
+      },
     });
 
     log.info('[ANALYTICS_ALERTS] Email sent.', {

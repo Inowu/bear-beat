@@ -2,6 +2,7 @@ import { Prisma, PrismaClient, Users } from '@prisma/client';
 import { log } from '../server';
 import { isEmailConfigured, sendEmail } from '../email';
 import { emailTemplates } from '../email/templates';
+import { resolveEmailTemplateContent } from '../email/templateOverrides';
 import { manyChat } from '../many-chat';
 import { ANALYTICS_PUBLIC_TRAFFIC_FILTER_AE_SQL, ensureAnalyticsEventsTableExists } from '../analytics';
 import { OFFER_KEYS, markUserOffersRedeemed, upsertUserOfferAndCoupon } from '../offers';
@@ -97,6 +98,7 @@ async function safeSendAutomationEmail(params: {
   html: string;
   text: string;
   templateKey?: string;
+  templateVariables?: Record<string, unknown>;
   metadata?: Prisma.JsonObject;
 }): Promise<boolean> {
   if (!isEmailConfigured()) return false;
@@ -111,6 +113,7 @@ async function safeSendAutomationEmail(params: {
     html,
     text,
     templateKey,
+    templateVariables,
     metadata,
   } = params;
   const normalizedContextKey = normalizeContextKey(contextKey);
@@ -165,11 +168,22 @@ async function safeSendAutomationEmail(params: {
     });
   };
   try {
+    const resolvedContent = await resolveEmailTemplateContent({
+      prisma,
+      templateKey: resolvedTemplateKey,
+      fallback: {
+        subject,
+        html,
+        text,
+      },
+      variables: templateVariables,
+    });
+
     const result = await sendEmail({
       to: [toEmail],
-      subject,
-      html,
-      text,
+      subject: resolvedContent.subject,
+      html: resolvedContent.html,
+      text: resolvedContent.text,
       tags: {
         action_key: resolvedActionKey,
         template_key: resolvedTemplateKey,
@@ -441,6 +455,11 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	            html: tpl.html,
 	            text: tpl.text,
 	            templateKey: 'automation_trial_no_download_24h',
+              templateVariables: {
+                NAME: user.username,
+                URL: url,
+                UNSUBSCRIBE_URL: unsubscribeUrl,
+              },
 	          })) {
 	            noteEmailSent();
 	          }
@@ -543,6 +562,13 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
             html: tpl.html,
             text: tpl.text,
             templateKey: 'automation_paid_no_download_2h',
+            templateVariables: {
+              NAME: user.username,
+              INSTRUCTIONS_URL: instructionsUrl,
+              CATALOG_URL: catalogUrl,
+              RECOMMENDED_FOLDER: recommendedFolder,
+              UNSUBSCRIBE_URL: unsubscribeUrl,
+            },
           })) {
             noteEmailSent();
           }
@@ -624,6 +650,11 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	            html: tpl.html,
 	            text: tpl.text,
 	            templateKey: 'automation_paid_no_download_24h',
+              templateVariables: {
+                NAME: user.username,
+                URL: url,
+                UNSUBSCRIBE_URL: unsubscribeUrl,
+              },
 	          })) {
 	            noteEmailSent();
 	          }
@@ -737,6 +768,14 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	            html: tpl.html,
 	            text: tpl.text,
 	            templateKey: 'automation_registered_no_purchase_7d',
+              templateVariables: {
+                NAME: user.username,
+                URL: url,
+                COUPON_CODE: offer.couponCode,
+                PERCENT_OFF: offer.percentOff,
+                EXPIRES_AT: expiresAtText,
+                UNSUBSCRIBE_URL: unsubscribeUrl,
+              },
 	          })) {
 	            noteEmailSent();
 	          }
@@ -807,6 +846,10 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	            html: tpl.html,
 	            text: tpl.text,
 	            templateKey: 'automation_verify_whatsapp_24h',
+              templateVariables: {
+                NAME: user.username,
+                URL: url,
+              },
 	          })) {
 	            noteEmailSent();
 	          }
@@ -1011,6 +1054,14 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
               html: tpl.html,
               text: tpl.text,
               templateKey: `automation_checkout_abandoned_${stageConfig.stage}`,
+              templateVariables: {
+                NAME: user.username,
+                URL: emailUrl,
+                PLAN_NAME: row.planName ?? null,
+                PRICE: row.planPrice == null ? null : String(row.planPrice),
+                CURRENCY: row.planCurrency ?? null,
+                UNSUBSCRIBE_URL: unsubscribeUrl,
+              },
               metadata: { campaign: stageConfig.campaign },
             });
             if (emailSent) {
@@ -1122,6 +1173,11 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	            html: tpl.html,
 	            text: tpl.text,
 	            templateKey: 'automation_trial_expiring_24h',
+              templateVariables: {
+                NAME: user.username,
+                URL: url,
+                UNSUBSCRIBE_URL: unsubscribeUrl,
+              },
 	          })) {
 	            noteEmailSent();
 	          }
@@ -1210,6 +1266,12 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	            html: tpl.html,
 	            text: tpl.text,
 	            templateKey: `automation_active_no_download_${days}d`,
+              templateVariables: {
+                NAME: user.username,
+                URL: url,
+                DAYS: days,
+                UNSUBSCRIBE_URL: unsubscribeUrl,
+              },
 	          })) {
 	            noteEmailSent();
 	          }
@@ -1293,6 +1355,12 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
           html: tpl.html,
           text: tpl.text,
           templateKey: 'automation_cancel_access_end_reminder_3d',
+          templateVariables: {
+            NAME: row.username,
+            ACCESS_UNTIL: accessUntilText,
+            ACCOUNT_URL: accountUrl,
+            REACTIVATE_URL: reactivateUrl,
+          },
         })) {
           noteEmailSent();
         }
@@ -1428,6 +1496,14 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
             html: tpl.html,
             text: tpl.text,
             templateKey: `automation_winback_lapsed_${stageDays}d`,
+            templateVariables: {
+              NAME: user.username,
+              URL: url,
+              COUPON_CODE: offer.couponCode,
+              PERCENT_OFF: offer.percentOff,
+              EXPIRES_AT: expiresAtText,
+              UNSUBSCRIBE_URL: unsubscribeUrl,
+            },
           })) {
             noteEmailSent();
           }
@@ -1549,6 +1625,14 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	            html: tpl.html,
 	            text: tpl.text,
 	            templateKey: 'automation_plans_offer_stage_1',
+              templateVariables: {
+                NAME: user.username,
+                URL: url,
+                COUPON_CODE: offer.couponCode,
+                PERCENT_OFF: offer.percentOff,
+                EXPIRES_AT: expiresAtText,
+                UNSUBSCRIBE_URL: unsubscribeUrl,
+              },
 	          })) {
 	            noteEmailSent();
 	          }
@@ -1668,6 +1752,14 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	            html: tpl.html,
 	            text: tpl.text,
 	            templateKey: 'automation_plans_offer_stage_2',
+              templateVariables: {
+                NAME: user.username,
+                URL: url,
+                COUPON_CODE: offer.couponCode,
+                PERCENT_OFF: offer.percentOff,
+                EXPIRES_AT: expiresAtText,
+                UNSUBSCRIBE_URL: unsubscribeUrl,
+              },
 	          })) {
 	            noteEmailSent();
 	          }
@@ -1784,6 +1876,14 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
 	            html: tpl.html,
 	            text: tpl.text,
 	            templateKey: 'automation_plans_offer_stage_3',
+              templateVariables: {
+                NAME: user.username,
+                URL: url,
+                COUPON_CODE: offer.couponCode,
+                PERCENT_OFF: offer.percentOff,
+                EXPIRES_AT: expiresAtText,
+                UNSUBSCRIBE_URL: unsubscribeUrl,
+              },
 	          })) {
 	            noteEmailSent();
 	          }
@@ -1917,6 +2017,13 @@ export async function runAutomationOnce(prisma: PrismaClient): Promise<void> {
             html: tpl.html,
             text: tpl.text,
             templateKey: `automation_dunning_payment_failed_d${stageDays}`,
+            templateVariables: {
+              NAME: user.username,
+              CTA_URL: ctaUrl,
+              STAGE_DAYS: stageDays,
+              ACCESS_UNTIL: accessUntilText,
+              SUPPORT_URL: accountUrl,
+            },
           })) {
             noteEmailSent();
           }

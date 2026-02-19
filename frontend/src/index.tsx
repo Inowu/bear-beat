@@ -144,6 +144,11 @@ const AuditLogs = lazy(() =>
 const WebhookInbox = lazy(() =>
   import("./pages/Admin/WebhookInbox/WebhookInbox").then((module) => ({ default: module.WebhookInbox })),
 );
+const EmailTemplates = lazy(() =>
+  import("./pages/Admin/EmailTemplates/EmailTemplates").then((module) => ({
+    default: module.EmailTemplates,
+  })),
+);
 
 function RouteLoader() {
   return (
@@ -252,6 +257,7 @@ const router = createBrowserRouter([
           { path: "historialCheckout", element: <Navigate replace to="/admin/historial-checkout" /> },
           { path: "audit-logs", element: withRouteSuspense(<AuditLogs />) },
           { path: "webhook-inbox", element: withRouteSuspense(<WebhookInbox />) },
+          { path: "email-templates", element: withRouteSuspense(<EmailTemplates />) },
           { path: "dominios-bloqueados", element: withRouteSuspense(<BlockedEmailDomains />) },
           { path: "telefonos-bloqueados", element: withRouteSuspense(<BlockedPhoneNumbers />) },
         ],
