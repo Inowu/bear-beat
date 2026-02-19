@@ -7,7 +7,13 @@ import { GROWTH_METRICS, trackGrowthMetric } from "../../../utils/growthMetrics"
 import { buildDemoPlaybackUrl } from "../../../utils/demoUrl";
 import { inferTrackMetadata, prettyMediaName } from "../../../utils/fileMetadata";
 import { isRetryableMediaError, retryWithJitter } from "../../../utils/retry";
-import { formatDownloads, formatInt } from "../homeFormat";
+import {
+  formatDownloads,
+  formatInt,
+  isSingleLetterGenreLabel,
+  normalizeGenreDisplayName,
+  normalizeGenreGroupingKey,
+} from "../homeFormat";
 import PreviewModal from "../../../components/PreviewModal/PreviewModal";
 import { SkeletonTable, Button } from "../../../components/ui";
 
@@ -46,14 +52,53 @@ function normalizeApiItems(value: unknown): SocialTopItem[] {
     }));
 }
 
-function normalizeWeeklyGenreItems(value: unknown): WeeklyGenreUpload[] {
+function toWeeklyGenreLabel(value: string): string {
+  const normalized = normalizeGenreDisplayName(value).trim();
+  if (!normalized) return "";
+  return normalized
+    .replace(/\s+/g, " ")
+    .replace(/\b([a-záéíóúüñ])([a-záéíóúüñ]*)/gi, (_, first: string, rest: string) => `${first.toUpperCase()}${rest}`);
+}
+
+function isInvalidWeeklyGenreLabel(displayName: string, groupingKey: string): boolean {
+  if (!displayName) return true;
+  if (!groupingKey) return true;
+  if (isSingleLetterGenreLabel(displayName)) return true;
+  if (/^\d{1,2}$/.test(groupingKey)) return true;
+  if (/^(?:semana|week|wk|sem)\s*\d{1,2}$/.test(groupingKey)) return true;
+  return false;
+}
+
+export function normalizeWeeklyGenreItems(value: unknown): WeeklyGenreUpload[] {
   const items = Array.isArray(value) ? value : [];
-  return items
-    .map((item: any) => ({
-      genre: `${item?.genre ?? ""}`.trim().toLowerCase(),
-      files: Number(item?.files ?? 0),
-    }))
-    .filter((item) => item.genre.length > 0 && Number.isFinite(item.files) && item.files > 0);
+  const grouped = new Map<string, WeeklyGenreUpload>();
+
+  items.forEach((item: any) => {
+    const files = Number(item?.files ?? 0);
+    if (!Number.isFinite(files) || files <= 0) return;
+
+    const rawGenre = `${item?.genre ?? ""}`.trim();
+    const genre = toWeeklyGenreLabel(rawGenre);
+    const groupingKey = normalizeGenreGroupingKey(genre);
+    if (isInvalidWeeklyGenreLabel(genre, groupingKey)) return;
+
+    const existing = grouped.get(groupingKey);
+    if (existing) {
+      existing.files += files;
+      if (genre.length > existing.genre.length) existing.genre = genre;
+      return;
+    }
+
+    grouped.set(groupingKey, {
+      genre,
+      files,
+    });
+  });
+
+  return Array.from(grouped.values()).sort((left, right) => {
+    if (right.files !== left.files) return right.files - left.files;
+    return left.genre.localeCompare(right.genre, "es-MX");
+  });
 }
 
 function TopList(props: {

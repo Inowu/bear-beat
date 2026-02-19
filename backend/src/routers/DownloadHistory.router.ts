@@ -129,6 +129,7 @@ const MAX_PUBLIC_EXPLORER_PREVIEW_LIMIT = 10;
 const PUBLIC_EXPLORER_PREVIEW_CACHE_TTL_MS = 2 * 60 * 1000;
 const MAX_WEEKLY_SCAN_DEPTH = 6;
 const WEEK_FOLDER_HINT_REGEX = /(?:\bsemana\b|\bweek\b|\bweekly\b|\bwk[\s_-]*\d{1,2}\b|\bsem[\s_-]*\d{1,2}\b)/i;
+const WEEK_NUMBER_ONLY_REGEX = /^(?:0?[1-9]|[1-4][0-9]|5[0-3])$/;
 const GENERIC_WEEK_BUCKET_REGEX = /^(?:audio|audios|video|videos|karaoke|karaokes|music|musica)$/i;
 const FILE_HAS_TEMPO_KEY_REGEX = /\b(?:1[0-2]|[1-9])\s*[AB]\b/i;
 const FILE_HAS_BPM_REGEX = /\b\d{2,3}\s*bpm\b/i;
@@ -196,6 +197,75 @@ const cleanWeeklyGenreLabel = (raw: string): string => {
   const matched = WEEKLY_GENRE_ALIASES.find((entry) => entry.pattern.test(compact));
   if (matched) return matched.label;
   return compact;
+};
+
+const parseWeekNumber = (value: string): number => {
+  const compact = `${value ?? ''}`.trim();
+  if (!compact) return Number.NaN;
+
+  if (WEEK_NUMBER_ONLY_REGEX.test(compact)) {
+    const asNumber = Number(compact);
+    return Number.isFinite(asNumber) ? asNumber : Number.NaN;
+  }
+
+  const matched = compact.match(/(\d{1,2})/);
+  if (!matched) return Number.NaN;
+  const asNumber = Number(matched[1]);
+  if (!Number.isFinite(asNumber)) return Number.NaN;
+  if (asNumber < 1 || asNumber > 53) return Number.NaN;
+  return asNumber;
+};
+
+const isWeekLikeFolderName = (value: string): boolean => {
+  const compact = `${value ?? ''}`.trim();
+  if (!compact) return false;
+  return WEEK_FOLDER_HINT_REGEX.test(compact) || WEEK_NUMBER_ONLY_REGEX.test(compact);
+};
+
+const resolveWeeklyContentFolder = async (
+  weeklyFolder: WeeklyFolderCandidate,
+): Promise<WeeklyFolderCandidate> => {
+  const directoryEntries = (await listDirectorySafe(weeklyFolder.fullPath)).filter(
+    (entry) => entry.type === 'd',
+  );
+  if (!directoryEntries.length) return weeklyFolder;
+
+  const weekLikeEntries = directoryEntries.filter((entry) =>
+    isWeekLikeFolderName(entry.name),
+  );
+  const shouldDrillIntoWeekFolder =
+    weekLikeEntries.length > 0
+    && (
+      weekLikeEntries.length === directoryEntries.length
+      || weekLikeEntries.length >= 2
+    );
+  if (!shouldDrillIntoWeekFolder) return weeklyFolder;
+
+  const selectedWeek = [...weekLikeEntries].sort((left, right) => {
+    const rightModification = Number(right.modification ?? 0);
+    const leftModification = Number(left.modification ?? 0);
+    if (rightModification !== leftModification) {
+      return rightModification - leftModification;
+    }
+
+    const rightWeek = parseWeekNumber(right.name);
+    const leftWeek = parseWeekNumber(left.name);
+    if (Number.isFinite(rightWeek) && Number.isFinite(leftWeek) && rightWeek !== leftWeek) {
+      return rightWeek - leftWeek;
+    }
+
+    return `${right.name ?? ''}`.localeCompare(`${left.name ?? ''}`, 'es-MX');
+  })[0];
+
+  if (!selectedWeek) return weeklyFolder;
+
+  return {
+    ...weeklyFolder,
+    fullPath: path.join(weeklyFolder.fullPath, selectedWeek.name),
+    relativePath: joinCatalogRelativePath(weeklyFolder.relativePath, selectedWeek.name),
+    name: selectedWeek.name,
+    modification: Number(selectedWeek.modification ?? weeklyFolder.modification ?? 0),
+  };
 };
 
 const listDirectorySafe = async (directoryPath: string): Promise<IFileStat[]> => {
@@ -393,8 +463,11 @@ const buildWeeklyGenreUploadsSnapshot = async (): Promise<PublicWeeklyGenreUploa
   const songsBasePath = `${process.env.SONGS_PATH ?? ''}`.trim();
   if (!songsBasePath) return createEmptyWeeklyUploadsSnapshot();
 
-  const latestWeeklyFolder = await getLatestWeeklyFolderCandidate(songsBasePath);
-  if (!latestWeeklyFolder) return createEmptyWeeklyUploadsSnapshot();
+  const latestWeeklyFolderCandidate = await getLatestWeeklyFolderCandidate(songsBasePath);
+  if (!latestWeeklyFolderCandidate) return createEmptyWeeklyUploadsSnapshot();
+  const latestWeeklyFolder = await resolveWeeklyContentFolder(
+    latestWeeklyFolderCandidate,
+  );
 
   const weeklyEntries = await listDirectorySafe(latestWeeklyFolder.fullPath);
   const counter = new Map<string, number>();
