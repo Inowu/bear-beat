@@ -1992,10 +1992,20 @@ html.dark .checkout-method.is-active,
 }
 
 .checkout2026__consentRow input[type="checkbox"] {
+  appearance: auto;
   margin-top: 0;
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  min-height: 16px;
+  max-width: 16px;
+  max-height: 16px;
+  padding: 0;
+  border-radius: 4px;
+  background: transparent;
+  box-shadow: none;
   accent-color: var(--app-accent);
+  flex: 0 0 16px;
   flex-shrink: 0;
 }
 
