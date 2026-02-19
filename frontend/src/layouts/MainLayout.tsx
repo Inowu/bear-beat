@@ -313,7 +313,7 @@ function MainLayout() {
         <Navbar
           setAsideOpen={setAsideOpen}
           menuButtonRef={menuButtonRef}
-          hideMenuButton={showMobileTabBar}
+          hideMenuButton={false}
         />
       )}
       {showMobileTabBar && showMobileSearchOverlay && (
@@ -354,7 +354,7 @@ function MainLayout() {
         </div>
       )}
       <div className="content-container">
-        {showAppChrome && !showMobileTabBar && (
+        {showAppChrome && (
           <AsideNavbar show={asideOpen} onHide={handleAsideHide} />
         )}
         {showDownload && currentUser !== null && <FileLoader />}
