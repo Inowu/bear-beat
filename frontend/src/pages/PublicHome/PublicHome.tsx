@@ -6,29 +6,45 @@ import brandMarkBlack from "../../assets/brand/bearbeat-mark-black.png";
 import brandMarkCyan from "../../assets/brand/bearbeat-mark-cyan.png";
 import PublicTopNav from "../../components/PublicTopNav/PublicTopNav";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
+import {
+  openManyChatWidget,
+  syncManyChatWidgetVisibility,
+} from "../../utils/manychatLoader";
 import { GROWTH_METRICS, trackGrowthMetric } from "../../utils/growthMetrics";
 import {
+  buildHomeFaqItems,
   getHomeCtaPrimaryLabel,
   HOME_HERO_MICROCOPY_BASE,
   HOME_HERO_MICROCOPY_TRIAL,
 } from "./homeCopy";
 import {
   formatCatalogSizeMarketing,
-  HOME_NUMBER_LOCALE,
   formatInt,
+  HOME_NUMBER_LOCALE,
+  normalizeGenreDisplayName,
+  normalizeSearchKey,
 } from "./homeFormat";
+import { buildMarketingVariables } from "../../utils/marketingSnapshot";
 import HomeHero from "./sections/HomeHero";
 import SocialProof from "./sections/SocialProof";
 import Pricing, {
   type PricingPlan,
   type TrialSummary,
 } from "./sections/Pricing";
+import WhyBearBeat from "./sections/WhyBearBeat";
+import GenresCoverage, { type HomeCatalogGenre } from "./sections/GenresCoverage";
+import InsideExplorer, {
+  type PublicExplorerPreviewSnapshot,
+} from "./sections/InsideExplorer";
 import type { PaymentMethodId } from "../../components/PaymentMethodLogos/PaymentMethodLogos";
 import HomeFaq from "./sections/HomeFaq";
 import StickyMobileCta from "./sections/StickyMobileCta";
 import "./PublicHome.scss";
 import { Button } from "src/components/ui";
 const TOP_DOWNLOADS_DAYS = 120;
+const FOOTER_PLANS_CTA_LABEL = "¿Listo para tu primer gig con Bear Beat?";
+const FAQ_WHATSAPP_CTA_LABEL = "¿Tienes más dudas? Escríbenos por WhatsApp";
+const WHATSAPP_SUPPORT_URL = `${process.env.REACT_APP_WHATSAPP_SUPPORT_URL ?? ""}`.trim();
 const DEFAULT_LIMITS_NOTE =
   "La cuota de descarga es lo que puedes bajar en cada ciclo. El catálogo total es lo disponible para elegir.";
 const PAYMENT_METHOD_VALUES: PaymentMethodId[] = [
@@ -41,6 +57,7 @@ const PAYMENT_METHOD_VALUES: PaymentMethodId[] = [
   "transfer",
 ];
 type CurrencyKey = "mxn" | "usd";
+const DAYS_PER_MONTH_FOR_DAILY_PRICE = 30;
 
 const MEXICO_TIMEZONES = new Set<string>([
   "America/Mexico_City",
@@ -105,12 +122,17 @@ type PublicTopDownloadsResponse = {
   sinceDays: number;
 };
 
+type PublicExplorerPreviewResponse = PublicExplorerPreviewSnapshot;
+
 type PublicPricingUiSnapshot = {
   defaultCurrency: CurrencyKey;
   limitsNote: string;
   afterPriceLabel: string;
+  genres: HomeCatalogGenre[];
   stats: {
     totalFiles: number;
+    totalGenres: number;
+    karaokes: number;
     totalTB: number;
     quotaGbDefault: number;
   };
@@ -142,6 +164,138 @@ function parsePaymentMethods(
     parsed.push(method);
   }
   return parsed.length > 0 ? parsed : fallback;
+}
+
+function formatCurrency(
+  amount: number,
+  currency: "mxn" | "usd",
+  locale: string,
+  opts?: { minimumFractionDigits?: number; maximumFractionDigits?: number },
+): string {
+  const code = currency === "mxn" ? "MXN" : "USD";
+  const safeAmount = Number(amount);
+  if (!Number.isFinite(safeAmount) || safeAmount <= 0) return `0 ${code}`;
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: code,
+      minimumFractionDigits: opts?.minimumFractionDigits,
+      maximumFractionDigits: opts?.maximumFractionDigits,
+    }).format(safeAmount);
+  } catch {
+    return `${safeAmount} ${code}`;
+  }
+}
+
+function formatMonthlyPriceWithCode(
+  amount: number,
+  currency: "mxn" | "usd",
+  locale: string,
+): string {
+  const code = currency === "mxn" ? "MXN" : "USD";
+  const safeAmount = Number(amount);
+  if (!Number.isFinite(safeAmount) || safeAmount <= 0) return `${code} $0/mes`;
+  const hasDecimals = !Number.isInteger(safeAmount);
+  const formatted = formatCurrency(safeAmount, currency, locale, {
+    minimumFractionDigits: hasDecimals ? 2 : 0,
+    maximumFractionDigits: 2,
+  });
+  return `${code} ${formatted}/mes`;
+}
+
+function getDailyPrice(monthlyPrice: number): number {
+  const safe = Number(monthlyPrice);
+  if (!Number.isFinite(safe) || safe <= 0) return 0;
+  const rawDaily = safe / DAYS_PER_MONTH_FOR_DAILY_PRICE;
+  return Math.floor(rawDaily * 10) / 10;
+}
+
+function buildHomeHeroAfterPriceLabel(input: {
+  fallback: string;
+  numberLocale: string;
+  mxnPlan: PricingPlan | null;
+  usdPlan: PricingPlan | null;
+  withDailyUsd: boolean;
+}): string {
+  const monthlyParts: string[] = [];
+
+  if (input.mxnPlan && Number(input.mxnPlan.price) > 0) {
+    monthlyParts.push(
+      formatMonthlyPriceWithCode(input.mxnPlan.price, "mxn", input.numberLocale),
+    );
+  }
+  if (input.usdPlan && Number(input.usdPlan.price) > 0) {
+    monthlyParts.push(
+      formatMonthlyPriceWithCode(input.usdPlan.price, "usd", input.numberLocale),
+    );
+  }
+
+  const base =
+    monthlyParts.length > 0
+      ? monthlyParts.join(" · ")
+      : `${input.fallback ?? ""}`
+          .replace(/^desde\s*/i, "")
+          .replace(/[()]/g, "")
+          .replace(/\s+/g, " ")
+          .trim();
+
+  if (!input.withDailyUsd || !input.usdPlan || Number(input.usdPlan.price) <= 0) {
+    return base;
+  }
+
+  const usdDaily = formatCurrency(
+    getDailyPrice(input.usdPlan.price),
+    "usd",
+    input.numberLocale,
+    {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    },
+  );
+
+  return `${base} · (${usdDaily} USD al día)`;
+}
+
+function buildCatalogGenresSnapshot(value: unknown): HomeCatalogGenre[] {
+  const rows = Array.isArray(value) ? value : [];
+  const grouped = new Map<string, HomeCatalogGenre>();
+
+  rows.forEach((row: any, index) => {
+    const displayName =
+      typeof row?.name === "string"
+        ? normalizeGenreDisplayName(row.name).trim()
+        : "";
+    if (!displayName) return;
+
+    const searchKey = normalizeSearchKey(displayName);
+    if (!searchKey) return;
+
+    const filesRaw = Number(row?.files ?? 0);
+    const gbRaw = Number(row?.gb ?? 0);
+    const files = Number.isFinite(filesRaw) && filesRaw > 0 ? filesRaw : 0;
+    const gb = Number.isFinite(gbRaw) && gbRaw > 0 ? gbRaw : 0;
+    const existing = grouped.get(searchKey);
+
+    if (existing) {
+      existing.files += files;
+      existing.gb += gb;
+      if (displayName.length > existing.name.length) existing.name = displayName;
+      return;
+    }
+
+    grouped.set(searchKey, {
+      id: `genre-${searchKey}-${index}`,
+      name: displayName,
+      searchKey,
+      files,
+      gb,
+    });
+  });
+
+  return Array.from(grouped.values()).sort((a, b) => {
+    if (b.files !== a.files) return b.files - a.files;
+    return a.name.localeCompare(b.name, "es-MX");
+  });
 }
 
 function readRegionFromLocale(locale: string): string | null {
@@ -206,9 +360,12 @@ export default function PublicHome() {
   const [pricingUi, setPricingUi] = useState<PublicPricingUiSnapshot>({
     defaultCurrency: "mxn",
     limitsNote: DEFAULT_LIMITS_NOTE,
-    afterPriceLabel: "MXN $350/mes (USD $18)",
+    afterPriceLabel: "precio mensual",
+    genres: [],
     stats: {
       totalFiles: 0,
+      totalGenres: 0,
+      karaokes: 0,
       totalTB: 0,
       quotaGbDefault: 500,
     },
@@ -219,6 +376,9 @@ export default function PublicHome() {
   );
   const [topDownloads, setTopDownloads] =
     useState<PublicTopDownloadsResponse | null>(null);
+  const [insideExplorer, setInsideExplorer] =
+    useState<PublicExplorerPreviewResponse | null>(null);
+  const [insideExplorerLoading, setInsideExplorerLoading] = useState(true);
   const [pricingPlans, setPricingPlans] = useState<{
     mxn: PricingPlan | null;
     usd: PricingPlan | null;
@@ -325,6 +485,9 @@ export default function PublicHome() {
         mxn: toPlan(mxn, "mxn"),
         usd: toPlan(usd, "usd"),
       };
+      const marketingVariables = buildMarketingVariables({
+        pricingConfig: response,
+      });
 
       const defaultCurrencyRaw = String(
         response?.ui?.defaultCurrency ?? response?.currencyDefault ?? "mxn",
@@ -339,14 +502,14 @@ export default function PublicHome() {
         defaultCurrencyFromApi,
         nextPlans,
       );
-      const totalFiles = Math.max(
-        0,
-        Number(response?.ui?.stats?.totalFiles ?? 0),
-      );
-      const totalTB = Math.max(0, Number(response?.ui?.stats?.totalTB ?? 0));
+      const totalFiles = Math.max(0, Number(marketingVariables.TOTAL_FILES));
+      const totalGenres = Math.max(0, Number(marketingVariables.TOTAL_GENRES));
+      const karaokes = Math.max(0, Number(marketingVariables.TOTAL_KARAOKE));
+      const genres = buildCatalogGenresSnapshot(response?.catalog?.genresDetail);
+      const totalTB = Math.max(0, Number(marketingVariables.TOTAL_TB));
       const quotaFromUi = Math.max(
         0,
-        Number(response?.ui?.stats?.quotaGbDefault ?? 0),
+        Number(marketingVariables.MONTHLY_GB ?? 0),
       );
       const quotaFromPlans =
         defaultCurrency === "mxn"
@@ -369,13 +532,18 @@ export default function PublicHome() {
         typeof response?.ui?.afterPriceLabel === "string"
           ? response.ui.afterPriceLabel.trim()
           : "";
+      const afterPriceLabelFallback = `${marketingVariables.MONTHLY_LABEL_DUAL}`.trim();
 
       setPricingUi({
         defaultCurrency,
         limitsNote: normalizedLimitsNote || DEFAULT_LIMITS_NOTE,
-        afterPriceLabel: afterPriceLabelRaw || "MXN $350/mes (USD $18)",
+        afterPriceLabel:
+          afterPriceLabelRaw || afterPriceLabelFallback || "precio mensual",
+        genres,
         stats: {
           totalFiles: Number.isFinite(totalFiles) ? totalFiles : 0,
+          totalGenres: Number.isFinite(totalGenres) ? totalGenres : 0,
+          karaokes: Number.isFinite(karaokes) ? karaokes : 0,
           totalTB: Number.isFinite(totalTB) ? totalTB : 0,
           quotaGbDefault: Number.isFinite(quotaGbDefault)
             ? quotaGbDefault
@@ -445,6 +613,30 @@ export default function PublicHome() {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    if (!cancelled) setInsideExplorerLoading(true);
+
+    (async () => {
+      try {
+        const response =
+          (await trpc.downloadHistory.getPublicExplorerPreview.query({
+            limit: 6,
+          })) as PublicExplorerPreviewResponse;
+
+        if (!cancelled) setInsideExplorer(response);
+      } catch {
+        if (!cancelled) setInsideExplorer(null);
+      } finally {
+        if (!cancelled) setInsideExplorerLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const trialSummary = useMemo<TrialSummary | null>(() => {
     if (!trialConfig) return null;
     return {
@@ -497,24 +689,57 @@ export default function PublicHome() {
     return HOME_HERO_MICROCOPY_BASE;
   }, [trialSummary?.enabled]);
 
+  const faqItems = useMemo(
+    () =>
+      buildHomeFaqItems({
+        totalFiles: pricingUi.stats.totalFiles,
+        totalGenres: pricingUi.stats.totalGenres,
+        karaokes: pricingUi.stats.karaokes,
+        quotaGbDefault: pricingUi.stats.quotaGbDefault,
+        trialEnabled: Boolean(trialConfig?.enabled),
+        trialDays: Number(trialConfig?.days ?? 7),
+        trialGb: Number(trialConfig?.gb ?? 100),
+        genres: pricingUi.genres,
+      }),
+    [
+      pricingUi.genres,
+      pricingUi.stats.karaokes,
+      pricingUi.stats.quotaGbDefault,
+      pricingUi.stats.totalFiles,
+      pricingUi.stats.totalGenres,
+      trialConfig?.days,
+      trialConfig?.gb,
+    ],
+  );
+
   const afterPriceLabel = pricingUi.afterPriceLabel;
+  const heroAfterPriceLabel = useMemo(
+    () =>
+      buildHomeHeroAfterPriceLabel({
+        fallback: afterPriceLabel,
+        numberLocale: HOME_NUMBER_LOCALE,
+        mxnPlan: pricingPlans.mxn,
+        usdPlan: pricingPlans.usd,
+        withDailyUsd: Boolean(trialSummary?.enabled),
+      }),
+    [
+      afterPriceLabel,
+      pricingPlans.mxn,
+      pricingPlans.usd,
+      trialSummary?.enabled,
+    ],
+  );
 
-  const downloadQuotaGb = useMemo(() => {
-    const fromUi = Number(pricingUi.stats.quotaGbDefault ?? 0);
-    if (Number.isFinite(fromUi) && fromUi > 0) return fromUi;
-    const fromPlans = Number(
-      pricingPlans.mxn?.gigas ?? pricingPlans.usd?.gigas ?? 0,
-    );
-    return Number.isFinite(fromPlans) && fromPlans > 0 ? fromPlans : 500;
-  }, [
-    pricingPlans.mxn?.gigas,
-    pricingPlans.usd?.gigas,
-    pricingUi.stats.quotaGbDefault,
-  ]);
-
-  const downloadQuotaLabel = `${formatInt(downloadQuotaGb)} GB/mes`;
   const effectiveTotalTB = Math.max(0, Number(pricingUi.stats.totalTB ?? 0));
   const totalTBLabel = formatCatalogSizeMarketing(effectiveTotalTB);
+  const footerBrandLead = useMemo(() => {
+    const totalFiles = Math.max(0, Number(pricingUi.stats.totalFiles ?? 0));
+    const totalGenres = Math.max(0, Number(pricingUi.stats.totalGenres ?? 0));
+    if (totalFiles <= 0 || totalGenres <= 0) {
+      return "Catálogo real. Géneros latinos. Actualizaciones cada semana.";
+    }
+    return `${formatInt(totalFiles)} archivos. ${formatInt(totalGenres)}+ géneros. Actualizaciones cada semana.`;
+  }, [pricingUi.stats.totalFiles, pricingUi.stats.totalGenres]);
 
   const socialAudio = useMemo(() => {
     const items = topDownloads?.audio ?? [];
@@ -614,6 +839,13 @@ export default function PublicHome() {
     },
     [],
   );
+  const onGenreCoverageClick = useCallback((genre: HomeCatalogGenre) => {
+    trackGrowthMetric(GROWTH_METRICS.CTA_SECONDARY_CLICK, {
+      location: "genres_coverage",
+      genre: genre.name,
+      target: `/?genre=${encodeURIComponent(genre.name)}`,
+    });
+  }, []);
   const onComparePlansClick = useCallback(
     (location: "topnav" | "footer") => {
       trackGrowthMetric(GROWTH_METRICS.PLANS_COMPARE_CLICK, {
@@ -624,6 +856,24 @@ export default function PublicHome() {
     },
     [comparePlansTo],
   );
+  const onFaqWhatsappClick = useCallback(() => {
+    const target = WHATSAPP_SUPPORT_URL || "manychat_widget";
+    trackGrowthMetric(GROWTH_METRICS.CTA_SECONDARY_CLICK, {
+      location: "faq_whatsapp",
+      target,
+    });
+    trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
+      id: "home_faq_whatsapp",
+      location: "faq",
+      target,
+    });
+    trackManyChatConversion(MC_EVENTS.CLICK_CHAT);
+
+    if (!WHATSAPP_SUPPORT_URL && typeof window !== "undefined") {
+      syncManyChatWidgetVisibility(window.location.pathname);
+      openManyChatWidget();
+    }
+  }, []);
 
   const findSectionByIds = useCallback((ids: string[]) => {
     for (const id of ids) {
@@ -766,6 +1016,7 @@ export default function PublicHome() {
       const fallbackDemoSection = document.getElementById("demo");
       const section =
         findSectionByIds([
+          "inside-explorer",
           "top100",
           "top-audios",
           "top-videos",
@@ -775,7 +1026,9 @@ export default function PublicHome() {
         ]) ?? fallbackDemoSection;
 
       const getFinalTarget = () =>
-        (document.getElementById("top100") as HTMLElement | null) ?? section;
+        (document.getElementById("inside-explorer") as HTMLElement | null) ??
+        (document.getElementById("top100") as HTMLElement | null) ??
+        section;
 
       if (section) {
         scrollToTarget(section, options.behavior ?? "smooth");
@@ -786,8 +1039,15 @@ export default function PublicHome() {
         });
       }
       if (options.focusSearch) {
-        // Avoid opening the keyboard; focus the first demo play button when the user explicitly clicks "Ver demo".
+        // Keep focus in the demo section after scrolling without forcing keyboard input on mobile.
         window.setTimeout(() => {
+          const insideHeading = document.querySelector(
+            ".inside-explorer h2",
+          ) as HTMLHeadingElement | null;
+          if (insideHeading) {
+            insideHeading.focus({ preventScroll: true });
+            return;
+          }
           const play = document.querySelector(
             "[data-testid='home-topdemo-play']",
           ) as HTMLButtonElement | null;
@@ -928,9 +1188,10 @@ export default function PublicHome() {
 
       <div id="home-main" className="home-main">
         <HomeHero
+          totalFiles={pricingUi.stats.totalFiles}
+          totalGenres={pricingUi.stats.totalGenres}
           totalTBLabel={totalTBLabel}
-          downloadQuotaLabel={downloadQuotaLabel}
-          afterPriceLabel={afterPriceLabel}
+          afterPriceLabel={heroAfterPriceLabel}
           trial={trialSummary}
           ctaLabel={ctaPrimaryLabel}
           primaryCheckoutFrom={primaryCheckoutFrom}
@@ -944,15 +1205,35 @@ export default function PublicHome() {
             status={pricingStatus}
             defaultCurrency={preferredCurrency}
             numberLocale={HOME_NUMBER_LOCALE}
-            catalogTBLabel={totalTBLabel}
-            downloadQuotaGb={downloadQuotaGb}
-            limitsNote={pricingUi.limitsNote}
+            totalFiles={pricingUi.stats.totalFiles}
+            totalGenres={pricingUi.stats.totalGenres}
+            karaokes={pricingUi.stats.karaokes}
             trial={trialSummary}
             ctaLabel={ctaPrimaryLabel}
             primaryCheckoutFrom={primaryCheckoutFrom}
             onPrimaryCtaClick={() => onPrimaryCtaClick("pricing")}
           />
         </div>
+
+        <WhyBearBeat
+          totalGenres={pricingUi.stats.totalGenres}
+          karaokes={pricingUi.stats.karaokes}
+          totalTBLabel={totalTBLabel}
+          usdMonthlyPrice={pricingPlans.usd?.price ?? null}
+          mxnMonthlyPrice={pricingPlans.mxn?.price ?? null}
+          numberLocale={HOME_NUMBER_LOCALE}
+        />
+
+        <GenresCoverage
+          genres={pricingUi.genres}
+          totalGenres={pricingUi.stats.totalGenres}
+          onGenreClick={onGenreCoverageClick}
+        />
+
+        <InsideExplorer
+          snapshot={insideExplorer}
+          loading={insideExplorerLoading}
+        />
 
         <SocialProof
           audio={socialAudio}
@@ -961,7 +1242,15 @@ export default function PublicHome() {
           onMoreClick={() => onSecondaryCtaClick("top_downloads")}
         />
 
-        <HomeFaq onFaqExpand={onFaqExpand} />
+        <HomeFaq
+          items={faqItems}
+          onFaqExpand={onFaqExpand}
+          postCta={{
+            label: FAQ_WHATSAPP_CTA_LABEL,
+            href: WHATSAPP_SUPPORT_URL || null,
+          }}
+          onPostCtaClick={onFaqWhatsappClick}
+        />
       </div>
 
       <footer className="home-footer" aria-label="Footer">
@@ -969,7 +1258,9 @@ export default function PublicHome() {
           <div className="home-footer__brand">
             <img src={brandMark} alt="Bear Beat" width={46} height={46} />
             <p>
-              Catálogo grande, descargas mensuales claras y activación guiada.
+              {footerBrandLead}
+              <br />
+              El record pool latino más completo del mercado.
             </p>
           </div>
 
@@ -981,6 +1272,13 @@ export default function PublicHome() {
           </div>
 
           <div className="home-footer__cta" aria-label="Activar">
+            <Link
+              to={comparePlansTo}
+              className="home-footer__hook-link"
+              onClick={() => onComparePlansClick("footer")}
+            >
+              {FOOTER_PLANS_CTA_LABEL}
+            </Link>
             <Link
               to="/auth/registro"
               state={{ from: primaryCheckoutFrom }}

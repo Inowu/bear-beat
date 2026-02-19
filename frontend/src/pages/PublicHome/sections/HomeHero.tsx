@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, CheckCircle2, CirclePlay, Lock, Ticket } from "src/icons";
+import { ArrowRight, CirclePlay, Music, Ticket } from "src/icons";
 import {
-  HOME_HERO_FIT_POINTS,
-  HOME_HERO_MICROCOPY_BASE,
-  HOME_HERO_MICROCOPY_TRIAL,
-  HOME_HERO_SUBTITLE,
+  getHomeHeroFitPoints,
+  getHomeHeroStats,
+  getHomeHeroSubtitle,
+  HOME_CTA_SECONDARY_LABEL,
   HOME_HERO_TRUST_ITEMS,
   HOME_HERO_TITLE,
 } from "../homeCopy";
@@ -18,8 +18,9 @@ type TrialSummary = {
 };
 
 export default function HomeHero(props: {
+  totalFiles: number;
+  totalGenres: number;
   totalTBLabel: string;
-  downloadQuotaLabel: string;
   afterPriceLabel: string;
   trial: TrialSummary | null;
   ctaLabel: string;
@@ -28,8 +29,9 @@ export default function HomeHero(props: {
   onDemoScroll: () => void;
 }) {
   const {
+    totalFiles,
+    totalGenres,
     totalTBLabel,
-    downloadQuotaLabel,
     afterPriceLabel,
     trial,
     ctaLabel,
@@ -40,36 +42,48 @@ export default function HomeHero(props: {
 
   const hasTrial = Boolean(trial?.enabled);
   const trialLabel =
-    hasTrial && trial ? `Prueba: ${formatInt(trial.days)} días + ${formatInt(trial.gb)} GB.` : null;
+    hasTrial && trial
+      ? `Prueba gratis: ${formatInt(trial.days)} días + ${formatInt(trial.gb)} GB de descarga`
+      : null;
+  const trialSongsEstimate =
+    hasTrial && trial
+      ? Math.max(0, Math.floor(Number(trial.gb ?? 0) * 6))
+      : 0;
+  const trialSongsLabel =
+    trialSongsEstimate > 0 ? `+${formatInt(trialSongsEstimate)}` : "cientos de";
+  const heroSubtitle = getHomeHeroSubtitle(totalFiles);
+  const heroFitPoints = getHomeHeroFitPoints(totalGenres);
+  const heroStats = getHomeHeroStats({
+    totalFiles,
+    totalTBLabel,
+    totalGenres,
+  });
 
   return (
     <section className="home-hero" aria-label="Presentación">
       <div className="ph__container home-hero__inner">
         <div className="home-hero__copy">
           <h1 className="home-hero__title">{HOME_HERO_TITLE}</h1>
-          <p className="home-hero__sub">{HOME_HERO_SUBTITLE}</p>
-          <ul className="home-hero__fit" aria-label="Ideal para">
-            {HOME_HERO_FIT_POINTS.map((point) => (
+          <p className="home-hero__sub">{heroSubtitle}</p>
+          <ul className="home-hero__fit" aria-label="Beneficios principales">
+            {heroFitPoints.map((point) => (
               <li key={point}>
-                <CheckCircle2 size={16} aria-hidden />
+                <Music size={16} aria-hidden />
                 <span>{point}</span>
               </li>
             ))}
           </ul>
 
           <div className="home-hero__stats" role="list" aria-label="Resumen">
-            <div role="listitem" className="home-stat bb-stat-pill">
-              <span className="home-stat__value bb-stat-pill__value">{totalTBLabel}</span>
-              <span className="home-stat__label bb-stat-pill__label">catálogo</span>
-            </div>
-            <div role="listitem" className="home-stat bb-stat-pill">
-              <span className="home-stat__value bb-stat-pill__value">{downloadQuotaLabel}</span>
-              <span className="home-stat__label bb-stat-pill__label">cuota de descarga</span>
-            </div>
-            <div role="listitem" className="home-stat bb-stat-pill">
-              <span className="home-stat__value bb-stat-pill__value">Audios / Videos / Karaoke</span>
-              <span className="home-stat__label bb-stat-pill__label">Año / Mes / Semana / Género</span>
-            </div>
+            {heroStats.map((item) => (
+              <div key={item.label} role="listitem" className="home-stat bb-stat-pill">
+                <span className="home-stat__value bb-stat-pill__value">{item.value}</span>
+                <span className="home-stat__label bb-stat-pill__label">
+                  {item.label}
+                  {item.note ? <span className="home-stat__note">({item.note})</span> : null}
+                </span>
+              </div>
+            ))}
           </div>
 
           <div className="home-hero__cta">
@@ -86,7 +100,7 @@ export default function HomeHero(props: {
               </Link>
               <Button unstyled type="button" className="home-cta home-cta--secondary home-hero__cta-demo" onClick={onDemoScroll}>
                 <CirclePlay size={18} aria-hidden />
-                Ver demo
+                {HOME_CTA_SECONDARY_LABEL}
               </Button>
             </div>
             <div className="home-hero__trust-inline" role="note" aria-label="Confianza rápida">
@@ -105,12 +119,21 @@ export default function HomeHero(props: {
                   <span className="home-hero__micro-row">
                     <Ticket size={16} aria-hidden />
                     <span>
-                      <strong>{trialLabel}</strong> {HOME_HERO_MICROCOPY_TRIAL}
+                      <strong>{trialLabel}</strong>
                     </span>
                   </span>
                   <span className="home-hero__micro-row">
                     <ArrowRight size={16} aria-hidden />
-                    Después: desde {afterPriceLabel}
+                    Eso son {trialSongsLabel} canciones para probar en tu evento
+                    este fin de semana.
+                  </span>
+                  <span className="home-hero__micro-row">
+                    <ArrowRight size={16} aria-hidden />
+                    Si no te convence, cancelas y no pagas nada. Cero riesgo.
+                  </span>
+                  <span className="home-hero__micro-row">
+                    <ArrowRight size={16} aria-hidden />
+                    Después: {afterPriceLabel}
                   </span>
                 </>
               ) : (
@@ -119,10 +142,6 @@ export default function HomeHero(props: {
                   Desde {afterPriceLabel}
                 </span>
               )}
-              <span className="home-hero__micro-row">
-                <Lock size={16} aria-hidden />
-                {HOME_HERO_MICROCOPY_BASE}
-              </span>
             </div>
           </div>
         </div>

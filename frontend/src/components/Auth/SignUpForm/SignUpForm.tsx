@@ -35,6 +35,10 @@ import {
 import { toErrorMessage } from "../../../utils/errorMessage";
 import type { IPlans } from "../../../interfaces/Plans";
 import { formatInt } from "../../../utils/format";
+import {
+  buildMarketingVariables,
+  EMPTY_MARKETING_VARIABLES,
+} from "../../../utils/marketingSnapshot";
 import brandLockupBlack from "../../../assets/brand/bearbeat-lockup-black.png";
 import brandLockupCyan from "../../../assets/brand/bearbeat-lockup-cyan.png";
 
@@ -134,6 +138,9 @@ function SignUpForm() {
     gb: number;
     eligible: boolean | null;
   } | null>(null);
+  const [marketingVariables, setMarketingVariables] = useState(
+    EMPTY_MARKETING_VARIABLES,
+  );
 
   const clearTurnstileTimeout = useCallback(() => {
     if (turnstileTimeoutRef.current !== null) {
@@ -464,20 +471,29 @@ function SignUpForm() {
   }, [getUserLocation]);
 
   useEffect(() => {
-    const fetchTrialConfig = async () => {
+    let cancelled = false;
+    const fetchPublicMarketingSnapshot = async () => {
       try {
-        const cfg = (await trpc.plans.getTrialConfig.query()) as any;
+        const response = (await trpc.plans.getPublicPricingConfig.query()) as any;
+        if (cancelled) return;
+
+        const snapshot = buildMarketingVariables({ pricingConfig: response });
+        setMarketingVariables(snapshot);
+
         setTrialConfig({
-          enabled: Boolean(cfg?.enabled),
-          days: Number(cfg?.days ?? 0),
-          gb: Number(cfg?.gb ?? 0),
-          eligible: typeof cfg?.eligible === "boolean" ? cfg.eligible : null,
+          enabled: Boolean(response?.trialConfig?.enabled),
+          days: snapshot.TRIAL_DAYS,
+          gb: snapshot.TRIAL_GB,
+          eligible: snapshot.TRIAL_ELIGIBLE,
         });
       } catch {
         // ignore
       }
     };
-    void fetchTrialConfig();
+    void fetchPublicMarketingSnapshot();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -1017,9 +1033,13 @@ function SignUpForm() {
         <div className="auth-login-atmosphere">
           <div className="auth-login-card auth-login-card--signup">
             <img src={brandLockup} alt="Bear Beat" className="auth-login-logo" />
-            <h1 className="auth-login-title">Crea tu cuenta</h1>
+            <h1 className="auth-login-title">
+              Crea tu cuenta y empieza a descargar en minutos.
+            </h1>
             <p className="auth-login-sub auth-login-sub--signup">
-              Activa tu cuenta en minutos y empieza a descargar.
+              {marketingVariables.TOTAL_FILES > 0
+                ? `${formatInt(marketingVariables.TOTAL_FILES)} archivos te están esperando.`
+                : "Tu biblioteca para cabina te está esperando."}
             </p>
             {FormContent}
           </div>

@@ -2,6 +2,7 @@ import { CirclePlay } from "src/icons";
 import CatalogPreviewWebp from "../../../assets/images/home-catalog-preview.webp";
 import CatalogPreviewPng from "../../../assets/images/home-catalog-preview.png";
 import { Button } from "src/components/ui";
+import { HOME_CTA_SECONDARY_LABEL } from "../homeCopy";
 export default function InsidePreview(props: {
   onDemoScroll: () => void;
   onTourClick: () => void;
@@ -18,7 +19,7 @@ export default function InsidePreview(props: {
           </div>
           <Button unstyled type="button" className="home-cta home-cta--secondary inside-preview__cta" onClick={onDemoScroll}>
             <CirclePlay size={18} aria-hidden />
-            Ver demo
+            {HOME_CTA_SECONDARY_LABEL}
           </Button>
         </div>
 

@@ -100,7 +100,7 @@ describe("checkout CTA labels", () => {
       isMethodTrial: true,
     });
 
-    expect(label).toBe("Iniciar prueba");
+    expect(label).toBe("Activar 7 días gratis");
   });
 
   it("uses pay-now CTA for non-card methods", () => {

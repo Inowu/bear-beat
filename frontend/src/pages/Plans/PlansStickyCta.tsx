@@ -174,7 +174,7 @@ export default function PlansStickyCta(props: {
 
   const stickyMicro =
     trial?.enabled && Number.isFinite(trial.days) && trial.days > 0
-      ? `Con tarjeta: hoy $0 (${trial.days} días de prueba)`
+      ? `Hoy pagas $0 (${trial.days} días + ${trial.gb} GB)`
       : "Cancela cuando quieras";
 
   if (!canShow || !visible) return null;
@@ -187,7 +187,7 @@ export default function PlansStickyCta(props: {
           <span className="plans-sticky__cta-micro">{stickyMicro}</span>
         </Button>
         <Button unstyled type="button" className="plans-sticky__demo" onClick={onDemoClick}>
-          Ver demo
+          Escuchar demos ↓
         </Button>
         <Button unstyled type="button" className="plans-sticky__close" onClick={dismiss} aria-label="Ocultar barra">
           <X size={16} aria-hidden />

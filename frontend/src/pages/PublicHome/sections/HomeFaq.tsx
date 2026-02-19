@@ -1,11 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronDown } from "src/icons";
-import { HOME_FAQ_ITEMS } from "../homeCopy";
+import type { HomeFaqItem } from "../homeCopy";
 import { Button } from "src/components/ui";
 export default function HomeFaq(props: {
+  items: HomeFaqItem[];
   onFaqExpand?: (id: string) => void;
+  postCta?: {
+    label: string;
+    href?: string | null;
+  };
+  onPostCtaClick?: () => void;
 }) {
-  const { onFaqExpand } = props;
+  const { items, onFaqExpand, postCta, onPostCtaClick } = props;
   const [openIds, setOpenIds] = useState<Record<string, boolean>>({});
 
   const handleToggle = useCallback(
@@ -25,8 +31,8 @@ export default function HomeFaq(props: {
     const openFromHash = () => {
       const hash = window.location.hash;
       if (hash === "#faq") {
-        if (HOME_FAQ_ITEMS.length === 0) return;
-        const first = HOME_FAQ_ITEMS[0];
+        if (items.length === 0) return;
+        const first = items[0];
         if (!first) return;
         setOpenIds((prev) => ({ ...prev, [first.id]: true }));
         const section = document.getElementById("faq");
@@ -45,13 +51,13 @@ export default function HomeFaq(props: {
     openFromHash();
     window.addEventListener("hashchange", openFromHash);
     return () => window.removeEventListener("hashchange", openFromHash);
-  }, []);
+  }, [items]);
 
   const faqSchemaJson = useMemo(() => {
     const schema = {
       "@context": "https://schema.org",
       "@type": "FAQPage",
-      mainEntity: HOME_FAQ_ITEMS.map((item) => ({
+      mainEntity: items.map((item) => ({
         "@type": "Question",
         name: item.question,
         acceptedAnswer: {
@@ -61,7 +67,7 @@ export default function HomeFaq(props: {
       })),
     };
     return JSON.stringify(schema);
-  }, []);
+  }, [items]);
 
   useEffect(() => {
     if (typeof document === "undefined") return;
@@ -73,6 +79,9 @@ export default function HomeFaq(props: {
     return () => script.remove();
   }, [faqSchemaJson]);
 
+  const postCtaHref = `${postCta?.href ?? ""}`.trim();
+  const isPostCtaExternal = /^https?:\/\//i.test(postCtaHref);
+
   return (
     <section id="faq" className="home-faq" aria-label="Preguntas frecuentes">
       <div className="ph__container">
@@ -82,7 +91,7 @@ export default function HomeFaq(props: {
         </p>
 
         <div className="home-faq__list bb-accordion">
-          {HOME_FAQ_ITEMS.map((item) => (
+          {items.map((item) => (
             <div
               key={item.id}
               id={`faq-${item.id}`}
@@ -114,6 +123,31 @@ export default function HomeFaq(props: {
             </div>
           ))}
         </div>
+
+        {postCta?.label ? (
+          <div className="home-faq__post-cta">
+            {postCtaHref ? (
+              <a
+                className="home-faq__post-link"
+                href={postCtaHref}
+                onClick={onPostCtaClick}
+                target={isPostCtaExternal ? "_blank" : undefined}
+                rel={isPostCtaExternal ? "noopener noreferrer" : undefined}
+              >
+                {postCta.label}
+              </a>
+            ) : (
+              <Button
+                unstyled
+                type="button"
+                className="home-faq__post-link"
+                onClick={onPostCtaClick}
+              >
+                {postCta.label}
+              </Button>
+            )}
+          </div>
+        ) : null}
       </div>
     </section>
   );

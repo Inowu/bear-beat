@@ -1,6 +1,7 @@
 const AUTH_RETURN_URL_KEY = "bb.auth.returnUrl";
 const AUTH_RETURN_URL_TTL_MS = 20 * 60 * 1000; // 20 minutes
 const AUTH_RETURN_ALLOWED_PATH_PREFIXES = [
+  "/",
   "/comprar",
   "/planes",
   "/descargas",

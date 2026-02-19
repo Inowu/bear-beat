@@ -4,7 +4,7 @@ import trpc from "../../api";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { trackManyChatConversion, MC_EVENTS } from "../../utils/manychatPixel";
 import { AlertTriangle, Check, Layers3, RefreshCw } from "src/icons";
-import { formatCatalogSizeMarketing, formatInt } from "../../utils/format";
+import { formatInt } from "../../utils/format";
 import PublicTopNav from "../../components/PublicTopNav/PublicTopNav";
 import PaymentMethodLogos, {
   type PaymentMethodId,
@@ -14,6 +14,7 @@ import { useUserContext } from "../../contexts/UserContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import PlansStickyCta from "./PlansStickyCta";
 import { Button } from "src/components/ui";
+import { buildMarketingVariables } from "../../utils/marketingSnapshot";
 
 type CurrencyKey = "mxn" | "usd";
 type PlansEntry = "fastlane" | "compare";
@@ -28,6 +29,7 @@ const PAYMENT_METHOD_VALUES: PaymentMethodId[] = [
   "oxxo",
   "transfer",
 ];
+const DAYS_PER_MONTH_FOR_DAILY_PRICE = 30;
 
 type PublicBestPlan = {
   planId: number;
@@ -44,6 +46,8 @@ type PublicPricingUi = {
   limitsNote: string;
   stats: {
     totalFiles: number;
+    totalGenres: number;
+    karaokes: number;
     totalTB: number;
     quotaGb: {
       mxn: number;
@@ -105,6 +109,29 @@ function formatMoneyFixed(value: unknown, locale: string): string {
   }).format(amount);
 }
 
+function formatMonthlyPriceWithCode(
+  amount: number,
+  currency: CurrencyKey,
+  locale: string,
+): string {
+  const safeAmount = toNumber(amount);
+  const code = currency.toUpperCase();
+  if (!Number.isFinite(safeAmount) || safeAmount <= 0) return `${code} $0/mes`;
+  const hasDecimals = !Number.isInteger(safeAmount);
+  const formatted = new Intl.NumberFormat(locale, {
+    minimumFractionDigits: hasDecimals ? 2 : 0,
+    maximumFractionDigits: 2,
+  }).format(safeAmount);
+  return `${code} $${formatted}/mes`;
+}
+
+function getDailyPrice(monthlyPrice: number): number {
+  const safe = toNumber(monthlyPrice);
+  if (!Number.isFinite(safe) || safe <= 0) return 0;
+  const rawDaily = safe / DAYS_PER_MONTH_FOR_DAILY_PRICE;
+  return Math.floor(rawDaily * 10) / 10;
+}
+
 function formatPayNowMethodsLabel(methods: PaymentMethodId[]): string {
   const labels: string[] = [];
   if (methods.includes("paypal")) labels.push("PayPal");
@@ -146,6 +173,8 @@ function Plans() {
     limitsNote: DEFAULT_LIMITS_NOTE,
     stats: {
       totalFiles: 0,
+      totalGenres: 0,
+      karaokes: 0,
       totalTB: 0,
       quotaGb: { mxn: 500, usd: 500 },
       quotaGbDefault: 500,
@@ -195,6 +224,9 @@ function Plans() {
         mxn: toPlan(result?.plans?.mxn, "mxn"),
         usd: toPlan(result?.plans?.usd, "usd"),
       };
+      const marketingVariables = buildMarketingVariables({
+        pricingConfig: result,
+      });
       const trialRaw =
         result?.trialConfig && typeof result.trialConfig === "object"
           ? result.trialConfig
@@ -202,12 +234,9 @@ function Plans() {
       const nextTrialConfig: PublicTrialConfig | null = trialRaw
         ? {
             enabled: Boolean(trialRaw.enabled),
-            days: Math.max(0, Math.trunc(toNumber(trialRaw.days))),
-            gb: Math.max(0, Math.trunc(toNumber(trialRaw.gb))),
-            eligible:
-              typeof trialRaw.eligible === "boolean" || trialRaw.eligible === null
-                ? trialRaw.eligible
-                : null,
+            days: Math.max(0, Math.trunc(marketingVariables.TRIAL_DAYS)),
+            gb: Math.max(0, Math.trunc(marketingVariables.TRIAL_GB)),
+            eligible: marketingVariables.TRIAL_ELIGIBLE,
           }
         : null;
 
@@ -218,11 +247,13 @@ function Plans() {
         .toLowerCase();
       const defaultCurrency: CurrencyKey =
         defaultCurrencyRaw === "usd" ? "usd" : "mxn";
-      const totalFiles = Math.max(
+      const totalFiles = Math.max(0, Math.trunc(marketingVariables.TOTAL_FILES));
+      const totalGenres = Math.max(
         0,
-        Math.trunc(toNumber(result?.ui?.stats?.totalFiles)),
+        Math.trunc(marketingVariables.TOTAL_GENRES),
       );
-      const totalTB = Math.max(0, toNumber(result?.ui?.stats?.totalTB));
+      const karaokes = Math.max(0, Math.trunc(marketingVariables.TOTAL_KARAOKE));
+      const totalTB = Math.max(0, toNumber(marketingVariables.TOTAL_TB));
       const quotaMxn = Math.max(
         0,
         Math.trunc(
@@ -237,7 +268,11 @@ function Plans() {
       );
       const quotaDefaultRaw = Math.max(
         0,
-        Math.trunc(toNumber(result?.ui?.stats?.quotaGbDefault)),
+        Math.trunc(
+          toNumber(
+            result?.ui?.stats?.quotaGbDefault ?? marketingVariables.MONTHLY_GB,
+          ),
+        ),
       );
       const quotaDefaultFromPlans =
         defaultCurrency === "mxn"
@@ -263,6 +298,8 @@ function Plans() {
         limitsNote,
         stats: {
           totalFiles,
+          totalGenres,
+          karaokes,
           totalTB,
           quotaGb: {
             mxn:
@@ -347,7 +384,8 @@ function Plans() {
 
   const stats = useMemo(() => {
     const totalFiles = pricingUi.stats.totalFiles;
-    const totalTB = pricingUi.stats.totalTB;
+    const totalGenres = pricingUi.stats.totalGenres;
+    const karaokes = pricingUi.stats.karaokes;
     const quotaFromUi =
       selectedCurrency === "mxn"
         ? pricingUi.stats.quotaGb.mxn
@@ -364,21 +402,38 @@ function Plans() {
 
     return {
       totalFiles,
-      totalTB,
+      totalGenres,
+      karaokes,
       quotaGb,
     };
   }, [pricingUi.stats, selectedCurrency, selectedPlan?.gigas]);
 
-  const price = useMemo(() => {
-    if (!selectedPlan)
-      return { amount: "—", currencyLabel: selectedCurrency.toUpperCase() };
-    const currencyLabel = selectedCurrency.toUpperCase();
+  const selectedMonthlyLabel = useMemo(() => {
+    if (!selectedPlan) return `${selectedCurrency.toUpperCase()} $0/mes`;
     const locale = selectedCurrency === "usd" ? "en-US" : "es-MX";
-    return {
-      amount: `$${formatMoneyFixed(selectedPlan.price, locale)}`,
-      currencyLabel,
-    };
+    return formatMonthlyPriceWithCode(selectedPlan.price, selectedCurrency, locale);
   }, [selectedCurrency, selectedPlan]);
+
+  const dualMonthlyLabel = useMemo(() => {
+    const labels: string[] = [];
+    if (plansByCurrency.mxn) {
+      labels.push(
+        formatMonthlyPriceWithCode(plansByCurrency.mxn.price, "mxn", "es-MX"),
+      );
+    }
+    if (plansByCurrency.usd) {
+      labels.push(
+        formatMonthlyPriceWithCode(plansByCurrency.usd.price, "usd", "en-US"),
+      );
+    }
+    return labels.length > 0 ? labels.join(" · ") : selectedMonthlyLabel;
+  }, [plansByCurrency.mxn, plansByCurrency.usd, selectedMonthlyLabel]);
+
+  const usdDailyLabel = useMemo(() => {
+    const usdPrice = toNumber(plansByCurrency.usd?.price);
+    if (!Number.isFinite(usdPrice) || usdPrice <= 0) return null;
+    return `$${formatMoneyFixed(getDailyPrice(usdPrice), "en-US")} USD al día`;
+  }, [plansByCurrency.usd?.price]);
 
   const paymentMethods = useMemo(() => {
     if (selectedPlan?.paymentMethods?.length)
@@ -388,31 +443,72 @@ function Plans() {
       : (["visa", "mastercard"] as PaymentMethodId[]);
   }, [selectedCurrency, selectedPlan?.paymentMethods]);
 
+  const allPaymentMethods = useMemo(() => {
+    const methods: PaymentMethodId[] = [];
+    const append = (items: PaymentMethodId[] | undefined) => {
+      if (!items?.length) return;
+      items.forEach((item) => {
+        if (!methods.includes(item)) methods.push(item);
+      });
+    };
+    append(plansByCurrency.mxn?.paymentMethods);
+    append(plansByCurrency.usd?.paymentMethods);
+    if (!methods.length) append(paymentMethods);
+    return methods;
+  }, [
+    paymentMethods,
+    plansByCurrency.mxn?.paymentMethods,
+    plansByCurrency.usd?.paymentMethods,
+  ]);
+
+  const paymentSafetyLine = useMemo(() => {
+    const extraMethods = formatPayNowMethodsLabel(allPaymentMethods).replaceAll(
+      " / ",
+      ", ",
+    );
+    if (!extraMethods || extraMethods === "Otros métodos") {
+      return "Pago seguro con tarjeta";
+    }
+    return `Pago seguro con tarjeta, ${extraMethods}`;
+  }, [allPaymentMethods]);
+
   const trialPreview = useMemo(() => {
     const trialEnabled =
       Boolean(trialConfig?.enabled) && trialConfig?.eligible !== false;
     const trialDays = Math.max(0, Math.trunc(toNumber(trialConfig?.days)));
     const trialGb = Math.max(0, Math.trunc(toNumber(trialConfig?.gb)));
     const applies = trialEnabled && trialDays > 0 && trialGb > 0;
-    const monthlyLabel = `${price.amount} ${price.currencyLabel}/mes`;
-    const payNowMethodsLabel = formatPayNowMethodsLabel(paymentMethods);
 
     return {
       applies,
       trialDays,
       trialGb,
-      monthlyLabel,
-      payNowMethodsLabel,
     };
-  }, [paymentMethods, price.amount, price.currencyLabel, trialConfig]);
+  }, [trialConfig]);
+
+  const totalFilesLabel =
+    stats.totalFiles > 0 ? formatInt(stats.totalFiles) : "N/D";
+  const totalGenresLabel =
+    stats.totalGenres > 0 ? `${formatInt(stats.totalGenres)}+` : "N/D";
+  const karaokesLabel = stats.karaokes > 0 ? formatInt(stats.karaokes) : "N/D";
+  const benefits = useMemo(
+    () => [
+      `${totalFilesLabel} archivos (audios, videos, karaokes)`,
+      `${formatInt(stats.quotaGb)} GB de descarga cada mes (~3,000 videos)`,
+      `${totalGenresLabel} géneros latinos organizados por carpetas`,
+      "BPM + Key incluidos en cada archivo",
+      "Packs nuevos cada semana (no mensuales)",
+      `${karaokesLabel} karaokes de la A a la Z`,
+      "Activación guiada — te ayudamos a conectar",
+    ],
+    [karaokesLabel, stats.quotaGb, totalFilesLabel, totalGenresLabel],
+  );
 
   const primaryCtaLabel = trialPreview.applies
-    ? "Iniciar prueba"
-    : "Continuar al pago seguro";
+    ? "Activar 7 días gratis"
+    : "CONTINUAR AL PAGO SEGURO";
 
-  const trustCopy = trialPreview.applies
-    ? "Tu prueba se activa con tarjeta. Cancela cuando quieras."
-    : "Tu cuenta se activa al pagar. Cancela cuando quieras.";
+  const trustCopy = "Cancela cuando quieras desde tu cuenta. Sin contratos.";
 
   const selectCurrency = (next: CurrencyKey) => {
     if (next === selectedCurrency) return;
@@ -497,74 +593,48 @@ function Plans() {
         <div className="plans2026__container bb-marketing-container--narrow">
           <header className="plans2026__hero" data-testid="plans-hero">
             <p className="plans2026__kicker">
-              {isFastlaneEntry ? "Compara y sigue" : "Paso 1 de 2"}
+              Empieza tu prueba gratis en 2 minutos.
             </p>
-            <h1>Elige tu plan.</h1>
+            <h1>Plan Oro</h1>
             <p className="plans2026__subtitle">
               {isFastlaneEntry
-                ? "Si quieres comparar antes de pagar, aquí eliges moneda y plan sin perder tu avance."
-                : "Primero eliges moneda y plan. En el siguiente paso completas el pago seguro."}
+                ? "Activa tu cuenta hoy y avanza al checkout sin perder tu flujo."
+                : "Todo en un solo plan: audios, videos y karaoke listos para cabina."}
             </p>
           </header>
 
           {loader ? (
-            <>
-              <section
-                className="plans2026__bento plans2026__bento--skeleton"
-                aria-label="Actualizando valor incluido"
-                role="status"
-                aria-live="polite"
-                aria-busy="true"
-              >
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <article
-                    key={i}
-                    className="plans2026__bento-card bb-bento-card"
-                    aria-hidden
-                  >
-                    <span className="plans2026__sk plans2026__sk--bentoValue" />
-                    <span className="plans2026__sk plans2026__sk--bentoLabel" />
-                  </article>
+            <section
+              className="plans2026__card bb-hero-card plans2026__card--skeleton"
+              aria-label="Actualizando plan"
+              role="status"
+              aria-live="polite"
+              aria-busy="true"
+            >
+              <span className="sr-only">Actualizando tu mejor opción</span>
+
+              <div className="plans2026__card-head" aria-hidden>
+                <span className="plans2026__sk plans2026__sk--pill" />
+              </div>
+
+              <div className="plans2026__price" aria-hidden>
+                <span className="plans2026__sk plans2026__sk--price" />
+                <span className="plans2026__sk plans2026__sk--suffix" />
+              </div>
+
+              <ul className="plans2026__benefits" aria-hidden>
+                {Array.from({ length: 7 }).map((_, i) => (
+                  <li key={i} className="plans2026__benefit">
+                    <span className="plans2026__sk plans2026__sk--benefitIcon" />
+                    <span className="plans2026__sk plans2026__sk--benefitLine" />
+                  </li>
                 ))}
-              </section>
+              </ul>
 
-              <section
-                className="plans2026__card bb-hero-card plans2026__card--skeleton"
-                aria-label="Actualizando plan"
-                role="status"
-                aria-live="polite"
-                aria-busy="true"
-              >
-                <span className="sr-only">Actualizando tu mejor opción</span>
-
-                <div className="plans2026__card-head" aria-hidden>
-                  <span className="plans2026__sk plans2026__sk--pill" />
-                </div>
-
-                <div className="plans2026__currency-skeleton" aria-hidden>
-                  <span className="plans2026__sk plans2026__sk--currencyBtn" />
-                  <span className="plans2026__sk plans2026__sk--currencyBtn" />
-                </div>
-
-                <div className="plans2026__price" aria-hidden>
-                  <span className="plans2026__sk plans2026__sk--price" />
-                  <span className="plans2026__sk plans2026__sk--suffix" />
-                </div>
-
-                <ul className="plans2026__benefits" aria-hidden>
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <li key={i} className="plans2026__benefit">
-                      <span className="plans2026__sk plans2026__sk--benefitIcon" />
-                      <span className="plans2026__sk plans2026__sk--benefitLine" />
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="plans2026__actions" aria-hidden>
-                  <span className="plans2026__sk plans2026__sk--cta" />
-                </div>
-              </section>
-            </>
+              <div className="plans2026__actions" aria-hidden>
+                <span className="plans2026__sk plans2026__sk--cta" />
+              </div>
+            </section>
           ) : loadError ? (
             <section className="plans2026__state">
               <div className="app-state-panel is-error" role="alert">
@@ -603,39 +673,81 @@ function Plans() {
             </section>
           ) : (
             <div className="bb-skeleton-fade-in">
-              <section className="plans2026__bento" aria-label="Valor incluido">
-                <article className="plans2026__bento-card bb-bento-card">
-                  <p className="plans2026__bento-value">
-                    {formatCatalogSizeMarketing(stats.totalTB)}
-                  </p>
-                  <p className="plans2026__bento-label">Catálogo total</p>
-                </article>
-                <article className="plans2026__bento-card bb-bento-card">
-                  <p className="plans2026__bento-value">
-                    {formatInt(stats.quotaGb)} GB/mes
-                  </p>
-                  <p className="plans2026__bento-label">Cuota de descarga</p>
-                </article>
-                <article className="plans2026__bento-card bb-bento-card">
-                  <p className="plans2026__bento-value">
-                    {formatInt(stats.totalFiles)}
-                  </p>
-                  <p className="plans2026__bento-label">Archivos listos</p>
-                </article>
-              </section>
-
-              <p className="plans2026__limitsNote">{pricingUi.limitsNote}</p>
-
               <section
                 className="plans2026__card bb-hero-card"
                 aria-label="Plan Oro"
               >
                 <div className="plans2026__card-head">
                   <p className="plans2026__plan-name bb-pill bb-pill--soft">
-                    Plan Oro
+                    PLAN ORO
                   </p>
                 </div>
 
+                <div
+                  className="plans2026__price plans2026__price--dual"
+                  aria-label="Precio mensual"
+                >
+                  <span className="plans2026__price-line">{dualMonthlyLabel}</span>
+                  {usdDailyLabel ? (
+                    <span className="plans2026__price-daily">
+                      ({usdDailyLabel})
+                    </span>
+                  ) : null}
+                </div>
+
+                <section
+                  className="plans2026__billingPreview"
+                  aria-label="Resumen de cobro"
+                >
+                  {trialPreview.applies ? (
+                    <>
+                      <p className="plans2026__billingLine">
+                        <span>HOY PAGAS</span>
+                        <strong>
+                          {`$0 (prueba ${formatInt(trialPreview.trialDays)} días + ${formatInt(trialPreview.trialGb)} GB)`}
+                        </strong>
+                      </p>
+                      <p className="plans2026__billingLine">
+                        <span>DESPUÉS</span>
+                        <strong>Se activa tu membresía mensual</strong>
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="plans2026__billingLine">
+                        <span>HOY PAGAS</span>
+                        <strong>{selectedMonthlyLabel}</strong>
+                      </p>
+                      <p className="plans2026__billingLine">
+                        <span>DESPUÉS</span>
+                        <strong>Renovación mensual hasta que canceles</strong>
+                      </p>
+                    </>
+                  )}
+                </section>
+
+                <p className="plans2026__includesTitle">Lo que incluye:</p>
+                <ul className="plans2026__benefits" aria-label="Beneficios">
+                  {benefits.map((benefit) => (
+                    <li key={benefit} className="plans2026__benefit">
+                      <span className="plans2026__benefit-icon" aria-hidden>
+                        <Check size={16} />
+                      </span>
+                      <span className="plans2026__benefit-text">{benefit}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <p className="plans2026__billingHint">
+                  {`💳 ${paymentSafetyLine}${plansByCurrency.mxn && plansByCurrency.usd ? " (según moneda)" : ""}`}
+                </p>
+                <PaymentMethodLogos
+                  methods={[...paymentMethods]}
+                  className="plans2026__payment-logos"
+                  ariaLabel="Métodos de pago disponibles"
+                />
+
+                <p className="plans2026__currencyTitle">Selecciona tu moneda</p>
                 <div
                   className={[
                     "bb-segmented",
@@ -679,63 +791,6 @@ function Plans() {
                   </Button>
                 </div>
 
-                <div
-                  className="plans2026__price"
-                  aria-label={`Precio ${price.currencyLabel}`}
-                >
-                  <span className="plans2026__price-amount">
-                    {price.amount}
-                  </span>
-                  <span className="plans2026__price-suffix">
-                    {price.currencyLabel} <span aria-hidden>/</span> mes
-                  </span>
-                </div>
-
-                <ul className="plans2026__benefits" aria-label="Beneficios">
-                  {[
-                    `Cuota de descarga: ${formatInt(stats.quotaGb)} GB/mes.`,
-                    "Catálogo completo (eliges qué descargar).",
-                    "Actualizaciones: semanales (nuevos packs).",
-                    "Carpetas listas para cabina por género y temporada.",
-                    "Soporte por chat para activar.",
-                  ].map((benefit) => (
-                    <li key={benefit} className="plans2026__benefit">
-                      <span className="plans2026__benefit-icon" aria-hidden>
-                        <Check size={16} />
-                      </span>
-                      <span className="plans2026__benefit-text">{benefit}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <section className="plans2026__billingPreview" aria-label="Resumen de cobro">
-                  {trialPreview.applies ? (
-                    <>
-                      <p className="plans2026__billingLine">
-                        <span>Con tarjeta</span>
-                        <strong>
-                          {`Hoy: $0 (prueba ${formatInt(trialPreview.trialDays)} días + ${formatInt(trialPreview.trialGb)} GB)`}
-                        </strong>
-                      </p>
-                      <p className="plans2026__billingLine">
-                        <span>Después</span>
-                        <strong>{`${trialPreview.monthlyLabel} (si no cancelas)`}</strong>
-                      </p>
-                      <p className="plans2026__billingHint">
-                        {trialPreview.payNowMethodsLabel}: pago hoy
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="plans2026__billingLine">
-                        <span>Pago hoy</span>
-                        <strong>{`${price.amount} ${price.currencyLabel}`}</strong>
-                      </p>
-                      <p className="plans2026__billingHint">Acceso inmediato</p>
-                    </>
-                  )}
-                </section>
-
                 <Button unstyled
                   type="button"
                   className="home-cta home-cta--primary home-cta--block"
@@ -754,23 +809,17 @@ function Plans() {
                 </Button>
 
                 <div className="plans2026__trust" aria-label="Confianza">
-                  <PaymentMethodLogos
-                    methods={[...paymentMethods]}
-                    className="plans2026__payment-logos"
-                    ariaLabel="Métodos de pago disponibles"
-                  />
                   <p className="plans2026__trust-copy">
                     {trustCopy}
                   </p>
-                  <p className="plans2026__links" aria-label="Ayuda">
-                    <Link to="/instrucciones" className="plans2026__link">
-                      Ver cómo descargar
-                    </Link>
-                    <span className="plans2026__link-sep" aria-hidden>
-                      ·
-                    </span>
-                    <Link to="/legal" className="plans2026__link">
-                      FAQ y políticas
+                  <p className="plans2026__links" aria-label="Acceso">
+                    ¿Ya tienes cuenta?{" "}
+                    <Link
+                      to="/auth"
+                      state={{ from: `${location.pathname}${location.search}` }}
+                      className="plans2026__link"
+                    >
+                      Inicia sesión →
                     </Link>
                   </p>
                 </div>

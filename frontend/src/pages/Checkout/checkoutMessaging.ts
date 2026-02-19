@@ -60,7 +60,7 @@ export function buildCheckoutContinueLabel(opts: {
 
   const compactAmount = formatCompactAmount(opts.totalPrice);
   if (opts.method === "card") {
-    return opts.isMethodTrial ? "Iniciar prueba" : `Pagar $${compactAmount}`;
+    return opts.isMethodTrial ? "Activar 7 días gratis" : `Pagar $${compactAmount}`;
   }
   if (opts.method === "paypal") return `Pagar $${compactAmount}`;
   if (opts.method === "spei") return `Pagar $${compactAmount}`;

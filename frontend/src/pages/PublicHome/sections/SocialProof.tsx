@@ -7,7 +7,7 @@ import { GROWTH_METRICS, trackGrowthMetric } from "../../../utils/growthMetrics"
 import { buildDemoPlaybackUrl } from "../../../utils/demoUrl";
 import { inferTrackMetadata, prettyMediaName } from "../../../utils/fileMetadata";
 import { isRetryableMediaError, retryWithJitter } from "../../../utils/retry";
-import { formatDownloads } from "../homeFormat";
+import { formatDownloads, formatInt } from "../homeFormat";
 import PreviewModal from "../../../components/PreviewModal/PreviewModal";
 import { SkeletonTable, Button } from "../../../components/ui";
 
@@ -15,6 +15,21 @@ export type SocialTopItem = {
   path: string;
   name: string;
   downloads: number;
+};
+
+type WeeklyGenreUpload = {
+  genre: string;
+  files: number;
+};
+
+type WeeklyUploadsSnapshot = {
+  generatedAt: string;
+  sourceFolderPath: string | null;
+  sourceFolderName: string | null;
+  totalFiles: number;
+  genres: WeeklyGenreUpload[];
+  topGenres: WeeklyGenreUpload[];
+  stale: boolean;
 };
 
 type DemoKind = "audio" | "video";
@@ -29,6 +44,16 @@ function normalizeApiItems(value: unknown): SocialTopItem[] {
       name: prettyMediaName(item.name) || item.name,
       downloads: Number(item.downloads ?? 0),
     }));
+}
+
+function normalizeWeeklyGenreItems(value: unknown): WeeklyGenreUpload[] {
+  const items = Array.isArray(value) ? value : [];
+  return items
+    .map((item: any) => ({
+      genre: `${item?.genre ?? ""}`.trim().toLowerCase(),
+      files: Number(item?.files ?? 0),
+    }))
+    .filter((item) => item.genre.length > 0 && Number.isFinite(item.files) && item.files > 0);
 }
 
 function TopList(props: {
@@ -170,6 +195,8 @@ export default function SocialProof(props: {
   const [previewFile, setPreviewFile] = useState<{ url: string; name: string; kind: DemoKind } | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [activeCategory, setActiveCategory] = useState<SocialCategoryKey | null>(null);
+  const [weeklyUploads, setWeeklyUploads] = useState<WeeklyUploadsSnapshot | null>(null);
+  const [weeklyLoading, setWeeklyLoading] = useState(true);
 
   useEffect(() => {
     if (!showMore) return;
@@ -203,6 +230,59 @@ export default function SocialProof(props: {
       cancelled = true;
     };
   }, [modalTop, showMore]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadWeeklyUploads = async (initial = false) => {
+      if (initial) setWeeklyLoading(true);
+
+      try {
+        const response = await trpc.downloadHistory.getPublicWeeklyGenreUploads.query({
+          top: 5,
+        });
+
+        if (cancelled) return;
+
+        const snapshot: WeeklyUploadsSnapshot = {
+          generatedAt: `${response?.generatedAt ?? ""}`,
+          sourceFolderPath:
+            typeof response?.sourceFolderPath === "string" && response.sourceFolderPath.trim()
+              ? response.sourceFolderPath.trim()
+              : null,
+          sourceFolderName:
+            typeof response?.sourceFolderName === "string" && response.sourceFolderName.trim()
+              ? response.sourceFolderName.trim()
+              : null,
+          totalFiles: Number(response?.totalFiles ?? 0),
+          genres: normalizeWeeklyGenreItems(response?.genres),
+          topGenres: normalizeWeeklyGenreItems(response?.topGenres),
+          stale: Boolean(response?.stale),
+        };
+
+        setWeeklyUploads(snapshot);
+      } catch {
+        if (!cancelled) {
+          setWeeklyUploads(null);
+        }
+      } finally {
+        if (!cancelled && initial) {
+          setWeeklyLoading(false);
+        }
+      }
+    };
+
+    void loadWeeklyUploads(true);
+
+    const refreshInterval = window.setInterval(() => {
+      void loadWeeklyUploads(false);
+    }, 60_000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(refreshInterval);
+    };
+  }, []);
 
   const onOpenDemo = useCallback(async (row: { key: string; path: string; label: string; kindHint: string }) => {
     setDemoAlert(null);
@@ -309,6 +389,16 @@ export default function SocialProof(props: {
   const modalHasVideo = (modalVideo?.length ?? 0) > 0;
   const modalHasKaraoke = (modalKaraoke?.length ?? 0) > 0;
   const selectedCategory = availableCategories.find((category) => category.key === activeCategory) ?? null;
+  const weeklyTopGenres = useMemo(
+    () => (weeklyUploads?.topGenres ?? []).slice(0, 5),
+    [weeklyUploads?.topGenres],
+  );
+  const weeklyTickerLine = useMemo(() => {
+    const line = weeklyTopGenres
+      .map((item) => `${formatInt(item.files)} ${item.genre} nuevos`)
+      .join(" · ");
+    return line ? `${line} · ` : "";
+  }, [weeklyTopGenres]);
 
   if (!hasAny) {
     return (
@@ -331,8 +421,8 @@ export default function SocialProof(props: {
       <div className="ph__container">
         <div className="social-proof__head">
           <div>
-            <h2 className="home-h2">Lo que más se descarga</h2>
-            <p className="home-sub">Top real por categoría. Escucha demos de 60s antes de decidir.</p>
+            <h2 className="home-h2">Escucha lo que otros DJs ya están tocando este mes</h2>
+            <p className="home-sub">Top descargas en tiempo real — dale play a cualquier preview de 60 segundos.</p>
             <nav className="social-proof__jump" aria-label="Seleccionar categoría" role="tablist">
               {availableCategories.map((category) => {
                 const isActive = selectedCategory?.key === category.key;
@@ -388,6 +478,20 @@ export default function SocialProof(props: {
             />
           )}
         </div>
+
+        {(weeklyLoading || weeklyTopGenres.length > 0) && (
+          <section className="social-proof__weekly bb-market-surface" aria-label="Nuevos de esta semana" role="note">
+            <p className="social-proof__weekly-title">📊 Esta semana subimos:</p>
+            {weeklyTopGenres.length > 0 ? (
+              <div className="social-proof__weekly-ticker" aria-live="polite">
+                <span className="social-proof__weekly-track">{weeklyTickerLine.repeat(3)}</span>
+              </div>
+            ) : (
+              <p className="social-proof__weekly-loading">Actualizando conteos semanales en tiempo real…</p>
+            )}
+            <p className="social-proof__weekly-question">¿Tu record pool actual te da esto CADA semana?</p>
+          </section>
+        )}
       </div>
 
       <Modal

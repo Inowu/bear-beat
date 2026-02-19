@@ -1,5 +1,5 @@
 import './Home.scss';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
   FolderOpen, Folder, ArrowLeft, ChevronRight, Search, Play, Pause, Download, BookOpen, Server, FileMusic, FileVideoCamera, FileArchive, Microphone, File, X, RefreshCw, } from "src/icons";
 import PreviewModal from '../../components/PreviewModal/PreviewModal';
@@ -397,6 +397,7 @@ const buildMonthlyTrending = (payload: PublicTopDownloadsResponse | null): Month
 };
 
 function Home() {
+  const location = useLocation();
   const { theme } = useTheme();
   const { fileChange, closeFile, userToken, currentUser, startUser } = useUserContext();
   const { setShowDownload, setCurrentFile, setFileData } = useDownloadContext();
@@ -456,12 +457,17 @@ function Home() {
   const [inlinePreviewLoadingPath, setInlinePreviewLoadingPath] = useState<string | null>(null);
   const [inlineUnavailablePaths, setInlineUnavailablePaths] = useState<Record<string, true>>({});
   const searchRequestRef = useRef(0);
+  const appliedGenreQueryRef = useRef('');
   const lastTrackedSearchRef = useRef<string>('');
   const stripeWarmupRef = useRef<Promise<boolean> | null>(null);
   const recentCarouselRef = useRef<HTMLDivElement | null>(null);
   const inlineAudioRef = useRef<HTMLAudioElement | null>(null);
   const inlinePreviewRequestRef = useRef(0);
   const inlineDemoUrlCacheRef = useRef<Map<string, string>>(new Map());
+  const genreSearchFromQuery = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return `${params.get('genre') ?? ''}`.trim();
+  }, [location.search]);
 
   const stripeOptions = useMemo(() => ({ appearance: getStripeAppearance(theme) }), [theme]);
 
@@ -1709,6 +1715,17 @@ function Home() {
       window.removeEventListener(MOBILE_LIBRARY_ROOT_EVENT, handleMobileLibraryRoot);
     };
   }, []);
+
+  useEffect(() => {
+    const query = genreSearchFromQuery;
+    if (!query) return;
+    if (appliedGenreQueryRef.current === query) return;
+
+    appliedGenreQueryRef.current = query;
+    setFilters((prev) => ({ ...prev, page: 0 }));
+    setSearchQuickFilter(null);
+    setSearchValue(query);
+  }, [genreSearchFromQuery]);
 
   useEffect(() => {
     const trimmed = searchValue.trim();

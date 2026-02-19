@@ -4,9 +4,7 @@ import { useEffect, useId, useMemo, useState } from "react";
 import PaymentMethodLogos, {
   type PaymentMethodId,
 } from "../../../components/PaymentMethodLogos/PaymentMethodLogos";
-import {
-  HOME_HERO_MICROCOPY_TRIAL,
-} from "../homeCopy";
+import { HOME_CTA_PRICING_LABEL_TRIAL } from "../homeCopy";
 import { formatInt } from "../homeFormat";
 import { Button } from "src/components/ui";
 
@@ -30,20 +28,54 @@ export type PricingPlan = {
   altPaymentLabel: string;
 };
 
+const DAYS_PER_MONTH_FOR_DAILY_PRICE = 30;
+
 function formatCurrency(
   amount: number,
   currency: "mxn" | "usd",
   locale: string,
+  opts?: { minimumFractionDigits?: number; maximumFractionDigits?: number },
 ): string {
   const code = currency === "mxn" ? "MXN" : "USD";
   try {
     return new Intl.NumberFormat(locale, {
       style: "currency",
       currency: code,
+      minimumFractionDigits: opts?.minimumFractionDigits,
+      maximumFractionDigits: opts?.maximumFractionDigits,
     }).format(amount);
   } catch {
     return `${amount} ${code}`;
   }
+}
+
+function getDailyPrice(monthlyPrice: number): number {
+  const safe = Number(monthlyPrice);
+  if (!Number.isFinite(safe) || safe <= 0) return 0;
+  const rawDaily = safe / DAYS_PER_MONTH_FOR_DAILY_PRICE;
+  // Keep a stable 1-decimal marketing figure, then render it with 2 decimals.
+  return Math.floor(rawDaily * 10) / 10;
+}
+
+function formatMonthlyPriceWithCode(
+  amount: number,
+  currency: "mxn" | "usd",
+  locale: string,
+): string {
+  const code = currency === "mxn" ? "MXN" : "USD";
+  const hasDecimals = !Number.isInteger(amount);
+  const formatted = formatCurrency(amount, currency, locale, {
+    minimumFractionDigits: hasDecimals ? 2 : 0,
+    maximumFractionDigits: 2,
+  });
+  return `${code} ${formatted}/mes`;
+}
+
+function formatDailyPrice(amount: number, currency: "mxn" | "usd", locale: string): string {
+  return formatCurrency(amount, currency, locale, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
 export default function Pricing(props: {
@@ -51,9 +83,9 @@ export default function Pricing(props: {
   status: PricingStatus;
   defaultCurrency: "mxn" | "usd";
   numberLocale: string;
-  catalogTBLabel: string;
-  downloadQuotaGb: number;
-  limitsNote: string;
+  totalFiles: number;
+  totalGenres: number;
+  karaokes: number;
   trial: TrialSummary | null;
   ctaLabel: string;
   primaryCheckoutFrom: string;
@@ -64,9 +96,9 @@ export default function Pricing(props: {
     status,
     defaultCurrency,
     numberLocale,
-    catalogTBLabel,
-    downloadQuotaGb,
-    limitsNote,
+    totalFiles,
+    totalGenres,
+    karaokes,
     trial,
     ctaLabel,
     primaryCheckoutFrom,
@@ -92,6 +124,7 @@ export default function Pricing(props: {
   const mxnPlan = plans.mxn ?? null;
   const usdPlan = plans.usd ?? null;
   const hasTrial = Boolean(trial?.enabled);
+  const pricingCtaLabel = hasTrial ? HOME_CTA_PRICING_LABEL_TRIAL : ctaLabel;
   const microcopy = "Pago seguro y activación inmediata.";
   const tabPrefix = useId();
   const mxnTabId = `${tabPrefix}-tab-mxn`;
@@ -148,18 +181,95 @@ export default function Pricing(props: {
     return primaryCheckoutFrom;
   }, [usdPlan?.planId, primaryCheckoutFrom]);
 
+  const safeTotalFiles = Math.max(0, Number(totalFiles ?? 0));
+  const safeTotalGenres = Math.max(0, Number(totalGenres ?? 0));
+  const safeKaraokes = Math.max(0, Number(karaokes ?? 0));
+  const totalFilesLabel = safeTotalFiles > 0 ? formatInt(safeTotalFiles) : "N/D";
+  const totalGenresLabel = safeTotalGenres > 0 ? `${formatInt(safeTotalGenres)}+` : "N/D";
+  const karaokesLabel = safeKaraokes > 0 ? formatInt(safeKaraokes) : "N/D";
+  const pricingHighlights = useMemo(
+    () => [
+      `${totalFilesLabel} archivos listos para cabina`,
+      `${totalGenresLabel} géneros latinos cubiertos`,
+      "Actualizaciones semanales (no mensuales como otros)",
+      "BPM + Key en cada archivo (ahórrate horas de análisis)",
+      "Carpetas organizadas por género, mes y semana",
+      `Karaoke: ${karaokesLabel} canciones de A a Z`,
+      "Soporte para activar tu conexión en minutos",
+    ],
+    [karaokesLabel, totalFilesLabel, totalGenresLabel],
+  );
+  const headerPriceCards = useMemo(() => {
+    const cards: Array<{ key: "mxn" | "usd"; monthly: string; daily: string }> = [];
+
+    if (mxnPlan) {
+      cards.push({
+        key: "mxn",
+        monthly: formatMonthlyPriceWithCode(mxnPlan.price, "mxn", numberLocale),
+        daily: `(${formatDailyPrice(getDailyPrice(mxnPlan.price), "mxn", numberLocale)}/día)`,
+      });
+    }
+    if (usdPlan) {
+      cards.push({
+        key: "usd",
+        monthly: formatMonthlyPriceWithCode(usdPlan.price, "usd", numberLocale),
+        daily: `(${formatDailyPrice(getDailyPrice(usdPlan.price), "usd", numberLocale)}/día)`,
+      });
+    }
+
+    return cards;
+  }, [mxnPlan, numberLocale, usdPlan]);
+  const mxnDaily = useMemo(
+    () => formatDailyPrice(getDailyPrice(mxnPlan?.price ?? 0), "mxn", numberLocale),
+    [mxnPlan?.price, numberLocale],
+  );
+  const usdDaily = useMemo(
+    () => formatDailyPrice(getDailyPrice(usdPlan?.price ?? 0), "usd", numberLocale),
+    [numberLocale, usdPlan?.price],
+  );
+  const trialSongsEstimate = hasTrial && trial
+    ? Math.max(0, Math.floor(Number(trial.gb ?? 0) * 6))
+    : 0;
+  const trialSongsLabel =
+    trialSongsEstimate > 0 ? `+${formatInt(trialSongsEstimate)}` : "cientos de";
+  const trialAfterLabel = useMemo(() => {
+    const monthlyParts: string[] = [];
+    if (mxnPlan && Number(mxnPlan.price) > 0) {
+      monthlyParts.push(
+        formatMonthlyPriceWithCode(mxnPlan.price, "mxn", numberLocale),
+      );
+    }
+    if (usdPlan && Number(usdPlan.price) > 0) {
+      monthlyParts.push(
+        formatMonthlyPriceWithCode(usdPlan.price, "usd", numberLocale),
+      );
+    }
+
+    if (monthlyParts.length === 0) return "";
+    if (usdPlan && Number(usdPlan.price) > 0) {
+      return `${monthlyParts.join(" · ")} · (${usdDaily} USD al día)`;
+    }
+    return monthlyParts.join(" · ");
+  }, [mxnPlan, numberLocale, usdDaily, usdPlan]);
+
   return (
     <section id="precio" className="pricing" aria-label="Precio">
       <div className="ph__container">
         <div className="pricing__head">
-          <h2 className="home-h2">Empieza hoy con precio claro</h2>
+          <h2 className="home-h2">Un precio. Todo incluido. Sin sorpresas.</h2>
           <p className="home-sub">
-            Catálogo total: <strong>{catalogTBLabel}</strong> • Cuota de descarga:{" "}
-            <strong>{formatInt(downloadQuotaGb)} GB/mes</strong>
+            Audios, videos y karaokes por menos de lo que cuesta un café diario.
           </p>
-          <p className="pricing__quotaExample">
-            500 GB/mes = aprox. 3,000 videos (depende del peso y calidad de cada archivo).
-          </p>
+          {headerPriceCards.length > 0 && (
+            <div className="pricing__daily-grid" aria-label="Precio por mes y por día">
+              {headerPriceCards.map((item) => (
+                <div key={item.key} className="pricing__daily-card">
+                  <span className="pricing__daily-month">{item.monthly}</span>
+                  <span className="pricing__daily-day">{item.daily}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {(hasMxn || hasUsd) && hasMxn && hasUsd && (
@@ -285,6 +395,7 @@ export default function Pricing(props: {
                       {formatCurrency(mxnPlan.price, "mxn", numberLocale)}
                     </span>
                     <span className="pricing__per">/ mes</span>
+                    <span className="pricing__daily">({mxnDaily}/día)</span>
                     {hasTrial && (
                       <span className="pricing__after">
                         Después de la prueba
@@ -296,35 +407,31 @@ export default function Pricing(props: {
                 {hasTrial && trial && (
                   <div className="pricing__trial" role="note">
                     <strong>
-                      Prueba: {trial.days} días + {formatInt(trial.gb)} GB
+                      Prueba gratis: {trial.days} días + {formatInt(trial.gb)} GB
+                      de descarga
                     </strong>
                     <div className="pricing__trial-sub">
-                      Solo tarjeta, 1ª vez. {HOME_HERO_MICROCOPY_TRIAL}
+                      Eso son {trialSongsLabel} canciones para probar en tu evento este fin de semana.
                     </div>
+                    <div className="pricing__trial-note">
+                      Si no te convence, cancelas y no pagas nada. Cero riesgo.
+                    </div>
+                    {trialAfterLabel ? (
+                      <div className="pricing__trial-note">
+                        Después: {trialAfterLabel}
+                      </div>
+                    ) : null}
                   </div>
                 )}
 
                 <ul className="pricing__includes" aria-label="Incluye">
-                  <li>
-                    <CheckCircle2 size={16} aria-hidden />
-                    <span className="pricing__include-text">
-                      Cuota de descarga: {formatInt(downloadQuotaGb)} GB/mes
-                    </span>
-                  </li>
-                  <li>
-                    <CheckCircle2 size={16} aria-hidden />
-                    <span className="pricing__include-text">
-                      Actualizaciones: semanales (nuevos packs)
-                    </span>
-                  </li>
-                  <li>
-                    <CheckCircle2 size={16} aria-hidden />
-                    <span className="pricing__include-text">
-                      Catálogo total: {catalogTBLabel} (eliges qué bajar)
-                    </span>
-                  </li>
+                  {pricingHighlights.map((item) => (
+                    <li key={item}>
+                      <CheckCircle2 size={16} aria-hidden />
+                      <span className="pricing__include-text">{item}</span>
+                    </li>
+                  ))}
                 </ul>
-                <p className="pricing__micro">{limitsNote}</p>
 
                 <div className="pricing__cta">
                   <Link
@@ -332,10 +439,10 @@ export default function Pricing(props: {
                     state={{ from: mxnCheckoutFrom }}
                     className="home-cta home-cta--primary"
                     data-testid="home-pricing-primary-cta"
-                    aria-label={ctaLabel}
+                    aria-label={pricingCtaLabel}
                     onClick={onPrimaryCtaClick}
                   >
-                    {ctaLabel}
+                    {pricingCtaLabel}
                     <ArrowRight size={18} aria-hidden />
                   </Link>
                   <p className="pricing__micro">{microcopy}</p>
@@ -379,6 +486,7 @@ export default function Pricing(props: {
                       {formatCurrency(usdPlan.price, "usd", numberLocale)}
                     </span>
                     <span className="pricing__per">/ mes</span>
+                    <span className="pricing__daily">({usdDaily}/día)</span>
                     {hasTrial && (
                       <span className="pricing__after">
                         Después de la prueba
@@ -390,35 +498,31 @@ export default function Pricing(props: {
                 {hasTrial && trial && (
                   <div className="pricing__trial" role="note">
                     <strong>
-                      Prueba: {trial.days} días + {formatInt(trial.gb)} GB
+                      Prueba gratis: {trial.days} días + {formatInt(trial.gb)} GB
+                      de descarga
                     </strong>
                     <div className="pricing__trial-sub">
-                      Solo tarjeta, 1ª vez. {HOME_HERO_MICROCOPY_TRIAL}
+                      Eso son {trialSongsLabel} canciones para probar en tu evento este fin de semana.
                     </div>
+                    <div className="pricing__trial-note">
+                      Si no te convence, cancelas y no pagas nada. Cero riesgo.
+                    </div>
+                    {trialAfterLabel ? (
+                      <div className="pricing__trial-note">
+                        Después: {trialAfterLabel}
+                      </div>
+                    ) : null}
                   </div>
                 )}
 
                 <ul className="pricing__includes" aria-label="Incluye">
-                  <li>
-                    <CheckCircle2 size={16} aria-hidden />
-                    <span className="pricing__include-text">
-                      Cuota de descarga: {formatInt(downloadQuotaGb)} GB/mes
-                    </span>
-                  </li>
-                  <li>
-                    <CheckCircle2 size={16} aria-hidden />
-                    <span className="pricing__include-text">
-                      Actualizaciones: semanales (nuevos packs)
-                    </span>
-                  </li>
-                  <li>
-                    <CheckCircle2 size={16} aria-hidden />
-                    <span className="pricing__include-text">
-                      Catálogo total: {catalogTBLabel} (eliges qué bajar)
-                    </span>
-                  </li>
+                  {pricingHighlights.map((item) => (
+                    <li key={item}>
+                      <CheckCircle2 size={16} aria-hidden />
+                      <span className="pricing__include-text">{item}</span>
+                    </li>
+                  ))}
                 </ul>
-                <p className="pricing__micro">{limitsNote}</p>
 
                 <div className="pricing__cta">
                   <Link
@@ -426,10 +530,10 @@ export default function Pricing(props: {
                     state={{ from: usdCheckoutFrom }}
                     className="home-cta home-cta--primary"
                     data-testid="home-pricing-primary-cta"
-                    aria-label={ctaLabel}
+                    aria-label={pricingCtaLabel}
                     onClick={onPrimaryCtaClick}
                   >
-                    {ctaLabel}
+                    {pricingCtaLabel}
                     <ArrowRight size={18} aria-hidden />
                   </Link>
                   <p className="pricing__micro">{microcopy}</p>
