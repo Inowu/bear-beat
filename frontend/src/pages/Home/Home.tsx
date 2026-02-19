@@ -447,6 +447,7 @@ function Home() {
   const [monthlyTrending, setMonthlyTrending] = useState<MonthlyTrendingRow[]>([]);
   const [monthlyTrendingLoading, setMonthlyTrendingLoading] = useState(true);
   const [monthlyTrendingPreviewPath, setMonthlyTrendingPreviewPath] = useState<string | null>(null);
+  const [monthlyTrendingDownloadPath, setMonthlyTrendingDownloadPath] = useState<string | null>(null);
   const [forYouRecommendations, setForYouRecommendations] = useState<ForYouRecommendation[]>([]);
   const [forYouLoading, setForYouLoading] = useState(true);
   const [forYouEligible, setForYouEligible] = useState(false);
@@ -993,6 +994,24 @@ function Home() {
       appToast.error("No pudimos cargar el preview. Reintentar.");
     } finally {
       setMonthlyTrendingPreviewPath(null);
+    }
+  };
+  const startMonthlyTrendingDownload = async (row: MonthlyTrendingRow) => {
+    if (!row.path || monthlyTrendingDownloadPath === row.path) return;
+
+    const trendingFile: IFiles = {
+      name: row.name,
+      type: '-',
+      path: row.path,
+      size: 0,
+      already_downloaded: false,
+    };
+
+    setMonthlyTrendingDownloadPath(row.path);
+    try {
+      await downloadFile(trendingFile, -1);
+    } finally {
+      setMonthlyTrendingDownloadPath(null);
     }
   };
 
@@ -2358,6 +2377,24 @@ function Home() {
                             ) : (
                               <span className="bb-trending-no-preview" aria-hidden />
                             )}
+                            <Button unstyled
+                              type="button"
+                              className="bb-action-btn bb-action-btn--primary bb-trending-download"
+                              onClick={() => {
+                                void startMonthlyTrendingDownload(row);
+                              }}
+                              aria-label={`Descargar ${row.name}`}
+                              disabled={monthlyTrendingDownloadPath === row.path}
+                            >
+                              {monthlyTrendingDownloadPath === row.path ? (
+                                <Spinner size={2} width={0.2} color="var(--app-accent)" />
+                              ) : (
+                                <>
+                                  <Download size={16} aria-hidden />
+                                  <span className="bb-action-label">Descargar</span>
+                                </>
+                              )}
+                            </Button>
                           </div>
                         </li>
                       );

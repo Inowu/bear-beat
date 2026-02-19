@@ -1073,10 +1073,15 @@ html[data-theme="dark"] .bb-content-stage {
   display: inline-flex;
   align-items: center;
   justify-content: flex-end;
+  gap: 8px;
 }
 
 .bb-trending-preview {
   min-width: 96px;
+}
+
+.bb-trending-download {
+  min-width: 114px;
 }
 
 .bb-trending-no-preview {
@@ -2072,14 +2077,16 @@ html[data-theme="dark"] .bb-explorer-row:hover {
     display: none;
   }
 
-  .bb-trending-preview {
+  .bb-trending-preview,
+  .bb-trending-download {
     width: 44px;
     min-width: 44px;
     padding: 0;
     border-radius: 10px;
   }
 
-  .bb-trending-preview .bb-action-label {
+  .bb-trending-preview .bb-action-label,
+  .bb-trending-download .bb-action-label {
     display: none;
   }
 }
