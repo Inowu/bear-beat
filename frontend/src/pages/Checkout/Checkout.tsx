@@ -32,7 +32,6 @@ import { trackInitiateCheckout } from "../../utils/facebookPixel";
 import { generateEventId } from "../../utils/marketingIds";
 import { getConektaFingerprint } from "../../utils/conektaCollect";
 import { formatInt } from "../../utils/format";
-import PublicTopNav from "../../components/PublicTopNav/PublicTopNav";
 import { toErrorMessage } from "../../utils/errorMessage";
 import {
   ensureStripeReady,
@@ -1719,30 +1718,10 @@ function Checkout() {
     ? "Paso 2 de 2: confirma tu tarjeta para activar tu prueba hoy."
     : "Paso 2 de 2: confirma tu método de pago y activa en minutos.";
 
-  const checkoutTopCta = (
-    <div className="checkout2026__topCta" aria-label="Progreso de compra">
-      <span className="checkout2026__step">Paso 2 de 2</span>
-      <Link to={plansCompareUrl} className="checkout2026__back">
-        Cambiar plan
-      </Link>
-    </div>
-  );
-
-  const TopNav = (
-    <PublicTopNav
-      className="checkout2026__topnav"
-      brandTo={plansCompareUrl}
-      plansTo={plansCompareUrl}
-      loginFrom={`${location.pathname}${location.search}`}
-      cta={checkoutTopCta}
-    />
-  );
-
   if (!priceId) {
     const resolving = autoPlanStatus !== "failed";
     return (
       <div className={checkoutPageClassName}>
-        {TopNav}
         <section className="checkout2026__main" aria-label="Checkout">
           <div className="checkout2026__container checkout2026__center">
             {resolving ? (
@@ -1788,7 +1767,6 @@ function Checkout() {
     const retryLabel = checkoutRetryActionLabel(currentMethod);
     return (
       <div className={checkoutPageClassName}>
-        {TopNav}
         <section className="checkout2026__main" aria-label="Checkout">
           <div className="checkout2026__container checkout2026__center">
             <div className="checkout-one-state" role="status" aria-live="polite" aria-busy="true">
@@ -1854,7 +1832,6 @@ function Checkout() {
 
       return (
         <div className={checkoutPageClassName}>
-          {TopNav}
           <section className="checkout2026__main" aria-label="Checkout">
             <div className="checkout2026__container checkout2026__center">
               <div className="checkout-one-state" role="status" aria-live="polite">
@@ -1881,7 +1858,6 @@ function Checkout() {
 
     return (
       <div className={checkoutPageClassName}>
-        {TopNav}
         <section className="checkout2026__main" aria-label="Checkout">
           <div className="checkout2026__container">
             <header className="checkout2026__hero">
@@ -1992,7 +1968,6 @@ function Checkout() {
 
   return (
     <div className={checkoutPageClassName}>
-      {TopNav}
       <section className="checkout2026__main bb-skeleton-fade-in" aria-label="Checkout">
         <div className="checkout2026__container">
           <header className="checkout2026__hero">
