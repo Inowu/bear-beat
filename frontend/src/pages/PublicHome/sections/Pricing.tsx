@@ -83,6 +83,20 @@ function formatDailyPrice(amount: number, currency: "mxn" | "usd", _locale: stri
   });
 }
 
+function mergePaymentMethods(
+  ...lists: Array<PaymentMethodId[]>
+): PaymentMethodId[] {
+  const merged: PaymentMethodId[] = [];
+  for (const list of lists) {
+    if (!Array.isArray(list)) continue;
+    for (const method of list) {
+      if (merged.includes(method)) continue;
+      merged.push(method);
+    }
+  }
+  return merged;
+}
+
 export default function Pricing(props: {
   plans: { mxn?: PricingPlan | null; usd?: PricingPlan | null };
   status: PricingStatus;
@@ -145,9 +159,11 @@ export default function Pricing(props: {
     const regularMethods = Array.isArray(mxnPlan.pricingPaymentMethods)
       ? mxnPlan.pricingPaymentMethods
       : [];
-    if (hasTrial && trialMethods.length > 0) return trialMethods;
-    return regularMethods.length > 0
-      ? regularMethods
+    const mergedMethods = hasTrial
+      ? mergePaymentMethods(trialMethods, regularMethods)
+      : mergePaymentMethods(regularMethods, trialMethods);
+    return mergedMethods.length > 0
+      ? mergedMethods
       : (["visa", "mastercard", "amex"] as PaymentMethodId[]);
   }, [mxnPlan, hasTrial]);
   const usdPaymentMethods = useMemo(() => {
@@ -158,9 +174,11 @@ export default function Pricing(props: {
     const regularMethods = Array.isArray(usdPlan.pricingPaymentMethods)
       ? usdPlan.pricingPaymentMethods
       : [];
-    if (hasTrial && trialMethods.length > 0) return trialMethods;
-    return regularMethods.length > 0
-      ? regularMethods
+    const mergedMethods = hasTrial
+      ? mergePaymentMethods(trialMethods, regularMethods)
+      : mergePaymentMethods(regularMethods, trialMethods);
+    return mergedMethods.length > 0
+      ? mergedMethods
       : (["visa", "mastercard", "amex"] as PaymentMethodId[]);
   }, [usdPlan, hasTrial]);
   const mxnAltPaymentLabel = useMemo(
@@ -419,9 +437,7 @@ export default function Pricing(props: {
                     />
                     {showAltPaymentsNoteMxn && (
                       <div className="pricing__payments-note" role="note">
-                        La prueba aplica solo con tarjeta. Otros métodos (
-                        {mxnAltPaymentLabel}) se muestran como opciones sin
-                        prueba al activar.
+                        La prueba aplica solo con tarjeta. {mxnAltPaymentLabel} también está disponible al activar sin prueba.
                       </div>
                     )}
                   </div>
@@ -510,9 +526,7 @@ export default function Pricing(props: {
                     />
                     {showAltPaymentsNoteUsd && (
                       <div className="pricing__payments-note" role="note">
-                        La prueba aplica solo con tarjeta. Otros métodos (
-                        {usdAltPaymentLabel}) se muestran como opciones sin
-                        prueba al activar.
+                        La prueba aplica solo con tarjeta. {usdAltPaymentLabel} también está disponible al activar sin prueba.
                       </div>
                     )}
                   </div>
