@@ -21,6 +21,11 @@ export type Params =
       orderId?: never;
       service: PaymentService;
       expirationDate: Date;
+      /**
+       * When true and orderId is provided, reuses the existing PAID order
+       * instead of creating a new renewal order.
+       */
+      reusePaidOrderId?: boolean;
       /** Override the download quota (in GB) to assign for this subscription period (e.g. trials). */
       quotaGb?: number;
       /** When true, does not mark the order as PAID (used for free trials). */
@@ -34,6 +39,11 @@ export type Params =
       plan?: never;
       service: PaymentService;
       expirationDate: Date;
+      /**
+       * When true and orderId is provided, reuses the existing PAID order
+       * instead of creating a new renewal order.
+       */
+      reusePaidOrderId?: boolean;
       /** Override the download quota (in GB) to assign for this subscription period (e.g. trials). */
       quotaGb?: number;
       /** When true, does not mark the order as PAID (used for free trials). */

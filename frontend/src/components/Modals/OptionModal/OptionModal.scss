@@ -2,6 +2,9 @@
 
 .modal-container {
   .bottom {
+    display: grid;
+    gap: 20px;
+
     .plan-options-container {
       display: grid;
       gap: 20px;
@@ -19,6 +22,48 @@
         font-weight: var(--app-font-weight-heading);
         font-family: var(--bb-font-ui);
         box-shadow: 0 0 16px var(--app-focus-ring);
+      }
+    }
+
+    .payment-reconcile-container {
+      display: grid;
+      gap: 10px;
+      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      background: rgba(10, 14, 24, 0.35);
+
+      .payment-reconcile-title {
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 700;
+      }
+
+      label {
+        font-size: 0.84rem;
+        opacity: 0.9;
+      }
+
+      select,
+      input {
+        width: 100%;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: rgba(0, 0, 0, 0.3);
+        color: var(--app-text-body);
+        font-family: var(--bb-font-ui);
+        font-size: 0.92rem;
+        padding: 10px 12px;
+      }
+
+      .payment-reconcile-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .payment-reconcile-button {
+        margin-top: 4px;
       }
     }
   }

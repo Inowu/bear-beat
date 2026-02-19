@@ -113,6 +113,7 @@ export const subscribe = async ({
   subId,
   service,
   expirationDate,
+  reusePaidOrderId = false,
   quotaGb: quotaGbInput,
   isTrial = false,
 }: Params) => {
@@ -219,6 +220,7 @@ export const subscribe = async ({
           user.id,
           dbPlan,
           service,
+          reusePaidOrderId,
         );
         selectedOrderId = createdOrder.id;
         settledPaidOrder = createdOrder;
@@ -363,6 +365,7 @@ export const subscribe = async ({
         user.id,
         dbPlan,
         service,
+        reusePaidOrderId,
       );
       // Webhooks can be delivered multiple times. Avoid granting duplicate quota rows
       // when we process the same billing period more than once (idempotency).
@@ -408,6 +411,7 @@ const insertOrderOrUpdate = async (
   userId: number,
   plan: Plans,
   service: PaymentService,
+  reusePaidOrderId: boolean,
 ) => {
   const now = new Date();
 
@@ -415,6 +419,10 @@ const insertOrderOrUpdate = async (
     const byId = await prisma.orders.findFirst({
       where: { id: orderId },
     });
+
+    if (byId && reusePaidOrderId && byId.status === OrderStatus.PAID) {
+      return byId;
+    }
 
     // If this is the initial checkout-created order (PENDING), mark it as paid now.
     // This is especially important for trials converting to paid (first invoice happens later).

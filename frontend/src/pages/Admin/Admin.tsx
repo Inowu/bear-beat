@@ -788,7 +788,7 @@ function Admin() {
         onSaved={() => filterUsers(filters)}
       />
       <HistoryModal show={showHistory} onHide={handleCloseHistory} user={selectUser} />
-      <AddExtraStorageModal showModal={showAddGB} onHideModal={handleCloseAddGB} userId={selectUser.id} />
+      <AddExtraStorageModal showModal={showAddGB} onHideModal={handleCloseAddGB} userId={selectedUser.id} />
       <DeleteUOneUserModal
         show={showDeleteUser}
         onHide={handleCloseDeleteUser}
