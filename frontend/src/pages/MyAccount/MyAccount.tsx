@@ -1,5 +1,5 @@
 import "./MyAccount.scss";
-import { CancellationReasonModal, type CancellationReasonCode, ConditionModal, ErrorModal, PaymentMethodModal, PlansModal, SuccessModal, } from "../../components/Modals";
+import { CancellationReasonModal, type CancellationReasonCode, ConditionModal, ErrorModal, PlansModal, SuccessModal, } from "../../components/Modals";
 import { Elements } from "@stripe/react-stripe-js";
 import type { Stripe } from "@stripe/stripe-js";
 import {
@@ -73,7 +73,6 @@ function MyAccount() {
   const [successTitle, setSuccessTitle] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const [showPaymentMethod, setShowPaymentMethod] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<any>();
   const [conditionMessage, setConditionMessage] = useState("");
   const [conditionTitle, setConditionTitle] = useState("");
@@ -137,11 +136,6 @@ function MyAccount() {
     const ready = await ensureStripeForSurface("my_account_gb_topup");
     if (!ready) return;
     setShowPlan(true);
-  };
-  const openPaymentMethodModal = async () => {
-    const ready = await ensureStripeForSurface("my_account_add_card");
-    if (!ready) return;
-    setShowPaymentMethod(true);
   };
 
   const startCancel = () => {
@@ -267,17 +261,6 @@ function MyAccount() {
     }
   };
 
-  const handlePaymentMethod = (value: boolean) => {
-    if (!value) {
-      setShowPaymentMethod(false);
-      getPaymentMethods();
-    } else {
-      setShowPaymentMethod(false);
-      setShowError(true);
-      setErrorMessage("Ha habido un error");
-    }
-  };
-
   const openBillingPortal = async () => {
     setPortalLoading(true);
     try {
@@ -285,7 +268,12 @@ function MyAccount() {
       const { url } = await trpc.subscriptions.createBillingPortalSession.mutate({
         returnUrl,
       });
-      if (url) window.open(url, "_blank");
+      if (url) {
+        window.location.assign(url);
+        return;
+      }
+      setErrorMessage("No se pudo abrir el portal de pagos. Intenta más tarde.");
+      setShowError(true);
     } catch {
       setErrorMessage("No se pudo abrir el portal de pagos. Intenta más tarde.");
       setShowError(true);
@@ -689,11 +677,7 @@ function MyAccount() {
               )}
               <Button unstyled
                 type="button"
-                onClick={
-                  paymentMethods.length > 0
-                    ? openBillingPortal
-                    : () => void openPaymentMethodModal()
-                }
+                onClick={openBillingPortal}
                 disabled={portalLoading}
                 className="ma-btn ma-btn-outline"
               >
@@ -1027,11 +1011,12 @@ function MyAccount() {
                   ))}
                   <Button unstyled
                     type="button"
-                    onClick={() => void openPaymentMethodModal()}
+                    onClick={openBillingPortal}
+                    disabled={portalLoading}
                     className="ma-add-card"
                   >
                     <CreditCard size={20} />
-                    <span>Agregar tarjeta</span>
+                    <span>{portalLoading ? "Abriendo..." : "Agregar tarjeta"}</span>
                   </Button>
                 </div>
               ) : (
@@ -1156,16 +1141,6 @@ function MyAccount() {
         message={successMessage}
         title={successTitle}
       />
-      {stripePromise && (
-        <Elements stripe={stripePromise} options={stripeOptions}>
-          <PaymentMethodModal
-            show={showPaymentMethod}
-            onHide={handlePaymentMethod}
-            message=""
-            title="Ingresa una nueva tarjeta"
-          />
-        </Elements>
-      )}
       <ConditionModal
         title={conditionTitle}
         message={conditionMessage}
