@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, CirclePlay, Music, Ticket } from "src/icons";
+import { ArrowRight, CirclePlay, Music } from "src/icons";
 import {
   getHomeHeroFitPoints,
   getHomeHeroStats,
@@ -117,7 +117,7 @@ export default function HomeHero(props: {
               {trialLabel ? (
                 <>
                   <span className="home-hero__micro-row">
-                    <Ticket size={16} aria-hidden />
+                    <ArrowRight size={16} aria-hidden />
                     <span>
                       <strong>{trialLabel}</strong>
                     </span>

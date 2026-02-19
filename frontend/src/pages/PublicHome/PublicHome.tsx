@@ -217,45 +217,49 @@ function buildHomeHeroAfterPriceLabel(input: {
   numberLocale: string;
   mxnPlan: PricingPlan | null;
   usdPlan: PricingPlan | null;
-  withDailyUsd: boolean;
+  preferredCurrency: CurrencyKey;
+  withDailyPrice: boolean;
 }): string {
-  const monthlyParts: string[] = [];
+  const preferredPlan =
+    input.preferredCurrency === "usd" ? input.usdPlan : input.mxnPlan;
+  const fallbackPlan =
+    input.preferredCurrency === "usd" ? input.mxnPlan : input.usdPlan;
 
-  if (input.mxnPlan && Number(input.mxnPlan.price) > 0) {
-    monthlyParts.push(
-      formatMonthlyPriceWithCode(input.mxnPlan.price, "mxn", input.numberLocale),
-    );
-  }
-  if (input.usdPlan && Number(input.usdPlan.price) > 0) {
-    monthlyParts.push(
-      formatMonthlyPriceWithCode(input.usdPlan.price, "usd", input.numberLocale),
-    );
-  }
+  const hasPreferredPlan = Boolean(
+    preferredPlan && Number(preferredPlan.price) > 0,
+  );
+  const hasFallbackPlan = Boolean(fallbackPlan && Number(fallbackPlan.price) > 0);
 
-  const base =
-    monthlyParts.length > 0
-      ? monthlyParts.join(" · ")
-      : `${input.fallback ?? ""}`
-          .replace(/^desde\s*/i, "")
-          .replace(/[()]/g, "")
-          .replace(/\s+/g, " ")
-          .trim();
+  const selectedCurrency: CurrencyKey | null = hasPreferredPlan
+    ? input.preferredCurrency
+    : hasFallbackPlan
+      ? input.preferredCurrency === "usd"
+        ? "mxn"
+        : "usd"
+      : null;
+  const selectedPlan = hasPreferredPlan ? preferredPlan : hasFallbackPlan ? fallbackPlan : null;
 
-  if (!input.withDailyUsd || !input.usdPlan || Number(input.usdPlan.price) <= 0) {
-    return base;
-  }
+  const base = selectedPlan && selectedCurrency
+    ? formatMonthlyPriceWithCode(selectedPlan.price, selectedCurrency, input.numberLocale)
+    : `${input.fallback ?? ""}`
+        .replace(/^desde\s*/i, "")
+        .replace(/[()]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
 
-  const usdDaily = formatCurrency(
-    getDailyPrice(input.usdPlan.price),
-    "usd",
-    DISPLAY_LOCALE_BY_CURRENCY.usd,
+  if (!input.withDailyPrice || !selectedPlan || !selectedCurrency) return base;
+
+  const dailyPriceLabel = formatCurrency(
+    getDailyPrice(selectedPlan.price),
+    selectedCurrency,
+    DISPLAY_LOCALE_BY_CURRENCY[selectedCurrency],
     {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     },
   );
 
-  return `${base} · (${usdDaily}/día)`;
+  return `${base} · (${dailyPriceLabel}/día)`;
 }
 
 function buildCatalogGenresSnapshot(value: unknown): HomeCatalogGenre[] {
@@ -723,10 +727,12 @@ export default function PublicHome() {
         numberLocale: HOME_NUMBER_LOCALE,
         mxnPlan: pricingPlans.mxn,
         usdPlan: pricingPlans.usd,
-        withDailyUsd: Boolean(trialSummary?.enabled),
+        preferredCurrency,
+        withDailyPrice: Boolean(trialSummary?.enabled),
       }),
     [
       afterPriceLabel,
+      preferredCurrency,
       pricingPlans.mxn,
       pricingPlans.usd,
       trialSummary?.enabled,
