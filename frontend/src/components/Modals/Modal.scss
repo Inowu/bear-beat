@@ -261,6 +261,55 @@
   backdrop-filter: blur(4px);
 }
 
+.condition-download-modal .modal-dialog {
+  width: min(440px, calc(100% - 32px));
+  max-width: min(440px, calc(100% - 32px));
+}
+
+.condition-download-modal .condition-download-modal__panel {
+  max-width: 440px;
+}
+
+.condition-download-modal .condition-download-modal__panel .header {
+  padding-inline: 16px;
+  padding-block: 12px;
+}
+
+.condition-download-modal .condition-download-modal__panel .header .title {
+  font-size: clamp(1rem, 2.2vw, 1.15rem);
+  line-height: 1.3;
+}
+
+.condition-download-modal .condition-download-modal__panel .bottom {
+  gap: 8px;
+  padding-inline: 16px;
+  padding-block: 14px;
+}
+
+.condition-download-modal .condition-download-modal__panel .bottom .content {
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.condition-download-modal .condition-download-modal__panel .bottom .button-container {
+  gap: 10px;
+}
+
+.condition-download-modal .condition-download-modal__panel .bottom .button-container button {
+  flex: 1;
+  min-height: 44px;
+  padding-inline: 16px;
+  font-size: 0.95rem;
+}
+
+.condition-download-modal .condition-download-modal__spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 44px;
+}
+
 .error-modal .modal-content {
   border-color: var(--app-status-error) !important;
   box-shadow: var(--app-shadow-card), 0 0 0 2px color-mix(in srgb, var(--app-status-error) 25%, transparent) !important;
@@ -811,6 +860,37 @@ html[data-theme="light"] .oxxo-modal .modal-content {
   }
   .modal-UHREMIX .container .right .checkout-form {
     padding: 0 16px;
+  }
+
+  .condition-download-modal.modal {
+    align-items: center;
+    padding: 12px;
+  }
+
+  .condition-download-modal .modal-dialog {
+    margin: 0;
+    width: 100%;
+    max-width: 420px;
+  }
+
+  .condition-download-modal .modal-content {
+    border-radius: 16px;
+    border-bottom: 1px solid var(--app-border);
+    max-height: none;
+  }
+
+  .condition-download-modal .condition-download-modal__panel {
+    border-radius: 16px;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .condition-download-modal .condition-download-modal__panel .header {
+    border-radius: 16px 16px 0 0;
+  }
+
+  .condition-download-modal .condition-download-modal__panel .bottom {
+    padding-bottom: 14px;
   }
 }
 

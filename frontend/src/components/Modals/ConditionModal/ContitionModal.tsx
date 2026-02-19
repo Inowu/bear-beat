@@ -21,8 +21,8 @@ export function ConditionModal (props: ICondition)  {
       onHide();
     }
   return (
-    <Modal open={show} onClose={onHide}>
-        <div className='modal-container success-modal'>
+    <Modal open={show} onClose={onHide} size="sm" className="condition-download-modal">
+        <div className='modal-container success-modal condition-download-modal__panel'>
             <div className='header'>
                 <p className='title'>{title}</p>
                 <XCircle className='icon' onClick={onHide} aria-label="Cerrar" />
@@ -40,7 +40,7 @@ export function ConditionModal (props: ICondition)  {
                     ? <Button unstyled className='btn-option-4' onClick={startAction}>
                       Confirmar
                     </Button>
-                    : <div style={{width: 189}}><Spinner size={3} width={.3} color="var(--app-accent)"/></div>
+                    : <div className="condition-download-modal__spinner"><Spinner size={3} width={.3} color="var(--app-accent)"/></div>
                   }
                 </div>
             </div>
