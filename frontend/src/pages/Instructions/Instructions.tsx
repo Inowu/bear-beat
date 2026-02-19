@@ -94,7 +94,9 @@ function Instructions() {
         Saltar al contenido
       </a>
 
-      <PublicTopNav className="instructions2026__topnav" loginFrom="/instrucciones" />
+      {!userToken && (
+        <PublicTopNav className="instructions2026__topnav" loginFrom="/instrucciones" />
+      )}
 
       <section id="instructions-main" className="instructions2026__main" aria-label="Contenido principal de instrucciones">
         <div className="ph__container instructions2026__container">

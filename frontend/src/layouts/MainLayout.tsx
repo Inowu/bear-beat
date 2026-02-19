@@ -156,7 +156,6 @@ function MainLayout() {
   // mezclar chrome del producto, aunque exista sesion.
   const isMarketingSurface =
     location.pathname.startsWith("/planes") ||
-    location.pathname.startsWith("/instrucciones") ||
     location.pathname.startsWith("/legal");
 
   const showAppChrome = Boolean(userToken) && !isCheckoutSurface && !isMarketingSurface;
