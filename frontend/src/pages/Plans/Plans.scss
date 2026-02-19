@@ -408,6 +408,14 @@
   scrollbar-width: thin;
 }
 
+.plans2026__paymentHint {
+  margin: 2px 0 0;
+  color: color-mix(in srgb, var(--ph-text-muted) 94%, transparent);
+  font-size: 1.02rem;
+  font-weight: 640;
+  text-align: center;
+}
+
 .plans2026__trust-copy {
   margin: 0;
   color: color-mix(in srgb, var(--ph-text-muted) 96%, transparent);
@@ -594,7 +602,7 @@
   }
 
   .plans2026__payment-logos {
-    justify-content: flex-start;
+    justify-content: center;
   }
 
   .plans2026__ctaTrust {

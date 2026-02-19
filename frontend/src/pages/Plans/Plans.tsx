@@ -423,6 +423,23 @@ function Plans() {
       : (["visa", "mastercard"] as PaymentMethodId[]);
   }, [selectedCurrency, selectedPlan?.paymentMethods]);
 
+  const paypalAvailabilityHint = useMemo(() => {
+    const selectedHasPaypal = paymentMethods.includes("paypal");
+    if (selectedHasPaypal) return null;
+
+    const mxnHasPaypal = Boolean(plansByCurrency.mxn?.paymentMethods?.includes("paypal"));
+    const usdHasPaypal = Boolean(plansByCurrency.usd?.paymentMethods?.includes("paypal"));
+    if (!mxnHasPaypal && !usdHasPaypal) return null;
+
+    if (selectedCurrency === "usd" && mxnHasPaypal) {
+      return "PayPal disponible al pagar en MXN.";
+    }
+    if (selectedCurrency === "mxn" && usdHasPaypal) {
+      return "PayPal disponible al pagar en USD.";
+    }
+    return null;
+  }, [paymentMethods, plansByCurrency.mxn?.paymentMethods, plansByCurrency.usd?.paymentMethods, selectedCurrency]);
+
   const hasBothCurrencies = Boolean(plansByCurrency.mxn && plansByCurrency.usd);
 
   const trialPreview = useMemo(() => {
@@ -770,6 +787,9 @@ function Plans() {
                   className="plans2026__payment-logos"
                   ariaLabel="Métodos de pago disponibles"
                 />
+                {paypalAvailabilityHint ? (
+                  <p className="plans2026__paymentHint">{paypalAvailabilityHint}</p>
+                ) : null}
               </section>
             </div>
           )}
