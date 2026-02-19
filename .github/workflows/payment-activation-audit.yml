@@ -1,0 +1,83 @@
+name: Audit payments vs activations
+
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "How many days to inspect (ignored if since/until provided)."
+        required: false
+        default: "31"
+      since:
+        description: "Optional start date (YYYY-MM-DD, UTC)."
+        required: false
+        default: ""
+      until:
+        description: "Optional end date (YYYY-MM-DD, inclusive, UTC)."
+        required: false
+        default: ""
+      providers:
+        description: "Comma-separated providers (stripe,stripe_oxxo,paypal,conekta,admin or all)."
+        required: false
+        default: "stripe,stripe_oxxo,paypal,conekta"
+      sample:
+        description: "Max missing order IDs to print per provider."
+        required: false
+        default: "100"
+
+concurrency:
+  group: payment-activation-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Run audit via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          command_timeout: 180m
+          script: |
+            set -e
+            export PATH="/usr/local/bin:/usr/bin:$PATH"
+            [ -f ~/.profile ] && . ~/.profile
+            [ -f ~/.bashrc ] && . ~/.bashrc
+            cd bear-beat
+
+            # Keep scripts in sync with origin/main.
+            git fetch origin main
+            git reset --hard origin/main
+
+            if [ -f ~/.nvm/nvm.sh ]; then
+              . ~/.nvm/nvm.sh
+              if [ -f backend/.nvmrc ]; then
+                NODE_VERSION="$(tr -d ' \t\r\n' < backend/.nvmrc)"
+                if [ -n "$NODE_VERSION" ]; then
+                  nvm install "$NODE_VERSION"
+                  nvm use "$NODE_VERSION"
+                fi
+              else
+                nvm use default 2>/dev/null || true
+              fi
+            fi
+
+            DAYS="${{ github.event.inputs.days }}"
+            SINCE="${{ github.event.inputs.since }}"
+            UNTIL="${{ github.event.inputs.until }}"
+            PROVIDERS="${{ github.event.inputs.providers }}"
+            SAMPLE="${{ github.event.inputs.sample }}"
+
+            args=(--providers "$PROVIDERS" --sample "$SAMPLE" --pretty)
+
+            if [ -n "$SINCE" ] || [ -n "$UNTIL" ]; then
+              [ -n "$SINCE" ] && args+=(--since "$SINCE")
+              [ -n "$UNTIL" ] && args+=(--until "$UNTIL")
+            else
+              args+=(--days "$DAYS")
+            fi
+
+            npm run analytics:payments-activation:audit --workspace=backend -- "${args[@]}"
+
