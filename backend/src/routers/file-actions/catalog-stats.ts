@@ -59,10 +59,38 @@ interface WalkStats {
   byGenre: Record<string, { files: number; bytes: number }>;
 }
 
+const FALLBACK_GENRE_NAME = 'Sin género';
+const INVALID_GENRE_LABELS = new Set([
+  '',
+  '0',
+  '(raíz)',
+  '(raiz)',
+  'raíz',
+  'raiz',
+  'sin género',
+  'sin genero',
+  'n/a',
+  'na',
+  'null',
+  'undefined',
+]);
+
 function genreFromRelativePath(relativePath: string): string {
   if (!relativePath) return '(raíz)';
   const segments = relativePath.split('/').filter(Boolean);
   return segments.length ? segments[segments.length - 1]! : '(raíz)';
+}
+
+function sanitizeGenreLabel(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return FALLBACK_GENRE_NAME;
+
+  const normalized = trimmed.toLowerCase();
+  if (INVALID_GENRE_LABELS.has(normalized)) {
+    return FALLBACK_GENRE_NAME;
+  }
+
+  return trimmed;
 }
 
 type ListEntry = { name: string; type: 'd' | '-'; size: number };
@@ -119,7 +147,7 @@ async function walkDir(basePath: string, relativePath: string, stats: WalkStats)
       await walkDir(basePath, rel, stats);
     } else {
       const size = entry.size || 0;
-      const genre = genreFromRelativePath(relativePath);
+      const genre = sanitizeGenreLabel(genreFromRelativePath(relativePath));
 
       stats.totalFiles += 1;
       stats.totalBytes += size;

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { RefreshCw } from "src/icons";
+import { MoreVertical, RefreshCw } from "src/icons";
 import trpc from "../../../api";
+import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import Pagination from "../../../components/Pagination/Pagination";
 import { Spinner } from "../../../components/Spinner/Spinner";
@@ -94,6 +95,7 @@ export const AuditLogs = () => {
   const [loader, setLoader] = useState(true);
   const [totalLoader, setTotalLoader] = useState(false);
   const [error, setError] = useState("");
+  const [drawerItem, setDrawerItem] = useState<AdminAuditLogItem | null>(null);
 
   const actionOptions = useMemo(() => {
     const fromRows = items.map((item) => item.action);
@@ -325,6 +327,76 @@ export const AuditLogs = () => {
           </table>
         </div>
       </div>
+
+      <div className="admin-mobile-list">
+        {items.length > 0 ? (
+          items.map((item) => (
+            <Button unstyled
+              key={`m_${item.id}`}
+              className="admin-mobile-card"
+              onClick={() => setDrawerItem(item)}
+              type="button"
+            >
+              <div className="admin-mobile-card__head">
+                <div className="admin-mobile-card__identity">
+                  <div className="admin-mobile-card__avatar">
+                    {String(item.actorUserId).slice(-2)}
+                  </div>
+                  <div className="admin-mobile-card__copy">
+                    <p className="admin-mobile-card__name">{item.action}</p>
+                    <p className="admin-mobile-card__email">Admin #{item.actorUserId}</p>
+                  </div>
+                </div>
+                <span className="admin-mobile-status is-active">
+                  {item.targetUserId ? `Obj #${item.targetUserId}` : "Sin objetivo"}
+                </span>
+                <span className="admin-mobile-card__menu" aria-hidden>
+                  <MoreVertical size={20} />
+                </span>
+              </div>
+              <div className="admin-mobile-card__foot">
+                <span>{formatDateTime(item.createdAt)}</span>
+                <span>{item.ip || "IP —"}</span>
+              </div>
+            </Button>
+          ))
+        ) : (
+          <div className="px-4 py-6 text-center">
+            <p className="text-text-main text-sm font-medium">No hay registros para los filtros seleccionados.</p>
+            <p className="text-text-muted text-xs mt-1">Ajusta los filtros para ver actividad reciente.</p>
+          </div>
+        )}
+      </div>
+
+      <div className="admin-pagination-mobile">
+        <Pagination
+          totalData={total}
+          title="registros"
+          startFilter={startFilter}
+          currentPage={filters.page}
+          limit={filters.limit}
+          totalLoader={totalLoader}
+        />
+      </div>
+
+      <AdminDrawer
+        open={drawerItem !== null}
+        onClose={() => setDrawerItem(null)}
+        title={drawerItem?.action ?? "Registro"}
+        user={undefined}
+      >
+        {drawerItem && (
+          <div className="space-y-2 text-sm">
+            <p><span className="text-text-muted">Fecha:</span> {formatDateTime(drawerItem.createdAt)}</p>
+            <p><span className="text-text-muted">Acción:</span> {drawerItem.action}</p>
+            <p><span className="text-text-muted">Admin:</span> #{drawerItem.actorUserId}</p>
+            <p><span className="text-text-muted">Objetivo:</span> {drawerItem.targetUserId ? `#${drawerItem.targetUserId}` : "—"}</p>
+            <p><span className="text-text-muted">Metadata:</span> {formatMetadata(drawerItem.metadata)}</p>
+            <p><span className="text-text-muted">IP:</span> {drawerItem.ip || "—"}</p>
+            <p><span className="text-text-muted">User-Agent:</span> {drawerItem.userAgent || "—"}</p>
+          </div>
+        )}
+      </AdminDrawer>
     </AdminPageLayout>
   );
 };

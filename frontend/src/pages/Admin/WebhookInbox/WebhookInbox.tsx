@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { RefreshCw } from "src/icons";
+import { MoreVertical, RefreshCw } from "src/icons";
 import trpc from "../../../api";
+import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
 import { Spinner } from "../../../components/Spinner/Spinner";
 import { SkeletonRow, Button, Input, Select } from "../../../components/ui";
@@ -108,6 +109,7 @@ export const WebhookInbox = () => {
   const [detail, setDetail] = useState<WebhookInboxDetail | null>(null);
   const [detailLoader, setDetailLoader] = useState(false);
   const [retryingId, setRetryingId] = useState<number | null>(null);
+  const [drawerItem, setDrawerItem] = useState<WebhookInboxListItem | null>(null);
 
   const providers = useMemo(() => {
     const values = new Set(DEFAULT_PROVIDERS);
@@ -120,6 +122,12 @@ export const WebhookInbox = () => {
     items.forEach((item) => values.add(item.status));
     return Array.from(values);
   }, [items]);
+
+  const drawerDetail = useMemo(() => {
+    if (!drawerItem) return null;
+    if (!detail) return null;
+    return detail.id === drawerItem.id ? detail : null;
+  }, [detail, drawerItem]);
 
   const fetchList = async (
     nextFilters: WebhookInboxFilters,
@@ -411,6 +419,102 @@ export const WebhookInbox = () => {
           </div>
         )}
       </div>
+
+      <div className="admin-mobile-list">
+        {items.length > 0 ? (
+          items.map((item) => (
+            <Button unstyled
+              key={`m_${item.id}`}
+              className="admin-mobile-card"
+              onClick={() => {
+                setDrawerItem(item);
+                setSelectedId(item.id);
+              }}
+              type="button"
+            >
+              <div className="admin-mobile-card__head">
+                <div className="admin-mobile-card__identity">
+                  <div className="admin-mobile-card__avatar">{item.provider.slice(0, 2).toUpperCase()}</div>
+                  <div className="admin-mobile-card__copy">
+                    <p className="admin-mobile-card__name">{item.eventType}</p>
+                    <p className="admin-mobile-card__email">{item.provider} · #{item.id}</p>
+                  </div>
+                </div>
+                <span className="admin-mobile-status is-active">{item.status}</span>
+                <span className="admin-mobile-card__menu" aria-hidden>
+                  <MoreVertical size={20} />
+                </span>
+              </div>
+              <div className="admin-mobile-card__foot">
+                <span>Recibido: {formatDateTime(item.receivedAt)}</span>
+                <span>Intentos: {item.attempts}</span>
+              </div>
+            </Button>
+          ))
+        ) : (
+          <div className="px-4 py-6 text-center">
+            <p className="text-text-main text-sm font-medium">No hay eventos para los filtros seleccionados.</p>
+            <p className="text-text-muted text-xs mt-1">Prueba con otro proveedor, estado o tipo de evento.</p>
+          </div>
+        )}
+      </div>
+
+      {nextCursor && (
+        <div className="admin-pagination-mobile">
+          <div className="flex justify-center">
+            <Button unstyled
+              type="button"
+              className="btn-icon btn-secondary"
+              onClick={() => void loadMore()}
+              disabled={loadingMore}
+              aria-label={loadingMore ? "Actualizando más eventos" : undefined}
+            >
+              {loadingMore ? <SkeletonRow width="82px" height="14px" /> : "Cargar más"}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <AdminDrawer
+        open={drawerItem !== null}
+        onClose={() => setDrawerItem(null)}
+        title={drawerItem ? `Evento #${drawerItem.id}` : "Evento"}
+        user={undefined}
+        actions={
+          drawerItem && (drawerItem.status === "FAILED" || drawerItem.status === "IGNORED")
+            ? [
+                {
+                  id: `retry_${drawerItem.id}`,
+                  label: retryingId === drawerItem.id ? "Reintentando..." : "Reintentar",
+                  onClick: () => {
+                    void retryEvent(drawerItem.id);
+                  },
+                  disabled: retryingId === drawerItem.id,
+                  variant: "secondary",
+                },
+              ]
+            : []
+        }
+      >
+        {drawerItem && (
+          <div className="space-y-2 text-sm">
+            <p><span className="text-text-muted">Proveedor:</span> {drawerItem.provider}</p>
+            <p><span className="text-text-muted">Event ID:</span> {drawerDetail?.eventId ?? drawerItem.eventId}</p>
+            <p><span className="text-text-muted">Tipo:</span> {drawerItem.eventType}</p>
+            <p><span className="text-text-muted">Status:</span> {drawerDetail?.status ?? drawerItem.status}</p>
+            <p><span className="text-text-muted">Intentos:</span> {drawerDetail?.attempts ?? drawerItem.attempts}</p>
+            <p><span className="text-text-muted">Recibido:</span> {formatDateTime(drawerItem.receivedAt)}</p>
+            <p><span className="text-text-muted">Procesado:</span> {formatDateTime(drawerItem.processedAt)}</p>
+            <p><span className="text-text-muted">Siguiente retry:</span> {formatDateTime(drawerDetail?.nextRetryAt ?? null)}</p>
+            <p><span className="text-text-muted">Error:</span> {drawerDetail?.lastError || drawerItem.lastError || "—"}</p>
+            {detailLoader && selectedId === drawerItem.id && (
+              <div className="pt-2">
+                <Spinner size={2} width={0.25} color="var(--app-accent)" />
+              </div>
+            )}
+          </div>
+        )}
+      </AdminDrawer>
 
       {selectedId && (
         <div className="webhook-inbox-detail">

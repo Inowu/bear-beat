@@ -16,6 +16,7 @@ jest.mock("../src/db", () => ({
     ftpquotatallies: { findFirst: jest.fn(), update: jest.fn() },
     ftpQuotaLimits: { findFirst: jest.fn() },
     downloadHistory: { create: jest.fn() },
+    downloadHistoryRollupDaily: { upsert: jest.fn() },
     jobs: { findFirst: jest.fn() },
     dir_downloads: { findFirst: jest.fn() },
   },
@@ -24,7 +25,10 @@ jest.mock("../src/db", () => ({
 import Path from "path";
 import { fileService } from "../src/ftp";
 import { prisma } from "../src/db";
-import { downloadEndpoint } from "../src/endpoints/download.endpoint";
+import {
+  __clearDownloadIdempotencyCacheForTests,
+  downloadEndpoint,
+} from "../src/endpoints/download.endpoint";
 import { downloadDirEndpoint } from "../src/endpoints/download-dir.endpoint";
 
 function makeRes() {
@@ -55,6 +59,7 @@ describe("Download endpoints security (path traversal / IDOR guardrails)", () =>
 
   beforeEach(() => {
     jest.clearAllMocks();
+    __clearDownloadIdempotencyCacheForTests();
     process.env = { ...originalEnv };
     process.env.JWT_SECRET = "test-secret";
     process.env.SONGS_PATH = "/srv/bearbeat-songs";
@@ -178,5 +183,105 @@ describe("Download endpoints security (path traversal / IDOR guardrails)", () =>
         `${Path.sep}${process.env.COMPRESSED_DIRS_NAME}${Path.sep}expected.zip`,
       ),
     );
+  });
+});
+
+describe("downloadEndpoint rid idempotency", () => {
+  const originalEnv = process.env;
+
+  const setSuccessfulDownloadMocks = () => {
+    (fileService.exists as jest.Mock).mockResolvedValue(true);
+    (fileService.stat as jest.Mock).mockResolvedValue({ size: BigInt(1024) });
+    (prisma.users.findFirst as jest.Mock).mockResolvedValue({ verified: true });
+    (prisma.descargasUser.findMany as jest.Mock).mockResolvedValue([{ id: 1 }]);
+    (prisma.ftpUser.findMany as jest.Mock).mockResolvedValue([
+      { userid: "dj-user" },
+    ]);
+    (prisma.ftpquotatallies.findFirst as jest.Mock).mockResolvedValue({
+      id: 10,
+      name: "dj-user",
+      bytes_out_used: BigInt(0),
+    });
+    (prisma.ftpQuotaLimits.findFirst as jest.Mock).mockResolvedValue({
+      name: "dj-user",
+      bytes_out_avail: BigInt(10_000),
+    });
+    (prisma.ftpquotatallies.update as jest.Mock).mockResolvedValue({
+      id: 10,
+      bytes_out_used: BigInt(1024),
+    });
+    (prisma.downloadHistory.create as jest.Mock).mockResolvedValue({ id: 1 });
+    (prisma.downloadHistoryRollupDaily.upsert as jest.Mock).mockResolvedValue({
+      id: 1,
+    });
+  };
+
+  const makeDownloadReq = (rid?: string) => {
+    const token = jwt.sign(
+      { id: 99, username: "jest-user", role: "normal", email: "jest@local.test" },
+      process.env.JWT_SECRET as string,
+    );
+
+    return {
+      query: {
+        token,
+        path: "Audios/Test Song.mp3",
+        ...(rid ? { rid } : {}),
+      },
+    } as unknown as Request;
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    __clearDownloadIdempotencyCacheForTests();
+    process.env = { ...originalEnv };
+    process.env.JWT_SECRET = "test-secret";
+    process.env.SONGS_PATH = "/srv/bearbeat-songs";
+  });
+
+  afterAll(() => {
+    process.env = originalEnv;
+  });
+
+  it("deduplicates when the same rid is retried", async () => {
+    setSuccessfulDownloadMocks();
+
+    const req = makeDownloadReq("rid-fixed-1");
+    const firstRes = makeRes();
+    const secondRes = makeRes();
+
+    await downloadEndpoint(req, firstRes);
+    await downloadEndpoint(req, secondRes);
+
+    expect(prisma.ftpquotatallies.update).toHaveBeenCalledTimes(1);
+    expect(prisma.downloadHistory.create).toHaveBeenCalledTimes(1);
+    expect(firstRes.sendFile).toHaveBeenCalledTimes(1);
+    expect(secondRes.sendFile).toHaveBeenCalledTimes(1);
+  });
+
+  it("charges twice when rid is different", async () => {
+    setSuccessfulDownloadMocks();
+
+    const firstRes = makeRes();
+    const secondRes = makeRes();
+
+    await downloadEndpoint(makeDownloadReq("rid-1"), firstRes);
+    await downloadEndpoint(makeDownloadReq("rid-2"), secondRes);
+
+    expect(prisma.ftpquotatallies.update).toHaveBeenCalledTimes(2);
+    expect(prisma.downloadHistory.create).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps legacy behavior when rid is omitted", async () => {
+    setSuccessfulDownloadMocks();
+
+    const firstRes = makeRes();
+    const secondRes = makeRes();
+
+    await downloadEndpoint(makeDownloadReq(), firstRes);
+    await downloadEndpoint(makeDownloadReq(), secondRes);
+
+    expect(prisma.ftpquotatallies.update).toHaveBeenCalledTimes(2);
+    expect(prisma.downloadHistory.create).toHaveBeenCalledTimes(2);
   });
 });

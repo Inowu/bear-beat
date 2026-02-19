@@ -2261,6 +2261,10 @@ html[data-theme="dark"] .bb-explorer-row:hover {
 
   .bb-trending-name {
     font-size: 0.9rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    white-space: normal;
   }
 
   .bb-trending-count {
@@ -2318,9 +2322,21 @@ html[data-theme="dark"] .bb-explorer-row:hover {
     max-width: 180px;
   }
 
+  .bb-breadcrumb {
+    padding: 1px 8px;
+  }
+
   .bb-breadcrumb-link,
   .bb-breadcrumb-current {
     font-size: 0.94rem;
+  }
+
+  .bb-breadcrumb-link {
+    padding: 4px 6px;
+  }
+
+  .bb-breadcrumb-current {
+    padding: 4px 0;
   }
 
   .bb-file-name {

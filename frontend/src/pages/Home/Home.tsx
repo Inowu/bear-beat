@@ -1351,7 +1351,9 @@ function Home() {
       '/download?path=' +
       encodeURIComponent(resolvedPath) +
       '&token=' +
-      userToken;
+      userToken +
+      '&rid=' +
+      encodeURIComponent(createDownloadRequestId());
 
     await startDownload(url, downloadName, { file, index, type: 'file' });
   };
@@ -1444,19 +1446,33 @@ function Home() {
       handleError();
     }
   };
+  const createDownloadRequestId = (): string => {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+  };
+
   const startDownload = async (
     url: string,
     name: string,
     pending: PendingDownload,
   ) => {
-    const a: any = document.createElement('a');
+    const a: HTMLAnchorElement = document.createElement('a');
     try {
       const response = await fetch(url);
       if (response.ok) {
-        a.href = url;
+        const blob = await response.blob();
+        const objectUrl = window.URL.createObjectURL(blob);
+        a.href = objectUrl;
         a.download = name;
+        a.rel = 'noopener';
+        document.body.appendChild(a);
         a.click();
-        window.URL.revokeObjectURL(url);
+        a.remove();
+        window.setTimeout(() => {
+          window.URL.revokeObjectURL(objectUrl);
+        }, 2_000);
         appToast.success(`Descarga iniciada: ${truncateToastLabel(name, 40)}`);
         trackGrowthMetric(GROWTH_METRICS.FILE_DOWNLOAD_SUCCEEDED, {
           fileType: pending.type,

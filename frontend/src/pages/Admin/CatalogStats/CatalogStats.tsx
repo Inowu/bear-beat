@@ -1,5 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
+import { MoreVertical } from "src/icons";
 import { AdminPageLayout } from "../../../components/AdminPageLayout/AdminPageLayout";
+import { AdminDrawer } from "../../../components/AdminDrawer/AdminDrawer";
 import { Alert } from "../../../components/ui/Alert/Alert";
 import { SkeletonRow, SkeletonTable, Button } from "../../../components/ui";
 import { getAccessToken } from "../../../utils/authStorage";
@@ -11,6 +13,21 @@ const API_BASE =
 
 const CACHE_KEY = "catalog-stats-cache";
 const PAGE_SIZE = 50;
+const FALLBACK_GENRE_NAME = "Sin género";
+const INVALID_GENRE_NAMES = new Set([
+  "",
+  "0",
+  "(raíz)",
+  "(raiz)",
+  "raíz",
+  "raiz",
+  "sin genero",
+  "sin género",
+  "n/a",
+  "na",
+  "null",
+  "undefined",
+]);
 
 interface GenreStats {
   name: string;
@@ -47,13 +64,47 @@ const emptyData: CatalogStatsData = {
   genresDetail: [],
 };
 
+function sanitizeGenreName(value: unknown): string {
+  const name = typeof value === "string" ? value.trim() : "";
+  if (!name) return FALLBACK_GENRE_NAME;
+  const normalized = name.toLowerCase();
+  if (INVALID_GENRE_NAMES.has(normalized)) return FALLBACK_GENRE_NAME;
+  return name;
+}
+
+function normalizeGenresDetail(items: GenreStats[]): GenreStats[] {
+  const merged = new Map<string, GenreStats>();
+
+  items.forEach((item) => {
+    const name = sanitizeGenreName(item.name);
+    const files = Number(item.files) || 0;
+    const gb = Number(item.gb) || 0;
+    const current = merged.get(name);
+    if (current) {
+      current.files += files;
+      current.gb = Math.round((current.gb + gb) * 100) / 100;
+      return;
+    }
+    merged.set(name, {
+      name,
+      files,
+      gb: Math.round(gb * 100) / 100,
+    });
+  });
+
+  return Array.from(merged.values()).sort((left, right) =>
+    left.name.localeCompare(right.name, "es-MX"),
+  );
+}
+
 function normalizeCatalogResponse(res: Record<string, unknown>): CatalogStatsData {
-  const genresDetail = Array.isArray(res.genresDetail)
+  const rawGenres = Array.isArray(res.genresDetail)
     ? (res.genresDetail as GenreStats[])
     : Array.isArray(res.genres)
       ? (res.genres as string[]).map((name: string) => ({ name, files: 0, gb: 0 }))
       : [];
-  const totalGenres = typeof res.totalGenres === "number" ? res.totalGenres : genresDetail.length;
+  const genresDetail = normalizeGenresDetail(rawGenres);
+  const totalGenres = genresDetail.length;
   return {
     error: typeof res.error === "string" ? res.error : undefined,
     totalFiles: Number(res.totalFiles) || 0,
@@ -94,6 +145,7 @@ export function CatalogStats() {
   const [loading, setLoading] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [genrePage, setGenrePage] = useState(0);
+  const [drawerGenre, setDrawerGenre] = useState<GenreStats | null>(null);
 
   const fetchStats = useCallback((refresh = false) => {
     setLoading(true);
@@ -339,6 +391,85 @@ export function CatalogStats() {
                 </table>
               </div>
             </div>
+
+            <div className="admin-mobile-list">
+              {pageGenres.length > 0 ? (
+                pageGenres.map((genre) => (
+                  <Button unstyled
+                    key={`m_${genre.name}`}
+                    className="admin-mobile-card"
+                    onClick={() => setDrawerGenre(genre)}
+                    type="button"
+                  >
+                    <div className="admin-mobile-card__head">
+                      <div className="admin-mobile-card__identity">
+                        <div className="admin-mobile-card__avatar">
+                          {genre.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="admin-mobile-card__copy">
+                          <p className="admin-mobile-card__name">{genre.name}</p>
+                          <p className="admin-mobile-card__email">{genre.files.toLocaleString()} archivos</p>
+                        </div>
+                      </div>
+                      <span className="admin-mobile-status is-active">
+                        {genre.gb.toLocaleString()} GB
+                      </span>
+                      <span className="admin-mobile-card__menu" aria-hidden>
+                        <MoreVertical size={20} />
+                      </span>
+                    </div>
+                    <div className="admin-mobile-card__foot">
+                      <span>Archivos: {genre.files.toLocaleString()}</span>
+                      <span>Volumen: {genre.gb.toLocaleString()} GB</span>
+                    </div>
+                  </Button>
+                ))
+              ) : (
+                <div className="px-4 py-6 text-center">
+                  <p className="text-text-main text-sm font-medium">No hay géneros para esta página.</p>
+                  <p className="text-text-muted text-xs mt-1">Ajusta la paginación para ver más resultados.</p>
+                </div>
+              )}
+            </div>
+
+            <div className="admin-pagination-mobile">
+              <div className="flex items-center justify-between gap-2">
+                <Button unstyled
+                  type="button"
+                  disabled={page <= 0}
+                  onClick={() => setGenrePage((p) => Math.max(0, p - 1))}
+                  className="bg-bg-card hover:bg-bg-input disabled:opacity-50 text-text-main text-sm rounded-lg px-3 py-1.5 border border-border transition-colors"
+                >
+                  Anterior
+                </Button>
+                <span className="text-text-muted text-sm">
+                  Página {page + 1} de {totalPages}
+                </span>
+                <Button unstyled
+                  type="button"
+                  disabled={page >= totalPages - 1}
+                  onClick={() => setGenrePage((p) => Math.min(totalPages - 1, p + 1))}
+                  className="bg-bg-card hover:bg-bg-input disabled:opacity-50 text-text-main text-sm rounded-lg px-3 py-1.5 border border-border transition-colors"
+                >
+                  Siguiente
+                </Button>
+              </div>
+            </div>
+
+            <AdminDrawer
+              open={drawerGenre !== null}
+              onClose={() => setDrawerGenre(null)}
+              title={drawerGenre?.name ?? "Género"}
+              user={undefined}
+            >
+              {drawerGenre && (
+                <div className="space-y-2 text-sm">
+                  <p><span className="text-text-muted">Género:</span> {drawerGenre.name}</p>
+                  <p><span className="text-text-muted">Archivos:</span> {drawerGenre.files.toLocaleString()}</p>
+                  <p><span className="text-text-muted">Volumen:</span> {drawerGenre.gb.toLocaleString()} GB</p>
+                </div>
+              )}
+            </AdminDrawer>
           </>
         )}
       </div>

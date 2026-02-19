@@ -9,6 +9,7 @@ import {
   normalizeSeoPath,
   resolveSeoUrl,
 } from "../seo";
+import { getAdminNavigationItem } from "../constants/adminNavigation";
 
 type RouteSeo = {
   title: string;
@@ -46,7 +47,13 @@ export function applyRouteSeo(pathname: string): void {
   const normalizedPath = normalizeSeoPath(pathname);
   const routeSeo = findSeoRoute(normalizedPath) as RouteSeo | null;
 
-  const title = routeSeo?.title ?? SEO_DEFAULT_META.title;
+  const defaultTitle = routeSeo?.title ?? SEO_DEFAULT_META.title;
+  const adminNavigationItem = normalizedPath.startsWith("/admin")
+    ? getAdminNavigationItem(normalizedPath)
+    : null;
+  const title = adminNavigationItem
+    ? `${adminNavigationItem.label} | Admin | Bear Beat`
+    : defaultTitle;
   const description = routeSeo?.description ?? SEO_DEFAULT_META.description;
   // Unknown routes must be noindex/nofollow by default.
   const indexable = routeSeo ? routeSeo.indexable === true : false;

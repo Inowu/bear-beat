@@ -190,8 +190,9 @@ aside {
 
 html[data-theme="light"] aside .nav-container .nav-link-item:not(.is-active):not(.nav-link-item--danger):hover,
 html[data-theme="light"] aside .nav-container .nav-link-item:not(.is-active):not(.nav-link-item--danger):focus-visible {
-  background: rgba(0, 0, 0, 0.1);
-  border-color: rgba(0, 0, 0, 0.14);
+  color: color-mix(in srgb, var(--theme-nav-text) 96%, black);
+  background: color-mix(in srgb, var(--app-accent) 16%, rgba(0, 0, 0, 0.04));
+  border-color: color-mix(in srgb, var(--app-accent) 46%, rgba(0, 0, 0, 0.14));
 }
 
 @include respond-to(desktop) {
