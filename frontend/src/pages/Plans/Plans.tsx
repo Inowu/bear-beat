@@ -148,7 +148,7 @@ function parsePlansEntry(value: string | null): PlansEntry | null {
 }
 
 function Plans() {
-  const { currentUser } = useUserContext();
+  const { currentUser, userToken } = useUserContext();
   const { theme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -507,6 +507,7 @@ function Plans() {
     ? "Activar 7 días gratis"
     : "CONTINUAR AL PAGO SEGURO";
 
+  const isAuthenticated = Boolean(userToken || currentUser);
   const trustCopy = "Cancela cuando quieras desde tu cuenta. Sin contratos.";
 
   const selectCurrency = (next: CurrencyKey) => {
@@ -803,21 +804,23 @@ function Plans() {
                   {primaryCtaLabel}
                 </Button>
 
-                <div className="plans2026__trust" aria-label="Confianza">
-                  <p className="plans2026__trust-copy">
-                    {trustCopy}
-                  </p>
-                  <p className="plans2026__links" aria-label="Acceso">
-                    ¿Ya tienes cuenta?{" "}
-                    <Link
-                      to="/auth"
-                      state={{ from: `${location.pathname}${location.search}` }}
-                      className="plans2026__link"
-                    >
-                      Inicia sesión →
-                    </Link>
-                  </p>
-                </div>
+                {!isAuthenticated && (
+                  <div className="plans2026__trust" aria-label="Confianza">
+                    <p className="plans2026__trust-copy">
+                      {trustCopy}
+                    </p>
+                    <p className="plans2026__links" aria-label="Acceso">
+                      ¿Ya tienes cuenta?{" "}
+                      <Link
+                        to="/auth"
+                        state={{ from: `${location.pathname}${location.search}` }}
+                        className="plans2026__link"
+                      >
+                        Inicia sesión →
+                      </Link>
+                    </p>
+                  </div>
+                )}
               </section>
             </div>
           )}
