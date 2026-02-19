@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { Prisma, type PrismaClient } from '@prisma/client';
 import type { Request, Response } from 'express';
 import { prisma } from '../../db';
@@ -71,6 +72,28 @@ const parseBodyAsJsonObject = (body: unknown): Record<string, unknown> | null =>
   }
 
   return null;
+};
+
+const isDirectSesNotificationPayload = (
+  value: Record<string, unknown>,
+): value is SesNotificationPayload => {
+  const eventType = value.eventType;
+  const mail = value.mail as Record<string, unknown> | undefined;
+  const messageId = mail?.messageId;
+
+  return typeof eventType === 'string'
+    && eventType.trim().length > 0
+    && typeof messageId === 'string'
+    && messageId.trim().length > 0;
+};
+
+const buildRawProviderEventId = (payload: Record<string, unknown>): string => {
+  const digest = crypto
+    .createHash('sha256')
+    .update(JSON.stringify(payload))
+    .digest('hex');
+
+  return `raw_${digest}`.slice(0, 120);
 };
 
 const normalizeText = (value: unknown, max = 120): string | null => {
@@ -210,43 +233,54 @@ const updateAutomationLogsByMessageId = async (
 };
 
 export const sesSnsEndpoint = async (req: Request, res: Response) => {
-  const envelopeRaw = parseBodyAsJsonObject(req.body);
-  if (!envelopeRaw) {
+  const payloadRaw = parseBodyAsJsonObject(req.body);
+  if (!payloadRaw) {
     return res.status(400).send('Invalid SNS payload');
   }
 
-  const envelope: SnsEnvelope = {
-    Type: normalizeText(envelopeRaw.Type, 80) ?? undefined,
-    MessageId: normalizeText(envelopeRaw.MessageId, 120) ?? undefined,
-    Message: typeof envelopeRaw.Message === 'string' ? envelopeRaw.Message : undefined,
-    SubscribeURL: normalizeText(envelopeRaw.SubscribeURL, 2000) ?? undefined,
-    Timestamp: normalizeText(envelopeRaw.Timestamp, 80) ?? undefined,
-  };
-
-  if (envelope.Type === 'SubscriptionConfirmation') {
-    await maybeAutoConfirmSubscription(envelope);
-    return res.status(200).end();
-  }
-
-  if (envelope.Type !== 'Notification') {
-    return res.status(200).end();
-  }
-
-  if (!envelope.MessageId || !envelope.Message) {
-    return res.status(400).send('Invalid SNS notification envelope');
-  }
-
   let payload: SesNotificationPayload;
-  try {
-    payload = JSON.parse(envelope.Message) as SesNotificationPayload;
-  } catch {
-    return res.status(400).send('Invalid SES notification payload');
+  let providerEventId: string | null = null;
+  let envelopeTimestamp: string | undefined;
+
+  if (isDirectSesNotificationPayload(payloadRaw)) {
+    payload = payloadRaw;
+    providerEventId = buildRawProviderEventId(payloadRaw);
+  } else {
+    const envelope: SnsEnvelope = {
+      Type: normalizeText(payloadRaw.Type, 80) ?? undefined,
+      MessageId: normalizeText(payloadRaw.MessageId, 120) ?? undefined,
+      Message: typeof payloadRaw.Message === 'string' ? payloadRaw.Message : undefined,
+      SubscribeURL: normalizeText(payloadRaw.SubscribeURL, 2000) ?? undefined,
+      Timestamp: normalizeText(payloadRaw.Timestamp, 80) ?? undefined,
+    };
+
+    if (envelope.Type === 'SubscriptionConfirmation') {
+      await maybeAutoConfirmSubscription(envelope);
+      return res.status(200).end();
+    }
+
+    if (envelope.Type !== 'Notification') {
+      return res.status(200).end();
+    }
+
+    if (!envelope.MessageId || !envelope.Message) {
+      return res.status(400).send('Invalid SNS notification envelope');
+    }
+
+    try {
+      payload = JSON.parse(envelope.Message) as SesNotificationPayload;
+    } catch {
+      return res.status(400).send('Invalid SES notification payload');
+    }
+
+    providerEventId = envelope.MessageId;
+    envelopeTimestamp = envelope.Timestamp;
   }
 
   const eventTypeRaw = normalizeText(payload.eventType, 80);
   const status = eventTypeRaw ? toDeliveryStatus(eventTypeRaw) : null;
   const providerMessageId = normalizeText(payload.mail?.messageId, 120);
-  if (!status || !providerMessageId) {
+  if (!status || !providerMessageId || !providerEventId) {
     return res.status(200).end();
   }
 
@@ -264,12 +298,12 @@ export const sesSnsEndpoint = async (req: Request, res: Response) => {
     payload.bounce?.timestamp,
     payload.complaint?.timestamp,
     payload.mail?.timestamp,
-    envelope.Timestamp,
+    envelopeTimestamp,
   );
 
   try {
     await insertEmailDeliveryEvent(prisma, {
-      providerEventId: envelope.MessageId,
+      providerEventId,
       providerMessageId,
       status,
       eventTs,
@@ -281,7 +315,7 @@ export const sesSnsEndpoint = async (req: Request, res: Response) => {
     await updateAutomationLogsByMessageId(prisma, providerMessageId, status);
   } catch (error) {
     log.error('[SES_SNS] Failed processing notification', {
-      eventId: envelope.MessageId,
+      eventId: providerEventId,
       status,
       error: error instanceof Error ? error.message : String(error ?? ''),
     });
