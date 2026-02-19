@@ -476,6 +476,16 @@ function Plans() {
   const primaryCtaLabel = trialPreview.applies
     ? "Activar 7 días gratis"
     : "CONTINUAR AL PAGO SEGURO";
+  const plansHeroTitle = trialPreview.applies
+    ? "Activa tu prueba gratis hoy."
+    : "Activa tu membresía hoy.";
+  const plansHeroSubtitle = isFastlaneEntry
+    ? trialPreview.applies
+      ? "Ya estás a un paso: elige moneda y confirma tu tarjeta para activar tu prueba."
+      : "Ya estás a un paso: elige moneda y termina tu pago seguro."
+    : trialPreview.applies
+      ? "Elige moneda, confirma pago seguro y empieza a descargar en minutos."
+      : "Elige moneda, confirma pago seguro y activa tu membresía en minutos.";
 
   const isAuthenticated = Boolean(userToken || currentUser);
   const trustCopy = "Sin contratos. Puedes cancelar cuando quieras desde tu cuenta.";
@@ -550,12 +560,8 @@ function Plans() {
             <p className="plans2026__kicker">
               Un plan. Todo incluido.
             </p>
-            <h1>Activa tu prueba gratis hoy.</h1>
-            <p className="plans2026__subtitle">
-              {isFastlaneEntry
-                ? "Ya estás a un paso: elige moneda y termina tu pago seguro."
-                : "Elige moneda, confirma pago seguro y empieza a descargar en minutos."}
-            </p>
+            <h1>{plansHeroTitle}</h1>
+            <p className="plans2026__subtitle">{plansHeroSubtitle}</p>
           </header>
 
           {loader ? (
