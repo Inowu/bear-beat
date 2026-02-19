@@ -166,6 +166,15 @@ const SEARCH_QUICK_FILTERS: Array<{ value: SearchQuickFilter; label: string }> =
 ];
 
 const normalizeFilePath = (value?: string): string => (value ?? '').replace(/\\/g, '/');
+const normalizeDownloadMarkerPath = (value?: string): string => {
+  const normalized = normalizeFilePath(value).trim().replace(/\/{2,}/g, '/');
+  if (!normalized) return '';
+  const withLeadingSlash = normalized.startsWith('/') ? normalized : `/${normalized}`;
+  if (withLeadingSlash !== '/' && withLeadingSlash.endsWith('/')) {
+    return withLeadingSlash.slice(0, -1);
+  }
+  return withLeadingSlash;
+};
 const normalizeOptionalText = (value: unknown): string | null => {
   const text = `${value ?? ''}`.trim();
   return text ? text : null;
@@ -597,6 +606,30 @@ function Home() {
     }
     const joinedPath = [...pastFile, file.name].filter(Boolean).join('/');
     return `/${joinedPath}`;
+  };
+
+  const markItemAsDownloaded = (path: string, itemType: '-' | 'd') => {
+    const normalizedTargetPath = normalizeDownloadMarkerPath(path);
+    if (!normalizedTargetPath) return;
+
+    const markRows = (rows: IFiles[]): IFiles[] =>
+      rows.map((item) => {
+        if (item.type !== itemType) return item;
+
+        const fallbackPath = `/${[...pastFile, item.name].filter(Boolean).join('/')}`;
+        const normalizedItemPath = normalizeDownloadMarkerPath(item.path ?? fallbackPath);
+        if (!normalizedItemPath || normalizedItemPath !== normalizedTargetPath) {
+          return item;
+        }
+        if (item.already_downloaded) return item;
+        return {
+          ...item,
+          already_downloaded: true,
+        };
+      });
+
+    setfiles((prev) => markRows(prev));
+    setFolderScopeFiles((prev) => markRows(prev));
   };
 
   const resolvePreviewPath = (file: IFiles): string =>
@@ -1420,6 +1453,7 @@ function Home() {
         path: url,
         name: file.name,
       });
+      markItemAsDownloaded(path, 'd');
       appToast.success(`Descarga iniciada: ${truncateToastLabel(file.name, 40)}`);
       trackGrowthMetric(GROWTH_METRICS.FILE_DOWNLOAD_SUCCEEDED, {
         fileType: 'folder',
@@ -1473,6 +1507,10 @@ function Home() {
         window.setTimeout(() => {
           window.URL.revokeObjectURL(objectUrl);
         }, 2_000);
+        markItemAsDownloaded(
+          resolveFilePath(pending.file),
+          pending.type === 'folder' ? 'd' : '-',
+        );
         appToast.success(`Descarga iniciada: ${truncateToastLabel(name, 40)}`);
         trackGrowthMetric(GROWTH_METRICS.FILE_DOWNLOAD_SUCCEEDED, {
           fileType: pending.type,
@@ -2541,7 +2579,7 @@ function Home() {
                 const keyLabel = normalizeOptionalText(resolvedTrack?.camelot);
                 const keyToneClass = keyLabel ? `is-${resolveKeyTone(keyLabel)}` : '';
                 const formatBadge = getResolvedFormatBadge(file.name, resolvedTrack?.format ?? null);
-                const alreadyDownloaded = file.type === '-' && Boolean(file.already_downloaded);
+                const alreadyDownloaded = Boolean(file.already_downloaded);
                 const resolvedPreviewPath = !isFolder ? resolvePreviewPath(file) : '';
                 const isAudioTrack = file.type === '-' && kind === 'audio';
                 const hasInlinePreview =
@@ -2677,7 +2715,7 @@ function Home() {
                           {allowFolderDownload && (
                             <Button unstyled
                               type="button"
-                              className="bb-action-btn bb-action-btn--ghost"
+                              className={`bb-action-btn bb-action-btn--ghost${alreadyDownloaded ? ' bb-action-btn--downloaded' : ''}`}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 checkAlbumSize(file, idx);
@@ -2731,7 +2769,7 @@ function Home() {
                             ) : (
                               <Button unstyled
                                 type="button"
-                                className="bb-action-btn bb-action-btn--primary"
+                                className={`bb-action-btn bb-action-btn--primary${alreadyDownloaded ? ' bb-action-btn--downloaded' : ''}`}
                                 onClick={() => downloadFile(file, idx)}
                                 title="Descargar archivo"
                                 aria-label="Descargar archivo"

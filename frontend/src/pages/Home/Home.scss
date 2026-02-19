@@ -1910,6 +1910,18 @@ html[data-theme="dark"] .bb-explorer-row:hover {
   }
 }
 
+.bb-action-btn--downloaded {
+  border-color: color-mix(in srgb, var(--app-status-error) 48%, transparent);
+  background: color-mix(in srgb, var(--app-status-error) 14%, transparent);
+  color: color-mix(in srgb, var(--app-status-error) 88%, var(--app-text-heading));
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--app-status-error) 62%, transparent);
+    background: color-mix(in srgb, var(--app-status-error) 20%, transparent);
+    color: color-mix(in srgb, var(--app-status-error) 94%, var(--app-text-heading));
+  }
+}
+
 .bb-action-btn--loading {
   cursor: default;
 }
