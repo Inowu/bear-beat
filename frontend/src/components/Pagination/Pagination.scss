@@ -128,6 +128,52 @@ $bear-blue-dim: var(--bb-cyan);
       color: var(--app-accent);
       font-size: var(--app-font-size-body);
     }
+
+    .compact-page-indicator {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      border: 1px solid color-mix(in srgb, var(--app-border) 82%, transparent);
+      background: color-mix(in srgb, var(--app-bg-soft) 82%, transparent);
+      color: $text-primary;
+      font-size: var(--app-font-size-body);
+      font-weight: 700;
+      padding: 0 14px;
+      white-space: nowrap;
+      line-height: 1;
+    }
+  }
+}
+
+.pagination-container.is-compact {
+  align-items: stretch;
+  gap: 8px;
+
+  .left-side {
+    justify-content: space-between;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .left-text {
+    font-size: 0.92rem;
+  }
+
+  .right-side--compact {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .right-side--compact .compact-page-indicator {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 

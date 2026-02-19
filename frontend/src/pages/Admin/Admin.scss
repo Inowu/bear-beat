@@ -682,7 +682,7 @@ html[data-theme="light"] .admin-users-wrap .btn-primary:hover {
 
 .admin-mobile-list {
   display: none;
-  gap: 10px;
+  gap: 12px;
   flex-direction: column;
 }
 
@@ -691,7 +691,7 @@ html[data-theme="light"] .admin-users-wrap .btn-primary:hover {
   display: block;
   width: 100%;
   text-align: left;
-  padding: 11px 12px;
+  padding: 12px;
   border-radius: 14px;
   border: 1px solid color-mix(in srgb, var(--ad-border) 84%, transparent);
   background: color-mix(in srgb, var(--ad-card) 96%, transparent);
@@ -706,12 +706,16 @@ html[data-theme="light"] .admin-users-wrap .btn-primary:hover {
 
 .admin-mobile-card__head {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "identity menu"
+    "status status";
+  gap: 8px 10px;
   align-items: center;
 }
 
 .admin-mobile-card__identity {
+  grid-area: identity;
   min-width: 0;
   display: flex;
   align-items: center;
@@ -761,6 +765,8 @@ html[data-theme="light"] .admin-users-wrap .btn-primary:hover {
 }
 
 .admin-mobile-status {
+  grid-area: status;
+  justify-self: start;
   min-height: 24px;
   display: inline-flex;
   align-items: center;
@@ -784,15 +790,17 @@ html[data-theme="light"] .admin-users-wrap .btn-primary:hover {
 }
 
 .admin-mobile-card__menu {
-  width: 44px;
-  height: 44px;
+  grid-area: menu;
+  width: 38px;
+  height: 38px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 9px;
+  border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--ad-border) 74%, transparent);
   background: color-mix(in srgb, var(--ad-card) 88%, transparent);
   color: var(--ad-text-muted);
+  justify-self: end;
 }
 
 .admin-mobile-card__menu:hover {
@@ -804,19 +812,17 @@ html[data-theme="light"] .admin-users-wrap .btn-primary:hover {
   margin-top: 8px;
   padding-top: 8px;
   border-top: 1px solid color-mix(in srgb, var(--ad-border) 64%, transparent);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 6px 10px;
 }
 
 .admin-mobile-card__foot span {
   color: var(--ad-text-muted);
   font-size: 0.84rem;
   font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .admin-mobile-empty {
@@ -994,6 +1000,34 @@ html[data-theme="light"] .admin-users-wrap .btn-primary:hover {
 
   .btn-icon {
     width: 100%;
+  }
+
+  .admin-mobile-card {
+    padding: 11px;
+  }
+
+  .admin-mobile-card__avatar {
+    width: 36px;
+    min-width: 36px;
+    height: 36px;
+    font-size: 0.94rem;
+  }
+
+  .admin-mobile-card__name {
+    font-size: 0.96rem;
+  }
+
+  .admin-mobile-card__email {
+    font-size: 0.84rem;
+  }
+
+  .admin-mobile-card__foot {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-mobile-card__menu {
+    width: 36px;
+    height: 36px;
   }
 }
 

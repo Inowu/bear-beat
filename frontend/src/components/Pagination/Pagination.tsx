@@ -18,6 +18,34 @@ function Pagination(props: IPagination) {
   const totalPages = Math.max(1, Math.ceil(totalData / limit));
   const canGoBack = currentPage > 0;
   const canGoForward = currentPage + 1 < totalPages;
+  const [isCompactMobile, setIsCompactMobile] = React.useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(max-width: 640px)").matches;
+  });
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const mediaQuery = window.matchMedia("(max-width: 640px)");
+    const handleViewportChange = (event: MediaQueryListEvent) => {
+      setIsCompactMobile(event.matches);
+    };
+
+    setIsCompactMobile(mediaQuery.matches);
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener("change", handleViewportChange);
+    } else {
+      mediaQuery.addListener(handleViewportChange);
+    }
+
+    return () => {
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener("change", handleViewportChange);
+      } else {
+        mediaQuery.removeListener(handleViewportChange);
+      }
+    };
+  }, []);
+
   const changePage = (direction: string, page: number) => {
     if (direction === "back" && currentPage !== 0) {
       startFilter("page", page);
@@ -33,7 +61,7 @@ function Pagination(props: IPagination) {
     }
   };
   return (
-    <div className="pagination-container">
+    <div className={`pagination-container${isCompactMobile ? " is-compact" : ""}`}>
       <div className="left-side">
         <div className="total">
           <p className="left-text">Total de {title}:</p>
@@ -45,7 +73,7 @@ function Pagination(props: IPagination) {
         </div>
         <p className="left-text">Datos por página: {limit}</p>
       </div>
-      <div className="right-side">
+      <div className={`right-side${isCompactMobile ? " right-side--compact" : ""}`}>
         <Button unstyled
           type="button"
           className="page-nav"
@@ -55,31 +83,37 @@ function Pagination(props: IPagination) {
         >
           <ChevronLeft aria-hidden />
         </Button>
-        {showPages(currentPage + 1, totalData, limit).map(
-          (val: number | string, index: number) => {
-            if (typeof val !== "number") {
+        {isCompactMobile ? (
+          <span className="compact-page-indicator" aria-live="polite">
+            Página {currentPage + 1} de {totalPages}
+          </span>
+        ) : (
+          showPages(currentPage + 1, totalData, limit).map(
+            (val: number | string, index: number) => {
+              if (typeof val !== "number") {
+                return (
+                  <span key={"paginate_" + index} className="points" aria-hidden>
+                    {val}
+                  </span>
+                );
+              }
+
+              const isCurrent = currentPage + 1 === val;
               return (
-                <span key={"paginate_" + index} className="points" aria-hidden>
+                <Button unstyled
+                  key={"paginate_" + index}
+                  type="button"
+                  className={isCurrent ? "selected" : "unselected"}
+                  aria-label={`Ir a página ${val}`}
+                  aria-current={isCurrent ? "page" : undefined}
+                  onClick={() => (isCurrent ? null : changePage("direct", val - 1))}
+                  disabled={isCurrent}
+                >
                   {val}
-                </span>
+                </Button>
               );
             }
-
-            const isCurrent = currentPage + 1 === val;
-            return (
-              <Button unstyled
-                key={"paginate_" + index}
-                type="button"
-                className={isCurrent ? "selected" : "unselected"}
-                aria-label={`Ir a página ${val}`}
-                aria-current={isCurrent ? "page" : undefined}
-                onClick={() => (isCurrent ? null : changePage("direct", val - 1))}
-                disabled={isCurrent}
-              >
-                {val}
-              </Button>
-            );
-          }
+          )
         )}
         <Button unstyled
           type="button"
