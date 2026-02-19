@@ -131,8 +131,6 @@ function TopList(props: {
     });
   }, [items, maxRows]);
 
-  const showKeyMeta = rows.length > 0 && rows.every((row) => Boolean(row.bpm) && Boolean(row.camelot));
-
   return (
     <section id={sectionId} className="social-proof__col bb-market-surface" aria-labelledby={headingId}>
       <h3 id={headingId} className="social-proof__col-title">
@@ -179,30 +177,33 @@ function TopList(props: {
                   )}
                 </span>
                 <span className="social-proof__left">
-                  <span
-                    className="social-proof__name"
-                    title={item.artist ? `${item.artist} – ${item.track}` : item.track}
-                  >
-                    {item.artist ? (
-                      <>
-                        <span className="social-proof__artist">{item.artist}</span>
-                        <span className="social-proof__dash" aria-hidden>
-                          {" "}
-                          –{" "}
-                        </span>
-                        <span className="social-proof__track">{item.track}</span>
-                      </>
-                    ) : (
-                      item.track
-                    )}
+                  <span className="social-proof__headline">
+                    <span
+                      className="social-proof__name"
+                      title={item.artist ? `${item.artist} – ${item.track}` : item.track}
+                    >
+                      {item.artist ? (
+                        <>
+                          <span className="social-proof__artist">{item.artist}</span>
+                          <span className="social-proof__dash" aria-hidden>
+                            {" "}
+                            –{" "}
+                          </span>
+                          <span className="social-proof__track">{item.track}</span>
+                        </>
+                      ) : (
+                        item.track
+                      )}
+                    </span>
+                    <span className="social-proof__meta">{formatDownloads(item.downloads)}</span>
                   </span>
-                  {showKeyMeta && (
+                  {(item.bpm || item.camelot) && (
                     <span className="social-proof__row-meta">
-                      {item.bpm} BPM • {item.camelot}
+                      {item.bpm && <span className="social-proof__row-chip">{item.bpm} BPM</span>}
+                      {item.camelot && <span className="social-proof__row-chip">{item.camelot}</span>}
                     </span>
                   )}
                 </span>
-                <span className="social-proof__meta">{formatDownloads(item.downloads)}</span>
               </Button>
           </div>
           );
