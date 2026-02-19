@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { FileMusic, FolderOpen, Search } from "src/icons";
 import { Input } from "src/components/ui";
 import { inferTrackMetadata } from "../../../utils/fileMetadata";
 
@@ -107,7 +106,6 @@ export default function InsideExplorer(props: {
 
         <div className="inside-explorer__card bb-market-surface">
           <div className="inside-explorer__toolbar" aria-hidden>
-            <FolderOpen size={16} />
             <span>Explorador Bear Beat</span>
             {snapshot?.stale && <span className="inside-explorer__stale">Sincronizando…</span>}
           </div>
@@ -126,7 +124,6 @@ export default function InsideExplorer(props: {
           </div>
 
           <label className="inside-explorer__search" htmlFor="inside-explorer-search">
-            <Search size={16} aria-hidden />
             <Input
               id="inside-explorer-search"
               type="search"
@@ -144,7 +141,6 @@ export default function InsideExplorer(props: {
             <ul className="inside-explorer__rows" aria-label="Archivos del explorador">
               {rows.map((row) => (
                 <li key={row.path} className="inside-explorer__row">
-                  <FileMusic size={15} aria-hidden />
                   <span className="inside-explorer__name" title={row.name}>
                     {row.name}
                   </span>
@@ -163,7 +159,7 @@ export default function InsideExplorer(props: {
         </div>
 
         <p className="inside-explorer__proof">
-          ↑ BPM y Key ya incluidos en el nombre. Arrástralos a <strong>Serato</strong>,{" "}
+          BPM y Key ya incluidos en el nombre. Arrástralos a <strong>Serato</strong>,{" "}
           <strong>Rekordbox</strong> o <strong>Virtual DJ</strong> sin preparar nada.
         </p>
       </div>
