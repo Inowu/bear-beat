@@ -2006,7 +2006,7 @@ function Checkout() {
               {benefitList.map((benefit) => (
                 <li key={benefit} className="checkout2026__benefit">
                   <span className="checkout2026__benefitIcon" aria-hidden>
-                    <Check size={16} />
+                    <Check size={13} />
                   </span>
                   <span className="checkout2026__benefitText">{benefit}</span>
                 </li>
