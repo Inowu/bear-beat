@@ -204,26 +204,6 @@ export default function Pricing(props: {
     ],
     [karaokesLabel, totalFilesLabel, totalGenresLabel],
   );
-  const headerPriceCards = useMemo(() => {
-    const cards: Array<{ key: "mxn" | "usd"; monthly: string; daily: string }> = [];
-
-    if (mxnPlan) {
-      cards.push({
-        key: "mxn",
-        monthly: formatMonthlyPriceWithCode(mxnPlan.price, "mxn", numberLocale),
-        daily: `(${formatDailyPrice(getDailyPrice(mxnPlan.price), "mxn", numberLocale)}/día)`,
-      });
-    }
-    if (usdPlan) {
-      cards.push({
-        key: "usd",
-        monthly: formatMonthlyPriceWithCode(usdPlan.price, "usd", numberLocale),
-        daily: `(${formatDailyPrice(getDailyPrice(usdPlan.price), "usd", numberLocale)}/día)`,
-      });
-    }
-
-    return cards;
-  }, [mxnPlan, numberLocale, usdPlan]);
   const mxnDaily = useMemo(
     () => formatDailyPrice(getDailyPrice(mxnPlan?.price ?? 0), "mxn", numberLocale),
     [mxnPlan?.price, numberLocale],
@@ -237,25 +217,14 @@ export default function Pricing(props: {
     : 0;
   const trialSongsLabel =
     trialSongsEstimate > 0 ? `+${formatInt(trialSongsEstimate)}` : "cientos de";
-  const trialAfterLabel = useMemo(() => {
-    const monthlyParts: string[] = [];
-    if (mxnPlan && Number(mxnPlan.price) > 0) {
-      monthlyParts.push(
-        formatMonthlyPriceWithCode(mxnPlan.price, "mxn", numberLocale),
-      );
-    }
-    if (usdPlan && Number(usdPlan.price) > 0) {
-      monthlyParts.push(
-        formatMonthlyPriceWithCode(usdPlan.price, "usd", numberLocale),
-      );
-    }
-
-    if (monthlyParts.length === 0) return "";
-    if (usdPlan && Number(usdPlan.price) > 0) {
-      return `${monthlyParts.join(" · ")} · (${usdDaily}/día)`;
-    }
-    return monthlyParts.join(" · ");
-  }, [mxnPlan, numberLocale, usdDaily, usdPlan]);
+  const mxnTrialAfterLabel = useMemo(() => {
+    if (!mxnPlan || Number(mxnPlan.price) <= 0) return "";
+    return `${formatMonthlyPriceWithCode(mxnPlan.price, "mxn", numberLocale)} · (${mxnDaily}/día)`;
+  }, [mxnDaily, mxnPlan, numberLocale]);
+  const usdTrialAfterLabel = useMemo(() => {
+    if (!usdPlan || Number(usdPlan.price) <= 0) return "";
+    return `${formatMonthlyPriceWithCode(usdPlan.price, "usd", numberLocale)} · (${usdDaily}/día)`;
+  }, [numberLocale, usdDaily, usdPlan]);
 
   return (
     <section id="precio" className="pricing" aria-label="Precio">
@@ -265,16 +234,6 @@ export default function Pricing(props: {
           <p className="home-sub">
             Audios, videos y karaokes por menos de lo que cuesta un café diario.
           </p>
-          {headerPriceCards.length > 0 && (
-            <div className="pricing__daily-grid" aria-label="Precio por mes y por día">
-              {headerPriceCards.map((item) => (
-                <div key={item.key} className="pricing__daily-card">
-                  <span className="pricing__daily-month">{item.monthly}</span>
-                  <span className="pricing__daily-day">{item.daily}</span>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
 
         {(hasMxn || hasUsd) && hasMxn && hasUsd && (
@@ -421,9 +380,9 @@ export default function Pricing(props: {
                     <div className="pricing__trial-note">
                       Si no te convence, cancelas y no pagas nada. Cero riesgo.
                     </div>
-                    {trialAfterLabel ? (
+                    {mxnTrialAfterLabel ? (
                       <div className="pricing__trial-note">
-                        Después: {trialAfterLabel}
+                        Después: {mxnTrialAfterLabel}
                       </div>
                     ) : null}
                   </div>
@@ -512,9 +471,9 @@ export default function Pricing(props: {
                     <div className="pricing__trial-note">
                       Si no te convence, cancelas y no pagas nada. Cero riesgo.
                     </div>
-                    {trialAfterLabel ? (
+                    {usdTrialAfterLabel ? (
                       <div className="pricing__trial-note">
-                        Después: {trialAfterLabel}
+                        Después: {usdTrialAfterLabel}
                       </div>
                     ) : null}
                   </div>
