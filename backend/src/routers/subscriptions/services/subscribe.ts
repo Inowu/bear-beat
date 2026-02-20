@@ -362,28 +362,57 @@ export const subscribe = async ({
 
       log.info('[SUBSCRIPTION] Creating renewal order');
 
-      const createdOrder = await insertOrderOrUpdate(
-        prisma,
-        orderId,
-        subId,
-        user.id,
-        dbPlan,
-        service,
-        reusePaidOrderId,
-      );
-      // Webhooks can be delivered multiple times. Avoid granting duplicate quota rows
-      // when we process the same billing period more than once (idempotency).
+      let createdOrder: Orders | null = null;
+
+      // Webhooks can be delivered multiple times. If this billing period is already present,
+      // reuse the existing order reference and avoid creating a duplicate order row.
       const existingDescargasForPeriod = await prisma.descargasUser.findFirst({
         where: {
           user_id: user.id,
           date_end: expirationDate,
         },
-        select: { id: true },
+        orderBy: { id: 'desc' },
+        select: { id: true, order_id: true },
       });
+
+      if (existingDescargasForPeriod?.order_id) {
+        const existingOrderForPeriod = await prisma.orders.findFirst({
+          where: {
+            id: existingDescargasForPeriod.order_id,
+            user_id: user.id,
+            status: OrderStatus.PAID,
+            is_plan: 1,
+          },
+        });
+
+        if (existingOrderForPeriod) {
+          createdOrder = existingOrderForPeriod;
+        }
+      }
+
+      if (!createdOrder) {
+        createdOrder = await insertOrderOrUpdate(
+          prisma,
+          orderId,
+          subId,
+          user.id,
+          dbPlan,
+          service,
+          reusePaidOrderId,
+        );
+      }
+
       if (existingDescargasForPeriod) {
         log.info(
           `[SUBSCRIPTION] Descargas already exists for period ending ${expirationDate.toISOString()}, skipping insert`,
         );
+
+        if (existingDescargasForPeriod.order_id !== createdOrder.id) {
+          await prisma.descargasUser.update({
+            where: { id: existingDescargasForPeriod.id },
+            data: { order_id: createdOrder.id },
+          });
+        }
       } else {
         await insertInDescargas({
           expirationDate,

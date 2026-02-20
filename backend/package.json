@@ -30,6 +30,7 @@
     "analytics:payment-success:backfill": "node -r ts-node/register scripts/backfillStripePaymentSuccess.ts",
     "analytics:payments-activation:audit": "node -r ts-node/register scripts/auditPaymentsVsActivations.ts",
     "analytics:trial-events:backfill": "node -r ts-node/register scripts/backfillStripeTrialEvents.ts",
+    "orders:dedupe": "node -r ts-node/register scripts/dedupeSubscriptionOrders.ts",
     "downloadHistory:rollup:backfill": "node -r ts-node/register scripts/backfillDownloadHistoryRollupDaily.ts",
     "downloadHistory:purge": "node -r ts-node/register scripts/purgeDownloadHistory.ts",
     "downloadHistory:partitions": "node -r ts-node/register scripts/manageDownloadHistoryPartitions.ts",
