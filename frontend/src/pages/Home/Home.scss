@@ -1515,6 +1515,10 @@ html[data-theme="dark"] .bb-explorer-row:hover {
   justify-content: flex-end;
 }
 
+.bb-track-col--downloaded {
+  min-width: 0;
+}
+
 .bb-track-bpm-badge,
 .bb-track-key-badge,
 .bb-track-format-badge {
@@ -1595,6 +1599,7 @@ html[data-theme="dark"] .bb-explorer-row:hover {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  max-width: 100%;
   color: var(--app-status-success);
   font-size: 0.79rem;
   font-weight: 760;
@@ -1605,6 +1610,11 @@ html[data-theme="dark"] .bb-explorer-row:hover {
 .bb-track-downloaded-check {
   font-weight: 900;
   font-size: 0.9rem;
+}
+
+.bb-track-downloaded-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .bb-file-copy--track {
@@ -1910,18 +1920,6 @@ html[data-theme="dark"] .bb-explorer-row:hover {
   }
 }
 
-.bb-action-btn--downloaded {
-  border-color: color-mix(in srgb, var(--app-status-error) 48%, transparent);
-  background: color-mix(in srgb, var(--app-status-error) 14%, transparent);
-  color: color-mix(in srgb, var(--app-status-error) 88%, var(--app-text-heading));
-
-  &:hover {
-    border-color: color-mix(in srgb, var(--app-status-error) 62%, transparent);
-    background: color-mix(in srgb, var(--app-status-error) 20%, transparent);
-    color: color-mix(in srgb, var(--app-status-error) 94%, var(--app-text-heading));
-  }
-}
-
 .bb-action-btn--loading {
   cursor: default;
 }
@@ -2002,6 +2000,10 @@ html[data-theme="dark"] .bb-explorer-row:hover {
 
   .bb-content-stage {
     min-height: 420px;
+  }
+
+  .bb-track-downloaded-text {
+    display: none;
   }
 }
 

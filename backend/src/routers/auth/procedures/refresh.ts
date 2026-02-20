@@ -3,8 +3,9 @@ import jwt from 'jsonwebtoken';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { publicProcedure } from '../../../procedures/public.procedure';
-import { generateTokens } from './utils/generateTokens';
+import { getStoredRefreshTokenHashes } from './utils/generateTokens';
 import { SessionUser } from '../utils/serialize-user';
+import { generateJwt } from '../utils/generateJwt';
 
 export const refresh = publicProcedure
   .input(
@@ -17,7 +18,6 @@ export const refresh = publicProcedure
       const tokenPayload = jwt.verify(
         refreshToken,
         process.env.JWT_SECRET as string,
-        { ignoreExpiration: true },
       ) as SessionUser;
 
       if (!tokenPayload) {
@@ -47,7 +47,12 @@ export const refresh = publicProcedure
         });
       }
 
-      const isValid = bcrypt.compareSync(refreshToken, user.refresh_token);
+      const storedRefreshTokenHashes = getStoredRefreshTokenHashes(
+        user.refresh_token,
+      );
+      const isValid = storedRefreshTokenHashes.some((hash) =>
+        bcrypt.compareSync(refreshToken, hash),
+      );
 
       if (!isValid) {
         throw new TRPCError({
@@ -56,8 +61,14 @@ export const refresh = publicProcedure
         });
       }
 
-      return await generateTokens(prisma, user);
+      return {
+        token: generateJwt(user),
+        refreshToken,
+      };
     } catch (error: unknown) {
+      if (error instanceof TRPCError) {
+        throw error;
+      }
       if (error instanceof jwt.TokenExpiredError) {
         throw new TRPCError({
           code: 'UNAUTHORIZED',

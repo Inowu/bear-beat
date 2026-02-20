@@ -164,26 +164,27 @@ function readTokenWithMigration(key: string): string | null {
   const sessionStorage = getStorage("session");
   const localStorage = getStorage("local");
 
+  // Canonical source for persistent sessions per device.
+  const fromLocal = safeGet(localStorage, key, "local");
+  if (fromLocal) {
+    memoryStore.set(key, fromLocal);
+    // Keep a session copy for compatibility with older flows/scripts.
+    safeSet(sessionStorage, key, fromLocal, "session");
+    return fromLocal;
+  }
+
+  // Backward compatibility: if a user still has only session-scoped tokens,
+  // promote them to localStorage so the next browser restart keeps the session.
   const fromSession = safeGet(sessionStorage, key, "session");
   if (fromSession) {
     memoryStore.set(key, fromSession);
+    safeSet(localStorage, key, fromSession, "local");
     return fromSession;
   }
 
   const fromMemory = memoryStore.get(key);
   if (fromMemory) {
     return fromMemory;
-  }
-
-  // Backward compatibility: migrate token from localStorage to sessionStorage once.
-  const fromLocal = safeGet(localStorage, key, "local");
-  if (fromLocal) {
-    memoryStore.set(key, fromLocal);
-    const migrated = safeSet(sessionStorage, key, fromLocal, "session");
-    if (migrated) {
-      safeRemove(localStorage, key, "local");
-    }
-    return fromLocal;
   }
 
   return null;
@@ -205,28 +206,12 @@ export function setAuthTokens(token: string, refreshToken: string): void {
   memoryStore.set(ACCESS_TOKEN_KEY, token);
   memoryStore.set(REFRESH_TOKEN_KEY, refreshToken);
 
-  const tokenInSession = safeSet(
-    sessionStorage,
-    ACCESS_TOKEN_KEY,
-    token,
-    "session",
-  );
-  const refreshInSession = safeSet(
-    sessionStorage,
-    REFRESH_TOKEN_KEY,
-    refreshToken,
-    "session",
-  );
-
-  if (tokenInSession && refreshInSession) {
-    safeRemove(localStorage, ACCESS_TOKEN_KEY, "local");
-    safeRemove(localStorage, REFRESH_TOKEN_KEY, "local");
-    return;
-  }
-
-  // Fallback persistence for browsers where sessionStorage is blocked.
+  // Persist by default per-device (survives browser restarts).
   safeSet(localStorage, ACCESS_TOKEN_KEY, token, "local");
   safeSet(localStorage, REFRESH_TOKEN_KEY, refreshToken, "local");
+  // Keep session copies as best effort for compatibility.
+  safeSet(sessionStorage, ACCESS_TOKEN_KEY, token, "session");
+  safeSet(sessionStorage, REFRESH_TOKEN_KEY, refreshToken, "session");
 }
 
 export function clearAuthTokens(): void {

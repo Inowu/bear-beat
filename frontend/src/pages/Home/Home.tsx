@@ -2728,7 +2728,7 @@ function Home() {
                             {alreadyDownloaded && (
                               <span className="bb-track-downloaded">
                                 <span className="bb-track-downloaded-check" aria-hidden>✓</span>
-                                <span className="bb-track-downloaded-text">ya descargado</span>
+                                <span className="bb-track-downloaded-text">Descargado</span>
                               </span>
                             )}
                           </div>
@@ -2756,13 +2756,13 @@ function Home() {
                           {allowFolderDownload && (
                             <Button unstyled
                               type="button"
-                              className={`bb-action-btn bb-action-btn--ghost${alreadyDownloaded ? ' bb-action-btn--downloaded' : ''}`}
+                              className="bb-action-btn bb-action-btn--ghost"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 checkAlbumSize(file, idx);
                               }}
-                              title="Descargar carpeta"
-                              aria-label="Descargar carpeta"
+                              title={alreadyDownloaded ? "Descargar carpeta de nuevo" : "Descargar carpeta"}
+                              aria-label={alreadyDownloaded ? "Descargar carpeta de nuevo" : "Descargar carpeta"}
                             >
                               {loadDownload && index === idx ? (
                                 <Spinner size={2} width={0.2} color="var(--app-accent)" />
@@ -2810,10 +2810,10 @@ function Home() {
                             ) : (
                               <Button unstyled
                                 type="button"
-                                className={`bb-action-btn bb-action-btn--primary${alreadyDownloaded ? ' bb-action-btn--downloaded' : ''}`}
+                                className="bb-action-btn bb-action-btn--primary"
                                 onClick={() => downloadFile(file, idx)}
-                                title="Descargar archivo"
-                                aria-label="Descargar archivo"
+                                title={alreadyDownloaded ? "Descargar archivo de nuevo" : "Descargar archivo"}
+                                aria-label={alreadyDownloaded ? "Descargar archivo de nuevo" : "Descargar archivo"}
                               >
                                 <Download size={18} aria-hidden />
                                 <span className="bb-action-label">Descargar</span>
