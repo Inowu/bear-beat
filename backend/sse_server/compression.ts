@@ -4,10 +4,24 @@ import path from 'path';
 import fs from 'fs';
 import archiver from 'archiver';
 import fastFolderSize from 'fast-folder-size/sync';
-import { log } from './log';
-import { prisma } from './db';
-import { JobStatus } from './job-status';
-import { sse } from './';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { log } = require('./log');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { prisma } = require('./db');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { JobStatus } = require('./job-status');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { sse } = require('./');
+import {
+  buildZipArtifactVersionKey,
+  buildZipArtifactZipName,
+  markZipArtifactBuilding,
+  markZipArtifactFailed,
+  normalizeCatalogFolderPath,
+  publishSharedZipArtifactFile,
+  resolveZipArtifactTier,
+  upsertZipArtifactReady,
+} from '../src/utils/zipArtifact.service';
 
 export const MAX_CONCURRENT_DOWNLOADS = 25;
 const parsedZipCompressionLevel = Number(process.env.ZIP_COMPRESSION_LEVEL);
@@ -17,6 +31,74 @@ const ZIP_COMPRESSION_LEVEL =
   parsedZipCompressionLevel <= 9
     ? parsedZipCompressionLevel
     : 1;
+
+const publishSharedArtifactFromJob = async (job: Job): Promise<void> => {
+  const folderPathNormalized = normalizeCatalogFolderPath(
+    `${job?.data?.folderPathNormalized ?? job?.data?.songsRelativePath ?? ''}`,
+  );
+  const sourceZipName = `${path.basename(job.data.songsRelativePath)}-${
+    job.data.userId
+  }-${job.id}.zip`;
+  const sourceZipPath = path.resolve(
+    __dirname,
+    `../${process.env.COMPRESSED_DIRS_NAME}/${sourceZipName}`,
+  );
+
+  if (!fs.existsSync(sourceZipPath)) {
+    return;
+  }
+
+  const sourceSizeBytes =
+    Number(job?.data?.dirSize ?? 0) ||
+    Number(fastFolderSize(job.data.songsAbsolutePath) ?? 0);
+  const sourceDirMtimeMs =
+    Number(job?.data?.sourceDirMtimeMs ?? 0) ||
+    fs.statSync(job.data.songsAbsolutePath).mtimeMs;
+  const versionKey =
+    `${job?.data?.sourceDirVersionKey ?? ''}`.trim() ||
+    buildZipArtifactVersionKey({
+      folderPathNormalized,
+      sourceSizeBytes,
+      dirMtimeMs: sourceDirMtimeMs,
+    });
+  const zipName = buildZipArtifactZipName(folderPathNormalized, versionKey);
+  const tier = await resolveZipArtifactTier(prisma as any, folderPathNormalized);
+
+  await markZipArtifactBuilding(prisma as any, {
+    folderPathNormalized,
+    versionKey,
+    zipName,
+    sourceSizeBytes,
+    tier,
+  });
+
+  try {
+    const sharedZipPath = await publishSharedZipArtifactFile({
+      sourceZipPath,
+      targetZipName: zipName,
+    });
+    const zipStats = fs.statSync(sharedZipPath);
+
+    await upsertZipArtifactReady(prisma as any, {
+      folderPathNormalized,
+      versionKey,
+      zipName,
+      zipSizeBytes: zipStats.size,
+      sourceSizeBytes,
+      tier,
+    });
+  } catch (error: any) {
+    await markZipArtifactFailed(prisma as any, {
+      folderPathNormalized,
+      versionKey,
+      zipName,
+      sourceSizeBytes,
+      tier,
+      error: `${error?.message ?? error}`,
+    });
+    throw error;
+  }
+};
 
 export const createCompressionWorker = () => {
   const compressionWorker = new Worker(
@@ -169,6 +251,14 @@ export const createCompressionWorker = () => {
         `[WORKER:COMPRESSION:COMPLETED] Error updating job status: ${
           (e as Error).message
         }`,
+      );
+    }
+
+    try {
+      await publishSharedArtifactFromJob(job);
+    } catch (error: any) {
+      log.warn(
+        `[WORKER:COMPRESSION:COMPLETED] Error publishing shared artifact for job ${job.id}: ${error?.message ?? error}`,
       );
     }
 

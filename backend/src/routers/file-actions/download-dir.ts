@@ -2,6 +2,7 @@ import { z } from 'zod';
 import Path from 'path';
 import pm2 from 'pm2';
 import { TRPCError } from '@trpc/server';
+import fs from 'fs';
 import type { PrismaClient } from '@prisma/client';
 import { fileService } from '../../ftp';
 import { log } from '../../server';
@@ -14,6 +15,14 @@ import fastFolderSizeSync from 'fast-folder-size/sync';
 import { JobStatus } from '../../queue/jobStatus';
 import axios from 'axios';
 import { isSafeFileName, resolvePathWithinRoot } from '../../utils/safePaths';
+import { addDays } from 'date-fns';
+import {
+  buildArtifactDownloadUrl,
+  buildZipArtifactVersionKey,
+  findReadyZipArtifact,
+  normalizeCatalogFolderPath,
+  resolveSharedZipArtifactPath,
+} from '../../utils/zipArtifact.service';
 
 const getCompressedRoot = () =>
   Path.resolve(
@@ -56,6 +65,14 @@ const ensureTokenizedDownloadUrl = (
       zipName,
     )}&jobId=${encodeURIComponent(queueJobId)}`;
   }
+};
+
+const getFolderMtimeMs = (fullPath: string): number => {
+  const stats = fs.statSync(fullPath);
+  if (!stats.isDirectory()) {
+    throw new Error('target_path_is_not_directory');
+  }
+  return stats.mtimeMs;
 };
 
 const findReusableDownload = async ({
@@ -186,59 +203,22 @@ export const downloadDir = shieldedProcedure
         message: 'Ocurrió un error al calcular el tamaño de la carpeta',
       });
     }
-
-    // Check if server has enough storage to perform the download
+    let sourceDirMtimeMs: number;
     try {
-      const response = await axios('http://0.0.0.0:8123/');
-
-      const {
-        available_storage: availableStorage,
-      }: {
-        available_storage: number;
-        used_storage: number;
-        total_storage: number;
-      } = response.data;
-
-      // Add a margin to the storage to avoid reaching the limit
-      const storageMargin = 40;
-
-      if (availableStorage <= dirSize + storageMargin) {
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message:
-            'Lo sentimos, por el momento el servidor no cuenta con suficientes recursos para realizar esta descarga',
-        });
-      }
-    } catch (e: unknown) {
-      log.error(`[STORAGE] Couldn't check os storage: ${e}`);
-
+      sourceDirMtimeMs = getFolderMtimeMs(fullPath);
+    } catch {
       throw new TRPCError({
-        code: 'INTERNAL_SERVER_ERROR',
-        message: 'Ocurrió un error al iniciar la descarga',
+        code: 'BAD_REQUEST',
+        message: 'Esa carpeta no existe',
       });
     }
 
-    const inProgressJobs = await prisma.jobs.findMany({
-      where: {
-        status: JobStatus.IN_PROGRESS,
-      },
+    const folderPathNormalized = normalizeCatalogFolderPath(path);
+    const sourceDirVersionKey = buildZipArtifactVersionKey({
+      folderPathNormalized,
+      sourceSizeBytes: dirSize,
+      dirMtimeMs: sourceDirMtimeMs,
     });
-
-    // Only allow one download per user
-    if (inProgressJobs.find((job) => job.user_id === user.id)) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message:
-          'Ya tienes una descarga en progreso, solo se permite una descarga por usuario a la vez',
-      });
-    }
-
-    if (inProgressJobs.length >= Number(process.env.MAX_CONCURRENT_DOWNLOADS)) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'Hay demasiadas descargas en progreso, intentalo más tarde',
-      });
-    }
 
     const activePlans = await prisma.descargasUser.findMany({
       where: {
@@ -371,6 +351,76 @@ export const downloadDir = shieldedProcedure
       });
     }
 
+    const readyArtifact = await findReadyZipArtifact(prisma, {
+      folderPathNormalized,
+      versionKey: sourceDirVersionKey,
+    });
+
+    if (readyArtifact) {
+      const artifactZipPath = resolveSharedZipArtifactPath(readyArtifact.zip_name);
+      const artifactExists = artifactZipPath
+        ? await fileService.exists(artifactZipPath)
+        : false;
+
+      if (artifactExists) {
+        const downloadedAt = new Date();
+        const artifactDownloadUrl = buildArtifactDownloadUrl({
+          artifactId: readyArtifact.id,
+          zipName: readyArtifact.zip_name,
+        });
+
+        await prisma.dir_downloads.create({
+          data: {
+            userId: user.id,
+            date: downloadedAt,
+            size: BigInt(dirSize),
+            dirName: Path.basename(fullPath),
+            downloadUrl: artifactDownloadUrl,
+            expirationDate: addDays(downloadedAt, 1),
+          },
+        });
+
+        try {
+          await prisma.downloadHistory.create({
+            data: {
+              userId: user.id,
+              size: dirSize,
+              date: downloadedAt,
+              fileName: path,
+              isFolder: true,
+            },
+          });
+        } catch (e: any) {
+          log.warn(
+            `[DOWNLOAD:DIR] Failed to write download_history on artifact hit: ${e?.message ?? e}`,
+          );
+        }
+
+        await prisma.ftpquotatallies.update({
+          where: {
+            id: quotaTallies.id,
+          },
+          data: {
+            bytes_out_used: {
+              increment: BigInt(dirSize),
+            },
+          },
+        });
+
+        log.info(
+          `[DOWNLOAD:DIR] Artifact cache hit for path ${path} (artifactId=${readyArtifact.id})`,
+        );
+
+        return {
+          mode: 'artifact_ready' as const,
+          jobId: null,
+          downloadUrl: artifactDownloadUrl,
+          cacheTier: readyArtifact.tier,
+          reused: true,
+        };
+      }
+    }
+
     const reusableDownload = await findReusableDownload({
       prisma,
       userId: user.id,
@@ -411,10 +461,61 @@ export const downloadDir = shieldedProcedure
       );
 
       return {
+        mode: 'artifact_ready' as const,
         jobId: reusableDownload.jobId,
         downloadUrl: reusableDownload.downloadUrl,
+        cacheTier: undefined,
         reused: true,
       };
+    }
+
+    // Check if server has enough storage to perform a new compression.
+    try {
+      const response = await axios('http://0.0.0.0:8123/');
+
+      const {
+        available_storage: availableStorage,
+      }: {
+        available_storage: number;
+        used_storage: number;
+        total_storage: number;
+      } = response.data;
+
+      const storageMargin = 40;
+      if (availableStorage <= dirSize + storageMargin) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message:
+            'Lo sentimos, por el momento el servidor no cuenta con suficientes recursos para realizar esta descarga',
+        });
+      }
+    } catch (e: unknown) {
+      log.error(`[STORAGE] Couldn't check os storage: ${e}`);
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Ocurrió un error al iniciar la descarga',
+      });
+    }
+
+    const inProgressJobs = await prisma.jobs.findMany({
+      where: {
+        status: JobStatus.IN_PROGRESS,
+      },
+    });
+
+    if (inProgressJobs.find((job) => job.user_id === user.id)) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message:
+          'Ya tienes una descarga en progreso, solo se permite una descarga por usuario a la vez',
+      });
+    }
+
+    if (inProgressJobs.length >= Number(process.env.MAX_CONCURRENT_DOWNLOADS)) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Hay demasiadas descargas en progreso, intentalo más tarde',
+      });
     }
 
     try {
@@ -449,6 +550,9 @@ export const downloadDir = shieldedProcedure
       const job = await compressionQueue.add(`compress-${user.id}`, {
         songsAbsolutePath: fullPath,
         songsRelativePath: path,
+        folderPathNormalized,
+        sourceDirMtimeMs,
+        sourceDirVersionKey,
         userId: user.id,
         dirDownloadId: dirDownload.id,
         ftpAccountName:
@@ -545,7 +649,10 @@ export const downloadDir = shieldedProcedure
       });
 
       return {
+        mode: 'queued_user_job' as const,
         jobId: job.id,
+        downloadUrl: undefined,
+        cacheTier: undefined,
         reused: false,
       };
     } catch (e: any) {

@@ -486,6 +486,29 @@ model dir_downloads {
   expirationDate DateTime? @db.DateTime(0)
 }
 
+model compressed_dir_artifacts {
+  id                     Int                 @id @default(autoincrement())
+  folder_path_normalized String              @db.VarChar(500)
+  version_key            String              @db.VarChar(128)
+  zip_name               String              @db.VarChar(255)
+  zip_size_bytes         BigInt              @default(0) @db.UnsignedBigInt
+  source_size_bytes      BigInt              @default(0) @db.UnsignedBigInt
+  tier                   zip_artifact_tier   @default(warm)
+  status                 zip_artifact_status @default(building)
+  hit_count              BigInt              @default(0) @db.UnsignedBigInt
+  last_accessed_at       DateTime?           @db.DateTime(0)
+  expires_at             DateTime            @db.DateTime(0)
+  created_at             DateTime            @default(now()) @db.DateTime(0)
+  updated_at             DateTime            @updatedAt @db.DateTime(0)
+  last_error             String?             @db.LongText
+
+  @@unique([folder_path_normalized, version_key], map: "uniq_compressed_dir_artifacts_folder_version")
+  @@index([status, expires_at], map: "idx_compressed_dir_artifacts_status_expires_at")
+  @@index([tier, last_accessed_at], map: "idx_compressed_dir_artifacts_tier_last_accessed_at")
+  @@index([expires_at], map: "idx_compressed_dir_artifacts_expires_at")
+  @@map("compressed_dir_artifacts")
+}
+
 model DownloadHistory {
   id       Int      @id @default(autoincrement())
   userId   Int
@@ -648,4 +671,15 @@ enum ftpquotatallies_history_quota_type {
   group
   class
   all
+}
+
+enum zip_artifact_tier {
+  hot
+  warm
+}
+
+enum zip_artifact_status {
+  ready
+  building
+  failed
 }

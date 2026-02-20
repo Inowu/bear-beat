@@ -3,6 +3,8 @@ import Path from 'path';
 import { prisma } from '../db';
 import { log } from '../server';
 import { isSafeFileName, resolvePathWithinRoot } from './safePaths';
+import { parseDownloadDirUrl } from './zipArtifact.service';
+import { runZipArtifactCleanupSweep } from './zipArtifactCleanup';
 
 type CleanupSweepResult = {
   expiredRows: number;
@@ -10,18 +12,27 @@ type CleanupSweepResult = {
   deletedFiles: number;
   missingFiles: number;
   errors: number;
+  artifactLockAcquired: boolean;
+  artifactExpiredRows: number;
+  artifactExpiredDeletedRows: number;
+  artifactExpiredDeletedFiles: number;
+  artifactExpiredMissingFiles: number;
+  artifactExpiredErrors: number;
+  artifactEvictedRows: number;
+  artifactEvictedFiles: number;
+  artifactEvictionErrors: number;
+  artifactDiskBudgetBytes: bigint;
+  artifactDiskUsedBytes: bigint;
 };
 
 const parseZipNameFromDownloadUrl = (downloadUrl: string | null | undefined): string | null => {
-  const raw = `${downloadUrl ?? ''}`.trim();
-  if (!raw) return null;
-  try {
-    const parsed = new URL(raw);
-    const dirName = `${parsed.searchParams.get('dirName') ?? ''}`.trim();
-    return isSafeFileName(dirName) ? dirName : null;
-  } catch {
-    return null;
-  }
+  const parsed = parseDownloadDirUrl(downloadUrl);
+  return parsed.dirName && isSafeFileName(parsed.dirName) ? parsed.dirName : null;
+};
+
+const isArtifactDownloadUrl = (downloadUrl: string | null | undefined): boolean => {
+  const parsed = parseDownloadDirUrl(downloadUrl);
+  return Number.isInteger(parsed.artifactId) && Number(parsed.artifactId) > 0;
 };
 
 const getCompressedDirsRoot = (): string => {
@@ -41,6 +52,10 @@ const resolveZipName = (
   },
   queueJobByDbId: Map<number, string>,
 ): string | null => {
+  if (isArtifactDownloadUrl(dirDownload.downloadUrl)) {
+    return null;
+  }
+
   const fromUrl = parseZipNameFromDownloadUrl(dirDownload.downloadUrl);
   if (fromUrl) return fromUrl;
 
@@ -52,6 +67,20 @@ const resolveZipName = (
 };
 
 export const runCompressedDirsCleanupSweep = async (): Promise<CleanupSweepResult> => {
+  const emptyArtifactCounters = {
+    artifactLockAcquired: false,
+    artifactExpiredRows: 0,
+    artifactExpiredDeletedRows: 0,
+    artifactExpiredDeletedFiles: 0,
+    artifactExpiredMissingFiles: 0,
+    artifactExpiredErrors: 0,
+    artifactEvictedRows: 0,
+    artifactEvictedFiles: 0,
+    artifactEvictionErrors: 0,
+    artifactDiskBudgetBytes: BigInt(0),
+    artifactDiskUsedBytes: BigInt(0),
+  };
+
   const now = new Date();
   const expiredDownloads = await prisma.dir_downloads.findMany({
     where: {
@@ -70,12 +99,24 @@ export const runCompressedDirsCleanupSweep = async (): Promise<CleanupSweepResul
   });
 
   if (expiredDownloads.length === 0) {
+    const artifactCleanup = await runZipArtifactCleanupSweep(prisma);
     return {
       expiredRows: 0,
       deletedRows: 0,
       deletedFiles: 0,
       missingFiles: 0,
       errors: 0,
+      artifactLockAcquired: artifactCleanup.lockAcquired,
+      artifactExpiredRows: artifactCleanup.expiredRows,
+      artifactExpiredDeletedRows: artifactCleanup.expiredDeletedRows,
+      artifactExpiredDeletedFiles: artifactCleanup.expiredDeletedFiles,
+      artifactExpiredMissingFiles: artifactCleanup.expiredMissingFiles,
+      artifactExpiredErrors: artifactCleanup.expiredErrors,
+      artifactEvictedRows: artifactCleanup.evictedRows,
+      artifactEvictedFiles: artifactCleanup.evictedFiles,
+      artifactEvictionErrors: artifactCleanup.evictionErrors,
+      artifactDiskBudgetBytes: artifactCleanup.diskBudgetBytes,
+      artifactDiskUsedBytes: artifactCleanup.diskUsedBytes,
     };
   }
 
@@ -111,6 +152,11 @@ export const runCompressedDirsCleanupSweep = async (): Promise<CleanupSweepResul
   let errors = 0;
 
   for (const download of expiredDownloads) {
+    if (isArtifactDownloadUrl(download.downloadUrl)) {
+      rowsToDelete.push(download.id);
+      continue;
+    }
+
     const zipName = resolveZipName(download, queueJobByDbId);
     if (!zipName || !isSafeFileName(zipName)) {
       rowsToDelete.push(download.id);
@@ -148,11 +194,36 @@ export const runCompressedDirsCleanupSweep = async (): Promise<CleanupSweepResul
     });
   }
 
+  let artifactCleanup;
+  try {
+    artifactCleanup = await runZipArtifactCleanupSweep(prisma);
+  } catch (error: any) {
+    log.warn(
+      `[ZIP_ARTIFACT] Cleanup sweep failed: ${error?.message ?? 'unknown error'}`,
+    );
+    artifactCleanup = null;
+  }
+
   return {
     expiredRows: expiredDownloads.length,
     deletedRows: rowsToDelete.length,
     deletedFiles,
     missingFiles,
     errors,
+    ...(artifactCleanup
+      ? {
+          artifactLockAcquired: artifactCleanup.lockAcquired,
+          artifactExpiredRows: artifactCleanup.expiredRows,
+          artifactExpiredDeletedRows: artifactCleanup.expiredDeletedRows,
+          artifactExpiredDeletedFiles: artifactCleanup.expiredDeletedFiles,
+          artifactExpiredMissingFiles: artifactCleanup.expiredMissingFiles,
+          artifactExpiredErrors: artifactCleanup.expiredErrors,
+          artifactEvictedRows: artifactCleanup.evictedRows,
+          artifactEvictedFiles: artifactCleanup.evictedFiles,
+          artifactEvictionErrors: artifactCleanup.evictionErrors,
+          artifactDiskBudgetBytes: artifactCleanup.diskBudgetBytes,
+          artifactDiskUsedBytes: artifactCleanup.diskUsedBytes,
+        }
+      : emptyArtifactCounters),
   };
 };

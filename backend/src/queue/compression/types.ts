@@ -1,6 +1,9 @@
 export type CompressionJob = {
   songsRelativePath: string;
   songsAbsolutePath: string;
+  folderPathNormalized: string;
+  sourceDirMtimeMs: number;
+  sourceDirVersionKey: string;
   userId: number;
   dirDownloadId: number;
   // The name of the ftp account used to download the directory

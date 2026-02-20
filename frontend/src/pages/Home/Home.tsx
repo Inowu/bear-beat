@@ -1444,15 +1444,28 @@ function Home() {
     };
     try {
       const response = await trpc.ftp.downloadDir.query(body);
+      const mode = `${response?.mode ?? ''}`.trim();
+      const resolvedMode =
+        mode === 'artifact_ready' || mode === 'queued_user_job'
+          ? mode
+          : response?.downloadUrl
+            ? 'artifact_ready'
+            : 'queued_user_job';
 
-      if (response?.downloadUrl) {
+      if (resolvedMode === 'artifact_ready' && response?.downloadUrl) {
         setShowDownload(false);
         triggerBrowserDownload(
           `${response.downloadUrl}&token=${encodeURIComponent(userToken)}`,
           file.name,
         );
         markItemAsDownloaded(path, 'd');
-        appToast.success(`Descarga iniciada: ${truncateToastLabel(file.name, 40)}`);
+        const cacheTierLabel =
+          response?.cacheTier === 'hot'
+            ? ' (cache caliente)'
+            : response?.cacheTier === 'warm'
+              ? ' (cache)'
+              : '';
+        appToast.success(`Descarga inmediata${cacheTierLabel}: ${truncateToastLabel(file.name, 40)}`);
         trackGrowthMetric(GROWTH_METRICS.FILE_DOWNLOAD_SUCCEEDED, {
           fileType: 'folder',
           pagePath: `/${path}`,
@@ -1468,7 +1481,7 @@ function Home() {
         name: file.name,
       });
       markItemAsDownloaded(path, 'd');
-      appToast.success(`Descarga iniciada: ${truncateToastLabel(file.name, 40)}`);
+      appToast.info(`Preparando archivo: ${truncateToastLabel(file.name, 40)}`);
       trackGrowthMetric(GROWTH_METRICS.FILE_DOWNLOAD_SUCCEEDED, {
         fileType: 'folder',
         pagePath: `/${path}`,

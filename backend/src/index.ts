@@ -62,6 +62,9 @@ import {
   sweepWebhookInboxEvents,
 } from './webhookInbox/service';
 import { runCompressedDirsCleanupSweep } from './utils/compressedDirsCleanup';
+import { getZipArtifactConfig } from './utils/zipArtifact.service';
+import { runZipArtifactPrewarmSweep } from './utils/zipArtifactPrewarm';
+import { prisma } from './db';
 
 const DEFAULT_CORS_ORIGINS = [
   'http://localhost:3000',
@@ -669,10 +672,14 @@ async function main() {
             result.deletedRows > 0 ||
             result.deletedFiles > 0 ||
             result.missingFiles > 0 ||
-            result.errors > 0
+            result.errors > 0 ||
+            result.artifactExpiredDeletedRows > 0 ||
+            result.artifactEvictedRows > 0 ||
+            result.artifactExpiredErrors > 0 ||
+            result.artifactEvictionErrors > 0
           ) {
             log.info(
-              `[COMPRESSED_DIRS] Cleanup: expiredRows=${result.expiredRows} deletedRows=${result.deletedRows} deletedFiles=${result.deletedFiles} missingFiles=${result.missingFiles} errors=${result.errors}`,
+              `[COMPRESSED_DIRS] Cleanup: expiredRows=${result.expiredRows} deletedRows=${result.deletedRows} deletedFiles=${result.deletedFiles} missingFiles=${result.missingFiles} errors=${result.errors} artifactLock=${result.artifactLockAcquired ? 'yes' : 'no'} artifactExpiredRows=${result.artifactExpiredRows} artifactExpiredDeletedRows=${result.artifactExpiredDeletedRows} artifactEvictedRows=${result.artifactEvictedRows} artifactDiskUsedBytes=${result.artifactDiskUsedBytes.toString()} artifactDiskBudgetBytes=${result.artifactDiskBudgetBytes.toString()} artifactErrors=${result.artifactExpiredErrors + result.artifactEvictionErrors}`,
             );
           }
         } catch (error: any) {
@@ -695,6 +702,47 @@ async function main() {
 
       log.info(
         `[COMPRESSED_DIRS] Cleanup enabled every ${compressedDirsCleanupIntervalMinutes} minute(s)`,
+      );
+    }
+
+    const zipPrewarmConfig = getZipArtifactConfig();
+    const zipPrewarmIntervalMinutes = zipPrewarmConfig.prewarmIntervalMinutes;
+    if (zipPrewarmIntervalMinutes > 0) {
+      let prewarmInProgress = false;
+      const runPrewarmSweep = async () => {
+        if (prewarmInProgress) return;
+        prewarmInProgress = true;
+        try {
+          const result = await runZipArtifactPrewarmSweep(prisma);
+          if (
+            result.candidates > 0 ||
+            result.built > 0 ||
+            result.failed > 0
+          ) {
+            log.info(
+              `[ZIP_PREWARM] Sweep: lock=${result.lockAcquired ? 'yes' : 'no'} candidates=${result.candidates} attempted=${result.attempted} built=${result.built} skippedReady=${result.skippedReady} skippedMissing=${result.skippedMissingFolder} skippedBuilding=${result.skippedBuilding} failed=${result.failed}`,
+            );
+          }
+        } catch (error: any) {
+          log.warn(
+            `[ZIP_PREWARM] Sweep failed: ${error?.message ?? 'unknown error'}`,
+          );
+        } finally {
+          prewarmInProgress = false;
+        }
+      };
+
+      void runPrewarmSweep();
+      const prewarmIntervalMs = zipPrewarmIntervalMinutes * 60 * 1000;
+      const prewarmIntervalRef = setInterval(() => {
+        void runPrewarmSweep();
+      }, prewarmIntervalMs);
+      if (typeof prewarmIntervalRef.unref === 'function') {
+        prewarmIntervalRef.unref();
+      }
+
+      log.info(
+        `[ZIP_PREWARM] Enabled every ${zipPrewarmIntervalMinutes} minute(s) with concurrency ${zipPrewarmConfig.prewarmConcurrency}`,
       );
     }
 

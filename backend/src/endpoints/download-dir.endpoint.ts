@@ -7,6 +7,21 @@ import { prisma } from '../db';
 import { JobStatus } from '../queue/jobStatus';
 import { fileService } from '../ftp';
 import { isSafeFileName, resolvePathWithinRoot } from '../utils/safePaths';
+import {
+  findReadyZipArtifactById,
+  getCompressedDirsRoot,
+  parseDownloadDirUrl,
+  resolveSharedZipArtifactPath,
+  touchZipArtifactAccess,
+} from '../utils/zipArtifact.service';
+
+const parsePositiveInt = (raw: string | undefined): number | null => {
+  if (!raw || typeof raw !== 'string') return null;
+  if (!/^\d+$/.test(raw)) return null;
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed <= 0) return null;
+  return Math.floor(parsed);
+};
 
 export const downloadDirEndpoint = async (req: Request, res: Response) => {
   const token = req.query.token as string;
@@ -25,9 +40,9 @@ export const downloadDirEndpoint = async (req: Request, res: Response) => {
     return res.status(401).send({ error: 'Unauthorized' });
   }
 
-  const jobId = req.query.jobId as string;
-
-  if (!jobId || typeof jobId !== 'string') {
+  const artifactId = parsePositiveInt(req.query.artifactId as string | undefined);
+  const jobId = req.query.jobId as string | undefined;
+  if (!artifactId && (!jobId || typeof jobId !== 'string')) {
     return res.status(400).send({ error: 'Bad request' });
   }
 
@@ -47,19 +62,118 @@ export const downloadDirEndpoint = async (req: Request, res: Response) => {
     });
   }
 
+  if (artifactId) {
+    const artifact = await findReadyZipArtifactById(prisma, artifactId);
+    if (!artifact) {
+      return res
+        .status(404)
+        .send({ error: 'Ocurrió un error al descargar la carpeta' });
+    }
+
+    if (providedDirName !== artifact.zip_name) {
+      log.warn(
+        `[DOWNLOAD] artifact dirName mismatch: artifactId=${artifactId} expected=${artifact.zip_name} got=${providedDirName}`,
+      );
+      return res
+        .status(404)
+        .send({ error: 'Ocurrió un error al descargar la carpeta' });
+    }
+
+    const downloadRecord = await prisma.dir_downloads.findFirst({
+      where: {
+        userId: user.id,
+        expirationDate: {
+          gt: new Date(),
+        },
+        downloadUrl: {
+          contains: `artifactId=${artifactId}`,
+        },
+      },
+      orderBy: {
+        date: 'desc',
+      },
+    });
+
+    if (!downloadRecord) {
+      log.warn(
+        `[DOWNLOAD] Artifact download record missing for artifactId=${artifactId}`,
+      );
+      return res
+        .status(404)
+        .send({ error: 'Ocurrió un error al descargar la carpeta' });
+    }
+
+    const downloadUrlParts = parseDownloadDirUrl(downloadRecord.downloadUrl);
+    if (
+      downloadUrlParts.artifactId !== artifactId ||
+      !downloadUrlParts.dirName ||
+      downloadUrlParts.dirName !== providedDirName
+    ) {
+      log.warn(
+        `[DOWNLOAD] Artifact URL mismatch for artifactId=${artifactId}`,
+      );
+      return res
+        .status(404)
+        .send({ error: 'Ocurrió un error al descargar la carpeta' });
+    }
+
+    const sharedZipPath = resolveSharedZipArtifactPath(artifact.zip_name);
+    if (!sharedZipPath) {
+      return res.status(400).send({ error: 'Bad request' });
+    }
+
+    const exists = await fileService.exists(sharedZipPath);
+    if (!exists) {
+      return res.status(404).send({ error: 'Esa carpeta no existe' });
+    }
+
+    try {
+      await touchZipArtifactAccess(prisma, artifactId);
+    } catch {
+      // noop
+    }
+
+    try {
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${Path.basename(
+          sharedZipPath,
+        )}"; filename*=UTF-8''${encodeURIComponent(Path.basename(sharedZipPath))}`,
+      );
+    } catch (e: any) {
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename*=UTF-8''${encodeURIComponent(
+          Path.basename(sharedZipPath),
+        )}`,
+      );
+      log.warn(
+        `[DOWNLOAD] Error setting artifact header: ${e?.message ?? e}, file: ${Path.basename(sharedZipPath)}`,
+      );
+    }
+
+    log.info(`[DOWNLOAD] Downloading artifact ${artifactId}`);
+    return res.sendFile(sharedZipPath);
+  }
+
+  const normalizedJobId = `${jobId ?? ''}`.trim();
+  if (!normalizedJobId) {
+    return res.status(400).send({ error: 'Bad request' });
+  }
+
   const job = await prisma.jobs.findFirst({
     where: {
       AND: [
         { status: JobStatus.COMPLETED },
         { queue: process.env.COMPRESSION_QUEUE_NAME },
-        { jobId: jobId },
+        { jobId: normalizedJobId },
         { user_id: user.id },
       ],
     },
   });
 
   if (!job) {
-    log.error(`[DOWNLOAD] Job not found for jobId ${jobId}`);
+    log.error(`[DOWNLOAD] Job not found for jobId ${normalizedJobId}`);
     return res
       .status(404)
       .send({ error: 'Ocurrió un error al descargar la carpeta' });
@@ -73,19 +187,19 @@ export const downloadDirEndpoint = async (req: Request, res: Response) => {
   });
 
   if (!download) {
-    log.error(`[DOWNLOAD] Download not found for jobId ${jobId}`);
+    log.error(`[DOWNLOAD] Download not found for jobId ${normalizedJobId}`);
     return res
       .status(404)
       .send({ error: 'Ocurrió un error al descargar la carpeta' });
   }
 
   if (download.expirationDate && new Date() >= download.expirationDate) {
-    log.error(`[DOWNLOAD] Download expired for jobId ${jobId}`);
+    log.error(`[DOWNLOAD] Download expired for jobId ${normalizedJobId}`);
     return res.status(400).send({ error: 'Este url ha expirado' });
   }
 
   const downloadUrl = `${download.downloadUrl ?? ''}`.trim();
-  const expectedSuffix = `-${user.id}-${jobId}.zip`;
+  const expectedSuffix = `-${user.id}-${normalizedJobId}.zip`;
 
   let expectedDirName = '';
   let expectedJobId = '';
@@ -102,14 +216,14 @@ export const downloadDirEndpoint = async (req: Request, res: Response) => {
   if (expectedDirName) {
     if (!isSafeFileName(expectedDirName)) {
       log.error(
-        `[DOWNLOAD] Invalid dirName in downloadUrl for jobId ${jobId}`,
+        `[DOWNLOAD] Invalid dirName in downloadUrl for jobId ${normalizedJobId}`,
       );
       return res.status(404).send({ error: 'Ocurrió un error al descargar la carpeta' });
     }
 
-    if (expectedJobId && expectedJobId !== jobId) {
+    if (expectedJobId && expectedJobId !== normalizedJobId) {
       log.error(
-        `[DOWNLOAD] jobId mismatch: url=${expectedJobId} req=${jobId}`,
+        `[DOWNLOAD] jobId mismatch: url=${expectedJobId} req=${normalizedJobId}`,
       );
       return res.status(404).send({ error: 'Ocurrió un error al descargar la carpeta' });
     }
@@ -126,17 +240,14 @@ export const downloadDirEndpoint = async (req: Request, res: Response) => {
     // downloading only the zip that matches the worker naming scheme for this user+job.
     if (!providedDirName.endsWith(expectedSuffix)) {
       log.error(
-        `[DOWNLOAD] Missing downloadUrl and dirName does not match expected suffix for jobId ${jobId}`,
+        `[DOWNLOAD] Missing downloadUrl and dirName does not match expected suffix for jobId ${normalizedJobId}`,
       );
       return res.status(404).send({ error: 'Ocurrió un error al descargar la carpeta' });
     }
     expectedDirName = providedDirName;
   }
 
-  const compressedRoot = Path.resolve(
-    __dirname,
-    `../../${process.env.COMPRESSED_DIRS_NAME}`,
-  );
+  const compressedRoot = getCompressedDirsRoot();
   const fullPath = resolvePathWithinRoot(compressedRoot, expectedDirName);
   if (!fullPath) {
     return res.status(400).send({ error: 'Bad request' });
@@ -145,12 +256,12 @@ export const downloadDirEndpoint = async (req: Request, res: Response) => {
   const dirExists = await fileService.exists(fullPath);
   if (!dirExists) {
     log.error(
-      `[DOWNLOAD] Directory not found for jobId ${jobId}`,
+      `[DOWNLOAD] Directory not found for jobId ${normalizedJobId}`,
     );
     return res.status(404).send({ error: 'Esa carpeta no existe' });
   }
 
-  log.info(`[DOWNLOAD] Downloading directory for jobId ${jobId}`);
+  log.info(`[DOWNLOAD] Downloading directory for jobId ${normalizedJobId}`);
 
   try {
     // Can fail with weird characters

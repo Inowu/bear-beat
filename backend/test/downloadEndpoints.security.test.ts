@@ -19,6 +19,11 @@ jest.mock("../src/db", () => ({
     downloadHistoryRollupDaily: { upsert: jest.fn() },
     jobs: { findFirst: jest.fn() },
     dir_downloads: { findFirst: jest.fn() },
+    compressed_dir_artifacts: {
+      findFirst: jest.fn(),
+      findUnique: jest.fn(),
+      update: jest.fn(),
+    },
   },
 }));
 
@@ -181,6 +186,54 @@ describe("Download endpoints security (path traversal / IDOR guardrails)", () =>
     expect((res.sendFile as unknown as jest.Mock).mock.calls[0]?.[0]).toEqual(
       expect.stringContaining(
         `${Path.sep}${process.env.COMPRESSED_DIRS_NAME}${Path.sep}expected.zip`,
+      ),
+    );
+  });
+
+  it("downloadDirEndpoint: serves shared artifact zip only with a valid user download record", async () => {
+    const token = jwt.sign(
+      { id: 1, username: "jest-user", role: "normal", email: "jest@local.test" },
+      process.env.JWT_SECRET as string,
+    );
+
+    (prisma.users.findFirst as jest.Mock).mockResolvedValue({ verified: true });
+    (prisma.compressed_dir_artifacts.findFirst as jest.Mock).mockResolvedValue({
+      id: 77,
+      zip_name: "shared-zip.zip",
+      tier: "hot",
+    });
+    (prisma.dir_downloads.findFirst as jest.Mock).mockResolvedValue({
+      downloadUrl:
+        "http://localhost:5001/download-dir?artifactId=77&dirName=shared-zip.zip",
+      expirationDate: new Date(Date.now() + 60_000),
+      date: new Date(),
+    });
+    (prisma.compressed_dir_artifacts.findUnique as jest.Mock).mockResolvedValue({
+      id: 77,
+      tier: "hot",
+    });
+    (prisma.compressed_dir_artifacts.update as jest.Mock).mockResolvedValue({
+      id: 77,
+      tier: "hot",
+    });
+    (fileService.exists as jest.Mock).mockResolvedValue(true);
+
+    const req = {
+      query: {
+        token,
+        artifactId: "77",
+        dirName: "shared-zip.zip",
+      },
+    } as unknown as Request;
+
+    const res = makeRes();
+    await downloadDirEndpoint(req, res);
+
+    expect(fileService.exists).toHaveBeenCalledTimes(1);
+    expect(res.sendFile).toHaveBeenCalledTimes(1);
+    expect((res.sendFile as unknown as jest.Mock).mock.calls[0]?.[0]).toEqual(
+      expect.stringContaining(
+        `${Path.sep}${process.env.COMPRESSED_DIRS_NAME}${Path.sep}shared${Path.sep}shared-zip.zip`,
       ),
     );
   });
