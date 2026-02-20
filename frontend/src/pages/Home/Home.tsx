@@ -459,6 +459,8 @@ function Home() {
   const [forYouLoading, setForYouLoading] = useState(true);
   const [forYouEligible, setForYouEligible] = useState(false);
   const [forYouPreviewPath, setForYouPreviewPath] = useState<string | null>(null);
+  const [forYouDownloadPath, setForYouDownloadPath] = useState<string | null>(null);
+  const [downloadedPathFlags, setDownloadedPathFlags] = useState<Record<string, true>>({});
   const [inlinePreviewPath, setInlinePreviewPath] = useState<string | null>(null);
   const [inlinePreviewProgress, setInlinePreviewProgress] = useState(0);
   const [inlinePreviewPlaying, setInlinePreviewPlaying] = useState(false);
@@ -611,6 +613,9 @@ function Home() {
   const markItemAsDownloaded = (path: string, itemType: '-' | 'd') => {
     const normalizedTargetPath = normalizeDownloadMarkerPath(path);
     if (!normalizedTargetPath) return;
+    setDownloadedPathFlags((prev) =>
+      prev[normalizedTargetPath] ? prev : { ...prev, [normalizedTargetPath]: true }
+    );
 
     const markRows = (rows: IFiles[]): IFiles[] =>
       rows.map((item) => {
@@ -1045,6 +1050,31 @@ function Home() {
     }
   };
 
+  const startForYouDownload = async (recommendation: ForYouRecommendation) => {
+    const normalizedPath = normalizeFilePath(recommendation.path).replace(/^\/+/, '');
+    if (!normalizedPath || forYouDownloadPath === normalizedPath) return;
+
+    const recommendationFile: IFiles = {
+      name: recommendation.name,
+      type: recommendation.type === 'd' ? 'd' : '-',
+      path: normalizedPath,
+      size: recommendation.size,
+      metadata: recommendation.metadata ?? undefined,
+      already_downloaded: false,
+    };
+
+    setForYouDownloadPath(normalizedPath);
+    try {
+      if (recommendationFile.type === 'd') {
+        await startAlbumDownload(recommendationFile, -1);
+      } else {
+        await downloadFile(recommendationFile, -1);
+      }
+    } finally {
+      setForYouDownloadPath(null);
+    }
+  };
+
   const openForYouPreview = async (recommendation: ForYouRecommendation) => {
     if (!recommendation.hasPreview) return;
     if (forYouPreviewPath === recommendation.path) return;
@@ -1091,26 +1121,6 @@ function Home() {
     } finally {
       setForYouPreviewPath(null);
     }
-  };
-
-  const openForYouLocation = async (recommendation: ForYouRecommendation) => {
-    const normalizedPath = normalizeFilePath(recommendation.path).replace(/^\/+|\/+$/g, '');
-    if (!normalizedPath) return;
-    const folderPath = normalizedPath.includes('/')
-      ? normalizedPath.slice(0, normalizedPath.lastIndexOf('/'))
-      : '';
-    if (!folderPath) {
-      await goToRoot();
-      return;
-    }
-
-    await openRecentPack({
-      folderPath,
-      name: recommendation.name,
-      fileCount: 1,
-      addedAt: new Date().toISOString(),
-      genre: recommendation.genre,
-    });
   };
 
   const scrollRecentPacks = (direction: 'prev' | 'next') => {
@@ -2343,6 +2353,11 @@ function Home() {
                         metadata: recommendation.metadata,
                         already_downloaded: false,
                       };
+                      const recommendationPathKey = normalizeDownloadMarkerPath(recommendation.path);
+                      const isForYouDownloaded = Boolean(
+                        recommendationPathKey && downloadedPathFlags[recommendationPathKey]
+                      );
+                      const isForYouDownloading = forYouDownloadPath === recommendation.path;
                       const kind = getFileVisualKind(fileForKind);
                       const artist = normalizeOptionalText(recommendation.metadata?.artist);
                       const bpmLabel = recommendation.metadata?.bpm
@@ -2413,14 +2428,30 @@ function Home() {
                             )}
                             <Button unstyled
                               type="button"
-                              className="bb-action-btn bb-action-btn--primary bb-for-you-open"
+                              className={`bb-action-btn bb-action-btn--primary bb-for-you-download${isForYouDownloaded ? ' bb-action-btn--downloaded' : ''}${isForYouDownloading ? ' bb-action-btn--downloading bb-action-btn--loading' : ''}`}
                               onClick={() => {
-                                void openForYouLocation(recommendation);
+                                void startForYouDownload(recommendation);
                               }}
-                              aria-label={`Abrir ubicación de ${recommendation.name}`}
+                              aria-label={
+                                isForYouDownloading
+                                  ? `Descargando ${recommendation.name}`
+                                  : isForYouDownloaded
+                                    ? `Re-descargar ${recommendation.name}`
+                                    : `Descargar ${recommendation.name}`
+                              }
+                              disabled={isForYouDownloading}
                             >
-                              <span className="bb-action-label">ABRIR</span>
-                              <ChevronRight className="bb-row-chevron" aria-hidden />
+                              {isForYouDownloading ? (
+                                <>
+                                  <Spinner size={2} width={0.2} color="currentColor" />
+                                  <span className="bb-action-label">Descargando</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Download size={16} aria-hidden />
+                                  <span className="bb-action-label">{isForYouDownloaded ? 'Re-descargar' : 'Descargar'}</span>
+                                </>
+                              )}
                             </Button>
                           </div>
                         </article>
@@ -2449,6 +2480,11 @@ function Home() {
                     {monthlyTrending.map((row, idx) => {
                       const rank = idx + 1;
                       const isTop3 = rank <= 3;
+                      const rowPathKey = normalizeDownloadMarkerPath(row.path);
+                      const isTrendingDownloaded = Boolean(
+                        rowPathKey && downloadedPathFlags[rowPathKey]
+                      );
+                      const isTrendingDownloading = monthlyTrendingDownloadPath === row.path;
                       return (
                         <li
                           key={`monthly-trending-${row.path}`}
@@ -2491,19 +2527,25 @@ function Home() {
                             )}
                             <Button unstyled
                               type="button"
-                              className="bb-action-btn bb-action-btn--primary bb-trending-download"
+                              className={`bb-action-btn bb-action-btn--primary bb-trending-download${isTrendingDownloaded ? ' bb-action-btn--downloaded' : ''}${isTrendingDownloading ? ' bb-action-btn--downloading bb-action-btn--loading' : ''}`}
                               onClick={() => {
                                 void startMonthlyTrendingDownload(row);
                               }}
-                              aria-label={`Descargar ${row.name}`}
-                              disabled={monthlyTrendingDownloadPath === row.path}
+                              aria-label={
+                                isTrendingDownloading
+                                  ? `Descargando ${row.name}`
+                                  : isTrendingDownloaded
+                                    ? `Re-descargar ${row.name}`
+                                    : `Descargar ${row.name}`
+                              }
+                              disabled={isTrendingDownloading}
                             >
-                              {monthlyTrendingDownloadPath === row.path ? (
-                                <Spinner size={2} width={0.2} color="var(--app-accent)" />
+                              {isTrendingDownloading ? (
+                                <Spinner size={2} width={0.2} color="currentColor" />
                               ) : (
                                 <>
                                   <Download size={16} aria-hidden />
-                                  <span className="bb-action-label">Descargar</span>
+                                  <span className="bb-action-label">{isTrendingDownloaded ? 'Re-descargar' : 'Descargar'}</span>
                                 </>
                               )}
                             </Button>

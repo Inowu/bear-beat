@@ -910,8 +910,8 @@ html[data-theme="dark"] .bb-content-stage {
   min-width: 96px;
 }
 
-.bb-for-you-open {
-  min-width: 88px;
+.bb-for-you-download {
+  min-width: 114px;
 }
 
 .bb-for-you-empty {
@@ -2108,7 +2108,9 @@ html[data-theme="dark"] .bb-explorer-row:hover {
   }
 
   .bb-trending-preview,
-  .bb-trending-download {
+  .bb-trending-download,
+  .bb-for-you-preview,
+  .bb-for-you-download {
     width: 44px;
     min-width: 44px;
     padding: 0;
@@ -2116,7 +2118,9 @@ html[data-theme="dark"] .bb-explorer-row:hover {
   }
 
   .bb-trending-preview .bb-action-label,
-  .bb-trending-download .bb-action-label {
+  .bb-trending-download .bb-action-label,
+  .bb-for-you-preview .bb-action-label,
+  .bb-for-you-download .bb-action-label {
     display: none;
   }
 }
