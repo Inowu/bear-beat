@@ -1434,6 +1434,12 @@ function Home() {
     a.click();
     a.remove();
   };
+  const getFolderBaseName = (value: string): string => {
+    const normalized = `${value ?? ''}`.replace(/\\/g, '/').replace(/\/+$/, '');
+    if (!normalized) return '';
+    const segments = normalized.split('/').filter(Boolean);
+    return segments[segments.length - 1] ?? '';
+  };
   const downloadAlbum = async (
     path: string,
     file: IFiles,
@@ -1476,9 +1482,17 @@ function Home() {
 
       setShowDownload(true);
       setCurrentFile(file);
+      const queuedJobId = `${response?.jobId ?? ''}`.trim();
+      const fallbackBaseName = getFolderBaseName(path) || `${file?.name ?? ''}`.trim();
+      const queueZipName =
+        queuedJobId && currentUser?.id
+          ? `${fallbackBaseName}-${currentUser.id}-${queuedJobId}.zip`
+          : '';
       setFileData({
-        path: '',
+        path,
         name: file.name,
+        jobId: queuedJobId,
+        dirName: queueZipName,
       });
       markItemAsDownloaded(path, 'd');
       appToast.info(`Preparando archivo: ${truncateToastLabel(file.name, 40)}`);

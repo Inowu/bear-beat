@@ -147,6 +147,8 @@ ensure_env_default "NODE_ENV" "production"
 
 log "Ensuring required production flags are set (Conekta + client URL)..."
 upsert_env "CLIENT_URL" "https://thebearbeat.com"
+ensure_env_default "BACKEND_URL" "https://thebearbeatapi.lat"
+ensure_env_default "BACKEND_SSE_URL" "http://127.0.0.1:8001"
 # Only set defaults; don't override manual disables (critical during incident response).
 ensure_env_default "CONEKTA_PBB_ENABLED" "1"
 ensure_env_default "CONEKTA_OXXO_ENABLED" "1"

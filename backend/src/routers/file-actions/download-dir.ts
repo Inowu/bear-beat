@@ -604,17 +604,24 @@ export const downloadDir = shieldedProcedure
       );
 
       try {
-        const [waitingCount, activeCount] = await Promise.all([
-          compressionQueue.getWaitingCount(),
-          compressionQueue.getActiveCount(),
-        ]);
+        const backendSseUrl = `${process.env.BACKEND_SSE_URL ?? ''}`.trim();
+        if (!backendSseUrl) {
+          log.warn(
+            '[DOWNLOAD:DIR] BACKEND_SSE_URL is not configured. queued SSE event skipped.',
+          );
+        } else {
+          const [waitingCount, activeCount] = await Promise.all([
+            compressionQueue.getWaitingCount(),
+            compressionQueue.getActiveCount(),
+          ]);
 
-        await axios.post(`${process.env.BACKEND_SSE_URL}/send-event`, {
-          eventName: `compression:queued:${user.id}`,
-          jobId: job.id,
-          progress: 0,
-          queueDepth: waitingCount + activeCount,
-        });
+          await axios.post(`${backendSseUrl}/send-event`, {
+            eventName: `compression:queued:${user.id}`,
+            jobId: job.id,
+            progress: 0,
+            queueDepth: waitingCount + activeCount,
+          });
+        }
       } catch (e: any) {
         log.warn(
           `[DOWNLOAD:DIR] Could not publish queued event: ${e?.message ?? e}`,

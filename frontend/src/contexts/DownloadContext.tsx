@@ -10,6 +10,8 @@ interface IDownloadContext {
   fileData: {
     path: string;
     name: string;
+    jobId: string;
+    dirName: string;
   };
   setFileData: any;
 }
@@ -22,6 +24,8 @@ export const DownloadContext = createContext<IDownloadContext>({
   fileData: {
     path: "",
     name: "",
+    jobId: "",
+    dirName: "",
   },
   setFileData: () => {},
 });
@@ -34,6 +38,8 @@ const DownloadContextProvider = (props: any) => {
   const [fileData, setFileData] = useState({
     path: "",
     name: "",
+    jobId: "",
+    dirName: "",
   });
 
   const values = {

@@ -28,6 +28,7 @@ const DEFAULT_WARM_TTL_DAYS = 14;
 const DEFAULT_PREWARM_TOP_WINDOW_DAYS = 30;
 const DEFAULT_PREWARM_NEW_WINDOW_DAYS = 180;
 const SHARED_ARTIFACTS_DIRNAME = 'shared';
+const DEFAULT_BACKEND_URL = 'https://thebearbeatapi.lat';
 
 const parsePositiveInt = (value, fallback) => {
   const parsed = Number(value);
@@ -421,6 +422,8 @@ const compressionWorker = new Worker(
   },
 );
 
+const lastProgressByJob = new Map();
+
 compressionWorker.on('active', (job) => {
   process.on('SIGINT', async () => {
     try {
@@ -446,7 +449,8 @@ compressionWorker.on('completed', async (job) => {
   const dirName = encodeURIComponent(
     `${path.basename(job.data.songsRelativePath)}-${job.data.userId}-${job.id}`,
   );
-  const downloadUrl = `${process.env.BACKEND_URL}/download-dir?dirName=${dirName}.zip&jobId=${job.id}`;
+  const backendUrl = `${process.env.BACKEND_URL || ''}`.trim() || DEFAULT_BACKEND_URL;
+  const downloadUrl = `${backendUrl}/download-dir?dirName=${dirName}.zip&jobId=${job.id}`;
 
   try {
     const dirDownload = await prisma.dir_downloads.update({
@@ -497,11 +501,12 @@ compressionWorker.on('completed', async (job) => {
     );
   }
 
-  await sendEvent(`${process.env.BACKEND_SSE_URL}/send-event`, {
+  await sendEvent(`compression:completed:${job.data.userId}`, {
     jobId: job.id,
     url: downloadUrl,
-    eventName: `compression:completed:${job.data.userId}`,
   });
+
+  lastProgressByJob.delete(`${job.id}`);
 
   pm2.delete(`compress-${job.data.userId}-${job.id}`, (err) => {
     if (err) {
@@ -576,10 +581,11 @@ compressionWorker.on('failed', async (job, error) => {
     }
   }
 
-  await sendEvent(`${process.env.BACKEND_SSE_URL}/send-event`, {
+  await sendEvent(`compression:failed:${job.data.userId}`, {
     jobId: job.id,
-    eventName: `compression:failed:${job.data.userId}`,
   });
+
+  lastProgressByJob.delete(`${job?.id ?? ''}`);
 
   pm2.delete(`compress-${job.data.userId}-${job.id}`, (err) => {
     if (err) {
@@ -601,11 +607,15 @@ compressionWorker.on('error', (error) => {
 compressionWorker.on('progress', async (job) => {
   const progress = Math.round(job.progress);
 
-  if (progress % 5 !== 0 || progress === 0) return;
+  if (progress <= 0) return;
 
-  await sendEvent(`${process.env.BACKEND_SSE_URL}/send-event`, {
+  const progressKey = `${job.id}`;
+  const previousProgress = Number(lastProgressByJob.get(progressKey) || 0);
+  if (progress <= previousProgress) return;
+  lastProgressByJob.set(progressKey, progress);
+
+  await sendEvent(`compression:progress:${job.data.userId}`, {
     jobId: job.id,
-    eventName: `compression:progress:${job.data.userId}`,
     progress,
   });
 });

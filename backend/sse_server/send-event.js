@@ -2,8 +2,16 @@ const { default: axios } = require('axios');
 const { log } = require('./log');
 
 const sendEvent = async (eventName, body) => {
+  const backendSseUrl = `${process.env.BACKEND_SSE_URL || ''}`.trim();
+  if (!backendSseUrl) {
+    log.warn(
+      `[WORKER:COMPRESSION] BACKEND_SSE_URL is not configured. Event ${eventName} skipped.`,
+    );
+    return;
+  }
+
   try {
-    await axios(`${process.env.BACKEND_SSE_URL}/send-event`, {
+    await axios(`${backendSseUrl}/send-event`, {
       method: 'post',
       data: {
         eventName,

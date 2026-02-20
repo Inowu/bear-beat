@@ -24,6 +24,7 @@ import {
 } from '../src/utils/zipArtifact.service';
 
 export const MAX_CONCURRENT_DOWNLOADS = 25;
+const DEFAULT_BACKEND_URL = 'https://thebearbeatapi.lat';
 const parsedZipCompressionLevel = Number(process.env.ZIP_COMPRESSION_LEVEL);
 const ZIP_COMPRESSION_LEVEL =
   Number.isInteger(parsedZipCompressionLevel) &&
@@ -101,6 +102,7 @@ const publishSharedArtifactFromJob = async (job: Job): Promise<void> => {
 };
 
 export const createCompressionWorker = () => {
+  const lastProgressByJob = new Map<string, number>();
   const compressionWorker = new Worker(
     process.env.COMPRESSION_QUEUE_NAME as string,
     // Spawn a new process for each job
@@ -209,7 +211,9 @@ export const createCompressionWorker = () => {
         job.id
       }`,
     );
-    const downloadUrl = `${process.env.BACKEND_URL}/download-dir?dirName=${dirName}.zip&jobId=${job.id}`;
+    const backendUrl =
+      `${process.env.BACKEND_URL ?? ''}`.trim() || DEFAULT_BACKEND_URL;
+    const downloadUrl = `${backendUrl}/download-dir?dirName=${dirName}.zip&jobId=${job.id}`;
 
     try {
       const dirDownload = await prisma.dir_downloads.update({
@@ -269,6 +273,8 @@ export const createCompressionWorker = () => {
       }),
       `compression:completed:${job.data.userId}`,
     );
+
+    lastProgressByJob.delete(`${job.id}`);
   });
 
   compressionWorker.on('failed', async (job, error) => {
@@ -343,6 +349,8 @@ export const createCompressionWorker = () => {
       }),
       `compression:failed:${job?.data.userId}`,
     );
+
+    lastProgressByJob.delete(`${job?.id ?? ''}`);
   });
 
   compressionWorker.on('stalled', (job) => {
@@ -356,7 +364,11 @@ export const createCompressionWorker = () => {
   compressionWorker.on('progress', (job) => {
     const progress = Math.round(job.progress as number);
 
-    if (progress % 5 !== 0 || progress === 0) return;
+    if (progress <= 0) return;
+    const progressKey = `${job.id}`;
+    const previousProgress = Number(lastProgressByJob.get(progressKey) || 0);
+    if (progress <= previousProgress) return;
+    lastProgressByJob.set(progressKey, progress);
 
     sse.send(
       JSON.stringify({
