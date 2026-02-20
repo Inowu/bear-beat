@@ -427,7 +427,7 @@ export const DownloadHistory = () => {
             </div>
           ) : consumption ? (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                 <div className="rounded-xl border border-border bg-bg-card p-4">
                   <h2 className="text-text-muted text-xs uppercase tracking-wider mb-1">GB totales</h2>
                   <p className="text-text-main text-2xl font-bold">{formatGb(consumption.totals.totalGb)}</p>

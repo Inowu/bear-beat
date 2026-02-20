@@ -347,7 +347,7 @@ export const Ordens = () => {
       <div className="w-full overflow-x-hidden">
         {summary ? (
           <div className="admin-table-panel mb-4">
-            <div className="p-4 grid grid-cols-1 md:grid-cols-4 gap-3">
+            <div className="p-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
               <div className="rounded-xl border border-border bg-bg-card p-4">
                 <p className="text-xs uppercase tracking-wider text-text-muted">Órdenes</p>
                 <p className="text-2xl font-bold">{summary.totals.totalOrders.toLocaleString("es-MX")}</p>
@@ -415,14 +415,14 @@ export const Ordens = () => {
             aria-label="Tabla de órdenes (desliza para ver más columnas)"
             data-scroll-region
           >
-            <table className="w-full text-left text-sm border-collapse table-fixed">
+            <table className="w-full min-w-full lg:min-w-[1110px] text-left text-sm border-collapse table-fixed">
               <thead>
                 <tr>
                   <th className="p-4 w-[90px]">No. Orden</th>
                   <th className="p-4 w-[220px]">Correo</th>
-                  <th className="p-4 hidden xl:table-cell w-[160px]">Teléfono</th>
+                  <th className="p-4 hidden lg:table-cell w-[160px]">Teléfono</th>
                   <th className="p-4 w-[120px]">Método</th>
-                  <th className="p-4 hidden 2xl:table-cell w-[170px]">Id suscripción</th>
+                  <th className="p-4 hidden lg:table-cell w-[170px]">Id suscripción</th>
                   <th className="p-4 w-[110px]">Precio</th>
                   <th className="p-4 w-[120px]">Fecha</th>
                   <th className="p-4 w-[120px]">Estado</th>
@@ -437,9 +437,9 @@ export const Ordens = () => {
                       >
                         <td className="py-4 px-4">{orden.id}</td>
                         <td className="py-4 px-4 truncate" title={orden.email}>{orden.email}</td>
-                        <td className="py-4 px-4 hidden xl:table-cell truncate" title={orden.phone ?? ""}>{orden.phone}</td>
+                        <td className="py-4 px-4 hidden lg:table-cell truncate" title={orden.phone ?? ""}>{orden.phone}</td>
                         <td className="py-4 px-4 truncate" title={orden.payment_method ?? "—"}>{orden.payment_method ?? "—"}</td>
-                        <td className="py-4 px-4 hidden 2xl:table-cell truncate" title={orden.txn_id ?? ""}>{orden.txn_id}</td>
+                        <td className="py-4 px-4 hidden lg:table-cell truncate" title={orden.txn_id ?? ""}>{orden.txn_id}</td>
                         <td className="py-4 px-4">{orden.total_price}</td>
                         <td className="py-4 px-4">{orden.date_order.toLocaleDateString()}</td>
                         <td className="py-4 px-4">{statusBadge(orden.status)}</td>

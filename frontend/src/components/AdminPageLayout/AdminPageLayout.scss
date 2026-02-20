@@ -4,7 +4,7 @@
   position: relative;
   isolation: isolate;
   width: 100%;
-  max-width: 1500px;
+  max-width: 100%;
   margin: 0 auto;
   padding: clamp(10px, 1.5vw, 24px);
   border-radius: clamp(14px, 2vw, 22px);
@@ -464,6 +464,24 @@
   [class*="border-emerald-300"],
   [class*="border-emerald-400"] {
     border-color: color-mix(in srgb, var(--ad-badge-success-text) 32%, transparent) !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .admin-page-wrap {
+    max-width: 76rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .admin-page-wrap {
+    max-width: 84rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  .admin-page-wrap {
+    max-width: 88rem;
   }
 }
 

@@ -302,7 +302,7 @@ export function CatalogStats() {
           </Alert>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-8">
           <div className="rounded-xl border border-border bg-bg-card p-4">
             <h2 className="text-text-muted text-xs uppercase tracking-wider mb-1">Archivos totales</h2>
             <p className="text-text-main text-2xl font-bold">{data.totalFiles.toLocaleString()}</p>
@@ -318,7 +318,7 @@ export function CatalogStats() {
         </div>
 
         <h2 className="text-text-main font-bold text-lg mb-4 font-ui">Por tipo</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
           <div className="rounded-xl border border-border bg-bg-card p-4">
             <h3 className="text-text-muted text-sm mb-1">Videos</h3>
             <p className="text-text-main text-sm">{data.videos.toLocaleString()} archivos · {data.gbVideos.toLocaleString()} GB</p>

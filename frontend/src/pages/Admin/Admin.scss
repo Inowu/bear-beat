@@ -966,7 +966,8 @@ html[data-theme="light"] .admin-users-wrap .btn-primary:hover {
   }
 
   .admin-mobile-list {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .admin-pagination-mobile {
@@ -975,6 +976,12 @@ html[data-theme="light"] .admin-users-wrap .btn-primary:hover {
 
   .admin-error-strip {
     flex-wrap: wrap;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 900px) {
+  .admin-mobile-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
