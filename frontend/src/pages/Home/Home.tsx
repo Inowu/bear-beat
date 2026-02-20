@@ -460,6 +460,7 @@ function Home() {
   const [forYouEligible, setForYouEligible] = useState(false);
   const [forYouPreviewPath, setForYouPreviewPath] = useState<string | null>(null);
   const [forYouDownloadPath, setForYouDownloadPath] = useState<string | null>(null);
+  const [recentPackDownloadPath, setRecentPackDownloadPath] = useState<string | null>(null);
   const [downloadedPathFlags, setDownloadedPathFlags] = useState<Record<string, true>>({});
   const [inlinePreviewPath, setInlinePreviewPath] = useState<string | null>(null);
   const [inlinePreviewProgress, setInlinePreviewProgress] = useState(0);
@@ -1072,6 +1073,28 @@ function Home() {
       }
     } finally {
       setForYouDownloadPath(null);
+    }
+  };
+
+  const startRecentPackDownload = async (pack: RecentPack) => {
+    const normalizedPath = normalizeFilePath(pack.folderPath).replace(/^\/+|\/+$/g, '');
+    if (!normalizedPath || recentPackDownloadPath === normalizedPath) return;
+
+    const folderName =
+      normalizedPath.split('/').filter(Boolean).pop() || `${pack.name ?? ''}`.trim() || 'Pack';
+    const packFolder: IFiles = {
+      name: folderName,
+      type: 'd',
+      path: normalizedPath,
+      size: 0,
+      already_downloaded: false,
+    };
+
+    setRecentPackDownloadPath(normalizedPath);
+    try {
+      await startAlbumDownload(packFolder, -1);
+    } finally {
+      setRecentPackDownloadPath(null);
     }
   };
 
@@ -2292,6 +2315,12 @@ function Home() {
                   <div className="bb-recent-carousel bb-skeleton-fade-in" ref={recentCarouselRef}>
                     {recentPacks.map((pack) => {
                       const kind = getRecentPackVisualKind(pack);
+                      const normalizedPackPath = normalizeFilePath(pack.folderPath).replace(/^\/+|\/+$/g, '');
+                      const recentPackPathKey = normalizeDownloadMarkerPath(normalizedPackPath);
+                      const isRecentPackDownloaded = Boolean(
+                        recentPackPathKey && downloadedPathFlags[recentPackPathKey]
+                      );
+                      const isRecentPackDownloading = recentPackDownloadPath === normalizedPackPath;
                       return (
                         <article
                           key={`recent-pack-${pack.folderPath}`}
@@ -2311,17 +2340,46 @@ function Home() {
                               </span>
                             </div>
                           </div>
-                          <Button unstyled
-                            type="button"
-                            className="bb-action-btn bb-action-btn--primary bb-action-btn--recent"
-                            onClick={() => {
-                              openRecentPack(pack);
-                            }}
-                            aria-label={`Abrir pack ${pack.name}`}
-                          >
-                            <span className="bb-action-label">ABRIR</span>
-                            <ChevronRight className="bb-row-chevron" aria-hidden />
-                          </Button>
+                          <div className="bb-recent-actions">
+                            <Button unstyled
+                              type="button"
+                              className="bb-action-btn bb-action-btn--ghost bb-action-btn--recent"
+                              onClick={() => {
+                                openRecentPack(pack);
+                              }}
+                              aria-label={`Abrir pack ${pack.name}`}
+                            >
+                              <span className="bb-action-label">Abrir</span>
+                              <ChevronRight className="bb-row-chevron" aria-hidden />
+                            </Button>
+                            <Button unstyled
+                              type="button"
+                              className={`bb-action-btn bb-action-btn--primary bb-recent-download${isRecentPackDownloaded ? ' bb-action-btn--downloaded' : ''}${isRecentPackDownloading ? ' bb-action-btn--downloading bb-action-btn--loading' : ''}`}
+                              onClick={() => {
+                                void startRecentPackDownload(pack);
+                              }}
+                              aria-label={
+                                isRecentPackDownloading
+                                  ? `Descargando ${pack.name}`
+                                  : isRecentPackDownloaded
+                                    ? `Re-descargar ${pack.name}`
+                                    : `Descargar ${pack.name}`
+                              }
+                              disabled={isRecentPackDownloading}
+                            >
+                              {isRecentPackDownloading ? (
+                                <>
+                                  <Spinner size={2} width={0.2} color="currentColor" />
+                                  <span className="bb-action-label">Descargando</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Download size={16} aria-hidden />
+                                  <span className="bb-action-label">{isRecentPackDownloaded ? 'Re-descargar' : 'Descargar'}</span>
+                                </>
+                              )}
+                            </Button>
+                          </div>
                         </article>
                       );
                     })}

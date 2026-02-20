@@ -856,6 +856,16 @@ html[data-theme="dark"] .bb-content-stage {
   min-width: 98px;
 }
 
+.bb-recent-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bb-recent-download {
+  min-width: 114px;
+}
+
 .bb-for-you-section {
   display: flex;
   flex-direction: column;
@@ -2092,6 +2102,17 @@ html[data-theme="dark"] .bb-explorer-row:hover {
   }
 
   .bb-row-actions .bb-action-label {
+    display: none;
+  }
+
+  .bb-recent-actions .bb-action-btn {
+    width: 44px;
+    min-width: 44px;
+    padding: 0;
+    border-radius: 10px;
+  }
+
+  .bb-recent-actions .bb-action-label {
     display: none;
   }
 
