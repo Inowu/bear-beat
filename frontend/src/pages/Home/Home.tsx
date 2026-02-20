@@ -2630,6 +2630,7 @@ function Home() {
                 const isInlinePreviewLoading =
                   hasInlinePreview && inlinePreviewLoadingPath === resolvedPreviewPath;
                 const isInlinePreviewActive = hasInlinePreview && inlinePreviewPath === resolvedPreviewPath;
+                const isRowDownloading = loadDownload && index === idx;
                 const inlineProgressPercent = `${Math.max(
                   0,
                   Math.min(100, Math.round(inlinePreviewProgress * 100)),
@@ -2711,6 +2712,12 @@ function Home() {
                                 />
                               </span>
                             )}
+                            {alreadyDownloaded && (
+                              <span className="bb-track-downloaded bb-track-downloaded--inline">
+                                <span className="bb-track-downloaded-check" aria-hidden>✓</span>
+                                <span className="bb-track-downloaded-text">Descargado</span>
+                              </span>
+                            )}
                           </div>
                           <div className="bb-track-col bb-track-col--bpm">
                             {bpmLabel && <span className="bb-track-bpm-badge">{bpmLabel}</span>}
@@ -2724,14 +2731,6 @@ function Home() {
                             {formatBadge && <span className="bb-track-format-badge">{formatBadge}</span>}
                           </div>
                           <div className="bb-track-col bb-track-col--size">{sizeLabel}</div>
-                          <div className="bb-track-col bb-track-col--downloaded">
-                            {alreadyDownloaded && (
-                              <span className="bb-track-downloaded">
-                                <span className="bb-track-downloaded-check" aria-hidden>✓</span>
-                                <span className="bb-track-downloaded-text">Descargado</span>
-                              </span>
-                            )}
-                          </div>
                         </div>
                       )}
                     </div>
@@ -2756,20 +2755,37 @@ function Home() {
                           {allowFolderDownload && (
                             <Button unstyled
                               type="button"
-                              className="bb-action-btn bb-action-btn--ghost"
+                              className={`bb-action-btn bb-action-btn--ghost${alreadyDownloaded ? ' bb-action-btn--downloaded' : ''}${isRowDownloading ? ' bb-action-btn--downloading bb-action-btn--loading' : ''}`}
                               onClick={(e) => {
                                 e.stopPropagation();
+                                if (isRowDownloading) return;
                                 checkAlbumSize(file, idx);
                               }}
-                              title={alreadyDownloaded ? "Descargar carpeta de nuevo" : "Descargar carpeta"}
-                              aria-label={alreadyDownloaded ? "Descargar carpeta de nuevo" : "Descargar carpeta"}
+                              disabled={isRowDownloading}
+                              title={
+                                isRowDownloading
+                                  ? "Descargando carpeta"
+                                  : alreadyDownloaded
+                                    ? "Descargar carpeta de nuevo"
+                                    : "Descargar carpeta"
+                              }
+                              aria-label={
+                                isRowDownloading
+                                  ? "Descargando carpeta"
+                                  : alreadyDownloaded
+                                    ? "Descargar carpeta de nuevo"
+                                    : "Descargar carpeta"
+                              }
                             >
-                              {loadDownload && index === idx ? (
-                                <Spinner size={2} width={0.2} color="var(--app-accent)" />
+                              {isRowDownloading ? (
+                                <>
+                                  <Spinner size={2} width={0.2} color="currentColor" />
+                                  <span className="bb-action-label">Descargando</span>
+                                </>
                               ) : (
                                 <>
                                   <Download size={18} aria-hidden />
-                                  <span className="bb-action-label">Descargar</span>
+                                  <span className="bb-action-label">{alreadyDownloaded ? "Re-descargar" : "Descargar"}</span>
                                 </>
                               )}
                             </Button>
@@ -2803,22 +2819,42 @@ function Home() {
                           )}
 
                           {file.type === '-' && (
-                            loadDownload && index === idx ? (
-                              <span className="bb-action-btn bb-action-btn--primary bb-action-btn--loading">
-                                <Spinner size={2} width={0.2} color="var(--app-accent)" />
-                              </span>
-                            ) : (
-                              <Button unstyled
-                                type="button"
-                                className="bb-action-btn bb-action-btn--primary"
-                                onClick={() => downloadFile(file, idx)}
-                                title={alreadyDownloaded ? "Descargar archivo de nuevo" : "Descargar archivo"}
-                                aria-label={alreadyDownloaded ? "Descargar archivo de nuevo" : "Descargar archivo"}
-                              >
-                                <Download size={18} aria-hidden />
-                                <span className="bb-action-label">Descargar</span>
-                              </Button>
-                            )
+                            <Button unstyled
+                              type="button"
+                              className={`bb-action-btn bb-action-btn--primary${alreadyDownloaded ? ' bb-action-btn--downloaded' : ''}${isRowDownloading ? ' bb-action-btn--downloading bb-action-btn--loading' : ''}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (isRowDownloading) return;
+                                void downloadFile(file, idx);
+                              }}
+                              disabled={isRowDownloading}
+                              title={
+                                isRowDownloading
+                                  ? "Descargando archivo"
+                                  : alreadyDownloaded
+                                    ? "Descargar archivo de nuevo"
+                                    : "Descargar archivo"
+                              }
+                              aria-label={
+                                isRowDownloading
+                                  ? "Descargando archivo"
+                                  : alreadyDownloaded
+                                    ? "Descargar archivo de nuevo"
+                                    : "Descargar archivo"
+                              }
+                            >
+                              {isRowDownloading ? (
+                                <>
+                                  <Spinner size={2} width={0.2} color="currentColor" />
+                                  <span className="bb-action-label">Descargando</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Download size={18} aria-hidden />
+                                  <span className="bb-action-label">{alreadyDownloaded ? "Re-descargar" : "Descargar"}</span>
+                                </>
+                              )}
+                            </Button>
                           )}
                         </>
                       )}
