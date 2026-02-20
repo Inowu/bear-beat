@@ -32,6 +32,26 @@ interface AdminOrders {
   txn_id: string;
 }
 
+const ordersDedupJoinSql = Prisma.sql`
+  INNER JOIN (
+    SELECT MAX(od.id) AS id
+    FROM orders od
+    GROUP BY CASE
+      WHEN LOWER(COALESCE(TRIM(od.payment_method), '')) IN ('stripe', 'paypal')
+        AND COALESCE(TRIM(od.txn_id), '') <> ''
+      THEN CONCAT(
+        'provider:', LOWER(COALESCE(TRIM(od.payment_method), '')),
+        '|txn:', LOWER(COALESCE(TRIM(od.txn_id), '')),
+        '|user:', od.user_id,
+        '|status:', od.status,
+        '|amount:', ROUND(od.total_price, 2),
+        '|day:', DATE(od.date_order)
+      )
+      ELSE CONCAT('order-id:', od.id)
+    END
+  ) dedup_orders ON dedup_orders.id = o.id
+`;
+
 export const ordersRouter = router({
   ownOrders: shieldedProcedure
     .input(OrdersFindManySchema)
@@ -134,6 +154,7 @@ export const ordersRouter = router({
 
         const countQuery = Prisma.sql`SELECT COUNT(*) as totalCount
           FROM orders o
+          ${ordersDedupJoinSql}
           INNER JOIN users u ON o.user_id = u.id
           ${whereSql}`;
 
@@ -146,6 +167,7 @@ export const ordersRouter = router({
 
         const query = Prisma.sql`SELECT o.id, o.date_order, o.status, o.total_price, o.txn_id, o.payment_method, u.city, u.email, u.phone
           FROM orders o
+          ${ordersDedupJoinSql}
           INNER JOIN users u ON o.user_id = u.id
           ${whereSql}
           ORDER BY o.date_order DESC
@@ -262,6 +284,7 @@ export const ordersRouter = router({
           COUNT(*) AS totalOrders,
           COALESCE(SUM(o.total_price), 0) AS grossRevenue
         FROM orders o
+        ${ordersDedupJoinSql}
         INNER JOIN users u ON o.user_id = u.id
         ${whereSql}
       `);
@@ -278,6 +301,7 @@ export const ordersRouter = router({
           COUNT(*) AS totalOrders,
           COALESCE(SUM(o.total_price), 0) AS grossRevenue
         FROM orders o
+        ${ordersDedupJoinSql}
         INNER JOIN users u ON o.user_id = u.id
         ${whereSql}
         GROUP BY paymentMethod
@@ -311,6 +335,7 @@ export const ordersRouter = router({
           COUNT(*) AS totalOrders,
           COALESCE(SUM(o.total_price), 0) AS grossRevenue
         FROM orders o
+        ${ordersDedupJoinSql}
         INNER JOIN users u ON o.user_id = u.id
         ${trendWhereSql}
         GROUP BY day
