@@ -375,7 +375,7 @@ export const Ordens = () => {
                   <p className="font-semibold">Desglose por método</p>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[520px] text-left text-sm">
+                  <table className="w-full min-w-full lg:min-w-[520px] text-left text-sm">
                     <thead>
                       <tr>
                         <th className="p-3">Método</th>

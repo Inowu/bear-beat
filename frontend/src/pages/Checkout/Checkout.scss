@@ -686,7 +686,7 @@
 
 @media (max-width: 640px) {
   .checkout2026__paymentLogos.payment-method-logos {
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     justify-content: center;
     gap: 0.34rem;
     overflow-x: visible;
@@ -2474,6 +2474,11 @@ html[data-theme="light"] .checkout-credentials__item {
     min-height: 68px;
     padding-top: 8px;
     padding-bottom: 8px;
+  }
+
+  .checkout2026__methodLogos.payment-method-logos {
+    flex-wrap: wrap;
+    justify-content: flex-start;
   }
 
   .checkout-payment-card__total {

@@ -341,7 +341,7 @@ export const WebhookInbox = () => {
           aria-label="Tabla de webhook inbox"
           data-scroll-region
         >
-          <table className="w-full min-w-[1040px]">
+          <table className="w-full min-w-full lg:min-w-[1040px]">
             <thead className="sticky top-0 z-10">
               <tr>
                 <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Received At</th>

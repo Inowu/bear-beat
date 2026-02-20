@@ -695,7 +695,7 @@ html.dark .auth-split {
   }
 
   .auth-split-left .auth-split-title {
-    font-size: 2.2rem;
+    font-size: clamp(1.5rem, 4.5vw, 2.2rem);
   }
 
   .auth-split-left .auth-split-list li {

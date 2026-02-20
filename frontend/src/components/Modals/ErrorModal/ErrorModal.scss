@@ -33,7 +33,7 @@
   .header .title {
     margin: 0;
     color: var(--app-text-heading);
-    font-size: 2rem;
+    font-size: clamp(1.4rem, 4.5vw, 2rem);
     font-weight: var(--app-font-weight-heading-strong);
     font-family: var(--bb-font-ui);
     line-height: 1.15;

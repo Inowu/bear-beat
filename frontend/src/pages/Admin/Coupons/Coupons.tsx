@@ -222,7 +222,7 @@ export const Coupons = () => {
                 Ventana: últimos {metricsDays} días. Montos solo se muestran cuando el cupón se usó en 1 moneda; si no, verás el desglose.
               </p>
             </div>
-            <div className="flex items-end gap-2">
+            <div className="flex flex-wrap items-end gap-2 sm:flex-nowrap">
               <label className="inline-flex flex-col gap-1 text-sm text-text-muted min-w-[170px]">
                 Rango
                 <Select value={metricsDays} onChange={(e) => setMetricsDays(Number(e.target.value))}>
@@ -259,7 +259,7 @@ export const Coupons = () => {
               aria-label="Tabla de métricas de cupones"
               data-scroll-region
             >
-              <table className="w-full min-w-[900px]">
+              <table className="w-full min-w-full lg:min-w-[900px]">
                 <thead className="sticky top-0 z-10">
                   <tr>
                     <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Cupón</th>
@@ -338,7 +338,7 @@ export const Coupons = () => {
               aria-label="Tabla de cupones (desliza para ver más)"
               data-scroll-region
             >
-              <table className="w-full min-w-[500px]">
+              <table className="w-full min-w-full lg:min-w-[500px]">
                 <thead className="sticky top-0 z-10">
                   <tr>
                     <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Código</th>

@@ -158,7 +158,7 @@ export const PlanAdmin = () => {
           aria-label="Tabla de planes (desliza para ver más)"
           data-scroll-region
         >
-          <table className="w-full min-w-[700px]">
+          <table className="w-full min-w-full lg:min-w-[700px]">
             <thead className="sticky top-0 z-10">
               <tr>
                 <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Nombre</th>

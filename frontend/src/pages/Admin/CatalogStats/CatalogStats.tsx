@@ -343,7 +343,7 @@ export function CatalogStats() {
             <p className="text-text-muted text-sm mb-4">Cada género = nombre de la carpeta (ej. Bachata).</p>
             <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
               <span className="text-text-muted text-sm">Mostrando {from}-{to} de {genres.length}</span>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
                 <Button unstyled
                   type="button"
                   disabled={page <= 0}
@@ -433,23 +433,23 @@ export function CatalogStats() {
             </div>
 
             <div className="admin-pagination-mobile">
-              <div className="flex items-center justify-between gap-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-[auto_1fr_auto] sm:items-center">
                 <Button unstyled
                   type="button"
                   disabled={page <= 0}
                   onClick={() => setGenrePage((p) => Math.max(0, p - 1))}
-                  className="bg-bg-card hover:bg-bg-input disabled:opacity-50 text-text-main text-sm rounded-lg px-3 py-1.5 border border-border transition-colors"
+                  className="w-full bg-bg-card hover:bg-bg-input disabled:opacity-50 text-text-main text-sm rounded-lg px-3 py-1.5 border border-border transition-colors sm:w-auto"
                 >
                   Anterior
                 </Button>
-                <span className="text-text-muted text-sm">
+                <span className="text-text-muted text-sm text-center">
                   Página {page + 1} de {totalPages}
                 </span>
                 <Button unstyled
                   type="button"
                   disabled={page >= totalPages - 1}
                   onClick={() => setGenrePage((p) => Math.min(totalPages - 1, p + 1))}
-                  className="bg-bg-card hover:bg-bg-input disabled:opacity-50 text-text-main text-sm rounded-lg px-3 py-1.5 border border-border transition-colors"
+                  className="w-full bg-bg-card hover:bg-bg-input disabled:opacity-50 text-text-main text-sm rounded-lg px-3 py-1.5 border border-border transition-colors sm:w-auto"
                 >
                   Siguiente
                 </Button>

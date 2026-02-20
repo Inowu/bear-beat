@@ -263,7 +263,7 @@ export const AuditLogs = () => {
           aria-label="Tabla de auditoría admin"
           data-scroll-region
         >
-          <table className="w-full min-w-[1100px]">
+          <table className="w-full min-w-full lg:min-w-[1100px]">
             <thead className="sticky top-0 z-10">
               <tr>
                 <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Fecha</th>

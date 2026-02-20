@@ -1,12 +1,16 @@
 @use "src/styles/landing-design" as *;
 
 .modal-container {
-  width: 100vh;
+  width: 100%;
+  max-width: min(100vw - 24px, 720px);
   font-size: var(--app-font-size-body);
   font-family: var(--bb-font-ui);
 
   .bottom {
     .table-contain {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+
       table {
         color: var(--app-text-body);
         border-spacing: 10px;
@@ -73,10 +77,6 @@
     .modal-container {
         width: 100%;
         max-width: 100%;
-    }
-    .modal-container .bottom .table-contain {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
     }
     .modal-container .bottom .table-contain table {
         font-size: var(--app-font-size-body);

@@ -458,7 +458,7 @@ export const DownloadHistory = () => {
                     </div>
                   </div>
                   <div className="overflow-x-auto max-h-[45vh] overflow-y-auto" tabIndex={0} role="region" aria-label="Alertas de consumo" data-scroll-region>
-                    <table className="w-full min-w-[900px]">
+                    <table className="w-full min-w-full lg:min-w-[900px]">
                       <thead className="sticky top-0 z-10">
                         <tr>
                           <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Día</th>
@@ -493,7 +493,7 @@ export const DownloadHistory = () => {
                   <p className="text-text-main text-sm font-semibold">Top usuarios por consumo</p>
                 </div>
                 <div className="overflow-x-auto max-h-[45vh] overflow-y-auto" tabIndex={0} role="region" aria-label="Top usuarios" data-scroll-region>
-                  <table className="w-full min-w-[900px]">
+                  <table className="w-full min-w-full lg:min-w-[900px]">
                     <thead className="sticky top-0 z-10">
                       <tr>
                         <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Usuario</th>
@@ -523,7 +523,7 @@ export const DownloadHistory = () => {
                   <p className="text-text-main text-sm font-semibold">Top GB por usuario y día</p>
                 </div>
                 <div className="overflow-x-auto max-h-[45vh] overflow-y-auto" tabIndex={0} role="region" aria-label="Top usuario-día" data-scroll-region>
-                  <table className="w-full min-w-[900px]">
+                  <table className="w-full min-w-full lg:min-w-[900px]">
                     <thead className="sticky top-0 z-10">
                       <tr>
                         <th className="uppercase text-xs tracking-wider text-left py-3 px-4">Día</th>
