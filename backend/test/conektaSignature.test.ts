@@ -141,6 +141,38 @@ describe('verifyConektaSignature', () => {
     ).toBe(true);
   });
 
+  it('accepts digest header with quoted sha-256 value', () => {
+    const payload = Buffer.from('{"id":"evt_1","type":"order.paid"}', 'utf8');
+    const digest = signPayload(payload, privateKeyPem);
+
+    expect(
+      verifyConektaSignature(payload, `sha-256="${digest}"`, publicKeyPem),
+    ).toBe(true);
+  });
+
+  it('accepts digest header with multiple algorithms', () => {
+    const payload = Buffer.from('{"id":"evt_1","type":"order.paid"}', 'utf8');
+    const digest = signPayload(payload, privateKeyPem);
+    const digestHeader = `sha-1=not-used, sha-256=${digest}`;
+
+    expect(
+      verifyConektaSignature(payload, digestHeader, publicKeyPem),
+    ).toBe(true);
+  });
+
+  it('accepts digest header in base64url format', () => {
+    const payload = Buffer.from('{"id":"evt_1","type":"order.paid"}', 'utf8');
+    const digestBase64 = signPayload(payload, privateKeyPem);
+    const digestBase64Url = digestBase64
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/g, '');
+
+    expect(
+      verifyConektaSignature(payload, `sha-256=${digestBase64Url}`, publicKeyPem),
+    ).toBe(true);
+  });
+
   it('returns false when digest does not match body signature', () => {
     const payload = Buffer.from('{"id":"evt_1","type":"order.paid"}', 'utf8');
     const digest = signPayload(
