@@ -27,12 +27,17 @@ interface OrdersFinancialSummary {
   totals: {
     totalOrders: number;
     grossRevenue: number;
+    grossRevenueByCurrency: CurrencyTotals;
+    grossRevenueConvertedMxn: number | null;
     avgOrderValue: number;
+    avgOrderValueConvertedMxn: number | null;
   };
   byPaymentMethod: Array<{
     paymentMethod: string;
     totalOrders: number;
     grossRevenue: number;
+    grossRevenueByCurrency: CurrencyTotals;
+    grossRevenueConvertedMxn: number | null;
   }>;
   trend: {
     days: number | null;
@@ -40,8 +45,18 @@ interface OrdersFinancialSummary {
       day: string;
       totalOrders: number;
       grossRevenue: number;
+      grossRevenueByCurrency: CurrencyTotals;
+      grossRevenueConvertedMxn: number | null;
     }>;
   };
+}
+
+interface CurrencyTotals {
+  mxn: number;
+  usd: number;
+  other: number;
+  convertedMxn: number | null;
+  usdToMxnRate: number | null;
 }
 
 function getOrderStatusString(status: number) {
@@ -62,6 +77,32 @@ function formatCurrency(value: number | null | undefined): string {
     currency: "MXN",
     maximumFractionDigits: 2,
   }).format(value);
+}
+
+function formatCurrencyCode(value: number | null | undefined, currency: string): string {
+  if (value == null || Number.isNaN(value)) return "—";
+  const code = (currency || "MXN").toUpperCase();
+  return new Intl.NumberFormat("es-MX", {
+    style: "currency",
+    currency: code,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+function formatCurrencyBreakdown(totals: CurrencyTotals | null | undefined): string {
+  if (!totals) return "—";
+  const parts: string[] = [];
+  if ((totals.mxn ?? 0) > 0) parts.push(`MXN ${formatCurrencyCode(totals.mxn, "MXN")}`);
+  if ((totals.usd ?? 0) > 0) parts.push(`USD ${formatCurrencyCode(totals.usd, "USD")}`);
+  if ((totals.other ?? 0) > 0) {
+    parts.push(
+      `OTRAS ${totals.other.toLocaleString("es-MX", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`,
+    );
+  }
+  return parts.length ? parts.join(" · ") : "—";
 }
 
 function Sparkline({ values }: { values: number[] }) {
@@ -354,15 +395,29 @@ export const Ordens = () => {
               </div>
               <div className="rounded-xl border border-border bg-bg-card p-4">
                 <p className="text-xs uppercase tracking-wider text-text-muted">Ingreso bruto</p>
-                <p className="text-2xl font-bold">{formatCurrency(summary.totals.grossRevenue)}</p>
+                <p className="text-lg font-bold">{formatCurrencyBreakdown(summary.totals.grossRevenueByCurrency)}</p>
+                <p className="text-xs text-text-muted mt-1">
+                  Total conv: {formatCurrency(summary.totals.grossRevenueConvertedMxn)}
+                </p>
               </div>
               <div className="rounded-xl border border-border bg-bg-card p-4">
                 <p className="text-xs uppercase tracking-wider text-text-muted">Ticket promedio</p>
-                <p className="text-2xl font-bold">{formatCurrency(summary.totals.avgOrderValue)}</p>
+                <p className="text-2xl font-bold">
+                  {formatCurrency(summary.totals.avgOrderValueConvertedMxn)}
+                </p>
+                <p className="text-xs text-text-muted mt-1">
+                  Conv. MXN
+                </p>
               </div>
               <div className="rounded-xl border border-border bg-bg-card p-4">
                 <p className="text-xs uppercase tracking-wider text-text-muted">Tendencia</p>
-                <Sparkline values={summary.trend.points.map((p) => p.grossRevenue)} />
+                <Sparkline
+                  values={summary.trend.points.map((p) => (
+                    p.grossRevenueConvertedMxn != null
+                      ? p.grossRevenueConvertedMxn
+                      : p.grossRevenue
+                  ))}
+                />
                 <p className="text-xs text-text-muted mt-1">
                   {summary.trend.days ? `Últimos ${summary.trend.days} días` : "Rango seleccionado"}
                 </p>
@@ -380,7 +435,7 @@ export const Ordens = () => {
                       <tr>
                         <th className="p-3">Método</th>
                         <th className="p-3">Órdenes</th>
-                        <th className="p-3">Ingreso</th>
+                        <th className="p-3">Ingreso (desglose)</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -388,7 +443,12 @@ export const Ordens = () => {
                         <tr key={row.paymentMethod} className="border-t border-border">
                           <td className="p-3">{row.paymentMethod}</td>
                           <td className="p-3">{row.totalOrders.toLocaleString("es-MX")}</td>
-                          <td className="p-3">{formatCurrency(row.grossRevenue)}</td>
+                          <td className="p-3">
+                            {formatCurrencyBreakdown(row.grossRevenueByCurrency)}
+                            <div className="text-xs text-text-muted mt-1">
+                              Conv: {formatCurrency(row.grossRevenueConvertedMxn)}
+                            </div>
+                          </td>
                         </tr>
                       ))}
                       {summary.byPaymentMethod.length === 0 ? (

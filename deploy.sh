@@ -124,6 +124,11 @@ PY
   printf "\nANALYTICS_IP_SALT=%s\n" "$salt" >> "$ENV_FILE"
 fi
 
+log "Ensuring ANALYTICS_USD_TO_MXN_RATE exists (analytics currency conversion baseline)..."
+# Baseline fallback for mixed-currency analytics views.
+# You can override this value in backend/.env at any time.
+ensure_env_default "ANALYTICS_USD_TO_MXN_RATE" "17.27"
+
 log "Ensuring EMAIL_PREFERENCES_SECRET is set (sign unsubscribe links)..."
 existing_email_pref_secret="$({ grep '^EMAIL_PREFERENCES_SECRET=' "$ENV_FILE" | head -n 1 | sed 's/^EMAIL_PREFERENCES_SECRET=//'; } || true)"
 existing_email_pref_secret="$(printf '%s' "$existing_email_pref_secret" | tr -d ' \t\r\n')"

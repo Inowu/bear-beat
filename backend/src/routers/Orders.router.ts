@@ -19,6 +19,7 @@ import { OrderStatus } from './subscriptions/interfaces/order-status.interface';
 import { PaymentService } from './subscriptions/services/types';
 import { RolesNames } from './auth/interfaces/roles.interface';
 import { createAdminAuditLog } from './utils/adminAuditLog';
+import { computeAnalyticsCurrencyTotals } from '../utils/analyticsCurrency';
 
 interface AdminOrders {
   city: string;
@@ -278,14 +279,33 @@ export const ordersRouter = router({
         Array<{
           totalOrders: bigint | number;
           grossRevenue: bigint | number;
+          grossRevenueMxn: bigint | number;
+          grossRevenueUsd: bigint | number;
+          grossRevenueOther: bigint | number;
         }>
       >(Prisma.sql`
         SELECT
           COUNT(*) AS totalOrders,
-          COALESCE(SUM(o.total_price), 0) AS grossRevenue
+          COALESCE(SUM(o.total_price), 0) AS grossRevenue,
+          COALESCE(SUM(CASE
+            WHEN LOWER(COALESCE(NULLIF(TRIM(p.moneda), ''), 'unknown')) = 'mxn'
+              THEN o.total_price
+            ELSE 0
+          END), 0) AS grossRevenueMxn,
+          COALESCE(SUM(CASE
+            WHEN LOWER(COALESCE(NULLIF(TRIM(p.moneda), ''), 'unknown')) = 'usd'
+              THEN o.total_price
+            ELSE 0
+          END), 0) AS grossRevenueUsd,
+          COALESCE(SUM(CASE
+            WHEN LOWER(COALESCE(NULLIF(TRIM(p.moneda), ''), 'unknown')) NOT IN ('mxn', 'usd')
+              THEN o.total_price
+            ELSE 0
+          END), 0) AS grossRevenueOther
         FROM orders o
         ${ordersDedupJoinSql}
         INNER JOIN users u ON o.user_id = u.id
+        LEFT JOIN plans p ON p.id = o.plan_id
         ${whereSql}
       `);
 
@@ -294,15 +314,34 @@ export const ordersRouter = router({
           paymentMethod: string | null;
           totalOrders: bigint | number;
           grossRevenue: bigint | number;
+          grossRevenueMxn: bigint | number;
+          grossRevenueUsd: bigint | number;
+          grossRevenueOther: bigint | number;
         }>
       >(Prisma.sql`
         SELECT
           COALESCE(NULLIF(TRIM(o.payment_method), ''), 'Unknown') AS paymentMethod,
           COUNT(*) AS totalOrders,
-          COALESCE(SUM(o.total_price), 0) AS grossRevenue
+          COALESCE(SUM(o.total_price), 0) AS grossRevenue,
+          COALESCE(SUM(CASE
+            WHEN LOWER(COALESCE(NULLIF(TRIM(p.moneda), ''), 'unknown')) = 'mxn'
+              THEN o.total_price
+            ELSE 0
+          END), 0) AS grossRevenueMxn,
+          COALESCE(SUM(CASE
+            WHEN LOWER(COALESCE(NULLIF(TRIM(p.moneda), ''), 'unknown')) = 'usd'
+              THEN o.total_price
+            ELSE 0
+          END), 0) AS grossRevenueUsd,
+          COALESCE(SUM(CASE
+            WHEN LOWER(COALESCE(NULLIF(TRIM(p.moneda), ''), 'unknown')) NOT IN ('mxn', 'usd')
+              THEN o.total_price
+            ELSE 0
+          END), 0) AS grossRevenueOther
         FROM orders o
         ${ordersDedupJoinSql}
         INNER JOIN users u ON o.user_id = u.id
+        LEFT JOIN plans p ON p.id = o.plan_id
         ${whereSql}
         GROUP BY paymentMethod
         ORDER BY grossRevenue DESC
@@ -328,43 +367,100 @@ export const ordersRouter = router({
           day: string;
           totalOrders: bigint | number;
           grossRevenue: bigint | number;
+          grossRevenueMxn: bigint | number;
+          grossRevenueUsd: bigint | number;
+          grossRevenueOther: bigint | number;
         }>
       >(Prisma.sql`
         SELECT
           DATE(o.date_order) AS day,
           COUNT(*) AS totalOrders,
-          COALESCE(SUM(o.total_price), 0) AS grossRevenue
+          COALESCE(SUM(o.total_price), 0) AS grossRevenue,
+          COALESCE(SUM(CASE
+            WHEN LOWER(COALESCE(NULLIF(TRIM(p.moneda), ''), 'unknown')) = 'mxn'
+              THEN o.total_price
+            ELSE 0
+          END), 0) AS grossRevenueMxn,
+          COALESCE(SUM(CASE
+            WHEN LOWER(COALESCE(NULLIF(TRIM(p.moneda), ''), 'unknown')) = 'usd'
+              THEN o.total_price
+            ELSE 0
+          END), 0) AS grossRevenueUsd,
+          COALESCE(SUM(CASE
+            WHEN LOWER(COALESCE(NULLIF(TRIM(p.moneda), ''), 'unknown')) NOT IN ('mxn', 'usd')
+              THEN o.total_price
+            ELSE 0
+          END), 0) AS grossRevenueOther
         FROM orders o
         ${ordersDedupJoinSql}
         INNER JOIN users u ON o.user_id = u.id
+        LEFT JOIN plans p ON p.id = o.plan_id
         ${trendWhereSql}
         GROUP BY day
         ORDER BY day ASC
       `);
 
-      const totals = totalsRows?.[0] ?? { totalOrders: 0, grossRevenue: 0 };
+      const totals = totalsRows?.[0] ?? {
+        totalOrders: 0,
+        grossRevenue: 0,
+        grossRevenueMxn: 0,
+        grossRevenueUsd: 0,
+        grossRevenueOther: 0,
+      };
       const totalOrders = numberFromUnknown(totals.totalOrders);
       const grossRevenue = numberFromUnknown(totals.grossRevenue);
+      const grossRevenueByCurrency = computeAnalyticsCurrencyTotals({
+        mxn: totals.grossRevenueMxn,
+        usd: totals.grossRevenueUsd,
+        other: totals.grossRevenueOther,
+      });
+      const grossRevenueConvertedMxn =
+        grossRevenueByCurrency.convertedMxn;
       const avgOrderValue = totalOrders > 0 ? grossRevenue / totalOrders : 0;
+      const avgOrderValueConvertedMxn =
+        grossRevenueConvertedMxn != null && totalOrders > 0
+          ? grossRevenueConvertedMxn / totalOrders
+          : null;
 
       return {
         totals: {
           totalOrders,
           grossRevenue,
+          grossRevenueByCurrency,
+          grossRevenueConvertedMxn,
           avgOrderValue,
+          avgOrderValueConvertedMxn,
         },
-        byPaymentMethod: breakdownRows.map((row) => ({
-          paymentMethod: row.paymentMethod ?? 'Unknown',
-          totalOrders: numberFromUnknown(row.totalOrders),
-          grossRevenue: numberFromUnknown(row.grossRevenue),
-        })),
-        trend: {
-          days: hasExplicitDateFilter ? null : 90,
-          points: trendRows.map((row) => ({
-            day: row.day,
+        byPaymentMethod: breakdownRows.map((row) => {
+          const byCurrency = computeAnalyticsCurrencyTotals({
+            mxn: row.grossRevenueMxn,
+            usd: row.grossRevenueUsd,
+            other: row.grossRevenueOther,
+          });
+          return {
+            paymentMethod: row.paymentMethod ?? 'Unknown',
             totalOrders: numberFromUnknown(row.totalOrders),
             grossRevenue: numberFromUnknown(row.grossRevenue),
-          })),
+            grossRevenueByCurrency: byCurrency,
+            grossRevenueConvertedMxn: byCurrency.convertedMxn,
+          };
+        }),
+        trend: {
+          days: hasExplicitDateFilter ? null : 90,
+          points: trendRows.map((row) => {
+            const byCurrency = computeAnalyticsCurrencyTotals({
+              mxn: row.grossRevenueMxn,
+              usd: row.grossRevenueUsd,
+              other: row.grossRevenueOther,
+            });
+            return {
+              day: row.day,
+              totalOrders: numberFromUnknown(row.totalOrders),
+              grossRevenue: numberFromUnknown(row.grossRevenue),
+              grossRevenueByCurrency: byCurrency,
+              grossRevenueConvertedMxn: byCurrency.convertedMxn,
+            };
+          }),
         },
       };
     }),

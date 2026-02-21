@@ -1,6 +1,10 @@
 import { createHash } from 'crypto';
 import { Prisma, PrismaClient } from '@prisma/client';
 import { z } from 'zod';
+import {
+  AnalyticsCurrencyTotals,
+  computeAnalyticsCurrencyTotals,
+} from '../utils/analyticsCurrency';
 import stripeInstance, { isStripeConfigured } from '../stripe';
 import { log } from '../server';
 
@@ -147,6 +151,7 @@ interface AnalyticsFunnelOverview {
     paidOrders: number;
     paidUsers: number;
     grossRevenue: number;
+    grossRevenueByCurrency: AnalyticsCurrencyTotals;
     activationD1Users: number;
     registrationCohort: number;
     retainedD30Users: number;
@@ -201,6 +206,9 @@ interface AnalyticsAttributionPoint {
   purchases: number;
   revenue: number;
   aov: number;
+  revenueByCurrency: AnalyticsCurrencyTotals;
+  revenueConvertedMxn: number | null;
+  aovConvertedMxn: number | null;
 }
 
 interface AnalyticsBusinessMetrics {
@@ -214,10 +222,17 @@ interface AnalyticsBusinessMetrics {
     paidOrders: number;
     paidUsers: number;
     grossRevenue: number;
+    grossRevenueByCurrency: AnalyticsCurrencyTotals;
+    grossRevenueConvertedMxn: number | null;
     avgOrderValue: number;
+    avgOrderValueConvertedMxn: number | null;
     arpu: number;
+    arpuConvertedMxn: number | null;
     monthlyRecurringRevenueEstimate: number;
+    monthlyRecurringRevenueByCurrency: AnalyticsCurrencyTotals;
+    monthlyRecurringRevenueEstimateConvertedMxn: number | null;
     monthlyArpuEstimate: number;
+    monthlyArpuEstimateConvertedMxn: number | null;
     activeSubscribersNow: number;
     activeSubscribersWithPlanNow: number;
     mrrActiveSubscriptionsMxn: number;
@@ -228,6 +243,7 @@ interface AnalyticsBusinessMetrics {
     refundRatePct: number;
     churnMonthlyPct: number;
     ltvEstimate: number | null;
+    ltvEstimateConvertedMxn: number | null;
     cacEstimate: number | null;
     paybackMonthsEstimate: number | null;
   };
@@ -355,7 +371,10 @@ interface AnalyticsCrmDashboardSnapshot {
     newPaidUsersFromRangeRegistrations: number;
     renewalOrders: number;
     grossRevenue: number;
+    grossRevenueByCurrency: AnalyticsCurrencyTotals;
+    grossRevenueConvertedMxn: number | null;
     avgOrderValue: number;
+    avgOrderValueConvertedMxn: number | null;
     trialStarts: number;
     trialConversions: number;
     trialConversionRatePct: number;
@@ -923,6 +942,13 @@ export const getAnalyticsFunnelOverview = async (
         paidOrders: 0,
         paidUsers: 0,
         grossRevenue: 0,
+        grossRevenueByCurrency: {
+          mxn: 0,
+          usd: 0,
+          other: 0,
+          convertedMxn: null,
+          usdToMxnRate: null,
+        },
         activationD1Users: 0,
         registrationCohort: 0,
         retainedD30Users: 0,
@@ -1041,16 +1067,36 @@ export const getAnalyticsFunnelOverview = async (
         paidOrders: bigint | number;
         paidUsers: bigint | number;
         grossRevenue: bigint | number;
+        grossRevenueMxn: bigint | number;
+        grossRevenueUsd: bigint | number;
+        grossRevenueOther: bigint | number;
       }>
     >(Prisma.sql`
         SELECT
           COUNT(*) AS paidOrders,
           COUNT(DISTINCT user_id) AS paidUsers,
-          COALESCE(SUM(total_price), 0) AS grossRevenue
-        FROM orders
-        WHERE status = 1
-          AND date_order >= ${startDate}
-          AND (is_canceled IS NULL OR is_canceled = 0)
+          COALESCE(SUM(o.total_price), 0) AS grossRevenue,
+          COALESCE(SUM(CASE
+            WHEN LOWER(COALESCE(NULLIF(TRIM(p.moneda), ''), 'unknown')) = 'mxn'
+              THEN o.total_price
+            ELSE 0
+          END), 0) AS grossRevenueMxn,
+          COALESCE(SUM(CASE
+            WHEN LOWER(COALESCE(NULLIF(TRIM(p.moneda), ''), 'unknown')) = 'usd'
+              THEN o.total_price
+            ELSE 0
+          END), 0) AS grossRevenueUsd,
+          COALESCE(SUM(CASE
+            WHEN LOWER(COALESCE(NULLIF(TRIM(p.moneda), ''), 'unknown')) NOT IN ('mxn', 'usd')
+              THEN o.total_price
+            ELSE 0
+          END), 0) AS grossRevenueOther
+        FROM orders o
+        LEFT JOIN plans p
+          ON p.id = o.plan_id
+        WHERE o.status = 1
+          AND o.date_order >= ${startDate}
+          AND (o.is_canceled IS NULL OR o.is_canceled = 0)
       `),
     prisma.$queryRaw<Array<{ activationD1Users: bigint | number }>>(Prisma.sql`
         SELECT
@@ -1185,6 +1231,9 @@ export const getAnalyticsFunnelOverview = async (
     paidOrders: 0,
     paidUsers: 0,
     grossRevenue: 0,
+    grossRevenueMxn: 0,
+    grossRevenueUsd: 0,
+    grossRevenueOther: 0,
   };
   const activationVolume = activationRows[0] ?? { activationD1Users: 0 };
   const registrationVolume = registrationRows[0] ?? { registrationCohort: 0 };
@@ -1215,6 +1264,11 @@ export const getAnalyticsFunnelOverview = async (
   const paidOrders = numberFromUnknown(orderVolume.paidOrders);
   const paidUsers = numberFromUnknown(orderVolume.paidUsers);
   const grossRevenue = numberFromUnknown(orderVolume.grossRevenue);
+  const grossRevenueByCurrency = computeAnalyticsCurrencyTotals({
+    mxn: orderVolume.grossRevenueMxn,
+    usd: orderVolume.grossRevenueUsd,
+    other: orderVolume.grossRevenueOther,
+  });
   const activationD1Users = numberFromUnknown(
     activationVolume.activationD1Users,
   );
@@ -1293,6 +1347,7 @@ export const getAnalyticsFunnelOverview = async (
       paidOrders,
       paidUsers,
       grossRevenue: Math.round(grossRevenue * 100) / 100,
+      grossRevenueByCurrency,
       activationD1Users,
       registrationCohort,
       retainedD30Users,
@@ -1417,6 +1472,9 @@ export const getAnalyticsAttributionBreakdown = async (
         checkouts: bigint | number;
         purchases: bigint | number;
         revenue: unknown;
+        revenueMxn: unknown;
+        revenueUsd: unknown;
+        revenueOther: unknown;
       }>
     >(Prisma.sql`
       SELECT
@@ -1433,7 +1491,25 @@ export const getAnalyticsAttributionBreakdown = async (
         COALESCE(SUM(CASE
           WHEN event_name = 'payment_success' THEN COALESCE(amount, 0)
           ELSE 0
-        END), 0) AS revenue
+        END), 0) AS revenue,
+        COALESCE(SUM(CASE
+          WHEN event_name = 'payment_success'
+            AND LOWER(COALESCE(NULLIF(TRIM(currency), ''), 'unknown')) = 'mxn'
+            THEN COALESCE(amount, 0)
+          ELSE 0
+        END), 0) AS revenueMxn,
+        COALESCE(SUM(CASE
+          WHEN event_name = 'payment_success'
+            AND LOWER(COALESCE(NULLIF(TRIM(currency), ''), 'unknown')) = 'usd'
+            THEN COALESCE(amount, 0)
+          ELSE 0
+        END), 0) AS revenueUsd,
+        COALESCE(SUM(CASE
+          WHEN event_name = 'payment_success'
+            AND LOWER(COALESCE(NULLIF(TRIM(currency), ''), 'unknown')) NOT IN ('mxn', 'usd')
+            THEN COALESCE(amount, 0)
+          ELSE 0
+        END), 0) AS revenueOther
       FROM analytics_events
       WHERE event_ts >= ${startDate}
         ${ANALYTICS_PUBLIC_TRAFFIC_FILTER_SQL}
@@ -1448,6 +1524,19 @@ export const getAnalyticsAttributionBreakdown = async (
   const data = rows.map((row) => {
     const purchases = numberFromUnknown(row.purchases);
     const revenue = roundNumber(numberFromUnknown(row.revenue), 2);
+    const revenueByCurrency = computeAnalyticsCurrencyTotals({
+      mxn: row.revenueMxn,
+      usd: row.revenueUsd,
+      other: row.revenueOther,
+    });
+    const revenueConvertedMxn =
+      revenueByCurrency.convertedMxn == null
+        ? null
+        : roundNumber(revenueByCurrency.convertedMxn, 2);
+    const aovConvertedMxn =
+      purchases > 0 && revenueConvertedMxn != null
+        ? roundNumber(revenueConvertedMxn / purchases, 2)
+        : null;
     return {
       source: row.source || 'direct',
       medium: row.medium || 'none',
@@ -1458,6 +1547,9 @@ export const getAnalyticsAttributionBreakdown = async (
       purchases,
       revenue,
       aov: purchases > 0 ? roundNumber(revenue / purchases, 2) : 0,
+      revenueByCurrency,
+      revenueConvertedMxn,
+      aovConvertedMxn,
     };
   });
 
@@ -1482,10 +1574,29 @@ export const getAnalyticsBusinessMetrics = async (
         paidOrders: 0,
         paidUsers: 0,
         grossRevenue: 0,
+        grossRevenueByCurrency: {
+          mxn: 0,
+          usd: 0,
+          other: 0,
+          convertedMxn: null,
+          usdToMxnRate: null,
+        },
+        grossRevenueConvertedMxn: null,
         avgOrderValue: 0,
+        avgOrderValueConvertedMxn: null,
         arpu: 0,
+        arpuConvertedMxn: null,
         monthlyRecurringRevenueEstimate: 0,
+        monthlyRecurringRevenueByCurrency: {
+          mxn: 0,
+          usd: 0,
+          other: 0,
+          convertedMxn: null,
+          usdToMxnRate: null,
+        },
+        monthlyRecurringRevenueEstimateConvertedMxn: null,
         monthlyArpuEstimate: 0,
+        monthlyArpuEstimateConvertedMxn: null,
         activeSubscribersNow: 0,
         activeSubscribersWithPlanNow: 0,
         mrrActiveSubscriptionsMxn: 0,
@@ -1496,6 +1607,7 @@ export const getAnalyticsBusinessMetrics = async (
         refundRatePct: 0,
         churnMonthlyPct: 0,
         ltvEstimate: null,
+        ltvEstimateConvertedMxn: null,
         cacEstimate: null,
         paybackMonthsEstimate: null,
       },
@@ -1535,17 +1647,37 @@ export const getAnalyticsBusinessMetrics = async (
         paidOrders: bigint | number;
         paidUsers: bigint | number;
         grossRevenue: bigint | number;
+        grossRevenueMxn: bigint | number;
+        grossRevenueUsd: bigint | number;
+        grossRevenueOther: bigint | number;
         refundedOrders: bigint | number;
       }>
     >(Prisma.sql`
       SELECT
         COUNT(*) AS paidOrders,
-        COUNT(DISTINCT user_id) AS paidUsers,
-        COALESCE(SUM(total_price), 0) AS grossRevenue,
-        COUNT(CASE WHEN is_canceled = 1 THEN 1 END) AS refundedOrders
-      FROM orders
-      WHERE status = 1
-        AND date_order >= ${startDate}
+        COUNT(DISTINCT o.user_id) AS paidUsers,
+        COALESCE(SUM(o.total_price), 0) AS grossRevenue,
+        COALESCE(SUM(CASE
+          WHEN LOWER(COALESCE(NULLIF(TRIM(p.moneda), ''), 'unknown')) = 'mxn'
+            THEN o.total_price
+          ELSE 0
+        END), 0) AS grossRevenueMxn,
+        COALESCE(SUM(CASE
+          WHEN LOWER(COALESCE(NULLIF(TRIM(p.moneda), ''), 'unknown')) = 'usd'
+            THEN o.total_price
+          ELSE 0
+        END), 0) AS grossRevenueUsd,
+        COALESCE(SUM(CASE
+          WHEN LOWER(COALESCE(NULLIF(TRIM(p.moneda), ''), 'unknown')) NOT IN ('mxn', 'usd')
+            THEN o.total_price
+          ELSE 0
+        END), 0) AS grossRevenueOther,
+        COUNT(CASE WHEN o.is_canceled = 1 THEN 1 END) AS refundedOrders
+      FROM orders o
+      LEFT JOIN plans p
+        ON p.id = o.plan_id
+      WHERE o.status = 1
+        AND o.date_order >= ${startDate}
     `),
     prisma.$queryRaw<Array<{ repeatBuyers: bigint | number }>>(Prisma.sql`
       SELECT
@@ -1564,15 +1696,35 @@ export const getAnalyticsBusinessMetrics = async (
       Array<{
         activeUsers: bigint | number;
         revenue: bigint | number;
+        revenueMxn: bigint | number;
+        revenueUsd: bigint | number;
+        revenueOther: bigint | number;
       }>
     >(Prisma.sql`
       SELECT
-        COUNT(DISTINCT user_id) AS activeUsers,
-        COALESCE(SUM(total_price), 0) AS revenue
-      FROM orders
-      WHERE status = 1
-        AND (is_canceled IS NULL OR is_canceled = 0)
-        AND date_order >= ${currentWindowStart}
+        COUNT(DISTINCT o.user_id) AS activeUsers,
+        COALESCE(SUM(o.total_price), 0) AS revenue,
+        COALESCE(SUM(CASE
+          WHEN LOWER(COALESCE(NULLIF(TRIM(p.moneda), ''), 'unknown')) = 'mxn'
+            THEN o.total_price
+          ELSE 0
+        END), 0) AS revenueMxn,
+        COALESCE(SUM(CASE
+          WHEN LOWER(COALESCE(NULLIF(TRIM(p.moneda), ''), 'unknown')) = 'usd'
+            THEN o.total_price
+          ELSE 0
+        END), 0) AS revenueUsd,
+        COALESCE(SUM(CASE
+          WHEN LOWER(COALESCE(NULLIF(TRIM(p.moneda), ''), 'unknown')) NOT IN ('mxn', 'usd')
+            THEN o.total_price
+          ELSE 0
+        END), 0) AS revenueOther
+      FROM orders o
+      LEFT JOIN plans p
+        ON p.id = o.plan_id
+      WHERE o.status = 1
+        AND (o.is_canceled IS NULL OR o.is_canceled = 0)
+        AND o.date_order >= ${currentWindowStart}
     `),
     prisma.$queryRaw<Array<{ previousUsers: bigint | number }>>(Prisma.sql`
       SELECT
@@ -1678,10 +1830,19 @@ export const getAnalyticsBusinessMetrics = async (
     paidOrders: 0,
     paidUsers: 0,
     grossRevenue: 0,
+    grossRevenueMxn: 0,
+    grossRevenueUsd: 0,
+    grossRevenueOther: 0,
     refundedOrders: 0,
   };
   const repeatBuyers = repeatBuyersRows[0] ?? { repeatBuyers: 0 };
-  const currentWindow = currentWindowRows[0] ?? { activeUsers: 0, revenue: 0 };
+  const currentWindow = currentWindowRows[0] ?? {
+    activeUsers: 0,
+    revenue: 0,
+    revenueMxn: 0,
+    revenueUsd: 0,
+    revenueOther: 0,
+  };
   const previousWindow = previousUsersRows[0] ?? { previousUsers: 0 };
   const lostWindow = lostUsersRows[0] ?? { lostUsers: 0 };
   const newWindow = newUsersRows[0] ?? { newUsers: 0 };
@@ -1689,10 +1850,20 @@ export const getAnalyticsBusinessMetrics = async (
   const paidOrders = numberFromUnknown(rangeOrders.paidOrders);
   const paidUsers = numberFromUnknown(rangeOrders.paidUsers);
   const grossRevenue = numberFromUnknown(rangeOrders.grossRevenue);
+  const grossRevenueByCurrency = computeAnalyticsCurrencyTotals({
+    mxn: rangeOrders.grossRevenueMxn,
+    usd: rangeOrders.grossRevenueUsd,
+    other: rangeOrders.grossRevenueOther,
+  });
   const refundedOrders = numberFromUnknown(rangeOrders.refundedOrders);
   const repeatBuyerCount = numberFromUnknown(repeatBuyers.repeatBuyers);
   const currentActiveUsers = numberFromUnknown(currentWindow.activeUsers);
   const currentRevenue = numberFromUnknown(currentWindow.revenue);
+  const monthlyRecurringRevenueByCurrency = computeAnalyticsCurrencyTotals({
+    mxn: currentWindow.revenueMxn,
+    usd: currentWindow.revenueUsd,
+    other: currentWindow.revenueOther,
+  });
   const previousActiveUsers = numberFromUnknown(previousWindow.previousUsers);
   const lostUsers = numberFromUnknown(lostWindow.lostUsers);
   const newUsers = numberFromUnknown(newWindow.newUsers);
@@ -1719,9 +1890,32 @@ export const getAnalyticsBusinessMetrics = async (
   const arrActiveSubscriptionsUsd = mrrActiveSubscriptionsUsd * 12;
 
   const avgOrderValue = paidOrders > 0 ? grossRevenue / paidOrders : 0;
+  const grossRevenueConvertedMxn =
+    grossRevenueByCurrency.convertedMxn == null
+      ? null
+      : roundNumber(grossRevenueByCurrency.convertedMxn, 2);
+  const avgOrderValueConvertedMxn =
+    grossRevenueConvertedMxn != null && paidOrders > 0
+      ? roundNumber(grossRevenueConvertedMxn / paidOrders, 2)
+      : null;
   const arpu = paidUsers > 0 ? grossRevenue / paidUsers : 0;
+  const arpuConvertedMxn =
+    grossRevenueConvertedMxn != null && paidUsers > 0
+      ? roundNumber(grossRevenueConvertedMxn / paidUsers, 2)
+      : null;
+  const monthlyRecurringRevenueEstimateConvertedMxn =
+    monthlyRecurringRevenueByCurrency.convertedMxn == null
+      ? null
+      : roundNumber(monthlyRecurringRevenueByCurrency.convertedMxn, 2);
   const monthlyArpuEstimate =
     currentActiveUsers > 0 ? currentRevenue / currentActiveUsers : 0;
+  const monthlyArpuEstimateConvertedMxn =
+    monthlyRecurringRevenueEstimateConvertedMxn != null && currentActiveUsers > 0
+      ? roundNumber(
+          monthlyRecurringRevenueEstimateConvertedMxn / currentActiveUsers,
+          2,
+        )
+      : null;
   const refundRatePct = calculateRate(refundedOrders, paidOrders);
   const churnMonthlyPct = calculateRate(lostUsers, previousActiveUsers);
   const repeatPurchaseRatePct = calculateRate(repeatBuyerCount, paidUsers);
@@ -1730,6 +1924,12 @@ export const getAnalyticsBusinessMetrics = async (
   const ltvEstimate =
     churnFraction > 0 && Number.isFinite(monthlyArpuEstimate)
       ? roundNumber(monthlyArpuEstimate / churnFraction, 2)
+      : null;
+  const ltvEstimateConvertedMxn =
+    churnFraction > 0 &&
+    monthlyArpuEstimateConvertedMxn != null &&
+    Number.isFinite(monthlyArpuEstimateConvertedMxn)
+      ? roundNumber(monthlyArpuEstimateConvertedMxn / churnFraction, 2)
       : null;
 
   const adSpendFromEnv = Number(process.env.ANALYTICS_MONTHLY_AD_SPEND);
@@ -1765,10 +1965,17 @@ export const getAnalyticsBusinessMetrics = async (
       paidOrders,
       paidUsers,
       grossRevenue: roundNumber(grossRevenue, 2),
+      grossRevenueByCurrency,
+      grossRevenueConvertedMxn,
       avgOrderValue: roundNumber(avgOrderValue, 2),
+      avgOrderValueConvertedMxn,
       arpu: roundNumber(arpu, 2),
+      arpuConvertedMxn,
       monthlyRecurringRevenueEstimate: roundNumber(currentRevenue, 2),
+      monthlyRecurringRevenueByCurrency,
+      monthlyRecurringRevenueEstimateConvertedMxn,
       monthlyArpuEstimate: roundNumber(monthlyArpuEstimate, 2),
+      monthlyArpuEstimateConvertedMxn,
       activeSubscribersNow,
       activeSubscribersWithPlanNow,
       mrrActiveSubscriptionsMxn: roundNumber(mrrActiveSubscriptionsMxn, 2),
@@ -1779,6 +1986,7 @@ export const getAnalyticsBusinessMetrics = async (
       refundRatePct: roundNumber(refundRatePct, 2),
       churnMonthlyPct: roundNumber(churnMonthlyPct, 2),
       ltvEstimate,
+      ltvEstimateConvertedMxn,
       cacEstimate,
       paybackMonthsEstimate,
     },
@@ -2125,7 +2333,16 @@ export const getAnalyticsCrmDashboard = async (
         newPaidUsersFromRangeRegistrations: 0,
         renewalOrders: 0,
         grossRevenue: 0,
+        grossRevenueByCurrency: {
+          mxn: 0,
+          usd: 0,
+          other: 0,
+          convertedMxn: null,
+          usdToMxnRate: null,
+        },
+        grossRevenueConvertedMxn: null,
         avgOrderValue: 0,
+        avgOrderValueConvertedMxn: null,
         trialStarts: 0,
         trialConversions: 0,
         trialConversionRatePct: 0,
@@ -2203,16 +2420,39 @@ export const getAnalyticsCrmDashboard = async (
       ORDER BY day ASC
     `),
     prisma.$queryRaw<
-      Array<{ paidOrders: bigint | number; grossRevenue: bigint | number }>
+      Array<{
+        paidOrders: bigint | number;
+        grossRevenue: bigint | number;
+        grossRevenueMxn: bigint | number;
+        grossRevenueUsd: bigint | number;
+        grossRevenueOther: bigint | number;
+      }>
     >(Prisma.sql`
       SELECT
         COUNT(*) AS paidOrders,
-        COALESCE(SUM(total_price), 0) AS grossRevenue
-      FROM orders
-      WHERE status = 1
-        AND is_plan = 1
-        AND date_order >= ${startDateOnly}
-        AND (is_canceled IS NULL OR is_canceled = 0)
+        COALESCE(SUM(o.total_price), 0) AS grossRevenue,
+        COALESCE(SUM(CASE
+          WHEN LOWER(COALESCE(NULLIF(TRIM(p.moneda), ''), 'unknown')) = 'mxn'
+            THEN o.total_price
+          ELSE 0
+        END), 0) AS grossRevenueMxn,
+        COALESCE(SUM(CASE
+          WHEN LOWER(COALESCE(NULLIF(TRIM(p.moneda), ''), 'unknown')) = 'usd'
+            THEN o.total_price
+          ELSE 0
+        END), 0) AS grossRevenueUsd,
+        COALESCE(SUM(CASE
+          WHEN LOWER(COALESCE(NULLIF(TRIM(p.moneda), ''), 'unknown')) NOT IN ('mxn', 'usd')
+            THEN o.total_price
+          ELSE 0
+        END), 0) AS grossRevenueOther
+      FROM orders o
+      LEFT JOIN plans p
+        ON p.id = o.plan_id
+      WHERE o.status = 1
+        AND o.is_plan = 1
+        AND o.date_order >= ${startDateOnly}
+        AND (o.is_canceled IS NULL OR o.is_canceled = 0)
     `),
     prisma.$queryRaw<
       Array<{
@@ -2603,7 +2843,13 @@ export const getAnalyticsCrmDashboard = async (
     Array<{ day: string; registrations: bigint | number }>
   >(2, []);
   const paidOrdersRows = pickCrmResult<
-    Array<{ paidOrders: bigint | number; grossRevenue: bigint | number }>
+    Array<{
+      paidOrders: bigint | number;
+      grossRevenue: bigint | number;
+      grossRevenueMxn: bigint | number;
+      grossRevenueUsd: bigint | number;
+      grossRevenueOther: bigint | number;
+    }>
   >(3, []);
   const newVsRenewalRows = pickCrmResult<
     Array<{
@@ -2725,12 +2971,25 @@ export const getAnalyticsCrmDashboard = async (
   );
 
   const paidOrders = numberFromUnknown(paidOrdersRows?.[0]?.paidOrders);
+  const grossRevenueByCurrency = computeAnalyticsCurrencyTotals({
+    mxn: paidOrdersRows?.[0]?.grossRevenueMxn ?? 0,
+    usd: paidOrdersRows?.[0]?.grossRevenueUsd ?? 0,
+    other: paidOrdersRows?.[0]?.grossRevenueOther ?? 0,
+  });
   const grossRevenue = roundNumber(
     numberFromUnknown(paidOrdersRows?.[0]?.grossRevenue),
     2,
   );
+  const grossRevenueConvertedMxn =
+    grossRevenueByCurrency.convertedMxn == null
+      ? null
+      : roundNumber(grossRevenueByCurrency.convertedMxn, 2);
   const avgOrderValue =
     paidOrders > 0 ? roundNumber(grossRevenue / paidOrders, 2) : 0;
+  const avgOrderValueConvertedMxn =
+    grossRevenueConvertedMxn != null && paidOrders > 0
+      ? roundNumber(grossRevenueConvertedMxn / paidOrders, 2)
+      : null;
 
   const newPaidUsers = numberFromUnknown(newVsRenewalRows?.[0]?.newPaidUsers);
   const newPaidUsersFromRangeRegistrations = numberFromUnknown(
@@ -2839,7 +3098,10 @@ export const getAnalyticsCrmDashboard = async (
       newPaidUsersFromRangeRegistrations,
       renewalOrders,
       grossRevenue,
+      grossRevenueByCurrency,
+      grossRevenueConvertedMxn,
       avgOrderValue,
+      avgOrderValueConvertedMxn,
       trialStarts,
       trialConversions,
       trialConversionRatePct,

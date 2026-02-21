@@ -26,6 +26,7 @@ interface FunnelOverview {
     paidOrders: number;
     paidUsers: number;
     grossRevenue: number;
+    grossRevenueByCurrency: CurrencyTotals;
     chatOpened: number;
     activationD1Users: number;
     registrationCohort: number;
@@ -80,6 +81,9 @@ interface AttributionPoint {
   purchases: number;
   revenue: number;
   aov: number;
+  revenueByCurrency: CurrencyTotals;
+  revenueConvertedMxn: number | null;
+  aovConvertedMxn: number | null;
 }
 
 interface CancellationReasonCampaignPoint {
@@ -118,10 +122,17 @@ interface BusinessMetrics {
     paidOrders: number;
     paidUsers: number;
     grossRevenue: number;
+    grossRevenueByCurrency: CurrencyTotals;
+    grossRevenueConvertedMxn: number | null;
     avgOrderValue: number;
+    avgOrderValueConvertedMxn: number | null;
     arpu: number;
+    arpuConvertedMxn: number | null;
     monthlyRecurringRevenueEstimate: number;
+    monthlyRecurringRevenueByCurrency: CurrencyTotals;
+    monthlyRecurringRevenueEstimateConvertedMxn: number | null;
     monthlyArpuEstimate: number;
+    monthlyArpuEstimateConvertedMxn: number | null;
     activeSubscribersNow: number;
     activeSubscribersWithPlanNow: number;
     mrrActiveSubscriptionsMxn: number;
@@ -132,6 +143,7 @@ interface BusinessMetrics {
     refundRatePct: number;
     churnMonthlyPct: number;
     ltvEstimate: number | null;
+    ltvEstimateConvertedMxn: number | null;
     cacEstimate: number | null;
     paybackMonthsEstimate: number | null;
   };
@@ -228,6 +240,14 @@ interface HealthAlertsSnapshot {
 interface PaginatedResult<T> {
   total: number;
   data: T[];
+}
+
+interface CurrencyTotals {
+  mxn: number;
+  usd: number;
+  other: number;
+  convertedMxn: number | null;
+  usdToMxnRate: number | null;
 }
 
 const ANALYTICS_KPI_SKELETON_COUNT = 9;
@@ -349,6 +369,34 @@ function formatCurrencyPair(mxn: number, usd: number): string {
   if (mxn > 0) parts.push(`MXN ${formatCurrencyCode(mxn, "MXN")}`);
   if (usd > 0) parts.push(`USD ${formatCurrencyCode(usd, "USD")}`);
   return parts.length ? parts.join(" · ") : "—";
+}
+
+function formatCurrencyBreakdown(totals: CurrencyTotals | null | undefined): string {
+  if (!totals) return "—";
+  const parts: string[] = [];
+  if ((totals.mxn ?? 0) > 0) parts.push(`MXN ${formatCurrencyCode(totals.mxn, "MXN")}`);
+  if ((totals.usd ?? 0) > 0) parts.push(`USD ${formatCurrencyCode(totals.usd, "USD")}`);
+  if ((totals.other ?? 0) > 0) {
+    parts.push(
+      `OTRAS ${totals.other.toLocaleString("es-MX", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`,
+    );
+  }
+  return parts.length ? parts.join(" · ") : "—";
+}
+
+function formatConvertedMxnSummary(totals: CurrencyTotals | null | undefined): string {
+  if (!totals) return "Sin desglose de moneda.";
+  if (totals.convertedMxn == null || totals.usdToMxnRate == null) {
+    return "Conversión USD→MXN no configurada (ANALYTICS_USD_TO_MXN_RATE).";
+  }
+  const otherSuffix =
+    (totals.other ?? 0) > 0
+      ? ` · Otras sin conversión: ${formatCurrency(totals.other)}`
+      : "";
+  return `Total convertido: ${formatCurrency(totals.convertedMxn)} (1 USD = ${totals.usdToMxnRate.toFixed(4)} MXN)${otherSuffix}`;
 }
 
 function formatPct(value: number): string {
@@ -639,8 +687,10 @@ export function AnalyticsDashboard() {
       {
         id: "revenue",
         label: "Ingreso bruto",
-        value: formatCurrency(funnel.volume.grossRevenue),
-        helper: formatRangeWindow(funnel.range.days),
+        value: formatCurrencyBreakdown(funnel.volume.grossRevenueByCurrency),
+        helper: `${formatRangeWindow(funnel.range.days)} · ${formatConvertedMxnSummary(
+          funnel.volume.grossRevenueByCurrency,
+        )}`,
         icon: DollarSign,
       },
       {
@@ -660,8 +710,10 @@ export function AnalyticsDashboard() {
       {
         id: "ltv",
         label: "LTV estimado",
-        value: formatCurrency(business.kpis.ltvEstimate),
-        helper: `ARPU mes: ${formatCurrency(business.kpis.monthlyArpuEstimate)}`,
+        value: formatCurrency(business.kpis.ltvEstimateConvertedMxn),
+        helper: `ARPU mes (conv): ${formatCurrency(
+          business.kpis.monthlyArpuEstimateConvertedMxn,
+        )}`,
         icon: Gauge,
       },
       {
@@ -705,8 +757,8 @@ export function AnalyticsDashboard() {
       {
         id: "revenue-range",
         title: "Ingreso del período",
-        value: formatCurrency(funnel.volume.grossRevenue),
-        helper: `Total de ${formatRangeWindow(funnel.range.days)}.`,
+        value: formatCurrencyBreakdown(funnel.volume.grossRevenueByCurrency),
+        helper: formatConvertedMxnSummary(funnel.volume.grossRevenueByCurrency),
         icon: DollarSign,
       },
       {
@@ -1075,7 +1127,7 @@ export function AnalyticsDashboard() {
                             <th>Checkout</th>
                             <th>Pagos</th>
                             <th>Ingreso</th>
-                            <th>AOV</th>
+                            <th>AOV (MXN conv.)</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1096,8 +1148,12 @@ export function AnalyticsDashboard() {
                                 <td>{item.registrations.toLocaleString("es-MX")}</td>
                                 <td>{item.checkouts.toLocaleString("es-MX")}</td>
                                 <td>{item.purchases.toLocaleString("es-MX")}</td>
-                                <td>{formatCurrency(item.revenue)}</td>
-                                <td>{formatCurrency(item.aov)}</td>
+                                <td>{formatCurrencyBreakdown(item.revenueByCurrency)}</td>
+                                <td>
+                                  {item.aovConvertedMxn != null
+                                    ? formatCurrency(item.aovConvertedMxn)
+                                    : "—"}
+                                </td>
                               </tr>
                             ))
                           )}
@@ -1152,11 +1208,15 @@ export function AnalyticsDashboard() {
                               </div>
                               <div className="analytics-mobile-kv__row">
                                 <dt>Ingreso</dt>
-                                <dd>{formatCurrency(item.revenue)}</dd>
+                                <dd>{formatCurrencyBreakdown(item.revenueByCurrency)}</dd>
                               </div>
                               <div className="analytics-mobile-kv__row">
                                 <dt>AOV</dt>
-                                <dd>{formatCurrency(item.aov)}</dd>
+                                <dd>
+                                  {item.aovConvertedMxn != null
+                                    ? formatCurrency(item.aovConvertedMxn)
+                                    : "—"}
+                                </dd>
                               </div>
                             </dl>
                           </article>
@@ -1298,19 +1358,43 @@ export function AnalyticsDashboard() {
                           </tr>
                           <tr>
                             <th>Ingresos últimos 30d (no MRR)</th>
-                            <td>{formatCurrency(business.kpis.monthlyRecurringRevenueEstimate)}</td>
+                            <td>
+                              {formatCurrencyBreakdown(
+                                business.kpis.monthlyRecurringRevenueByCurrency,
+                              )}
+                              <br />
+                              <small>
+                                {formatConvertedMxnSummary(
+                                  business.kpis.monthlyRecurringRevenueByCurrency,
+                                )}
+                              </small>
+                            </td>
                           </tr>
                           <tr>
                             <th>Ingreso promedio por usuario (ARPU, rango)</th>
-                            <td>{formatCurrency(business.kpis.arpu)}</td>
+                            <td>
+                              {business.kpis.arpuConvertedMxn != null
+                                ? formatCurrency(business.kpis.arpuConvertedMxn)
+                                : "—"}
+                            </td>
                           </tr>
                           <tr>
                             <th>Ingreso promedio mensual por usuario (ARPU 30d)</th>
-                            <td>{formatCurrency(business.kpis.monthlyArpuEstimate)}</td>
+                            <td>
+                              {business.kpis.monthlyArpuEstimateConvertedMxn != null
+                                ? formatCurrency(
+                                    business.kpis.monthlyArpuEstimateConvertedMxn,
+                                  )
+                                : "—"}
+                            </td>
                           </tr>
                           <tr>
                             <th>LTV estimado</th>
-                            <td>{formatCurrency(business.kpis.ltvEstimate)}</td>
+                            <td>
+                              {business.kpis.ltvEstimateConvertedMxn != null
+                                ? formatCurrency(business.kpis.ltvEstimateConvertedMxn)
+                                : "—"}
+                            </td>
                           </tr>
                           <tr>
                             <th>CAC estimado</th>
@@ -1363,16 +1447,38 @@ export function AnalyticsDashboard() {
                             </dd>
                           </div>
                           <div className="analytics-mobile-kv__row">
+                            <dt>Ingresos 30d</dt>
+                            <dd>
+                              {formatCurrencyBreakdown(
+                                business.kpis.monthlyRecurringRevenueByCurrency,
+                              )}
+                            </dd>
+                          </div>
+                          <div className="analytics-mobile-kv__row">
                             <dt>ARPU</dt>
-                            <dd>{formatCurrency(business.kpis.arpu)}</dd>
+                            <dd>
+                              {business.kpis.arpuConvertedMxn != null
+                                ? formatCurrency(business.kpis.arpuConvertedMxn)
+                                : "—"}
+                            </dd>
                           </div>
                           <div className="analytics-mobile-kv__row">
                             <dt>ARPU 30d</dt>
-                            <dd>{formatCurrency(business.kpis.monthlyArpuEstimate)}</dd>
+                            <dd>
+                              {business.kpis.monthlyArpuEstimateConvertedMxn != null
+                                ? formatCurrency(
+                                    business.kpis.monthlyArpuEstimateConvertedMxn,
+                                  )
+                                : "—"}
+                            </dd>
                           </div>
                           <div className="analytics-mobile-kv__row">
                             <dt>LTV</dt>
-                            <dd>{formatCurrency(business.kpis.ltvEstimate)}</dd>
+                            <dd>
+                              {business.kpis.ltvEstimateConvertedMxn != null
+                                ? formatCurrency(business.kpis.ltvEstimateConvertedMxn)
+                                : "—"}
+                            </dd>
                           </div>
                           <div className="analytics-mobile-kv__row">
                             <dt>CAC</dt>

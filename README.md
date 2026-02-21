@@ -70,6 +70,7 @@ Otras variables que usa el proyecto (puedes dejarlas vacías o con valores de pr
 - Rutas: `SONGS_PATH`, `COMPRESSED_DIRS_NAME`
 - Redis, colas: `REMOVE_USERS_QUEUE_NAME`, etc.
 - Facebook: `FACEBOOK_ACCESS_TOKEN`, `FACEBOOK_PIXEL_ID`
+- Analytics moneda: `ANALYTICS_USD_TO_MXN_RATE` (ej. `17.27`; usado para convertir USD->MXN en dashboards internos cuando hay datos mixtos)
 
 Para producción o pruebas más completas, rellena las que uses según la documentación en [docs/](docs/).
 

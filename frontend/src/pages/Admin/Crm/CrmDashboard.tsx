@@ -127,7 +127,10 @@ interface CrmSnapshot {
     newPaidUsersFromRangeRegistrations: number;
     renewalOrders: number;
     grossRevenue: number;
+    grossRevenueByCurrency: CurrencyTotals;
+    grossRevenueConvertedMxn: number | null;
     avgOrderValue: number;
+    avgOrderValueConvertedMxn: number | null;
     trialStarts: number;
     trialConversions: number;
     trialConversionRatePct: number;
@@ -151,6 +154,14 @@ interface CrmSnapshot {
   paidNoDownload2h: CrmPaidNoDownloadPoint[];
   paidNoDownload24hTotal: number;
   paidNoDownload24h: CrmPaidNoDownloadPoint[];
+}
+
+interface CurrencyTotals {
+  mxn: number;
+  usd: number;
+  other: number;
+  convertedMxn: number | null;
+  usdToMxnRate: number | null;
 }
 
 const RANGE_OPTIONS = [
@@ -177,6 +188,32 @@ function formatCurrency(value: number | null | undefined): string {
     currency: "MXN",
     maximumFractionDigits: 2,
   }).format(value);
+}
+
+function formatCurrencyCode(value: number | null | undefined, currency: string): string {
+  if (value == null || Number.isNaN(value)) return "—";
+  const code = (currency || "MXN").toUpperCase();
+  return new Intl.NumberFormat("es-MX", {
+    style: "currency",
+    currency: code,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+function formatCurrencyBreakdown(totals: CurrencyTotals | null | undefined): string {
+  if (!totals) return "—";
+  const parts: string[] = [];
+  if ((totals.mxn ?? 0) > 0) parts.push(`MXN ${formatCurrencyCode(totals.mxn, "MXN")}`);
+  if ((totals.usd ?? 0) > 0) parts.push(`USD ${formatCurrencyCode(totals.usd, "USD")}`);
+  if ((totals.other ?? 0) > 0) {
+    parts.push(
+      `OTRAS ${totals.other.toLocaleString("es-MX", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`,
+    );
+  }
+  return parts.length ? parts.join(" · ") : "—";
 }
 
 function formatPct(value: number): string {
@@ -769,8 +806,12 @@ export function CrmDashboard() {
             />
             <KpiCard
               title="Ingresos"
-              value={formatCurrency(snapshot.kpis.grossRevenue)}
-              helper={`AOV ${formatCurrency(snapshot.kpis.avgOrderValue)}`}
+              value={formatCurrencyBreakdown(snapshot.kpis.grossRevenueByCurrency)}
+              helper={`Total conv: ${formatCurrency(
+                snapshot.kpis.grossRevenueConvertedMxn,
+              )} · AOV conv: ${formatCurrency(
+                snapshot.kpis.avgOrderValueConvertedMxn,
+              )}`}
               icon={DollarSign}
             />
             <KpiCard
