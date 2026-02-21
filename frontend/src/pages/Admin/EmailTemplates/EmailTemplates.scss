@@ -291,7 +291,7 @@
   display: grid;
   gap: 8px;
 
-  h3 {
+  h2 {
     margin: 0;
     font-size: 0.95rem;
     color: var(--ad-title);
@@ -330,7 +330,7 @@
   justify-content: space-between;
   align-items: center;
 
-  h3 {
+  h2 {
     margin: 0;
     font-size: 0.95rem;
     color: var(--ad-title);
@@ -373,7 +373,7 @@
   display: grid;
   gap: 8px;
 
-  h3 {
+  h2 {
     margin: 0;
     font-size: 0.95rem;
     color: var(--ad-title);
@@ -432,7 +432,12 @@
   font-weight: 700;
 }
 
-@media (max-width: 1080px) {
+@media (max-width: 1360px) {
+  .email-templates-grid .email-templates-list.admin-table-panel,
+  .email-templates-grid .email-templates-editor.admin-table-panel {
+    display: grid;
+  }
+
   .email-templates-grid {
     grid-template-columns: 1fr;
   }

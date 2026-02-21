@@ -2033,13 +2033,13 @@ html[data-theme="light"] .home-hero__cta-demo:hover:not(:disabled) {
 .home-why__chip--yes {
   border-color: color-mix(in srgb, #16a34a 42%, var(--ph-border));
   background: color-mix(in srgb, #16a34a 18%, transparent);
-  color: color-mix(in srgb, #16a34a 72%, white);
+  color: color-mix(in srgb, var(--ph-text-heading) 68%, #166534);
 }
 
 .home-why__chip--no {
   border-color: color-mix(in srgb, #dc2626 34%, var(--ph-border));
   background: color-mix(in srgb, #dc2626 14%, transparent);
-  color: color-mix(in srgb, #dc2626 74%, white);
+  color: color-mix(in srgb, var(--ph-text-heading) 64%, #b91c1c);
 }
 
 .home-why__chip--value {

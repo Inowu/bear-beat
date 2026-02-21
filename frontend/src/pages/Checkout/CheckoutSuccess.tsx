@@ -266,7 +266,7 @@ function CheckoutSuccess() {
             </div>
             <h1 className="checkout-one-state__title">Pago realizado</h1>
             <p className="checkout-summary__desc checkout-success-card__desc">{activationCopy.description}</p>
-            <p className="checkout-summary__meta">
+            <div className="checkout-summary__meta">
               <strong style={{ color: "var(--app-text-heading)" }}>{activationCopy.title}</strong>
               {activationState === "checking" ? (
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 8, marginLeft: 10 }}>
@@ -276,7 +276,7 @@ function CheckoutSuccess() {
                   Verificando…
                 </span>
               ) : null}
-            </p>
+            </div>
             {activationError ? (
               <p className="checkout-summary__meta" role="status" aria-live="polite">
                 {activationError}

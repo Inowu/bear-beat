@@ -22,7 +22,7 @@ export function AdminPageLayout({
   return (
     <div className={classes}>
       <header className="admin-page-wrap__header">
-        <h2 className="admin-page-wrap__title">{title}</h2>
+        <h1 className="admin-page-wrap__title">{title}</h1>
         {subtitle && <p className="admin-page-wrap__subtitle">{subtitle}</p>}
       </header>
       {toolbar && <div className="admin-page-wrap__toolbar">{toolbar}</div>}
@@ -30,4 +30,3 @@ export function AdminPageLayout({
     </div>
   );
 }
-

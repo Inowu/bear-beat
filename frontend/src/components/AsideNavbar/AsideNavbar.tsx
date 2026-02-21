@@ -88,7 +88,7 @@ function AsideNavbar(props: AsideNavbarPropsI) {
 
   return (
     <aside
-      className={drawerOpen ? "open" : ""}
+      className={`aside-nav${drawerOpen ? " open" : ""}`}
       aria-hidden={drawerOpen ? undefined : true}
       aria-label="Menú lateral"
     >

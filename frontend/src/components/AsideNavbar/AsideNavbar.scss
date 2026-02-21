@@ -1,6 +1,6 @@
 @use "src/styles/mixin" as *;
 
-aside {
+.aside-nav {
   width: 100%;
   max-width: 292px;
   padding: 0 16px;
@@ -193,15 +193,15 @@ aside {
   }
 }
 
-html[data-theme="light"] aside .nav-container .nav-link-item:not(.is-active):not(.nav-link-item--danger):hover,
-html[data-theme="light"] aside .nav-container .nav-link-item:not(.is-active):not(.nav-link-item--danger):focus-visible {
+html[data-theme="light"] .aside-nav .nav-container .nav-link-item:not(.is-active):not(.nav-link-item--danger):hover,
+html[data-theme="light"] .aside-nav .nav-container .nav-link-item:not(.is-active):not(.nav-link-item--danger):focus-visible {
   color: color-mix(in srgb, var(--theme-nav-text) 96%, black);
   background: color-mix(in srgb, var(--app-accent) 16%, rgba(0, 0, 0, 0.04));
   border-color: color-mix(in srgb, var(--app-accent) 46%, rgba(0, 0, 0, 0.14));
 }
 
 @include respond-to(desktop) {
-  aside {
+  .aside-nav {
     position: fixed;
     top: 0;
     left: 0;

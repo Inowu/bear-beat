@@ -49,8 +49,8 @@
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--ma-accent) 32%, transparent);
   background: color-mix(in srgb, var(--ma-accent) 12%, transparent);
-  color: var(--ma-accent);
-  font-size: 1.12rem;
+  color: color-mix(in srgb, var(--ma-title) 66%, var(--ma-accent));
+  font-size: 1.2rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -939,6 +939,7 @@ html[data-theme="light"] .ma-control-head p {
 html[data-theme="light"] .ma-page-kicker {
   border-color: color-mix(in srgb, var(--ma-accent) 28%, transparent);
   background: color-mix(in srgb, var(--ma-accent) 8%, var(--color-white));
+  color: color-mix(in srgb, var(--ma-title) 70%, var(--ma-accent));
 }
 
 html[data-theme="light"] .ma-control-center {
@@ -1479,7 +1480,7 @@ html[data-theme="light"] .ma-add-card:hover {
   }
 
   .ma-page-kicker {
-    font-size: 1.08rem;
+    font-size: 1.12rem;
   }
 }
 

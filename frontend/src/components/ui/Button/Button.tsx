@@ -13,7 +13,7 @@ export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   rightIcon?: React.ReactNode;
 };
 
-export function Button(props: ButtonProps) {
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(props, ref) {
   const {
     variant = "primary",
     size = "md",
@@ -32,6 +32,7 @@ export function Button(props: ButtonProps) {
   return (
     <button
       {...rest}
+      ref={ref}
       type={rest.type ?? "button"}
       disabled={isDisabled}
       aria-busy={loading || undefined}
@@ -66,4 +67,4 @@ export function Button(props: ButtonProps) {
       ) : null}
     </button>
   );
-}
+});

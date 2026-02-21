@@ -94,6 +94,45 @@ const isSameEditorState = (a: TemplateEditorState, b: TemplateEditorState): bool
   && a.html === b.html
   && a.text === b.text;
 
+const stripUnsafePreviewScripts = (html: string): string =>
+  (html || "").replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
+
+const sanitizePreviewHtml = (html: string): string => {
+  const source = html || "";
+  if (!source) return "";
+
+  const fallback = stripUnsafePreviewScripts(source);
+
+  if (typeof window === "undefined" || typeof DOMParser === "undefined") {
+    return fallback;
+  }
+
+  try {
+    const doc = new DOMParser().parseFromString(fallback, "text/html");
+    doc.querySelectorAll("script").forEach((node) => node.remove());
+    doc.querySelectorAll<HTMLElement>("*").forEach((node) => {
+      Array.from(node.attributes).forEach((attr) => {
+        const attrName = attr.name.toLowerCase();
+        const attrValue = attr.value.trim().toLowerCase();
+        if (attrName.startsWith("on")) {
+          node.removeAttribute(attr.name);
+          return;
+        }
+        if (
+          (attrName === "href" || attrName === "src" || attrName === "xlink:href")
+          && attrValue.startsWith("javascript:")
+        ) {
+          node.removeAttribute(attr.name);
+        }
+      });
+    });
+
+    return doc.documentElement ? `<!doctype html>\n${doc.documentElement.outerHTML}` : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
 export function EmailTemplates() {
   const navigate = useNavigate();
   const { currentUser } = useUserContext();
@@ -226,6 +265,8 @@ export function EmailTemplates() {
     }
     return editor.html;
   }, [detail?.effectiveContent?.html, editor.html, previewMode]);
+
+  const previewHtmlSafe = useMemo(() => sanitizePreviewHtml(previewHtml), [previewHtml]);
 
   const startSelectTemplate = (templateKey: string) => {
     if (templateKey === selectedTemplateKey) return;
@@ -367,7 +408,7 @@ export function EmailTemplates() {
         </div>
       ) : (
         <section className="email-templates-grid">
-          <aside className="email-templates-list admin-table-panel">
+          <section className="email-templates-list admin-table-panel">
             <header className="email-templates-list__header">
               <h2>Templates</h2>
               <span>{filteredTemplates.length}</span>
@@ -376,7 +417,7 @@ export function EmailTemplates() {
             {filteredTemplates.length === 0 ? (
               <p className="email-templates-list__empty">No hay plantillas para esos filtros.</p>
             ) : (
-              <div className="email-templates-list__scroll" role="list" aria-label="Listado de templates">
+              <div className="email-templates-list__scroll" aria-label="Listado de templates">
                 {filteredTemplates.map((item) => {
                   const isActive = item.templateKey === selectedTemplateKey;
                   return (
@@ -403,7 +444,7 @@ export function EmailTemplates() {
                 })}
               </div>
             )}
-          </aside>
+          </section>
 
           <div className="email-templates-editor admin-table-panel">
             {loadingDetail ? (
@@ -517,7 +558,7 @@ export function EmailTemplates() {
                 </div>
 
                 <section className="email-templates-test">
-                  <h3>Enviar prueba</h3>
+                  <h2>Enviar prueba</h2>
                   <div className="email-templates-test__controls">
                     <label>
                       <span>Email destino</span>
@@ -552,7 +593,7 @@ export function EmailTemplates() {
 
                 <section className="email-templates-preview">
                   <div className="email-templates-preview__head">
-                    <h3>Vista previa</h3>
+                    <h2>Vista previa</h2>
                     <div className="email-templates-preview__modes">
                       <button
                         type="button"
@@ -574,13 +615,13 @@ export function EmailTemplates() {
                   <iframe
                     title="Preview template email"
                     className="email-templates-preview__frame"
-                    srcDoc={previewHtml}
+                    srcDoc={previewHtmlSafe}
                     sandbox=""
                   />
                 </section>
 
                 <section className="email-templates-variables">
-                  <h3>Tokens disponibles</h3>
+                  <h2>Tokens disponibles</h2>
                   <p>Usa formato <code>{"{{TOKEN}}"}</code>.</p>
                   <div className="email-templates-variables__chips">
                     {detail.tokens.map((token) => (
