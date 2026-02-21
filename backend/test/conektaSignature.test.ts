@@ -70,13 +70,18 @@ const signPayload = (payload: Buffer, privateKeyPem: string): string => {
 const buildReq = ({
   body,
   digest,
+  headers,
 }: {
   body: unknown;
   digest?: string;
+  headers?: Record<string, string>;
 }): Request =>
   ({
     body,
-    headers: digest ? { digest } : {},
+    headers: {
+      ...(headers || {}),
+      ...(digest ? { digest } : {}),
+    },
   } as unknown as Request);
 
 const buildRes = () => {
@@ -234,6 +239,54 @@ describe('conektaEndpoint', () => {
 
     expect(enqueueWebhookInboxJobMock).toHaveBeenCalledWith({ inboxId: 34 });
     expect(markWebhookInboxEventEnqueuedMock).toHaveBeenCalledWith(34);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.end).toHaveBeenCalled();
+  });
+
+  it('accepts webhook public key with escaped newlines in env var', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.CONEKTA_WEBHOOK_PUBLIC_KEY = publicKeyPem.replace(/\n/g, '\\n');
+
+    const payload = Buffer.from('{"id":"evt_esc","type":"order.paid"}', 'utf8');
+    const digest = signPayload(payload, privateKeyPem);
+    const req = buildReq({
+      body: payload,
+      digest,
+    });
+    const res = buildRes();
+
+    persistEventMock.mockResolvedValue({
+      created: false,
+      inboxId: 35,
+    });
+
+    await conektaEndpoint(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.end).toHaveBeenCalled();
+  });
+
+  it('accepts signature in x-conekta-signature header', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.CONEKTA_WEBHOOK_PUBLIC_KEY = publicKeyPem;
+
+    const payload = Buffer.from('{"id":"evt_alt","type":"order.paid"}', 'utf8');
+    const digest = signPayload(payload, privateKeyPem);
+    const req = buildReq({
+      body: payload,
+      headers: {
+        'x-conekta-signature': digest,
+      },
+    });
+    const res = buildRes();
+
+    persistEventMock.mockResolvedValue({
+      created: false,
+      inboxId: 36,
+    });
+
+    await conektaEndpoint(req, res);
+
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.end).toHaveBeenCalled();
   });

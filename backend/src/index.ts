@@ -386,6 +386,12 @@ async function main() {
       express.raw({ type: 'application/json' }),
       conektaEndpoint,
     );
+    // Backward-compat alias: some providers/configs use slash style.
+    app.use(
+      '/webhooks/conekta',
+      express.raw({ type: 'application/json' }),
+      conektaEndpoint,
+    );
 
     app.use(
       '/webhooks.ses.sns',

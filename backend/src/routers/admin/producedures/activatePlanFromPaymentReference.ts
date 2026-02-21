@@ -20,7 +20,7 @@ const providerToPaymentService: Record<ProviderInput, PaymentService> = {
   conekta: PaymentService.CONEKTA,
 };
 
-const providerToOrderMethods: Record<ProviderInput, PaymentService[]> = {
+const providerToOrderMethods: Record<ProviderInput, string[]> = {
   stripe: [
     PaymentService.STRIPE,
     PaymentService.STRIPE_RENOVACION,
@@ -28,7 +28,12 @@ const providerToOrderMethods: Record<ProviderInput, PaymentService[]> = {
   ],
   stripe_oxxo: [PaymentService.STRIPE_OXXO],
   paypal: [PaymentService.PAYPAL, PaymentService.PAYPAL_PLAN_CHANGE],
-  conekta: [PaymentService.CONEKTA],
+  conekta: [
+    PaymentService.CONEKTA,
+    'Conekta spei',
+    'Conekta cash',
+    'Conekta pay_by_bank',
+  ],
 };
 
 const normalizeReference = (value: string): string => value.trim();

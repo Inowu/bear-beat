@@ -14,10 +14,23 @@ const getHeaderValue = (value: string | string[] | undefined): string => {
   return typeof value === 'string' ? value : '';
 };
 
+const normalizePemValue = (value: string): string => {
+  let normalized = value.trim();
+
+  if (
+    (normalized.startsWith('"') && normalized.endsWith('"')) ||
+    (normalized.startsWith('\'') && normalized.endsWith('\''))
+  ) {
+    normalized = normalized.slice(1, -1);
+  }
+
+  return normalized.replace(/\\n/g, '\n').trim();
+};
+
 const resolveConektaWebhookPublicKey = (): string => {
-  const configuredPublicKey = String(
+  const configuredPublicKey = normalizePemValue(String(
     process.env.CONEKTA_WEBHOOK_PUBLIC_KEY || '',
-  ).trim();
+  ));
   if (configuredPublicKey) return configuredPublicKey;
 
   const preferLive = process.env.NODE_ENV === 'production';
@@ -26,7 +39,7 @@ const resolveConektaWebhookPublicKey = (): string => {
     : [process.env.CONEKTA_SIGNED_TEST_KEY, process.env.CONEKTA_SIGNED_KEY];
 
   for (const candidate of candidates) {
-    const normalized = String(candidate || '').trim();
+    const normalized = normalizePemValue(String(candidate || ''));
     if (normalized) return normalized;
   }
 
@@ -41,7 +54,11 @@ export const conektaEndpoint = async (req: Request, res: Response) => {
     return res.status(400).send('Invalid webhook payload');
   }
 
-  const digestHeader = getHeaderValue(req.headers.digest);
+  const headers = req.headers as Record<string, string | string[] | undefined>;
+  const digestHeader =
+    getHeaderValue(headers.digest) ||
+    getHeaderValue(headers['x-conekta-signature']) ||
+    getHeaderValue(headers['x-signature']);
   const publicKeyPem = resolveConektaWebhookPublicKey();
   const isValidSignature = verifyConektaSignature(
     req.body,
