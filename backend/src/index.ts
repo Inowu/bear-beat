@@ -383,13 +383,13 @@ async function main() {
 
     app.use(
       '/webhooks.conekta',
-      express.raw({ type: 'application/json' }),
+      express.raw({ type: '*/*', limit: '1mb' }),
       conektaEndpoint,
     );
     // Backward-compat alias: some providers/configs use slash style.
     app.use(
       '/webhooks/conekta',
-      express.raw({ type: 'application/json' }),
+      express.raw({ type: '*/*', limit: '1mb' }),
       conektaEndpoint,
     );
 

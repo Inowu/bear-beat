@@ -148,6 +148,15 @@ describe('verifyConektaSignature', () => {
     ).toBe(true);
   });
 
+  it('accepts digest header normalized as sha256=<base64>', () => {
+    const payload = Buffer.from('{"id":"evt_1","type":"order.paid"}', 'utf8');
+    const digest = signPayload(payload, privateKeyPem);
+
+    expect(
+      verifyConektaSignature(payload, `sha256=${digest}`, publicKeyPem),
+    ).toBe(true);
+  });
+
   it('accepts digest header with quoted sha-256 value', () => {
     const payload = Buffer.from('{"id":"evt_1","type":"order.paid"}', 'utf8');
     const digest = signPayload(payload, privateKeyPem);
@@ -164,6 +173,15 @@ describe('verifyConektaSignature', () => {
 
     expect(
       verifyConektaSignature(payload, digestHeader, publicKeyPem),
+    ).toBe(true);
+  });
+
+  it('accepts digest header with signature=<base64>', () => {
+    const payload = Buffer.from('{"id":"evt_1","type":"order.paid"}', 'utf8');
+    const digest = signPayload(payload, privateKeyPem);
+
+    expect(
+      verifyConektaSignature(payload, `signature=${digest}`, publicKeyPem),
     ).toBe(true);
   });
 
