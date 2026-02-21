@@ -21,6 +21,7 @@ import {
 import { getMarketingTrialConfigFromEnv } from '../../utils/trialConfig';
 import { ensureStripePriceId, StripePriceKey } from './utils/ensureStripePriceId';
 import { sanitizeTrackingUrl } from '../../utils/trackingUrl';
+import { toStripeMetadataValue } from '../../stripe/disputeData';
 
 /**
  * Crea una Stripe Checkout Session (redirect a la página de pago de Stripe).
@@ -96,6 +97,15 @@ export const createStripeCheckoutSession = shieldedProcedure
       });
     }
 
+    const clientIp = getClientIpFromRequest(req);
+    const userAgentRaw = req.headers['user-agent'];
+    const userAgent =
+      typeof userAgentRaw === 'string'
+        ? userAgentRaw
+        : Array.isArray(userAgentRaw)
+          ? userAgentRaw[0] ?? null
+          : null;
+
     const isLocalSuccessUrl = (() => {
       try {
         const parsed = new URL(successUrl);
@@ -150,15 +160,6 @@ export const createStripeCheckoutSession = shieldedProcedure
     // No bloquear checkout si falla.
     try {
       if (url) {
-        const clientIp = getClientIpFromRequest(req);
-        const userAgentRaw = req.headers['user-agent'];
-        const userAgent =
-          typeof userAgentRaw === 'string'
-            ? userAgentRaw
-            : Array.isArray(userAgentRaw)
-              ? userAgentRaw[0] ?? null
-              : null;
-
         const value = Number(plan.price) || 0;
         const currency = (plan.moneda || 'USD').toUpperCase();
         await facebook.setEvent(
@@ -342,17 +343,12 @@ export const createStripeCheckoutSession = shieldedProcedure
       trialDays: consentTrialDays,
     });
 
-    const safeMetaValue = (value: unknown, maxLen = 480): string | undefined => {
-      const raw = typeof value === 'string' ? value : value != null ? String(value) : '';
-      const trimmed = raw.trim();
-      return trimmed ? trimmed.slice(0, maxLen) : undefined;
-    };
     const getUrlAttribution = (value: string | undefined) => {
       if (!value) return {};
       try {
         const parsed = new URL(value);
         const pick = (key: string, maxLen: number) =>
-          safeMetaValue(parsed.searchParams.get(key), maxLen);
+          toStripeMetadataValue(parsed.searchParams.get(key), maxLen);
         return {
           source: pick('utm_source', 120),
           medium: pick('utm_medium', 120),
@@ -368,13 +364,18 @@ export const createStripeCheckoutSession = shieldedProcedure
     };
 
     const subscriptionMarketingMetadata: Record<string, string> = {};
-    const metaFbp = safeMetaValue(fbp);
-    const metaFbc = safeMetaValue(fbc);
-    const metaPurchaseEventId = safeMetaValue(purchaseEventId, 120);
-    const metaSourceUrl = safeMetaValue(url ? sanitizeTrackingUrl(url, 480) : '', 480);
-    const metaSessionId = safeMetaValue(sessionId, 80);
-    const metaVisitorId = safeMetaValue(visitorId, 80);
-    const metaCheckoutId = safeMetaValue(checkoutId, 80);
+    const metaFbp = toStripeMetadataValue(fbp);
+    const metaFbc = toStripeMetadataValue(fbc);
+    const metaPurchaseEventId = toStripeMetadataValue(purchaseEventId, 120);
+    const metaSourceUrl = toStripeMetadataValue(url ? sanitizeTrackingUrl(url, 480) : '', 480);
+    const metaSessionId = toStripeMetadataValue(sessionId, 80);
+    const metaVisitorId = toStripeMetadataValue(visitorId, 80);
+    const metaCheckoutId = toStripeMetadataValue(checkoutId, 80);
+    const metaClientIp = toStripeMetadataValue(clientIp, 120);
+    const metaUserAgent = toStripeMetadataValue(userAgent, 255);
+    const subscriptionDescription =
+      toStripeMetadataValue(`Suscripción Bear Beat: ${plan.name}`, 255)
+      ?? `Suscripción Bear Beat plan ${plan.id}`;
     const urlAttribution = getUrlAttribution(url);
     if (metaFbp) subscriptionMarketingMetadata.bb_fbp = metaFbp;
     if (metaFbc) subscriptionMarketingMetadata.bb_fbc = metaFbc;
@@ -390,12 +391,30 @@ export const createStripeCheckoutSession = shieldedProcedure
     if (urlAttribution.content) subscriptionMarketingMetadata.bb_utm_content = urlAttribution.content;
     if (urlAttribution.fbclid) subscriptionMarketingMetadata.bb_fbclid = urlAttribution.fbclid;
     if (urlAttribution.gclid) subscriptionMarketingMetadata.bb_gclid = urlAttribution.gclid;
+    if (metaClientIp) subscriptionMarketingMetadata.bb_customer_purchase_ip = metaClientIp;
+    if (metaUserAgent) subscriptionMarketingMetadata.bb_user_agent = metaUserAgent;
 
     const createSession = async (withDiscount: boolean) =>
       stripeInstance.checkout.sessions.create(
         {
           mode: 'subscription',
           customer: stripeCustomer,
+          customer_email: existingUser.email ?? user.email,
+          client_reference_id: `order-${order.id}`,
+          billing_address_collection: 'required',
+          phone_number_collection: { enabled: true },
+          name_collection: {
+            individual: {
+              enabled: true,
+              optional: false,
+            },
+          },
+          customer_update: {
+            address: 'auto',
+            name: 'auto',
+            shipping: 'auto',
+          },
+          tax_id_collection: { enabled: true },
           line_items: [
             {
               price: stripePriceId,
@@ -407,11 +426,19 @@ export const createStripeCheckoutSession = shieldedProcedure
           metadata: {
             orderId: String(order.id),
             userId: String(user.id),
+            planId: String(plan.id),
+            bb_kind: 'plan_subscription',
             bb_consent_version: BILLING_CONSENT_VERSION,
+            ...(metaClientIp ? { bb_customer_purchase_ip: metaClientIp } : {}),
+            ...(metaUserAgent ? { bb_user_agent: metaUserAgent } : {}),
           },
           subscription_data: {
+            description: subscriptionDescription,
             metadata: {
               orderId: String(order.id),
+              userId: String(user.id),
+              planId: String(plan.id),
+              bb_kind: 'plan_subscription',
               ...trialMetadata,
               ...subscriptionMarketingMetadata,
               bb_consent_version: BILLING_CONSENT_VERSION,
@@ -446,15 +473,6 @@ export const createStripeCheckoutSession = shieldedProcedure
       log.info('[STRIPE_CHECKOUT_SESSION] Created checkout session');
 
       try {
-        const clientIp = getClientIpFromRequest(req);
-        const userAgentRaw = req.headers['user-agent'];
-        const userAgent =
-          typeof userAgentRaw === 'string'
-            ? userAgentRaw
-            : Array.isArray(userAgentRaw)
-              ? userAgentRaw[0] ?? null
-              : null;
-
         await prisma.billingConsent.create({
           data: {
             user_id: user.id,

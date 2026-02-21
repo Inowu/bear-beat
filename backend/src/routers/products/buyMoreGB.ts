@@ -13,6 +13,8 @@ import { getConektaCustomer } from '../subscriptions/utils/getConektaCustomer';
 import { conektaOrders } from '../../conekta';
 import { SessionUser } from '../auth/utils/serialize-user';
 import { addGBToAccount } from './services/addGBToAccount';
+import { getClientIpFromRequest } from '../../analytics';
+import { toStripeMetadataValue } from '../../stripe/disputeData';
 
 export const buyMoreGB = shieldedProcedure
   .input(
@@ -39,7 +41,7 @@ export const buyMoreGB = shieldedProcedure
   )
   .mutation(
     async ({
-      ctx: { prisma, session },
+      ctx: { prisma, session, req },
       input: { paymentMethod, productId, service, orderId },
     }) => {
       const user = session!.user!;
@@ -93,6 +95,16 @@ export const buyMoreGB = shieldedProcedure
             }
 
             const pm = typeof paymentMethod === 'string' ? paymentMethod.trim() : '';
+            const clientIp = toStripeMetadataValue(getClientIpFromRequest(req), 120);
+            const userAgentRaw = req.headers['user-agent'];
+            const userAgent = toStripeMetadataValue(
+              typeof userAgentRaw === 'string'
+                ? userAgentRaw
+                : Array.isArray(userAgentRaw)
+                  ? userAgentRaw[0] ?? null
+                  : null,
+              255,
+            );
             const pi = await stripeInstance.paymentIntents.create(
               {
                 customer: stripeCustomer,
@@ -100,8 +112,16 @@ export const buyMoreGB = shieldedProcedure
                 amount: unitAmount,
                 ...(pm ? { payment_method: pm } : {}),
                 payment_method_types: ['card'],
+                receipt_email: user.email,
+                description: `Compra GB extra: ${product.name}`,
                 metadata: {
                   productOrderId: String(productOrder.id),
+                  userId: String(user.id),
+                  productId: String(product.id),
+                  productName: toStripeMetadataValue(product.name, 180) ?? `product_${product.id}`,
+                  bb_kind: 'extra_gb',
+                  ...(clientIp ? { bb_customer_purchase_ip: clientIp } : {}),
+                  ...(userAgent ? { bb_user_agent: userAgent } : {}),
                 },
               },
               { idempotencyKey: `stripe-pi-order-${productOrder.id}` },

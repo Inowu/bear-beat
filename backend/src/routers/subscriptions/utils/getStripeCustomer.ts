@@ -3,6 +3,11 @@ import Stripe from 'stripe';
 import { SessionUser } from '../../auth/utils/serialize-user';
 import stripeInstance from '../../../stripe';
 import { log } from '../../../server';
+import {
+  resolveStripeCustomerAddress,
+  resolveStripeCustomerName,
+  resolveStripeCustomerPhone,
+} from '../../../stripe/disputeData';
 
 export const getStripeCustomer = async (
   prisma: PrismaClient,
@@ -12,7 +17,18 @@ export const getStripeCustomer = async (
   // Always resolve by DB `users.id` (not by email/username).
   const dbUser = await prisma.users.findFirst({
     where: { id: user.id },
-    select: { id: true, email: true, username: true, stripe_cusid: true },
+    select: {
+      id: true,
+      email: true,
+      username: true,
+      first_name: true,
+      last_name: true,
+      phone: true,
+      address: true,
+      city: true,
+      country_id: true,
+      stripe_cusid: true,
+    },
   });
 
   if (!dbUser) {
@@ -28,12 +44,43 @@ export const getStripeCustomer = async (
     );
   };
 
-  const maybeSyncCustomerFields = async (customerId: string, customer: Stripe.Customer) => {
+  const maybeSyncCustomerFields = async (
+    customerId: string,
+    customer: Stripe.Customer,
+  ) => {
     const updateParams: Stripe.CustomerUpdateParams = {};
+    const customerName = resolveStripeCustomerName({
+      firstName: dbUser.first_name,
+      lastName: dbUser.last_name,
+      username: dbUser.username,
+      email: dbUser.email,
+    });
+    const customerPhone = resolveStripeCustomerPhone(dbUser.phone);
+    const customerAddress = resolveStripeCustomerAddress({
+      addressLine1: dbUser.address,
+      city: dbUser.city,
+      countryCode: dbUser.country_id,
+    });
 
     // Keep Stripe in sync (best-effort). This helps receipts, portal, and support workflows.
-    if (dbUser.email && customer.email !== dbUser.email) updateParams.email = dbUser.email;
-    if (dbUser.username && customer.name !== dbUser.username) updateParams.name = dbUser.username;
+    if (dbUser.email && customer.email !== dbUser.email)
+      updateParams.email = dbUser.email;
+    if (customerName && customer.name !== customerName)
+      updateParams.name = customerName;
+    if (customerPhone && customer.phone !== customerPhone)
+      updateParams.phone = customerPhone;
+
+    if (customerAddress) {
+      const currentAddress = customer.address as Stripe.Address | null;
+      const shouldUpdateAddress =
+        (customerAddress.line1 ?? '') !== (currentAddress?.line1 ?? '') ||
+        (customerAddress.city ?? '') !== (currentAddress?.city ?? '') ||
+        (customerAddress.country ?? '') !== (currentAddress?.country ?? '');
+
+      if (shouldUpdateAddress) {
+        updateParams.address = customerAddress;
+      }
+    }
 
     // Backward compatible metadata keys (older customers used `id`).
     const desiredId = String(dbUser.id);
@@ -62,14 +109,19 @@ export const getStripeCustomer = async (
 
   if (dbUser.stripe_cusid) {
     try {
-      const customer = await stripeInstance.customers.retrieve(dbUser.stripe_cusid);
+      const customer = await stripeInstance.customers.retrieve(
+        dbUser.stripe_cusid,
+      );
       if ((customer as any)?.deleted) {
         await prisma.users.update({
           where: { id: user.id },
           data: { stripe_cusid: null },
         });
       } else {
-        await maybeSyncCustomerFields(dbUser.stripe_cusid, customer as Stripe.Customer);
+        await maybeSyncCustomerFields(
+          dbUser.stripe_cusid,
+          customer as Stripe.Customer,
+        );
         return dbUser.stripe_cusid;
       }
     } catch (e) {
@@ -118,7 +170,18 @@ export const getStripeCustomer = async (
 
   const newCustomer = await stripeInstance.customers.create({
     email: dbUser.email,
-    name: dbUser.username,
+    name: resolveStripeCustomerName({
+      firstName: dbUser.first_name,
+      lastName: dbUser.last_name,
+      username: dbUser.username,
+      email: dbUser.email,
+    }),
+    phone: resolveStripeCustomerPhone(dbUser.phone),
+    address: resolveStripeCustomerAddress({
+      addressLine1: dbUser.address,
+      city: dbUser.city,
+      countryCode: dbUser.country_id,
+    }),
     metadata: {
       id: String(dbUser.id),
       userId: String(dbUser.id),

@@ -8,6 +8,8 @@ import { OrderStatus } from './interfaces/order-status.interface';
 import { PaymentService } from './services/types';
 import type { Stripe } from 'stripe';
 import bwipjs from 'bwip-js';
+import { getClientIpFromRequest } from '../../analytics';
+import { toStripeMetadataValue } from '../../stripe/disputeData';
 
 const toPositiveInt = (value: unknown): number | null => {
   const n = typeof value === 'number' ? value : Number(value);
@@ -171,7 +173,7 @@ export const subscribeWithOxxoStripe = shieldedProcedure
       })
       .strict(),
   )
-  .mutation(async ({ input: { planId }, ctx: { prisma, session } }) => {
+  .mutation(async ({ input: { planId }, ctx: { prisma, session, req } }) => {
     if (!isStripeOxxoConfigured()) {
       throw new TRPCError({
         code: 'BAD_REQUEST',
@@ -311,6 +313,16 @@ export const subscribeWithOxxoStripe = shieldedProcedure
         usernameRaw: dbUser?.username ?? user.username,
         emailRaw: dbUser?.email ?? user.email,
       });
+      const clientIp = toStripeMetadataValue(getClientIpFromRequest(req), 120);
+      const userAgentRaw = req.headers['user-agent'];
+      const userAgent = toStripeMetadataValue(
+        typeof userAgentRaw === 'string'
+          ? userAgentRaw
+          : Array.isArray(userAgentRaw)
+            ? userAgentRaw[0] ?? null
+            : null,
+        255,
+      );
       pi = await stripeOxxoInstance.paymentIntents.create(
         {
           amount: amountCents,
@@ -329,6 +341,7 @@ export const subscribeWithOxxoStripe = shieldedProcedure
               expires_after_days: expiresAfterDays,
             },
           } as any,
+          receipt_email: user.email,
           description: `Plan ${plan.name} (OXXO)`,
           metadata: {
             orderId: String(order.id),
@@ -336,6 +349,8 @@ export const subscribeWithOxxoStripe = shieldedProcedure
             planId: String(plan.id),
             bb_kind: 'plan',
             bb_provider: 'stripe_oxxo',
+            ...(clientIp ? { bb_customer_purchase_ip: clientIp } : {}),
+            ...(userAgent ? { bb_user_agent: userAgent } : {}),
           },
         },
         { idempotencyKey: `stripe-oxxo-order-${order.id}` },

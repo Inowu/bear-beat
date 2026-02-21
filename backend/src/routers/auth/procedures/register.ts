@@ -25,6 +25,10 @@ import {
 import { verifyTurnstileToken } from '../../../utils/turnstile';
 import { getClientIpFromRequest } from '../../../analytics';
 import { serializeUser } from '../utils/serialize-user';
+import {
+  resolveStripeCustomerName,
+  resolveStripeCustomerPhone,
+} from '../../../stripe/disputeData';
 
 function normalizeUsernameCandidate(value: string): string {
   const trimmed = `${value ?? ''}`.trim();
@@ -291,6 +295,11 @@ export const register = publicProcedure
         try {
           const customer = await stripe.customers.create({
             email,
+            name: resolveStripeCustomerName({
+              username: newUser.username,
+              email: newUser.email,
+            }),
+            phone: resolveStripeCustomerPhone(newUser.phone),
             metadata: {
               id: String(newUser.id),
               userId: String(newUser.id),
