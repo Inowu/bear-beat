@@ -4,6 +4,7 @@ import {
   PaymentMethodsApi,
   Configuration,
   OrdersApi,
+  WebhookKeysApi,
 } from 'conekta';
 import { loadEnvOnce } from '../utils/loadEnv';
 
@@ -52,3 +53,5 @@ export const conektaSubscriptions = new SubscriptionsApi(conektaConfig);
 export const conektaPaymentMethods = new PaymentMethodsApi(conektaConfig);
 
 export const conektaOrders = new OrdersApi(conektaConfig);
+
+export const conektaWebhookKeys = new WebhookKeysApi(conektaConfig);

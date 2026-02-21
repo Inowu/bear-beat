@@ -1,7 +1,14 @@
 import { createSign, generateKeyPairSync } from 'crypto';
 import type { Request, Response } from 'express';
 import { conektaEndpoint } from '../src/endpoints/webhooks/conekta.endpoint';
+import { conektaWebhookKeys } from '../src/conekta';
 import { verifyConektaSignature } from '../src/routers/utils/verifyConektaSignature';
+
+jest.mock('../src/conekta', () => ({
+  conektaWebhookKeys: {
+    getWebhookKeys: jest.fn(),
+  },
+}));
 
 jest.mock('../src/services/webhookInbox', () => ({
   persistEvent: jest.fn(),
@@ -22,6 +29,9 @@ import { markWebhookInboxEventEnqueued } from '../src/webhookInbox/service';
 const persistEventMock = persistEvent as jest.Mock;
 const enqueueWebhookInboxJobMock = enqueueWebhookInboxJob as jest.Mock;
 const markWebhookInboxEventEnqueuedMock = markWebhookInboxEventEnqueued as jest.Mock;
+const conektaWebhookKeysMock = conektaWebhookKeys as unknown as {
+  getWebhookKeys: jest.Mock;
+};
 
 const ORIGINAL_ENV = {
   NODE_ENV: process.env.NODE_ENV,
@@ -158,6 +168,12 @@ describe('conektaEndpoint', () => {
     persistEventMock.mockReset();
     enqueueWebhookInboxJobMock.mockReset();
     markWebhookInboxEventEnqueuedMock.mockReset();
+    conektaWebhookKeysMock.getWebhookKeys.mockReset();
+    conektaWebhookKeysMock.getWebhookKeys.mockResolvedValue({
+      data: {
+        data: [],
+      },
+    });
   });
 
   afterEach(() => {
@@ -309,6 +325,41 @@ describe('conektaEndpoint', () => {
 
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.send).toHaveBeenCalledWith('Failed to persist webhook event');
+  });
+
+  it('accepts signature using active webhook key fetched from Conekta API', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.CONEKTA_WEBHOOK_PUBLIC_KEY =
+      '-----BEGIN PUBLIC KEY-----\\ninvalid\\n-----END PUBLIC KEY-----';
+
+    const payload = Buffer.from('{"id":"evt_api_key","type":"order.paid"}', 'utf8');
+    const digest = signPayload(payload, privateKeyPem);
+    const req = buildReq({
+      body: payload,
+      digest,
+    });
+    const res = buildRes();
+
+    conektaWebhookKeysMock.getWebhookKeys.mockResolvedValue({
+      data: {
+        data: [
+          {
+            active: true,
+            public_key: publicKeyPem,
+          },
+        ],
+      },
+    });
+    persistEventMock.mockResolvedValue({
+      created: false,
+      inboxId: 37,
+    });
+
+    await conektaEndpoint(req, res);
+
+    expect(conektaWebhookKeysMock.getWebhookKeys).toHaveBeenCalledWith('en', undefined, 100);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.end).toHaveBeenCalled();
   });
 
   it('returns 400 when webhook body is not Buffer', async () => {
