@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { conektaWebhookKeys } from '../../conekta';
+import { conektaEvents, conektaWebhookKeys } from '../../conekta';
 import { verifyConektaSignature } from '../../routers/utils/verifyConektaSignature';
 import { log } from '../../server';
 import { parseWebhookPayload, extractWebhookIdentity } from '../../webhookInbox/intake';
@@ -101,6 +101,53 @@ const resolveConektaWebhookPublicKey = (): string => {
   return '';
 };
 
+const resolveCanonicalEventFromApi = async (
+  parsedPayload: ReturnType<typeof parseWebhookPayload>,
+): Promise<ReturnType<typeof parseWebhookPayload> | null> => {
+  const incomingIdentity = extractWebhookIdentity('conekta', parsedPayload.payload);
+  if (!incomingIdentity?.eventId || !incomingIdentity?.eventType) {
+    return null;
+  }
+
+  try {
+    const response = await conektaEvents.getEvent(incomingIdentity.eventId, 'en');
+    const apiPayloadCandidate = response?.data as unknown;
+    const apiPayload =
+      apiPayloadCandidate
+      && typeof apiPayloadCandidate === 'object'
+      && !Array.isArray(apiPayloadCandidate)
+        ? (apiPayloadCandidate as Record<string, unknown>)
+        : null;
+
+    if (!apiPayload) {
+      return null;
+    }
+
+    const apiIdentity = extractWebhookIdentity('conekta', apiPayload);
+    if (!apiIdentity) {
+      return null;
+    }
+
+    if (apiIdentity.eventId !== incomingIdentity.eventId) {
+      return null;
+    }
+
+    if (apiIdentity.eventType !== incomingIdentity.eventType) {
+      return null;
+    }
+
+    return {
+      payload: apiPayload,
+      rawPayload: JSON.stringify(apiPayload),
+    };
+  } catch (error) {
+    log.warn('[CONEKTA_WH] Failed to confirm webhook event via Conekta API', {
+      error: error instanceof Error ? error.message : String(error ?? ''),
+    });
+    return null;
+  }
+};
+
 export const conektaEndpoint = async (req: Request, res: Response) => {
   const isProduction = process.env.NODE_ENV === 'production';
 
@@ -121,6 +168,7 @@ export const conektaEndpoint = async (req: Request, res: Response) => {
     primaryPublicKeyPem,
   );
   let isValidSignature = isPrimarySignatureValid;
+  let isVerifiedViaEventsApi = false;
 
   if (!isValidSignature) {
     const configuredFallbackKeys = resolveExtraConfiguredPublicKeys();
@@ -138,23 +186,46 @@ export const conektaEndpoint = async (req: Request, res: Response) => {
     }
   }
 
+  let parsedPayload: ReturnType<typeof parseWebhookPayload> | null = null;
+  if (!isValidSignature) {
+    try {
+      const incomingPayload = parseWebhookPayload(req.body);
+      const canonicalPayload = await resolveCanonicalEventFromApi(incomingPayload);
+      if (canonicalPayload) {
+        parsedPayload = canonicalPayload;
+        isValidSignature = true;
+        isVerifiedViaEventsApi = true;
+      }
+    } catch (_error) {
+      // Keep standard invalid signature response below.
+    }
+  }
+
   if (!isValidSignature) {
     return res.status(isProduction ? 401 : 400).send('Invalid signature');
   }
 
-  let parsedPayload: ReturnType<typeof parseWebhookPayload>;
-  try {
-    parsedPayload = parseWebhookPayload(req.body);
-  } catch (error) {
-    log.warn('[CONEKTA_WH] Invalid JSON payload', {
-      error: error instanceof Error ? error.message : String(error ?? ''),
-    });
-    return res.status(400).send('Invalid JSON payload');
+  if (!parsedPayload) {
+    try {
+      parsedPayload = parseWebhookPayload(req.body);
+    } catch (error) {
+      log.warn('[CONEKTA_WH] Invalid JSON payload', {
+        error: error instanceof Error ? error.message : String(error ?? ''),
+      });
+      return res.status(400).send('Invalid JSON payload');
+    }
   }
 
   const identity = extractWebhookIdentity('conekta', parsedPayload.payload);
   if (!identity) {
     return res.status(400).send('Invalid webhook payload');
+  }
+
+  if (isVerifiedViaEventsApi) {
+    log.info('[CONEKTA_WH] Signature fallback accepted via Conekta Events API', {
+      eventId: identity.eventId,
+      eventType: identity.eventType,
+    });
   }
 
   try {

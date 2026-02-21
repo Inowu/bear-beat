@@ -1,10 +1,13 @@
 import { createSign, generateKeyPairSync } from 'crypto';
 import type { Request, Response } from 'express';
 import { conektaEndpoint } from '../src/endpoints/webhooks/conekta.endpoint';
-import { conektaWebhookKeys } from '../src/conekta';
+import { conektaEvents, conektaWebhookKeys } from '../src/conekta';
 import { verifyConektaSignature } from '../src/routers/utils/verifyConektaSignature';
 
 jest.mock('../src/conekta', () => ({
+  conektaEvents: {
+    getEvent: jest.fn(),
+  },
   conektaWebhookKeys: {
     getWebhookKeys: jest.fn(),
   },
@@ -29,6 +32,9 @@ import { markWebhookInboxEventEnqueued } from '../src/webhookInbox/service';
 const persistEventMock = persistEvent as jest.Mock;
 const enqueueWebhookInboxJobMock = enqueueWebhookInboxJob as jest.Mock;
 const markWebhookInboxEventEnqueuedMock = markWebhookInboxEventEnqueued as jest.Mock;
+const conektaEventsMock = conektaEvents as unknown as {
+  getEvent: jest.Mock;
+};
 const conektaWebhookKeysMock = conektaWebhookKeys as unknown as {
   getWebhookKeys: jest.Mock;
 };
@@ -235,12 +241,14 @@ describe('conektaEndpoint', () => {
     persistEventMock.mockReset();
     enqueueWebhookInboxJobMock.mockReset();
     markWebhookInboxEventEnqueuedMock.mockReset();
+    conektaEventsMock.getEvent.mockReset();
     conektaWebhookKeysMock.getWebhookKeys.mockReset();
     conektaWebhookKeysMock.getWebhookKeys.mockResolvedValue({
       data: {
         data: [],
       },
     });
+    conektaEventsMock.getEvent.mockRejectedValue(new Error('not_used'));
   });
 
   afterEach(() => {
@@ -425,6 +433,41 @@ describe('conektaEndpoint', () => {
     await conektaEndpoint(req, res);
 
     expect(conektaWebhookKeysMock.getWebhookKeys).toHaveBeenCalledWith('en', undefined, 100);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.end).toHaveBeenCalled();
+  });
+
+  it('accepts event when signature fails but event is confirmed by Conekta Events API', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.CONEKTA_WEBHOOK_PUBLIC_KEY =
+      '-----BEGIN PUBLIC KEY-----\\ninvalid\\n-----END PUBLIC KEY-----';
+
+    const payload = Buffer.from('{"id":"evt_api_event","type":"order.paid"}', 'utf8');
+    const req = buildReq({
+      body: payload,
+      digest: 'sha-256=invalid',
+    });
+    const res = buildRes();
+
+    conektaEventsMock.getEvent.mockResolvedValue({
+      data: {
+        id: 'evt_api_event',
+        type: 'order.paid',
+        data: {
+          object: {
+            id: 'ord_123',
+          },
+        },
+      },
+    });
+    persistEventMock.mockResolvedValue({
+      created: false,
+      inboxId: 38,
+    });
+
+    await conektaEndpoint(req, res);
+
+    expect(conektaEventsMock.getEvent).toHaveBeenCalledWith('evt_api_event', 'en');
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.end).toHaveBeenCalled();
   });
