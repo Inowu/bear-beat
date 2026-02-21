@@ -59,15 +59,14 @@ const getActiveWebhookPublicKeysFromConekta = async (): Promise<string[]> => {
   try {
     const response = await conektaWebhookKeys.getWebhookKeys('en', undefined, 100);
     const rows = (response.data as { data?: Array<{ active?: boolean; public_key?: string }> } | null)?.data;
-    const activeKeys = Array.isArray(rows)
+    const fetchedKeys = Array.isArray(rows)
       ? rows
-          .filter((row) => row?.active !== false)
           .map((row) => normalizePemValue(String(row?.public_key || '')))
           .filter(Boolean)
       : [];
 
     cachedWebhookPublicKeys = {
-      keys: dedupeKeys(activeKeys),
+      keys: dedupeKeys(fetchedKeys),
       expiresAt: now + WEBHOOK_KEYS_CACHE_TTL_MS,
     };
   } catch (error) {
