@@ -70,12 +70,19 @@ const restoreConektaSignatureEnv = () => {
 const toPemString = (key: string | Buffer): string =>
   Buffer.isBuffer(key) ? key.toString('utf8') : key;
 
-const signPayload = (payload: Buffer, privateKeyPem: string): string => {
-  const signer = createSign('RSA-SHA256');
+const signPayloadWithAlgorithm = (
+  payload: Buffer,
+  privateKeyPem: string,
+  algorithm: 'RSA-SHA256' | 'RSA-SHA512',
+): string => {
+  const signer = createSign(algorithm);
   signer.update(payload.toString('utf8'), 'utf8');
   signer.end();
   return signer.sign(privateKeyPem).toString('base64');
 };
+
+const signPayload = (payload: Buffer, privateKeyPem: string): string =>
+  signPayloadWithAlgorithm(payload, privateKeyPem, 'RSA-SHA256');
 
 const buildReq = ({
   body,
@@ -154,6 +161,16 @@ describe('verifyConektaSignature', () => {
     const payload = Buffer.from('{"id":"evt_1","type":"order.paid"}', 'utf8');
     const digest = signPayload(payload, privateKeyPem);
     const digestHeader = `sha-1=not-used, sha-256=${digest}`;
+
+    expect(
+      verifyConektaSignature(payload, digestHeader, publicKeyPem),
+    ).toBe(true);
+  });
+
+  it('accepts digest header signed with sha-512', () => {
+    const payload = Buffer.from('{"id":"evt_1","type":"order.paid"}', 'utf8');
+    const digest = signPayloadWithAlgorithm(payload, privateKeyPem, 'RSA-SHA512');
+    const digestHeader = `sha-512=${digest}`;
 
     expect(
       verifyConektaSignature(payload, digestHeader, publicKeyPem),

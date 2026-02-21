@@ -23,23 +23,49 @@ const normalizeBase64Like = (value: string): string => {
   return `${token}${'='.repeat(4 - remainder)}`;
 };
 
-const normalizeDigestHeader = (digestHeader: string): string => {
+type DigestCandidate = {
+  algorithm: 'RSA-SHA256' | 'RSA-SHA512' | 'RSA-SHA1';
+  signatureBase64: string;
+};
+
+const algoFromDigestLabel = (
+  value: string,
+): DigestCandidate['algorithm'] | null => {
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'sha-256') return 'RSA-SHA256';
+  if (normalized === 'sha-512') return 'RSA-SHA512';
+  if (normalized === 'sha-1') return 'RSA-SHA1';
+  return null;
+};
+
+const parseDigestCandidates = (digestHeader: string): DigestCandidate[] => {
   const trimmed = digestHeader.trim();
-  if (!trimmed) return '';
+  if (!trimmed) return [];
 
   const parts = trimmed
     .split(',')
     .map((part) => part.trim())
     .filter(Boolean);
 
+  const candidates: DigestCandidate[] = [];
+
   for (const part of parts) {
-    const normalizedWithAlgo = part.match(/^sha-256\s*=\s*(.+)$/i);
-    if (normalizedWithAlgo?.[1]) {
-      return normalizeBase64Like(normalizedWithAlgo[1]);
+    const normalizedWithAlgo = part.match(/^([a-z0-9-]+)\s*=\s*(.+)$/i);
+    if (normalizedWithAlgo?.[1] && normalizedWithAlgo?.[2]) {
+      const algorithm = algoFromDigestLabel(normalizedWithAlgo[1]);
+      if (!algorithm) continue;
+      const signatureBase64 = normalizeBase64Like(normalizedWithAlgo[2]);
+      if (!signatureBase64) continue;
+      candidates.push({ algorithm, signatureBase64 });
     }
   }
 
-  return normalizeBase64Like(parts[0] || trimmed);
+  if (candidates.length > 0) return candidates;
+
+  const fallback = normalizeBase64Like(parts[0] || trimmed);
+  return fallback
+    ? [{ algorithm: 'RSA-SHA256', signatureBase64: fallback }]
+    : [];
 };
 
 export const verifyConektaSignature = (
@@ -49,21 +75,27 @@ export const verifyConektaSignature = (
 ): boolean => {
   if (!Buffer.isBuffer(rawBody)) return false;
 
-  const normalizedDigest = normalizeDigestHeader(digestHeader);
-  if (!normalizedDigest) return false;
+  const digestCandidates = parseDigestCandidates(digestHeader);
+  if (digestCandidates.length === 0) return false;
 
   const normalizedPublicKey = publicKeyPem.trim();
   if (!normalizedPublicKey) return false;
 
-  try {
-    const signature = Buffer.from(normalizedDigest, 'base64');
-    if (!signature.length) return false;
+  for (const candidate of digestCandidates) {
+    try {
+      const signature = Buffer.from(candidate.signatureBase64, 'base64');
+      if (!signature.length) continue;
 
-    const verifier = createVerify('RSA-SHA256');
-    verifier.update(rawBody);
-    verifier.end();
-    return verifier.verify(normalizedPublicKey, signature);
-  } catch (_err) {
-    return false;
+      const verifier = createVerify(candidate.algorithm);
+      verifier.update(rawBody);
+      verifier.end();
+      if (verifier.verify(normalizedPublicKey, signature)) {
+        return true;
+      }
+    } catch (_err) {
+      // Ignore malformed candidates and try the next one.
+    }
   }
+
+  return false;
 };
