@@ -8,11 +8,13 @@ import { login } from './procedures/login';
 import { me } from './procedures/me';
 import { refresh } from './procedures/refresh';
 import { register } from './procedures/register';
+import { startTrialByEmail } from './procedures/startTrialByEmail';
 import { verifyPhone } from './procedures/verifyPhone';
 import { sendVerificationCode } from './procedures/sendVerificationCode';
 
 export const authRouter = router({
   login,
+  startTrialByEmail,
   me,
   register,
   claimManyChatHandoff,

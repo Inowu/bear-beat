@@ -58,7 +58,7 @@ export default function HomeDemoModal(props: {
 
         <div className="home-demo-modal__actions">
           <Link
-            to="/auth/registro"
+            to="/auth/prueba"
             state={{ from: primaryCheckoutFrom }}
             className="home-cta home-cta--primary home-demo-modal__cta"
             onClick={() => {

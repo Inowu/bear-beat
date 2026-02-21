@@ -19,6 +19,7 @@ import {
   buildRecurringBillingConsentText,
 } from '../../utils/billingConsent';
 import { getMarketingTrialConfigFromEnv } from '../../utils/trialConfig';
+import { isUserEligibleForMarketingTrial } from '../../utils/marketingTrialEligibility';
 import { ensureStripePriceId, StripePriceKey } from './utils/ensureStripePriceId';
 import { sanitizeTrackingUrl } from '../../utils/trackingUrl';
 import { toStripeMetadataValue } from '../../stripe/disputeData';
@@ -267,57 +268,25 @@ export const createStripeCheckoutSession = shieldedProcedure
     let marketingTrialEnd: number | undefined;
     let isMarketingTrial = false;
 
-    if (!trialEnd && bbTrialDays > 0 && !existingUser.trial_used_at) {
-      const previousPaidPlanOrder = await prisma.orders.findFirst({
-        where: {
-          user_id: user.id,
-          status: OrderStatus.PAID,
-          is_plan: 1,
+    if (!trialEnd && bbTrialDays > 0) {
+      const eligibleForMarketingTrial = await isUserEligibleForMarketingTrial({
+        prisma,
+        userId: user.id,
+        user: {
+          trial_used_at: existingUser.trial_used_at,
+          phone: existingUser.phone,
         },
-        select: { id: true },
+        trialConfig,
       });
 
-      if (!previousPaidPlanOrder) {
-        // Anti-abuse guard: if another account with the same phone already used a trial
-        // or has a paid plan, this user is not eligible for the "first time" marketing trial.
-        const phone = (existingUser.phone ?? '').trim();
-        let samePhoneUsedTrialOrPaid = false;
-        if (phone) {
-          try {
-            const samePhoneUsers = await prisma.users.findMany({
-              where: { id: { not: user.id }, phone },
-              select: { id: true, trial_used_at: true },
-              take: 5,
-            });
-
-            const samePhoneHasTrial = samePhoneUsers.some((row) => Boolean(row.trial_used_at));
-            let samePhoneHasPaid = false;
-            if (!samePhoneHasTrial && samePhoneUsers.length > 0) {
-              const paid = await prisma.orders.findFirst({
-                where: {
-                  user_id: { in: samePhoneUsers.map((row) => row.id) },
-                  status: OrderStatus.PAID,
-                  is_plan: 1,
-                },
-                select: { id: true },
-              });
-              samePhoneHasPaid = Boolean(paid);
-            }
-            samePhoneUsedTrialOrPaid = samePhoneHasTrial || samePhoneHasPaid;
-          } catch {
-            // Best-effort only; never break checkout.
-          }
-        }
-
-        if (samePhoneUsedTrialOrPaid) {
-          log.info('[STRIPE_CHECKOUT_SESSION] Marketing trial blocked (same phone already used)');
-        } else {
-          isMarketingTrial = true;
-          marketingTrialEnd = Math.floor(addDays(new Date(), bbTrialDays).getTime() / 1000);
-          log.info(
-            `[STRIPE_CHECKOUT_SESSION] Marketing trial enabled (days: ${bbTrialDays}, gb: ${bbTrialGb})`,
-          );
-        }
+      if (eligibleForMarketingTrial) {
+        isMarketingTrial = true;
+        marketingTrialEnd = Math.floor(addDays(new Date(), bbTrialDays).getTime() / 1000);
+        log.info(
+          `[STRIPE_CHECKOUT_SESSION] Marketing trial enabled (days: ${bbTrialDays}, gb: ${bbTrialGb})`,
+        );
+      } else {
+        log.info('[STRIPE_CHECKOUT_SESSION] Marketing trial blocked for this user');
       }
     }
 

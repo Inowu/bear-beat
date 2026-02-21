@@ -232,7 +232,7 @@ export default function GenresCoverage(props: {
                           {category.genres.map((genre) => (
                             <Link
                               key={`${category.key}-${replica}-${genre.id}`}
-                              to="/auth/registro"
+                              to="/auth/prueba"
                               state={{ from: buildGenreFilterUrl(genre.name) }}
                               className="genres-coverage__chip"
                               onClick={replica === 0 ? () => onGenreClick?.(genre) : undefined}

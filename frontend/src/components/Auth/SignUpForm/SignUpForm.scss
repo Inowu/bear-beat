@@ -1206,6 +1206,20 @@ form.sign-up-form {
     }
   }
 
+  .auth-signup-precheck {
+    min-height: 40px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--app-accent) 45%, transparent);
+    background: color-mix(in srgb, var(--app-accent) 10%, transparent);
+    color: var(--app-text);
+    font-size: clamp(12px, 0.24vw + 11px, 13px);
+    font-weight: 600;
+    line-height: 1.35;
+    display: flex;
+    align-items: center;
+  }
+
   .auth-login-register-wrap {
     text-align: center;
     margin-top: -2px;

@@ -273,6 +273,18 @@
     background: color-mix(in srgb, var(--app-status-error) 12%, transparent);
   }
 
+  .auth-login-inline-info {
+    min-height: 44px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--app-accent) 45%, transparent);
+    background: color-mix(in srgb, var(--app-accent) 10%, transparent);
+    color: var(--app-text);
+    font-size: 0.98rem;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
   .auth-login-spinner {
     width: 100%;
     min-height: 54px;

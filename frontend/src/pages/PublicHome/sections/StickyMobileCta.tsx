@@ -206,7 +206,7 @@ export default function StickyMobileCta(props: {
     <div className="home-sticky" role="region" aria-label="Acceso rápido">
       <div className="home-sticky__inner">
         <Link
-          to="/auth/registro"
+          to="/auth/prueba"
           state={{ from: primaryCheckoutFrom }}
           className="home-cta home-cta--primary home-sticky__cta"
           onClick={onPrimaryCtaClick}

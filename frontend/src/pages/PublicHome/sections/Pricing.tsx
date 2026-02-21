@@ -459,7 +459,7 @@ export default function Pricing(props: {
 
                 <div className="pricing__cta">
                   <Link
-                    to="/auth/registro"
+                    to="/auth/prueba"
                     state={{ from: mxnCheckoutFrom }}
                     className="home-cta home-cta--primary"
                     data-testid="home-pricing-primary-cta"
@@ -551,7 +551,7 @@ export default function Pricing(props: {
 
                 <div className="pricing__cta">
                   <Link
-                    to="/auth/registro"
+                    to="/auth/prueba"
                     state={{ from: usdCheckoutFrom }}
                     className="home-cta home-cta--primary"
                     data-testid="home-pricing-primary-cta"

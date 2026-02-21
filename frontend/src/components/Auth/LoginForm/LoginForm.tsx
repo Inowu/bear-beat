@@ -19,6 +19,11 @@ import {
   normalizeAuthReturnUrl,
   readAuthReturnUrl,
 } from "../../../utils/authReturnUrl";
+import {
+  getPrecheckMessage,
+  isPrecheckMessageKey,
+  type PrecheckMessageKey,
+} from "../precheckCopy";
 import "./LoginForm.scss";
 
 const SIMPLE_EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -41,7 +46,23 @@ function LoginForm() {
   const { handleLogin } = useUserContext();
   const navigate = useNavigate();
   const location = useLocation();
-  const stateFromRaw = (location.state as { from?: string } | null)?.from;
+  const locationState = location.state as
+    | {
+        from?: string;
+        prefillEmail?: unknown;
+        precheckMessageKey?: unknown;
+      }
+    | null;
+  const stateFromRaw = locationState?.from;
+  const statePrefillEmail =
+    typeof locationState?.prefillEmail === "string"
+      ? locationState.prefillEmail.trim()
+      : "";
+  const statePrecheckMessageKey: PrecheckMessageKey | null = isPrecheckMessageKey(
+    locationState?.precheckMessageKey,
+  )
+    ? locationState.precheckMessageKey
+    : null;
   const stateFrom =
     typeof stateFromRaw === "string" ? normalizeAuthReturnUrl(stateFromRaw) : null;
   const storedFromRaw = readAuthReturnUrl();
@@ -63,6 +84,9 @@ function LoginForm() {
       ? "storage"
       : "default";
   const from = stateFrom ?? storedFrom ?? "/";
+  const precheckMessage = statePrecheckMessageKey
+    ? getPrecheckMessage(statePrecheckMessageKey)
+    : "";
   const authStorageEventTrackedRef = useRef(false);
   const validationSchema = Yup.object().shape({
     username: Yup.string()
@@ -77,7 +101,7 @@ function LoginForm() {
       .min(3, "La contraseña debe contener al menos 3 caracteres"),
   });
   const initialValues = {
-    username: "",
+    username: statePrefillEmail,
     password: "",
   };
   const formik = useFormik({
@@ -185,6 +209,11 @@ function LoginForm() {
           <p className="auth-login-sub">
             Tu cabina está lista. Ingresa para descargar.
           </p>
+          {precheckMessage && (
+            <div className="auth-login-inline-info" role="status">
+              {precheckMessage}
+            </div>
+          )}
           <form
             className="auth-form auth-login-form"
             onSubmit={formik.handleSubmit}
@@ -267,7 +296,11 @@ function LoginForm() {
             <div className="c-row auth-login-register-wrap">
               <span className="auth-login-register-copy">
                 ¿No tienes cuenta?{" "}
-                <Link to="/auth/registro" state={{ from }} className="auth-login-register">
+                <Link
+                  to="/auth/registro"
+                  state={{ from, prefillEmail: formik.values.username.trim() }}
+                  className="auth-login-register"
+                >
                   Crear cuenta
                 </Link>
               </span>

@@ -239,9 +239,9 @@ function PlanCard(props: PlanCardPropsI) {
       planId,
     });
     const target = `/comprar?priceId=${planId}`;
-    // /planes es pública; si el usuario no está logueado, mandarlo directo a registro con return URL.
+    // /planes es pública; si el usuario no está logueado, pasar primero por gate de email.
     if (!userEmail) {
-      navigate("/auth/registro", { state: { from: target } });
+      navigate("/auth/prueba", { state: { from: target } });
       return;
     }
     navigate(target);
@@ -256,7 +256,7 @@ function PlanCard(props: PlanCardPropsI) {
       method,
     });
     if (!userEmail) {
-      navigate("/auth/registro", { state: { from: target } });
+      navigate("/auth/prueba", { state: { from: target } });
       return;
     }
     navigate(target);
@@ -293,6 +293,7 @@ function PlanCard(props: PlanCardPropsI) {
   }
 
   useEffect(() => { retreivePaypalPlan() }, [retreivePaypalPlan]);
+  const paypalCheckoutTarget = `/comprar?priceId=${plan.id}&method=paypal`;
 
   const isMxn = plan.moneda === "mxn" || plan.moneda === "MXN";
   useEffect(() => {
@@ -535,7 +536,9 @@ function PlanCard(props: PlanCardPropsI) {
                                         planId: plan.id,
                                         method: "paypal",
                                       });
-                                      navigate("/auth/registro", { state: { from: "/planes" } });
+                                      navigate("/auth/prueba", {
+                                        state: { from: paypalCheckoutTarget },
+                                      });
                                     }}
                                   >
                                     <span className="plan-card-btn-label">PayPal</span>
@@ -595,7 +598,9 @@ function PlanCard(props: PlanCardPropsI) {
                                         planId: plan.id,
                                         method: "paypal",
                                       });
-                                      navigate("/auth/registro", { state: { from: "/planes" } });
+                                      navigate("/auth/prueba", {
+                                        state: { from: paypalCheckoutTarget },
+                                      });
                                     }}
                                   >
                                     PayPal
@@ -639,7 +644,9 @@ function PlanCard(props: PlanCardPropsI) {
                                     planId: plan.id,
                                     method: "paypal",
                                   });
-                                  navigate("/auth/registro", { state: { from: "/planes" } });
+                                  navigate("/auth/prueba", {
+                                    state: { from: paypalCheckoutTarget },
+                                  });
                                 }}
                               >
                                 PayPal

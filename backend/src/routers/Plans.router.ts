@@ -24,6 +24,7 @@ import { OrderStatus } from './subscriptions/interfaces/order-status.interface';
 import { paypal } from '../paypal';
 import { manyChat } from '../many-chat';
 import { getMarketingTrialConfigFromEnv } from '../utils/trialConfig';
+import { isUserEligibleForMarketingTrial } from '../utils/marketingTrialEligibility';
 import { StripePriceKey } from './subscriptions/utils/ensureStripePriceId';
 import type { Plans } from '@prisma/client';
 import { isStripeOxxoConfigured } from '../stripe/oxxo';
@@ -342,63 +343,11 @@ async function computeTrialConfigForUser(
   let eligible: boolean | null = null;
   const userId = ctx.session?.user?.id;
   if (userId) {
-    const user = await ctx.prisma.users.findFirst({
-      where: { id: userId },
-      select: { trial_used_at: true, phone: true },
+    eligible = await isUserEligibleForMarketingTrial({
+      prisma: ctx.prisma,
+      userId,
+      trialConfig: config,
     });
-    if (user) {
-      if (!config.enabled || user.trial_used_at) {
-        eligible = false;
-      } else {
-        const previousPaidPlanOrder = await ctx.prisma.orders.findFirst({
-          where: {
-            user_id: userId,
-            status: OrderStatus.PAID,
-            is_plan: 1,
-          },
-          select: { id: true },
-        });
-        eligible = !previousPaidPlanOrder;
-
-        // Anti-abuse guard: if another account with the same phone already used a trial
-        // or has a paid plan, treat this user as not eligible for a new "first time" trial.
-        const phone = (user.phone ?? '').trim();
-        if (eligible && phone) {
-          try {
-            const samePhoneUsers = await ctx.prisma.users.findMany({
-              where: {
-                id: { not: userId },
-                phone,
-              },
-              select: { id: true, trial_used_at: true },
-              take: 5,
-            });
-
-            const samePhoneHasTrial = samePhoneUsers.some((row) =>
-              Boolean(row.trial_used_at),
-            );
-            let samePhoneHasPaid = false;
-            if (!samePhoneHasTrial && samePhoneUsers.length > 0) {
-              const paid = await ctx.prisma.orders.findFirst({
-                where: {
-                  user_id: { in: samePhoneUsers.map((row) => row.id) },
-                  status: OrderStatus.PAID,
-                  is_plan: 1,
-                },
-                select: { id: true },
-              });
-              samePhoneHasPaid = Boolean(paid);
-            }
-
-            if (samePhoneHasTrial || samePhoneHasPaid) {
-              eligible = false;
-            }
-          } catch {
-            // Best-effort only; do not break trial config computation.
-          }
-        }
-      }
-    }
   }
 
   return {

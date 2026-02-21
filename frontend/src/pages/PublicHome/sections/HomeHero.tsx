@@ -89,7 +89,7 @@ export default function HomeHero(props: {
           <div className="home-hero__cta">
             <div className="home-hero__cta-row" role="group" aria-label="Acciones">
               <Link
-                to="/auth/registro"
+                to="/auth/prueba"
                 state={{ from: primaryCheckoutFrom }}
                 className="home-cta home-cta--primary"
                 data-testid="home-cta-primary"

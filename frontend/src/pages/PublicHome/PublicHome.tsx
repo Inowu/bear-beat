@@ -400,17 +400,17 @@ export default function PublicHome() {
   const pricingRef = useRef<HTMLDivElement | null>(null);
   const pricingViewedRef = useRef(false);
 
-  const prefetchRegisterOnceRef = useRef(false);
-  const prefetchRegisterRoute = useCallback(() => {
-    if (prefetchRegisterOnceRef.current) return;
-    prefetchRegisterOnceRef.current = true;
+  const prefetchTrialGateOnceRef = useRef(false);
+  const prefetchTrialGateRoute = useCallback(() => {
+    if (prefetchTrialGateOnceRef.current) return;
+    prefetchTrialGateOnceRef.current = true;
 
     void Promise.all([
       import("../Auth/Auth"),
-      import("../../components/Auth/SignUpForm/SignUpForm"),
+      import("../../components/Auth/TrialEmailGateForm/TrialEmailGateForm"),
     ]).catch(() => {
       // Best-effort: allow retry if the prefetch fails.
-      prefetchRegisterOnceRef.current = false;
+      prefetchTrialGateOnceRef.current = false;
     });
   }, []);
 
@@ -418,7 +418,7 @@ export default function PublicHome() {
     if (typeof window === "undefined") return;
 
     const onIntent = () => {
-      prefetchRegisterRoute();
+      prefetchTrialGateRoute();
     };
 
     window.addEventListener("pointerdown", onIntent, {
@@ -430,7 +430,7 @@ export default function PublicHome() {
       window.removeEventListener("pointerdown", onIntent);
       window.removeEventListener("keydown", onIntent);
     };
-  }, [prefetchRegisterRoute]);
+  }, [prefetchTrialGateRoute]);
 
   useEffect(() => {
     trackGrowthMetric(GROWTH_METRICS.HOME_VIEW, { section: "home" });
@@ -1177,13 +1177,13 @@ export default function PublicHome() {
         onPlansClick={() => onComparePlansClick("topnav")}
         cta={
           <Link
-            to="/auth/registro"
+            to="/auth/prueba"
             state={{ from: primaryCheckoutFrom }}
             className="home-cta home-cta--primary home-topnav__cta"
             data-testid="home-nav-primary-cta"
             onClick={() => onPrimaryCtaClick("nav")}
-            onPointerEnter={prefetchRegisterRoute}
-            onFocus={prefetchRegisterRoute}
+            onPointerEnter={prefetchTrialGateRoute}
+            onFocus={prefetchTrialGateRoute}
           >
             {ctaPrimaryLabel}
           </Link>
@@ -1284,13 +1284,13 @@ export default function PublicHome() {
               {FOOTER_PLANS_CTA_LABEL}
             </Link>
             <Link
-              to="/auth/registro"
+              to="/auth/prueba"
               state={{ from: primaryCheckoutFrom }}
               className="home-cta home-cta--primary"
               data-testid="home-footer-primary-cta"
               onClick={() => onPrimaryCtaClick("footer")}
-              onPointerEnter={prefetchRegisterRoute}
-              onFocus={prefetchRegisterRoute}
+              onPointerEnter={prefetchTrialGateRoute}
+              onFocus={prefetchTrialGateRoute}
             >
               {ctaPrimaryLabel}
             </Link>

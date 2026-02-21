@@ -1,0 +1,24 @@
+.auth-login-card.auth-login-card--trial-gate {
+  .auth-trial-gate-form {
+    display: grid;
+    gap: 14px;
+  }
+}
+
+.trial-email-gate__support {
+  border: 1px solid color-mix(in srgb, var(--app-accent) 30%, var(--app-border, transparent));
+  border-radius: 12px;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.trial-email-gate__support p {
+  margin: 0;
+  color: var(--app-text);
+}
+
+.trial-email-gate__support-cta {
+  text-decoration: none;
+  justify-content: center;
+}

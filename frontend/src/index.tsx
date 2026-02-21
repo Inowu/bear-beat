@@ -85,6 +85,9 @@ const Auth = lazy(() => import("./pages/Auth/Auth"));
 const Plans = lazy(() => import("./pages/Plans/Plans"));
 const LoginForm = lazy(() => import("./components/Auth/LoginForm/LoginForm"));
 const SignUpForm = lazy(() => import("./components/Auth/SignUpForm/SignUpForm"));
+const TrialEmailGateForm = lazy(() =>
+  import("./components/Auth/TrialEmailGateForm/TrialEmailGateForm"),
+);
 const ForgotPasswordForm = lazy(() => import("./components/Auth/ForgotPasswordForm/ForgotPasswordForm"));
 const ResetPassword = lazy(() => import("./components/Auth/ResetPassword/ResetPassword"));
 const Instructions = lazy(() => import("./pages/Instructions/Instructions"));
@@ -271,6 +274,7 @@ const router = createBrowserRouter([
         ),
         children: [
           { path: "", element: withRouteSuspense(<LoginForm />) },
+          { path: "prueba", element: withRouteSuspense(<TrialEmailGateForm />) },
           { path: "registro", element: withRouteSuspense(<SignUpForm />) },
           { path: "recuperar", element: withRouteSuspense(<ForgotPasswordForm />) },
           { path: "reset-password", element: withRouteSuspense(<ResetPassword />) },

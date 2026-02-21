@@ -29,6 +29,11 @@ import {
   readAuthReturnUrl,
 } from "../../../utils/authReturnUrl";
 import {
+  getPrecheckMessage,
+  isPrecheckMessageKey,
+  type PrecheckMessageKey,
+} from "../precheckCopy";
+import {
   shouldBypassTurnstile,
   TURNSTILE_BYPASS_TOKEN,
 } from "../../../utils/turnstile";
@@ -76,7 +81,23 @@ function SignUpForm() {
   const { theme } = useTheme();
   const brandLockup = theme === "light" ? brandLockupBlack : brandLockupCyan;
   const brandLockupOnDark = brandLockupCyan;
-  const stateFromRaw = (location.state as { from?: string } | null)?.from;
+  const locationState = location.state as
+    | {
+        from?: string;
+        prefillEmail?: unknown;
+        precheckMessageKey?: unknown;
+      }
+    | null;
+  const stateFromRaw = locationState?.from;
+  const statePrefillEmail =
+    typeof locationState?.prefillEmail === "string"
+      ? locationState.prefillEmail.trim()
+      : "";
+  const statePrecheckMessageKey: PrecheckMessageKey | null = isPrecheckMessageKey(
+    locationState?.precheckMessageKey,
+  )
+    ? locationState.precheckMessageKey
+    : null;
   const stateFrom =
     typeof stateFromRaw === "string" ? normalizeAuthReturnUrl(stateFromRaw) : null;
   const storedFromRaw = readAuthReturnUrl();
@@ -99,6 +120,9 @@ function SignUpForm() {
       : "default";
   // Default conversion path after signup is /planes (unless the user came from a protected route / checkout).
   const from = stateFrom ?? storedFrom ?? "/planes";
+  const precheckMessage = statePrecheckMessageKey
+    ? getPrecheckMessage(statePrecheckMessageKey)
+    : "";
   const isCheckoutIntent = from.startsWith("/comprar") || from.startsWith("/checkout");
   const authStorageEventTrackedRef = useRef(false);
   const checkoutPlanId = useMemo(() => {
@@ -256,7 +280,7 @@ function SignUpForm() {
   const initialValues = {
     username: "",
     password: "",
-    email: "",
+    email: statePrefillEmail,
     phone: "",
     passwordConfirmation: "",
     acceptSupportComms: true,
@@ -746,6 +770,11 @@ function SignUpForm() {
         formik.handleSubmit(e);
       }}
     >
+      {precheckMessage && (
+        <div className="auth-signup-precheck" role="status">
+          {precheckMessage}
+        </div>
+      )}
       {NameField}
       <div className={`c-row ${showEmailError ? "is-invalid" : ""}`}>
         <label htmlFor="email" className="auth-field-label">
@@ -886,7 +915,11 @@ function SignUpForm() {
         <div className="c-row auth-login-register-wrap">
           <span className="auth-login-register-copy">
             ¿Ya tienes cuenta?{" "}
-            <Link to="/auth" state={{ from }} className="auth-login-register">
+            <Link
+              to="/auth"
+              state={{ from, prefillEmail: formik.values.email.trim() }}
+              className="auth-login-register"
+            >
               Inicia sesión
             </Link>
           </span>
@@ -906,7 +939,11 @@ function SignUpForm() {
                 <span className="checkout-intent-shell__step" aria-label="Progreso">
                   Paso 1 de 2
                 </span>
-                <Link to="/auth" state={{ from }} className="checkout-intent-shell__login">
+                <Link
+                  to="/auth"
+                  state={{ from, prefillEmail: formik.values.email.trim() }}
+                  className="checkout-intent-shell__login"
+                >
                   Ya tengo cuenta
                 </Link>
               </div>

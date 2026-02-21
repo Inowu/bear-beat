@@ -44,7 +44,7 @@ export default function ActivationSteps(props: {
 
         <div className="activation-steps__cta">
           <Link
-            to="/auth/registro"
+            to="/auth/prueba"
             state={{ from: primaryCheckoutFrom }}
             className="home-cta home-cta--primary"
             data-testid="home-mid-primary-cta"
