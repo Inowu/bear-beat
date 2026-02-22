@@ -232,10 +232,9 @@ html[data-theme="light"] .aside-nav .nav-container .nav-link-item:not(.is-active
       position: fixed;
       inset: 0;
       z-index: 0;
-      background:
-        radial-gradient(900px 520px at 18% 0%, rgba(8, 225, 247, 0.18), transparent 60%),
-        radial-gradient(820px 540px at 82% 12%, rgba(0, 230, 193, 0.14), transparent 60%),
-        var(--aside-backdrop-bg, rgba(0, 0, 0, 0.38));
+      background: var(--aside-backdrop-bg, rgba(0, 0, 0, 0.38));
+      backdrop-filter: blur(1.5px);
+      -webkit-backdrop-filter: blur(1.5px);
       pointer-events: auto;
     }
 
