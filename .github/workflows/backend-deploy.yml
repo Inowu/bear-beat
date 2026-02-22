@@ -56,6 +56,5 @@ jobs:
             export DEPLOY_SPOTIFY_CLIENT_ID="${{ secrets.SPOTIFY_CLIENT_ID }}"
             export DEPLOY_SPOTIFY_CLIENT_SECRET="${{ secrets.SPOTIFY_CLIENT_SECRET }}"
             export DEPLOY_SPOTIFY_MARKET="${{ secrets.SPOTIFY_MARKET }}"
-            export DEPLOY_TRACK_METADATA_SPOTIFY_ENABLED="${{ secrets.TRACK_METADATA_SPOTIFY_ENABLED }}"
             export DEPLOY_TRACK_METADATA_SPOTIFY_TEXT_MIN_CONFIDENCE="${{ secrets.TRACK_METADATA_SPOTIFY_TEXT_MIN_CONFIDENCE }}"
             bash ./deploy.sh
