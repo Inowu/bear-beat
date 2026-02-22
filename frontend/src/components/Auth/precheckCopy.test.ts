@@ -31,4 +31,25 @@ describe("precheckCopy", () => {
     expect(message).toContain("sin prueba");
     expect(message).toContain("SPEI");
   });
+
+  it("explains paid-membership reason when welcome_back_no_trial comes from paid history", () => {
+    const message = getPrecheckMessage("welcome_back_no_trial", {
+      intentMethod: "card",
+      intentAllowsTrial: true,
+      ineligibleReason: "already_paid_member",
+    });
+
+    expect(message).toContain("historial de membresía de pago");
+    expect(message).not.toContain("ya has usado tu prueba gratis");
+  });
+
+  it("explains phone-linked reason when welcome_back_no_trial comes from shared phone history", () => {
+    const message = getPrecheckMessage("welcome_back_no_trial", {
+      intentMethod: "card",
+      intentAllowsTrial: true,
+      ineligibleReason: "phone_linked_history",
+    });
+
+    expect(message).toContain("número asociado");
+  });
 });

@@ -17,6 +17,19 @@ type IsUserEligibleForMarketingTrialParams = {
   trialConfig?: MarketingTrialConfig;
 };
 
+export type MarketingTrialIneligibilityReason =
+  | 'trial_disabled'
+  | 'user_not_found'
+  | 'trial_used_at'
+  | 'has_paid_order'
+  | 'shared_phone_trial_history'
+  | 'shared_phone_paid_history';
+
+export type MarketingTrialEligibilityResult = {
+  eligible: boolean;
+  reason: MarketingTrialIneligibilityReason | null;
+};
+
 /**
  * Centralized marketing trial eligibility check (first-time trial guard).
  * Rules:
@@ -26,13 +39,15 @@ type IsUserEligibleForMarketingTrialParams = {
  * - Anti-abuse: if another account with same phone already used trial
  *   or has paid plan orders, this user is not eligible.
  */
-export async function isUserEligibleForMarketingTrial(
+export async function resolveMarketingTrialEligibility(
   params: IsUserEligibleForMarketingTrialParams,
-): Promise<boolean> {
+): Promise<MarketingTrialEligibilityResult> {
   const { prisma, userId } = params;
   const trialConfig = params.trialConfig ?? getMarketingTrialConfigFromEnv();
 
-  if (!trialConfig.enabled) return false;
+  if (!trialConfig.enabled) {
+    return { eligible: false, reason: 'trial_disabled' };
+  }
 
   const user = params.user
     ? {
@@ -44,8 +59,12 @@ export async function isUserEligibleForMarketingTrial(
         select: { trial_used_at: true, phone: true },
       });
 
-  if (!user) return false;
-  if (user.trial_used_at) return false;
+  if (!user) {
+    return { eligible: false, reason: 'user_not_found' };
+  }
+  if (user.trial_used_at) {
+    return { eligible: false, reason: 'trial_used_at' };
+  }
 
   const previousPaidPlanOrder = await prisma.orders.findFirst({
     where: {
@@ -56,10 +75,14 @@ export async function isUserEligibleForMarketingTrial(
     select: { id: true },
   });
 
-  if (previousPaidPlanOrder) return false;
+  if (previousPaidPlanOrder) {
+    return { eligible: false, reason: 'has_paid_order' };
+  }
 
   const phone = (user.phone ?? '').trim();
-  if (!phone) return true;
+  if (!phone) {
+    return { eligible: true, reason: null };
+  }
 
   try {
     const samePhoneUsers = await prisma.users.findMany({
@@ -74,7 +97,9 @@ export async function isUserEligibleForMarketingTrial(
     const samePhoneHasTrial = samePhoneUsers.some((row) =>
       Boolean(row.trial_used_at),
     );
-    if (samePhoneHasTrial) return false;
+    if (samePhoneHasTrial) {
+      return { eligible: false, reason: 'shared_phone_trial_history' };
+    }
 
     if (samePhoneUsers.length > 0) {
       const paid = await prisma.orders.findFirst({
@@ -85,11 +110,20 @@ export async function isUserEligibleForMarketingTrial(
         },
         select: { id: true },
       });
-      if (paid) return false;
+      if (paid) {
+        return { eligible: false, reason: 'shared_phone_paid_history' };
+      }
     }
   } catch {
     // Best-effort only: do not fail eligibility if anti-abuse lookup errors out.
   }
 
-  return true;
+  return { eligible: true, reason: null };
+}
+
+export async function isUserEligibleForMarketingTrial(
+  params: IsUserEligibleForMarketingTrialParams,
+): Promise<boolean> {
+  const result = await resolveMarketingTrialEligibility(params);
+  return result.eligible;
 }

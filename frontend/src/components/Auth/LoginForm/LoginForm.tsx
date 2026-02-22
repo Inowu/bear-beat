@@ -21,7 +21,9 @@ import {
 } from "../../../utils/authReturnUrl";
 import {
   getPrecheckMessage,
+  isPrecheckIneligibleReason,
   isPrecheckMessageKey,
+  type PrecheckIneligibleReason,
   type PrecheckMessageKey,
 } from "../precheckCopy";
 import { parseCheckoutIntent } from "../checkoutIntent";
@@ -53,6 +55,7 @@ function LoginForm() {
         prefillEmail?: unknown;
         precheckMessageKey?: unknown;
         precheckTrial?: unknown;
+        precheckIneligibleReason?: unknown;
       }
     | null;
   const stateFromRaw = locationState?.from;
@@ -65,6 +68,10 @@ function LoginForm() {
   )
     ? locationState.precheckMessageKey
     : null;
+  const statePrecheckIneligibleReason: PrecheckIneligibleReason | null =
+    isPrecheckIneligibleReason(locationState?.precheckIneligibleReason)
+      ? locationState.precheckIneligibleReason
+      : null;
   const stateFrom =
     typeof stateFromRaw === "string" ? normalizeAuthReturnUrl(stateFromRaw) : null;
   const storedFromRaw = readAuthReturnUrl();
@@ -88,7 +95,10 @@ function LoginForm() {
   const from = stateFrom ?? storedFrom ?? "/";
   const checkoutIntent = useMemo(() => parseCheckoutIntent(from), [from]);
   const precheckMessage = statePrecheckMessageKey
-    ? getPrecheckMessage(statePrecheckMessageKey, checkoutIntent)
+    ? getPrecheckMessage(statePrecheckMessageKey, {
+        ...checkoutIntent,
+        ineligibleReason: statePrecheckIneligibleReason,
+      })
     : "";
   const authStorageEventTrackedRef = useRef(false);
   const validationSchema = Yup.object().shape({

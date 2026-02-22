@@ -21,6 +21,7 @@ describe("trialEmailGateDecision", () => {
     expect(decision.state.from).toBe("/comprar?priceId=123&entry=fastlane");
     expect(decision.state.prefillEmail).toBe("dj@example.com");
     expect(decision.state.precheckMessageKey).toBe("welcome_back_trial");
+    expect(decision.state.precheckIneligibleReason).toBeNull();
     expect(decision.state.precheckTrial).toEqual({
       enabled: true,
       days: 7,
@@ -49,6 +50,7 @@ describe("trialEmailGateDecision", () => {
     expect(decision.state.from).toBe("/planes?entry=compare");
     expect(decision.state.prefillEmail).toBe("new@example.com");
     expect(decision.state.precheckMessageKey).toBe("new_account_trial");
+    expect(decision.state.precheckIneligibleReason).toBeNull();
     expect(decision.state.precheckTrial).toEqual({
       enabled: true,
       days: 7,
@@ -85,6 +87,7 @@ describe("trialEmailGateDecision", () => {
         trialState: "ineligible",
         trial: { enabled: true, days: 7, gb: 100 },
         messageKey: "welcome_back_no_trial",
+        ineligibleReason: "already_paid_member",
       },
       from: "/comprar?priceId=999&method=paypal",
       email: "private@example.com",
@@ -98,5 +101,6 @@ describe("trialEmailGateDecision", () => {
     expect(decision.state.prefillEmail).toBe("private@example.com");
     expect(decision.state.precheckTrial.trialState).toBe("ineligible");
     expect(decision.state.precheckTrial.accountState).toBe("existing_active");
+    expect(decision.state.precheckIneligibleReason).toBe("already_paid_member");
   });
 });

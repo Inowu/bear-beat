@@ -72,9 +72,14 @@ describe('auth.startTrialByEmail', () => {
     phone?: string | null;
   }) => {
     const suffix = params.suffix;
+    const uniqueUsername = `${suffix}-${Date.now().toString(36)}-${Math.floor(
+      Math.random() * 1_000_000,
+    )
+      .toString()
+      .padStart(6, '0')}`.slice(0, 40);
     return prisma.users.create({
       data: {
-        username: `${prefix}-${suffix}`.slice(0, 40),
+        username: uniqueUsername,
         email: `${prefix}-${suffix}@local.test`,
         password:
           '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
@@ -100,6 +105,7 @@ describe('auth.startTrialByEmail', () => {
     expect(res.accountState).toBe('new');
     expect(res.trialState).toBe('unknown_for_new');
     expect(res.messageKey).toBe('new_account_trial');
+    expect(res.ineligibleReason).toBeNull();
     expect(res.trial.enabled).toBe(true);
   });
 
@@ -118,6 +124,7 @@ describe('auth.startTrialByEmail', () => {
     expect(res.accountState).toBe('existing_active');
     expect(res.trialState).toBe('eligible');
     expect(res.messageKey).toBe('welcome_back_trial');
+    expect(res.ineligibleReason).toBeNull();
   });
 
   it('returns login + welcome_back_no_trial when trial was already used', async () => {
@@ -135,6 +142,7 @@ describe('auth.startTrialByEmail', () => {
     expect(res.accountState).toBe('existing_active');
     expect(res.trialState).toBe('ineligible');
     expect(res.messageKey).toBe('welcome_back_no_trial');
+    expect(res.ineligibleReason).toBe('trial_already_used');
   });
 
   it('returns login + welcome_back_no_trial when account has previous paid plan order', async () => {
@@ -162,6 +170,31 @@ describe('auth.startTrialByEmail', () => {
     expect(res.accountState).toBe('existing_active');
     expect(res.trialState).toBe('ineligible');
     expect(res.messageKey).toBe('welcome_back_no_trial');
+    expect(res.ineligibleReason).toBe('already_paid_member');
+  });
+
+  it('returns login + welcome_back_no_trial when another account with same phone already used trial', async () => {
+    const sharedPhone = `+1${String(Date.now()).slice(-10)}`;
+    await createUser({
+      suffix: 'same-phone-source',
+      phone: sharedPhone,
+      trialUsedAt: new Date(),
+    });
+    const user = await createUser({
+      suffix: 'same-phone-target',
+      phone: sharedPhone,
+    });
+
+    const res = await caller.auth.startTrialByEmail({
+      email: user.email,
+      turnstileToken: turnstileBypassToken,
+    });
+
+    expect(res.nextAction).toBe('login');
+    expect(res.accountState).toBe('existing_active');
+    expect(res.trialState).toBe('ineligible');
+    expect(res.messageKey).toBe('welcome_back_no_trial');
+    expect(res.ineligibleReason).toBe('phone_linked_history');
   });
 
   it('returns support + blocked_account for blocked users', async () => {
@@ -179,6 +212,7 @@ describe('auth.startTrialByEmail', () => {
     expect(res.accountState).toBe('existing_blocked');
     expect(res.trialState).toBe('ineligible');
     expect(res.messageKey).toBe('blocked_account');
+    expect(res.ineligibleReason).toBeNull();
   });
 
   it('returns support + deleted_account when email exists in deleted_users', async () => {
@@ -200,6 +234,7 @@ describe('auth.startTrialByEmail', () => {
     expect(res.accountState).toBe('existing_deleted');
     expect(res.trialState).toBe('ineligible');
     expect(res.messageKey).toBe('deleted_account');
+    expect(res.ineligibleReason).toBeNull();
   });
 
   it('rejects when token is missing', async () => {

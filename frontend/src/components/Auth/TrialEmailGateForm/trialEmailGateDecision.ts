@@ -1,4 +1,7 @@
-import type { PrecheckMessageKey } from "../precheckCopy";
+import type {
+  PrecheckIneligibleReason,
+  PrecheckMessageKey,
+} from "../precheckCopy";
 
 export type TrialEmailGatePrecheckTrial = {
   enabled: boolean;
@@ -14,6 +17,7 @@ export type TrialEmailGateApiResult = {
   trialState: "eligible" | "ineligible" | "unknown_for_new";
   trial: { enabled: boolean; days: number; gb: number };
   messageKey: PrecheckMessageKey;
+  ineligibleReason?: PrecheckIneligibleReason | null;
 };
 
 export type TrialEmailGateNavigationDecision =
@@ -25,6 +29,7 @@ export type TrialEmailGateNavigationDecision =
         prefillEmail: string;
         precheckMessageKey: PrecheckMessageKey;
         precheckTrial: TrialEmailGatePrecheckTrial;
+        precheckIneligibleReason: PrecheckIneligibleReason | null;
       };
     }
   | {
@@ -59,6 +64,7 @@ export function resolveTrialEmailGateDecision(input: {
         trialState: result.trialState,
         accountState: result.accountState,
       },
+      precheckIneligibleReason: result.ineligibleReason ?? null,
     },
   };
 }

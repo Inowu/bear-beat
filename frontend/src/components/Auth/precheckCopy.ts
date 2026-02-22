@@ -10,16 +10,37 @@ export const PRECHECK_MESSAGE_KEYS = [
 ] as const;
 
 export type PrecheckMessageKey = (typeof PRECHECK_MESSAGE_KEYS)[number];
+export const PRECHECK_INELIGIBLE_REASONS = [
+  "trial_already_used",
+  "already_paid_member",
+  "phone_linked_history",
+  "trial_disabled",
+  "unknown",
+] as const;
+export type PrecheckIneligibleReason =
+  (typeof PRECHECK_INELIGIBLE_REASONS)[number];
 
 const precheckMessageSet = new Set<string>(PRECHECK_MESSAGE_KEYS);
+const precheckIneligibleReasonSet = new Set<string>(
+  PRECHECK_INELIGIBLE_REASONS,
+);
 
 export function isPrecheckMessageKey(value: unknown): value is PrecheckMessageKey {
   return typeof value === "string" && precheckMessageSet.has(value);
 }
 
+export function isPrecheckIneligibleReason(
+  value: unknown,
+): value is PrecheckIneligibleReason {
+  return (
+    typeof value === "string" && precheckIneligibleReasonSet.has(value)
+  );
+}
+
 export type PrecheckMessageContext = {
   intentMethod?: CheckoutIntentMethod | null;
   intentAllowsTrial?: boolean | null;
+  ineligibleReason?: PrecheckIneligibleReason | null;
 };
 
 function getMethodLabel(method: CheckoutIntentMethod | null | undefined): string {
@@ -43,6 +64,21 @@ function getNoTrialMethodSuffix(context?: PrecheckMessageContext): string {
   return " con este método de pago";
 }
 
+function getNoTrialReasonMessage(context?: PrecheckMessageContext): string {
+  switch (context?.ineligibleReason) {
+    case "trial_already_used":
+      return "ya has usado tu prueba gratis anteriormente";
+    case "already_paid_member":
+      return "tu cuenta ya tiene historial de membresía de pago";
+    case "phone_linked_history":
+      return "detectamos historial previo de prueba o membresía en un número asociado";
+    case "trial_disabled":
+      return "la prueba gratis no está disponible temporalmente";
+    default:
+      return "la prueba gratis no está disponible para esta cuenta";
+  }
+}
+
 export function getPrecheckMessage(
   key: PrecheckMessageKey,
   context?: PrecheckMessageContext,
@@ -56,7 +92,7 @@ export function getPrecheckMessage(
       }
       return "Bienvenido de vuelta. Este correo puede activar prueba gratis al continuar con tarjeta.";
     case "welcome_back_no_trial":
-      return "Bienvenido de vuelta. Con este correo ya has usado anteriormente tu prueba gratis; inicia sesión para activar tu membresía.";
+      return `Bienvenido de vuelta. Con este correo ${getNoTrialReasonMessage(context)}; inicia sesión para activar tu membresía.`;
     case "new_account_trial":
       if (!intentAllowsTrial) {
         return `Este correo aún no tiene cuenta. Crea tu cuenta para activar tu membresía${getNoTrialMethodSuffix(context)} (sin prueba).`;
