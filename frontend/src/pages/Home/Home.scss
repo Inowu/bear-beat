@@ -1450,6 +1450,7 @@ html[data-theme="dark"] .bb-explorer-row:hover {
     minmax(220px, 1fr)
     minmax(80px, auto)
     minmax(80px, auto)
+    minmax(84px, auto)
     minmax(80px, auto)
     minmax(90px, auto);
   align-items: center;
@@ -1465,6 +1466,13 @@ html[data-theme="dark"] .bb-explorer-row:hover {
 .bb-track-col--name {
   flex-direction: column;
   align-items: flex-start;
+  gap: 4px;
+}
+
+.bb-track-inline-meta {
+  display: none;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 4px;
 }
 
@@ -1487,6 +1495,7 @@ html[data-theme="dark"] .bb-explorer-row:hover {
 
 .bb-track-col--bpm,
 .bb-track-col--key,
+.bb-track-col--energy,
 .bb-track-col--format {
   justify-content: center;
 }
@@ -1497,6 +1506,7 @@ html[data-theme="dark"] .bb-explorer-row:hover {
 
 .bb-track-bpm-badge,
 .bb-track-key-badge,
+.bb-track-energy-badge,
 .bb-track-format-badge {
   min-height: 24px;
   display: inline-flex;
@@ -1560,6 +1570,13 @@ html[data-theme="dark"] .bb-explorer-row:hover {
   color: var(--app-text-muted);
   border-color: color-mix(in srgb, var(--app-border) 86%, transparent);
   background: transparent;
+}
+
+.bb-track-energy-badge {
+  color: color-mix(in srgb, var(--app-status-warning) 84%, var(--app-text-heading));
+  border-color: color-mix(in srgb, var(--app-status-warning) 42%, transparent);
+  background: color-mix(in srgb, var(--app-status-warning) 12%, transparent);
+  font-variant-numeric: tabular-nums;
 }
 
 .bb-track-col--size {
@@ -2025,6 +2042,7 @@ html[data-theme="dark"] .bb-explorer-row:hover {
       minmax(160px, 1fr)
       minmax(70px, auto)
       minmax(70px, auto)
+      minmax(74px, auto)
       minmax(70px, auto)
       minmax(80px, auto);
     gap: 6px;
@@ -2032,6 +2050,7 @@ html[data-theme="dark"] .bb-explorer-row:hover {
 
   .bb-track-bpm-badge,
   .bb-track-key-badge,
+  .bb-track-energy-badge,
   .bb-track-format-badge {
     font-size: 0.74rem;
   }
@@ -2446,13 +2465,18 @@ html[data-theme="dark"] .bb-explorer-row:hover {
   }
 
   .bb-track-col--bpm,
-  .bb-track-col--key {
+  .bb-track-col--key,
+  .bb-track-col--energy {
     display: none;
   }
 
   .bb-track-col--format,
   .bb-track-col--size {
     justify-content: flex-start;
+  }
+
+  .bb-track-inline-meta {
+    display: inline-flex;
   }
 
   .bb-track-downloaded-text {

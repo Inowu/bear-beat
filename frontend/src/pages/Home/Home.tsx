@@ -281,6 +281,14 @@ const getResolvedFormatBadge = (fileName: string, metadataFormat: string | null)
   return ext.toUpperCase();
 };
 
+const toEnergyLabel = (value: number | null | undefined): string | null => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return null;
+  }
+  const normalized = Math.max(1, Math.min(10, Math.round(value)));
+  return `E${normalized}/10`;
+};
+
 const formatRecentPackAge = (value: string): string => {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
@@ -2493,6 +2501,7 @@ function Home() {
                         ? `${recommendation.metadata.bpm} BPM`
                         : null;
                       const keyLabel = normalizeOptionalText(recommendation.metadata?.camelot);
+                      const energyLabel = toEnergyLabel(recommendation.metadata?.energyLevel);
                       const formatBadge = getResolvedFormatBadge(
                         recommendation.name,
                         recommendation.metadata?.format ?? null,
@@ -2527,6 +2536,9 @@ function Home() {
                                 )}
                                 {keyLabel && (
                                   <span className="bb-file-pill bb-file-pill--key">{keyLabel}</span>
+                                )}
+                                {energyLabel && (
+                                  <span className="bb-file-pill bb-file-pill--energy">{energyLabel}</span>
                                 )}
                                 {formatBadge && (
                                   <span className="bb-file-pill bb-file-pill--format">{formatBadge}</span>
@@ -2797,6 +2809,7 @@ function Home() {
                 const bpmLabel = resolvedTrack?.bpm ? `${resolvedTrack.bpm} BPM` : null;
                 const keyLabel = normalizeOptionalText(resolvedTrack?.camelot);
                 const keyToneClass = keyLabel ? `is-${resolveKeyTone(keyLabel)}` : '';
+                const energyLabel = toEnergyLabel(resolvedTrack?.energyLevel);
                 const formatBadge = getResolvedFormatBadge(file.name, resolvedTrack?.format ?? null);
                 const alreadyDownloaded = Boolean(file.already_downloaded);
                 const resolvedPreviewPath = !isFolder ? resolvePreviewPath(file) : '';
@@ -2872,6 +2885,19 @@ function Home() {
                                 {trackArtist}
                               </span>
                             )}
+                            {(bpmLabel || keyLabel || energyLabel) && (
+                              <div className="bb-track-inline-meta">
+                                {bpmLabel && (
+                                  <span className="bb-file-pill bb-file-pill--tempo">{bpmLabel}</span>
+                                )}
+                                {keyLabel && (
+                                  <span className="bb-file-pill bb-file-pill--key">{keyLabel}</span>
+                                )}
+                                {energyLabel && (
+                                  <span className="bb-file-pill bb-file-pill--energy">{energyLabel}</span>
+                                )}
+                              </div>
+                            )}
                             {isInlinePreviewActive && (
                               <span className="bb-inline-preview-progress" aria-hidden>
                                 <span
@@ -2894,6 +2920,9 @@ function Home() {
                             {keyLabel && (
                               <span className={`bb-track-key-badge ${keyToneClass}`}>{keyLabel}</span>
                             )}
+                          </div>
+                          <div className="bb-track-col bb-track-col--energy">
+                            {energyLabel && <span className="bb-track-energy-badge">{energyLabel}</span>}
                           </div>
                           <div className="bb-track-col bb-track-col--format">
                             {formatBadge && <span className="bb-track-format-badge">{formatBadge}</span>}
