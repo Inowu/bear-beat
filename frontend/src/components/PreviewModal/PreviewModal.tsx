@@ -14,6 +14,9 @@ interface PreviewModalPropsI {
   } | null;
   show: boolean;
   onHide: () => void;
+  primaryActionLabel?: string;
+  onPrimaryAction?: () => void;
+  primaryActionDisabled?: boolean;
 }
 
 const formatTime = (seconds: number): string => {
@@ -77,7 +80,14 @@ const isExpectedPlayRestrictionError = (error: unknown): boolean => {
 };
 
 function PreviewModal(props: PreviewModalPropsI) {
-  const { show, onHide, file } = props;
+  const {
+    show,
+    onHide,
+    file,
+    primaryActionLabel,
+    onPrimaryAction,
+    primaryActionDisabled = false,
+  } = props;
   const resolvedKind = file?.kind === 'video' ? 'video' : 'audio';
   const isAudio = resolvedKind === 'audio';
   const mediaName = file?.name ?? '';
@@ -94,6 +104,7 @@ function PreviewModal(props: PreviewModalPropsI) {
   const playStartTrackedForRef = useRef<string>('');
   const audioRetryTimerRef = useRef<number | null>(null);
   const videoRetryTimerRef = useRef<number | null>(null);
+  const videoStallTimerRef = useRef<number | null>(null);
   const scheduledAudioRetryRef = useRef<number>(-1);
   const scheduledVideoRetryRef = useRef<number>(-1);
   const [isModalReady, setIsModalReady] = useState(false);
@@ -116,6 +127,7 @@ function PreviewModal(props: PreviewModalPropsI) {
     () => () => {
       clearRetryTimer(audioRetryTimerRef);
       clearRetryTimer(videoRetryTimerRef);
+      clearRetryTimer(videoStallTimerRef);
     },
     [],
   );
@@ -131,6 +143,7 @@ function PreviewModal(props: PreviewModalPropsI) {
       scheduledVideoRetryRef.current = -1;
       clearRetryTimer(audioRetryTimerRef);
       clearRetryTimer(videoRetryTimerRef);
+      clearRetryTimer(videoStallTimerRef);
     }
   }, [show]);
 
@@ -168,8 +181,29 @@ function PreviewModal(props: PreviewModalPropsI) {
     scheduledVideoRetryRef.current = -1;
     clearRetryTimer(audioRetryTimerRef);
     clearRetryTimer(videoRetryTimerRef);
+    clearRetryTimer(videoStallTimerRef);
     setWaveDrawn(false);
   }, [show, file?.url]);
+
+  useEffect(() => {
+    if (!show || !file || isAudio) {
+      clearRetryTimer(videoStallTimerRef);
+      return;
+    }
+
+    clearRetryTimer(videoStallTimerRef);
+    if (typeof window !== 'undefined') {
+      videoStallTimerRef.current = window.setTimeout(() => {
+        setVideoLoadError(
+          'La reproducción completa está tardando más de lo normal. Puedes abrirla en otra pestaña mientras carga.',
+        );
+      }, 9_000);
+    }
+
+    return () => {
+      clearRetryTimer(videoStallTimerRef);
+    };
+  }, [show, file, isAudio, videoPlaybackUrl]);
 
   useEffect(() => {
     if (!show || !isModalReady || audioPlaybackUrl === '' || !useWaveformAudio || !waveformRef.current) {
@@ -312,6 +346,7 @@ function PreviewModal(props: PreviewModalPropsI) {
   };
 
   const handleVideoError = () => {
+    clearRetryTimer(videoStallTimerRef);
     if (videoRetryAttempt < MAX_MEDIA_LOAD_RETRIES) {
       const nextAttempt = videoRetryAttempt + 1;
       if (scheduledVideoRetryRef.current !== nextAttempt) {
@@ -334,9 +369,18 @@ function PreviewModal(props: PreviewModalPropsI) {
   };
 
   const handleVideoPlaying = () => {
+    clearRetryTimer(videoStallTimerRef);
     scheduledVideoRetryRef.current = -1;
     setVideoLoadError('');
     markDemoPlayStarted();
+  };
+
+  const handlePrimaryAction = () => {
+    if (onPrimaryAction) {
+      onPrimaryAction();
+      return;
+    }
+    onHide();
   };
 
   const playAudioSafely = (playbackAction: () => void | Promise<unknown>) => {
@@ -495,8 +539,13 @@ function PreviewModal(props: PreviewModalPropsI) {
             ? 'Estás escuchando el archivo real completo. Al descargar, también recibirás el archivo completo y en calidad original.'
             : 'Esta muestra reproduce hasta 60 segundos en calidad reducida. Al descargar con tu plan recibes el archivo completo y en su calidad original.'}
         </p>
-        <Button unstyled className="btn primary-pill linear-bg" onClick={onHide}>
-          Cerrar
+        <Button
+          unstyled
+          className="btn primary-pill linear-bg"
+          onClick={handlePrimaryAction}
+          disabled={primaryActionDisabled}
+        >
+          {primaryActionLabel ?? 'Cerrar'}
         </Button>
       </Modal.Footer>
     </Modal>

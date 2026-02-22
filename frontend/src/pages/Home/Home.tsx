@@ -485,6 +485,7 @@ function Home() {
     kind: PreviewKind;
     playbackMode: PlaybackMode;
   } | null>(null);
+  const [previewDownloadFile, setPreviewDownloadFile] = useState<IFiles | null>(null);
   const [index, setIndex] = useState<number>(-1);
   const [show, setShow] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<any>('');
@@ -1149,6 +1150,13 @@ function Home() {
     try {
       const playback = await resolvePlaybackSource(row.path);
       const kind = resolveTrackPlaybackKind(row.name, row.path);
+      const trendingFile: IFiles = {
+        name: row.name,
+        type: '-',
+        path: normalizeFilePath(row.path).replace(/^\/+/, ''),
+        size: 0,
+        already_downloaded: false,
+      };
 
       setFileToShow({
         url: playback.url,
@@ -1156,6 +1164,7 @@ function Home() {
         kind,
         playbackMode: playback.playbackMode,
       });
+      setPreviewDownloadFile(trendingFile);
       setShowPreviewModal(true);
 
       if (playback.playbackMode === 'demo') {
@@ -1252,6 +1261,14 @@ function Home() {
       const normalizedPath = `/${normalizeFilePath(recommendation.path).replace(/^\/+/, '')}`;
       const playback = await resolvePlaybackSource(normalizedPath);
       const kind = resolveTrackPlaybackKind(recommendation.name, normalizedPath);
+      const recommendationFile: IFiles = {
+        name: recommendation.name,
+        type: recommendation.type === 'd' ? 'd' : '-',
+        path: normalizeFilePath(recommendation.path).replace(/^\/+/, ''),
+        size: recommendation.size,
+        metadata: recommendation.metadata ?? undefined,
+        already_downloaded: false,
+      };
 
       setFileToShow({
         url: playback.url,
@@ -1259,6 +1276,7 @@ function Home() {
         kind,
         playbackMode: playback.playbackMode,
       });
+      setPreviewDownloadFile(recommendationFile);
       setShowPreviewModal(true);
 
       if (playback.playbackMode === 'demo') {
@@ -1477,6 +1495,10 @@ function Home() {
         kind: previewKind,
         playbackMode: playback.playbackMode,
       });
+      setPreviewDownloadFile({
+        ...file,
+        path: normalizeFilePath(resolveFilePath(file)).replace(/^\/+/, ''),
+      });
       setIndex(-1);
       setLoadFile(false);
       setShowPreviewModal(true);
@@ -1615,6 +1637,32 @@ function Home() {
         : 'quota_exhausted_modal_shown',
       pagePath,
     });
+  };
+  const closePreviewModal = () => {
+    setShowPreviewModal(false);
+    setFileToShow(null);
+    setPreviewDownloadFile(null);
+  };
+  const handlePreviewPrimaryAction = () => {
+    const targetFile = previewDownloadFile;
+    if (!targetFile) {
+      closePreviewModal();
+      return;
+    }
+
+    closePreviewModal();
+    if (!currentUser?.hasActiveSubscription) {
+      showMembershipRequiredUpsell(
+        targetFile.type === 'd' ? 'folder' : 'file',
+        resolveFilePath(targetFile),
+      );
+      return;
+    }
+    if (targetFile.type === 'd') {
+      void startAlbumDownload(targetFile, -1);
+      return;
+    }
+    void downloadFile(targetFile, -1);
   };
   const downloadFile = async (
     file: IFiles,
@@ -2254,6 +2302,16 @@ function Home() {
     : pastFile.length > 0
       ? routeLabel
       : 'Elige Audios, Karaoke o Videos para empezar.';
+  const previewTargetsFolder = previewDownloadFile?.type === 'd';
+  const previewPrimaryActionLabel = currentUser?.hasActiveSubscription
+    ? loadDownload
+      ? 'Descargando...'
+      : previewTargetsFolder
+        ? 'Descargar carpeta'
+        : 'Descargar archivo'
+    : previewTargetsFolder
+      ? 'Ver membresías para descargar carpeta'
+      : 'Ver membresías para descargar';
 
   const renderKindIcon = (kind: FileVisualKind) => {
     if (kind === 'folder') {
@@ -2325,10 +2383,10 @@ function Home() {
       <PreviewModal
         show={showPreviewModal}
         file={fileToShow}
-        onHide={() => {
-          setShowPreviewModal(false);
-          setFileToShow(null);
-        }}
+        onHide={closePreviewModal}
+        onPrimaryAction={handlePreviewPrimaryAction}
+        primaryActionLabel={previewPrimaryActionLabel}
+        primaryActionDisabled={loadDownload}
       />
       <audio ref={inlineAudioRef} className="bb-inline-audio-element" preload="none" />
       {stripePromise && (
