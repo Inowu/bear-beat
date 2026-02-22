@@ -42,6 +42,14 @@ body.home-mobile-menu-open {
   overflow: hidden;
 }
 
+/* Make the mobile menu feel modal: background content should recede clearly. */
+body.home-mobile-menu-open .home-main {
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.32;
+  filter: saturate(0.7) blur(1px);
+}
+
 .home-topnav__inner {
   display: flex;
   align-items: center;
@@ -370,9 +378,9 @@ body.home-mobile-menu-open {
     inset: 0;
     top: calc(58px + env(safe-area-inset-top, 0px));
     border: 0;
-    background: rgba(8, 13, 22, 0.46);
-    backdrop-filter: blur(8px) saturate(95%);
-    -webkit-backdrop-filter: blur(8px) saturate(95%);
+    background: rgba(8, 13, 22, 0.72);
+    backdrop-filter: blur(10px) saturate(88%);
+    -webkit-backdrop-filter: blur(10px) saturate(88%);
     z-index: 3;
     cursor: pointer;
   }
@@ -504,7 +512,7 @@ html[data-theme="light"] .home-topnav__mobile-menu-inner {
 }
 
 html[data-theme="light"] .home-topnav__mobile-overlay {
-  background: rgba(15, 23, 42, 0.32);
+  background: rgba(15, 23, 42, 0.54);
 }
 
 html[data-theme="light"] .home-topnav__mobile-head {
