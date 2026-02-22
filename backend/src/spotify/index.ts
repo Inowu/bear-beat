@@ -8,6 +8,7 @@ const MEMORY_COVER_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 const SPOTIFY_SEARCH_LIMIT = 8;
 const SPOTIFY_MIN_SCORE = 28;
 const SPOTIFY_EARLY_ACCEPT_SCORE = 72;
+const SPOTIFY_DEFAULT_MARKET = 'MX';
 
 const AUDIO_VIDEO_EXT_REGEX = /\.(mp3|aac|m4a|flac|ogg|aiff|alac|mp4|mov|mkv|avi|wmv|webm|m4v)$/i;
 const BPM_CAMLOT_REGEX = /\b(\d{2,3}\s*bpm|(?:1[0-2]|[1-9])[ab])\b/gi;
@@ -257,20 +258,17 @@ function buildQueryCandidates(descriptor: SearchDescriptor): string[] {
   const fileName = toSpotifyField(descriptor.fileName);
 
   if (artist && fullTitle) {
-    candidates.add(`artist:"${artist}" track:"${fullTitle}"`);
     candidates.add(`${artist} ${fullTitle}`);
   }
   if (fullTitle) {
-    candidates.add(`track:"${fullTitle}"`);
     candidates.add(fullTitle);
   }
 
   if (artist && baseTitle && normalizeForMatch(baseTitle) !== normalizeForMatch(fullTitle)) {
-    candidates.add(`artist:"${artist}" track:"${baseTitle}"`);
     candidates.add(`${artist} ${baseTitle}`);
   }
   if (baseTitle && normalizeForMatch(baseTitle) !== normalizeForMatch(fullTitle)) {
-    candidates.add(`track:"${baseTitle}"`);
+    candidates.add(baseTitle);
   }
   if (displayName) {
     candidates.add(displayName);
@@ -278,7 +276,10 @@ function buildQueryCandidates(descriptor: SearchDescriptor): string[] {
   if (fileName) {
     candidates.add(fileName);
   }
-  return Array.from(candidates).slice(0, 8);
+  return Array.from(candidates)
+    .map((query) => toPlainSpotifyQuery(query))
+    .filter(Boolean)
+    .slice(0, 8);
 }
 
 function makeMetadataCacheKey(input: SpotifyTrackSearchInput): string {
@@ -517,13 +518,40 @@ function toPlainSpotifyQuery(query: string): string {
   ).slice(0, 120);
 }
 
+function resolveSpotifyMarket(): string | null {
+  const raw = toText(process.env.SPOTIFY_MARKET);
+  if (!raw) return SPOTIFY_DEFAULT_MARKET;
+
+  const withoutQuotes = raw.replace(/^['"]+|['"]+$/g, '').trim();
+  if (!withoutQuotes) return SPOTIFY_DEFAULT_MARKET;
+
+  const directCode = withoutQuotes.toUpperCase();
+  if (/^[A-Z]{2}$/.test(directCode)) {
+    return directCode;
+  }
+
+  const firstCode = withoutQuotes.match(/[A-Za-z]{2}/)?.[0]?.toUpperCase() ?? null;
+  if (firstCode && /^[A-Z]{2}$/.test(firstCode)) {
+    return firstCode;
+  }
+
+  return SPOTIFY_DEFAULT_MARKET;
+}
+
 async function searchTracksByQuery(
   query: string,
-  forceTokenRefresh = false,
-  fallbackTried = false,
+  options: {
+    forceTokenRefresh?: boolean;
+    fallbackTried?: boolean;
+    withoutMarketFallbackTried?: boolean;
+    market?: string | null;
+  } = {},
 ): Promise<SpotifyTrackItem[]> {
+  const forceTokenRefresh = options.forceTokenRefresh === true;
+  const fallbackTried = options.fallbackTried === true;
+  const withoutMarketFallbackTried = options.withoutMarketFallbackTried === true;
+  const market = options.market === undefined ? resolveSpotifyMarket() : options.market;
   const accessToken = await requestSpotifyToken(forceTokenRefresh);
-  const market = toText(process.env.SPOTIFY_MARKET) || 'MX';
 
   const response = await axios.get(
     SPOTIFY_SEARCH_URL,
@@ -532,7 +560,7 @@ async function searchTracksByQuery(
         q: query,
         type: 'track',
         limit: SPOTIFY_SEARCH_LIMIT,
-        market,
+        ...(market ? { market } : {}),
       },
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -543,18 +571,37 @@ async function searchTracksByQuery(
   );
 
   if (response.status === 401 && !forceTokenRefresh) {
-    return searchTracksByQuery(query, true, fallbackTried);
+    return searchTracksByQuery(query, {
+      ...options,
+      forceTokenRefresh: true,
+    });
   }
 
   if (response.status === 400 && !fallbackTried) {
     const plainQuery = toPlainSpotifyQuery(query);
     if (plainQuery && plainQuery !== query) {
-      return searchTracksByQuery(plainQuery, forceTokenRefresh, true);
+      return searchTracksByQuery(plainQuery, {
+        ...options,
+        fallbackTried: true,
+      });
     }
   }
 
+  if (response.status === 400 && market && !withoutMarketFallbackTried) {
+    return searchTracksByQuery(query, {
+      ...options,
+      withoutMarketFallbackTried: true,
+      market: null,
+    });
+  }
+
   if (response.status < 200 || response.status >= 300) {
-    throw new Error(`Spotify search failed with status ${response.status}`);
+    const remoteError = toText(response.data?.error?.message)
+      || toText(response.data?.error)
+      || toText(response.data?.message);
+    const marketHint = market ? ` (market=${market})` : '';
+    const messageSuffix = remoteError ? `: ${remoteError}` : '';
+    throw new Error(`Spotify search failed with status ${response.status}${marketHint}${messageSuffix}`);
   }
 
   const items = response.data?.tracks?.items;
