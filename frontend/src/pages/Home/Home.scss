@@ -1476,6 +1476,38 @@ html[data-theme="dark"] .bb-explorer-row:hover {
   gap: 4px;
 }
 
+.bb-track-inline-secondary {
+  display: none;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.bb-track-inline-secondary-item {
+  min-height: 20px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0 7px;
+  border: 1px solid color-mix(in srgb, var(--app-border) 76%, transparent);
+  background: color-mix(in srgb, var(--app-bg-soft) 68%, transparent);
+  color: var(--app-text-muted);
+  font-size: 0.72rem;
+  font-weight: 740;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.bb-track-inline-secondary-item--format {
+  color: color-mix(in srgb, var(--app-accent) 86%, var(--app-text-heading));
+  border-color: color-mix(in srgb, var(--app-accent) 36%, transparent);
+  background: color-mix(in srgb, var(--app-accent) 12%, transparent);
+}
+
+.bb-track-inline-secondary-item--size {
+  font-variant-numeric: tabular-nums;
+}
+
 .bb-inline-preview-progress {
   width: min(100%, 320px);
   height: 3px;
@@ -2466,16 +2498,19 @@ html[data-theme="dark"] .bb-explorer-row:hover {
 
   .bb-track-col--bpm,
   .bb-track-col--key,
-  .bb-track-col--energy {
+  .bb-track-col--energy,
+  .bb-track-col--format,
+  .bb-track-col--size {
     display: none;
   }
 
-  .bb-track-col--format,
-  .bb-track-col--size {
-    justify-content: flex-start;
+  .bb-track-inline-meta {
+    display: inline-flex;
+    row-gap: 4px;
+    column-gap: 5px;
   }
 
-  .bb-track-inline-meta {
+  .bb-track-inline-secondary {
     display: inline-flex;
   }
 

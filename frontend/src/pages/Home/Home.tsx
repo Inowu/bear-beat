@@ -2907,6 +2907,20 @@ function Home() {
                                 )}
                               </div>
                             )}
+                            {(formatBadge || sizeLabel) && (
+                              <div className="bb-track-inline-secondary">
+                                {formatBadge && (
+                                  <span className="bb-track-inline-secondary-item bb-track-inline-secondary-item--format">
+                                    {formatBadge}
+                                  </span>
+                                )}
+                                {sizeLabel && (
+                                  <span className="bb-track-inline-secondary-item bb-track-inline-secondary-item--size">
+                                    {sizeLabel}
+                                  </span>
+                                )}
+                              </div>
+                            )}
                             {isInlinePreviewActive && (
                               <span className="bb-inline-preview-progress" aria-hidden>
                                 <span
