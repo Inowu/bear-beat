@@ -9,6 +9,7 @@ const SPOTIFY_SEARCH_LIMIT = 8;
 const SPOTIFY_MIN_SCORE = 28;
 const SPOTIFY_EARLY_ACCEPT_SCORE = 72;
 const SPOTIFY_DEFAULT_MARKET = 'MX';
+const SPOTIFY_RATE_LIMIT_ERROR_PREFIX = 'SPOTIFY_RATE_LIMIT';
 
 const AUDIO_VIDEO_EXT_REGEX = /\.(mp3|aac|m4a|flac|ogg|aiff|alac|mp4|mov|mkv|avi|wmv|webm|m4v)$/i;
 const BPM_CAMLOT_REGEX = /\b(\d{2,3}\s*bpm|(?:1[0-2]|[1-9])[ab])\b/gi;
@@ -307,6 +308,11 @@ export function isSpotifyMetadataEnabled(): boolean {
     return false;
   }
   return Boolean(getSpotifyCredentials());
+}
+
+export function isSpotifyRateLimitError(error: unknown): boolean {
+  const message = toText((error as { message?: unknown } | null)?.message).toUpperCase();
+  return message.startsWith(`${SPOTIFY_RATE_LIMIT_ERROR_PREFIX}:`);
 }
 
 async function requestSpotifyToken(forceRefresh = false): Promise<string> {
@@ -614,7 +620,11 @@ async function searchTracksByQuery(
       || toText(response.data?.message);
     const marketHint = market ? ` (market=${market})` : '';
     const messageSuffix = remoteError ? `: ${remoteError}` : '';
-    throw new Error(`Spotify search failed with status ${response.status}${marketHint}${messageSuffix}`);
+    const normalizedMessage = `Spotify search failed with status ${response.status}${marketHint}${messageSuffix}`;
+    if (response.status === 429) {
+      throw new Error(`${SPOTIFY_RATE_LIMIT_ERROR_PREFIX}: ${normalizedMessage}`);
+    }
+    throw new Error(normalizedMessage);
   }
 
   const items = response.data?.tracks?.items;
@@ -684,6 +694,9 @@ export async function searchSpotifyTrackMetadata(
         break;
       }
     } catch (error: any) {
+      if (isSpotifyRateLimitError(error)) {
+        throw error;
+      }
       log.warn(`[SPOTIFY] cover lookup failed for query "${query}": ${error?.message ?? 'unknown error'}`);
     }
   }

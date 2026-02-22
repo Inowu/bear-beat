@@ -5,6 +5,7 @@ import { IFileStat } from '../services/interfaces/fileService.interface';
 import { log } from '../server';
 import {
   isSpotifyMetadataEnabled,
+  isSpotifyRateLimitError,
   searchSpotifyTrackMetadata,
   type SpotifyTrackMetadataResult,
 } from '../spotify';
@@ -612,12 +613,25 @@ export async function backfillSpotifyCoversForPaths(
 
   for (const row of candidates) {
     processed += 1;
-    const spotifyMetadata = await searchSpotifyTrackMetadata({
-      artist: row.artist,
-      title: row.title,
-      displayName: row.displayName,
-      fileName: row.name,
-    });
+    let spotifyMetadata: SpotifyTrackMetadataResult | null = null;
+    try {
+      spotifyMetadata = await searchSpotifyTrackMetadata({
+        artist: row.artist,
+        title: row.title,
+        displayName: row.displayName,
+        fileName: row.name,
+      });
+    } catch (error: any) {
+      if (isSpotifyRateLimitError(error)) {
+        log.warn(
+          `[TRACK_METADATA] Spotify rate limited while backfilling paths. Stopping early after processed=${processed}, updated=${updated}, misses=${misses}.`,
+        );
+        break;
+      }
+      log.warn(
+        `[TRACK_METADATA] Spotify lookup failed for ${row.path}: ${error?.message ?? 'unknown error'}`,
+      );
+    }
 
     if (spotifyMetadata) {
       const updatePayload = buildSpotifyUpdateData(row, spotifyMetadata);
@@ -670,14 +684,30 @@ export async function backfillSpotifyCoversForCatalog(
       break;
     }
 
+    let rateLimited = false;
+
     for (const row of candidates) {
       processed += 1;
-      const spotifyMetadata = await searchSpotifyTrackMetadata({
-        artist: row.artist,
-        title: row.title,
-        displayName: row.displayName,
-        fileName: row.name,
-      });
+      let spotifyMetadata: SpotifyTrackMetadataResult | null = null;
+      try {
+        spotifyMetadata = await searchSpotifyTrackMetadata({
+          artist: row.artist,
+          title: row.title,
+          displayName: row.displayName,
+          fileName: row.name,
+        });
+      } catch (error: any) {
+        if (isSpotifyRateLimitError(error)) {
+          rateLimited = true;
+          log.warn(
+            `[TRACK_METADATA] Spotify rate limited while scanning catalog. Stopping early after processed=${processed}, updated=${updated}, misses=${misses}.`,
+          );
+          break;
+        }
+        log.warn(
+          `[TRACK_METADATA] Spotify lookup failed for ${row.path}: ${error?.message ?? 'unknown error'}`,
+        );
+      }
 
       if (spotifyMetadata) {
         const updatePayload = buildSpotifyUpdateData(row, spotifyMetadata);
@@ -698,6 +728,10 @@ export async function backfillSpotifyCoversForCatalog(
         },
       });
       misses += 1;
+    }
+
+    if (rateLimited) {
+      break;
     }
   }
 
