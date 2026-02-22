@@ -1838,6 +1838,30 @@ html[data-theme="dark"] .bb-explorer-row:hover {
   text-overflow: ellipsis;
 }
 
+.bb-track-primary-line,
+.bb-track-meta-line {
+  display: none;
+  max-width: 100%;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bb-track-primary-line {
+  color: var(--app-text-heading);
+  font-size: 0.9rem;
+  font-weight: 760;
+  line-height: 1.24;
+}
+
+.bb-track-meta-line {
+  color: var(--app-text-muted);
+  font-size: 0.74rem;
+  font-weight: 680;
+  line-height: 1.2;
+}
+
 .bb-kind-icon {
   width: 40px;
   min-width: 40px;
@@ -2615,11 +2639,21 @@ html[data-theme="dark"] .bb-explorer-row:hover {
   }
 
   .bb-track-col--name {
-    gap: 2px;
+    gap: 3px;
+  }
+
+  .bb-track-primary-line,
+  .bb-track-meta-line {
+    display: block;
   }
 
   .bb-track-col--name .bb-file-name {
     -webkit-line-clamp: 1;
+  }
+
+  .bb-track-col--name .bb-track-title,
+  .bb-track-col--name .bb-track-artist {
+    display: none;
   }
 
   .bb-track-cover-fallback svg {
@@ -2648,13 +2682,11 @@ html[data-theme="dark"] .bb-explorer-row:hover {
   }
 
   .bb-track-inline-meta {
-    display: inline-flex;
-    row-gap: 4px;
-    column-gap: 5px;
+    display: none;
   }
 
   .bb-track-inline-secondary {
-    display: inline-flex;
+    display: none;
   }
 
   .bb-track-downloaded-text {

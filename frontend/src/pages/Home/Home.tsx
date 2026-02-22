@@ -3120,6 +3120,10 @@ function Home() {
                 const keyToneClass = keyLabel ? `is-${resolveKeyTone(keyLabel)}` : '';
                 const energyLabel = toEnergyLabel(resolvedTrack?.energyLevel);
                 const formatBadge = getResolvedFormatBadge(file.name, resolvedTrack?.format ?? null);
+                const trackHeadline = trackArtist ? `${trackArtist} - ${trackTitle}` : trackTitle;
+                const trackMetaLine = [bpmLabel, keyLabel, energyLabel, formatBadge, sizeLabel]
+                  .filter((value): value is string => Boolean(value))
+                  .join(' · ');
                 const alreadyDownloaded = Boolean(file.already_downloaded);
                 const resolvedPreviewPath = !isFolder ? resolvePreviewPath(file) : '';
                 const isAudioTrack = file.type === '-' && kind === 'audio';
@@ -3211,7 +3215,10 @@ function Home() {
                       ) : (
                         <div className="bb-track-columns">
                           <div className="bb-track-col bb-track-col--name">
-                            <span className="bb-file-name" title={trackTitle}>
+                            <span className="bb-track-primary-line" title={trackHeadline}>
+                              {trackHeadline}
+                            </span>
+                            <span className="bb-file-name bb-track-title" title={trackTitle}>
                               {trackTitle}
                             </span>
                             {trackArtist && (
@@ -3219,7 +3226,12 @@ function Home() {
                                 {trackArtist}
                               </span>
                             )}
-                            {(bpmLabel || keyLabel || energyLabel) && (
+                            {trackMetaLine && (
+                              <span className="bb-track-meta-line" title={trackMetaLine}>
+                                {trackMetaLine}
+                              </span>
+                            )}
+                            {(bpmLabel || keyLabel || energyLabel || formatBadge || sizeLabel) && (
                               <div className="bb-track-inline-meta">
                                 {bpmLabel && (
                                   <span className="bb-file-pill bb-file-pill--tempo">{bpmLabel}</span>
@@ -3230,17 +3242,13 @@ function Home() {
                                 {energyLabel && (
                                   <span className="bb-file-pill bb-file-pill--energy">{energyLabel}</span>
                                 )}
-                              </div>
-                            )}
-                            {(formatBadge || sizeLabel) && (
-                              <div className="bb-track-inline-secondary">
                                 {formatBadge && (
-                                  <span className="bb-track-inline-secondary-item bb-track-inline-secondary-item--format">
+                                  <span className="bb-file-pill bb-file-pill--format">
                                     {formatBadge}
                                   </span>
                                 )}
                                 {sizeLabel && (
-                                  <span className="bb-track-inline-secondary-item bb-track-inline-secondary-item--size">
+                                  <span className="bb-file-pill bb-file-pill--size">
                                     {sizeLabel}
                                   </span>
                                 )}
