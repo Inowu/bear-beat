@@ -291,9 +291,13 @@ function makeMetadataCacheKey(input: SpotifyTrackSearchInput): string {
   ].join('|');
 }
 
+function normalizeCredential(value: unknown): string {
+  return toText(value).replace(/^['"]+|['"]+$/g, '').trim();
+}
+
 function getSpotifyCredentials(): { clientId: string; clientSecret: string } | null {
-  const clientId = toText(process.env.SPOTIFY_CLIENT_ID);
-  const clientSecret = toText(process.env.SPOTIFY_CLIENT_SECRET);
+  const clientId = normalizeCredential(process.env.SPOTIFY_CLIENT_ID);
+  const clientSecret = normalizeCredential(process.env.SPOTIFY_CLIENT_SECRET);
   if (!clientId || !clientSecret) return null;
   return { clientId, clientSecret };
 }
@@ -338,8 +342,17 @@ async function requestSpotifyToken(forceRefresh = false): Promise<string> {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         timeout: 10_000,
+        validateStatus: (status) => status >= 200 && status < 500,
       },
     );
+
+    if (response.status < 200 || response.status >= 300) {
+      const remoteError = toText(response.data?.error_description)
+        || toText(response.data?.error)
+        || toText(response.data?.message);
+      const messageSuffix = remoteError ? `: ${remoteError}` : '';
+      throw new Error(`Spotify token request failed with status ${response.status}${messageSuffix}`);
+    }
 
     const accessToken = toText(response.data?.access_token);
     const expiresInSec = Number(response.data?.expires_in ?? 3600);
