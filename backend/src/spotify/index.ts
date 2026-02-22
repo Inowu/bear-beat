@@ -28,6 +28,9 @@ const INSTRUMENTAL_MARKERS_REGEX = /\b(instrumental|acapella|acappella)\b/i;
 const EXCLUDED_MARKERS_REGEX = /\b(karaoke|tribute)\b/i;
 const VERSION_SEGMENT_MARKERS_REGEX =
   /\b(original mix|extended mix|radio edit|club mix|dub mix|remix|mix|edit|vip|bootleg|rework|flip|mashup|version|clean|dirty|intro|outro|instrumental|acapella|acappella|hd|hq|official|lyric|video|club)\b/i;
+const TITLE_NOISE_REGEX =
+  /\b(hd|hq|official|lyric|lyrics|video|audio|clean|dirty|extended|redrum|intro|outro|dance|club|version)\b/gi;
+const DECADE_NOISE_REGEX = /\b(?:19|20)?\d{2}\s*'?s\b/gi;
 
 const REMIX_STOPWORDS = new Set([
   'remix',
@@ -222,6 +225,16 @@ function extractRemixTokens(value: string): string[] {
   );
 }
 
+function stripSearchNoise(value: string): string {
+  return normalizeWhitespace(
+    value
+      .replace(TITLE_NOISE_REGEX, ' ')
+      .replace(DECADE_NOISE_REGEX, ' ')
+      .replace(/\b\d{2,3}\b/g, ' ')
+      .replace(/\s+/g, ' '),
+  );
+}
+
 function buildSearchDescriptor(input: SpotifyTrackSearchInput): SearchDescriptor {
   const artistFromInput = sanitizeSpotifyText(toText(input.artist));
   const titleRaw = toText(input.title);
@@ -240,9 +253,10 @@ function buildSearchDescriptor(input: SpotifyTrackSearchInput): SearchDescriptor
     { preserveVersionSegments: true },
   );
   const versionSplit = stripVersionTail(titleWithVersionSegments || fileName);
-  const fullTitle = sanitizeSpotifyText(titleWithVersionSegments || fileName);
-  const baseTitle = sanitizeSpotifyText(versionSplit.baseTitle) || fullTitle;
-  const remixTokenSource = `${versionSplit.versionSegments.join(' ')} ${fullTitle}`;
+  const fullTitleSource = sanitizeSpotifyText(titleWithVersionSegments || fileName);
+  const fullTitle = stripSearchNoise(fullTitleSource);
+  const baseTitle = stripSearchNoise(sanitizeSpotifyText(versionSplit.baseTitle)) || fullTitle;
+  const remixTokenSource = `${versionSplit.versionSegments.join(' ')} ${fullTitleSource}`;
   const remixTokens = extractRemixTokens(remixTokenSource);
 
   return {
@@ -257,9 +271,9 @@ function buildSearchDescriptor(input: SpotifyTrackSearchInput): SearchDescriptor
     artistTokens: tokenizeForMatch(artist),
     baseTitleTokens: tokenizeForMatch(baseTitle),
     remixTokens,
-    hasRemixHint: REMIX_MARKERS_REGEX.test(fullTitle),
-    hasLiveHint: LIVE_MARKERS_REGEX.test(fullTitle),
-    hasInstrumentalHint: INSTRUMENTAL_MARKERS_REGEX.test(fullTitle),
+    hasRemixHint: REMIX_MARKERS_REGEX.test(fullTitleSource),
+    hasLiveHint: LIVE_MARKERS_REGEX.test(fullTitleSource),
+    hasInstrumentalHint: INSTRUMENTAL_MARKERS_REGEX.test(fullTitleSource),
   };
 }
 

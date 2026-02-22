@@ -30,6 +30,9 @@ const SPOTIFY_SAFE_MAX_PER_CALL = Number(process.env.TRACK_METADATA_SPOTIFY_SAFE
 const SPOTIFY_TEXT_METADATA_MIN_CONFIDENCE = Number(
   process.env.TRACK_METADATA_SPOTIFY_TEXT_MIN_CONFIDENCE ?? 0.58,
 );
+const SPOTIFY_COVER_MIN_CONFIDENCE = Number(
+  process.env.TRACK_METADATA_SPOTIFY_COVER_MIN_CONFIDENCE ?? 0.32,
+);
 const TRACK_METADATA_SYNC_COOLDOWN_MS = Number(process.env.TRACK_METADATA_SYNC_COOLDOWN_MS ?? 5 * 60 * 1000);
 const TRACK_METADATA_SYNC_MAX_FILES_PER_CALL = Number(
   process.env.TRACK_METADATA_SYNC_MAX_FILES_PER_CALL ?? 180,
@@ -507,12 +510,14 @@ function buildSpotifyUpdateData(
   let shouldUpdate = false;
 
   const coverUrl = normalizeText(spotifyMetadata.coverUrl);
-  if (coverUrl) {
+  const coverConfidence = normalizeConfidence(spotifyMetadata.confidence);
+  const minCoverConfidence = normalizeConfidence(SPOTIFY_COVER_MIN_CONFIDENCE);
+  if (coverUrl && coverConfidence >= minCoverConfidence) {
     data.coverUrl = coverUrl;
     shouldUpdate = true;
   }
 
-  const textConfidence = normalizeConfidence(spotifyMetadata.confidence);
+  const textConfidence = coverConfidence;
   const minTextConfidence = normalizeConfidence(SPOTIFY_TEXT_METADATA_MIN_CONFIDENCE);
   if (textConfidence >= minTextConfidence) {
     const artist = normalizeText(spotifyMetadata.artist);
