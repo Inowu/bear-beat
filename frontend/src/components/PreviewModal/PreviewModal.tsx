@@ -94,6 +94,7 @@ function PreviewModal(props: PreviewModalPropsI) {
   const audioUrl = file?.url ?? '';
   const playbackMode = file?.playbackMode === 'full' ? 'full' : 'demo';
   const isFullPlayback = playbackMode === 'full';
+  const playbackAssetLabel = isFullPlayback ? 'archivo completo' : 'demo';
   const useWaveformAudio = isAudio && !isFullPlayback;
   const [audioRetryAttempt, setAudioRetryAttempt] = useState(0);
   const [videoRetryAttempt, setVideoRetryAttempt] = useState(0);
@@ -195,7 +196,7 @@ function PreviewModal(props: PreviewModalPropsI) {
     if (typeof window !== 'undefined') {
       videoStallTimerRef.current = window.setTimeout(() => {
         setVideoLoadError(
-          'La reproducción completa está tardando más de lo normal. Puedes abrirla en otra pestaña mientras carga.',
+          'La reproducción está tardando más de lo normal. Seguimos intentando cargar el archivo…',
         );
       }, 9_000);
     }
@@ -352,7 +353,7 @@ function PreviewModal(props: PreviewModalPropsI) {
       if (scheduledVideoRetryRef.current !== nextAttempt) {
         const delayMs = getMediaRetryDelayMs(nextAttempt);
         scheduledVideoRetryRef.current = nextAttempt;
-        setVideoLoadError('El demo tardó en cargar. Reintentando...');
+        setVideoLoadError(`El ${playbackAssetLabel} tardó en cargar. Reintentando...`);
         clearRetryTimer(videoRetryTimerRef);
         if (typeof window !== 'undefined') {
           videoRetryTimerRef.current = window.setTimeout(() => {
@@ -365,7 +366,9 @@ function PreviewModal(props: PreviewModalPropsI) {
       }
       return;
     }
-    setVideoLoadError('No pudimos cargar este video. Prueba con otro archivo.');
+    setVideoLoadError(
+      `No pudimos cargar este ${playbackAssetLabel === 'demo' ? 'video' : 'archivo'}. Prueba con otro archivo.`,
+    );
   };
 
   const handleVideoPlaying = () => {
@@ -498,9 +501,6 @@ function PreviewModal(props: PreviewModalPropsI) {
               {audioLoadError !== '' && (
                 <div className="preview-video-error">
                   <p className="preview-wave-error">{audioLoadError}</p>
-                  <a className="preview-video-fallback" href={audioPlaybackUrl} target="_blank" rel="noreferrer">
-                    Abrir audio en otra pestaña →
-                  </a>
                 </div>
               )}
             </div>
@@ -524,9 +524,6 @@ function PreviewModal(props: PreviewModalPropsI) {
               {videoLoadError !== '' && (
                 <div className="preview-video-error">
                   <p className="preview-wave-error">{videoLoadError}</p>
-                  <a className="preview-video-fallback" href={videoPlaybackUrl} target="_blank" rel="noreferrer">
-                    Abrir demo en otra pestaña →
-                  </a>
                 </div>
               )}
             </>

@@ -217,24 +217,6 @@
           gap: 6px;
         }
 
-        .preview-video-fallback {
-          width: fit-content;
-          color: var(--app-accent);
-          font-weight: 700;
-          text-decoration: none;
-        }
-
-        .preview-video-fallback:hover {
-          text-decoration: underline;
-        }
-
-        .preview-video-fallback:focus-visible {
-          outline: 2px solid var(--app-focus-ring);
-          outline-offset: 2px;
-          border-radius: 10px;
-          text-decoration: underline;
-          text-underline-offset: 4px;
-        }
       }
 
       .modal-footer {

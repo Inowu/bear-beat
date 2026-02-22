@@ -38,6 +38,79 @@ type StreamByteRange = {
   end: number;
 };
 
+type CachedFileSize = {
+  size: number;
+  expiresAtMs: number;
+};
+
+const FILE_SIZE_CACHE_TTL_MS = 5 * 60 * 1000;
+const ACTIVE_SUBSCRIPTION_CACHE_TTL_MS = 45 * 1000;
+const fileSizeCache = new Map<string, CachedFileSize>();
+const activeSubscriptionCache = new Map<number, number>();
+
+const getCachedFileSize = async (fullPath: string): Promise<number | null> => {
+  const nowMs = Date.now();
+  const cached = fileSizeCache.get(fullPath);
+  if (cached && cached.expiresAtMs > nowMs && Number.isFinite(cached.size) && cached.size > 0) {
+    return cached.size;
+  }
+
+  try {
+    const fileStats = await fileService.stat(fullPath);
+    const fileSize = Number(fileStats?.size ?? 0);
+    if (!Number.isFinite(fileSize) || fileSize <= 0) {
+      fileSizeCache.delete(fullPath);
+      return null;
+    }
+
+    fileSizeCache.set(fullPath, {
+      size: fileSize,
+      expiresAtMs: nowMs + FILE_SIZE_CACHE_TTL_MS,
+    });
+    return fileSize;
+  } catch {
+    fileSizeCache.delete(fullPath);
+    return null;
+  }
+};
+
+const hasActiveSubscriptionCached = async (userId: number): Promise<boolean> => {
+  const nowMs = Date.now();
+  const cachedUntilMs = activeSubscriptionCache.get(userId) ?? 0;
+  if (cachedUntilMs > nowMs) {
+    return true;
+  }
+
+  const activeSubscription = await prisma.descargasUser.findFirst({
+    where: {
+      user_id: userId,
+      date_end: {
+        gte: new Date(nowMs),
+      },
+    },
+    select: {
+      id: true,
+      date_end: true,
+    },
+    orderBy: {
+      date_end: 'desc',
+    },
+  });
+
+  if (!activeSubscription) {
+    activeSubscriptionCache.delete(userId);
+    return false;
+  }
+
+  const subscriptionEndMs = new Date(activeSubscription.date_end).getTime();
+  const nextCacheExpiryMs = Math.min(subscriptionEndMs, nowMs + ACTIVE_SUBSCRIPTION_CACHE_TTL_MS);
+  if (Number.isFinite(nextCacheExpiryMs) && nextCacheExpiryMs > nowMs) {
+    activeSubscriptionCache.set(userId, nextCacheExpiryMs);
+  }
+
+  return true;
+};
+
 const parseByteRange = (
   rawRangeHeader: string | undefined,
   fileSize: number,
@@ -104,30 +177,13 @@ export const streamEndpoint = async (req: Request, res: Response) => {
     return res.status(400).send({ error: 'Parámetro path inválido' });
   }
 
-  const hasFile = await fileService.exists(fullPath);
-  if (!hasFile) {
+  const fileSize = await getCachedFileSize(fullPath);
+  if (!fileSize) {
     return res.status(404).send({ error: 'No encontramos este archivo' });
   }
 
-  const fileStats = await fileService.stat(fullPath);
-  const fileSize = Number(fileStats?.size ?? 0);
-  if (!Number.isFinite(fileSize) || fileSize <= 0) {
-    return res.status(404).send({ error: 'No encontramos este archivo' });
-  }
-
-  const activeSubscription = await prisma.descargasUser.findFirst({
-    where: {
-      user_id: user.id,
-      date_end: {
-        gte: new Date(),
-      },
-    },
-    select: {
-      id: true,
-    },
-  });
-
-  if (!activeSubscription) {
+  const hasActiveSubscription = await hasActiveSubscriptionCached(user.id);
+  if (!hasActiveSubscription) {
     return res.status(403).send({ error: 'Necesitas una membresía activa para reproducir completo' });
   }
 
@@ -155,8 +211,11 @@ export const streamEndpoint = async (req: Request, res: Response) => {
   }
   res.setHeader('Content-Length', `${chunkSize}`);
 
+  if (req.method === 'HEAD') {
+    return res.end();
+  }
+
   const fileStream = fs.createReadStream(fullPath, { start, end });
-  req.on('close', () => fileStream.destroy());
   fileStream.on('error', (error) => {
     const errorCode = typeof (error as any)?.code === 'string' ? (error as any).code : 'unknown';
     if (res.headersSent) {

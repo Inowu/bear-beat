@@ -25,6 +25,7 @@ import { formatBytes } from '../../utils/format';
 import { inferTrackMetadata } from '../../utils/fileMetadata';
 import { apiBaseUrl } from '../../utils/runtimeConfig';
 import { buildDemoPlaybackUrl, buildMemberPlaybackUrl } from '../../utils/demoUrl';
+import { getAccessToken, getRefreshToken } from '../../utils/authStorage';
 import { isRetryableMediaError, retryWithJitter } from '../../utils/retry';
 import {
   ensureStripeReady, getStripeLoadFailureReason, } from '../../utils/stripeLoader';
@@ -169,6 +170,7 @@ const DAY_MS = 24 * HOUR_MS;
 const WEEK_MS = 7 * DAY_MS;
 const MONTH_MS = 30 * DAY_MS;
 const YEAR_MS = 365 * DAY_MS;
+const MIN_MEMBER_PLAYBACK_TOKEN_TTL_MS = 45 * 1000;
 const SEARCH_QUICK_FILTERS: Array<{ value: SearchQuickFilter; label: string }> = [
   { value: 'audio', label: 'Audio' },
   { value: 'video', label: 'Video' },
@@ -177,6 +179,23 @@ const SEARCH_QUICK_FILTERS: Array<{ value: SearchQuickFilter; label: string }> =
 ];
 
 const normalizeFilePath = (value?: string): string => (value ?? '').replace(/\\/g, '/');
+const decodeJwtExpMs = (token: string): number | null => {
+  const normalizedToken = `${token ?? ''}`.trim();
+  if (!normalizedToken || typeof atob !== 'function') return null;
+  const parts = normalizedToken.split('.');
+  if (parts.length < 2) return null;
+
+  try {
+    const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padded = payload.padEnd(payload.length + ((4 - (payload.length % 4)) % 4), '=');
+    const parsedPayload = JSON.parse(atob(padded)) as { exp?: unknown };
+    const expSeconds = Number(parsedPayload?.exp ?? NaN);
+    if (!Number.isFinite(expSeconds) || expSeconds <= 0) return null;
+    return Math.floor(expSeconds * 1000);
+  } catch {
+    return null;
+  }
+};
 const isTrackCoverKind = (kind: FileVisualKind): boolean =>
   kind === 'audio' || kind === 'video' || kind === 'karaoke';
 const buildTrackCoverProxyUrl = (
@@ -464,7 +483,7 @@ const buildMonthlyTrending = (payload: PublicTopDownloadsResponse | null): Month
 function Home() {
   const location = useLocation();
   const { theme } = useTheme();
-  const { fileChange, closeFile, userToken, currentUser, startUser } = useUserContext();
+  const { fileChange, closeFile, userToken, currentUser, startUser, handleLogin } = useUserContext();
   const { setShowDownload, setCurrentFile, setFileData } = useDownloadContext();
   const [showPreviewModal, setShowPreviewModal] = useState<boolean>(false);
   const [showModal, setShowModal] = useState<boolean>(false);
@@ -738,8 +757,35 @@ function Home() {
     const shouldUseFullPlayback = canUseFullPlayback && !opts.forceDemo;
 
     if (shouldUseFullPlayback) {
+      let playbackToken = `${getAccessToken() ?? userToken ?? ''}`.trim();
+      const tokenExpiresAtMs = decodeJwtExpMs(playbackToken);
+      const tokenHasEnoughLifetime =
+        tokenExpiresAtMs === null ||
+        tokenExpiresAtMs - Date.now() > MIN_MEMBER_PLAYBACK_TOKEN_TTL_MS;
+
+      if (!playbackToken || !tokenHasEnoughLifetime) {
+        const refreshToken = `${getRefreshToken() ?? ''}`.trim();
+        if (refreshToken) {
+          try {
+            const refreshedTokens = await trpc.auth.refresh.query({ refreshToken });
+            const refreshedAccessToken = `${refreshedTokens?.token ?? ''}`.trim();
+            const refreshedRefreshToken = `${refreshedTokens?.refreshToken ?? ''}`.trim();
+            if (refreshedAccessToken && refreshedRefreshToken) {
+              handleLogin(refreshedAccessToken, refreshedRefreshToken);
+              playbackToken = refreshedAccessToken;
+            }
+          } catch {
+            // noop: we'll fail with a clear message below if we still have no usable token.
+          }
+        }
+      }
+
+      if (!playbackToken) {
+        throw new Error('No pudimos validar tu sesión para reproducir el archivo completo.');
+      }
+
       return {
-        url: buildMemberPlaybackUrl(normalizedPath, userToken ?? '', apiBaseUrl),
+        url: buildMemberPlaybackUrl(normalizedPath, playbackToken, apiBaseUrl),
         playbackMode: 'full',
       };
     }
@@ -776,6 +822,19 @@ function Home() {
       message.includes('no pudimos preparar el demo') ||
       message.includes('solo se permiten')
     );
+  };
+  const resolvePreviewPlaybackErrorMessage = (error: unknown): string => {
+    const rawMessage = `${(error as any)?.message ?? ''}`.trim();
+    const normalized = rawMessage.toLowerCase();
+    if (
+      normalized.includes('sesión') ||
+      normalized.includes('session') ||
+      normalized.includes('unauthorized') ||
+      normalized.includes('jwt')
+    ) {
+      return 'Tu sesión expiró para reproducir completo. Inicia sesión de nuevo para continuar.';
+    }
+    return rawMessage || 'No pudimos cargar el preview. Reintentar.';
   };
 
   const stopInlinePreviewAudio = (options: { clearSource?: boolean } = {}) => {
@@ -863,7 +922,7 @@ function Home() {
           [normalizedPath]: true,
         }));
       } else {
-        appToast.error("No pudimos cargar el preview. Reintentar.");
+        appToast.error(resolvePreviewPlaybackErrorMessage(error));
       }
       stopInlinePreviewAudio();
     } finally {
@@ -1179,8 +1238,8 @@ function Home() {
         pagePath: `/${normalizeFilePath(row.path).replace(/^\/+/, '')}`,
         playbackMode: playback.playbackMode,
       });
-    } catch {
-      appToast.error("No pudimos cargar el preview. Reintentar.");
+    } catch (error) {
+      appToast.error(resolvePreviewPlaybackErrorMessage(error));
     } finally {
       setMonthlyTrendingPreviewPath(null);
     }
@@ -1290,8 +1349,8 @@ function Home() {
         pagePath: normalizedPath,
         playbackMode: playback.playbackMode,
       });
-    } catch {
-      appToast.error("No pudimos cargar el preview. Reintentar.");
+    } catch (error) {
+      appToast.error(resolvePreviewPlaybackErrorMessage(error));
     } finally {
       setForYouPreviewPath(null);
     }
@@ -1517,6 +1576,7 @@ function Home() {
     } catch (error) {
       setIndex(-1);
       setLoadFile(false);
+      appToast.error(resolvePreviewPlaybackErrorMessage(error));
     }
   };
   const errorMethod = (
