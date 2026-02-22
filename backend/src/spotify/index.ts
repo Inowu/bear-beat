@@ -239,7 +239,13 @@ function buildSearchDescriptor(input: SpotifyTrackSearchInput): SearchDescriptor
 }
 
 function toSpotifyField(value: string): string {
-  return value.replace(/["']/g, ' ').trim();
+  return normalizeWhitespace(
+    value
+      .replace(/["'`´“”‘’]/g, ' ')
+      .replace(/[^\p{L}\p{N}\s&+/\-]/gu, ' ')
+      .replace(/\s+/g, ' ')
+      .trim(),
+  ).slice(0, 120);
 }
 
 function buildQueryCandidates(descriptor: SearchDescriptor): string[] {
@@ -500,7 +506,22 @@ function toConfidence(score: number): number {
   return Math.max(0, Math.min(1, Number(normalized.toFixed(2))));
 }
 
-async function searchTracksByQuery(query: string, forceTokenRefresh = false): Promise<SpotifyTrackItem[]> {
+function toPlainSpotifyQuery(query: string): string {
+  return normalizeWhitespace(
+    query
+      .replace(/\b(?:artist|track):"([^"]+)"/gi, '$1')
+      .replace(/\b(?:artist|track):([^\s]+)/gi, '$1')
+      .replace(/[^\p{L}\p{N}\s&+/\-]/gu, ' ')
+      .replace(/\s+/g, ' ')
+      .trim(),
+  ).slice(0, 120);
+}
+
+async function searchTracksByQuery(
+  query: string,
+  forceTokenRefresh = false,
+  fallbackTried = false,
+): Promise<SpotifyTrackItem[]> {
   const accessToken = await requestSpotifyToken(forceTokenRefresh);
   const market = toText(process.env.SPOTIFY_MARKET) || 'MX';
 
@@ -522,7 +543,14 @@ async function searchTracksByQuery(query: string, forceTokenRefresh = false): Pr
   );
 
   if (response.status === 401 && !forceTokenRefresh) {
-    return searchTracksByQuery(query, true);
+    return searchTracksByQuery(query, true, fallbackTried);
+  }
+
+  if (response.status === 400 && !fallbackTried) {
+    const plainQuery = toPlainSpotifyQuery(query);
+    if (plainQuery && plainQuery !== query) {
+      return searchTracksByQuery(plainQuery, forceTokenRefresh, true);
+    }
   }
 
   if (response.status < 200 || response.status >= 300) {

@@ -17,6 +17,9 @@ import { getEmbeddedTrackTags } from './embeddedTags';
 
 const TRACK_METADATA_QUERY_BATCH = 400;
 const SPOTIFY_MISS_RETRY_HOURS = Number(process.env.TRACK_METADATA_SPOTIFY_MISS_RETRY_HOURS ?? 24);
+const SPOTIFY_MISS_RETRY_MINUTES_ON_READ = Number(
+  process.env.TRACK_METADATA_SPOTIFY_MISS_RETRY_MINUTES_ON_READ ?? 15,
+);
 const SPOTIFY_DEFAULT_MAX_PER_CALL = Number(process.env.TRACK_METADATA_SPOTIFY_MAX_PER_CALL ?? 6);
 const SPOTIFY_SYNC_ON_READ_ENABLED = process.env.TRACK_METADATA_SPOTIFY_SYNC_ON_READ !== '0';
 const SPOTIFY_SYNC_ON_READ_MAX_PER_CALL = Number(
@@ -532,9 +535,27 @@ async function fetchSpotifyBackfillCandidates(
   paths: string[],
   maxToProcess: number,
 ): Promise<SpotifyBackfillCandidate[]> {
-  const retryCutoff = new Date(
-    Date.now() - sanitizePositiveInt(SPOTIFY_MISS_RETRY_HOURS, 24) * 60 * 60 * 1000,
+  const nowMs = Date.now();
+  const retryCutoffHours = new Date(
+    nowMs - sanitizePositiveInt(SPOTIFY_MISS_RETRY_HOURS, 24) * 60 * 60 * 1000,
   );
+  const retryCutoffOnRead = new Date(
+    nowMs - sanitizePositiveInt(SPOTIFY_MISS_RETRY_MINUTES_ON_READ, 15) * 60 * 1000,
+  );
+  const spotifyMissFilter =
+    paths.length > 0
+      ? {
+        source: 'spotify_miss' as const,
+        updatedAt: {
+          lt: retryCutoffOnRead,
+        },
+      }
+      : {
+        source: 'spotify_miss' as const,
+        updatedAt: {
+          lt: retryCutoffHours,
+        },
+      };
 
   return prisma.trackMetadata.findMany({
     where: {
@@ -549,12 +570,7 @@ async function fetchSpotifyBackfillCandidates(
       OR: [
         { source: 'inferred' },
         { source: 'spotify' },
-        {
-          source: 'spotify_miss',
-          updatedAt: {
-            lt: retryCutoff,
-          },
-        },
+        spotifyMissFilter,
       ],
     },
     select: {
