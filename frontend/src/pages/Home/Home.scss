@@ -1862,6 +1862,10 @@ html[data-theme="dark"] .bb-explorer-row:hover {
   line-height: 1.2;
 }
 
+.bb-track-meta-line.is-downloaded::after {
+  content: '';
+}
+
 .bb-kind-icon {
   width: 40px;
   min-width: 40px;
@@ -2647,6 +2651,16 @@ html[data-theme="dark"] .bb-explorer-row:hover {
     display: block;
   }
 
+  .bb-track-meta-line.is-downloaded::after {
+    content: '✓';
+    color: var(--app-status-success);
+    margin-left: 6px;
+    font-size: 0.78rem;
+    font-weight: 900;
+    line-height: 1;
+    vertical-align: baseline;
+  }
+
   .bb-track-col--name .bb-file-name {
     -webkit-line-clamp: 1;
   }
@@ -2686,6 +2700,10 @@ html[data-theme="dark"] .bb-explorer-row:hover {
   }
 
   .bb-track-inline-secondary {
+    display: none;
+  }
+
+  .bb-track-downloaded--inline {
     display: none;
   }
 

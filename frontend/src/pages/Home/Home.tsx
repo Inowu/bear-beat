@@ -3285,7 +3285,10 @@ function Home() {
                               </span>
                             )}
                             {trackMetaLine && (
-                              <span className="bb-track-meta-line" title={trackMetaLine}>
+                              <span
+                                className={`bb-track-meta-line${alreadyDownloaded ? ' is-downloaded' : ''}`}
+                                title={trackMetaLine}
+                              >
                                 {trackMetaLine}
                               </span>
                             )}
