@@ -24,7 +24,7 @@ import { GROWTH_METRICS, trackGrowthMetric } from '../../utils/growthMetrics';
 import { formatBytes } from '../../utils/format';
 import { inferTrackMetadata } from '../../utils/fileMetadata';
 import { apiBaseUrl } from '../../utils/runtimeConfig';
-import { buildDemoPlaybackUrl } from '../../utils/demoUrl';
+import { buildDemoPlaybackUrl, buildMemberPlaybackUrl } from '../../utils/demoUrl';
 import { isRetryableMediaError, retryWithJitter } from '../../utils/retry';
 import {
   ensureStripeReady, getStripeLoadFailureReason, } from '../../utils/stripeLoader';
@@ -113,6 +113,7 @@ type ForYouFeed = {
 
 type FileVisualKind = 'folder' | 'audio' | 'video' | 'karaoke' | 'archive' | 'file';
 type PreviewKind = 'audio' | 'video';
+type PlaybackMode = 'demo' | 'full';
 type MediaScope = 'audio' | 'video' | 'karaoke' | null;
 type SearchQuickFilter = 'audio' | 'video' | 'karaoke' | 'mp3';
 type ResolvedTrackMetadata = {
@@ -453,6 +454,7 @@ function Home() {
     url: string;
     name: string;
     kind: PreviewKind;
+    playbackMode: PlaybackMode;
   } | null>(null);
   const [index, setIndex] = useState<number>(-1);
   const [show, setShow] = useState<boolean>(false);
@@ -509,6 +511,7 @@ function Home() {
   }, [location.search]);
 
   const stripeOptions = useMemo(() => ({ appearance: getStripeAppearance(theme) }), [theme]);
+  const canUseFullPlayback = Boolean(currentUser?.hasActiveSubscription && userToken);
 
   const getFileVisualKind = (file: IFiles): FileVisualKind => {
     if (file.type === 'd') {
@@ -669,6 +672,41 @@ function Home() {
   const resolvePreviewPath = (file: IFiles): string =>
     resolveFilePath(file).replace(/^\/+/, '');
 
+  const resolveTrackPlaybackKind = (fileName: string, path: string): PreviewKind => {
+    const signature = `${fileName} ${path}`.toLowerCase();
+    return AUDIO_EXT_REGEX.test(signature) ? 'audio' : 'video';
+  };
+
+  const resolvePlaybackSource = async (
+    path: string,
+    opts: { forceDemo?: boolean } = {},
+  ): Promise<{ url: string; playbackMode: PlaybackMode }> => {
+    const normalizedPath = normalizeFilePath(path).replace(/^\/+/, '');
+    const shouldUseFullPlayback = canUseFullPlayback && !opts.forceDemo;
+
+    if (shouldUseFullPlayback) {
+      return {
+        url: buildMemberPlaybackUrl(normalizedPath, userToken, apiBaseUrl),
+        playbackMode: 'full',
+      };
+    }
+
+    const filesDemo = await retryWithJitter(
+      async () => await trpc.ftp.demo.query({ path: normalizedPath }),
+      {
+        maxAttempts: 3,
+        baseDelayMs: 250,
+        maxDelayMs: 1800,
+        jitterMs: 450,
+        shouldRetry: isRetryableMediaError,
+      },
+    );
+    return {
+      url: buildDemoPlaybackUrl(filesDemo.demo, apiBaseUrl),
+      playbackMode: 'demo',
+    };
+  };
+
   const isInlineDemoUnavailableError = (error: unknown): boolean => {
     const code = `${(error as any)?.data?.code ?? (error as any)?.shape?.data?.code ?? ''}`;
     if (
@@ -732,23 +770,14 @@ function Home() {
     const requestId = ++inlinePreviewRequestRef.current;
 
     try {
-      let previewUrl = inlineDemoUrlCacheRef.current.get(normalizedPath);
+      let playbackMode: PlaybackMode = canUseFullPlayback ? 'full' : 'demo';
+      const cacheKey = `${playbackMode}:${normalizedPath}`;
+      let previewUrl = inlineDemoUrlCacheRef.current.get(cacheKey);
       if (!previewUrl) {
-        const demo = await retryWithJitter(
-          async () =>
-            await trpc.ftp.demo.query({
-              path: normalizedPath,
-            }),
-          {
-            maxAttempts: 3,
-            baseDelayMs: 250,
-            maxDelayMs: 1800,
-            jitterMs: 450,
-            shouldRetry: isRetryableMediaError,
-          },
-        );
-        previewUrl = buildDemoPlaybackUrl(demo.demo, apiBaseUrl);
-        inlineDemoUrlCacheRef.current.set(normalizedPath, previewUrl);
+        const playback = await resolvePlaybackSource(normalizedPath);
+        previewUrl = playback.url;
+        playbackMode = playback.playbackMode;
+        inlineDemoUrlCacheRef.current.set(`${playbackMode}:${normalizedPath}`, previewUrl);
       }
 
       if (requestId !== inlinePreviewRequestRef.current) return;
@@ -760,14 +789,17 @@ function Home() {
       await audio.play();
       setInlinePreviewPlaying(true);
 
-      trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, {
-        location: 'home_library_inline',
-        kind: 'audio',
-        pagePath: normalizedPath,
-      });
+      if (playbackMode === 'demo') {
+        trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, {
+          location: 'home_library_inline',
+          kind: 'audio',
+          pagePath: normalizedPath,
+        });
+      }
       trackGrowthMetric(GROWTH_METRICS.FILE_PREVIEW_OPENED, {
         fileType: 'audio',
         pagePath: normalizedPath,
+        playbackMode,
       });
     } catch (error) {
       if (requestId !== inlinePreviewRequestRef.current) return;
@@ -1025,34 +1057,28 @@ function Home() {
     stopInlinePreviewAudio();
     setMonthlyTrendingPreviewPath(row.path);
     try {
-      const result = (await retryWithJitter(
-        async () =>
-          await trpc.downloadHistory.getPublicTopDemo.query({
-            path: row.path,
-          }),
-        {
-          maxAttempts: 3,
-          baseDelayMs: 250,
-          maxDelayMs: 1800,
-          jitterMs: 450,
-          shouldRetry: isRetryableMediaError,
-        },
-      )) as { demo: string; kind: PreviewKind; name?: string };
-
-      const previewUrl = buildDemoPlaybackUrl(result.demo, apiBaseUrl);
-      const kind: PreviewKind = result.kind === 'video' ? 'video' : 'audio';
+      const playback = await resolvePlaybackSource(row.path);
+      const kind = resolveTrackPlaybackKind(row.name, row.path);
 
       setFileToShow({
-        url: previewUrl,
-        name: row.name || result.name || 'Preview',
+        url: playback.url,
+        name: row.name || 'Preview',
         kind,
+        playbackMode: playback.playbackMode,
       });
       setShowPreviewModal(true);
 
-      trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, {
-        location: 'home_trending',
-        kind,
-        source: 'top_descargas_mes',
+      if (playback.playbackMode === 'demo') {
+        trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, {
+          location: 'home_trending',
+          kind,
+          source: 'top_descargas_mes',
+        });
+      }
+      trackGrowthMetric(GROWTH_METRICS.FILE_PREVIEW_OPENED, {
+        fileType: kind,
+        pagePath: `/${normalizeFilePath(row.path).replace(/^\/+/, '')}`,
+        playbackMode: playback.playbackMode,
       });
     } catch {
       appToast.error("No pudimos cargar el preview. Reintentar.");
@@ -1134,38 +1160,27 @@ function Home() {
     setForYouPreviewPath(recommendation.path);
     try {
       const normalizedPath = `/${normalizeFilePath(recommendation.path).replace(/^\/+/, '')}`;
-      const filesDemo = await retryWithJitter(
-        async () =>
-          await trpc.ftp.demo.query({
-            path: normalizedPath,
-          }),
-        {
-          maxAttempts: 3,
-          baseDelayMs: 250,
-          maxDelayMs: 1800,
-          jitterMs: 450,
-          shouldRetry: isRetryableMediaError,
-        },
-      );
-
-      const previewUrl = buildDemoPlaybackUrl(filesDemo.demo, apiBaseUrl);
-      const previewSignature = `${recommendation.name} ${normalizedPath} ${previewUrl}`.toLowerCase();
-      const kind: PreviewKind = AUDIO_EXT_REGEX.test(previewSignature) ? 'audio' : 'video';
+      const playback = await resolvePlaybackSource(normalizedPath);
+      const kind = resolveTrackPlaybackKind(recommendation.name, normalizedPath);
 
       setFileToShow({
-        url: previewUrl,
+        url: playback.url,
         name: recommendation.name,
         kind,
+        playbackMode: playback.playbackMode,
       });
       setShowPreviewModal(true);
 
-      trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, {
-        location: 'home_for_you',
-        kind,
-      });
+      if (playback.playbackMode === 'demo') {
+        trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, {
+          location: 'home_for_you',
+          kind,
+        });
+      }
       trackGrowthMetric(GROWTH_METRICS.FILE_PREVIEW_OPENED, {
         fileType: kind,
         pagePath: normalizedPath,
+        playbackMode: playback.playbackMode,
       });
     } catch {
       appToast.error("No pudimos cargar el preview. Reintentar.");
@@ -1364,34 +1379,28 @@ function Home() {
     setIndex(index);
     try {
       const path = resolveFilePath(file);
-      const filesDemo = await retryWithJitter(
-        async () => await trpc.ftp.demo.query({ path }),
-        {
-          maxAttempts: 3,
-          baseDelayMs: 250,
-          maxDelayMs: 1800,
-          jitterMs: 450,
-          shouldRetry: isRetryableMediaError,
-        },
-      );
-      const previewUrl = buildDemoPlaybackUrl(filesDemo.demo, apiBaseUrl);
-      const previewSignature = `${file.name} ${path} ${previewUrl}`.toLowerCase();
+      const playback = await resolvePlaybackSource(path);
+      const previewKind = resolveTrackPlaybackKind(file.name, path);
       setFileToShow({
-        url: previewUrl,
+        url: playback.url,
         name: file.name,
-        kind: AUDIO_EXT_REGEX.test(previewSignature) ? 'audio' : 'video',
+        kind: previewKind,
+        playbackMode: playback.playbackMode,
       });
       setIndex(-1);
       setLoadFile(false);
       setShowPreviewModal(true);
-      trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, {
-        location: 'home_library',
-        kind: AUDIO_EXT_REGEX.test(previewSignature) ? 'audio' : 'video',
-        pagePath: path,
-      });
+      if (playback.playbackMode === 'demo') {
+        trackGrowthMetric(GROWTH_METRICS.VIEW_DEMO_CLICK, {
+          location: 'home_library',
+          kind: previewKind,
+          pagePath: path,
+        });
+      }
       trackGrowthMetric(GROWTH_METRICS.FILE_PREVIEW_OPENED, {
-        fileType: AUDIO_EXT_REGEX.test(previewSignature) ? 'audio' : 'video',
+        fileType: previewKind,
         pagePath: path,
+        playbackMode: playback.playbackMode,
       });
     } catch (error) {
       setIndex(-1);
@@ -2554,7 +2563,7 @@ function Home() {
                                 onClick={() => {
                                   void openForYouPreview(recommendation);
                                 }}
-                                aria-label={`Reproducir preview de ${title}`}
+                                aria-label={`${canUseFullPlayback ? 'Reproducir completo' : 'Reproducir preview'} de ${title}`}
                                 disabled={forYouPreviewPath === recommendation.path}
                               >
                                 {forYouPreviewPath === recommendation.path ? (
@@ -2562,7 +2571,7 @@ function Home() {
                                 ) : (
                                   <>
                                     <Play size={16} aria-hidden />
-                                    <span className="bb-action-label">Preview</span>
+                                    <span className="bb-action-label">{canUseFullPlayback ? 'Escuchar' : 'Preview'}</span>
                                   </>
                                 )}
                               </Button>
@@ -2653,7 +2662,7 @@ function Home() {
                                 onClick={() => {
                                   openMonthlyTrendingPreview(row);
                                 }}
-                                aria-label={`Reproducir preview de ${row.name}`}
+                                aria-label={`${canUseFullPlayback ? 'Reproducir completo' : 'Reproducir preview'} de ${row.name}`}
                                 disabled={monthlyTrendingPreviewPath === row.path}
                               >
                                 {monthlyTrendingPreviewPath === row.path ? (
@@ -2661,7 +2670,7 @@ function Home() {
                                 ) : (
                                   <>
                                     <Play size={16} aria-hidden />
-                                    <span className="bb-action-label">Preview</span>
+                                    <span className="bb-action-label">{canUseFullPlayback ? 'Escuchar' : 'Preview'}</span>
                                   </>
                                 )}
                               </Button>
@@ -2998,8 +3007,16 @@ function Home() {
                                 e.stopPropagation();
                                 void toggleInlineAudioPreview(file);
                               }}
-                              title={isInlinePreviewActive && inlinePreviewPlaying ? 'Pausar preview' : 'Reproducir preview'}
-                              aria-label={isInlinePreviewActive && inlinePreviewPlaying ? 'Pausar preview' : 'Reproducir preview'}
+                              title={
+                                isInlinePreviewActive && inlinePreviewPlaying
+                                  ? (canUseFullPlayback ? 'Pausar reproducción completa' : 'Pausar preview')
+                                  : (canUseFullPlayback ? 'Reproducir completo' : 'Reproducir preview')
+                              }
+                              aria-label={
+                                isInlinePreviewActive && inlinePreviewPlaying
+                                  ? (canUseFullPlayback ? 'Pausar reproducción completa' : 'Pausar preview')
+                                  : (canUseFullPlayback ? 'Reproducir completo' : 'Reproducir preview')
+                              }
                             >
                               {isInlinePreviewLoading ? (
                                 <>
@@ -3014,7 +3031,7 @@ function Home() {
                               ) : (
                                 <>
                                   <Play size={18} aria-hidden />
-                                  <span className="bb-action-label">Preview</span>
+                                  <span className="bb-action-label">{canUseFullPlayback ? 'Escuchar' : 'Preview'}</span>
                                 </>
                               )}
                             </Button>
@@ -3036,11 +3053,11 @@ function Home() {
                                   e.stopPropagation();
                                   playFile(file, idx);
                                 }}
-                                title="Escuchar muestra"
-                                aria-label="Escuchar muestra"
+                                title={canUseFullPlayback ? "Escuchar completo" : "Escuchar muestra"}
+                                aria-label={canUseFullPlayback ? "Escuchar completo" : "Escuchar muestra"}
                               >
                                 <Play size={18} aria-hidden />
-                                <span className="bb-action-label">Escuchar</span>
+                                <span className="bb-action-label">{canUseFullPlayback ? "Completo" : "Escuchar"}</span>
                               </Button>
                             )
                           )}

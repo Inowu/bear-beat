@@ -7,6 +7,15 @@ const normalizeSegment = (segment: string): string => {
   }
 };
 
+const decodeSegment = (segment: string): string => {
+  if (!segment) return segment;
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
+};
+
 const encodePathBySegment = (rawPath: string): string =>
   rawPath
     .replace(/\\/g, '/')
@@ -19,6 +28,15 @@ const encodePathBySegment = (rawPath: string): string =>
 
 const isAbsoluteHttpUrl = (value: string): boolean =>
   /^https?:\/\//i.test(value);
+
+const normalizeCatalogPath = (rawPath: string): string =>
+  `${rawPath ?? ''}`
+    .trim()
+    .replace(/\\/g, '/')
+    .replace(/^\/+/, '')
+    .split('/')
+    .map((segment) => decodeSegment(segment))
+    .join('/');
 
 export const buildDemoPlaybackUrl = (demoPath: string, baseUrl: string): string => {
   const normalizedPath = `${demoPath ?? ''}`.trim();
@@ -41,4 +59,21 @@ export const buildDemoPlaybackUrl = (demoPath: string, baseUrl: string): string 
   const encodedPath = encodePathBySegment(normalizedPath);
   const absolutePath = encodedPath.startsWith('/') ? encodedPath : `/${encodedPath}`;
   return new URL(absolutePath, baseUrl).toString();
+};
+
+export const buildMemberPlaybackUrl = (
+  catalogPath: string,
+  token: string,
+  baseUrl: string,
+): string => {
+  const normalizedPath = normalizeCatalogPath(catalogPath);
+  const authToken = `${token ?? ''}`.trim();
+  if (!normalizedPath || !authToken) {
+    return new URL(baseUrl).toString();
+  }
+
+  const streamUrl = new URL('/stream', baseUrl);
+  streamUrl.searchParams.set('path', normalizedPath);
+  streamUrl.searchParams.set('token', authToken);
+  return streamUrl.toString();
 };

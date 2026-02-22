@@ -10,6 +10,7 @@ interface PreviewModalPropsI {
     url: string;
     name: string;
     kind: 'audio' | 'video';
+    playbackMode?: 'demo' | 'full';
   } | null;
   show: boolean;
   onHide: () => void;
@@ -81,6 +82,8 @@ function PreviewModal(props: PreviewModalPropsI) {
   const isAudio = resolvedKind === 'audio';
   const mediaName = file?.name ?? '';
   const audioUrl = file?.url ?? '';
+  const playbackMode = file?.playbackMode === 'full' ? 'full' : 'demo';
+  const isFullPlayback = playbackMode === 'full';
   const [audioRetryAttempt, setAudioRetryAttempt] = useState(0);
   const [videoRetryAttempt, setVideoRetryAttempt] = useState(0);
   const audioPlaybackUrl = withRetryCacheBust(audioUrl, audioRetryAttempt);
@@ -135,6 +138,7 @@ function PreviewModal(props: PreviewModalPropsI) {
   }, [show, file?.url, file?.kind]);
 
   const markDemoPlayStarted = () => {
+    if (isFullPlayback) return;
     const currentUrl = file?.url?.trim();
     if (!show || !currentUrl) return;
 
@@ -347,13 +351,17 @@ function PreviewModal(props: PreviewModalPropsI) {
     >
       <Modal.Header closeButton closeLabel="Cerrar modal">
         <Modal.Title id="contained-modal-title-vcenter">
-          Escucha una muestra
+          {isFullPlayback ? 'Escucha el archivo completo' : 'Escucha una muestra'}
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <div className="preview-meta">
           <h4 title={mediaName}>{mediaName}</h4>
-          <p>Muestra rápida para validar mezcla y energía antes de descargar.</p>
+          <p>
+            {isFullPlayback
+              ? 'Reproducción completa para validar mezcla y calidad antes de descargar.'
+              : 'Muestra rápida para validar mezcla y energía antes de descargar.'}
+          </p>
         </div>
         <div className={`preview-container ${isAudio ? 'is-audio' : 'is-video'}`}>
           {file && isAudio && (
@@ -425,8 +433,9 @@ function PreviewModal(props: PreviewModalPropsI) {
       </Modal.Body>
       <Modal.Footer>
         <p>
-          Esta muestra reproduce hasta 60 segundos en calidad reducida. Al descargar con tu plan recibes el
-          archivo completo y en su calidad original.
+          {isFullPlayback
+            ? 'Estás escuchando el archivo real completo. Al descargar, también recibirás el archivo completo y en calidad original.'
+            : 'Esta muestra reproduce hasta 60 segundos en calidad reducida. Al descargar con tu plan recibes el archivo completo y en su calidad original.'}
         </p>
         <Button unstyled className="btn primary-pill linear-bg" onClick={onHide}>
           Cerrar

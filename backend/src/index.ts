@@ -27,6 +27,7 @@ import { paypalEndpoint } from './endpoints/webhooks/paypal.endpoint';
 import { stripePiEndpoint } from './endpoints/webhooks/stripePaymentIntents.endpoint';
 import { sesSnsEndpoint } from './endpoints/webhooks/sesSns.endpoint';
 import { trackCoverEndpoint } from './endpoints/track-cover.endpoint';
+import { streamEndpoint } from './endpoints/stream.endpoint';
 import {
   compressionQueue,
   initializeCompressionQueue,
@@ -460,6 +461,7 @@ async function main() {
     app.get('/download-dir', downloadDirEndpoint);
 
     app.get('/track-cover', trackCoverEndpoint);
+    app.get('/stream', streamEndpoint);
 
     app.get('/api/catalog-stats', catalogStatsEndpoint);
 
