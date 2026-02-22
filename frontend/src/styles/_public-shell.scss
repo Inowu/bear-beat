@@ -332,7 +332,7 @@ body.home-mobile-menu-open .home-main {
     min-height: 46px;
     border-radius: 14px;
     border: 1px solid color-mix(in srgb, var(--ph-border) 82%, transparent);
-    background: color-mix(in srgb, var(--ph-bg-card) 92%, transparent);
+    background: transparent;
     color: var(--ph-text-heading);
     text-decoration: none;
     font-size: 15px;
@@ -495,7 +495,7 @@ html[data-theme="light"] .home-topnav__menu-btn[aria-expanded="true"] {
 
 html[data-theme="light"] .home-topnav__mobile-link {
   border-color: color-mix(in srgb, var(--ph-border) 92%, transparent);
-  background: color-mix(in srgb, var(--color-white) 99%, var(--ph-bg-card));
+  background: transparent;
   color: color-mix(in srgb, var(--ph-text-body) 96%, transparent);
 }
 
