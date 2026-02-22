@@ -9,8 +9,14 @@ const MEMORY_COVER_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 const SPOTIFY_SEARCH_LIMIT = 8;
 const SPOTIFY_MIN_SCORE = 28;
 const SPOTIFY_EARLY_ACCEPT_SCORE = 72;
+const ITUNES_MIN_SCORE = Math.max(20, SPOTIFY_MIN_SCORE - 6);
 const SPOTIFY_DEFAULT_MARKET = 'MX';
 const SPOTIFY_RATE_LIMIT_ERROR_PREFIX = 'SPOTIFY_RATE_LIMIT';
+const SPOTIFY_RATE_LIMIT_COOLDOWN_MS = (() => {
+  const raw = Number(process.env.TRACK_METADATA_SPOTIFY_RATE_LIMIT_COOLDOWN_MS ?? 3 * 60 * 1000);
+  if (!Number.isFinite(raw) || raw <= 0) return 3 * 60 * 1000;
+  return Math.floor(raw);
+})();
 const ITUNES_FALLBACK_ENABLED = process.env.TRACK_METADATA_ITUNES_FALLBACK !== '0';
 
 const AUDIO_VIDEO_EXT_REGEX = /\.(mp3|aac|m4a|flac|ogg|aiff|alac|mp4|mov|mkv|avi|wmv|webm|m4v)$/i;
@@ -21,7 +27,7 @@ const LIVE_MARKERS_REGEX = /\b(live|en vivo)\b/i;
 const INSTRUMENTAL_MARKERS_REGEX = /\b(instrumental|acapella|acappella)\b/i;
 const EXCLUDED_MARKERS_REGEX = /\b(karaoke|tribute)\b/i;
 const VERSION_SEGMENT_MARKERS_REGEX =
-  /\b(original mix|extended mix|radio edit|club mix|dub mix|remix|mix|edit|vip|bootleg|rework|flip|mashup|version)\b/i;
+  /\b(original mix|extended mix|radio edit|club mix|dub mix|remix|mix|edit|vip|bootleg|rework|flip|mashup|version|clean|dirty|intro|outro|instrumental|acapella|acappella|hd|hq|official|lyric|video|club)\b/i;
 
 const REMIX_STOPWORDS = new Set([
   'remix',
@@ -108,6 +114,7 @@ type CandidateDescriptor = {
 
 let spotifyTokenCache: SpotifyTokenCache | null = null;
 let spotifyTokenPromise: Promise<string> | null = null;
+let spotifyRateLimitedUntilMs = 0;
 const spotifyMetadataCache = new Map<
   string,
   { value: SpotifyTrackMetadataResult | null; expiresAt: number }
@@ -131,12 +138,17 @@ const tokenizeForMatch = (value: string): string[] =>
     .map((token) => token.trim())
     .filter((token) => token.length > 1);
 
-function sanitizeSpotifyText(value: string): string {
+function sanitizeSpotifyText(
+  value: string,
+  options: { preserveVersionSegments?: boolean } = {},
+): string {
+  const preserveVersionSegments = options.preserveVersionSegments === true;
   return normalizeWhitespace(
     value
       .replace(AUDIO_VIDEO_EXT_REGEX, '')
       .replace(BPM_CAMLOT_REGEX, ' ')
-      .replace(/[_[\]{}()]+/g, ' ')
+      .replace(/[_{}]+/g, ' ')
+      .replace(preserveVersionSegments ? /[^\S\r\n]+/g : /[\[\]()]+/g, ' ')
       .replace(/\s+/g, ' '),
   );
 }
@@ -212,15 +224,24 @@ function extractRemixTokens(value: string): string[] {
 
 function buildSearchDescriptor(input: SpotifyTrackSearchInput): SearchDescriptor {
   const artistFromInput = sanitizeSpotifyText(toText(input.artist));
-  const titleFromInput = sanitizeSpotifyText(toText(input.title));
-  const displayName = sanitizeSpotifyText(toText(input.displayName));
-  const fileName = sanitizeSpotifyText(toText(input.fileName));
-  const splitDisplay = splitArtistAndTitle(displayName);
+  const titleRaw = toText(input.title);
+  const displayRaw = toText(input.displayName);
+  const fileRaw = toText(input.fileName);
+  const displayName = sanitizeSpotifyText(displayRaw);
+  const fileName = sanitizeSpotifyText(fileRaw);
+  const splitDisplay = splitArtistAndTitle(
+    sanitizeSpotifyText(displayRaw, { preserveVersionSegments: true }),
+  );
 
   const artist = artistFromInput || splitDisplay?.artist || '';
-  const fullTitle = titleFromInput || splitDisplay?.title || displayName || fileName;
-  const versionSplit = stripVersionTail(fullTitle || fileName);
-  const baseTitle = versionSplit.baseTitle || fullTitle;
+  const rawTitleCandidate = titleRaw || splitDisplay?.title || displayRaw || fileRaw;
+  const titleWithVersionSegments = sanitizeSpotifyText(
+    rawTitleCandidate,
+    { preserveVersionSegments: true },
+  );
+  const versionSplit = stripVersionTail(titleWithVersionSegments || fileName);
+  const fullTitle = sanitizeSpotifyText(titleWithVersionSegments || fileName);
+  const baseTitle = sanitizeSpotifyText(versionSplit.baseTitle) || fullTitle;
   const remixTokenSource = `${versionSplit.versionSegments.join(' ')} ${fullTitle}`;
   const remixTokens = extractRemixTokens(remixTokenSource);
 
@@ -783,32 +804,43 @@ export async function searchSpotifyTrackMetadata(
   }
 
   const candidatesByKey = new Map<string, ScoredCandidate>();
-  let spotifyRateLimited = false;
+  let spotifyRateLimited = Date.now() < spotifyRateLimitedUntilMs;
   let fallbackRateLimited = false;
 
-  for (const query of queries) {
-    try {
-      const items = await searchTracksByQuery(query);
-      addScoredItems(items, descriptor, 'spotify', candidatesByKey);
+  if (!spotifyRateLimited) {
+    for (const query of queries) {
+      try {
+        const items = await searchTracksByQuery(query);
+        addScoredItems(items, descriptor, 'spotify', candidatesByKey);
 
-      const topScore = Math.max(
-        ...Array.from(candidatesByKey.values()).map((entry) => entry.score),
-        Number.MIN_SAFE_INTEGER,
-      );
-      if (topScore >= SPOTIFY_EARLY_ACCEPT_SCORE) {
-        break;
+        const topScore = Math.max(
+          ...Array.from(candidatesByKey.values()).map((entry) => entry.score),
+          Number.MIN_SAFE_INTEGER,
+        );
+        if (topScore >= SPOTIFY_EARLY_ACCEPT_SCORE) {
+          break;
+        }
+      } catch (error: any) {
+        if (isSpotifyRateLimitError(error)) {
+          spotifyRateLimited = true;
+          spotifyRateLimitedUntilMs = Date.now() + SPOTIFY_RATE_LIMIT_COOLDOWN_MS;
+          break;
+        }
+        log.warn(`[SPOTIFY] cover lookup failed for query "${query}": ${error?.message ?? 'unknown error'}`);
       }
-    } catch (error: any) {
-      if (isSpotifyRateLimitError(error)) {
-        spotifyRateLimited = true;
-        break;
-      }
-      log.warn(`[SPOTIFY] cover lookup failed for query "${query}": ${error?.message ?? 'unknown error'}`);
     }
+  } else {
+    log.debug?.(
+      `[SPOTIFY] skipping Spotify API calls during cooldown window (${Math.ceil(SPOTIFY_RATE_LIMIT_COOLDOWN_MS / 1000)}s).`,
+    );
   }
 
   let bestCandidate = pickBestCandidate(candidatesByKey);
-  if ((!bestCandidate || bestCandidate.score < SPOTIFY_MIN_SCORE) && ITUNES_FALLBACK_ENABLED) {
+  const spotifyScoreThreshold =
+    bestCandidate?.provider === 'itunes'
+      ? ITUNES_MIN_SCORE
+      : SPOTIFY_MIN_SCORE;
+  if ((!bestCandidate || bestCandidate.score < spotifyScoreThreshold) && ITUNES_FALLBACK_ENABLED) {
     for (const query of queries) {
       try {
         const items = await searchItunesTracksByQuery(query);
@@ -832,7 +864,12 @@ export async function searchSpotifyTrackMetadata(
     bestCandidate = pickBestCandidate(candidatesByKey);
   }
 
-  if (!bestCandidate || bestCandidate.score < SPOTIFY_MIN_SCORE) {
+  const requiredScore =
+    bestCandidate?.provider === 'itunes'
+      ? ITUNES_MIN_SCORE
+      : SPOTIFY_MIN_SCORE;
+
+  if (!bestCandidate || bestCandidate.score < requiredScore) {
     if (spotifyRateLimited && fallbackRateLimited) {
       throw new Error(`${SPOTIFY_RATE_LIMIT_ERROR_PREFIX}: cover providers are rate limited`);
     }

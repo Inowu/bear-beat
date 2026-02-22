@@ -2283,6 +2283,11 @@ html[data-theme="dark"] .bb-explorer-row:hover {
     padding: 8px;
   }
 
+  .bb-explorer-body {
+    gap: 9px;
+    padding: 10px 10px calc(112px + env(safe-area-inset-bottom, 0px));
+  }
+
   .bb-root-grid {
     grid-template-columns: 1fr;
   }
@@ -2509,17 +2514,23 @@ html[data-theme="dark"] .bb-explorer-row:hover {
   }
 
   .bb-track-columns {
-    grid-template-columns: repeat(5, minmax(0, auto));
+    grid-template-columns: minmax(0, 1fr) minmax(0, auto) minmax(0, auto);
     align-items: start;
     justify-content: flex-start;
-    row-gap: 5px;
-    column-gap: 6px;
+    row-gap: 6px;
+    column-gap: 7px;
   }
 
   .bb-track-col--name {
     grid-column: 1 / -1;
   }
 
+  .bb-track-col--bpm,
+  .bb-track-col--key {
+    display: none;
+  }
+
+  .bb-track-col--format,
   .bb-track-col--size {
     justify-content: flex-start;
   }
@@ -2530,7 +2541,8 @@ html[data-theme="dark"] .bb-explorer-row:hover {
 
   .bb-explorer-row {
     grid-template-columns: 50px minmax(0, 1fr) auto;
-    min-height: 68px;
+    min-height: 74px;
+    padding: 9px 10px;
     gap: 9px;
   }
 
@@ -2555,6 +2567,8 @@ html[data-theme="dark"] .bb-explorer-row:hover {
 
   .bb-row-actions {
     gap: 6px;
+    align-self: start;
+    margin-top: 2px;
   }
 
   .bb-open-cta {

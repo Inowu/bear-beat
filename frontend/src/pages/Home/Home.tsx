@@ -166,6 +166,17 @@ const SEARCH_QUICK_FILTERS: Array<{ value: SearchQuickFilter; label: string }> =
 ];
 
 const normalizeFilePath = (value?: string): string => (value ?? '').replace(/\\/g, '/');
+const isTrackCoverKind = (kind: FileVisualKind): boolean =>
+  kind === 'audio' || kind === 'video' || kind === 'karaoke';
+const buildTrackCoverProxyUrl = (
+  trackPath: string | undefined,
+  token: string | null | undefined,
+): string | null => {
+  const normalizedPath = normalizeFilePath(trackPath).replace(/^\/+/, '').trim();
+  const safeToken = `${token ?? ''}`.trim();
+  if (!normalizedPath || !safeToken) return null;
+  return `${apiBaseUrl}/track-cover?path=${encodeURIComponent(normalizedPath)}&token=${encodeURIComponent(safeToken)}`;
+};
 const normalizeDownloadMarkerPath = (value?: string): string => {
   const normalized = normalizeFilePath(value).trim().replace(/\/{2,}/g, '/');
   if (!normalized) return '';
@@ -2015,23 +2026,40 @@ function Home() {
     kind: FileVisualKind,
     options: {
       coverUrl: string | null;
+      fallbackCoverUrl?: string | null;
       seed: string;
       className?: string;
     },
   ) => {
+    const primaryCoverUrl = normalizeOptionalText(options.coverUrl);
+    const fallbackCoverUrl = normalizeOptionalText(options.fallbackCoverUrl);
+    const preferredCoverUrl = primaryCoverUrl || fallbackCoverUrl;
+    const secondaryCoverUrl = primaryCoverUrl ? fallbackCoverUrl : null;
     const toneStyle = {
       '--bb-track-cover-hue': `${resolveCoverHue(options.seed)}`,
     } as CSSProperties;
     const className = `bb-track-cover bb-track-cover--thumb${kind === 'video' ? ' bb-track-cover--video' : ''}${options.className ? ` ${options.className}` : ''}`;
     return (
       <span className={className} style={toneStyle} aria-hidden>
-        {options.coverUrl && (
+        {preferredCoverUrl && (
           <img
-            src={options.coverUrl}
+            src={preferredCoverUrl}
             alt=""
             className="bb-track-cover-img"
             loading="lazy"
             referrerPolicy="no-referrer"
+            decoding="async"
+            data-fallback-url={secondaryCoverUrl ?? ''}
+            onError={(event) => {
+              const target = event.currentTarget;
+              const nextFallback = normalizeOptionalText(target.dataset.fallbackUrl);
+              if (nextFallback && target.src !== nextFallback) {
+                target.dataset.fallbackUrl = '';
+                target.src = nextFallback;
+                return;
+              }
+              target.style.display = 'none';
+            }}
           />
         )}
         <span className="bb-track-cover-fallback">
@@ -2458,6 +2486,9 @@ function Home() {
                       const title = normalizeOptionalText(recommendation.metadata?.title) ?? recommendation.name;
                       const artist = normalizeOptionalText(recommendation.metadata?.artist);
                       const coverUrl = normalizeOptionalText(recommendation.metadata?.coverUrl);
+                      const fallbackCoverUrl = isTrackCoverKind(kind)
+                        ? buildTrackCoverProxyUrl(recommendation.path, userToken)
+                        : null;
                       const bpmLabel = recommendation.metadata?.bpm
                         ? `${recommendation.metadata.bpm} BPM`
                         : null;
@@ -2475,6 +2506,7 @@ function Home() {
                           <div className="bb-recent-card-main">
                             {renderTrackCover(kind, {
                               coverUrl,
+                              fallbackCoverUrl,
                               seed: `${recommendation.path} ${title} ${artist ?? ''}`,
                             })}
                             <div className="bb-for-you-copy">
@@ -2759,6 +2791,9 @@ function Home() {
                 const trackTitle = normalizeOptionalText(resolvedTrack?.title) ?? file.name;
                 const trackArtist = normalizeOptionalText(resolvedTrack?.artist);
                 const trackCoverUrl = normalizeOptionalText(resolvedTrack?.coverUrl);
+                const fallbackCoverUrl = isTrackCoverKind(kind)
+                  ? buildTrackCoverProxyUrl(file.path, userToken)
+                  : null;
                 const bpmLabel = resolvedTrack?.bpm ? `${resolvedTrack.bpm} BPM` : null;
                 const keyLabel = normalizeOptionalText(resolvedTrack?.camelot);
                 const keyToneClass = keyLabel ? `is-${resolveKeyTone(keyLabel)}` : '';
@@ -2807,6 +2842,7 @@ function Home() {
                         <span className="bb-row-icon-wrap">
                           {renderTrackCover(kind, {
                             coverUrl: trackCoverUrl,
+                            fallbackCoverUrl,
                             seed: `${file.path ?? file.name} ${trackTitle} ${trackArtist ?? ''}`,
                           })}
                           {hasInlinePreview && (
