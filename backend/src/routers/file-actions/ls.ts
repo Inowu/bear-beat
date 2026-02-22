@@ -152,7 +152,8 @@ export const ls = shieldedProcedure
     }),
   )
   .query(async ({ input: { path }, ctx: { prisma, session } }) => {
-    await syncFtpTransferDownloadsBestEffort(prisma);
+    // Keep download history sync warm without adding latency to folder listing.
+    void syncFtpTransferDownloadsBestEffort(prisma);
 
     const userId = session?.user?.id ?? null;
     const sanitizedPath = path.replace('..', '').replace('//', '/');

@@ -84,6 +84,7 @@ function PreviewModal(props: PreviewModalPropsI) {
   const audioUrl = file?.url ?? '';
   const playbackMode = file?.playbackMode === 'full' ? 'full' : 'demo';
   const isFullPlayback = playbackMode === 'full';
+  const useWaveformAudio = isAudio && !isFullPlayback;
   const [audioRetryAttempt, setAudioRetryAttempt] = useState(0);
   const [videoRetryAttempt, setVideoRetryAttempt] = useState(0);
   const audioPlaybackUrl = withRetryCacheBust(audioUrl, audioRetryAttempt);
@@ -171,8 +172,8 @@ function PreviewModal(props: PreviewModalPropsI) {
   }, [show, file?.url]);
 
   useEffect(() => {
-    if (!show || !isModalReady || audioPlaybackUrl === '' || !isAudio || !waveformRef.current) {
-      if (!show || audioPlaybackUrl === '' || !isAudio) {
+    if (!show || !isModalReady || audioPlaybackUrl === '' || !useWaveformAudio || !waveformRef.current) {
+      if (!show || audioPlaybackUrl === '' || !useWaveformAudio) {
         setIsPlaying(false);
         setCurrentTime(0);
         setDuration(0);
@@ -276,7 +277,39 @@ function PreviewModal(props: PreviewModalPropsI) {
       setCurrentTime(0);
       setDuration(0);
     };
-  }, [show, isModalReady, audioPlaybackUrl, isAudio, audioRetryAttempt]);
+  }, [show, isModalReady, audioPlaybackUrl, useWaveformAudio, audioRetryAttempt]);
+
+  const handleNativeAudioError = () => {
+    if (audioRetryAttempt < MAX_MEDIA_LOAD_RETRIES) {
+      const nextAttempt = audioRetryAttempt + 1;
+      if (scheduledAudioRetryRef.current !== nextAttempt) {
+        const delayMs = getMediaRetryDelayMs(nextAttempt);
+        scheduledAudioRetryRef.current = nextAttempt;
+        setAudioLoadError('El audio tardó en cargar. Reintentando...');
+        clearRetryTimer(audioRetryTimerRef);
+        if (typeof window !== 'undefined') {
+          audioRetryTimerRef.current = window.setTimeout(() => {
+            setAudioRetryAttempt((currentAttempt) =>
+              currentAttempt >= nextAttempt ? currentAttempt : nextAttempt,
+            );
+            audioRetryTimerRef.current = null;
+          }, delayMs);
+        }
+      }
+      return;
+    }
+    setAudioLoadError('No pudimos cargar este audio. Intenta de nuevo.');
+  };
+
+  const handleNativeAudioPlaying = () => {
+    scheduledAudioRetryRef.current = -1;
+    setAudioLoadError('');
+    setIsPlaying(true);
+  };
+
+  const handleNativeAudioPause = () => {
+    setIsPlaying(false);
+  };
 
   const handleVideoError = () => {
     if (videoRetryAttempt < MAX_MEDIA_LOAD_RETRIES) {
@@ -364,7 +397,7 @@ function PreviewModal(props: PreviewModalPropsI) {
           </p>
         </div>
         <div className={`preview-container ${isAudio ? 'is-audio' : 'is-video'}`}>
-          {file && isAudio && (
+          {file && useWaveformAudio && (
             <div className="preview-audio-shell">
               <div className="preview-waveform-shell">
                 <div
@@ -401,6 +434,31 @@ function PreviewModal(props: PreviewModalPropsI) {
               </div>
               <p className="preview-wave-help">Haz clic sobre la onda para adelantar o regresar.</p>
               {audioLoadError !== '' && <p className="preview-wave-error">{audioLoadError}</p>}
+            </div>
+          )}
+          {file && isAudio && isFullPlayback && (
+            <div className="preview-audio-native-shell">
+              <audio
+                key={audioPlaybackUrl}
+                src={audioPlaybackUrl}
+                controls
+                autoPlay
+                preload="metadata"
+                controlsList="nodownload noplaybackrate"
+                onPlaying={handleNativeAudioPlaying}
+                onPause={handleNativeAudioPause}
+                onError={handleNativeAudioError}
+                onContextMenu={(e) => e.preventDefault()}
+                onDragStart={(e) => e.preventDefault()}
+              />
+              {audioLoadError !== '' && (
+                <div className="preview-video-error">
+                  <p className="preview-wave-error">{audioLoadError}</p>
+                  <a className="preview-video-fallback" href={audioPlaybackUrl} target="_blank" rel="noreferrer">
+                    Abrir audio en otra pestaña →
+                  </a>
+                </div>
+              )}
             </div>
           )}
           {file && !isAudio && (
