@@ -322,10 +322,19 @@ body.home-mobile-menu-open .home-main {
     padding: 0 2px 2px;
   }
 
-  .home-topnav__mobile-links {
+  /* Reset global `nav { ... }` styles leaking from app shell. */
+  .home-topnav__mobile-menu-inner nav.home-topnav__mobile-links {
     display: grid;
     grid-template-columns: 1fr;
     gap: 2px;
+    padding: 0;
+    min-height: 0;
+    height: auto;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    align-items: stretch;
+    justify-content: stretch;
   }
 
   .home-topnav__mobile-link {
