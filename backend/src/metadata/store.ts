@@ -18,6 +18,10 @@ import { getEmbeddedTrackTags } from './embeddedTags';
 const TRACK_METADATA_QUERY_BATCH = 400;
 const SPOTIFY_MISS_RETRY_HOURS = Number(process.env.TRACK_METADATA_SPOTIFY_MISS_RETRY_HOURS ?? 24);
 const SPOTIFY_DEFAULT_MAX_PER_CALL = Number(process.env.TRACK_METADATA_SPOTIFY_MAX_PER_CALL ?? 6);
+const SPOTIFY_SYNC_ON_READ_ENABLED = process.env.TRACK_METADATA_SPOTIFY_SYNC_ON_READ !== '0';
+const SPOTIFY_SYNC_ON_READ_MAX_PER_CALL = Number(
+  process.env.TRACK_METADATA_SPOTIFY_SYNC_ON_READ_MAX_PER_CALL ?? 6,
+);
 const SPOTIFY_TEXT_METADATA_MIN_CONFIDENCE = Number(
   process.env.TRACK_METADATA_SPOTIFY_TEXT_MIN_CONFIDENCE ?? 0.58,
 );
@@ -196,7 +200,25 @@ export async function enrichFilesWithTrackMetadata<T extends IFileStat>(files: T
     .map((file) => (file.path ? normalizeCatalogPath(file.path) : null))
     .filter((value): value is string => Boolean(value));
 
-  const metadataByPath = await getTrackMetadataMapByPaths(pathList);
+  let metadataByPath = await getTrackMetadataMapByPaths(pathList);
+
+  if (SPOTIFY_SYNC_ON_READ_ENABLED && isSpotifyMetadataEnabled()) {
+    const syncLimit = sanitizePositiveInt(SPOTIFY_SYNC_ON_READ_MAX_PER_CALL, 6);
+    const pathsMissingCover = pathList.filter((pathValue) => {
+      const metadata = metadataByPath.get(pathValue);
+      return Boolean(metadata && !metadata.coverUrl);
+    });
+
+    if (pathsMissingCover.length > 0) {
+      const syncResult = await backfillSpotifyCoversForPaths(pathsMissingCover, {
+        maxToProcess: Math.min(syncLimit, pathsMissingCover.length),
+      });
+      if (syncResult.updated > 0) {
+        metadataByPath = await getTrackMetadataMapByPaths(pathList);
+      }
+    }
+  }
+
   if (metadataByPath.size === 0) {
     return files;
   }
@@ -526,6 +548,7 @@ async function fetchSpotifyBackfillCandidates(
       coverUrl: null,
       OR: [
         { source: 'inferred' },
+        { source: 'spotify' },
         {
           source: 'spotify_miss',
           updatedAt: {
@@ -707,7 +730,29 @@ export async function enrichSearchDocumentsWithTrackMetadata<T extends SearchDoc
   const pointers = findSearchDocPointers(documents);
   if (!pointers.length) return documents;
 
-  const metadataByPath = await getTrackMetadataMapByPaths(pointers.map((pointer) => pointer.path));
+  const docPaths = pointers.map((pointer) => pointer.path);
+  let metadataByPath = await getTrackMetadataMapByPaths(docPaths);
+  if (
+    metadataByPath.size > 0
+    && SPOTIFY_SYNC_ON_READ_ENABLED
+    && isSpotifyMetadataEnabled()
+  ) {
+    const syncLimit = sanitizePositiveInt(SPOTIFY_SYNC_ON_READ_MAX_PER_CALL, 6);
+    const pathsMissingCover = docPaths.filter((pathValue) => {
+      const metadata = metadataByPath.get(normalizeCatalogPath(pathValue));
+      return Boolean(metadata && !metadata.coverUrl);
+    });
+
+    if (pathsMissingCover.length > 0) {
+      const syncResult = await backfillSpotifyCoversForPaths(pathsMissingCover, {
+        maxToProcess: Math.min(syncLimit, pathsMissingCover.length),
+      });
+      if (syncResult.updated > 0) {
+        metadataByPath = await getTrackMetadataMapByPaths(docPaths);
+      }
+    }
+  }
+
   if (metadataByPath.size === 0) {
     return documents;
   }
