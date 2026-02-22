@@ -3,6 +3,7 @@ import { log } from '../server';
 
 const SPOTIFY_ACCOUNTS_URL = 'https://accounts.spotify.com/api/token';
 const SPOTIFY_SEARCH_URL = 'https://api.spotify.com/v1/search';
+const ITUNES_SEARCH_URL = 'https://itunes.apple.com/search';
 const SPOTIFY_TOKEN_SKEW_MS = 30_000;
 const MEMORY_COVER_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 const SPOTIFY_SEARCH_LIMIT = 8;
@@ -10,6 +11,7 @@ const SPOTIFY_MIN_SCORE = 28;
 const SPOTIFY_EARLY_ACCEPT_SCORE = 72;
 const SPOTIFY_DEFAULT_MARKET = 'MX';
 const SPOTIFY_RATE_LIMIT_ERROR_PREFIX = 'SPOTIFY_RATE_LIMIT';
+const ITUNES_FALLBACK_ENABLED = process.env.TRACK_METADATA_ITUNES_FALLBACK !== '0';
 
 const AUDIO_VIDEO_EXT_REGEX = /\.(mp3|aac|m4a|flac|ogg|aiff|alac|mp4|mov|mkv|avi|wmv|webm|m4v)$/i;
 const BPM_CAMLOT_REGEX = /\b(\d{2,3}\s*bpm|(?:1[0-2]|[1-9])[ab])\b/gi;
@@ -389,6 +391,21 @@ type SpotifyTrackItem = {
   album?: { images?: SpotifyImage[] };
 };
 
+type ItunesTrackItem = {
+  trackId?: number;
+  trackName?: string;
+  artistName?: string;
+  artworkUrl100?: string;
+  artworkUrl60?: string;
+};
+
+type ScoredCandidate = {
+  item: SpotifyTrackItem;
+  score: number;
+  matchedType: MatchKind;
+  provider: 'spotify' | 'itunes';
+};
+
 function tokenOverlapRatio(left: string[], right: string[]): number {
   if (!left.length || !right.length) return 0;
   const rightSet = new Set(right);
@@ -557,6 +574,63 @@ function resolveSpotifyMarket(): string | null {
   return SPOTIFY_DEFAULT_MARKET;
 }
 
+function toItunesCountry(): string {
+  return (resolveSpotifyMarket() || SPOTIFY_DEFAULT_MARKET).toLowerCase();
+}
+
+function normalizeItunesArtworkUrl(value: unknown): string | null {
+  const raw = toText(value);
+  if (!raw) return null;
+  return raw.replace(/\/\d+x\d+bb(?:-\d+)?\.(jpg|jpeg|png)$/i, '/600x600bb.$1');
+}
+
+function toCandidateKey(item: SpotifyTrackItem): string {
+  return toText(item.id)
+    || [
+      normalizeForMatch(toText(item.name)),
+      normalizeForMatch(
+        (item.artists ?? [])
+          .map((artist) => toText(artist?.name))
+          .filter(Boolean)
+          .join(' '),
+      ),
+    ].join('|');
+}
+
+function addScoredItems(
+  items: SpotifyTrackItem[],
+  descriptor: SearchDescriptor,
+  provider: 'spotify' | 'itunes',
+  candidatesByKey: Map<string, ScoredCandidate>,
+): void {
+  items.forEach((item) => {
+    const key = toCandidateKey(item);
+    if (!key) return;
+
+    const scored = scoreSpotifyTrack(item, descriptor);
+    const previous = candidatesByKey.get(key);
+    if (!previous || scored.score > previous.score) {
+      candidatesByKey.set(key, {
+        item,
+        score: scored.score,
+        matchedType: scored.matchedType,
+        provider,
+      });
+    }
+  });
+}
+
+function pickBestCandidate(candidatesByKey: Map<string, ScoredCandidate>): ScoredCandidate | null {
+  const best = Array.from(candidatesByKey.values()).sort((left, right) => {
+    if (right.score !== left.score) return right.score - left.score;
+    const rightPopularity = Number(right.item.popularity ?? 0);
+    const leftPopularity = Number(left.item.popularity ?? 0);
+    return rightPopularity - leftPopularity;
+  })[0];
+
+  return best ?? null;
+}
+
 async function searchTracksByQuery(
   query: string,
   options: {
@@ -632,6 +706,60 @@ async function searchTracksByQuery(
   return items as SpotifyTrackItem[];
 }
 
+function mapItunesItemToSpotifyShape(item: ItunesTrackItem): SpotifyTrackItem | null {
+  const title = sanitizeSpotifyText(toText(item.trackName));
+  const artist = sanitizeSpotifyText(toText(item.artistName));
+  const artwork = normalizeItunesArtworkUrl(item.artworkUrl100 ?? item.artworkUrl60);
+  const id = Number.isFinite(item.trackId as number) ? String(item.trackId) : '';
+
+  if (!title && !artist && !artwork) return null;
+
+  return {
+    id: id || undefined,
+    name: title || undefined,
+    artists: artist ? [{ name: artist }] : [],
+    album: artwork
+      ? {
+        images: [{ url: artwork, width: 600, height: 600 }],
+      }
+      : undefined,
+  };
+}
+
+async function searchItunesTracksByQuery(query: string): Promise<SpotifyTrackItem[]> {
+  const response = await axios.get(
+    ITUNES_SEARCH_URL,
+    {
+      params: {
+        term: query,
+        media: 'music',
+        entity: 'song',
+        country: toItunesCountry(),
+        limit: SPOTIFY_SEARCH_LIMIT,
+      },
+      timeout: 10_000,
+      validateStatus: (status) => status >= 200 && status < 500,
+    },
+  );
+
+  if (response.status < 200 || response.status >= 300) {
+    const remoteError = toText(response.data?.errorMessage)
+      || toText(response.data?.error)
+      || toText(response.data?.message);
+    const messageSuffix = remoteError ? `: ${remoteError}` : '';
+    const normalizedMessage = `iTunes search failed with status ${response.status}${messageSuffix}`;
+    if (response.status === 429) {
+      throw new Error(`${SPOTIFY_RATE_LIMIT_ERROR_PREFIX}: ${normalizedMessage}`);
+    }
+    throw new Error(normalizedMessage);
+  }
+
+  const rows = Array.isArray(response.data?.results) ? (response.data.results as ItunesTrackItem[]) : [];
+  return rows
+    .map((row) => mapItunesItemToSpotifyShape(row))
+    .filter((item): item is SpotifyTrackItem => Boolean(item));
+}
+
 export async function searchSpotifyTrackMetadata(
   input: SpotifyTrackSearchInput,
 ): Promise<SpotifyTrackMetadataResult | null> {
@@ -654,37 +782,14 @@ export async function searchSpotifyTrackMetadata(
     return null;
   }
 
-  const candidatesByKey = new Map<
-    string,
-    { item: SpotifyTrackItem; score: number; matchedType: MatchKind }
-  >();
+  const candidatesByKey = new Map<string, ScoredCandidate>();
+  let spotifyRateLimited = false;
+  let fallbackRateLimited = false;
 
   for (const query of queries) {
     try {
       const items = await searchTracksByQuery(query);
-      items.forEach((item) => {
-        const key = toText(item.id)
-          || [
-            normalizeForMatch(toText(item.name)),
-            normalizeForMatch(
-              (item.artists ?? [])
-                .map((artist) => toText(artist?.name))
-                .filter(Boolean)
-                .join(' '),
-            ),
-          ].join('|');
-        if (!key) return;
-
-        const scored = scoreSpotifyTrack(item, descriptor);
-        const previous = candidatesByKey.get(key);
-        if (!previous || scored.score > previous.score) {
-          candidatesByKey.set(key, {
-            item,
-            score: scored.score,
-            matchedType: scored.matchedType,
-          });
-        }
-      });
+      addScoredItems(items, descriptor, 'spotify', candidatesByKey);
 
       const topScore = Math.max(
         ...Array.from(candidatesByKey.values()).map((entry) => entry.score),
@@ -695,20 +800,42 @@ export async function searchSpotifyTrackMetadata(
       }
     } catch (error: any) {
       if (isSpotifyRateLimitError(error)) {
-        throw error;
+        spotifyRateLimited = true;
+        break;
       }
       log.warn(`[SPOTIFY] cover lookup failed for query "${query}": ${error?.message ?? 'unknown error'}`);
     }
   }
 
-  const bestCandidate = Array.from(candidatesByKey.values()).sort((left, right) => {
-    if (right.score !== left.score) return right.score - left.score;
-    const rightPopularity = Number(right.item.popularity ?? 0);
-    const leftPopularity = Number(left.item.popularity ?? 0);
-    return rightPopularity - leftPopularity;
-  })[0];
+  let bestCandidate = pickBestCandidate(candidatesByKey);
+  if ((!bestCandidate || bestCandidate.score < SPOTIFY_MIN_SCORE) && ITUNES_FALLBACK_ENABLED) {
+    for (const query of queries) {
+      try {
+        const items = await searchItunesTracksByQuery(query);
+        addScoredItems(items, descriptor, 'itunes', candidatesByKey);
+
+        const topScore = Math.max(
+          ...Array.from(candidatesByKey.values()).map((entry) => entry.score),
+          Number.MIN_SAFE_INTEGER,
+        );
+        if (topScore >= SPOTIFY_EARLY_ACCEPT_SCORE) {
+          break;
+        }
+      } catch (error: any) {
+        if (isSpotifyRateLimitError(error)) {
+          fallbackRateLimited = true;
+          break;
+        }
+        log.warn(`[SPOTIFY] iTunes fallback failed for query "${query}": ${error?.message ?? 'unknown error'}`);
+      }
+    }
+    bestCandidate = pickBestCandidate(candidatesByKey);
+  }
 
   if (!bestCandidate || bestCandidate.score < SPOTIFY_MIN_SCORE) {
+    if (spotifyRateLimited && fallbackRateLimited) {
+      throw new Error(`${SPOTIFY_RATE_LIMIT_ERROR_PREFIX}: cover providers are rate limited`);
+    }
     spotifyMetadataCache.set(cacheKey, {
       value: null,
       expiresAt: now + MEMORY_COVER_CACHE_TTL_MS,
@@ -723,7 +850,10 @@ export async function searchSpotifyTrackMetadata(
     artist: toText(bestCandidate.item.artists?.[0]?.name) || null,
     confidence: toConfidence(bestCandidate.score),
     matchedType: bestCandidate.matchedType,
-    spotifyTrackId: toText(bestCandidate.item.id) || null,
+    spotifyTrackId:
+      bestCandidate.provider === 'spotify'
+        ? (toText(bestCandidate.item.id) || null)
+        : null,
   };
 
   if (!result.coverUrl && !result.title && !result.artist) {

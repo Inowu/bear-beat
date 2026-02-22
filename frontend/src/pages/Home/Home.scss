@@ -2474,15 +2474,38 @@ html[data-theme="dark"] .bb-explorer-row:hover {
   }
 
   .bb-track-cover {
-    width: 44px;
-    min-width: 44px;
-    height: 44px;
-    border-radius: 9px;
+    width: 50px;
+    min-width: 50px;
+    height: 50px;
+    border-radius: 10px;
   }
 
-  .bb-track-artist,
+  .bb-track-artist {
+    display: block;
+    max-width: 100%;
+    font-size: 0.74rem;
+    line-height: 1.2;
+    color: var(--app-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .bb-file-pill--duration {
     display: none;
+  }
+
+  .bb-track-col--name {
+    gap: 2px;
+  }
+
+  .bb-track-col--name .bb-file-name {
+    -webkit-line-clamp: 1;
+  }
+
+  .bb-track-cover-fallback svg {
+    width: 18px;
+    height: 18px;
   }
 
   .bb-track-columns {
@@ -2506,15 +2529,15 @@ html[data-theme="dark"] .bb-explorer-row:hover {
   }
 
   .bb-explorer-row {
-    grid-template-columns: 44px minmax(0, 1fr) auto;
-    min-height: 62px;
-    gap: 10px;
+    grid-template-columns: 50px minmax(0, 1fr) auto;
+    min-height: 68px;
+    gap: 9px;
   }
 
   .bb-row-icon-wrap {
-    width: 44px;
-    min-width: 44px;
-    height: 44px;
+    width: 50px;
+    min-width: 50px;
+    height: 50px;
   }
 
   .bb-row-inline-play--overlay {
