@@ -325,13 +325,13 @@ body.home-mobile-menu-open .home-main {
   .home-topnav__mobile-links {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 6px;
+    gap: 2px;
   }
 
   .home-topnav__mobile-link {
     min-height: 46px;
-    border-radius: 14px;
-    border: 1px solid color-mix(in srgb, var(--ph-border) 82%, transparent);
+    border-radius: 10px;
+    border: 0;
     background: transparent;
     color: var(--ph-text-heading);
     text-decoration: none;
@@ -346,12 +346,10 @@ body.home-mobile-menu-open .home-main {
 
   .home-topnav__mobile-link:hover {
     background: color-mix(in srgb, var(--ph-accent) 12%, transparent);
-    border-color: color-mix(in srgb, var(--ph-accent) 44%, var(--ph-border));
   }
 
   .home-topnav__mobile-link.is-active,
   .home-topnav__mobile-link[aria-current="page"] {
-    border-color: color-mix(in srgb, var(--ph-accent) 52%, var(--ph-border));
     background: color-mix(in srgb, var(--ph-accent) 12%, transparent);
   }
 
@@ -494,7 +492,7 @@ html[data-theme="light"] .home-topnav__menu-btn[aria-expanded="true"] {
 }
 
 html[data-theme="light"] .home-topnav__mobile-link {
-  border-color: color-mix(in srgb, var(--ph-border) 92%, transparent);
+  border: 0;
   background: transparent;
   color: color-mix(in srgb, var(--ph-text-body) 96%, transparent);
 }
