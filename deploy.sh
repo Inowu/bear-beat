@@ -214,6 +214,15 @@ if [ -n "${DEPLOY_TRACK_METADATA_SPOTIFY_ENABLED:-}" ]; then
 elif [ -n "${DEPLOY_SPOTIFY_CLIENT_ID:-}" ] && [ -n "${DEPLOY_SPOTIFY_CLIENT_SECRET:-}" ]; then
   # Auto-enable Spotify metadata when credentials are provided by CI unless explicitly overridden.
   upsert_env "TRACK_METADATA_SPOTIFY_ENABLED" "1"
+else
+  # If credentials are already present in backend/.env from previous deploys, keep Spotify enabled.
+  existing_spotify_client_id="$({ grep '^SPOTIFY_CLIENT_ID=' "$ENV_FILE" | head -n 1 | sed 's/^SPOTIFY_CLIENT_ID=//'; } || true)"
+  existing_spotify_client_secret="$({ grep '^SPOTIFY_CLIENT_SECRET=' "$ENV_FILE" | head -n 1 | sed 's/^SPOTIFY_CLIENT_SECRET=//'; } || true)"
+  existing_spotify_client_id="$(printf '%s' "$existing_spotify_client_id" | tr -d ' \t\r\n')"
+  existing_spotify_client_secret="$(printf '%s' "$existing_spotify_client_secret" | tr -d ' \t\r\n')"
+  if [ -n "$existing_spotify_client_id" ] && [ -n "$existing_spotify_client_secret" ]; then
+    upsert_env "TRACK_METADATA_SPOTIFY_ENABLED" "1"
+  fi
 fi
 # Default free trial config (Stripe only). Override in backend/.env if needed.
 ensure_env_default "BB_TRIAL_DAYS" "7"
@@ -296,11 +305,16 @@ else
   log "Skipping metadata:scan (SONGS_PATH not configured)."
 fi
 
-if grep -q '^TRACK_METADATA_SPOTIFY_ENABLED=1' "$ENV_FILE"; then
+spotify_enabled_value="$({ grep '^TRACK_METADATA_SPOTIFY_ENABLED=' "$ENV_FILE" | tail -n 1 | sed 's/^TRACK_METADATA_SPOTIFY_ENABLED=//'; } || true)"
+spotify_enabled_value="$(printf '%s' "$spotify_enabled_value" | tr -d ' \t\r\n' | tr '[:upper:]' '[:lower:]')"
+
+if [ "$spotify_enabled_value" = "1" ] || [ "$spotify_enabled_value" = "true" ] || [ "$spotify_enabled_value" = "yes" ]; then
   log "Backfilling Spotify covers for track metadata (optional)..."
   if ! ( cd "$BACKEND_DIR" && npm run metadata:spotify-covers ); then
     log "Warning: metadata:spotify-covers failed; continuing deploy."
   fi
+else
+  log "Skipping metadata:spotify-covers (TRACK_METADATA_SPOTIFY_ENABLED=${spotify_enabled_value:-unset})."
 fi
 
 log "Ensuring pm2 automation runner is running (single instance)..."
