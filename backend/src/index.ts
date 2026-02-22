@@ -64,6 +64,7 @@ import {
 import { runCompressedDirsCleanupSweep } from './utils/compressedDirsCleanup';
 import { getZipArtifactConfig } from './utils/zipArtifact.service';
 import { runZipArtifactPrewarmSweep } from './utils/zipArtifactPrewarm';
+import { syncFtpTransferDownloadsBestEffort } from './utils/ftpTransferDownloadHistory';
 import { prisma } from './db';
 
 const DEFAULT_CORS_ORIGINS = [
@@ -594,6 +595,25 @@ async function main() {
     } catch (error: any) {
       log.warn(
         `[FTP] File service disabled in this environment: ${error?.message ?? 'unknown error'}`,
+      );
+    }
+
+    const fileServiceMode = `${process.env.FILE_SERVICE ?? ''}`.trim().toLowerCase();
+    if (fileServiceMode === 'ftp') {
+      void syncFtpTransferDownloadsBestEffort(prisma);
+
+      const ftpTransferSyncIntervalMs = toPositiveInt(
+        process.env.FTP_TRANSFER_LOG_SYNC_POLL_INTERVAL_MS,
+        15_000,
+      );
+      const intervalRef = setInterval(() => {
+        void syncFtpTransferDownloadsBestEffort(prisma);
+      }, ftpTransferSyncIntervalMs);
+      if (typeof intervalRef.unref === 'function') {
+        intervalRef.unref();
+      }
+      log.info(
+        `[FTP_TRANSFER_SYNC] Background sync enabled every ${ftpTransferSyncIntervalMs}ms`,
       );
     }
 

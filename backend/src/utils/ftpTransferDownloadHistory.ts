@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import type { PrismaClient } from '@prisma/client';
+import { isTrackLikeFileName, scheduleTrackMetadataSyncForFiles } from '../metadata';
 import { log } from '../server';
 import { normalizeDownloadHistoryFileName } from './downloadHistoryRollup';
 
@@ -8,6 +9,7 @@ const DEFAULT_MAX_BYTES_PER_RUN = 512 * 1024;
 const DEFAULT_MIN_INTERVAL_MS = 15_000;
 const DEFAULT_DISCOVERY_CACHE_MS = 60_000;
 const DOWNLOAD_DIRECTION = 'o';
+const UPLOAD_DIRECTION = 'i';
 const COMPLETED_STATUS = 'c';
 const DEFAULT_TRANSFER_LOG_CANDIDATES = [
   '/var/log/xferlog',
@@ -28,6 +30,7 @@ type CursorConfigRecord = {
 };
 
 type ParsedFtpTransferLine = {
+  direction: 'download' | 'upload';
   username: string;
   rawPath: string;
   size: bigint;
@@ -173,8 +176,11 @@ const parseFtpTransferLine = (line: string): ParsedFtpTransferLine | null => {
   const fileTokensEnd = tokens.length - 9;
   if (fileTokensEnd <= 8) return null;
 
-  const direction = `${tokens[tokens.length - 7] ?? ''}`.toLowerCase();
-  if (direction !== DOWNLOAD_DIRECTION) return null;
+  const directionToken = `${tokens[tokens.length - 7] ?? ''}`.toLowerCase();
+  let direction: ParsedFtpTransferLine['direction'] | null = null;
+  if (directionToken === DOWNLOAD_DIRECTION) direction = 'download';
+  if (directionToken === UPLOAD_DIRECTION) direction = 'upload';
+  if (!direction) return null;
 
   const completion = `${tokens[tokens.length - 1] ?? ''}`.toLowerCase();
   if (completion !== COMPLETED_STATUS) return null;
@@ -194,6 +200,7 @@ const parseFtpTransferLine = (line: string): ParsedFtpTransferLine | null => {
   const date = Number.isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
 
   return {
+    direction,
     username,
     rawPath,
     size,
@@ -392,7 +399,10 @@ const runSync = async (prisma: PrismaClient): Promise<void> => {
       });
     });
 
-    const transferRows = shouldSkipRead ? [] : await buildTransferRows(prisma, parsedTransfers);
+    const downloadTransfers = parsedTransfers.filter((line) => line.direction === 'download');
+    const uploadTransfers = parsedTransfers.filter((line) => line.direction === 'upload');
+
+    const transferRows = shouldSkipRead ? [] : await buildTransferRows(prisma, downloadTransfers);
     if (transferRows.length > 0) {
       await prisma.downloadHistory.createMany({
         data: transferRows.map((row) => ({
@@ -403,6 +413,29 @@ const runSync = async (prisma: PrismaClient): Promise<void> => {
           isFolder: false,
         })),
       });
+    }
+
+    if (!shouldSkipRead && uploadTransfers.length > 0) {
+      const uploadedMediaFiles = uploadTransfers.reduce<Array<{ name: string; path: string; type: '-' }>>(
+        (acc, transfer) => {
+          const fileName = transfer.rawPath.split('/').filter(Boolean).pop() ?? '';
+          if (!fileName || !isTrackLikeFileName(fileName)) return acc;
+          acc.push({
+            name: fileName,
+            path: transfer.rawPath,
+            type: '-',
+          });
+          return acc;
+        },
+        [],
+      );
+
+      const queued = scheduleTrackMetadataSyncForFiles(uploadedMediaFiles);
+      if (queued > 0) {
+        log.info(
+          `[FTP_TRANSFER_SYNC] Queued track metadata sync for ${queued} uploaded file(s).`,
+        );
+      }
     }
 
     const nextOffset = shouldSkipRead ? offset : offset + consumedBytes;
