@@ -191,6 +191,30 @@ fi
 if [ -n "${DEPLOY_STRIPE_OXXO_WH_PI_SECRET:-}" ]; then
   upsert_env "STRIPE_OXXO_WH_PI_SECRET" "${DEPLOY_STRIPE_OXXO_WH_PI_SECRET}"
 fi
+
+log "Optionally injecting Spotify metadata credentials from deploy environment..."
+# Usage (avoid printing secrets):
+#   DEPLOY_SPOTIFY_CLIENT_ID="SPOTIFY_CLIENT_ID_HERE" \\
+#   DEPLOY_SPOTIFY_CLIENT_SECRET="SPOTIFY_CLIENT_SECRET_HERE" \\
+#   ./deploy.sh
+if [ -n "${DEPLOY_SPOTIFY_CLIENT_ID:-}" ]; then
+  upsert_env "SPOTIFY_CLIENT_ID" "${DEPLOY_SPOTIFY_CLIENT_ID}"
+fi
+if [ -n "${DEPLOY_SPOTIFY_CLIENT_SECRET:-}" ]; then
+  upsert_env "SPOTIFY_CLIENT_SECRET" "${DEPLOY_SPOTIFY_CLIENT_SECRET}"
+fi
+if [ -n "${DEPLOY_SPOTIFY_MARKET:-}" ]; then
+  upsert_env "SPOTIFY_MARKET" "${DEPLOY_SPOTIFY_MARKET}"
+fi
+if [ -n "${DEPLOY_TRACK_METADATA_SPOTIFY_TEXT_MIN_CONFIDENCE:-}" ]; then
+  upsert_env "TRACK_METADATA_SPOTIFY_TEXT_MIN_CONFIDENCE" "${DEPLOY_TRACK_METADATA_SPOTIFY_TEXT_MIN_CONFIDENCE}"
+fi
+if [ -n "${DEPLOY_TRACK_METADATA_SPOTIFY_ENABLED:-}" ]; then
+  upsert_env "TRACK_METADATA_SPOTIFY_ENABLED" "${DEPLOY_TRACK_METADATA_SPOTIFY_ENABLED}"
+elif [ -n "${DEPLOY_SPOTIFY_CLIENT_ID:-}" ] && [ -n "${DEPLOY_SPOTIFY_CLIENT_SECRET:-}" ]; then
+  # Auto-enable Spotify metadata when credentials are provided by CI unless explicitly overridden.
+  upsert_env "TRACK_METADATA_SPOTIFY_ENABLED" "1"
+fi
 # Default free trial config (Stripe only). Override in backend/.env if needed.
 ensure_env_default "BB_TRIAL_DAYS" "7"
 ensure_env_default "BB_TRIAL_GB" "100"
@@ -220,6 +244,8 @@ ensure_env_default "TRACK_METADATA_SPOTIFY_SCAN_ON_REBUILD" "0"
 ensure_env_default "TRACK_METADATA_SPOTIFY_SCAN_MAX" "400"
 ensure_env_default "TRACK_METADATA_SPOTIFY_MAX_PER_CALL" "6"
 ensure_env_default "TRACK_METADATA_SPOTIFY_MISS_RETRY_HOURS" "24"
+ensure_env_default "TRACK_METADATA_SPOTIFY_TEXT_MIN_CONFIDENCE" "0.58"
+ensure_env_default "SPOTIFY_MARKET" "MX"
 
 current_port="$(grep -Eo 'proxy_pass\s+http://(localhost|127\.0\.0\.1):[0-9]+' "$NGINX_CONF" \
   | head -n 1 \

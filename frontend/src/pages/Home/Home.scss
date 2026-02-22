@@ -1375,6 +1375,16 @@ html[data-theme="dark"] .bb-explorer-body {
   justify-content: center;
 }
 
+.bb-row-icon-wrap {
+  position: relative;
+  width: 56px;
+  min-width: 56px;
+  height: 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .bb-inline-audio-element {
   display: none;
 }
@@ -1415,6 +1425,26 @@ html[data-theme="dark"] .bb-explorer-body {
 
 .bb-row-inline-play.is-playing {
   background: var(--theme-accent-soft-bg-2);
+}
+
+.bb-row-inline-play--overlay {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  padding: 0;
+  z-index: 3;
+  box-shadow:
+    0 8px 16px rgba(2, 6, 23, 0.24),
+    inset 0 1px 0 color-mix(in srgb, var(--color-white) 24%, transparent);
+}
+
+.bb-row-inline-play--overlay svg {
+  width: 12px;
+  height: 12px;
 }
 
 .bb-explorer-row.is-folder {
@@ -2479,6 +2509,25 @@ html[data-theme="dark"] .bb-explorer-row:hover {
     grid-template-columns: 44px minmax(0, 1fr) auto;
     min-height: 62px;
     gap: 10px;
+  }
+
+  .bb-row-icon-wrap {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+  }
+
+  .bb-row-inline-play--overlay {
+    right: -3px;
+    bottom: -3px;
+    width: 24px;
+    min-width: 24px;
+    height: 24px;
+  }
+
+  .bb-row-inline-play--overlay svg {
+    width: 10px;
+    height: 10px;
   }
 
   .bb-row-actions {

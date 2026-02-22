@@ -1,9 +1,13 @@
-import { TrackMetadata } from '@prisma/client';
+import { Prisma, TrackMetadata } from '@prisma/client';
 import path from 'path';
 import { prisma } from '../db';
 import { IFileStat } from '../services/interfaces/fileService.interface';
 import { log } from '../server';
-import { isSpotifyMetadataEnabled, searchSpotifyTrackCover } from '../spotify';
+import {
+  isSpotifyMetadataEnabled,
+  searchSpotifyTrackMetadata,
+  type SpotifyTrackMetadataResult,
+} from '../spotify';
 import {
   InferredTrackMetadata,
   inferTrackMetadataFromName,
@@ -14,6 +18,9 @@ import { getEmbeddedTrackTags } from './embeddedTags';
 const TRACK_METADATA_QUERY_BATCH = 400;
 const SPOTIFY_MISS_RETRY_HOURS = Number(process.env.TRACK_METADATA_SPOTIFY_MISS_RETRY_HOURS ?? 24);
 const SPOTIFY_DEFAULT_MAX_PER_CALL = Number(process.env.TRACK_METADATA_SPOTIFY_MAX_PER_CALL ?? 6);
+const SPOTIFY_TEXT_METADATA_MIN_CONFIDENCE = Number(
+  process.env.TRACK_METADATA_SPOTIFY_TEXT_MIN_CONFIDENCE ?? 0.58,
+);
 const TRACK_METADATA_SYNC_COOLDOWN_MS = Number(process.env.TRACK_METADATA_SYNC_COOLDOWN_MS ?? 5 * 60 * 1000);
 const TRACK_METADATA_SYNC_MAX_FILES_PER_CALL = Number(
   process.env.TRACK_METADATA_SYNC_MAX_FILES_PER_CALL ?? 180,
@@ -419,9 +426,14 @@ export async function syncTrackMetadataForFiles<T extends Pick<IFileStat, 'name'
     );
   }
 
-  const freshPaths = missingRows.map((row) => row.path);
-  if (freshPaths.length > 0 && isSpotifyMetadataEnabled()) {
-    void backfillSpotifyCoversForPaths(freshPaths, { maxToProcess: Math.min(4, freshPaths.length) })
+  const spotifyCandidatePaths = Array.from(
+    new Set(rows.map((row) => normalizeCatalogPath(row.path))),
+  ).filter((pathValue) => pathValue && pathValue !== '/');
+  if (spotifyCandidatePaths.length > 0 && isSpotifyMetadataEnabled()) {
+    void backfillSpotifyCoversForPaths(
+      spotifyCandidatePaths,
+      { maxToProcess: Math.min(6, spotifyCandidatePaths.length) },
+    )
       .catch((error: any) => {
         log.warn(`[TRACK_METADATA] async spotify backfill failed: ${error?.message ?? 'unknown error'}`);
       });
@@ -438,6 +450,60 @@ function normalizeSpotifyBackfillPaths(paths: string[]): string[] {
         .filter((pathValue) => pathValue && pathValue !== '/'),
     ),
   );
+}
+
+function normalizeConfidence(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.min(1, value));
+}
+
+function buildDisplayName(artist: string | null, title: string | null): string | null {
+  const safeArtist = normalizeText(artist);
+  const safeTitle = normalizeText(title);
+  if (safeArtist && safeTitle) {
+    return `${safeArtist} - ${safeTitle}`;
+  }
+  return safeTitle;
+}
+
+function buildSpotifyUpdateData(
+  row: SpotifyBackfillCandidate,
+  spotifyMetadata: SpotifyTrackMetadataResult,
+): { data: Prisma.TrackMetadataUpdateInput; shouldUpdate: boolean } {
+  const data: Prisma.TrackMetadataUpdateInput = {
+    source: 'spotify',
+  };
+  let shouldUpdate = false;
+
+  const coverUrl = normalizeText(spotifyMetadata.coverUrl);
+  if (coverUrl) {
+    data.coverUrl = coverUrl;
+    shouldUpdate = true;
+  }
+
+  const textConfidence = normalizeConfidence(spotifyMetadata.confidence);
+  const minTextConfidence = normalizeConfidence(SPOTIFY_TEXT_METADATA_MIN_CONFIDENCE);
+  if (textConfidence >= minTextConfidence) {
+    const artist = normalizeText(spotifyMetadata.artist);
+    const title = normalizeText(spotifyMetadata.title);
+
+    if (artist && artist !== normalizeText(row.artist)) {
+      data.artist = artist;
+      shouldUpdate = true;
+    }
+    if (title && title !== normalizeText(row.title)) {
+      data.title = title;
+      shouldUpdate = true;
+    }
+
+    const displayName = buildDisplayName(artist ?? row.artist, title ?? row.title);
+    if (displayName && displayName !== normalizeText(row.displayName)) {
+      data.displayName = displayName;
+      shouldUpdate = true;
+    }
+  }
+
+  return { data, shouldUpdate };
 }
 
 async function fetchSpotifyBackfillCandidates(
@@ -507,23 +573,23 @@ export async function backfillSpotifyCoversForPaths(
 
   for (const row of candidates) {
     processed += 1;
-    const coverUrl = await searchSpotifyTrackCover({
+    const spotifyMetadata = await searchSpotifyTrackMetadata({
       artist: row.artist,
       title: row.title,
       displayName: row.displayName,
       fileName: row.name,
     });
 
-    if (coverUrl) {
-      await prisma.trackMetadata.update({
-        where: { id: row.id },
-        data: {
-          coverUrl,
-          source: 'spotify',
-        },
-      });
-      updated += 1;
-      continue;
+    if (spotifyMetadata) {
+      const updatePayload = buildSpotifyUpdateData(row, spotifyMetadata);
+      if (updatePayload.shouldUpdate) {
+        await prisma.trackMetadata.update({
+          where: { id: row.id },
+          data: updatePayload.data,
+        });
+        updated += 1;
+        continue;
+      }
     }
 
     await prisma.trackMetadata.update({
@@ -567,23 +633,23 @@ export async function backfillSpotifyCoversForCatalog(
 
     for (const row of candidates) {
       processed += 1;
-      const coverUrl = await searchSpotifyTrackCover({
+      const spotifyMetadata = await searchSpotifyTrackMetadata({
         artist: row.artist,
         title: row.title,
         displayName: row.displayName,
         fileName: row.name,
       });
 
-      if (coverUrl) {
-        await prisma.trackMetadata.update({
-          where: { id: row.id },
-          data: {
-            coverUrl,
-            source: 'spotify',
-          },
-        });
-        updated += 1;
-        continue;
+      if (spotifyMetadata) {
+        const updatePayload = buildSpotifyUpdateData(row, spotifyMetadata);
+        if (updatePayload.shouldUpdate) {
+          await prisma.trackMetadata.update({
+            where: { id: row.id },
+            data: updatePayload.data,
+          });
+          updated += 1;
+          continue;
+        }
       }
 
       await prisma.trackMetadata.update({

@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   FolderOpen, Folder, ArrowLeft, ChevronRight, Search, Play, Pause, Download, BookOpen, Server, FileMusic, FileVideoCamera, FileArchive, Microphone, File, X, RefreshCw, } from "src/icons";
 import PreviewModal from '../../components/PreviewModal/PreviewModal';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
 import type { Stripe } from '@stripe/stripe-js';
 import trpc from '../../api';
 import { IFiles, ITrackMetadata } from 'interfaces/Files';
@@ -184,6 +184,15 @@ const normalizeOptionalNumber = (value: unknown): number | null => {
     return null;
   }
   return value;
+};
+const resolveCoverHue = (seed: string): number => {
+  const normalized = `${seed ?? ''}`.trim().toLowerCase();
+  if (!normalized) return 198;
+  let hash = 0;
+  for (let idx = 0; idx < normalized.length; idx += 1) {
+    hash = ((hash << 5) - hash + normalized.charCodeAt(idx)) | 0;
+  }
+  return Math.abs(hash) % 360;
 };
 const buildTrackMetadata = (
   file: IFiles,
@@ -2002,6 +2011,35 @@ function Home() {
     }
     return <File />;
   };
+  const renderTrackCover = (
+    kind: FileVisualKind,
+    options: {
+      coverUrl: string | null;
+      seed: string;
+      className?: string;
+    },
+  ) => {
+    const toneStyle = {
+      '--bb-track-cover-hue': `${resolveCoverHue(options.seed)}`,
+    } as CSSProperties;
+    const className = `bb-track-cover bb-track-cover--thumb${kind === 'video' ? ' bb-track-cover--video' : ''}${options.className ? ` ${options.className}` : ''}`;
+    return (
+      <span className={className} style={toneStyle} aria-hidden>
+        {options.coverUrl && (
+          <img
+            src={options.coverUrl}
+            alt=""
+            className="bb-track-cover-img"
+            loading="lazy"
+            referrerPolicy="no-referrer"
+          />
+        )}
+        <span className="bb-track-cover-fallback">
+          {renderKindIcon(kind)}
+        </span>
+      </span>
+    );
+  };
 
   return (
     <div className="home-main-container bb-app-page overflow-x-hidden">
@@ -2417,7 +2455,9 @@ function Home() {
                       );
                       const isForYouDownloading = forYouDownloadPath === recommendation.path;
                       const kind = getFileVisualKind(fileForKind);
+                      const title = normalizeOptionalText(recommendation.metadata?.title) ?? recommendation.name;
                       const artist = normalizeOptionalText(recommendation.metadata?.artist);
+                      const coverUrl = normalizeOptionalText(recommendation.metadata?.coverUrl);
                       const bpmLabel = recommendation.metadata?.bpm
                         ? `${recommendation.metadata.bpm} BPM`
                         : null;
@@ -2433,12 +2473,13 @@ function Home() {
                           onContextMenu={(e) => e.preventDefault()}
                         >
                           <div className="bb-recent-card-main">
-                            <span className={`bb-kind-icon bb-kind-${kind}`} aria-hidden>
-                              {renderKindIcon(kind)}
-                            </span>
+                            {renderTrackCover(kind, {
+                              coverUrl,
+                              seed: `${recommendation.path} ${title} ${artist ?? ''}`,
+                            })}
                             <div className="bb-for-you-copy">
-                              <span className="bb-recent-name" title={recommendation.name}>
-                                {recommendation.name}
+                              <span className="bb-recent-name" title={title}>
+                                {title}
                               </span>
                               {artist && (
                                 <span className="bb-for-you-artist" title={artist}>
@@ -2469,7 +2510,7 @@ function Home() {
                                 onClick={() => {
                                   void openForYouPreview(recommendation);
                                 }}
-                                aria-label={`Reproducir preview de ${recommendation.name}`}
+                                aria-label={`Reproducir preview de ${title}`}
                                 disabled={forYouPreviewPath === recommendation.path}
                               >
                                 {forYouPreviewPath === recommendation.path ? (
@@ -2492,10 +2533,10 @@ function Home() {
                               }}
                               aria-label={
                                 isForYouDownloading
-                                  ? `Descargando ${recommendation.name}`
+                                  ? `Descargando ${title}`
                                   : isForYouDownloaded
-                                    ? `Re-descargar ${recommendation.name}`
-                                    : `Descargar ${recommendation.name}`
+                                    ? `Re-descargar ${title}`
+                                    : `Descargar ${title}`
                               }
                               disabled={isForYouDownloading}
                             >
@@ -2715,7 +2756,9 @@ function Home() {
                 const fileCategoryLabel = getFileCategoryLabel(file);
                 const kind = getFileVisualKind(file);
                 const resolvedTrack = buildTrackMetadata(file, kind);
-                const trackArtist = resolvedTrack?.artist;
+                const trackTitle = normalizeOptionalText(resolvedTrack?.title) ?? file.name;
+                const trackArtist = normalizeOptionalText(resolvedTrack?.artist);
+                const trackCoverUrl = normalizeOptionalText(resolvedTrack?.coverUrl);
                 const bpmLabel = resolvedTrack?.bpm ? `${resolvedTrack.bpm} BPM` : null;
                 const keyLabel = normalizeOptionalText(resolvedTrack?.camelot);
                 const keyToneClass = keyLabel ? `is-${resolveKeyTone(keyLabel)}` : '';
@@ -2739,7 +2782,7 @@ function Home() {
                 return (
                   <article
                     key={`explorer-${idx}`}
-                    className={`bb-explorer-row ${isFolder ? 'is-folder' : 'is-file'}`}
+                    className={`bb-explorer-row ${isFolder ? 'is-folder' : 'is-file'}${!isFolder ? ' is-track' : ''}`}
                     onContextMenu={(e) => e.preventDefault()}
                     onClick={() => {
                       if (isFolder) {
@@ -2756,28 +2799,36 @@ function Home() {
                     }}
                   >
                     <div className="bb-row-icon">
-                      {hasInlinePreview ? (
-                        <Button unstyled
-                          type="button"
-                          className={`bb-row-inline-play ${isInlinePreviewActive && inlinePreviewPlaying ? 'is-playing' : ''}`}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            void toggleInlineAudioPreview(file);
-                          }}
-                          title={isInlinePreviewActive && inlinePreviewPlaying ? 'Pausar preview' : 'Reproducir preview'}
-                          aria-label={isInlinePreviewActive && inlinePreviewPlaying ? 'Pausar preview' : 'Reproducir preview'}
-                        >
-                          {isInlinePreviewLoading ? (
-                            <Spinner size={1.7} width={0.2} color="var(--app-accent)" />
-                          ) : isInlinePreviewActive && inlinePreviewPlaying ? (
-                            <Pause size={16} aria-hidden />
-                          ) : (
-                            <Play size={16} aria-hidden />
-                          )}
-                        </Button>
-                      ) : (
+                      {isFolder ? (
                         <span className={`bb-kind-icon bb-kind-${kind}`} aria-hidden>
                           {renderKindIcon(kind)}
+                        </span>
+                      ) : (
+                        <span className="bb-row-icon-wrap">
+                          {renderTrackCover(kind, {
+                            coverUrl: trackCoverUrl,
+                            seed: `${file.path ?? file.name} ${trackTitle} ${trackArtist ?? ''}`,
+                          })}
+                          {hasInlinePreview && (
+                            <Button unstyled
+                              type="button"
+                              className={`bb-row-inline-play bb-row-inline-play--overlay${isInlinePreviewActive && inlinePreviewPlaying ? ' is-playing' : ''}`}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                void toggleInlineAudioPreview(file);
+                              }}
+                              title={isInlinePreviewActive && inlinePreviewPlaying ? 'Pausar preview' : 'Reproducir preview'}
+                              aria-label={isInlinePreviewActive && inlinePreviewPlaying ? 'Pausar preview' : 'Reproducir preview'}
+                            >
+                              {isInlinePreviewLoading ? (
+                                <Spinner size={1.7} width={0.2} color="var(--app-accent)" />
+                              ) : isInlinePreviewActive && inlinePreviewPlaying ? (
+                                <Pause size={14} aria-hidden />
+                              ) : (
+                                <Play size={14} aria-hidden />
+                              )}
+                            </Button>
+                          )}
                         </span>
                       )}
                     </div>
@@ -2796,8 +2847,8 @@ function Home() {
                       ) : (
                         <div className="bb-track-columns">
                           <div className="bb-track-col bb-track-col--name">
-                            <span className="bb-file-name" title={file.name}>
-                              {file.name}
+                            <span className="bb-file-name" title={trackTitle}>
+                              {trackTitle}
                             </span>
                             {trackArtist && (
                               <span className="bb-track-artist" title={trackArtist}>
