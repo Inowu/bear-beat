@@ -1,7 +1,7 @@
 import './Home.scss';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  FolderOpen, Folder, ArrowLeft, ChevronRight, Search, Play, Pause, Download, BookOpen, Server, FileMusic, FileVideoCamera, FileArchive, Microphone, File, X, RefreshCw, } from "src/icons";
+  FolderOpen, Folder, ArrowLeft, ChevronRight, Search, Play, Pause, Download, BookOpen, Server, FileMusic, FileVideoCamera, FileArchive, Microphone, Lock, File, X, RefreshCw, } from "src/icons";
 import PreviewModal from '../../components/PreviewModal/PreviewModal';
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
 import type { Stripe } from '@stripe/stripe-js';
@@ -12,7 +12,7 @@ import { Spinner } from '../../components/Spinner/Spinner';
 import { useUserContext } from '../../contexts/UserContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { getStripeAppearance } from '../../utils/stripeAppearance';
-import { ErrorModal } from '../../components/Modals/ErrorModal/ErrorModal';
+import { ErrorModal, type ErrorModalAction } from '../../components/Modals/ErrorModal/ErrorModal';
 import { PlansModal, SuccessModal, VerifyUpdatePhoneModal } from '../../components/Modals';
 import { useDownloadContext } from '../../contexts/DownloadContext';
 import { ConditionModal } from '../../components/Modals/ConditionModal/ContitionModal';
@@ -459,6 +459,9 @@ function Home() {
   const [index, setIndex] = useState<number>(-1);
   const [show, setShow] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<any>('');
+  const [errorTitle, setErrorTitle] = useState<string>('');
+  const [errorHint, setErrorHint] = useState<string>('');
+  const [errorActions, setErrorActions] = useState<ErrorModalAction[] | undefined>(undefined);
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
   const [successTitle, setSuccessTitle] = useState<string>('');
   const [successMessage, setSuccessMessage] = useState<string>('');
@@ -824,8 +827,15 @@ function Home() {
     const normalized = (message ?? '').toLowerCase();
     return (
       normalized.includes('verificar') ||
-      normalized.includes('whatsapp') ||
-      normalized.includes('forbidden')
+      normalized.includes('whatsapp')
+    );
+  };
+  const isMembershipRequiredMessage = (message?: string): boolean => {
+    const normalized = (message ?? '').toLowerCase();
+    return (
+      normalized.includes('membresía') ||
+      normalized.includes('suscripción') ||
+      normalized.includes('plan activo')
     );
   };
 
@@ -848,6 +858,9 @@ function Home() {
 
   const closeError = () => {
     setShow(false);
+    setErrorTitle('');
+    setErrorHint('');
+    setErrorActions(undefined);
   };
   const closeSuccess = () => {
     setShowSuccess(false);
@@ -1407,11 +1420,60 @@ function Home() {
       setLoadFile(false);
     }
   };
-  const errorMethod = (message: string) => {
+  const errorMethod = (
+    message: string,
+    options: {
+      title?: string;
+      hint?: string;
+      actions?: ErrorModalAction[];
+    } = {},
+  ) => {
     setErrorMessage(message);
+    setErrorTitle(`${options.title ?? ''}`.trim());
+    setErrorHint(`${options.hint ?? ''}`.trim());
+    setErrorActions(options.actions);
     setShow(true);
     setLoadDownload(false);
     setIndex(-1);
+  };
+  const redirectToMembershipUpgrade = (itemType: 'file' | 'folder') => {
+    trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
+      id: 'download_membership_upgrade',
+      location: 'home_download_gate',
+      itemType,
+      targetPath: '/actualizar-planes',
+    });
+    window.location.assign('/actualizar-planes?from=download_gate');
+  };
+  const showMembershipRequiredUpsell = (itemType: 'file' | 'folder', pagePath: string) => {
+    errorMethod(
+      'Para descargar el archivo completo necesitas una membresía activa.',
+      {
+        title: 'Desbloquea la descarga completa',
+        hint:
+          'Con membresía escuchas completo, descargas el archivo original y accedes a todo el catálogo.',
+        actions: [
+          {
+            label: 'Ver membresías',
+            onClick: () => {
+              closeError();
+              redirectToMembershipUpgrade(itemType);
+            },
+            variant: 'primary',
+          },
+          {
+            label: 'Seguir con demos',
+            onClick: () => closeError(),
+            variant: 'secondary',
+          },
+        ],
+      },
+    );
+    trackGrowthMetric(GROWTH_METRICS.FILE_DOWNLOAD_FAILED, {
+      fileType: itemType,
+      reason: 'membership_required_modal_shown',
+      pagePath,
+    });
   };
   const downloadFile = async (
     file: IFiles,
@@ -1432,7 +1494,7 @@ function Home() {
         reason: 'no_active_subscription',
         pagePath: `/${resolvedPath}`,
       });
-      errorMethod('Para descargar se necesita de una suscripción');
+      showMembershipRequiredUpsell('file', `/${resolvedPath}`);
       return;
     }
 
@@ -1479,7 +1541,7 @@ function Home() {
         reason: 'no_active_subscription',
         pagePath: `/${resolvedPath}`,
       });
-      errorMethod('Para descargar se necesita de una suscripción');
+      showMembershipRequiredUpsell('folder', `/${resolvedPath}`);
       return;
     }
 
@@ -1576,6 +1638,10 @@ function Home() {
         queueDownloadVerification({ file, index, type: 'folder' });
         return;
       }
+      if (isMembershipRequiredMessage(error?.message ?? `${error ?? ''}`)) {
+        showMembershipRequiredUpsell('folder', `/${path}`);
+        return;
+      }
       if (currentUser?.hasActiveSubscription && isOutOfGbMessage(error?.message ?? error)) {
         appToast.warning("Sin GB disponibles. Recarga para continuar.");
         void openPlan();
@@ -1632,6 +1698,11 @@ function Home() {
         const payload = await response.json().catch(() => null);
         const backendMessage =
           payload?.error ?? 'Para descargar se necesita tener gb disponibles';
+
+        if (isMembershipRequiredMessage(backendMessage)) {
+          showMembershipRequiredUpsell(pending.type, resolveFilePath(pending.file));
+          return;
+        }
 
         if (response.status === 403 || isVerificationRequiredMessage(backendMessage)) {
           queueDownloadVerification(pending);
@@ -2404,6 +2475,19 @@ function Home() {
                         recentPackPathKey && downloadedPathFlags[recentPackPathKey]
                       );
                       const isRecentPackDownloading = recentPackDownloadPath === normalizedPackPath;
+                      const isRecentPackMembershipLocked = !currentUser?.hasActiveSubscription;
+                      const recentPackDownloadLabel = isRecentPackMembershipLocked
+                        ? 'Desbloquear'
+                        : isRecentPackDownloaded
+                          ? 'Re-descargar'
+                          : 'Descargar';
+                      const recentPackDownloadAria = isRecentPackDownloading
+                        ? `Descargando ${pack.name}`
+                        : isRecentPackMembershipLocked
+                          ? `Desbloquear descarga de ${pack.name}`
+                          : isRecentPackDownloaded
+                            ? `Re-descargar ${pack.name}`
+                            : `Descargar ${pack.name}`;
                       return (
                         <article
                           key={`recent-pack-${pack.folderPath}`}
@@ -2437,17 +2521,11 @@ function Home() {
                             </Button>
                             <Button unstyled
                               type="button"
-                              className={`bb-action-btn bb-action-btn--primary bb-recent-download${isRecentPackDownloaded ? ' bb-action-btn--downloaded' : ''}${isRecentPackDownloading ? ' bb-action-btn--downloading bb-action-btn--loading' : ''}`}
+                              className={`bb-action-btn bb-action-btn--primary bb-recent-download${isRecentPackMembershipLocked ? ' bb-action-btn--upsell' : ''}${!isRecentPackMembershipLocked && isRecentPackDownloaded ? ' bb-action-btn--downloaded' : ''}${isRecentPackDownloading ? ' bb-action-btn--downloading bb-action-btn--loading' : ''}`}
                               onClick={() => {
                                 void startRecentPackDownload(pack);
                               }}
-                              aria-label={
-                                isRecentPackDownloading
-                                  ? `Descargando ${pack.name}`
-                                  : isRecentPackDownloaded
-                                    ? `Re-descargar ${pack.name}`
-                                    : `Descargar ${pack.name}`
-                              }
+                              aria-label={recentPackDownloadAria}
                               disabled={isRecentPackDownloading}
                             >
                               {isRecentPackDownloading ? (
@@ -2457,8 +2535,12 @@ function Home() {
                                 </>
                               ) : (
                                 <>
-                                  <Download size={16} aria-hidden />
-                                  <span className="bb-action-label">{isRecentPackDownloaded ? 'Re-descargar' : 'Descargar'}</span>
+                                  {isRecentPackMembershipLocked ? (
+                                    <Lock size={16} aria-hidden />
+                                  ) : (
+                                    <Download size={16} aria-hidden />
+                                  )}
+                                  <span className="bb-action-label">{recentPackDownloadLabel}</span>
                                 </>
                               )}
                             </Button>
@@ -2499,6 +2581,19 @@ function Home() {
                         recommendationPathKey && downloadedPathFlags[recommendationPathKey]
                       );
                       const isForYouDownloading = forYouDownloadPath === recommendation.path;
+                      const isForYouMembershipLocked = !currentUser?.hasActiveSubscription;
+                      const forYouDownloadLabel = isForYouMembershipLocked
+                        ? 'Desbloquear'
+                        : isForYouDownloaded
+                          ? 'Re-descargar'
+                          : 'Descargar';
+                      const forYouDownloadAria = isForYouDownloading
+                        ? `Descargando ${title}`
+                        : isForYouMembershipLocked
+                          ? `Desbloquear descarga de ${title}`
+                          : isForYouDownloaded
+                            ? `Re-descargar ${title}`
+                            : `Descargar ${title}`;
                       const kind = getFileVisualKind(fileForKind);
                       const title = normalizeOptionalText(recommendation.metadata?.title) ?? recommendation.name;
                       const artist = normalizeOptionalText(recommendation.metadata?.artist);
@@ -2580,17 +2675,11 @@ function Home() {
                             )}
                             <Button unstyled
                               type="button"
-                              className={`bb-action-btn bb-action-btn--primary bb-for-you-download${isForYouDownloaded ? ' bb-action-btn--downloaded' : ''}${isForYouDownloading ? ' bb-action-btn--downloading bb-action-btn--loading' : ''}`}
+                              className={`bb-action-btn bb-action-btn--primary bb-for-you-download${isForYouMembershipLocked ? ' bb-action-btn--upsell' : ''}${!isForYouMembershipLocked && isForYouDownloaded ? ' bb-action-btn--downloaded' : ''}${isForYouDownloading ? ' bb-action-btn--downloading bb-action-btn--loading' : ''}`}
                               onClick={() => {
                                 void startForYouDownload(recommendation);
                               }}
-                              aria-label={
-                                isForYouDownloading
-                                  ? `Descargando ${title}`
-                                  : isForYouDownloaded
-                                    ? `Re-descargar ${title}`
-                                    : `Descargar ${title}`
-                              }
+                              aria-label={forYouDownloadAria}
                               disabled={isForYouDownloading}
                             >
                               {isForYouDownloading ? (
@@ -2600,8 +2689,12 @@ function Home() {
                                 </>
                               ) : (
                                 <>
-                                  <Download size={16} aria-hidden />
-                                  <span className="bb-action-label">{isForYouDownloaded ? 'Re-descargar' : 'Descargar'}</span>
+                                  {isForYouMembershipLocked ? (
+                                    <Lock size={16} aria-hidden />
+                                  ) : (
+                                    <Download size={16} aria-hidden />
+                                  )}
+                                  <span className="bb-action-label">{forYouDownloadLabel}</span>
                                 </>
                               )}
                             </Button>
@@ -2637,6 +2730,19 @@ function Home() {
                         rowPathKey && downloadedPathFlags[rowPathKey]
                       );
                       const isTrendingDownloading = monthlyTrendingDownloadPath === row.path;
+                      const isTrendingMembershipLocked = !currentUser?.hasActiveSubscription;
+                      const trendingDownloadLabel = isTrendingMembershipLocked
+                        ? 'Desbloquear'
+                        : isTrendingDownloaded
+                          ? 'Re-descargar'
+                          : 'Descargar';
+                      const trendingDownloadAria = isTrendingDownloading
+                        ? `Descargando ${row.name}`
+                        : isTrendingMembershipLocked
+                          ? `Desbloquear descarga de ${row.name}`
+                          : isTrendingDownloaded
+                            ? `Re-descargar ${row.name}`
+                            : `Descargar ${row.name}`;
                       return (
                         <li
                           key={`monthly-trending-${row.path}`}
@@ -2679,25 +2785,23 @@ function Home() {
                             )}
                             <Button unstyled
                               type="button"
-                              className={`bb-action-btn bb-action-btn--primary bb-trending-download${isTrendingDownloaded ? ' bb-action-btn--downloaded' : ''}${isTrendingDownloading ? ' bb-action-btn--downloading bb-action-btn--loading' : ''}`}
+                              className={`bb-action-btn bb-action-btn--primary bb-trending-download${isTrendingMembershipLocked ? ' bb-action-btn--upsell' : ''}${!isTrendingMembershipLocked && isTrendingDownloaded ? ' bb-action-btn--downloaded' : ''}${isTrendingDownloading ? ' bb-action-btn--downloading bb-action-btn--loading' : ''}`}
                               onClick={() => {
                                 void startMonthlyTrendingDownload(row);
                               }}
-                              aria-label={
-                                isTrendingDownloading
-                                  ? `Descargando ${row.name}`
-                                  : isTrendingDownloaded
-                                    ? `Re-descargar ${row.name}`
-                                    : `Descargar ${row.name}`
-                              }
+                              aria-label={trendingDownloadAria}
                               disabled={isTrendingDownloading}
                             >
                               {isTrendingDownloading ? (
                                 <Spinner size={2} width={0.2} color="currentColor" />
                               ) : (
                                 <>
-                                  <Download size={16} aria-hidden />
-                                  <span className="bb-action-label">{isTrendingDownloaded ? 'Re-descargar' : 'Descargar'}</span>
+                                  {isTrendingMembershipLocked ? (
+                                    <Lock size={16} aria-hidden />
+                                  ) : (
+                                    <Download size={16} aria-hidden />
+                                  )}
+                                  <span className="bb-action-label">{trendingDownloadLabel}</span>
                                 </>
                               )}
                             </Button>
@@ -2831,6 +2935,31 @@ function Home() {
                   hasInlinePreview && inlinePreviewLoadingPath === resolvedPreviewPath;
                 const isInlinePreviewActive = hasInlinePreview && inlinePreviewPath === resolvedPreviewPath;
                 const isRowDownloading = loadDownload && index === idx;
+                const isMembershipLocked = !currentUser?.hasActiveSubscription;
+                const fileDownloadLabel = isMembershipLocked
+                  ? 'Desbloquear'
+                  : alreadyDownloaded
+                    ? 'Re-descargar'
+                    : 'Descargar';
+                const folderDownloadLabel = isMembershipLocked
+                  ? 'Desbloquear'
+                  : alreadyDownloaded
+                    ? 'Re-descargar'
+                    : 'Descargar';
+                const fileDownloadTitle = isRowDownloading
+                  ? 'Descargando archivo'
+                  : isMembershipLocked
+                    ? 'Desbloquear descarga con membresía'
+                    : alreadyDownloaded
+                      ? 'Descargar archivo de nuevo'
+                      : 'Descargar archivo';
+                const folderDownloadTitle = isRowDownloading
+                  ? 'Descargando carpeta'
+                  : isMembershipLocked
+                    ? 'Desbloquear descarga con membresía'
+                    : alreadyDownloaded
+                      ? 'Descargar carpeta de nuevo'
+                      : 'Descargar carpeta';
                 const inlineProgressPercent = `${Math.max(
                   0,
                   Math.min(100, Math.round(inlinePreviewProgress * 100)),
@@ -2975,27 +3104,15 @@ function Home() {
                           {allowFolderDownload && (
                             <Button unstyled
                               type="button"
-                              className={`bb-action-btn bb-action-btn--ghost${alreadyDownloaded ? ' bb-action-btn--downloaded' : ''}${isRowDownloading ? ' bb-action-btn--downloading bb-action-btn--loading' : ''}`}
+                              className={`bb-action-btn bb-action-btn--ghost${isMembershipLocked ? ' bb-action-btn--upsell' : ''}${!isMembershipLocked && alreadyDownloaded ? ' bb-action-btn--downloaded' : ''}${isRowDownloading ? ' bb-action-btn--downloading bb-action-btn--loading' : ''}`}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (isRowDownloading) return;
                                 checkAlbumSize(file, idx);
                               }}
                               disabled={isRowDownloading}
-                              title={
-                                isRowDownloading
-                                  ? "Descargando carpeta"
-                                  : alreadyDownloaded
-                                    ? "Descargar carpeta de nuevo"
-                                    : "Descargar carpeta"
-                              }
-                              aria-label={
-                                isRowDownloading
-                                  ? "Descargando carpeta"
-                                  : alreadyDownloaded
-                                    ? "Descargar carpeta de nuevo"
-                                    : "Descargar carpeta"
-                              }
+                              title={folderDownloadTitle}
+                              aria-label={folderDownloadTitle}
                             >
                               {isRowDownloading ? (
                                 <>
@@ -3004,8 +3121,12 @@ function Home() {
                                 </>
                               ) : (
                                 <>
-                                  <Download size={18} aria-hidden />
-                                  <span className="bb-action-label">{alreadyDownloaded ? "Re-descargar" : "Descargar"}</span>
+                                  {isMembershipLocked ? (
+                                    <Lock size={18} aria-hidden />
+                                  ) : (
+                                    <Download size={18} aria-hidden />
+                                  )}
+                                  <span className="bb-action-label">{folderDownloadLabel}</span>
                                 </>
                               )}
                             </Button>
@@ -3079,27 +3200,15 @@ function Home() {
                           {file.type === '-' && (
                             <Button unstyled
                               type="button"
-                              className={`bb-action-btn bb-action-btn--primary${alreadyDownloaded ? ' bb-action-btn--downloaded' : ''}${isRowDownloading ? ' bb-action-btn--downloading bb-action-btn--loading' : ''}`}
+                              className={`bb-action-btn bb-action-btn--primary${isMembershipLocked ? ' bb-action-btn--upsell' : ''}${!isMembershipLocked && alreadyDownloaded ? ' bb-action-btn--downloaded' : ''}${isRowDownloading ? ' bb-action-btn--downloading bb-action-btn--loading' : ''}`}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (isRowDownloading) return;
                                 void downloadFile(file, idx);
                               }}
                               disabled={isRowDownloading}
-                              title={
-                                isRowDownloading
-                                  ? "Descargando archivo"
-                                  : alreadyDownloaded
-                                    ? "Descargar archivo de nuevo"
-                                    : "Descargar archivo"
-                              }
-                              aria-label={
-                                isRowDownloading
-                                  ? "Descargando archivo"
-                                  : alreadyDownloaded
-                                    ? "Descargar archivo de nuevo"
-                                    : "Descargar archivo"
-                              }
+                              title={fileDownloadTitle}
+                              aria-label={fileDownloadTitle}
                             >
                               {isRowDownloading ? (
                                 <>
@@ -3108,8 +3217,12 @@ function Home() {
                                 </>
                               ) : (
                                 <>
-                                  <Download size={18} aria-hidden />
-                                  <span className="bb-action-label">{alreadyDownloaded ? "Re-descargar" : "Descargar"}</span>
+                                  {isMembershipLocked ? (
+                                    <Lock size={18} aria-hidden />
+                                  ) : (
+                                    <Download size={18} aria-hidden />
+                                  )}
+                                  <span className="bb-action-label">{fileDownloadLabel}</span>
                                 </>
                               )}
                             </Button>
@@ -3177,6 +3290,9 @@ function Home() {
         onHide={closeError}
         message={errorMessage}
         user={currentUser}
+        title={errorTitle}
+        hint={errorHint}
+        actions={errorActions}
       />
       <SuccessModal
         show={showSuccess}

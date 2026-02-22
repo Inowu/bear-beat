@@ -1927,6 +1927,18 @@ html[data-theme="dark"] .bb-explorer-row:hover {
   }
 }
 
+.bb-action-btn--upsell {
+  border-color: color-mix(in srgb, var(--app-status-warning) 56%, transparent);
+  background: color-mix(in srgb, var(--app-status-warning) 14%, var(--app-bg-soft));
+  color: color-mix(in srgb, var(--app-status-warning) 90%, var(--app-text-heading));
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--app-status-warning) 70%, transparent);
+    background: color-mix(in srgb, var(--app-status-warning) 22%, var(--app-bg-soft));
+    color: color-mix(in srgb, var(--app-status-warning) 96%, var(--app-text-heading));
+  }
+}
+
 .bb-action-btn--downloaded {
   border-color: color-mix(in srgb, var(--app-status-error) 48%, transparent);
   background: color-mix(in srgb, var(--app-status-error) 14%, transparent);

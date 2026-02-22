@@ -264,10 +264,10 @@ export const downloadDir = shieldedProcedure
       ftpAccount.userid.endsWith(extendedAccountPostfix),
     );
 
-    if (activePlans.length === 0 && !extendedAccount) {
+    if (activePlans.length === 0) {
       throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'Este usuario no tiene un plan activo',
+        code: 'FORBIDDEN',
+        message: 'Necesitas una membresía activa para descargar',
       });
     }
 
@@ -297,12 +297,11 @@ export const downloadDir = shieldedProcedure
     const availableBytesRegular =
       quotaLimits.bytes_out_avail - quotaTallies.bytes_out_used;
 
-    // Use extended account when:
-    // 1) user has no active plan (only extra GB should allow downloads), OR
-    // 2) regular quota is not enough for this specific folder download.
+    // Use extended account only when the user has an active membership but
+    // regular quota is not enough for this specific folder download.
     if (extendedAccount) {
       const shouldUseExtended =
-        activePlans.length === 0 || availableBytesRegular < BigInt(dirSize);
+        availableBytesRegular < BigInt(dirSize);
 
       if (shouldUseExtended) {
         log.info('[DOWNLOAD] Using extended account');

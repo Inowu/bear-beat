@@ -204,6 +204,12 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
     take: 1,
   });
 
+  if (activePlans.length === 0) {
+    return res
+      .status(403)
+      .send({ error: 'Necesitas una membresía activa para descargar' });
+  }
+
   const ftpAccounts = await prisma.ftpUser.findMany({
     where: {
       user_id: user?.id,
@@ -227,12 +233,6 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
   const extendedAccount = ftpAccounts.find((ftpAccount) =>
     ftpAccount.userid.endsWith(extendedAccountPostfix),
   );
-
-  if (activePlans.length === 0 && !extendedAccount) {
-    return res
-      .status(400)
-      .send({ error: 'Este usuario no tiene un plan activo' });
-  }
 
   let quotaTallies = await prisma.ftpquotatallies.findFirst({
     where: {
@@ -262,12 +262,11 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
   const availableBytesRegular =
     quotaLimits.bytes_out_avail - quotaTallies.bytes_out_used;
 
-  // Use extended account when:
-  // 1) user has no active plan (only extra GB should allow downloads), OR
-  // 2) regular quota is not enough for this specific file download.
+  // Use extended account only when the user has an active membership but
+  // regular quota is not enough for this specific file download.
   if (extendedAccount) {
     const shouldUseExtended =
-      activePlans.length === 0 || availableBytesRegular < BigInt(fileStat.size);
+      availableBytesRegular < BigInt(fileStat.size);
 
     if (shouldUseExtended) {
       log.info('[DOWNLOAD] Using extended account');

@@ -62,6 +62,25 @@ export const downloadDirEndpoint = async (req: Request, res: Response) => {
     });
   }
 
+  const activePlans = await prisma.descargasUser.findMany({
+    where: {
+      user_id: user.id,
+      date_end: {
+        gte: new Date(),
+      },
+    },
+    orderBy: {
+      date_end: 'desc',
+    },
+    take: 1,
+  });
+
+  if (activePlans.length === 0) {
+    return res.status(403).send({
+      error: 'Necesitas una membresía activa para descargar',
+    });
+  }
+
   if (artifactId) {
     const artifact = await findReadyZipArtifactById(prisma, artifactId);
     if (!artifact) {

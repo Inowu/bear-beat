@@ -70,6 +70,7 @@ describe("Download endpoints security (path traversal / IDOR guardrails)", () =>
     process.env.SONGS_PATH = "/srv/bearbeat-songs";
     process.env.COMPRESSION_QUEUE_NAME = "bearbeat_compression";
     process.env.COMPRESSED_DIRS_NAME = "compressed_dirs";
+    (prisma.descargasUser.findMany as jest.Mock).mockResolvedValue([{ id: 1 }]);
   });
 
   afterAll(() => {
@@ -98,6 +99,33 @@ describe("Download endpoints security (path traversal / IDOR guardrails)", () =>
 
     expect((res.status as unknown as jest.Mock).mock.calls[0]?.[0]).toBe(400);
     expect(res.send).toHaveBeenCalledWith({ error: "Bad request" });
+  });
+
+  it("downloadEndpoint: blocks file downloads without active membership", async () => {
+    const token = jwt.sign(
+      { id: 1, username: "jest-user", role: "normal", email: "jest@local.test" },
+      process.env.JWT_SECRET as string,
+    );
+
+    (fileService.exists as jest.Mock).mockResolvedValue(true);
+    (prisma.users.findFirst as jest.Mock).mockResolvedValue({ verified: true });
+    (prisma.descargasUser.findMany as jest.Mock).mockResolvedValue([]);
+
+    const req = {
+      query: {
+        token,
+        path: "Audios/Test Song.mp3",
+      },
+    } as unknown as Request;
+
+    const res = makeRes();
+    await downloadEndpoint(req, res);
+
+    expect((res.status as unknown as jest.Mock).mock.calls[0]?.[0]).toBe(403);
+    expect(res.send).toHaveBeenCalledWith({
+      error: "Necesitas una membresía activa para descargar",
+    });
+    expect(prisma.ftpUser.findMany).not.toHaveBeenCalled();
   });
 
   it("downloadDirEndpoint: rejects unsafe dirName values (traversal/separators)", async () => {
@@ -153,6 +181,33 @@ describe("Download endpoints security (path traversal / IDOR guardrails)", () =>
     expect(res.send).toHaveBeenCalledWith({
       error: "Ocurrió un error al descargar la carpeta",
     });
+  });
+
+  it("downloadDirEndpoint: blocks direct zip download without active membership", async () => {
+    const token = jwt.sign(
+      { id: 1, username: "jest-user", role: "normal", email: "jest@local.test" },
+      process.env.JWT_SECRET as string,
+    );
+
+    (prisma.users.findFirst as jest.Mock).mockResolvedValue({ verified: true });
+    (prisma.descargasUser.findMany as jest.Mock).mockResolvedValue([]);
+
+    const req = {
+      query: {
+        token,
+        dirName: "expected.zip",
+        jobId: "123",
+      },
+    } as unknown as Request;
+
+    const res = makeRes();
+    await downloadDirEndpoint(req, res);
+
+    expect((res.status as unknown as jest.Mock).mock.calls[0]?.[0]).toBe(403);
+    expect(res.send).toHaveBeenCalledWith({
+      error: "Necesitas una membresía activa para descargar",
+    });
+    expect(prisma.jobs.findFirst).not.toHaveBeenCalled();
   });
 
   it("downloadDirEndpoint: serves only the expected zip file under COMPRESSED_DIRS_NAME", async () => {
