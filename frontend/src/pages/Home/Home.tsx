@@ -171,6 +171,7 @@ const WEEK_MS = 7 * DAY_MS;
 const MONTH_MS = 30 * DAY_MS;
 const YEAR_MS = 365 * DAY_MS;
 const MIN_MEMBER_PLAYBACK_TOKEN_TTL_MS = 45 * 1000;
+const MIN_DOWNLOAD_TOKEN_TTL_MS = 45 * 1000;
 const SEARCH_QUICK_FILTERS: Array<{ value: SearchQuickFilter; label: string }> = [
   { value: 'audio', label: 'Audio' },
   { value: 'video', label: 'Video' },
@@ -749,6 +750,47 @@ function Home() {
     return AUDIO_EXT_REGEX.test(signature) ? 'audio' : 'video';
   };
 
+  const resolveFreshAccessToken = async (minimumTtlMs: number): Promise<string | null> => {
+    const nowMs = Date.now();
+    let accessToken = `${getAccessToken() ?? userToken ?? ''}`.trim();
+    const accessTokenExpiresAtMs = decodeJwtExpMs(accessToken);
+    const hasEnoughLifetime =
+      accessToken !== '' &&
+      (accessTokenExpiresAtMs === null || accessTokenExpiresAtMs - nowMs > minimumTtlMs);
+
+    if (hasEnoughLifetime) {
+      return accessToken;
+    }
+
+    const refreshToken = `${getRefreshToken() ?? ''}`.trim();
+    if (!refreshToken) {
+      return null;
+    }
+
+    try {
+      const refreshedTokens = await trpc.auth.refresh.query({ refreshToken });
+      const refreshedAccessToken = `${refreshedTokens?.token ?? ''}`.trim();
+      const refreshedRefreshToken = `${refreshedTokens?.refreshToken ?? ''}`.trim();
+
+      if (!refreshedAccessToken || !refreshedRefreshToken) {
+        return null;
+      }
+
+      handleLogin(refreshedAccessToken, refreshedRefreshToken);
+      accessToken = refreshedAccessToken;
+      const refreshedExpiresAtMs = decodeJwtExpMs(accessToken);
+      if (
+        refreshedExpiresAtMs !== null &&
+        refreshedExpiresAtMs - Date.now() <= minimumTtlMs
+      ) {
+        return null;
+      }
+      return accessToken;
+    } catch {
+      return null;
+    }
+  };
+
   const resolvePlaybackSource = async (
     path: string,
     opts: { forceDemo?: boolean } = {},
@@ -757,29 +799,7 @@ function Home() {
     const shouldUseFullPlayback = canUseFullPlayback && !opts.forceDemo;
 
     if (shouldUseFullPlayback) {
-      let playbackToken = `${getAccessToken() ?? userToken ?? ''}`.trim();
-      const tokenExpiresAtMs = decodeJwtExpMs(playbackToken);
-      const tokenHasEnoughLifetime =
-        tokenExpiresAtMs === null ||
-        tokenExpiresAtMs - Date.now() > MIN_MEMBER_PLAYBACK_TOKEN_TTL_MS;
-
-      if (!playbackToken || !tokenHasEnoughLifetime) {
-        const refreshToken = `${getRefreshToken() ?? ''}`.trim();
-        if (refreshToken) {
-          try {
-            const refreshedTokens = await trpc.auth.refresh.query({ refreshToken });
-            const refreshedAccessToken = `${refreshedTokens?.token ?? ''}`.trim();
-            const refreshedRefreshToken = `${refreshedTokens?.refreshToken ?? ''}`.trim();
-            if (refreshedAccessToken && refreshedRefreshToken) {
-              handleLogin(refreshedAccessToken, refreshedRefreshToken);
-              playbackToken = refreshedAccessToken;
-            }
-          } catch {
-            // noop: we'll fail with a clear message below if we still have no usable token.
-          }
-        }
-      }
-
+      const playbackToken = await resolveFreshAccessToken(MIN_MEMBER_PLAYBACK_TOKEN_TTL_MS);
       if (!playbackToken) {
         throw new Error('No pudimos validar tu sesión para reproducir el archivo completo.');
       }
@@ -1755,6 +1775,14 @@ function Home() {
 
     setLoadDownload(true);
     setIndex(index);
+    const accessToken = await resolveFreshAccessToken(MIN_DOWNLOAD_TOKEN_TTL_MS);
+    if (!accessToken) {
+      setLoadDownload(false);
+      setIndex(-1);
+      errorMethod('Tu sesión expiró. Inicia sesión de nuevo para continuar descargando.');
+      return;
+    }
+
     const downloadName = file.name;
     const domain =
       process.env.REACT_APP_ENVIRONMENT === 'development'
@@ -1765,7 +1793,7 @@ function Home() {
       '/download?path=' +
       encodeURIComponent(resolvedPath) +
       '&token=' +
-      userToken +
+      encodeURIComponent(accessToken) +
       '&rid=' +
       encodeURIComponent(createDownloadRequestId());
 
@@ -1802,7 +1830,15 @@ function Home() {
 
     setLoadDownload(true);
     setIndex(index);
-    await downloadAlbum(resolvedPath, file, index);
+    const accessToken = await resolveFreshAccessToken(MIN_DOWNLOAD_TOKEN_TTL_MS);
+    if (!accessToken) {
+      setLoadDownload(false);
+      setIndex(-1);
+      errorMethod('Tu sesión expiró. Inicia sesión de nuevo para continuar descargando.');
+      return;
+    }
+
+    await downloadAlbum(resolvedPath, file, index, accessToken);
     setLoadDownload(false);
     setIndex(-1);
   };
@@ -1825,6 +1861,7 @@ function Home() {
     path: string,
     file: IFiles,
     index: number,
+    accessToken: string,
   ) => {
     let body = {
       path: path,
@@ -1842,7 +1879,7 @@ function Home() {
       if (resolvedMode === 'artifact_ready' && response?.downloadUrl) {
         setShowDownload(false);
         triggerBrowserDownload(
-          `${response.downloadUrl}&token=${encodeURIComponent(userToken ?? '')}`,
+          `${response.downloadUrl}&token=${encodeURIComponent(accessToken)}`,
           file.name,
         );
         markItemAsDownloaded(path, 'd');
@@ -1919,21 +1956,21 @@ function Home() {
     name: string,
     pending: PendingDownload,
   ) => {
-    const a: HTMLAnchorElement = document.createElement('a');
+    const probeUrl = (() => {
+      try {
+        const parsed = new URL(url);
+        parsed.searchParams.set('probe', '1');
+        return parsed.toString();
+      } catch {
+        const separator = url.includes('?') ? '&' : '?';
+        return `${url}${separator}probe=1`;
+      }
+    })();
+
     try {
-      const response = await fetch(url);
+      const response = await fetch(probeUrl);
       if (response.ok) {
-        const blob = await response.blob();
-        const objectUrl = window.URL.createObjectURL(blob);
-        a.href = objectUrl;
-        a.download = name;
-        a.rel = 'noopener';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.setTimeout(() => {
-          window.URL.revokeObjectURL(objectUrl);
-        }, 2_000);
+        triggerBrowserDownload(url, name);
         markItemAsDownloaded(
           resolveFilePath(pending.file),
           pending.type === 'folder' ? 'd' : '-',
@@ -1949,6 +1986,12 @@ function Home() {
         const payload = await response.json().catch(() => null);
         const backendMessage =
           payload?.error ?? 'Para descargar se necesita tener gb disponibles';
+
+        if (response.status === 401 || `${backendMessage}`.toLowerCase() === 'unauthorized') {
+          appToast.info('Tu sesión expiró. Inicia sesión de nuevo para descargar.');
+          errorMethod('Tu sesión expiró. Inicia sesión de nuevo para continuar descargando.');
+          return;
+        }
 
         if (isMembershipRequiredMessage(backendMessage)) {
           showMembershipRequiredUpsell(pending.type, resolveFilePath(pending.file));
@@ -1986,7 +2029,7 @@ function Home() {
         pagePath: resolveFilePath(pending.file),
       });
       appToast.error("Error de red — Revisa tu conexión.");
-      errorMethod('Para descargar se necesita tener gb disponibles');
+      errorMethod('No pudimos iniciar la descarga. Revisa tu conexión e intenta de nuevo.');
     } finally {
       setLoadDownload(false);
       setIndex(-1);

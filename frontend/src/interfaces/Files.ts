@@ -30,3 +30,13 @@ export interface IDownloads {
   downloadUrl: string;
   expirationDate: Date;
 }
+
+export interface IUnifiedDownloadItem {
+  id: string;
+  source: 'file' | 'dir';
+  kind: 'folder' | 'audio' | 'video' | 'file';
+  name: string;
+  path: string | null;
+  date: string | Date;
+  sizeBytes: number | null;
+}

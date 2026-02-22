@@ -172,6 +172,7 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
   }
 
   const requestId = normalizeDownloadRequestId(req.query.rid);
+  const isProbeRequest = `${req.query.probe ?? ''}`.trim() === '1';
   let idempotencyKey: string | null = null;
 
   const dbUser = await prisma.users.findFirst({
@@ -338,6 +339,13 @@ export const downloadEndpoint = async (req: Request, res: Response) => {
     return res
       .status(400)
       .send({ error: 'Este usuario no tiene suficientes bytes disponibles' });
+  }
+
+  if (isProbeRequest) {
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('X-BB-Download-Probe', 'ok');
+    res.setHeader('X-BB-File-Size', String(fileStat.size));
+    return res.status(204).end();
   }
 
   if (idempotencyKey) {

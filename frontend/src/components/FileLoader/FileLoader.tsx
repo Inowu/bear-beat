@@ -9,6 +9,27 @@ import { useSafeSSE } from "../../utils/sse";
 import { formatBytes } from "../../utils/format";
 import { Button } from "src/components/ui";
 import { apiBaseUrl } from "../../utils/runtimeConfig";
+import { getAccessToken, getRefreshToken } from "../../utils/authStorage";
+
+const MIN_QUEUE_DOWNLOAD_TOKEN_TTL_MS = 20_000;
+
+const decodeJwtExpMs = (token: string): number | null => {
+  const normalizedToken = `${token ?? ""}`.trim();
+  if (!normalizedToken || typeof atob !== "function") return null;
+  const parts = normalizedToken.split(".");
+  if (parts.length < 2) return null;
+
+  try {
+    const payload = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const padded = payload.padEnd(payload.length + ((4 - (payload.length % 4)) % 4), "=");
+    const parsedPayload = JSON.parse(atob(padded)) as { exp?: unknown };
+    const expSeconds = Number(parsedPayload?.exp ?? NaN);
+    if (!Number.isFinite(expSeconds) || expSeconds <= 0) return null;
+    return Math.floor(expSeconds * 1000);
+  } catch {
+    return null;
+  }
+};
 
 const appendTokenToUrl = (url: string, token: string): string => {
   if (!url) return url;
@@ -23,7 +44,7 @@ const appendTokenToUrl = (url: string, token: string): string => {
 };
 
 export const FileLoader = () => {
-  const { currentUser, userToken } = useUserContext();
+  const { currentUser, userToken, handleLogin } = useUserContext();
   const { currentFile, fileData, setShowDownload } = useDownloadContext();
   const startedDownloadRef = useRef(false);
   const startDownloadAlbum = (url: string) => {
@@ -101,31 +122,86 @@ export const FileLoader = () => {
         ? "Preparando archivo..."
         : "0%";
 
+  const resolveQueueDownloadToken = async (): Promise<string | null> => {
+    const nowMs = Date.now();
+    let accessToken = `${getAccessToken() ?? userToken ?? ""}`.trim();
+    const expiresAtMs = decodeJwtExpMs(accessToken);
+    const hasEnoughLifetime =
+      accessToken !== "" &&
+      (expiresAtMs === null || expiresAtMs - nowMs > MIN_QUEUE_DOWNLOAD_TOKEN_TTL_MS);
+    if (hasEnoughLifetime) {
+      return accessToken;
+    }
+
+    const refreshToken = `${getRefreshToken() ?? ""}`.trim();
+    if (!refreshToken) {
+      return null;
+    }
+
+    try {
+      const refreshedTokens = await trpc.auth.refresh.query({ refreshToken });
+      const refreshedAccessToken = `${refreshedTokens?.token ?? ""}`.trim();
+      const refreshedRefreshToken = `${refreshedTokens?.refreshToken ?? ""}`.trim();
+      if (!refreshedAccessToken || !refreshedRefreshToken) {
+        return null;
+      }
+      handleLogin(refreshedAccessToken, refreshedRefreshToken);
+      accessToken = refreshedAccessToken;
+      const refreshedExpiresAtMs = decodeJwtExpMs(accessToken);
+      if (
+        refreshedExpiresAtMs !== null &&
+        refreshedExpiresAtMs - Date.now() <= MIN_QUEUE_DOWNLOAD_TOKEN_TTL_MS
+      ) {
+        return null;
+      }
+      return accessToken;
+    } catch {
+      return null;
+    }
+  };
+
   useEffect(() => {
     startedDownloadRef.current = false;
   }, [activeJobId, fallbackDirName]);
 
   useEffect(() => {
-    if (completed.url !== "") {
-      startDownloadAlbum(appendTokenToUrl(completed.url, userToken));
-    }
-  }, [completed.url, userToken]);
+    if (completed.url === "") return;
+    let cancelled = false;
+    const attemptCompletedDownload = async () => {
+      const accessToken = await resolveQueueDownloadToken();
+      if (cancelled || !accessToken) {
+        setShowDownload(false);
+        return;
+      }
+      startDownloadAlbum(appendTokenToUrl(completed.url, accessToken));
+    };
+    void attemptCompletedDownload();
+    return () => {
+      cancelled = true;
+    };
+  }, [completed.url, userToken, handleLogin]);
 
   useEffect(() => {
-    if (!activeJobId || !fallbackDirName || !userToken || startedDownloadRef.current) {
+    if (!activeJobId || !fallbackDirName || startedDownloadRef.current) {
       return;
     }
-
-    const downloadUrl = `${apiBaseUrl}/download-dir?dirName=${encodeURIComponent(
-      fallbackDirName,
-    )}&jobId=${encodeURIComponent(activeJobId)}&token=${encodeURIComponent(
-      userToken,
-    )}`;
 
     let cancelled = false;
 
     const probeDownloadReadiness = async () => {
       if (cancelled || startedDownloadRef.current) return;
+      const accessToken = await resolveQueueDownloadToken();
+      if (cancelled || !accessToken) {
+        setShowDownload(false);
+        return;
+      }
+
+      const downloadUrl = `${apiBaseUrl}/download-dir?dirName=${encodeURIComponent(
+        fallbackDirName,
+      )}&jobId=${encodeURIComponent(activeJobId)}&token=${encodeURIComponent(
+        accessToken,
+      )}`;
+
       try {
         const response = await fetch(downloadUrl, { method: "HEAD" });
         if (response.ok) {
@@ -149,7 +225,7 @@ export const FileLoader = () => {
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [activeJobId, fallbackDirName, userToken, setShowDownload]);
+  }, [activeJobId, fallbackDirName, userToken, handleLogin, setShowDownload]);
 
   return (
     <div className="file-loader-contain">

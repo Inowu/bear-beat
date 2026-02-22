@@ -1,17 +1,47 @@
 import React, { useEffect, useState } from "react";
-import { FolderDown, Music, RefreshCw } from "src/icons";
-import { IDownloads } from "interfaces/Files";
+import { File, FileVideoCamera, FolderDown, Music, RefreshCw } from "src/icons";
+import { IUnifiedDownloadItem } from "interfaces/Files";
 import trpc from "../../api";
 import { Button, EmptyState, SkeletonCard, SkeletonTable } from "../../components/ui";
+import { formatBytes } from "../../utils/format";
+
+const toDateSafe = (value: string | Date): Date | null => {
+  const candidate = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(candidate.getTime()) ? null : candidate;
+};
+
+const formatDownloadDate = (value: string | Date): string => {
+  const parsed = toDateSafe(value);
+  if (!parsed) return "—";
+  return parsed.toLocaleDateString("es-MX", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+};
+
+const resolveDownloadIcon = (kind: IUnifiedDownloadItem["kind"]) => {
+  if (kind === "audio") return <Music className="h-5 w-5 flex-shrink-0 text-bear-cyan" aria-hidden />;
+  if (kind === "video") return <FileVideoCamera className="h-5 w-5 flex-shrink-0 text-bear-cyan" aria-hidden />;
+  if (kind === "folder") return <FolderDown className="h-5 w-5 flex-shrink-0 text-bear-cyan" aria-hidden />;
+  return <File className="h-5 w-5 flex-shrink-0 text-bear-cyan" aria-hidden />;
+};
+
+const resolveDownloadKindLabel = (kind: IUnifiedDownloadItem["kind"]): string => {
+  if (kind === "audio") return "Audio";
+  if (kind === "video") return "Video";
+  if (kind === "folder") return "Carpeta";
+  return "Archivo";
+};
 
 function Downloads() {
-  const [downloads, setDownloads] = useState<IDownloads[] | null>(null);
+  const [downloads, setDownloads] = useState<IUnifiedDownloadItem[] | null>(null);
   const [loadError, setLoadError] = useState<string>("");
 
   const retrieveDownloads = async () => {
     try {
       setLoadError("");
-      const data = await trpc.dirDownloads.myDirDownloads.query();
+      const data = await trpc.dirDownloads.myDownloads.query({ limit: 180 });
       setDownloads(data);
     } catch (error: unknown) {
       setDownloads(null);
@@ -83,25 +113,36 @@ function Downloads() {
                 Nombre
               </th>
               <th className="bg-bg-input text-text-muted text-xs uppercase tracking-wider p-4 text-left font-medium border-b border-border">
+                Tipo
+              </th>
+              <th className="bg-bg-input text-text-muted text-xs uppercase tracking-wider p-4 text-left font-medium border-b border-border">
                 Descargado
               </th>
             </tr>
           </thead>
           <tbody className="bg-bg-card divide-y divide-border">
             {downloads !== null && downloads.length > 0 &&
-              downloads.map((download: IDownloads, index: number) => (
+              downloads.map((download: IUnifiedDownloadItem, index: number) => (
                 <tr
-                  key={`download-${index}`}
+                  key={download.id || `download-${index}`}
                   className="transition-colors"
                 >
                   <td className="py-4 px-4 text-sm text-text-main">
                     <span className="flex items-center gap-3 min-w-0">
-                      <Music className="h-5 w-5 flex-shrink-0 text-bear-cyan" aria-hidden />
-                      <span className="truncate">{download.dirName}</span>
+                      {resolveDownloadIcon(download.kind)}
+                      <span className="min-w-0">
+                        <span className="truncate block">{download.name}</span>
+                        {download.sizeBytes !== null && (
+                          <span className="text-xs text-text-muted">{formatBytes(download.sizeBytes)}</span>
+                        )}
+                      </span>
                     </span>
                   </td>
                   <td className="py-4 px-4 text-sm text-text-main whitespace-nowrap">
-                    {download.date.toLocaleDateString()}
+                    {resolveDownloadKindLabel(download.kind)}
+                  </td>
+                  <td className="py-4 px-4 text-sm text-text-main whitespace-nowrap">
+                    {formatDownloadDate(download.date)}
                   </td>
                 </tr>
               ))}
@@ -116,19 +157,25 @@ function Downloads() {
         } bb-skeleton-fade-in`}
       >
         {downloads !== null && downloads.length > 0 &&
-          downloads.map((download: IDownloads, index: number) => (
+          downloads.map((download: IUnifiedDownloadItem, index: number) => (
             <div
-              key={`download-card-${index}`}
+              key={download.id || `download-card-${index}`}
               className="bg-bg-card p-4 rounded-2xl border border-border shadow-none"
               style={{ boxShadow: "var(--app-shadow)" }}
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <Music className="h-5 w-5 flex-shrink-0 text-bear-cyan" aria-hidden />
-                  <p className="text-sm text-text-main truncate">{download.dirName}</p>
+                  {resolveDownloadIcon(download.kind)}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-text-main truncate">{download.name}</p>
+                    <p className="text-xs text-text-muted">
+                      {resolveDownloadKindLabel(download.kind)}
+                      {download.sizeBytes !== null ? ` · ${formatBytes(download.sizeBytes)}` : ""}
+                    </p>
+                  </div>
                 </div>
                 <p className="text-sm text-text-muted flex-shrink-0">
-                  {download.date.toLocaleDateString()}
+                  {formatDownloadDate(download.date)}
                 </p>
               </div>
             </div>
