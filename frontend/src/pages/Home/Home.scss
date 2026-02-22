@@ -31,6 +31,17 @@ html[data-theme="light"] .bb-onboarding-strip {
     color-mix(in srgb, var(--color-white) 97%, var(--app-bg-soft));
 }
 
+html[data-theme="light"] .bb-quota-banner {
+  border-color: color-mix(in srgb, var(--app-status-warning) 34%, transparent);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--app-status-warning) 10%, var(--color-white)),
+      transparent 72%
+    ),
+    color-mix(in srgb, var(--color-white) 97%, var(--app-bg-soft));
+}
+
 html[data-theme="light"] .bb-onboarding-btn {
   border-color: color-mix(in srgb, var(--app-border) 84%, transparent);
   background: color-mix(in srgb, var(--color-white) 96%, var(--app-bg-soft));
@@ -181,6 +192,90 @@ html[data-theme="dark"] .home-main-container::before {
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--app-accent) 9%, transparent), transparent 72%),
     color-mix(in srgb, var(--app-bg-soft) 88%, var(--app-bg-card));
+}
+
+.bb-quota-banner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 13px;
+  border: 1px solid color-mix(in srgb, var(--app-status-warning) 36%, transparent);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--app-status-warning) 10%, transparent),
+      transparent 72%
+    ),
+    color-mix(in srgb, var(--app-bg-soft) 86%, var(--app-bg-card));
+}
+
+.bb-quota-banner__copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.bb-quota-banner__title {
+  margin: 0;
+  color: var(--app-text-heading);
+  font-size: 1rem;
+  font-weight: 780;
+  line-height: 1.3;
+}
+
+.bb-quota-banner__text {
+  margin: 0;
+  color: var(--app-text-muted);
+  font-size: 0.9rem;
+  font-weight: 640;
+  line-height: 1.4;
+}
+
+.bb-quota-banner__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.bb-quota-banner__btn {
+  min-height: 40px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  font-family: var(--bb-font-ui);
+  font-size: 0.88rem;
+  font-weight: 730;
+  line-height: 1;
+  transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease;
+}
+
+.bb-quota-banner__btn--primary {
+  border-color: color-mix(in srgb, var(--app-status-warning) 62%, transparent);
+  background: color-mix(in srgb, var(--app-status-warning) 18%, transparent);
+  color: color-mix(in srgb, var(--app-status-warning) 92%, var(--app-text-heading));
+}
+
+.bb-quota-banner__btn--primary:hover {
+  border-color: color-mix(in srgb, var(--app-status-warning) 76%, transparent);
+  background: color-mix(in srgb, var(--app-status-warning) 24%, transparent);
+}
+
+.bb-quota-banner__btn--secondary {
+  border-color: color-mix(in srgb, var(--app-accent) 44%, transparent);
+  background: color-mix(in srgb, var(--app-accent) 14%, transparent);
+  color: var(--app-accent);
+}
+
+.bb-quota-banner__btn--secondary:hover {
+  border-color: color-mix(in srgb, var(--app-accent) 58%, transparent);
+  background: color-mix(in srgb, var(--app-accent) 20%, transparent);
 }
 
 .bb-onboarding-head h3 {
@@ -1994,6 +2089,7 @@ html[data-theme="dark"] .bb-explorer-row:hover {
 .bb-search-clear:focus-visible,
 .bb-search-pill:focus-visible,
 .bb-home-quick-btn:focus-visible,
+.bb-quota-banner__btn:focus-visible,
 .bb-breadcrumb-link:focus-visible,
 .bb-back-btn:focus-visible,
 .bb-recent-nav-btn:focus-visible,
@@ -2074,6 +2170,16 @@ html[data-theme="dark"] .bb-explorer-row:hover {
 
   .bb-onboarding-btn {
     min-height: 42px;
+  }
+
+  .bb-quota-banner {
+    grid-template-columns: 1fr;
+    align-items: flex-start;
+  }
+
+  .bb-quota-banner__actions {
+    width: 100%;
+    justify-content: flex-start;
   }
 
   .bb-explorer-row {
@@ -2198,6 +2304,31 @@ html[data-theme="dark"] .bb-explorer-row:hover {
   .bb-home-title-icon {
     width: 30px;
     height: 30px;
+  }
+
+  .bb-quota-banner {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .bb-quota-banner__title {
+    font-size: 0.94rem;
+  }
+
+  .bb-quota-banner__text {
+    font-size: 0.82rem;
+  }
+
+  .bb-quota-banner__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .bb-quota-banner__btn {
+    width: 100%;
+    min-height: 42px;
+    font-size: 0.84rem;
   }
 
   .bb-search-input {

@@ -3,19 +3,84 @@ import trpc from "../../api";
 import { IPlans } from "interfaces/Plans";
 import { Spinner } from "../../components/Spinner/Spinner";
 import PlanCard from "../../components/PlanCard/PlanCard";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useUserContext } from "../../contexts/UserContext";
 import { Button, EmptyState, Alert } from "../../components/ui";
 import { ArrowRight, RefreshCw, Shield, Sparkles, TrendingUp, HardDriveDownload } from "src/icons";
 import "./PlanUpgrade.scss";
 
+type UpgradeEntryContext =
+  | "default"
+  | "quota_warning"
+  | "quota_exhausted"
+  | "trial_quota_exhausted";
+
 export const PlanUpgrade = () => {
   const { currentUser } = useUserContext();
+  const location = useLocation();
   const [plans, setPlans] = useState<IPlans[]>([]);
   const [loader, setLoader] = useState<boolean>(true);
   const [currentPlan, setCurrentPlan] = useState<IPlans | null>(null);
   const [loadError, setLoadError] = useState<string>("");
   const navigate = useNavigate();
+  const upgradeEntryContext = useMemo<UpgradeEntryContext>(() => {
+    const params = new URLSearchParams(location.search);
+    const entry = `${params.get("entry") ?? ""}`.trim().toLowerCase();
+    const segment = `${params.get("segment") ?? ""}`.trim().toLowerCase();
+
+    if (entry === "quota-warning") return "quota_warning";
+    if (entry === "quota-exhausted" && segment === "trial")
+      return "trial_quota_exhausted";
+    if (entry === "quota-exhausted") return "quota_exhausted";
+    return "default";
+  }, [location.search]);
+  const heroCopy = useMemo(() => {
+    if (upgradeEntryContext === "trial_quota_exhausted") {
+      return {
+        kicker: "Sin esperar",
+        title: "Se agotaron tus GB de prueba",
+        description:
+          "No necesitas esperar a que termine la prueba. Activa tu membresía ahora y sigue escuchando/descargando completo.",
+        primaryLabel: "Activar membresía ahora",
+        calloutTitle: "Tus 100 GB de prueba ya se agotaron",
+        calloutBody:
+          "Haz upgrade hoy para seguir sin pausas o compra GB extra si prefieres mantener tu plan actual.",
+      };
+    }
+    if (upgradeEntryContext === "quota_exhausted") {
+      return {
+        kicker: "Upgrade inteligente",
+        title: "Se agotaron tus GB disponibles",
+        description:
+          "Activa una membresía con más cuota o compra GB extra para seguir descargando hoy mismo.",
+        primaryLabel: "Ver upgrades",
+        calloutTitle: "Te quedaste en 0 GB",
+        calloutBody:
+          "Elige upgrade inmediato para subir tu cuota mensual o recarga GB extra para continuar sin esperar al siguiente ciclo.",
+      };
+    }
+    if (upgradeEntryContext === "quota_warning") {
+      return {
+        kicker: "Upgrade inteligente",
+        title: "Te quedan pocos GB en este ciclo",
+        description:
+          "Asegura continuidad antes de quedarte sin cuota. Puedes subir de plan o recargar GB extra.",
+        primaryLabel: "Ver upgrades",
+        calloutTitle: "Evita pausas en tus descargas",
+        calloutBody:
+          "Aprovecha este momento para subir tu membresía y mantener margen de descarga durante todo el mes.",
+      };
+    }
+    return {
+      kicker: "Upgrade inteligente",
+      title: "Actualizar plan",
+      description:
+        "Escala tu membresía cuando ya estás descargando al límite. Más cuota mensual, misma experiencia y activación inmediata.",
+      primaryLabel: "Ver upgrades",
+      calloutTitle: "",
+      calloutBody: "",
+    };
+  }, [upgradeEntryContext]);
 
   const toPlanGb = (value: unknown): number => {
     if (typeof value === "bigint") return Number(value);
@@ -170,12 +235,15 @@ export const PlanUpgrade = () => {
     <div className="plan-upgrade plans-main-container bb-app-page">
       <section className="plan-upgrade__hero" aria-label="Actualizar membresía">
         <div className="plan-upgrade__heroCopy">
-          <span className="plan-upgrade__kicker">Upgrade inteligente</span>
-          <h1>Actualizar plan</h1>
-          <p>
-            Escala tu membresía cuando ya estás descargando al límite. Más cuota mensual, misma
-            experiencia y activación inmediata.
-          </p>
+          <span className="plan-upgrade__kicker">{heroCopy.kicker}</span>
+          <h1>{heroCopy.title}</h1>
+          <p>{heroCopy.description}</p>
+          {heroCopy.calloutTitle && heroCopy.calloutBody && (
+            <div className="plan-upgrade__entryCallout" role="status" aria-live="polite">
+              <p className="plan-upgrade__entryCalloutTitle">{heroCopy.calloutTitle}</p>
+              <p className="plan-upgrade__entryCalloutBody">{heroCopy.calloutBody}</p>
+            </div>
+          )}
         </div>
         <div className="plan-upgrade__heroActions">
           <Link to="/micuenta" className="plan-upgrade__ghostLink">
@@ -190,7 +258,7 @@ export const PlanUpgrade = () => {
               target?.scrollIntoView({ behavior: "smooth", block: "start" });
             }}
           >
-            Ver upgrades
+            {heroCopy.primaryLabel}
           </Button>
         </div>
       </section>

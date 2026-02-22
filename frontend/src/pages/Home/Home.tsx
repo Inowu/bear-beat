@@ -129,6 +129,16 @@ type ResolvedTrackMetadata = {
   durationSeconds: number | null;
   source: 'database' | 'inferred';
 };
+type HomeQuotaSnapshot = {
+  regular: {
+    used: bigint;
+    available: bigint;
+  };
+  extended: {
+    used: bigint;
+    available: bigint;
+  };
+};
 
 const AUDIO_EXT_REGEX = /\.(mp3|aac|m4a|flac|ogg|aiff|alac)$/i;
 const VIDEO_EXT_REGEX = /\.(mp4|mov|mkv|avi|wmv|webm|m4v)$/i;
@@ -196,6 +206,25 @@ const normalizeOptionalNumber = (value: unknown): number | null => {
     return null;
   }
   return value;
+};
+const toBigIntSafe = (value: unknown): bigint => {
+  if (typeof value === 'bigint') return value;
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return BigInt(Math.trunc(value));
+  }
+  if (typeof value === 'string' && value.trim() !== '') {
+    try {
+      return BigInt(value.trim());
+    } catch {
+      return BigInt(0);
+    }
+  }
+  return BigInt(0);
+};
+const bytesToGb = (value: bigint): number => {
+  if (value <= BigInt(0)) return 0;
+  const gb = value / BigInt(1_000_000_000);
+  return Number(gb);
 };
 const resolveCoverHue = (seed: string): number => {
   const normalized = `${seed ?? ''}`.trim().toLowerCase();
@@ -494,6 +523,7 @@ function Home() {
   const [forYouPreviewPath, setForYouPreviewPath] = useState<string | null>(null);
   const [forYouDownloadPath, setForYouDownloadPath] = useState<string | null>(null);
   const [recentPackDownloadPath, setRecentPackDownloadPath] = useState<string | null>(null);
+  const [quotaSnapshot, setQuotaSnapshot] = useState<HomeQuotaSnapshot | null>(null);
   const [downloadedPathFlags, setDownloadedPathFlags] = useState<Record<string, true>>({});
   const [inlinePreviewPath, setInlinePreviewPath] = useState<string | null>(null);
   const [inlinePreviewProgress, setInlinePreviewProgress] = useState(0);
@@ -515,6 +545,25 @@ function Home() {
 
   const stripeOptions = useMemo(() => ({ appearance: getStripeAppearance(theme) }), [theme]);
   const canUseFullPlayback = Boolean(currentUser?.hasActiveSubscription && userToken);
+  const totalQuotaCapacityGb = useMemo(() => {
+    if (!quotaSnapshot) return null;
+    return (
+      bytesToGb(quotaSnapshot.regular.available) +
+      bytesToGb(quotaSnapshot.extended.available)
+    );
+  }, [quotaSnapshot]);
+  const totalRemainingQuotaGb = useMemo(() => {
+    if (!quotaSnapshot) return null;
+    const regularRemaining = quotaSnapshot.regular.available - quotaSnapshot.regular.used;
+    const extendedRemaining = quotaSnapshot.extended.available - quotaSnapshot.extended.used;
+    return bytesToGb(regularRemaining > BigInt(0) ? regularRemaining : BigInt(0)) +
+      bytesToGb(extendedRemaining > BigInt(0) ? extendedRemaining : BigInt(0));
+  }, [quotaSnapshot]);
+  const isLikelyTrialQuota = useMemo(() => {
+    if (!currentUser?.hasActiveSubscription) return false;
+    if (totalQuotaCapacityGb === null) return false;
+    return totalQuotaCapacityGb > 0 && totalQuotaCapacityGb <= 120;
+  }, [currentUser?.hasActiveSubscription, totalQuotaCapacityGb]);
 
   const getFileVisualKind = (file: IFiles): FileVisualKind => {
     if (file.type === 'd') {
@@ -689,7 +738,7 @@ function Home() {
 
     if (shouldUseFullPlayback) {
       return {
-        url: buildMemberPlaybackUrl(normalizedPath, userToken, apiBaseUrl),
+        url: buildMemberPlaybackUrl(normalizedPath, userToken ?? '', apiBaseUrl),
         playbackMode: 'full',
       };
     }
@@ -902,6 +951,27 @@ function Home() {
     if (!ready) return;
     setShowPlan(true);
   };
+  const refreshQuotaSnapshot = async () => {
+    if (!currentUser?.hasActiveSubscription) {
+      setQuotaSnapshot(null);
+      return;
+    }
+    try {
+      const quota = await trpc.ftp.quota.query();
+      setQuotaSnapshot({
+        regular: {
+          used: toBigIntSafe(quota?.regular?.used),
+          available: toBigIntSafe(quota?.regular?.available),
+        },
+        extended: {
+          used: toBigIntSafe(quota?.extended?.used),
+          available: toBigIntSafe(quota?.extended?.available),
+        },
+      });
+    } catch {
+      setQuotaSnapshot(null);
+    }
+  };
   const openMigrationModal = async () => {
     const ready = await ensureStripeForSurface('home_migration');
     if (!ready) return;
@@ -909,7 +979,14 @@ function Home() {
   };
   const isOutOfGbMessage = (value: unknown): boolean => {
     const msg = `${value ?? ''}`.toLowerCase();
-    return msg.includes('suficientes bytes');
+    return (
+      msg.includes('suficientes bytes') ||
+      msg.includes('bytes disponibles') ||
+      msg.includes('sin gb') ||
+      msg.includes('gb disponibles') ||
+      msg.includes('not enough bytes') ||
+      msg.includes('enough available bytes')
+    );
   };
   const goToRoot = async () => {
     stopInlinePreviewAudio();
@@ -1443,7 +1520,29 @@ function Home() {
       itemType,
       targetPath: '/actualizar-planes',
     });
-    window.location.assign('/actualizar-planes?from=download_gate');
+    window.location.assign('/actualizar-planes?entry=download-gate&from=download_gate');
+  };
+  const redirectToQuotaUpgrade = (
+    options: { source: 'home_quota_banner' | 'home_quota_modal'; itemType: 'file' | 'folder' | 'quota' },
+  ) => {
+    const query = new URLSearchParams({
+      entry: 'quota-exhausted',
+      from: options.source,
+    });
+    if (isLikelyTrialQuota) {
+      query.set('segment', 'trial');
+    }
+    if (options.itemType !== 'quota') {
+      query.set('itemType', options.itemType);
+    }
+    trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
+      id: 'quota_exhausted_upgrade',
+      location: options.source,
+      itemType: options.itemType,
+      targetPath: '/actualizar-planes',
+      segment: isLikelyTrialQuota ? 'trial' : 'active',
+    });
+    window.location.assign(`/actualizar-planes?${query.toString()}`);
   };
   const showMembershipRequiredUpsell = (itemType: 'file' | 'folder', pagePath: string) => {
     errorMethod(
@@ -1472,6 +1571,48 @@ function Home() {
     trackGrowthMetric(GROWTH_METRICS.FILE_DOWNLOAD_FAILED, {
       fileType: itemType,
       reason: 'membership_required_modal_shown',
+      pagePath,
+    });
+  };
+  const showQuotaExhaustedUpsell = (itemType: 'file' | 'folder', pagePath: string) => {
+    const title = isLikelyTrialQuota
+      ? 'Se agotaron tus GB de prueba'
+      : 'Se agotaron tus GB disponibles';
+    const hint = isLikelyTrialQuota
+      ? 'No necesitas esperar a que termine la prueba. Activa tu membresía hoy o recarga GB extra para seguir descargando.'
+      : 'Puedes hacer upgrade de membresía o comprar GB extra para seguir descargando ahora mismo.';
+    const primaryLabel = isLikelyTrialQuota
+      ? 'Activar membresía hoy'
+      : 'Hacer upgrade de membresía';
+
+    errorMethod('Tu cuota de descarga llegó a 0 GB.', {
+      title,
+      hint,
+      actions: [
+        {
+          label: primaryLabel,
+          onClick: () => {
+            closeError();
+            redirectToQuotaUpgrade({ source: 'home_quota_modal', itemType });
+          },
+          variant: 'primary',
+        },
+        {
+          label: 'Comprar GB extra',
+          onClick: () => {
+            closeError();
+            void openPlan();
+          },
+          variant: 'secondary',
+        },
+      ],
+    });
+
+    trackGrowthMetric(GROWTH_METRICS.FILE_DOWNLOAD_FAILED, {
+      fileType: itemType,
+      reason: isLikelyTrialQuota
+        ? 'trial_quota_exhausted_modal_shown'
+        : 'quota_exhausted_modal_shown',
       pagePath,
     });
   };
@@ -1593,7 +1734,7 @@ function Home() {
       if (resolvedMode === 'artifact_ready' && response?.downloadUrl) {
         setShowDownload(false);
         triggerBrowserDownload(
-          `${response.downloadUrl}&token=${encodeURIComponent(userToken)}`,
+          `${response.downloadUrl}&token=${encodeURIComponent(userToken ?? '')}`,
           file.name,
         );
         markItemAsDownloaded(path, 'd');
@@ -1604,6 +1745,7 @@ function Home() {
               ? ' (cache)'
               : '';
         appToast.success(`Descarga inmediata${cacheTierLabel}: ${truncateToastLabel(file.name, 40)}`);
+        void refreshQuotaSnapshot();
         trackGrowthMetric(GROWTH_METRICS.FILE_DOWNLOAD_SUCCEEDED, {
           fileType: 'folder',
           pagePath: `/${path}`,
@@ -1628,6 +1770,7 @@ function Home() {
       });
       markItemAsDownloaded(path, 'd');
       appToast.info(`Preparando archivo: ${truncateToastLabel(file.name, 40)}`);
+      void refreshQuotaSnapshot();
       trackGrowthMetric(GROWTH_METRICS.FILE_DOWNLOAD_SUCCEEDED, {
         fileType: 'folder',
         pagePath: `/${path}`,
@@ -1643,8 +1786,7 @@ function Home() {
         return;
       }
       if (currentUser?.hasActiveSubscription && isOutOfGbMessage(error?.message ?? error)) {
-        appToast.warning("Sin GB disponibles. Recarga para continuar.");
-        void openPlan();
+        showQuotaExhaustedUpsell('folder', `/${path}`);
         return;
       }
       trackGrowthMetric(GROWTH_METRICS.FILE_DOWNLOAD_FAILED, {
@@ -1689,6 +1831,7 @@ function Home() {
           pending.type === 'folder' ? 'd' : '-',
         );
         appToast.success(`Descarga iniciada: ${truncateToastLabel(name, 40)}`);
+        void refreshQuotaSnapshot();
         trackGrowthMetric(GROWTH_METRICS.FILE_DOWNLOAD_SUCCEEDED, {
           fileType: pending.type,
           pagePath: resolveFilePath(pending.file),
@@ -1713,8 +1856,7 @@ function Home() {
         }
 
         if (currentUser?.hasActiveSubscription && isOutOfGbMessage(backendMessage)) {
-          appToast.warning("Sin GB disponibles. Recarga para continuar.");
-          void openPlan();
+          showQuotaExhaustedUpsell(pending.type, resolveFilePath(pending.file));
           setLoadDownload(false);
           setIndex(-1);
           return;
@@ -1923,6 +2065,13 @@ function Home() {
     };
   }, [currentUser?.hasActiveSubscription, currentUser?.id]);
   useEffect(() => {
+    if (!currentUser?.hasActiveSubscription) {
+      setQuotaSnapshot(null);
+      return;
+    }
+    void refreshQuotaSnapshot();
+  }, [currentUser?.hasActiveSubscription, currentUser?.id]);
+  useEffect(() => {
     if (fileChange) {
       closeFile();
       getFiles();
@@ -2072,6 +2221,20 @@ function Home() {
     !loader &&
     currentUser?.hasActiveSubscription &&
     isNewUserOnboarding;
+  const hasQuotaExhausted =
+    Boolean(currentUser?.hasActiveSubscription) &&
+    totalRemainingQuotaGb !== null &&
+    totalRemainingQuotaGb <= 0;
+  const showQuotaExhaustedBanner = hasQuotaExhausted && !showPlan;
+  const quotaExhaustedTitle = isLikelyTrialQuota
+    ? 'Se agotaron tus GB de prueba'
+    : 'Se agotaron tus GB de descarga';
+  const quotaExhaustedCopy = isLikelyTrialQuota
+    ? 'No necesitas esperar 7 días: activa membresía ahora o compra GB extra para seguir descargando hoy.'
+    : 'Activa un upgrade de membresía o compra GB extra para seguir descargando sin pausa.';
+  const quotaExhaustedPrimaryLabel = isLikelyTrialQuota
+    ? 'Activar membresía ahora'
+    : 'Hacer upgrade de membresía';
   const formatSize = (sizeInBytes?: number | null) => formatBytes(sizeInBytes);
   const totalVisibleBytes = sortedFiles.reduce((total, file) => {
     if (file.size == null || !Number.isFinite(file.size)) {
@@ -2213,6 +2376,39 @@ function Home() {
                   <Download size={16} aria-hidden />
                 )}
                 Descargar primer pack recomendado
+              </Button>
+            </div>
+          </section>
+        )}
+        {showQuotaExhaustedBanner && (
+          <section className="bb-quota-banner" aria-label="Cuota agotada">
+            <div className="bb-quota-banner__copy">
+              <p className="bb-quota-banner__title">{quotaExhaustedTitle}</p>
+              <p className="bb-quota-banner__text">
+                {quotaExhaustedCopy}
+              </p>
+            </div>
+            <div className="bb-quota-banner__actions">
+              <Button
+                unstyled
+                type="button"
+                className="bb-quota-banner__btn bb-quota-banner__btn--primary"
+                onClick={() =>
+                  redirectToQuotaUpgrade({
+                    source: 'home_quota_banner',
+                    itemType: 'quota',
+                  })
+                }
+              >
+                {quotaExhaustedPrimaryLabel}
+              </Button>
+              <Button
+                unstyled
+                type="button"
+                className="bb-quota-banner__btn bb-quota-banner__btn--secondary"
+                onClick={() => void openPlan()}
+              >
+                Comprar GB extra
               </Button>
             </div>
           </section>
@@ -2582,6 +2778,7 @@ function Home() {
                       );
                       const isForYouDownloading = forYouDownloadPath === recommendation.path;
                       const isForYouMembershipLocked = !currentUser?.hasActiveSubscription;
+                      const title = normalizeOptionalText(recommendation.metadata?.title) ?? recommendation.name;
                       const forYouDownloadLabel = isForYouMembershipLocked
                         ? 'Desbloquear'
                         : isForYouDownloaded
@@ -2595,7 +2792,6 @@ function Home() {
                             ? `Re-descargar ${title}`
                             : `Descargar ${title}`;
                       const kind = getFileVisualKind(fileForKind);
-                      const title = normalizeOptionalText(recommendation.metadata?.title) ?? recommendation.name;
                       const artist = normalizeOptionalText(recommendation.metadata?.artist);
                       const coverUrl = normalizeOptionalText(recommendation.metadata?.coverUrl);
                       const fallbackCoverUrl = isTrackCoverKind(kind)

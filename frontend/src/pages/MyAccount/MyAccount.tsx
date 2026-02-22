@@ -298,13 +298,21 @@ function MyAccount() {
     }
   };
 
-  const openUpgradePlans = () => {
+  const openUpgradePlans = (entry: "quota-warning" | "quota-exhausted" = "quota-warning") => {
+    const query = new URLSearchParams({
+      entry,
+    });
+    if (entry === "quota-exhausted" && isLikelyTrialQuota) {
+      query.set("segment", "trial");
+    }
     trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
       id: "quota_low_upgrade_plan",
       location: "my_account",
       remainingGb: Math.max(0, Math.trunc(totalRemainingGb)),
+      entry,
+      segment: isLikelyTrialQuota ? "trial" : "active",
     });
-    navigate("/actualizar-planes?entry=quota-warning");
+    navigate(`/actualizar-planes?${query.toString()}`);
   };
 
   const loadEmailPreferences = async () => {
@@ -480,12 +488,16 @@ function MyAccount() {
   const storageFillPercent = storagePercent <= 0 ? 0 : Math.min(100, Math.max(2, storagePercent));
   const hasQuotaReached = storagePercent >= 100;
   const hasNoQuotaLeft = remainingRegularGb <= 0 && remainingExtendedGb <= 0;
+  const hasActiveSubscription = Boolean(currentUser?.hasActiveSubscription);
   const lowQuotaThresholdGb = Math.max(40, Math.round(Math.max(availableGb, 1) * 0.2));
+  const isLikelyTrialQuota =
+    hasActiveSubscription &&
+    availableGb > 0 &&
+    availableGb <= 120;
   const hasLowQuotaWarning =
     Boolean(currentUser?.hasActiveSubscription) &&
     totalRemainingGb > 0 &&
     totalRemainingGb <= lowQuotaThresholdGb;
-  const hasActiveSubscription = Boolean(currentUser?.hasActiveSubscription);
   const hasFtpRecord = Boolean(currentUser?.ftpAccount);
   const ftpExpiration = parseAccountExpiration(currentUser?.ftpAccount?.expiration ?? null);
   const isFtpExpired = Boolean(ftpExpiration && ftpExpiration.getTime() < Date.now());
@@ -855,7 +867,7 @@ function MyAccount() {
                         <Button
                           unstyled
                           type="button"
-                          onClick={openUpgradePlans}
+                          onClick={() => openUpgradePlans("quota-warning")}
                           className="ma-btn ma-btn-outline"
                         >
                           Hacer upgrade de membresía
@@ -871,10 +883,44 @@ function MyAccount() {
                       </div>
                     </section>
                   )}
+                  {hasNoQuotaLeft && hasActiveSubscription && (
+                    <section className="ma-quota-upsell" aria-label="Sin GB disponibles">
+                      <p className="ma-quota-upsell__title">
+                        {isLikelyTrialQuota
+                          ? "Se agotaron tus GB de prueba."
+                          : "Se agotaron tus GB de descarga."}
+                      </p>
+                      <p className="ma-quota-upsell__copy">
+                        {isLikelyTrialQuota
+                          ? "No necesitas esperar a que termine la prueba: puedes activar tu membresía ahora o comprar GB extra para seguir descargando hoy."
+                          : "Para continuar ahora, elige upgrade de membresía o compra GB extra."}
+                      </p>
+                      <div className="ma-quota-upsell__actions">
+                        <Button
+                          unstyled
+                          type="button"
+                          onClick={() => openUpgradePlans("quota-exhausted")}
+                          className="ma-btn ma-btn-outline"
+                        >
+                          {isLikelyTrialQuota
+                            ? "Activar membresía ahora"
+                            : "Hacer upgrade de membresía"}
+                        </Button>
+                        <Button
+                          unstyled
+                          type="button"
+                          onClick={() => void openPlan()}
+                          className="ma-btn ma-btn-soft"
+                        >
+                          Comprar GB extra
+                        </Button>
+                      </div>
+                    </section>
+                  )}
                   {hasQuotaReached && (
                     <p className="ma-storage-alert">
                       {hasNoQuotaLeft
-                        ? `Límite alcanzado. No puedes descargar más hasta ${cycleEndOrFallback}.`
+                        ? `Límite alcanzado. Para no esperar hasta ${cycleEndOrFallback}, haz upgrade o compra GB extra ahora.`
                         : "Llegaste a 100% de tu cuota regular. Puedes seguir usando GB extra si tienes disponibles."}
                     </p>
                   )}
