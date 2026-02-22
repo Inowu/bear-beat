@@ -2065,11 +2065,6 @@ function Home() {
         <span className="bb-track-cover-fallback">
           {renderKindIcon(kind)}
         </span>
-        {kind === 'video' && (
-          <span className="bb-track-cover-badge">
-            <Play size={12} aria-hidden />
-          </span>
-        )}
       </span>
     );
   };
@@ -2819,6 +2814,7 @@ function Home() {
                   Math.min(100, Math.round(inlinePreviewProgress * 100)),
                 )}%`;
                 const showFilePreviewAction = !isFolder && kind !== 'audio';
+                const showAudioPreviewAction = !isFolder && kind === 'audio' && hasInlinePreview;
                 return (
                   <article
                     key={`explorer-${idx}`}
@@ -2850,26 +2846,6 @@ function Home() {
                             fallbackCoverUrl,
                             seed: `${file.path ?? file.name} ${trackTitle} ${trackArtist ?? ''}`,
                           })}
-                          {hasInlinePreview && (
-                            <Button unstyled
-                              type="button"
-                              className={`bb-row-inline-play bb-row-inline-play--overlay${isInlinePreviewActive && inlinePreviewPlaying ? ' is-playing' : ''}`}
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                void toggleInlineAudioPreview(file);
-                              }}
-                              title={isInlinePreviewActive && inlinePreviewPlaying ? 'Pausar preview' : 'Reproducir preview'}
-                              aria-label={isInlinePreviewActive && inlinePreviewPlaying ? 'Pausar preview' : 'Reproducir preview'}
-                            >
-                              {isInlinePreviewLoading ? (
-                                <Spinner size={1.7} width={0.2} color="var(--app-accent)" />
-                              ) : isInlinePreviewActive && inlinePreviewPlaying ? (
-                                <Pause size={14} aria-hidden />
-                              ) : (
-                                <Play size={14} aria-hidden />
-                              )}
-                            </Button>
-                          )}
                         </span>
                       )}
                     </div>
@@ -2985,6 +2961,36 @@ function Home() {
                         </>
                       ) : (
                         <>
+                          {showAudioPreviewAction && (
+                            <Button unstyled
+                              type="button"
+                              className="bb-action-btn bb-action-btn--ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                void toggleInlineAudioPreview(file);
+                              }}
+                              title={isInlinePreviewActive && inlinePreviewPlaying ? 'Pausar preview' : 'Reproducir preview'}
+                              aria-label={isInlinePreviewActive && inlinePreviewPlaying ? 'Pausar preview' : 'Reproducir preview'}
+                            >
+                              {isInlinePreviewLoading ? (
+                                <>
+                                  <Spinner size={2} width={0.2} color="var(--app-accent)" />
+                                  <span className="bb-action-label">Cargando</span>
+                                </>
+                              ) : isInlinePreviewActive && inlinePreviewPlaying ? (
+                                <>
+                                  <Pause size={18} aria-hidden />
+                                  <span className="bb-action-label">Pausar</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Play size={18} aria-hidden />
+                                  <span className="bb-action-label">Preview</span>
+                                </>
+                              )}
+                            </Button>
+                          )}
+
                           {showFilePreviewAction && (
                             loadFile && index === idx ? (
                               <span
