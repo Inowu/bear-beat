@@ -2327,18 +2327,56 @@ html[data-theme="dark"] .bb-explorer-row:hover {
   }
 
   .bb-recent-card {
-    flex-basis: 88%;
-    min-height: 88px;
-    padding: 10px;
-    gap: 10px;
+    flex-basis: calc(100% - 2px);
+    min-height: 94px;
+    padding: 11px 12px;
+    gap: 8px;
+  }
+
+  .bb-recent-card--skeleton {
+    flex-basis: calc(100% - 2px);
+    min-height: 94px;
   }
 
   .bb-recent-name {
-    font-size: 0.98rem;
+    font-size: 0.95rem;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-height: 1.25;
   }
 
   .bb-recent-meta {
-    font-size: 0.8rem;
+    font-size: 0.77rem;
+    line-height: 1.25;
+  }
+
+  .bb-recent-card-main {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .bb-recent-actions,
+  .bb-for-you-actions {
+    gap: 5px;
+  }
+
+  .bb-recent-actions .bb-action-btn,
+  .bb-for-you-actions .bb-action-btn {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    min-height: 40px;
+    border-radius: 9px;
+  }
+
+  .bb-for-you-card {
+    min-height: 106px;
+  }
+
+  .bb-for-you-meta {
+    row-gap: 4px;
   }
 
   /* The header subtitle already explains the next step; hide the duplicated intro on small screens. */

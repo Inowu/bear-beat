@@ -28,6 +28,7 @@ import {
   type TrialEmailGateApiResult,
 } from "./trialEmailGateDecision";
 import { parseCheckoutIntent } from "../checkoutIntent";
+import "../LoginForm/LoginForm.scss";
 import "./TrialEmailGateForm.scss";
 
 const TURNSTILE_VERIFY_TIMEOUT_MS = 18_000;
