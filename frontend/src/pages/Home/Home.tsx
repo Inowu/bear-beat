@@ -2065,6 +2065,11 @@ function Home() {
         <span className="bb-track-cover-fallback">
           {renderKindIcon(kind)}
         </span>
+        {kind === 'video' && (
+          <span className="bb-track-cover-badge">
+            <Play size={12} aria-hidden />
+          </span>
+        )}
       </span>
     );
   };

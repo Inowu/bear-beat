@@ -10,20 +10,48 @@ import { log } from '../server';
 const execFileAsync = promisify(execFile);
 
 const COVER_MISS_TTL_MS = 24 * 60 * 60 * 1000;
+const COVER_CACHE_VERSION = 'v2';
+const VIDEO_PREVIEW_MIN_SEEK_SECONDS = Number(process.env.TRACK_COVER_VIDEO_MIN_SEEK_SECONDS ?? 2);
+const VIDEO_PREVIEW_MAX_SEEK_SECONDS = Number(process.env.TRACK_COVER_VIDEO_MAX_SEEK_SECONDS ?? 45);
+const VIDEO_PREVIEW_SEEK_RATIO = Number(process.env.TRACK_COVER_VIDEO_SEEK_RATIO ?? 0.18);
 const coverMissCache = new Map<string, number>(); // key -> expiresAt
 const coverInFlight = new Map<string, Promise<boolean>>(); // key -> generation promise
 
 type FfprobeStream = {
   index?: number;
   codec_type?: string;
+  duration?: string | number;
   disposition?: {
     attached_pic?: number;
   };
 };
 
+type FfprobeFormat = {
+  duration?: string | number;
+};
+
 type FfprobeStreamsResponse = {
   streams?: FfprobeStream[];
+  format?: FfprobeFormat;
 };
+
+type CoverProbeSelection =
+  | {
+      mode: 'attached_pic';
+      streamIndex: number;
+      durationSeconds: number | null;
+    }
+  | {
+      mode: 'video_frame';
+      streamIndex: number;
+      durationSeconds: number | null;
+    }
+  | {
+      mode: 'none';
+    }
+  | {
+      mode: 'unknown';
+    };
 
 const toText = (value: unknown): string => `${value ?? ''}`.trim();
 
@@ -49,7 +77,7 @@ function resolveCoversDir(): string {
 
 function computeCoverCacheKey(relativePath: string, mtimeMs: number, size: number): string {
   return createHash('sha1')
-    .update(`${relativePath}|${Math.floor(mtimeMs)}|${size}`)
+    .update(`${COVER_CACHE_VERSION}|${relativePath}|${Math.floor(mtimeMs)}|${size}`)
     .digest('hex');
 }
 
@@ -72,7 +100,7 @@ async function ffprobeStreams(fullPath: string): Promise<FfprobeStreamsResponse 
         '-print_format',
         'json',
         '-show_entries',
-        'stream=index,codec_type,disposition',
+        'stream=index,codec_type,duration,disposition:format=duration',
         fullPath,
       ],
       {
@@ -89,13 +117,42 @@ async function ffprobeStreams(fullPath: string): Promise<FfprobeStreamsResponse 
   }
 }
 
-async function resolveCoverStreamIndex(
+function parseDurationSeconds(value: unknown): number | null {
+  const duration = Number(value);
+  if (!Number.isFinite(duration) || duration <= 0) return null;
+  return duration;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
+
+function resolveVideoSeekSeconds(durationSeconds: number | null): number {
+  const minSeek = Number.isFinite(VIDEO_PREVIEW_MIN_SEEK_SECONDS) && VIDEO_PREVIEW_MIN_SEEK_SECONDS >= 0
+    ? VIDEO_PREVIEW_MIN_SEEK_SECONDS
+    : 2;
+  const maxSeek = Number.isFinite(VIDEO_PREVIEW_MAX_SEEK_SECONDS) && VIDEO_PREVIEW_MAX_SEEK_SECONDS >= minSeek
+    ? VIDEO_PREVIEW_MAX_SEEK_SECONDS
+    : Math.max(minSeek, 45);
+  const ratio = Number.isFinite(VIDEO_PREVIEW_SEEK_RATIO) && VIDEO_PREVIEW_SEEK_RATIO > 0
+    ? VIDEO_PREVIEW_SEEK_RATIO
+    : 0.18;
+
+  if (!durationSeconds || durationSeconds <= minSeek + 0.5) {
+    return minSeek;
+  }
+
+  return clamp(durationSeconds * ratio, minSeek, maxSeek);
+}
+
+async function resolveCoverProbeSelection(
   inputPath: string,
-): Promise<number | null | undefined> {
+): Promise<CoverProbeSelection> {
   const probe = await ffprobeStreams(inputPath);
-  if (!probe) return undefined;
+  if (!probe) return { mode: 'unknown' };
 
   const streams = Array.isArray(probe.streams) ? probe.streams : [];
+  const formatDuration = parseDurationSeconds(probe.format?.duration);
   const attached = streams.find(
     (stream) =>
       stream?.codec_type === 'video' &&
@@ -104,7 +161,11 @@ async function resolveCoverStreamIndex(
       Number.isFinite(stream.index),
   );
   if (attached && typeof attached.index === 'number') {
-    return attached.index;
+    return {
+      mode: 'attached_pic',
+      streamIndex: attached.index,
+      durationSeconds: parseDurationSeconds(attached.duration) ?? formatDuration,
+    };
   }
 
   const firstVideo = streams.find(
@@ -114,11 +175,15 @@ async function resolveCoverStreamIndex(
       Number.isFinite(stream.index),
   );
   if (firstVideo && typeof firstVideo.index === 'number') {
-    return firstVideo.index;
+    return {
+      mode: 'video_frame',
+      streamIndex: firstVideo.index,
+      durationSeconds: parseDurationSeconds(firstVideo.duration) ?? formatDuration,
+    };
   }
 
   // No video streams at all -> no embedded cover and no video frame fallback.
-  return null;
+  return { mode: 'none' };
 }
 
 type CoverGenerationResult = {
@@ -127,32 +192,40 @@ type CoverGenerationResult = {
 };
 
 async function generateCoverJpeg(inputPath: string, outputPath: string): Promise<CoverGenerationResult> {
-  const streamIndex = await resolveCoverStreamIndex(inputPath);
-  if (streamIndex === null) {
+  const selection = await resolveCoverProbeSelection(inputPath);
+  if (selection.mode === 'none') {
     return { ok: false, cacheableMiss: true };
   }
+  if (selection.mode === 'unknown') {
+    return { ok: false, cacheableMiss: false };
+  }
 
-  const mapValue =
-    typeof streamIndex === 'number' ? `0:${streamIndex}` : '0:v:0';
+  const mapValue = `0:${selection.streamIndex}`;
+  const args = [
+    '-hide_banner',
+    '-loglevel',
+    'error',
+    '-y',
+  ];
+  if (selection.mode === 'video_frame') {
+    args.push('-ss', `${resolveVideoSeekSeconds(selection.durationSeconds)}`);
+  }
+  args.push(
+    '-i',
+    inputPath,
+    '-map',
+    mapValue,
+    '-frames:v',
+    '1',
+    '-q:v',
+    '2',
+    outputPath,
+  );
 
   try {
     await execFileAsync(
       'ffmpeg',
-      [
-        '-hide_banner',
-        '-loglevel',
-        'error',
-        '-y',
-        '-i',
-        inputPath,
-        '-map',
-        mapValue,
-        '-frames:v',
-        '1',
-        '-q:v',
-        '2',
-        outputPath,
-      ],
+      args,
       {
         timeout: 25_000,
       },
