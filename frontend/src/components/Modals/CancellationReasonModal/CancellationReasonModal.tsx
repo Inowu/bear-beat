@@ -1,9 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Modal } from "src/components/ui";
-import { XCircle } from "src/icons";
-import { Spinner } from "../../../components/Spinner/Spinner";
-import "../Modal.scss";
-import { Button, Select } from "src/components/ui";
+import { Button, Modal, Select } from "src/components/ui";
+import "./CancellationReasonModal.scss";
 
 export type CancellationReasonCode =
   | "too_expensive"
@@ -41,8 +38,8 @@ export function CancellationReasonModal(props: CancellationReasonModalProps) {
     onHide,
     onConfirm,
     onReasonChange,
-    title = "Cancelar suscripción",
-    message = "Ayúdanos a mejorar. Selecciona el motivo de tu cancelación.",
+    title = "Cancelación de suscripción",
+    message = "Antes de cancelar, cuéntanos el motivo. Nos ayuda a mejorar tu experiencia.",
     reasons = DEFAULT_REASONS,
     maxTextLength = 500,
   } = props;
@@ -56,6 +53,8 @@ export function CancellationReasonModal(props: CancellationReasonModalProps) {
     () => reasons.find((item) => item.code === reasonCode) ?? null,
     [reasonCode, reasons],
   );
+  const remainingChars = Math.max(0, maxTextLength - reasonText.length);
+  const textUsagePercent = Math.min(100, Math.round((reasonText.length / maxTextLength) * 100));
 
   useEffect(() => {
     if (!show) return;
@@ -66,7 +65,11 @@ export function CancellationReasonModal(props: CancellationReasonModalProps) {
   }, [show]);
 
   const startConfirm = async () => {
-    if (!reasonCode || loader) return;
+    if (loader) return;
+    if (!reasonCode) {
+      setErrorMessage("Selecciona un motivo para continuar.");
+      return;
+    }
     setLoader(true);
     setErrorMessage("");
     try {
@@ -87,98 +90,102 @@ export function CancellationReasonModal(props: CancellationReasonModalProps) {
   };
 
   return (
-    <Modal show={show} onHide={onHide} centered>
-      <div className="modal-container success-modal">
-        <div className="header">
-          <p className="title">{title}</p>
-          <XCircle className="icon" onClick={onHide} aria-label="Cerrar" />
-        </div>
-        <div className="bottom">
-          <p className="content">{message}</p>
+    <Modal show={show} onHide={onHide} centered size="md" className="cancellation-reason-modal">
+      <Modal.Header closeButton closeLabel="Cerrar modal">
+        <Modal.Title>{title}</Modal.Title>
+      </Modal.Header>
 
-          <div className="c-row" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <span style={{ fontWeight: 600 }}>Motivo (requerido)</span>
-              <Select
-                className="form-select"
-                value={reasonCode}
-                onChange={(event) => {
-                  const next = event.target.value as CancellationReasonCode | "";
-                  setReasonCode(next);
-                  setErrorMessage("");
-                  if (next) onReasonChange?.(next);
-                }}
-              >
-                <option value="" disabled>
-                  Selecciona una opción...
-                </option>
-                {reasons.map((reason) => (
-                  <option key={reason.code} value={reason.code}>
-                    {reason.label}
-                  </option>
-                ))}
-              </Select>
-              {selectedReason?.helper && (
-                <small className="text-muted">{selectedReason.helper}</small>
-              )}
-            </label>
-          </div>
+      <Modal.Body>
+        <p className="cancel-reason__lead">{message}</p>
 
-          <div className="c-row" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <span style={{ fontWeight: 600 }}>Detalle (opcional)</span>
-              <textarea
-                className="form-control"
-                value={reasonText}
-                maxLength={maxTextLength}
-                onChange={(event) => {
-                  setReasonText(event.target.value);
-                  setErrorMessage("");
-                }}
-                placeholder="Opcional. No incluyas datos personales."
-                rows={3}
-              />
-              <small className="text-muted">
-                {Math.max(0, maxTextLength - reasonText.length)} caracteres restantes
-              </small>
-            </label>
-          </div>
-
-          {errorMessage && (
-            <p
-              role="alert"
-              style={{
-                color: "var(--app-status-error)",
-                background: "color-mix(in srgb, var(--app-status-error) 12%, transparent)",
-                border: "1px solid color-mix(in srgb, var(--app-status-error) 25%, transparent)",
-                padding: 12,
-                borderRadius: 12,
-              }}
-            >
-              {errorMessage}
+        <div className="cancel-reason__field">
+          <label htmlFor="cancel-reason-code" className="cancel-reason__label">
+            Motivo <span>(requerido)</span>
+          </label>
+          <Select
+            id="cancel-reason-code"
+            className="cancel-reason__select"
+            value={reasonCode}
+            hasError={Boolean(errorMessage && !reasonCode)}
+            onChange={(event) => {
+              const next = event.target.value as CancellationReasonCode | "";
+              setReasonCode(next);
+              setErrorMessage("");
+              if (next) onReasonChange?.(next);
+            }}
+          >
+            <option value="" disabled>
+              Selecciona una opción...
+            </option>
+            {reasons.map((reason) => (
+              <option key={reason.code} value={reason.code}>
+                {reason.label}
+              </option>
+            ))}
+          </Select>
+          {selectedReason?.helper && (
+            <p className="cancel-reason__helper" role="status">
+              {selectedReason.helper}
             </p>
           )}
-
-          <div className="button-container">
-            <Button unstyled className="btn-option-5" onClick={onHide} disabled={loader}>
-              Volver
-            </Button>
-            {!loader ? (
-              <Button unstyled
-                className="btn-option-4"
-                onClick={startConfirm}
-                disabled={!reasonCode}
-              >
-                Confirmar cancelación
-              </Button>
-            ) : (
-              <div style={{ width: 189 }}>
-                <Spinner size={3} width={0.3} color="var(--app-accent)" />
-              </div>
-            )}
-          </div>
         </div>
-      </div>
+
+        <div className="cancel-reason__field">
+          <label htmlFor="cancel-reason-detail" className="cancel-reason__label">
+            Detalle <span>(opcional)</span>
+          </label>
+          <textarea
+            id="cancel-reason-detail"
+            className="cancel-reason__textarea"
+            value={reasonText}
+            maxLength={maxTextLength}
+            onChange={(event) => {
+              setReasonText(event.target.value);
+              setErrorMessage("");
+            }}
+            placeholder="Opcional. No incluyas datos personales."
+            rows={4}
+          />
+          <div className="cancel-reason__counter">
+            <span>{remainingChars} caracteres restantes</span>
+            <span>{textUsagePercent}%</span>
+          </div>
+          <span className="cancel-reason__counter-bar" aria-hidden>
+            <span
+              className="cancel-reason__counter-fill"
+              style={{ width: `${textUsagePercent}%` }}
+            />
+          </span>
+        </div>
+
+        {errorMessage && (
+          <p role="alert" className="cancel-reason__error">
+            {errorMessage}
+          </p>
+        )}
+      </Modal.Body>
+
+      <Modal.Footer>
+        <div className="cancel-reason__actions">
+          <Button
+            variant="secondary"
+            className="cancel-reason__back-btn"
+            onClick={onHide}
+            disabled={loader}
+          >
+            Volver
+          </Button>
+          <Button
+            variant="danger"
+            className="cancel-reason__confirm-btn"
+            onClick={startConfirm}
+            loading={loader}
+            disabled={!reasonCode}
+          >
+            Confirmar cancelación
+          </Button>
+        </div>
+      </Modal.Footer>
     </Modal>
   );
 }
