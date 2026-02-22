@@ -15,9 +15,35 @@
           font-size: var(--app-font-size-h2);
           color: var(--app-text-heading);
         }
-        .btn-close {
+
+        .bb-ui-modal__close {
           filter: none;
-          opacity: 0.8;
+          opacity: 1;
+          background-image: none;
+          background: color-mix(in srgb, var(--app-bg-soft) 76%, var(--app-bg-card));
+          border-color: color-mix(in srgb, var(--app-accent) 32%, var(--app-border));
+          color: color-mix(in srgb, var(--app-text-heading) 96%, white);
+          box-shadow:
+            0 6px 14px rgba(2, 6, 23, 0.16),
+            inset 0 1px 0 color-mix(in srgb, var(--color-white) 22%, transparent);
+
+          svg {
+            width: 18px;
+            height: 18px;
+            color: inherit;
+            stroke-width: 2.2;
+          }
+
+          &:hover {
+            border-color: color-mix(in srgb, var(--app-accent) 48%, transparent);
+            background: var(--theme-accent-soft-bg);
+            color: var(--app-text-heading);
+          }
+
+          &:focus-visible {
+            outline: 2px solid var(--app-focus-ring);
+            outline-offset: 2px;
+          }
         }
       }
       .modal-body {
@@ -230,11 +256,6 @@
       }
     }
   }
-}
-
-[data-theme="dark"] .preview-modal .modal-dialog .modal-content .modal-header .btn-close,
-html.dark .preview-modal .modal-dialog .modal-content .modal-header .btn-close {
-  filter: invert(1) grayscale(1);
 }
 
 @media (max-width: 640px) {
