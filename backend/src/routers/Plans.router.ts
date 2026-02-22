@@ -572,6 +572,11 @@ export const plansRouter = router({
     const quota = await getUserQuotaSnapshot({ prisma: ctx.prisma, userId });
     const usedBytes = toBigIntSafe(quota?.regular?.used);
     const quotaUsedGbBigInt = usedBytes / BigInt(1_000_000_000);
+    const currentPlanGbBigInt = toBigIntSafe(currentPlan.gigas);
+    const upgradeFloorGbBigInt =
+      quotaUsedGbBigInt > currentPlanGbBigInt
+        ? quotaUsedGbBigInt
+        : currentPlanGbBigInt;
 
     const stripeCandidate = String(
       currentPlan.stripe_prod_id ?? currentPlan.stripe_prod_id_test ?? '',
@@ -613,7 +618,10 @@ export const plansRouter = router({
 
       plans = candidates.filter(
         (plan) =>
-          String(plan.paypal_product_id ?? '').trim() === paypalProductId,
+          String(plan.paypal_product_id ?? '').trim() === paypalProductId &&
+          Boolean(
+            String(plan.paypal_plan_id ?? plan.paypal_plan_id_test ?? '').trim(),
+          ),
       );
     } else {
       plans = await ctx.prisma.plans.findMany({
@@ -623,10 +631,12 @@ export const plansRouter = router({
     }
 
     const upgradePlans = plans
-      .filter((plan) => toBigIntSafe(plan?.gigas) > quotaUsedGbBigInt)
+      .filter((plan) => toBigIntSafe(plan?.gigas) > upgradeFloorGbBigInt)
       .sort((a, b) => {
         const byQuota = toFiniteNumber(a.gigas) - toFiniteNumber(b.gigas);
         if (byQuota !== 0) return byQuota;
+        const byPrice = toFiniteNumber(a.price) - toFiniteNumber(b.price);
+        if (byPrice !== 0) return byPrice;
         return a.id - b.id;
       });
 
@@ -634,6 +644,8 @@ export const plansRouter = router({
       currentPlan,
       upgradePlans,
       quotaUsedGb: Number(quotaUsedGbBigInt),
+      currentPlanGb: Number(currentPlanGbBigInt),
+      upgradeFloorGb: Number(upgradeFloorGbBigInt),
       billingRail,
     };
   }),

@@ -1,0 +1,163 @@
+@use "src/styles/mixin" as *;
+
+.plan-upgrade {
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: clamp(10px, 1.8vw, 20px);
+  display: grid;
+  gap: 14px;
+}
+
+.plan-upgrade__hero {
+  border: 1px solid color-mix(in srgb, var(--app-accent) 32%, transparent);
+  border-radius: 16px;
+  background:
+    radial-gradient(
+      720px 260px at 8% -40%,
+      color-mix(in srgb, var(--app-accent) 18%, transparent),
+      transparent 78%
+    ),
+    linear-gradient(180deg, color-mix(in srgb, var(--app-accent) 10%, transparent), transparent 72%),
+    color-mix(in srgb, var(--app-bg-card) 96%, transparent);
+  padding: clamp(12px, 2vw, 20px);
+  display: grid;
+  gap: 12px;
+}
+
+.plan-upgrade__heroCopy {
+  display: grid;
+  gap: 6px;
+}
+
+.plan-upgrade__kicker {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 24px;
+  align-items: center;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--app-accent) 38%, transparent);
+  background: color-mix(in srgb, var(--app-accent) 10%, transparent);
+  color: color-mix(in srgb, var(--app-accent) 90%, var(--app-text-heading));
+  font-size: 1.08rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.plan-upgrade__hero h1 {
+  margin: 0;
+  color: var(--app-text-heading);
+  font-size: clamp(2.5rem, 1.1vw + 2.1rem, 3.2rem);
+  font-weight: 700;
+  line-height: 1.08;
+}
+
+.plan-upgrade__hero p {
+  margin: 0;
+  color: var(--app-text-muted);
+  font-size: 1.32rem;
+  font-weight: 520;
+  line-height: 1.45;
+  max-width: 760px;
+}
+
+.plan-upgrade__heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.plan-upgrade__ghostLink {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--app-border) 86%, transparent);
+  background: color-mix(in srgb, var(--app-bg-soft) 72%, transparent);
+  color: var(--app-text-main);
+  font-size: var(--app-font-size-button);
+  font-weight: 700;
+  text-decoration: none;
+  transition: border-color 140ms ease, background 140ms ease, color 140ms ease;
+}
+
+.plan-upgrade__ghostLink:hover {
+  border-color: color-mix(in srgb, var(--app-accent) 44%, transparent);
+  background: color-mix(in srgb, var(--app-accent) 10%, transparent);
+  color: color-mix(in srgb, var(--app-accent) 90%, var(--app-text-main));
+}
+
+.plan-upgrade__sectionHead {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.plan-upgrade__sectionHead h2 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--app-text-heading);
+  font-size: clamp(1.85rem, 0.38vw + 1.66rem, 2.12rem);
+  font-weight: 700;
+  line-height: 1.16;
+}
+
+.plan-upgrade__sectionHead h2 svg {
+  color: var(--app-accent);
+}
+
+.plan-upgrade__sectionHead p {
+  margin: 0;
+  color: var(--app-text-muted);
+  font-size: 1.22rem;
+  font-weight: 560;
+  line-height: 1.42;
+}
+
+.plan-upgrade__current,
+.plan-upgrade__featured,
+.plan-upgrade__list {
+  display: grid;
+  gap: 10px;
+}
+
+.plan-upgrade__featured {
+  border: 1px solid color-mix(in srgb, var(--app-accent) 28%, transparent);
+  border-radius: 14px;
+  padding: clamp(10px, 1.6vw, 16px);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--app-accent) 8%, transparent), transparent 74%),
+    color-mix(in srgb, var(--app-bg-card) 96%, transparent);
+}
+
+.plan-upgrade__empty {
+  margin-top: 4px;
+}
+
+@media (max-width: 720px) {
+  .plan-upgrade {
+    padding: 10px;
+    gap: 12px;
+  }
+
+  .plan-upgrade__hero {
+    border-radius: 14px;
+    padding: 12px;
+  }
+
+  .plan-upgrade__heroActions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .plan-upgrade__ghostLink {
+    width: 100%;
+  }
+}

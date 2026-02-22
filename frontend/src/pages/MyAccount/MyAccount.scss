@@ -400,6 +400,40 @@
   line-height: 1.4;
 }
 
+.ma-quota-upsell {
+  display: grid;
+  gap: 8px;
+  margin-top: 2px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--ma-accent) 34%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--ma-accent) 10%, transparent), transparent 74%),
+    color-mix(in srgb, var(--ma-progress-bg) 74%, transparent);
+}
+
+.ma-quota-upsell__title {
+  margin: 0;
+  color: var(--ma-title);
+  font-size: 1.28rem;
+  font-weight: 760;
+  line-height: 1.25;
+}
+
+.ma-quota-upsell__copy {
+  margin: 0;
+  color: var(--ma-text-muted);
+  font-size: 1.18rem;
+  font-weight: 560;
+  line-height: 1.42;
+}
+
+.ma-quota-upsell__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .ma-grid-two {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -966,6 +1000,13 @@ html[data-theme="light"] .ma-ftp-priority {
   background: color-mix(in srgb, var(--ma-accent) 6%, var(--color-white));
 }
 
+html[data-theme="light"] .ma-quota-upsell {
+  border-color: color-mix(in srgb, var(--ma-accent) 30%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--ma-accent) 8%, var(--color-white)), transparent 74%),
+    color-mix(in srgb, var(--color-white) 98%, var(--ma-progress-bg));
+}
+
 html[data-theme="light"] .ma-panel {
   border-color: color-mix(in srgb, var(--ma-card-border) 90%, transparent);
   background: color-mix(in srgb, var(--color-white) 99%, var(--ma-card-bg));
@@ -1206,6 +1247,11 @@ html[data-theme="light"] .ma-add-card:hover {
 
   .ma-storage-amount {
     font-size: 1.22rem;
+  }
+
+  .ma-quota-upsell__actions {
+    display: grid;
+    grid-template-columns: 1fr;
   }
 
   .ma-profile-panel > .ma-btn-danger {

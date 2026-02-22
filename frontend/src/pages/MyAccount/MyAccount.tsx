@@ -9,7 +9,7 @@ import mastercardLogo from "../../assets/images/cards/master.png";
 import amexLogo from "../../assets/images/cards/express.png";
 import { getCompleted, transformBiteToGb } from "../../functions/functions";
 import { IOrders, IQuota, IFtpAccount } from "interfaces/User";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { saveAs } from "file-saver";
 import { Spinner } from "../../components/Spinner/Spinner";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -57,6 +57,7 @@ function parseAccountExpiration(value: unknown): Date | null {
 
 function MyAccount() {
   const { theme } = useTheme();
+  const navigate = useNavigate();
   const {
     currentUser,
     startUser,
@@ -297,6 +298,15 @@ function MyAccount() {
     }
   };
 
+  const openUpgradePlans = () => {
+    trackGrowthMetric(GROWTH_METRICS.CTA_CLICK, {
+      id: "quota_low_upgrade_plan",
+      location: "my_account",
+      remainingGb: Math.max(0, Math.trunc(totalRemainingGb)),
+    });
+    navigate("/actualizar-planes?entry=quota-warning");
+  };
+
   const loadEmailPreferences = async () => {
     if (!currentUser) return;
     setEmailPrefsLoading(true);
@@ -465,10 +475,16 @@ function MyAccount() {
   const remainingExtendedGb = quota?.extended
     ? transformBiteToGb(remainingExtendedBytes > BigInt(0) ? remainingExtendedBytes : BigInt(0))
     : 0;
+  const totalRemainingGb = Math.max(0, remainingRegularGb + remainingExtendedGb);
   const storagePercentLabel = storagePercent > 100 ? "100%+" : `${storagePercent}%`;
   const storageFillPercent = storagePercent <= 0 ? 0 : Math.min(100, Math.max(2, storagePercent));
   const hasQuotaReached = storagePercent >= 100;
   const hasNoQuotaLeft = remainingRegularGb <= 0 && remainingExtendedGb <= 0;
+  const lowQuotaThresholdGb = Math.max(40, Math.round(Math.max(availableGb, 1) * 0.2));
+  const hasLowQuotaWarning =
+    Boolean(currentUser?.hasActiveSubscription) &&
+    totalRemainingGb > 0 &&
+    totalRemainingGb <= lowQuotaThresholdGb;
   const hasActiveSubscription = Boolean(currentUser?.hasActiveSubscription);
   const hasFtpRecord = Boolean(currentUser?.ftpAccount);
   const ftpExpiration = parseAccountExpiration(currentUser?.ftpAccount?.expiration ?? null);
@@ -828,6 +844,33 @@ function MyAccount() {
                       La cuota de descarga es lo que puedes bajar en cada ciclo. El catálogo total es lo que puedes elegir.
                     </p>
                   </details>
+                  {hasLowQuotaWarning && (
+                    <section className="ma-quota-upsell" aria-label="Pocos GB disponibles">
+                      <p className="ma-quota-upsell__title">Te quedan pocos GB en este ciclo.</p>
+                      <p className="ma-quota-upsell__copy">
+                        Tienes {formatInt(totalRemainingGb)} GB disponibles entre cuota mensual y GB extra.
+                        Para no pausar descargas, elige upgrade o recarga ahora.
+                      </p>
+                      <div className="ma-quota-upsell__actions">
+                        <Button
+                          unstyled
+                          type="button"
+                          onClick={openUpgradePlans}
+                          className="ma-btn ma-btn-outline"
+                        >
+                          Hacer upgrade de membresía
+                        </Button>
+                        <Button
+                          unstyled
+                          type="button"
+                          onClick={() => void openPlan()}
+                          className="ma-btn ma-btn-soft"
+                        >
+                          Comprar GB extra
+                        </Button>
+                      </div>
+                    </section>
+                  )}
                   {hasQuotaReached && (
                     <p className="ma-storage-alert">
                       {hasNoQuotaLeft
@@ -835,7 +878,7 @@ function MyAccount() {
                         : "Llegaste a 100% de tu cuota regular. Puedes seguir usando GB extra si tienes disponibles."}
                     </p>
                   )}
-                  {hasActiveSubscription && (
+                  {hasActiveSubscription && !hasLowQuotaWarning && (
                     <Button unstyled type="button" onClick={() => void openPlan()} className="ma-btn ma-btn-soft">
                       Comprar extra 100 GB
                     </Button>

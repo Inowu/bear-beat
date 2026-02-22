@@ -3,12 +3,17 @@ import { TRPCError } from '@trpc/server';
 import { shieldedProcedure } from '../../../procedures/shielded.procedure';
 import { PaymentService } from './../services/types';
 import { log } from '../../../server';
+import { getPlanKey } from '../../../utils/getPlanKey';
 import {
   updatePaypalSubscription,
   updateStripeSubscription,
 } from './updateSubscription';
 import { getFtpUserInfo } from '../../utils/getFtpUserInfo';
 import { gbToBytes } from '../../../utils/gbToBytes';
+import {
+  ensureStripePriceId,
+  StripePriceKey,
+} from '../utils/ensureStripePriceId';
 
 export const changeSubscriptionPlan = shieldedProcedure
   .input(
@@ -110,14 +115,57 @@ export const changeSubscriptionPlan = shieldedProcedure
       });
     }
 
-    if (newPlan.stripe_prod_id || newPlan.stripe_prod_id_test) {
+    if (subscriptionOrder.payment_method === PaymentService.STRIPE) {
+      const priceKey = getPlanKey(PaymentService.STRIPE) as StripePriceKey;
+      let stripePriceId = newPlan[priceKey];
+
+      if (
+        !stripePriceId ||
+        typeof stripePriceId !== 'string' ||
+        !stripePriceId.startsWith('price_')
+      ) {
+        try {
+          stripePriceId = await ensureStripePriceId({
+            prisma,
+            plan: newPlan,
+            priceKey,
+          });
+        } catch (error) {
+          log.error('[CHANGE_PLAN] Missing Stripe price and auto-setup failed', {
+            planId: newPlan.id,
+            priceKey,
+            error: error instanceof Error ? error.message : error,
+          });
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message:
+              'No se pudo preparar este plan para Stripe. Intenta de nuevo en unos minutos.',
+          });
+        }
+      }
+
+      const stripeReadyPlan = {
+        ...newPlan,
+        [priceKey]: stripePriceId,
+      };
+
       return await updateStripeSubscription({
-        newPlan,
+        newPlan: stripeReadyPlan,
         subscription: subscriptionInfo,
         subscriptionOrder,
         user,
       });
-    } else if (newPlan.paypal_plan_id || newPlan.paypal_plan_id_test) {
+    }
+
+    if (subscriptionOrder.payment_method === PaymentService.PAYPAL) {
+      if (!newPlan.paypal_plan_id && !newPlan.paypal_plan_id_test) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message:
+            'Este plan aún no tiene configuración de PayPal para cambio de suscripción.',
+        });
+      }
+
       if (previousPlan.paypal_product_id !== newPlan.paypal_product_id) {
         log.error(
           `[CHANGE_PLAN] Plan change failed, previous plan ${previousPlan.id} and new plan ${newPlan.id} have different paypal product ids`,
@@ -136,13 +184,14 @@ export const changeSubscriptionPlan = shieldedProcedure
         user,
         subscription: subscriptionInfo,
       });
-    } else {
-      log.error(`[CHANGE_PLAN] Plan has no stripe or paypal id, ${newPlan.id}`);
-
-      throw new TRPCError({
-        code: 'INTERNAL_SERVER_ERROR',
-        message:
-          'Por el momento tu plan no es compatible con el cambio de suscripción, por favor intenta más tarde o contacta a soporte para más información.',
-      });
     }
+
+    log.error(
+      `[CHANGE_PLAN] Unsupported payment method for change plan - order ${subscriptionOrder.id}`,
+    );
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message:
+        'No se pudo procesar el cambio de plan para este método de pago.',
+    });
   });
