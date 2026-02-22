@@ -26,6 +26,7 @@ const SPOTIFY_SYNC_ON_READ_ENABLED = process.env.TRACK_METADATA_SPOTIFY_SYNC_ON_
 const SPOTIFY_SYNC_ON_READ_MAX_PER_CALL = Number(
   process.env.TRACK_METADATA_SPOTIFY_SYNC_ON_READ_MAX_PER_CALL ?? 6,
 );
+const SPOTIFY_SAFE_MAX_PER_CALL = Number(process.env.TRACK_METADATA_SPOTIFY_SAFE_MAX_PER_CALL ?? 2);
 const SPOTIFY_TEXT_METADATA_MIN_CONFIDENCE = Number(
   process.env.TRACK_METADATA_SPOTIFY_TEXT_MIN_CONFIDENCE ?? 0.58,
 );
@@ -207,7 +208,10 @@ export async function enrichFilesWithTrackMetadata<T extends IFileStat>(files: T
   let metadataByPath = await getTrackMetadataMapByPaths(pathList);
 
   if (SPOTIFY_SYNC_ON_READ_ENABLED && isSpotifyMetadataEnabled()) {
-    const syncLimit = sanitizePositiveInt(SPOTIFY_SYNC_ON_READ_MAX_PER_CALL, 6);
+    const syncLimit = Math.min(
+      sanitizePositiveInt(SPOTIFY_SYNC_ON_READ_MAX_PER_CALL, 6),
+      sanitizePositiveInt(SPOTIFY_SAFE_MAX_PER_CALL, 2),
+    );
     const pathsMissingCover = pathList.filter((pathValue) => {
       const metadata = metadataByPath.get(pathValue);
       return Boolean(metadata && !metadata.coverUrl);
@@ -456,9 +460,10 @@ export async function syncTrackMetadataForFiles<T extends Pick<IFileStat, 'name'
     new Set(rows.map((row) => normalizeCatalogPath(row.path))),
   ).filter((pathValue) => pathValue && pathValue !== '/');
   if (spotifyCandidatePaths.length > 0 && isSpotifyMetadataEnabled()) {
+    const asyncSpotifyLimit = sanitizePositiveInt(SPOTIFY_SAFE_MAX_PER_CALL, 2);
     void backfillSpotifyCoversForPaths(
       spotifyCandidatePaths,
-      { maxToProcess: Math.min(6, spotifyCandidatePaths.length) },
+      { maxToProcess: Math.min(asyncSpotifyLimit, spotifyCandidatePaths.length) },
     )
       .catch((error: any) => {
         log.warn(`[TRACK_METADATA] async spotify backfill failed: ${error?.message ?? 'unknown error'}`);
@@ -787,7 +792,10 @@ export async function enrichSearchDocumentsWithTrackMetadata<T extends SearchDoc
     && SPOTIFY_SYNC_ON_READ_ENABLED
     && isSpotifyMetadataEnabled()
   ) {
-    const syncLimit = sanitizePositiveInt(SPOTIFY_SYNC_ON_READ_MAX_PER_CALL, 6);
+    const syncLimit = Math.min(
+      sanitizePositiveInt(SPOTIFY_SYNC_ON_READ_MAX_PER_CALL, 6),
+      sanitizePositiveInt(SPOTIFY_SAFE_MAX_PER_CALL, 2),
+    );
     const pathsMissingCover = docPaths.filter((pathValue) => {
       const metadata = metadataByPath.get(normalizeCatalogPath(pathValue));
       return Boolean(metadata && !metadata.coverUrl);
