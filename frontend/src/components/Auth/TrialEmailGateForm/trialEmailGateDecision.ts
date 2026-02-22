@@ -1,5 +1,13 @@
 import type { PrecheckMessageKey } from "../precheckCopy";
 
+export type TrialEmailGatePrecheckTrial = {
+  enabled: boolean;
+  days: number;
+  gb: number;
+  trialState: "eligible" | "ineligible" | "unknown_for_new";
+  accountState: "new" | "existing_active" | "existing_blocked" | "existing_deleted";
+};
+
 export type TrialEmailGateApiResult = {
   nextAction: "login" | "register" | "support";
   accountState: "new" | "existing_active" | "existing_blocked" | "existing_deleted";
@@ -16,6 +24,7 @@ export type TrialEmailGateNavigationDecision =
         from: string;
         prefillEmail: string;
         precheckMessageKey: PrecheckMessageKey;
+        precheckTrial: TrialEmailGatePrecheckTrial;
       };
     }
   | {
@@ -43,6 +52,13 @@ export function resolveTrialEmailGateDecision(input: {
       from,
       prefillEmail: email,
       precheckMessageKey: result.messageKey,
+      precheckTrial: {
+        enabled: Boolean(result.trial?.enabled),
+        days: Number(result.trial?.days ?? 0),
+        gb: Number(result.trial?.gb ?? 0),
+        trialState: result.trialState,
+        accountState: result.accountState,
+      },
     },
   };
 }

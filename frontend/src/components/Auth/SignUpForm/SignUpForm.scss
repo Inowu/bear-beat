@@ -413,6 +413,39 @@ html.dark .checkout-intent-card,
   color: var(--app-text-muted);
 }
 
+.checkout-intent-summary__chargeRows {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.checkout-intent-summary__chargeRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.checkout-intent-summary__chargeLabel {
+  font-size: 0.86rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--app-text-muted);
+}
+
+.checkout-intent-summary__chargeValue {
+  font-size: 1.04rem;
+  font-weight: 850;
+  color: var(--app-text-heading);
+  text-align: right;
+}
+
+.checkout-intent-summary__chargeValue--after {
+  color: color-mix(in srgb, var(--app-text-heading) 88%, var(--app-text-muted));
+}
+
 .checkout-intent-summary__hint {
   margin: 8px 0 0;
   color: var(--app-text-muted);

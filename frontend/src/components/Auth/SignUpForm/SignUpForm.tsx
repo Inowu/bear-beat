@@ -33,6 +33,7 @@ import {
   isPrecheckMessageKey,
   type PrecheckMessageKey,
 } from "../precheckCopy";
+import { parseCheckoutIntent } from "../checkoutIntent";
 import {
   shouldBypassTurnstile,
   TURNSTILE_BYPASS_TOKEN,
@@ -44,6 +45,13 @@ import {
   buildMarketingVariables,
   EMPTY_MARKETING_VARIABLES,
 } from "../../../utils/marketingSnapshot";
+import {
+  buildSignUpCheckoutChargeCopy,
+  mapPrecheckTrialToConfig,
+  parseSignUpPrecheckTrial,
+  shouldShowSignUpCheckoutTrial,
+  type SignUpTrialConfig,
+} from "./signupCheckoutSummary";
 import brandLockupBlack from "../../../assets/brand/bearbeat-lockup-black.png";
 import brandLockupCyan from "../../../assets/brand/bearbeat-lockup-cyan.png";
 
@@ -86,6 +94,7 @@ function SignUpForm() {
         from?: string;
         prefillEmail?: unknown;
         precheckMessageKey?: unknown;
+        precheckTrial?: unknown;
       }
     | null;
   const stateFromRaw = locationState?.from;
@@ -98,6 +107,14 @@ function SignUpForm() {
   )
     ? locationState.precheckMessageKey
     : null;
+  const statePrecheckTrial = useMemo(
+    () => parseSignUpPrecheckTrial(locationState?.precheckTrial),
+    [locationState?.precheckTrial],
+  );
+  const precheckTrialConfig = useMemo(
+    () => mapPrecheckTrialToConfig(statePrecheckTrial),
+    [statePrecheckTrial],
+  );
   const stateFrom =
     typeof stateFromRaw === "string" ? normalizeAuthReturnUrl(stateFromRaw) : null;
   const storedFromRaw = readAuthReturnUrl();
@@ -120,10 +137,11 @@ function SignUpForm() {
       : "default";
   // Default conversion path after signup is /planes (unless the user came from a protected route / checkout).
   const from = stateFrom ?? storedFrom ?? "/planes";
+  const checkoutIntent = useMemo(() => parseCheckoutIntent(from), [from]);
   const precheckMessage = statePrecheckMessageKey
-    ? getPrecheckMessage(statePrecheckMessageKey)
+    ? getPrecheckMessage(statePrecheckMessageKey, checkoutIntent)
     : "";
-  const isCheckoutIntent = from.startsWith("/comprar") || from.startsWith("/checkout");
+  const isCheckoutIntent = checkoutIntent.isCheckoutIntent;
   const authStorageEventTrackedRef = useRef(false);
   const checkoutPlanId = useMemo(() => {
     if (typeof window === "undefined") return null;
@@ -156,15 +174,17 @@ function SignUpForm() {
   const registrationStartedRef = useRef(false);
   const registrationCompletedRef = useRef(false);
   const registrationAbandonTrackedRef = useRef(false);
-  const [trialConfig, setTrialConfig] = useState<{
-    enabled: boolean;
-    days: number;
-    gb: number;
-    eligible: boolean | null;
-  } | null>(null);
+  const [trialConfig, setTrialConfig] = useState<SignUpTrialConfig | null>(
+    precheckTrialConfig,
+  );
   const [marketingVariables, setMarketingVariables] = useState(
     EMPTY_MARKETING_VARIABLES,
   );
+
+  useEffect(() => {
+    if (!precheckTrialConfig) return;
+    setTrialConfig((previous) => previous ?? precheckTrialConfig);
+  }, [precheckTrialConfig]);
 
   const clearTurnstileTimeout = useCallback(() => {
     if (turnstileTimeoutRef.current !== null) {
@@ -654,13 +674,27 @@ function SignUpForm() {
     return hasTrial ? "Crear cuenta y empezar prueba" : "Crear cuenta y activar";
   }, [isCheckoutIntent, trialConfig?.days, trialConfig?.eligible, trialConfig?.enabled]);
 
-  const showCheckoutTrial =
-    Boolean(trialConfig?.enabled) &&
-    trialConfig?.eligible !== false &&
-    Number.isFinite(trialConfig?.days) &&
-    (trialConfig?.days ?? 0) > 0 &&
-    Number.isFinite(trialConfig?.gb) &&
-    (trialConfig?.gb ?? 0) > 0;
+  const showCheckoutTrial = shouldShowSignUpCheckoutTrial({
+    trialConfig,
+    intentAllowsTrial: checkoutIntent.intentAllowsTrial,
+  });
+
+  const checkoutChargeCopy = useMemo(
+    () =>
+      buildSignUpCheckoutChargeCopy({
+        showCheckoutTrial,
+        trialConfig,
+        checkoutPlanPriceLabel,
+      }),
+    [
+      checkoutPlanPriceLabel,
+      showCheckoutTrial,
+      trialConfig?.days,
+      trialConfig?.enabled,
+      trialConfig?.gb,
+      trialConfig?.eligible,
+    ],
+  );
 
   const checkoutSubtitle = useMemo(() => {
     if (!isCheckoutIntent) return "";
@@ -985,15 +1019,13 @@ function SignUpForm() {
                         {checkoutPlanLoading ? (
                           <SkeletonRow width="132px" height="12px" />
                         ) : (
-                          `${checkoutPlanNameText}${checkoutPlanPriceLabel ? ` · ${checkoutPlanPriceLabel}/mes` : ""}`
+                          showCheckoutTrial
+                            ? checkoutPlanNameText
+                            : `${checkoutPlanNameText}${checkoutPlanPriceLabel ? ` · ${checkoutPlanPriceLabel}/mes` : ""}`
                         )}
                       </small>
                     </span>
-                    {showCheckoutTrial ? (
-                      <strong>Prueba con tarjeta</strong>
-                    ) : (
-                      <strong>{checkoutPlanPriceLabel ? `${checkoutPlanPriceLabel}/mes` : "—"}</strong>
-                    )}
+                    <strong>{checkoutChargeCopy.summaryPrimary}</strong>
                   </summary>
                   <div className="checkout-intent-summary__body">
                     <div className="checkout-intent-summary__labelRow">
@@ -1008,12 +1040,30 @@ function SignUpForm() {
                       <strong className="checkout-intent-summary__name">
                         {checkoutPlanNameNode}
                       </strong>
-                      {checkoutPlanPriceLabel && (
+                      {!showCheckoutTrial && checkoutPlanPriceLabel && (
                         <span className="checkout-intent-summary__price">
                           {checkoutPlanPriceLabel}
                           <span className="checkout-intent-summary__suffix">/mes</span>
                         </span>
                       )}
+                    </div>
+                    <div className="checkout-intent-summary__chargeRows" aria-label="Cobro y renovación">
+                      <div className="checkout-intent-summary__chargeRow">
+                        <span className="checkout-intent-summary__chargeLabel">
+                          {checkoutChargeCopy.todayLabel}
+                        </span>
+                        <strong className="checkout-intent-summary__chargeValue">
+                          {checkoutChargeCopy.todayValue}
+                        </strong>
+                      </div>
+                      <div className="checkout-intent-summary__chargeRow">
+                        <span className="checkout-intent-summary__chargeLabel">
+                          {checkoutChargeCopy.afterLabel}
+                        </span>
+                        <span className="checkout-intent-summary__chargeValue checkout-intent-summary__chargeValue--after">
+                          {checkoutChargeCopy.afterValue}
+                        </span>
+                      </div>
                     </div>
                     <p className="checkout-intent-summary__hint">
                       El pago se realiza en el siguiente paso, dentro del checkout seguro.
@@ -1043,12 +1093,30 @@ function SignUpForm() {
                     <strong className="checkout-intent-summary__name">
                       {checkoutPlanNameNode}
                     </strong>
-                    {checkoutPlanPriceLabel && (
+                    {!showCheckoutTrial && checkoutPlanPriceLabel && (
                       <span className="checkout-intent-summary__price">
                         {checkoutPlanPriceLabel}
                         <span className="checkout-intent-summary__suffix">/mes</span>
                       </span>
                     )}
+                  </div>
+                  <div className="checkout-intent-summary__chargeRows" aria-label="Cobro y renovación">
+                    <div className="checkout-intent-summary__chargeRow">
+                      <span className="checkout-intent-summary__chargeLabel">
+                        {checkoutChargeCopy.todayLabel}
+                      </span>
+                      <strong className="checkout-intent-summary__chargeValue">
+                        {checkoutChargeCopy.todayValue}
+                      </strong>
+                    </div>
+                    <div className="checkout-intent-summary__chargeRow">
+                      <span className="checkout-intent-summary__chargeLabel">
+                        {checkoutChargeCopy.afterLabel}
+                      </span>
+                      <span className="checkout-intent-summary__chargeValue checkout-intent-summary__chargeValue--after">
+                        {checkoutChargeCopy.afterValue}
+                      </span>
+                    </div>
                   </div>
                   <p className="checkout-intent-summary__hint">
                     El pago se realiza en el siguiente paso, dentro del checkout seguro.

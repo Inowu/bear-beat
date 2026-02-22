@@ -24,6 +24,7 @@ import {
   isPrecheckMessageKey,
   type PrecheckMessageKey,
 } from "../precheckCopy";
+import { parseCheckoutIntent } from "../checkoutIntent";
 import "./LoginForm.scss";
 
 const SIMPLE_EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -51,6 +52,7 @@ function LoginForm() {
         from?: string;
         prefillEmail?: unknown;
         precheckMessageKey?: unknown;
+        precheckTrial?: unknown;
       }
     | null;
   const stateFromRaw = locationState?.from;
@@ -84,8 +86,9 @@ function LoginForm() {
       ? "storage"
       : "default";
   const from = stateFrom ?? storedFrom ?? "/";
+  const checkoutIntent = useMemo(() => parseCheckoutIntent(from), [from]);
   const precheckMessage = statePrecheckMessageKey
-    ? getPrecheckMessage(statePrecheckMessageKey)
+    ? getPrecheckMessage(statePrecheckMessageKey, checkoutIntent)
     : "";
   const authStorageEventTrackedRef = useRef(false);
   const validationSchema = Yup.object().shape({

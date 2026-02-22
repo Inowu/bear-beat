@@ -27,6 +27,7 @@ import {
   resolveTrialEmailGateDecision,
   type TrialEmailGateApiResult,
 } from "./trialEmailGateDecision";
+import { parseCheckoutIntent } from "../checkoutIntent";
 import "./TrialEmailGateForm.scss";
 
 const TURNSTILE_VERIFY_TIMEOUT_MS = 18_000;
@@ -68,6 +69,7 @@ function TrialEmailGateForm() {
   }, [stateFrom]);
   const storedFrom = allowStoredFrom ? storedFromRaw : null;
   const from = stateFrom ?? storedFrom ?? "/planes";
+  const checkoutIntent = useMemo(() => parseCheckoutIntent(from), [from]);
 
   const [loader, setLoader] = useState<boolean>(false);
   const [inlineError, setInlineError] = useState<string>("");
@@ -216,7 +218,7 @@ function TrialEmailGateForm() {
   }, [clearTurnstileTimeout]);
 
   const supportMessage = supportMessageKey
-    ? getPrecheckMessage(supportMessageKey)
+    ? getPrecheckMessage(supportMessageKey, checkoutIntent)
     : null;
   const showEmailError = Boolean(
     (formik.touched.email || formik.submitCount > 0) && formik.errors.email,
